@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
@@ -14,6 +15,7 @@
     "paths": {
       "@/*": ["./src/renderer/*"]
     },
+    "types": ["unplugin-icons/types/vue"]
   },
   "include": [
     "src/renderer/**/*.ts",

@@ -1,0 +1,74 @@
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-bg);
+}
+
+#app {
+  color: var(--color-text);
+  font-size: var(--text-md);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+}
+h1 {
+  font-size: var(--text-xxxl);
+  margin: var(--spacing-xl) 0;
+}
+h2 {
+  font-size: var(--text-xxl);
+  margin: var(--spacing-xl) 0;
+}
+h3 {
+  font-size: var(--text-xl);
+  margin: var(--spacing-xl) 0;
+}
+h3 {
+  font-size: var(--text-lg);
+  margin: var(--spacing-lg) 0;
+}
+h4 {
+  font-size: var(--text-md);
+  margin: var(--spacing-md) 0;
+}
+h5 {
+  font-size: var(--text-sm);
+  margin: var(--spacing-xs) 0;
+}
+h6 {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  margin: var(--spacing-xs) 0;
+  font-weight: 700;
+  color: var(--color-contrast-medium);
+}
+
+.gutter-line {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100vh;
+  background-color: var(--color-border);
+  cursor: col-resize;
+  &::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 8px;
+    position: absolute;
+    left: -3px;
+    z-index: 10;
+  }
+}
+
+.desc {
+  font-size: var(--text-sm);
+  color: var(--color-contrast-medium);
+  margin-top: var(--spacing-xs);
+}

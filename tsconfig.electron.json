@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "outDir": "./build",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "config/*.ts",
+    "scripts/*.ts",
+    "src/main/**/*.ts",
+    "src/main/types"
+  ],
+  "exclude":[
+    "./node_modules",
+  ]
+}

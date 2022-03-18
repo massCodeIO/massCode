@@ -1,0 +1,57 @@
+@import '~perfect-scrollbar/css/perfect-scrollbar.css';
+
+.ps {
+  $r: &;
+  &__rail-y {
+    background-color: rgba(121, 121, 121, .8);
+    width: 5px;
+    &:hover {
+      #{$r}__thumb-y {
+        width: 5px;
+        right: 0;
+      }
+    }
+  }
+  &__rail-x {
+    background-color: rgba(121, 121, 121, .5);
+    width: 4px;
+    &:hover {
+      height: 4px;
+      background-color: transparent !important;
+      opacity: 0.4 !important;
+      #{$r}__thumb-x {
+        height: 4px;
+        right: 0;
+      }
+    }
+  }
+  &__thumb-y {
+    border-radius: 0;
+    background-color: rgba(121, 121, 121, .8);
+    width: 5px;
+    right: 0;
+  }
+  &__thumb-x {
+    border-radius: 0;
+    background-color: rgba(121, 121, 121, .8);
+    height: 4px;
+    right: 0;
+  }
+}
+
+
+.draggable-placeholder-inner{
+  border: 1px dashed var(--color-contrast-medium);
+  box-sizing: border-box;
+  border-radius: 4px;
+  text-align: center;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-right: 1px;
+
+}
+
+.draggable-placeholder{
+} 

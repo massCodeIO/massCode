@@ -1,0 +1,10 @@
+.ace_gutter {
+  width: 40px !important;
+  background: transparent !important;
+  &-layer {
+    margin-left: -12px;
+  }
+}
+.ace_scroller {
+  left: 40px !important;
+}

@@ -1,15 +1,30 @@
 <template>
-  <div class="main">
-    main
-  </div>
+  <TheEditor
+    v-model="snippet"
+    v-model:lang="lang"
+  />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import TheEditor from '@/components/editor/TheEditor.vue'
 
+const snippet = ref(
+  `declare module '*.vue' {
+  import type { DefineComponent } from 'vue'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
+  const component: DefineComponent<{}, {}, any>
+  export default component
+};
+
+const x = 1
+let a = 'some'
+`
+)
+const lang = ref()
 </script>
 
 <style scoped lang="scss">
-
 .main {
   display: grid;
   height: 100vh;

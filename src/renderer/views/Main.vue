@@ -1,13 +1,15 @@
 <template>
-  <TheEditor
-    v-model="snippet"
-    v-model:lang="lang"
-  />
+  <div class="main">
+    <TheSidebar />
+    <TheEditor
+      v-model="snippet"
+      v-model:lang="lang"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import TheEditor from '@/components/editor/TheEditor.vue'
 
 const snippet = ref(
   `declare module '*.vue' {
@@ -30,6 +32,7 @@ const lang = ref()
   height: 100vh;
   background-color: var(--color-bg);
   overflow: hidden;
+  grid-template-columns: 200px 1fr;
 }
 .update-available {
   position: absolute;

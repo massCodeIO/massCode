@@ -1,6 +1,7 @@
 <template>
   <div class="main">
     <TheSidebar />
+    <SnippetList />
     <TheEditor
       v-model="snippet"
       v-model:lang="lang"
@@ -32,7 +33,7 @@ const lang = ref()
   height: 100vh;
   background-color: var(--color-bg);
   overflow: hidden;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 200px 200px 1fr;
 }
 .update-available {
   position: absolute;

@@ -5,8 +5,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <style lang="scss">
 body {
@@ -17,7 +16,7 @@ body {
     position: absolute;
     top: 0;
     width: 100%;
-    height: 30px;
+    height: var(--title-bar-height);
     user-select: none;
     -webkit-app-region: drag;
     z-index: 1010;

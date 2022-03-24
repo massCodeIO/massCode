@@ -6,6 +6,7 @@ interface StoreSchema {
 
 export default new Store<StoreSchema>({
   name: 'app',
+  cwd: 'massCode',
 
   schema: {
     bounds: {

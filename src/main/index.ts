@@ -2,8 +2,13 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
 import os from 'os'
 import { store } from './store'
+import { createApiServer } from './services/api/server'
+import { createDb } from './services/db'
 
 const isDev = process.env.NODE_ENV === 'development'
+
+createDb()
+createApiServer()
 
 function createWindow () {
   const bounds = store.app.get('bounds')
@@ -15,7 +20,8 @@ function createWindow () {
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.js'),
       nodeIntegration: true,
-      contextIsolation: true
+      contextIsolation: true,
+      webSecurity: !isDev
     }
   })
 

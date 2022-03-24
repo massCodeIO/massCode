@@ -1,18 +1,16 @@
-import type { EventCallback } from './types'
 import { contextBridge, ipcRenderer } from 'electron'
+import type { ElectronBridge } from './types'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
-    on: (channel: string, cb: EventCallback) => ipcRenderer.on(channel, cb),
-    send: (channel: string, data: any, cb: EventCallback) => {
+    on: (channel, cb) => ipcRenderer.on(channel, cb),
+    send: (channel, data, cb) => {
       ipcRenderer.send(channel, data)
       if (cb && typeof cb === 'function') {
         ipcRenderer.on(channel, cb)
       }
     },
-    removeListener: (channel: string, cb: EventCallback) =>
-      ipcRenderer.removeListener(channel, cb),
-    removeListeners: (channel: string) =>
-      ipcRenderer.removeAllListeners(channel)
+    removeListener: (channel, cb) => ipcRenderer.removeListener(channel, cb),
+    removeListeners: channel => ipcRenderer.removeAllListeners(channel)
   }
-})
+} as ElectronBridge)

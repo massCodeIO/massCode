@@ -38,13 +38,6 @@ function createWindow () {
 }
 
 app.whenReady().then(async () => {
-  if (isDev) {
-    const { default: installExtension, VUEJS3_DEVTOOLS } = await import(
-      'electron-devtools-installer'
-    )
-    installExtension(VUEJS3_DEVTOOLS)
-  }
-
   createWindow()
 
   app.on('activate', function () {

@@ -1,17 +1,14 @@
 import Store from 'electron-store'
 
-interface StoreSchema {
+export interface AppStoreSchema {
   bounds: object
 }
 
-export default new Store<StoreSchema>({
+export default new Store<AppStoreSchema>({
   name: 'app',
   cwd: 'massCode',
 
-  schema: {
-    bounds: {
-      default: {},
-      type: 'object'
-    }
+  defaults: {
+    bounds: {}
   }
 })

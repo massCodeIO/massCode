@@ -21,12 +21,8 @@ export default new Store<StoreSchema>({
   name: 'preferences',
   cwd: 'massCode',
 
-  schema: {
-    storagePath: {
-      default: defaultPath
-    },
-    backupPath: {
-      default: backupPath
-    }
+  defaults: {
+    storagePath: defaultPath,
+    backupPath
   }
 })

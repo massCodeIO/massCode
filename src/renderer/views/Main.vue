@@ -2,29 +2,31 @@
   <div class="main">
     <TheSidebar />
     <SnippetList />
-    <TheEditor
-      v-model="snippet"
-      v-model:lang="lang"
-    />
+    <SnippetsView />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { store } from '@/electron'
+import { useFolderStore } from '@/store/folders'
+import { useSnippetStore } from '@/store/snippets'
 
-const snippet = ref(
-  `declare module '*.vue' {
-  import type { DefineComponent } from 'vue'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
-  const component: DefineComponent<{}, {}, any>
-  export default component
-};
+const folderStore = useFolderStore()
+const snippetStore = useSnippetStore()
 
-const x = 1
-let a = 'some'
-`
-)
-const lang = ref()
+const init = async () => {
+  const storedFolderId = store.app.get('selectedFolderId')
+  const storedSnippetId = store.app.get('selectedSnippetId')
+  const firstFolderId = folderStore.main[0]?.id
+  const firstSnippetId = snippetStore.snippets[0]?.id
+
+  await folderStore.getFolders()
+  folderStore.selectId(storedFolderId || firstFolderId)
+  await snippetStore.getSnippetsByFolderId(storedFolderId || firstFolderId)
+  await snippetStore.getSnippetsById(storedSnippetId || firstSnippetId)
+}
+
+init()
 </script>
 
 <style scoped lang="scss">

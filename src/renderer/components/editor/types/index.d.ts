@@ -144,7 +144,6 @@ export type Language =
   | 'slim'
   | 'smarty'
   | 'smithy'
-  | 'snippets'
   | 'soy_template'
   | 'space'
   | 'sparql'

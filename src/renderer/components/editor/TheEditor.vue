@@ -33,7 +33,7 @@ import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
 import type { Language } from './types'
-import { languages } from './languages'
+import { languages, oldLanguageMap } from './languages'
 
 interface Props {
   lang: Language
@@ -61,13 +61,12 @@ const cursorPosition = reactive({
 let editor: Ace.Editor
 
 const localLang = computed({
-  get: () => props.lang,
+  get: () => oldLanguageMap[props.lang] || props.lang,
   set: v => emit('update:lang', v)
 })
 
 const init = async () => {
   editor = ace.edit(editorRef.value, {
-    mode: `ace/mode/${props.lang}`,
     theme: `ace/theme/${props.theme}`,
     useWorker: false,
     fontSize: 12,
@@ -105,7 +104,7 @@ const setValue = () => {
 }
 
 const setLang = () => {
-  editor.session.setMode(`ace/mode/${props.lang}`)
+  editor.session.setMode(`ace/mode/${localLang.value}`)
 }
 
 const setTheme = () => {

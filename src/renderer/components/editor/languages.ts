@@ -1,4 +1,4 @@
-import type { LanguageOption } from './types'
+import type { Language, LanguageOption } from './types'
 
 export const languages: LanguageOption[] = [
   { name: 'ABAP', value: 'abap' },
@@ -13,6 +13,7 @@ export const languages: LanguageOption[] = [
   { name: 'ASL', value: 'asl' },
   { name: 'Assembly x86', value: 'assembly_x86' },
   { name: 'AutoHotkey / AutoIt', value: 'autohotkey' },
+  { name: 'Bash', value: 'sh' },
   { name: 'BatchFile', value: 'batchfile' },
   { name: 'C and C++', value: 'c_cpp' },
   { name: 'C#', value: 'csharp' },
@@ -43,7 +44,7 @@ export const languages: LanguageOption[] = [
   { name: 'Erlang', value: 'erlang' },
   { name: 'Forth', value: 'forth' },
   { name: 'Fortran', value: 'fortran' },
-  { name: 'FSharp', value: 'fsharp' },
+  { name: 'F#', value: 'fsharp' },
   { name: 'FSL', value: 'fsl' },
   { name: 'Gcode', value: 'gcode' },
   { name: 'Gherkin', value: 'gherkin' },
@@ -126,6 +127,7 @@ export const languages: LanguageOption[] = [
   { name: 'Razor', value: 'razor' },
   { name: 'RDoc', value: 'rdoc' },
   { name: 'Red', value: 'red' },
+  { name: 'Redshift', value: 'redshift' },
   { name: 'RHTML', value: 'rhtml' },
   { name: 'RST', value: 'rst' },
   { name: 'Ruby', value: 'ruby' },
@@ -136,7 +138,6 @@ export const languages: LanguageOption[] = [
   { name: 'Scheme', value: 'scheme' },
   { name: 'Scrypt', value: 'scrypt' },
   { name: 'SCSS', value: 'scss' },
-  { name: 'SH', value: 'sh' },
   { name: 'SJS', value: 'sjs' },
   { name: 'Slim', value: 'slim' },
   { name: 'Smarty', value: 'smarty' },
@@ -169,3 +170,28 @@ export const languages: LanguageOption[] = [
   { name: 'YAML', value: 'yaml' },
   { name: 'Zeek', value: 'zeek' }
 ]
+
+// TODO: убрать в будущих релизах
+export const oldLanguageMap: Record<any, Language> = {
+  azcli: 'plain_text',
+  bat: 'sh',
+  cameligo: 'plain_text',
+  coffeescript: 'coffee',
+  c: 'c_cpp',
+  csp: 'plain_text',
+  go: 'golang',
+  graphql: 'graphqlschema',
+  msdax: 'plain_text',
+  'objective-c': 'objectivec',
+  pascaligo: 'plain_text',
+  postiats: 'plain_text',
+  powerquery: 'plain_text',
+  pug: 'jade',
+  redis: 'plain_text',
+  sb: 'plain_text',
+  shell: 'sh',
+  sol: 'plain_text',
+  aes: 'plain_text',
+  st: 'plain_text',
+  vb: 'vbscript'
+}

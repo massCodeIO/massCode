@@ -1,5 +1,8 @@
 <template>
-  <div class="editor">
+  <div
+    class="editor"
+    :class="{ 'with-fragments': fragments }"
+  >
     <div
       ref="editorRef"
       class="main"
@@ -38,6 +41,7 @@ import { languages, oldLanguageMap } from './languages'
 interface Props {
   lang: Language
   theme: string
+  fragments: boolean
   modelValue: string
 }
 
@@ -48,7 +52,8 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   lang: 'typescript',
-  theme: 'google'
+  theme: 'google',
+  fragments: false
 })
 
 const emit = defineEmits<Emits>()
@@ -133,8 +138,21 @@ watch(
 
 <style lang="scss" scoped>
 .editor {
+  padding-top: 4px;
+  &.with-fragments {
+    .main {
+      height: calc(
+        100vh - var(--title-bar-height) - var(--snippets-view-header-top-height) -
+          var(--snippets-view-footer-height) -
+          var(--snippet-header-fragment-height)
+      );
+    }
+  }
   .main {
-    height: calc(100vh - var(--title-bar-height) - 30px);
+    height: calc(
+      100vh - var(--title-bar-height) - var(--snippets-view-header-top-height) -
+        var(--snippets-view-footer-height)
+    );
   }
   .footer {
     height: 30px;

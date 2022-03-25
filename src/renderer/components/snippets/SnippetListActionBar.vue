@@ -2,7 +2,9 @@
   <div class="action">
     <UniconsSearch />
     <input placeholder="Search...">
-    <UniconsPlus />
+    <AppActionButton class="add">
+      <UniconsPlus />
+    </AppActionButton>
   </div>
 </template>
 
@@ -12,7 +14,7 @@
 .action {
   display: flex;
   align-items: center;
-  padding: var(--spacing-xs);
+  padding: var(--spacing-sm);
   input {
     outline: none;
     border: none;
@@ -21,6 +23,10 @@
   }
   :deep(svg) {
     flex-shrink: 0;
+  }
+  .add {
+    position: relative;
+    right: -8px;
   }
 }
 </style>

@@ -35,7 +35,7 @@ init()
   height: 100vh;
   background-color: var(--color-bg);
   overflow: hidden;
-  grid-template-columns: 200px 200px 1fr;
+  grid-template-columns: var(--sidebar-width) var(--snippets-list-width) 1fr;
 }
 .update-available {
   position: absolute;

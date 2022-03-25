@@ -13,7 +13,8 @@
     "lib": ["ESNext", "DOM"],
     "outDir": "./build",
     "paths": {
-      "@/*": ["./src/renderer/*"]
+      "@/*": ["./src/renderer/*"],
+      "@@/*": ["./src/main/*"]
     },
     "types": ["unplugin-icons/types/vue"]
   },
@@ -22,7 +23,7 @@
     "src/renderer/**/*.d.ts",
     "src/renderer/**/*.tsx",
     "src/renderer/**/*.vue",
-    "src/main/types"
+    "src/main/types",
   ],
   "exclude":[
     "./node_modules"

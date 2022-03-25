@@ -6,12 +6,12 @@
     >
       <template v-if="activeTab === 'library'">
         <SidebarListItem
-          v-for="i in demoSystemFolders"
-          :key="i.label"
+          v-for="i in systemFolders"
+          :key="i.name"
           :icon="i.icon"
           :system="true"
         >
-          {{ i.label }}
+          {{ i.name }}
         </SidebarListItem>
       </template>
       <template v-if="activeTab === 'tags'">
@@ -25,7 +25,16 @@
       <template #action>
         <UniconsPlus />
       </template>
-      <SidebarListItem> Demo folder </SidebarListItem>
+      <SidebarListItem
+        v-for="i in folderStore.main"
+        :key="i.id"
+      >
+        <TheFolder
+          :id="i.id"
+          :name="i.name"
+          @click="onClickFolder(i)"
+        />
+      </SidebarListItem>
     </SidebarList>
     <div
       ref="gutter"
@@ -35,25 +44,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { FunctionalComponent } from 'vue'
+import { computed, ref } from 'vue'
 import type { Tab, Tabs } from './types'
 import Inbox from '~icons/unicons/inbox'
 import Favorite from '~icons/unicons/favorite'
 import Archive from '~icons/unicons/archive'
 import Trash from '~icons/unicons/trash'
+import { useFolderStore } from '@/store/folders'
+import type { Folder } from '@@/types/db'
+import { useSnippetStore } from '@/store/snippets'
 
-const demoSystemFolders = [
-  { label: 'Inbox', id: 'inbox', icon: Inbox },
-  { label: 'Favorites', id: 'favorites', icon: Favorite },
-  { label: 'All snippets', id: 'all', icon: Archive },
-  { label: 'Trash', id: 'trash', icon: Trash }
-]
+interface SidebarSystemFolder extends Folder {
+  icon: FunctionalComponent
+}
+
+const folderStore = useFolderStore()
+const snippetStore = useSnippetStore()
+
+const systemFolders = computed(() => {
+  const folders = folderStore.system.map<Partial<SidebarSystemFolder>>(i => {
+    let icon
+    if (i.name === 'Inbox') icon = Inbox
+    if (i.name === 'Trash') icon = Trash
+    return { ...i, icon }
+  })
+
+  const favAndAll = [
+    { name: 'Favorites', icon: Favorite },
+    { name: 'All Snippets', icon: Archive }
+  ]
+
+  folders.splice(1, 0, ...favAndAll)
+
+  return folders
+})
 
 const tabs: Tabs[] = [
   { label: 'Library', value: 'library' },
   { label: 'Tabs', value: 'tags' }
 ]
+
 const activeTab = ref<Tab>('library')
+
+const onClickFolder = async (folder: Folder) => {
+  folderStore.selectId(folder.id)
+  await snippetStore.getSnippetsByFolderId(folder.id)
+  const firstSnippetId = snippetStore.snippets[0]?.id
+  snippetStore.getSnippetsById(firstSnippetId)
+}
 </script>
 
 <style lang="scss" scoped>

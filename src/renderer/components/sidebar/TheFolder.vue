@@ -1,0 +1,72 @@
+<template>
+  <div
+    class="folder"
+    @dblclick="isEdit = true"
+  >
+    <span
+      v-if="!isEdit"
+      class="name"
+    >
+      {{ name }}
+    </span>
+    <input
+      v-else
+      ref="inputRef"
+      v-model="localName"
+      type="text"
+    >
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useFolderStore } from '@/store/folders'
+import { onClickOutside } from '@vueuse/core'
+import { computed, nextTick, ref, watch } from 'vue'
+
+interface Props {
+  id: string
+  name: string
+}
+
+const props = defineProps<Props>()
+const folderStore = useFolderStore()
+
+const backupName = ref(props.name)
+const isEdit = ref(false)
+
+const inputRef = ref<HTMLInputElement>()
+
+const localName = computed({
+  get: () => props.name,
+  set: v => folderStore.patchFoldersById(props.id, { name: v })
+})
+
+onClickOutside(inputRef, async () => {
+  isEdit.value = false
+  if (!props.name) {
+    await folderStore.patchFoldersById(props.id, { name: backupName.value })
+  }
+  backupName.value = props.name
+})
+
+watch(isEdit, () => {
+  nextTick(() => inputRef.value?.select())
+})
+</script>
+
+<style lang="scss" scoped>
+.folder {
+  width: 100%;
+  input {
+    border: 0;
+    background: #fff;
+    outline: var(--color-primary) solid 1px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+}
+.name {
+  user-select: none;
+}
+</style>

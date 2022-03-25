@@ -1,6 +1,6 @@
 :root {
   --sidebar-width: 180px;
-  --snippets-list-width: 220px;
+  --snippets-list-width: 250px;
   --snippets-view-header-height: 60px;
   --snippets-view-header-top-height: 30px;
   --snippets-view-header-full-height: calc(var(--snippets-view-header-height) + var(--snippets-tags-height));
@@ -32,10 +32,11 @@
 }
 
 [data-theme='light'] {
-  --color-primary: hsl(213, 81%, 67%);
+  --color-primary: hsl(215, 93%, 52%);
 
   --color-bg: hsl(0, 0%, 100%);
   --color-contrast-lower: hsl(0, 0%, 97%);
+  --color-contrast-lower-alt: hsl(0, 0%, 94%);
   --color-contrast-low: hsl(0, 0%, 85%);
   --color-contrast-low-alt: hsl(0, 0%, 80%);
   --color-contrast-medium: hsl(0, 0%, 50%);
@@ -47,7 +48,7 @@
 }
 
 [data-theme='dark'] {
-  --color-primary: hsl(213, 81%, 67%);
+  --color-primary: hsl(215, 93%, 52%);
 
   --color-bg: hsl(0, 0%, 20%);
   --color-contrast-lower: hsl(0, 0%, 25%);

@@ -44,6 +44,7 @@ const name = computed({
 
 const onAddNewFragment = () => {
   snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
+  snippetStore.fragment = snippetStore.fragmentCount!
 }
 
 emitter.on('focus:snippet-name', () => {

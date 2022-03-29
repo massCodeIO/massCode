@@ -1,5 +1,6 @@
 import Store from 'electron-store'
 import { homedir, platform } from 'os'
+import type { PreferencesStore } from './types'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isWin = platform() === 'win32'
@@ -12,12 +13,7 @@ const devPath = isWin
 const defaultPath = isDev ? devPath : prodPath
 const backupPath = isWin ? `${defaultPath}\\backups` : `${defaultPath}/backups`
 
-interface StoreSchema {
-  storagePath: string
-  backupPath: string
-}
-
-export default new Store<StoreSchema>({
+export default new Store<PreferencesStore>({
   name: 'preferences',
   cwd: 'massCode',
 

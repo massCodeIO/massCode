@@ -1,12 +1,7 @@
 import Store from 'electron-store'
+import type { AppStore } from './types'
 
-export interface AppStoreSchema {
-  bounds: object
-  selectedFolderId?: string
-  selectedSnippetId?: string
-}
-
-export default new Store<AppStoreSchema>({
+export default new Store<AppStore>({
   name: 'app',
   cwd: 'massCode',
 

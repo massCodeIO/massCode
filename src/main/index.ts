@@ -53,9 +53,10 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// Demo IPC communication
-ipcMain.on('message', (event, message) => {
-  console.log(message)
+ipcMain.on('restart', () => {
+  console.log('App is restart...')
+  app.relaunch()
+  app.exit()
 })
 
 ipcMain.on('request-info', event => {

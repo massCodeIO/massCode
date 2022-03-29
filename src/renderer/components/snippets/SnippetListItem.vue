@@ -84,7 +84,7 @@ onClickOutside(itemRef, () => {
   }
   &.is-selected {
     &::before {
-      background-color: var(--color-contrast-lower-alt);
+      background-color: var(--color-snippet-selected);
     }
     .name,
     .footer {

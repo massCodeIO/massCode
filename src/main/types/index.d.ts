@@ -1,8 +1,11 @@
 import type { IpcRendererEvent } from 'electron'
 import type { AppStoreSchema } from '../store/module/app'
+import type { DB, Folder, Tag, Snippet } from './db'
+
 interface EventCallback {
   (event?: IpcRendererEvent, ...args: any[]): void
 }
+
 export interface ElectronBridge {
   ipc: {
     on: (channel: string, cb: EventCallback) => void
@@ -15,6 +18,14 @@ export interface ElectronBridge {
       get: (name: keyof AppStoreSchema) => string
       set: (name: keyof AppStoreSchema, value: any) => void
     }
+  }
+  db: {
+    migrate: (path: string) => void
+    updateTable: (
+      key: keyof DB,
+      data: Folder[] | Snippet[] | Tag[],
+      db: DB
+    ) => void
   }
 }
 

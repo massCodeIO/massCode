@@ -36,8 +36,9 @@ withDefaults(defineProps<Props>(), {
 .item {
   display: flex;
   align-items: center;
-  padding: 4px var(--spacing-sm);
+  padding: 4px 0;
   position: relative;
+  width: 100%;
   .icon {
     margin-right: var(--spacing-xs);
     display: flex;

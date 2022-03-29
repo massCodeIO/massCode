@@ -4,12 +4,16 @@ export interface Folder {
   id: string
   name: string
   defaultLanguage: Language
-  parentId: string
+  parentId: string | null
   index: number
   isOpen: boolean
   isSystem: boolean
   createdAt: number
   updatedAt: number
+}
+
+export interface FolderTree extends Folder {
+  children: Folder[]
 }
 
 export interface SnippetContent {

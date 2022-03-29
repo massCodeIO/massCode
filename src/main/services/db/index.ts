@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import readline from 'readline'
 import { nestedToFlat } from '../../utils'
 import { nanoid } from 'nanoid'
-import type { Folder, Snippet, Tag } from '../../types/db'
+import type { DB, Folder, Snippet, Tag } from '../../types/db'
 
 const fileDb = store.preferences.get('storagePath') + '/db.json'
 
@@ -12,7 +12,7 @@ const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
     id: nanoid(8),
     name: 'Inbox',
     defaultLanguage: 'plain_text',
-    parentId: '',
+    parentId: null,
     index: 0,
     isOpen: false,
     isSystem: true,
@@ -23,7 +23,7 @@ const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
     id: nanoid(8),
     name: 'Trash',
     defaultLanguage: 'plain_text',
-    parentId: '',
+    parentId: null,
     index: 0,
     isOpen: false,
     isSystem: true,
@@ -36,7 +36,7 @@ const DEFAULT_FOLDER = {
   id: nanoid(8),
   name: 'Default',
   defaultLanguage: 'typescript',
-  parentId: '',
+  parentId: null,
   isOpen: false,
   isSystem: false,
   createdAt: new Date().valueOf(),
@@ -47,7 +47,7 @@ export const createDb = () => {
   if (fs.existsSync(fileDb)) return
 
   const db = {
-    folders: [DEFAULT_FOLDER],
+    folders: [...DEFAULT_SYSTEM_FOLDERS, DEFAULT_FOLDER],
     snippets: [],
     tags: []
   }
@@ -59,6 +59,17 @@ export const createDb = () => {
 const writeToFile = (db: object) => {
   const data = JSON.stringify(db, null, 2)
   fs.writeFileSync(fileDb, data)
+}
+
+export const updateTable = (
+  key: keyof DB,
+  data: Folder[] | Snippet[] | Tag[],
+  db: DB
+) => {
+  const clone = JSON.parse(JSON.stringify(db))
+  clone[key] = data
+
+  writeToFile(clone)
 }
 
 export const migrate = async (path: string) => {
@@ -113,7 +124,7 @@ export const migrate = async (path: string) => {
       id: newId,
       isOpen: open,
       ...rest,
-      parentId: parentId ?? '',
+      parentId: parentId ?? null,
       createdAt: new Date().valueOf(),
       updatedAt: new Date().valueOf()
     })
@@ -162,7 +173,7 @@ export const migrate = async (path: string) => {
 
       snippets.push({
         id: newId,
-        folderId: newFolderId ?? '',
+        folderId: newFolderId ?? null,
         tagsIds,
         ...rest,
         createdAt: createdAt.$$date,

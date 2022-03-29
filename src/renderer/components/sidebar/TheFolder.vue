@@ -3,12 +3,12 @@
     class="folder"
     @dblclick="isEdit = true"
   >
-    <span
+    <div
       v-if="!isEdit"
       class="name"
     >
       {{ name }}
-    </span>
+    </div>
     <input
       v-else
       ref="inputRef"

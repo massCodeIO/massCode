@@ -36,7 +36,6 @@
 
   --color-bg: hsl(0, 0%, 100%);
   --color-contrast-lower: hsl(0, 0%, 97%);
-  --color-contrast-lower-alt: hsl(0, 0%, 94%);
   --color-contrast-low: hsl(0, 0%, 85%);
   --color-contrast-low-alt: hsl(0, 0%, 80%);
   --color-contrast-medium: hsl(0, 0%, 50%);
@@ -45,6 +44,9 @@
 
   --color-text: var(--color-contrast-high);
   --color-border: var(--color-contrast-low);
+
+  --color-sidebar-item-selected: var(--color-contrast-low);
+  --color-snippet-selected: hsl(0, 0%, 94%);
 }
 
 [data-theme='dark'] {

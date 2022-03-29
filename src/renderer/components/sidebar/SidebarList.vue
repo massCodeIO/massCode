@@ -19,7 +19,12 @@
         <slot name="action" />
       </div>
     </div>
-    <slot />
+    <div
+      class="body"
+      :class="{ 'is-system': isSystem }"
+    >
+      <slot />
+    </div>
   </div>
 </template>
 
@@ -31,6 +36,7 @@ interface Props {
   title?: string
   tabs?: Tabs[]
   modelValue?: Tab
+  isSystem?: boolean
 }
 
 interface Emits {
@@ -39,7 +45,9 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isSystem: false
+})
 
 const activeTab = computed({
   get: () => props.modelValue,
@@ -56,12 +64,13 @@ const onClickTab = (tab: Tab) => {
 <style lang="scss" scoped>
 .sidebar-list {
   margin-bottom: var(--spacing-xs);
+  padding: 0 var(--spacing-xs);
   // height: 100%;
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 2px var(--spacing-xs);
+    padding: 2px 0;
     svg {
       stroke: var(--color-contrast-medium);
       width: 16px;
@@ -76,6 +85,11 @@ const onClickTab = (tab: Tab) => {
   &__title,
   &__action {
     display: inline-block;
+  }
+  .body {
+    &.is-system {
+      padding: 0 var(--spacing-sm);
+    }
   }
   .tab-header {
     color: var(--color-contrast-low-alt);

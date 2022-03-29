@@ -3,6 +3,7 @@
     <SidebarList
       v-model="activeTab"
       :tabs="tabs"
+      :is-system="true"
     >
       <template v-if="activeTab === 'library'">
         <SidebarListItem
@@ -25,16 +26,21 @@
       <template #action>
         <UniconsPlus />
       </template>
-      <SidebarListItem
-        v-for="i in folderStore.main"
-        :key="i.id"
+      <AppTree
+        v-model="folderStore.foldersTree"
+        :selected-id="folderStore.selectedId"
+        @update:model-value="onUpdate"
+        @click:node="onClickFolder"
       >
-        <TheFolder
-          :id="i.id"
-          :name="i.name"
-          @click="onClickFolder(i)"
-        />
-      </SidebarListItem>
+        <template #default="{ node }">
+          <SidebarListItem>
+            <TheFolder
+              :id="node.id"
+              :name="node.name"
+            />
+          </SidebarListItem>
+        </template>
+      </AppTree>
     </SidebarList>
     <div
       ref="gutter"
@@ -87,11 +93,15 @@ const tabs: Tabs[] = [
 
 const activeTab = ref<Tab>('library')
 
-const onClickFolder = async (folder: Folder) => {
-  folderStore.selectId(folder.id)
-  await snippetStore.getSnippetsByFolderId(folder.id)
+const onClickFolder = async (id: string) => {
+  folderStore.selectId(id)
+  await snippetStore.getSnippetsByFolderId(id)
   const firstSnippetId = snippetStore.snippets[0]?.id
   snippetStore.getSnippetsById(firstSnippetId)
+}
+
+const onUpdate = () => {
+  folderStore.updateSort()
 }
 </script>
 

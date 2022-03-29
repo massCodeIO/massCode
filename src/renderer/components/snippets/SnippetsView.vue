@@ -36,6 +36,7 @@ const lang = computed({
 
 <style lang="scss" scoped>
 .snippets-view {
+  overflow: hidden;
   padding-top: var(--title-bar-height);
 }
 </style>

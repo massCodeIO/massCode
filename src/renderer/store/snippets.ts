@@ -37,7 +37,9 @@ export const useSnippetStore = defineStore('snippets', {
         snippets.push(...data.value)
       }
 
-      this.snippets = snippets
+      this.snippets = snippets.sort((a, b) =>
+        a.createdAt > b.createdAt ? -1 : 1
+      )
     },
     async getSnippetsById (id: string) {
       const { data } = await useApi<Snippet>(`/snippets/${id}`).get().json()

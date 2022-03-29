@@ -3,6 +3,7 @@ import * as jsonServer from 'json-server'
 import { store } from '../../store'
 import type { Server } from 'http'
 import type { Socket } from 'net'
+import { nanoid } from 'nanoid'
 interface ServerWithDestroy extends Server {
   destroy: Function
 }
@@ -32,6 +33,9 @@ export const createApiServer = () => {
   const middlewares = jsonServer.defaults()
   const router = jsonServer.router(db)
 
+  app.use(jsonServer.bodyParser)
+  app.use(middlewares)
+
   app.get('/restart', (req, res) => {
     server.destroy()
     createApiServer()
@@ -40,7 +44,19 @@ export const createApiServer = () => {
     res.status(200)
   })
 
-  app.use(middlewares)
+  app.use((req, res, next) => {
+    if (req.method === 'POST') {
+      req.body.id = nanoid(8)
+      req.body.createdAt = Date.now().valueOf()
+      req.body.updatedAt = Date.now().valueOf()
+    }
+
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      req.body.updatedAt = Date.now().valueOf()
+    }
+    next()
+  })
+
   app.use(router)
 
   const server = app.listen(process.env.VITE_APP_API_PORT, () => {

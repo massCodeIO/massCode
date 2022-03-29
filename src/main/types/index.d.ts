@@ -7,7 +7,7 @@ interface EventCallback {
 }
 
 interface StoreGet<T> {
-  (name: keyof T): string
+  (name: keyof T): any
 }
 
 interface StoreSet<T> {

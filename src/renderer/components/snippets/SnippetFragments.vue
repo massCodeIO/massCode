@@ -7,7 +7,7 @@
       :class="{ 'is-active': index == snippetStore.fragment }"
       @click="onClickFragment(index)"
     >
-      {{ i }}
+      <SnippetsFragmentsInput :name="i" />
     </div>
   </div>
 </template>
@@ -27,14 +27,16 @@ const onClickFragment = (index: number) => {
   display: flex;
   align-items: center;
   height: var(--snippet-header-fragment-height);
+  overflow-y: auto;
   .item {
     padding: 0 var(--spacing-xs);
     display: flex;
     align-items: center;
     height: var(--snippet-header-fragment-height);
-    width: 1000%;
+    width: 100%;
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
+    min-width: 100px;
     &.is-active {
       background-color: var(--color-contrast-lower);
     }

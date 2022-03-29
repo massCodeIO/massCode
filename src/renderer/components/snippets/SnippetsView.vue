@@ -11,18 +11,19 @@
 
 <script setup lang="ts">
 import { useSnippetStore } from '@/store/snippets'
+import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
 
 const snippetStore = useSnippetStore()
 
 const snippet = computed({
   get: () => snippetStore.currentContent || '',
-  set: v => {
+  set: useDebounceFn(v => {
     if (!v) return
     if (snippetStore.currentContent !== v) {
       snippetStore.patchCurrentSnippetContentByKey('value', v)
     }
-  }
+  }, 300)
 })
 
 const lang = computed({

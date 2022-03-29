@@ -1,9 +1,17 @@
 import type { IpcRendererEvent } from 'electron'
-import type { AppStoreSchema } from '../store/module/app'
+import type { AppStore, PreferencesStore } from '../store/module/types'
 import type { DB, Folder, Tag, Snippet } from './db'
 
 interface EventCallback {
   (event?: IpcRendererEvent, ...args: any[]): void
+}
+
+interface StoreGet<T> {
+  (name: keyof T): string
+}
+
+interface StoreSet<T> {
+  (name: keyof T, value: any): void
 }
 
 export interface ElectronBridge {
@@ -15,8 +23,12 @@ export interface ElectronBridge {
   }
   store: {
     app: {
-      get: (name: keyof AppStoreSchema) => string
-      set: (name: keyof AppStoreSchema, value: any) => void
+      get: StoreGet<AppStore>
+      set: StoreSet<AppStore>
+    }
+    preferences: {
+      get: StoreGet<PreferencesStore>
+      set: StoreSet<PreferencesStore>
     }
   }
   db: {

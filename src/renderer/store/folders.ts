@@ -1,7 +1,7 @@
 import { useApi } from '@/composable'
 import { store, db } from '@/electron'
 import { flatToNested } from '@/utils'
-import type { Folder } from '@@/types/db'
+import type { Folder, FolderTree } from '@@/types/db'
 import { defineStore } from 'pinia'
 import type { State } from './types'
 import { nestedToFlat } from '../../main/utils'
@@ -11,12 +11,18 @@ export const useFolderStore = defineStore('folders', {
     ({
       folders: [],
       foldersTree: [],
+      selected: undefined,
       selectedId: undefined
     } as State),
 
   getters: {
     system: state => state.folders.filter(i => i.isSystem),
-    main: state => state.folders.filter(i => !i.isSystem)
+    main: state => state.folders.filter(i => !i.isSystem),
+    selectedIds (): string[] {
+      const ids = [this.selectedId!]
+      this.selected?.children.forEach(i => ids.push(i.id))
+      return ids
+    }
   },
 
   actions: {
@@ -45,7 +51,26 @@ export const useFolderStore = defineStore('folders', {
     },
     selectId (id: string) {
       this.selectedId = id
+      this.selected = this.getSelectedFolder()
       store.app.set('selectedFolderId', id)
+      store.app.set('selectedFolderIds', this.selectedIds)
+    },
+    getSelectedFolder () {
+      let folder: FolderTree | undefined
+
+      const findFolderById = (id: string, folders: FolderTree[]) => {
+        folders.forEach(i => {
+          if (i.id === id) {
+            folder = i
+          } else if (i.children) {
+            findFolderById(id, i.children as FolderTree[])
+          }
+        })
+      }
+
+      findFolderById(this.selectedId!, this.foldersTree)
+
+      return folder
     }
   }
 })

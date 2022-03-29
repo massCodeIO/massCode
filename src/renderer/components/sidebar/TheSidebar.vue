@@ -95,7 +95,7 @@ const activeTab = ref<Tab>('library')
 
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
-  await snippetStore.getSnippetsByFolderId(id)
+  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds as string[])
   const firstSnippetId = snippetStore.snippets[0]?.id
   snippetStore.getSnippetsById(firstSnippetId)
 }

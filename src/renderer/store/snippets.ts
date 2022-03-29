@@ -24,13 +24,20 @@ export const useSnippetStore = defineStore('snippets', {
   },
 
   actions: {
-    async getSnippetsByFolderId (id: string) {
-      const { data } = await useApi<SnippetWithFolder[]>(
-        `/folders/${id}/snippets?_expand=folder`
-      )
-        .get()
-        .json()
-      this.snippets = data.value
+    async getSnippetsByFolderIds (ids: string[]) {
+      const snippets: SnippetWithFolder[] = []
+
+      for (const id of ids) {
+        const { data } = await useApi<SnippetWithFolder[]>(
+          `/folders/${id}/snippets?_expand=folder`
+        )
+          .get()
+          .json()
+
+        snippets.push(...data.value)
+      }
+
+      this.snippets = snippets
     },
     async getSnippetsById (id: string) {
       const { data } = await useApi<Snippet>(`/snippets/${id}`).get().json()

@@ -1,39 +1,30 @@
 <p align="center">
-  <img src="./src/renderer/assets/logo.svg" width="300px">
+  <img src="./hero.png">
 </p>
 
-<h1 align="center">Electron Vue Vite Boilerplate</h1>
+<h1 align="center">massCode next</h1>
 
-Based on [electron-vue-template](https://github.com/deluze/electron-vue-template) with adds some additional features.
+<p align="center">
+  <strong>Built with Electron, Vue 3 & Ace Editor.</strong>
+  <br>
+  Inspired by applications like SnippetsLab and Quiver.
+</p>
 
-## Features
+> ☝️ massCode is currently in development, and there is no build to download yet. I started from scratch.
 
-### Core
-  - Electron 16
-  - Electron store
-  - Vue 3
-  - Vite 2
-  - TypeScript
+massCode v1 is available for [download](https://github.com/antonreshetov/massCode).
 
-### Development
-  - Vue Devtools
+## Supporting
 
-### Style
-  - SCSS
+The best support right now is your star for the project.
 
-### Code Style
-  - Eslint
-  - Commitlint
+## Feature for now
+- Support M1
+- Syntax highlighting over 170 languages
+- API to fetch snippets on the localhost
 
-## Usage
+## Overview
 
-### Development
-```bash
-yarn
-yarn dev
-```
+The goal of creating this application was mostly my own growth as a developer. Also, I wanted this project to absorb the best of such applications already on the market (both free and paid). At the same time, I wanted this project to be an open source project.
 
-### Build
-```bash
-yarn build
-```
+massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.

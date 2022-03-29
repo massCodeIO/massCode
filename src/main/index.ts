@@ -13,7 +13,7 @@ createApiServer()
 function createWindow () {
   const bounds = store.app.get('bounds')
   const mainWindow = new BrowserWindow({
-    width: 800,
+    width: 1000,
     height: 600,
     ...bounds,
     titleBarStyle: 'hidden',

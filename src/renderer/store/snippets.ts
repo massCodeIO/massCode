@@ -63,6 +63,25 @@ export const useSnippetStore = defineStore('snippets', {
 
         await useApi(`/snippets/${this.selectedId}`).patch(body)
       }
+    },
+    async addNewSnippet () {
+      const folderStore = useFolderStore()
+      const body: Partial<Snippet> = {}
+
+      body.name = 'Untitled snippet'
+      body.folderId = folderStore.selectedId
+      body.content = [
+        {
+          label: 'Fragment 1',
+          language: folderStore.selected?.defaultLanguage || 'plain_text',
+          value: ''
+        }
+      ]
+
+      const { data } = await useApi('/snippets').post(body).json()
+
+      this.snippet = data.value
+      store.app.set('selectedSnippetId', this.snippet!.id)
     }
   }
 })

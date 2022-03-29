@@ -2,13 +2,29 @@
   <div class="action">
     <UniconsSearch />
     <input placeholder="Search...">
-    <AppActionButton class="add">
+    <AppActionButton
+      class="add"
+      @click="onAddNewSnippet"
+    >
       <UniconsPlus />
     </AppActionButton>
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { emitter } from '@/composable'
+import { useFolderStore } from '@/store/folders'
+import { useSnippetStore } from '@/store/snippets'
+
+const snippetStore = useSnippetStore()
+const folderStore = useFolderStore()
+
+const onAddNewSnippet = async () => {
+  await snippetStore.addNewSnippet()
+  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds)
+  emitter.emit('focus:snippet-name', true)
+}
+</script>
 
 <style lang="scss" scoped>
 .action {

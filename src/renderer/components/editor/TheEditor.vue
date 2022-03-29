@@ -52,7 +52,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   lang: 'typescript',
-  theme: 'google',
+  theme: 'chrome',
   fragments: false
 })
 

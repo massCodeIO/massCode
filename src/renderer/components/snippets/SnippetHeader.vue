@@ -14,7 +14,7 @@
           <UniconsArrow />
         </AppActionButton>
         <AppActionButton>
-          <UniconsPlus />
+          <UniconsPlus @click="onAddNewFragment" />
         </AppActionButton>
       </div>
     </div>
@@ -41,6 +41,10 @@ const name = computed({
     300
   )
 })
+
+const onAddNewFragment = () => {
+  snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
+}
 
 emitter.on('focus:snippet-name', () => {
   inputRef.value?.select()

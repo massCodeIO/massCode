@@ -90,6 +90,23 @@ export const useSnippetStore = defineStore('snippets', {
 
       this.snippet = data.value
       store.app.set('selectedSnippetId', this.snippet!.id)
+    },
+    async addNewFragmentToSnippetsById (id: string) {
+      const folderStore = useFolderStore()
+      const content = [...this.snippet!.content]
+      const fragmentCount = content.length + 1
+      const body: Partial<Snippet> = {}
+
+      content.push({
+        label: `Fragment ${fragmentCount}`,
+        language: folderStore.selected?.defaultLanguage || 'plain_text',
+        value: ''
+      })
+
+      body.content = content
+
+      await this.patchSnippetsById(id, body)
+      await this.getSnippetsById(id)
     }
   }
 })

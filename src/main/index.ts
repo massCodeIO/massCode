@@ -4,6 +4,7 @@ import os from 'os'
 import { store } from './store'
 import { createApiServer } from './services/api/server'
 import { createDb } from './services/db'
+import { debounce } from 'lodash'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -32,10 +33,13 @@ function createWindow () {
     mainWindow.loadFile(path.resolve(app.getAppPath(), 'renderer/index.html'))
   }
 
-  mainWindow.on('close', () => {
-    store.app.set('bounds', mainWindow.getBounds())
-  })
+  mainWindow.on('resize', () => storeBounds(mainWindow))
+  mainWindow.on('move', () => storeBounds(mainWindow))
 }
+
+const storeBounds = debounce((mainWindow: BrowserWindow) => {
+  store.app.set('bounds', mainWindow.getBounds())
+}, 300)
 
 app.whenReady().then(async () => {
   createWindow()

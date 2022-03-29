@@ -3,6 +3,7 @@ import { useApi } from '@/composable'
 import { store } from '@/electron'
 import type { Snippet, SnippetContent } from '@@/types/db'
 import { defineStore } from 'pinia'
+import { useFolderStore } from './folders'
 import type { SnippetWithFolder, State } from './types/snippets'
 
 export const useSnippetStore = defineStore('snippets', {
@@ -47,7 +48,14 @@ export const useSnippetStore = defineStore('snippets', {
       store.app.set('selectedSnippetId', id)
     },
     async patchSnippetsById (id: string, body: Partial<Snippet>) {
-      body.updatedAt = new Date().valueOf()
+      const { data } = await useApi(`/snippets/${id}`).patch(body).json()
+      const snippet = this.snippets.find(i => i.id === id)
+
+      if (!snippet) return
+
+      if (snippet.name !== data.value.name) {
+        snippet.name = data.value.name
+      }
     },
     async patchCurrentSnippetContentByKey (
       key: keyof SnippetContent,

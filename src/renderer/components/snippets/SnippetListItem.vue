@@ -11,7 +11,7 @@
     <div class="header">
       <div class="name">
         <span>
-          {{ name }}
+          {{ name || 'Untitled snippet' }}
         </span>
       </div>
     </div>
@@ -20,7 +20,7 @@
         {{ folder }}
       </div>
       <div class="date">
-        {{ date }}
+        {{ dateFormat }}
       </div>
     </div>
   </div>
@@ -28,16 +28,16 @@
 
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Props {
   name: string
   folder: string
-  date: number | string
+  date: number
   isSelected: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const itemRef = ref()
 const isFocused = ref(false)
@@ -45,6 +45,10 @@ const isFocused = ref(false)
 onClickOutside(itemRef, () => {
   isFocused.value = false
 })
+
+const dateFormat = computed(() =>
+  new Intl.DateTimeFormat('ru').format(props.date)
+)
 </script>
 
 <style lang="scss" scoped>

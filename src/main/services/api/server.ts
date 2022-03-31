@@ -4,6 +4,7 @@ import type { Server } from 'http'
 import type { Socket } from 'net'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
+import path from 'path'
 interface ServerWithDestroy extends Server {
   destroy: Function
 }
@@ -28,7 +29,7 @@ const enableDestroy = (server: ServerWithDestroy) => {
 }
 
 export const createApiServer = () => {
-  const db = store.preferences.get('storagePath') + '/db.json'
+  const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
   const app = jsonServer.create()
   const middlewares = jsonServer.defaults()
   const router = jsonServer.router(db)

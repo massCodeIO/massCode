@@ -3,7 +3,7 @@ import { store } from '../../store'
 import type { Server } from 'http'
 import type { Socket } from 'net'
 import { nanoid } from 'nanoid'
-import { API_PORT } from '../../../config'
+import { API_PORT } from '../../config'
 interface ServerWithDestroy extends Server {
   destroy: Function
 }

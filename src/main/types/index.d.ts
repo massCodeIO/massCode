@@ -1,4 +1,3 @@
-import type { IpcRendererEvent } from 'electron'
 import type { AppStore, PreferencesStore } from '../store/module/types'
 import type { DB, Folder, Tag, Snippet } from './db'
 
@@ -16,10 +15,7 @@ interface StoreSet<T> {
 
 export interface ElectronBridge {
   ipc: {
-    on: (channel: string, cb: EventCallback) => void
-    send: (channel: string, data: any, cb: EventCallback) => void
-    removeListener: (channel: string, cb: EventCallback) => void
-    removeListeners: (channel: string) => void
+    invoke<T, U>(channel: Channel, payload: U): Promise<T>
   }
   store: {
     app: {
@@ -38,11 +34,5 @@ export interface ElectronBridge {
       data: Folder[] | Snippet[] | Tag[],
       db: DB
     ) => void
-  }
-}
-
-declare global {
-  interface Window {
-    electron: ElectronBridge
   }
 }

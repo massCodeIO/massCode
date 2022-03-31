@@ -19,7 +19,8 @@ export default defineConfig({
   },
   build: {
     outDir: pathOut,
-    emptyOutDir: true
+    emptyOutDir: true,
+    target: 'esnext'
   },
   plugins: [
     vuePlugin(),

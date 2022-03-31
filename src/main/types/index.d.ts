@@ -2,16 +2,25 @@ import type { AppStore, PreferencesStore } from '../store/module/types'
 import type { DB, Folder, Tag, Snippet } from './db'
 
 type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder'
-type ContextMenuAction = 'rename' | 'delete' | 'duplicate'
+
+type ContextMenuAction =
+  | 'rename'
+  | 'delete'
+  | 'duplicate'
+  | 'favorites'
+  | 'none'
+
 type CombineWithChannelSubject<
   T extends ChannelSubject,
   U extends string
 > = `${U}:${T}`
+
 export type ContextMenuChannel = CombineWithChannelSubject<
 ChannelSubject,
 'context-menu'
 >
-export type Channel = ContextMenuChannel
+
+export type Channel = 'restart' | ContextMenuChannel
 export interface ContextMenuPayload {
   name?: string
 }

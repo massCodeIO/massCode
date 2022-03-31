@@ -1,6 +1,10 @@
 import { createPopupMenu } from '../../components/menu'
 import { dialog, ipcMain } from 'electron'
-import type { ContextMenuPayload, ContextMenuResponse } from '../../types'
+import type {
+  ContextMenuAction,
+  ContextMenuPayload,
+  ContextMenuResponse
+} from '../../types'
 
 export const subscribeToContextMenu = () => {
   ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
@@ -38,6 +42,58 @@ export const subscribeToContextMenu = () => {
             }
           }
         ])
+      })
+    }
+  )
+
+  ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
+    'context-menu:snippet',
+    async () => {
+      return new Promise(resolve => {
+        let action: ContextMenuAction = 'none'
+
+        const menu = createPopupMenu([
+          {
+            label: 'Add to Favorites',
+            click: () => {
+              action = 'favorites'
+              resolve({
+                action,
+                data: {}
+              })
+            }
+          },
+          { type: 'separator' },
+          {
+            label: 'Duplicate',
+            click: () => {
+              action = 'duplicate'
+              resolve({
+                action,
+                data: {}
+              })
+            }
+          },
+          {
+            label: 'Delete',
+            click: () => {
+              action = 'delete'
+              resolve({
+                action,
+                data: {}
+              })
+            }
+          }
+        ])
+
+        menu.on('menu-will-close', async () => {
+          setImmediate(() => {
+            resolve({
+              action,
+              data: {}
+            })
+          })
+        })
       })
     }
   )

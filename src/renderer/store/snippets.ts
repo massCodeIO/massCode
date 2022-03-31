@@ -109,6 +109,16 @@ export const useSnippetStore = defineStore('snippets', {
 
       await this.patchSnippetsById(id, body)
       await this.getSnippetsById(id)
+    },
+    async deleteCurrentSnippetFragmentByIndex (index: number) {
+      const body: Partial<Snippet> = {}
+      const content = [...this.snippet!.content]
+
+      content.splice(index, 1)
+      body.content = content
+
+      await this.patchSnippetsById(this.selectedId!, body)
+      await this.getSnippetsById(this.selectedId!)
     }
   }
 })

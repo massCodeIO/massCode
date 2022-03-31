@@ -2,6 +2,7 @@
   <div
     class="fragment"
     @dblclick="isEdit = true"
+    @contextmenu="onClickContext"
   >
     <div
       v-if="!isEdit"
@@ -22,9 +23,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-
 import { useSnippetStore } from '@/store/snippets'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
+import { ipc } from '@/electron'
+import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
 
 interface Props {
   name: string
@@ -51,6 +53,24 @@ onClickOutside(inputRef, async () => {
     snippetStore.patchCurrentSnippetContentByKey('label', 'Untitled fragment')
   }
 })
+
+const onClickContext = async () => {
+  const { action } = await ipc.invoke<ContextMenuResponse, ContextMenuPayload>(
+    'context-menu:snippet-fragment',
+    {
+      name: props.name
+    }
+  )
+
+  if (action === 'rename') {
+    isEdit.value = true
+  }
+
+  if (action === 'delete') {
+    await snippetStore.deleteCurrentSnippetFragmentByIndex(props.index)
+    snippetStore.fragment = snippetStore.fragmentCount! - 1
+  }
+}
 
 watch(isEdit, () => {
   nextTick(() => inputRef.value?.select())

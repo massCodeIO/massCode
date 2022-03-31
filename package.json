@@ -1,7 +1,8 @@
 {
-  "name": "electron-vue-vite-boilerplate",
+  "name": "masscode",
   "version": "0.1.0",
-  "description": "Electron & Vue 3 application",
+  "description": "A free and open source code snippets manager for developers",
+  "license": "AGPL-3.0",
   "main": "build/src/main/index.js",
   "scripts": {
     "dev": "run-p dev:watch dev:vue-devtools",
@@ -15,7 +16,7 @@
     "release": "bumpp -c 'build: release v' -t",
     "prepare": "husky install"
   },
-  "repository": "https://github.com/antonreshetov/electron-vue-vite-boilerplate",
+  "repository": "https://github.com/massCodeIO/massCode",
   "author": {
     "name": "Anton Reshetov",
     "url": "https://github.com/antonreshetov"

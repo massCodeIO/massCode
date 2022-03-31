@@ -30,6 +30,7 @@ import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
 
 interface Props {
   name: string
+  index: number
 }
 
 const props = defineProps<Props>()

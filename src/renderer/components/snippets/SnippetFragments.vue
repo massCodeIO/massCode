@@ -7,7 +7,10 @@
       :class="{ 'is-active': index == snippetStore.fragment }"
       @click="onClickFragment(index)"
     >
-      <SnippetsFragmentsInput :name="i" />
+      <SnippetsFragmentsInput
+        :name="i"
+        :index="index"
+      />
     </div>
   </div>
 </template>

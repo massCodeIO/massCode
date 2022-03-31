@@ -7,9 +7,14 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '@/electron'
+import { store, db } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
+import devtools from '@vue/devtools'
+
+if (import.meta.env.DEV) {
+  devtools.connect('http://localhost', 8098)
+}
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()

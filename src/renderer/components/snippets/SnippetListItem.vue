@@ -90,6 +90,7 @@ const onClickContextMenu = async () => {
   }
 
   isHighlighted.value = false
+  isFocused.value = false
 }
 
 const dateFormat = computed(() =>

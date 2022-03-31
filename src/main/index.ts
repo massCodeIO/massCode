@@ -5,11 +5,13 @@ import { store } from './store'
 import { createApiServer } from './services/api/server'
 import { createDb } from './services/db'
 import { debounce } from 'lodash'
+import { subscribeToChannels } from './services/ipc'
 
 const isDev = process.env.NODE_ENV === 'development'
 
 createDb()
 createApiServer()
+subscribeToChannels()
 
 function createWindow () {
   const bounds = store.app.get('bounds')

@@ -1,8 +1,24 @@
 import type { AppStore, PreferencesStore } from '../store/module/types'
 import type { DB, Folder, Tag, Snippet } from './db'
 
-interface EventCallback {
-  (event?: IpcRendererEvent, ...args: any[]): void
+type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder'
+type ContextMenuAction = 'rename' | 'delete' | 'duplicate'
+type CombineWithChannelSubject<
+  T extends ChannelSubject,
+  U extends string
+> = `${U}:${T}`
+export type ContextMenuChannel = CombineWithChannelSubject<
+ChannelSubject,
+'context-menu'
+>
+export type Channel = ContextMenuChannel
+export interface ContextMenuPayload {
+  name?: string
+}
+
+export interface ContextMenuResponse {
+  action: ContextMenuAction
+  data: ContextMenuPayload
 }
 
 interface StoreGet<T> {

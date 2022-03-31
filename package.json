@@ -1,5 +1,6 @@
 {
   "name": "masscode",
+  "productName": "massCode",
   "version": "0.1.0",
   "description": "A free and open source code snippets manager for developers",
   "license": "AGPL-3.0",

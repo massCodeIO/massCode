@@ -15,6 +15,10 @@ export const useSnippetStore = defineStore('snippets', {
     } as State),
 
   getters: {
+    snippetsNonDeleted: state =>
+      state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
+    snippetsDeleted: state =>
+      state.snippets.filter(i => i.isDeleted) as SnippetWithFolder[],
     selectedId: state => state.snippet?.id,
     currentContent: state => state.snippet?.content[state.fragment]?.value,
     currentLanguage: state =>

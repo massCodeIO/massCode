@@ -22,7 +22,7 @@ function createWindow () {
       preload: path.resolve(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: true,
-      webSecurity: !isDev
+      webSecurity: false
     }
   })
 

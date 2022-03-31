@@ -5,7 +5,8 @@
     </div>
     <div class="body">
       <SnippetListItem
-        v-for="i in snippetStore.snippets"
+        v-for="i in snippetStore.snippetsNonDeleted"
+        :id="i.id"
         :key="i.id"
         :folder="i.folder.name"
         :date="i.updatedAt"

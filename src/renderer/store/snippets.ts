@@ -18,7 +18,7 @@ export const useSnippetStore = defineStore('snippets', {
     snippetsNonDeleted: state =>
       state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
     snippetsDeleted: state =>
-      state.snippets.filter(i => i.isDeleted) as SnippetWithFolder[],
+      state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
     selectedId: state => state.snippet?.id,
     currentContent: state => state.snippet?.content[state.fragment]?.value,
     currentLanguage: state =>
@@ -67,6 +67,7 @@ export const useSnippetStore = defineStore('snippets', {
       key: keyof SnippetContent,
       value: string | Language
     ) {
+      const folderStore = useFolderStore()
       const body: Partial<Snippet> = {}
       const content = this.snippet?.content
 
@@ -76,6 +77,7 @@ export const useSnippetStore = defineStore('snippets', {
         body.updatedAt = new Date().valueOf()
 
         await useApi(`/snippets/${this.selectedId}`).patch(body)
+        await this.getSnippetsByFolderIds(folderStore.selectedIds)
       }
     },
     async addNewSnippet () {
@@ -97,6 +99,20 @@ export const useSnippetStore = defineStore('snippets', {
       this.snippet = data.value
       store.app.set('selectedSnippetId', this.snippet!.id)
     },
+    async duplicateSnippetById (id: string) {
+      const snippet = this.snippets.find(i => i.id === id)
+
+      if (snippet) {
+        const body = Object.assign({}, snippet)
+        body.name = body.name + ' Copy'
+
+        const { data } = await useApi('/snippets').post(body).json()
+        this.snippet = data.value
+        this.fragment = 0
+
+        store.app.set('selectedSnippetId', this.snippet!.id)
+      }
+    },
     async addNewFragmentToSnippetsById (id: string) {
       const folderStore = useFolderStore()
       const content = [...this.snippet!.content]
@@ -112,6 +128,7 @@ export const useSnippetStore = defineStore('snippets', {
       body.content = content
 
       await this.patchSnippetsById(id, body)
+      await this.getSnippetsByFolderIds(folderStore.selectedIds)
       await this.getSnippetsById(id)
     },
     async deleteCurrentSnippetFragmentByIndex (index: number) {

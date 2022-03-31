@@ -14,6 +14,11 @@ createApiServer()
 subscribeToChannels()
 
 function createWindow () {
+  if (isDev) {
+    store.preferences.set('storagePath', os.homedir() + '/massCode/dev')
+    store.preferences.set('backupPath', os.homedir() + '/massCode/dev')
+  }
+
   const bounds = store.app.get('bounds')
   const mainWindow = new BrowserWindow({
     width: 1000,

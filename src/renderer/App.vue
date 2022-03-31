@@ -5,7 +5,14 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import router from '@/router'
+
+// По какой то причине необходимо явно установить роут в '/'
+// для корректного поведения в продакшен сборке
+// TODO: выяснить причину
+router.push('/')
+</script>
 
 <style lang="scss">
 body {

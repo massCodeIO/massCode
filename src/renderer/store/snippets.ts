@@ -16,8 +16,9 @@ export const useSnippetStore = defineStore('snippets', {
 
   getters: {
     selectedId: state => state.snippet?.id,
-    currentContent: state => state.snippet?.content[state.fragment].value,
-    currentLanguage: state => state.snippet?.content[state.fragment].language,
+    currentContent: state => state.snippet?.content[state.fragment]?.value,
+    currentLanguage: state =>
+      state.snippet?.content[state.fragment]?.language,
     fragmentLabels: state => state.snippet?.content.map(i => i.label),
     fragmentCount: state => state.snippet?.content.length,
     isFragmentsShow () {

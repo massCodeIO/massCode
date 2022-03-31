@@ -20,9 +20,9 @@
     "config/*.ts",
     "scripts/*.ts",
     "src/main/**/*.ts",
-    "src/main/types"
+    "src/main/**/*.d.ts",
   ],
-  "exclude":[
+  "exclude": [
     "./node_modules",
   ]
 }

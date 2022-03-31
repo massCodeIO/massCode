@@ -19,13 +19,14 @@
     "types": ["unplugin-icons/types/vue"]
   },
   "include": [
-    "src/renderer/**/*.ts",
-    "src/renderer/**/*.d.ts",
-    "src/renderer/**/*.tsx",
-    "src/renderer/**/*.vue",
-    "src/main/types",
+    "./src/renderer/**/*.ts",
+    "./src/renderer/**/*.d.ts",
+    "./src/renderer/**/*.tsx",
+    "./src/renderer/**/*.vue",
+    "./src/main/**/*.ts",
+    "./src/main/**/*.d.ts"
   ],
-  "exclude":[
+  "exclude": [
     "./node_modules"
   ]
 }

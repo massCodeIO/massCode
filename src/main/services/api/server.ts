@@ -1,9 +1,9 @@
-import 'dotenv/config'
 import * as jsonServer from 'json-server'
 import { store } from '../../store'
 import type { Server } from 'http'
 import type { Socket } from 'net'
 import { nanoid } from 'nanoid'
+import { API_PORT } from '../../../config'
 interface ServerWithDestroy extends Server {
   destroy: Function
 }
@@ -59,10 +59,8 @@ export const createApiServer = () => {
 
   app.use(router)
 
-  const server = app.listen(process.env.VITE_APP_API_PORT, () => {
-    console.log(
-      `API server is running on port ${process.env.VITE_APP_API_PORT}`
-    )
+  const server = app.listen(API_PORT, () => {
+    console.log(`API server is running on port ${API_PORT}`)
   }) as ServerWithDestroy
 
   enableDestroy(server)

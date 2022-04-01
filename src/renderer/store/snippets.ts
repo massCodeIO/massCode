@@ -55,6 +55,7 @@ export const useSnippetStore = defineStore('snippets', {
         this.snippet = data.value
         store.app.set('selectedSnippetId', id)
       } else {
+        store.app.delete('selectedSnippetId')
         this.snippet = undefined
       }
     },

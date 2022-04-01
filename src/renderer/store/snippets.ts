@@ -78,6 +78,8 @@ export const useSnippetStore = defineStore('snippets', {
       if (snippet.name !== data.value.name) {
         snippet.name = data.value.name
       }
+
+      await this.getSnippets()
     },
     async patchCurrentSnippetContentByKey (
       key: keyof SnippetContent,

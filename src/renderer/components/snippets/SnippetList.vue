@@ -5,10 +5,10 @@
     </div>
     <div class="body">
       <SnippetListItem
-        v-for="i in snippetStore.snippetsNonDeleted"
+        v-for="i in snippetStore.snippets"
         :id="i.id"
         :key="i.id"
-        :folder="i.folder.name"
+        :folder="i.folder?.name"
         :date="i.updatedAt"
         :name="i.name"
         :is-selected="i.id === snippetStore.selectedId"

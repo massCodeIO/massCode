@@ -1,6 +1,7 @@
 export interface AppStore {
   bounds: object
   selectedFolderId?: string
+  selectedFolderAlias?: string
   selectedFolderIds?: string[]
   selectedSnippetId?: string
 }

@@ -1,3 +1,4 @@
+import type { SystemFolderAlias } from '@/components/sidebar/types'
 import type { Folder, FolderTree } from '@@/types/db'
 
 export interface State {
@@ -5,4 +6,5 @@ export interface State {
   foldersTree: FolderTree[]
   selected?: FolderTree
   selectedId?: string
+  selectedAlias?: SystemFolderAlias
 }

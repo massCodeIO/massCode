@@ -12,7 +12,8 @@ export const useFolderStore = defineStore('folders', {
       folders: [],
       foldersTree: [],
       selected: undefined,
-      selectedId: undefined
+      selectedId: undefined,
+      selectedAlias: undefined
     } as State),
 
   getters: {
@@ -52,8 +53,11 @@ export const useFolderStore = defineStore('folders', {
     selectId (id: string) {
       this.selectedId = id
       this.selected = this.getSelectedFolder()
+      this.selectedAlias = undefined
+
       store.app.set('selectedFolderId', id)
       store.app.set('selectedFolderIds', this.selectedIds)
+      store.app.delete('selectedFolderAlias')
     },
     getSelectedFolder () {
       let folder: FolderTree | undefined

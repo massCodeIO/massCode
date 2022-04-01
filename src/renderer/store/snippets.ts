@@ -55,9 +55,9 @@ export const useSnippetStore = defineStore('snippets', {
         snippets.push(...data.value)
       }
 
-      this.snippets = snippets.sort((a, b) =>
-        a.createdAt > b.createdAt ? -1 : 1
-      )
+      this.snippets = snippets
+        .filter(i => !i.isDeleted)
+        .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
     },
     async getSnippetsById (id: string) {
       if (id) {

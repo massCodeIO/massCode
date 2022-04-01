@@ -11,6 +11,8 @@
           :key="i.name"
           :icon="i.icon"
           :system="true"
+          :is-selected="i.alias === folderStore.selectedAlias"
+          @click="onClickSystemFolder(i.alias)"
         >
           {{ i.name }}
         </SidebarListItem>
@@ -51,7 +53,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { SidebarSystemFolder, Tab, Tabs } from './types'
+import type { SidebarSystemFolder, SystemFolderAlias, Tab, Tabs } from './types'
 import Inbox from '~icons/unicons/inbox'
 import Favorite from '~icons/unicons/favorite'
 import Archive from '~icons/unicons/archive'
@@ -93,9 +95,11 @@ const activeTab = ref<Tab>('library')
 
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
-  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds as string[])
-  const firstSnippetId = snippetStore.snippetsNonDeleted[0]?.id
-  snippetStore.getSnippetsById(firstSnippetId)
+  snippetStore.setSnippetsByFolderIds()
+}
+
+const onClickSystemFolder = (alias: SystemFolderAlias) => {
+  snippetStore.setSnippetsByAlias(alias)
 }
 
 const onUpdate = () => {

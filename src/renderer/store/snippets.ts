@@ -1,7 +1,8 @@
 import type { Language } from '@/components/editor/types'
+import type { SystemFolderAlias } from '@/components/sidebar/types'
 import { useApi } from '@/composable'
 import { store } from '@/electron'
-import type { Snippet, SnippetContent } from '@@/types/db'
+import type { Folder, Snippet, SnippetContent } from '@@/types/db'
 import { defineStore } from 'pinia'
 import { useFolderStore } from './folders'
 import type { SnippetWithFolder, State } from './types/snippets'
@@ -9,16 +10,13 @@ import type { SnippetWithFolder, State } from './types/snippets'
 export const useSnippetStore = defineStore('snippets', {
   state: () =>
     ({
+      all: [],
       snippets: [],
       snippet: undefined,
       fragment: 0
     } as State),
 
   getters: {
-    snippetsNonDeleted: state =>
-      state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
-    snippetsDeleted: state =>
-      state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
     selectedId: state => state.snippet?.id,
     currentContent: state =>
       state.snippet?.content?.[state.fragment]?.value || undefined,
@@ -32,6 +30,18 @@ export const useSnippetStore = defineStore('snippets', {
   },
 
   actions: {
+    async getSnippets () {
+      // Почему то не работает _expand
+      const { data } = await useApi('/snippets?_expand=folder`').get().json()
+      const { data: folderData } = await useApi('/folders').get().json()
+
+      // Поэтому добавляем folder самостоятельно
+      this.all = data.value.map((i: SnippetWithFolder) => {
+        const folder = folderData.value.find((f: Folder) => f.id === i.folderId)
+        if (folder) i.folder = folder
+        return i
+      })
+    },
     async getSnippetsByFolderIds (ids: string[]) {
       const snippets: SnippetWithFolder[] = []
 
@@ -146,6 +156,42 @@ export const useSnippetStore = defineStore('snippets', {
 
       await this.patchSnippetsById(this.selectedId!, body)
       await this.getSnippetsById(this.selectedId!)
+    },
+    async setSnippetsByFolderIds () {
+      const folderStore = useFolderStore()
+      await this.getSnippetsByFolderIds(folderStore.selectedIds!)
+      this.snippet = this.snippets[0]
+    },
+    setSnippetsByAlias (alias: SystemFolderAlias) {
+      const folderStore = useFolderStore()
+
+      let snippets: SnippetWithFolder[] = []
+
+      if (alias === 'inbox') {
+        snippets = this.all.filter(i => !i.folderId && !i.isDeleted)
+      }
+
+      if (alias === 'all') {
+        snippets = this.all.filter(i => !i.isDeleted)
+      }
+
+      if (alias === 'favorites') {
+        snippets = this.all.filter(i => i.isFavorites && !i.isDeleted)
+      }
+
+      if (alias === 'trash') {
+        snippets = this.all.filter(i => i.isDeleted)
+      }
+
+      this.snippets = snippets
+      this.snippet = snippets[0]
+
+      folderStore.selectedId = undefined
+      folderStore.selectedAlias = alias
+
+      store.app.set('selectedFolderAlias', alias)
+      store.app.delete('selectedFolderId')
+      store.app.delete('selectedFolderIds')
     }
   }
 })

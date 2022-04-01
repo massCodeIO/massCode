@@ -5,6 +5,7 @@ export interface SnippetWithFolder extends Snippet {
 }
 
 export interface State {
+  all: SnippetWithFolder[]
   snippets: SnippetWithFolder[]
   snippet: Snippet | undefined
   fragment: number

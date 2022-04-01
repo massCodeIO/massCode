@@ -38,19 +38,19 @@ interface StoreSet<T> {
   (name: keyof T, value: any): void
 }
 
+interface StoreProperties<T> {
+  get: StoreGet<T>
+  set: StoreSet<T>
+  delete: StoreGet<T>
+}
+
 export interface ElectronBridge {
   ipc: {
     invoke<T, U>(channel: Channel, payload: U): Promise<T>
   }
   store: {
-    app: {
-      get: StoreGet<AppStore>
-      set: StoreSet<AppStore>
-    }
-    preferences: {
-      get: StoreGet<PreferencesStore>
-      set: StoreSet<PreferencesStore>
-    }
+    app: StoreProperties<AppStore>
+    preferences: StoreProperties<PreferencesStore>
   }
   db: {
     migrate: (path: string) => void

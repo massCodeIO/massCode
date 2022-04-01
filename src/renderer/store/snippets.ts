@@ -20,11 +20,12 @@ export const useSnippetStore = defineStore('snippets', {
     snippetsDeleted: state =>
       state.snippets.filter(i => !i.isDeleted) as SnippetWithFolder[],
     selectedId: state => state.snippet?.id,
-    currentContent: state => state.snippet?.content[state.fragment]?.value,
+    currentContent: state =>
+      state.snippet?.content?.[state.fragment]?.value || undefined,
     currentLanguage: state =>
-      state.snippet?.content[state.fragment]?.language,
-    fragmentLabels: state => state.snippet?.content.map(i => i.label),
-    fragmentCount: state => state.snippet?.content.length,
+      state.snippet?.content?.[state.fragment]?.language,
+    fragmentLabels: state => state.snippet?.content?.map(i => i.label),
+    fragmentCount: state => state.snippet?.content?.length,
     isFragmentsShow () {
       return this.fragmentLabels?.length > 1
     }
@@ -49,9 +50,13 @@ export const useSnippetStore = defineStore('snippets', {
       )
     },
     async getSnippetsById (id: string) {
-      const { data } = await useApi<Snippet>(`/snippets/${id}`).get().json()
-      this.snippet = data.value
-      store.app.set('selectedSnippetId', id)
+      if (id) {
+        const { data } = await useApi<Snippet>(`/snippets/${id}`).get().json()
+        this.snippet = data.value
+        store.app.set('selectedSnippetId', id)
+      } else {
+        this.snippet = undefined
+      }
     },
     async patchSnippetsById (id: string, body: Partial<Snippet>) {
       const { data } = await useApi(`/snippets/${id}`).patch(body).json()

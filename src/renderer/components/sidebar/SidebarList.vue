@@ -86,11 +86,6 @@ const onClickTab = (tab: Tab) => {
   &__action {
     display: inline-block;
   }
-  .body {
-    &.is-system {
-      padding: 0 var(--spacing-sm);
-    }
-  }
   .tab-header {
     color: var(--color-contrast-low-alt);
     padding: var(--spacing-xs) 0;

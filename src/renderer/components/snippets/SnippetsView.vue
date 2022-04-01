@@ -1,11 +1,16 @@
 <template>
   <div class="snippets-view">
-    <SnippetHeader />
-    <TheEditor
-      v-model="snippet"
-      v-model:lang="lang"
-      :fragments="snippetStore.isFragmentsShow"
-    />
+    <template v-if="snippetStore.snippet">
+      <SnippetHeader />
+      <TheEditor
+        v-model="snippet"
+        v-model:lang="lang"
+        :fragments="snippetStore.isFragmentsShow"
+      />
+    </template>
+    <div class="no-snippet">
+      No Snippet Selected
+    </div>
   </div>
 </template>
 
@@ -38,5 +43,11 @@ const lang = computed({
 .snippets-view {
   overflow: hidden;
   padding-top: var(--title-bar-height);
+}
+.no-snippet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 </style>

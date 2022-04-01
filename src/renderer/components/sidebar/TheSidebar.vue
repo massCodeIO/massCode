@@ -50,35 +50,33 @@
 </template>
 
 <script setup lang="ts">
-import type { FunctionalComponent } from 'vue'
 import { computed, ref } from 'vue'
-import type { Tab, Tabs } from './types'
+import type { SidebarSystemFolder, Tab, Tabs } from './types'
 import Inbox from '~icons/unicons/inbox'
 import Favorite from '~icons/unicons/favorite'
 import Archive from '~icons/unicons/archive'
 import Trash from '~icons/unicons/trash'
 import { useFolderStore } from '@/store/folders'
-import type { Folder } from '@@/types/db'
 import { useSnippetStore } from '@/store/snippets'
-
-interface SidebarSystemFolder extends Folder {
-  icon: FunctionalComponent
-}
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
 
 const systemFolders = computed(() => {
-  const folders = folderStore.system.map<Partial<SidebarSystemFolder>>(i => {
+  const folders = folderStore.system.map(i => {
     let icon
-    if (i.name === 'Inbox') icon = Inbox
-    return { ...i, icon }
-  })
+    let alias
+    if (i.name === 'Inbox') {
+      icon = Inbox
+      alias = 'inbox'
+    }
+    return { ...i, alias, icon }
+  }) as SidebarSystemFolder[]
 
-  const other = [
-    { name: 'Favorites', icon: Favorite },
-    { name: 'All Snippets', icon: Archive },
-    { name: 'Trash', icon: Trash }
+  const other: SidebarSystemFolder[] = [
+    { name: 'Favorites', alias: 'favorites', icon: Favorite },
+    { name: 'All Snippets', alias: 'all', icon: Archive },
+    { name: 'Trash', alias: 'trash', icon: Trash }
   ]
 
   folders.splice(1, 0, ...other)

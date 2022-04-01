@@ -19,7 +19,7 @@
     </div>
     <div class="footer">
       <div class="folder">
-        {{ folder }}
+        {{ folder || 'Inbox' }}
       </div>
       <div class="date">
         {{ dateFormat }}
@@ -39,7 +39,7 @@ import { computed, ref } from 'vue'
 interface Props {
   id: string
   name: string
-  folder: string
+  folder?: string
   date: number
   isSelected: boolean
 }
@@ -74,7 +74,7 @@ const onClickContextMenu = async () => {
     })
 
     await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-    snippetStore.snippet = snippetStore.snippetsNonDeleted[0]
+    snippetStore.snippet = snippetStore.snippets[0]
   }
 
   if (action === 'duplicate') {

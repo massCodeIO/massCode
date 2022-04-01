@@ -95,7 +95,7 @@ const activeTab = ref<Tab>('library')
 
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
-  snippetStore.setSnippetsByFolderIds()
+  await snippetStore.setSnippetsByFolderIds(true)
 }
 
 const onClickSystemFolder = (alias: SystemFolderAlias) => {

@@ -157,10 +157,14 @@ export const useSnippetStore = defineStore('snippets', {
       await this.patchSnippetsById(this.selectedId!, body)
       await this.getSnippetsById(this.selectedId!)
     },
-    async setSnippetsByFolderIds () {
+    async setSnippetsByFolderIds (setFirst?: boolean) {
       const folderStore = useFolderStore()
       await this.getSnippetsByFolderIds(folderStore.selectedIds!)
-      this.snippet = this.snippets[0]
+
+      if (setFirst) {
+        this.snippet = this.snippets[0]
+        store.app.set('selectedSnippetId', this.snippets[0].id)
+      }
     },
     setSnippetsByAlias (alias: SystemFolderAlias) {
       const folderStore = useFolderStore()
@@ -192,6 +196,10 @@ export const useSnippetStore = defineStore('snippets', {
       store.app.set('selectedFolderAlias', alias)
       store.app.delete('selectedFolderId')
       store.app.delete('selectedFolderIds')
+    },
+    setSnippetById (id: string) {
+      const snippet = this.all.find(i => i.id === id)
+      if (snippet) this.snippet = snippet
     }
   }
 })

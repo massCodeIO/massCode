@@ -340,12 +340,12 @@ $color-grey: #8c8c8c;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 19px;
+    height: 19px;
     fill: $color-grey;
     z-index: 1;
     &-placeholder {
-      width: 17px;
+      width: 19px;
     }
     &--down {
       transform: rotate(90deg);

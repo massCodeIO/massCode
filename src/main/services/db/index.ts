@@ -18,17 +18,6 @@ const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
     isSystem: true,
     createdAt: new Date().valueOf(),
     updatedAt: new Date().valueOf()
-  },
-  {
-    id: nanoid(8),
-    name: 'Trash',
-    defaultLanguage: 'plain_text',
-    parentId: null,
-    index: 0,
-    isOpen: false,
-    isSystem: true,
-    createdAt: new Date().valueOf(),
-    updatedAt: new Date().valueOf()
   }
 ]
 

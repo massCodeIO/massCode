@@ -72,16 +72,16 @@ const systemFolders = computed(() => {
   const folders = folderStore.system.map<Partial<SidebarSystemFolder>>(i => {
     let icon
     if (i.name === 'Inbox') icon = Inbox
-    if (i.name === 'Trash') icon = Trash
     return { ...i, icon }
   })
 
-  const favAndAll = [
+  const other = [
     { name: 'Favorites', icon: Favorite },
-    { name: 'All Snippets', icon: Archive }
+    { name: 'All Snippets', icon: Archive },
+    { name: 'Trash', icon: Trash }
   ]
 
-  folders.splice(1, 0, ...favAndAll)
+  folders.splice(1, 0, ...other)
 
   return folders
 })
@@ -96,7 +96,7 @@ const activeTab = ref<Tab>('library')
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds as string[])
-  const firstSnippetId = snippetStore.snippets[0]?.id
+  const firstSnippetId = snippetStore.snippetsNonDeleted[0]?.id
   snippetStore.getSnippetsById(firstSnippetId)
 }
 

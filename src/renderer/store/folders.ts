@@ -13,17 +13,13 @@ export const useFolderStore = defineStore('folders', {
       foldersTree: [],
       selected: undefined,
       selectedId: undefined,
+      selectedIds: undefined,
       selectedAlias: undefined
     } as State),
 
   getters: {
     system: state => state.folders.filter(i => i.isSystem),
-    main: state => state.folders.filter(i => !i.isSystem),
-    selectedIds (): string[] {
-      const ids = [this.selectedId!]
-      this.selected?.children.forEach(i => ids.push(i.id))
-      return ids
-    }
+    main: state => state.folders.filter(i => !i.isSystem)
   },
 
   actions: {
@@ -52,29 +48,49 @@ export const useFolderStore = defineStore('folders', {
     },
     selectId (id: string) {
       this.selectedId = id
-      this.selected = this.getSelectedFolder()
+      this.selected = this.findFolderById(id, this.foldersTree)
       this.selectedAlias = undefined
+      const ids = this.getIds([this.selected!])
+      this.selectedIds = ids
 
       store.app.set('selectedFolderId', id)
-      store.app.set('selectedFolderIds', this.selectedIds)
+      store.app.set('selectedFolderIds', ids)
       store.app.delete('selectedFolderAlias')
     },
-    getSelectedFolder () {
+    findFolderById (id: string, folders: FolderTree[]) {
       let folder: FolderTree | undefined
 
-      const findFolderById = (id: string, folders: FolderTree[]) => {
+      const find = (id: string, folders: FolderTree[]) => {
         folders.forEach(i => {
+          console.log(i.id, id)
           if (i.id === id) {
             folder = i
           } else if (i.children) {
-            findFolderById(id, i.children as FolderTree[])
+            find(id, i.children as FolderTree[])
           }
         })
       }
 
-      findFolderById(this.selectedId!, this.foldersTree)
+      find(id, folders)
 
       return folder
+    },
+    getIds (folders: FolderTree[]) {
+      const ids: string[] = []
+
+      const find = (folders: FolderTree[]) => {
+        folders.forEach(i => {
+          ids.push(i.id)
+
+          if (i.children && i.children.length) {
+            find(i.children as FolderTree[])
+          }
+        })
+      }
+
+      find(folders)
+
+      return ids
     }
   }
 })

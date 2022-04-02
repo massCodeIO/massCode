@@ -6,5 +6,6 @@ export interface State {
   foldersTree: FolderTree[]
   selected?: FolderTree
   selectedId?: string
+  selectedIds?: string[]
   selectedAlias?: SystemFolderAlias
 }

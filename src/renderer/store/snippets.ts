@@ -159,6 +159,9 @@ export const useSnippetStore = defineStore('snippets', {
       await this.patchSnippetsById(this.selectedId!, body)
       await this.getSnippetsById(this.selectedId!)
     },
+    async deleteSnippetsById (id: string) {
+      await useApi(`/snippets/${id}`).delete()
+    },
     async setSnippetsByFolderIds (setFirst?: boolean) {
       const folderStore = useFolderStore()
       await this.getSnippetsByFolderIds(folderStore.selectedIds!)

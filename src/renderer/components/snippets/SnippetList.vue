@@ -1,7 +1,7 @@
 <template>
   <div class="list">
     <div class="header">
-      <SnippetListActionBar />
+      <SnippetListHeader />
     </div>
     <div class="body">
       <SnippetListItem

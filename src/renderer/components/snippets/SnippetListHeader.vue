@@ -12,7 +12,6 @@
 </template>
 
 <script setup lang="ts">
-import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 
@@ -20,9 +19,11 @@ const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
 
 const onAddNewSnippet = async () => {
+  if (folderStore.selectedAlias !== undefined) return
+
   await snippetStore.addNewSnippet()
   await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds)
-  emitter.emit('focus:snippet-name', true)
+  await snippetStore.getSnippets()
 }
 </script>
 

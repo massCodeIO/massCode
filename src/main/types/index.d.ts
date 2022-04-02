@@ -10,6 +10,8 @@ type ContextMenuAction =
   | 'favorites'
   | 'none'
 
+export type ContextMenuType = 'folder' | 'inbox' | 'all' | 'trash' | 'favorites'
+
 type CombineWithChannelSubject<
   T extends ChannelSubject,
   U extends string
@@ -23,11 +25,13 @@ ChannelSubject,
 export type Channel = 'restart' | ContextMenuChannel
 export interface ContextMenuPayload {
   name?: string
+  type: ContextMenuType
 }
 
 export interface ContextMenuResponse {
   action: ContextMenuAction
-  data: ContextMenuPayload
+  type: ContextMenuType
+  data: any
 }
 
 interface StoreGet<T> {

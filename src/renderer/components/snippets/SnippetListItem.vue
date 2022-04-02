@@ -35,6 +35,7 @@ import { useSnippetStore } from '@/store/snippets'
 import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
 import { onClickOutside } from '@vueuse/core'
 import { computed, ref } from 'vue'
+import type { SystemFolderAlias } from '../sidebar/types'
 
 interface Props {
   id: string
@@ -61,32 +62,67 @@ onClickOutside(itemRef, () => {
 const onClickContextMenu = async () => {
   isHighlighted.value = true
 
-  const { action } = await ipc.invoke<ContextMenuResponse, ContextMenuPayload>(
-    'context-menu:snippet',
-    {
-      name: props.name
-    }
-  )
+  const { action, data, type } = await ipc.invoke<
+  ContextMenuResponse,
+  ContextMenuPayload
+  >('context-menu:snippet', {
+    name: props.name,
+    type: folderStore.selectedAlias ?? 'folder'
+  })
 
-  if (action === 'delete') {
+  const moveToTrash = async (alias?: SystemFolderAlias) => {
     snippetStore.patchSnippetsById(props.id, {
       isDeleted: true
     })
+    if (!alias) {
+      await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+      snippetStore.snippet = snippetStore.snippets[0]
+    } else {
+      await snippetStore.getSnippets()
+      snippetStore.setSnippetsByAlias(alias)
+    }
+  }
 
-    await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-    snippetStore.snippet = snippetStore.snippets[0]
+  if (action === 'delete') {
+    if (type === 'folder') await moveToTrash()
+
+    if (type === 'favorites' || type === 'all' || type === 'inbox') {
+      await moveToTrash(type)
+    }
+
+    if (type === 'trash') {
+      await snippetStore.deleteSnippetsById(props.id)
+      await snippetStore.getSnippets()
+      snippetStore.setSnippetsByAlias(type)
+    }
   }
 
   if (action === 'duplicate') {
     await snippetStore.duplicateSnippetById(props.id)
-    await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+
+    if (type === 'folder') {
+      await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+    }
+
+    if (type === 'all' || type === 'inbox') {
+      await snippetStore.getSnippets()
+      snippetStore.setSnippetsByAlias(type)
+    }
   }
 
   if (action === 'favorites') {
     snippetStore.patchSnippetsById(props.id, {
-      isFavorites: true
+      isFavorites: data
     })
-    await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+
+    if (type === 'folder') {
+      await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+    }
+
+    if (type === 'favorites') {
+      await snippetStore.getSnippets()
+      snippetStore.setSnippetsByAlias(type)
+    }
   }
 
   isHighlighted.value = false

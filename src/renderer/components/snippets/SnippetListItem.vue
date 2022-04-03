@@ -62,6 +62,10 @@ onClickOutside(itemRef, () => {
 const onClickContextMenu = async () => {
   isHighlighted.value = true
 
+  ipc.once('context-menu:close', () => {
+    isHighlighted.value = false
+  })
+
   const { action, data, type } = await ipc.invoke<
   ContextMenuResponse,
   ContextMenuPayload

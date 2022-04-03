@@ -11,6 +11,7 @@
     @dragend.stop="onDragEnd"
     @drop.stop="onDrop"
     @dragover.prevent
+    @contextmenu.stop="onClickContextMenu"
   >
     <div
       :id="node.id"
@@ -19,7 +20,8 @@
       :class="{
         'is-hovered': isHovered && isAllowed,
         'is-selected': isSelected,
-        'is-focused': isFocused
+        'is-focused': isFocused,
+        'is-highlighted': isHighlighted
       }"
       @dragenter.stop="onDragEnter"
       @dragover="onDragOver"
@@ -120,11 +122,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const updateValue = inject('updateValue') as Function
 const clickNode = inject('clickNode') as Function
+const contextMenuHandler = inject('contextMenuHandler') as Function
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
 const isDragged = ref(false)
 const isFocused = ref(false)
+const isHighlighted = ref(false)
 const rowRef = ref<HTMLElement>()
 
 // COMPUTED
@@ -178,6 +182,11 @@ const onClickNode = (id: string) => {
   store.selectedId = id
   isFocused.value = true
   clickNode(id)
+}
+
+const onClickContextMenu = async () => {
+  isHighlighted.value = true
+  isHighlighted.value = await contextMenuHandler()
 }
 
 const onDragStart = (e: DragEvent) => {
@@ -260,6 +269,7 @@ const onDrop = () => {
 
 onClickOutside(rowRef, () => {
   isFocused.value = false
+  isHighlighted.value = false
 })
 </script>
 
@@ -279,7 +289,8 @@ $color-grey: #8c8c8c;
     display: flex;
     &.is-hovered,
     &.is-selected,
-    &.is-focused {
+    &.is-focused,
+    &.is-highlighted {
       color: #fff;
       position: relative;
       #{$r}__arrow {
@@ -320,6 +331,13 @@ $color-grey: #8c8c8c;
       }
       &::before {
         background-color: var(--color-primary);
+      }
+    }
+    &.is-highlighted {
+      color: var(--color-text);
+      &::before {
+        background-color: transparent;
+        border: 2px solid var(--color-primary);
       }
     }
   }

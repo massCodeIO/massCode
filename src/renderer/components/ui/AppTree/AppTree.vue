@@ -34,6 +34,8 @@ interface Props {
   modelValue: Node[] | any[]
   selectedId?: string
   createGhostEl?: Function
+  // Колбек должен вернуть состояние для props.isHighlighted AppTreeNode
+  contextMenuHandler: () => Promise<boolean>
 }
 
 interface Emits {
@@ -42,7 +44,9 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  contextMenuHandler: () => Promise.resolve(true)
+})
 
 const cloneNodes = () => {
   store.clonedNodes = clone(props.modelValue) as Node[]
@@ -53,6 +57,7 @@ const clickNode = (id: string) => emit('click:node', id)
 
 provide('updateValue', updateValue)
 provide('clickNode', clickNode)
+provide('contextMenuHandler', props.contextMenuHandler)
 
 watch(
   () => props.modelValue,

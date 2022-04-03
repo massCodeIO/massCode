@@ -1,7 +1,8 @@
+import type { IpcRendererEvent } from 'electron'
 import type { AppStore, PreferencesStore } from '../store/module/types'
 import type { DB, Folder, Tag, Snippet } from './db'
 
-type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder'
+type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder' | 'close'
 
 type ContextMenuAction =
   | 'rename'
@@ -34,6 +35,10 @@ export interface ContextMenuResponse {
   data: any
 }
 
+interface EventCallback {
+  (event?: IpcRendererEvent, ...args: any[]): void
+}
+
 interface StoreGet<T> {
   (name: keyof T): any
 }
@@ -51,6 +56,8 @@ interface StoreProperties<T> {
 export interface ElectronBridge {
   ipc: {
     invoke<T, U>(channel: Channel, payload: U): Promise<T>
+    on(channel: Channel, cb: EventCallback): void
+    once(channel: Channel, cb: EventCallback): void
   }
   store: {
     app: StoreProperties<AppStore>

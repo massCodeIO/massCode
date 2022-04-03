@@ -5,7 +5,9 @@ import type { ElectronBridge } from './types'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
-    invoke: (channel, payload) => ipcRenderer.invoke(channel, payload)
+    invoke: (channel, payload) => ipcRenderer.invoke(channel, payload),
+    on: (channel, cb) => ipcRenderer.on(channel, cb),
+    once: (channel, cb) => ipcRenderer.once(channel, cb)
   },
   store: {
     app: {

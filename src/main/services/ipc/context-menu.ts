@@ -1,11 +1,7 @@
 import { createPopupMenu } from '../../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
-import { Menu, MenuItem, dialog, ipcMain } from 'electron'
-import type {
-  ContextMenuAction,
-  ContextMenuPayload,
-  ContextMenuResponse
-} from '../../types'
+import { BrowserWindow, MenuItem, dialog, ipcMain } from 'electron'
+import type { ContextMenuPayload, ContextMenuResponse } from '../../types'
 
 export const subscribeToContextMenu = () => {
   ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
@@ -56,15 +52,13 @@ export const subscribeToContextMenu = () => {
 
       return new Promise(resolve => {
         const menu = createPopupMenu([])
-        let action: ContextMenuAction = 'none'
 
         const defaultMenu: MenuItemConstructorOptions[] = [
           {
             label: 'Add to Favorites',
             click: () => {
-              action = 'favorites'
               resolve({
-                action,
+                action: 'favorites',
                 type,
                 data: true
               })
@@ -74,9 +68,8 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Duplicate',
             click: () => {
-              action = 'duplicate'
               resolve({
-                action,
+                action: 'duplicate',
                 type,
                 data: undefined
               })
@@ -85,9 +78,8 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete',
             click: () => {
-              action = 'delete'
               resolve({
-                action,
+                action: 'delete',
                 type,
                 data: undefined
               })
@@ -99,9 +91,8 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Remove from Favorites',
             click: () => {
-              action = 'favorites'
               resolve({
-                action,
+                action: 'favorites',
                 type,
                 data: false
               })
@@ -111,9 +102,8 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete',
             click: () => {
-              action = 'delete'
               resolve({
-                action,
+                action: 'delete',
                 type,
                 data: undefined
               })
@@ -125,7 +115,6 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete now',
             click: () => {
-              action = 'delete'
               const buttonId = dialog.showMessageBoxSync({
                 message: `Are you sure you want to permanently delete "${name}"?`,
                 detail: 'You cannot undo this action.',
@@ -133,11 +122,18 @@ export const subscribeToContextMenu = () => {
                 defaultId: 0,
                 cancelId: 1
               })
+
               if (buttonId === 0) {
                 resolve({
                   action: 'delete',
                   type,
-                  data: payload
+                  data: undefined
+                })
+              } else {
+                resolve({
+                  action: 'none',
+                  type,
+                  data: undefined
                 })
               }
             }
@@ -162,14 +158,10 @@ export const subscribeToContextMenu = () => {
           })
         }
 
-        menu.on('menu-will-close', async () => {
-          setImmediate(() => {
-            resolve({
-              action,
-              type,
-              data: payload
-            })
-          })
+        menu.on('menu-will-close', () => {
+          BrowserWindow.getFocusedWindow()?.webContents.send(
+            'context-menu:close'
+          )
         })
       })
     }

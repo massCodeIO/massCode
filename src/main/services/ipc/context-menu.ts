@@ -209,8 +209,8 @@ export const subscribeToContextMenu = () => {
             label: 'Delete',
             click: () => {
               const buttonId = dialog.showMessageBoxSync({
-                message: `Are you sure you want to permanently delete "${name}"?`,
-                detail: 'You cannot undo this action.',
+                message: `Are you sure you want to delete "${name}"?`,
+                detail: 'All snippets in this folder will be moved to trash.',
                 buttons: ['Delete', 'Cancel'],
                 defaultId: 0,
                 cancelId: 1

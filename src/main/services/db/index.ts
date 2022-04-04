@@ -42,6 +42,10 @@ export const createDb = () => {
   }
 
   writeToFile(db)
+
+  store.app.delete('selectedFolderId')
+  store.app.delete('selectedFolderIds')
+
   console.log('DB is created')
 }
 

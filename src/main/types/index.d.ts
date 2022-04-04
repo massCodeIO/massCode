@@ -1,6 +1,6 @@
 import type { IpcRendererEvent } from 'electron'
 import type { AppStore, PreferencesStore } from '../store/module/types'
-import type { DB, Folder, Tag, Snippet } from './db'
+import type { DB, Folder, Tag, Snippet, FolderTree } from './db'
 
 type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder' | 'close'
 
@@ -9,6 +9,8 @@ type ContextMenuAction =
   | 'delete'
   | 'duplicate'
   | 'favorites'
+  | 'new'
+  | 'update:language'
   | 'none'
 
 export type ContextMenuType = 'folder' | 'inbox' | 'all' | 'trash' | 'favorites'
@@ -27,6 +29,7 @@ export type Channel = 'restart' | ContextMenuChannel
 export interface ContextMenuPayload {
   name?: string
   type: ContextMenuType
+  data?: any
 }
 
 export interface ContextMenuResponse {

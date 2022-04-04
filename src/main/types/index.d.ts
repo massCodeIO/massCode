@@ -25,7 +25,7 @@ ChannelSubject,
 'context-menu'
 >
 
-export type Channel = 'restart' | ContextMenuChannel
+export type Channel = 'restart' | 'notification' | ContextMenuChannel
 export interface ContextMenuPayload {
   name?: string
   type: ContextMenuType
@@ -37,6 +37,10 @@ export interface ContextMenuResponse {
   action: ContextMenuAction
   type: ContextMenuType
   data: any
+}
+
+export interface NotificationPayload {
+  body: string
 }
 
 interface EventCallback {
@@ -59,7 +63,7 @@ interface StoreProperties<T> {
 
 export interface ElectronBridge {
   ipc: {
-    invoke<T, U>(channel: Channel, payload: U): Promise<T>
+    invoke<T, U = any>(channel: Channel, payload: U): Promise<T>
     on(channel: Channel, cb: EventCallback): void
     once(channel: Channel, cb: EventCallback): void
   }

@@ -1,11 +1,5 @@
-import type {
-  ContextMenuChannel,
-  ContextMenuPayload,
-  ElectronBridge,
-  Channel
-} from '.'
+import type { ElectronBridge, Channel } from '.'
 
-// TODO: почему то нет автокомплита для ContextMenuPayload
 declare global {
   interface Window {
     electron: ElectronBridge
@@ -13,7 +7,7 @@ declare global {
 
   namespace Electron {
     interface IpcMain {
-      handle<T, U>(
+      handle<T, U = void>(
         channel: Channel,
         listener: (event: IpcMainInvokeEvent, payload: T) => Promise<U>
       ): void

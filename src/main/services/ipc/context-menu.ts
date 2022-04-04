@@ -2,6 +2,7 @@ import { createPopupMenu } from '../../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { BrowserWindow, MenuItem, dialog, ipcMain } from 'electron'
 import type { ContextMenuPayload, ContextMenuResponse } from '../../types'
+import { languages } from '../../../renderer/components/editor/languages'
 
 export const subscribeToContextMenu = () => {
   ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
@@ -157,6 +158,85 @@ export const subscribeToContextMenu = () => {
             menu.append(new MenuItem(i))
           })
         }
+
+        menu.on('menu-will-close', () => {
+          BrowserWindow.getFocusedWindow()?.webContents.send(
+            'context-menu:close'
+          )
+        })
+      })
+    }
+  )
+
+  ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
+    'context-menu:folder',
+    async (event, payload) => {
+      const { name, type, data } = payload
+
+      console.log(data.defaultLanguage)
+
+      return new Promise(resolve => {
+        const createLanguageMenu = () => {
+          return languages.map(i => {
+            return {
+              label: i.name,
+              type: 'radio',
+              checked: i.value === data.defaultLanguage,
+              click: () => {
+                resolve({
+                  action: 'update:language',
+                  type,
+                  data: i.value
+                })
+              }
+            }
+          }) as MenuItemConstructorOptions[]
+        }
+
+        const menu = createPopupMenu([
+          {
+            label: 'New folder',
+            click: () => {
+              resolve({
+                action: 'new',
+                type,
+                data: undefined
+              })
+            }
+          },
+          { type: 'separator' },
+          {
+            label: 'Delete',
+            click: () => {
+              const buttonId = dialog.showMessageBoxSync({
+                message: `Are you sure you want to permanently delete "${name}"?`,
+                detail: 'You cannot undo this action.',
+                buttons: ['Delete', 'Cancel'],
+                defaultId: 0,
+                cancelId: 1
+              })
+
+              if (buttonId === 0) {
+                resolve({
+                  action: 'delete',
+                  type,
+                  data: undefined
+                })
+              } else {
+                resolve({
+                  action: 'none',
+                  type,
+                  data: undefined
+                })
+              }
+            }
+          },
+          { type: 'separator' },
+          {
+            label: 'Default Language',
+            submenu: createLanguageMenu()
+          }
+        ])
 
         menu.on('menu-will-close', () => {
           BrowserWindow.getFocusedWindow()?.webContents.send(

@@ -26,16 +26,20 @@
       title="Folders"
     >
       <template #action>
-        <UniconsPlus />
+        <UniconsPlus @click="onAddNewFolder" />
       </template>
       <AppTree
         v-model="folderStore.foldersTree"
         :selected-id="folderStore.selectedId"
+        :context-menu-handler="contextMenuHandler"
         @update:model-value="onUpdate"
         @click:node="onClickFolder"
       >
         <template #default="{ node }">
-          <SidebarListItem>
+          <SidebarListItem
+            :id="node.id"
+            :model="node"
+          >
             <TheFolder
               :id="node.id"
               :name="node.name"
@@ -60,6 +64,7 @@ import Archive from '~icons/unicons/archive'
 import Trash from '~icons/unicons/trash'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
+import { ipc } from '@/electron'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -100,6 +105,16 @@ const onClickFolder = async (id: string) => {
 
 const onClickSystemFolder = (alias: SystemFolderAlias) => {
   snippetStore.setSnippetsByAlias(alias)
+}
+
+const contextMenuHandler = () => {
+  return new Promise<boolean>(resolve => {
+    ipc.once('context-menu:close', () => resolve(false))
+  })
+}
+
+const onAddNewFolder = async () => {
+  await folderStore.addNewFolder()
 }
 
 const onUpdate = () => {

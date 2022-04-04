@@ -5,6 +5,8 @@ import type { Folder, FolderTree } from '@@/types/db'
 import { defineStore } from 'pinia'
 import type { State } from './types'
 import { nestedToFlat } from '../../main/utils'
+import type { SnippetWithFolder } from './types/snippets'
+import { useSnippetStore } from './snippets'
 
 export const useFolderStore = defineStore('folders', {
   state: () =>
@@ -28,10 +30,31 @@ export const useFolderStore = defineStore('folders', {
       this.folders = data.value
       this.foldersTree = flatToNested(this.folders.filter(i => !i.isSystem))
     },
+    async addNewFolder () {
+      const snippetStore = useSnippetStore()
+
+      const body: Partial<Folder> = {
+        name: 'Untitled folder',
+        parentId: null,
+        isOpen: false,
+        isSystem: false,
+        defaultLanguage: 'plain_text'
+      }
+
+      const { data } = await useApi('/folders').post(body).json()
+
+      await this.getFolders()
+      this.selectId(data.value.id)
+      await snippetStore.getSnippetsByFolderIds(this.selectedIds!)
+    },
     async patchFoldersById (id: string, body: Partial<Folder>) {
       body.updatedAt = new Date().valueOf()
       await useApi(`/folders/${id}`).patch(body)
       await this.getFolders()
+
+      if (id === this.selectedId) {
+        this.selected = this.findFolderById(id, this.foldersTree)
+      }
     },
     async updateSort () {
       const { data } = await useApi('/db').get().json()
@@ -91,6 +114,43 @@ export const useFolderStore = defineStore('folders', {
       find(folders)
 
       return ids
+    },
+    async deleteFoldersById (id: string) {
+      const snippetStore = useSnippetStore()
+      const folder = this.findFolderById(id, this.foldersTree)
+      const folderIds: string[] = []
+      const snippetsIds: string[] = []
+
+      if (folder) {
+        const ids = this.getIds([folder])
+        folderIds.push(...ids)
+      }
+
+      for (const id of folderIds) {
+        await useApi(`/folders/${id}`).delete()
+      }
+
+      for (const id of folderIds) {
+        const { data } = await useApi<SnippetWithFolder[]>(
+          `/folders/${id}/snippets?_expand=folder`
+        )
+          .get()
+          .json()
+        data.value.forEach(i => {
+          snippetsIds.push(i.id)
+        })
+      }
+
+      for (const id of snippetsIds) {
+        await useApi(`/snippets/${id}`).patch({
+          folderId: '',
+          isDeleted: true
+        })
+      }
+
+      await this.getFolders()
+      await snippetStore.getSnippets()
+      snippetStore.setSnippetsByAlias('trash')
     }
   }
 })

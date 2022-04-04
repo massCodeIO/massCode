@@ -80,6 +80,7 @@ const init = async () => {
   })
 
   setValue()
+  setLang()
 
   // Убираем вызов поиска
   editor.commands.removeCommand('find')

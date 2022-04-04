@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
 const activeTab = computed({
   get: () => props.modelValue,
   set: v => {
-    emit('update:modelValue', v)
+    emit('update:modelValue', v!)
   }
 })
 

@@ -12,18 +12,23 @@ export const useSnippetStore = defineStore('snippets', {
     ({
       all: [],
       snippets: [],
-      snippet: undefined,
-      fragment: 0
+      selected: undefined,
+      selectedMultiple: [],
+      fragment: 0,
+      isContextState: false
     } as State),
 
   getters: {
-    selectedId: state => state.snippet?.id,
+    selectedId: state => state.selected?.id,
+    selectedIds: state => state.selectedMultiple.map(i => i.id),
+    selectedIndex: state =>
+      state.snippets.findIndex(i => i.id === state.selected?.id),
     currentContent: state =>
-      state.snippet?.content?.[state.fragment]?.value || undefined,
+      state.selected?.content?.[state.fragment]?.value || undefined,
     currentLanguage: state =>
-      state.snippet?.content?.[state.fragment]?.language,
-    fragmentLabels: state => state.snippet?.content?.map(i => i.label),
-    fragmentCount: state => state.snippet?.content?.length,
+      state.selected?.content?.[state.fragment]?.language,
+    fragmentLabels: state => state.selected?.content?.map(i => i.label),
+    fragmentCount: state => state.selected?.content?.length,
     isFragmentsShow () {
       return this.fragmentLabels?.length > 1
     }
@@ -62,11 +67,11 @@ export const useSnippetStore = defineStore('snippets', {
     async getSnippetsById (id: string) {
       if (id) {
         const { data } = await useApi<Snippet>(`/snippets/${id}`).get().json()
-        this.snippet = data.value
+        this.selected = data.value
         store.app.set('selectedSnippetId', id)
       } else {
         store.app.delete('selectedSnippetId')
-        this.snippet = undefined
+        this.selected = undefined
       }
     },
     async patchSnippetsById (id: string, body: Partial<Snippet>) {
@@ -87,7 +92,7 @@ export const useSnippetStore = defineStore('snippets', {
     ) {
       const folderStore = useFolderStore()
       const body: Partial<Snippet> = {}
-      const content = this.snippet?.content
+      const content = this.selected?.content
 
       if (content) {
         (content[this.fragment] as any)[key] = value
@@ -104,6 +109,9 @@ export const useSnippetStore = defineStore('snippets', {
 
       body.name = 'Untitled snippet'
       body.folderId = folderStore.selectedId
+      body.isDeleted = false
+      body.isFavorites = false
+      body.tagsIds = []
       body.content = [
         {
           label: 'Fragment 1',
@@ -114,8 +122,8 @@ export const useSnippetStore = defineStore('snippets', {
 
       const { data } = await useApi('/snippets').post(body).json()
 
-      this.snippet = data.value
-      store.app.set('selectedSnippetId', this.snippet!.id)
+      this.selected = data.value
+      store.app.set('selectedSnippetId', this.selected!.id)
     },
     async duplicateSnippetById (id: string) {
       const snippet = this.snippets.find(i => i.id === id)
@@ -125,15 +133,15 @@ export const useSnippetStore = defineStore('snippets', {
         body.name = body.name + ' Copy'
 
         const { data } = await useApi('/snippets').post(body).json()
-        this.snippet = data.value
+        this.selected = data.value
         this.fragment = 0
 
-        store.app.set('selectedSnippetId', this.snippet!.id)
+        store.app.set('selectedSnippetId', this.selected!.id)
       }
     },
     async addNewFragmentToSnippetsById (id: string) {
       const folderStore = useFolderStore()
-      const content = [...this.snippet!.content]
+      const content = [...this.selected!.content]
       const fragmentCount = content.length + 1
       const body: Partial<Snippet> = {}
 
@@ -151,7 +159,7 @@ export const useSnippetStore = defineStore('snippets', {
     },
     async deleteCurrentSnippetFragmentByIndex (index: number) {
       const body: Partial<Snippet> = {}
-      const content = [...this.snippet!.content]
+      const content = [...this.selected!.content]
 
       content.splice(index, 1)
       body.content = content
@@ -162,13 +170,20 @@ export const useSnippetStore = defineStore('snippets', {
     async deleteSnippetsById (id: string) {
       await useApi(`/snippets/${id}`).delete()
     },
+    async deleteSnippetsByIds (ids: string[]) {
+      for (const id of ids) {
+        await useApi(`/snippets/${id}`).delete()
+      }
+    },
     async setSnippetsByFolderIds (setFirst?: boolean) {
       const folderStore = useFolderStore()
       await this.getSnippetsByFolderIds(folderStore.selectedIds!)
 
       if (setFirst) {
-        this.snippet = this.snippets[0]
-        store.app.set('selectedSnippetId', this.snippets[0].id)
+        this.selected = this.snippets[0]
+        if (this.selected) {
+          store.app.set('selectedSnippetId', this.snippets[0].id)
+        }
       }
     },
     setSnippetsByAlias (alias: SystemFolderAlias) {
@@ -193,7 +208,7 @@ export const useSnippetStore = defineStore('snippets', {
       }
 
       this.snippets = snippets
-      this.snippet = snippets[0]
+      this.selected = snippets[0]
 
       folderStore.selectedId = undefined
       folderStore.selectedAlias = alias
@@ -204,7 +219,7 @@ export const useSnippetStore = defineStore('snippets', {
     },
     setSnippetById (id: string) {
       const snippet = this.all.find(i => i.id === id)
-      if (snippet) this.snippet = snippet
+      if (snippet) this.selected = snippet
     }
   }
 })

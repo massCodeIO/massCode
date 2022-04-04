@@ -34,7 +34,7 @@ const snippetStore = useSnippetStore()
 const inputRef = ref<HTMLInputElement>()
 
 const name = computed({
-  get: () => snippetStore.snippet?.name,
+  get: () => snippetStore.selected?.name,
   set: useDebounceFn(
     v =>
       snippetStore.patchSnippetsById(snippetStore.selectedId!, { name: v }),

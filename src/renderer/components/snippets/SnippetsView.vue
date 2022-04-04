@@ -1,6 +1,6 @@
 <template>
   <div class="snippets-view">
-    <template v-if="snippetStore.snippet">
+    <template v-if="snippetStore.selected">
       <SnippetHeader />
       <TheEditor
         v-model="snippet"
@@ -8,7 +8,17 @@
         :fragments="snippetStore.isFragmentsShow"
       />
     </template>
-    <div class="no-snippet">
+
+    <div
+      v-else-if="snippetStore.selectedMultiple?.length"
+      class="no-snippet"
+    >
+      {{ snippetStore.selectedMultiple.length }} Snippets Selected
+    </div>
+    <div
+      v-else
+      class="no-snippet"
+    >
       No Snippet Selected
     </div>
   </div>
@@ -49,5 +59,6 @@ const lang = computed({
   align-items: center;
   justify-content: center;
   height: 100%;
+  user-select: none;
 }
 </style>

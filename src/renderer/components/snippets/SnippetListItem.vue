@@ -5,9 +5,9 @@
     :class="{
       'is-selected': !isFocused && isSelected,
       'is-focused': isFocused,
-      'is-highlighted': isHighlighted
+      'is-highlighted': isHighlighted || isHighlightedMultiple
     }"
-    @click="isFocused = true"
+    @click="onClickSnippet"
     @contextmenu="onClickContextMenu"
   >
     <div class="header">
@@ -39,10 +39,10 @@ import type { SystemFolderAlias } from '../sidebar/types'
 
 interface Props {
   id: string
+  index: number
   name: string
   folder?: string
   date: number
-  isSelected: boolean
 }
 
 const props = defineProps<Props>()
@@ -54,16 +54,56 @@ const itemRef = ref()
 const isFocused = ref(false)
 const isHighlighted = ref(false)
 
+const isSelected = computed(() => {
+  if (snippetStore.selectedId) {
+    return props.id === snippetStore.selectedId
+  } else {
+    return snippetStore.selectedMultiple?.some(i => i.id === props.id)
+  }
+})
+
+const isHighlightedMultiple = computed(() => {
+  if (snippetStore.selectedMultiple && snippetStore.isContextState) {
+    return snippetStore.selectedMultiple?.some(i => i.id === props.id)
+  }
+  return false
+})
+
 onClickOutside(itemRef, () => {
   isFocused.value = false
   isHighlighted.value = false
 })
 
+const onClickSnippet = (e: MouseEvent) => {
+  if (e.shiftKey) {
+    if (snippetStore.selectedIndex < props.index) {
+      snippetStore.selectedMultiple = snippetStore.snippets.slice(
+        snippetStore.selectedIndex,
+        props.index + 1
+      )
+    } else {
+      snippetStore.selectedMultiple = snippetStore.snippets.slice(
+        props.index,
+        snippetStore.selectedIndex + 1
+      )
+    }
+    snippetStore.selected = undefined
+    isFocused.value = false
+  } else {
+    isFocused.value = true
+    snippetStore.fragment = 0
+    snippetStore.selectedMultiple = []
+    snippetStore.getSnippetsById(props.id)
+  }
+}
+
 const onClickContextMenu = async () => {
   isHighlighted.value = true
+  snippetStore.isContextState = true
 
   ipc.once('context-menu:close', () => {
     isHighlighted.value = false
+    snippetStore.isContextState = false
   })
 
   const { action, data, type } = await ipc.invoke<
@@ -71,16 +111,25 @@ const onClickContextMenu = async () => {
   ContextMenuPayload
   >('context-menu:snippet', {
     name: props.name,
-    type: folderStore.selectedAlias ?? 'folder'
+    type: folderStore.selectedAlias ?? 'folder',
+    selectedCount: snippetStore.selectedMultiple.length
   })
 
   const moveToTrash = async (alias?: SystemFolderAlias) => {
-    snippetStore.patchSnippetsById(props.id, {
-      isDeleted: true
-    })
+    if (snippetStore.selectedIds.length) {
+      for (const id of snippetStore.selectedIds) {
+        await snippetStore.patchSnippetsById(id, {
+          isDeleted: true
+        })
+      }
+    } else {
+      await snippetStore.patchSnippetsById(props.id, {
+        isDeleted: true
+      })
+    }
     if (!alias) {
       await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-      snippetStore.snippet = snippetStore.snippets[0]
+      snippetStore.selected = snippetStore.snippets[0]
     } else {
       await snippetStore.getSnippets()
       snippetStore.setSnippetsByAlias(alias)
@@ -95,7 +144,11 @@ const onClickContextMenu = async () => {
     }
 
     if (type === 'trash') {
-      await snippetStore.deleteSnippetsById(props.id)
+      if (snippetStore.selectedIds.length) {
+        await snippetStore.deleteSnippetsByIds(snippetStore.selectedIds)
+      } else {
+        await snippetStore.deleteSnippetsById(props.id)
+      }
       await snippetStore.getSnippets()
       snippetStore.setSnippetsByAlias(type)
     }
@@ -131,6 +184,9 @@ const onClickContextMenu = async () => {
 
   isHighlighted.value = false
   isFocused.value = false
+  snippetStore.isContextState = false
+  snippetStore.selected = undefined
+  snippetStore.selectedMultiple = []
 }
 
 const dateFormat = computed(() =>

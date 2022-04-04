@@ -7,6 +7,8 @@ export interface SnippetWithFolder extends Snippet {
 export interface State {
   all: SnippetWithFolder[]
   snippets: SnippetWithFolder[]
-  snippet: Snippet | undefined
+  selected?: Snippet
+  selectedMultiple: Snippet[]
   fragment: number
+  isContextState: boolean
 }

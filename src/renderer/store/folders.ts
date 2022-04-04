@@ -85,7 +85,6 @@ export const useFolderStore = defineStore('folders', {
 
       const find = (id: string, folders: FolderTree[]) => {
         folders.forEach(i => {
-          console.log(i.id, id)
           if (i.id === id) {
             folder = i
           } else if (i.children) {
@@ -127,10 +126,6 @@ export const useFolderStore = defineStore('folders', {
       }
 
       for (const id of folderIds) {
-        await useApi(`/folders/${id}`).delete()
-      }
-
-      for (const id of folderIds) {
         const { data } = await useApi<SnippetWithFolder[]>(
           `/folders/${id}/snippets?_expand=folder`
         )
@@ -141,11 +136,17 @@ export const useFolderStore = defineStore('folders', {
         })
       }
 
+      console.log(snippetsIds)
+
       for (const id of snippetsIds) {
         await useApi(`/snippets/${id}`).patch({
           folderId: '',
           isDeleted: true
         })
+      }
+
+      for (const id of folderIds) {
+        await useApi(`/folders/${id}`).delete()
       }
 
       await this.getFolders()

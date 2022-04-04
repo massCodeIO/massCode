@@ -1374,6 +1374,33 @@
     lodash "^4.17.15"
     tmp-promise "^3.0.2"
 
+"@masscode/json-server@^0.18.0":
+  version "0.18.0"
+  resolved "https://registry.yarnpkg.com/@masscode/json-server/-/json-server-0.18.0.tgz#a8949c00c852bf7cb30baa296e88569441d7dd5f"
+  integrity sha512-5M2/42AevLRmlNvbTzD5EMzwegzgqJIju/LzmMVH1X0yoQzyHmi0aPdRoxSjEGByKXwN0JTPkUpj/D6ltn1TCg==
+  dependencies:
+    body-parser "^1.19.0"
+    bumpp "^7.1.1"
+    chalk "^4.1.2"
+    compression "^1.7.4"
+    connect-pause "^0.1.1"
+    cors "^2.8.5"
+    errorhandler "^1.5.1"
+    express "^4.17.1"
+    express-urlrewrite "^1.4.0"
+    json-parse-helpfulerror "^1.0.3"
+    lodash "^4.17.21"
+    lodash-id "^0.14.1"
+    lowdb "^1.0.0"
+    method-override "^3.0.0"
+    morgan "^1.10.0"
+    nanoid "^3.1.23"
+    please-upgrade-node "^3.2.0"
+    pluralize "^8.0.0"
+    server-destroy "^1.0.1"
+    update-notifier "^5.1.0"
+    yargs "^17.0.1"
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -7137,32 +7164,6 @@ json-schema@0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.4.0.tgz#f7de4cf6efab838ebaeb3236474cbba5a1930ab5"
   integrity sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==
-
-json-server@^0.17.0:
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/json-server/-/json-server-0.17.0.tgz#6db3d1d1028a90c4642ff5e56274d106348ec44c"
-  integrity sha512-+e/nW0mf666j1yTK+5dRx7hgxq5wJTkc5QhTYa/cBfD6vLlQWHfB4l8XKPgzeO55A8Hqm38g44OtZ5SooXi6MQ==
-  dependencies:
-    body-parser "^1.19.0"
-    chalk "^4.1.2"
-    compression "^1.7.4"
-    connect-pause "^0.1.1"
-    cors "^2.8.5"
-    errorhandler "^1.5.1"
-    express "^4.17.1"
-    express-urlrewrite "^1.4.0"
-    json-parse-helpfulerror "^1.0.3"
-    lodash "^4.17.21"
-    lodash-id "^0.14.1"
-    lowdb "^1.0.0"
-    method-override "^3.0.0"
-    morgan "^1.10.0"
-    nanoid "^3.1.23"
-    please-upgrade-node "^3.2.0"
-    pluralize "^8.0.0"
-    server-destroy "^1.0.1"
-    update-notifier "^5.1.0"
-    yargs "^17.0.1"
 
 json-stable-stringify-without-jsonify@^1.0.1:
   version "1.0.1"

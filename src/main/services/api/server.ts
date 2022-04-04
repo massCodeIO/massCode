@@ -1,4 +1,4 @@
-import * as jsonServer from 'json-server'
+import * as jsonServer from '@masscode/json-server'
 import { store } from '../../store'
 import type { Server } from 'http'
 import type { Socket } from 'net'

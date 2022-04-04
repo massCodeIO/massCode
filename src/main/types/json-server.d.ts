@@ -1,4 +1,4 @@
-declare module 'json-server' {
+declare module '@masscode/json-server' {
   import type { NextHandleFunction } from 'connect'
   import type { Application, RequestHandler, Router } from 'express'
   import type { LowSync } from 'lowdb'

@@ -11,7 +11,7 @@
       </div>
       <div class="action">
         <AppActionButton>
-          <UniconsArrow />
+          <UniconsArrow @click="onCopySnippet" />
         </AppActionButton>
         <AppActionButton>
           <UniconsPlus @click="onAddNewFragment" />
@@ -26,9 +26,11 @@
 
 <script setup lang="ts">
 import { emitter } from '@/composable'
+import { ipc } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
-import { useDebounceFn } from '@vueuse/core'
+import { useClipboard, useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
+import type { NotificationPayload } from '@@/types'
 
 const snippetStore = useSnippetStore()
 const inputRef = ref<HTMLInputElement>()
@@ -45,6 +47,14 @@ const name = computed({
 const onAddNewFragment = () => {
   snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
   snippetStore.fragment = snippetStore.fragmentCount!
+}
+
+const onCopySnippet = () => {
+  const { copy } = useClipboard({ source: snippetStore.currentContent })
+  copy()
+  ipc.invoke<any, NotificationPayload>('notification', {
+    body: 'Snippet copied'
+  })
 }
 
 emitter.on('focus:snippet-name', () => {

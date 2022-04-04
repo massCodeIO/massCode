@@ -20,9 +20,10 @@ const folderStore = useFolderStore()
 
 const onAddNewSnippet = async () => {
   if (folderStore.selectedAlias !== undefined) return
+  if (!folderStore.selectedId) return
 
   await snippetStore.addNewSnippet()
-  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds)
+  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
   await snippetStore.getSnippets()
 }
 </script>

@@ -177,8 +177,6 @@ export const subscribeToContextMenu = () => {
     async (event, payload) => {
       const { name, type, data } = payload
 
-      console.log(data.defaultLanguage)
-
       return new Promise(resolve => {
         const createLanguageMenu = () => {
           return languages.map(i => {

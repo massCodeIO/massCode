@@ -66,7 +66,7 @@ const cursorPosition = reactive({
 let editor: Ace.Editor
 
 const localLang = computed({
-  get: () => oldLanguageMap[props.lang] || props.lang,
+  get: () => props.lang,
   set: v => emit('update:lang', v)
 })
 

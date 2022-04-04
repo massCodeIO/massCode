@@ -4,6 +4,7 @@ import readline from 'readline'
 import { nestedToFlat } from '../../utils'
 import { nanoid } from 'nanoid'
 import type { DB, Folder, Snippet, Tag } from '../../types/db'
+import { oldLanguageMap } from '../../../renderer/components/editor/languages'
 
 const fileDb = store.preferences.get('storagePath') + '/db.json'
 
@@ -110,24 +111,27 @@ export const migrate = async (path: string) => {
 
   folders.push(...DEFAULT_SYSTEM_FOLDERS)
 
-  masscodeJSONList.forEach(({ id, open, parentId, ...rest }) => {
-    const newId = nanoid(8)
+  masscodeJSONList.forEach(
+    ({ id, open, parentId, defaultLanguage, ...rest }) => {
+      const newId = nanoid(8)
 
-    folders.push({
-      id: newId,
-      isOpen: open,
-      ...rest,
-      parentId: parentId ?? null,
-      createdAt: new Date().valueOf(),
-      updatedAt: new Date().valueOf()
-    })
+      folders.push({
+        id: newId,
+        isOpen: open,
+        parentId: parentId ?? null,
+        defaultLanguage: oldLanguageMap[defaultLanguage] || defaultLanguage,
+        ...rest,
+        createdAt: new Date().valueOf(),
+        updatedAt: new Date().valueOf()
+      })
 
-    folderIdsMap.push([id, newId])
-    folderIdsMap.forEach(([oldId, newId]) => {
-      const item = folders.find(i => i.parentId === oldId)
-      if (item) item.parentId = newId
-    })
-  })
+      folderIdsMap.push([id, newId])
+      folderIdsMap.forEach(([oldId, newId]) => {
+        const item = folders.find(i => i.parentId === oldId)
+        if (item) item.parentId = newId
+      })
+    }
+  )
 
   tagsJSON.forEach(({ _id, ...rest }) => {
     const newId = nanoid(8)
@@ -152,6 +156,7 @@ export const migrate = async (path: string) => {
       tagsPopulated,
       createdAt,
       updatedAt,
+      content,
       ...rest
     }) => {
       const newId = nanoid(8)
@@ -164,10 +169,18 @@ export const migrate = async (path: string) => {
         if (newId) tagsIds.push(newId)
       })
 
+      content = content.map((i: any) => {
+        return {
+          ...i,
+          language: oldLanguageMap[i.language] || i.language
+        }
+      })
+
       snippets.push({
         id: newId,
         folderId: newFolderId ?? null,
         tagsIds,
+        content,
         ...rest,
         createdAt: createdAt.$$date,
         updatedAt: updatedAt.$$date

@@ -171,7 +171,6 @@ export const languages: LanguageOption[] = [
   { name: 'Zeek', value: 'zeek' }
 ]
 
-// TODO: убрать в будущих релизах
 export const oldLanguageMap: Record<any, Language> = {
   azcli: 'plain_text',
   bat: 'sh',

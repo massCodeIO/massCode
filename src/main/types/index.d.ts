@@ -30,6 +30,7 @@ export interface ContextMenuPayload {
   name?: string
   type: ContextMenuType
   data?: any
+  selectedCount?: number
 }
 
 export interface ContextMenuResponse {

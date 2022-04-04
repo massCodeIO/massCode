@@ -5,14 +5,13 @@
     </div>
     <div class="body">
       <SnippetListItem
-        v-for="i in snippetStore.snippets"
+        v-for="(i, index) in snippetStore.snippets"
         :id="i.id"
         :key="i.id"
+        :index="index"
         :folder="i.folder?.name"
         :date="i.updatedAt"
         :name="i.name"
-        :is-selected="i.id === snippetStore.selectedId"
-        @click="onClickSnippet(i.id)"
       />
     </div>
   </div>
@@ -22,11 +21,6 @@
 import { useSnippetStore } from '@/store/snippets'
 
 const snippetStore = useSnippetStore()
-
-const onClickSnippet = (id: string) => {
-  snippetStore.fragment = 0
-  snippetStore.getSnippetsById(id)
-}
 </script>
 
 <style lang="scss" scoped>

@@ -49,7 +49,7 @@ export const subscribeToContextMenu = () => {
   ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
     'context-menu:snippet',
     async (event, payload) => {
-      const { name, type } = payload
+      const { name, type, selectedCount } = payload
 
       return new Promise(resolve => {
         const menu = createPopupMenu([])
@@ -116,8 +116,12 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete now',
             click: () => {
+              const message =
+                selectedCount === 0
+                  ? `Are you sure you want to permanently delete "${name}"?`
+                  : `Are you sure you want to permanently delete ${selectedCount} selected snippets?`
               const buttonId = dialog.showMessageBoxSync({
-                message: `Are you sure you want to permanently delete "${name}"?`,
+                message,
                 detail: 'You cannot undo this action.',
                 buttons: ['Delete', 'Cancel'],
                 defaultId: 0,

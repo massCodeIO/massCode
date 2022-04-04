@@ -64,7 +64,7 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
-ipcMain.on('restart', () => {
+ipcMain.handle('restart', () => {
   console.log('App is restart...')
   app.relaunch()
   app.exit()

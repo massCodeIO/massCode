@@ -38,6 +38,7 @@ export default {
     '!src',
     '!build',
     'build/src/main/**/*',
+    'build/src/renderer/**/*',
     {
       from: 'build/renderer',
       to: 'renderer',

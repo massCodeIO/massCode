@@ -16,7 +16,7 @@ massCode v1 is available for [download](https://github.com/antonreshetov/massCod
 
 ## Supporting
 
-The best support right now is your star for the project.
+The best support right now is your star for the project. You can also help spread the word about the app in the public.
 
 ## Feature for now
 - Support M1
@@ -28,3 +28,7 @@ The best support right now is your star for the project.
 The goal of creating this application was mostly my own growth as a developer. Also, I wanted this project to absorb the best of such applications already on the market (both free and paid). At the same time, I wanted this project to be an open source project.
 
 massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
+
+## Follow
+ - News and updates on [Twitter](https://twitter.com/anton_reshetov).
+ - [Discussions](https://github.com/massCodeIO/massCode/discussions).

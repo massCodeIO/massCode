@@ -7,10 +7,9 @@
 </template>
 
 <script setup lang="ts">
-import { store, db } from '@/electron'
+import { store } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { onMounted } from 'vue'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()

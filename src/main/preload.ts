@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { migrate, updateTable } from './services/db'
 import { store } from './store'
-import type { ElectronBridge } from './types'
+import type { ElectronBridge } from '@shared/types/main'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {

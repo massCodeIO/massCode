@@ -57,7 +57,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { SidebarSystemFolder, SystemFolderAlias, Tab, Tabs } from './types'
+import type {
+  SidebarSystemFolder,
+  SystemFolderAlias,
+  Tab,
+  Tabs
+} from '@shared/types/renderer/sidebar'
 import Inbox from '~icons/unicons/inbox'
 import Favorite from '~icons/unicons/favorite'
 import Archive from '~icons/unicons/archive'

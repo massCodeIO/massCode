@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import readline from 'readline'
 import { nestedToFlat } from '../../utils'
 import { nanoid } from 'nanoid'
-import type { DB, Folder, Snippet, Tag } from '../../types/db'
+import type { DB, Folder, Snippet, Tag } from '@shared/types/main/db'
 import { oldLanguageMap } from '../../../renderer/components/editor/languages'
 
 const fileDb = store.preferences.get('storagePath') + '/db.json'

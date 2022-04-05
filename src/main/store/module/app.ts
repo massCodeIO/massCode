@@ -1,5 +1,5 @@
 import Store from 'electron-store'
-import type { AppStore } from './types'
+import type { AppStore } from '@shared/types/main/store'
 
 export default new Store<AppStore>({
   name: 'app',

@@ -1,4 +1,4 @@
-import type { Language, LanguageOption } from './types'
+import type { Language, LanguageOption } from '@shared/types/renderer/editor'
 
 export const languages: LanguageOption[] = [
   { name: 'ABAP', value: 'abap' },

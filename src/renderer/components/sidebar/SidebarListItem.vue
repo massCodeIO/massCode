@@ -30,9 +30,12 @@ import Folder from '~icons/unicons/folder'
 import AngleRight from '~icons/unicons/angle-right'
 import { onClickOutside } from '@vueuse/core'
 import { ipc } from '@/electron'
-import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
+import type {
+  ContextMenuPayload,
+  ContextMenuResponse
+} from '@shared/types/main'
 import { useFolderStore } from '@/store/folders'
-import type { FolderTree } from '@@/types/db'
+import type { FolderTree } from '@shared/types/main/db'
 
 interface Props {
   id?: string

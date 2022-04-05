@@ -35,7 +35,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
-import type { Language } from './types'
+import type { Language } from '@shared/types/renderer/editor'
 import { languages, oldLanguageMap } from './languages'
 
 interface Props {

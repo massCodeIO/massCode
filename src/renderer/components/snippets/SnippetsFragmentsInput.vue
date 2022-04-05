@@ -26,7 +26,10 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useSnippetStore } from '@/store/snippets'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { ipc } from '@/electron'
-import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
+import type {
+  ContextMenuPayload,
+  ContextMenuResponse
+} from '@shared/types/main'
 
 interface Props {
   name: string
@@ -59,7 +62,8 @@ const onClickContext = async () => {
   const { action } = await ipc.invoke<ContextMenuResponse, ContextMenuPayload>(
     'context-menu:snippet-fragment',
     {
-      name: props.name
+      name: props.name,
+      type: 'folder'
     }
   )
 

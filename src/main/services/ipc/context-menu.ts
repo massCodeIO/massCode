@@ -1,7 +1,10 @@
 import { createPopupMenu } from '../../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { BrowserWindow, MenuItem, dialog, ipcMain } from 'electron'
-import type { ContextMenuPayload, ContextMenuResponse } from '../../types'
+import type {
+  ContextMenuPayload,
+  ContextMenuResponse
+} from '@shared/types/main'
 import { languages } from '../../../renderer/components/editor/languages'
 
 export const subscribeToContextMenu = () => {

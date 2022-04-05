@@ -14,7 +14,9 @@
     "outDir": "./build",
     "paths": {
       "@/*": ["./src/renderer/*"],
-      "@@/*": ["./src/main/*"]
+      "@renderer/*": ["./src/renderer/*"],
+      "@main/*": ["./src/main/*"],
+      "@shared/*": ["./src/shared/*"]
     },
     "types": ["unplugin-icons/types/vue"]
   },
@@ -24,7 +26,9 @@
     "./src/renderer/**/*.tsx",
     "./src/renderer/**/*.vue",
     "./src/main/**/*.ts",
-    "./src/main/**/*.d.ts"
+    "./src/main/**/*.d.ts",
+    "./src/shared/**/*.ts",
+    "./src/shared/**/*.d.ts"
   ],
   "exclude": [
     "./node_modules"

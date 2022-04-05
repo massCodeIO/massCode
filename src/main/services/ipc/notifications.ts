@@ -1,4 +1,4 @@
-import type { NotificationPayload } from '../../types'
+import type { NotificationPayload } from '@shared/types/main'
 import { ipcMain, Notification } from 'electron'
 
 export const subscribeToNotification = () => {

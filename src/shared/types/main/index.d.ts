@@ -1,5 +1,5 @@
 import type { IpcRendererEvent } from 'electron'
-import type { AppStore, PreferencesStore } from '../store/module/types'
+import type { AppStore, PreferencesStore } from './store'
 import type { DB, Folder, Tag, Snippet, FolderTree } from './db'
 
 type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder' | 'close'

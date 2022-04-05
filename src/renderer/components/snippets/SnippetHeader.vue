@@ -30,7 +30,7 @@ import { ipc } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useClipboard, useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import type { NotificationPayload } from '@@/types'
+import type { NotificationPayload } from '@shared/types/main'
 
 const snippetStore = useSnippetStore()
 const inputRef = ref<HTMLInputElement>()

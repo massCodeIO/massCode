@@ -1,4 +1,5 @@
-import type { Language } from '../../renderer/components/editor/types'
+// import type { Language } from '../renderer/editor'
+import type { Language } from '@shared/types/renderer/editor'
 
 export interface Folder {
   id: string

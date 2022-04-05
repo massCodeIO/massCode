@@ -1,11 +1,14 @@
-import type { Language } from '@/components/editor/types'
-import type { SystemFolderAlias } from '@/components/sidebar/types'
+import type { Language } from '../../shared/types/renderer/editor'
+import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useApi } from '@/composable'
 import { store } from '@/electron'
-import type { Folder, Snippet, SnippetContent } from '@@/types/db'
+import type { Folder, Snippet, SnippetContent } from '@shared/types/main/db'
 import { defineStore } from 'pinia'
 import { useFolderStore } from './folders'
-import type { SnippetWithFolder, State } from './types/snippets'
+import type {
+  SnippetWithFolder,
+  State
+} from '@shared/types/renderer/store/snippets'
 
 export const useSnippetStore = defineStore('snippets', {
   state: () =>

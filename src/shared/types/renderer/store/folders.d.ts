@@ -1,5 +1,5 @@
-import type { SystemFolderAlias } from '@/components/sidebar/types'
-import type { Folder, FolderTree } from '@@/types/db'
+import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
+import type { Folder, FolderTree } from '@shared/types/main/db'
 
 export interface State {
   folders: Folder[]

@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Tab, Tabs } from './types'
+import type { Tab, Tabs } from '@shared/types/renderer/sidebar'
 
 interface Props {
   title?: string

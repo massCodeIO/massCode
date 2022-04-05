@@ -1,11 +1,11 @@
 import { useApi } from '@/composable'
 import { store, db } from '@/electron'
 import { flatToNested } from '@/utils'
-import type { Folder, FolderTree } from '@@/types/db'
+import type { Folder, FolderTree } from '@shared/types/main/db'
 import { defineStore } from 'pinia'
-import type { State } from './types'
+import type { State } from '@shared/types/renderer/store/folders'
 import { nestedToFlat } from '../../main/utils'
-import type { SnippetWithFolder } from './types/snippets'
+import type { SnippetWithFolder } from '@shared/types/renderer/store/snippets'
 import { useSnippetStore } from './snippets'
 
 export const useFolderStore = defineStore('folders', {
@@ -131,7 +131,7 @@ export const useFolderStore = defineStore('folders', {
         )
           .get()
           .json()
-        data.value.forEach(i => {
+        data.value.forEach((i: any) => {
           snippetsIds.push(i.id)
         })
       }

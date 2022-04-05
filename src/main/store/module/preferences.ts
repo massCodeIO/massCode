@@ -1,6 +1,6 @@
 import Store from 'electron-store'
 import { homedir, platform } from 'os'
-import type { PreferencesStore } from './types'
+import type { PreferencesStore } from '@shared/types/main/store'
 
 const isWin = platform() === 'win32'
 

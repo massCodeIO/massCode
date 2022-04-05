@@ -3,14 +3,26 @@
     <TheSidebar />
     <SnippetList />
     <SnippetsView />
+    <button
+      style="position: absolute; bottom: 30px; right: 30px; z-index: 100"
+      @click="onMigrate"
+    >
+      migrate
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { store, db } from '@/electron'
+import { store, db, ipc } from '@/electron'
+import router from '@/router'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { onMounted } from 'vue'
+
+const onMigrate = () => {
+  db.migrate(store.preferences.get('storagePath'))
+  ipc.invoke('restart', null)
+}
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()

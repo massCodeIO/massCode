@@ -1,4 +1,4 @@
-import type { Folder } from '@@/types/db'
+import type { Folder } from '@shared/types/main/db'
 import type { FunctionalComponent } from 'vue'
 
 export type Tab = 'library' | 'tags'

@@ -32,10 +32,13 @@
 import { ipc } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import type { ContextMenuPayload, ContextMenuResponse } from '@@/types'
+import type {
+  ContextMenuPayload,
+  ContextMenuResponse
+} from '@shared/types/main'
 import { onClickOutside } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import type { SystemFolderAlias } from '../sidebar/types'
+import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 
 interface Props {
   id: string

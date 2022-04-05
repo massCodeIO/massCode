@@ -10,11 +10,7 @@
 import { store, db } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import devtools from '@vue/devtools'
-
-if (import.meta.env.DEV) {
-  devtools.connect('http://localhost', 8098)
-}
+import { onMounted } from 'vue'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -41,6 +37,15 @@ const init = async () => {
   }
 }
 
+const addDevtoolsHost = () => {
+  if (import.meta.env.DEV) {
+    const s = document.createElement('script')
+    s.src = 'http://localhost:8098'
+    document.head.appendChild(s)
+  }
+}
+
+addDevtoolsHost()
 init()
 </script>
 

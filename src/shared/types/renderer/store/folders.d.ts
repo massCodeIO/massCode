@@ -8,4 +8,5 @@ export interface State {
   selectedId?: string
   selectedIds?: string[]
   selectedAlias?: SystemFolderAlias
+  hoveredId?: string
 }

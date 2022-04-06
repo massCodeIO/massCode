@@ -7,8 +7,11 @@
       'is-focused': isFocused,
       'is-highlighted': isHighlighted || isHighlightedMultiple
     }"
+    :draggable="true"
     @click="onClickSnippet"
     @contextmenu="onClickContextMenu"
+    @dragstart="onDragStart"
+    @dragend="onDragEnd"
   >
     <div class="header">
       <div class="name">
@@ -195,6 +198,40 @@ const onClickContextMenu = async () => {
 const dateFormat = computed(() =>
   new Intl.DateTimeFormat('ru').format(props.date)
 )
+
+const onDragStart = (e: DragEvent) => {
+  if (snippetStore.selectedIds.length) {
+    e.dataTransfer?.setData('payload', JSON.stringify(snippetStore.selectedIds))
+
+    const count = snippetStore.selectedIds.length
+    const el = document.createElement('div')
+    const style = {
+      padding: '2px 10px',
+      backgroundColor: 'var(--color-bg)',
+      borderRadius: '3px',
+      color: 'var(--color-contrast-higher)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'fixed',
+      fontSize: '14px',
+      top: '100%'
+    }
+    el.innerHTML = `${count} ${count > 1 ? 'items' : 'item'}`
+
+    Object.assign(el.style, style)
+    document.body.appendChild(el)
+
+    e.dataTransfer?.setDragImage(el, 0, 0)
+    setTimeout(() => el.remove(), 0)
+  } else {
+    e.dataTransfer?.setData('payload', JSON.stringify([props.id]))
+  }
+}
+
+const onDragEnd = () => {
+  folderStore.hoveredId = ''
+}
 </script>
 
 <style lang="scss" scoped>

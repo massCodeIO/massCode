@@ -29,6 +29,7 @@
         <UniconsPlus @click="onAddNewFolder" />
       </template>
       <AppTree
+        ref="treeRef"
         v-model="folderStore.foldersTree"
         :selected-id="folderStore.selectedId"
         :context-menu-handler="contextMenuHandler"
@@ -39,6 +40,9 @@
           <SidebarListItem
             :id="node.id"
             :model="node"
+            @drop="onDrop($event, node.id)"
+            @dragover.prevent
+            @dragenter="onDragEnter(node.id)"
           >
             <TheFolder
               :id="node.id"
@@ -56,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type {
   SidebarSystemFolder,
   SystemFolderAlias,
@@ -73,6 +77,35 @@ import { ipc } from '@/electron'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
+
+const treeRef = ref()
+
+const onDrop = async (e: DragEvent, id: string) => {
+  const payload = e.dataTransfer?.getData('payload')
+
+  if (payload) {
+    const snippetIds = JSON.parse(payload)
+    for (const i of snippetIds) {
+      await snippetStore.patchSnippetsById(i, {
+        folderId: id
+      })
+    }
+    snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+  }
+}
+
+const onDragEnter = (id: string) => {
+  folderStore.hoveredId = id
+}
+
+watch(
+  () => folderStore.hoveredId,
+  () => {
+    if (treeRef.value) {
+      treeRef.value.hoveredNodeId = folderStore.hoveredId
+    }
+  }
+)
 
 const systemFolders = computed(() => {
   const folders = folderStore.system.map(i => {

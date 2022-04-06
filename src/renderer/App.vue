@@ -1,17 +1,29 @@
 <template>
-  <div data-theme="light">
-    <div class="app-title-bar" />
-    <RouterView />
-  </div>
+  <div class="app-title-bar" />
+  <RouterView />
 </template>
 
 <script setup lang="ts">
 import router from '@/router'
+import { watch } from 'vue'
+import { useAppStore } from './store/app'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
 // TODO: выяснить причину
 router.push('/')
+
+const appStore = useAppStore()
+
+const setTheme = (theme: string) => {
+  document.body.dataset.theme = theme
+}
+
+watch(
+  () => appStore.theme,
+  () => setTheme(appStore.theme),
+  { immediate: true }
+)
 </script>
 
 <style lang="scss">

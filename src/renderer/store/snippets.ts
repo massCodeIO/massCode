@@ -221,6 +221,14 @@ export const useSnippetStore = defineStore('snippets', {
       store.app.delete('selectedFolderId')
       store.app.delete('selectedFolderIds')
     },
+    async setSnippetsByTagId (id: string) {
+      const snippets: SnippetWithFolder[] = this.all.filter(i =>
+        i.tagsIds.includes(id)
+      )
+
+      this.snippets = snippets
+      this.selected = snippets[0]
+    },
     setSnippetById (id: string) {
       const snippet = this.all.find(i => i.id === id)
       if (snippet) this.selected = snippet

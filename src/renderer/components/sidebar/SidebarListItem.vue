@@ -5,7 +5,8 @@
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
-      'is-system': system
+      'is-system': system,
+      'is-tag': isTag
     }"
     @click="isFocused = true"
     @contextmenu="onClickContextMenu"
@@ -44,6 +45,7 @@ interface Props {
   nested?: boolean
   open?: boolean
   isSelected?: boolean
+  isTag?: boolean
   model?: FolderTree
 }
 
@@ -99,7 +101,8 @@ onClickOutside(itemRef, () => {
   width: 100%;
   z-index: 2;
   user-select: none;
-  &.is-system {
+  &.is-system,
+  &.is-tag {
     padding-left: var(--spacing-sm);
     padding-right: var(--spacing-sm);
   }

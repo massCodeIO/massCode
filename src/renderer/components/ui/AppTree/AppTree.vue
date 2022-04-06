@@ -11,11 +11,13 @@
         :node="node"
         :nodes="store.clonedNodes!"
         :index="index"
+        :hovered-node-id="hoveredNodeId"
       >
         <template #default="{ node: childNode, deep }">
           <slot
             :node="childNode"
             :deep="deep"
+            :hovered-node-id="hoveredNodeId"
           />
         </template>
       </AppTreeNode>
@@ -24,10 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { provide, watch } from 'vue'
+import { provide, ref, watch } from 'vue'
 import { store } from './composable'
 import type { Node } from './types'
-
 import { clone } from './helpers'
 
 interface Props {
@@ -48,6 +49,8 @@ const props = withDefaults(defineProps<Props>(), {
   contextMenuHandler: () => Promise.resolve(true)
 })
 
+const hoveredNodeId = ref('')
+
 const cloneNodes = () => {
   store.clonedNodes = clone(props.modelValue) as Node[]
 }
@@ -58,6 +61,10 @@ const clickNode = (id: string) => emit('click:node', id)
 provide('updateValue', updateValue)
 provide('clickNode', clickNode)
 provide('contextMenuHandler', props.contextMenuHandler)
+
+defineExpose({
+  hoveredNodeId
+})
 
 watch(
   () => props.modelValue,

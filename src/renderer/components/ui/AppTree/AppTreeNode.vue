@@ -18,7 +18,7 @@
       ref="rowRef"
       class="node__row"
       :class="{
-        'is-hovered': isHovered && isAllowed,
+        'is-hovered': (isHovered && isAllowed) || hoveredNodeId === node.id,
         'is-selected': isSelected,
         'is-focused': isFocused,
         'is-highlighted': isHighlighted
@@ -56,12 +56,14 @@
         :deep="deep + 1"
         :node="children"
         :nodes="node.children"
+        :hovered-node-id="hoveredNodeId"
       >
         <!-- eslint-disable-next-line vue/no-template-shadow -->
-        <template #default="{ node, deep }">
+        <template #default="{ node, deep, hoveredNodeId }">
           <slot
             :node="node"
             :deep="deep"
+            :hovered-node-id="hoveredNodeId"
           />
         </template>
       </AppTreeNode>
@@ -110,6 +112,7 @@ interface Props {
   node: Node
   nodes: Node[]
   indent?: number
+  hoveredNodeId?: string
   ghostEl?: Function
 }
 

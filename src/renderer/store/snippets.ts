@@ -214,6 +214,7 @@ export const useSnippetStore = defineStore('snippets', {
       this.selected = snippets[0]
 
       folderStore.selectedId = undefined
+      folderStore.selectedIds = undefined
       folderStore.selectedAlias = alias
 
       store.app.set('selectedFolderAlias', alias)

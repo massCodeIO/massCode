@@ -102,7 +102,7 @@ watch(
   () => folderStore.hoveredId,
   () => {
     if (treeRef.value) {
-      treeRef.value.hoveredNodeId = folderStore.hoveredId
+      treeRef.value.setHoveredNodeId(folderStore.hoveredId)
     }
   }
 )

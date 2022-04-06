@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core'
-import type { CSSProperties } from 'vue'
+import type { CSSProperties, Ref } from 'vue'
 import { computed, inject, ref } from 'vue'
 import {
   store,
@@ -126,6 +126,7 @@ const props = withDefaults(defineProps<Props>(), {
 const updateValue = inject('updateValue') as Function
 const clickNode = inject('clickNode') as Function
 const contextMenuHandler = inject('contextMenuHandler') as Function
+const isHoveredByIdDisabled = inject('isHoveredByIdDisabled') as Ref
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -194,6 +195,7 @@ const onClickContextMenu = async () => {
 
 const onDragStart = (e: DragEvent) => {
   store.dragNode = props.node
+  isHoveredByIdDisabled.value = true
 
   const el = document.createElement('div')
   const style = {
@@ -220,6 +222,7 @@ const onDragEnd = () => {
   store.dragEnterNode = undefined
   overPosition.value = undefined
   isDragged.value = false
+  isHoveredByIdDisabled.value = false
 }
 
 const onDragEnter = () => {

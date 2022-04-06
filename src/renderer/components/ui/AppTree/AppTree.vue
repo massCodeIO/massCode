@@ -50,6 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const hoveredNodeId = ref('')
+const isHoveredByIdDisabled = ref(false)
 
 const cloneNodes = () => {
   store.clonedNodes = clone(props.modelValue) as Node[]
@@ -58,12 +59,18 @@ const cloneNodes = () => {
 const updateValue = () => emit('update:modelValue', store.clonedNodes)
 const clickNode = (id: string) => emit('click:node', id)
 
+const setHoveredNodeId = (id: string) => {
+  if (isHoveredByIdDisabled.value) return
+  hoveredNodeId.value = id
+}
+
 provide('updateValue', updateValue)
 provide('clickNode', clickNode)
 provide('contextMenuHandler', props.contextMenuHandler)
+provide('isHoveredByIdDisabled', isHoveredByIdDisabled)
 
 defineExpose({
-  hoveredNodeId
+  setHoveredNodeId
 })
 
 watch(

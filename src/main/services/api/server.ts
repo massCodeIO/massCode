@@ -1,32 +1,8 @@
 import * as jsonServer from '@masscode/json-server'
 import { store } from '../../store'
-import type { Server } from 'http'
-import type { Socket } from 'net'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
-interface ServerWithDestroy extends Server {
-  destroy: Function
-}
-
-const enableDestroy = (server: ServerWithDestroy) => {
-  const connections: Record<string, Socket> = {}
-
-  server.on('connection', conn => {
-    const key = conn.remoteAddress + ':' + conn.remotePort
-    connections[key] = conn
-    conn.on('close', () => {
-      delete connections[key]
-    })
-  })
-
-  server.destroy = () => {
-    server.close()
-    for (const key in connections) {
-      connections[key].destroy()
-    }
-  }
-}
 
 export const createApiServer = () => {
   const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
@@ -37,12 +13,25 @@ export const createApiServer = () => {
   app.use(jsonServer.bodyParser)
   app.use(middlewares)
 
-  app.get('/restart', (req, res) => {
-    server.destroy()
-    createApiServer()
-    console.log('API server is restart...')
+  app.post('/db/update/:table', (req, res) => {
+    const table = req.params.table
+    const isAllowedTable = ['folders', 'snippets', 'tags'].includes(table)
 
-    res.status(200)
+    if (!isAllowedTable) {
+      return res.status(400).send('Table is not defined in DB')
+    }
+    if (req.body.value?.length === 0) {
+      res.status(400).send("'value' is required")
+    } else {
+      const db: any = router.db.getState()
+
+      db[table] = req.body.value
+
+      router.db.setState(db)
+      router.db.write()
+
+      res.sendStatus(200)
+    }
   })
 
   app.use((req, res, next) => {
@@ -60,9 +49,7 @@ export const createApiServer = () => {
 
   app.use(router)
 
-  const server = app.listen(API_PORT, () => {
+  app.listen(API_PORT, () => {
     console.log(`API server is running on port ${API_PORT}`)
-  }) as ServerWithDestroy
-
-  enableDestroy(server)
+  })
 }

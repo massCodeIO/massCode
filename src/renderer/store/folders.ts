@@ -1,5 +1,5 @@
 import { useApi } from '@/composable'
-import { store, db } from '@/electron'
+import { store } from '@/electron'
 import { flatToNested } from '@/utils'
 import type { Folder, FolderTree } from '@shared/types/main/db'
 import { defineStore } from 'pinia'
@@ -56,18 +56,14 @@ export const useFolderStore = defineStore('folders', {
         this.selected = this.findFolderById(id, this.foldersTree)
       }
     },
-    async updateSort () {
-      const { data } = await useApi('/db').get().json()
-
-      db.updateTable(
-        'folders',
-        [
+    async updateFoldersTable () {
+      const body = {
+        value: [
           ...JSON.parse(JSON.stringify(this.system)),
           ...nestedToFlat(this.foldersTree)
-        ],
-        data.value
-      )
-      await useApi('/restart').get()
+        ]
+      }
+      await useApi('/db/update/folders').post(body)
     },
     selectId (id: string) {
       this.selectedId = id

@@ -122,8 +122,8 @@ const onAddNewFolder = async () => {
   await folderStore.addNewFolder()
 }
 
-const onUpdate = () => {
-  folderStore.updateSort()
+const onUpdate = async () => {
+  await folderStore.updateFoldersTable()
 }
 </script>
 

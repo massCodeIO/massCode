@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { migrate, updateTable } from './services/db'
+import { migrate } from './services/db'
 import { store } from './store'
 import type { ElectronBridge } from '@shared/types/main'
 
@@ -22,7 +22,6 @@ contextBridge.exposeInMainWorld('electron', {
     }
   },
   db: {
-    migrate: (path: string) => migrate(path),
-    updateTable: (key, data, db) => updateTable(key, data, db)
+    migrate: (path: string) => migrate(path)
   }
 } as ElectronBridge)

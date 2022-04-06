@@ -73,10 +73,5 @@ export interface ElectronBridge {
   }
   db: {
     migrate: (path: string) => void
-    updateTable: (
-      key: keyof DB,
-      data: Folder[] | Snippet[] | Tag[],
-      db: DB
-    ) => void
   }
 }

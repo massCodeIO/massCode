@@ -5,7 +5,7 @@
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
-      'is-system': system,
+      'is-system': isSystem,
       'is-tag': isTag
     }"
     @click="isFocused = true"
@@ -33,39 +33,46 @@ import { onClickOutside } from '@vueuse/core'
 import { ipc } from '@/electron'
 import type {
   ContextMenuPayload,
-  ContextMenuResponse
+  ContextMenuResponse,
+  ContextMenuType
 } from '@shared/types/main'
 import { useFolderStore } from '@/store/folders'
+import { useTagStore } from '@/store/tags'
 import type { FolderTree } from '@shared/types/main/db'
+import { useSnippetStore } from '@/store/snippets'
 
 interface Props {
   id?: string
   icon?: FunctionalComponent
-  system?: boolean
+  isSystem?: boolean
   nested?: boolean
   open?: boolean
   isSelected?: boolean
   isTag?: boolean
+  isFolder?: boolean
   model?: FolderTree
+  alias?: ContextMenuType
+  name?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  system: false,
   nested: false,
   open: false
 })
 
 const folderStore = useFolderStore()
+const snippetStore = useSnippetStore()
+const tagStore = useTagStore()
 
 const isFocused = ref(false)
 const itemRef = ref()
 
 const onClickContextMenu = async () => {
-  if (props.id) {
+  if (props.isFolder) {
     const { action, type, data } = await ipc.invoke<
     ContextMenuResponse,
     ContextMenuPayload
-    >('context-menu:folder', {
+    >('context-menu:library', {
       name: props.model?.name,
       type: 'folder',
       data: JSON.parse(JSON.stringify(props.model))
@@ -82,7 +89,35 @@ const onClickContextMenu = async () => {
 
     if (action === 'update:language') {
       console.log(data)
-      await folderStore.patchFoldersById(props.id, { defaultLanguage: data })
+      await folderStore.patchFoldersById(props.id!, { defaultLanguage: data })
+    }
+  }
+
+  if (props.isTag) {
+    const { action, type, data } = await ipc.invoke<
+    ContextMenuResponse,
+    ContextMenuPayload
+    >('context-menu:library', {
+      name: props.name,
+      type: 'tag',
+      data: {}
+    })
+
+    if (action === 'delete') {
+      await tagStore.deleteTagById(props.id!)
+
+      if (props.id === tagStore.selectedId) {
+        tagStore.selectedId = undefined
+      }
+
+      if (tagStore.tags.length) {
+        const firstTagId = tagStore.tags[0].id
+        tagStore.selectedId = firstTagId
+        snippetStore.setSnippetsByTagId(firstTagId)
+      } else {
+        snippetStore.selected = undefined
+        snippetStore.snippets = []
+      }
     }
   }
 }

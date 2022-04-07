@@ -176,11 +176,13 @@ export const subscribeToContextMenu = () => {
   )
 
   ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
-    'context-menu:folder',
+    'context-menu:library',
     async (event, payload) => {
       const { name, type, data } = payload
 
       return new Promise(resolve => {
+        const menu = createPopupMenu([])
+
         const createLanguageMenu = () => {
           return languages.map(i => {
             return {
@@ -198,7 +200,7 @@ export const subscribeToContextMenu = () => {
           }) as MenuItemConstructorOptions[]
         }
 
-        const menu = createPopupMenu([
+        const folderMenu: MenuItemConstructorOptions[] = [
           {
             label: 'New folder',
             click: () => {
@@ -241,7 +243,49 @@ export const subscribeToContextMenu = () => {
             label: 'Default Language',
             submenu: createLanguageMenu()
           }
-        ])
+        ]
+
+        const tagMenu: MenuItemConstructorOptions[] = [
+          {
+            label: 'Delete',
+            click: () => {
+              const buttonId = dialog.showMessageBoxSync({
+                message: `Are you sure you want to delete "${name}"?`,
+                detail:
+                  'This will also cause all snippets to have that tag removed.',
+                buttons: ['Delete', 'Cancel'],
+                defaultId: 0,
+                cancelId: 1
+              })
+
+              if (buttonId === 0) {
+                resolve({
+                  action: 'delete',
+                  type,
+                  data: undefined
+                })
+              } else {
+                resolve({
+                  action: 'none',
+                  type,
+                  data: undefined
+                })
+              }
+            }
+          }
+        ]
+
+        if (type === 'folder') {
+          folderMenu.forEach(i => {
+            menu.append(new MenuItem(i))
+          })
+        }
+
+        if (type === 'tag') {
+          tagMenu.forEach(i => {
+            menu.append(new MenuItem(i))
+          })
+        }
 
         menu.on('menu-will-close', () => {
           BrowserWindow.getFocusedWindow()?.webContents.send(

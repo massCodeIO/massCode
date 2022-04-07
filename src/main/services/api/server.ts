@@ -3,7 +3,8 @@ import { store } from '../../store'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
-import type { DB, Snippet } from '@shared/types/main/db'
+import type { DB, Snippet, Tag } from '@shared/types/main/db'
+import { remove } from 'lodash'
 
 export const createApiServer = () => {
   const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
@@ -35,12 +36,31 @@ export const createApiServer = () => {
     }
   })
 
+  app.delete('/tags/:id', (req, res) => {
+    const id = req.params.id
+    const tags = router.db.get<Tag[]>('tags').value()
+    const snippets = router.db
+      .get<Snippet[]>('snippets')
+      .filter(i => i.tagsIds.includes(id))
+      .value()
+    const index = tags.findIndex(i => i.id === id)
+
+    snippets.forEach(i => {
+      remove(i.tagsIds, item => item === id)
+    })
+
+    tags.splice(index, 1)
+    router.db.write()
+
+    res.sendStatus(200)
+  })
+
   app.get('/tags/:id/snippets', (req, res) => {
     const id = req.params.id
-    const snippets = router.db.get<Snippet[]>('snippets').value()
-    const founded = snippets.filter(i => i.tagsIds.includes(id))
+    const _snippets = router.db.get<Snippet[]>('snippets').value()
+    const snippets = _snippets.filter(i => i.tagsIds.includes(id))
 
-    res.status(200).send(founded)
+    res.status(200).send(snippets)
   })
 
   app.use((req, res, next) => {

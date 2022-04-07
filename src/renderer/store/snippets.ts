@@ -2,13 +2,20 @@ import type { Language } from '../../shared/types/renderer/editor'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useApi } from '@/composable'
 import { store } from '@/electron'
-import type { Folder, Snippet, SnippetContent } from '@shared/types/main/db'
+import type {
+  Folder,
+  Snippet,
+  SnippetContent,
+  Tag
+} from '@shared/types/main/db'
 import { defineStore } from 'pinia'
 import { useFolderStore } from './folders'
 import type {
   SnippetWithFolder,
   State
 } from '@shared/types/renderer/store/snippets'
+import { useTagStore } from './tags'
+import { useAppStore } from './app'
 
 export const useSnippetStore = defineStore('snippets', {
   state: () =>
@@ -30,10 +37,28 @@ export const useSnippetStore = defineStore('snippets', {
       state.selected?.content?.[state.fragment]?.value || undefined,
     currentLanguage: state =>
       state.selected?.content?.[state.fragment]?.language,
+    currentTags (): Tag[] {
+      const tagStore = useTagStore()
+      const tags: Tag[] = []
+
+      if (this.selected?.tagsIds.length) {
+        this.selected.tagsIds.forEach(i => {
+          const tag = tagStore.tags.find(t => t.id === i)
+          if (tag) tags.push(tag)
+        })
+      }
+
+      return tags
+    },
     fragmentLabels: state => state.selected?.content?.map(i => i.label),
     fragmentCount: state => state.selected?.content?.length,
-    isFragmentsShow () {
-      return this.fragmentLabels?.length > 1
+    tagsCount: state => state.selected?.tagsIds?.length,
+    isFragmentsShow (): boolean {
+      return this.fragmentCount ? this.fragmentCount > 1 : false
+    },
+    isTagsShow (): boolean {
+      const appStore = useAppStore()
+      return this.tagsCount ? this.tagsCount > 0 : appStore.showTags
     }
   },
 
@@ -83,6 +108,10 @@ export const useSnippetStore = defineStore('snippets', {
 
       if (!snippet) return
 
+      if (snippet.id === this.selected?.id) {
+        this.selected.name = data.value.name
+      }
+
       if (snippet.name !== data.value.name) {
         snippet.name = data.value.name
       }
@@ -103,7 +132,7 @@ export const useSnippetStore = defineStore('snippets', {
         body.updatedAt = new Date().valueOf()
 
         await useApi(`/snippets/${this.selectedId}`).patch(body)
-        await this.getSnippetsByFolderIds(folderStore.selectedIds)
+        await this.getSnippetsByFolderIds(folderStore.selectedIds!)
       }
     },
     async addNewSnippet () {

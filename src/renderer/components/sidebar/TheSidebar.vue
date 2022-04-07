@@ -10,7 +10,8 @@
           v-for="i in systemFolders"
           :key="i.name"
           :icon="i.icon"
-          :system="true"
+          :is-system="true"
+          :alias="i.alias"
           :is-selected="i.alias === folderStore.selectedAlias"
           @click="onClickSystemFolder(i.alias)"
         >
@@ -20,7 +21,9 @@
       <template v-if="activeTab === 'tags'">
         <SidebarListItem
           v-for="i in tagStore.tags"
+          :id="i.id"
           :key="i.id"
+          :name="i.name"
           :icon="LabelAlt"
           :is-tag="true"
           :is-selected="i.id === tagStore.selectedId"
@@ -48,6 +51,7 @@
         <template #default="{ node }">
           <SidebarListItem
             :id="node.id"
+            :is-folder="true"
             :model="node"
             @drop="onDrop($event, node.id)"
             @dragover.prevent
@@ -184,11 +188,15 @@ watch(
         snippetStore.setSnippetsByAlias(folderStore.selectedAlias)
       } else {
         await snippetStore.setSnippetsByFolderIds(true)
+        return
       }
     }
 
     if (v === 'tags' && tagStore.selectedId) {
       snippetStore.setSnippetsByTagId(tagStore.selectedId)
+    } else {
+      snippetStore.snippets = []
+      snippetStore.selected = undefined
     }
   }
 )

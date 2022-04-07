@@ -20,6 +20,7 @@
     </div>
     <div class="bottom">
       <SnippetFragments v-if="snippetStore.isFragmentsShow" />
+      <SnippetsTags v-if="snippetStore.isTagsShow" />
     </div>
   </div>
 </template>

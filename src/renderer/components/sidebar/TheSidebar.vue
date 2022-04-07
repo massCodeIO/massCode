@@ -195,8 +195,9 @@ watch(
     if (v === 'tags' && tagStore.selectedId) {
       snippetStore.setSnippetsByTagId(tagStore.selectedId)
     } else {
-      snippetStore.snippets = []
       snippetStore.selected = undefined
+      snippetStore.snippets = []
+      snippetStore.selectedMultiple = []
     }
   }
 )

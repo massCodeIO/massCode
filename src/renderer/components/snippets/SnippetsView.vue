@@ -2,8 +2,7 @@
   <div
     class="snippets-view"
     :class="{
-      'with-fragments': snippetStore.isFragmentsShow,
-      'with-tags': snippetStore.isTagsShow
+      'is-one-row': isShowPlaceholder
     }"
   >
     <template v-if="snippetStore.selected">
@@ -16,16 +15,13 @@
     </template>
 
     <div
-      v-else-if="snippetStore.selectedMultiple?.length"
-      class="no-snippet"
+      v-else-if="isShowPlaceholder"
+      class="placeholder"
     >
-      {{ snippetStore.selectedMultiple.length }} Snippets Selected
-    </div>
-    <div
-      v-else
-      class="no-snippet"
-    >
-      No Snippet Selected
+      <span v-if="snippetStore.selectedMultiple.length">
+        {{ snippetStore.selectedMultiple.length }} Snippets Selected
+      </span>
+      <span v-else> No Snippet Selected</span>
     </div>
   </div>
 </template>
@@ -69,6 +65,12 @@ const viewHeight = computed(() => {
 
   return result + 'px'
 })
+
+const isShowPlaceholder = computed(() => {
+  return (
+    snippetStore.selectedMultiple.length || snippetStore.snippets.length === 0
+  )
+})
 </script>
 
 <style lang="scss" scoped>
@@ -77,8 +79,11 @@ const viewHeight = computed(() => {
   padding-top: var(--title-bar-height);
   display: grid;
   grid-template-rows: v-bind(viewHeight) 1fr;
+  &.is-one-row {
+    grid-template-rows: 1fr;
+  }
 }
-.no-snippet {
+.placeholder {
   display: flex;
   align-items: center;
   justify-content: center;

@@ -31,6 +31,7 @@
   "dependencies": {
     "@iconscout/unicons": "^4.0.1",
     "@masscode/json-server": "^0.18.0",
+    "@sipec/vue3-tags-input": "^3.0.4",
     "@vueuse/core": "^8.1.2",
     "ace-builds": "^1.4.14",
     "electron-store": "^8.0.1",

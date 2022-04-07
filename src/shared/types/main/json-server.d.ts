@@ -2,10 +2,12 @@ declare module '@masscode/json-server' {
   import type { NextHandleFunction } from 'connect'
   import type { Application, RequestHandler, Router } from 'express'
   import { LowSync } from 'lowdb'
+  import type lodash from 'lodash'
 
   class LowSyncExtended<T = unknown> extends LowSync {
     setState(data: any): void
     getState(): T
+    get<U>(table: string): lodash.ExpChain<U>
   }
 
   export interface JsonServerRouter<T> extends Router {

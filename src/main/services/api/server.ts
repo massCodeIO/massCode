@@ -3,19 +3,19 @@ import { store } from '../../store'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
-import type { Snippet } from '@shared/types/main/db'
+import type { DB, Snippet } from '@shared/types/main/db'
 
 export const createApiServer = () => {
   const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
   const app = jsonServer.create()
   const middlewares = jsonServer.defaults()
-  const router = jsonServer.router(db)
+  const router = jsonServer.router<DB>(db)
 
   app.use(jsonServer.bodyParser)
   app.use(middlewares)
 
   app.post('/db/update/:table', (req, res) => {
-    const table = req.params.table
+    const table = req.params.table as keyof DB
     const isAllowedTable = ['folders', 'snippets', 'tags'].includes(table)
 
     if (!isAllowedTable) {
@@ -24,7 +24,7 @@ export const createApiServer = () => {
     if (req.body.value?.length === 0) {
       res.status(400).send("'value' is required")
     } else {
-      const db: any = router.db.getState()
+      const db = router.db.getState()
 
       db[table] = req.body.value
 

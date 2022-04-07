@@ -27,13 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
 
 const snippetStore = useSnippetStore()
-const appStore = useAppStore()
 
 const snippet = computed({
   get: () => snippetStore.currentContent || '',
@@ -52,20 +50,6 @@ const lang = computed({
   }
 })
 
-const viewHeight = computed(() => {
-  let result = appStore.sizes.editor.titleHeight
-
-  if (snippetStore.isFragmentsShow) {
-    result += appStore.sizes.editor.fragmentsHeight
-  }
-
-  if (snippetStore.isTagsShow) {
-    result += appStore.sizes.editor.tagsHeight
-  }
-
-  return result + 'px'
-})
-
 const isShowPlaceholder = computed(() => {
   return (
     snippetStore.selectedMultiple.length || snippetStore.snippets.length === 0
@@ -77,11 +61,8 @@ const isShowPlaceholder = computed(() => {
 .snippets-view {
   overflow: hidden;
   padding-top: var(--title-bar-height);
-  display: grid;
-  grid-template-rows: v-bind(viewHeight) 1fr;
-  &.is-one-row {
-    grid-template-rows: 1fr;
-  }
+  display: flex;
+  flex-flow: column;
 }
 .placeholder {
   display: flex;

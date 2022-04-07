@@ -1,4 +1,5 @@
 export interface AppSizes {
+  titlebar: number
   editor: {
     titleHeight: number
     fragmentsHeight: number

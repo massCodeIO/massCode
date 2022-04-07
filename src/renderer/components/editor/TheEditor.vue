@@ -35,6 +35,7 @@ import './module-resolver'
 import type { Language } from '@shared/types/renderer/editor'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
+import { useSnippetStore } from '@/store/snippets'
 
 interface Props {
   lang: Language
@@ -56,6 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const appStore = useAppStore()
+const snippetStore = useSnippetStore()
 
 const editorRef = ref()
 const cursorPosition = reactive({
@@ -69,7 +71,29 @@ const localLang = computed({
   set: v => emit('update:lang', v)
 })
 
-const footerHeight = appStore.sizes.editor.footerHeight + 'px'
+const forceRefresh = ref()
+
+const editorHeight = computed(() => {
+  // eslint-disable-next-line no-unused-expressions
+  forceRefresh.value
+
+  let result =
+    appStore.sizes.editor.titleHeight +
+    appStore.sizes.titlebar +
+    appStore.sizes.editor.footerHeight
+
+  if (snippetStore.isFragmentsShow) {
+    result += appStore.sizes.editor.fragmentsHeight
+  }
+
+  if (snippetStore.isTagsShow) {
+    result += appStore.sizes.editor.tagsHeight
+  }
+
+  return window.innerHeight - result + 'px'
+})
+
+const footerHeight = computed(() => appStore.sizes.editor.footerHeight + 'px')
 
 const init = async () => {
   editor = ace.edit(editorRef.value, {
@@ -83,9 +107,11 @@ const init = async () => {
   setValue()
   setLang()
 
-  // Удаляем все шорткаты
+  // Удаляем некторые шорткаты
   // @ts-ignore
-  editor.keyBinding.$defaultHandler.commandKeyBinding = {}
+  editor.commands.removeCommand('find')
+  editor.commands.removeCommand('gotoline')
+  editor.commands.removeCommand('showSettingsMenu')
 
   // События
   editor.on('change', () => {
@@ -137,16 +163,20 @@ watch(
   () => props.modelValue,
   () => setValue()
 )
+
+window.addEventListener('resize', () => {
+  forceRefresh.value = Math.random()
+})
 </script>
 
 <style lang="scss" scoped>
 .editor {
   padding-top: 4px;
   .main {
-    height: calc(100% - v-bind(footerHeight));
+    height: v-bind(editorHeight);
   }
   .footer {
-    height: 30px;
+    height: v-bind(footerHeight);
     display: flex;
     align-items: center;
     justify-content: space-between;

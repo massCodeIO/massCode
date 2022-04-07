@@ -10,9 +10,11 @@
 import { store } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
+import { useTagStore } from '@/store/tags'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
+const tagStore = useTagStore()
 
 const init = async () => {
   const storedFolderId = store.app.get('selectedFolderId')
@@ -21,6 +23,7 @@ const init = async () => {
 
   await folderStore.getFolders()
   await snippetStore.getSnippets()
+  await tagStore.getTags()
 
   if (storedSnippetId) {
     snippetStore.setSnippetById(storedSnippetId)

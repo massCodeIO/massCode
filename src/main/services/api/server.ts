@@ -3,6 +3,7 @@ import { store } from '../../store'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
+import type { Snippet } from '@shared/types/main/db'
 
 export const createApiServer = () => {
   const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
@@ -32,6 +33,14 @@ export const createApiServer = () => {
 
       res.sendStatus(200)
     }
+  })
+
+  app.get('/tags/:id/snippets', (req, res) => {
+    const id = req.params.id
+    const snippets = router.db.get<Snippet[]>('snippets').value()
+    const founded = snippets.filter(i => i.tagsIds.includes(id))
+
+    res.status(200).send(founded)
   })
 
   app.use((req, res, next) => {

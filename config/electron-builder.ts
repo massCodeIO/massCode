@@ -15,15 +15,18 @@ export default {
   },
   mac: {
     target: [
-      { target: 'dmg', arch: 'arm64' }
-      // { target: 'dmg', arch: 'x64' }
-    ]
+      { target: 'dmg', arch: 'arm64' },
+      { target: 'dmg', arch: 'x64' }
+    ],
+    icon: 'config/icons/icon.icns'
   },
   win: {
-    target: 'nsis'
+    target: 'nsis',
+    icon: 'config/icons/icon.ico'
   },
   linux: {
-    target: ['snap']
+    target: ['snap'],
+    icon: 'config/icons'
   },
   files: [
     '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}',

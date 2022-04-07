@@ -1,5 +1,10 @@
 <template>
-  <div class="snippets-view">
+  <div
+    class="snippets-view"
+    :class="{
+      'is-one-row': isShowPlaceholder
+    }"
+  >
     <template v-if="snippetStore.selected">
       <SnippetHeader />
       <TheEditor
@@ -10,26 +15,25 @@
     </template>
 
     <div
-      v-else-if="snippetStore.selectedMultiple?.length"
-      class="no-snippet"
+      v-else-if="isShowPlaceholder"
+      class="placeholder"
     >
-      {{ snippetStore.selectedMultiple.length }} Snippets Selected
-    </div>
-    <div
-      v-else
-      class="no-snippet"
-    >
-      No Snippet Selected
+      <span v-if="snippetStore.selectedMultiple.length">
+        {{ snippetStore.selectedMultiple.length }} Snippets Selected
+      </span>
+      <span v-else> No Snippet Selected</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
 
 const snippetStore = useSnippetStore()
+const appStore = useAppStore()
 
 const snippet = computed({
   get: () => snippetStore.currentContent || '',
@@ -47,14 +51,39 @@ const lang = computed({
     snippetStore.patchCurrentSnippetContentByKey('language', v)
   }
 })
+
+const viewHeight = computed(() => {
+  let result = appStore.sizes.editor.titleHeight
+
+  if (snippetStore.isFragmentsShow) {
+    result += appStore.sizes.editor.fragmentsHeight
+  }
+
+  if (snippetStore.isTagsShow) {
+    result += appStore.sizes.editor.tagsHeight
+  }
+
+  return result + 'px'
+})
+
+const isShowPlaceholder = computed(() => {
+  return (
+    snippetStore.selectedMultiple.length || snippetStore.snippets.length === 0
+  )
+})
 </script>
 
 <style lang="scss" scoped>
 .snippets-view {
   overflow: hidden;
   padding-top: var(--title-bar-height);
+  display: grid;
+  grid-template-rows: v-bind(viewHeight) 1fr;
+  &.is-one-row {
+    grid-template-rows: 1fr;
+  }
 }
-.no-snippet {
+.placeholder {
   display: flex;
   align-items: center;
   justify-content: center;

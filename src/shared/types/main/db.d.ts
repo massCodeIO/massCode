@@ -28,7 +28,7 @@ export interface Snippet {
   name: string
   content: SnippetContent[]
   folderId: string
-  tagsIds: []
+  tagsIds: string[]
   isFavorites: boolean
   isDeleted: boolean
   createdAt: number

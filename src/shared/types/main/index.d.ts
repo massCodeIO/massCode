@@ -2,7 +2,13 @@ import type { IpcRendererEvent } from 'electron'
 import type { AppStore, PreferencesStore } from './store'
 import type { DB, Folder, Tag, Snippet, FolderTree } from './db'
 
-type ChannelSubject = 'snippet' | 'snippet-fragment' | 'folder' | 'close'
+type ChannelSubject =
+  | 'snippet'
+  | 'snippet-fragment'
+  | 'folder'
+  | 'tag'
+  | 'library'
+  | 'close'
 
 type ContextMenuAction =
   | 'rename'
@@ -13,7 +19,13 @@ type ContextMenuAction =
   | 'update:language'
   | 'none'
 
-export type ContextMenuType = 'folder' | 'inbox' | 'all' | 'trash' | 'favorites'
+export type ContextMenuType =
+  | 'folder'
+  | 'inbox'
+  | 'all'
+  | 'trash'
+  | 'favorites'
+  | 'tag'
 
 type CombineWithChannelSubject<
   T extends ChannelSubject,

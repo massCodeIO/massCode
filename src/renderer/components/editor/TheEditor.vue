@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="editor"
-    :class="{ 'with-fragments': fragments }"
-  >
+  <div class="editor">
     <div
       ref="editorRef"
       class="main"
@@ -36,7 +33,8 @@ import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
 import type { Language } from '@shared/types/renderer/editor'
-import { languages, oldLanguageMap } from './languages'
+import { languages } from './languages'
+import { useAppStore } from '@/store/app'
 
 interface Props {
   lang: Language
@@ -52,11 +50,12 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   lang: 'typescript',
-  theme: 'chrome',
-  fragments: false
+  theme: 'chrome'
 })
 
 const emit = defineEmits<Emits>()
+
+const appStore = useAppStore()
 
 const editorRef = ref()
 const cursorPosition = reactive({
@@ -69,6 +68,8 @@ const localLang = computed({
   get: () => props.lang,
   set: v => emit('update:lang', v)
 })
+
+const footerHeight = appStore.sizes.editor.footerHeight + 'px'
 
 const init = async () => {
   editor = ace.edit(editorRef.value, {
@@ -141,20 +142,8 @@ watch(
 <style lang="scss" scoped>
 .editor {
   padding-top: 4px;
-  &.with-fragments {
-    .main {
-      height: calc(
-        100vh - var(--title-bar-height) - var(--snippets-view-header-top-height) -
-          var(--snippets-view-footer-height) -
-          var(--snippet-header-fragment-height)
-      );
-    }
-  }
   .main {
-    height: calc(
-      100vh - var(--title-bar-height) - var(--snippets-view-header-top-height) -
-        var(--snippets-view-footer-height)
-    );
+    height: calc(100% - v-bind(footerHeight));
   }
   .footer {
     height: 30px;

@@ -42,6 +42,7 @@ import type {
 import { onClickOutside } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
+import { useTagStore } from '@/store/tags'
 
 interface Props {
   id: string
@@ -55,6 +56,7 @@ const props = defineProps<Props>()
 
 const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
+const tagStore = useTagStore()
 
 const itemRef = ref()
 const isFocused = ref(false)
@@ -100,6 +102,7 @@ const onClickSnippet = (e: MouseEvent) => {
     snippetStore.fragment = 0
     snippetStore.selectedMultiple = []
     snippetStore.getSnippetsById(props.id)
+    tagStore.getTags()
   }
 }
 

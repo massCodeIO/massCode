@@ -10,7 +10,8 @@
           v-for="i in systemFolders"
           :key="i.name"
           :icon="i.icon"
-          :system="true"
+          :is-system="true"
+          :alias="i.alias"
           :is-selected="i.alias === folderStore.selectedAlias"
           @click="onClickSystemFolder(i.alias)"
         >
@@ -18,7 +19,18 @@
         </SidebarListItem>
       </template>
       <template v-if="activeTab === 'tags'">
-        tags
+        <SidebarListItem
+          v-for="i in tagStore.tags"
+          :id="i.id"
+          :key="i.id"
+          :name="i.name"
+          :icon="LabelAlt"
+          :is-tag="true"
+          :is-selected="i.id === tagStore.selectedId"
+          @click="onClickTag(i.id)"
+        >
+          {{ i.name }}
+        </SidebarListItem>
       </template>
     </SidebarList>
     <SidebarList
@@ -39,6 +51,7 @@
         <template #default="{ node }">
           <SidebarListItem
             :id="node.id"
+            :is-folder="true"
             :model="node"
             @drop="onDrop($event, node.id)"
             @dragover.prevent
@@ -71,41 +84,17 @@ import Inbox from '~icons/unicons/inbox'
 import Favorite from '~icons/unicons/favorite'
 import Archive from '~icons/unicons/archive'
 import Trash from '~icons/unicons/trash'
+import LabelAlt from '~icons/unicons/label-alt'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { ipc } from '@/electron'
+import { useTagStore } from '@/store/tags'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
+const tagStore = useTagStore()
 
 const treeRef = ref()
-
-const onDrop = async (e: DragEvent, id: string) => {
-  const payload = e.dataTransfer?.getData('payload')
-
-  if (payload) {
-    const snippetIds = JSON.parse(payload)
-    for (const i of snippetIds) {
-      await snippetStore.patchSnippetsById(i, {
-        folderId: id
-      })
-    }
-    snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-  }
-}
-
-const onDragEnter = (id: string) => {
-  folderStore.hoveredId = id
-}
-
-watch(
-  () => folderStore.hoveredId,
-  () => {
-    if (treeRef.value) {
-      treeRef.value.setHoveredNodeId(folderStore.hoveredId)
-    }
-  }
-)
 
 const systemFolders = computed(() => {
   const folders = folderStore.system.map(i => {
@@ -145,6 +134,11 @@ const onClickSystemFolder = (alias: SystemFolderAlias) => {
   snippetStore.setSnippetsByAlias(alias)
 }
 
+const onClickTag = (id: string) => {
+  snippetStore.setSnippetsByTagId(id)
+  tagStore.selectedId = id
+}
+
 const contextMenuHandler = () => {
   return new Promise<boolean>(resolve => {
     ipc.once('context-menu:close', () => resolve(false))
@@ -158,6 +152,55 @@ const onAddNewFolder = async () => {
 const onUpdate = async () => {
   await folderStore.updateFoldersTable()
 }
+
+const onDrop = async (e: DragEvent, id: string) => {
+  const payload = e.dataTransfer?.getData('payload')
+
+  if (payload) {
+    const snippetIds = JSON.parse(payload)
+    for (const i of snippetIds) {
+      await snippetStore.patchSnippetsById(i, {
+        folderId: id
+      })
+    }
+    snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+  }
+}
+
+const onDragEnter = (id: string) => {
+  folderStore.hoveredId = id
+}
+
+watch(
+  () => folderStore.hoveredId,
+  v => {
+    if (treeRef.value) {
+      treeRef.value.setHoveredNodeId(v)
+    }
+  }
+)
+
+watch(
+  () => activeTab.value,
+  async v => {
+    if (v === 'library') {
+      if (folderStore.selectedAlias) {
+        snippetStore.setSnippetsByAlias(folderStore.selectedAlias)
+      } else {
+        await snippetStore.setSnippetsByFolderIds(true)
+        return
+      }
+    }
+
+    if (v === 'tags' && tagStore.selectedId) {
+      snippetStore.setSnippetsByTagId(tagStore.selectedId)
+    } else {
+      snippetStore.selected = undefined
+      snippetStore.snippets = []
+      snippetStore.selectedMultiple = []
+    }
+  }
+)
 </script>
 
 <style lang="scss" scoped>

@@ -3,18 +3,20 @@ import { store } from '../../store'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
+import type { DB, Snippet, Tag } from '@shared/types/main/db'
+import { remove } from 'lodash'
 
 export const createApiServer = () => {
   const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
   const app = jsonServer.create()
   const middlewares = jsonServer.defaults()
-  const router = jsonServer.router(db)
+  const router = jsonServer.router<DB>(db)
 
   app.use(jsonServer.bodyParser)
   app.use(middlewares)
 
   app.post('/db/update/:table', (req, res) => {
-    const table = req.params.table
+    const table = req.params.table as keyof DB
     const isAllowedTable = ['folders', 'snippets', 'tags'].includes(table)
 
     if (!isAllowedTable) {
@@ -23,7 +25,7 @@ export const createApiServer = () => {
     if (req.body.value?.length === 0) {
       res.status(400).send("'value' is required")
     } else {
-      const db: any = router.db.getState()
+      const db = router.db.getState()
 
       db[table] = req.body.value
 
@@ -32,6 +34,33 @@ export const createApiServer = () => {
 
       res.sendStatus(200)
     }
+  })
+
+  app.delete('/tags/:id', (req, res) => {
+    const id = req.params.id
+    const tags = router.db.get<Tag[]>('tags').value()
+    const snippets = router.db
+      .get<Snippet[]>('snippets')
+      .filter(i => i.tagsIds.includes(id))
+      .value()
+    const index = tags.findIndex(i => i.id === id)
+
+    snippets.forEach(i => {
+      remove(i.tagsIds, item => item === id)
+    })
+
+    tags.splice(index, 1)
+    router.db.write()
+
+    res.sendStatus(200)
+  })
+
+  app.get('/tags/:id/snippets', (req, res) => {
+    const id = req.params.id
+    const _snippets = router.db.get<Snippet[]>('snippets').value()
+    const snippets = _snippets.filter(i => i.tagsIds.includes(id))
+
+    res.status(200).send(snippets)
   })
 
   app.use((req, res, next) => {

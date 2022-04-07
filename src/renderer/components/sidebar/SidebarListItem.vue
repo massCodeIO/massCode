@@ -93,6 +93,27 @@ const onClickContextMenu = async () => {
     }
   }
 
+  if (props.alias) {
+    const { action, type, data } = await ipc.invoke<
+    ContextMenuResponse,
+    ContextMenuPayload
+    >('context-menu:library', {
+      name: props.name,
+      type: 'trash',
+      data: {}
+    })
+
+    if (action === 'delete') {
+      console.log('trash delete')
+      snippetStore.emptyTrash()
+      await snippetStore.getSnippets()
+
+      if (folderStore.selectedAlias === 'trash') {
+        snippetStore.setSnippetsByAlias('trash')
+      }
+    }
+  }
+
   if (props.isTag) {
     const { action, type, data } = await ipc.invoke<
     ContextMenuResponse,

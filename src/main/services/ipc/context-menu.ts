@@ -275,6 +275,36 @@ export const subscribeToContextMenu = () => {
           }
         ]
 
+        const trashMenu: MenuItemConstructorOptions[] = [
+          {
+            label: 'Empty Trash',
+            click: () => {
+              const buttonId = dialog.showMessageBoxSync({
+                message:
+                  'Are you sure you want to permanently delete all snippets in Trash?',
+                detail: 'You cannot undo this action.',
+                buttons: ['Delete', 'Cancel'],
+                defaultId: 0,
+                cancelId: 1
+              })
+
+              if (buttonId === 0) {
+                resolve({
+                  action: 'delete',
+                  type,
+                  data: undefined
+                })
+              } else {
+                resolve({
+                  action: 'none',
+                  type,
+                  data: undefined
+                })
+              }
+            }
+          }
+        ]
+
         if (type === 'folder') {
           folderMenu.forEach(i => {
             menu.append(new MenuItem(i))
@@ -283,6 +313,12 @@ export const subscribeToContextMenu = () => {
 
         if (type === 'tag') {
           tagMenu.forEach(i => {
+            menu.append(new MenuItem(i))
+          })
+        }
+
+        if (type === 'trash') {
+          trashMenu.forEach(i => {
             menu.append(new MenuItem(i))
           })
         }

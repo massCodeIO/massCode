@@ -259,6 +259,10 @@ export const useSnippetStore = defineStore('snippets', {
     setSnippetById (id: string) {
       const snippet = this.all.find(i => i.id === id)
       if (snippet) this.selected = snippet
+    },
+    async emptyTrash () {
+      const ids = this.all.filter(i => i.isDeleted).map(i => i.id)
+      await this.deleteSnippetsByIds(ids)
     }
   }
 })

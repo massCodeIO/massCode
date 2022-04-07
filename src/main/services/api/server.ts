@@ -36,6 +36,20 @@ export const createApiServer = () => {
     }
   })
 
+  app.post('/snippets/delete', (req, res) => {
+    const ids: string[] = req.body.ids
+    const snippets = router.db.get<Snippet[]>('snippets').value()
+
+    ids.forEach(i => {
+      const index = snippets.findIndex(s => s.id === i)
+      if (index !== -1) snippets.splice(index, 1)
+    })
+
+    router.db.write()
+
+    res.sendStatus(200)
+  })
+
   app.delete('/tags/:id', (req, res) => {
     const id = req.params.id
     const tags = router.db.get<Tag[]>('tags').value()

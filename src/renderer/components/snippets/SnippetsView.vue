@@ -1,5 +1,11 @@
 <template>
-  <div class="snippets-view">
+  <div
+    class="snippets-view"
+    :class="{
+      'with-fragments': snippetStore.isFragmentsShow,
+      'with-tags': snippetStore.isTagsShow
+    }"
+  >
     <template v-if="snippetStore.selected">
       <SnippetHeader />
       <TheEditor
@@ -53,6 +59,25 @@ const lang = computed({
 .snippets-view {
   overflow: hidden;
   padding-top: var(--title-bar-height);
+  display: grid;
+  grid-template-rows: var(--snippets-view-header-top-height) 1fr;
+  &.with-fragments {
+    grid-template-rows:
+      calc(
+        var(--snippets-view-header-top-height) +
+          var(--snippet-header-fragment-height)
+      )
+      1fr;
+  }
+  &.with-tags {
+    grid-template-rows:
+      calc(
+        var(--snippets-view-header-top-height) +
+          var(--snippet-header-fragment-height) +
+          var(--snippet-header-tags-height)
+      )
+      1fr;
+  }
 }
 .no-snippet {
   display: flex;

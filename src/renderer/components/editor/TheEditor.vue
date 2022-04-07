@@ -34,6 +34,7 @@ import ace from 'ace-builds'
 import './module-resolver'
 import type { Language } from '@shared/types/renderer/editor'
 import { languages } from './languages'
+import { useAppStore } from '@/store/app'
 
 interface Props {
   lang: Language
@@ -54,6 +55,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+const appStore = useAppStore()
+
 const editorRef = ref()
 const cursorPosition = reactive({
   row: 0,
@@ -65,6 +68,8 @@ const localLang = computed({
   get: () => props.lang,
   set: v => emit('update:lang', v)
 })
+
+const footerHeight = appStore.sizes.editor.footerHeight + 'px'
 
 const init = async () => {
   editor = ace.edit(editorRef.value, {
@@ -138,7 +143,7 @@ watch(
 .editor {
   padding-top: 4px;
   .main {
-    height: calc(100% - var(--snippets-view-footer-height));
+    height: calc(100% - v-bind(footerHeight));
   }
   .footer {
     height: 30px;

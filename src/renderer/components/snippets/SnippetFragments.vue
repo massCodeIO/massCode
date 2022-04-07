@@ -16,26 +16,30 @@
 </template>
 
 <script setup lang="ts">
+import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 
 const snippetStore = useSnippetStore()
+const appStore = useAppStore()
 
 const onClickFragment = (index: number) => {
   snippetStore.fragment = index
 }
+
+const fragmentHeight = appStore.sizes.editor.fragmentsHeight + 'px'
 </script>
 
 <style lang="scss" scoped>
 .fragments {
   display: flex;
   align-items: center;
-  height: var(--snippet-header-fragment-height);
+  height: v-bind(fragmentHeight);
   overflow-y: auto;
   .item {
     padding: 0 var(--spacing-xs);
     display: flex;
     align-items: center;
-    height: var(--snippet-header-fragment-height);
+    height: v-bind(fragmentHeight);
     width: 100%;
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);

@@ -32,9 +32,14 @@ import { useSnippetStore } from '@/store/snippets'
 import { useClipboard, useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import type { NotificationPayload } from '@shared/types/main'
+import { useAppStore } from '@/store/app'
 
 const snippetStore = useSnippetStore()
+const appStore = useAppStore()
+
 const inputRef = ref<HTMLInputElement>()
+
+const headerHeight = appStore.sizes.editor.titleHeight + 'px'
 
 const name = computed({
   get: () => snippetStore.selected?.name,
@@ -70,7 +75,7 @@ emitter.on('focus:snippet-name', () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: var(--snippets-view-header-top-height);
+    height: v-bind(headerHeight);
   }
   .name {
     font-size: 16px;

@@ -40,7 +40,9 @@
       type="folders"
     >
       <template #action>
-        <UniconsPlus @click="onAddNewFolder" />
+        <AppActionButton>
+          <UniconsPlus @click="onAddNewFolder" />
+        </AppActionButton>
       </template>
       <AppTree
         ref="treeRef"

@@ -11,10 +11,12 @@ import { store } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'
+import { useAppStore } from '@/store/app'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
 const tagStore = useTagStore()
+const appStore = useAppStore()
 
 const init = async () => {
   const storedFolderId = store.app.get('selectedFolderId')
@@ -37,6 +39,8 @@ const init = async () => {
   if (storedFolderAlias) {
     snippetStore.setSnippetsByAlias(storedFolderAlias)
   }
+
+  appStore.isInit = true
 }
 
 const addDevtoolsHost = () => {

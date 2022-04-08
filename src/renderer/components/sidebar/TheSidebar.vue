@@ -35,6 +35,7 @@
     </SidebarList>
     <SidebarList
       v-if="activeTab === 'library'"
+      :is-scrollable="true"
       title="Folders"
     >
       <template #action>
@@ -89,6 +90,7 @@ import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { ipc } from '@/electron'
 import { useTagStore } from '@/store/tags'
+import { emitter } from '@/composable'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -128,6 +130,7 @@ const activeTab = ref<Tab>('library')
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.setSnippetsByFolderIds(true)
+  emitter.emit('folder:click', id)
 }
 
 const onClickSystemFolder = (alias: SystemFolderAlias) => {

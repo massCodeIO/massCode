@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 
 export const useAppStore = defineStore('app', {
   state: (): State => ({
+    isInit: false,
     theme: 'light',
     showTags: true,
     sizes: {

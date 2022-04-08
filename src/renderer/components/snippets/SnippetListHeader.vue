@@ -62,12 +62,15 @@ const onReset = () => {
 .action {
   display: flex;
   align-items: center;
-  padding: var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
+  position: relative;
+  top: var(--title-bar-height-offset);
   input {
     outline: none;
     border: none;
     width: 100%;
     padding: 0 var(--spacing-xs);
+    height: 24px;
   }
   :deep(svg) {
     flex-shrink: 0;

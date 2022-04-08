@@ -30,8 +30,9 @@ const snippetStore = useSnippetStore()
   grid-template-rows: 50px 1fr;
 }
 .header {
-  margin-top: 12px;
+  padding-top: var(--title-bar-height);
   display: flex;
+  border-bottom: 1px solid var(--color-border);
 }
 .body {
   overflow-y: scroll;

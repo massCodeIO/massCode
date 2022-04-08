@@ -16,17 +16,18 @@ import type {
 } from '@shared/types/renderer/store/snippets'
 import { useTagStore } from './tags'
 import { useAppStore } from './app'
+import { uniqBy } from 'lodash'
 
 export const useSnippetStore = defineStore('snippets', {
-  state: () =>
-    ({
-      all: [],
-      snippets: [],
-      selected: undefined,
-      selectedMultiple: [],
-      fragment: 0,
-      isContextState: false
-    } as State),
+  state: (): State => ({
+    all: [],
+    snippets: [],
+    selected: undefined,
+    selectedMultiple: [],
+    fragment: 0,
+    isContextState: false,
+    searchQuery: undefined
+  }),
 
   getters: {
     selectedId: state => state.selected?.id,
@@ -263,6 +264,20 @@ export const useSnippetStore = defineStore('snippets', {
     async emptyTrash () {
       const ids = this.all.filter(i => i.isDeleted).map(i => i.id)
       await this.deleteSnippetsByIds(ids)
+    },
+    search (query: string) {
+      const byName = this.all.filter(i =>
+        i.name.toLowerCase().includes(query.toLowerCase())
+      )
+
+      const byContent = this.all.filter(i => {
+        return i.content.some(c =>
+          c.value.toLowerCase().includes(query.toLowerCase())
+        )
+      })
+
+      this.snippets = uniqBy([...byName, ...byContent], 'id')
+      this.selected = this.snippets[0]
     }
   }
 })

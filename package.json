@@ -41,7 +41,8 @@
     "nanoid": "^3.3.1",
     "pinia": "^2.0.12",
     "vue": "^3.2.26",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.12",
+    "vue3-perfect-scrollbar": "^1.6.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^15.0.0",

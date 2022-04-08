@@ -1,5 +1,10 @@
 <template>
-  <div class="sidebar-list">
+  <div
+    class="sidebar-list"
+    :class="{
+      'is-scrollable': isScrollable
+    }"
+  >
     <div class="sidebar-list__header">
       <div class="sidebar-list__title">
         <h6 v-if="!tabs">
@@ -23,7 +28,17 @@
       class="body"
       :class="{ 'is-system': isSystem }"
     >
-      <slot />
+      <PerfectScrollbar v-if="isScrollable">
+        <div class="inner">
+          <slot />
+        </div>
+      </PerfectScrollbar>
+      <div
+        v-else
+        class="inner"
+      >
+        <slot />
+      </div>
     </div>
   </div>
 </template>
@@ -37,6 +52,7 @@ interface Props {
   tabs?: Tabs[]
   modelValue?: Tab
   isSystem?: boolean
+  isScrollable?: boolean
 }
 
 interface Emits {
@@ -64,8 +80,17 @@ const onClickTab = (tab: Tab) => {
 <style lang="scss" scoped>
 .sidebar-list {
   margin-bottom: var(--spacing-xs);
-  padding: 0 var(--spacing-xs);
-  // height: 100%;
+  .body {
+    .inner {
+      padding: 0 var(--spacing-xs);
+    }
+  }
+  // overflow: hidden;
+  &.is-scrollable {
+    :deep(.ps) {
+      height: calc(100vh - 190px);
+    }
+  }
   &__header {
     display: flex;
     align-items: center;
@@ -85,6 +110,7 @@ const onClickTab = (tab: Tab) => {
   &__title,
   &__action {
     display: inline-block;
+    padding: 0 var(--spacing-xs);
   }
   .tab-header {
     color: var(--color-contrast-low-alt);

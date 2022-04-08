@@ -76,6 +76,8 @@ emitter.on('focus:snippet-name', () => {
     justify-content: space-between;
     align-items: center;
     height: v-bind(headerHeight);
+    position: relative;
+    top: var(--title-bar-height-offset);
   }
   .name {
     font-size: 16px;

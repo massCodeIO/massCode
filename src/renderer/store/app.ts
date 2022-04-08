@@ -8,7 +8,7 @@ export const useAppStore = defineStore('app', {
     sizes: {
       titlebar: 15,
       editor: {
-        titleHeight: 30,
+        titleHeight: 34,
         fragmentsHeight: 25,
         tagsHeight: 40,
         footerHeight: 30

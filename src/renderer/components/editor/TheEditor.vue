@@ -135,6 +135,13 @@ const setValue = () => {
   const pos = editor.session.selection.toJSON()
   editor.setValue(props.modelValue)
   editor.session.selection.fromJSON(pos)
+
+  if (snippetStore.searchQuery) {
+    findAll(snippetStore.searchQuery)
+  } else {
+    editor.moveCursorTo(0, 0)
+    editor.clearSelection()
+  }
 }
 
 const setLang = () => {
@@ -143,6 +150,11 @@ const setLang = () => {
 
 const setTheme = () => {
   editor.session.setMode(`ace/theme/${props.theme}`)
+}
+
+const findAll = (q: string) => {
+  if (q === '') return
+  editor.findAll(q, { caseSensitive: false, preventScroll: true })
 }
 
 const getCursorPosition = () => {
@@ -162,6 +174,13 @@ watch(
 watch(
   () => props.modelValue,
   () => setValue()
+)
+
+watch(
+  () => snippetStore.searchQuery,
+  v => {
+    if (v) findAll(v)
+  }
 )
 
 window.addEventListener('resize', () => {

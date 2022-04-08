@@ -11,4 +11,5 @@ export interface State {
   selectedMultiple: Snippet[]
   fragment: number
   isContextState: boolean
+  searchQuery?: string
 }

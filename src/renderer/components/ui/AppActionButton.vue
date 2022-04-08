@@ -16,7 +16,7 @@
     fill: var(--color-contrast-medium);
   }
   &:hover {
-    background-color: var(--color-contrast-lower);
+    background-color: var(--color-contrast-lower-alt);
   }
 }
 </style>

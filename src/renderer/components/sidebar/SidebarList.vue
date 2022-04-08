@@ -2,7 +2,8 @@
   <div
     class="sidebar-list"
     :class="{
-      'is-scrollable': isScrollable
+      'is-scrollable': isScrollable || modelValue === 'tags',
+      'is-tags': modelValue === 'tags'
     }"
   >
     <div class="sidebar-list__header">
@@ -25,10 +26,11 @@
       </div>
     </div>
     <div
+      ref="listRef"
       class="body"
       :class="{ 'is-system': isSystem }"
     >
-      <PerfectScrollbar v-if="isScrollable">
+      <PerfectScrollbar v-if="isScrollable || modelValue === 'tags'">
         <div class="inner">
           <slot />
         </div>
@@ -53,6 +55,7 @@ interface Props {
   modelValue?: Tab
   isSystem?: boolean
   isScrollable?: boolean
+  type?: 'folders' | 'tags'
 }
 
 interface Emits {
@@ -89,6 +92,11 @@ const onClickTab = (tab: Tab) => {
   &.is-scrollable {
     :deep(.ps) {
       height: calc(100vh - 190px);
+    }
+    &.is-tags {
+      :deep(.ps) {
+        height: calc(100vh - 50px);
+      }
     }
   }
   &__header {

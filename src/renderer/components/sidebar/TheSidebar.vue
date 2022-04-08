@@ -37,6 +37,7 @@
       v-if="activeTab === 'library'"
       :is-scrollable="true"
       title="Folders"
+      type="folders"
     >
       <template #action>
         <UniconsPlus @click="onAddNewFolder" />

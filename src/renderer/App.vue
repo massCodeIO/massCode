@@ -1,13 +1,21 @@
 <template>
   <div class="app-title-bar" />
   <RouterView />
+  <div
+    v-if="isUpdateAvailable"
+    class="update"
+    @click="onClickUpdate"
+  >
+    <span> Update available </span>
+  </div>
 </template>
 
 <script setup lang="ts">
 import router from '@/router'
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import { ipc } from './electron'
 import { useAppStore } from './store/app'
+import { repository } from '../../package.json'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -16,8 +24,14 @@ router.push('/')
 
 const appStore = useAppStore()
 
+const isUpdateAvailable = ref(false)
+
 const setTheme = (theme: string) => {
   document.body.dataset.theme = theme
+}
+
+const onClickUpdate = () => {
+  ipc.invoke('main:open-url', `${repository}/releases`)
 }
 
 watch(
@@ -28,6 +42,10 @@ watch(
 
 ipc.on('main-menu:preferences', () => {
   router.push('/preferences')
+})
+
+ipc.on('main:update-available', async () => {
+  isUpdateAvailable.value = true
 })
 </script>
 
@@ -45,6 +63,32 @@ body {
     -webkit-app-region: drag;
     z-index: 1010;
     transition: all 0.5s;
+  }
+}
+.update {
+  position: absolute;
+  top: 5px;
+  right: var(--spacing-sm);
+  z-index: 1020;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: bold;
+  background: -webkit-linear-gradient(60deg, var(--color-primary), limegreen);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: shine 3s ease infinite;
+}
+
+@keyframes shine {
+  from {
+    background-position: 200%;
+  }
+}
+
+@keyframes zoom {
+  from {
+    background-position: 100%;
   }
 }
 </style>

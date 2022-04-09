@@ -36,6 +36,7 @@
     "@types/universal-analytics": "^0.4.5",
     "@vueuse/core": "^8.1.2",
     "ace-builds": "^1.4.14",
+    "axios": "^0.26.1",
     "electron-store": "^8.0.1",
     "fs-extra": "^10.0.1",
     "lowdb": "^3.0.0",

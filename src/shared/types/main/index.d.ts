@@ -37,6 +37,8 @@ type MainAction =
   | 'notification'
   | 'open-dialog'
   | 'open-message-box'
+  | 'update-available'
+  | 'open-url'
 
 export type ContextMenuChannel = CombineWith<ChannelSubject, 'context-menu'>
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
 import path from 'path'
 import os from 'os'
 import { store } from './store'
@@ -8,6 +8,7 @@ import { debounce } from 'lodash'
 import { subscribeToChannels } from './services/ipc'
 import { mainMenu } from './menu/main'
 import { subscribeToDialog } from './services/ipc/dialog'
+import { checkForUpdate } from './services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -43,6 +44,8 @@ function createWindow () {
 
   mainWindow.on('resize', () => storeBounds(mainWindow))
   mainWindow.on('move', () => storeBounds(mainWindow))
+
+  checkForUpdate()
 }
 
 const storeBounds = debounce((mainWindow: BrowserWindow) => {
@@ -67,6 +70,10 @@ app.on('window-all-closed', function () {
 
 ipcMain.handle('main:restart-api', () => {
   apiServer.restart()
+})
+
+ipcMain.handle('main:open-url', (event, payload) => {
+  shell.openExternal(payload as string)
 })
 
 ipcMain.on('request-info', event => {

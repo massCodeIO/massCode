@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import path from 'path'
 import os from 'os'
 import { store } from './store'
@@ -6,6 +6,8 @@ import { ApiServer } from './services/api/server'
 import { createDb } from './services/db'
 import { debounce } from 'lodash'
 import { subscribeToChannels } from './services/ipc'
+import { mainMenu } from './menu/main'
+import { subscribeToDialog } from './services/ipc/dialog'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -29,6 +31,8 @@ function createWindow () {
       webSecurity: false
     }
   })
+
+  Menu.setApplicationMenu(mainMenu)
 
   if (isDev) {
     const rendererPort = process.argv[2]

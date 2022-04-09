@@ -138,9 +138,6 @@ const setValue = () => {
 
   if (snippetStore.searchQuery) {
     findAll(snippetStore.searchQuery)
-  } else {
-    editor.moveCursorTo(0, 0)
-    editor.clearSelection()
   }
 }
 

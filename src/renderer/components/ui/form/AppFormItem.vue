@@ -1,0 +1,42 @@
+<template>
+  <div class="form-item">
+    <div class="label">
+      {{ label }}
+    </div>
+    <div class="inner">
+      <div class="body">
+        <slot />
+      </div>
+      <div
+        v-if="$slots.desc"
+        class="desc"
+      >
+        <slot name="desc" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+interface Props {
+  label: string
+}
+
+defineProps<Props>()
+</script>
+
+<style lang="scss" scoped>
+.form-item {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  .inner {
+    display: flex;
+    flex-flow: column;
+  }
+  .body {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+}
+</style>

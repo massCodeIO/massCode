@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { migrate } from './services/db'
+import { isDbExist, migrate, move } from './services/db'
 import { store } from './store'
 import type { ElectronBridge } from '@shared/types/main'
 
@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('electron', {
     }
   },
   db: {
-    migrate: (path: string) => migrate(path)
+    migrate: path => migrate(path),
+    move: (from, to) => move(from, to),
+    isExist: path => isDbExist(path)
   }
 } as ElectronBridge)

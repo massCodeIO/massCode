@@ -2,6 +2,8 @@ import type { IpcRendererEvent } from 'electron'
 import type { AppStore, PreferencesStore } from './store'
 import type { DB, Folder, Tag, Snippet, FolderTree } from './db'
 
+type CombineWith<T extends string, U extends string> = `${U}:${T}`
+
 type ChannelSubject =
   | 'snippet'
   | 'snippet-fragment'
@@ -27,17 +29,16 @@ export type ContextMenuType =
   | 'favorites'
   | 'tag'
 
-type CombineWithChannelSubject<
-  T extends ChannelSubject,
-  U extends string
-> = `${U}:${T}`
+type MainMenuAction = 'preferences' | 'new-snippet'
 
-export type ContextMenuChannel = CombineWithChannelSubject<
-ChannelSubject,
-'context-menu'
->
+type MainAction = 'restart' | 'restart-api' | 'notification' | 'open-dialog'
 
-export type Channel = 'restart' | 'notification' | ContextMenuChannel
+export type ContextMenuChannel = CombineWith<ChannelSubject, 'context-menu'>
+
+export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
+export type MainChannel = CombineWith<MainAction, 'main'>
+
+export type Channel = ContextMenuChannel | MainMenuChannel | MainChannel
 export interface ContextMenuPayload {
   name?: string
   type: ContextMenuType
@@ -85,5 +86,7 @@ export interface ElectronBridge {
   }
   db: {
     migrate: (path: string) => void
+    move: (from: string, to: string) => Promise<void>
+    isExist: (path: string) => boolean
   }
 }

@@ -10,9 +10,16 @@
   Inspired by applications like SnippetsLab and Quiver.
 </p>
 
-> ☝️ massCode is currently in development, and there is no build to download yet. I started from scratch.
+<p align="center">
+  <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/massCodeIO/massCode">
+  <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/massCodeIO/massCode/total">
+  <img alt="GitHub" src="https://img.shields.io/github/license/massCodeIO/massCode">
+</p>
 
-massCode v1 is available for [download](https://github.com/antonreshetov/massCode).
+<p align="center">
+  <a href="https://github.com/massCodeIO/massCode/releases">Latest release</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
+</p>
+
 
 ## Supporting
 
@@ -32,3 +39,6 @@ massCode allows you to organize snippets using multi-level folders as well as ta
 ## Follow
  - News and updates on [Twitter](https://twitter.com/anton_reshetov).
  - [Discussions](https://github.com/massCodeIO/massCode/discussions).
+
+## Other
+You can also [download](https://github.com/antonreshetov/massCode) massCode v1.

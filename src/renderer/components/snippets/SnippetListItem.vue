@@ -285,13 +285,9 @@ const onDragEnd = () => {
   }
   &.is-highlighted {
     &::before {
-      top: 0px;
-      left: 10px;
-      right: 10px;
-      bottom: 2px;
       border-radius: 5px;
-      // z-index: 3;
       outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
     }
   }
 }

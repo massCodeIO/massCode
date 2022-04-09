@@ -72,6 +72,7 @@ emitter.on('folder:click', () => {
   padding: var(--spacing-xs) 0;
   :deep(.ps) {
     height: calc(100vh - 60px);
+    padding-top: 2px;
   }
 }
 </style>

@@ -28,6 +28,9 @@ export default {
     target: ['snap'],
     icon: 'config/icons'
   },
+  extraMetadata: {
+    main: 'src/main/index.js'
+  },
   files: [
     '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}',
     '!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}',
@@ -36,15 +39,21 @@ export default {
     '!config',
     '!README.md',
     '!scripts',
-    '!config',
     '!dist',
     '!src',
     '!build',
-    'build/src/main/**/*',
-    'build/src/renderer/**/*',
+    '!hero.png',
+    '!commitlint.config.js',
+    '!tsconfig.electron.json',
+    '!tsconfig.json',
     {
       from: 'build/renderer',
       to: 'renderer',
+      filter: ['**/*']
+    },
+    {
+      from: 'build/src',
+      to: 'src',
       filter: ['**/*']
     }
   ]

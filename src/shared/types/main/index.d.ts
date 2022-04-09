@@ -31,7 +31,12 @@ export type ContextMenuType =
 
 type MainMenuAction = 'preferences' | 'new-snippet'
 
-type MainAction = 'restart' | 'restart-api' | 'notification' | 'open-dialog'
+type MainAction =
+  | 'restart'
+  | 'restart-api'
+  | 'notification'
+  | 'open-dialog'
+  | 'open-message-box'
 
 export type ContextMenuChannel = CombineWith<ChannelSubject, 'context-menu'>
 
@@ -54,6 +59,12 @@ export interface ContextMenuResponse {
 
 export interface NotificationPayload {
   body: string
+}
+
+export interface MessageBoxRequest {
+  message: string
+  detail: string
+  buttons: string[]
 }
 
 interface EventCallback {
@@ -85,7 +96,7 @@ export interface ElectronBridge {
     preferences: StoreProperties<PreferencesStore>
   }
   db: {
-    migrate: (path: string) => void
+    migrate: (path: string) => Promise<void>
     move: (from: string, to: string) => Promise<void>
     isExist: (path: string) => boolean
   }

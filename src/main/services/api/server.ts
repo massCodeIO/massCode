@@ -4,95 +4,133 @@ import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
 import type { DB, Snippet, Tag } from '@shared/types/main/db'
+import type { Server } from 'http'
+import type { Socket } from 'net'
 import { remove } from 'lodash'
 
-export const createApiServer = () => {
-  const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
-  const app = jsonServer.create()
-  const middlewares = jsonServer.defaults()
-  const router = jsonServer.router<DB>(db)
+interface ServerWithDestroy extends Server {
+  destroy: Function
+}
 
-  app.use(jsonServer.bodyParser)
-  app.use(middlewares)
+export class ApiServer {
+  server: ServerWithDestroy
+  connections: Record<string, Socket> = {}
 
-  app.post('/db/update/:table', (req, res) => {
-    const table = req.params.table as keyof DB
-    const isAllowedTable = ['folders', 'snippets', 'tags'].includes(table)
+  constructor () {
+    this.server = this.create()
+  }
 
-    if (!isAllowedTable) {
-      return res.status(400).send('Table is not defined in DB')
-    }
-    if (req.body.value?.length === 0) {
-      res.status(400).send("'value' is required")
-    } else {
-      const db = router.db.getState()
+  create (): ServerWithDestroy {
+    const db = path.resolve(store.preferences.get('storagePath') + '/db.json')
+    const app = jsonServer.create()
+    const middlewares = jsonServer.defaults()
+    const router = jsonServer.router<DB>(db)
 
-      db[table] = req.body.value
+    app.use(jsonServer.bodyParser)
+    app.use(middlewares)
 
-      router.db.setState(db)
+    app.post('/db/update/:table', (req, res) => {
+      const table = req.params.table as keyof DB
+      const isAllowedTable = ['folders', 'snippets', 'tags'].includes(table)
+
+      if (!isAllowedTable) {
+        return res.status(400).send('Table is not defined in DB')
+      }
+      if (req.body.value?.length === 0) {
+        res.status(400).send("'value' is required")
+      } else {
+        const db = router.db.getState()
+
+        db[table] = req.body.value
+
+        router.db.setState(db)
+        router.db.write()
+
+        res.sendStatus(200)
+      }
+    })
+
+    app.post('/snippets/delete', (req, res) => {
+      const ids: string[] = req.body.ids
+      const snippets = router.db.get<Snippet[]>('snippets').value()
+
+      ids.forEach(i => {
+        const index = snippets.findIndex(s => s.id === i)
+        if (index !== -1) snippets.splice(index, 1)
+      })
+
       router.db.write()
 
       res.sendStatus(200)
-    }
-  })
-
-  app.post('/snippets/delete', (req, res) => {
-    const ids: string[] = req.body.ids
-    const snippets = router.db.get<Snippet[]>('snippets').value()
-
-    ids.forEach(i => {
-      const index = snippets.findIndex(s => s.id === i)
-      if (index !== -1) snippets.splice(index, 1)
     })
 
-    router.db.write()
+    app.delete('/tags/:id', (req, res) => {
+      const id = req.params.id
+      const tags = router.db.get<Tag[]>('tags').value()
+      const snippets = router.db
+        .get<Snippet[]>('snippets')
+        .filter(i => i.tagsIds.includes(id))
+        .value()
+      const index = tags.findIndex(i => i.id === id)
 
-    res.sendStatus(200)
-  })
+      snippets.forEach(i => {
+        remove(i.tagsIds, item => item === id)
+      })
 
-  app.delete('/tags/:id', (req, res) => {
-    const id = req.params.id
-    const tags = router.db.get<Tag[]>('tags').value()
-    const snippets = router.db
-      .get<Snippet[]>('snippets')
-      .filter(i => i.tagsIds.includes(id))
-      .value()
-    const index = tags.findIndex(i => i.id === id)
+      tags.splice(index, 1)
+      router.db.write()
 
-    snippets.forEach(i => {
-      remove(i.tagsIds, item => item === id)
+      res.sendStatus(200)
     })
 
-    tags.splice(index, 1)
-    router.db.write()
+    app.get('/tags/:id/snippets', (req, res) => {
+      const id = req.params.id
+      const _snippets = router.db.get<Snippet[]>('snippets').value()
+      const snippets = _snippets.filter(i => i.tagsIds.includes(id))
 
-    res.sendStatus(200)
-  })
+      res.status(200).send(snippets)
+    })
 
-  app.get('/tags/:id/snippets', (req, res) => {
-    const id = req.params.id
-    const _snippets = router.db.get<Snippet[]>('snippets').value()
-    const snippets = _snippets.filter(i => i.tagsIds.includes(id))
+    app.use((req, res, next) => {
+      if (req.method === 'POST') {
+        req.body.id = nanoid(8)
+        req.body.createdAt = Date.now().valueOf()
+        req.body.updatedAt = Date.now().valueOf()
+      }
 
-    res.status(200).send(snippets)
-  })
+      if (req.method === 'PATCH' || req.method === 'PUT') {
+        req.body.updatedAt = Date.now().valueOf()
+      }
+      next()
+    })
 
-  app.use((req, res, next) => {
-    if (req.method === 'POST') {
-      req.body.id = nanoid(8)
-      req.body.createdAt = Date.now().valueOf()
-      req.body.updatedAt = Date.now().valueOf()
+    app.use(router)
+
+    const server = app.listen(API_PORT, () => {
+      console.log(`API server is running on port ${API_PORT}`)
+    }) as ServerWithDestroy
+
+    server.on('connection', conn => {
+      const key = conn.remoteAddress + ':' + conn.remotePort
+      this.connections[key] = conn
+      conn.on('close', () => {
+        delete this.connections[key]
+      })
+    })
+
+    server.destroy = () => {
+      server.close()
+      for (const key in this.connections) {
+        this.connections[key].destroy()
+      }
     }
 
-    if (req.method === 'PATCH' || req.method === 'PUT') {
-      req.body.updatedAt = Date.now().valueOf()
-    }
-    next()
-  })
+    return server
+  }
 
-  app.use(router)
-
-  app.listen(API_PORT, () => {
-    console.log(`API server is running on port ${API_PORT}`)
-  })
+  restart () {
+    console.log('API server restart...')
+    this.server.destroy()
+    this.server = this.create()
+  }
 }

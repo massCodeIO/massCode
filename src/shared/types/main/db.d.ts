@@ -6,7 +6,6 @@ export interface Folder {
   name: string
   defaultLanguage: Language
   parentId: string | null
-  index: number
   isOpen: boolean
   isSystem: boolean
   createdAt: number

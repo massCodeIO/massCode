@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { watch } from 'vue'
+import { ipc } from './electron'
 import { useAppStore } from './store/app'
 
 // По какой то причине необходимо явно установить роут в '/'
@@ -24,6 +25,10 @@ watch(
   () => setTheme(appStore.theme),
   { immediate: true }
 )
+
+ipc.on('main-menu:preferences', () => {
+  router.push('/preferences')
+})
 </script>
 
 <style lang="scss">

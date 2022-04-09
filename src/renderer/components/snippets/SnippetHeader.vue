@@ -58,7 +58,7 @@ const onAddNewFragment = () => {
 const onCopySnippet = () => {
   const { copy } = useClipboard({ source: snippetStore.currentContent })
   copy()
-  ipc.invoke<any, NotificationPayload>('notification', {
+  ipc.invoke<any, NotificationPayload>('main:notification', {
     body: 'Snippet copied'
   })
 }

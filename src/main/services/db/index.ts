@@ -6,7 +6,7 @@ import { nanoid } from 'nanoid'
 import type { Folder, Snippet, Tag } from '@shared/types/main/db'
 import { oldLanguageMap } from '../../../renderer/components/editor/languages'
 
-const fileDb = store.preferences.get('storagePath') + '/db.json'
+const DB_NAME = 'db.json'
 
 const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
   {
@@ -14,7 +14,6 @@ const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
     name: 'Inbox',
     defaultLanguage: 'plain_text',
     parentId: null,
-    index: 0,
     isOpen: false,
     isSystem: true,
     createdAt: new Date().valueOf(),
@@ -32,6 +31,8 @@ const DEFAULT_FOLDER = {
   createdAt: new Date().valueOf(),
   updatedAt: new Date().valueOf()
 }
+
+const fileDb = store.preferences.get('storagePath') + `/${DB_NAME}`
 
 export const createDb = () => {
   if (fs.existsSync(fileDb)) return
@@ -53,6 +54,23 @@ export const createDb = () => {
 const writeToFile = (db: object) => {
   const data = JSON.stringify(db, null, 2)
   fs.writeFileSync(fileDb, data)
+}
+
+export const move = async (from: string, to: string) => {
+  const src = `${from}/${DB_NAME}`
+  const dist = `${to}/${DB_NAME}`
+
+  if (isDbExist(to)) {
+    throw Error(
+      'Folder already contains db file. Please select another folder.'
+    )
+  }
+  await fs.move(src, dist)
+}
+
+export const isDbExist = (path: string) => {
+  const files = fs.readdirSync(path)
+  return files.some(i => i === DB_NAME)
 }
 
 export const migrate = async (path: string) => {

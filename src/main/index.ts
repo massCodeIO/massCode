@@ -1,24 +1,23 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import path from 'path'
 import os from 'os'
 import { store } from './store'
-import { createApiServer } from './services/api/server'
+import { ApiServer } from './services/api/server'
 import { createDb } from './services/db'
 import { debounce } from 'lodash'
 import { subscribeToChannels } from './services/ipc'
+import { mainMenu } from './menu/main'
+import { subscribeToDialog } from './services/ipc/dialog'
 
 const isDev = process.env.NODE_ENV === 'development'
 
 createDb()
-createApiServer()
+const apiServer = new ApiServer()
+
 subscribeToChannels()
+subscribeToDialog()
 
 function createWindow () {
-  if (isDev) {
-    store.preferences.set('storagePath', os.homedir() + '/massCode/dev')
-    store.preferences.set('backupPath', os.homedir() + '/massCode/dev')
-  }
-
   const bounds = store.app.get('bounds')
   const mainWindow = new BrowserWindow({
     width: 1000,
@@ -32,6 +31,8 @@ function createWindow () {
       webSecurity: false
     }
   })
+
+  Menu.setApplicationMenu(mainMenu)
 
   if (isDev) {
     const rendererPort = process.argv[2]
@@ -64,10 +65,8 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
-ipcMain.handle('restart', () => {
-  console.log('App is restart...')
-  app.relaunch()
-  app.exit()
+ipcMain.handle('main:restart-api', () => {
+  apiServer.restart()
 })
 
 ipcMain.on('request-info', event => {

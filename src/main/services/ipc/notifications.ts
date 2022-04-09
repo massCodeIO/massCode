@@ -4,7 +4,7 @@ import { ipcMain, Notification } from 'electron'
 export const subscribeToNotification = () => {
   if (!Notification.isSupported()) return
 
-  ipcMain.handle<NotificationPayload>('notification', (event, payload) => {
+  ipcMain.handle<NotificationPayload>('main:notification', (event, payload) => {
     return new Promise(resolve => {
       const { body } = payload
       const notification = new Notification({

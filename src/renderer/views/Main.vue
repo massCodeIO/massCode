@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '@/electron'
+import { store, track } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'
@@ -53,6 +53,7 @@ const addDevtoolsHost = () => {
 
 addDevtoolsHost()
 init()
+track('main')
 </script>
 
 <style scoped lang="scss">

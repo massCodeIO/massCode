@@ -12,5 +12,6 @@ export interface State {
   theme: string
   sizes: AppSizes
   showTags: boolean
+  version: string
   isInit: boolean
 }

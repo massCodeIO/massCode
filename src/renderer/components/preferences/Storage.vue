@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ipc, store, db } from '@/electron'
+import { ipc, store, db, track } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import type { MessageBoxRequest } from '@shared/types/main'
@@ -53,6 +53,7 @@ const onClickMove = async () => {
     await db.move(storagePath.value, path)
     console.log('aas')
     setStorageAndRestartApi(path)
+    track('app/move-storage')
   } catch (err) {
     const e = err as Error
     ipc.invoke('main:notification', {
@@ -69,6 +70,7 @@ const onClickOpen = async () => {
   if (isExist) {
     setStorageAndRestartApi(path, true)
     snippetStore.getSnippets()
+    track('app/open-storage')
   } else {
     const message = 'Folder not contain "db.json".'
     ipc.invoke('main:notification', {
@@ -99,6 +101,7 @@ const onClickMigrate = async () => {
       body: 'DB successfully migrated.'
     })
     snippetStore.getSnippets()
+    track('app/migrate')
   } catch (err) {
     const e = err as Error
     ipc.invoke('main:notification', {

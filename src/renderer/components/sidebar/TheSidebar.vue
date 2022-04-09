@@ -91,7 +91,7 @@ import Trash from '~icons/unicons/trash'
 import LabelAlt from '~icons/unicons/label-alt'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc } from '@/electron'
+import { ipc, track } from '@/electron'
 import { useTagStore } from '@/store/tags'
 import { emitter } from '@/composable'
 
@@ -153,6 +153,7 @@ const contextMenuHandler = () => {
 
 const onAddNewFolder = async () => {
   await folderStore.addNewFolder()
+  track('folders/add-new')
 }
 
 const onUpdate = async () => {

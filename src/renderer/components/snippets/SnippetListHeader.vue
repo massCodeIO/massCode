@@ -28,6 +28,7 @@ import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
+import { track } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
@@ -38,6 +39,7 @@ const query = computed({
     snippetStore.searchQuery = v
     snippetStore.setSnippetsByAlias('all')
     snippetStore.search(v!)
+    track('snippets/search')
   }, 300)
 })
 
@@ -50,6 +52,7 @@ const onAddNewSnippet = async () => {
   await snippetStore.getSnippets()
 
   emitter.emit('focus:snippet-name', true)
+  track('snippets/add-new')
 }
 
 const onReset = () => {

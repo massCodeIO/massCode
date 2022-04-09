@@ -1,8 +1,8 @@
 import type { IpcRendererEvent } from 'electron'
+import type { TrackEvents } from '../main/analytics'
 import type { AppStore, PreferencesStore } from './store'
-import type { DB, Folder, Tag, Snippet, FolderTree } from './db'
 
-type CombineWith<T extends string, U extends string> = `${U}:${T}`
+export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
 type ChannelSubject =
   | 'snippet'
@@ -100,4 +100,5 @@ export interface ElectronBridge {
     move: (from: string, to: string) => Promise<void>
     isExist: (path: string) => boolean
   }
+  track: (event: TrackEvents, payload?: string) => void
 }

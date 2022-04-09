@@ -2,6 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { isDbExist, migrate, move } from './services/db'
 import { store } from './store'
 import type { ElectronBridge } from '@shared/types/main'
+import { version } from '../../package.json'
+import type { TrackEvents } from '@shared/types/main/analytics'
+import { analytics } from './services/analytics'
+
+const isDev = process.env.NODE_ENV === 'development'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
@@ -25,5 +30,14 @@ contextBridge.exposeInMainWorld('electron', {
     migrate: path => migrate(path),
     move: (from, to) => move(from, to),
     isExist: path => isDbExist(path)
+  },
+  track: (event: TrackEvents, payload?: string) => {
+    if (isDev) return
+
+    const path = payload
+      ? `${version}/${event}/${payload}`
+      : `${version}/${event}`
+
+    analytics.pageview(path).send()
   }
 } as ElectronBridge)

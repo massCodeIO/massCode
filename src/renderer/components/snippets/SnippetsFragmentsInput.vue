@@ -25,7 +25,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useSnippetStore } from '@/store/snippets'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
-import { ipc } from '@/electron'
+import { ipc, track } from '@/electron'
 import type {
   ContextMenuPayload,
   ContextMenuResponse
@@ -74,6 +74,7 @@ const onClickContext = async () => {
   if (action === 'delete') {
     await snippetStore.deleteCurrentSnippetFragmentByIndex(props.index)
     snippetStore.fragment = snippetStore.fragmentCount! - 1
+    track('snippets/delete-fragment')
   }
 }
 

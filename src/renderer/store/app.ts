@@ -1,5 +1,6 @@
 import type { State } from '@shared/types/renderer/store/app'
 import { defineStore } from 'pinia'
+import { version } from '../../../package.json'
 
 export const useAppStore = defineStore('app', {
   state: (): State => ({
@@ -14,6 +15,7 @@ export const useAppStore = defineStore('app', {
         tagsHeight: 40,
         footerHeight: 30
       }
-    }
+    },
+    version
   })
 })

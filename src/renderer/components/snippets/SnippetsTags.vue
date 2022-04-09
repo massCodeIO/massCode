@@ -5,6 +5,7 @@
 </template>
 
 <script setup lang="ts">
+import { track } from '@/electron'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'
@@ -24,6 +25,7 @@ const tags = computed({
 
       if (tag) {
         tagsIds.push(tag.id)
+        track('snippets/add-tag')
       } else {
         if (!i.text) return
 
@@ -37,6 +39,8 @@ const tags = computed({
         } else {
           snippetStore.selected!.tags = [newTag]
         }
+
+        track('tags/add-new')
       }
     }
 

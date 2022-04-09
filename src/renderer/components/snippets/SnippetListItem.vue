@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ipc } from '@/electron'
+import { ipc, track } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import type {
@@ -146,7 +146,10 @@ const onClickContextMenu = async () => {
   }
 
   if (action === 'delete') {
-    if (type === 'folder') await moveToTrash()
+    if (type === 'folder') {
+      await moveToTrash()
+      track('snippets/move-to-trash')
+    }
 
     if (type === 'favorites' || type === 'all' || type === 'inbox') {
       await moveToTrash(type)
@@ -165,6 +168,7 @@ const onClickContextMenu = async () => {
 
   if (action === 'duplicate') {
     await snippetStore.duplicateSnippetById(props.id)
+    track('snippets/duplicate')
 
     if (type === 'folder') {
       await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
@@ -180,6 +184,12 @@ const onClickContextMenu = async () => {
     snippetStore.patchSnippetsById(props.id, {
       isFavorites: data
     })
+
+    if (data) {
+      track('snippets/add-to-favorites')
+    } else {
+      track('snippets/delete-from-favorites')
+    }
 
     if (type === 'folder') {
       await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)

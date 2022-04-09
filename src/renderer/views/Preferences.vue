@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { track } from '@/electron'
 import router from '@/router'
 import { ref } from 'vue'
 
@@ -28,6 +29,8 @@ const activeMenu = ref('storage')
 const toHome = () => {
   router.push('/')
 }
+
+track('preferences')
 </script>
 
 <style lang="scss" scoped>

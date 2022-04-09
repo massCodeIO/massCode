@@ -30,7 +30,7 @@ import { ref } from 'vue'
 import Folder from '~icons/unicons/folder'
 import AngleRight from '~icons/unicons/angle-right'
 import { onClickOutside } from '@vueuse/core'
-import { ipc } from '@/electron'
+import { ipc, track } from '@/electron'
 import type {
   ContextMenuPayload,
   ContextMenuResponse,
@@ -80,16 +80,17 @@ const onClickContextMenu = async () => {
 
     if (action === 'new') {
       await folderStore.addNewFolder()
+      track('folders/add-new')
     }
 
     if (action === 'delete') {
       await folderStore.deleteFoldersById(props.id!)
-      console.log(action, type)
+      track('folders/delete')
     }
 
     if (action === 'update:language') {
-      console.log(data)
       await folderStore.patchFoldersById(props.id!, { defaultLanguage: data })
+      track('folders/set-language', data)
     }
   }
 
@@ -104,9 +105,9 @@ const onClickContextMenu = async () => {
     })
 
     if (action === 'delete') {
-      console.log('trash delete')
       snippetStore.emptyTrash()
       await snippetStore.getSnippets()
+      track('app/empty-trash')
 
       if (folderStore.selectedAlias === 'trash') {
         snippetStore.setSnippetsByAlias('trash')
@@ -126,6 +127,7 @@ const onClickContextMenu = async () => {
 
     if (action === 'delete') {
       await tagStore.deleteTagById(props.id!)
+      track('tags/delete')
 
       if (props.id === tagStore.selectedId) {
         tagStore.selectedId = undefined

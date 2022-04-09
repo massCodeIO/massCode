@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { emitter } from '@/composable'
-import { ipc } from '@/electron'
+import { ipc, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useClipboard, useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
@@ -53,6 +53,7 @@ const name = computed({
 const onAddNewFragment = () => {
   snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
   snippetStore.fragment = snippetStore.fragmentCount!
+  track('snippets/add-fragment')
 }
 
 const onCopySnippet = () => {
@@ -61,6 +62,7 @@ const onCopySnippet = () => {
   ipc.invoke<any, NotificationPayload>('main:notification', {
     body: 'Snippet copied'
   })
+  track('snippets/copy')
 }
 
 emitter.on('focus:snippet-name', () => {

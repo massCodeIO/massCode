@@ -36,6 +36,7 @@ import type { Language } from '@shared/types/renderer/editor'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
+import { track } from '@/electron'
 
 interface Props {
   lang: Language
@@ -143,6 +144,7 @@ const setValue = () => {
 
 const setLang = () => {
   editor.session.setMode(`ace/mode/${localLang.value}`)
+  track('snippets/set-language', localLang.value)
 }
 
 const setTheme = () => {

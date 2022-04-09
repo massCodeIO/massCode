@@ -24,7 +24,6 @@ MenuItemConstructorOptions
     label: 'Preferences',
     accelerator: 'CommandOrControl+,',
     click: () => {
-      console.log('ss')
       BrowserWindow.getFocusedWindow()?.webContents.send(
         'main-menu:preferences'
       )

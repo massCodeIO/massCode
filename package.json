@@ -15,6 +15,7 @@
     "lint": "eslint --ext .js,.ts,.vue . src",
     "lint:fix": "eslint --ext .js,.ts,.vue . --fix src",
     "release": "bumpp -c 'build: release v' -t",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "prepare": "husky install"
   },
   "repository": "https://github.com/massCodeIO/massCode",

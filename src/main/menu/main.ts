@@ -1,7 +1,8 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
-import { app, BrowserWindow } from 'electron'
+import { dialog, app, BrowserWindow } from 'electron'
 import { version, author } from '../../../package.json'
+import os from 'os'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
@@ -80,6 +81,25 @@ const helpMenu: MenuItemConstructorOptions[] = [
   {
     label: 'Toogle Dev tools',
     role: 'toggleDevTools'
+  },
+  {
+    label: 'About',
+    click () {
+      dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
+        title: 'massCode',
+        message: 'massCode',
+        type: 'info',
+        detail: `
+          Version: ${version}
+          Electron: ${process.versions.electron}
+          Chrome: ${process.versions.chrome}
+          Node.js: ${process.versions.node}
+          V8: ${process.versions.v8}
+          OS: ${os.type()} ${os.arch()} ${os.release()}
+          ©2019-${year} Anton Reshetov <reshetov.art@gmail.com>
+        `
+      })
+    }
   }
 ]
 

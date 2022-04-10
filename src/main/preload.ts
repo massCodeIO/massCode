@@ -5,6 +5,7 @@ import type { ElectronBridge } from '@shared/types/main'
 import { version } from '../../package.json'
 import type { TrackEvents } from '@shared/types/main/analytics'
 import { analytics } from './services/analytics'
+import { platform } from 'os'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -39,5 +40,6 @@ contextBridge.exposeInMainWorld('electron', {
       : `${version}/${event}`
 
     analytics.pageview(path).send()
-  }
+  },
+  platform: () => platform()
 } as ElectronBridge)

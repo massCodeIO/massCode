@@ -1,4 +1,4 @@
-import { createPopupMenu } from '../../components/menu'
+import { createMenu } from '../../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { BrowserWindow, MenuItem, dialog, ipcMain } from 'electron'
 import type {
@@ -14,7 +14,7 @@ export const subscribeToContextMenu = () => {
       const { name, type } = payload
 
       return new Promise(resolve => {
-        createPopupMenu([
+        const menu = createMenu([
           {
             label: `Rename "${name}"`,
             click: () =>
@@ -45,6 +45,8 @@ export const subscribeToContextMenu = () => {
             }
           }
         ])
+
+        menu.popup({ window: BrowserWindow.getFocusedWindow()! })
       })
     }
   )
@@ -55,7 +57,7 @@ export const subscribeToContextMenu = () => {
       const { name, type, selectedCount } = payload
 
       return new Promise(resolve => {
-        const menu = createPopupMenu([])
+        const menu = createMenu([])
 
         const defaultMenu: MenuItemConstructorOptions[] = [
           {
@@ -151,18 +153,21 @@ export const subscribeToContextMenu = () => {
         if (type === 'folder' || type === 'all' || type === 'inbox') {
           defaultMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 
         if (type === 'favorites') {
           favoritesMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 
         if (type === 'trash') {
           trashMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 
@@ -181,7 +186,7 @@ export const subscribeToContextMenu = () => {
       const { name, type, data } = payload
 
       return new Promise(resolve => {
-        const menu = createPopupMenu([])
+        const menu = createMenu([])
 
         const createLanguageMenu = () => {
           return languages.map(i => {
@@ -308,18 +313,21 @@ export const subscribeToContextMenu = () => {
         if (type === 'folder') {
           folderMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 
         if (type === 'tag') {
           tagMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 
         if (type === 'trash') {
           trashMenu.forEach(i => {
             menu.append(new MenuItem(i))
+            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
         }
 

@@ -1,3 +1,12 @@
+# [2.0.0-beta.2](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2022-04-10)
+
+
+### Features
+
+* support win ([#13](https://github.com/massCodeIO/massCode/issues/13)) ([edc114c](https://github.com/massCodeIO/massCode/commit/edc114cd4995913f039da0197c2560c5a99828f1))
+
+
+
 # [2.0.0-beta.1](https://github.com/massCodeIO/massCode/compare/9fd7085f113be898b9bde3a78eca1eff56c7a391...v2.0.0-beta.1) (2022-04-09)
 
 

@@ -11,6 +11,7 @@ import { subscribeToDialog } from './services/ipc/dialog'
 import { checkForUpdate } from './services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
+const isMac = process.platform === 'darwin'
 
 createDb()
 const apiServer = new ApiServer()
@@ -24,7 +25,7 @@ function createWindow () {
     width: 1000,
     height: 600,
     ...bounds,
-    titleBarStyle: 'hidden',
+    titleBarStyle: isMac ? 'hidden' : 'default',
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.js'),
       nodeIntegration: true,

@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { ref, watch } from 'vue'
-import { ipc, platform } from './electron'
+import { ipc } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 

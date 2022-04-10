@@ -1,5 +1,8 @@
 <template>
-  <div class="app-title-bar" />
+  <div
+    class="app-title-bar"
+    :class="{ 'is-win': appStore.platform === 'win32' }"
+  />
   <RouterView />
   <div
     v-if="isUpdateAvailable"
@@ -13,7 +16,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { ref, watch } from 'vue'
-import { ipc } from './electron'
+import { ipc, platform } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 
@@ -63,6 +66,9 @@ body {
     -webkit-app-region: drag;
     z-index: 1010;
     transition: all 0.5s;
+    &.is-win {
+      border-top: 1px solid var(--color-border);
+    }
   }
 }
 .update {

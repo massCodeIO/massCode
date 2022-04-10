@@ -1,5 +1,5 @@
 import { spawn } from 'child_process'
-import type { ChildProcess, SpawnOptionsWithoutStdio } from 'child_process'
+import type { ChildProcess } from 'child_process'
 import path from 'path'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
@@ -23,9 +23,9 @@ async function startRenderer () {
 function startElectron () {
   if (electronProcess) return
 
-  const args = ['.', rendererPort] as SpawnOptionsWithoutStdio
-
-  electronProcess = spawn('electron', args)
+  electronProcess = spawn('electron', ['.', (rendererPort || 0).toString()], {
+    shell: true
+  })
 
   electronProcess?.stdout?.on('data', data => {
     console.log(chalk.blueBright('[Electron] ') + chalk.white(data.toString()))
@@ -33,6 +33,10 @@ function startElectron () {
 
   electronProcess?.stderr?.on('data', data => {
     console.log(chalk.redBright('[Electron] ') + chalk.white(data.toString()))
+  })
+
+  electronProcess?.on('error', error => {
+    console.log(chalk.redBright('[Electron] ', error))
   })
 }
 

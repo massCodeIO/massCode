@@ -9,6 +9,7 @@ export interface AppSizes {
 }
 
 export interface State {
+  platform: NodeJS.Platform
   theme: string
   sizes: AppSizes
   showTags: boolean

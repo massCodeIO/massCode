@@ -7,7 +7,7 @@
   "main": "build/src/main/index.js",
   "scripts": {
     "dev": "run-p dev:watch dev:vue-devtools",
-    "dev:watch": "tsc-watch -p tsconfig.electron.json --onFirstSuccess 'npm run dev:server'",
+    "dev:watch": "tsc-watch -p tsconfig.electron.json --onFirstSuccess \"npm run dev:server\"",
     "dev:server": "node build/scripts/dev-server.js",
     "dev:vue-devtools": "vue-devtools",
     "build:ts": "tsc -p tsconfig.electron.json",

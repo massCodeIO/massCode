@@ -1,3 +1,4 @@
+import { platform } from '@/electron'
 import type { State } from '@shared/types/renderer/store/app'
 import { defineStore } from 'pinia'
 import { version } from '../../../package.json'
@@ -16,6 +17,7 @@ export const useAppStore = defineStore('app', {
         footerHeight: 30
       }
     },
-    version
+    version,
+    platform: platform()
   })
 })

@@ -1,5 +1,8 @@
 <template>
-  <div class="app-title-bar" />
+  <div
+    class="app-title-bar"
+    :class="{ 'is-win': appStore.platform === 'win32' }"
+  />
   <RouterView />
   <div
     v-if="isUpdateAvailable"
@@ -63,6 +66,9 @@ body {
     -webkit-app-region: drag;
     z-index: 1010;
     transition: all 0.5s;
+    &.is-win {
+      border-top: 1px solid var(--color-border);
+    }
   }
 }
 .update {

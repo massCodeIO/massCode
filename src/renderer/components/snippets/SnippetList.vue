@@ -39,7 +39,7 @@ const listRef = ref<HTMLElement>()
 
 const setScrollPosition = (offset: number) => {
   const ps = listRef.value?.querySelector<HTMLElement>('.ps')
-  ps!.scrollTop = offset
+  if (ps) ps.scrollTop = offset
 }
 
 watch(

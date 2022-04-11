@@ -45,7 +45,7 @@ const folderStore = useFolderStore()
 const storagePath = ref(store.preferences.get('storagePath'))
 
 const onClickMove = async () => {
-  const path = await ipc.invoke<string>('main:open-dialog', {})
+  const path = await ipc.invoke<any, string>('main:open-dialog', {})
 
   if (!path) return
 
@@ -64,7 +64,7 @@ const onClickMove = async () => {
 }
 
 const onClickOpen = async () => {
-  const path = await ipc.invoke<string>('main:open-dialog', {})
+  const path = await ipc.invoke<any, string>('main:open-dialog', {})
   const isExist = db.isExist(path)
 
   if (isExist) {
@@ -81,7 +81,7 @@ const onClickOpen = async () => {
 }
 
 const onClickMigrate = async () => {
-  const state = await ipc.invoke<boolean, MessageBoxRequest>(
+  const state = await ipc.invoke<MessageBoxRequest, boolean>(
     'main:open-message-box',
     {
       message: 'Are you sure you want to migrate from v1',
@@ -94,7 +94,7 @@ const onClickMigrate = async () => {
   if (!state) return
 
   try {
-    const path = await ipc.invoke<string>('main:open-dialog', {})
+    const path = await ipc.invoke<any, string>('main:open-dialog', {})
     await db.migrate(path)
     ipc.invoke('main:restart-api', {})
     ipc.invoke('main:notification', {

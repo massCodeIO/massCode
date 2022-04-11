@@ -38,7 +38,7 @@ import { ipc, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useClipboard, useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import type { NotificationPayload } from '@shared/types/main'
+import type { NotificationRequest } from '@shared/types/main'
 import { useAppStore } from '@/store/app'
 
 const snippetStore = useSnippetStore()
@@ -66,7 +66,7 @@ const onAddNewFragment = () => {
 const onCopySnippet = () => {
   const { copy } = useClipboard({ source: snippetStore.currentContent })
   copy()
-  ipc.invoke<any, NotificationPayload>('main:notification', {
+  ipc.invoke<any, NotificationRequest>('main:notification', {
     body: 'Snippet copied'
   })
   track('snippets/copy')

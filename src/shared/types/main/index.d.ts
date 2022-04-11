@@ -46,7 +46,7 @@ export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type MainChannel = CombineWith<MainAction, 'main'>
 
 export type Channel = ContextMenuChannel | MainMenuChannel | MainChannel
-export interface ContextMenuPayload {
+export interface ContextMenuRequest {
   name?: string
   type: ContextMenuType
   data?: any
@@ -59,7 +59,7 @@ export interface ContextMenuResponse {
   data: any
 }
 
-export interface NotificationPayload {
+export interface NotificationRequest {
   body: string
 }
 
@@ -89,7 +89,7 @@ interface StoreProperties<T> {
 
 export interface ElectronBridge {
   ipc: {
-    invoke<T, U = any>(channel: Channel, payload: U): Promise<T>
+    invoke<T, U = any>(channel: Channel, payload: T): Promise<U>
     on(channel: Channel, cb: EventCallback): void
     once(channel: Channel, cb: EventCallback): void
   }

@@ -27,7 +27,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { ipc, track } from '@/electron'
 import type {
-  ContextMenuPayload,
+  ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
 
@@ -59,7 +59,7 @@ onClickOutside(inputRef, async () => {
 })
 
 const onClickContext = async () => {
-  const { action } = await ipc.invoke<ContextMenuResponse, ContextMenuPayload>(
+  const { action } = await ipc.invoke<ContextMenuRequest, ContextMenuResponse>(
     'context-menu:snippet-fragment',
     {
       name: props.name,

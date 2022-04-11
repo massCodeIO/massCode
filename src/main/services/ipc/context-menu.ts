@@ -2,13 +2,13 @@ import { createMenu } from '../../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { BrowserWindow, MenuItem, dialog, ipcMain } from 'electron'
 import type {
-  ContextMenuPayload,
+  ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
 import { languages } from '../../../renderer/components/editor/languages'
 
 export const subscribeToContextMenu = () => {
-  ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
+  ipcMain.handle<ContextMenuRequest, ContextMenuResponse>(
     'context-menu:snippet-fragment',
     async (event, payload) => {
       const { name, type } = payload
@@ -51,7 +51,7 @@ export const subscribeToContextMenu = () => {
     }
   )
 
-  ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
+  ipcMain.handle<ContextMenuRequest, ContextMenuResponse>(
     'context-menu:snippet',
     async (event, payload) => {
       const { name, type, selectedCount } = payload
@@ -180,7 +180,7 @@ export const subscribeToContextMenu = () => {
     }
   )
 
-  ipcMain.handle<ContextMenuPayload, ContextMenuResponse>(
+  ipcMain.handle<ContextMenuRequest, ContextMenuResponse>(
     'context-menu:library',
     async (event, payload) => {
       const { name, type, data } = payload

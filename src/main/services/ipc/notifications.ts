@@ -1,10 +1,10 @@
-import type { NotificationPayload } from '@shared/types/main'
+import type { NotificationRequest } from '@shared/types/main'
 import { ipcMain, Notification } from 'electron'
 
 export const subscribeToNotification = () => {
   if (!Notification.isSupported()) return
 
-  ipcMain.handle<NotificationPayload>('main:notification', (event, payload) => {
+  ipcMain.handle<NotificationRequest>('main:notification', (event, payload) => {
     return new Promise(resolve => {
       const { body } = payload
       const notification = new Notification({

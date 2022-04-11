@@ -35,7 +35,11 @@ const DEFAULT_FOLDER = {
 const fileDb = store.preferences.get('storagePath') + `/${DB_NAME}`
 
 export const createDb = () => {
-  if (fs.existsSync(fileDb)) return
+  if (fs.existsSync(fileDb)) {
+    return
+  } else {
+    fs.ensureFileSync(fileDb)
+  }
 
   const db = {
     folders: [...DEFAULT_SYSTEM_FOLDERS, DEFAULT_FOLDER],

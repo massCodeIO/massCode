@@ -36,7 +36,7 @@ import { ipc, track } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import type {
-  ContextMenuPayload,
+  ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
 import { onClickOutside } from '@vueuse/core'
@@ -116,8 +116,8 @@ const onClickContextMenu = async () => {
   })
 
   const { action, data, type } = await ipc.invoke<
-  ContextMenuResponse,
-  ContextMenuPayload
+  ContextMenuRequest,
+  ContextMenuResponse
   >('context-menu:snippet', {
     name: props.name,
     type: folderStore.selectedAlias ?? 'folder',

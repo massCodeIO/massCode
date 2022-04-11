@@ -10,6 +10,7 @@ export interface State {
   selected?: Snippet
   selectedMultiple: Snippet[]
   fragment: number
-  isContextState: boolean
   searchQuery?: string
+  isContextState: boolean
+  isMarkdownPreview: boolean
 }

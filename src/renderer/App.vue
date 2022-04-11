@@ -19,6 +19,7 @@ import { ref, watch } from 'vue'
 import { ipc } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
+import { useSnippetStore } from './store/snippets'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -26,6 +27,7 @@ import { repository } from '../../package.json'
 router.push('/')
 
 const appStore = useAppStore()
+const snippetStore = useSnippetStore()
 
 const isUpdateAvailable = ref(false)
 
@@ -41,6 +43,13 @@ watch(
   () => appStore.theme,
   () => setTheme(appStore.theme),
   { immediate: true }
+)
+
+watch(
+  () => snippetStore.selectedId,
+  () => {
+    snippetStore.isMarkdownPreview = false
+  }
 )
 
 ipc.on('main-menu:preferences', () => {

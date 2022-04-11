@@ -10,10 +10,12 @@
       <TheEditor
         v-model="snippet"
         v-model:lang="lang"
+        :snippet-id="snippetStore.selectedId!"
+        :fragment-index="snippetStore.fragment"
+        :is-search-mode="snippetStore.searchQuery?.length > 0"
         :fragments="snippetStore.isFragmentsShow"
       />
     </template>
-
     <div
       v-else-if="isShowPlaceholder"
       class="placeholder"

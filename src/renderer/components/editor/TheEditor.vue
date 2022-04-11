@@ -42,7 +42,10 @@ interface Props {
   lang: Language
   theme: string
   fragments: boolean
+  fragmentIndex: number
+  snippetId: string
   modelValue: string
+  isSearchMode: boolean
 }
 
 interface Emits {
@@ -151,6 +154,15 @@ const setTheme = () => {
   editor.session.setMode(`ace/theme/${props.theme}`)
 }
 
+const resetUndoStack = () => {
+  editor.getSession().setUndoManager(new ace.UndoManager())
+}
+
+const setCursorToStartAndClearSelection = () => {
+  editor.moveCursorTo(0, 0)
+  editor.clearSelection()
+}
+
 const findAll = (q: string) => {
   if (q === '') return
   editor.findAll(q, { caseSensitive: false, preventScroll: true })
@@ -179,6 +191,16 @@ watch(
   () => snippetStore.searchQuery,
   v => {
     if (v) findAll(v)
+  }
+)
+
+watch(
+  () => [props.snippetId, props.fragmentIndex],
+  () => {
+    resetUndoStack()
+    if (!props.isSearchMode) {
+      setCursorToStartAndClearSelection()
+    }
   }
 )
 

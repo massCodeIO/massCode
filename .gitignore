@@ -7,3 +7,4 @@ build
 .DS_Store
 src/renderer/types/auto-imports.d.ts
 src/renderer/types/components.d.ts
+*.log

@@ -1,3 +1,13 @@
+# [2.0.0-beta.3](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2022-04-11)
+
+
+### Bug Fixes
+
+* **main: db:** create app folder [#14](https://github.com/massCodeIO/massCode/issues/14) ([750637d](https://github.com/massCodeIO/massCode/commit/750637d068dae50dc10cc7308e9f5862754f0177))
+* **snippets:** scroll to top ([2dbecaf](https://github.com/massCodeIO/massCode/commit/2dbecaff987d9376e62fab0e98aa9194ef01d2d3))
+
+
+
 # [2.0.0-beta.2](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2022-04-10)
 
 

@@ -10,11 +10,18 @@
         >
       </div>
       <div class="action">
-        <AppActionButton>
-          <UniconsArrow @click="onCopySnippet" />
+        <AppActionButton
+          v-if="snippetStore.currentLanguage === 'markdown'"
+          @click="onClickMarkdownPreview"
+        >
+          <UniconsEye v-if="!snippetStore.isMarkdownPreview" />
+          <UniconsEyeSlash v-else />
         </AppActionButton>
-        <AppActionButton>
-          <UniconsPlus @click="onAddNewFragment" />
+        <AppActionButton @click="onCopySnippet">
+          <UniconsArrow />
+        </AppActionButton>
+        <AppActionButton @click="onAddNewFragment">
+          <UniconsPlus />
         </AppActionButton>
       </div>
     </div>
@@ -63,6 +70,10 @@ const onCopySnippet = () => {
     body: 'Snippet copied'
   })
   track('snippets/copy')
+}
+
+const onClickMarkdownPreview = () => {
+  snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
 }
 
 emitter.on('focus:snippet-name', () => {

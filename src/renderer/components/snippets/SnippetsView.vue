@@ -8,12 +8,17 @@
     <template v-if="snippetStore.selected">
       <SnippetHeader />
       <TheEditor
+        v-if="!snippetStore.isMarkdownPreview"
         v-model="snippet"
         v-model:lang="lang"
         :snippet-id="snippetStore.selectedId!"
         :fragment-index="snippetStore.fragment"
         :is-search-mode="snippetStore.searchQuery?.length > 0"
         :fragments="snippetStore.isFragmentsShow"
+      />
+      <TheMarkdown
+        v-else
+        :value="snippetStore.currentContent!"
       />
     </template>
     <div

@@ -25,8 +25,9 @@ export const useSnippetStore = defineStore('snippets', {
     selected: undefined,
     selectedMultiple: [],
     fragment: 0,
+    searchQuery: undefined,
     isContextState: false,
-    searchQuery: undefined
+    isMarkdownPreview: false
   }),
 
   getters: {

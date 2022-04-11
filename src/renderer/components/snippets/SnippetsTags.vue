@@ -34,12 +34,6 @@ const tags = computed({
 
         tagsIds.push(newTag.id)
 
-        if (snippetStore.selected?.tags) {
-          snippetStore.selected.tags.push(newTag)
-        } else {
-          snippetStore.selected!.tags = [newTag]
-        }
-
         track('tags/add-new')
       }
     }

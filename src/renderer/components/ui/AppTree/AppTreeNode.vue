@@ -58,8 +58,8 @@
         :nodes="node.children"
         :hovered-node-id="hoveredNodeId"
       >
-        <!-- eslint-disable-next-line vue/no-template-shadow -->
-        <template #default="{ node, deep, hoveredNodeId }">
+        <!-- eslint-disable-next-line vue/no-template-shadow-->
+        <template #default="{ node, deep }">
           <slot
             :node="node"
             :deep="deep"

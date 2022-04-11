@@ -190,7 +190,7 @@ export const useSnippetStore = defineStore('snippets', {
       body.content = content
 
       await this.patchSnippetsById(id, body)
-      await this.getSnippetsByFolderIds(folderStore.selectedIds)
+      await this.getSnippetsByFolderIds(folderStore.selectedIds!)
       await this.getSnippetsById(id)
     },
     async deleteCurrentSnippetFragmentByIndex (index: number) {

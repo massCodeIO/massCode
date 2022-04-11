@@ -99,7 +99,7 @@ const onClickContextMenu = async () => {
     ContextMenuRequest,
     ContextMenuResponse
     >('context-menu:library', {
-      name2: props.name,
+      name: props.name,
       type: 'trash',
       data: {}
     })

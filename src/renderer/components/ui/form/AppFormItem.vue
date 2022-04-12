@@ -28,7 +28,7 @@ defineProps<Props>()
 <style lang="scss" scoped>
 .form-item {
   display: grid;
-  grid-template-columns: 100px 1fr;
+  grid-template-columns: 120px 1fr;
   .inner {
     display: flex;
     flex-flow: column;

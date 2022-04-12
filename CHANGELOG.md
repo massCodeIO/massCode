@@ -1,3 +1,19 @@
+# [2.0.0-beta.4](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2022-04-12)
+
+
+### Bug Fixes
+
+* **editor:** undo/redo stack ([84096c4](https://github.com/massCodeIO/massCode/commit/84096c47bcf88b49229997d592f473f23812672e))
+* **snippets:** sort in 'All snippets' ([ab799d5](https://github.com/massCodeIO/massCode/commit/ab799d5df478bed659d56cb6529c1dd589355c0f))
+
+
+### Features
+
+* add editor preferences ([#18](https://github.com/massCodeIO/massCode/issues/18)) ([d1fe23f](https://github.com/massCodeIO/massCode/commit/d1fe23fd510445426424bef85df2e3cf01c086e4))
+* **snippets:** add markdown preview ([#15](https://github.com/massCodeIO/massCode/issues/15)) ([c208871](https://github.com/massCodeIO/massCode/commit/c2088712ffbc38c2ce2593ec50dbaeaa6291bd7a))
+
+
+
 # [2.0.0-beta.3](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2022-04-11)
 
 

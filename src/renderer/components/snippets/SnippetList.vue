@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { emitter } from '@/composable'
+import { emitter, setScrollPosition } from '@/composable'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { onMounted, ref, watch } from 'vue'
@@ -44,11 +44,6 @@ const appStore = useAppStore()
 const listRef = ref()
 const bodyRef = ref<HTMLElement>()
 const gutterRef = ref()
-
-const setScrollPosition = (offset: number) => {
-  const ps = bodyRef.value?.querySelector<HTMLElement>('.ps')
-  if (ps) ps.scrollTop = offset
-}
 
 onMounted(() => {
   interact(listRef.value).resizable({
@@ -71,12 +66,12 @@ watch(
     const el = document.querySelector<HTMLElement>(
       `[data-id='${snippetStore.selectedId!}']`
     )
-    if (el?.offsetTop) setScrollPosition(el.offsetTop)
+    if (el?.offsetTop) setScrollPosition(bodyRef.value!, el.offsetTop)
   }
 )
 
 emitter.on('folder:click', () => {
-  setScrollPosition(0)
+  setScrollPosition(bodyRef.value!, 0)
 })
 </script>
 

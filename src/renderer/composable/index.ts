@@ -45,3 +45,8 @@ export const onAddNewFolder = async () => {
 
   track('folders/add-new')
 }
+
+export const setScrollPosition = (el: HTMLElement, offset: number) => {
+  const ps = el.querySelector('.ps')
+  if (ps) ps.scrollTop = offset
+}

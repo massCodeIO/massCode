@@ -7,12 +7,18 @@
       </AppActionButton>
     </div>
     <div class="body">
-      <AppMenu v-model="activeMenu">
+      <AppMenu v-model="appStore.selectedPreferencesMenu">
         <AppMenuItem
           name="Storage"
           value="storage"
         >
           <Storage />
+        </AppMenuItem>
+        <AppMenuItem
+          name="Editor"
+          value="editor"
+        >
+          <EditorPreferences />
         </AppMenuItem>
       </AppMenu>
     </div>
@@ -22,9 +28,9 @@
 <script setup lang="ts">
 import { track } from '@/electron'
 import router from '@/router'
-import { ref } from 'vue'
+import { useAppStore } from '@/store/app'
 
-const activeMenu = ref('storage')
+const appStore = useAppStore()
 
 const toHome = () => {
   router.push('/')

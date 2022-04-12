@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { ref, watch } from 'vue'
-import { ipc } from './electron'
+import { ipc, store } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
@@ -31,6 +31,13 @@ const snippetStore = useSnippetStore()
 
 const isUpdateAvailable = ref(false)
 
+const init = () => {
+  const isValid = appStore.isEditorSettingsValid(
+    store.preferences.get('editor')
+  )
+  if (isValid) appStore.editor = store.preferences.get('editor')
+}
+
 const setTheme = (theme: string) => {
   document.body.dataset.theme = theme
 }
@@ -38,6 +45,8 @@ const setTheme = (theme: string) => {
 const onClickUpdate = () => {
   ipc.invoke('main:open-url', `${repository}/releases`)
 }
+
+init()
 
 watch(
   () => appStore.theme,

@@ -1,5 +1,8 @@
 <template>
-  <div class="sidebar">
+  <div
+    ref="sidebarRef"
+    class="sidebar"
+  >
     <SidebarList
       v-model="activeTab"
       :tabs="tabs"
@@ -70,14 +73,14 @@
       </AppTree>
     </SidebarList>
     <div
-      ref="gutter"
+      ref="gutterRef"
       class="gutter-line"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type {
   SidebarSystemFolder,
   SystemFolderAlias,
@@ -91,15 +94,20 @@ import Trash from '~icons/unicons/trash'
 import LabelAlt from '~icons/unicons/label-alt'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc, track } from '@/electron'
+import { ipc, store, track } from '@/electron'
 import { useTagStore } from '@/store/tags'
 import { emitter } from '@/composable'
+import interact from 'interactjs'
+import { useAppStore } from '@/store/app'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
 const tagStore = useTagStore()
+const appStore = useAppStore()
 
 const treeRef = ref()
+const sidebarRef = ref()
+const gutterRef = ref()
 
 const systemFolders = computed(() => {
   const folders = folderStore.system.map(i => {
@@ -177,6 +185,21 @@ const onDrop = async (e: DragEvent, id: string) => {
 const onDragEnter = (id: string) => {
   folderStore.hoveredId = id
 }
+
+onMounted(() => {
+  interact(sidebarRef.value).resizable({
+    allowFrom: gutterRef.value,
+    onmove: e => {
+      const { pageX } = e
+      const minWidth = 100
+
+      if (pageX < minWidth) return
+      const width = Math.floor(pageX)
+      appStore.sizes.sidebar = width
+      store.app.set('sidebarWidth', width)
+    }
+  })
+})
 
 watch(
   () => folderStore.hoveredId,

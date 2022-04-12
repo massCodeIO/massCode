@@ -6,6 +6,8 @@ export default new Store<AppStore>({
   cwd: 'v2',
 
   defaults: {
-    bounds: {}
+    bounds: {},
+    sidebarWidth: 180,
+    snippetListWidth: 250
   }
 })

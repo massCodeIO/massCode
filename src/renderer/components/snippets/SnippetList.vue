@@ -7,7 +7,7 @@
       <SnippetListHeader />
     </div>
     <div
-      ref="listRef"
+      ref="bodyRef"
       class="body"
     >
       <PerfectScrollbar>
@@ -23,6 +23,10 @@
         />
       </PerfectScrollbar>
     </div>
+    <div
+      ref="gutterRef"
+      class="gutter-line"
+    />
   </div>
 </template>
 
@@ -30,17 +34,36 @@
 import { emitter } from '@/composable'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import interact from 'interactjs'
+import { store } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
 
-const listRef = ref<HTMLElement>()
+const listRef = ref()
+const bodyRef = ref<HTMLElement>()
+const gutterRef = ref()
 
 const setScrollPosition = (offset: number) => {
-  const ps = listRef.value?.querySelector<HTMLElement>('.ps')
+  const ps = bodyRef.value?.querySelector<HTMLElement>('.ps')
   if (ps) ps.scrollTop = offset
 }
+
+onMounted(() => {
+  interact(listRef.value).resizable({
+    allowFrom: gutterRef.value,
+    onmove: e => {
+      const { pageX } = e
+      const minWidth = appStore.sizes.sidebar + 100
+      const width = Math.floor(pageX - appStore.sizes.sidebar)
+
+      if (pageX < minWidth) return
+      appStore.sizes.snippetList = width
+      store.app.set('snippetListWidth', width)
+    }
+  })
+})
 
 watch(
   () => appStore.isInit,
@@ -59,6 +82,7 @@ emitter.on('folder:click', () => {
 
 <style lang="scss" scoped>
 .snippet-list {
+  position: relative;
   border-right: 1px solid var(--color-border);
   display: grid;
   grid-template-rows: 50px 1fr 10px;

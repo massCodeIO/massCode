@@ -68,6 +68,7 @@ const onReset = () => {
   padding: 0 var(--spacing-sm);
   position: relative;
   top: var(--title-bar-height-offset);
+  width: 100%;
   input {
     outline: none;
     border: none;

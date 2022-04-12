@@ -36,6 +36,9 @@ const init = () => {
     store.preferences.get('editor')
   )
   if (isValid) appStore.editor = store.preferences.get('editor')
+
+  appStore.sizes.sidebar = store.app.get('sidebarWidth')
+  appStore.sizes.snippetList = store.app.get('snippetListWidth')
 }
 
 const setTheme = (theme: string) => {

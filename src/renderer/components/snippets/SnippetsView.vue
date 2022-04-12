@@ -13,7 +13,7 @@
         v-model:lang="lang"
         :snippet-id="snippetStore.selectedId!"
         :fragment-index="snippetStore.fragment"
-        :is-search-mode="snippetStore.searchQuery?.length > 0"
+        :is-search-mode="isSearchMode"
         :fragments="snippetStore.isFragmentsShow"
       />
       <TheMarkdown
@@ -61,6 +61,10 @@ const isShowPlaceholder = computed(() => {
   return (
     snippetStore.selectedMultiple.length || snippetStore.snippets.length === 0
   )
+})
+
+const isSearchMode = computed(() => {
+  return snippetStore.searchQuery ? snippetStore.searchQuery.length > 0 : false
 })
 </script>
 

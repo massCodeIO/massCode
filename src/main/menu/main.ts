@@ -110,10 +110,42 @@ if (isDev) {
   })
 }
 
+const fileMenu: MenuItemConstructorOptions[] = [
+  {
+    label: 'New Snippet',
+    accelerator: 'CommandOrControl+N',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:new-snippet'
+      )
+    }
+  },
+  {
+    label: 'New Fragment',
+    accelerator: 'CommandOrControl+T',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:new-fragment'
+      )
+    }
+  },
+  {
+    label: 'New Folder',
+    accelerator: 'CommandOrControl+Shift+N',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:new-folder')
+    }
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: 'massCode',
     submenu: isMac ? appMenuMac : appMenu
+  },
+  {
+    label: 'File',
+    submenu: fileMenu
   },
   {
     label: 'Edit',

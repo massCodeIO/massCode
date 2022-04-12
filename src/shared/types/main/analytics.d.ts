@@ -20,6 +20,7 @@ type AppEvents =
   | 'open-storage'
   | 'migrate'
   | 'update'
+  | 'install'
   | 'empty-trash'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>

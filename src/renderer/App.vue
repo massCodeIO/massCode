@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { ref, watch } from 'vue'
-import { ipc, store } from './electron'
+import { ipc, store, track } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
@@ -35,10 +35,13 @@ const init = () => {
   const isValid = appStore.isEditorSettingsValid(
     store.preferences.get('editor')
   )
+
   if (isValid) appStore.editor = store.preferences.get('editor')
 
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
+
+  trackAppUpdate()
 }
 
 const setTheme = (theme: string) => {
@@ -47,6 +50,19 @@ const setTheme = (theme: string) => {
 
 const onClickUpdate = () => {
   ipc.invoke('main:open-url', `${repository}/releases`)
+  track('app/update')
+}
+
+const trackAppUpdate = () => {
+  const installedVersion = store.app.get('version')
+
+  if (!installedVersion) track('app/install')
+
+  if (installedVersion && appStore.version !== installedVersion) {
+    track('app/update', appStore.version)
+  }
+
+  store.app.set('version', appStore.version)
 }
 
 init()

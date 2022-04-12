@@ -6,6 +6,7 @@ export interface AppStore {
   selectedSnippetId?: string
   sidebarWidth: number
   snippetListWidth: number
+  version?: string
 }
 
 interface Editor {

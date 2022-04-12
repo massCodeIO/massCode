@@ -38,11 +38,12 @@ export const onAddNewFragment = () => {
 
 export const onAddNewFolder = async () => {
   const folderStore = useFolderStore()
+  const snippetStore = useSnippetStore()
 
   const folder = await folderStore.addNewFolder()
-  console.log(folder.id)
-  emitter.emit('scroll-to:folder', folder.id)
+  snippetStore.selected = undefined
 
+  emitter.emit('scroll-to:folder', folder.id)
   track('folders/add-new')
 }
 

@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { emitter } from '@/composable'
+import { emitter, onAddNewFragment } from '@/composable'
 import { ipc, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useClipboard, useDebounceFn } from '@vueuse/core'
@@ -56,12 +56,6 @@ const name = computed({
     300
   )
 })
-
-const onAddNewFragment = () => {
-  snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
-  snippetStore.fragment = snippetStore.fragmentCount!
-  track('snippets/add-fragment')
-}
 
 const onCopySnippet = () => {
   const { copy } = useClipboard({ source: snippetStore.currentContent })

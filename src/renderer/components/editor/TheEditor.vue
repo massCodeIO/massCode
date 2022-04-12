@@ -213,10 +213,6 @@ watch(
   }
 )
 
-appStore.$subscribe(mutation => {
-  console.log(mutation)
-})
-
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()
 })

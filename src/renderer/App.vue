@@ -20,6 +20,8 @@ import { ipc, store, track } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
+import { useFolderStore } from './store/folders'
+import { onAddNewSnippet, onAddNewFragment } from '@/composable'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -28,6 +30,7 @@ router.push('/')
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
+const folderStore = useFolderStore()
 
 const isUpdateAvailable = ref(false)
 
@@ -86,6 +89,18 @@ ipc.on('main-menu:preferences', () => {
 
 ipc.on('main:update-available', async () => {
   isUpdateAvailable.value = true
+})
+
+ipc.on('main-menu:new-folder', async () => {
+  await folderStore.addNewFolder()
+})
+
+ipc.on('main-menu:new-snippet', async () => {
+  await onAddNewSnippet()
+})
+
+ipc.on('main-menu:new-fragment', async () => {
+  onAddNewFragment()
 })
 </script>
 

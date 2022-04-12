@@ -21,7 +21,7 @@ import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
 import { useFolderStore } from './store/folders'
-import { onAddNewSnippet, onAddNewFragment } from '@/composable'
+import { onAddNewSnippet, onAddNewFragment, emitter } from '@/composable'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -92,7 +92,8 @@ ipc.on('main:update-available', async () => {
 })
 
 ipc.on('main-menu:new-folder', async () => {
-  await folderStore.addNewFolder()
+  const folder = await folderStore.addNewFolder()
+  emitter.emit('scroll-to:folder', folder.id)
 })
 
 ipc.on('main-menu:new-snippet', async () => {

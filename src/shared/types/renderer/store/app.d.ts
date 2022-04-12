@@ -1,3 +1,5 @@
+import type { Ace } from 'ace-builds'
+
 export interface AppSizes {
   titlebar: number
   editor: {
@@ -8,11 +10,19 @@ export interface AppSizes {
   }
 }
 
+export interface EditorSettings {
+  showInvisibles: boolean
+  fontSize: number
+  fontFamily: string
+  wrap: Ace.EditSessionOptions['wrap']
+  tabSize: number
+}
 export interface State {
   platform: NodeJS.Platform
   theme: string
   sizes: AppSizes
   showTags: boolean
   version: string
+  editor: EditorSettings
   isInit: boolean
 }

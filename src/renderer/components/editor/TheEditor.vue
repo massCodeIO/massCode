@@ -103,9 +103,12 @@ const init = async () => {
   editor = ace.edit(editorRef.value, {
     theme: `ace/theme/${props.theme}`,
     useWorker: false,
-    fontSize: 12,
+    fontSize: appStore.editor.fontSize,
+    fontFamily: appStore.editor.fontFamily,
     printMargin: false,
-    tabSize: 2
+    tabSize: appStore.editor.tabSize,
+    wrap: appStore.editor.wrap,
+    showInvisibles: appStore.editor.showInvisibles
   })
 
   setValue()
@@ -152,6 +155,12 @@ const setLang = () => {
 
 const setTheme = () => {
   editor.session.setMode(`ace/theme/${props.theme}`)
+}
+const setOption = <T extends keyof Ace.EditSessionOptions>(
+  name: T,
+  value: Ace.EditSessionOptions[T]
+) => {
+  editor.session.setOption(name, value)
 }
 
 const resetUndoStack = () => {
@@ -203,6 +212,10 @@ watch(
     }
   }
 )
+
+appStore.$subscribe(mutation => {
+  console.log(mutation)
+})
 
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()

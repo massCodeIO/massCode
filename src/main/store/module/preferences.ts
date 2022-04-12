@@ -13,6 +13,13 @@ export default new Store<PreferencesStore>({
 
   defaults: {
     storagePath: defaultPath,
-    backupPath
+    backupPath,
+    editor: {
+      wrap: 'free',
+      fontFamily: 'SF Mono, Consolas, Menlo',
+      fontSize: 12,
+      showInvisibles: false,
+      tabSize: 2
+    }
   }
 })

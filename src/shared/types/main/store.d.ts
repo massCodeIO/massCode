@@ -6,7 +6,15 @@ export interface AppStore {
   selectedSnippetId?: string
 }
 
+interface Editor {
+  fontFamily: string
+  fontSize: number
+  showInvisibles: boolean
+  tabSize: number
+  wrap: string
+}
 export interface PreferencesStore {
   storagePath: string
   backupPath: string
+  editor: Editor
 }

@@ -14,6 +14,12 @@
         >
           <Storage />
         </AppMenuItem>
+        <AppMenuItem
+          name="Editor"
+          value="editor"
+        >
+          <EditorPreferences />
+        </AppMenuItem>
       </AppMenu>
     </div>
   </div>

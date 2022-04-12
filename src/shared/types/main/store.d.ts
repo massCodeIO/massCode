@@ -4,6 +4,8 @@ export interface AppStore {
   selectedFolderAlias?: string
   selectedFolderIds?: string[]
   selectedSnippetId?: string
+  sidebarWidth: number
+  snippetListWidth: number
 }
 
 interface Editor {

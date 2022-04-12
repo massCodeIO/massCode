@@ -2,6 +2,8 @@ import type { Ace } from 'ace-builds'
 
 export interface AppSizes {
   titlebar: number
+  sidebar: number
+  snippetList: number
   editor: {
     titleHeight: number
     fragmentsHeight: number

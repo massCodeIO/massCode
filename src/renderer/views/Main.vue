@@ -12,11 +12,15 @@ import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'
 import { useAppStore } from '@/store/app'
+import { computed } from 'vue'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
 const tagStore = useTagStore()
 const appStore = useAppStore()
+
+const sidebarWidth = computed(() => appStore.sizes.sidebar + 'px')
+const snippetListWidth = computed(() => appStore.sizes.snippetList + 'px')
 
 const init = async () => {
   const storedFolderId = store.app.get('selectedFolderId')
@@ -62,7 +66,7 @@ track('main')
   height: 100vh;
   background-color: var(--color-bg);
   overflow: hidden;
-  grid-template-columns: var(--sidebar-width) var(--snippets-list-width) 1fr;
+  grid-template-columns: v-bind(sidebarWidth) v-bind(snippetListWidth) 1fr;
 }
 .update-available {
   position: absolute;

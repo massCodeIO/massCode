@@ -24,5 +24,6 @@ export interface State {
   showTags: boolean
   version: string
   editor: EditorSettings
+  selectedPreferencesMenu: string
   isInit: boolean
 }

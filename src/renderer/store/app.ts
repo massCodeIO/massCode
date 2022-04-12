@@ -26,6 +26,7 @@ export const useAppStore = defineStore('app', {
       }
     },
     editor: EDITOR_DEFAULTS,
+    selectedPreferencesMenu: 'storage',
     version,
     platform: platform()
   }),

@@ -11,8 +11,13 @@
         {{ i.name }}
       </div>
     </div>
-    <div class="body">
-      <slot />
+    <div
+      ref="bodyRef"
+      class="body"
+    >
+      <PerfectScrollbar>
+        <slot />
+      </PerfectScrollbar>
     </div>
   </div>
 </template>
@@ -39,9 +44,12 @@ const props = defineProps<Props>()
 
 const items = ref<Item[]>([])
 const value = computed(() => props.modelValue)
+const bodyRef = ref<HTMLElement>()
 
 const onClickItem = (item: Item) => {
   emit('update:modelValue', item.value)
+  const el = bodyRef.value?.querySelector('.ps')
+  if (el) el.scrollTop = 0
 }
 
 const update = (value: string) => {
@@ -55,15 +63,22 @@ provide('items', items.value)
 
 <style lang="scss" scoped>
 .menu {
+  width: 100%;
+  height: 300px;
   display: grid;
   grid-template-columns: 150px 1fr;
   gap: var(--spacing-sm);
-}
-.name {
-  padding: var(--spacing-xs);
-  &.is-selected {
-    border-radius: 5px;
-    background-color: var(--color-contrast-lower-alt);
+  .name {
+    padding: var(--spacing-xs);
+    &.is-selected {
+      border-radius: 5px;
+      background-color: var(--color-contrast-lower-alt);
+    }
+  }
+  .body {
+    :deep(.ps) {
+      height: calc(100vh - 80px);
+    }
   }
 }
 </style>

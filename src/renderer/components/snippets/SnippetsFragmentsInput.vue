@@ -3,6 +3,7 @@
     class="fragment"
     @dblclick="isEdit = true"
     @contextmenu="onClickContext"
+    @keypress="onKyePress"
   >
     <div
       v-if="!isEdit"
@@ -76,6 +77,10 @@ const onClickContext = async () => {
     snippetStore.fragment = snippetStore.fragmentCount! - 1
     track('snippets/delete-fragment')
   }
+}
+
+const onKyePress = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') isEdit.value = false
 }
 
 watch(isEdit, () => {

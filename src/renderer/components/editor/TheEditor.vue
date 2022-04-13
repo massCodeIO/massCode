@@ -177,6 +177,7 @@ const format = () => {
 
   let parser = props.lang as string
 
+  if (props.lang === 'javascript') parser = 'babel'
   if (props.lang === 'graphqlschema') parser = 'graphql'
 
   try {

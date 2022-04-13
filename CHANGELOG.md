@@ -1,3 +1,20 @@
+# [2.0.0-beta.5](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2022-04-13)
+
+
+### Bug Fixes
+
+* **snippets:** cut off snippets name for Windows [#20](https://github.com/massCodeIO/massCode/issues/20) ([#24](https://github.com/massCodeIO/massCode/issues/24)) ([097d2cb](https://github.com/massCodeIO/massCode/commit/097d2cbf688fdfc7404d1e7d9e479bb70dd42ed0))
+* **snippets:** open external link in markdown ([b5d3ee0](https://github.com/massCodeIO/massCode/commit/b5d3ee01cf7ad48dffb0255d10b652f98659867b))
+
+
+### Features
+
+* add prettier for snippets formatting ([#22](https://github.com/massCodeIO/massCode/issues/22)) ([14b0f86](https://github.com/massCodeIO/massCode/commit/14b0f86ab67ed7bea7277c424988f75e07a8ed91))
+* resizable layout ([#19](https://github.com/massCodeIO/massCode/issues/19)) ([a1e41b3](https://github.com/massCodeIO/massCode/commit/a1e41b3ab567854eda7b9c636cb94c6e34614242))
+* update main menu ([#21](https://github.com/massCodeIO/massCode/issues/21)) ([6d14e7d](https://github.com/massCodeIO/massCode/commit/6d14e7df657f4762a8e43f207e909ee3eaed33cf))
+
+
+
 # [2.0.0-beta.4](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2022-04-12)
 
 

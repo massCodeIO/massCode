@@ -84,8 +84,8 @@ const renderer = computed(() => getRenderer())
 
 const openExternal = (e: Event) => {
   const el = e.target as HTMLAnchorElement
+  e.preventDefault()
   if (el.classList.contains('external')) {
-    e.preventDefault()
     ipc.invoke('main:open-url', el.href)
   }
 }

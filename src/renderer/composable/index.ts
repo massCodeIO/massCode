@@ -1,10 +1,11 @@
-import { createFetch } from '@vueuse/core'
+import { createFetch, useClipboard } from '@vueuse/core'
 import mitt from 'mitt'
 import type { EmitterEvents } from '@shared/types/renderer/composable'
 import { API_PORT } from '../../main/config'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { track } from '@/electron'
+import { ipc, track } from '@/electron'
+import type { NotificationRequest } from '@shared/types/main'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -45,6 +46,18 @@ export const onAddNewFolder = async () => {
 
   emitter.emit('scroll-to:folder', folder.id)
   track('folders/add-new')
+}
+
+export const onCopySnippet = () => {
+  const snippetStore = useSnippetStore()
+
+  const { copy } = useClipboard({ source: snippetStore.currentContent })
+  copy()
+
+  ipc.invoke<any, NotificationRequest>('main:notification', {
+    body: 'Snippet copied'
+  })
+  track('snippets/copy')
 }
 
 export const setScrollPosition = (el: HTMLElement, offset: number) => {

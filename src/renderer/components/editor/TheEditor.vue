@@ -37,6 +37,15 @@ import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { track } from '@/electron'
+import prettier from 'prettier/standalone'
+import parserTypescript from 'prettier/parser-typescript'
+import parserBabel from 'prettier/parser-babel'
+import parserHtml from 'prettier/parser-html'
+import parserGraphql from 'prettier/parser-graphql'
+import parserMarkdown from 'prettier/parser-markdown'
+import parserPostcss from 'prettier/parser-postcss'
+import parserYaml from 'prettier/parser-yaml'
+import { emitter } from '@/composable'
 
 interface Props {
   lang: Language
@@ -148,6 +157,54 @@ const setValue = () => {
   }
 }
 
+const format = () => {
+  const availableLang: Language[] = [
+    'javascript',
+    'typescript',
+    'json',
+    'json5',
+    'yaml',
+    'html',
+    'markdown',
+    'graphqlschema',
+    'css',
+    'sass',
+    'scss',
+    'less'
+  ]
+
+  if (!availableLang.includes(props.lang)) return
+
+  let parser = props.lang as string
+
+  if (props.lang === 'javascript') parser = 'babel'
+  if (props.lang === 'graphqlschema') parser = 'graphql'
+
+  try {
+    const formatted = prettier.format(props.modelValue, {
+      parser,
+      plugins: [
+        parserTypescript,
+        parserBabel,
+        parserHtml,
+        parserMarkdown,
+        parserPostcss,
+        parserGraphql,
+        parserYaml
+      ],
+      tabWidth: appStore.editor.tabSize,
+      trailingComma: appStore.editor.trailingComma,
+      semi: appStore.editor.semi,
+      singleQuote: appStore.editor.singleQuote
+    })
+
+    // Обновляем напрямую без debounce
+    snippetStore.patchCurrentSnippetContentByKey('value', formatted)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 const setLang = () => {
   editor.session.setMode(`ace/mode/${localLang.value}`)
   track('snippets/set-language', localLang.value)
@@ -212,6 +269,8 @@ watch(
     }
   }
 )
+
+emitter.on('format-snippet', () => format())
 
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()

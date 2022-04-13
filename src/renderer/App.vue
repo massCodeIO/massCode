@@ -24,7 +24,8 @@ import {
   onAddNewSnippet,
   onAddNewFragment,
   onAddNewFolder,
-  onCopySnippet
+  onCopySnippet,
+  emitter
 } from '@/composable'
 
 // По какой то причине необходимо явно установить роут в '/'
@@ -115,11 +116,19 @@ ipc.on('main-menu:preview-markdown', async () => {
 ipc.on('main-menu:copy-snippet', () => {
   onCopySnippet()
 })
+
+ipc.on('main-menu:format-snippet', () => {
+  emitter.emit('format-snippet', true)
+})
 </script>
 
 <style lang="scss">
 body {
   margin: 0;
+}
+#app {
+  height: 100vh;
+  overflow: hidden;
 }
 .app {
   &-title-bar {

@@ -64,6 +64,7 @@
     "@types/markdown-it": "^12.2.3",
     "@types/markdown-it-link-attributes": "^3.0.1",
     "@types/node": "^17.0.4",
+    "@types/prettier": "^2.6.0",
     "@types/sanitize-html": "^2.6.2",
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.8.0",

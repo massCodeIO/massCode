@@ -45,16 +45,15 @@ track('preferences')
     margin: 0;
   }
   margin-top: var(--title-bar-height);
-  padding: var(--spacing-sm);
 }
 .title {
+  padding: var(--spacing-sm);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .body {
-  padding-top: var(--spacing-sm);
+  padding: 0 0 var(--spacing-sm) var(--spacing-sm);
   display: grid;
-  grid-template-columns: 200px 1fr;
 }
 </style>

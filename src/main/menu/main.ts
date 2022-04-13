@@ -201,6 +201,15 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: 'Format',
+    accelerator: 'Shift+CommandOrControl+F',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:format-snippet'
+      )
+    }
+  },
+  {
     label: 'Preview Markdown',
     accelerator: 'Shift+CommandOrControl+M',
     click: () => {

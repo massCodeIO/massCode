@@ -15,6 +15,9 @@ interface Editor {
   showInvisibles: boolean
   tabSize: number
   wrap: string
+  trailingComma: 'all' | 'none' | 'es5'
+  semi: boolean
+  singleQuote: boolean
 }
 export interface PreferencesStore {
   storagePath: string

@@ -18,6 +18,9 @@ export interface EditorSettings {
   fontFamily: string
   wrap: Ace.EditSessionOptions['wrap']
   tabSize: number
+  trailingComma: 'all' | 'none' | 'es5'
+  semi: boolean
+  singleQuote: boolean
 }
 export interface State {
   platform: NodeJS.Platform

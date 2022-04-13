@@ -1,6 +1,7 @@
 <template>
   <div class="editor-preferences">
     <AppForm>
+      <h4>Editor</h4>
       <AppFormItem label="Font Size">
         <AppInput
           v-model="appStore.editor.fontSize"
@@ -30,6 +31,25 @@
           name="showInvisibles"
         />
       </AppFormItem>
+      <h4>Prettier</h4>
+      <AppFormItem label="Trailing Comma">
+        <AppSelect
+          v-model="appStore.editor.trailingComma"
+          :options="trailingCommaOptions"
+        />
+      </AppFormItem>
+      <AppFormItem label="Semi">
+        <AppCheckbox
+          v-model="appStore.editor.semi"
+          name="semi"
+        />
+      </AppFormItem>
+      <AppFormItem label="Single Quote">
+        <AppCheckbox
+          v-model="appStore.editor.singleQuote"
+          name="semi"
+        />
+      </AppFormItem>
     </AppForm>
   </div>
 </template>
@@ -46,6 +66,12 @@ const wrapOptions = [
   { label: 'Off', value: 'off' }
 ]
 
+const trailingCommaOptions = [
+  { label: 'None', value: 'none' },
+  { label: 'All', value: 'all' },
+  { label: 'ES6', value: 'es6' }
+]
+
 watch(
   () => appStore.editor,
   v => {
@@ -55,4 +81,11 @@ watch(
 )
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+h4 {
+  &:first-child {
+    margin-top: 0;
+  }
+  margin-bottom: 0;
+}
+</style>

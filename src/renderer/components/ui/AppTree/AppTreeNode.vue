@@ -345,6 +345,9 @@ $color-grey: #8c8c8c;
         background-color: transparent;
         border: 2px solid var(--color-primary);
       }
+      :deep(svg) {
+        fill: var(--color-text);
+      }
     }
   }
   &__name {

@@ -2,6 +2,7 @@
   <div
     class="folder"
     @dblclick="isEdit = true"
+    @keypress="onKyePress"
   >
     <div
       v-if="!isEdit"
@@ -19,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 import { onClickOutside } from '@vueuse/core'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -49,8 +51,16 @@ onClickOutside(inputRef, async () => {
   backupName.value = props.name
 })
 
+const onKyePress = (e: KeyboardEvent) => {
+  if (e.code === 'Enter') isEdit.value = false
+}
+
 watch(isEdit, () => {
   nextTick(() => inputRef.value?.select())
+})
+
+emitter.on('folder:rename', id => {
+  if (id === props.id) isEdit.value = true
 })
 </script>
 
@@ -61,7 +71,7 @@ watch(isEdit, () => {
     border: 0;
     background: #fff;
     outline: var(--color-primary) solid 1px;
-    width: 100%;
+    width: 95%;
     padding: 0;
     margin: 0;
   }

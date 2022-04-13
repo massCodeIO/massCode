@@ -118,7 +118,7 @@ ipc.on('main-menu:copy-snippet', () => {
 })
 
 ipc.on('main-menu:format-snippet', () => {
-  emitter.emit('format-snippet', true)
+  emitter.emit('snippet:format', true)
 })
 </script>
 

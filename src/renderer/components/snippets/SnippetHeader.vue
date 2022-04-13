@@ -59,7 +59,7 @@ const onClickMarkdownPreview = () => {
   snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
 }
 
-emitter.on('focus:snippet-name', () => {
+emitter.on('snippet:focus-name', () => {
   inputRef.value?.select()
 })
 </script>

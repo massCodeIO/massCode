@@ -24,7 +24,7 @@ export const onAddNewSnippet = async () => {
   await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
   await snippetStore.getSnippets()
 
-  emitter.emit('focus:snippet-name', true)
+  emitter.emit('snippet:focus-name', true)
   track('snippets/add-new')
 }
 

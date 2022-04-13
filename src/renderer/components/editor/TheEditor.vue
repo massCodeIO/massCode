@@ -271,7 +271,7 @@ watch(
   }
 )
 
-emitter.on('format-snippet', () => format())
+emitter.on('snippet:format', () => format())
 
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()

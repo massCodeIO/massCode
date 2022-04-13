@@ -1,7 +1,7 @@
 export type EmitterEvents = {
-  'focus:snippet-name': boolean
+  'snippet:focus-name': boolean
+  'snippet:format': boolean
   'folder:click': any
   'folder:rename': string
   'scroll-to:folder': string
-  'format-snippet': boolean
 }

@@ -13,6 +13,7 @@ type SnippetEvents =
   | 'move-to-trash'
   | 'set-language'
   | 'search'
+  | 'format'
 type FolderEvents = 'add-new' | 'delete' | 'set-language'
 type TagEvents = 'add-new' | 'delete'
 type AppEvents =

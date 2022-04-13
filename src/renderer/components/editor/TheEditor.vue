@@ -200,6 +200,7 @@ const format = () => {
 
     // Обновляем напрямую без debounce
     snippetStore.patchCurrentSnippetContentByKey('value', formatted)
+    track('snippets/format')
   } catch (err) {
     console.error(err)
   }

@@ -308,6 +308,7 @@ const onDragEnd = () => {
   overflow: hidden;
   position: relative;
   z-index: 1;
+  line-height: 24px;
   span {
     display: -webkit-box;
     -webkit-line-clamp: 1;

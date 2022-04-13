@@ -82,6 +82,7 @@ emitter.on('focus:snippet-name', () => {
       border: 0;
       width: 100%;
       outline: none;
+      line-height: 32px;
       text-overflow: ellipsis;
     }
   }

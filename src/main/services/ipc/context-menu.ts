@@ -218,6 +218,16 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
+            label: 'Rename',
+            click: () => {
+              resolve({
+                action: 'rename',
+                type,
+                data: payload
+              })
+            }
+          },
+          {
             label: 'Delete',
             click: () => {
               const buttonId = dialog.showMessageBoxSync({

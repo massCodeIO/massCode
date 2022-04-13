@@ -40,6 +40,7 @@ import { useFolderStore } from '@/store/folders'
 import { useTagStore } from '@/store/tags'
 import type { FolderTree } from '@shared/types/main/db'
 import { useSnippetStore } from '@/store/snippets'
+import { emitter } from '@/composable'
 
 interface Props {
   id?: string
@@ -86,6 +87,10 @@ const onClickContextMenu = async () => {
     if (action === 'delete') {
       await folderStore.deleteFoldersById(props.id!)
       track('folders/delete')
+    }
+
+    if (action === 'rename') {
+      emitter.emit('folder:rename', props.id!)
     }
 
     if (action === 'update:language') {

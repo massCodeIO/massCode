@@ -8,7 +8,10 @@ const EDITOR_DEFAULTS: EditorSettings = {
   fontSize: 12,
   showInvisibles: false,
   tabSize: 2,
-  wrap: 'free'
+  wrap: 'free',
+  trailingComma: 'none',
+  semi: false,
+  singleQuote: true
 }
 
 export const useAppStore = defineStore('app', {

@@ -33,6 +33,7 @@ type MainMenuAction =
   | 'preferences'
   | 'new-snippet'
   | 'copy-snippet'
+  | 'format-snippet'
   | 'new-fragment'
   | 'new-folder'
   | 'search'

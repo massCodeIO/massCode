@@ -19,7 +19,10 @@ export default new Store<PreferencesStore>({
       fontFamily: 'SF Mono, Consolas, Menlo',
       fontSize: 12,
       showInvisibles: false,
-      tabSize: 2
+      tabSize: 2,
+      trailingComma: 'none',
+      semi: false,
+      singleQuote: true
     }
   }
 })

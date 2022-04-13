@@ -26,7 +26,7 @@
       </div>
     </div>
     <div
-      ref="listRef"
+      ref="bodyRef"
       class="body"
       :class="{ 'is-system': isSystem }"
     >
@@ -46,8 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import type { Tab, Tabs } from '@shared/types/renderer/sidebar'
+import { emitter, setScrollPosition } from '@/composable'
 
 interface Props {
   title?: string
@@ -68,6 +69,8 @@ const props = withDefaults(defineProps<Props>(), {
   isSystem: false
 })
 
+const bodyRef = ref<HTMLElement>()
+
 const activeTab = computed({
   get: () => props.modelValue,
   set: v => {
@@ -78,6 +81,15 @@ const activeTab = computed({
 const onClickTab = (tab: Tab) => {
   activeTab.value = tab
 }
+
+emitter.on('scroll-to:folder', id => {
+  nextTick(() => {
+    const el = document.querySelector<HTMLElement>(`[data-id='${id}']`)
+    if (el) {
+      setScrollPosition(bodyRef.value!, el.getBoundingClientRect().top + 210)
+    }
+  })
+})
 </script>
 
 <style lang="scss" scoped>

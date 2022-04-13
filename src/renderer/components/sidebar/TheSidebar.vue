@@ -58,6 +58,7 @@
         <template #default="{ node }">
           <SidebarListItem
             :id="node.id"
+            :data-id="node.id"
             :is-folder="true"
             :model="node"
             @drop="onDrop($event, node.id)"
@@ -94,9 +95,9 @@ import Trash from '~icons/unicons/trash'
 import LabelAlt from '~icons/unicons/label-alt'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc, store, track } from '@/electron'
+import { ipc, store } from '@/electron'
 import { useTagStore } from '@/store/tags'
-import { emitter } from '@/composable'
+import { emitter, onAddNewFolder } from '@/composable'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
 
@@ -157,11 +158,6 @@ const contextMenuHandler = () => {
   return new Promise<boolean>(resolve => {
     ipc.once('context-menu:close', () => resolve(false))
   })
-}
-
-const onAddNewFolder = async () => {
-  await folderStore.addNewFolder()
-  track('folders/add-new')
 }
 
 const onUpdate = async () => {

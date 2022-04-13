@@ -23,15 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { emitter } from '@/composable'
-import { useFolderStore } from '@/store/folders'
+import { onAddNewSnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
 import { track } from '@/electron'
 
 const snippetStore = useSnippetStore()
-const folderStore = useFolderStore()
 
 const query = computed({
   get: () => snippetStore.searchQuery,
@@ -42,18 +40,6 @@ const query = computed({
     track('snippets/search')
   }, 300)
 })
-
-const onAddNewSnippet = async () => {
-  if (folderStore.selectedAlias !== undefined) return
-  if (!folderStore.selectedId) return
-
-  await snippetStore.addNewSnippet()
-  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-  await snippetStore.getSnippets()
-
-  emitter.emit('focus:snippet-name', true)
-  track('snippets/add-new')
-}
 
 const onReset = () => {
   snippetStore.searchQuery = undefined

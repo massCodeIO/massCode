@@ -46,6 +46,7 @@ export const useFolderStore = defineStore('folders', {
       await this.getFolders()
       this.selectId(data.value.id)
       await snippetStore.getSnippetsByFolderIds(this.selectedIds!)
+      return data.value as Folder
     },
     async patchFoldersById (id: string, body: Partial<Folder>) {
       body.updatedAt = new Date().valueOf()

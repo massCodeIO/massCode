@@ -20,6 +20,12 @@ import { ipc, store, track } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
+import {
+  onAddNewSnippet,
+  onAddNewFragment,
+  onAddNewFolder,
+  onCopySnippet
+} from '@/composable'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -84,8 +90,30 @@ ipc.on('main-menu:preferences', () => {
   router.push('/preferences')
 })
 
-ipc.on('main:update-available', async () => {
+ipc.on('main:update-available', () => {
   isUpdateAvailable.value = true
+})
+
+ipc.on('main-menu:new-folder', async () => {
+  await onAddNewFolder()
+})
+
+ipc.on('main-menu:new-snippet', async () => {
+  await onAddNewSnippet()
+})
+
+ipc.on('main-menu:new-fragment', () => {
+  onAddNewFragment()
+})
+
+ipc.on('main-menu:preview-markdown', async () => {
+  if (snippetStore.currentLanguage === 'markdown') {
+    snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+  }
+})
+
+ipc.on('main-menu:copy-snippet', () => {
+  onCopySnippet()
 })
 </script>
 

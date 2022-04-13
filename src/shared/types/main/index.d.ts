@@ -29,7 +29,14 @@ export type ContextMenuType =
   | 'favorites'
   | 'tag'
 
-type MainMenuAction = 'preferences' | 'new-snippet'
+type MainMenuAction =
+  | 'preferences'
+  | 'new-snippet'
+  | 'copy-snippet'
+  | 'new-fragment'
+  | 'new-folder'
+  | 'search'
+  | 'preview-markdown'
 
 type MainAction =
   | 'restart'

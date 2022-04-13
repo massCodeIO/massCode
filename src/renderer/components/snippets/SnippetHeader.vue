@@ -33,12 +33,10 @@
 </template>
 
 <script setup lang="ts">
-import { emitter } from '@/composable'
-import { ipc, track } from '@/electron'
+import { emitter, onAddNewFragment, onCopySnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
-import { useClipboard, useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import type { NotificationRequest } from '@shared/types/main'
 import { useAppStore } from '@/store/app'
 
 const snippetStore = useSnippetStore()
@@ -56,21 +54,6 @@ const name = computed({
     300
   )
 })
-
-const onAddNewFragment = () => {
-  snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
-  snippetStore.fragment = snippetStore.fragmentCount!
-  track('snippets/add-fragment')
-}
-
-const onCopySnippet = () => {
-  const { copy } = useClipboard({ source: snippetStore.currentContent })
-  copy()
-  ipc.invoke<any, NotificationRequest>('main:notification', {
-    body: 'Snippet copied'
-  })
-  track('snippets/copy')
-}
 
 const onClickMarkdownPreview = () => {
   snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview

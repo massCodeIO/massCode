@@ -1,6 +1,6 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
-import { dialog, app, BrowserWindow } from 'electron'
+import { shell, dialog, app, BrowserWindow } from 'electron'
 import { version, author } from '../../../package.json'
 import os from 'os'
 
@@ -79,10 +79,6 @@ const appMenu: MenuItemConstructorOptions[] = [
 
 const helpMenu: MenuItemConstructorOptions[] = [
   {
-    label: 'Toogle Dev tools',
-    role: 'toggleDevTools'
-  },
-  {
     label: 'About',
     click () {
       dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
@@ -100,6 +96,62 @@ const helpMenu: MenuItemConstructorOptions[] = [
         `
       })
     }
+  },
+  {
+    label: 'Website',
+    click: () => {
+      shell.openExternal('https://masscode.io')
+    }
+  },
+  {
+    label: 'Change Log',
+    click: () => {
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md'
+      )
+    }
+  },
+  {
+    label: 'Documentation',
+    click: () => {
+      shell.openExternal('https://masscode.io/documentation')
+    }
+  },
+  {
+    label: 'View in GitHub',
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/massCode')
+    }
+  },
+  {
+    label: 'Report Issue',
+    click: () => {
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/issues/new/choose'
+      )
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: 'Donate',
+    click: () => {
+      shell.openExternal('https://opencollective.com/masscode')
+    }
+  },
+  {
+    label: 'Twitter',
+    click: () => {
+      shell.openExternal('https://twitter.com/anton_reshetov')
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: 'Toggle Developer Tools',
+    role: 'toggleDevTools'
   }
 ]
 
@@ -138,6 +190,27 @@ const fileMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const editorMenu: MenuItemConstructorOptions[] = [
+  {
+    label: 'Copy Snippet to Clipboard',
+    accelerator: 'Shift+CommandOrControl+C',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:copy-snippet'
+      )
+    }
+  },
+  {
+    label: 'Preview Markdown',
+    accelerator: 'Shift+CommandOrControl+M',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:preview-markdown'
+      )
+    }
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: 'massCode',
@@ -150,6 +223,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: 'Edit',
     role: 'editMenu'
+  },
+  {
+    label: 'Editor',
+    submenu: editorMenu
   },
   {
     label: 'Help',

@@ -12,7 +12,7 @@
   <img src="./hero.png">
 </p>
 
-<h1 align="center">massCode next</h1>
+<h1 align="center">massCode</h1>
 
 <p align="center">
   <strong>Built with Electron, Vue 3 & Ace Editor.</strong>
@@ -29,10 +29,35 @@
 
 The best support right now is your star for the project. You can also help spread the word about the app in the public.
 
-## Feature for now
+<!-- ## Feature for now
 - Support M1
 - Syntax highlighting over 170 languages
-- API to fetch snippets on the localhost
+- API to fetch snippets on the localhost -->
+
+## Features
+### Organization
+massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
+
+### Editor
+A snippet manager must not only provide organization of snippets but also have a good code editor. That's why under the hood of massCode there's [Ace](https://microsoft.github.io/monaco-editor). Ace is a high performance code editor which supports syntax highlighting for over 170 languages. We also added a [Prettier](https://prettier.io/) to code formatter.
+
+### Markdown
+massCode allows you to write in Markdown and also provide syntax highlighting inside a code block. And of course there is a preview.
+
+### Search
+It is impossible to imagine a productive snippets manager without quick access to snippets. Therefore massCode has a fast full-text search with highlighting of the search query.
+
+### Autosave
+massCode automatically saves any changes you make during work, so you don't have to worry about losing changes.
+
+### Sync
+You can use any service that provides cloud synchronization, such as iCloud Drive, Google Drive, Dropbox or other similar.
+
+### Database
+massCode uses a simple JSON to store your data. The database files are on your local computer.
+
+### API Server
+Coming soon.
 
 ## Overview
 
@@ -46,3 +71,9 @@ massCode allows you to organize snippets using multi-level folders as well as ta
 
 ## Other
 You can also [download](https://github.com/antonreshetov/massCode) massCode v1.
+
+## License
+
+[AGPL-3.0](https://github.com/massCodeIO/massCode/blob/master/LICENSE)
+
+Copyright (c) 2019-present, Anton Reshetov.

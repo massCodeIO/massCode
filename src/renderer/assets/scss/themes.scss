@@ -32,6 +32,8 @@
   --color-select: var(--color-contrast-lower-alt);
 
   --color-menu-selected: var(--color-contrast-lower-alt3);
+
+  --color-tag-delete: var(--color-contrast-lower-alt4);
 }
 
 [data-theme='dark:one'] {
@@ -65,6 +67,8 @@
   --color-input: var(--color-bg);
 
   --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
 [data-theme='dark:dracula'] {
@@ -75,6 +79,7 @@
   --color-contrast-lower: hsl(231, 15%, 20%);
   --color-contrast-lower-alt: hsl(231, 15%, 22%);
   --color-contrast-lower-alt2: hsl(231, 15%, 25%);
+  --color-contrast-lower-alt3: hsl(231, 15%, 30%);
   --color-contrast-lower-low: hsl(231, 15%, 40%);
   --color-contrast-lower-medium: hsl(231, 15%, 50%);
 
@@ -97,6 +102,8 @@
   --color-input: var(--color-bg);
 
   --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
 [data-theme='dark:monokai'] {
@@ -107,6 +114,7 @@
   --color-contrast-lower: hsl(70, 8%, 20%);
   --color-contrast-lower-alt: hsl(70, 8%, 22%);
   --color-contrast-lower-alt2: hsl(70, 8%, 25%);
+  --color-contrast-lower-alt3: hsl(70, 8%, 30%);
   --color-contrast-lower-low: hsl(70, 8%, 40%);
   --color-contrast-lower-medium: hsl(70, 8%, 50%);
 
@@ -129,6 +137,8 @@
   --color-input: var(--color-bg);
 
   --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
 [data-theme='dark:merbivore'] {
@@ -139,6 +149,7 @@
   --color-contrast-lower: hsl(0, 0%, 20%);
   --color-contrast-lower-alt: hsl(0, 0%, 22%);
   --color-contrast-lower-alt2: hsl(0, 0%, 25%);
+  --color-contrast-lower-alt3: hsl(0, 0%, 30%);
   --color-contrast-lower-low: hsl(0, 0%, 40%);
   --color-contrast-lower-medium: hsl(0, 0%, 50%);
 
@@ -161,4 +172,6 @@
   --color-input: var(--color-bg);
 
   --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
 }

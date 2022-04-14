@@ -187,6 +187,13 @@ const fileMenu: MenuItemConstructorOptions[] = [
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:new-folder')
     }
+  },
+  {
+    label: 'Find',
+    accelerator: 'CommandOrControl+F',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:search')
+    }
   }
 ]
 

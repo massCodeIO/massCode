@@ -127,6 +127,10 @@ ipc.on('main-menu:copy-snippet', () => {
 ipc.on('main-menu:format-snippet', () => {
   emitter.emit('snippet:format', true)
 })
+
+ipc.on('main-menu:search', () => {
+  emitter.emit('search:focus', true)
+})
 </script>
 
 <style lang="scss">

@@ -2,6 +2,7 @@
   <div class="action">
     <UniconsSearch />
     <input
+      ref="inputRef"
       v-model="query"
       placeholder="Search..."
     >
@@ -23,13 +24,15 @@
 </template>
 
 <script setup lang="ts">
-import { onAddNewSnippet } from '@/composable'
+import { emitter, onAddNewSnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { track } from '@/electron'
 
 const snippetStore = useSnippetStore()
+
+const inputRef = ref<HTMLInputElement>()
 
 const query = computed({
   get: () => snippetStore.searchQuery,
@@ -45,6 +48,10 @@ const onReset = () => {
   snippetStore.searchQuery = undefined
   snippetStore.setSnippetsByAlias('all')
 }
+
+emitter.on('search:focus', () => {
+  inputRef.value?.focus()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -62,6 +69,7 @@ const onReset = () => {
     padding: 0 var(--spacing-xs);
     height: 24px;
     background-color: var(--color-snippet-list);
+    color: var(--color-text);
   }
   :deep(svg) {
     flex-shrink: 0;

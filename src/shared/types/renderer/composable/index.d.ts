@@ -4,4 +4,5 @@ export type EmitterEvents = {
   'folder:click': any
   'folder:rename': string
   'scroll-to:folder': string
+  'search:focus': boolean
 }

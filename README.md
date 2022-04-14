@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/massCodeIO/massCode/releases">Latest release</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
+  <a href="https://github.com/massCodeIO/massCode/releases">Latest release</a> | <a href="https://github.com/massCodeIO/massCode-assistant-raycast">Raycast Extension</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
 </p>
 
 

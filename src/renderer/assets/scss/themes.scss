@@ -74,7 +74,8 @@
 [data-theme='dark:dracula'] {
   --color-primary: hsl(215, 69%, 45%);
 
-  --color-bg: hsl(231, 15%, 18%);
+  // при конвертации в hsl цвет отличается, поэтому оставляем в hex
+  --color-bg: #282A36; 
 
   --color-contrast-lower: hsl(231, 15%, 20%);
   --color-contrast-lower-alt: hsl(231, 15%, 22%);
@@ -109,7 +110,8 @@
 [data-theme='dark:monokai'] {
   --color-primary: hsl(215, 69%, 45%);
 
-  --color-bg: hsl(70, 8%, 15%);
+  // при конвертации в hsl цвет отличается, поэтому оставляем в hex
+  --color-bg: #272822;
 
   --color-contrast-lower: hsl(70, 8%, 20%);
   --color-contrast-lower-alt: hsl(70, 8%, 22%);

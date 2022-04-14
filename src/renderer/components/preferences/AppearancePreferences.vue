@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+import { track } from '@/electron'
 import { useAppStore } from '@/store/app'
 import type { Theme } from '@shared/types/renderer/store/app'
 import { computed } from 'vue'
@@ -23,7 +24,10 @@ const appStore = useAppStore()
 
 const localValue = computed({
   get: () => appStore.theme,
-  set: v => appStore.setTheme(v)
+  set: v => {
+    appStore.setTheme(v)
+    track('app/set-theme', v)
+  }
 })
 
 const options: Options[] = [

@@ -18,9 +18,11 @@ interface Editor {
   trailingComma: 'all' | 'none' | 'es5'
   semi: boolean
   singleQuote: boolean
+  theme: string
 }
 export interface PreferencesStore {
   storagePath: string
   backupPath: string
   editor: Editor
+  theme: string
 }

@@ -38,5 +38,7 @@ const localValue = computed({
   border: 1px solid var(--color-border);
   border-radius: 3px;
   padding: 0 var(--spacing-xs);
+  background-color: var(--color-input);
+  color: var(--color-text);
 }
 </style>

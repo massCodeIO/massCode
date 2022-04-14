@@ -62,11 +62,15 @@ const onChange = (v: string[]) => {
   }
   :deep(.ti-tags) {
     gap: 4px;
+    background-color: var(--color-bg);
     .ti-new-tag-input-wrapper {
       margin: 0;
       input {
         size: 11px;
       }
+    }
+    .ti-new-tag-input {
+      background-color: var(--color-bg);
     }
   }
   :deep(.ti-autocomplete) {

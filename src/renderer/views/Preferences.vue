@@ -20,6 +20,12 @@
         >
           <EditorPreferences />
         </AppMenuItem>
+        <AppMenuItem
+          name="Appearance"
+          value="appearance"
+        >
+          <AppearancePreferences />
+        </AppMenuItem>
       </AppMenu>
     </div>
   </div>

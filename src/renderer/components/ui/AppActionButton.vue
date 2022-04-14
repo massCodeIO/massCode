@@ -12,11 +12,11 @@
   align-items: center;
   padding: 4px 6px;
   border-radius: 4px;
-  svg {
-    fill: var(--color-contrast-medium);
+  :deep(svg) {
+    fill: var(--color-button-action);
   }
   &:hover {
-    background-color: var(--color-contrast-lower-alt);
+    background-color: var(--color-button-action-hover);
   }
 }
 </style>

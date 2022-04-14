@@ -233,7 +233,7 @@ watch(
 .sidebar {
   padding-top: var(--title-bar-height);
   position: relative;
-  background-color: var(--color-contrast-lower);
+  background-color: var(--color-sidebar);
   display: flex;
   flex-flow: column;
   height: 100%;

@@ -1,5 +1,9 @@
-import { platform } from '@/electron'
-import type { EditorSettings, State } from '@shared/types/renderer/store/app'
+import { platform, store } from '@/electron'
+import type {
+  EditorSettings,
+  State,
+  Theme
+} from '@shared/types/renderer/store/app'
 import { defineStore } from 'pinia'
 import { version } from '../../../package.json'
 
@@ -11,7 +15,8 @@ const EDITOR_DEFAULTS: EditorSettings = {
   wrap: 'free',
   trailingComma: 'none',
   semi: false,
-  singleQuote: true
+  singleQuote: true,
+  theme: 'chrome'
 }
 
 export const useAppStore = defineStore('app', {
@@ -37,6 +42,37 @@ export const useAppStore = defineStore('app', {
   }),
 
   actions: {
+    setTheme (theme: Theme) {
+      this.theme = theme
+
+      if (theme === 'light:chrome') {
+        this.editor.theme = 'chrome'
+      }
+      if (theme === 'light:solarized') {
+        this.editor.theme = 'solarized_light'
+      }
+      if (theme === 'light:xcode') {
+        this.editor.theme = 'xcode'
+      }
+      if (theme === 'light:textmate') {
+        this.editor.theme = 'textmate'
+      }
+      if (theme === 'dark:one') {
+        this.editor.theme = 'one_dark'
+      }
+      if (theme === 'dark:dracula') {
+        this.editor.theme = 'dracula'
+      }
+      if (theme === 'dark:monokai') {
+        this.editor.theme = 'monokai'
+      }
+      if (theme === 'dark:merbivore') {
+        this.editor.theme = 'merbivore_soft'
+      }
+
+      store.preferences.set('theme', theme)
+      store.preferences.set('editor', { ...this.editor })
+    },
     resetEditorSettings () {
       this.editor = EDITOR_DEFAULTS
     },

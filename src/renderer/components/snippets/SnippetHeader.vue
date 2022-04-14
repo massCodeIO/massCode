@@ -84,6 +84,8 @@ emitter.on('snippet:focus-name', () => {
       outline: none;
       line-height: 32px;
       text-overflow: ellipsis;
+      background-color: var(--color-bg);
+      color: var(--color-text);
     }
   }
   .action {

@@ -321,7 +321,7 @@ const onDragEnd = () => {
   position: relative;
   z-index: 1;
   justify-content: space-between;
-  color: var(--color-contrast-medium);
+  color: var(--color-text-3);
   padding-top: var(--spacing-sm);
 }
 </style>

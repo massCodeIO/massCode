@@ -1,12 +1,3 @@
-<p align="center">
-  <img src="./logo.png" width="80">
-</p>
-
-<p align="center">
-  <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/massCodeIO/massCode">
-  <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/massCodeIO/massCode/total">
-  <img alt="GitHub" src="https://img.shields.io/github/license/massCodeIO/massCode">
-</p>
 
 <p align="center">
   <img src="./hero.png">
@@ -18,6 +9,13 @@
   <strong>Built with Electron, Vue 3 & Ace Editor.</strong>
   <br>
   Inspired by applications like SnippetsLab and Quiver.
+</p>
+
+
+<p align="center">
+  <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/massCodeIO/massCode">
+  <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/massCodeIO/massCode/total">
+  <img alt="GitHub" src="https://img.shields.io/github/license/massCodeIO/massCode">
 </p>
 
 <p align="center">

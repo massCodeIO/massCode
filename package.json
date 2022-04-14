@@ -1,7 +1,7 @@
 {
   "name": "masscode",
   "productName": "massCode",
-  "version": "2.0.0-beta.5",
+  "version": "2.0.0-beta.6",
   "description": "A free and open source code snippets manager for developers",
   "license": "AGPL-3.0",
   "main": "build/src/main/index.js",

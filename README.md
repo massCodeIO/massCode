@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="./hero.png">
+  <img src="./preview.png">
 </p>
 
 <h1 align="center">massCode</h1>

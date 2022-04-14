@@ -1,3 +1,14 @@
+# [2.0.0-beta.6](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2022-04-14)
+
+
+### Features
+
+* add  4 light & 4 dark app theme ([#26](https://github.com/massCodeIO/massCode/issues/26)) ([e9dff1e](https://github.com/massCodeIO/massCode/commit/e9dff1e7739f770d557dc8cea4fcfc2bd131d0cd))
+* **folders:** add rename context menu ([#25](https://github.com/massCodeIO/massCode/issues/25)) ([654767b](https://github.com/massCodeIO/massCode/commit/654767b98dbf25390af892ac3eb1ba93f7cefee0))
+* **snippets:** exit from edit mode by enter for fragment ([9e3e301](https://github.com/massCodeIO/massCode/commit/9e3e301006953bc81ac7fee9bb3c1920b1ec5d39))
+
+
+
 # [2.0.0-beta.5](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2022-04-13)
 
 

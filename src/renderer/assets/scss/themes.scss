@@ -85,10 +85,10 @@
   --color-contrast-lower-medium: hsl(231, 15%, 50%);
 
   --color-snippet-list: var(--color-bg);
-  --color-snippet-selected: var(--color-contrast-lower-alt);
+  --color-snippet-selected: var(--color-contrast-lower-alt2);
 
   --color-sidebar: var(--color-bg);
-  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-item-selected: var(--color-contrast-lower-alt2);
   --color-sidebar-icon: var(--color-text);
 
   --color-border: var(--color-contrast-lower-alt2);
@@ -102,7 +102,7 @@
 
   --color-input: var(--color-bg);
 
-  --color-menu-selected: var(--color-contrast-lower-alt);
+  --color-menu-selected: var(--color-contrast-lower-alt2);
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
@@ -121,10 +121,10 @@
   --color-contrast-lower-medium: hsl(70, 8%, 50%);
 
   --color-snippet-list: var(--color-bg);
-  --color-snippet-selected: var(--color-contrast-lower-alt);
+  --color-snippet-selected: var(--color-contrast-lower);
 
   --color-sidebar: var(--color-bg);
-  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-item-selected: var(--color-contrast-lower);
   --color-sidebar-icon: var(--color-text);
 
   --color-border: var(--color-contrast-lower-alt2);
@@ -138,7 +138,7 @@
 
   --color-input: var(--color-bg);
 
-  --color-menu-selected: var(--color-contrast-lower-alt);
+  --color-menu-selected: var(--color-contrast-lower);
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
@@ -156,10 +156,10 @@
   --color-contrast-lower-medium: hsl(0, 0%, 50%);
 
   --color-snippet-list: var(--color-bg);
-  --color-snippet-selected: var(--color-contrast-lower-alt);
+  --color-snippet-selected: var(--color-contrast-lower);
 
   --color-sidebar: var(--color-bg);
-  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-item-selected: var(--color-contrast-lower);
   --color-sidebar-icon: var(--color-text);
 
   --color-border: var(--color-contrast-lower-alt2);
@@ -173,7 +173,7 @@
 
   --color-input: var(--color-bg);
 
-  --color-menu-selected: var(--color-contrast-lower-alt);
+  --color-menu-selected: var(--color-contrast-lower);
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }

@@ -333,7 +333,7 @@ $color-grey: #8c8c8c;
         fill: #fff;
       }
       :deep(svg) {
-        fill: #fff;
+        fill: #fff !important;
       }
       &::before {
         background-color: var(--color-primary);
@@ -346,7 +346,17 @@ $color-grey: #8c8c8c;
         border: 2px solid var(--color-primary);
       }
       :deep(svg) {
-        fill: var(--color-text);
+        fill: var(--color-text) !important;
+      }
+      &.is-focused {
+        :deep(svg) {
+          fill: var(--color-text);
+        }
+      }
+      &.is-selected {
+        :deep(svg) {
+          fill: var(--color-text) !important;
+        }
       }
     }
   }

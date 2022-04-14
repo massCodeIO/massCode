@@ -182,19 +182,25 @@ onClickOutside(itemRef, () => {
       border-radius: 5px;
       z-index: -1;
     }
+    :deep(svg) {
+      fill: var(--color-sidebar-icon-selected);
+    }
   }
-
+  &.is-focused {
+    .icon {
+      :deep(svg) {
+        fill: var(--color-sidebar-icon-selected);
+      }
+    }
+  }
   &.is-selected {
     &::before {
       background-color: var(--color-sidebar-item-selected);
     }
+
     &.is-focused {
       &::before {
         background-color: var(--color-primary);
-      }
-      color: #fff;
-      :deep(svg) {
-        fill: #fff;
       }
     }
   }
@@ -202,6 +208,9 @@ onClickOutside(itemRef, () => {
     margin-right: var(--spacing-xs);
     display: flex;
     align-items: center;
+    :deep(svg) {
+      fill: var(--color-sidebar-icon);
+    }
   }
   .nested {
     position: absolute;

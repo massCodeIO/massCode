@@ -116,15 +116,10 @@ emitter.on('scroll-to:folder', id => {
     align-items: center;
     justify-content: space-between;
     padding: 2px 0;
-    svg {
-      stroke: var(--color-contrast-medium);
-      width: 16px;
-      height: 16px;
-    }
   }
   &__title {
     h6 {
-      color: var(--color-contrast-medium);
+      color: var(--color-text);
     }
   }
   &__title,
@@ -133,16 +128,16 @@ emitter.on('scroll-to:folder', id => {
     padding: 0 var(--spacing-xs);
   }
   .tab-header {
-    color: var(--color-contrast-low-alt);
+    color: var(--color-text-3);
     padding: var(--spacing-xs) 0;
     -webkit-user-select: none;
     &.active {
-      color: var(--color-contrast-medium);
+      color: var(--color-text);
     }
     &:after {
       content: '/';
       margin: 0 5px;
-      color: var(--color-contrast-low-alt);
+      color: var(--color-text-3);
     }
     &:last-child {
       &:after {

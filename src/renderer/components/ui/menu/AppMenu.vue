@@ -72,7 +72,7 @@ provide('items', items.value)
     padding: var(--spacing-xs);
     &.is-selected {
       border-radius: 5px;
-      background-color: var(--color-contrast-lower-alt);
+      background-color: var(--color-menu-selected);
     }
   }
   .body {

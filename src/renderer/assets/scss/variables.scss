@@ -24,12 +24,11 @@
   --text-xl: calc(var(--text-base-size) * 2.4);
   --text-xxl: calc(var(--text-base-size) * 3.2);
   --text-xxxl: calc(var(--text-base-size) * 3.6);
-}
 
-[data-theme='light'] {
   --color-primary: hsl(215, 93%, 52%);
 
   --color-bg: hsl(0, 0%, 100%);
+
   --color-contrast-lower: hsl(0, 0%, 97%);
   --color-contrast-lower-alt: hsl(0, 0%, 92%);
   --color-contrast-low: hsl(0, 0%, 85%);
@@ -38,26 +37,31 @@
   --color-contrast-high: hsl(0, 0%, 15%);
   --color-contrast-higher: hsl(0, 0%, 0%);
 
-  --color-text: var(--color-contrast-high);
+  --color-text: hsl(0, 0%, 0%);
+  --color-text-2: hsl(0, 0%, 15%);
+  --color-text-3: hsl(0, 0%, 50%);
+  --color-text-4: hsl(0, 0%, 80%);
+  --color-text-5: hsl(0, 0%, 85%);
+
   --color-border: var(--color-contrast-low);
 
+  --color-button: var(--color-contrast-lower-alt);
+  --color-button-hover: var(--color-contrast-low);
+  --color-button-action: var(--color-contrast-medium);
+  --color-button-action-hover: var(--color-contrast-lower-alt);
+
+  --color-sidebar: var(--color-contrast-lower);
   --color-sidebar-item-selected: var(--color-contrast-low);
+  --color-sidebar-icon: var(--color-text);
+  --color-sidebar-icon-selected: #fff;
+
   --color-snippet-selected: hsl(0, 0%, 94%);
+  --color-snippet-list: var(--color-bg);
 
   --color-editor-scrollbar: rgba(121, 121, 121, 0.4);
+
+  --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt);
 }
 
-[data-theme='dark'] {
-  --color-primary: hsl(215, 93%, 52%);
-
-  --color-bg: hsl(0, 0%, 20%);
-  --color-contrast-lower: hsl(0, 0%, 25%);
-  --color-contrast-low: hsl(0, 0%, 32%);
-  --color-contrast-low-alt: hsl(0, 0%, 37%);
-  --color-contrast-medium: hsl(0, 0%, 50%);
-  --color-contrast-high: hsl(0, 0%, 85%);
-  --color-contrast-higher: hsl(0, 0%, 100%);
-
-  --color-text: var(--color-contrast-high);
-  --color-border: var(--color-contrast-low);
-}

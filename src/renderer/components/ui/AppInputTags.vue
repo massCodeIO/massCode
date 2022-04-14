@@ -68,26 +68,20 @@ const onChange = (v: string[]) => {
         size: 11px;
       }
     }
+    .ti-new-tag-input {
+    }
   }
   :deep(.ti-autocomplete) {
     margin-top: 2px;
-    border: 1px solid var(--color-border);
     overflow-y: scroll;
     .ti-selected-item {
-      background-color: var(--color-primary);
     }
   }
   :deep(.ti-tag) {
-    background-color: var(--color-contrast-lower);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
     margin: 0;
     padding: 0 4px;
     border-radius: 3px;
     font-size: 11px;
-    &.ti-deletion-mark {
-      background-color: var(--color-contrast-low);
-    }
     .ti-icon-close {
       position: relative;
       top: 1px;

@@ -49,7 +49,6 @@ import { emitter } from '@/composable'
 
 interface Props {
   lang: Language
-  theme: string
   fragments: boolean
   fragmentIndex: number
   snippetId: string
@@ -63,8 +62,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  lang: 'typescript',
-  theme: 'chrome'
+  lang: 'typescript'
 })
 
 const emit = defineEmits<Emits>()
@@ -110,7 +108,7 @@ const footerHeight = computed(() => appStore.sizes.editor.footerHeight + 'px')
 
 const init = async () => {
   editor = ace.edit(editorRef.value, {
-    theme: `ace/theme/${props.theme}`,
+    theme: `ace/theme/${appStore.editor.theme}`,
     useWorker: false,
     fontSize: appStore.editor.fontSize,
     fontFamily: appStore.editor.fontFamily,
@@ -291,11 +289,15 @@ window.addEventListener('resize', () => {
     justify-content: space-between;
     padding: 0 var(--spacing-xs);
     font-size: 12px;
+    select {
+      background-color: var(--color-bg);
+    }
   }
 }
 .lang-selector {
   -webkit-appearance: none;
   border: 0;
   outline: none;
+  color: var(--color-text);
 }
 </style>

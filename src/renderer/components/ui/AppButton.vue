@@ -10,11 +10,12 @@
 .button {
   height: 32px;
   border: 1px solid var(--color-border);
-  background-color: var(--color-contrast-lower-alt);
+  background-color: var(--color-button);
   border-radius: 3px;
   transition: all 0.2s;
+  color: var(--color-text);
   &:hover {
-    background-color: var(--color-contrast-low);
+    background-color: var(--color-button-hover);
   }
 }
 </style>

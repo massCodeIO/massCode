@@ -61,9 +61,11 @@ const onReset = () => {
     width: 100%;
     padding: 0 var(--spacing-xs);
     height: 24px;
+    background-color: var(--color-snippet-list);
   }
   :deep(svg) {
     flex-shrink: 0;
+    fill: var(--color-text);
   }
   .item {
     position: relative;

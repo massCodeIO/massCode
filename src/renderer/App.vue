@@ -39,6 +39,7 @@ const snippetStore = useSnippetStore()
 const isUpdateAvailable = ref(false)
 
 const init = () => {
+  const theme = store.preferences.get('theme')
   const isValid = appStore.isEditorSettingsValid(
     store.preferences.get('editor')
   )
@@ -47,6 +48,12 @@ const init = () => {
 
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
+
+  if (theme) {
+    appStore.setTheme(theme)
+  } else {
+    appStore.setTheme('light:chrome')
+  }
 
   trackAppUpdate()
 }

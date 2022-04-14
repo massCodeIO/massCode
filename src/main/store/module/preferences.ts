@@ -14,6 +14,7 @@ export default new Store<PreferencesStore>({
   defaults: {
     storagePath: defaultPath,
     backupPath,
+    theme: 'light:chrome',
     editor: {
       wrap: 'free',
       fontFamily: 'SF Mono, Consolas, Menlo',
@@ -22,7 +23,8 @@ export default new Store<PreferencesStore>({
       tabSize: 2,
       trailingComma: 'none',
       semi: false,
-      singleQuote: true
+      singleQuote: true,
+      theme: 'github'
     }
   }
 })

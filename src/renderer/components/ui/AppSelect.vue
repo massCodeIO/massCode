@@ -50,12 +50,15 @@ const localValue = computed({
     padding: 0 var(--spacing-xs);
     -webkit-appearance: none;
     width: 300px;
+    background-color: var(--color-select);
+    color: var(--color-text);
   }
   :deep(svg) {
     position: absolute;
     right: 2px;
     top: 50%;
     transform: translateY(-50%);
+    fill: var(--color-text);
   }
 }
 </style>

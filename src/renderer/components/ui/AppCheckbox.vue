@@ -53,8 +53,10 @@ const onChange = () => {
     border-radius: 3px;
     display: flex;
     align-items: center;
+    background-color: var(--color-checkbox);
     :deep(svg) {
       position: relative;
+      fill: var(--color-text);
     }
   }
 }

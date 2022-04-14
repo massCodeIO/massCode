@@ -45,7 +45,6 @@ h6 {
   text-transform: uppercase;
   margin: var(--spacing-xs) 0;
   font-weight: 700;
-  color: var(--color-contrast-medium);
 }
 
 .gutter-line {
@@ -69,6 +68,6 @@ h6 {
 
 .desc {
   font-size: var(--text-sm);
-  color: var(--color-contrast-medium);
+  color: var(--color-text-3);
   margin-top: var(--spacing-xs);
 }

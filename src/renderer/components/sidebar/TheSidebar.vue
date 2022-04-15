@@ -134,7 +134,7 @@ const systemFolders = computed(() => {
 
 const tabs: Tabs[] = [
   { label: 'Library', value: 'library' },
-  { label: 'Tabs', value: 'tags' }
+  { label: 'Tags', value: 'tags' }
 ]
 
 const activeTab = ref<Tab>('library')

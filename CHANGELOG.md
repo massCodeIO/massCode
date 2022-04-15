@@ -1,3 +1,18 @@
+# [2.1.0](https://github.com/massCodeIO/massCode/compare/v2.0.1...v2.1.0) (2022-04-15)
+
+
+### Bug Fixes
+
+* unsubscribe on unmount for emiiter events [#29](https://github.com/massCodeIO/massCode/issues/29) ([#32](https://github.com/massCodeIO/massCode/issues/32)) ([d1d0bc5](https://github.com/massCodeIO/massCode/commit/d1d0bc583801d8655a1736310b4baef9e4f58372))
+* **snippets:** disable markdown preview by select other fragment [#27](https://github.com/massCodeIO/massCode/issues/27) ([#31](https://github.com/massCodeIO/massCode/issues/31)) ([a7dfceb](https://github.com/massCodeIO/massCode/commit/a7dfcebd7d0721a7c28f412ced93d4bf8d4e6518))
+
+
+### Features
+
+* **main: db:** migrate from SnippetsLab ([#30](https://github.com/massCodeIO/massCode/issues/30)) ([1d48506](https://github.com/massCodeIO/massCode/commit/1d485067c5b6f476d92149905b437ae918a16963))
+
+
+
 ## [2.0.1](https://github.com/massCodeIO/massCode/compare/v2.0.0...v2.0.1) (2022-04-15)
 
 

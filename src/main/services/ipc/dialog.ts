@@ -1,11 +1,14 @@
-import type { MessageBoxRequest } from '@shared/types/main'
+import type { DialogRequest, MessageBoxRequest } from '@shared/types/main'
 import { dialog, ipcMain } from 'electron'
 
 export const subscribeToDialog = () => {
-  ipcMain.handle('main:open-dialog', () => {
+  ipcMain.handle<DialogRequest, any>('main:open-dialog', (event, payload) => {
     return new Promise<string>(resolve => {
+      const { properties, filters } = payload
+
       const dir = dialog.showOpenDialogSync({
-        properties: ['openDirectory', 'createDirectory']
+        properties: properties || ['openDirectory', 'createDirectory'],
+        filters: filters || [{ name: '*', extensions: ['json'] }]
       })
 
       if (dir) {

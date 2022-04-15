@@ -1,4 +1,4 @@
-import type { IpcRendererEvent } from 'electron'
+import type { IpcRendererEvent, OpenDialogOptions } from 'electron'
 import type { TrackEvents } from '../main/analytics'
 import type { AppStore, PreferencesStore } from './store'
 
@@ -77,6 +77,11 @@ export interface MessageBoxRequest {
   buttons: string[]
 }
 
+export interface DialogRequest {
+  properties?: OpenDialogOptions['properties']
+  filters?: OpenDialogOptions['filters']
+}
+
 interface EventCallback {
   (event?: IpcRendererEvent, ...args: any[]): void
 }
@@ -107,6 +112,7 @@ export interface ElectronBridge {
   }
   db: {
     migrate: (path: string) => Promise<void>
+    migrateFromSnippetsLab: (path: string) => void
     move: (from: string, to: string) => Promise<void>
     isExist: (path: string) => boolean
   }

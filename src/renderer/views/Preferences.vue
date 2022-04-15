@@ -12,7 +12,7 @@
           name="Storage"
           value="storage"
         >
-          <Storage />
+          <StoragePreferences />
         </AppMenuItem>
         <AppMenuItem
           name="Editor"

@@ -43,6 +43,7 @@ import { onClickOutside } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
+import { isToday, format } from 'date-fns'
 
 interface Props {
   id: string
@@ -208,9 +209,11 @@ const onClickContextMenu = async () => {
   snippetStore.selectedMultiple = []
 }
 
-const dateFormat = computed(() =>
-  new Intl.DateTimeFormat('ru').format(props.date)
-)
+const dateFormat = computed(() => {
+  const date = new Date(props.date)
+  if (isToday(date)) return format(date, 'HH:mm')
+  return format(date, 'dd.MM.yyyy')
+})
 
 const onDragStart = (e: DragEvent) => {
   if (snippetStore.selectedIds.length) {

@@ -106,6 +106,9 @@ const onClickMigrate = async () => {
 
   try {
     const path = await ipc.invoke<any, string>('main:open-dialog', {})
+
+    if (!path) return
+
     await db.migrate(path)
 
     ipc.invoke('main:restart-api', {})
@@ -143,6 +146,8 @@ const onClickMigrateFromSnippetsLab = async () => {
     const path = await ipc.invoke<DialogRequest, string>('main:open-dialog', {
       properties: ['openFile']
     })
+
+    if (!path) return
 
     db.migrateFromSnippetsLab(path)
 

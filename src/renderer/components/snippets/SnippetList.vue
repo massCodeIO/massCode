@@ -34,7 +34,7 @@
 import { emitter, setScrollPosition } from '@/composable'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import interact from 'interactjs'
 import { store } from '@/electron'
 
@@ -72,6 +72,10 @@ watch(
 
 emitter.on('folder:click', () => {
   setScrollPosition(bodyRef.value!, 0)
+})
+
+onUnmounted(() => {
+  emitter.off('folder:click')
 })
 </script>
 

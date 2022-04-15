@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onUnmounted, ref } from 'vue'
 import type { Tab, Tabs } from '@shared/types/renderer/sidebar'
 import { emitter, setScrollPosition } from '@/composable'
 
@@ -89,6 +89,10 @@ emitter.on('scroll-to:folder', id => {
       setScrollPosition(bodyRef.value!, el.getBoundingClientRect().top + 210)
     }
   })
+})
+
+onUnmounted(() => {
+  emitter.off('scroll-to:folder')
 })
 </script>
 

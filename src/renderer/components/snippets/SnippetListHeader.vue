@@ -27,7 +27,7 @@
 import { emitter, onAddNewSnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { track } from '@/electron'
 
 const snippetStore = useSnippetStore()
@@ -51,6 +51,10 @@ const onReset = () => {
 
 emitter.on('search:focus', () => {
   inputRef.value?.focus()
+})
+
+onUnmounted(() => {
+  emitter.off('search:focus')
 })
 </script>
 

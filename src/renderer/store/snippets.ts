@@ -66,17 +66,9 @@ export const useSnippetStore = defineStore('snippets', {
 
   actions: {
     async getSnippets () {
-      // Почему то не работает _expand
-      const { data } = await useApi('/snippets?_expand=folder`').get().json()
-      const { data: folderData } = await useApi('/folders').get().json()
+      const { data } = await useApi('/snippets/embed-folder').get().json()
 
-      // Поэтому добавляем folder самостоятельно
-      this.all = data.value.map((i: SnippetWithFolder) => {
-        const folder = folderData.value.find((f: Folder) => f.id === i.folderId)
-        if (folder) i.folder = folder
-        return i
-      })
-
+      this.all = data.value
       this.all.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
     },
     async getSnippetsByFolderIds (ids: string[]) {

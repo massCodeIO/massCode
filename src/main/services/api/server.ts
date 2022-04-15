@@ -3,10 +3,11 @@ import { store } from '../../store'
 import { nanoid } from 'nanoid'
 import { API_PORT } from '../../config'
 import path from 'path'
-import type { DB, Snippet, Tag } from '@shared/types/main/db'
+import type { DB, Folder, Snippet, Tag } from '@shared/types/main/db'
 import type { Server } from 'http'
 import type { Socket } from 'net'
 import { remove } from 'lodash'
+import type { SnippetWithFolder } from '@shared/types/renderer/store/snippets'
 
 interface ServerWithDestroy extends Server {
   destroy: Function
@@ -48,6 +49,20 @@ export class ApiServer {
 
         res.sendStatus(200)
       }
+    })
+
+    app.get('/snippets/embed-folder', (req, res) => {
+      const snippets = router.db.get<SnippetWithFolder[]>('snippets').value()
+
+      const result = snippets.map(i => {
+        const folder = router.db
+          .get<Folder[]>('folders')
+          .find(f => f.id === i.folderId)
+        if (folder) i.folder = folder.value()
+        return i
+      })
+
+      res.status(200).send(result)
     })
 
     app.post('/snippets/delete', (req, res) => {

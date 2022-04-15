@@ -77,7 +77,7 @@ export const useSnippetStore = defineStore('snippets', {
         return i
       })
 
-      this.all.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+      this.all.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
     },
     async getSnippetsByFolderIds (ids: string[]) {
       const snippets: SnippetWithFolder[] = []
@@ -94,7 +94,7 @@ export const useSnippetStore = defineStore('snippets', {
 
       this.snippets = snippets
         .filter(i => !i.isDeleted)
-        .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+        .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
     },
     async getSnippetsById (id: string) {
       if (id) {

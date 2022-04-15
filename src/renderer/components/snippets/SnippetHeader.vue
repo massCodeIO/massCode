@@ -36,7 +36,7 @@
 import { emitter, onAddNewFragment, onCopySnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/store/app'
 
 const snippetStore = useSnippetStore()
@@ -61,6 +61,10 @@ const onClickMarkdownPreview = () => {
 
 emitter.on('snippet:focus-name', () => {
   inputRef.value?.select()
+})
+
+onUnmounted(() => {
+  emitter.off('snippet:focus-name')
 })
 </script>
 

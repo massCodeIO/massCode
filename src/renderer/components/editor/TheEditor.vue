@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
@@ -270,6 +270,10 @@ watch(
 )
 
 emitter.on('snippet:format', () => format())
+
+onUnmounted(() => {
+  emitter.off('snippet:format')
+})
 
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()

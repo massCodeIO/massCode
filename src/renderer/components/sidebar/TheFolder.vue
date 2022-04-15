@@ -23,7 +23,7 @@
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 import { onClickOutside } from '@vueuse/core'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
 interface Props {
   id: string
@@ -61,6 +61,10 @@ watch(isEdit, () => {
 
 emitter.on('folder:rename', id => {
   if (id === props.id) isEdit.value = true
+})
+
+onUnmounted(() => {
+  emitter.off('folder:rename')
 })
 </script>
 

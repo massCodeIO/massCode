@@ -187,7 +187,8 @@ onClickOutside(itemRef, () => {
     }
   }
   &.is-focused {
-    &.is-system {
+    &.is-system,
+    &.is-tag {
       color: #fff;
       :deep(svg) {
         fill: #fff;

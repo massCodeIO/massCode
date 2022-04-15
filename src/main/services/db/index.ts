@@ -3,8 +3,12 @@ import fs from 'fs-extra'
 import readline from 'readline'
 import { nestedToFlat } from '../../utils'
 import { nanoid } from 'nanoid'
-import type { Folder, Snippet, Tag } from '@shared/types/main/db'
-import { oldLanguageMap } from '../../../renderer/components/editor/languages'
+import type { DB, Folder, Snippet, Tag } from '@shared/types/main/db'
+import {
+  oldLanguageMap,
+  languages
+} from '../../../renderer/components/editor/languages'
+import { snakeCase } from 'lodash'
 
 const DB_NAME = 'db.json'
 
@@ -204,6 +208,116 @@ export const migrate = async (path: string) => {
     snippets,
     tags
   }
+  writeToFile(db)
+  console.log('Migrate is done')
+}
+
+export const migrateFromSnippetsLab = (path: string) => {
+  interface SLFragment {
+    Content: string
+    'Date Created': string
+    'Date Modified': string
+    Note: string
+    Title: string
+    Language: string
+  }
+  interface SLSnippet {
+    'Date Created': string
+    'Date Modified': string
+    Folder: string
+    Title: string
+    Fragments: SLFragment[]
+    Tags: string[]
+  }
+
+  interface SnippetsLabDbJSON {
+    Snippets: SLSnippet[]
+  }
+
+  const INBOX = 'Uncategorized'
+
+  const file = fs.readFileSync(path, 'utf-8')
+  const json = JSON.parse(file) as SnippetsLabDbJSON
+
+  const folders = new Set<string>()
+  const tags = new Set<string>()
+
+  const db: DB = {
+    folders: [...DEFAULT_SYSTEM_FOLDERS],
+    snippets: [],
+    tags: []
+  }
+
+  json.Snippets.forEach(i => {
+    if (i.Folder) folders.add(i.Folder)
+
+    if (i.Tags.length) {
+      i.Tags.forEach(t => tags.add(t))
+    }
+  })
+
+  folders.forEach(i => {
+    if (i === INBOX) return
+    db.folders.push({
+      id: nanoid(8),
+      name: i,
+      defaultLanguage: 'plain_text',
+      parentId: null,
+      isOpen: false,
+      isSystem: false,
+      createdAt: new Date().valueOf(),
+      updatedAt: new Date().valueOf()
+    })
+  })
+
+  tags.forEach(i => {
+    db.tags.push({
+      id: nanoid(8),
+      name: i,
+      createdAt: new Date().valueOf(),
+      updatedAt: new Date().valueOf()
+    })
+  })
+
+  json.Snippets.forEach(i => {
+    const folderId = db.folders.find(f => f.name === i.Folder)?.id || ''
+    const tagsIds: string[] = []
+
+    if (i.Tags.length) {
+      i.Tags.forEach(t => {
+        const id = db.tags.find(_t => _t.name === t)?.id
+        if (id) tagsIds.push(id)
+      })
+    }
+
+    const snippet: Snippet = {
+      id: nanoid(8),
+      name: i.Title,
+      content: [],
+      folderId,
+      tagsIds,
+      isDeleted: false,
+      isFavorites: false,
+      createdAt: new Date(i['Date Created']).valueOf(),
+      updatedAt: new Date(i['Date Modified']).valueOf()
+    }
+
+    if (i.Fragments.length) {
+      i.Fragments.forEach(f => {
+        const _language = snakeCase(f.Language.toLowerCase())
+        const language = languages.find(i => i.value === _language)?.value
+
+        snippet.content.push({
+          label: f.Title,
+          value: f.Content,
+          language: language || 'plain_text'
+        })
+      })
+    }
+
+    db.snippets.push(snippet)
+  })
+
   writeToFile(db)
   console.log('Migrate is done')
 }

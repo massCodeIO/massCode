@@ -43,6 +43,7 @@
     "fs-extra": "^10.0.1",
     "highlight.js": "^11.5.1",
     "interactjs": "^1.10.11",
+    "lodash": "^4.17.21",
     "lowdb": "^3.0.0",
     "markdown-it": "^12.3.2",
     "markdown-it-link-attributes": "^4.0.0",

@@ -1,3 +1,12 @@
+## [2.0.1](https://github.com/massCodeIO/massCode/compare/v2.0.0...v2.0.1) (2022-04-15)
+
+
+### Bug Fixes
+
+* **snippets:** system folder highlight ([4cfe131](https://github.com/massCodeIO/massCode/commit/4cfe131bc79f55b28b1929905adfd86a7ada6086))
+
+
+
 # [2.0.0](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.6...v2.0.0) (2022-04-15)
 
 

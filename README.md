@@ -37,7 +37,7 @@ The best support right now is your star for the project. You can also help sprea
 massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
 
 ### Editor
-A snippet manager must not only provide organization of snippets but also have a good code editor. That's why under the hood of massCode there's [Ace](https://microsoft.github.io/monaco-editor). Ace is a high performance code editor which supports syntax highlighting for over 170 languages. We also added a [Prettier](https://prettier.io/) to code formatter.
+A snippet manager must not only provide organization of snippets but also have a good code editor. That's why under the hood of massCode there's [Ace](https://github.com/ajaxorg/ace-builds). Ace is a high performance code editor which supports syntax highlighting for over 170 languages. We also added a [Prettier](https://prettier.io/) to code formatter.
 
 ### Markdown
 massCode allows you to write in Markdown and also provide syntax highlighting inside a code block. And of course there is a preview.

@@ -1,3 +1,19 @@
+# [2.0.0](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.6...v2.0.0) (2022-04-15)
+
+
+### Bug Fixes
+
+* **snippets:** sort by `updatedAt` ([f5f50e6](https://github.com/massCodeIO/massCode/commit/f5f50e6a68d5b309fabe77f402b370a6d4d22d43))
+
+
+### Features
+
+* **api:** add controller to get snippets with folder ([3a2f1fb](https://github.com/massCodeIO/massCode/commit/3a2f1fb0f1d224e943942ad02be851c97a62ef97))
+* **main: menu:** add find menu ([e42349e](https://github.com/massCodeIO/massCode/commit/e42349e25f6cfdbb9b74d3f7815a3e7eabd2b39a))
+* **snippets:** show time for today updated & full date for other snippets ([3724a5b](https://github.com/massCodeIO/massCode/commit/3724a5b459034bab90a3410c5e2d720394c33581))
+
+
+
 # [2.0.0-beta.6](https://github.com/massCodeIO/massCode/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2022-04-14)
 
 

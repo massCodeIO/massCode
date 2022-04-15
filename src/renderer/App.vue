@@ -88,7 +88,7 @@ watch(
 )
 
 watch(
-  () => snippetStore.selectedId,
+  () => [snippetStore.selectedId, snippetStore.fragment],
   () => {
     snippetStore.isMarkdownPreview = false
   }

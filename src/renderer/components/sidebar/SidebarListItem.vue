@@ -187,6 +187,12 @@ onClickOutside(itemRef, () => {
     }
   }
   &.is-focused {
+    &.is-system {
+      color: #fff;
+      :deep(svg) {
+        fill: #fff;
+      }
+    }
     .icon {
       :deep(svg) {
         fill: var(--color-sidebar-icon-selected);

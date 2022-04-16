@@ -22,7 +22,7 @@ const EDITOR_DEFAULTS: EditorSettings = {
 export const useAppStore = defineStore('app', {
   state: (): State => ({
     isInit: false,
-    theme: 'light',
+    theme: 'light:chrome',
     showTags: true,
     sizes: {
       titlebar: 15,

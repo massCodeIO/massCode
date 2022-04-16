@@ -10,7 +10,7 @@
     "dev:watch": "tsc-watch -p tsconfig.electron.json --onFirstSuccess \"npm run dev:server\"",
     "dev:server": "node build/scripts/dev-server.js",
     "dev:vue-devtools": "vue-devtools",
-    "build": "npm run build:ts && node build/scripts/build.js ",
+    "build": "npm run ts-check:vue && npm run build:ts && node build/scripts/build.js ",
     "build:ts": "tsc -p tsconfig.electron.json",
     "ts-check:vue": "vue-tsc --noEmit --skipLibCheck",
     "lint": "eslint --ext .js,.ts,.vue . src",

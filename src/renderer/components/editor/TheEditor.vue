@@ -209,16 +209,6 @@ const setLang = () => {
   track('snippets/set-language', localLang.value)
 }
 
-const setTheme = () => {
-  editor.session.setMode(`ace/theme/${props.theme}`)
-}
-const setOption = <T extends keyof Ace.EditSessionOptions>(
-  name: T,
-  value: Ace.EditSessionOptions[T]
-) => {
-  editor.session.setOption(name, value)
-}
-
 const resetUndoStack = () => {
   editor.getSession().setUndoManager(new ace.UndoManager())
 }

@@ -1,3 +1,14 @@
+## [2.1.1](https://github.com/massCodeIO/massCode/compare/v2.1.0...v2.1.1) (2022-04-18)
+
+
+### Bug Fixes
+
+* **editor:** disable multiple selection by edit snippet after search ([ec2c1eb](https://github.com/massCodeIO/massCode/commit/ec2c1eb39605a87f575b0e5e970232b7ef5078fa))
+* **sidebar:** tag highlight, spell fix tabs -> tags ([#33](https://github.com/massCodeIO/massCode/issues/33)) ([9be3e13](https://github.com/massCodeIO/massCode/commit/9be3e13b1fad2c8a5d027d36f743d7f1bc4afd86))
+* **snippets:** color text for ghost for multiple dragged snippets ([fc25202](https://github.com/massCodeIO/massCode/commit/fc25202059819f298e27e4506c0625756219c97d))
+
+
+
 # [2.1.0](https://github.com/massCodeIO/massCode/compare/v2.0.1...v2.1.0) (2022-04-15)
 
 

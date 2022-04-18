@@ -52,6 +52,7 @@
     "pinia": "^2.0.12",
     "sanitize-html": "^2.7.0",
     "universal-analytics": "^0.5.3",
+    "vercel-toast": "^1.5.5",
     "vue": "^3.2.26",
     "vue-router": "^4.0.12",
     "vue3-perfect-scrollbar": "^1.6.0"

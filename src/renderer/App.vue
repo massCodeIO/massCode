@@ -27,6 +27,7 @@ import {
   onCopySnippet,
   emitter
 } from '@/composable'
+import { createToast, destroyAllToasts } from 'vercel-toast'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -79,7 +80,39 @@ const trackAppUpdate = () => {
   store.app.set('version', appStore.version)
 }
 
+const showSupportToast = () => {
+  if (!store.app.get('notifySupport')) {
+    const message = document.createElement('div')
+
+    setTimeout(() => {
+      message.innerHTML = `Hi, Anton here 👋<br><br>
+I need your support. If you find this app useful, please put a star on <a class="external" href="#">github</a>. It will inspire me to continue development on the project.<br><br>My goal is at least 10k stars.`
+
+      createToast(message, {
+        action: {
+          text: 'Close',
+          callback (toast) {
+            toast.destroy()
+            store.app.set('notifySupport', true)
+            track('app/notify', 'support-go-to-github')
+          }
+        }
+      })
+
+      const a = document.querySelector('.external')
+
+      a?.addEventListener('click', () => {
+        ipc.invoke('main:open-url', 'https://github.com/massCodeIO/massCode')
+        store.app.set('notifySupport', true)
+        destroyAllToasts()
+        track('app/notify', 'support-close')
+      })
+    }, 1000 * 60 * 5)
+  }
+}
+
 init()
+showSupportToast()
 
 watch(
   () => appStore.theme,

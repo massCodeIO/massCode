@@ -24,6 +24,7 @@ type AppEvents =
   | 'install'
   | 'empty-trash'
   | 'set-theme'
+  | 'notify'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>

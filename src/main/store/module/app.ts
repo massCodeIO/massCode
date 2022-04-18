@@ -8,6 +8,7 @@ export default new Store<AppStore>({
   defaults: {
     bounds: {},
     sidebarWidth: 180,
-    snippetListWidth: 250
+    snippetListWidth: 250,
+    notifySupport: false
   }
 })

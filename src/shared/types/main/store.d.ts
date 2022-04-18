@@ -7,6 +7,7 @@ export interface AppStore {
   sidebarWidth: number
   snippetListWidth: number
   version?: string
+  notifySupport: boolean
 }
 
 interface Editor {

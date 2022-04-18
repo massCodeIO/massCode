@@ -225,7 +225,7 @@ const onDragStart = (e: DragEvent) => {
       padding: '2px 10px',
       backgroundColor: 'var(--color-bg)',
       borderRadius: '3px',
-      color: 'var(--color-contrast-higher)',
+      color: 'var(--color-text)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

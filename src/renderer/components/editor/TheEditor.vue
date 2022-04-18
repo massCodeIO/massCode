@@ -134,6 +134,11 @@ const init = async () => {
   editor.selection.on('changeCursor', () => {
     getCursorPosition()
   })
+  editor.on('focus', () => {
+    if (snippetStore.searchQuery?.length) {
+      snippetStore.searchQuery = undefined
+    }
+  })
 
   // Фиксированный размер для колонки чисел строк
   // @ts-ignore

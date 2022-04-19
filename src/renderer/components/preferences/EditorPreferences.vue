@@ -31,6 +31,18 @@
           name="showInvisibles"
         />
       </AppFormItem>
+      <AppFormItem label="Highlight Line">
+        <AppCheckbox
+          v-model="appStore.editor.highlightLine"
+          name="showInvisibles"
+        />
+      </AppFormItem>
+      <AppFormItem label="Highlight Gutter">
+        <AppCheckbox
+          v-model="appStore.editor.highlightGutter"
+          name="showInvisibles"
+        />
+      </AppFormItem>
       <h4>Prettier</h4>
       <AppFormItem label="Trailing Comma">
         <AppSelect

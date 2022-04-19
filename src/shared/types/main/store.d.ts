@@ -1,3 +1,5 @@
+import type { EditorSettings } from '../renderer/store/app'
+
 export interface AppStore {
   bounds: object
   selectedFolderId?: string
@@ -10,20 +12,9 @@ export interface AppStore {
   notifySupport: boolean
 }
 
-interface Editor {
-  fontFamily: string
-  fontSize: number
-  showInvisibles: boolean
-  tabSize: number
-  wrap: string
-  trailingComma: 'all' | 'none' | 'es5'
-  semi: boolean
-  singleQuote: boolean
-  theme: string
-}
 export interface PreferencesStore {
   storagePath: string
   backupPath: string
-  editor: Editor
+  editor: EditorSettings
   theme: string
 }

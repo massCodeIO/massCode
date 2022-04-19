@@ -16,7 +16,9 @@ const EDITOR_DEFAULTS: EditorSettings = {
   trailingComma: 'none',
   semi: false,
   singleQuote: true,
-  theme: 'chrome'
+  theme: 'chrome',
+  highlightLine: false,
+  highlightGutter: false
 }
 
 export const useAppStore = defineStore('app', {

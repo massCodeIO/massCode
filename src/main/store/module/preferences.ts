@@ -24,7 +24,9 @@ export default new Store<PreferencesStore>({
       trailingComma: 'none',
       semi: false,
       singleQuote: true,
-      theme: 'github'
+      theme: 'chrome',
+      highlightLine: false,
+      highlightGutter: false
     }
   }
 })

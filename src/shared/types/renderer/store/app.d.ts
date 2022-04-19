@@ -42,6 +42,8 @@ export interface EditorSettings {
   semi: boolean
   singleQuote: boolean
   theme: ThemeEditor
+  highlightLine: boolean
+  highlightGutter: boolean
 }
 
 export interface State {

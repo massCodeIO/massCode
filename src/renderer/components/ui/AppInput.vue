@@ -40,5 +40,9 @@ const localValue = computed({
   padding: 0 var(--spacing-xs);
   background-color: var(--color-input);
   color: var(--color-text);
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
 }
 </style>

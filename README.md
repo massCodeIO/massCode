@@ -23,14 +23,10 @@
 </p>
 
 
-## Supporting
+## Thoughts on further development
 
-The best support right now is your star for the project. You can also help spread the word about the app in the public.
+[Post on Discussions](https://github.com/massCodeIO/massCode/discussions/47)
 
-<!-- ## Feature for now
-- Support M1
-- Syntax highlighting over 170 languages
-- API to fetch snippets on the localhost -->
 
 ## Features
 ### Organization

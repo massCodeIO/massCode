@@ -1,3 +1,18 @@
+# [2.2.0](https://github.com/massCodeIO/massCode/compare/v2.1.1...v2.2.0) (2022-04-19)
+
+
+### Bug Fixes
+
+* **search:** set selected folder & snippet after focus on editor after search ([069e296](https://github.com/massCodeIO/massCode/commit/069e296f0aa3792990b8a25a1cfd314c853946fa))
+* **snippets:** persist scroll position by change view ([ba05384](https://github.com/massCodeIO/massCode/commit/ba05384c62eb39115bcc6c0fdd5d0f0a6a83b6c5))
+
+
+### Features
+
+* **editor:** add `highlightGutter` & `highlightLine` settings ([#45](https://github.com/massCodeIO/massCode/issues/45)) ([52f8455](https://github.com/massCodeIO/massCode/commit/52f845575b641b1eeaa3a2a893b72f362908c744))
+
+
+
 ## [2.1.1](https://github.com/massCodeIO/massCode/compare/v2.1.0...v2.1.1) (2022-04-18)
 
 

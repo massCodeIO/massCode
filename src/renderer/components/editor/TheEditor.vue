@@ -115,7 +115,9 @@ const init = async () => {
     printMargin: false,
     tabSize: appStore.editor.tabSize,
     wrap: appStore.editor.wrap,
-    showInvisibles: appStore.editor.showInvisibles
+    showInvisibles: appStore.editor.showInvisibles,
+    highlightGutterLine: appStore.editor.highlightGutter,
+    highlightActiveLine: appStore.editor.highlightLine
   })
 
   setValue()

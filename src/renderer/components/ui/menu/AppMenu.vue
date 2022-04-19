@@ -64,7 +64,6 @@ provide('items', items.value)
 <style lang="scss" scoped>
 .menu {
   width: 100%;
-  height: 300px;
   display: grid;
   grid-template-columns: 150px 1fr;
   gap: var(--spacing-sm);

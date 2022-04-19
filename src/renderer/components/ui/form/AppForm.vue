@@ -12,5 +12,6 @@
   display: flex;
   flex-flow: column;
   gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 </style>

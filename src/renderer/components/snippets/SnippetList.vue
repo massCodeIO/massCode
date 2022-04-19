@@ -45,6 +45,11 @@ const listRef = ref()
 const bodyRef = ref<HTMLElement>()
 const gutterRef = ref()
 
+const scrollToSnippet = (id: string) => {
+  const el = document.querySelector<HTMLElement>(`[data-id='${id}']`)
+  if (el?.offsetTop) setScrollPosition(bodyRef.value!, el.offsetTop)
+}
+
 onMounted(() => {
   interact(listRef.value).resizable({
     allowFrom: gutterRef.value,
@@ -62,20 +67,20 @@ onMounted(() => {
 
 watch(
   () => appStore.isInit,
-  () => {
-    const el = document.querySelector<HTMLElement>(
-      `[data-id='${snippetStore.selectedId!}']`
-    )
-    if (el?.offsetTop) setScrollPosition(bodyRef.value!, el.offsetTop)
-  }
+  () => scrollToSnippet(snippetStore.selectedId!)
 )
 
 emitter.on('folder:click', () => {
   setScrollPosition(bodyRef.value!, 0)
 })
 
+emitter.on('scroll-to:snippet', (id: string) => {
+  scrollToSnippet(id)
+})
+
 onUnmounted(() => {
   emitter.off('folder:click')
+  emitter.off('scroll-to:snippet')
 })
 </script>
 

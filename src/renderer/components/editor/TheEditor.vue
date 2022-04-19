@@ -46,6 +46,7 @@ import parserMarkdown from 'prettier/parser-markdown'
 import parserPostcss from 'prettier/parser-postcss'
 import parserYaml from 'prettier/parser-yaml'
 import { emitter } from '@/composable'
+import { useFolderStore } from '@/store/folders'
 
 interface Props {
   lang: Language
@@ -69,6 +70,7 @@ const emit = defineEmits<Emits>()
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
+const folderStore = useFolderStore()
 
 const editorRef = ref()
 const cursorPosition = reactive({
@@ -136,9 +138,12 @@ const init = async () => {
   editor.selection.on('changeCursor', () => {
     getCursorPosition()
   })
-  editor.on('focus', () => {
+  editor.on('focus', async () => {
     if (snippetStore.searchQuery?.length) {
       snippetStore.searchQuery = undefined
+      folderStore.selectId(snippetStore.selected!.folderId)
+      await snippetStore.setSnippetsByFolderIds()
+      emitter.emit('scroll-to:snippet', snippetStore.selectedId!)
     }
   })
 

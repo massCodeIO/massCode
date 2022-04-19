@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import router from '@/router'
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { ipc, store, track } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
@@ -28,6 +28,7 @@ import {
   emitter
 } from '@/composable'
 import { createToast, destroyAllToasts } from 'vercel-toast'
+import { useRoute } from 'vue-router'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -36,6 +37,7 @@ router.push('/')
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
+const route = useRoute()
 
 const isUpdateAvailable = ref(false)
 
@@ -124,6 +126,17 @@ watch(
   () => [snippetStore.selectedId, snippetStore.fragment],
   () => {
     snippetStore.isMarkdownPreview = false
+  }
+)
+
+watch(
+  () => route.path,
+  () => {
+    if (route.path === '/') {
+      nextTick(() => {
+        emitter.emit('scroll-to:snippet', snippetStore.selectedId!)
+      })
+    }
   }
 )
 

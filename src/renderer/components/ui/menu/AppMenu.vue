@@ -70,6 +70,7 @@ provide('items', items.value)
   gap: var(--spacing-sm);
   .name {
     padding: var(--spacing-xs);
+    user-select: none;
     &.is-selected {
       border-radius: 5px;
       background-color: var(--color-menu-selected);

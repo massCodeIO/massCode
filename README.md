@@ -19,7 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/massCodeIO/massCode/releases">Latest Release</a> | <a href="https://github.com/massCodeIO/massCode-assistant-raycast">Raycast Extension</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
+  <a href="https://github.com/massCodeIO/massCode/releases">Latest Release</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
+</p>
+
+<p align="center">
+  Extensions:
+  <a href="https://github.com/massCodeIO/massCode-assistant-raycast">Raycast</a> |
+  <a href="https://github.com/massCodeIO/assistant-alfred">Alfred</a>
 </p>
 
 

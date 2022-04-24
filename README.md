@@ -29,10 +29,9 @@
 </p>
 
 
-## Thoughts on further development
+## Support
 
-[Post on Discussions](https://github.com/massCodeIO/massCode/discussions/47)
-
+massCode need your support, give a [star](https://github.com/massCodeIO/massCode/stargazers) on this repo or [donate](https://opencollective.com/masscode). All of this is valuable and will inspire further development.
 
 ## Features
 ### Organization

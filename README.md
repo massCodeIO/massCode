@@ -24,7 +24,7 @@
 
 <p align="center">
   Extensions:
-  <a href="https://github.com/massCodeIO/massCode-assistant-raycast">Raycast</a> |
+  <a href="https://www.raycast.com/antonreshetov/masscode">Raycast</a> |
   <a href="https://github.com/massCodeIO/assistant-alfred">Alfred</a>
 </p>
 

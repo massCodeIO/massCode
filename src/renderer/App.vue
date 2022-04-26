@@ -88,7 +88,7 @@ const showSupportToast = () => {
 
     setTimeout(() => {
       message.innerHTML = `Hi, Anton here 👋<br><br>
-I need your support. If you find this app useful, please put a star on <a class="external" href="#">github</a>. It will inspire me to continue development on the project.<br><br>My goal is at least 10k stars.`
+I need your support. If you find this app useful, please give a star on <a class="external" href="#">github</a>. It will inspire me to continue development on the project.<br><br>My goal is at least 10k stars.`
 
       createToast(message, {
         action: {

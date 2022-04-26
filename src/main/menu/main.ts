@@ -104,18 +104,13 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Change Log',
-    click: () => {
-      shell.openExternal(
-        'https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md'
-      )
-    }
-  },
-  {
     label: 'Documentation',
     click: () => {
       shell.openExternal('https://masscode.io/documentation')
     }
+  },
+  {
+    type: 'separator'
   },
   {
     label: 'View in GitHub',
@@ -124,11 +119,40 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: 'Change Log',
+    click: () => {
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md'
+      )
+    }
+  },
+  {
     label: 'Report Issue',
     click: () => {
       shell.openExternal(
         'https://github.com/massCodeIO/massCode/issues/new/choose'
       )
+    }
+  },
+  {
+    label: 'Give a Star',
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: 'Raycast Extension',
+    click: () => {
+      shell.openExternal('https://www.raycast.com/antonreshetov/masscode')
+    }
+  },
+  {
+    label: 'Alfred Extension',
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/assistant-alfred')
     }
   },
   {

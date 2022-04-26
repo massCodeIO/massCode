@@ -52,7 +52,10 @@ export class ApiServer {
     })
 
     app.get('/snippets/embed-folder', (req, res) => {
-      const snippets = router.db.get<SnippetWithFolder[]>('snippets').value()
+      const snippets = router.db
+        .get<SnippetWithFolder[]>('snippets')
+        .cloneDeep()
+        .value()
 
       const result = snippets.map(i => {
         const folder = router.db

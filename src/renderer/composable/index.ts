@@ -17,11 +17,14 @@ export const onAddNewSnippet = async () => {
   const folderStore = useFolderStore()
   const snippetStore = useSnippetStore()
 
-  if (folderStore.selectedAlias !== undefined) return
-  if (!folderStore.selectedId) return
-
   await snippetStore.addNewSnippet()
-  await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+
+  if (folderStore.selectedId) {
+    await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+  } else {
+    await snippetStore.getSnippets()
+    snippetStore.setSnippetsByAlias('inbox')
+  }
   await snippetStore.getSnippets()
 
   emitter.emit('snippet:focus-name', true)

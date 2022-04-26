@@ -136,7 +136,7 @@ export const useSnippetStore = defineStore('snippets', {
       const body: Partial<Snippet> = {}
 
       body.name = 'Untitled snippet'
-      body.folderId = folderStore.selectedId
+      body.folderId = folderStore.selectedId || ''
       body.isDeleted = false
       body.isFavorites = false
       body.tagsIds = []

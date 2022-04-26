@@ -177,6 +177,7 @@ export const migrate = async (path: string) => {
       content = content.map((i: any) => {
         return {
           ...i,
+          value: i.value || '',
           language: oldLanguageMap[i.language] || i.language
         }
       })

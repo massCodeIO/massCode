@@ -23,9 +23,13 @@ const DEFAULT_FOLDER = {
   updatedAt: new Date().valueOf()
 }
 
-const fileDb = store.preferences.get('storagePath') + `/${DB_NAME}`
+const getFileDb = () => {
+  return store.preferences.get('storagePath') + `/${DB_NAME}`
+}
 
 export const createDb = () => {
+  const fileDb = getFileDb()
+
   if (fs.existsSync(fileDb)) {
     return
   } else {
@@ -47,6 +51,7 @@ export const createDb = () => {
 }
 
 const writeToFile = (db: object) => {
+  const fileDb = getFileDb()
   const data = JSON.stringify(db, null, 2)
   fs.writeFileSync(fileDb, data)
 }

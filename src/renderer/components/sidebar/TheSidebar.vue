@@ -110,27 +110,12 @@ const treeRef = ref()
 const sidebarRef = ref()
 const gutterRef = ref()
 
-const systemFolders = computed(() => {
-  const folders = folderStore.system.map(i => {
-    let icon
-    let alias
-    if (i.name === 'Inbox') {
-      icon = Inbox
-      alias = 'inbox'
-    }
-    return { ...i, alias, icon }
-  }) as SidebarSystemFolder[]
-
-  const other: SidebarSystemFolder[] = [
-    { name: 'Favorites', alias: 'favorites', icon: Favorite },
-    { name: 'All Snippets', alias: 'all', icon: Archive },
-    { name: 'Trash', alias: 'trash', icon: Trash }
-  ]
-
-  folders.splice(1, 0, ...other)
-
-  return folders
-})
+const systemFolders: SidebarSystemFolder[] = [
+  { name: 'Inbox', alias: 'inbox', icon: Inbox },
+  { name: 'Favorites', alias: 'favorites', icon: Favorite },
+  { name: 'All Snippets', alias: 'all', icon: Archive },
+  { name: 'Trash', alias: 'trash', icon: Trash }
+]
 
 const tabs: Tabs[] = [
   { label: 'Library', value: 'library' },

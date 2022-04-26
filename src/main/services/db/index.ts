@@ -12,19 +12,6 @@ import { snakeCase } from 'lodash'
 
 const DB_NAME = 'db.json'
 
-const DEFAULT_SYSTEM_FOLDERS: Folder[] = [
-  {
-    id: nanoid(8),
-    name: 'Inbox',
-    defaultLanguage: 'plain_text',
-    parentId: null,
-    isOpen: false,
-    isSystem: true,
-    createdAt: new Date().valueOf(),
-    updatedAt: new Date().valueOf()
-  }
-]
-
 const DEFAULT_FOLDER = {
   id: nanoid(8),
   name: 'Default',
@@ -46,7 +33,7 @@ export const createDb = () => {
   }
 
   const db = {
-    folders: [...DEFAULT_SYSTEM_FOLDERS, DEFAULT_FOLDER],
+    folders: [DEFAULT_FOLDER],
     snippets: [],
     tags: []
   }
@@ -123,8 +110,6 @@ export const migrate = async (path: string) => {
 
   const folderIdsMap: any[] = []
   const tagIdsMap: any[] = []
-
-  folders.push(...DEFAULT_SYSTEM_FOLDERS)
 
   masscodeJSONList.forEach(
     ({ id, open, parentId, defaultLanguage, ...rest }) => {
@@ -243,7 +228,7 @@ export const migrateFromSnippetsLab = (path: string) => {
   const tags = new Set<string>()
 
   const db: DB = {
-    folders: [...DEFAULT_SYSTEM_FOLDERS],
+    folders: [],
     snippets: [],
     tags: []
   }

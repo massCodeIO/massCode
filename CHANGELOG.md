@@ -1,3 +1,21 @@
+# [2.3.0](https://github.com/massCodeIO/massCode/compare/v2.2.0...v2.3.0) (2022-04-26)
+
+
+### Bug Fixes
+
+* **api:** don't mutate snippets table during embed folders ([f60d045](https://github.com/massCodeIO/massCode/commit/f60d04586b5b7890df7dbcf5f0c71aedd4a455b4))
+* **main: db:** migrate after move storage ([5406083](https://github.com/massCodeIO/massCode/commit/54060831a8bd3d3a11f63b8cb044e2c777d28f8d))
+* **main: db:** set empty `value` for content if `value` is `null` on migrate from v1 [#38](https://github.com/massCodeIO/massCode/issues/38) ([1874d1c](https://github.com/massCodeIO/massCode/commit/1874d1c3c925175a74f95527d6aafb3307b09ffe))
+* **snippets:** remove selected by click for system folder ([ebd9f29](https://github.com/massCodeIO/massCode/commit/ebd9f29ae31db0f5e03cec76e79a072c4b36b127))
+
+
+### Features
+
+* **main: menu:** add raycast & alfred extensions links ([aab76b6](https://github.com/massCodeIO/massCode/commit/aab76b61ad7191a929e3c3861b1394811ad926da))
+* **snippets:** allow add snippets to inbox ([#52](https://github.com/massCodeIO/massCode/issues/52)) ([5cf809a](https://github.com/massCodeIO/massCode/commit/5cf809aea45e20d3cab9152dcb986652583413b6))
+
+
+
 # [2.2.0](https://github.com/massCodeIO/massCode/compare/v2.1.1...v2.2.0) (2022-04-19)
 
 

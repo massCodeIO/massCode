@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import type { FunctionalComponent } from 'vue'
-import { ref } from 'vue'
+import { watch, ref } from 'vue'
 import Folder from '~icons/unicons/folder'
 import AngleRight from '~icons/unicons/angle-right'
 import { onClickOutside } from '@vueuse/core'
@@ -153,6 +153,13 @@ const onClickContextMenu = async () => {
 onClickOutside(itemRef, () => {
   isFocused.value = false
 })
+
+watch(
+  () => props.isSelected,
+  v => {
+    if (!v) isFocused.value = false
+  }
+)
 </script>
 
 <style lang="scss" scoped>

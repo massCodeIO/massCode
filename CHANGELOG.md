@@ -1,3 +1,13 @@
+# [2.4.0](https://github.com/massCodeIO/massCode/compare/v2.3.0...v2.4.0) (2022-04-27)
+
+
+### Features
+
+* **api:** create snippets ([#56](https://github.com/massCodeIO/massCode/issues/56)) ([4abd6bd](https://github.com/massCodeIO/massCode/commit/4abd6bd53660c8b2750700139ba0fa4202532c35))
+* **main: menu:** add VS Code extension link ([98c4720](https://github.com/massCodeIO/massCode/commit/98c4720a3bf40fe3031808ccbf22717f4ac87d15))
+
+
+
 # [2.3.0](https://github.com/massCodeIO/massCode/compare/v2.2.0...v2.3.0) (2022-04-26)
 
 

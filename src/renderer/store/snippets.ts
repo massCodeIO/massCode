@@ -131,24 +131,34 @@ export const useSnippetStore = defineStore('snippets', {
         await this.getSnippetsByFolderIds(folderStore.selectedIds!)
       }
     },
-    async addNewSnippet () {
+    async addNewSnippet (body?: Partial<Snippet>) {
       const folderStore = useFolderStore()
-      const body: Partial<Snippet> = {}
+      let _body: Partial<Snippet> = {}
 
-      body.name = 'Untitled snippet'
-      body.folderId = folderStore.selectedId || ''
-      body.isDeleted = false
-      body.isFavorites = false
-      body.tagsIds = []
-      body.content = [
-        {
-          label: 'Fragment 1',
-          language: folderStore.selected?.defaultLanguage || 'plain_text',
-          value: ''
+      _body.isDeleted = false
+      _body.isFavorites = false
+      _body.folderId = ''
+      _body.tagsIds = []
+
+      if (body) {
+        _body = {
+          ..._body,
+          name: body.name,
+          content: body.content
         }
-      ]
+      } else {
+        _body.name = 'Untitled snippet'
+        _body.folderId = folderStore.selectedId || ''
+        _body.content = [
+          {
+            label: 'Fragment 1',
+            language: folderStore.selected?.defaultLanguage || 'plain_text',
+            value: ''
+          }
+        ]
+      }
 
-      const { data } = await useApi('/snippets').post(body).json()
+      const { data } = await useApi('/snippets').post(_body).json()
 
       this.selected = data.value
       store.app.set('selectedSnippetId', this.selected!.id)

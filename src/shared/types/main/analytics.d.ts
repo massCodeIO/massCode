@@ -25,16 +25,19 @@ type AppEvents =
   | 'empty-trash'
   | 'set-theme'
   | 'notify'
+type ApiEvents = 'snippet-create'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>
 type TrackTagEvents = CombineWith<TagEvents, 'tags'>
 type TrackAppEvents = CombineWith<AppEvents, 'app'>
+type TrackApiEvents = CombineWith<ApiEvents, 'api'>
 
 export type TrackEvents =
   | TrackSnippetEvents
   | TrackFolderEvents
   | TrackTagEvents
   | TrackAppEvents
+  | TrackApiEvents
   | 'main'
   | 'preferences'

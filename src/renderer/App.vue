@@ -25,10 +25,12 @@ import {
   onAddNewFragment,
   onAddNewFolder,
   onCopySnippet,
-  emitter
+  emitter,
+  onCreateSnippet
 } from '@/composable'
 import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
+import type { Snippet } from '@shared/types/main/db'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -176,6 +178,10 @@ ipc.on('main-menu:format-snippet', () => {
 
 ipc.on('main-menu:search', () => {
   emitter.emit('search:focus', true)
+})
+
+ipc.on('api:snippet-create', (event, body: Snippet) => {
+  onCreateSnippet(body)
 })
 </script>
 

@@ -48,12 +48,19 @@ type MainAction =
   | 'update-available'
   | 'open-url'
 
+type ApiAction = 'snippet-create'
+
 export type ContextMenuChannel = CombineWith<ChannelSubject, 'context-menu'>
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type MainChannel = CombineWith<MainAction, 'main'>
+export type ApiChannel = CombineWith<ApiAction, 'api'>
 
-export type Channel = ContextMenuChannel | MainMenuChannel | MainChannel
+export type Channel =
+  | ContextMenuChannel
+  | MainMenuChannel
+  | MainChannel
+  | ApiChannel
 export interface ContextMenuRequest {
   name?: string
   type: ContextMenuType

@@ -6,6 +6,7 @@ import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
+import type { Snippet } from '@shared/types/main/db'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -29,6 +30,15 @@ export const onAddNewSnippet = async () => {
 
   emitter.emit('snippet:focus-name', true)
   track('snippets/add-new')
+}
+
+export const onCreateSnippet = async (body: Partial<Snippet>) => {
+  const snippetStore = useSnippetStore()
+
+  await snippetStore.addNewSnippet(body)
+  await snippetStore.getSnippets()
+  snippetStore.setSnippetsByAlias('inbox')
+  track('api/snippet-create')
 }
 
 export const onAddNewFragment = () => {

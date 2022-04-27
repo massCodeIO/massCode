@@ -8,6 +8,7 @@ import type { Server } from 'http'
 import type { Socket } from 'net'
 import { remove } from 'lodash'
 import type { SnippetWithFolder } from '@shared/types/renderer/store/snippets'
+import { BrowserWindow } from 'electron'
 
 interface ServerWithDestroy extends Server {
   destroy: Function
@@ -78,6 +79,13 @@ export class ApiServer {
       })
 
       router.db.write()
+
+      res.sendStatus(200)
+    })
+
+    app.post('/snippets/create', (req, res) => {
+      const windows = BrowserWindow.getAllWindows()
+      windows[0].webContents.send('api:snippet-create', req.body)
 
       res.sendStatus(200)
     })

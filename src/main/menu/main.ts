@@ -144,6 +144,14 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
+    label: 'VS Code Extension',
+    click: () => {
+      shell.openExternal(
+        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant'
+      )
+    }
+  },
+  {
     label: 'Raycast Extension',
     click: () => {
       shell.openExternal('https://www.raycast.com/antonreshetov/masscode')

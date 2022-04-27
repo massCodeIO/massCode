@@ -100,5 +100,8 @@
     "unplugin-vue-components": "^0.18.1",
     "vite": "^2.8.6",
     "vue-tsc": "^0.30.0"
+  },
+  "volta": {
+    "node": "16.15.0"
   }
 }

@@ -78,7 +78,7 @@ const trackAppUpdate = () => {
   if (!installedVersion) track('app/install')
 
   if (installedVersion && appStore.version !== installedVersion) {
-    track('app/update', appStore.version)
+    track('app/update', `from-${installedVersion}`)
   }
 
   store.app.set('version', appStore.version)

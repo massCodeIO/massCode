@@ -28,13 +28,16 @@ export const subscribeToContextMenu = () => {
           {
             label: `Delete "${name}"`,
             click: () => {
-              const buttonId = dialog.showMessageBoxSync({
-                message: `Are you sure you want to permanently delete "${name}"?`,
-                detail: 'You cannot undo this action.',
-                buttons: ['Delete', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1
-              })
+              const buttonId = dialog.showMessageBoxSync(
+                BrowserWindow.getFocusedWindow()!,
+                {
+                  message: `Are you sure you want to permanently delete "${name}"?`,
+                  detail: 'You cannot undo this action.',
+                  buttons: ['Delete', 'Cancel'],
+                  defaultId: 0,
+                  cancelId: 1
+                }
+              )
               if (buttonId === 0) {
                 resolve({
                   action: 'delete',
@@ -125,13 +128,16 @@ export const subscribeToContextMenu = () => {
                 selectedCount === 0
                   ? `Are you sure you want to permanently delete "${name}"?`
                   : `Are you sure you want to permanently delete ${selectedCount} selected snippets?`
-              const buttonId = dialog.showMessageBoxSync({
-                message,
-                detail: 'You cannot undo this action.',
-                buttons: ['Delete', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1
-              })
+              const buttonId = dialog.showMessageBoxSync(
+                BrowserWindow.getFocusedWindow()!,
+                {
+                  message,
+                  detail: 'You cannot undo this action.',
+                  buttons: ['Delete', 'Cancel'],
+                  defaultId: 0,
+                  cancelId: 1
+                }
+              )
 
               if (buttonId === 0) {
                 resolve({
@@ -230,13 +236,16 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete',
             click: () => {
-              const buttonId = dialog.showMessageBoxSync({
-                message: `Are you sure you want to delete "${name}"?`,
-                detail: 'All snippets in this folder will be moved to trash.',
-                buttons: ['Delete', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1
-              })
+              const buttonId = dialog.showMessageBoxSync(
+                BrowserWindow.getFocusedWindow()!,
+                {
+                  message: `Are you sure you want to delete "${name}"?`,
+                  detail: 'All snippets in this folder will be moved to trash.',
+                  buttons: ['Delete', 'Cancel'],
+                  defaultId: 0,
+                  cancelId: 1
+                }
+              )
 
               if (buttonId === 0) {
                 resolve({
@@ -264,14 +273,17 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Delete',
             click: () => {
-              const buttonId = dialog.showMessageBoxSync({
-                message: `Are you sure you want to delete "${name}"?`,
-                detail:
-                  'This will also cause all snippets to have that tag removed.',
-                buttons: ['Delete', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1
-              })
+              const buttonId = dialog.showMessageBoxSync(
+                BrowserWindow.getFocusedWindow()!,
+                {
+                  message: `Are you sure you want to delete "${name}"?`,
+                  detail:
+                    'This will also cause all snippets to have that tag removed.',
+                  buttons: ['Delete', 'Cancel'],
+                  defaultId: 0,
+                  cancelId: 1
+                }
+              )
 
               if (buttonId === 0) {
                 resolve({
@@ -294,14 +306,17 @@ export const subscribeToContextMenu = () => {
           {
             label: 'Empty Trash',
             click: () => {
-              const buttonId = dialog.showMessageBoxSync({
-                message:
-                  'Are you sure you want to permanently delete all snippets in Trash?',
-                detail: 'You cannot undo this action.',
-                buttons: ['Delete', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1
-              })
+              const buttonId = dialog.showMessageBoxSync(
+                BrowserWindow.getFocusedWindow()!,
+                {
+                  message:
+                    'Are you sure you want to permanently delete all snippets in Trash?',
+                  detail: 'You cannot undo this action.',
+                  buttons: ['Delete', 'Cancel'],
+                  defaultId: 0,
+                  cancelId: 1
+                }
+              )
 
               if (buttonId === 0) {
                 resolve({

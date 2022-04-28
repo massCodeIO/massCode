@@ -9,12 +9,29 @@ const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
 const year = new Date().getFullYear()
 
-if (isMac) {
-  app.setAboutPanelOptions({
-    applicationName: 'massCode',
-    applicationVersion: version,
-    version,
-    copyright: `${author.name}\n https://masscode.io \n©2019-${year}`
+// if (isMac) {
+//   app.setAboutPanelOptions({
+//     applicationName: 'massCode',
+//     applicationVersion: version,
+//     version,
+//     copyright: `${author.name}\n https://masscode.io \n©2019-${year}`
+//   })
+// }
+
+const aboutApp = () => {
+  dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
+    title: 'massCode',
+    message: 'massCode',
+    type: 'info',
+    detail: `
+      Version: ${version}
+      Electron: ${process.versions.electron}
+      Chrome: ${process.versions.chrome}
+      Node.js: ${process.versions.node}
+      V8: ${process.versions.v8}
+      OS: ${os.type()} ${os.arch()} ${os.release()}
+      ©2019-${year} Anton Reshetov <reshetov.art@gmail.com>
+    `
   })
 }
 
@@ -40,9 +57,7 @@ MenuItemConstructorOptions
 const appMenuMac: MenuItemConstructorOptions[] = [
   {
     label: 'About massCode',
-    click: () => {
-      app.showAboutPanel()
-    }
+    click: () => aboutApp()
   },
   {
     label: 'Check for Updates...',
@@ -107,22 +122,7 @@ const appMenu: MenuItemConstructorOptions[] = [
 const helpMenu: MenuItemConstructorOptions[] = [
   {
     label: 'About',
-    click () {
-      dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
-        title: 'massCode',
-        message: 'massCode',
-        type: 'info',
-        detail: `
-          Version: ${version}
-          Electron: ${process.versions.electron}
-          Chrome: ${process.versions.chrome}
-          Node.js: ${process.versions.node}
-          V8: ${process.versions.v8}
-          OS: ${os.type()} ${os.arch()} ${os.release()}
-          ©2019-${year} Anton Reshetov <reshetov.art@gmail.com>
-        `
-      })
-    }
+    click: () => aboutApp()
   },
   {
     label: 'Website',

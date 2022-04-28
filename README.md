@@ -56,14 +56,12 @@ You can use any service that provides cloud synchronization, such as iCloud Driv
 ### Database
 massCode uses a simple JSON to store your data. The database files are on your local computer.
 
-### API Server
-Coming soon.
+### Integrations
+massCode supports extensions for [VS Code](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant), [Raycast](https://www.raycast.com/antonreshetov/masscode) and [Alfred](https://github.com/massCodeIO/assistant-alfred), which gives even more possibilities to use application. With the VS Code extension you get practically zen mode, search for the necessary snippets and insert them immediately or save the selected code sections as a snippet.
 
 ## Overview
 
 The goal of creating this application was mostly my own growth as a developer. Also, I wanted this project to absorb the best of such applications already on the market (both free and paid). At the same time, I wanted this project to be an open source project.
-
-massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
 
 ## Follow
  - News and updates on [Twitter](https://twitter.com/anton_reshetov).

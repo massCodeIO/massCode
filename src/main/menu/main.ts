@@ -1,8 +1,9 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { shell, dialog, app, BrowserWindow } from 'electron'
-import { version, author } from '../../../package.json'
+import { version, author, repository } from '../../../package.json'
 import os from 'os'
+import { checkForUpdate } from '../services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
@@ -41,6 +42,32 @@ const appMenuMac: MenuItemConstructorOptions[] = [
     label: 'About massCode',
     click: () => {
       app.showAboutPanel()
+    }
+  },
+  {
+    label: 'Check for Updates...',
+    click: async () => {
+      const newVersion = await checkForUpdate()
+
+      if (newVersion) {
+        const buttonId = dialog.showMessageBoxSync(
+          BrowserWindow.getFocusedWindow()!,
+          {
+            message: `Version ${newVersion} is now available for download.\nYour version is ${version}.`,
+            buttons: ['Go to GitHub', 'OK'],
+            defaultId: 0,
+            cancelId: 1
+          }
+        )
+
+        if (buttonId === 0) {
+          shell.openExternal(`${repository}/releases`)
+        }
+      } else {
+        dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
+          message: 'There are currently no updates available.'
+        })
+      }
     }
   },
   {

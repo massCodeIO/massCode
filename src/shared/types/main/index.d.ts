@@ -47,6 +47,7 @@ type MainAction =
   | 'open-message-box'
   | 'update-available'
   | 'open-url'
+  | 'prettier'
 
 type ApiAction = 'snippet-create'
 
@@ -87,6 +88,11 @@ export interface MessageBoxRequest {
 export interface DialogRequest {
   properties?: OpenDialogOptions['properties']
   filters?: OpenDialogOptions['filters']
+}
+
+export interface PrettierRequest {
+  source: string
+  parser: string
 }
 
 interface EventCallback {

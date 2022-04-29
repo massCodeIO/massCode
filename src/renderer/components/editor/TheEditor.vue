@@ -36,15 +36,7 @@ import type { Language } from '@shared/types/renderer/editor'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import { track } from '@/electron'
-import prettier from 'prettier/standalone'
-import parserTypescript from 'prettier/parser-typescript'
-import parserBabel from 'prettier/parser-babel'
-import parserHtml from 'prettier/parser-html'
-import parserGraphql from 'prettier/parser-graphql'
-import parserMarkdown from 'prettier/parser-markdown'
-import parserPostcss from 'prettier/parser-postcss'
-import parserYaml from 'prettier/parser-yaml'
+import { ipc, track } from '@/electron'
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 
@@ -167,48 +159,47 @@ const setValue = () => {
   }
 }
 
-const format = () => {
+const format = async () => {
   const availableLang: Language[] = [
+    'css',
+    'dockerfile',
+    'gitignore',
+    'graphqlschema',
+    'html',
+    'ini',
+    'jade',
+    'java',
     'javascript',
-    'typescript',
     'json',
     'json5',
-    'yaml',
-    'html',
+    'less',
     'markdown',
-    'graphqlschema',
-    'css',
+    'php',
+    'properties',
     'sass',
     'scss',
-    'less'
+    'sh',
+    'toml',
+    'typescript',
+    'xml',
+    'yaml'
   ]
 
   if (!availableLang.includes(props.lang)) return
 
   let parser = props.lang as string
+  const shellLike = ['dockerfile', 'gitignore', 'properties', 'ini']
 
   if (props.lang === 'javascript') parser = 'babel'
   if (props.lang === 'graphqlschema') parser = 'graphql'
+  if (props.lang === 'jade') parser = 'pug'
+  if (shellLike.includes(props.lang)) parser = 'sh'
 
   try {
-    const formatted = prettier.format(props.modelValue, {
-      parser,
-      plugins: [
-        parserTypescript,
-        parserBabel,
-        parserHtml,
-        parserMarkdown,
-        parserPostcss,
-        parserGraphql,
-        parserYaml
-      ],
-      tabWidth: appStore.editor.tabSize,
-      trailingComma: appStore.editor.trailingComma,
-      semi: appStore.editor.semi,
-      singleQuote: appStore.editor.singleQuote
+    const formatted = await ipc.invoke('main:prettier', {
+      source: props.modelValue,
+      parser
     })
-
-    // Обновляем напрямую без debounce
     snippetStore.patchCurrentSnippetContentByKey('value', formatted)
     track('snippets/format')
   } catch (err) {

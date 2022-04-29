@@ -154,7 +154,7 @@ export const languages: LanguageOption[] = [
   { name: 'Tex', value: 'tex' },
   { name: 'Text', value: 'text' },
   { name: 'Textile', value: 'textile' },
-  { name: 'Toml', value: 'toml' },
+  { name: 'TOML', value: 'toml' },
   { name: 'TSX', value: 'tsx' },
   { name: 'Twig', value: 'twig' },
   { name: 'Typescript', value: 'typescript' },

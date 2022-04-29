@@ -66,7 +66,7 @@ export const languages: LanguageOption[] = [
   { name: 'INI', value: 'ini' },
   { name: 'Io', value: 'io' },
   { name: 'Jack', value: 'jack' },
-  { name: 'Jade', value: 'jade' },
+  { name: 'Jade / Pug', value: 'jade' },
   { name: 'Java', value: 'java' },
   { name: 'JavaScript', value: 'javascript' },
   { name: 'JSON', value: 'json' },

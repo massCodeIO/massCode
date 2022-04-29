@@ -36,7 +36,7 @@ const aboutApp = () => {
 }
 
 const appMenuCommon: Record<
-'preferences' | 'quit',
+'preferences' | 'quit' | 'update',
 MenuItemConstructorOptions
 > = {
   preferences: {
@@ -48,18 +48,7 @@ MenuItemConstructorOptions
       )
     }
   },
-  quit: {
-    label: 'Quit massCode',
-    role: 'quit'
-  }
-}
-
-const appMenuMac: MenuItemConstructorOptions[] = [
-  {
-    label: 'About massCode',
-    click: () => aboutApp()
-  },
-  {
+  update: {
     label: 'Check for Updates...',
     click: async () => {
       const newVersion = await checkForUpdate()
@@ -84,6 +73,20 @@ const appMenuMac: MenuItemConstructorOptions[] = [
         })
       }
     }
+  },
+  quit: {
+    label: 'Quit massCode',
+    role: 'quit'
+  }
+}
+
+const appMenuMac: MenuItemConstructorOptions[] = [
+  {
+    label: 'About massCode',
+    click: () => aboutApp()
+  },
+  {
+    ...appMenuCommon.update
   },
   {
     type: 'separator'
@@ -116,6 +119,7 @@ const appMenuMac: MenuItemConstructorOptions[] = [
 
 const appMenu: MenuItemConstructorOptions[] = [
   { ...appMenuCommon.preferences },
+  { ...appMenuCommon.update },
   { ...appMenuCommon.quit }
 ]
 

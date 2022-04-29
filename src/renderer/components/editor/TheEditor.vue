@@ -159,20 +159,30 @@ const setValue = () => {
   }
 }
 
-const format = () => {
+const format = async () => {
   const availableLang: Language[] = [
+    'css',
+    'dockerfile',
+    'gitignore',
+    'graphqlschema',
+    'html',
+    'jade',
+    'java',
     'javascript',
-    'typescript',
     'json',
     'json5',
-    'yaml',
-    'html',
+    'less',
     'markdown',
-    'graphqlschema',
-    'css',
+    'php',
+    'properties',
+    'ruby',
     'sass',
     'scss',
-    'less'
+    'sh',
+    'toml',
+    'typescript',
+    'xml',
+    'yaml'
   ]
 
   if (!availableLang.includes(props.lang)) return
@@ -181,6 +191,10 @@ const format = () => {
 
   if (props.lang === 'javascript') parser = 'babel'
   if (props.lang === 'graphqlschema') parser = 'graphql'
+  if (props.lang === 'jade') parser = 'pug'
+  if (props.lang === 'dockerfile') parser = 'sh'
+  if (props.lang === 'gitignore') parser = 'sh'
+  if (props.lang === 'properties') parser = 'sh'
 
   try {
     const formatted = await ipc.invoke('main:prettier', {

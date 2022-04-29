@@ -19,7 +19,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/massCodeIO/massCode/releases">Latest Release</a> | <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
+  <a href="https://github.com/massCodeIO/massCode/releases">Latest Release</a> |
+  <a href="https://masscode.io/documentation/">Documentation</a> |
+  <a href="https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md">Change Log</a>
 </p>
 
 <p align="center">

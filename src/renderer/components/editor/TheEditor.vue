@@ -166,6 +166,7 @@ const format = async () => {
     'gitignore',
     'graphqlschema',
     'html',
+    'ini',
     'jade',
     'java',
     'javascript',
@@ -175,7 +176,6 @@ const format = async () => {
     'markdown',
     'php',
     'properties',
-    'ruby',
     'sass',
     'scss',
     'sh',
@@ -188,13 +188,12 @@ const format = async () => {
   if (!availableLang.includes(props.lang)) return
 
   let parser = props.lang as string
+  const shellLike = ['dockerfile', 'gitignore', 'properties', 'ini']
 
   if (props.lang === 'javascript') parser = 'babel'
   if (props.lang === 'graphqlschema') parser = 'graphql'
   if (props.lang === 'jade') parser = 'pug'
-  if (props.lang === 'dockerfile') parser = 'sh'
-  if (props.lang === 'gitignore') parser = 'sh'
-  if (props.lang === 'properties') parser = 'sh'
+  if (shellLike.includes(props.lang)) parser = 'sh'
 
   try {
     const formatted = await ipc.invoke('main:prettier', {

@@ -1,3 +1,18 @@
+# [2.5.0](https://github.com/massCodeIO/massCode/compare/v2.4.0...v2.5.0) (2022-04-29)
+
+
+### Bug Fixes
+
+* **main: menu:** add check for updates for other platforms ([94676b6](https://github.com/massCodeIO/massCode/commit/94676b65c1dca707fae18fc1119d79636d20b89a))
+
+
+### Features
+
+* **main: menu:** add check for updates ([702d0f5](https://github.com/massCodeIO/massCode/commit/702d0f550306f57b2964c9588a579d6f3bbaf7c5))
+* **snippets:** more languages support for prettier ([#58](https://github.com/massCodeIO/massCode/issues/58)) ([658d3c0](https://github.com/massCodeIO/massCode/commit/658d3c0bf69a801e9f4ff3c6ebd7d1b3c1e91f02))
+
+
+
 # [2.4.0](https://github.com/massCodeIO/massCode/compare/v2.3.0...v2.4.0) (2022-04-27)
 
 

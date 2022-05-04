@@ -1,4 +1,5 @@
 import type { EditorSettings } from '../renderer/store/app'
+import type { SnippetsSort } from './db'
 
 export interface AppStore {
   bounds: object
@@ -8,6 +9,7 @@ export interface AppStore {
   selectedSnippetId?: string
   sidebarWidth: number
   snippetListWidth: number
+  sort: SnippetsSort
   version?: string
   notifySupport: boolean
 }

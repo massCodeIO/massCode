@@ -1,4 +1,4 @@
-import type { Folder, Snippet } from '@shared/types/main/db'
+import type { Folder, Snippet, SnippetsSort } from '@shared/types/main/db'
 
 export interface SnippetWithFolder extends Snippet {
   folder: Folder
@@ -11,6 +11,7 @@ export interface State {
   selectedMultiple: Snippet[]
   fragment: number
   searchQuery?: string
+  sort: SnippetsSort
   isContextState: boolean
   isMarkdownPreview: boolean
 }

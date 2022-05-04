@@ -34,6 +34,7 @@ type MainMenuAction =
   | 'new-snippet'
   | 'copy-snippet'
   | 'format-snippet'
+  | 'sort-snippets'
   | 'new-fragment'
   | 'new-folder'
   | 'search'

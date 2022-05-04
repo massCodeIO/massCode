@@ -1,4 +1,3 @@
-// import type { Language } from '../renderer/editor'
 import type { Language } from '@shared/types/renderer/editor'
 
 export interface Folder {
@@ -15,6 +14,8 @@ export interface Folder {
 export interface FolderTree extends Folder {
   children: Folder[]
 }
+
+export type SnippetsSort = 'updatedAt' | 'createdAt' | 'name'
 
 export interface SnippetContent {
   label: string

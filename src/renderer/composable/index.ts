@@ -6,7 +6,7 @@ import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
-import type { Snippet } from '@shared/types/main/db'
+import type { Snippet, SnippetsSort } from '@shared/types/main/db'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -76,4 +76,20 @@ export const onCopySnippet = () => {
 export const setScrollPosition = (el: HTMLElement, offset: number) => {
   const ps = el.querySelector('.ps')
   if (ps) ps.scrollTop = offset
+}
+
+export const sortSnippetsBy = (snippets: Snippet[], sort: SnippetsSort) => {
+  if (sort === 'updatedAt') {
+    snippets.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+  }
+
+  if (sort === 'createdAt') {
+    snippets.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+  }
+
+  if (sort === 'name') {
+    snippets.sort((a, b) =>
+      a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
+    )
+  }
 }

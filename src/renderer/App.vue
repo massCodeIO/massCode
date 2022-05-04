@@ -54,6 +54,8 @@ const init = () => {
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
 
+  snippetStore.sort = store.app.get('sort')
+
   if (theme) {
     appStore.setTheme(theme)
   } else {
@@ -178,6 +180,10 @@ ipc.on('main-menu:format-snippet', () => {
 
 ipc.on('main-menu:search', () => {
   emitter.emit('search:focus', true)
+})
+
+ipc.on('main-menu:sort-snippets', (event, sort) => {
+  snippetStore.setSort(sort)
 })
 
 ipc.on('api:snippet-create', (event, body: Snippet) => {

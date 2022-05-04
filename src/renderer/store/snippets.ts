@@ -1,11 +1,11 @@
 import type { Language } from '../../shared/types/renderer/editor'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
-import { useApi } from '@/composable'
+import { sortSnippetsBy, useApi } from '@/composable'
 import { store } from '@/electron'
 import type {
-  Folder,
   Snippet,
   SnippetContent,
+  SnippetsSort,
   Tag
 } from '@shared/types/main/db'
 import { defineStore } from 'pinia'
@@ -26,6 +26,7 @@ export const useSnippetStore = defineStore('snippets', {
     selectedMultiple: [],
     fragment: 0,
     searchQuery: undefined,
+    sort: 'updatedAt',
     isContextState: false,
     isMarkdownPreview: false
   }),
@@ -69,7 +70,7 @@ export const useSnippetStore = defineStore('snippets', {
       const { data } = await useApi('/snippets/embed-folder').get().json()
 
       this.all = data.value
-      this.all.sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+      sortSnippetsBy(this.all, this.sort)
     },
     async getSnippetsByFolderIds (ids: string[]) {
       const snippets: SnippetWithFolder[] = []
@@ -84,9 +85,8 @@ export const useSnippetStore = defineStore('snippets', {
         snippets.push(...data.value)
       }
 
-      this.snippets = snippets
-        .filter(i => !i.isDeleted)
-        .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1))
+      this.snippets = snippets.filter(i => !i.isDeleted)
+      sortSnippetsBy(this.snippets, this.sort)
     },
     async getSnippetsById (id: string) {
       if (id) {
@@ -244,6 +244,8 @@ export const useSnippetStore = defineStore('snippets', {
       }
 
       this.snippets = snippets
+      sortSnippetsBy(this.snippets, this.sort)
+
       this.selected = snippets[0]
 
       folderStore.selected = undefined
@@ -284,6 +286,14 @@ export const useSnippetStore = defineStore('snippets', {
 
       this.snippets = uniqBy([...byName, ...byContent], 'id')
       this.selected = this.snippets[0]
+    },
+    setSort (sort: SnippetsSort) {
+      const folderStore = useFolderStore()
+
+      this.sort = sort
+      store.app.set('sort', sort)
+
+      sortSnippetsBy(this.snippets, this.sort)
     }
   }
 })

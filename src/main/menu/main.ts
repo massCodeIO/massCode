@@ -1,22 +1,14 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
-import { shell, dialog, app, BrowserWindow } from 'electron'
-import { version, author, repository } from '../../../package.json'
+import { shell, dialog, BrowserWindow } from 'electron'
+import { version, repository } from '../../../package.json'
 import os from 'os'
 import { checkForUpdate } from '../services/update-check'
+import { store } from '../store'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
 const year = new Date().getFullYear()
-
-// if (isMac) {
-//   app.setAboutPanelOptions({
-//     applicationName: 'massCode',
-//     applicationVersion: version,
-//     version,
-//     copyright: `${author.name}\n https://masscode.io \n©2019-${year}`
-//   })
-// }
 
 const aboutApp = () => {
   dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
@@ -260,6 +252,47 @@ const fileMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const viewMenu: MenuItemConstructorOptions[] = [
+  {
+    label: 'Sort Snippets By',
+    submenu: [
+      {
+        label: 'Date Modified',
+        type: 'radio',
+        checked: store.app.get('sort') === 'updatedAt',
+        click: () => {
+          BrowserWindow.getFocusedWindow()?.webContents.send(
+            'main-menu:sort-snippets',
+            'updatedAt'
+          )
+        }
+      },
+      {
+        label: 'Date Created',
+        type: 'radio',
+        checked: store.app.get('sort') === 'createdAt',
+        click: () => {
+          BrowserWindow.getFocusedWindow()?.webContents.send(
+            'main-menu:sort-snippets',
+            'createdAt'
+          )
+        }
+      },
+      {
+        label: 'Name',
+        type: 'radio',
+        checked: store.app.get('sort') === 'name',
+        click: () => {
+          BrowserWindow.getFocusedWindow()?.webContents.send(
+            'main-menu:sort-snippets',
+            'name'
+          )
+        }
+      }
+    ]
+  }
+]
+
 const editorMenu: MenuItemConstructorOptions[] = [
   {
     label: 'Copy Snippet to Clipboard',
@@ -298,6 +331,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: 'File',
     submenu: fileMenu
+  },
+  {
+    label: 'View',
+    submenu: viewMenu
   },
   {
     label: 'Edit',

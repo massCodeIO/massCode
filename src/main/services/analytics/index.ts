@@ -15,6 +15,7 @@ export const track = (event: TrackEvents, payload?: string) => {
 
   if (p === 'darwin') os = 'macOS'
   if (p === 'win32') os = 'Windows'
+  if (p === 'linux') os = 'Linux'
 
   const path = payload
     ? `${version}/${os}/${event}/${payload}`

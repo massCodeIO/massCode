@@ -69,6 +69,10 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
+app.on('browser-window-focus', () => {
+  BrowserWindow.getFocusedWindow()?.webContents.send('main:focus')
+})
+
 ipcMain.handle('main:restart-api', () => {
   apiServer.restart()
 })

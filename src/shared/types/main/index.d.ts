@@ -49,6 +49,7 @@ type MainAction =
   | 'update-available'
   | 'open-url'
   | 'prettier'
+  | 'focus'
 
 type ApiAction = 'snippet-create'
 

@@ -31,6 +31,7 @@ import {
 import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
+import { addDays, isSameDay } from 'date-fns'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -42,9 +43,11 @@ const snippetStore = useSnippetStore()
 const route = useRoute()
 
 const isUpdateAvailable = ref(false)
+const isSupportToastShow = ref(false)
 
 const init = () => {
   const theme = store.preferences.get('theme')
+  const dateInstallation = store.app.get('dateInstallation')
   const isValid = appStore.isEditorSettingsValid(
     store.preferences.get('editor')
   )
@@ -60,6 +63,11 @@ const init = () => {
     appStore.setTheme(theme)
   } else {
     appStore.setTheme('light:chrome')
+  }
+
+  if (!dateInstallation) {
+    store.app.set('dateInstallation', new Date().valueOf())
+    store.app.set('notifySupport', false)
   }
 
   trackAppUpdate()
@@ -87,38 +95,51 @@ const trackAppUpdate = () => {
 }
 
 const showSupportToast = () => {
-  if (!store.app.get('notifySupport')) {
-    const message = document.createElement('div')
+  if (store.app.get('notifySupport')) return
 
-    setTimeout(() => {
-      message.innerHTML = `Hi, Anton here 👋<br><br>
-I need your support. If you find this app useful, please give a star on <a class="external" href="#">github</a>. It will inspire me to continue development on the project.<br><br>My goal is at least 10k stars.`
+  const dateInstallation = store.app.get('dateInstallation')
+  const dateToNotify = addDays(dateInstallation, 7)
+  const isShow = isSameDay(new Date(), dateToNotify)
 
-      createToast(message, {
-        action: {
-          text: 'Close',
-          callback (toast) {
-            toast.destroy()
-            store.app.set('notifySupport', true)
-            track('app/notify', 'support-go-to-github')
-          }
-        }
-      })
+  if (!isShow) return
+  if (isSupportToastShow.value) return
 
-      const a = document.querySelector('.external')
+  const message = document.createElement('div')
+  message.innerHTML = `Hi, Anton here 👋<br><br>
+I need your support. If you find this app useful, please give a star on <a class="github" href="#">github</a> or <a class="opencollective" href="#">donate</a>. It will inspire me to continue development on the project.`
 
-      a?.addEventListener('click', () => {
-        ipc.invoke('main:open-url', 'https://github.com/massCodeIO/massCode')
+  createToast(message, {
+    action: {
+      text: 'Close',
+      callback (toast) {
+        toast.destroy()
         store.app.set('notifySupport', true)
-        destroyAllToasts()
         track('app/notify', 'support-close')
-      })
-    }, 1000 * 60 * 5)
-  }
+      }
+    }
+  })
+
+  isSupportToastShow.value = true
+
+  const g = document.querySelector('.github')
+  const o = document.querySelector('.opencollective')
+
+  g?.addEventListener('click', () => {
+    ipc.invoke('main:open-url', 'https://github.com/massCodeIO/massCode')
+    store.app.set('notifySupport', true)
+    destroyAllToasts()
+    track('app/notify', 'support-go-to-github')
+  })
+
+  o?.addEventListener('click', () => {
+    ipc.invoke('main:open-url', 'https://opencollective.com/masscode')
+    store.app.set('notifySupport', true)
+    destroyAllToasts()
+    track('app/notify', 'support-go-to-opencollective')
+  })
 }
 
 init()
-showSupportToast()
 
 watch(
   () => appStore.theme,
@@ -144,12 +165,16 @@ watch(
   }
 )
 
-ipc.on('main-menu:preferences', () => {
-  router.push('/preferences')
-})
-
 ipc.on('main:update-available', () => {
   isUpdateAvailable.value = true
+})
+
+ipc.on('main:focus', () => {
+  showSupportToast()
+})
+
+ipc.on('main-menu:preferences', () => {
+  router.push('/preferences')
 })
 
 ipc.on('main-menu:new-folder', async () => {

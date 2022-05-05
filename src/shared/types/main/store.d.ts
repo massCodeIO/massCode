@@ -3,15 +3,16 @@ import type { SnippetsSort } from './db'
 
 export interface AppStore {
   bounds: object
-  selectedFolderId?: string
+  dateInstallation?: number
+  notifySupport: boolean
   selectedFolderAlias?: string
+  selectedFolderId?: string
   selectedFolderIds?: string[]
   selectedSnippetId?: string
   sidebarWidth: number
   snippetListWidth: number
   sort: SnippetsSort
   version?: string
-  notifySupport: boolean
 }
 
 export interface PreferencesStore {

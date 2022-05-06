@@ -14,6 +14,7 @@
   border-radius: 3px;
   transition: all 0.2s;
   color: var(--color-text);
+  padding: 0 var(--spacing-xs);
   &:hover {
     background-color: var(--color-button-hover);
   }

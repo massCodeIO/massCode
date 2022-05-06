@@ -1,3 +1,12 @@
+## [2.6.1](https://github.com/massCodeIO/massCode/compare/v2.6.0...v2.6.1) (2022-05-06)
+
+
+### Bug Fixes
+
+* **ui:** button spacing ([41ade18](https://github.com/massCodeIO/massCode/commit/41ade1819235ca1690450734807208279ef99ec8))
+
+
+
 # [2.6.0](https://github.com/massCodeIO/massCode/compare/v2.5.0...v2.6.0) (2022-05-06)
 
 

@@ -77,7 +77,7 @@ onUnmounted(() => {
   }
   :deep(svg) {
     flex-shrink: 0;
-    fill: var(--color-text);
+    fill: var(--color-button-action);
   }
   .item {
     position: relative;

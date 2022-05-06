@@ -59,7 +59,9 @@ const lang = computed({
 
 const isShowPlaceholder = computed(() => {
   return (
-    snippetStore.selectedMultiple.length || snippetStore.snippets.length === 0
+    snippetStore.selectedMultiple.length ||
+    !snippetStore.selected ||
+    snippetStore.snippets.length === 0
   )
 })
 

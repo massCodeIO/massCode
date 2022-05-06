@@ -50,6 +50,23 @@ export const onAddNewFragment = () => {
   track('snippets/add-fragment')
 }
 
+export const onAddDescription = async () => {
+  const snippetStore = useSnippetStore()
+
+  if (typeof snippetStore.selected?.description === 'string') return
+
+  if (
+    snippetStore.selected?.description === undefined ||
+    snippetStore.selected?.description === null
+  ) {
+    await snippetStore.patchSnippetsById(snippetStore.selectedId!, {
+      description: ''
+    })
+  }
+
+  track('snippets/add-description')
+}
+
 export const onAddNewFolder = async () => {
   const folderStore = useFolderStore()
   const snippetStore = useSnippetStore()

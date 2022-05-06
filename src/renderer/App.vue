@@ -26,7 +26,8 @@ import {
   onAddNewFolder,
   onCopySnippet,
   emitter,
-  onCreateSnippet
+  onCreateSnippet,
+  onAddDescription
 } from '@/composable'
 import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
@@ -209,6 +210,10 @@ ipc.on('main-menu:search', () => {
 
 ipc.on('main-menu:sort-snippets', (event, sort) => {
   snippetStore.setSort(sort)
+})
+
+ipc.on('main-menu:add-description', async () => {
+  await onAddDescription()
 })
 
 ipc.on('api:snippet-create', (event, body: Snippet) => {

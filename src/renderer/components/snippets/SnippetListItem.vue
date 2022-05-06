@@ -182,7 +182,7 @@ const onClickContextMenu = async () => {
   }
 
   if (action === 'favorites') {
-    snippetStore.patchSnippetsById(props.id, {
+    await snippetStore.patchSnippetsById(props.id, {
       isFavorites: data
     })
 
@@ -192,12 +192,9 @@ const onClickContextMenu = async () => {
       track('snippets/delete-from-favorites')
     }
 
-    if (type === 'folder') {
-      await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-    }
+    await snippetStore.getSnippets()
 
     if (type === 'favorites') {
-      await snippetStore.getSnippets()
       snippetStore.setSnippetsByAlias(type)
     }
   }
@@ -205,8 +202,11 @@ const onClickContextMenu = async () => {
   isHighlighted.value = false
   isFocused.value = false
   snippetStore.isContextState = false
-  snippetStore.selected = undefined
-  snippetStore.selectedMultiple = []
+
+  if (snippetStore.selectedIds.length) {
+    snippetStore.selected = undefined
+    snippetStore.selectedMultiple = []
+  }
 }
 
 const dateFormat = computed(() => {

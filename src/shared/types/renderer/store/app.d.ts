@@ -29,6 +29,7 @@ export interface AppSizes {
     fragmentsHeight: number
     tagsHeight: number
     footerHeight: number
+    descriptionHeight: number
   }
 }
 

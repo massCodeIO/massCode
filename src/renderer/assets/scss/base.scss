@@ -47,6 +47,11 @@ h6 {
   font-weight: 700;
 }
 
+::placeholder {
+  color: var(--color-text-3);
+}
+
+
 .gutter-line {
   position: absolute;
   top: 0;

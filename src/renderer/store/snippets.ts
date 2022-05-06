@@ -62,7 +62,9 @@ export const useSnippetStore = defineStore('snippets', {
     isTagsShow (): boolean {
       const appStore = useAppStore()
       return this.tagsCount ? this.tagsCount > 0 : appStore.showTags
-    }
+    },
+    isDescriptionShow: state =>
+      typeof state.selected?.description === 'string'
   },
 
   actions: {
@@ -104,15 +106,15 @@ export const useSnippetStore = defineStore('snippets', {
 
       if (!snippet) return
 
-      if (snippet.id === this.selected?.id) {
-        this.selected.name = data.value.name
+      if (snippet.id === this.selectedId) {
+        for (const props in data.value) {
+          (this.selected as any)[props] = data.value[props]
+        }
       }
 
-      if (snippet.name !== data.value.name) {
-        snippet.name = data.value.name
+      for (const props in data.value) {
+        (snippet as any)[props] = data.value[props]
       }
-
-      await this.getSnippets()
     },
     async patchCurrentSnippetContentByKey (
       key: keyof SnippetContent,
@@ -139,6 +141,7 @@ export const useSnippetStore = defineStore('snippets', {
       _body.isFavorites = false
       _body.folderId = ''
       _body.tagsIds = []
+      _body.description = null
 
       if (body) {
         _body = {
@@ -288,8 +291,6 @@ export const useSnippetStore = defineStore('snippets', {
       this.selected = this.snippets[0]
     },
     setSort (sort: SnippetsSort) {
-      const folderStore = useFolderStore()
-
       this.sort = sort
       store.app.set('sort', sort)
 

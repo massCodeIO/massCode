@@ -95,6 +95,10 @@ const editorHeight = computed(() => {
     result += appStore.sizes.editor.tagsHeight
   }
 
+  if (snippetStore.isDescriptionShow) {
+    result += appStore.sizes.editor.descriptionHeight
+  }
+
   return window.innerHeight - result + 'px'
 })
 

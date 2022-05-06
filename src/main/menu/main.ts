@@ -237,11 +237,26 @@ const fileMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: 'Add Description',
+    accelerator: 'CommandOrControl+Shift+T',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:add-description'
+      )
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
     label: 'New Folder',
     accelerator: 'CommandOrControl+Shift+N',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:new-folder')
     }
+  },
+  {
+    type: 'separator'
   },
   {
     label: 'Find',

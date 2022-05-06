@@ -20,12 +20,16 @@
         <AppActionButton @click="onCopySnippet">
           <UniconsArrow />
         </AppActionButton>
+        <AppActionButton @click="onAddDescription">
+          <UniconsText />
+        </AppActionButton>
         <AppActionButton @click="onAddNewFragment">
           <UniconsPlus />
         </AppActionButton>
       </div>
     </div>
     <div class="bottom">
+      <SnippetsDescription v-show="snippetStore.isDescriptionShow" />
       <SnippetFragments v-if="snippetStore.isFragmentsShow" />
       <SnippetsTags v-if="snippetStore.isTagsShow" />
     </div>
@@ -33,7 +37,12 @@
 </template>
 
 <script setup lang="ts">
-import { emitter, onAddNewFragment, onCopySnippet } from '@/composable'
+import {
+  onAddNewFragment,
+  onAddDescription,
+  onCopySnippet,
+  emitter
+} from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'

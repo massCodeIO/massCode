@@ -30,15 +30,16 @@ export type ContextMenuType =
   | 'tag'
 
 type MainMenuAction =
-  | 'preferences'
-  | 'new-snippet'
+  | 'add-description'
   | 'copy-snippet'
   | 'format-snippet'
-  | 'sort-snippets'
-  | 'new-fragment'
   | 'new-folder'
-  | 'search'
+  | 'new-fragment'
+  | 'new-snippet'
+  | 'preferences'
   | 'preview-markdown'
+  | 'search'
+  | 'sort-snippets'
 
 type MainAction =
   | 'restart'

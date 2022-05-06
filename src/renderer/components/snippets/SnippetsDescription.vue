@@ -58,15 +58,26 @@ watch(
   padding: 0 var(--spacing-xs);
   font-size: 12px;
   color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
+  position: relative;
   :empty::before {
     content: attr(placeholder);
     position: absolute;
     color: var(--color-text-3);
     background-color: transparent;
   }
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: var(--color-border);
+    left: 0;
+    bottom: -1px;
+  }
   &.no-border-bottom {
-    border-bottom: none;
+    &::after {
+      content: none;
+    }
   }
   .input {
     width: 100%;

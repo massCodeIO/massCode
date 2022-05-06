@@ -182,9 +182,17 @@ const onClickContextMenu = async () => {
   }
 
   if (action === 'favorites') {
-    await snippetStore.patchSnippetsById(props.id, {
-      isFavorites: data
-    })
+    if (snippetStore.selectedIds.length) {
+      for (const id of snippetStore.selectedIds) {
+        await snippetStore.patchSnippetsById(id, {
+          isFavorites: data
+        })
+      }
+    } else {
+      await snippetStore.patchSnippetsById(props.id, {
+        isFavorites: data
+      })
+    }
 
     if (data) {
       track('snippets/add-to-favorites')

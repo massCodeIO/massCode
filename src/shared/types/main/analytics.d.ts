@@ -1,6 +1,7 @@
 type CombineWith<T extends string, U extends string> = `${U}/${T}`
 
 type SnippetEvents =
+  | 'add-description'
   | 'add-fragment'
   | 'add-new'
   | 'add-tag'
@@ -10,10 +11,10 @@ type SnippetEvents =
   | 'delete-from-favorites'
   | 'delete'
   | 'duplicate'
-  | 'move-to-trash'
-  | 'set-language'
-  | 'search'
   | 'format'
+  | 'move-to-trash'
+  | 'search'
+  | 'set-language'
 type FolderEvents = 'add-new' | 'delete' | 'set-language'
 type TagEvents = 'add-new' | 'delete'
 type AppEvents =

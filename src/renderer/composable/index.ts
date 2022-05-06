@@ -41,12 +41,10 @@ export const onCreateSnippet = async (body: Partial<Snippet>) => {
   track('api/snippet-create')
 }
 
-export const onAddNewFragment = () => {
+export const onAddNewFragment = async () => {
   const snippetStore = useSnippetStore()
 
-  snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
-  snippetStore.fragment = snippetStore.fragmentCount!
-
+  await snippetStore.addNewFragmentToSnippetsById(snippetStore.selectedId!)
   track('snippets/add-fragment')
 }
 

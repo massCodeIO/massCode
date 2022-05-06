@@ -195,8 +195,7 @@ export const useSnippetStore = defineStore('snippets', {
       body.content = content
 
       await this.patchSnippetsById(id, body)
-      await this.getSnippetsByFolderIds(folderStore.selectedIds!)
-      await this.getSnippetsById(id)
+      this.fragment = content.length - 1
     },
     async deleteCurrentSnippetFragmentByIndex (index: number) {
       const body: Partial<Snippet> = {}

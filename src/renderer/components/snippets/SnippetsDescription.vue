@@ -37,7 +37,6 @@ const onBlur = (e: Event) => {
   snippetStore.patchSnippetsById(snippetStore.selectedId!, {
     description: (e.target as HTMLElement).innerText.trimEnd() || null
   })
-  snippetStore.isNewDescription = false
 }
 
 const onClick = () => {

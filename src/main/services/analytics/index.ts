@@ -21,5 +21,5 @@ export const track = (event: TrackEvents, payload?: string) => {
     ? `${version}/${os}/${event}/${payload}`
     : `${version}/${os}/${event}`
 
-  // analytics.pageview(path).send()
+  analytics.pageview(path).send()
 }

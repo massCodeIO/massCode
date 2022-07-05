@@ -76,4 +76,4 @@ You can also [download](https://github.com/antonreshetov/massCode) massCode v1.
 
 [AGPL-3.0](https://github.com/massCodeIO/massCode/blob/master/LICENSE)
 
-Copyright (c) 2019-present, Anton Reshetov.
+Copyright (c) 2019-present, [Anton Reshetov](https://github.com/antonreshetov).

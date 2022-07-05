@@ -29,10 +29,11 @@
           database files.
           <p>To migrate from SnippetsLab select JSON file.</p>
           <p>
-            Some Limitations. During migration from SnippetsLab, snippets with
-            unsupported languages will be set to default Plain Text. Also since
-            JSON file does not represent nesting for folders, all folders will
-            be first level.
+            Some Limitations. During migration from SnippetsLab: <br>
+            - All folders will be first level as JSON file (below v2.1) does not
+            represent nested folders.<br>
+            - Snippets with unsupported languages will be set to default Plain
+            Text.
           </p>
         </template>
       </AppFormItem>

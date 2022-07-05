@@ -227,6 +227,8 @@ export const useSnippetStore = defineStore('snippets', {
     setSnippetsByAlias (alias: SystemFolderAlias) {
       const folderStore = useFolderStore()
 
+      this.getSnippets()
+
       let snippets: SnippetWithFolder[] = []
 
       if (alias === 'inbox') {

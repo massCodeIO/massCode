@@ -190,9 +190,15 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'Donate',
+    label: 'Donate on Open Collective',
     click: () => {
       shell.openExternal('https://opencollective.com/masscode')
+    }
+  },
+  {
+    label: 'Donate via PayPal',
+    click: () => {
+      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
     }
   },
   {

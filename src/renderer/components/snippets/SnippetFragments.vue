@@ -1,18 +1,20 @@
 <template>
-  <div class="fragments">
-    <div
-      v-for="(i, index) in snippetStore.fragmentLabels"
-      :key="index"
-      class="item"
-      :class="{ 'is-active': index == snippetStore.fragment }"
-      @click="onClickFragment(index)"
-    >
-      <SnippetsFragmentsInput
-        :name="i"
-        :index="index"
-      />
+  <PerfectScrollbar>
+    <div class="fragments">
+      <div
+        v-for="(i, index) in snippetStore.fragmentLabels"
+        :key="index"
+        class="item"
+        :class="{ 'is-active': index == snippetStore.fragment }"
+        @click="onClickFragment(index)"
+      >
+        <SnippetsFragmentsInput
+          :name="i"
+          :index="index"
+        />
+      </div>
     </div>
-  </div>
+  </PerfectScrollbar>
 </template>
 
 <script setup lang="ts">
@@ -34,7 +36,7 @@ const fragmentHeight = appStore.sizes.editor.fragmentsHeight + 'px'
   display: flex;
   align-items: center;
   height: v-bind(fragmentHeight);
-  overflow-y: auto;
+  // overflow-y: auto;
   .item {
     padding: 0 var(--spacing-xs);
     display: flex;

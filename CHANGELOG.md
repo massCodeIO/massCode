@@ -1,3 +1,20 @@
+# [2.7.0](https://github.com/massCodeIO/massCode/compare/v2.6.1...v2.7.0) (2022-07-06)
+
+
+### Bug Fixes
+
+* **snippets:** fragmetns scroll [#92](https://github.com/massCodeIO/massCode/issues/92) ([#105](https://github.com/massCodeIO/massCode/issues/105)) ([35e57dd](https://github.com/massCodeIO/massCode/commit/35e57dd233bbc518b7124084b1e64104ab9879ed))
+* **snippets:** update snippets list after add new ([#101](https://github.com/massCodeIO/massCode/issues/101)) ([55bb05d](https://github.com/massCodeIO/massCode/commit/55bb05dae55a559c8bd4519713eeab24fb690218))
+
+
+### Features
+
+* add mermaid diagram for markdown ([#104](https://github.com/massCodeIO/massCode/issues/104)) ([e578056](https://github.com/massCodeIO/massCode/commit/e57805675fe352f1e9a7618d40b0e725e6fee2ba))
+* **db:** add migration from SnippetsLab >= v2.1 ([#98](https://github.com/massCodeIO/massCode/issues/98)) ([542870d](https://github.com/massCodeIO/massCode/commit/542870d621673308549fdde1937f336029524830))
+* **main: menu:** add donate via PayPal ([86bf46a](https://github.com/massCodeIO/massCode/commit/86bf46af9ffcaaf64cfd964c145f555ccb40ee05))
+
+
+
 ## [2.6.1](https://github.com/massCodeIO/massCode/compare/v2.6.0...v2.6.1) (2022-05-06)
 
 

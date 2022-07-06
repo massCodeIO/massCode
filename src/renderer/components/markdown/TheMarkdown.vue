@@ -9,13 +9,13 @@
 <script setup lang="ts">
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import MarkdownIt from 'markdown-it'
 import sanitizeHtml from 'sanitize-html'
 import hljs from 'highlight.js'
-import mila from 'markdown-it-link-attributes'
 import 'highlight.js/styles/github.css'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ipc } from '@/electron'
+import { marked } from 'marked'
+import mermaid from 'mermaid'
 
 interface Props {
   value: string
@@ -26,41 +26,45 @@ const props = defineProps<Props>()
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 
-let md: MarkdownIt
 const forceRefresh = ref()
 
 const init = () => {
-  md = new MarkdownIt({
-    html: true,
-    langPrefix: 'language-',
-    highlight (str, lang) {
-      if (lang && hljs.getLanguage(lang)) {
-        try {
-          return `<pre class="hljs"><code>${
-            hljs.highlight(str, {
-              language: lang,
-              ignoreIllegals: true
-            }).value
-          }</code></pre>`
-        } catch (err) {
-          console.log(err)
-        }
+  const renderer = {
+    code (code: string, lang: string) {
+      if (lang === 'mermaid') {
+        return `<div class="mermaid">${code}</div><br>`
+      } else {
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+        return `<pre><code class="language-${lang}">${
+          hljs.highlight(code, { language }).value
+        }</code></pre>`
       }
-      return `<pre class="hljs"><code>${MarkdownIt().utils.escapeHtml(
-        str
-      )}</code></pre>`
+    },
+    link (href: string, title: string, text: string) {
+      return `<a href="${href}" class="external">${text}</a>`
     }
-  })
+  }
 
-  md.use(mila, {
-    attrs: {
-      class: 'external'
-    }
-  })
+  marked.use({ renderer })
 }
 
+const initMermaid = () => {
+  try {
+    mermaid.initialize({
+      // @ts-ignore
+      theme: appStore.theme.match(/^dark/) ? 'dark' : 'default',
+      startOnLoad: true
+    })
+    mermaid.init('.mermaid')
+  } catch (err) {}
+}
+
+onMounted(() => {
+  initMermaid()
+})
+
 const getRenderer = () => {
-  const raw = md?.render(props.value)
+  const raw = marked.parse(props.value)
   const html = sanitizeHtml(raw, {
     allowedTags: false,
     allowedAttributes: {

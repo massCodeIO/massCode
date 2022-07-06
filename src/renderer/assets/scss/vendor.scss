@@ -13,25 +13,31 @@
     }
   }
   &__rail-x {
-    background-color: rgba(121, 121, 121, 0.5);
+    background-color: rgba(121, 121, 121, 0.8);
     width: 5px;
     &:hover {
       height: 4px;
       background-color: transparent !important;
       opacity: 0.4 !important;
       #{$r}__thumb-x {
-        height: 4px;
+        height: 5px;
         right: 0;
       }
     }
   }
-  &__thumb-y,
+  &__thumb-x,
   &__thumb-y {
     background-color: rgba(121, 121, 121, 0.8);
+  }
+  &__thumb-y {
     width: 5px;
     right: 0;
   }
+  &__thumb-x {
+    height: 5px;
+  }
 }
+
 
 .ti-tags {
   background-color: var(--color-bg) !important;

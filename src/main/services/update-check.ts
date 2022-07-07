@@ -26,3 +26,11 @@ export const checkForUpdate = async () => {
     console.error(err)
   }
 }
+
+export const checkForUpdateWithInterval = () => {
+  checkForUpdate()
+
+  setInterval(() => {
+    checkForUpdate()
+  }, 1000 * 60 * 360) // 6 часов
+}

@@ -8,7 +8,7 @@ import { debounce } from 'lodash'
 import { subscribeToChannels } from './services/ipc'
 import { mainMenu } from './menu/main'
 import { subscribeToDialog } from './services/ipc/dialog'
-import { checkForUpdate } from './services/update-check'
+import { checkForUpdateWithInterval } from './services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
@@ -46,7 +46,7 @@ function createWindow () {
   mainWindow.on('resize', () => storeBounds(mainWindow))
   mainWindow.on('move', () => storeBounds(mainWindow))
 
-  checkForUpdate()
+  checkForUpdateWithInterval()
 }
 
 const storeBounds = debounce((mainWindow: BrowserWindow) => {

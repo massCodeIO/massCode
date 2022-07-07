@@ -10,6 +10,7 @@ module.exports = {
         'docs',
         'feat',
         'fix',
+        'perf',
         'polish',
         'refactor',
         'release',

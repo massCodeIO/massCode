@@ -6,6 +6,10 @@
 <h1 align="center">massCode</h1>
 
 <p align="center">
+A free and open source code snippets manager for developers.
+</p>
+
+<p align="center">
   <strong>Built with Electron, Vue 3 & Ace Editor.</strong>
   <br>
   Inspired by applications like SnippetsLab and Quiver.

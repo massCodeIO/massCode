@@ -29,7 +29,7 @@ const snippetStore = useSnippetStore()
 const forceRefresh = ref()
 
 const init = () => {
-  const renderer = {
+  const renderer: marked.RendererObject = {
     code (code: string, lang: string) {
       if (lang === 'mermaid') {
         return `<div class="mermaid">${code}</div><br>`

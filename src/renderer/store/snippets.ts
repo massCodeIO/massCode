@@ -222,10 +222,10 @@ export const useSnippetStore = defineStore('snippets', {
         }
       }
     },
-    setSnippetsByAlias (alias: SystemFolderAlias) {
+    async setSnippetsByAlias (alias: SystemFolderAlias) {
       const folderStore = useFolderStore()
 
-      this.getSnippets()
+      await this.getSnippets()
 
       let snippets: SnippetWithFolder[] = []
 

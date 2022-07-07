@@ -244,8 +244,9 @@ watch(
   () => props.lang,
   () => setLang()
 )
+
 watch(
-  () => props.modelValue,
+  () => props.snippetId,
   () => setValue()
 )
 

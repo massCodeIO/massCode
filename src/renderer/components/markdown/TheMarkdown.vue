@@ -77,7 +77,10 @@ const getRenderer = () => {
         'src',
         'target',
         'width',
-        'class'
+        'class',
+        'type',
+        'checked',
+        'disabled'
       ]
     }
   })

@@ -204,7 +204,8 @@ const format = async () => {
       source: props.modelValue,
       parser
     })
-    snippetStore.patchCurrentSnippetContentByKey('value', formatted)
+    await snippetStore.patchCurrentSnippetContentByKey('value', formatted)
+    setValue()
     track('snippets/format')
   } catch (err) {
     console.error(err)

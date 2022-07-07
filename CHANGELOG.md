@@ -1,3 +1,20 @@
+## [2.7.1](https://github.com/massCodeIO/massCode/compare/v2.7.0...v2.7.1) (2022-07-07)
+
+
+### Bug Fixes
+
+* **editor:** update value after format ([3a91111](https://github.com/massCodeIO/massCode/commit/3a911112d7dcebc0b0299ada6e1e5e550c899197))
+* **markdown:** render task list ([#107](https://github.com/massCodeIO/massCode/issues/107)) ([4ee1970](https://github.com/massCodeIO/massCode/commit/4ee19704291e55ef66b5e617ed56afc7a732edd5))
+* **snippets:** await fetch snippets by click on system folders ([4f2a203](https://github.com/massCodeIO/massCode/commit/4f2a203611130713e20f64f1f4a6605d552f3dfe))
+
+
+### Performance Improvements
+
+* **editor:** set value only if snippet id is changed ([#109](https://github.com/massCodeIO/massCode/issues/109)) ([56bd929](https://github.com/massCodeIO/massCode/commit/56bd9296deae1f37a0f467b596fc4b2be0d4021c))
+* **snippets:** no need to fetch snippets after patch ([3a51e69](https://github.com/massCodeIO/massCode/commit/3a51e695ac61e268cc499acd71f61ad48a57f28d))
+
+
+
 # [2.7.0](https://github.com/massCodeIO/massCode/compare/v2.6.1...v2.7.0) (2022-07-06)
 
 

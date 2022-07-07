@@ -120,7 +120,6 @@ export const useSnippetStore = defineStore('snippets', {
       key: keyof SnippetContent,
       value: string | Language
     ) {
-      const folderStore = useFolderStore()
       const body: Partial<Snippet> = {}
       const content = this.selected?.content
 
@@ -130,7 +129,6 @@ export const useSnippetStore = defineStore('snippets', {
         body.updatedAt = new Date().valueOf()
 
         await useApi(`/snippets/${this.selectedId}`).patch(body)
-        await this.getSnippetsByFolderIds(folderStore.selectedIds!)
       }
     },
     async addNewSnippet (body?: Partial<Snippet>) {

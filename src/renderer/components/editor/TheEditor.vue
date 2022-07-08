@@ -247,7 +247,7 @@ watch(
 )
 
 watch(
-  () => props.snippetId,
+  () => [props.snippetId, props.fragmentIndex].concat(),
   () => setValue()
 )
 

@@ -1,6 +1,9 @@
 <template>
   <div class="snippet-screenshot">
-    <div class="tools">
+    <div
+      class="tools"
+      :class="{ 'no-top-border': snippetStore.isFragmentsShow }"
+    >
       <div class="left">
         <div class="tools__item">
           <AppCheckbox
@@ -103,6 +106,7 @@ import interact from 'interactjs'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useHljsTheme } from '@/composable'
 import { store } from '@/electron'
+import { useSnippetStore } from '@/store/snippets'
 
 const GUTTER_RIGHT_OFFSET = 10
 const GUTTER_WIDTH = 8
@@ -118,6 +122,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const appStore = useAppStore()
+const snippetStore = useSnippetStore()
 
 const frameRef = ref<HTMLElement>()
 const snippetRef = ref<HTMLElement>()
@@ -257,11 +262,11 @@ init()
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     padding: 4px var(--spacing-xs);
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
-    &__item {
+    &.no-top-border {
+      border-top: none;
     }
     .left {
       gap: var(--spacing-sm);

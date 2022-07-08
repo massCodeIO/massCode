@@ -8,7 +8,9 @@
     <template v-if="snippetStore.selected">
       <SnippetHeader />
       <TheEditor
-        v-if="!snippetStore.isMarkdownPreview"
+        v-if="
+          !snippetStore.isMarkdownPreview && !snippetStore.isScreenshotPreview
+        "
         v-model="snippet"
         v-model:lang="lang"
         :snippet-id="snippetStore.selectedId!"
@@ -17,8 +19,16 @@
         :fragments="snippetStore.isFragmentsShow"
       />
       <TheMarkdown
-        v-else
+        v-if="
+          snippetStore.isMarkdownPreview && !snippetStore.isScreenshotPreview
+        "
         :value="snippetStore.currentContent!"
+      />
+      <TheScreenshot
+        v-if="snippetStore.isScreenshotPreview"
+        :snippet="snippet"
+        :lang="lang"
+        :name="snippetStore.selected?.name"
       />
     </template>
     <div

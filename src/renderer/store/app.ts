@@ -1,6 +1,7 @@
 import { platform, store } from '@/electron'
 import type {
   EditorSettings,
+  ScreenshotSettings,
   State,
   Theme
 } from '@shared/types/renderer/store/app'
@@ -21,6 +22,13 @@ const EDITOR_DEFAULTS: EditorSettings = {
   highlightGutter: false
 }
 
+const SCREENSHOT_DEFAULTS: ScreenshotSettings = {
+  background: false,
+  gradient: ['#D02F98', '#9439CA'],
+  darkMode: true,
+  width: 600
+}
+
 export const useAppStore = defineStore('app', {
   state: (): State => ({
     isInit: false,
@@ -39,10 +47,15 @@ export const useAppStore = defineStore('app', {
       }
     },
     editor: EDITOR_DEFAULTS,
+    screenshot: SCREENSHOT_DEFAULTS,
     selectedPreferencesMenu: 'storage',
     version,
     platform: platform()
   }),
+
+  getters: {
+    isLightTheme: state => !!state.theme.match(/^light/)
+  },
 
   actions: {
     setTheme (theme: Theme) {

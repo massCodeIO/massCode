@@ -27,6 +27,12 @@ export default new Store<PreferencesStore>({
       theme: 'chrome',
       highlightLine: false,
       highlightGutter: false
+    },
+    screenshot: {
+      background: false,
+      gradient: ['#D02F98', '#9439CA'],
+      darkMode: true,
+      width: 600
     }
   }
 })

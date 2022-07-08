@@ -17,6 +17,10 @@
           <UniconsEye v-if="!snippetStore.isMarkdownPreview" />
           <UniconsEyeSlash v-else />
         </AppActionButton>
+        <AppActionButton @click="onClickScreenshotPreview">
+          <UniconsCamera v-if="!snippetStore.isScreenshotPreview" />
+          <UniconsCameraSlash v-else />
+        </AppActionButton>
         <AppActionButton @click="onCopySnippet">
           <UniconsArrow />
         </AppActionButton>
@@ -31,7 +35,9 @@
     <div class="bottom">
       <SnippetsDescription v-show="snippetStore.isDescriptionShow" />
       <SnippetFragments v-if="snippetStore.isFragmentsShow" />
-      <SnippetsTags v-if="snippetStore.isTagsShow" />
+      <SnippetsTags
+        v-if="snippetStore.isTagsShow && !snippetStore.isScreenshotPreview"
+      />
     </div>
   </div>
 </template>
@@ -66,6 +72,10 @@ const name = computed({
 
 const onClickMarkdownPreview = () => {
   snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+}
+
+const onClickScreenshotPreview = () => {
+  snippetStore.isScreenshotPreview = !snippetStore.isScreenshotPreview
 }
 
 emitter.on('snippet:focus-name', () => {

@@ -57,6 +57,7 @@ const init = () => {
 
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
+  appStore.screenshot = store.preferences.get('screenshot')
 
   snippetStore.sort = store.app.get('sort')
 

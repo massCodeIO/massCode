@@ -14,4 +14,5 @@ export interface State {
   sort: SnippetsSort
   isContextState: boolean
   isMarkdownPreview: boolean
+  isScreenshotPreview: boolean
 }

@@ -28,7 +28,8 @@ export const useSnippetStore = defineStore('snippets', {
     searchQuery: undefined,
     sort: 'updatedAt',
     isContextState: false,
-    isMarkdownPreview: false
+    isMarkdownPreview: false,
+    isScreenshotPreview: false
   }),
 
   getters: {

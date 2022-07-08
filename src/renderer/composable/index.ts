@@ -7,6 +7,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
+import { useAppStore } from '@/store/app'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -107,4 +108,26 @@ export const sortSnippetsBy = (snippets: Snippet[], sort: SnippetsSort) => {
       a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
     )
   }
+}
+
+export const useHljsTheme = async (theme: 'dark' | 'light') => {
+  const { default: darkCSS } = await import(
+    'highlight.js/styles/base16/material.css?raw'
+  )
+  const { default: lightCSS } = await import(
+    'highlight.js/styles/github.css?raw'
+  )
+
+  document.querySelector('[data=hljs-theme]')?.remove()
+
+  const style = document.createElement('style')
+  style.setAttribute('data', 'hljs-theme')
+
+  if (theme === 'dark') {
+    style.innerHTML = darkCSS
+  } else {
+    style.innerHTML = lightCSS
+  }
+
+  document.head.appendChild(style)
 }

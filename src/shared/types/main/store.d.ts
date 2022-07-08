@@ -1,4 +1,4 @@
-import type { EditorSettings } from '../renderer/store/app'
+import type { EditorSettings, ScreenshotSettings } from '../renderer/store/app'
 import type { SnippetsSort } from './db'
 
 export interface AppStore {
@@ -19,5 +19,6 @@ export interface PreferencesStore {
   storagePath: string
   backupPath: string
   editor: EditorSettings
+  screenshot: ScreenshotSettings
   theme: string
 }

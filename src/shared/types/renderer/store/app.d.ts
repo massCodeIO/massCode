@@ -47,6 +47,13 @@ export interface EditorSettings {
   highlightGutter: boolean
 }
 
+export interface ScreenshotSettings {
+  background: boolean
+  gradient: [string, string]
+  darkMode: boolean
+  width: number
+}
+
 export interface State {
   platform: NodeJS.Platform
   theme: Theme
@@ -55,5 +62,6 @@ export interface State {
   version: string
   editor: EditorSettings
   selectedPreferencesMenu: string
+  screenshot: ScreenshotSettings
   isInit: boolean
 }

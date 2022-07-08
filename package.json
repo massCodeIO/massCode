@@ -45,6 +45,7 @@
     "electron-store": "^8.0.1",
     "fs-extra": "^10.0.1",
     "highlight.js": "^11.5.1",
+    "html2canvas": "^1.4.1",
     "interactjs": "^1.10.11",
     "lodash": "^4.17.21",
     "lowdb": "^3.0.0",

@@ -11,11 +11,11 @@ import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import sanitizeHtml from 'sanitize-html'
 import hljs from 'highlight.js'
-import 'highlight.js/styles/github.css'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ipc } from '@/electron'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
+import { useHljsTheme } from '@/composable'
 
 interface Props {
   value: string
@@ -27,6 +27,9 @@ const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 
 const forceRefresh = ref()
+const preTagBg = computed(() =>
+  appStore.isLightTheme ? '#fff' : 'var(--color-contrast-high)'
+)
 
 const init = () => {
   const renderer: marked.RendererObject = {
@@ -181,6 +184,18 @@ const height = computed(() => {
   return window.innerHeight - result + 'px'
 })
 
+watch(
+  () => appStore.isLightTheme,
+  v => {
+    if (v) {
+      useHljsTheme('light')
+    } else {
+      useHljsTheme('dark')
+    }
+  },
+  { immediate: true }
+)
+
 init()
 
 onMounted(() => {
@@ -206,6 +221,9 @@ window.addEventListener('resize', () => {
   }
   :deep(.ps) {
     height: v-bind(height);
+  }
+  :deep(pre) {
+    background-color: v-bind(preTagBg);
   }
 }
 </style>

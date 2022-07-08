@@ -181,7 +181,6 @@ const onSaveScreenshot = async () => {
   a.href = img
   a.download = `${props.name}.png`
   a.click()
-  console.log(img)
 }
 
 watch(

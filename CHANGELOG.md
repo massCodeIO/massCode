@@ -1,3 +1,18 @@
+# [2.8.0](https://github.com/massCodeIO/massCode/compare/v2.7.1...v2.8.0) (2022-07-08)
+
+
+### Bug Fixes
+
+* **markdown:** proper bg color for code block depending on theme ([85eaa64](https://github.com/massCodeIO/massCode/commit/85eaa6475c7f167b26f83e04424781844caf85c7))
+* **snippets:** update editor if fragments is changed [#113](https://github.com/massCodeIO/massCode/issues/113) ([8908af9](https://github.com/massCodeIO/massCode/commit/8908af9906611d4cd604fe869840748a0bd6ce8a))
+
+
+### Features
+
+* **snippets:** create screenshot of snippets ([#115](https://github.com/massCodeIO/massCode/issues/115)) ([024dfa5](https://github.com/massCodeIO/massCode/commit/024dfa5870d9e7dd36f533dcb06898e9bc50a641))
+
+
+
 ## [2.7.1](https://github.com/massCodeIO/massCode/compare/v2.7.0...v2.7.1) (2022-07-07)
 
 

@@ -43,6 +43,11 @@ const onChange = () => {
 
 <style lang="scss" scoped>
 .app-checkbox {
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
   input {
     display: none;
   }

@@ -87,7 +87,6 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .snippet-list {
   position: relative;
-  border-right: 1px solid var(--color-border);
   display: grid;
   grid-template-rows: 50px 1fr 10px;
   background-color: var(--color-snippet-list);

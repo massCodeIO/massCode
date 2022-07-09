@@ -127,11 +127,13 @@ const activeTab = ref<Tab>('library')
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.setSnippetsByFolderIds(true)
+  snippetStore.searchQuery = ''
   emitter.emit('folder:click', id)
 }
 
 const onClickSystemFolder = (alias: SystemFolderAlias) => {
   snippetStore.setSnippetsByAlias(alias)
+  snippetStore.searchQuery = ''
 }
 
 const onClickTag = (id: string) => {

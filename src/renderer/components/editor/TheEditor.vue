@@ -237,7 +237,7 @@ const findAll = (q: string) => {
     }
   }
 
-  editor.findAll(q, { caseSensitive: false, preventScroll: true, range: null })
+  editor.findAll(q, { caseSensitive: false, preventScroll: true })
 }
 
 const getCursorPosition = () => {

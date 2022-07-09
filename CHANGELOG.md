@@ -1,3 +1,16 @@
+## [2.8.1](https://github.com/massCodeIO/massCode/compare/v2.8.0...v2.8.1) (2022-07-09)
+
+
+### Bug Fixes
+
+* **editor:** search highlighting ([0bdab6c](https://github.com/massCodeIO/massCode/commit/0bdab6ceda460074cb1781b9ded3958309f8750f))
+* **snippets:** blinking system folder when click ([bc7cdfe](https://github.com/massCodeIO/massCode/commit/bc7cdfee4090e7e65f036b6ad3b2a00913937ad6))
+* **snippets:** clear search field after click folder ([6360b5c](https://github.com/massCodeIO/massCode/commit/6360b5cab456881a67ccad0ab4da61d7b5ad4e4d))
+* **snippets:** double get snippets when add new snippet ([c38af77](https://github.com/massCodeIO/massCode/commit/c38af77500dd147aa3ff83bfa492464589f5b748))
+* **snippets:** search [#117](https://github.com/massCodeIO/massCode/issues/117) ([beb8591](https://github.com/massCodeIO/massCode/commit/beb8591003f45305a1f08455ff4e26e785135e27))
+
+
+
 # [2.8.0](https://github.com/massCodeIO/massCode/compare/v2.7.1...v2.8.0) (2022-07-08)
 
 

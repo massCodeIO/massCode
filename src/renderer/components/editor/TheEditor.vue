@@ -228,7 +228,16 @@ const setCursorToStartAndClearSelection = () => {
 
 const findAll = (q: string) => {
   if (q === '') return
-  editor.findAll(q, { caseSensitive: false, preventScroll: true })
+
+  const prevMarks = editor.session.getMarkers()
+
+  if (prevMarks) {
+    for (const i of Object.keys(prevMarks)) {
+      editor.session.removeMarker(prevMarks[Number(i)].id)
+    }
+  }
+
+  editor.findAll(q, { caseSensitive: false, preventScroll: true, range: null })
 }
 
 const getCursorPosition = () => {

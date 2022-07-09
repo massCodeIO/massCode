@@ -36,9 +36,9 @@ const inputRef = ref<HTMLInputElement>()
 
 const query = computed({
   get: () => snippetStore.searchQuery,
-  set: useDebounceFn(v => {
+  set: useDebounceFn(async v => {
     snippetStore.searchQuery = v
-    snippetStore.setSnippetsByAlias('all')
+    await snippetStore.setSnippetsByAlias('all')
     snippetStore.search(v!)
     track('snippets/search')
   }, 300)

@@ -226,6 +226,11 @@ export const useSnippetStore = defineStore('snippets', {
     async setSnippetsByAlias (alias: SystemFolderAlias) {
       const folderStore = useFolderStore()
 
+      folderStore.selectedAlias = alias
+      folderStore.selected = undefined
+      folderStore.selectedId = undefined
+      folderStore.selectedIds = undefined
+
       await this.getSnippets()
 
       let snippets: SnippetWithFolder[] = []
@@ -250,11 +255,6 @@ export const useSnippetStore = defineStore('snippets', {
       sortSnippetsBy(this.snippets, this.sort)
 
       this.selected = snippets[0]
-
-      folderStore.selected = undefined
-      folderStore.selectedId = undefined
-      folderStore.selectedIds = undefined
-      folderStore.selectedAlias = alias
 
       store.app.set('selectedFolderAlias', alias)
       store.app.delete('selectedFolderId')

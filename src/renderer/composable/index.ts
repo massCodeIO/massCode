@@ -7,7 +7,6 @@ import { useSnippetStore } from '@/store/snippets'
 import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
-import { useAppStore } from '@/store/app'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -24,10 +23,8 @@ export const onAddNewSnippet = async () => {
   if (folderStore.selectedId) {
     await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
   } else {
-    await snippetStore.getSnippets()
     snippetStore.setSnippetsByAlias('inbox')
   }
-  await snippetStore.getSnippets()
 
   emitter.emit('snippet:focus-name', true)
   track('snippets/add-new')

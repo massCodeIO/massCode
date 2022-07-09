@@ -105,7 +105,7 @@ import html2canvas from 'html2canvas'
 import interact from 'interactjs'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useHljsTheme } from '@/composable'
-import { store } from '@/electron'
+import { store, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 
 const GUTTER_RIGHT_OFFSET = 10
@@ -186,6 +186,7 @@ const onSaveScreenshot = async () => {
   a.href = img
   a.download = `${props.name}.png`
   a.click()
+  track('snippets/create-screenshot')
 }
 
 watch(

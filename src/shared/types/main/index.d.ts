@@ -38,6 +38,7 @@ type MainMenuAction =
   | 'new-snippet'
   | 'preferences'
   | 'preview-markdown'
+  | 'preview-code'
   | 'search'
   | 'sort-snippets'
 

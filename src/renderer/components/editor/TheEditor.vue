@@ -83,8 +83,8 @@ const editorHeight = computed(() => {
   forceRefresh.value
 
   let result =
-    appStore.sizes.editor.titleHeight +
     appStore.sizes.titlebar +
+    appStore.sizes.editor.titleHeight +
     appStore.sizes.editor.footerHeight
 
   if (snippetStore.isFragmentsShow) {
@@ -97,6 +97,10 @@ const editorHeight = computed(() => {
 
   if (snippetStore.isDescriptionShow) {
     result += appStore.sizes.editor.descriptionHeight
+  }
+
+  if (snippetStore.isCodePreview) {
+    result += appStore.sizes.codePreviewHeight
   }
 
   return window.innerHeight - result + 'px'

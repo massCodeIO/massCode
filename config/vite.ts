@@ -33,7 +33,7 @@ export default defineConfig({
       resolvers: [
         IconsResolver({
           prefix: '',
-          customCollections: ['unicons']
+          customCollections: ['unicons', 'svg']
         })
       ]
     }),
@@ -41,7 +41,8 @@ export default defineConfig({
       customCollections: {
         unicons: FileSystemIconLoader(
           './node_modules/@iconscout/unicons/svg/line'
-        )
+        ),
+        svg: FileSystemIconLoader(pathSrc + '/assets/svg')
       }
     })
   ],

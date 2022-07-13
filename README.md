@@ -43,6 +43,9 @@ massCode allows you to organize snippets using multi-level folders as well as ta
 ### Editor
 A snippet manager must not only provide organization of snippets but also have a good code editor. That's why under the hood of massCode there's [Ace](https://ace.c9.io). Ace is a high performance code editor which supports syntax highlighting for over 170 languages. We also added a [Prettier](https://prettier.io) to code formatter.
 
+### Real-time Render for HTML & CSS
+You can not only collect snippets, but also see the rendering result for HTML and CSS in real time. Test the idea or just view the result.
+
 ### Markdown
 massCode allows you to write in Markdown and provide support to syntax highlighting, tables, list and other formatting. Also massCode supports [Mermaid](https://mermaid-js.github.io/mermaid/#) - diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
 
@@ -60,6 +63,9 @@ massCode uses a simple JSON to store your data. The database files are on your l
 
 ### Integrations
 massCode supports extensions for [VS Code](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant), [Raycast](https://www.raycast.com/antonreshetov/masscode) and [Alfred](https://github.com/massCodeIO/assistant-alfred), which gives even more possibilities to use application. With the VS Code extension you get practically zen mode, search for the necessary snippets and insert them immediately or save the selected code sections as a snippet.
+
+### Beautiful Screenshots
+Create beautiful snippet images on different backgrounds and in different modes
 
 ## Overview
 

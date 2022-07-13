@@ -1,5 +1,6 @@
 import { platform, store } from '@/electron'
 import type {
+  CodePreviewSettings,
   EditorSettings,
   ScreenshotSettings,
   State,
@@ -29,6 +30,10 @@ const SCREENSHOT_DEFAULTS: ScreenshotSettings = {
   width: 600
 }
 
+const CODE_PREVIEW_DEFAULTS: CodePreviewSettings = {
+  darkMode: false
+}
+
 export const useAppStore = defineStore('app', {
   state: (): State => ({
     isInit: false,
@@ -49,6 +54,7 @@ export const useAppStore = defineStore('app', {
     },
     editor: EDITOR_DEFAULTS,
     screenshot: SCREENSHOT_DEFAULTS,
+    codePreview: CODE_PREVIEW_DEFAULTS,
     selectedPreferencesMenu: 'storage',
     version,
     platform: platform()

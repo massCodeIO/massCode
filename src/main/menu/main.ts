@@ -341,6 +341,15 @@ const editorMenu: MenuItemConstructorOptions[] = [
         'main-menu:preview-markdown'
       )
     }
+  },
+  {
+    label: 'Preview Code',
+    accelerator: 'Shift+CommandOrControl+P',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:preview-code'
+      )
+    }
   }
 ]
 

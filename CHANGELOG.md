@@ -1,3 +1,12 @@
+# [2.9.0](https://github.com/massCodeIO/massCode/compare/v2.8.1...v2.9.0) (2022-07-13)
+
+
+### Features
+
+* **snippets:** add html & css renderer to snippets preview ([#126](https://github.com/massCodeIO/massCode/issues/126)) ([21828e6](https://github.com/massCodeIO/massCode/commit/21828e63a142c13953495e3d8693fe946deabe50))
+
+
+
 ## [2.8.1](https://github.com/massCodeIO/massCode/compare/v2.8.0...v2.8.1) (2022-07-09)
 
 

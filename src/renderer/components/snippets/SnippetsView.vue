@@ -7,6 +7,7 @@
   >
     <template v-if="snippetStore.selected">
       <SnippetHeader />
+      <!-- TODO: упростить условия отображения -->
       <TheEditor
         v-if="
           !snippetStore.isMarkdownPreview && !snippetStore.isScreenshotPreview
@@ -17,6 +18,13 @@
         :fragment-index="snippetStore.fragment"
         :is-search-mode="isSearchMode"
         :fragments="snippetStore.isFragmentsShow"
+      />
+      <EditorPreview
+        v-if="
+          snippetStore.isCodePreview &&
+            !snippetStore.isScreenshotPreview &&
+            !snippetStore.isMarkdownPreview
+        "
       />
       <TheMarkdown
         v-if="

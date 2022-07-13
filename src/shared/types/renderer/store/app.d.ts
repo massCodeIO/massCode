@@ -24,6 +24,7 @@ export interface AppSizes {
   titlebar: number
   sidebar: number
   snippetList: number
+  codePreviewHeight: number
   editor: {
     titleHeight: number
     fragmentsHeight: number
@@ -54,6 +55,10 @@ export interface ScreenshotSettings {
   width: number
 }
 
+export interface CodePreviewSettings {
+  darkMode: boolean
+}
+
 export interface State {
   platform: NodeJS.Platform
   theme: Theme
@@ -63,5 +68,6 @@ export interface State {
   editor: EditorSettings
   selectedPreferencesMenu: string
   screenshot: ScreenshotSettings
+  codePreview: CodePreviewSettings
   isInit: boolean
 }

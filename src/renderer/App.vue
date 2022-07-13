@@ -197,6 +197,10 @@ ipc.on('main-menu:preview-markdown', async () => {
   }
 })
 
+ipc.on('main-menu:preview-code', () => {
+  snippetStore.isCodePreview = !snippetStore.isCodePreview
+})
+
 ipc.on('main-menu:copy-snippet', () => {
   onCopySnippet()
 })

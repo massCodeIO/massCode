@@ -16,6 +16,7 @@ type SnippetEvents =
   | 'search'
   | 'set-language'
   | 'create-screenshot'
+  | 'code-preview'
 type FolderEvents = 'add-new' | 'delete' | 'set-language'
 type TagEvents = 'add-new' | 'delete'
 type AppEvents =

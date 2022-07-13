@@ -70,6 +70,25 @@ h6 {
     z-index: 10;
   }
 }
+.gutter-line-horizontal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-border);
+  cursor: row-resize;
+  &::after {
+    content: '';
+    display: block;
+    height: 8px;
+    width: 100%;
+    position: absolute;
+    top: -2px;
+    z-index: 10;
+  }
+}
 
 .desc {
   font-size: var(--text-sm);

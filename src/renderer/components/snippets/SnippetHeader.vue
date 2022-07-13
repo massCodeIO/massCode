@@ -21,8 +21,9 @@
           <UniconsCamera v-if="!snippetStore.isScreenshotPreview" />
           <UniconsCameraSlash v-else />
         </AppActionButton>
-        <AppActionButton @click="onCopySnippet">
-          <UniconsArrow />
+        <AppActionButton @click="onCodePreview">
+          <SvgArrowSlash v-if="snippetStore.isCodePreview" />
+          <UniconsArrow v-else />
         </AppActionButton>
         <AppActionButton @click="onAddDescription">
           <UniconsText />
@@ -53,6 +54,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/store/app'
+import { track } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
@@ -76,6 +78,10 @@ const onClickMarkdownPreview = () => {
 
 const onClickScreenshotPreview = () => {
   snippetStore.isScreenshotPreview = !snippetStore.isScreenshotPreview
+}
+const onCodePreview = () => {
+  snippetStore.isCodePreview = !snippetStore.isCodePreview
+  track('snippets/code-preview')
 }
 
 emitter.on('snippet:focus-name', () => {

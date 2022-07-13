@@ -15,4 +15,5 @@ export interface State {
   isContextState: boolean
   isMarkdownPreview: boolean
   isScreenshotPreview: boolean
+  isCodePreview: boolean
 }

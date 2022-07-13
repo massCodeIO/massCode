@@ -28,7 +28,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
@@ -278,6 +286,21 @@ watch(
     if (!props.isSearchMode) {
       setCursorToStartAndClearSelection()
     }
+  }
+)
+
+watch(
+  () => snippetStore.isCodePreview,
+  () => {
+    // Пока не нашел другого способа обновить высоту редактора в этом случае.
+    // Странно то, что при ресайзе окна, высота редактора корректно высчитывается
+    const scrollTop = editor.session.getScrollTop()
+
+    editor.destroy()
+    nextTick(() => {
+      init()
+      editor.session.setScrollTop(scrollTop)
+    })
   }
 )
 

@@ -26,6 +26,12 @@
         >
           <AppearancePreferences />
         </AppMenuItem>
+        <AppMenuItem
+          name="Custom Languages"
+          value="customLanguages"
+        >
+          <CustomLanguagePreferences />
+        </AppMenuItem>
       </AppMenu>
     </div>
   </div>

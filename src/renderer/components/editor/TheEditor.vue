@@ -41,9 +41,10 @@ import type { Ace } from 'ace-builds'
 import ace from 'ace-builds'
 import './module-resolver'
 import type { Language } from '@shared/types/renderer/editor'
-import { languages } from './languages'
+import { languages as defaultLanguages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
+import { usePreferencesStore } from '@/store/preferences'
 import { ipc, track } from '@/electron'
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
@@ -71,6 +72,12 @@ const emit = defineEmits<Emits>()
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
+const preferences = usePreferencesStore()
+
+const customLanguages = preferences.customLanguages
+const languages = [...defaultLanguages, ...customLanguages].sort((a, b) =>
+  a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+)
 
 const editorRef = ref()
 const cursorPosition = reactive({
@@ -82,6 +89,15 @@ let editor: Ace.Editor
 const localLang = computed({
   get: () => props.lang,
   set: v => emit('update:lang', v)
+})
+
+const editorLang = computed({
+  get: () => {
+    const customLanguage = customLanguages.find(cl => cl.value === props.lang)
+    const surrogateLanguage =
+      customLanguage?.surrogate?.length > 0 ? customLanguage.surrogate : null
+    return surrogateLanguage || props.lang
+  }
 })
 
 const forceRefresh = ref()
@@ -225,7 +241,7 @@ const format = async () => {
 }
 
 const setLang = () => {
-  editor.session.setMode(`ace/mode/${localLang.value}`)
+  editor.session.setMode(`ace/mode/${editorLang.value}`)
   track('snippets/set-language', localLang.value)
 }
 

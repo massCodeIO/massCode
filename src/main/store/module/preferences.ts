@@ -12,6 +12,7 @@ export default new Store<PreferencesStore>({
   cwd: 'v2',
 
   defaults: {
+    customLanguages: [],
     storagePath: defaultPath,
     backupPath,
     theme: 'light:chrome',

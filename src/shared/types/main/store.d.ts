@@ -1,5 +1,6 @@
 import type { EditorSettings, ScreenshotSettings } from '../renderer/store/app'
 import type { SnippetsSort } from './db'
+import type { LanguageOption } from '../renderer/editor'
 
 export interface AppStore {
   bounds: object
@@ -16,6 +17,7 @@ export interface AppStore {
 }
 
 export interface PreferencesStore {
+  customLanguages: LanguageOption[]
   storagePath: string
   backupPath: string
   editor: EditorSettings

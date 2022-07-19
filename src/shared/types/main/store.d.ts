@@ -4,7 +4,7 @@ import type { SnippetsSort } from './db'
 export interface AppStore {
   bounds: object
   dateInstallation?: number
-  notifySupport: boolean
+  nextSupportNotice?: number
   selectedFolderAlias?: string
   selectedFolderId?: string
   selectedFolderIds?: string[]

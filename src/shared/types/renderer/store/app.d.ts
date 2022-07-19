@@ -70,4 +70,5 @@ export interface State {
   screenshot: ScreenshotSettings
   codePreview: CodePreviewSettings
   isInit: boolean
+  isSponsored: boolean
 }

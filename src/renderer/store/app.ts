@@ -34,9 +34,12 @@ const CODE_PREVIEW_DEFAULTS: CodePreviewSettings = {
   darkMode: false
 }
 
+console.log(import.meta.env.VITE_SPONSORED)
+
 export const useAppStore = defineStore('app', {
   state: (): State => ({
     isInit: false,
+    isSponsored: import.meta.env.VITE_SPONSORED === 'true',
     theme: 'light:chrome',
     showTags: true,
     sizes: {

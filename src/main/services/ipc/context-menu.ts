@@ -313,7 +313,7 @@ export const subscribeToContextMenu = () => {
                 {
                   message: i18n.t('dialog:emptyTrash'),
                   detail: i18n.t('dialog:noUndo'),
-                  buttons: [i18n.t('delete'), i18n.t('cancel')],
+                  buttons: [i18n.t('delete'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }

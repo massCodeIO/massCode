@@ -1,0 +1,12 @@
+{
+  "deleteConfirm": "你是否确定要永久删除{{name}}？",
+  "deleteConfirmMultipleSnippets": "你是否确定要永久删除{{count}}个选中的代码片段?",
+  "noUndo": "你将无法恢复此次操作造成的结果。",
+  "allSnippetsMoveToTrash": "本文件夹内的所有代码片段将被移动至回收站。",
+  "deleteTag": "这也将导致所有拥有该标签的代码片段的失去该标签。",
+  "emptyTrash": "你是否确定要永久删除回收站内的所有代码片段？",
+  "migrateConfirm": [
+    "你是否确定要从{{name}}迁徙?",
+    "在迁移过程中，当前的库将被覆盖。"
+  ]
+}

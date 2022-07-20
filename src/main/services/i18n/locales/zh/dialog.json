@@ -1,0 +1,12 @@
+{
+  "deleteConfirm": "确认要永久删除 {{name}} 吗？",
+  "deleteConfirmMultipleSnippets": "确认要永久删除选择的 {{count}} 个代码片段嘛？",
+  "noUndo": "无法撤消此操作。",
+  "allSnippetsMoveToTrash": "此文件夹中的所有代码片段都将被移动到回收站中。",
+  "deleteTag": "这也将导致所有代码片段删除该标签。",
+  "emptyTrash": "是否确认要永久删除回收站中的所有代码片段？",
+  "migrateConfirm": [
+    "确定要从 {{name}} 迁移吗？",
+    "在迁移过程中，当前存储将被覆盖。"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "button": {
+    "moveStorage": "移动存储",
+    "openStorage": "打开存储",
+    "fromMassCodeV1": "来自 massCode v1.0",
+    "fromSnippetsLab": "来自 SnippetsLab",
+    "confirm": "确认",
+    "cancel": "取消",
+    "update": ["前往 GitHub", "好的"]
+  },
+  "newFolder": "新建文件夹",
+  "newSnippet": "新建代码片段",
+  "newFragment": "添加分段",
+  "addDescription": "添加描述",
+  "addToFavorites": "添加到收藏夹",
+  "addTag": "添加标签",
+  "rename": "重命名",
+  "duplicate": "创建副本",
+  "delete": "删除",
+  "deleteNow": "立即删除",
+  "defaultLanguage": "默认语言",
+  "removeFromFavorites": "移出收藏夹",
+  "emptyTrash": "清空到回收站",
+  "close": "关闭",
+  "folder": {
+    "untitled": "未命名文件夹",
+    "plural": "文件夹"
+  },
+  "snippet": {
+    "untitled": "未命名片段",
+    "plural": "代码片段",
+    "emptyName": "输入片段名称",
+    "selectedMultiple": "{{count}} 个片段已选择",
+    "noSelected": "未选择片段"
+  },
+  "fragment": "分段",
+  "search": "搜索",
+  "line": "行",
+  "column": "列",
+  "sidebar": {
+    "inbox": "收件箱",
+    "favorites": "收藏夹",
+    "allSnippets": "所有片段",
+    "trash": "回收站",
+    "untitled": "未命名文件夹",
+    "folders": "文件夹",
+    "library": "库",
+    "tags": "标签"
+  },
+  "darkMode": "暗黑模式",
+  "background": "背景色",
+  "restartApp": "重启 massCode",
+  "updateAvailable": "可用更新"
+}

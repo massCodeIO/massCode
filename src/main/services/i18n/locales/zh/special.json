@@ -1,0 +1,24 @@
+{
+  "description": {
+    "storage": "要使用 iCloud Drive、Dropbox 的 Google Drive 等同步服务，只需将存储移动到相应的同步文件夹即可。",
+    "migrate": {
+      "1": "要从 massCode v1.0 迁移，请选择包含数据库文件的文件夹。",
+      "2": "要从 SnippetsLab 迁移，请选择 JSON 文件。",
+      "3": [
+        "从 SnippetsLab 迁移期间的一些限制：",
+        "所有文件夹都将是顶级，因为 JSON 文件（低于 v2.1）不能表示文件夹结构。",
+        "所有不受支持的语言片段都将默认设置为纯文本。"
+      ]
+    },
+    "htmlCssPreview": "添加带有 HTML 和 CSS 语言的片段以查看预览效果。"
+  },
+  "success": {
+    "migrate": "数据迁移成功。"
+  },
+  "error": {
+    "folderNotContainDb": "在文件夹里未找到 \"db.json\" 文件。"
+  },
+  "unsponsored": "未捐助",
+  "supportMessage": "嗨，我是 Anton 👋<br><br>\n感谢您使用 massCode。 如果您觉得这个应用程序有用，请 {{-tagStart}} 捐助 {{-tagEnd}}。 这将激励我继续开发该项目。",
+  "snippetsShowcase": "代码片段展示"
+}

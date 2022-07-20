@@ -20,7 +20,8 @@
         </select>
       </span>
       <span>
-        Line {{ cursorPosition.row + 1 }}, Column
+        {{ i18n.t('line') }} {{ cursorPosition.row + 1 }},
+        {{ i18n.t('column') }}
         {{ cursorPosition.column + 1 }}
       </span>
     </div>
@@ -44,7 +45,7 @@ import type { Language } from '@shared/types/renderer/editor'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc, track } from '@/electron'
+import { ipc, track, i18n } from '@/electron'
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 

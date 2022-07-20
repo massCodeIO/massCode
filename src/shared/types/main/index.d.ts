@@ -134,5 +134,8 @@ export interface ElectronBridge {
     isExist: (path: string) => boolean
   }
   track: (event: TrackEvents, payload?: string) => void
+  i18n: {
+    t: (key: string, options?: any) => string
+  }
   platform: () => NodeJS.Platform
 }

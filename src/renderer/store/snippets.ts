@@ -1,7 +1,7 @@
 import type { Language } from '../../shared/types/renderer/editor'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { sortSnippetsBy, useApi } from '@/composable'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import type {
   Snippet,
   SnippetContent,
@@ -150,11 +150,11 @@ export const useSnippetStore = defineStore('snippets', {
           content: body.content
         }
       } else {
-        _body.name = 'Untitled snippet'
+        _body.name = i18n.t('snippet.untitled')
         _body.folderId = folderStore.selectedId || ''
         _body.content = [
           {
-            label: 'Fragment 1',
+            label: `${i18n.t('fragment')} 1`,
             language: folderStore.selected?.defaultLanguage || 'plain_text',
             value: ''
           }
@@ -187,7 +187,7 @@ export const useSnippetStore = defineStore('snippets', {
       const body: Partial<Snippet> = {}
 
       content.push({
-        label: `Fragment ${fragmentCount}`,
+        label: `${i18n.t('fragment')} ${fragmentCount}`,
         language: folderStore.selected?.defaultLanguage || 'plain_text',
         value: ''
       })

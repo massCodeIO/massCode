@@ -16,7 +16,7 @@
           class="link"
           @click="onClickSnippetShowcase"
         >
-          Snippets Showcase
+          {{ i18n.t('special:snippetsShowcase') }}
         </div>
         <AppActionButton @click="onSaveToHtml">
           <UniconsFileDownload />
@@ -43,7 +43,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, onMounted, watch } from 'vue'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
-import { ipc, track } from '@/electron'
+import { i18n, ipc, track } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
@@ -72,8 +72,9 @@ const setSrcDoc = () => {
     i => i.language === 'css'
   )?.value
 
-  const htmlDefault =
-    '<div>Add fragments with HTML & CSS languages to view result.</div>'
+  const htmlDefault = `<div>${i18n.t(
+    'special:description.htmlCssPreview'
+  )}</div>`
   const bg = appStore.codePreview.darkMode ? 'background: #263238;' : ''
   const cssDefault = `
     body {

@@ -6,7 +6,7 @@
           ref="inputRef"
           v-model="name"
           type="text"
-          placeholder="Type snippet name"
+          :placeholder="i18n.t('snippet.emptyName')"
         >
       </div>
       <div class="action">
@@ -54,7 +54,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/store/app'
-import { track } from '@/electron'
+import { track, i18n } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()

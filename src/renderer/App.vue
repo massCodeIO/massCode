@@ -9,7 +9,7 @@
       v-if="!appStore.isSponsored && !isUpdateAvailable"
       class="unsponsored"
     >
-      Unsponsored
+      {{ i18n.t('special:unsponsored') }}
     </span>
     <span
       v-if="isUpdateAvailable"
@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { nextTick, ref, watch } from 'vue'
-import { ipc, store, track } from './electron'
+import { ipc, store, track, i18n } from './electron'
 import { useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
@@ -122,12 +122,13 @@ const showSupportToast = () => {
   if (isSupportToastShow.value) return
 
   const message = document.createElement('div')
-  message.innerHTML = `Hi, Anton here 👋<br><br>
-Thanks for using massCode. If you find this app useful, please <a id="donate" href="#">donate</a>. It will inspire me to continue development on the project.`
+  message.innerHTML = i18n.t('special:supportMessage', {
+    link: '<a id="donate" href="#">donate</a>'
+  })
 
   createToast(message, {
     action: {
-      text: 'Close',
+      text: i18n.t('close'),
       callback (toast) {
         toast.destroy()
         addNextNotice()

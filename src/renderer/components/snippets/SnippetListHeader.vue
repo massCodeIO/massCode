@@ -4,7 +4,7 @@
     <input
       ref="inputRef"
       v-model="query"
-      placeholder="Search..."
+      :placeholder="`${i18n.t('search')}...`"
     >
     <AppActionButton
       v-if="!query"
@@ -28,7 +28,7 @@ import { emitter, onAddNewSnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
-import { track } from '@/electron'
+import { track, i18n } from '@/electron'
 
 const snippetStore = useSnippetStore()
 

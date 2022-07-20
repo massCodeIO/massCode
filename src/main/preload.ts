@@ -4,6 +4,7 @@ import { store } from './store'
 import type { ElectronBridge } from '@shared/types/main'
 import { track } from './services/analytics'
 import { platform } from 'os'
+import i18n from './services/i18n'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
@@ -28,6 +29,9 @@ contextBridge.exposeInMainWorld('electron', {
     migrateFromSnippetsLab: path => migrateFromSnippetsLab(path),
     move: (from, to) => move(from, to),
     isExist: path => isDbExist(path)
+  },
+  i18n: {
+    t: (key, options) => i18n.t(key, options)
   },
   track: (event, payload) => track(event, payload),
   platform: () => platform()

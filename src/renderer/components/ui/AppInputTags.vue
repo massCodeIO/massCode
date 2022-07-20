@@ -4,6 +4,7 @@
       v-model="tag"
       :autocomplete-items="tags"
       :tags="localValue"
+      :placeholder="i18n.t('addTag')"
       @tags-changed="onChange"
     />
   </div>
@@ -13,6 +14,7 @@
 import { VueTagsInput } from '@sipec/vue3-tags-input'
 import { useTagStore } from '@/store/tags'
 import { computed, ref } from 'vue'
+import { i18n } from '@/electron'
 
 interface Props {
   modelValue: string[]

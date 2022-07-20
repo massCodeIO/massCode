@@ -39,7 +39,7 @@
     <SidebarList
       v-if="activeTab === 'library'"
       :is-scrollable="true"
-      title="Folders"
+      :title="i18n.t('sidebar.folders')"
       type="folders"
     >
       <template #action>
@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type {
   SidebarSystemFolder,
   SystemFolderAlias,
@@ -95,7 +95,7 @@ import Trash from '~icons/unicons/trash'
 import LabelAlt from '~icons/unicons/label-alt'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc, store } from '@/electron'
+import { ipc, store, i18n } from '@/electron'
 import { useTagStore } from '@/store/tags'
 import { emitter, onAddNewFolder } from '@/composable'
 import interact from 'interactjs'
@@ -111,15 +111,15 @@ const sidebarRef = ref()
 const gutterRef = ref()
 
 const systemFolders: SidebarSystemFolder[] = [
-  { name: 'Inbox', alias: 'inbox', icon: Inbox },
-  { name: 'Favorites', alias: 'favorites', icon: Favorite },
-  { name: 'All Snippets', alias: 'all', icon: Archive },
-  { name: 'Trash', alias: 'trash', icon: Trash }
+  { name: i18n.t('sidebar.inbox'), alias: 'inbox', icon: Inbox },
+  { name: i18n.t('sidebar.favorites'), alias: 'favorites', icon: Favorite },
+  { name: i18n.t('sidebar.allSnippets'), alias: 'all', icon: Archive },
+  { name: i18n.t('sidebar.trash'), alias: 'trash', icon: Trash }
 ]
 
 const tabs: Tabs[] = [
-  { label: 'Library', value: 'library' },
-  { label: 'Tags', value: 'tags' }
+  { label: i18n.t('sidebar.library'), value: 'library' },
+  { label: i18n.t('sidebar.tags'), value: 'tags' }
 ]
 
 const activeTab = ref<Tab>('library')

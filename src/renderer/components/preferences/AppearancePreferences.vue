@@ -1,6 +1,6 @@
 <template>
   <div class="theme-preferences">
-    <AppFormItem label="Theme">
+    <AppFormItem :label="i18n.t('preferences:appearance.theme.label')">
       <AppSelect
         v-model="localValue"
         :options="options"
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { track } from '@/electron'
+import { track, i18n } from '@/electron'
 import { useAppStore } from '@/store/app'
 import type { Theme } from '@shared/types/renderer/store/app'
 import { computed } from 'vue'
@@ -31,14 +31,38 @@ const localValue = computed({
 })
 
 const options: Options[] = [
-  { label: 'Light: Chrome', value: 'light:chrome' },
-  { label: 'Light: Solarized', value: 'light:solarized' },
-  { label: 'Light: TextMate', value: 'light:textmate' },
-  { label: 'Light: Xcode', value: 'light:xcode' },
-  { label: 'Dark: Dracula', value: 'dark:dracula' },
-  { label: 'Dark: Merbivore', value: 'dark:merbivore' },
-  { label: 'Dark: Monokai', value: 'dark:monokai' },
-  { label: 'Dark: One Dark', value: 'dark:one' }
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Chrome`,
+    value: 'light:chrome'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Solarized`,
+    value: 'light:solarized'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: TextMate`,
+    value: 'light:textmate'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Xcode`,
+    value: 'light:xcode'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Dracula`,
+    value: 'dark:dracula'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Merbivore`,
+    value: 'dark:merbivore'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Monokai`,
+    value: 'dark:monokai'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: One Dark`,
+    value: 'dark:one'
+  }
 ]
 </script>
 

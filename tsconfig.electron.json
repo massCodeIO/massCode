@@ -24,6 +24,7 @@
     "./scripts/*.ts",
     "./src/main/**/*.ts",
     "./src/main/**/*.d.ts",
+    "./src/main/services/i18n/locales/**/*.json",
     "./src/shared/**/*.ts",
     "./src/shared/**/*.d.ts"
   ],

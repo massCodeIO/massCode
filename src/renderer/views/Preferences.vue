@@ -1,7 +1,7 @@
 <template>
   <div class="preferences">
     <div class="title">
-      <h3>Preferences</h3>
+      <h3>{{ i18n.t('preferences:title') }}</h3>
       <AppActionButton @click="toHome">
         <UniconsTimes />
       </AppActionButton>
@@ -9,19 +9,19 @@
     <div class="body">
       <AppMenu v-model="appStore.selectedPreferencesMenu">
         <AppMenuItem
-          name="Storage"
+          :name="i18n.t('preferences:storage.label')"
           value="storage"
         >
           <StoragePreferences />
         </AppMenuItem>
         <AppMenuItem
-          name="Editor"
+          :name="i18n.t('preferences:editor.label')"
           value="editor"
         >
           <EditorPreferences />
         </AppMenuItem>
         <AppMenuItem
-          name="Appearance"
+          :name="i18n.t('preferences:appearance.label')"
           value="appearance"
         >
           <AppearancePreferences />
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { track } from '@/electron'
+import { track, i18n } from '@/electron'
 import router from '@/router'
 import { useAppStore } from '@/store/app'
 

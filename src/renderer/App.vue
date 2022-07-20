@@ -16,7 +16,7 @@
       class="update"
       @click="onClickUpdate"
     >
-      Update available
+      {{ i18n.t('updateAvailable') }}
     </span>
   </div>
 </template>

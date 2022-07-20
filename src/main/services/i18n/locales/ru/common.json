@@ -48,5 +48,6 @@
   },
   "darkMode": "Темный режим",
   "background": "Фон",
-  "restartApp": "Перезагрузить massCode"
+  "restartApp": "Перезагрузить massCode",
+  "updateAvailable": "Доступно обновление"
 }

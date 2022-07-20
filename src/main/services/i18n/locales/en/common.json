@@ -5,7 +5,8 @@
     "fromMassCodeV1": "From massCode v1.0",
     "fromSnippetsLab": "From SnippetsLab",
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "update": ["Go to GitHub", "OK"]
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",
@@ -48,5 +49,6 @@
   },
   "darkMode": "Dark Mode",
   "background": "Background",
-  "restartApp": "Restart massCode"
+  "restartApp": "Restart massCode",
+  "updateAvailable": "Update Available"
 }

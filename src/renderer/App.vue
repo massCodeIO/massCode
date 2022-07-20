@@ -123,7 +123,8 @@ const showSupportToast = () => {
 
   const message = document.createElement('div')
   message.innerHTML = i18n.t('special:supportMessage', {
-    link: '<a id="donate" href="#">donate</a>'
+    tagStart: '<a id="donate" href="#">',
+    tagEnd: '</a>'
   })
 
   createToast(message, {

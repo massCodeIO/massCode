@@ -19,6 +19,6 @@
     "folderNotContainDb": "Folder not contain \"db.json\"."
   },
   "unsponsored": "Unsponsored",
-  "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-link}}. It will inspire me to continue development on the project.",
+  "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}} donate {{-tagEnd}}. It will inspire me to continue development on the project.",
   "snippetsShowcase": "Snippets Showcase"
 }

@@ -44,9 +44,13 @@
       class="placeholder"
     >
       <span v-if="snippetStore.selectedMultiple.length">
-        {{ snippetStore.selectedMultiple.length }} Snippets Selected
+        {{
+          i18n.t('snippet.selectedMultiple', {
+            count: snippetStore.selectedMultiple.length
+          })
+        }}
       </span>
-      <span v-else> No Snippet Selected</span>
+      <span v-else>{{ i18n.t('snippet.noSelected') }}</span>
     </div>
   </div>
 </template>
@@ -55,6 +59,7 @@
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
+import { i18n } from '@/electron'
 
 const snippetStore = useSnippetStore()
 

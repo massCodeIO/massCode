@@ -1,3 +1,3 @@
-const { ipc, store, db, track, platform } = window.electron
+const { ipc, store, db, track, platform, i18n } = window.electron
 
-export { ipc, store, db, track, platform }
+export { ipc, store, db, track, platform, i18n }

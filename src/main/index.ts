@@ -77,6 +77,11 @@ ipcMain.handle('main:restart-api', () => {
   apiServer.restart()
 })
 
+ipcMain.handle('main:restart', () => {
+  app.relaunch()
+  app.quit()
+})
+
 ipcMain.handle('main:open-url', (event, payload) => {
   shell.openExternal(payload as string)
 })

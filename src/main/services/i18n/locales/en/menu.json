@@ -1,0 +1,67 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferences",
+    "update": {
+      "label": "Check for Updates....",
+      "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
+      "button": ["Go to Github", "OK"],
+      "noUpdate": "There are currently no updates available."
+    },
+    "quit": "Quit massCode",
+    "about": "About massCode",
+    "hide": "Hide massCode",
+    "hideOther": "Hide Others",
+    "showAll": "Show All"
+  },
+  "help": {
+    "label": "Help",
+    "website": "Website",
+    "documentation": "Documentation",
+    "viewInGitHub": "View in GitHub",
+    "changeLog": "Change Log",
+    "reportIssue": "Report Issue",
+    "giveStar": "Give a Star",
+    "extension": {
+      "vscode": "VS Code Extension",
+      "raycast": "Raycast Extension",
+      "alfred": "Alfred Extension"
+    },
+    "donate": {
+      "openCollective": "Donate on Open Collective",
+      "payPal": "Donate via PayPal"
+    },
+    "twitter": "Twitter",
+    "devTools": "Toggle Developer Tools"
+  },
+  "file": {
+    "label": "File",
+    "find": "Find"
+  },
+  "view": {
+    "label": "View",
+    "sortBy": {
+      "label": "Sort Snippets By",
+      "dateModified": "Date Modified",
+      "dateCreated": "Date Created",
+      "name": "Name"
+    }
+  },
+  "edit": {
+    "label": "Edit",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "delete": "Delete",
+    "selectAll": "Select All"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copy Snippet to Clipboard",
+    "format": "Format",
+    "previewMarkdown": "Preview Markdown",
+    "previewCode": "Preview Code",
+  }
+}

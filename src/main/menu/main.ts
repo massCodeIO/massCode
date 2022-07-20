@@ -5,6 +5,7 @@ import { version, repository } from '../../../package.json'
 import os from 'os'
 import { checkForUpdate } from '../services/update-check'
 import { store } from '../store'
+import i18n from '../services/i18n'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
@@ -32,7 +33,7 @@ const appMenuCommon: Record<
 MenuItemConstructorOptions
 > = {
   preferences: {
-    label: 'Preferences',
+    label: i18n.t('menu:app.preferences'),
     accelerator: 'CommandOrControl+,',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -41,7 +42,7 @@ MenuItemConstructorOptions
     }
   },
   update: {
-    label: 'Check for Updates...',
+    label: i18n.t('menu:app.update.label'),
     click: async () => {
       const newVersion = await checkForUpdate()
 
@@ -49,8 +50,16 @@ MenuItemConstructorOptions
         const buttonId = dialog.showMessageBoxSync(
           BrowserWindow.getFocusedWindow()!,
           {
-            message: `Version ${newVersion} is now available for download.\nYour version is ${version}.`,
-            buttons: ['Go to GitHub', 'OK'],
+            // message: `Version ${newVersion} is now available for download.\nYour version is ${version}.`,
+            // buttons: ['Go to GitHub', 'OK'],
+            message: i18n.t('menu:app.update.message', {
+              newVersion,
+              oldVersion: version
+            }),
+            buttons: [
+              i18n.t('menu:app.update.button.0'),
+              i18n.t('menu:app.update.button.1')
+            ],
             defaultId: 0,
             cancelId: 1
           }
@@ -61,20 +70,20 @@ MenuItemConstructorOptions
         }
       } else {
         dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
-          message: 'There are currently no updates available.'
+          message: i18n.t('menu:app.update.noUpdate')
         })
       }
     }
   },
   quit: {
-    label: 'Quit massCode',
+    label: i18n.t('menu:app.quit'),
     role: 'quit'
   }
 }
 
 const appMenuMac: MenuItemConstructorOptions[] = [
   {
-    label: 'About massCode',
+    label: i18n.t('menu:app.about'),
     click: () => aboutApp()
   },
   {
@@ -90,15 +99,15 @@ const appMenuMac: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'Hide massCode',
+    label: i18n.t('menu:app.hide'),
     role: 'hide'
   },
   {
-    label: 'Hide Others',
+    label: i18n.t('menu:app.hideOther'),
     role: 'hideOthers'
   },
   {
-    label: 'Show All',
+    label: i18n.t('menu:app.showAll'),
     role: 'unhide'
   },
   {
@@ -117,17 +126,17 @@ const appMenu: MenuItemConstructorOptions[] = [
 
 const helpMenu: MenuItemConstructorOptions[] = [
   {
-    label: 'About',
+    label: i18n.t('menu:app.about'),
     click: () => aboutApp()
   },
   {
-    label: 'Website',
+    label: i18n.t('menu:help.website'),
     click: () => {
       shell.openExternal('https://masscode.io')
     }
   },
   {
-    label: 'Documentation',
+    label: i18n.t('menu:help.documentation'),
     click: () => {
       shell.openExternal('https://masscode.io/documentation')
     }
@@ -136,13 +145,13 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'View in GitHub',
+    label: i18n.t('menu:help.viewInGitHub'),
     click: () => {
       shell.openExternal('https://github.com/massCodeIO/massCode')
     }
   },
   {
-    label: 'Change Log',
+    label: i18n.t('menu:help.changeLog'),
     click: () => {
       shell.openExternal(
         'https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md'
@@ -150,7 +159,7 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Report Issue',
+    label: i18n.t('menu:help.reportIssue'),
     click: () => {
       shell.openExternal(
         'https://github.com/massCodeIO/massCode/issues/new/choose'
@@ -158,7 +167,7 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Give a Star',
+    label: i18n.t('menu:help.giveStar'),
     click: () => {
       shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
     }
@@ -167,7 +176,7 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'VS Code Extension',
+    label: i18n.t('menu:help.extension.vscode'),
     click: () => {
       shell.openExternal(
         'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant'
@@ -175,13 +184,13 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Raycast Extension',
+    label: i18n.t('menu:help.extension.raycast'),
     click: () => {
       shell.openExternal('https://www.raycast.com/antonreshetov/masscode')
     }
   },
   {
-    label: 'Alfred Extension',
+    label: i18n.t('menu:help.extension.alfred'),
     click: () => {
       shell.openExternal('https://github.com/massCodeIO/assistant-alfred')
     }
@@ -190,19 +199,19 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'Donate on Open Collective',
+    label: i18n.t('menu:help.donate.openCollective'),
     click: () => {
       shell.openExternal('https://opencollective.com/masscode')
     }
   },
   {
-    label: 'Donate via PayPal',
+    label: i18n.t('menu:help.donate.payPal'),
     click: () => {
       shell.openExternal('https://www.paypal.com/paypalme/antongithub')
     }
   },
   {
-    label: 'Twitter',
+    label: i18n.t('menu:help.twitter'),
     click: () => {
       shell.openExternal('https://twitter.com/anton_reshetov')
     }
@@ -211,7 +220,7 @@ const helpMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'Toggle Developer Tools',
+    label: i18n.t('menu:help.devTools'),
     role: 'toggleDevTools'
   }
 ]
@@ -225,7 +234,7 @@ if (isDev) {
 
 const fileMenu: MenuItemConstructorOptions[] = [
   {
-    label: 'New Snippet',
+    label: i18n.t('newSnippet'),
     accelerator: 'CommandOrControl+N',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -234,7 +243,7 @@ const fileMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'New Fragment',
+    label: i18n.t('newFragment'),
     accelerator: 'CommandOrControl+T',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -243,7 +252,7 @@ const fileMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Add Description',
+    label: i18n.t('addDescription'),
     accelerator: 'CommandOrControl+Shift+T',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -255,7 +264,7 @@ const fileMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'New Folder',
+    label: i18n.t('newFolder'),
     accelerator: 'CommandOrControl+Shift+N',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:new-folder')
@@ -265,7 +274,7 @@ const fileMenu: MenuItemConstructorOptions[] = [
     type: 'separator'
   },
   {
-    label: 'Find',
+    label: i18n.t('menu:file.find'),
     accelerator: 'CommandOrControl+F',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:search')
@@ -275,10 +284,10 @@ const fileMenu: MenuItemConstructorOptions[] = [
 
 const viewMenu: MenuItemConstructorOptions[] = [
   {
-    label: 'Sort Snippets By',
+    label: i18n.t('menu:view.sortBy.label'),
     submenu: [
       {
-        label: 'Date Modified',
+        label: i18n.t('menu:view.sortBy.dateModified'),
         type: 'radio',
         checked: store.app.get('sort') === 'updatedAt',
         click: () => {
@@ -289,7 +298,7 @@ const viewMenu: MenuItemConstructorOptions[] = [
         }
       },
       {
-        label: 'Date Created',
+        label: i18n.t('menu:view.sortBy.dateCreated'),
         type: 'radio',
         checked: store.app.get('sort') === 'createdAt',
         click: () => {
@@ -300,7 +309,7 @@ const viewMenu: MenuItemConstructorOptions[] = [
         }
       },
       {
-        label: 'Name',
+        label: i18n.t('menu:view.sortBy.name'),
         type: 'radio',
         checked: store.app.get('sort') === 'name',
         click: () => {
@@ -316,7 +325,7 @@ const viewMenu: MenuItemConstructorOptions[] = [
 
 const editorMenu: MenuItemConstructorOptions[] = [
   {
-    label: 'Copy Snippet to Clipboard',
+    label: i18n.t('menu:editor.copy'),
     accelerator: 'Shift+CommandOrControl+C',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -325,7 +334,7 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Format',
+    label: i18n.t('menu:editor.format'),
     accelerator: 'Shift+CommandOrControl+F',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -334,7 +343,7 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Preview Markdown',
+    label: i18n.t('menu:editor.previewMarkdown'),
     accelerator: 'Shift+CommandOrControl+M',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -343,7 +352,7 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: 'Preview Code',
+    label: i18n.t('menu:editor.previewCode'),
     accelerator: 'Shift+CommandOrControl+P',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -353,29 +362,62 @@ const editorMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const editMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:edit.undo'),
+    role: 'undo'
+  },
+  {
+    label: i18n.t('menu:edit.redo'),
+    role: 'redo'
+  },
+  { type: 'separator' },
+  {
+    label: i18n.t('menu:edit.cut'),
+    role: 'cut'
+  },
+  {
+    label: i18n.t('menu:edit.copy'),
+    role: 'copy'
+  },
+  {
+    label: i18n.t('menu:edit.paste'),
+    role: 'paste'
+  },
+  {
+    label: i18n.t('menu:edit.delete'),
+    role: 'delete'
+  },
+  { type: 'separator' },
+  {
+    label: i18n.t('menu:edit.selectAll'),
+    role: 'selectAll'
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
-    label: 'massCode',
+    label: i18n.t('menu:app.label'),
     submenu: isMac ? appMenuMac : appMenu
   },
   {
-    label: 'File',
+    label: i18n.t('menu:file.label'),
     submenu: fileMenu
   },
   {
-    label: 'View',
+    label: i18n.t('menu:view.label'),
     submenu: viewMenu
   },
   {
-    label: 'Edit',
-    role: 'editMenu'
+    label: i18n.t('menu:edit.label'),
+    submenu: editMenu
   },
   {
-    label: 'Editor',
+    label: i18n.t('menu:editor.label'),
     submenu: editorMenu
   },
   {
-    label: 'Help',
+    label: i18n.t('menu:help.label'),
     submenu: helpMenu
   }
 ]

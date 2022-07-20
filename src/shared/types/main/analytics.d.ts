@@ -29,6 +29,7 @@ type AppEvents =
   | 'empty-trash'
   | 'set-theme'
   | 'notify'
+  | 'set-language'
 type ApiEvents = 'snippet-create'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>

@@ -1,51 +1,48 @@
 <template>
   <div class="storage">
     <AppForm>
-      <AppFormItem label="Storage">
+      <AppFormItem :label="i18n.t('preferences:storage.label')">
         <AppInput
           v-model="storagePath"
           readonly
         />
         <AppButton @click="onClickMove">
-          Move Storage
+          {{ i18n.t('button.moveStorage') }}
         </AppButton>
         <AppButton @click="onClickOpen">
-          Open Storage
+          {{ i18n.t('button.openStorage') }}
         </AppButton>
         <template #desc>
-          To use sync services like iCloud Drive, Google Drive of Dropbox,
-          simply move storage to the corresponding synced folders
+          {{ i18n.t('special:description.storage') }}
         </template>
       </AppFormItem>
-      <AppFormItem label="Migrate">
+      <AppFormItem :label="i18n.t('preferences:storage.migrate')">
         <AppButton @click="onClickMigrate">
-          From massCode v1.0
+          {{ i18n.t('button.fromMassCodeV1') }}
         </AppButton>
         <AppButton @click="onClickMigrateFromSnippetsLab">
-          From SnippetsLab
+          {{ i18n.t('button.fromSnippetsLab') }}
         </AppButton>
         <template #desc>
-          To migrate from massCode v1.0 select the folder containing the
-          database files.
-          <p>To migrate from SnippetsLab select JSON file.</p>
+          {{ i18n.t('special:description.migrate.1') }}
+          <p>{{ i18n.t('special:description.migrate.2') }}</p>
           <p>
-            Some Limitations. During migration from SnippetsLab: <br>
-            - All folders will be first level as JSON file (below v2.1) does not
-            represent nested folders.<br>
-            - Snippets with unsupported languages will be set to default Plain
-            Text.
+            {{ i18n.t('special:description.migrate.3.0') }} <br>
+            - {{ i18n.t('special:description.migrate.3.1') }}<br>
+            - {{ i18n.t('special:description.migrate.3.2') }}
           </p>
         </template>
       </AppFormItem>
-      <AppFormItem label="Count">
-        {{ snippetStore.all.length }} snippets.
+      <AppFormItem :label="i18n.t('preferences:storage.count')">
+        {{ snippetStore.all.length }}
+        {{ i18n.t('snippet.plural').toLowerCase() }}.
       </AppFormItem>
     </AppForm>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ipc, store, db, track } from '@/electron'
+import { ipc, store, db, track, i18n } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import type { MessageBoxRequest, DialogRequest } from '@shared/types/main'
@@ -63,7 +60,6 @@ const onClickMove = async () => {
 
   try {
     await db.move(storagePath.value, path)
-    console.log('aas')
     setStorageAndRestartApi(path)
     track('app/move-storage')
   } catch (err) {
@@ -84,7 +80,7 @@ const onClickOpen = async () => {
     snippetStore.getSnippets()
     track('app/open-storage')
   } else {
-    const message = 'Folder not contain "db.json".'
+    const message = i18n.t('special:error.folderNotContainDb')
     ipc.invoke('main:notification', {
       body: message
     })
@@ -96,10 +92,9 @@ const onClickMigrate = async () => {
   const state = await ipc.invoke<MessageBoxRequest, boolean>(
     'main:open-message-box',
     {
-      message: 'Are you sure you want to migrate from v1',
-      detail:
-        'During migrate from old DB, the current library will be overwritten.',
-      buttons: ['Confirm', 'Cancel']
+      message: i18n.t('dialog:migrateConfirm.0', { name: 'v1' }),
+      detail: i18n.t('dialog:migrateConfirm.1'),
+      buttons: [i18n.t('button.confirm'), i18n.t('button.cancel')]
     }
   )
 
@@ -118,7 +113,7 @@ const onClickMigrate = async () => {
     await snippetStore.getSnippets()
 
     ipc.invoke('main:notification', {
-      body: 'DB successfully migrated.'
+      body: i18n.t('special:success.migrate')
     })
 
     track('app/migrate')
@@ -135,9 +130,9 @@ const onClickMigrateFromSnippetsLab = async () => {
   const state = await ipc.invoke<MessageBoxRequest, boolean>(
     'main:open-message-box',
     {
-      message: 'Are you sure you want to migrate from SnippetsLab',
-      detail: 'During migrate, the current library will be overwritten.',
-      buttons: ['Confirm', 'Cancel']
+      message: i18n.t('dialog:migrateConfirm.0', { name: 'SnippetsLab' }),
+      detail: i18n.t('dialog:migrateConfirm.1'),
+      buttons: [i18n.t('button.confirm'), i18n.t('button.cancel')]
     }
   )
 
@@ -158,7 +153,7 @@ const onClickMigrateFromSnippetsLab = async () => {
     await snippetStore.getSnippets()
 
     ipc.invoke('main:notification', {
-      body: 'DB successfully migrated.'
+      body: i18n.t('special:success.migrate')
     })
 
     track('app/migrate', 'from-snippets-lab')

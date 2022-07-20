@@ -12,6 +12,7 @@ specifiers:
   '@tsconfig/node14': ^1.0.1
   '@types/ace': ^0.0.48
   '@types/estree': ^0.0.51
+  '@types/i18next-fs-backend': ^1.1.2
   '@types/lowdb': ^1.0.11
   '@types/marked': ^4.0.3
   '@types/mermaid': ^8.2.9
@@ -47,6 +48,8 @@ specifiers:
   highlight.js: ^11.5.1
   html2canvas: ^1.4.1
   husky: ^7.0.0
+  i18next: ^21.8.14
+  i18next-fs-backend: ^1.1.4
   interactjs: ^1.10.11
   lint-staged: ^12.1.4
   lodash: ^4.17.21
@@ -92,6 +95,8 @@ dependencies:
   fs-extra: 10.0.1
   highlight.js: 11.5.1
   html2canvas: 1.4.1
+  i18next: 21.8.14
+  i18next-fs-backend: 1.1.4
   interactjs: 1.10.11
   lodash: 4.17.21
   lowdb: 3.0.0
@@ -117,6 +122,7 @@ devDependencies:
   '@tsconfig/node14': 1.0.1
   '@types/ace': 0.0.48
   '@types/estree': 0.0.51
+  '@types/i18next-fs-backend': 1.1.2
   '@types/lowdb': 1.0.11
   '@types/marked': 4.0.3
   '@types/mermaid': 8.2.9
@@ -1415,12 +1421,11 @@ packages:
       source-map-support: 0.5.21
     dev: true
 
-  /@babel/runtime/7.16.5:
-    resolution: {integrity: sha512-TXWihFIS3Pyv5hzR7j6ihmeLkZfrXGxAr5UfSl8CHf+6q/wpiYDkUau0czckpYG8QmnCIuPpdLtuA9VmuGGyMA==}
+  /@babel/runtime/7.18.9:
+    resolution: {integrity: sha512-lkqXDcvlFT5rvEjiu6+QYO+1GXrEHRo2LOtS7E4GtX5ESIZOgepqsZBVIj6Pv+a6zqsya9VCgiK1KAK4BvJDAw==}
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.13.9
-    dev: true
 
   /@babel/template/7.16.0:
     resolution: {integrity: sha512-MnZdpFD/ZdYhXwiunMqqgyZyucaYsbL0IrjoGjaVhGilz+x8YB++kRfygSOIj1yOtWKPlx7NBp+9I1RQSgsd5A==}
@@ -2142,6 +2147,12 @@ packages:
 
   /@types/http-errors/1.8.2:
     resolution: {integrity: sha512-EqX+YQxINb+MeXaIqYDASb6U6FCHbWjkj4a1CKDBks3d/QiB2+PqBLyO72vLDgAO1wUI4O+9gweRcQK11bTL/w==}
+    dev: true
+
+  /@types/i18next-fs-backend/1.1.2:
+    resolution: {integrity: sha512-ZzTRXA5B0x0oGhzKNp08IsYjZpli4LjRZpg3q4j0XFxN5lKG2MVLnR4yHX8PPExBk4sj9Yfk1z9O6CjPrAlmIQ==}
+    dependencies:
+      i18next: 21.8.14
     dev: true
 
   /@types/inquirer/6.5.0:
@@ -7855,6 +7866,15 @@ packages:
     hasBin: true
     dev: true
 
+  /i18next-fs-backend/1.1.4:
+    resolution: {integrity: sha512-/MfAGMP0jHonV966uFf9PkWWuDjPYLIcsipnSO3NxpNtAgRUKLTwvm85fEmsF6hGeu0zbZiCQ3W74jwO6K9uXA==}
+    dev: false
+
+  /i18next/21.8.14:
+    resolution: {integrity: sha512-4Yi+DtexvMm/Yw3Q9fllzY12SgLk+Mcmar+rCAccsOPul/2UmnBzoHbTGn/L48IPkFcmrNaH7xTLboBWIbH6pw==}
+    dependencies:
+      '@babel/runtime': 7.18.9
+
   /iconv-corefoundation/1.1.7:
     resolution: {integrity: sha512-T10qvkw0zz4wnm560lOEg0PovVqUXuOFhhHAkixw8/sycy7TJt7v/RrkEKEQnAw2viPSJu6iAkErxnzR0g8PpQ==}
     engines: {node: ^8.11.2 || >=10}
@@ -10741,12 +10761,11 @@ packages:
 
   /regenerator-runtime/0.13.9:
     resolution: {integrity: sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==}
-    dev: true
 
   /regenerator-transform/0.14.5:
     resolution: {integrity: sha512-eOf6vka5IO151Jfsw2NO9WpGX58W6wWmefK3I1zEGr0lOD0u8rwPaNqQL1aRxUaxLeKO3ArNh3VYg1KbaD+FFw==}
     dependencies:
-      '@babel/runtime': 7.16.5
+      '@babel/runtime': 7.18.9
     dev: true
 
   /regex-not/1.0.2:

@@ -9,14 +9,14 @@
           <AppCheckbox
             v-model="appStore.screenshot.background"
             name="background"
-            label="Background"
+            :label="i18n.t('background')"
           />
         </div>
         <div class="tools__item">
           <AppCheckbox
             v-model="appStore.screenshot.darkMode"
             name="darkMode"
-            label="Dark mode"
+            :label="i18n.t('darkMode')"
           />
         </div>
         <div class="tools__item">
@@ -105,7 +105,7 @@ import html2canvas from 'html2canvas'
 import interact from 'interactjs'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useHljsTheme } from '@/composable'
-import { store, track } from '@/electron'
+import { store, track, i18n } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 
 const GUTTER_RIGHT_OFFSET = 10

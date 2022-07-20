@@ -1,65 +1,67 @@
 <template>
   <div class="editor-preferences">
     <AppForm>
-      <h4>Editor</h4>
-      <AppFormItem label="Font Size">
+      <h4>{{ i18n.t('preferences:editor.label') }}</h4>
+      <AppFormItem :label="i18n.t('preferences:editor.fontSize')">
         <AppInput
           v-model="appStore.editor.fontSize"
           type="number"
           style="width: 100px"
         />
       </AppFormItem>
-      <AppFormItem label="Font Family">
+      <AppFormItem :label="i18n.t('preferences:editor.fontFamily')">
         <AppInput v-model="appStore.editor.fontFamily" />
       </AppFormItem>
-      <AppFormItem label="Wrap">
+      <AppFormItem :label="i18n.t('preferences:editor.wrap.label')">
         <AppSelect
           v-model="appStore.editor.wrap"
           :options="wrapOptions"
         />
       </AppFormItem>
-      <AppFormItem label="Tab Size">
+      <AppFormItem :label="i18n.t('preferences:editor.tabSize')">
         <AppInput
           v-model="appStore.editor.tabSize"
           type="number"
           style="width: 100px"
         />
       </AppFormItem>
-      <AppFormItem label="Show Invisibles">
+      <AppFormItem :label="i18n.t('preferences:editor.showInvisibles')">
         <AppCheckbox
           v-model="appStore.editor.showInvisibles"
           name="showInvisibles"
         />
       </AppFormItem>
-      <AppFormItem label="Highlight Line">
+      <AppFormItem :label="i18n.t('preferences:editor.highlightLine')">
         <AppCheckbox
           v-model="appStore.editor.highlightLine"
-          name="showInvisibles"
+          name="highlightLine"
         />
       </AppFormItem>
-      <AppFormItem label="Highlight Gutter">
+      <AppFormItem :label="i18n.t('preferences:editor.highlightGutter')">
         <AppCheckbox
           v-model="appStore.editor.highlightGutter"
-          name="showInvisibles"
+          name="highlightGutter"
         />
       </AppFormItem>
-      <h4>Prettier</h4>
-      <AppFormItem label="Trailing Comma">
+      <h4>{{ i18n.t('preferences:editor.prettier.label') }}</h4>
+      <AppFormItem
+        :label="i18n.t('preferences:editor.prettier.trailingComma.label')"
+      >
         <AppSelect
           v-model="appStore.editor.trailingComma"
           :options="trailingCommaOptions"
         />
       </AppFormItem>
-      <AppFormItem label="Semi">
+      <AppFormItem :label="i18n.t('preferences:editor.prettier.semi')">
         <AppCheckbox
           v-model="appStore.editor.semi"
           name="semi"
         />
       </AppFormItem>
-      <AppFormItem label="Single Quote">
+      <AppFormItem :label="i18n.t('preferences:editor.prettier.singleQuote')">
         <AppCheckbox
           v-model="appStore.editor.singleQuote"
-          name="semi"
+          name="singleQuote"
         />
       </AppFormItem>
     </AppForm>
@@ -67,21 +69,30 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '@/electron'
+import { store, i18n } from '@/electron'
 import { useAppStore } from '@/store/app'
 import { watch } from 'vue'
 
 const appStore = useAppStore()
 
 const wrapOptions = [
-  { label: 'Word Wrap', value: 'free' },
-  { label: 'Off', value: 'off' }
+  { label: i18n.t('preferences:editor.wrap.wordWrap'), value: 'free' },
+  { label: i18n.t('preferences:editor.wrap.off'), value: 'off' }
 ]
 
 const trailingCommaOptions = [
-  { label: 'None', value: 'none' },
-  { label: 'All', value: 'all' },
-  { label: 'ES6', value: 'es6' }
+  {
+    label: i18n.t('preferences:editor.prettier.trailingComma.none'),
+    value: 'none'
+  },
+  {
+    label: i18n.t('preferences:editor.prettier.trailingComma.all'),
+    value: 'all'
+  },
+  {
+    label: i18n.t('preferences:editor.prettier.trailingComma.es6'),
+    value: 'es6'
+  }
 ]
 
 watch(

@@ -69,6 +69,7 @@ export interface State {
   selectedPreferencesMenu: string
   screenshot: ScreenshotSettings
   codePreview: CodePreviewSettings
+  language: string
   isInit: boolean
   isSponsored: boolean
 }

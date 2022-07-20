@@ -6,6 +6,7 @@ import type {
   ContextMenuResponse
 } from '@shared/types/main'
 import { languages } from '../../../renderer/components/editor/languages'
+import i18n from '../i18n'
 
 export const subscribeToContextMenu = () => {
   ipcMain.handle<ContextMenuRequest, ContextMenuResponse>(
@@ -16,7 +17,7 @@ export const subscribeToContextMenu = () => {
       return new Promise(resolve => {
         const menu = createMenu([
           {
-            label: `Rename "${name}"`,
+            label: `${i18n.t('rename')} ${name}`,
             click: () =>
               resolve({
                 action: 'rename',
@@ -26,14 +27,14 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
-            label: `Delete "${name}"`,
+            label: `${i18n.t('delete')} ${name}`,
             click: () => {
               const buttonId = dialog.showMessageBoxSync(
                 BrowserWindow.getFocusedWindow()!,
                 {
-                  message: `Are you sure you want to permanently delete "${name}"?`,
-                  detail: 'You cannot undo this action.',
-                  buttons: ['Delete', 'Cancel'],
+                  message: i18n.t('dialog:deleteConfirm', { name }),
+                  detail: i18n.t('dialog:noUndo'),
+                  buttons: [i18n.t('button.confirm'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }
@@ -64,7 +65,7 @@ export const subscribeToContextMenu = () => {
 
         const defaultMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'Add to Favorites',
+            label: i18n.t('addToFavorites'),
             click: () => {
               resolve({
                 action: 'favorites',
@@ -75,7 +76,7 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
-            label: 'Duplicate',
+            label: i18n.t('duplicate'),
             click: () => {
               resolve({
                 action: 'duplicate',
@@ -85,7 +86,7 @@ export const subscribeToContextMenu = () => {
             }
           },
           {
-            label: 'Delete',
+            label: i18n.t('delete'),
             click: () => {
               resolve({
                 action: 'delete',
@@ -98,7 +99,7 @@ export const subscribeToContextMenu = () => {
 
         const favoritesMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'Remove from Favorites',
+            label: i18n.t('removeFromFavorites'),
             click: () => {
               resolve({
                 action: 'favorites',
@@ -109,7 +110,7 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
-            label: 'Delete',
+            label: i18n.t('delete'),
             click: () => {
               resolve({
                 action: 'delete',
@@ -122,18 +123,20 @@ export const subscribeToContextMenu = () => {
 
         const trashMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'Delete now',
+            label: i18n.t('deleteNow'),
             click: () => {
               const message =
                 selectedCount === 0
-                  ? `Are you sure you want to permanently delete "${name}"?`
-                  : `Are you sure you want to permanently delete ${selectedCount} selected snippets?`
+                  ? i18n.t('dialog:deleteConfirm', { name })
+                  : i18n.t('dialog:deleteConfirmMultipleSnippets', {
+                    count: selectedCount
+                  })
               const buttonId = dialog.showMessageBoxSync(
                 BrowserWindow.getFocusedWindow()!,
                 {
                   message,
-                  detail: 'You cannot undo this action.',
-                  buttons: ['Delete', 'Cancel'],
+                  detail: i18n.t('dialog:noUndo'),
+                  buttons: [i18n.t('button.confirm'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }
@@ -213,7 +216,7 @@ export const subscribeToContextMenu = () => {
 
         const folderMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'New folder',
+            label: i18n.t('newFolder'),
             click: () => {
               resolve({
                 action: 'new',
@@ -224,7 +227,7 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
-            label: 'Rename',
+            label: i18n.t('rename'),
             click: () => {
               resolve({
                 action: 'rename',
@@ -234,14 +237,14 @@ export const subscribeToContextMenu = () => {
             }
           },
           {
-            label: 'Delete',
+            label: i18n.t('delete'),
             click: () => {
               const buttonId = dialog.showMessageBoxSync(
                 BrowserWindow.getFocusedWindow()!,
                 {
-                  message: `Are you sure you want to delete "${name}"?`,
-                  detail: 'All snippets in this folder will be moved to trash.',
-                  buttons: ['Delete', 'Cancel'],
+                  message: i18n.t('dialog:deleteConfirm', { name }),
+                  detail: i18n.t('dialog:allSnippetsMoveToTrash'),
+                  buttons: [i18n.t('delete'), i18n.t('cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }
@@ -264,22 +267,21 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
-            label: 'Default Language',
+            label: i18n.t('defaultLanguage'),
             submenu: createLanguageMenu()
           }
         ]
 
         const tagMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'Delete',
+            label: i18n.t('delete'),
             click: () => {
               const buttonId = dialog.showMessageBoxSync(
                 BrowserWindow.getFocusedWindow()!,
                 {
-                  message: `Are you sure you want to delete "${name}"?`,
-                  detail:
-                    'This will also cause all snippets to have that tag removed.',
-                  buttons: ['Delete', 'Cancel'],
+                  message: i18n.t('dialog:deleteConfirm', { name }),
+                  detail: i18n.t('dialog:deleteTag'),
+                  buttons: [i18n.t('delete'), i18n.t('cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }
@@ -304,15 +306,14 @@ export const subscribeToContextMenu = () => {
 
         const trashMenu: MenuItemConstructorOptions[] = [
           {
-            label: 'Empty Trash',
+            label: i18n.t('emptyTrash'),
             click: () => {
               const buttonId = dialog.showMessageBoxSync(
                 BrowserWindow.getFocusedWindow()!,
                 {
-                  message:
-                    'Are you sure you want to permanently delete all snippets in Trash?',
-                  detail: 'You cannot undo this action.',
-                  buttons: ['Delete', 'Cancel'],
+                  message: i18n.t('dialog:emptyTrash'),
+                  detail: i18n.t('dialog:noUndo'),
+                  buttons: [i18n.t('delete'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }

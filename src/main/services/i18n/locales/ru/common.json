@@ -1,7 +1,7 @@
 {
   "button": {
-    "moveStorage": "Переместить хранилище",
-    "openStorage": "Открыть хранилище",
+    "moveStorage": "Переместить",
+    "openStorage": "Открыть",
     "fromMassCodeV1": "Из massCode v1.0",
     "fromSnippetsLab": "Из SnippetsLab",
     "confirm": "Подтвердить",

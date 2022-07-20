@@ -21,4 +21,5 @@ export interface PreferencesStore {
   editor: EditorSettings
   screenshot: ScreenshotSettings
   theme: string
+  language: string
 }

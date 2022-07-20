@@ -26,6 +26,12 @@
         >
           <AppearancePreferences />
         </AppMenuItem>
+        <AppMenuItem
+          :name="i18n.t('preferences:language.label')"
+          value="languages"
+        >
+          <LanguagePreferences />
+        </AppMenuItem>
       </AppMenu>
     </div>
   </div>

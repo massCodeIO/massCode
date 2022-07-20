@@ -57,6 +57,7 @@ export const useAppStore = defineStore('app', {
     screenshot: SCREENSHOT_DEFAULTS,
     codePreview: CODE_PREVIEW_DEFAULTS,
     selectedPreferencesMenu: 'storage',
+    language: store.preferences.get('language'),
     version,
     platform: platform()
   }),
@@ -105,6 +106,10 @@ export const useAppStore = defineStore('app', {
       const toCompare = Object.keys(settings)
 
       return defaults.every(i => toCompare.includes(i))
+    },
+    setLang (lang: string) {
+      this.language = lang
+      store.preferences.set('language', lang)
     }
   }
 })

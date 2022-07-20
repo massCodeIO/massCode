@@ -33,6 +33,7 @@ export default new Store<PreferencesStore>({
       gradient: ['#D02F98', '#9439CA'],
       darkMode: true,
       width: 600
-    }
+    },
+    language: 'en'
   }
 })

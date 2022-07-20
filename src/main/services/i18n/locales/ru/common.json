@@ -1,0 +1,52 @@
+{
+  "button": {
+    "moveStorage": "Переместить хранилище",
+    "openStorage": "Открыть хранилище",
+    "fromMassCodeV1": "Из massCode v1.0",
+    "fromSnippetsLab": "Из SnippetsLab",
+    "confirm": "Подтвердить",
+    "cancel": "Отмена"
+  },
+  "newFolder": "Новая папка",
+  "newSnippet": "Новый сниппет",
+  "newFragment": "Новый фрагмент",
+  "addDescription": "Добавить описание",
+  "addToFavorites": "Добавить в избранное",
+  "addTag": "Добавить тег",
+  "rename": "Переименовать",
+  "duplicate": "Дубликат",
+  "delete": "Удалить",
+  "deleteNow": "Удалить сейчас",
+  "defaultLanguage": "Языка по умолчанию ",
+  "removeFromFavorites": "Удалить из избранного",
+  "emptyTrash": "Очисть корзину",
+  "close": "Закрыть",
+  "folder": {
+    "untitled": "Новая папка",
+    "plural": "Папки"
+  },
+  "snippet": {
+    "untitled": "Новый сниппет",
+    "plural": "Сниппеты",
+    "emptyName": "Введите имя сниппета",
+    "selectedMultiple": "{{count}} сниппетов выбрано",
+    "noSelected": "Не выбрано ни одного сниппета"
+  },
+  "fragment": "Фрагмент",
+  "search": "Поиск",
+  "line": "Строка",
+  "column": "Колонка",
+  "sidebar": {
+    "inbox": "Входящие",
+    "favorites": "Избранное",
+    "allSnippets": "Все сниппеты",
+    "trash": "Корзина",
+    "untitled": "Новая папка",
+    "folders": "Папки",
+    "library": "Библиотека",
+    "tags": "Теги"
+  },
+  "darkMode": "Темный режим",
+  "background": "Фон",
+  "restartApp": "Перезагрузить massCode"
+}

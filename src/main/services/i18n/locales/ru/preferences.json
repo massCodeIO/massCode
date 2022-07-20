@@ -1,0 +1,46 @@
+{
+  "title": "Настройки",
+  "storage": {
+    "label": "Хранилище",
+    "migrate": "Миграция",
+    "count": "Количество"
+  },
+  "editor": {
+    "label": "Редактор",
+    "fontSize": "Размер шрифта",
+    "fontFamily": "Семейство шрифтов",
+    "wrap": {
+      "label": "Перенос",
+      "wordWrap": "Перенос по словам",
+      "off": "Отключить"
+    },
+    "tabSize": "Размер отступа",
+    "showInvisibles": "Показ невидимых символов",
+    "highlightLine": "Подсветка строки",
+    "highlightGutter": "Подсветка gutter",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Запятая в конце",
+        "none": "Нет",
+        "all": "Все",
+        "es6": "ES6"
+      },
+      "semi": "Точка с запятой",
+      "singleQuote": "Одинарные кавычки"
+    }
+  },
+  "appearance": {
+    "label": "Внешний вид",
+    "theme": {
+      "label": "Тема",
+      "light": "Светлая",
+      "dark": "Темная"
+    }
+  },
+  "language": {
+    "label": "Язык",
+    "en": "English",
+    "ru": "Русский"
+  }
+}

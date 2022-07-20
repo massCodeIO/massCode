@@ -21,7 +21,7 @@
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Trailing Coma",
+        "label": "Trailing Comma",
         "none": "None",
         "all": "All",
         "es6": "ES6"
@@ -37,5 +37,10 @@
       "light": "Light",
       "dark": "Dark"
     }
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ru": "Русский"
   }
 }

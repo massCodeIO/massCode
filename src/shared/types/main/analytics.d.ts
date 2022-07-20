@@ -22,6 +22,7 @@ type TagEvents = 'add-new' | 'delete'
 type AppEvents =
   | 'move-storage'
   | 'open-storage'
+  | 'open-url'
   | 'migrate'
   | 'update'
   | 'install'

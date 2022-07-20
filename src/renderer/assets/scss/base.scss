@@ -95,3 +95,8 @@ h6 {
   color: var(--color-text-3);
   margin-top: var(--spacing-xs);
 }
+
+.link {
+  text-decoration: underline;
+  cursor: pointer;
+}

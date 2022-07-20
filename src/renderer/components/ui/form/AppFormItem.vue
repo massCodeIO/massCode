@@ -29,6 +29,7 @@ defineProps<Props>()
 .form-item {
   display: grid;
   grid-template-columns: 150px 1fr;
+  gap: var(--spacing-sm);
   .inner {
     display: flex;
     flex-flow: column;

@@ -48,19 +48,19 @@ const options: Options[] = [
     value: 'light:xcode'
   },
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Dracula`,
+    label: `${i18n.t('preferences:appearance.theme.dark')}: Dracula`,
     value: 'dark:dracula'
   },
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Merbivore`,
+    label: `${i18n.t('preferences:appearance.theme.dark')}: Merbivore`,
     value: 'dark:merbivore'
   },
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Monokai`,
+    label: `${i18n.t('preferences:appearance.theme.dark')}: Monokai`,
     value: 'dark:monokai'
   },
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: One Dark`,
+    label: `${i18n.t('preferences:appearance.theme.dark')}: One Dark`,
     value: 'dark:one'
   }
 ]

@@ -362,6 +362,39 @@ const editorMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const editMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:edit.undo'),
+    role: 'undo'
+  },
+  {
+    label: i18n.t('menu:edit.redo'),
+    role: 'redo'
+  },
+  { type: 'separator' },
+  {
+    label: i18n.t('menu:edit.cut'),
+    role: 'cut'
+  },
+  {
+    label: i18n.t('menu:edit.copy'),
+    role: 'copy'
+  },
+  {
+    label: i18n.t('menu:edit.paste'),
+    role: 'paste'
+  },
+  {
+    label: i18n.t('menu:edit.delete'),
+    role: 'delete'
+  },
+  { type: 'separator' },
+  {
+    label: i18n.t('menu:edit.selectAll'),
+    role: 'selectAll'
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -377,7 +410,7 @@ const menuItems: MenuItemConstructorOptions[] = [
   },
   {
     label: i18n.t('menu:edit.label'),
-    role: 'editMenu'
+    submenu: editMenu
   },
   {
     label: i18n.t('menu:editor.label'),

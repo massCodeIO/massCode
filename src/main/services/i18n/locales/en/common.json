@@ -47,5 +47,6 @@
     "tags": "Tags"
   },
   "darkMode": "Dark Mode",
-  "background": "Background"
+  "background": "Background",
+  "restartApp": "Restart massCode"
 }

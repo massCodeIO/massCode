@@ -27,7 +27,7 @@
   },
   "snippet": {
     "untitled": "Новый сниппет",
-    "plural": "Сниппеты",
+    "plural": "Сниппетов",
     "emptyName": "Введите имя сниппета",
     "selectedMultiple": "{{count}} сниппетов выбрано",
     "noSelected": "Не выбрано ни одного сниппета"

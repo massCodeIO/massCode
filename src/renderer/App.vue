@@ -4,12 +4,20 @@
     :class="{ 'is-win': appStore.platform === 'win32' }"
   />
   <RouterView />
-  <div
-    v-if="isUpdateAvailable"
-    class="update"
-    @click="onClickUpdate"
-  >
-    <span> Update available </span>
+  <div class="top-notification">
+    <span
+      v-if="!appStore.isSponsored && !isUpdateAvailable"
+      class="unsponsored"
+    >
+      Unsponsored
+    </span>
+    <span
+      v-if="isUpdateAvailable"
+      class="update"
+      @click="onClickUpdate"
+    >
+      Update available
+    </span>
   </div>
 </template>
 
@@ -32,7 +40,7 @@ import {
 import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
-import { addDays, isSameDay } from 'date-fns'
+import { addDays, isSameDay, isYesterday } from 'date-fns'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -69,7 +77,6 @@ const init = () => {
 
   if (!dateInstallation) {
     store.app.set('dateInstallation', new Date().valueOf())
-    store.app.set('notifySupport', false)
   }
 
   trackAppUpdate()
@@ -96,49 +103,51 @@ const trackAppUpdate = () => {
   store.app.set('version', appStore.version)
 }
 
+// Yes, this is that annoying piece of crap code.
+// You can delete it, but know that you hurt me.
 const showSupportToast = () => {
-  if (store.app.get('notifySupport')) return
+  if (appStore.isSponsored) return
 
-  const dateInstallation = store.app.get('dateInstallation')
-  const dateToNotify = addDays(dateInstallation, 7)
-  const isShow = isSameDay(new Date(), dateToNotify)
+  const addNextNotice = () => {
+    store.app.set('nextSupportNotice', addDays(new Date(), 7).valueOf())
+  }
+
+  const date = store.app.get('nextSupportNotice')
+
+  if (!date) addNextNotice()
+
+  const isShow = isSameDay(new Date(), date) || isYesterday(date)
 
   if (!isShow) return
   if (isSupportToastShow.value) return
 
   const message = document.createElement('div')
   message.innerHTML = `Hi, Anton here 👋<br><br>
-I need your support. If you find this app useful, please give a star on <a class="github" href="#">github</a> or <a class="opencollective" href="#">donate</a>. It will inspire me to continue development on the project.`
+Thanks for using massCode. If you find this app useful, please <a id="donate" href="#">donate</a>. It will inspire me to continue development on the project.`
 
   createToast(message, {
     action: {
       text: 'Close',
       callback (toast) {
         toast.destroy()
-        store.app.set('notifySupport', true)
+        addNextNotice()
+        isSupportToastShow.value = false
         track('app/notify', 'support-close')
       }
     }
   })
 
+  const d = document.querySelector('#donate')
+
+  d?.addEventListener('click', () => {
+    ipc.invoke('main:open-url', 'https://masscode.io/donate')
+    destroyAllToasts()
+    addNextNotice()
+    isSupportToastShow.value = false
+    track('app/notify', 'support-go-to-masscode')
+  })
+
   isSupportToastShow.value = true
-
-  const g = document.querySelector('.github')
-  const o = document.querySelector('.opencollective')
-
-  g?.addEventListener('click', () => {
-    ipc.invoke('main:open-url', 'https://github.com/massCodeIO/massCode')
-    store.app.set('notifySupport', true)
-    destroyAllToasts()
-    track('app/notify', 'support-go-to-github')
-  })
-
-  o?.addEventListener('click', () => {
-    ipc.invoke('main:open-url', 'https://opencollective.com/masscode')
-    store.app.set('notifySupport', true)
-    destroyAllToasts()
-    track('app/notify', 'support-go-to-opencollective')
-  })
 }
 
 init()
@@ -249,14 +258,18 @@ body {
     }
   }
 }
-.update {
+.top-notification {
   position: absolute;
   top: 5px;
   right: var(--spacing-sm);
   z-index: 1020;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.update {
   background: -webkit-linear-gradient(60deg, var(--color-primary), limegreen);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

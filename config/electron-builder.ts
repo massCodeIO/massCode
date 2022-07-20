@@ -1,8 +1,16 @@
+/* eslint-disable no-template-curly-in-string */
 import type { Configuration } from 'electron-builder'
 import path from 'path'
 
+const isSponsored = process.env.VITE_SPONSORED === 'true'
+
+const artifactName = isSponsored
+  ? '${productName}-${version}-${arch}-sponsored.${ext}'
+  : undefined
+
 export default {
   appId: 'io.masscode.app',
+  artifactName,
   productName: 'massCode',
   directories: {
     output: path.resolve(__dirname, '../../dist')

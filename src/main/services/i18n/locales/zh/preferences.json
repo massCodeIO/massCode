@@ -1,9 +1,9 @@
 {
   "title": "首选项",
   "storage": {
-    "label": "存储",
-    "migrate": "迁徙",
-    "count": "计数"
+    "label": "存储路径",
+    "migrate": "迁移",
+    "count": "总计"
   },
   "editor": {
     "label": "编辑器",
@@ -14,8 +14,8 @@
       "wordWrap": "开启",
       "off": "关闭"
     },
-    "tabSize": "Tab空格数",
-    "showInvisibles": "显示缩进参考线",
+    "tabSize": "Tab 空格数",
+    "showInvisibles": "显示空格与换行符",
     "highlightLine": "高亮光标所在行整行",
     "highlightGutter": "高亮光标所在行行号",
     "prettier": {

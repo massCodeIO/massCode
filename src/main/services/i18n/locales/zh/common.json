@@ -1,9 +1,9 @@
 {
   "button": {
-    "moveStorage": "移动存储位置",
-    "openStorage": "打开对应路径",
-    "fromMassCodeV1": "来自massCode v1.0",
-    "fromSnippetsLab": "来自SnippetsLab",
+    "moveStorage": "更改存储路径",
+    "openStorage": "打开现有存储",
+    "fromMassCodeV1": "来自 massCode v1.0",
+    "fromSnippetsLab": "来自 SnippetsLab",
     "confirm": "确认",
     "cancel": "取消",
     "update": ["前往 GitHub", "OK"]
@@ -15,9 +15,9 @@
   "addToFavorites": "添加至收藏夹",
   "addTag": "添加标签",
   "rename": "重命名",
-  "duplicate": "复制",
+  "duplicate": "创建副本",
   "delete": "删除",
-  "deleteNow": "现在删除",
+  "deleteNow": "立即删除",
   "defaultLanguage": "默认语言",
   "removeFromFavorites": "从收藏夹移除",
   "emptyTrash": "清空回收站",
@@ -30,17 +30,17 @@
     "untitled": "未命名代码片段",
     "plural": "代码片段",
     "emptyName": "请输入该代码片段名称",
-    "selectedMultiple": "已选中{{count}}个代码片段",
-    "noSelected": "未选中任何代码片段"
+    "selectedMultiple": "已选中 {{count}} 个代码片段",
+    "noSelected": "未选中代码片段"
   },
   "fragment": "子片段",
   "search": "搜索",
   "line": "行",
   "column": "列",
   "sidebar": {
-    "inbox": "收件箱",
-    "favorites": "收藏",
-    "allSnippets": "所有代码片段",
+    "inbox": "暂存区",
+    "favorites": "收藏夹",
+    "allSnippets": "所有的",
     "trash": "回收站",
     "untitled": "未命名文件夹",
     "folders": "自定义文件夹",
@@ -49,6 +49,6 @@
   },
   "darkMode": "深色模式",
   "background": "背景",
-  "restartApp": "重启massCode",
+  "restartApp": "重启 massCode",
   "updateAvailable": "存在新版本"
 }

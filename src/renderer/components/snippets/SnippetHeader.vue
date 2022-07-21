@@ -12,23 +12,48 @@
       <div class="action">
         <AppActionButton
           v-if="snippetStore.currentLanguage === 'markdown'"
+          v-tooltip="
+            !snippetStore.isMarkdownPreview
+              ? i18n.t('menu:editor.previewMarkdown')
+              : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewMarkdown')
+          "
           @click="onClickMarkdownPreview"
         >
           <UniconsEye v-if="!snippetStore.isMarkdownPreview" />
           <UniconsEyeSlash v-else />
         </AppActionButton>
-        <AppActionButton @click="onClickScreenshotPreview">
+        <AppActionButton
+          v-tooltip="
+            !snippetStore.isScreenshotPreview
+              ? i18n.t('menu:editor.previewScreenshot')
+              : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewScreenshot')
+          "
+          @click="onClickScreenshotPreview"
+        >
           <UniconsCamera v-if="!snippetStore.isScreenshotPreview" />
           <UniconsCameraSlash v-else />
         </AppActionButton>
-        <AppActionButton @click="onCodePreview">
+        <AppActionButton
+          v-tooltip="
+            !snippetStore.isCodePreview
+              ? i18n.t('menu:editor.previewCode')
+              : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewCode')
+          "
+          @click="onCodePreview"
+        >
           <SvgArrowSlash v-if="snippetStore.isCodePreview" />
           <UniconsArrow v-else />
         </AppActionButton>
-        <AppActionButton @click="onAddDescription">
+        <AppActionButton
+          v-tooltip="i18n.t('addDescription')"
+          @click="onAddDescription"
+        >
           <UniconsText />
         </AppActionButton>
-        <AppActionButton @click="onAddNewFragment">
+        <AppActionButton
+          v-tooltip="i18n.t('newFragment')"
+          @click="onAddNewFragment"
+        >
           <UniconsPlus />
         </AppActionButton>
       </div>

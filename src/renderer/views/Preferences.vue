@@ -2,7 +2,10 @@
   <div class="preferences">
     <div class="title">
       <h3>{{ i18n.t('preferences:title') }}</h3>
-      <AppActionButton @click="toHome">
+      <AppActionButton
+        v-tooltip="i18n.t('close')"
+        @click="toHome"
+      >
         <UniconsTimes />
       </AppActionButton>
     </div>

@@ -8,6 +8,7 @@
     >
     <AppActionButton
       v-if="!query"
+      v-tooltip="i18n.t('newSnippet')"
       class="item"
       @click="onAddNewSnippet"
     >

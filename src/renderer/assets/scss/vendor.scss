@@ -64,11 +64,25 @@
 
 .toast-container {
   .toast {
-    
     width: 400px;
     &-text {
       display: flex;
       align-items: center;
+    }
+  }
+}
+
+.v-popper {
+  &--theme-tooltip {
+    .v-popper {
+      &__inner {
+        font-size: 12px;
+        padding: 4px 8px !important;
+        border-radius: 3px !important;
+      }
+      &__arrow-container {
+        display: none;
+      }
     }
   }
 }

@@ -41,15 +41,15 @@ const localValue = computed({
 
 const options = [
   {
-    label: i18n.t('preferences:language.en'),
+    label: i18n.t('language:en'),
     value: 'en'
   },
   {
-    label: i18n.t('preferences:language.ru'),
+    label: i18n.t('language:ru'),
     value: 'ru'
   },
   {
-    label: i18n.t('preferences:language.zh_CN'),
+    label: i18n.t('language:zh_CN'),
     value: 'zh_CN'
   }
 ]

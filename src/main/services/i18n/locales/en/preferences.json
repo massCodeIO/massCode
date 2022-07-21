@@ -39,9 +39,6 @@
     }
   },
   "language": {
-    "label": "Language",
-    "en": "English",
-    "ru": "Русский",
-    "zh_CN": "简体中文"
+    "label": "Language"
   }
 }

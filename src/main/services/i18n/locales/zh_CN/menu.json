@@ -62,6 +62,7 @@
     "copy": "将代码片段复制至剪贴板",
     "format": "格式化",
     "previewMarkdown": "预览 Markdown",
-    "previewCode": "预览 HTML 和 CSS"
+    "previewCode": "预览 HTML 和 CSS",
+    "previewScreenshot": "生成并预览代码截图"
   }
 }

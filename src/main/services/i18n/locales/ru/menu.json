@@ -62,6 +62,7 @@
     "copy": "Скопировать сниппет в буфер",
     "format": "Форматировать",
     "previewMarkdown": "Просмотр Markdown",
-    "previewCode": "Просмотр результата HTML/CSS"
+    "previewCode": "Просмотр результата HTML/CSS",
+    "previewScreenshot": "Просмотр скриншота"
   }
 }

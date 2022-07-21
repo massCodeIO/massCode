@@ -51,6 +51,14 @@ const options = [
   {
     label: i18n.t('language:zh_CN'),
     value: 'zh_CN'
+  },
+  {
+    label: i18n.t('language:zh_TW'),
+    value: 'zh_TW'
+  },
+  {
+    label: i18n.t('language:zh_HK'),
+    value: 'zh_HK'
   }
 ]
 

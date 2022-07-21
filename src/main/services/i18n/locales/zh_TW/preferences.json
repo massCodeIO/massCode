@@ -1,0 +1,44 @@
+{
+  "title": "首選項",
+  "storage": {
+    "label": "儲存路徑",
+    "migrate": "遷移",
+    "count": "總計"
+  },
+  "editor": {
+    "label": "編輯器",
+    "fontSize": "字型大小",
+    "fontFamily": "字型系列",
+    "wrap": {
+      "label": "自動換行",
+      "wordWrap": "開啟",
+      "off": "關閉"
+    },
+    "tabSize": "Tab 空格數",
+    "showInvisibles": "顯示空格與換行符",
+    "highlightLine": "高亮游標所在行整行",
+    "highlightGutter": "高亮游標所在行行號",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "尾後逗號",
+        "none": "None",
+        "all": "All",
+        "es6": "ES6"
+      },
+      "semi": "句尾新增分號",
+      "singleQuote": "使用單引號代替雙引號"
+    }
+  },
+  "appearance": {
+    "label": "外觀",
+    "theme": {
+      "label": "主題",
+      "light": "淺色",
+      "dark": "深色"
+    }
+  },
+  "language": {
+    "label": "語言"
+  }
+}

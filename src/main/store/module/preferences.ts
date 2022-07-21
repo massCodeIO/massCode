@@ -17,7 +17,7 @@ export default new Store<PreferencesStore>({
     theme: 'light:chrome',
     editor: {
       wrap: 'free',
-      fontFamily: 'SF Mono, Consolas, Menlo',
+      fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
       fontSize: 12,
       showInvisibles: false,
       tabSize: 2,

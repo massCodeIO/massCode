@@ -10,7 +10,7 @@ import { defineStore } from 'pinia'
 import { version } from '../../../package.json'
 
 const EDITOR_DEFAULTS: EditorSettings = {
-  fontFamily: 'SF Mono, Consolas, Menlo',
+  fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
   fontSize: 12,
   showInvisibles: false,
   tabSize: 2,

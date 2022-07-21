@@ -1,3 +1,21 @@
+# [2.10.0](https://github.com/massCodeIO/massCode/compare/v2.9.0...v2.10.0) (2022-07-21)
+
+
+### Bug Fixes
+
+* **editor:** fallback to monospace font [#149](https://github.com/massCodeIO/massCode/issues/149) ([3d9efcd](https://github.com/massCodeIO/massCode/commit/3d9efcdc6dd82d6ae598e160333c3fb116b87aa9))
+* **editor:** height when opening code preview ([#131](https://github.com/massCodeIO/massCode/issues/131)) ([c8d8443](https://github.com/massCodeIO/massCode/commit/c8d84432d71873a5b64c66c9f1afc4043031a20d))
+
+
+### Features
+
+* add tooltips ([#159](https://github.com/massCodeIO/massCode/issues/159)) ([9c90e71](https://github.com/massCodeIO/massCode/commit/9c90e713e9e6aa4d3425f0c68be2ebfba0fd5965))
+* **i18n:** add Simplified Chinese for i18n ([#154](https://github.com/massCodeIO/massCode/issues/154)) ([843b91d](https://github.com/massCodeIO/massCode/commit/843b91de41752face2e8a86ae23a0e8d5ad1f57a))
+* **snippets:** add snippets showcase link ([e30a174](https://github.com/massCodeIO/massCode/commit/e30a17469bf7da14e3dfaac289fbc25254bd5432))
+* support i18n, add russian local ([#152](https://github.com/massCodeIO/massCode/issues/152)) ([59da3d9](https://github.com/massCodeIO/massCode/commit/59da3d95ee28f637fc3314cfc28cf940f7e3ee18))
+
+
+
 # [2.9.0](https://github.com/massCodeIO/massCode/compare/v2.8.1...v2.9.0) (2022-07-13)
 
 

@@ -43,6 +43,7 @@
     "axios": "^0.26.1",
     "date-fns": "^2.28.0",
     "electron-store": "^8.0.1",
+    "floating-vue": "^2.0.0-beta.17",
     "fs-extra": "^10.0.1",
     "highlight.js": "^11.5.1",
     "html2canvas": "^1.4.1",

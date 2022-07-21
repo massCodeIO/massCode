@@ -43,7 +43,7 @@
       type="folders"
     >
       <template #action>
-        <AppActionButton>
+        <AppActionButton v-tooltip="i18n.t('newFolder')">
           <UniconsPlus @click="onAddNewFolder" />
         </AppActionButton>
       </template>

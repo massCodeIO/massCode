@@ -50,5 +50,7 @@
   "darkMode": "深色模式",
   "background": "背景",
   "restartApp": "重启 massCode",
-  "updateAvailable": "存在新版本"
+  "updateAvailable": "存在新版本",
+  "hide": "隐藏",
+  "show": "显示"
 }

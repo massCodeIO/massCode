@@ -14,6 +14,7 @@
   "addDescription": "添加描述",
   "addToFavorites": "添加至收藏夹",
   "addTag": "添加标签",
+  "exportToHtml": "导出 HTML 文件",
   "rename": "重命名",
   "duplicate": "创建副本",
   "delete": "删除",

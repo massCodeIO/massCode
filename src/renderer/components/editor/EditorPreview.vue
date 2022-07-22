@@ -18,7 +18,10 @@
         >
           {{ i18n.t('special:snippetsShowcase') }}
         </div>
-        <AppActionButton @click="onSaveToHtml">
+        <AppActionButton
+          v-tooltip="i18n.t('exportToHtml')"
+          @click="onSaveToHtml"
+        >
           <UniconsFileDownload />
         </AppActionButton>
       </div>
@@ -138,6 +141,9 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: var(--spacing-xs);
+      .button {
+        cursor: pointer;
+      }
     }
   }
   iframe {

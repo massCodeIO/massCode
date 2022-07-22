@@ -1,0 +1,24 @@
+{
+  "description": {
+    "storage": "要使用 iCloud Drive、Google Drive 和 Dropbox 等同步服務，只需將儲存路徑設定為相應的同步資料夾即可。",
+    "migrate": {
+      "1": "從 massCode v1.0 遷移：選擇包含資料庫檔案的資料夾。",
+      "2": "從 SnippetsLab 遷移：選擇 JSON 檔案。",
+      "3": [
+        "從SnippetsLab遷移將會遇到一些侷限：",
+        "所有的資料夾將是第一層，因為 JSON 檔案（低於 v2.1）無法表示巢狀的資料夾。",
+        "某些片段可能會因為其語言暫時不被 massCode 而被識別為純文字。"
+      ]
+    },
+    "htmlCssPreview": "新增帶有 HTML 和 CSS 語言的片段來檢視預覽結果。"
+  },
+  "success": {
+    "migrate": "資料庫遷移成功。"
+  },
+  "error": {
+    "folderNotContainDb": "資料夾內不存在 \"db.json\"。"
+  },
+  "unsponsored": "未贊助的",
+  "supportMessage": "Hi，我是 Anton 👋<br><br>\n感謝你使用 massCode 。如果你覺得這個應用很有幫助，請{{-tagStart}} 捐贈 {{-tagEnd}}。這將激勵我繼續開發這個專案。",
+  "snippetsShowcase": "程式碼片段展示區"
+}

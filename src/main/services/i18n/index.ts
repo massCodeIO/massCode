@@ -4,9 +4,11 @@ import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { store } from '../../store'
 
+const lng = store.preferences.get('language')
+
 i18next.use(Backend).init({
   fallbackLng: 'en',
-  lng: store.preferences.get('language'),
+  lng,
   debug: false,
   ns: ['common', 'dialog', 'preferences', 'special', 'menu'],
   defaultNS: 'common',
@@ -19,6 +21,14 @@ i18next.use(Backend).init({
   backend: {
     loadPath: join(__dirname, './locales/{{lng}}/{{ns}}.json')
   }
+})
+
+i18next.addResourceBundle(lng, 'language', {
+  en: 'English',
+  ru: 'Русский',
+  zh_CN: '中文 (简体)',
+  zh_TW: '中文 (繁體)',
+  zh_HK: '中文 (繁體 香港特別行政區)'
 })
 
 export default i18next

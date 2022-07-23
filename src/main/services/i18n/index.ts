@@ -25,6 +25,7 @@ i18next.use(Backend).init({
 
 i18next.addResourceBundle(lng, 'language', {
   en: 'English',
+  es_ES: 'Español',
   ru: 'Русский',
   zh_CN: '中文 (简体)',
   zh_TW: '中文 (繁體)',

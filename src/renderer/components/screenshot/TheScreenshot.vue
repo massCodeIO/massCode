@@ -24,7 +24,9 @@
         </div>
       </div>
       <div class="right">
-        <AppActionButton @click="onSaveScreenshot">
+        <AppActionButton
+          v-tooltip="i18n.t('saveScreenshot')"
+          @click="onSaveScreenshot">
           <UniconsFileDownload />
         </AppActionButton>
       </div>

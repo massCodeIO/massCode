@@ -142,7 +142,7 @@ onMounted(() => {
       align-items: center;
       gap: var(--spacing-xs);
       .button {
-        cursor: pointer;
+        cursor: default;
       }
     }
   }

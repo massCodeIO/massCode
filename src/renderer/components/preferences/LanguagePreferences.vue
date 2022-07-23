@@ -45,7 +45,7 @@ const options = [
     value: 'en'
   },
   {
-    label: i18n.t('language:es'),
+    label: i18n.t('language:es_ES'),
     value: 'es_ES'
   },
   {

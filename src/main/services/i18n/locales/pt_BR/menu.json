@@ -1,0 +1,68 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferências",
+    "update": {
+      "label": "Verificar atualizações....",
+      "message": "Versão {{newVersion}} já está disponível para download.\nSua versão é {{oldVersion}}.",
+      "button": ["Ir até o Github", "OK"],
+      "noUpdate": "No momento, não há atualizações disponíveis."
+    },
+    "quit": "Sair do massCode",
+    "about": "Sobre o massCode",
+    "hide": "Ocultar o massCode",
+    "hideOther": "Ocultar outros",
+    "showAll": "Mostrar tudo"
+  },
+  "help": {
+    "label": "Ajuda",
+    "website": "Site",
+    "documentation": "Documentação",
+    "viewInGitHub": "Ver no GitHub",
+    "changeLog": "Registro de mudanças",
+    "reportIssue": "Reportar um problema",
+    "giveStar": "Dar uma estrela",
+    "extension": {
+      "vscode": "Extensão do VS code",
+      "raycast": "Extensão do Raycast",
+      "alfred": "Extensão do Alfred"
+    },
+    "donate": {
+      "openCollective": "Doação coletiva",
+      "payPal": "Doação via PayPal"
+    },
+    "twitter": "Twitter",
+    "devTools": "Alternar ferramentas do desenvolvedor"
+  },
+  "file": {
+    "label": "Arquivo",
+    "find": "Procurar"
+  },
+  "view": {
+    "label": "Visualizar",
+    "sortBy": {
+      "label": "Classificar snippes por",
+      "dateModified": "Data da modificação",
+      "dateCreated": "Data da criação",
+      "name": "Name"
+    }
+  },
+  "edit": {
+    "label": "Editar",
+    "undo": "Desfazer",
+    "redo": "Refazer",
+    "cut": "Cortar",
+    "copy": "Copiar",
+    "paste": "Colar",
+    "delete": "Apagar",
+    "selectAll": "Selecionar tudo"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copiar para área de transferencia",
+    "format": "Formatar",
+    "previewMarkdown": "Pré-visualizar marcador",
+    "previewCode": "Pré-visualizar código",
+    "previewScreenshot": "Pré-visualizar captura de tela"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "description": {
+    "storage": "Para usar serviços de sincronização como iCloud Drive, Google Drive ou Dropbox, basta mover o armazenamento para as pastas sincronizadas correspondentes",
+    "migrate": {
+      "1": "Para migrar do massCode versão 1.0 selecione a pasta que contém os arquivos do banco de dados.",
+      "2": "Para migrar do SnippetsLab selecione o arquivo JSON.",
+      "3": [
+        "Algumas Limitações. Durante a migração do SnippetsLab:",
+        "Todas as pastas serão de primeiro nível, pois o arquivo JSON (abaixo da v2.1) não representa pastas aninhadas.",
+        "Trechos com idiomas não suportados serão definidos como texto simples padrão."
+      ]
+    },
+    "htmlCssPreview": "Adicione fragmentos com linguagens HTML e CSS para visualizar o resultado."
+  },
+  "success": {
+    "migrate": "Banco de dados migrado com sucesso."
+  },
+  "error": {
+    "folderNotContainDb": "Pasta não contém \"db.json\"."
+  },
+  "unsponsored": "Não patrocinado",
+  "supportMessage": "Oi, Anton aqui 👋<br><br>\nObrigado por usar o massCode. Se você achar este aplicativo útil, por favor {{-tagStart}} doe {{-tagEnd}}. Isso me inspirará a continuar o desenvolvimento do projeto.",
+  "snippetsShowcase": "Exibir Snippets"
+}

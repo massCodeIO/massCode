@@ -59,12 +59,14 @@ watch(isEdit, () => {
   nextTick(() => inputRef.value?.select())
 })
 
-emitter.on('folder:rename', id => {
+const onRename = (id: string) => {
   if (id === props.id) isEdit.value = true
-})
+}
+
+emitter.on('folder:rename', onRename)
 
 onUnmounted(() => {
-  emitter.off('folder:rename')
+  emitter.off('folder:rename', onRename)
 })
 </script>
 

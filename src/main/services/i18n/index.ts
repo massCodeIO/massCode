@@ -3,6 +3,7 @@ import { join } from 'path'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { store } from '../../store'
+import { language } from './locales/language'
 
 const lng = store.preferences.get('language')
 
@@ -23,13 +24,6 @@ i18next.use(Backend).init({
   }
 })
 
-i18next.addResourceBundle(lng, 'language', {
-  en: 'English',
-  es_ES: 'Español',
-  ru: 'Русский',
-  zh_CN: '中文 (简体)',
-  zh_TW: '中文 (繁體)',
-  zh_HK: '中文 (繁體 香港特別行政區)'
-})
+i18next.addResourceBundle(lng, 'language', language)
 
 export default i18next

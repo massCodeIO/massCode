@@ -20,7 +20,7 @@
 import { useAppStore } from '@/store/app'
 import { computed, ref } from 'vue'
 import { i18n, ipc, track } from '@/electron'
-import { language } from '../../../main/services/i18n/locales/language'
+import { language } from '../../../main/services/i18n/language'
 
 const appStore = useAppStore()
 

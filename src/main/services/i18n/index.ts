@@ -3,7 +3,7 @@ import { join } from 'path'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { store } from '../../store'
-import { language } from './locales/language'
+import { language } from './language'
 
 const lng = store.preferences.get('language')
 

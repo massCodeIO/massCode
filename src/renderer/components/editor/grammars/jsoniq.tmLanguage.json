@@ -1,0 +1,459 @@
+{
+  "name": "JSONiq",
+  "scopeName": "source.jsoniq",
+  "fileTypes": ["jq"],
+  "firstLineMatch": "^\\bjsoniq\\s+version\\b.*",
+  "foldingStartMarker": "^\\s*(<[^!?%/](?!.+?(/>|</.+?>))|<[!%]--(?!.+?--%?>)|<%[!]?(?!.+?%>))|(declare|.*\\{\\s*(//.*)?$)",
+  "foldingStopMarker": "^\\s*(</[^>]+>|[/%]>|-->)\\s*$|(.*\\}\\s*;?\\s*|.*;)",
+  "patterns": [
+    {
+      "include": "#main"
+    }
+  ],
+  "repository": {
+    "main": {
+      "patterns": [
+        {
+          "include": "#EmbeddedXQuery"
+        },
+        {
+          "include": "#Pragma"
+        },
+        {
+          "include": "#XMLComment"
+        },
+        {
+          "include": "#CDATA"
+        },
+        {
+          "include": "#PredefinedEntityRef"
+        },
+        {
+          "include": "#CharRef"
+        },
+        {
+          "include": "#Comments"
+        },
+        {
+          "include": "#String"
+        },
+        {
+          "include": "#Annotation"
+        },
+        {
+          "include": "#AbbrevForwardStep"
+        },
+        {
+          "include": "#Variable"
+        },
+        {
+          "include": "#Numbers"
+        },
+        {
+          "include": "#Keywords"
+        },
+        {
+          "include": "#EQName"
+        },
+        {
+          "include": "#Symbols"
+        },
+        {
+          "include": "#OpenTag"
+        },
+        {
+          "include": "#CloseTag"
+        }
+      ]
+    },
+    "AbbrevForwardStep": {
+      "name": "support.type.jsoniq",
+      "match": "(@)(?:\\*\\s|(?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-._a-zA-Z0-9]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.type.jsoniq"
+        }
+      }
+    },
+    "Annotation": {
+      "name": "meta.declaration.annotation.jsoniq",
+      "match": "(%+)((?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-._a-zA-Z0-9]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.annotation.jsoniq"
+        },
+        "2": {
+          "name": "entity.name.annotation.jsoniq"
+        }
+      }
+    },
+    "CDATA": {
+      "name": "string.unquoted.cdata.jsoniq",
+      "begin": "<!\\[CDATA\\[",
+      "end": "\\]\\]>",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.jsoniq"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.jsoniq"
+        }
+      }
+    },
+    "CharRef": {
+      "name": "constant.character.entity.jsoniq",
+      "match": "(&#)([0-9]+|x[0-9A-Fa-f]+)(;)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.entity.begin.jsoniq"
+        },
+        "2": {
+          "name": "entity.name.entity.other.jsoniq"
+        },
+        "3": {
+          "name": "punctuation.definition.entity.end.jsoniq"
+        }
+      }
+    },
+    "CloseTag": {
+      "name": "meta.tag.closetag.jsoniq",
+      "match": "(<\\/)((?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-_a-zA-Z0-9]*)\\s*(>)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.jsoniq"
+        },
+        "2": {
+          "name": "entity.name.tag.localname.jsoniq"
+        },
+        "3": {
+          "name": "punctuation.definition.tag.end.jsoniq"
+        }
+      }
+    },
+    "Comments": {
+      "patterns": [
+        {
+          "name": "comment.block.doc.jsoniq",
+          "begin": "\\(:~",
+          "end": ":\\)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.jsoniq"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.jsoniq"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.language.jsoniq",
+              "match": "(@)[a-zA-Z0-9_\\.\\-]+",
+              "captures": {
+                "1": {
+                  "name": "punctuation.definition.jsoniq"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "comment.block.jsoniq",
+          "begin": "<\\?",
+          "end": "\\?>",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.jsoniq"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.jsoniq"
+            }
+          }
+        },
+        {
+          "name": "comment.block.jsoniq",
+          "begin": "\\(:",
+          "end": ":\\)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.jsoniq"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.jsoniq"
+            }
+          }
+        }
+      ]
+    },
+    "EmbeddedXQuery": {
+      "begin": "^(?=xquery\\s+version\\s+)",
+      "end": "\\z",
+      "contentName": "source.embedded.xq",
+      "patterns": [
+        {
+          "include": "source.xq"
+        }
+      ]
+    },
+    "EQName": {
+      "name": "support.function.eqname.jsoniq",
+      "match": "(?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-_a-zA-Z0-9]*(?=\\s*\\()"
+    },
+    "Keywords": {
+      "patterns": [
+        {
+          "name": "constant.language.${1:/downcase}.jsoniq",
+          "match": "\\b(NaN|null)\\b"
+        },
+        {
+          "name": "constant.language.boolean.logical.$1.jsoniq",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "storage.type.$1.jsoniq",
+          "match": "\\b(function|let)\\b"
+        },
+        {
+          "name": "keyword.control.flow.$1.jsoniq",
+          "match": "(?x) \\b\n( break\n| case\n| catch\n| continue\n| end\n| exit\n| for\n| from\n| if\n| import\n| in\n| loop\n| return\n| switch\n| then\n| try\n| when\n| where\n| while\n| with\n) \\b"
+        },
+        {
+          "name": "keyword.operator.$1.jsoniq",
+          "match": "(?x) \\b\n( after\n| allowing\n| ancestor-or-self\n| ancestor\n| and\n| append\n| array\n| ascending\n| as\n| attribute\n| at\n| base-uri\n| before\n| boundary-space\n| by\n| castable\n| cast\n| child\n| collation\n| comment\n| constraint\n| construction\n| contains\n| context\n| copy-namespaces\n| copy\n| count\n| decimal-format\n| decimal-separator\n| declare\n| default\n| delete\n| descendant-or-self\n| descendant\n| descending\n| digit\n| div\n| document-node\n| document\n| element\n| else\n| empty-sequence\n| empty\n| encoding\n| eq\n| every\n| except\n| external\n| first\n| following-sibling\n| following\n| ft-option\n| ge\n| greatest\n| grouping-separator\n| group\n| gt\n| idiv\n| index\n| infinity\n| insert\n| instance\n| integrity\n| intersect\n| into\n| is\n| item\n| json-item\n| jsoniq\n| json\n| last\n| lax\n| least\n| le\n| lt\n| minus-sign\n| modify\n| module\n| mod\n| namespace-node\n| namespace\n| next\n| ne\n| nodes\n| node\n| not\n| object\n| of\n| only\n| option\n| ordered\n| ordering\n| order\n| or\n| paragraphs\n| parent\n| pattern-separator\n| per-mille\n| percent\n| preceding-sibling\n| preceding\n| previous\n| processing-instruction\n| rename\n| replace\n| returning\n| revalidation\n| satisfies\n| schema-attribute\n| schema-element\n| schema\n| score\n| select\n| self\n| sentences\n| sliding\n| some\n| stable\n| start\n| strict\n| text\n| times\n| to\n| treat\n| tumbling\n| typeswitch\n| type\n| union\n| unordered\n| updating\n| validate\n| value\n| variable\n| version\n| window\n| words\n| xquery\n| zero-digit\n) (?!:|-)\\b"
+        }
+      ]
+    },
+    "EnclosedExpr": {
+      "name": "meta.enclosed.expression.jsoniq",
+      "begin": "{",
+      "end": "}",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.scope.begin.jsoniq"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.scope.end.jsoniq"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#main"
+        }
+      ]
+    },
+    "Numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.exponential.jsoniq",
+          "match": "(?:\\.[0-9]+|\\b[0-9]+(?:\\.[0-9]*)?)[Ee][+#x002D]?[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.jsoniq",
+          "match": "(?:\\.[0-9]+|\\b[0-9]+\\.[0-9]*)\\b"
+        },
+        {
+          "name": "constant.numeric.integer.jsoniq",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "OpenTag": {
+      "name": "meta.tag.opentag.jsoniq",
+      "begin": "(<)((?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-_a-zA-Z0-9]*)",
+      "end": "/?>",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.jsoniq"
+        },
+        "2": {
+          "name": "entity.name.tag.localname.jsoniq"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.tag.end.jsoniq"
+        }
+      },
+      "patterns": [
+        {
+          "name": "entity.other.attribute-name.jsoniq",
+          "match": "([-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?([-_a-zA-Z0-9][-_a-zA-Z0-9]*)"
+        },
+        {
+          "name": "keyword.operator.assignment.jsoniq",
+          "match": "="
+        },
+        {
+          "name": "string.quoted.single.jsoniq",
+          "begin": "'",
+          "end": "'(?!')",
+          "patterns": [
+            {
+              "match": "''",
+              "name": "constant.character.escape.quote.jsoniq"
+            },
+            {
+              "include": "#PredefinedEntityRef"
+            },
+            {
+              "include": "#CharRef"
+            },
+            {
+              "match": "({{|}})",
+              "name": "constant.jsoniq"
+            },
+            {
+              "include": "#EnclosedExpr"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.jsoniq",
+          "begin": "\"",
+          "end": "\"(?!\")",
+          "patterns": [
+            {
+              "match": "\"\"",
+              "name": "constant.character.escape.quote.jsoniq"
+            },
+            {
+              "include": "#PredefinedEntityRef"
+            },
+            {
+              "include": "#CharRef"
+            },
+            {
+              "match": "({{|}})",
+              "name": "string.jsoniq"
+            },
+            {
+              "include": "#EnclosedExpr"
+            }
+          ]
+        }
+      ]
+    },
+    "Pragma": {
+      "name": "meta.pragma.jsoniq",
+      "begin": "\\(#",
+      "end": "#\\)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.pragma.begin.jsoniq"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.pragma.end.jsoniq"
+        }
+      },
+      "contentName": "constant.other.pragma.jsoniq"
+    },
+    "PredefinedEntityRef": {
+      "name": "constant.language.entity.predefined.jsoniq",
+      "match": "(&)(lt|gt|amp|quot|apos)(;)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.entity.begin.jsoniq"
+        },
+        "2": {
+          "name": "entity.name.entity.other.jsoniq"
+        },
+        "3": {
+          "name": "punctuation.definition.entity.end.jsoniq"
+        }
+      }
+    },
+    "String": {
+      "name": "string.quoted.double.jsoniq",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.jsoniq",
+          "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4})"
+        },
+        {
+          "name": "invalid.illegal.unrecognized-string-escape.jsoniq",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "Symbols": {
+      "patterns": [
+        {
+          "match": ":=?",
+          "name": "keyword.operator.assignment.definition.jsoniq"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.delimiter.comma.jsoniq"
+        },
+        {
+          "match": "\\.",
+          "name": "punctuation.separator.delimiter.dot.jsoniq"
+        },
+        {
+          "match": "\\[",
+          "name": "punctuation.definition.bracket.square.begin.jsoniq"
+        },
+        {
+          "match": "\\]",
+          "name": "punctuation.definition.bracket.square.end.jsoniq"
+        },
+        {
+          "match": "\\{",
+          "name": "punctuation.definition.bracket.curly.begin.jsoniq"
+        },
+        {
+          "match": "\\}",
+          "name": "punctuation.definition.bracket.curly.end.jsoniq"
+        },
+        {
+          "match": "\\(",
+          "name": "punctuation.definition.bracket.round.begin.jsoniq"
+        },
+        {
+          "match": "\\)",
+          "name": "punctuation.definition.bracket.round.end.jsoniq"
+        }
+      ]
+    },
+    "Variable": {
+      "name": "meta.definition.variable.name.jsoniq",
+      "match": "(\\$)(?:[-_a-zA-Z0-9][-._a-zA-Z0-9]*:)?[-_a-zA-Z0-9][-_a-zA-Z0-9]*",
+      "captures": {
+        "0": {
+          "name": "variable.other.jsoniq"
+        },
+        "1": {
+          "name": "punctuation.definition.variable.jsoniq"
+        }
+      }
+    },
+    "XMLComment": {
+      "name": "comment.block.jsoniq",
+      "begin": "<!--",
+      "end": "-->",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.begin.jsoniq"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.end.jsoniq"
+        }
+      }
+    }
+  }
+}

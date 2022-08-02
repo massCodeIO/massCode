@@ -1,0 +1,991 @@
+{
+  "scopeName": "etc",
+  "patterns": [
+    {
+      "include": "#comma"
+    },
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#esc"
+    },
+    {
+      "include": "#float"
+    },
+    {
+      "include": "#int"
+    },
+    {
+      "include": "#str"
+    },
+    {
+      "include": "#colon"
+    },
+    {
+      "include": "#eql"
+    },
+    {
+      "include": "#dot"
+    }
+  ],
+  "repository": {
+    "base64": {
+      "name": "constant.numeric.base64",
+      "match": "[A-Za-z0-9+/=]{4,}"
+    },
+    "comma": {
+      "name": "punctuation.separator.delimiter.comma",
+      "match": ","
+    },
+    "comment": {
+      "patterns": [
+        {
+          "include": "#commentHash"
+        }
+      ]
+    },
+    "commentHash": {
+      "name": "comment.line.number-sign",
+      "begin": "#",
+      "end": "$",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment"
+        }
+      }
+    },
+    "commentSemi": {
+      "name": "comment.line.semicolon",
+      "begin": ";+",
+      "end": "$",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment"
+        }
+      }
+    },
+    "commentSlash": {
+      "name": "comment.line.double-slash",
+      "begin": "//",
+      "end": "$",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment"
+        }
+      }
+    },
+    "bareword": {
+      "name": "string.unquoted.bareword",
+      "match": "[^\"\\s][\\S]*"
+    },
+    "bool": {
+      "name": "constant.logical.bool.boolean.${1:/downcase}",
+      "match": "\\b(true|false|TRUE|FALSE)\\b"
+    },
+    "bracket": {
+      "patterns": [
+        {
+          "match": "\\{",
+          "name": "punctuation.definition.bracket.curly.brace.begin"
+        },
+        {
+          "match": "\\}",
+          "name": "punctuation.definition.bracket.curly.brace.end"
+        },
+        {
+          "match": "\\[",
+          "name": "punctuation.definition.bracket.square.begin"
+        },
+        {
+          "match": "\\]",
+          "name": "punctuation.definition.bracket.square.end"
+        },
+        {
+          "match": "\\(",
+          "name": "punctuation.definition.bracket.round.parenthesis.begin"
+        },
+        {
+          "match": "\\)",
+          "name": "punctuation.definition.bracket.round.parenthesis.end"
+        },
+        {
+          "match": "<",
+          "name": "punctuation.definition.bracket.angle.ascii.begin"
+        },
+        {
+          "match": ">",
+          "name": "punctuation.definition.bracket.angle.ascii.end"
+        },
+        {
+          "match": "⟨",
+          "name": "punctuation.definition.bracket.angle.unicode.begin"
+        },
+        {
+          "match": "⟩",
+          "name": "punctuation.definition.bracket.angle.unicode.end"
+        }
+      ]
+    },
+    "colon": {
+      "name": "punctuation.delimiter.separator.colon",
+      "match": ":"
+    },
+    "dash": {
+      "name": "punctuation.delimiter.separator.dash.hyphen",
+      "match": "-"
+    },
+    "dots": {
+      "patterns": [
+        {
+          "include": "#ellipsis"
+        },
+        {
+          "include": "#dotPair"
+        },
+        {
+          "include": "#dot"
+        }
+      ]
+    },
+    "dot": {
+      "name": "punctuation.delimiter.separator.property.period.dot",
+      "match": "\\."
+    },
+    "dotPair": {
+      "name": "keyword.operator.punctuation.dots.splat.range.spread.rest",
+      "match": "\\.\\.|‥"
+    },
+    "ellipsis": {
+      "name": "keyword.operator.punctuation.ellipsis.splat.range.spread.rest",
+      "match": "\\.{3}|…"
+    },
+    "dotTrail": {
+      "name": "punctuation.delimiter.separator.dotted.border.leader.dots",
+      "match": "\\.{4,}"
+    },
+    "email": {
+      "patterns": [
+        {
+          "include": "#emailBracketed"
+        },
+        {
+          "include": "#emailQuoted"
+        },
+        {
+          "include": "#emailUnquoted"
+        }
+      ]
+    },
+    "emailBracketed": {
+      "patterns": [
+        {
+          "name": "meta.email-address.bracketed.ascii.angle-brackets",
+          "match": "(<)\\s*([^>@\\s]+@[^>@\\s]+)\\s*(>)",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.bracketed.unicode.angle-brackets",
+          "match": "(⟨)\\s*([^⟩@\\s]+@[^⟩@\\s]+)\\s*(⟩)",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.bracketed.guillemots",
+          "match": "(«)\\s*([^»@\\s]+@[^»@\\s]+)\\s*(»)",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.bracketed.round-brackets",
+          "match": "(\\()\\s*([^\\)@\\s]+@[^\\)@\\s]+)\\s*(\\))",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.bracketed.curly-brackets",
+          "match": "({)\\s*([^}@\\s]+@[^}@\\s]+)\\s*(})",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.bracketed.square-brackets",
+          "match": "(\\[)\\s*([^\\]@\\s]+@[^\\]@\\s]+)\\s*(\\])",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#bracket"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "emailQuoted": {
+      "patterns": [
+        {
+          "name": "meta.email-address.quoted.ascii.double-quotes",
+          "match": "(\")\\s*([^\"@\\s]+@[^\"@\\s]+)\\s*(\")",
+          "captures": {
+            "0": {
+              "name": "string.quoted.double"
+            },
+            "1": {
+              "name": "punctuation.definition.string.begin.email-address"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.email-address"
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.quoted.unicode.double-quotes",
+          "match": "(“)\\s*([^”@\\s]+@[^”@\\s]+)\\s*(”)",
+          "captures": {
+            "0": {
+              "name": "string.quoted.double"
+            },
+            "1": {
+              "name": "punctuation.definition.string.begin.email-address"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.email-address"
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.quoted.unicode.single-quotes",
+          "match": "(‘)\\s*([^’@\\s]+@[^’@\\s]+)\\s*(’)",
+          "captures": {
+            "0": {
+              "name": "string.quoted.single"
+            },
+            "1": {
+              "name": "punctuation.definition.string.begin.email-address"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.email-address"
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.quoted.backticks",
+          "match": "(`)\\s*([^`@\\s]+@[^`@\\s]+)\\s*(`)",
+          "captures": {
+            "0": {
+              "name": "string.quoted.template.backticks"
+            },
+            "1": {
+              "name": "punctuation.definition.string.begin.email-address"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.email-address"
+            }
+          }
+        },
+        {
+          "name": "meta.email-address.quoted.single-quotes",
+          "match": "(`|')\\s*([^'@\\s]+@[^'@\\s]+)\\s*(')",
+          "captures": {
+            "0": {
+              "name": "string.quoted.single"
+            },
+            "1": {
+              "name": "punctuation.definition.string.begin.email-address"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#emailInnards"
+                }
+              ]
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.email-address"
+            }
+          }
+        }
+      ]
+    },
+    "emailUnquoted": {
+      "name": "meta.email-address.unquoted",
+      "match": "(?x)\n((?!\\.) (?:[^\\[\\(<⟨«\"'\\s@.]|\\.(?!\\.))++ @\n([^\\[\\(<⟨«\"'\\s@.]+?\\.(?=[^\\.\\s])(?:[^\\[\\(<⟨«\"'\\s@.]|\\.(?!\\.))++))",
+      "captures": {
+        "1": {
+          "name": "string.unquoted.email-address",
+          "patterns": [
+            {
+              "include": "#emailInnards"
+            }
+          ]
+        }
+      }
+    },
+    "emailInnards": {
+      "name": "constant.other.reference.link.underline.email",
+      "match": "(?:\\G|^|(?<=\\n)).+",
+      "captures": {
+        "0": {
+          "patterns": [
+            {
+              "match": "\\G([^@]*)(@)(.*)",
+              "captures": {
+                "1": {
+                  "name": "meta.local-part"
+                },
+                "2": {
+                  "name": "punctuation.separator.at-sign.email"
+                },
+                "3": {
+                  "name": "meta.domain"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "esc": {
+      "name": "constant.character.escape.backslash",
+      "match": "(\\\\).",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.escape.backslash"
+        }
+      }
+    },
+    "eql": {
+      "name": "keyword.operator.assignment.key-value.equals-sign",
+      "match": "="
+    },
+    "float": {
+      "patterns": [
+        {
+          "include": "#floatExp"
+        },
+        {
+          "include": "#floatNoExp"
+        }
+      ]
+    },
+    "floatExp": {
+      "name": "constant.numeric.float.real.decimal.dec.exponential.scientific",
+      "match": "[-+]?(?:[0-9]*\\.[0-9]+|[0-9]+\\.)(?:[eE][-+]?[0-9]+)++"
+    },
+    "floatNoExp": {
+      "name": "constant.numeric.float.real.decimal.dec",
+      "match": "[-+]?(?:[0-9]*\\.[0-9]+|[0-9]+\\.)++"
+    },
+    "hex": {
+      "name": "constant.numeric.integer.int.hexadecimal.hex",
+      "match": "[-+]?[A-Fa-f0-9]+"
+    },
+    "hexNoSign": {
+      "name": "constant.numeric.integer.int.hexadecimal.hex",
+      "match": "[A-Fa-f0-9]+"
+    },
+    "int": {
+      "patterns": [
+        {
+          "include": "#intExp"
+        },
+        {
+          "include": "#intNoExp"
+        }
+      ]
+    },
+    "intExp": {
+      "name": "constant.numeric.integer.int.decimal.dec.exponential.scientific",
+      "match": "[-+]?[0-9]+[eE][-+]?[0-9]+"
+    },
+    "intNoExp": {
+      "name": "constant.numeric.integer.int.decimal.dec",
+      "match": "[-+]?[0-9]+"
+    },
+    "ip": {
+      "name": "constant.numeric.other.ip-address",
+      "match": "(?:\\d+\\.){3,}\\d+(?=\\s|$)",
+      "captures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "#dot"
+            }
+          ]
+        }
+      }
+    },
+    "kolon": {
+      "name": "keyword.operator.assignment.key-value.colon",
+      "match": ":"
+    },
+    "num": {
+      "patterns": [
+        {
+          "include": "#float"
+        },
+        {
+          "include": "#int"
+        }
+      ]
+    },
+    "op": {
+      "patterns": [
+        {
+          "include": "#opBitAssign"
+        },
+        {
+          "include": "#opMathAssign"
+        },
+        {
+          "include": "#opBit"
+        },
+        {
+          "include": "#opFix"
+        },
+        {
+          "include": "#opCmp"
+        },
+        {
+          "include": "#opLog"
+        },
+        {
+          "include": "#opMath"
+        }
+      ]
+    },
+    "opBit": {
+      "patterns": [
+        {
+          "match": "\\^",
+          "name": "keyword.operator.bitwise.xor"
+        },
+        {
+          "match": "~",
+          "name": "keyword.operator.bitwise.not"
+        },
+        {
+          "match": "&",
+          "name": "keyword.operator.bitwise.and"
+        },
+        {
+          "match": "\\|",
+          "name": "keyword.operator.bitwise.or"
+        },
+        {
+          "match": "<<",
+          "name": "keyword.operator.bitwise.shift.left"
+        },
+        {
+          "match": ">>>",
+          "name": "keyword.operator.bitwise.shift.right.unsigned"
+        },
+        {
+          "match": ">>",
+          "name": "keyword.operator.bitwise.shift.right.signed"
+        }
+      ]
+    },
+    "opBitAssign": {
+      "patterns": [
+        {
+          "match": "\\^=",
+          "name": "keyword.operator.assignment.bitwise.xor"
+        },
+        {
+          "match": "~=",
+          "name": "keyword.operator.assignment.bitwise.not"
+        },
+        {
+          "match": "&=",
+          "name": "keyword.operator.assignment.bitwise.and"
+        },
+        {
+          "match": "\\|=",
+          "name": "keyword.operator.assignment.bitwise.or"
+        },
+        {
+          "match": "<<=",
+          "name": "keyword.operator.assignment.bitwise.shift.left"
+        },
+        {
+          "match": ">>>=",
+          "name": "keyword.operator.assignment.bitwise.shift.right.unsigned"
+        },
+        {
+          "match": ">>=",
+          "name": "keyword.operator.assignment.bitwise.shift.right.signed"
+        }
+      ]
+    },
+    "opCmp": {
+      "patterns": [
+        {
+          "match": "<=>",
+          "name": "keyword.operator.logical.comparison.starship.spaceship"
+        },
+        {
+          "match": "<=",
+          "name": "keyword.operator.logical.comparison.less-than-or-equal-to.lte"
+        },
+        {
+          "match": "<",
+          "name": "keyword.operator.logical.comparison.less-than.lt"
+        },
+        {
+          "match": ">=",
+          "name": "keyword.operator.logical.comparison.greater-than-or-equal-to.gte"
+        },
+        {
+          "match": ">",
+          "name": "keyword.operator.logical.comparison.greater-than.gt"
+        },
+        {
+          "match": "===",
+          "name": "keyword.operator.logical.comparison.equal-to.equals.equal.eql.eq.strict"
+        },
+        {
+          "match": "==",
+          "name": "keyword.operator.logical.comparison.equal-to.equals.equal.eql.eq"
+        },
+        {
+          "match": "!==",
+          "name": "keyword.operator.logical.comparison.not-equal-to.not-equal.unequal.neql.ne.strict"
+        },
+        {
+          "match": "!=",
+          "name": "keyword.operator.logical.comparison.not-equal-to.not-equal.unequal.neql.ne"
+        }
+      ]
+    },
+    "opFix": {
+      "patterns": [
+        {
+          "match": "\\+{2}",
+          "name": "keyword.operator.increment"
+        },
+        {
+          "match": "-{2}",
+          "name": "keyword.operator.decrement"
+        }
+      ]
+    },
+    "opLog": {
+      "patterns": [
+        {
+          "match": "!!",
+          "name": "keyword.operator.logical.boolean.cast"
+        },
+        {
+          "match": "!",
+          "name": "keyword.operator.logical.boolean.not.negation.negate"
+        },
+        {
+          "match": "&&",
+          "name": "keyword.operator.logical.boolean.and"
+        },
+        {
+          "match": "\\|{2}",
+          "name": "keyword.operator.logical.boolean.or"
+        },
+        {
+          "match": "\\?{2}",
+          "name": "keyword.operator.logical.boolean.or.nullish"
+        }
+      ]
+    },
+    "opMath": {
+      "patterns": [
+        {
+          "match": "\\*{2}|\\^",
+          "name": "keyword.operator.arithmetic.exponentiation.exponent.exp.power"
+        },
+        {
+          "match": "\\+",
+          "name": "keyword.operator.arithmetic.addition.add.plus"
+        },
+        {
+          "match": "\\*",
+          "name": "keyword.operator.arithmetic.multiplication.multiply.times"
+        },
+        {
+          "match": "/",
+          "name": "keyword.operator.arithmetic.division.divide"
+        },
+        {
+          "match": "%",
+          "name": "keyword.operator.arithmetic.remainder.modulo.modulus.mod"
+        },
+        {
+          "name": "keyword.operator.arithmetic.subtraction.subtract.minus",
+          "match": "[-֊־᐀᠆‐-―⸗⸚⸺⸻⹀〜〰゠︱︲﹘﹣－]"
+        }
+      ]
+    },
+    "opMathAssign": {
+      "patterns": [
+        {
+          "match": "\\*{2}=|\\^=",
+          "name": "keyword.operator.assignment.arithmetic.exponentiation.exponent.exp.power"
+        },
+        {
+          "match": "\\+=",
+          "name": "keyword.operator.assignment.arithmetic.addition.add.plus"
+        },
+        {
+          "match": "\\*=",
+          "name": "keyword.operator.assignment.arithmetic.multiplication.multiply.times"
+        },
+        {
+          "match": "/=",
+          "name": "keyword.operator.assignment.arithmetic.division.divide"
+        },
+        {
+          "match": "%=",
+          "name": "keyword.operator.assignment.arithmetic.remainder.modulo.modulus.mod"
+        },
+        {
+          "name": "keyword.operator.assignment.arithmetic.subtraction.subtract.minus",
+          "match": "[-֊־᐀᠆‐-―⸗⸚⸺⸻⹀〜〰゠︱︲﹘﹣－]="
+        }
+      ]
+    },
+    "semi": {
+      "name": "punctuation.delimiter.separator.semicolon",
+      "match": ";"
+    },
+    "str": {
+      "patterns": [
+        {
+          "include": "#strDouble"
+        },
+        {
+          "include": "#strSingle"
+        }
+      ]
+    },
+    "strDouble": {
+      "name": "string.quoted.double",
+      "begin": "\"",
+      "end": "\"|(?=$)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#esc"
+        }
+      ]
+    },
+    "strSingle": {
+      "name": "string.quoted.single",
+      "begin": "'",
+      "end": "'|(?=$)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#esc"
+        }
+      ]
+    },
+    "tab": {
+      "patterns": [
+        {
+          "match": "^\\t+",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "match": "\\t",
+                  "name": "punctuation.whitespace.leading.tab.hard-tab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "\\t+$",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "match": "\\t",
+                  "name": "punctuation.whitespace.trailing.tab.hard-tab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "match": "\\t",
+          "name": "punctuation.whitespace.tab.hard-tab"
+        }
+      ]
+    },
+    "url": {
+      "patterns": [
+        {
+          "match": "(?x)\n(\"|'|\\b)\n(\n\t# Not part of official URL schemes, included here for convenience\n\t(?: (?:jdbc|mvn|odbc|view-source) :)?\n\n\t# Common protocols/URI schemes\n\t( https?\n\t| s?ftp\n\t| ftps\n\t| file\n\t| wss?\n\t| (?:git|svn) (?:\\+(?:https?|ssh))?\n\t| ssh\n\t\n\t# Less common URI schemes\n\t| aaas?\n\t| acap\n\t| adiumxtra\n\t| admin\n\t| afp\n\t| app\n\t| atom\n\t| aurora\n\t| aw\n\t| beshare\n\t| bolo\n\t| cassandra\n\t| chrome(?:-extension)?\n\t| coaps?\n\t| cockroach\n\t| content\n\t| couchbase\n\t| crid\n\t| cvs\n\t| dict\n\t| dns\n\t| docker\n\t| ed2k\n\t| facetime\n\t| feed\n\t| finger\n\t| fish\n\t| gemini\n\t| github(?:-(?:mac|linux|windows))?\n\t| gizmoproject\n\t| gopher\n\t| go\n\t| hcp\n\t| imap\n\t| irc[6s]?\n\t| issue\n\t| keyparc\n\t| lastfm\n\t| ldaps?\n\t| man(?:-?page)?\n\t| maria(?:db)?\n\t| market\n\t| message\n\t| mms\n\t| modern-?sqlite\n\t| mongodb\n\t| ms-help\n\t| mssql\n\t| mumble\n\t| my?sql\n\t| netezza\n\t| nfs\n\t| ni\n\t| nntp\n\t| notes\n\t| oleodbc\n\t| oracle\n\t| payto\n\t| pgsql\n\t| pg\n\t| pop\n\t| postgres(?:ql)?\n\t| postgresql\n\t| presto(?:dbs?|s)\n\t| reload\n\t| resource\n\t| res\n\t| rmi\n\t| rsync\n\t| rtmf?p\n\t| rtmp\n\t| s3\n\t| saphana\n\t| secondlife\n\t| sgn\n\t| shttp\n\t| slack\n\t| smb\n\t| snmp\n\t| soldat\n\t| sqlite3?\n\t| sqlserver\n\t| steam\n\t| stratum\\+[a-z]+\n\t| stuns?\n\t| teamspeak\n\t| telnet\n\t| turns?\n\t| txmt\n\t| udp\n\t| unreal\n\t| ut2004\n\t| ventrilo\n\t| vnc\n\t| wais\n\t| web\\+[a-z]+\n\t| webcal\n\t| wtai\n\t| wyciwyg\n\t| xmpp\n\t| xri\n\t| z39\\.50[rs]\n\t| zoommtg\n\t\n\t# User-defined/arbitrary URI scheme starting with `x-`\n\t| x(?:-[a-z][a-z0-9]*)++\n\t) ://\n\t\n\t# Path specifier\n\t(?:\n\t\t(?! \\#\\w*\\#)\n\t\t(?: [-:\\@\\w.,~%+_/?=&\\#;|!])\n\t)+\n\t\n\t# Don't include trailing punctuation\n\t(?<![-.,?:\\#;])\n)\n(\\1)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.url"
+            },
+            "2": {
+              "name": "constant.other.reference.link.underline.$3.url"
+            },
+            "4": {
+              "name": "punctuation.definition.link.end.url"
+            }
+          }
+        },
+        {
+          "match": "(?x)\n(\"|'|\\b)\n(\n\tmailto (:)\n\t(?:\n\t\t(?! \\#\\w*\\#)\n\t\t(?: [-:@\\w.,~%+_/?=&\\#;|!])\n\t)+\n\t(?<![-.,?:\\#;])\n)\n(\\1)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.begin.url"
+            },
+            "2": {
+              "name": "constant.other.reference.link.underline.mailto.url"
+            },
+            "3": {
+              "name": "punctuation.separator.delimiter.scheme.url"
+            },
+            "4": {
+              "name": "punctuation.definition.link.end.url"
+            }
+          }
+        }
+      ]
+    },
+    "version": {
+      "name": "constant.other.version-string",
+      "match": "(?x)\n(\"|'|\\b)\n([vV]?)\n(0 | [1-9]\\d*) (\\.)\n(0 | [1-9]\\d*) (\\.)\n(0 | [1-9]\\d*)\n(?:\n\t(-)\n\t(\n\t\t(?: 0\n\t\t| [1-9]\\d*\n\t\t| \\d*[a-zA-Z-][0-9a-zA-Z-]*\n\t\t)\n\t\t\n\t\t(?:\n\t\t\t\\.\n\t\t\t(?: 0\n\t\t\t| [1-9]\\d*\n\t\t\t| \\d*[a-zA-Z-][0-9a-zA-Z-]*\n\t\t\t)\n\t\t)*\n\t)\n)?\n(?:\n\t(\\+)\n\t(\n\t\t[0-9a-zA-Z-]+\n\t\t(?:\\.[0-9a-zA-Z-]+)*\n\t)\n)?\n(\\1)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.version-string.begin"
+        },
+        "2": {
+          "name": "punctuation.definition.version-prefix"
+        },
+        "3": {
+          "name": "meta.major.release-number"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#dot"
+            }
+          ]
+        },
+        "5": {
+          "name": "meta.minor.release-number"
+        },
+        "6": {
+          "patterns": [
+            {
+              "include": "#dot"
+            }
+          ]
+        },
+        "7": {
+          "name": "meta.patch.release-number"
+        },
+        "8": {
+          "patterns": [
+            {
+              "include": "#dash"
+            }
+          ]
+        },
+        "9": {
+          "name": "meta.prerelease.release-number",
+          "patterns": [
+            {
+              "include": "#dot"
+            }
+          ]
+        },
+        "10": {
+          "name": "punctuation.delimiter.separator.plus"
+        },
+        "11": {
+          "name": "meta.build-metadata",
+          "patterns": [
+            {
+              "include": "#dot"
+            }
+          ]
+        },
+        "12": {
+          "name": "punctuation.definition.version-string.end"
+        }
+      }
+    }
+  }
+}

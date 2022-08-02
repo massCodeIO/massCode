@@ -22,6 +22,10 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'esnext'
   },
+  define: {
+    // прокладка для pseudomap при билде
+    'process.env.TEST_PSEUDOMAP': {}
+  },
   plugins: [
     vuePlugin(),
     AutoImport({

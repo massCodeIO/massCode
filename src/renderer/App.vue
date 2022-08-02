@@ -41,6 +41,8 @@ import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
 import { addDays, isSameDay, isYesterday } from 'date-fns'
+import { loadWASM } from 'onigasm'
+import { loadGrammars } from '@/components/editor/grammars'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -54,7 +56,10 @@ const route = useRoute()
 const isUpdateAvailable = ref(false)
 const isSupportToastShow = ref(false)
 
-const init = () => {
+const init = async () => {
+  await loadOnigasm()
+  await loadGrammars()
+
   const theme = store.preferences.get('theme')
   const dateInstallation = store.app.get('dateInstallation')
   const isValid = appStore.isEditorSettingsValid(
@@ -80,6 +85,14 @@ const init = () => {
   }
 
   trackAppUpdate()
+}
+
+const loadOnigasm = async () => {
+  const file = await ipc.invoke('main:fs-read', {
+    path: '/onigasm/onigasm.wasm'
+  })
+
+  loadWASM(new Uint8Array(file).buffer)
 }
 
 const setTheme = (theme: string) => {

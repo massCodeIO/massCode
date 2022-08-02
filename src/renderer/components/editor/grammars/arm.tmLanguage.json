@@ -1,0 +1,154 @@
+{
+  "scopeName": "source.arm",
+  "fileTypes": ["s", "S"],
+  "patterns": [
+    { "match": "@.*$", "name": "comment.line" },
+    { "match": "//.*$", "name": "comment.line" },
+    { "match": ";.*$", "name": "comment.line" },
+    {
+      "begin": "^\\s*\\#\\s*if\\s+0\\b",
+      "end": "^\\s*\\#\\s*endif\\b",
+      "name": "comment.preprocessor"
+    },
+    { "begin": "/\\*", "end": "\\*/", "name": "comment.block" },
+    {
+      "begin": "(?x)\n\t\t\t^\\s*\\#\\s*(define)\\s+             # define\n\t\t\t((?<id>[a-zA-Z_][a-zA-Z0-9_]*))  # macro name\n\t\t\t(?:                              # and optionally:\n\t\t\t    (\\()                         # an open parenthesis\n\t\t\t        (\n\t\t\t            \\s* \\g<id> \\s*       # first argument\n\t\t\t            ((,) \\s* \\g<id> \\s*)*  # additional arguments\n\t\t\t            (?:\\.\\.\\.)?          # varargs ellipsis?\n\t\t\t        )\n\t\t\t    (\\))                         # a close parenthesis\n\t\t\t)?\n\t\t\t",
+      "end": "(?=(?://|/\\*))|$",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.c"
+        },
+        { "include": "$base" }
+      ],
+      "name": "meta.preprocessor.macro.c",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.import.define.c" },
+        "8": { "name": "punctuation.definition.parameters.c" },
+        "4": { "name": "punctuation.definition.parameters.c" },
+        "2": { "name": "entity.name.function.preprocessor.c" },
+        "7": { "name": "punctuation.separator.parameters.c" },
+        "5": { "name": "variable.parameter.preprocessor.c" }
+      }
+    },
+    {
+      "begin": "^\\s*#\\s*(error|warning)\\b",
+      "end": "$",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.c"
+        }
+      ],
+      "name": "meta.preprocessor.diagnostic.c",
+      "captures": { "1": { "name": "keyword.control.import.error.c" } }
+    },
+    {
+      "begin": "^\\s*#\\s*(include|import)\\b\\s+",
+      "end": "(?=(?://|/\\*))|$",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.c"
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.c" }
+          },
+          "end": "\"",
+          "name": "string.quoted.double.include.c",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.c" }
+          }
+        },
+        {
+          "begin": "<",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.c" }
+          },
+          "end": ">",
+          "name": "string.quoted.other.lt-gt.include.c",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.c" }
+          }
+        }
+      ],
+      "name": "meta.preprocessor.c.include",
+      "captures": { "1": { "name": "keyword.control.import.include.c" } }
+    },
+    {
+      "match": "((?i)([xw][0-9]|[xw]1[0-9]||[xw]2[0-9]|[wx]30|wzr|xzr|wsp|fpsr|fpcr|[rcp]1[0-5]|[rcp][0-9]|a[1-4]|v[1-8]|sl|sb|fp|ip|sp|lr|(c|s)psr(_c)?|pc|[sd]3[0-1]|[sd][12][0-9]|[sd][0-9]|fpsid|fpscr|fpexc|q3[0-1]|q2[0-9]|q1[0-9]|q[0-9]|APSR_nzcv|sy)!?(?-i))?\\b",
+      "name": "storage.other.register"
+    },
+    {
+      "match": "\\.(?i)(globl|global|macro|endm|purgem|if|elseif|else|endif|section|text|arm|align|balign|irp|rept|endr|req|unreq|error|short|func|endfunc|hidden|type|fpu|arch|code|altmacro|object_arch|word|int|string)(?-i)\\b",
+      "name": "keyword.control.directive"
+    },
+    {
+      "match": "armv(2a?|3m?|4t?|5t?e?6(j|t2|zk?|-m)?|7v?e?(-(a|r|m))?|8-a(\\+crc)?)",
+      "name": "keyword.control.arch.arm"
+    },
+    {
+      "begin": "^\\s*#\\s*(define|defined|elif|else|if|ifdef|ifndef|line|pragma|undef|endif)\\b",
+      "end": "(?=(?://|/\\*))|$",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.c"
+        }
+      ],
+      "name": "meta.preprocessor.c",
+      "captures": { "1": { "name": "keyword.control.import.c" } }
+    },
+    {
+      "match": "(?x)\\b((?i)\n\t\t\t\t(\n\t\t\t\t\t(bf(c|i)|(u|s)bfx|(u|s)xta?(h|b)?) |\n\t\t\t\t\t(v(add|cvt|sub|mov|trn|cmp|div|qdmulh|mrs|mul|ld1|qadd|qshrun|st[1234]|addw|mull|mlal|rshrn|swp|qmovun)|qmovun)(\\.([isup]?8|[isupf]?16|[isuf]?32|[isu]?64))* |\n\t\t\t\t\t(and|m(rs|sr)|eor|sub|rsb|add|adc|sbc|rsc|tst|teq|cmp|cmn|orr|mov|bic|mvn |\n\t\t\t\t\t\t(neg) |\n\t\t\t\t\t\t(lsr|lsl|ror|asr) # shift ops either pseudo ops or actual shifts\n\t\t\t\t\t)s? |\n\t\t\t\t\t(mul|mla|mull|smlabb) |\n\t\t\t\t\t(mov(w|t)) |\n\t\t\t\t\trev(8|16)? |\n\t\t\t\t\t(pld|adr|adrl|vswp)\n\t\t\t\t)\n\t\t\t\t(ne|eq|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|lt|le|gt|ge|al)?(?-i))?\\b",
+      "name": "support.function.mnemonic.arithmetic"
+    },
+    {
+      "match": "(?x)\\b((?i)(\n\t\t\t\t\tswi|svc|wfi|\n\t\t\t\t\tdmb | clrex | dsb | isb |\n\t\t\t\t\tv(ldr|str|push|pop) |\n\t\t\t\t\t(push|pop) |\n\t\t\t\t\t(st|ld)(\n\t\t\t\t\t    p |\n\t\t\t\t\t\tr(ex|s?(h|b)|d)? |\n\t\t\t\t\t\tm(\n\t\t\t\t\t\t\t(f|e)(d|a) |\n\t\t\t\t\t\t\t(d|i)(b|a)\n\t\t\t\t\t\t)?\n\t\t\t\t\t) |\n\t\t\t\t\tb(l|x|lx|lr|r)? |\n\t\t\t\t\t(i|e)?ret|\n\t\t\t\t\tb\\.(eq|ne|hs|cs|lo|cc|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv)+ |\t\t\t\t\t\n\t\t\t\t\t(c|t)?bn?z|\n\t\t\t\t)+(ne|eq|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|lt|le|gt|ge|al)?(?-i))\\b",
+      "name": "support.function.mnemonic.memory"
+    },
+    {
+      "match": "\\b((?i)(def(b|w|s)|equ|(include|get)(\\s+([a-zA-Z_]+[0-9a-zA-Z_]*|[0-9]+[a-zA-Z_]+[0-9a-zA-Z_]*?)\\.s)?)?(?-i))\\b",
+      "name": "meta.preprocessor.c.include"
+    },
+    {
+      "match": "\\b((?i)(align)(?-i))?\\b",
+      "name": "storage.type.c.memaccess"
+    },
+    { "match": "\\s+\\\".+\\\"", "name": "string" },
+    {
+      "match": "\\b((?i)nop(ne|eq|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|lt|le|gt|ge|al)?(?-i))?\\b",
+      "name": "comment.nop"
+    },
+    {
+      "begin": "\\s\\[",
+      "end": "\\]",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.c"
+        },
+        { "include": "$base" }
+      ],
+      "name": "storage.type.c.memaccess"
+    },
+    { "match": "(\\b|\\s+)\\=\\b", "name": "keyword.control.evaluation" },
+    {
+      "match": "(\\b|\\s+)(\\#)?-?(0x|&)[0-9a-fA-F_]+\\b",
+      "name": "constant.numeric.hex"
+    },
+    {
+      "match": "(\\b|\\s+)\\#-?[0-9a-zA-Z_]+\\b",
+      "name": "constant.numeric.literal"
+    },
+    { "match": "(\\b|\\s+)[0-9]+\\b", "name": "constant.numeric.dec" },
+    {
+      "match": "\\b([a-zA-Z_]+[0-9a-zA-Z_]*|[0-9]+[a-zA-Z_]+[0-9a-zA-Z_]*)\\b",
+      "name": "meta.function.source.arm.label"
+    }
+  ],
+  "name": "ARM Assembly",
+  "uuid": "433AE307-8DE5-4856-8113-37659B1AFDA4"
+}

@@ -1,0 +1,236 @@
+{
+  "fileTypes": ["tpl"],
+  "injections": {
+    "text.html.smarty - (meta.embedded | meta.tag | comment.block | meta.block.literal), L:text.html.smarty meta.tag": {
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#blocks"
+        }
+      ]
+    }
+  },
+  "keyEquivalent": "^~S",
+  "name": "Smarty",
+  "patterns": [
+    {
+      "include": "text.html.basic"
+    }
+  ],
+  "repository": {
+    "blocks": {
+      "patterns": [
+        {
+          "begin": "(\\{)(literal)(\\})",
+          "captures": [
+            {
+              "name": "meta.embedded.line.tag.literal.smarty"
+            },
+            {
+              "name": "punctuation.definition.tag.begin.smarty"
+            },
+            {
+              "name": "support.function.built-in.smarty"
+            },
+            {
+              "name": "punctuation.definition.tag.end.smarty"
+            }
+          ],
+          "end": "(\\{/)(literal)(\\})",
+          "name": "meta.block.literal.smarty",
+          "patterns": [
+            {
+              "include": "text.html.basic"
+            }
+          ]
+        },
+        {
+          "begin": "(\\{%?)",
+          "beginCaptures": [
+            {
+              "name": "source.smarty"
+            },
+            {
+              "name": "punctuation.section.embedded.begin.smarty"
+            }
+          ],
+          "contentName": "source.smarty",
+          "end": "(%?\\})",
+          "endCaptures": [
+            {
+              "name": "source.smarty"
+            },
+            {
+              "name": "punctuation.section.embedded.end.smarty"
+            }
+          ],
+          "name": "meta.embedded.line.tag.smarty",
+          "patterns": [
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#variables"
+            },
+            {
+              "include": "#lang"
+            }
+          ]
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "begin": "(\\{%?)\\*",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment.smarty"
+            }
+          },
+          "end": "\\*(%?\\})",
+          "name": "comment.block.smarty",
+          "patterns": []
+        }
+      ]
+    },
+    "lang": {
+      "patterns": [
+        {
+          "match": "(!==|!=|!|<=|>=|<|>|===|==|%|&&|\\|\\|)|\\b(and|or|eq|neq|ne|gte|gt|ge|lte|lt|le|not|mod)\\b",
+          "name": "keyword.operator.smarty"
+        },
+        {
+          "match": "\\b(TRUE|FALSE|true|false)\\b",
+          "name": "constant.language.smarty"
+        },
+        {
+          "match": "\\b(if|else|elseif|foreach|foreachelse|section|switch|case|break|default)\\b",
+          "name": "keyword.control.smarty"
+        },
+        {
+          "captures": [
+            {
+              "name": "variable.parameter.smarty"
+            }
+          ],
+          "match": "\\b([a-zA-Z]+)=",
+          "name": "meta.attribute.smarty"
+        },
+        {
+          "match": "\\b(capture|config_load|counter|cycle|debug|eval|fetch|include_php|include|insert|literal|math|strip|rdelim|ldelim|assign|constant|block|html_[a-z_]*)\\b",
+          "name": "support.function.built-in.smarty"
+        },
+        {
+          "match": "\\|(capitalize|cat|count_characters|count_paragraphs|count_sentences|count_words|date_format|default|escape|indent|lower|nl2br|regex_replace|replace|spacify|string_format|strip_tags|strip|truncate|upper|wordwrap)",
+          "name": "support.function.variable-modifier.smarty"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "begin": "'",
+          "beginCaptures": [
+            {
+              "name": "punctuation.definition.string.begin.smarty"
+            }
+          ],
+          "end": "'",
+          "endCaptures": [
+            {
+              "name": "punctuation.definition.string.end.smarty"
+            }
+          ],
+          "name": "string.quoted.single.smarty",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.smarty"
+            }
+          ]
+        },
+        {
+          "begin": "\"",
+          "beginCaptures": [
+            {
+              "name": "punctuation.definition.string.begin.smarty"
+            }
+          ],
+          "end": "\"",
+          "endCaptures": [
+            {
+              "name": "punctuation.definition.string.end.smarty"
+            }
+          ],
+          "name": "string.quoted.double.smarty",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.smarty"
+            }
+          ]
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.smarty"
+            }
+          },
+          "match": "\\b(\\$)Smarty\\.",
+          "name": "variable.other.global.smarty"
+        },
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.smarty"
+            },
+            "2": {
+              "name": "variable.other.smarty"
+            }
+          },
+          "match": "(\\$)([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+          "name": "variable.other.smarty"
+        },
+        {
+          "captures": {
+            "1": {
+              "name": "keyword.operator.smarty"
+            },
+            "2": {
+              "name": "variable.other.property.smarty"
+            }
+          },
+          "match": "(->)([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+          "name": "variable.other.smarty"
+        },
+        {
+          "captures": {
+            "1": {
+              "name": "keyword.operator.smarty"
+            },
+            "2": {
+              "name": "meta.function-call.object.smarty"
+            },
+            "3": {
+              "name": "punctuation.definition.variable.smarty"
+            },
+            "4": {
+              "name": "punctuation.definition.variable.smarty"
+            }
+          },
+          "match": "(->)([a-zA-Z_][a-zA-Z0-9_]*)(\\().*?(\\))",
+          "name": "variable.other.smarty"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.smarty",
+  "uuid": "4D6BBA54-E3FC-4296-9CA1-662B2AD537C6"
+}

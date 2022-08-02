@@ -1,0 +1,59 @@
+{
+  "scopeName": "source.drools",
+  "fileTypes": [".drl"],
+  "patterns": [
+    {
+      "comment": "Mathmatical operators",
+      "match": "[<|>|==|<=|>=|.|!=]",
+      "name": "keyword.operator.source.drools"
+    },
+    {
+      "comment": "Drools RHS functions",
+      "match": "\\b(insert|insertLogical|delete|modify)\\b",
+      "name": "entity.name.function.source.drools"
+    },
+    {
+      "comment": "Drools hard keywords",
+      "match": "\\b(true|false|null)\\b",
+      "name": "constant.language.source.drools"
+    },
+    {
+      "comment": "Drools soft keywords",
+      "match": "\\b(lock-on-active|date-effective|date-expires|no-loop|auto-focus|activation-group|agenda-group|ruleflow-group|entry-point|duration|package|import|dialect|salience|enabled|attributes|rule|extends|when|then|template|query|declare|function|global|eval|not|in|or|and|exists|forall|accumulate|collect|from|end|over|calendars|init|action|reverse|result|new)\\b",
+      "name": "keyword.control.source.drools"
+    },
+    {
+      "comment": "Bound variables like $person, $myList",
+      "match": "\\$([A-Za-z][A-Za-z0-9_]+)",
+      "name": "variable.parameter.source.drools"
+    },
+    {
+      "comment": "Java classes",
+      "match": "\\b([A-Z][A-Za-z_]+)\\b",
+      "name": "support.type.source.drools"
+    },
+    {
+      "comment": "Single line comment",
+      "match": "(\\/)(\\/).*",
+      "name": "comment.line.double-slash.source.drools"
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "comment": "Multi line comment",
+      "name": "comment.line.double-slash.source.drools"
+    },
+    {
+      "comment": "Double quote strings",
+      "match": "(\").*(\")",
+      "name": "string.quoted.double.source.drools"
+    },
+    {
+      "comment": "Numbers",
+      "match": "([0-9]+(\\.)?[0-9]*)",
+      "name": "constant.numeric.source.drools"
+    }
+  ],
+  "name": "Drools",
+  "uuid": "a98fc7cc-15d1-401e-bb85-e72714276cdb"
+}

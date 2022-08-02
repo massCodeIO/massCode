@@ -1,0 +1,1081 @@
+{
+  "foldingStartMarker": "(?x)^\n\t    (\\s*+\n\t        (module|class|def(?!.*\\bend\\s*$)\n\t        |unless|if\n\t        |case\n\t        |begin\n\t        |for|while|until\n\t        |(  \"(\\\\.|[^\"])*+\"          # eat a double quoted string\n\t         | '(\\\\.|[^'])*+'        # eat a single quoted string\n\t         |   [^#\"']                # eat all but comments and strings\n\t         )*\n\t         (                        \\s   (do|begin|case)\n\t         | (?<!\\$)[-+=&|*/~%^<>~] \\s*+ (if|unless)\n\t         )\n\t        )\\b\n\t        (?! [^;]*+ ; .*? \\bend\\b )\n\t    |(  \"(\\\\.|[^\"])*+\"              # eat a double quoted string\n\t     | '(\\\\.|[^'])*+'            # eat a single quoted string\n\t     |   [^#\"']                    # eat all but comments and strings\n\t     )*\n\t     ( \\{ (?!  [^}]*+ \\} )\n\t     | \\[ (?! [^\\]]*+ \\] )\n\t     )\n\t    ).*$\n\t|   [#] .*? \\(fold\\) \\s*+ $         # Sune’s special marker\n\t",
+  "firstLineMatch": "^#!/.*\\bcrystal",
+  "foldingStopMarker": "(?x)\n\t\t(   (^|;) \\s*+ end   \\s*+ ([#].*)? $\n\t\t|   (^|;) \\s*+ end \\. .* $\n\t\t|   ^     \\s*+ [}\\]] ,? \\s*+ ([#].*)? $\n\t\t|   [#] .*? \\(end\\) \\s*+ $    # Sune’s special marker\n\t\t|   ^=end\n\t\t)",
+  "keyEquivalent": "^~C",
+  "fileTypes": ["cr"],
+  "repository": {
+    "nest_ltgt_r": {
+      "begin": "\\<",
+      "end": "\\>",
+      "patterns": [{ "include": "#regex_sub" }, { "include": "#nest_ltgt_r" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_curly_and_self": {
+      "patterns": [
+        {
+          "begin": "\\{",
+          "end": "\\}",
+          "patterns": [{ "include": "#nest_curly_and_self" }],
+          "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+        },
+        { "include": "$self" }
+      ]
+    },
+    "nest_ltgt_i": {
+      "begin": "\\<",
+      "end": "\\>",
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_ltgt_i" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_brackets": {
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [{ "include": "#nest_brackets" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_brackets_r": {
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [
+        { "include": "#regex_sub" },
+        { "include": "#nest_brackets_r" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "heredoc": {
+      "begin": "^<<-?\\w+",
+      "end": "$",
+      "patterns": [{ "include": "$self" }]
+    },
+    "interpolated_crystal": {
+      "patterns": [
+        {
+          "end": "(\\})",
+          "begin": "#\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.section.embedded.begin.crystal" }
+          },
+          "contentName": "source.crystal",
+          "patterns": [
+            { "include": "#nest_curly_and_self" },
+            { "include": "$self" }
+          ],
+          "endCaptures": {
+            "0": { "name": "punctuation.section.embedded.end.crystal" },
+            "1": { "name": "source.crystal" }
+          },
+          "name": "meta.embedded.line.crystal"
+        },
+        {
+          "match": "(#@)[a-zA-Z_]\\w*",
+          "name": "variable.other.readwrite.instance.crystal",
+          "captures": {
+            "1": { "name": "punctuation.definition.variable.crystal" }
+          }
+        },
+        {
+          "match": "(#@@)[a-zA-Z_]\\w*",
+          "name": "variable.other.readwrite.class.crystal",
+          "captures": {
+            "1": { "name": "punctuation.definition.variable.crystal" }
+          }
+        },
+        {
+          "match": "(#\\$)[a-zA-Z_]\\w*",
+          "name": "variable.other.readwrite.global.crystal",
+          "captures": {
+            "1": { "name": "punctuation.definition.variable.crystal" }
+          }
+        }
+      ]
+    },
+    "escaped_char": {
+      "match": "\\\\(?:[0-7]{1,3}|x[\\da-fA-F]{1,2}|.)",
+      "name": "constant.character.escape.crystal"
+    },
+    "nest_curly": {
+      "begin": "\\{",
+      "end": "\\}",
+      "patterns": [{ "include": "#nest_curly" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_ltgt": {
+      "begin": "\\<",
+      "end": "\\>",
+      "patterns": [{ "include": "#nest_ltgt" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_brackets_i": {
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_brackets_i" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_parens_r": {
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [
+        { "include": "#regex_sub" },
+        { "include": "#nest_parens_r" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_curly_i": {
+      "begin": "\\{",
+      "end": "\\}",
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_curly_i" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_parens": {
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [{ "include": "#nest_parens" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "nest_parens_i": {
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_parens_i" }
+      ],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    },
+    "regex_sub": {
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        {
+          "match": "(\\{)\\d+(,\\d+)?(\\})",
+          "name": "string.regexp.arbitrary-repitition.crystal",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.arbitrary-repitition.crystal"
+            },
+            "3": {
+              "name": "punctuation.definition.arbitrary-repitition.crystal"
+            }
+          }
+        },
+        {
+          "begin": "\\[(?:\\^?\\])?",
+          "end": "\\]",
+          "patterns": [{ "include": "#escaped_char" }],
+          "name": "string.regexp.character-class.crystal",
+          "captures": {
+            "0": { "name": "punctuation.definition.character-class.crystal" }
+          }
+        },
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "#regex_sub" }],
+          "name": "string.regexp.group.crystal",
+          "captures": {
+            "0": { "name": "punctuation.definition.group.crystal" }
+          }
+        },
+        {
+          "match": "(?<=^|\\s)(#)\\s[[a-zA-Z0-9,. \\t?!-][^\\x{00}-\\x{7F}]]*$",
+          "comment": "We are restrictive in what we allow to go after the comment character to avoid false positives, since the availability of comments depend on regexp flags.",
+          "name": "comment.line.number-sign.crystal",
+          "captures": {
+            "1": { "name": "punctuation.definition.comment.crystal" }
+          }
+        }
+      ]
+    },
+    "nest_curly_r": {
+      "begin": "\\{",
+      "end": "\\}",
+      "patterns": [{ "include": "#regex_sub" }, { "include": "#nest_curly_r" }],
+      "captures": { "0": { "name": "punctuation.section.scope.crystal" } }
+    }
+  },
+  "uuid": "A2124E02-D424-4897-86BA-79DD7C3B6133",
+  "patterns": [
+    {
+      "match": "^\\s*((?:private|abstract|private\\s+abstract)\\s+)?((?:class|struct))\\s+(([.a-zA-Z0-9_:]+(\\s*(<)\\s*[.a-zA-Z0-9_:]+)?)|((<<)\\s*[.a-zA-Z0-9_:]+))",
+      "name": "meta.class.crystal",
+      "captures": {
+        "7": { "name": "variable.other.object.crystal" },
+        "3": { "name": "entity.name.type.class.crystal" },
+        "8": { "name": "punctuation.definition.variable.crystal" },
+        "5": { "name": "entity.other.inherited-class.crystal" },
+        "1": { "name": "keyword.control.class.crystal" },
+        "6": { "name": "punctuation.separator.inheritance.crystal" },
+        "2": { "name": "keyword.control.class.crystal" }
+      }
+    },
+    {
+      "match": "^\\s*(private\\s+)?(module)\\s+(([A-Z]\\w*(::))?([A-Z]\\w*(::))?([A-Z]\\w*(::))*[A-Z]\\w*)",
+      "name": "meta.module.crystal",
+      "captures": {
+        "7": { "name": "punctuation.separator.inheritance.crystal" },
+        "3": { "name": "entity.name.type.module.crystal" },
+        "8": { "name": "entity.other.inherited-class.module.third.crystal" },
+        "4": { "name": "entity.other.inherited-class.module.first.crystal" },
+        "9": { "name": "punctuation.separator.inheritance.crystal" },
+        "5": { "name": "punctuation.separator.inheritance.crystal" },
+        "1": { "name": "keyword.control.module.crystal" },
+        "6": { "name": "entity.other.inherited-class.module.second.crystal" },
+        "2": { "name": "keyword.control.module.crystal" }
+      }
+    },
+    {
+      "comment": "else if is a common mistake carried over from other languages. it works if you put in a second end, but it’s never what you want.",
+      "match": "(?<!\\.)\\belse(\\s)+if\\b",
+      "name": "invalid.deprecated.crystal"
+    },
+    {
+      "comment": "everything being a reserved word, not a value and needing a 'end' is a..",
+      "match": "(?<!\\.)\\b(BEGIN|alias|as|begin|case|select|abstract|class|else|elsif|END|end|ensure|for|fun|if|ifdef|in|lib|module|of|out|rescue|struct|union|enum|macro|then|type|unless|until|when|while)\\b(?![?!])",
+      "name": "keyword.control.crystal"
+    },
+    {
+      "comment": "contextual smart pair support for block parameters",
+      "match": "(?<!\\.)\\bdo\\b\\s*",
+      "name": "keyword.control.start-block.crystal"
+    },
+    {
+      "comment": "contextual smart pair support",
+      "match": "(?<=\\{)(\\s+)",
+      "name": "meta.syntax.crystal.start-block"
+    },
+    {
+      "comment": " as above, just doesn't need a 'end' and does a logic operation",
+      "match": "(?<!\\.)\\b(and|not|or)\\b",
+      "name": "keyword.operator.logical.crystal"
+    },
+    {
+      "comment": " just as above but being not a logical operation",
+      "match": "(?<!\\.)\\b(alias|alias_method|break|next|pointerof|typeof|sizeof|instance_sizeof|zredo|retry|return|super|undef|yield|uninitialized|forall)\\b(?![?!])|\\bdefined\\?|\\bblock_given\\?",
+      "name": "keyword.control.pseudo-method.crystal"
+    },
+    {
+      "match": "\\b(nil|true|false)\\b(?![?!])",
+      "name": "constant.language.crystal"
+    },
+    {
+      "match": "\\b(__(DIR|FILE|LINE)__|self)\\b(?![?!])",
+      "name": "variable.language.crystal"
+    },
+    {
+      "comment": " everything being a method but having a special function is a..",
+      "match": "\\b(initialize|new|loop|include|extend|raise|class_getter|class_setter|class_property|getter|setter|property|catch|throw|private|module_function|public|protected|describe|it|with|delegate|def_hash|def_equals|def_equals_and_hash|forward_missing_to|record|assert_responds_to|spawn)\\b[!?]?",
+      "name": "keyword.other.special-method.crystal"
+    },
+    {
+      "begin": "\\b(require|gem)\\b",
+      "end": "$|(?=#)",
+      "patterns": [{ "include": "$self" }],
+      "name": "meta.require.crystal",
+      "captures": { "1": { "name": "keyword.other.special-method.crystal" } }
+    },
+    {
+      "match": "(@)[a-zA-Z_]\\w*",
+      "name": "variable.other.readwrite.instance.crystal",
+      "captures": { "1": { "name": "punctuation.definition.variable.crystal" } }
+    },
+    {
+      "match": "(@@)[a-zA-Z_]\\w*",
+      "name": "variable.other.readwrite.class.crystal",
+      "captures": { "1": { "name": "punctuation.definition.variable.crystal" } }
+    },
+    {
+      "match": "(\\$)[a-zA-Z_]\\w*",
+      "name": "variable.other.readwrite.global.crystal",
+      "captures": { "1": { "name": "punctuation.definition.variable.crystal" } }
+    },
+    {
+      "match": "(\\$)(!|@|&|`|'|\\+|\\d+|~|=|/|\\\\|,|;|\\.|<|>|_|\\*|\\$|\\?|:|\"|-[0adFiIlpv])",
+      "name": "variable.other.readwrite.global.pre-defined.crystal",
+      "captures": { "1": { "name": "punctuation.definition.variable.crystal" } }
+    },
+    {
+      "begin": "\\b(ENV)\\[",
+      "end": "\\]",
+      "patterns": [{ "include": "$self" }],
+      "name": "meta.environment-variable.crystal",
+      "beginCaptures": { "1": { "name": "variable.other.constant.crystal" } }
+    },
+    { "match": "\\b[A-Z]\\w*", "name": "support.class.crystal" },
+    { "match": "\\b[A-Z]\\w*\\b", "name": "variable.other.constant.crystal" },
+    {
+      "end": "\\)",
+      "begin": "(?x)\n\t\t\t         (?=def\\b)                                                      # an optimization to help Oniguruma fail fast\n\t\t\t         (?<=^|\\s)(def)\\s+                                              # the def keyword\n\t\t\t         ( (?>[a-zA-Z_]\\w*(?>\\.|::))?                                   # a method name prefix\n\t\t\t           (?>[a-zA-Z_]\\w*(?>[?!]|=(?!>))?                              # the method name\n\t\t\t           |===?|>[>=]?|<=>|<[<=]?|[%&`/\\|]|\\*\\*?|=?~|[-+]@?|\\[\\]=?) )  # …or an operator method\n\t\t\t         \\s*(\\()                                                        # the openning parenthesis for arguments\n\t\t\t        ",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.def.crystal" },
+        "2": { "name": "entity.name.function.crystal" },
+        "3": { "name": "punctuation.definition.parameters.crystal" }
+      },
+      "patterns": [
+        { "include": "$self" },
+        {
+          "match": "\\b[a-z\\_]\\w*\\b",
+          "name": "variable.parameter.function.crystal"
+        }
+      ],
+      "comment": "the method pattern comes from the symbol pattern, see there for a explanation",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.parameters.crystal" }
+      },
+      "name": "meta.function.method.with-arguments.crystal"
+    },
+    {
+      "begin": "(?x)\n\t\t\t         (?=def\\b)                                                      # an optimization to help Oniguruma fail fast\n\t\t\t         (?<=^|\\s)(def)\\s+                                              # the def keyword\n\t\t\t         ( (?>[a-zA-Z_]\\w*(?>\\.|::))?                                   # a method name prefix\n\t\t\t           (?>[a-zA-Z_]\\w*(?>[?!]|=(?!>))?                              # the method name\n\t\t\t           |===?|>[>=]?|<=>|<[<=]?|[%&`/\\|]|\\*\\*?|=?~|[-+]@?|\\[\\]=?) )  # …or an operator method\n\t\t\t         [ \\t]                                                          # the space separating the arguments\n\t\t\t         (?=[ \\t]*[^\\s#;])                                              # make sure arguments and not a comment follow\n\t\t\t        ",
+      "end": "$",
+      "comment": "same as the previous rule, but without parentheses around the arguments",
+      "name": "meta.function.method.with-arguments.crystal",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.def.crystal" },
+        "2": { "name": "entity.name.function.crystal" }
+      },
+      "patterns": [
+        { "include": "$self" },
+        {
+          "match": "\\b[a-z\\_]\\w*\\b",
+          "name": "variable.parameter.function.crystal"
+        }
+      ]
+    },
+    {
+      "match": "(?x)\n\t\t\t         (?=def\\b)                                                           # an optimization to help Oniguruma fail fast\n\t\t\t         (?<=^|\\s)(def)\\b                                                    # the def keyword\n\t\t\t         ( \\s+                                                               # an optional group of whitespace followed by…\n\t\t\t           ( (?>[a-zA-Z_]\\w*(?>\\.|::))?                                      # a method name prefix\n\t\t\t             (?>[a-zA-Z_]\\w*(?>[?!]|=(?!>))?                                 # the method name\n\t\t\t             |===?|>[>=]?|<=>|<[<=]?|[%&`/\\|]|\\*\\*?|=?~|[-+]@?|\\[\\]=?) ) )?  # …or an operator method\n\t\t\t        ",
+      "comment": " the optional name is just to catch the def also without a method-name",
+      "name": "meta.function.method.without-arguments.crystal",
+      "captures": {
+        "1": { "name": "keyword.control.def.crystal" },
+        "3": { "name": "entity.name.function.crystal" }
+      }
+    },
+    {
+      "match": "\\b(0[xXoObB]\\h(?>_?\\h)*|\\d(?>_?\\d)*(\\.(?![^[:space:][:digit:]])(?>_?\\d)*)?([eE][-+]?\\d(?>_?\\d)*)?|0[bB][01]+)(_?(u8|u16|u32|u64|u128|i8|i16|i32|i64|i128|f32|f64))?\\b",
+      "name": "constant.numeric.crystal"
+    },
+    {
+      "begin": ":'",
+      "end": "'",
+      "patterns": [
+        { "match": "\\\\['\\\\]", "name": "constant.character.escape.crystal" }
+      ],
+      "name": "constant.other.symbol.single-quoted.crystal",
+      "captures": { "0": { "name": "punctuation.definition.constant.crystal" } }
+    },
+    {
+      "begin": ":\"",
+      "end": "\"",
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "name": "constant.other.symbol.double-quoted.crystal",
+      "captures": { "0": { "name": "punctuation.definition.constant.crystal" } }
+    },
+    {
+      "comment": "Needs higher precidence than regular expressions.",
+      "match": "(?<!\\()/=",
+      "name": "keyword.operator.assignment.augmented.crystal"
+    },
+    {
+      "end": "'",
+      "begin": "'",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\'|\\\\\\\\",
+          "name": "constant.character.escape.crystal"
+        }
+      ],
+      "comment": "single quoted string (does not allow interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.single.crystal"
+    },
+    {
+      "end": "\"",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "double quoted string (allows for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.double.crystal"
+    },
+    {
+      "end": "`",
+      "begin": "`",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "execute string (allows for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "end": "\\}",
+      "begin": "%x\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_curly_i" }
+      ],
+      "comment": "execute string (allow for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "end": "\\]",
+      "begin": "%x\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_brackets_i" }
+      ],
+      "comment": "execute string (allow for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "end": "\\>",
+      "begin": "%x\\<",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_ltgt_i" }
+      ],
+      "comment": "execute string (allow for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "end": "\\)",
+      "begin": "%x\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_parens_i" }
+      ],
+      "comment": "execute string (allow for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "end": "\\1",
+      "begin": "%x([^\\w])",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "execute string (allow for interpolation)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.interpolated.crystal"
+    },
+    {
+      "begin": "(?x)\n\t\t\t   (?:\n\t\t\t     ^                      # beginning of line\n\t\t\t   | (?<=                   # or look-behind on:\n\t\t\t       [=>~(?:\\[,|&;]\n\t\t\t     | [\\s;]if\\s\t\t\t# keywords\n\t\t\t     | [\\s;]elsif\\s\n\t\t\t     | [\\s;]while\\s\n\t\t\t     | [\\s;]unless\\s\n\t\t\t     | [\\s;]when\\s\n\t\t\t     | [\\s;]assert_match\\s\n\t\t\t     | [\\s;]or\\s\t\t\t# boolean opperators\n\t\t\t     | [\\s;]and\\s\n\t\t\t     | [\\s;]not\\s\n\t\t\t     | [\\s.]index\\s\t\t\t# methods\n\t\t\t     | [\\s.]scan\\s\n\t\t\t     | [\\s.]sub\\s\n\t\t\t     | [\\s.]sub!\\s\n\t\t\t     | [\\s.]gsub\\s\n\t\t\t     | [\\s.]gsub!\\s\n\t\t\t     | [\\s.]match\\s\n\t\t\t     )\n\t\t\t   | (?<=                  # or a look-behind with line anchor:\n\t\t\t        ^when\\s            # duplication necessary due to limits of regex\n\t\t\t      | ^if\\s\n\t\t\t      | ^elsif\\s\n\t\t\t      | ^while\\s\n\t\t\t      | ^unless\\s\n\t\t\t      )\n\t\t\t   )\n\t\t\t   \\s*((/))(?![*+{}?])\n\t\t\t",
+      "end": "((/[eimnosux]*))",
+      "comment": "regular expressions (normal)\n\t\t\twe only start a regexp if the character before it (excluding whitespace)\n\t\t\tis what we think is before a regexp\n\t\t\t",
+      "contentName": "string.regexp.classic.crystal",
+      "captures": {
+        "1": { "name": "string.regexp.classic.crystal" },
+        "2": { "name": "punctuation.definition.string.crystal" }
+      },
+      "patterns": [{ "include": "#regex_sub" }]
+    },
+    {
+      "end": "\\}[eimnosux]*",
+      "begin": "%r\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [{ "include": "#regex_sub" }, { "include": "#nest_curly_r" }],
+      "comment": "regular expressions (literal)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.regexp.mod-r.crystal"
+    },
+    {
+      "end": "\\][eimnosux]*",
+      "begin": "%r\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#regex_sub" },
+        { "include": "#nest_brackets_r" }
+      ],
+      "comment": "regular expressions (literal)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.regexp.mod-r.crystal"
+    },
+    {
+      "end": "\\)[eimnosux]*",
+      "begin": "%r\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#regex_sub" },
+        { "include": "#nest_parens_r" }
+      ],
+      "comment": "regular expressions (literal)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.regexp.mod-r.crystal"
+    },
+    {
+      "end": "\\>[eimnosux]*",
+      "begin": "%r\\<",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [{ "include": "#regex_sub" }, { "include": "#nest_ltgt_r" }],
+      "comment": "regular expressions (literal)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.regexp.mod-r.crystal"
+    },
+    {
+      "end": "\\1[eimnosux]*",
+      "begin": "%r([^\\w])",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [{ "include": "#regex_sub" }],
+      "comment": "regular expressions (literal)",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.regexp.mod-r.crystal"
+    },
+    {
+      "end": "\\)",
+      "begin": "%[QWSR]?\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_parens_i" }
+      ],
+      "comment": "literal capable of interpolation ()",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.upper.crystal"
+    },
+    {
+      "end": "\\]",
+      "begin": "%[QWSR]?\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_brackets_i" }
+      ],
+      "comment": "literal capable of interpolation []",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.upper.crystal"
+    },
+    {
+      "end": "\\>",
+      "begin": "%[QWSR]?\\<",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_ltgt_i" }
+      ],
+      "comment": "literal capable of interpolation <>",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.upper.crystal"
+    },
+    {
+      "end": "\\}",
+      "begin": "%[QWSR]?\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" },
+        { "include": "#nest_curly_i" }
+      ],
+      "comment": "literal capable of interpolation -- {}",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.double.crystal.mod"
+    },
+    {
+      "end": "\\1",
+      "begin": "%[QWSR]([^\\w])",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "literal capable of interpolation -- wildcard",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.upper.crystal"
+    },
+    {
+      "end": "\\)",
+      "begin": "%[qws]\\(",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\\\)|\\\\\\\\",
+          "name": "constant.character.escape.crystal"
+        },
+        { "include": "#nest_parens" }
+      ],
+      "comment": "literal incapable of interpolation -- ()",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.lower.crystal"
+    },
+    {
+      "end": "\\>",
+      "begin": "%[qws]\\<",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\\\>|\\\\\\\\",
+          "name": "constant.character.escape.crystal"
+        },
+        { "include": "#nest_ltgt" }
+      ],
+      "comment": "literal incapable of interpolation -- <>",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.lower.crystal"
+    },
+    {
+      "end": "\\]",
+      "begin": "%[qws]\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\\\]|\\\\\\\\",
+          "name": "constant.character.escape.crystal"
+        },
+        { "include": "#nest_brackets" }
+      ],
+      "comment": "literal incapable of interpolation -- []",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.lower.crystal"
+    },
+    {
+      "end": "\\}",
+      "begin": "%[qws]\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\\\}|\\\\\\\\",
+          "name": "constant.character.escape.crystal"
+        },
+        { "include": "#nest_curly" }
+      ],
+      "comment": "literal incapable of interpolation -- {}",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.lower.crystal"
+    },
+    {
+      "end": "\\1",
+      "begin": "%[qws]([^\\w])",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        {
+          "comment": "Cant be named because its not necessarily an escape.",
+          "match": "\\\\."
+        }
+      ],
+      "comment": "literal incapable of interpolation -- wildcard",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.quoted.other.literal.lower.crystal"
+    },
+    {
+      "match": "(?<!:)(:)(?>[a-zA-Z_]\\w*(?>[?!]|=(?![>=]))?|===?|>[>=]?|<[<=]?|<=>|[%&`/\\|]|\\*\\*?|=?~|[-+]@?|\\[\\]=?|@@?[a-zA-Z_]\\w*)",
+      "comment": "symbols",
+      "name": "constant.other.symbol.crystal",
+      "captures": { "1": { "name": "punctuation.definition.constant.crystal" } }
+    },
+    {
+      "match": "(?>[a-zA-Z_]\\w*(?>[?!])?)(:)(?!:)",
+      "comment": "symbols",
+      "name": "constant.other.symbol.crystal.19syntax",
+      "captures": { "1": { "name": "punctuation.definition.constant.crystal" } }
+    },
+    {
+      "begin": "#",
+      "end": "\\n",
+      "patterns": [
+        {
+          "match": "\\b(BUG|DEPRECATED|FIXME|NOTE|OPTIMIZE|TODO)\\b",
+          "name": "storage.type.class.todo.crystal"
+        }
+      ],
+      "name": "comment.line.number-sign.crystal",
+      "captures": { "0": { "name": "punctuation.definition.comment.crystal" } }
+    },
+    {
+      "comment": "\n\t\t\tmatches questionmark-letters.\n\n\t\t\texamples (1st alternation = hex):\n\t\t\t?\\x1     ?\\x61\n\n\t\t\texamples (2nd alternation = octal):\n\t\t\t?\\0      ?\\07     ?\\017\n\n\t\t\texamples (3rd alternation = escaped):\n\t\t\t?\\n      ?\\b\n\n\t\t\texamples (4th alternation = meta-ctrl):\n\t\t\t?\\C-a    ?\\M-a    ?\\C-\\M-\\C-\\M-a\n\n\t\t\texamples (4th alternation = normal):\n\t\t\t?a       ?A       ?0\n\t\t\t?*       ?\"       ?(\n\t\t\t?.       ?#\n\n\n\t\t\tthe negative lookbehind prevents against matching\n\t\t\tp(42.tainted?)\n\t\t\t",
+      "match": "(?<!\\w)\\?(\\\\(x\\h{1,2}(?!\\h)\\b|0[0-7]{0,2}(?![0-7])\\b|[^x0MC])|(\\\\[MC]-)+\\w|[^\\s\\\\])",
+      "name": "constant.numeric.crystal"
+    },
+    {
+      "begin": "^__END__\\n",
+      "end": "(?=not)impossible",
+      "comment": "__END__ marker",
+      "contentName": "text.plain",
+      "captures": { "0": { "name": "string.unquoted.program-block.crystal" } },
+      "patterns": [
+        {
+          "begin": "(?=<?xml|<(?i:html\\b)|!DOCTYPE (?i:html\\b))",
+          "end": "(?=not)impossible",
+          "patterns": [{ "include": "text.html.basic" }],
+          "name": "text.html.embedded.crystal"
+        }
+      ]
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)HTML)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.html.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "text.html.basic" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded HTML and indented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.html.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)SQL)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.sql.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.sql" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded SQL and indented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.sql.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)CSS)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.css.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.css" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded css and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.css.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)CPP)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.c++.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.c++" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded c++ and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.cplusplus.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)C)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.c.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.c" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded c++ and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.c.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)(?:JS|JAVASCRIPT))\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.js.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.js" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded javascript and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.js.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)JQUERY)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.js.jquery.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.js.jquery" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded javascript and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.js.jquery.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)(?:SH|SHELL))\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.shell.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.shell" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded shell and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.shell.crystal"
+    },
+    {
+      "end": "\\s*\\2$",
+      "begin": "(?><<-(\"?)((?:[_\\w]+_|)RUBY)\\b\\1)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "contentName": "text.crystal.embedded.crystal",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "source.crystal" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with embedded crystal and intented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.embedded.crystal.crystal"
+    },
+    {
+      "begin": "(?>\\=\\s*<<(\\w+))",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "end": "^\\1$",
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "name": "string.unquoted.heredoc.crystal",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      }
+    },
+    {
+      "end": "\\s*\\1$",
+      "begin": "(?><<-(\\w+))",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.crystal" }
+      },
+      "patterns": [
+        { "include": "#heredoc" },
+        { "include": "#interpolated_crystal" },
+        { "include": "#escaped_char" }
+      ],
+      "comment": "heredoc with indented terminator",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.crystal" }
+      },
+      "name": "string.unquoted.heredoc.crystal"
+    },
+    {
+      "begin": "(?<=\\{|do|\\{\\s|do\\s)(\\|)",
+      "end": "(\\|)",
+      "patterns": [
+        {
+          "match": "[_a-zA-Z][_a-zA-Z0-9]*",
+          "name": "variable.other.block.crystal"
+        },
+        { "match": ",", "name": "punctuation.separator.variable.crystal" }
+      ],
+      "captures": { "1": { "name": "punctuation.separator.variable.crystal" } }
+    },
+    { "match": "=>", "name": "punctuation.separator.key-value" },
+    {
+      "match": "<<=|%=|&=|\\*=|\\*\\*=|\\+=|\\-=|\\^=|\\|{1,2}=|<<",
+      "name": "keyword.operator.assignment.augmented.crystal"
+    },
+    {
+      "match": "<=>|<(?!<|=)|>(?!<|=|>)|<=|>=|===|==|=~|!=|!~|(?<=[ \\t])\\?",
+      "name": "keyword.operator.comparison.crystal"
+    },
+    {
+      "match": "(?<=[ \\t])!+|\\bnot\\b|&&|\\band\\b|\\|\\||\\bor\\b|\\^",
+      "name": "keyword.operator.logical.crystal"
+    },
+    {
+      "match": "(\\{\\%|\\%\\}|\\{\\{|\\}\\})",
+      "name": "keyword.operator.macro.crystal"
+    },
+    {
+      "match": "(%|&|\\*\\*|\\*|\\+|\\-|/)",
+      "name": "keyword.operator.arithmetic.crystal"
+    },
+    { "match": "=", "name": "keyword.operator.assignment.crystal" },
+    { "match": "\\||~|>>", "name": "keyword.operator.other.crystal" },
+    { "match": ":", "name": "punctuation.separator.other.crystal" },
+    { "match": "\\;", "name": "punctuation.separator.statement.crystal" },
+    { "match": ",", "name": "punctuation.separator.object.crystal" },
+    { "match": "\\.|::", "name": "punctuation.separator.method.crystal" },
+    { "match": "\\{|\\}", "name": "punctuation.section.scope.crystal" },
+    { "match": "\\[|\\]", "name": "punctuation.section.array.crystal" },
+    { "match": "\\(|\\)", "name": "punctuation.section.function.crystal" }
+  ],
+  "comment": "\n\tTODO: unresolved issues\n\n\ttext:\n\t\"p << end\n\tprint me!\n\tend\"\n\tsymptoms:\n\tnot recognized as a heredoc\n\tsolution:\n\tthere is no way to distinguish perfectly between the << operator and the start\n\tof a heredoc. Currently, we require assignment to recognize a heredoc. More\n\trefinement is possible.\n\t• Heredocs with indented terminators (<<-) are always distinguishable, however.\n\t• Nested heredocs are not really supportable at present\n\n\ttext:\n\tprint <<-'THERE'\n\tThis is single quoted.\n\tThe above used #{Time.now}\n\tTHERE\n\tsymtoms:\n\tFrom Programming Ruby p306; should be a non-interpolated heredoc.\n\n\ttext:\n\t\"a\\332a\"\n\tsymptoms:\n\t'\\332' is not recognized as slash3.. which should be octal 332.\n\tsolution:\n\tplain regexp.. should be easy.\n\n    text:\n    val?(a):p(b)\n    val?'a':'b'\n    symptoms:\n    ':p' is recognized as a symbol.. its 2 things ':' and 'p'.\n    :'b' has same problem.\n    solution:\n    ternary operator rule, precedence stuff, symbol rule.\n    but also consider 'a.b?(:c)' ??\n",
+  "name": "Crystal",
+  "scopeName": "source.crystal"
+}

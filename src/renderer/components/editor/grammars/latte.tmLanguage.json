@@ -1,0 +1,92 @@
+{
+  "name": "Latte",
+  "scopeName": "source.latte",
+  "fileTypes": ["latte"],
+  "patterns": [
+    {
+      "name": "comment.block.latte",
+      "begin": "\\{\\*",
+      "end": "\\*\\}"
+    },
+    {
+      "name": "source.latte",
+      "begin": "\\{\\{?(?!\\s)",
+      "beginCaptures": {
+        "0": {
+          "name": "tag.begin.latte"
+        }
+      },
+      "end": "\\}?\\}",
+      "endCaptures": {
+        "0": {
+          "name": "tag.end.latte"
+        }
+      },
+      "patterns": [
+        {
+          "name": "keyword.latte",
+          "match": "(?<=\\{)(\\![^}]*)"
+        },
+        {
+          "name": "constant.numeric.latte",
+          "match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)\\b"
+        },
+        {
+          "name": "variable.other.latte",
+          "match": "\\$\\$?[a-zA-Z_0-9]+\\s*"
+        },
+        {
+          "name": "constant.language.latte",
+          "match": "true|TRUE|True|false|FALSE|False|null|NULL|Null"
+        },
+        {
+          "name": "keyword.control.single.latte",
+          "match": "(?<=\\{)(_|breakIf|continueIf|contentType|control|debugbreak|default|dump|elseifset|elseif|else|extends|includeblock|include|inputError|input|layout|link|php|plink|r|status|use|var)\\s*"
+        },
+        {
+          "name": "keyword.control.pair.latte",
+          "match": "(?<=\\{)/?(block|cache|capture|define|first|foreach|form|for|ifset|ifCurrent|if|label|last|l|sep|snippet|syntax|while)\\s*"
+        },
+        {
+          "name": "keyword.operator.latte",
+          "match": "(?<=\\s)(\\!|/|===|as|and|AND|And|&&|or|OR|Or|\\|\\||\\+\\+|\\-\\-|==|<=>|>=|<=)\\s?"
+        },
+        {
+          "name": "keyword.operator.latte",
+          "match": "->"
+        },
+        {
+          "match": ".*?(\\|)(\\w+)(?:\\:([^\\|\\}]+))*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.latte"
+            },
+            "2": {
+              "name": "keyword.other.latte"
+            }
+          }
+        },
+        {
+          "include": "#strings"
+        }
+      ]
+    },
+    {
+      "include": "text.html.basic"
+    }
+  ],
+  "repository": {
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.latte",
+          "match": "(')(.*)(')"
+        },
+        {
+          "name": "string.quoted.double.latte",
+          "match": "(\")(.*)(\")"
+        }
+      ]
+    }
+  }
+}

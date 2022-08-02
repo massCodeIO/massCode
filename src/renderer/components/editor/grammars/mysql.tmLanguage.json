@@ -1,0 +1,345 @@
+{
+  "foldingStartMarker": "\\s*\\(\\s*$",
+  "bundleUUID": "AAB4CBF7-73F9-11D9-B89A-000D93589AF6",
+  "foldingStopMarker": "^\\s*\\)",
+  "keyEquivalent": "^~S",
+  "fileTypes": ["sql", "ddl", "dml"],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "match": "(--).*$\\n?",
+          "name": "comment.line.double-dash.sql",
+          "captures": { "1": { "name": "punctuation.definition.comment.sql" } }
+        },
+        {
+          "match": "(#).*$\\n?",
+          "name": "comment.line.number-sign.sql",
+          "captures": { "1": { "name": "punctuation.definition.comment.sql" } }
+        },
+        {
+          "begin": "/\\*",
+          "end": "\\*/",
+          "name": "comment.block.c",
+          "captures": { "0": { "name": "punctuation.definition.comment.sql" } }
+        }
+      ]
+    },
+    "string_escape": {
+      "match": "\\\\.",
+      "name": "constant.character.escape.sql"
+    },
+    "string_interpolation": {
+      "match": "(#\\{)([^\\}]*)(\\})",
+      "name": "string.interpolated.sql",
+      "captures": { "1": { "name": "punctuation.definition.string.end.sql" } }
+    },
+    "strings": {
+      "patterns": [
+        {
+          "match": "(')[^'\\\\]*(')",
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
+          "name": "string.quoted.single.sql",
+          "captures": {
+            "1": { "name": "punctuation.definition.string.begin.sql" },
+            "3": { "name": "punctuation.definition.string.end.sql" }
+          }
+        },
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.sql" }
+          },
+          "end": "'",
+          "patterns": [{ "include": "#string_escape" }],
+          "name": "string.quoted.single.sql",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.sql" }
+          }
+        },
+        {
+          "match": "(?<!\\.)(`)[^`\\\\]*(`)(?!\\.)",
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
+          "name": "source.sql.mysql.identifier",
+          "captures": {
+            "1": { "name": "punctuation.definition.identifier.begin.sql" },
+            "3": { "name": "punctuation.definition.identifier.end.sql" }
+          }
+        },
+        {
+          "begin": "`",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.identifier.end.sql" }
+          },
+          "end": "`",
+          "patterns": [{ "include": "#string_escape" }],
+          "name": "source.sql.mysql.identifier",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.identifier.begin.sql" }
+          }
+        },
+        {
+          "match": "(\")[^\"#]*(\")",
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and SQL files tend to have very long lines.",
+          "name": "source.sql.mysql.identifier",
+          "captures": {
+            "1": { "name": "punctuation.definition.identifier.begin.sql" },
+            "3": { "name": "punctuation.definition.identifier.end.sql" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.identifier.end.sql" }
+          },
+          "end": "\"",
+          "patterns": [{ "include": "#string_interpolation" }],
+          "name": "source.sql.mysql.identifier",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.identifier.begin.sql" }
+          }
+        },
+        {
+          "begin": "%\\{",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.sql" }
+          },
+          "end": "\\}",
+          "patterns": [{ "include": "#string_interpolation" }],
+          "name": "string.other.quoted.brackets.sql",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.sql" }
+          }
+        }
+      ]
+    },
+    "regexps": {
+      "patterns": [
+        {
+          "begin": "/(?=\\S.*/)",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.sql" }
+          },
+          "end": "/",
+          "patterns": [
+            { "include": "#string_interpolation" },
+            { "match": "\\\\/", "name": "constant.character.escape.slash.sql" }
+          ],
+          "name": "string.regexp.sql",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.sql" }
+          }
+        },
+        {
+          "end": "\\}",
+          "begin": "%r\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.sql" }
+          },
+          "patterns": [{ "include": "#string_interpolation" }],
+          "comment": "We should probably handle nested bracket pairs!?! -- Allan",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.sql" }
+          },
+          "name": "string.regexp.modr.sql"
+        }
+      ]
+    }
+  },
+  "uuid": "6FBEE1E0-D923-4DE8-9B57-6096FAB14BB0",
+  "patterns": [
+    { "include": "#comments" },
+    {
+      "match": "(?i:^\\s*(create)\\s+(aggregate|conversion|database|domain|function|group|(unique\\s+)?index|language|operator class|operator|rule|schema|sequence|tablespace|type|user)\\s+)(?:([\"`]?)(\\w+)\\4\\.)?([\"`]?)(\\w+)\\6",
+      "name": "meta.create.sql",
+      "captures": {
+        "1": { "name": "keyword.other.create.sql" },
+        "2": { "name": "keyword.other.sql" },
+        "7": { "name": "entity.name.function.sql" },
+        "5": { "name": "entity.other.inherited-class.sql" }
+      }
+    },
+    {
+      "match": "(?i:^\\s*(create)\\s+((?:temporary\\s+)?table(?:\\s+if\\s+not\\s+exists)?\\s+)(?:([\"`]?)(\\w+)\\3\\.)?([\"`]?)(\\w+)\\5)(?i:\\s+(\\(?)\\s*(like)\\s+(?:([\"`]?)(\\w+)\\9\\.)?([\"`]?)(\\w+)\\11\\s*\\7)?",
+      "name": "meta.create.table.sql",
+      "captures": {
+        "8": { "name": "keyword.other.create.table.sql" },
+        "4": { "name": "entity.other.inherited-class.sql" },
+        "1": { "name": "keyword.other.create.sql" },
+        "12": { "name": "constant.other.table-name.sql" },
+        "6": { "name": "entity.name.function.sql" },
+        "10": { "name": "constant.other.database-name.sql" },
+        "2": { "name": "keyword.other.create.table.sql" }
+      }
+    },
+    {
+      "match": "(?i:^\\s*(create(?:\\s+or\\s+replace)?)(?:\\s+(algorithm)\\s*=\\s*(undefined|merge|temptable))?(?:\\s+(definer)\\s*=\\s*(?:(current_user)|\\w+))?(?:\\s+(sql\\s+security)\\s*=\\s*(definer|invoker))?\\s+(view)\\s+)(?:([\"`]?)(\\w+)\\9\\.)?([\"`]?)(\\w+)\\11",
+      "name": "meta.create.view.sql",
+      "captures": {
+        "7": { "name": "constant.other.security.mysql.sql" },
+        "3": { "name": "constant.other.algorithm.mysql.sql" },
+        "8": { "name": "keyword.other.view.sql" },
+        "4": { "name": "keyword.other.create.view.mysql.sql" },
+        "5": { "name": "constant.other.definer.mysql.sql" },
+        "1": { "name": "keyword.other.create.sql" },
+        "12": { "name": "entity.name.function.sql" },
+        "6": { "name": "keyword.other.create.view.mysql.sql" },
+        "10": { "name": "entity.other.inherited-class.sql" },
+        "2": { "name": "keyword.other.create.view.mysql.sql" }
+      }
+    },
+    {
+      "match": "(?i:^\\s*(create)(?:\\s+(definer)\\s*=\\s*(?:(current_user)|\\w+))?\\s+(trigger)\\s+(\\w+)\\s+(before|after)\\s+(insert|update|delete)\\s+(on)\\s+)(?:([\"`]?)(\\w+)\\9\\.)?([\"`]?)(\\w+)\\11(?i:\\s+(for)\\s+(each)\\s+(row))",
+      "name": "meta.create.trigger.sql",
+      "captures": {
+        "10": { "name": "constant.other.database-name.sql" },
+        "2": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "15": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "3": { "name": "constant.other.definer.mysql.sql" },
+        "4": { "name": "keyword.other.trigger.sql" },
+        "5": { "name": "entity.name.function.sql" },
+        "12": { "name": "constant.other.table-name.sql" },
+        "6": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "13": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "7": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "8": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "14": { "name": "keyword.other.create.trigger.mysql.sql" },
+        "1": { "name": "keyword.other.create.sql" }
+      }
+    },
+    {
+      "match": "(?i:^\\s*(drop)\\s+(aggregate|conversion|database|domain|function|group|index|language|operator class|operator|rule|schema|sequence|table(?:\\s+if\\s+exists)?|tablespace|trigger|type|user|view))",
+      "name": "meta.drop.sql",
+      "captures": {
+        "1": { "name": "keyword.other.create.sql" },
+        "2": { "name": "keyword.other.sql" }
+      }
+    },
+    {
+      "match": "(?i:\\s*(drop)\\s+(table)\\s+(\\w+)(\\s+cascade)?\\b)",
+      "name": "meta.drop.sql",
+      "captures": {
+        "3": { "name": "entity.name.function.sql" },
+        "1": { "name": "keyword.other.create.sql" },
+        "4": { "name": "keyword.other.cascade.sql" },
+        "2": { "name": "keyword.other.table.sql" }
+      }
+    },
+    {
+      "match": "(?i:^\\s*(alter)\\s+(aggregate|conversion|database|domain|function|group|index|language|operator class|operator|rule|schema|sequence|table|tablespace|trigger|type|user|view)\\s+)",
+      "name": "meta.alter.sql",
+      "captures": {
+        "1": { "name": "keyword.other.create.sql" },
+        "2": { "name": "keyword.other.table.sql" }
+      }
+    },
+    {
+      "match": "(?xi)\n\n\t\t\t\t# Data Types\n\n\t\t\t\t# Non-suffix types\n\t\t\t\t# Capture 1\n\t\t\t\t\\b(year|time(?:stamp)?|date(?:time)?|(?:long|medium|tiny)?blob)\\b\n\n\t\t\t\t# Non-suffix types with optional qualifiers\n\t\t\t\t# Capture 2 + 3i\n\t\t\t\t|\\b((?:long|medium|tiny)?text)\\b(?:\\((\\d+)\\))?\n\n\t\t\t\t# Required numeric suffix types\n\t\t\t\t# Capture 4 + 5i\n\t\t\t\t|\\b(varbinary)\\((\\d+)\\)\n\n\t\t\t\t# Required numeric suffix types with optional qualifiers\n\t\t\t\t# Capture 6 + 7i + 8o + 9c + 10o + 11c\n\t\t\t\t|\\b(varchar)\\((\\d+)\\)(?:\\s+(char(?:set|acter\\sset))\\s+([a-zA-Z0-9]+)(?:\\s+(collate)\\s+([_a-zA-Z0-9]+))?)?\n\n\t\t\t\t# Optianal single numeric suffix\n\t\t\t\t# Capture 12 + 13i\n\t\t\t\t|\\b(bi(?:t|nary))\\b(?:\\((\\d+)\\))?\n\n\t\t\t\t# Optional single numeric suffix with optional qualifiers\n\t\t\t\t# Capture 14 + 15i + 16l + 17l\n\t\t\t\t|\\b((?:big|medium|small|tiny)?int|integer|decimal|numeric)\\b(?:\\((\\d+)\\))?(?:\\s+(unsigned))?(?:\\s+(zerofill))?\n\n\t\t\t\t# Optional single numeric suffix with optional qualifiers\n\t\t\t\t# Capture 18 + 19i + 20o + 21c + 22o + 23c\n\t\t\t\t|\\b(char)\\b(?:\\((\\d+)\\))?(?:\\s+(char(?:set|acter\\sset))\\s+([a-zA-Z0-9]+)(?:\\s+(collate)\\s+([_a-zA-Z0-9]+))?)?\n\n\t\t\t\t# Optional double numeric suffix with optional qualifiers\n\t\t\t\t# Capture 24 + 25i + 26i + 27l + 28l\n\t\t\t\t|\\b(numeric|d(?:ouble|ecimal)|float|real)\\b(?:\\((\\d+),\\s*(\\d+)\\))?(?:\\s+(unsigned))?(?:\\s+(zerofill))?\n\n\t\t\t\t# Required multi-valued suffix with optional qualifiers\n\t\t\t\t# Capture 29 + 30x + 31s + 32o + 33c + 34o + 35c\n\t\t\t\t|\\b(set|enum)\\(([^\\,\\)]+(?:(,\\s*)[^\\,\\)]+)*)\\)(?:\\s+(char(?:set|acter\\sset))\\s+([a-zA-Z0-9]+)(?:\\s+(collate)\\s+([_a-zA-Z0-9]+))?)?\n            \n\t\t\t",
+      "captures": {
+        "3": { "name": "constant.numeric.sql" },
+        "12": { "name": "storage.type.sql" },
+        "21": { "name": "constant.other.charset.mysql.sql" },
+        "4": { "name": "storage.type.sql" },
+        "30": { "name": "constant.other.user-defined.sql" },
+        "13": { "name": "constant.numeric.sql" },
+        "5": { "name": "constant.numeric.sql" },
+        "22": { "name": "keyword.other.mysql.sql" },
+        "6": { "name": "storage.type.sql" },
+        "31": { "name": "source.sql.mysql" },
+        "14": { "name": "storage.type.sql" },
+        "7": { "name": "constant.numeric.sql" },
+        "23": { "name": "constant.other.charset.mysql.sql" },
+        "32": { "name": "keyword.other.mysql.sql" },
+        "15": { "name": "constant.numeric.sql" },
+        "8": { "name": "keyword.other.mysql.sql" },
+        "24": { "name": "storage.type.sql" },
+        "9": { "name": "constant.other.charset.mysql.sql" },
+        "33": { "name": "constant.other.charset.mysql.sql" },
+        "16": { "name": "constant.language.mysql.sql" },
+        "25": { "name": "constant.numeric.sql" },
+        "34": { "name": "keyword.other.mysql.sql" },
+        "17": { "name": "constant.language.mysql.sql" },
+        "26": { "name": "constant.numeric.sql" },
+        "35": { "name": "constant.other.charset.mysql.sql" },
+        "18": { "name": "storage.type.sql" },
+        "27": { "name": "constant.language.mysql.sql" },
+        "19": { "name": "constant.numeric.sql" },
+        "28": { "name": "constant.language.mysql.sql" },
+        "29": { "name": "storage.type.sql" },
+        "10": { "name": "keyword.other.mysql.sql" },
+        "1": { "name": "storage.type.sql" },
+        "11": { "name": "constant.other.charset.mysql.sql" },
+        "2": { "name": "storage.type.sql" },
+        "20": { "name": "keyword.other.mysql.sql" }
+      }
+    },
+    {
+      "match": "(?i:\\b((?:primary|foreign)\\s+key|references|on\\sdelete(\\s+cascade)?|check|constraint)\\b)",
+      "name": "storage.modifier.sql"
+    },
+    {
+      "match": "(?ix)\n\t\t\t\n\t\t\t        # Column Definitions\n\t\t\t        \n\t\t\t        # Capture 1\n\t\t\t        \\b(?:not\\s+)?(null)\\b\n\t\t\t        \n\t\t\t        # Capture\n\t\t\t        |\\b(?:default\\s+)\n\t\t\t        \n\t\t\t        # Capture\n\t\t\t        |\\bauto_increment\\b\n\t\t\t        \n\t\t\t        # Capture\n\t\t\t        |\\b(?:unique(?:\\s+key)?|(?:primary\\s+)?key)\\b\n\t\t\t        \n\t\t\t        # Capture\n\t\t\t        |\\bcomment\\s+\n\t\t\t        \n\t\t\t        # Capture 2\n\t\t\t        |\\bcolumn_format\\s+(d(?:ynamic|efault)|fixed)\\b\n\t\t\t        \n\t\t\t        # Capture 3\n\t\t\t        |\\bstorage\\s+(d(?:isk|efault)|memory)\\b\n\t\t\t        \n\t\t\t",
+      "name": "storage.modifier.mysql.sql",
+      "captures": {
+        "1": { "name": "constant.language.sql" },
+        "2": { "name": "constant.language.mysql.sql" },
+        "3": { "name": "constant.language.mysql.sql" }
+      }
+    },
+    { "match": "\\b\\d+\\b", "name": "constant.numeric.sql" },
+    {
+      "match": "(?i:\\b(select(\\s+distinct)?|insert\\s+(ignore\\s+)?into|update|delete|from|set|where|group\\sby|or|like|and|union(\\s+all)?|having|order\\sby|limit|(inner|cross)\\s+join|straight_join|(left|right)(\\s+outer)?\\s+join|natural(\\s+(left|right)(\\s+outer)?)?\\s+join)\\b)",
+      "name": "keyword.other.DML.sql"
+    },
+    {
+      "match": "(?i:\\b(on|((is\\s+)?not\\s+)?null)\\b)",
+      "name": "keyword.other.DDL.create.II.sql"
+    },
+    { "match": "(?i:\\bvalues\\b)", "name": "keyword.other.DML.II.sql" },
+    {
+      "match": "(?i:\\b(begin(\\s+work)?|start\\s+transaction|commit(\\s+work)?|rollback(\\s+work)?)\\b)",
+      "name": "keyword.other.LUW.sql"
+    },
+    {
+      "match": "(?i:\\b(grant(\\swith\\sgrant\\soption)?|revoke)\\b)",
+      "name": "keyword.other.authorization.sql"
+    },
+    { "match": "(?i:\\bin\\b)", "name": "keyword.other.data-integrity.sql" },
+    {
+      "match": "(?i:^\\s*(comment\\s+on\\s+(table|column|aggregate|constraint|database|domain|function|index|operator|rule|schema|sequence|trigger|type|view))\\s+.*?\\s+(is)\\s+)",
+      "name": "keyword.other.object-comments.sql"
+    },
+    { "match": "(?i)\\bAS\\b", "name": "keyword.other.alias.sql" },
+    { "match": "(?i)\\b(DESC|ASC)\\b", "name": "keyword.other.order.sql" },
+    { "match": "\\*", "name": "keyword.operator.star.sql" },
+    { "match": "[!<>]?=|<>|<|>", "name": "keyword.operator.comparison.sql" },
+    { "match": "-|\\+|/", "name": "keyword.operator.math.sql" },
+    { "match": "\\|\\|", "name": "keyword.operator.concatenator.sql" },
+    {
+      "comment": "List of SQL99 built-in functions from http://www.oreilly.com/catalog/sqlnut/chapter/ch04.html",
+      "match": "(?i)\\b(CURRENT_(DATE|TIME(STAMP)?|USER)|(SESSION|SYSTEM)_USER)\\b",
+      "name": "support.function.scalar.sql"
+    },
+    {
+      "comment": "List of SQL99 built-in functions from http://www.oreilly.com/catalog/sqlnut/chapter/ch04.html",
+      "match": "(?i)\\b(AVG|COUNT|MIN|MAX|SUM)(?=\\s*\\()",
+      "name": "support.function.aggregate.sql"
+    },
+    {
+      "match": "(?i)\\b(CONCATENATE|CONVERT|LOWER|SUBSTRING|TRANSLATE|TRIM|UPPER)\\b",
+      "name": "support.function.string.sql"
+    },
+    {
+      "match": "(?:(?:`?(\\w+)`?)\\.)?(?:`?(\\w+)`?)?\\.`?(\\w+)`?",
+      "captures": {
+        "1": { "name": "constant.other.database-name.sql" },
+        "2": { "name": "constant.other.table-name.sql" },
+        "3": { "name": "constant.other.column-name.sql" }
+      }
+    },
+    { "include": "#strings" },
+    { "include": "#regexps" }
+  ],
+  "name": "SQL (MySQL)",
+  "scopeName": "source.sql.mysql"
+}

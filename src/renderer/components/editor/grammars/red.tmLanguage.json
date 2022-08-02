@@ -1,0 +1,556 @@
+{
+  "name": "Red",
+  "scopeName": "source.red",
+  "uuid": "6BE0E13B-C4DD-478F-953A-2D84DBBCA2BA",
+  "fileTypes": ["red", "reds"],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#type-literal"
+    },
+    {
+      "include": "#logic"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#values"
+    },
+    {
+      "include": "#words"
+    },
+    {
+      "include": "#errors"
+    }
+  ],
+  "repository": {
+    "binary-base-sixty-four": {
+      "begin": "64#\\{",
+      "end": "\\}",
+      "name": "string.other.base64.red",
+      "patterns": [
+        {
+          "include": "#comment-line"
+        },
+        {
+          "match": "[\\w+/=]+",
+          "name": "constant.character.base64.red"
+        }
+      ]
+    },
+    "binary-base-two": {
+      "begin": "2#\\{",
+      "end": "\\}",
+      "name": "string.other.base2.red",
+      "patterns": [
+        {
+          "include": "#comment-line"
+        },
+        {
+          "match": "[01]+",
+          "name": "constant.character.base2.red"
+        }
+      ]
+    },
+    "binary-base-sixteen": {
+      "begin": "(16)?#\\{",
+      "end": "\\}",
+      "name": "string.other.base16.red",
+      "patterns": [
+        {
+          "include": "#comment-line"
+        },
+        {
+          "match": "\\h+",
+          "name": "constant.character.base16.red"
+        }
+      ]
+    },
+    "block-blocks": {
+      "begin": "(\\[)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.embedded.begin.red"
+        }
+      },
+      "end": "(\\])",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.embedded.end.red"
+        }
+      },
+      "name": "meta.group.block.red",
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "block-parens": {
+      "begin": "\\(",
+      "end": "\\)",
+      "name": "meta.group.paren.red",
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "blocks": {
+      "patterns": [
+        {
+          "include": "#block-blocks"
+        },
+        {
+          "include": "#block-parens"
+        }
+      ]
+    },
+    "character": {
+      "begin": "#\"",
+      "end": "\"",
+      "name": "string.character.red",
+      "patterns": [
+        {
+          "include": "#character-inline"
+        },
+        {
+          "match": "[^\"^]",
+          "name": "string.character.red"
+        }
+      ]
+    },
+    "character-html": {
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.entity.html"
+        },
+        "3": {
+          "name": "punctuation.definition.entity.html"
+        }
+      },
+      "match": "(&)([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+)(;)",
+      "name": "constant.character.entity.html"
+    },
+    "character-inline": {
+      "match": "\\^(\\((\\h{2,4}|[a-zA-Z]{3,6})\\)|.)",
+      "name": "constant.character.red"
+    },
+    "comment-line": {
+      "match": ";([^%\\n]|%(?!>))*",
+      "name": "comment.line.semicolon.red"
+    },
+    "comment-multiline-block": {
+      "begin": "comment\\s*\\[",
+      "end": "\\]",
+      "name": "comment.block.red",
+      "patterns": [
+        {
+          "include": "#comment-multiline-block-nested"
+        }
+      ]
+    },
+    "comment-multiline-block-nested": {
+      "begin": "\\[",
+      "end": "\\]",
+      "name": "comment.block.red",
+      "patterns": [
+        {
+          "include": "#comment-multiline-block-nested"
+        }
+      ]
+    },
+    "comment-multiline-string": {
+      "begin": "comment\\s*\\{",
+      "end": "\\}",
+      "name": "comment.block.red",
+      "patterns": [
+        {
+          "include": "#comment-multiline-string-nested"
+        }
+      ]
+    },
+    "comment-multiline-string-nested": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "comment.block.red",
+      "patterns": [
+        {
+          "include": "#comment-multiline-string-nested"
+        }
+      ]
+    },
+    "comment-tag": {
+      "begin": "(?<=^|[\\s\\[\\]()}\"])<!--",
+      "end": "-->",
+      "name": "comment.block.tag.red"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "include": "#comment-shebang"
+        },
+        {
+          "include": "#comment-line"
+        },
+        {
+          "include": "#comment-multiline-string"
+        },
+        {
+          "include": "#comment-multiline-block"
+        },
+        {
+          "include": "#comment-tag"
+        }
+      ]
+    },
+    "comments-shebang": {
+      "match": "^#!/.*red.*",
+      "name": "comment.line.shebang.red"
+    },
+    "error-commas": {
+      "match": ",",
+      "name": "invalid.illegal.comma.red"
+    },
+    "errors": {
+      "patterns": [
+        {
+          "include": "#error-commas"
+        }
+      ]
+    },
+    "logic": {
+      "match": "#\\[(true|false|none)\\]",
+      "name": "constant.language.logic.red"
+    },
+    "string-email": {
+      "match": "[^\\s\\n:/\\[\\]()]+@[^\\s\\n:/\\[\\]()]+",
+      "name": "string.email.red"
+    },
+    "string-rawstring": {
+      "begin": "(%+)\\{",
+      "end": "\\}\\1",
+      "name": "string.other.red"
+    },
+    "string-file": {
+      "match": "%[^\\s\\n\\[\\](){}]*",
+      "name": "string.other.file.red"
+    },
+    "string-file-quoted": {
+      "begin": "%\"",
+      "end": "\"",
+      "name": "string.other.file.red",
+      "patterns": [
+        {
+          "match": "%\\h{2}",
+          "name": "constant.character.hex.red"
+        }
+      ]
+    },
+    "string-issue": {
+      "match": "#[^\\s\\n\\[\\]()]*",
+      "name": "string.other.issue.red"
+    },
+    "string-ref": {
+      "match": "(?<=^|[\\s()\\[\\]}/])@[^\\s\\n\\[\\](){}]+",
+      "name": "string.other.tag.red"
+    },
+    "string-multiline": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "string.other.red",
+      "patterns": [
+        {
+          "include": "#string-rsp-tag"
+        },
+        {
+          "include": "#character-inline"
+        },
+        {
+          "include": "#character-html"
+        },
+        {
+          "include": "#string-nested-multiline"
+        }
+      ]
+    },
+    "string-nested-multiline": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "string.other.red",
+      "patterns": [
+        {
+          "include": "#string-nested-multiline"
+        }
+      ]
+    },
+    "string-quoted": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.red",
+      "patterns": [
+        {
+          "include": "#string-rsp-tag"
+        },
+        {
+          "include": "#character-inline"
+        },
+        {
+          "include": "#character-html"
+        }
+      ]
+    },
+    "string-rsp-tag": {
+      "begin": "<%(==?|:|!)? ",
+      "end": " %>",
+      "name": "source.red.embedded.block.html",
+      "patterns": [
+        {
+          "include": "source.red"
+        }
+      ]
+    },
+    "string-tag": {
+      "begin": "<(?:/|%={0,2} |!)?(?:([\\w\\-]+):)?([\\w\\-:]+)",
+      "captures": {
+        "1": {
+          "name": "entity.other.namespace.xml"
+        },
+        "2": {
+          "name": "entity.name.tag.xml"
+        }
+      },
+      "end": "(?:\\s/| %)?>",
+      "name": "meta.tag.red",
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "entity.other.namespace.xml"
+            },
+            "2": {
+              "name": "entity.other.attribute-name.xml"
+            }
+          },
+          "match": " (?:([\\w-]+):)?([\\w-]+)"
+        },
+        {
+          "include": "#string-tag-double-quoted"
+        },
+        {
+          "include": "#string-tag-single-quoted"
+        }
+      ]
+    },
+    "string-tag-double-quoted": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.xml"
+    },
+    "string-tag-single-quoted": {
+      "begin": "'",
+      "end": "'",
+      "name": "string.quoted.single.xml"
+    },
+    "string-url": {
+      "match": "[A-Za-z][\\w-]{1,15}:(/{0,3}[^\\s\\n\\[\\]()]+|//)",
+      "name": "string.other.url.red"
+    },
+    "strings": {
+      "patterns": [
+        {
+          "include": "#character"
+        },
+        {
+          "include": "#string-quoted"
+        },
+        {
+          "include": "#string-rawstring"
+        },
+        {
+          "include": "#string-multiline"
+        },
+        {
+          "include": "#string-tag"
+        },
+        {
+          "include": "#string-file-quoted"
+        },
+        {
+          "include": "#string-file"
+        },
+        {
+          "include": "#string-url"
+        },
+        {
+          "include": "#string-email"
+        },
+        {
+          "include": "#binary-base-two"
+        },
+        {
+          "include": "#binary-base-sixty-four"
+        },
+        {
+          "include": "#binary-base-sixteen"
+        },
+        {
+          "include": "#string-issue"
+        },
+        {
+          "include": "#string-ref"
+        }
+      ]
+    },
+    "type-literal": {
+      "begin": "#\\[(?:([\\w\\-]+!))",
+      "captures": {
+        "1": {
+          "name": "keyword.control.datatype.red"
+        }
+      },
+      "end": "\\]",
+      "name": "meta.literal.red",
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    "value-date": {
+      "match": "\\d{1,4}\\-(Jan(u(a(ry?)?)?)?|Feb(r(u(a(ry?)?)?)?)?|Mar(ch?)?|Apr(il?)?|May|June?|July?|Aug(u(st?)?)?|Sep(t(e(m(b(er?)?)?)?)?)?|Oct(o(b(er?)?)?)?|Nov(e(m(b(er?)?)?)?)?|Dec(e(m(b(er?)?)?)?)?|[1-9]|1[012])\\-\\d{1,4}(/\\d{1,2}[:]\\d{1,2}([:]\\d{1,2}(\\.\\d{1,5})?)?([+-]\\d{1,2}[:]\\d{1,2})?)?",
+      "name": "constant.other.date.red"
+    },
+    "value-money": {
+      "match": "(?<!\\w)-?[a-zA-Z]*\\$\\d+(\\.\\d{2})?",
+      "name": "constant.numeric.money.red"
+    },
+    "value-number": {
+      "match": "(?<![\\w.,])([-+]?((\\d+[\\d']*[.,]?[\\d']*)|([.,]\\d+[\\d']*))([eE](\\+|-)?\\d+)?)(?=\\W)",
+      "name": "constant.numeric.red"
+    },
+    "value-hex": {
+      "match": "(?<!\\w)[0-9A-F]+[0-9A-F]*h(?=[\\s\\[\\](){\"]|$)",
+      "name": "constant.numeric.hex.red"
+    },
+    "value-pair": {
+      "match": "(?<!\\w)[-+]?\\d+[xX][-+]?\\d+",
+      "name": "constant.numeric.pair.red"
+    },
+    "value-time": {
+      "match": "[+-]?\\d+:\\d+(:\\d+(\\.\\d+)?)?",
+      "name": "constant.numeric.time.red"
+    },
+    "value-tuple": {
+      "match": "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2,9}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.?",
+      "name": "constant.rgb-value.red"
+    },
+    "values": {
+      "patterns": [
+        {
+          "include": "#value-date"
+        },
+        {
+          "include": "#value-time"
+        },
+        {
+          "include": "#value-tuple"
+        },
+        {
+          "include": "#value-number"
+        },
+        {
+          "include": "#value-hex"
+        },
+        {
+          "include": "#value-pair"
+        },
+        {
+          "include": "#value-money"
+        }
+      ]
+    },
+    "word-datatype": {
+      "match": "(?<=^|[\\s\\[\\]()}\"/])[A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*(/([A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-!?*+\\.`~&'^]*|[+-]?\\d+([xX][+-]?\\d+|[.,]\\d+([eE][+-]?\\d+)?)?))*\\!",
+      "name": "storage.type.cs.red"
+    },
+    "word-set": {
+      "match": "[A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*(/([A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*|[+-]?\\d+([xX][+-]?\\d+|[.,]\\d+([eE][+-]?\\d+)?)?))*:",
+      "name": "variable.name.red"
+    },
+    "word-get": {
+      "match": ":[A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*(/([A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*|[+-]?\\d+([xX][+-]?\\d+|[.,]\\d+([eE][+-]?\\d+)?)?)*)*",
+      "name": "variable.other.getword.red"
+    },
+    "word-header": {
+      "match": "(?<=^\\[|^)(Red|Red(/System)?)(?=\\s*\\[)",
+      "name": "keyword.control.header.red"
+    },
+    "word-lit": {
+      "match": "(?<=^|[\\s\\[\\]()}\"/])'[A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*(/([A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-?!*+\\.`~&'^]*|[+-]?\\d+([xX][+-]?\\d+|[.,]\\d+([eE][+-]?\\d+)?)?))*",
+      "name": "constant.other.litword.red"
+    },
+    "word-native": {
+      "match": "(?<=^|[\\s\\[\\]()}\"])(datatype!|unset!|none!|logic!|block!|paren!|string!|file!|url!|char!|integer!|float!|word!|set-word!|lit-word!|get-word!|refinement!|issue!|native!|action!|op!|function!|path!|lit-path!|set-path!|get-path!|routine!|bitset!|point!|object!|typeset!|error!|vector!|hash!|pair!|percent!|tuple!|map!|binary!|series!|time!|tag!|email!|handle!|date!|image!|to|not|remove|while|collect|any|copy|insert|if|quote|set|case|change|clear|move|poke|put|random|reverse|sort|swap|take|trim|uppercase|lowercase|checksum|add|subtract|divide|on-parse-event|try|catch|multiply|browse|throw|math|event!|make|any-type!|return|reflect|form|mold|all|modify|absolute|number!|negate|power|remainder|round|even\\?|odd\\?|and~|complement|or~|xor~|append|at|back|any-object!|find|skip|last|tail|head|head\\?|index\\?|any-word!|length\\?|next|pick|scalar!|any-string!|select|any-function!|tail\\?|delete|query|read|source|as|write|unless|either|until|loop|repeat|forever|foreach|forall|remove-each|func|function|does|has|switch|do|expand|reduce|any-block!|compose|get|print|prin|equal\\?|not-equal\\?|strict-equal\\?|lesser\\?|greater\\?|lesser-or-equal\\?|greater-or-equal\\?|same\\?|type\\?|stats|show|bind|context|in|object|parse|input|union|unique|intersect|difference|exclude|complement\\?|dehex|negative\\?|positive\\?|max|min|shift|to-hex|sine|cosine|tangent|arcsine|arccosine|arctangent|arctangent2|NaN\\?|zero\\?|log-2|log-10|log-e|exp|square-root|construct|value\\?|as-pair|break|continue|exit|extend|debase|enbase|to-local-file|wait|unset|new-line|any-list!|new-line\\?|context\\?|set-env|get-env|list-env|now|sign\\?|any-path!|call|size\\?|decompress|recycle|transcode|on|off|quit|\\+|no|last-lf\\?|get-current-dir|dir|set-current-dir|make-dir|<|true|<>|%|<<|or|null|cause-error|view|unview|error\\?|quit-return|=|none|immediate!|all-word!|none\\?|any-block\\?|system|any-list\\?|word\\?|char\\?|tag\\?|any-string\\?|block\\?|series\\?|binary\\?|\\*|/|attempt|p-indent|newline|url\\?|string\\?|suffix\\?|file\\?|object\\?|body-of|yes|first|second|third|-|>|mod|<=|slash|clean-path|dir\\?|exists\\?|normalize-dir|empty\\?|dirize|create-dir|dbl-quote|to-red-file|space|offset\\?|what-dir|expand-directives|load|Red|split-path|change-dir|path-thru|save|load-thru|sum|to-local-date|false|float\\?|>=|charset|\\?|lf|tab|set-quiet|repend|set-word\\?|q|stop-reactor|words-of|replace|react|function\\?|spec-of|unset\\?|rebol|halt|op\\?|any-function\\?|to-paren|routine|as-color|as-rgba|\\*\\*|class-of|face!|rich-text|size-text|hex-to-rgb|tuple\\?|make-face|gui-console-ctx|debug-info\\?|find-flag\\?|draw|handle\\?|link-tabs-to-parent|link-sub-to-parent|on-face-deep-change\\*|update-font-faces|do-actor|do-safe|event\\?|do-events|white|font-fixed|font-sans-serif|font-serif|transparent|pair\\?|font!|foreach-face|cancel-captions|CR|LF|CRLF|pad|issue\\?|para!|alter|path\\?|typeset\\?|datatype\\?|set-flag|layout|extract|image\\?|rtd-layout|get-word\\?|to-logic|to-set-word|//|to-block|center-face|dump-face|scroller!|request-font|request-file|request-dir|rejoin|dot|ellipsize-at|any-object\\?|map\\?|keys-of|a-an|also|help-string|what|routine\\?|os-info|to-UTC-date|escape|ask|list-dir|probe|action\\?|native\\?|refinement\\?|to-word|comma|get-scroller|caret-to-offset|offset-to-caret|write-clipboard|read-clipboard|integer\\?|red-complete-ctx|highlight|to-string|fstk-logo|gray|shift-right|shift-left|shift-logical|as-ipv4|write-stdout|sp|crlf|pi|internal!|external!|default!|aqua|beige|black|blue|brick|brown|coal|coffee|crimson|cyan|forest|gold|green|ivory|khaki|leaf|linen|magenta|maroon|mint|navy|oldrab|olive|orange|papaya|pewter|pink|purple|reblue|rebolor|sienna|silver|sky|snow|tanned|teal|violet|water|wheat|yello|yellow|glass|alert|comment|\\?\\?|fourth|fifth|values-of|bitset\\?|email\\?|get-path\\?|hash\\?|lit-path\\?|lit-word\\?|logic\\?|paren\\?|percent\\?|set-path\\?|time\\?|date\\?|vector\\?|any-path\\?|any-word\\?|number\\?|immediate\\?|scalar\\?|all-word\\?|to-bitset|to-binary|to-char|to-email|to-file|to-float|to-get-path|to-get-word|to-hash|to-integer|to-issue|to-lit-path|to-lit-word|to-map|to-none|to-pair|to-path|to-percent|to-refinement|to-set-path|to-tag|to-time|to-typeset|to-tuple|to-unset|to-url|to-image|to-date|parse-trace|modulo|eval-set-path|extract-boot-args|flip-exe-flag|split|do-file|exists-thru\\?|read-thru|do-thru|cos|sin|tan|acos|asin|atan|atan2|sqrt|average|==|=\\?|>>|>>>|and|xor|reactor!|deep-reactor!|clear-reactions|dump-reactions|is|react\\?|preprocessor|within\\?|overlap\\?|distance\\?|face\\?|offset-to-char|metrics\\?|insert-event-func|remove-event-func|set-focus|help-ctx|help|fetch-help|about|ls|ll|pwd|cd|red-complete-input|tips!|self)((?=/[A-Za-z_=\\-?!*+\\.`~&^])|(?=[\\s\\[\\](){\"]|$))",
+      "name": "storage.type.function.red"
+    },
+    "word-native-reds": {
+      "match": "(?<=^|[\\s\\[\\]()}\"])(\\?\\?|as|assert|size\\?|if|either|case|switch|until|while|loop|any|all|exit|return|break|continue|catch|declare|use|null|context|with|comment|true|false|func|function|alias)((?=/[A-Za-z_=\\-?!*+\\.`~&^])|(?=[\\s\\[\\](){\"]|$))",
+      "name": "storage.type.function.reds.red"
+    },
+    "word-parse": {
+      "match": "(?<=^|[\\s\\[\\]()}\"])(thru|some|opt|end|into|ahead|then|fail|keep)(?=[\\s\\[\\](){\"]|$)",
+      "name": "keyword.control.parse.red"
+    },
+    "word-qm": {
+      "match": "(?<=^|[\\s\\[\\]()}\"])(qm|route|render|redirect-to|publish|response|validate|verify|get-param|get-cookie|set-cookie|require)(/(?=[A-Za-z_=\\-?!*+\\.`~&^])|(?=[\\s\\[\\](){\"]))",
+      "name": "keyword.control.qm.red"
+    },
+    "word-refine": {
+      "match": "/([A-Za-z_=\\-?!*+\\.`~&^][\\w=\\-!?*\\.`~&'^]*|[+-]?\\d+([xX][+-]?\\d+|[.,]\\d+([eE][+-]?\\d+)?)?)",
+      "name": "constant.other.word.refinement.red"
+    },
+    "words": {
+      "name": "meta.word.red",
+      "patterns": [
+        {
+          "include": "#word-datatype"
+        },
+        {
+          "include": "#word-set"
+        },
+        {
+          "include": "#word-get"
+        },
+        {
+          "include": "#word-lit"
+        },
+        {
+          "include": "#word-header"
+        },
+        {
+          "include": "#word-native"
+        },
+        {
+          "include": "#word-native-reds"
+        },
+        {
+          "include": "#word-refine"
+        },
+        {
+          "include": "#word-parse"
+        },
+        {
+          "include": "#word-qm"
+        },
+        {
+          "include": "#word"
+        }
+      ]
+    }
+  },
+  "version": "https://github.com/yoyocat/red-vscode/commit/47c7f19488476299148785c1d39c32860abfaa5a"
+}

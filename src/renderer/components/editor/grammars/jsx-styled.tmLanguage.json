@@ -1,0 +1,112 @@
+{
+  "fileTypes": ["js", "jsx", "ts", "tsx"],
+  "injectionSelector": "L:source -comment -string",
+  "patterns": [
+    {
+      "begin": "\\s*(<)(style) (jsx|global jsx|jsx global)(>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.ts.tsx"
+        },
+        "2": {
+          "name": "entity.name.tag.ts.tsx"
+        },
+        "3": {
+          "name": "entity.other.attribute-name.ts.tsx"
+        },
+        "4": {
+          "name": "punctuation.definition.tag.end.ts.tsx"
+        },
+        "5": {
+          "name": "punctuation.definition.tag.begin.ts.tsx"
+        },
+        "6": {
+          "name": "entity.name.tag.ts.tsx"
+        },
+        "7": {
+          "name": "entity.other.attribute-name.ts.tsx"
+        },
+        "8": {
+          "name": "punctuation.definition.tag.end.ts.tsx"
+        },
+        "9": {
+          "name": "punctuation.definition.tag.begin.ts.tsx"
+        },
+        "10": {
+          "name": "entity.name.tag.ts.tsx"
+        },
+        "12": {
+          "name": "entity.other.attribute-name.ts.tsx"
+        },
+        "13": {
+          "name": "punctuation.definition.tag.end.ts.tsx"
+        }
+      },
+      "end": "(</)(style)(>)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.ts.tsx"
+        },
+        "2": {
+          "name": "entity.name.tag.ts.tsx"
+        },
+        "3": {
+          "name": "punctuation.definition.tag.end.ts.tsx"
+        }
+      },
+      "patterns": [
+        {
+          "begin": "({)(`)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.block.js"
+            },
+            "2": {
+              "name": "punctuation.definition.string.template.begin.js string.template.js"
+            }
+          },
+          "end": "(`)(})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.template.begin.js string.template.js"
+            },
+            "2": {
+              "name": "punctuation.definition.block.js"
+            }
+          },
+          "patterns": [{ "include": "source.css.jsx.styled" }]
+        }
+      ]
+    },
+    {
+      "contentName": "source.css.scss",
+      "begin": "(?:(?:(\\bcss\\.)(resolve|global))|(\\bcss))(`)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.accessor.js"
+        },
+        "2": {
+          "name": "entity.name.function.tagged-template.js"
+        },
+        "3": {
+          "name": "entity.name.function.tagged-template.js"
+        },
+        "4": {
+          "name": "punctuation.definition.string.template.begin.js string.template.js"
+        }
+      },
+      "end": "`",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.template.end.js string.template.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css.jsx.styled"
+        }
+      ]
+    }
+  ],
+  "scopeName": "styled-jsx"
+}

@@ -1,0 +1,766 @@
+{
+  "name": "Second Life LSL",
+  "scopeName": "source.lsl",
+  "fileTypes": [".lsl"],
+  "uuid": "21B2E01B-B911-4B99-975E-4787BEAE6697",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#script-top-level"
+    }
+  ],
+  "repository": {
+    "declarations": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#state-declaration"
+        },
+        {
+          "include": "#variable-declaration"
+        },
+        {
+          "include": "#function-declaration"
+        }
+      ]
+    },
+    "script-top-level": {
+      "patterns": [
+        {
+          "include": "#statement"
+        },
+        {
+          "include": "#punctuation-semicolon"
+        }
+      ]
+    },
+    "state-declaration": {
+      "begin": "\\b(default)|((state)\\s+([_[:alpha:]][_[:alnum:]]*))\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.lsl"
+        },
+        "3": {
+          "name": "keyword.other.lsl"
+        },
+        "4": {
+          "name": "entity.name.type.state.lsl"
+        }
+      },
+      "end": "(?<=\\})",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "begin": "\\{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.curlybrace.open.lsl"
+            }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.curlybrace.close.lsl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#event-declaration"
+            }
+          ]
+        }
+      ]
+    },
+    "variable-declaration": {
+      "begin": "([_[:alpha:]][_[:alnum:]]*)\\s+([_[:alpha:]][_[:alnum:]]*)\\s*(?=;|=|\\))",
+      "beginCaptures": {
+        "1": {
+          "patterns": [
+            {
+              "include": "#type"
+            }
+          ]
+        },
+        "2": {
+          "name": "entity.name.variable.lsl"
+        }
+      },
+      "end": "(?=;|\\))",
+      "patterns": [
+        {
+          "name": "entity.name.variable.lsl",
+          "match": "[_[:alpha:]][_[:alnum:]]*"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#variable-initializer"
+        }
+      ]
+    },
+    "variable-initializer": {
+      "begin": "(?<!=|!)(=)(?!=|>)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.operator.assignment.lsl"
+        }
+      },
+      "end": "(?=[\\)\\];}])",
+      "patterns": [
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "function-declaration": {
+      "begin": "(([[:alpha:]]+)\\s+)?([_[:alpha:]][_[:alnum:]]*)\\s*(?=\\()",
+      "beginCaptures": {
+        "2": {
+          "patterns": [
+            {
+              "include": "#type"
+            }
+          ]
+        },
+        "3": {
+          "name": "entity.name.function.lsl"
+        }
+      },
+      "end": "(?<=\\})",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#parenthesized-parameter-list"
+        },
+        {
+          "include": "#block"
+        }
+      ]
+    },
+    "event-declaration": {
+      "begin": "([_[:alpha:]][_[:alnum:]]*)\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.function.event.lsl"
+        }
+      },
+      "end": "(?<=\\})",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#parenthesized-parameter-list"
+        },
+        {
+          "include": "#block"
+        }
+      ]
+    },
+    "parenthesized-parameter-list": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.open.lsl"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.close.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "match": "\\b([_[:alpha:]][_[:alnum:]]*)\\s*(?=[,)])",
+          "captures": {
+            "1": {
+              "name": "entity.name.variable.parameter.lsl"
+            }
+          }
+        },
+        {
+          "include": "#type"
+        },
+        {
+          "include": "punctuation-comma"
+        }
+      ]
+    },
+    "block": {
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.curlybrace.open.lsl"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.curlybrace.close.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "statement": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#while-statement"
+        },
+        {
+          "include": "#do-statement"
+        },
+        {
+          "include": "#for-statement"
+        },
+        {
+          "include": "#if-statement"
+        },
+        {
+          "include": "#else-part"
+        },
+        {
+          "include": "#jump-statement"
+        },
+        {
+          "include": "#return-statement"
+        },
+        {
+          "include": "#labeled-statement"
+        },
+        {
+          "include": "#variable-declaration"
+        },
+        {
+          "include": "#block"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#punctuation-semicolon"
+        }
+      ]
+    },
+    "if-statement": {
+      "begin": "(?<!\\.)\\b(if)\\b\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.conditional.if.lsl"
+        }
+      },
+      "end": "(?<=\\})|(?=;)",
+      "patterns": [
+        {
+          "begin": "\\(",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.open.lsl"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.close.lsl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expression"
+            }
+          ]
+        },
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "else-part": {
+      "begin": "(?<!\\.)\\b(else)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.conditional.else.lsl"
+        }
+      },
+      "end": "(?<=\\})|(?=;)",
+      "patterns": [
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "do-statement": {
+      "begin": "(?<!\\.)\\b(do)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.loop.do.lsl"
+        }
+      },
+      "end": "(?=;|})",
+      "patterns": [
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "while-statement": {
+      "begin": "(?<!\\.)\\b(while)\\b\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.loop.while.lsl"
+        }
+      },
+      "end": "(?<=\\})|(?=;)",
+      "patterns": [
+        {
+          "begin": "\\(",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.open.lsl"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.close.lsl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expression"
+            }
+          ]
+        },
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "for-statement": {
+      "begin": "(?<!\\.)\\b(for)\\b\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.loop.for.lsl"
+        }
+      },
+      "end": "(?<=\\})|(?=;)",
+      "patterns": [
+        {
+          "begin": "\\(",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.open.lsl"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.parenthesis.close.lsl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expression"
+            },
+            {
+              "include": "#punctuation-comma"
+            },
+            {
+              "include": "#punctuation-semicolon"
+            }
+          ]
+        },
+        {
+          "include": "#statement"
+        }
+      ]
+    },
+    "jump-statement": {
+      "begin": "(?<!\\.)\\b(jump)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.jump.lsl"
+        }
+      },
+      "end": "(?=;)",
+      "patterns": [
+        {
+          "begin": "\\b(jump)\\b",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.case.lsl"
+            }
+          },
+          "end": "(?=;)",
+          "patterns": [
+            {
+              "include": "#expression"
+            }
+          ]
+        },
+        {
+          "name": "entity.name.label.lsl",
+          "match": "[_[:alpha:]][_[:alnum:]]*"
+        }
+      ]
+    },
+    "return-statement": {
+      "begin": "(?<!\\.)\\b(return)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.flow.return.lsl"
+        }
+      },
+      "end": "(?=;)",
+      "patterns": [
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "labeled-statement": {
+      "match": "(\\@)([_[:alpha:]][_[:alnum:]]*)\\s*(;)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.ampersand.lsl"
+        },
+        "2": {
+          "name": "entity.name.label.lsl"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#punctuation-semicolon"
+            }
+          ]
+        }
+      }
+    },
+    "expression": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#bracketed-list"
+        },
+        {
+          "include": "#expression-operators"
+        },
+        {
+          "include": "#invocation-expression"
+        },
+        {
+          "include": "#cast-expression"
+        },
+        {
+          "include": "#literal"
+        },
+        {
+          "include": "#parenthesized-expression"
+        },
+        {
+          "include": "#constant-identifier"
+        },
+        {
+          "include": "#identifier"
+        }
+      ]
+    },
+    "expression-operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.compound.lsl",
+          "match": "\\*=|/=|%=|\\+=|-="
+        },
+        {
+          "name": "keyword.operator.bitwise.shift.lsl",
+          "match": "<<|>>"
+        },
+        {
+          "name": "keyword.operator.comparison.lsl",
+          "match": "==|!="
+        },
+        {
+          "name": "keyword.operator.relational.lsl",
+          "match": "<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.logical.lsl",
+          "match": "\\!|&&|\\|\\|"
+        },
+        {
+          "name": "keyword.operator.bitwise.lsl",
+          "match": "\\&|~|\\^|\\|"
+        },
+        {
+          "name": "keyword.operator.assignment.lsl",
+          "match": "\\="
+        },
+        {
+          "name": "keyword.operator.decrement.lsl",
+          "match": "--"
+        },
+        {
+          "name": "keyword.operator.increment.lsl",
+          "match": "\\+\\+"
+        },
+        {
+          "name": "keyword.operator.arithmetic.lsl",
+          "match": "%|\\*|/|-|\\+"
+        }
+      ]
+    },
+    "bracketed-list": {
+      "begin": "(?=(\\[))",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.squarebracket.open.lsl"
+        }
+      },
+      "end": "(?=(\\]))",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.squarebracket.close.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "begin": "(?<=\\[)",
+          "end": "(?=\\])",
+          "patterns": [
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#punctuation-comma"
+            },
+            {
+              "include": "#expression"
+            }
+          ]
+        }
+      ]
+    },
+    "invocation-expression": {
+      "begin": "([_[:alpha:]][_[:alnum:]]*)\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.function.lsl"
+        }
+      },
+      "end": "(?<=\\))",
+      "patterns": [
+        {
+          "include": "#argument-list"
+        }
+      ]
+    },
+    "argument-list": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.open.lsl"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.close.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#argument"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "argument": {
+      "patterns": [
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "cast-expression": {
+      "match": "(\\()\\s*([_[:alpha:]][_[:alnum:]]*)\\s*(\\))(?=\\s*[_[:alnum:]\\(])",
+      "captures": {
+        "1": {
+          "name": "punctuation.parenthesis.open.lsl"
+        },
+        "2": {
+          "patterns": [
+            {
+              "include": "#type"
+            }
+          ]
+        },
+        "3": {
+          "name": "punctuation.parenthesis.close.lsl"
+        }
+      }
+    },
+    "literal": {
+      "patterns": [
+        {
+          "include": "#numeric-literal"
+        },
+        {
+          "include": "#string-literal"
+        }
+      ]
+    },
+    "numeric-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.lsl",
+          "match": "\\b0(x|X)[0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.lsl",
+          "match": "\\b([0-9]+)?\\.[0-9]+((e|E)[+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.lsl",
+          "match": "\\b[0-9]+(\\.[0-9]*)?((e|E)[+-]?[0-9]+)?\\b"
+        }
+      ]
+    },
+    "string-literal": {
+      "name": "string.quoted.double.lsl",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.lsl"
+        }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string-character-escape"
+        }
+      ]
+    },
+    "string-character-escape": {
+      "name": "constant.character.escape.lsl",
+      "match": "\\\\."
+    },
+    "parenthesized-expression": {
+      "begin": "\\(",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.open.lsl"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.parenthesis.close.lsl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "constant-identifier": {
+      "patterns": [
+        {
+          "name": "variable.other.constant.lsl",
+          "match": "(?<!\\.)\\b([A-Z][A-Z_]+)\\b"
+        }
+      ]
+    },
+    "identifier": {
+      "name": "variable.other.readwrite.lsl",
+      "match": "[_[:alpha:]][_[:alnum:]]*"
+    },
+    "type": {
+      "match": "\\b(float|integer|key|list|quaternion|rotation|string|vector)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.type.lsl"
+        }
+      }
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block.lsl",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.lsl"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.lsl"
+            }
+          }
+        },
+        {
+          "begin": "(^[ \\t]+)?(?=//)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.lsl"
+            }
+          },
+          "end": "(?=$)",
+          "patterns": [
+            {
+              "name": "comment.line.double-slash.lsl",
+              "begin": "//",
+              "beginCaptures": {
+                "0": {
+                  "name": "punctuation.definition.comment.lsl"
+                }
+              },
+              "end": "(?=$)"
+            }
+          ]
+        }
+      ]
+    },
+    "punctuation-comma": {
+      "name": "punctuation.separator.comma.lsl",
+      "match": ","
+    },
+    "punctuation-semicolon": {
+      "name": "punctuation.terminator.statement.lsl",
+      "match": ";"
+    }
+  }
+}

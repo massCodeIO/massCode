@@ -1,0 +1,107 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "source.asymptote",
+  "name": "Asymptote",
+  "foldingStartMarker": "(\\{|\\[|\\()\\s*$",
+  "foldingStopMarker": "^\\s*(\\}|\\]\\))",
+  "repository": {
+    "const_keywords": {
+      "match": "\\b(deepmagenta|deepblue|Dotted|deepgray|left|arrowangle|identity4|yellow|realEpsilon|mediumyellow|darkred|invert|realDigits|arcarrowangle|defaultpen|default|red|arrowtexfactor|Allow|mantissaBits|Suppress|lightblue|settings|legendmargin|gray|royalblue|darkcyan|defaultfilename|heavygreen|SSW|olive|labelmargin|Yellow|palemagenta|spinner|invisible|sqrtEpsilon|lightmagenta|nan|palegray|infinity|nomarker|CCW|dotfactor|NoAlign|ESE|realMax|stdout|Fill|legendhskip|plain_scaling|mediumblue|beveljoin|lightgray|expansionfactor|SW|blue|legendvskip|heavyred|palecyan|bracedefaultratio|magenta|pt|longdashed|NNE|currentpatterns|NoSide|squarepen|NoFill|darkbrown|E|chartreuse|Move|Black|nullpen|version|arrowhookfactor|lightred|lightyellow|MarkFill|salmon|count|dashed|currentpicture|extendcap|bracemidangle|inXasyMode|defaultseparator|arrowlength|nullpath|zerowinding|lightcyan|VERSION|NW|cm|mediumred|N|lightgrey|plus|braceinnerangle|dot|BeginPoint|viewportmargin|evenodd|cputimeformat|circlescale|currentprojection|pink|Label|paleyellow|deepcyan|mediummagenta|defaultformat|roundcap|randMax|SuppressQuiet|braceouterangle|ocgindex|IgnoreAspect|miterjoin|unitcircle|Draw|dotted|right|palegrey|plain|Mark|inches|inch|LeftSide|Cyan|ignore|basealign|darkmagenta|grey|arcarrowfactor|NE|currentpen|mediumcyan|viewportsize|intMax|arrow2sizelimit|squarecap|CW|diagnostics|heavycyan|mediumgrey|white|W|deepyellow|lightgreen|TeXHead|Aspect|undefined|arrowfactor|stdin|fuchsia|legendmaxrelativewidth|heavygrey|intMin|JOIN_IN|down|Magenta|HookHead|orange|dotframe|colorPen|debugging|heavyblue|SE|longdashdotted|UnFill|darkgrey|mediumgreen|deepgreen|black|MarkPath|deepgrey|ENE|currentlight|darkgray|roundjoin|circleprecision|cyan|Align|arrowbarb|EndPoint|up|Center|paleblue|debuggerlines|pi|MidPoint|legendlinelength|darkblue|file3|palered|S|FillDraw|heavygray|barfactor|lightolive|deepred|xformStack|arrowdir|bp|shipped|brown|arrowsizelimit|WNW|NNW|mm|mediumgray|MoveQuiet|springgreen|plain_bounds|solid|darkolive|heavymagenta|dashdotted|unitsquare|SSE|monoPen|DefaultHead|purple|SimpleHead|inf|I|nobasealign|green|JOIN_OUT|realMin|palegreen|WSW|camerafactor|RightSide|darkgreen)\\b",
+      "name": "support.constant"
+    },
+    "type_keywords": {
+      "match": "\\b(pen|scaleT|marginT|autoscaleT|slice|coord|int|Legend|bool|pair|indexedTransform|transformation|projection|processtime|bool3|light|pairOrTriple|align|marker|filltype|coords3|arrowhead|frame|framedTransformStack|real|scaling|side|transform|file|hsv|path3|Label|position|string|ScaleT|picture|object|triple|path|cputime|coords2|bounds|guide)\\b",
+      "name": "support.class"
+    },
+    "operator_keywords": {
+      "match": "(\\*|\\+|\\#|\\-\\-|\\>\\=|\\-|\\,|\\-\\-\\-|\\.\\.|\\<|\\!|\\&|\\=\\=|\\<\\=|\\>|\\=|\\||\\%|\\/|\\^|\\:\\:|\\!\\=)",
+      "name": "keyword.operator"
+    },
+    "prim_type_keywords": {
+      "match": "\\b(void|code)\\b",
+      "name": "storage.type"
+    }
+  },
+  "patterns": [
+    {
+      "match": "//.*$",
+      "name": "comment.line.double-slash"
+    },
+    {
+      "match": "\\b(const|static|explicit|struct|typedef)\\b",
+      "name": "storage.modifier"
+    },
+    {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language"
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block"
+    },
+    {
+      "match": "\\s+\"(.*)\"",
+      "name": "string.quoted.double"
+    },
+    {
+      "begin": "(?<!\\s)\"{1}",
+      "end": "\"{1}",
+      "name": "string.quoted.double",
+      "patterns": [
+        {
+          "include": "text.tex.latex"
+        }
+      ]
+    },
+    {
+      "match": "\\'.*?\\'",
+      "name": "string.quoted.single"
+    },
+    {
+      "match": "\\b(if|else|while|for|do|break|return|continue|unravel)\\b",
+      "name": "keyword.control"
+    },
+    {
+      "match": "\\b(new|cast|ecast|init)\\b",
+      "name": "keyword.operator"
+    },
+    {
+      "match": "\\b(import|include|as|access|from|operator|quote)\\b",
+      "name": "keyword.other"
+    },
+    {
+      "match": "\\b(\\d*)(\\.?)\\d+",
+      "name": "constant.numeric"
+    },
+    {
+      "match": "\\b([a-zA-Z_]\\w*)\\s*\\(",
+      "captures": {
+        "1": {
+          "name": "entity.name.function"
+        }
+      }
+    },
+    {
+      "begin": "\\b(quote)\\s*\\{",
+      "end": "\\}",
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    {
+      "include": "#const_keywords"
+    },
+    {
+      "include": "#type_keywords"
+    },
+    {
+      "include": "#operator_keywords"
+    },
+    {
+      "include": "#prim_type_keywords"
+    }
+  ]
+}

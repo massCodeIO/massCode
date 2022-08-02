@@ -28,6 +28,9 @@
     "*.{js,ts,vue}": [
       "prettier --write",
       "eslint --fix"
+    ],
+    "*.json": [
+      "prettier --write"
     ]
   },
   "dependencies": {

@@ -801,7 +801,7 @@ export const languages: LanguageOption[] = [
     name: 'SQLServer',
     value: 'sqlserver',
     grammar: () => import('./grammars/sql.tmLanguage.json'),
-    scopeName: 'source.sql'
+    scopeName: 'source.sqlserver'
   },
   {
     name: 'Stylus',

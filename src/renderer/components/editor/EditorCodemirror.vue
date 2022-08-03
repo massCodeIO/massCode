@@ -2,7 +2,7 @@
   <div class="editor">
     <div
       ref="editorRef"
-      class="main"
+      class="body"
     />
     <div class="footer">
       <span>
@@ -29,23 +29,18 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  reactive,
-  ref,
-  watch
-} from 'vue'
-import type { Ace } from 'ace-builds'
-import ace from 'ace-builds'
-import './module-resolver'
-import type { Language } from '@shared/types/renderer/editor'
+import CodeMirror from 'codemirror'
+import 'codemirror/addon/edit/closebrackets'
+import 'codemirror/addon/search/search'
+import 'codemirror/addon/search/searchcursor'
+import 'codemirror/lib/codemirror.css'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { i18n, ipc, track } from '@/electron'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
-import { ipc, track, i18n } from '@/electron'
+import { loadThemes, getThemeName } from './themes'
+import type { Language } from '@shared/types/renderer/editor'
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
 
@@ -58,14 +53,12 @@ interface Props {
   isSearchMode: boolean
 }
 
+const props = defineProps<Props>()
+
 interface Emits {
   (e: 'update:modelValue', value: string): void
   (e: 'update:lang', value: string): void
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  lang: 'typescript'
-})
 
 const emit = defineEmits<Emits>()
 
@@ -74,16 +67,20 @@ const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
 
 const editorRef = ref()
-const cursorPosition = reactive({
-  row: 0,
-  column: 0
-})
-let editor: Ace.Editor
+let editor: CodeMirror.Editor
 
 const localLang = computed({
   get: () => props.lang,
   set: v => emit('update:lang', v)
 })
+
+const cursorPosition = reactive({
+  row: 0,
+  column: 0
+})
+
+const fontSize = computed(() => appStore.editor.fontSize + 'px')
+const fontFamily = computed(() => appStore.editor.fontFamily)
 
 const forceRefresh = ref()
 
@@ -118,35 +115,26 @@ const editorHeight = computed(() => {
 const footerHeight = computed(() => appStore.sizes.editor.footerHeight + 'px')
 
 const init = async () => {
-  editor = ace.edit(editorRef.value, {
-    theme: `ace/theme/${appStore.editor.theme}`,
-    useWorker: false,
-    fontSize: appStore.editor.fontSize,
-    fontFamily: appStore.editor.fontFamily,
-    printMargin: false,
+  await loadThemes()
+
+  editor = CodeMirror(editorRef.value, {
+    value: props.modelValue,
+    mode: props.lang,
+    theme: getThemeName(appStore.theme) || 'GitHub',
+    lineWrapping: Boolean(appStore.editor.wrap),
+    lineNumbers: true,
     tabSize: appStore.editor.tabSize,
-    wrap: appStore.editor.wrap,
-    showInvisibles: appStore.editor.showInvisibles,
-    highlightGutterLine: appStore.editor.highlightGutter,
-    highlightActiveLine: appStore.editor.highlightLine
+    autoCloseBrackets: true
   })
 
-  setValue()
-  setLang()
-
-  // Удаляем некторые шорткаты
-  // @ts-ignore
-  editor.commands.removeCommand('find')
-  editor.commands.removeCommand('gotoline')
-  editor.commands.removeCommand('showSettingsMenu')
-
-  // События
   editor.on('change', () => {
     emit('update:modelValue', editor.getValue())
   })
-  editor.selection.on('changeCursor', () => {
+
+  editor.on('cursorActivity', () => {
     getCursorPosition()
   })
+
   editor.on('focus', async () => {
     if (snippetStore.searchQuery?.length) {
       snippetStore.searchQuery = undefined
@@ -155,24 +143,37 @@ const init = async () => {
       emitter.emit('scroll-to:snippet', snippetStore.selectedId!)
     }
   })
-
-  // Фиксированный размер для колонки чисел строк
-  // @ts-ignore
-  editor.session.gutterRenderer = {
-    getWidth: () => 20,
-    getText: (session: any, row: number) => {
-      return row + 1
-    }
-  }
 }
 
-const setValue = () => {
-  const pos = editor.session.selection.toJSON()
-  editor.setValue(props.modelValue)
-  editor.session.selection.fromJSON(pos)
+const setValue = (value: string) => {
+  if (!editor) return
 
-  if (snippetStore.searchQuery) {
-    findAll(snippetStore.searchQuery)
+  const cursor = editor.getCursor()
+  editor.setValue(value)
+
+  if (cursor) editor.setCursor(cursor)
+}
+
+const setLang = (lang: string) => {
+  if (!editor) return
+  editor.setOption('mode', lang)
+}
+
+const getCursorPosition = () => {
+  const { line, ch } = editor.getCursor()
+  cursorPosition.row = line
+  cursorPosition.column = ch
+}
+
+const findAll = (query: string) => {
+  const re = new RegExp(query, 'gmi')
+  const cursor = editor.getSearchCursor(re)
+
+  // TODO: найти новое решение, так как не всегда данное отрабатывает корректно
+  while (cursor.findNext()) {
+    editor.markText(cursor.from(), cursor.to(), {
+      className: appStore.isLightTheme ? 'mark mark--light' : 'mark'
+    })
   }
 }
 
@@ -209,7 +210,6 @@ const format = async () => {
 
   if (props.lang === 'javascript') parser = 'babel'
   if (props.lang === 'graphqlschema') parser = 'graphql'
-  if (props.lang === 'jade') parser = 'pug'
   if (shellLike.includes(props.lang)) parser = 'sh'
 
   try {
@@ -218,108 +218,71 @@ const format = async () => {
       parser
     })
     await snippetStore.patchCurrentSnippetContentByKey('value', formatted)
-    setValue()
+    setValue(formatted)
     track('snippets/format')
   } catch (err) {
     console.error(err)
   }
 }
 
-const setLang = () => {
-  editor.session.setMode(`ace/mode/${localLang.value}`)
-  track('snippets/set-language', localLang.value)
-}
+watch(
+  () => props.modelValue,
+  () => {
+    setValue(props.modelValue)
 
-const resetUndoStack = () => {
-  editor.getSession().setUndoManager(new ace.UndoManager())
-}
-
-const setCursorToStartAndClearSelection = () => {
-  editor.moveCursorTo(0, 0)
-  editor.clearSelection()
-}
-
-const findAll = (q: string) => {
-  if (q === '') return
-
-  const prevMarks = editor.session.getMarkers()
-
-  if (prevMarks) {
-    for (const i of Object.keys(prevMarks)) {
-      editor.session.removeMarker(prevMarks[Number(i)].id)
+    if (snippetStore.searchQuery) {
+      findAll(snippetStore.searchQuery)
     }
   }
-
-  editor.findAll(q, { caseSensitive: false, preventScroll: true })
-}
-
-const getCursorPosition = () => {
-  const { row, column } = editor.getCursorPosition()
-  cursorPosition.row = row
-  cursorPosition.column = column
-}
-
-onMounted(() => {
-  init()
-})
-
-watch(
-  () => props.lang,
-  () => setLang()
 )
 
 watch(
   () => [props.snippetId, props.fragmentIndex].concat(),
-  () => setValue()
-)
-
-watch(
-  () => snippetStore.searchQuery,
-  v => {
-    if (v) findAll(v)
-  }
-)
-
-watch(
-  () => [props.snippetId, props.fragmentIndex],
   () => {
-    resetUndoStack()
-    if (!props.isSearchMode) {
-      setCursorToStartAndClearSelection()
+    if (editor) {
+      editor.clearHistory()
     }
   }
 )
 
 watch(
-  () => snippetStore.isCodePreview,
+  () => props.lang,
   () => {
-    // Пока не нашел другого способа обновить высоту редактора в этом случае.
-    // Странно то, что при ресайзе окна, высота редактора корректно высчитывается
-    const scrollTop = editor.session.getScrollTop()
-
-    editor.destroy()
-    nextTick(() => {
-      init()
-      editor.session.setScrollTop(scrollTop)
-    })
+    setLang(props.lang)
   }
 )
 
 emitter.on('snippet:format', () => format())
 
-onUnmounted(() => {
-  emitter.off('snippet:format')
+onMounted(() => {
+  init()
 })
 
-window.addEventListener('resize', () => {
-  forceRefresh.value = Math.random()
+onUnmounted(() => {
+  emitter.off('snippet:format')
 })
 </script>
 
 <style lang="scss" scoped>
 .editor {
   padding-top: 4px;
-  .main {
+  height: 100%;
+  :deep(.CodeMirror) {
+    height: 100%;
+    font-size: v-bind(fontSize);
+    font-family: v-bind(fontFamily);
+    line-height: calc(v-bind(fontSize) * 1.5);
+  }
+  :deep(.mark) {
+    background-color: yellow;
+    color: #000;
+    border-radius: 2px;
+  }
+  :deep(.mark--light) {
+    background-color: var(--color-primary);
+    color: #fff;
+  }
+  .body {
     height: v-bind(editorHeight);
   }
   .footer {

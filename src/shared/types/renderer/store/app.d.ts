@@ -25,15 +25,13 @@ export interface AppSizes {
 }
 
 export interface EditorSettings {
-  showInvisibles: boolean
   fontSize: number
   fontFamily: string
-  wrap: Ace.EditSessionOptions['wrap']
+  wrap: boolean
   tabSize: number
   trailingComma: 'all' | 'none' | 'es5'
   semi: boolean
   singleQuote: boolean
-  theme: string
   highlightLine: boolean
   highlightGutter: boolean
 }

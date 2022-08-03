@@ -6,8 +6,8 @@
       v-bind="$attrs"
     >
       <option
-        v-for="i in options"
-        :key="i.value"
+        v-for="(i, index) in options"
+        :key="index"
         :value="i.value"
       >
         {{ i.label }}
@@ -21,7 +21,7 @@
 import { computed } from 'vue'
 
 interface Props {
-  options: { label: string; value: string }[]
+  options: { label: string; value: string | boolean }[]
   modelValue: any
 }
 

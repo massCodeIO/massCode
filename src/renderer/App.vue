@@ -77,7 +77,7 @@ const init = async () => {
   if (theme) {
     appStore.setTheme(theme)
   } else {
-    appStore.setTheme('light:chrome')
+    appStore.setTheme('light:github')
   }
 
   if (!dateInstallation) {

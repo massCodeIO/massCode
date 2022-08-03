@@ -10,7 +10,6 @@ specifiers:
   '@prettier/plugin-xml': ^2.1.0
   '@sipec/vue3-tags-input': ^3.0.4
   '@tsconfig/node14': ^1.0.1
-  '@types/ace': ^0.0.48
   '@types/codemirror': ^5.60.5
   '@types/estree': ^0.0.51
   '@types/i18next-fs-backend': ^1.1.2
@@ -29,7 +28,6 @@ specifiers:
   '@vue/devtools': ^6.1.4
   '@vue/eslint-config-standard': ^6.1.0
   '@vueuse/core': ^8.3.1
-  ace-builds: ^1.4.14
   axios: ^0.26.1
   bumpp: ^7.1.1
   chalk: ^4.1.2
@@ -49,6 +47,7 @@ specifiers:
   eslint-plugin-vue: ^8.2.0
   floating-vue: ^2.0.0-beta.17
   fs-extra: ^10.0.1
+  handlebars: ^4.7.7
   highlight.js: ^11.5.1
   html2canvas: ^1.4.1
   husky: ^7.0.0
@@ -93,7 +92,6 @@ dependencies:
   '@sipec/vue3-tags-input': 3.0.4
   '@types/universal-analytics': 0.4.5
   '@vueuse/core': 8.3.1_vue@3.2.33
-  ace-builds: 1.4.14
   axios: 0.26.1
   codemirror: 5.65.7
   codemirror-textmate: 1.1.0_codemirror@5.65.7+onigasm@2.2.5
@@ -129,7 +127,6 @@ devDependencies:
   '@commitlint/cli': 15.0.0
   '@commitlint/config-conventional': 15.0.0
   '@tsconfig/node14': 1.0.1
-  '@types/ace': 0.0.48
   '@types/codemirror': 5.60.5
   '@types/estree': 0.0.51
   '@types/i18next-fs-backend': 1.1.2
@@ -158,6 +155,7 @@ devDependencies:
   eslint-plugin-prettier: 4.0.0_9fde4b62d2f523479a1a2c7a778a1fac
   eslint-plugin-promise: 6.0.0_eslint@8.5.0
   eslint-plugin-vue: 8.2.0_eslint@8.5.0
+  handlebars: 4.7.7
   husky: 7.0.4
   lint-staged: 12.1.4
   npm-run-all: 4.1.5
@@ -2051,10 +2049,6 @@ packages:
       '@types/node': 17.0.29
     dev: true
 
-  /@types/ace/0.0.48:
-    resolution: {integrity: sha512-esV6hOWiDOZ6d7w5S11iLu6LQsPGe/9RPzhri7gNNLdrK1LFpO9/m7IZhQL6dat0JHICJ7l51zvHAiCgnPLLHA==}
-    dev: true
-
   /@types/body-parser/1.19.0:
     resolution: {integrity: sha512-W98JrE0j2K78swW4ukqMleo8R7h/pFETjM2DQ90MF6XK2i4LO4W3gQ71Lt4w3bfm2EvVSyWHplECvB5sK22yFQ==}
     dependencies:
@@ -2990,10 +2984,6 @@ packages:
     dependencies:
       mime-types: 2.1.35
       negotiator: 0.6.3
-
-  /ace-builds/1.4.14:
-    resolution: {integrity: sha512-NBOQlm9+7RBqRqZwimpgquaLeTJFayqb9UEPtTkpC3TkkwDnlsT/TwsCC0svjt9kEZ6G9mH5AEOHSz6Q/HrzQQ==}
-    dev: false
 
   /acorn-import-assertions/1.8.0_acorn@8.7.0:
     resolution: {integrity: sha512-m7VZ3jwz4eK6A4Vtt8Ew1/mNbP24u0FhdyfA7fSvnJR6LMdfOYnmuIrrJAgrYfYJ10F/otaHTtrtrtmHdMNzEw==}
@@ -7683,6 +7673,19 @@ packages:
     resolution: {integrity: sha1-8QdIy+dq+WS3yWyTxrzCivEgwIE=}
     dev: true
 
+  /handlebars/4.7.7:
+    resolution: {integrity: sha512-aAcXm5OAfE/8IXkcZvCepKU3VzW1/39Fb5ZuqMtgI/hT8X2YgoMvBY5dLhq/cpOvw7Lk1nK/UF71aLG/ZnVYRA==}
+    engines: {node: '>=0.4.7'}
+    hasBin: true
+    dependencies:
+      minimist: 1.2.6
+      neo-async: 2.6.2
+      source-map: 0.6.1
+      wordwrap: 1.0.0
+    optionalDependencies:
+      uglify-js: 3.16.3
+    dev: true
+
   /har-schema/2.0.0:
     resolution: {integrity: sha1-qUwiJOvKwEeCoNkDVSHyRzW37JI=}
     engines: {node: '>=4'}
@@ -12369,6 +12372,14 @@ packages:
     resolution: {integrity: sha512-VAH4IvQ7BDFYglMd7BPRDfLgxZZX4O4TFcRDA6EN5X7erNJJq+McIEp8np9aVtxrCJ6qx4GTYVfOWNjcqwZgRw==}
     engines: {node: '>=8'}
 
+  /uglify-js/3.16.3:
+    resolution: {integrity: sha512-uVbFqx9vvLhQg0iBaau9Z75AxWJ8tqM9AV890dIZCLApF4rTcyHwmAvLeEdYRs+BzYWu8Iw81F79ah0EfTXbaw==}
+    engines: {node: '>=0.8.0'}
+    hasBin: true
+    requiresBuild: true
+    dev: true
+    optional: true
+
   /unbox-primitive/1.0.1:
     resolution: {integrity: sha512-tZU/3NqK3dA5gpE1KtyiJUrEB0lxnGkMFHptJ7q6ewdZ8s12QrODwNbhIJStmJkd1QDXa1NRA8aF2A1zk/Ypyw==}
     dependencies:
@@ -13124,6 +13135,10 @@ packages:
   /word-wrap/1.2.3:
     resolution: {integrity: sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /wordwrap/1.0.0:
+    resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
     dev: true
 
   /wrap-ansi/6.2.0:

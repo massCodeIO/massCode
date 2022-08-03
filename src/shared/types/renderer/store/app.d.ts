@@ -1,5 +1,3 @@
-import type { Ace } from 'ace-builds'
-
 export type Theme =
   | 'dark:dracula'
   | 'dark:material'

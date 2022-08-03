@@ -5,6 +5,16 @@ export const auxGrammars = [
     grammar: () => import('./grammars/sassdoc.tmLanguage.json')
   },
   {
+    source: 'source.scss',
+    language: 'scss2',
+    grammar: () => import('./grammars/scss.tmLanguage.json')
+  },
+  {
+    source: 'source.css.nunjucks',
+    language: 'css-nunjucks',
+    grammar: () => import('./grammars/css.tmLanguage.json')
+  },
+  {
     source: 'source.less',
     language: 'less2',
     grammar: () => import('./grammars/less.tmLanguage.json')
@@ -79,7 +89,6 @@ export const auxGrammars = [
     language: 'elixir2',
     grammar: () => import('./grammars/eex.tmLanguage.json')
   },
-  // { source: 'source.elixir', language: 'elixir2', grammar: () => import('./grammars/elixir.tmLanguage.json') },
   {
     source: 'text.html.derivative',
     language: 'html-derivative',
@@ -99,11 +108,6 @@ export const auxGrammars = [
     source: 'text.log',
     language: 'text-log',
     grammar: () => import('./grammars/log.tmLanguage.json')
-  },
-  {
-    source: 'source.tsx',
-    language: 'tsx',
-    grammar: () => import('./grammars/tsx.tmLanguage.json')
   },
   {
     source: 'text.git-rebase',
@@ -129,5 +133,40 @@ export const auxGrammars = [
     source: 'etc',
     language: 'etc',
     grammar: () => import('./grammars/etc.tmLanguage.json')
+  },
+  {
+    source: 'source.cfscript',
+    language: 'cfscript',
+    grammar: () => import('./grammars/cfscript.tmLanguage.json')
+  },
+  {
+    source: 'text.html.cfm',
+    language: 'html-cfm',
+    grammar: () => import('./grammars/html-cfml.tmLanguage.json')
+  },
+  {
+    source: 'source.js.jsx',
+    language: 'jsx2',
+    grammar: () => import('./grammars/jsx.tmLanguage.json')
+  },
+  {
+    source: 'text.html.php',
+    language: 'php2',
+    grammar: () => import('./grammars/php.tmLanguage.json')
+  },
+  {
+    source: 'source.xq',
+    language: 'xq',
+    grammar: () => import('./grammars/xquery.tmLanguage.json')
+  },
+  {
+    source: 'source.md',
+    language: 'md',
+    grammar: () => import('./grammars/markdown.tmLanguage.json')
+  },
+  {
+    source: 'source.erb',
+    language: 'erb',
+    grammar: () => import('./grammars/html-ruby.tmLanguage.json')
   }
 ]

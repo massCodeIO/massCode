@@ -1,151 +1,355 @@
 {
-  "fileTypes": ["f90", "F90", "f95", "F95", "f03", "F03", "f08", "F08"],
-  "firstLineMatch": "(?i)-[*]- mode: f90 -[*]-",
-  "keyEquivalent": "^~F",
-  "uuid": "016CA1B6-8351-4B17-9215-29C275D5D973",
+  "fileTypes": ["f", "F", "f77", "F77", "for", "FOR", "fpp", "FPP"],
+  "repository": {
+    "preprocessor-rule-other": {
+      "begin": "^\\s*(#\\s*(if(n?def)?)\\b.*?(?:(?=(?://|/\\*))|$))",
+      "end": "^\\s*(#\\s*(endif)\\b).*$",
+      "patterns": [{ "include": "$base" }],
+      "captures": {
+        "1": { "name": "meta.preprocessor.fortran" },
+        "2": { "name": "keyword.control.import.fortran" }
+      }
+    },
+    "disabled": {
+      "begin": "^\\s*#\\s*if(n?def)?\\b.*$",
+      "end": "^\\s*#\\s*endif\\b.*$",
+      "comment": "eat nested preprocessor if(def)s",
+      "patterns": [{ "include": "#disabled" }, { "include": "#pragma-mark" }]
+    },
+    "preprocessor-rule-enabled": {
+      "begin": "^\\s*(#(if)\\s+(0*1)\\b)",
+      "end": "^\\s*(#\\s*(endif)\\b)",
+      "patterns": [
+        {
+          "begin": "^\\s*(#\\s*(else)\\b).*",
+          "end": "(?=^\\s*#\\s*endif\\b.*$)",
+          "patterns": [
+            { "include": "#disabled" },
+            { "include": "#pragma-mark" }
+          ],
+          "contentName": "comment.block.preprocessor.else-branch",
+          "captures": {
+            "1": { "name": "meta.preprocessor.fortran" },
+            "2": { "name": "keyword.control.import.else.fortran" }
+          }
+        },
+        {
+          "begin": "",
+          "end": "(?=^\\s*#\\s*(else|endif)\\b.*$)",
+          "patterns": [{ "include": "$base" }]
+        }
+      ],
+      "captures": {
+        "1": { "name": "meta.preprocessor.fortran" },
+        "2": { "name": "keyword.control.import.if.fortran" },
+        "3": { "name": "constant.numeric.preprocessor.fortran" }
+      }
+    },
+    "pragma-mark": {
+      "match": "^\\s*(#\\s*(pragma\\s+mark)\\s+(.*))",
+      "name": "meta.section",
+      "captures": {
+        "1": { "name": "meta.preprocessor.fortran" },
+        "2": { "name": "keyword.control.import.pragma.fortran" },
+        "3": { "name": "meta.toc-list.pragma-mark.fortran" }
+      }
+    },
+    "preprocessor-rule-disabled": {
+      "begin": "^\\s*(#(if)\\s+(0)\\b).*",
+      "end": "^\\s*(#\\s*(endif)\\b)",
+      "patterns": [
+        {
+          "begin": "^\\s*(#\\s*(else)\\b)",
+          "end": "(?=^\\s*#\\s*endif\\b.*$)",
+          "patterns": [{ "include": "$base" }],
+          "captures": {
+            "1": { "name": "meta.preprocessor.fortran" },
+            "2": { "name": "keyword.control.import.else.fortran" }
+          }
+        },
+        {
+          "begin": "",
+          "end": "(?=^\\s*#\\s*(else|endif)\\b.*$)",
+          "patterns": [
+            { "include": "#disabled" },
+            { "include": "#pragma-mark" }
+          ],
+          "name": "comment.block.preprocessor.if-branch"
+        }
+      ],
+      "captures": {
+        "1": { "name": "meta.preprocessor.fortran" },
+        "2": { "name": "keyword.control.import.if.fortran" },
+        "3": { "name": "constant.numeric.preprocessor.fortran" }
+      }
+    }
+  },
+  "uuid": "45253F88-F7CC-49C5-9C32-F3FADD2AB579",
+  "injections": {
+    "source.fortran - (source.fortran.modern)": {
+      "patterns": [
+        {
+          "begin": "^[Cc](?=\\b|[Cc])",
+          "end": "$\\n?",
+          "patterns": [{ "match": "\\\\\\s*\\n" }],
+          "name": "comment.line.c.fortran",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.fortran" }
+          }
+        },
+        {
+          "begin": "^\\*",
+          "end": "$\\n?",
+          "patterns": [{ "match": "\\\\\\s*\\n" }],
+          "name": "comment.line.asterisk.fortran",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.fortran" }
+          }
+        }
+      ]
+    }
+  },
   "patterns": [
-    { "include": "source.fortran" },
+    { "include": "#preprocessor-rule-enabled" },
+    { "include": "#preprocessor-rule-disabled" },
+    { "include": "#preprocessor-rule-other" },
     {
-      "end": "(?xi)\n\t\t\t\t(end)(?=\\s|\\z)\t\t\t\t\t\t# 1: the word end\n\t\t\t\t(?:\n\t\t\t\t\t\\s+\n\t\t\t\t\t(interface)\t\t\t\t\t\t# 2: possibly interface\n\t\t\t\t)?\n\t\t\t",
-      "begin": "(?x:\t\t\t\t\t# extended mode\n\t\t\t\t\t^\n\t\t\t\t\t\\s*\t\t\t\t\t# start of line and possibly some space\n\t\t\t\t\t(?i:(interface))\t\t# 1: word interface\n\t\t\t\t\t\\s+\t\t\t\t\t# some space\n\t\t\t\t\t(?i:(operator|assignment))\t\t# 2: the words operator or assignment\n\t\t\t\t\t\\(\t\t\t\t\t# opening parenthesis\n\t\t\t\t\t((\\.[a-zA-Z0-9_]+\\.)|[\\+\\-\\=\\/\\*]+)\t# 3: an operator\n\t\t\t\t\t\n\t\t\t\t\t\\)\t\t\t\t\t# closing parenthesis\n\t\t\t\t\t)",
-      "beginCaptures": {
-        "1": { "name": "storage.type.function.fortran" },
-        "2": { "name": "storage.type.fortran" },
-        "3": { "name": "keyword.operator.fortran" }
-      },
-      "patterns": [{ "include": "$self" }],
-      "comment": "Interface declaration of operator/assignments",
-      "endCaptures": {
-        "1": { "name": "keyword.other.fortran" },
-        "2": { "name": "storage.type.function.fortran" }
-      },
-      "name": "meta.function.interface.operator.fortran.modern"
+      "comment": "built-in constants",
+      "match": "(?i:(r8|r4|\\.TRUE\\.|\\.FALSE\\.))",
+      "name": "constant.language.fortran"
     },
     {
-      "end": "(?xi)\n\t\t\t\t(end)(?=\\s|\\z)\t\t\t\t\t\t# 1: the word end\n\t\t\t\t(?:\n\t\t\t\t\t\\s+\n\t\t\t\t\t(interface)\t\t\t\t\t\t# 2: possibly interface\n\t\t\t\t)?\n\t\t\t",
-      "begin": "(?x:\t\t\t\t\t# extended mode\n\t\t\t\t\t^\n\t\t\t\t\t\\s*\t\t\t\t\t# start of line and possibly some space\n\t\t\t\t\t(?i:(interface))\t\t# 1: word interface\n\t\t\t\t\t\\s+\t\t\t\t\t# some space\n\t\t\t\t\t([A-Za-z_][A-Za-z0-9_]*)\t# 1: name\n\t\t\t\t\t)",
-      "beginCaptures": {
-        "1": { "name": "storage.type.function.fortran" },
-        "2": { "name": "entity.name.function.fortran" }
-      },
-      "patterns": [{ "include": "$self" }],
-      "comment": "Interface declaration of function/subroutines",
-      "endCaptures": {
-        "1": { "name": "keyword.other.fortran" },
-        "2": { "name": "storage.type.function.fortran" }
-      },
-      "name": "meta.function.interface.fortran.modern"
+      "comment": "numbers",
+      "match": "\\b[\\+\\-]?[0-9]+\\.?[0-9a-zA-Z_]*\\b",
+      "name": "constant.numeric.fortran"
     },
     {
-      "end": "(?xi)\n\t\t\t\t(end)(?=\\s|\\z)\t\t\t\t\t\t# 1: the word end\n\t\t\t\t(?:\n\t\t\t\t\t\\s+\n\t\t\t\t\t(type)\t\t\t\t\t\t\t# 2: possibly the word type\n\t\t\t\t\t(\\s+[A-Za-z_][A-Za-z0-9_]*)?\t# 3: possibly the name\n\t\t\t\t)?\n\t\t\t",
-      "begin": "(?x:\t\t\t\t\t\t\t\t# extended mode\n\t\t\t\t\t^\\s*\t\t\t\t\t\t\t\t# begining of line and some space\n\t\t\t\t\t(?i:(type))\t\t\t\t\t\t\t# 1: word type\n\t\t\t\t\t\\s+\t\t\t\t\t\t\t\t\t# some space\n\t\t\t\t\t([a-zA-Z_][a-zA-Z0-9_]*)\t\t\t# 2: type name\n\t\t\t\t\t)",
+      "end": "(?x:\t\t\t\t\t\t\t\t\t# extended mode\n\t\t\t\t\t((?i:end))\t\t\t\t\t\t\t# 1: the word end\n\t\t\t\t\t(\t\t\t\t\t\t\t\t\t# followed by\n\t\t\t\t\t\t$\t\t\t\t\t\t\t\t# end of line\n\t\t\t\t\t|\t\t\t\t\t\t\t\t\t# or\n\t\t\t\t\t\t\\s*\t\t\t\t\t\t\t\t# possibly some space\n\t\t\t\t\t\t(?i:(function|subroutine))\t\t# 2: function or subroutine\n\t\t\t\t\t\t((\\s+[A-Za-z_][A-Za-z0-9_]*)?)\t# 3: possibly the name\n\t\t\t\t\t)\n\t\t\t\t\t)",
+      "begin": "(?x:\t\t\t\t\t\t\t\t# extended mode\n\t\t\t\t\t^\n\t\t\t\t\t\\s*\t\t\t\t\t\t\t\t\t# start of line and possibly some space\n\t\t\t\t\t([a-zA-Z\\(\\)]*)(?<!end)\t\t\t\t# 1: possibly some type specification but not the word end\n\t\t\t\t\t\\s*\t\t\t\t\t\t\t\t\t# possibly some space\n\t\t\t\t\t(?i:(function|subroutine))\\b\t\t# 2: function or subroutine\n\t\t\t\t\t\\s+\t\t\t\t\t\t\t\t\t# some space\n\t\t\t\t\t([A-Za-z_][A-Za-z0-9_]*)\t\t\t# 3: name\n\t\t\t\t\t)",
       "beginCaptures": {
-        "1": { "name": "storage.type.fortran.modern" },
-        "2": { "name": "entity.name.type.fortran.modern" }
+        "1": { "name": "storage.type.fortran" },
+        "2": { "name": "storage.type.function.fortran" },
+        "3": { "name": "entity.name.function.fortran" }
       },
-      "patterns": [{ "include": "$self" }],
-      "comment": "Type definition",
-      "endCaptures": {
-        "1": { "name": "keyword.other.fortran" },
-        "2": { "name": "storage.type.fortran.modern" },
-        "3": { "name": "entity.name.type.end.fortran.modern" }
-      },
-      "name": "meta.type-definition.fortran.modern"
-    },
-    {
-      "begin": "(^[ \\t]+)?(?=!-)",
-      "end": "(?!\\G)",
       "patterns": [
         {
-          "begin": "!-",
-          "end": "\\n",
-          "patterns": [{ "match": "\\\\\\s*\\n" }],
-          "name": "comment.line.exclamation.mark.fortran.modern",
+          "begin": "\\G\\s*(\\()",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.parameters.end.fortran" }
+          },
+          "end": "\\)",
+          "patterns": [
+            {
+              "match": "([^\\s),]*)\\s*(,)?",
+              "captures": {
+                "1": { "name": "variable.parameter.fortran" },
+                "2": { "name": "punctuation.separator.arguments.fortan" }
+              }
+            }
+          ],
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment.fortran" }
+            "1": { "name": "punctuation.definition.parameters.begin.fortran" }
           }
-        }
+        },
+        { "include": "$base" }
       ],
-      "beginCaptures": {
-        "1": { "name": "punctuation.whitespace.comment.leading.fortran" }
-      }
+      "comment": "First line of function/subroutine definition",
+      "endCaptures": {
+        "1": { "name": "keyword.other.fortran" },
+        "3": { "name": "storage.type.function.fortran" },
+        "4": { "name": "entity.name.function.end.fortran" }
+      },
+      "name": "meta.function.fortran"
     },
     {
-      "begin": "(^[ \\t]+)?(?=!)",
-      "end": "(?!\\G)",
-      "patterns": [
-        {
-          "begin": "!",
-          "end": "\\n",
-          "patterns": [{ "match": "\\\\\\s*\\n" }],
-          "name": "comment.line.exclamation.fortran.modern",
-          "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment.fortran" }
-          }
-        }
-      ],
-      "beginCaptures": {
-        "1": { "name": "punctuation.whitespace.comment.leading.fortran" }
-      }
-    },
-    {
-      "comment": "statements controling the flow of the program",
-      "match": "\\b(?i:(select\\s+case|case(\\s+default)?|end\\s+select|use|(end\\s+)?forall))\\b",
-      "name": "keyword.control.fortran.modern"
-    },
-    {
-      "comment": "input/output instrinsics",
-      "match": "\\b(?i:(access|action|advance|append|apostrophe|asis|blank|delete|delim|direct|end|eor|err|exist|file|fmt|form|formatted|iolength|iostat|keep|name|named|nextrec|new|nml|no|null|number|old|opened|pad|position|quote|read|readwrite|rec|recl|replace|scratch|sequential|size|status|undefined|unformatted|unit|unknown|write|yes|zero|namelist)(?=\\())",
-      "name": "keyword.control.io.fortran.modern"
-    },
-    {
-      "comment": "logical operators in symbolic format",
-      "match": "\\b(\\=\\=|\\/\\=|\\>\\=|\\>|\\<|\\<\\=)\\b",
-      "name": "keyword.operator.logical.fortran.modern"
-    },
-    {
-      "comment": "operators",
-      "match": "(\\%|\\=\\>)",
-      "name": "keyword.operator.fortran.modern"
-    },
-    {
-      "comment": "numeric instrinsics",
-      "match": "\\b(?i:(ceiling|floor|modulo)(?=\\())",
-      "name": "keyword.other.instrinsic.numeric.fortran.modern"
-    },
-    {
-      "comment": "matrix/vector/array instrinsics",
-      "match": "\\b(?i:(allocate|allocated|deallocate)(?=\\())",
-      "name": "keyword.other.instrinsic.array.fortran.modern"
-    },
-    {
-      "comment": "pointer instrinsics",
-      "match": "\\b(?i:(associated)(?=\\())",
-      "name": "keyword.other.instrinsic.pointer.fortran.modern"
-    },
-    {
-      "comment": "programming units",
-      "match": "\\b(?i:((end\\s*)?(interface|procedure|module)))\\b",
-      "name": "keyword.other.programming-units.fortran.modern"
-    },
-    {
-      "begin": "\\b(?i:(type(?=\\s*\\()))\\b(?=.*::)",
+      "begin": "\\b(?i:(integer|real|double\\s+precision|complex|logical|character))\\b(?=.*::)",
       "end": "(?=!)|$",
       "comment": "Line of type specification",
-      "name": "meta.specification.fortran.modern",
-      "beginCaptures": { "1": { "name": "storage.type.fortran.modern" } },
+      "name": "meta.specification.fortran",
+      "beginCaptures": { "1": { "name": "storage.type.fortran" } },
       "patterns": [{ "include": "$base" }]
     },
     {
-      "match": "\\b(?i:(type(?=\\s*\\()))\\b",
-      "name": "storage.type.fortran.modern"
+      "comment": "statements controling the flow of the program",
+      "match": "\\b(?i:(go\\s*to|assign|to|if|then|else|elseif|end\\s*if|continue|stop|pause|do|end\\s*do|while|cycle))\\b",
+      "name": "keyword.control.fortran"
     },
     {
-      "match": "\\b(?i:(optional|recursive|pointer|allocatable|target|private|public))\\b",
-      "name": "storage.modifier.fortran.modern"
+      "comment": "programming units",
+      "match": "\\b(?i:(program|end\\s+program|entry|block\\s+data|call|return|contains|include))\\b",
+      "name": "keyword.control.programming-units.fortran"
+    },
+    {
+      "comment": "i/o statements",
+      "match": "\\b(?i:(open|close|read|write|print|inquire|backspace|endfile|format))\\b",
+      "name": "keyword.control.io.fortran"
+    },
+    {
+      "comment": "operators",
+      "match": "((?<!\\=)\\=(?!\\=)|\\-|\\+|\\/\\/|\\/|(?!^)\\*|::)",
+      "name": "keyword.operator.fortran"
+    },
+    {
+      "comment": "logical operators",
+      "match": "(?i:(\\.and\\.|\\.or\\.|\\.eq\\.|\\.lt\\.|\\.le\\.|\\.gt\\.|\\.ge\\.|\\.ne\\.|\\.not\\.|\\.eqv\\.|\\.neqv\\.))",
+      "name": "keyword.operator.logical.fortran"
+    },
+    {
+      "comment": "argument related intrisics",
+      "match": "\\b(?i:(present)(?=\\())",
+      "name": "keyword.other.instrisic.argument.fortran"
+    },
+    {
+      "comment": "numeric intrisics",
+      "match": "\\b(?i:(abs|aimag|aint|anint|cmplx|conjg|dble|dim|dprod|int|max|min|mod|nint|real|sign|digits|epsilon|huge|maxexponent|minexponent|precision|radix|range|tiny)(?=\\())",
+      "name": "keyword.other.instrisic.numeric.fortran"
+    },
+    {
+      "comment": "character string intrinsics",
+      "match": "\\b(?i:(achar|adjustl|adjustr|char|iachar|ichar|index|len_trim|repeat|scan|string|trim|verify|len)(?=\\())",
+      "name": "keyword.other.instrisic.string.fortran"
+    },
+    {
+      "comment": "mathematical intrisics",
+      "match": "\\b(?i:(((acos|asin|atan|atan2|cos|cosh|exp|log|log10|sin|sinh|sqrt|tan|tanh)(?=\\())|(random_number|random_seed)))\\b",
+      "name": "keyword.other.instrisic.math.fortran"
+    },
+    {
+      "comment": "data kind intrinsics",
+      "match": "\\b(?i:(kind|selected_int_kind|selected_real_kind|transfer)(?=\\())",
+      "name": "keyword.other.instrisic.data.fortran"
+    },
+    {
+      "comment": "logical intrinsics",
+      "match": "\\b(?i:(logical)(?=\\())",
+      "name": "keyword.other.instrisic.logical.fortran"
+    },
+    {
+      "comment": "bit operations intrinsics",
+      "match": "\\b(?i:(((bit_size|btest|iand|ibclr|ibits|ibset|ieor|ior|ishift|ishiftc|not)(?=\\())|mvbits))\\b",
+      "name": "keyword.other.instrisic.bit.fortran"
+    },
+    {
+      "comment": "floating point intrinsics",
+      "match": "\\b(?i:(exponent|fraction|nearest|rrspacing|scale|set_exponent|spacing)(?=\\())",
+      "name": "keyword.other.instrisic.floating-point.fortran"
+    },
+    {
+      "comment": "matrix/vector/array intrisics",
+      "match": "\\b(?i:(((dot_product|sum|matmul|transpose|all|any|count|maxval|minval|maxloc|minloc|product|sum|lbound|ubound|shape|size|merge|pack|unpack|reshape|spread|cshift|eoshift)(?=\\())|(where|elsewhere|end\\s*where)))\\b",
+      "name": "keyword.other.instrisic.array.fortran"
+    },
+    {
+      "comment": "other intrisics",
+      "match": "\\b(?i:(((dtime)(?=\\())|(date_and_time|system_clock)))\\b",
+      "name": "keyword.other.instrisic.fortran"
+    },
+    {
+      "comment": "data specification",
+      "match": "\\b(?i:(integer|real|double\\s+precision|complex|logical|character|block\\sdata|operator|assignment))\\b",
+      "name": "storage.type.fortran"
+    },
+    {
+      "comment": "data type attributes",
+      "match": "\\b(?i:(dimension|common|equivalence|parameter|external|intrinsic|save|data|implicit\\s*none|implicit|intent|in|out|inout))\\b",
+      "name": "storage.modifier.fortran"
+    },
+    {
+      "end": "'",
+      "begin": "'",
+      "applyEndPatternLast": 1,
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.fortran" }
+      },
+      "patterns": [
+        {
+          "match": "''",
+          "name": "constant.character.escape.apostrophe.fortran"
+        }
+      ],
+      "comment": "String",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.fortran" }
+      },
+      "name": "string.quoted.single.fortran"
+    },
+    {
+      "end": "\"",
+      "begin": "\"",
+      "applyEndPatternLast": 1,
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.fortran" }
+      },
+      "patterns": [
+        { "match": "\"\"", "name": "constant.character.escape.quote.fortran" }
+      ],
+      "comment": "String",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.fortran" }
+      },
+      "name": "string.quoted.double.fortran"
+    },
+    {
+      "begin": "^\\s*#\\s*(error|warning)\\b",
+      "end": "$\\n?",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.fortran"
+        }
+      ],
+      "name": "meta.preprocessor.diagnostic.fortran",
+      "captures": { "1": { "name": "keyword.control.import.error.fortran" } }
+    },
+    {
+      "begin": "^\\s*#\\s*(include|import)\\b\\s+",
+      "end": "(?=(?://|/\\*))|$\\n?",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.fortran"
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.fortran" }
+          },
+          "end": "\"",
+          "name": "string.quoted.double.include.fortran",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.fortran" }
+          }
+        },
+        {
+          "begin": "<",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.fortran" }
+          },
+          "end": ">",
+          "name": "string.quoted.other.lt-gt.include.fortran",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.fortran" }
+          }
+        }
+      ],
+      "name": "meta.preprocessor.fortran.include",
+      "captures": { "1": { "name": "keyword.control.import.include.fortran" } }
+    },
+    { "include": "#pragma-mark" },
+    {
+      "begin": "^\\s*#\\s*(define|defined|elif|else|if|ifdef|ifndef|line|pragma|undef)\\b",
+      "end": "(?=(?://|/\\*))|$\\n?",
+      "patterns": [
+        {
+          "match": "(?>\\\\\\s*\\n)",
+          "name": "punctuation.separator.continuation.fortran"
+        }
+      ],
+      "name": "meta.preprocessor.fortran",
+      "captures": { "1": { "name": "keyword.control.import.fortran" } }
     }
   ],
-  "comment": "Specificities of Fortran >= 90",
-  "name": "Fortran - Modern",
-  "scopeName": "source.fortran.modern"
+  "comment": "?i: has to be added everywhere because fortran is case insensitive; NB: order of matching matters",
+  "name": "Fortran - Punchcard",
+  "scopeName": "source.fortran"
 }

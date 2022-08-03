@@ -177,3 +177,42 @@
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
+
+[data-theme='dark:material'] {
+  --color-primary: hsl(215, 69%, 45%);
+
+  --color-bg: hsl(200, 19%, 18%);
+
+  --color-contrast-lower: hsl(200, 19%, 22%);
+  --color-contrast-lower-alt: hsl(200, 19%, 25%);
+  --color-contrast-lower-alt2: hsl(200, 19%, 25%);
+  --color-contrast-lower-alt3: hsl(200, 19%, 30%);
+  --color-contrast-lower-low: hsl(200, 19%, 40%);
+  --color-contrast-lower-medium: hsl(200, 19%, 50%);
+
+  --color-snippet-list: var(--color-bg);
+  --color-snippet-selected: var(--color-contrast-lower);
+
+  --color-sidebar: var(--color-bg);
+  --color-sidebar-item-selected: var(--color-contrast-lower);
+  --color-sidebar-icon: var(--color-text);
+
+  --color-border: var(--color-contrast-lower-alt2);
+
+  --color-text: hsl(0, 0%, 70%);
+
+  --color-button: var(--color-contrast-lower-alt);
+  --color-button-hover: var(--color-contrast-lower-alt2);
+  --color-button-action: var(--color-contrast-low); 
+  --color-button-action-hover: var(--color-contrast-lower-alt2);
+
+  --color-input: var(--color-bg);
+
+  --color-menu-selected: var(--color-contrast-lower);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
+}
+
+[data-theme='light:material'] {
+  --color-bg: hsl(0, 0%, 98%);
+}

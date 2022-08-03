@@ -10,9 +10,11 @@ export type Language =
   | 'aql'
   | 'asciidoc'
   | 'asl'
+  | 'asp_vb_net'
   | 'assembly_x86'
   | 'autohotkey'
   | 'batchfile'
+  | 'c_cpp'
   | 'c9search'
   | 'cirru'
   | 'clojure'
@@ -27,7 +29,6 @@ export type Language =
   | 'csp'
   | 'css'
   | 'curly'
-  | 'c_cpp'
   | 'd'
   | 'dart'
   | 'diff'
@@ -56,13 +57,13 @@ export type Language =
   | 'groovy'
   | 'haml'
   | 'handlebars'
-  | 'haskell'
   | 'haskell_cabal'
+  | 'haskell'
   | 'haxe'
   | 'hjson'
-  | 'html'
   | 'html_elixir'
   | 'html_ruby'
+  | 'html'
   | 'ini'
   | 'io'
   | 'jack'
@@ -96,6 +97,7 @@ export type Language =
   | 'maze'
   | 'mediawiki'
   | 'mel'
+  | 'mikrotik'
   | 'mips'
   | 'mixal'
   | 'mushcode'
@@ -109,9 +111,10 @@ export type Language =
   | 'ocaml'
   | 'pascal'
   | 'perl'
+  | 'perl6'
   | 'pgsql'
-  | 'php'
   | 'php_laravel_blade'
+  | 'php'
   | 'pig'
   | 'plain_text'
   | 'powershell'
@@ -120,6 +123,7 @@ export type Language =
   | 'prolog'
   | 'properties'
   | 'protobuf'
+  | 'pug'
   | 'puppet'
   | 'python'
   | 'qml'
@@ -134,6 +138,7 @@ export type Language =
   | 'ruby'
   | 'rust'
   | 'sass'
+  | 'sassdoc'
   | 'scad'
   | 'scala'
   | 'scheme'
@@ -144,6 +149,7 @@ export type Language =
   | 'slim'
   | 'smarty'
   | 'smithy'
+  | 'solidity'
   | 'soy_template'
   | 'space'
   | 'sparql'
@@ -171,10 +177,19 @@ export type Language =
   | 'wollok'
   | 'xml'
   | 'xquery'
+  | 'xsl'
   | 'yaml'
   | 'zeek'
 
 export interface LanguageOption {
   name: string
   value: Language
+  grammar?: () => Promise<{ default: any }>
+  scopeName?: string
+}
+
+export interface GrammarOption {
+  grammar: () => Promise<{ default: any }>
+  language: Language
+  priority: 'asap' | 'now' | 'defer'
 }

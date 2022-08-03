@@ -2,23 +2,13 @@ import type { Ace } from 'ace-builds'
 
 export type Theme =
   | 'dark:dracula'
+  | 'dark:material'
   | 'dark:merbivore'
   | 'dark:monokai'
   | 'dark:one'
-  | 'light:chrome'
+  | 'light:github'
+  | 'light:material'
   | 'light:solarized'
-  | 'light:textmate'
-  | 'light:xcode'
-
-export type ThemeEditor =
-  | 'chrome'
-  | 'dracula'
-  | 'merbivore_soft'
-  | 'monokai'
-  | 'one_dark'
-  | 'solarized_light'
-  | 'textmate'
-  | 'xcode'
 
 export interface AppSizes {
   titlebar: number
@@ -43,7 +33,7 @@ export interface EditorSettings {
   trailingComma: 'all' | 'none' | 'es5'
   semi: boolean
   singleQuote: boolean
-  theme: ThemeEditor
+  theme: string
   highlightLine: boolean
   highlightGutter: boolean
 }

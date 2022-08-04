@@ -35,7 +35,8 @@ import {
   onCopySnippet,
   emitter,
   onCreateSnippet,
-  onAddDescription
+  onAddDescription,
+  checkForRemoteNotification
 } from '@/composable'
 import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
@@ -85,6 +86,7 @@ const init = async () => {
   }
 
   trackAppUpdate()
+  checkForRemoteNotification()
 }
 
 const loadOnigasm = async () => {

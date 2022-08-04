@@ -839,7 +839,12 @@ export const languages: LanguageOption[] = [
     grammar: () => import('./grammars/tex.tmLanguage.json'),
     scopeName: 'text.tex'
   },
-  { name: 'Plain Text', value: 'plain_text' },
+  {
+    name: 'Plain Text',
+    value: 'plain_text',
+    grammar: () => import('./grammars/plain-text.tmLanguage.json'),
+    scopeName: 'text.plain'
+  },
   {
     name: 'Textile',
     value: 'textile',

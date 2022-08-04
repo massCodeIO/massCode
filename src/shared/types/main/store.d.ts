@@ -5,6 +5,7 @@ export interface AppStore {
   bounds: object
   dateInstallation?: number
   nextSupportNotice?: number
+  prevRemoteNotice?: number
   selectedFolderAlias?: string
   selectedFolderId?: string
   selectedFolderIds?: string[]

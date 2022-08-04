@@ -1,0 +1,69 @@
+{
+  "foldingStopMarker": "^\\s*(</[^>]+>|[/%]>|-->)\\s*$",
+  "foldingStartMarker": "^\\s*(<[^!?%/](?!.+?(/>|</.+?>))|<[!%]--(?!.+?--%?>)|<%[!]?(?!.+?%>))",
+  "keyEquivalent": "^~S",
+  "fileTypes": ["svg"],
+  "uuid": "60E1A653-2588-410D-8F89-9DA05E8BF163",
+  "patterns": [
+    {
+      "match": "\\b(if|while|for|return)\\b",
+      "name": "keyword.control.untitled"
+    },
+    {
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escaped.untitled" }
+      ],
+      "name": "string.quoted.double.untitled"
+    },
+    { "include": "text.xml" },
+    {
+      "begin": "(?:^\\s+)?<((?i:style))\\b(?![^>]*/>)",
+      "end": "</((?i:style))>(?:\\s*\\n)?",
+      "patterns": [
+        { "include": "#tag-stuff" },
+        {
+          "begin": ">",
+          "end": "(?=</(?i:style))",
+          "patterns": [
+            { "include": "#embedded-code" },
+            { "include": "source.css" }
+          ]
+        }
+      ],
+      "name": "source.css.embedded.svg",
+      "captures": { "1": { "name": "entity.name.tag.style.svg" } }
+    },
+    {
+      "begin": "(?:^\\s+)?<((?i:script))\\b(?![^>]*/>)",
+      "end": "(?<=</(script))>(?:\\s*\\n)?",
+      "patterns": [
+        { "include": "#tag-stuff" },
+        {
+          "begin": "(?<!</(?:script))>",
+          "end": "</((?i:script))",
+          "patterns": [{ "include": "source.js" }]
+        }
+      ],
+      "name": "source.js.embedded.svg",
+      "captures": { "1": { "name": "entity.name.tag.script.svg" } }
+    },
+    {
+      "begin": "(?:^\\s+)?<((?i:handler))\\b(?![^>]*/>)",
+      "end": "(?<=</(script))>(?:\\s*\\n)?",
+      "patterns": [
+        { "include": "#tag-stuff" },
+        {
+          "begin": "(?<!</(?:handler))>",
+          "end": "</((?i:handler))",
+          "patterns": [{ "include": "source.js" }]
+        }
+      ],
+      "name": "source.js.embedded.svg",
+      "captures": { "1": { "name": "entity.name.tag.handler.svg" } }
+    }
+  ],
+  "name": "SVG",
+  "scopeName": "text.xml.svg"
+}

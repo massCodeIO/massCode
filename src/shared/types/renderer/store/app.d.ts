@@ -1,24 +1,12 @@
-import type { Ace } from 'ace-builds'
-
 export type Theme =
   | 'dark:dracula'
+  | 'dark:material'
   | 'dark:merbivore'
   | 'dark:monokai'
   | 'dark:one'
-  | 'light:chrome'
+  | 'light:github'
+  | 'light:material'
   | 'light:solarized'
-  | 'light:textmate'
-  | 'light:xcode'
-
-export type ThemeEditor =
-  | 'chrome'
-  | 'dracula'
-  | 'merbivore_soft'
-  | 'monokai'
-  | 'one_dark'
-  | 'solarized_light'
-  | 'textmate'
-  | 'xcode'
 
 export interface AppSizes {
   titlebar: number
@@ -35,15 +23,13 @@ export interface AppSizes {
 }
 
 export interface EditorSettings {
-  showInvisibles: boolean
   fontSize: number
   fontFamily: string
-  wrap: Ace.EditSessionOptions['wrap']
+  wrap: boolean
   tabSize: number
   trailingComma: 'all' | 'none' | 'es5'
   semi: boolean
   singleQuote: boolean
-  theme: ThemeEditor
   highlightLine: boolean
   highlightGutter: boolean
 }

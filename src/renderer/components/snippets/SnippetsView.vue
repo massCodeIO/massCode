@@ -8,7 +8,7 @@
     <template v-if="snippetStore.selected">
       <SnippetHeader />
       <!-- TODO: упростить условия отображения -->
-      <TheEditor
+      <EditorCodemirror
         v-if="
           !snippetStore.isMarkdownPreview && !snippetStore.isScreenshotPreview
         "

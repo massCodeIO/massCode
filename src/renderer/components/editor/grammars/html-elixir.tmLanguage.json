@@ -1,0 +1,15 @@
+{
+  "foldingStopMarker": "(?x)\n\t\t(</(?i:head|body|table|thead|tbody|tfoot|tr|div|select|fieldset|style|script|ul|ol|form|dl)>\n\t\t|^\\s*-->\n\t\t|(^|\\s)\\}\n\t\t)",
+  "foldingStartMarker": "(?x)\n\t\t(<(?i:head|body|table|thead|tbody|tfoot|tr|div|select|fieldset|style|script|ul|ol|form|dl)\\b.*?>\n\t\t|<!--(?!.*-->)\n\t\t|\\{\\s*($|\\?>\\s*$|//|/\\*(.*\\*/\\s*$|(?!.*?\\*/)))\n\t\t)",
+  "fileTypes": ["html.eex", "html.leex", "html.heex"],
+  "uuid": "206E7013-2252-41AA-99A3-E8B3F4C2CC98",
+  "injections": {
+    "R:text.html.elixir meta.tag meta.attribute string.quoted": {
+      "comment": "Uses R: to ensure this matches after any other injections.",
+      "patterns": [{ "include": "text.elixir" }]
+    }
+  },
+  "patterns": [{ "include": "text.elixir" }, { "include": "text.html.basic" }],
+  "name": "HTML (EEx)",
+  "scopeName": "text.html.elixir"
+}

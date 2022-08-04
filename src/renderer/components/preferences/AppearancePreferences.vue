@@ -32,24 +32,24 @@ const localValue = computed({
 
 const options: Options[] = [
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Chrome`,
-    value: 'light:chrome'
+    label: `${i18n.t('preferences:appearance.theme.light')}: GitHub`,
+    value: 'light:github'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.light')}: Material`,
+    value: 'light:material'
   },
   {
     label: `${i18n.t('preferences:appearance.theme.light')}: Solarized`,
     value: 'light:solarized'
   },
   {
-    label: `${i18n.t('preferences:appearance.theme.light')}: TextMate`,
-    value: 'light:textmate'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Xcode`,
-    value: 'light:xcode'
-  },
-  {
     label: `${i18n.t('preferences:appearance.theme.dark')}: Dracula`,
     value: 'dark:dracula'
+  },
+  {
+    label: `${i18n.t('preferences:appearance.theme.dark')}: Material`,
+    value: 'dark:material'
   },
   {
     label: `${i18n.t('preferences:appearance.theme.dark')}: Merbivore`,

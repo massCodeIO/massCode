@@ -14,17 +14,15 @@ export default new Store<PreferencesStore>({
   defaults: {
     storagePath: defaultPath,
     backupPath,
-    theme: 'light:chrome',
+    theme: 'light:github',
     editor: {
-      wrap: 'free',
+      wrap: true,
       fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
       fontSize: 12,
-      showInvisibles: false,
       tabSize: 2,
       trailingComma: 'none',
       semi: false,
       singleQuote: true,
-      theme: 'chrome',
       highlightLine: false,
       highlightGutter: false
     },

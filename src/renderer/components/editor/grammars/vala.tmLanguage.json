@@ -1,0 +1,518 @@
+{
+  "foldingStartMarker": "(\\{\\s*(//.*)?$|^\\s*// \\{\\{\\{)",
+  "foldingStopMarker": "^\\s*(\\}|// \\}\\}\\}$)",
+  "repository": {
+    "constants-and-special-vars": {
+      "patterns": [
+        {
+          "match": "\\b(true|false|null)\\b",
+          "name": "constant.language.vala"
+        },
+        { "match": "\\b(this|base)\\b", "name": "variable.language.vala" },
+        {
+          "match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)([LlFfUuDd]|UL|ul)?\\b",
+          "name": "constant.numeric.vala"
+        },
+        {
+          "match": "(\\.)?\\b([A-Z][A-Z0-9_]+)(?!<|\\.class|\\s*\\w+\\s*=)\\b",
+          "name": "constant.other.vala",
+          "captures": { "1": { "name": "keyword.operator.dereference.vala" } }
+        }
+      ]
+    },
+    "values": {
+      "patterns": [
+        { "include": "#strings" },
+        { "include": "#object-types" },
+        { "include": "#constants-and-special-vars" }
+      ]
+    },
+    "class": {
+      "begin": "(?=\\w?[\\w\\s]*(?:class|(?:@)?interface|enum|struct|namespace)\\s+\\w+)",
+      "endCaptures": { "0": { "name": "punctuation.section.class.end.vala" } },
+      "end": "}",
+      "comment": "attempting to put namespace in here.",
+      "name": "meta.class.vala",
+      "patterns": [
+        { "include": "#storage-modifiers" },
+        { "include": "#comments" },
+        {
+          "match": "(class|(?:@)?interface|enum|struct|namespace)\\s+([\\w\\.]+)",
+          "name": "meta.class.identifier.vala",
+          "captures": {
+            "1": { "name": "storage.modifier.vala" },
+            "2": { "name": "entity.name.type.class.vala" }
+          }
+        },
+        {
+          "begin": ":",
+          "end": "(?={|,)",
+          "patterns": [
+            { "include": "#object-types-inherited" },
+            { "include": "#comments" }
+          ],
+          "name": "meta.definition.class.inherited.classes.vala",
+          "beginCaptures": { "0": { "name": "storage.modifier.extends.vala" } }
+        },
+        {
+          "begin": "(,)\\s",
+          "end": "(?=\\{)",
+          "patterns": [
+            { "include": "#object-types-inherited" },
+            { "include": "#comments" }
+          ],
+          "name": "meta.definition.class.implemented.interfaces.vala",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.implements.vala" }
+          }
+        },
+        {
+          "begin": "{",
+          "end": "(?=})",
+          "patterns": [{ "include": "#class-body" }],
+          "name": "meta.class.body.vala"
+        }
+      ]
+    },
+    "parameters": {
+      "patterns": [
+        { "match": "final", "name": "storage.modifier.vala" },
+        { "include": "#primitive-arrays" },
+        { "include": "#primitive-types" },
+        { "include": "#object-types" },
+        { "match": "\\w+", "name": "variable.parameter.vala" }
+      ]
+    },
+    "code": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#class" },
+        { "begin": "{", "end": "}", "patterns": [{ "include": "#code" }] },
+        { "include": "#assertions" },
+        { "include": "#parens" },
+        { "include": "#constants-and-special-vars" },
+        { "include": "#anonymous-classes-and-new" },
+        { "include": "#keywords" },
+        { "include": "#storage-modifiers" },
+        { "include": "#strings" },
+        { "include": "#all-types" }
+      ]
+    },
+    "annotations": {
+      "patterns": [
+        {
+          "begin": "(@[^ (]+)(\\()",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.annotation-arguments.end.vala"
+            }
+          },
+          "end": "(\\))",
+          "patterns": [
+            {
+              "match": "(\\w*)\\s*(=)",
+              "captures": {
+                "1": { "name": "constant.other.key.vala" },
+                "2": { "name": "keyword.operator.assignment.vala" }
+              }
+            },
+            { "include": "#code" },
+            { "match": ",", "name": "punctuation.seperator.property.vala" }
+          ],
+          "name": "meta.declaration.annotation.vala",
+          "beginCaptures": {
+            "1": { "name": "storage.type.annotation.vala" },
+            "2": {
+              "name": "punctuation.definition.annotation-arguments.begin.vala"
+            }
+          }
+        },
+        { "match": "@\\w*", "name": "storage.type.annotation.vala" }
+      ]
+    },
+    "anonymous-classes-and-new": {
+      "begin": "\\bnew\\b",
+      "end": "(?<=\\)|\\])(?!\\s*{)|(?<=})|(?=;)",
+      "patterns": [
+        {
+          "begin": "(\\w+)\\s*(?=\\[)",
+          "end": "}|(?=;|\\))",
+          "patterns": [
+            {
+              "begin": "\\[",
+              "end": "\\]",
+              "patterns": [{ "include": "#code" }]
+            },
+            {
+              "begin": "{",
+              "end": "(?=})",
+              "patterns": [{ "include": "#code" }]
+            }
+          ],
+          "beginCaptures": { "1": { "name": "storage.type.vala" } }
+        },
+        {
+          "begin": "(?=\\w.*\\()",
+          "end": "(?<=\\))",
+          "patterns": [
+            { "include": "#object-types" },
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [{ "include": "#code" }],
+              "beginCaptures": { "1": { "name": "storage.type.vala" } }
+            }
+          ]
+        },
+        {
+          "begin": "{",
+          "end": "}",
+          "patterns": [{ "include": "#class-body" }],
+          "name": "meta.inner-class.vala"
+        }
+      ],
+      "beginCaptures": { "0": { "name": "keyword.control.new.vala" } }
+    },
+    "assertions": {
+      "patterns": [
+        {
+          "begin": "\\b(assert|requires|ensures)\\s",
+          "end": "$",
+          "patterns": [
+            {
+              "match": ":",
+              "name": "keyword.operator.assert.expression-seperator.vala"
+            },
+            { "include": "#code" }
+          ],
+          "name": "meta.declaration.assertion.vala",
+          "beginCaptures": { "1": { "name": "keyword.control.assert.vala" } }
+        }
+      ]
+    },
+    "object-types-inherited": {
+      "patterns": [
+        {
+          "begin": "\\b((?:[a-z]\\w*\\.)*[A-Z]+\\w*)<",
+          "end": ">|[^\\w\\s,<]",
+          "patterns": [
+            { "include": "#object-types" },
+            {
+              "begin": "<",
+              "end": ">|[^\\w\\s,<]",
+              "comment": "This is just to support <>'s with no actual type prefix",
+              "name": "storage.type.generic.vala"
+            }
+          ],
+          "name": "entity.other.inherited-class.vala"
+        },
+        {
+          "match": "\\b(?:[a-z]\\w*(\\.))*[A-Z]+\\w*",
+          "name": "entity.other.inherited-class.vala",
+          "captures": { "1": { "name": "keyword.operator.dereference.vala" } }
+        }
+      ]
+    },
+    "class-body": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#class" },
+        { "include": "#enums" },
+        { "include": "#methods" },
+        { "include": "#annotations" },
+        { "include": "#storage-modifiers" },
+        { "include": "#code" }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "begin": "@\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.vala" }
+          },
+          "end": "\"",
+          "patterns": [
+            {
+              "match": "\\\\.|%[\\w\\.\\-]+|\\$(\\w+|\\([\\w\\s\\+\\-\\*\\/]+\\))",
+              "name": "constant.character.escape.vala"
+            }
+          ],
+          "name": "string.quoted.interpolated.vala",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.vala" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.vala" }
+          },
+          "end": "\"",
+          "patterns": [
+            { "match": "\\\\.", "name": "constant.character.escape.vala" },
+            {
+              "match": "%[\\w\\.\\-]+",
+              "name": "constant.character.escape.vala"
+            }
+          ],
+          "name": "string.quoted.double.vala",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.vala" }
+          }
+        },
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.vala" }
+          },
+          "end": "'",
+          "patterns": [
+            { "match": "\\\\.", "name": "constant.character.escape.vala" }
+          ],
+          "name": "string.quoted.single.vala",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.vala" }
+          }
+        },
+        {
+          "begin": "\"\"\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.vala" }
+          },
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "match": "%[\\w\\.\\-]+",
+              "name": "constant.character.escape.vala"
+            }
+          ],
+          "name": "string.quoted.triple.vala",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.vala" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(try|catch|finally|throw)\\b",
+          "name": "keyword.control.catch-exception.vala"
+        },
+        { "match": "\\?|:|\\?\\?", "name": "keyword.control.vala" },
+        {
+          "match": "\\b(return|break|case|continue|default|do|while|for|foreach|switch|if|else|in|yield|get|set|value)\\b",
+          "name": "keyword.control.vala"
+        },
+        { "match": "\\b(typeof|is|as)\\b", "name": "keyword.operator.vala" },
+        {
+          "match": "(==|!=|<=|>=|<>|<|>)",
+          "name": "keyword.operator.comparison.vala"
+        },
+        { "match": "(=)", "name": "keyword.operator.assignment.vala" },
+        {
+          "match": "(\\-\\-|\\+\\+)",
+          "name": "keyword.operator.increment-decrement.vala"
+        },
+        {
+          "match": "(\\-|\\+|\\*|\\/|%)",
+          "name": "keyword.operator.arithmetic.vala"
+        },
+        { "match": "(!|&&|\\|\\|)", "name": "keyword.operator.logical.vala" },
+        {
+          "match": "(?<=\\S)\\.(?=\\S)",
+          "name": "keyword.operator.dereference.vala"
+        },
+        { "match": ";", "name": "punctuation.terminator.vala" },
+        { "match": "(owned|unowned)", "name": "keyword.operator.ownership" }
+      ]
+    },
+    "comments-inline": {
+      "patterns": [
+        {
+          "begin": "/\\*",
+          "end": "\\*/",
+          "name": "comment.block.vala",
+          "captures": { "0": { "name": "punctuation.definition.comment.vala" } }
+        },
+        {
+          "match": "\\s*((//).*$\\n?)",
+          "captures": {
+            "1": { "name": "comment.line.double-slash.vala" },
+            "2": { "name": "punctuation.definition.comment.vala" }
+          }
+        }
+      ]
+    },
+    "throws": {
+      "begin": "throws",
+      "end": "(?={|;)",
+      "patterns": [{ "include": "#object-types" }],
+      "name": "meta.throwables.vala",
+      "beginCaptures": { "0": { "name": "storage.modifier.vala" } }
+    },
+    "primitive-types": {
+      "patterns": [
+        {
+          "comment": "var is not really a primitive, but acts like one in most cases",
+          "match": "\\b(?:var|bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string|void|signal|int8|int16|int32|int64|uint8|uint16|uint32|uint64)\\b",
+          "name": "storage.type.primitive.vala"
+        }
+      ]
+    },
+    "all-types": {
+      "patterns": [
+        { "include": "#primitive-arrays" },
+        { "include": "#primitive-types" },
+        { "include": "#object-types" }
+      ]
+    },
+    "namespace": {
+      "begin": "^(?=\\s*[A-Z0-9_]+\\s*({|\\(|,))",
+      "end": "(?=;|})",
+      "comment": "This is not quite right. See the class grammar right now",
+      "patterns": [
+        {
+          "begin": "\\w+",
+          "end": "(?=,|;|})",
+          "patterns": [
+            { "include": "#parens" },
+            { "begin": "{", "end": "}", "patterns": [{ "include": "#code" }] }
+          ],
+          "name": "meta.namespace.vala",
+          "beginCaptures": { "0": { "name": "constant.other.namespace.vala" } }
+        }
+      ]
+    },
+    "storage-modifiers": {
+      "comment": "Not sure about unsafe and readonly",
+      "match": "\\b(public|private|protected|internal|static|final|sealed|virtual|override|abstract|readonly|volatile|dynamic|async|unsafe|out|ref|weak|owned|unowned|const)\\b",
+      "captures": { "1": { "name": "storage.modifier.vala" } }
+    },
+    "enums": {
+      "begin": "^(?=\\s*[A-Z0-9_]+\\s*({|\\(|,))",
+      "end": "(?=;|})",
+      "patterns": [
+        {
+          "begin": "\\w+",
+          "end": "(?=,|;|})",
+          "patterns": [
+            { "include": "#parens" },
+            {
+              "begin": "{",
+              "end": "}",
+              "patterns": [{ "include": "#class-body" }]
+            }
+          ],
+          "name": "meta.enum.vala",
+          "beginCaptures": { "0": { "name": "constant.other.enum.vala" } }
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "match": "/\\*\\*/",
+          "name": "comment.block.empty.vala",
+          "captures": { "0": { "name": "punctuation.definition.comment.vala" } }
+        },
+        { "include": "text.html.javadoc" },
+        { "include": "#comments-inline" }
+      ]
+    },
+    "methods": {
+      "begin": "(?!new)(?=\\w.*\\s+)(?=[^=]+\\()",
+      "end": "}|(?=;)",
+      "patterns": [
+        { "include": "#storage-modifiers" },
+        {
+          "begin": "([\\~\\w\\.]+)\\s*\\(",
+          "end": "\\)",
+          "patterns": [{ "include": "#parameters" }],
+          "name": "meta.method.identifier.vala",
+          "beginCaptures": { "1": { "name": "entity.name.function.vala" } }
+        },
+        {
+          "begin": "(?=\\w.*\\s+\\w+\\s*\\()",
+          "end": "(?=\\w+\\s*\\()",
+          "patterns": [{ "include": "#all-types" }],
+          "name": "meta.method.return-type.vala"
+        },
+        { "include": "#throws" },
+        {
+          "begin": "{",
+          "end": "(?=})",
+          "patterns": [{ "include": "#code" }],
+          "name": "meta.method.body.vala"
+        }
+      ],
+      "name": "meta.method.vala"
+    },
+    "primitive-arrays": {
+      "patterns": [
+        {
+          "match": "\\b(?:bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string|void|int8|int16|int32|int64|uint8|uint16|uint32|uint64)(\\[\\])*\\b",
+          "name": "storage.type.primitive.array.vala"
+        }
+      ]
+    },
+    "parens": {
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [{ "include": "#code" }]
+    },
+    "object-types": {
+      "patterns": [
+        {
+          "begin": "\\b((?:[a-z]\\w*\\.)*[A-Z]+\\w*)<",
+          "end": ">|[^\\w\\s,\\?<\\[\\]]",
+          "patterns": [
+            { "include": "#object-types" },
+            {
+              "begin": "<",
+              "end": ">|[^\\w\\s,\\[\\]<]",
+              "comment": "This is just to support <>'s with no actual type prefix",
+              "name": "storage.type.generic.vala"
+            }
+          ],
+          "name": "storage.type.generic.vala"
+        },
+        {
+          "begin": "\\b((?:[a-z]\\w*\\.)*[A-Z]+\\w*)(?=\\[)",
+          "end": "(?=[^\\]\\s])",
+          "patterns": [
+            {
+              "begin": "\\[",
+              "end": "\\]",
+              "patterns": [{ "include": "#code" }]
+            }
+          ],
+          "name": "storage.type.object.array.vala"
+        },
+        {
+          "match": "\\b(?:[a-z]\\w*(\\.))*[A-Z]+\\w*\\b",
+          "name": "storage.type.vala",
+          "captures": { "1": { "name": "keyword.operator.dereference.vala" } }
+        }
+      ]
+    }
+  },
+  "fileTypes": ["vala", "vapi"],
+  "uuid": "5FBC8212-3C2F-45AC-83D2-0C9195878913",
+  "patterns": [
+    {
+      "match": "^\\s*(using)\\b(?:\\s*([^ ;$]+)\\s*(;)?)?",
+      "name": "meta.using.vala",
+      "captures": {
+        "1": { "name": "keyword.other.using.vala" },
+        "2": { "name": "storage.modifier.using.vala" },
+        "3": { "name": "punctuation.terminator.vala" }
+      }
+    },
+    { "include": "#code" }
+  ],
+  "comment": "Based heavily on the Java bundle's language syntax. TODO:\n* Closures\n* Delegates\n* Properties: Better support for properties.\n* Annotations\n* Error domains\n* Named arguments\n* Array slicing, negative indexes, multidimensional\n* construct blocks\n* lock blocks?\n* regex literals\n* DocBlock syntax highlighting. (Currently importing javadoc)\n* Folding rule for comments.\n",
+  "name": "Vala",
+  "scopeName": "source.vala"
+}

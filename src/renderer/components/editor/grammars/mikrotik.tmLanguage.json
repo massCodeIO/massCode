@@ -1,0 +1,407 @@
+{
+  "fileTypes": ["rsc"],
+  "name": "Mikrotik Script",
+  "patterns": [
+    {
+      "include": "#literal-string"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#parameters-readwrite"
+    },
+    {
+      "include": "#literal-constants"
+    },
+    {
+      "include": "#literal-boolean"
+    },
+    {
+      "include": "#literal-ip"
+    },
+    {
+      "include": "#literal-mac"
+    },
+    {
+      "include": "#literal-date"
+    },
+    {
+      "include": "#literal-number"
+    },
+    {
+      "include": "#variable"
+    },
+    {
+      "include": "#variable-definition"
+    },
+    {
+      "include": "#control-flow"
+    },
+    {
+      "include": "#commands"
+    },
+    {
+      "include": "#parameters-readonly"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#line-continuation"
+    }
+  ],
+  "repository": {
+    "commands": {
+      "patterns": [
+        {
+          "match": "(?x) \\b(?<![\\-=])( Neighbor| aaa| accept\\-filter| access\\-list| access| accounting| action| address\\-list| address| add| advertise\\-filter| advertisements| aggregate| alert| align| area| arp| bandwidth\\-server| bandwidth\\-test| beep| bfd| bgp\\-vpls| bgp| binding| bonding| bridge| cache\\-contents| cache| certificate| cisco\\-bgp\\-vpls| client| config| connect\\-list| connections| connection| cookie| cpu| delay| detail| dhcp\\-client| dhcp\\-relay| dhcp\\-server| direct| disable| discovery| dns\\-update| e\\-mail| edit| enable| environment| eoip| error| ethernet| export| fdb| fetch| file| filter| find| find| firewall| firmware| flush| get| gps| graphing| gre6| gre| group| host| hotspot| identity| inbox| info| inserts| installed\\-sa| instance| interfaces| interface| interface| ip\\-binding| ip\\-scan| ipip| ipsec| ipv6| ip| ip| irq| keys| key| l2tp\\-client| l2tp\\-server| latency\\-distribution| layer7\\-protocol| lcd| ldp| lease| leds| len| logging| log| lookup| lsa| mac\\-server| mac\\-winbox| mangle| manual\\-sa| manual\\-tx\\-power\\-table| mesh| mirror| mme| mode\\-cfg| monitor| mpls| nat| nbma\\-neighbor| nd| neighbor| netwatch| network| note| nstreme\\-dual| nstreme| ntp| option| originators| ospf\\-router| ospf| ovpn\\-client| ovpn\\-server| packet\\-generator| packet\\-template| packet| parse| path\\-state| pci| peer| pick| ping| policy| pool| port| ppp\\-client| pppoe\\-client| pppoe\\-server| ppp| pptp\\-client| pptp\\-server| prefix\\-list| prefix| print| profile| proposal| protocol| proxy| put| queue| range| raw| registration\\-table| remote\\-peers| remove| resolve| resource| resv\\-state| rip| routerboard| route| routing| run| scan| scep| scheduler| script| security\\-profiles| send| server| service| settings| set| set| sham\\-link| shares| share| smb| sms| snapshot| sniffer| socks| sstp\\-client| sstp\\-server| statistics| stats| status| switch| system| target| terminal| time| toarray| tobool| toid| toip6| toip| tonum| tool| tostr| totime| typeof| tracking| traffic\\-eng| traffic\\-flow| traffic\\-generator| traffic\\-monitor| tunnel\\-path| type| uncounted| upgrade| upnp| ups| usb| used| users| user| virtual\\-link| vlan| vpls| vpnv4\\-route| vrf| vrrp| walled\\-garden| watchdog| wds| web\\-access| wireless| return )(?!-)\\b\n",
+          "name": "support.function.mikrotik-script"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.mikrotik-script"
+            }
+          },
+          "comment": "comments are ignored by syntax",
+          "match": "(#).*$\\n?",
+          "name": "comment.line.number-sign.mikrotik-script"
+        }
+      ]
+    },
+    "control-flow": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "keyword.control.flow.mikrotik-script"
+            },
+            "2": {
+              "name": "invalid.illegal.whitespace.mikrotik-script"
+            },
+            "3": {
+              "name": "keyword.operator.comparison.mikrotik-script"
+            }
+          },
+          "match": "\\b(from|to|step|in|do|else|while)\\b([\\s|\\t]*)(=)"
+        },
+        {
+          "match": "\\b(while|for|foreach|on-error|if|do)\\b",
+          "name": "keyword.control.flow.mikrotik-script"
+        }
+      ]
+    },
+    "line-continuation": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.continuation.line.mikrotik-script"
+            },
+            "2": {
+              "name": "invalid.illegal.unexpected-text.mikrotik-script"
+            }
+          },
+          "match": "(\\\\)(.*)$\\n?"
+        }
+      ]
+    },
+    "literal-boolean": {
+      "patterns": [
+        {
+          "comment": "boolean",
+          "match": "\\b(true|false)\\b",
+          "name": "constant.language.mikrotik-script"
+        }
+      ]
+    },
+    "literal-date": {
+      "patterns": [
+        {
+          "comment": "1s, 2m, 3h, 4d",
+          "match": "\\b([1-9]+[0-9]*|0)(ms|s|m|h|d|w)\\b",
+          "name": "constant.other.time.mikrotik-script"
+        },
+        {
+          "comment": "1w5d12:20:59",
+          "match": "\\b(([1-9]+[0-9]*w)?([1-9]+[0-9]*d)?([0-9]{2}:[0-9]{2}:[0-9]{2}))\\b",
+          "name": "constant.other.time.mikrotik-script"
+        },
+        {
+          "match": "\\b((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\\/[0-9]{2}\\/[1-9]+[0-9]*)\\b",
+          "name": "constant.other.date.mikrotik-script"
+        },
+        {
+          "match": "([\\+\\-]?[0-9]{2}:[0-9]{2})",
+          "name": "constant.other.time.delta.mikrotik-script"
+        }
+      ]
+    },
+    "literal-ip": {
+      "patterns": [
+        {
+          "comment": "IPv6 address, zero compressed IPv6 addresses, link-local IPv6 addresses with zone index, IPv4-Embedded IPv6 Address, IPv4-mapped IPv6 addresses, IPv4-translated addresses (http://stackoverflow.com/a/17871737/188530)",
+          "match": "\\b((\\h{1,4}\\:){7}\\h{1,4}|(\\h{1,4}\\:){1,7}\\:|(\\h{1,4}\\:){1,6}\\:\\h{1,4}|(\\h{1,4}\\:){1,5}(\\:\\h{1,4}){1,2}|(\\h{1,4}\\:){1,4}(\\:\\h{1,4}){1,3}|(\\h{1,4}\\:){1,3}(\\:\\h{1,4}){1,4}|(\\h{1,4}\\:){1,2}(\\:\\h{1,4}){1,5}|\\h{1,4}\\:((\\:\\h{1,4}){1,6})|\\:((\\:\\h{1,4}){1,7}|\\:)|fe80\\:(\\:\\h{,4}){,4}\\%[0-9a-zA-Z]{1,}|\\:\\:(ffff(\\:0{1,4})?\\:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9]).){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|(\\h{1,4}\\:){1,4}\\:((25[0-5]|(2[0-4]|1?[0-9])?[0-9]).){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))\\b",
+          "name": "constant.other.ipv6.mikrotik-script"
+        },
+        {
+          "comment": "IPv4 address (http://stackoverflow.com/a/5284179/188530)",
+          "match": "\\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\/([0-9]|1[0-9]|2[0-4]))?\\b",
+          "name": "constant.other.ipv4.mikrotik-script"
+        }
+      ]
+    },
+    "literal-mac": {
+      "patterns": [
+        {
+          "comment": "MAC address (http://stackoverflow.com/a/4260512/188530)",
+          "match": "\\b(\\h{2}[:-]){5}(\\h{2})\\b",
+          "name": "constant.other.mac.mikrotik-script"
+        }
+      ]
+    },
+    "literal-number": {
+      "patterns": [
+        {
+          "comment": "64bit signed integer in hexadecimal form",
+          "match": "\\b(?i:(0x\\h*))\\b",
+          "name": "constant.numeric.integer.hexadecimal.mikrotik-script"
+        },
+        {
+          "comment": "64bit signed integer in decimal form",
+          "match": "\\b([1-9]+[0-9]*|0)\\b",
+          "name": "constant.numeric.integer.decimal.mikrotik-script"
+        }
+      ]
+    },
+    "literal-string": {
+      "patterns": [
+        {
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.mikrotik-script"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.mikrotik-script"
+            }
+          },
+          "name": "string.quoted.double.mikrotik-script",
+          "patterns": [
+            {
+              "include": "#string-escape"
+            },
+            {
+              "include": "#string-expression"
+            },
+            {
+              "include": "#line-continuation"
+            },
+            {
+              "match": "\\n",
+              "name": "invalid.illegal.newline.mikrotik-script"
+            }
+          ]
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "comment": "arithmetic operators",
+          "match": "\\+|\\-|\\*|\\/",
+          "name": "keyword.operator.arithmetic.mikrotik-script"
+        },
+        {
+          "comment": "relational operators",
+          "match": "<|>|<=|>=",
+          "name": "keyword.operator.relational.mikrotik-script"
+        },
+        {
+          "comment": "comparison operators",
+          "match": "=|!=",
+          "name": "keyword.operator.comparison.mikrotik-script"
+        },
+        {
+          "comment": "logical operators",
+          "match": "\\!|&&|\\|\\|",
+          "name": "keyword.operator.logical.mikrotik-script"
+        },
+        {
+          "comment": "bitwise operators",
+          "match": "~|\\||\\^|\\&|<<|>>",
+          "name": "keyword.operator.bitwise.mikrotik-script"
+        },
+        {
+          "comment": "concatenation operators",
+          "match": "\\.|\\,",
+          "name": "keyword.operator.concatenation.mikrotik-script"
+        },
+        {
+          "comment": "access array element by key",
+          "match": "->",
+          "name": "keyword.operator.other.mikrotik-script"
+        },
+        {
+          "comment": "delimeters",
+          "match": ":|\\$|\\/",
+          "name": "keyword.operator.other.mikrotik-script"
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.statement.mikrotik-script"
+        },
+        {
+          "match": "\\(|\\)",
+          "name": "meta.brace.round.mikrotik-script"
+        },
+        {
+          "match": "\\{|\\}",
+          "name": "meta.brace.curly.mikrotik-script"
+        },
+        {
+          "match": "\\[|\\]",
+          "name": "meta.brace.square.mikrotik-script"
+        }
+      ]
+    },
+    "parameters-readonly": {
+      "patterns": [
+        {
+          "match": "(?x) \\b(?<![\\-=])( 802\\.1x\\-port\\-enabled| ac\\-mac| ack\\-timeout| active\\-address| active\\-client\\-id| active\\-cpu| active\\-interfaces| active\\-links| active\\-mac\\-address| active\\-server| actual\\-interface| actual\\-tx\\-interval| addresses| adjacency| agent\\-circuit\\-id| agent\\-remote\\-id| aggregator| ap| architecture\\-name| as\\-path| as4\\-capability| assured| atomic\\-aggregate| authentication\\-type| authority| backup\\-dr\\-address| bad\\-blocks| bgp\\-ext\\-communities| bgp| blocked| board\\-name| bytes\\-in| bytes\\-out| ca\\-crl\\-host| caller\\-id| category| ca| checksum| cisco\\-bgp\\-signaled| client| cluster\\-list| communities| cpu\\-count| cpu\\-frequency| cpu\\-load| creation\\-time| crl| data\\-byte| db\\-exchanges| db\\-summaries| denied| desired\\-tx\\-interval| dhcp| dijkstras| disk| dr\\-address| dsa| dst\\-user| dst| dynamic| effective\\-router\\-id| egress| encoding| encryption| errors| established| evm\\-ch0| evm\\-ch1| evm\\-ch2| expire\\-time| expired| expires\\-after| expires\\-in| external\\-imports| file\\-size| file\\ type| fingerprint| first\\-header| frame\\-bytes| frames| framing\\-current\\-size| framing\\-limit| framing\\-mode| free\\-hdd\\-space| free\\-memory| gateway\\-status| global| gre\\-key| gre\\-version| group\\-encryption| header\\-stack| hits| hw\\-frame\\-bytes| hw\\-frames| icmp\\-code| icmp\\-id| icmp\\-type| idle\\-time| id| imposed\\-label| in\\-accepted| in\\-dropped| in\\-label| in\\-previous\\-hop| in\\-transformed| inactive| info| inteface| invalid\\-after| invalid\\-before| invalid| io| ip\\-dscp| ip\\-dst| ip\\-frag\\-off| ip\\-gateway| ip\\-id| ip\\-src| ip\\-ttl| irq| issued| issuer| label| last\\-accessed\\-time| last\\-accessed| last\\-activity| last\\-ip| last\\-modified\\-time| last\\-modified| last\\-seen| latency\\-distribution\\-measure\\-interval| latency\\-distribution\\-samples| link\\-local| local\\-label| local\\-pref| local\\-transport| locally\\-originated| ls\\-requests| ls\\-retransmits| mac\\-dst| mac\\-src| management\\-protection| manufacture\\-date| max\\-entries| med| memory| message| model| mru| next\\-hop| nexthop| no\\-expiration\\-info| no\\-memory| nominal\\-battery\\-voltage| non\\-cacheable| non\\-output| not\\-found| nstreme| offline\\-after| operational| options| originator\\-id| origin| ospf\\-metric| ospf| out\\-accepted| out\\-dropped| out\\-label| out\\-next\\-hop| out\\-transformed| owner| p\\-throughput| package\\-architecture| package\\-built\\-time| package\\-name| package\\-version| packed\\-bytes| packed\\-frames| packets\\-in| packets\\-out| packets\\-rx| path\\-in\\-explicit\\-route| path\\-in\\-record\\-route| path\\-out\\-explicit\\-route| path\\-out\\-record\\-route| peer| ph2\\-state| pool| prefix\\-count| primary\\-dns| primary\\-ntp| protocols| radius| raw\\-header| received\\-from| recorded\\-route| refresh\\-capability| remaining\\-bw| remote\\-group| remote\\-hold\\-time| remote\\-id| remote\\-label| remote\\-min\\-rx| remote\\-status| reply\\-dst\\-address| reply\\-src\\-address| required\\-min\\-rx| resv\\-bandwidth| resv\\-out\\-record\\-route| revoked| rip| routeros\\-version| router| running| rx\\-1024\\-1518| rx\\-128\\-255| rx\\-1519\\-max| rx\\-256\\-511| rx\\-512\\-1023| rx\\-64| rx\\-65\\-127| rx\\-align\\-error| rx\\-broadcast| rx\\-bytes| rx\\-ccq| rx\\-fcs\\-error| rx\\-fragment| rx\\-multicast| rx\\-overflow| rx\\-pause| rx\\-rate| rx\\-runt| rx\\-too\\-long| scep\\-url| secondary\\-dns| secondary\\-ntp| seen\\ reply| sending\\-path| sending\\-resv| sending\\-targeted\\-hello| sequence\\-number| serial| service| shared| side| signal\\-strength\\-ch0| signal\\-strength\\-ch1| signal\\-strength\\-ch2| signal\\-strength| signal\\-to\\-noise| since| slave| smart\\-card\\-key| src\\-user| src| state\\-changes| static| strength\\-at\\-rates| successes| switch| tcp\\-state| tdma\\-retx| tdma\\-rx\\-size| tdma\\-timing\\-offset| tdma\\-tx\\-size| tdma\\-windfull| timestamp| too\\-large| total\\-entries| total\\-hdd\\-space| total\\-memory| transport\\-nexthop| tx\\-1024\\-1518| tx\\-128\\-255| tx\\-1519\\-max| tx\\-256\\-511| tx\\-512\\-1023| tx\\-64| tx\\-65\\-127| tx\\-align\\-error| tx\\-broadcast| tx\\-bytes| tx\\-ccq| tx\\-evm\\-ch0| tx\\-evm\\-ch1| tx\\-evm\\-ch2| tx\\-fcs\\-error| tx\\-fragment| tx\\-frames\\-timed\\-out| tx\\-multicast| tx\\-overflow| tx\\-pause| tx\\-rate| tx\\-runt| tx\\-signal\\-strength\\-ch0| tx\\-signal\\-strength\\-ch1| tx\\-signal\\-strength\\-ch2| tx\\-signal\\-strength| tx\\-too\\-long| udp\\-dst\\-port| udp\\-src\\-port| unknown\\-server| unreachable| updates\\-received| updates\\-sent| up| uri| used\\-hold\\-time| used\\-keepalive\\-time| users| vlan\\-protocol| vpls| wds| withdraws\\-received| withdraws\\-sent| wmm\\-enabled| write\\-sect\\-since\\-reboot| write\\-sect\\-total )(?!-)\\b\n",
+          "name": "entity.other.attribute-name.readonly.mikrotik-script"
+        }
+      ]
+    },
+    "parameters-readwrite": {
+      "patterns": [
+        {
+          "captures": {
+            "2": {
+              "name": "entity.other.attribute-name.readwrite.mikrotik-script"
+            },
+            "4": {
+              "name": "invalid.illegal.unexpected-text.mikrotik-script"
+            },
+            "5": {
+              "name": "keyword.operator.assigment.mikrotik-script"
+            }
+          },
+          "match": "(?x) (\\b(?<![\\/\\-=])(?<words> 2ghz\\-10mhz\\-power\\-channels| 2ghz\\-11n\\-channels| 2ghz\\-5mhz\\-power\\-channels| 2ghz\\-b\\-channels| 2ghz\\-g\\-channels| 2ghz\\-g\\-turbo\\-channels| 5ghz\\-10mhz\\-power\\-channels| 5ghz\\-11n\\-channels| 5ghz\\-5mhz\\-power\\-channels| 5ghz\\-channels| 5ghz\\-turbo\\-channels| 6to4\\-interface| 802\\.3\\-sap| 802\\.3\\-type| AH| DNS| ESP| NET\\-BIOS| SNMP| ac\\-name| accept\\-dynamic\\-neighbors| accept\\-redirects| accept\\-router\\-advertisements| accept\\-source\\-route| accept| accessible\\-via\\-web| account\\-local\\-traffic| accounting| action| active\\-flow\\-timeout| active\\-mode| active\\-port\\-type| active| adaptive\\-noise\\-immunity| add\\-arp| add\\-default\\-route| add\\-lifetime| add\\-mac\\-cookie| add\\-relay\\-info| address\\-families| address\\-family| address\\-list\\-timeout| address\\-list| address\\-pool| address\\-prefix\\-length| address6| addresses| address| addtime| adjacent\\-neighbors| admin\\-mac| advertise\\-dns| advertise\\-filter| advertise\\-interval| advertise\\-mac\\-address| advertise\\-timeout| advertise\\-url| advertised\\-l2mtu| advertise| affinity\\-exclude| affinity\\-include\\-all| affinity\\-include\\-any| ageing\\-time| age| ah\\-algorithm| ah\\-key| ah\\-spi| alarm\\-setting| alert\\-timeout| allocate\\-udp\\-ports\\-from| allow\\-address| allow\\-as\\-in| allow\\-disable\\-external\\-interface| allow\\-fast\\-path| allow\\-guests| allow\\-remote\\-requests| allow\\-sharedkey| allow\\-target| allowed\\-number| allow| always\\-broadcast| always\\-from\\-cache| antenna\\-gain| antenna\\-mode| ap\\-tx\\-limit| apn| append\\-bgp\\-communities| append\\-route\\-targets| area\\-id| area\\-prefix| area| arp\\-dst\\-address| arp\\-dst\\-mac\\-address| arp\\-gratuitous| arp\\-hardware\\-type| arp\\-interval| arp\\-ip\\-targets| arp\\-opcode| arp\\-packet\\-type| arp\\-ping| arp\\-src\\-address| arp\\-src\\-mac\\-address| arp\\-timeout| arp| as\\-override| ascii| as| attribute\\-filter| audio\\-max| audio\\-min| audio\\-monitor| auth\\-algorithms| auth\\-algorithm| auth\\-key| auth\\-method| authenticate| authentication\\-key\\-id| authentication\\-key| authentication\\-password| authentication\\-protocol| authentication\\-types| authentication| authoritative| auth| auto\\-bandwidth\\-avg\\-interval| auto\\-bandwidth\\-range| auto\\-bandwidth\\-reserve| auto\\-bandwidth\\-update\\-interval| auto\\-mac| auto\\-negotiation| auto\\-send\\-supout| automatic\\-supout| autonomous| backup\\-designated\\-router| bandwidth\\-limit| bandwidth| band| basic\\-rates\\-a\\/g| basic\\-rates\\-b| battery\\-charge| battery\\-voltage| baud\\-rate| bearing| bgp\\-as\\-path\\-length| bgp\\-as\\-path| bgp\\-atomic\\-aggregate| bgp\\-communities| bgp\\-local\\-pref| bgp\\-med| bgp\\-origin| bgp\\-prepend| bgp\\-weight| bidirectional\\-timeout| blink| block\\-access| blockade\\-k\\-factor| board| body| boot\\-device| boot\\-file\\-name| boot\\-protocol| bootp\\-support| bridge\\-cost| bridge\\-horizon| bridge\\-mode| bridge\\-path\\-cost| bridge\\-port\\-priority| bridge| broadcast| bsd\\-syslog| burst\\-time| bytes| ca\\-fingerprint| ca\\-identity| cable\\-setting| cable\\-test| cache\\-administrator| cache\\-entries| cache\\-hit\\-dscp| cache\\-max\\-ttl| cache\\-on\\-disk| cache\\-size| capabilities| cc| certificate| chain| challenge\\-password| change\\-tcp\\-mss| channel\\-time| channel\\-width| channel| check\\-certificate| check\\-gateway| check\\-interval| check\\-status| chip\\-info| cipher| cisco\\-style\\-id| cisco\\-style| cisco\\-vpls\\-nlri\\-len\\-fmt| client\\-id| client\\-to\\-client\\-reflection| client\\-tx\\-limit| cluster\\-id| code| comment| common\\-name| compression| confederation\\-peers| confederation| connect\\-to| connection\\-bytes| connection\\-limit| connection\\-mark| connection\\-rate| connection\\-state| connection\\-type| connect| contact| contents| content| contrast| cost| country| count| cpu\\-frequency| cpu| current\\-bytes| current\\-mac\\-address| data\\-bits| data\\-channel| data| date\\-and\\-time| days\\-valid| dead\\-interval| default\\-ap\\-tx\\-limit| default\\-authentication| default\\-cable\\-settings| default\\-client\\-tx\\-limit| default\\-cost| default\\-forwarding| default\\-group| default\\-name| default\\-originate| default\\-periodic\\-calibration| default\\-profile| default\\-route\\-distance| default\\-vlan\\-id| default| delay\\-threshold| designated\\-port\\-count| designated\\-router| device\\-id| device| dfs\\-mode| dh\\-group| dhcp\\-options| dhcp\\-option| dhcp\\-server| dial\\-command| dial\\-on\\-demand| direction| directory| disable\\-csma| disable\\-running\\-check| disabled| disconnect\\-timeout| discover| disk\\-file\\-count| disk\\-file\\-name| disk\\-lines\\-per\\-file| disk\\-stop\\-on\\-full| distance| distribute\\-default| distribute\\-for\\-default\\-route| dns\\-name| dns\\-server| do\\-not\\-fragment| domain\\-id| domain\\-tag| domain| down\\-delay| down\\-flood\\-thresholds| down\\-script| dpd\\-interval| dpd\\-maximum\\-failures| dscp| dst\\-address\\-list| dst\\-address\\-type| dst\\-address| dst\\-delta| dst\\-end| dst\\-host| dst\\-limit| dst\\-mac\\-address| dst\\-path| dst\\-port| dst\\-start| duid| duration| dynamic\\-label\\-range| eap\\-methods| edge\\-port\\-discovery| edge\\-port| edge| email\\-to| email| enable\\-nstreme| enable\\-polling| enabled| enc\\-algorithms| enc\\-algorithm| encryption\\-password| encryption\\-protocol| engine\\-id| esp\\-auth\\-algorithm| esp\\-auth\\-key| esp\\-enc\\-algorithm| esp\\-enc\\-key| esp\\-spi| eui\\-64| exchange\\-mode| exclude\\-groups| export\\-pub\\-key| export\\-route\\-target| external\\-fdb| file\\-limit| file\\-name| file| filter\\-direction| filter\\-interface| filter\\-ip\\-address| filter\\-ip\\-protocol| filter\\-mac\\-address| filter\\-mac\\-protocol| filter\\-mac| filter\\-operator\\-between\\-entries| filter\\-port| filter\\-stream| fingerprint\\-algorithm| firmware| flow\\-control\\-auto| flow\\-control\\-rx| flow\\-control\\-tx| flow\\-control| force\\-aes| force\\-backup\\-booter| forward\\-delay| forwarding| forward| fragment\\-offset| fragment| frame\\-lifetime| frame\\-size| framer\\-limit| framer\\-policy| frames\\-per\\-second| frequency\\-mode| frequency\\-offset| frequency| from\\-address| from\\-date| from\\-pool| from\\-time| from| full\\-duplex| garbage\\-timer| gateway\\-class| gateway\\-keepalive| gateway\\-selection| gateway| generate\\-key| generate\\-policy| generic\\-timeout| graph| group\\-ciphers| group\\-key\\-update| group| hash\\-algorithm| hello\\-interval| hide\\-ssid| hold\\-time| holding\\-priority| hop\\-limit| hoplimit| hops| horizon| host\\-name| host| hotspot\\-address| hotspot| ht\\-ampdu\\-priorities| ht\\-amsdu\\-limit| ht\\-amsdu\\-threshold| ht\\-basic\\-mcs| ht\\-chains| ht\\-channel\\-width| ht\\-guard\\-interval| ht\\-rates| ht\\-rxchains| ht\\-streams| ht\\-supported\\-mcs| ht\\-txchains| html\\-directory| http\\-cookie\\-lifetime| http\\-proxy| hw\\-fragmentation\\-threshold| hw\\-protection\\-mode| hw\\-protection\\-threshold| hw\\-retries| hwmp\\-default\\-hoplimit| hwmp\\-prep\\-lifetime| hwmp\\-preq\\-destination\\-only| hwmp\\-preq\\-reply\\-and\\-forward| hwmp\\-preq\\-retries| hwmp\\-preq\\-waiting\\-time| hwmp\\-rann\\-interval| hwmp\\-rann\\-lifetime| hwmp\\-rann\\-propagation\\-delay| iaid| icmp\\-options| icmp\\-rate\\-limit| icmp\\-rate\\-mask| icmp\\-timeout| identification| identity| idle\\-timeout| ignore\\-as\\-path\\-len| ignore\\-directip\\-modem| igp\\-flood\\-period| import\\-route\\-target| import| in\\-bridge\\-port| in\\-bridge| in\\-buffer\\-errors| in\\-errors| in\\-filter| in\\-header\\-errors| in\\-interface| in\\-no\\-policies| in\\-no\\-states| in\\-policy\\-blocked| in\\-policy\\-errors| in\\-prefix\\-list| in\\-state\\-expired| in\\-state\\-invalid| in\\-state\\-mismatches| in\\-state\\-mode\\-errors| in\\-state\\-protocol\\-errors| in\\-state\\-sequence\\-errors| in\\-template\\-mismatches| inactive\\-flow\\-timeout| include\\-igp| incoming\\-filter| incoming\\-packet\\-mark| info\\-channel| ingress\\-priority| inherit\\-attributes| inject\\-summary\\-lsas| insert\\-queue\\-before| instance| interface\\-name| interface\\-type| interfaces| interface| interim\\-update| interval| invert\\-math| ip\\-address| ip\\-forwarding| ip\\-forward| ip\\-header\\-size| ip\\-packet\\-size| ip\\-protocol| ipsec\\-protocols| ipv4\\-options| ipv6| jump\\-target| k\\-factor| keep\\-max\\-sms| keep\\-result| keepalive\\-timeout| keepalive\\-time| keepalive| key\\-bits| key\\-chain| key\\-id| key\\-name| key\\-size| key\\-usage| key| kind| l2mtu| l2router\\-id| lacp\\-rate| last\\-packet\\-before| latency\\-distribution\\-max| latency\\-distribution\\-scale| latency| latitude| layer7\\-protocol| learning| lease\\-script| lease\\-time| leds| level| life\\-time| lifebytes| lifetime| limit\\-bytes\\-in| limit\\-bytes\\-out| limit\\-bytes\\-total| limit\\-uptime| limit| line\\-voltage| link\\-monitoring| list| load| local\\-address| local\\-port| local\\-tx\\-speed| local\\-udp\\-tx\\-size| locality| locally\\-originated\\-bgp| local| location| log\\-prefix| login\\-by| longitude| loop\\-detect| low\\-battery| lsr\\-id| mac\\-address| mac\\-auth\\-password| mac\\-cookie\\-timeout| mac\\-protocol| make\\-static| managed\\-address\\-configuration| management\\-protection\\-key| management\\-protection| manual\\-sa| manual\\-tx\\-powers| master\\-interface| master\\-port| match\\-chain| max\\-cache\\-object\\-size| max\\-cache\\-size| max\\-client\\-connections| max\\-connections| max\\-fresh\\-time| max\\-message\\-age| max\\-mru| max\\-mtu| max\\-prefix\\-limit| max\\-prefix\\-restart\\-time| max\\-server\\-connections| max\\-sessions| max\\-station\\-count| max\\-udp\\-packet\\-size| mbps| mdix\\-enable| memory\\-limit| memory\\-lines| memory\\-scroll| memory\\-stop\\-on\\-full| mesh\\-portal| mesh| messages\\-rx| messages\\-tx| method| metric\\-bgp| metric\\-connected| metric\\-default| metric\\-ospf| metric\\-other\\-ospf| metric\\-rip| metric\\-static| metric| mii\\-interval| min\\-runtime| min\\-rx| mirror\\-source| mirror\\-target| mode\\-cfg| modem\\-init| modem\\-signal\\-treshold| mode| monitor| mpls\\-mtu| mpls\\-te\\-area| mpls\\-te\\-router\\-id| mq\\-pfifo\\-limit| mrru| mschapv2\\-password| mschapv2\\-username| mss| mtu| multicast\\-buffering| multicast\\-helper| multihop| multiple\\-channels| multiplier| my\\-id\\-user\\-fqdn| name| nas\\-port\\-type| nat\\-traversal| neighbor\\-id| neighbors| neighbor| netmask| network\\-type| network| new\\-connection\\-mark| new\\-dscp| new\\-mss| new\\-packet\\-mark| new\\-priority| new\\-routing\\-mark| new\\-ttl| next\\-server| nexthop\\-choice| no\\-ping\\-delay| noise\\-floor\\-threshold| note| nth| ntp\\-server| null\\-modem| num| nv2\\-cell\\-radius| nv2\\-noise\\-floor\\-offset| nv2\\-preshared\\-key| nv2\\-qos| nv2\\-queue\\-count| nv2\\-security| offline\\-time| on\\-alert| on\\-backup| on\\-battery| on\\-event| on\\-fail\\-retry\\-time| on\\-interface| on\\-line| on\\-link| on\\-login| on\\-logout| on\\-master| one\\-session\\-per\\-host| only\\-headers| only\\-one| open\\-status\\-page| organization| organziation| orig\\-mac\\-address| origination\\-interval| originator| ospf\\-type| other\\-configuration| out\\-bridge\\-port| out\\-bridge| out\\-bundle\\-check\\-errors| out\\-bundle\\-errors| out\\-errors| out\\-filter| out\\-interface| out\\-no\\-states| out\\-policy\\-blocked| out\\-policy\\-dead| out\\-policy\\-errors| out\\-prefix\\-list| out\\-state\\-expired| out\\-state\\-mode\\-errors| out\\-state\\-protocol\\-errors| out\\-state\\-sequence\\-errors| outgoing\\-filter| outgoing\\-packet\\-mark| output\\-voltage| overloaded\\-output| p2p| packet\\-mark| packet\\-size| packet\\-type| packets| page\\-refresh| parent\\-proxy\\-port| parent\\-proxy| parent\\-queue| parity| passive| password| path\\-cost| path\\-vector\\-limit| path| pci\\-info| pcq\\-burst\\-rate| pcq\\-burst\\-threshold| pcq\\-burst\\-time| pcq\\-classifier| pcq\\-dst\\-address\\-mask| pcq\\-dst\\-address6\\-mask| pcq\\-limit| pcq\\-rate| pcq\\-src\\-address\\-mask| pcq\\-src\\-address6\\-mask| pcq\\-total\\-limit| peek\\-rate| per\\-connection\\-classifier| periodic\\-calibration\\-interval| periodic\\-calibration| pfifo\\-limit| pfs\\-group| pfs| phone| phy\\-regs| pin| platform| poe\\-out| poe\\-priority| point\\-to\\-point\\-port| point\\-to\\-point| policy\\-group| policy| poll\\-interval| pool\\-name| pool\\-prefix\\-length| port\\-count| port\\-number| port\\-type| ports| port| pps| preamble\\-mode| preemption\\-mode| pref\\-src| preferred\\-gateway| preferred\\-lifetime| prefix\\-length| prefix| primary\\-ntp| primary\\-path| primary\\-retry\\-interval| primary\\-server| primary| priority| prism\\-cardtype| private\\-algo| private\\-key| private\\-pre\\-shared\\-key| profile| propagate\\-ttl| proposal\\-check| proposal| proprietary\\-extensions| proprietary\\-extension| protocol\\-mode| protocol| psd| pw\\-mtu| pw\\-type| query\\-server\\-timeout| query\\-total\\-timeout| queue\\-type| queue| quick| ra\\-delay| ra\\-interval| ra\\-lifetime| radio\\-name| radius\\-accounting| radius\\-default\\-domain| radius\\-eap\\-accounting| radius\\-interim\\-update| radius\\-location\\-name| radius\\-mac\\-authentication| radius\\-mac\\-caching| radius\\-mac\\-format| radius\\-mac\\-mode| random\\-data| random| ranges| range| rate\\-limit| rate\\-selection| rate\\-set| rates\\-a\\/g| rates\\-b| rate| raw\\-value| reachable\\-time| read\\-access| read\\-only| receive\\-all| receive\\-enabled| receive\\-errors| receive| record\\-route| red\\-avg\\-packet| red\\-burst| red\\-limit| red\\-max\\-threshold| red\\-min\\-threshold| redirect\\-to| redistribute\\-bgp| redistribute\\-connected| redistribute\\-ospf| redistribute\\-other\\-bgp| redistribute\\-other\\-ospf| redistribute\\-rip| redistribute\\-static| refresh\\-time| regexp| reject\\-with| relay| release| remember| remote\\-address| remote\\-as| remote\\-certificate| remote\\-mac| remote\\-peer| remote\\-port| remote\\-tx\\-speed| remote\\-udp\\-tx\\-size| remote| remove\\-private\\-as| renew| reoptimize\\-interval| reoptimize\\-paths| replace\\-battery| replay| req\\-fingerprint| require\\-client\\-certificate| resends| reset\\-alert| reset\\-counters\\-all| reset\\-counters| reset\\-mac\\-address| resource\\-class| retransmit\\-interval| role| root\\-bridge\\-id| root\\-bridge| root\\-path\\-cost| root\\-port| route\\-comment| route\\-distinguisher| route\\-reflect| route\\-tag| route\\-target| router\\-id| routes| routing\\-mark| routing\\-table| rp\\-filter| rp_filter| runtime\\-calibration\\-running| runtime\\-left| rx\\-band| rx\\-channel\\-width| rx\\-frequency| rx\\-radio| sa\\-dst\\-address| sa\\-src\\-address| sa\\-type| same\\-not\\-by\\-dst| satellites| scan\\-list| scope| secondary\\-ntp| secondary\\-paths| secondary\\-server| secret| secure\\-redirects| security\\-profile| security| send\\-dns| send\\-email\\-from| send\\-email\\-to| send\\-initial\\-contact| send\\-redirects| send\\-smtp\\-server| send\\-targeted| sending\\-rstp| send| seq\\-number| serial\\-number| serialize\\-connections| servers| server| service\\-name| session\\-timeout| set\\-bgp\\-communities| set\\-bgp\\-local\\-pref| set\\-bgp\\-med| set\\-bgp\\-prepend\\-path| set\\-bgp\\-prepend| set\\-bgp\\-weight| set\\-check\\-gateway| set\\-disabled| set\\-distance| set\\-in\\-nexthop\\-direct| set\\-in\\-nexthop\\-ipv6| set\\-in\\-nexthop\\-linklocal| set\\-in\\-nexthop| set\\-metric| set\\-out\\-nexthop\\-ipv6| set\\-out\\-nexthop\\-linklocal| set\\-out\\-nexthop| set\\-pref\\-src| set\\-route\\-comment| set\\-route\\-tag| set\\-route\\-targets| set\\-routing\\-mark| set\\-scope| set\\-site\\-of\\-origin| set\\-system\\-time| set\\-target\\-scope| set\\-type| set\\-use\\-te\\-nexthop| setup\\-priority| setup| sfp\\-rate\\-select| sfq\\-allot| sfq\\-perturb| shared\\-users| share| show\\-at\\-login| show\\-dummy\\-rule| signal\\-range| silent\\-boot| sim\\-pin| simple\\-queue| sip\\-direct\\-media| site\\-id| site\\-of\\-origin| size| skin| slaves| smart\\-boost\\-mode| smart\\-ssdd\\-mode| smtp\\-server| software\\-id| source| speed| spi| split\\-include| split\\-user\\-domain| src\\-address\\-list| src\\-address\\-type| src\\-address| src\\-mac\\-address| src\\-mac| src\\-path| src\\-port| ssid\\-all| ssid| ssl\\-certificate| start\\-time| start| state| static\\-algo\\-0| static\\-algo\\-1| static\\-algo\\-2| static\\-algo\\-3| static\\-key\\-0| static\\-key\\-1| static\\-key\\-2| static\\-key\\-3| static\\-sta\\-private\\-algo| static\\-sta\\-private\\-key| static\\-transmit\\-key| station\\-bridge\\-clone\\-mac| stats\\-samples\\-to\\-keep| status\\-autorefresh| status| stop\\-bits| stop| store\\-every| store\\-leases\\-disk| store\\-name| store\\-on\\-disk| stp\\-flags| stp\\-forward\\-delay| stp\\-hello\\-time| stp\\-max\\-age| stp\\-msg\\-age| stp\\-port| stp\\-root\\-address| stp\\-root\\-cost| stp\\-root\\-priority| stp\\-sender\\-address| stp\\-sender\\-priority| stp\\-type| streaming\\-enabled| streaming\\-max\\-rate| streaming\\-server| subject| summary\\-only| supplicant\\-identity| supported\\-bands| supported\\-rates\\-a\\/g| supported\\-rates\\-b| suppress\\-filter| synchronize| syslog\\-facility| syslog\\-severity| syslog\\-time\\-format| target\\-scope| target| tcp\\-close\\-timeout| tcp\\-close\\-wait\\-timeout| tcp\\-connection\\-count| tcp\\-established\\-timeout| tcp\\-fin\\-wait\\-timeout| tcp\\-flags| tcp\\-last\\-ack\\-timeout| tcp\\-md5\\-key| tcp\\-mss| tcp\\-syn\\-received\\-timeout| tcp\\-syn\\-sent\\-timeout| tcp\\-syncookies| tcp\\-time\\-wait\\-timeout| tcp_syncookies| tdma\\-debug| tdma\\-hw\\-test\\-mode| tdma\\-override\\-rate| tdma\\-override\\-size| tdma\\-period\\-size| tdma\\-test\\-mode| te\\-metric| template| test\\-audio| test\\-id| threshold| time\\-zone\\-name| time\\-zone| timeout\\-timer| timeout| time| tls\\-certificate| tls\\-mode| tls| to\\-addresses| to\\-address| to\\-arp\\-reply\\-mac\\-address| to\\-dst\\-mac\\-address| to\\-ports| to\\-src\\-mac\\-address| top\\-bits| topics| total| to| traffic| transfer\\-cause| transit\\-area| translator\\-role| transmit\\-delay| transmit\\-hash\\-policy| transmit\\-hold\\-count| transparent\\-proxy| transport\\-address| transport| trap\\-generators| trap\\-target| trap\\-version| trial\\-uptime| trial\\-user\\-profile| trigger| trusted| ttl| tunnel\\-id| tunnel| tx\\-band| tx\\-channel\\-width| tx\\-frequency| tx\\-power\\-mode| tx\\-power| tx\\-radio| tx\\-template| type| udp\\-stream\\-timeout| udp\\-timeout| unicast\\-ciphers| unit| unpack| up\\-delay| up\\-flood\\-thresholds| up\\-script| update\\-source| update\\-stats\\-interval| update\\-timer| upload| uptime| url| usb\\-version| use\\-bfd| use\\-compression| use\\-control\\-word| use\\-cspf| use\\-dn| use\\-encryption| use\\-explicit\\-null| use\\-ip\\-firewall\\-for\\-pppoe| use\\-ip\\-firewall\\-for\\-vlan| use\\-ip\\-firewall| use\\-mpls| use\\-peer\\-dns| use\\-peer\\-ntp| use\\-radius| use\\-service\\-tag| use\\-src\\-mac| use\\-udp| use\\-vj\\-compression| username| user| v3\\-protocol| v9\\-template\\-refresh| v9\\-template\\-timeout| valid\\-lifetime| valid\\-server| valid| value| vendor\\-id| vendor| verify\\-client\\-certificate| verify\\-server\\-address\\-from\\-certificate| verify\\-server\\-certificate| version| vlan\\-encap| vlan\\-header| vlan\\-id| vlan\\-mode| vlan\\-priority| vpls\\-id| vrid| watch\\-address| watchdog\\-timer| wds\\-address| wds\\-cost\\-range| wds\\-default\\-bridge| wds\\-default\\-cost| wds\\-ignore\\-ssid| wds\\-mode| wins\\-server| wireless\\-protocol| wmm\\-support| wpa\\-pre\\-shared\\-key| wpa2\\-pre\\-shared\\-key| write\\-access| xauth\\-login| xauth\\-password| zone )\\b(?!-)(([\\s\\t]*?)(=))?)\n"
+        }
+      ]
+    },
+    "string-escape": {
+      "patterns": [
+        {
+          "match": "\\\\\\\"|\\\\\\\\|\\\\n|\\\\r|\\\\t|\\\\\\$|\\\\\\?|\\\\_|\\\\a|\\\\b|\\\\f|\\\\v|\\\\\\h\\h",
+          "name": "constant.character.escape.mikrotik-script"
+        }
+      ]
+    },
+    "string-expression": {
+      "patterns": [
+        {
+          "begin": "\\$\\(",
+          "end": "\\)",
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "include": "#line-continuation"
+            },
+            {
+              "match": "\\n",
+              "name": "invalid.illegal.newline.mikrotik-script"
+            }
+          ]
+        },
+        {
+          "begin": "\\$\\[",
+          "end": "\\]",
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "include": "#line-continuation"
+            },
+            {
+              "match": "\\n",
+              "name": "invalid.illegal.newline.mikrotik-script"
+            }
+          ]
+        }
+      ]
+    },
+    "variable": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.mikrotik-script"
+            }
+          },
+          "match": "(\\$)([0-9a-zA-Z]+)",
+          "name": "variable.other.mikrotik-script"
+        },
+        {
+          "begin": "(\\$)(\\\")",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.variable.mikrotik-script"
+            },
+            "2": {
+              "name": "punctuation.definition.variable.begin.mikrotik-script"
+            }
+          },
+          "end": "\\\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.variable.end.mikrotik-script"
+            }
+          },
+          "name": "variable.other.mikrotik-script",
+          "patterns": [
+            {
+              "include": "#string-escape"
+            },
+            {
+              "include": "#line-continuation"
+            },
+            {
+              "match": "\\n",
+              "name": "invalid.illegal.newline.mikrotik-script"
+            }
+          ]
+        }
+      ]
+    },
+    "variable-definition": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "keyword.operator.other.mikrotik-script"
+            },
+            "2": {
+              "name": "storage.modifier.mikrotik-script"
+            }
+          },
+          "match": "(\\:)(global|local)\\b"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.mikrotik-script",
+  "uuid": "1a4e4c34-d9fb-4371-b819-9934ebed400c"
+}

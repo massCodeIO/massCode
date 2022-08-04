@@ -1,0 +1,119 @@
+{
+  "scopeName": "source.io",
+  "fileTypes": ["io"],
+  "patterns": [
+    {
+      "comment": "we match this to overload return inside () --Allan; scoping rules for what gets the scope have changed, so we now group the ) instead of the ( -- Rob",
+      "match": "\\((\\))",
+      "captures": { "1": { "name": "meta.empty-parenthesis.io" } }
+    },
+    {
+      "comment": "We want to do the same for ,) -- Seckar; same as above -- Rob",
+      "match": "\\,(\\))",
+      "captures": { "1": { "name": "meta.comma-parenthesis.io" } }
+    },
+    {
+      "match": "\\b(if|ifTrue|ifFalse|ifTrueIfFalse|for|loop|reverseForeach|foreach|map|continue|break|while|do|return)\\b",
+      "name": "keyword.control.io"
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.io",
+      "captures": { "0": { "name": "punctuation.definition.comment.io" } }
+    },
+    {
+      "begin": "(^[ \\t]+)?(?=//)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "//",
+          "end": "\\n",
+          "name": "comment.line.double-slash.io",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.io" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.io" }
+      }
+    },
+    {
+      "begin": "(^[ \\t]+)?(?=#)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "#",
+          "end": "\\n",
+          "name": "comment.line.number-sign.io",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.io" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.io" }
+      }
+    },
+    {
+      "comment": "I wonder if some of this isn't variable.other.language? --Allan; scoping this as variable.language to match Objective-C's handling of 'self', which is inconsistent with C++'s handling of 'this' but perhaps intentionally so -- Rob",
+      "match": "\\b(self|sender|target|proto|protos|parent)\\b",
+      "name": "variable.language.io"
+    },
+    {
+      "match": "<=|>=|=|:=|\\*|\\||\\|\\||\\+|-|/|&|&&|>|<|\\?|@|@@|\\b(and|or)\\b",
+      "name": "keyword.operator.io"
+    },
+    { "match": "\\bGL[\\w_]+\\b", "name": "constant.other.io" },
+    { "match": "\\b([A-Z](\\w+)?)\\b", "name": "support.class.io" },
+    {
+      "match": "\\b(clone|call|init|method|list|vector|block|(\\w+(?=\\s*\\()))\\b",
+      "name": "support.function.io"
+    },
+    {
+      "match": "\\b(gl(u|ut)?[A-Z]\\w+)\\b",
+      "name": "support.function.open-gl.io"
+    },
+    {
+      "begin": "\"\"\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.io" }
+      },
+      "end": "\"\"\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.io" }
+      ],
+      "name": "string.quoted.triple.io",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.io" }
+      }
+    },
+    {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.io" }
+      },
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.io" }
+      ],
+      "name": "string.quoted.double.io",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.io" }
+      }
+    },
+    {
+      "match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|UL|ul|u|U|F|f)?\\b",
+      "name": "constant.numeric.io"
+    },
+    { "match": "(Lobby)\\b", "name": "variable.other.global.io" },
+    {
+      "match": "\\b(TRUE|true|FALSE|false|NULL|null|Null|Nil|nil|YES|NO)\\b",
+      "name": "constant.language.io"
+    }
+  ],
+  "name": "Io",
+  "keyEquivalent": "^~I",
+  "uuid": "BD798537-3548-47F3-A6AB-7FB95C45DB83"
+}

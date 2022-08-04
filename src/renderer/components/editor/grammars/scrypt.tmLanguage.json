@@ -1,0 +1,462 @@
+{
+  "fileTypes": ["scrypt"],
+  "name": "sCrypt",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#import"
+    },
+    {
+      "include": "#alias"
+    },
+    {
+      "include": "#operator"
+    },
+    {
+      "include": "#control"
+    },
+    {
+      "include": "#constant"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "include": "#type"
+    },
+    {
+      "include": "#global"
+    },
+    {
+      "include": "#declaration"
+    },
+    {
+      "include": "#function-call"
+    },
+    {
+      "include": "#punctuation"
+    },
+    {
+      "include": "#asm-keywords"
+    },
+    {
+      "include": "#std-contracts"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "include": "#comment-line"
+        },
+        {
+          "include": "#comment-block"
+        }
+      ]
+    },
+    "comment-line": {
+      "match": "(?<!tp:)//.*?$",
+      "name": "comment.line.scrypt"
+    },
+    "comment-block": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.scrypt"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "include": "#operator-logic"
+        },
+        {
+          "include": "#operator-arithmetic"
+        },
+        {
+          "include": "#operator-binary"
+        },
+        {
+          "include": "#operator-assignment"
+        }
+      ]
+    },
+    "operator-logic": {
+      "match": "(==|!=|!(?!=)|<(?!<)|<=|>(?!>)|>=|\\&\\&|\\|\\||\\:(?!=)|\\?)",
+      "name": "keyword.operator.logic.scrypt"
+    },
+    "operator-arithmetic": {
+      "match": "(\\+|\\-|\\/|\\%|(?<!\\*)\\*(?!\\*))",
+      "name": "keyword.operator.arithmetic.scrypt"
+    },
+    "operator-binary": {
+      "match": "(\\~|\\^|\\&|\\||<<|>>)",
+      "name": "keyword.operator.binary.scrypt"
+    },
+    "operator-assignment": {
+      "match": "(\\:?=)",
+      "name": "keyword.operator.assignment.scrypt"
+    },
+    "control": {
+      "patterns": [
+        {
+          "include": "#control-flow"
+        },
+        {
+          "include": "#control-new"
+        },
+        {
+          "include": "#control-seperator"
+        }
+      ]
+    },
+    "control-flow": {
+      "match": "\\b(if|else|loop|returns?)\\b",
+      "name": "keyword.control.flow.scrypt"
+    },
+    "control-new": {
+      "match": "\\b(new)\\b",
+      "name": "keyword.control.new.scrypt"
+    },
+    "control-seperator": {
+      "match": "(\\*{3,})",
+      "name": "keyword.other.seperator.scrypt"
+    },
+    "constant": {
+      "patterns": [
+        {
+          "include": "#constant-boolean"
+        }
+      ]
+    },
+    "constant-boolean": {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.boolean.scrypt"
+    },
+    "number": {
+      "patterns": [
+        {
+          "include": "#number-decimal"
+        },
+        {
+          "include": "#number-hex"
+        }
+      ]
+    },
+    "number-decimal": {
+      "match": "\\b(\\d+(\\.\\d+)?)\\b",
+      "name": "constant.numeric.decimal.scrypt"
+    },
+    "number-hex": {
+      "match": "\\b(0[xX][a-fA-F0-9]+)\\b",
+      "name": "constant.numeric.hexadecimal.scrypt"
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#single-byte"
+        },
+        {
+          "include": "#string-bytes"
+        }
+      ]
+    },
+    "single-byte": {
+      "match": "('[0-9a-fA-F]*')",
+      "name": "string.quoted.single.bytes.scrypt"
+    },
+    "string-bytes": {
+      "match": "\\b(b'[0-9a-fA-F]*')",
+      "name": "string.quoted.single.bytes.scrypt"
+    },
+    "type": {
+      "patterns": [
+        {
+          "include": "#type-primitive"
+        },
+        {
+          "include": "#type-const"
+        }
+      ]
+    },
+    "type-primitive": {
+      "match": "\\b(bool|int|bytes|PrivKey|PubKey|Sig|Ripemd160|Sha1|Sha256|SigHashType|SigHashPreimage|OpCodeType)\\b",
+      "name": "support.type.primitive.scrypt"
+    },
+    "type-const": {
+      "match": "\\b(const)\\b",
+      "name": "keyword.other.const.scrypt"
+    },
+    "global": {
+      "patterns": [
+        {
+          "include": "#global-variables"
+        },
+        {
+          "include": "#global-functions"
+        }
+      ]
+    },
+    "global-variables": {
+      "patterns": [
+        {
+          "match": "\\b(this)\\b",
+          "name": "variable.language.this.scrypt"
+        }
+      ]
+    },
+    "global-functions": {
+      "patterns": [
+        {
+          "match": "\\b(require)\\b",
+          "name": "keyword.control.exceptions.scrypt"
+        },
+        {
+          "match": "\\b(exit)\\b",
+          "name": "keyword.control.exceptions.scrypt"
+        },
+        {
+          "match": "\\b(abs|min|max|within|ripemd160|sha1|sha256|hash160|hash256|checkSig|checkMultiSig|num2bin|pack|unpack|len|reverseBytes|repeat)\\b",
+          "name": "support.function.math.scrypt"
+        }
+      ]
+    },
+    "declaration": {
+      "patterns": [
+        {
+          "include": "#declaration-contract"
+        },
+        {
+          "include": "#declaration-function"
+        },
+        {
+          "include": "#declaration-constructor"
+        },
+        {
+          "include": "#declaration-struct"
+        }
+      ]
+    },
+    "declaration-contract": {
+      "patterns": [
+        {
+          "match": "\\b(contract|library)(\\s+([A-Za-z_]\\w*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.contract.scrypt"
+            },
+            "3": {
+              "name": "entity.name.type.contract.scrypt"
+            }
+          }
+        }
+      ]
+    },
+    "declaration-struct": {
+      "patterns": [
+        {
+          "match": "\\b(struct)(\\s+([A-Za-z_]\\w*))?\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.struct.scrypt"
+            },
+            "3": {
+              "name": "entity.name.type.struct.scrypt"
+            }
+          }
+        }
+      ]
+    },
+    "declaration-constructor": {
+      "match": "\\b(constructor)\\b",
+      "captures": {
+        "1": {
+          "name": "storage.type.constructor.scrypt"
+        }
+      }
+    },
+    "declaration-function": {
+      "patterns": [
+        {
+          "match": "\\b(function)\\s+([A-Za-z_]\\w*)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.function.scrypt"
+            },
+            "2": {
+              "name": "entity.name.function.scrypt"
+            }
+          }
+        },
+        {
+          "match": "\\b(public|private)\\b",
+          "name": "storage.type.modifier.scrypt"
+        },
+        {
+          "match": "\\b(static)\\b",
+          "name": "storage.type.modifier.scrypt"
+        }
+      ]
+    },
+    "function-call": {
+      "match": "\\b\\.\\s*([A-Za-z_]\\w*)\\s*\\(",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.scrypt"
+        }
+      }
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "match": ";",
+          "name": "punctuation.terminator.statement.scrypt"
+        },
+        {
+          "match": "\\.",
+          "name": "punctuation.accessor.scrypt"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.scrypt"
+        }
+      ]
+    },
+    "asm-keywords": {
+      "begin": "(asm)\\s*(?=\\{)",
+      "beginCaptures": {
+        "0": { "name": "keyword.other.scrypt" }
+      },
+      "end": "(?<=\\s*)\\}",
+      "patterns": [
+        {
+          "match": "\\s(\\$\\w+)\\b",
+          "name": "variable.other.scrypt"
+        },
+        {
+          "comment": "Numeric constant",
+          "name": "constant.numeric.hexadecimal.scrypt",
+          "match": "\\b([A-Fa-f0-9]+)\\b"
+        },
+        {
+          "name": "support.other",
+          "match": "(?i)\\b(OP_PUSHDATA1|OP_PUSHDATA2|OP_PUSHDATA4)\\b"
+        },
+        {
+          "name": "constant.language",
+          "match": "(?i)\\b(OP_0|OP_FALSE|OP_1NEGATE|OP_1|OP_TRUE|OP_2|OP_3|OP_4|OP_5|OP_6|OP_7|OP_8|OP_9|OP_10|OP_11|OP_12|OP_13|OP_14|OP_15|OP_16)\\b"
+        },
+        {
+          "name": "support.function",
+          "match": "(?i)\\b(OP_1ADD|OP_1SUB|OP_NEGATE|OP_ABS|OP_NOT|OP_0NOTEQUAL|OP_ADD|OP_SUB|OP_MUL|OP_DIV|OP_MOD|OP_LSHIFT|OP_RSHIFT|OP_BOOLAND|OP_BOOLOR|OP_NUMEQUAL|OP_NUMEQUALVERIFY|OP_NUMNOTEQUAL|OP_LESSTHAN|OP_GREATERTHAN|OP_LESSTHANOREQUAL|OP_GREATERTHANOREQUAL|OP_MIN|OP_MAX|OP_WITHIN)\\b"
+        },
+        {
+          "name": "support.function",
+          "match": "(?i)\\b(OP_CAT|OP_SPLIT|OP_BIN2NUM|OP_NUM2BIN|OP_SIZE)\\b"
+        },
+        {
+          "name": "keyword.control",
+          "match": "(?i)\\b(OP_NOP|OP_IF|OP_NOTIF|OP_ELSE|OP_ENDIF|OP_VERIFY|OP_RETURN)\\b"
+        },
+        {
+          "name": "support.function",
+          "match": "(?i)\\b(OP_TOALTSTACK|OP_FROMALTSTACK|OP_IFDUP|OP_DEPTH|OP_DROP|OP_DUP|OP_NIP|OP_OVER|OP_PICK|OP_ROLL|OP_ROT|OP_SWAP|OP_TUCK|OP_2DROP|OP_2DUP|OP_3DUP|OP_2OVER|OP_2ROT|OP_2SWAP)\\b"
+        },
+        {
+          "name": "support.function",
+          "match": "(?i)\\b(OP_RIPEMD160|OP_SHA1|OP_SHA256|OP_HASH160|OP_HASH256|OP_CODESEPARATOR|OP_CHECKSIG|OP_CHECKSIGVERIFY|OP_CHECKMULTISIG|OP_CHECKMULTISIGVERIFY)\\b"
+        },
+        {
+          "name": "support.function",
+          "match": "(?i)\\b(OP_INVERT|OP_AND|OP_OR|OP_XOR|OP_EQUAL|OP_EQUALVERIFY)\\b"
+        },
+        {
+          "name": "invalid.illegal",
+          "match": "(?i)\\b(OP_VER|OP_VERIF|OP_VERNOTIF|OP_2MUL|OP_2DIV|OP_RESERVED|OP_VER|OP_VERIF|OP_VERNOTIF|OP_RESERVED1|OP_RESERVED2|OP_NOP1|OP_NOP2|OP_NOP3|OP_NOP4|OP_NOP5|OP_NOP6|OP_NOP7|OP_NOP8|OP_NOP9|OP_NOP10)\\b"
+        },
+        {
+          "include": "#comment-line"
+        },
+        {
+          "include": "#comment-block"
+        }
+      ]
+    },
+    "std-contracts": {
+      "patterns": [
+        {
+          "name": "entity.name.type.contract.scrypt",
+          "match": "\\b(P2PKH|P2PK|Tx|HashPuzzleRipemd160|HashPuzzleSha1|HashPuzzleSha256|HashPuzzleHash160)\\b"
+        }
+      ]
+    },
+    "import": {
+      "begin": "\\b(import)\\s",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.import.scrypt"
+        }
+      },
+      "end": "\\s*(;|\n)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.scrypt"
+        }
+      },
+      "name": "meta.import.scrypt",
+      "patterns": [
+        {
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.separator.scrypt"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.separator.scrypt"
+            }
+          },
+          "contentName": "string.quoted.double.bytes.scrypt"
+        }
+      ]
+    },
+    "alias": {
+      "begin": "\\b(type)\\s",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.type.scrypt"
+        }
+      },
+      "end": "\\s*(;)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.scrypt"
+        }
+      },
+      "name": "meta.alias.scrypt",
+      "contentName": "string.quoted.double.bytes.scrypt",
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z_]\\w*)\\s*(=)\\s*([A-Za-z_]\\w*)\\b",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.alias.scrypt"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.scrypt"
+            },
+            "3": {
+              "name": "support.type.primitive.scrypt"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "scopeName": "source.scrypt"
+}

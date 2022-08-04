@@ -35,6 +35,8 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/search/search'
 import 'codemirror/addon/search/searchcursor'
 import 'codemirror/addon/selection/active-line'
+import 'codemirror/addon/scroll/simplescrollbars'
+import 'codemirror/addon/scroll/simplescrollbars.css'
 import 'codemirror/lib/codemirror.css'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { i18n, ipc, track } from '@/electron'
@@ -45,6 +47,7 @@ import { loadThemes, getThemeName } from './themes'
 import type { Language } from '@shared/types/renderer/editor'
 import { emitter } from '@/composable'
 import { useFolderStore } from '@/store/folders'
+import { useDebounceFn } from '@vueuse/core'
 
 interface Props {
   lang: Language
@@ -69,6 +72,7 @@ const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
 
 const editorRef = ref()
+const scrollBarOpacity = ref(1)
 let editor: CodeMirror.Editor
 
 const localLang = computed({
@@ -128,7 +132,8 @@ const init = async () => {
     tabSize: appStore.editor.tabSize,
     autoCloseBrackets: true,
     matchBrackets: appStore.editor.matchBrackets,
-    styleActiveLine: appStore.editor.highlightLine
+    styleActiveLine: appStore.editor.highlightLine,
+    scrollbarStyle: 'null'
   })
 
   editor.on('change', () => {
@@ -147,6 +152,12 @@ const init = async () => {
       emitter.emit('scroll-to:snippet', snippetStore.selectedId!)
     }
   })
+
+  editor.on('scroll', () => {
+    scrollBarOpacity.value = 1
+    editor.setOption('scrollbarStyle', 'overlay')
+  })
+  editor.on('scroll', hideScrollbar)
 }
 
 const setValue = (value: string) => {
@@ -231,6 +242,10 @@ const format = async () => {
   }
 }
 
+const hideScrollbar = useDebounceFn(() => {
+  scrollBarOpacity.value = 0
+}, 1000)
+
 watch(
   () => props.modelValue,
   () => {
@@ -278,6 +293,21 @@ onUnmounted(() => {
     font-size: v-bind(fontSize);
     font-family: v-bind(fontFamily);
     line-height: calc(v-bind(fontSize) * 1.5);
+  }
+  :deep(.CodeMirror-overlayscroll-vertical div) {
+    background-color: rgba(121, 121, 121, 0.8);
+    width: 5px;
+    opacity: v-bind(scrollBarOpacity);
+    transition: opacity 0.3s;
+  }
+  :deep(.CodeMirror-overlayscroll-horizontal div) {
+    background-color: rgba(121, 121, 121, 0.8);
+    height: 5px;
+    opacity: v-bind(scrollBarOpacity);
+    transition: opacity 0.3s;
+  }
+  :deep(.CodeMirror-scrollbar-filler) {
+    background-color: transparent;
   }
   :deep(.mark) {
     background-color: yellow;

@@ -1,3 +1,24 @@
+# [3.0.0-beta.1](https://github.com/massCodeIO/massCode/compare/v2.10.0...v3.0.0-beta.1) (2022-08-04)
+
+### Breaking Changes
+- Drop Ace editor
+- Does not support syntax highlighting for AQL, C9 Search Results, FSL, Gobstones, Jack, JSSM, LogiQL, LuaPage, Lucene, Maze, MIXAL, MUSHCode, RDoc, Redshift, RHTML, RST, Space
+- Remove Light: Crome, Light: Textmate, Light: Xcode themes
+
+
+### Bug Fixes
+
+* **snippets:** folder rename [#162](https://github.com/massCodeIO/massCode/issues/162) ([#169](https://github.com/massCodeIO/massCode/issues/169)) ([c5ddd23](https://github.com/massCodeIO/massCode/commit/c5ddd231c6baecda6df572dda4406d50cc803575))
+
+
+### Features
+
+* add codemirror & use `.tmLanguage` directly as grammar ([#186](https://github.com/massCodeIO/massCode/issues/186)) ([d81536c](https://github.com/massCodeIO/massCode/commit/d81536ca362c4905bab807d4cb5c7397ef85c681))
+* **i18n:** add Chinese traditional locale ([#161](https://github.com/massCodeIO/massCode/issues/161)) ([8b00fcd](https://github.com/massCodeIO/massCode/commit/8b00fcd58eca6c42402a747f23ac57ee8be28927))
+* **i18n:** add Spanish locale ([bd68311](https://github.com/massCodeIO/massCode/commit/bd6831123158a38166025a3683412a290ca74114))
+
+
+
 # [2.10.0](https://github.com/massCodeIO/massCode/compare/v2.9.0...v2.10.0) (2022-07-21)
 
 

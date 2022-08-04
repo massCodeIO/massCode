@@ -24,7 +24,8 @@ export default new Store<PreferencesStore>({
       semi: false,
       singleQuote: true,
       highlightLine: false,
-      highlightGutter: false
+      highlightGutter: false,
+      matchBrackets: false
     },
     screenshot: {
       background: false,

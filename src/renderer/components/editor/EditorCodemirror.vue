@@ -31,8 +31,10 @@
 <script setup lang="ts">
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
+import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/search/search'
 import 'codemirror/addon/search/searchcursor'
+import 'codemirror/addon/selection/active-line'
 import 'codemirror/lib/codemirror.css'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { i18n, ipc, track } from '@/electron'
@@ -124,7 +126,9 @@ const init = async () => {
     lineWrapping: Boolean(appStore.editor.wrap),
     lineNumbers: true,
     tabSize: appStore.editor.tabSize,
-    autoCloseBrackets: true
+    autoCloseBrackets: true,
+    matchBrackets: appStore.editor.matchBrackets,
+    styleActiveLine: appStore.editor.highlightLine
   })
 
   editor.on('change', () => {

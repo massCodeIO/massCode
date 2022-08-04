@@ -18,6 +18,7 @@
     "showInvisibles": "Показ невидимых символов",
     "highlightLine": "Подсветка строки",
     "highlightGutter": "Подсветка gutter",
+    "matchBrackets": "Подсветка скобок",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {

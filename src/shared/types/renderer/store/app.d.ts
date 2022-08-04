@@ -32,6 +32,7 @@ export interface EditorSettings {
   singleQuote: boolean
   highlightLine: boolean
   highlightGutter: boolean
+  matchBrackets: boolean
 }
 
 export interface ScreenshotSettings {

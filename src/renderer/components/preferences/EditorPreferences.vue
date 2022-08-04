@@ -25,18 +25,18 @@
           style="width: 100px"
         />
       </AppFormItem>
-      <!-- <AppFormItem :label="i18n.t('preferences:editor.highlightLine')">
+      <AppFormItem :label="i18n.t('preferences:editor.highlightLine')">
         <AppCheckbox
           v-model="appStore.editor.highlightLine"
           name="highlightLine"
         />
       </AppFormItem>
-      <AppFormItem :label="i18n.t('preferences:editor.highlightGutter')">
+      <AppFormItem :label="i18n.t('preferences:editor.matchBrackets')">
         <AppCheckbox
-          v-model="appStore.editor.highlightGutter"
-          name="highlightGutter"
+          v-model="appStore.editor.matchBrackets"
+          name="matchBrackets"
         />
-      </AppFormItem> -->
+      </AppFormItem>
       <h4>{{ i18n.t('preferences:editor.prettier.label') }}</h4>
       <AppFormItem
         :label="i18n.t('preferences:editor.prettier.trailingComma.label')"

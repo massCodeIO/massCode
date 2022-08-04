@@ -18,7 +18,8 @@ const EDITOR_DEFAULTS: EditorSettings = {
   semi: false,
   singleQuote: true,
   highlightLine: false,
-  highlightGutter: false
+  highlightGutter: false,
+  matchBrackets: false
 }
 
 const SCREENSHOT_DEFAULTS: ScreenshotSettings = {

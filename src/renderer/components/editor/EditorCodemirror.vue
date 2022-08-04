@@ -166,6 +166,8 @@ const getCursorPosition = () => {
 }
 
 const findAll = (query: string) => {
+  if (!editor) return
+
   const re = new RegExp(query, 'gmi')
   const cursor = editor.getSearchCursor(re)
 

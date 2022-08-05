@@ -174,6 +174,7 @@ export type Language =
   | 'verilog'
   | 'vhdl'
   | 'visualforce'
+  | 'vue'
   | 'wollok'
   | 'xml'
   | 'xquery'

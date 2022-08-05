@@ -20,6 +20,11 @@ export const auxGrammars = [
     grammar: () => import('./grammars/less.tmLanguage.json')
   },
   {
+    source: 'source.postcss',
+    language: 'postcss',
+    grammar: () => import('./grammars/postcss.tmLanguage.json')
+  },
+  {
     source: 'source.js.jquery',
     languages: 'jquery',
     grammar: () => import('./grammars/javascript.tmLanguage.json')
@@ -168,5 +173,15 @@ export const auxGrammars = [
     source: 'source.erb',
     language: 'erb',
     grammar: () => import('./grammars/html-ruby.tmLanguage.json')
+  },
+  {
+    source: 'text.jade',
+    language: 'jade',
+    grammar: () => import('./grammars/pug.tmLanguage.json')
+  },
+  {
+    source: 'text.slm',
+    language: 'slm',
+    grammar: () => import('./grammars/slm.tmLanguage.json')
   }
 ]

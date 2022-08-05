@@ -906,6 +906,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'text.visualforce.markup'
   },
   {
+    name: 'Vue',
+    value: 'vue',
+    grammar: () => import('./grammars/vue.tmLanguage.json'),
+    scopeName: 'text.html.vue'
+  },
+  {
     name: 'Wollok',
     value: 'wollok',
     grammar: () => import('./grammars/wollok.tmLanguage.json'),

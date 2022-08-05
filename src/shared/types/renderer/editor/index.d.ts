@@ -137,6 +137,7 @@ export type Language =
   | 'rst'
   | 'ruby'
   | 'rust'
+  | 'sas'
   | 'sass'
   | 'sassdoc'
   | 'scad'

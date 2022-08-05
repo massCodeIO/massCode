@@ -123,6 +123,7 @@ This is a list of language that supports in massCode.
 - RST
 - Ruby
 - Rust
+- SAS
 - SASS
 - SCAD
 - Scala

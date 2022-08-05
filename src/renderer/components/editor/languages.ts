@@ -720,6 +720,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.rust'
   },
   {
+    name: 'SAS',
+    value: 'sas',
+    grammar: () => import('./grammars/sas.tmLanguage.json'),
+    scopeName: 'source.sas'
+  },
+  {
     name: 'SASS',
     value: 'sass',
     grammar: () => import('./grammars/sass.tmLanguage.json'),

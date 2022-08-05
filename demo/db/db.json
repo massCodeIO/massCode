@@ -2782,7 +2782,25 @@
       ],
       "id": "n2cZYWla",
       "createdAt": 1659674577829,
-      "updatedAt": 1659676092104
+      "updatedAt": 1659685133678
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "SAS",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "sas",
+          "value": "***  Some comments;\nproc sort data=preTest;\n     by student_ID;\nrun;\nproc sort data=postTest;\n     by student_ID;\nrun;\ndata testGroup;\n     merge preTest(in=a rename=(score=pre)) \n           postTest(in=b rename=(score=post));\n     by student_ID;\n     if a and b;\n     difference=post-pre;\nrun;\nTitle \"Student's T test of difference\"; \nproc means data=testGroup n mean stddev stderr t prt;\n     by student_ID;\n     var difference;\nrun;"
+        }
+      ],
+      "id": "ZbWrvEHT",
+      "createdAt": 1659686186866,
+      "updatedAt": 1659686553849
     }
   ],
   "tags": []

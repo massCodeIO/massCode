@@ -159,6 +159,12 @@ const init = async () => {
   })
   editor.on('scroll', hideScrollbar)
 
+  editor.setOption('extraKeys', {
+    'Cmd-F': () => {
+      emitter.emit('search:focus', true)
+    }
+  })
+
   if (snippetStore.searchQuery) {
     findAll(snippetStore.searchQuery)
   }

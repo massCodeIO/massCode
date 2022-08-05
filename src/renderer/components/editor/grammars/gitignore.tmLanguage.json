@@ -1,0 +1,316 @@
+{
+  "name": "Ignore List",
+  "scopeName": "source.gitignore",
+  "fileTypes": [
+    "gitignore",
+    "git/ignore",
+    "git/info/exclude",
+    "gitignore-global",
+    "gitignore_global",
+    "gitignore.global",
+    "sparse-checkout",
+    "alexignore",
+    "atomignore",
+    "babelignore",
+    "coffeelintignore",
+    "dockerignore",
+    "eleventyignore",
+    "eslintignore",
+    "markdownlintignore",
+    "nodemonignore",
+    "npmignore",
+    "prettierignore",
+    "stylelintignore",
+    "vercelignore",
+    "vscodeignore",
+    "bazaar/ignore",
+    "bzrignore",
+    "cpyskip.txt",
+    "cvsignore",
+    "slugignore"
+  ],
+  "patterns": [
+    {
+      "include": "#main"
+    }
+  ],
+  "firstLineMatch": "(?x)\n\n# Emacs modeline\n-\\*-(?i:[ \\t]*(?=[^:;\\s]+[ \\t]*-\\*-)|(?:.*?[ \\t;]|(?<=-\\*-))[ \\t]*mode[ \\t]*:[ \\t]*)\n\t(?i:git-?ignore|ignore-?list)\n(?=[ \\t;]|(?<![-*])-\\*-).*?-\\*-\n\n|\n\t\n# Vim modeline\n(?:(?:^|[ \\t])(?:vi|Vi(?=m))(?:m[<=>]?[0-9]+|m)?|[ \\t]ex)(?=:(?=[ \\t]*set?[ \\t][^\\r\\n:]+:)|:(?![ \\t]*set?[ \\t]))\n(?:(?:[ \\t]*:[ \\t]*|[ \\t])\\w*(?:[ \\t]*=(?:[^\\\\\\s]|\\\\.)*)?)*[ \\t:]\n(?:filetype|ft|syntax)[ \\t]*=\n\t(?i:git-?ignore|ignore-?list)\n(?=$|\\s|:)",
+  "repository": {
+    "main": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#cvsSyntax"
+        },
+        {
+          "include": "#magic"
+        },
+        {
+          "include": "#pattern"
+        },
+        {
+          "include": "#escape"
+        }
+      ]
+    },
+    "bazaarPrefixes": {
+      "patterns": [
+        {
+          "name": "storage.modifier.bazaar.re-prefix.gitignore",
+          "match": "^RE(:)(?=\\S)"
+        },
+        {
+          "name": "keyword.operator.logical.not.negation.elevated.bazaar.gitignore",
+          "match": "^!!(?=\\S)"
+        }
+      ]
+    },
+    "comment": {
+      "name": "comment.line.number-sign.gitignore",
+      "begin": "#",
+      "end": "$",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.gitignore"
+        }
+      }
+    },
+    "cvsSyntax": {
+      "match": "\\A(syntax)(:)\\s+(glob)$",
+      "captures": {
+        "1": {
+          "name": "variable.parameter.assignment.glob-syntax.cvs.gitignore"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.separator.key-value.cvs.gitignore"
+        },
+        "3": {
+          "name": "support.constant.language.syntax-type.cvs.gitignore"
+        }
+      }
+    },
+    "escape": {
+      "name": "constant.character.escape.backslash.gitignore",
+      "match": "(\\\\).",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.escape.backslash.gitignore"
+        }
+      }
+    },
+    "magic": {
+      "patterns": [
+        {
+          "name": "meta.magic-signature.long.gitignore",
+          "begin": "^(:)(\\()(?=.*?\\))",
+          "end": "(?<!\\\\)\\)|(?=\\s*$)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.operator.signature.begin.gitignore"
+            },
+            "2": {
+              "name": "punctuation.section.signature.begin.gitignore"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.signature.end.gitignore"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#escape"
+            },
+            {
+              "include": "#magicInnards"
+            }
+          ]
+        },
+        {
+          "name": "meta.magic-signature.short.gitignore",
+          "match": "^(:)([!^]+)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.signature.begin.gitignore"
+            },
+            "2": {
+              "name": "keyword.operator.mnemonic.gitignore"
+            }
+          }
+        }
+      ]
+    },
+    "magicMnemonic": {
+      "patterns": [
+        {
+          "match": "-",
+          "name": "keyword.operator.logical.not.negation.gitignore"
+        },
+        {
+          "match": "!",
+          "name": "keyword.operator.unset.delete.gitignore"
+        }
+      ]
+    },
+    "magicInnards": {
+      "patterns": [
+        {
+          "include": "etc#comma"
+        },
+        {
+          "name": "meta.attribute-list.gitignore",
+          "begin": "(?:\\G|(?<=,|\\())(attr)(:)",
+          "end": "(?=,|\\)|$)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.magic-signature.$1.gitignore"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "etc#colon"
+                }
+              ]
+            }
+          },
+          "patterns": [
+            {
+              "name": "meta.attribute.gitignore",
+              "match": "(-|!)?((?:[^\\\\\\s=\\(\\),]|\\\\.)++)(?:(=)((?:[^\\\\\\s=\\(\\),]|\\\\.)*+))?",
+              "captures": {
+                "1": {
+                  "patterns": [
+                    {
+                      "include": "#magicMnemonic"
+                    }
+                  ]
+                },
+                "2": {
+                  "name": "variable.parameter.attribute.gitignore",
+                  "patterns": [
+                    {
+                      "include": "#escape"
+                    }
+                  ]
+                },
+                "3": {
+                  "name": "punctuation.definition.assignment.equals-sign.gitignore"
+                },
+                "4": {
+                  "name": "constant.language.other.gitignore",
+                  "patterns": [
+                    {
+                      "include": "#escape"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "meta.$1-attribute.gitignore",
+          "match": "(?:\\G|(?<=,|\\())(-|!)?(attr|exclude|glob|icase|literal|top)(?=,|\\))",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#magicMnemonic"
+                }
+              ]
+            },
+            "2": {
+              "name": "keyword.control.magic-signature.$2.gitignore"
+            }
+          }
+        },
+        {
+          "name": "meta.unknown-attribute.gitignore",
+          "match": "(?:\\G|(?<=,|\\())(-|!)?((?:[^\\\\=\\s,:\\)]|\\\\.)++)(?=,|\\))",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#magicMnemonic"
+                }
+              ]
+            },
+            "2": {
+              "name": "keyword.control.magic-signature.unknown.gitignore"
+            }
+          }
+        }
+      ]
+    },
+    "pattern": {
+      "name": "meta.pattern.gitignore",
+      "begin": "(?=[^#\\s])",
+      "end": "$|(?=#)",
+      "patterns": [
+        {
+          "include": "#bazaarPrefixes"
+        },
+        {
+          "include": "#patternInnards"
+        }
+      ]
+    },
+    "patternInnards": {
+      "patterns": [
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "#range"
+        },
+        {
+          "match": "\\G!",
+          "name": "keyword.operator.logical.not.negation.gitignore"
+        },
+        {
+          "match": "\\*\\*",
+          "name": "keyword.operator.glob.wildcard.globstar.gitignore"
+        },
+        {
+          "match": "[*?]",
+          "name": "keyword.operator.glob.wildcard.gitignore"
+        },
+        {
+          "match": "/",
+          "name": "punctuation.directory.separator.meta.gitignore"
+        },
+        {
+          "name": "entity.other.file.name.gitignore",
+          "match": "[^\\[\\]\\\\*?#/\\s]+"
+        }
+      ]
+    },
+    "range": {
+      "name": "meta.character-range.gitignore",
+      "begin": "\\[",
+      "end": "\\]|(?=$)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.square.bracket.begin.gitignore"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.square.bracket.end.gitignore"
+        }
+      },
+      "contentName": "constant.character.class.gitignore",
+      "patterns": [
+        {
+          "include": "#escape"
+        },
+        {
+          "name": "punctuation.delimiter.range.character-set.gitignore",
+          "match": "-"
+        }
+      ]
+    }
+  }
+}

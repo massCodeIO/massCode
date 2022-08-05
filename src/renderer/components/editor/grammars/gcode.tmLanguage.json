@@ -1,0 +1,62 @@
+{
+  "scopeName": "source.gcode",
+  "fileTypes": ["nc", "ngc", "prg", "mpf", "gcode"],
+  "patterns": [
+    { "comment": "g commands", "match": "G\\d+", "name": "support.variable" },
+    { "comment": "m commands", "match": "M\\d+", "name": "support.constant" },
+    { "comment": "comments", "match": "\\(.*\\)", "name": "comment.line" },
+    {
+      "comment": "flow control operators",
+      "match": "(IF|THEN|AND|OR|WHILE|GOTO)",
+      "name": "keyword.control"
+    },
+    {
+      "comment": "functions",
+      "match": "(ABS|ACOS|ASIN|ATAN|COS|LN|EXP|FIX|FUP|MOD|ROUND|SQRT|SIN|TAN)",
+      "name": "support.function"
+    },
+    {
+      "comment": "comparison operators",
+      "match": "(GT|LT|GE|LE|EQ)",
+      "name": "keyword.operator"
+    },
+    {
+      "comment": "flow control locations",
+      "match": "(?<=GOTO|DO)\\d+",
+      "name": "markup.italic"
+    },
+    { "comment": "variables", "match": "(#\\d+)", "name": "variable.other" },
+    {
+      "comment": "positions",
+      "match": "([XYZABC]{1})(?=([\\d\\.-])*)",
+      "name": "markup.bold"
+    },
+    {
+      "comment": "arc positions",
+      "match": "([IJK])(?=([\\d\\.-])*)",
+      "name": "markup.italic"
+    },
+    {
+      "comment": "positions",
+      "match": "(?<=[XYZABC])([\\d\\.-])*",
+      "name": "constant.numeric"
+    },
+    {
+      "comment": "feeds & speeds",
+      "match": "(?<= )[FS]([\\d\\.-])+",
+      "name": "variable.parameter"
+    },
+    {
+      "comment": "O & N numberes",
+      "match": "([ON]([\\d\\.-])+)",
+      "name": "support.function"
+    },
+    {
+      "comment": "brackets",
+      "match": "(\\[|\\])",
+      "name": "string.interpolated"
+    }
+  ],
+  "name": "G-code",
+  "uuid": "e6875107-21f9-449b-bbae-036db969b3d2"
+}

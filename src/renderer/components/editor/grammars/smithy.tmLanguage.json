@@ -1,0 +1,559 @@
+{
+  "name": "Smithy",
+  "fileTypes": ["smithy"],
+  "scopeName": "source.smithy",
+  "uuid": "9c3e617f-4d4a-4370-9194-2e82173c1610",
+  "foldingStartMarker": "(\\{|\\[)\\s*",
+  "foldingStopMarker": "\\s*(\\}|\\])",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "name": "meta.keyword.statement.control.smithy",
+      "begin": "^(\\$)([A-Z-a-z_][A-Z-a-z0-9_]*)(:)\\s*",
+      "end": "\\n",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.control.smithy"
+        },
+        "2": {
+          "name": "support.type.property-name.smithy"
+        },
+        "3": {
+          "name": "punctuation.separator.dictionary.pair.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#value"
+        },
+        {
+          "match": "[^\\n]",
+          "name": "invalid.illegal.control.smithy"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.metadata.smithy",
+      "begin": "^(metadata)\\s+(.+)\\s*(=)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "variable.other.smithy"
+        },
+        "3": {
+          "name": "keyword.operator.smithy"
+        }
+      },
+      "end": "\\n",
+      "patterns": [
+        {
+          "include": "#value"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.namespace.smithy",
+      "begin": "^(namespace)\\s+",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        }
+      },
+      "end": "\\n",
+      "patterns": [
+        {
+          "match": "[A-Z-a-z_][A-Z-a-z0-9_]*(\\.[A-Z-a-z_][A-Z-a-z0-9_]*)*",
+          "name": "entity.name.type.smithy"
+        },
+        {
+          "match": "[^\\n]",
+          "name": "invalid.illegal.namespace.smithy"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.use.smithy",
+      "begin": "^(use)\\s+",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        }
+      },
+      "end": "\\n",
+      "patterns": [
+        {
+          "match": "[A-Z-a-z_][A-Z-a-z0-9_]*(\\.[A-Z-a-z_][A-Z-a-z0-9_]*)*#[A-Z-a-z_][A-Z-a-z0-9_]*(\\.[A-Z-a-z_][A-Z-a-z0-9_]*)*",
+          "name": "entity.name.type.smithy"
+        },
+        {
+          "match": "[^\\n]",
+          "name": "invalid.illegal.use.smithy"
+        }
+      ]
+    },
+    {
+      "include": "#trait"
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "begin": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\\s+(with)\\s+(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        },
+        "3": {
+          "name": "keyword.statement.with.smithy"
+        },
+        "4": {
+          "name": "punctuation.definition.array.begin.smithy"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#identifier",
+          "name": "entity.name.type.smithy"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.smithy"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "match": "^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)",
+      "captures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        }
+      }
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "begin": "^(structure)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z\\.#-]+))?\\s+(with)\\s+(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        },
+        "3": {
+          "name": "keyword.statement.for-resource.smithy"
+        },
+        "4": {
+          "name": "entity.name.type.smithy"
+        },
+        "5": {
+          "name": "keyword.statement.with.smithy"
+        },
+        "6": {
+          "name": "punctuation.definition.array.begin.smithy"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#identifier",
+          "name": "entity.name.type.smithy"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.smithy"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.shape.smithy",
+      "match": "^(structure)\\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\\s+(for)\\s+([0-9a-zA-Z\\.#-]+))?",
+      "captures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        },
+        "3": {
+          "name": "keyword.statement.for-resource.smithy"
+        },
+        "4": {
+          "name": "entity.name.type.smithy"
+        }
+      }
+    },
+    {
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.dictionary.begin.smithy"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.dictionary.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#shape_inner"
+        }
+      ]
+    },
+    {
+      "name": "meta.keyword.statement.apply.smithy",
+      "begin": "^(apply)\\s+([A-Z-a-z0-9_]+)\\s+",
+      "end": "\\n",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.smithy"
+        },
+        "2": {
+          "name": "entity.name.type.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#trait"
+        },
+        {
+          "match": "[^\\n]",
+          "name": "invalid.illegal.apply.smithy"
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "with_statement": {
+      "begin": "(with)\\s+(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.statement.with.smithy"
+        },
+        "2": {
+          "name": "punctuation.definition.array.begin.smithy"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.smithy"
+        },
+        {
+          "include": "#identifier"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        {
+          "include": "#doc_comment"
+        },
+        {
+          "include": "#line_comment"
+        }
+      ]
+    },
+    "doc_comment": {
+      "match": "(///.*)",
+      "name": "comment.block.documentation.smithy"
+    },
+    "line_comment": {
+      "match": "(//.*)",
+      "name": "comment.line.double-slash.smithy"
+    },
+    "trait": {
+      "patterns": [
+        {
+          "name": "meta.keyword.statement.trait.smithy",
+          "begin": "(@)([0-9a-zA-Z\\.#-]+)(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.annotation.smithy"
+            },
+            "2": {
+              "name": "storage.type.annotation.smithy"
+            },
+            "3": {
+              "name": "punctuation.definition.dictionary.begin.smithy"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.dictionary.end.smithy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#object_inner"
+            },
+            {
+              "include": "#value"
+            }
+          ]
+        },
+        {
+          "name": "meta.keyword.statement.trait.smithy",
+          "match": "(@)([0-9a-zA-Z\\.#-]+)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.annotation.smithy"
+            },
+            "2": {
+              "name": "storage.type.annotation.smithy"
+            }
+          }
+        }
+      ]
+    },
+    "value": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#array"
+        },
+        {
+          "include": "#object"
+        }
+      ]
+    },
+    "array": {
+      "begin": "\\[",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.begin.smithy"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.smithy"
+        }
+      },
+      "name": "meta.structure.array.smithy",
+      "patterns": [
+        {
+          "include": "#value"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.smithy"
+        },
+        {
+          "match": "[^\\s\\]]",
+          "name": "invalid.illegal.array.smithy"
+        }
+      ]
+    },
+    "keywords": {
+      "match": "\\b(?:true|false|null)\\b",
+      "name": "constant.language.smithy"
+    },
+    "number": {
+      "match": "(?x:            # turn on extended mode\n                         -?         # an optional minus\n                         (?:\n                           0        # a zero\n                           |        # ...or...\n                           [1-9]    # a 1-9 character\n                           \\d*      # followed by zero or more digits\n                         )\n                         (?:\n                           (?:\n                             \\.     # a period\n                             \\d+    # followed by one or more digits\n                           )?\n                           (?:\n                             [eE]   # an e character\n                             [+-]?  # followed by an option +/-\n                             \\d+    # followed by one or more digits\n                           )?       # make exponent optional\n                         )?         # make decimal portion optional\n                       )",
+      "name": "constant.numeric.smithy"
+    },
+    "object": {
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.dictionary.begin.smithy"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.dictionary.end.smithy"
+        }
+      },
+      "name": "meta.structure.dictionary.smithy",
+      "patterns": [
+        {
+          "include": "#object_inner"
+        }
+      ]
+    },
+    "object_inner": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string_key"
+        },
+        {
+          "match": ":",
+          "name": "punctuation.separator.dictionary.key-value.smithy"
+        },
+        {
+          "name": "meta.structure.dictionary.value.smithy",
+          "include": "#value"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.dictionary.pair.smithy"
+        }
+      ]
+    },
+    "shape_inner": {
+      "patterns": [
+        {
+          "include": "#trait"
+        },
+        {
+          "match": ":=",
+          "name": "punctuation.separator.dictionary.inline-struct.smithy"
+        },
+        {
+          "include": "#with_statement"
+        },
+        {
+          "include": "#elided_target"
+        },
+        {
+          "include": "#object_inner"
+        }
+      ]
+    },
+    "string_key": {
+      "patterns": [
+        {
+          "include": "#identifier_key"
+        },
+        {
+          "include": "#dquote_key"
+        }
+      ]
+    },
+    "identifier_key": {
+      "name": "support.type.property-name.smithy",
+      "match": "[A-Z-a-z0-9_\\.#$]+(?=\\s*:)"
+    },
+    "dquote_key": {
+      "name": "support.type.property-name.smithy",
+      "match": "\".*\"(?=\\s*:)"
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#textblock"
+        },
+        {
+          "include": "#dquote"
+        },
+        {
+          "include": "#shapeid"
+        }
+      ]
+    },
+    "textblock": {
+      "name": "string.quoted.double.smithy",
+      "begin": "\"\"\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.smithy"
+        }
+      },
+      "end": "\"\"\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.smithy"
+        }
+      ]
+    },
+    "dquote": {
+      "name": "string.quoted.double.smithy",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.smithy"
+        }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.smithy"
+        }
+      },
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.smithy"
+        }
+      ]
+    },
+    "identifier": {
+      "name": "entity.name.type.smithy",
+      "match": "[A-Z-a-z_][A-Z-a-z0-9_]*"
+    },
+    "shapeid": {
+      "name": "entity.name.type.smithy",
+      "match": "[A-Z-a-z_][A-Z-a-z0-9_\\.#$]*"
+    },
+    "elided_target": {
+      "match": "(\\$)([A-Z-a-z0-9_\\.#$]+)",
+      "captures": {
+        "1": {
+          "name": "keyword.statement.elision.smithy"
+        },
+        "2": {
+          "name": "support.type.property-name.smithy"
+        }
+      }
+    }
+  }
+}

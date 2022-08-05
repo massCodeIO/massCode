@@ -2765,6 +2765,24 @@
       "id": "F6QCorpv",
       "createdAt": 1659514362723,
       "updatedAt": 1659514383840
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "Vue",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "vue",
+          "value": "<template>\n  <input\n    v-model=\"localValue\"\n    class=\"input\"\n    type=\"text\"\n    v-bind=\"$attrs\"\n  >\n</template>\n\n<script setup lang=\"ts\">\nimport { computed } from 'vue'\n\ninterface Props {\n  modelValue: string | number\n}\n\ninterface Emits {\n  (e: 'update:modelValue', value: string | number): void\n}\n\nconst emit = defineEmits<Emits>()\n\nconst props = defineProps<Props>()\n\nconst localValue = computed({\n  get: () => props.modelValue,\n  set: v => {\n    emit('update:modelValue', v)\n  }\n})\n</script>\n\n<style lang=\"scss\" scoped>\n.input {\n  width: 300px;\n  height: 32px;\n  outline: none;\n  border: 1px solid var(--color-border);\n  border-radius: 3px;\n  padding: 0 var(--spacing-xs);\n  background-color: var(--color-input);\n  color: var(--color-text);\n  &::-webkit-inner-spin-button,\n  &::-webkit-outer-spin-button {\n    -webkit-appearance: none;\n  }\n}\n</style>\n"
+        }
+      ],
+      "id": "n2cZYWla",
+      "createdAt": 1659674577829,
+      "updatedAt": 1659676092104
     }
   ],
   "tags": []

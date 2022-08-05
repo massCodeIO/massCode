@@ -61,8 +61,8 @@
     "label": "Editor",
     "copy": "Copiar Snippet al Portapapeles",
     "format": "Formato",
-    "previewMarkdown": "Pré-visualizar en Markdown",
-    "previewCode": "Pré-visualizar Codigo",
-    "previewScreenshot": "Pré-visualizar Captura de Pantalla"
+    "previewMarkdown": "Pre-visualizar en Markdown",
+    "previewCode": "Previsualizar Código",
+    "previewScreenshot": "Previsualizar Captura de Pantalla"
   }
 }

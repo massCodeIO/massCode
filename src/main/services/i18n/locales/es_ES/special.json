@@ -18,7 +18,7 @@
   "error": {
     "folderNotContainDb": "La carpeta no contiene \"db.json\"."
   },
-  "unsponsored": "Sin Patrocinio",
+  "unsponsored": "Sin Patrocinar",
   "supportMessage": "Hola, soy Anton 👋<br><br>\nGracias por usar massCode. Si encuentras útil esta aplicación, por favor {{-tagStart}} dona {{-tagEnd}}. Me inspirará a continuar desarrollando este proyecto.",
   "snippetsShowcase": "Muestra de Snippets"
 }

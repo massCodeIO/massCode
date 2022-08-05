@@ -9,7 +9,6 @@ import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
 import axios from 'axios'
 import { createToast } from 'vercel-toast'
-import { differenceInDays } from 'date-fns'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -161,17 +160,23 @@ export const checkForRemoteNotification = async () => {
 
   const checkAndShow = async () => {
     try {
-      const { data } = await axios.get<{ message: string; date: string }>(
-        'https://masscode.io/notification.json'
+      const headers = {
+        'Cache-Control': 'no-cache',
+        Expires: 0
+      }
+
+      const { data } = await axios.get<{ message: string; date: number }>(
+        'https://masscode.io/notification.json',
+        { headers }
       )
 
       if (!data) return
+
       const { message, date } = data
       const prevDate = store.app.get('prevRemoteNotice')
 
       if (prevDate) {
-        const diff = differenceInDays(prevDate, new Date(date))
-        if (diff < 0) showMessage(message, date)
+        if (prevDate < date) showMessage(message, date)
       } else {
         showMessage(message, date)
       }
@@ -184,5 +189,5 @@ export const checkForRemoteNotification = async () => {
 
   setInterval(() => {
     checkAndShow()
-  }, 1000 * 60 * 360) // 6 часов
+  }, 1000 * 60 * 180) // 3 часа
 }

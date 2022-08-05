@@ -6,7 +6,6 @@ import { languages } from '../src/renderer/components/editor/languages'
 const sorted = languages.sort((a, b) =>
   a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
 )
-console.log(sorted)
 
 const source = `# Languages list
 
@@ -25,4 +24,5 @@ fs.writeFile(
   result,
   { encoding: 'utf-8' }
 )
-console.log('Done')
+
+console.log(`Total languages: ${languages.length}`)

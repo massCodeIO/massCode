@@ -780,10 +780,10 @@ export const languages: LanguageOption[] = [
     scopeName: 'text.slim'
   },
   {
-    name: 'Solidity',
-    value: 'solidity',
-    grammar: () => import('./grammars/solidity.tmLanguage.json'),
-    scopeName: 'source.solidity'
+    name: 'Smalltalk',
+    value: 'smalltalk',
+    grammar: () => import('./grammars/smalltalk.tmLanguage.json'),
+    scopeName: 'source.smalltalk'
   },
   {
     name: 'Smarty',
@@ -796,6 +796,12 @@ export const languages: LanguageOption[] = [
     value: 'smithy',
     grammar: () => import('./grammars/smithy.tmLanguage.json'),
     scopeName: 'source.smithy'
+  },
+  {
+    name: 'Solidity',
+    value: 'solidity',
+    grammar: () => import('./grammars/solidity.tmLanguage.json'),
+    scopeName: 'source.solidity'
   },
   {
     name: 'Soy Template',

@@ -133,6 +133,7 @@ This is a list of language that supports in massCode.
 - SCSS
 - SJS
 - Slim
+- Smalltalk
 - Smarty
 - Smithy
 - Solidity

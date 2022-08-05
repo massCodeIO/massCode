@@ -149,6 +149,7 @@ export type Language =
   | 'sh'
   | 'sjs'
   | 'slim'
+  | 'smalltalk'
   | 'smarty'
   | 'smithy'
   | 'solidity'

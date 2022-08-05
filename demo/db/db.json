@@ -2819,6 +2819,24 @@
       "id": "j0F_-__e",
       "createdAt": 1659687264814,
       "updatedAt": 1659688177442
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "Smalltalk",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "smalltalk",
+          "value": "exampleWithNumber: x\n    | y |\n    true & false not & (nil isNil) ifFalse: [self halt].\n    y := self size + super size.\n    #($a #a 'a' 1 1.0)\n        do: [ :each |\n            Transcript show: (each class name);\n                       show: ' '].\n    ^x < y \"Some comment\""
+        }
+      ],
+      "id": "cj0IfumH",
+      "createdAt": 1659688801793,
+      "updatedAt": 1659688919992
     }
   ],
   "tags": []

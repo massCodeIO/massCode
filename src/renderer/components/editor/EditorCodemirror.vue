@@ -158,6 +158,10 @@ const init = async () => {
     editor.setOption('scrollbarStyle', 'overlay')
   })
   editor.on('scroll', hideScrollbar)
+
+  if (snippetStore.searchQuery) {
+    findAll(snippetStore.searchQuery)
+  }
 }
 
 const setValue = (value: string) => {
@@ -181,16 +185,27 @@ const getCursorPosition = () => {
 }
 
 const findAll = (query: string) => {
-  if (!editor) return
+  if (!editor || query === '') return
 
-  const re = new RegExp(query, 'gmi')
+  query = query.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
+
+  const re = new RegExp(query, 'i')
   const cursor = editor.getSearchCursor(re)
 
-  // TODO: найти новое решение, так как не всегда данное отрабатывает корректно
+  clearAllMarks()
+
   while (cursor.findNext()) {
     editor.markText(cursor.from(), cursor.to(), {
       className: appStore.isLightTheme ? 'mark mark--light' : 'mark'
     })
+  }
+}
+
+const clearAllMarks = () => {
+  const marks = editor.getAllMarks()
+
+  if (marks) {
+    marks.forEach(i => i.clear())
   }
 }
 
@@ -270,6 +285,17 @@ watch(
   () => props.lang,
   () => {
     setLang(props.lang)
+  }
+)
+
+watch(
+  () => snippetStore.searchQuery,
+  v => {
+    if (v) {
+      findAll(v)
+    } else {
+      clearAllMarks()
+    }
   }
 )
 

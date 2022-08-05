@@ -120,6 +120,7 @@ This is a list of language that supports in massCode.
 - Raku
 - Razor
 - Red
+- RegExp
 - RST
 - Ruby
 - Rust

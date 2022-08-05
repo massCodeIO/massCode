@@ -133,6 +133,7 @@ export type Language =
   | 'rdoc'
   | 'red'
   | 'redshift'
+  | 'regexp'
   | 'rhtml'
   | 'rst'
   | 'ruby'

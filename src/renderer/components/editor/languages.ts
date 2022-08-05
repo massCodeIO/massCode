@@ -702,6 +702,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.red'
   },
   {
+    name: 'RegExp',
+    value: 'regexp',
+    grammar: () => import('./grammars/regexp.tmLanguage.json'),
+    scopeName: 'source.regexp'
+  },
+  {
     name: 'RST',
     value: 'rst',
     grammar: () => import('./grammars/rst.tmLanguage.json'),

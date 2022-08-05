@@ -2801,6 +2801,24 @@
       "id": "ZbWrvEHT",
       "createdAt": 1659686186866,
       "updatedAt": 1659686553849
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "RegExp",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "regexp",
+          "value": "^((?=\\S*?[A-Z])(?=\\S*?[a-z])(?=\\S*?[0-9]).{6,})\\S$"
+        }
+      ],
+      "id": "j0F_-__e",
+      "createdAt": 1659687264814,
+      "updatedAt": 1659688177442
     }
   ],
   "tags": []

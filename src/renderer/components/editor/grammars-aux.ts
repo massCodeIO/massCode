@@ -70,6 +70,21 @@ export const auxGrammars = [
     grammar: () => import('./grammars/regexp-python.tmLanguage.json')
   },
   {
+    source: 'source.regexp.posix',
+    language: 'regexp-posix',
+    grammar: () => import('./grammars/regexp-posix.tmLanguage.json')
+  },
+  {
+    source: 'source.regexp.extended',
+    language: 'regexp-extended',
+    grammar: () => import('./grammars/regexp-extended.tmLanguage.json')
+  },
+  {
+    source: 'source.sy',
+    language: 'sy',
+    grammar: () => import('./grammars/syon.tmLanguage.json')
+  },
+  {
     source: 'text.bibtex',
     language: 'bibtex',
     grammar: () => import('./grammars/bibtex.tmLanguage.json')

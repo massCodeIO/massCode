@@ -181,7 +181,8 @@
 [data-theme='dark:material'] {
   --color-primary: hsl(215, 69%, 45%);
 
-  --color-bg: hsl(200, 19%, 18%);
+   // при конвертации в hsl цвет отличается, поэтому оставляем в hex
+  --color-bg: #263238;
 
   --color-contrast-lower: hsl(200, 19%, 22%);
   --color-contrast-lower-alt: hsl(200, 19%, 25%);

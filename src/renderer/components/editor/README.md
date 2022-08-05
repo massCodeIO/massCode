@@ -153,6 +153,7 @@ This is a list of language that supports in massCode.
 - Verilog
 - VHDL
 - Visualforce
+- Vue
 - Wollok
 - XML
 - XQuery

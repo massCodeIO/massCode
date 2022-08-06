@@ -1,0 +1,192 @@
+{
+  "name": "Csound Score",
+  "scopeName": "source.csound-score",
+  "fileTypes": ["sco"],
+  "patterns": [
+    {
+      "include": "source.csound#preprocessorDirectives"
+    },
+    {
+      "include": "source.csound#commentsAndMacroUses"
+    },
+    {
+      "name": "keyword.control.csound-score",
+      "match": "[aBbCdefiqstvxy]"
+    },
+    {
+      "name": "invalid.illegal.csound-score",
+      "match": "w"
+    },
+    {
+      "name": "constant.numeric.language.csound-score",
+      "match": "z"
+    },
+    {
+      "name": "meta.p-symbol.csound-score",
+      "match": "([nNpP][pP])(\\d+)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.csound-score"
+        },
+        "2": {
+          "name": "constant.numeric.integer.decimal.csound-score"
+        }
+      }
+    },
+    {
+      "begin": "(m)|(n)",
+      "end": "$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.mark.preprocessor.csound-score"
+        },
+        "2": {
+          "name": "keyword.repeat-mark.preprocessor.csound-score"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.csound#comments"
+        },
+        {
+          "name": "entity.name.label.csound-score",
+          "match": "[A-Z_a-z]\\w*"
+        }
+      ]
+    },
+    {
+      "begin": "r\\b",
+      "end": "$",
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.repeat-section.preprocessor.csound-score"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.csound#comments"
+        },
+        {
+          "begin": "\\d+",
+          "end": "$",
+          "beginCaptures": {
+            "0": {
+              "name": "constant.numeric.integer.decimal.csound-score"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.csound#comments"
+            },
+            {
+              "include": "source.csound#macroNames"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "include": "source.csound#numbers"
+    },
+    {
+      "name": "keyword.operator.csound-score",
+      "match": "[!+\\-*/^%&|<>#~.]"
+    },
+    {
+      "name": "string.quoted.csound-score",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.csound-score"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.csound-score"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.csound#macroUses"
+        }
+      ]
+    },
+    {
+      "name": "meta.braced-loop.csound-score",
+      "begin": "\\{",
+      "end": "\\}",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.braced-loop.begin.csound-score"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.braced-loop.end.csound-score"
+        }
+      },
+      "patterns": [
+        {
+          "name": "meta.braced-loop-details.csound-score",
+          "begin": "\\G",
+          "end": "$",
+          "patterns": [
+            {
+              "begin": "\\d+",
+              "end": "$",
+              "beginCaptures": {
+                "0": {
+                  "name": "constant.numeric.integer.decimal.csound-score"
+                }
+              },
+              "patterns": [
+                {
+                  "begin": "[A-Z_a-z]\\w*\\b",
+                  "end": "$",
+                  "beginCaptures": {
+                    "0": {
+                      "name": "entity.name.function.preprocessor.csound-score"
+                    }
+                  },
+                  "patterns": [
+                    {
+                      "include": "#comments"
+                    },
+                    {
+                      "name": "invalid.illegal.csound-score",
+                      "match": "\\S+"
+                    }
+                  ]
+                },
+                {
+                  "include": "#comments"
+                },
+                {
+                  "name": "invalid.illegal.csound-score",
+                  "match": "\\S+"
+                }
+              ]
+            },
+            {
+              "include": "#comments"
+            },
+            {
+              "name": "invalid.illegal.csound-score",
+              "match": "\\S+"
+            }
+          ]
+        },
+        {
+          "begin": "^",
+          "end": "(?=\\})",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

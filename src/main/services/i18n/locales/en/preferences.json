@@ -18,6 +18,7 @@
     "showInvisibles": "Snow Invisibles",
     "highlightLine": "Highlight Line",
     "highlightGutter": "Highlight Gutter",
+    "matchBrackets": "Match Brackets",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {

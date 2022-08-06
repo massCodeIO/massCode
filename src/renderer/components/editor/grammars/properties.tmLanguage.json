@@ -1,0 +1,88 @@
+{
+  "scopeName": "source.tm-properties",
+  "fileTypes": ["tm_properties", "tmProperties"],
+  "patterns": [
+    {
+      "begin": "^([a-zA-Z0-9][a-zA-Z0-9_+\\-]*)\\s*(=)\\s*",
+      "end": "$",
+      "patterns": [{ "include": "#string" }],
+      "captures": {
+        "1": { "name": "support.constant.tm-properties" },
+        "2": { "name": "punctuation.separator.key-value.tm-properties" }
+      }
+    },
+    {
+      "begin": "^\\[",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.section.end.tm-properties" }
+      },
+      "end": "\\]",
+      "patterns": [{ "include": "#string" }],
+      "name": "meta.section.tm-properties",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.section.begin.tm-properties" }
+      }
+    },
+    { "include": "#comment" }
+  ],
+  "repository": {
+    "comment": {
+      "begin": "(^[ \\t]+)?(?=#)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "#",
+          "end": "\\n",
+          "name": "comment.line.number-sign.tm-properties",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.tm-properties" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.tm-properties" }
+      },
+      "captures": {
+        "1": { "name": "punctuation.definition.comment.tm-properties" }
+      }
+    },
+    "string": {
+      "patterns": [
+        {
+          "match": "[a-zA-Z0-9][a-zA-Z0-9_+\\-]*",
+          "name": "string.unquoted.tm-properties"
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.tm-properties" }
+          },
+          "end": "\"",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.tm-properties"
+            }
+          ],
+          "name": "string.quoted.double.tm-properties",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.tm-properties" }
+          }
+        },
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.tm-properties" }
+          },
+          "end": "'",
+          "name": "string.quoted.single.tm-properties",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.tm-properties" }
+          }
+        }
+      ]
+    }
+  },
+  "name": "Properties",
+  "uuid": "DE84747E-90A6-4731-92A4-A9C6823D35DE"
+}

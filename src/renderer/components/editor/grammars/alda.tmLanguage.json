@@ -1,0 +1,36 @@
+{
+  "scopeName": "source.alda",
+  "fileTypes": ["alda"],
+  "patterns": [
+    {
+      "match": "^([a-zA-Z]{2}[\\w-]*)(?:\\s(\\\"[a-z]{2}[\\w-]*\\\"))?:",
+      "name": "entity.name.function.part.alda",
+      "captures": {
+        "1": { "name": "entity.name.type.instrument.alda" },
+        "2": { "name": "string.quoted.double.quickname.alda" }
+      }
+    },
+    { "match": "^[Vv][0-9]+:", "name": "entity.name.function.voice.alda" },
+    {
+      "match": "[~.]|(?<=[a-g\\+\\-\\~])\\d+|r\\d*",
+      "name": "variable.parameter.timing.alda"
+    },
+    {
+      "match": "(?<=[a-g])[\\-\\+]+",
+      "name": "variable.parameter.pitch-shift.alda"
+    },
+    { "match": "o\\d+", "name": "keyword.operator.octave-set.alda" },
+    {
+      "match": "%[a-zA-Z]{2}[\\w\\-]*",
+      "name": "entity.name.tag.sync-marker.alda"
+    },
+    { "match": "@[a-zA-Z]{2}[\\w\\-]*", "name": "entity.name.tag.sync.alda" },
+    { "match": "[\\<\\>]", "name": "keyword.operator.octave-shift.alda" },
+    { "match": "/", "name": "keyword.operator.subchord.alda" },
+    { "match": "\\|", "name": "comment.character.pipe.alda" },
+    { "match": "#.*$", "name": "comment.line.number-sign.alda" },
+    { "begin": "\\(\\*", "end": "\\*\\)", "name": "comment.block.alda" }
+  ],
+  "name": "Alda",
+  "uuid": "8e03bdb0-70f9-4e1f-b998-c69d3821bfa1"
+}

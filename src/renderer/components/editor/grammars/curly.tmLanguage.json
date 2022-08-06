@@ -1,0 +1,96 @@
+{
+  "scopeName": "text.html.curly",
+  "fileTypes": ["curly"],
+  "patterns": [
+    {
+      "begin": "(?<!\\{)\\{\\{!",
+      "end": "\\}\\}",
+      "name": "comment.block.curly"
+    },
+    {
+      "begin": "(?<!\\{)(\\{\\{)(/)",
+      "endCaptures": { "1": { "name": "keyword.control.end.curly" } },
+      "end": "(\\}\\})",
+      "patterns": [{ "include": "#terminateTag" }],
+      "name": "meta.function.terminate.curly",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.curly" },
+        "2": { "name": "keyword.operator.terminate.curly" }
+      }
+    },
+    {
+      "begin": "(?<!\\{)(\\{\\{)(#)",
+      "endCaptures": { "1": { "name": "keyword.control.end.curly" } },
+      "end": "(\\}\\})",
+      "patterns": [{ "include": "#tag" }],
+      "name": "meta.function.if.curly",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.curly" },
+        "2": { "name": "keyword.operator.if.curly" }
+      }
+    },
+    {
+      "begin": "(?<!\\{)(\\{\\{)(\\^)",
+      "endCaptures": { "1": { "name": "keyword.control.end.curly" } },
+      "end": "(\\}\\})",
+      "patterns": [{ "include": "#tag" }],
+      "name": "meta.function.unless.curly",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.curly" },
+        "2": { "name": "keyword.operator.unless.curly" }
+      }
+    },
+    {
+      "begin": "(?<!\\{)(\\{\\{)(\\*)",
+      "endCaptures": { "1": { "name": "keyword.control.end.curly" } },
+      "end": "(\\}\\})",
+      "patterns": [{ "include": "#tag" }],
+      "name": "meta.function.collection.curly",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.curly" },
+        "2": { "name": "keyword.operator.collection.curly" }
+      }
+    },
+    {
+      "begin": "(?<!\\{)(\\{\\{)(@)",
+      "endCaptures": { "1": { "name": "keyword.control.end.curly" } },
+      "end": "(\\}\\})",
+      "patterns": [{ "include": "#tag" }],
+      "name": "meta.function.context.curly",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.curly" },
+        "2": { "name": "keyword.operator.context.curly" }
+      }
+    },
+    {
+      "begin": "(?<!\\{)\\{\\{(?!\\{)",
+      "endCaptures": { "0": { "name": "keyword.control.end.curly" } },
+      "end": "\\}\\}",
+      "patterns": [{ "include": "#tag" }],
+      "name": "meta.function.basic.curly",
+      "beginCaptures": { "0": { "name": "keyword.control.begin.curly" } }
+    },
+    { "include": "text.html.basic" }
+  ],
+  "repository": {
+    "tag": {
+      "patterns": [
+        { "include": "#terminateTag" },
+        { "match": "\\.", "name": "keyword.operator.argument-seperator.curly" },
+        { "match": "=", "name": "keyword.operator.assignment.curly" },
+        { "match": "\"[^\"]*\"", "name": "string.quoted.double.curly" },
+        { "match": "'[^']*'", "name": "string.quoted.single.curly" }
+      ]
+    },
+    "terminateTag": {
+      "patterns": [
+        {
+          "match": "([a-z_][a-zA-Z_0-9]*[?!]?)",
+          "name": "variable.other.curly"
+        }
+      ]
+    }
+  },
+  "name": "Curly Template",
+  "uuid": "c86979be-c965-4918-ba0e-0eac4a04db49"
+}

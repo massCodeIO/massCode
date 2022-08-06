@@ -1,7 +1,7 @@
 {
   "name": "masscode",
   "productName": "massCode",
-  "version": "2.10.0",
+  "version": "3.0.0",
   "description": "A free and open source code snippets manager for developers",
   "license": "AGPL-3.0",
   "main": "build/src/main/index.js",
@@ -16,6 +16,7 @@
     "lint": "eslint --ext .js,.ts,.vue . src",
     "lint:fix": "eslint --ext .js,.ts,.vue . --fix src",
     "release": "bumpp -c 'build: release v' -t",
+    "generate:language-readme": "node build/scripts/generate-language-readme.js ",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "prepare": "husky install"
   },
@@ -28,6 +29,9 @@
     "*.{js,ts,vue}": [
       "prettier --write",
       "eslint --fix"
+    ],
+    "*.json": [
+      "prettier --write"
     ]
   },
   "dependencies": {
@@ -39,8 +43,9 @@
     "@sipec/vue3-tags-input": "^3.0.4",
     "@types/universal-analytics": "^0.4.5",
     "@vueuse/core": "^8.3.1",
-    "ace-builds": "^1.4.14",
     "axios": "^0.26.1",
+    "codemirror": "^5.65.7",
+    "codemirror-textmate": "^1.1.0",
     "date-fns": "^2.28.0",
     "electron-store": "^8.0.1",
     "floating-vue": "^2.0.0-beta.17",
@@ -56,6 +61,7 @@
     "mermaid": "^9.1.3",
     "mitt": "^3.0.0",
     "nanoid": "^3.3.1",
+    "onigasm": "^2.2.5",
     "pinia": "^2.0.13",
     "prettier": "^2.6.2",
     "prettier-plugin-java": "^1.6.1",
@@ -72,7 +78,7 @@
     "@commitlint/cli": "^15.0.0",
     "@commitlint/config-conventional": "^15.0.0",
     "@tsconfig/node14": "^1.0.1",
-    "@types/ace": "^0.0.48",
+    "@types/codemirror": "^5.60.5",
     "@types/estree": "^0.0.51",
     "@types/i18next-fs-backend": "^1.1.2",
     "@types/lowdb": "^1.0.11",
@@ -100,6 +106,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-vue": "^8.2.0",
+    "handlebars": "^4.7.7",
     "husky": "^7.0.0",
     "lint-staged": "^12.1.4",
     "npm-run-all": "^4.1.5",

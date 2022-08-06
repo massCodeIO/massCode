@@ -1,0 +1,270 @@
+{
+  "fileTypes": ["slm"],
+  "foldingStartMarker": "^\\s*([-%#\\:\\.\\w\\=].*)\\s$",
+  "foldingStopMarker": "^\\s*$",
+  "name": "Slm",
+  "patterns": [
+    {
+      "begin": "^(\\s*)(javascript):$",
+      "beginCaptures": {
+        "2": { "name": "constant.language.name.javascript.filter.slm" }
+      },
+      "end": "^(?!(\\1\\s)|\\s*$)",
+      "name": "text.javascript.filter.slm",
+      "patterns": [{ "include": "source.js" }]
+    },
+    {
+      "begin": "^(\\s*)(coffee):$",
+      "beginCaptures": {
+        "2": { "name": "constant.language.name.coffeescript.filter.slm" }
+      },
+      "end": "^(?!(\\1\\s)|\\s*$)",
+      "name": "text.coffeescript.filter.slm",
+      "patterns": [{ "include": "source.coffee" }]
+    },
+    {
+      "begin": "^(\\s*)(markdown):$",
+      "beginCaptures": {
+        "2": { "name": "constant.language.name.markdown.filter.slm" }
+      },
+      "end": "^(?!(\\1\\s)|\\s*$)",
+      "name": "text.markdown.filter.slm",
+      "patterns": [{ "include": "source.md" }]
+    },
+    {
+      "captures": {
+        "1": { "name": "punctuation.definition.prolog.slm" }
+      },
+      "match": "^(! )($|\\s.*)",
+      "name": "meta.prolog.slm"
+    },
+    {
+      "captures": {
+        "1": { "name": "punctuation.section.comment.slm" }
+      },
+      "match": "^\\s*(/)\\s*\\S.*$\\n?",
+      "name": "comment.line.slash.slm"
+    },
+    {
+      "begin": "^(\\s*)(/)\\s*$",
+      "beginCaptures": {
+        "2": { "name": "punctuation.section.comment.slm" }
+      },
+      "end": "^(?!\\1  )",
+      "name": "comment.block.slm",
+      "patterns": [{ "include": "text.slm" }]
+    },
+    {
+      "begin": "^\\s*(?===|=|-|~)",
+      "end": "$",
+      "patterns": [{ "include": "#rubyline" }]
+    },
+    { "include": "#inline-html-tag" },
+    { "include": "#normal-html-tag" },
+    { "include": "#embedded-ruby" },
+    {
+      "begin": "^\\s*([\\w.#_-]*[\\w]+)\\s*",
+      "captures": {
+        "0": { "name": "entity.name.tag.slm" }
+      },
+      "end": "$|(?!\\.|#|\\{|\\[|=|-|~|/)",
+      "patterns": [
+        {
+          "begin": "\\{(?=.*\\}|.*\\|\\s*$)",
+          "end": "\\}|$|^(?!.*\\|\\s*$)",
+          "name": "meta.section.attributes.slm",
+          "patterns": [
+            { "include": "source.js" },
+            { "include": "#continuation" }
+          ]
+        },
+        {
+          "begin": "\\[(?=.*\\]|.*\\|\\s*$)",
+          "end": "\\]|$|^(?!.*\\|\\s*$)",
+          "name": "meta.section.object.slm",
+          "patterns": [
+            { "include": "source.js" },
+            { "include": "#continuation" }
+          ]
+        },
+        { "include": "#rubyline" },
+        {
+          "match": "/",
+          "name": "punctuation.terminator.tag.slm"
+        }
+      ]
+    },
+    {
+      "captures": {
+        "1": { "name": "meta.escape.slm" }
+      },
+      "match": "^\\s*(\\\\.)"
+    },
+    {
+      "begin": "^\\s*(?=\\||')",
+      "end": "$",
+      "patterns": [
+        { "include": "#embedded-ruby" },
+        { "include": "text.html.basic" }
+      ]
+    }
+  ],
+  "repository": {
+    "continuation": {
+      "captures": {
+        "1": { "name": "punctuation.separator.continuation.slm" }
+      },
+      "match": "([\\\\,])\\s*\\n"
+    },
+    "delimited-ruby-a": {
+      "begin": "=\\(",
+      "end": "\\)(?=( \\w|$))",
+      "name": "source.js.embedded.slm",
+      "patterns": [{ "include": "source.js" }]
+    },
+    "delimited-ruby-b": {
+      "begin": "=\\[",
+      "end": "\\](?=( \\w|$))",
+      "name": "source.js.embedded.slm",
+      "patterns": [{ "include": "source.js" }]
+    },
+    "embedded-ruby": {
+      "begin": "(?<!\\\\)\\${",
+      "end": "}",
+      "name": "source.js.embedded.html",
+      "patterns": [{ "include": "source.js" }]
+    },
+    "entities": {
+      "patterns": [
+        {
+          "captures": {
+            "1": { "name": "punctuation.definition.entity.html" },
+            "3": { "name": "punctuation.definition.entity.html" }
+          },
+          "match": "(&)([a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+)(;)",
+          "name": "constant.character.entity.html"
+        },
+        {
+          "match": "&",
+          "name": "invalid.illegal.bad-ampersand.html"
+        }
+      ]
+    },
+    "inline-html-tag": {
+      "begin": "^(\\s*([\\w.#_-]+( [\\w.#_-]+=(\".*?\"))*: )*)([\\w.#_-]+( [\\w.#_-]+=(\".*?\"))*:)(?=\\s)",
+      "captures": {
+        "1": { "name": "entity.name.tag.slm" },
+        "2": { "name": "entity.name.tag.slm" },
+        "3": { "name": "entity.name.tag.slm" },
+        "4": { "name": "string.quoted.double.html" },
+        "5": { "name": "entity.name.tag.slm" },
+        "6": { "name": "entity.name.tag.slm" },
+        "7": { "name": "string.quoted.double.html" }
+      },
+      "end": "$",
+      "patterns": [
+        { "include": "#normal-inline-html-tag" },
+        { "include": "#tag-stuff" }
+      ]
+    },
+    "interpolated-ruby": {
+      "begin": "=(?=\\b)",
+      "end": "\\s|\\w$",
+      "name": "source.js.embedded.html"
+    },
+    "normal-html-tag": {
+      "begin": "([\\w.#_-]+=)",
+      "captures": {
+        "1": { "name": "entity.name.tag.slm" }
+      },
+      "end": "$",
+      "patterns": [
+        { "include": "#tag-stuff" },
+        { "include": "#string-double-quoted" },
+        { "include": "#string-single-quoted" }
+      ]
+    },
+    "normal-inline-html-tag": {
+      "begin": "([\\w.#_-]+)",
+      "captures": {
+        "1": { "name": "entity.name.tag.slm" }
+      },
+      "end": "$",
+      "patterns": [{ "include": "#tag-stuff" }]
+    },
+    "rubyline": {
+      "begin": "(==.|=.|==|=|-)",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.slm" }
+      },
+      "contentName": "source.js.embedded.slm",
+      "end": "$",
+      "endCaptures": {
+        "1": { "name": "source.js.embedded.html" },
+        "2": { "name": "keyword.control.js.start-block" }
+      },
+      "name": "meta.line.js.slm",
+      "patterns": [
+        {
+          "comment": "Hack to let ruby comments work in this context properly",
+          "match": "////.*$",
+          "name": "comment.line.number-sign.js"
+        },
+        { "include": "#continuation" },
+        { "include": "source.js" }
+      ]
+    },
+    "string-double-quoted": {
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.html" }
+      },
+      "contentName": "meta.toc-list.id.html",
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.html" }
+      },
+      "name": "string.quoted.double.html",
+      "patterns": [{ "include": "#embedded-ruby" }, { "include": "#entities" }]
+    },
+    "string-single-quoted": {
+      "begin": "'",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.html" }
+      },
+      "contentName": "meta.toc-list.id.html",
+      "end": "'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.html" }
+      },
+      "name": "string.quoted.single.html",
+      "patterns": [{ "include": "#embedded-ruby" }, { "include": "#entities" }]
+    },
+    "tag-id-attribute": {
+      "begin": "\\b(id)\\b\\s*(=)",
+      "captures": {
+        "1": { "name": "entity.other.attribute-name.id.html" },
+        "2": { "name": "punctuation.separator.key-value.html" }
+      },
+      "end": "(?<='|\")",
+      "name": "meta.attribute-with-value.id.html",
+      "patterns": [
+        { "include": "#string-double-quoted" },
+        { "include": "#string-single-quoted" }
+      ]
+    },
+    "tag-stuff": {
+      "patterns": [
+        { "include": "#inline-html-tag" },
+        { "include": "#normal-html-tag" },
+        { "include": "#tag-id-attribute" },
+        { "include": "#interpolated-ruby" },
+        { "include": "#delimited-ruby-a" },
+        { "include": "#delimited-ruby-b" },
+        { "include": "#rubyline" },
+        { "include": "#embedded-ruby" }
+      ]
+    }
+  },
+  "scopeName": "text.slm"
+}

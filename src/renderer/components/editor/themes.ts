@@ -4,6 +4,7 @@ import type { Theme } from '@shared/types/renderer/store/app'
 
 interface ThemeConfig {
   name: string // Имя темы из файла .tmTheme.json
+  label: string
   value: Theme
   loader: () => Promise<ITextmateThemePlus>
   gutterSettings: {
@@ -15,6 +16,7 @@ interface ThemeConfig {
 export const themes: ThemeConfig[] = [
   {
     name: 'Dracula',
+    label: 'Dracula',
     value: 'dark:dracula',
     loader: () => import('./themes/dracula.tmTheme.json'),
     gutterSettings: {
@@ -24,6 +26,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'Material-Theme',
+    label: 'Material',
     value: 'dark:material',
     loader: () => import('./themes/material-theme.tmTheme.json'),
     gutterSettings: {
@@ -32,7 +35,18 @@ export const themes: ThemeConfig[] = [
     }
   },
   {
+    name: 'Material-Theme-Palenight',
+    label: 'Material Palenight',
+    value: 'dark:material-palenight',
+    loader: () => import('./themes/material-theme-palenight.tmTheme.json'),
+    gutterSettings: {
+      background: '#292D3F',
+      divider: '#292D3F'
+    }
+  },
+  {
     name: 'Merbivore-Soft',
+    label: 'Merbivore Soft',
     value: 'dark:merbivore',
     loader: () => import('./themes/merbivore-soft.tmTheme.json'),
     gutterSettings: {
@@ -42,6 +56,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'Monokai',
+    label: 'Monokai',
     value: 'dark:monokai',
     loader: () => import('./themes/monokai.tmTheme.json'),
     gutterSettings: {
@@ -51,6 +66,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'One-Dark',
+    label: 'One',
     value: 'dark:one',
     loader: () => import('./themes/one-dark.tmTheme.json'),
     gutterSettings: {
@@ -60,6 +76,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'GitHub',
+    label: 'GitHub',
     value: 'light:github',
     loader: () => import('./themes/github.tmTheme.json'),
     gutterSettings: {
@@ -69,6 +86,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'Solarized-Light',
+    label: 'Solarized',
     value: 'light:solarized',
     loader: () => import('./themes/solarized-light.tmTheme.json'),
     gutterSettings: {
@@ -78,6 +96,7 @@ export const themes: ThemeConfig[] = [
   },
   {
     name: 'Material-Theme-Lighter',
+    label: 'Material',
     value: 'light:material',
     loader: () => import('./themes/material-theme-lighter.tmTheme.json'),
     gutterSettings: {

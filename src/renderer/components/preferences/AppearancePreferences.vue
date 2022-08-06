@@ -14,6 +14,7 @@ import { track, i18n } from '@/electron'
 import { useAppStore } from '@/store/app'
 import type { Theme } from '@shared/types/renderer/store/app'
 import { computed } from 'vue'
+import { themes } from '@/components/editor/themes'
 
 interface Options {
   label: string
@@ -30,40 +31,18 @@ const localValue = computed({
   }
 })
 
-const options: Options[] = [
-  {
-    label: `${i18n.t('preferences:appearance.theme.light')}: GitHub`,
-    value: 'light:github'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Material`,
-    value: 'light:material'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.light')}: Solarized`,
-    value: 'light:solarized'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.dark')}: Dracula`,
-    value: 'dark:dracula'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.dark')}: Material`,
-    value: 'dark:material'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.dark')}: Merbivore`,
-    value: 'dark:merbivore'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.dark')}: Monokai`,
-    value: 'dark:monokai'
-  },
-  {
-    label: `${i18n.t('preferences:appearance.theme.dark')}: One Dark`,
-    value: 'dark:one'
-  }
-]
+const options: Options[] = themes
+  .map(i => {
+    const label = i.value.startsWith('light')
+      ? `${i18n.t('preferences:appearance.theme.light')}: ${i.label}`
+      : `${i18n.t('preferences:appearance.theme.dark')}: ${i.label}`
+
+    return {
+      label,
+      value: i.value
+    }
+  })
+  .sort((a, b) => (a.label > b.label ? 1 : -1))
 </script>
 
 <style lang="scss" scoped></style>

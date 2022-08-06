@@ -1,5 +1,6 @@
 export type Theme =
   | 'dark:dracula'
+  | 'dark:material-palenight'
   | 'dark:material'
   | 'dark:merbivore'
   | 'dark:monokai'

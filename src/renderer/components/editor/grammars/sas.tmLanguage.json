@@ -1,0 +1,306 @@
+{
+  "name": "sas",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "support.function.sas"
+        },
+        "2": {
+          "name": "entity.name.function.sas"
+        }
+      },
+      "match": "(?i:(proc) (\\w+))"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "support.function.sas"
+        },
+        "2": {
+          "name": "constant.other.table-name.sas"
+        }
+      },
+      "match": "(?i:^(data) ([^\\s]+))"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "entity.other.attribute-name.sas"
+        },
+        "2": {
+          "name": "constant.other.library-name.sas"
+        },
+        "3": {
+          "name": "constant.other.table-name.sas"
+        }
+      },
+      "match": "(?i:\\b(data|out)=(\\w+\\.)?(\\w*)\\b)"
+    },
+    {
+      "match": "(?i:\\bsort|run|quit|output\\b)",
+      "name": "support.function.sas"
+    },
+    {
+      "match": "\\b\\d+(\\.\\d+)*\\b",
+      "name": "constant.numeric.sas"
+    },
+    {
+      "match": "\\blow|high\\b",
+      "name": "constant.sas"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "keyword.other.sas"
+        },
+        "2": {
+          "name": "variable.other.sas"
+        }
+      },
+      "match": "(?i:\\b(by) ([^\\s]+)\\b)"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "keyword.other.sas"
+        },
+        "2": {
+          "name": "variable.other.sas"
+        }
+      },
+      "match": "(?i:(keep|drop|retain|format|class|var) ([\\w\\s]+))"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "keyword.other.sas"
+        },
+        "2": {
+          "name": "constant.other.table-name.sas"
+        }
+      },
+      "match": "(?i:\\b(set|tables|merge) ([\\w\\s]+)\\b)"
+    },
+    {
+      "match": "\\b(if|else|then|end)\\b",
+      "name": "keyword.control.sas"
+    },
+    {
+      "match": "(?i)\\b(descending)\\b",
+      "name": "keyword.other.order.sas"
+    },
+    {
+      "match": "(?i)\\b(title)\\b",
+      "name": "keyword.other.sas"
+    },
+    {
+      "match": "\\*",
+      "name": "keyword.operator.star.sas"
+    },
+    {
+      "match": "\\b<|>|eq|ne\\b",
+      "name": "keyword.operator.comparison.sas"
+    },
+    {
+      "match": " \\. ",
+      "name": "keyword.null.sas"
+    },
+    {
+      "match": "-|\\+|/",
+      "name": "keyword.operator.math.sas"
+    },
+    {
+      "match": "(?i)\\b(avg|sum)(?=\\s*\\()",
+      "name": "support.function.aggregate.sas"
+    },
+    {
+      "captures": {
+        "1": {
+          "name": "constant.other.library-name.sas"
+        },
+        "2": {
+          "name": "constant.other.table-name.sas"
+        }
+      },
+      "match": "(\\w+?)\\.(\\w+)"
+    },
+    {
+      "begin": "proc sas;",
+      "end": "quit;",
+      "patterns": [
+        {
+          "include": "source.sas"
+        }
+      ]
+    },
+    {
+      "include": "#strings"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.sas"
+            }
+          },
+          "match": "^\\s*(\\*).*;\\s*$\\n?",
+          "name": "comment.line.asterisk.sas"
+        },
+        {
+          "begin": "/\\*",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.sas"
+            }
+          },
+          "end": "\\*/",
+          "name": "comment.block.c"
+        }
+      ]
+    },
+    "string_escape": {
+      "match": "\\\\.",
+      "name": "constant.character.escape.sas"
+    },
+    "string_interpolation": {
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.string.end.sas"
+        }
+      },
+      "match": "(#\\{)([^\\}]*)(\\})",
+      "name": "string.interpolated.sas"
+    },
+    "strings": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.sas"
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and sas files tend to have very long lines.",
+          "match": "(')[^'\\\\]*(')",
+          "name": "string.quoted.single.sas"
+        },
+        {
+          "begin": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sas"
+            }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "name": "string.quoted.single.sas",
+          "patterns": [
+            {
+              "include": "#string_escape"
+            }
+          ]
+        },
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.sas"
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and sas files tend to have very long lines.",
+          "match": "(`)[^`\\\\]*(`)",
+          "name": "string.quoted.other.backtick.sas"
+        },
+        {
+          "begin": "`",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sas"
+            }
+          },
+          "end": "`",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "name": "string.quoted.other.backtick.sas",
+          "patterns": [
+            {
+              "include": "#string_escape"
+            }
+          ]
+        },
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.sas"
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "comment": "this is faster than the next begin/end rule since sub-pattern will match till end-of-line and sas files tend to have very long lines.",
+          "match": "(\")[^\"#]*(\")",
+          "name": "string.quoted.double.sas"
+        },
+        {
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sas"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "name": "string.quoted.double.sas",
+          "patterns": [
+            {
+              "include": "#string_interpolation"
+            }
+          ]
+        },
+        {
+          "begin": "%\\{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sas"
+            }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sas"
+            }
+          },
+          "name": "string.other.quoted.brackets.sas",
+          "patterns": [
+            {
+              "include": "#string_interpolation"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "scopeName": "source.sas"
+}

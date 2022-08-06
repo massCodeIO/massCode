@@ -1,0 +1,818 @@
+{
+  "scopeName": "text.asciidoc",
+  "fileTypes": ["adoc", "ad", "asciidoc"],
+  "patterns": [
+    { "include": "#lists" },
+    { "include": "#blocks" },
+    { "include": "#section_titles" },
+    { "include": "#lines" },
+    { "include": "#inline" },
+    { "include": "#characters" }
+  ],
+  "repository": {
+    "block_admonition_label": {
+      "comment": "Label of an admonition block.\n\nExamples:\n  NOTE: This is a admonition block.\n  WARNING:  Be aware of them!\n",
+      "match": "^(NOTE|TIP|IMPORTANT|WARNING|CAUTION):(?=\\s+)",
+      "name": "support.constant.admonitionword.asciidoc"
+    },
+    "mark_double": {
+      "end": "\\#\\#",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with an attribute list (indeed, that is its purpose)\n(?<!\\\\)         # must not be preceded by escape\n(\\#\\#)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": {
+          "name": "punctuation.definition.string.unquoted.double.begin.asciidoc"
+        }
+      },
+      "contentName": "string.unquoted.unquotedinner.double.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Marked text (unconstrained variant).\n\nExamples:\n  Lo##re##m ##ipsum dolor##.\n  Lo[red]##re##m\n",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.unquoted.double.end.asciidoc"
+        }
+      },
+      "name": "string.other.unquoted.double.asciidoc"
+    },
+    "title_level_0": {
+      "match": "^(=) (\\w.*)$\\n?",
+      "name": "markup.heading.level.0.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "attribute_list_line": {
+      "match": "^(\\[)[^\\[\\]]*(\\])\\s*$\\n?",
+      "comment": "Attribute list as paragraph: single brackets. No need for special treatment of escape; follows literal block, section template as being a more general regex.\n",
+      "name": "support.variable.attributelist.asciidoc",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.attributelistline.begin.asciidoc"
+        },
+        "2": { "name": "punctuation.definition.attributelistline.end.asciidoc" }
+      }
+    },
+    "title_level_2": {
+      "match": "^(===) (\\w.*)$\\n?",
+      "name": "markup.heading.level.2.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "xref": {
+      "match": "(?<!<)(<<)([^,]*?)((,\\s*)(.*?))?(>>)(?!<)",
+      "comment": "Internal cross-reference\n\nExamples:\n  <<lorem>>\n  <<lorem, see here>>\n",
+      "name": "meta.xref.asciidoc",
+      "captures": {
+        "1": { "name": "constant.character.xref.begin.asciidoc" },
+        "6": { "name": "constant.character.xref.end.asciidoc" },
+        "2": { "name": "markup.underline.term.xref.asciidoc" },
+        "5": { "name": "variable.parameter.xref.asciidoc" }
+      }
+    },
+    "title_level_4": {
+      "match": "^(=====) (\\w.*)$\\n?",
+      "name": "markup.heading.level.4.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "passthrough": {
+      "end": "\\1",
+      "begin": "(\\+\\+\\+|\\$\\$)",
+      "beginCaptures": {
+        "1": { "name": "constant.character.passthru.begin.asciidoc" }
+      },
+      "contentName": "variable.parameter.passthruinner.asciidoc",
+      "comment": "Inline triple-plus and double dolar passthrough.\n\nExamples:\n  Lo+++re++++m +++ipsum dolor+++.\n  Lo$$re$$m $$ipsum dolor$$.\n\nNote: Must be dead first among the inlines, so as to take priority.\n",
+      "endCaptures": {
+        "0": { "name": "constant.character.passthru.end.asciidoc" }
+      },
+      "name": "meta.passthru.inline.asciidoc"
+    },
+    "blocks": {
+      "patterns": [
+        { "include": "#block_literal" },
+        { "include": "#block_comment" },
+        { "include": "#block_listing" },
+        { "include": "#block_source_fenced" },
+        { "include": "#block_sidebar" },
+        { "include": "#block_pass" },
+        { "include": "#block_quote" },
+        { "include": "#block_example" },
+        { "include": "#block_open" }
+      ]
+    },
+    "block_source_fenced": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(```)(\\w+)?\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.listing.begin.asciidoc" }
+      },
+      "contentName": "source.block.listing.content.asciidoc",
+      "patterns": [{ "include": "#inline_callout" }],
+      "comment": "Fenced code block (ala Markdown)\n\nExamples:\n  ```rb\n  puts 'Hello world!'\n  ```\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.listing.end.asciidoc" }
+      },
+      "name": "meta.embedded.block.listing.asciidoc"
+    },
+    "section_template": {
+      "match": "(?x)^\n(\\[)  # in square brackets\n(template\\s*=\\s*)?(\")?  # might start with template-equals and might have template name in quotes\n(\nsect\\d|abstract|preface|colophon|dedication|glossary|bibliography|synopsis|appendix|index # fixed list of known templates\n)\n(\".*(\\])|(\\]))  # either close the quote (and perhaps go on) and close the bracket, or close the bracket immediately\n\\s*$\\n?",
+      "comment": "fixed list of known template names",
+      "name": "variable.parameter.sectiontemplate.asciidoc",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.sectiontemplate.begin.asciidoc"
+        },
+        "6": { "name": "punctuation.definition.sectiontemplate.end.asciidoc" },
+        "4": { "name": "meta.tag.sectiontemplate.asciidoc" },
+        "7": { "name": "punctuation.definition.sectiontemplate.end.asciidoc" }
+      }
+    },
+    "block_id": {
+      "match": "^(\\[\\[)([^\\[].*)(\\]\\])\\s*$\\n?",
+      "comment": "A block id (i.e. anchor).\n\nExamples:\n  [[myid]]\n  Lorem ipsum dolor.\n",
+      "name": "meta.tag.blockid.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.blockid.begin.asciidoc" },
+        "2": { "name": "markup.underline.blockid.id.asciidoc" },
+        "3": { "name": "punctuation.definition.blockid.end.asciidoc" }
+      }
+    },
+    "monospaced_double": {
+      "end": "``",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with attribute list\n(?<!\\\\)         # must not be preceded by escape\n(``)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.literal.double.begin.asciidoc" }
+      },
+      "contentName": "meta.literalinner.double.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Monospaced text (unconstrained variant).\n\nExamples:\n  Lo``re``m ``ipsum dolor``.\n  Lo[red]``re``m\n",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.literal.double.end.asciidoc" }
+      },
+      "name": "string.other.literal.double.asciidoc"
+    },
+    "subscript": {
+      "end": "~",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with attribute list\n(?<!\\\\)         # must not be preceded by escape\n(~)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": {
+          "name": "punctuation.definition.string.subscript.begin.asciidoc"
+        }
+      },
+      "contentName": "meta.subscriptinner.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Subscript text.\n\nExamples:\n  E=mc^2^\n  E=mc[red]^2^\n",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.subscript.end.asciidoc" }
+      },
+      "name": "string.other.subscript.asciidoc"
+    },
+    "entity_name": {
+      "comment": "Character entity reference\n\nExamples:\n  &nbsp;\n  &sup2;\n",
+      "match": "(?<!\\\\)&([a-zA-Z][a-zA-Z0-9]*);",
+      "name": "constant.character.entity.xml.asciidoc"
+    },
+    "superscript": {
+      "end": "^",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with attribute list\n(?<!\\\\)         # no preceding escape\n(\\^)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": {
+          "name": "punctuation.definition.string.superscript.begin.asciidoc"
+        }
+      },
+      "contentName": "meta.superscriptinner.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Superscript text.\n\nExamples:\n  H~2~O\n  H[red]~2~O\n",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.superscript.end.asciidoc"
+        }
+      },
+      "name": "string.other.superscript.asciidoc"
+    },
+    "biblio_anchor": {
+      "match": "(?<!\\[)(\\[\\[\\[).*?(\\]\\]\\])(?!\\])",
+      "comment": "Bibliography anchor\n\nExamples:\n  [[[Lorem ipsum]]]\n",
+      "name": "storage.type.reference.biblioanchor.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.biblioanchor.begin.asciidoc" },
+        "2": { "name": "punctuation.definition.biblioanchor.end.asciidoc" }
+      }
+    },
+    "block_comment": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(/{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.asciidoc" }
+      },
+      "contentName": "meta.block.comment.content.asciidoc",
+      "patterns": [{ "include": "#macro" }],
+      "comment": "Examples:\n  ////\n  A multi-line comment.\n  Notice it's a delimited block.\n  ////\n",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.asciidoc" }
+      },
+      "name": "comment.block.asciidoc"
+    },
+    "ulist_item_marker": {
+      "match": "^(\\s*(\\-|\\*{1,5}))\\s+(?=\\S)",
+      "comment": "Marker of an unordered (bullet) list item.\n\nExamples:\n  * level 1\n  ** level 2\n  *** level 3\n  **** level 4\n  ***** level 5\n  - level 1\n  -- level 2\n  --- level 3\n  ---- level 4\n  ----- level 5\n",
+      "name": "markup.list.bulleted.asciidoc",
+      "captures": {
+        "1": { "name": "string.unquoted.list.bullet.asciidoc" },
+        "2": { "name": "constant.numeric.list.bullet.asciidoc" }
+      }
+    },
+    "indexterm_double": {
+      "match": "(?<!\\()(\\({2})([^\\(\\s].*?)(\\){2})(?!\\))",
+      "comment": "Double parenthesis indexterm.\n\nExamples:\n  ((Arthur))\n",
+      "name": "variable.other.indexterm.double.asciidoc",
+      "captures": {
+        "1": { "name": "constant.character.indexterm.double.begin.asciidoc" },
+        "3": { "name": "constant.character.indexterm.double.end.asciidoc" }
+      }
+    },
+    "inline": {
+      "patterns": [
+        { "include": "#passthrough" },
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" }
+      ]
+    },
+    "macro": {
+      "match": "(?x)\n(?:\n  ((?:https?|mailto|ftp|file)  # specify separately so we can mark them as links that TextMate opens\n  ?:{1}  # inline only\n  \\S*)   # (others such as image are partial URLs and/or TextMate cannot handle them)\n|\n  (([a-zA-Z0-9][a-zA-Z0-9_]*)\n  (:{1,2})\n  (\\S*))\n)\n(?:(\\[)([^\\]]*)(\\]))",
+      "comment": "Note: There are other macro notations, but I match only those that end in\nsquare brackets.\n",
+      "name": "meta.macro.asciidoc",
+      "captures": {
+        "7": { "name": "variable.parameter.attributes.macro.asciidoc" },
+        "3": { "name": "keyword.control.name.macro.asciidoc" },
+        "8": { "name": "constant.character.attributes.macro.end.asciidoc" },
+        "4": { "name": "constant.character.separator.macro.asciidoc" },
+        "5": { "name": "markup.underline.target.macro.asciidoc" },
+        "1": { "name": "markup.underline.link.macro.asciidoc" },
+        "6": { "name": "constant.character.attributes.macro.begin.asciidoc" }
+      }
+    },
+    "strong": {
+      "end": "(?x)\n(?<=\\S)(\\*)       # delimiter star that must be preceded by a nonspace character\n(?!\\w)            # ...and followed by a nonword character",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?      # might start with an attributes list\n(?<=^|\\W)(?<!\\\\|})  # must be preceded by nonword character, and not by escape or } (attribute)\n(\\*)(?=\\S)          # delimiter star that must be followed by a nonspace character",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.bold.single.begin.asciidoc" }
+      },
+      "contentName": "meta.boldinner.single.asciidoc",
+      "patterns": [
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Strong (bold) text (constrained variant).\n\nExamples:\n  *Lorem ipsum* dolor\n  [red]*Lorem ipsum* dolor\n",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.bold.single.end.asciidoc" }
+      },
+      "name": "markup.bold.single.asciidoc"
+    },
+    "attribute_entry": {
+      "end": "$\\n?",
+      "begin": "(?x)\n^(:)                          # opening delimiter\n(!)?                          # bang symbol (unset attribute)\n([A-Za-z0-9_][A-Za-z0-9_-]*)  # attribute name\n(!)?                          # bang symbol (unset attribute)\n(:)                           # closing delimiter\n(?:\\s+|(?=$))",
+      "beginCaptures": {
+        "3": { "name": "support.variable.attribute.asciidoc" },
+        "1": {
+          "name": "punctuation.definition.attributeentry.attrname.begin.asciidoc"
+        },
+        "4": { "name": "punctuation.definition.attributeentry.unset.asciidoc" },
+        "2": { "name": "punctuation.definition.attributeentry.unset.asciidoc" },
+        "5": {
+          "name": "punctuation.definition.attributeentry.attrname.end.asciidoc"
+        }
+      },
+      "contentName": "meta.attributeentry.value.asciidoc",
+      "patterns": [{ "include": "#characters" }],
+      "comment": "An attribute entry.\n\nExamples:\n  :my-attribute: value\n  :sectnums!:\n  :!sectnums:\n",
+      "name": "meta.attributeentry.asciidoc"
+    },
+    "block_listing": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(\\-{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.listing.begin.asciidoc" }
+      },
+      "contentName": "source.block.listing.content.asciidoc",
+      "patterns": [{ "include": "#inline_callout" }],
+      "comment": "Examples:\n  ----\n  Lorem ipsum.\n  ----\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.listing.end.asciidoc" }
+      },
+      "name": "meta.embedded.block.listing.asciidoc"
+    },
+    "monospaced": {
+      "end": "(?x)\n(?<=\\S)(`)        # delimiter backtick that must be preceded by a nonspace character\n(?!\\w)            # ...and followed by a nonword character",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?      # might start with attributes list\n(?<=^|\\W)(?<!\\\\|})  # must be preceded by nonword character, and not by escape or } (attribute)\n(`)(?=\\S)           # delimiter backtick that must be followed by a nonspace character",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.literal.single.begin.asciidoc" }
+      },
+      "contentName": "meta.literalinner.single.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Monospaced text (constrained variant).\n\nExamples:\n  `Lorem ipsum` dolor\n  [red]`Lorem ipsum` dolor\n",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.literal.single.end.asciidoc" }
+      },
+      "name": "string.other.literal.single.asciidoc"
+    },
+    "lists": {
+      "comment": "My strategy for lists (and similar) is not to try to treat entire paragraphs as lists, but only call out the opening.\n",
+      "patterns": [
+        { "include": "#block_admonition_label" },
+        { "include": "#ulist_item_marker" },
+        { "include": "#olist_item_marker" },
+        { "include": "#dlist_item_label" },
+        { "include": "#colist_item_marker" }
+      ]
+    },
+    "dlist_item_label": {
+      "end": "(:{2,4})(?:\\s|$\\n?)",
+      "begin": "^\\s*(?=.*:{2,4}(?:\\s|$))",
+      "contentName": "meta.list.label.asciidoc",
+      "patterns": [{ "include": "#inline" }, { "include": "#characters" }],
+      "comment": "Label of a definition (labeled) list item.\n\nExamples:\n  Label level 1:: lorem ipsum\n  Label level 2::: dolor sit amet\n  Label level 3:::: consectetur\n  Label level 1::\n    lorem ipsum\n  Another label :: lorem ipsum\n  Last::label:: dolor sit amet\n\nNote: This rule is not strictly correct, because Asciidoctor allows\ndouble colon followed by a space inside a label, i.e. it matches the\n*last* double colon, not the first. I don't know how to do that\n*effectively.\n",
+      "endCaptures": {
+        "1": { "name": "constant.labeledlist.separator.asciidoc" }
+      },
+      "name": "markup.list.labeled.asciidoc"
+    },
+    "inline_callout": {
+      "match": "(?<!\\\\)(<)\\d+(>)",
+      "comment": "Callout label\n\nExamples:\n  <1>\n  <42>\n",
+      "name": "constant.other.callout.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.callout.begin.asciidoc" },
+        "2": { "name": "punctuation.definition.callout.end.asciidoc" }
+      }
+    },
+    "block_sidebar": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(\\*{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.block.sidebar.begin.asciidoc" }
+      },
+      "contentName": "meta.block.sidebar.content.asciidoc",
+      "patterns": [
+        { "include": "#lists" },
+        { "include": "#block_comment" },
+        { "include": "#block_listing" },
+        { "include": "#lines" },
+        { "include": "#inline" },
+        { "include": "#characters" }
+      ],
+      "comment": "Examples:\n  ****\n  Lorem ipsum\n  ****\n\nNote: Might need to add more includes, but these are the ones that arise\nfor me in practice.\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.block.sidebar.end.asciidoc" }
+      },
+      "name": "string.quoted.block.sidebar.asciidoc"
+    },
+    "emphasis_double": {
+      "end": "__",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with attribute list\n(?<!\\\\)         # must not be preceded by escape\n(__)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.italic.double.begin.asciidoc" }
+      },
+      "contentName": "meta.italicinner.double.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Emphasized (italic) text (unconstrained variant).\n\nExamples:\n  Lo__re__m __ipsum dolor__.\n  Lo[red]__re__m\n",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.italic.double.end.asciidoc" }
+      },
+      "name": "markup.italic.double.asciidoc"
+    },
+    "attribute_reference": {
+      "match": "({)([A-Za-z0-9_][A-Za-z0-9_-]*)(})",
+      "comment": "Examples:\n  {my-attribute}\n",
+      "name": "variable.other",
+      "captures": {
+        "1": {
+          "name": "constant.character.attributes.reference.begin.asciidoc"
+        },
+        "2": { "name": "support.variable.attribute.asciidoc" },
+        "3": { "name": "constant.character.attributes.reference.end.asciidoc" }
+      }
+    },
+    "entity_number": {
+      "comment": "Numeric character reference\n\nExamples:\n  &#x278a;\n  &#182;\n",
+      "match": "(?<!\\\\)&#(x?[0-9a-fA-f]{2,4});",
+      "name": "constant.character.entity.asciidoc"
+    },
+    "block_literal": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(\\.{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.block.literal.begin.asciidoc" }
+      },
+      "contentName": "meta.block.literal.content.asciidoc",
+      "patterns": [{ "include": "#inline_callout" }],
+      "comment": "Examples:\n  ....\n  Lorem ipsum.\n  ....\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.block.literal.end.asciidoc" }
+      },
+      "name": "string.literal.block.delimited.asciidoc"
+    },
+    "title_level_1": {
+      "match": "^(==) (\\w.*)$\\n?",
+      "name": "markup.heading.level.1.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "title_level_3": {
+      "match": "^(====) (\\w.*)$\\n?",
+      "name": "markup.heading.level.3.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "title_level_5": {
+      "match": "^(======) (\\w.*)$\\n?",
+      "name": "markup.heading.level.5.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.asciidoc" },
+        "2": { "name": "entity.name.section.asciidoc" }
+      }
+    },
+    "inline_break": {
+      "comment": "Line hard break with a plus sign (+).\n\nExamples:\n  Rubies are red, +\n  Topazes are blue.\n",
+      "match": "(?<=\\s)\\+$\\n?",
+      "name": "constant.linebreak.asciidoc"
+    },
+    "block_pass": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(\\+{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.block.passthrough.begin.asciidoc" }
+      },
+      "contentName": "text.xml.block.passthrough.content.asciidoc",
+      "patterns": [{ "include": "text.xml" }],
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.block.passthrough.end.asciidoc" }
+      },
+      "name": "meta.embedded.block.passthrough.asciidoc"
+    },
+    "strong_double": {
+      "end": "\\*\\*",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?  # might start with an attribute list\n(?<!\\\\)         # must not be preceded by escape\n(\\*\\*)",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.bold.double.begin.asciidoc" }
+      },
+      "contentName": "meta.boldinner.double.asciidoc",
+      "patterns": [
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Strong (bold) text (unconstrained variant).\n\nExamples:\n  Lo**re**m **ipsum dolor**.\n  Lo[red]**re**m\n",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.bold.double.end.asciidoc" }
+      },
+      "name": "markup.bold.double.asciidoc"
+    },
+    "block_example": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(={4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.example.begin.asciidoc" }
+      },
+      "contentName": "meta.block.example.content.asciidoc",
+      "patterns": [
+        { "include": "#lists" },
+        { "include": "#block_listing" },
+        { "include": "#lines" },
+        { "include": "#inline" },
+        { "include": "#characters" }
+      ],
+      "comment": "Examples:\n  ====\n  Lorem ipsum.\n  ====\n\nNote: Might need to add more includes, but these are the ones that arise in\npractice for me.\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.example.end.asciidoc" }
+      },
+      "name": "string.unquoted.block.example.asciidoc"
+    },
+    "block_page_break": {
+      "comment": "A page break.\n\nExamples:\n  <<<\n  <<<<<\n",
+      "match": "^<{3,}$\\n?",
+      "name": "meta.separator.pagebreak.asciidoc"
+    },
+    "macro_pass": {
+      "end": "\\]",
+      "captures": {
+        "3": { "name": "markup.underline.target.macro.asciidoc" },
+        "1": { "name": "keyword.control.name.macro.pass.asciidoc" },
+        "4": { "name": "constant.character.attributes.macro.begin.asciidoc" },
+        "2": { "name": "constant.character.separator.macro.asciidoc" }
+      },
+      "begin": "(?x)\n(pass)\n(:{1,2})\n(\\S*)\n(\\[)(?=[^\\]]*\\])",
+      "contentName": "variable.parameter.attributes.macro.pass.asciidoc",
+      "patterns": [{ "include": "text.xml" }],
+      "comment": "Passthrough macro\n\nExamples:\n  pass:[Lorem ipsum]\n  pass::[Lorem ipsum]\n",
+      "name": "meta.macro.pass.asciidoc",
+      "endCaptures": {
+        "0": { "name": "constant.character.attributes.macro.end.asciidoc" }
+      }
+    },
+    "mark": {
+      "end": "(?x)\n(?<=\\S)(\\#)       # delimiter hash that must be preceded by a nonspace character\n(?!\\w)            # ...and followed by a nonword character",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?      # might start with attribute list (darned well better or why are we here)\n(?<=^|\\W)(?<!\\\\|})  # must be preceded by nonword character, and not by escape or } (attribute)\n(\\#)(?=\\S)          # delimiter hash that must be followed by a nonspace character",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": {
+          "name": "punctuation.definition.string.unquoted.single.begin.asciidoc"
+        }
+      },
+      "contentName": "string.unquoted.unquotedinner.single.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#emphasis_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#strong" },
+        { "include": "#emphasis" },
+        { "include": "#monospaced" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Marked text (constrained variant).\n\nExamples:\n  #Lorem ipsum# dolor\n  [red]#Lorem ipsum# dolor\n",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.unquoted.single.end.asciidoc"
+        }
+      },
+      "name": "string.other.unquoted.single.asciidoc"
+    },
+    "colist_item_marker": {
+      "match": "^(\\s*((<)\\d+?(>)))\\s+(?=\\S)",
+      "comment": "Marker of a callout list item.\n\nExamples:\n  <1> a callout\n  <42> another callout\n",
+      "name": "markup.list.numbered.callout.asciidoc",
+      "captures": {
+        "3": {
+          "name": "punctuation.definition.calloutlistnumber.begin.asciidoc"
+        },
+        "1": { "name": "string.unquoted.list.callout.asciidoc" },
+        "4": {
+          "name": "punctuation.definition.calloutlistnumber.end.asciidoc"
+        },
+        "2": { "name": "constant.numeric.callout.asciidoc" }
+      }
+    },
+    "characters": {
+      "patterns": [
+        { "include": "#attribute_reference" },
+        { "include": "#entity_number" },
+        { "include": "#entity_name" },
+        { "include": "#escape" },
+        { "include": "#replacement" },
+        { "include": "#macro_pass" },
+        { "include": "#macro" },
+        { "include": "#xref" },
+        { "include": "#biblio_anchor" },
+        { "include": "#indexterm_triple" },
+        { "include": "#indexterm_double" }
+      ]
+    },
+    "block_title": {
+      "match": "^(\\.)\\w.*$\\n?",
+      "comment": "Title of a block.\n\nExamples:\n  .My title\n  Lorem ipsum dolor.\n",
+      "name": "markup.heading.block.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.blockheading.asciidoc" }
+      }
+    },
+    "replacement": {
+      "match": "(?x)\n(?<!\\\\)  # must not be escaped\n(\n  \\(C\\)\n  | \\(TM\\)\n  | \\(R\\)\n  | ((?<!\\-)\\-\\-(?!\\-))    # exactly two, and even this may not rule out all that I want to\n  | ((?<!\\.)\\.\\.\\.(?!\\.))  # exactly three\n  | \\->\n  | <\\-\n  | =>\n  | <=\n)",
+      "name": "constant.character.replacement.asciidoc"
+    },
+    "block_quote": {
+      "end": "^\\1\\s*$\\n?",
+      "begin": "^(_{4,})\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.block.quote.begin.asciidoc" }
+      },
+      "contentName": "meta.block.quote.content.asciidoc",
+      "patterns": [
+        { "include": "#lines" },
+        { "include": "#inline" },
+        { "include": "#characters" }
+      ],
+      "comment": "Examples:\n  ____\n  Lorem ipsum\n  ____\n\nNote: Might need to add more includes, but these are the ones that arise for me in practice.\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.block.quote.end.asciidoc" }
+      },
+      "name": "markup.quote.block.asciidoc"
+    },
+    "olist_item_marker": {
+      "match": "^(\\s*(\\.{1,5}))\\s+(?=\\S)",
+      "comment": "Marker of an ordered (numbered) list item.\n\nExamples:\n  . level 1\n  .. level 2\n  ... level 3\n  .... level 4\n  ..... level 5\n\nNote: The space distinguishes it from a block title.\n",
+      "name": "markup.list.numbered.dotted.asciidoc",
+      "captures": {
+        "1": { "name": "string.unquoted.list.dotted.asciidoc" },
+        "2": { "name": "constant.numeric.list.dot.asciidoc" }
+      }
+    },
+    "emphasis": {
+      "end": "(?x)\n(?<=\\S)(_)        # delimiter underscore that must be preceded by a nonspace character\n(?!\\w)            # ...and followed by a nonword character",
+      "begin": "(?x)\n(\\[[^\\]]*?\\])?      # might be preceded by an attributes list\n(?<=^|\\W)(?<!\\\\|})  # must be preceded by nonword character, and not by escape or } (attribute)\n(_)(?=\\S)           # delimiter underscore that must be followed by a nonspace character",
+      "beginCaptures": {
+        "1": { "name": "support.variable.attributelist.asciidoc" },
+        "2": { "name": "punctuation.definition.italic.single.begin.asciidoc" }
+      },
+      "contentName": "meta.italicinner.single.asciidoc",
+      "patterns": [
+        { "include": "#strong_double" },
+        { "include": "#monospaced_double" },
+        { "include": "#mark_double" },
+        { "include": "#strong" },
+        { "include": "#monospaced" },
+        { "include": "#mark" },
+        { "include": "#superscript" },
+        { "include": "#subscript" },
+        { "include": "#characters" }
+      ],
+      "comment": "Emphasized (italic) text (constrained variant).\n\nExamples:\n  _Lorem ipsum_ dolor\n  [red]_Lorem ipsum_ dolor\n",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.italic.single.end.asciidoc" }
+      },
+      "name": "markup.italic.single.asciidoc"
+    },
+    "escape": {
+      "comment": "List of special characters that may be escaped.\n\nNote: I do not really know if this is a good list, adopted wholesale from\noriginal bundle.\n",
+      "match": "\\\\(?=[-`*_#+.!(){}\\[\\]\\\\>:])",
+      "name": "constant.character.escape.asciidoc"
+    },
+    "inline_comment": {
+      "match": "^(//)([^/\\n].*|)$\\n?",
+      "comment": "Inline comment.\n\nExamples:\n  // This is just a comment!\n",
+      "name": "comment.line.double-slash.asciidoc",
+      "captures": {
+        "1": { "name": "punctuation.definition.comment.line.asciidoc" },
+        "2": { "name": "meta.line.comment.content.asciidoc" }
+      }
+    },
+    "indexterm_triple": {
+      "match": "(?<!\\()(\\({3})([^\\(].*?)(\\){3})(?!\\))",
+      "comment": "Triple parenthesis indexterm.\n\nExamples:\n  (((Sword, Broadsword, Excalibur)))\n",
+      "name": "variable.other.indexterm.triple.asciidoc",
+      "captures": {
+        "1": { "name": "constant.character.indexterm.triple.begin.asciidoc" },
+        "3": { "name": "constant.character.indexterm.triple.end.asciidoc" }
+      }
+    },
+    "block_open": {
+      "end": "^\\-\\-\\s*$\\n?",
+      "begin": "^\\-\\-\\s*$\\n?",
+      "beginCaptures": {
+        "0": { "name": "constant.delimiter.block.open.begin.asciidoc" }
+      },
+      "contentName": "meta.block.open.content.asciidoc",
+      "patterns": [
+        { "include": "#lists" },
+        { "include": "#block_comment" },
+        { "include": "#block_listing" },
+        { "include": "#block_pass" },
+        { "include": "#lines" },
+        { "include": "#inline" },
+        { "include": "#characters" }
+      ],
+      "comment": "Examples:\n  --\n  Lorem ipsum\n  --\nNote: Might need to check on these includes.\n",
+      "endCaptures": {
+        "0": { "name": "constant.delimiter.block.open.end.asciidoc" }
+      },
+      "name": "meta.block.open.asciidoc"
+    },
+    "list_continuation": {
+      "match": "^\\+\\s*$\\n?",
+      "name": "constant.listcontinuation.asciidoc"
+    },
+    "lines": {
+      "patterns": [
+        { "include": "#inline_comment" },
+        { "include": "#list_continuation" },
+        { "include": "#inline_break" },
+        { "include": "#block_page_break" },
+        { "include": "#block_thematic_break" },
+        { "include": "#block_title" },
+        { "include": "#block_id" },
+        { "include": "#section_template" },
+        { "include": "#attribute_list_line" },
+        { "include": "#attribute_entry" }
+      ]
+    },
+    "section_titles": {
+      "comment": "Examples:\n\n  = Document Title (Level 0)\n\n  == Level 1 Section\n\n  === Level 2 Section\n",
+      "patterns": [
+        { "include": "#title_level_5" },
+        { "include": "#title_level_4" },
+        { "include": "#title_level_3" },
+        { "include": "#title_level_2" },
+        { "include": "#title_level_1" },
+        { "include": "#title_level_0" }
+      ]
+    },
+    "block_thematic_break": {
+      "comment": "A thematic break (aka horizontal rule).\n\nExamples:\n  '''\n  ''''''\n",
+      "match": "^'{3,}$\\n?",
+      "name": "meta.separator.ruler.asciidoc"
+    }
+  },
+  "name": "AsciiDoc (Asciidoctor)",
+  "uuid": "A2AE6D21-3F08-4978-ADF3-55B5AD580921"
+}

@@ -52,6 +52,7 @@ type MainAction =
   | 'open-url'
   | 'prettier'
   | 'focus'
+  | 'fs-read'
 
 type ApiAction = 'snippet-create'
 

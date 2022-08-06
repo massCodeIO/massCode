@@ -1,0 +1,235 @@
+{
+  "foldingStartMarker": "(^.*\\{[^}]*$|^.*\\([^\\)]*$|^.*/\\*(?!.*\\*/).*$)",
+  "foldingStopMarker": "(^\\s*\\}|^\\s*\\)|^(?!.*/\\*).*\\*/)",
+  "keyEquivalent": "^~J",
+  "fileTypes": ["js"],
+  "repository": {
+    "html-markup-single": {
+      "name": "meta.markup.html",
+      "patterns": [
+        { "include": "text.html.basic" },
+        { "match": "\\\\(')", "name": "constant.character.escape.js" }
+      ]
+    },
+    "css-selector": {
+      "begin": "(?=\\s*[.*#a-zA-Z])",
+      "end": "(?=[\"'])",
+      "patterns": [
+        {
+          "match": "\\b(a|abbr|acronym|address|area|article|aside|audio|b|base|big|blockquote|body|br|button|canvas|caption|cite|command|code|col|colgroup|datalist|dd|del|details|device|dfn|div|dl|dt|em|embed|fieldset|fig(ure|caption)|footer|form|frame|frameset|(h[1-6])|head(er)?|hgroup|hr|html|i|iframe|img|input|ins|kbd|keygen|label|legend|li|link|map|menu|meta|meter|noframes|noscript|object|ol|optgroup|option|output|p|param|pre|progress|q|samp|script|section|select|small|span|strike|strong|style|summary|sub|sup|table|tbody|td|textarea|tfoot|th|thead|time|title|tr|tt|ul|var|video)\\b",
+          "name": "entity.name.tag.css"
+        },
+        {
+          "match": "(\\.)[a-zA-Z0-9_-]+",
+          "name": "entity.other.attribute-name.class.css",
+          "captures": {
+            "1": { "name": "punctuation.definition.attribute-name.css" }
+          }
+        },
+        {
+          "match": "(#)[a-zA-Z0-9_-]+",
+          "name": "entity.other.attribute-name.id.css",
+          "captures": {
+            "1": { "name": "punctuation.definition.attribute-name.css" }
+          }
+        },
+        { "match": "\\*", "name": "entity.name.tag.wildcard.css" },
+        {
+          "match": "(:)\\b(active|after|before|first-letter|first-line|hover|link|target|visited)\\b",
+          "name": "entity.other.attribute-name.pseudo-class.css",
+          "captures": {
+            "1": { "name": "punctuation.definition.attribute-name.css" }
+          }
+        }
+      ],
+      "name": "meta.selector.css"
+    },
+    "html-markup-double": {
+      "name": "meta.markup.html",
+      "patterns": [
+        { "include": "text.html.basic" },
+        { "match": "\\\\(\")", "name": "constant.character.escape.js" }
+      ]
+    },
+    "nested-parens": {
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [{ "include": "#nested-parens" }, { "include": "source.js" }],
+      "captures": { "0": { "name": "punctuation.section.scope.js" } }
+    }
+  },
+  "uuid": "1AD8EB10-62BE-417C-BC4B-29B5C6F0B36A",
+  "patterns": [
+    { "include": "source" },
+    {
+      "begin": "(\\$|jQuery)(\\((?!('|\")<))",
+      "endCaptures": { "1": { "name": "punctuation.section.class.js" } },
+      "end": "(\\))",
+      "patterns": [
+        { "include": "#nested-parens" },
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.selector.end.js" }
+          },
+          "end": "'",
+          "patterns": [{ "include": "#css-selector" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.selector.begin.js" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.selector.end.js" }
+          },
+          "end": "\"",
+          "patterns": [{ "include": "#css-selector" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.selector.begin.js" }
+          }
+        },
+        { "include": "source.js" }
+      ],
+      "contentName": "meta.selector.jquery",
+      "beginCaptures": {
+        "1": { "name": "support.class.js.jquery" },
+        "2": { "name": "punctuation.section.class.js" }
+      }
+    },
+    {
+      "begin": "\\b(add|appendTo|children|closest|detach|filter|find|has|index|insertAfter|insertBefore|is|next|nextAll|nextUntil|not|parent|parents|parentsUntil|prependTo|prev|prevAll|prevUntil|remove|replaceAll|siblings)\\s*(\\((?!('|\")<))",
+      "endCaptures": { "1": { "name": "punctuation.section.function.js" } },
+      "end": "(\\))",
+      "patterns": [
+        { "include": "#nested-parens" },
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.selector.end.js" }
+          },
+          "end": "'",
+          "patterns": [{ "include": "#css-selector" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.selector.begin.js" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.selector.end.js" }
+          },
+          "end": "\"",
+          "patterns": [{ "include": "#css-selector" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.selector.begin.js" }
+          }
+        },
+        { "include": "source.js" }
+      ],
+      "contentName": "meta.selector.jquery",
+      "beginCaptures": {
+        "1": { "name": "support.function.js.jquery" },
+        "2": { "name": "punctuation.section.function.js" }
+      }
+    },
+    {
+      "begin": "(\\$|jQuery)(\\((?=('|\")<))",
+      "endCaptures": { "1": { "name": "punctuation.section.class.js" } },
+      "end": "(\\))",
+      "patterns": [
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.markup.end.js" }
+          },
+          "end": "'",
+          "patterns": [{ "include": "#html-markup-single" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.markup.begin.js" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.markup.end.js" }
+          },
+          "end": "\"",
+          "patterns": [{ "include": "#html-markup-double" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.markup.begin.js" }
+          }
+        },
+        { "include": "source.js" }
+      ],
+      "contentName": "meta.markup.jquery",
+      "beginCaptures": {
+        "1": { "name": "support.class.js.jquery" },
+        "2": { "name": "punctuation.section.class.js" }
+      }
+    },
+    {
+      "begin": "\\b(add|after|append|before|html|prepend|replaceWith|wrap|wrapAll|wrapInner)\\s*(\\((?=('|\")<))",
+      "endCaptures": { "1": { "name": "punctuation.section.class.js" } },
+      "end": "(\\))",
+      "patterns": [
+        {
+          "begin": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.markup.end.js" }
+          },
+          "end": "'",
+          "patterns": [{ "include": "#html-markup-single" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.markup.begin.js" }
+          }
+        },
+        {
+          "begin": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.markup.end.js" }
+          },
+          "end": "\"",
+          "patterns": [{ "include": "#html-markup-double" }],
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.markup.begin.js" }
+          }
+        },
+        { "include": "source.js" }
+      ],
+      "contentName": "meta.markup.jquery",
+      "beginCaptures": {
+        "1": { "name": "support.function.js.jquery" },
+        "2": { "name": "punctuation.section.class.js" }
+      }
+    },
+    {
+      "match": "(\\$|jQuery)\\.(ajaxSettings|boxModel|browser|fx|isReady|support|fn)",
+      "name": "meta.property.jquery",
+      "captures": {
+        "1": { "name": "support.class.js" },
+        "2": { "name": "support.constant.js" }
+      }
+    },
+    {
+      "match": "(?<=\\.)(length|selector|context)\\b",
+      "name": "support.constant.js.jquery"
+    },
+    {
+      "match": "(?<=\\.)(add|addClass|after|ajaxComplete|ajaxError|ajaxSend|ajaxStart|ajaxStop|ajaxSuccess|always|andSelf|animate|append|appendTo|attr|before|bind|blur|change|children|clearQueue|click|clone|closest|contents|css|data|dblclick|delay|delegate|dequeue|detach|disable|disabled|die|domManip|done|each|empty|end|eq|error|fadeIn|fadeOut|fadeTo|fadeToggle|fail|filter|find|first|fire|fired|fireWith|focus|focusin|focusout|get|has|hasClass|height|hide|hover|html|index|innerHeight|innerWidth|insertAfter|insertBefore|is|isRejected|isResolved|keydown|keypress|keyup|last|live|load|lock|locked|map|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|next|nextAll|nextUntil|not|notify|notifyWith|off|offset|offsetParent|on|one|outerHeight|outerWidth|parent|parents|parentsUntil|pipe|position|prepend|prependTo|prev|prevAll|prevUntil|progress|promise|prop|pushStack|queue|ready|reject|rejectWith|remove|removeAttr|removeClass|removeData|replaceAll|replaceWith|resize|resolve|resolveWith|scroll|scrollLeft|scrollTop|select|serialize|serializeArray|show|siblings|size|slice|slideDown|slideToggle|slideUp|state|stop|submit|text|then|toArray|toggle|toggleClass|trigger|triggerHandler|unbind|undelegate|unload|unwrap|val|width|wrap|wrapAll|wrapInner)\\b",
+      "name": "support.function.js.jquery"
+    },
+    {
+      "match": "(\\$|jQuery)(\\.)(Callbacks|Deferred|Event|ajax|ajaxPrefilter|ajaxSetup|ajaxTransport|bindReady|clean|cleanData|contains|css|data|dequeue|each|error|extend|Event|get|getJSON|getScript|globalEval|grep|inArray|isArray|isEmptyObject|isFunction|isNumeric|isPlainObject|isWindow|isXMLDoc|makeArray|map|merge|noConflict|noop|param|parseJSON|parseXML|post|proxy|queue|ready|removeData|sibling|sub|text|triggerGlobal|trim|type|unique|when)\\b",
+      "name": "support.function.js.jquery",
+      "captures": {
+        "1": { "name": "support.class.js" },
+        "3": { "name": "support.function.js" }
+      }
+    },
+    { "include": "source.js" }
+  ],
+  "comment": "jQuery Javascript Library. Sublime Text 2 package forked by Zander Martineau from original Textmate bundle by Jonathan Chaffer & Karl Swedberg. Dual licensed under MIT (http://www.opensource.org/licenses/mit-license.php) and GPL (http://www.gnu.org/licenses/gpl.html) licenses.",
+  "name": "jQuery (JavaScript)",
+  "scopeName": "source.js.jquery"
+}

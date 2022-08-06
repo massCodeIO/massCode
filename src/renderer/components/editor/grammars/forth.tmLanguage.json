@@ -1,0 +1,206 @@
+{
+  "fileTypes": ["frt", "fth", "fs", "4th", "forth"],
+  "foldingStartMarker": "/\\*\\*|\\{\\s*$",
+  "foldingStopMarker": "\\*\\*/|^\\s*\\}",
+  "name": "Forth",
+  "patterns": [
+    {
+      "include": "#forth"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "comment": "line comments for iForth",
+          "match": "(?<=^|\\s)(--\\s.*$)",
+          "name": "comment.line.double-dash.forth"
+        },
+        {
+          "comment": "ANSI line comment",
+          "match": "(?<=^|\\s)(\\\\[\\s\\S]*$)",
+          "name": "comment.line.backslash.forth"
+        },
+        {
+          "comment": "gForth line comment",
+          "match": "(?<=^|\\s)(\\\\[Gg] .*$)",
+          "name": "comment.line.backslash-g.forth"
+        },
+        {
+          "begin": "(?<=^|\\s)(\\(\\*)(?=\\s)",
+          "comment": "multiline comments for iForth",
+          "end": "(?<=^|\\s)(\\*\\))(?=\\s)",
+          "name": "comment.block.forth"
+        },
+        {
+          "begin": "\\b(?i:DOC)\\b",
+          "comment": "documentation comments for iForth",
+          "end": "\\b(?i:ENDDOC)\\b",
+          "name": "comment.block.documentation.forth"
+        },
+        {
+          "comment": "ANSI line comment",
+          "match": "(?<=^|\\s)(\\.?\\( [^)]*\\))",
+          "name": "comment.line.parentheses.forth"
+        }
+      ]
+    },
+    "constant": {
+      "patterns": [
+        {
+          "match": "(?i:(?<=^|\\s)(TRUE|FALSE|BL|PI|CELL|C/L|R/O|W/O|R/W)(?=\\s))",
+          "name": "constant.language.forth"
+        },
+        {
+          "match": "(?<=^|\\s)([$#%]?[-+]?[0-9]+(\\.[0-9]*e(-?[0-9]+)|\\.?[0-9a-fA-F]*))(?=\\s)",
+          "name": "constant.numeric.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(([&^]\\S)|((\"|')\\S(\"|')))(?=\\s)",
+          "name": "constant.character.forth"
+        }
+      ]
+    },
+    "forth": {
+      "patterns": [
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#word"
+        },
+        {
+          "include": "#variable"
+        },
+        {
+          "include": "#storage"
+        },
+        {
+          "include": "#word-def"
+        }
+      ]
+    },
+    "storage": {
+      "patterns": [
+        {
+          "comment": "",
+          "match": "(?<=^|\\s)(?i:(2CONSTANT|2VARIABLE|ALIAS|CONSTANT|CREATE-INTERPRET/COMPILE[:]?|CREATE|DEFER|FCONSTANT|FIELD|FVARIABLE|USER|VALUE|VARIABLE|VOCABULARY))(?=\\s)",
+          "name": "storage.type.forth"
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "comment": "",
+          "match": "(?i:((?<=ABORT\" )|(?<=BREAK\" )|(?<=\\.\" )|(C\" )|(0\")|(S\\\\?\" )))[^\"]+\"",
+          "name": "string.quoted.double.forth"
+        },
+        {
+          "comment": "",
+          "match": "(?i:((?<=INCLUDE)|(?<=NEEDS)|(?<=REQUIRE)|(?<=USE)))[ ]\\S+(?=\\s)",
+          "name": "string.unquoted.forth"
+        }
+      ]
+    },
+    "variable": {
+      "patterns": [
+        {
+          "match": "\\b(?i:I|J)\\b",
+          "name": "variable.language.forth"
+        }
+      ]
+    },
+    "word": {
+      "patterns": [
+        {
+          "match": "(?<=^|\\s)\\[(?i:(NIP|TUCK|ROT|SWAP|DUP|OVER|DROP|2SWAP|2DUP|2DROP|FNIP|FTUCK|FROT|FSWAP|FDUP|FOVER|FDROP|F2SWAP|F2DUP|F2DROP))\\](?=\\s)",
+          "name": "keyword.other.word.forth"
+        },
+        {
+          "match": "(?<=^|\\s)\\[(?i:(F+|F-|F*|F**|FSQRT|F/|F.S))\\](?=\\s)",
+          "name": "keyword.other.word.forth"
+        },
+        {
+          "match": "(?<=^|\\s)\\[(?i:(EXECUTE|ABORT|CATCH|C@|F@|>R|R>|!|/MOD|MOD))\\](?=\\s)",
+          "name": "keyword.other.word.forth"
+        },
+        {
+          "match": "(?<=^|\\s)\\[(?i:(\\?DO|\\+LOOP|AGAIN|BEGIN|DEFINED|DO|ELSE|ENDIF|FOR|IF|IFDEF|IFUNDEF|LOOP|NEXT|REPEAT|THEN|UNTIL|WHILE))\\](?=\\s)",
+          "name": "keyword.control.immediate.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(?i:(COMPILE-ONLY|IMMEDIATE|IS|RESTRICT|TO|WHAT'S|]))(?=\\s)",
+          "name": "keyword.operator.immediate.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(?i:(-DO|\\-LOOP|\\?DO|\\?LEAVE|\\+DO|\\+LOOP|ABORT\\\"|AGAIN|AHEAD|BEGIN|CASE|DO|ELSE|ENDCASE|ENDIF|ENDOF|ENDTRY\\-IFERROR|ENDTRY|FOR|IF|IFERROR|LEAVE|LOOP|NEXT|RECOVER|REPEAT|RESTORE|THEN|TRY|U\\-DO|U\\+DO|UNTIL|WHILE))(?=\\s)",
+          "name": "keyword.control.compile-only.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(?i:(\\?DUP-0=-IF|\\?DUP-IF|\\)|\\[|\\['\\]|\\[CHAR\\]|\\[COMPILE\\]|\\[IS\\]|\\[TO\\]|<COMPILATION|<INTERPRETATION|ASSERT\\(|ASSERT0\\(|ASSERT1\\(|ASSERT2\\(|ASSERT3\\(|COMPILATION>|DEFERS|DOES>|INTERPRETATION>|OF|POSTPONE))(?=\\s)",
+          "name": "keyword.other.compile-only.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(?i:('|<IS>|<TO>|CHAR|END-STRUCT|INCLUDE[D]?|LOAD|NEEDS|REQUIRE[D]?|REVISION|SEE|STRUCT|THRU|USE))(?=\\s)",
+          "name": "keyword.other.non-immediate.forth"
+        },
+        {
+          "match": "(?<=^|\\s)(?i:(~~|BREAK:|BREAK\"|DBG))(?=\\s)",
+          "name": "keyword.other.warning.forth"
+        }
+      ]
+    },
+    "word-def": {
+      "begin": "(^:|\\s:)\\s(\\S+)\\s|(?i:(:NONAME))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.compile-only.forth"
+        },
+        "2": {
+          "name": "entity.name.function.forth"
+        },
+        "3": {
+          "name": "keyword.other.compile-only.forth"
+        },
+        "4": {
+          "name": "keyword.other.word.forth"
+        }
+      },
+      "end": "(;(?i:CODE)?)",
+      "endCaptures": {
+        "0": {
+          "name": "keyword.other.compile-only.forth"
+        }
+      },
+      "name": "meta.block.forth",
+      "patterns": [
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#word"
+        },
+        {
+          "include": "#variable"
+        },
+        {
+          "include": "#storage"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.forth"
+}

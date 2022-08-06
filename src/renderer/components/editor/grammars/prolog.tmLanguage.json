@@ -1,0 +1,54 @@
+{
+  "scopeName": "source.prolog",
+  "fileTypes": [],
+  "patterns": [
+    {
+      "begin": "'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.prolog" }
+      },
+      "end": "'",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.prolog" },
+        { "match": "''", "name": "constant.character.escape.quote.prolog" }
+      ],
+      "name": "string.quoted.single.prolog",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.prolog" }
+      }
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.prolog",
+      "captures": { "0": { "name": "punctuation.definition.comment.prolog" } }
+    },
+    {
+      "begin": "(^[ \\t]+)?(?=%)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "%",
+          "end": "\\n",
+          "name": "comment.line.percentage.prolog",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.prolog" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.prolog" }
+      }
+    },
+    { "match": ":-", "name": "keyword.operator.definition.prolog" },
+    { "match": "\\b[A-Z][a-zA-Z0-9_]*\\b", "name": "variable.other.prolog" },
+    {
+      "comment": "\n\t\t\tI changed this from entity to storage.type, but have no idea what it is -- Allan\n\t\t\tAnd I changed this to constant.other.symbol after glancing over the docs,\n\t\t\t    might still be wrong.  -- Infininight\n\t\t\t",
+      "match": "\\b[a-z][a-zA-Z0-9_]*\\b",
+      "name": "constant.other.symbol.prolog"
+    }
+  ],
+  "name": "Prolog",
+  "keyEquivalent": "^~P",
+  "uuid": "C0E2ADB0-1706-4A28-8DB7-263BDC8B5C5C"
+}

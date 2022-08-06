@@ -1,3 +1,27 @@
+# [3.0.0](https://github.com/massCodeIO/massCode/compare/v2.11.0...v3.0.0) (2022-08-05)
+
+
+### Features
+
+* add codemirror & use `.tmLanguage` directly as grammar ([#190](https://github.com/massCodeIO/massCode/issues/190)) ([a36bcf0](https://github.com/massCodeIO/massCode/commit/a36bcf005f4210a372b424ccc7e7c3fb84f7d634))
+
+
+
+# [2.11.0](https://github.com/massCodeIO/massCode/compare/v2.10.0...v2.11.0) (2022-08-04)
+
+
+### Bug Fixes
+
+* **snippets:** folder rename [#162](https://github.com/massCodeIO/massCode/issues/162) ([#169](https://github.com/massCodeIO/massCode/issues/169)) ([c5ddd23](https://github.com/massCodeIO/massCode/commit/c5ddd231c6baecda6df572dda4406d50cc803575))
+
+
+### Features
+
+* **i18n:** add Chinese traditional locale ([#161](https://github.com/massCodeIO/massCode/issues/161)) ([8b00fcd](https://github.com/massCodeIO/massCode/commit/8b00fcd58eca6c42402a747f23ac57ee8be28927))
+* **i18n:** add Spanish locale ([bd68311](https://github.com/massCodeIO/massCode/commit/bd6831123158a38166025a3683412a290ca74114))
+
+
+
 # [2.10.0](https://github.com/massCodeIO/massCode/compare/v2.9.0...v2.10.0) (2022-07-21)
 
 

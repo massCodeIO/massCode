@@ -1,0 +1,157 @@
+{
+  "name": "Pig",
+  "scopeName": "source.pig",
+  "fileTypes": ["pig", "piglet"],
+  "patterns": [
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.pig"
+    },
+    {
+      "match": "(--).*$\\n?",
+      "name": "comment.line.double-dash.pig"
+    },
+    {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.pig",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.pig"
+        }
+      ]
+    },
+    {
+      "begin": "'",
+      "end": "'",
+      "name": "string.quoted.single.pig",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.pig"
+        }
+      ]
+    },
+    {
+      "match": "\\b(NULL|true|false|stdin|stdout|stderr)\\b",
+      "name": "constant.language.pig"
+    },
+    {
+      "match": "\\b(DIFF|TOBAG|TOMAP|TOP|TOTUPLE|RANDOM|FLATTEN|flatten|CUBE|ROLLUP|IsEmpty|ARITY|PluckTuple|SUBTRACT|BagToString)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "\\b(ABS|ACOS|ASIN|ATAN|CBRT|CEIL|COS|COSH|EXP|FLOOR|LOG|LOG10|ROUND|ROUND_TO|SIN|SINH|SQRT|TAN|TANH|AVG|COUNT|COUNT_STAR|MAX|MIN|SUM|COR|COV)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "\\b(CONCAT|INDEXOF|LAST_INDEX_OF|LCFIRST|LOWER|REGEX_EXTRACT|REGEX_EXTRACT_ALL|REPLACE|SIZE|STRSPLIT|SUBSTRING|TOKENIZE|TRIM|UCFIRST|UPPER|LTRIM|RTRIM|ENDSWITH|STARTSWITH|TRIM)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "\\b(CurrentTime|AddDuration|GetHour|DaysBetween|GetDay|GetMilliSecond|GetMinute|GetMonth|GetSecond|GetWeek|GetWeekYear|GetYear|HoursBetween|MilliSecondsBetween|MinutesBetween|MonthsBetween|SecondsBetween|SubtractDuration|ToDate|WeeksBetween|YearsBetween|ToMilliSeconds|ToString|ToUnixTime)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "\\b(cat|cd|copyFromLocal|copyToLocal|cp|ls|mkdir|mv|pwd|rm)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "\\b(PigStorage|BinStorage|BinaryStorage|PigDump|HBaseStorage|JsonLoader|JsonStorage|AvroStorage|TextLoader|PigStreaming|TrevniStorage|AccumuloStorage)\\b",
+      "name": "entity.name.function.pig"
+    },
+    {
+      "match": "(?i)\\b(ASSERT|LOAD|STORE|DUMP|FILTER|DISTINCT|FOREACH|GENERATE|STREAM|JOIN|COGROUP|GROUP|CROSS|ORDER|LIMIT|UNION|SPLIT|DESCRIBE|EXPLAIN|ILLUSTRATE|AS|BY|INTO|USING|LIMIT|PARALLEL|OUTER|INNER|LEFT|SAMPLE|RANK|CUBE|ALL|KILL|QUIT|MAPREDUCE|ASC|DESC|THROUGH|SHIP|CACHE|CASE|WHEN|THEN|END|IN|PARTITION|FULL|SET|IF|ONSCHEMA|INPUT|OUTPUT)\\b",
+      "name": "keyword.control.pig"
+    },
+    {
+      "match": "\\b(bytearray|boolean|chararray|datetime|double|float|int|long)\\b",
+      "name": "storage.type.pig"
+    },
+    {
+      "match": "\\b(bag|map|tuple)\\b",
+      "name": "support.type.pig"
+    },
+    {
+      "match": "\\b((([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|F|f)?\\b",
+      "name": "constant.numeric.pig"
+    },
+    {
+      "match": "\\b(\\+|\\*|\\-|\\/|\\%|&|\\|\\^|~)\\b",
+      "name": "keyword.operator.arithmetic.pig"
+    },
+    {
+      "match": "\\$[a_zA-Z0-9_]+",
+      "name": "variable.language.pig"
+    },
+    {
+      "match": ";",
+      "name": "punctuation.terminator.pig"
+    },
+    {
+      "begin": "(?i)^\\s*([a-z_][a-z0-9_]*)\\s*(?:=)",
+      "end": "$",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.variable.pig"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)^\\s*(register|import)\\s+",
+      "end": "$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.import.pig"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)^\\s*(%declare|%default)\\s*(\\S+)?\\s*",
+      "end": "$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.import.pig"
+        },
+        "2": {
+          "name": "variable.other.pig"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)^\\s*(define)\\s*(\\S+)?\\s*",
+      "end": "$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.import.pig"
+        },
+        "2": {
+          "name": "variable.other.pig"
+        }
+      },
+      "patterns": [
+        {
+          "include": "$self"
+        }
+      ]
+    }
+  ],
+  "uuid": "54caed77-86b5-4b23-86db-7dd942cbde85"
+}

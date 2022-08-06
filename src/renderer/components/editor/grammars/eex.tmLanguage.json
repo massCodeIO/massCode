@@ -1,0 +1,39 @@
+{
+  "scopeName": "text.elixir",
+  "fileTypes": ["eex"],
+  "patterns": [
+    {
+      "begin": "<%+#",
+      "end": "%>",
+      "name": "comment.block.elixir",
+      "captures": { "0": { "name": "punctuation.definition.comment.eex" } }
+    },
+    {
+      "end": "(-)%>|(%)>",
+      "begin": "<%+(?!>)[-=]*",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.embedded.begin.elixir" }
+      },
+      "contentName": "source.elixir",
+      "patterns": [
+        {
+          "match": "(#).*?(?=-?%>)",
+          "name": "comment.line.number-sign.elixir",
+          "captures": {
+            "1": { "name": "punctuation.definition.comment.elixir" }
+          }
+        },
+        { "include": "source.elixir" }
+      ],
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.end.elixir" },
+        "1": { "name": "source.elixir" },
+        "2": { "name": "source.elixir" }
+      },
+      "name": "meta.embedded.line.elixir"
+    }
+  ],
+  "name": "EEx",
+  "keyEquivalent": "^~X",
+  "uuid": "B1393067-A26A-4BAD-9D0F-42DF21FEB1C2"
+}

@@ -1,0 +1,979 @@
+{
+  "name": "SyON",
+  "scopeName": "source.sy",
+  "fileTypes": ["sy"],
+  "patterns": [
+    {
+      "include": "#blockInnards"
+    }
+  ],
+  "repository": {
+    "main": {
+      "patterns": [
+        {
+          "include": "#signature"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#regexp"
+        },
+        {
+          "include": "#fieldQuotedEarly"
+        },
+        {
+          "include": "#heredoc"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#stringJunk"
+        },
+        {
+          "include": "#block"
+        },
+        {
+          "include": "#field"
+        },
+        {
+          "include": "#array"
+        },
+        {
+          "include": "#byteArray"
+        },
+        {
+          "include": "#brackets"
+        },
+        {
+          "include": "#boolean"
+        },
+        {
+          "include": "#null"
+        },
+        {
+          "include": "#date"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#comma"
+        },
+        {
+          "include": "#operator"
+        }
+      ]
+    },
+    "array": {
+      "name": "meta.array.sy",
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.begin.bracket.square.sy"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.array.end.bracket.square.sy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#main"
+        },
+        {
+          "match": "(?:[^,\\[\\]{}<>\"'`\\s:]|:(?=\\S))+",
+          "name": "string.unquoted.sy"
+        }
+      ]
+    },
+    "block": {
+      "patterns": [
+        {
+          "name": "meta.block.tagged.sy",
+          "begin": "((?:[^{}\\[\\]:\\s,]|[:#](?=\\S))(?:[^:{}]|:(?=\\S)|\\\\[{:])*?)({)",
+          "end": "}",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.block.tag.label.sy"
+            },
+            "2": {
+              "name": "punctuation.section.scope.block.begin.bracket.curly.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.scope.block.end.bracket.curly.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#blockInnards"
+            }
+          ]
+        },
+        {
+          "name": "meta.block.sy",
+          "begin": "{",
+          "end": "}",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.scope.block.begin.bracket.curly.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.scope.block.end.bracket.curly.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#blockInnards"
+            }
+          ]
+        }
+      ]
+    },
+    "blockInnards": {
+      "patterns": [
+        {
+          "include": "#fieldQuotedEarly"
+        },
+        {
+          "include": "#main"
+        },
+        {
+          "match": "((?:[^{}\\[\\]:\\s,]|[:#](?=\\S))(?:[^:{}]|:(?=\\S)|\\\\[{:])*?)",
+          "captures": {
+            "1": {
+              "name": "entity.name.tag.property.sy"
+            }
+          }
+        }
+      ]
+    },
+    "brackets": {
+      "name": "meta.expression.sy",
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.scope.block.begin.bracket.round.sy"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.scope.block.end.bracket.round.sy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#main"
+        }
+      ]
+    },
+    "boolean": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.true.sy",
+          "match": "(?x)\n(?:\\G|^|(?<=[\\s\\[{,]))\n(?:true|yes|on|TRUE|YES|ON)\n(?=$|[\\s\\]},])"
+        },
+        {
+          "name": "constant.language.boolean.false.sy",
+          "match": "(?x)\n(?:\\G|^|(?<=[\\s\\[{,]))\n(?:false|no|off|TRUE|YES|ON)\n(?=$|[\\s\\]},])"
+        }
+      ]
+    },
+    "byteArray": {
+      "patterns": [
+        {
+          "name": "meta.byte-array.base64.sy",
+          "begin": "(<)(base64)(:)",
+          "end": "(>)\\s*([^:,}\\]]+)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.section.byte-array.begin.bracket.angle.sy"
+            },
+            "2": {
+              "name": "storage.modifier.encoding.base64.sy"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.sy"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.byte-array.end.bracket.angle.sy"
+            },
+            "2": {
+              "name": "invalid.illegal.characters.sy"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.encoded.base64.sy",
+              "match": "[A-Za-z0-9+/=]+"
+            },
+            {
+              "include": "#comment"
+            },
+            {
+              "name": "invalid.illegal.character.sy",
+              "match": "[^\\s>]+"
+            }
+          ]
+        },
+        {
+          "name": "meta.byte-array.base85.sy",
+          "begin": "<~",
+          "end": "~>",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.byte-array.begin.bracket.angle.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.byte-array.end.bracket.angle.sy"
+            }
+          },
+          "patterns": [
+            {
+              "match": "[!-uz]+",
+              "name": "constant.character.encoded.base85.sy"
+            },
+            {
+              "match": "[^!-uz\\s~]",
+              "name": "invalid.illegal.character.sy"
+            }
+          ]
+        },
+        {
+          "name": "meta.byte-array.sy",
+          "begin": "<",
+          "end": "(>)\\s*([^:,}\\]]+)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.byte-array.begin.bracket.angle.sy"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.byte-array.end.bracket.angle.sy"
+            },
+            "2": {
+              "name": "invalid.illegal.characters.sy"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.numeric.integer.int.hexadecimal.hex.sy",
+              "match": "[A-Fa-f0-9]+"
+            },
+            {
+              "include": "#comment"
+            },
+            {
+              "name": "invalid.illegal.character.sy",
+              "match": "[^\\s>]+"
+            }
+          ]
+        }
+      ]
+    },
+    "comma": {
+      "name": "punctuation.separator.delimiter.comma.sy",
+      "match": ","
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block.sy",
+          "begin": "(?:\\G|^|(?<=\\s|\\xC2\\xAD|\\xAD))(#{3,})(?=\\s|$)",
+          "end": "\\1",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.sy"
+            }
+          }
+        },
+        {
+          "name": "comment.line.number-sign.sy",
+          "begin": "(?:\\G|^|(?<=\\s|\\xC2\\xAD|\\xAD))#(?=\\s|$)",
+          "end": "$",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.sy"
+            }
+          }
+        }
+      ]
+    },
+    "date": {
+      "name": "constant.other.date.sy",
+      "match": "(?x)\n# Date\n[0-9]{4} - # Year\n[0-9]{2} - # Month\n[0-9]{2}   # Day\n\n# Time\n(?:\n\t(?:T|\\s+)\n\t[0-9]{1,2} :     # Hours\n\t[0-9]{1,2} :     # Minutes\n\t[0-9]{1,2}       # Seconds\n\t(?:\\.[0-9]+)?   # Milliseconds\n\t(\\+[0-9]{4}|Z)? # Timezone\n)?\n\n# Followed by delimiter, EOL, or comment\n(?= \\s* (?:$|[,\\]}])\n|   \\s+ \\#(?:$|\\s)\n)"
+    },
+    "escape": {
+      "patterns": [
+        {
+          "name": "constant.character.escape.newline.sy",
+          "begin": "\\\\$\\s*",
+          "end": "^",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.backslash.definition.escape.sy"
+            }
+          }
+        },
+        {
+          "name": "constant.character.escape.unicode.sy",
+          "match": "(\\\\)x[A-Fa-f0-9]{2}",
+          "captures": {
+            "1": {
+              "name": "punctuation.backslash.definition.escape.sy"
+            }
+          }
+        },
+        {
+          "name": "constant.character.escape.unicode.sy",
+          "match": "(\\\\)u[A-Fa-f0-9]{4}",
+          "captures": {
+            "1": {
+              "name": "punctuation.backslash.definition.escape.sy"
+            }
+          }
+        },
+        {
+          "name": "constant.character.escape.unicode.sy",
+          "match": "(\\\\)u({)[A-Fa-f0-9]+(})",
+          "captures": {
+            "1": {
+              "name": "punctuation.backslash.definition.escape.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.unicode-escape.begin.bracket.curly.sy"
+            },
+            "3": {
+              "name": "punctuation.definition.unicode-escape.end.bracket.curly.sy"
+            }
+          }
+        },
+        {
+          "name": "invalid.illegal.unicode-escape.sy",
+          "match": "\\\\u{[^}\"]*}"
+        },
+        {
+          "name": "invalid.illegal.unicode-escape.sy",
+          "match": "\\\\u(?![A-Fa-f0-9]{4})[^\"]*"
+        },
+        {
+          "name": "constant.character.escape.sy",
+          "match": "(\\\\).",
+          "captures": {
+            "0": {
+              "name": "punctuation.backslash.definition.escape.sy"
+            }
+          }
+        }
+      ]
+    },
+    "escapeVerbatim": {
+      "name": "constant.character.escape.backtick.sy",
+      "match": "``"
+    },
+    "expression": {
+      "name": "meta.expression.sy",
+      "match": "(?x)\n\\G\n(\n\t(?:\\s*\\()*\n\t\\s*\n\t~? [-+]? ~?\n\t\\d\n\t[-+*/%~^&|\\(\\)eE\\s.oOxXbB\\d]*\n)\n(?=\n\t\\s*\n\t(?: $\n\t|   ,\n\t| \\]\n\t| \\}\n\t| (?<=\\s)\\#(?=\\s|$)\n\t)\n)",
+      "captures": {
+        "1": {
+          "patterns": [
+            {
+              "include": "#brackets"
+            },
+            {
+              "include": "#number"
+            },
+            {
+              "include": "#operator"
+            }
+          ]
+        }
+      }
+    },
+    "field": {
+      "name": "meta.field.sy",
+      "begin": "(?x)\n(?:\n\t# Quoted property name\n\t(?<=[:{\\[]) \\s*\n\t(?: (\"(?:[^\"\\\\]|\\\\.)*\")\n\t|   ('(?:[^'\\\\]|\\\\.)*')\n\t|   (`(?:[^`]|``)*+`(?!`))\n\t) \\s* (:)\n\t\n\t|\n\t\n\t# Unquoted property name\n\t([^{}\\[\\]<>\\s][^,]*?)\n\t(?<!\\\\) (:)\n\t\n\t|\n\t\n\t# Presumably one following a multiline string\n\t(?<=[\"'`]) \\s* (:)\n)\n(?=\\s|$)\n\\s*",
+      "end": "(?=\\s*})|^(?!\\G)",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.tag.property.quoted.double.sy",
+          "patterns": [
+            {
+              "include": "#escape"
+            }
+          ]
+        },
+        "2": {
+          "name": "entity.name.tag.property.quoted.single.sy",
+          "patterns": [
+            {
+              "include": "#escape"
+            }
+          ]
+        },
+        "3": {
+          "name": "entity.name.tag.property.quoted.backtick.sy",
+          "patterns": [
+            {
+              "include": "#escapeVerbatim"
+            }
+          ]
+        },
+        "4": {
+          "name": "punctuation.separator.key-value.sy"
+        },
+        "5": {
+          "name": "entity.name.tag.property.sy",
+          "patterns": [
+            {
+              "include": "#escape"
+            }
+          ]
+        },
+        "6": {
+          "name": "punctuation.separator.key-value.sy"
+        },
+        "7": {
+          "name": "punctuation.separator.key-value.sy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#fieldInnards"
+        }
+      ]
+    },
+    "fieldQuotedEarly": {
+      "name": "meta.field.sy",
+      "begin": "(?x) (?:\\G|^) \\s*\n(?: (\"(?:[^\"\\\\]|\\\\.)*\")\n|   ('(?:[^'\\\\]|\\\\.)*')\n|   (`(?:[^`]|``)*+`(?!`))\n) \\s* (:)\n(?=\\s|$)\n\\s*",
+      "end": "(?=\\s*})|^(?!\\G)",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.tag.property.quoted.double.sy",
+          "patterns": [
+            {
+              "include": "#escape"
+            }
+          ]
+        },
+        "2": {
+          "name": "entity.name.tag.property.quoted.single.sy",
+          "patterns": [
+            {
+              "include": "#escape"
+            }
+          ]
+        },
+        "3": {
+          "name": "entity.name.tag.property.quoted.backtick.sy",
+          "patterns": [
+            {
+              "include": "#escapeVerbatim"
+            }
+          ]
+        },
+        "4": {
+          "name": "punctuation.separator.key-value.sy"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#fieldInnards"
+        }
+      ]
+    },
+    "fieldInnards": {
+      "patterns": [
+        {
+          "include": "#date"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#main"
+        },
+        {
+          "name": "string.unquoted.sy",
+          "match": "(?x) \\G\n(?! ~?[-+]?[0-9]\n|  (?<=\\s)\\#(?=\\s|$)\n)\n[^\\s{}\\[\\]<:\"'`]\n\n(?: [^\\#,}\\]:]\n|   (?<=\\S) [\\#:]\n|   [:\\#] (?=\\S)\n)*\n(?!\n\t\\s*\n\t(?:[\\{:])\n)",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "include": "#url"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "heredoc": {
+      "patterns": [
+        {
+          "include": "#heredocDouble"
+        },
+        {
+          "include": "#heredocSingle"
+        },
+        {
+          "include": "#heredocVerbatim"
+        }
+      ]
+    },
+    "heredocDouble": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.heredoc.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+(\"{3,})",
+          "end": "\\2",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.double.heredoc.sy",
+          "begin": "(\"{3,})",
+          "end": "\\1",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#stringInnards"
+            }
+          ]
+        }
+      ]
+    },
+    "heredocSingle": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.heredoc.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+('{3,})",
+          "end": "\\2",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.single.heredoc.sy",
+          "begin": "('{3,})",
+          "end": "\\1",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#stringInnards"
+            }
+          ]
+        }
+      ]
+    },
+    "heredocVerbatim": {
+      "patterns": [
+        {
+          "name": "string.quoted.verbatim.backtick.heredoc.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+(`{3,})",
+          "end": "\\2",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.verbatim.backtick.heredoc.sy",
+          "begin": "(`{3,})",
+          "end": "\\1",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          }
+        }
+      ]
+    },
+    "injection": {
+      "begin": "\\A(?:\\xC2\\xAD|\\xAD){2}",
+      "end": "(?=A)B",
+      "beginCaptures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "#signature"
+            }
+          ]
+        }
+      },
+      "patterns": [
+        {
+          "include": "#blockInnards"
+        }
+      ]
+    },
+    "null": {
+      "name": "constant.language.null.sy",
+      "match": "(?x)\n(?:\\G|^|(?<=[\\s\\[{,]))\n(?:null|NULL)\n(?=$|[\\s\\]},])"
+    },
+    "number": {
+      "match": "(?x)\n(?:^|(?<=[\\s\\[\\({,~])|\\G)\n(?: ([-+]?0[xX][A-Fa-f0-9_]+) # Hexadecimal\n|   ([-+]?0[oO][0-7_]+)       # Octal\n|   ([-+]?0[bB][0-1_]+)       # Binary\n|   ([-+]?[0-9_]+\\.(?:[0-9_]*[eE][+-]?[0-9_]+|[0-9_]+)) # Float\n|   ([-+]?[0-9_]+(?:[eE][+-]?[0-9_]+)?) # Integer\n)\n\\s*\n(?= $\n|   [-+*/%^&|\\)<>\\s\\]},]\n|   (?<=\\s)\\#(?=\\s|$)\n)",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.integer.int.hexadecimal.hex.sy"
+        },
+        "2": {
+          "name": "constant.numeric.integer.int.octal.oct.sy"
+        },
+        "3": {
+          "name": "constant.numeric.integer.int.binary.bin.sy"
+        },
+        "4": {
+          "name": "constant.numeric.float.decimal.dec.sy"
+        },
+        "5": {
+          "name": "constant.numeric.integer.int.decimal.dec.sy"
+        }
+      }
+    },
+    "operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.sy",
+          "match": "\\*\\*|[-+*/%]"
+        },
+        {
+          "name": "keyword.operator.bitwise.sy",
+          "match": "(<<|>>|>>>|[~&|^])"
+        }
+      ]
+    },
+    "regexp": {
+      "patterns": [
+        {
+          "name": "string.regexp.multiline.sy",
+          "begin": "(?:([-\\w]+)[ \\t]+)?(/{3,})",
+          "end": "(\\2)([A-Za-z]*)",
+          "patterns": [
+            {
+              "include": "source.regexp#main"
+            }
+          ],
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "match": "(?:\\G|^)/{3}$",
+                  "name": "punctuation.definition.string.begin.triple-slash.sy"
+                },
+                {
+                  "match": ".+",
+                  "name": "punctuation.definition.string.begin.sy"
+                }
+              ]
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "patterns": [
+                {
+                  "match": "(?:\\G|^)/{3}$",
+                  "name": "punctuation.definition.string.end.triple-slash.sy"
+                },
+                {
+                  "match": ".+",
+                  "name": "punctuation.definition.string.end.sy"
+                }
+              ]
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "source.regexp#scopedModifiers"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "string.regexp.sy",
+          "begin": "(?:([-\\w]+)[ \\t]+)?(/)",
+          "end": "(/)([A-Za-z]*)",
+          "patterns": [
+            {
+              "include": "source.regexp#main"
+            }
+          ],
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.sy"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "source.regexp#scopedModifiers"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "signature": {
+      "name": "punctuation.whitespace.shy-hyphens.signature.sy",
+      "match": "^(?:\\xC2\\xAD|\\xAD){2,}"
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#stringDouble"
+        },
+        {
+          "include": "#stringSingle"
+        },
+        {
+          "include": "#stringVerbatim"
+        }
+      ]
+    },
+    "stringDouble": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+(\")",
+          "end": "\"",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.double.sy",
+          "begin": "\"",
+          "end": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#stringInnards"
+            }
+          ]
+        }
+      ]
+    },
+    "stringSingle": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+(')",
+          "end": "'",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.single.sy",
+          "begin": "'",
+          "end": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#stringInnards"
+            }
+          ]
+        }
+      ]
+    },
+    "stringVerbatim": {
+      "patterns": [
+        {
+          "name": "string.quoted.verbatim.backtick.hinted.${1:/scopify}.sy",
+          "begin": "([-\\w]+)[ \\t]+(`)",
+          "end": "`",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.modifier.type.parse-hint.sy"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "contentName": "embedded.${1:/scopify}"
+        },
+        {
+          "name": "string.quoted.verbatim.backtick.sy",
+          "begin": "`",
+          "end": "`(?!`)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.sy"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.sy"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#escapeVerbatim"
+            }
+          ]
+        }
+      ]
+    },
+    "stringJunk": {
+      "name": "invalid.illegal.syntax.sy",
+      "begin": "(?<=[\"'`])(?!\\s*$)(?=\\s*[^:,}\\]])",
+      "end": "(?=[:,}\\]])"
+    },
+    "stringInnards": {
+      "patterns": [
+        {
+          "include": "#url"
+        },
+        {
+          "include": "#escape"
+        }
+      ]
+    },
+    "url": {
+      "patterns": [
+        {
+          "name": "constant.other.reference.link.underline.sy",
+          "match": "(?x) \\b\n# Protocol\n( https?\n| s?ftp\n| ftps\n| file\n| wss?\n| smb\n| git (?:\\+https?)\n| ssh\n| rsync\n| afp\n| nfs\n| (?:x-)?man(?:-page)?\n| gopher\n| txmt\n| issue\n| atom\n) ://\n\n# Path specifier\n(?:\n\t(?! \\#\\w*\\#)\n\t(?: [-:\\@\\w.,~%+_/?=&\\#;|!])\n)+\n\n# Don't include trailing punctuation\n(?<![-.,?:\\#;])"
+        },
+        {
+          "name": "markup.underline.link.mailto.sy",
+          "match": "(?x) \\b\nmailto: (?:\n\t(?! \\#\\w*\\#)\n\t(?: [-:@\\w.,~%+_/?=&\\#;|!])\n)+\n(?<![-.,?:\\#;])"
+        }
+      ]
+    }
+  }
+}

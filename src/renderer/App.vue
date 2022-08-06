@@ -43,6 +43,7 @@ import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
 import { addDays, isSameDay, isYesterday } from 'date-fns'
 import { loadWASM } from 'onigasm'
+import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { loadGrammars } from '@/components/editor/grammars'
 
 // По какой то причине необходимо явно установить роут в '/'
@@ -58,7 +59,7 @@ const isUpdateAvailable = ref(false)
 const isSupportToastShow = ref(false)
 
 const init = async () => {
-  await loadOnigasm()
+  loadWASM(onigasmFile)
   await loadGrammars()
 
   const theme = store.preferences.get('theme')
@@ -87,14 +88,6 @@ const init = async () => {
 
   trackAppUpdate()
   checkForRemoteNotification()
-}
-
-const loadOnigasm = async () => {
-  const file = await ipc.invoke('main:fs-read', {
-    path: '/onigasm/onigasm.wasm'
-  })
-
-  loadWASM(new Uint8Array(file).buffer)
 }
 
 const setTheme = (theme: string) => {

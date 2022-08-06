@@ -261,3 +261,40 @@
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
+
+[data-theme='dark:tokyo-night'] {
+  --color-primary: hsl(215, 69%, 45%);
+
+   // при конвертации в hsl цвет отличается, поэтому оставляем в hex
+  --color-bg: #1C2029;
+
+
+  --color-contrast-lower: hsl(229, 21%, 20%);
+  --color-contrast-lower-alt: hsl(229, 21%, 22%);
+  --color-contrast-lower-alt2: hsl(229, 21%, 25%);
+  --color-contrast-lower-alt3: hsl(229, 21%, 30%);
+  --color-contrast-lower-low: hsl(229, 21%, 40%);
+  --color-contrast-lower-medium: hsl(229, 21%, 50%);
+
+  --color-snippet-list: var(--color-bg);
+  --color-snippet-selected: var(--color-contrast-lower-alt);
+
+  --color-sidebar: var(--color-bg);
+  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-icon: var(--color-text);
+
+  --color-border: var(--color-contrast-lower-alt2);
+
+  --color-text: hsl(0, 0%, 70%);
+
+  --color-button: var(--color-contrast-lower-alt);
+  --color-button-hover: var(--color-contrast-lower-alt2);
+  --color-button-action: var(--color-contrast-low); 
+  --color-button-action-hover: var(--color-contrast-lower-alt2);
+
+  --color-input: var(--color-bg);
+
+  --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
+}

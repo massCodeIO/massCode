@@ -75,6 +75,16 @@ export const themes: ThemeConfig[] = [
     }
   },
   {
+    name: 'Tokyo-Night',
+    label: 'Tokyo Night',
+    value: 'dark:tokyo-night',
+    loader: () => import('./themes/tokyo-night.tmTheme.json'),
+    gutterSettings: {
+      background: '#1C2029',
+      divider: '#1C2029'
+    }
+  },
+  {
     name: 'GitHub',
     label: 'GitHub',
     value: 'light:github',

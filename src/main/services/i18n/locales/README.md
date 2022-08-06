@@ -14,5 +14,4 @@
   }
 ...
 ```
-  - commit your changes, remarks like this: `feat(i18n): add Chinese traditional locale`
   - Make PR.

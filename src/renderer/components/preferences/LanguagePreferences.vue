@@ -20,6 +20,7 @@
 import { useAppStore } from '@/store/app'
 import { computed, ref } from 'vue'
 import { i18n, ipc, track } from '@/electron'
+import { language } from '../../../main/services/i18n/language'
 
 const appStore = useAppStore()
 
@@ -39,32 +40,14 @@ const localValue = computed({
   }
 })
 
-const options = [
-  {
-    label: i18n.t('language:en'),
-    value: 'en'
-  },
-  {
-    label: i18n.t('language:es_ES'),
-    value: 'es_ES'
-  },
-  {
-    label: i18n.t('language:ru'),
-    value: 'ru'
-  },
-  {
-    label: i18n.t('language:zh_CN'),
-    value: 'zh_CN'
-  },
-  {
-    label: i18n.t('language:zh_TW'),
-    value: 'zh_TW'
-  },
-  {
-    label: i18n.t('language:zh_HK'),
-    value: 'zh_HK'
-  }
-]
+const options: { label: string; value: string }[] = []
+
+Object.entries(language).forEach(([k, v]) => {
+  options.push({
+    label: v,
+    value: k
+  })
+})
 
 const onReload = () => {
   ipc.invoke('main:restart', {})

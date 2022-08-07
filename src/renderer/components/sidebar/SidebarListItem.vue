@@ -97,6 +97,14 @@ const onClickContextMenu = async () => {
       await folderStore.patchFoldersById(props.id!, { defaultLanguage: data })
       track('folders/set-language', data)
     }
+
+    if (action === 'collapse-all') {
+      folderStore.openFolders('close')
+    }
+
+    if (action === 'expand-all') {
+      folderStore.openFolders('open')
+    }
   }
 
   if (props.alias) {

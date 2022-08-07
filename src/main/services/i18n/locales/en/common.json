@@ -56,5 +56,7 @@
   "restartApp": "Restart massCode",
   "updateAvailable": "Update Available",
   "hide": "Hide",
-  "show": "Show"
+  "show": "Show",
+  "collapse-all": "Collapse All",
+  "expand-all": "Expand All"
 }

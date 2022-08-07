@@ -19,6 +19,8 @@ type ContextMenuAction =
   | 'favorites'
   | 'new'
   | 'update:language'
+  | 'collapse-all'
+  | 'expand-all'
   | 'none'
 
 export type ContextMenuType =

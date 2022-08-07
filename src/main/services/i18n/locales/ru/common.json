@@ -55,5 +55,7 @@
   "restartApp": "Перезагрузить massCode",
   "updateAvailable": "Доступно обновление",
   "hide": "Hide",
-  "show": "Show"
+  "show": "Show",
+  "collapse-all": "Закрыть все",
+  "expand-all": "Открыть все"
 }

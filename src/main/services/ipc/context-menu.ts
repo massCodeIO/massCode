@@ -267,6 +267,27 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
+            label: i18n.t('collapse-all'),
+            click: () => {
+              resolve({
+                action: 'collapse-all',
+                type,
+                data: undefined
+              })
+            }
+          },
+          {
+            label: i18n.t('expand-all'),
+            click: () => {
+              resolve({
+                action: 'expand-all',
+                type,
+                data: undefined
+              })
+            }
+          },
+          { type: 'separator' },
+          {
             label: i18n.t('defaultLanguage'),
             submenu: createLanguageMenu()
           }

@@ -149,6 +149,21 @@ export const useFolderStore = defineStore('folders', {
       await this.getFolders()
       await snippetStore.getSnippets()
       snippetStore.setSnippetsByAlias('trash')
+    },
+    openFolders (action: 'open' | 'close') {
+      if (action === 'open') {
+        this.folders.forEach(async i => {
+          this.patchFoldersById(i.id, {
+            isOpen: true
+          })
+        })
+      } else {
+        this.folders.forEach(i => {
+          this.patchFoldersById(i.id, {
+            isOpen: false
+          })
+        })
+      }
     }
   }
 })

@@ -51,11 +51,7 @@
 import { ipc, store, db, track, i18n } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import type {
-  MessageBoxRequest,
-  DialogRequest,
-  ErrorBoxRequest
-} from '@shared/types/main'
+import type { MessageBoxRequest, DialogRequest } from '@shared/types/main'
 import { ref } from 'vue'
 
 const snippetStore = useSnippetStore()
@@ -107,6 +103,7 @@ const onClickNew = async () => {
     store.preferences.set('storagePath', path)
     setStorageAndRestartApi(path, true)
     db.create()
+    track('app/new-storage')
   } else {
     await ipc.invoke<MessageBoxRequest, boolean>('main:open-message-box', {
       message: i18n.t('special:error.folderContainDb'),

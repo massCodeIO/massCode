@@ -17,11 +17,14 @@ type SnippetEvents =
   | 'set-language'
   | 'create-screenshot'
   | 'code-preview'
+
 type FolderEvents = 'add-new' | 'delete' | 'set-language'
 type TagEvents = 'add-new' | 'delete'
+
 type AppEvents =
   | 'move-storage'
   | 'open-storage'
+  | 'new-storage'
   | 'open-url'
   | 'migrate'
   | 'update'
@@ -30,6 +33,7 @@ type AppEvents =
   | 'set-theme'
   | 'notify'
   | 'set-language'
+
 type ApiEvents = 'snippet-create'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>

@@ -16,6 +16,7 @@
     "migrate": "БД успешно перенесена."
   },
   "error": {
+    "folderContainDb": "Папка уже содержит \"db.json\".",
     "folderNotContainDb": "Папка не содержит \"db.json\"."
   },
   "unsponsored": "Неспонсируемое",

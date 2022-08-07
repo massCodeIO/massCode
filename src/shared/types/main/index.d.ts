@@ -128,6 +128,7 @@ export interface ElectronBridge {
     preferences: StoreProperties<PreferencesStore>
   }
   db: {
+    create: () => void
     migrate: (path: string) => Promise<void>
     migrateFromSnippetsLab: (path: string) => void
     move: (from: string, to: string) => Promise<void>

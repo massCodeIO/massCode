@@ -8,5 +8,6 @@
   "migrateConfirm": [
     "Are you sure you want to migrate from {{name}}?",
     "During migrate, the current library will be overwritten."
-  ]
+  ],
+  "createDb": "Please select another folder"
 }

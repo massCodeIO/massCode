@@ -32,7 +32,10 @@
       "payPal": "Donate via PayPal"
     },
     "twitter": "Twitter",
-    "devTools": "Toggle Developer Tools"
+    "devTools": "Toggle Developer Tools",
+    "links": {
+      "snippets": "Snippet Collection"
+    }
   },
   "file": {
     "label": "File",

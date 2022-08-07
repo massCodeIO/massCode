@@ -208,6 +208,8 @@ const findAll = (query: string) => {
 }
 
 const clearAllMarks = () => {
+  if (!editor) return
+
   const marks = editor.getAllMarks()
 
   if (marks) {

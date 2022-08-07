@@ -8,6 +8,12 @@
         <slot />
       </div>
       <div
+        v-if="$slots.actions"
+        class="actions"
+      >
+        <slot name="actions" />
+      </div>
+      <div
         v-if="$slots.desc"
         class="desc"
       >
@@ -37,6 +43,11 @@ defineProps<Props>()
   .body {
     display: flex;
     align-items: center;
+    gap: var(--spacing-sm);
+  }
+  .actions {
+    margin-top: var(--spacing-sm);
+    display: flex;
     gap: var(--spacing-sm);
   }
 }

@@ -4,14 +4,20 @@
       <AppFormItem :label="i18n.t('preferences:storage.label')">
         <AppInput
           v-model="storagePath"
+          style="width: 100%"
           readonly
         />
-        <AppButton @click="onClickMove">
-          {{ i18n.t('button.moveStorage') }}
-        </AppButton>
-        <AppButton @click="onClickOpen">
-          {{ i18n.t('button.openStorage') }}
-        </AppButton>
+        <template #actions>
+          <AppButton @click="onClickMove">
+            {{ i18n.t('button.moveStorage') }}
+          </AppButton>
+          <AppButton @click="onClickOpen">
+            {{ i18n.t('button.openStorage') }}
+          </AppButton>
+          <AppButton @click="onClickNew">
+            {{ i18n.t('button.newStorage') }}
+          </AppButton>
+        </template>
         <template #desc>
           {{ i18n.t('special:description.storage') }}
         </template>
@@ -45,7 +51,11 @@
 import { ipc, store, db, track, i18n } from '@/electron'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import type { MessageBoxRequest, DialogRequest } from '@shared/types/main'
+import type {
+  MessageBoxRequest,
+  DialogRequest,
+  ErrorBoxRequest
+} from '@shared/types/main'
 import { ref } from 'vue'
 
 const snippetStore = useSnippetStore()
@@ -85,6 +95,24 @@ const onClickOpen = async () => {
       body: message
     })
     console.error(message)
+  }
+}
+
+const onClickNew = async () => {
+  const path = await ipc.invoke<any, string>('main:open-dialog', {})
+
+  const isExist = db.isExist(path)
+
+  if (!isExist) {
+    store.preferences.set('storagePath', path)
+    setStorageAndRestartApi(path, true)
+    db.create()
+  } else {
+    await ipc.invoke<MessageBoxRequest, boolean>('main:open-message-box', {
+      message: i18n.t('special:error.folderContainDb'),
+      detail: i18n.t('dialog:createDb'),
+      buttons: [i18n.t('button.ok')]
+    })
   }
 }
 

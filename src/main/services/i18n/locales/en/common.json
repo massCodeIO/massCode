@@ -2,11 +2,13 @@
   "button": {
     "moveStorage": "Move Storage",
     "openStorage": "Open Storage",
+    "newStorage": "New Storage",
     "fromMassCodeV1": "From massCode v1.0",
     "fromSnippetsLab": "From SnippetsLab",
     "confirm": "Confirm",
     "cancel": "Cancel",
-    "update": ["Go to GitHub", "OK"]
+    "update": ["Go to GitHub", "OK"],
+    "ok": "OK"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",

@@ -2,10 +2,12 @@
   "button": {
     "moveStorage": "Переместить",
     "openStorage": "Открыть",
+    "newStorage": "Создать новое",
     "fromMassCodeV1": "Из massCode v1.0",
     "fromSnippetsLab": "Из SnippetsLab",
     "confirm": "Подтвердить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "ok": "Хорошо"
   },
   "newFolder": "Новая папка",
   "newSnippet": "Новый сниппет",

@@ -16,6 +16,7 @@
     "migrate": "DB successfully migrated."
   },
   "error": {
+    "folderContainDb": "Folder already contain \"db.json\".",
     "folderNotContainDb": "Folder not contain \"db.json\"."
   },
   "unsponsored": "Unsponsored",

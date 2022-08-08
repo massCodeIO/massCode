@@ -5,6 +5,7 @@ export type Theme =
   | 'dark:merbivore'
   | 'dark:monokai'
   | 'dark:one'
+  | 'dark:tokyo-night'
   | 'light:github'
   | 'light:material'
   | 'light:solarized'

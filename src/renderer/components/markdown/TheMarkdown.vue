@@ -12,10 +12,12 @@ import { useSnippetStore } from '@/store/snippets'
 import sanitizeHtml from 'sanitize-html'
 import hljs from 'highlight.js'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ipc } from '@/electron'
+import { ipc, store } from '@/electron'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
 import { useHljsTheme } from '@/composable'
+
+const isDev = import.meta.env.DEV
 
 interface Props {
   value: string
@@ -68,7 +70,7 @@ onMounted(() => {
 
 const getRenderer = () => {
   const raw = marked.parse(props.value)
-  const html = sanitizeHtml(raw, {
+  let html = sanitizeHtml(raw, {
     allowedTags: [
       'h1',
       'h2',
@@ -151,6 +153,14 @@ const getRenderer = () => {
       ]
     }
   })
+
+  const re = /src="\.\//g
+  const path = store.preferences.get('storagePath')
+
+  html = isDev
+    ? html.replace(re, `src="file://${path}/`)
+    : html.replace(re, `src="${path}/`)
+
   return html
 }
 

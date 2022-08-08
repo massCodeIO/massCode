@@ -1,3 +1,23 @@
+# [3.1.0](https://github.com/massCodeIO/massCode/compare/v3.0.0...v3.1.0) (2022-08-08)
+
+
+### Bug Fixes
+
+* **editor:** clear search marks ([6a1bfc1](https://github.com/massCodeIO/massCode/commit/6a1bfc11b73403cc249c19555d5e4aae7d7f4936))
+
+
+### Features
+
+* add collapse/expand all folders action ([#199](https://github.com/massCodeIO/massCode/issues/199)) ([b1ee963](https://github.com/massCodeIO/massCode/commit/b1ee963f2f61cd5d0e82c85ea290693c75627b5a))
+* add create a new storage ([#197](https://github.com/massCodeIO/massCode/issues/197)) ([da2f192](https://github.com/massCodeIO/massCode/commit/da2f19203da237ce567f821010d3b7e7dbaac919))
+* **editor:** add embed image in mardown ([#201](https://github.com/massCodeIO/massCode/issues/201)) ([37dcae9](https://github.com/massCodeIO/massCode/commit/37dcae9ba53c5f96af7b1b3655adaf234351702f))
+* **i18n:** add Português (Brasil) locale ([#194](https://github.com/massCodeIO/massCode/issues/194)) ([3e60142](https://github.com/massCodeIO/massCode/commit/3e601425b4b8c96a868b730d257183cdf91dbac8))
+* **main: menu:** add snippet collection link ([#198](https://github.com/massCodeIO/massCode/issues/198)) ([861f889](https://github.com/massCodeIO/massCode/commit/861f889f473aea59a7f032663a89c09079e944e9))
+* **themes:** add material palenight ([#195](https://github.com/massCodeIO/massCode/issues/195)) ([d644074](https://github.com/massCodeIO/massCode/commit/d644074dceb64ae798942c26d0487eb9cd17df01))
+* **themes:** add tokyo night ([#196](https://github.com/massCodeIO/massCode/issues/196)) ([f17aa89](https://github.com/massCodeIO/massCode/commit/f17aa8918b0da0a1bdc1c59f6545f8f0fd791e65))
+
+
+
 # [3.0.0](https://github.com/massCodeIO/massCode/compare/v2.11.0...v3.0.0) (2022-08-05)
 
 

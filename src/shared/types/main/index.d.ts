@@ -54,6 +54,7 @@ type MainAction =
   | 'open-url'
   | 'prettier'
   | 'focus'
+  | 'copy-to-assets'
 
 type ApiAction = 'snippet-create'
 

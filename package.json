@@ -68,6 +68,7 @@
     "prettier-plugin-sh": "0.8.2",
     "prettier-plugin-toml": "^0.3.1",
     "sanitize-html": "^2.7.0",
+    "slash": "^3.0.0",
     "universal-analytics": "^0.5.3",
     "vercel-toast": "^1.5.5",
     "vue": "^3.2.33",

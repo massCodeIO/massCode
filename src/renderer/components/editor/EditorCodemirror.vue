@@ -159,6 +159,21 @@ const init = async () => {
   })
   editor.on('scroll', hideScrollbar)
 
+  editor.on('paste', async (cm, e) => {
+    if (props.lang === 'markdown') {
+      const item = e.clipboardData?.items[0]
+
+      if (item?.type.startsWith('image')) {
+        e.preventDefault()
+
+        const blob = item.getAsFile()
+        const path = await ipc.invoke('main:copy-to-assets', blob?.path)
+
+        cm.replaceSelection(`![](./${path})`)
+      }
+    }
+  })
+
   editor.setOption('extraKeys', {
     'Cmd-F': () => {
       emitter.emit('search:focus', true)

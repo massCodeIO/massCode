@@ -65,11 +65,12 @@
     "copy": "將程式碼片段複製至剪貼簿",
     "format": "格式化",
     "previewCode": "預覽 HTML 和 CSS",
-    "previewScreenshot": "生成並預覽程式碼截圖"
+    "previewScreenshot": "生成並預覽程式碼截圖",
+    "previewMarkdown": "預覽"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "演示模式",
+    "preview": "預覽模式"
   }
 }

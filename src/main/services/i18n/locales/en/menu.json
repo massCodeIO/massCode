@@ -65,7 +65,8 @@
     "copy": "Copy Snippet to Clipboard",
     "format": "Format",
     "previewCode": "Preview Code",
-    "previewScreenshot": "Preview Screenshot"
+    "previewScreenshot": "Preview Screenshot",
+    "previewMarkdown": "Preview Markdown"
   },
   "markdown": {
     "label": "Markdown",

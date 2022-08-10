@@ -9,7 +9,9 @@
       v-if="!appStore.isSponsored && !isUpdateAvailable"
       class="unsponsored"
     >
-      {{ i18n.t('special:unsponsored') }}
+      <span v-if="!isDev">
+        {{ i18n.t('special:unsponsored') }}
+      </span>
     </span>
     <span
       v-if="isUpdateAvailable"
@@ -57,6 +59,7 @@ const route = useRoute()
 
 const isUpdateAvailable = ref(false)
 const isSupportToastShow = ref(false)
+const isDev = import.meta.env.DEV
 
 const init = async () => {
   loadWASM(onigasmFile)

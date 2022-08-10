@@ -34,7 +34,8 @@ export default new Store<PreferencesStore>({
       width: 600
     },
     markdown: {
-      presentationScale: 1.3
+      presentationScale: 1.3,
+      codeRenderer: 'highlight.js'
     },
     language: 'en'
   }

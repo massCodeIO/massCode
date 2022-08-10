@@ -24,6 +24,12 @@
           <EditorPreferences />
         </AppMenuItem>
         <AppMenuItem
+          :name="i18n.t('preferences:markdown.label')"
+          value="markdown"
+        >
+          <MarkdownPreferences />
+        </AppMenuItem>
+        <AppMenuItem
           :name="i18n.t('preferences:appearance.label')"
           value="appearance"
         >

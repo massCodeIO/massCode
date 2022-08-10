@@ -1,7 +1,7 @@
 <template>
   <div class="markdown markdown-body">
     <PerfectScrollbar>
-      <div v-html="renderer" />
+      <div v-html="renderedHtml" />
     </PerfectScrollbar>
   </div>
 </template>
@@ -11,17 +11,26 @@ import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import sanitizeHtml from 'sanitize-html'
 import hljs from 'highlight.js'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { ipc, store } from '@/electron'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
 import { useHljsTheme } from '@/composable'
+import { useCodemirror } from '@/composable/codemirror'
+
+import { nanoid } from 'nanoid'
 
 const isDev = import.meta.env.DEV
 
 interface Props {
   value: string
   scale?: number
+}
+
+interface Editors {
+  id: string
+  value: string
+  lang: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -31,10 +40,15 @@ const props = withDefaults(defineProps<Props>(), {
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 
+const renderedHtml = ref()
+
+const editors: Editors[] = []
+
 const forceRefresh = ref()
 const preTagBg = computed(() =>
   appStore.isLightTheme ? '#fff' : 'var(--color-contrast-high)'
 )
+const fontFamily = computed(() => appStore.editor.fontFamily)
 
 const init = () => {
   const renderer: marked.RendererObject = {
@@ -42,10 +56,22 @@ const init = () => {
       if (lang === 'mermaid') {
         return `<div class="mermaid">${code}</div><br>`
       } else {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext'
-        return `<pre><code class="language-${lang}">${
-          hljs.highlight(code, { language }).value
-        }</code></pre>`
+        if (appStore.markdown.codeRenderer === 'highlight.js') {
+          const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+          return `<pre><code class="language-${lang}">${
+            hljs.highlight(code, { language }).value
+          }</code></pre>`
+        } else {
+          const id = nanoid(6)
+
+          editors.push({
+            id,
+            value: code,
+            lang
+          })
+
+          return `<div id="${id}"></div>`
+        }
       }
     },
     link (href: string, title: string, text: string) {
@@ -69,10 +95,12 @@ const initMermaid = () => {
 
 onMounted(() => {
   initMermaid()
+  render()
 })
 
-const getRenderer = () => {
+const render = () => {
   const raw = marked.parse(props.value)
+
   let html = sanitizeHtml(raw, {
     allowedTags: [
       'h1',
@@ -152,7 +180,8 @@ const getRenderer = () => {
         'class',
         'type',
         'checked',
-        'disabled'
+        'disabled',
+        'id'
       ]
     }
   })
@@ -164,10 +193,8 @@ const getRenderer = () => {
     ? html.replace(re, `src="file://${path}/`)
     : html.replace(re, `src="${path}/`)
 
-  return html
+  renderedHtml.value = html
 }
-
-const renderer = computed(() => getRenderer())
 
 const openExternal = (e: Event) => {
   const el = e.target as HTMLAnchorElement
@@ -209,6 +236,24 @@ watch(
   { immediate: true }
 )
 
+watch(renderedHtml, () => {
+  nextTick(() => {
+    editors.forEach(i => {
+      useCodemirror(i.id, {
+        value: i.value,
+        mode: i.lang
+      })
+    })
+  })
+})
+
+watch(
+  () => props.value,
+  () => {
+    render()
+  }
+)
+
 init()
 
 onMounted(() => {
@@ -237,6 +282,21 @@ window.addEventListener('resize', () => {
   }
   :deep(.ps) {
     height: v-bind(height);
+  }
+  :deep(.CodeMirror) {
+    height: 100%;
+    padding: var(--spacing-xs);
+    font-size: 0.85em;
+    font-family: v-bind(fontFamily);
+  }
+  :deep(.CodeMirror-line) {
+    padding: 0 var(--spacing-sm);
+    &:first-child {
+      padding-top: var(--spacing-xs);
+    }
+    &:last-child {
+      padding-bottom: var(--spacing-xs);
+    }
   }
 }
 </style>

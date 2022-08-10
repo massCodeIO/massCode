@@ -17,6 +17,7 @@ export interface AppStore {
 }
 
 export interface MarkdownSettings {
+  codeRenderer: 'codemirror' | 'highlight.js'
   presentationScale: number
 }
 

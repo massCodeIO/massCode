@@ -298,3 +298,12 @@
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
+
+[data-theme^="dark"] {
+  a {
+    color: var(--color-contrast-medium);
+    &:hover {
+      color: var(--color-text);
+    }
+  }
+}

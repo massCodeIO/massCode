@@ -64,8 +64,12 @@
     "label": "Editor",
     "copy": "Copy Snippet to Clipboard",
     "format": "Format",
-    "previewMarkdown": "Preview Markdown",
     "previewCode": "Preview Code",
     "previewScreenshot": "Preview Screenshot"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Presentation Mode",
+    "preview": "Preview"
   }
 }

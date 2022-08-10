@@ -286,6 +286,7 @@ window.addEventListener('resize', () => {
   :deep(.CodeMirror) {
     height: 100%;
     padding: var(--spacing-xs);
+    font-size: 0.85em;
     font-family: v-bind(fontFamily);
   }
   :deep(.CodeMirror-line) {
@@ -296,25 +297,6 @@ window.addEventListener('resize', () => {
     &:last-child {
       padding-bottom: var(--spacing-xs);
     }
-    // padding: var(--spacing-xs);
   }
-  :deep(.CodeMirror-code) {
-    // padding: var(--spacing-xs);
-  }
-  // :deep(.CodeMirror-overlayscroll-vertical div) {
-  //   background-color: rgba(121, 121, 121, 0.8);
-  //   width: 5px;
-  //   // opacity: v-bind(scrollBarOpacity);
-  //   transition: opacity 0.3s;
-  // }
-  // :deep(.CodeMirror-overlayscroll-horizontal div) {
-  //   background-color: rgba(121, 121, 121, 0.8);
-  //   height: 5px;
-  //   // opacity: v-bind(scrollBarOpacity);
-  //   transition: opacity 0.3s;
-  // }
-  // :deep(.CodeMirror-scrollbar-filler) {
-  //   background-color: transparent;
-  // }
 }
 </style>

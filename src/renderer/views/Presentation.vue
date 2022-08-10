@@ -58,7 +58,7 @@
             />
           </AppActionButton>
           <div class="factor">
-            {{ scale.toFixed(1) }}
+            {{ scale }}
           </div>
           <AppActionButton @click="onPlusScale">
             <UniconsPlus
@@ -76,13 +76,15 @@
 </template>
 
 <script setup lang="ts">
-import { i18n, ipc } from '@/electron'
+import { i18n, store } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn, useMagicKeys, useFullscreen } from '@vueuse/core'
+import { useAppStore } from '@/store/app'
 
 const snippetStore = useSnippetStore()
+const appStore = useAppStore()
 const router = useRouter()
 const { left, right, escape } = useMagicKeys()
 const { isFullscreen, toggle } = useFullscreen()
@@ -93,7 +95,13 @@ const currentIndex = computed(() =>
 )
 
 const showActions = ref(false)
-const scale = ref(1.3)
+const scale = computed({
+  get: () => appStore.markdown.presentationScale,
+  set: v => {
+    appStore.markdown.presentationScale = Number(v.toFixed(1))
+    store.preferences.set('markdown', { ...appStore.markdown })
+  }
+})
 const toHome = () => {
   router.push('/')
 }

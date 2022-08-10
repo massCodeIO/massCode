@@ -16,11 +16,16 @@ export interface AppStore {
   version?: string
 }
 
+export interface MarkdownSettings {
+  presentationScale: number
+}
+
 export interface PreferencesStore {
   storagePath: string
   backupPath: string
   editor: EditorSettings
   screenshot: ScreenshotSettings
+  markdown: MarkdownSettings
   theme: string
   language: string
 }

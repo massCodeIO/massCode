@@ -33,6 +33,9 @@ export default new Store<PreferencesStore>({
       darkMode: true,
       width: 600
     },
+    markdown: {
+      presentationScale: 1.3
+    },
     language: 'en'
   }
 })

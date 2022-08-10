@@ -1,5 +1,5 @@
 <template>
-  <div class="markdown markdown-github">
+  <div class="markdown markdown-body">
     <PerfectScrollbar>
       <div v-html="renderer" />
     </PerfectScrollbar>
@@ -21,9 +21,12 @@ const isDev = import.meta.env.DEV
 
 interface Props {
   value: string
+  scale?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  scale: 1
+})
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
@@ -224,6 +227,9 @@ window.addEventListener('resize', () => {
 <style lang="scss" scoped>
 .markdown {
   padding: 0 var(--spacing-xs);
+  &-body {
+    --scale: v-bind(props.scale);
+  }
   :deep(h1, h2, h3, h4, h5, h6) {
     &:first-child {
       margin-top: 0;
@@ -231,9 +237,6 @@ window.addEventListener('resize', () => {
   }
   :deep(.ps) {
     height: v-bind(height);
-  }
-  :deep(pre) {
-    background-color: v-bind(preTagBg);
   }
 }
 </style>

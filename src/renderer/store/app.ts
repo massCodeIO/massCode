@@ -1,4 +1,5 @@
 import { platform, store } from '@/electron'
+import type { MarkdownSettings } from '@shared/types/main/store'
 import type {
   CodePreviewSettings,
   EditorSettings,
@@ -33,6 +34,10 @@ const CODE_PREVIEW_DEFAULTS: CodePreviewSettings = {
   darkMode: false
 }
 
+const MARKDOWN_DEFAULTS: MarkdownSettings = {
+  presentationScale: 1.3
+}
+
 export const useAppStore = defineStore('app', {
   state: (): State => ({
     isInit: false,
@@ -55,6 +60,7 @@ export const useAppStore = defineStore('app', {
     editor: EDITOR_DEFAULTS,
     screenshot: SCREENSHOT_DEFAULTS,
     codePreview: CODE_PREVIEW_DEFAULTS,
+    markdown: MARKDOWN_DEFAULTS,
     selectedPreferencesMenu: 'storage',
     language: store.preferences.get('language'),
     version,

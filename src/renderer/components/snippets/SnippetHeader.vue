@@ -12,6 +12,13 @@
       <div class="action">
         <AppActionButton
           v-if="snippetStore.currentLanguage === 'markdown'"
+          v-tooltip="i18n.t('menu:markdown.presentationMode')"
+          @click="onClickPresentationMode"
+        >
+          <UniconsMeetingBoard />
+        </AppActionButton>
+        <AppActionButton
+          v-if="snippetStore.currentLanguage === 'markdown'"
           v-tooltip="
             !snippetStore.isMarkdownPreview
               ? i18n.t('menu:editor.previewMarkdown')
@@ -80,9 +87,11 @@ import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/store/app'
 import { track, i18n } from '@/electron'
+import { useRouter } from 'vue-router'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
+const router = useRouter()
 
 const inputRef = ref<HTMLInputElement>()
 
@@ -99,6 +108,7 @@ const name = computed({
 
 const onClickMarkdownPreview = () => {
   snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+  track('snippets/markdown-preview')
 }
 
 const onClickScreenshotPreview = () => {
@@ -107,6 +117,11 @@ const onClickScreenshotPreview = () => {
 const onCodePreview = () => {
   snippetStore.isCodePreview = !snippetStore.isCodePreview
   track('snippets/code-preview')
+}
+
+const onClickPresentationMode = () => {
+  router.push('/presentation')
+  track('snippets/presentation-mode')
 }
 
 emitter.on('snippet:focus-name', () => {

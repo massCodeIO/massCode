@@ -39,8 +39,9 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-snippet'
   | 'preferences'
-  | 'preview-markdown'
+  | 'presentation-mode'
   | 'preview-code'
+  | 'preview-markdown'
   | 'search'
   | 'sort-snippets'
 

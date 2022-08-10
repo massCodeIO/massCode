@@ -1,3 +1,5 @@
+import type { MarkdownSettings } from '@shared/types/main/store'
+
 export type Theme =
   | 'dark:dracula'
   | 'dark:material-palenight'
@@ -57,6 +59,7 @@ export interface State {
   editor: EditorSettings
   selectedPreferencesMenu: string
   screenshot: ScreenshotSettings
+  markdown: MarkdownSettings
   codePreview: CodePreviewSettings
   language: string
   isInit: boolean

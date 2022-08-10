@@ -61,8 +61,12 @@
     "label": "Editor",
     "copy": "Copiar para área de transferencia",
     "format": "Formatar",
-    "previewMarkdown": "Pré-visualizar marcador",
     "previewCode": "Pré-visualizar código",
     "previewScreenshot": "Pré-visualizar captura de tela"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Presentation Mode",
+    "preview": "Preview"
   }
 }

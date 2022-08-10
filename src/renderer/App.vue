@@ -9,7 +9,9 @@
       v-if="!appStore.isSponsored && !isUpdateAvailable"
       class="unsponsored"
     >
-      {{ i18n.t('special:unsponsored') }}
+      <span v-if="!isDev">
+        {{ i18n.t('special:unsponsored') }}
+      </span>
     </span>
     <span
       v-if="isUpdateAvailable"
@@ -57,6 +59,7 @@ const route = useRoute()
 
 const isUpdateAvailable = ref(false)
 const isSupportToastShow = ref(false)
+const isDev = import.meta.env.DEV
 
 const init = async () => {
   loadWASM(onigasmFile)
@@ -73,6 +76,7 @@ const init = async () => {
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
   appStore.screenshot = store.preferences.get('screenshot')
+  appStore.markdown = store.preferences.get('markdown')
 
   snippetStore.sort = store.app.get('sort')
 
@@ -213,6 +217,13 @@ ipc.on('main-menu:new-fragment', () => {
 ipc.on('main-menu:preview-markdown', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
     snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+    track('snippets/markdown-preview')
+  }
+})
+ipc.on('main-menu:presentation-mode', async () => {
+  if (snippetStore.currentLanguage === 'markdown') {
+    router.push('/presentation')
+    track('snippets/presentation-mode')
   }
 })
 

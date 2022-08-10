@@ -64,8 +64,12 @@
     "label": "Редактор",
     "copy": "Скопировать сниппет в буфер",
     "format": "Форматировать",
-    "previewMarkdown": "Просмотр Markdown",
     "previewCode": "Просмотр результата HTML/CSS",
     "previewScreenshot": "Просмотр скриншота"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Режим презентации",
+    "preview": "Просмотр Markdown"
   }
 }

@@ -61,8 +61,12 @@
     "label": "編輯器",
     "copy": "將程式碼片段複製至剪貼簿",
     "format": "格式化",
-    "previewMarkdown": "預覽 Markdown",
     "previewCode": "預覽 HTML 和 CSS",
     "previewScreenshot": "生成並預覽程式碼截圖"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Presentation Mode",
+    "preview": "Preview"
   }
 }

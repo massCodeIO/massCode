@@ -1,7 +1,7 @@
 <template>
-  <div class="button">
+  <button class="button">
     <slot />
-  </div>
+  </button>
 </template>
 
 <script setup lang="ts"></script>
@@ -12,6 +12,9 @@
   align-items: center;
   padding: 4px 6px;
   border-radius: 4px;
+  border: none;
+  background-color: transparent;
+  outline: none;
   :deep(svg) {
     fill: var(--color-button-action);
   }

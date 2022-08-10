@@ -73,6 +73,7 @@ const init = async () => {
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
   appStore.screenshot = store.preferences.get('screenshot')
+  appStore.markdown = store.preferences.get('markdown')
 
   snippetStore.sort = store.app.get('sort')
 
@@ -213,6 +214,13 @@ ipc.on('main-menu:new-fragment', () => {
 ipc.on('main-menu:preview-markdown', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
     snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+    track('snippets/markdown-preview')
+  }
+})
+ipc.on('main-menu:presentation-mode', async () => {
+  if (snippetStore.currentLanguage === 'markdown') {
+    router.push('/presentation')
+    track('snippets/presentation-mode')
   }
 })
 

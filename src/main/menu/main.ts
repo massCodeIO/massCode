@@ -352,7 +352,19 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: i18n.t('menu:editor.previewMarkdown'),
+    label: i18n.t('menu:editor.previewCode'),
+    accelerator: 'Shift+CommandOrControl+P',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:preview-code'
+      )
+    }
+  }
+]
+
+const markdownMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:markdown.preview'),
     accelerator: 'Shift+CommandOrControl+M',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
@@ -361,11 +373,11 @@ const editorMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: i18n.t('menu:editor.previewCode'),
-    accelerator: 'Shift+CommandOrControl+P',
+    label: i18n.t('menu:markdown.presentationMode'),
+    accelerator: 'Control+CommandOrControl+P',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:preview-code'
+        'main-menu:presentation-mode'
       )
     }
   }
@@ -424,6 +436,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:editor.label'),
     submenu: editorMenu
+  },
+  {
+    label: i18n.t('menu:markdown.label'),
+    submenu: markdownMenu
   },
   {
     label: i18n.t('menu:help.label'),

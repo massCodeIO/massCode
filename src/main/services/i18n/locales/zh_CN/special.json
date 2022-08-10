@@ -16,9 +16,10 @@
     "migrate": "数据库迁移成功。"
   },
   "error": {
+    "folderContainDb": "文件夹内已存在 \"db.json\"。",
     "folderNotContainDb": "文件夹内不存在 \"db.json\"。"
   },
   "unsponsored": "未赞助的",
   "supportMessage": "Hi，我是 Anton 👋<br><br>\n感谢你使用 massCode 。如果你觉得这个应用很有帮助，请{{-tagStart}} 捐赠 {{-tagEnd}}。这将激励我继续开发这个项目。",
-  "snippetsShowcase": "代码片段展示区"
+  "snippetsShowcase": "代码片段分享站"
 }

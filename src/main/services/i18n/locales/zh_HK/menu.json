@@ -32,7 +32,10 @@
       "payPal": "通過 PayPal 捐贈"
     },
     "twitter": "訪問作者 Twitter",
-    "devTools": "開發者工具"
+    "devTools": "開發者工具",
+    "links": {
+      "snippets": "代碼片段分享站"
+    }
   },
   "file": {
     "label": "文件",

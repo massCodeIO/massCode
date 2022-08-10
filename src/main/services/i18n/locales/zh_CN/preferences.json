@@ -18,6 +18,7 @@
     "showInvisibles": "显示空格与换行符",
     "highlightLine": "高亮光标所在行整行",
     "highlightGutter": "高亮光标所在行行号",
+    "matchBrackets": "括号匹配",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {

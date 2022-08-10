@@ -15,6 +15,7 @@ export default {
   directories: {
     output: path.resolve(__dirname, '../../dist')
   },
+  afterSign: 'build/scripts/notarize.js',
   nsis: {
     oneClick: false,
     perMachine: false,
@@ -26,7 +27,10 @@ export default {
       { target: 'dmg', arch: 'arm64' },
       { target: 'dmg', arch: 'x64' }
     ],
-    icon: 'config/icons/icon.icns'
+    icon: 'config/icons/icon.icns',
+    category: 'public.app-category.productivity',
+    hardenedRuntime: true,
+    entitlements: 'build/entitlements.mac.inherit.plist'
   },
   win: {
     target: 'nsis',

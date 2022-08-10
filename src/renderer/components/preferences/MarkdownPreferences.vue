@@ -6,6 +6,17 @@
           v-model="renderer"
           :options="rendererOptions"
         />
+        <template #desc>
+          {{ i18n.t('special:description.codeBlockRenderer.0') }}
+          <a
+            href="#"
+            @click="
+              onClickUrl(
+                'https://github.com/massCodeIO/massCode/blob/master/src/renderer/components/editor/languages.ts'
+              )
+            "
+          >{{ i18n.t('special:description.codeBlockRenderer.1') }}</a>.
+        </template>
       </AppFormItem>
     </AppForm>
   </div>
@@ -15,6 +26,7 @@
 import { i18n, store } from '@/electron'
 import { useAppStore } from '@/store/app'
 import { computed } from 'vue'
+import { onClickUrl } from '@/composable'
 
 const appStore = useAppStore()
 

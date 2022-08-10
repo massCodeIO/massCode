@@ -21,7 +21,7 @@
     "viewInGitHub": "Ver no GitHub",
     "changeLog": "Registro de mudanças",
     "reportIssue": "Reportar um problema",
-    "giveStar": "Dar uma estrela",
+    "giveStar": "Dar estrela",
     "extension": {
       "vscode": "Extensão do VS code",
       "raycast": "Extensão do Raycast",
@@ -32,7 +32,7 @@
       "payPal": "Doação via PayPal"
     },
     "twitter": "Twitter",
-    "devTools": "Alternar ferramentas do desenvolvedor"
+    "devTools": "Ferramentas do desenvolvedor"
   },
   "file": {
     "label": "Arquivo",
@@ -44,7 +44,7 @@
       "label": "Classificar snippes por",
       "dateModified": "Data da modificação",
       "dateCreated": "Data da criação",
-      "name": "Name"
+      "name": "Nome"
     }
   },
   "edit": {
@@ -60,13 +60,13 @@
   "editor": {
     "label": "Editor",
     "copy": "Copiar para área de transferencia",
-    "format": "Formatar",
+    "format": "Formato",
     "previewCode": "Pré-visualizar código",
     "previewScreenshot": "Pré-visualizar captura de tela"
   },
   "markdown": {
-    "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "label": "Marcador",
+    "presentationMode": "Modo de apresentação",
+    "preview": "Visualizar"
   }
 }

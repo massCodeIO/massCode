@@ -213,6 +213,13 @@ ipc.on('main-menu:new-fragment', () => {
 ipc.on('main-menu:preview-markdown', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
     snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+    track('snippets/markdown-preview')
+  }
+})
+ipc.on('main-menu:presentation-mode', async () => {
+  if (snippetStore.currentLanguage === 'markdown') {
+    router.push('/presentation')
+    track('snippets/presentation-mode')
   }
 })
 

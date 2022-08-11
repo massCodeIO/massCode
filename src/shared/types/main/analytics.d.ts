@@ -16,7 +16,6 @@ type SnippetEvents =
   | 'format'
   | 'markdown-preview'
   | 'move-to-trash'
-  | 'presentation-mode'
   | 'search'
   | 'set-language'
 
@@ -37,6 +36,7 @@ type AppEvents =
   | 'set-language'
 
 type ApiEvents = 'snippet-create'
+type PageEvents = 'main' | 'preferences' | 'presentation'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>
@@ -50,5 +50,4 @@ export type TrackEvents =
   | TrackTagEvents
   | TrackAppEvents
   | TrackApiEvents
-  | 'main'
-  | 'preferences'
+  | PageEvents

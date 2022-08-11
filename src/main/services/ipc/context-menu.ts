@@ -156,6 +156,16 @@ export const subscribeToContextMenu = () => {
                 })
               }
             }
+          },
+          {
+            label: i18n.t('restore'),
+            click: () => {
+              resolve({
+                action: 'restore-from-trash',
+                type,
+                data: undefined
+              })
+            }
           }
         ]
 

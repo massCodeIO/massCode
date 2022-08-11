@@ -4,11 +4,9 @@ import type { EmitterEvents } from '@shared/types/renderer/composable'
 import { API_PORT } from '../../main/config'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { i18n, ipc, store, track } from '@/electron'
+import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
-import axios from 'axios'
-import { createToast } from 'vercel-toast'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -129,67 +127,6 @@ export const useHljsTheme = async (theme: 'dark' | 'light') => {
   }
 
   document.head.appendChild(style)
-}
-
-export const checkForRemoteNotification = async () => {
-  const showMessage = (message: string, date: string | number) => {
-    const el = document.createElement('div')
-    el.innerHTML = message
-
-    const links = el.querySelectorAll('a')
-
-    links.forEach(i => {
-      i.addEventListener('click', e => {
-        e.preventDefault()
-        ipc.invoke('main:open-url', i.href)
-        track('app/notify', i.innerHTML)
-      })
-    })
-
-    createToast(el, {
-      action: {
-        text: i18n.t('close'),
-        callback (toast) {
-          toast.destroy()
-          store.app.set('prevRemoteNotice', date)
-          track('app/notify', `remoteNotification-${date}`)
-        }
-      }
-    })
-  }
-
-  const checkAndShow = async () => {
-    try {
-      const headers = {
-        'Cache-Control': 'no-cache',
-        Expires: 0
-      }
-
-      const { data } = await axios.get<{ message: string; date: number }>(
-        'https://masscode.io/notification.json',
-        { headers }
-      )
-
-      if (!data) return
-
-      const { message, date } = data
-      const prevDate = store.app.get('prevRemoteNotice')
-
-      if (prevDate) {
-        if (prevDate < date) showMessage(message, date)
-      } else {
-        showMessage(message, date)
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  checkAndShow()
-
-  setInterval(() => {
-    checkAndShow()
-  }, 1000 * 60 * 180) // 3 часа
 }
 
 export const onClickUrl = (url: string) => {

@@ -41,5 +41,9 @@
   },
   "language": {
     "label": "语言"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "代码块渲染器"
   }
 }

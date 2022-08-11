@@ -10,7 +10,11 @@
         "某些片段可能會因為其語言暫時不被 massCode 而被識別為純文本。"
       ]
     },
-    "htmlCssPreview": "添加帶有 HTML 和 CSS 語言的片段來查看預覽結果。"
+    "htmlCssPreview": "添加帶有 HTML 和 CSS 語言的片段來查看預覽結果。",
+    "codeBlockRenderer": [
+      "當使用 Codemirror 渲染時， 則必須為代碼塊設置對應的",
+      "編程語言"
+    ]
   },
   "success": {
     "migrate": "數據庫遷移成功。"

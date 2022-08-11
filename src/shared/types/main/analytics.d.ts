@@ -16,6 +16,7 @@ type SnippetEvents =
   | 'format'
   | 'markdown-preview'
   | 'move-to-trash'
+  | 'restore-from-trash'
   | 'search'
   | 'set-language'
 

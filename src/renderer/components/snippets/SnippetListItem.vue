@@ -222,6 +222,7 @@ const onClickContextMenu = async () => {
 
     await snippetStore.getSnippets()
     snippetStore.setSnippetsByAlias('trash')
+    track('snippets/restore-from-trash')
   }
 
   isHighlighted.value = false

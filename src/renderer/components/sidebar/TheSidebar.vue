@@ -100,6 +100,7 @@ import { useTagStore } from '@/store/tags'
 import { emitter, onAddNewFolder } from '@/composable'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
+import type { Snippet } from '@shared/types/main/db'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -156,12 +157,26 @@ const onDrop = async (e: DragEvent, id: string) => {
 
   if (payload) {
     const snippetIds = JSON.parse(payload)
+
     for (const i of snippetIds) {
-      await snippetStore.patchSnippetsById(i, {
+      const isDeleted = snippetStore.snippets.find(s => s.id === i)?.isDeleted
+
+      const body: Partial<Snippet> = {
         folderId: id
-      })
+      }
+
+      if (isDeleted) body.isDeleted = false
+
+      await snippetStore.patchSnippetsById(i, body)
     }
-    snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+
+    if (folderStore.selectedIds) {
+      snippetStore.getSnippetsByFolderIds(folderStore.selectedIds)
+    }
+
+    if (folderStore.selectedAlias) {
+      await snippetStore.setSnippetsByAlias(folderStore.selectedAlias)
+    }
   }
 }
 

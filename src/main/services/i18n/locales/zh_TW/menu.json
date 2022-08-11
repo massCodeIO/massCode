@@ -32,28 +32,28 @@
       "payPal": "透過 PayPal 捐贈"
     },
     "twitter": "訪問作者 Twitter",
-    "devTools": "開發者工具",
+    "devTools": "開發人員工具",
     "links": {
       "snippets": "程式碼片段分享站"
     }
   },
   "file": {
     "label": "檔案",
-    "find": "查詢"
+    "find": "尋找"
   },
   "view": {
     "label": "檢視",
     "sortBy": {
-      "label": "排序方式",
-      "dateModified": "根據修改日期",
-      "dateCreated": "根據建立日期",
-      "name": "根據片段名"
+      "label": "排序按照",
+      "dateModified": "修改日期",
+      "dateCreated": "建立日期",
+      "name": "片段名"
     }
   },
   "edit": {
     "label": "編輯",
-    "undo": "撤銷",
-    "redo": "恢復",
+    "undo": "復原",
+    "redo": "取消復原",
     "cut": "剪下",
     "copy": "複製",
     "paste": "貼上",
@@ -65,7 +65,7 @@
     "copy": "將程式碼片段複製至剪貼簿",
     "format": "格式化",
     "previewCode": "預覽 HTML 和 CSS",
-    "previewScreenshot": "生成並預覽程式碼截圖",
+    "previewScreenshot": "生成並預覽程式碼擷圖",
     "previewMarkdown": "預覽"
   },
   "markdown": {

@@ -9,4 +9,4 @@
 
 ### Validations
 
-- [ ] Follow our [CONTRIBUTING](https://github.com/massCodeIO/massCode/blob/master/CONTRIBUTING) guide
+- [ ] Follow our [CONTRIBUTING](https://github.com/massCodeIO/massCode/blob/master/CONTRIBUTING.md) guide

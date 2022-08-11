@@ -323,6 +323,7 @@ watch(
 )
 
 emitter.on('snippet:format', () => format())
+emitter.on('editor:refresh', () => editor.refresh())
 
 onMounted(() => {
   init()
@@ -330,6 +331,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   emitter.off('snippet:format')
+  emitter.off('editor:refresh')
 })
 </script>
 

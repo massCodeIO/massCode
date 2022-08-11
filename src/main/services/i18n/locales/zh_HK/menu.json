@@ -32,7 +32,10 @@
       "payPal": "通過 PayPal 捐贈"
     },
     "twitter": "訪問作者 Twitter",
-    "devTools": "開發者工具"
+    "devTools": "開發者工具",
+    "links": {
+      "snippets": "代碼片段分享站"
+    }
   },
   "file": {
     "label": "文件",
@@ -62,11 +65,12 @@
     "copy": "將代碼片段複製至剪貼板",
     "format": "格式化",
     "previewCode": "預覽 HTML 和 CSS",
-    "previewScreenshot": "生成並預覽代碼截圖"
+    "previewScreenshot": "生成並預覽代碼截圖",
+    "previewMarkdown": "預覽"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "演示模式",
+    "preview": "預覽模式"
   }
 }

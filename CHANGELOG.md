@@ -1,3 +1,17 @@
+# [3.2.0](https://github.com/massCodeIO/massCode/compare/v3.1.0...v3.2.0) (2022-08-11)
+
+
+### Features
+
+* add presentation mode ([#215](https://github.com/massCodeIO/massCode/issues/215)) ([0b540cf](https://github.com/massCodeIO/massCode/commit/0b540cf9214a30a3b11d50a517f44efced527e5f))
+* **i18n:** add Japanese locales ([#214](https://github.com/massCodeIO/massCode/issues/214)) ([5ceea07](https://github.com/massCodeIO/massCode/commit/5ceea076c691ed6e8d96050d8232e5dadc925a85))
+* **keymap:** add `cmd+` / `cmd-` to control editor font size ([#222](https://github.com/massCodeIO/massCode/issues/222)) ([d8b2872](https://github.com/massCodeIO/massCode/commit/d8b2872c5073038e505290eebbfc291c09aec31a))
+* **markdown:** add optional codemirror as code block renderer ([#218](https://github.com/massCodeIO/massCode/issues/218)) ([4a76beb](https://github.com/massCodeIO/massCode/commit/4a76beb76f4e2bd6a5d82296f8d09b6508026028))
+* notarizing macOS builds ([#219](https://github.com/massCodeIO/massCode/issues/219)) ([0a9c214](https://github.com/massCodeIO/massCode/commit/0a9c214da6f680a5bfc1998f195fe12e6ba0d153))
+* **snippets:** add restore from trash ([#221](https://github.com/massCodeIO/massCode/issues/221)) ([0db6756](https://github.com/massCodeIO/massCode/commit/0db67561ee57ac98b17aace22fedb13db97ebedb))
+
+
+
 # [3.1.0](https://github.com/massCodeIO/massCode/compare/v3.0.0...v3.1.0) (2022-08-08)
 
 

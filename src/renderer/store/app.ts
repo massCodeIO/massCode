@@ -35,7 +35,8 @@ const CODE_PREVIEW_DEFAULTS: CodePreviewSettings = {
 }
 
 const MARKDOWN_DEFAULTS: MarkdownSettings = {
-  presentationScale: 1.3
+  presentationScale: 1.3,
+  codeRenderer: 'highlight.js'
 }
 
 export const useAppStore = defineStore('app', {

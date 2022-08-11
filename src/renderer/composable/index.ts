@@ -191,3 +191,8 @@ export const checkForRemoteNotification = async () => {
     checkAndShow()
   }, 1000 * 60 * 180) // 3 часа
 }
+
+export const onClickUrl = (url: string) => {
+  ipc.invoke('main:open-url', url)
+  track('app/open-url', url)
+}

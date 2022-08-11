@@ -76,7 +76,10 @@ const init = async () => {
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
   appStore.screenshot = store.preferences.get('screenshot')
-  appStore.markdown = store.preferences.get('markdown')
+  appStore.markdown = {
+    ...appStore.markdown,
+    ...store.preferences.get('markdown')
+  }
 
   snippetStore.sort = store.app.get('sort')
 

@@ -41,5 +41,9 @@
   },
   "language": {
     "label": "Язык"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Рендерер блоков кода"
   }
 }

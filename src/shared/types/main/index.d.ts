@@ -21,6 +21,7 @@ type ContextMenuAction =
   | 'update:language'
   | 'collapse-all'
   | 'expand-all'
+  | 'restore-from-trash'
   | 'none'
 
 export type ContextMenuType =

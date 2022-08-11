@@ -38,14 +38,14 @@
   "fragment": "子片段",
   "search": "搜尋",
   "line": "行",
-  "column": "列",
+  "column": "欄",
   "sidebar": {
     "inbox": "暫存區",
     "favorites": "收藏夾",
     "allSnippets": "所有的",
     "trash": "回收站",
     "untitled": "未命名資料夾",
-    "folders": "自定義資料夾",
+    "folders": "資料夾",
     "library": "庫",
     "tags": "標籤"
   },

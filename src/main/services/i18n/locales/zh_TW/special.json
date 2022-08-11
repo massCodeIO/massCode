@@ -5,9 +5,9 @@
       "1": "從 massCode v1.0 遷移：選擇包含資料庫檔案的資料夾。",
       "2": "從 SnippetsLab 遷移：選擇 JSON 檔案。",
       "3": [
-        "從SnippetsLab遷移將會遇到一些侷限：",
-        "所有的資料夾將是第一層，因為 JSON 檔案（低於 v2.1）無法表示巢狀的資料夾。",
-        "某些片段可能會因為其語言暫時不被 massCode 而被識別為純文字。"
+        "從 SnippetsLab 遷移將會遇到一些侷限：",
+        "低於2.1版的 SnippetsLab 因為沒有巢狀資料夾將只有一層資料夾。",
+        "某些片段可能會因為其語言暫時不被 massCode 支持而被識別為純文字。"
       ]
     },
     "htmlCssPreview": "新增帶有 HTML 和 CSS 語言的片段來檢視預覽結果。"
@@ -20,5 +20,5 @@
   },
   "unsponsored": "未贊助的",
   "supportMessage": "Hi，我是 Anton 👋<br><br>\n感謝你使用 massCode 。如果你覺得這個應用很有幫助，請{{-tagStart}} 捐贈 {{-tagEnd}}。這將激勵我繼續開發這個專案。",
-  "snippetsShowcase": "程式碼片段展示區"
+  "snippetsShowcase": "前端片段社群"
 }

@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { i18n, store } from '@/electron'
+import { i18n, store, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -153,6 +153,8 @@ watch(right, v => {
 watch(escape, v => {
   if (v) toHome()
 })
+
+track('presentation')
 </script>
 
 <style lang="scss" scoped>

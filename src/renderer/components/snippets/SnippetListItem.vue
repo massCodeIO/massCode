@@ -207,6 +207,24 @@ const onClickContextMenu = async () => {
     }
   }
 
+  if (action === 'restore-from-trash') {
+    if (snippetStore.selectedIds.length) {
+      for (const id of snippetStore.selectedIds) {
+        await snippetStore.patchSnippetsById(id, {
+          isDeleted: false
+        })
+      }
+    } else {
+      await snippetStore.patchSnippetsById(props.id, {
+        isDeleted: false
+      })
+    }
+
+    await snippetStore.getSnippets()
+    snippetStore.setSnippetsByAlias('trash')
+    track('snippets/restore-from-trash')
+  }
+
   isHighlighted.value = false
   isFocused.value = false
   snippetStore.isContextState = false

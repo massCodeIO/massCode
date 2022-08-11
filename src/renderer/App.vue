@@ -37,16 +37,18 @@ import {
   onCopySnippet,
   emitter,
   onCreateSnippet,
-  onAddDescription,
-  checkForRemoteNotification
+  onAddDescription
 } from '@/composable'
-import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
-import { addDays, isSameDay, isYesterday } from 'date-fns'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { loadGrammars } from '@/components/editor/grammars'
+import {
+  useSupportNotification,
+  checkForRemoteNotification
+} from '@/composable/notification'
+import { useKeyMap } from '@/composable/keymap'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -57,8 +59,9 @@ const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 const route = useRoute()
 
+const { showSupportToast } = useSupportNotification()
+
 const isUpdateAvailable = ref(false)
-const isSupportToastShow = ref(false)
 const isDev = import.meta.env.DEV
 
 const init = async () => {
@@ -95,6 +98,7 @@ const init = async () => {
 
   trackAppUpdate()
   checkForRemoteNotification()
+  useKeyMap()
 }
 
 const setTheme = (theme: string) => {
@@ -116,55 +120,6 @@ const trackAppUpdate = () => {
   }
 
   store.app.set('version', appStore.version)
-}
-
-// Yes, this is that annoying piece of crap code.
-// You can delete it, but know that you hurt me.
-const showSupportToast = () => {
-  if (appStore.isSponsored) return
-
-  const addNextNotice = () => {
-    store.app.set('nextSupportNotice', addDays(new Date(), 7).valueOf())
-  }
-
-  const date = store.app.get('nextSupportNotice')
-
-  if (!date) addNextNotice()
-
-  const isShow = isSameDay(new Date(), date) || isYesterday(date)
-
-  if (!isShow) return
-  if (isSupportToastShow.value) return
-
-  const message = document.createElement('div')
-  message.innerHTML = i18n.t('special:supportMessage', {
-    tagStart: '<a id="donate" href="#">',
-    tagEnd: '</a>'
-  })
-
-  createToast(message, {
-    action: {
-      text: i18n.t('close'),
-      callback (toast) {
-        toast.destroy()
-        addNextNotice()
-        isSupportToastShow.value = false
-        track('app/notify', 'support-close')
-      }
-    }
-  })
-
-  const d = document.querySelector('#donate')
-
-  d?.addEventListener('click', () => {
-    ipc.invoke('main:open-url', 'https://masscode.io/donate')
-    destroyAllToasts()
-    addNextNotice()
-    isSupportToastShow.value = false
-    track('app/notify', 'support-go-to-masscode')
-  })
-
-  isSupportToastShow.value = true
 }
 
 init()
@@ -198,6 +153,8 @@ ipc.on('main:update-available', () => {
 })
 
 ipc.on('main:focus', () => {
+  // Yes, this is that annoying piece of crap code.
+  // You can delete it, but know that you hurt me.
   showSupportToast()
 })
 
@@ -226,7 +183,6 @@ ipc.on('main-menu:preview-markdown', async () => {
 ipc.on('main-menu:presentation-mode', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
     router.push('/presentation')
-    track('snippets/presentation-mode')
   }
 })
 

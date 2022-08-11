@@ -58,5 +58,6 @@
   "hide": "Hide",
   "show": "Show",
   "collapse-all": "Collapse All",
-  "expand-all": "Expand All"
+  "expand-all": "Expand All",
+  "restore": "Restore"
 }

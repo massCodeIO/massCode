@@ -121,7 +121,6 @@ const onCodePreview = () => {
 
 const onClickPresentationMode = () => {
   router.push('/presentation')
-  track('snippets/presentation-mode')
 }
 
 emitter.on('snippet:focus-name', () => {

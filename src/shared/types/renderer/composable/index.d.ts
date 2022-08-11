@@ -7,4 +7,5 @@ export type EmitterEvents = {
   'scroll-to:folder': string
   'scroll-to:snippet': string
   'search:focus': boolean
+  'editor:refresh': boolean
 }

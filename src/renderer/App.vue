@@ -48,6 +48,7 @@ import {
   useSupportNotification,
   checkForRemoteNotification
 } from '@/composable/notification'
+import { useKeyMap } from '@/composable/keymap'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -97,6 +98,7 @@ const init = async () => {
 
   trackAppUpdate()
   checkForRemoteNotification()
+  useKeyMap()
 }
 
 const setTheme = (theme: string) => {

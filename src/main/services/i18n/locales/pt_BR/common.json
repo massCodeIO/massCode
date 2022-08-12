@@ -9,8 +9,8 @@
     "update": ["Ir para o GitHub", "OK"]
   },
   "newFolder": "Nova pasta",
-  "newSnippet": "Novo Snippet",
-  "newFragment": "Novo Fragmento",
+  "newSnippet": "Novo snippet",
+  "newFragment": "Novo fragmento",
   "addDescription": "Adicionar descrição",
   "addToFavorites": "Adicionar aos favoritos",
   "addTag": "Adicionar etiqueta",
@@ -36,7 +36,7 @@
     "noSelected": "Nenhum snippet selecionado"
   },
   "fragment": "Fragmento",
-  "search": "Procurar",
+  "search": "Buscar",
   "line": "Linha",
   "column": "Coluna",
   "sidebar": {

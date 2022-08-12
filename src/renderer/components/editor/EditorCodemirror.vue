@@ -232,6 +232,11 @@ const clearAllMarks = () => {
   }
 }
 
+const clearHistory = () => {
+  if (!editor) return
+  editor.clearHistory()
+}
+
 const format = async () => {
   const availableLang: Language[] = [
     'css',
@@ -293,9 +298,7 @@ watch(
       findAll(snippetStore.searchQuery)
     }
 
-    if (editor) {
-      editor.clearHistory()
-    }
+    clearHistory()
   }
 )
 

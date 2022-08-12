@@ -59,6 +59,10 @@ You can not only collect snippets, but also see the rendering result for HTML an
 ### Markdown
 massCode allows you to write in Markdown and provide support to syntax highlighting, tables, list and other formatting. Also massCode supports [Mermaid](https://mermaid-js.github.io/mermaid/#) - diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
 
+### Presentation Mode
+
+massCode allows you to make a presentation out of a sequence of snippets. It's great for classroom use, team meetings, conferences or simply reviewing notes on your own.
+
 ### Search
 It is impossible to imagine a productive snippets manager without quick access to snippets. Therefore massCode has a fast full-text search with highlighting of the search query.
 

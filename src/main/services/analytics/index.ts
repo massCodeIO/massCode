@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import type { TrackEvents } from '@shared/types/main/analytics'
 import ua from 'universal-analytics'
 import { version } from '../../../../package.json'

@@ -11,6 +11,7 @@
     "dev:server": "node build/scripts/dev-server.js",
     "dev:vue-devtools": "vue-devtools",
     "build": "npm run ts-check:vue && npm run copy:plist && npm run build:ts && node build/scripts/build.js ",
+    "build:test": "TEST_BUILD=true TEST_MAC_ARCH=arm64 npm run build",
     "build:ts": "tsc -p tsconfig.electron.json",
     "ts-check:vue": "vue-tsc --noEmit --skipLibCheck",
     "lint": "eslint --ext .js,.ts,.vue . src",

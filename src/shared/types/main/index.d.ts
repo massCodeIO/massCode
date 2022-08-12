@@ -45,6 +45,9 @@ type MainMenuAction =
   | 'preview-markdown'
   | 'search'
   | 'sort-snippets'
+  | 'font-size-increase'
+  | 'font-size-decrease'
+  | 'font-size-reset'
 
 type MainAction =
   | 'restart'

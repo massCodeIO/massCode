@@ -232,6 +232,11 @@ const clearAllMarks = () => {
   }
 }
 
+const clearHistory = () => {
+  if (!editor) return
+  editor.clearHistory()
+}
+
 const format = async () => {
   const availableLang: Language[] = [
     'css',
@@ -285,22 +290,15 @@ const hideScrollbar = useDebounceFn(() => {
 }, 1000)
 
 watch(
-  () => props.modelValue,
+  () => [props.snippetId, props.fragmentIndex],
   () => {
     setValue(props.modelValue)
 
     if (snippetStore.searchQuery) {
       findAll(snippetStore.searchQuery)
     }
-  }
-)
 
-watch(
-  () => [props.snippetId, props.fragmentIndex].concat(),
-  () => {
-    if (editor) {
-      editor.clearHistory()
-    }
+    clearHistory()
   }
 )
 

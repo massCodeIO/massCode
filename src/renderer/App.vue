@@ -27,7 +27,7 @@
 import router from '@/router'
 import { nextTick, ref, watch } from 'vue'
 import { ipc, store, track, i18n } from './electron'
-import { useAppStore } from './store/app'
+import { EDITOR_DEFAULTS, useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
 import {
@@ -48,7 +48,6 @@ import {
   useSupportNotification,
   checkForRemoteNotification
 } from '@/composable/notification'
-import { useKeyMap } from '@/composable/keymap'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -98,7 +97,6 @@ const init = async () => {
 
   trackAppUpdate()
   checkForRemoteNotification()
-  useKeyMap()
 }
 
 const setTheme = (theme: string) => {
@@ -146,6 +144,14 @@ watch(
       })
     }
   }
+)
+
+watch(
+  () => appStore.editor,
+  v => {
+    store.preferences.set('editor', { ...v })
+  },
+  { deep: true }
 )
 
 ipc.on('main:update-available', () => {
@@ -208,6 +214,22 @@ ipc.on('main-menu:sort-snippets', (event, sort) => {
 
 ipc.on('main-menu:add-description', async () => {
   await onAddDescription()
+})
+
+ipc.on('main-menu:font-size-increase', async () => {
+  appStore.editor.fontSize += 1
+  emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:font-size-decrease', async () => {
+  if (appStore.editor.fontSize === 1) return
+  appStore.editor.fontSize -= 1
+  emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:font-size-reset', async () => {
+  appStore.editor.fontSize = EDITOR_DEFAULTS.fontSize
+  emitter.emit('editor:refresh', true)
 })
 
 ipc.on('api:snippet-create', (event, body: Snippet) => {

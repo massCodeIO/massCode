@@ -38,7 +38,15 @@ import 'codemirror/addon/selection/active-line'
 import 'codemirror/addon/scroll/simplescrollbars'
 import 'codemirror/addon/scroll/simplescrollbars.css'
 import 'codemirror/lib/codemirror.css'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { i18n, ipc, track } from '@/electron'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
@@ -320,8 +328,14 @@ watch(
   }
 )
 
+watch(
+  () => appStore.editor.fontSize,
+  () => {
+    nextTick(() => editor.refresh())
+  }
+)
+
 emitter.on('snippet:format', () => format())
-emitter.on('editor:refresh', () => editor.refresh())
 
 onMounted(() => {
   init()
@@ -329,7 +343,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   emitter.off('snippet:format')
-  emitter.off('editor:refresh')
 })
 </script>
 

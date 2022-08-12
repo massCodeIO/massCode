@@ -359,6 +359,36 @@ const editorMenu: MenuItemConstructorOptions[] = [
         'main-menu:preview-code'
       )
     }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeIncrease'),
+    accelerator: 'CommandOrControl+=',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-increase'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeDecrease'),
+    accelerator: 'CommandOrControl+-',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-decrease'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeReset'),
+    accelerator: 'CommandOrControl+0',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-reset'
+      )
+    }
   }
 ]
 

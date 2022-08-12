@@ -374,7 +374,7 @@ const markdownMenu: MenuItemConstructorOptions[] = [
   },
   {
     label: i18n.t('menu:markdown.presentationMode'),
-    accelerator: 'Control+CommandOrControl+P',
+    accelerator: 'Alt+CommandOrControl+P',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
         'main-menu:presentation-mode'

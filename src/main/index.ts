@@ -12,7 +12,7 @@ import { checkForUpdateWithInterval } from './services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
-const isLocked = app.requestSingleInstanceLock()
+const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
 
@@ -22,7 +22,10 @@ const apiServer = new ApiServer()
 subscribeToChannels()
 subscribeToDialog()
 
-if (!isLocked) app.quit()
+if (!gotTheLock) {
+  // @ts-ignore
+  return app.quit()
+}
 
 function createWindow () {
   const bounds = store.app.get('bounds')
@@ -89,14 +92,20 @@ app.on('browser-window-focus', () => {
   BrowserWindow.getFocusedWindow()?.webContents.send('main:focus')
 })
 
-app.on('second-instance', () => {
+app.on('second-instance', (e, argv) => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   }
+
+  if (process.platform !== 'darwin') {
+    const url = argv.find(i => i.startsWith('masscode://'))
+    BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
+  }
 })
 
 app.on('open-url', (event, url) => {
+  console.log('open url')
   BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
 })
 

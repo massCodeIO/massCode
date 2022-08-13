@@ -151,6 +151,10 @@ export class ApiServer {
       }
     }
 
+    // Почему то на windows даже при том что порт API свободен,
+    // API сервер падает, поэтому просто обрабатываем ошибку
+    server.on('error', err => console.error(err))
+
     return server
   }
 

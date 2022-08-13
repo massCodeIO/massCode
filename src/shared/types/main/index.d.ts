@@ -60,6 +60,7 @@ type MainAction =
   | 'prettier'
   | 'focus'
   | 'copy-to-assets'
+  | 'app-protocol'
 
 type ApiAction = 'snippet-create'
 

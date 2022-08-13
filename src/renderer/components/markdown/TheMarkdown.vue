@@ -15,9 +15,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { ipc, store } from '@/electron'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
-import { useHljsTheme } from '@/composable'
+import { useHljsTheme, goToSnippet } from '@/composable'
 import { useCodemirror } from '@/composable/codemirror'
-
 import { nanoid } from 'nanoid'
 
 const isDev = import.meta.env.DEV
@@ -75,7 +74,12 @@ const init = () => {
       }
     },
     link (href: string, title: string, text: string) {
-      return `<a href="${href}" class="external">${text}</a>`
+      if (/^masscode:\/\/snippets/.test(href)) {
+        const id = href.split('/').pop()
+        return `<a href="${href}" class="snippet-link" data-snippet-id="${id}">${text}</a>`
+      } else {
+        return `<a href="${href}" class="external">${text}</a>`
+      }
     }
   }
 
@@ -181,9 +185,11 @@ const render = () => {
         'type',
         'checked',
         'disabled',
-        'id'
+        'id',
+        'data-*'
       ]
-    }
+    },
+    allowedSchemes: ['http', 'https', 'masscode']
   })
 
   const re = /src="\.\//g
@@ -196,11 +202,17 @@ const render = () => {
   renderedHtml.value = html
 }
 
-const openExternal = (e: Event) => {
+const onLink = async (e: Event) => {
   const el = e.target as HTMLAnchorElement
   e.preventDefault()
+
   if (el.classList.contains('external')) {
     ipc.invoke('main:open-url', el.href)
+  }
+
+  if (el.classList.contains('snippet-link')) {
+    const { snippetId } = el.dataset
+    if (snippetId) goToSnippet(snippetId)
   }
 }
 
@@ -257,11 +269,11 @@ watch(
 init()
 
 onMounted(() => {
-  document.addEventListener('click', openExternal)
+  document.addEventListener('click', onLink)
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', openExternal)
+  document.removeEventListener('click', onLink)
 })
 
 window.addEventListener('resize', () => {

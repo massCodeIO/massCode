@@ -86,6 +86,26 @@ export const onCopySnippet = () => {
   track('snippets/copy')
 }
 
+export const goToSnippet = async (snippetId: string) => {
+  if (!snippetId) return
+
+  const folderStore = useFolderStore()
+  const snippetStore = useSnippetStore()
+
+  const snippet = snippetStore.findSnippetById(snippetId)
+
+  if (!snippet) return
+
+  folderStore.selectId(snippet.folderId)
+
+  snippetStore.fragment = 0
+
+  await snippetStore.getSnippetsById(snippetId)
+  await snippetStore.setSnippetsByFolderIds()
+
+  emitter.emit('folder:click', snippet.folderId)
+}
+
 export const setScrollPosition = (el: HTMLElement, offset: number) => {
   const ps = el.querySelector('.ps')
   if (ps) ps.scrollTop = offset

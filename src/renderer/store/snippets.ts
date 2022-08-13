@@ -46,7 +46,7 @@ export const useSnippetStore = defineStore('snippets', {
       const tagStore = useTagStore()
       const tags: Tag[] = []
 
-      if (this.selected?.tagsIds.length) {
+      if (this.selected?.tagsIds?.length) {
         this.selected.tagsIds.forEach(i => {
           const tag = tagStore.tags.find(t => t.id === i)
           if (tag) tags.push(tag)
@@ -270,8 +270,11 @@ export const useSnippetStore = defineStore('snippets', {
       this.selected = snippets[0]
     },
     setSnippetById (id: string) {
-      const snippet = this.all.find(i => i.id === id)
+      const snippet = this.findSnippetById(id)
       if (snippet) this.selected = snippet
+    },
+    findSnippetById (id: string) {
+      return this.all.find(i => i.id === id)
     },
     async emptyTrash () {
       const ids = this.all.filter(i => i.isDeleted).map(i => i.id)

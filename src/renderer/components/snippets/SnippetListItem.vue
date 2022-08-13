@@ -39,7 +39,7 @@ import type {
   ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, useClipboard } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
@@ -223,6 +223,12 @@ const onClickContextMenu = async () => {
     await snippetStore.getSnippets()
     snippetStore.setSnippetsByAlias('trash')
     track('snippets/restore-from-trash')
+  }
+
+  if (action === 'copy-snippet-link') {
+    const { copy } = useClipboard({ source: `masscode://snippets/${props.id}` })
+    copy()
+    track('snippets/copy-link')
   }
 
   isHighlighted.value = false

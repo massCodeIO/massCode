@@ -37,7 +37,8 @@ import {
   onCopySnippet,
   emitter,
   onCreateSnippet,
-  onAddDescription
+  onAddDescription,
+  goToSnippet
 } from '@/composable'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
@@ -162,6 +163,13 @@ ipc.on('main:focus', () => {
   // Yes, this is that annoying piece of crap code.
   // You can delete it, but know that you hurt me.
   showSupportToast()
+})
+
+ipc.on('main:app-protocol', (event, payload: string) => {
+  if (/^masscode:\/\/snippets/.test(payload)) {
+    const snippetId = payload.split('/').pop()
+    if (snippetId) goToSnippet(snippetId)
+  }
 })
 
 ipc.on('main-menu:preferences', () => {

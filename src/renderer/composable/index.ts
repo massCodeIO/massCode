@@ -86,6 +86,50 @@ export const onCopySnippet = () => {
   track('snippets/copy')
 }
 
+export const goToSnippet = async (snippetId: string) => {
+  if (!snippetId) return
+
+  const folderStore = useFolderStore()
+  const snippetStore = useSnippetStore()
+
+  const snippet = snippetStore.findSnippetById(snippetId)
+
+  if (!snippet) return
+
+  folderStore.selectId(snippet.folderId)
+
+  expandParentFolders(snippet.folderId)
+
+  snippetStore.fragment = 0
+
+  await snippetStore.getSnippetsById(snippetId)
+  await snippetStore.setSnippetsByFolderIds()
+
+  emitter.emit('folder:click', snippet.folderId)
+  emitter.emit('scroll-to:snippet', snippetId)
+  emitter.emit('scroll-to:folder', snippet.folderId)
+}
+
+export const expandParentFolders = (folderId: string) => {
+  const folderStore = useFolderStore()
+
+  const findParentAndExpand = async (id: string) => {
+    const folder = folderStore.folders.find(i => i.id === id)
+
+    if (!folder) return
+
+    await folderStore.patchFoldersById(folder.id, {
+      isOpen: true
+    })
+
+    if (folder.parentId) {
+      findParentAndExpand(folder.parentId)
+    }
+  }
+
+  findParentAndExpand(folderId)
+}
+
 export const setScrollPosition = (el: HTMLElement, offset: number) => {
   const ps = el.querySelector('.ps')
   if (ps) ps.scrollTop = offset

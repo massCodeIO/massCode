@@ -19,8 +19,10 @@ export const track = (event: TrackEvents, payload?: string) => {
     ? `${version}/${os}/${event}/${payload}`
     : `${version}/${os}/${event}`
 
-  if (isDev && process.env.DEBUG?.includes('analytics')) {
-    console.log('[analytics]:', path)
+  if (isDev) {
+    if (process.env.DEBUG?.includes('analytics')) {
+      console.log('[analytics]:', path)
+    }
   } else {
     analytics.pageview(path).send()
   }

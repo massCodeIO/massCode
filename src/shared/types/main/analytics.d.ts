@@ -8,6 +8,7 @@ type SnippetEvents =
   | 'add-to-favorites'
   | 'code-preview'
   | 'copy'
+  | 'copy-link'
   | 'create-screenshot'
   | 'delete-fragment'
   | 'delete-from-favorites'

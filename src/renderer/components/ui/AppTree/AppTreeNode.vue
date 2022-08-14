@@ -126,6 +126,7 @@ const updateValue = inject('updateValue') as Function
 const clickNode = inject('clickNode') as Function
 const contextMenuHandler = inject('contextMenuHandler') as Function
 const isHoveredByIdDisabled = inject('isHoveredByIdDisabled') as Ref
+const focusHandler = inject('focusHandler') as Function
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -276,6 +277,8 @@ onClickOutside(rowRef, () => {
   isFocused.value = false
   isHighlighted.value = false
 })
+
+if (focusHandler) focusHandler(isFocused)
 </script>
 
 <style lang="scss" scoped>

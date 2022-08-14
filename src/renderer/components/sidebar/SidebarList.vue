@@ -86,7 +86,7 @@ emitter.on('scroll-to:folder', id => {
   nextTick(() => {
     const el = document.querySelector<HTMLElement>(`[data-id='${id}']`)
     if (el) {
-      setScrollPosition(bodyRef.value!, el.getBoundingClientRect().top + 210)
+      setScrollPosition(bodyRef.value!, el.getBoundingClientRect().top - 210)
     }
   })
 })

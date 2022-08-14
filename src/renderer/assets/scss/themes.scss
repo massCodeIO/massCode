@@ -300,7 +300,7 @@
 }
 
 [data-theme^="dark"] {
-  a {
+  > a {
     color: var(--color-contrast-medium);
     &:hover {
       color: var(--color-text);

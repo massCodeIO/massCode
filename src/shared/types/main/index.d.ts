@@ -22,6 +22,7 @@ type ContextMenuAction =
   | 'collapse-all'
   | 'expand-all'
   | 'restore-from-trash'
+  | 'copy-snippet-link'
   | 'none'
 
 export type ContextMenuType =
@@ -60,6 +61,7 @@ type MainAction =
   | 'prettier'
   | 'focus'
   | 'copy-to-assets'
+  | 'app-protocol'
 
 type ApiAction = 'snippet-create'
 

@@ -39,11 +39,12 @@ import type {
   ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
-import { onClickOutside } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { onClickOutside, useClipboard } from '@vueuse/core'
+import { computed, onUnmounted, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
 import { isToday, format } from 'date-fns'
+import { emitter } from '@/composable'
 
 interface Props {
   id: string
@@ -225,6 +226,12 @@ const onClickContextMenu = async () => {
     track('snippets/restore-from-trash')
   }
 
+  if (action === 'copy-snippet-link') {
+    const { copy } = useClipboard({ source: `masscode://snippets/${props.id}` })
+    copy()
+    track('snippets/copy-link')
+  }
+
   isHighlighted.value = false
   isFocused.value = false
   snippetStore.isContextState = false
@@ -274,6 +281,18 @@ const onDragStart = (e: DragEvent) => {
 const onDragEnd = () => {
   folderStore.hoveredId = ''
 }
+
+const onScrollToSnippet = () => {
+  if (snippetStore.selectedId !== props.id) {
+    isFocused.value = false
+  }
+}
+
+emitter.on('scroll-to:snippet', onScrollToSnippet)
+
+onUnmounted(() => {
+  emitter.off('scroll-to:snippet', onScrollToSnippet)
+})
 </script>
 
 <style lang="scss" scoped>

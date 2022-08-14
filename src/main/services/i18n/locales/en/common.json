@@ -59,5 +59,6 @@
   "show": "Show",
   "collapse-all": "Collapse All",
   "expand-all": "Expand All",
-  "restore": "Restore"
+  "restore": "Restore",
+  "copy-snippet-link": "Copy Snippet Link"
 }

@@ -106,6 +106,8 @@ export const goToSnippet = async (snippetId: string) => {
   await snippetStore.setSnippetsByFolderIds()
 
   emitter.emit('folder:click', snippet.folderId)
+  emitter.emit('scroll-to:snippet', snippetId)
+  emitter.emit('scroll-to:folder', snippet.folderId)
 }
 
 export const expandParentFolders = (folderId: string) => {

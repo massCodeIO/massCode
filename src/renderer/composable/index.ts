@@ -98,12 +98,34 @@ export const goToSnippet = async (snippetId: string) => {
 
   folderStore.selectId(snippet.folderId)
 
+  expandParentFolders(snippet.folderId)
+
   snippetStore.fragment = 0
 
   await snippetStore.getSnippetsById(snippetId)
   await snippetStore.setSnippetsByFolderIds()
 
   emitter.emit('folder:click', snippet.folderId)
+}
+
+export const expandParentFolders = (folderId: string) => {
+  const folderStore = useFolderStore()
+
+  const findParentAndExpand = async (id: string) => {
+    const folder = folderStore.folders.find(i => i.id === id)
+
+    if (!folder) return
+
+    await folderStore.patchFoldersById(folder.id, {
+      isOpen: true
+    })
+
+    if (folder.parentId) {
+      findParentAndExpand(folder.parentId)
+    }
+  }
+
+  findParentAndExpand(folderId)
 }
 
 export const setScrollPosition = (el: HTMLElement, offset: number) => {

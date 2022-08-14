@@ -105,7 +105,6 @@ app.on('second-instance', (e, argv) => {
 })
 
 app.on('open-url', (event, url) => {
-  console.log('open url')
   BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
 })
 

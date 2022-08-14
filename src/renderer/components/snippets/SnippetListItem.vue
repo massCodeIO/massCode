@@ -40,10 +40,11 @@ import type {
   ContextMenuResponse
 } from '@shared/types/main'
 import { onClickOutside, useClipboard } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
 import { isToday, format } from 'date-fns'
+import { emitter } from '@/composable'
 
 interface Props {
   id: string
@@ -280,6 +281,18 @@ const onDragStart = (e: DragEvent) => {
 const onDragEnd = () => {
   folderStore.hoveredId = ''
 }
+
+const onScrollToSnippet = () => {
+  if (snippetStore.selectedId !== props.id) {
+    isFocused.value = false
+  }
+}
+
+emitter.on('scroll-to:snippet', onScrollToSnippet)
+
+onUnmounted(() => {
+  emitter.off('scroll-to:snippet', onScrollToSnippet)
+})
 </script>
 
 <style lang="scss" scoped>

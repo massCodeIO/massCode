@@ -52,6 +52,7 @@
         v-model="folderStore.foldersTree"
         :selected-id="folderStore.selectedId"
         :context-menu-handler="contextMenuHandler"
+        :focus-handler="focusHandler"
         @update:model-value="onUpdate"
         @click:node="onClickFolder"
       >
@@ -81,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { onMounted, ref, watch } from 'vue'
 import type {
   SidebarSystemFolder,
@@ -101,6 +103,7 @@ import { emitter, onAddNewFolder } from '@/composable'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
 import type { Snippet } from '@shared/types/main/db'
+import { onScrollToFolder } from './composable'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -182,6 +185,10 @@ const onDrop = async (e: DragEvent, id: string) => {
 
 const onDragEnter = (id: string) => {
   folderStore.hoveredId = id
+}
+
+const focusHandler = (isFocused: Ref) => {
+  onScrollToFolder(isFocused)
 }
 
 onMounted(() => {

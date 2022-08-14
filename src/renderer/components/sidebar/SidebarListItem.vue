@@ -41,6 +41,7 @@ import { useTagStore } from '@/store/tags'
 import type { FolderTree } from '@shared/types/main/db'
 import { useSnippetStore } from '@/store/snippets'
 import { emitter } from '@/composable'
+import { onScrollToFolder } from './composable'
 
 interface Props {
   id?: string
@@ -161,6 +162,8 @@ const onClickContextMenu = async () => {
 onClickOutside(itemRef, () => {
   isFocused.value = false
 })
+
+onScrollToFolder(isFocused)
 
 watch(
   () => props.isSelected,

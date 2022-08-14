@@ -98,8 +98,8 @@ const initMermaid = () => {
 }
 
 onMounted(() => {
-  initMermaid()
   render()
+  nextTick(() => initMermaid())
 })
 
 const render = () => {

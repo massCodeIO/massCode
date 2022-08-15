@@ -75,5 +75,10 @@
     "label": "Markdown",
     "presentationMode": "Presentation Mode",
     "preview": "Preview"
+  },
+  "history": {
+    "label": "History",
+    "back": "Back",
+    "forward": "Forward"
   }
 }

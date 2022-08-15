@@ -7,6 +7,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
+import { useAppStore } from '@/store/app'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -86,11 +87,12 @@ export const onCopySnippet = () => {
   track('snippets/copy')
 }
 
-export const goToSnippet = async (snippetId: string) => {
+export const goToSnippet = async (snippetId: string, history?: boolean) => {
   if (!snippetId) return
 
   const folderStore = useFolderStore()
   const snippetStore = useSnippetStore()
+  const appStore = useAppStore()
 
   const snippet = snippetStore.findSnippetById(snippetId)
 
@@ -104,6 +106,8 @@ export const goToSnippet = async (snippetId: string) => {
 
   await snippetStore.getSnippetsById(snippetId)
   await snippetStore.setSnippetsByFolderIds()
+
+  if (history) appStore.history.push(snippetId)
 
   emitter.emit('folder:click', snippet.folderId)
   emitter.emit('scroll-to:snippet', snippetId)

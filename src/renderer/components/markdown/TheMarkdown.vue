@@ -217,7 +217,7 @@ const onLink = async (e: Event) => {
 
   if (el.classList.contains('snippet-link')) {
     const { snippetId } = el.dataset
-    if (snippetId) goToSnippet(snippetId)
+    if (snippetId) goToSnippet(snippetId, true)
   }
 }
 

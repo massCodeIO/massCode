@@ -74,5 +74,10 @@
     "label": "Markdown",
     "presentationMode": "Режим презентации",
     "preview": "Просмотр Markdown"
+  },
+  "history": {
+    "label": "История",
+    "back": "Назад",
+    "forward": "Вперед"
   }
 }

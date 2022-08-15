@@ -446,6 +446,27 @@ const editMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const historyMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:history.back'),
+    accelerator: 'CommandOrControl+[',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:history-back'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:history.forward'),
+    accelerator: 'CommandOrControl+]',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:history-forward'
+      )
+    }
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -470,6 +491,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:markdown.label'),
     submenu: markdownMenu
+  },
+  {
+    label: i18n.t('menu:history.label'),
+    submenu: historyMenu
   },
   {
     label: i18n.t('menu:help.label'),

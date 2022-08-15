@@ -173,7 +173,7 @@ ipc.on('main:focus', () => {
 ipc.on('main:app-protocol', (event, payload: string) => {
   if (/^masscode:\/\/snippets/.test(payload)) {
     const snippetId = payload.split('/').pop()
-    if (snippetId) goToSnippet(snippetId)
+    if (snippetId) goToSnippet(snippetId, true)
   }
 })
 
@@ -243,6 +243,14 @@ ipc.on('main-menu:font-size-decrease', async () => {
 ipc.on('main-menu:font-size-reset', async () => {
   appStore.editor.fontSize = EDITOR_DEFAULTS.fontSize
   emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:history-back', async () => {
+  appStore.historyBack()
+})
+
+ipc.on('main-menu:history-forward', async () => {
+  appStore.historyForward()
 })
 
 ipc.on('api:snippet-create', (event, body: Snippet) => {

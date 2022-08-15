@@ -45,6 +45,7 @@ import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
 import { isToday, format } from 'date-fns'
 import { emitter } from '@/composable'
+import { useAppStore } from '@/store/app'
 
 interface Props {
   id: string
@@ -59,6 +60,7 @@ const props = defineProps<Props>()
 const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
 const tagStore = useTagStore()
+const appStore = useAppStore()
 
 const itemRef = ref()
 const isFocused = ref(false)
@@ -105,6 +107,7 @@ const onClickSnippet = (e: MouseEvent) => {
     snippetStore.selectedMultiple = []
     snippetStore.getSnippetsById(props.id)
     tagStore.getTags()
+    appStore.addToHistory(props.id)
   }
 }
 

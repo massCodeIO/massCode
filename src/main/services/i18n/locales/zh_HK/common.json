@@ -57,5 +57,7 @@
   "hide": "隱藏",
   "show": "顯示",
   "collapse-all": "全部展開",
-  "expand-all": "全部摺疊"
+  "expand-all": "全部摺疊",
+  "restore": "回復",
+  "copy-snippet-link": "複製連結"
 }

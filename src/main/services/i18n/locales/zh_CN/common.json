@@ -58,5 +58,7 @@
   "hide": "隐藏",
   "show": "显示",
   "collapse-all": "全部展开",
-  "expand-all": "全部折叠"
+  "expand-all": "全部折叠",
+  "restore": "还原",
+  "copy-snippet-link": "复制链接"
 }

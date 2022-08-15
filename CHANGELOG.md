@@ -1,3 +1,25 @@
+# [3.3.0](https://github.com/massCodeIO/massCode/compare/v3.2.0...v3.3.0) (2022-08-15)
+
+
+### Bug Fixes
+
+* **editor:** update editor value only if snippet id is changed ([#228](https://github.com/massCodeIO/massCode/issues/228)) ([78f6f7e](https://github.com/massCodeIO/massCode/commit/78f6f7ebedd781f987df4e07540c3f29c3f40217))
+* **markdown:** crash if value is empty ([#233](https://github.com/massCodeIO/massCode/issues/233)) ([23bb935](https://github.com/massCodeIO/massCode/commit/23bb935e975fdbc9b3821195229685265fa89d9b))
+* **markdown:** render mermaid ([#231](https://github.com/massCodeIO/massCode/issues/231)) ([1df5319](https://github.com/massCodeIO/massCode/commit/1df53194e162b57bbbe610efba8c685ced9c86ec))
+* restore scroll to folder on init ([#234](https://github.com/massCodeIO/massCode/issues/234)) ([3fb66e4](https://github.com/massCodeIO/massCode/commit/3fb66e462d324130c0ce0c2dccb3945a86ad2a18))
+* **snippets:** use only markdown for presentation ([#232](https://github.com/massCodeIO/massCode/issues/232)) ([834327a](https://github.com/massCodeIO/massCode/commit/834327a20540847661346948974cda457bdcedeb))
+
+
+### Features
+
+* add snippets selection history  ([#238](https://github.com/massCodeIO/massCode/issues/238)) ([a7540c9](https://github.com/massCodeIO/massCode/commit/a7540c91fd9a62aa4dd2f8253f30be1b70cd5bff))
+* **main:menu:** add keymap to control editor font size ([#229](https://github.com/massCodeIO/massCode/issues/229)) ([cb17910](https://github.com/massCodeIO/massCode/commit/cb17910e87eb5275ab693f4fb8d4728cda971835))
+* **markdown:** persist preview state ([#236](https://github.com/massCodeIO/massCode/issues/236)) ([3fadd32](https://github.com/massCodeIO/massCode/commit/3fadd327a2f4c753124ccc956123a1b52617d176))
+* **snippets:** add snippet link ([#230](https://github.com/massCodeIO/massCode/issues/230)) ([5a744f5](https://github.com/massCodeIO/massCode/commit/5a744f5d482c783b7ee1e2ba4cb94dbea8b667e9))
+* use escape to exit from markdown, code & screenshot previews ([#235](https://github.com/massCodeIO/massCode/issues/235)) ([12c6906](https://github.com/massCodeIO/massCode/commit/12c69060af04bbd4d29f2c9b9826022ca6d72572))
+
+
+
 # [3.2.0](https://github.com/massCodeIO/massCode/compare/v3.1.0...v3.2.0) (2022-08-11)
 
 

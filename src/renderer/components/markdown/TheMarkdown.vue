@@ -98,7 +98,6 @@ const initMermaid = () => {
 }
 
 onMounted(() => {
-  initMermaid()
   render()
 })
 
@@ -200,6 +199,8 @@ const render = () => {
     : html.replace(re, `src="${path}/`)
 
   renderedHtml.value = html
+
+  nextTick(() => initMermaid())
 }
 
 const onLink = async (e: Event) => {

@@ -102,6 +102,8 @@ onMounted(() => {
 })
 
 const render = () => {
+  if (!props.value) return
+
   const raw = marked.parse(props.value)
 
   let html = sanitizeHtml(raw, {

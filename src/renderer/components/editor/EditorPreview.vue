@@ -47,9 +47,12 @@ import { computed, ref, onMounted, watch } from 'vue'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
 import { i18n, ipc, track } from '@/electron'
+import { useMagicKeys } from '@vueuse/core'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
+const { escape } = useMagicKeys()
+
 const srcDoc = ref()
 const height = computed(() => appStore.sizes.codePreviewHeight + 'px')
 
@@ -111,6 +114,10 @@ const onClickSnippetShowcase = () => {
   ipc.invoke('main:open-url', 'https://masscode.io/snippets')
   track('app/open-url', 'https://masscode.io/snippets')
 }
+
+watch(escape, () => {
+  snippetStore.isCodePreview = false
+})
 
 onMounted(() => {
   interact(previewRef.value).resizable({

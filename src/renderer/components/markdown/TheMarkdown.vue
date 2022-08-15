@@ -18,6 +18,7 @@ import mermaid from 'mermaid'
 import { useHljsTheme, goToSnippet } from '@/composable'
 import { useCodemirror } from '@/composable/codemirror'
 import { nanoid } from 'nanoid'
+import { useMagicKeys } from '@vueuse/core'
 
 const isDev = import.meta.env.DEV
 
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
+const { escape } = useMagicKeys()
 
 const renderedHtml = ref()
 
@@ -268,6 +270,10 @@ watch(
     render()
   }
 )
+
+watch(escape, () => {
+  snippetStore.isMarkdownPreview = false
+})
 
 init()
 

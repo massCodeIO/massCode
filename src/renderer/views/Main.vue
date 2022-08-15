@@ -34,6 +34,9 @@ const init = async () => {
 
   if (storedSnippetId) {
     snippetStore.setSnippetById(storedSnippetId)
+    appStore.addToHistory(storedSnippetId)
+  } else {
+    appStore.addToHistory(snippetStore.snippets[0]?.id)
   }
 
   if (storedFolderId) {

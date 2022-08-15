@@ -49,6 +49,8 @@ type MainMenuAction =
   | 'font-size-increase'
   | 'font-size-decrease'
   | 'font-size-reset'
+  | 'history-back'
+  | 'history-forward'
 
 type MainAction =
   | 'restart'

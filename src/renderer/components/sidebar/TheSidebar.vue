@@ -132,6 +132,7 @@ const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.setSnippetsByFolderIds(true)
   snippetStore.searchQuery = ''
+  appStore.addToHistory(snippetStore.snippets[0]?.id)
   emitter.emit('folder:click', id)
 }
 

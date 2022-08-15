@@ -62,6 +62,8 @@ export interface State {
   markdown: MarkdownSettings
   codePreview: CodePreviewSettings
   language: string
+  history: string[]
+  historyIndex: number
   isInit: boolean
   isSponsored: boolean
 }

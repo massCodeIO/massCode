@@ -89,7 +89,9 @@ const router = useRouter()
 const { left, right, escape } = useMagicKeys()
 const { isFullscreen, toggle } = useFullscreen()
 
-const slideIds = snippetStore.snippets.map(i => i.id)
+const slideIds = snippetStore.snippets
+  .filter(i => i.content[0].language === 'markdown')
+  .map(i => i.id)
 const currentIndex = computed(() =>
   snippetStore.snippets.findIndex(i => i.id === snippetStore.selectedId)
 )

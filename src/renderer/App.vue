@@ -132,7 +132,12 @@ watch(
 watch(
   () => [snippetStore.selectedId, snippetStore.fragment],
   () => {
-    snippetStore.isMarkdownPreview = false
+    if (
+      snippetStore.selected?.content[snippetStore.fragment].language !==
+      'markdown'
+    ) {
+      snippetStore.isMarkdownPreview = false
+    }
   }
 )
 

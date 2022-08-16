@@ -32,7 +32,10 @@
       "payPal": "Doação via PayPal"
     },
     "twitter": "Twitter",
-    "devTools": "Ferramentas do desenvolvedor"
+    "devTools": "Ferramentas do desenvolvedor",
+    "links": {
+       "snippets": "Coleção de snippet"
+    }
   },
   "file": {
     "label": "Arquivo",
@@ -61,12 +64,21 @@
     "label": "Editor",
     "copy": "Copiar para área de transferencia",
     "format": "Formato",
-    "previewCode": "Pré-visualizar código",
-    "previewScreenshot": "Pré-visualizar captura de tela"
+   "previewCode": "Pré-visualizar código",
+    "previewScreenshot": "Pré-visualizar captura de tela",
+    "previewMarkdown": "Pré-visualizar marcador",
+    "fontSizeIncrease": "Aumentar tamanho da fonte",
+    "fontSizeDecrease": "Diminuir tamanho da fonte",
+    "fontSizeReset": "Redefinir tamanho da fonte"
   },
   "markdown": {
     "label": "Marcador",
     "presentationMode": "Modo de apresentação",
-    "preview": "Visualizar"
+    "preview": "Pré-visualizar"
+  },
+  "history": {
+    "label": "Histórico",
+    "back": "Voltar",
+    "forward": "Avançar"
   }
 }

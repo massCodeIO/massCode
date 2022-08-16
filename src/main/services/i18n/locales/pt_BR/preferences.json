@@ -14,10 +14,11 @@
       "wordWrap": "Quebra de linha",
       "off": "Desligado"
     },
-    "tabSize": "Tamanho da guia",
+    "tabSize": "Tamanho da aba",
     "showInvisibles": "Mostrar itens ocultos",
     "highlightLine": "Destacar linha",
     "highlightGutter": "Destacar área em branco",
+    "matchBrackets": "Corresponder parênteses",
     "prettier": {
       "label": "Embelezar",
       "trailingComma": {
@@ -40,5 +41,9 @@
   },
   "language": {
     "label": "Idioma"
+ },
+  "markdown": {
+    "label": "Marcador",
+    "codeRenderer": "Renderizador de bloco de código"
   }
 }

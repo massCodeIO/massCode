@@ -2,11 +2,13 @@
   "button": {
     "moveStorage": "Mover itens armazenados",
     "openStorage": "Abrir armazenamento ",
+    "newStorage": "Novo armazenamento",
     "fromMassCodeV1": "Vindo do Masscode v1.0",
     "fromSnippetsLab": "Vindo do SnippetsLab",
     "confirm": "Confirmar",
     "cancel": "Cancelar",
-    "update": ["Ir para o GitHub", "OK"]
+    "update": ["Ir para o GitHub", "OK"],
+    "ok": "OK"
   },
   "newFolder": "Nova pasta",
   "newSnippet": "Novo snippet",
@@ -32,7 +34,7 @@
     "untitled": "snippet sem título",
     "plural": "Snippets",
     "emptyName": "Digite o nome do snippet",
-    "selectedMultiple": "{{count}} Snippets selecionados",
+    "selectedMultiple": "{{count}} snippets selecionados",
     "noSelected": "Nenhum snippet selecionado"
   },
   "fragment": "Fragmento",
@@ -54,5 +56,9 @@
   "restartApp": "Reiniciar massCode",
   "updateAvailable": "Atualização disponível",
   "hide": "Ocultar",
-  "show": "Mostrar"
+  "show": "Show",
+  "collapse-all": "Recolher todos",
+  "expand-all": "Expandir todos",
+  "restore": "Restaurar",
+  "copy-snippet-link": "Copiar link deste snippet"
 }

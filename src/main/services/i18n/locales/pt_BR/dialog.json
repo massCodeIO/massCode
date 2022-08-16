@@ -8,5 +8,6 @@
   "migrateConfirm": [
     "Tem certeza de que deseja migrar de {{name}}?",
     "Durante a migração, a biblioteca atual será substituída."
-  ]
+  ],
+  "createDb": "Por favor escolha outra pasta"
 }

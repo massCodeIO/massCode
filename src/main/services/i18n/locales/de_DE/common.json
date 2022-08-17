@@ -7,7 +7,10 @@
     "fromSnippetsLab": "Von SnippetsLab",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
-    "update": ["Nach GitHub", "OK"],
+    "update": [
+      "Nach GitHub",
+      "OK"
+    ],
     "ok": "OK"
   },
   "newFolder": "Neuer Ordner",

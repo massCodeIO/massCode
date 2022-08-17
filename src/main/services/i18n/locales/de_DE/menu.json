@@ -5,7 +5,10 @@
     "update": {
       "label": "Auf Updates prüfen...",
       "message": "Version {{newVersion}} steht zum download bereit.\nAktuelle Version ist {{oldVersion}}.",
-      "button": ["Zu Github", "OK"],
+      "button": [
+        "Zu Github",
+        "OK"
+      ],
       "noUpdate": "Es stehen aktuell keine Updates zur Verfügung."
     },
     "quit": "massCode beenden",

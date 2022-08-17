@@ -57,5 +57,7 @@
   "hide": "Hide",
   "show": "Show",
   "collapse-all": "Закрыть все",
-  "expand-all": "Открыть все"
+  "expand-all": "Открыть все",
+  "restore": "Восстановить",
+  "copy-snippet-link": "Скопировать ссылку"
 }

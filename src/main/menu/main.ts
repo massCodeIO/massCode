@@ -359,6 +359,36 @@ const editorMenu: MenuItemConstructorOptions[] = [
         'main-menu:preview-code'
       )
     }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeIncrease'),
+    accelerator: 'CommandOrControl+=',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-increase'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeDecrease'),
+    accelerator: 'CommandOrControl+-',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-decrease'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeReset'),
+    accelerator: 'CommandOrControl+0',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:font-size-reset'
+      )
+    }
   }
 ]
 
@@ -374,7 +404,7 @@ const markdownMenu: MenuItemConstructorOptions[] = [
   },
   {
     label: i18n.t('menu:markdown.presentationMode'),
-    accelerator: 'Control+CommandOrControl+P',
+    accelerator: 'Alt+CommandOrControl+P',
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send(
         'main-menu:presentation-mode'
@@ -416,6 +446,27 @@ const editMenu: MenuItemConstructorOptions[] = [
   }
 ]
 
+const historyMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:history.back'),
+    accelerator: 'CommandOrControl+[',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:history-back'
+      )
+    }
+  },
+  {
+    label: i18n.t('menu:history.forward'),
+    accelerator: 'CommandOrControl+]',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:history-forward'
+      )
+    }
+  }
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -440,6 +491,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:markdown.label'),
     submenu: markdownMenu
+  },
+  {
+    label: i18n.t('menu:history.label'),
+    submenu: historyMenu
   },
   {
     label: i18n.t('menu:help.label'),

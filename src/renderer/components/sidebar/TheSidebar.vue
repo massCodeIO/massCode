@@ -52,6 +52,7 @@
         v-model="folderStore.foldersTree"
         :selected-id="folderStore.selectedId"
         :context-menu-handler="contextMenuHandler"
+        :focus-handler="focusHandler"
         @update:model-value="onUpdate"
         @click:node="onClickFolder"
       >
@@ -81,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { onMounted, ref, watch } from 'vue'
 import type {
   SidebarSystemFolder,
@@ -100,6 +102,8 @@ import { useTagStore } from '@/store/tags'
 import { emitter, onAddNewFolder } from '@/composable'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
+import type { Snippet } from '@shared/types/main/db'
+import { onScrollToFolder } from './composable'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -128,6 +132,7 @@ const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.setSnippetsByFolderIds(true)
   snippetStore.searchQuery = ''
+  appStore.addToHistory(snippetStore.snippets[0]?.id)
   emitter.emit('folder:click', id)
 }
 
@@ -156,17 +161,35 @@ const onDrop = async (e: DragEvent, id: string) => {
 
   if (payload) {
     const snippetIds = JSON.parse(payload)
+
     for (const i of snippetIds) {
-      await snippetStore.patchSnippetsById(i, {
+      const isDeleted = snippetStore.snippets.find(s => s.id === i)?.isDeleted
+
+      const body: Partial<Snippet> = {
         folderId: id
-      })
+      }
+
+      if (isDeleted) body.isDeleted = false
+
+      await snippetStore.patchSnippetsById(i, body)
     }
-    snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
+
+    if (folderStore.selectedIds) {
+      snippetStore.getSnippetsByFolderIds(folderStore.selectedIds)
+    }
+
+    if (folderStore.selectedAlias) {
+      await snippetStore.setSnippetsByAlias(folderStore.selectedAlias)
+    }
   }
 }
 
 const onDragEnter = (id: string) => {
   folderStore.hoveredId = id
+}
+
+const focusHandler = (isFocused: Ref) => {
+  onScrollToFolder(isFocused)
 }
 
 onMounted(() => {

@@ -12,6 +12,9 @@ import { checkForUpdateWithInterval } from './services/update-check'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
+const gotTheLock = app.requestSingleInstanceLock()
+
+let mainWindow: BrowserWindow
 
 createDb()
 const apiServer = new ApiServer()
@@ -19,9 +22,14 @@ const apiServer = new ApiServer()
 subscribeToChannels()
 subscribeToDialog()
 
+if (!gotTheLock) {
+  // @ts-ignore
+  return app.quit()
+}
+
 function createWindow () {
   const bounds = store.app.get('bounds')
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
     ...bounds,
@@ -54,6 +62,16 @@ const storeBounds = debounce((mainWindow: BrowserWindow) => {
   store.app.set('bounds', mainWindow.getBounds())
 }, 300)
 
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('masscode', process.execPath, [
+      path.resolve(process.argv[1])
+    ])
+  }
+} else {
+  app.setAsDefaultProtocolClient('masscode')
+}
+
 app.whenReady().then(async () => {
   createWindow()
 
@@ -72,6 +90,22 @@ app.on('window-all-closed', function () {
 
 app.on('browser-window-focus', () => {
   BrowserWindow.getFocusedWindow()?.webContents.send('main:focus')
+})
+
+app.on('second-instance', (e, argv) => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
+
+  if (process.platform !== 'darwin') {
+    const url = argv.find(i => i.startsWith('masscode://'))
+    BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
+  }
+})
+
+app.on('open-url', (event, url) => {
+  BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
 })
 
 ipcMain.handle('main:restart-api', () => {

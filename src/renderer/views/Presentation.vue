@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { i18n, store } from '@/electron'
+import { i18n, store, track } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -89,7 +89,9 @@ const router = useRouter()
 const { left, right, escape } = useMagicKeys()
 const { isFullscreen, toggle } = useFullscreen()
 
-const slideIds = snippetStore.snippets.map(i => i.id)
+const slideIds = snippetStore.snippets
+  .filter(i => i.content[0].language === 'markdown')
+  .map(i => i.id)
 const currentIndex = computed(() =>
   snippetStore.snippets.findIndex(i => i.id === snippetStore.selectedId)
 )
@@ -153,6 +155,8 @@ watch(right, v => {
 watch(escape, v => {
   if (v) toHome()
 })
+
+track('presentation')
 </script>
 
 <style lang="scss" scoped>

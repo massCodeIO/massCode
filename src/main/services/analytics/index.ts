@@ -8,8 +8,6 @@ const isDev = process.env.NODE_ENV === 'development'
 const analytics = ua('UA-56182454-13')
 
 export const track = (event: TrackEvents, payload?: string) => {
-  if (isDev) return
-
   let os
   const p = platform()
 
@@ -21,5 +19,11 @@ export const track = (event: TrackEvents, payload?: string) => {
     ? `${version}/${os}/${event}/${payload}`
     : `${version}/${os}/${event}`
 
-  analytics.pageview(path).send()
+  if (isDev) {
+    if (process.env.DEBUG?.includes('analytics')) {
+      console.log('[analytics]:', path)
+    }
+  } else {
+    analytics.pageview(path).send()
+  }
 }

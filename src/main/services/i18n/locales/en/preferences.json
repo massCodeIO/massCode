@@ -41,5 +41,9 @@
   },
   "language": {
     "label": "Language"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Code block Renderer"
   }
 }

@@ -951,5 +951,8 @@
     pre {
       background-color: rgba(0, 0, 0, 0.15);
     }
+    .CodeMirror-gutter {
+      background-color: rgba(0, 0, 0, 0.03) !important;
+    }
   }
 }

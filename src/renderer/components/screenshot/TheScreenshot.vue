@@ -26,7 +26,8 @@
       <div class="right">
         <AppActionButton
           v-tooltip="i18n.t('saveScreenshot')"
-          @click="onSaveScreenshot">
+          @click="onSaveScreenshot"
+        >
           <UniconsFileDownload />
         </AppActionButton>
       </div>
@@ -109,6 +110,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useHljsTheme } from '@/composable'
 import { store, track, i18n } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
+import { useMagicKeys } from '@vueuse/core'
 
 const GUTTER_RIGHT_OFFSET = 10
 const GUTTER_WIDTH = 8
@@ -125,6 +127,7 @@ const props = defineProps<Props>()
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
+const { escape } = useMagicKeys()
 
 const frameRef = ref<HTMLElement>()
 const snippetRef = ref<HTMLElement>()
@@ -210,6 +213,10 @@ watch(
   },
   { deep: true }
 )
+
+watch(escape, () => {
+  snippetStore.isScreenshotPreview = false
+})
 
 onMounted(() => {
   interact(frameRef.value!).resizable({

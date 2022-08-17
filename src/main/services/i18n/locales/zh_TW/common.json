@@ -6,7 +6,8 @@
     "fromSnippetsLab": "來自 SnippetsLab",
     "confirm": "確認",
     "cancel": "取消",
-    "update": ["前往 GitHub", "OK"]
+    "update": ["前往 GitHub", "OK"],
+    "ok": "OK"
   },
   "newFolder": "新建資料夾",
   "newSnippet": "新建程式碼片段",
@@ -38,14 +39,14 @@
   "fragment": "子片段",
   "search": "搜尋",
   "line": "行",
-  "column": "列",
+  "column": "欄",
   "sidebar": {
     "inbox": "暫存區",
     "favorites": "收藏夾",
     "allSnippets": "所有的",
     "trash": "回收站",
     "untitled": "未命名資料夾",
-    "folders": "自定義資料夾",
+    "folders": "資料夾",
     "library": "庫",
     "tags": "標籤"
   },
@@ -54,5 +55,9 @@
   "restartApp": "重啟 massCode",
   "updateAvailable": "存在新版本",
   "hide": "隱藏",
-  "show": "顯示"
+  "show": "顯示",
+  "collapse-all": "全部展開",
+  "expand-all": "全部摺疊",
+  "restore": "回復",
+  "copy-snippet-link": "複製連結"
 }

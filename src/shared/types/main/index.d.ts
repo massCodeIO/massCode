@@ -21,6 +21,8 @@ type ContextMenuAction =
   | 'update:language'
   | 'collapse-all'
   | 'expand-all'
+  | 'restore-from-trash'
+  | 'copy-snippet-link'
   | 'none'
 
 export type ContextMenuType =
@@ -44,6 +46,11 @@ type MainMenuAction =
   | 'preview-markdown'
   | 'search'
   | 'sort-snippets'
+  | 'font-size-increase'
+  | 'font-size-decrease'
+  | 'font-size-reset'
+  | 'history-back'
+  | 'history-forward'
 
 type MainAction =
   | 'restart'
@@ -56,6 +63,7 @@ type MainAction =
   | 'prettier'
   | 'focus'
   | 'copy-to-assets'
+  | 'app-protocol'
 
 type ApiAction = 'snippet-create'
 

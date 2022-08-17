@@ -40,7 +40,7 @@
   "fragment": "フラグメント",
   "search": "検索",
   "line": "行",
-  "column": "列",
+  "column": "Column",
   "sidebar": {
     "inbox": "カテゴリなし",
     "favorites": "お気に入り",

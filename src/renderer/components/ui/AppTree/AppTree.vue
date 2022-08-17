@@ -26,6 +26,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { provide, ref, watch } from 'vue'
 import { store } from './composable'
 import type { Node } from './types'
@@ -37,6 +38,7 @@ interface Props {
   createGhostEl?: Function
   // Колбек должен вернуть состояние для props.isHighlighted AppTreeNode
   contextMenuHandler: () => Promise<boolean>
+  focusHandler?: (isFocused: Ref) => void
 }
 
 interface Emits {
@@ -68,6 +70,7 @@ provide('updateValue', updateValue)
 provide('clickNode', clickNode)
 provide('contextMenuHandler', props.contextMenuHandler)
 provide('isHoveredByIdDisabled', isHoveredByIdDisabled)
+provide('focusHandler', props.focusHandler)
 
 defineExpose({
   setHoveredNodeId

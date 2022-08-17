@@ -65,11 +65,20 @@
     "copy": "Copy Snippet to Clipboard",
     "format": "Format",
     "previewCode": "Preview Code",
-    "previewScreenshot": "Preview Screenshot"
+    "previewScreenshot": "Preview Screenshot",
+    "previewMarkdown": "Preview Markdown",
+    "fontSizeIncrease": "Font Size Increase",
+    "fontSizeDecrease": "Font Size Decrease",
+    "fontSizeReset": "Font Size Reset"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Presentation Mode",
     "preview": "Preview"
+  },
+  "history": {
+    "label": "History",
+    "back": "Back",
+    "forward": "Forward"
   }
 }

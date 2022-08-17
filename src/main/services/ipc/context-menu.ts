@@ -76,6 +76,17 @@ export const subscribeToContextMenu = () => {
           },
           { type: 'separator' },
           {
+            label: i18n.t('copy-snippet-link'),
+            click: () => {
+              resolve({
+                action: 'copy-snippet-link',
+                type,
+                data: true
+              })
+            }
+          },
+          { type: 'separator' },
+          {
             label: i18n.t('duplicate'),
             click: () => {
               resolve({
@@ -155,6 +166,16 @@ export const subscribeToContextMenu = () => {
                   data: undefined
                 })
               }
+            }
+          },
+          {
+            label: i18n.t('restore'),
+            click: () => {
+              resolve({
+                action: 'restore-from-trash',
+                type,
+                data: undefined
+              })
             }
           }
         ]

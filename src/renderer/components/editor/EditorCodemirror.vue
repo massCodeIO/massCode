@@ -38,7 +38,15 @@ import 'codemirror/addon/selection/active-line'
 import 'codemirror/addon/scroll/simplescrollbars'
 import 'codemirror/addon/scroll/simplescrollbars.css'
 import 'codemirror/lib/codemirror.css'
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { i18n, ipc, track } from '@/electron'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
@@ -232,6 +240,11 @@ const clearAllMarks = () => {
   }
 }
 
+const clearHistory = () => {
+  if (!editor) return
+  editor.clearHistory()
+}
+
 const format = async () => {
   const availableLang: Language[] = [
     'css',
@@ -285,22 +298,15 @@ const hideScrollbar = useDebounceFn(() => {
 }, 1000)
 
 watch(
-  () => props.modelValue,
+  () => [props.snippetId, props.fragmentIndex],
   () => {
     setValue(props.modelValue)
 
     if (snippetStore.searchQuery) {
       findAll(snippetStore.searchQuery)
     }
-  }
-)
 
-watch(
-  () => [props.snippetId, props.fragmentIndex].concat(),
-  () => {
-    if (editor) {
-      editor.clearHistory()
-    }
+    clearHistory()
   }
 )
 
@@ -319,6 +325,13 @@ watch(
     } else {
       clearAllMarks()
     }
+  }
+)
+
+watch(
+  () => appStore.editor.fontSize,
+  () => {
+    nextTick(() => editor.refresh())
   }
 )
 

@@ -65,11 +65,19 @@
     "copy": "Скопировать сниппет в буфер",
     "format": "Форматировать",
     "previewCode": "Просмотр результата HTML/CSS",
-    "previewScreenshot": "Просмотр скриншота"
+    "previewScreenshot": "Просмотр скриншота",
+    "fontSizeIncrease": "Увеличить шрифт",
+    "fontSizeDecrease": "Уменьшить шрифт",
+    "fontSizeReset": "Сбросить размер шрифта"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Режим презентации",
     "preview": "Просмотр Markdown"
+  },
+  "history": {
+    "label": "История",
+    "back": "Назад",
+    "forward": "Вперед"
   }
 }

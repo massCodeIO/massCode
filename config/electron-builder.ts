@@ -3,10 +3,22 @@ import type { Configuration } from 'electron-builder'
 import path from 'path'
 
 const isSponsored = process.env.VITE_SPONSORED === 'true'
+const isTestBuild = process.env.TEST_BUILD === 'true'
+const testMacArch = process.env.TEST_MAC_ARCH
 
 const artifactName = isSponsored
   ? '${productName}-${version}-${arch}-sponsored.${ext}'
   : undefined
+
+const macTarget = [
+  { target: 'dmg', arch: 'arm64' },
+  { target: 'dmg', arch: 'x64' }
+]
+
+if (isTestBuild) {
+  if (testMacArch === 'arm64') macTarget.pop()
+  if (testMacArch === 'x64') macTarget.shift()
+}
 
 export default {
   appId: 'io.masscode.app',
@@ -15,6 +27,7 @@ export default {
   directories: {
     output: path.resolve(__dirname, '../../dist')
   },
+  afterSign: !isTestBuild ? 'build/scripts/notarize.js' : undefined,
   nsis: {
     oneClick: false,
     perMachine: false,
@@ -22,11 +35,11 @@ export default {
     shortcutName: 'massCode'
   },
   mac: {
-    target: [
-      { target: 'dmg', arch: 'arm64' },
-      { target: 'dmg', arch: 'x64' }
-    ],
-    icon: 'config/icons/icon.icns'
+    target: macTarget,
+    icon: 'config/icons/icon.icns',
+    category: 'public.app-category.productivity',
+    hardenedRuntime: true,
+    entitlements: 'build/entitlements.mac.inherit.plist'
   },
   win: {
     target: 'nsis',
@@ -39,6 +52,12 @@ export default {
   extraMetadata: {
     main: 'src/main/index.js'
   },
+  protocols: [
+    {
+      name: 'massCode',
+      schemes: ['masscode']
+    }
+  ],
   files: [
     '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}',
     '!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}',

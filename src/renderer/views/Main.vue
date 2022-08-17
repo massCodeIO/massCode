@@ -13,6 +13,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'
 import { useAppStore } from '@/store/app'
 import { computed } from 'vue'
+import { emitter } from '@/composable'
 
 const folderStore = useFolderStore()
 const snippetStore = useSnippetStore()
@@ -33,6 +34,9 @@ const init = async () => {
 
   if (storedSnippetId) {
     snippetStore.setSnippetById(storedSnippetId)
+    appStore.addToHistory(storedSnippetId)
+  } else {
+    appStore.addToHistory(snippetStore.snippets[0]?.id)
   }
 
   if (storedFolderId) {
@@ -43,6 +47,8 @@ const init = async () => {
   if (storedFolderAlias) {
     snippetStore.setSnippetsByAlias(storedFolderAlias)
   }
+
+  emitter.emit('scroll-to:folder', folderStore.selectedId!)
 
   appStore.isInit = true
 }

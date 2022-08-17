@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="listRef"
     class="sidebar-list"
     :class="{
       'is-scrollable': isScrollable || modelValue === 'tags',
@@ -70,6 +71,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const bodyRef = ref<HTMLElement>()
+const listRef = ref<HTMLElement>()
 
 const activeTab = computed({
   get: () => props.modelValue,
@@ -83,10 +85,21 @@ const onClickTab = (tab: Tab) => {
 }
 
 emitter.on('scroll-to:folder', id => {
+  if (props.isSystem) return
+
   nextTick(() => {
     const el = document.querySelector<HTMLElement>(`[data-id='${id}']`)
-    if (el) {
-      setScrollPosition(bodyRef.value!, el.getBoundingClientRect().top + 210)
+
+    if (!el) return
+
+    const bounding = el.getBoundingClientRect()
+    const listHeight = listRef.value!.offsetHeight
+
+    const OFFSET = 210 // высота списка системных папок + заголовки
+    const SHIFT = bounding.top - OFFSET
+
+    if (SHIFT > listHeight || bounding.top < 0) {
+      setScrollPosition(bodyRef.value!, SHIFT)
     }
   })
 })

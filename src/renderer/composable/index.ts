@@ -4,11 +4,10 @@ import type { EmitterEvents } from '@shared/types/renderer/composable'
 import { API_PORT } from '../../main/config'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
-import { i18n, ipc, store, track } from '@/electron'
+import { ipc, track } from '@/electron'
 import type { NotificationRequest } from '@shared/types/main'
 import type { Snippet, SnippetsSort } from '@shared/types/main/db'
-import axios from 'axios'
-import { createToast } from 'vercel-toast'
+import { useAppStore } from '@/store/app'
 
 export const useApi = createFetch({
   baseUrl: `http://localhost:${API_PORT}`
@@ -88,6 +87,53 @@ export const onCopySnippet = () => {
   track('snippets/copy')
 }
 
+export const goToSnippet = async (snippetId: string, history?: boolean) => {
+  if (!snippetId) return
+
+  const folderStore = useFolderStore()
+  const snippetStore = useSnippetStore()
+  const appStore = useAppStore()
+
+  const snippet = snippetStore.findSnippetById(snippetId)
+
+  if (!snippet) return
+
+  folderStore.selectId(snippet.folderId)
+
+  expandParentFolders(snippet.folderId)
+
+  snippetStore.fragment = 0
+
+  await snippetStore.getSnippetsById(snippetId)
+  await snippetStore.setSnippetsByFolderIds()
+
+  if (history) appStore.history.push(snippetId)
+
+  emitter.emit('folder:click', snippet.folderId)
+  emitter.emit('scroll-to:snippet', snippetId)
+  emitter.emit('scroll-to:folder', snippet.folderId)
+}
+
+export const expandParentFolders = (folderId: string) => {
+  const folderStore = useFolderStore()
+
+  const findParentAndExpand = async (id: string) => {
+    const folder = folderStore.folders.find(i => i.id === id)
+
+    if (!folder) return
+
+    await folderStore.patchFoldersById(folder.id, {
+      isOpen: true
+    })
+
+    if (folder.parentId) {
+      findParentAndExpand(folder.parentId)
+    }
+  }
+
+  findParentAndExpand(folderId)
+}
+
 export const setScrollPosition = (el: HTMLElement, offset: number) => {
   const ps = el.querySelector('.ps')
   if (ps) ps.scrollTop = offset
@@ -131,63 +177,7 @@ export const useHljsTheme = async (theme: 'dark' | 'light') => {
   document.head.appendChild(style)
 }
 
-export const checkForRemoteNotification = async () => {
-  const showMessage = (message: string, date: string | number) => {
-    const el = document.createElement('div')
-    el.innerHTML = message
-
-    const links = el.querySelectorAll('a')
-
-    links.forEach(i => {
-      i.addEventListener('click', e => {
-        e.preventDefault()
-        ipc.invoke('main:open-url', i.href)
-        track('app/notify', i.innerHTML)
-      })
-    })
-
-    createToast(el, {
-      action: {
-        text: i18n.t('close'),
-        callback (toast) {
-          toast.destroy()
-          store.app.set('prevRemoteNotice', date)
-          track('app/notify', `remoteNotification-${date}`)
-        }
-      }
-    })
-  }
-
-  const checkAndShow = async () => {
-    try {
-      const headers = {
-        'Cache-Control': 'no-cache',
-        Expires: 0
-      }
-
-      const { data } = await axios.get<{ message: string; date: number }>(
-        'https://masscode.io/notification.json',
-        { headers }
-      )
-
-      if (!data) return
-
-      const { message, date } = data
-      const prevDate = store.app.get('prevRemoteNotice')
-
-      if (prevDate) {
-        if (prevDate < date) showMessage(message, date)
-      } else {
-        showMessage(message, date)
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  checkAndShow()
-
-  setInterval(() => {
-    checkAndShow()
-  }, 1000 * 60 * 180) // 3 часа
+export const onClickUrl = (url: string) => {
+  ipc.invoke('main:open-url', url)
+  track('app/open-url', url)
 }

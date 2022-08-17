@@ -39,11 +39,13 @@ import type {
   ContextMenuRequest,
   ContextMenuResponse
 } from '@shared/types/main'
-import { onClickOutside } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { onClickOutside, useClipboard } from '@vueuse/core'
+import { computed, onUnmounted, ref } from 'vue'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { useTagStore } from '@/store/tags'
 import { isToday, format } from 'date-fns'
+import { emitter } from '@/composable'
+import { useAppStore } from '@/store/app'
 
 interface Props {
   id: string
@@ -58,6 +60,7 @@ const props = defineProps<Props>()
 const snippetStore = useSnippetStore()
 const folderStore = useFolderStore()
 const tagStore = useTagStore()
+const appStore = useAppStore()
 
 const itemRef = ref()
 const isFocused = ref(false)
@@ -104,6 +107,7 @@ const onClickSnippet = (e: MouseEvent) => {
     snippetStore.selectedMultiple = []
     snippetStore.getSnippetsById(props.id)
     tagStore.getTags()
+    appStore.addToHistory(props.id)
   }
 }
 
@@ -207,6 +211,30 @@ const onClickContextMenu = async () => {
     }
   }
 
+  if (action === 'restore-from-trash') {
+    if (snippetStore.selectedIds.length) {
+      for (const id of snippetStore.selectedIds) {
+        await snippetStore.patchSnippetsById(id, {
+          isDeleted: false
+        })
+      }
+    } else {
+      await snippetStore.patchSnippetsById(props.id, {
+        isDeleted: false
+      })
+    }
+
+    await snippetStore.getSnippets()
+    snippetStore.setSnippetsByAlias('trash')
+    track('snippets/restore-from-trash')
+  }
+
+  if (action === 'copy-snippet-link') {
+    const { copy } = useClipboard({ source: `masscode://snippets/${props.id}` })
+    copy()
+    track('snippets/copy-link')
+  }
+
   isHighlighted.value = false
   isFocused.value = false
   snippetStore.isContextState = false
@@ -256,6 +284,18 @@ const onDragStart = (e: DragEvent) => {
 const onDragEnd = () => {
   folderStore.hoveredId = ''
 }
+
+const onScrollToSnippet = () => {
+  if (snippetStore.selectedId !== props.id) {
+    isFocused.value = false
+  }
+}
+
+emitter.on('scroll-to:snippet', onScrollToSnippet)
+
+onUnmounted(() => {
+  emitter.off('scroll-to:snippet', onScrollToSnippet)
+})
 </script>
 
 <style lang="scss" scoped>

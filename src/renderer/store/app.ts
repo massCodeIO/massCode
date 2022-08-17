@@ -1,3 +1,4 @@
+import { goToSnippet } from '@/composable'
 import { platform, store } from '@/electron'
 import type { MarkdownSettings } from '@shared/types/main/store'
 import type {
@@ -10,7 +11,7 @@ import type {
 import { defineStore } from 'pinia'
 import { version } from '../../../package.json'
 
-const EDITOR_DEFAULTS: EditorSettings = {
+export const EDITOR_DEFAULTS: EditorSettings = {
   fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
   fontSize: 12,
   tabSize: 2,
@@ -35,8 +36,11 @@ const CODE_PREVIEW_DEFAULTS: CodePreviewSettings = {
 }
 
 const MARKDOWN_DEFAULTS: MarkdownSettings = {
-  presentationScale: 1.3
+  presentationScale: 1.3,
+  codeRenderer: 'highlight.js'
 }
+
+const HISTORY_LIMIT = 50
 
 export const useAppStore = defineStore('app', {
   state: (): State => ({
@@ -63,6 +67,8 @@ export const useAppStore = defineStore('app', {
     markdown: MARKDOWN_DEFAULTS,
     selectedPreferencesMenu: 'storage',
     language: store.preferences.get('language'),
+    history: [],
+    historyIndex: 0,
     version,
     platform: platform()
   }),
@@ -90,6 +96,27 @@ export const useAppStore = defineStore('app', {
     setLang (lang: string) {
       this.language = lang
       store.preferences.set('language', lang)
+    },
+    addToHistory (snippetId: string) {
+      if (!snippetId) return
+      if (this.history[this.history.length - 1] === snippetId) return
+
+      if (this.history.length === HISTORY_LIMIT) this.history.shift()
+
+      this.history.push(snippetId)
+      this.historyIndex = this.history.length - 1
+    },
+    historyBack () {
+      if (this.historyIndex === 0) return
+
+      this.historyIndex = this.historyIndex - 1
+      goToSnippet(this.history[this.historyIndex])
+    },
+    historyForward () {
+      if (this.historyIndex === this.history.length - 1) return
+
+      this.historyIndex = this.historyIndex + 1
+      goToSnippet(this.history[this.historyIndex])
     }
   }
 })

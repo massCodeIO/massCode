@@ -27,7 +27,7 @@
 import router from '@/router'
 import { nextTick, ref, watch } from 'vue'
 import { ipc, store, track, i18n } from './electron'
-import { useAppStore } from './store/app'
+import { EDITOR_DEFAULTS, useAppStore } from './store/app'
 import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
 import {
@@ -38,15 +38,17 @@ import {
   emitter,
   onCreateSnippet,
   onAddDescription,
-  checkForRemoteNotification
+  goToSnippet
 } from '@/composable'
-import { createToast, destroyAllToasts } from 'vercel-toast'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
-import { addDays, isSameDay, isYesterday } from 'date-fns'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { loadGrammars } from '@/components/editor/grammars'
+import {
+  useSupportNotification,
+  checkForRemoteNotification
+} from '@/composable/notification'
 
 // По какой то причине необходимо явно установить роут в '/'
 // для корректного поведения в продакшен сборке
@@ -57,8 +59,9 @@ const appStore = useAppStore()
 const snippetStore = useSnippetStore()
 const route = useRoute()
 
+const { showSupportToast } = useSupportNotification()
+
 const isUpdateAvailable = ref(false)
-const isSupportToastShow = ref(false)
 const isDev = import.meta.env.DEV
 
 const init = async () => {
@@ -76,7 +79,10 @@ const init = async () => {
   appStore.sizes.sidebar = store.app.get('sidebarWidth')
   appStore.sizes.snippetList = store.app.get('snippetListWidth')
   appStore.screenshot = store.preferences.get('screenshot')
-  appStore.markdown = store.preferences.get('markdown')
+  appStore.markdown = {
+    ...appStore.markdown,
+    ...store.preferences.get('markdown')
+  }
 
   snippetStore.sort = store.app.get('sort')
 
@@ -115,55 +121,6 @@ const trackAppUpdate = () => {
   store.app.set('version', appStore.version)
 }
 
-// Yes, this is that annoying piece of crap code.
-// You can delete it, but know that you hurt me.
-const showSupportToast = () => {
-  if (appStore.isSponsored) return
-
-  const addNextNotice = () => {
-    store.app.set('nextSupportNotice', addDays(new Date(), 7).valueOf())
-  }
-
-  const date = store.app.get('nextSupportNotice')
-
-  if (!date) addNextNotice()
-
-  const isShow = isSameDay(new Date(), date) || isYesterday(date)
-
-  if (!isShow) return
-  if (isSupportToastShow.value) return
-
-  const message = document.createElement('div')
-  message.innerHTML = i18n.t('special:supportMessage', {
-    tagStart: '<a id="donate" href="#">',
-    tagEnd: '</a>'
-  })
-
-  createToast(message, {
-    action: {
-      text: i18n.t('close'),
-      callback (toast) {
-        toast.destroy()
-        addNextNotice()
-        isSupportToastShow.value = false
-        track('app/notify', 'support-close')
-      }
-    }
-  })
-
-  const d = document.querySelector('#donate')
-
-  d?.addEventListener('click', () => {
-    ipc.invoke('main:open-url', 'https://masscode.io/donate')
-    destroyAllToasts()
-    addNextNotice()
-    isSupportToastShow.value = false
-    track('app/notify', 'support-go-to-masscode')
-  })
-
-  isSupportToastShow.value = true
-}
-
 init()
 
 watch(
@@ -175,7 +132,12 @@ watch(
 watch(
   () => [snippetStore.selectedId, snippetStore.fragment],
   () => {
-    snippetStore.isMarkdownPreview = false
+    if (
+      snippetStore.selected?.content[snippetStore.fragment].language !==
+      'markdown'
+    ) {
+      snippetStore.isMarkdownPreview = false
+    }
   }
 )
 
@@ -190,12 +152,29 @@ watch(
   }
 )
 
+watch(
+  () => appStore.editor,
+  v => {
+    store.preferences.set('editor', { ...v })
+  },
+  { deep: true }
+)
+
 ipc.on('main:update-available', () => {
   isUpdateAvailable.value = true
 })
 
 ipc.on('main:focus', () => {
+  // Yes, this is that annoying piece of crap code.
+  // You can delete it, but know that you hurt me.
   showSupportToast()
+})
+
+ipc.on('main:app-protocol', (event, payload: string) => {
+  if (/^masscode:\/\/snippets/.test(payload)) {
+    const snippetId = payload.split('/').pop()
+    if (snippetId) goToSnippet(snippetId, true)
+  }
 })
 
 ipc.on('main-menu:preferences', () => {
@@ -223,7 +202,6 @@ ipc.on('main-menu:preview-markdown', async () => {
 ipc.on('main-menu:presentation-mode', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
     router.push('/presentation')
-    track('snippets/presentation-mode')
   }
 })
 
@@ -249,6 +227,30 @@ ipc.on('main-menu:sort-snippets', (event, sort) => {
 
 ipc.on('main-menu:add-description', async () => {
   await onAddDescription()
+})
+
+ipc.on('main-menu:font-size-increase', async () => {
+  appStore.editor.fontSize += 1
+  emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:font-size-decrease', async () => {
+  if (appStore.editor.fontSize === 1) return
+  appStore.editor.fontSize -= 1
+  emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:font-size-reset', async () => {
+  appStore.editor.fontSize = EDITOR_DEFAULTS.fontSize
+  emitter.emit('editor:refresh', true)
+})
+
+ipc.on('main-menu:history-back', async () => {
+  appStore.historyBack()
+})
+
+ipc.on('main-menu:history-forward', async () => {
+  appStore.historyForward()
 })
 
 ipc.on('api:snippet-create', (event, body: Snippet) => {

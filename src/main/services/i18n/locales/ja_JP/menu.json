@@ -66,11 +66,20 @@
     "format": "フォーマット",
     "previewMarkdown": "Markdownをプレビュー",
     "previewCode": "コードをプレビュー",
-    "previewScreenshot": "スクリーンショットをプレビュー"
+    "previewScreenshot": "スクリーンショットをプレビュー",
+    "fontSizeIncrease": "フォントを拡大",
+    "fontSizeDecrease": "フォントを縮小",
+    "fontSizeReset": "フォントサイズをリセット"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "プレゼンテーションモード",
     "preview": "プレビュー"
+  },
+  "history": {
+    "label": "履歴",
+    "back": "戻る",
+    "forward": "進む"
+  }
   }
 }

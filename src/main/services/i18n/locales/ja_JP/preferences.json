@@ -41,5 +41,9 @@
   },
   "language": {
     "label": "表示言語"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "コードブロックレンダラ"
   }
 }

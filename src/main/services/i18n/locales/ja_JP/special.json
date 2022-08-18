@@ -10,7 +10,11 @@
         "サポートされていない言語のスニペットは、デフォルトのPlain Textに設定されます。"
       ]
     },
-    "htmlCssPreview": "HTMLやCSS言語によるフラグメントを追加して、結果を表示することができます。"
+    "htmlCssPreview": "HTMLやCSS言語によるフラグメントを追加して、結果を表示することができます。",
+    "codeBlockRenderer": [
+      "Codemirrorを使用する場合、コードブロックに設定する言語は下記対応言語の中からのみ選択できます。",
+      "対応言語一覧"
+    ]
   },
   "success": {
     "migrate": "データの移行が完了しました。"
@@ -20,6 +24,6 @@
     "folderNotContainDb": "フォルダには \"db.json\" が存在しません。"
   },
   "unsponsored": "サポートしていません",
-  "supportMessage": "やあ！アントンです。👋<br><br>\nmassCodeを使ってくれてありがとう。もしあなたがこのソフトを気に入ったのなら、ぜひ{{-tagStart}}寄付{{-tagEnd}}をお願いします！。 このプロジェクトを開発し続けるための力になります。",
-  "snippetsShowcase": "スニペットショーケース"
+  "supportMessage": "やあ！アントンです。👋<br><br>\nmassCodeを使ってくれてありがとう。もしあなたがこのソフトを気に入ったのなら、ぜひ{{-tagStart}}寄付{{-tagEnd}}をお願いします！。 massCodeを開発し続けるための力になります。",
+  "snippetsShowcase": "スニペットライブラリ"
 }

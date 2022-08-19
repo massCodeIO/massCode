@@ -5,7 +5,10 @@
     "update": {
       "label": "アップデートがあるか確認",
       "message": "バージョン {{newVersion}} がダウンロード可能です。\n現在使用しているバージョンは {{oldVersion}} です。",
-      "button": ["Githubを開く", "OK"],
+      "button": [
+        "Githubを開く",
+        "OK"
+      ],
       "noUpdate": "アップデートはありません。"
     },
     "quit": "massCodeを終了",
@@ -80,6 +83,5 @@
     "label": "履歴",
     "back": "戻る",
     "forward": "進む"
-  }
   }
 }

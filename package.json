@@ -20,7 +20,8 @@
     "generate:language-readme": "node build/scripts/generate-language-readme.js ",
     "copy:plist": "copyfiles *.plist build",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "preinstall": "npx only-allow pnpm"
   },
   "repository": "https://github.com/massCodeIO/massCode",
   "author": {
@@ -124,6 +125,9 @@
     "unplugin-vue-components": "^0.18.1",
     "vite": "^2.9.6",
     "vue-tsc": "^0.30.6"
+  },
+  "engines": {
+    "pnpm": ">=6.32.9 <7"
   },
   "volta": {
     "node": "16.15.0"

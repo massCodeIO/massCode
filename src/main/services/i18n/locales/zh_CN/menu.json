@@ -66,11 +66,19 @@
     "format": "格式化",
     "previewCode": "预览 HTML 和 CSS",
     "previewScreenshot": "生成并预览代码截图",
-    "previewMarkdown": "预览"
+    "previewMarkdown": "预览 Markdown",
+    "fontSizeIncrease": "增加字体大小",
+    "fontSizeDecrease": "减小字体大小",
+    "fontSizeReset": "重置字体大小"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "演示模式",
     "preview": "预览模式"
+  },
+  "history": {
+    "label": "历史记录",
+    "back": "后退",
+    "forward": "前进"
   }
 }

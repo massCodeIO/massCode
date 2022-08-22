@@ -19,6 +19,9 @@ export const onAddNewSnippet = async () => {
   const folderStore = useFolderStore()
   const snippetStore = useSnippetStore()
 
+  snippetStore.fragment = 0
+  snippetStore.isMarkdownPreview = false
+
   await snippetStore.addNewSnippet()
 
   if (folderStore.selectedId) {

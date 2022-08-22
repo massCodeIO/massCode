@@ -339,6 +339,10 @@ emitter.on('snippet:format', () => format())
 
 onMounted(() => {
   init()
+
+  window.addEventListener('resize', () => {
+    forceRefresh.value = Math.random()
+  })
 })
 
 onUnmounted(() => {

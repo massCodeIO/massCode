@@ -105,7 +105,6 @@ This is a list of language that supports in massCode.
 - PHP (Blade Template)
 - Pig
 - Plain Text
-- Plain Text
 - Powershell
 - Praat
 - Prisma

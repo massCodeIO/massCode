@@ -29,7 +29,8 @@
     },
     "donate": {
       "openCollective": "通过 Open Collective 捐赠",
-      "payPal": "通过 PayPal 捐赠"
+      "payPal": "通过 PayPal 捐赠",
+      "gumroad": "通过 Gumroad 捐赠(Visa、Mastercard…)"
     },
     "twitter": "访问作者 Twitter",
     "devTools": "开发者工具",

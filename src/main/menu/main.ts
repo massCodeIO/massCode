@@ -1,7 +1,7 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { shell, dialog, BrowserWindow } from 'electron'
-import { version, repository } from '../../../package.json'
+import { version } from '../../../package.json'
 import os from 'os'
 import { checkForUpdate } from '../services/update-check'
 import { store } from '../store'
@@ -66,7 +66,7 @@ MenuItemConstructorOptions
         )
 
         if (buttonId === 0) {
-          shell.openExternal(`${repository}/releases`)
+          shell.openExternal('https://masscode.io/download/latest-release.html')
         }
       } else {
         dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {

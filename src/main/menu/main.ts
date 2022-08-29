@@ -50,8 +50,6 @@ MenuItemConstructorOptions
         const buttonId = dialog.showMessageBoxSync(
           BrowserWindow.getFocusedWindow()!,
           {
-            // message: `Version ${newVersion} is now available for download.\nYour version is ${version}.`,
-            // buttons: ['Go to GitHub', 'OK'],
             message: i18n.t('menu:app.update.message', {
               newVersion,
               oldVersion: version
@@ -142,6 +140,12 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: i18n.t('menu:help.twitter'),
+    click: () => {
+      shell.openExternal('https://twitter.com/anton_reshetov')
+    }
+  },
+  {
     type: 'separator'
   },
   {
@@ -214,15 +218,15 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: i18n.t('menu:help.donate.payPal'),
+    label: i18n.t('menu:help.donate.gumroad'),
     click: () => {
-      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
+      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
     }
   },
   {
-    label: i18n.t('menu:help.twitter'),
+    label: i18n.t('menu:help.donate.payPal'),
     click: () => {
-      shell.openExternal('https://twitter.com/anton_reshetov')
+      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
     }
   },
   {

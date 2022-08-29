@@ -29,7 +29,8 @@
     },
     "donate": {
       "openCollective": "Donate on Open Collective",
-      "payPal": "Donate via PayPal"
+      "payPal": "Donate via PayPal",
+      "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
     "devTools": "Toggle Developer Tools",

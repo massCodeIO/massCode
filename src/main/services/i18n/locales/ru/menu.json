@@ -29,7 +29,8 @@
     },
     "donate": {
       "openCollective": "Пожертвовать через Open Collective",
-      "payPal": "Пожертвовать через PayPal"
+      "payPal": "Пожертвовать через PayPal",
+      "gumroad": "Пожертвовать через Gumroad (Visa, Mastercard, и тд.)"
     },
     "twitter": "Twitter",
     "devTools": "Открыть инструменты разработчика",

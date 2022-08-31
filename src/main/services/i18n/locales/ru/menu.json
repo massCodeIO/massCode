@@ -5,7 +5,7 @@
     "update": {
       "label": "Проверить обновления....",
       "message": "Версия {{newVersion}} доступна для скачивания.\nТекущая версия {{oldVersion}}.",
-      "button": ["Перейти на GitHub", "OK"],
+      "button": ["Перейти для загрузки", "OK"],
       "noUpdate": "В настоящее время нет доступных обновлений."
     },
     "quit": "Выйти из massCode",
@@ -29,7 +29,8 @@
     },
     "donate": {
       "openCollective": "Пожертвовать через Open Collective",
-      "payPal": "Пожертвовать через PayPal"
+      "payPal": "Пожертвовать через PayPal",
+      "gumroad": "Пожертвовать через Gumroad (Visa, Mastercard, и тд.)"
     },
     "twitter": "Twitter",
     "devTools": "Открыть инструменты разработчика",

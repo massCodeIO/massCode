@@ -31,6 +31,19 @@
   <a href="https://github.com/massCodeIO/assistant-alfred">Alfred</a>
 </p>
 
+<p align="center">
+  <strong>SPONSORS</strong>
+</p>
+
+<p align="center">
+  <a href="https://m.do.co/c/f2bb3bfab2e6">
+    <img src='.github/assets/DO.svg'>
+  </a>
+  &nbsp;
+  <a href="https://mysigmail.com/?ref=github/massCodeIO">
+    <img src='.github/assets/MySigMail.svg'>
+  </a>
+</p>
 
 ## Support
 
@@ -88,6 +101,8 @@ The goal of creating this application was mostly my own growth as a developer. A
 ## Follow
  - News and updates on [Twitter](https://twitter.com/anton_reshetov).
  - [Discussions](https://github.com/massCodeIO/massCode/discussions).
+
+![](.github/assets/subscribe.gif)
 
 ## Other
 You can also [download](https://github.com/antonreshetov/massCode) massCode v1.

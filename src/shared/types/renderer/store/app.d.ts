@@ -16,6 +16,8 @@ export interface AppSizes {
   titlebar: number
   sidebar: number
   snippetList: number
+  minWidth: number
+  maxWidth: number
   codePreviewHeight: number
   editor: {
     titleHeight: number

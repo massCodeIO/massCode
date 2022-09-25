@@ -197,10 +197,10 @@ onMounted(() => {
     allowFrom: gutterRef.value,
     onmove: e => {
       const { pageX } = e
-      const minWidth = 100
-
-      if (pageX < minWidth) return
       const width = Math.floor(pageX)
+      if (width < appStore.sizes.minWidth || width > appStore.sizes.maxWidth) {
+        return
+      }
       appStore.sizes.sidebar = width
       store.app.set('sidebarWidth', width)
     }
@@ -253,6 +253,9 @@ watch(
     align-items: center;
     justify-content: flex-end;
     padding: 0 var(--spacing-xs);
+  }
+  .folder {
+    overflow: hidden;
   }
 }
 </style>

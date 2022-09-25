@@ -84,5 +84,8 @@ onUnmounted(() => {
 }
 .name {
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

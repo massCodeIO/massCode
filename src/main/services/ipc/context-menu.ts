@@ -183,22 +183,22 @@ export const subscribeToContextMenu = () => {
         if (type === 'folder' || type === 'all' || type === 'inbox') {
           defaultMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         if (type === 'favorites') {
           favoritesMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         if (type === 'trash') {
           trashMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         menu.on('menu-will-close', () => {
@@ -381,22 +381,22 @@ export const subscribeToContextMenu = () => {
         if (type === 'folder') {
           folderMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         if (type === 'tag') {
           tagMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         if (type === 'trash') {
           trashMenu.forEach(i => {
             menu.append(new MenuItem(i))
-            menu.popup({ window: BrowserWindow.getFocusedWindow()! })
           })
+          menu.popup({ window: BrowserWindow.getFocusedWindow()! })
         }
 
         menu.on('menu-will-close', () => {

@@ -55,10 +55,11 @@ onMounted(() => {
     allowFrom: gutterRef.value,
     onmove: e => {
       const { pageX } = e
-      const minWidth = appStore.sizes.sidebar + 100
       const width = Math.floor(pageX - appStore.sizes.sidebar)
 
-      if (pageX < minWidth) return
+      if (width < appStore.sizes.minWidth || width > appStore.sizes.maxWidth) {
+        return
+      }
       appStore.sizes.snippetList = width
       store.app.set('snippetListWidth', width)
     }
@@ -87,7 +88,6 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .snippet-list {
   position: relative;
-  display: grid;
   grid-template-rows: 50px 1fr 10px;
   background-color: var(--color-snippet-list);
 }

@@ -31,7 +31,9 @@ function createWindow () {
   const bounds = store.app.get('bounds')
   mainWindow = new BrowserWindow({
     width: 1000,
+    minWidth: 800,
     height: 600,
+    minHeight: 500,
     ...bounds,
     titleBarStyle: isMac ? 'hidden' : 'default',
     webPreferences: {

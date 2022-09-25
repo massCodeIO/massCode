@@ -366,6 +366,12 @@ onUnmounted(() => {
     -webkit-box-orient: vertical;
   }
 }
+.folder {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .footer {
   font-size: 11px;
   display: flex;

@@ -105,7 +105,10 @@ const setTheme = (theme: string) => {
 }
 
 const onClickUpdate = () => {
-  ipc.invoke('main:open-url', `${repository}/releases`)
+  ipc.invoke(
+    'main:open-url',
+    'https://masscode.io/download/latest-release.html'
+  )
   track('app/update')
 }
 

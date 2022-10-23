@@ -1,7 +1,7 @@
 import { createMenu } from '../components/menu'
 import type { MenuItemConstructorOptions } from 'electron'
 import { shell, dialog, BrowserWindow } from 'electron'
-import { version, repository } from '../../../package.json'
+import { version } from '../../../package.json'
 import os from 'os'
 import { checkForUpdate } from '../services/update-check'
 import { store } from '../store'
@@ -50,8 +50,6 @@ MenuItemConstructorOptions
         const buttonId = dialog.showMessageBoxSync(
           BrowserWindow.getFocusedWindow()!,
           {
-            // message: `Version ${newVersion} is now available for download.\nYour version is ${version}.`,
-            // buttons: ['Go to GitHub', 'OK'],
             message: i18n.t('menu:app.update.message', {
               newVersion,
               oldVersion: version
@@ -66,7 +64,7 @@ MenuItemConstructorOptions
         )
 
         if (buttonId === 0) {
-          shell.openExternal(`${repository}/releases`)
+          shell.openExternal('https://masscode.io/download/latest-release.html')
         }
       } else {
         dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
@@ -142,6 +140,12 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: i18n.t('menu:help.twitter'),
+    click: () => {
+      shell.openExternal('https://twitter.com/anton_reshetov')
+    }
+  },
+  {
     type: 'separator'
   },
   {
@@ -214,15 +218,15 @@ const helpMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
-    label: i18n.t('menu:help.donate.payPal'),
+    label: i18n.t('menu:help.donate.gumroad'),
     click: () => {
-      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
+      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
     }
   },
   {
-    label: i18n.t('menu:help.twitter'),
+    label: i18n.t('menu:help.donate.payPal'),
     click: () => {
-      shell.openExternal('https://twitter.com/anton_reshetov')
+      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
     }
   },
   {

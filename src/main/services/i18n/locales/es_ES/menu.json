@@ -5,7 +5,7 @@
     "update": {
       "label": "Buscar actualizaciones....",
       "message": "La versión {{newVersion}} está disponible para descargar.\nTu versión actual es {{oldVersion}}.",
-      "button": ["Ir a Github", "OK"],
+      "button": ["Ir a Descarga", "OK"],
       "noUpdate": "No hay actualizaciones disponibles."
     },
     "quit": "Salir de massCode",

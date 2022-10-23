@@ -5,7 +5,7 @@
     "update": {
       "label": "檢查更新…",
       "message": "新版本 {{newVersion}} 現在已經可以下載。\n現在的版本是 {{oldVersion}} 。",
-      "button": ["前往 GitHub", "OK"],
+      "button": ["前往下载", "OK"],
       "noUpdate": "當前沒有可用的更新。"
     },
     "quit": "退出 massCode",

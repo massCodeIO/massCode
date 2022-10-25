@@ -40,6 +40,8 @@ export const useSnippetStore = defineStore('snippets', {
       state.snippets.findIndex(i => i.id === state.selected?.id),
     currentContent: state =>
       state.selected?.content?.[state.fragment]?.value || undefined,
+    currentFragementLabel: state =>
+      state.selected?.content?.[state.fragment]?.label || undefined,
     currentLanguage: state =>
       state.selected?.content?.[state.fragment]?.language,
     currentTags (): Tag[] {

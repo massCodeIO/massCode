@@ -190,6 +190,9 @@ const onSaveScreenshot = async () => {
 
   a.href = img
   a.download = `${props.name}.png`
+  if (snippetStore.isFragmentsShow) {
+    a.download = `${props.name} - ${snippetStore.currentFragementLabel}.png`
+  }
   a.click()
   track('snippets/create-screenshot')
 }

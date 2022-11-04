@@ -1,85 +1,85 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "Preferences",
+    "preferences": "Προτιμήσεις",
     "update": {
-      "label": "Check for Updates....",
-      "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
-      "button": ["Go to Download", "OK"],
-      "noUpdate": "There are currently no updates available."
+      "label": "Έλεγχος για Ενημερώσεις....",
+      "message": "Η έκδοση {{newVersion}} είναι διαθέσιμη για λήψη.\nΗ έκδοσή σας είναι {{oldVersion}}.",
+      "button": ["Μεταβείτε στην Λήψη", "Εντάξει"],
+      "noUpdate": "Δεν υπάρχουν διαθέσιμες ενημερώσεις."
     },
-    "quit": "Quit massCode",
-    "about": "About massCode",
-    "hide": "Hide massCode",
-    "hideOther": "Hide Others",
-    "showAll": "Show All"
+    "quit": "Έξοδος από το massCode",
+    "about": "Σχετικά με το massCode",
+    "hide": "Απόκρυψη του massCode",
+    "hideOther": "Απόκρυψη Υπολοίπων",
+    "showAll": "Εμφάνιση Όλων"
   },
   "help": {
-    "label": "Help",
-    "website": "Website",
-    "documentation": "Documentation",
-    "viewInGitHub": "View in GitHub",
-    "changeLog": "Change Log",
-    "reportIssue": "Report Issue",
-    "giveStar": "Give a Star",
+    "label": "Βοήθεια",
+    "website": "Ιστότοπος",
+    "documentation": "Τεκμηρίωση",
+    "viewInGitHub": "Προβολή στο GitHub",
+    "changeLog": "Αρχείο Καταγραφής Αλλαγών",
+    "reportIssue": "Αναφορά Προβλήματος",
+    "giveStar": "Δώστε ένα Αστέρι",
     "extension": {
-      "vscode": "VS Code Extension",
-      "raycast": "Raycast Extension",
-      "alfred": "Alfred Extension"
+      "vscode": "Επέκταση VS Code",
+      "raycast": "Επέκταση Raycast",
+      "alfred": "Επέκταση Alfred"
     },
     "donate": {
-      "openCollective": "Donate on Open Collective",
-      "payPal": "Donate via PayPal",
-      "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
+      "openCollective": "Συνεισφέρετε στο Open Collective",
+      "payPal": "Συνεισφέρετε μέσω PayPal",
+      "gumroad": "Συνεισφέρετε μέσω Gumroad (Visa, Mastercard, κλπ.)"
     },
     "twitter": "Twitter",
-    "devTools": "Toggle Developer Tools",
+    "devTools": "Εναλλαγή των Developer Tools",
     "links": {
-      "snippets": "Snippet Collection"
+      "snippets": "Συλλογή Αποσπάσματος"
     }
   },
   "file": {
-    "label": "File",
-    "find": "Find"
+    "label": "Αρχείο",
+    "find": "Εύρεση"
   },
   "view": {
-    "label": "View",
+    "label": "Προβολή",
     "sortBy": {
-      "label": "Sort Snippets By",
-      "dateModified": "Date Modified",
-      "dateCreated": "Date Created",
-      "name": "Name"
+      "label": "Ταξινόμηση Αποκομμάτων Κατά",
+      "dateModified": "Ημερομηνία Τροποποίησης",
+      "dateCreated": "Ημερομηνία Δημιουργίας",
+      "name": "Ονομασία"
     }
   },
   "edit": {
-    "label": "Edit",
-    "undo": "Undo",
-    "redo": "Redo",
-    "cut": "Cut",
-    "copy": "Copy",
-    "paste": "Paste",
-    "delete": "Delete",
-    "selectAll": "Select All"
+    "label": "Επεξεργασία",
+    "undo": "Αναίρεση",
+    "redo": "Επανάληψη",
+    "cut": "Αποκοπή",
+    "copy": "Αντιγραφή",
+    "paste": "Επικόλληση",
+    "delete": "Διαγραφή",
+    "selectAll": "Επιλογή Όλων"
   },
   "editor": {
-    "label": "Editor",
-    "copy": "Copy Snippet to Clipboard",
-    "format": "Format",
-    "previewCode": "Preview Code",
-    "previewScreenshot": "Preview Screenshot",
-    "previewMarkdown": "Preview Markdown",
-    "fontSizeIncrease": "Font Size Increase",
-    "fontSizeDecrease": "Font Size Decrease",
-    "fontSizeReset": "Font Size Reset"
+    "label": "Διορθωτής",
+    "copy": "Αντιγραφή Αποσπάσματος στο Πρόχειρο",
+    "format": "Μορφοποίηση",
+    "previewCode": "Προεπισκόπηση Κώδικα",
+    "previewScreenshot": "Προεπισκόπηση Στιγμιότυπου Οθόνης",
+    "previewMarkdown": "Προεπισκόπηση Markdown",
+    "fontSizeIncrease": "Μέγεθος Γραμματοσειράς Αύξηση",
+    "fontSizeDecrease": "Μέγεθος Γραμματοσειράς Μείωση",
+    "fontSizeReset": "Μέγεθος Γραμματοσειράς Επαναφορά"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "Λειτουργία Παρουσίασης",
+    "preview": "Προεπισκόπηση"
   },
   "history": {
-    "label": "History",
-    "back": "Back",
-    "forward": "Forward"
+    "label": "Ιστορικό",
+    "back": "Πίσω",
+    "forward": "Μπροστά"
   }
 }

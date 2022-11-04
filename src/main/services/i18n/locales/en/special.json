@@ -1,6 +1,6 @@
 {
   "description": {
-    "storage": "To use sync services like iCloud Drive, Google Drive of Dropbox, simply move storage to the corresponding synced folders",
+    "storage": "To use sync services like iCloud Drive, Google Drive or Dropbox, simply move storage to the corresponding synced folders",
     "migrate": {
       "1": "To migrate from massCode v1.0 select the folder containing the database files.",
       "2": "To migrate from SnippetsLab select JSON file.",

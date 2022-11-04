@@ -1,29 +1,29 @@
 {
   "description": {
-    "storage": "To use sync services like iCloud Drive, Google Drive of Dropbox, simply move storage to the corresponding synced folders",
+    "storage": "Για να χρησιμοποιήσετε υπηρεσίες συγχρονισμού όπως iCloud Drive, Google Drive ή Dropbox, απλώς μεταφέρετε τον αποθηκευτικό χώρο στους αντίστοιχους συγχρονισμένους φακέλους",
     "migrate": {
-      "1": "To migrate from massCode v1.0 select the folder containing the database files.",
-      "2": "To migrate from SnippetsLab select JSON file.",
+      "1": "Για μεταφορά από το massCode v1.0 επιλέξτε τον φάκελο που περιέχει τα αρχεία της βάσης δεδομένων.",
+      "2": "Για μεταφορά από το SnippetsLab επιλέξτε αρχείο JSON.",
       "3": [
-        "Some Limitations. During migration from SnippetsLab:",
-        "All folders will be first level as JSON file (below v2.1) does not represent nested folders.",
-        "Snippets with unsupported languages will be set to default Plain Text."
+        "Ορισμένοι Περιορισμοί. Κατά την μεταφορά από το SnippetsLab:",
+        "Όλοι οι φάκελοι θα είναι πρώτου επιπέδου καθώς το αρχείο JSON (κάτω από την έκδοση 2.1) δεν αντιπροσωπεύει ένθετους φακέλους.",
+        "Αποσπάσματα με μη υποστηριζόμενες γλώσσες θα ορίζονται ως Απλό Κείμενο (προεπιλογή)."
       ]
     },
-    "htmlCssPreview": "Add fragments with HTML & CSS languages to view result.",
+    "htmlCssPreview": "Προσθέστε τμήματα με γλώσσες HTML & CSS για να δείτε αποτέλεσμα.",
     "codeBlockRenderer": [
-      "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
-      "languages"
+      "Όταν χρησιμοποιείτε το Codemirror, η γλώσσα που θα οριστεί για το μπλοκ κώδικα πρέπει να αντιστοιχεί σε μία από τις τιμές του",
+      "γλώσσες"
     ]
   },
   "success": {
-    "migrate": "DB successfully migrated."
+    "migrate": "Η DB μετακινήθηκε επιτυχώς."
   },
   "error": {
-    "folderContainDb": "Folder already contain \"db.json\".",
-    "folderNotContainDb": "Folder not contain \"db.json\"."
+    "folderContainDb": "Ο φάκελος περιέχει ήδη το \"db.json\".",
+    "folderNotContainDb": "Ο φάκελος δεν περιέχει το \"db.json\"."
   },
-  "unsponsored": "Unsponsored",
-  "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}} donate {{-tagEnd}}. It will inspire me to continue development on the project.",
-  "snippetsShowcase": "Snippets Showcase"
+  "unsponsored": "Χωρίς Χορηγία",
+  "supportMessage": "Γειά, Anton εδώ 👋<br><br>\nΕυχαριστώ που χρησιμοποιείτε το massCode. Εάν βρίσκετε αυτήν την εφαρμογή χρήσιμη, παρακαλώ {{-tagStart}} συνεισφέρετε {{-tagEnd}}. Θα με εμπνεύσει να συνεχίσω την ανάπτυξη του έργου.",
+  "snippetsShowcase": "Βιτρίνα Αποσπασμάτων"
 }

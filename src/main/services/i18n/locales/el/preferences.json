@@ -1,49 +1,49 @@
 {
-  "title": "Preferences",
+  "title": "Προτιμήσεις",
   "storage": {
-    "label": "Storage",
-    "migrate": "Migrate",
-    "count": "Count"
+    "label": "Αποθηκευτικός Χώρος",
+    "migrate": "Μετακίνηση",
+    "count": "Καταμέτρηση"
   },
   "editor": {
-    "label": "Editor",
-    "fontSize": "Font Size",
-    "fontFamily": "Font Family",
+    "label": "Διορθωτής",
+    "fontSize": "Μέγεθος Γραμματοσειράς",
+    "fontFamily": "Γραμματοσειρά",
     "wrap": {
-      "label": "Wrap",
-      "wordWrap": "Word Wrap",
-      "off": "Off"
+      "label": "Αναδίπλωση",
+      "wordWrap": "Αναδίπλωση Λέξεων",
+      "off": "Ανενεργό"
     },
-    "tabSize": "Tab Size",
-    "showInvisibles": "Show Invisibles",
-    "highlightLine": "Highlight Line",
-    "highlightGutter": "Highlight Gutter",
-    "matchBrackets": "Match Brackets",
+    "tabSize": "Μέγεθος Tab",
+    "showInvisibles": "Εμφάνιση Κρυφών",
+    "highlightLine": "Επισήμανση Γραμμής",
+    "highlightGutter": "Επισήμανση Περιθωρίου",
+    "matchBrackets": "Αντιστοίχιση Αγκύλων",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Trailing Comma",
-        "none": "None",
-        "all": "All",
+        "label": "Κόμμα Ουράς",
+        "none": "Καθόλου",
+        "all": "Όλα",
         "es6": "ES6"
       },
       "semi": "Semi",
-      "singleQuote": "Single Quote"
+      "singleQuote": "Μονά Εισαγωγικά"
     }
   },
   "appearance": {
-    "label": "Appearance",
+    "label": "Εμφάνιση",
     "theme": {
-      "label": "Theme",
-      "light": "Light",
-      "dark": "Dark"
+      "label": "Θέμα",
+      "light": "Φωτεινό",
+      "dark": "Σκοτεινό"
     }
   },
   "language": {
-    "label": "Language"
+    "label": "Γλώσσα"
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Code block Renderer"
+    "codeRenderer": "Απεικόνιση Μπλοκ Κώδικα"
   }
 }

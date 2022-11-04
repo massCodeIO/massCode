@@ -1,13 +1,13 @@
 {
-  "deleteConfirm": "Are you sure you want to permanently delete {{name}}?",
-  "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
-  "noUndo": "You cannot undo this action.",
-  "allSnippetsMoveToTrash": "All snippets in this folder will be moved to trash.",
-  "deleteTag": "This will also cause all snippets to have that tag removed.",
-  "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
+  "deleteConfirm": "Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά το {{name}};",
+  "deleteConfirmMultipleSnippets": "Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά {{count}} επιλεγμένα αποσπάσματα;",
+  "noUndo": "Δεν μπορείτε να αναιρέσετε αυτήν την ενέργεια.",
+  "allSnippetsMoveToTrash": "Όλα τα αποσπάσματα σε αυτόν τον φάκελο θα μετακινηθούν στον Κάδο.",
+  "deleteTag": "Αυτό θα προκαλέσει επίσης την αφαίρεση αυτής της ετικέτας από όλα τα αποσπάσματα.",
+  "emptyTrash": "Είστε σίγουροι ότι θέλετε να διαγράψετε οριστικά όλα τα αποσπάσματα στον Κάδο;",
   "migrateConfirm": [
-    "Are you sure you want to migrate from {{name}}?",
-    "During migrate, the current library will be overwritten."
+    "Θέλετε σίγουρα να μεταφέρετε από το {{name}};",
+    "Κατά την μεταφορά, η παρούσα βιβλιοθήκη θα αντικατασταθεί."
   ],
-  "createDb": "Please select another folder"
+  "createDb": "Παρακαλούμε επιλέξτε άλλο φάκελο"
 }

@@ -15,6 +15,7 @@
   border: none;
   background-color: transparent;
   outline: none;
+  color: var(--color-text);
   :deep(svg) {
     fill: var(--color-button-action);
   }

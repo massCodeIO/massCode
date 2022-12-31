@@ -26,8 +26,16 @@
       <div class="right">
         <AppActionButton
           v-tooltip="i18n.t('saveScreenshot')"
-          @click="onSaveScreenshot"
+          @click="onSaveScreenshot('png')"
         >
+          PNG &nbsp;
+          <UniconsFileDownload />
+        </AppActionButton>
+        <AppActionButton
+          v-tooltip="i18n.t('saveScreenshot')"
+          @click="onSaveScreenshot('svg')"
+        >
+          SVG &nbsp;
           <UniconsFileDownload />
         </AppActionButton>
       </div>
@@ -174,12 +182,20 @@ const init = () => {
   hljs.registerAliases('graphqlschema', { languageName: 'graphql' })
 }
 
-const onSaveScreenshot = async () => {
-  const data = await domToImage.toPng(snippetRef.value!)
+const onSaveScreenshot = async (type: 'png' | 'svg' = 'png') => {
+  let data = ''
+
+  if (type === 'png') {
+    data = await domToImage.toPng(snippetRef.value!)
+  }
+
+  if (type === 'svg') {
+    data = await domToImage.toSvg(snippetRef.value!)
+  }
 
   const a = document.createElement('a')
   a.href = data
-  a.download = `${props.name}.png`
+  a.download = `${props.name}.${type}`
   a.click()
 
   track('snippets/create-screenshot')
@@ -273,6 +289,10 @@ init()
       gap: var(--spacing-sm);
       align-items: center;
       display: flex;
+    }
+    .right {
+      display: flex;
+      gap: var(--spacing-xs);
     }
   }
   .content {

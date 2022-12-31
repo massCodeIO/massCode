@@ -94,23 +94,19 @@
         </div>
       </div>
     </PerfectScrollbar>
-    <div
-      ref="previewRef"
-      class="preview"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAppStore } from '@/store/app'
 import hljs from 'highlight.js'
-import html2canvas from 'html2canvas'
 import interact from 'interactjs'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useHljsTheme } from '@/composable'
 import { store, track, i18n } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useMagicKeys } from '@vueuse/core'
+import domToImage from 'dom-to-image'
 
 const GUTTER_RIGHT_OFFSET = 10
 const GUTTER_WIDTH = 8
@@ -131,7 +127,6 @@ const { escape } = useMagicKeys()
 
 const frameRef = ref<HTMLElement>()
 const snippetRef = ref<HTMLElement>()
-const previewRef = ref<HTMLElement>()
 const gutterRef = ref<HTMLElement>()
 
 const gutterWidth = ref(GUTTER_WIDTH + 'px')
@@ -180,17 +175,13 @@ const init = () => {
 }
 
 const onSaveScreenshot = async () => {
-  const canvas = await html2canvas(snippetRef.value!, {
-    backgroundColor: null
-  })
-  previewRef.value?.appendChild(canvas)
+  const data = await domToImage.toPng(snippetRef.value!)
 
   const a = document.createElement('a')
-  const img = canvas.toDataURL('image/png')
-
-  a.href = img
+  a.href = data
   a.download = `${props.name}.png`
   a.click()
+
   track('snippets/create-screenshot')
 }
 

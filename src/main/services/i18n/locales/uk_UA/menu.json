@@ -1,0 +1,84 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Параметри",
+    "update": {
+      "label": "Перевірити оновлення....",
+      "message": "Версія {{newVersion}} доступна для скачування.\nПоточна версія {{oldVersion}}.",
+      "button": ["Перейти до завантаження", "OK"],
+      "noUpdate": "В даний час немає доступних оновлень."
+    },
+    "quit": "Вийти з massCode",
+    "about": "Про massCode",
+    "hide": "Сховати massCode",
+    "hideOther": "Сховати інші",
+    "showAll": "Показати всі"
+  },
+  "help": {
+    "label": "Підтримка",
+    "website": "Сайт",
+    "documentation": "Документація",
+    "viewInGitHub": "Переглянути у GitHub",
+    "changeLog": "Список змін",
+    "reportIssue": "Відкрити Issue",
+    "giveStar": "Поставити зірку",
+    "extension": {
+      "vscode": "VS Code росширення",
+      "raycast": "Raycast росширення",
+      "alfred": "Alfred росширення"
+    },
+    "donate": {
+      "openCollective": "Пожертвувати через Open Collective",
+      "payPal": "Пожертвувати через PayPal",
+      "gumroad": "Пожертвувати через Gumroad (Visa, Mastercard, и тд.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Відкрити інструменти разробника",
+    "links": {
+      "snippets": "Колекція сніпетів"
+    }
+  },
+  "file": {
+    "label": "Файл",
+    "find": "Знайти"
+  },
+  "view": {
+    "label": "Вид",
+    "sortBy": {
+      "label": "Сортувати сніпети по",
+      "dateModified": "Дата модифікації",
+      "dateCreated": "Дата створення",
+      "name": "Імені"
+    }
+  },
+  "edit": {
+    "label": "Змінити",
+    "undo": "Скасувати",
+    "redo": "Повторити",
+    "cut": "Вирізати",
+    "copy": "Скопіювати",
+    "paste": "Вставити",
+    "delete": "Видалити",
+    "selectAll": "Вибрати все"
+  },
+  "editor": {
+    "label": "Редактор",
+    "copy": "Скопіювати сніпет у буфер",
+    "format": "Форматувати",
+    "previewCode": "Перегляд результату HTML/CSS",
+    "previewScreenshot": "Перегляд скріншота",
+    "fontSizeIncrease": "Збільшити шрифт",
+    "fontSizeDecrease": "Зменшити шрифт",
+    "fontSizeReset": "Скинути размір шрифта"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Режим презентації",
+    "preview": "Перегляд Markdown"
+  },
+  "history": {
+    "label": "Істория",
+    "back": "Назад",
+    "forward": "Вперед"
+  }
+}

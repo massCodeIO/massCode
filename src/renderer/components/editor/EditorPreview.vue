@@ -8,7 +8,7 @@
         <AppCheckbox
           v-model="appStore.codePreview.darkMode"
           name="Dark mode"
-          label="Dark mode"
+          :label="i18n.t('darkMode')"
         />
       </div>
       <div class="right">

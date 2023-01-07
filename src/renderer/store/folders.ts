@@ -1,5 +1,5 @@
 import { useApi } from '@/composable'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { flatToNested } from '@/utils'
 import type { Folder, FolderTree } from '@shared/types/main/db'
 import { defineStore } from 'pinia'
@@ -34,7 +34,7 @@ export const useFolderStore = defineStore('folders', {
       const snippetStore = useSnippetStore()
 
       const body: Partial<Folder> = {
-        name: 'Untitled folder',
+        name: i18n.t('folder.untitled'),
         parentId: null,
         isOpen: false,
         isSystem: false,

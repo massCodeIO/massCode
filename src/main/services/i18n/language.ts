@@ -4,6 +4,7 @@ export const language = {
   en: 'English',
   es_ES: 'Español',
   pt_BR: 'Português (Brasil)',
+  uk_UA: 'Українська',
   ru: 'Русский',
   zh_CN: '中文 (简体)',
   zh_TW: '中文 (繁體)',

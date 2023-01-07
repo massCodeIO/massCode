@@ -1,5 +1,6 @@
 export const language = {
   de_DE: 'Deutsch',
+  el: 'Ελληνικά',
   en: 'English',
   es_ES: 'Español',
   pt_BR: 'Português (Brasil)',

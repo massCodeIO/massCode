@@ -91,7 +91,7 @@
                   </g>
                 </svg>
               </div>
-              <div v-html="renderer" />
+              <div ref="editorRef" />
             </div>
           </div>
           <div class="transparent" />
@@ -107,14 +107,14 @@
 
 <script setup lang="ts">
 import { useAppStore } from '@/store/app'
-import hljs from 'highlight.js'
 import interact from 'interactjs'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useHljsTheme } from '@/composable'
 import { store, track, i18n } from '@/electron'
 import { useSnippetStore } from '@/store/snippets'
 import { useMagicKeys } from '@vueuse/core'
 import domToImage from 'dom-to-image'
+import CodeMirror from 'codemirror'
+import { getThemeName } from '../editor/themes'
 
 const GUTTER_RIGHT_OFFSET = 10
 const GUTTER_WIDTH = 8
@@ -136,13 +136,13 @@ const { escape } = useMagicKeys()
 const frameRef = ref<HTMLElement>()
 const snippetRef = ref<HTMLElement>()
 const gutterRef = ref<HTMLElement>()
+const editorRef = ref<HTMLElement>()
 
 const gutterWidth = ref(GUTTER_WIDTH + 'px')
 const offsetGutterRight = ref(GUTTER_RIGHT_OFFSET + 'px')
 
 const forceRefresh = ref()
 
-const font = computed(() => appStore.editor.fontFamily)
 const frameWidthC = computed(() => appStore.screenshot.width + 'px')
 const transparentOpacity = computed(() =>
   appStore.isLightTheme ? '75%' : '10%'
@@ -156,13 +156,10 @@ const colorBgStyle = computed(() => {
     backgroundImage: `linear-gradient(45deg, ${appStore.screenshot.gradient[0]}, ${appStore.screenshot.gradient[1]})`
   }
 })
+const fontSize = computed(() => appStore.editor.fontSize + 'px')
+const fontFamily = computed(() => appStore.editor.fontFamily)
 
-const renderer = computed(() => {
-  const language = hljs.getLanguage(props.lang) ? props.lang : 'plaintext'
-  return `<pre><code class="language-${props.lang} hljs">${
-    hljs.highlight(props.snippet, { language }).value
-  }</code></pre>`
-})
+let editor: CodeMirror.Editor
 
 const height = computed(() => {
   // eslint-disable-next-line no-unused-expressions
@@ -176,10 +173,61 @@ const height = computed(() => {
   return window.innerHeight - result + 'px'
 })
 
+const setValue = (value: string) => {
+  if (!editor) return
+
+  const cursor = editor.getCursor()
+  editor.setValue(value)
+
+  if (cursor) editor.setCursor(cursor)
+}
+
+const setLang = (lang: string) => {
+  if (!editor) return
+  editor.setOption('mode', lang)
+}
+
+const setTheme = (theme: string) => {
+  if (!editor) return
+  editor.setOption('theme', theme)
+}
+
 const init = () => {
-  hljs.registerAliases('apache_conf', { languageName: 'apache' })
-  hljs.registerAliases('c_cpp', { languageName: 'cpp' })
-  hljs.registerAliases('graphqlschema', { languageName: 'graphql' })
+  editor = CodeMirror(editorRef.value!, {
+    value: props.snippet,
+    mode: props.lang,
+    theme: appStore.screenshot.darkMode
+      ? getThemeName('dark:material')
+      : getThemeName('light:github'),
+    lineNumbers: false,
+    tabSize: appStore.editor.tabSize,
+    scrollbarStyle: 'null',
+    readOnly: true
+  })
+
+  interact(frameRef.value!).resizable({
+    allowFrom: gutterRef.value!,
+    onmove: e => {
+      const { pageX } = e
+      const gutterOffset = GUTTER_RIGHT_OFFSET + GUTTER_WIDTH / 2
+      const width = Math.floor(
+        pageX -
+          appStore.sizes.sidebar -
+          appStore.sizes.snippetList +
+          gutterOffset
+      )
+
+      appStore.screenshot.width = width
+
+      if (width < MIN_WIDTH) {
+        appStore.screenshot.width = 520
+      }
+
+      if (width > MAX_WIDTH) {
+        appStore.screenshot.width = 920
+      }
+    }
+  })
 }
 
 const onSaveScreenshot = async (type: 'png' | 'svg' = 'png') => {
@@ -205,12 +253,11 @@ watch(
   () => appStore.screenshot.darkMode,
   v => {
     if (v) {
-      useHljsTheme('dark')
+      setTheme(getThemeName('dark:material')!)
     } else {
-      useHljsTheme('light')
+      setTheme(getThemeName('light:github')!)
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(
@@ -225,55 +272,40 @@ watch(escape, () => {
   snippetStore.isScreenshotPreview = false
 })
 
+watch(
+  () => props.snippet,
+  v => setValue(v)
+)
+watch(
+  () => props.lang,
+  v => setLang(v)
+)
+
 onMounted(() => {
-  interact(frameRef.value!).resizable({
-    allowFrom: gutterRef.value!,
-    onmove: e => {
-      const { pageX } = e
-      const gutterOffset = GUTTER_RIGHT_OFFSET + GUTTER_WIDTH / 2
-      const width = Math.floor(
-        pageX -
-          appStore.sizes.sidebar -
-          appStore.sizes.snippetList +
-          gutterOffset
-      )
-
-      appStore.screenshot.width = width
-
-      if (width < MIN_WIDTH) {
-        appStore.screenshot.width = 520
-      }
-
-      if (width > MAX_WIDTH) {
-        appStore.screenshot.width = 920
-      }
-    }
-  })
+  init()
 })
 
 window.addEventListener('resize', () => {
   forceRefresh.value = Math.random()
 })
-
-init()
 </script>
 
 <style lang="scss" scoped>
 .snippet-screenshot {
   --color-bg-transparent: hsla(0, 0%, v-bind(transparentOpacity));
 
-  :deep(code) {
-    font-family: v-bind(font) !important;
-  }
   :deep(pre) {
     white-space: pre-wrap;
     font-size: 12px;
   }
-  :deep(code) {
-    padding: 0;
-  }
   :deep(.ps) {
     height: v-bind(height);
+  }
+  :deep(.CodeMirror) {
+    height: 100%;
+    font-size: v-bind(fontSize);
+    font-family: v-bind(fontFamily);
+    line-height: calc(v-bind(fontSize) * 1.5);
   }
   .tools {
     display: flex;
@@ -348,6 +380,9 @@ init()
     border-radius: 12px;
     background-color: v-bind(colorBodyBg);
     user-select: none;
+    .window-controls {
+      margin-bottom: var(--spacing-xs);
+    }
   }
 }
 </style>

@@ -93,19 +93,30 @@ const setSrcDoc = () => {
     }
   `
 
-  srcDoc.value = `<html>
-    <body>${html || htmlDefault}<body>
-    <style>${cssDefault + css}<style>
-  </html>
+  srcDoc.value = `<!DOCTYPE html>
+  <html>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${snippetStore.selected?.name}</title>
+  </head>
+    <body>${html || htmlDefault}</body>
+    <style>${cssDefault + css}</style>
+</html>
   `
 }
+
 setSrcDoc()
 
-const onSaveToHtml = () => {
+const onSaveToHtml = async () => {
+  const formatted = await ipc.invoke('main:prettier', {
+    source: srcDoc.value,
+    parser: 'html'
+  })
+
   const a = document.createElement('a')
 
-  a.href = `data:text/plain;charset=utf-8, ${encodeURIComponent(srcDoc.value)}`
-  console.log(a)
+  a.href = `data:text/plain;charset=utf-8, ${encodeURIComponent(formatted)}`
   a.download = `${snippetStore.selected?.name}.html`
   a.click()
 }

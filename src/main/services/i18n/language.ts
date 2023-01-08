@@ -1,4 +1,5 @@
 export const language = {
+  cs: 'Čeština',
   de_DE: 'Deutsch',
   el: 'Ελληνικά',
   en: 'English',

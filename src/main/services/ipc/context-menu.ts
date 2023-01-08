@@ -265,7 +265,7 @@ export const subscribeToContextMenu = () => {
                 {
                   message: i18n.t('dialog:deleteConfirm', { name }),
                   detail: i18n.t('dialog:allSnippetsMoveToTrash'),
-                  buttons: [i18n.t('delete'), i18n.t('cancel')],
+                  buttons: [i18n.t('delete'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }
@@ -323,7 +323,7 @@ export const subscribeToContextMenu = () => {
                 {
                   message: i18n.t('dialog:deleteConfirm', { name }),
                   detail: i18n.t('dialog:deleteTag'),
-                  buttons: [i18n.t('delete'), i18n.t('cancel')],
+                  buttons: [i18n.t('delete'), i18n.t('button.cancel')],
                   defaultId: 0,
                   cancelId: 1
                 }

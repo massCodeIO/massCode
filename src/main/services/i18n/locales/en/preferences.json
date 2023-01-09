@@ -25,7 +25,7 @@
         "label": "Trailing Comma",
         "none": "None",
         "all": "All",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "Semi",
       "singleQuote": "Single Quote"

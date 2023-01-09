@@ -25,7 +25,7 @@
         "label": "Vírgula à direita",
         "none": "Nenhum",
         "all": "Tudo",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "Semi",
       "singleQuote": "Citação única"

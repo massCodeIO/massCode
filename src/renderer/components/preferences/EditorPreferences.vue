@@ -84,8 +84,8 @@ const trailingCommaOptions = [
     value: 'all'
   },
   {
-    label: i18n.t('preferences:editor.prettier.trailingComma.es6'),
-    value: 'es6'
+    label: i18n.t('preferences:editor.prettier.trailingComma.es5'),
+    value: 'es5'
   }
 ]
 

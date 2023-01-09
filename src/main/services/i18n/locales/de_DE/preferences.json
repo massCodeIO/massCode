@@ -25,7 +25,7 @@
         "label": "Nachgestelltes Komma",
         "none": "Ohne",
         "all": "Immer",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "Semi",
       "singleQuote": "Einzelne Anführungszeichen"

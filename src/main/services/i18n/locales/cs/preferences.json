@@ -24,7 +24,7 @@
         "label": "Koncová čárka",
         "none": "Nikdy",
         "all": "Vždy",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "Semi",
       "singleQuote": "Jednoduché uvozovky"

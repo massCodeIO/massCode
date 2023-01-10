@@ -2837,6 +2837,24 @@
       "id": "cj0IfumH",
       "createdAt": 1659688801793,
       "updatedAt": 1659688919992
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "Kusto KQL",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "kusto",
+          "value": "let Events = MyLogTable | where ... ;\nEvents\n| where Name == \"Start\"\n| project Name, City, SessionId, StartTime=timestamp\n| join (Events\n        | where Name == \"Stop\"\n        | project StopTime=timestamp, SessionId)\n    on SessionId\n| project City, SessionId, StartTime, StopTime, Duration = StopTime - StartTime"
+        }
+      ],
+      "id": "vH7mmfKH",
+      "createdAt": 1673326490808,
+      "updatedAt": 1673326641538
     }
   ],
   "tags": []

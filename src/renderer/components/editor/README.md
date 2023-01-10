@@ -73,6 +73,7 @@ This is a list of language that supports in massCode.
 - JSX
 - Julia
 - Kotlin
+- Kusto (KQL)
 - LaTeX
 - Latte
 - LESS

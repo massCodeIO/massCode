@@ -431,6 +431,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.kotlin'
   },
   {
+    name: 'Kusto (KQL)',
+    value: 'kusto',
+    grammar: () => import('./grammars/kusto.tmLanguage.json'),
+    scopeName: 'source.kusto'
+  },
+  {
     name: 'LaTeX',
     value: 'latex',
     grammar: () => import('./grammars/latex.tmLanguage.json'),

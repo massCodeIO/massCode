@@ -78,6 +78,7 @@ export type Language =
   | 'jsx'
   | 'julia'
   | 'kotlin'
+  | 'kusto'
   | 'latex'
   | 'latte'
   | 'less'

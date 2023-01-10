@@ -2855,6 +2855,24 @@
       "id": "vH7mmfKH",
       "createdAt": 1673326490808,
       "updatedAt": 1673326641538
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "J7rNZi7X",
+      "tagsIds": [],
+      "description": null,
+      "name": "Bicep",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "bicep",
+          "value": "param rgLocation string = resourceGroup().location\nparam storages array = [\n  {\n    name: 'contoso'\n    skuName: 'Standard_LRS'\n  }\n  {\n    name: 'fabrikam'\n    skuName: 'Premium_LRS'\n  }\n]\n\nresource createStorages 'Microsoft.Storage/storageAccounts@2021-06-01' = [for storage in storages: {\n  name: '${storage.name}obj${uniqueString(resourceGroup().id)}'\n  location: rgLocation\n  sku: {\n    name: storage.skuName\n  }\n  kind: 'StorageV2'\n}]"
+        }
+      ],
+      "id": "W9p-A0M9",
+      "createdAt": 1673328306847,
+      "updatedAt": 1673328471208
     }
   ],
   "tags": []

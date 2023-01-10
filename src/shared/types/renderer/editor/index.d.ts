@@ -14,6 +14,7 @@ export type Language =
   | 'assembly_x86'
   | 'autohotkey'
   | 'batchfile'
+  | 'bicep'
   | 'c_cpp'
   | 'c9search'
   | 'cirru'

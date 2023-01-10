@@ -52,6 +52,8 @@ export const useAppStore = defineStore('app', {
       titlebar: 15,
       sidebar: 180,
       snippetList: 250,
+      minWidth: 140,
+      maxWidth: 260,
       codePreviewHeight: 200,
       editor: {
         titleHeight: 34,

@@ -17,6 +17,7 @@ This is a list of language that supports in massCode.
 - AutoHotkey / AutoIt
 - Bash
 - BatchFile
+- Bicep
 - C and C++
 - C#
 - Cirru

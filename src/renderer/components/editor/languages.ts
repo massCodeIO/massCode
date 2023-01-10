@@ -93,6 +93,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.batchfile'
   },
   {
+    name: 'Bicep',
+    value: 'bicep',
+    grammar: () => import('./grammars/bicep.tmLanguage.json'),
+    scopeName: 'source.bicep'
+  },
+  {
     name: 'C and C++',
     value: 'c_cpp',
     grammar: () => import('./grammars/cpp.tmLanguage.json'),

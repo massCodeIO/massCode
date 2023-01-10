@@ -25,7 +25,7 @@
         "label": "尾后逗号",
         "none": "None",
         "all": "All",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "句尾添加分号",
       "singleQuote": "使用单引号代替双引号"

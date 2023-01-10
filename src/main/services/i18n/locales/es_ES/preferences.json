@@ -24,7 +24,7 @@
         "label": "Coma Final",
         "none": "Ninguna",
         "all": "Todo",
-        "es6": "ES6"
+        "es5": "ES5"
       },
       "semi": "Semi",
       "singleQuote": "Comillas Simple"

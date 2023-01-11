@@ -200,6 +200,7 @@ const init = () => {
       ? getThemeName('dark:material')
       : getThemeName('light:github'),
     lineNumbers: false,
+    lineWrapping: true,
     tabSize: appStore.editor.tabSize,
     scrollbarStyle: 'null',
     readOnly: true

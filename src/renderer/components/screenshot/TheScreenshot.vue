@@ -131,7 +131,8 @@ const props = defineProps<Props>()
 
 const appStore = useAppStore()
 const snippetStore = useSnippetStore()
-const { escape } = useMagicKeys()
+// eslint-disable-next-line camelcase
+const { escape, Meta_C, Ctrl_C } = useMagicKeys()
 
 const frameRef = ref<HTMLElement>()
 const snippetRef = ref<HTMLElement>()
@@ -250,6 +251,12 @@ const onSaveScreenshot = async (type: 'png' | 'svg' = 'png') => {
   track('snippets/create-screenshot')
 }
 
+const copyToClipboard = async () => {
+  const data = await domToImage.toBlob(snippetRef.value!)
+  navigator.clipboard.write([new ClipboardItem({ 'image/png': data })])
+  track('snippets/create-screenshot')
+}
+
 watch(
   () => appStore.screenshot.darkMode,
   v => {
@@ -269,10 +276,6 @@ watch(
   { deep: true }
 )
 
-watch(escape, () => {
-  snippetStore.isScreenshotPreview = false
-})
-
 watch(
   () => props.snippet,
   v => setValue(v)
@@ -281,6 +284,21 @@ watch(
   () => props.lang,
   v => setLang(v)
 )
+
+watch(escape, () => {
+  snippetStore.isScreenshotPreview = false
+})
+
+watch(Meta_C, v => {
+  if (v) {
+    copyToClipboard()
+  }
+})
+watch(Ctrl_C, v => {
+  if (v) {
+    copyToClipboard()
+  }
+})
 
 onMounted(() => {
   init()

@@ -3,10 +3,10 @@
     "label": "massCode",
     "preferences": "Параметри",
     "update": {
-      "label": "Перевірити оновлення....",
+      "label": "Перевірити оновлення...",
       "message": "Версія {{newVersion}} доступна для скачування.\nПоточна версія {{oldVersion}}.",
       "button": ["Перейти до завантаження", "OK"],
-      "noUpdate": "В даний час немає доступних оновлень."
+      "noUpdate": "Немає доступних оновлень."
     },
     "quit": "Вийти з massCode",
     "about": "Про massCode",
@@ -23,9 +23,9 @@
     "reportIssue": "Відкрити Issue",
     "giveStar": "Поставити зірку",
     "extension": {
-      "vscode": "VS Code росширення",
-      "raycast": "Raycast росширення",
-      "alfred": "Alfred росширення"
+      "vscode": "VS Code розширення",
+      "raycast": "Raycast розширення",
+      "alfred": "Alfred розширення"
     },
     "donate": {
       "openCollective": "Пожертвувати через Open Collective",
@@ -33,22 +33,22 @@
       "gumroad": "Пожертвувати через Gumroad (Visa, Mastercard, и тд.)"
     },
     "twitter": "Twitter",
-    "devTools": "Відкрити інструменти разробника",
+    "devTools": "Відкрити інструменти розробника",
     "links": {
       "snippets": "Колекція сніпетів"
     }
   },
   "file": {
     "label": "Файл",
-    "find": "Знайти"
+    "find": "Пошук"
   },
   "view": {
     "label": "Вид",
     "sortBy": {
-      "label": "Сортувати сніпети по",
+      "label": "Сортувати сніпети за",
       "dateModified": "Дата модифікації",
       "dateCreated": "Дата створення",
-      "name": "Імені"
+      "name": "Назва"
     }
   },
   "edit": {
@@ -66,10 +66,10 @@
     "copy": "Скопіювати сніпет у буфер",
     "format": "Форматувати",
     "previewCode": "Перегляд результату HTML/CSS",
-    "previewScreenshot": "Перегляд скріншота",
+    "previewScreenshot": "Перегляд скриншота",
     "fontSizeIncrease": "Збільшити шрифт",
     "fontSizeDecrease": "Зменшити шрифт",
-    "fontSizeReset": "Скинути размір шрифта"
+    "fontSizeReset": "Скинути розмір шрифта"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,7 +77,7 @@
     "preview": "Перегляд Markdown"
   },
   "history": {
-    "label": "Істория",
+    "label": "Історія",
     "back": "Назад",
     "forward": "Вперед"
   }

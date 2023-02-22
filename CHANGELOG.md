@@ -1,3 +1,41 @@
+# [3.6.0](https://github.com/massCodeIO/massCode/compare/v3.5.0...v3.6.0) (2023-02-22)
+
+
+### Bug Fixes
+
+* **main:** blinking context menu ([#345](https://github.com/massCodeIO/massCode/issues/345)) ([23f57c5](https://github.com/massCodeIO/massCode/commit/23f57c5fabb7f1273ccb6a8b85419a9a808458f3))
+* **snippets:** invalid prettier es6 option ([#323](https://github.com/massCodeIO/massCode/issues/323)) ([08e5123](https://github.com/massCodeIO/massCode/commit/08e512381601faa60c4aad590ca4e4c789e64e19))
+* **snippets:** wrapping long lines in screenshot ([#326](https://github.com/massCodeIO/massCode/issues/326)) ([891b548](https://github.com/massCodeIO/massCode/commit/891b548c021c7f8817e28379cd86f77d23171b40))
+
+
+### Features
+
+* **grammars:** add bicep ([#325](https://github.com/massCodeIO/massCode/issues/325)) ([e461e51](https://github.com/massCodeIO/massCode/commit/e461e516c089437bd8391c3dda474c5c5cd8124e))
+* **grammars:** add kusto (KQL) ([#324](https://github.com/massCodeIO/massCode/issues/324)) ([b92e403](https://github.com/massCodeIO/massCode/commit/b92e4033530d77c5ffb956a5b10b76c58e6776d2))
+* **i18n:** add Czech locales ([#294](https://github.com/massCodeIO/massCode/issues/294)) ([7fe6696](https://github.com/massCodeIO/massCode/commit/7fe66967c6e73467948626ba19eb7a99b019c65d))
+* **i18n:** add Romanian locales ([#334](https://github.com/massCodeIO/massCode/issues/334)) ([9f55ff1](https://github.com/massCodeIO/massCode/commit/9f55ff1ec219c81281c30e6733407230d6a30b44))
+* **snippets:** copy screenshot to clipboard ([#327](https://github.com/massCodeIO/massCode/issues/327)) ([f06b084](https://github.com/massCodeIO/massCode/commit/f06b0842b14502bb4e2f9882ed5ed79625652043))
+
+
+
+# [3.5.0](https://github.com/massCodeIO/massCode/compare/v3.4.1...v3.5.0) (2023-01-07)
+
+
+### Bug Fixes
+
+* **snippets:** export to html [#309](https://github.com/massCodeIO/massCode/issues/309) ([#320](https://github.com/massCodeIO/massCode/issues/320)) ([2f3bada](https://github.com/massCodeIO/massCode/commit/2f3badaf78378c68a7f667edb26a8a5039d282a9))
+* **snippets:** use 'dom-to-image' instead 'html2canvas' [#297](https://github.com/massCodeIO/massCode/issues/297) ([#317](https://github.com/massCodeIO/massCode/issues/317)) ([2ba53ac](https://github.com/massCodeIO/massCode/commit/2ba53ac1408dc083fcbbeccd6010fa93e1cbe6a9))
+
+
+### Features
+
+* **i18n:** add Greek locales ([#304](https://github.com/massCodeIO/massCode/issues/304)) ([19f0942](https://github.com/massCodeIO/massCode/commit/19f0942e229d64ebf976f540f1b73c9fa85ee563))
+* **i18n:** add Ukrainian locales ([#319](https://github.com/massCodeIO/massCode/issues/319)) ([a44ebd2](https://github.com/massCodeIO/massCode/commit/a44ebd222731fb0965fd9df87b8cc7835c8c42df))
+* **snippets:** save screenshot as svg ([#318](https://github.com/massCodeIO/massCode/issues/318)) ([4cf24c9](https://github.com/massCodeIO/massCode/commit/4cf24c9ba49931ac36e18c1e9cdc407639e4d709))
+* **snippets:** use codemirror for screenshot ([#321](https://github.com/massCodeIO/massCode/issues/321)) ([9d264e0](https://github.com/massCodeIO/massCode/commit/9d264e0659f1e2b064eab1e93072c672b330ed15))
+
+
+
 ## [3.4.1](https://github.com/massCodeIO/massCode/compare/v3.4.0...v3.4.1) (2022-08-29)
 
 

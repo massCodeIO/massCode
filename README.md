@@ -6,7 +6,7 @@
 <h1 align="center">massCode</h1>
 
 <p align="center">
-  <strong>Built with Electron, Vue 3 & Codemirror.</strong>
+  <strong>Built with Electron, Vue & Codemirror.</strong>
   <br>
   Inspired by applications like SnippetsLab and Quiver.
 </p>

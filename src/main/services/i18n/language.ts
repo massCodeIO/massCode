@@ -6,7 +6,7 @@ export const language = {
   es_ES: 'Español',
   ja_JP: '日本語',
   pt_BR: 'Português (Brasil)',
-  ro: 'Română',
+  ro_RO: 'Română',
   ru: 'Русский',
   uk_UA: 'Українська',
   zh_CN: '中文 (简体)',

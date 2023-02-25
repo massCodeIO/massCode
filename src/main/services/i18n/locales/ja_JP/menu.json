@@ -29,7 +29,8 @@
     },
     "donate": {
       "openCollective": "Open Collectiveで寄付をする",
-      "payPal": "PayPalで寄付をする"
+      "payPal": "PayPalで寄付をする",
+      "gumroad": "Gumroadで寄付をする（Visa, Mastercardなどが使えます)"
     },
     "twitter": "Twitter",
     "devTools": "Developer Toolsを表示",

@@ -103,20 +103,21 @@ export const useSnippetStore = defineStore('snippets', {
       }
     },
     async patchSnippetsById (id: string, body: Partial<Snippet>) {
-      const { data } = await useApi(`/snippets/${id}`).patch(body).json()
       const snippet = this.snippets.find(i => i.id === id)
 
       if (!snippet) return
 
       if (snippet.id === this.selectedId) {
-        for (const props in data.value) {
-          (this.selected as any)[props] = data.value[props]
+        for (const props in body) {
+          (this.selected as any)[props] = (body as any)[props]
         }
       }
 
-      for (const props in data.value) {
-        (snippet as any)[props] = data.value[props]
+      for (const props in body) {
+        (snippet as any)[props] = (body as any)[props]
       }
+
+      await useApi(`/snippets/${id}`).patch(body).json()
     },
     async patchCurrentSnippetContentByKey (
       key: keyof SnippetContent,

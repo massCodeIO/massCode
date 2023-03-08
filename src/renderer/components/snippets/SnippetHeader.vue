@@ -13,6 +13,7 @@
         <AppActionButton
           v-if="snippetStore.currentLanguage === 'markdown'"
           v-tooltip="i18n.t('menu:markdown.presentationMode')"
+          tabindex="-1"
           @click="onClickPresentationMode"
         >
           <UniconsMeetingBoard />
@@ -24,6 +25,7 @@
               ? i18n.t('menu:editor.previewMarkdown')
               : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewMarkdown')
           "
+          tabindex="-1"
           @click="onClickMarkdownPreview"
         >
           <UniconsEye v-if="!snippetStore.isMarkdownPreview" />
@@ -35,6 +37,7 @@
               ? i18n.t('menu:editor.previewScreenshot')
               : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewScreenshot')
           "
+          tabindex="-1"
           @click="onClickScreenshotPreview"
         >
           <UniconsCamera v-if="!snippetStore.isScreenshotPreview" />
@@ -46,6 +49,7 @@
               ? i18n.t('menu:editor.previewCode')
               : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewCode')
           "
+          tabindex="-1"
           @click="onCodePreview"
         >
           <SvgArrowSlash v-if="snippetStore.isCodePreview" />
@@ -53,12 +57,14 @@
         </AppActionButton>
         <AppActionButton
           v-tooltip="i18n.t('addDescription')"
+          tabindex="-1"
           @click="onAddDescription"
         >
           <UniconsText />
         </AppActionButton>
         <AppActionButton
           v-tooltip="i18n.t('newFragment')"
+          tabindex="-1"
           @click="onAddNewFragment"
         >
           <UniconsPlus />
@@ -76,12 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  onAddNewFragment,
-  onAddDescription,
-  onCopySnippet,
-  emitter
-} from '@/composable'
+import { onAddNewFragment, onAddDescription, emitter } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'

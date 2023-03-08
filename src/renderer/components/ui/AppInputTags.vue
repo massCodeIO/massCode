@@ -2,6 +2,7 @@
   <div class="input-tags">
     <VueTagsInput
       v-model="tag"
+      tabindex="-1"
       :autocomplete-items="tags"
       :tags="localValue"
       :placeholder="i18n.t('addTag')"

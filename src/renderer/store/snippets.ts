@@ -1,7 +1,7 @@
 import type { Language } from '../../shared/types/renderer/editor'
 import type { SystemFolderAlias } from '@shared/types/renderer/sidebar'
 import { sortSnippetsBy, useApi } from '@/composable'
-import { i18n, store } from '@/electron'
+import { i18n, store, track } from '@/electron'
 import type {
   Snippet,
   SnippetContent,
@@ -300,6 +300,47 @@ export const useSnippetStore = defineStore('snippets', {
       store.app.set('sort', sort)
 
       sortSnippetsBy(this.snippets, this.sort)
+    },
+    async moveToTrash (id: string, alias?: SystemFolderAlias) {
+      const folderStore = useFolderStore()
+
+      if (this.selectedIds.length) {
+        for (const _id of this.selectedIds) {
+          await this.patchSnippetsById(_id, {
+            isDeleted: true
+          })
+        }
+      } else {
+        await this.patchSnippetsById(id, {
+          isDeleted: true
+        })
+      }
+      if (!alias) {
+        await this.getSnippetsByFolderIds(folderStore.selectedIds!)
+        this.selected = this.snippets[0]
+      } else {
+        await this.getSnippets()
+        this.setSnippetsByAlias(alias)
+      }
+    },
+    async deleteSnippetsByIdAndType (
+      id: string,
+      type?: SystemFolderAlias | 'folder' | string
+    ) {
+      if (type === 'folder') {
+        await this.moveToTrash(id, type)
+        track('snippets/move-to-trash')
+      } else if (type === 'favorites' || type === 'all' || type === 'inbox') {
+        await this.moveToTrash(id, type)
+      } else if (type === 'trash') {
+        if (this.selectedIds.length) {
+          await this.deleteSnippetsByIds(this.selectedIds)
+        } else {
+          await this.deleteSnippetsById(id)
+        }
+        await this.getSnippets()
+        this.setSnippetsByAlias(type)
+      }
     }
   }
 })

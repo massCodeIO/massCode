@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { emitter, setScrollPosition } from '@/composable'
 import { useAppStore } from '@/store/app'
+import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import interact from 'interactjs'
@@ -40,6 +41,7 @@ import { store } from '@/electron'
 
 const snippetStore = useSnippetStore()
 const appStore = useAppStore()
+const folderStore = useFolderStore()
 
 const listRef = ref()
 const bodyRef = ref<HTMLElement>()
@@ -48,6 +50,17 @@ const gutterRef = ref()
 const scrollToSnippet = (id: string) => {
   const el = document.querySelector<HTMLElement>(`[data-id='${id}']`)
   if (el?.offsetTop) setScrollPosition(bodyRef.value!, el.offsetTop)
+}
+
+const keyboardListener = async (e: KeyboardEvent) => {
+  // handle ctrlcmd+backspace
+  if (e.key === 'Backspace' && (e.ctrlKey || e.metaKey)) {
+    const selectedId =
+      snippetStore.selectedId || snippetStore.selectedMultiple?.[0]?.id
+    if (!selectedId) return
+    const type = folderStore.selectedAlias ?? 'folder'
+    await snippetStore.deleteSnippetsByIdAndType(selectedId, type)
+  }
 }
 
 onMounted(() => {
@@ -63,6 +76,8 @@ onMounted(() => {
       store.app.set('snippetListWidth', width)
     }
   })
+
+  window.addEventListener('keydown', keyboardListener)
 })
 
 watch(
@@ -81,6 +96,7 @@ emitter.on('scroll-to:snippet', (id: string) => {
 onUnmounted(() => {
   emitter.off('folder:click')
   emitter.off('scroll-to:snippet')
+  window.removeEventListener('keydown', keyboardListener)
 })
 </script>
 

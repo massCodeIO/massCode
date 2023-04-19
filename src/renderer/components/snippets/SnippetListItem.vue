@@ -129,46 +129,8 @@ const onClickContextMenu = async () => {
     selectedCount: snippetStore.selectedMultiple.length
   })
 
-  const moveToTrash = async (alias?: SystemFolderAlias) => {
-    if (snippetStore.selectedIds.length) {
-      for (const id of snippetStore.selectedIds) {
-        await snippetStore.patchSnippetsById(id, {
-          isDeleted: true
-        })
-      }
-    } else {
-      await snippetStore.patchSnippetsById(props.id, {
-        isDeleted: true
-      })
-    }
-    if (!alias) {
-      await snippetStore.getSnippetsByFolderIds(folderStore.selectedIds!)
-      snippetStore.selected = snippetStore.snippets[0]
-    } else {
-      await snippetStore.getSnippets()
-      snippetStore.setSnippetsByAlias(alias)
-    }
-  }
-
   if (action === 'delete') {
-    if (type === 'folder') {
-      await moveToTrash()
-      track('snippets/move-to-trash')
-    }
-
-    if (type === 'favorites' || type === 'all' || type === 'inbox') {
-      await moveToTrash(type)
-    }
-
-    if (type === 'trash') {
-      if (snippetStore.selectedIds.length) {
-        await snippetStore.deleteSnippetsByIds(snippetStore.selectedIds)
-      } else {
-        await snippetStore.deleteSnippetsById(props.id)
-      }
-      await snippetStore.getSnippets()
-      snippetStore.setSnippetsByAlias(type)
-    }
+    await snippetStore.deleteSnippetsByIdAndType(props.id, type as string)
   }
 
   if (action === 'duplicate') {

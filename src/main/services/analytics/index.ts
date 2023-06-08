@@ -1,11 +1,10 @@
+import 'dotenv/config'
 import type { TrackEvents } from '@shared/types/main/analytics'
-import ua from 'universal-analytics'
 import { version } from '../../../../package.json'
 import { platform } from 'os'
+import axios from 'axios'
 
 const isDev = process.env.NODE_ENV === 'development'
-
-const analytics = ua('UA-56182454-13')
 
 export const track = (event: TrackEvents, payload?: string) => {
   let os
@@ -15,15 +14,23 @@ export const track = (event: TrackEvents, payload?: string) => {
   if (p === 'win32') os = 'Windows'
   if (p === 'linux') os = 'Linux'
 
+  const api = process.env.APP_ANALYTICS_API || 'http://localhost'
+
   const path = payload
     ? `${version}/${os}/${event}/${payload}`
     : `${version}/${os}/${event}`
+
+  const body = {
+    name: 'pageview',
+    url: `https://${process.env.APP_ANALYTICS_DOMAIN}/${path}`,
+    domain: process.env.APP_ANALYTICS_DOMAIN
+  }
 
   if (isDev) {
     if (process.env.DEBUG?.includes('analytics')) {
       console.log('[analytics]:', path)
     }
   } else {
-    analytics.pageview(path).send()
+    axios.post(api, body)
   }
 }

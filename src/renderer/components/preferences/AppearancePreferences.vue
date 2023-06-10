@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { track, i18n } from '@/electron'
+import { i18n } from '@/electron'
+import { track } from '@/services/analytics'
 import { useAppStore } from '@/store/app'
 import type { Theme } from '@shared/types/renderer/store/app'
 import { computed } from 'vue'

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { track } from '@/electron'
+import { track } from '@/services/analytics'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'

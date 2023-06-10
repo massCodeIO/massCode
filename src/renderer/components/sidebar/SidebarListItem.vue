@@ -30,7 +30,8 @@ import { watch, ref } from 'vue'
 import Folder from '~icons/unicons/folder'
 import AngleRight from '~icons/unicons/angle-right'
 import { onClickOutside } from '@vueuse/core'
-import { ipc, track } from '@/electron'
+import { ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import type {
   ContextMenuRequest,
   ContextMenuResponse,

@@ -26,9 +26,9 @@
 <script setup lang="ts">
 import router from '@/router'
 import { nextTick, ref, watch } from 'vue'
-import { ipc, store, track, i18n } from './electron'
+import { ipc, store, i18n } from './electron'
+import { track } from '@/services/analytics'
 import { EDITOR_DEFAULTS, useAppStore } from './store/app'
-import { repository } from '../../package.json'
 import { useSnippetStore } from './store/snippets'
 import {
   onAddNewSnippet,

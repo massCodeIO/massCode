@@ -87,7 +87,8 @@ import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
 import { useAppStore } from '@/store/app'
-import { track, i18n } from '@/electron'
+import { i18n } from '@/electron'
+import { track } from '@/services/analytics'
 import { useRouter } from 'vue-router'
 
 const snippetStore = useSnippetStore()

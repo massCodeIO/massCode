@@ -19,7 +19,8 @@
 <script setup lang="ts">
 import { useAppStore } from '@/store/app'
 import { computed, ref } from 'vue'
-import { i18n, ipc, track } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import { language } from '../../../main/services/i18n/language'
 
 const appStore = useAppStore()

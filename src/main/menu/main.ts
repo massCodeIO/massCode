@@ -333,6 +333,16 @@ const viewMenu: MenuItemConstructorOptions[] = [
         }
       }
     ]
+  },
+  {
+    label: i18n.t('menu:view.hideSubfolderSnippets'),
+    type: 'checkbox',
+    checked: store.app.get('hideSubfolderSnippets'),
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:hide-subfolder-snippets'
+      )
+    }
   }
 ]
 

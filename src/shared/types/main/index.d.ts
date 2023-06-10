@@ -45,6 +45,7 @@ type MainMenuAction =
   | 'preview-markdown'
   | 'search'
   | 'sort-snippets'
+  | 'hide-subfolder-snippets'
   | 'font-size-increase'
   | 'font-size-decrease'
   | 'font-size-reset'

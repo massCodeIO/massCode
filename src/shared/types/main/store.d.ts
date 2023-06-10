@@ -13,6 +13,7 @@ export interface AppStore {
   sidebarWidth: number
   snippetListWidth: number
   sort: SnippetsSort
+  hideSubfolderSnippets?: boolean
   version?: string
 }
 

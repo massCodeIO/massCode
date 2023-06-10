@@ -12,7 +12,7 @@
     >
       <PerfectScrollbar>
         <SnippetListItem
-          v-for="(i, index) in snippetStore.snippets"
+          v-for="(i, index) in snippetStore.snippetsByFilter"
           :id="i.id"
           :key="i.id"
           :data-id="i.id"

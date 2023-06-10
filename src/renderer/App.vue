@@ -85,6 +85,7 @@ const init = async () => {
   }
 
   snippetStore.sort = store.app.get('sort')
+  snippetStore.hideSubfolderSnippets = store.app.get('hideSubfolderSnippets')
 
   if (theme) {
     appStore.setTheme(theme)
@@ -226,6 +227,11 @@ ipc.on('main-menu:search', () => {
 
 ipc.on('main-menu:sort-snippets', (event, sort) => {
   snippetStore.setSort(sort)
+})
+
+ipc.on('main-menu:hide-subfolder-snippets', () => {
+  snippetStore.hideSubfolderSnippets = !snippetStore.hideSubfolderSnippets
+  store.app.set('hideSubfolderSnippets', snippetStore.hideSubfolderSnippets)
 })
 
 ipc.on('main-menu:add-description', async () => {

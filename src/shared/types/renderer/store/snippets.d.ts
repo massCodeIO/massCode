@@ -12,6 +12,7 @@ export interface State {
   fragment: number
   searchQuery?: string
   sort: SnippetsSort
+  hideSubfolderSnippets: boolean
   isContextState: boolean
   isMarkdownPreview: boolean
   isScreenshotPreview: boolean

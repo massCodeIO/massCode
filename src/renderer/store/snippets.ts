@@ -27,6 +27,7 @@ export const useSnippetStore = defineStore('snippets', {
     fragment: 0,
     searchQuery: undefined,
     sort: 'updatedAt',
+    hideSubfolderSnippets: false,
     isContextState: false,
     isMarkdownPreview: false,
     isScreenshotPreview: false,
@@ -34,6 +35,21 @@ export const useSnippetStore = defineStore('snippets', {
   }),
 
   getters: {
+    snippetsByFilter: state => {
+      const folderStore = useFolderStore()
+
+      if (folderStore.selectedAlias) {
+        return state.snippets
+      }
+
+      if (state.hideSubfolderSnippets) {
+        return state.snippets.filter(
+          i => i.folderId === folderStore.selectedId
+        )
+      }
+
+      return state.snippets
+    },
     selectedId: state => state.selected?.id,
     selectedIds: state => state.selectedMultiple.map(i => i.id),
     selectedIndex: state =>

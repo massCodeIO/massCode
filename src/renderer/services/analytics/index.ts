@@ -1,15 +1,16 @@
 import type { TrackEvents } from '@shared/types/main/analytics'
-import ua from 'universal-analytics'
-import { version } from '../../../../package.json'
-import { platform } from 'os'
+import { version, platform } from '@/electron'
+import axios from 'axios'
 
-const isDev = process.env.NODE_ENV === 'development'
-
-const analytics = ua('UA-56182454-13')
+const isDev = import.meta.env.DEV
+const api = import.meta.env.VITE_ANALYTICS_API
+const scope = import.meta.env.VITE_ANALYTICS_SCOPE
 
 export const track = (event: TrackEvents, payload?: string) => {
   let os
   const p = platform()
+
+  if (!api) return
 
   if (p === 'darwin') os = 'macOS'
   if (p === 'win32') os = 'Windows'
@@ -19,11 +20,15 @@ export const track = (event: TrackEvents, payload?: string) => {
     ? `${version}/${os}/${event}/${payload}`
     : `${version}/${os}/${event}`
 
+  const body = {
+    name: 'pageview',
+    url: `https://${scope}/${path}`,
+    domain: scope
+  }
+
   if (isDev) {
-    if (process.env.DEBUG?.includes('analytics')) {
-      console.log('[analytics]:', path)
-    }
+    console.log('[analytics]:', body)
   } else {
-    analytics.pageview(path).send()
+    axios.post(api, body)
   }
 }

@@ -47,7 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { track, i18n } from '@/electron'
+import { i18n } from '@/electron'
+import { track } from '@/services/analytics'
 import router from '@/router'
 import { useAppStore } from '@/store/app'
 

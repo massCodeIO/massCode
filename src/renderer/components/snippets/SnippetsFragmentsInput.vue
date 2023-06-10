@@ -26,7 +26,8 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useSnippetStore } from '@/store/snippets'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
-import { ipc, track } from '@/electron'
+import { ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import type {
   ContextMenuRequest,
   ContextMenuResponse

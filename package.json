@@ -72,7 +72,6 @@
     "prettier-plugin-toml": "^0.3.1",
     "sanitize-html": "^2.7.0",
     "slash": "^3.0.0",
-    "universal-analytics": "^0.5.3",
     "vercel-toast": "^1.5.5",
     "vue": "^3.2.33",
     "vue-router": "^4.0.14",
@@ -128,7 +127,7 @@
     "vue-tsc": "^0.30.6"
   },
   "engines": {
-    "pnpm": ">=6.32.9 <7"
+    "pnpm": ">=8.0.0"
   },
   "volta": {
     "node": "16.15.0"

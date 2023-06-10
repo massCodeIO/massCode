@@ -7,7 +7,8 @@
 </template>
 
 <script setup lang="ts">
-import { store, track } from '@/electron'
+import { store } from '@/electron'
+import { track } from '@/services/analytics'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import { useTagStore } from '@/store/tags'

@@ -76,7 +76,8 @@
 </template>
 
 <script setup lang="ts">
-import { i18n, store, track } from '@/electron'
+import { i18n, store } from '@/electron'
+import { track } from '@/services/analytics'
 import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'

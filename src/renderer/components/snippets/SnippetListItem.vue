@@ -32,7 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { ipc, track } from '@/electron'
+import { ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import { useFolderStore } from '@/store/folders'
 import { useSnippetStore } from '@/store/snippets'
 import type {

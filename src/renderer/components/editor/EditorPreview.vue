@@ -46,7 +46,8 @@ import { useSnippetStore } from '@/store/snippets'
 import { computed, ref, onMounted, watch } from 'vue'
 import interact from 'interactjs'
 import { useAppStore } from '@/store/app'
-import { i18n, ipc, track } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import { useMagicKeys } from '@vueuse/core'
 
 const snippetStore = useSnippetStore()

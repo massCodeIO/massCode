@@ -47,7 +47,8 @@ import {
   ref,
   watch
 } from 'vue'
-import { i18n, ipc, track } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { track } from '@/services/analytics'
 import { languages } from './languages'
 import { useAppStore } from '@/store/app'
 import { useSnippetStore } from '@/store/snippets'

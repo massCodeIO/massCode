@@ -29,7 +29,8 @@ import { emitter, onAddNewSnippet } from '@/composable'
 import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed, onUnmounted, ref } from 'vue'
-import { track, i18n } from '@/electron'
+import { i18n } from '@/electron'
+import { track } from '@/services/analytics'
 
 const snippetStore = useSnippetStore()
 

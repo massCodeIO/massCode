@@ -60,6 +60,7 @@ import { useSnippetStore } from '@/store/snippets'
 import { useDebounceFn } from '@vueuse/core'
 import { computed } from 'vue'
 import { i18n } from '@/electron'
+import { track } from '@/services/analytics'
 
 const snippetStore = useSnippetStore()
 
@@ -77,6 +78,7 @@ const lang = computed({
   get: () => snippetStore.currentLanguage || 'plain_text',
   set: v => {
     snippetStore.patchCurrentSnippetContentByKey('language', v)
+    track('snippets/set-language', v)
   }
 })
 

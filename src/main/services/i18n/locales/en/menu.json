@@ -50,7 +50,8 @@
       "dateCreated": "Date Created",
       "name": "Name"
     },
-    "hideSubfolderSnippets": "Hide Subfolder Snippets"
+    "hideSubfolderSnippets": "Hide Subfolder Snippets",
+    "compactMode": "Compact Mode"
   },
   "edit": {
     "label": "Edit",

@@ -343,6 +343,16 @@ const viewMenu: MenuItemConstructorOptions[] = [
         'main-menu:hide-subfolder-snippets'
       )
     }
+  },
+  {
+    label: i18n.t('menu:view.compactMode'),
+    type: 'checkbox',
+    checked: store.app.get('compactMode'),
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:compact-mode-snippets'
+      )
+    }
   }
 ]
 

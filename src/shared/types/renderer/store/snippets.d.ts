@@ -13,6 +13,7 @@ export interface State {
   searchQuery?: string
   sort: SnippetsSort
   hideSubfolderSnippets: boolean
+  compactMode: boolean
   isContextState: boolean
   isMarkdownPreview: boolean
   isScreenshotPreview: boolean

@@ -46,6 +46,7 @@ type MainMenuAction =
   | 'search'
   | 'sort-snippets'
   | 'hide-subfolder-snippets'
+  | 'compact-mode-snippets'
   | 'font-size-increase'
   | 'font-size-decrease'
   | 'font-size-reset'

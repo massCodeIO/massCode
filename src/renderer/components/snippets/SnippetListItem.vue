@@ -3,7 +3,7 @@
     ref="itemRef"
     class="item"
     :class="{
-      'is-selected': !isFocused && isSelected,
+      'is-selected': isSelected,
       'is-focused': isFocused,
       'is-highlighted': isHighlighted || isHighlightedMultiple,
       'is-compact': snippetStore.compactMode
@@ -101,15 +101,15 @@ onClickOutside(itemRef, () => {
 
 const onClickSnippet = (e: MouseEvent) => {
   if (e.shiftKey) {
-    if (snippetStore.selectedIndex < props.index) {
-      snippetStore.selectedMultiple = snippetStore.snippets.slice(
-        snippetStore.selectedIndex,
-        props.index + 1
-      )
-    } else {
-      snippetStore.selectedMultiple = snippetStore.snippets.slice(
+    if (snippetStore.selectedIndex > props.index) {
+      snippetStore.selectedMultiple = snippetStore.snippetsByFilter.slice(
         props.index,
         snippetStore.selectedIndex + 1
+      )
+    } else {
+      snippetStore.selectedMultiple = snippetStore.snippetsByFilter.slice(
+        snippetStore.selectedIndex,
+        props.index + 1
       )
     }
     snippetStore.selected = undefined
@@ -341,11 +341,11 @@ onUnmounted(() => {
   }
   &.is-focused {
     &::before {
-      background-color: var(--color-primary);
+      background-color: var(--color-primary) !important;
     }
     .name,
     .footer {
-      color: #fff;
+      color: #fff !important;
     }
   }
   &.is-selected {

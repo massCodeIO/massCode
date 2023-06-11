@@ -36,7 +36,7 @@ export const useSnippetStore = defineStore('snippets', {
   }),
 
   getters: {
-    snippetsByFilter: state => {
+    snippetsByFilter: (state): SnippetWithFolder[] => {
       const folderStore = useFolderStore()
 
       if (folderStore.selectedAlias) {
@@ -53,8 +53,11 @@ export const useSnippetStore = defineStore('snippets', {
     },
     selectedId: state => state.selected?.id,
     selectedIds: state => state.selectedMultiple.map(i => i.id),
-    selectedIndex: state =>
-      state.snippets.findIndex(i => i.id === state.selected?.id),
+    selectedIndex () {
+      // @ts-expect-error
+      // FIXME: Разобраться с типами
+      return this.snippetsByFilter.findIndex(i => i.id === this.selected?.id)
+    },
     currentContent: state =>
       state.selected?.content?.[state.fragment]?.value || undefined,
     currentLanguage: state =>

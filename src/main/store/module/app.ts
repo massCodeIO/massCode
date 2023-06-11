@@ -10,6 +10,7 @@ export default new Store<AppStore>({
     sidebarWidth: 180,
     snippetListWidth: 250,
     sort: 'updatedAt',
-    hideSubfolderSnippets: false
+    hideSubfolderSnippets: false,
+    compactMode: false
   }
 })

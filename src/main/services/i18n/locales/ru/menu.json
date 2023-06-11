@@ -50,7 +50,8 @@
       "dateCreated": "Дате создания",
       "name": "Имени"
     },
-    "hideSubfolderSnippets": "Скрыть сниппеты в подпапках"
+    "hideSubfolderSnippets": "Скрыть сниппеты в подпапках",
+    "compactMode": "Компактный режим"
   },
   "edit": {
     "label": "Изменить",

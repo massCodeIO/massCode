@@ -5,7 +5,8 @@
     :class="{
       'is-selected': !isFocused && isSelected,
       'is-focused': isFocused,
-      'is-highlighted': isHighlighted || isHighlightedMultiple
+      'is-highlighted': isHighlighted || isHighlightedMultiple,
+      'is-compact': snippetStore.compactMode
     }"
     :draggable="true"
     @click="onClickSnippet"
@@ -15,12 +16,23 @@
   >
     <div class="header">
       <div class="name">
-        <span>
-          {{ name || 'Untitled snippet' }}
-        </span>
+        <div class="name__inner">
+          <span>
+            {{ name || 'Untitled snippet' }}
+          </span>
+          <span
+            v-if="snippetStore.compactMode"
+            class="date"
+          >
+            {{ dateFormat }}
+          </span>
+        </div>
       </div>
     </div>
-    <div class="footer">
+    <div
+      v-if="!snippetStore.compactMode"
+      class="footer"
+    >
       <div class="folder">
         {{ folder || 'Inbox' }}
       </div>
@@ -322,7 +334,7 @@ onUnmounted(() => {
       top: 0px;
       left: 8px;
       right: 8px;
-      bottom: 0px;
+      bottom: 3px;
       border-radius: 5px;
       z-index: 1;
     }
@@ -352,6 +364,14 @@ onUnmounted(() => {
       outline-offset: -2px;
     }
   }
+  &.is-compact {
+    .date {
+      color: var(--color-text-3);
+      font-size: 11px;
+      position: relative;
+      top: 1px;
+    }
+  }
 }
 .name {
   display: table;
@@ -361,10 +381,15 @@ onUnmounted(() => {
   position: relative;
   z-index: 1;
   line-height: 24px;
-  span {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
+  &__inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    span {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
   }
 }
 .footer {

@@ -28,6 +28,7 @@ export const useSnippetStore = defineStore('snippets', {
     searchQuery: undefined,
     sort: 'updatedAt',
     hideSubfolderSnippets: false,
+    compactMode: false,
     isContextState: false,
     isMarkdownPreview: false,
     isScreenshotPreview: false,

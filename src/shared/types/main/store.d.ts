@@ -14,6 +14,7 @@ export interface AppStore {
   snippetListWidth: number
   sort: SnippetsSort
   hideSubfolderSnippets?: boolean
+  compactMode?: boolean
   version?: string
 }
 

@@ -48,6 +48,7 @@ export const useAppStore = defineStore('app', {
     isSponsored: import.meta.env.VITE_SPONSORED === 'true',
     theme: 'light:github',
     showTags: true,
+    showModal: false,
     sizes: {
       titlebar: 15,
       sidebar: 180,

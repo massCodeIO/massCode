@@ -8,6 +8,7 @@ import 'vercel-toast/dist/vercel-toast.css'
 import './assets/scss/main.scss'
 import FloatingVue from 'floating-vue'
 import 'floating-vue/dist/style.css'
+import '@/components/ui/folder-icons/icons'
 
 createApp(App)
   .use(createPinia())

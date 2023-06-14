@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg class="header__svg-logo" preserveAspectRatio="xMinYMin" version="1.1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="a" x1="64.01" x2="32.99" y1="65.26" y2="89.48" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1565c0" offset=".18"/>
+   <stop stop-color="#1e88e5" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g class="header__svg-logo__icon" transform="matrix(.02849 0 0 .02849 .0029054 .0032299)">
+  <path transform="matrix(10.838 0 0 10.838 83.006 -330.21)" d="m2 41.25a2 2 0 0 0-2 2.32l8.49 51.54a2.72 2.72 0 0 0 2.66 2.27h40.73a2 2 0 0 0 2-1.68l8.51-52.11a2 2 0 0 0-2-2.32zm35.75 37.25h-13l-3.52-18.38h19.67z" fill="#1e88e5"/>
+  <path transform="matrix(10.838 0 0 10.838 83.006 -330.21)" d="m59.67 60.12h-18.77l-3.15 18.38h-13l-15.35 18.23a2.71 2.71 0 0 0 1.75 0.66h40.74a2 2 0 0 0 2-1.68z" fill="url(#a)"/>
+ </g>
+</svg>

@@ -21,6 +21,10 @@
       {{ i18n.t('updateAvailable') }}
     </span>
   </div>
+  <!-- TODO: Подумать о дальнейшем управлении глобальным модальным окном -->
+  <AppModal v-model:show="appStore.showModal">
+    <AppFolderIcons />
+  </AppModal>
 </template>
 
 <script setup lang="ts">

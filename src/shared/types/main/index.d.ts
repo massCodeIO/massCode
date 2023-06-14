@@ -22,6 +22,7 @@ type ContextMenuAction =
   | 'expand-all'
   | 'restore-from-trash'
   | 'copy-snippet-link'
+  | 'set-custom-icon'
   | 'none'
 
 export type ContextMenuType =

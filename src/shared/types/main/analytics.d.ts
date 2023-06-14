@@ -21,7 +21,7 @@ type SnippetEvents =
   | 'search'
   | 'set-language'
 
-type FolderEvents = 'add-new' | 'delete' | 'set-language'
+type FolderEvents = 'add-new' | 'delete' | 'set-language' | 'set-custom-icon'
 type TagEvents = 'add-new' | 'delete'
 
 type AppEvents =

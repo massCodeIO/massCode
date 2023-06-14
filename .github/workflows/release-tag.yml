@@ -17,7 +17,7 @@ jobs:
 
       - name: Create Release for Tag
         id: release_tag
-        uses: Akryum/release-tag@conventional
+        uses: massCodeIO/release-tag@conventional
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

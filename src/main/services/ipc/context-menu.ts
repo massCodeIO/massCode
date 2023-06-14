@@ -311,6 +311,17 @@ export const subscribeToContextMenu = () => {
           {
             label: i18n.t('defaultLanguage'),
             submenu: createLanguageMenu()
+          },
+          { type: 'separator' },
+          {
+            label: i18n.t('set-custom-icon'),
+            click: () => {
+              resolve({
+                action: 'set-custom-icon',
+                type,
+                data: undefined
+              })
+            }
           }
         ]
 

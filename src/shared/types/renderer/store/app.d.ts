@@ -55,6 +55,7 @@ export interface State {
   theme: Theme
   sizes: AppSizes
   showTags: boolean
+  showModal: boolean
   version: string
   editor: EditorSettings
   selectedPreferencesMenu: string

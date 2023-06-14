@@ -60,5 +60,6 @@
   "collapse-all": "Collapse All",
   "expand-all": "Expand All",
   "restore": "Restore",
-  "copy-snippet-link": "Copy Snippet Link"
+  "copy-snippet-link": "Copy Snippet Link",
+  "set-custom-icon": "Set Custom Icon"
 }

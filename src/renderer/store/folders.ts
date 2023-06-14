@@ -15,6 +15,7 @@ export const useFolderStore = defineStore('folders', {
       foldersTree: [],
       selected: undefined,
       selectedId: undefined,
+      selectedContextId: undefined,
       selectedIds: undefined,
       selectedAlias: undefined
     } as State),

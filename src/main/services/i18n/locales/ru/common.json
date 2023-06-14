@@ -59,5 +59,6 @@
   "collapse-all": "Закрыть все",
   "expand-all": "Открыть все",
   "restore": "Восстановить",
-  "copy-snippet-link": "Скопировать ссылку"
+  "copy-snippet-link": "Скопировать ссылку",
+  "set-custom-icon": "Установить иконку"
 }

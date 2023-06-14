@@ -1,10 +1,12 @@
 import type { Language } from '@shared/types/renderer/editor'
+import type { FunctionalComponent } from 'vue'
 
 export interface Folder {
   id: string
   name: string
   defaultLanguage: Language
   parentId: string | null
+  icon?: string | null | FunctionalComponent
   isOpen: boolean
   isSystem: boolean
   createdAt: number

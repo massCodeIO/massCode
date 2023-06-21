@@ -49,7 +49,9 @@
       "dateModified": "更新日",
       "dateCreated": "作成日",
       "name": "名前"
-    }
+    },
+    "hideSubfolderSnippets": "サブフォルダのスニペットを隠す",
+    "compactMode": "コンパクトモード"
   },
   "edit": {
     "label": "ラベル",

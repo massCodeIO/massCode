@@ -24,6 +24,6 @@
     "folderNotContainDb": "フォルダには \"db.json\" が存在しません。"
   },
   "unsponsored": "サポートしていません",
-  "supportMessage": "やあ！アントンです。👋<br><br>\nmassCodeを使ってくれてありがとう。もしあなたがこのソフトを気に入ったのなら、ぜひ{{-tagStart}}寄付{{-tagEnd}}をお願いします！。 massCodeを開発し続けるための力になります。",
+  "supportMessage": "やあ！アントンです👋<br><br>\nmassCodeを使ってくれてありがとう。もしあなたがこのソフトを気に入ったのなら、ぜひ{{-tagStart}}寄付{{-tagEnd}}をお願いします！。 massCodeを開発し続けるための力になります。",
   "snippetsShowcase": "スニペットライブラリ"
 }

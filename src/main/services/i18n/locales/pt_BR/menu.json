@@ -3,7 +3,7 @@
     "label": "massCode",
     "preferences": "Preferências",
     "update": {
-      "label": "Verificar atualizações....",
+      "label": "Procurar por atualizações....",
       "message": "Versão {{newVersion}} já está disponível para download.\nSua versão é {{oldVersion}}.",
       "button": ["Ir até o Download", "OK"],
       "noUpdate": "No momento, não há atualizações disponíveis."
@@ -48,7 +48,9 @@
       "dateModified": "Data da modificação",
       "dateCreated": "Data da criação",
       "name": "Nome"
-    }
+    },
+    "hideSubfolderSnippets": "Ocultar subpasta",
+    "compactMode": "Modo compacto"
   },
   "edit": {
     "label": "Editar",

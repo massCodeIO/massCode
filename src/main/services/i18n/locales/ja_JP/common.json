@@ -60,5 +60,6 @@
   "collapse-all": "すべて縮小",
   "expand-all": "すべて展開",
   "restore": "回復",
-  "copy-snippet-link": "スニペットリンクをコピー"
+  "copy-snippet-link": "スニペットリンクをコピー",
+  "set-custom-icon": "カスタムアイコンを設定"
 }

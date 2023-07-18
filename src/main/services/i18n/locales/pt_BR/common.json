@@ -56,9 +56,10 @@
   "restartApp": "Reiniciar massCode",
   "updateAvailable": "Atualização disponível",
   "hide": "Ocultar",
-  "show": "Show",
+  "show": "Mostrar",
   "collapse-all": "Recolher todos",
   "expand-all": "Expandir todos",
   "restore": "Restaurar",
-  "copy-snippet-link": "Copiar link deste snippet"
+  "copy-snippet-link": "Copiar link deste snippet",
+  "set-custom-icon": "Definir ícone personalizado"
 }

@@ -17,6 +17,7 @@
     "tabSize": "Šířka tabulátoru",
     "showInvisibles": "Zobrazit neviditelné",
     "highlightLine": "Zvýraznit řádek",
+    "highlightGutter": "Zvýraznit Gutter",
     "matchBrackets": "Párovat závorky",
     "prettier": {
       "label": "Prettier",

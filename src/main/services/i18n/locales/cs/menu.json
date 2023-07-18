@@ -49,7 +49,9 @@
       "dateModified": "Data úpravy",
       "dateCreated": "Data vytvoření",
       "name": "Názvu"
-    }
+    },
+    "hideSubfolderSnippets": "Skrýt snippety podsložek",
+    "compactMode": "Kompaktní zobrazení"
   },
   "edit": {
     "label": "Upravit",

@@ -62,5 +62,6 @@
   "collapse-all": "Sbalit vše",
   "expand-all": "Rozbalit vše",
   "restore": "Obnovit",
-  "copy-snippet-link": "Zkopírovat odkaz na snippet"
+  "copy-snippet-link": "Zkopírovat odkaz na snippet",
+  "set-custom-icon": "Nastavit vlastní ikonu"
 }

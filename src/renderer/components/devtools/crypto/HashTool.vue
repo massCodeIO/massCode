@@ -7,12 +7,12 @@
           style="width: 100%"
           type="textarea"
         />
-        <template #actions>
-          <AppSelect
-            v-model="algo"
-            :options="options"
-          />
-        </template>
+      </AppFormItem>
+      <AppFormItem :label="i18n.t('devtools:form.algorithm')">
+        <AppSelect
+          v-model="algo"
+          :options="options"
+        />
       </AppFormItem>
       <AppFormItem :label="i18n.t('devtools:form.result')">
         <AppInput

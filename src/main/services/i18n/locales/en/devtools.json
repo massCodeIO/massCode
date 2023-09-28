@@ -9,7 +9,8 @@
     "value": "Value",
     "component": "Component",
     "result": "Result",
-    "secretKey": "Secret Key"
+    "secretKey": "Secret Key",
+    "algorithm": "Algorithm"
   },
   "textTools": {
     "label": "Text Tools",

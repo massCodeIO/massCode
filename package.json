@@ -73,6 +73,7 @@
     "query-string": "^8.1.0",
     "sanitize-html": "^2.7.0",
     "slash": "^3.0.0",
+    "slugify": "^1.6.6",
     "vercel-toast": "^1.5.5",
     "vue": "^3.2.33",
     "vue-router": "^4.0.14",

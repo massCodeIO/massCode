@@ -29,6 +29,13 @@
           >
             <UrlParserTool />
           </AppMenuItem>
+          <AppMenuItem
+            group="textTools"
+            :name="i18n.t('devtools:textTools.slugGenerator')"
+            value="textTools.slugGenerator"
+          >
+            <SlugTool />
+          </AppMenuItem>
         </AppMenuGroup>
       </AppMenu>
     </div>

@@ -12,6 +12,7 @@
   "textTools": {
     "label": "Text Tools",
     "caseConverter": "Case Converter",
-    "urlParser": "URL Parser"
+    "urlParser": "URL Parser",
+    "slugGenerator": "Slug Generator"
   }
 }

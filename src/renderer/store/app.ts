@@ -67,6 +67,7 @@ export const useAppStore = defineStore('app', {
     codePreview: CODE_PREVIEW_DEFAULTS,
     markdown: MARKDOWN_DEFAULTS,
     selectedPreferencesMenu: 'storage',
+    selectedDevtoolsMenu: 'textTools.caseConverter',
     language: store.preferences.get('language'),
     history: [],
     historyIndex: 0,

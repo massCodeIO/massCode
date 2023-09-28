@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { inject } from 'vue'
 import { menuKey } from './keys'
 
 interface Props {
@@ -19,6 +19,7 @@ const root = inject(menuKey)!
 
 root.groups.value.push({
   name: props.name,
+  label: props.label,
   items: []
 })
 </script>

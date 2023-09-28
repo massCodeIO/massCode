@@ -1,0 +1,10 @@
+{
+  "form": {
+    "inputString": "Input String",
+    "outputString": "Output String"
+  },
+  "textTools": {
+    "label": "Text Tools",
+    "caseConverter": "Case Converter"
+  }
+}

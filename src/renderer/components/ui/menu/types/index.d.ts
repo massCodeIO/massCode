@@ -7,6 +7,7 @@ export interface MenuItem {
 
 export interface GroupItem {
   name: string
+  label: string
   items: MenuItem[]
 }
 

@@ -8,7 +8,9 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "update": ["Go to GitHub", "OK"],
-    "ok": "OK"
+    "ok": "OK",
+    "clear": "Clear",
+    "copy": "Copy"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",

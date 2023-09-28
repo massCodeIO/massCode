@@ -11,7 +11,7 @@ i18next.use(Backend).init({
   fallbackLng: 'en',
   lng,
   debug: false,
-  ns: ['common', 'dialog', 'preferences', 'special', 'menu'],
+  ns: ['common', 'dialog', 'preferences', 'special', 'menu', 'devtools'],
   defaultNS: 'common',
   initImmediate: false,
   preload: readdirSync(join(__dirname, './locales')).filter(fileName => {

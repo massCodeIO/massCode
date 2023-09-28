@@ -7,7 +7,7 @@
           :key="g.name"
         >
           <div class="group">
-            {{ g.name }}
+            {{ g.label }}
           </div>
           <div
             v-for="i in g.items"

@@ -73,20 +73,22 @@ function pascalCase (str: string) {
 }
 
 function onClick (type: CaseType) {
+  const lines = inputValue.value.split('\n')
+
   if (type === 'camelCase') {
-    outputValue.value = camelCase(inputValue.value)
+    outputValue.value = lines.map(line => camelCase(line)).join('\n')
   } else if (type === 'kebabCase') {
-    outputValue.value = kebabCase(inputValue.value)
+    outputValue.value = lines.map(line => kebabCase(line)).join('\n')
   } else if (type === 'lowerCase') {
     outputValue.value = inputValue.value.toLowerCase()
   } else if (type === 'startCase') {
-    outputValue.value = startCase(inputValue.value)
+    outputValue.value = lines.map(line => startCase(line)).join('\n')
   } else if (type === 'upperCase') {
     outputValue.value = inputValue.value.toUpperCase()
   } else if (type === 'snakeCase') {
-    outputValue.value = snakeCase(inputValue.value)
+    outputValue.value = lines.map(line => snakeCase(line)).join('\n')
   } else if (type === 'pascalCase') {
-    outputValue.value = pascalCase(inputValue.value)
+    outputValue.value = lines.map(line => pascalCase(line)).join('\n')
   }
 }
 

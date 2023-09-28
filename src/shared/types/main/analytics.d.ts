@@ -39,17 +39,19 @@ type AppEvents =
 
 type ApiEvents = 'snippet-create'
 type PageEvents = 'main' | 'preferences' | 'presentation' | 'devtools'
-type DevtoolsTextEvents = 'case-converter' | 'url-parser' | 'slug-generator'
+type DevtoolsEvents =
+  | 'case-converter'
+  | 'url-parser'
+  | 'slug-generator'
+  | 'sort'
+  | 'hash-generator'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>
 type TrackTagEvents = CombineWith<TagEvents, 'tags'>
 type TrackAppEvents = CombineWith<AppEvents, 'app'>
 type TrackApiEvents = CombineWith<ApiEvents, 'api'>
-type TrackDevtoolsEvents = CombineWith<
-DevtoolsTextEvents,
-'devtools/text-tools'
->
+type TrackDevtoolsEvents = CombineWith<DevtoolsEvents, 'devtools'>
 
 export type TrackEvents =
   | TrackSnippetEvents

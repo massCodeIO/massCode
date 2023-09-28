@@ -44,6 +44,18 @@
             <UrlParserTool />
           </AppMenuItem>
         </AppMenuGroup>
+        <AppMenuGroup
+          :label="i18n.t('devtools:crypto.label')"
+          name="cryptoTools"
+        >
+          <AppMenuItem
+            group="cryptoTools"
+            :name="i18n.t('devtools:crypto.hashGenerator')"
+            value="cryptoTools.hashGenerator"
+          >
+            <HashTool />
+          </AppMenuItem>
+        </AppMenuGroup>
       </AppMenu>
     </div>
   </div>

@@ -105,7 +105,7 @@ const port = computed(() => url.value?.port)
 
 const queryObj = computed(() => qs.parse(query?.value || ''))
 
-track('devtools/text-tools/url-parser')
+track('devtools/url-parser')
 </script>
 
 <style lang="scss" scoped></style>

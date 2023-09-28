@@ -69,7 +69,7 @@ function onSort (type: string) {
   outputValue.value = nonEmptyLines.join('\n')
 }
 
-track('devtools/text-tools/slug-generator')
+track('devtools/sort')
 </script>
 
 <style lang="scss" scoped></style>

@@ -104,7 +104,7 @@ function onCopy () {
   copy(outputValue.value)
 }
 
-track('devtools/text-tools/case-converter')
+track('devtools/case-converter')
 </script>
 
 <style lang="scss" scoped></style>

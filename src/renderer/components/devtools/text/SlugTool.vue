@@ -50,7 +50,7 @@ function onCopy () {
   copy(outputValue.value)
 }
 
-track('devtools/text-tools/slug-generator')
+track('devtools/slug-generator')
 </script>
 
 <style lang="scss" scoped></style>

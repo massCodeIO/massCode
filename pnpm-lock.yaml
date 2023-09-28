@@ -38,6 +38,9 @@ dependencies:
   codemirror-textmate:
     specifier: ^1.1.0
     version: 1.1.0(codemirror@5.65.7)(onigasm@2.2.5)
+  crypto-js:
+    specifier: ^4.1.1
+    version: 4.1.1
   date-fns:
     specifier: ^2.28.0
     version: 2.28.0
@@ -4811,6 +4814,10 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  /crypto-js@4.1.1:
+    resolution: {integrity: sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==}
+    dev: false
 
   /crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}

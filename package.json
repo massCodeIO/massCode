@@ -70,6 +70,7 @@
     "prettier-plugin-java": "^1.6.1",
     "prettier-plugin-sh": "0.8.2",
     "prettier-plugin-toml": "^0.3.1",
+    "query-string": "^8.1.0",
     "sanitize-html": "^2.7.0",
     "slash": "^3.0.0",
     "vercel-toast": "^1.5.5",

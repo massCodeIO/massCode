@@ -39,7 +39,7 @@ type AppEvents =
 
 type ApiEvents = 'snippet-create'
 type PageEvents = 'main' | 'preferences' | 'presentation' | 'devtools'
-type DevtoolsTextEvents = 'case-converter'
+type DevtoolsTextEvents = 'case-converter' | 'url-parser'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>

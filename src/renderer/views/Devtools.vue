@@ -22,6 +22,13 @@
           >
             <CaseConverterTool />
           </AppMenuItem>
+          <AppMenuItem
+            group="textTools"
+            :name="i18n.t('devtools:textTools.urlParser')"
+            value="textTools.urlParser"
+          >
+            <UrlParserTool />
+          </AppMenuItem>
         </AppMenuGroup>
       </AppMenu>
     </div>

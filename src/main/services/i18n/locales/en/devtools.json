@@ -1,10 +1,17 @@
 {
   "form": {
     "inputString": "Input String",
-    "outputString": "Output String"
+    "outputString": "Output String",
+    "inputUrl": "Input URL",
+    "parsedUrl": "Parsed URL",
+    "splitQueryString": "Split Query String",
+    "key": "Key",
+    "value": "Value",
+    "component": "Component"
   },
   "textTools": {
     "label": "Text Tools",
-    "caseConverter": "Case Converter"
+    "caseConverter": "Case Converter",
+    "urlParser": "URL Parser"
   }
 }

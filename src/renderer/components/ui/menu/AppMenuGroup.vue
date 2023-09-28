@@ -24,4 +24,8 @@ root.groups.value.push({
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.menu-group {
+  margin-bottom: var(--spacing-sm);
+}
+</style>

@@ -4,6 +4,7 @@
       <AppFormItem :label="i18n.t('devtools:form.inputString')">
         <AppInput
           v-model="inputValue"
+          style="width: 100%"
           type="textarea"
         />
         <template #actions>
@@ -33,6 +34,7 @@
       <AppFormItem :label="i18n.t('devtools:form.outputString')">
         <AppInput
           v-model="outputValue"
+          style="width: 100%"
           type="textarea"
           readonly
         />

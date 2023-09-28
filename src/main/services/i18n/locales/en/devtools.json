@@ -13,6 +13,7 @@
     "label": "Text Tools",
     "caseConverter": "Case Converter",
     "urlParser": "URL Parser",
-    "slugGenerator": "Slug Generator"
+    "slugGenerator": "Slug Generator",
+    "sortLines": "Sort Lines"
   }
 }

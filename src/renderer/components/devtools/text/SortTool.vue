@@ -7,6 +7,14 @@
           style="width: 100%"
           type="textarea"
         />
+        <template #actions>
+          <AppButton @click="onSort('sort')">
+            {{ i18n.t('common:button.sort') }}
+          </AppButton>
+          <AppButton @click="onSort('revers')">
+            {{ i18n.t('common:button.revers') }}
+          </AppButton>
+        </template>
       </AppFormItem>
       <AppFormItem :label="i18n.t('devtools:form.outputString')">
         <AppInput
@@ -31,23 +39,34 @@
 <script setup lang="ts">
 import { i18n } from '@/electron'
 import { track } from '@/services/analytics'
-import { ref, computed } from 'vue'
-import slugify from 'slugify'
+import { ref } from 'vue'
 import { useClipboard } from '@vueuse/core'
 
 const inputValue = ref('')
-const outputValue = computed(() => {
-  const lines = inputValue.value.split('\n')
-  return lines.map(line => slugify(line)).join('\n')
-})
+const outputValue = ref('')
 
 function onClear () {
   inputValue.value = ''
+  outputValue.value = ''
 }
 
 function onCopy () {
   const { copy } = useClipboard()
   copy(outputValue.value)
+}
+
+function onSort (type: string) {
+  const lines = inputValue.value.split('\n')
+
+  if (type === 'sort') {
+    lines.sort()
+  } else if (type === 'revers') {
+    lines.reverse()
+  }
+
+  const nonEmptyLines = lines.filter(line => line.trim() !== '')
+
+  outputValue.value = nonEmptyLines.join('\n')
 }
 
 track('devtools/text-tools/slug-generator')

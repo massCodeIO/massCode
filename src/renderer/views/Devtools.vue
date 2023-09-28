@@ -24,17 +24,24 @@
           </AppMenuItem>
           <AppMenuItem
             group="textTools"
-            :name="i18n.t('devtools:textTools.urlParser')"
-            value="textTools.urlParser"
-          >
-            <UrlParserTool />
-          </AppMenuItem>
-          <AppMenuItem
-            group="textTools"
             :name="i18n.t('devtools:textTools.slugGenerator')"
             value="textTools.slugGenerator"
           >
             <SlugTool />
+          </AppMenuItem>
+          <AppMenuItem
+            group="textTools"
+            :name="i18n.t('devtools:textTools.sortLines')"
+            value="textTools.sortLines"
+          >
+            <SortTool />
+          </AppMenuItem>
+          <AppMenuItem
+            group="textTools"
+            :name="i18n.t('devtools:textTools.urlParser')"
+            value="textTools.urlParser"
+          >
+            <UrlParserTool />
           </AppMenuItem>
         </AppMenuGroup>
       </AppMenu>

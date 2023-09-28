@@ -10,7 +10,9 @@
     "update": ["Go to GitHub", "OK"],
     "ok": "OK",
     "clear": "Clear",
-    "copy": "Copy"
+    "copy": "Copy",
+    "sort": "Sort",
+    "revers": "Revers"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",

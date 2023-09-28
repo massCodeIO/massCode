@@ -48,6 +48,7 @@ defineProps<Props>()
   .actions {
     margin-top: var(--spacing-sm);
     display: flex;
+    flex-flow: wrap;
     gap: var(--spacing-sm);
   }
 }

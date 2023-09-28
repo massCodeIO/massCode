@@ -1,5 +1,12 @@
 <template>
+  <textarea
+    v-if="type === 'textarea'"
+    v-model="localValue"
+    class="textarea"
+    v-bind="$attrs"
+  />
   <input
+    v-else
     v-model="localValue"
     class="input"
     type="text"
@@ -12,6 +19,7 @@ import { computed } from 'vue'
 
 interface Props {
   modelValue: string | number
+  type?: string
 }
 
 interface Emits {
@@ -20,7 +28,9 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  type: 'text'
+})
 
 const localValue = computed({
   get: () => props.modelValue,
@@ -31,9 +41,8 @@ const localValue = computed({
 </script>
 
 <style lang="scss" scoped>
-.input {
-  width: 300px;
-  height: 32px;
+.input,
+.textarea {
   outline: none;
   border: 1px solid var(--color-border);
   border-radius: 3px;
@@ -44,5 +53,17 @@ const localValue = computed({
   &::-webkit-outer-spin-button {
     -webkit-appearance: none;
   }
+}
+
+.input {
+  width: 300px;
+  height: 32px;
+}
+
+.textarea {
+  padding: var(--spacing-xs);
+  width: 400px;
+  height: 150px;
+  resize: vertical;
 }
 </style>

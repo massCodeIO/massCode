@@ -85,6 +85,7 @@
     "@commitlint/config-conventional": "^15.0.0",
     "@tsconfig/node14": "^1.0.1",
     "@types/codemirror": "^5.60.5",
+    "@types/crypto-js": "^4.1.2",
     "@types/dom-to-image": "^2.6.4",
     "@types/estree": "^0.0.51",
     "@types/i18next-fs-backend": "^1.1.2",

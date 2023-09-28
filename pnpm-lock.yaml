@@ -142,6 +142,9 @@ devDependencies:
   '@types/codemirror':
     specifier: ^5.60.5
     version: 5.60.5
+  '@types/crypto-js':
+    specifier: ^4.1.2
+    version: 4.1.2
   '@types/dom-to-image':
     specifier: ^2.6.4
     version: 2.6.4
@@ -2202,6 +2205,10 @@ packages:
 
   /@types/cors@2.8.12:
     resolution: {integrity: sha512-vt+kDhq/M2ayberEtJcIN/hxXy1Pk+59g2FV/ZQceeaTyCtCucjL2Q7FXlFjtWn4n15KCr1NE2lNNFhp0lEThw==}
+    dev: true
+
+  /@types/crypto-js@4.1.2:
+    resolution: {integrity: sha512-t33RNmTu5ufG/sorROIafiCVJMx3jz95bXUMoPAZcUD14fxMXnuTzqzXZoxpR0tNx2xpw11Dlmem9vGCsrSOfA==}
     dev: true
 
   /@types/debug@4.1.7:

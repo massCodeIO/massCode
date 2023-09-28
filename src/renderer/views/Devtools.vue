@@ -55,6 +55,13 @@
           >
             <HashTool />
           </AppMenuItem>
+          <AppMenuItem
+            group="cryptoTools"
+            :name="i18n.t('devtools:crypto.hmacGenerator')"
+            value="cryptoTools.hmacGenerator"
+          >
+            <HmacTool />
+          </AppMenuItem>
         </AppMenuGroup>
       </AppMenu>
     </div>

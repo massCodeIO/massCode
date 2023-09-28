@@ -8,7 +8,8 @@
     "key": "Key",
     "value": "Value",
     "component": "Component",
-    "result": "Result"
+    "result": "Result",
+    "secretKey": "Secret Key"
   },
   "textTools": {
     "label": "Text Tools",
@@ -19,6 +20,7 @@
   },
   "crypto": {
     "label": "Cryptography / Security",
-    "hashGenerator": "Hash Generator"
+    "hashGenerator": "Hash Generator",
+    "hmacGenerator": "HMAC Generator"
   }
 }

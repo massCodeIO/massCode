@@ -4,6 +4,7 @@
       <AppFormItem :label="i18n.t('devtools:form.inputString')">
         <AppInput
           v-model="inputValue"
+          type="textarea"
           style="width: 100%"
         />
       </AppFormItem>
@@ -11,6 +12,7 @@
         <AppInput
           v-model="outputValue"
           style="width: 100%"
+          type="textarea"
           readonly
         />
         <template #actions>
@@ -34,7 +36,10 @@ import slugify from 'slugify'
 import { useClipboard } from '@vueuse/core'
 
 const inputValue = ref('')
-const outputValue = computed(() => slugify(inputValue.value))
+const outputValue = computed(() => {
+  const lines = inputValue.value.split('\n')
+  return lines.map(line => slugify(line)).join('\n')
+})
 
 function onClear () {
   inputValue.value = ''

@@ -17,6 +17,9 @@
           <AppButton @click="onClickNew">
             {{ i18n.t('button.newStorage') }}
           </AppButton>
+          <AppButton @click="onClickReload">
+            {{ i18n.t('button.reloadStorage') }}
+          </AppButton>
         </template>
         <template #desc>
           {{ i18n.t('special:description.storage') }}
@@ -209,6 +212,11 @@ const resetStore = () => {
 
   snippetStore.$reset()
   folderStore.$reset()
+}
+
+const onClickReload = () => {
+  ipc.invoke('main:restart-api', {})
+  snippetStore.getSnippets()
 }
 </script>
 

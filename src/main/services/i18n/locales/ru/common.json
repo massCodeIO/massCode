@@ -7,7 +7,12 @@
     "fromSnippetsLab": "Из SnippetsLab",
     "confirm": "Подтвердить",
     "cancel": "Отмена",
-    "ok": "Хорошо"
+    "ok": "Хорошо",
+    "clear": "Очистить",
+    "copy": "Копировать",
+    "sort": "Сортировать",
+    "revers": "Реверс",
+    "generate": "Генерировать"
   },
   "newFolder": "Новая папка",
   "newSnippet": "Новый сниппет",

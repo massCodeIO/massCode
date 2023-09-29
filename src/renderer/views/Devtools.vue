@@ -70,6 +70,18 @@
             <UuidTool />
           </AppMenuItem>
         </AppMenuGroup>
+        <AppMenuGroup
+          :label="i18n.t('devtools:encodeDecode.label')"
+          name="encodeDecodeTools"
+        >
+          <AppMenuItem
+            group="encodeDecodeTools"
+            :name="i18n.t('devtools:encodeDecode.url')"
+            value="encodeDecode.url"
+          >
+            <UrlEncodeDecodeTool />
+          </AppMenuItem>
+        </AppMenuGroup>
       </AppMenu>
     </div>
   </div>
@@ -105,7 +117,7 @@ track('devtools')
   justify-content: space-between;
 }
 .body {
-  padding: 0 0 var(--spacing-sm) var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
   display: grid;
 }
 </style>

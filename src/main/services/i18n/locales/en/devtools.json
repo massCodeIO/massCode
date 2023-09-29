@@ -3,6 +3,7 @@
     "inputString": "Input String",
     "outputString": "Output String",
     "inputUrl": "Input URL",
+    "outputUrl": "Output URL",
     "parsedUrl": "Parsed URL",
     "splitQueryString": "Split Query String",
     "key": "Key",
@@ -12,7 +13,8 @@
     "secretKey": "Secret Key",
     "algorithm": "Algorithm",
     "version": "Version",
-    "amount": "Amount"
+    "amount": "Amount",
+    "type": "Type"
   },
   "textTools": {
     "label": "Text Tools",
@@ -26,5 +28,9 @@
     "hashGenerator": "Hash Generator",
     "hmacGenerator": "HMAC Generator",
     "uuidGenerator": "UUID Generator"
+  },
+  "encodeDecode": {
+    "label": "Encoders / Decoders",
+    "url": "URL Encoder / Decoder"
   }
 }

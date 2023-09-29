@@ -47,6 +47,7 @@ type DevtoolsEvents =
   | 'hash-generator'
   | 'hmac-generator'
   | 'uuid-generator'
+  | 'pass-generator'
   | 'url-encoder-decoder'
   | 'base64-encoder-decoder'
 

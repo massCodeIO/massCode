@@ -57,6 +57,13 @@
         </AppMenuItem>
         <AppMenuItem
           group="cryptoTools"
+          :name="i18n.t('devtools:crypto.passGenerator')"
+          value="cryptoTools.passGenerator"
+        >
+          <PassTool />
+        </AppMenuItem>
+        <AppMenuItem
+          group="cryptoTools"
           :name="i18n.t('devtools:crypto.uuidGenerator')"
           value="cryptoTools.uuidGenerator"
         >

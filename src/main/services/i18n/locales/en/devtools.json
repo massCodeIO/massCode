@@ -14,7 +14,9 @@
     "algorithm": "Algorithm",
     "version": "Version",
     "amount": "Amount",
-    "type": "Type"
+    "type": "Type",
+    "length": "Length",
+    "options": "Options"
   },
   "textTools": {
     "label": "Text Tools",
@@ -27,6 +29,7 @@
     "label": "Cryptography / Security",
     "hashGenerator": "Hash Generator",
     "hmacGenerator": "HMAC Generator",
+    "passGenerator": "Password Generator",
     "uuidGenerator": "UUID Generator"
   },
   "encodeDecode": {

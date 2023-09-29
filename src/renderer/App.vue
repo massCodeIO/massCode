@@ -190,6 +190,10 @@ ipc.on('main-menu:preferences', () => {
   router.push('/preferences')
 })
 
+ipc.on('main-menu:devtools', () => {
+  router.push('/devtools')
+})
+
 ipc.on('main-menu:new-folder', async () => {
   await onAddNewFolder()
 })

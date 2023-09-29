@@ -1,49 +1,41 @@
 <template>
-  <div class="preferences">
-    <div class="title">
-      <h3>{{ i18n.t('preferences:title') }}</h3>
-      <AppActionButton
-        v-tooltip="i18n.t('close')"
-        @click="toHome"
+  <AppLayoutOneColumn
+    :title="i18n.t('preferences:title')"
+    @close="toHome"
+  >
+    <AppMenu v-model="appStore.selectedPreferencesMenu">
+      <AppMenuItem
+        :name="i18n.t('preferences:storage.label')"
+        value="storage"
       >
-        <UniconsTimes />
-      </AppActionButton>
-    </div>
-    <div class="body">
-      <AppMenu v-model="appStore.selectedPreferencesMenu">
-        <AppMenuItem
-          :name="i18n.t('preferences:storage.label')"
-          value="storage"
-        >
-          <StoragePreferences />
-        </AppMenuItem>
-        <AppMenuItem
-          :name="i18n.t('preferences:editor.label')"
-          value="editor"
-        >
-          <EditorPreferences />
-        </AppMenuItem>
-        <AppMenuItem
-          :name="i18n.t('preferences:markdown.label')"
-          value="markdown"
-        >
-          <MarkdownPreferences />
-        </AppMenuItem>
-        <AppMenuItem
-          :name="i18n.t('preferences:appearance.label')"
-          value="appearance"
-        >
-          <AppearancePreferences />
-        </AppMenuItem>
-        <AppMenuItem
-          :name="i18n.t('preferences:language.label')"
-          value="languages"
-        >
-          <LanguagePreferences />
-        </AppMenuItem>
-      </AppMenu>
-    </div>
-  </div>
+        <StoragePreferences />
+      </AppMenuItem>
+      <AppMenuItem
+        :name="i18n.t('preferences:editor.label')"
+        value="editor"
+      >
+        <EditorPreferences />
+      </AppMenuItem>
+      <AppMenuItem
+        :name="i18n.t('preferences:markdown.label')"
+        value="markdown"
+      >
+        <MarkdownPreferences />
+      </AppMenuItem>
+      <AppMenuItem
+        :name="i18n.t('preferences:appearance.label')"
+        value="appearance"
+      >
+        <AppearancePreferences />
+      </AppMenuItem>
+      <AppMenuItem
+        :name="i18n.t('preferences:language.label')"
+        value="languages"
+      >
+        <LanguagePreferences />
+      </AppMenuItem>
+    </AppMenu>
+  </AppLayoutOneColumn>
 </template>
 
 <script setup lang="ts">
@@ -61,21 +53,4 @@ const toHome = () => {
 track('preferences')
 </script>
 
-<style lang="scss" scoped>
-.preferences {
-  h3 {
-    margin: 0;
-  }
-  margin-top: var(--title-bar-height);
-}
-.title {
-  padding: var(--spacing-sm);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.body {
-  padding: 0 0 var(--spacing-sm) var(--spacing-sm);
-  display: grid;
-}
-</style>
+<style lang="scss" scoped></style>

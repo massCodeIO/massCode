@@ -83,5 +83,8 @@
     "label": "History",
     "back": "Back",
     "forward": "Forward"
+  },
+  "devtools": {
+    "label": "Developer Tools"
   }
 }

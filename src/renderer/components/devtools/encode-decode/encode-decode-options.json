@@ -1,0 +1,4 @@
+[
+  { "label": "Encode", "value": "encode" },
+  { "label": "Decode", "value": "decode" }
+]

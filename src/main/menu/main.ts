@@ -29,7 +29,7 @@ const aboutApp = () => {
 }
 
 const appMenuCommon: Record<
-'preferences' | 'quit' | 'update',
+'preferences' | 'quit' | 'update' | 'devtools',
 MenuItemConstructorOptions
 > = {
   preferences: {
@@ -39,6 +39,13 @@ MenuItemConstructorOptions
       BrowserWindow.getFocusedWindow()?.webContents.send(
         'main-menu:preferences'
       )
+    }
+  },
+  devtools: {
+    label: i18n.t('menu:devtools.label') + '...',
+    accelerator: 'CommandOrControl+.',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:devtools')
     }
   },
   update: {
@@ -92,6 +99,12 @@ const appMenuMac: MenuItemConstructorOptions[] = [
   },
   {
     ...appMenuCommon.preferences
+  },
+  {
+    type: 'separator'
+  },
+  {
+    ...appMenuCommon.devtools
   },
   {
     type: 'separator'

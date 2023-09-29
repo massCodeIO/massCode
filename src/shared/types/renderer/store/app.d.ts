@@ -59,6 +59,7 @@ export interface State {
   version: string
   editor: EditorSettings
   selectedPreferencesMenu: string
+  selectedDevtoolsMenu: string
   screenshot: ScreenshotSettings
   markdown: MarkdownSettings
   codePreview: CodePreviewSettings

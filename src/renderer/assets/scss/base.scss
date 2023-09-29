@@ -100,3 +100,23 @@ h6 {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--color-border);
+  table-layout: fixed;
+  th,
+  td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+  }
+  th {
+    text-align: left;
+    background-color: var(--color-bg-2);
+  }
+  tr:nth-child(even) {
+    background-color: var(--color-bg-2);
+  }
+}

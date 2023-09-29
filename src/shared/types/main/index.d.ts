@@ -53,6 +53,7 @@ type MainMenuAction =
   | 'font-size-reset'
   | 'history-back'
   | 'history-forward'
+  | 'devtools'
 
 type MainAction =
   | 'restart'

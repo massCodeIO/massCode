@@ -1,5 +1,5 @@
 <template>
-  <div class="url-encode-decode-tool">
+  <div class="base-encode-decode-tool">
     <AppForm>
       <AppFormItem :label="i18n.t('devtools:form.type')">
         <AppSelect
@@ -7,14 +7,14 @@
           :options="options"
         />
       </AppFormItem>
-      <AppFormItem :label="i18n.t('devtools:form.inputUrl')">
+      <AppFormItem :label="i18n.t('devtools:form.inputString')">
         <AppInput
           v-model="inputValue"
           style="width: 100%"
           type="textarea"
         />
       </AppFormItem>
-      <AppFormItem :label="i18n.t('devtools:form.outputUrl')">
+      <AppFormItem :label="i18n.t('devtools:form.result')">
         <AppInput
           v-model="outputValue"
           style="width: 100%"
@@ -52,11 +52,11 @@ const outputValue = computed(() => {
   }
 
   if (type.value === 'encode') {
-    result = encodeURIComponent(inputValue.value)
+    result = btoa(inputValue.value)
   }
 
   if (type.value === 'decode') {
-    result = decodeURIComponent(inputValue.value)
+    result = atob(inputValue.value)
   }
 
   return result
@@ -71,7 +71,7 @@ function onCopy () {
   copy(outputValue.value)
 }
 
-track('devtools/url-encoder-decoder')
+track('devtools/base64-encoder-decoder')
 </script>
 
 <style lang="scss" scoped></style>

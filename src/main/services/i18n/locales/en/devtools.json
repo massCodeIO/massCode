@@ -31,6 +31,7 @@
   },
   "encodeDecode": {
     "label": "Encoders / Decoders",
-    "url": "URL Encoder / Decoder"
+    "url": "URL Encoder / Decoder",
+    "base64": "Base64 Encoder / Decoder"
   }
 }

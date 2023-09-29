@@ -74,6 +74,13 @@
         >
           <UrlEncodeDecodeTool />
         </AppMenuItem>
+        <AppMenuItem
+          group="encodeDecodeTools"
+          :name="i18n.t('devtools:encodeDecode.base64')"
+          value="encodeDecode.base64"
+        >
+          <Base64EncodeDecodeTool />
+        </AppMenuItem>
       </AppMenuGroup>
     </AppMenu>
   </AppLayoutOneColumn>

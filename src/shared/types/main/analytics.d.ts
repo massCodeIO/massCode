@@ -47,6 +47,8 @@ type DevtoolsEvents =
   | 'hash-generator'
   | 'hmac-generator'
   | 'uuid-generator'
+  | 'url-encoder-decoder'
+  | 'base64-encoder-decoder'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>

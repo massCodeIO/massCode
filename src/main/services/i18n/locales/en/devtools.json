@@ -10,7 +10,9 @@
     "component": "Component",
     "result": "Result",
     "secretKey": "Secret Key",
-    "algorithm": "Algorithm"
+    "algorithm": "Algorithm",
+    "version": "Version",
+    "amount": "Amount"
   },
   "textTools": {
     "label": "Text Tools",
@@ -22,6 +24,7 @@
   "crypto": {
     "label": "Cryptography / Security",
     "hashGenerator": "Hash Generator",
-    "hmacGenerator": "HMAC Generator"
+    "hmacGenerator": "HMAC Generator",
+    "uuidGenerator": "UUID Generator"
   }
 }

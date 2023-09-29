@@ -62,6 +62,13 @@
           >
             <HmacTool />
           </AppMenuItem>
+          <AppMenuItem
+            group="cryptoTools"
+            :name="i18n.t('devtools:crypto.uuidGenerator')"
+            value="cryptoTools.uuidGenerator"
+          >
+            <UuidTool />
+          </AppMenuItem>
         </AppMenuGroup>
       </AppMenu>
     </div>

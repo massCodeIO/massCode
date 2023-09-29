@@ -116,6 +116,9 @@ dependencies:
   slugify:
     specifier: ^1.6.6
     version: 1.6.6
+  uuid:
+    specifier: ^9.0.1
+    version: 9.0.1
   vercel-toast:
     specifier: ^1.5.5
     version: 1.5.5
@@ -172,6 +175,9 @@ devDependencies:
   '@types/sanitize-html':
     specifier: ^2.6.2
     version: 2.6.2
+  '@types/uuid':
+    specifier: ^9.0.4
+    version: 9.0.4
   '@types/webpack':
     specifier: ^5.28.0
     version: 5.28.0
@@ -2465,6 +2471,10 @@ packages:
   /@types/universal-analytics@0.4.5:
     resolution: {integrity: sha512-Opb+Un786PS3te24VtJR/QPmX00P/pXaJQtLQYJklQefP4xP0Ic3mPc2z6SDz97OrITzR+RHTBEwjtNRjZ/nLQ==}
     dev: false
+
+  /@types/uuid@9.0.4:
+    resolution: {integrity: sha512-zAuJWQflfx6dYJM62vna+Sn5aeSWhh3OB+wfUEACNcqUSc0AGc5JKl+ycL1vrH7frGTXhJchYjE1Hak8L819dA==}
+    dev: true
 
   /@types/verror@1.10.5:
     resolution: {integrity: sha512-9UjMCHK5GPgQRoNbqdLIAvAy0EInuiqbW0PBMtVP6B5B2HQJlvoJHM+KodPZMEjOa5VkSc+5LH7xy+cUzQdmHw==}
@@ -12967,6 +12977,11 @@ packages:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
     dev: true
+
+  /uuid@9.0.1:
+    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    hasBin: true
+    dev: false
 
   /v8-compile-cache@2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}

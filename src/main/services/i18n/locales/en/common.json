@@ -12,7 +12,8 @@
     "clear": "Clear",
     "copy": "Copy",
     "sort": "Sort",
-    "revers": "Revers"
+    "revers": "Revers",
+    "generate": "Generate"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",

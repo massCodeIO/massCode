@@ -46,6 +46,7 @@ type DevtoolsEvents =
   | 'sort'
   | 'hash-generator'
   | 'hmac-generator'
+  | 'uuid-generator'
 
 type TrackSnippetEvents = CombineWith<SnippetEvents, 'snippets'>
 type TrackFolderEvents = CombineWith<FolderEvents, 'folders'>

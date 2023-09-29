@@ -83,7 +83,7 @@ provide(menuKey, {
 .menu {
   width: 100%;
   display: grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: 180px 1fr;
   gap: var(--spacing-sm);
   .group {
     padding: var(--spacing-xs);

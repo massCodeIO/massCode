@@ -8,7 +8,7 @@
 
 <style lang="scss" scoped>
 .form {
-  width: 800px;
+  max-width: 800px;
   display: flex;
   flex-flow: column;
   gap: var(--spacing-md);

@@ -7,71 +7,73 @@
           style="width: 100%"
         />
       </AppFormItem>
-      <strong>{{ i18n.t('devtools:form.parsedUrl') }}</strong>
-      <table class="table">
-        <colgroup>
-          <col width="20%">
-          <col width="80%">
-        </colgroup>
-        <thead>
+      <AppFormItem :label="i18n.t('devtools:form.parsedUrl')">
+        <table class="table">
+          <colgroup>
+            <col width="20%">
+            <col width="80%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>{{ i18n.t('devtools:form.component') }}</th>
+              <th>{{ i18n.t('devtools:form.value') }}</th>
+            </tr>
+          </thead>
           <tr>
-            <th>{{ i18n.t('devtools:form.component') }}</th>
-            <th>{{ i18n.t('devtools:form.value') }}</th>
+            <td>Protocol</td>
+            <td>{{ protocol }}</td>
           </tr>
-        </thead>
-        <tr>
-          <td>Protocol</td>
-          <td>{{ protocol }}</td>
-        </tr>
-        <tr>
-          <td>Hash</td>
-          <td>{{ hash }}</td>
-        </tr>
-        <tr>
-          <td>Query</td>
-          <td>{{ query }}</td>
-        </tr>
-        <tr>
-          <td>Pathname</td>
-          <td>{{ pathname }}</td>
-        </tr>
-        <tr>
-          <td>Host</td>
-          <td>{{ host }}</td>
-        </tr>
-        <tr>
-          <td>Port</td>
-          <td>{{ port }}</td>
-        </tr>
-        <tr>
-          <td>Hostname</td>
-          <td>{{ hostname }}</td>
-        </tr>
-        <tr>
-          <td>Origin</td>
-          <td>{{ origin }}</td>
-        </tr>
-      </table>
-      <strong>{{ i18n.t('devtools:form.splitQueryString') }}</strong>
-      <table class="table">
-        <colgroup>
-          <col width="20%">
-          <col width="80%">
-        </colgroup>
-        <thead>
           <tr>
-            <th>{{ i18n.t('devtools:form.key') }}</th>
-            <th>{{ i18n.t('devtools:form.value') }}</th>
+            <td>Hash</td>
+            <td>{{ hash }}</td>
           </tr>
-        </thead>
-        <tr
-          v-for="(v, k) in queryObj"
-          :key="k"
-        >
-          <td>{{ k }}</td>
-          <td>{{ v }}</td>
-        </tr>
-      </table>
+          <tr>
+            <td>Query</td>
+            <td>{{ query }}</td>
+          </tr>
+          <tr>
+            <td>Pathname</td>
+            <td>{{ pathname }}</td>
+          </tr>
+          <tr>
+            <td>Host</td>
+            <td>{{ host }}</td>
+          </tr>
+          <tr>
+            <td>Port</td>
+            <td>{{ port }}</td>
+          </tr>
+          <tr>
+            <td>Hostname</td>
+            <td>{{ hostname }}</td>
+          </tr>
+          <tr>
+            <td>Origin</td>
+            <td>{{ origin }}</td>
+          </tr>
+        </table>
+      </AppFormItem>
+      <AppFormItem :label="i18n.t('devtools:form.splitQueryString')">
+        <table class="table">
+          <colgroup>
+            <col width="20%">
+            <col width="80%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>{{ i18n.t('devtools:form.key') }}</th>
+              <th>{{ i18n.t('devtools:form.value') }}</th>
+            </tr>
+          </thead>
+          <tr
+            v-for="(v, k) in queryObj"
+            :key="k"
+          >
+            <td>{{ k }}</td>
+            <td>{{ v }}</td>
+          </tr>
+        </table>
+      </AppFormItem>
     </AppForm>
   </div>
 </template>

@@ -25,7 +25,7 @@
           <AppButton @click="onClear">
             {{ i18n.t('common:button.clear') }}
           </AppButton>
-          <AppButton @click="onCopy">
+          <AppButton @click="useCopy(outputValue)">
             {{ i18n.t('common:button.copy') }}
           </AppButton>
         </template>
@@ -38,7 +38,6 @@
 import { i18n } from '@/electron'
 import { track } from '@/services/analytics'
 import { ref, computed } from 'vue'
-import { useClipboard } from '@vueuse/core'
 import sha1 from 'crypto-js/sha1'
 import sha224 from 'crypto-js/sha224'
 import sha256 from 'crypto-js/sha256'
@@ -49,6 +48,7 @@ import md5 from 'crypto-js/md5'
 import ripemd160 from 'crypto-js/ripemd160'
 import type { Algo } from './types'
 import options from './algo-options.json'
+import { useCopy } from '../composables'
 
 const inputValue = ref('')
 const algo = ref<Algo>('md5')
@@ -96,11 +96,6 @@ const outputValue = computed(() => {
 
 function onClear () {
   inputValue.value = ''
-}
-
-function onCopy () {
-  const { copy } = useClipboard()
-  copy(outputValue.value)
 }
 
 track('devtools/hash-generator')

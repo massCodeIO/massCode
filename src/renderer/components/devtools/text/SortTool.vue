@@ -27,7 +27,7 @@
           <AppButton @click="onClear">
             {{ i18n.t('common:button.clear') }}
           </AppButton>
-          <AppButton @click="onCopy">
+          <AppButton @click="useCopy(outputValue)">
             {{ i18n.t('common:button.copy') }}
           </AppButton>
         </template>
@@ -40,7 +40,7 @@
 import { i18n } from '@/electron'
 import { track } from '@/services/analytics'
 import { ref } from 'vue'
-import { useClipboard } from '@vueuse/core'
+import { useCopy } from '../composables'
 
 const inputValue = ref('')
 const outputValue = ref('')
@@ -48,11 +48,6 @@ const outputValue = ref('')
 function onClear () {
   inputValue.value = ''
   outputValue.value = ''
-}
-
-function onCopy () {
-  const { copy } = useClipboard()
-  copy(outputValue.value)
 }
 
 function onSort (type: string) {

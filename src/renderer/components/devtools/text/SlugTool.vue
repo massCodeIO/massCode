@@ -19,7 +19,7 @@
           <AppButton @click="onClear">
             {{ i18n.t('common:button.clear') }}
           </AppButton>
-          <AppButton @click="onCopy">
+          <AppButton @click="useCopy(outputValue)">
             {{ i18n.t('common:button.copy') }}
           </AppButton>
         </template>
@@ -33,7 +33,7 @@ import { i18n } from '@/electron'
 import { track } from '@/services/analytics'
 import { ref, computed } from 'vue'
 import slugify from 'slugify'
-import { useClipboard } from '@vueuse/core'
+import { useCopy } from '../composables'
 
 const inputValue = ref('')
 const outputValue = computed(() => {
@@ -43,11 +43,6 @@ const outputValue = computed(() => {
 
 function onClear () {
   inputValue.value = ''
-}
-
-function onCopy () {
-  const { copy } = useClipboard()
-  copy(outputValue.value)
 }
 
 track('devtools/slug-generator')

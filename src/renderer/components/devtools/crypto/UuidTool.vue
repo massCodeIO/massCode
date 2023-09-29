@@ -30,7 +30,7 @@
           <AppButton @click="onClear">
             {{ i18n.t('common:button.clear') }}
           </AppButton>
-          <AppButton @click="onCopy">
+          <AppButton @click="useCopy(outputValue)">
             {{ i18n.t('common:button.copy') }}
           </AppButton>
         </template>
@@ -43,8 +43,8 @@
 import { i18n } from '@/electron'
 import { track } from '@/services/analytics'
 import { ref, watch, nextTick } from 'vue'
-import { useClipboard } from '@vueuse/core'
 import { v1, v4 } from 'uuid'
+import { useCopy } from '../composables'
 
 const version = ref('1')
 const amount = ref(1)
@@ -69,11 +69,6 @@ function onGenerate () {
 
 function onClear () {
   outputValue.value = ''
-}
-
-function onCopy () {
-  const { copy } = useClipboard()
-  copy(outputValue.value)
 }
 
 watch(amount, v => {

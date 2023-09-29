@@ -3,6 +3,7 @@
     "moveStorage": "Move Storage",
     "openStorage": "Open Storage",
     "newStorage": "New Storage",
+    "reloadStorage": "Reload Storage",
     "fromMassCodeV1": "From massCode v1.0",
     "fromSnippetsLab": "From SnippetsLab",
     "confirm": "Confirm",

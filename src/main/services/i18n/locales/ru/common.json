@@ -3,6 +3,7 @@
     "moveStorage": "Переместить",
     "openStorage": "Открыть",
     "newStorage": "Создать новое",
+    "reloadStorage": "Перезагрузить",
     "fromMassCodeV1": "Из massCode v1.0",
     "fromSnippetsLab": "Из SnippetsLab",
     "confirm": "Подтвердить",

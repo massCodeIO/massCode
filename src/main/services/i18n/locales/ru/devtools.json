@@ -16,7 +16,11 @@
     "amount": "Количество",
     "type": "Тип",
     "length": "Длина",
-    "options": "Опции"
+    "options": "Опции",
+    "numbers": "Цифры",
+    "symbols": "Символы",
+    "lowercase": "Нижний регистр",
+    "uppercase": "Верхний регистр"
   },
   "textTools": {
     "label": "Инструменты для текста",

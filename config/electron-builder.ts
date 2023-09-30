@@ -27,7 +27,7 @@ export default {
   directories: {
     output: path.resolve(__dirname, '../../dist')
   },
-  afterSign: !isTestBuild ? 'build/scripts/notarize.js' : undefined,
+  // afterSign: !isTestBuild ? 'build/scripts/notarize.js' : undefined,
   nsis: {
     oneClick: false,
     perMachine: false,

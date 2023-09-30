@@ -16,7 +16,11 @@
     "amount": "Amount",
     "type": "Type",
     "length": "Length",
-    "options": "Options"
+    "options": "Options",
+    "numbers": "Numbers",
+    "symbols": "Symbols",
+    "lowercase": "Lowercase",
+    "uppercase": "Uppercase"
   },
   "textTools": {
     "label": "Text Tools",

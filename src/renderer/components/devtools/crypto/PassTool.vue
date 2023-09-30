@@ -13,7 +13,7 @@
       <AppFormItem :label="i18n.t('devtools:form.options')">
         <AppCheckbox
           v-model="options.numbers"
-          :label="i18n.t('devtools:form.includeNumbers')"
+          :label="i18n.t('devtools:form.numbers')"
           name="numbers"
         />
         <AppCheckbox

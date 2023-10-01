@@ -83,5 +83,8 @@
     "label": "Historie",
     "back": "Zpět",
     "forward": "Vpřed"
+  },
+  "devtools": {
+    "label": "Nástroje pro vývojáře"
   }
 }

@@ -9,6 +9,7 @@ export const language = {
   ro_RO: 'Română',
   ru: 'Русский',
   uk_UA: 'Українська',
+  tr: 'Türkçe',
   zh_CN: '中文 (简体)',
   zh_HK: '中文 (繁體 香港特別行政區)',
   zh_TW: '中文 (繁體)'

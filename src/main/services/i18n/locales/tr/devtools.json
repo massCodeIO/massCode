@@ -1,44 +1,44 @@
 {
   "form": {
-    "inputString": "Input String",
-    "outputString": "Output String",
-    "inputUrl": "Input URL",
-    "outputUrl": "Output URL",
-    "parsedUrl": "Parsed URL",
-    "splitQueryString": "Split Query String",
-    "key": "Key",
-    "value": "Value",
-    "component": "Component",
-    "result": "Result",
-    "secretKey": "Secret Key",
-    "algorithm": "Algorithm",
-    "version": "Version",
-    "amount": "Amount",
-    "type": "Type",
-    "length": "Length",
-    "options": "Options",
-    "numbers": "Numbers",
-    "symbols": "Symbols",
-    "lowercase": "Lowercase",
-    "uppercase": "Uppercase"
+    "inputString": "Giriş Metni",
+    "outputString": "Çıkış Metni",
+    "inputUrl": "Giriş URL'si",
+    "outputUrl": "Çıkış URL'si",
+    "parsedUrl": "Ayrılmış URL",
+    "splitQueryString": "Sorgu Dizisi Ayır",
+    "key": "Anahtar",
+    "value": "Değer",
+    "component": "Komponent",
+    "result": "Sonuç",
+    "secretKey": "Gizli Anahtar",
+    "algorithm": "Algoritma",
+    "version": "Sürüm",
+    "amount": "Miktar",
+    "type": "Tür",
+    "length": "Uzunluk",
+    "options": "Seçenekler",
+    "numbers": "Sayılar",
+    "symbols": "Semboller",
+    "lowercase": "Küçük Harf",
+    "uppercase": "Büyük Harf"
   },
   "textTools": {
-    "label": "Text Tools",
-    "caseConverter": "Case Converter",
-    "urlParser": "URL Parser",
-    "slugGenerator": "Slug Generator",
-    "sortLines": "Sort Lines"
+    "label": "Metin Araçları",
+    "caseConverter": "Harf Dönüştürücü",
+    "urlParser": "URL Ayrıştırıcı",
+    "slugGenerator": "Slug Oluşturucu",
+    "sortLines": "Satırları Sırala"
   },
   "crypto": {
-    "label": "Cryptography / Security",
-    "hashGenerator": "Hash Generator",
-    "hmacGenerator": "HMAC Generator",
-    "passGenerator": "Password Generator",
-    "uuidGenerator": "UUID Generator"
+    "label": "Kriptografi / Güvenlik",
+    "hashGenerator": "Hash Oluşturucu",
+    "hmacGenerator": "HMAC Oluşturucu",
+    "passGenerator": "Şifre Oluşturucu",
+    "uuidGenerator": "UUID Oluşturucu"
   },
   "encodeDecode": {
-    "label": "Encoders / Decoders",
-    "url": "URL Encoder / Decoder",
-    "base64": "Base64 Encoder / Decoder"
+    "label": "Kodlayıcılar / Kod Çözücüler",
+    "url": "URL Kodlayıcı / Çözücü",
+    "base64": "Base64 Kodlayıcı / Çözücü"
   }
 }

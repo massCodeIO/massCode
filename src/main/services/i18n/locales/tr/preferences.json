@@ -1,49 +1,49 @@
 {
-  "title": "Preferences",
+  "title": "Tercihler",
   "storage": {
-    "label": "Storage",
-    "migrate": "Migrate",
-    "count": "Count"
+    "label": "Depolama",
+    "migrate": "Göç Et",
+    "count": "Say"
   },
   "editor": {
-    "label": "Editor",
-    "fontSize": "Font Size",
-    "fontFamily": "Font Family",
+    "label": "Editör",
+    "fontSize": "Yazı Boyutu",
+    "fontFamily": "Yazı Tipi",
     "wrap": {
-      "label": "Wrap",
-      "wordWrap": "Word Wrap",
-      "off": "Off"
+      "label": "Satır Sarması",
+      "wordWrap": "Kelime Sarması",
+      "off": "Kapat"
     },
-    "tabSize": "Tab Size",
-    "showInvisibles": "Show Invisibles",
-    "highlightLine": "Highlight Line",
-    "highlightGutter": "Highlight Gutter",
-    "matchBrackets": "Match Brackets",
+    "tabSize": "Sekme Boyutu",
+    "showInvisibles": "Görünmezleri Göster",
+    "highlightLine": "Satırı Vurgula",
+    "highlightGutter": "Sütunu Vurgula",
+    "matchBrackets": "Parantezleri Eşleştir",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Trailing Comma",
-        "none": "None",
-        "all": "All",
+        "label": "Son Virgül",
+        "none": "Hiçbiri",
+        "all": "Tümü",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Single Quote"
+      "semi": "Noktalı Virgül",
+      "singleQuote": "Tek Tırnak"
     }
   },
   "appearance": {
-    "label": "Appearance",
+    "label": "Görünüm",
     "theme": {
-      "label": "Theme",
-      "light": "Light",
-      "dark": "Dark"
+      "label": "Tema",
+      "light": "Açık",
+      "dark": "Koyu"
     }
   },
   "language": {
-    "label": "Language"
+    "label": "Dil"
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Code block Renderer"
+    "codeRenderer": "Kod Bloğu Görüntüleyici"
   }
 }

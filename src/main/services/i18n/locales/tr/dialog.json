@@ -1,13 +1,13 @@
 {
-  "deleteConfirm": "Are you sure you want to permanently delete {{name}}?",
-  "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
-  "noUndo": "You cannot undo this action.",
-  "allSnippetsMoveToTrash": "All snippets in this folder will be moved to trash.",
-  "deleteTag": "This will also cause all snippets to have that tag removed.",
-  "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
+  "deleteConfirm": "{{name}} adlı öğeyi kalıcı olarak silmek istediğinizden emin misiniz?",
+  "deleteConfirmMultipleSnippets": "{{count}} seçili kod parçasını kalıcı olarak silmek istediğinizden emin misiniz?",
+  "noUndo": "Bu işlemi geri alamazsınız.",
+  "allSnippetsMoveToTrash": "Bu klasördeki tüm kod parçaları çöp kutusuna taşınacaktır.",
+  "deleteTag": "Bu aynı zamanda tüm kod parçalarının bu etiketin kaldırılmasına neden olacaktır.",
+  "emptyTrash": "Çöp kutusundaki tüm kod parçalarını kalıcı olarak silmek istediğinizden emin misiniz?",
   "migrateConfirm": [
-    "Are you sure you want to migrate from {{name}}?",
-    "During migrate, the current library will be overwritten."
+    "{{name}} adından geçiş yapmak istediğinizden emin misiniz?",
+    "Geçiş sırasında mevcut kütüphane üzerine yazılacaktır."
   ],
-  "createDb": "Please select another folder"
+  "createDb": "Lütfen başka bir klasör seçin."
 }

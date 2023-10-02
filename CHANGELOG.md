@@ -1,3 +1,14 @@
+# [3.8.0](https://github.com/massCodeIO/massCode/compare/v3.7.0...v3.8.0) (2023-09-29)
+
+
+### Features
+
+* add dev tools ([#407](https://github.com/massCodeIO/massCode/issues/407)) ([eea5900](https://github.com/massCodeIO/massCode/commit/eea5900f6765d62a64863c5a8bbb28bebffac862))
+* add reload db ([#408](https://github.com/massCodeIO/massCode/issues/408)) ([d6ff713](https://github.com/massCodeIO/massCode/commit/d6ff71324d478e3e2f6590a3ae01ed30feb43877))
+* **icons:** add DigitalOcean, Moodle and Oracle icons ([#388](https://github.com/massCodeIO/massCode/issues/388)) ([864e2f6](https://github.com/massCodeIO/massCode/commit/864e2f6ff42c79ac99c63d84e470a0beb1aab362))
+
+
+
 # [3.7.0](https://github.com/massCodeIO/massCode/compare/v3.6.0...v3.7.0) (2023-06-14)
 
 

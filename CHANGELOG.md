@@ -1,3 +1,18 @@
+# [3.9.0](https://github.com/massCodeIO/massCode/compare/v3.8.0...v3.9.0) (2023-10-05)
+
+
+### Bug Fixes
+
+* devtools menu in win [#415](https://github.com/massCodeIO/massCode/issues/415) ([#416](https://github.com/massCodeIO/massCode/issues/416)) ([a8909e4](https://github.com/massCodeIO/massCode/commit/a8909e475dafb4ff876d438e185f61ae9baf4510))
+
+
+### Features
+
+* **i18n:** add new Czech translations ([#411](https://github.com/massCodeIO/massCode/issues/411)) ([e7e0cdc](https://github.com/massCodeIO/massCode/commit/e7e0cdcaca4718ffe828ff7ae9119895cabb79bc))
+* **i18n:** add Turkish locales ([#412](https://github.com/massCodeIO/massCode/issues/412)) ([bc6da09](https://github.com/massCodeIO/massCode/commit/bc6da09021d95eeb9ba35f2a5373e464b155df88))
+
+
+
 # [3.8.0](https://github.com/massCodeIO/massCode/compare/v3.7.0...v3.8.0) (2023-09-29)
 
 

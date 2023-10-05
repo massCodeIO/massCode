@@ -130,8 +130,11 @@ const appMenuMac: MenuItemConstructorOptions[] = [
 ]
 
 const appMenu: MenuItemConstructorOptions[] = [
-  { ...appMenuCommon.preferences },
   { ...appMenuCommon.update },
+  { type: 'separator' },
+  { ...appMenuCommon.preferences },
+  { ...appMenuCommon.devtools },
+  { type: 'separator' },
   { ...appMenuCommon.quit }
 ]
 

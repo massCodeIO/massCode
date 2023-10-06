@@ -1,13 +1,13 @@
 {
-  "deleteConfirm": "Are you sure you want to permanently delete {{name}}?",
-  "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
-  "noUndo": "You cannot undo this action.",
-  "allSnippetsMoveToTrash": "All snippets in this folder will be moved to trash.",
-  "deleteTag": "This will also cause all snippets to have that tag removed.",
-  "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
+  "deleteConfirm": "Etes-vous sûr de vouloir effacer de façon permanente {{name}}?",
+  "deleteConfirmMultipleSnippets": "Etes-vous sûr de vouloir effacer de façon permanente {{count}} extraits sélectionnés ?",
+  "noUndo": "vous ne pouvez pas annuler cette action.",
+  "allSnippetsMoveToTrash": "Tous les extraits de ce dossier seront déplacés vers la corbeille.",
+  "deleteTag": "Cette étiquette sera également supprimée de tous les extraits.",
+  "emptyTrash": "Êtes-vous sûr de vouloir supprimer définitivement tous les extraits dans la corbeille ?",
   "migrateConfirm": [
-    "Are you sure you want to migrate from {{name}}?",
-    "During migrate, the current library will be overwritten."
+    "Êtes-vous sûr de vouloir migrer de {{name}}?",
+    "Lors de la migration, la bibliothèque actuelle sera écrasée."
   ],
-  "createDb": "Please select another folder"
+  "createDb": "Veuillez sélectionner un autre dossier"
 }

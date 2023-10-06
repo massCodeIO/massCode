@@ -1,44 +1,44 @@
 {
   "form": {
-    "inputString": "Input String",
-    "outputString": "Output String",
-    "inputUrl": "Input URL",
-    "outputUrl": "Output URL",
-    "parsedUrl": "Parsed URL",
-    "splitQueryString": "Split Query String",
-    "key": "Key",
-    "value": "Value",
-    "component": "Component",
-    "result": "Result",
-    "secretKey": "Secret Key",
-    "algorithm": "Algorithm",
+    "inputString": "Chaîne d'entrée",
+    "outputString": "Chaîne de sortie",
+    "inputUrl": "URL d'entrée",
+    "outputUrl": "URL de sortie",
+    "parsedUrl": "URL analysée",
+    "splitQueryString": "Fractionner la chaîne de requête",
+    "key": "Clef",
+    "value": "Valeur",
+    "component": "Composant",
+    "result": "Résultat",
+    "secretKey": "Clef secrète",
+    "algorithm": "Algorithme",
     "version": "Version",
-    "amount": "Amount",
+    "amount": "Montant",
     "type": "Type",
-    "length": "Length",
+    "length": "Longueur",
     "options": "Options",
-    "numbers": "Numbers",
-    "symbols": "Symbols",
-    "lowercase": "Lowercase",
-    "uppercase": "Uppercase"
+    "numbers": "Nombres",
+    "symbols": "Symboles",
+    "lowercase": "Minuscule",
+    "uppercase": "Majuscule"
   },
   "textTools": {
-    "label": "Text Tools",
-    "caseConverter": "Case Converter",
-    "urlParser": "URL Parser",
-    "slugGenerator": "Slug Generator",
-    "sortLines": "Sort Lines"
+    "label": "Outils de texte",
+    "caseConverter": "Convertisseur de casse",
+    "urlParser": "Analyseur URL",
+    "slugGenerator": "Générateur Slug",
+    "sortLines": "Trier lignes"
   },
   "crypto": {
-    "label": "Cryptography / Security",
-    "hashGenerator": "Hash Generator",
-    "hmacGenerator": "HMAC Generator",
-    "passGenerator": "Password Generator",
-    "uuidGenerator": "UUID Generator"
+    "label": "Cryptographie / Sécurité",
+    "hashGenerator": "Générateur de Hash",
+    "hmacGenerator": "Générateur de HMAC",
+    "passGenerator": "Générateur de mot de passe",
+    "uuidGenerator": "Générateur de UUID"
   },
   "encodeDecode": {
-    "label": "Encoders / Decoders",
-    "url": "URL Encoder / Decoder",
-    "base64": "Base64 Encoder / Decoder"
+    "label": "Encodeurs / Décodeurs",
+    "url": "Encodeurs / Décodeurs URL",
+    "base64": "Encodeurs / Décodeurs Base64"
   }
 }

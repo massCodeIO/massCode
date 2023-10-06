@@ -1,90 +1,90 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "Preferences",
+    "preferences": "Préférences",
     "update": {
-      "label": "Check for Updates....",
-      "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
-      "button": ["Go to Download", "OK"],
-      "noUpdate": "There are currently no updates available."
+      "label": "Vérifier mise à jour ...",
+      "message": "La version {{newVersion}} est maintenant disponible au téléchargement.\nVotre version est la {{oldVersion}}.",
+      "button": ["Allez au téléchargement", "OK"],
+      "noUpdate": "Il n'y a actuellement aucune mise à jour disponible."
     },
-    "quit": "Quit massCode",
-    "about": "About massCode",
-    "hide": "Hide massCode",
-    "hideOther": "Hide Others",
-    "showAll": "Show All"
+    "quit": "Quitter massCode",
+    "about": "A propos de massCode",
+    "hide": "Cacher massCode",
+    "hideOther": "Cacher les autres",
+    "showAll": "Tout montrer"
   },
   "help": {
-    "label": "Help",
-    "website": "Website",
+    "label": "Aide",
+    "website": "Site web",
     "documentation": "Documentation",
-    "viewInGitHub": "View in GitHub",
-    "changeLog": "Change Log",
-    "reportIssue": "Report Issue",
-    "giveStar": "Give a Star",
+    "viewInGitHub": "Voir dans GitHub",
+    "changeLog": "Log des changements",
+    "reportIssue": "Rapporter un problème",
+    "giveStar": "Donner une étoile",
     "extension": {
-      "vscode": "VS Code Extension",
-      "raycast": "Raycast Extension",
-      "alfred": "Alfred Extension"
+      "vscode": "Extension VS Code",
+      "raycast": "Extension Raycast",
+      "alfred": "Extension Alfred"
     },
     "donate": {
-      "openCollective": "Donate on Open Collective",
-      "payPal": "Donate via PayPal",
-      "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
+      "openCollective": "Faire une donation à un collectif ouvert (Open)",
+      "payPal": "Faire une donation via PayPal",
+      "gumroad": "Faire une donation via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
-    "devTools": "Toggle Developer Tools",
+    "devTools": "Basculer vers les outils développeurs",
     "links": {
-      "snippets": "Snippet Collection"
+      "snippets": "Collection d'extraits"
     }
   },
   "file": {
-    "label": "File",
-    "find": "Find"
+    "label": "Fichier",
+    "find": "Trouver"
   },
   "view": {
-    "label": "View",
+    "label": "Affichage",
     "sortBy": {
-      "label": "Sort Snippets By",
-      "dateModified": "Date Modified",
-      "dateCreated": "Date Created",
-      "name": "Name"
+      "label": "Trier les extraits par",
+      "dateModified": "Date modifiée",
+      "dateCreated": "Date de création",
+      "name": "Nom"
     },
-    "hideSubfolderSnippets": "Hide Subfolder Snippets",
-    "compactMode": "Compact Mode"
+    "hideSubfolderSnippets": "Masquer les sous-dossier des extraits",
+    "compactMode": "Mode compacté"
   },
   "edit": {
-    "label": "Edit",
-    "undo": "Undo",
-    "redo": "Redo",
-    "cut": "Cut",
-    "copy": "Copy",
-    "paste": "Paste",
-    "delete": "Delete",
-    "selectAll": "Select All"
+    "label": "Edition",
+    "undo": "Annuler",
+    "redo": "Refaire",
+    "cut": "Couper",
+    "copy": "Copier",
+    "paste": "Coller",
+    "delete": "Effacer",
+    "selectAll": "Tout sélectionner"
   },
   "editor": {
-    "label": "Editor",
-    "copy": "Copy Snippet to Clipboard",
-    "format": "Format",
-    "previewCode": "Preview Code",
-    "previewScreenshot": "Preview Screenshot",
-    "previewMarkdown": "Preview Markdown",
-    "fontSizeIncrease": "Font Size Increase",
-    "fontSizeDecrease": "Font Size Decrease",
-    "fontSizeReset": "Font Size Reset"
+    "label": "Editeur",
+    "copy": "Copier extrait vers presse-papier",
+    "format": "Formatter",
+    "previewCode": "Prévisualisation Code",
+    "previewScreenshot": "Prévisualisation copie écran",
+    "previewMarkdown": "Prévisualisation Markdown",
+    "fontSizeIncrease": "Augmentation taille police",
+    "fontSizeDecrease": "Diminution taille police",
+    "fontSizeReset": "Réinitialisation taille police"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "Mode présentation",
+    "preview": "Prévisualisation"
   },
   "history": {
-    "label": "History",
-    "back": "Back",
-    "forward": "Forward"
+    "label": "Historique",
+    "back": "Retour arrière",
+    "forward": "Avance"
   },
   "devtools": {
-    "label": "Developer Tools"
+    "label": "Outils développeur"
   }
 }

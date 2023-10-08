@@ -4,6 +4,7 @@ export const language = {
   el: 'Ελληνικά',
   en: 'English',
   es_ES: 'Español',
+  fr_FR: 'French',
   ja_JP: '日本語',
   pt_BR: 'Português (Brasil)',
   ro_RO: 'Română',
@@ -13,5 +14,4 @@ export const language = {
   zh_CN: '中文 (简体)',
   zh_HK: '中文 (繁體 香港特別行政區)',
   zh_TW: '中文 (繁體)',
-  fr_FR: 'French'
 }

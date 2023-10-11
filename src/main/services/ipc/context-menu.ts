@@ -104,7 +104,8 @@ export const subscribeToContextMenu = () => {
                 type,
                 data: undefined
               })
-            }
+            },
+            accelerator: 'CommandOrControl+Backspace'
           }
         ]
 

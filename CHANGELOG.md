@@ -1,3 +1,18 @@
+# [3.10.0](https://github.com/massCodeIO/massCode/compare/v3.9.0...v3.10.0) (2023-10-12)
+
+
+### Bug Fixes
+
+* **snippets:** delete fragment ([8b362a0](https://github.com/massCodeIO/massCode/commit/8b362a00c1dc61b6e415dfa37257c9a83b3d37d8))
+
+
+### Features
+
+* add mindmap ([#419](https://github.com/massCodeIO/massCode/issues/419)) ([238388d](https://github.com/massCodeIO/massCode/commit/238388de5bd3288121415a3860e8818036e96fcc))
+* **i18n:** add French locales ([#417](https://github.com/massCodeIO/massCode/issues/417)) ([5b27fda](https://github.com/massCodeIO/massCode/commit/5b27fdad3180a43177a2b047afe221114efe39f2))
+
+
+
 # [3.9.0](https://github.com/massCodeIO/massCode/compare/v3.8.0...v3.9.0) (2023-10-05)
 
 

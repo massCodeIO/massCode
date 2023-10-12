@@ -14,7 +14,11 @@
     "copy": "Copy",
     "sort": "Sort",
     "revers": "Revers",
-    "generate": "Generate"
+    "generate": "Generate",
+    "saveAs": "Save as",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fit": "Fit"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",
@@ -23,7 +27,6 @@
   "addToFavorites": "Add to Favorites",
   "addTag": "Add Tag",
   "exportToHtml": "Export to HTML",
-  "saveScreenshot": "Save Screenshot",
   "rename": "Rename",
   "duplicate": "Duplicate",
   "delete": "Delete",

@@ -443,6 +443,18 @@ const markdownMenu: MenuItemConstructorOptions[] = [
     }
   },
   {
+    label: i18n.t('menu:editor.previewMindmap'),
+    accelerator: 'Shift+CommandOrControl+I',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'main-menu:preview-mindmap'
+      )
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
     label: i18n.t('menu:markdown.presentationMode'),
     accelerator: 'Alt+CommandOrControl+P',
     click: () => {

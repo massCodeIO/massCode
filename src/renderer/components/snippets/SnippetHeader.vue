@@ -12,25 +12,34 @@
       <div class="action">
         <AppActionButton
           v-if="snippetStore.currentLanguage === 'markdown'"
-          v-tooltip="i18n.t('menu:markdown.presentationMode')"
+          v-tooltip="i18n.t('menu:editor.previewMarkdown')"
           tabindex="-1"
           @click="onClickPresentationMode"
         >
           <UniconsMeetingBoard />
         </AppActionButton>
-        <AppActionButton
-          v-if="snippetStore.currentLanguage === 'markdown'"
-          v-tooltip="
-            !snippetStore.isMarkdownPreview
-              ? i18n.t('menu:editor.previewMarkdown')
-              : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewMarkdown')
-          "
-          tabindex="-1"
-          @click="onClickMarkdownPreview"
-        >
-          <UniconsEye v-if="!snippetStore.isMarkdownPreview" />
-          <UniconsEyeSlash v-else />
-        </AppActionButton>
+        <template v-if="snippetStore.currentLanguage === 'markdown'">
+          <AppActionButton
+            v-tooltip="
+              !snippetStore.isMarkdownPreview
+                ? i18n.t('menu:editor.previewMarkdown')
+                : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewMarkdown')
+            "
+            tabindex="-1"
+            :active="snippetStore.isMarkdownPreview"
+            @click="onClickMarkdownPreview"
+          >
+            <UniconsEye />
+          </AppActionButton>
+          <AppActionButton
+            v-tooltip="i18n.t('menu:editor.previewMindmap')"
+            tabindex="-1"
+            :active="snippetStore.isMindmapPreview"
+            @click="onClickMindmapPreview"
+          >
+            <UniconsCodeBranch class="mindmap" />
+          </AppActionButton>
+        </template>
         <AppActionButton
           v-tooltip="
             !snippetStore.isScreenshotPreview
@@ -38,10 +47,10 @@
               : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewScreenshot')
           "
           tabindex="-1"
+          :active="snippetStore.isScreenshotPreview"
           @click="onClickScreenshotPreview"
         >
-          <UniconsCamera v-if="!snippetStore.isScreenshotPreview" />
-          <UniconsCameraSlash v-else />
+          <UniconsCamera />
         </AppActionButton>
         <AppActionButton
           v-tooltip="
@@ -50,10 +59,10 @@
               : i18n.t('hide') + ' ' + i18n.t('menu:editor.previewCode')
           "
           tabindex="-1"
+          :active="snippetStore.isCodePreview"
           @click="onCodePreview"
         >
-          <SvgArrowSlash v-if="snippetStore.isCodePreview" />
-          <UniconsArrow v-else />
+          <UniconsArrow />
         </AppActionButton>
         <AppActionButton
           v-tooltip="i18n.t('addDescription')"
@@ -74,9 +83,7 @@
     <div class="bottom">
       <SnippetsDescription v-show="snippetStore.isDescriptionShow" />
       <SnippetFragments v-if="snippetStore.isFragmentsShow" />
-      <SnippetsTags
-        v-if="snippetStore.isTagsShow && !snippetStore.isScreenshotPreview"
-      />
+      <SnippetsTags v-if="isTagsShow" />
     </div>
   </div>
 </template>
@@ -108,16 +115,31 @@ const name = computed({
   )
 })
 
+const isTagsShow = computed(() => {
+  return (
+    snippetStore.isTagsShow &&
+    !snippetStore.isScreenshotPreview &&
+    !snippetStore.isMarkdownPreview &&
+    !snippetStore.isMindmapPreview
+  )
+})
+
 const onClickMarkdownPreview = () => {
-  snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+  snippetStore.togglePreview('markdown')
   track('snippets/markdown-preview')
 }
 
+const onClickMindmapPreview = () => {
+  snippetStore.togglePreview('mindmap')
+  track('snippets/mindmap-preview')
+}
+
 const onClickScreenshotPreview = () => {
-  snippetStore.isScreenshotPreview = !snippetStore.isScreenshotPreview
+  snippetStore.togglePreview('screenshot')
+  track('snippets/screenshot-preview')
 }
 const onCodePreview = () => {
-  snippetStore.isCodePreview = !snippetStore.isCodePreview
+  snippetStore.togglePreview('code')
   track('snippets/code-preview')
 }
 
@@ -160,6 +182,10 @@ onUnmounted(() => {
   }
   .action {
     display: flex;
+
+    .mindmap {
+      transform: rotate(90deg);
+    }
   }
 }
 </style>

@@ -16,6 +16,9 @@ export interface State {
   compactMode: boolean
   isContextState: boolean
   isMarkdownPreview: boolean
+  isMindmapPreview: boolean
   isScreenshotPreview: boolean
   isCodePreview: boolean
 }
+
+export type PreviewType = 'markdown' | 'mindmap' | 'screenshot' | 'code'

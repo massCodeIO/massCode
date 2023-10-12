@@ -141,11 +141,11 @@ watch(
 watch(
   () => [snippetStore.selectedId, snippetStore.fragment],
   () => {
-    if (
-      snippetStore.selected?.content[snippetStore.fragment].language !==
-      'markdown'
-    ) {
+    const lang = snippetStore.selected?.content[snippetStore.fragment]?.language
+
+    if (lang && lang !== 'markdown') {
       snippetStore.isMarkdownPreview = false
+      snippetStore.isMindmapPreview = false
     }
   }
 )

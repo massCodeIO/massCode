@@ -1,9 +1,6 @@
 <template>
   <div class="snippet-screenshot">
-    <div
-      class="tools"
-      :class="{ 'no-top-border': snippetStore.isFragmentsShow }"
-    >
+    <SnippetHeaderTools>
       <div class="left">
         <div class="tools__item">
           <AppCheckbox
@@ -39,7 +36,7 @@
           <UniconsFileDownload />
         </AppActionButton>
       </div>
-    </div>
+    </SnippetHeaderTools>
     <PerfectScrollbar>
       <div class="content">
         <div
@@ -327,25 +324,13 @@ window.addEventListener('resize', () => {
     font-family: v-bind(fontFamily);
     line-height: calc(v-bind(fontSize) * 1.5);
   }
-  .tools {
-    display: flex;
-    justify-content: space-between;
+  .left {
+    gap: var(--spacing-sm);
     align-items: center;
-    padding: 4px var(--spacing-xs);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    &.no-top-border {
-      border-top: none;
-    }
-    .left {
-      gap: var(--spacing-sm);
-      align-items: center;
-      display: flex;
-    }
-    .right {
-      display: flex;
-      gap: var(--spacing-xs);
-    }
+    display: flex;
+  }
+  .right {
+    display: flex;
   }
   .content {
     flex: 1;

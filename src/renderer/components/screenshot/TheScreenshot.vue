@@ -25,14 +25,14 @@
       </div>
       <div class="right">
         <AppActionButton
-          v-tooltip="i18n.t('saveScreenshot')"
+          v-tooltip="`${i18n.t('button.saveAs')} PNG`"
           @click="onSaveScreenshot('png')"
         >
           PNG &nbsp;
           <UniconsFileDownload />
         </AppActionButton>
         <AppActionButton
-          v-tooltip="i18n.t('saveScreenshot')"
+          v-tooltip="`${i18n.t('button.saveAs')} SVG`"
           @click="onSaveScreenshot('svg')"
         >
           SVG &nbsp;

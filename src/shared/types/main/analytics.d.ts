@@ -20,6 +20,9 @@ type SnippetEvents =
   | 'restore-from-trash'
   | 'search'
   | 'set-language'
+  | 'mindmap-preview'
+  | 'screenshot-preview'
+  | 'save-mindmap'
 
 type FolderEvents = 'add-new' | 'delete' | 'set-language' | 'set-custom-icon'
 type TagEvents = 'add-new' | 'delete'

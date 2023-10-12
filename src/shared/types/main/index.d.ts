@@ -44,6 +44,7 @@ type MainMenuAction =
   | 'presentation-mode'
   | 'preview-code'
   | 'preview-markdown'
+  | 'preview-mindmap'
   | 'search'
   | 'sort-snippets'
   | 'hide-subfolder-snippets'

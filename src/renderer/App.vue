@@ -208,7 +208,7 @@ ipc.on('main-menu:new-fragment', () => {
 
 ipc.on('main-menu:preview-markdown', async () => {
   if (snippetStore.currentLanguage === 'markdown') {
-    snippetStore.isMarkdownPreview = !snippetStore.isMarkdownPreview
+    snippetStore.togglePreview('markdown')
     track('snippets/markdown-preview')
   }
 })
@@ -219,7 +219,10 @@ ipc.on('main-menu:presentation-mode', async () => {
 })
 
 ipc.on('main-menu:preview-code', () => {
-  snippetStore.isCodePreview = !snippetStore.isCodePreview
+  snippetStore.togglePreview('code')
+})
+ipc.on('main-menu:preview-mindmap', () => {
+  snippetStore.togglePreview('mindmap')
 })
 
 ipc.on('main-menu:copy-snippet', () => {

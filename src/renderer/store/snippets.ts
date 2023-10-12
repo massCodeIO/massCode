@@ -12,7 +12,8 @@ import { defineStore } from 'pinia'
 import { useFolderStore } from './folders'
 import type {
   SnippetWithFolder,
-  State
+  State,
+  PreviewType
 } from '@shared/types/renderer/store/snippets'
 import { useTagStore } from './tags'
 import { useAppStore } from './app'
@@ -31,6 +32,7 @@ export const useSnippetStore = defineStore('snippets', {
     compactMode: false,
     isContextState: false,
     isMarkdownPreview: false,
+    isMindmapPreview: false,
     isScreenshotPreview: false,
     isCodePreview: false
   }),
@@ -320,6 +322,34 @@ export const useSnippetStore = defineStore('snippets', {
       store.app.set('sort', sort)
 
       sortSnippetsBy(this.snippets, this.sort)
+    },
+    togglePreview (type: PreviewType) {
+      switch (type) {
+        case 'markdown':
+          this.isMarkdownPreview = !this.isMarkdownPreview
+          this.isMindmapPreview = false
+          this.isScreenshotPreview = false
+          this.isCodePreview = false
+          break
+        case 'mindmap':
+          this.isMarkdownPreview = false
+          this.isMindmapPreview = !this.isMindmapPreview
+          this.isScreenshotPreview = false
+          this.isCodePreview = false
+          break
+        case 'screenshot':
+          this.isMarkdownPreview = false
+          this.isMindmapPreview = false
+          this.isScreenshotPreview = !this.isScreenshotPreview
+          this.isCodePreview = false
+          break
+        case 'code':
+          this.isMarkdownPreview = false
+          this.isMindmapPreview = false
+          this.isScreenshotPreview = false
+          this.isCodePreview = !this.isCodePreview
+          break
+      }
     }
   }
 })

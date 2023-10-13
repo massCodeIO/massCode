@@ -76,6 +76,10 @@ massCode allows you to write in Markdown and provide support to syntax highlight
 
 massCode allows you to make a presentation out of a sequence of snippets. It's great for classroom use, team meetings, conferences or simply reviewing notes on your own.
 
+### Mindmap
+
+massCode allows you to create mental maps from markdown, making the process of creating and editing maps fast and intuitively understandable. It's a great way to organize and structure information visually.
+
 ### Search
 It is impossible to imagine a productive snippets manager without quick access to snippets. Therefore massCode has a fast full-text search with highlighting of the search query.
 

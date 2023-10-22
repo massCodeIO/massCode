@@ -19,7 +19,7 @@
             class="tab-header"
             :class="{ active: modelValue === i.value }"
             @click="onClickTab(i.value)"
-            >{{ i.label }}</span>
+          >{{ i.label }}</span>
         </h6>
       </div>
       <div class="sidebar-list__action">

@@ -84,8 +84,8 @@ const itemRef = ref()
 const onClickContextMenu = async () => {
   if (props.isFolder) {
     const { action, type, data } = await ipc.invoke<
-      ContextMenuRequest,
-      ContextMenuResponse
+    ContextMenuRequest,
+    ContextMenuResponse
     >('context-menu:library', {
       name: props.model?.name,
       type: 'folder',
@@ -127,8 +127,8 @@ const onClickContextMenu = async () => {
 
   if (props.alias) {
     const { action, type, data } = await ipc.invoke<
-      ContextMenuRequest,
-      ContextMenuResponse
+    ContextMenuRequest,
+    ContextMenuResponse
     >('context-menu:library', {
       name: props.name,
       type: 'trash',
@@ -148,8 +148,8 @@ const onClickContextMenu = async () => {
 
   if (props.isTag) {
     const { action, type, data } = await ipc.invoke<
-      ContextMenuRequest,
-      ContextMenuResponse
+    ContextMenuRequest,
+    ContextMenuResponse
     >('context-menu:library', {
       name: props.name,
       type: 'tag',

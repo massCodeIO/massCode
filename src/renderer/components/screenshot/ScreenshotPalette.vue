@@ -39,7 +39,7 @@ const palette: [string, string][] = [
 ]
 
 const selected = computed(() =>
-  palette.findIndex((i) => i.every((c, idx) => c === props.modelValue[idx]))
+  palette.findIndex(i => i.every((c, idx) => c === props.modelValue[idx]))
 )
 
 const onSelect = (value: [string, string]) => {

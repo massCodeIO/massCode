@@ -66,6 +66,7 @@ const onChange = (v: string[]) => {
   :deep(.ti-tags) {
     gap: 4px;
     .ti-new-tag-input-wrapper {
+      padding-left: 10px;
       margin: 0;
       input {
         size: 11px;

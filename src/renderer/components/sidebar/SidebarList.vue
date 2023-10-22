@@ -19,7 +19,7 @@
             class="tab-header"
             :class="{ active: modelValue === i.value }"
             @click="onClickTab(i.value)"
-          >{{ i.label }}</span>
+            >{{ i.label }}</span>
         </h6>
       </div>
       <div class="sidebar-list__action">
@@ -112,11 +112,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .sidebar-list {
   margin-bottom: var(--spacing-xs);
-  .body {
-    .inner {
-      padding: 0 var(--spacing-xs);
-    }
-  }
+
   // overflow: hidden;
   &.is-scrollable {
     :deep(.ps) {

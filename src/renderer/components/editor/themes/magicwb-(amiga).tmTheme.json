@@ -1,0 +1,240 @@
+{
+  "author": "Allan Odgaard",
+  "comment": "Inspired by the original 8 MagicWB colors from Martin Huttenloher",
+  "name": "MagicWB (Amiga)",
+  "settings": [
+    {
+      "settings": {
+        "background": "#969696",
+        "caret": "#FFFFFF",
+        "foreground": "#000000",
+        "invisibles": "#FF38FF",
+        "lineHighlight": "#00000012",
+        "selection": "#B1B1B1"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#8D2E75"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "background": "#FF000033",
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Constant: Built-in",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Constant: User-defined",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "background": "#0000FF33",
+        "fontStyle": "",
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#3A68A3"
+      }
+    },
+    {
+      "name": "Type Name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Inherited Class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Function Name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Function Argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Entity Name",
+      "scope": "entity.name",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0000FF"
+      }
+    },
+    {
+      "name": "Tag Attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#3A68A3"
+      }
+    },
+    {
+      "name": "Library Function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#E5B3FF"
+      }
+    },
+    {
+      "name": "Objective-C Method Call",
+      "scope": "support.function.any-method",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Objective-C Method Call - :",
+      "scope": "support.function.any-method - punctuation",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Library Constant",
+      "scope": "support.constant",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Library Class/Type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Library Variable",
+      "scope": "support.variable",
+      "settings": {
+        "foreground": "#3A68A3"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#797979",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Include <system>",
+      "scope": "string.quoted.other.lt-gt.include",
+      "settings": {
+        "background": "#969696",
+        "fontStyle": "italic",
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Include \"user\"",
+      "scope": "string.quoted.double.include",
+      "settings": {
+        "background": "#969696",
+        "foreground": "#FFA995"
+      }
+    },
+    {
+      "name": "Markup: List Item",
+      "scope": "markup.list",
+      "settings": {
+        "foreground": "#4D4E60"
+      }
+    },
+    {
+      "name": "Markup: Raw",
+      "scope": "markup.raw",
+      "settings": {
+        "background": "#0000FF",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Markup: Quote (Email)",
+      "scope": "markup.quote",
+      "settings": {
+        "foreground": "#00F0C9"
+      }
+    },
+    {
+      "name": "Markup: Quote Double (Email)",
+      "scope": "markup.quote markup.quote",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#4C457E"
+      }
+    },
+    {
+      "name": "Embedded Source",
+      "scope": "text.html source",
+      "settings": {
+        "background": "#8A9ECB"
+      }
+    }
+  ],
+  "uuid": "B0A18BAA-6220-481C-9914-F6D3E51B5410"
+}

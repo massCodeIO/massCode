@@ -1,0 +1,244 @@
+{
+  "author": "Chris Thomas and Michael Dippery",
+  "name": "Summer Sun",
+  "settings": [
+    {
+      "settings": {
+        "background": "#110F0A",
+        "caret": "#F2F8CB",
+        "foreground": "#F2F8CB",
+        "invisibles": "#7C7558",
+        "lineHighlight": "#14120B",
+        "selection": "#76705380"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#645F47"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A3ED4E"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3FA2ED"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3A94DC"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3588CA"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F35E18"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F39B19"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escape",
+        "string source"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F3771D"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "meta.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F39B19"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F3771D"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "support.function.any-method"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7DDE12"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#EEF890"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#EEF890"
+      }
+    },
+    {
+      "name": "Function parameter",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Section",
+      "scope": [
+        "meta.section entity.name.section",
+        "meta.function.section entity.name.section",
+        "declaration.section entity.name.section"
+      ],
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#A3ED4E"
+      }
+    },
+    {
+      "name": "Library object",
+      "scope": [
+        "support.class",
+        "support.type"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.variable",
+      "settings": {
+        "foreground": "#F35E18"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#F32119",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#F33A34",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup DOCTYPE",
+      "scope": [
+        "meta.tag.sgml.doctype",
+        "meta.tag.sgml.doctype string"
+      ],
+      "settings": {
+        "foreground": "#645F47"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "meta.selector entity.name.tag"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EEF890"
+      }
+    },
+    {
+      "name": "Markup tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#F8BB00"
+      }
+    },
+    {
+      "name": "Markup property",
+      "scope": "support.type.property-name",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Markup constant",
+      "scope": [
+        "support.constant.property-value",
+        "support.constant.font-name",
+        "support.constant.color"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F35E18"
+      }
+    },
+    {
+      "name": "Python library object",
+      "scope": "meta.function-call.python support.type.python",
+      "settings": {
+        "foreground": "#A3ED4E"
+      }
+    }
+  ],
+  "uuid": "A0117721-BF40-4C6A-A955-EDDC2C7426D8"
+}

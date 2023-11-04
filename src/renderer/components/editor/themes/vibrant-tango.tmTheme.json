@@ -1,0 +1,292 @@
+{
+  "name": "Vibrant Tango",
+  "settings": [
+    {
+      "settings": {
+        "background": "#191D1E",
+        "caret": "#FBEC50",
+        "foreground": "#FFFFFF",
+        "invisibles": "#404040",
+        "lineHighlight": "#131413",
+        "selection": "#434441"
+      }
+    },
+    {
+      "name": "Text base",
+      "scope": "text",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Inline Ruby Html",
+      "scope": "source.ruby.rails.embedded.html",
+      "settings": {}
+    },
+    {
+      "name": "Ruby Html",
+      "scope": "text.html.ruby",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Ruby Number",
+      "scope": "constant.numeric.ruby",
+      "settings": {
+        "foreground": "#8DE635"
+      }
+    },
+    {
+      "name": "Ruby source",
+      "scope": "source.ruby",
+      "settings": {}
+    },
+    {
+      "name": "Source base",
+      "scope": "source",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#744E7B"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "foreground": "#739FCF"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F27709"
+      }
+    },
+    {
+      "name": "Pre-processor Line",
+      "scope": "keyword.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EDF8F9"
+      }
+    },
+    {
+      "name": "Pre-processor Directive",
+      "scope": "keyword.preprocessor directive",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "storage.type.function.js"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FBEB50"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Block comment",
+      "scope": "source comment.block",
+      "settings": {
+        "background": "#070707",
+        "foreground": "#744E7B"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable.other",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "ActiveRecord Function",
+      "scope": "support.function.activerecord.rails",
+      "settings": {
+        "foreground": "#E8B96F"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#8DE635"
+      }
+    },
+    {
+      "name": "String escapes",
+      "scope": "string constant.character.escape",
+      "settings": {
+        "foreground": "#AAAAAA"
+      }
+    },
+    {
+      "name": "String (executed)",
+      "scope": "string.interpolated",
+      "settings": {
+        "background": "#FBEB50",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Regular expression",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#739FCF"
+      }
+    },
+    {
+      "name": "String (literal)",
+      "scope": "string.literal",
+      "settings": {
+        "foreground": "#FBEB50"
+      }
+    },
+    {
+      "name": "String escapes (executed)",
+      "scope": "string.interpolated constant.character.escape",
+      "settings": {
+        "foreground": "#555555"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": [
+        "entity.name.class",
+        "support.class.js"
+      ],
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Class inheritance",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic underline"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Html Meta",
+      "scope": [
+        "meta.tag.inline.any.html",
+        "meta.tag.block.any.html"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F27709"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#8DE635"
+      }
+    },
+    {
+      "name": "Other Keywords",
+      "scope": "keyword.other",
+      "settings": {
+        "foreground": "#FBEB50"
+      }
+    },
+    {
+      "name": "CSS Selector",
+      "scope": [
+        "meta.selector.css",
+        "entity.other.attribute-name.pseudo-class.css",
+        "entity.name.tag.wildcard.css",
+        "entity.other.attribute-name.id.css",
+        "entity.other.attribute-name.class.css"
+      ],
+      "settings": {
+        "foreground": "#F27709"
+      }
+    },
+    {
+      "name": "CSS Property",
+      "scope": "support.type.property-name.css",
+      "settings": {
+        "foreground": "#E8B96F"
+      }
+    },
+    {
+      "name": "CSS Other",
+      "scope": [
+        "keyword.other.unit.css",
+        "constant.other.rgb-value.css",
+        "constant.numeric.css"
+      ],
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Javascript Events",
+      "scope": "support.function.event-handler.js",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Javascript Operators",
+      "scope": "keyword.operator.js",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Javascript Keywords",
+      "scope": "keyword.control.js",
+      "settings": {
+        "foreground": "#FBEB50"
+      }
+    },
+    {
+      "name": "Prototype Objects",
+      "scope": "support.class.prototype.js",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Prototype Methods",
+      "scope": "object.property.function.prototype.js",
+      "settings": {
+        "foreground": "#F27709"
+      }
+    }
+  ],
+  "uuid": "289D5D3D-D53D-4908-84CB-ED8E3F24CF70"
+}

@@ -1,0 +1,196 @@
+{
+  "name": "Resesif",
+  "settings": [
+    {
+      "settings": {
+        "background": "#2B2B2B",
+        "caret": "#FFFFFF",
+        "foreground": "#E6E1DC",
+        "invisibles": "#404040",
+        "lineHighlight": "#333435",
+        "selection": "#5A647EE0"
+      }
+    },
+    {
+      "name": "Source",
+      "scope": "source",
+      "settings": {
+        "background": "#232323",
+        "fontStyle": "",
+        "foreground": "#E8E2DF"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8B8B8B"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B6C34D"
+      }
+    },
+    {
+      "name": "Function (definition)",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D98339"
+      }
+    },
+    {
+      "name": "Class (definition)",
+      "scope": "entity.name",
+      "settings": {
+        "background": "#BE493C1A",
+        "fontStyle": "",
+        "foreground": "#E16C5B"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "background": "#8D76AC1A",
+        "fontStyle": "",
+        "foreground": "#B49CDA"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "background": "#2A91A90D",
+        "fontStyle": "",
+        "foreground": "#4DA6BD"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "background": "#BA88661A",
+        "fontStyle": "",
+        "foreground": "#C29B7A"
+      }
+    },
+    {
+      "name": "Constant (other variable)",
+      "scope": "variable.other.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#E06868"
+      }
+    },
+    {
+      "name": "Constant (built-in)",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#71BACC"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "background": "#9DBB530F",
+        "fontStyle": "",
+        "foreground": "#B0CC66"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "variable.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#DBD76B"
+      }
+    },
+    {
+      "name": "Library type",
+      "scope": "support.type",
+      "settings": {
+        "foreground": "#6E9CBE"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BBC94D"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#E8BF6A"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escaped",
+        "constant.character.escape",
+        "string source",
+        "string source.ruby"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3FC172"
+      }
+    },
+    {
+      "name": "Diff Add",
+      "scope": "markup.inserted",
+      "settings": {
+        "background": "#144212",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Remove",
+      "scope": "markup.deleted",
+      "settings": {
+        "background": "#660000",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Header",
+      "scope": [
+        "meta.diff.header",
+        "meta.separator.diff",
+        "meta.diff.index",
+        "meta.diff.range"
+      ],
+      "settings": {
+        "background": "#2F33AB"
+      }
+    }
+  ],
+  "uuid": "24933864-AD69-4CA8-8618-CF4E9F2F12F3"
+}

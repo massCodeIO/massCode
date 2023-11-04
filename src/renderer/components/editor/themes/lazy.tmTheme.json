@@ -1,0 +1,187 @@
+{
+  "author": "Domenico Carbotta",
+  "name": "LAZY",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#7C7C7C",
+        "foreground": "#000000",
+        "invisibles": "#B6B6B6",
+        "lineHighlight": "#EFFCA68F",
+        "selection": "#E3FC8D"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8C868F"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "Entity",
+      "scope": "entity",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "Latex Entity",
+      "scope": "text.tex.latex entity",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D62A28"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF7800"
+      }
+    },
+    {
+      "name": "String",
+      "scope": [
+        "string",
+        "meta.verbatim"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#409B1C"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Invalid – Deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#990000"
+      }
+    },
+    {
+      "name": "Invalid – Illegal",
+      "scope": "invalid.illegal",
+      "settings": {
+        "background": "#9D1E15",
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "Superclass",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": "string constant.other.placeholder",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#671EBB"
+      }
+    },
+    {
+      "name": "meta.function-call.py",
+      "scope": "meta.function-call.py",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3E4558"
+      }
+    },
+    {
+      "name": "meta.tag",
+      "scope": [
+        "meta.tag",
+        "meta.tag entity"
+      ],
+      "settings": {
+        "foreground": "#3A4A64"
+      }
+    },
+    {
+      "name": "OCaml variant",
+      "scope": "keyword.type.variant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7F90AA"
+      }
+    },
+    {
+      "name": "OCaml operator",
+      "scope": "source.ocaml keyword.operator",
+      "settings": {
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "OCaml infix operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "OCaml prefix operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix",
+      "settings": {
+        "foreground": "#3B5BB5"
+      }
+    },
+    {
+      "name": "OCaml infix f-p operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml prefix f-p operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml f-p constant",
+      "scope": "source.ocaml constant.numeric.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    }
+  ],
+  "uuid": "A1E55FCB-3CD2-4811-9E73-D9B87419443A"
+}

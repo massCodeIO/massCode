@@ -1,0 +1,306 @@
+{
+  "name": "Erebus",
+  "settings": [
+    {
+      "settings": {
+        "background": "#140A0A",
+        "caret": "#F8F8F0",
+        "foreground": "#F8F8F2",
+        "invisibles": "#3B3A32",
+        "lineHighlight": "#3D2E2E77",
+        "selection": "#A63A3A"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#8C6969"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#FFB2B2"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D0A3F8"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#D95757"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D95757"
+      }
+    },
+    {
+      "name": "Storage type",
+      "scope": "storage.type",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "fontStyle": "underline",
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic underline",
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FFD2A6"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D95757"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "PHP Namespaces",
+      "scope": [
+        "support.other.namespace",
+        "entity.name.type.namespace"
+      ],
+      "settings": {
+        "foreground": "#FFD2A6"
+      }
+    },
+    {
+      "name": "PHP Namespace Alias",
+      "scope": "support.other.namespace.use-as.php",
+      "settings": {
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "PHP Namespace Keyword",
+      "scope": "variable.language.namespace.php",
+      "settings": {
+        "foreground": "#D17B7B"
+      }
+    },
+    {
+      "name": "PHP Namespace Separator",
+      "scope": "punctuation.separator.inheritance.php",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "CSS ID / Class",
+      "scope": [
+        "entity.other.attribute-name.id.css",
+        "entity.other.attribute-name.class.css"
+      ],
+      "settings": {
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "CSS Pseudo Class",
+      "scope": "entity.other.attribute-name.pseudo-class.css",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "CSS Functions / Property Values",
+      "scope": [
+        "support.function.misc.css",
+        "support.constant.property-value.css",
+        "support.constant.font-name.css"
+      ],
+      "settings": {
+        "foreground": "#FFD2A6"
+      }
+    },
+    {
+      "name": "CSS Numeric Constant",
+      "scope": "constant.numeric.css",
+      "settings": {
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "CSS Function Parameters",
+      "scope": "variable.parameter.misc.css",
+      "settings": {
+        "foreground": "#F2AAEC"
+      }
+    },
+    {
+      "name": "Twig Tagbraces",
+      "scope": "entity.other.tagbraces.twig",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "Twig Tag",
+      "scope": "keyword.control.twig",
+      "settings": {
+        "foreground": "#FFB266"
+      }
+    },
+    {
+      "name": "Twig Variable",
+      "scope": "variable.other.twig",
+      "settings": {
+        "foreground": "#FFCCFB"
+      }
+    },
+    {
+      "name": "Twig Filter",
+      "scope": "support.function.filter.twig",
+      "settings": {
+        "foreground": "#D95757"
+      }
+    },
+    {
+      "name": "Twig Variable Filter",
+      "scope": "support.function.filter.variable.twig",
+      "settings": {
+        "foreground": "#E57EDD"
+      }
+    },
+    {
+      "name": "Twig Function",
+      "scope": "entity.name.function.twig",
+      "settings": {
+        "foreground": "#D95757"
+      }
+    },
+    {
+      "name": "Twig Function Argument",
+      "scope": "entity.other.argument.twig",
+      "settings": {
+        "foreground": "#FFB2B2"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#D95757",
+        "fontStyle": "",
+        "foreground": "#F8F8F0"
+      }
+    },
+    {
+      "name": "Invalid deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "background": "#E57EDD",
+        "foreground": "#F8F8F0"
+      }
+    }
+  ],
+  "uuid": "5EC01583-7BFA-496E-BAA7-6993f61d4191"
+}

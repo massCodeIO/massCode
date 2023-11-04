@@ -1,0 +1,156 @@
+{
+  "name": "RubyRobot",
+  "settings": [
+    {
+      "settings": {
+        "background": "#000000",
+        "caret": "#FFFFFF",
+        "foreground": "#FFFFFF",
+        "invisibles": "#404040",
+        "lineHighlight": "#3A3A007A",
+        "selection": "#4A8CDBB3"
+      }
+    },
+    {
+      "name": "Text",
+      "scope": "text",
+      "settings": {
+        "background": "#000000",
+        "fontStyle": "",
+        "foreground": "#EEEEEE"
+      }
+    },
+    {
+      "name": "Source",
+      "scope": "source",
+      "settings": {
+        "background": "#000000",
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#A28075"
+      }
+    },
+    {
+      "name": "Block comment",
+      "scope": "comment.block",
+      "settings": {
+        "background": "#121212",
+        "foreground": "#A28075"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "foreground": "#367C1B"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D01D33"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AAAAAA"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "foreground": "#3185B9"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AAAAAA"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#C3C3C3"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#60F400"
+      }
+    },
+    {
+      "name": "Regular expression",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#D8E600"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Class inheritance",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": [
+        "meta.tag",
+        "meta.tag entity"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AAAAAA"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#367C1B"
+      }
+    },
+    {
+      "name": "Support function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#CBC3B1"
+      }
+    },
+    {
+      "name": "Support class",
+      "scope": "support.class",
+      "settings": {
+        "foreground": "#DF864D"
+      }
+    }
+  ],
+  "uuid": "02EAA0FC-2812-480F-9722-68B10EBA5DF7"
+}

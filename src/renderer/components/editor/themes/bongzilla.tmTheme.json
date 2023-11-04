@@ -1,0 +1,142 @@
+{
+  "author": "Domenico Carbotta",
+  "name": "Bongzilla",
+  "settings": [
+    {
+      "settings": {
+        "background": "#1F1F1F",
+        "caret": "#FFFFFFA6",
+        "foreground": "#F8F8F8",
+        "invisibles": "#FFFFFF40",
+        "lineHighlight": "#FFFFFF0F",
+        "selection": "#253B76"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AEAEAE"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF593E"
+      }
+    },
+    {
+      "name": "Entity",
+      "scope": "entity",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF6400"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFCC66"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFCC66"
+      }
+    },
+    {
+      "name": "String",
+      "scope": [
+        "string",
+        "meta.verbatim"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#78CE91"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DA6CE"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BEF895"
+      }
+    },
+    {
+      "name": "Invalid – Deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#AB2A1D"
+      }
+    },
+    {
+      "name": "Invalid – Illegal",
+      "scope": "invalid.illegal",
+      "settings": {
+        "background": "#9D1E15",
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "Superclass",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FF6400"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": "string constant.other.placeholder",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF6400"
+      }
+    },
+    {
+      "name": "meta.function-call.py",
+      "scope": "meta.function-call.py",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BECDE6"
+      }
+    },
+    {
+      "name": "meta.tag",
+      "scope": [
+        "meta.tag",
+        "meta.tag entity"
+      ],
+      "settings": {
+        "foreground": "#7F90AA"
+      }
+    },
+    {
+      "name": "entity.name.section",
+      "scope": "entity.name.section",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F9FFFF"
+      }
+    }
+  ],
+  "uuid": "5FA1AC2D-8D58-4A47-BFF7-CF5D25D30E65"
+}

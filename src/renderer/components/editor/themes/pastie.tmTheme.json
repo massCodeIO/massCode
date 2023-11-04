@@ -1,0 +1,215 @@
+{
+  "name": "Pastie",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#000000",
+        "foreground": "#000000",
+        "invisibles": "#404040",
+        "lineHighlight": "#C1E2F8",
+        "selection": "#80C7FF"
+      }
+    },
+    {
+      "name": "Source",
+      "scope": "source",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#138B05"
+      }
+    },
+    {
+      "name": "Function (definition)",
+      "scope": [
+        "entity.name.function",
+        "keyword.other.name-of-parameter.objc"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1076C3"
+      }
+    },
+    {
+      "name": "Class (definition)",
+      "scope": "entity.name",
+      "settings": {
+        "foreground": "#B80066"
+      }
+    },
+    {
+      "name": "Class inheritence",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "foreground": "#2E3266"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#073191"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0000DC"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0E65BB"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#DC6036"
+      }
+    },
+    {
+      "name": "Constant (other variable)",
+      "scope": "variable.other.constant",
+      "settings": {
+        "foreground": "#DA4939"
+      }
+    },
+    {
+      "name": "Constant (built-in)",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0B51A6"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "background": "#FFF0F0",
+        "fontStyle": "",
+        "foreground": "#D71707"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#D71707"
+      }
+    },
+    {
+      "name": "Library type",
+      "scope": "support.type",
+      "settings": {
+        "foreground": "#0B51A6"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "entity.name.tag",
+        "declaration.tag"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#107941"
+      }
+    },
+    {
+      "name": "Tag Attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#000084"
+      }
+    },
+    {
+      "name": "Meta Tag",
+      "scope": "meta.tag",
+      "settings": {
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escaped",
+        "constant.character.escape",
+        "string source",
+        "string source.ruby"
+      ],
+      "settings": {
+        "background": "#FFF0F0",
+        "fontStyle": "",
+        "foreground": "#D71707"
+      }
+    },
+    {
+      "name": "Diff Add",
+      "scope": "markup.inserted",
+      "settings": {
+        "background": "#81C7FF",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Remove",
+      "scope": "markup.deleted",
+      "settings": {
+        "background": "#D1363D",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Header",
+      "scope": [
+        "meta.diff.header",
+        "meta.separator.diff",
+        "meta.diff.index",
+        "meta.diff.range"
+      ],
+      "settings": {
+        "background": "#64AB80"
+      }
+    }
+  ],
+  "uuid": "35B6D70F-39CA-489E-A00C-A7F13CCD8805"
+}

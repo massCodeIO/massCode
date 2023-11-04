@@ -1,0 +1,244 @@
+{
+  "name": "Clouds Midnight",
+  "settings": [
+    {
+      "settings": {
+        "background": "#191919",
+        "caret": "#7DA5DC",
+        "foreground": "#929292",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#D7D7D708",
+        "selection": "#000000"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3C403B"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#5D90CD"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#46A609"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#39946A"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "support.constant.property-value",
+        "constant.other.color"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#927C5D"
+      }
+    },
+    {
+      "name": "Keyword -> Unit",
+      "scope": "keyword.other.unit",
+      "settings": {
+        "foreground": "#366F1A"
+      }
+    },
+    {
+      "name": "HTML Attribute",
+      "scope": "entity.other.attribute-name.html",
+      "settings": {
+        "foreground": "#A46763"
+      }
+    },
+    {
+      "name": "Keyword -> Operator",
+      "scope": "keyword.operator",
+      "settings": {
+        "foreground": "#4B4B4B"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#E92E2E"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#858585"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {}
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#606060"
+      }
+    },
+    {
+      "name": "HTML Entity",
+      "scope": "constant.character.entity",
+      "settings": {
+        "foreground": "#A165AC"
+      }
+    },
+    {
+      "name": "JS Support Class",
+      "scope": "support.class.js",
+      "settings": {
+        "foreground": "#A165AC"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#606060"
+      }
+    },
+    {
+      "name": "CSS Selector",
+      "scope": [
+        "meta.selector.css",
+        "entity.name.tag.css",
+        "entity.other.attribute-name.id.css",
+        "entity.other.attribute-name.class.css"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#E92E2E"
+      }
+    },
+    {
+      "name": "CSS Property",
+      "scope": "meta.property-name.css",
+      "settings": {
+        "foreground": "#616161"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#E92E2E"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {}
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#E92E2E",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Punctuation/Widgets",
+      "scope": "punctuation.section.embedded",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#E92E2E"
+      }
+    },
+    {
+      "name": "Punctuation (Tags)",
+      "scope": "punctuation.definition.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#606060"
+      }
+    },
+    {
+      "name": "Keyword -> CSS",
+      "scope": [
+        "constant.other.color.rgb-value.css",
+        "support.constant.property-value.css"
+      ],
+      "settings": {
+        "foreground": "#A165AC"
+      }
+    }
+  ],
+  "uuid": "E5304455-0AC7-4082-8E62-5FD1B3313EEC"
+}

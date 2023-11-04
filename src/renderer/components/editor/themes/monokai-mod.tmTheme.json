@@ -1,0 +1,300 @@
+{
+  "name": "Monokai Mod",
+  "settings": [
+    {
+      "settings": {
+        "background": "#1D1E19F2",
+        "caret": "#F8F8F0",
+        "foreground": "#F8F8F2",
+        "invisibles": "#6D6A58",
+        "lineHighlight": "#24241D",
+        "selection": "#3C3427"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#75715E"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#E6DB74"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#AE81FF"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#AE81FF"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "foreground": "#AE81FF"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F88767"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#F92672"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F92672"
+      }
+    },
+    {
+      "name": "Storage type",
+      "scope": "storage.type",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#66D9EF"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "fontStyle": "underline",
+        "foreground": "#A6E22E"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic underline",
+        "foreground": "#A6E22E"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A6E22E"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FD971F"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F92672"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A6E22E"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#66D9EF"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#66D9EF"
+      }
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#66D9EF"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFF8F2"
+      }
+    },
+    {
+      "name": "text.html",
+      "scope": "text.html",
+      "settings": {
+        "foreground": "#FE558A"
+      }
+    },
+    {
+      "name": "text.html.ruby",
+      "scope": "punctuation.section.embedded.ruby",
+      "settings": {
+        "foreground": "#A89F7E"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#F92672",
+        "fontStyle": "",
+        "foreground": "#F8F8F0"
+      }
+    },
+    {
+      "name": "Invalid deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "background": "#AE81FF",
+        "foreground": "#F8F8F0"
+      }
+    },
+    {
+      "name": "♦ Embedded Source (Bright)",
+      "scope": "text source",
+      "settings": {
+        "background": "#B1B3BA08",
+        "fontStyle": "",
+        "foreground": "#E4E4E4"
+      }
+    },
+    {
+      "name": "♦ Entity inherited-class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#9B5C2E"
+      }
+    },
+    {
+      "name": "♦ String embedded-variable",
+      "scope": "source string source",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#CED79A"
+      }
+    },
+    {
+      "name": "♦ String punctuation",
+      "scope": "source string source punctuation.section.embedded",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#00A0A0"
+      }
+    },
+    {
+      "name": "♦ String constant",
+      "scope": "string constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#009090"
+      }
+    },
+    {
+      "name": "♦ String.regexp",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#E9B24B"
+      }
+    },
+    {
+      "name": "♦ String.regexp.«special»",
+      "scope": [
+        "string.regexp constant.character.escape",
+        "string.regexp source.ruby.embedded",
+        "string.regexp string.regexp.arbitrary-repitition"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF8000"
+      }
+    },
+    {
+      "name": "♦ String.regexp.group",
+      "scope": "string.regexp.group",
+      "settings": {
+        "background": "#FFFFFF0F",
+        "fontStyle": "",
+        "foreground": "#C6A24F"
+      }
+    },
+    {
+      "name": "♦ String.regexp.character-class",
+      "scope": "string.regexp.character-class",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B18A3D"
+      }
+    },
+    {
+      "name": "♦ String variable",
+      "scope": "string variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8A9A95"
+      }
+    },
+    {
+      "name": "♦ Support.function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#66D9EF"
+      }
+    },
+    {
+      "name": "♦ Support.constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFD2A7"
+      }
+    }
+  ],
+  "uuid": "D8D5E82E-3D5B-46B5-B38E-8C841C21347E"
+}

@@ -1,0 +1,224 @@
+{
+  "name": "Cool Glow",
+  "settings": [
+    {
+      "settings": {
+        "background": "#06071DFA",
+        "caret": "#FFFFFFA6",
+        "foreground": "#E0E0E0",
+        "invisibles": "#FFFFFF42",
+        "lineHighlight": "#FFFFFF0F",
+        "selection": "#122BBB"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AEAEAE"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#62E9BD"
+      }
+    },
+    {
+      "name": "Entity",
+      "scope": "entity",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A3EBFF"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#2BF1DC"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F8FBB1"
+      }
+    },
+    {
+      "name": "String",
+      "scope": [
+        "string",
+        "meta.verbatim"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DFF8E"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#60A4F1"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B683CA"
+      }
+    },
+    {
+      "name": "Invalid – Deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#AB2A1D"
+      }
+    },
+    {
+      "name": "Invalid – Illegal",
+      "scope": "invalid.illegal",
+      "settings": {
+        "background": "#AD2117",
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "Superclass",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#61FFD2"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": "string constant.other.placeholder",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#92FFA3"
+      }
+    },
+    {
+      "name": "meta.function-call.py",
+      "scope": "meta.function-call.py",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BECDE6"
+      }
+    },
+    {
+      "name": "meta.tag",
+      "scope": [
+        "meta.tag",
+        "meta.tag entity"
+      ],
+      "settings": {
+        "foreground": "#7BACCA"
+      }
+    },
+    {
+      "name": "entity.name.section",
+      "scope": "entity.name.section",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "OCaml variant",
+      "scope": "keyword.type.variant",
+      "settings": {
+        "foreground": "#D5E0F3"
+      }
+    },
+    {
+      "name": "OCaml operator",
+      "scope": "source.ocaml keyword.operator.symbol",
+      "settings": {
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "OCaml infix operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DA6CE"
+      }
+    },
+    {
+      "name": "OCaml prefix operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DA6CE"
+      }
+    },
+    {
+      "name": "OCaml f-p infix operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml f-p prefix operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml f-p constant",
+      "scope": "source.ocaml constant.numeric.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "LaTeX environment",
+      "scope": "text.latex meta.environment",
+      "settings": {
+        "background": "#FFFFFF08"
+      }
+    },
+    {
+      "name": "LaTeX environment (nested)",
+      "scope": "text.latex meta.environment meta.environment",
+      "settings": {
+        "background": "#7A96FA08"
+      }
+    },
+    {
+      "name": "Latex support",
+      "scope": "text.latex support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FBDE2D"
+      }
+    },
+    {
+      "name": "PList unquoted string",
+      "scope": [
+        "source.plist string.unquoted",
+        "source.plist keyword.operator"
+      ],
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    }
+  ],
+  "uuid": "efadc1f0-7643-11db-9fe1-0800200c9a66"
+}

@@ -1,0 +1,310 @@
+{
+  "name": "monoindustrial",
+  "settings": [
+    {
+      "settings": {
+        "background": "#222C28",
+        "caret": "#FFFFFF",
+        "foreground": "#FFFFFF",
+        "invisibles": "#666C6880",
+        "lineHighlight": "#0C0D0C40",
+        "selection": "#91999466"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "background": "#151C19",
+        "fontStyle": "",
+        "foreground": "#666C68"
+      }
+    },
+    {
+      "name": "Type",
+      "scope": [
+        "storage",
+        "support.type"
+      ],
+      "settings": {
+        "foreground": "#C23B00"
+      }
+    },
+    {
+      "name": "Embedded code",
+      "scope": [
+        "string.unquoted.embedded",
+        "text source",
+        "string.unquoted"
+      ],
+      "settings": {
+        "background": "#151C19",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escaped",
+        "string source - string.unquoted.embedded",
+        "string string source"
+      ],
+      "settings": {
+        "background": "#1A0700",
+        "foreground": "#E9470000"
+      }
+    },
+    {
+      "name": "String",
+      "scope": [
+        "string - string source",
+        "string source string",
+        "meta.scope.heredoc"
+      ],
+      "settings": {
+        "background": "#1A0700",
+        "fontStyle": "",
+        "foreground": "#C23800"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#E98800"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#648BD2"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "foreground": "#E98800"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "other.preprocessor",
+      "settings": {
+        "background": "#161D1A",
+        "fontStyle": "",
+        "foreground": "#A8B3AB"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "entity.name.preprocessor",
+      "settings": {
+        "background": "#161D1A",
+        "fontStyle": "",
+        "foreground": "#A8B3AB"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "keyword.operator",
+        "keyword.other.name-of-parameter"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A8B3AB"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#9A2F00"
+      }
+    },
+    {
+      "name": "Function parameter",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#648BD2"
+      }
+    },
+    {
+      "name": "Function argument and result types",
+      "scope": "storage.type.method",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#666C68"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage.type.function.php"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A39E64"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000AD",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.trailing-whitespace",
+      "settings": {
+        "background": "#FFD0D0",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#588E60"
+      }
+    },
+    {
+      "name": "Library object",
+      "scope": [
+        "support.class",
+        "support.type",
+        "entity.name"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#5778B6"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "foreground": "#C87500"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#5879B7"
+      }
+    },
+    {
+      "name": "Markup XML declaration",
+      "scope": "declaration.xml-processing",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#68685B"
+      }
+    },
+    {
+      "name": "Markup DOCTYPE",
+      "scope": "declaration.doctype",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Markup DTD",
+      "scope": "declaration.doctype.DTD",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": "declaration.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A65EFF"
+      }
+    },
+    {
+      "name": "Markup name of tag",
+      "scope": "entity.name.tag",
+      "settings": {
+        "foreground": "#A65EFF"
+      }
+    },
+    {
+      "name": "Markup tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#909993"
+      }
+    },
+    {
+      "name": "Punctuation",
+      "scope": "punctuation",
+      "settings": {
+        "foreground": "#90999380"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7642B7"
+      }
+    },
+    {
+      "name": "Changed files (Subversion)",
+      "scope": [
+        "meta.scope.changed-files.svn",
+        "markup.inserted.svn",
+        "markup.changed.svn",
+        "markup.deleted.svn"
+      ],
+      "settings": {
+        "background": "#00000059",
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Blocks, Expressions 1",
+      "scope": "meta.section",
+      "settings": {
+        "background": "#78807B0A"
+      }
+    },
+    {
+      "name": "Blocks, Expressions 2",
+      "scope": "meta.section meta.section",
+      "settings": {
+        "background": "#78807B0A"
+      }
+    },
+    {
+      "name": "Blocks, Expressions 3",
+      "scope": "meta.section meta.section meta.section",
+      "settings": {
+        "background": "#78807B0A"
+      }
+    }
+  ],
+  "uuid": "EEA328BA-54E5-49DC-81F3-1F25BF8AF163"
+}

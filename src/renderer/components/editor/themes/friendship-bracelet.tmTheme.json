@@ -1,0 +1,193 @@
+{
+  "author": "David Heinemeier Hansson",
+  "name": "Friendship Bracelet",
+  "settings": [
+    {
+      "settings": {
+        "background": "#1F1F1F",
+        "caret": "#FFFFFF",
+        "foreground": "#F1F1F1",
+        "invisibles": "#404040",
+        "lineHighlight": "#404040",
+        "selection": "#73597EE0"
+      }
+    },
+    {
+      "name": "Text base",
+      "scope": "text",
+      "settings": {
+        "foreground": "#DCDCDC"
+      }
+    },
+    {
+      "name": "Source base",
+      "scope": "source",
+      "settings": {
+        "foreground": "#DCDCDC"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#8A8988"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "foreground": "#389AD9"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF8C56"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D4312C"
+      }
+    },
+    {
+      "name": "Pre-processor Line",
+      "scope": "meta.preprocessor.c",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D0D0FF"
+      }
+    },
+    {
+      "name": "Pre-processor Directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#389AD9"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Block comment",
+      "scope": "source comment.block",
+      "settings": {
+        "background": "#9B9B9B",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#F3F99A"
+      }
+    },
+    {
+      "name": "String escapes",
+      "scope": "string constant.character.escape",
+      "settings": {
+        "foreground": "#AAAAAA"
+      }
+    },
+    {
+      "name": "String (executed)",
+      "scope": "string.interpolated",
+      "settings": {
+        "background": "#F3F48C",
+        "foreground": "#0A0A0A"
+      }
+    },
+    {
+      "name": "Regular expression",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#ECF5A7"
+      }
+    },
+    {
+      "name": "String (literal)",
+      "scope": "string.literal",
+      "settings": {
+        "foreground": "#ECF5A7"
+      }
+    },
+    {
+      "name": "String escapes (executed)",
+      "scope": "string.interpolated constant.character.escape",
+      "settings": {
+        "foreground": "#555555"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Class inheritance",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FC8C56"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#389AD9"
+      }
+    },
+    {
+      "name": "Tag Bracket",
+      "scope": [
+        "declaration.tag",
+        "meta.tag"
+      ],
+      "settings": {
+        "foreground": "#389AD9"
+      }
+    },
+    {
+      "name": "Support function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF6666"
+      }
+    }
+  ],
+  "uuid": "107F019C-6EA6-4E86-9EE7-6921EA74B737"
+}

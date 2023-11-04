@@ -1,0 +1,183 @@
+{
+  "author": "Jeroen van der Ham",
+  "name": "iPlastic",
+  "settings": [
+    {
+      "settings": {
+        "background": "#EEEEEEEB",
+        "caret": "#000000",
+        "foreground": "#000000",
+        "invisibles": "#B3B3B3F4",
+        "lineHighlight": "#0000001A",
+        "selection": "#BAD6FD"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#009933"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#0066FF"
+      }
+    },
+    {
+      "name": "Regular expression",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#FF0080"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#0000FF"
+      }
+    },
+    {
+      "name": "Identifier",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#9700CC"
+      }
+    },
+    {
+      "name": "Exception",
+      "scope": "support.class.exception",
+      "settings": {
+        "foreground": "#990000"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "foreground": "#FF8000"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "bold underline"
+      }
+    },
+    {
+      "name": "Arguments",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#0066FF"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#E71A114D",
+        "foreground": "#FF0000"
+      }
+    },
+    {
+      "name": "Trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#E71A1100"
+      }
+    },
+    {
+      "name": "Embedded source",
+      "scope": "text source",
+      "settings": {
+        "background": "#FAFAFAFC",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag"
+      ],
+      "settings": {
+        "foreground": "#0033CC"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": [
+        "constant",
+        "support.constant"
+      ],
+      "settings": {
+        "foreground": "#6782D3"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#3333FF"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Section name",
+      "scope": "entity.name.section",
+      "settings": {
+        "fontStyle": "bold underline"
+      }
+    },
+    {
+      "name": "Frame title",
+      "scope": "entity.name.function.frame",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "XML Declaration",
+      "scope": "meta.tag.preprocessor.xml",
+      "settings": {
+        "foreground": "#333333"
+      }
+    },
+    {
+      "name": "Tag Attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#3366CC"
+      }
+    },
+    {
+      "name": "Tag Name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    }
+  ],
+  "uuid": "4FCFA210-B247-11D9-9D00-000D93347A42"
+}

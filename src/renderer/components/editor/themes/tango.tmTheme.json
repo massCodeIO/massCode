@@ -1,0 +1,311 @@
+{
+  "author": "Chris Thomas",
+  "name": "Tango",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#000000",
+        "foreground": "#303436",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#0000000F",
+        "selection": "#4D97FF54"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#555753"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#303436"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#4F9B00"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#194A87"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#194A87"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#194A87"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A70000"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escape",
+        "string source"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A70000"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "meta.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#65961E"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#65961E"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "support.function.any-method"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#5C3566"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Function parameter",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Function argument and result types",
+      "scope": "storage.type.method",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#70727E"
+      }
+    },
+    {
+      "name": "Section",
+      "scope": [
+        "meta.section entity.name.section",
+        "declaration.section entity.name.section"
+      ],
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3C4C72"
+      }
+    },
+    {
+      "name": "Library object",
+      "scope": [
+        "support.class",
+        "support.type"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D15B00"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#529C08"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#2E65A5"
+      }
+    },
+    {
+      "name": "JS: Operator",
+      "scope": "keyword.operator.js",
+      "settings": {
+        "foreground": "#687687"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#FFD0D0"
+      }
+    },
+    {
+      "name": "Embedded source",
+      "scope": [
+        "text source",
+        "string.unquoted"
+      ],
+      "settings": {
+        "background": "#0000000D"
+      }
+    },
+    {
+      "name": "Embedded embedded source",
+      "scope": [
+        "text source string.unquoted",
+        "text source text source"
+      ],
+      "settings": {
+        "background": "#0000000F"
+      }
+    },
+    {
+      "name": "Markup XML declaration",
+      "scope": "meta.tag.preprocessor.xml",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#68685B"
+      }
+    },
+    {
+      "name": "Markup DOCTYPE",
+      "scope": [
+        "meta.tag.sgml.doctype",
+        "meta.tag.sgml.doctype entity",
+        "meta.tag.sgml.doctype string",
+        "meta.tag.preprocessor.xml",
+        "meta.tag.preprocessor.xml entity",
+        "meta.tag.preprocessor.xml string"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Markup DTD",
+      "scope": "string.quoted.docinfo.doctype.DTD",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#4266A0"
+      }
+    },
+    {
+      "name": "Markup name of tag",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Markup tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup: Heading",
+      "scope": "markup.heading",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#4266A0"
+      }
+    },
+    {
+      "name": "Markup: Quote",
+      "scope": "markup.quote",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Markup: List",
+      "scope": "markup.list",
+      "settings": {
+        "foreground": "#B90690"
+      }
+    }
+  ],
+  "uuid": "509B45AB-A33A-472C-80CF-656718CEECC9"
+}

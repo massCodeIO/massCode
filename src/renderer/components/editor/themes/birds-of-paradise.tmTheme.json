@@ -1,0 +1,196 @@
+{
+  "name": "Birds of Paradise",
+  "settings": [
+    {
+      "settings": {
+        "background": "#372725",
+        "caret": "#E6E1C4",
+        "foreground": "#E6E1C4",
+        "invisibles": "#42302D",
+        "lineHighlight": "#1F1611",
+        "selection": "#16120E"
+      }
+    },
+    {
+      "name": "Source",
+      "scope": "source",
+      "settings": {
+        "background": "#322323",
+        "foreground": "#E6E1C4"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#6B4E32"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EF5D32"
+      }
+    },
+    {
+      "name": "Function (definition)",
+      "scope": [
+        "entity.name.function",
+        "keyword.other.name-of-parameter.objc"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EFAC32"
+      }
+    },
+    {
+      "name": "Class (definition)",
+      "scope": "entity.name",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#EFAC32"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6C99BB"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7DAF9C"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6C99BB"
+      }
+    },
+    {
+      "name": "Constant (other variable)",
+      "scope": "variable.other.constant",
+      "settings": {
+        "foreground": "#EFAC32"
+      }
+    },
+    {
+      "name": "Constant (built-in)",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6C99BB"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D9D762"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EFAC32"
+      }
+    },
+    {
+      "name": "Library type",
+      "scope": "support.type",
+      "settings": {
+        "foreground": "#EFAC32"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "foreground": "#6C99BB"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag",
+        "entity.name.tag",
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EFCB43"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escaped",
+        "constant.character.escape",
+        "string source",
+        "string source.ruby"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7DAF9C"
+      }
+    },
+    {
+      "name": "Diff Add",
+      "scope": "markup.inserted",
+      "settings": {
+        "background": "#144212",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Remove",
+      "scope": "markup.deleted",
+      "settings": {
+        "background": "#660000",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Header",
+      "scope": [
+        "meta.diff.header",
+        "meta.separator.diff",
+        "meta.diff.index",
+        "meta.diff.range"
+      ],
+      "settings": {
+        "background": "#2F33AB"
+      }
+    }
+  ],
+  "uuid": "D25F0E6D-C39C-4801-8678-CC5A4838DEB6"
+}

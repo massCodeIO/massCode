@@ -1,0 +1,181 @@
+{
+  "comment": "Created and tailored by Bastien Dejean",
+  "name": "Coal Graal",
+  "settings": [
+    {
+      "settings": {
+        "background": "#222222",
+        "caret": "#D8D9D1",
+        "foreground": "#D8D9D1",
+        "invisibles": "#E5E5B2",
+        "lineHighlight": "#282828",
+        "selection": "#6405D0"
+      }
+    },
+    {
+      "name": "Parenthesis",
+      "scope": "punctuation.definition.list",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#949494"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#B4DF61"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#ACC6D7"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#E4D962"
+      }
+    },
+    {
+      "name": "User-defined Constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "foreground": "#DFCA53"
+      }
+    },
+    {
+      "name": "Built-in Constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#EDB272"
+      }
+    },
+    {
+      "name": "Storage Modifier",
+      "scope": "storage.modifier",
+      "settings": {
+        "foreground": "#A8A8A8"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "foreground": "#DBBFED"
+      }
+    },
+    {
+      "name": "Function Name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#DFCC94"
+      }
+    },
+    {
+      "name": "Support Function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#D9C589"
+      }
+    },
+    {
+      "name": "Misc Function",
+      "scope": "entity.name.function.misc",
+      "settings": {
+        "foreground": "#E3E4A9"
+      }
+    },
+    {
+      "name": "Predicate Function",
+      "scope": "entity.name.function.predicate",
+      "settings": {
+        "foreground": "#A5DF93"
+      }
+    },
+    {
+      "name": "Input/Output Function",
+      "scope": "entity.name.function.io",
+      "settings": {
+        "foreground": "#DFB3AC"
+      }
+    },
+    {
+      "name": "External Symbol",
+      "scope": "variable.other.external-symbol",
+      "settings": {
+        "foreground": "#BBDFDD"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "foreground": "#7AC0ED"
+      }
+    },
+    {
+      "name": "Parameter Variable",
+      "scope": "variable.parameter",
+      "settings": {
+        "foreground": "#85C6D9"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#A3AAD8"
+      }
+    },
+    {
+      "name": "Class Name",
+      "scope": "entity.name.class",
+      "settings": {
+        "foreground": "#B998DF"
+      }
+    },
+    {
+      "name": "Structure Name",
+      "scope": "entity.name.structure",
+      "settings": {
+        "foreground": "#B998DF"
+      }
+    },
+    {
+      "name": "Type Name",
+      "scope": "entity.name.type",
+      "settings": {
+        "foreground": "#B998DF"
+      }
+    },
+    {
+      "name": "Support Class",
+      "scope": "support.class",
+      "settings": {
+        "foreground": "#A9A5D9"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#CC1B27",
+        "foreground": "#DFDFD5"
+      }
+    }
+  ],
+  "uuid": "A735E334-7473-4EC7-B44B-EAB031F3F226"
+}

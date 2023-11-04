@@ -1,0 +1,225 @@
+{
+  "author": "William D. Neumann",
+  "name": "Zenburnesque",
+  "settings": [
+    {
+      "settings": {
+        "background": "#404040",
+        "caret": "#FFFF66",
+        "foreground": "#DEDEDE",
+        "invisibles": "#A8A8A8",
+        "lineHighlight": "#A0804026",
+        "selection": "#A0A0C0"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#709070"
+      }
+    },
+    {
+      "name": "Directive",
+      "scope": "keyword.other.directive",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Line-number directives",
+      "scope": "keyword.other.directive.line-number",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Characters",
+      "scope": "constant.character",
+      "settings": {
+        "foreground": "#FF8080"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#FF2020"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#22C0FF"
+      }
+    },
+    {
+      "name": "Floating-point numbers",
+      "scope": "constant.numeric.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {}
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.parameter",
+        "variable.other"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Language Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#FFFFA0"
+      }
+    },
+    {
+      "name": "Module Keyword",
+      "scope": [
+        "entity.name.module",
+        "support.other.module"
+      ],
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#FF8000"
+      }
+    },
+    {
+      "name": "Operators",
+      "scope": "keyword.operator",
+      "settings": {
+        "foreground": "#FFFFA0"
+      }
+    },
+    {
+      "name": "Floating-point infix operators",
+      "scope": "source.ocaml keyword.operator.symbol.infix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Floating-point prefix operators",
+      "scope": "source.ocaml keyword.operator.symbol.prefix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Storage Types",
+      "scope": "storage.type",
+      "settings": {
+        "foreground": "#6080FF"
+      }
+    },
+    {
+      "name": "Variant Types",
+      "scope": "entity.name.class.variant",
+      "settings": {
+        "foreground": "#4080A0"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {}
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "foreground": "#F09040"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {}
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#FFCC66"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "storage.type.user-defined",
+      "settings": {
+        "foreground": "#FFE000"
+      }
+    },
+    {
+      "name": "Class type name",
+      "scope": "entity.name.type.class.type",
+      "settings": {
+        "foreground": "#F4A020"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {}
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {}
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {}
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {}
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.variable",
+      "settings": {}
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {}
+    }
+  ],
+  "uuid": "8D4988B9-ADD8-436F-B388-BC1360F8504B"
+}

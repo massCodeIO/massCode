@@ -1,0 +1,155 @@
+{
+  "comment": "http://chriskempson.com",
+  "name": "Tomorrow Night",
+  "settings": [
+    {
+      "settings": {
+        "background": "#1D1F21",
+        "caret": "#AEAFAD",
+        "foreground": "#C5C8C6",
+        "invisibles": "#4B4E55",
+        "lineHighlight": "#282A2E",
+        "selection": "#373B41"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "foreground": "#969896"
+      }
+    },
+    {
+      "name": "Foreground",
+      "scope": [
+        "keyword.operator.class",
+        "constant.other",
+        "source.php.embedded.line"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#CED1CF"
+      }
+    },
+    {
+      "name": "Variable, String Link, Regular Expression, Tag Name",
+      "scope": [
+        "variable",
+        "support.other.variable",
+        "string.other.link",
+        "string.regexp",
+        "entity.name.tag",
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#CC6666"
+      }
+    },
+    {
+      "name": "Number, Constant, Function Argument, Tag Attribute, Embedded",
+      "scope": [
+        "constant.numeric",
+        "constant.language",
+        "support.constant",
+        "constant.character",
+        "variable.parameter",
+        "punctuation.section.embedded",
+        "keyword.other.unit"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#DE935F"
+      }
+    },
+    {
+      "name": "Class, Support",
+      "scope": [
+        "entity.name.class",
+        "entity.name.type.class",
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F0C674"
+      }
+    },
+    {
+      "name": "String, Symbols, Inherited Class, Markup Heading",
+      "scope": [
+        "string",
+        "constant.other.symbol",
+        "entity.other.inherited-class",
+        "markup.heading"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B5BD68"
+      }
+    },
+    {
+      "name": "Operator, Misc",
+      "scope": [
+        "keyword.operator",
+        "constant.other.color"
+      ],
+      "settings": {
+        "foreground": "#8ABEB7"
+      }
+    },
+    {
+      "name": "Function, Special Method, Block Level",
+      "scope": [
+        "entity.name.function",
+        "meta.function-call",
+        "support.function",
+        "keyword.other.special-method",
+        "meta.block-level"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#81A2BE"
+      }
+    },
+    {
+      "name": "Keyword, Storage",
+      "scope": [
+        "keyword",
+        "storage",
+        "storage.type",
+        "entity.name.tag.css"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B294BB"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#DF5F5F",
+        "fontStyle": "",
+        "foreground": "#CED2CF"
+      }
+    },
+    {
+      "name": "Separator",
+      "scope": "meta.separator",
+      "settings": {
+        "background": "#82A3BF",
+        "foreground": "#CED2CF"
+      }
+    },
+    {
+      "name": "Deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "background": "#B798BF",
+        "fontStyle": "",
+        "foreground": "#CED2CF"
+      }
+    }
+  ],
+  "uuid": "F96223EB-1A60-4617-92F3-D24D4F13DB09"
+}

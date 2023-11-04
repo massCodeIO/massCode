@@ -1,0 +1,225 @@
+{
+  "author": "Domenico Carbotta",
+  "name": "Midnight",
+  "settings": [
+    {
+      "settings": {
+        "background": "#0A001FE3",
+        "caret": "#FFFFFFA6",
+        "foreground": "#F8F8F8",
+        "invisibles": "#FFFFFF40",
+        "lineHighlight": "#3C1EFF4D",
+        "selection": "#2500FF85"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6900A1"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFD500"
+      }
+    },
+    {
+      "name": "Entity",
+      "scope": "entity",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#845DC4"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#599EFF"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#75AFFF"
+      }
+    },
+    {
+      "name": "String",
+      "scope": [
+        "string",
+        "meta.verbatim"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#00F13A"
+      }
+    },
+    {
+      "name": "Support",
+      "scope": "support",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7678E2"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#99B2FF"
+      }
+    },
+    {
+      "name": "Invalid – Deprecated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#AB2A1D"
+      }
+    },
+    {
+      "name": "Invalid – Illegal",
+      "scope": "invalid.illegal",
+      "settings": {
+        "background": "#9D1E15",
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "Superclass",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#9149C4"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": "string constant.other.placeholder",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF6400"
+      }
+    },
+    {
+      "name": "meta.function-call.py",
+      "scope": "meta.function-call.py",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BECDE6"
+      }
+    },
+    {
+      "name": "meta.tag",
+      "scope": [
+        "meta.tag",
+        "meta.tag entity"
+      ],
+      "settings": {
+        "foreground": "#8860FF"
+      }
+    },
+    {
+      "name": "entity.name.section",
+      "scope": "entity.name.section",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "OCaml variant",
+      "scope": "keyword.type.variant",
+      "settings": {
+        "foreground": "#D5E0F3"
+      }
+    },
+    {
+      "name": "OCaml operator",
+      "scope": "source.ocaml keyword.operator.symbol",
+      "settings": {
+        "foreground": "#F8F8F8"
+      }
+    },
+    {
+      "name": "OCaml infix operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DA6CE"
+      }
+    },
+    {
+      "name": "OCaml prefix operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8DA6CE"
+      }
+    },
+    {
+      "name": "OCaml f-p infix operator",
+      "scope": "source.ocaml keyword.operator.symbol.infix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml f-p prefix operator",
+      "scope": "source.ocaml keyword.operator.symbol.prefix.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "OCaml f-p constant",
+      "scope": "source.ocaml constant.numeric.floating-point",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "LaTeX environment",
+      "scope": "text.tex.latex meta.function.environment",
+      "settings": {
+        "background": "#FFFFFF08"
+      }
+    },
+    {
+      "name": "LaTeX environment (nested)",
+      "scope": "text.tex.latex meta.function.environment meta.function.environment",
+      "settings": {
+        "background": "#7A96FA08"
+      }
+    },
+    {
+      "name": "Latex support",
+      "scope": "text.tex.latex support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FBDE2D"
+      }
+    },
+    {
+      "name": "PList unquoted string",
+      "scope": [
+        "source.plist string.unquoted",
+        "source.plist keyword.operator"
+      ],
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    }
+  ],
+  "uuid": "1418C589-849F-4D58-812C-A9D9F44E0424"
+}

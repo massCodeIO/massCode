@@ -1,0 +1,150 @@
+{
+  "author": "Chris Thomas",
+  "name": "Summer Camp Mod",
+  "settings": [
+    {
+      "settings": {
+        "background": "#110F0A",
+        "caret": "#F2F8CB",
+        "foreground": "#F2F8CB",
+        "invisibles": "#F3771D",
+        "lineHighlight": "#14120B",
+        "selection": "#433D2780"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "background": "#070604",
+        "fontStyle": "italic",
+        "foreground": "#2B2719"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A3ED4E"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3FA2ED"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3A94DC"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3588CA"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F35E18"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F39B19"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escape",
+        "string source"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F3771D"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "meta.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F39B19"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#F3771D"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "support.function.any-method"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7DDE12"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#EEF890"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#EEF890"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#F32119",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#F33A34",
+        "fontStyle": "italic"
+      }
+    }
+  ],
+  "uuid": "41F6B7A0-FB4E-4C86-BF65-1756B2AFFD06"
+}

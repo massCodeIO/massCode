@@ -1,0 +1,195 @@
+{
+  "name": "Tubster",
+  "settings": [
+    {
+      "settings": {
+        "background": "#232323",
+        "caret": "#FFFFFF",
+        "foreground": "#E6E1DC",
+        "invisibles": "#404040",
+        "lineHighlight": "#333435",
+        "selection": "#5A647EE0"
+      }
+    },
+    {
+      "name": "Source",
+      "scope": "source",
+      "settings": {
+        "background": "#232323"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#666666"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#CC6633"
+      }
+    },
+    {
+      "name": "Function (definition)",
+      "scope": [
+        "entity.name.function",
+        "keyword.other.name-of-parameter.objc"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFCC33"
+      }
+    },
+    {
+      "name": "Class (definition)",
+      "scope": "entity.name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#99CC66"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3399CC"
+      }
+    },
+    {
+      "name": "Constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#34A2D9"
+      }
+    },
+    {
+      "name": "Constant (other variable)",
+      "scope": "variable.other.constant",
+      "settings": {
+        "foreground": "#CC3333"
+      }
+    },
+    {
+      "name": "Constant (built-in)",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3399CC"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#99CC33"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#DA4939"
+      }
+    },
+    {
+      "name": "Library type",
+      "scope": "support.type",
+      "settings": {
+        "foreground": "#6E9CBE"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "foreground": "#99CC33"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag",
+        "entity.name.tag",
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFCC33"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#CC0000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escaped",
+        "constant.character.escape",
+        "string source",
+        "string source.ruby"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#519F50"
+      }
+    },
+    {
+      "name": "Diff Add",
+      "scope": "markup.inserted",
+      "settings": {
+        "background": "#669966",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Remove",
+      "scope": "markup.deleted",
+      "settings": {
+        "background": "#993333",
+        "foreground": "#E6E1DC"
+      }
+    },
+    {
+      "name": "Diff Header",
+      "scope": [
+        "meta.diff.header",
+        "meta.separator.diff",
+        "meta.diff.index",
+        "meta.diff.range"
+      ],
+      "settings": {
+        "background": "#3366FF"
+      }
+    }
+  ],
+  "uuid": "6859ADD2-5700-4A41-8B30-CE7A9BAC83D7"
+}

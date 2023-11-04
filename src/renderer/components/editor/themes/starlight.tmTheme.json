@@ -1,0 +1,67 @@
+{
+  "name": "Starlight",
+  "settings": [
+    {
+      "settings": {
+        "background": "#223859F2",
+        "caret": "#D0C179",
+        "foreground": "#C0B6A8",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#0000001F",
+        "selection": "#50729C"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AEAEAE"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#B9A185"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#B9A185"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A38474"
+      }
+    },
+    {
+      "name": "Entity",
+      "settings": {
+        "foreground": "#B8ADA0"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "foreground": "#A19A83"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "foreground": "#F3D651"
+      }
+    }
+  ],
+  "uuid": "750AEFCD-88F3-4E2C-9560-1CF215A393C9"
+}

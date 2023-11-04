@@ -1,0 +1,356 @@
+{
+  "name": "Amy",
+  "author": "William D. Neumann",
+  "settings": [
+    {
+      "settings": {
+        "background": "#200020",
+        "caret": "#7070FF",
+        "foreground": "#D0D0FF",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#80000040",
+        "selection": "#80000080"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment.block",
+      "settings": {
+        "background": "#200020",
+        "fontStyle": "italic",
+        "foreground": "#404080"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#999999"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#707090"
+      }
+    },
+    {
+      "name": "Integer",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#7090B0"
+      }
+    },
+    {
+      "name": "Int32 constant",
+      "scope": "constant.numeric.integer.int32",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Int64 constant",
+      "scope": "constant.numeric.integer.int64",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Nativeint constant",
+      "scope": "constant.numeric.integer.nativeint",
+      "settings": {
+        "fontStyle": "bold italic"
+      }
+    },
+    {
+      "name": "Floating-point constant",
+      "scope": "constant.numeric.floating-point.ocaml",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Character constant",
+      "scope": "constant.character",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#666666"
+      }
+    },
+    {
+      "name": "Boolean constant",
+      "scope": "constant.language.boolean",
+      "settings": {
+        "foreground": "#8080A0"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {}
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant.other",
+      "settings": {}
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#008080"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#A080FF"
+      }
+    },
+    {
+      "name": "Keyword operator",
+      "scope": "keyword.operator",
+      "settings": {
+        "foreground": "#A0A0FF"
+      }
+    },
+    {
+      "name": "Keyword decorator",
+      "scope": "keyword.other.decorator",
+      "settings": {
+        "foreground": "#D0D0FF"
+      }
+    },
+    {
+      "name": "Floating-point infix operator",
+      "scope": "keyword.operator.infix.floating-point.ocaml",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Floating-point prefix operator",
+      "scope": "keyword.operator.prefix.floating-point.ocaml",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Compiler directives",
+      "scope": "keyword.other.directive",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#C080C0"
+      }
+    },
+    {
+      "name": "Line-number directives",
+      "scope": "keyword.other.directive.line-number",
+      "settings": {
+        "fontStyle": "underline",
+        "foreground": "#C080C0"
+      }
+    },
+    {
+      "name": "Control keyword",
+      "scope": "keyword.control",
+      "settings": {
+        "foreground": "#80A0FF"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "foreground": "#B0FFF0"
+      }
+    },
+    {
+      "name": "Variants",
+      "scope": "entity.name.type.variant",
+      "settings": {
+        "foreground": "#60B0FF"
+      }
+    },
+    {
+      "name": "Polymorphic variants",
+      "scope": [
+        "storage.type.variant.polymorphic",
+        "entity.name.type.variant.polymorphic"
+      ],
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#60B0FF"
+      }
+    },
+    {
+      "name": "Module definitions",
+      "scope": "entity.name.type.module",
+      "settings": {
+        "foreground": "#B000B0"
+      }
+    },
+    {
+      "name": "Module type definitions",
+      "scope": "entity.name.type.module-type.ocaml",
+      "settings": {
+        "fontStyle": "underline",
+        "foreground": "#B000B0"
+      }
+    },
+    {
+      "name": "Support modules",
+      "scope": "support.other",
+      "settings": {
+        "foreground": "#A00050"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.type.class",
+      "settings": {
+        "foreground": "#70E080"
+      }
+    },
+    {
+      "name": "Class type",
+      "scope": "entity.name.type.class-type",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#70E0A0"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {}
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "foreground": "#50A0A0"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "foreground": "#80B0B0"
+      }
+    },
+    {
+      "name": "Token definition (ocamlyacc)",
+      "scope": "entity.name.type.token",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3080A0"
+      }
+    },
+    {
+      "name": "Token reference (ocamlyacc)",
+      "scope": "entity.name.type.token.reference",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3CB0D0"
+      }
+    },
+    {
+      "name": "Non-terminal definition (ocamlyacc)",
+      "scope": "entity.name.function.non-terminal",
+      "settings": {
+        "foreground": "#90E0E0"
+      }
+    },
+    {
+      "name": "Non-terminal reference (ocamlyacc)",
+      "scope": "entity.name.function.non-terminal.reference",
+      "settings": {
+        "foreground": "#C0F0F0"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "foreground": "#009090"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {}
+    },
+    {
+      "name": "Library function",
+      "settings": {
+        "background": "#200020"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "background": "#200020"
+      }
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {}
+    },
+    {
+      "name": "Invalid - illegal",
+      "scope": "invalid.illegal",
+      "settings": {
+        "background": "#FFFF00",
+        "fontStyle": "bold",
+        "foreground": "#400080"
+      }
+    },
+    {
+      "name": "Invalid - depricated",
+      "scope": "invalid.deprecated",
+      "settings": {
+        "background": "#CC66FF",
+        "foreground": "#200020"
+      }
+    },
+    {
+      "name": "Camlp4 code",
+      "scope": "source.camlp4.embedded",
+      "settings": {
+        "background": "#40008054"
+      }
+    },
+    {
+      "name": "Camlp4 temp (parser)",
+      "scope": "source.camlp4.embedded.parser.ocaml",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Punctuation",
+      "scope": "punctuation",
+      "settings": {
+        "foreground": "#805080"
+      }
+    }
+  ],
+  "uuid": "3C01FADD-7592-49DD-B7A5-1B82CA4E57B5"
+}

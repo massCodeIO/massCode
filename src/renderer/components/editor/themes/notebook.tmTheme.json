@@ -1,0 +1,198 @@
+{
+  "name": "Notebook",
+  "settings": [
+    {
+      "settings": {
+        "background": "#BEB69D",
+        "caret": "#000000",
+        "foreground": "#000000BF",
+        "invisibles": "#85715540",
+        "lineHighlight": "#FFFFFF29",
+        "selection": "#FFFFFFDB"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FFEECE80"
+      }
+    },
+    {
+      "name": "Punctuation",
+      "scope": "punctuation.section.embedded",
+      "settings": {
+        "background": "#FFFFFF4D",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "background": "#E9D92BBF",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "background": "#9AFF42BF",
+        "foreground": "#000000BF"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "background": "#65D8E6BF",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "background": "#65D8E6BF",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "background": "#6693525C",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#C52727"
+      }
+    },
+    {
+      "name": "Entity",
+      "scope": "constant.character.entity",
+      "settings": {
+        "background": "#8FE6D3BF",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "background": "#A69C86BF",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": [
+        "entity.name.type.class",
+        "support.class"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1D368F"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": [
+        "entity.name.tag",
+        "entity.other.attribute-name.class.css",
+        "entity.other.attribute-name.id.css"
+      ],
+      "settings": {
+        "background": "#B1A68FBF",
+        "fontStyle": "",
+        "foreground": "#000000BF"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": [
+        "support.function",
+        "support.constant.property-value.css"
+      ],
+      "settings": {
+        "background": "#F9559B6E",
+        "fontStyle": "",
+        "foreground": "#FFFFFF1A"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": ""
+      }
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {}
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#BF363B",
+        "foreground": "#FFFFFF"
+      }
+    }
+  ],
+  "uuid": "FE674D9A-27B3-4A5A-84F7-1CC67BD29531"
+}

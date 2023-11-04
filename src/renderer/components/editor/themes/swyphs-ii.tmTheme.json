@@ -1,0 +1,216 @@
+{
+  "name": "Swyphs II",
+  "settings": [
+    {
+      "settings": {
+        "background": "#000000FA",
+        "caret": "#FFFFFF",
+        "foreground": "#C1C1C1",
+        "invisibles": "#323232",
+        "lineHighlight": "#080808",
+        "selection": "#BC1800"
+      }
+    },
+    {
+      "name": "source",
+      "scope": "source",
+      "settings": {
+        "foreground": "#CACACA"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#575757"
+      }
+    },
+    {
+      "name": "Return value",
+      "scope": "meta.method-return.actionscript.3",
+      "settings": {
+        "foreground": "#624343"
+      }
+    },
+    {
+      "name": "ASDoc @see references",
+      "scope": "meta.documentation.tag.see.asdoc",
+      "settings": {
+        "foreground": "#383B40"
+      }
+    },
+    {
+      "name": "ASDoc @param references",
+      "scope": "meta.documentation.tag.param.asdoc",
+      "settings": {
+        "foreground": "#2E383E"
+      }
+    },
+    {
+      "name": "control statement",
+      "scope": "keyword.control",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#92577E"
+      }
+    },
+    {
+      "name": "storage",
+      "scope": [
+        "storage.modifier",
+        "meta.tag.inline.any.html",
+        "meta.tag.structure.any.html",
+        "meta.tag.block.any.html"
+      ],
+      "settings": {
+        "foreground": "#82677E"
+      }
+    },
+    {
+      "name": "symbol",
+      "scope": [
+        "keyword.operator.symbolic",
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#8B8B8B"
+      }
+    },
+    {
+      "name": "storage type",
+      "scope": [
+        "storage.type",
+        "support.constant.actionscript.2"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8D7D68"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function.actionscript",
+      "settings": {
+        "background": "#000000FC",
+        "foreground": "#F0D155"
+      }
+    },
+    {
+      "name": "import",
+      "scope": "storage.type.import",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6C7D6A"
+      }
+    },
+    {
+      "name": "namespace",
+      "scope": "storage.type.namespace",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#654151"
+      }
+    },
+    {
+      "name": "number, string",
+      "scope": [
+        "constant.numeric",
+        "string.quoted"
+      ],
+      "settings": {
+        "foreground": "#D7D7D7"
+      }
+    },
+    {
+      "name": "accessor",
+      "scope": "storage.type.accessor",
+      "settings": {
+        "foreground": "#CD402F"
+      }
+    },
+    {
+      "name": "type",
+      "scope": [
+        "support.type.function.global",
+        "support.class"
+      ],
+      "settings": {
+        "foreground": "#867E63"
+      }
+    },
+    {
+      "name": "function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#7D6068"
+      }
+    },
+    {
+      "name": "constant",
+      "scope": [
+        "constant.language",
+        "source.js"
+      ],
+      "settings": {
+        "foreground": "#557474"
+      }
+    },
+    {
+      "name": "property",
+      "scope": [
+        "support.property",
+        "source.css"
+      ],
+      "settings": {
+        "foreground": "#8B7867"
+      }
+    },
+    {
+      "name": "keyword operator",
+      "scope": "keyword.operator",
+      "settings": {
+        "foreground": "#608C6D"
+      }
+    },
+    {
+      "name": "xml tag",
+      "scope": "entity.name.tag.localname.xml",
+      "settings": {
+        "foreground": "#647980"
+      }
+    },
+    {
+      "name": "xml text",
+      "scope": "text.xml",
+      "settings": {
+        "foreground": "#C5C5C5"
+      }
+    },
+    {
+      "name": "xml cdata wrapper",
+      "scope": [
+        "punctuation.definition.string.begin.xml",
+        "punctuation.definition.string.end.xml"
+      ],
+      "settings": {
+        "foreground": "#A99C6F"
+      }
+    },
+    {
+      "name": "xml cdata content",
+      "scope": "string.unquoted.cdata.xml",
+      "settings": {
+        "foreground": "#FEFAF7"
+      }
+    },
+    {
+      "name": "CONSTANT",
+      "scope": "constant.language.null.actionscript",
+      "settings": {
+        "foreground": "#82484A"
+      }
+    }
+  ],
+  "uuid": "ABA887B2-7EDB-41C4-86E0-BA23509E8B3A"
+}

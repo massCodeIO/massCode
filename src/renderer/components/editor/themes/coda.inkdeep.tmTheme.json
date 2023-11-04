@@ -1,0 +1,209 @@
+{
+  "name": "Coda.inkdeep",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#000000",
+        "foreground": "#000000",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#EEF1F5",
+        "selection": "#A7CAFF"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#ADADAD"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#EA8500"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#0F20F6"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#530033"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0E00A7"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1892FF"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#66FF00"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#AA2063"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "foreground": "#009749"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "foreground": "#AA2063"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D20037"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#053369"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#525F3C"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#525F3C"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#728F3A"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#008DE2"
+      }
+    },
+    {
+      "name": "Class Variable",
+      "scope": [
+        "variable.other",
+        "variable.js",
+        "punctuation.separator.variable"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0000FF"
+      }
+    },
+    {
+      "name": "Language Constant",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#D20037"
+      }
+    },
+    {
+      "name": "Meta Brace",
+      "scope": [
+        "punctuation.section.embedded -(source string source punctuation.section.embedded)",
+        "meta.brace.erb.html"
+      ],
+      "settings": {
+        "foreground": "#525F3C"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "foreground": "#EB291C"
+      }
+    },
+    {
+      "name": "Normal Variable",
+      "scope": [
+        "variable.other.php",
+        "variable.other.normal"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0000FF"
+      }
+    },
+    {
+      "name": "Function Call",
+      "scope": "meta.function-call",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#163369"
+      }
+    },
+    {
+      "name": "Keyword Control",
+      "scope": "keyword.control",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0A00DF"
+      }
+    }
+  ],
+  "uuid": "E6DC182C-65E2-4398-B1B2-F533DC37E6F0"
+}

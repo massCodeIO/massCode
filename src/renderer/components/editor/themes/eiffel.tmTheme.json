@@ -1,0 +1,297 @@
+{
+  "name": "Eiffel",
+  "author": "Ian Joyner",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#000000",
+        "foreground": "#000000",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#00000012",
+        "selection": "#C3DCFF"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#00B418"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": "variable",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#0206FF"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0100B6"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#CD0000"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#C5060B"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#585CF6"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#D80800"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escape",
+        "string source"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#26B31A"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "meta.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1A921C"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0C450D"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "keyword.other.name-of-parameter.objc"
+      ],
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0000A2"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Function parameter",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Function argument and result types",
+      "scope": "storage.type.method",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#70727E"
+      }
+    },
+    {
+      "name": "Section",
+      "scope": [
+        "meta.section entity.name.section",
+        "declaration.section entity.name.section"
+      ],
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#3C4C72"
+      }
+    },
+    {
+      "name": "Library object",
+      "scope": [
+        "support.class",
+        "support.type"
+      ],
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#6D79DE"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#06960E"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.variable",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#21439C"
+      }
+    },
+    {
+      "name": "JS: Operator",
+      "scope": "keyword.operator.js",
+      "settings": {
+        "foreground": "#687687"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "background": "#990000",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#FFD0D0"
+      }
+    },
+    {
+      "name": "Embedded source",
+      "scope": [
+        "text source",
+        "string.unquoted"
+      ],
+      "settings": {
+        "background": "#427FF530"
+      }
+    },
+    {
+      "name": "Markup XML declaration",
+      "scope": [
+        "meta.xml-processing",
+        "declaration.xml-processing"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#68685B"
+      }
+    },
+    {
+      "name": "Markup DOCTYPE",
+      "scope": [
+        "meta.doctype",
+        "declaration.doctype"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Markup DTD",
+      "scope": [
+        "meta.doctype.DTD",
+        "declaration.doctype.DTD"
+      ],
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1C02FF"
+      }
+    },
+    {
+      "name": "Markup name of tag",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Markup tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup: Heading",
+      "scope": "markup.heading",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#0C07FF"
+      }
+    },
+    {
+      "name": "Markup: Quote",
+      "scope": "markup.quote",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#000000"
+      }
+    },
+    {
+      "name": "Markup: List",
+      "scope": "markup.list",
+      "settings": {
+        "foreground": "#B90690"
+      }
+    }
+  ],
+  "uuid": "ADD7FDE7-C6BE-454B-A71A-7951ED54FB04"
+}

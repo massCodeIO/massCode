@@ -1,0 +1,113 @@
+{
+  "name": "MultiMarkdown",
+  "settings": [
+    {
+      "settings": {
+        "background": "#FFFFFF",
+        "caret": "#000000",
+        "foreground": "#000000",
+        "invisibles": "#BFBFBF",
+        "lineHighlight": "#00000012",
+        "selection": "#B5D8F7"
+      }
+    },
+    {
+      "name": "MultiMarkdown Metadata",
+      "scope": "meta.header.multimarkdown",
+      "settings": {
+        "background": "#FFFFFF",
+        "foreground": "#979797"
+      }
+    },
+    {
+      "name": "MultiMarkdown meta key",
+      "scope": "meta.header.key.multimarkdown",
+      "settings": {
+        "fontStyle": "underline"
+      }
+    },
+    {
+      "name": "MultiMarkdown meta value",
+      "scope": "meta.header.value.multimarkdown",
+      "settings": {}
+    },
+    {
+      "name": "Markdown Heading",
+      "scope": "markup.heading.markdown",
+      "settings": {
+        "fontStyle": "bold underline"
+      }
+    },
+    {
+      "name": "Markdown Table",
+      "scope": "markup.table.multimarkdown",
+      "settings": {
+        "foreground": "#FF0000"
+      }
+    },
+    {
+      "name": "Markdown Link Def",
+      "scope": "meta.link.reference.def.markdown",
+      "settings": {
+        "foreground": "#21FF0A"
+      }
+    },
+    {
+      "name": "MultiMarkdown Footnote Def",
+      "scope": "meta.footnote.reference.def.multimarkdown",
+      "settings": {
+        "foreground": "#FF8D04"
+      }
+    },
+    {
+      "name": "MultiMarkdown Citation Def",
+      "scope": "meta.citation.reference.def.multimarkdown",
+      "settings": {
+        "foreground": "#0ABFFF"
+      }
+    },
+    {
+      "name": "Markdown Code Block",
+      "scope": "markup.raw.block.markdown",
+      "settings": {
+        "background": "#E5E5E5"
+      }
+    },
+    {
+      "name": "MultiMarkdown Math",
+      "scope": "markup.math.multimarkdown",
+      "settings": {
+        "background": "#E5E5E5"
+      }
+    },
+    {
+      "name": "Markdown Code Span",
+      "scope": "markup.raw.inline.markdown",
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Markdown Quote",
+      "scope": "markup.quote.markdown",
+      "settings": {
+        "background": "#E5E5E5"
+      }
+    },
+    {
+      "name": "Possible Citation",
+      "scope": "citation.possible",
+      "settings": {
+        "foreground": "#FF0093"
+      }
+    },
+    {
+      "name": "Markdown link",
+      "scope": "meta.link",
+      "settings": {
+        "foreground": "#0205F0"
+      }
+    }
+  ],
+  "uuid": "2250B6DC-C3BE-4BE8-B815-17B11D90BD6F"
+}

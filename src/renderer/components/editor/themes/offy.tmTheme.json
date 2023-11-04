@@ -1,0 +1,390 @@
+{
+  "name": "Offy",
+  "settings": [
+    {
+      "settings": {
+        "background": "#00002ECC",
+        "caret": "#FF1C97",
+        "foreground": "#FFFFFF",
+        "invisibles": "#947991",
+        "lineHighlight": "#000000",
+        "selection": "#535009"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "bold italic",
+        "foreground": "#577478CC"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": [
+        "keyword",
+        "storage"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF0205"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#7EAAC0"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": "constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#BC83FC"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF57FF"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#007EC9"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#339900"
+      }
+    },
+    {
+      "name": "String RegExp",
+      "scope": "string.regexp",
+      "settings": {
+        "foreground": "#60FF2E"
+      }
+    },
+    {
+      "name": "String interpolation",
+      "scope": [
+        "constant.character.escape",
+        "string source"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#ACDB85"
+      }
+    },
+    {
+      "name": "Preprocessor line",
+      "scope": "meta.preprocessor",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#669933"
+      }
+    },
+    {
+      "name": "Preprocessor directive",
+      "scope": "keyword.control.import",
+      "settings": {
+        "fontStyle": "bold",
+        "foreground": "#859875"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": [
+        "entity.name.function",
+        "keyword.other.name-of-parameter.objc"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF6609"
+      }
+    },
+    {
+      "name": "Type name",
+      "scope": "entity.name.type",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0099FF"
+      }
+    },
+    {
+      "name": "Inherited class name",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#396BB7"
+      }
+    },
+    {
+      "name": "Function parameter",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#A6FFFF"
+      }
+    },
+    {
+      "name": "Function argument and result types",
+      "scope": "storage.type.method",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#6BAC0E"
+      }
+    },
+    {
+      "name": "Section",
+      "scope": [
+        "meta.section entity.name.section",
+        "declaration.section entity.name.section"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#0099FF"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FF9999"
+      }
+    },
+    {
+      "name": "Library object",
+      "scope": [
+        "support.class",
+        "support.type"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#8B62E1"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#5CD9EB"
+      }
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.variable",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#004B91"
+      }
+    },
+    {
+      "name": "JS: Operator",
+      "scope": "keyword.operator.js",
+      "settings": {
+        "foreground": "#9999CC"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {
+        "foreground": "#FF0AF1"
+      }
+    },
+    {
+      "name": "Invalid trailing whitespace",
+      "scope": "invalid.deprecated.trailing-whitespace",
+      "settings": {
+        "background": "#FF3333",
+        "fontStyle": "bold",
+        "foreground": "#330000"
+      }
+    },
+    {
+      "name": "support.function",
+      "scope": "support.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FCFF00"
+      }
+    },
+    {
+      "name": "Embedded source",
+      "scope": [
+        "text source",
+        "string.unquoted"
+      ],
+      "settings": {
+        "foreground": "#D2B4AA"
+      }
+    },
+    {
+      "name": "Markup XML declaration",
+      "scope": "meta.tag.preprocessor.xml",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#68685B"
+      }
+    },
+    {
+      "name": "Markup DOCTYPE",
+      "scope": [
+        "meta.tag.sgml.doctype",
+        "meta.tag.sgml.doctype entity",
+        "meta.tag.sgml.doctype string",
+        "meta.tag.preprocessor.xml",
+        "meta.tag.preprocessor.xml entity",
+        "meta.tag.preprocessor.xml string"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#888888"
+      }
+    },
+    {
+      "name": "Markup DTD",
+      "scope": "string.quoted.docinfo.doctype.DTD",
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Markup tag",
+      "scope": [
+        "meta.tag",
+        "declaration.tag"
+      ],
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFF33"
+      }
+    },
+    {
+      "name": "Markup name of tag",
+      "scope": "entity.name.tag",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#FFFF33"
+      }
+    },
+    {
+      "name": "Markup tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3293E7"
+      }
+    },
+    {
+      "name": "Markup: Heading",
+      "scope": "markup.heading",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#1645FF"
+      }
+    },
+    {
+      "name": "Markup: Quote",
+      "scope": "markup.quote",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Markup: List",
+      "scope": "markup.list",
+      "settings": {
+        "foreground": "#B90690"
+      }
+    },
+    {
+      "name": "CSS color",
+      "scope": [
+        "constant.other.color",
+        "support.constant.color"
+      ],
+      "settings": {
+        "foreground": "#FF8326"
+      }
+    },
+    {
+      "name": "Rails builder function",
+      "scope": "function.other.builder.rails",
+      "settings": {
+        "foreground": "#FF55C2"
+      }
+    },
+    {
+      "name": "general Ruby methods",
+      "scope": "support.method.ruby",
+      "settings": {
+        "foreground": "#00BA8F"
+      }
+    },
+    {
+      "name": "Ruby boolean? methods",
+      "scope": "support.boolean-method.ruby",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#00BA8F"
+      }
+    },
+    {
+      "name": "Ruby BANG! methods",
+      "scope": "support.bang-method.ruby",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#00BA8F"
+      }
+    },
+    {
+      "name": "Ruby assigns-to",
+      "scope": "support.assigns-to.ruby",
+      "settings": {
+        "foreground": "#7A34FE"
+      }
+    },
+    {
+      "name": "parentheses",
+      "scope": "punctuation.section.function",
+      "settings": {
+        "foreground": "#FF55C2"
+      }
+    },
+    {
+      "name": "brackets",
+      "scope": "punctuation.section.array",
+      "settings": {
+        "foreground": "#FF99D1"
+      }
+    },
+    {
+      "name": "braces",
+      "scope": "punctuation.section.scope",
+      "settings": {
+        "foreground": "#FFC6DD"
+      }
+    }
+  ],
+  "uuid": "82DB25FC-0FFD-4804-9F82-F1EC99396499"
+}

@@ -1,0 +1,241 @@
+{
+  "name": "inkdeep",
+  "settings": [
+    {
+      "settings": {
+        "background": "#040A12",
+        "caret": "#E6E6E6",
+        "foreground": "#FFFFFF",
+        "invisibles": "#10161D",
+        "lineHighlight": "#00000012",
+        "selection": "#A5C9FF"
+      }
+    },
+    {
+      "name": "Comment",
+      "scope": "comment",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#510D15"
+      }
+    },
+    {
+      "name": "String",
+      "scope": "string",
+      "settings": {
+        "foreground": "#3B5D8B"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#B9D2EB"
+      }
+    },
+    {
+      "name": "Built-in constant",
+      "scope": "constant.language",
+      "settings": {
+        "foreground": "#EF872A"
+      }
+    },
+    {
+      "name": "User-defined constant",
+      "scope": [
+        "constant.character",
+        "constant.other"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Variable",
+      "scope": [
+        "variable.language",
+        "variable.other"
+      ],
+      "settings": {
+        "foreground": "#C5FF38"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": "keyword",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#3B5D8B"
+      }
+    },
+    {
+      "name": "Storage",
+      "scope": "storage",
+      "settings": {
+        "foreground": "#ED2E8B"
+      }
+    },
+    {
+      "name": "Class name",
+      "scope": "entity.name.class",
+      "settings": {
+        "foreground": "#8CFBCF"
+      }
+    },
+    {
+      "name": "Inherited class",
+      "scope": "entity.other.inherited-class",
+      "settings": {
+        "foreground": "#FF6600"
+      }
+    },
+    {
+      "name": "Function name",
+      "scope": "entity.name.function",
+      "settings": {
+        "fontStyle": "",
+        "foreground": "#63983B"
+      }
+    },
+    {
+      "name": "Function argument",
+      "scope": "variable.parameter",
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#F4B52D"
+      }
+    },
+    {
+      "name": "Tag name",
+      "scope": "entity.name.tag",
+      "settings": {
+        "foreground": "#766817"
+      }
+    },
+    {
+      "name": "Tag attribute",
+      "scope": "entity.other.attribute-name",
+      "settings": {
+        "foreground": "#D6CB6D"
+      }
+    },
+    {
+      "name": "Library function",
+      "scope": "support.function",
+      "settings": {
+        "foreground": "#FF3700"
+      }
+    },
+    {
+      "name": "Library constant",
+      "scope": "support.constant",
+      "settings": {
+        "foreground": "#7AB7F9"
+      }
+    },
+    {
+      "name": "Library class/type",
+      "scope": [
+        "support.type",
+        "support.class"
+      ],
+      "settings": {}
+    },
+    {
+      "name": "Library variable",
+      "scope": "support.other.variable",
+      "settings": {
+        "foreground": "#264D0B"
+      }
+    },
+    {
+      "name": "Invalid",
+      "scope": "invalid",
+      "settings": {}
+    },
+    {
+      "name": "Html: Tag Declaration",
+      "scope": [
+        "text.html declaration.tag",
+        "text.html meta.tag",
+        "text.html entity.name.tag.xhtml"
+      ],
+      "settings": {
+        "foreground": "#2193AE"
+      }
+    },
+    {
+      "name": "Ruby String",
+      "scope": [
+        "source.ruby string",
+        "string.quoted.other"
+      ],
+      "settings": {
+        "foreground": "#FEFAC6"
+      }
+    },
+    {
+      "name": "Ruby Method",
+      "scope": [
+        "ruby.source",
+        "meta.function.method.without-arguments.ruby",
+        "keyword.control.def.ruby"
+      ],
+      "settings": {
+        "foreground": "#BD2241"
+      }
+    },
+    {
+      "name": "Ruby Method Name",
+      "scope": "entity.name.function.ruby",
+      "settings": {
+        "foreground": "#C7F945"
+      }
+    },
+    {
+      "name": "Ruby Module Name",
+      "scope": [
+        "source.ruby",
+        "meta.module.ruby",
+        "keyword.control.module.ruby"
+      ],
+      "settings": {
+        "foreground": "#E94526"
+      }
+    },
+    {
+      "name": "Ruby Class",
+      "scope": [
+        "source.ruby",
+        "support.class.ruby"
+      ],
+      "settings": {
+        "foreground": "#EC6828"
+      }
+    },
+    {
+      "name": "Ruby Source",
+      "scope": "source.ruby",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "name": "Ruby Array",
+      "scope": "punctuation.section.array.ruby",
+      "settings": {
+        "foreground": "#FDF05D"
+      }
+    },
+    {
+      "name": "Ruby Keyword",
+      "scope": [
+        "source.ruby",
+        "meta.function.method.without-arguments.ruby",
+        "keyword.control.def.ruby"
+      ],
+      "settings": {
+        "foreground": "#BD2241"
+      }
+    }
+  ],
+  "uuid": "F1940441-1002-4CB9-828C-99887BEEE083"
+}

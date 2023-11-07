@@ -17,7 +17,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Active4D",
     label: "Active4D",
-    value: "dark:Active4D",
+    value: "light:active4d",
     loader: () => import("./themes/active4d.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -27,7 +27,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "All Hallows Eve Custom",
     label: "All Hallows Eve Custom",
-    value: "dark:All Hallows Eve Custom",
+    value: "light:all-hallows-eve-custom",
     loader: () => import("./themes/all-hallows-eve-custom.tmTheme.json"),
     gutterSettings: {
       background: "#131313",
@@ -37,7 +37,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "All Hallows Eve",
     label: "All Hallows Eve",
-    value: "dark:All Hallows Eve",
+    value: "light:all-hallows-eve",
     loader: () => import("./themes/all-hallows-eve.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -47,7 +47,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Amy",
     label: "Amy",
-    value: "dark:Amy",
+    value: "light:amy",
     loader: () => import("./themes/amy.tmTheme.json"),
     gutterSettings: {
       background: "#200020",
@@ -57,7 +57,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Argonaut",
     label: "Argonaut",
-    value: "dark:Argonaut",
+    value: "light:argonaut",
     loader: () => import("./themes/argonaut.tmTheme.json"),
     gutterSettings: {
       background: "#151515",
@@ -65,8 +65,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "barf",
-    label: "barf",
+    name: "Barf",
+    label: "Barf",
     value: "dark:barf",
     loader: () => import("./themes/barf.tmTheme.json"),
     gutterSettings: {
@@ -77,7 +77,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "BBEdit",
     label: "BBEdit",
-    value: "dark:BBEdit",
+    value: "light:bbedit",
     loader: () => import("./themes/bbedit.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -87,7 +87,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Bespin",
     label: "Bespin",
-    value: "dark:Bespin",
+    value: "dark:bespin",
     loader: () => import("./themes/bespin.tmTheme.json"),
     gutterSettings: {
       background: "#28211C",
@@ -97,7 +97,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Birds of Paradise",
     label: "Birds of Paradise",
-    value: "dark:Birds of Paradise",
+    value: "light:birds-of-paradise",
     loader: () => import("./themes/birds-of-paradise.tmTheme.json"),
     gutterSettings: {
       background: "#372725",
@@ -107,7 +107,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Black Pearl II",
     label: "Black Pearl II",
-    value: "dark:Black Pearl II",
+    value: "light:black-pearl-ii",
     loader: () => import("./themes/black-pearl-ii.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -117,7 +117,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Black Pearl",
     label: "Black Pearl",
-    value: "dark:Black Pearl",
+    value: "light:black-pearl",
     loader: () => import("./themes/black-pearl.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -127,7 +127,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Blackboard Black",
     label: "Blackboard Black",
-    value: "dark:Blackboard Black",
+    value: "dark:blackboard-black",
     loader: () => import("./themes/blackboard-black.tmTheme.json"),
     gutterSettings: {
       background: "#1F1F1F",
@@ -137,7 +137,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Blackboard Mod",
     label: "Blackboard Mod",
-    value: "dark:Blackboard Mod",
+    value: "dark:blackboard-mod",
     loader: () => import("./themes/blackboard-mod.tmTheme.json"),
     gutterSettings: {
       background: "#0B0D17E6",
@@ -145,9 +145,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Blackboard Mod",
-    label: "Blackboard Mod",
-    value: "dark:Blackboard Mod",
+    name: "Blackboard New",
+    label: "Blackboard New",
+    value: "dark:blackboard-new",
     loader: () => import("./themes/blackboard-new.tmTheme.json"),
     gutterSettings: {
       background: "#0B0D17E6",
@@ -157,7 +157,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Blackboard",
     label: "Blackboard",
-    value: "dark:Blackboard",
+    value: "dark:blackboard",
     loader: () => import("./themes/blackboard.tmTheme.json"),
     gutterSettings: {
       background: "#0C1021",
@@ -167,7 +167,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "BlackLight",
     label: "BlackLight",
-    value: "dark:BlackLight",
+    value: "dark:blacklight",
     loader: () => import("./themes/blacklight.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -177,7 +177,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Bongzilla",
     label: "Bongzilla",
-    value: "dark:Bongzilla",
+    value: "dark:bongzilla",
     loader: () => import("./themes/bongzilla.tmTheme.json"),
     gutterSettings: {
       background: "#1F1F1F",
@@ -187,7 +187,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Brilliance Black",
     label: "Brilliance Black",
-    value: "dark:Brilliance Black",
+    value: "light:brilliance-black",
     loader: () => import("./themes/brilliance-black.tmTheme.json"),
     gutterSettings: {
       background: "#0D0D0DFA",
@@ -197,7 +197,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Brilliance Dull",
     label: "Brilliance Dull",
-    value: "dark:Brilliance Dull",
+    value: "light:brilliance-dull",
     loader: () => import("./themes/brilliance-dull.tmTheme.json"),
     gutterSettings: {
       background: "#050505FA",
@@ -205,8 +205,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "choco",
-    label: "choco",
+    name: "Choco",
+    label: "Choco",
     value: "dark:choco",
     loader: () => import("./themes/choco.tmTheme.json"),
     gutterSettings: {
@@ -217,7 +217,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Claire",
     label: "Claire",
-    value: "dark:Claire",
+    value: "dark:claire",
     loader: () => import("./themes/claire.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -227,7 +227,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Classic Modified",
     label: "Classic Modified",
-    value: "dark:Classic Modified",
+    value: "light:classic-modified",
     loader: () => import("./themes/classic-modified.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -237,7 +237,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Close to the Sea",
     label: "Close to the Sea",
-    value: "dark:Close to the Sea",
+    value: "light:close-to-the-sea",
     loader: () => import("./themes/close_to_the_sea.tmTheme.json"),
     gutterSettings: {
       background: "#172024",
@@ -247,7 +247,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Clouds Midnight",
     label: "Clouds Midnight",
-    value: "dark:Clouds Midnight",
+    value: "light:clouds-midnight",
     loader: () => import("./themes/clouds-midnight.tmTheme.json"),
     gutterSettings: {
       background: "#191919",
@@ -257,7 +257,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Clouds",
     label: "Clouds",
-    value: "dark:Clouds",
+    value: "light:clouds",
     loader: () => import("./themes/clouds.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -267,7 +267,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Coal Graal",
     label: "Coal Graal",
-    value: "dark:Coal Graal",
+    value: "light:coal-graal",
     loader: () => import("./themes/coal-graal.tmTheme.json"),
     gutterSettings: {
       background: "#222222",
@@ -277,7 +277,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Cobalt",
     label: "Cobalt",
-    value: "dark:Cobalt",
+    value: "dark:cobalt",
     loader: () => import("./themes/cobalt.tmTheme.json"),
     gutterSettings: {
       background: "#002240",
@@ -285,9 +285,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Coda.inkdeep",
-    label: "Coda.inkdeep",
-    value: "dark:Coda.inkdeep",
+    name: "Coda.Inkdeep",
+    label: "Coda.Inkdeep",
+    value: "light:coda.inkdeep",
     loader: () => import("./themes/coda.inkdeep.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -297,7 +297,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Coda",
     label: "Coda",
-    value: "dark:Coda",
+    value: "light:coda",
     loader: () => import("./themes/coda.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -307,7 +307,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Cool Glow",
     label: "Cool Glow",
-    value: "dark:Cool Glow",
+    value: "light:cool-glow",
     loader: () => import("./themes/cool-glow.tmTheme.json"),
     gutterSettings: {
       background: "#06071DFA",
@@ -317,7 +317,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Creeper",
     label: "Creeper",
-    value: "dark:Creeper",
+    value: "dark:creeper",
     loader: () => import("./themes/creeper.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -327,7 +327,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "CSSEdit",
     label: "CSSEdit",
-    value: "dark:CSSEdit",
+    value: "light:cssedit",
     loader: () => import("./themes/cssedit.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -337,7 +337,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Daniel Fischer",
     label: "Daniel Fischer",
-    value: "dark:Daniel Fischer",
+    value: "light:daniel-fischer",
     loader: () => import("./themes/daniel-fischer.tmTheme.json"),
     gutterSettings: {
       background: "#000000F2",
@@ -347,7 +347,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Dawn (custom)",
     label: "Dawn (custom)",
-    value: "dark:Dawn (custom)",
+    value: "light:dawn-(custom)",
     loader: () => import("./themes/dawn-mod1.tmTheme.json"),
     gutterSettings: {
       background: "#F9F9F9F2",
@@ -357,7 +357,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Dawn",
     label: "Dawn",
-    value: "dark:Dawn",
+    value: "light:dawn",
     loader: () => import("./themes/dawn.tmTheme.json"),
     gutterSettings: {
       background: "#F9F9F9",
@@ -367,7 +367,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Deluxe",
     label: "Deluxe",
-    value: "dark:Deluxe",
+    value: "dark:deluxe",
     loader: () => import("./themes/deluxe.tmTheme.json"),
     gutterSettings: {
       background: "#000000F2",
@@ -377,7 +377,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Django (Smoothy)",
     label: "Django (Smoothy)",
-    value: "dark:Django (Smoothy)",
+    value: "light:django-(smoothy)",
     loader: () => import("./themes/django-(smoothy).tmTheme.json"),
     gutterSettings: {
       background: "#245032",
@@ -387,7 +387,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Django Dark",
     label: "Django Dark",
-    value: "dark:Django Dark",
+    value: "light:django-dark",
     loader: () => import("./themes/django-dark.tmTheme.json"),
     gutterSettings: {
       background: "#0A1C12",
@@ -397,7 +397,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Dominion Day",
     label: "Dominion Day",
-    value: "dark:Dominion Day",
+    value: "light:dominion-day",
     loader: () => import("./themes/dominion-day.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -407,7 +407,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Dracula",
     label: "Dracula",
-    value: "dark:Dracula",
+    value: "dark:dracula",
     loader: () => import("./themes/dracula.tmTheme.json"),
     gutterSettings: {
       background: "#282a36",
@@ -417,7 +417,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Eiffel",
     label: "Eiffel",
-    value: "dark:Eiffel",
+    value: "light:eiffel",
     loader: () => import("./themes/eiffel.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -427,7 +427,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Emacs Strict",
     label: "Emacs Strict",
-    value: "dark:Emacs Strict",
+    value: "light:emacs-strict",
     loader: () => import("./themes/emacs-strict.tmTheme.json"),
     gutterSettings: {
       background: "#000000EB",
@@ -437,7 +437,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Erebus",
     label: "Erebus",
-    value: "dark:Erebus",
+    value: "dark:erebus",
     loader: () => import("./themes/erebus.tmTheme.json"),
     gutterSettings: {
       background: "#140A0A",
@@ -447,7 +447,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Espresso Libre",
     label: "Espresso Libre",
-    value: "dark:Espresso Libre",
+    value: "light:espresso-libre",
     loader: () => import("./themes/espresso-libre.tmTheme.json"),
     gutterSettings: {
       background: "#2A211C",
@@ -457,7 +457,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Espresso Tutti",
     label: "Espresso Tutti",
-    value: "dark:Espresso Tutti",
+    value: "light:espresso-tutti",
     loader: () => import("./themes/espresso-tutti.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -467,7 +467,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Espresso",
     label: "Espresso",
-    value: "dark:Espresso",
+    value: "light:espresso",
     loader: () => import("./themes/espresso.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -477,7 +477,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Fade to Grey",
     label: "Fade to Grey",
-    value: "dark:Fade to Grey",
+    value: "light:fade-to-grey",
     loader: () => import("./themes/fade-to-grey.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -485,8 +485,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "fake",
-    label: "fake",
+    name: "Fake",
+    label: "Fake",
     value: "dark:fake",
     loader: () => import("./themes/fake.tmTheme.json"),
     gutterSettings: {
@@ -497,7 +497,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Fluidvision",
     label: "Fluidvision",
-    value: "dark:Fluidvision",
+    value: "light:fluidvision",
     loader: () => import("./themes/fluidvision.tmTheme.json"),
     gutterSettings: {
       background: "#F4F4F4F2",
@@ -507,7 +507,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "ForLaTeX",
     label: "ForLaTeX",
-    value: "dark:ForLaTeX",
+    value: "dark:forlatex",
     loader: () => import("./themes/forlatex.tmTheme.json"),
     gutterSettings: {
       background: "#000000C7",
@@ -517,27 +517,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Freckle",
     label: "Freckle",
-    value: "dark:Freckle",
-    loader: () => import("./themes/freckle-mod1.tmTheme.json"),
-    gutterSettings: {
-      background: "#FFFFFF",
-      divider: "#FFFFFF",
-    },
-  },
-  {
-    name: "Freckle (custom)",
-    label: "Freckle (custom)",
-    value: "dark:Freckle (custom)",
-    loader: () => import("./themes/freckle-mod2.tmTheme.json"),
-    gutterSettings: {
-      background: "#FFFFFFF0",
-      divider: "#FFFFFFF0",
-    },
-  },
-  {
-    name: "Freckle",
-    label: "Freckle",
-    value: "dark:Freckle",
+    value: "light:freckle",
     loader: () => import("./themes/freckle.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -545,9 +525,29 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
+    name: "Freckle Mod",
+    label: "Freckle Mod",
+    value: "light:freckle-mod",
+    loader: () => import("./themes/freckle-mod.tmTheme.json"),
+    gutterSettings: {
+      background: "#FFFFFF",
+      divider: "#FFFFFF",
+    },
+  },
+  {
+    name: "Freckle Mod 2",
+    label: "Freckle Mod 2",
+    value: "light:freckle-mod-2",
+    loader: () => import("./themes/freckle-mod-2.tmTheme.json"),
+    gutterSettings: {
+      background: "#FFFFFFF0",
+      divider: "#FFFFFFF0",
+    },
+  },
+  {
     name: "Friendship Bracelet",
     label: "Friendship Bracelet",
-    value: "dark:Friendship Bracelet",
+    value: "light:friendship-bracelet",
     loader: () => import("./themes/friendship-bracelet.tmTheme.json"),
     gutterSettings: {
       background: "#1F1F1F",
@@ -557,7 +557,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Funky Dashboard",
     label: "Funky Dashboard",
-    value: "dark:Funky Dashboard",
+    value: "light:funky-dashboard",
     loader: () => import("./themes/funky_dashboard.tmTheme.json"),
     gutterSettings: {
       background: "#000000D9",
@@ -567,7 +567,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "GitHub",
     label: "GitHub",
-    value: "dark:GitHub",
+    value: "light:github",
     loader: () => import("./themes/github.tmTheme.json"),
     gutterSettings: {
       background: "#ffffff",
@@ -577,7 +577,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "GlitterBomb",
     label: "GlitterBomb",
-    value: "dark:GlitterBomb",
+    value: "dark:glitterbomb",
     loader: () => import("./themes/glitterbomb.tmTheme.json"),
     gutterSettings: {
       background: "#0B0A0A",
@@ -587,7 +587,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Glow",
     label: "Glow",
-    value: "dark:Glow",
+    value: "dark:glow",
     loader: () => import("./themes/glow.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -595,10 +595,10 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Happy happy joy joy 2",
-    label: "Happy happy joy joy 2",
-    value: "dark:Happy happy joy joy 2",
-    loader: () => import("./themes/happy-happy-joy-joy-2.tmTheme.json"),
+    name: "Happy happy joy joy",
+    label: "Happy happy joy joy",
+    value: "light:happy-happy-joy-joy",
+    loader: () => import("./themes/happy-happy-joy-joy.tmTheme.json"),
     gutterSettings: {
       background: "#E5E5E5",
       divider: "#E5E5E5",
@@ -607,8 +607,8 @@ export const themes: ThemeConfig[] = [
   {
     name: "Happy happy joy joy 2",
     label: "Happy happy joy joy 2",
-    value: "dark:Happy happy joy joy 2",
-    loader: () => import("./themes/happy-happy-joy-joy.tmTheme.json"),
+    value: "light:happy-happy-joy-joy-2",
+    loader: () => import("./themes/happy-happy-joy-joy-2.tmTheme.json"),
     gutterSettings: {
       background: "#E5E5E5",
       divider: "#E5E5E5",
@@ -617,7 +617,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Happydeluxe",
     label: "Happydeluxe",
-    value: "dark:Happydeluxe",
+    value: "dark:happydeluxe",
     loader: () => import("./themes/happydeluxe.tmTheme.json"),
     gutterSettings: {
       background: "#0E131E",
@@ -627,7 +627,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Heroku",
     label: "Heroku",
-    value: "dark:Heroku",
+    value: "dark:heroku",
     loader: () => import("./themes/heroku.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -637,7 +637,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "HerokuCodeSamples",
     label: "HerokuCodeSamples",
-    value: "dark:HerokuCodeSamples",
+    value: "dark:herokucodesamples",
     loader: () => import("./themes/herokucodesamples.tmTheme.json"),
     gutterSettings: {
       background: "#39434B",
@@ -647,7 +647,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "IDLE",
     label: "IDLE",
-    value: "dark:IDLE",
+    value: "light:idle",
     loader: () => import("./themes/idle.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -655,9 +655,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "idleFingers",
-    label: "idleFingers",
-    value: "dark:idleFingers",
+    name: "IdleFingers",
+    label: "IdleFingers",
+    value: "dark:idlefingers",
     loader: () => import("./themes/idlefingers.tmTheme.json"),
     gutterSettings: {
       background: "#323232",
@@ -665,9 +665,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "iLife 05",
-    label: "iLife 05",
-    value: "dark:iLife 05",
+    name: "ILife 05",
+    label: "ILife 05",
+    value: "light:ilife-05",
     loader: () => import("./themes/ilife-05.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFFFC",
@@ -675,9 +675,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "iLife 06",
-    label: "iLife 06",
-    value: "dark:iLife 06",
+    name: "ILife 06",
+    label: "ILife 06",
+    value: "light:ilife-06",
     loader: () => import("./themes/ilife-06.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFFFC",
@@ -685,8 +685,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "imathis",
-    label: "imathis",
+    name: "Imathis",
+    label: "Imathis",
     value: "dark:imathis",
     loader: () => import("./themes/imathis.tmTheme.json"),
     gutterSettings: {
@@ -695,8 +695,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "inkdeep",
-    label: "inkdeep",
+    name: "Inkdeep",
+    label: "Inkdeep",
     value: "dark:inkdeep",
     loader: () => import("./themes/inkdeep.tmTheme.json"),
     gutterSettings: {
@@ -705,9 +705,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "iPlastic",
-    label: "iPlastic",
-    value: "dark:iPlastic",
+    name: "IPlastic",
+    label: "IPlastic",
+    value: "light:iplastic",
     loader: () => import("./themes/iplastic.tmTheme.json"),
     gutterSettings: {
       background: "#EEEEEEEB",
@@ -715,20 +715,20 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "IR_Black",
-    label: "IR_Black",
-    value: "dark:IR_Black",
-    loader: () => import("./themes/ir_black.tmTheme.json"),
+    name: "IR Black",
+    label: "IR Black",
+    value: "dark:ir-black",
+    loader: () => import("./themes/ir-black.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
       divider: "#000000",
     },
   },
   {
-    name: "IR_White",
-    label: "IR_White",
-    value: "dark:IR_White",
-    loader: () => import("./themes/ir_white.tmTheme.json"),
+    name: "IR White",
+    label: "IR White",
+    value: "light:ir-white",
+    loader: () => import("./themes/ir-white.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
       divider: "#FFFFFF",
@@ -737,7 +737,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Juicy",
     label: "Juicy",
-    value: "dark:Juicy",
+    value: "light:juicy",
     loader: () => import("./themes/juicy.tmTheme.json"),
     gutterSettings: {
       background: "#F1F1F1",
@@ -745,9 +745,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "krTheme",
-    label: "krTheme",
-    value: "dark:krTheme",
+    name: "KrTheme",
+    label: "KrTheme",
+    value: "dark:krtheme",
     loader: () => import("./themes/krtheme.tmTheme.json"),
     gutterSettings: {
       background: "#0B0A09",
@@ -755,9 +755,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "LAZY.inkdeep",
-    label: "LAZY.inkdeep",
-    value: "dark:LAZY.inkdeep",
+    name: "Lazy.Inkdeep",
+    label: "Lazy.Inkdeep",
+    value: "light:lazy.inkdeep",
     loader: () => import("./themes/lazy.inkdeep.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -765,9 +765,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "LAZY",
-    label: "LAZY",
-    value: "dark:LAZY",
+    name: "Lazy",
+    label: "Lazy",
+    value: "light:lazy",
     loader: () => import("./themes/lazy.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -777,7 +777,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Lowlight",
     label: "Lowlight",
-    value: "dark:Lowlight",
+    value: "dark:lowlight",
     loader: () => import("./themes/lowlight.tmTheme.json"),
     gutterSettings: {
       background: "#1E1E1E",
@@ -787,7 +787,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Mac Classic",
     label: "Mac Classic",
-    value: "dark:Mac Classic",
+    value: "light:mac-classic",
     loader: () => import("./themes/mac-classic.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -797,7 +797,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Made of Code",
     label: "Made of Code",
-    value: "dark:Made of Code",
+    value: "light:made-of-code",
     loader: () => import("./themes/made-of-code.tmTheme.json"),
     gutterSettings: {
       background: "#090A1BF2",
@@ -805,19 +805,19 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "MagicWB (Amiga)",
-    label: "MagicWB (Amiga)",
-    value: "dark:MagicWB (Amiga)",
-    loader: () => import("./themes/magicwb-(amiga).tmTheme.json"),
+    name: "MagicWB Amiga",
+    label: "MagicWB Amiga",
+    value: "light:magicwb-amiga",
+    loader: () => import("./themes/magicwb-amiga.tmTheme.json"),
     gutterSettings: {
       background: "#969696",
       divider: "#969696",
     },
   },
   {
-    name: "Material-Theme-Lighter",
-    label: "Material-Theme-Lighter",
-    value: "dark:Material-Theme-Lighter",
+    name: "Material Theme Lighter",
+    label: "Material Theme Lighter",
+    value: "light:material-theme-lighter",
     loader: () => import("./themes/material-theme-lighter.tmTheme.json"),
     gutterSettings: {
       background: "#FAFAFA",
@@ -825,9 +825,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Material-Theme-Palenight",
-    label: "Material-Theme-Palenight",
-    value: "dark:Material-Theme-Palenight",
+    name: "Material Theme Palenight",
+    label: "Material Theme Palenight",
+    value: "dark:material-theme-palenight",
     loader: () => import("./themes/material-theme-palenight.tmTheme.json"),
     gutterSettings: {
       background: "#3B8070FF",
@@ -835,9 +835,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Material-Theme",
-    label: "Material-Theme",
-    value: "dark:Material-Theme",
+    name: "Material Theme",
+    label: "Material Theme",
+    value: "dark:material-theme",
     loader: () => import("./themes/material-theme.tmTheme.json"),
     gutterSettings: {
       background: "#263238",
@@ -847,7 +847,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Menage A Trois",
     label: "Menage A Trois",
-    value: "dark:Menage A Trois",
+    value: "light:menage-a-trois",
     loader: () => import("./themes/menage-a-trois.tmTheme.json"),
     gutterSettings: {
       background: "#0F1014",
@@ -855,9 +855,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Merbivore-Soft",
-    label: "Merbivore-Soft",
-    value: "dark:Merbivore-Soft",
+    name: "Merbivore Soft",
+    label: "Merbivore Soft",
+    value: "dark:merbivore-soft",
     loader: () => import("./themes/merbivore-soft.tmTheme.json"),
     gutterSettings: {
       background: "#1C1C1C",
@@ -867,7 +867,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Merbivore",
     label: "Merbivore",
-    value: "dark:Merbivore",
+    value: "dark:merbivore",
     loader: () => import("./themes/merbivore.tmTheme.json"),
     gutterSettings: {
       background: "#161616",
@@ -877,7 +877,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Midnight",
     label: "Midnight",
-    value: "dark:Midnight",
+    value: "dark:midnight",
     loader: () => import("./themes/midnight.tmTheme.json"),
     gutterSettings: {
       background: "#0A001FE3",
@@ -885,9 +885,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "minimal Theme",
-    label: "minimal Theme",
-    value: "dark:minimal Theme",
+    name: "Minimal Theme",
+    label: "Minimal Theme",
+    value: "light:minimal-theme",
     loader: () => import("./themes/minimal-theme.tmTheme.json"),
     gutterSettings: {
       background: "#302D26",
@@ -895,8 +895,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "monoindustrial",
-    label: "monoindustrial",
+    name: "Monoindustrial",
+    label: "Monoindustrial",
     value: "dark:monoindustrial",
     loader: () => import("./themes/monoindustrial.tmTheme.json"),
     gutterSettings: {
@@ -907,7 +907,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Monokai Dark",
     label: "Monokai Dark",
-    value: "dark:Monokai Dark",
+    value: "dark:monokai-dark",
     loader: () => import("./themes/monokai-dark.tmTheme.json"),
     gutterSettings: {
       background: "#0D0D0D",
@@ -915,20 +915,20 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Monokai for Textmaters CUSTOM (philtrMod)",
-    label: "Monokai for Textmaters CUSTOM (philtrMod)",
-    value: "dark:Monokai for Textmaters CUSTOM (philtrMod)",
+    name: "Monokai for Textmaters Custom 2",
+    label: "Monokai for Textmaters Custom 2",
+    value: "light:monokai-for-textmaters-custom-2",
     loader: () =>
-      import("./themes/monokai-for-textmaters-custom-(philtr).tmTheme.json"),
+      import("./themes/monokai-for-textmaters-custom-2.tmTheme.json"),
     gutterSettings: {
       background: "#272822",
       divider: "#272822",
     },
   },
   {
-    name: "Monokai for Textmaters CUSTOM",
-    label: "Monokai for Textmaters CUSTOM",
-    value: "dark:Monokai for Textmaters CUSTOM",
+    name: "Monokai for Textmaters Custom",
+    label: "Monokai for Textmaters Custom",
+    value: "dark:monokai-for-textmaters-custom",
     loader: () => import("./themes/monokai-for-textmaters-custom.tmTheme.json"),
     gutterSettings: {
       background: "#272822",
@@ -936,20 +936,20 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Monokai Mod",
-    label: "Monokai Mod",
-    value: "dark:Monokai Mod",
-    loader: () => import("./themes/monokai-mod-(seangaffney).tmTheme.json"),
+    name: "Monokai Mod 3",
+    label: "Monokai Mod 3",
+    value: "dark:monokai-mod-3",
+    loader: () => import("./themes/monokai-mod-3.tmTheme.json"),
     gutterSettings: {
       background: "#1D1E19F2",
       divider: "#1D1E19F2",
     },
   },
   {
-    name: "Monokai for Textmaters CUSTOM",
-    label: "Monokai for Textmaters CUSTOM",
-    value: "dark:Monokai for Textmaters CUSTOM",
-    loader: () => import("./themes/monokai-mod-1.tmTheme.json"),
+    name: "Monokai Mod 2",
+    label: "Monokai Mod 2",
+    value: "dark:monokai-mod-2",
+    loader: () => import("./themes/monokai-mod-2.tmTheme.json"),
     gutterSettings: {
       background: "#272822",
       divider: "#272822",
@@ -958,7 +958,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Monokai Mod",
     label: "Monokai Mod",
-    value: "dark:Monokai Mod",
+    value: "dark:monokai-mod",
     loader: () => import("./themes/monokai-mod.tmTheme.json"),
     gutterSettings: {
       background: "#1D1E19F2",
@@ -966,19 +966,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Monokai",
-    label: "Monokai",
-    value: "dark:Monokai",
-    loader: () => import("./themes/monokai.tmTheme.json"),
-    gutterSettings: {
-      background: "#272822",
-      divider: "#272822",
-    },
-  },
-  {
     name: "MultiMarkdown",
     label: "MultiMarkdown",
-    value: "dark:MultiMarkdown",
+    value: "light:multimarkdown",
     loader: () => import("./themes/multimarkdown.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -988,7 +978,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Notebook",
     label: "Notebook",
-    value: "dark:Notebook",
+    value: "dark:notebook",
     loader: () => import("./themes/notebook.tmTheme.json"),
     gutterSettings: {
       background: "#BEB69D",
@@ -998,8 +988,8 @@ export const themes: ThemeConfig[] = [
   {
     name: "Notepad 2",
     label: "Notepad 2",
-    value: "dark:Notepad 2",
-    loader: () => import("./themes/notepad2.tmTheme.json"),
+    value: "light:notepad-2",
+    loader: () => import("./themes/notepad-2.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
       divider: "#FFFFFF",
@@ -1008,7 +998,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Oceanic",
     label: "Oceanic",
-    value: "dark:Oceanic",
+    value: "dark:oceanic",
     loader: () => import("./themes/oceanic.tmTheme.json"),
     gutterSettings: {
       background: "#1B2630",
@@ -1018,7 +1008,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Offy",
     label: "Offy",
-    value: "dark:Offy",
+    value: "dark:offy",
     loader: () => import("./themes/offy.tmTheme.json"),
     gutterSettings: {
       background: "#00002ECC",
@@ -1028,7 +1018,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "One-Dark",
     label: "One-Dark",
-    value: "dark:One-Dark",
+    value: "dark:one-dark",
     loader: () => import("./themes/one-dark.tmTheme.json"),
     gutterSettings: {
       background: "#282c34",
@@ -1038,7 +1028,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Pastels on Dark",
     label: "Pastels on Dark",
-    value: "dark:Pastels on Dark",
+    value: "light:pastels-on-dark",
     loader: () => import("./themes/pastels-on-dark.tmTheme.json"),
     gutterSettings: {
       background: "#211E1E",
@@ -1048,7 +1038,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Pastie",
     label: "Pastie",
-    value: "dark:Pastie",
+    value: "light:pastie",
     loader: () => import("./themes/pastie.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1056,9 +1046,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Pengwynn menlo",
-    label: "Pengwynn menlo",
-    value: "dark:Pengwynn menlo",
+    name: "Pengwynn Menlo",
+    label: "Pengwynn Menlo",
+    value: "dark:pengwynn-menlo",
     loader: () => import("./themes/pengwynn-menlo.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1068,7 +1058,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Pengwynn",
     label: "Pengwynn",
-    value: "dark:Pengwynn",
+    value: "dark:pengwynn",
     loader: () => import("./themes/pengwynn.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1078,7 +1068,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Plum Dumb",
     label: "Plum Dumb",
-    value: "dark:Plum Dumb",
+    value: "light:plum-dumb",
     loader: () => import("./themes/plum-dumb.tmTheme.json"),
     gutterSettings: {
       background: "#00000BF7",
@@ -1088,7 +1078,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Putty",
     label: "Putty",
-    value: "dark:Putty",
+    value: "dark:putty",
     loader: () => import("./themes/putty.tmTheme.json"),
     gutterSettings: {
       background: "#242322",
@@ -1098,7 +1088,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Rails Envy",
     label: "Rails Envy",
-    value: "dark:Rails Envy",
+    value: "light:rails-envy",
     loader: () => import("./themes/rails-envy.tmTheme.json"),
     gutterSettings: {
       background: "#121210",
@@ -1106,10 +1096,10 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Railscasts - boost",
-    label: "Railscasts - boost",
-    value: "dark:Railscasts - boost",
-    loader: () => import("./themes/railscasts---boost.tmTheme.json"),
+    name: "Railscasts Boost",
+    label: "Railscasts Boost",
+    value: "dark:railscasts-boost",
+    loader: () => import("./themes/railscasts-boost.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
       divider: "#000000",
@@ -1118,7 +1108,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Railscasts",
     label: "Railscasts",
-    value: "dark:Railscasts",
+    value: "dark:railscasts",
     loader: () => import("./themes/railscasts.tmTheme.json"),
     gutterSettings: {
       background: "#2B2B2B",
@@ -1128,7 +1118,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "RDark",
     label: "RDark",
-    value: "dark:RDark",
+    value: "dark:rdark",
     loader: () => import("./themes/rdark.tmTheme.json"),
     gutterSettings: {
       background: "#1B2426",
@@ -1138,7 +1128,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Resesif",
     label: "Resesif",
-    value: "dark:Resesif",
+    value: "dark:resesif",
     loader: () => import("./themes/resesif.tmTheme.json"),
     gutterSettings: {
       background: "#2B2B2B",
@@ -1148,7 +1138,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Ruby Blue",
     label: "Ruby Blue",
-    value: "dark:Ruby Blue",
+    value: "light:ruby-blue",
     loader: () => import("./themes/ruby-blue.tmTheme.json"),
     gutterSettings: {
       background: "#121E31",
@@ -1158,7 +1148,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "RubyRobot",
     label: "RubyRobot",
-    value: "dark:RubyRobot",
+    value: "dark:rubyrobot",
     loader: () => import("./themes/rubyrobot.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1168,7 +1158,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Ryan Light",
     label: "Ryan Light",
-    value: "dark:Ryan Light",
+    value: "light:ryan-light",
     loader: () => import("./themes/ryan-light.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1178,7 +1168,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Sidewalk Chalk",
     label: "Sidewalk Chalk",
-    value: "dark:Sidewalk Chalk",
+    value: "light:sidewalk-chalk",
     loader: () => import("./themes/sidewalkchalk.tmTheme.json"),
     gutterSettings: {
       background: "#2B2D2E",
@@ -1188,7 +1178,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Sidewalk Chalk Green Mod",
     label: "Sidewalk Chalk Green Mod",
-    value: "dark:Sidewalk Chalk Green Mod",
+    value: "light:sidewalk-chalk-green-mod",
     loader: () => import("./themes/sidewalkchalkgreenmod.tmTheme.json"),
     gutterSettings: {
       background: "#2B2D2E",
@@ -1198,7 +1188,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Smoothy",
     label: "Smoothy",
-    value: "dark:Smoothy",
+    value: "light:smoothy",
     loader: () => import("./themes/smoothy.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1206,30 +1196,30 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Solarized (dark)",
-    label: "Solarized (dark)",
-    value: "dark:Solarized (dark)",
-    loader: () => import("./themes/solarized-(dark).tmTheme.json"),
+    name: "Solarized Dark",
+    label: "Solarized Dark",
+    value: "light:solarized-dark",
+    loader: () => import("./themes/solarized-dark.tmTheme.json"),
     gutterSettings: {
       background: "#042029",
       divider: "#042029",
     },
   },
   {
-    name: "Solarized (light)",
-    label: "Solarized (light)",
-    value: "dark:Solarized (light)",
-    loader: () => import("./themes/solarized-(light).tmTheme.json"),
+    name: "Solarized Light",
+    label: "Solarized Light",
+    value: "light:solarized-light",
+    loader: () => import("./themes/solarized-light.tmTheme.json"),
     gutterSettings: {
       background: "#FDF6E3",
       divider: "#FDF6E3",
     },
   },
   {
-    name: "Solarized-Light",
-    label: "Solarized-Light",
-    value: "dark:Solarized-Light",
-    loader: () => import("./themes/solarized-light.tmTheme.json"),
+    name: "Solarized Sepia",
+    label: "Solarized Sepia",
+    value: "dark:solarized-sepia",
+    loader: () => import("./themes/solarized-sepia.tmTheme.json"),
     gutterSettings: {
       background: "#FDF6E3",
       divider: "#FDF6E3",
@@ -1238,7 +1228,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "SpaceCadet",
     label: "SpaceCadet",
-    value: "dark:SpaceCadet",
+    value: "dark:spacecadet",
     loader: () => import("./themes/spacecadet.tmTheme.json"),
     gutterSettings: {
       background: "#0D0D0D",
@@ -1248,7 +1238,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Spectacular",
     label: "Spectacular",
-    value: "dark:Spectacular",
+    value: "dark:spectacular",
     loader: () => import("./themes/spectacular.tmTheme.json"),
     gutterSettings: {
       background: "#0B0A0A",
@@ -1258,7 +1248,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Starlight",
     label: "Starlight",
-    value: "dark:Starlight",
+    value: "dark:starlight",
     loader: () => import("./themes/starlight.tmTheme.json"),
     gutterSettings: {
       background: "#223859F2",
@@ -1268,8 +1258,8 @@ export const themes: ThemeConfig[] = [
   {
     name: "Succulent",
     label: "Succulent",
-    value: "dark:Succulent",
-    loader: () => import("./themes/succulent_1.tmTheme.json"),
+    value: "dark:succulent",
+    loader: () => import("./themes/succulent.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
       divider: "#000000",
@@ -1278,7 +1268,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Summer Camp Daybreak",
     label: "Summer Camp Daybreak",
-    value: "dark:Summer Camp Daybreak",
+    value: "light:summer-camp-daybreak",
     loader: () => import("./themes/summer-camp-daybreak.tmTheme.json"),
     gutterSettings: {
       background: "#110F0A",
@@ -1288,7 +1278,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Summer Camp Mod",
     label: "Summer Camp Mod",
-    value: "dark:Summer Camp Mod",
+    value: "light:summer-camp-mod",
     loader: () => import("./themes/summer-camp-mod.tmTheme.json"),
     gutterSettings: {
       background: "#110F0A",
@@ -1298,7 +1288,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Summer Sun",
     label: "Summer Sun",
-    value: "dark:Summer Sun",
+    value: "light:summer-sun",
     loader: () => import("./themes/summer-sun.tmTheme.json"),
     gutterSettings: {
       background: "#110F0A",
@@ -1308,7 +1298,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Sunburst",
     label: "Sunburst",
-    value: "dark:Sunburst",
+    value: "dark:sunburst",
     loader: () => import("./themes/sunburst.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1318,7 +1308,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Sweyla Theme (650478)",
     label: "Sweyla Theme (650478)",
-    value: "dark:Sweyla Theme (650478)",
+    value: "light:sweyla-theme-(650478)",
     loader: () => import("./themes/sweyla650478.tmTheme.json"),
     gutterSettings: {
       background: "#020306",
@@ -1328,7 +1318,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Sweyla Theme (674314)",
     label: "Sweyla Theme (674314)",
-    value: "dark:Sweyla Theme (674314)",
+    value: "light:sweyla-theme-(674314)",
     loader: () => import("./themes/sweyla674314.tmTheme.json"),
     gutterSettings: {
       background: "#0E0C00",
@@ -1338,7 +1328,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Swyphs II",
     label: "Swyphs II",
-    value: "dark:Swyphs II",
+    value: "light:swyphs-ii",
     loader: () => import("./themes/swyphs-ii.tmTheme.json"),
     gutterSettings: {
       background: "#000000FA",
@@ -1348,7 +1338,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tango in Twilight",
     label: "Tango in Twilight",
-    value: "dark:Tango in Twilight",
+    value: "light:tango-in-twilight",
     loader: () => import("./themes/tango-in-twilight.tmTheme.json"),
     gutterSettings: {
       background: "#000000F2",
@@ -1358,7 +1348,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tango",
     label: "Tango",
-    value: "dark:Tango",
+    value: "light:tango",
     loader: () => import("./themes/tango.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1368,7 +1358,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tek",
     label: "Tek",
-    value: "dark:Tek",
+    value: "dark:tek",
     loader: () => import("./themes/tek.tmTheme.json"),
     gutterSettings: {
       background: "#2F4F4F",
@@ -1378,7 +1368,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Text Ex Machina (Lighter comments)",
     label: "Text Ex Machina (Lighter comments)",
-    value: "dark:Text Ex Machina (Lighter comments)",
+    value: "light:text-ex-machina-(lighter-comments)",
     loader: () =>
       import("./themes/text-ex-machina-(lighter-comments).tmTheme.json"),
     gutterSettings: {
@@ -1389,7 +1379,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Text Ex Machina",
     label: "Text Ex Machina",
-    value: "dark:Text Ex Machina",
+    value: "light:text-ex-machina",
     loader: () => import("./themes/text-ex-machina.tmTheme.json"),
     gutterSettings: {
       background: "#151515",
@@ -1397,9 +1387,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Tokyo-Night",
-    label: "Tokyo-Night",
-    value: "dark:Tokyo-Night",
+    name: "Tokyo Night",
+    label: "Tokyo Night",
+    value: "dark:tokyo-night",
     loader: () => import("./themes/tokyo-night.tmTheme.json"),
     gutterSettings: {
       background: "#1d1f29",
@@ -1409,7 +1399,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tomorrow Night - Blue",
     label: "Tomorrow Night - Blue",
-    value: "dark:Tomorrow Night - Blue",
+    value: "light:tomorrow-night---blue",
     loader: () => import("./themes/tomorrow-night-blue.tmTheme.json"),
     gutterSettings: {
       background: "#002451",
@@ -1419,7 +1409,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tomorrow Night - Bright",
     label: "Tomorrow Night - Bright",
-    value: "dark:Tomorrow Night - Bright",
+    value: "light:tomorrow-night---bright",
     loader: () => import("./themes/tomorrow-night-bright.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1429,7 +1419,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tomorrow Night - Eighties",
     label: "Tomorrow Night - Eighties",
-    value: "dark:Tomorrow Night - Eighties",
+    value: "light:tomorrow-night---eighties",
     loader: () => import("./themes/tomorrow-night-eighties.tmTheme.json"),
     gutterSettings: {
       background: "#2D2D2D",
@@ -1439,7 +1429,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tomorrow Night",
     label: "Tomorrow Night",
-    value: "dark:Tomorrow Night",
+    value: "light:tomorrow-night",
     loader: () => import("./themes/tomorrow-night.tmTheme.json"),
     gutterSettings: {
       background: "#1D1F21",
@@ -1447,9 +1437,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Tomorrow Night",
-    label: "Tomorrow Night",
-    value: "dark:Tomorrow Night",
+    name: "Tomorrow Night 2",
+    label: "Tomorrow Night 2",
+    value: "light:tomorrow-night-2",
     loader: () => import("./themes/tomorrow-night2.tmTheme.json"),
     gutterSettings: {
       background: "#1D1F21",
@@ -1459,7 +1449,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tomorrow",
     label: "Tomorrow",
-    value: "dark:Tomorrow",
+    value: "light:tomorrow",
     loader: () => import("./themes/tomorrow.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1469,7 +1459,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Tubster",
     label: "Tubster",
-    value: "dark:Tubster",
+    value: "dark:tubster",
     loader: () => import("./themes/tubster.tmTheme.json"),
     gutterSettings: {
       background: "#232323",
@@ -1479,7 +1469,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Twilight Bright",
     label: "Twilight Bright",
-    value: "dark:Twilight Bright",
+    value: "dark:twilight-bright",
     loader: () => import("./themes/twilight-bright.tmTheme.json"),
     gutterSettings: {
       background: "#FFFFFF",
@@ -1487,9 +1477,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Twilight REMIX",
-    label: "Twilight REMIX",
-    value: "dark:Twilight REMIX",
+    name: "Twilight Remix",
+    label: "Twilight Remix",
+    value: "dark:twilight-remix",
     loader: () => import("./themes/twilight-remix.tmTheme.json"),
     gutterSettings: {
       background: "#030303",
@@ -1499,7 +1489,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Twilight",
     label: "Twilight",
-    value: "dark:Twilight",
+    value: "dark:twilight",
     loader: () => import("./themes/twilight.tmTheme.json"),
     gutterSettings: {
       background: "#141414",
@@ -1509,7 +1499,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Upstream Sunburst",
     label: "Upstream Sunburst",
-    value: "dark:Upstream Sunburst",
+    value: "dark:upstream-sunburst",
     loader: () => import("./themes/upstream-sunburst.tmTheme.json"),
     gutterSettings: {
       background: "#000000F7",
@@ -1519,7 +1509,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Upstream Vibrant",
     label: "Upstream Vibrant",
-    value: "dark:Upstream Vibrant",
+    value: "light:upstream-vibrant",
     loader: () => import("./themes/upstream-vibrant.tmTheme.json"),
     gutterSettings: {
       background: "#000000D9",
@@ -1529,7 +1519,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Venom",
     label: "Venom",
-    value: "dark:Venom",
+    value: "dark:venom",
     loader: () => import("./themes/venom.tmTheme.json"),
     gutterSettings: {
       background: "#0D0D0D",
@@ -1539,7 +1529,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Vibrant Fin",
     label: "Vibrant Fin",
-    value: "dark:Vibrant Fin",
+    value: "light:vibrant-fin",
     loader: () => import("./themes/vibrant-fin.tmTheme.json"),
     gutterSettings: {
       background: "#000000F2",
@@ -1549,7 +1539,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Vibrant Ink choppedNscrewed",
     label: "Vibrant Ink choppedNscrewed",
-    value: "dark:Vibrant Ink choppedNscrewed",
+    value: "light:vibrant-ink-choppednscrewed",
     loader: () => import("./themes/vibrant-ink-choppednscrewed.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1557,9 +1547,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Vibrant Ink remix",
-    label: "Vibrant Ink remix",
-    value: "dark:Vibrant Ink remix",
+    name: "Vibrant Ink Remix",
+    label: "Vibrant Ink Remix",
+    value: "light:vibrant-ink-remix",
     loader: () => import("./themes/vibrant-ink-remix.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1569,7 +1559,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Vibrant Ink",
     label: "Vibrant Ink",
-    value: "dark:Vibrant Ink",
+    value: "light:vibrant-ink",
     loader: () => import("./themes/vibrant-ink.tmTheme.json"),
     gutterSettings: {
       background: "#000000",
@@ -1579,7 +1569,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Vibrant Tango",
     label: "Vibrant Tango",
-    value: "dark:Vibrant Tango",
+    value: "light:vibrant-tango",
     loader: () => import("./themes/vibrant-tango.tmTheme.json"),
     gutterSettings: {
       background: "#191D1E",
@@ -1589,7 +1579,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Vintage Aurora",
     label: "Vintage Aurora",
-    value: "dark:Vintage Aurora",
+    value: "light:vintage-aurora",
     loader: () => import("./themes/vintage-aurora.tmTheme.json"),
     gutterSettings: {
       background: "#2E0026DE",
@@ -1597,9 +1587,9 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "Why’s Poignant",
-    label: "Why’s Poignant",
-    value: "dark:Why’s Poignant",
+    name: "Whys Poignant",
+    label: "Whys Poignant",
+    value: "light:whys-poignant",
     loader: () => import("./themes/whys-poignant.tmTheme.json"),
     gutterSettings: {
       background: "#FFFEF9",
@@ -1609,7 +1599,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Zachstronaut Theme 4.1",
     label: "Zachstronaut Theme 4.1",
-    value: "dark:Zachstronaut Theme 4.1",
+    value: "light:zachstronaut-theme-4.1",
     loader: () => import("./themes/zachstronaut-theme-4.1.tmTheme.json"),
     gutterSettings: {
       background: "#181310FA",
@@ -1617,8 +1607,8 @@ export const themes: ThemeConfig[] = [
     },
   },
   {
-    name: "zenburn",
-    label: "zenburn",
+    name: "Zenburn",
+    label: "Zenburn",
     value: "dark:zenburn",
     loader: () => import("./themes/zenburn.tmTheme.json"),
     gutterSettings: {
@@ -1629,7 +1619,7 @@ export const themes: ThemeConfig[] = [
   {
     name: "Zenburnesque",
     label: "Zenburnesque",
-    value: "dark:Zenburnesque",
+    value: "dark:zenburnesque",
     loader: () => import("./themes/zenburnesque.tmTheme.json"),
     gutterSettings: {
       background: "#404040",
@@ -1656,3 +1646,4 @@ export const setTheme = async (theme: Theme, editor: CodeMirror.Editor) => {
 
 export const getThemeName = (theme: Theme) =>
   themes.find((i) => i.value === theme)?.name;
+

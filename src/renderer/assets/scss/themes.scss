@@ -2,7 +2,7 @@
 
 // LIGHT
 
-[data-theme='light:solarized'] {
+[data-theme='light:solarized-light'] {
   --color-primary: hsl(44, 84%, 54%);
 
   --color-bg: hsl(44, 87%, 94%);
@@ -40,15 +40,79 @@
   --color-tag-delete: var(--color-contrast-lower-alt4);
 }
 
-[data-theme='light:material'] {
+[data-theme='light:material-theme-lighter'] {
   --color-bg: hsl(0, 0%, 98%);
 }
 
+
 // DARK
 
-[data-theme='dark:one'] {
+$dark-common-themes: (
+  'dark:barf', 
+  'dark:bespin', 
+  'dark:blackboard-black',
+  'dark:blackboard-mod',
+  'dark:blackboard-new',
+  'dark:blackboard',
+  'dark:blacklight',
+  'dark:bongzilla',
+  'dark:choco',
+  'dark:claire',
+  'dark:cobalt',
+  'dark:creeper',
+  'dark:deluxe',
+  'dark:erebus',
+  'dark:fake',
+  'dark:forlatex',
+  'dark:glitterbomb',
+  'dark:glow',
+  'dark:happydeluxe',
+  'dark:heroku',
+  'dark:herokucodesamples',
+  'dark:idlefingers',
+  'dark:imathis',
+  'dark:inkdeep',
+  'dark:ir-black',
+  'dark:krtheme',
+  'dark:lowlight',
+  'dark:merbivore-soft',
+  'dark:midnight',
+  'dark:monoindustrial',
+  'dark:monokai-for-textmaters-custom',
+  'dark:monokai-mod',
+  'dark:monokai-mod-2',
+  'dark:monokai-mod-3',
+  'dark:notebook',
+  'dark:oceanic',
+  'dark:offy',
+  'dark:pengwynn-menlo',
+  'dark:pengwynn',
+  'dark:putty',
+  'dark:railscasts-boost',
+  'dark:railscasts',
+  'dark:rdark',
+  'dark:resesif',
+  'dark:rubyrobot',
+  'dark:solarized-sepia',
+  'dark:spacecadet',
+  'dark:spectacular',
+  'dark:starlight',
+  'dark:succulent',
+  'dark:sunburst',
+  'dark:tek',
+  'dark:tubster',
+  'dark:twilight-bright',
+  'dark:twilight-remix',
+  'dark:twilight',
+  'dark:upstream-sunburst',
+  'dark:venom',
+  'dark:zenburn',
+  'dark:zenburnesque'
+);
+
+@each $theme in $dark-common-themes {
+  [data-theme='#{$theme}'] {
   --color-primary: hsl(215, 69%, 45%);
-  
   --color-bg: hsl(220, 13%, 18%);
 
   --color-contrast-lower: hsl(220, 13%, 20%);
@@ -79,6 +143,7 @@
   --color-menu-selected: var(--color-contrast-lower-alt);
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
+  }
 }
 
 [data-theme='dark:dracula'] {
@@ -117,7 +182,7 @@
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
-[data-theme='dark:monokai'] {
+[data-theme='dark:monokai-dark'] {
   --color-primary: hsl(215, 69%, 45%);
 
   // при конвертации в hsl цвет отличается, поэтому оставляем в hex
@@ -188,7 +253,7 @@
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
-[data-theme='dark:material'] {
+[data-theme='dark:material-theme'] {
   --color-primary: hsl(215, 69%, 45%);
 
    // при конвертации в hsl цвет отличается, поэтому оставляем в hex
@@ -223,9 +288,7 @@
 
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
-
-
-[data-theme='dark:material-palenight'] {
+[data-theme='dark:material-theme-palenight'] {
   --color-primary: hsl(215, 69%, 45%);
 
    // при конвертации в hsl цвет отличается, поэтому оставляем в hex
@@ -262,6 +325,39 @@
   --color-tag-delete: var(--color-contrast-lower-alt3);
 }
 
+[data-theme='dark:one-dark'] {
+  --color-primary: hsl(215, 69%, 45%);
+  --color-bg: hsl(220, 13%, 18%);
+
+  --color-contrast-lower: hsl(220, 13%, 20%);
+  --color-contrast-lower-alt: hsl(220, 13%, 22%);
+  --color-contrast-lower-alt2: hsl(220, 13%, 25%);
+  --color-contrast-lower-alt3: hsl(220, 13%, 30%);
+  --color-contrast-lower-low: hsl(220, 13%, 40%);
+  --color-contrast-medium: hsl(220, 13%, 50%);
+  
+  --color-border: var(--color-contrast-lower-alt2);
+  
+  --color-snippet-list: var(--color-bg);
+  --color-snippet-selected: var(--color-contrast-lower-alt);
+  
+  --color-sidebar: var(--color-bg);
+  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-icon: var(--color-text);
+
+  --color-text: hsl(0, 0%, 70%);
+
+  --color-button: var(--color-contrast-lower-alt);
+  --color-button-hover: var(--color-contrast-lower-alt2);
+  --color-button-action: var(--color-contrast-low); 
+  --color-button-action-hover: var(--color-contrast-lower-alt2); 
+
+  --color-input: var(--color-bg);
+
+  --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
+}
 [data-theme='dark:tokyo-night'] {
   --color-primary: hsl(215, 69%, 45%);
 

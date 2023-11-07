@@ -1,6 +1,6 @@
 {
-  "comment": "From Why’s Poignant Guide to Ruby",
-  "name": "Why’s Poignant",
+  "comment": "From Whys Poignant Guide to Ruby",
+  "name": "Whys Poignant",
   "settings": [
     {
       "settings": {
@@ -13,7 +13,7 @@
       }
     },
     {
-      "name": "Why’s (Poignant) Guide to Ruby",
+      "name": "Whys (Poignant) Guide to Ruby",
       "scope": "markup.bold",
       "settings": {
         "fontStyle": "bold"

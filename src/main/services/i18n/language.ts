@@ -4,6 +4,7 @@ export const language = {
   el: 'Ελληνικά',
   en: 'English',
   es_ES: 'Español',
+  fa_IR: 'فارسی',
   fr_FR: 'French',
   ja_JP: '日本語',
   pt_BR: 'Português (Brasil)',

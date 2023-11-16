@@ -1,29 +1,29 @@
 {
   "description": {
-    "storage": "To use sync services like iCloud Drive, Google Drive or Dropbox, simply move storage to the corresponding synced folders",
+    "storage": "برای استفاده از سرویس‌های هم‌گام‌سازی مانند آی‌کلود درایو، گوگل‌درایو یا دراپ‌باکس، به‌سادگی فضای ذخیره‌سازی را به پوشه‌های هم‌گام‌سازی‌شده مربوطه منتقل کنید",
     "migrate": {
-      "1": "To migrate from massCode v1.0 select the folder containing the database files.",
-      "2": "To migrate from SnippetsLab select JSON file.",
+      "1": "برای مهاجرت از massCode v1.0 پوشه دارای پرونده‌های پایگاه داده را انتخاب کنید.",
+      "2": "برای مهاجرت از SnippetsLab پرونده JSON را انتخاب کنید.",
       "3": [
-        "Some Limitations. During migration from SnippetsLab:",
-        "All folders will be first level as JSON file (below v2.1) does not represent nested folders.",
-        "Snippets with unsupported languages will be set to default Plain Text."
+        "برخی محدودیت‌ها در هنگام مهاجرت از SnippetsLab:",
+        "همه پوشه‌ها سطح اول خواهند بود زیرا پرونده JSON (زیر نگارش ۲٫۱) پوشه‌های تودرتو را نشان نمی‌دهد.",
+        "اسنیپت‌هایی با زبان‌های پشتیبانی‌نشده رو متن ساده پیش‌فرض تنظیم می‌شوند."
       ]
     },
-    "htmlCssPreview": "Add fragments with HTML & CSS languages to view result.",
+    "htmlCssPreview": "برای دیدن نتیجه، فرگمنت‌هایی را با زبان‌های HTML و CSS اضافه کنید.",
     "codeBlockRenderer": [
-      "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
-      "languages"
+      "هنگام استفاده از Codemirror، زبانی که برای بلوک کد تنظیم می‌شود باید با یکی از مقادیر زبان‌ها مطابقت داشته باشد:",
+      "زبان‌های پشتیبانی‌شده"
     ]
   },
   "success": {
-    "migrate": "DB successfully migrated."
+    "migrate": "پایگاه داده با موفقیت منتقل شد."
   },
   "error": {
-    "folderContainDb": "Folder already contain \"db.json\".",
-    "folderNotContainDb": "Folder not contain \"db.json\"."
+    "folderContainDb": "پوشه از قبل دارای \"db.json\" است.",
+    "folderNotContainDb": "پوشه دارای \"db.json\" نیست."
   },
-  "unsponsored": "Unsponsored",
-  "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}} donate {{-tagEnd}}. It will inspire me to continue development on the project.",
-  "snippetsShowcase": "Snippets Showcase"
+  "unsponsored": "بدون حمایت",
+  "supportMessage": "سلام، اینجا آنتون هستم 👋<br><br>\nاز استفاده از massCode متشکرم. اگر این برنامه را مفید می‌یابید، لطفاً {{-tagStart}} کمک مالی {{-tagEnd}} کنید. این باعث می‌شود تا من برای ادامه توسعه پروژه، الهام بگیرم.",
+  "snippetsShowcase": "ویترین اسنیپت‌ها"
 }

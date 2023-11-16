@@ -1,49 +1,49 @@
 {
-  "title": "Preferences",
+  "title": "تنظیمات",
   "storage": {
-    "label": "Storage",
-    "migrate": "Migrate",
-    "count": "Count"
+    "label": "فضای ذخیره‌سازی",
+    "migrate": "مهاجرت",
+    "count": "تعداد"
   },
   "editor": {
-    "label": "Editor",
-    "fontSize": "Font Size",
-    "fontFamily": "Font Family",
+    "label": "ویرایشگر",
+    "fontSize": "اندازه فونت",
+    "fontFamily": "خانواده فونت",
     "wrap": {
-      "label": "Wrap",
-      "wordWrap": "Word Wrap",
-      "off": "Off"
+      "label": "بسته‌بندی (Wrap)",
+      "wordWrap": "بسته‌بندی واژگان",
+      "off": "خاموش"
     },
-    "tabSize": "Tab Size",
-    "showInvisibles": "Show Invisibles",
-    "highlightLine": "Highlight Line",
+    "tabSize": "اندازه زبانه",
+    "showInvisibles": "نمایش نامرئی‌ها",
+    "highlightLine": "برجسته‌کردن خط",
     "highlightGutter": "Highlight Gutter",
-    "matchBrackets": "Match Brackets",
+    "matchBrackets": "مطابقت براکت‌ها",
     "prettier": {
-      "label": "Prettier",
+      "label": "زیباتر",
       "trailingComma": {
-        "label": "Trailing Comma",
-        "none": "None",
-        "all": "All",
+        "label": "کاما دنباله‌دار",
+        "none": "هیچ",
+        "all": "همه",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Single Quote"
+      "semi": "نیمه",
+      "singleQuote": "نقل قول تک"
     }
   },
   "appearance": {
-    "label": "Appearance",
+    "label": "ظاهر",
     "theme": {
-      "label": "Theme",
-      "light": "Light",
-      "dark": "Dark"
+      "label": "پوسته",
+      "light": "روشن",
+      "dark": "تیره"
     }
   },
   "language": {
-    "label": "Language"
+    "label": "زبان"
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Code block Renderer"
+    "codeRenderer": "رندرکننده بلاک کد"
   }
 }

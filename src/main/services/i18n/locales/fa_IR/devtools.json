@@ -1,44 +1,44 @@
 {
   "form": {
-    "inputString": "Input String",
-    "outputString": "Output String",
-    "inputUrl": "Input URL",
-    "outputUrl": "Output URL",
-    "parsedUrl": "Parsed URL",
-    "splitQueryString": "Split Query String",
-    "key": "Key",
-    "value": "Value",
-    "component": "Component",
-    "result": "Result",
-    "secretKey": "Secret Key",
-    "algorithm": "Algorithm",
-    "version": "Version",
-    "amount": "Amount",
-    "type": "Type",
-    "length": "Length",
-    "options": "Options",
-    "numbers": "Numbers",
-    "symbols": "Symbols",
-    "lowercase": "Lowercase",
-    "uppercase": "Uppercase"
+    "inputString": "رشته ورودی",
+    "outputString": "رشته خروجی",
+    "inputUrl": "نشانی ورودی",
+    "outputUrl": "نشانی خروجی",
+    "parsedUrl": "نشانی تجزیه‌شده",
+    "splitQueryString": "تقسیم رشته پرس‌وجو",
+    "key": "کلید",
+    "value": "مقدار",
+    "component": "کامپوننت",
+    "result": "نتیجه",
+    "secretKey": "کلید پنهان",
+    "algorithm": "الگوریتم",
+    "version": "نگارش",
+    "amount": "تعداد",
+    "type": "نوع",
+    "length": "طول",
+    "options": "گزینه‌ها",
+    "numbers": "شماره‌ها",
+    "symbols": "نمادها",
+    "lowercase": "حروف کوچک",
+    "uppercase": "حروف بزرگ"
   },
   "textTools": {
-    "label": "Text Tools",
-    "caseConverter": "Case Converter",
-    "urlParser": "URL Parser",
-    "slugGenerator": "Slug Generator",
-    "sortLines": "Sort Lines"
+    "label": "ابزارهای متن",
+    "caseConverter": "مبدل حروف کوچک/بزرگ",
+    "urlParser": "تجزیه‌کننده نشانی",
+    "slugGenerator": "سازنده نامک",
+    "sortLines": "مرتب‌سازی خط‌ها"
   },
   "crypto": {
-    "label": "Cryptography / Security",
-    "hashGenerator": "Hash Generator",
-    "hmacGenerator": "HMAC Generator",
-    "passGenerator": "Password Generator",
-    "uuidGenerator": "UUID Generator"
+    "label": "کریپتوگرافی / امنیت",
+    "hashGenerator": "سازنده Hash",
+    "hmacGenerator": "سازنده HMAC",
+    "passGenerator": "سازنده گذرواژه",
+    "uuidGenerator": "سازنده UUID"
   },
   "encodeDecode": {
-    "label": "Encoders / Decoders",
-    "url": "URL Encoder / Decoder",
-    "base64": "Base64 Encoder / Decoder"
+    "label": "کدگذارها / کدگشاها",
+    "url": "کدگذاری / کدگشایی نشانی",
+    "base64": "کدگذاری / کدگشایی Base64"
   }
 }

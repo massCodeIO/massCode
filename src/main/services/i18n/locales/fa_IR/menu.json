@@ -1,91 +1,91 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "Preferences",
+    "preferences": "تنظیمات",
     "update": {
-      "label": "Check for Updates....",
-      "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
-      "button": ["Go to Download", "OK"],
-      "noUpdate": "There are currently no updates available."
+      "label": "بررسی برای به‌روزرسانی‌ها....",
+      "message": "نگارش {{newVersion}} اکنون برای دریافت در دسترس است.\nنگارش شما {{oldVersion}} است.",
+      "button": ["برو به دریافت", "باشه"],
+      "noUpdate": "درحال حاضر هیچ به‌روزرسانی در دسترس نیست."
     },
-    "quit": "Quit massCode",
-    "about": "About massCode",
-    "hide": "Hide massCode",
-    "hideOther": "Hide Others",
-    "showAll": "Show All"
+    "quit": "خروج از massCode",
+    "about": "درباره massCode",
+    "hide": "پنهان‌کردن massCode",
+    "hideOther": "پنهان‌کردن دیگران",
+    "showAll": "نمایش همه"
   },
   "help": {
-    "label": "Help",
-    "website": "Website",
-    "documentation": "Documentation",
-    "viewInGitHub": "View in GitHub",
-    "changeLog": "Change Log",
-    "reportIssue": "Report Issue",
-    "giveStar": "Give a Star",
+    "label": "کمک",
+    "website": "وب‌سایت",
+    "documentation": "مستندات",
+    "viewInGitHub": "مشاهده در گیت‌هاب",
+    "changeLog": "تغییرات",
+    "reportIssue": "گزارش مشکل",
+    "giveStar": "ستاره بدهید",
     "extension": {
-      "vscode": "VS Code Extension",
-      "raycast": "Raycast Extension",
-      "alfred": "Alfred Extension"
+      "vscode": "افزونه VS Code",
+      "raycast": "افزونه Raycast",
+      "alfred": "افزونه Alfred"
     },
     "donate": {
-      "openCollective": "Donate on Open Collective",
-      "payPal": "Donate via PayPal",
-      "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
+      "openCollective": "کمک مالی در Open Collective",
+      "payPal": "کمک مالی از طریق PayPal",
+      "gumroad": "کمک مالی از طریق Gumroad (ویزا، مسترکارت و غیره)"
     },
-    "twitter": "Twitter",
-    "devTools": "Toggle Developer Tools",
+    "twitter": "توییتر",
+    "devTools": "ابزارهای توسعه‌دهنده",
     "links": {
-      "snippets": "Snippet Collection"
+      "snippets": "مجموعه اسنیپت"
     }
   },
   "file": {
-    "label": "File",
-    "find": "Find"
+    "label": "پرونده",
+    "find": "یافتن"
   },
   "view": {
-    "label": "View",
+    "label": "نمایش",
     "sortBy": {
-      "label": "Sort Snippets By",
-      "dateModified": "Date Modified",
-      "dateCreated": "Date Created",
-      "name": "Name"
+      "label": "مرتب‌سازی اسنیپت‌ها براساس",
+      "dateModified": "تاریخ ویرایش",
+      "dateCreated": "تاریخ ساخت",
+      "name": "نام"
     },
-    "hideSubfolderSnippets": "Hide Subfolder Snippets",
-    "compactMode": "Compact Mode"
+    "hideSubfolderSnippets": "پنهان‌کردن اسنیپت‌های زیرپوشه",
+    "compactMode": "حالت فشرده"
   },
   "edit": {
-    "label": "Edit",
-    "undo": "Undo",
-    "redo": "Redo",
-    "cut": "Cut",
-    "copy": "Copy",
-    "paste": "Paste",
-    "delete": "Delete",
-    "selectAll": "Select All"
+    "label": "ویرایش",
+    "undo": "واگرد",
+    "redo": "انجام دوباره",
+    "cut": "برش",
+    "copy": "رونویسی",
+    "paste": "جای‌گذاری",
+    "delete": "حذف",
+    "selectAll": "انتخاب همه"
   },
   "editor": {
-    "label": "Editor",
-    "copy": "Copy Snippet to Clipboard",
-    "format": "Format",
-    "previewCode": "Preview Code",
-    "previewScreenshot": "Preview Screenshot",
-    "previewMarkdown": "Preview Markdown",
-    "previewMindmap": "Preview Mindmap",
-    "fontSizeIncrease": "Font Size Increase",
-    "fontSizeDecrease": "Font Size Decrease",
-    "fontSizeReset": "Font Size Reset"
+    "label": "ویرایشگر",
+    "copy": "رونویسی اسنیپت در بریده‌دان",
+    "format": "قالب",
+    "previewCode": "پیش‌نمایش کد",
+    "previewScreenshot": "پیش‌نمایش اسکرین‌شات",
+    "previewMarkdown": "پیش‌نمایش Markdown",
+    "previewMindmap": "پیش‌نمایش Mindmap",
+    "fontSizeIncrease": "افزایش اندازه فونت",
+    "fontSizeDecrease": "کاهش اندازه فونت",
+    "fontSizeReset": "بازتنظیم اندازه فونت"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "حالت ارائه",
+    "preview": "پیش‌نمایش"
   },
   "history": {
-    "label": "History",
-    "back": "Back",
-    "forward": "Forward"
+    "label": "تاریخچه",
+    "back": "بازگشت",
+    "forward": "به‌جلو"
   },
   "devtools": {
-    "label": "Developer Tools"
+    "label": "ابزارهای توسعه‌دهنده"
   }
 }

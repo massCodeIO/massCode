@@ -1,0 +1,49 @@
+{
+  "title": "Preferencje",
+  "storage": {
+    "label": "Magazyn",
+    "migrate": "Migruj",
+    "count": "Liczba"
+  },
+  "editor": {
+    "label": "Edytor",
+    "fontSize": "Rozmiar Czcionki",
+    "fontFamily": "Rodzina Czcionek",
+    "wrap": {
+      "label": "Zawijanie",
+      "wordWrap": "Zawijanie Wyrazów",
+      "off": "Wyłączone"
+    },
+    "tabSize": "Rozmiar Tabulatora",
+    "showInvisibles": "Pokaż Niewidoczne",
+    "highlightLine": "Podświetl Linię",
+    "highlightGutter": "Podświetl Margines",
+    "matchBrackets": "Podświetl Nawiasy",
+    "prettier": {
+      "label": "Upiększenie",
+      "trailingComma": {
+        "label": "Przecinek na Końcu",
+        "none": "Brak",
+        "all": "Wszystkie",
+        "es5": "ES5"
+      },
+      "semi": "Średnik",
+      "singleQuote": "Cudzysłów pojedynczy"
+    }
+  },
+  "appearance": {
+    "label": "Wygląd",
+    "theme": {
+      "label": "Motyw",
+      "light": "Jasny",
+      "dark": "Ciemny"
+    }
+  },
+  "language": {
+    "label": "Język"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Render bloku kodu"
+  }
+}

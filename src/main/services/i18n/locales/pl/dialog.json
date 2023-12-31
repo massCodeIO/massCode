@@ -1,0 +1,13 @@
+{
+  "deleteConfirm": "Czy na pewno chcesz trwale usunąć {{name}}?",
+  "deleteConfirmMultipleSnippets": "Czy na pewno chcesz trwale usunąć {{count}} wybrane fragmenty kodu?",
+  "noUndo": "Nie można cofnąć tej czynności.",
+  "allSnippetsMoveToTrash": "Wszystkie fragmenty kodu w tym folderze zostaną przeniesione do kosza.",
+  "deleteTag": "Spowoduje to także usunięcie tagu we wszystkich fragmentach kodu.",
+  "emptyTrash": "Czy na pewno chcesz trwale usunąć wszystkie fragmenty kodu w koszu?",
+  "migrateConfirm": [
+    "Czy na pewno chcesz przeprowadzić migrację z {{name}}?",
+    "Podczas migracji bieżąca biblioteka zostanie nadpisana."
+  ],
+  "createDb": "Proszę wybrać inny folder"
+}

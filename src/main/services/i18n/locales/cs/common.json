@@ -14,7 +14,11 @@
     "copy": "Kopírovat",
     "sort": "Seřadit",
     "revers": "Obrátit",
-    "generate": "Generovat"
+    "generate": "Generovat",
+    "saveAs": "Uložit jako",
+    "zoomIn": "Přiblížit",
+    "zoomOut": "Oddálit",
+    "fit": "Přizpůsobit"
   },
   "newFolder": "Nová složka",
   "newSnippet": "Nový snippet",
@@ -22,7 +26,6 @@
   "addDescription": "Přidat popis",
   "addToFavorites": "Přidat do oblíbených",
   "addTag": "Přidat štítek",
-  "exportToHtml": "Exportovat do HTML",
   "saveScreenshot": "Uložit screenshot",
   "rename": "Přejmenovat",
   "duplicate": "Duplikovat",

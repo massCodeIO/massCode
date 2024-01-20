@@ -1,0 +1,91 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferencje",
+    "update": {
+      "label": "Sprawdź aktualizacje...",
+      "message": "Wersja {{newVersion}} jest teraz dostępna do pobrania.\nTwoja wersja to {{oldVersion}}.",
+      "button": ["Przejdź do Pobierania", "OK"],
+      "noUpdate": "Obecnie nie ma dostępnych aktualizacji."
+    },
+    "quit": "Zakończ massCode",
+    "about": "O massCode",
+    "hide": "Ukryj massCode",
+    "hideOther": "Ukryj Inne",
+    "showAll": "Pokaż Wszystkie"
+  },
+  "help": {
+    "label": "Pomoc",
+    "website": "Strona internetowa",
+    "documentation": "Dokumentacja",
+    "viewInGitHub": "Zobacz na GitHubie",
+    "changeLog": "Dziennik Zmian",
+    "reportIssue": "Zgłoś Problem",
+    "giveStar": "Dodaj Gwiazdkę",
+    "extension": {
+      "vscode": "Rozszerzenie dla VS Code",
+      "raycast": "Rozszerzenie dla Raycast",
+      "alfred": "Rozszerzenie dla Alfred"
+    },
+    "donate": {
+      "openCollective": "Wesprzyj na Open Collective",
+      "payPal": "Wesprzyj przez PayPal",
+      "gumroad": "Wesprzyj przez Gumroad (Visa, Mastercard itp.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Przełącz narzędzia deweloperskie",
+    "links": {
+      "snippets": "Zbiór Fragmentów Kodu"
+    }
+  },
+  "file": {
+    "label": "Plik",
+    "find": "Znajdź"
+  },
+  "view": {
+    "label": "Widok",
+    "sortBy": {
+      "label": "Sortuj Fragmenty Kodu według",
+      "dateModified": "Daty Modyfikacji",
+      "dateCreated": "Daty Utworzenia",
+      "name": "Nazwy"
+    },
+    "hideSubfolderSnippets": "Ukryj Fragmenty z Podfolderów",
+    "compactMode": "Tryb Kompaktowy"
+  },
+  "edit": {
+    "label": "Edytuj",
+    "undo": "Cofnij",
+    "redo": "Ponów",
+    "cut": "Wytnij",
+    "copy": "Kopiuj",
+    "paste": "Wklej",
+    "delete": "Usuń",
+    "selectAll": "Zaznacz Wszystko"
+  },
+  "editor": {
+    "label": "Edytor",
+    "copy": "Skopiuj Fragment do Schowka",
+    "format": "Formatuj",
+    "previewCode": "Podgląd Kodu",
+    "previewScreenshot": "Podgląd Zrzutu Ekranu",
+    "previewMarkdown": "Podgląd Markdown",
+    "previewMindmap": "Podgląd Mapy Myśli",
+    "fontSizeIncrease": "Zwiększ Rozmiar Czcionki",
+    "fontSizeDecrease": "Zmniejsz Rozmiar Czcionki",
+    "fontSizeReset": "Resetuj Rozmiar Czcionki"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Tryb Prezentacji",
+    "preview": "Podgląd"
+  },
+  "history": {
+    "label": "Historia",
+    "back": "Wstecz",
+    "forward": "Dalej"
+  },
+  "devtools": {
+    "label": "Narzędzia Deweloperskie"
+  }
+}

@@ -189,8 +189,8 @@ const init = async () => {
     }
   })
 
-  if (snippetStore.searchQuery) {
-    findAll(snippetStore.searchQuery)
+  if (snippetStore.searchQueryEscaped) {
+    findAll(snippetStore.searchQueryEscaped)
   }
 }
 
@@ -303,8 +303,8 @@ watch(
   () => {
     setValue(props.modelValue)
 
-    if (snippetStore.searchQuery) {
-      findAll(snippetStore.searchQuery)
+    if (snippetStore.searchQueryEscaped) {
+      findAll(snippetStore.searchQueryEscaped)
     }
 
     clearHistory()
@@ -319,7 +319,7 @@ watch(
 )
 
 watch(
-  () => snippetStore.searchQuery,
+  () => snippetStore.searchQueryEscaped,
   v => {
     if (v) {
       findAll(v)

@@ -11,6 +11,7 @@ export interface State {
   selectedMultiple: Snippet[]
   fragment: number
   searchQuery?: string
+  searchQueryEscaped?: string
   sort: SnippetsSort
   hideSubfolderSnippets: boolean
   compactMode: boolean

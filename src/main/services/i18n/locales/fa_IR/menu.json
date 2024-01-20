@@ -1,0 +1,91 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "تنظیمات",
+    "update": {
+      "label": "بررسی برای به‌روزرسانی‌ها....",
+      "message": "نگارش {{newVersion}} اکنون برای دریافت در دسترس است.\nنگارش شما {{oldVersion}} است.",
+      "button": ["برو به دریافت", "باشه"],
+      "noUpdate": "درحال حاضر هیچ به‌روزرسانی در دسترس نیست."
+    },
+    "quit": "خروج از massCode",
+    "about": "درباره massCode",
+    "hide": "پنهان‌کردن massCode",
+    "hideOther": "پنهان‌کردن دیگران",
+    "showAll": "نمایش همه"
+  },
+  "help": {
+    "label": "کمک",
+    "website": "وب‌سایت",
+    "documentation": "مستندات",
+    "viewInGitHub": "مشاهده در گیت‌هاب",
+    "changeLog": "تغییرات",
+    "reportIssue": "گزارش مشکل",
+    "giveStar": "ستاره بدهید",
+    "extension": {
+      "vscode": "افزونه VS Code",
+      "raycast": "افزونه Raycast",
+      "alfred": "افزونه Alfred"
+    },
+    "donate": {
+      "openCollective": "کمک مالی در Open Collective",
+      "payPal": "کمک مالی از طریق PayPal",
+      "gumroad": "کمک مالی از طریق Gumroad (ویزا، مسترکارت و غیره)"
+    },
+    "twitter": "توییتر",
+    "devTools": "ابزارهای توسعه‌دهنده",
+    "links": {
+      "snippets": "مجموعه اسنیپت"
+    }
+  },
+  "file": {
+    "label": "پرونده",
+    "find": "یافتن"
+  },
+  "view": {
+    "label": "نمایش",
+    "sortBy": {
+      "label": "مرتب‌سازی اسنیپت‌ها براساس",
+      "dateModified": "تاریخ ویرایش",
+      "dateCreated": "تاریخ ساخت",
+      "name": "نام"
+    },
+    "hideSubfolderSnippets": "پنهان‌کردن اسنیپت‌های زیرپوشه",
+    "compactMode": "حالت فشرده"
+  },
+  "edit": {
+    "label": "ویرایش",
+    "undo": "واگرد",
+    "redo": "انجام دوباره",
+    "cut": "برش",
+    "copy": "رونویسی",
+    "paste": "جای‌گذاری",
+    "delete": "حذف",
+    "selectAll": "انتخاب همه"
+  },
+  "editor": {
+    "label": "ویرایشگر",
+    "copy": "رونویسی اسنیپت در بریده‌دان",
+    "format": "قالب",
+    "previewCode": "پیش‌نمایش کد",
+    "previewScreenshot": "پیش‌نمایش اسکرین‌شات",
+    "previewMarkdown": "پیش‌نمایش Markdown",
+    "previewMindmap": "پیش‌نمایش Mindmap",
+    "fontSizeIncrease": "افزایش اندازه فونت",
+    "fontSizeDecrease": "کاهش اندازه فونت",
+    "fontSizeReset": "بازتنظیم اندازه فونت"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "حالت ارائه",
+    "preview": "پیش‌نمایش"
+  },
+  "history": {
+    "label": "تاریخچه",
+    "back": "بازگشت",
+    "forward": "به‌جلو"
+  },
+  "devtools": {
+    "label": "ابزارهای توسعه‌دهنده"
+  }
+}

@@ -326,7 +326,7 @@ export const useSnippetStore = defineStore('snippets', {
         includeScore: true,
         threshold: isExactSearch ? 0 : 0.4,
         ignoreLocation: true,
-        keys: ['name', 'content.value']
+        keys: ['name', 'content.value', 'description']
       })
 
       const result = fuse.search(q)

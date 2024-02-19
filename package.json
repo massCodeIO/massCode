@@ -26,6 +26,7 @@
   "repository": "https://github.com/massCodeIO/massCode",
   "author": {
     "name": "Anton Reshetov",
+    "email": "reshetov.art@gmail.com",
     "url": "https://github.com/antonreshetov"
   },
   "lint-staged": {

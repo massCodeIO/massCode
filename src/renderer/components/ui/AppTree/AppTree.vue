@@ -93,10 +93,3 @@ watch(
 )
 </script>
 
-<style lang="scss" scoped>
-.tree {
-  &__inner {
-    padding-top: 5px;
-  }
-}
-</style>

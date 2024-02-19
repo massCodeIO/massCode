@@ -241,7 +241,8 @@ watch(
 
 <style lang="scss" scoped>
 .sidebar {
-  padding-top: var(--title-bar-height);
+  padding-top: 20px;
+  padding-left: 5px;
   position: relative;
   background-color: var(--color-sidebar);
   display: flex;

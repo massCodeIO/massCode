@@ -92,8 +92,8 @@ onUnmounted(() => {
   background-color: var(--color-snippet-list);
 }
 .header {
-  padding-top: var(--title-bar-height);
   display: flex;
+  height: 53px;
   border-bottom: 1px solid var(--color-border);
 }
 .body {

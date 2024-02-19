@@ -159,7 +159,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .header {
   .top {
-    padding: 0 var(--spacing-xs);
+    padding: 0 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;

@@ -112,11 +112,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .sidebar-list {
   margin-bottom: var(--spacing-xs);
-  .body {
-    .inner {
-      padding: 0 var(--spacing-xs);
-    }
-  }
+
   // overflow: hidden;
   &.is-scrollable {
     :deep(.ps) {

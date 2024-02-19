@@ -1,3 +1,16 @@
+# [3.11.0](https://github.com/massCodeIO/massCode/compare/v3.10.0...v3.11.0) (2024-02-19)
+
+
+### Features
+
+* add search by description ([134c424](https://github.com/massCodeIO/massCode/commit/134c4249f474c6653d0c8e1a8470b13e2fdd5359))
+* **i18n:** add new Czech translations ([3166034](https://github.com/massCodeIO/massCode/commit/3166034bf8e576bebb23dd8fcb8f65719c8f45ea))
+* **i18n:** add Persian locales ([a32dc0f](https://github.com/massCodeIO/massCode/commit/a32dc0ff8a187b4eb80971c15082e848ed4d5b23))
+* **i18n:** add Polish locales ([cd44fb4](https://github.com/massCodeIO/massCode/commit/cd44fb4d87ff873d6483c1eaeff3f45f5a9a287f))
+* add fuzzy search ([a0eba0a](https://github.com/massCodeIO/massCode/commit/a0eba0ac89335ad134999bc1a679b99d523096c7))
+
+
+
 # [3.10.0](https://github.com/massCodeIO/massCode/compare/v3.9.0...v3.10.0) (2023-10-12)
 
 

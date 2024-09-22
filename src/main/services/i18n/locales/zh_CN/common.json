@@ -14,6 +14,7 @@
   "newSnippet": "新建代码片段",
   "newFragment": "新建子片段",
   "addDescription": "添加描述",
+  "exportAll": "导出所有代码块",
   "addToFavorites": "添加至收藏夹",
   "addTag": "添加标签",
   "exportToHtml": "导出 HTML 文件",

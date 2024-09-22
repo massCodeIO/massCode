@@ -7,16 +7,14 @@
     "fromSnippetsLab": "Von SnippetsLab",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
-    "update": [
-      "Nach GitHub",
-      "OK"
-    ],
+    "update": ["Nach GitHub", "OK"],
     "ok": "OK"
   },
   "newFolder": "Neuer Ordner",
   "newSnippet": "Neues Snippet",
   "newFragment": "Neues Fragment",
   "addDescription": "Beschreibung hinzufügen",
+  "exportAll": "Alle Codeblöcke exportieren",
   "addToFavorites": "Zu Favoriten hinzufügen",
   "addTag": "Tag hinzufügen",
   "exportToHtml": "Export zu HTML",

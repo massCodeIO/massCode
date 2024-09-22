@@ -55,6 +55,7 @@ type MainMenuAction =
   | 'history-back'
   | 'history-forward'
   | 'devtools'
+  | 'exportAll'
 
 type MainAction =
   | 'restart'
@@ -68,6 +69,7 @@ type MainAction =
   | 'focus'
   | 'copy-to-assets'
   | 'app-protocol'
+  | 'exportAll'
 
 type ApiAction = 'snippet-create'
 

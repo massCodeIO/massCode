@@ -28,9 +28,9 @@
     "./src/main/**/*.ts",
     "./src/main/**/*.d.ts",
     "./src/shared/**/*.ts",
-    "./src/shared/**/*.d.ts"
+    "./src/shared/**/*.d.ts",
+    "scripts/codeContext.ts",
+    "scripts/codeContext.ts"
   ],
-  "exclude": [
-    "./node_modules"
-  ]
+  "exclude": ["./node_modules"]
 }

@@ -13,6 +13,7 @@
   "newSnippet": "新建代碼片段",
   "newFragment": "新建子片段",
   "addDescription": "添加描述",
+  "exportAll": "導出全部代碼塊",
   "addToFavorites": "添加至收藏夾",
   "addTag": "添加標籤",
   "exportToHtml": "導出 HTML 文件",

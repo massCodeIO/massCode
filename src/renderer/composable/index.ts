@@ -185,3 +185,8 @@ export const onClickUrl = (url: string) => {
   ipc.invoke('main:open-url', url)
   track('app/open-url', url)
 }
+
+export const onExportAll = () => {
+  const snippetStore = useSnippetStore()
+  ipc.invoke('main:exportAll', JSON.stringify(snippetStore.all))
+}

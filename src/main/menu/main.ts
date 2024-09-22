@@ -308,6 +308,16 @@ const fileMenu: MenuItemConstructorOptions[] = [
     click: () => {
       BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:search')
     }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: i18n.t('exportAll'),
+    accelerator: 'CommandOrControl+E',
+    click: () => {
+      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:exportAll')
+    }
   }
 ]
 

@@ -20,6 +20,7 @@
   "newSnippet": "Yeni Kod Parçası",
   "newFragment": "Yeni Bölüm",
   "addDescription": "Açıklama Ekle",
+  "exportAll": "Tüm kod bloklarını dışarı aktar",
   "addToFavorites": "Favorilere Ekle",
   "addTag": "Etiket Ekle",
   "exportToHtml": "HTML'ye Aktar",

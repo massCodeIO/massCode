@@ -23,7 +23,7 @@
     "prepare": "husky install",
     "preinstall": "npx only-allow pnpm"
   },
-  "repository": "https://github.com/massCodeIO/massCode",
+  "repository": "https://github.com/sanwu-maizi/massCode",
   "author": {
     "name": "Anton Reshetov",
     "url": "https://github.com/antonreshetov"

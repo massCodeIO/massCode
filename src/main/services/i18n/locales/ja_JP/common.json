@@ -14,6 +14,7 @@
   "newSnippet": "新規スニペット",
   "newFragment": "新規フラグメント",
   "addDescription": "説明を追加",
+  "exportAll": "すべてのコードブロックをエクスポート",
   "addToFavorites": "お気に入りに追加",
   "addTag": "タグを追加",
   "exportToHtml": "HTMLにエキスポート",

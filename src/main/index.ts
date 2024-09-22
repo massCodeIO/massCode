@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
 import path from 'path'
 import os from 'os'
 import { store } from './store'
@@ -9,6 +9,7 @@ import { subscribeToChannels } from './services/ipc'
 import { mainMenu } from './menu/main'
 import { subscribeToDialog } from './services/ipc/dialog'
 import { checkForUpdateWithInterval } from './services/update-check'
+import { exportAllSnippets } from '../../scripts/exportAll'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isMac = process.platform === 'darwin'
@@ -119,6 +120,23 @@ ipcMain.handle('main:restart', () => {
 
 ipcMain.handle('main:open-url', (event, payload) => {
   shell.openExternal(payload as string)
+})
+
+ipcMain.handle('main:exportAll', (event, payload: any) => {
+  const snippets = JSON.parse(payload)
+  dialog
+    .showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
+    .then(result => {
+      if (!result.canceled) {
+        console.log(result.filePaths)
+        exportAllSnippets(snippets, result.filePaths[0])
+      }
+    })
+    .catch(err => {
+      console.log(err)
+    })
 })
 
 ipcMain.on('request-info', event => {

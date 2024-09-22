@@ -42,7 +42,8 @@ import {
   emitter,
   onCreateSnippet,
   onAddDescription,
-  goToSnippet
+  goToSnippet,
+  onExportAll
 } from '@/composable'
 import { useRoute } from 'vue-router'
 import type { Snippet } from '@shared/types/main/db'
@@ -282,16 +283,22 @@ ipc.on('main-menu:history-forward', async () => {
 ipc.on('api:snippet-create', (event, body: Snippet) => {
   onCreateSnippet(body)
 })
+
+ipc.on('main-menu:exportAll', (event, body: Snippet) => {
+  onExportAll()
+})
 </script>
 
 <style lang="scss">
 body {
   margin: 0;
 }
+
 #app {
   height: 100vh;
   overflow: hidden;
 }
+
 .app {
   &-title-bar {
     position: absolute;
@@ -302,11 +309,13 @@ body {
     -webkit-app-region: drag;
     z-index: 1010;
     transition: all 0.5s;
+
     &.is-win {
       border-top: 1px solid var(--color-border);
     }
   }
 }
+
 .top-notification {
   position: absolute;
   top: 5px;
@@ -318,6 +327,7 @@ body {
   display: flex;
   gap: var(--spacing-sm);
 }
+
 .update {
   background: -webkit-linear-gradient(60deg, var(--color-primary), limegreen);
   -webkit-background-clip: text;

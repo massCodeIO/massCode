@@ -23,6 +23,7 @@
   "newSnippet": "Новый сниппет",
   "newFragment": "Новый фрагмент",
   "addDescription": "Добавить описание",
+  "exportAll": "Экспортировать все блоки кода",
   "addToFavorites": "Добавить в избранное",
   "addTag": "Добавить тег",
   "exportToHtml": "Экспорт в HTML",

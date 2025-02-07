@@ -1,0 +1,6 @@
+{
+  "watch": ["src/main"],
+  "ext": "ts,json",
+  "exec": "npm run build:main",
+  "delay": 1000
+}

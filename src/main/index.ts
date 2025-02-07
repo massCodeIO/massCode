@@ -1,130 +1,101 @@
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
-import path from 'path'
-import os from 'os'
+/* eslint-disable node/prefer-global/process */
+import type Database from 'better-sqlite3'
+import type { DBQueryArgs } from './types'
+import os from 'node:os'
+import path from 'node:path'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import { initDB } from './db'
 import { store } from './store'
-import { ApiServer } from './services/api/server'
-import { createDb } from './services/db'
-import { debounce } from 'lodash'
-import { subscribeToChannels } from './services/ipc'
-import { mainMenu } from './menu/main'
-import { subscribeToDialog } from './services/ipc/dialog'
-import { checkForUpdateWithInterval } from './services/update-check'
+
+let db: Database.Database
+
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
 
 const isDev = process.env.NODE_ENV === 'development'
-const isMac = process.platform === 'darwin'
-const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
+let isQuitting = false
 
-createDb()
-const apiServer = new ApiServer()
-
-subscribeToChannels()
-subscribeToDialog()
-
-if (!gotTheLock) {
-  // @ts-ignore
-  return app.quit()
-}
-
-function createWindow () {
+function createWindow() {
   const bounds = store.app.get('bounds')
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 600,
+    width: 1200,
+    height: 800,
     ...bounds,
-    titleBarStyle: isMac ? 'hidden' : 'default',
+    titleBarStyle: 'hidden',
     webPreferences: {
-      preload: path.resolve(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: true,
-      webSecurity: false
-    }
+      preload: path.join(__dirname, 'preload.js'),
+    },
   })
-
-  Menu.setApplicationMenu(mainMenu)
 
   if (isDev) {
-    const rendererPort = process.argv[2]
-    mainWindow.loadURL(`http://localhost:${rendererPort}`)
+    mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
-  } else {
-    mainWindow.loadFile(path.resolve(app.getAppPath(), 'renderer/index.html'))
+  }
+  else {
+    mainWindow.loadFile(
+      path.join(__dirname, '../../build/renderer/index.html'),
+    )
   }
 
-  mainWindow.on('resize', () => storeBounds(mainWindow))
-  mainWindow.on('move', () => storeBounds(mainWindow))
+  mainWindow.on('close', (event) => {
+    store.app.set('bounds', mainWindow.getBounds())
 
-  checkForUpdateWithInterval()
-}
-
-const storeBounds = debounce((mainWindow: BrowserWindow) => {
-  store.app.set('bounds', mainWindow.getBounds())
-}, 300)
-
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('masscode', process.execPath, [
-      path.resolve(process.argv[1])
-    ])
-  }
-} else {
-  app.setAsDefaultProtocolClient('masscode')
-}
-
-app.whenReady().then(async () => {
-  createWindow()
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+    if (!isQuitting) {
+      event.preventDefault()
+      mainWindow.hide()
+    }
+    else {
+      mainWindow.destroy()
     }
   })
+}
+
+app.whenReady().then(() => {
+  createWindow()
+
+  db = initDB()
+  const stmt = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
+  stmt.run('theme', 'light')
 })
 
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+app.on('activate', () => {
+  mainWindow.show()
 })
 
-app.on('browser-window-focus', () => {
-  BrowserWindow.getFocusedWindow()?.webContents.send('main:focus')
+app.on('before-quit', () => {
+  isQuitting = true
 })
 
-app.on('second-instance', (e, argv) => {
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) mainWindow.restore()
-    mainWindow.focus()
-  }
-
-  if (process.platform !== 'darwin') {
-    const url = argv.find(i => i.startsWith('masscode://'))
-    BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
-  }
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin')
+    app.quit()
 })
 
-app.on('open-url', (event, url) => {
-  BrowserWindow.getFocusedWindow()?.webContents.send('main:app-protocol', url)
+ipcMain.on('message', (event, message) => {
+  // eslint-disable-next-line no-console
+  console.log(message)
 })
 
-ipcMain.handle('main:restart-api', () => {
-  apiServer.restart()
-})
-
-ipcMain.handle('main:restart', () => {
-  app.relaunch()
-  app.quit()
-})
-
-ipcMain.handle('main:open-url', (event, payload) => {
-  shell.openExternal(payload as string)
-})
-
-ipcMain.on('request-info', event => {
+ipcMain.on('request-info', (event) => {
   event.sender.send('request-info', {
     version: app.getVersion(),
     arch: os.arch(),
-    platform: process.platform
+    platform: process.platform,
   })
+})
+
+ipcMain.handle('db-query', async (event, args: DBQueryArgs) => {
+  const { sql, params = [] } = args
+  const stmt = db.prepare(sql)
+
+  if (/^(?:INSERT|UPDATE|DELETE)/i.test(sql)) {
+    return stmt.run(params)
+  }
+
+  if (/^SELECT/i.test(sql)) {
+    return stmt.all(params)
+  }
+
+  throw new Error('Unsupported query type')
 })

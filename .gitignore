@@ -1,12 +1,6 @@
-node_modules
 dist
-build
+build/main
+build/renderer
 
-.vscode
-.idea
+node_modules
 .DS_Store
-src/renderer/types/auto-imports.d.ts
-src/renderer/types/components.d.ts
-*.log
-*.local
-.env

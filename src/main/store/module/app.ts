@@ -1,16 +1,15 @@
 import Store from 'electron-store'
-import type { AppStore } from '@shared/types/main/store'
 
-export default new Store<AppStore>({
+interface StoreSchema {
+  bounds: object
+}
+
+export default new Store<StoreSchema>({
   name: 'app',
-  cwd: 'v2',
-
-  defaults: {
-    bounds: {},
-    sidebarWidth: 180,
-    snippetListWidth: 250,
-    sort: 'updatedAt',
-    hideSubfolderSnippets: false,
-    compactMode: false
-  }
+  schema: {
+    bounds: {
+      default: {},
+      type: 'object',
+    },
+  },
 })

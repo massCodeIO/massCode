@@ -29,7 +29,11 @@
         :name="(model.icon as string)"
       />
     </span>
-    <slot />
+    <div class="name">
+      <div>
+        <slot />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -260,6 +264,18 @@ watch(
     left: 0;
     &.open {
       transform: rotate(90deg);
+    }
+  }
+  .name {
+    user-select: none;
+    display: table;
+    table-layout: fixed;
+    width: 90%;
+    overflow: hidden;
+    > div {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
     }
   }
 }

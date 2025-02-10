@@ -8,7 +8,9 @@
       v-if="!isEdit"
       class="name"
     >
-      {{ name }}
+      <div>
+        {{ name }}
+      </div>
     </div>
     <input
       v-else
@@ -84,5 +86,14 @@ onUnmounted(() => {
 }
 .name {
   user-select: none;
+  display: table;
+  table-layout: fixed;
+  width: 90%;
+  overflow: hidden;
+  > div {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
 }
 </style>

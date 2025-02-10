@@ -131,7 +131,8 @@ const activeTab = ref<Tab>('library')
 const onClickFolder = async (id: string) => {
   folderStore.selectId(id)
   await snippetStore.setSnippetsByFolderIds(true)
-  snippetStore.searchQuery = ''
+  snippetStore.searchQuery = undefined
+  snippetStore.searchQueryEscaped = undefined
   appStore.addToHistory(snippetStore.snippets[0]?.id)
   emitter.emit('folder:click', id)
 }

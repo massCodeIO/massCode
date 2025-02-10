@@ -48,6 +48,7 @@ const query = computed({
 
 const onReset = () => {
   snippetStore.searchQuery = undefined
+  snippetStore.searchQueryEscaped = undefined
   snippetStore.setSnippetsByAlias('all')
 }
 

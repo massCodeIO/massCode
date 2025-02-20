@@ -2,14 +2,15 @@ import Store from 'electron-store'
 
 interface StoreSchema {
   bounds: object
+  isAutoMigratedFromJson: boolean
 }
 
 export default new Store<StoreSchema>({
   name: 'app',
-  schema: {
-    bounds: {
-      default: {},
-      type: 'object',
-    },
+  cwd: 'v2',
+
+  defaults: {
+    bounds: {},
+    isAutoMigratedFromJson: false,
   },
 })

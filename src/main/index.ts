@@ -1,18 +1,19 @@
 /* eslint-disable node/prefer-global/process */
 import type Database from 'better-sqlite3'
 import type { DBQueryArgs } from './types'
+import { readFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { initDB } from './db'
+import { migrateJsonToSqlite } from './db/migrate'
 import { store } from './store'
-
-let db: Database.Database
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
 
 const isDev = process.env.NODE_ENV === 'development'
 
+let db: Database.Database
 let mainWindow: BrowserWindow
 let isQuitting = false
 
@@ -55,8 +56,21 @@ app.whenReady().then(() => {
   createWindow()
 
   db = initDB()
-  const stmt = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
-  stmt.run('theme', 'light')
+
+  if (store.app.get('isAutoMigratedFromJson')) {
+    return
+  }
+
+  const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
+  const jsonData = readFileSync(jsonDbPath, 'utf8')
+
+  try {
+    migrateJsonToSqlite(JSON.parse(jsonData), db)
+    store.app.set('isAutoMigratedFromJson', true)
+  }
+  catch (err) {
+    console.error('Error migrating JSON to SQLite:', err)
+  }
 })
 
 app.on('activate', () => {

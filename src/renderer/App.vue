@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { db, ipc } from '@/electron'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 
 const info = ref('')
-const settings = ref({})
-const newValue = ref('')
+const stats = reactive({
+  folders: 0,
+  snippets: 0,
+  tags: 0,
+})
 
 ipc.send('request-info', null, (_, message) => {
   info.value = message
 })
 
-function getSettings() {
-  db.query('SELECT * FROM settings').then((res) => {
-    settings.value = res[0]
-  })
+async function getStats() {
+  try {
+    const [{ folders }] = await db.query(
+      'SELECT COUNT(*) as folders FROM folders',
+    )
+    stats.folders = folders
+
+    const [{ snippets }] = await db.query(
+      'SELECT COUNT(*) as snippets FROM snippets',
+    )
+    stats.snippets = snippets
+
+    const [{ tags }] = await db.query('SELECT COUNT(*) as tags FROM tags')
+    stats.tags = tags
+  }
+  catch (error) {
+    console.error('Failed to get DB statistics:', error)
+  }
 }
 
-function updateSettings() {
-  db.query('UPDATE settings SET value = ? WHERE key = ?', [
-    newValue.value,
-    'theme',
-  ])
-  getSettings()
-}
-
-getSettings()
+getStats()
 </script>
 
 <template>
@@ -49,23 +58,13 @@ getSettings()
       </router-link>
     </nav>
     <RouterView />
-    <div class="mt-4 text-gray-500">
+    <div class="mt-4 text-gray-500 text-center">
       {{ info }}
       <br>
-      DB Table: settings {{ settings }}
-    </div>
-    <div class="flex gap-2 mt-2">
-      <input
-        v-model="newValue"
-        class="border border-gray-300 rounded-md px-2 w-32"
-        type="text"
-      >
-      <button
-        class="bg-blue-500 rounded-md px-3 py-1 text-white"
-        @click="updateSettings"
-      >
-        Update value
-      </button>
+      <span class="font-bold">DB Stats:</span>
+      <span> Folders: {{ stats.folders }}, </span>
+      <span> Snippets: {{ stats.snippets }}, </span>
+      <span> Tags: {{ stats.tags }} </span>
     </div>
   </div>
 </template>

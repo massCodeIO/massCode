@@ -12,7 +12,7 @@ const foldersUpdate = t.Object({
   isOpen: t.Number({ minimum: 0, maximum: 1 }),
 })
 
-const foldersResponse = t.Object({
+const foldersItem = t.Object({
   id: t.Number(),
   name: t.String(),
   createdAt: t.Number(),
@@ -21,6 +21,8 @@ const foldersResponse = t.Object({
   isOpen: t.Number(),
   defaultLanguage: t.String(),
 })
+
+const foldersResponse = t.Array(foldersItem)
 
 export const foldersDTO = new Elysia().model({
   foldersAdd,

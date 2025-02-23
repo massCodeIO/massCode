@@ -1,7 +1,8 @@
+import { cors } from '@elysiajs/cors'
 import { node } from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
+import { app as electronApp } from 'electron'
 import { Elysia } from 'elysia'
-import { version } from '../../../package.json'
 import { store } from '../store'
 import folders from './routes/folders'
 import snippets from './routes/snippets'
@@ -12,12 +13,13 @@ export function initApi() {
   const port = store.preferences.get('apiPort')
 
   app
+    .use(cors({ origin: '*' }))
     .use(
       swagger({
         documentation: {
           info: {
             title: 'massCode API',
-            version,
+            version: electronApp.getVersion(),
           },
         },
       }),

@@ -20,7 +20,7 @@ const snippetContentsAdd = t.Object({
   language: t.String(), // TODO: enum
 })
 
-const snippetsResponse = t.Object({
+const snippetItem = t.Object({
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
@@ -43,6 +43,8 @@ const snippetsResponse = t.Object({
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })
+
+const snippetsResponse = t.Array(snippetItem)
 
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,

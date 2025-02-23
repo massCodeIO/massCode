@@ -94,7 +94,7 @@ app
       ORDER BY createdAt ${ORDER}
     `)
 
-      const result = stmt.all(...params) as SnippetsResponse[]
+      const result = stmt.all(...params) as SnippetsResponse
 
       result.forEach((snippet) => {
         snippet.contents = JSON.parse(snippet.contents as unknown as string)
@@ -105,7 +105,7 @@ app
     },
     {
       query: 'snippetsQuery',
-      response: 'snippetsResponse[]',
+      response: 'snippetsResponse',
       detail: {
         tags: ['Snippets'],
       },

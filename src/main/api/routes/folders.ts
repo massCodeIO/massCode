@@ -28,10 +28,10 @@ app
 
       const result = stmt.all()
 
-      return result as FoldersResponse[]
+      return result as FoldersResponse
     },
     {
-      response: 'foldersResponse[]',
+      response: 'foldersResponse',
       detail: {
         tags: ['Folders'],
       },

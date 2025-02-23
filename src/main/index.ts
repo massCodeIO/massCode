@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { initDB } from './db'
+import { initApi } from './api'
+import { useDB } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
 import { store } from './store'
 
@@ -55,21 +56,22 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow()
 
-  db = initDB()
+  db = useDB()
+  initApi()
 
   if (store.app.get('isAutoMigratedFromJson')) {
     return
   }
 
-  const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
-  const jsonData = readFileSync(jsonDbPath, 'utf8')
-
   try {
+    const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
+    const jsonData = readFileSync(jsonDbPath, 'utf8')
+
     migrateJsonToSqlite(JSON.parse(jsonData), db)
     store.app.set('isAutoMigratedFromJson', true)
   }
   catch (err) {
-    console.error('Error migrating JSON to SQLite:', err)
+    console.error('Error on auto migration JSON to SQLite:', err)
   }
 })
 
@@ -101,13 +103,15 @@ ipcMain.on('request-info', (event) => {
 
 ipcMain.handle('db-query', async (event, args: DBQueryArgs) => {
   const { sql, params = [] } = args
-  const stmt = db.prepare(sql)
 
-  if (/^(?:INSERT|UPDATE|DELETE)/i.test(sql)) {
+  const stmt = db.prepare(sql)
+  const trimmedSql = sql.trim()
+
+  if (/^(?:INSERT|UPDATE|DELETE)/i.test(trimmedSql)) {
     return stmt.run(params)
   }
 
-  if (/^SELECT/i.test(sql)) {
+  if (/^SELECT|WITH/i.test(trimmedSql)) {
     return stmt.all(params)
   }
 

@@ -14,7 +14,8 @@
     "icon": "build/icons/icon.icns",
     "entitlements": "build/entitlements.mac.plist",
     "category": "public.app-category.productivity",
-    "hardenedRuntime": true
+    "hardenedRuntime": false,
+    "identity": null
   },
   "win": {
     "target": ["nsis", "portable"],

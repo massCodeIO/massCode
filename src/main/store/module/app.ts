@@ -1,16 +1,15 @@
+import type { AppStore } from '../types'
 import Store from 'electron-store'
+import { APP_DEFAULTS } from '../constants'
 
-interface StoreSchema {
-  bounds: object
-  isAutoMigratedFromJson: boolean
-}
-
-export default new Store<StoreSchema>({
+export default new Store<AppStore>({
   name: 'app',
   cwd: 'v2',
 
   defaults: {
     bounds: {},
+    sidebarWidth: APP_DEFAULTS.sizes.sidebar,
+    snippetListWidth: APP_DEFAULTS.sizes.snippetList,
     isAutoMigratedFromJson: false,
   },
 })

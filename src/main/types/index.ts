@@ -1,4 +1,5 @@
 import type { IpcRendererEvent } from 'electron'
+import type { Store } from '../store/types'
 
 export interface EventCallback {
   (event?: IpcRendererEvent, ...args: any[]): void
@@ -21,6 +22,7 @@ declare global {
       db: {
         query: (sql: string, params?: any[]) => Promise<any>
       }
+      store: Store
     }
   }
 }

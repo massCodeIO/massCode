@@ -5,11 +5,16 @@ import { store } from '../store'
 const DB_NAME = 'app.db'
 const isDev = process.env.NODE_ENV === 'development'
 
-export function initDB() {
+let db: Database.Database | null = null
+
+export function useDB() {
+  if (db)
+    return db
+
   const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
 
   try {
-    const db = new Database(dbPath, {
+    db = new Database(dbPath, {
       // eslint-disable-next-line no-console
       verbose: isDev ? console.log : undefined,
     })
@@ -17,15 +22,22 @@ export function initDB() {
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
 
+    // Поскольку из коробки в SQLite регистронезависимый поиск возможен только для ASCII,
+    // то добавляем самостоятельно функцию для сравнения строк без учета регистра
+    db.function('unicode_lower', (str: unknown) => {
+      if (typeof str !== 'string')
+        return str
+      return str.toLowerCase()
+    })
+
     // Таблица для папок
     db.exec(`
       CREATE TABLE IF NOT EXISTS folders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        defaultLanguage TEXT,
+        defaultLanguage TEXT NOT NULL,
         parentId INTEGER,
         isOpen INTEGER NOT NULL,
-        isSystem INTEGER NOT NULL,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL,
         icon TEXT,
@@ -64,7 +76,7 @@ export function initDB() {
     db.exec(`
       CREATE TABLE IF NOT EXISTS tags (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL UNIQUE,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       )

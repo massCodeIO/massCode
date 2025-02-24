@@ -4,8 +4,8 @@ import type { JSONDB } from './types'
 export function migrateJsonToSqlite(jsonData: JSONDB, db: Database.Database) {
   // Подготовленные выражения для вставки данных
   const insertFolderStmt = db.prepare(`
-    INSERT INTO folders (name, defaultLanguage, parentId, isOpen, isSystem, createdAt, updatedAt, icon)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO folders (name, defaultLanguage, parentId, isOpen, createdAt, updatedAt, icon)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
 
   const updateFolderParentStmt = db.prepare(`
@@ -43,10 +43,9 @@ export function migrateJsonToSqlite(jsonData: JSONDB, db: Database.Database) {
     jsonData.folders.forEach((folder) => {
       const result = insertFolderStmt.run(
         folder.name,
-        folder.defaultLanguage || null,
+        folder.defaultLanguage || 'plain_text',
         null, // parentId обновим позже
         folder.isOpen ? 1 : 0,
-        folder.isSystem ? 1 : 0,
         folder.createdAt,
         folder.updatedAt,
         folder.icon || null,

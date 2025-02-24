@@ -4,6 +4,7 @@ import Store from 'electron-store'
 interface StoreSchema {
   storagePath: string
   backupPath: string
+  apiPort: number
 }
 
 const isWin = platform() === 'win32'
@@ -18,5 +19,6 @@ export default new Store<StoreSchema>({
   defaults: {
     storagePath,
     backupPath,
+    apiPort: 4321,
   },
 })

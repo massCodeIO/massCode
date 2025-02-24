@@ -9,4 +9,5 @@ module.exports = antfu({
       },
     ],
   },
+  ignores: ['src/renderer/services/api/generated/**/*'],
 })

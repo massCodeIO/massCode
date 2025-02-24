@@ -30,11 +30,13 @@
     "prepare": "simple-git-hooks && npm run rebuild"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
     "@elysiajs/node": "^1.2.5",
     "@elysiajs/swagger": "^1.2.2",
     "better-sqlite3": "^11.8.1",
     "electron-store": "^8.2.0",
-    "elysia": "^1.2.15"
+    "elysia": "^1.2.15",
+    "ky": "^1.7.5"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",

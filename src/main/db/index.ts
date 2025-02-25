@@ -38,9 +38,10 @@ export function useDB() {
         defaultLanguage TEXT NOT NULL,
         parentId INTEGER,
         isOpen INTEGER NOT NULL,
+        orderIndex INTEGER NOT NULL DEFAULT 0,
+        icon TEXT,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL,
-        icon TEXT,
         FOREIGN KEY(parentId) REFERENCES folders(id)
       )
     `)

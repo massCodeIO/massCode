@@ -62,22 +62,10 @@ export interface SnippetsQuery {
   order?: "ASC" | "DESC";
   folderId?:
     | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+    | (string | (string | (string | (string | (string | (string | number))))));
   tagId?:
     | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+    | (string | (string | (string | (string | (string | (string | number))))));
 }
 
 export type SnippetsResponse = {
@@ -110,8 +98,10 @@ export type FoldersResponse = {
   createdAt: number;
   updatedAt: number;
   icon: string | null;
+  parentId: number | null;
   isOpen: number;
   defaultLanguage: string;
+  orderIndex: number;
 }[];
 
 export interface FoldersUpdate {
@@ -128,7 +118,33 @@ export interface FoldersUpdate {
   isOpen:
     | string
     | (string | (string | (string | (string | (string | number)))));
+  orderIndex:
+    | string
+    | (string | (string | (string | (string | (string | number)))));
 }
+
+export type FoldersTreeResponse = {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  icon: string | null;
+  parentId: number | null;
+  isOpen: number;
+  defaultLanguage: string;
+  orderIndex: number;
+  children: {
+    id: number;
+    name: string;
+    createdAt: number;
+    updatedAt: number;
+    icon: string | null;
+    parentId: number | null;
+    isOpen: number;
+    defaultLanguage: string;
+    orderIndex: number;
+  }[];
+}[];
 
 export interface TagsAdd {
   name: string;
@@ -409,25 +425,13 @@ export class Api<
           | string
           | (
               | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
+              | (string | (string | (string | (string | (string | number)))))
             );
         tagId?:
           | string
           | (
               | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
+              | (string | (string | (string | (string | (string | number)))))
             );
       },
       params: RequestParams = {},
@@ -577,6 +581,21 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Folders
+     * @name GetFoldersTree
+     * @request GET:/folders/tree
+     */
+    getFoldersTree: (params: RequestParams = {}) =>
+      this.request<FoldersTreeResponse, any>({
+        path: `/folders/tree`,
+        method: "GET",
         format: "json",
         ...params,
       }),

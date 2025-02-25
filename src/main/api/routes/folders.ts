@@ -46,9 +46,6 @@ app
       const allFolders = db
         .prepare(
           `
-
-      const newOrder = maxOrder + 1
-
         SELECT * 
         FROM folders
         ORDER BY parentId, orderIndex

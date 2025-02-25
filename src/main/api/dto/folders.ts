@@ -25,10 +25,12 @@ const foldersItem = t.Object({
   orderIndex: t.Number(),
 })
 
-const foldersItemWithChildren = t.Object({
-  ...foldersItem.properties,
-  children: t.Array(foldersItem),
-})
+const foldersItemWithChildren = t.Recursive(This =>
+  t.Object({
+    ...foldersItem.properties,
+    children: t.Array(This),
+  }),
+)
 
 const foldersResponse = t.Array(foldersItem)
 const foldersTreeResponse = t.Array(foldersItemWithChildren)

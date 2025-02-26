@@ -45,3 +45,4 @@ export const foldersDTO = new Elysia().model({
 export type FoldersAdd = typeof foldersAdd.static
 export type FoldersResponse = typeof foldersResponse.static
 export type FoldersTree = typeof foldersTreeResponse.static
+export type FoldersItem = typeof foldersItem.static

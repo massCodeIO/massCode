@@ -1,7 +1,13 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+@import "tailwindcss";
 
 :root {
   --title-bar-height: 30px;
+}
+
+
+@theme {
+  --color-primary: oklch(50% 0.19 260);
+  --color-bg: oklch(100% 0 0);
+  --color-fg: oklch(0% 0 0);
 }

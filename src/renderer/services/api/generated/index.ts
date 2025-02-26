@@ -133,17 +133,7 @@ export type FoldersTreeResponse = {
   isOpen: number;
   defaultLanguage: string;
   orderIndex: number;
-  children: {
-    id: number;
-    name: string;
-    createdAt: number;
-    updatedAt: number;
-    icon: string | null;
-    parentId: number | null;
-    isOpen: number;
-    defaultLanguage: string;
-    orderIndex: number;
-  }[];
+  children: any[];
 }[];
 
 export interface TagsAdd {

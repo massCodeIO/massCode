@@ -10,4 +10,5 @@ export interface Store {
   dragNode?: Node
   dragEnterNode?: Node
   selectedId?: string | number
+  highlightedId?: string | number
 }

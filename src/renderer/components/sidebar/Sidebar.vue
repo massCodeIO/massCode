@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Node } from '@/components/ui/app-tree/types'
-import type { FoldersTreeResponse } from '~/renderer/services/api/generated'
+import type { Node } from '@/components/ui/folder-tree/types'
+import type { FoldersTreeResponse } from '@/services/api/generated'
 import { useApp, useGutter } from '@/composables'
+import { store } from '@/electron'
+import { api } from '@/services/api'
 import { APP_DEFAULTS } from '~/main/store/constants'
-import { store } from '~/renderer/electron'
-import { api } from '~/renderer/services/api'
 
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
@@ -27,13 +27,13 @@ async function getFolders() {
 
 getFolders()
 
-async function handleNodeClick(id: string | number) {
+async function onNodeClick(id: string | number) {
   // eslint-disable-next-line no-console
   console.log('Папка выбрана:', id)
   // TODO обрабатываем клик по папке
 }
 
-async function handleNodeToggle(node: Node) {
+async function onNodeToggle(node: Node) {
   try {
     const { id, name, icon, defaultLanguage, parentId, isOpen, orderIndex }
       = node
@@ -54,7 +54,7 @@ async function handleNodeToggle(node: Node) {
   }
 }
 
-async function handleNodeDrag({
+async function onNodeDrag({
   node,
   target,
   position,
@@ -130,12 +130,12 @@ watch(width, () => {
       Library
     </div>
     <div class="flex-grow overflow-auto">
-      <UiAppTree
+      <UiFolderTree
         v-if="folders"
         v-model="folders"
-        @click-node="handleNodeClick"
-        @toggle-node="handleNodeToggle"
-        @drag-node="handleNodeDrag"
+        @click-node="onNodeClick"
+        @toggle-node="onNodeToggle"
+        @drag-node="onNodeDrag"
       />
     </div>
     <UiGutter ref="gutterRef" />

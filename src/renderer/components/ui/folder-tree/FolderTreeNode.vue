@@ -4,9 +4,9 @@ import type { Node, Position } from './types'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronRight } from 'lucide-vue-next'
 
-import { isAllowed, store } from './composable'
+import { isAllowed, store } from './composables'
 
-import { appTreeKeys } from './keys'
+import { folderTreeKeys } from './keys'
 
 interface Props {
   index: number
@@ -23,20 +23,14 @@ const props = withDefaults(defineProps<Props>(), {
   indent: 10,
 })
 
-const {
-  clickNode,
-  dragNode,
-  toggleNode,
-  contextMenuHandler,
-  isHoveredByIdDisabled,
-  focusHandler,
-} = inject(appTreeKeys)!
+const { clickNode, dragNode, toggleNode, isHoveredByIdDisabled, focusHandler }
+  = inject(folderTreeKeys)!
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
 const isDragged = ref(false)
 const isFocused = ref(false)
-const isHighlighted = ref(false)
+
 const rowRef = ref<HTMLElement>()
 
 const hasChildren = computed(
@@ -50,6 +44,7 @@ const isHovered = computed(() => {
 })
 
 const isSelected = computed(() => store.selectedId === props.node.id)
+const isHighlighted = computed(() => store.highlightedId === props.node.id)
 
 const isShowBetweenLine = computed(() => {
   if (!store.dragNode)
@@ -88,13 +83,13 @@ function onClickArrow(node: Node) {
 
 function onClickNode(id: string | number) {
   store.selectedId = id
+  store.highlightedId = undefined
   isFocused.value = true
   clickNode(id)
 }
 
 async function onClickContextMenu() {
-  isHighlighted.value = true
-  isHighlighted.value = await contextMenuHandler()
+  store.highlightedId = props.node.id
 }
 
 function onDragStart(e: DragEvent) {
@@ -173,7 +168,8 @@ function onDrop() {
 
 onClickOutside(rowRef, () => {
   isFocused.value = false
-  isHighlighted.value = false
+  // isHighlighted.value = false
+  store.highlightedId = undefined
 })
 
 if (focusHandler)
@@ -235,7 +231,7 @@ if (focusHandler)
       </span>
     </div>
     <template v-if="node.children">
-      <AppTreeNode
+      <FolderTreeNode
         v-for="(children, idx) in node.children"
         v-show="node.isOpen"
         :key="children.id"
@@ -253,7 +249,7 @@ if (focusHandler)
             :hovered-node-id="hoveredNodeId"
           />
         </template>
-      </AppTreeNode>
+      </FolderTreeNode>
     </template>
     <svg
       v-if="isShowBetweenLine"

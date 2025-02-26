@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import type { Node } from './types'
-import AppTreeNode from './AppTreeNode.vue'
-import { appTreeKeys } from './keys'
+import FolderTreeNode from './FolderTreeNode.vue'
+import { folderTreeKeys } from './keys'
 
 interface Props {
   modelValue: Node[]
@@ -37,11 +37,10 @@ function toggleNode(node: Node) {
   return emit('toggleNode', node)
 }
 
-provide(appTreeKeys, {
+provide(folderTreeKeys, {
   clickNode,
   dragNode,
   toggleNode,
-  contextMenuHandler: props.contextMenuHandler,
   isHoveredByIdDisabled,
   focusHandler: props.focusHandler,
 })
@@ -52,7 +51,7 @@ provide(appTreeKeys, {
     data-folder-tree
     class="pt-1"
   >
-    <AppTreeNode
+    <FolderTreeNode
       v-for="(node, index) in modelValue"
       :key="node.id"
       :node="node"
@@ -71,6 +70,6 @@ provide(appTreeKeys, {
           {{ node.name }}
         </template>
       </template>
-    </AppTreeNode>
+    </FolderTreeNode>
   </div>
 </template>

@@ -50,7 +50,7 @@ async function handleNodeToggle(node: Node) {
     await getFolders()
   }
   catch (error) {
-    console.error('Ошибка при обновлении папки:', error)
+    console.error('Folder update error:', error)
   }
 }
 
@@ -110,7 +110,7 @@ async function handleNodeDrag({
     await getFolders()
   }
   catch (error) {
-    console.error('Ошибка при перетаскивании папки:', error)
+    console.error('Folder update error:', error)
   }
 }
 

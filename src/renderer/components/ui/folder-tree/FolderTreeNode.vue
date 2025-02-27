@@ -302,7 +302,7 @@ if (focusHandler)
     &.is-selected {
       @apply text-fg;
       &::before {
-        @apply bg-black/10;
+        @apply bg-button;
       }
     }
     &.is-focused,

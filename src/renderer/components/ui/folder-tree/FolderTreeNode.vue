@@ -47,7 +47,7 @@ const isSelected = computed(() => store.selectedId === props.node.id)
 const isHighlighted = computed(() => store.highlightedId === props.node.id)
 
 const isShowBetweenLine = computed(() => {
-  if (!store.dragNode)
+  if (!isAllowed.value)
     return false
   return overPosition.value === 'before' || overPosition.value === 'after'
 })

@@ -35,11 +35,14 @@
     "@elysiajs/swagger": "^1.2.2",
     "@vueuse/core": "^12.7.0",
     "better-sqlite3": "^11.8.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "electron-store": "^8.2.0",
     "elysia": "^1.2.15",
     "interactjs": "^1.10.27",
     "ky": "^1.7.5",
-    "lucide-vue-next": "^0.476.0"
+    "lucide-vue-next": "^0.476.0",
+    "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",

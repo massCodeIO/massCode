@@ -5,6 +5,10 @@
   --title-bar-height: 30px;
 }
 
+body {
+  font-size: 14px;
+}
+
 
 @theme {
   --color-primary: oklch(50% 0.19 260);

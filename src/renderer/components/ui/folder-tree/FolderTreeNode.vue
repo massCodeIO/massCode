@@ -2,7 +2,7 @@
 import type { CSSProperties } from 'vue'
 import type { Node, Position } from './types'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronRight } from 'lucide-vue-next'
+import { ChevronRight, Folder } from 'lucide-vue-next'
 
 import { isAllowed, store } from './composables'
 
@@ -168,7 +168,6 @@ function onDrop() {
 
 onClickOutside(rowRef, () => {
   isFocused.value = false
-  // isHighlighted.value = false
   store.highlightedId = undefined
 })
 
@@ -226,6 +225,16 @@ if (focusHandler)
           :node="node"
           :deep="deep"
         >
+          <div class="mr-1.5">
+            <UiFolderIcon
+              v-if="node.icon"
+              :name="node.icon"
+            />
+            <Folder
+              v-else
+              class="w-4 h-4"
+            />
+          </div>
           {{ node.name }}
         </slot>
       </span>

@@ -209,7 +209,7 @@ if (focusHandler)
       <span class="node__name flex items-center relative z-10 w-full">
         <div
           v-if="node.children && node.children.length"
-          class="w-4 h-4 mx-1 flex items-center justify-center"
+          class="w-4 h-4 mx-1 flex items-center justify-center flex-shrink-0"
           @click.stop="onClickArrow(node)"
         >
           <ChevronRight
@@ -219,13 +219,13 @@ if (focusHandler)
         </div>
         <span
           v-else
-          class="w-6"
+          class="w-6 flex-shrink-0"
         />
         <slot
           :node="node"
           :deep="deep"
         >
-          <div class="mr-1.5">
+          <div class="mr-1.5 flex-shrink-0 flex items-center">
             <UiFolderIcon
               v-if="node.icon"
               :name="node.icon"
@@ -235,7 +235,11 @@ if (focusHandler)
               class="w-4 h-4"
             />
           </div>
-          {{ node.name }}
+          <span
+            class="overflow-hidden text-ellipsis whitespace-nowrap min-w-0 flex-1"
+          >
+            {{ node.name }}
+          </span>
         </slot>
       </span>
     </div>

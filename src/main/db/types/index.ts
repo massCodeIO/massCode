@@ -5,6 +5,7 @@ interface Folder {
   parentId: string | null
   isOpen: boolean
   isSystem: boolean
+  index: number
   createdAt: number
   updatedAt: number
   icon: string | null

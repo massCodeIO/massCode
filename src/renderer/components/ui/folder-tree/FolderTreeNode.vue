@@ -97,17 +97,11 @@ function onDragStart(e: DragEvent) {
   isHoveredByIdDisabled.value = true
 
   const el = document.createElement('div')
-  const style = {
-    position: 'fixed',
-    left: '-100%',
-    color: 'var(--color-text)',
-    fontSize: 'var(--text-md)',
-  }
+  el.className = 'fixed left-[-100%] text-fg'
 
   el.id = 'ghost'
   el.innerHTML = props.node.name
 
-  Object.assign(el.style, style)
   document.body.appendChild(el)
 
   e.dataTransfer!.setDragImage(el, 0, 0)

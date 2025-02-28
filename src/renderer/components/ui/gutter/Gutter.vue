@@ -41,8 +41,8 @@ function onMouseMove() {
 <template>
   <div
     data-gutter
-    class="absolute top-0 right-0 w-[2px] h-full cursor-col-resize after:block after:h-full after:w-[8px] after:absolute after:-left-[3px] after:z-10"
-    :class="{ 'bg-blue-500': isHovered || isDragging }"
+    class="absolute top-0 right-0 w-[1px] h-full cursor-col-resize after:block after:h-full after:w-[8px] after:absolute after:-left-[3px] after:z-10 bg-border"
+    :class="{ 'bg-primary w-[2px]': isHovered || isDragging }"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
     @mousedown="onMouseDown"

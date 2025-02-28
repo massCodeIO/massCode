@@ -11,7 +11,7 @@ const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
 const { sidebarWidth, selectedSnippetId, selectFolder } = useApp()
-const { getSnippets, snippets } = useSnippets()
+const { getSnippets, snippets, searchQuery } = useSnippets()
 
 const { width } = useGutter(
   sidebarRef,
@@ -45,6 +45,8 @@ async function onFolderClick(id: number) {
   if (firstSnippet) {
     selectedSnippetId.value = firstSnippet.id
   }
+
+  searchQuery.value = ''
 }
 
 async function onFolderToggle(node: Node) {
@@ -168,7 +170,7 @@ watch(width, () => {
         variant="icon"
         size="sm"
       >
-        <Plus class="w-4 h-4" />
+        <Plus class="w-4 h-4 text-text-muted" />
       </UiButton>
     </div>
     <div class="flex-grow overflow-auto">

@@ -31,7 +31,7 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="not-first:border-t border-border-snippet [&+.is-selected+div]:border-transparent"
+    class="not-first:border-t border-border [&+.is-selected+div]:border-transparent"
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
@@ -42,7 +42,7 @@ onClickOutside(snippetRef, () => {
       <div class="overflow-hidden text-ellipsis whitespace-nowrap min-w-0 mb-2">
         {{ snippet.name }}
       </div>
-      <div class="text-xs flex justify-between">
+      <div class="meta text-xs flex justify-between text-text-muted">
         <div>
           {{ snippet.folder?.name }}
         </div>
@@ -59,9 +59,15 @@ onClickOutside(snippetRef, () => {
 [data-snippet-item] {
   &.is-selected {
     @apply bg-fg/10 rounded-md;
+    .meta {
+      @apply text-text;
+    }
   }
   &.is-focused {
     @apply text-white bg-primary rounded-md;
+    .meta {
+      @apply text-white;
+    }
   }
 }
 </style>

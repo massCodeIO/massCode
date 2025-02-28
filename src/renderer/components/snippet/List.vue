@@ -37,7 +37,7 @@ watch(width, () => {
   <div
     ref="listRef"
     data-snippets-list
-    class="relative flex flex-col h-screen"
+    class="relative flex flex-col h-screen px-1"
   >
     <div>
       <SnippetHeader />

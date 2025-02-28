@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@/components/ui/folder-tree/types'
 import type { FoldersTreeResponse } from '@/services/api/generated'
-import { useApp, useGutter } from '@/composables'
+import { useApp, useGutter, useSnippets } from '@/composables'
 import { store } from '@/electron'
 import { api } from '@/services/api'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
@@ -10,7 +10,8 @@ import { APP_DEFAULTS } from '~/main/store/constants'
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
-const { sidebarWidth } = useApp()
+const { sidebarWidth, selectedSnippetId, selectFolder } = useApp()
+const { getSnippets, snippets, searchQuery } = useSnippets()
 
 const { width } = useGutter(
   sidebarRef,
@@ -35,13 +36,20 @@ async function getFolders() {
 
 getFolders()
 
-async function onNodeClick(id: string | number) {
-  // eslint-disable-next-line no-console
-  console.log('Папка выбрана:', id)
-  // TODO обрабатываем клик по папке
+async function onFolderClick(id: number) {
+  selectFolder(id)
+  await getSnippets({ folderId: id })
+
+  const firstSnippet = snippets.value && snippets.value[0]
+
+  if (firstSnippet) {
+    selectedSnippetId.value = firstSnippet.id
+  }
+
+  searchQuery.value = ''
 }
 
-async function onNodeToggle(node: Node) {
+async function onFolderToggle(node: Node) {
   try {
     const { id, name, icon, defaultLanguage, parentId, isOpen, orderIndex }
       = node
@@ -62,7 +70,7 @@ async function onNodeToggle(node: Node) {
   }
 }
 
-async function onNodeDrag({
+async function onFolderDrag({
   node,
   target,
   position,
@@ -162,16 +170,16 @@ watch(width, () => {
         variant="icon"
         size="sm"
       >
-        <Plus class="w-4 h-4" />
+        <Plus class="w-4 h-4 text-text-muted" />
       </UiButton>
     </div>
     <div class="flex-grow overflow-auto">
       <UiFolderTree
         v-if="folders"
         v-model="folders"
-        @click-node="onNodeClick"
-        @toggle-node="onNodeToggle"
-        @drag-node="onNodeDrag"
+        @click-node="onFolderClick"
+        @toggle-node="onFolderToggle"
+        @drag-node="onFolderDrag"
       />
     </div>
     <UiGutter ref="gutterRef" />

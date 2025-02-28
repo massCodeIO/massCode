@@ -16,4 +16,7 @@ body {
   --color-fg: oklch(0% 0 0);
   --color-button: oklch(92% 0 0);
   --color-button-fg: oklch(0% 0 0);
+  --color-border: oklch(90% 0 0);
+  --color-text: oklch(20% 0 0);
+  --color-text-muted: oklch(60% 0 0);
 }

@@ -24,8 +24,13 @@ const snippetItem = t.Object({
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
-  folderId: t.Union([t.Number(), t.Null()]),
   tags: t.Array(
+    t.Object({
+      id: t.Number(),
+      name: t.String(),
+    }),
+  ),
+  folder: t.Nullable(
     t.Object({
       id: t.Number(),
       name: t.String(),

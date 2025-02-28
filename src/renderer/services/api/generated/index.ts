@@ -62,21 +62,36 @@ export interface SnippetsQuery {
   order?: "ASC" | "DESC";
   folderId?:
     | string
-    | (string | (string | (string | (string | (string | (string | number))))));
+    | (
+        | string
+        | (
+            | string
+            | (string | (string | (string | (string | (string | number)))))
+          )
+      );
   tagId?:
     | string
-    | (string | (string | (string | (string | (string | (string | number))))));
+    | (
+        | string
+        | (
+            | string
+            | (string | (string | (string | (string | (string | number)))))
+          )
+      );
 }
 
 export type SnippetsResponse = {
   id: number;
   name: string;
   description: string | null;
-  folderId: number | null;
   tags: {
     id: number;
     name: string;
   }[];
+  folder: {
+    id: number;
+    name: string;
+  };
   contents: {
     id: number;
     label: string;
@@ -415,13 +430,25 @@ export class Api<
           | string
           | (
               | string
-              | (string | (string | (string | (string | (string | number)))))
+              | (
+                  | string
+                  | (
+                      | string
+                      | (string | (string | (string | (string | number))))
+                    )
+                )
             );
         tagId?:
           | string
           | (
               | string
-              | (string | (string | (string | (string | (string | number)))))
+              | (
+                  | string
+                  | (
+                      | string
+                      | (string | (string | (string | (string | number))))
+                    )
+                )
             );
       },
       params: RequestParams = {},

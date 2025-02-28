@@ -56,9 +56,15 @@ app
           s.name,
           s.description,
           s.isFavorites,
-          s.folderId,
           s.createdAt,
           s.updatedAt,
+          CASE 
+            WHEN f.id IS NOT NULL THEN json_object(
+              'id', f.id,
+              'name', f.name
+            )
+            ELSE NULL
+          END as folder,
           json_group_array(
             json_object(
               'id', t.id,
@@ -74,6 +80,7 @@ app
             )
           ) FILTER (WHERE sc.id IS NOT NULL) as contents
         FROM snippets s
+        LEFT JOIN folders f ON s.folderId = f.id
         LEFT JOIN snippet_tags st ON s.id = st.snippetId
         LEFT JOIN tags t ON st.tagId = t.id
         LEFT JOIN snippet_contents sc ON s.id = sc.snippetId
@@ -85,7 +92,7 @@ app
         name,
         description,
         isFavorites,
-        folderId,
+        folder,
         tags,
         contents,
         createdAt,
@@ -99,6 +106,7 @@ app
       result.forEach((snippet) => {
         snippet.contents = JSON.parse(snippet.contents as unknown as string)
         snippet.tags = JSON.parse(snippet.tags as unknown as string)
+        snippet.folder = JSON.parse(snippet.folder as unknown as string)
       })
 
       return result

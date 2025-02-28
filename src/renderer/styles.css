@@ -16,4 +16,5 @@ body {
   --color-fg: oklch(0% 0 0);
   --color-button: oklch(92% 0 0);
   --color-button-fg: oklch(0% 0 0);
+  --color-border-snippet: oklch(90% 0 0);
 }

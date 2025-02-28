@@ -37,6 +37,7 @@
     "better-sqlite3": "^11.8.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "electron-store": "^8.2.0",
     "elysia": "^1.2.15",
     "interactjs": "^1.10.27",

@@ -7,16 +7,48 @@
 
 body {
   font-size: 14px;
+  background-color: var(--color-bg);
+  color: var(--color-text)
 }
 
 
 @theme {
   --color-primary: oklch(50% 0.19 260);
+
   --color-bg: oklch(100% 0 0);
   --color-fg: oklch(0% 0 0);
+
   --color-button: oklch(92% 0 0);
   --color-button-fg: oklch(0% 0 0);
+  --color-button-hover: oklch(95% 0 0);
+
   --color-border: oklch(90% 0 0);
+
   --color-text: oklch(20% 0 0);
   --color-text-muted: oklch(60% 0 0);
+
+  --color-list-selection: oklch(92% 0 0);
+  --color-list-selection-fg: oklch(20% 0 0);
+  --color-list-focus: var(--color-primary);
+  --color-list-focus-fg: oklch(100% 0 0);
+}
+
+
+html.dark {
+  --color-primary: oklch(50% 0.19 260);
+
+  --color-bg: oklch(25% 0 0);
+  --color-fg: oklch(100% 0 0);
+
+  --color-button: oklch(% 0 0);
+  --color-button-fg: oklch(95% 0 0);
+  --color-button-hover: oklch(32% 0 0);
+
+  --color-border: oklch(30% 0 0);
+
+  --color-text: oklch(75% 0 0);
+  --color-text-muted: oklch(60% 0 0);
+
+  --color-list-selection: oklch(32% 0 0);
+  --color-list-selection-fg: oklch(95% 0 0);
 }

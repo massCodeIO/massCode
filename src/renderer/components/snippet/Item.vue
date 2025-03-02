@@ -31,7 +31,7 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="not-first:border-t border-border [&+.is-selected+div]:border-transparent"
+    class="border-border not-first:border-t [&+.is-selected+div]:border-transparent"
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
@@ -39,10 +39,10 @@ onClickOutside(snippetRef, () => {
     @click="onSnippetClick(snippet.id)"
   >
     <div class="flex flex-col p-2 select-none">
-      <div class="overflow-hidden text-ellipsis whitespace-nowrap min-w-0 mb-2">
+      <div class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
         {{ snippet.name }}
       </div>
-      <div class="meta text-xs flex justify-between text-text-muted">
+      <div class="meta text-text-muted flex justify-between text-xs">
         <div>
           {{ snippet.folder?.name }}
         </div>
@@ -58,15 +58,17 @@ onClickOutside(snippetRef, () => {
 @reference "../../styles.css";
 [data-snippet-item] {
   &.is-selected {
-    @apply bg-fg/10 rounded-md;
+    // @apply bg-fg/10 rounded-md text-fg;
+    @apply bg-list-selection text-list-selection-fg rounded-md;
     .meta {
-      @apply text-text;
+      @apply text-list-selection-fg;
     }
   }
   &.is-focused {
-    @apply text-white bg-primary rounded-md;
+    // @apply text-white bg-primary rounded-md;
+    @apply bg-list-focus text-list-focus-fg rounded-md;
     .meta {
-      @apply text-white;
+      @apply text-list-focus-fg;
     }
   }
 }

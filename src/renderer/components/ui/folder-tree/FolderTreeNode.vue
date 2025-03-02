@@ -172,7 +172,7 @@ if (focusHandler)
 <template>
   <div
     data-folder-tree-node
-    class="node *:mt-[2px] relative user-select-none"
+    class="node user-select-none relative *:mt-[2px]"
     :class="{
       'has-children': hasChildren,
       'is-dragged': isDragged,
@@ -188,7 +188,7 @@ if (focusHandler)
     <div
       :id="String(node.id)"
       ref="rowRef"
-      class="node__row relative flex user-select-none"
+      class="node__row user-select-none relative flex"
       :class="{
         'is-hovered':
           (isHovered && isAllowed) || hoveredNodeId === String(node.id),
@@ -200,14 +200,14 @@ if (focusHandler)
       @dragover="onDragOver"
       @click="onClickNode(node.id)"
     >
-      <span class="node__name flex items-center relative z-10 w-full">
+      <span class="node__name relative z-10 flex w-full items-center">
         <div
           v-if="node.children && node.children.length"
-          class="w-4 h-4 mx-1 flex items-center justify-center flex-shrink-0"
+          class="mx-1 flex h-4 w-4 flex-shrink-0 items-center justify-center"
           @click.stop="onClickArrow(node)"
         >
           <ChevronRight
-            class="node__arrow w-3 h-3"
+            class="node__arrow h-3 w-3"
             :class="{ 'rotate-90': node.isOpen }"
           />
         </div>
@@ -219,18 +219,18 @@ if (focusHandler)
           :node="node"
           :deep="deep"
         >
-          <div class="mr-1.5 flex-shrink-0 flex items-center">
+          <div class="mr-1.5 flex flex-shrink-0 items-center">
             <UiFolderIcon
               v-if="node.icon"
               :name="node.icon"
             />
             <Folder
               v-else
-              class="w-4 h-4"
+              class="h-4 w-4"
             />
           </div>
           <span
-            class="overflow-hidden text-ellipsis whitespace-nowrap min-w-0 flex-1"
+            class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
           >
             {{ node.name }}
           </span>
@@ -292,30 +292,30 @@ if (focusHandler)
     &.is-selected,
     &.is-focused,
     &.is-highlighted {
-      @apply text-white;
+      @apply text-list-selection-fg;
       &::before {
         content: "";
         left: v-bind(hoveredOffsetStyle);
-        @apply absolute right-0 top-0 bottom-0 bg-primary z-0 rounded-md;
+        @apply bg-list-focus absolute top-0 right-0 bottom-0 z-0 rounded-md;
       }
     }
     &.is-selected {
-      @apply text-fg;
+      @apply text-list-selection-fg;
       &::before {
-        @apply bg-button;
+        @apply bg-list-selection;
       }
     }
     &.is-focused,
     &.is-hovered {
-      @apply text-white;
+      @apply text-list-focus-fg;
       &::before {
-        @apply bg-primary;
+        @apply bg-list-focus;
       }
     }
     &.is-highlighted {
-      @apply text-fg;
+      @apply text-list-selection-fg;
       &::before {
-        @apply bg-transparent border-2 border-primary;
+        @apply border-list-focus border-2 bg-transparent;
       }
     }
   }

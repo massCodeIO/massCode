@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useApp } from '@/composables'
+import { useDark } from '@vueuse/core'
 
 useApp()
+useDark()
 </script>
 
 <template>
   <div
     data-title-bar
-    class="absolute top-0 h-[var(--title-bar-height)] w-full select-none z-50"
+    class="absolute top-0 z-50 h-[var(--title-bar-height)] w-full select-none"
   />
   <RouterView />
 </template>

@@ -1,18 +1,20 @@
 <script setup lang="ts">
+import type { Node } from '@/components/sidebar/folders/types'
 import type { FoldersTreeResponse } from '@/services/api/generated'
-import type { Node } from '~/renderer/components/sidebar/folders/types'
 import { useApp, useGutter, useSnippets } from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
 import { api } from '@/services/api'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
 import Tree from './folders/Tree.vue'
+import LibraryItem from './library/Item.vue'
 
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
-const { sidebarWidth, selectedSnippetId, selectFolder } = useApp()
-const { getSnippets, snippets, searchQuery } = useSnippets()
+const { sidebarWidth, selectFolder } = useApp()
+const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
 
 const { width } = useGutter(
   sidebarRef,
@@ -24,10 +26,10 @@ const { width } = useGutter(
 const folders = ref<FoldersTreeResponse>()
 
 const libraryItems = [
-  { name: 'Inbox', icon: Inbox },
-  { name: 'Favorites', icon: Star },
-  { name: 'All Snippets', icon: Archive },
-  { name: 'Trash', icon: Trash },
+  { id: LibraryFilter.Inbox, name: 'Inbox', icon: Inbox },
+  { id: LibraryFilter.Favorites, name: 'Favorites', icon: Star },
+  { id: LibraryFilter.All, name: 'All Snippets', icon: Archive },
+  { id: LibraryFilter.Trash, name: 'Trash', icon: Trash },
 ]
 
 async function getFolders() {
@@ -40,12 +42,7 @@ getFolders()
 async function onFolderClick(id: number) {
   selectFolder(id)
   await getSnippets({ folderId: id })
-
-  const firstSnippet = snippets.value && snippets.value[0]
-
-  if (firstSnippet) {
-    selectedSnippetId.value = firstSnippet.id
-  }
+  selectFirstSnippet()
 
   searchQuery.value = ''
 }
@@ -147,11 +144,14 @@ watch(width, () => {
       <div class="pb-1 pl-1 text-[10px] font-bold uppercase">
         Library / Tags
       </div>
-      <div class="ml-5.5">
-        <div
+      <div class="">
+        <!-- <div
           v-for="i in libraryItems"
           :key="i.name"
-          class="flex items-center"
+          data-sidebar-item
+          :data-state="selectedLibrary === i.id ? 'selected' : null"
+          class="flex items-center data-[state=selected]:bg-list-selection"
+          @click="onLibraryItemClick(i.id)"
         >
           <component
             :is="i.icon"
@@ -160,7 +160,14 @@ watch(width, () => {
           <div class="ml-1 select-none">
             {{ i.name }}
           </div>
-        </div>
+        </div> -->
+        <LibraryItem
+          v-for="i in libraryItems"
+          :id="i.id"
+          :key="i.name"
+          :name="i.name"
+          :icon="i.icon"
+        />
       </div>
     </div>
     <div class="flex items-center justify-between pt-2 pl-1">

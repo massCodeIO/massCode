@@ -78,6 +78,45 @@ export interface SnippetsQuery {
             | (string | (string | (string | (string | (string | number)))))
           )
       );
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?:
+    | string
+    | (
+        | string
+        | (
+            | string
+            | (string | (string | (string | (string | (string | number)))))
+          )
+      );
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?:
+    | string
+    | (
+        | string
+        | (
+            | string
+            | (string | (string | (string | (string | (string | number)))))
+          )
+      );
+  /**
+   * @min 0
+   * @max 1
+   */
+  isInbox?:
+    | string
+    | (
+        | string
+        | (
+            | string
+            | (string | (string | (string | (string | (string | number)))))
+          )
+      );
 }
 
 export type SnippetsResponse = {
@@ -91,7 +130,7 @@ export type SnippetsResponse = {
   folder: {
     id: number;
     name: string;
-  };
+  } | null;
   contents: {
     id: number;
     label: string;
@@ -439,6 +478,54 @@ export class Api<
                 )
             );
         tagId?:
+          | string
+          | (
+              | string
+              | (
+                  | string
+                  | (
+                      | string
+                      | (string | (string | (string | (string | number))))
+                    )
+                )
+            );
+        /**
+         * @min 0
+         * @max 1
+         */
+        isFavorites?:
+          | string
+          | (
+              | string
+              | (
+                  | string
+                  | (
+                      | string
+                      | (string | (string | (string | (string | number))))
+                    )
+                )
+            );
+        /**
+         * @min 0
+         * @max 1
+         */
+        isDeleted?:
+          | string
+          | (
+              | string
+              | (
+                  | string
+                  | (
+                      | string
+                      | (string | (string | (string | (string | number))))
+                    )
+                )
+            );
+        /**
+         * @min 0
+         * @max 1
+         */
+        isInbox?:
           | string
           | (
               | string

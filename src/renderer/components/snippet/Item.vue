@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
 import { useApp } from '@/composables'
+import { store } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
 
@@ -22,6 +23,7 @@ const isHighlighted = computed(
 
 function onSnippetClick(id: number) {
   selectedSnippetId.value = id
+  store.app.set('selectedSnippetId', id)
   isFocused.value = true
 }
 

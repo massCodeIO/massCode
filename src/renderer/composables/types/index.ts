@@ -1,1 +1,6 @@
-export type LibraryFilter = 'all' | 'favorites' | 'inbox' | 'trash'
+export const LibraryFilter = {
+  All: 'all',
+  Favorites: 'favorites',
+  Inbox: 'inbox',
+  Trash: 'trash',
+} as const

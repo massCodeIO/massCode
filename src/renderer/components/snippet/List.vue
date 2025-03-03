@@ -1,15 +1,40 @@
 <script setup lang="ts">
+import type { SnippetsQuery } from '@/services/api/generated'
 import { useApp, useGutter, useSnippets } from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
-const { snippetListWidth, sidebarWidth, selectedFolderId } = useApp()
+const { snippetListWidth, sidebarWidth, selectedFolderId, selectedLibrary }
+  = useApp()
 const { snippets, snippetsBySearch, isSearch, getSnippets } = useSnippets()
 
-getSnippets({ folderId: selectedFolderId.value })
+async function initGetSnippets() {
+  const query: SnippetsQuery = {}
+
+  if (selectedFolderId.value) {
+    query.folderId = selectedFolderId.value
+  }
+  else if (selectedLibrary.value === LibraryFilter.Favorites) {
+    query.isFavorites = 1
+  }
+  else if (selectedLibrary.value === LibraryFilter.Trash) {
+    query.isDeleted = 1
+  }
+  else if (selectedLibrary.value === LibraryFilter.All) {
+    query.isDeleted = 0
+  }
+  else if (selectedLibrary.value === LibraryFilter.Inbox) {
+    query.isInbox = 1
+  }
+
+  await getSnippets(query)
+}
+
+initGetSnippets()
 
 const offsetWidth = computed(() => {
   return (
@@ -37,7 +62,7 @@ watch(width, () => {
   <div
     ref="listRef"
     data-snippets-list
-    class="relative flex flex-col h-screen px-1"
+    class="relative flex h-screen flex-col px-1"
   >
     <div>
       <SnippetHeader />

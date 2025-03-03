@@ -5,6 +5,9 @@ export interface AppStore {
   isAutoMigratedFromJson: boolean
   sidebarWidth: number
   snippetListWidth: number
+  selectedFolderId?: number
+  selectedSnippetId?: number
+  selectedLibrary?: string
 }
 
 export interface PreferencesStore {

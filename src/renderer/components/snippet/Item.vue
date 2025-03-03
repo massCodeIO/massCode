@@ -3,7 +3,6 @@ import type { SnippetsResponse } from '@/services/api/generated'
 import { useApp } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
-import { useSnippetsStore } from './composables'
 
 interface Props {
   snippet: SnippetsResponse[0]
@@ -11,14 +10,15 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedSnippetId } = useApp()
-const { highlightedId } = useSnippetsStore()
+const { selectedSnippetId, highlightedSnippetId } = useApp()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => selectedSnippetId.value === props.snippet.id)
-const isHighlighted = computed(() => highlightedId.value === props.snippet.id)
+const isHighlighted = computed(
+  () => highlightedSnippetId.value === props.snippet.id,
+)
 
 function onSnippetClick(id: number) {
   selectedSnippetId.value = id
@@ -26,12 +26,12 @@ function onSnippetClick(id: number) {
 }
 
 function onClickContextMenu() {
-  highlightedId.value = props.snippet.id
+  highlightedSnippetId.value = props.snippet.id
 }
 
 onClickOutside(snippetRef, () => {
   isFocused.value = false
-  highlightedId.value = undefined
+  highlightedSnippetId.value = undefined
 })
 </script>
 

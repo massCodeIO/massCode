@@ -6,6 +6,8 @@ const { store } = window.electron
 const libraryFilterSelected = ref<LibraryFilter>()
 const selectedFolderId = ref<number>(store.app.get('selectedFolderId'))
 const selectedSnippetId = ref<number>(store.app.get('selectedSnippetId'))
+const highlightedFolderId = ref<number>()
+const highlightedSnippetId = ref<number>()
 
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
@@ -18,6 +20,19 @@ function selectFolder(folderId: number) {
   store.app.set('selectedFolderId', folderId)
 }
 
+watch(
+  [highlightedFolderId, highlightedSnippetId],
+  ([newFolderId, newSnippetId], [oldFolderId, oldSnippetId]) => {
+    if (newFolderId !== oldFolderId && newFolderId !== undefined) {
+      highlightedSnippetId.value = undefined
+    }
+
+    if (newSnippetId !== oldSnippetId && newSnippetId !== undefined) {
+      highlightedFolderId.value = undefined
+    }
+  },
+)
+
 export function useApp() {
   return {
     libraryFilterSelected,
@@ -26,5 +41,7 @@ export function useApp() {
     sidebarWidth,
     snippetListWidth,
     selectFolder,
+    highlightedFolderId,
+    highlightedSnippetId,
   }
 }

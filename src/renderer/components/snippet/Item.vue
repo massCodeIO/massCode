@@ -3,6 +3,7 @@ import type { SnippetsResponse } from '@/services/api/generated'
 import { useApp } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
+import { useSnippetsStore } from './composables'
 
 interface Props {
   snippet: SnippetsResponse[0]
@@ -11,19 +12,26 @@ interface Props {
 const props = defineProps<Props>()
 
 const { selectedSnippetId } = useApp()
+const { highlightedId } = useSnippetsStore()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => selectedSnippetId.value === props.snippet.id)
+const isHighlighted = computed(() => highlightedId.value === props.snippet.id)
 
 function onSnippetClick(id: number) {
   selectedSnippetId.value = id
   isFocused.value = true
 }
 
+function onClickContextMenu() {
+  highlightedId.value = props.snippet.id
+}
+
 onClickOutside(snippetRef, () => {
   isFocused.value = false
+  highlightedId.value = undefined
 })
 </script>
 
@@ -31,12 +39,14 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="border-border not-first:border-t [&+.is-selected+div]:border-transparent"
+    class="border-border relative not-first:border-t [&+.is-selected+div]:border-transparent"
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
+      'is-highlighted': isHighlighted,
     }"
     @click="onSnippetClick(snippet.id)"
+    @contextmenu="onClickContextMenu"
   >
     <div class="flex flex-col p-2 select-none">
       <div class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -58,17 +68,25 @@ onClickOutside(snippetRef, () => {
 @reference "../../styles.css";
 [data-snippet-item] {
   &.is-selected {
-    // @apply bg-fg/10 rounded-md text-fg;
     @apply bg-list-selection text-list-selection-fg rounded-md;
     .meta {
       @apply text-list-selection-fg;
     }
   }
   &.is-focused {
-    // @apply text-white bg-primary rounded-md;
     @apply bg-list-focus text-list-focus-fg rounded-md;
     .meta {
       @apply text-list-focus-fg;
+    }
+  }
+  &.is-highlighted {
+    @apply outline-list-focus rounded-md outline-2 -outline-offset-2;
+    &.is-focused,
+    &.is-selected {
+      @apply bg-bg text-list-selection-fg;
+      .meta {
+        @apply text-list-selection-fg;
+      }
     }
   }
 }

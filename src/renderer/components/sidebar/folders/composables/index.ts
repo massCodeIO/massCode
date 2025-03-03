@@ -1,4 +1,4 @@
-import type { Node, Store } from './types'
+import type { Node, Store } from '../types'
 import { computed, reactive } from 'vue'
 
 export const store = reactive<Store>({})
@@ -32,3 +32,11 @@ export const isAllowed = computed(() => {
 
   return !isSameNode && !isChildrenNode
 })
+
+export function useFolders() {
+  return {
+    dragNodeChildrenIds,
+    isAllowed,
+    store,
+  }
+}

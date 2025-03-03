@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import type { Node } from './types'
-import FolderTreeNode from './FolderTreeNode.vue'
-import { folderTreeKeys } from './keys'
+import { treeKeys } from './keys'
+import TreeNode from './TreeNode.vue'
 
 interface Props {
   modelValue: Node[]
@@ -37,7 +37,7 @@ function toggleNode(node: Node) {
   return emit('toggleNode', node)
 }
 
-provide(folderTreeKeys, {
+provide(treeKeys, {
   clickNode,
   dragNode,
   toggleNode,
@@ -51,7 +51,7 @@ provide(folderTreeKeys, {
     data-folder-tree
     class="pt-1"
   >
-    <FolderTreeNode
+    <TreeNode
       v-for="(node, index) in modelValue"
       :key="node.id"
       :node="node"
@@ -70,6 +70,6 @@ provide(folderTreeKeys, {
           {{ node.name }}
         </template>
       </template>
-    </FolderTreeNode>
+    </TreeNode>
   </div>
 </template>

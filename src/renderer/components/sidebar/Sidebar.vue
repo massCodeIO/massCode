@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { Node } from '@/components/ui/folder-tree/types'
 import type { FoldersTreeResponse } from '@/services/api/generated'
+import type { Node } from '~/renderer/components/sidebar/folders/types'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { store } from '@/electron'
 import { api } from '@/services/api'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
+import Tree from './folders/Tree.vue'
 
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
@@ -140,10 +141,10 @@ watch(width, () => {
   <div
     ref="sidebarRef"
     data-sidebar
-    class="relative pt-[var(--title-bar-height)] flex flex-col h-screen px-1"
+    class="relative flex h-screen flex-col px-1 pt-[var(--title-bar-height)]"
   >
     <div class="flex-shrink-0">
-      <div class="uppercase font-bold text-[10px] pb-1 pl-1">
+      <div class="pb-1 pl-1 text-[10px] font-bold uppercase">
         Library / Tags
       </div>
       <div class="ml-5.5">
@@ -154,7 +155,7 @@ watch(width, () => {
         >
           <component
             :is="i.icon"
-            class="w-4 h-4 mr-0.5"
+            class="mr-0.5 h-4 w-4"
           />
           <div class="ml-1 select-none">
             {{ i.name }}
@@ -163,18 +164,18 @@ watch(width, () => {
       </div>
     </div>
     <div class="flex items-center justify-between pt-2 pl-1">
-      <div class="uppercase font-bold text-[10px]">
+      <div class="text-[10px] font-bold uppercase">
         Folders
       </div>
       <UiButton
         variant="icon"
         size="sm"
       >
-        <Plus class="w-4 h-4 text-text-muted" />
+        <Plus class="text-text-muted h-4 w-4" />
       </UiButton>
     </div>
     <div class="flex-grow overflow-auto">
-      <UiFolderTree
+      <Tree
         v-if="folders"
         v-model="folders"
         @click-node="onFolderClick"

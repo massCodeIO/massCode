@@ -3,9 +3,15 @@ import { useCssVar } from '@vueuse/core'
 
 const { store } = window.electron
 
-const libraryFilterSelected = ref<LibraryFilter>()
-const selectedFolderId = ref<number>(store.app.get('selectedFolderId'))
-const selectedSnippetId = ref<number>(store.app.get('selectedSnippetId'))
+const selectedLibrary = ref<
+  (typeof LibraryFilter)[keyof typeof LibraryFilter] | undefined
+>(
+    store.app.get(
+      'selectedLibrary',
+    ) as (typeof LibraryFilter)[keyof typeof LibraryFilter],
+    )
+const selectedFolderId = ref(store.app.get('selectedFolderId'))
+const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
 const highlightedFolderId = ref<number>()
 const highlightedSnippetId = ref<number>()
 
@@ -17,7 +23,9 @@ snippetListWidth.value = `${store.app.get('snippetListWidth')}px`
 
 function selectFolder(folderId: number) {
   selectedFolderId.value = folderId
+  selectedLibrary.value = undefined
   store.app.set('selectedFolderId', folderId)
+  store.app.delete('selectedLibrary')
 }
 
 watch(
@@ -35,7 +43,7 @@ watch(
 
 export function useApp() {
   return {
-    libraryFilterSelected,
+    selectedLibrary,
     selectedFolderId,
     selectedSnippetId,
     sidebarWidth,

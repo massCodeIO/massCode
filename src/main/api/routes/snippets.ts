@@ -13,14 +13,21 @@ app
   .get(
     '/',
     ({ query }) => {
-      const { search, order, folderId, tagId } = query
+      const {
+        search,
+        order,
+        folderId,
+        tagId,
+        isFavorites,
+        isDeleted,
+        isInbox,
+      } = query
       const searchQuery = search ? `%${query.search}%` : undefined
 
       const WHERE: any[] = []
       const ORDER = order || 'DESC'
       const params: any[] = []
 
-      // Добавляем условие для поиска
       if (searchQuery) {
         WHERE.push(`(
         unicode_lower(s.name) LIKE unicode_lower(?) OR
@@ -30,13 +37,14 @@ app
         params.push(searchQuery, searchQuery, searchQuery)
       }
 
-      // Добавляем условие для папки
       if (folderId) {
         WHERE.push('s.folderId = ?')
         params.push(folderId)
       }
+      else if (isInbox) {
+        WHERE.push('s.folderId IS NULL')
+      }
 
-      // Добавляем условие для тега
       if (tagId) {
         WHERE.push(
           'EXISTS (SELECT 1 FROM snippet_tags st2 WHERE st2.snippetId = s.id AND st2.tagId = ?)',
@@ -44,8 +52,16 @@ app
         params.push(tagId)
       }
 
-      // Всегда добавляем условие isDeleted
-      WHERE.push('s.isDeleted = 0')
+      if (isFavorites) {
+        WHERE.push('s.isFavorites = 1')
+      }
+
+      if (isDeleted) {
+        WHERE.push('s.isDeleted = 1')
+      }
+      else {
+        WHERE.push('s.isDeleted = 0')
+      }
 
       const whereCondition = WHERE.length ? `WHERE ${WHERE.join(' AND ')}` : ''
 

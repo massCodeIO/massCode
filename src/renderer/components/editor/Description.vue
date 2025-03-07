@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useSnippets, useSnippetUpdate } from '@/composables'
 
-const { selectedSnippet, updateSnippet } = useSnippets()
+const { selectedSnippet } = useSnippets()
+const { addToUpdateQueue } = useSnippetUpdate()
 
 const description = computed({
   get() {
     return selectedSnippet.value?.description || ''
   },
   set(v: string) {
-    updateSnippet(selectedSnippet.value!.id, {
+    addToUpdateQueue(selectedSnippet.value!.id, {
       name: selectedSnippet.value!.name,
       description: v,
       folderId: selectedSnippet.value!.folder?.id || null,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
-import { useEditor, useSnippets } from '@/composables'
+import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
 import { useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
@@ -26,11 +26,11 @@ interface Props {
 defineProps<Props>()
 
 const { settings, cursorPosition } = useEditor()
-const { selectedSnippetContent, updateSnippetContent, selectedSnippet }
-  = useSnippets()
+const { selectedSnippetContent, selectedSnippet } = useSnippets()
+
+const { addToUpdateContentQueue } = useSnippetUpdate()
 
 const isDark = useDark()
-
 let editor: CodeMirror.Editor | null = null
 
 const editorRef = ref()
@@ -70,7 +70,7 @@ async function init() {
     const updatedValue = JSON.stringify(e.getValue())
 
     if (initValue !== updatedValue) {
-      updateSnippetContent(
+      addToUpdateContentQueue(
         selectedSnippet.value!.id,
         selectedSnippetContent.value!.id,
         {

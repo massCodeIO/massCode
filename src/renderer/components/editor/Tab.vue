@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useSnippets, useSnippetUpdate } from '@/composables'
 
 interface Props {
   name: string
@@ -7,15 +7,15 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { updateSnippetContent, selectedSnippetContent, selectedSnippet }
-  = useSnippets()
+const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { addToUpdateContentQueue } = useSnippetUpdate()
 
 const name = computed({
   get() {
     return props.name
   },
   set(v: string) {
-    updateSnippetContent(
+    addToUpdateContentQueue(
       selectedSnippet.value!.id,
       selectedSnippetContent.value!.id,
       {

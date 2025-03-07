@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { Plus } from 'lucide-vue-next'
 
-const { selectedSnippet, updateSnippet } = useSnippets()
+const { selectedSnippet } = useSnippets()
 const { selectedSnippetContentIndex } = useApp()
+const { addToUpdateQueue } = useSnippetUpdate()
 
 const name = computed({
   get() {
     return selectedSnippet?.value?.name
   },
   set(v: string) {
-    updateSnippet(selectedSnippet.value!.id, {
+    addToUpdateQueue(selectedSnippet.value!.id, {
       name: v,
       description: selectedSnippet.value!.description,
       folderId: selectedSnippet.value!.folder?.id || null,

@@ -138,6 +138,7 @@ export type SnippetsResponse = {
     language: string;
   }[];
   isFavorites: number;
+  isDeleted: number;
   createdAt: number;
   updatedAt: number;
 }[];

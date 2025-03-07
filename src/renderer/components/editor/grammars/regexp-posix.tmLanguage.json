@@ -1,0 +1,237 @@
+{
+  "name": "Regular Expression (POSIX - Extended)",
+  "scopeName": "source.regexp.posix",
+  "patterns": [
+    {
+      "include": "#main"
+    }
+  ],
+  "repository": {
+    "main": {
+      "patterns": [
+        {
+          "include": "source.regexp#alternation"
+        },
+        {
+          "include": "source.regexp#wildcard"
+        },
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "#brackets"
+        },
+        {
+          "include": "#bound"
+        },
+        {
+          "include": "#anchor"
+        },
+        {
+          "include": "#group"
+        }
+      ]
+    },
+    "anchor": {
+      "match": "\\^|\\$",
+      "captures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "source.regexp#anchor"
+            }
+          ]
+        }
+      }
+    },
+    "bound": {
+      "patterns": [
+        {
+          "match": "\\\\{,"
+        },
+        {
+          "include": "source.regexp#quantifier"
+        }
+      ]
+    },
+    "brackets": {
+      "patterns": [
+        {
+          "name": "meta.character-class.set.empty.regexp",
+          "match": "(\\[)(\\])",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.character-class.set.begin.regexp"
+            },
+            "2": {
+              "name": "punctuation.definition.character-class.set.end.regexp"
+            }
+          }
+        },
+        {
+          "name": "meta.character-class.set.regexp",
+          "begin": "\\[",
+          "end": "(?!\\G)-?\\]",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.character-class.set.begin.regexp"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.character-class.set.end.regexp"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\G(\\^)(?:-|\\])?",
+              "captures": {
+                "1": {
+                  "patterns": [
+                    {
+                      "include": "source.regexp#classInnards"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#charRange"
+            },
+            {
+              "include": "#localeClasses"
+            }
+          ]
+        }
+      ]
+    },
+    "charClass": {
+      "name": "constant.language.$2-char.character-class.regexp.posix",
+      "match": "(\\[:)(\\^?)(\\w+)(:\\])",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.character-class.set.begin.regexp"
+        },
+        "2": {
+          "name": "keyword.operator.logical.not.regexp"
+        },
+        "3": {
+          "name": "support.constant.posix-class.regexp"
+        },
+        "4": {
+          "name": "punctuation.definition.character-class.set.end.regexp"
+        }
+      }
+    },
+    "charRange": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.range.ambiguous-endpoint.regexp",
+          "match": "(?<=[^-])-[^\\[\\]\\\\]"
+        },
+        {
+          "name": "(?:[^\\]\\\\]|(?<=\\]))(-)(?:[^\\[\\]\\\\]|(?=[^\\\\[\\]\\\\]))",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.range.dash.regexp"
+            }
+          }
+        }
+      ]
+    },
+    "collatingElement": {
+      "name": "constant.language.collating-element.regexp.posix",
+      "match": "(\\[\\.)(.*?)(\\.\\])",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.collating-element.set.begin.regexp"
+        },
+        "2": {
+          "name": "storage.type.var.regexp"
+        },
+        "3": {
+          "name": "punctuation.definition.collating-element.set.end.regexp"
+        }
+      }
+    },
+    "equivalenceClass": {
+      "name": "constant.language.posix.equivalence-class.regexp",
+      "match": "(\\[=)(.*?)(=\\])",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.class.begin.regexp"
+        },
+        "2": {
+          "name": "storage.type.class.regexp"
+        },
+        "3": {
+          "name": "punctuation.definition.class.end.regexp"
+        }
+      }
+    },
+    "escape": {
+      "patterns": [
+        {
+          "include": "#escapeMeta"
+        },
+        {
+          "include": "#escapeOther"
+        }
+      ]
+    },
+    "escapeMeta": {
+      "name": "constant.character.escape.literal-metacharacter.regexp",
+      "match": "\\\\[.^\\[$\\(\\)|*+?{\\\\]"
+    },
+    "escapeOther": {
+      "name": "constant.character.escape.misc.regexp",
+      "match": "\\\\."
+    },
+    "group": {
+      "patterns": [
+        {
+          "name": "meta.group.empty.regexp",
+          "match": "(\\()(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.group.begin.regexp"
+            },
+            "2": {
+              "name": "punctuation.definition.group.end.regexp"
+            }
+          }
+        },
+        {
+          "name": "meta.group.regexp",
+          "begin": "\\(",
+          "end": "\\)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.group.begin.regexp"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.group.end.regexp"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#main"
+            }
+          ]
+        }
+      ]
+    },
+    "localeClasses": {
+      "patterns": [
+        {
+          "include": "#collatingElement"
+        },
+        {
+          "include": "#equivalenceClass"
+        }
+      ]
+    }
+  }
+}

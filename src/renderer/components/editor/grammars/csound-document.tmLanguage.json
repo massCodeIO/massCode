@@ -1,0 +1,177 @@
+{
+  "name": "Csound Document",
+  "scopeName": "source.csound-document",
+  "fileTypes": ["csd"],
+  "firstLineMatch": "<CsoundSynthesi[sz]er>",
+  "patterns": [
+    {
+      "begin": "(<)(CsoundSynthesi[sz]er)(>)",
+      "end": "(</)(CsoundSynthesi[sz]er)(>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.csound-document"
+        },
+        "2": {
+          "name": "entity.name.tag.csound-document"
+        },
+        "3": {
+          "name": "punctuation.definition.tag.end.csound-document"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.csound-document"
+        },
+        "2": {
+          "name": "entity.name.tag.csound-document"
+        },
+        "3": {
+          "name": "punctuation.definition.tag.end.csound-document"
+        }
+      },
+      "patterns": [
+        {
+          "begin": "(<)(CsOptions)(>)",
+          "end": "(</)(CsOptions)(>)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.csound#comments"
+            }
+          ]
+        },
+        {
+          "name": "meta.orchestra.csound-document",
+          "begin": "(<)(CsInstruments)(>)",
+          "end": "(</)(CsInstruments)(>)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "contentName": "source.csound.embedded.csound-document",
+          "patterns": [
+            {
+              "include": "source.csound"
+            }
+          ]
+        },
+        {
+          "name": "meta.score.csound-document",
+          "begin": "(<)(CsScore)(>)",
+          "end": "(</)(CsScore)(>)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            },
+            "3": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "contentName": "source.csound-score.embedded.csound-document",
+          "patterns": [
+            {
+              "include": "source.csound-score"
+            }
+          ]
+        },
+        {
+          "name": "meta.html.csound-document",
+          "begin": "(?i)(?=<html)",
+          "end": "(?i)(?<=</html>)",
+          "patterns": [
+            {
+              "include": "text.html.basic"
+            }
+          ]
+        },
+        {
+          "include": "#tags"
+        }
+      ]
+    },
+    {
+      "include": "#tags"
+    }
+  ],
+  "repository": {
+    "tags": {
+      "patterns": [
+        {
+          "begin": "(</?)([\\w:-]+)",
+          "end": ">",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.tag.begin.csound-document"
+            },
+            "2": {
+              "name": "entity.name.tag.csound-document"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.tag.end.csound-document"
+            }
+          },
+          "patterns": [
+            {
+              "include": "text.xml#tagStuff"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "foldingStartMarker": "^\\s*(editor|for|if|form|procedure|proc|repeat|while)(?=\\s)",
+  "foldingStopMarker": "^\\s*(endeditor|endfor|elsif|else|endif|endform|endproc|endwhile|until)(?=\\s*)",
+  "fileTypes": [
+    "praat",
+    "script",
+    "psc",
+    "praat_script",
+    "praatscript",
+    "praat-script",
+    "praat-batch",
+    "proc"
+  ],
+  "uuid": "ca03e751-04ef-4330-9a6b-9b99aae1c418",
+  "patterns": [
+    { "match": "(^|\\s)(#|;)(.*)$", "name": "comment.line.number-sign.praat" },
+    {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.praat" }
+      },
+      "end": "\"",
+      "name": "string.quoted.double.praat",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.praat" }
+      }
+    },
+    {
+      "begin": "(\\:|\\s|\\(|\\.)'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.praat" }
+      },
+      "end": "'",
+      "name": "string.quoted.single.praat",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.praat" }
+      }
+    },
+    {
+      "match": "\\b(([0-9]+(\\.[0-9]+)?e[0-9]+(\\.[0-9]+)?(?=($|\\s+|\\b|;|,|\\)){1,1})|[0-9]+(\\.[0-9]+)?%?(?=($|\\s+|;|,|\\)){1,1})))",
+      "name": "constant.numeric.praat"
+    },
+    {
+      "begin": "^\\s*(procedure|proc)\\s+(?=[a-zA-Z][A-Za-z0-9_]*(\\s*:|\\s*\\(|$))",
+      "end": "($|\\))",
+      "patterns": [
+        {
+          "begin": "(?=[a-zA-Z][a-zA-z_])",
+          "end": "(?![A-Za-z0-9_])",
+          "patterns": [{ "include": "#entity_name_function" }],
+          "contentName": "entity.name.function.praat"
+        },
+        {
+          "begin": "(:|\\()",
+          "end": "($|\\))",
+          "patterns": [
+            {
+              "match": "\\b([a-z][a-zA-Z0-9_\\$]*)\\s*((?=,)|(?=$)|(?=\\)))",
+              "captures": {
+                "1": { "name": "variable.parameter.function.praat" }
+              }
+            }
+          ],
+          "contentName": "meta.function.parameters.praat",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.parameters.begin.praat" }
+          }
+        }
+      ],
+      "name": "meta.function.praat",
+      "beginCaptures": { "1": { "name": "keyword.control.praat" } }
+    },
+    {
+      "match": "(^\\s*call)|(^\\s*@[a-zA-Z0-9_]*(?![a-zA-Z0-9_]))",
+      "name": "entity.name.function.praat"
+    },
+    {
+      "match": "(^|\\s+)(assert|editor|elif|else|elsif|endeditor|endfor|endform|endif|endproc|endwhile|form|for|goto|if|label|nocheck|noprogress|nowarn|proc|procedure|repeat|then(?=.*fi)|until|warn|while)(?=\\s|$|:)",
+      "name": "keyword.control.praat"
+    },
+    {
+      "match": "(\\s+)(from(?=.*to)(?=\\s)|to(?=\\s)|fi($|\\s+))",
+      "name": "keyword.control.praat"
+    },
+    {
+      "match": "^\\s*(boolean|button|choice|comment|demo|integer|natural|option|optionmenu|positive|real|sentence|text|word)(?=\\s)",
+      "name": "support.class.praat"
+    },
+    {
+      "match": "\\s+(Activation|AffineTransform|AmplitudeTier|Art|Artword|Autosegment|BarkFilter|Categories|CCA|Cepstrum|Cepstrumc|ChebyshevSeries|ClassificationTable|Cochleagram|Collection|Configuration|Confusion|ContingencyTable|Corpus|Correlation|Covariance|CrossCorrelationTable|CrossCorrelationTables|Diagonalizer|Discriminant|Dissimilarity|Distance|Distributions|DTW|DurationTier|EEG|Eigen|ERP|ERPTier|Excitation|Excitations|ExperimentMFC|FeatureWeights|FFNet|Formant|FormantFilter|FormantGrid|FormantPoint|FormantTier|GaussianMixture|Harmonicity|HMM|HMM_Observation|HMM_ObservationSequence|HMM_State|HMM_StateSequence|Index|Intensity|IntensityTier|IntervalTier|ISpline|KlattGrid|KlattTable|KNN|Label|LegendreSeries|LFCC|LinearRegression|LogisticRegression|LongSound|LPC|Ltas|Manipulation|ManPages|Matrix|MelFilter|MFCC|MixingMatrix|Movie|MSpline|Network|OTGrammar|OTHistory|OTMulti|PairDistribution|ParamCurve|Pattern|PCA|Permutation|Photo|Pitch|PitchTier|PointProcess|Polygon|Polynomial|Procrustes|RealPoint|RealTier|ResultsMFC|Roots|Salience|ScalarProduct|Similarity|SimpleString|SortedSetOfString|Sound|Speaker|Spectrogram|Spectrum|SpectrumTier|SpeechSynthesizer|SpellingChecker|SPINET|SSCP|Strings|StringsIndex|SVD|Table|TableOfReal|TextGrid|TextInterval|TextPoint|TextTier|Tier|Transition|VocalTract|Weight|WordList)(?=\\s+)",
+      "name": "constant.other.placeholder.praat"
+    },
+    {
+      "match": "^\\s*(minus|plus|(select all|select)|editor)(?=\\s|$)",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "^\\s*(sendsocket|system|system_nocheck)(?=\\s)",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "^\\s*(fileappend|fileappendinfo|filedelete|include)(?=\\s)",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "^\\s*(clearinfo|echo|execute|exitScript|exit|pauseScript|pause|printline|print|sendpraat|stopwatch)(?=\\s|$|:)",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "(\\s|^\\s*)(Add|Append|Arrow|Autocorrelate|Axes|Change|Close|Colour|Combine|Compute|Concatenate|Convert|Convolve|Copy|Count|Courier|Create|Cross|Dashed|De|Deepen|Dotted|Down|Draw|Duplicate|Edit|Erase|Extend|Extract|Fade|Filter|Filtering|Font|Formula|Get|Helvetica|Horizontal|Hum|Info|Insert|Inspect|Interpolate|Is|Kill|Lengthen|Line|List|Logarithmic|Marks|Merge|Move|Multiply|New|One|Open|Override|Paint|Palatino|Picture|Pitch|Plain|Play|PostScript|Pre|Randomize|Read|Record|Remove|Rename|Replace|Resample|Reverse|Save|Scale|Scatter|Select|Set|Shift|Show|Smooth|Solid|Sort|Speckle|Subtract|Text|Times|To|Vertical|View & Edit|View|Write|Zoom)(\\s*.*(?=:\\s+)|\\s*.*(?=\\.{3}\\s+)|(\\s*)([a-zA-Z ]*)(?!'))",
+      "name": "support.class.praat"
+    },
+    {
+      "match": "\\s*(Black|black|Blue|blue|Cyan|cyan|Green|green|Grey|grey|Lime|lime|Magenta|magenta|Maroon|maroon|Navy|navy|Olive|olive|Pink|pink|Purple|purple|Red|red|Silver|silver|Teal|teal|White|white|Yellow|yellow)(?=\\s*$)",
+      "name": "constant.other.placeholder.praat"
+    },
+    {
+      "match": "(!=|&|>|><|>=|<|<=|\\*|\\*=|\\+|\\+=|-|-=|\\/|\\/=|=|==|\\^|\\|)(?=.)",
+      "name": "keyword.operator.praat"
+    },
+    {
+      "match": "\\s+(and|or|not)(?=.*(!|!=|>|><|>=|<|<=|==))",
+      "name": "keyword.operator.praat"
+    },
+    { "match": "\\s+(div|mod)\\s+", "name": "keyword.operator.praat" },
+    {
+      "match": "(^|\\s+)(abs|actanh|appendFileLine|appendFile|appendInfoLine|appendInfo|arccosh|arccos|arcsinh|arcsin|arctan2|arctan|barkToHerz|beginPause|besselI|besselK|beta|binomialP|binomialQ|ceiling|chiSquareP|chiSquareQ|chooseDirectory\\$|chooseReadFile\\$|chooseWriteFile\\$|cosh|cos|createDirectory|date\\$|deleteFile|demoClickedIn|demoClicked|demoCommandKeyPressed|demoExtraControlKeyPressed|demoInput|demoKey\\$|demoKeyPressed|demoOptionKeyPressed|demoShiftKeyPressed|demoShow|demoWaitForInput|demoWindowTitle|demoX|demoY|differenceLimensToPhon|endPause|endsWith|environment\\$|erbToHertz|erb|erfc|erf|exp|extractLine\\$|extractNumber|extractWord\\$|fisherP|fisherQ|fixed\\$|floor|gaussP|gaussQ|hertzToBark|hertzToErb|hertzToMel|hertzToSemitones|imax|imin|index_regex|index|invBinomialP|invBinomialQ|invChiSquareQ|invFisherQ|invGaussQ|invSigmoid|invStudentQ|left\\$|length|ln|lnGamma|log10|log2|max|melToHertz|mid\\$|min|numberOfSelected|number|percent\\$|phonToDifferenceLimens|randomGauss|randomInteger|randomPoisson|randomUniform|replace\\$|replace_regex\\$|right\\$|rindex_regex|rindex|round|selected\\$|selected|semitonesToHerz|sigmoid|sinc|sin|sincpi|sinh|sqrt|startsWith|string\\$|studentP|studentQ|tanh|tan|variableExists|writeFileLine|writeFile|writeInfoLine|writeInfo)((?=\\s*:)|(?=\\s*\\())",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "(Bark|Bars|Bartlett|Bottom|bottom|Centre|centre|Courier|Cubic|dB|energy|Gaussian|Half|half|Hamming|Hanning|Helvetica|Hertz|Kaiser2|Left|left|Linear|Nearest|no|None|Palatino|Parabolic|Rectangular|rectangular|Right|right|Semitones|Sinc|Sinc70|Sinc700|sones|Square|Times|Top|top|Welch|yes)",
+      "name": "meta.function.parameters.praat"
+    },
+    {
+      "match": "(^|\\s*)(defaultDirectory\\$|homeDirectory\\$|macintosh|newline\\$|pi|praatVersion\\$|praatVersion|preferencesDirectory\\$|shellDirectory\\$|tab\\$|temporaryDirectory\\$|undefined|unix|windows)(\\s*(?=\\+|,)|$)",
+      "name": "support.function.builtin.praat"
+    },
+    {
+      "match": "(^|\\s*)(exitScript|minusObject|plusObject|removeObject|runScript|selectObject)((?=:)|(?=\\())",
+      "name": "support.function.builtin.praat"
+    }
+  ],
+  "name": "Praat",
+  "scopeName": "source.praat"
+}

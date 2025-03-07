@@ -4,14 +4,24 @@ import { cn } from '@/utils'
 import { X } from 'lucide-vue-next'
 import { variants } from './variants'
 
+defineOptions({
+  inheritAttrs: false,
+})
+
+const props = withDefaults(defineProps<Props>(), {
+  type: 'text',
+})
+
+const attrs = useAttrs()
+
 interface Props {
   variant?: Variants['variant']
   class?: string
   placeholder?: string
   clearable?: boolean
+  type?: 'text' | 'number' | 'textarea'
 }
 
-const props = defineProps<Props>()
 const model = defineModel<string>()
 
 function clear() {
@@ -22,22 +32,33 @@ function clear() {
 <template>
   <div class="relative flex">
     <input
+      v-if="type !== 'textarea'"
       v-model="model"
       :class="[
         cn(variants({ variant }), props.class),
         { 'pr-9': clearable && model },
       ]"
       :placeholder="placeholder"
-      type="text"
+      :type="type"
+      v-bind="attrs"
     >
+    <textarea
+      v-else
+      v-model="model"
+      v-bind="$attrs"
+      :class="[
+        cn(variants({ variant }), props.class),
+        { 'pr-9': clearable && model },
+      ]"
+    />
     <UiButton
-      v-if="clearable && model"
-      class="absolute right-2 top-1/2 -translate-y-1/2"
+      v-if="clearable && model && type !== 'textarea'"
+      class="absolute top-1/2 right-2 -translate-y-1/2"
       variant="icon"
       size="sm"
       @click="clear"
     >
-      <X class="w-3 h-3" />
+      <X class="h-3 w-3" />
     </UiButton>
   </div>
 </template>

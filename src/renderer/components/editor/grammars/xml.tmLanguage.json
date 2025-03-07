@@ -1,0 +1,203 @@
+{
+  "fileTypes": ["xml", "xsd", "tld", "jsp", "pt", "cpt", "dtml", "rss", "opml"],
+  "repository": {
+    "entity": {
+      "match": "(&)([:a-zA-Z_][:a-zA-Z0-9_.-]*|#[0-9]+|#x[0-9a-fA-F]+)(;)",
+      "name": "constant.character.entity.xml",
+      "captures": {
+        "1": { "name": "punctuation.definition.constant.xml" },
+        "3": { "name": "punctuation.definition.constant.xml" }
+      }
+    },
+    "parameterEntity": {
+      "match": "(%)([:a-zA-Z_][:a-zA-Z0-9_.-]*)(;)",
+      "name": "constant.character.parameter-entity.xml",
+      "captures": {
+        "1": { "name": "punctuation.definition.constant.xml" },
+        "3": { "name": "punctuation.definition.constant.xml" }
+      }
+    },
+    "tagStuff": {
+      "patterns": [
+        {
+          "match": " (?:([-_a-zA-Z0-9]+)((:)))?([-_a-zA-Z0-9]+)=",
+          "captures": {
+            "3": { "name": "punctuation.separator.namespace.xml" },
+            "1": { "name": "entity.other.attribute-name.namespace.xml" },
+            "4": { "name": "entity.other.attribute-name.localname.xml" },
+            "2": { "name": "entity.other.attribute-name.xml" }
+          }
+        },
+        { "include": "#doublequotedString" },
+        { "include": "#singlequotedString" }
+      ]
+    },
+    "bare-ampersand": {
+      "match": "&",
+      "name": "invalid.illegal.bad-ampersand.xml"
+    },
+    "singlequotedString": {
+      "begin": "'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.xml" }
+      },
+      "end": "'",
+      "patterns": [{ "include": "#entity" }, { "include": "#bare-ampersand" }],
+      "name": "string.quoted.single.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.xml" }
+      }
+    },
+    "doublequotedString": {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.xml" }
+      },
+      "end": "\"",
+      "patterns": [{ "include": "#entity" }, { "include": "#bare-ampersand" }],
+      "name": "string.quoted.double.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.xml" }
+      }
+    },
+    "internalSubset": {
+      "begin": "(\\[)",
+      "end": "(\\])",
+      "patterns": [
+        { "include": "#EntityDecl" },
+        { "include": "#parameterEntity" }
+      ],
+      "name": "meta.internalsubset.xml",
+      "captures": { "1": { "name": "punctuation.definition.constant.xml" } }
+    },
+    "EntityDecl": {
+      "begin": "(<!)(ENTITY)\\s+(%\\s+)?([:a-zA-Z_][:a-zA-Z0-9_.-]*)(\\s+(?:SYSTEM|PUBLIC)\\s+)?",
+      "end": "(>)",
+      "patterns": [
+        { "include": "#doublequotedString" },
+        { "include": "#singlequotedString" }
+      ],
+      "captures": {
+        "3": { "name": "punctuation.definition.entity.xml" },
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "4": { "name": "variable.language.entity.xml" },
+        "2": { "name": "keyword.other.entity.xml" },
+        "5": { "name": "keyword.other.entitytype.xml" }
+      }
+    }
+  },
+  "keyEquivalent": "^~X",
+  "uuid": "D3C4E6DA-6B1C-11D9-8CC2-000D93589AF6",
+  "patterns": [
+    {
+      "begin": "(<\\?)\\s*([-_a-zA-Z0-9]+)",
+      "end": "(\\?>)",
+      "patterns": [
+        { "match": " ([a-zA-Z-]+)", "name": "entity.other.attribute-name.xml" },
+        { "include": "#doublequotedString" },
+        { "include": "#singlequotedString" }
+      ],
+      "name": "meta.tag.metadata.processing.xml",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "2": { "name": "entity.name.tag.xml" }
+      }
+    },
+    {
+      "begin": "(<!)(DOCTYPE)\\s+([:a-zA-Z_][:a-zA-Z0-9_.-]*)",
+      "end": "\\s*(>)",
+      "patterns": [{ "include": "#internalSubset" }],
+      "name": "meta.tag.metadata.doctype.xml",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "2": { "name": "entity.name.tag.xml" },
+        "3": { "name": "entity.other.attribute-name.documentroot.xml" }
+      }
+    },
+    {
+      "begin": "<[!%]--",
+      "end": "--%?>",
+      "name": "comment.block.xml",
+      "captures": { "0": { "name": "punctuation.definition.comment.xml" } }
+    },
+    {
+      "begin": "(<)((?:([-_a-zA-Z0-9]+)((:)))?([-_a-zA-Z0-9:]+))(?=(\\s[^>]*)?></\\2>)",
+      "endCaptures": {
+        "7": { "name": "punctuation.definition.tag.xml" },
+        "3": { "name": "entity.name.tag.namespace.xml" },
+        "4": { "name": "entity.name.tag.xml" },
+        "5": { "name": "punctuation.separator.namespace.xml" },
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "6": { "name": "entity.name.tag.localname.xml" },
+        "2": { "name": "meta.scope.between-tag-pair.xml" }
+      },
+      "end": "(>(<))/(?:([-_a-zA-Z0-9]+)((:)))?([-_a-zA-Z0-9:]+)(>)",
+      "patterns": [{ "include": "#tagStuff" }],
+      "name": "meta.tag.no-content.xml",
+      "beginCaptures": {
+        "3": { "name": "entity.name.tag.namespace.xml" },
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "6": { "name": "entity.name.tag.localname.xml" },
+        "4": { "name": "entity.name.tag.xml" },
+        "5": { "name": "punctuation.separator.namespace.xml" }
+      }
+    },
+    {
+      "begin": "(</?)(?:([-_a-zA-Z0-9]+)((:)))?([-_a-zA-Z0-9:]+)",
+      "end": "(/?>)",
+      "patterns": [{ "include": "#tagStuff" }],
+      "name": "meta.tag.xml",
+      "captures": {
+        "3": { "name": "entity.name.tag.xml" },
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "4": { "name": "punctuation.separator.namespace.xml" },
+        "2": { "name": "entity.name.tag.namespace.xml" },
+        "5": { "name": "entity.name.tag.localname.xml" }
+      }
+    },
+    { "include": "#entity" },
+    { "include": "#bare-ampersand" },
+    {
+      "begin": "<%@",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.end.xml" }
+      },
+      "end": "%>",
+      "patterns": [
+        {
+          "match": "page|include|taglib",
+          "name": "keyword.other.page-props.xml"
+        }
+      ],
+      "name": "source.java-props.embedded.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.embedded.begin.xml" }
+      }
+    },
+    {
+      "begin": "<%[!=]?(?!--)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.end.xml" }
+      },
+      "end": "(?!--)%>",
+      "patterns": [{ "include": "source.java" }],
+      "name": "source.java.embedded.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.embedded.begin.xml" }
+      }
+    },
+    {
+      "begin": "<!\\[CDATA\\[",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.xml" }
+      },
+      "end": "]]>",
+      "name": "string.unquoted.cdata.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.xml" }
+      }
+    }
+  ],
+  "name": "XML",
+  "scopeName": "text.xml"
+}

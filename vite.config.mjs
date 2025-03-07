@@ -35,4 +35,8 @@ export default defineConfig({
       '~': rootSrc,
     },
   },
+  define: {
+    'process.env': {},
+    'process': {},
+  },
 })

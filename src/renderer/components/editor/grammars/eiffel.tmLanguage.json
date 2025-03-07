@@ -1,0 +1,84 @@
+{
+  "fileTypes": ["e"],
+  "repository": {
+    "number": { "match": "[0-9]+" },
+    "variable": { "match": "[a-zA-Z0-9_]+" }
+  },
+  "keyEquivalent": "^~E",
+  "uuid": "34672373-DED9-45B8-AF7E-2E4B6C3D6B76",
+  "patterns": [
+    {
+      "begin": "(^[ \\t]+)?(?=--)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "--",
+          "end": "\\n",
+          "name": "comment.line.double-dash.eiffel",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.eiffel" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.eiffel" }
+      }
+    },
+    {
+      "match": "\\b(Indexing|indexing|deferred|expanded|class|inherit|rename|as|export|undefine|redefine|select|all|create|creation|feature|prefix|infix|separate|frozen|obsolete|local|is|unique|do|once|external|alias|require|ensure|invariant|variant|rescue|retry|like|check|if|else|elseif|then|inspect|when|from|loop|until|debug|not|or|and|xor|implies|old|end)\\b",
+      "name": "keyword.control.eiffel"
+    },
+    { "match": "[a-zA-Z_]+", "name": "variable.other.eiffel" },
+    {
+      "match": "\\b(True|true|False|false|Void|void|Result|result)\\b",
+      "name": "constant.language.eiffel"
+    },
+    { "begin": "feature", "end": "end", "name": "meta.features.eiffel" },
+    {
+      "begin": "(do|once)",
+      "end": "(ensure|end)",
+      "name": "meta.effective_routine_body.eiffel"
+    },
+    { "begin": "rescue", "end": "end", "name": "meta.rescue.eiffel" },
+    {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.eiffel" }
+      },
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.eiffel" }
+      ],
+      "name": "string.quoted.double.eiffel",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.eiffel" }
+      }
+    },
+    { "match": "[0-9]+", "name": "constant.numeric.eiffel" },
+    { "match": "\\b(deferred|expanded)\\b", "name": "storage.modifier.eiffel" },
+    {
+      "begin": "^\\s*\n\t\t\t\t\t((?:\\b(deferred|expanded)\\b\\s*)*) # modifier\n\t\t\t\t\t(class)\\s+\n\t\t\t\t\t(\\w+)\\s* # identifier",
+      "end": "(?=end)",
+      "patterns": [
+        {
+          "begin": "\\b(extends)\\b\\s+",
+          "end": "(?={|implements)",
+          "patterns": [{ "include": "#all-types" }],
+          "name": "meta.definition.class.extends.java",
+          "captures": { "1": { "name": "storage.modifier.java" } }
+        },
+        {
+          "begin": "\\b(implements)\\b\\s+",
+          "end": "(?={|extends)",
+          "patterns": [{ "include": "#all-types" }],
+          "name": "meta.definition.class.implements.java",
+          "captures": { "1": { "name": "storage.modifier.java" } }
+        }
+      ],
+      "name": "meta.definition.class.eiffel",
+      "captures": { "1": { "name": "storage.modifier.eiffel" } }
+    }
+  ],
+  "name": "Eiffel",
+  "scopeName": "source.eiffel"
+}

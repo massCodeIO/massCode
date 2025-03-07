@@ -1,0 +1,59 @@
+{
+  "fileTypes": ["xsl", "xslt"],
+  "repository": {
+    "doublequotedString": {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.xml" }
+      },
+      "end": "\"",
+      "name": "string.quoted.double.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.xml" }
+      }
+    },
+    "singlequotedString": {
+      "begin": "'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.xml" }
+      },
+      "end": "'",
+      "name": "string.quoted.single.xml",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.xml" }
+      }
+    }
+  },
+  "keyEquivalent": "^~X",
+  "uuid": "DB8033A1-6D8E-4D80-B8A2-8768AAC6125D",
+  "patterns": [
+    {
+      "begin": "(<)(xsl)((:))(template)",
+      "end": "(>)",
+      "patterns": [
+        {
+          "match": " (?:([-_a-zA-Z0-9]+)((:)))?([a-zA-Z-]+)",
+          "captures": {
+            "3": { "name": "punctuation.separator.namespace.xml" },
+            "1": { "name": "entity.other.attribute-name.namespace.xml" },
+            "4": { "name": "entity.other.attribute-name.localname.xml" },
+            "2": { "name": "entity.other.attribute-name.xml" }
+          }
+        },
+        { "include": "#doublequotedString" },
+        { "include": "#singlequotedString" }
+      ],
+      "name": "meta.tag.xml.template",
+      "captures": {
+        "3": { "name": "entity.name.tag.xml" },
+        "1": { "name": "punctuation.definition.tag.xml" },
+        "4": { "name": "punctuation.separator.namespace.xml" },
+        "2": { "name": "entity.name.tag.namespace.xml" },
+        "5": { "name": "entity.name.tag.localname.xml" }
+      }
+    },
+    { "include": "text.xml" }
+  ],
+  "name": "XSL",
+  "scopeName": "text.xml.xsl"
+}

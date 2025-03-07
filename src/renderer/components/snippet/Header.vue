@@ -27,9 +27,9 @@ watch(searchQuery, () => {
 </script>
 
 <template>
-  <div class="mt-5 mb-2">
+  <div class="border-border mt-[var(--title-bar-height)] mb-2 border-b">
     <div class="flex items-center">
-      <Search class="w-4 h-4 text-text-muted ml-1" />
+      <Search class="text-text-muted ml-1 h-4 w-4" />
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"
@@ -43,7 +43,7 @@ watch(searchQuery, () => {
         size="sm"
         @click="clear"
       >
-        <X class="w-4 h-4 text-text-muted" />
+        <X class="text-text-muted h-4 w-4" />
       </UiButton>
       <UiButton
         v-else
@@ -51,7 +51,7 @@ watch(searchQuery, () => {
         size="sm"
         @click="clear"
       >
-        <Plus class="w-4 h-4 text-text-muted" />
+        <Plus class="text-text-muted h-4 w-4" />
       </UiButton>
     </div>
   </div>

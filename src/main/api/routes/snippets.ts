@@ -72,6 +72,7 @@ app
           s.name,
           s.description,
           s.isFavorites,
+          s.isDeleted,
           s.createdAt,
           s.updatedAt,
           CASE 
@@ -108,6 +109,7 @@ app
         name,
         description,
         isFavorites,
+        isDeleted,
         folder,
         tags,
         contents,

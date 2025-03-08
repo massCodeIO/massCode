@@ -20,6 +20,7 @@ interface Props {
   placeholder?: string
   clearable?: boolean
   type?: 'text' | 'number' | 'textarea'
+  focus?: boolean
 }
 
 const model = defineModel<string>()
@@ -27,12 +28,23 @@ const model = defineModel<string>()
 function clear() {
   model.value = ''
 }
+
+const inputRef = ref<HTMLInputElement>()
+
+watchEffect(() => {
+  if (props.focus) {
+    nextTick(() => {
+      inputRef.value?.focus()
+    })
+  }
+})
 </script>
 
 <template>
   <div class="relative flex">
     <input
       v-if="type !== 'textarea'"
+      ref="inputRef"
       v-model="model"
       :class="[
         cn(variants({ variant }), props.class),
@@ -44,6 +56,7 @@ function clear() {
     >
     <textarea
       v-else
+      ref="inputRef"
       v-model="model"
       v-bind="$attrs"
       :class="[

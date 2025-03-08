@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
-import { Plus } from 'lucide-vue-next'
+import { Plus, Type } from 'lucide-vue-next'
 
 const { selectedSnippet } = useSnippets()
 const { selectedSnippetContentIndex } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
+
+const isShowDescription = ref(false)
 
 const name = computed({
   get() {
@@ -25,7 +27,7 @@ const name = computed({
 <template>
   <div data-editor-header>
     <div
-      class="_pb-2 border-border grid grid-cols-[1fr_auto] items-center border-b px-2"
+      class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2"
     >
       <div class="min-w-0 truncate">
         <UiInput
@@ -34,8 +36,18 @@ const name = computed({
           class="w-full px-0"
         />
       </div>
-      <div class="ml-2">
-        <UiButton variant="icon">
+      <div class="ml-2 flex">
+        <UiButton
+          variant="icon"
+          size="icon"
+          @click="isShowDescription = !isShowDescription"
+        >
+          <Type class="h-3 w-3" />
+        </UiButton>
+        <UiButton
+          variant="icon"
+          size="icon"
+        >
           <Plus class="h-4 w-4" />
         </UiButton>
       </div>
@@ -56,6 +68,6 @@ const name = computed({
         @click="selectedSnippetContentIndex = index"
       />
     </div>
-    <EditorDescription />
+    <EditorDescription v-model:show="isShowDescription" />
   </div>
 </template>

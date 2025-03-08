@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useSnippets, useSnippetUpdate } from '@/composables'
 
+const show = defineModel<boolean>('show')
+
 const { selectedSnippet } = useSnippets()
 const { addToUpdateQueue } = useSnippetUpdate()
 
@@ -18,11 +20,17 @@ const description = computed({
     })
   },
 })
+
+watch(selectedSnippet, () => {
+  if (show.value) {
+    show.value = false
+  }
+})
 </script>
 
 <template>
   <div
-    v-if="selectedSnippet?.description"
+    v-if="selectedSnippet?.description || show"
     data-editor-description
     class="border-border border-b px-2"
   >
@@ -30,6 +38,7 @@ const description = computed({
       v-model="description"
       variant="ghost"
       type="textarea"
+      :focus="show"
       :rows="2"
       class="max-h-28 px-0"
     />

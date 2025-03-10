@@ -45,6 +45,7 @@ const snippetItem = t.Object({
     }),
   ),
   isFavorites: t.Number(),
+  isDeleted: t.Number(),
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })

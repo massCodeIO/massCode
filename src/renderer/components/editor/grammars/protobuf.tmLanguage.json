@@ -1,0 +1,177 @@
+{
+  "scopeName": "source.proto",
+  "fileTypes": ["proto"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#storagetypes" },
+    { "include": "#enum" },
+    { "include": "#message" },
+    { "include": "#option" },
+    { "include": "#constants" },
+    { "include": "#strings" },
+    { "include": "#oneof" },
+    { "include": "#packaging" },
+    { "include": "#service" },
+    {
+      "match": "\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)\\b",
+      "name": "constant.numeric.proto"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "begin": "/\\*", "end": "\\*/", "name": "comment.block.proto" },
+        {
+          "begin": "//",
+          "end": "$\\n?",
+          "name": "comment.line.double-slash.proto"
+        }
+      ]
+    },
+    "option": {
+      "begin": "(\\b)(option)(\\b)",
+      "end": ";",
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        {
+          "match": "default|packed|optimize\\_for|java\\_package|java\\_outer\\_classname|go\\_package|deprecated|lazy|\\w+\\_api\\_version",
+          "name": "storage.type.proto"
+        },
+        { "match": "(CODE\\_SIZE|SPEED)", "name": "constant.language.proto" }
+      ],
+      "beginCaptures": { "2": { "name": "keyword.source.proto" } }
+    },
+    "service": {
+      "begin": "(service)(\\s+)([A-Za-z][A-Za-z0-9_.]*)(\\s*)(\\{)?",
+      "end": "\\}",
+      "patterns": [
+        { "include": "#comments" },
+        {
+          "begin": "(rpc)\\s+([A-Za-z][A-Z-a-z0-9_.]+)\\s*\\((stream\\s+)?([A-Za-z0-9_]+)\\)\\s+(returns)\\s+\\((stream\\s+)?([A-Za-z0-9_.]+)\\)\\{?",
+          "end": "\\}|;",
+          "patterns": [{ "include": "#comments" }, { "include": "#option" }],
+          "beginCaptures": {
+            "3": { "name": "keyword.source.proto" },
+            "1": { "name": "keyword.source.proto" },
+            "6": { "name": "keyword.source.proto" },
+            "2": { "name": "entity.name.function" },
+            "5": { "name": "keyword.source.proto" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "keyword.source.proto" },
+        "3": { "name": "entity.name.class.message.proto" }
+      }
+    },
+    "packaging": {
+      "match": "(package|import)(?=(\\s+)([\"]?[A-Za-z][A-Za-z0-9-_./]*[\"]?)(;))",
+      "captures": {
+        "1": { "name": "keyword.source.proto" },
+        "2": { "name": "entity.name.tag" }
+      }
+    },
+    "message": {
+      "begin": "(message|extend)(\\s+)([A-Za-z][A-Za-z0-9_.]*)(\\s*)(\\{)?",
+      "end": "\\}",
+      "patterns": [
+        { "include": "$self" },
+        { "include": "#enum" },
+        { "include": "#option" },
+        { "include": "#comments" },
+        { "include": "#oneof" },
+        {
+          "begin": "(optional|repeated|required|to|extensions)(\\s+)",
+          "end": ";",
+          "patterns": [
+            { "include": "#storagetypes" },
+            {
+              "match": "(map)<([A-Za-z][A-Za-z0-9_]*),\\s*([A-Za-z][A-Za-z0-9_]*)>\\s+([A-Za-z][A-Za-z0-9_]*)",
+              "captures": {
+                "1": { "name": "keyword.source.proto" },
+                "4": { "name": "entity.name.class.proto" }
+              }
+            },
+            {
+              "match": "([A-Za-z][A-Za-z0-9_]*)(\\s+)([A-Za-z][A-Za-z0-9_]*)",
+              "captures": { "1": { "name": "entity.name.class.proto" } }
+            },
+            {
+              "match": "(\\s*)(=)(\\s*)([0-9]*)",
+              "captures": { "4": { "name": "constant.numeric.proto" } }
+            },
+            {
+              "begin": "\\[",
+              "end": "\\]",
+              "patterns": [
+                {
+                  "match": "default|packed|deprecated|lazy",
+                  "name": "keyword.source.proto"
+                },
+                { "include": "#constants" }
+              ]
+            }
+          ],
+          "beginCaptures": { "1": { "name": "keyword.source.proto" } }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "keyword.source.proto" },
+        "3": { "name": "entity.name.class.message.proto" }
+      }
+    },
+    "storagetypes": {
+      "match": "\\b(double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string|bytes)\\b",
+      "name": "storage.type.proto"
+    },
+    "oneof": {
+      "begin": "(oneof)(\\s+)([A-Za-z][A-Za-z0-9_]*)(\\s*)(\\{)?",
+      "end": "\\}",
+      "patterns": [
+        { "include": "#option" },
+        { "include": "#comments" },
+        { "match": "\\b(to|extensions)\\b", "name": "keyword.source.proto" },
+        {
+          "match": "([A-Za-z][A-Za-z0-9_]*)(\\s+)([A-Za-z][A-Za-z0-9_]*)(\\s*)(=)(\\s*)([0-9]*)",
+          "captures": {
+            "1": { "name": "entity.name.class.proto" },
+            "7": { "name": "constant.numeric.proto" }
+          }
+        }
+      ],
+      "beginCaptures": { "1": { "name": "keyword.source.proto" } }
+    },
+    "enum": {
+      "begin": "(enum)(\\s+)([A-Za-z][A-Za-z0-9_]*)(\\s*)(\\{)?",
+      "end": "\\}",
+      "patterns": [
+        { "include": "#option" },
+        { "include": "#comments" },
+        { "match": "\\b(to|extensions)\\b", "name": "keyword.source.proto" },
+        {
+          "match": "([A-Za-z][A-Za-z0-9_]*)(\\s*)(=)(\\s*)([0-9]*)",
+          "captures": {
+            "1": { "name": "constant.other.proto" },
+            "5": { "name": "constant.numeric.proto" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "keyword.source.proto" },
+        "3": { "name": "entity.name.class.message.proto" }
+      }
+    },
+    "strings": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.proto"
+    },
+    "constants": {
+      "match": "\\b(true|false|max)\\b",
+      "name": "constant.language.proto"
+    }
+  },
+  "name": "Protocol Buffer",
+  "uuid": "750ac1f3-b172-48de-b1a4-a3c310c4a293"
+}

@@ -1,0 +1,34 @@
+{
+  "scopeName": "text.rdoc",
+  "fileTypes": ["rdoc"],
+  "patterns": [
+    {
+      "match": "^\\s*(•).*$\\n?",
+      "name": "meta.bullet-point.strong.text",
+      "captures": { "1": { "name": "punctuation.definition.item.text" } }
+    },
+    {
+      "match": "^\\s*(·).*$\\n?",
+      "name": "meta.bullet-point.light.text",
+      "captures": { "1": { "name": "punctuation.definition.item.text" } }
+    },
+    {
+      "match": "^\\s*(\\*).*$\\n?",
+      "name": "meta.bullet-point.star.text",
+      "captures": { "1": { "name": "punctuation.definition.item.text" } }
+    },
+    {
+      "begin": "^([ \\t]*)(?=\\S)",
+      "end": "^(?!\\1(?=\\S))",
+      "patterns": [
+        {
+          "match": "(?x)\n\t\t\t\t\t\t( (https?|s?ftp|ftps|file|smb|afp|nfs|(x-)?man|gopher|txmt)://|mailto:)\n\t\t\t\t\t\t[-:@a-zA-Z0-9_.,~%+/?=&#]+(?<![.,?:])\n\t\t\t\t\t",
+          "name": "markup.underline.link.text"
+        }
+      ],
+      "contentName": "meta.paragraph.text"
+    }
+  ],
+  "name": "RDoc",
+  "uuid": "753B331D-F00D-435B-A7F5-3E6D311438D0"
+}

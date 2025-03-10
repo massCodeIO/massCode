@@ -1,0 +1,443 @@
+{
+  "scopeName": "source.terraform",
+  "fileTypes": ["tf", "tfvars", "hcl"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#top_level_attribute_definition" },
+    { "include": "#imports" },
+    { "include": "#block" },
+    { "include": "#expressions" }
+  ],
+  "repository": {
+    "imports": {
+      "begin": "\\s*(terraform)\\s*(import)\\s*",
+      "end": "$\\n?",
+      "comment": "Terraform imports",
+      "patterns": [
+        { "include": "#string_literals" },
+        {
+          "comment": "Identifier label",
+          "match": "\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b",
+          "name": "entity.name.label.terraform"
+        },
+        { "include": "#numeric_literals" },
+        { "include": "#attribute_access" }
+      ],
+      "beginCaptures": {
+        "1": { "name": "support.constant.terraform" },
+        "2": { "name": "keyword.control.import.terraform" }
+      }
+    },
+    "main": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#block" },
+        { "include": "#expressions" }
+      ]
+    },
+    "comma": {
+      "comment": "Commas - used in certain expressions",
+      "match": "\\,",
+      "name": "punctuation.separator.terraform"
+    },
+    "block_comments": {
+      "begin": "/\\*",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.terraform" }
+      },
+      "end": "\\*/",
+      "comment": "Block comments",
+      "name": "comment.block.terraform",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.terraform" }
+      }
+    },
+    "object_key_values": {
+      "patterns": [{ "include": "#comments" }, { "include": "#expressions" }]
+    },
+    "string_literals": {
+      "end": "\"",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.terraform" }
+      },
+      "patterns": [
+        { "include": "#string_interpolation" },
+        {
+          "comment": "Character Escapes",
+          "match": "\\\\[nrt\"\\\\]|\\\\u(\\h{8}|\\h{4})",
+          "name": "constant.character.escape.terraform"
+        }
+      ],
+      "comment": "Strings",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.terraform" }
+      },
+      "name": "string.quoted.double.terraform"
+    },
+    "tuple_for_expression": {
+      "begin": "\\bfor\\b",
+      "end": "(?=\\])",
+      "comment": "Tuple for-expression",
+      "patterns": [
+        { "match": "\\bin\\b", "name": "keyword.operator.word.terraform" },
+        {
+          "match": "\\bif\\b",
+          "name": "keyword.control.conditional.terraform"
+        },
+        { "match": "\\:", "name": "keyword.operator.terraform" },
+        { "include": "#expressions" },
+        { "include": "#comments" },
+        { "include": "#comma" },
+        {
+          "comment": "Local Identifiers",
+          "match": "\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b",
+          "name": "variable.other.readwrite.terraform"
+        }
+      ],
+      "beginCaptures": { "0": { "name": "keyword.control.terraform" } }
+    },
+    "block": {
+      "begin": "(\\b(resource|provider|variable|output|locals|module|data|terraform)\\b|(\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b))(?=[\\s\\\"\\-[:word:]]*(\\{))",
+      "end": "(?=\\{)",
+      "comment": "Blocks",
+      "name": "meta.type.terraform",
+      "beginCaptures": {
+        "2": { "name": "storage.type.terraform" },
+        "3": { "name": "entity.name.type.terraform" }
+      },
+      "patterns": [
+        {
+          "begin": "\\\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.terraform" }
+          },
+          "end": "\\\"",
+          "comment": "String literal label",
+          "name": "string.quoted.double.terraform",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.terraform" }
+          }
+        },
+        {
+          "comment": "Identifer label",
+          "match": "\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b",
+          "name": "entity.name.label.terraform"
+        }
+      ]
+    },
+    "objects": {
+      "end": "\\}",
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.braces.begin.terraform" }
+      },
+      "patterns": [
+        { "include": "#object_for_expression" },
+        { "include": "#comments" },
+        {
+          "begin": "\\s*(\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b)\\s*(\\=)\\s*",
+          "endCaptures": {
+            "1": { "name": "punctuation.separator.terraform" },
+            "3": { "name": "punctuation.section.braces.end.terraform" }
+          },
+          "end": "((\\,)|($\\n?)|(?=\\}))",
+          "comment": "Literal, named object key",
+          "patterns": [{ "include": "#object_key_values" }],
+          "beginCaptures": {
+            "1": {
+              "name": "meta.mapping.key.terraform string.unquoted.terraform"
+            },
+            "2": { "name": "keyword.operator.terraform" }
+          }
+        },
+        {
+          "begin": "((\\\").*(\\\"))\\s*(\\=)\\s*",
+          "endCaptures": {
+            "1": { "name": "punctuation.separator.terraform" },
+            "3": { "name": "punctuation.section.braces.end.terraform" }
+          },
+          "end": "((\\,)|($\\n?)|(?=\\}))",
+          "comment": "String object key",
+          "patterns": [{ "include": "#object_key_values" }],
+          "beginCaptures": {
+            "3": { "name": "punctuation.definition.string.end.terraform" },
+            "1": {
+              "name": "meta.mapping.key.terraform string.quoted.double.terraform"
+            },
+            "4": { "name": "keyword.operator.terraform" },
+            "2": { "name": "punctuation.definition.string.begin.terraform" }
+          }
+        },
+        {
+          "end": "(\\))\\s*(\\=)\\s*",
+          "begin": "\\(",
+          "beginCaptures": {
+            "0": { "name": "punctuation.section.parens.begin.terraform" }
+          },
+          "patterns": [{ "include": "#expressions" }],
+          "comment": "Begin computed object key",
+          "endCaptures": {
+            "1": { "name": "punctuation.section.parens.end.terraform" },
+            "2": { "name": "keyword.operator.terraform" }
+          },
+          "name": "meta.mapping.key.terraform"
+        },
+        {
+          "comment": "Random Expression, for matching after computed keys",
+          "patterns": [{ "include": "#main" }]
+        }
+      ],
+      "comment": "Map collection values",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.braces.end.terraform" }
+      },
+      "name": "meta.braces.terraform"
+    },
+    "top_level_attribute_definition": {
+      "match": "(\\()?(\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b)(\\))?\\s*(\\=[^\\=|\\>])\\s*",
+      "comment": "Attribute Definition - Identifier \"=\" Expression Newline",
+      "name": "variable.declaration.terraform",
+      "captures": {
+        "3": { "name": "punctuation.section.parens.end.terraform" },
+        "1": { "name": "punctuation.section.parens.begin.terraform" },
+        "4": { "name": "keyword.operator.assignment.terraform" },
+        "2": { "name": "variable.other.readwrite.terraform" }
+      }
+    },
+    "string_interpolation": {
+      "end": "\\}",
+      "begin": "(\\$|\\%)\\{",
+      "beginCaptures": {
+        "0": { "name": "keyword.other.interpolation.begin.terraform" }
+      },
+      "patterns": [
+        {
+          "comment": "Trim left whitespace",
+          "match": "\\~\\s",
+          "name": "keyword.operator.template.left.trim.terraform"
+        },
+        {
+          "comment": "Trim right whitespace",
+          "match": "\\s\\~",
+          "name": "keyword.operator.template.right.trim.terraform"
+        },
+        {
+          "comment": "if/else/endif and for/in/endfor directives",
+          "match": "\\b(if|else|endif|for|in|endfor)\\b",
+          "name": "keyword.control.terraform"
+        },
+        { "include": "#expressions" }
+      ],
+      "comment": "String interpolation",
+      "endCaptures": {
+        "0": { "name": "keyword.other.interpolation.end.terraform" }
+      },
+      "name": "meta.interpolation.terraform"
+    },
+    "attribute_access": {
+      "begin": "\\.",
+      "endCaptures": {
+        "1": { "name": "variable.other.member.terraform" },
+        "2": { "name": "keyword.operator.splat.terraform" },
+        "3": { "name": "constant.numeric.integer.terraform" }
+      },
+      "end": "(\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b)|(\\*)|(\\d+)",
+      "comment": "Attribute Access - \".\" Identifier",
+      "beginCaptures": {
+        "0": { "name": "keyword.operator.accessor.terraform" }
+      }
+    },
+    "functions": {
+      "end": "\\)",
+      "begin": "((abs|ceil|floor|log|max|min|pow|signum|chomp|format|formatlist|indent|join|lower|regex|regexall|replace|split|strrev|substr|title|trimspace|upper|chunklist|coalesce|coalescelist|compact|concat|contains|distinct|element|flatten|index|keys|length|list|lookup|map|matchkeys|merge|range|reverse|setintersection|setproduct|setunion|slice|sort|transpose|values|zipmap|base64decode|base64encode|base64gzip|csvdecode|jsondecode|jsonencode|urlencode|yamldecode|yamlencode|abspath|dirname|pathexpand|basename|file|fileexists|fileset|filebase64|templatefile|formatdate|timeadd|timestamp|base64sha256|base64sha512|bcrypt|filebase64sha256|filebase64sha512|filemd5|filemd1|filesha256|filesha512|md5|rsadecrypt|sha1|sha256|sha512|uuid|uuidv5|cidrhost|cidrnetmask|cidrsubnet|tobool|tolist|tomap|tonumber|toset|tostring)|\\b((?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b))(\\()",
+      "beginCaptures": {
+        "2": { "name": "support.function.builtin.terraform" },
+        "3": { "name": "variable.function.terraform" },
+        "4": { "name": "punctuation.section.parens.begin.terraform" }
+      },
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#expressions" },
+        { "include": "#comma" }
+      ],
+      "comment": "Functions calls- Terraform builtins and unknown",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.terraform" }
+      },
+      "name": "meta.function-call.terraform"
+    },
+    "literal_values": {
+      "patterns": [
+        { "include": "#numeric_literals" },
+        { "include": "#language_constants" },
+        { "include": "#string_literals" },
+        { "include": "#heredoc" },
+        { "include": "#type_keywords" },
+        { "include": "#named_value_references" }
+      ]
+    },
+    "named_value_references": {
+      "comment": "Terraform built-in variables",
+      "match": "\\b(var|local|module|data|path|terraform)\\b",
+      "name": "support.constant.terraform"
+    },
+    "operators": {
+      "patterns": [
+        { "match": "\\>\\=", "name": "keyword.operator.terraform" },
+        { "match": "\\<\\=", "name": "keyword.operator.terraform" },
+        { "match": "\\=\\=", "name": "keyword.operator.terraform" },
+        { "match": "\\!\\=", "name": "keyword.operator.terraform" },
+        { "match": "\\+", "name": "keyword.operator.arithmetic.terraform" },
+        { "match": "\\-", "name": "keyword.operator.arithmetic.terraform" },
+        { "match": "\\*", "name": "keyword.operator.arithmetic.terraform" },
+        { "match": "\\/", "name": "keyword.operator.arithmetic.terraform" },
+        { "match": "\\%", "name": "keyword.operator.arithmetic.terraform" },
+        { "match": "\\&\\&", "name": "keyword.operator.logical.terraform" },
+        { "match": "\\|\\|", "name": "keyword.operator.logical.terraform" },
+        { "match": "\\!", "name": "keyword.operator.logical.terraform" },
+        { "match": "\\>", "name": "keyword.operator.terraform" },
+        { "match": "\\<", "name": "keyword.operator.terraform" },
+        { "match": "\\?", "name": "keyword.operator.terraform" },
+        { "match": "\\.\\.\\.", "name": "keyword.operator.terraform" },
+        { "match": "\\:", "name": "keyword.operator.terraform" }
+      ]
+    },
+    "heredoc": {
+      "end": "^\\s*\\2\\s*$",
+      "begin": "(\\<\\<\\-?)\\s*(\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b)\\s*$",
+      "beginCaptures": {
+        "1": { "name": "keyword.operator.heredoc.terraform" },
+        "2": { "name": "keyword.control.heredoc.terraform" }
+      },
+      "patterns": [{ "include": "#string_interpolation" }],
+      "comment": "Heredocs",
+      "endCaptures": { "0": { "name": "keyword.control.heredoc.terraform" } },
+      "name": "string.unquoted.heredoc.terraform"
+    },
+    "brackets": {
+      "begin": "\\[",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.brackets.end.terraform" },
+        "1": { "name": "keyword.operator.splat.terraform" }
+      },
+      "end": "(\\*)?\\]",
+      "comment": "Tuples & subscript notation",
+      "patterns": [
+        { "include": "#comma" },
+        { "include": "#comments" },
+        { "include": "#expressions" },
+        { "include": "#tuple_for_expression" }
+      ],
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.brackets.begin.terraform" }
+      }
+    },
+    "comments": {
+      "patterns": [
+        { "include": "#inline_comments" },
+        { "include": "#block_comments" }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        { "include": "#literal_values" },
+        { "include": "#operators" },
+        { "include": "#brackets" },
+        { "include": "#objects" },
+        { "include": "#attribute_access" },
+        { "include": "#functions" },
+        { "include": "#parens" }
+      ]
+    },
+    "numeric_literals": {
+      "patterns": [
+        {
+          "match": "\\b\\d+(([Ee][+-]?))\\d+\\b",
+          "comment": "Integer, no fraction, optional exponent",
+          "name": "constant.numeric.float.terraform",
+          "captures": {
+            "1": { "name": "punctuation.separator.exponent.terraform" }
+          }
+        },
+        {
+          "match": "\\b\\d+(\\.)\\d+(?:(([Ee][+-]?))\\d+)?\\b",
+          "comment": "Integer, fraction, optional exponent",
+          "name": "constant.numeric.float.terraform",
+          "captures": {
+            "1": { "name": "punctuation.separator.decimal.terraform" },
+            "2": { "name": "punctuation.separator.exponent.terraform" }
+          }
+        },
+        {
+          "comment": "Integers",
+          "match": "\\b\\d+\\b",
+          "name": "constant.numeric.integer.terraform"
+        }
+      ]
+    },
+    "object_for_expression": {
+      "begin": "\\bfor\\b",
+      "end": "(?=\\})",
+      "comment": "Object for-expression",
+      "patterns": [
+        { "match": "\\=\\>", "name": "storage.type.function.terraform" },
+        { "match": "\\bin\\b", "name": "keyword.operator.word.terraform" },
+        {
+          "match": "\\bif\\b",
+          "name": "keyword.control.conditional.terraform"
+        },
+        { "match": "\\:", "name": "keyword.operator.terraform" },
+        { "include": "#expressions" },
+        { "include": "#comments" },
+        { "include": "#comma" },
+        {
+          "comment": "Local Identifiers",
+          "match": "\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b",
+          "name": "variable.other.readwrite.terraform"
+        }
+      ],
+      "beginCaptures": { "0": { "name": "keyword.control.terraform" } }
+    },
+    "inline_comments": {
+      "begin": "#|//",
+      "end": "$\n?",
+      "comment": "Inline comments",
+      "name": "comment.line.terraform",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.terraform" }
+      }
+    },
+    "parens": {
+      "begin": "\\(",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.parens.end.terraform" }
+      },
+      "end": "\\)",
+      "comment": "Parens - matched *after* function syntax",
+      "patterns": [
+        { "include": "#expressions" },
+        {
+          "comment": "Local Identifiers",
+          "match": "\\b(?!null|false|true)[[:alpha:]][[:alnum:]_-]*\\b",
+          "name": "variable.other.readwrite.terraform"
+        }
+      ],
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.parens.begin.terraform" }
+      }
+    },
+    "type_keywords": {
+      "comment": "Type keywords known to Terraform.",
+      "match": "\\b(any|string|number|bool)\\b",
+      "name": "storage.type.terraform"
+    },
+    "language_constants": {
+      "comment": "Language Constants",
+      "match": "\\b(true|false|null)\\b",
+      "name": "constant.language.terraform"
+    }
+  },
+  "name": "Terraform",
+  "uuid": "9060ca81-906d-4f19-a91a-159f4eb119d6"
+}

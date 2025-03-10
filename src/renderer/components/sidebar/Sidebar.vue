@@ -140,27 +140,11 @@ watch(width, () => {
     data-sidebar
     class="relative flex h-screen flex-col px-1 pt-[var(--title-bar-height)]"
   >
-    <div class="flex-shrink-0">
+    <div class="flex-shrink-0 pt-2">
       <div class="pb-1 pl-1 text-[10px] font-bold uppercase">
         Library / Tags
       </div>
       <div class="">
-        <!-- <div
-          v-for="i in libraryItems"
-          :key="i.name"
-          data-sidebar-item
-          :data-state="selectedLibrary === i.id ? 'selected' : null"
-          class="flex items-center data-[state=selected]:bg-list-selection"
-          @click="onLibraryItemClick(i.id)"
-        >
-          <component
-            :is="i.icon"
-            class="mr-0.5 h-4 w-4"
-          />
-          <div class="ml-1 select-none">
-            {{ i.name }}
-          </div>
-        </div> -->
         <LibraryItem
           v-for="i in libraryItems"
           :id="i.id"
@@ -176,9 +160,9 @@ watch(width, () => {
       </div>
       <UiButton
         variant="icon"
-        size="sm"
+        size="icon"
       >
-        <Plus class="text-text-muted h-4 w-4" />
+        <Plus class="h-4 w-4" />
       </UiButton>
     </div>
     <div class="flex-grow overflow-auto">

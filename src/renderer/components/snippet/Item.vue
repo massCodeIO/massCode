@@ -11,7 +11,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedSnippetId, highlightedSnippetId } = useApp()
+const { selectedSnippetId, highlightedSnippetId, selectedSnippetContentIndex }
+  = useApp()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
@@ -24,6 +25,7 @@ const isHighlighted = computed(
 function onSnippetClick(id: number) {
   selectedSnippetId.value = id
   store.app.set('selectedSnippetId', id)
+  selectedSnippetContentIndex.value = 0
   isFocused.value = true
 }
 

@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { useApp } from '@/composables'
 import { useDark } from '@vueuse/core'
+import { loadWASM } from 'onigasm'
+import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
+import { loadGrammars } from './components/editor/grammars'
 
 useApp()
 useDark()
+
+async function init() {
+  loadWASM(onigasmFile)
+  await loadGrammars()
+}
+
+init()
 </script>
 
 <template>

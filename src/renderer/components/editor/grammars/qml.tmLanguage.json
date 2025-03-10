@@ -1,0 +1,140 @@
+{
+  "scopeName": "source.qml",
+  "fileTypes": ["qml", "qmlproject"],
+  "patterns": [
+    {
+      "begin": "/\\*(?!/)",
+      "end": "\\*/",
+      "comment": "Block comment.",
+      "name": "comment.block.documentation.qml"
+    },
+    {
+      "comment": "Line comment.",
+      "match": "//.*$",
+      "name": "comment.line.double-slash.qml"
+    },
+    {
+      "begin": "\\b(import)\\s+",
+      "end": "$",
+      "comment": "import statement.",
+      "name": "meta.import.qml",
+      "beginCaptures": { "1": { "name": "keyword.other.import.qml" } },
+      "patterns": [
+        {
+          "match": "([\\w\\d\\.]+)\\s+(\\d+\\.\\d+)(?:\\s+(as)\\s+([A-Z][\\w\\d]*))?",
+          "comment": "import Namespace VersionMajor.VersionMinor [as SingletonTypeIdentifier]",
+          "name": "meta.import.namespace.qml",
+          "captures": {
+            "3": { "name": "keyword.other.import.qml" },
+            "1": { "name": "entity.name.class.qml" },
+            "4": { "name": "entity.name.class.qml" },
+            "2": { "name": "constant.numeric.qml" }
+          }
+        },
+        {
+          "match": "(\\\"[^\\\"]+\\\")(?:\\s+(as)\\s+([A-Z][\\w\\d]*))?",
+          "comment": "import <string> [as Script]",
+          "name": "meta.import.dirjs.qml",
+          "captures": {
+            "1": { "name": "string.quoted.double.qml" },
+            "2": { "name": "keyword.other.import.qml" },
+            "3": { "name": "entity.name.class.qml" }
+          }
+        }
+      ]
+    },
+    {
+      "comment": "Capitalized word (class or enum).",
+      "match": "\\b[A-Z]\\w*\\b",
+      "name": "support.class.qml"
+    },
+    {
+      "comment": "onSomething - handler.",
+      "match": "(((^|\\{)\\s*)|\\b)on[A-Z]\\w*\\b",
+      "name": "support.class.qml"
+    },
+    {
+      "match": "(?:^|\\{)\\s*(id)\\s*\\:\\s*([^;\\s]+)\\b",
+      "comment": "id: <something>",
+      "name": "meta.id.qml",
+      "captures": {
+        "1": { "name": "keyword.other.qml" },
+        "2": { "name": "storage.modifier.qml" }
+      }
+    },
+    {
+      "match": "^\\s*(?:(default|readonly)\\s+)?(property)\\s+(?:(alias)|([\\w\\<\\>]+))\\s+(\\w+)",
+      "comment": "property definition.",
+      "name": "meta.propertydef.qml",
+      "captures": {
+        "3": { "name": "keyword.other.qml" },
+        "1": { "name": "keyword.other.qml" },
+        "4": { "name": "storage.type.qml" },
+        "2": { "name": "keyword.other.qml" },
+        "5": { "name": "entity.other.attribute-name.qml" }
+      }
+    },
+    {
+      "begin": "\\b(signal)\\s+(\\w+)\\s*",
+      "end": ";|(?=/)|$",
+      "comment": "signal <signalName>[([<type> <parameter>[, ...]])]",
+      "name": "meta.signal.qml",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.qml" },
+        "2": { "name": "support.function.qml" }
+      },
+      "patterns": [
+        {
+          "match": "(\\w+)\\s+(\\w+)",
+          "name": "meta.signal.parameters.qml",
+          "captures": {
+            "1": { "name": "storage.type.qml" },
+            "2": { "name": "variable.parameter.qml" }
+          }
+        }
+      ]
+    },
+    {
+      "match": "(?:\\b|\\s+)(?:(true|false|null|undefined)|(var|void)|(on|as|enum|connect|break|case|catch|continue|debugger|default|delete|do|else|finally|for|if|in|instanceof|new|return|switch|this|throw|try|typeof|while|with))\\b",
+      "comment": "js keywords.",
+      "name": "meta.keyword.qml",
+      "captures": {
+        "1": { "name": "constant.language.qml" },
+        "2": { "name": "storage.type.qml" },
+        "3": { "name": "keyword.control.qml" }
+      }
+    },
+    {
+      "match": "\\b(function)\\s+([\\w_]+)\\s*(?=\\()",
+      "comment": "function definition.",
+      "name": "meta.function.qml",
+      "captures": {
+        "1": { "name": "storage.type.qml" },
+        "2": { "name": "entity.name.function.untitled" }
+      }
+    },
+    {
+      "comment": "function call.",
+      "match": "\\b[\\w_]+\\s*(?=\\()",
+      "name": "support.function.qml"
+    },
+    {
+      "comment": "property  (property: <something>).",
+      "match": "(?:^|\\{|;)\\s*[a-z][\\w\\.]*\\s*(?=\\:)",
+      "name": "entity.other.attribute-name.qml"
+    },
+    {
+      "comment": "property of the variable (name.property).",
+      "match": "(?<=\\.)\\b\\w*",
+      "name": "entity.other.attribute-name.qml"
+    },
+    {
+      "comment": "All non colored words are assumed to be variables.",
+      "match": "\\b([a-z_]\\w*)\\b",
+      "name": "variable.parameter"
+    },
+    { "include": "source.js" }
+  ],
+  "name": "QML",
+  "uuid": "13a281e0-0507-45b4-bb6c-a57177630f10"
+}

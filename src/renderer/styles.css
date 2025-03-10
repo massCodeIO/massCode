@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  --title-bar-height: 30px;
+  --title-bar-height: 20px;
 }
 
 body {
@@ -31,13 +31,18 @@ body {
   --color-list-selection-fg: oklch(20% 0 0);
   --color-list-focus: var(--color-primary);
   --color-list-focus-fg: oklch(100% 0 0);
+
+  --color-scrollbar: oklch(0% 0 0 / 0.2);
+
+  --color-tooltip: oklch(20% 0 0);
+  --color-tooltip-fg: oklch(85% 0 0);
 }
 
 
 html.dark {
   --color-primary: oklch(50% 0.19 260);
 
-  --color-bg: oklch(25% 0 0);
+  --color-bg: oklch(24.78% 0 0);
   --color-fg: oklch(100% 0 0);
 
   --color-button: oklch(% 0 0);
@@ -51,4 +56,8 @@ html.dark {
 
   --color-list-selection: oklch(32% 0 0);
   --color-list-selection-fg: oklch(95% 0 0);
+
+  --color-scrollbar: oklch(100% 0 0 / 0.2);
+
+  --color-tooltip-fg: oklch(75% 0 0);
 }

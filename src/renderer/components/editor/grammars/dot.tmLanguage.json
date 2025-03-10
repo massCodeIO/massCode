@@ -1,0 +1,98 @@
+{
+  "fileTypes": ["dot", "DOT"],
+  "firstLineMatch": "digraph.*",
+  "keyEquivalent": "^~G",
+  "uuid": "1A53D54E-6B1D-11D9-A006-000D93589AF6",
+  "patterns": [
+    {
+      "comment": "named digraph declaration: \"digraph NAME {\"",
+      "match": " ?(digraph)[ \\t]+([A-Za-z0-9]+) ?(\\{)",
+      "captures": {
+        "1": { "name": "storage.type.dot" },
+        "2": { "name": "variable.other.dot" },
+        "4": { "name": "punctuation.section.dot" }
+      }
+    },
+    {
+      "comment": "edge definition: <- -> --",
+      "match": "(<|-)(>|-)",
+      "name": "keyword.operator.dot"
+    },
+    {
+      "match": "\\b(node|edge|graph|digraph|subgraph|strict)\\b",
+      "name": "storage.type.dot"
+    },
+    {
+      "match": "\\b(bottomlabel|color|comment|distortion|fillcolor|fixedsize|fontcolor|fontname|fontsize|group|height|label|layer|orientation|peripheries|regular|shape|shapefile|sides|skew|style|toplabel|URL|width|z)\\b",
+      "name": "support.constant.attribute.node.dot"
+    },
+    {
+      "match": "\\b(arrowhead|arrowsize|arrowtail|color|comment|constraint|decorate|dir|fontcolor|fontname|fontsize|headlabel|headport|headURL|label|labelangle|labeldistance|labelfloat|labelcolor|labelfontname|labelfontsize|layer|lhead|ltail|minlen|samehead|sametail|splines|style|taillabel|tailport|tailURL|weight)\\b",
+      "name": "support.constant.attribute.edge.dot"
+    },
+    {
+      "match": "\\b(bgcolor|center|clusterrank|color|comment|compound|concentrate|fillcolor|fontname|fontpath|fontsize|label|labeljust|labelloc|layers|margin|mclimit|nodesep|nslimit|nslimit1|ordering|orientation|page|pagedir|quantum|rank|rankdir|ranksep|ratio|remincross|rotate|samplepoints|searchsize|size|style|URL)\\b",
+      "name": "support.constant.attribute.graph.dot"
+    },
+    {
+      "match": "\\b(box|polygon|ellipse|circle|point|egg|triangle|plaintext|diamond|trapezium|parallelogram|house|pentagon|hexagon|septagon|octagon|doublecircle|doubleoctagon|tripleoctagon|invtriangle|invtrapezium|invhouse|Mdiamond|Msquare|Mcircle|rect|rectangle|none|note|tab|folder|box3d|component|max|min|same)\\b",
+      "name": "variable.other.dot"
+    },
+    {
+      "begin": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.dot" }
+      },
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.dot" }
+      ],
+      "name": "string.quoted.double.dot",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.dot" }
+      }
+    },
+    {
+      "begin": "(^[ \\t]+)?(?=//)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "//",
+          "end": "\\n",
+          "name": "comment.line.double-slash.dot",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.dot" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.dot" }
+      }
+    },
+    {
+      "begin": "(^[ \\t]+)?(?=#)",
+      "end": "(?!\\G)",
+      "patterns": [
+        {
+          "begin": "#",
+          "end": "\\n",
+          "name": "comment.line.number-sign.dot",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.comment.dot" }
+          }
+        }
+      ],
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.comment.leading.dot" }
+      }
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.dot",
+      "captures": { "0": { "name": "punctuation.definition.comment.dot" } }
+    }
+  ],
+  "name": "Graphviz (DOT)",
+  "scopeName": "source.dot"
+}

@@ -1,0 +1,42 @@
+{
+  "scopeName": "text.abcnotation",
+  "fileTypes": ["abc"],
+  "patterns": [
+    { "comment": "Comments", "match": "%.*", "name": "comment.line" },
+    {
+      "comment": "Bar lines",
+      "match": "[\\[:]*[|:][|\\]:]*(\\[?[0-9]+)?|(\\[[0-9]+)",
+      "name": "keyword.operator"
+    },
+    {
+      "match": "^[A-Za-z]:([^%\\\\]*)",
+      "comment": "Header lines",
+      "name": "entity.name.function",
+      "captures": { "1": { "name": "string.unquoted" } }
+    },
+    {
+      "comment": "Inline fields",
+      "match": "\\[([A-Z]:)(.*?)\\]",
+      "captures": {
+        "1": { "name": "entity.name.function" },
+        "2": { "name": "string.unquoted" }
+      }
+    },
+    {
+      "comment": "Notes",
+      "match": "([\\^=_]*)([A-Ga-gz][,']*)([0-9]*/*[><0-9]*)",
+      "captures": {
+        "1": { "name": "constant.language" },
+        "2": { "name": "constant.character" },
+        "3": { "name": "constant.numeric" }
+      }
+    },
+    {
+      "comment": "Chord names + other annotations",
+      "match": "[\\\"!].*?[\\\"!]",
+      "name": "string.quoted"
+    }
+  ],
+  "name": "ABC Notation",
+  "uuid": "431a5f26-5897-4146-8415-25a3c4b859c0"
+}

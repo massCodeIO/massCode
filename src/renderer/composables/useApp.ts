@@ -12,6 +12,7 @@ const selectedLibrary = ref<
     )
 const selectedFolderId = ref(store.app.get('selectedFolderId'))
 const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
+const selectedSnippetContentIndex = ref(0)
 const highlightedFolderId = ref<number>()
 const highlightedSnippetId = ref<number>()
 
@@ -21,9 +22,12 @@ const snippetListWidth = useCssVar('--snippet-list-width')
 sidebarWidth.value = `${store.app.get('sidebarWidth')}px`
 snippetListWidth.value = `${store.app.get('snippetListWidth')}px`
 
+// TODO: вынести в useFolder
 function selectFolder(folderId: number) {
   selectedFolderId.value = folderId
   selectedLibrary.value = undefined
+  selectedSnippetContentIndex.value = 0
+
   store.app.set('selectedFolderId', folderId)
   store.app.delete('selectedLibrary')
 }
@@ -43,13 +47,14 @@ watch(
 
 export function useApp() {
   return {
-    selectedLibrary,
-    selectedFolderId,
-    selectedSnippetId,
-    sidebarWidth,
-    snippetListWidth,
-    selectFolder,
     highlightedFolderId,
     highlightedSnippetId,
+    selectedFolderId,
+    selectedLibrary,
+    selectedSnippetContentIndex,
+    selectedSnippetId,
+    selectFolder,
+    sidebarWidth,
+    snippetListWidth,
   }
 }

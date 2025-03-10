@@ -1,0 +1,58 @@
+{
+  "scopeName": "source.wollok",
+  "fileTypes": ["wollok"],
+  "patterns": [{ "include": "#main" }],
+  "repository": {
+    "main__3": {
+      "patterns": [
+        { "include": "#numeric" },
+        { "match": "(,)", "name": "keyword.operator.wollok" }
+      ]
+    },
+    "main__2": { "patterns": [] },
+    "main__1": { "patterns": [{ "include": "#main" }] },
+    "multi_line_comment": {
+      "patterns": [
+        {
+          "begin": "(/\\*)",
+          "endCaptures": { "1": { "name": "comment.wollok" } },
+          "end": "(\\*/)",
+          "contentName": "comment.wollok",
+          "beginCaptures": { "1": { "name": "comment.wollok" } }
+        }
+      ]
+    },
+    "numeric": {
+      "patterns": [{ "match": "(\\b\\d+)", "name": "constant.numeric.wollok" }]
+    },
+    "main": {
+      "patterns": [
+        { "match": "@[A-Za-z]+", "name": "variable.wollok" },
+        { "include": "#numeric" },
+        {
+          "begin": "(\\{)",
+          "endCaptures": { "1": { "name": "keyword.operator.wollok" } },
+          "patterns": [{ "include": "#main__1" }],
+          "end": "(\\})",
+          "beginCaptures": { "1": { "name": "keyword.operator.wollok" } }
+        },
+        { "match": "(;)", "name": "keyword.operator.wollok" },
+        {
+          "begin": "(\\\"|')",
+          "endCaptures": { "1": { "name": "string.wollok" } },
+          "end": "(\\\"|')",
+          "contentName": "string.wollok",
+          "beginCaptures": { "1": { "name": "string.wollok" } }
+        },
+        { "include": "#multi_line_comment" },
+        { "match": "(//.*)", "name": "comment.wollok" },
+        {
+          "match": "\\b(object|class|package|program|test|describe|method|override|constructor|native|var|const|property|inherits|new|if|else|self|super|import|null|true|false|return|throw|then always|try|catch|mixed with|with|mixin|fixture)\\b",
+          "name": "keyword.wollok"
+        }
+      ]
+    },
+    "multi_line_comment__1": { "patterns": [] }
+  },
+  "name": "wollok"
+}

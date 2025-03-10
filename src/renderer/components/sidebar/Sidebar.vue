@@ -160,9 +160,9 @@ watch(width, () => {
       </div>
       <UiButton
         variant="icon"
-        size="sm"
+        size="icon"
       >
-        <Plus class="text-text-muted h-4 w-4" />
+        <Plus class="h-4 w-4" />
       </UiButton>
     </div>
     <div class="flex-grow overflow-auto">

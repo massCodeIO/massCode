@@ -37,19 +37,15 @@ const name = computed({
         />
       </div>
       <div class="ml-2 flex">
-        <UiButton
-          variant="icon"
-          size="icon"
+        <EditorHeaderActionButton
+          tooltip="Add Description"
           @click="isShowDescription = !isShowDescription"
         >
           <Type class="h-3 w-3" />
-        </UiButton>
-        <UiButton
-          variant="icon"
-          size="icon"
-        >
+        </EditorHeaderActionButton>
+        <EditorHeaderActionButton tooltip="New Fragment">
           <Plus class="h-4 w-4" />
-        </UiButton>
+        </EditorHeaderActionButton>
       </div>
     </div>
     <div

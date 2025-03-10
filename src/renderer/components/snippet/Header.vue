@@ -40,18 +40,18 @@ watch(searchQuery, () => {
       <UiButton
         v-if="searchQuery"
         variant="icon"
-        size="sm"
+        size="icon"
         @click="clear"
       >
-        <X class="text-text-muted h-4 w-4" />
+        <X class="h-4 w-4" />
       </UiButton>
       <UiButton
         v-else
         variant="icon"
-        size="sm"
+        size="icon"
         @click="clear"
       >
-        <Plus class="text-text-muted h-4 w-4" />
+        <Plus class="h-4 w-4" />
       </UiButton>
     </div>
   </div>

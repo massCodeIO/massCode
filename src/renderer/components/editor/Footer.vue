@@ -57,7 +57,10 @@ function fuzzySearch(list: string[], searchTerm: string) {
     <div>
       <Popover.Popover v-model:open="isOpen">
         <Popover.PopoverTrigger as-child>
-          <UiButton variant="icon">
+          <UiButton
+            variant="icon"
+            class="-ml-1"
+          >
             {{ selectedLanguageName }}
           </UiButton>
         </Popover.PopoverTrigger>
@@ -96,7 +99,7 @@ function fuzzySearch(list: string[], searchTerm: string) {
         </Popover.PopoverContent>
       </Popover.Popover>
     </div>
-    <div>
+    <div class="mr-1">
       Ln {{ cursorPosition.row + 1 }}, Col {{ cursorPosition.column + 1 }}
     </div>
   </div>

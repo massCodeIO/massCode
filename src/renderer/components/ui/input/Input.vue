@@ -21,6 +21,7 @@ interface Props {
   clearable?: boolean
   type?: 'text' | 'number' | 'textarea'
   focus?: boolean
+  select?: boolean
 }
 
 const model = defineModel<string>()
@@ -38,10 +39,18 @@ watchEffect(() => {
     })
   }
 })
+
+watchEffect(() => {
+  if (props.select) {
+    nextTick(() => {
+      inputRef.value?.select()
+    })
+  }
+})
 </script>
 
 <template>
-  <div class="relative flex">
+  <div :class="{ 'relative flex': clearable && model }">
     <input
       v-if="type !== 'textarea'"
       ref="inputRef"

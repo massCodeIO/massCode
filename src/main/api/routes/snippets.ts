@@ -66,7 +66,21 @@ app
       const whereCondition = WHERE.length ? `WHERE ${WHERE.join(' AND ')}` : ''
 
       const stmt = db.prepare(`
-      WITH snippet_data AS (
+      WITH snippet_contents_data AS (
+        SELECT 
+          snippetId,
+          json_group_array(
+            json_object(
+              'id', id,
+              'label', label,
+              'value', value,
+              'language', language
+            )
+          ) as contents
+        FROM snippet_contents
+        GROUP BY snippetId
+      ),
+      snippet_data AS (
         SELECT 
           s.id,
           s.name,
@@ -88,19 +102,12 @@ app
               'name', t.name
             )
           ) FILTER (WHERE t.id IS NOT NULL) as tags,
-          json_group_array(
-            json_object(
-              'id', sc.id,
-              'label', sc.label,
-              'value', sc.value,
-              'language', sc.language
-            )
-          ) FILTER (WHERE sc.id IS NOT NULL) as contents
+          COALESCE(scd.contents, '[]') as contents
         FROM snippets s
         LEFT JOIN folders f ON s.folderId = f.id
         LEFT JOIN snippet_tags st ON s.id = st.snippetId
         LEFT JOIN tags t ON st.tagId = t.id
-        LEFT JOIN snippet_contents sc ON s.id = sc.snippetId
+        LEFT JOIN snippet_contents_data scd ON s.id = scd.snippetId
         ${whereCondition}
         GROUP BY s.id
       )

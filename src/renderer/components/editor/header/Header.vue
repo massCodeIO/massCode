@@ -50,12 +50,11 @@ const name = computed({
     </div>
     <div
       v-if="selectedSnippet?.contents && selectedSnippet.contents.length > 1"
-      class="border-border flex gap-1 border-b"
+      class="border-border grid auto-cols-fr grid-flow-col border-b"
     >
       <EditorTab
         v-for="(i, index) in selectedSnippet?.contents"
         :key="i.id"
-        class="flex-1"
         :name="i.label"
         :class="{
           'bg-list-selection text-list-selection-fg':

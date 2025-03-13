@@ -1,0 +1,49 @@
+{
+  "title": "تنظیمات",
+  "storage": {
+    "label": "فضای ذخیره‌سازی",
+    "migrate": "مهاجرت",
+    "count": "تعداد"
+  },
+  "editor": {
+    "label": "ویرایشگر",
+    "fontSize": "اندازه فونت",
+    "fontFamily": "خانواده فونت",
+    "wrap": {
+      "label": "بسته‌بندی (Wrap)",
+      "wordWrap": "بسته‌بندی واژگان",
+      "off": "خاموش"
+    },
+    "tabSize": "اندازه زبانه",
+    "showInvisibles": "نمایش نامرئی‌ها",
+    "highlightLine": "برجسته‌کردن خط",
+    "highlightGutter": "Highlight Gutter",
+    "matchBrackets": "مطابقت براکت‌ها",
+    "prettier": {
+      "label": "زیباتر",
+      "trailingComma": {
+        "label": "کاما دنباله‌دار",
+        "none": "هیچ",
+        "all": "همه",
+        "es5": "ES5"
+      },
+      "semi": "نیمه",
+      "singleQuote": "نقل قول تک"
+    }
+  },
+  "appearance": {
+    "label": "ظاهر",
+    "theme": {
+      "label": "پوسته",
+      "light": "روشن",
+      "dark": "تیره"
+    }
+  },
+  "language": {
+    "label": "زبان"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "رندرکننده بلاک کد"
+  }
+}

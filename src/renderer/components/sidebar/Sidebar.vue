@@ -3,7 +3,7 @@ import type { Node } from '@/components/sidebar/folders/types'
 import type { FoldersTreeResponse } from '@/services/api/generated'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { api } from '@/services/api'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
@@ -26,10 +26,14 @@ const { width } = useGutter(
 const folders = ref<FoldersTreeResponse>()
 
 const libraryItems = [
-  { id: LibraryFilter.Inbox, name: 'Inbox', icon: Inbox },
-  { id: LibraryFilter.Favorites, name: 'Favorites', icon: Star },
-  { id: LibraryFilter.All, name: 'All Snippets', icon: Archive },
-  { id: LibraryFilter.Trash, name: 'Trash', icon: Trash },
+  { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
+  {
+    id: LibraryFilter.Favorites,
+    name: i18n.t('sidebar.favorites'),
+    icon: Star,
+  },
+  { id: LibraryFilter.All, name: i18n.t('sidebar.allSnippets'), icon: Archive },
+  { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
 ]
 
 async function getFolders() {
@@ -142,7 +146,7 @@ watch(width, () => {
   >
     <div class="flex-shrink-0 pt-2">
       <div class="pb-1 pl-1 text-[10px] font-bold uppercase">
-        Library / Tags
+        {{ i18n.t("sidebar.library") }} / {{ i18n.t("sidebar.tags") }}
       </div>
       <div class="">
         <LibraryItem
@@ -156,7 +160,7 @@ watch(width, () => {
     </div>
     <div class="flex items-center justify-between pt-2 pl-1">
       <div class="text-[10px] font-bold uppercase">
-        Folders
+        {{ i18n.t("sidebar.folders") }}
       </div>
       <UiButton
         variant="icon"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
+import { i18n } from '@/electron'
 import { Plus, Type } from 'lucide-vue-next'
 
 const { selectedSnippet } = useSnippets()
@@ -38,12 +39,12 @@ const name = computed({
       </div>
       <div class="ml-2 flex">
         <EditorHeaderActionButton
-          tooltip="Add Description"
+          :tooltip="i18n.t('addDescription')"
           @click="isShowDescription = !isShowDescription"
         >
           <Type class="h-3 w-3" />
         </EditorHeaderActionButton>
-        <EditorHeaderActionButton tooltip="New Fragment">
+        <EditorHeaderActionButton :tooltip="i18n.t('newFragment')">
           <Plus class="h-4 w-4" />
         </EditorHeaderActionButton>
       </div>

@@ -1,0 +1,29 @@
+{
+  "description": {
+    "storage": "Aby korzystać z usług synchronizacji, takich jak iCloud Drive, Google Drive lub Dropbox, po prostu przenieś magazyn do odpowiadających im zsynchronizowanych folderów.",
+    "migrate": {
+      "1": "Aby przeprowadzić migrację z massCode v1.0, wybierz folder zawierający pliki bazy danych.",
+      "2": "Aby przeprowadzić migrację ze SnippetsLab, wybierz plik JSON.",
+      "3": [
+        "Niektóre ograniczenia. Podczas migracji ze SnippetsLab:",
+        "Wszystkie foldery będą na pierwszym poziomie, ponieważ plik JSON (poniżej wersji 2.1) nie reprezentuje zagnieżdżonych folderów.",
+        "Fragmenty kodu w nieobsługiwanych językach zostaną ustawione jako domyślny Zwykły Tekst."
+      ]
+    },
+    "htmlCssPreview": "Dodaj fragmenty kodu w językach HTML i CSS, aby zobaczyć wynik.",
+    "codeBlockRenderer": [
+      "Podczas korzystania z Codemirror, język dla bloku kodu musi odpowiadać jednej z wartości",
+      "dostępnych języków"
+    ]
+  },
+  "success": {
+    "migrate": "Pomyślnie przeprowadzono migrację bazy danych."
+  },
+  "error": {
+    "folderContainDb": "Folder już zawiera plik \"db.json\".",
+    "folderNotContainDb": "Folder nie zawiera pliku \"db.json\"."
+  },
+  "unsponsored": "Bez Sponsorów",
+  "supportMessage": "Cześć, tutaj Anton 👋<br><br>\nDzięki za korzystanie z massCode. Jeśli uważasz, że ta aplikacja jest użyteczna, proszę {{-tagStart}} wesprzyj nas finansowo {{-tagEnd}}. To zmotywuje mnie do kontynuowania pracy nad projektem.",
+  "snippetsShowcase": "Przykłady Fragmentów Kodu"
+}

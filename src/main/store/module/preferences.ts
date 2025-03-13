@@ -15,5 +15,6 @@ export default new Store<PreferencesStore>({
     storagePath,
     backupPath,
     apiPort: 4321,
+    language: 'en',
   },
 })

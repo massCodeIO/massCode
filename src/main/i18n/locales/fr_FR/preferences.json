@@ -1,0 +1,49 @@
+{
+  "title": "Préférences",
+  "storage": {
+    "label": "Stockage",
+    "migrate": "Migration",
+    "count": "Compteur"
+  },
+  "editor": {
+    "label": "Edition",
+    "fontSize": "Taille police de caractères",
+    "fontFamily": "Famille de polices",
+    "wrap": {
+      "label": "Enveloppage",
+      "wordWrap": "Retour à la ligne",
+      "off": "inactif"
+    },
+    "tabSize": "Taille des onglets",
+    "showInvisibles": "Montrer les invisibles",
+    "highlightLine": "Mettre une ligne en surbrillance",
+    "highlightGutter": "Mise en évidence de la gouttière",
+    "matchBrackets": "Support des accolades",
+    "prettier": {
+      "label": "Plus jolie",
+      "trailingComma": {
+        "label": "Virgule à la fin",
+        "none": "Aucune",
+        "all": "toutes",
+        "es5": "ES5"
+      },
+      "semi": "Semi",
+      "singleQuote": "Apostrophe"
+    }
+  },
+  "appearance": {
+    "label": "Apparence",
+    "theme": {
+      "label": "Thème",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
+  },
+  "language": {
+    "label": "Langage"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Bloc de code Renderer"
+  }
+}

@@ -14,6 +14,7 @@ export interface PreferencesStore {
   storagePath: string
   backupPath: string
   apiPort: number
+  language: string
 }
 
 export interface Store {

@@ -1,6 +1,7 @@
 import type { AppStore, PreferencesStore } from './store/types'
 import type { EventCallback } from './types'
 import { contextBridge, ipcRenderer } from 'electron'
+import i18n from './i18n'
 import { store } from './store'
 
 contextBridge.exposeInMainWorld('electron', {
@@ -36,5 +37,8 @@ contextBridge.exposeInMainWorld('electron', {
       ) => store.preferences.set(name, value),
       delete: (name: keyof PreferencesStore) => store.preferences.delete(name),
     },
+  },
+  i18n: {
+    t: (key: string, options?: any) => i18n.t(key, options),
   },
 })

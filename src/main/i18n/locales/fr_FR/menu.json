@@ -1,0 +1,90 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Préférences",
+    "update": {
+      "label": "Vérifier mise à jour ...",
+      "message": "La version {{newVersion}} est maintenant disponible au téléchargement.\nVotre version est la {{oldVersion}}.",
+      "button": ["Allez au téléchargement", "OK"],
+      "noUpdate": "Il n'y a actuellement aucune mise à jour disponible."
+    },
+    "quit": "Quitter massCode",
+    "about": "A propos de massCode",
+    "hide": "Cacher massCode",
+    "hideOther": "Cacher les autres",
+    "showAll": "Tout montrer"
+  },
+  "help": {
+    "label": "Aide",
+    "website": "Site web",
+    "documentation": "Documentation",
+    "viewInGitHub": "Voir dans GitHub",
+    "changeLog": "Log des changements",
+    "reportIssue": "Rapporter un problème",
+    "giveStar": "Donner une étoile",
+    "extension": {
+      "vscode": "Extension VS Code",
+      "raycast": "Extension Raycast",
+      "alfred": "Extension Alfred"
+    },
+    "donate": {
+      "openCollective": "Faire une donation à un collectif ouvert (Open)",
+      "payPal": "Faire une donation via PayPal",
+      "gumroad": "Faire une donation via Gumroad (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Basculer vers les outils développeurs",
+    "links": {
+      "snippets": "Collection d'extraits"
+    }
+  },
+  "file": {
+    "label": "Fichier",
+    "find": "Trouver"
+  },
+  "view": {
+    "label": "Affichage",
+    "sortBy": {
+      "label": "Trier les extraits par",
+      "dateModified": "Date modifiée",
+      "dateCreated": "Date de création",
+      "name": "Nom"
+    },
+    "hideSubfolderSnippets": "Masquer les sous-dossier des extraits",
+    "compactMode": "Mode compacté"
+  },
+  "edit": {
+    "label": "Edition",
+    "undo": "Annuler",
+    "redo": "Refaire",
+    "cut": "Couper",
+    "copy": "Copier",
+    "paste": "Coller",
+    "delete": "Effacer",
+    "selectAll": "Tout sélectionner"
+  },
+  "editor": {
+    "label": "Editeur",
+    "copy": "Copier extrait vers presse-papier",
+    "format": "Formatter",
+    "previewCode": "Prévisualisation Code",
+    "previewScreenshot": "Prévisualisation copie écran",
+    "previewMarkdown": "Prévisualisation Markdown",
+    "fontSizeIncrease": "Augmentation taille police",
+    "fontSizeDecrease": "Diminution taille police",
+    "fontSizeReset": "Réinitialisation taille police"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Mode présentation",
+    "preview": "Prévisualisation"
+  },
+  "history": {
+    "label": "Historique",
+    "back": "Retour arrière",
+    "forward": "Avance"
+  },
+  "devtools": {
+    "label": "Outils développeur"
+  }
+}

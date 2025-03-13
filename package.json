@@ -42,6 +42,8 @@
     "date-fns": "^4.1.0",
     "electron-store": "^8.2.0",
     "elysia": "^1.2.15",
+    "i18next": "^24.2.2",
+    "i18next-fs-backend": "^2.6.0",
     "interactjs": "^1.10.27",
     "ky": "^1.7.5",
     "lucide-vue-next": "^0.476.0",

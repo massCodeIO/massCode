@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
+import { i18n } from '@/electron'
 
 interface Props {
   name: string
@@ -56,11 +57,15 @@ function onClickContextMenu() {
       </ContextMenu.Trigger>
       <ContextMenu.Content>
         <ContextMenu.Item @click="isEdit = true">
-          Rename "<span class="max-w-36 truncate">{{ name }}</span>"
+          {{ i18n.t("rename") }} "<span class="max-w-36 truncate">{{
+            name
+          }}</span>"
         </ContextMenu.Item>
         <ContextMenu.Separator />
         <ContextMenu.Item>
-          Delete "<span class="max-w-36 truncate">{{ name }}</span>"
+          {{ i18n.t("delete") }} "<span class="max-w-36 truncate">{{
+            name
+          }}</span>"
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

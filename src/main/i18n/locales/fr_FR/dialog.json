@@ -1,0 +1,13 @@
+{
+  "deleteConfirm": "Etes-vous sûr de vouloir effacer de façon permanente {{name}}?",
+  "deleteConfirmMultipleSnippets": "Etes-vous sûr de vouloir effacer de façon permanente {{count}} extraits sélectionnés ?",
+  "noUndo": "vous ne pouvez pas annuler cette action.",
+  "allSnippetsMoveToTrash": "Tous les extraits de ce dossier seront déplacés vers la corbeille.",
+  "deleteTag": "Cette étiquette sera également supprimée de tous les extraits.",
+  "emptyTrash": "Êtes-vous sûr de vouloir supprimer définitivement tous les extraits dans la corbeille ?",
+  "migrateConfirm": [
+    "Êtes-vous sûr de vouloir migrer de {{name}}?",
+    "Lors de la migration, la bibliothèque actuelle sera écrasée."
+  ],
+  "createDb": "Veuillez sélectionner un autre dossier"
+}

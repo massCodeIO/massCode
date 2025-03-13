@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useApp, useSnippets } from '@/composables'
+import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
 const { isSearch, searchQuery, getSnippets, snippets } = useSnippets()
@@ -33,7 +34,7 @@ watch(searchQuery, () => {
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"
-          placeholder="Search"
+          :placeholder="i18n.t('search')"
           variant="ghost"
         />
       </div>

@@ -1,0 +1,29 @@
+{
+  "description": {
+    "storage": "Pour utiliser des services de synchronisation comme iCloud Drive, Google Drive ou Dropbox, il suffit de déplacer le stockage vers les dossiers synchronisés correspondants",
+    "migrate": {
+      "1": "Pour migrer à partir de massCode v1.0, sélectionnez le dossier contenant les fichiers de la base de données.",
+      "2": "Pour migrer depuis SnippetsLab, sélectionnez le fichier JSON.",
+      "3": [
+        "Quelques limitations. Lors de la migration de SnippetsLab :",
+        "Tous les dossiers seront de premier niveau car le fichier JSON (inférieur à la version 2.1) ne représente pas les dossiers imbriqués.",
+        "Les extraits dont la langue n'est pas prise en charge seront définis comme du texte brut par défaut."
+      ]
+    },
+    "htmlCssPreview": "Ajouter des fragments avec les langages HTML et CSS pour voir le résultat.",
+    "codeBlockRenderer": [
+      "Lors de l'utilisation de Codemirror, le langage à définir pour le bloc de code doit correspondre à l'une des valeurs des",
+      "langages"
+    ]
+  },
+  "success": {
+    "migrate": "Migration réussie de la base de données."
+  },
+  "error": {
+    "folderContainDb": "Le dossier contient déjà \"db.json\".",
+    "folderNotContainDb": "Dossier ne contenant pas \"db.json\"."
+  },
+  "unsponsored": "Non sponsorisé",
+  "supportMessage": "Bonjour, ici Anton 👋<br><br>\nMerci d'avoir utilisé massCode. Si vous trouvez cette application utile, veuillez {{-tagStart}} donate {{-tagEnd}}. Cela m'incitera à poursuivre le développement du projet.",
+  "snippetsShowcase": "Vitrine des extraits"
+}

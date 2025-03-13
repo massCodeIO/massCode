@@ -23,6 +23,9 @@ declare global {
         query: (sql: string, params?: any[]) => Promise<any>
       }
       store: Store
+      i18n: {
+        t: (key: string, options?: any) => string
+      }
     }
   }
 }

@@ -32,7 +32,10 @@ app
         WHERE.push(`(
         unicode_lower(s.name) LIKE unicode_lower(?) OR
         unicode_lower(s.description) LIKE unicode_lower(?) OR
-        unicode_lower(sc.value) LIKE unicode_lower(?)
+        EXISTS (
+          SELECT 1 FROM snippet_contents sc 
+          WHERE sc.snippetId = s.id AND unicode_lower(sc.value) LIKE unicode_lower(?)
+        )
       )`)
         params.push(searchQuery, searchQuery, searchQuery)
       }

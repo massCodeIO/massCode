@@ -58,7 +58,7 @@ onClickOutside(snippetRef, () => {
       </div>
       <div class="meta text-text-muted flex justify-between text-xs">
         <div>
-          {{ snippet.folder?.name }}
+          {{ snippet.folder?.name || "Inbox" }}
         </div>
         <div>
           {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}

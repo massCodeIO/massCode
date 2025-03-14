@@ -38,8 +38,13 @@ const selectedSnippetContent = computed(() => {
   return selectedSnippet.value?.contents[selectedSnippetContentIndex.value]
 })
 
-const queryByLibraryOrFolder = computed(() => {
+const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: SnippetsQuery = {}
+
+  if (isSearch.value) {
+    query.search = searchQuery.value
+    return query
+  }
 
   if (selectedFolderId.value) {
     query.folderId = selectedFolderId.value
@@ -73,7 +78,7 @@ async function getSnippets(query?: Query) {
 
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
   await api.snippets.putSnippetsById(String(snippetId), data)
-  getSnippets(queryByLibraryOrFolder.value)
+  getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function updateSnippetContent(
@@ -86,7 +91,7 @@ async function updateSnippetContent(
     String(contentId),
     data,
   )
-  getSnippets(queryByLibraryOrFolder.value)
+  getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 function selectFirstSnippet() {

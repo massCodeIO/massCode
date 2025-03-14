@@ -93,15 +93,17 @@ async function init() {
   editor.on('scroll', hideScrollbar)
 
   watch(selectedSnippetContent, (v) => {
-    if (!v?.value)
-      return
-    setValue(v.value)
+    nextTick(() => {
+      setValue(v?.value || '')
+    })
   })
 
   watch(selectedSnippetContent, (v) => {
-    if (!v)
-      return
-    setLanguage(v.language as Language)
+    nextTick(() => {
+      if (!v)
+        return
+      setLanguage(v.language as Language)
+    })
   })
 
   watch(isDark, (v) => {

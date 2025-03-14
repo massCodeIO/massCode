@@ -65,6 +65,14 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
   return query
 })
 
+const isEmpty = computed(() => {
+  if (isSearch.value) {
+    return snippetsBySearch.value?.length === 0
+  }
+
+  return snippets.value?.length === 0
+})
+
 async function getSnippets(query?: Query) {
   const { data } = await api.snippets.getSnippets(query)
 
@@ -120,5 +128,6 @@ export function useSnippets() {
     snippetsBySearch,
     updateSnippet,
     updateSnippetContent,
+    isEmpty,
   }
 }

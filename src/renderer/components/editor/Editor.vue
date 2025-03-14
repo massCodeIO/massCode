@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
 import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
+import { i18n } from '@/electron'
 import { useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
@@ -26,7 +27,7 @@ interface Props {
 defineProps<Props>()
 
 const { settings, cursorPosition } = useEditor()
-const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { selectedSnippetContent, selectedSnippet, isEmpty } = useSnippets()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -138,12 +139,19 @@ onMounted(() => {
     data-editor
     class="mt-[var(--title-bar-height)] grid grid-rows-[auto_1fr_auto] overflow-hidden"
   >
-    <EditorHeader />
+    <EditorHeader v-if="!isEmpty" />
     <div
+      v-show="!isEmpty"
       ref="editorRef"
       class="overflow-auto"
     />
-    <EditorFooter />
+    <EditorFooter v-if="!isEmpty" />
+    <div
+      v-if="isEmpty"
+      class="row-span-full flex items-center justify-center"
+    >
+      {{ i18n.t("snippet.noSelected") }}
+    </div>
   </div>
 </template>
 

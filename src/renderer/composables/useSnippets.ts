@@ -25,6 +25,12 @@ const searchQuery = ref('')
 const isSearch = ref(false)
 
 const selectedSnippet = computed(() => {
+  if (isSearch.value) {
+    return snippetsBySearch.value?.find(
+      s => s.id === selectedSnippetId.value,
+    )
+  }
+
   return snippets.value?.find(s => s.id === selectedSnippetId.value)
 })
 

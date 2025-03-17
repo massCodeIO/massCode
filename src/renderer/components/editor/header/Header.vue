@@ -3,8 +3,8 @@ import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Type } from 'lucide-vue-next'
 
-const { selectedSnippet } = useSnippets()
-const { selectedSnippetContentIndex } = useApp()
+const { selectedSnippet, createSnippetContent } = useSnippets()
+const { selectedSnippetContentIndex, isFocusedSnippetName } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
@@ -23,6 +23,14 @@ const name = computed({
     })
   },
 })
+
+async function onAddFragment() {
+  const index = await createSnippetContent(selectedSnippet.value!.id)
+
+  if (index) {
+    selectedSnippetContentIndex.value = index
+  }
+}
 </script>
 
 <template>
@@ -35,18 +43,23 @@ const name = computed({
           v-model="name"
           variant="ghost"
           class="w-full px-0"
+          :select="isFocusedSnippetName"
+          @blur="isFocusedSnippetName = false"
         />
       </div>
       <div class="ml-2 flex">
-        <EditorHeaderActionButton
+        <UiActionButton
           :tooltip="i18n.t('addDescription')"
           @click="isShowDescription = !isShowDescription"
         >
           <Type class="h-3 w-3" />
-        </EditorHeaderActionButton>
-        <EditorHeaderActionButton :tooltip="i18n.t('newFragment')">
+        </UiActionButton>
+        <UiActionButton
+          :tooltip="i18n.t('newFragment')"
+          @click="onAddFragment"
+        >
           <Plus class="h-4 w-4" />
-        </EditorHeaderActionButton>
+        </UiActionButton>
       </div>
     </div>
     <div
@@ -55,7 +68,9 @@ const name = computed({
     >
       <EditorTab
         v-for="(i, index) in selectedSnippet?.contents"
+        :id="i.id"
         :key="i.id"
+        :index="index"
         :name="i.label"
         :class="{
           'bg-list-selection text-list-selection-fg':

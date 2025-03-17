@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
+import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useSnippets } from '@/composables'
+import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
 
@@ -14,8 +16,15 @@ const {
   selectedSnippetId,
   highlightedSnippetId,
   selectedSnippetIdBeforeSearch,
+  isFocusedSnippetName,
 } = useApp()
-const { selectSnippet, isSearch } = useSnippets()
+const {
+  selectSnippet,
+  isSearch,
+  deleteSnippet,
+  selectFirstSnippet,
+  duplicateSnippet,
+} = useSnippets()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
@@ -39,6 +48,17 @@ function onClickContextMenu() {
   highlightedSnippetId.value = props.snippet.id
 }
 
+async function onDelete() {
+  await deleteSnippet(props.snippet.id)
+  selectFirstSnippet()
+}
+
+async function onDuplicate() {
+  await duplicateSnippet(props.snippet.id)
+  selectFirstSnippet()
+  isFocusedSnippetName.value = true
+}
+
 onClickOutside(snippetRef, () => {
   isFocused.value = false
   highlightedSnippetId.value = undefined
@@ -58,19 +78,33 @@ onClickOutside(snippetRef, () => {
     @click="onSnippetClick(snippet.id)"
     @contextmenu="onClickContextMenu"
   >
-    <div class="flex flex-col p-2 select-none">
-      <div class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-        {{ snippet.name }}
-      </div>
-      <div class="meta text-text-muted flex justify-between text-xs">
-        <div>
-          {{ snippet.folder?.name || "Inbox" }}
+    <ContextMenu.Root>
+      <ContextMenu.Trigger>
+        <div class="flex flex-col p-2 select-none">
+          <div
+            class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+          >
+            {{ snippet.name || i18n.t("snippet.untitled") }}
+          </div>
+          <div class="meta text-text-muted flex justify-between text-xs">
+            <div>
+              {{ snippet.folder?.name || "Inbox" }}
+            </div>
+            <div>
+              {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+            </div>
+          </div>
         </div>
-        <div>
-          {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
-        </div>
-      </div>
-    </div>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <ContextMenu.Item @click="onDuplicate">
+          {{ i18n.t("duplicate") }}
+        </ContextMenu.Item>
+        <ContextMenu.Item @click="onDelete">
+          {{ i18n.t("delete") }}
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   </div>
 </template>
 

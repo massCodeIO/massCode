@@ -12,6 +12,7 @@ const selectedLibrary = ref<
     )
 const selectedFolderId = ref(store.app.get('selectedFolderId'))
 const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
+const selectedSnippetIdBeforeSearch = ref(store.app.get('selectedSnippetId'))
 const selectedSnippetContentIndex = ref(0)
 const highlightedFolderId = ref<number>()
 const highlightedSnippetId = ref<number>()
@@ -27,6 +28,7 @@ function selectFolder(folderId: number) {
   selectedFolderId.value = folderId
   selectedLibrary.value = undefined
   selectedSnippetContentIndex.value = 0
+  selectedSnippetIdBeforeSearch.value = undefined
 
   store.app.set('selectedFolderId', folderId)
   store.app.delete('selectedLibrary')
@@ -53,6 +55,7 @@ export function useApp() {
     selectedLibrary,
     selectedSnippetContentIndex,
     selectedSnippetId,
+    selectedSnippetIdBeforeSearch,
     selectFolder,
     sidebarWidth,
     snippetListWidth,

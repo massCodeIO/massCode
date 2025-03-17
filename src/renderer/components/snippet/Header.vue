@@ -3,18 +3,28 @@ import { useApp, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
-const { isSearch, searchQuery, getSnippets, snippets } = useSnippets()
-const { selectedSnippetId } = useApp()
+const {
+  isSearch,
+  searchQuery,
+  getSnippets,
+  selectSnippet,
+  selectFirstSnippet,
+} = useSnippets()
+const { selectedSnippetContentIndex, selectedSnippetIdBeforeSearch } = useApp()
 
 async function search() {
   if (searchQuery.value) {
     isSearch.value = true
+    selectedSnippetContentIndex.value = 0
+
     await getSnippets({ search: searchQuery.value })
+    selectFirstSnippet()
   }
   else {
     isSearch.value = false
-    if (snippets.value)
-      selectedSnippetId.value = snippets.value[0].id
+    if (selectedSnippetIdBeforeSearch.value) {
+      selectSnippet(selectedSnippetIdBeforeSearch.value)
+    }
   }
 }
 

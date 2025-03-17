@@ -102,9 +102,21 @@ async function updateSnippetContent(
   getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
+function selectSnippet(snippetId: number) {
+  selectedSnippetId.value = snippetId
+  selectedSnippetContentIndex.value = 0
+  store.app.set('selectedSnippetId', snippetId)
+}
+
 function selectFirstSnippet() {
-  const firstSnippet = snippets.value && snippets.value[0]
-  const { selectedSnippetId } = useApp()
+  let firstSnippet: SnippetsResponse[0] | undefined
+
+  if (isSearch.value) {
+    firstSnippet = snippetsBySearch.value?.[0]
+  }
+  else {
+    firstSnippet = snippets.value?.[0]
+  }
 
   if (firstSnippet) {
     selectedSnippetId.value = firstSnippet.id
@@ -119,15 +131,16 @@ function selectFirstSnippet() {
 export function useSnippets() {
   return {
     getSnippets,
+    isEmpty,
     isSearch,
     searchQuery,
     selectedSnippet,
     selectedSnippetContent,
     selectFirstSnippet,
+    selectSnippet,
     snippets,
     snippetsBySearch,
     updateSnippet,
     updateSnippetContent,
-    isEmpty,
   }
 }

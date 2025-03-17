@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
-import { useApp } from '@/composables'
-import { store } from '@/electron'
+import { useApp, useSnippets } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
 
@@ -11,8 +10,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedSnippetId, highlightedSnippetId, selectedSnippetContentIndex }
-  = useApp()
+const {
+  selectedSnippetId,
+  highlightedSnippetId,
+  selectedSnippetIdBeforeSearch,
+} = useApp()
+const { selectSnippet, isSearch } = useSnippets()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
@@ -23,9 +26,12 @@ const isHighlighted = computed(
 )
 
 function onSnippetClick(id: number) {
-  selectedSnippetId.value = id
-  store.app.set('selectedSnippetId', id)
-  selectedSnippetContentIndex.value = 0
+  selectSnippet(id)
+
+  if (!isSearch.value) {
+    selectedSnippetIdBeforeSearch.value = id
+  }
+
   isFocused.value = true
 }
 

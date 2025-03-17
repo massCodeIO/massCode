@@ -15,17 +15,6 @@ import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
-interface Props {
-  lang: Language
-  fragments: boolean
-  fragmentIndex: number
-  snippetId: string
-  modelValue: string
-  isSearchMode: boolean
-}
-
-defineProps<Props>()
-
 const { settings, cursorPosition } = useEditor()
 const { selectedSnippetContent, selectedSnippet, isEmpty } = useSnippets()
 
@@ -36,6 +25,7 @@ let editor: CodeMirror.Editor | null = null
 
 const editorRef = ref()
 const scrollBarOpacity = ref(1)
+const isProgrammaticChange = ref(false)
 
 const fontSize = computed(() => `${settings.fontSize}px`)
 const fontFamily = computed(() => settings.fontFamily)
@@ -67,12 +57,15 @@ async function init() {
   })
 
   editor.on('change', (e) => {
+    if (isProgrammaticChange.value || !selectedSnippet.value?.id)
+      return
+
     const initValue = JSON.stringify(selectedSnippetContent.value?.value)
     const updatedValue = JSON.stringify(e.getValue())
 
     if (initValue !== updatedValue) {
       addToUpdateContentQueue(
-        selectedSnippet.value!.id,
+        selectedSnippet.value.id,
         selectedSnippetContent.value!.id,
         {
           label: selectedSnippetContent.value!.label,
@@ -121,7 +114,13 @@ function setValue(value: string) {
     return
 
   const cursor = editor.getCursor()
+
+  isProgrammaticChange.value = true
   editor?.setValue(value)
+
+  nextTick(() => {
+    isProgrammaticChange.value = false
+  })
 
   if (cursor)
     editor.setCursor(cursor)

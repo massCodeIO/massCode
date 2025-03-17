@@ -342,5 +342,32 @@ app
       },
     },
   )
+  // Удаление содержимого сниппета
+  .delete(
+    '/:id/contents/:contentId',
+    ({ params, set }) => {
+      const { contentId } = params
+
+      const result = db
+        .prepare(
+          `
+      DELETE FROM snippet_contents WHERE id = ?
+      `,
+        )
+        .run(contentId)
+
+      if (!result.changes) {
+        set.status = 404
+        throw new Error('Snippet content not found')
+      }
+
+      return { message: 'Snippet content deleted' }
+    },
+    {
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
 
 export default app

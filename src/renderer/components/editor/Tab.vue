@@ -4,14 +4,21 @@ import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
 
 interface Props {
+  id: number
+  index: number
   name: string
 }
 
 const props = defineProps<Props>()
 
-const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
+  = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
-const { highlightedSnippetId, highlightedFolderId } = useApp()
+const {
+  highlightedSnippetId,
+  highlightedFolderId,
+  selectedSnippetContentIndex,
+} = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
@@ -36,6 +43,17 @@ const name = computed({
 function onClickContextMenu() {
   highlightedSnippetId.value = undefined
   highlightedFolderId.value = undefined
+}
+
+async function onDelete() {
+  await deleteSnippetContent(selectedSnippet.value!.id, props.id)
+
+  if (selectedSnippetContentIndex.value === props.index) {
+    selectedSnippetContentIndex.value = 0
+  }
+  else if (selectedSnippetContentIndex.value > props.index) {
+    selectedSnippetContentIndex.value--
+  }
 }
 </script>
 
@@ -62,7 +80,7 @@ function onClickContextMenu() {
           }}</span>"
         </ContextMenu.Item>
         <ContextMenu.Separator />
-        <ContextMenu.Item>
+        <ContextMenu.Item @click="onDelete">
           {{ i18n.t("delete") }} "<span class="max-w-36 truncate">{{
             name
           }}</span>"

@@ -651,6 +651,24 @@ export class Api<
         type: ContentType.Json,
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name DeleteSnippetsByIdContentsByContentId
+     * @request DELETE:/snippets/{id}/contents/{contentId}
+     */
+    deleteSnippetsByIdContentsByContentId: (
+      id: string,
+      contentId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/snippets/${id}/contents/${contentId}`,
+        method: "DELETE",
+        ...params,
+      }),
   };
   folders = {
     /**

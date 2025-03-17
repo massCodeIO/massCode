@@ -9,8 +9,13 @@ const {
   getSnippets,
   selectSnippet,
   selectFirstSnippet,
+  createSnippet,
 } = useSnippets()
-const { selectedSnippetContentIndex, selectedSnippetIdBeforeSearch } = useApp()
+const {
+  selectedSnippetContentIndex,
+  selectedSnippetIdBeforeSearch,
+  isFocusedSnippetName,
+} = useApp()
 
 async function search() {
   if (searchQuery.value) {
@@ -26,6 +31,12 @@ async function search() {
       selectSnippet(selectedSnippetIdBeforeSearch.value)
     }
   }
+}
+
+async function onAddSnippet() {
+  await createSnippet()
+  selectFirstSnippet()
+  isFocusedSnippetName.value = true
 }
 
 function clear() {
@@ -56,14 +67,12 @@ watch(searchQuery, () => {
       >
         <X class="h-4 w-4" />
       </UiButton>
-      <UiButton
-        v-else
-        variant="icon"
-        size="icon"
-        @click="clear"
+      <UiActionButton
+        :tooltip="i18n.t('newSnippet')"
+        @click="onAddSnippet"
       >
         <Plus class="h-4 w-4" />
-      </UiButton>
+      </UiActionButton>
     </div>
   </div>
 </template>

@@ -17,6 +17,8 @@ const selectedSnippetContentIndex = ref(0)
 const highlightedFolderId = ref<number>()
 const highlightedSnippetId = ref<number>()
 
+const isFocusedSnippetName = ref(false)
+
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
 
@@ -59,5 +61,6 @@ export function useApp() {
     selectFolder,
     sidebarWidth,
     snippetListWidth,
+    isFocusedSnippetName,
   }
 }

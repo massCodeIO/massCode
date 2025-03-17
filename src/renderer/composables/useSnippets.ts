@@ -4,7 +4,7 @@ import type {
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from './types'
 import { useApp } from './useApp'
@@ -84,6 +84,73 @@ async function getSnippets(query?: Query) {
   }
 }
 
+async function createSnippet() {
+  try {
+    const { data } = await api.snippets.postSnippets({
+      name: i18n.t('snippet.untitled'),
+      folderId: selectedFolderId.value || null,
+    })
+
+    await api.snippets.postSnippetsByIdContents(String(data.id), {
+      label: `${i18n.t('fragment')} 1`,
+      value: '',
+      language: 'plain_text',
+    })
+
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+async function duplicateSnippet(snippetId: number) {
+  const snippet = snippets.value?.find(s => s.id === snippetId)
+
+  if (!snippet) {
+    return
+  }
+
+  try {
+    const { data } = await api.snippets.postSnippets({
+      name: `${snippet.name} - copy`,
+      folderId: snippet.folder?.id || null,
+    })
+
+    for (const content of snippet.contents) {
+      await api.snippets.postSnippetsByIdContents(String(data.id), {
+        label: content.label,
+        value: content.value,
+        language: content.language,
+      })
+    }
+
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+async function createSnippetContent(snippetId: number) {
+  const lastContentIndex = selectedSnippet.value?.contents.length || 0
+
+  try {
+    await api.snippets.postSnippetsByIdContents(String(snippetId), {
+      label: `${i18n.t('fragment')} ${lastContentIndex + 1}`,
+      value: '',
+      language: 'plain_text',
+    })
+
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+
+    return lastContentIndex
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
   await api.snippets.putSnippetsById(String(snippetId), data)
   getSnippets(queryByLibraryOrFolderOrSearch.value)
@@ -100,6 +167,25 @@ async function updateSnippetContent(
     data,
   )
   getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function deleteSnippet(snippetId: number) {
+  await api.snippets.deleteSnippetsById(String(snippetId))
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function deleteSnippetContent(snippetId: number, contentId: number) {
+  try {
+    await api.snippets.deleteSnippetsByIdContentsByContentId(
+      String(snippetId),
+      String(contentId),
+    )
+
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
 }
 
 function selectSnippet(snippetId: number) {
@@ -130,6 +216,11 @@ function selectFirstSnippet() {
 
 export function useSnippets() {
   return {
+    createSnippet,
+    createSnippetContent,
+    deleteSnippet,
+    deleteSnippetContent,
+    duplicateSnippet,
     getSnippets,
     isEmpty,
     isSearch,

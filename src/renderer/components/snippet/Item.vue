@@ -50,7 +50,10 @@ function onClickContextMenu() {
 
 async function onDelete() {
   await deleteSnippet(props.snippet.id)
-  selectFirstSnippet()
+
+  if (selectedSnippetId.value === props.snippet.id) {
+    selectFirstSnippet()
+  }
 }
 
 async function onDuplicate() {

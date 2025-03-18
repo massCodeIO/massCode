@@ -1,5 +1,6 @@
 export * from './useApp'
 export * from './useEditor'
+export * from './useFolders'
 export * from './useGutter'
 export * from './useSnippets'
 export * from './useSnippetUpdate'

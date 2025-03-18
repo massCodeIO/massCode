@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
-import type { FoldersTreeResponse } from '@/services/api/generated'
 import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
-import { useApp, useGutter, useSnippets } from '@/composables'
+import { useApp, useFolders, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
 import { api } from '@/services/api'
@@ -14,17 +13,15 @@ import LibraryItem from './library/Item.vue'
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
-const { sidebarWidth, selectFolder } = useApp()
+const { sidebarWidth } = useApp()
 const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
-
+const { getFolders, folders, selectFolder } = useFolders()
 const { width } = useGutter(
   sidebarRef,
   gutterRef,
   Number.parseInt(sidebarWidth.value as string),
   APP_DEFAULTS.sizes.sidebar,
 )
-
-const folders = ref<FoldersTreeResponse>()
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
@@ -36,11 +33,6 @@ const libraryItems = [
   { id: LibraryFilter.All, name: i18n.t('sidebar.allSnippets'), icon: Archive },
   { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
 ]
-
-async function getFolders() {
-  const { data } = await api.folders.getFoldersTree()
-  folders.value = data
-}
 
 getFolders()
 

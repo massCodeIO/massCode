@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { Node, Position } from './types'
-import { useApp } from '@/composables'
+import { useApp, useSnippets } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronRight, Folder } from 'lucide-vue-next'
 import { isAllowed, store } from './composables'
@@ -26,6 +26,7 @@ const { clickNode, dragNode, toggleNode, isHoveredByIdDisabled, focusHandler }
   = inject(treeKeys)!
 
 const { highlightedFolderId, selectedFolderId } = useApp()
+const { displayedSnippets, updateSnippet } = useSnippets()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -151,7 +152,22 @@ function onDragLeave() {
   overPosition.value = undefined
 }
 
-function onDrop() {
+function onDrop(e: DragEvent) {
+  const snippetId = e.dataTransfer?.getData('snippet')
+  const snippet = displayedSnippets.value?.find(
+    s => s.id === Number(snippetId),
+  )
+
+  if (snippet && props.node.id !== snippet.folder?.id) {
+    updateSnippet(snippet.id, {
+      name: snippet.name,
+      folderId: props.node.id,
+      description: snippet.description,
+      isDeleted: snippet.isDeleted,
+      isFavorites: snippet.isFavorites,
+    })
+  }
+
   if (!store.dragNode || !isAllowed.value)
     return
 

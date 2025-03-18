@@ -62,6 +62,21 @@ async function onDuplicate() {
   isFocusedSnippetName.value = true
 }
 
+function onDragStart(event: DragEvent) {
+  event.dataTransfer?.setData('snippet', props.snippet.id.toString())
+
+  const el = document.createElement('div')
+
+  el.className = 'fixed left-[-100%] text-fg truncate max-w-[200px]'
+  el.id = 'ghost'
+  el.innerHTML = props.snippet.name
+
+  document.body.appendChild(el)
+  event.dataTransfer?.setDragImage(el, 0, 0)
+
+  setTimeout(() => el.remove(), 0)
+}
+
 onClickOutside(snippetRef, () => {
   isFocused.value = false
   highlightedSnippetId.value = undefined
@@ -72,14 +87,16 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="border-border relative not-first:border-t [&+.is-selected+div]:border-transparent"
+    class="border-border relative not-first:border-t focus-visible:outline-none [&+.is-selected+div]:border-transparent"
     :class="{
       'is-selected': isSelected,
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
+    draggable="true"
     @click="onSnippetClick(snippet.id)"
     @contextmenu="onClickContextMenu"
+    @dragstart.stop="onDragStart"
   >
     <ContextMenu.Root>
       <ContextMenu.Trigger>

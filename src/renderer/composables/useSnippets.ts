@@ -24,6 +24,14 @@ const snippetsBySearch = shallowRef<SnippetsResponse>()
 const searchQuery = ref('')
 const isSearch = ref(false)
 
+const displayedSnippets = computed(() => {
+  if (isSearch.value) {
+    return snippetsBySearch.value
+  }
+
+  return snippets.value
+})
+
 const selectedSnippet = computed(() => {
   if (isSearch.value) {
     return snippetsBySearch.value?.find(
@@ -220,6 +228,7 @@ export function useSnippets() {
     createSnippetContent,
     deleteSnippet,
     deleteSnippetContent,
+    displayedSnippets,
     duplicateSnippet,
     getSnippets,
     isEmpty,
@@ -229,8 +238,6 @@ export function useSnippets() {
     selectedSnippetContent,
     selectFirstSnippet,
     selectSnippet,
-    snippets,
-    snippetsBySearch,
     updateSnippet,
     updateSnippetContent,
   }

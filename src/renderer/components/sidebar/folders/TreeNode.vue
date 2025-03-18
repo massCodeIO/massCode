@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { Node, Position } from './types'
-import { useApp } from '@/composables'
+import { useApp, useSnippets } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronRight, Folder } from 'lucide-vue-next'
 import { isAllowed, store } from './composables'
@@ -25,7 +25,8 @@ const props = withDefaults(defineProps<Props>(), {
 const { clickNode, dragNode, toggleNode, isHoveredByIdDisabled, focusHandler }
   = inject(treeKeys)!
 
-const { highlightedFolderId, selectedFolderId } = useApp()
+const { highlightedFolderId, selectedFolderId, selectedSnippetId } = useApp()
+const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -151,7 +152,34 @@ function onDragLeave() {
   overPosition.value = undefined
 }
 
-function onDrop() {
+async function onDrop(e: DragEvent) {
+  const snippetIds = JSON.parse(e.dataTransfer?.getData('snippetIds') || '[]')
+  const snippets = displayedSnippets.value?.filter(s =>
+    snippetIds.includes(s.id),
+  )
+
+  // Если все сниппеты уже в папке
+  if (snippets && snippets.every(s => s.folder?.id === props.node.id)) {
+    return
+  }
+
+  if (snippets) {
+    const ids = snippets.map(s => s.id)
+    const data = snippets.map(s => ({
+      name: s.name,
+      folderId: props.node.id,
+      description: s.description,
+      isDeleted: s.isDeleted,
+      isFavorites: s.isFavorites,
+    }))
+
+    await updateSnippets(ids, data)
+
+    if (selectedSnippetId.value && ids.includes(selectedSnippetId.value)) {
+      selectFirstSnippet()
+    }
+  }
+
   if (!store.dragNode || !isAllowed.value)
     return
 

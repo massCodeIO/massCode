@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
 import type { FoldersTreeResponse } from '@/services/api/generated'
+import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
@@ -169,15 +170,17 @@ watch(width, () => {
         <Plus class="h-4 w-4" />
       </UiButton>
     </div>
-    <div class="flex-grow overflow-auto">
-      <Tree
-        v-if="folders"
-        v-model="folders"
-        @click-node="onFolderClick"
-        @toggle-node="onFolderToggle"
-        @drag-node="onFolderDrag"
-      />
-    </div>
+    <ScrollArea>
+      <div class="flex-grow">
+        <Tree
+          v-if="folders"
+          v-model="folders"
+          @click-node="onFolderClick"
+          @toggle-node="onFolderToggle"
+          @drag-node="onFolderDrag"
+        />
+      </div>
+    </ScrollArea>
     <UiGutter ref="gutterRef" />
   </div>
 </template>

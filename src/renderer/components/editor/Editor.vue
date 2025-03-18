@@ -16,7 +16,8 @@ import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
 const { settings, cursorPosition } = useEditor()
-const { selectedSnippetContent, selectedSnippet, isEmpty } = useSnippets()
+const { selectedSnippetContent, selectedSnippet, isEmpty, selectedSnippetIds }
+  = useSnippets()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -140,18 +141,26 @@ onMounted(() => {
     data-editor
     class="mt-[var(--title-bar-height)] grid grid-rows-[auto_1fr_auto] overflow-hidden"
   >
-    <EditorHeader v-if="!isEmpty" />
+    <EditorHeader v-if="!isEmpty && selectedSnippetIds.length <= 1" />
     <div
-      v-show="!isEmpty"
+      v-show="!isEmpty && selectedSnippetIds.length <= 1"
       ref="editorRef"
       class="overflow-auto"
     />
-    <EditorFooter v-if="!isEmpty" />
+    <EditorFooter v-if="!isEmpty && selectedSnippetIds.length <= 1" />
     <div
       v-if="isEmpty"
       class="row-span-full flex items-center justify-center"
     >
       {{ i18n.t("snippet.noSelected") }}
+    </div>
+    <div
+      v-if="selectedSnippetIds.length > 1"
+      class="row-span-full flex items-center justify-center"
+    >
+      {{
+        i18n.t("snippet.selectedMultiple", { count: selectedSnippetIds.length })
+      }}
     </div>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SnippetsQuery } from '@/services/api/generated'
+import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
@@ -10,7 +11,7 @@ const gutterRef = ref<{ $el: HTMLElement }>()
 
 const { snippetListWidth, sidebarWidth, selectedFolderId, selectedLibrary }
   = useApp()
-const { snippets, snippetsBySearch, isSearch, getSnippets } = useSnippets()
+const { displayedSnippets, getSnippets } = useSnippets()
 
 async function initGetSnippets() {
   const query: SnippetsQuery = {}
@@ -67,13 +68,15 @@ watch(width, () => {
     <div>
       <SnippetHeader />
     </div>
-    <div class="flex-grow overflow-y-auto">
-      <SnippetItem
-        v-for="snippet in isSearch ? snippetsBySearch : snippets"
-        :key="snippet.id"
-        :snippet="snippet"
-      />
-    </div>
+    <ScrollArea>
+      <div class="flex-grow overflow-y-auto">
+        <SnippetItem
+          v-for="snippet in displayedSnippets"
+          :key="snippet.id"
+          :snippet="snippet"
+        />
+      </div>
+    </ScrollArea>
     <UiGutter ref="gutterRef" />
   </div>
 </template>

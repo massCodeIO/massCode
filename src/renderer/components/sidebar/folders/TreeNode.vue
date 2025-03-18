@@ -25,8 +25,8 @@ const props = withDefaults(defineProps<Props>(), {
 const { clickNode, dragNode, toggleNode, isHoveredByIdDisabled, focusHandler }
   = inject(treeKeys)!
 
-const { highlightedFolderId, selectedFolderId } = useApp()
-const { displayedSnippets, updateSnippet } = useSnippets()
+const { highlightedFolderId, selectedFolderId, selectedSnippetId } = useApp()
+const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -152,20 +152,32 @@ function onDragLeave() {
   overPosition.value = undefined
 }
 
-function onDrop(e: DragEvent) {
-  const snippetId = e.dataTransfer?.getData('snippet')
-  const snippet = displayedSnippets.value?.find(
-    s => s.id === Number(snippetId),
+async function onDrop(e: DragEvent) {
+  const snippetIds = JSON.parse(e.dataTransfer?.getData('snippetIds') || '[]')
+  const snippets = displayedSnippets.value?.filter(s =>
+    snippetIds.includes(s.id),
   )
 
-  if (snippet && props.node.id !== snippet.folder?.id) {
-    updateSnippet(snippet.id, {
-      name: snippet.name,
+  // Если все сниппеты уже в папке
+  if (snippets && snippets.every(s => s.folder?.id === props.node.id)) {
+    return
+  }
+
+  if (snippets) {
+    const ids = snippets.map(s => s.id)
+    const data = snippets.map(s => ({
+      name: s.name,
       folderId: props.node.id,
-      description: snippet.description,
-      isDeleted: snippet.isDeleted,
-      isFavorites: snippet.isFavorites,
-    })
+      description: s.description,
+      isDeleted: s.isDeleted,
+      isFavorites: s.isFavorites,
+    }))
+
+    await updateSnippets(ids, data)
+
+    if (selectedSnippetId.value && ids.includes(selectedSnippetId.value)) {
+      selectFirstSnippet()
+    }
   }
 
   if (!store.dragNode || !isAllowed.value)

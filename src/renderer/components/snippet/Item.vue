@@ -24,18 +24,24 @@ const {
   deleteSnippet,
   selectFirstSnippet,
   duplicateSnippet,
+  selectedSnippetIds,
 } = useSnippets()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => selectedSnippetId.value === props.snippet.id)
+const isInMultiSelection = computed(
+  () =>
+    selectedSnippetIds.value.length > 1
+    && selectedSnippetIds.value.includes(props.snippet.id),
+)
 const isHighlighted = computed(
   () => highlightedSnippetId.value === props.snippet.id,
 )
 
-function onSnippetClick(id: number) {
-  selectSnippet(id)
+function onSnippetClick(id: number, event: MouseEvent) {
+  selectSnippet(id, event.shiftKey)
 
   if (!isSearch.value) {
     selectedSnippetIdBeforeSearch.value = id
@@ -63,13 +69,30 @@ async function onDuplicate() {
 }
 
 function onDragStart(event: DragEvent) {
-  event.dataTransfer?.setData('snippet', props.snippet.id.toString())
+  const ids
+    = selectedSnippetIds.value.length > 1
+      ? selectedSnippetIds.value
+      : [props.snippet.id]
+
+  event.dataTransfer?.setData('snippetIds', JSON.stringify(ids))
 
   const el = document.createElement('div')
 
-  el.className = 'fixed left-[-100%] text-fg truncate max-w-[200px]'
-  el.id = 'ghost'
-  el.innerHTML = props.snippet.name
+  if (selectedSnippetIds.value.length > 1) {
+    el.className
+      = 'fixed left-[-100%] text-fg truncate max-w-[200px] flex items-center'
+    el.id = 'ghost'
+    el.innerHTML = `
+      <span class="rounded-full bg-primary text-white px-2 py-0.5 text-xs ml-3">
+        ${selectedSnippetIds.value.length}
+      </span>
+    `
+  }
+  else {
+    el.className = 'fixed left-[-100%] text-fg truncate max-w-[200px]'
+    el.id = 'ghost'
+    el.innerHTML = props.snippet.name
+  }
 
   document.body.appendChild(el)
   event.dataTransfer?.setDragImage(el, 0, 0)
@@ -90,11 +113,12 @@ onClickOutside(snippetRef, () => {
     class="border-border relative not-first:border-t focus-visible:outline-none [&+.is-selected+div]:border-transparent"
     :class="{
       'is-selected': isSelected,
+      'is-multi-selected': isInMultiSelection,
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
     draggable="true"
-    @click="onSnippetClick(snippet.id)"
+    @click="(event) => onSnippetClick(snippet.id, event)"
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"
   >
@@ -137,7 +161,13 @@ onClickOutside(snippetRef, () => {
       @apply text-list-selection-fg;
     }
   }
-  &.is-focused {
+  &.is-multi-selected {
+    @apply bg-list-selection/80 text-list-selection-fg rounded-md;
+    .meta {
+      @apply text-list-selection-fg;
+    }
+  }
+  &.is-focused:not(.is-multi-selected) {
     @apply bg-list-focus text-list-focus-fg rounded-md;
     .meta {
       @apply text-list-focus-fg;
@@ -146,7 +176,8 @@ onClickOutside(snippetRef, () => {
   &.is-highlighted {
     @apply outline-list-focus rounded-md outline-2 -outline-offset-2;
     &.is-focused,
-    &.is-selected {
+    &.is-selected,
+    &.is-multi-selected {
       @apply bg-bg text-list-selection-fg;
       .meta {
         @apply text-list-selection-fg;

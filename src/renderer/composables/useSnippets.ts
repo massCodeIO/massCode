@@ -18,6 +18,9 @@ const {
   selectedLibrary,
 } = useApp()
 
+const selectedSnippetIds = ref<number[]>([])
+const lastSelectedSnippetId = ref<number | undefined>()
+
 const snippets = shallowRef<SnippetsResponse>()
 const snippetsBySearch = shallowRef<SnippetsResponse>()
 
@@ -44,6 +47,11 @@ const selectedSnippet = computed(() => {
 
 const selectedSnippetContent = computed(() => {
   return selectedSnippet.value?.contents[selectedSnippetContentIndex.value]
+})
+
+const selectedSnippets = computed(() => {
+  const source = isSearch.value ? snippetsBySearch.value : snippets.value
+  return source?.filter(s => selectedSnippetIds.value.includes(s.id)) || []
 })
 
 const queryByLibraryOrFolderOrSearch = computed(() => {
@@ -161,7 +169,14 @@ async function createSnippetContent(snippetId: number) {
 
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
   await api.snippets.putSnippetsById(String(snippetId), data)
-  getSnippets(queryByLibraryOrFolderOrSearch.value)
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
+  for (const [index, snippetId] of snippetIds.entries()) {
+    await api.snippets.putSnippetsById(String(snippetId), data[index])
+  }
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function updateSnippetContent(
@@ -196,10 +211,45 @@ async function deleteSnippetContent(snippetId: number, contentId: number) {
   }
 }
 
-function selectSnippet(snippetId: number) {
-  selectedSnippetId.value = snippetId
-  selectedSnippetContentIndex.value = 0
-  store.app.set('selectedSnippetId', snippetId)
+function selectSnippet(snippetId: number, withShift = false) {
+  if (!withShift) {
+    selectedSnippetIds.value = [snippetId]
+    selectedSnippetId.value = snippetId
+    selectedSnippetContentIndex.value = 0
+    store.app.set('selectedSnippetId', snippetId)
+    return
+  }
+
+  if (selectedSnippetId.value !== undefined) {
+    const source = isSearch.value ? snippetsBySearch.value : snippets.value
+
+    if (source) {
+      const anchorIndex = source.findIndex(
+        s => s.id === selectedSnippetId.value,
+      )
+      const currentIndex = source.findIndex(s => s.id === snippetId)
+
+      if (anchorIndex !== -1 && currentIndex !== -1) {
+        const startIndex = Math.min(anchorIndex, currentIndex)
+        const endIndex = Math.max(anchorIndex, currentIndex)
+
+        const newSelection = source
+          .slice(startIndex, endIndex + 1)
+          .map(s => s.id)
+        selectedSnippetIds.value = newSelection
+
+        lastSelectedSnippetId.value = snippetId
+        selectedSnippetContentIndex.value = 0
+      }
+    }
+  }
+  else {
+    selectedSnippetIds.value = [snippetId]
+    selectedSnippetId.value = snippetId
+    lastSelectedSnippetId.value = snippetId
+    selectedSnippetContentIndex.value = 0
+    store.app.set('selectedSnippetId', snippetId)
+  }
 }
 
 function selectFirstSnippet() {
@@ -214,10 +264,14 @@ function selectFirstSnippet() {
 
   if (firstSnippet) {
     selectedSnippetId.value = firstSnippet.id
+    selectedSnippetIds.value = [firstSnippet.id]
+    lastSelectedSnippetId.value = firstSnippet.id
     store.app.set('selectedSnippetId', firstSnippet.id)
   }
   else {
     selectedSnippetId.value = undefined
+    selectedSnippetIds.value = []
+    lastSelectedSnippetId.value = undefined
     store.app.delete('selectedSnippetId')
   }
 }
@@ -233,12 +287,16 @@ export function useSnippets() {
     getSnippets,
     isEmpty,
     isSearch,
+    lastSelectedSnippetId,
     searchQuery,
     selectedSnippet,
     selectedSnippetContent,
+    selectedSnippets,
+    selectedSnippetIds,
     selectFirstSnippet,
     selectSnippet,
     updateSnippet,
+    updateSnippets,
     updateSnippetContent,
   }
 }

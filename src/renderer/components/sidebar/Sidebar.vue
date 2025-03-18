@@ -5,6 +5,7 @@ import { useApp, useFolders, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
 import { api } from '@/services/api'
+import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
 import Tree from './folders/Tree.vue'
@@ -13,7 +14,7 @@ import LibraryItem from './library/Item.vue'
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
-const { sidebarWidth } = useApp()
+const { sidebarWidth, selectedFolderId } = useApp()
 const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
 const { getFolders, folders, selectFolder } = useFolders()
 const { width } = useGutter(
@@ -34,7 +35,15 @@ const libraryItems = [
   { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
 ]
 
-getFolders()
+async function initGetFolders() {
+  await getFolders()
+
+  nextTick(() => {
+    scrollToElement(`[id="${selectedFolderId.value}"]`)
+  })
+}
+
+initGetFolders()
 
 async function onFolderClick(id: number) {
   selectFolder(id)

@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
+import { scrollToElement } from '@/utils'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
@@ -33,6 +34,10 @@ async function initGetSnippets() {
   }
 
   await getSnippets(query)
+
+  nextTick(() => {
+    scrollToElement('[data-snippet-item].is-selected')
+  })
 }
 
 initGetSnippets()

@@ -57,7 +57,7 @@ async function createFolderAndSelect() {
 
 async function updateFolder(folderId: number, data: FoldersUpdate) {
   try {
-    await api.folders.putFoldersById(String(folderId), data)
+    await api.folders.patchFoldersById(String(folderId), data)
     await getFolders()
 
     if (folderId === selectedFolderId.value) {

@@ -181,13 +181,7 @@ async function onDrop(e: DragEvent) {
     }
 
     const ids = snippets.map(s => s.id)
-    const data = snippets.map(s => ({
-      name: s.name,
-      folderId: props.node.id,
-      description: s.description,
-      isDeleted: s.isDeleted,
-      isFavorites: s.isFavorites,
-    }))
+    const data = snippets.map(() => ({ folderId: props.node.id }))
 
     await updateSnippets(ids, data)
 
@@ -220,14 +214,7 @@ function onUpdateName() {
     return
   }
 
-  updateFolder(props.node.id, {
-    name: name.value,
-    icon: props.node.icon,
-    defaultLanguage: props.node.defaultLanguage,
-    parentId: props.node.parentId,
-    isOpen: props.node.isOpen,
-    orderIndex: props.node.orderIndex,
-  })
+  updateFolder(props.node.id, { name: name.value })
 
   renameFolderId.value = null
 }

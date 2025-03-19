@@ -92,21 +92,12 @@ async function onDelete() {
     }
     else {
       // Мягкое удаление
-      const snippetsToSoftDelete = displayedSnippets.value?.filter(s =>
-        selectedSnippetIds.value.includes(s.id),
-      )
-      const snippetIds = snippetsToSoftDelete?.map(s => s.id)
-      const snippetsData = snippetsToSoftDelete?.map(s => ({
-        name: s.name,
-        folderId: s.folder?.id || null,
-        description: s.description,
+      const snippetsData = selectedSnippetIds.value?.map(() => ({
+        folderId: null,
         isDeleted: 1,
-        isFavorites: s.isFavorites,
       }))
 
-      if (snippetIds && snippetsData) {
-        await updateSnippets(snippetIds, snippetsData)
-      }
+      await updateSnippets(selectedSnippetIds.value, snippetsData)
     }
   }
   else if (props.snippet.isDeleted) {
@@ -115,11 +106,8 @@ async function onDelete() {
   else {
     // Мягкое удаление
     await updateSnippet(props.snippet.id, {
-      name: props.snippet.name,
       folderId: null,
-      description: props.snippet.description,
       isDeleted: 1,
-      isFavorites: props.snippet.isFavorites,
     })
   }
 

@@ -4,7 +4,6 @@ import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useFolders, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
-import { api } from '@/services/api'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
@@ -16,8 +15,13 @@ const gutterRef = ref<{ $el: HTMLElement }>()
 
 const { sidebarWidth, selectedFolderId } = useApp()
 const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
-const { getFolders, folders, selectFolder, createFolderAndSelect }
-  = useFolders()
+const {
+  getFolders,
+  folders,
+  selectFolder,
+  createFolderAndSelect,
+  updateFolder,
+} = useFolders()
 const { width } = useGutter(
   sidebarRef,
   gutterRef,
@@ -58,19 +62,9 @@ async function onFolderClick(id: number) {
 
 async function onFolderToggle(node: Node) {
   try {
-    const { id, name, icon, defaultLanguage, parentId, isOpen, orderIndex }
-      = node
+    const { id, isOpen } = node
 
-    await api.folders.putFoldersById(String(id), {
-      name,
-      icon,
-      defaultLanguage,
-      parentId,
-      isOpen: !isOpen ? 1 : 0,
-      orderIndex,
-    })
-
-    await getFolders()
+    updateFolder(id, { isOpen: !isOpen ? 1 : 0 })
   }
   catch (error) {
     console.error('Folder update error:', error)
@@ -121,16 +115,10 @@ async function onFolderDrag({
       }
     }
 
-    await api.folders.putFoldersById(String(node.id), {
-      name: node.name,
-      icon: node.icon || null,
-      defaultLanguage: node.defaultLanguage || 'plain_text',
+    updateFolder(node.id, {
       parentId: newParentId,
-      isOpen: node.isOpen ? 1 : 0,
       orderIndex: newOrderIndex,
     })
-
-    await getFolders()
   }
   catch (error) {
     console.error('Folder update error:', error)

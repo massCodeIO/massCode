@@ -40,6 +40,18 @@ const isHighlighted = computed(
   () => highlightedSnippetId.value === props.snippet.id,
 )
 
+const folderName = computed(() => {
+  if (props.snippet.folder) {
+    return props.snippet.folder.name
+  }
+
+  if (props.snippet.isDeleted) {
+    return i18n.t('sidebar.trash')
+  }
+
+  return i18n.t('sidebar.inbox')
+})
+
 function onSnippetClick(id: number, event: MouseEvent) {
   selectSnippet(id, event.shiftKey)
 
@@ -132,7 +144,7 @@ onClickOutside(snippetRef, () => {
           </div>
           <div class="meta text-text-muted flex justify-between text-xs">
             <div>
-              {{ snippet.folder?.name || "Inbox" }}
+              {{ folderName }}
             </div>
             <div>
               {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}

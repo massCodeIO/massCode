@@ -47,7 +47,19 @@ app
   // Удаление тега и удаление его из всех сниппетов
   .delete(
     '/:id',
-    ({ params }) => {
+    ({ params, error }) => {
+      const tag = db
+        .prepare(
+          `
+        SELECT id FROM tags WHERE id = ?
+      `,
+        )
+        .get(params.id)
+
+      if (!tag) {
+        return error(404, { message: 'Tag not found' })
+      }
+
       const transaction = db.transaction(() => {
         db.prepare(
           `
@@ -56,11 +68,7 @@ app
         ).run(params.id)
 
         const stmt = db.prepare(`DELETE FROM tags WHERE id = ?`)
-        const { changes } = stmt.run(params.id)
-
-        if (!changes) {
-          throw new Error('Tag not found')
-        }
+        stmt.run(params.id)
       })
 
       transaction()

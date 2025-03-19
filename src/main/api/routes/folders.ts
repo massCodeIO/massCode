@@ -138,15 +138,14 @@ app
   // Обновление папки
   .put(
     '/:id',
-    ({ params, body }) => {
+    ({ params, body, error }) => {
       const now = Date.now()
       const { id } = params
       const { name, icon, defaultLanguage, parentId, isOpen, orderIndex }
         = body
 
       const transaction = db.transaction(() => {
-        // Получаем текущую папку
-        const currentFolder = db
+        const folder = db
           .prepare(
             `
           SELECT parentId, orderIndex
@@ -156,35 +155,28 @@ app
           )
           .get(id) as { parentId: number | null, orderIndex: number }
 
-        if (!currentFolder) {
-          throw new Error('Folder not found')
+        if (!folder) {
+          return error(404, { message: 'Folder not found' })
         }
 
         // Если изменился родитель или позиция
-        if (
-          parentId !== currentFolder.parentId
-          || orderIndex !== currentFolder.orderIndex
-        ) {
-          if (parentId === currentFolder.parentId) {
+        if (parentId !== folder.parentId || orderIndex !== folder.orderIndex) {
+          if (parentId === folder.parentId) {
             // Перемещение в пределах одного родителя
-            if (orderIndex > currentFolder.orderIndex) {
+            if (orderIndex > folder.orderIndex) {
               // Двигаем вниз - уменьшаем индексы папок между старой и новой позицией
               db.prepare(
                 `
                 UPDATE folders
                 SET orderIndex = orderIndex - 1
-                WHERE parentId ${currentFolder.parentId === null ? 'IS NULL' : '= ?'}
+                WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
                 AND orderIndex > ?
                 AND orderIndex <= ?
               `,
               ).run(
-                ...(currentFolder.parentId === null
-                  ? [currentFolder.orderIndex, orderIndex]
-                  : [
-                      currentFolder.parentId,
-                      currentFolder.orderIndex,
-                      orderIndex,
-                    ]),
+                ...(folder.parentId === null
+                  ? [folder.orderIndex, orderIndex]
+                  : [folder.parentId, folder.orderIndex, orderIndex]),
               )
             }
             else {
@@ -193,18 +185,14 @@ app
                 `
                 UPDATE folders
                 SET orderIndex = orderIndex + 1
-                WHERE parentId ${currentFolder.parentId === null ? 'IS NULL' : '= ?'}
+                WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
                 AND orderIndex >= ?
                 AND orderIndex < ?
               `,
               ).run(
-                ...(currentFolder.parentId === null
-                  ? [orderIndex, currentFolder.orderIndex]
-                  : [
-                      currentFolder.parentId,
-                      orderIndex,
-                      currentFolder.orderIndex,
-                    ]),
+                ...(folder.parentId === null
+                  ? [orderIndex, folder.orderIndex]
+                  : [folder.parentId, orderIndex, folder.orderIndex]),
               )
             }
           }
@@ -215,13 +203,13 @@ app
               `
               UPDATE folders
               SET orderIndex = orderIndex - 1
-              WHERE parentId ${currentFolder.parentId === null ? 'IS NULL' : '= ?'}
+              WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
               AND orderIndex > ?
             `,
             ).run(
-              ...(currentFolder.parentId === null
-                ? [currentFolder.orderIndex]
-                : [currentFolder.parentId, currentFolder.orderIndex]),
+              ...(folder.parentId === null
+                ? [folder.orderIndex]
+                : [folder.parentId, folder.orderIndex]),
             )
 
             // 2. Обновляем индексы в новом родителе
@@ -239,9 +227,8 @@ app
         }
 
         // Обновляем саму папку
-        const { changes } = db
-          .prepare(
-            `
+        db.prepare(
+          `
           UPDATE folders 
           SET name = ?,
               icon = ?,
@@ -252,21 +239,16 @@ app
               updatedAt = ?
           WHERE id = ?
         `,
-          )
-          .run(
-            name,
-            icon,
-            defaultLanguage,
-            isOpen,
-            parentId,
-            orderIndex,
-            now,
-            id,
-          )
-
-        if (!changes) {
-          throw new Error('Folder not found')
-        }
+        ).run(
+          name,
+          icon,
+          defaultLanguage,
+          isOpen,
+          parentId,
+          orderIndex,
+          now,
+          id,
+        )
       })
 
       transaction()
@@ -283,8 +265,21 @@ app
   // Удаление папки
   .delete(
     '/:id',
-    ({ params }) => {
+    ({ params, error }) => {
       const { id } = params
+
+      const folder = db
+        .prepare(
+          `
+        SELECT id FROM folders WHERE id = ?
+      `,
+        )
+        .get(id)
+
+      if (!folder) {
+        return error(404, { message: 'Folder not found' })
+      }
+
       const transaction = db.transaction(() => {
         // Находим все вложенные папки рекурсивно
         const findAllSubfolders = (parentId: number): number[] => {
@@ -331,17 +326,11 @@ app
         }
 
         // Удаляем основную папку
-        const { changes } = db
-          .prepare(
-            `
+        db.prepare(
+          `
           DELETE FROM folders WHERE id = ?
         `,
-          )
-          .run(id)
-
-        if (!changes) {
-          throw new Error('Folder not found')
-        }
+        ).run(id)
       })
 
       transaction()

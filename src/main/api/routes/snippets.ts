@@ -207,7 +207,7 @@ app
   // Обновление сниппета
   .put(
     '/:id',
-    ({ params, body, set }) => {
+    ({ params, body, error }) => {
       const { id } = params
       const { name, description, folderId, isFavorites, isDeleted } = body
 
@@ -235,8 +235,7 @@ app
       )
 
       if (!result.changes) {
-        set.status = 404
-        throw new Error('Snippet not found')
+        return error(404, { message: 'Snippet not found' })
       }
 
       return { message: 'Snippet updated' }
@@ -251,7 +250,7 @@ app
   // Обновление содержимого сниппета
   .put(
     '/:id/contents/:contentId',
-    ({ params, body, set }) => {
+    ({ params, body, error }) => {
       const { id, contentId } = params
       const { label, value, language } = body
 
@@ -264,8 +263,7 @@ app
       const snippetResult = snippetsStmt.run(now, id)
 
       if (!snippetResult.changes) {
-        set.status = 404
-        throw new Error('Snippet not found')
+        return error(404, { message: 'Snippet not found' })
       }
 
       const contentsStmt = db.prepare(`
@@ -284,8 +282,7 @@ app
       )
 
       if (!contentsResult.changes) {
-        set.status = 404
-        throw new Error('Snippet content not found')
+        return error(404, { message: 'Snippet content not found' })
       }
 
       return { message: 'Snippet content updated' }
@@ -300,8 +297,20 @@ app
   // Удаление сниппета
   .delete(
     '/:id',
-    ({ params, set }) => {
+    ({ params, error }) => {
       const { id } = params
+
+      const snippet = db
+        .prepare(
+          `
+        SELECT id FROM snippets WHERE id = ?
+      `,
+        )
+        .get(id)
+
+      if (!snippet) {
+        return error(404, { message: 'Snippet not found' })
+      }
 
       const transaction = db.transaction(() => {
         // Удаляем связи с тегами
@@ -319,21 +328,15 @@ app
         ).run(id)
 
         // Удаляем сам сниппет
-        const result = db
-          .prepare(
-            `
+        db.prepare(
+          `
         DELETE FROM snippets WHERE id = ?
       `,
-          )
-          .run(id)
-
-        if (!result.changes) {
-          set.status = 404
-          throw new Error('Snippet not found')
-        }
+        ).run(id)
       })
 
       transaction()
+
       return { message: 'Snippet deleted' }
     },
     {
@@ -345,7 +348,7 @@ app
   // Удаление содержимого сниппета
   .delete(
     '/:id/contents/:contentId',
-    ({ params, set }) => {
+    ({ params, error }) => {
       const { contentId } = params
 
       const result = db
@@ -357,8 +360,7 @@ app
         .run(contentId)
 
       if (!result.changes) {
-        set.status = 404
-        throw new Error('Snippet content not found')
+        return error(404, { message: 'Snippet content not found' })
       }
 
       return { message: 'Snippet content deleted' }

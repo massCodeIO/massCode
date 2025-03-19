@@ -16,7 +16,8 @@ const gutterRef = ref<{ $el: HTMLElement }>()
 
 const { sidebarWidth, selectedFolderId } = useApp()
 const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
-const { getFolders, folders, selectFolder } = useFolders()
+const { getFolders, folders, selectFolder, createFolderAndSelect }
+  = useFolders()
 const { width } = useGutter(
   sidebarRef,
   gutterRef,
@@ -46,9 +47,11 @@ async function initGetFolders() {
 initGetFolders()
 
 async function onFolderClick(id: number) {
-  selectFolder(id)
-  await getSnippets({ folderId: id })
-  selectFirstSnippet()
+  if (selectedFolderId.value !== id) {
+    await getSnippets({ folderId: id })
+    selectFolder(id)
+    selectFirstSnippet()
+  }
 
   searchQuery.value = ''
 }
@@ -164,12 +167,12 @@ watch(width, () => {
       <div class="text-[10px] font-bold uppercase">
         {{ i18n.t("sidebar.folders") }}
       </div>
-      <UiButton
-        variant="icon"
-        size="icon"
+      <UiActionButton
+        :tooltip="i18n.t('newFolder')"
+        @click="createFolderAndSelect"
       >
         <Plus class="h-4 w-4" />
-      </UiButton>
+      </UiActionButton>
     </div>
     <ScrollArea>
       <div class="flex-grow">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { Node, Position } from './types'
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useFolders, useSnippets } from '@/composables'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronRight, Folder } from 'lucide-vue-next'
 import { isAllowed, store } from './composables'
@@ -22,11 +22,18 @@ const props = withDefaults(defineProps<Props>(), {
   indent: 10,
 })
 
-const { clickNode, dragNode, toggleNode, isHoveredByIdDisabled, focusHandler }
-  = inject(treeKeys)!
+const {
+  clickNode,
+  dragNode,
+  toggleNode,
+  isHoveredByIdDisabled,
+  focusHandler,
+  contextMenu,
+} = inject(treeKeys)!
 
 const { highlightedFolderId, selectedFolderId, selectedSnippetId } = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
+const { updateFolder, renameFolderId } = useFolders()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -34,6 +41,8 @@ const isDragged = ref(false)
 const isFocused = ref(false)
 
 const rowRef = ref<HTMLElement>()
+
+const name = ref(props.node.name)
 
 const hasChildren = computed(
   () => props.node.children && props.node.children.length > 0,
@@ -88,11 +97,12 @@ function onClickArrow(node: Node) {
 function onClickNode(id: string | number) {
   highlightedFolderId.value = undefined
   isFocused.value = true
-  clickNode(id)
+  clickNode(Number(id))
 }
 
-async function onClickContextMenu() {
+function onClickContextMenu(e: MouseEvent) {
   highlightedFolderId.value = props.node.id
+  contextMenu(props.node, e)
 }
 
 function onDragStart(e: DragEvent) {
@@ -158,12 +168,12 @@ async function onDrop(e: DragEvent) {
     snippetIds.includes(s.id),
   )
 
-  // Если все сниппеты уже в папке
-  if (snippets && snippets.every(s => s.folder?.id === props.node.id)) {
-    return
-  }
+  if (snippets && snippets.length > 0) {
+    // Если все сниппеты уже в папке
+    if (snippets.every(s => s.folder?.id === props.node.id)) {
+      return
+    }
 
-  if (snippets) {
     const ids = snippets.map(s => s.id)
     const data = snippets.map(s => ({
       name: s.name,
@@ -194,6 +204,32 @@ onClickOutside(rowRef, () => {
   isFocused.value = false
   highlightedFolderId.value = undefined
 })
+
+function onUpdateName() {
+  const trimmedName = name.value.trim()
+
+  if (trimmedName === '' || name.value === props.node.name) {
+    name.value = props.node.name
+    renameFolderId.value = null
+    return
+  }
+
+  updateFolder(props.node.id, {
+    name: name.value,
+    icon: props.node.icon,
+    defaultLanguage: props.node.defaultLanguage,
+    parentId: props.node.parentId,
+    isOpen: props.node.isOpen,
+    orderIndex: props.node.orderIndex,
+  })
+
+  renameFolderId.value = null
+}
+
+function onCancelUpdateName() {
+  name.value = props.node.name
+  renameFolderId.value = null
+}
 
 if (focusHandler)
   focusHandler(isFocused)
@@ -260,10 +296,24 @@ if (focusHandler)
             />
           </div>
           <span
+            v-if="renameFolderId !== node.id"
             class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+            @dblclick="renameFolderId = node.id"
           >
-            {{ node.name }}
+            {{ name }}
           </span>
+          <UiInput
+            v-else
+            v-model="name"
+            variant="ghost"
+            focus
+            select
+            class="w-full rounded-none px-0 py-0 leading-0"
+            @keydown.esc="onCancelUpdateName"
+            @keydown.enter="onUpdateName"
+            @blur="onUpdateName"
+            @click.stop
+          />
         </slot>
       </span>
     </div>

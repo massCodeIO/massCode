@@ -276,8 +276,18 @@ function selectFirstSnippet() {
   }
 }
 
+function clearSnippetsState() {
+  snippets.value = []
+  snippetsBySearch.value = []
+  selectedSnippetIds.value = []
+  selectedSnippetId.value = undefined
+  selectedSnippetContentIndex.value = 0
+  store.app.delete('selectedSnippetId')
+}
+
 export function useSnippets() {
   return {
+    clearSnippetsState,
     createSnippet,
     createSnippetContent,
     deleteSnippet,

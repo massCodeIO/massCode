@@ -214,14 +214,7 @@ function onUpdateName() {
     return
   }
 
-  updateFolder(props.node.id, {
-    name: name.value,
-    icon: props.node.icon,
-    defaultLanguage: props.node.defaultLanguage,
-    parentId: props.node.parentId,
-    isOpen: props.node.isOpen,
-    orderIndex: props.node.orderIndex,
-  })
+  updateFolder(props.node.id, { name: name.value })
 
   renameFolderId.value = null
 }

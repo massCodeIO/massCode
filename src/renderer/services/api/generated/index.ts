@@ -166,20 +166,20 @@ export type FoldersResponse = {
 }[];
 
 export interface FoldersUpdate {
-  name: string;
-  icon: string | null;
-  defaultLanguage: string;
-  parentId:
+  name?: string;
+  icon?: string | null;
+  defaultLanguage?: string;
+  parentId?:
     | (string | (string | (string | (string | (string | (string | number))))))
     | null;
   /**
    * @min 0
    * @max 1
    */
-  isOpen:
+  isOpen?:
     | string
     | (string | (string | (string | (string | (string | number)))));
-  orderIndex:
+  orderIndex?:
     | string
     | (string | (string | (string | (string | (string | number)))));
 }
@@ -733,17 +733,17 @@ export class Api<
      * No description
      *
      * @tags Folders
-     * @name PutFoldersById
-     * @request PUT:/folders/{id}
+     * @name PatchFoldersById
+     * @request PATCH:/folders/{id}
      */
-    putFoldersById: (
+    patchFoldersById: (
       id: string,
       data: FoldersUpdate,
       params: RequestParams = {},
     ) =>
       this.request<void, any>({
         path: `/folders/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body: data,
         type: ContentType.Json,
         ...params,

@@ -136,119 +136,151 @@ app
     },
   )
   // Обновление папки
-  .put(
+  .patch(
     '/:id',
     ({ params, body, error }) => {
-      const now = Date.now()
       const { id } = params
-      const { name, icon, defaultLanguage, parentId, isOpen, orderIndex }
-        = body
+      const now = Date.now()
+
+      const updateFields: string[] = []
+      const updateParams: any[] = []
+      let needOrderUpdate = false
+      let newParentId: number | null | undefined
+      let newOrderIndex: number | undefined
+
+      if ('name' in body) {
+        updateFields.push('name = ?')
+        updateParams.push(body.name)
+      }
+
+      if ('icon' in body) {
+        updateFields.push('icon = ?')
+        updateParams.push(body.icon)
+      }
+
+      if ('defaultLanguage' in body) {
+        updateFields.push('defaultLanguage = ?')
+        updateParams.push(body.defaultLanguage)
+      }
+
+      if ('isOpen' in body) {
+        updateFields.push('isOpen = ?')
+        updateParams.push(body.isOpen)
+      }
+
+      if ('parentId' in body) {
+        updateFields.push('parentId = ?')
+        updateParams.push(body.parentId)
+        newParentId = body.parentId
+        needOrderUpdate = true
+      }
+
+      if ('orderIndex' in body) {
+        updateFields.push('orderIndex = ?')
+        updateParams.push(body.orderIndex)
+        newOrderIndex = body.orderIndex
+        needOrderUpdate = true
+      }
+
+      if (updateFields.length === 0) {
+        return error(400, { message: 'Need at least one field to update' })
+      }
+
+      updateFields.push('updatedAt = ?')
+
+      updateParams.push(now)
+      updateParams.push(id)
 
       const transaction = db.transaction(() => {
+        // Получаем текущие данные папки
         const folder = db
-          .prepare(
-            `
-          SELECT parentId, orderIndex
-          FROM folders
-          WHERE id = ?
-        `,
-          )
-          .get(id) as { parentId: number | null, orderIndex: number }
+          .prepare('SELECT parentId, orderIndex FROM folders WHERE id = ?')
+          .get(id) as
+          | { parentId: number | null, orderIndex: number }
+          | undefined
 
         if (!folder) {
           return error(404, { message: 'Folder not found' })
         }
 
-        // Если изменился родитель или позиция
-        if (parentId !== folder.parentId || orderIndex !== folder.orderIndex) {
-          if (parentId === folder.parentId) {
-            // Перемещение в пределах одного родителя
-            if (orderIndex > folder.orderIndex) {
-              // Двигаем вниз - уменьшаем индексы папок между старой и новой позицией
-              db.prepare(
-                `
-                UPDATE folders
-                SET orderIndex = orderIndex - 1
-                WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
-                AND orderIndex > ?
-                AND orderIndex <= ?
-              `,
-              ).run(
-                ...(folder.parentId === null
-                  ? [folder.orderIndex, orderIndex]
-                  : [folder.parentId, folder.orderIndex, orderIndex]),
-              )
+        // Обновляем порядок, только если изменился родитель или индекс
+        if (needOrderUpdate) {
+          const currentParentId = folder.parentId
+          const currentOrderIndex = folder.orderIndex
+          const targetParentId
+            = newParentId === undefined ? currentParentId : newParentId
+          const targetOrderIndex
+            = newOrderIndex === undefined ? currentOrderIndex : newOrderIndex
+
+          if (
+            targetParentId !== currentParentId
+            || targetOrderIndex !== currentOrderIndex
+          ) {
+            if (targetParentId === currentParentId) {
+              // Перемещение в пределах одного родителя
+              if (targetOrderIndex > currentOrderIndex) {
+                // Двигаем вниз - уменьшаем индексы папок между старой и новой позицией
+                db.prepare(
+                  `UPDATE folders
+                   SET orderIndex = orderIndex - 1
+                   WHERE parentId ${currentParentId === null ? 'IS NULL' : '= ?'}
+                   AND orderIndex > ?
+                   AND orderIndex <= ?`,
+                ).run(
+                  ...(currentParentId === null
+                    ? [currentOrderIndex, targetOrderIndex]
+                    : [currentParentId, currentOrderIndex, targetOrderIndex]),
+                )
+              }
+              else {
+                // Двигаем вверх - увеличиваем индексы папок между новой и старой позицией
+                db.prepare(
+                  `UPDATE folders
+                   SET orderIndex = orderIndex + 1
+                   WHERE parentId ${currentParentId === null ? 'IS NULL' : '= ?'}
+                   AND orderIndex >= ?
+                   AND orderIndex < ?`,
+                ).run(
+                  ...(currentParentId === null
+                    ? [targetOrderIndex, currentOrderIndex]
+                    : [currentParentId, targetOrderIndex, currentOrderIndex]),
+                )
+              }
             }
             else {
-              // Двигаем вверх - увеличиваем индексы папок между новой и старой позицией
+              // Перемещение между разными родителями
+              // 1. Обновляем индексы в старом родителе
               db.prepare(
-                `
-                UPDATE folders
-                SET orderIndex = orderIndex + 1
-                WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
-                AND orderIndex >= ?
-                AND orderIndex < ?
-              `,
+                `UPDATE folders
+                 SET orderIndex = orderIndex - 1
+                 WHERE parentId ${currentParentId === null ? 'IS NULL' : '= ?'}
+                 AND orderIndex > ?`,
               ).run(
-                ...(folder.parentId === null
-                  ? [orderIndex, folder.orderIndex]
-                  : [folder.parentId, orderIndex, folder.orderIndex]),
+                ...(currentParentId === null
+                  ? [currentOrderIndex]
+                  : [currentParentId, currentOrderIndex]),
+              )
+
+              // 2. Обновляем индексы в новом родителе
+              db.prepare(
+                `UPDATE folders
+                 SET orderIndex = orderIndex + 1
+                 WHERE parentId ${targetParentId === null ? 'IS NULL' : '= ?'}
+                 AND orderIndex >= ?`,
+              ).run(
+                ...(targetParentId === null
+                  ? [targetOrderIndex]
+                  : [targetParentId, targetOrderIndex]),
               )
             }
-          }
-          else {
-            // Перемещение между разными родителями
-            // 1. Обновляем индексы в старом родителе
-            db.prepare(
-              `
-              UPDATE folders
-              SET orderIndex = orderIndex - 1
-              WHERE parentId ${folder.parentId === null ? 'IS NULL' : '= ?'}
-              AND orderIndex > ?
-            `,
-            ).run(
-              ...(folder.parentId === null
-                ? [folder.orderIndex]
-                : [folder.parentId, folder.orderIndex]),
-            )
-
-            // 2. Обновляем индексы в новом родителе
-            db.prepare(
-              `
-              UPDATE folders
-              SET orderIndex = orderIndex + 1
-              WHERE parentId ${parentId === null ? 'IS NULL' : '= ?'}
-              AND orderIndex >= ?
-            `,
-            ).run(
-              ...(parentId === null ? [orderIndex] : [parentId, orderIndex]),
-            )
           }
         }
 
         // Обновляем саму папку
-        db.prepare(
-          `
-          UPDATE folders 
-          SET name = ?,
-              icon = ?,
-              defaultLanguage = ?,
-              isOpen = ?,
-              parentId = ?,
-              orderIndex = ?,
-              updatedAt = ?
-          WHERE id = ?
-        `,
-        ).run(
-          name,
-          icon,
-          defaultLanguage,
-          isOpen,
-          parentId,
-          orderIndex,
-          now,
-          id,
-        )
+        const updateStmt = db.prepare(`
+          UPDATE folders SET ${updateFields.join(', ')} WHERE id = ?
+        `)
+        updateStmt.run(...updateParams)
       })
 
       transaction()

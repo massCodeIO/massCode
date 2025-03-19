@@ -5,12 +5,12 @@ const foldersAdd = t.Object({
 })
 
 const foldersUpdate = t.Object({
-  name: t.String(),
-  icon: t.Union([t.String(), t.Null()]),
-  defaultLanguage: t.String(),
-  parentId: t.Union([t.Number(), t.Null()]),
-  isOpen: t.Number({ minimum: 0, maximum: 1 }),
-  orderIndex: t.Number(),
+  name: t.Optional(t.String()),
+  icon: t.Optional(t.Union([t.String(), t.Null()])),
+  defaultLanguage: t.Optional(t.String()),
+  parentId: t.Optional(t.Union([t.Number(), t.Null()])),
+  isOpen: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  orderIndex: t.Optional(t.Number()),
 })
 
 const foldersItem = t.Object({

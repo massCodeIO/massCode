@@ -1,6 +1,9 @@
 {
   "watch": ["src/main"],
   "ext": "ts,json",
-  "exec": "npm run build:main",
+  "ignore": [
+    "src/main/i18n/locales/**/*.json"
+  ],
+  "exec": "tsc -p tsconfig.main.json",
   "delay": 1000
 }

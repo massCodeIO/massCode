@@ -1,5 +1,5 @@
-import child_process from 'node:child_process'
-import { styleText } from 'node:util'
+const child_process = require('node:child_process')
+const { styleText } = require('node:util')
 
 const url = `http://localhost:4321/swagger/json`
 

@@ -5,11 +5,12 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 
-const pathSrc = path.resolve(__dirname, 'src/renderer')
+const root = path.resolve(__dirname)
 const rootSrc = path.resolve(__dirname, 'src')
+const rootRenderer = path.resolve(__dirname, 'src/renderer')
 
 export default defineConfig({
-  root: pathSrc,
+  root: rootRenderer,
   base: './',
   plugins: [
     vue(),
@@ -18,7 +19,7 @@ export default defineConfig({
       imports: ['vue'],
     }),
     Components({
-      dirs: [`${pathSrc}/components`],
+      dirs: [`${rootRenderer}/components`],
       extensions: ['vue'],
       dts: true,
       directoryAsNamespace: true,
@@ -31,12 +32,22 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': pathSrc,
+      '@': rootRenderer,
       '~': rootSrc,
     },
   },
   define: {
     'process.env': {},
     'process': {},
+  },
+  server: {
+    watch: {
+      ignored: [
+        `${root}/src/main/i18n/locales/**/*`,
+        `${root}/scripts/**/*`,
+        `${root}/build/**/*`,
+        `${root}/src/main/**/*`,
+      ],
+    },
   },
 })

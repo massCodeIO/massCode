@@ -14,14 +14,16 @@
   },
   "scripts": {
     "dev": "npm run build:main && concurrently -k \"vite\" \"npm:dev:main\" \"npm:dev:start\"",
-    "dev:main": "nodemon --watch src/main --exec \"npm run build:main\"",
+    "dev:main": "nodemon",
     "dev:start": "cross-env NODE_ENV=development electronmon .",
     "build": "vite build && npm run build:main && electron-builder",
     "build:mac": "vite build && npm run build:main && electron-builder --mac --x64 --arm64",
     "build:win": "vite build && npm run build:main && electron-builder --win --x64",
     "build:linux": "vite build && npm run build:main && electron-builder --linux --x64",
     "build:all": "vite build && npm run build:main && npm run build:mac && npm run build:win && npm run build:linux",
-    "build:main": "tsc -p tsconfig.main.json",
+    "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
+    "api:generate": "node scripts/api-generate.js",
+    "copy:locales": "node scripts/copy-locales.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -96,7 +98,10 @@
   },
   "electronmon": {
     "patterns": [
-      "!src/renderer/**/*"
+      "!build/**/*",
+      "!scripts/**/*",
+      "!src/renderer/**/*",
+      "!src/main/i18n/locales/**/*"
     ]
   },
   "volta": {

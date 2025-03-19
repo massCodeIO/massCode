@@ -14,7 +14,8 @@ const props = defineProps<Props>()
 
 const {
   selectedSnippetId,
-  highlightedSnippetId,
+  highlightedSnippetIds,
+  highlightedFolderId,
   selectedSnippetIdBeforeSearch,
   isFocusedSnippetName,
 } = useApp()
@@ -25,7 +26,10 @@ const {
   duplicateSnippet,
   selectedSnippetIds,
   updateSnippet,
+  updateSnippets,
   deleteSnippet,
+  deleteSnippets,
+  displayedSnippets,
 } = useSnippets()
 
 const isFocused = ref(false)
@@ -37,8 +41,12 @@ const isInMultiSelection = computed(
     selectedSnippetIds.value.length > 1
     && selectedSnippetIds.value.includes(props.snippet.id),
 )
-const isHighlighted = computed(
-  () => highlightedSnippetId.value === props.snippet.id,
+const isHighlighted = computed(() =>
+  highlightedSnippetIds.value.has(props.snippet.id),
+)
+
+const isDuplicateDisabled = computed(
+  () => highlightedSnippetIds.value.size > 1,
 )
 
 const folderName = computed(() => {
@@ -64,11 +72,44 @@ function onSnippetClick(id: number, event: MouseEvent) {
 }
 
 function onClickContextMenu() {
-  highlightedSnippetId.value = props.snippet.id
+  highlightedFolderId.value = undefined
+  highlightedSnippetIds.value.clear()
+  highlightedSnippetIds.value.add(props.snippet.id)
+
+  if (selectedSnippetIds.value.length > 1) {
+    selectedSnippetIds.value.forEach(id =>
+      highlightedSnippetIds.value.add(id),
+    )
+  }
 }
 
 async function onDelete() {
-  if (props.snippet.isDeleted) {
+  if (selectedSnippetIds.value.length > 1) {
+    const isAllSoftDeleted = displayedSnippets.value?.every(s => s.isDeleted)
+
+    if (isAllSoftDeleted) {
+      await deleteSnippets(selectedSnippetIds.value)
+    }
+    else {
+      // Мягкое удаление
+      const snippetsToSoftDelete = displayedSnippets.value?.filter(s =>
+        selectedSnippetIds.value.includes(s.id),
+      )
+      const snippetIds = snippetsToSoftDelete?.map(s => s.id)
+      const snippetsData = snippetsToSoftDelete?.map(s => ({
+        name: s.name,
+        folderId: s.folder?.id || null,
+        description: s.description,
+        isDeleted: 1,
+        isFavorites: s.isFavorites,
+      }))
+
+      if (snippetIds && snippetsData) {
+        await updateSnippets(snippetIds, snippetsData)
+      }
+    }
+  }
+  else if (props.snippet.isDeleted) {
     await deleteSnippet(props.snippet.id)
   }
   else {
@@ -82,7 +123,10 @@ async function onDelete() {
     })
   }
 
-  if (selectedSnippetId.value === props.snippet.id) {
+  if (
+    selectedSnippetIds.value.length > 1
+    || selectedSnippetId.value === props.snippet.id
+  ) {
     selectFirstSnippet()
   }
 }
@@ -127,7 +171,7 @@ function onDragStart(event: DragEvent) {
 
 onClickOutside(snippetRef, () => {
   isFocused.value = false
-  highlightedSnippetId.value = undefined
+  highlightedSnippetIds.value.clear()
 })
 </script>
 
@@ -166,7 +210,10 @@ onClickOutside(snippetRef, () => {
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Content>
-        <ContextMenu.Item @click="onDuplicate">
+        <ContextMenu.Item
+          :disabled="isDuplicateDisabled"
+          @click="onDuplicate"
+        >
           {{ i18n.t("duplicate") }}
         </ContextMenu.Item>
         <ContextMenu.Item @click="onDelete">

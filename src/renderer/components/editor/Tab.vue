@@ -15,7 +15,7 @@ const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
   = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
 const {
-  highlightedSnippetId,
+  highlightedSnippetIds,
   highlightedFolderId,
   selectedSnippetContentIndex,
 } = useApp()
@@ -41,7 +41,7 @@ const name = computed({
 })
 
 function onClickContextMenu() {
-  highlightedSnippetId.value = undefined
+  highlightedSnippetIds.value.clear()
   highlightedFolderId.value = undefined
 }
 

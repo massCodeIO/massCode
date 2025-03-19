@@ -197,6 +197,13 @@ async function deleteSnippet(snippetId: number) {
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
+async function deleteSnippets(snippetIds: number[]) {
+  for (const snippetId of snippetIds) {
+    await api.snippets.deleteSnippetsById(String(snippetId))
+  }
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
 async function deleteSnippetContent(snippetId: number, contentId: number) {
   try {
     await api.snippets.deleteSnippetsByIdContentsByContentId(
@@ -292,6 +299,7 @@ export function useSnippets() {
     createSnippetContent,
     deleteSnippet,
     deleteSnippetContent,
+    deleteSnippets,
     displayedSnippets,
     duplicateSnippet,
     getSnippets,
@@ -301,12 +309,12 @@ export function useSnippets() {
     searchQuery,
     selectedSnippet,
     selectedSnippetContent,
-    selectedSnippets,
     selectedSnippetIds,
+    selectedSnippets,
     selectFirstSnippet,
     selectSnippet,
     updateSnippet,
-    updateSnippets,
     updateSnippetContent,
+    updateSnippets,
   }
 }

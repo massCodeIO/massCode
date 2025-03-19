@@ -25,6 +25,7 @@ const {
   duplicateSnippet,
   selectedSnippetIds,
   updateSnippet,
+  deleteSnippet,
 } = useSnippets()
 
 const isFocused = ref(false)
@@ -66,14 +67,20 @@ function onClickContextMenu() {
   highlightedSnippetId.value = props.snippet.id
 }
 
-async function onSoftDelete() {
-  await updateSnippet(props.snippet.id, {
-    name: props.snippet.name,
-    folderId: null,
-    description: props.snippet.description,
-    isDeleted: 1,
-    isFavorites: props.snippet.isFavorites,
-  })
+async function onDelete() {
+  if (props.snippet.isDeleted) {
+    await deleteSnippet(props.snippet.id)
+  }
+  else {
+    // Мягкое удаление
+    await updateSnippet(props.snippet.id, {
+      name: props.snippet.name,
+      folderId: null,
+      description: props.snippet.description,
+      isDeleted: 1,
+      isFavorites: props.snippet.isFavorites,
+    })
+  }
 
   if (selectedSnippetId.value === props.snippet.id) {
     selectFirstSnippet()
@@ -162,7 +169,7 @@ onClickOutside(snippetRef, () => {
         <ContextMenu.Item @click="onDuplicate">
           {{ i18n.t("duplicate") }}
         </ContextMenu.Item>
-        <ContextMenu.Item @click="onSoftDelete">
+        <ContextMenu.Item @click="onDelete">
           {{ i18n.t("delete") }}
         </ContextMenu.Item>
       </ContextMenu.Content>

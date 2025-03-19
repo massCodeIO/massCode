@@ -181,13 +181,7 @@ async function onDrop(e: DragEvent) {
     }
 
     const ids = snippets.map(s => s.id)
-    const data = snippets.map(s => ({
-      name: s.name,
-      folderId: props.node.id,
-      description: s.description,
-      isDeleted: s.isDeleted,
-      isFavorites: s.isFavorites,
-    }))
+    const data = snippets.map(() => ({ folderId: props.node.id }))
 
     await updateSnippets(ids, data)
 

@@ -7,17 +7,23 @@ const snippetsAdd = t.Object({
 })
 
 const snippetsUpdate = t.Object({
-  ...snippetsAdd.properties,
-  folderId: t.Union([t.Number(), t.Null()]),
-  description: t.Union([t.String(), t.Null()]),
-  isDeleted: t.Number({ minimum: 0, maximum: 1 }),
-  isFavorites: t.Number({ minimum: 0, maximum: 1 }),
+  name: t.Optional(t.String()),
+  folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  description: t.Optional(t.Union([t.String(), t.Null()])),
+  isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
 })
 
 const snippetContentsAdd = t.Object({
   label: t.String(),
   value: t.Union([t.String(), t.Null()]),
   language: t.String(), // TODO: enum
+})
+
+const snippetContentsUpdate = t.Object({
+  label: t.Optional(t.String()),
+  value: t.Optional(t.Union([t.String(), t.Null()])),
+  language: t.Optional(t.String()), // TODO: enum
 })
 
 const snippetItem = t.Object({
@@ -54,6 +60,7 @@ const snippetsResponse = t.Array(snippetItem)
 
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,
+  snippetContentsUpdate,
   snippetsAdd,
   snippetsUpdate,
   snippetsQuery: t.Object({

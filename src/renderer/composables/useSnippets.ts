@@ -168,13 +168,13 @@ async function createSnippetContent(snippetId: number) {
 }
 
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
-  await api.snippets.putSnippetsById(String(snippetId), data)
+  await api.snippets.patchSnippetsById(String(snippetId), data)
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
   for (const [index, snippetId] of snippetIds.entries()) {
-    await api.snippets.putSnippetsById(String(snippetId), data[index])
+    await api.snippets.patchSnippetsById(String(snippetId), data[index])
   }
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
@@ -184,7 +184,7 @@ async function updateSnippetContent(
   contentId: number,
   data: SnippetContentsAdd,
 ) {
-  await api.snippets.putSnippetsByIdContentsByContentId(
+  await api.snippets.patchSnippetsByIdContentsByContentId(
     String(snippetId),
     String(contentId),
     data,

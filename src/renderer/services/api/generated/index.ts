@@ -15,6 +15,12 @@ export interface SnippetContentsAdd {
   language: string;
 }
 
+export interface SnippetContentsUpdate {
+  label?: string;
+  value?: string | null;
+  language?: string;
+}
+
 export interface SnippetsAdd {
   name: string;
   folderId?:
@@ -29,8 +35,8 @@ export interface SnippetsAdd {
 }
 
 export interface SnippetsUpdate {
-  name: string;
-  folderId:
+  name?: string;
+  folderId?:
     | (
         | string
         | (
@@ -39,19 +45,19 @@ export interface SnippetsUpdate {
           )
       )
     | null;
-  description: string | null;
+  description?: string | null;
   /**
    * @min 0
    * @max 1
    */
-  isDeleted:
+  isDeleted?:
     | string
     | (string | (string | (string | (string | (string | (string | number))))));
   /**
    * @min 0
    * @max 1
    */
-  isFavorites:
+  isFavorites?:
     | string
     | (string | (string | (string | (string | (string | (string | number))))));
 }
@@ -601,17 +607,17 @@ export class Api<
      * No description
      *
      * @tags Snippets
-     * @name PutSnippetsById
-     * @request PUT:/snippets/{id}
+     * @name PatchSnippetsById
+     * @request PATCH:/snippets/{id}
      */
-    putSnippetsById: (
+    patchSnippetsById: (
       id: string,
       data: SnippetsUpdate,
       params: RequestParams = {},
     ) =>
       this.request<void, any>({
         path: `/snippets/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body: data,
         type: ContentType.Json,
         ...params,
@@ -635,18 +641,18 @@ export class Api<
      * No description
      *
      * @tags Snippets
-     * @name PutSnippetsByIdContentsByContentId
-     * @request PUT:/snippets/{id}/contents/{contentId}
+     * @name PatchSnippetsByIdContentsByContentId
+     * @request PATCH:/snippets/{id}/contents/{contentId}
      */
-    putSnippetsByIdContentsByContentId: (
+    patchSnippetsByIdContentsByContentId: (
       id: string,
       contentId: string,
-      data: SnippetContentsAdd,
+      data: SnippetContentsUpdate,
       params: RequestParams = {},
     ) =>
       this.request<void, any>({
         path: `/snippets/${id}/contents/${contentId}`,
-        method: "PUT",
+        method: "PATCH",
         body: data,
         type: ContentType.Json,
         ...params,

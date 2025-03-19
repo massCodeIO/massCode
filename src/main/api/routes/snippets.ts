@@ -205,34 +205,57 @@ app
     },
   )
   // Обновление сниппета
-  .put(
+  .patch(
     '/:id',
     ({ params, body, error }) => {
       const { id } = params
-      const { name, description, folderId, isFavorites, isDeleted } = body
 
-      const stmt = db.prepare(`
-      UPDATE snippets SET
-        name = ?,
-        description = ?,
-        folderId = ?,
-        isFavorites = ?,
-        isDeleted = ?,
-        updatedAt = ?
-      WHERE id = ?
-    `)
+      const updateFields: string[] = []
+      const updateParams: any[] = []
+
+      if ('name' in body) {
+        updateFields.push('name = ?')
+        updateParams.push(body.name)
+      }
+
+      if ('description' in body) {
+        updateFields.push('description = ?')
+        updateParams.push(body.description)
+      }
+
+      if ('folderId' in body) {
+        updateFields.push('folderId = ?')
+        updateParams.push(body.folderId)
+      }
+
+      if ('isFavorites' in body) {
+        updateFields.push('isFavorites = ?')
+        updateParams.push(body.isFavorites)
+      }
+
+      if ('isDeleted' in body) {
+        updateFields.push('isDeleted = ?')
+        updateParams.push(body.isDeleted)
+      }
+
+      if (updateFields.length === 0) {
+        return error(400, { message: 'Need at least one field to update' })
+      }
+
+      updateFields.push('updatedAt = ?')
 
       const now = new Date().getTime()
 
-      const result = stmt.run(
-        name,
-        description,
-        folderId,
-        isFavorites,
-        isDeleted,
-        now,
-        id,
-      )
+      updateParams.push(now)
+      updateParams.push(id)
+
+      const stmt = db.prepare(`
+        UPDATE snippets SET
+          ${updateFields.join(', ')}
+        WHERE id = ?
+      `)
+
+      const result = stmt.run(...updateParams)
 
       if (!result.changes) {
         return error(404, { message: 'Snippet not found' })
@@ -248,47 +271,65 @@ app
     },
   )
   // Обновление содержимого сниппета
-  .put(
+  .patch(
     '/:id/contents/:contentId',
     ({ params, body, error }) => {
       const { id, contentId } = params
-      const { label, value, language } = body
 
-      // обновляем updateAt для сниппета
-      const snippetsStmt = db.prepare(`
-      UPDATE snippets SET updatedAt = ? WHERE id = ?
-    `)
+      const updateFields: string[] = []
+      const updateParams: any[] = []
 
-      const now = new Date().getTime()
-      const snippetResult = snippetsStmt.run(now, id)
-
-      if (!snippetResult.changes) {
-        return error(404, { message: 'Snippet not found' })
+      if ('label' in body) {
+        updateFields.push('label = ?')
+        updateParams.push(body.label)
       }
 
-      const contentsStmt = db.prepare(`
-      UPDATE snippet_contents SET
-        label = ?,
-        value = ?,
-        language = ?
-      WHERE id = ?
-    `)
+      if ('value' in body) {
+        updateFields.push('value = ?')
+        updateParams.push(body.value)
+      }
 
-      const contentsResult = contentsStmt.run(
-        label,
-        value,
-        language,
-        contentId,
-      )
+      if ('language' in body) {
+        updateFields.push('language = ?')
+        updateParams.push(body.language)
+      }
+
+      if (updateFields.length === 0) {
+        return error(400, { message: 'Need at least one field to update' })
+      }
+
+      updateParams.push(contentId)
+
+      const contentsStmt = db.prepare(`
+        UPDATE snippet_contents SET
+          ${updateFields.join(', ')}
+        WHERE id = ?
+      `)
+
+      const contentsResult = contentsStmt.run(...updateParams)
 
       if (!contentsResult.changes) {
         return error(404, { message: 'Snippet content not found' })
       }
 
+      // Обновляем дату сниппета только если были реальные изменения в данных
+      if (contentsResult.changes > 0) {
+        const snippetsStmt = db.prepare(`
+          UPDATE snippets SET updatedAt = ? WHERE id = ?
+        `)
+
+        const now = new Date().getTime()
+        const snippetResult = snippetsStmt.run(now, id)
+
+        if (!snippetResult.changes) {
+          return error(404, { message: 'Snippet not found' })
+        }
+      }
+
       return { message: 'Snippet content updated' }
     },
     {
-      body: 'snippetContentsAdd',
+      body: 'snippetContentsUpdate',
       detail: {
         tags: ['Snippets'],
       },

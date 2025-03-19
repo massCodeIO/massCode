@@ -14,7 +14,7 @@ const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
 const selectedSnippetIdBeforeSearch = ref(store.app.get('selectedSnippetId'))
 const selectedSnippetContentIndex = ref(0)
 const highlightedFolderId = ref<number>()
-const highlightedSnippetId = ref<number>()
+const highlightedSnippetIds = ref<Set<number>>(new Set())
 
 const isFocusedSnippetName = ref(false)
 
@@ -24,23 +24,10 @@ const snippetListWidth = useCssVar('--snippet-list-width')
 sidebarWidth.value = `${store.app.get('sidebarWidth')}px`
 snippetListWidth.value = `${store.app.get('snippetListWidth')}px`
 
-watch(
-  [highlightedFolderId, highlightedSnippetId],
-  ([newFolderId, newSnippetId], [oldFolderId, oldSnippetId]) => {
-    if (newFolderId !== oldFolderId && newFolderId !== undefined) {
-      highlightedSnippetId.value = undefined
-    }
-
-    if (newSnippetId !== oldSnippetId && newSnippetId !== undefined) {
-      highlightedFolderId.value = undefined
-    }
-  },
-)
-
 export function useApp() {
   return {
     highlightedFolderId,
-    highlightedSnippetId,
+    highlightedSnippetIds,
     selectedFolderId,
     selectedLibrary,
     selectedSnippetContentIndex,

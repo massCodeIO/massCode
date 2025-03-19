@@ -31,7 +31,12 @@ const {
   contextMenu,
 } = inject(treeKeys)!
 
-const { highlightedFolderId, selectedFolderId, selectedSnippetId } = useApp()
+const {
+  highlightedFolderId,
+  highlightedSnippetIds,
+  selectedFolderId,
+  selectedSnippetId,
+} = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 const { updateFolder, renameFolderId } = useFolders()
 
@@ -102,6 +107,7 @@ function onClickNode(id: string | number) {
 
 function onClickContextMenu(e: MouseEvent) {
   highlightedFolderId.value = props.node.id
+  highlightedSnippetIds.value.clear()
   contextMenu(props.node, e)
 }
 

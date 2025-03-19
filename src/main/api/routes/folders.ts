@@ -286,17 +286,51 @@ app
     ({ params }) => {
       const { id } = params
       const transaction = db.transaction(() => {
-        // Мягкое удаление сниппетов в папке, а так же удаляем связь с папкой
+        // Находим все вложенные папки рекурсивно
+        const findAllSubfolders = (parentId: number): number[] => {
+          // Получаем непосредственные дочерние папки
+          const childFolders = db
+            .prepare(
+              `
+            SELECT id FROM folders WHERE parentId = ?
+          `,
+            )
+            .all(parentId) as { id: number }[]
+
+          // Рекурсивно собираем ID всех вложенных папок
+          let allSubfolders: number[] = childFolders.map(f => f.id)
+
+          for (const folder of childFolders) {
+            allSubfolders = allSubfolders.concat(findAllSubfolders(folder.id))
+          }
+
+          return allSubfolders
+        }
+
+        // Получаем все вложенные папки
+        const subfolderIds = findAllSubfolders(Number(id))
+        const allFolderIds = [Number(id), ...subfolderIds]
+
+        // Мягкое удаление сниппетов во всех папках, а также удаляем связь с папками
         db.prepare(
           `
           UPDATE snippets
-            SET isDeleted = 1,
-                folderId = null
-          WHERE folderId = ?
+          SET isDeleted = 1,
+              folderId = null
+          WHERE folderId IN (${allFolderIds.join(',')})
         `,
-        ).run(id)
+        ).run()
 
-        // Удаляем папку
+        // Удаляем все вложенные папки
+        if (subfolderIds.length > 0) {
+          db.prepare(
+            `
+            DELETE FROM folders WHERE id IN (${subfolderIds.join(',')})
+          `,
+          ).run()
+        }
+
+        // Удаляем основную папку
         const { changes } = db
           .prepare(
             `

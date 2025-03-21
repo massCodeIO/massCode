@@ -72,11 +72,13 @@ export function useDialog() {
                                 {},
                                 { default: () => title },
                               ),
-                              h(
-                                Dialog.DialogDescription,
-                                {},
-                                { default: () => description },
-                              ),
+                              description
+                                ? h(
+                                    Dialog.DialogDescription,
+                                    {},
+                                    { default: () => description },
+                                  )
+                                : null,
                             ],
                           },
                         ),
@@ -124,7 +126,6 @@ export function useDialog() {
   const confirm = (options: DialogOptions) => {
     const defaultOptions = {
       title: 'Confirm',
-      description: 'Are you sure you want to perform this action?',
       confirmText: i18n.t('button.confirm'),
       cancelText: i18n.t('button.cancel'),
     }

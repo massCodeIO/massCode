@@ -25,6 +25,7 @@
   "defaultLanguage": "Linguagem padrão",
   "removeFromFavorites": "Remover dos favoritos",
   "emptyTrash": "Esvaziar lixeira",
+  "moveToTrash": "Mover para a lixeira",
   "close": "Fechar",
   "folder": {
     "untitled": "Pasta sem título",

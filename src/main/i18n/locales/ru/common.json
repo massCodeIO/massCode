@@ -34,6 +34,7 @@
   "defaultLanguage": "Языка по умолчанию ",
   "removeFromFavorites": "Удалить из избранного",
   "emptyTrash": "Очисть корзину",
+  "moveToTrash": "Переместить в корзину",
   "close": "Закрыть",
   "folder": {
     "untitled": "Новая папка",

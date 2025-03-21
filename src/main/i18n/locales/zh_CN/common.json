@@ -25,6 +25,7 @@
   "defaultLanguage": "默认语言",
   "removeFromFavorites": "从收藏夹移除",
   "emptyTrash": "清空回收站",
+  "moveToTrash": "移到回收站",
   "close": "关闭",
   "folder": {
     "untitled": "未命名文件夹",

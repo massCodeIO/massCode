@@ -25,6 +25,7 @@
   "defaultLanguage": "標準の言語",
   "removeFromFavorites": "お気に入りから削除",
   "emptyTrash": "ゴミ箱を空に",
+  "moveToTrash": "ゴミ箱に移動",
   "close": "閉じる",
   "folder": {
     "untitled": "名称未設定フォルダ",

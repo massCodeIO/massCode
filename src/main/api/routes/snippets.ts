@@ -386,6 +386,63 @@ app
       },
     },
   )
+  // Удаление всех сниппетов в корзине
+  .delete(
+    '/trash',
+    ({ error }) => {
+      const deletedSnippets = db
+        .prepare(
+          `
+        SELECT id FROM snippets WHERE isDeleted = 1
+      `,
+        )
+        .all() as { id: number }[]
+
+      if (deletedSnippets.length === 0) {
+        return error(404, { message: 'No snippets in trash' })
+      }
+
+      const transaction = db.transaction(() => {
+        // Удаляем связи с тегами для всех сниппетов из корзины
+        db.prepare(
+          `
+          DELETE FROM snippet_tags 
+          WHERE snippetId IN (SELECT id FROM snippets WHERE isDeleted = 1)
+        `,
+        ).run()
+
+        // Удаляем содержимое всех сниппетов из корзины
+        db.prepare(
+          `
+          DELETE FROM snippet_contents 
+          WHERE snippetId IN (SELECT id FROM snippets WHERE isDeleted = 1)
+        `,
+        ).run()
+
+        // Удаляем сами сниппеты из корзины
+        const result = db
+          .prepare(
+            `
+          DELETE FROM snippets WHERE isDeleted = 1
+        `,
+          )
+          .run()
+
+        return result.changes
+      })
+
+      const deletedCount = transaction()
+
+      return {
+        message: `Successfully emptied trash: ${deletedCount} snippet(s) deleted`,
+      }
+    },
+    {
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
   // Удаление содержимого сниппета
   .delete(
     '/:id/contents/:contentId',

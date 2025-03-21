@@ -8,6 +8,7 @@ import { i18n, store } from '@/electron'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from './types'
 import { useApp } from './useApp'
+import { useDialog } from './useDialog'
 
 type Query = NonNullable<Parameters<typeof api.snippets.getSnippets>[0]>
 
@@ -218,6 +219,20 @@ async function deleteSnippetContent(snippetId: number, contentId: number) {
   }
 }
 
+async function emptyTrash() {
+  const { confirm } = useDialog()
+
+  const isConfirmed = await confirm({
+    title: i18n.t('dialog:emptyTrash'),
+    content: i18n.t('dialog:noUndo'),
+  })
+
+  if (isConfirmed) {
+    await api.snippets.deleteSnippetsTrash()
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+}
+
 function selectSnippet(snippetId: number, withShift = false) {
   if (!withShift) {
     selectedSnippetIds.value = [snippetId]
@@ -302,6 +317,7 @@ export function useSnippets() {
     deleteSnippets,
     displayedSnippets,
     duplicateSnippet,
+    emptyTrash,
     getSnippets,
     isEmpty,
     isSearch,

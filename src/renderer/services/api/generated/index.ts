@@ -675,6 +675,20 @@ export class Api<
         method: "DELETE",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name DeleteSnippetsTrash
+     * @request DELETE:/snippets/trash
+     */
+    deleteSnippetsTrash: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/snippets/trash`,
+        method: "DELETE",
+        ...params,
+      }),
   };
   folders = {
     /**

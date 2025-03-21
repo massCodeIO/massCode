@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
+import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useFolders, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
@@ -14,7 +15,8 @@ const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 
 const { sidebarWidth, selectedFolderId } = useApp()
-const { getSnippets, selectFirstSnippet, searchQuery } = useSnippets()
+const { getSnippets, selectFirstSnippet, searchQuery, emptyTrash }
+  = useSnippets()
 const {
   getFolders,
   folders,
@@ -141,15 +143,24 @@ watch(width, () => {
       <div class="pb-1 pl-1 text-[10px] font-bold uppercase">
         {{ i18n.t("sidebar.library") }} / {{ i18n.t("sidebar.tags") }}
       </div>
-      <div class="">
-        <LibraryItem
-          v-for="i in libraryItems"
-          :id="i.id"
-          :key="i.name"
-          :name="i.name"
-          :icon="i.icon"
-        />
-      </div>
+      <ContextMenu.Root>
+        <ContextMenu.Trigger>
+          <div class="">
+            <LibraryItem
+              v-for="i in libraryItems"
+              :id="i.id"
+              :key="i.name"
+              :name="i.name"
+              :icon="i.icon"
+            />
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Content>
+          <ContextMenu.Item @click="emptyTrash">
+            {{ i18n.t("emptyTrash") }}
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Root>
     </div>
     <div class="flex items-center justify-between pt-2 pl-1">
       <div class="text-[10px] font-bold uppercase">

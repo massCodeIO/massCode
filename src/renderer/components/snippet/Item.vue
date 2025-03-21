@@ -97,7 +97,7 @@ async function onDelete() {
         title: i18n.t('dialog:deleteConfirmMultipleSnippets', {
           count: selectedSnippetIds.value.length,
         }),
-        description: i18n.t('dialog:noUndo'),
+        content: i18n.t('dialog:noUndo'),
       })
 
       if (isConfirmed) {
@@ -117,7 +117,7 @@ async function onDelete() {
   else if (props.snippet.isDeleted) {
     const isConfirmed = await confirm({
       title: i18n.t('dialog:deleteConfirm', { name: props.snippet.name }),
-      description: i18n.t('dialog:noUndo'),
+      content: i18n.t('dialog:noUndo'),
     })
 
     if (isConfirmed) {

@@ -34,6 +34,7 @@
   "defaultLanguage": "Výchozí jazyk",
   "removeFromFavorites": "Odebrat z oblíbených",
   "emptyTrash": "Vyprázdnit koš",
+  "moveToTrash": "Přesunout do koše",
   "close": "Zavřít",
   "folder": {
     "untitled": "Nepojmenovaná složka",

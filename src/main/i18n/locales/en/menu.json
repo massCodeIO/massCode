@@ -3,7 +3,7 @@
     "label": "massCode",
     "preferences": "Preferences",
     "update": {
-      "label": "Check for Updates....",
+      "label": "Check for Updates...",
       "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
       "button": ["Go to Download", "OK"],
       "noUpdate": "There are currently no updates available."

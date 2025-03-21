@@ -31,6 +31,7 @@
   "defaultLanguage": "Langage par défaut",
   "removeFromFavorites": "Enlever des favoris",
   "emptyTrash": "vider la poubelle",
+  "moveToTrash": "Déplacer vers la corbeille",
   "close": "Fermer",
   "folder": {
     "untitled": "Dossier sans titre",

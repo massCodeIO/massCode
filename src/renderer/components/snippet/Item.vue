@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useDialog, useSnippets } from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -18,7 +19,9 @@ const {
   highlightedFolderId,
   selectedSnippetIdBeforeSearch,
   isFocusedSnippetName,
+  selectedLibrary,
 } = useApp()
+
 const {
   selectSnippet,
   isSearch,
@@ -31,6 +34,8 @@ const {
   deleteSnippets,
   displayedSnippets,
 } = useSnippets()
+
+const { confirm } = useDialog()
 
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
@@ -88,7 +93,16 @@ async function onDelete() {
     const isAllSoftDeleted = displayedSnippets.value?.every(s => s.isDeleted)
 
     if (isAllSoftDeleted) {
-      await deleteSnippets(selectedSnippetIds.value)
+      const isConfirmed = await confirm({
+        title: i18n.t('dialog:deleteConfirmMultipleSnippets', {
+          count: selectedSnippetIds.value.length,
+        }),
+        description: i18n.t('dialog:noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteSnippets(selectedSnippetIds.value)
+      }
     }
     else {
       // Мягкое удаление
@@ -101,7 +115,14 @@ async function onDelete() {
     }
   }
   else if (props.snippet.isDeleted) {
-    await deleteSnippet(props.snippet.id)
+    const isConfirmed = await confirm({
+      title: i18n.t('dialog:deleteConfirm', { name: props.snippet.name }),
+      description: i18n.t('dialog:noUndo'),
+    })
+
+    if (isConfirmed) {
+      await deleteSnippet(props.snippet.id)
+    }
   }
   else {
     // Мягкое удаление
@@ -199,13 +220,18 @@ onClickOutside(snippetRef, () => {
       </ContextMenu.Trigger>
       <ContextMenu.Content>
         <ContextMenu.Item
+          v-if="selectedLibrary !== LibraryFilter.Trash"
           :disabled="isDuplicateDisabled"
           @click="onDuplicate"
         >
           {{ i18n.t("duplicate") }}
         </ContextMenu.Item>
         <ContextMenu.Item @click="onDelete">
-          {{ i18n.t("delete") }}
+          {{
+            selectedLibrary === LibraryFilter.Trash
+              ? i18n.t("delete")
+              : i18n.t("moveToTrash")
+          }}
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

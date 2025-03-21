@@ -33,7 +33,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       v-bind="forwarded"
       :class="
         cn(
-          'border-border bg-bg fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-md border p-6 shadow-lg',
+          'border-border bg-bg fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-md border p-4 shadow-lg',
           props.class,
         )
       "
@@ -41,7 +41,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <slot />
       <DialogClose
         as-child
-        class="absolute top-4 right-4"
+        class="absolute top-1 right-1"
       >
         <UiButton variant="icon">
           <X class="h-4 w-4" />

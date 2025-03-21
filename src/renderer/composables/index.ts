@@ -1,4 +1,5 @@
 export * from './useApp'
+export * from './useDialog'
 export * from './useEditor'
 export * from './useFolders'
 export * from './useGutter'

@@ -98,10 +98,9 @@
   },
   "electronmon": {
     "patterns": [
-      "!build/**/*",
       "!scripts/**/*",
       "!src/renderer/**/*",
-      "!src/main/i18n/locales/**/*"
+      "!src/main/**/*"
     ]
   },
   "volta": {

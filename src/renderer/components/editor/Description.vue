@@ -34,13 +34,10 @@ watch(selectedSnippet, () => {
     data-editor-description
     class="border-border border-b px-2"
   >
-    <UiInput
+    <UiTextarea
       v-model="description"
-      variant="ghost"
-      type="textarea"
       :focus="show"
-      :rows="2"
-      class="max-h-28 px-0"
+      variant="ghost"
     />
   </div>
 </template>

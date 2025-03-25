@@ -4,6 +4,16 @@ import { cn } from '@/utils'
 import { X } from 'lucide-vue-next'
 import { variants } from './variants'
 
+interface Props {
+  variant?: Variants['variant']
+  class?: string
+  placeholder?: string
+  clearable?: boolean
+  type?: 'text' | 'number'
+  focus?: boolean
+  select?: boolean
+}
+
 defineOptions({
   inheritAttrs: false,
 })
@@ -14,23 +24,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const attrs = useAttrs()
 
-interface Props {
-  variant?: Variants['variant']
-  class?: string
-  placeholder?: string
-  clearable?: boolean
-  type?: 'text' | 'number' | 'textarea'
-  focus?: boolean
-  select?: boolean
-}
-
 const model = defineModel<string>()
 
 function clear() {
   model.value = ''
 }
 
-const inputRef = ref<HTMLInputElement>()
+const inputRef = useTemplateRef('inputRef')
 
 watchEffect(() => {
   if (props.focus) {
@@ -52,7 +52,6 @@ watchEffect(() => {
 <template>
   <div :class="{ 'relative flex': clearable && model }">
     <input
-      v-if="type !== 'textarea'"
       ref="inputRef"
       v-model="model"
       :class="[
@@ -63,18 +62,8 @@ watchEffect(() => {
       :type="type"
       v-bind="attrs"
     >
-    <textarea
-      v-else
-      ref="inputRef"
-      v-model="model"
-      v-bind="$attrs"
-      :class="[
-        cn(variants({ variant }), props.class),
-        { 'pr-9': clearable && model },
-      ]"
-    />
     <UiButton
-      v-if="clearable && model && type !== 'textarea'"
+      v-if="clearable && model"
       class="absolute top-1/2 right-2 -translate-y-1/2"
       variant="icon"
       size="sm"

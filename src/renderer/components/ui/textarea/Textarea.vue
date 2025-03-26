@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import type { Variants } from './variants'
-import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { cn } from '@/utils'
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { variants } from './variants'
+import 'vue3-perfect-scrollbar/style.css'
 
 interface Props {
   variant?: Variants['variant']
   class?: string
   placeholder?: string
   focus?: boolean
+  scrollbarOptions?: any
 }
 
 const props = defineProps<Props>()
@@ -33,24 +35,23 @@ watchEffect(() => {
 </script>
 
 <template>
-  <ScrollArea>
-    <div
-      ref="inputRef"
-      :class="[cn(variants({ variant }), props.class)]"
-      contenteditable="true"
-      spellcheck="false"
-      :data-placeholder="placeholder"
-      @blur="onBlur"
+  <div class="relative">
+    <PerfectScrollbar
+      :options="scrollbarOptions"
+      class="max-h-[100px]"
     >
-      {{ model }}
-    </div>
-  </ScrollArea>
+      <div
+        ref="inputRef"
+        :class="[cn(variants({ variant }), props.class)]"
+        class="break-words whitespace-pre-wrap"
+        contenteditable="true"
+        spellcheck="false"
+        role="textbox"
+        :data-placeholder="placeholder"
+        @blur="onBlur"
+      >
+        {{ model }}
+      </div>
+    </PerfectScrollbar>
+  </div>
 </template>
-
-<style>
-div[contenteditable="true"]:empty:before {
-  content: attr(data-placeholder);
-  color: #9ca3af;
-  pointer-events: none;
-}
-</style>

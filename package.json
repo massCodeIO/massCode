@@ -51,7 +51,8 @@
     "lucide-vue-next": "^0.476.0",
     "onigasm": "^2.2.5",
     "radix-vue": "^1.9.17",
-    "tailwind-merge": "^3.0.2"
+    "tailwind-merge": "^3.0.2",
+    "vue3-perfect-scrollbar": "^2.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",

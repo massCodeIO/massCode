@@ -32,7 +32,7 @@ watch(selectedSnippet, () => {
   <div
     v-if="selectedSnippet?.description || show"
     data-editor-description
-    class="border-border border-b px-2"
+    class="border-border border-b"
   >
     <UiTextarea
       v-model="description"

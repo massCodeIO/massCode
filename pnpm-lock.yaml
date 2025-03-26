@@ -68,6 +68,9 @@ importers:
       tailwind-merge:
         specifier: ^3.0.2
         version: 3.0.2
+      vue3-perfect-scrollbar:
+        specifier: ^2.0.0
+        version: 2.0.0(vue@3.5.13(typescript@5.7.3))
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^3.16.0
@@ -3369,6 +3372,9 @@ packages:
   perfect-debounce@1.0.0:
     resolution: {integrity: sha512-xCy9V055GLEqoFaHoC1SoLIaLmWctgCUaBaWxDZ7/Zx4CTyX7cJQLJOok/orfjZAh9kEYpjJa4d0KcJmCbctZA==}
 
+  perfect-scrollbar@1.5.6:
+    resolution: {integrity: sha512-rixgxw3SxyJbCaSpo1n35A/fwI1r2rdwMKOTCg/AcG+xOEyZcE8UHVjpZMFCVImzsFoCZeJTT+M/rdEIQYO2nw==}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -4186,6 +4192,11 @@ packages:
     resolution: {integrity: sha512-HDuk+PuH5monfNuY+ct49mNmkCRK4xJAV9Ts4z9UFc4rzdDnxQLyCMGGc8pKhZhHTVzfanpNwB/lwqevcBwI4w==}
     peerDependencies:
       vue: ^3.2.0
+
+  vue3-perfect-scrollbar@2.0.0:
+    resolution: {integrity: sha512-nSWVcRyViCgt0Pe3RhU3w/BllLcFSrEzYOGlRBjSyhVmiZlERHHziffW+9P8L0IMEWouC5t+uYrgNJGSAElqMA==}
+    peerDependencies:
+      vue: ^3.0.0
 
   vue@3.5.13:
     resolution: {integrity: sha512-wmeiSMxkZCSc+PM2w2VRsOYAZC8GdipNFRTsLSfodVqI9mbejKeXEGr8SckuLnrQPGe3oJN5c3K0vpoU9q/wCQ==}
@@ -7965,6 +7976,8 @@ snapshots:
 
   perfect-debounce@1.0.0: {}
 
+  perfect-scrollbar@1.5.6: {}
+
   picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
@@ -8731,6 +8744,11 @@ snapshots:
   vue-router@4.5.0(vue@3.5.13(typescript@5.7.3)):
     dependencies:
       '@vue/devtools-api': 6.6.4
+      vue: 3.5.13(typescript@5.7.3)
+
+  vue3-perfect-scrollbar@2.0.0(vue@3.5.13(typescript@5.7.3)):
+    dependencies:
+      perfect-scrollbar: 1.5.6
       vue: 3.5.13(typescript@5.7.3)
 
   vue@3.5.13(typescript@5.7.3):

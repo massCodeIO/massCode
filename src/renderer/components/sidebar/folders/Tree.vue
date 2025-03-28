@@ -2,7 +2,7 @@
 import type { Ref } from 'vue'
 import type { Node } from './types'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useFolders, useSnippets } from '@/composables'
+import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { treeKeys } from './keys'
 import TreeNode from './TreeNode.vue'
@@ -27,7 +27,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const { createFolderAndSelect, deleteFolder, renameFolderId } = useFolders()
+const { createFolderAndSelect, deleteFolder, renameFolderId, folders }
+  = useFolders()
 const { selectedFolderId } = useApp()
 const { clearSnippetsState } = useSnippets()
 
@@ -65,8 +66,19 @@ function contextMenu(node: Node, event: MouseEvent) {
   )
 }
 
-function onDeleteFolder() {
-  if (contextNodeId.value) {
+async function onDeleteFolder() {
+  const { confirm } = useDialog()
+
+  const folderName = folders.value?.find(
+    folder => folder.id === contextNodeId.value,
+  )?.name
+
+  const isConfirmed = await confirm({
+    title: i18n.t('dialog:deleteConfirm', { name: folderName }),
+    description: i18n.t('dialog:allSnippetsMoveToTrash'),
+  })
+
+  if (isConfirmed && contextNodeId.value) {
     deleteFolder(contextNodeId.value)
 
     if (contextNodeId.value === selectedFolderId.value) {

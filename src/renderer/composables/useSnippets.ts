@@ -114,6 +114,13 @@ async function createSnippet() {
       language: 'plain_text',
     })
 
+    if (
+      selectedLibrary.value === LibraryFilter.Trash
+      || selectedLibrary.value === LibraryFilter.Favorites
+    ) {
+      selectedLibrary.value = LibraryFilter.All
+    }
+
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
   }
   catch (error) {

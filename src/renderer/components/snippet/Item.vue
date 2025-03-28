@@ -116,7 +116,9 @@ async function onDelete() {
   }
   else if (props.snippet.isDeleted) {
     const isConfirmed = await confirm({
-      title: i18n.t('dialog:deleteConfirm', { name: props.snippet.name }),
+      title: i18n.t('dialog:deleteConfirmPermanently', {
+        name: props.snippet.name,
+      }),
       content: i18n.t('dialog:noUndo'),
     })
 

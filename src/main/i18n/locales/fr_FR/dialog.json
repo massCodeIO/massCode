@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "Etes-vous sûr de vouloir effacer de façon permanente \"{{name}}\"?",
+  "deleteConfirmPermanently": "Etes-vous sûr de vouloir effacer de façon permanente \"{{name}}\"?",
   "deleteConfirmMultipleSnippets": "Etes-vous sûr de vouloir effacer de façon permanente {{count}} extraits sélectionnés ?",
   "noUndo": "vous ne pouvez pas annuler cette action.",
   "allSnippetsMoveToTrash": "Tous les extraits de ce dossier seront déplacés vers la corbeille.",

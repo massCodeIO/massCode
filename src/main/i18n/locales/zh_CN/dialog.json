@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "你是否确定要永久删除 \"{{name}}\" ？",
+  "deleteConfirmPermanently": "你是否确定要永久删除 \"{{name}}\" ？",
   "deleteConfirmMultipleSnippets": "你是否确定要永久删除 {{count}} 个选中的代码片段？",
   "noUndo": "本操作将无法撤销。",
   "allSnippetsMoveToTrash": "本文件夹内的所有代码片段将被移动至回收站。",

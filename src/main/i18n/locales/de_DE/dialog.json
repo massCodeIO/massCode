@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "Soll \"{{name}}\" wirklich permanent gelöscht werden?",
+  "deleteConfirmPermanently": "Soll \"{{name}}\" wirklich permanent gelöscht werden?",
   "deleteConfirmMultipleSnippets": "Sollen {{count}} ausgewählte Snippets gelöscht werden?",
   "noUndo": "Dieser Vorgang kann nicht rückgängig gemacht werden.",
   "allSnippetsMoveToTrash": "Alle Snippets in diesem Ordner werden in den Papierkorb verschoben.",

@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "Czy na pewno chcesz trwale usunąć \"{{name}}\"?",
+  "deleteConfirmPermanently": "Czy na pewno chcesz trwale usunąć \"{{name}}\"?",
   "deleteConfirmMultipleSnippets": "Czy na pewno chcesz trwale usunąć {{count}} wybrane fragmenty kodu?",
   "noUndo": "Nie można cofnąć tej czynności.",
   "allSnippetsMoveToTrash": "Wszystkie fragmenty kodu w tym folderze zostaną przeniesione do kosza.",

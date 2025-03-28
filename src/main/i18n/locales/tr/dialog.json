@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "\"{{name}}\" adlı öğeyi kalıcı olarak silmek istediğinizden emin misiniz?",
+  "deleteConfirmPermanently": "\"{{name}}\" adlı öğeyi kalıcı olarak silmek istediğinizden emin misiniz?",
   "deleteConfirmMultipleSnippets": "{{count}} seçili kod parçasını kalıcı olarak silmek istediğinizden emin misiniz?",
   "noUndo": "Bu işlemi geri alamazsınız.",
   "allSnippetsMoveToTrash": "Bu klasördeki tüm kod parçaları çöp kutusuna taşınacaktır.",

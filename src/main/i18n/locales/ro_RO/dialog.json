@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "Sigur dorești să ștergi permanent \"{{name}}\"?",
+  "deleteConfirmPermanently": "Sigur dorești să ștergi permanent \"{{name}}\"?",
   "deleteConfirmMultipleSnippets": "Sigur dorești să ștergi permanent {{count}} fragmente selectate?",
   "noUndo": "Nu poți anula această acțiune.",
   "allSnippetsMoveToTrash": "Toate fragmentele din acest folder vor fi mutate în coșul de gunoi.",

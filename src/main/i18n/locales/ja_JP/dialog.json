@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "\"{{name}}\" を完全に削除してよろしいですか？",
+  "deleteConfirmPermanently": "\"{{name}}\" を完全に削除してよろしいですか？",
   "deleteConfirmMultipleSnippets": "選択している {{count}} 個のスニペットを完全に削除してよろしいですか？",
   "noUndo": "この操作は復元できません。",
   "allSnippetsMoveToTrash": "このフォルダー内のスニペットはすべてゴミ箱に移動されます。",

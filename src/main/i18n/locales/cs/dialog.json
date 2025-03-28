@@ -1,5 +1,5 @@
 {
-  "deleteConfirm": "Opravdu chcete trvale smazat \"{{name}}\"?",
+  "deleteConfirmPermanently": "Opravdu chcete trvale smazat \"{{name}}\"?",
   "deleteConfirmMultipleSnippets": "Opravdu chcete trvale smazat {{count}} vybraných snippetů?",
   "deleteConfirmMultipleSnippets_few": "Opravdu chcete trvale smazat {{count}} vybrané snippety?",
   "noUndo": "Tuto akci nelze vrátit zpět.",

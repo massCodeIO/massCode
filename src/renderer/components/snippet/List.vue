@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SnippetsQuery } from '@/services/api/generated'
-import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
+import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { useApp, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
@@ -9,6 +9,7 @@ import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
+const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
 const { snippetListWidth, sidebarWidth, selectedFolderId, selectedLibrary }
   = useApp()
@@ -62,18 +63,26 @@ watch(width, () => {
   snippetListWidth.value = `${_width}px`
   store.app.set('snippetListWidth', _width)
 })
+
+watch(displayedSnippets, () => {
+  nextTick(() => {
+    if (scrollbarRef.value) {
+      scrollbarRef.value.ps?.update()
+    }
+  })
+})
 </script>
 
 <template>
   <div
     ref="listRef"
     data-snippets-list
-    class="relative flex h-screen flex-col px-1"
+    class="relative flex h-screen flex-col"
   >
     <div>
       <SnippetHeader />
     </div>
-    <ScrollArea>
+    <PerfectScrollbar ref="scrollbarRef">
       <div class="flex-grow overflow-y-auto">
         <SnippetItem
           v-for="snippet in displayedSnippets"
@@ -81,7 +90,7 @@ watch(width, () => {
           :snippet="snippet"
         />
       </div>
-    </ScrollArea>
+    </PerfectScrollbar>
     <UiGutter ref="gutterRef" />
   </div>
 </template>

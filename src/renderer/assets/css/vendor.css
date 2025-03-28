@@ -32,6 +32,7 @@
 .ps__thumb-x,
 .ps__thumb-y {
   background-color: var(--color-scrollbar) !important;
+  z-index: 50;
 }
 
 .ps__thumb-y {

@@ -54,6 +54,14 @@ const isDuplicateDisabled = computed(
   () => highlightedSnippetIds.value.size > 1,
 )
 
+const isFavoritesLibrarySelected = computed(
+  () => selectedLibrary.value === LibraryFilter.Favorites,
+)
+
+const isTrashLibrarySelectd = computed(
+  () => selectedLibrary.value === LibraryFilter.Trash,
+)
+
 const folderName = computed(() => {
   if (props.snippet.folder) {
     return props.snippet.folder.name
@@ -85,6 +93,26 @@ function onClickContextMenu() {
     selectedSnippetIds.value.forEach(id =>
       highlightedSnippetIds.value.add(id),
     )
+  }
+}
+
+async function onAddFavorites() {
+  const isFavorites = isFavoritesLibrarySelected.value ? 0 : 1
+
+  if (selectedSnippetIds.value.length > 1) {
+    const snippetsData = selectedSnippetIds.value?.map(() => ({ isFavorites }))
+    await updateSnippets(selectedSnippetIds.value, snippetsData)
+  }
+  else {
+    await updateSnippet(props.snippet.id, { isFavorites })
+  }
+  if (isFavoritesLibrarySelected.value) {
+    if (
+      selectedSnippetIds.value.length > 1
+      || selectedSnippetId.value === props.snippet.id
+    ) {
+      selectFirstSnippet()
+    }
   }
 }
 
@@ -221,13 +249,22 @@ onClickOutside(snippetRef, () => {
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Content>
-        <ContextMenu.Item
-          v-if="selectedLibrary !== LibraryFilter.Trash"
-          :disabled="isDuplicateDisabled"
-          @click="onDuplicate"
-        >
-          {{ i18n.t("duplicate") }}
-        </ContextMenu.Item>
+        <template v-if="!isTrashLibrarySelectd">
+          <ContextMenu.Item @click="onAddFavorites">
+            {{
+              isFavoritesLibrarySelected
+                ? i18n.t("removeFromFavorites")
+                : i18n.t("addToFavorites")
+            }}
+          </ContextMenu.Item>
+          <ContextMenu.Separator />
+          <ContextMenu.Item
+            :disabled="isDuplicateDisabled"
+            @click="onDuplicate"
+          >
+            {{ i18n.t("duplicate") }}
+          </ContextMenu.Item>
+        </template>
         <ContextMenu.Item @click="onDelete">
           {{
             selectedLibrary === LibraryFilter.Trash

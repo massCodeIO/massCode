@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { Variants } from './variants'
 import { cn } from '@/utils'
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { variants } from './variants'
-import 'vue3-perfect-scrollbar/style.css'
 
 interface Props {
   variant?: Variants['variant']

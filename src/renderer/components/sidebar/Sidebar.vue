@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
+import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useApp, useFolders, useGutter, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
@@ -13,6 +13,7 @@ import LibraryItem from './library/Item.vue'
 
 const sidebarRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
+const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
 const { sidebarWidth, selectedFolderId } = useApp()
 const { getSnippets, selectFirstSnippet, searchQuery, emptyTrash }
@@ -131,6 +132,14 @@ watch(width, () => {
   sidebarWidth.value = `${width.value}px`
   store.app.set('sidebarWidth', width.value)
 })
+
+watch(folders, () => {
+  nextTick(() => {
+    if (scrollbarRef.value) {
+      scrollbarRef.value.ps?.update()
+    }
+  })
+})
 </script>
 
 <template>
@@ -173,7 +182,7 @@ watch(width, () => {
         <Plus class="h-4 w-4" />
       </UiActionButton>
     </div>
-    <ScrollArea>
+    <PerfectScrollbar ref="scrollbarRef">
       <div class="flex-grow">
         <Tree
           v-if="folders"
@@ -183,7 +192,7 @@ watch(width, () => {
           @drag-node="onFolderDrag"
         />
       </div>
-    </ScrollArea>
+    </PerfectScrollbar>
     <UiGutter ref="gutterRef" />
   </div>
 </template>

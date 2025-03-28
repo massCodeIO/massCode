@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as Command from '@/components/ui/shadcn/command'
 import * as Popover from '@/components/ui/shadcn/popover'
-import { ScrollArea } from '@/components/ui/shadcn/scroll-area'
 import { useEditor, useSnippets } from '@/composables'
 import { Check } from 'lucide-vue-next'
 import { languages } from './languages'
@@ -73,7 +72,7 @@ function fuzzySearch(list: string[], searchTerm: string) {
             <Command.CommandEmpty>No language found</Command.CommandEmpty>
             <Command.CommandList>
               <Command.CommandGroup>
-                <ScrollArea>
+                <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
                   <div class="_overflow-y-auto max-h-[150px]">
                     <Command.CommandItem
                       v-for="language in languages"
@@ -92,7 +91,7 @@ function fuzzySearch(list: string[], searchTerm: string) {
                       />
                     </Command.CommandItem>
                   </div>
-                </ScrollArea>
+                </PerfectScrollbar>
               </Command.CommandGroup>
             </Command.CommandList>
           </Command.Command>

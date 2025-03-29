@@ -17,9 +17,11 @@ async function onCreateTag(newTag: TagItem) {
     if (id && selectedSnippet.value) {
       await addTagToSnippet(id, selectedSnippet.value.id)
     }
+
+    await getTags()
   }
   catch (error) {
-    console.error('Ошибка при создании тега:', error)
+    console.error('Error creating tag:', error)
   }
 }
 

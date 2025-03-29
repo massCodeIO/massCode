@@ -226,6 +226,32 @@ async function deleteSnippetContent(snippetId: number, contentId: number) {
   }
 }
 
+async function addTagToSnippet(tagId: number, snippetId: number) {
+  try {
+    await api.snippets.postSnippetsByIdTagsByTagId(
+      String(snippetId),
+      String(tagId),
+    )
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+async function deleteTagFromSnippet(tagId: number, snippetId: number) {
+  try {
+    await api.snippets.deleteSnippetsByIdTagsByTagId(
+      String(snippetId),
+      String(tagId),
+    )
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 async function emptyTrash() {
   const { confirm } = useDialog()
 
@@ -339,5 +365,7 @@ export function useSnippets() {
     updateSnippet,
     updateSnippetContent,
     updateSnippets,
+    addTagToSnippet,
+    deleteTagFromSnippet,
   }
 }

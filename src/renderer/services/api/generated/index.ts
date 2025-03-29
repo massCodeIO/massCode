@@ -201,9 +201,13 @@ export interface TagsAdd {
   name: string;
 }
 
-export interface TagsResponse {
-  id: string | (string | (string | (string | (string | number))));
+export type TagsResponse = {
+  id: number;
   name: string;
+}[];
+
+export interface TagsAddResponse {
+  id: string | (string | (string | (string | (string | number))));
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -680,6 +684,42 @@ export class Api<
      * No description
      *
      * @tags Snippets
+     * @name PostSnippetsByIdTagsByTagId
+     * @request POST:/snippets/{id}/tags/{tagId}
+     */
+    postSnippetsByIdTagsByTagId: (
+      id: string,
+      tagId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/snippets/${id}/tags/${tagId}`,
+        method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name DeleteSnippetsByIdTagsByTagId
+     * @request DELETE:/snippets/{id}/tags/{tagId}
+     */
+    deleteSnippetsByIdTagsByTagId: (
+      id: string,
+      tagId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/snippets/${id}/tags/${tagId}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
      * @name DeleteSnippetsTrash
      * @request DELETE:/snippets/trash
      */
@@ -782,15 +822,31 @@ export class Api<
      * No description
      *
      * @tags Tags
+     * @name GetTags
+     * @request GET:/tags/
+     */
+    getTags: (params: RequestParams = {}) =>
+      this.request<TagsResponse, any>({
+        path: `/tags/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Tags
      * @name PostTags
      * @request POST:/tags/
      */
     postTags: (data: TagsAdd, params: RequestParams = {}) =>
-      this.request<void, any>({
+      this.request<TagsAddResponse, any>({
         path: `/tags/`,
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

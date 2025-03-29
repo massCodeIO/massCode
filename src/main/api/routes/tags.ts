@@ -15,10 +15,10 @@ app
       const stmt = db.prepare(`SELECT * FROM tags`)
       const result = stmt.all()
 
-      return result as TagsResponse[]
+      return result as TagsResponse
     },
     {
-      response: 'tagsResponse[]',
+      response: 'tagsResponse',
       detail: {
         tags: ['Tags'],
       },
@@ -35,10 +35,11 @@ app
 
       const { lastInsertRowid } = stmt.run(body.name, now, now)
 
-      return { id: lastInsertRowid }
+      return { id: lastInsertRowid as number }
     },
     {
       body: 'tagsAdd',
+      response: 'tagsAddResponse',
       detail: {
         tags: ['Tags'],
       },

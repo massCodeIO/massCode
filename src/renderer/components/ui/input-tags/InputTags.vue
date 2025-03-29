@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { TagItem } from './types'
+import { i18n } from '@/electron'
 import { X } from 'lucide-vue-next'
 
 interface Props {
@@ -17,7 +18,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Add tags...',
+  placeholder: `${i18n.t('addTag')}...`,
 })
 
 const emit = defineEmits<Emits>()

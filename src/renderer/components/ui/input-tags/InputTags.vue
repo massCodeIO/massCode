@@ -34,7 +34,9 @@ const isFocused = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
 const suggestionsRef = ref<HTMLDivElement | null>(null)
-const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
+const scrollbarRef = ref<
+  (PerfectScrollbarExpose & { $el: HTMLElement }) | null
+>(null)
 
 const dropdownStyle = ref({
   top: '0px',
@@ -46,10 +48,18 @@ function updateDropdownPosition() {
   nextTick(() => {
     if (containerRef.value && suggestionsRef.value) {
       const rect = containerRef.value.getBoundingClientRect()
+
+      const availableHeight = window.innerHeight - rect.bottom - 10 // 10px - отступ снизу
+      const maxHeight = Math.min(240, availableHeight)
+
       dropdownStyle.value = {
         top: `${rect.bottom}px`,
         left: `${rect.left}px`,
         width: `${rect.width}px`,
+      }
+
+      if (scrollbarRef.value?.$el) {
+        scrollbarRef.value.$el.style.maxHeight = `${maxHeight}px`
       }
     }
   })
@@ -276,10 +286,6 @@ watch(
   { deep: true },
 )
 
-// watch(tags, (newValue) => {
-//   emit('update:modelValue', newValue)
-// }, { deep: true })
-
 watch(filteredSuggestions, () => {
   selectedSuggestionIndex.value = -1
 })
@@ -342,7 +348,6 @@ watch(
     <PerfectScrollbar
       ref="scrollbarRef"
       :options="{ minScrollbarLength: 20 }"
-      class="max-h-60"
     >
       <ul class="w-full p-1">
         <li

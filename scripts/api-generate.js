@@ -7,7 +7,7 @@ async function generateApi() {
   try {
     console.log(styleText('blue', 'Generating API...'))
     child_process.execSync(
-      `npx swagger-typescript-api -p ${url} -o ./src/renderer/services/api/generated -n index.ts`,
+      `npx swagger-typescript-api@13.0.23 -p ${url} -o ./src/renderer/services/api/generated -n index.ts`,
     )
     console.log(styleText('green', 'API is successfully generated'))
   }

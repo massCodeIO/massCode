@@ -5,7 +5,7 @@ import { i18n, store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const sidebarRef = ref<HTMLElement>()
-const gutterRef = ref<{ $el: HTMLElement }>()
+const sidebarGutterRef = ref<{ $el: HTMLElement }>()
 
 const {
   sidebarWidth,
@@ -15,12 +15,15 @@ const {
   selectedTagId,
 } = useApp()
 const { clearSnippets } = useSnippets()
-const { width } = useGutter(
-  sidebarRef,
-  gutterRef,
-  Number.parseInt(sidebarWidth.value as string),
-  APP_DEFAULTS.sizes.sidebar,
-)
+
+const { width: sidebarWidthG } = useGutter({
+  target: sidebarRef,
+  gutter: sidebarGutterRef,
+  orientation: 'vertical',
+  options: {
+    minWidth: APP_DEFAULTS.sizes.sidebar,
+  },
+})
 
 function onSelectedLibraryTab(
   tab: (typeof LibraryTab)[keyof typeof LibraryTab],
@@ -39,9 +42,9 @@ function onSelectedLibraryTab(
   clearSnippets()
 }
 
-watch(width, () => {
-  sidebarWidth.value = `${width.value}px`
-  store.app.set('sidebarWidth', width.value)
+watch(sidebarWidthG, () => {
+  sidebarWidth.value = `${sidebarWidthG.value}px`
+  store.app.set('sidebarWidth', sidebarWidthG.value)
 })
 </script>
 
@@ -72,6 +75,6 @@ watch(width, () => {
     </div>
     <SidebarLibrary v-if="selectedLibraryTab === LibraryTab.Library" />
     <SidebarLibraryTags v-else />
-    <UiGutter ref="gutterRef" />
+    <UiGutter ref="sidebarGutterRef" />
   </div>
 </template>

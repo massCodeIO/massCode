@@ -1,47 +1,15 @@
 <script setup lang="ts">
-import type { SnippetsQuery } from '@/services/api/generated'
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { useApp, useGutter, useSnippets } from '@/composables'
-import { LibraryFilter } from '@/composables/types'
 import { store } from '@/electron'
-import { scrollToElement } from '@/utils'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
 const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
-const { snippetListWidth, sidebarWidth, selectedFolderId, selectedLibrary }
-  = useApp()
-const { displayedSnippets, getSnippets } = useSnippets()
-
-async function initGetSnippets() {
-  const query: SnippetsQuery = {}
-
-  if (selectedFolderId.value) {
-    query.folderId = selectedFolderId.value
-  }
-  else if (selectedLibrary.value === LibraryFilter.Favorites) {
-    query.isFavorites = 1
-  }
-  else if (selectedLibrary.value === LibraryFilter.Trash) {
-    query.isDeleted = 1
-  }
-  else if (selectedLibrary.value === LibraryFilter.All) {
-    query.isDeleted = 0
-  }
-  else if (selectedLibrary.value === LibraryFilter.Inbox) {
-    query.isInbox = 1
-  }
-
-  await getSnippets(query)
-
-  nextTick(() => {
-    scrollToElement('[data-snippet-item].is-selected')
-  })
-}
-
-initGetSnippets()
+const { snippetListWidth, sidebarWidth } = useApp()
+const { displayedSnippets } = useSnippets()
 
 const offsetWidth = computed(() => {
   return (

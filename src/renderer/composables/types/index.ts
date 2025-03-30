@@ -4,3 +4,8 @@ export const LibraryFilter = {
   Inbox: 'inbox',
   Trash: 'trash',
 } as const
+
+export const LibraryTab = {
+  Library: 'library',
+  Tags: 'tags',
+} as const

@@ -14,10 +14,21 @@ async function addTag(tagName: string) {
   return data.id as number
 }
 
+async function deleteTag(tagId: number) {
+  try {
+    await api.tags.deleteTagsById(String(tagId))
+    await getTags()
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 export function useTags() {
   return {
-    tags,
-    getTags,
     addTag,
+    deleteTag,
+    getTags,
+    tags,
   }
 }

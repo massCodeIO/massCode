@@ -16,6 +16,7 @@ const {
   selectedSnippetId,
   selectedSnippetContentIndex,
   selectedFolderId,
+  selectedTagId,
   selectedLibrary,
 } = useApp()
 
@@ -60,6 +61,11 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
 
   if (isSearch.value) {
     query.search = searchQuery.value
+    return query
+  }
+
+  if (selectedTagId.value) {
+    query.tagId = selectedTagId.value
     return query
   }
 
@@ -331,9 +337,13 @@ function selectFirstSnippet() {
   }
 }
 
-function clearSnippetsState() {
+function clearSnippets() {
   snippets.value = []
   snippetsBySearch.value = []
+}
+
+function clearSnippetsState() {
+  clearSnippets()
   selectedSnippetIds.value = []
   selectedSnippetId.value = undefined
   selectedSnippetContentIndex.value = 0
@@ -342,12 +352,15 @@ function clearSnippetsState() {
 
 export function useSnippets() {
   return {
+    addTagToSnippet,
+    clearSnippets,
     clearSnippetsState,
     createSnippet,
     createSnippetContent,
     deleteSnippet,
     deleteSnippetContent,
     deleteSnippets,
+    deleteTagFromSnippet,
     displayedSnippets,
     duplicateSnippet,
     emptyTrash,
@@ -365,7 +378,5 @@ export function useSnippets() {
     updateSnippet,
     updateSnippetContent,
     updateSnippets,
-    addTagToSnippet,
-    deleteTagFromSnippet,
   }
 }

@@ -1,6 +1,7 @@
 import type { LibraryFilter } from './types'
 import { store } from '@/electron'
 import { useCssVar } from '@vueuse/core'
+import { LibraryTab } from './types'
 
 const selectedLibrary = ref<
   (typeof LibraryFilter)[keyof typeof LibraryFilter] | undefined
@@ -9,12 +10,20 @@ const selectedLibrary = ref<
       'selectedLibrary',
     ) as (typeof LibraryFilter)[keyof typeof LibraryFilter],
     )
+const selectedLibraryTab = ref<(typeof LibraryTab)[keyof typeof LibraryTab]>(
+  LibraryTab.Library,
+)
 const selectedFolderId = ref(store.app.get('selectedFolderId'))
 const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
-const selectedSnippetIdBeforeSearch = ref(store.app.get('selectedSnippetId'))
+const selectedTagId = ref<number>()
 const selectedSnippetContentIndex = ref(0)
+
+const selectedSnippetIdBeforeSearch = ref(store.app.get('selectedSnippetId'))
+const selectedSnippetIdBeforeTagSelect = ref<number>()
+
 const highlightedFolderId = ref<number>()
 const highlightedSnippetIds = ref<Set<number>>(new Set())
+const highlightedTagId = ref<number>()
 
 const isFocusedSnippetName = ref(false)
 
@@ -28,13 +37,17 @@ export function useApp() {
   return {
     highlightedFolderId,
     highlightedSnippetIds,
+    highlightedTagId,
+    isFocusedSnippetName,
     selectedFolderId,
     selectedLibrary,
+    selectedLibraryTab,
     selectedSnippetContentIndex,
     selectedSnippetId,
     selectedSnippetIdBeforeSearch,
+    selectedSnippetIdBeforeTagSelect,
+    selectedTagId,
     sidebarWidth,
     snippetListWidth,
-    isFocusedSnippetName,
   }
 }

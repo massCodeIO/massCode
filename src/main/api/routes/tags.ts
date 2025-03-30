@@ -12,7 +12,7 @@ app
   .get(
     '/',
     () => {
-      const stmt = db.prepare(`SELECT * FROM tags`)
+      const stmt = db.prepare(`SELECT * FROM tags ORDER BY name ASC`)
       const result = stmt.all()
 
       return result as TagsResponse

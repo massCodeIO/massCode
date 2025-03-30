@@ -25,7 +25,6 @@ async function onCreateTag(newTag: TagItem) {
   }
 }
 
-// Обработчик удаления тега
 function onDeleteTag(deletedTag: TagItem) {
   if (selectedSnippet.value) {
     deleteTagFromSnippet(deletedTag.id, selectedSnippet.value.id)

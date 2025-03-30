@@ -1,4 +1,12 @@
 <script setup lang="ts">
+interface Props {
+  orientation?: 'horizontal' | 'vertical'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  orientation: 'vertical',
+})
+
 const isHovered = ref(false)
 const isDragging = ref(false)
 let hoverTimer: number | null = null
@@ -36,13 +44,45 @@ function onMouseUp() {
 function onMouseMove() {
   isHovered.value = true
 }
+
+// Вычисляемое свойство для определения стилей в зависимости от ориентации
+const gutterClasses = computed(() => {
+  const baseClasses = { 'bg-primary': isHovered.value || isDragging.value }
+
+  if (props.orientation === 'vertical') {
+    return {
+      ...baseClasses,
+      'absolute top-0 right-0 w-[1px] h-full cursor-col-resize': true,
+      'w-[2px]': isHovered.value || isDragging.value,
+    }
+  }
+  else {
+    // horizontal
+    return {
+      ...baseClasses,
+      'absolute bottom-0 left-0 h-[1px] w-full cursor-row-resize': true,
+      'h-[2px]': isHovered.value || isDragging.value,
+    }
+  }
+})
+
+// Вычисляемое свойство для определения стилей after-псевдоэлемента
+const afterStyles = computed(() => {
+  if (props.orientation === 'vertical') {
+    return 'after:block after:h-full after:w-[8px] after:absolute after:-left-[3px] after:z-10'
+  }
+  else {
+    // horizontal
+    return 'after:block after:w-full after:h-[8px] after:absolute after:-top-[3px] after:z-10'
+  }
+})
 </script>
 
 <template>
   <div
     data-gutter
-    class="absolute top-0 right-0 w-[1px] h-full cursor-col-resize after:block after:h-full after:w-[8px] after:absolute after:-left-[3px] after:z-10 bg-border"
-    :class="{ 'bg-primary w-[2px]': isHovered || isDragging }"
+    class="bg-border"
+    :class="[gutterClasses, afterStyles]"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
     @mousedown="onMouseDown"

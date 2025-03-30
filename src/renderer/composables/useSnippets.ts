@@ -16,6 +16,7 @@ const {
   selectedSnippetId,
   selectedSnippetContentIndex,
   selectedFolderId,
+  selectedTagId,
   selectedLibrary,
 } = useApp()
 
@@ -60,6 +61,11 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
 
   if (isSearch.value) {
     query.search = searchQuery.value
+    return query
+  }
+
+  if (selectedTagId.value) {
+    query.tagId = selectedTagId.value
     return query
   }
 
@@ -226,6 +232,32 @@ async function deleteSnippetContent(snippetId: number, contentId: number) {
   }
 }
 
+async function addTagToSnippet(tagId: number, snippetId: number) {
+  try {
+    await api.snippets.postSnippetsByIdTagsByTagId(
+      String(snippetId),
+      String(tagId),
+    )
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+async function deleteTagFromSnippet(tagId: number, snippetId: number) {
+  try {
+    await api.snippets.deleteSnippetsByIdTagsByTagId(
+      String(snippetId),
+      String(tagId),
+    )
+    await getSnippets(queryByLibraryOrFolderOrSearch.value)
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 async function emptyTrash() {
   const { confirm } = useDialog()
 
@@ -305,9 +337,13 @@ function selectFirstSnippet() {
   }
 }
 
-function clearSnippetsState() {
+function clearSnippets() {
   snippets.value = []
   snippetsBySearch.value = []
+}
+
+function clearSnippetsState() {
+  clearSnippets()
   selectedSnippetIds.value = []
   selectedSnippetId.value = undefined
   selectedSnippetContentIndex.value = 0
@@ -316,12 +352,15 @@ function clearSnippetsState() {
 
 export function useSnippets() {
   return {
+    addTagToSnippet,
+    clearSnippets,
     clearSnippetsState,
     createSnippet,
     createSnippetContent,
     deleteSnippet,
     deleteSnippetContent,
     deleteSnippets,
+    deleteTagFromSnippet,
     displayedSnippets,
     duplicateSnippet,
     emptyTrash,

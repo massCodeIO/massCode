@@ -335,6 +335,112 @@ app
       },
     },
   )
+  // Добавление тега к сниппету
+  .post(
+    '/:id/tags/:tagId',
+    ({ params, error }) => {
+      const { id, tagId } = params
+
+      // Проверяем, существует ли сниппет
+      const snippet = db
+        .prepare(
+          `
+        SELECT id FROM snippets WHERE id = ?
+      `,
+        )
+        .get(id)
+
+      if (!snippet) {
+        return error(404, { message: 'Snippet not found' })
+      }
+
+      // Проверяем, существует ли тег
+      const tag = db
+        .prepare(
+          `
+        SELECT id FROM tags WHERE id = ?
+      `,
+        )
+        .get(tagId)
+
+      if (!tag) {
+        return error(404, { message: 'Tag not found' })
+      }
+
+      // Добавляем связь между сниппетом и тегом
+      const stmt = db.prepare(
+        `
+      INSERT INTO snippet_tags (snippetId, tagId)
+      VALUES (?, ?)
+    `,
+      )
+
+      stmt.run(id, tagId)
+
+      return { message: 'Tag added to snippet' }
+    },
+    {
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
+  // Удаление тега из сниппета
+  .delete(
+    '/:id/tags/:tagId',
+    ({ params, error }) => {
+      const { id, tagId } = params
+
+      // Проверяем, существует ли сниппет
+      const snippet = db
+        .prepare(
+          `
+        SELECT id FROM snippets WHERE id = ?
+      `,
+        )
+        .get(id)
+
+      if (!snippet) {
+        return error(404, { message: 'Snippet not found' })
+      }
+
+      // Проверяем, существует ли тег
+      const tag = db
+        .prepare(
+          `
+        SELECT id FROM tags WHERE id = ?
+      `,
+        )
+        .get(tagId)
+
+      if (!tag) {
+        return error(404, { message: 'Tag not found' })
+      }
+
+      // Удаляем связь между сниппетом и тегом
+      const stmt = db.prepare(
+        `
+      DELETE FROM snippet_tags 
+      WHERE snippetId = ? AND tagId = ?
+    `,
+      )
+
+      const result = stmt.run(id, tagId)
+
+      if (!result.changes) {
+        return error(404, {
+          message: 'Tag is not associated with this snippet',
+        })
+      }
+
+      return { message: 'Tag removed from snippet' }
+    },
+    {
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
   // Удаление сниппета
   .delete(
     '/:id',

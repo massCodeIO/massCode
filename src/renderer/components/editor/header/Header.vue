@@ -80,5 +80,6 @@ async function onAddFragment() {
       />
     </div>
     <EditorDescription v-model:show="isShowDescription" />
+    <EditorHeaderTags class="px-2 py-1" />
   </div>
 </template>

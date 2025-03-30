@@ -4,14 +4,20 @@ const tagsAdd = t.Object({
   name: t.String(),
 })
 
-export const tagsResponse = t.Object({
+const tagsItem = t.Object({
   id: t.Number(),
   name: t.String(),
+})
+
+export const tagsResponse = t.Array(tagsItem)
+export const tagsAddResponse = t.Object({
+  id: t.Number(),
 })
 
 export const tagsDTO = new Elysia().model({
   tagsAdd,
   tagsResponse,
+  tagsAddResponse,
 })
 
 export type TagsAdd = typeof tagsAdd.static

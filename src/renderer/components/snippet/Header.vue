@@ -68,6 +68,7 @@ watch(searchQuery, () => {
         <X class="h-4 w-4" />
       </UiButton>
       <UiActionButton
+        v-if="!isSearch"
         :tooltip="i18n.t('newSnippet')"
         @click="onAddSnippet"
       >

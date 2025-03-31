@@ -155,6 +155,13 @@ async function duplicateSnippet(snippetId: number) {
       })
     }
 
+    for (const tag of snippet.tags) {
+      await api.snippets.postSnippetsByIdTagsByTagId(
+        String(data.id),
+        String(tag.id),
+      )
+    }
+
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
   }
   catch (error) {

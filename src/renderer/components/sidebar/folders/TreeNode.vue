@@ -36,6 +36,8 @@ const {
   highlightedSnippetIds,
   selectedFolderId,
   selectedSnippetId,
+  highlightedTagId,
+  selectedTagId,
 } = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 const { updateFolder, renameFolderId } = useFolders()
@@ -101,6 +103,8 @@ function onClickArrow(node: Node) {
 
 function onClickNode(id: string | number) {
   highlightedFolderId.value = undefined
+  highlightedTagId.value = undefined
+  selectedTagId.value = undefined
   isFocused.value = true
   clickNode(Number(id))
 }

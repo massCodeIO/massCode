@@ -7,9 +7,10 @@ import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
+import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 
 const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
@@ -23,6 +24,8 @@ const {
   createFolderAndSelect,
   updateFolder,
 } = useFolders()
+
+const tagsListHeight = store.app.get('sizes.tagsListHeight') as number
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
@@ -155,52 +158,81 @@ watch(folders, () => {
     }
   })
 })
+
+function onResizeTagList(val: number[]) {
+  store.app.set('sizes.tagsListHeight', val[1])
+}
 </script>
 
 <template>
-  <div
-    data-sidebar-library
-    class="shrink-0"
+  <SplitterGroup
+    id="1"
+    direction="vertical"
+    @layout="onResizeTagList"
   >
-    <ContextMenu.Root>
-      <ContextMenu.Trigger>
-        <div class="">
-          <LibraryItem
-            v-for="i in libraryItems"
-            :id="i.id"
-            :key="i.name"
-            :name="i.name"
-            :icon="i.icon"
+    <div
+      class="shrink-0 overflow-hidden"
+      data-sidebar-library
+    >
+      <ContextMenu.Root>
+        <ContextMenu.Trigger>
+          <div class="px-1">
+            <LibraryItem
+              v-for="i in libraryItems"
+              :id="i.id"
+              :key="i.name"
+              :name="i.name"
+              :icon="i.icon"
+            />
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Content>
+          <ContextMenu.Item @click="emptyTrash">
+            {{ i18n.t("emptyTrash") }}
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Root>
+    </div>
+    <div class="mt-1 flex items-center justify-between py-1 pl-1 select-none">
+      <div class="text-[10px] font-bold uppercase">
+        {{ i18n.t("sidebar.folders") }}
+      </div>
+      <UiActionButton
+        :tooltip="i18n.t('newFolder')"
+        @click="createFolderAndSelect"
+      >
+        <Plus class="h-4 w-4" />
+      </UiActionButton>
+    </div>
+    <SplitterPanel as-child>
+      <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+        <div class="h-full px-1">
+          <Tree
+            v-if="folders"
+            v-model="folders"
+            @click-node="onFolderClick"
+            @toggle-node="onFolderToggle"
+            @drag-node="onFolderDrag"
           />
         </div>
-      </ContextMenu.Trigger>
-      <ContextMenu.Content>
-        <ContextMenu.Item @click="emptyTrash">
-          {{ i18n.t("emptyTrash") }}
-        </ContextMenu.Item>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
-  </div>
-  <div class="flex items-center justify-between pt-2 pl-1">
-    <div class="text-[10px] font-bold uppercase">
-      {{ i18n.t("sidebar.folders") }}
+      </PerfectScrollbar>
+    </SplitterPanel>
+    <SplitterResizeHandle class="relative cursor-none">
+      <UiGutter orientation="horizontal" />
+    </SplitterResizeHandle>
+    <div class="flex items-center justify-between py-1 pl-1 select-none">
+      <div class="text-[10px] font-bold uppercase">
+        {{ i18n.t("sidebar.tags") }}
+      </div>
     </div>
-    <UiActionButton
-      :tooltip="i18n.t('newFolder')"
-      @click="createFolderAndSelect"
+    <SplitterPanel
+      class="_bg-white"
+      as-child
+      :default-size="tagsListHeight"
     >
-      <Plus class="h-4 w-4" />
-    </UiActionButton>
-  </div>
-  <PerfectScrollbar ref="scrollbarRef">
-    <div class="flex-grow">
-      <Tree
-        v-if="folders"
-        v-model="folders"
-        @click-node="onFolderClick"
-        @toggle-node="onFolderToggle"
-        @drag-node="onFolderDrag"
-      />
-    </div>
-  </PerfectScrollbar>
+      <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+        <SidebarTags class="px-1" />
+      </PerfectScrollbar>
+    </SplitterPanel>
+  </SplitterGroup>
 </template>

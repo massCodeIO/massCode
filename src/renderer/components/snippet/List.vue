@@ -22,7 +22,7 @@ const { width } = useGutter({
 
 watch(width, () => {
   snippetListWidth.value = `${width.value}px`
-  store.app.set('snippetListWidth', width.value)
+  store.app.set('sizes.snippetListWidth', width.value)
 })
 
 watch(displayedSnippets, () => {

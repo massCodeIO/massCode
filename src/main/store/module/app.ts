@@ -8,8 +8,11 @@ export default new Store<AppStore>({
 
   defaults: {
     bounds: {},
-    sidebarWidth: APP_DEFAULTS.sizes.sidebar,
-    snippetListWidth: APP_DEFAULTS.sizes.snippetList,
     isAutoMigratedFromJson: false,
+    sizes: {
+      sidebarWidth: APP_DEFAULTS.sizes.sidebar,
+      snippetListWidth: APP_DEFAULTS.sizes.snippetList,
+      tagsListHeight: APP_DEFAULTS.sizes.tagsList,
+    },
   },
 })

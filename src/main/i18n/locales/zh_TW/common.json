@@ -60,5 +60,6 @@
   "collapse-all": "全部展開",
   "expand-all": "全部摺疊",
   "restore": "回復",
-  "copy-snippet-link": "複製連結"
+  "copy-snippet-link": "複製連結",
+  "emptyTagList": "添加標籤到程式碼片段以在此處查看"
 }

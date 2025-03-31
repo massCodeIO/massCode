@@ -13,7 +13,7 @@ interface Props {
   icon: Component
 }
 
-const { selectedLibrary, selectedFolderId } = useApp()
+const { selectedLibrary, selectedFolderId, selectedTagId } = useApp()
 
 const { getSnippets, selectFirstSnippet } = useSnippets()
 
@@ -27,6 +27,7 @@ async function onItemClick(
   selectedLibrary.value = id
   isFocused.value = true
   selectedFolderId.value = undefined
+  selectedTagId.value = undefined
 
   store.app.delete('selectedFolderId')
   store.app.set('selectedLibrary', id)
@@ -59,9 +60,9 @@ onClickOutside(itemRef, () => {
   <div
     ref="itemRef"
     data-sidebar-item
-    :data-state="isSelected ? 'selected' : null"
-    :data-focused="isFocused ? 'true' : null"
-    class="data-[state=selected]:bg-list-selection data-[focused=true]:bg-list-focus! data-[focused=true]:text-list-focus-fg rounded-md"
+    :data-selected="isSelected ? 'true' : undefined"
+    :data-focused="isFocused ? 'true' : undefined"
+    class="data-[selected=true]:bg-list-selection data-[focused=true]:bg-list-focus! data-[focused=true]:text-list-focus-fg rounded-md"
     @click="onItemClick(id)"
   >
     <div class="ml-5.5 flex items-center">

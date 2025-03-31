@@ -71,5 +71,6 @@
   "expand-all": "Rozwiń wszystko",
   "restore": "Przywróć",
   "copy-snippet-link": "Skopiuj link do fragmentu kodu",
-  "set-custom-icon": "Ustaw niestandardową ikonę"
+  "set-custom-icon": "Ustaw niestandardową ikonę",
+  "emptyTagList": "Dodaj tagi do fragmentów kodu, aby zobaczyć je tutaj"
 }

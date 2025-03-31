@@ -55,5 +55,6 @@
   "restartApp": "Reiniciar massCode",
   "updateAvailable": "Actualización Disponible",
   "hide": "Ocultar",
-  "show": "Mostrar"
+  "show": "Mostrar",
+  "emptyTagList": "Agregue etiquetas a los snippets para verlos aquí"
 }

@@ -68,5 +68,6 @@
   "expand-all": "Hepsini Genişlet",
   "restore": "Geri Yükle",
   "copy-snippet-link": "Kod Parçası Bağlantısını Kopyala",
-  "set-custom-icon": "Özel Simge Ayarla"
+  "set-custom-icon": "Özel Simge Ayarla",
+  "emptyTagList": "Etiketleri burada görmek için kod parçacıklarına ekleyin"
 }

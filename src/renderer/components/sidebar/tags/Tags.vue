@@ -9,6 +9,8 @@ const { getSnippets, selectFirstSnippet, clearSnippets } = useSnippets()
 
 getTags()
 
+const idToDelete = ref(0)
+
 async function onTagClick(tagId: number) {
   selectedTagId.value = tagId
   highlightedTagId.value = undefined
@@ -19,6 +21,7 @@ async function onTagClick(tagId: number) {
 
 function onClickContextMenu(tagId: number) {
   highlightedTagId.value = tagId
+  idToDelete.value = tagId
 }
 
 async function onDelete() {
@@ -33,16 +36,18 @@ async function onDelete() {
     content: i18n.t('dialog:deleteTag'),
   })
 
-  if (isConfirmed && highlightedTagId.value) {
-    await deleteTag(highlightedTagId.value)
+  if (isConfirmed && idToDelete.value) {
+    await deleteTag(idToDelete.value)
 
-    if (selectedTagId.value === highlightedTagId.value) {
+    if (selectedTagId.value === idToDelete.value) {
       selectedTagId.value = undefined
       clearSnippets()
     }
     else if (selectedTagId.value) {
       await getSnippets({ tagId: selectedTagId.value })
     }
+
+    idToDelete.value = 0
   }
 }
 

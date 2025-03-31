@@ -68,5 +68,6 @@
   "expand-all": "Tout étendre",
   "restore": "Restaurer",
   "copy-snippet-link": "Copier lien extrait",
-  "set-custom-icon": "Définir une icône personnalisée"
+  "set-custom-icon": "Définir une icône personnalisée",
+  "emptyTagList": "Ajoutez des étiquettes aux extraits pour les voir ici"
 }

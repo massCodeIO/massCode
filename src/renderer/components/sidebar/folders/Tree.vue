@@ -112,7 +112,6 @@ provide(treeKeys, {
       <div
         ref="contextMenuTriggerRef"
         data-folder-tree
-        class="pt-1"
       >
         <TreeNode
           v-for="(node, index) in modelValue"

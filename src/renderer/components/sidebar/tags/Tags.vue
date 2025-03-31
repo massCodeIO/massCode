@@ -2,10 +2,9 @@
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useSnippets, useTags } from '@/composables'
 import { i18n } from '@/electron'
-import { Tag } from 'lucide-vue-next'
 
 const { tags, getTags, deleteTag } = useTags()
-const { selectedTagId, highlightedTagId } = useApp()
+const { selectedTagId, highlightedTagId, selectedFolderId } = useApp()
 const { getSnippets, selectFirstSnippet, clearSnippets } = useSnippets()
 
 getTags()
@@ -13,6 +12,7 @@ getTags()
 async function onTagClick(tagId: number) {
   selectedTagId.value = tagId
   highlightedTagId.value = undefined
+  selectedFolderId.value = undefined
   await getSnippets({ tagId })
   selectFirstSnippet()
 }
@@ -45,36 +45,41 @@ async function onDelete() {
     }
   }
 }
+
+function onUpdateContextMenu(bool: boolean) {
+  if (!bool) {
+    highlightedTagId.value = undefined
+  }
+}
 </script>
 
 <template>
-  <PerfectScrollbar data-sidebar-library-tags>
-    <div class="px-1">
-      <ContextMenu.Root>
-        <ContextMenu.Trigger>
-          <div
-            v-for="tag in tags"
-            :key="tag.id"
-            class="flex items-center gap-2 rounded-md px-5 select-none"
-            :class="{
-              'bg-list-selection text-list-selection-fg':
-                selectedTagId === tag.id,
-              'outline-primary bg-transparent outline-2 -outline-offset-2':
-                highlightedTagId === tag.id,
-            }"
-            @click="onTagClick(tag.id)"
-            @contextmenu="onClickContextMenu(tag.id)"
-          >
-            <Tag class="h-3 w-3 shrink-0" />
-            <span class="truncate">{{ tag.name }}</span>
-          </div>
-        </ContextMenu.Trigger>
-        <ContextMenu.Content>
-          <ContextMenu.Item @click="onDelete">
-            {{ i18n.t("delete") }}
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
-    </div>
+  <PerfectScrollbar
+    v-if="tags.length"
+    data-sidebar-tags
+  >
+    <ContextMenu.Root @update:open="onUpdateContextMenu">
+      <ContextMenu.Trigger>
+        <SidebarTagsItem
+          v-for="tag in tags"
+          :id="tag.id"
+          :key="tag.id"
+          :name="tag.name"
+          @click="onTagClick(tag.id)"
+          @contextmenu="onClickContextMenu(tag.id)"
+        />
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <ContextMenu.Item @click="onDelete">
+          {{ i18n.t("delete") }}
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   </PerfectScrollbar>
+  <div
+    v-else
+    class="text-text-muted flex h-full items-center justify-center text-center"
+  >
+    {{ i18n.t("emptyTagList") }}
+  </div>
 </template>

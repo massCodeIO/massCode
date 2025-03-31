@@ -30,8 +30,8 @@ const isFocusedSnippetName = ref(false)
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
 
-sidebarWidth.value = `${store.app.get('sidebarWidth')}px`
-snippetListWidth.value = `${store.app.get('snippetListWidth')}px`
+sidebarWidth.value = `${store.app.get('sizes.sidebarWidth')}px`
+snippetListWidth.value = `${store.app.get('sizes.snippetListWidth')}px`
 
 export function useApp() {
   return {

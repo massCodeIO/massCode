@@ -44,7 +44,7 @@ watch(displayedSnippets, () => {
       <SnippetHeader />
     </div>
     <PerfectScrollbar ref="scrollbarRef">
-      <div class="flex-grow overflow-y-auto">
+      <div class="flex-grow overflow-y-auto px-2">
         <SnippetItem
           v-for="snippet in displayedSnippets"
           :key="snippet.id"

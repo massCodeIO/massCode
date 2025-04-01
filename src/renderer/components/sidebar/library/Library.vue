@@ -192,17 +192,14 @@ function onResizeTagList(val: number[]) {
       </UiActionButton>
     </div>
     <SplitterPanel as-child>
-      <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-        <div class="h-full px-1">
-          <Tree
-            v-if="folders"
-            v-model="folders"
-            @click-node="onFolderClick"
-            @toggle-node="onFolderToggle"
-            @drag-node="onFolderDrag"
-          />
-        </div>
-      </PerfectScrollbar>
+      <Tree
+        v-if="folders"
+        v-model="folders"
+        class="px-1 pb-1"
+        @click-node="onFolderClick"
+        @toggle-node="onFolderToggle"
+        @drag-node="onFolderDrag"
+      />
     </SplitterPanel>
     <SplitterResizeHandle class="relative cursor-none">
       <UiGutter orientation="horizontal" />
@@ -216,9 +213,7 @@ function onResizeTagList(val: number[]) {
       as-child
       :default-size="tagsListHeight"
     >
-      <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-        <SidebarTags class="px-1" />
-      </PerfectScrollbar>
+      <SidebarTags class="px-1 pb-1" />
     </SplitterPanel>
   </SplitterGroup>
 </template>

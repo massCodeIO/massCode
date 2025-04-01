@@ -72,6 +72,7 @@ function onUpdateContextMenu(bool: boolean) {
   <PerfectScrollbar
     v-if="tags.length"
     data-sidebar-tags
+    :options="{ minScrollbarLength: 20 }"
   >
     <ContextMenu.Root @update:open="onUpdateContextMenu">
       <ContextMenu.Trigger>

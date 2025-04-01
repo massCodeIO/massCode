@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
+import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { Node } from './types'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
@@ -33,6 +34,8 @@ const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
 
 const contextMenuTriggerRef = useTemplateRef('contextMenuTriggerRef')
+const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
+
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
 const contextNodeId = ref<number | null>(null)
@@ -79,12 +82,18 @@ async function onDeleteFolder() {
   })
 
   if (isConfirmed && contextNodeId.value) {
-    deleteFolder(contextNodeId.value)
+    await deleteFolder(contextNodeId.value)
 
     if (contextNodeId.value === state.folderId) {
       state.folderId = undefined
       clearSnippetsState()
     }
+
+    nextTick(() => {
+      if (scrollRef.value) {
+        scrollRef.value.ps?.update()
+      }
+    })
   }
 }
 
@@ -107,45 +116,52 @@ provide(treeKeys, {
 </script>
 
 <template>
-  <ContextMenu.Root>
-    <ContextMenu.Trigger as-child>
-      <div
-        ref="contextMenuTriggerRef"
-        data-folder-tree
-      >
-        <TreeNode
-          v-for="(node, index) in modelValue"
-          :key="node.id"
-          :node="node"
-          :nodes="modelValue"
-          :index="index"
-          :hovered-node-id="hoveredNodeId"
+  <PerfectScrollbar
+    v-if="modelValue.length"
+    ref="scrollRef"
+    :options="{ minScrollbarLength: 20 }"
+  >
+    <ContextMenu.Root>
+      <ContextMenu.Trigger as-child>
+        <div
+          ref="contextMenuTriggerRef"
+          data-folder-tree
+          v-bind="$attrs"
         >
-          <template #default="slotProps">
-            <slot
-              v-if="slotProps && slotProps.node"
-              :node="slotProps.node"
-              :deep="slotProps.deep"
-              :hovered-node-id="hoveredNodeId"
-            />
-            <template v-else>
-              {{ node.name }} s
+          <TreeNode
+            v-for="(node, index) in modelValue"
+            :key="node.id"
+            :node="node"
+            :nodes="modelValue"
+            :index="index"
+            :hovered-node-id="hoveredNodeId"
+          >
+            <template #default="slotProps">
+              <slot
+                v-if="slotProps && slotProps.node"
+                :node="slotProps.node"
+                :deep="slotProps.deep"
+                :hovered-node-id="hoveredNodeId"
+              />
+              <template v-else>
+                {{ node.name }} s
+              </template>
             </template>
-          </template>
-        </TreeNode>
-      </div>
-    </ContextMenu.Trigger>
-    <ContextMenu.Content>
-      <ContextMenu.Item @click="createFolderAndSelect">
-        {{ i18n.t("newFolder") }}
-      </ContextMenu.Item>
-      <ContextMenu.Separator />
-      <ContextMenu.Item @click="onRenameFolder">
-        {{ i18n.t("rename") }}
-      </ContextMenu.Item>
-      <ContextMenu.Item @click="onDeleteFolder">
-        {{ i18n.t("delete") }}
-      </ContextMenu.Item>
-    </ContextMenu.Content>
-  </ContextMenu.Root>
+          </TreeNode>
+        </div>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <ContextMenu.Item @click="createFolderAndSelect">
+          {{ i18n.t("newFolder") }}
+        </ContextMenu.Item>
+        <ContextMenu.Separator />
+        <ContextMenu.Item @click="onRenameFolder">
+          {{ i18n.t("rename") }}
+        </ContextMenu.Item>
+        <ContextMenu.Item @click="onDeleteFolder">
+          {{ i18n.t("delete") }}
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
+  </PerfectScrollbar>
 </template>

@@ -14,17 +14,14 @@ interface Props {
 const props = defineProps<Props>()
 
 const {
-  selectedSnippetId,
   highlightedSnippetIds,
   highlightedFolderId,
-  selectedSnippetIdBeforeSearch,
   isFocusedSnippetName,
-  selectedLibrary,
+  state,
 } = useApp()
 
 const {
   selectSnippet,
-  isSearch,
   selectFirstSnippet,
   duplicateSnippet,
   selectedSnippetIds,
@@ -40,7 +37,7 @@ const { confirm } = useDialog()
 const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
 
-const isSelected = computed(() => selectedSnippetId.value === props.snippet.id)
+const isSelected = computed(() => state.snippetId === props.snippet.id)
 const isInMultiSelection = computed(
   () =>
     selectedSnippetIds.value.length > 1
@@ -55,11 +52,11 @@ const isDuplicateDisabled = computed(
 )
 
 const isFavoritesLibrarySelected = computed(
-  () => selectedLibrary.value === LibraryFilter.Favorites,
+  () => state.libraryFilter === LibraryFilter.Favorites,
 )
 
 const isTrashLibrarySelectd = computed(
-  () => selectedLibrary.value === LibraryFilter.Trash,
+  () => state.libraryFilter === LibraryFilter.Trash,
 )
 
 const folderName = computed(() => {
@@ -76,11 +73,6 @@ const folderName = computed(() => {
 
 function onSnippetClick(id: number, event: MouseEvent) {
   selectSnippet(id, event.shiftKey)
-
-  if (!isSearch.value) {
-    selectedSnippetIdBeforeSearch.value = id
-  }
-
   isFocused.value = true
 }
 
@@ -109,7 +101,7 @@ async function onAddFavorites() {
   if (isFavoritesLibrarySelected.value) {
     if (
       selectedSnippetIds.value.length > 1
-      || selectedSnippetId.value === props.snippet.id
+      || state.snippetId === props.snippet.id
     ) {
       selectFirstSnippet()
     }
@@ -164,7 +156,7 @@ async function onDelete() {
 
   if (
     selectedSnippetIds.value.length > 1
-    || selectedSnippetId.value === props.snippet.id
+    || state.snippetId === props.snippet.id
   ) {
     selectFirstSnippet()
   }
@@ -267,7 +259,7 @@ onClickOutside(snippetRef, () => {
         </template>
         <ContextMenu.Item @click="onDelete">
           {{
-            selectedLibrary === LibraryFilter.Trash
+            state.libraryFilter === LibraryFilter.Trash
               ? i18n.t("delete")
               : i18n.t("moveToTrash")
           }}

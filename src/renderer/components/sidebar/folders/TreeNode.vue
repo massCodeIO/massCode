@@ -31,14 +31,8 @@ const {
   contextMenu,
 } = inject(treeKeys)!
 
-const {
-  highlightedFolderId,
-  highlightedSnippetIds,
-  selectedFolderId,
-  selectedSnippetId,
-  highlightedTagId,
-  selectedTagId,
-} = useApp()
+const { highlightedFolderId, highlightedSnippetIds, highlightedTagId, state }
+  = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 const { updateFolder, renameFolderId } = useFolders()
 
@@ -61,7 +55,7 @@ const isHovered = computed(() => {
   return props.node.id === hoveredId.value && overPosition.value === 'center'
 })
 
-const isSelected = computed(() => selectedFolderId.value === props.node.id)
+const isSelected = computed(() => state.folderId === props.node.id)
 const isHighlighted = computed(
   () => highlightedFolderId.value === props.node.id,
 )
@@ -104,7 +98,7 @@ function onClickArrow(node: Node) {
 function onClickNode(id: string | number) {
   highlightedFolderId.value = undefined
   highlightedTagId.value = undefined
-  selectedTagId.value = undefined
+  state.tagId = undefined
   isFocused.value = true
   clickNode(Number(id))
 }
@@ -189,7 +183,7 @@ async function onDrop(e: DragEvent) {
 
     await updateSnippets(ids, data)
 
-    if (selectedSnippetId.value && ids.includes(selectedSnippetId.value)) {
+    if (state.snippetId && ids.includes(state.snippetId)) {
       selectFirstSnippet()
     }
   }

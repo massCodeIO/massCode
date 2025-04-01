@@ -2,7 +2,6 @@
 import type { SnippetsQuery } from '~/renderer/services/api/generated'
 import { useApp, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { store } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 
 const props = defineProps<Props>()
@@ -13,24 +12,25 @@ interface Props {
   icon: Component
 }
 
-const { selectedLibrary, selectedFolderId, selectedTagId } = useApp()
+const { state } = useApp()
 
-const { getSnippets, selectFirstSnippet } = useSnippets()
+const { getSnippets, selectFirstSnippet, clearSearch, isRestoreStateBlocked }
+  = useSnippets()
 
 const isFocused = ref(false)
 const itemRef = ref<HTMLElement>()
-const isSelected = computed(() => selectedLibrary.value === props.id)
+const isSelected = computed(() => state.libraryFilter === props.id)
 
 async function onItemClick(
   id: (typeof LibraryFilter)[keyof typeof LibraryFilter],
 ) {
-  selectedLibrary.value = id
   isFocused.value = true
-  selectedFolderId.value = undefined
-  selectedTagId.value = undefined
+  isRestoreStateBlocked.value = true
+  clearSearch()
 
-  store.app.delete('selectedFolderId')
-  store.app.set('selectedLibrary', id)
+  state.libraryFilter = id
+  state.folderId = undefined
+  state.tagId = undefined
 
   const query: SnippetsQuery = {}
 

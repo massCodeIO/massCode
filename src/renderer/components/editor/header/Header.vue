@@ -4,7 +4,7 @@ import { i18n } from '@/electron'
 import { Plus, Type } from 'lucide-vue-next'
 
 const { selectedSnippet, createSnippetContent } = useSnippets()
-const { selectedSnippetContentIndex, isFocusedSnippetName } = useApp()
+const { isFocusedSnippetName, state } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
@@ -28,8 +28,12 @@ async function onAddFragment() {
   const index = await createSnippetContent(selectedSnippet.value!.id)
 
   if (index) {
-    selectedSnippetContentIndex.value = index
+    state.snippetContentIndex = index
   }
+}
+
+function onClickTab(index: number) {
+  state.snippetContentIndex = index
 }
 </script>
 
@@ -74,9 +78,9 @@ async function onAddFragment() {
         :name="i.label"
         :class="{
           'bg-list-selection text-list-selection-fg':
-            selectedSnippetContentIndex === index,
+            state.snippetContentIndex === index,
         }"
-        @click="selectedSnippetContentIndex = index"
+        @click="onClickTab(index)"
       />
     </div>
     <EditorDescription v-model:show="isShowDescription" />

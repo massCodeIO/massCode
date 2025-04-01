@@ -6,32 +6,12 @@ import { Plus, Search, X } from 'lucide-vue-next'
 const {
   isSearch,
   searchQuery,
-  getSnippets,
-  selectSnippet,
   selectFirstSnippet,
   createSnippet,
+  clearSearch,
+  search,
 } = useSnippets()
-const {
-  selectedSnippetContentIndex,
-  selectedSnippetIdBeforeSearch,
-  isFocusedSnippetName,
-} = useApp()
-
-async function search() {
-  if (searchQuery.value) {
-    isSearch.value = true
-    selectedSnippetContentIndex.value = 0
-
-    await getSnippets({ search: searchQuery.value })
-    selectFirstSnippet()
-  }
-  else {
-    isSearch.value = false
-    if (selectedSnippetIdBeforeSearch.value) {
-      selectSnippet(selectedSnippetIdBeforeSearch.value)
-    }
-  }
-}
+const { isFocusedSnippetName } = useApp()
 
 async function onAddSnippet() {
   await createSnippet()
@@ -39,12 +19,13 @@ async function onAddSnippet() {
   isFocusedSnippetName.value = true
 }
 
-function clear() {
-  searchQuery.value = ''
-}
-
-watch(searchQuery, () => {
-  search()
+watch(searchQuery, (v) => {
+  if (v) {
+    search()
+  }
+  else {
+    clearSearch(true)
+  }
 })
 </script>
 
@@ -63,7 +44,7 @@ watch(searchQuery, () => {
         v-if="searchQuery"
         variant="icon"
         size="icon"
-        @click="clear"
+        @click="clearSearch(true)"
       >
         <X class="h-4 w-4" />
       </UiButton>

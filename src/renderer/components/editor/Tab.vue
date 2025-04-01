@@ -14,11 +14,7 @@ const props = defineProps<Props>()
 const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
   = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
-const {
-  highlightedSnippetIds,
-  highlightedFolderId,
-  selectedSnippetContentIndex,
-} = useApp()
+const { highlightedSnippetIds, highlightedFolderId, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
@@ -48,11 +44,14 @@ function onClickContextMenu() {
 async function onDelete() {
   await deleteSnippetContent(selectedSnippet.value!.id, props.id)
 
-  if (selectedSnippetContentIndex.value === props.index) {
-    selectedSnippetContentIndex.value = 0
+  if (state.snippetContentIndex === props.index) {
+    state.snippetContentIndex = 0
   }
-  else if (selectedSnippetContentIndex.value > props.index) {
-    selectedSnippetContentIndex.value--
+  else if (
+    state.snippetContentIndex
+    && state.snippetContentIndex > props.index
+  ) {
+    state.snippetContentIndex--
   }
 }
 </script>

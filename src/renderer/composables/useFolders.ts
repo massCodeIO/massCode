@@ -3,16 +3,11 @@ import type {
   FoldersUpdate,
 } from '@/services/api/generated'
 import { useApp, useSnippets } from '@/composables'
-import { i18n, store } from '@/electron'
+import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { scrollToElement } from '../utils'
 
-const {
-  selectedFolderId,
-  selectedLibrary,
-  selectedSnippetContentIndex,
-  selectedSnippetIdBeforeSearch,
-} = useApp()
+const { state } = useApp()
 
 const folders = shallowRef<FoldersTreeResponse>()
 
@@ -60,7 +55,7 @@ async function updateFolder(folderId: number, data: FoldersUpdate) {
     await api.folders.patchFoldersById(String(folderId), data)
     await getFolders()
 
-    if (folderId === selectedFolderId.value) {
+    if (folderId === state.folderId) {
       const { getSnippets } = useSnippets()
       await getSnippets({ folderId })
     }
@@ -80,13 +75,10 @@ async function deleteFolder(folderId: number) {
   }
 }
 function selectFolder(folderId: number) {
-  selectedFolderId.value = folderId
-  selectedLibrary.value = undefined
-  selectedSnippetContentIndex.value = 0
-  selectedSnippetIdBeforeSearch.value = undefined
-
-  store.app.set('selectedFolderId', folderId)
-  store.app.delete('selectedLibrary')
+  state.folderId = folderId
+  state.libraryFilter = undefined
+  state.tagId = undefined
+  state.snippetId = undefined
 }
 
 export function useFolders() {

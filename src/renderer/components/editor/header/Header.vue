@@ -42,15 +42,13 @@ function onClickTab(index: number) {
     <div
       class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2"
     >
-      <div class="min-w-0 truncate">
-        <UiInput
-          v-model="name"
-          variant="ghost"
-          class="w-full px-0"
-          :select="isFocusedSnippetName"
-          @blur="isFocusedSnippetName = false"
-        />
-      </div>
+      <UiInput
+        v-model="name"
+        variant="ghost"
+        class="w-full truncate px-0"
+        :select="isFocusedSnippetName"
+        @blur="isFocusedSnippetName = false"
+      />
       <div class="ml-2 flex">
         <UiActionButton
           :tooltip="i18n.t('addDescription')"

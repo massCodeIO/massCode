@@ -29,7 +29,7 @@ const emit = defineEmits<Emits>()
 
 const { createFolderAndSelect, deleteFolder, renameFolderId, folders }
   = useFolders()
-const { selectedFolderId } = useApp()
+const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
 
 const contextMenuTriggerRef = useTemplateRef('contextMenuTriggerRef')
@@ -81,8 +81,8 @@ async function onDeleteFolder() {
   if (isConfirmed && contextNodeId.value) {
     deleteFolder(contextNodeId.value)
 
-    if (contextNodeId.value === selectedFolderId.value) {
-      selectedFolderId.value = undefined
+    if (contextNodeId.value === state.folderId) {
+      state.folderId = undefined
       clearSnippetsState()
     }
   }

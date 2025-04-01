@@ -4,17 +4,27 @@ import { useApp, useDialog, useSnippets, useTags } from '@/composables'
 import { i18n } from '@/electron'
 
 const { tags, getTags, deleteTag } = useTags()
-const { selectedTagId, highlightedTagId, selectedFolderId } = useApp()
-const { getSnippets, selectFirstSnippet, clearSnippets } = useSnippets()
+const { highlightedTagId, state } = useApp()
+const {
+  getSnippets,
+  selectFirstSnippet,
+  clearSnippets,
+  clearSearch,
+  isRestoreStateBlocked,
+} = useSnippets()
 
 getTags()
 
 const idToDelete = ref(0)
 
 async function onTagClick(tagId: number) {
-  selectedTagId.value = tagId
-  highlightedTagId.value = undefined
-  selectedFolderId.value = undefined
+  state.tagId = tagId
+  state.folderId = undefined
+  state.libraryFilter = undefined
+
+  isRestoreStateBlocked.value = true
+  clearSearch()
+
   await getSnippets({ tagId })
   selectFirstSnippet()
 }
@@ -39,12 +49,12 @@ async function onDelete() {
   if (isConfirmed && idToDelete.value) {
     await deleteTag(idToDelete.value)
 
-    if (selectedTagId.value === idToDelete.value) {
-      selectedTagId.value = undefined
+    if (state.tagId === idToDelete.value) {
+      state.tagId = undefined
       clearSnippets()
     }
-    else if (selectedTagId.value) {
-      await getSnippets({ tagId: selectedTagId.value })
+    else if (state.tagId) {
+      await getSnippets({ tagId: state.tagId })
     }
 
     idToDelete.value = 0

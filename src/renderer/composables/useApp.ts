@@ -1,25 +1,12 @@
-import type { LibraryFilter } from './types'
+import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
 import { useCssVar } from '@vueuse/core'
-import { LibraryTab } from './types'
 
-const selectedLibrary = ref<
-  (typeof LibraryFilter)[keyof typeof LibraryFilter] | undefined
->(
-    store.app.get(
-      'selectedLibrary',
-    ) as (typeof LibraryFilter)[keyof typeof LibraryFilter],
-    )
-const selectedLibraryTab = ref<(typeof LibraryTab)[keyof typeof LibraryTab]>(
-  LibraryTab.Library,
-)
-const selectedFolderId = ref(store.app.get('selectedFolderId'))
-const selectedSnippetId = ref(store.app.get('selectedSnippetId'))
-const selectedTagId = ref<number>()
-const selectedSnippetContentIndex = ref(0)
+const stateSnapshots = reactive<Record<StateAction, SavedState>>({
+  beforeSearch: {},
+})
 
-const selectedSnippetIdBeforeSearch = ref(store.app.get('selectedSnippetId'))
-const selectedSnippetIdBeforeTagSelect = ref<number>()
+const state = reactive<SavedState>(store.app.get('state') as SavedState)
 
 const highlightedFolderId = ref<number>()
 const highlightedSnippetIds = ref<Set<number>>(new Set())
@@ -33,21 +20,47 @@ const snippetListWidth = useCssVar('--snippet-list-width')
 sidebarWidth.value = `${store.app.get('sizes.sidebarWidth')}px`
 snippetListWidth.value = `${store.app.get('sizes.snippetListWidth')}px`
 
+function saveStateSnapshot(action: StateAction): void {
+  stateSnapshots[action] = {
+    snippetId: state.snippetId,
+    folderId: state.folderId,
+    tagId: state.tagId,
+    snippetContentIndex: state.snippetContentIndex,
+    libraryFilter: state.libraryFilter,
+  }
+}
+
+function restoreStateSnapshot(action: StateAction): void {
+  const snapshot = stateSnapshots[action]
+
+  if (!snapshot)
+    return
+
+  if (snapshot.snippetId !== undefined)
+    state.snippetId = snapshot.snippetId
+  if (snapshot.folderId !== undefined)
+    state.folderId = snapshot.folderId
+  if (snapshot.tagId !== undefined)
+    state.tagId = snapshot.tagId
+  if (snapshot.snippetContentIndex !== undefined)
+    state.snippetContentIndex = snapshot.snippetContentIndex
+}
+
+watch(state, () => {
+  store.app.set('state', JSON.parse(JSON.stringify(state)))
+})
+
 export function useApp() {
   return {
     highlightedFolderId,
     highlightedSnippetIds,
     highlightedTagId,
     isFocusedSnippetName,
-    selectedFolderId,
-    selectedLibrary,
-    selectedLibraryTab,
-    selectedSnippetContentIndex,
-    selectedSnippetId,
-    selectedSnippetIdBeforeSearch,
-    selectedSnippetIdBeforeTagSelect,
-    selectedTagId,
+    restoreStateSnapshot,
+    saveStateSnapshot,
     sidebarWidth,
     snippetListWidth,
+    state,
+    stateSnapshots,
   }
 }

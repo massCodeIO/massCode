@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
-import type { SnippetsQuery } from '~/renderer/services/api/generated'
 import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
@@ -14,9 +13,14 @@ import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 
 const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
-const { selectedFolderId, selectedLibrary } = useApp()
-const { getSnippets, selectFirstSnippet, searchQuery, emptyTrash }
-  = useSnippets()
+const { state } = useApp()
+const {
+  getSnippets,
+  selectFirstSnippet,
+  emptyTrash,
+  isRestoreStateBlocked,
+  clearSearch,
+} = useSnippets()
 const {
   getFolders,
   folders,
@@ -42,32 +46,14 @@ async function initGetFolders() {
   await getFolders()
 
   nextTick(() => {
-    scrollToElement(`[id="${selectedFolderId.value}"]`)
+    scrollToElement(`[id="${state.folderId}"]`)
   })
 }
 
 initGetFolders()
 
 async function initGetSnippets() {
-  const query: SnippetsQuery = {}
-
-  if (selectedFolderId.value) {
-    query.folderId = selectedFolderId.value
-  }
-  else if (selectedLibrary.value === LibraryFilter.Favorites) {
-    query.isFavorites = 1
-  }
-  else if (selectedLibrary.value === LibraryFilter.Trash) {
-    query.isDeleted = 1
-  }
-  else if (selectedLibrary.value === LibraryFilter.All) {
-    query.isDeleted = 0
-  }
-  else if (selectedLibrary.value === LibraryFilter.Inbox) {
-    query.isInbox = 1
-  }
-
-  await getSnippets(query)
+  await getSnippets()
 
   nextTick(() => {
     scrollToElement('[data-snippet-item].is-selected')
@@ -77,13 +63,14 @@ async function initGetSnippets() {
 initGetSnippets()
 
 async function onFolderClick(id: number) {
-  if (selectedFolderId.value !== id) {
+  if (state.folderId !== id) {
+    isRestoreStateBlocked.value = true
+    clearSearch()
+
     await getSnippets({ folderId: id })
     selectFolder(id)
     selectFirstSnippet()
   }
-
-  searchQuery.value = ''
 }
 
 async function onFolderToggle(node: Node) {
@@ -226,7 +213,6 @@ function onResizeTagList(val: number[]) {
       </div>
     </div>
     <SplitterPanel
-      class="_bg-white"
       as-child
       :default-size="tagsListHeight"
     >

@@ -10,17 +10,16 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedTagId, highlightedTagId, selectedLibrary } = useApp()
+const { highlightedTagId, state } = useApp()
 
 const tagRef = useTemplateRef('tagRef')
 
 const isFocused = ref(false)
-const isSelected = computed(() => selectedTagId.value === props.id)
+const isSelected = computed(() => state.tagId === props.id)
 const isHighlighted = computed(() => highlightedTagId.value === props.id)
 
 function onClickItem() {
   highlightedTagId.value = undefined
-  selectedLibrary.value = undefined
   isFocused.value = true
 }
 

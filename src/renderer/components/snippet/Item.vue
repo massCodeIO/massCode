@@ -162,6 +162,23 @@ async function onDelete() {
   }
 }
 
+async function onRestore() {
+  if (selectedSnippetIds.value.length > 1) {
+    const snippetsData = selectedSnippetIds.value?.map(() => ({
+      folderId: null,
+      isDeleted: 0,
+    }))
+
+    await updateSnippets(selectedSnippetIds.value, snippetsData)
+  }
+  else {
+    await updateSnippet(props.snippet.id, {
+      folderId: null,
+      isDeleted: 0,
+    })
+  }
+}
+
 async function onDuplicate() {
   await duplicateSnippet(props.snippet.id)
   selectFirstSnippet()
@@ -263,6 +280,12 @@ onClickOutside(snippetRef, () => {
               ? i18n.t("delete")
               : i18n.t("moveToTrash")
           }}
+        </ContextMenu.Item>
+        <ContextMenu.Item
+          v-if="isTrashLibrarySelectd"
+          @click="onRestore"
+        >
+          {{ i18n.t("restore") }}
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

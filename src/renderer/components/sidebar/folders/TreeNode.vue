@@ -173,13 +173,17 @@ async function onDrop(e: DragEvent) {
   )
 
   if (snippets && snippets.length > 0) {
-    // Если все сниппеты уже в папке
-    if (snippets.every(s => s.folder?.id === props.node.id)) {
+    // Если все сниппеты уже в папке и не удалены
+    if (snippets.every(s => s.folder?.id === props.node.id && !s.isDeleted)) {
       return
     }
 
     const ids = snippets.map(s => s.id)
-    const data = snippets.map(() => ({ folderId: props.node.id }))
+    const data = snippets.map(() => ({
+      folderId: props.node.id,
+      // Если сниппет был удален, восстанавливаем его
+      isDeleted: 0,
+    }))
 
     await updateSnippets(ids, data)
 

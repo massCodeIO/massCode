@@ -195,7 +195,7 @@ function onResizeTagList(val: number[]) {
       <Tree
         v-if="folders"
         v-model="folders"
-        class="px-1 pb-1"
+        class="px-0.5 pb-1"
         @click-node="onFolderClick"
         @toggle-node="onFolderToggle"
         @drag-node="onFolderDrag"

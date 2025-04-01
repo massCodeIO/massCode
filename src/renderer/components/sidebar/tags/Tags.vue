@@ -3,7 +3,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useSnippets, useTags } from '@/composables'
 import { i18n } from '@/electron'
 
-const { tags, getTags, deleteTag } = useTags()
+const { tags, getTags, deleteTag, isLoading } = useTags()
 const { highlightedTagId, state } = useApp()
 const {
   getSnippets,
@@ -93,7 +93,7 @@ function onUpdateContextMenu(bool: boolean) {
     </ContextMenu.Root>
   </PerfectScrollbar>
   <div
-    v-else
+    v-else-if="!isLoading"
     class="text-text-muted flex h-full items-center justify-center text-center"
   >
     {{ i18n.t("emptyTagList") }}

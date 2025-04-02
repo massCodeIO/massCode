@@ -42,7 +42,7 @@ const gridTemplateColumns = computed(() => {
       </div>
     </div>
     <div class="bg-border" />
-    <div class="h-full overflow-auto pt-[var(--title-bar-height)]">
+    <div class="mt-2 h-full overflow-auto pt-[var(--title-bar-height)]">
       <slot name="right" />
     </div>
     <UiActionButton

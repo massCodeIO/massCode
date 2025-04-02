@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { X } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 
 interface Props {
   title: string
@@ -9,12 +8,16 @@ interface Props {
   rightSize?: string
 }
 
+interface Emits {
+  (e: 'back'): void
+}
+
 const props = withDefaults(defineProps<Props>(), {
-  leftSize: '200px',
+  leftSize: '220px',
   rightSize: '1fr',
 })
 
-const router = useRouter()
+const emit = defineEmits<Emits>()
 
 const gridTemplateColumns = computed(() => {
   return `${props.leftSize} 1px ${props.rightSize}`
@@ -44,7 +47,7 @@ const gridTemplateColumns = computed(() => {
     </div>
     <UiActionButton
       class="absolute top-2 right-2"
-      @click="() => router.back()"
+      @click="() => emit('back')"
     >
       <X class="h-4 w-4" />
     </UiActionButton>

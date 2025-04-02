@@ -9,7 +9,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <Tooltip.TooltipProvider>
+  <Tooltip.TooltipProvider v-if="tooltip">
     <Tooltip.Tooltip>
       <Tooltip.TooltipTrigger as-child>
         <UiButton
@@ -25,4 +25,12 @@ defineProps<Props>()
       </Tooltip.TooltipContent>
     </Tooltip.Tooltip>
   </Tooltip.TooltipProvider>
+  <UiButton
+    v-else
+    variant="icon"
+    v-bind="$attrs"
+    size="icon"
+  >
+    <slot />
+  </UiButton>
 </template>

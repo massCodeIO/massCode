@@ -3,6 +3,7 @@ import { useApp } from '@/composables'
 import { useDark } from '@vueuse/core'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
+import { Toaster } from 'vue-sonner'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
@@ -24,6 +25,7 @@ init()
     class="absolute top-0 z-50 h-[var(--title-bar-height)] w-full select-none"
   />
   <RouterView />
+  <Toaster />
 </template>
 
 <style>

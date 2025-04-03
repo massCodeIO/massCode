@@ -53,6 +53,7 @@
     "onigasm": "^2.2.5",
     "radix-vue": "^1.9.17",
     "tailwind-merge": "^3.0.2",
+    "vue-sonner": "^1.3.0",
     "vue3-perfect-scrollbar": "^2.0.0"
   },
   "devDependencies": {

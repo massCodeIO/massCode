@@ -69,9 +69,13 @@ const appMenuItems: MenuConfig[] = [
 
 const helpMenuItems: MenuConfig[] = [
   {
+    id: 'about',
+    label: i18n.t('menu:app.about'),
+    click: () => aboutApp(),
+  },
+  {
     label: i18n.t('menu:help.devTools'),
     role: 'toggleDevTools',
-    platforms: ['darwin', 'win32'],
   },
 ]
 
@@ -79,7 +83,6 @@ if (isDev) {
   helpMenuItems.push({
     label: 'Reload',
     role: 'reload',
-    platforms: ['darwin', 'win32'],
   })
 }
 

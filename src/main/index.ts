@@ -70,7 +70,7 @@ app.whenReady().then(() => {
     const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
     const jsonData = readFileSync(jsonDbPath, 'utf8')
 
-    migrateJsonToSqlite(JSON.parse(jsonData), db)
+    migrateJsonToSqlite(JSON.parse(jsonData))
     store.app.set('isAutoMigratedFromJson', true)
   }
   catch (err) {

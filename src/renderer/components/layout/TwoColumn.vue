@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
+import { i18n } from '@/electron'
+import { ArrowLeft } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 interface Props {
@@ -31,11 +32,18 @@ const gridTemplateColumns = computed(() => {
   >
     <div class="grid h-full grid-rows-[auto_1fr] overflow-hidden">
       <div
-        class="mt-2 flex items-center justify-between gap-2 px-2 pt-[var(--title-bar-height)] pb-2"
+        class="mt-2 flex items-center justify-between gap-2 overflow-hidden px-2 pt-[var(--title-bar-height)] pb-2"
       >
-        <div class="font-bold">
+        <div class="truncate font-bold">
           {{ title }}
         </div>
+        <UiActionButton
+          :tooltip="i18n.t('button.back')"
+          class="shrink-0"
+          @click="() => emit('back')"
+        >
+          <ArrowLeft class="h-4 w-4" />
+        </UiActionButton>
       </div>
       <div class="h-full overflow-auto">
         <slot name="left" />
@@ -45,11 +53,5 @@ const gridTemplateColumns = computed(() => {
     <div class="mt-2 h-full overflow-auto pt-[var(--title-bar-height)]">
       <slot name="right" />
     </div>
-    <UiActionButton
-      class="absolute top-2 right-2"
-      @click="() => emit('back')"
-    >
-      <X class="h-4 w-4" />
-    </UiActionButton>
   </div>
 </template>

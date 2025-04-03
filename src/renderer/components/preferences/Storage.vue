@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { DialogOptions } from '~/main/types/ipc'
-import { useDialog } from '@/composables'
+import { useDialog, useSonner } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 
 const storagePath = ref(store.preferences.get('storagePath'))
+
+const { sonner } = useSonner()
 
 async function moveStorage() {
   const result = await ipc.invoke<DialogOptions, string>(
@@ -14,8 +16,15 @@ async function moveStorage() {
   )
 
   if (result) {
-    ipc.invoke('db:move', result)
-    storagePath.value = result
+    try {
+      await ipc.invoke('db:move', result)
+      storagePath.value = result
+      sonner({ message: 'Storage successfully moved', type: 'success' })
+    }
+    catch (err) {
+      const e = err as Error
+      sonner({ message: e.message, type: 'error' })
+    }
   }
 }
 
@@ -28,8 +37,15 @@ async function openStorage() {
   )
 
   if (result) {
-    storagePath.value = result
-    ipc.invoke('db:relaod', result)
+    try {
+      await ipc.invoke('db:relaod', result)
+      storagePath.value = result
+      sonner({ message: 'Database successfully loaded', type: 'success' })
+    }
+    catch (err) {
+      const e = err as Error
+      sonner({ message: e.message, type: 'error' })
+    }
   }
 }
 
@@ -54,7 +70,14 @@ async function migrateFromV3() {
   })
 
   if (isConfirmed) {
-    ipc.invoke('db:migrate', result)
+    try {
+      await ipc.invoke('db:migrate', result)
+      sonner({ message: 'Migration successfully completed', type: 'success' })
+    }
+    catch (err) {
+      const e = err as Error
+      sonner({ message: e.message, type: 'error' })
+    }
   }
 }
 
@@ -67,7 +90,14 @@ async function clearDatabase() {
   })
 
   if (isConfirmed) {
-    ipc.invoke('db:clear', null)
+    try {
+      await ipc.invoke('db:clear', null)
+      sonner({ message: 'Database successfully cleared', type: 'success' })
+    }
+    catch (err) {
+      const e = err as Error
+      sonner({ message: e.message, type: 'error' })
+    }
   }
 }
 </script>

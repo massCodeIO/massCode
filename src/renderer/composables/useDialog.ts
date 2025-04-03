@@ -1,8 +1,15 @@
 import Button from '@/components/ui/button/Button.vue'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { i18n } from '@/electron'
-import { useMagicKeys } from '@vueuse/core'
-import { createVNode, defineComponent, h, ref, render } from 'vue'
+import { useEventListener } from '@vueuse/core'
+import {
+  createVNode,
+  defineComponent,
+  h,
+  onBeforeUnmount,
+  ref,
+  render,
+} from 'vue'
 
 export interface DialogOptions {
   title?: string
@@ -24,25 +31,51 @@ export function useDialog() {
 
     const container = createDialogContainer()
 
+    let isDialogActive = true
+
+    const cleanup = () => {
+      isDialogActive = false
+
+      if (container && container.parentNode) {
+        render(null, container)
+        container.parentNode.removeChild(container)
+      }
+    }
+
     return new Promise<boolean>((resolve) => {
       const DialogComponent = defineComponent({
         setup() {
           const isOpen = ref(true)
 
           const onConfirm = () => {
+            if (!isDialogActive)
+              return
+
             resolve(true)
             isOpen.value = false
+            cleanup()
           }
 
           const onCancel = () => {
+            if (!isDialogActive)
+              return
+
             resolve(false)
             isOpen.value = false
+            cleanup()
           }
 
-          const { enter } = useMagicKeys()
+          const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Enter' && isOpen.value && isDialogActive) {
+              event.preventDefault()
+              onConfirm()
+            }
+          }
 
-          watch(enter, () => {
-            onConfirm()
+          useEventListener(document, 'keydown', handleKeyDown)
+
+          onBeforeUnmount(() => {
+            isDialogActive = false
           })
 
           return () =>
@@ -53,6 +86,10 @@ export function useDialog() {
                 'open': isOpen.value,
                 'onUpdate:open': (open: boolean) => {
                   isOpen.value = open
+                  // Если диалог закрывается через UI, вызываем onCancel
+                  if (!open && isDialogActive) {
+                    onCancel()
+                  }
                 },
               },
               {

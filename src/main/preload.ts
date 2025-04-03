@@ -1,21 +1,23 @@
 import type { AppStore, PreferencesStore } from './store/types'
 import type { EventCallback } from './types'
+import type { Channel } from './types/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
 import i18n from './i18n'
 import { store } from './store'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
-    on: (channel: string, cb: EventCallback) => ipcRenderer.on(channel, cb),
-    send: (channel: string, data: any, cb: EventCallback) => {
+    on: (channel: Channel, cb: EventCallback) => ipcRenderer.on(channel, cb),
+    send: (channel: Channel, data: any, cb: EventCallback) => {
       ipcRenderer.send(channel, data)
       if (cb && typeof cb === 'function') {
         ipcRenderer.on(channel, cb)
       }
     },
-    removeListener: (channel: string, cb: EventCallback) =>
+    invoke: (channel: Channel, data: any) => ipcRenderer.invoke(channel, data),
+    removeListener: (channel: Channel, cb: EventCallback) =>
       ipcRenderer.removeListener(channel, cb),
-    removeListeners: (channel: string) =>
+    removeListeners: (channel: Channel) =>
       ipcRenderer.removeAllListeners(channel),
   },
   db: {

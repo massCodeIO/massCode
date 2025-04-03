@@ -8,6 +8,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { initApi } from './api'
 import { useDB } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
+import { registerIPC } from './ipc'
 import { store } from './store'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
@@ -56,6 +57,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow()
+  registerIPC()
 
   db = useDB()
   initApi()

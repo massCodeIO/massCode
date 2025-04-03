@@ -4,7 +4,6 @@ import { useDB } from '../../db'
 import { tagsDTO } from '../dto/tags'
 
 const app = new Elysia({ prefix: '/tags' })
-const db = useDB()
 
 app
   .use(tagsDTO)
@@ -12,6 +11,7 @@ app
   .get(
     '/',
     () => {
+      const db = useDB()
       const stmt = db.prepare(`SELECT * FROM tags ORDER BY name ASC`)
       const result = stmt.all()
 
@@ -28,6 +28,7 @@ app
   .post(
     '/',
     ({ body }) => {
+      const db = useDB()
       const stmt = db.prepare(
         `INSERT INTO tags (name, createdAt, updatedAt) VALUES (?, ?, ?)`,
       )
@@ -49,6 +50,7 @@ app
   .delete(
     '/:id',
     ({ params, error }) => {
+      const db = useDB()
       const tag = db
         .prepare(
           `

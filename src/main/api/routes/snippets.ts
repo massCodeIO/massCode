@@ -5,7 +5,6 @@ import { commonAddResponse } from '../dto/common/response'
 import { snippetsDTO } from '../dto/snippets'
 
 const app = new Elysia({ prefix: '/snippets' })
-const db = useDB()
 
 app
   .use(snippetsDTO)
@@ -13,6 +12,7 @@ app
   .get(
     '/',
     ({ query }) => {
+      const db = useDB()
       const {
         search,
         order,
@@ -151,6 +151,7 @@ app
   .post(
     '/',
     ({ body }) => {
+      const db = useDB()
       const { name, folderId } = body
 
       const stmt = db.prepare(`
@@ -184,6 +185,7 @@ app
   .post(
     '/:id/contents',
     ({ params, body }) => {
+      const db = useDB()
       const { id } = params
       const { label, value, language } = body
 
@@ -208,6 +210,7 @@ app
   .patch(
     '/:id',
     ({ params, body, error }) => {
+      const db = useDB()
       const { id } = params
 
       const updateFields: string[] = []
@@ -274,6 +277,7 @@ app
   .patch(
     '/:id/contents/:contentId',
     ({ params, body, error }) => {
+      const db = useDB()
       const { id, contentId } = params
 
       const updateFields: string[] = []
@@ -339,6 +343,7 @@ app
   .post(
     '/:id/tags/:tagId',
     ({ params, error }) => {
+      const db = useDB()
       const { id, tagId } = params
 
       // Проверяем, существует ли сниппет
@@ -389,6 +394,7 @@ app
   .delete(
     '/:id/tags/:tagId',
     ({ params, error }) => {
+      const db = useDB()
       const { id, tagId } = params
 
       // Проверяем, существует ли сниппет
@@ -445,6 +451,7 @@ app
   .delete(
     '/:id',
     ({ params, error }) => {
+      const db = useDB()
       const { id } = params
 
       const snippet = db
@@ -496,6 +503,7 @@ app
   .delete(
     '/trash',
     ({ error }) => {
+      const db = useDB()
       const deletedSnippets = db
         .prepare(
           `
@@ -553,6 +561,7 @@ app
   .delete(
     '/:id/contents/:contentId',
     ({ params, error }) => {
+      const db = useDB()
       const { contentId } = params
 
       const result = db

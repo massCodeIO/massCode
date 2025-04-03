@@ -1,4 +1,4 @@
-import type { SnippetsResponse } from '../dto/snippets'
+import type { SnippetsCountsResponse, SnippetsResponse } from '../dto/snippets'
 import Elysia from 'elysia'
 import { useDB } from '../../db'
 import { commonAddResponse } from '../dto/common/response'
@@ -142,6 +142,28 @@ app
     {
       query: 'snippetsQuery',
       response: 'snippetsResponse',
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
+  // Получение кол-ва сниппетов
+  .get(
+    '/counts',
+    () => {
+      const db = useDB()
+
+      const stmt = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          COALESCE(SUM(CASE WHEN isDeleted = 1 THEN 1 ELSE 0 END), 0) as trash
+        FROM snippets
+      `)
+
+      return stmt.get() as SnippetsCountsResponse
+    },
+    {
+      response: 'snippetsCountsResponse',
       detail: {
         tags: ['Snippets'],
       },

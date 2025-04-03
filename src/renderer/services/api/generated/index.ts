@@ -62,6 +62,15 @@ export interface SnippetsUpdate {
     | (string | (string | (string | (string | (string | (string | number))))));
 }
 
+export interface SnippetsCountsResponse {
+  total:
+    | string
+    | (string | (string | (string | (string | (string | (string | number))))));
+  trash:
+    | string
+    | (string | (string | (string | (string | (string | (string | number))))));
+}
+
 export interface SnippetsQuery {
   search?: string;
   sort?: string;
@@ -577,6 +586,21 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name GetSnippetsCounts
+     * @request GET:/snippets/counts
+     */
+    getSnippetsCounts: (params: RequestParams = {}) =>
+      this.request<SnippetsCountsResponse, any>({
+        path: `/snippets/counts`,
+        method: "GET",
         format: "json",
         ...params,
       }),

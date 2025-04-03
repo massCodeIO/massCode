@@ -4,11 +4,12 @@ import type { DBQueryArgs } from './types'
 import { readFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { initApi } from './api'
 import { useDB } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
+import { mainMenu } from './menu/main'
 import { store } from './store'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
@@ -31,6 +32,8 @@ function createWindow() {
       nodeIntegration: true,
     },
   })
+
+  Menu.setApplicationMenu(mainMenu)
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')

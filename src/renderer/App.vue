@@ -4,6 +4,7 @@ import { useDark } from '@vueuse/core'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { loadGrammars } from './components/editor/grammars'
+import { subscribe } from './ipc'
 
 useApp()
 useDark()
@@ -14,6 +15,7 @@ async function init() {
 }
 
 init()
+subscribe()
 </script>
 
 <template>

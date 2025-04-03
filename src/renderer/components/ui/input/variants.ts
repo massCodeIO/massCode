@@ -7,7 +7,7 @@ export const variants = cva(
     variants: {
       variant: {
         default: 'border-border focus:border-primary',
-        ghost: 'border-transparent focus:border-transparent bg-transparent',
+        ghost: 'border-transparent focus:border-transparent !bg-transparent',
       },
     },
     defaultVariants: {

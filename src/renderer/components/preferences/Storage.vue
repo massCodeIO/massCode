@@ -1,11 +1,32 @@
 <script setup lang="ts">
 import type { DialogOptions } from '~/main/types/ipc'
+import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import { useDialog, useSonner } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
+import { api } from '~/renderer/services/api'
 
 const storagePath = ref(store.preferences.get('storagePath'))
 
 const { sonner } = useSonner()
+
+const counts = reactive<SnippetsCountsResponse>({
+  total: 0,
+  trash: 0,
+})
+
+async function getSnippetsCounts() {
+  try {
+    const { data } = await api.snippets.getSnippetsCounts()
+
+    counts.total = data.total
+    counts.trash = data.trash
+  }
+  catch (err) {
+    console.error(err)
+  }
+}
+
+getSnippetsCounts()
 
 async function moveStorage() {
   const result = await ipc.invoke<DialogOptions, string>(
@@ -40,6 +61,7 @@ async function openStorage() {
     try {
       await ipc.invoke('db:relaod', result)
       storagePath.value = result
+      await getSnippetsCounts()
       sonner({ message: 'Database successfully loaded', type: 'success' })
     }
     catch (err) {
@@ -72,6 +94,7 @@ async function migrateFromV3() {
   if (isConfirmed) {
     try {
       await ipc.invoke('db:migrate', result)
+      await getSnippetsCounts()
       sonner({ message: 'Migration successfully completed', type: 'success' })
     }
     catch (err) {
@@ -92,6 +115,7 @@ async function clearDatabase() {
   if (isConfirmed) {
     try {
       await ipc.invoke('db:clear', null)
+      await getSnippetsCounts()
       sonner({ message: 'Database successfully cleared', type: 'success' })
     }
     catch (err) {
@@ -152,6 +176,10 @@ async function clearDatabase() {
       <template #description>
         {{ i18n.t("special:description.clearDatabase") }}
       </template>
+    </UiMenuFormItem>
+    <UiMenuFormItem :label="i18n.t('preferences:storage.count')">
+      {{ i18n.t("common:total") }}: {{ counts.total }},
+      {{ i18n.t("sidebar.trash") }}: {{ counts.trash }}
     </UiMenuFormItem>
   </div>
 </template>

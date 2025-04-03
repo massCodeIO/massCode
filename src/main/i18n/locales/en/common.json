@@ -75,5 +75,6 @@
   "restore": "Restore",
   "copy-snippet-link": "Copy Snippet Link",
   "set-custom-icon": "Set Custom Icon",
-  "emptyTagList": "Add tags to snippets to see them here"
+  "emptyTagList": "Add tags to snippets to see them here",
+  "total": "Total"
 }

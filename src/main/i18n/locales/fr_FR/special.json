@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Lors de l'utilisation de Codemirror, le langage à définir pour le bloc de code doit correspondre à l'une des valeurs des",
       "langages"
-    ]
+    ],
+    "clearDatabase": "Cela supprimera définitivement tous les extraits, dossiers et balises de la base de données."
   },
   "success": {
     "migrate": "Migration réussie de la base de données."

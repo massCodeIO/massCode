@@ -7,8 +7,9 @@
   "deleteTag": "This will also cause all snippets to have that tag removed.",
   "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
   "migrateConfirm": [
-    "Are you sure you want to migrate from \"{{name}}\"?",
+    "Are you sure you want to migrate?",
     "During migrate, the current library will be overwritten."
   ],
+  "clearDbConfirm": "Are you sure you want to clear the database?",
   "createDb": "Please select another folder"
 }

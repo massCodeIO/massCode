@@ -8,7 +8,10 @@
     "confirm": "Confirmare",
     "cancel": "Anulare",
     "update": ["Mergi la GitHub", "În regulă"],
-    "ok": "În regulă"
+    "ok": "În regulă",
+    "migrateFromV3": "Din massCode v3",
+    "deleteAllData": "Șterge toate datele",
+    "back": "Înapoi"
   },
   "newFolder": "Folder nou",
   "newSnippet": "Fragment nou",
@@ -57,9 +60,10 @@
   "restartApp": "Repornește massCode",
   "updateAvailable": "Actualizare disponibilă",
   "hide": "Ascunde",
-  "show": "Arătă",
+  "show": "Arată",
   "collapse-all": "Restrânge tot",
   "expand-all": "Extinde All",
   "restore": "Restaurează",
-  "copy-snippet-link": "Copiați link-ul fragmentului"
+  "copy-snippet-link": "Copiați link-ul fragmentului",
+  "set-custom-icon": "Setează pictograma personalizată"
 }

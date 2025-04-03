@@ -6,7 +6,10 @@
     "fromSnippetsLab": "Hacia SnippetsLab",
     "confirm": "Confirmar",
     "cancel": "Cancelar",
-    "update": ["Ir a GitHub", "OK"]
+    "update": ["Ir a GitHub", "OK"],
+    "migrateFromV3": "Desde massCode v3",
+    "deleteAllData": "Eliminar todos los datos",
+    "back": "Atrás"
   },
   "newFolder": "Nueva Carpeta",
   "newSnippet": "Nuevo Snippet",
@@ -56,5 +59,6 @@
   "updateAvailable": "Actualización Disponible",
   "hide": "Ocultar",
   "show": "Mostrar",
-  "emptyTagList": "Agregue etiquetas a los snippets para verlos aquí"
+  "emptyTagList": "Agregue etiquetas a los snippets para verlos aquí",
+  "set-custom-icon": "Establecer icono personalizado"
 }

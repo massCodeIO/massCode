@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Când utilizați Codemirror, limbajul care trebuie setat pentru blocul de cod trebuie să corespundă uneia dintre valorile",
       "limbajelor"
-    ]
+    ],
+    "clearDatabase": "Aceasta va șterge permanent toate fragmentele, folderele și etichetele din baza de date."
   },
   "success": {
     "migrate": "DB migrat cu succes."

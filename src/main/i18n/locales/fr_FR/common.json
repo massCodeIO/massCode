@@ -14,7 +14,10 @@
     "copy": "Copier",
     "sort": "Trier",
     "revers": "Retour arrière",
-    "generate": "Générer"
+    "generate": "Générer",
+    "migrateFromV3": "Depuis massCode v3",
+    "deleteAllData": "Supprimer toutes les données",
+    "back": "Retour"
   },
   "newFolder": "Nouveau dossier",
   "newSnippet": "Nouvel extrait",
@@ -68,6 +71,5 @@
   "expand-all": "Tout étendre",
   "restore": "Restaurer",
   "copy-snippet-link": "Copier lien extrait",
-  "set-custom-icon": "Définir une icône personnalisée",
-  "emptyTagList": "Ajoutez des étiquettes aux extraits pour les voir ici"
+  "set-custom-icon": "Définir une icône personnalisée"
 }

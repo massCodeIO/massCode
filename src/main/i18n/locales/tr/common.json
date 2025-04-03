@@ -14,7 +14,10 @@
     "copy": "Kopyala",
     "sort": "Sırala",
     "revers": "Ters Çevir",
-    "generate": "Oluştur"
+    "generate": "Oluştur",
+    "migrateFromV3": "massCode v3'ten",
+    "deleteAllData": "Tüm Verileri Sil",
+    "back": "Geri"
   },
   "newFolder": "Yeni Klasör",
   "newSnippet": "Yeni Kod Parçası",
@@ -68,6 +71,5 @@
   "expand-all": "Hepsini Genişlet",
   "restore": "Geri Yükle",
   "copy-snippet-link": "Kod Parçası Bağlantısını Kopyala",
-  "set-custom-icon": "Özel Simge Ayarla",
-  "emptyTagList": "Etiketleri burada görmek için kod parçacıklarına ekleyin"
+  "set-custom-icon": "Özel Simge Ayarla"
 }

@@ -2,7 +2,7 @@
   "description": {
     "storage": "To use sync services like iCloud Drive, Google Drive or Dropbox, simply move storage to the corresponding synced folders",
     "migrate": {
-      "1": "To migrate from massCode v1.0 select the folder containing the database files.",
+      "1": "To migrate from massCode v3 select the folder containing the JSON file.",
       "2": "To migrate from SnippetsLab select JSON file.",
       "3": [
         "Some Limitations. During migration from SnippetsLab:",
@@ -10,6 +10,7 @@
         "Snippets with unsupported languages will be set to default Plain Text."
       ]
     },
+    "clearDatabase": "This will permanently delete all Snippets, Folders, and Tags from the database.",
     "htmlCssPreview": "Add fragments with HTML & CSS languages to view result.",
     "codeBlockRenderer": [
       "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",

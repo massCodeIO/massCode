@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Při používání Codemirror musí jazyk použitý pro blok kódu odpovídat jednomu z podporovaných",
       "jazyků"
-    ]
+    ],
+    "clearDatabase": "Tímto trvale odstraníte všechny snippety, složky a štítky z databáze."
   },
   "success": {
     "migrate": "Databáze úspěšně zmigrována."

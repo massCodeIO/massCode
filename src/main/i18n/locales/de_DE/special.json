@@ -15,7 +15,8 @@
       "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
       "Bei der Verwendung von Codemirror muss die einzustellende Sprache für den Codeblock einem der Werte entsprechen",
       "Sprachen"
-    ]
+    ],
+    "clearDatabase": "Dies wird alle Snippets, Ordner und Tags in der Datenbank dauerhaft löschen."
   },
   "success": {
     "migrate": "DB erfolgreich migriert."

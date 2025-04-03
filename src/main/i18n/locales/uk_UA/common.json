@@ -7,7 +7,10 @@
     "fromSnippetsLab": "SnippetsLab",
     "confirm": "Підтвердити",
     "cancel": "Скасувати",
-    "ok": "ОК"
+    "ok": "ОК",
+    "migrateFromV3": "З massCode v3",
+    "deleteAllData": "Видалити всі дані",
+    "back": "Назад"
   },
   "newFolder": "Нова папка",
   "newSnippet": "Новий сніпет",
@@ -61,5 +64,6 @@
   "expand-all": "Відкрити все",
   "restore": "Відновити",
   "copy-snippet-link": "Скопіювати посилання",
-  "emptyTagList": "Додайте теги до сніпетів, щоб побачити їх тут"
+  "emptyTagList": "Додайте теги до сніпетів, щоб побачити їх тут",
+  "set-custom-icon": "Встановити власну іконку"
 }

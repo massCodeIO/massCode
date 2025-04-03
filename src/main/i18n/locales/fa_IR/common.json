@@ -18,7 +18,10 @@
     "saveAs": "ذخیره به‌عنوان",
     "zoomIn": "بزرگ‌نمایی",
     "zoomOut": "کوچک‌نمایی",
-    "fit": "فیت"
+    "fit": "فیت",
+    "migrateFromV3": "از massCode v3",
+    "deleteAllData": "حذف همه داده‌ها",
+    "back": "بازگشت"
   },
   "newFolder": "پوشه جدید",
   "newSnippet": "اسنیپت جدید",
@@ -71,6 +74,5 @@
   "expand-all": "گسترش همه",
   "restore": "بازیابی",
   "copy-snippet-link": "رونویسی پیوند اسنیپت",
-  "set-custom-icon": "تنظیم نماد سفارشی",
-  "emptyTagList": "افزودن برچسب‌ها به اسنیپت‌ها برای مشاهده آن‌ها در اینجا"
+  "set-custom-icon": "تنظیم آیکون سفارشی"
 }

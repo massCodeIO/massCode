@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Codemirror kullanırken, kod bloğu için ayarlanacak dil,",
       "dillerin değerlerinden birine karşılık gelmelidir."
-    ]
+    ],
+    "clearDatabase": "Bu işlem, veritabanındaki tüm parçaları, klasörleri ve etiketleri kalıcı olarak silecektir."
   },
   "success": {
     "migrate": "Veritabanı başarıyla göç edildi."

@@ -17,7 +17,10 @@
     "saveAs": "Сохранить как",
     "zoomIn": "Увеличить",
     "zoomOut": "Уменьшить",
-    "fit": "Подогнать"
+    "fit": "Подогнать",
+    "migrateFromV3": "Из massCode v3",
+    "deleteAllData": "Удалить все данные",
+    "back": "Назад"
   },
   "newFolder": "Новая папка",
   "newSnippet": "Новый сниппет",
@@ -71,5 +74,5 @@
   "expand-all": "Открыть все",
   "restore": "Восстановить",
   "copy-snippet-link": "Скопировать ссылку",
-  "set-custom-icon": "Установить иконку"
+  "set-custom-icon": "Установить пользовательскую иконку"
 }

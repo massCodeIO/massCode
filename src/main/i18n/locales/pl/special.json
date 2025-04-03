@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Podczas korzystania z Codemirror, język dla bloku kodu musi odpowiadać jednej z wartości",
       "dostępnych języków"
-    ]
+    ],
+    "clearDatabase": "Spowoduje to trwałe usunięcie wszystkich fragmentów, folderów i tagów z bazy danych."
   },
   "success": {
     "migrate": "Pomyślnie przeprowadzono migrację bazy danych."

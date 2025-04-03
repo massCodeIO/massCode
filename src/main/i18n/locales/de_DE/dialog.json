@@ -9,5 +9,6 @@
     "Möchten Sie wirklich von \"{{name}}\" migrieren?",
     "Während der Migration wird die aktuelle Bibliothek überschrieben."
   ],
-  "createDb": "Bitte anderen Ordner auswählen."
+  "createDb": "Bitte anderen Ordner auswählen.",
+  "clearDbConfirm": "Sind Sie sicher, dass Sie die Datenbank löschen möchten?"
 }

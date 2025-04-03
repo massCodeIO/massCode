@@ -8,5 +8,6 @@
   "migrateConfirm": [
     "¿Estás seguro que quieres migrar desde \"{{name}}\"?",
     "Durante la migración se sobrescribirá la librería actual."
-  ]
+  ],
+  "clearDbConfirm": "¿Estás seguro de que quieres borrar la base de datos?"
 }

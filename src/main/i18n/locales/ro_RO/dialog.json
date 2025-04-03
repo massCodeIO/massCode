@@ -9,5 +9,6 @@
     "Sigur dorești să migrați din \"{{name}}\"?",
     "În timpul migrației, biblioteca curentă va fi suprascrisă."
   ],
-  "createDb": "Vă rugăm să selectați un alt folder"
+  "createDb": "Vă rugăm să selectați un alt folder",
+  "clearDbConfirm": "Sigur dorești să ștergi baza de date?"
 }

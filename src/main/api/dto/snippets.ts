@@ -58,11 +58,17 @@ const snippetItem = t.Object({
 
 const snippetsResponse = t.Array(snippetItem)
 
+const snippetsCountsResponse = t.Object({
+  total: t.Number(),
+  trash: t.Number(),
+})
+
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,
   snippetContentsUpdate,
   snippetsAdd,
   snippetsUpdate,
+  snippetsCountsResponse,
   snippetsQuery: t.Object({
     ...commonQuery.properties,
     folderId: t.Optional(t.Number()),
@@ -76,3 +82,4 @@ export const snippetsDTO = new Elysia().model({
 
 export type SnippetsAdd = typeof snippetsAdd.static
 export type SnippetsResponse = typeof snippetsResponse.static
+export type SnippetsCountsResponse = typeof snippetsCountsResponse.static

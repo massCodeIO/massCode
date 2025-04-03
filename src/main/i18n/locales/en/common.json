@@ -6,6 +6,7 @@
     "reloadStorage": "Reload Storage",
     "fromMassCodeV1": "From massCode v1.0",
     "fromSnippetsLab": "From SnippetsLab",
+    "migrateFromV3": "From massCode v3",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "update": ["Go to GitHub", "OK"],
@@ -18,7 +19,9 @@
     "saveAs": "Save as",
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
-    "fit": "Fit"
+    "fit": "Fit",
+    "deleteAllData": "Delete All Data",
+    "back": "Back"
   },
   "newFolder": "New Folder",
   "newSnippet": "New Snippet",
@@ -72,5 +75,6 @@
   "restore": "Restore",
   "copy-snippet-link": "Copy Snippet Link",
   "set-custom-icon": "Set Custom Icon",
-  "emptyTagList": "Add tags to snippets to see them here"
+  "emptyTagList": "Add tags to snippets to see them here",
+  "total": "Total"
 }

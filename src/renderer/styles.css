@@ -44,9 +44,9 @@ html.dark {
   --color-bg: oklch(24.78% 0 0);
   --color-fg: oklch(100% 0 0);
 
-  --color-button: oklch(% 0 0);
+  --color-button: oklch(32% 0 0);
   --color-button-fg: oklch(95% 0 0);
-  --color-button-hover: oklch(32% 0 0);
+  --color-button-hover: oklch(35% 0 0);
 
   --color-border: oklch(30% 0 0);
 

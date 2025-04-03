@@ -10,5 +10,6 @@
     "Opravdu chcete migrovat z \"{{name}}\"?",
     "Současná knihovna bude v průběhu migrace přepsána."
   ],
-  "createDb": "Zvolte jinou složku, prosím"
+  "createDb": "Zvolte jinou složku, prosím",
+  "clearDbConfirm": "Opravdu chcete vymazat databázi?"
 }

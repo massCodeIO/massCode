@@ -3,7 +3,8 @@
   "storage": {
     "label": "Хранилище",
     "migrate": "Миграция",
-    "count": "Количество"
+    "count": "Количество",
+    "clearDatabase": "Очистить базу данных"
   },
   "editor": {
     "label": "Редактор",

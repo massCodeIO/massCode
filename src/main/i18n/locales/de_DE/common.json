@@ -11,7 +11,10 @@
       "Nach GitHub",
       "OK"
     ],
-    "ok": "OK"
+    "ok": "OK",
+    "migrateFromV3": "Von massCode v3",
+    "deleteAllData": "Alle Daten löschen",
+    "back": "Zurück"
   },
   "newFolder": "Neuer Ordner",
   "newSnippet": "Neues Snippet",
@@ -64,5 +67,6 @@
   "collapse-all": "Alle reduzieren",
   "expand-all": "Alle erweitern",
   "restore": "Wiederherstellen",
-  "copy-snippet-link": "Snippet Link kopieren"
+  "copy-snippet-link": "Snippet Link kopieren",
+  "set-custom-icon": "Benutzerdefiniertes Symbol festlegen"
 }

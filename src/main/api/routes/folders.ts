@@ -5,7 +5,6 @@ import { commonAddResponse } from '../dto/common/response'
 import { foldersDTO } from '../dto/folders'
 
 const app = new Elysia({ prefix: '/folders' })
-const db = useDB()
 
 app
   .use(foldersDTO)
@@ -13,6 +12,7 @@ app
   .get(
     '/',
     () => {
+      const db = useDB()
       const stmt = db.prepare(`
       SELECT 
         id,
@@ -43,6 +43,7 @@ app
   .get(
     '/tree',
     () => {
+      const db = useDB()
       const allFolders = db
         .prepare(
           `
@@ -88,6 +89,7 @@ app
   .post(
     '/',
     ({ body }) => {
+      const db = useDB()
       const { name } = body
       const now = Date.now()
 
@@ -139,6 +141,7 @@ app
   .patch(
     '/:id',
     ({ params, body, error }) => {
+      const db = useDB()
       const { id } = params
       const now = Date.now()
 
@@ -298,6 +301,7 @@ app
   .delete(
     '/:id',
     ({ params, error }) => {
+      const db = useDB()
       const { id } = params
 
       const folder = db

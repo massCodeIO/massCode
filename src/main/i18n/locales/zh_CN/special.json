@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "当使用 Codemirror 渲染时， 则必须为代码块设置对应的",
       "编程语言"
-    ]
+    ],
+    "clearDatabase": "这将永久删除数据库中的所有片段、文件夹和标签。"
   },
   "success": {
     "migrate": "数据库迁移成功。"

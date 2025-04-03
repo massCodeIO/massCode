@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "Ao usar o Codemirror, a linguagem selecionada para o bloco de código deve corresponder a um dos valores da ",
       "linguagem atual"
-    ]
+    ],
+    "clearDatabase": "Isso excluirá permanentemente todos os snippets, pastas e tags do banco de dados."
   },
   "success": {
     "migrate": "Migrado com sucesso."

@@ -9,5 +9,6 @@
     "Czy na pewno chcesz przeprowadzić migrację z \"{{name}}\"?",
     "Podczas migracji bieżąca biblioteka zostanie nadpisana."
   ],
-  "createDb": "Proszę wybrać inny folder"
+  "createDb": "Proszę wybrać inny folder",
+  "clearDbConfirm": "Czy na pewno chcesz wyczyścić bazę danych?"
 }

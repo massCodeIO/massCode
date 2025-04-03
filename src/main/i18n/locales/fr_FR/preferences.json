@@ -3,7 +3,8 @@
   "storage": {
     "label": "Stockage",
     "migrate": "Migration",
-    "count": "Compteur"
+    "count": "Compteur",
+    "clearDatabase": "Effacer la base de données"
   },
   "editor": {
     "label": "Edition",

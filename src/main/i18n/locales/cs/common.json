@@ -18,7 +18,10 @@
     "saveAs": "Uložit jako",
     "zoomIn": "Přiblížit",
     "zoomOut": "Oddálit",
-    "fit": "Přizpůsobit"
+    "fit": "Přizpůsobit",
+    "migrateFromV3": "Z massCode v3",
+    "deleteAllData": "Smazat všechna data",
+    "back": "Zpět"
   },
   "newFolder": "Nová složka",
   "newSnippet": "Nový snippet",

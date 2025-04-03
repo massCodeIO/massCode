@@ -14,7 +14,8 @@
     "codeBlockRenderer": [
       "當使用 Codemirror 渲染時， 則必須為代碼塊設置對應的",
       "編程語言"
-    ]
+    ],
+    "clearDatabase": "這將永久刪除數據庫中的所有片段、文件夾和標籤。"
   },
   "success": {
     "migrate": "數據庫遷移成功。"

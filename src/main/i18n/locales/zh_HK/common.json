@@ -7,7 +7,10 @@
     "confirm": "確認",
     "cancel": "取消",
     "update": ["前往 GitHub", "OK"],
-    "ok": "OK"
+    "ok": "OK",
+    "migrateFromV3": "從 massCode v3",
+    "deleteAllData": "刪除所有數據",
+    "back": "返回"
   },
   "newFolder": "新建文件夾",
   "newSnippet": "新建代碼片段",
@@ -61,5 +64,6 @@
   "expand-all": "全部摺疊",
   "restore": "回復",
   "copy-snippet-link": "複製連結",
-  "emptyTagList": "添加標籤到程式碼片段以在此處查看"
+  "emptyTagList": "添加標籤到程式碼片段以在此處查看",
+  "set-custom-icon": "設置自定義圖標"
 }

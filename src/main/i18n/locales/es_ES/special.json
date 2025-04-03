@@ -10,7 +10,8 @@
         "Los snippets con idiomas no admitidos se configurarán como Texto sin formato."
       ]
     },
-    "htmlCssPreview": "Agregue snippets con lenguajes HTML y CSS para ver el resultado."
+    "htmlCssPreview": "Agregue snippets con lenguajes HTML y CSS para ver el resultado.",
+    "clearDatabase": "Esto eliminará permanentemente todos los fragmentos, carpetas y etiquetas de la base de datos."
   },
   "success": {
     "migrate": "Base de datos migrada con éxito."

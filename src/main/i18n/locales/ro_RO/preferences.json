@@ -3,7 +3,8 @@
   "storage": {
     "label": "Stocare",
     "migrate": "Migrează",
-    "count": "Numără"
+    "count": "Numără",
+    "clearDatabase": "Șterge baza de date"
   },
   "editor": {
     "label": "Editor",

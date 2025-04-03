@@ -3,7 +3,8 @@
   "storage": {
     "label": "Depolama",
     "migrate": "Göç Et",
-    "count": "Say"
+    "count": "Say",
+    "clearDatabase": "Veritabanını Temizle"
   },
   "editor": {
     "label": "Editör",

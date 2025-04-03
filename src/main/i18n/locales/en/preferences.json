@@ -3,7 +3,8 @@
   "storage": {
     "label": "Storage",
     "migrate": "Migrate",
-    "count": "Count"
+    "count": "Count",
+    "clearDatabase": "Clear Database"
   },
   "editor": {
     "label": "Editor",

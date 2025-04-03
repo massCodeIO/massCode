@@ -1,8 +1,9 @@
 /* eslint-disable node/prefer-global/process */
 import Database from 'better-sqlite3'
+import fs from 'fs-extra'
 import { store } from '../store'
 
-const DB_NAME = 'app.db'
+const DB_NAME = 'massCode.db'
 const isDev = process.env.NODE_ENV === 'development'
 
 let db: Database.Database | null = null
@@ -98,6 +99,87 @@ export function useDB() {
   }
   catch (error) {
     console.error('Database initialization failed:', error)
+    throw error
+  }
+}
+
+export function reloadDB() {
+  try {
+    // Закрываем текущую базу данных, если она открыта
+    if (db) {
+      db.close()
+      db = null
+      // eslint-disable-next-line no-console
+      console.log('Current database has been closed')
+    }
+
+    // Определяем путь к новой базе данных
+    const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+
+    // Создаем новое соединение с базой данных
+    db = new Database(dbPath, {
+      // eslint-disable-next-line no-console
+      verbose: isDev ? console.log : undefined,
+    })
+
+    db.pragma('journal_mode = WAL')
+    db.pragma('foreign_keys = ON')
+
+    // eslint-disable-next-line no-console
+    console.log(`Database successfully reloaded: ${dbPath}`)
+  }
+  catch (error) {
+    console.error('Error while reloading the database:', error)
+    throw error
+  }
+}
+
+export function clearDB() {
+  try {
+    const db = useDB()
+    const stmt = db.transaction(() => {
+      // Сначала удаляем записи из таблиц со внешними ключами
+      db.prepare('DELETE FROM snippet_tags').run()
+      db.prepare('DELETE FROM snippet_contents').run()
+      db.prepare('DELETE FROM snippets').run()
+      // Затем удаляем записи из основных таблиц
+      db.prepare('DELETE FROM tags').run()
+      db.prepare('DELETE FROM folders').run()
+      // Сбрасываем автоинкрементные счетчики, чтобы id начинались с 1
+      db.prepare('DELETE FROM sqlite_sequence').run()
+    })
+
+    stmt()
+  }
+  catch (error) {
+    console.error('Error while clearing the database:', error)
+    throw error
+  }
+}
+
+export async function moveDB(path: string) {
+  try {
+    const currentPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+    const newPath = `${path}/${DB_NAME}`
+
+    const isExists = await fs.exists(newPath)
+
+    if (isExists) {
+      throw new Error(`Database already exists at the new path: ${newPath}`)
+    }
+
+    if (db) {
+      db.close()
+      db = null
+    }
+
+    await fs.move(currentPath, newPath, { overwrite: true })
+    store.preferences.set('storagePath', path)
+
+    reloadDB()
+  }
+  catch (error) {
+    console.error('Error while moving the database:', error)
     throw error
   }
 }

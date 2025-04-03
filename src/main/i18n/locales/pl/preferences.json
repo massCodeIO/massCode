@@ -3,7 +3,8 @@
   "storage": {
     "label": "Magazyn",
     "migrate": "Migruj",
-    "count": "Liczba"
+    "count": "Liczba",
+    "clearDatabase": "Wyczyść bazę danych"
   },
   "editor": {
     "label": "Edytor",

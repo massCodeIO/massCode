@@ -3,7 +3,8 @@
   "storage": {
     "label": "Datenbank",
     "migrate": "Migrieren",
-    "count": "Zählen"
+    "count": "Zählen",
+    "clearDatabase": "Datenbank löschen"
   },
   "editor": {
     "label": "Editor",

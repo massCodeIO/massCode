@@ -9,5 +9,6 @@
     "Êtes-vous sûr de vouloir migrer de \"{{name}}\"?",
     "Lors de la migration, la bibliothèque actuelle sera écrasée."
   ],
-  "createDb": "Veuillez sélectionner un autre dossier"
+  "createDb": "Veuillez sélectionner un autre dossier",
+  "clearDbConfirm": "Êtes-vous sûr de vouloir effacer la base de données ?"
 }

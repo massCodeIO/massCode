@@ -3,7 +3,8 @@
   "storage": {
     "label": "儲存路徑",
     "migrate": "遷移",
-    "count": "總計"
+    "count": "總計",
+    "clearDatabase": "清除資料庫"
   },
   "editor": {
     "label": "編輯器",

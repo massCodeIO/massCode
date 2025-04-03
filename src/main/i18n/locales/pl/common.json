@@ -18,7 +18,10 @@
     "saveAs": "Zapisz jako",
     "zoomIn": "Powiększ",
     "zoomOut": "Pomniejsz",
-    "fit": "Dopasuj"
+    "fit": "Dopasuj",
+    "migrateFromV3": "Z massCode v3",
+    "deleteAllData": "Usuń wszystkie dane",
+    "back": "Wstecz"
   },
   "newFolder": "Nowy folder",
   "newSnippet": "Nowy fragment kodu",
@@ -71,6 +74,5 @@
   "expand-all": "Rozwiń wszystko",
   "restore": "Przywróć",
   "copy-snippet-link": "Skopiuj link do fragmentu kodu",
-  "set-custom-icon": "Ustaw niestandardową ikonę",
-  "emptyTagList": "Dodaj tagi do fragmentów kodu, aby zobaczyć je tutaj"
+  "set-custom-icon": "Ustaw niestandardową ikonę"
 }

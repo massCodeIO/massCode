@@ -3,7 +3,8 @@
   "storage": {
     "label": "فضای ذخیره‌سازی",
     "migrate": "مهاجرت",
-    "count": "تعداد"
+    "count": "تعداد",
+    "clearDatabase": "پاک کردن پایگاه داده"
   },
   "editor": {
     "label": "ویرایشگر",

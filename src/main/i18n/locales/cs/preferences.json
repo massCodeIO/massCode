@@ -3,7 +3,8 @@
   "storage": {
     "label": "Uložiště",
     "migrate": "Migrovat",
-    "count": "Počet"
+    "count": "Počet",
+    "clearDatabase": "Vymazat databázi"
   },
   "editor": {
     "label": "Editor",

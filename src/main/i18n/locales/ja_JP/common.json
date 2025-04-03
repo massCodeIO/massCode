@@ -8,7 +8,10 @@
     "confirm": "OK",
     "cancel": "キャンセル",
     "update": ["GitHubへ", "OK"],
-    "ok": "OK"
+    "ok": "OK",
+    "migrateFromV3": "massCode v3から",
+    "deleteAllData": "すべてのデータを削除",
+    "back": "戻る"
   },
   "newFolder": "新規フォルダ",
   "newSnippet": "新規スニペット",

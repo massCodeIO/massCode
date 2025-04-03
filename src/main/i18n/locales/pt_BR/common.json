@@ -8,7 +8,10 @@
     "confirm": "Confirmar",
     "cancel": "Cancelar",
     "update": ["Ir para o GitHub", "OK"],
-    "ok": "OK"
+    "ok": "OK",
+    "migrateFromV3": "Do massCode v3",
+    "deleteAllData": "Excluir todos os dados",
+    "back": "Voltar"
   },
   "newFolder": "Nova pasta",
   "newSnippet": "Novo snippet",

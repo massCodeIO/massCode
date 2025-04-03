@@ -3,7 +3,8 @@
   "storage": {
     "label": "ストレージ",
     "migrate": "データの移行",
-    "count": "登録個数"
+    "count": "登録個数",
+    "clearDatabase": "データベースをクリア"
   },
   "editor": {
     "label": "エディタ",

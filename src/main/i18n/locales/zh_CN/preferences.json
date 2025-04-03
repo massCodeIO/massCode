@@ -3,7 +3,8 @@
   "storage": {
     "label": "存储路径",
     "migrate": "迁移",
-    "count": "总计"
+    "count": "总计",
+    "clearDatabase": "清除数据库"
   },
   "editor": {
     "label": "编辑器",

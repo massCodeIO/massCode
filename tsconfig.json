@@ -21,6 +21,6 @@
     "src/renderer/**/*.d.ts",
     "src/renderer/**/*.tsx",
     "src/renderer/**/*.vue",
-    "src/main/types"
+    "src/main/types/**/*.ts"
   ]
 }

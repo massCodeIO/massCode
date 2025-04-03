@@ -1,12 +1,8 @@
 /* eslint-disable node/prefer-global/process */
-import type Database from 'better-sqlite3'
-import type { DBQueryArgs } from './types'
 import { readFileSync } from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, Menu } from 'electron'
 import { initApi } from './api'
-import { useDB } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
 import { mainMenu } from './menu/main'
@@ -16,7 +12,6 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем se
 
 const isDev = process.env.NODE_ENV === 'development'
 
-let db: Database.Database
 let mainWindow: BrowserWindow
 let isQuitting = false
 
@@ -62,7 +57,6 @@ app.whenReady().then(() => {
   createWindow()
   registerIPC()
 
-  db = useDB()
   initApi()
 
   if (store.app.get('isAutoMigratedFromJson')) {
@@ -92,34 +86,4 @@ app.on('before-quit', () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin')
     app.quit()
-})
-
-ipcMain.on('message', (event, message) => {
-  // eslint-disable-next-line no-console
-  console.log(message)
-})
-
-ipcMain.on('request-info', (event) => {
-  event.sender.send('request-info', {
-    version: app.getVersion(),
-    arch: os.arch(),
-    platform: process.platform,
-  })
-})
-
-ipcMain.handle('db-query', async (event, args: DBQueryArgs) => {
-  const { sql, params = [] } = args
-
-  const stmt = db.prepare(sql)
-  const trimmedSql = sql.trim()
-
-  if (/^(?:INSERT|UPDATE|DELETE)/i.test(trimmedSql)) {
-    return stmt.run(params)
-  }
-
-  if (/^SELECT|WITH/i.test(trimmedSql)) {
-    return stmt.all(params)
-  }
-
-  throw new Error('Unsupported query type')
 })

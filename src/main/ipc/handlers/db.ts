@@ -3,6 +3,7 @@ import { readFileSync } from 'fs-extra'
 import { clearDB, moveDB, reloadDB } from '../../db'
 import { migrateJsonToSqlite } from '../../db/migrate'
 import { store } from '../../store'
+import '../../types'
 
 export function registerDBHandlers() {
   ipcMain.handle<string, void>('db:relaod', (_, payload) => {

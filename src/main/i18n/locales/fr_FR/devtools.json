@@ -1,44 +1,45 @@
 {
+  "label": "Outils de développement",
+  "textTools": {
+    "label": "Outils de texte",
+    "caseConverter": "Convertisseur de casse",
+    "urlParser": "Analyseur d'URL",
+    "slugGenerator": "Générateur de slug",
+    "sortLines": "Trier les lignes"
+  },
+  "crypto": {
+    "label": "Cryptographie / Sécurité",
+    "hashGenerator": "Générateur de hachage",
+    "hmacGenerator": "Générateur HMAC",
+    "passGenerator": "Générateur de mot de passe",
+    "uuidGenerator": "Générateur UUID"
+  },
+  "encodeDecode": {
+    "label": "Encodeurs / Décodeurs",
+    "url": "Encodeur / Décodeur URL",
+    "base64": "Encodeur / Décodeur Base64"
+  },
   "form": {
     "inputString": "Chaîne d'entrée",
     "outputString": "Chaîne de sortie",
     "inputUrl": "URL d'entrée",
     "outputUrl": "URL de sortie",
     "parsedUrl": "URL analysée",
-    "splitQueryString": "Fractionner la chaîne de requête",
-    "key": "Clef",
+    "splitQueryString": "Diviser la chaîne de requête",
+    "key": "Clé",
     "value": "Valeur",
     "component": "Composant",
     "result": "Résultat",
-    "secretKey": "Clef secrète",
+    "secretKey": "Clé secrète",
     "algorithm": "Algorithme",
     "version": "Version",
-    "amount": "Montant",
+    "amount": "Quantité",
     "type": "Type",
     "length": "Longueur",
     "options": "Options",
-    "numbers": "Nombres",
+    "numbers": "Chiffres",
     "symbols": "Symboles",
-    "lowercase": "Minuscule",
-    "uppercase": "Majuscule"
-  },
-  "textTools": {
-    "label": "Outils de texte",
-    "caseConverter": "Convertisseur de casse",
-    "urlParser": "Analyseur URL",
-    "slugGenerator": "Générateur Slug",
-    "sortLines": "Trier lignes"
-  },
-  "crypto": {
-    "label": "Cryptographie / Sécurité",
-    "hashGenerator": "Générateur de Hash",
-    "hmacGenerator": "Générateur de HMAC",
-    "passGenerator": "Générateur de mot de passe",
-    "uuidGenerator": "Générateur de UUID"
-  },
-  "encodeDecode": {
-    "label": "Encodeurs / Décodeurs",
-    "url": "Encodeurs / Décodeurs URL",
-    "base64": "Encodeurs / Décodeurs Base64"
+    "lowercase": "Minuscules",
+    "uppercase": "Majuscules"
   }
 }

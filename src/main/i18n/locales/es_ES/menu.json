@@ -2,72 +2,68 @@
   "app": {
     "label": "massCode",
     "preferences": "Preferencias",
-    "update": {
-      "label": "Buscar actualizaciones....",
-      "message": "La versión {{newVersion}} está disponible para descargar.\nTu versión actual es {{oldVersion}}.",
-      "button": ["Ir a Descarga", "OK"],
-      "noUpdate": "No hay actualizaciones disponibles."
-    },
+    "update": "Buscar Actualizaciones...",
     "quit": "Salir de massCode",
     "about": "Acerca de massCode",
-    "hide": "Ocultar massCode",
-    "hideOther": "Ocultar Otros",
-    "showAll": "Mostrar Todo"
+    "hide": "Ocultar massCode"
   },
   "help": {
     "label": "Ayuda",
     "website": "Sitio Web",
     "documentation": "Documentación",
     "viewInGitHub": "Ver en GitHub",
-    "changeLog": "Log de Cambios",
-    "reportIssue": "Reportar un Problema",
+    "changeLog": "Registro de Cambios",
+    "reportIssue": "Reportar Problema",
     "giveStar": "Dar una Estrella",
     "extension": {
-      "vscode": "Extensión para VS Code",
-      "raycast": "Extensión para Raycast",
-      "alfred": "Extensión para Alfred"
+      "vscode": "Extensión VS Code",
+      "raycast": "Extensión Raycast",
+      "alfred": "Extensión Alfred"
     },
     "donate": {
       "openCollective": "Donar en Open Collective",
-      "payPal": "Donar a través de PayPal"
+      "payPal": "Donar vía PayPal",
+      "gumroad": "Donar vía Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
-    "devTools": "Abrir Herramientas de Desarrollador"
-  },
-  "file": {
-    "label": "Archivo",
-    "find": "Buscar"
+    "devTools": "Alternar Herramientas de Desarrollo",
+    "links": {
+      "snippets": "Colección de Snippets"
+    }
   },
   "view": {
-    "label": "Ver",
+    "label": "Vista",
     "sortBy": {
-      "label": "Ordenar Snippets por",
+      "label": "Ordenar Snippets Por",
       "dateModified": "Fecha de Modificación",
       "dateCreated": "Fecha de Creación",
       "name": "Nombre"
-    }
-  },
-  "edit": {
-    "label": "Editar",
-    "undo": "Deshacer",
-    "redo": "Rehacer",
-    "cut": "Cortar",
-    "copy": "Copiar",
-    "paste": "Pegar",
-    "delete": "Borrar",
-    "selectAll": "Seleccionar Todo"
+    },
+    "compactMode": "Modo Compacto"
   },
   "editor": {
     "label": "Editor",
     "copy": "Copiar Snippet al Portapapeles",
-    "format": "Formato",
-    "previewMarkdown": "",
-    "previewCode": "Previsualizar Código",
-    "previewScreenshot": "Previsualizar Captura de Pantalla"
+    "format": "Formatear",
+    "previewCode": "Vista Previa del Código",
+    "previewScreenshot": "Vista Previa de Captura",
+    "previewMarkdown": "Vista Previa de Markdown",
+    "previewMindmap": "Vista Previa de Mapa Mental",
+    "fontSizeIncrease": "Aumentar Tamaño de Fuente",
+    "fontSizeDecrease": "Disminuir Tamaño de Fuente",
+    "fontSizeReset": "Restablecer Tamaño de Fuente"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Presentation Mode",
-    "preview": "Preview"
+    "presentationMode": "Modo Presentación",
+    "preview": "Vista Previa"
+  },
+  "history": {
+    "label": "Historial",
+    "back": "Atrás",
+    "forward": "Adelante"
+  },
+  "devtools": {
+    "label": "Herramientas de Desarrollo"
   }
 }

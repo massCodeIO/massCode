@@ -18,7 +18,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: `${i18n.t('addTag')}...`,
+  placeholder: `${i18n.t('placeholder.addTag')}...`,
 })
 
 const emit = defineEmits<Emits>()

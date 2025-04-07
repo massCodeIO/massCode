@@ -42,8 +42,8 @@ async function onDelete() {
   )?.name
 
   const isConfirmed = await confirm({
-    title: i18n.t('dialog:deleteConfirm', { name }),
-    content: i18n.t('dialog:deleteTag'),
+    title: i18n.t('messages:confirm.delete', { name }),
+    content: i18n.t('messages:warning.deleteTag'),
   })
 
   if (isConfirmed && idToDelete.value) {
@@ -87,7 +87,7 @@ function onUpdateContextMenu(bool: boolean) {
       </ContextMenu.Trigger>
       <ContextMenu.Content>
         <ContextMenu.Item @click="onDelete">
-          {{ i18n.t("delete") }}
+          {{ i18n.t("action.delete.common") }}
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>
@@ -96,6 +96,6 @@ function onUpdateContextMenu(bool: boolean) {
     v-else-if="!isLoading"
     class="text-text-muted flex h-full items-center justify-center text-center"
   >
-    {{ i18n.t("emptyTagList") }}
+    {{ i18n.t("placeholder.emptyTagList") }}
   </div>
 </template>

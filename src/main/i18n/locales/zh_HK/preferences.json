@@ -1,35 +1,35 @@
 {
-  "title": "首選項",
+  "label": "偏好設置",
   "storage": {
-    "label": "存儲路徑",
+    "label": "存儲",
     "migrate": "遷移",
-    "count": "總計",
-    "clearDatabase": "清除資料庫"
+    "count": "數量",
+    "clearDatabase": "清空數據庫"
   },
   "editor": {
     "label": "編輯器",
     "fontSize": "字體大小",
-    "fontFamily": "字體系列",
+    "fontFamily": "字體",
     "wrap": {
-      "label": "自動換行",
-      "wordWrap": "開啓",
+      "label": "換行",
+      "wordWrap": "自動換行",
       "off": "關閉"
     },
-    "tabSize": "Tab 空格數",
-    "showInvisibles": "顯示空格與換行符",
-    "highlightLine": "高亮光標所在行整行",
-    "highlightGutter": "高亮光標所在行行號",
-    "matchBrackets": "括號匹配",
+    "tabSize": "縮進大小",
+    "showInvisibles": "顯示不可見字符",
+    "highlightLine": "高亮當前行",
+    "highlightGutter": "高亮行號",
+    "matchBrackets": "匹配括號",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "尾後逗號",
-        "none": "None",
-        "all": "All",
+        "label": "尾隨逗號",
+        "none": "無",
+        "all": "全部",
         "es5": "ES5"
       },
-      "semi": "句尾添加分號",
-      "singleQuote": "使用單引號代替雙引號"
+      "semi": "分號",
+      "singleQuote": "單引號"
     }
   },
   "appearance": {
@@ -45,6 +45,6 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "代碼塊渲染器"
+    "codeRenderer": "程式碼區塊渲染器"
   }
 }

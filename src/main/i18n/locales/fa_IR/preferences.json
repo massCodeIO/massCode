@@ -1,7 +1,7 @@
 {
-  "title": "تنظیمات",
+  "label": "تنظیمات",
   "storage": {
-    "label": "فضای ذخیره‌سازی",
+    "label": "ذخیره‌سازی",
     "migrate": "مهاجرت",
     "count": "تعداد",
     "clearDatabase": "پاک کردن پایگاه داده"
@@ -11,33 +11,33 @@
     "fontSize": "اندازه فونت",
     "fontFamily": "خانواده فونت",
     "wrap": {
-      "label": "بسته‌بندی (Wrap)",
-      "wordWrap": "بسته‌بندی واژگان",
+      "label": "شکستن خط",
+      "wordWrap": "شکستن کلمه",
       "off": "خاموش"
     },
-    "tabSize": "اندازه زبانه",
+    "tabSize": "اندازه تب",
     "showInvisibles": "نمایش نامرئی‌ها",
-    "highlightLine": "برجسته‌کردن خط",
-    "highlightGutter": "Highlight Gutter",
-    "matchBrackets": "مطابقت براکت‌ها",
+    "highlightLine": "برجسته کردن خط",
+    "highlightGutter": "برجسته کردن حاشیه",
+    "matchBrackets": "تطبیق پرانتزها",
     "prettier": {
-      "label": "زیباتر",
+      "label": "Prettier",
       "trailingComma": {
-        "label": "کاما دنباله‌دار",
+        "label": "کاما انتهایی",
         "none": "هیچ",
         "all": "همه",
         "es5": "ES5"
       },
-      "semi": "نیمه",
-      "singleQuote": "نقل قول تک"
+      "semi": "نقطه‌ویرگول",
+      "singleQuote": "تک کوتیشن"
     }
   },
   "appearance": {
     "label": "ظاهر",
     "theme": {
-      "label": "پوسته",
+      "label": "تم",
       "light": "روشن",
-      "dark": "تیره"
+      "dark": "تاریک"
     }
   },
   "language": {
@@ -45,6 +45,6 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "رندرکننده بلاک کد"
+    "codeRenderer": "رندرکننده بلوک کد"
   }
 }

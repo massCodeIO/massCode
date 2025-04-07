@@ -2,78 +2,56 @@
   "app": {
     "label": "massCode",
     "preferences": "تنظیمات",
-    "update": {
-      "label": "بررسی برای به‌روزرسانی‌ها....",
-      "message": "نگارش {{newVersion}} اکنون برای دریافت در دسترس است.\nنگارش شما {{oldVersion}} است.",
-      "button": ["برو به دریافت", "باشه"],
-      "noUpdate": "درحال حاضر هیچ به‌روزرسانی در دسترس نیست."
-    },
+    "update": "بررسی به‌روزرسانی‌ها...",
     "quit": "خروج از massCode",
     "about": "درباره massCode",
-    "hide": "پنهان‌کردن massCode",
-    "hideOther": "پنهان‌کردن دیگران",
-    "showAll": "نمایش همه"
+    "hide": "مخفی کردن massCode"
   },
   "help": {
-    "label": "کمک",
+    "label": "راهنما",
     "website": "وب‌سایت",
     "documentation": "مستندات",
-    "viewInGitHub": "مشاهده در گیت‌هاب",
+    "viewInGitHub": "مشاهده در GitHub",
     "changeLog": "تغییرات",
     "reportIssue": "گزارش مشکل",
-    "giveStar": "ستاره بدهید",
+    "giveStar": "دادن ستاره",
     "extension": {
       "vscode": "افزونه VS Code",
       "raycast": "افزونه Raycast",
       "alfred": "افزونه Alfred"
     },
     "donate": {
-      "openCollective": "کمک مالی در Open Collective",
-      "payPal": "کمک مالی از طریق PayPal",
-      "gumroad": "کمک مالی از طریق Gumroad (ویزا، مسترکارت و غیره)"
+      "openCollective": "حمایت مالی در Open Collective",
+      "payPal": "حمایت مالی از طریق PayPal",
+      "gumroad": "حمایت مالی از طریق Gumroad (Visa، Mastercard و غیره)"
     },
-    "twitter": "توییتر",
-    "devTools": "ابزارهای توسعه‌دهنده",
+    "twitter": "Twitter",
+    "devTools": "تغییر وضعیت ابزارهای توسعه",
     "links": {
-      "snippets": "مجموعه اسنیپت"
+      "snippets": "مجموعه Snippet"
     }
-  },
-  "file": {
-    "label": "پرونده",
-    "find": "یافتن"
   },
   "view": {
     "label": "نمایش",
     "sortBy": {
-      "label": "مرتب‌سازی اسنیپت‌ها براساس",
+      "label": "مرتب‌سازی Snippetها بر اساس",
       "dateModified": "تاریخ ویرایش",
-      "dateCreated": "تاریخ ساخت",
+      "dateCreated": "تاریخ ایجاد",
       "name": "نام"
     },
-    "hideSubfolderSnippets": "پنهان‌کردن اسنیپت‌های زیرپوشه",
     "compactMode": "حالت فشرده"
-  },
-  "edit": {
-    "label": "ویرایش",
-    "undo": "واگرد",
-    "redo": "انجام دوباره",
-    "cut": "برش",
-    "copy": "رونویسی",
-    "paste": "جای‌گذاری",
-    "delete": "حذف",
-    "selectAll": "انتخاب همه"
   },
   "editor": {
     "label": "ویرایشگر",
-    "copy": "رونویسی اسنیپت در بریده‌دان",
-    "format": "قالب",
+    "copy": "کپی Snippet به کلیپ‌بورد",
+    "format": "قالب‌بندی",
     "previewCode": "پیش‌نمایش کد",
-    "previewScreenshot": "پیش‌نمایش اسکرین‌شات",
+    "previewScreenshot": "پیش‌نمایش تصویر",
     "previewMarkdown": "پیش‌نمایش Markdown",
-    "previewMindmap": "پیش‌نمایش Mindmap",
+    "previewMindmap": "پیش‌نمایش نقشه ذهنی",
     "fontSizeIncrease": "افزایش اندازه فونت",
     "fontSizeDecrease": "کاهش اندازه فونت",
-    "fontSizeReset": "بازتنظیم اندازه فونت"
+    "fontSizeReset": "بازنشانی اندازه فونت"
   },
   "markdown": {
     "label": "Markdown",
@@ -82,10 +60,10 @@
   },
   "history": {
     "label": "تاریخچه",
-    "back": "بازگشت",
-    "forward": "به‌جلو"
+    "back": "عقب",
+    "forward": "جلو"
   },
   "devtools": {
-    "label": "ابزارهای توسعه‌دهنده"
+    "label": "ابزارهای توسعه"
   }
 }

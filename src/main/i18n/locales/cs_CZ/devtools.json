@@ -1,0 +1,45 @@
+{
+  "label": "Vývojářské nástroje",
+  "textTools": {
+    "label": "Textové nástroje",
+    "caseConverter": "Převodník velikosti písmen",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Generátor slugů",
+    "sortLines": "Seřadit řádky"
+  },
+  "crypto": {
+    "label": "Kryptografie / Bezpečnost",
+    "hashGenerator": "Generátor hashů",
+    "hmacGenerator": "HMAC Generátor",
+    "passGenerator": "Generátor hesel",
+    "uuidGenerator": "UUID Generátor"
+  },
+  "encodeDecode": {
+    "label": "Kodéry / Dekodéry",
+    "url": "URL Kodér / Dekodér",
+    "base64": "Base64 Kodér / Dekodér"
+  },
+  "form": {
+    "inputString": "Vstupní řetězec",
+    "outputString": "Výstupní řetězec",
+    "inputUrl": "Vstupní URL",
+    "outputUrl": "Výstupní URL",
+    "parsedUrl": "Parsované URL",
+    "splitQueryString": "Rozdělený dotazovací řetězec",
+    "key": "Klíč",
+    "value": "Hodnota",
+    "component": "Komponenta",
+    "result": "Výsledek",
+    "secretKey": "Tajný klíč",
+    "algorithm": "Algoritmus",
+    "version": "Verze",
+    "amount": "Množství",
+    "type": "Typ",
+    "length": "Délka",
+    "options": "Možnosti",
+    "numbers": "Čísla",
+    "symbols": "Symboly",
+    "lowercase": "Malá písmena",
+    "uppercase": "Velká písmena"
+  }
+}

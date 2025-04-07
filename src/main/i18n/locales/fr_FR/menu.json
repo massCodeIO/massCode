@@ -2,25 +2,18 @@
   "app": {
     "label": "massCode",
     "preferences": "Préférences",
-    "update": {
-      "label": "Vérifier mise à jour ...",
-      "message": "La version {{newVersion}} est maintenant disponible au téléchargement.\nVotre version est la {{oldVersion}}.",
-      "button": ["Allez au téléchargement", "OK"],
-      "noUpdate": "Il n'y a actuellement aucune mise à jour disponible."
-    },
+    "update": "Rechercher des mises à jour...",
     "quit": "Quitter massCode",
-    "about": "A propos de massCode",
-    "hide": "Cacher massCode",
-    "hideOther": "Cacher les autres",
-    "showAll": "Tout montrer"
+    "about": "À propos de massCode",
+    "hide": "Masquer massCode"
   },
   "help": {
     "label": "Aide",
-    "website": "Site web",
+    "website": "Site Web",
     "documentation": "Documentation",
-    "viewInGitHub": "Voir dans GitHub",
-    "changeLog": "Log des changements",
-    "reportIssue": "Rapporter un problème",
+    "viewInGitHub": "Voir sur GitHub",
+    "changeLog": "Journal des modifications",
+    "reportIssue": "Signaler un problème",
     "giveStar": "Donner une étoile",
     "extension": {
       "vscode": "Extension VS Code",
@@ -28,63 +21,49 @@
       "alfred": "Extension Alfred"
     },
     "donate": {
-      "openCollective": "Faire une donation à un collectif ouvert (Open)",
-      "payPal": "Faire une donation via PayPal",
-      "gumroad": "Faire une donation via Gumroad (Visa, Mastercard, etc.)"
+      "openCollective": "Faire un don sur Open Collective",
+      "payPal": "Faire un don via PayPal",
+      "gumroad": "Faire un don via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
-    "devTools": "Basculer vers les outils développeurs",
+    "devTools": "Basculer les outils de développement",
     "links": {
-      "snippets": "Collection d'extraits"
+      "snippets": "Collection de snippets"
     }
-  },
-  "file": {
-    "label": "Fichier",
-    "find": "Trouver"
   },
   "view": {
     "label": "Affichage",
     "sortBy": {
-      "label": "Trier les extraits par",
-      "dateModified": "Date modifiée",
+      "label": "Trier les snippets par",
+      "dateModified": "Date de modification",
       "dateCreated": "Date de création",
       "name": "Nom"
     },
-    "hideSubfolderSnippets": "Masquer les sous-dossier des extraits",
-    "compactMode": "Mode compacté"
-  },
-  "edit": {
-    "label": "Edition",
-    "undo": "Annuler",
-    "redo": "Refaire",
-    "cut": "Couper",
-    "copy": "Copier",
-    "paste": "Coller",
-    "delete": "Effacer",
-    "selectAll": "Tout sélectionner"
+    "compactMode": "Mode compact"
   },
   "editor": {
-    "label": "Editeur",
-    "copy": "Copier extrait vers presse-papier",
-    "format": "Formatter",
-    "previewCode": "Prévisualisation Code",
-    "previewScreenshot": "Prévisualisation copie écran",
-    "previewMarkdown": "Prévisualisation Markdown",
-    "fontSizeIncrease": "Augmentation taille police",
-    "fontSizeDecrease": "Diminution taille police",
-    "fontSizeReset": "Réinitialisation taille police"
+    "label": "Éditeur",
+    "copy": "Copier le snippet dans le presse-papiers",
+    "format": "Formater",
+    "previewCode": "Aperçu du code",
+    "previewScreenshot": "Aperçu de la capture d'écran",
+    "previewMarkdown": "Aperçu Markdown",
+    "previewMindmap": "Aperçu de la carte mentale",
+    "fontSizeIncrease": "Augmenter la taille de la police",
+    "fontSizeDecrease": "Diminuer la taille de la police",
+    "fontSizeReset": "Réinitialiser la taille de la police"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Mode présentation",
-    "preview": "Prévisualisation"
+    "preview": "Aperçu"
   },
   "history": {
     "label": "Historique",
-    "back": "Retour arrière",
-    "forward": "Avance"
+    "back": "Retour",
+    "forward": "Suivant"
   },
   "devtools": {
-    "label": "Outils développeur"
+    "label": "Outils de développement"
   }
 }

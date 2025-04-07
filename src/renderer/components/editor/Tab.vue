@@ -74,15 +74,15 @@ async function onDelete() {
       </ContextMenu.Trigger>
       <ContextMenu.Content>
         <ContextMenu.Item @click="isEdit = true">
-          {{ i18n.t("rename") }} "<span class="max-w-36 truncate">{{
+          {{ i18n.t("action.rename") }} "<span class="max-w-36 truncate">{{
             name
           }}</span>"
         </ContextMenu.Item>
         <ContextMenu.Separator />
         <ContextMenu.Item @click="onDelete">
-          {{ i18n.t("delete") }} "<span class="max-w-36 truncate">{{
-            name
-          }}</span>"
+          {{ i18n.t("action.delete.common") }} "<span
+            class="max-w-36 truncate"
+          >{{ name }}</span>"
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

@@ -1,84 +1,69 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "Параметри",
-    "update": {
-      "label": "Перевірити оновлення...",
-      "message": "Версія {{newVersion}} доступна для скачування.\nПоточна версія {{oldVersion}}.",
-      "button": ["Перейти до завантаження", "OK"],
-      "noUpdate": "Немає доступних оновлень."
-    },
+    "preferences": "Налаштування",
+    "update": "Перевірити оновлення...",
     "quit": "Вийти з massCode",
     "about": "Про massCode",
-    "hide": "Сховати massCode",
-    "hideOther": "Сховати інші",
-    "showAll": "Показати всі"
+    "hide": "Приховати massCode"
   },
   "help": {
-    "label": "Підтримка",
-    "website": "Сайт",
+    "label": "Допомога",
+    "website": "Веб-сайт",
     "documentation": "Документація",
-    "viewInGitHub": "Переглянути у GitHub",
-    "changeLog": "Список змін",
-    "reportIssue": "Відкрити Issue",
+    "viewInGitHub": "Переглянути на GitHub",
+    "changeLog": "Журнал змін",
+    "reportIssue": "Повідомити про проблему",
     "giveStar": "Поставити зірку",
     "extension": {
-      "vscode": "VS Code розширення",
-      "raycast": "Raycast розширення",
-      "alfred": "Alfred розширення"
+      "vscode": "Розширення VS Code",
+      "raycast": "Розширення Raycast",
+      "alfred": "Розширення Alfred"
     },
     "donate": {
-      "openCollective": "Пожертвувати через Open Collective",
-      "payPal": "Пожертвувати через PayPal",
-      "gumroad": "Пожертвувати через Gumroad (Visa, Mastercard, и тд.)"
+      "openCollective": "Підтримати через Open Collective",
+      "payPal": "Підтримати через PayPal",
+      "gumroad": "Підтримати через Gumroad (Visa, Mastercard, тощо)"
     },
     "twitter": "Twitter",
-    "devTools": "Відкрити інструменти розробника",
+    "devTools": "Інструменти розробника",
     "links": {
       "snippets": "Колекція сніпетів"
     }
   },
-  "file": {
-    "label": "Файл",
-    "find": "Пошук"
-  },
   "view": {
-    "label": "Вид",
+    "label": "Вигляд",
     "sortBy": {
       "label": "Сортувати сніпети за",
-      "dateModified": "Дата модифікації",
-      "dateCreated": "Дата створення",
-      "name": "Назва"
-    }
-  },
-  "edit": {
-    "label": "Змінити",
-    "undo": "Скасувати",
-    "redo": "Повторити",
-    "cut": "Вирізати",
-    "copy": "Скопіювати",
-    "paste": "Вставити",
-    "delete": "Видалити",
-    "selectAll": "Вибрати все"
+      "dateModified": "Датою зміни",
+      "dateCreated": "Датою створення",
+      "name": "Назвою"
+    },
+    "compactMode": "Компактний режим"
   },
   "editor": {
     "label": "Редактор",
-    "copy": "Скопіювати сніпет у буфер",
+    "copy": "Копіювати сніпет в буфер обміну",
     "format": "Форматувати",
-    "previewCode": "Перегляд результату HTML/CSS",
-    "previewScreenshot": "Перегляд скриншота",
-    "fontSizeIncrease": "Збільшити шрифт",
-    "fontSizeDecrease": "Зменшити шрифт",
-    "fontSizeReset": "Скинути розмір шрифта"
+    "previewCode": "Попередній перегляд коду",
+    "previewScreenshot": "Попередній перегляд знімка екрану",
+    "previewMarkdown": "Попередній перегляд Markdown",
+    "previewMindmap": "Попередній перегляд Mindmap",
+    "fontSizeIncrease": "Збільшити розмір шрифту",
+    "fontSizeDecrease": "Зменшити розмір шрифту",
+    "fontSizeReset": "Скинути розмір шрифту"
   },
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Режим презентації",
-    "preview": "Перегляд Markdown"
+    "preview": "Попередній перегляд"
   },
   "history": {
     "label": "Історія",
     "back": "Назад",
     "forward": "Вперед"
+  },
+  "devtools": {
+    "label": "Інструменти розробника"
   }
 }

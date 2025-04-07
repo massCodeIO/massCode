@@ -8,11 +8,11 @@ import { language } from './language'
 const lng = store.preferences.get('language')
 
 i18next.use(Backend).init({
-  fallbackLng: 'en',
+  fallbackLng: 'en_US',
   lng,
   debug: false,
-  ns: ['common', 'dialog', 'preferences', 'special', 'menu', 'devtools'],
-  defaultNS: 'common',
+  ns: ['devtools', 'menu', 'messages', 'preferences', 'special', 'ui'],
+  defaultNS: 'ui',
   initImmediate: false,
   preload: readdirSync(join(__dirname, './locales')).filter((fileName) => {
     const joinedPath = join(join(__dirname, './locales'), fileName)

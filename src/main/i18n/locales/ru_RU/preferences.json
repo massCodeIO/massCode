@@ -1,0 +1,50 @@
+{
+  "label": "Настройки",
+  "storage": {
+    "label": "Хранилище",
+    "migrate": "Миграция",
+    "count": "Количество",
+    "clearDatabase": "Очистить базу данных"
+  },
+  "editor": {
+    "label": "Редактор",
+    "fontSize": "Размер шрифта",
+    "fontFamily": "Семейство шрифтов",
+    "wrap": {
+      "label": "Перенос",
+      "wordWrap": "Перенос слов",
+      "off": "Выключен"
+    },
+    "tabSize": "Размер отступа",
+    "showInvisibles": "Показывать невидимые символы",
+    "highlightLine": "Подсветка строки",
+    "highlightGutter": "Подсветка номеров строк",
+    "matchBrackets": "Подсветка скобок",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Замыкающая запятая",
+        "none": "Нет",
+        "all": "Везде",
+        "es5": "ES5"
+      },
+      "semi": "Точка с запятой",
+      "singleQuote": "Одинарные кавычки"
+    }
+  },
+  "appearance": {
+    "label": "Внешний вид",
+    "theme": {
+      "label": "Тема",
+      "light": "Светлая",
+      "dark": "Темная"
+    }
+  },
+  "language": {
+    "label": "Язык"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Рендер блоков кода"
+  }
+}

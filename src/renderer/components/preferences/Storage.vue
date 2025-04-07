@@ -87,8 +87,8 @@ async function migrateFromV3() {
   }
 
   const isConfirmed = await confirm({
-    title: i18n.t('dialog:migrateConfirm.0'),
-    content: i18n.t('dialog:migrateConfirm.1'),
+    title: i18n.t('messages:confirm.migrateDb.0'),
+    content: i18n.t('messages:confirm.migrateDb.1'),
   })
 
   if (isConfirmed) {
@@ -108,8 +108,8 @@ async function clearDatabase() {
   const { confirm } = useDialog()
 
   const isConfirmed = await confirm({
-    title: i18n.t('dialog:clearDbConfirm'),
-    content: i18n.t('dialog:noUndo'),
+    title: i18n.t('messages:confirm.clearDb'),
+    content: i18n.t('messages:warning.noUndo'),
   })
 
   if (isConfirmed) {
@@ -140,18 +140,18 @@ async function clearDatabase() {
             size="md"
             @click="moveStorage"
           >
-            {{ i18n.t("button.moveStorage") }}
+            {{ i18n.t("action.move.storage") }}
           </UiButton>
           <UiButton
             size="md"
             @click="openStorage"
           >
-            {{ i18n.t("button.openStorage") }}
+            {{ i18n.t("action.open.storage") }}
           </UiButton>
         </div>
       </template>
       <template #description>
-        {{ i18n.t("special:description.storage") }}
+        {{ i18n.t("messages:description.storage") }}
       </template>
     </UiMenuFormItem>
     <UiMenuFormItem :label="i18n.t('preferences:storage.migrate')">
@@ -159,10 +159,10 @@ async function clearDatabase() {
         size="md"
         @click="migrateFromV3"
       >
-        {{ i18n.t("button.migrateFromV3") }}
+        {{ i18n.t("action.migrate.fromV3") }}
       </UiButton>
       <template #description>
-        {{ i18n.t("special:description.migrate.1") }}
+        {{ i18n.t("messages:description.migrate.fromV3") }}
       </template>
     </UiMenuFormItem>
     <UiMenuFormItem :label="i18n.t('preferences:storage.clearDatabase')">
@@ -171,15 +171,15 @@ async function clearDatabase() {
         variant="danger"
         @click="clearDatabase"
       >
-        {{ i18n.t("button.deleteAllData") }}
+        {{ i18n.t("action.delete.allData") }}
       </UiButton>
       <template #description>
-        {{ i18n.t("special:description.clearDatabase") }}
+        {{ i18n.t("messages:warning.clearDb") }}
       </template>
     </UiMenuFormItem>
     <UiMenuFormItem :label="i18n.t('preferences:storage.count')">
-      {{ i18n.t("common:total") }}: {{ counts.total }},
-      {{ i18n.t("sidebar.trash") }}: {{ counts.trash }}
+      {{ i18n.t("total") }}: {{ counts.total }}, {{ i18n.t("sidebar.trash") }}:
+      {{ counts.trash }}
     </UiMenuFormItem>
   </div>
 </template>

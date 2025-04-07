@@ -175,7 +175,7 @@ function onResizeTagList(val: number[]) {
         </ContextMenu.Trigger>
         <ContextMenu.Content>
           <ContextMenu.Item @click="emptyTrash">
-            {{ i18n.t("emptyTrash") }}
+            {{ i18n.t("action.delete.trash") }}
           </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Root>
@@ -185,7 +185,7 @@ function onResizeTagList(val: number[]) {
         {{ i18n.t("sidebar.folders") }}
       </div>
       <UiActionButton
-        :tooltip="i18n.t('newFolder')"
+        :tooltip="i18n.t('action.new.folder')"
         @click="createFolderAndSelect"
       >
         <Plus class="h-4 w-4" />

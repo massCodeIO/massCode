@@ -1,35 +1,35 @@
 {
-  "title": "Preferințe",
+  "label": "Preferințe",
   "storage": {
-    "label": "Stocare",
-    "migrate": "Migrează",
-    "count": "Numără",
-    "clearDatabase": "Șterge baza de date"
+    "label": "Storage",
+    "migrate": "Migrare",
+    "count": "Număr",
+    "clearDatabase": "Șterge Database"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Mărime scris",
-    "fontFamily": "Familie scris",
+    "fontSize": "Dimensiune Font",
+    "fontFamily": "Familie Font",
     "wrap": {
-      "label": "Înfășurare",
-      "wordWrap": "Înfășurare cuvânt",
+      "label": "Încadrare",
+      "wordWrap": "Încadrare Cuvinte",
       "off": "Oprit"
     },
-    "tabSize": "Mărime tab",
-    "showInvisibles": "Arată invizibile",
-    "highlightLine": "Evidențiază linia",
-    "highlightGutter": "Evidențiază marginea",
-    "matchBrackets": "Potrivește parantezele",
+    "tabSize": "Dimensiune Tab",
+    "showInvisibles": "Arată Caractere Invizibile",
+    "highlightLine": "Evidențiere Linie",
+    "highlightGutter": "Evidențiere Gutter",
+    "matchBrackets": "Potrivire Paranteze",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Virgulă finală",
-        "none": "Niciunul",
+        "label": "Virgulă la Final",
+        "none": "Niciuna",
         "all": "Toate",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Ghilimele simple"
+      "semi": "Punct și Virgulă",
+      "singleQuote": "Ghilimele Simple"
     }
   },
   "appearance": {
@@ -45,6 +45,6 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Redator de cod"
+    "codeRenderer": "Renderer Bloc de Cod"
   }
 }

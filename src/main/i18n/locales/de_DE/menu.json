@@ -2,76 +2,55 @@
   "app": {
     "label": "massCode",
     "preferences": "Einstellungen",
-    "update": {
-      "label": "Auf Updates prüfen...",
-      "message": "Version {{newVersion}} steht zum download bereit.\nAktuelle Version ist {{oldVersion}}.",
-      "button": [
-        "Zu Github",
-        "OK"
-      ],
-      "noUpdate": "Es stehen aktuell keine Updates zur Verfügung."
-    },
+    "update": "Nach Updates suchen...",
     "quit": "massCode beenden",
     "about": "Über massCode",
-    "hide": "massCode minimieren",
-    "hideOther": "Andere minimieren",
-    "showAll": "Alle anzeigen"
+    "hide": "massCode ausblenden"
   },
   "help": {
     "label": "Hilfe",
     "website": "Website",
     "documentation": "Dokumentation",
-    "viewInGitHub": "In GitHub ansehen",
-    "changeLog": "Change Log",
-    "reportIssue": "Fehler melden",
-    "giveStar": "Gib einen Stern",
+    "viewInGitHub": "In GitHub anzeigen",
+    "changeLog": "Änderungsprotokoll",
+    "reportIssue": "Problem melden",
+    "giveStar": "Stern geben",
     "extension": {
       "vscode": "VS Code Erweiterung",
       "raycast": "Raycast Erweiterung",
       "alfred": "Alfred Erweiterung"
     },
     "donate": {
-      "openCollective": "Spende auf Open Collective",
-      "payPal": "Spende via PayPal"
+      "openCollective": "Über Open Collective spenden",
+      "payPal": "Über PayPal spenden",
+      "gumroad": "Über Gumroad spenden (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
-    "devTools": "Zeige Entwicklertools",
+    "devTools": "Entwicklerwerkzeuge ein-/ausblenden",
     "links": {
-      "snippets": "Snippet Collection"
+      "snippets": "Snippet-Sammlung"
     }
-  },
-  "file": {
-    "label": "Datei",
-    "find": "Finden"
   },
   "view": {
-    "label": "Anzeigen",
+    "label": "Ansicht",
     "sortBy": {
       "label": "Snippets sortieren nach",
-      "dateModified": "Geändert am",
-      "dateCreated": "Erstellt am",
+      "dateModified": "Änderungsdatum",
+      "dateCreated": "Erstellungsdatum",
       "name": "Name"
-    }
-  },
-  "edit": {
-    "label": "Bearbeiten",
-    "undo": "Rückgängig",
-    "redo": "Wiederholen",
-    "cut": "Ausschneiden",
-    "copy": "Kopieren",
-    "paste": "Einfügen",
-    "delete": "Löschen",
-    "selectAll": "Alle auswählen"
+    },
+    "compactMode": "Kompakter Modus"
   },
   "editor": {
     "label": "Editor",
-    "copy": "Snippet ins Clipboard kopieren",
-    "format": "Format",
-    "previewCode": "Code Vorschau",
-    "previewScreenshot": "Screenshot Vorschau",
-    "previewMarkdown": "Markdown Vorschau",
+    "copy": "Snippet in Zwischenablage kopieren",
+    "format": "Formatieren",
+    "previewCode": "Code-Vorschau",
+    "previewScreenshot": "Screenshot-Vorschau",
+    "previewMarkdown": "Markdown-Vorschau",
+    "previewMindmap": "Mindmap-Vorschau",
     "fontSizeIncrease": "Schriftgröße erhöhen",
-    "fontSizeDecrease": "Schriftgröße reduzieren",
+    "fontSizeDecrease": "Schriftgröße verringern",
     "fontSizeReset": "Schriftgröße zurücksetzen"
   },
   "markdown": {
@@ -83,5 +62,8 @@
     "label": "Verlauf",
     "back": "Zurück",
     "forward": "Vorwärts"
+  },
+  "devtools": {
+    "label": "Entwicklerwerkzeuge"
   }
 }

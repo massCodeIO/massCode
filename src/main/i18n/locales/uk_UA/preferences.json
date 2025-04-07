@@ -1,5 +1,5 @@
 {
-  "title": "Параметри",
+  "label": "Налаштування",
   "storage": {
     "label": "Сховище",
     "migrate": "Міграція",
@@ -8,24 +8,24 @@
   },
   "editor": {
     "label": "Редактор",
-    "fontSize": "Розмір шрифта",
+    "fontSize": "Розмір шрифту",
     "fontFamily": "Сімейство шрифтів",
     "wrap": {
       "label": "Перенесення",
-      "wordWrap": "Перенесення по словах",
-      "off": "Вимкнути"
+      "wordWrap": "Перенесення слів",
+      "off": "Вимкнено"
     },
-    "tabSize": "Розмір відступу",
-    "showInvisibles": "Показ невидимих символів",
-    "highlightLine": "Підсвітка рядку",
-    "highlightGutter": "Підсвітка gutter",
-    "matchBrackets": "Підсвітка дужок",
+    "tabSize": "Розмір табуляції",
+    "showInvisibles": "Показати невидимі символи",
+    "highlightLine": "Підсвічування рядка",
+    "highlightGutter": "Підсвічування відступів",
+    "matchBrackets": "Парні дужки",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Кома у кінці",
-        "none": "Ні",
-        "all": "Усі",
+        "label": "Кома в кінці",
+        "none": "Немає",
+        "all": "Всюди",
         "es5": "ES5"
       },
       "semi": "Крапка з комою",
@@ -33,9 +33,9 @@
     }
   },
   "appearance": {
-    "label": "Зовнішній вид",
+    "label": "Зовнішній вигляд",
     "theme": {
-      "label": "Вигляд",
+      "label": "Тема",
       "light": "Світла",
       "dark": "Темна"
     }
@@ -45,6 +45,6 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Рендерер блоків коду"
+    "codeRenderer": "Відображення блоків коду"
   }
 }

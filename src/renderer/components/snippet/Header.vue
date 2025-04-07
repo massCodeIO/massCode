@@ -36,7 +36,7 @@ watch(searchQuery, (v) => {
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"
-          :placeholder="i18n.t('search')"
+          :placeholder="i18n.t('placeholder.search')"
           variant="ghost"
         />
       </div>
@@ -50,7 +50,7 @@ watch(searchQuery, (v) => {
       </UiButton>
       <UiActionButton
         v-if="!isSearch"
-        :tooltip="i18n.t('newSnippet')"
+        :tooltip="i18n.t('action.new.snippet')"
         @click="onAddSnippet"
       >
         <Plus class="h-4 w-4" />

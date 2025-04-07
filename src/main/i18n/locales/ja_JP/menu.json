@@ -1,77 +1,56 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "設定",
-    "update": {
-      "label": "アップデートがあるか確認",
-      "message": "バージョン {{newVersion}} がダウンロード可能です。\n現在使用しているバージョンは {{oldVersion}} です。",
-      "button": ["ダウンロードに進む", "OK"],
-      "noUpdate": "アップデートはありません。"
-    },
+    "preferences": "環境設定",
+    "update": "アップデートを確認...",
     "quit": "massCodeを終了",
     "about": "massCodeについて",
-    "hide": "massCodeを隠す",
-    "hideOther": "他を隠す",
-    "showAll": "すべて表示"
+    "hide": "massCodeを隠す"
   },
   "help": {
     "label": "ヘルプ",
     "website": "ウェブサイト",
     "documentation": "ドキュメント",
-    "viewInGitHub": "GitHubで見る",
-    "changeLog": "更新履歴",
-    "reportIssue": "課題を提出",
+    "viewInGitHub": "GitHubで表示",
+    "changeLog": "変更履歴",
+    "reportIssue": "問題を報告",
     "giveStar": "スターを付ける",
     "extension": {
-      "vscode": "VS Code 拡張機能",
-      "raycast": "Raycast 拡張機能",
-      "alfred": "Alfred 拡張機能"
+      "vscode": "VS Code拡張機能",
+      "raycast": "Raycast拡張機能",
+      "alfred": "Alfred拡張機能"
     },
     "donate": {
-      "openCollective": "Open Collectiveで寄付をする",
-      "payPal": "PayPalで寄付をする",
-      "gumroad": "Gumroadで寄付をする（Visa, Mastercardなどが使えます)"
+      "openCollective": "Open Collectiveで寄付",
+      "payPal": "PayPalで寄付",
+      "gumroad": "Gumroadで寄付（Visa、Mastercard等）"
     },
     "twitter": "Twitter",
-    "devTools": "Developer Toolsを表示",
+    "devTools": "開発者ツールの切り替え",
     "links": {
       "snippets": "スニペットコレクション"
     }
   },
-  "file": {
-    "label": "ファイル",
-    "find": "検索"
-  },
   "view": {
     "label": "表示",
     "sortBy": {
-      "label": "スニペットの整列",
-      "dateModified": "更新日",
-      "dateCreated": "作成日",
+      "label": "スニペットの並び替え",
+      "dateModified": "更新日時",
+      "dateCreated": "作成日時",
       "name": "名前"
     },
-    "hideSubfolderSnippets": "サブフォルダのスニペットを隠す",
     "compactMode": "コンパクトモード"
-  },
-  "edit": {
-    "label": "ラベル",
-    "undo": "元に戻す",
-    "redo": "やり直し",
-    "cut": "切り取り",
-    "copy": "コピー",
-    "paste": "貼り付け",
-    "delete": "削除",
-    "selectAll": "すべて選択"
   },
   "editor": {
     "label": "エディタ",
     "copy": "スニペットをクリップボードにコピー",
     "format": "フォーマット",
-    "previewMarkdown": "Markdownをプレビュー",
-    "previewCode": "コードをプレビュー",
-    "previewScreenshot": "スクリーンショットをプレビュー",
-    "fontSizeIncrease": "フォントを拡大",
-    "fontSizeDecrease": "フォントを縮小",
+    "previewCode": "コードのプレビュー",
+    "previewScreenshot": "スクリーンショットのプレビュー",
+    "previewMarkdown": "Markdownのプレビュー",
+    "previewMindmap": "マインドマップのプレビュー",
+    "fontSizeIncrease": "フォントサイズを大きく",
+    "fontSizeDecrease": "フォントサイズを小さく",
     "fontSizeReset": "フォントサイズをリセット"
   },
   "markdown": {
@@ -83,5 +62,8 @@
     "label": "履歴",
     "back": "戻る",
     "forward": "進む"
+  },
+  "devtools": {
+    "label": "開発者ツール"
   }
 }

@@ -1,35 +1,35 @@
 {
-  "title": "首选项",
+  "label": "首选项",
   "storage": {
-    "label": "存储路径",
+    "label": "存储",
     "migrate": "迁移",
-    "count": "总计",
-    "clearDatabase": "清除数据库"
+    "count": "数量",
+    "clearDatabase": "清空数据库"
   },
   "editor": {
     "label": "编辑器",
     "fontSize": "字体大小",
-    "fontFamily": "字体系列",
+    "fontFamily": "字体",
     "wrap": {
-      "label": "自动换行",
-      "wordWrap": "开启",
+      "label": "换行",
+      "wordWrap": "自动换行",
       "off": "关闭"
     },
-    "tabSize": "Tab 空格数",
-    "showInvisibles": "显示空格与换行符",
-    "highlightLine": "高亮光标所在行整行",
-    "highlightGutter": "高亮光标所在行行号",
-    "matchBrackets": "括号匹配",
+    "tabSize": "缩进大小",
+    "showInvisibles": "显示不可见字符",
+    "highlightLine": "高亮当前行",
+    "highlightGutter": "高亮行号",
+    "matchBrackets": "匹配括号",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "尾后逗号",
-        "none": "None",
-        "all": "All",
+        "label": "尾随逗号",
+        "none": "无",
+        "all": "全部",
         "es5": "ES5"
       },
-      "semi": "句尾添加分号",
-      "singleQuote": "使用单引号代替双引号"
+      "semi": "分号",
+      "singleQuote": "单引号"
     }
   },
   "appearance": {

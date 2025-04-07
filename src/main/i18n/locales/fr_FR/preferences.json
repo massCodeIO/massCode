@@ -1,35 +1,35 @@
 {
-  "title": "Préférences",
+  "label": "Préférences",
   "storage": {
     "label": "Stockage",
-    "migrate": "Migration",
-    "count": "Compteur",
+    "migrate": "Migrer",
+    "count": "Nombre",
     "clearDatabase": "Effacer la base de données"
   },
   "editor": {
-    "label": "Edition",
-    "fontSize": "Taille police de caractères",
-    "fontFamily": "Famille de polices",
+    "label": "Éditeur",
+    "fontSize": "Taille de police",
+    "fontFamily": "Famille de police",
     "wrap": {
-      "label": "Enveloppage",
-      "wordWrap": "Retour à la ligne",
-      "off": "inactif"
+      "label": "Retour à la ligne",
+      "wordWrap": "Retour à la ligne automatique",
+      "off": "Désactivé"
     },
-    "tabSize": "Taille des onglets",
-    "showInvisibles": "Montrer les invisibles",
-    "highlightLine": "Mettre une ligne en surbrillance",
-    "highlightGutter": "Mise en évidence de la gouttière",
-    "matchBrackets": "Support des accolades",
+    "tabSize": "Taille de tabulation",
+    "showInvisibles": "Afficher les caractères invisibles",
+    "highlightLine": "Surligner la ligne",
+    "highlightGutter": "Surligner la gouttière",
+    "matchBrackets": "Correspondance des parenthèses",
     "prettier": {
-      "label": "Plus jolie",
+      "label": "Prettier",
       "trailingComma": {
-        "label": "Virgule à la fin",
+        "label": "Virgule finale",
         "none": "Aucune",
-        "all": "toutes",
+        "all": "Toutes",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Apostrophe"
+      "semi": "Point-virgule",
+      "singleQuote": "Guillemet simple"
     }
   },
   "appearance": {
@@ -41,10 +41,10 @@
     }
   },
   "language": {
-    "label": "Langage"
+    "label": "Langue"
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Bloc de code Renderer"
+    "codeRenderer": "Rendu des blocs de code"
   }
 }

@@ -1,35 +1,35 @@
 {
-  "title": "Preferências",
+  "label": "Preferências",
   "storage": {
-    "label": "Armazenar",
+    "label": "Storage",
     "migrate": "Migrar",
-    "count": "Total",
-    "clearDatabase": "Limpar Banco de Dados"
+    "count": "Contagem",
+    "clearDatabase": "Limpar Database"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Tamanho da fonte",
-    "fontFamily": "Nome da fonte",
+    "fontSize": "Tamanho da Fonte",
+    "fontFamily": "Família da Fonte",
     "wrap": {
       "label": "Quebra",
-      "wordWrap": "Quebra de linha",
+      "wordWrap": "Quebra de Palavra",
       "off": "Desligado"
     },
-    "tabSize": "Tamanho da aba",
-    "showInvisibles": "Mostrar itens ocultos",
-    "highlightLine": "Destacar linha",
-    "highlightGutter": "Destacar área em branco",
-    "matchBrackets": "Corresponder parênteses",
+    "tabSize": "Tamanho do Tab",
+    "showInvisibles": "Mostrar Invisíveis",
+    "highlightLine": "Destacar Linha",
+    "highlightGutter": "Destacar Gutter",
+    "matchBrackets": "Corresponder Colchetes",
     "prettier": {
-      "label": "Embelezar",
+      "label": "Prettier",
       "trailingComma": {
-        "label": "Vírgula à direita",
+        "label": "Vírgula Final",
         "none": "Nenhum",
-        "all": "Tudo",
+        "all": "Todos",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Citação única"
+      "semi": "Ponto e Vírgula",
+      "singleQuote": "Aspas Simples"
     }
   },
   "appearance": {
@@ -42,9 +42,9 @@
   },
   "language": {
     "label": "Idioma"
- },
+  },
   "markdown": {
-    "label": "Marcador",
-    "codeRenderer": "Renderizador de bloco de código"
+    "label": "Markdown",
+    "codeRenderer": "Renderizador de Bloco de Código"
   }
 }

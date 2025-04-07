@@ -1,10 +1,10 @@
 {
-  "title": "Einstellungen",
+  "label": "Einstellungen",
   "storage": {
-    "label": "Datenbank",
+    "label": "Speicher",
     "migrate": "Migrieren",
-    "count": "Zählen",
-    "clearDatabase": "Datenbank löschen"
+    "count": "Anzahl",
+    "clearDatabase": "Datenbank leeren"
   },
   "editor": {
     "label": "Editor",
@@ -13,27 +13,27 @@
     "wrap": {
       "label": "Umbruch",
       "wordWrap": "Zeilenumbruch",
-      "off": "Deaktiviert"
+      "off": "Aus"
     },
-    "tabSize": "Tab Größe",
-    "showInvisibles": "Zeige versteckte",
+    "tabSize": "Tabgröße",
+    "showInvisibles": "Unsichtbare Zeichen anzeigen",
     "highlightLine": "Zeile hervorheben",
-    "highlightGutter": "Gutter hervorheben",
-    "matchBrackets": "Match Brackets",
+    "highlightGutter": "Zeilennummern hervorheben",
+    "matchBrackets": "Klammern hervorheben",
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
-        "label": "Nachgestelltes Komma",
-        "none": "Ohne",
-        "all": "Immer",
+        "label": "Abschließendes Komma",
+        "none": "Keins",
+        "all": "Alle",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Einzelne Anführungszeichen"
+      "semi": "Semikolon",
+      "singleQuote": "Einfache Anführungszeichen"
     }
   },
   "appearance": {
-    "label": "Darstellung",
+    "label": "Erscheinungsbild",
     "theme": {
       "label": "Theme",
       "light": "Hell",
@@ -45,6 +45,6 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Code block Renderer"
+    "codeRenderer": "Code-Block Renderer"
   }
 }

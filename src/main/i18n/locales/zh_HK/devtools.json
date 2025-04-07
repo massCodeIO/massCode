@@ -1,0 +1,45 @@
+{
+  "label": "開發者工具",
+  "textTools": {
+    "label": "文本工具",
+    "caseConverter": "大小寫轉換",
+    "urlParser": "URL 解析器",
+    "slugGenerator": "Slug 生成器",
+    "sortLines": "行排序"
+  },
+  "crypto": {
+    "label": "加密/安全",
+    "hashGenerator": "哈希生成器",
+    "hmacGenerator": "HMAC 生成器",
+    "passGenerator": "密碼生成器",
+    "uuidGenerator": "UUID 生成器"
+  },
+  "encodeDecode": {
+    "label": "編碼/解碼器",
+    "url": "URL 編碼/解碼器",
+    "base64": "Base64 編碼/解碼器"
+  },
+  "form": {
+    "inputString": "輸入字符串",
+    "outputString": "輸出字符串",
+    "inputUrl": "輸入 URL",
+    "outputUrl": "輸出 URL",
+    "parsedUrl": "已解析的 URL",
+    "splitQueryString": "拆分查詢字符串",
+    "key": "鍵",
+    "value": "值",
+    "component": "組件",
+    "result": "結果",
+    "secretKey": "密鑰",
+    "algorithm": "算法",
+    "version": "版本",
+    "amount": "數量",
+    "type": "類型",
+    "length": "長度",
+    "options": "選項",
+    "numbers": "數字",
+    "symbols": "符號",
+    "lowercase": "小寫",
+    "uppercase": "大寫"
+  }
+}

@@ -1,35 +1,35 @@
 {
-  "title": "設定",
+  "label": "環境設定",
   "storage": {
     "label": "ストレージ",
-    "migrate": "データの移行",
-    "count": "登録個数",
+    "migrate": "移行",
+    "count": "カウント",
     "clearDatabase": "データベースをクリア"
   },
   "editor": {
     "label": "エディタ",
     "fontSize": "フォントサイズ",
-    "fontFamily": "フォントファミリ",
+    "fontFamily": "フォントファミリー",
     "wrap": {
-      "label": "行の折り返し",
-      "wordWrap": "折り返す",
-      "off": "折り返ししない"
+      "label": "折り返し",
+      "wordWrap": "ワードラップ",
+      "off": "オフ"
     },
     "tabSize": "タブサイズ",
-    "showInvisibles": "非表示文字を表示する",
-    "highlightLine": "行をハイライトする",
-    "highlightGutter": "ガターをハイライトする",
-    "matchBrackets": "ブラケットの強調",
+    "showInvisibles": "不可視文字を表示",
+    "highlightLine": "現在行をハイライト",
+    "highlightGutter": "ガッターをハイライト",
+    "matchBrackets": "括弧の対応を表示",
     "prettier": {
-      "label": "行の整形",
+      "label": "Prettier",
       "trailingComma": {
-        "label": "末尾のコンマ",
-        "none": "何もしない",
+        "label": "末尾のカンマ",
+        "none": "なし",
         "all": "すべて",
-        "es5": "ES5準拠"
+        "es5": "ES5"
       },
       "semi": "セミコロン",
-      "singleQuote": "シングルクォーテーション"
+      "singleQuote": "シングルクォート"
     }
   },
   "appearance": {
@@ -41,10 +41,10 @@
     }
   },
   "language": {
-    "label": "表示言語"
+    "label": "言語"
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "コードブロックレンダラ"
+    "codeRenderer": "コードブロックレンダラー"
   }
 }

@@ -1,0 +1,45 @@
+{
+  "label": "開発者ツール",
+  "textTools": {
+    "label": "テキストツール",
+    "caseConverter": "大文字小文字変換",
+    "urlParser": "URLパーサー",
+    "slugGenerator": "スラッグジェネレーター",
+    "sortLines": "行の並べ替え"
+  },
+  "crypto": {
+    "label": "暗号化/セキュリティ",
+    "hashGenerator": "ハッシュジェネレーター",
+    "hmacGenerator": "HMACジェネレーター",
+    "passGenerator": "パスワードジェネレーター",
+    "uuidGenerator": "UUIDジェネレーター"
+  },
+  "encodeDecode": {
+    "label": "エンコーダー/デコーダー",
+    "url": "URLエンコーダー/デコーダー",
+    "base64": "Base64エンコーダー/デコーダー"
+  },
+  "form": {
+    "inputString": "入力文字列",
+    "outputString": "出力文字列",
+    "inputUrl": "入力URL",
+    "outputUrl": "出力URL",
+    "parsedUrl": "解析済みURL",
+    "splitQueryString": "クエリ文字列の分割",
+    "key": "キー",
+    "value": "値",
+    "component": "コンポーネント",
+    "result": "結果",
+    "secretKey": "シークレットキー",
+    "algorithm": "アルゴリズム",
+    "version": "バージョン",
+    "amount": "数量",
+    "type": "タイプ",
+    "length": "長さ",
+    "options": "オプション",
+    "numbers": "数字",
+    "symbols": "記号",
+    "lowercase": "小文字",
+    "uppercase": "大文字"
+  }
+}

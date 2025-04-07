@@ -1,0 +1,50 @@
+{
+  "label": "Προτιμήσεις",
+  "storage": {
+    "label": "Storage",
+    "migrate": "Μετεγκατάσταση",
+    "count": "Πλήθος",
+    "clearDatabase": "Εκκαθάριση Database"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Μέγεθος Γραμματοσειράς",
+    "fontFamily": "Οικογένεια Γραμματοσειράς",
+    "wrap": {
+      "label": "Αναδίπλωση",
+      "wordWrap": "Αναδίπλωση Λέξεων",
+      "off": "Απενεργοποίηση"
+    },
+    "tabSize": "Μέγεθος Tab",
+    "showInvisibles": "Εμφάνιση Αόρατων Χαρακτήρων",
+    "highlightLine": "Επισήμανση Γραμμής",
+    "highlightGutter": "Επισήμανση Gutter",
+    "matchBrackets": "Αντιστοίχιση Παρενθέσεων",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Κόμμα στο Τέλος",
+        "none": "Κανένα",
+        "all": "Όλα",
+        "es5": "ES5"
+      },
+      "semi": "Ερωτηματικό",
+      "singleQuote": "Μονά Εισαγωγικά"
+    }
+  },
+  "appearance": {
+    "label": "Εμφάνιση",
+    "theme": {
+      "label": "Θέμα",
+      "light": "Φωτεινό",
+      "dark": "Σκοτεινό"
+    }
+  },
+  "language": {
+    "label": "Γλώσσα"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Code block Renderer"
+  }
+}

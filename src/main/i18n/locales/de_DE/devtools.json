@@ -1,0 +1,45 @@
+{
+  "label": "Entwicklerwerkzeuge",
+  "textTools": {
+    "label": "Text-Werkzeuge",
+    "caseConverter": "Groß-/Kleinschreibung Konverter",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Slug Generator",
+    "sortLines": "Zeilen sortieren"
+  },
+  "crypto": {
+    "label": "Kryptographie / Sicherheit",
+    "hashGenerator": "Hash Generator",
+    "hmacGenerator": "HMAC Generator",
+    "passGenerator": "Passwort Generator",
+    "uuidGenerator": "UUID Generator"
+  },
+  "encodeDecode": {
+    "label": "Encoder / Decoder",
+    "url": "URL Encoder / Decoder",
+    "base64": "Base64 Encoder / Decoder"
+  },
+  "form": {
+    "inputString": "Eingabetext",
+    "outputString": "Ausgabetext",
+    "inputUrl": "Eingabe-URL",
+    "outputUrl": "Ausgabe-URL",
+    "parsedUrl": "Geparste URL",
+    "splitQueryString": "Query-String aufteilen",
+    "key": "Schlüssel",
+    "value": "Wert",
+    "component": "Komponente",
+    "result": "Ergebnis",
+    "secretKey": "Geheimer Schlüssel",
+    "algorithm": "Algorithmus",
+    "version": "Version",
+    "amount": "Anzahl",
+    "type": "Typ",
+    "length": "Länge",
+    "options": "Optionen",
+    "numbers": "Zahlen",
+    "symbols": "Symbole",
+    "lowercase": "Kleinbuchstaben",
+    "uppercase": "Großbuchstaben"
+  }
+}

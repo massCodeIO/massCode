@@ -1,0 +1,50 @@
+{
+  "label": "Preferințe",
+  "storage": {
+    "label": "Storage",
+    "migrate": "Migrare",
+    "count": "Număr",
+    "clearDatabase": "Șterge Database"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Dimensiune Font",
+    "fontFamily": "Familie Font",
+    "wrap": {
+      "label": "Încadrare",
+      "wordWrap": "Încadrare Cuvinte",
+      "off": "Oprit"
+    },
+    "tabSize": "Dimensiune Tab",
+    "showInvisibles": "Arată Caractere Invizibile",
+    "highlightLine": "Evidențiere Linie",
+    "highlightGutter": "Evidențiere Gutter",
+    "matchBrackets": "Potrivire Paranteze",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Virgulă la Final",
+        "none": "Niciuna",
+        "all": "Toate",
+        "es5": "ES5"
+      },
+      "semi": "Punct și Virgulă",
+      "singleQuote": "Ghilimele Simple"
+    }
+  },
+  "appearance": {
+    "label": "Aspect",
+    "theme": {
+      "label": "Temă",
+      "light": "Luminos",
+      "dark": "Întunecat"
+    }
+  },
+  "language": {
+    "label": "Limbă"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Renderer Bloc de Cod"
+  }
+}

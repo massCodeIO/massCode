@@ -1,0 +1,45 @@
+{
+  "label": "Инструменты разработчика",
+  "textTools": {
+    "label": "Текстовые инструменты",
+    "caseConverter": "Конвертер регистра",
+    "urlParser": "Парсер URL",
+    "slugGenerator": "Генератор slug",
+    "sortLines": "Сортировка строк"
+  },
+  "crypto": {
+    "label": "Криптография / Безопасность",
+    "hashGenerator": "Генератор Hash",
+    "hmacGenerator": "Генератор HMAC",
+    "passGenerator": "Генератор паролей",
+    "uuidGenerator": "Генератор UUID"
+  },
+  "encodeDecode": {
+    "label": "Кодировщики / Декодеры",
+    "url": "URL кодировщик / декодер",
+    "base64": "Base64 кодировщик / декодер"
+  },
+  "form": {
+    "inputString": "Входная строка",
+    "outputString": "Выходная строка",
+    "inputUrl": "Входной URL",
+    "outputUrl": "Выходной URL",
+    "parsedUrl": "Разобранный URL",
+    "splitQueryString": "Разделенная строка запроса",
+    "key": "Ключ",
+    "value": "Значение",
+    "component": "Компонент",
+    "result": "Результат",
+    "secretKey": "Секретный ключ",
+    "algorithm": "Алгоритм",
+    "version": "Версия",
+    "amount": "Количество",
+    "type": "Тип",
+    "length": "Длина",
+    "options": "Опции",
+    "numbers": "Цифры",
+    "symbols": "Символы",
+    "lowercase": "Нижний регистр",
+    "uppercase": "Верхний регистр"
+  }
+}

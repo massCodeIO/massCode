@@ -1,0 +1,45 @@
+{
+  "label": "Instrumente pentru Dezvoltatori",
+  "textTools": {
+    "label": "Instrumente Text",
+    "caseConverter": "Convertor Majuscule/Minuscule",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Generator Slug",
+    "sortLines": "Sortare Linii"
+  },
+  "crypto": {
+    "label": "Criptografie / Securitate",
+    "hashGenerator": "Generator Hash",
+    "hmacGenerator": "Generator HMAC",
+    "passGenerator": "Generator Parole",
+    "uuidGenerator": "Generator UUID"
+  },
+  "encodeDecode": {
+    "label": "Codificatori / Decodificatori",
+    "url": "Codificator / Decodificator URL",
+    "base64": "Codificator / Decodificator Base64"
+  },
+  "form": {
+    "inputString": "String de Intrare",
+    "outputString": "String de Ieșire",
+    "inputUrl": "URL de Intrare",
+    "outputUrl": "URL de Ieșire",
+    "parsedUrl": "URL Analizat",
+    "splitQueryString": "Împarte Query String",
+    "key": "Cheie",
+    "value": "Valoare",
+    "component": "Componentă",
+    "result": "Rezultat",
+    "secretKey": "Cheie Secretă",
+    "algorithm": "Algoritm",
+    "version": "Versiune",
+    "amount": "Cantitate",
+    "type": "Tip",
+    "length": "Lungime",
+    "options": "Opțiuni",
+    "numbers": "Numere",
+    "symbols": "Simboluri",
+    "lowercase": "Minuscule",
+    "uppercase": "Majuscule"
+  }
+}

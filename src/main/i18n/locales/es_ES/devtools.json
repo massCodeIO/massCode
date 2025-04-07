@@ -1,0 +1,45 @@
+{
+  "label": "Herramientas de Desarrollo",
+  "textTools": {
+    "label": "Herramientas de Texto",
+    "caseConverter": "Conversor de Mayúsculas/Minúsculas",
+    "urlParser": "Analizador de URL",
+    "slugGenerator": "Generador de Slug",
+    "sortLines": "Ordenar Líneas"
+  },
+  "crypto": {
+    "label": "Criptografía / Seguridad",
+    "hashGenerator": "Generador de Hash",
+    "hmacGenerator": "Generador de HMAC",
+    "passGenerator": "Generador de Contraseñas",
+    "uuidGenerator": "Generador de UUID"
+  },
+  "encodeDecode": {
+    "label": "Codificadores / Decodificadores",
+    "url": "Codificador / Decodificador URL",
+    "base64": "Codificador / Decodificador Base64"
+  },
+  "form": {
+    "inputString": "Cadena de Entrada",
+    "outputString": "Cadena de Salida",
+    "inputUrl": "URL de Entrada",
+    "outputUrl": "URL de Salida",
+    "parsedUrl": "URL Analizada",
+    "splitQueryString": "Dividir Cadena de Consulta",
+    "key": "Clave",
+    "value": "Valor",
+    "component": "Componente",
+    "result": "Resultado",
+    "secretKey": "Clave Secreta",
+    "algorithm": "Algoritmo",
+    "version": "Versión",
+    "amount": "Cantidad",
+    "type": "Tipo",
+    "length": "Longitud",
+    "options": "Opciones",
+    "numbers": "Números",
+    "symbols": "Símbolos",
+    "lowercase": "Minúsculas",
+    "uppercase": "Mayúsculas"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferințe",
+    "update": "Verifică Actualizări...",
+    "quit": "Închide massCode",
+    "about": "Despre massCode",
+    "hide": "Ascunde massCode"
+  },
+  "help": {
+    "label": "Ajutor",
+    "website": "Website",
+    "documentation": "Documentație",
+    "viewInGitHub": "Vezi pe GitHub",
+    "changeLog": "Jurnal de Modificări",
+    "reportIssue": "Raportează o Problemă",
+    "giveStar": "Dă o Stea",
+    "extension": {
+      "vscode": "Extensie VS Code",
+      "raycast": "Extensie Raycast",
+      "alfred": "Extensie Alfred"
+    },
+    "donate": {
+      "openCollective": "Donează pe Open Collective",
+      "payPal": "Donează prin PayPal",
+      "gumroad": "Donează prin Gumroad (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Comută Instrumentele de Dezvoltare",
+    "links": {
+      "snippets": "Colecție de Snippets"
+    }
+  },
+  "view": {
+    "label": "Vizualizare",
+    "sortBy": {
+      "label": "Sortează Snippets După",
+      "dateModified": "Data Modificării",
+      "dateCreated": "Data Creării",
+      "name": "Nume"
+    },
+    "compactMode": "Mod Compact"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copiază Snippet în Clipboard",
+    "format": "Formatare",
+    "previewCode": "Previzualizare Cod",
+    "previewScreenshot": "Previzualizare Screenshot",
+    "previewMarkdown": "Previzualizare Markdown",
+    "previewMindmap": "Previzualizare Mindmap",
+    "fontSizeIncrease": "Mărește Dimensiunea Fontului",
+    "fontSizeDecrease": "Micșorează Dimensiunea Fontului",
+    "fontSizeReset": "Resetează Dimensiunea Fontului"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Mod Prezentare",
+    "preview": "Previzualizare"
+  },
+  "history": {
+    "label": "Istoric",
+    "back": "Înapoi",
+    "forward": "Înainte"
+  },
+  "devtools": {
+    "label": "Instrumente pentru Dezvoltatori"
+  }
+}

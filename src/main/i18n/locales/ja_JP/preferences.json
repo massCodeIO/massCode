@@ -1,0 +1,50 @@
+{
+  "label": "環境設定",
+  "storage": {
+    "label": "ストレージ",
+    "migrate": "移行",
+    "count": "カウント",
+    "clearDatabase": "データベースをクリア"
+  },
+  "editor": {
+    "label": "エディタ",
+    "fontSize": "フォントサイズ",
+    "fontFamily": "フォントファミリー",
+    "wrap": {
+      "label": "折り返し",
+      "wordWrap": "ワードラップ",
+      "off": "オフ"
+    },
+    "tabSize": "タブサイズ",
+    "showInvisibles": "不可視文字を表示",
+    "highlightLine": "現在行をハイライト",
+    "highlightGutter": "ガッターをハイライト",
+    "matchBrackets": "括弧の対応を表示",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "末尾のカンマ",
+        "none": "なし",
+        "all": "すべて",
+        "es5": "ES5"
+      },
+      "semi": "セミコロン",
+      "singleQuote": "シングルクォート"
+    }
+  },
+  "appearance": {
+    "label": "外観",
+    "theme": {
+      "label": "テーマ",
+      "light": "ライト",
+      "dark": "ダーク"
+    }
+  },
+  "language": {
+    "label": "言語"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "コードブロックレンダラー"
+  }
+}

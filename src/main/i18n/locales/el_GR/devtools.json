@@ -1,0 +1,45 @@
+{
+  "label": "Εργαλεία Προγραμματιστή",
+  "textTools": {
+    "label": "Εργαλεία Κειμένου",
+    "caseConverter": "Μετατροπέας Πεζών/Κεφαλαίων",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Δημιουργία Slug",
+    "sortLines": "Ταξινόμηση Γραμμών"
+  },
+  "crypto": {
+    "label": "Κρυπτογραφία / Ασφάλεια",
+    "hashGenerator": "Δημιουργία Hash",
+    "hmacGenerator": "Δημιουργία HMAC",
+    "passGenerator": "Δημιουργία Password",
+    "uuidGenerator": "Δημιουργία UUID"
+  },
+  "encodeDecode": {
+    "label": "Κωδικοποιητές / Αποκωδικοποιητές",
+    "url": "Κωδικοποίηση / Αποκωδικοποίηση URL",
+    "base64": "Κωδικοποίηση / Αποκωδικοποίηση Base64"
+  },
+  "form": {
+    "inputString": "Κείμενο Εισόδου",
+    "outputString": "Κείμενο Εξόδου",
+    "inputUrl": "URL Εισόδου",
+    "outputUrl": "URL Εξόδου",
+    "parsedUrl": "Αναλυμένο URL",
+    "splitQueryString": "Διαχωρισμός Query String",
+    "key": "Κλειδί",
+    "value": "Τιμή",
+    "component": "Στοιχείο",
+    "result": "Αποτέλεσμα",
+    "secretKey": "Μυστικό Κλειδί",
+    "algorithm": "Αλγόριθμος",
+    "version": "Έκδοση",
+    "amount": "Ποσότητα",
+    "type": "Τύπος",
+    "length": "Μήκος",
+    "options": "Επιλογές",
+    "numbers": "Αριθμοί",
+    "symbols": "Σύμβολα",
+    "lowercase": "Πεζά",
+    "uppercase": "Κεφαλαία"
+  }
+}

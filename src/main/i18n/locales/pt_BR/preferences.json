@@ -1,0 +1,50 @@
+{
+  "label": "Preferências",
+  "storage": {
+    "label": "Storage",
+    "migrate": "Migrar",
+    "count": "Contagem",
+    "clearDatabase": "Limpar Database"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Tamanho da Fonte",
+    "fontFamily": "Família da Fonte",
+    "wrap": {
+      "label": "Quebra",
+      "wordWrap": "Quebra de Palavra",
+      "off": "Desligado"
+    },
+    "tabSize": "Tamanho do Tab",
+    "showInvisibles": "Mostrar Invisíveis",
+    "highlightLine": "Destacar Linha",
+    "highlightGutter": "Destacar Gutter",
+    "matchBrackets": "Corresponder Colchetes",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Vírgula Final",
+        "none": "Nenhum",
+        "all": "Todos",
+        "es5": "ES5"
+      },
+      "semi": "Ponto e Vírgula",
+      "singleQuote": "Aspas Simples"
+    }
+  },
+  "appearance": {
+    "label": "Aparência",
+    "theme": {
+      "label": "Tema",
+      "light": "Claro",
+      "dark": "Escuro"
+    }
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Renderizador de Bloco de Código"
+  }
+}

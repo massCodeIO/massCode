@@ -1,0 +1,45 @@
+{
+  "label": "ابزارهای توسعه",
+  "textTools": {
+    "label": "ابزارهای متن",
+    "caseConverter": "تبدیل حروف",
+    "urlParser": "تجزیه‌کننده URL",
+    "slugGenerator": "تولیدکننده Slug",
+    "sortLines": "مرتب‌سازی خطوط"
+  },
+  "crypto": {
+    "label": "رمزنگاری / امنیت",
+    "hashGenerator": "تولیدکننده Hash",
+    "hmacGenerator": "تولیدکننده HMAC",
+    "passGenerator": "تولیدکننده رمز عبور",
+    "uuidGenerator": "تولیدکننده UUID"
+  },
+  "encodeDecode": {
+    "label": "رمزگذار / رمزگشا",
+    "url": "رمزگذار / رمزگشای URL",
+    "base64": "رمزگذار / رمزگشای Base64"
+  },
+  "form": {
+    "inputString": "رشته ورودی",
+    "outputString": "رشته خروجی",
+    "inputUrl": "URL ورودی",
+    "outputUrl": "URL خروجی",
+    "parsedUrl": "URL تجزیه شده",
+    "splitQueryString": "تقسیم رشته پرس‌وجو",
+    "key": "کلید",
+    "value": "مقدار",
+    "component": "مؤلفه",
+    "result": "نتیجه",
+    "secretKey": "کلید مخفی",
+    "algorithm": "الگوریتم",
+    "version": "نسخه",
+    "amount": "تعداد",
+    "type": "نوع",
+    "length": "طول",
+    "options": "گزینه‌ها",
+    "numbers": "اعداد",
+    "symbols": "نمادها",
+    "lowercase": "حروف کوچک",
+    "uppercase": "حروف بزرگ"
+  }
+}

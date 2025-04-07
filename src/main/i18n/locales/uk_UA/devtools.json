@@ -1,0 +1,45 @@
+{
+  "label": "Інструменти розробника",
+  "textTools": {
+    "label": "Текстові інструменти",
+    "caseConverter": "Конвертер регістру",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Генератор slug",
+    "sortLines": "Сортування рядків"
+  },
+  "crypto": {
+    "label": "Криптографія / Безпека",
+    "hashGenerator": "Генератор хешів",
+    "hmacGenerator": "Генератор HMAC",
+    "passGenerator": "Генератор паролів",
+    "uuidGenerator": "Генератор UUID"
+  },
+  "encodeDecode": {
+    "label": "Кодування / Декодування",
+    "url": "Кодування / Декодування URL",
+    "base64": "Кодування / Декодування Base64"
+  },
+  "form": {
+    "inputString": "Вхідний рядок",
+    "outputString": "Вихідний рядок",
+    "inputUrl": "Вхідний URL",
+    "outputUrl": "Вихідний URL",
+    "parsedUrl": "Розібраний URL",
+    "splitQueryString": "Розділити рядок запиту",
+    "key": "Ключ",
+    "value": "Значення",
+    "component": "Компонент",
+    "result": "Результат",
+    "secretKey": "Секретний ключ",
+    "algorithm": "Алгоритм",
+    "version": "Версія",
+    "amount": "Кількість",
+    "type": "Тип",
+    "length": "Довжина",
+    "options": "Опції",
+    "numbers": "Цифри",
+    "symbols": "Символи",
+    "lowercase": "Нижній регістр",
+    "uppercase": "Верхній регістр"
+  }
+}

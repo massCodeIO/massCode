@@ -1,0 +1,50 @@
+{
+  "label": "Preferencias",
+  "storage": {
+    "label": "Almacenamiento",
+    "migrate": "Migrar",
+    "count": "Cantidad",
+    "clearDatabase": "Limpiar Base de Datos"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Tamaño de Fuente",
+    "fontFamily": "Familia de Fuente",
+    "wrap": {
+      "label": "Ajuste",
+      "wordWrap": "Ajuste de Texto",
+      "off": "Desactivado"
+    },
+    "tabSize": "Tamaño de Tabulación",
+    "showInvisibles": "Mostrar Invisibles",
+    "highlightLine": "Resaltar Línea",
+    "highlightGutter": "Resaltar Margen",
+    "matchBrackets": "Emparejar Corchetes",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Coma Final",
+        "none": "Ninguna",
+        "all": "Todas",
+        "es5": "ES5"
+      },
+      "semi": "Punto y Coma",
+      "singleQuote": "Comilla Simple"
+    }
+  },
+  "appearance": {
+    "label": "Apariencia",
+    "theme": {
+      "label": "Tema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    }
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Renderizador de Bloques de Código"
+  }
+}

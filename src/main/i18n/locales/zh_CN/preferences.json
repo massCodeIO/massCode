@@ -1,0 +1,50 @@
+{
+  "label": "首选项",
+  "storage": {
+    "label": "存储",
+    "migrate": "迁移",
+    "count": "数量",
+    "clearDatabase": "清空数据库"
+  },
+  "editor": {
+    "label": "编辑器",
+    "fontSize": "字体大小",
+    "fontFamily": "字体",
+    "wrap": {
+      "label": "换行",
+      "wordWrap": "自动换行",
+      "off": "关闭"
+    },
+    "tabSize": "缩进大小",
+    "showInvisibles": "显示不可见字符",
+    "highlightLine": "高亮当前行",
+    "highlightGutter": "高亮行号",
+    "matchBrackets": "匹配括号",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "尾随逗号",
+        "none": "无",
+        "all": "全部",
+        "es5": "ES5"
+      },
+      "semi": "分号",
+      "singleQuote": "单引号"
+    }
+  },
+  "appearance": {
+    "label": "外观",
+    "theme": {
+      "label": "主题",
+      "light": "浅色",
+      "dark": "深色"
+    }
+  },
+  "language": {
+    "label": "语言"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "代码块渲染器"
+  }
+}

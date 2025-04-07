@@ -1,0 +1,69 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Налаштування",
+    "update": "Перевірити оновлення...",
+    "quit": "Вийти з massCode",
+    "about": "Про massCode",
+    "hide": "Приховати massCode"
+  },
+  "help": {
+    "label": "Допомога",
+    "website": "Веб-сайт",
+    "documentation": "Документація",
+    "viewInGitHub": "Переглянути на GitHub",
+    "changeLog": "Журнал змін",
+    "reportIssue": "Повідомити про проблему",
+    "giveStar": "Поставити зірку",
+    "extension": {
+      "vscode": "Розширення VS Code",
+      "raycast": "Розширення Raycast",
+      "alfred": "Розширення Alfred"
+    },
+    "donate": {
+      "openCollective": "Підтримати через Open Collective",
+      "payPal": "Підтримати через PayPal",
+      "gumroad": "Підтримати через Gumroad (Visa, Mastercard, тощо)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Інструменти розробника",
+    "links": {
+      "snippets": "Колекція сніпетів"
+    }
+  },
+  "view": {
+    "label": "Вигляд",
+    "sortBy": {
+      "label": "Сортувати сніпети за",
+      "dateModified": "Датою зміни",
+      "dateCreated": "Датою створення",
+      "name": "Назвою"
+    },
+    "compactMode": "Компактний режим"
+  },
+  "editor": {
+    "label": "Редактор",
+    "copy": "Копіювати сніпет в буфер обміну",
+    "format": "Форматувати",
+    "previewCode": "Попередній перегляд коду",
+    "previewScreenshot": "Попередній перегляд знімка екрану",
+    "previewMarkdown": "Попередній перегляд Markdown",
+    "previewMindmap": "Попередній перегляд Mindmap",
+    "fontSizeIncrease": "Збільшити розмір шрифту",
+    "fontSizeDecrease": "Зменшити розмір шрифту",
+    "fontSizeReset": "Скинути розмір шрифту"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Режим презентації",
+    "preview": "Попередній перегляд"
+  },
+  "history": {
+    "label": "Історія",
+    "back": "Назад",
+    "forward": "Вперед"
+  },
+  "devtools": {
+    "label": "Інструменти розробника"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "label": "Narzędzia deweloperskie",
+  "textTools": {
+    "label": "Narzędzia tekstowe",
+    "caseConverter": "Konwerter wielkości liter",
+    "urlParser": "Parser URL",
+    "slugGenerator": "Generator slugów",
+    "sortLines": "Sortowanie linii"
+  },
+  "crypto": {
+    "label": "Kryptografia / Bezpieczeństwo",
+    "hashGenerator": "Generator hashy",
+    "hmacGenerator": "Generator HMAC",
+    "passGenerator": "Generator haseł",
+    "uuidGenerator": "Generator UUID"
+  },
+  "encodeDecode": {
+    "label": "Kodery / Dekodery",
+    "url": "Koder / Dekoder URL",
+    "base64": "Koder / Dekoder Base64"
+  },
+  "form": {
+    "inputString": "Tekst wejściowy",
+    "outputString": "Tekst wyjściowy",
+    "inputUrl": "URL wejściowy",
+    "outputUrl": "URL wyjściowy",
+    "parsedUrl": "Przetworzony URL",
+    "splitQueryString": "Podziel ciąg zapytania",
+    "key": "Klucz",
+    "value": "Wartość",
+    "component": "Komponent",
+    "result": "Wynik",
+    "secretKey": "Klucz tajny",
+    "algorithm": "Algorytm",
+    "version": "Wersja",
+    "amount": "Ilość",
+    "type": "Typ",
+    "length": "Długość",
+    "options": "Opcje",
+    "numbers": "Cyfry",
+    "symbols": "Symbole",
+    "lowercase": "Małe litery",
+    "uppercase": "Wielkie litery"
+  }
+}

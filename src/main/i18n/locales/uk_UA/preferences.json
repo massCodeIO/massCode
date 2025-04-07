@@ -1,0 +1,50 @@
+{
+  "label": "Налаштування",
+  "storage": {
+    "label": "Сховище",
+    "migrate": "Міграція",
+    "count": "Кількість",
+    "clearDatabase": "Очистити базу даних"
+  },
+  "editor": {
+    "label": "Редактор",
+    "fontSize": "Розмір шрифту",
+    "fontFamily": "Сімейство шрифтів",
+    "wrap": {
+      "label": "Перенесення",
+      "wordWrap": "Перенесення слів",
+      "off": "Вимкнено"
+    },
+    "tabSize": "Розмір табуляції",
+    "showInvisibles": "Показати невидимі символи",
+    "highlightLine": "Підсвічування рядка",
+    "highlightGutter": "Підсвічування відступів",
+    "matchBrackets": "Парні дужки",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Кома в кінці",
+        "none": "Немає",
+        "all": "Всюди",
+        "es5": "ES5"
+      },
+      "semi": "Крапка з комою",
+      "singleQuote": "Одинарні лапки"
+    }
+  },
+  "appearance": {
+    "label": "Зовнішній вигляд",
+    "theme": {
+      "label": "Тема",
+      "light": "Світла",
+      "dark": "Темна"
+    }
+  },
+  "language": {
+    "label": "Мова"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Відображення блоків коду"
+  }
+}

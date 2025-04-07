@@ -1,0 +1,50 @@
+{
+  "label": "Předvolby",
+  "storage": {
+    "label": "Úložiště",
+    "migrate": "Migrovat",
+    "count": "Počet",
+    "clearDatabase": "Vymazat databázi"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Velikost písma",
+    "fontFamily": "Rodina písma",
+    "wrap": {
+      "label": "Zalamování",
+      "wordWrap": "Zalamování slov",
+      "off": "Vypnuto"
+    },
+    "tabSize": "Velikost tabulátoru",
+    "showInvisibles": "Zobrazit neviditelné znaky",
+    "highlightLine": "Zvýraznit řádek",
+    "highlightGutter": "Zvýraznit okraj",
+    "matchBrackets": "Párové závorky",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Koncová čárka",
+        "none": "Žádná",
+        "all": "Všude",
+        "es5": "ES5"
+      },
+      "semi": "Středník",
+      "singleQuote": "Jednoduché uvozovky"
+    }
+  },
+  "appearance": {
+    "label": "Vzhled",
+    "theme": {
+      "label": "Motiv",
+      "light": "Světlý",
+      "dark": "Tmavý"
+    }
+  },
+  "language": {
+    "label": "Jazyk"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Renderer kódových bloků"
+  }
+}

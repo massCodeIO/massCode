@@ -1,0 +1,50 @@
+{
+  "label": "Préférences",
+  "storage": {
+    "label": "Stockage",
+    "migrate": "Migrer",
+    "count": "Nombre",
+    "clearDatabase": "Effacer la base de données"
+  },
+  "editor": {
+    "label": "Éditeur",
+    "fontSize": "Taille de police",
+    "fontFamily": "Famille de police",
+    "wrap": {
+      "label": "Retour à la ligne",
+      "wordWrap": "Retour à la ligne automatique",
+      "off": "Désactivé"
+    },
+    "tabSize": "Taille de tabulation",
+    "showInvisibles": "Afficher les caractères invisibles",
+    "highlightLine": "Surligner la ligne",
+    "highlightGutter": "Surligner la gouttière",
+    "matchBrackets": "Correspondance des parenthèses",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Virgule finale",
+        "none": "Aucune",
+        "all": "Toutes",
+        "es5": "ES5"
+      },
+      "semi": "Point-virgule",
+      "singleQuote": "Guillemet simple"
+    }
+  },
+  "appearance": {
+    "label": "Apparence",
+    "theme": {
+      "label": "Thème",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
+  },
+  "language": {
+    "label": "Langue"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Rendu des blocs de code"
+  }
+}

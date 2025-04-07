@@ -22,6 +22,7 @@ export interface PreferencesStore {
   backupPath: string
   apiPort: number
   language: string
+  theme: 'light' | 'dark' | 'auto'
 }
 
 export interface Store {

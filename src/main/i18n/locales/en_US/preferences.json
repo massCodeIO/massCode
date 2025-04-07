@@ -37,7 +37,8 @@
     "theme": {
       "label": "Theme",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "System"
     }
   },
   "language": {

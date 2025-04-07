@@ -18,6 +18,10 @@ const nav = [
     label: i18n.t('preferences:language.label'),
     name: 'preferences/language',
   },
+  {
+    label: i18n.t('preferences:appearance.label'),
+    name: 'preferences/appearance',
+  },
 ]
 </script>
 

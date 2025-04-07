@@ -21,6 +21,11 @@ const routes = [
         name: 'preferences/language',
         component: () => import('@/components/preferences/Language.vue'),
       },
+      {
+        path: 'appearance',
+        name: 'preferences/appearance',
+        component: () => import('@/components/preferences/Appearance.vue'),
+      },
     ],
   },
 ]

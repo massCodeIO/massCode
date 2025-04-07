@@ -1,4 +1,24 @@
 {
+  "label": "Developer Tools",
+  "textTools": {
+    "label": "Text Tools",
+    "caseConverter": "Case Converter",
+    "urlParser": "URL Parser",
+    "slugGenerator": "Slug Generator",
+    "sortLines": "Sort Lines"
+  },
+  "crypto": {
+    "label": "Cryptography / Security",
+    "hashGenerator": "Hash Generator",
+    "hmacGenerator": "HMAC Generator",
+    "passGenerator": "Password Generator",
+    "uuidGenerator": "UUID Generator"
+  },
+  "encodeDecode": {
+    "label": "Encoders / Decoders",
+    "url": "URL Encoder / Decoder",
+    "base64": "Base64 Encoder / Decoder"
+  },
   "form": {
     "inputString": "Input String",
     "outputString": "Output String",
@@ -21,24 +41,6 @@
     "symbols": "Symbols",
     "lowercase": "Lowercase",
     "uppercase": "Uppercase"
-  },
-  "textTools": {
-    "label": "Text Tools",
-    "caseConverter": "Case Converter",
-    "urlParser": "URL Parser",
-    "slugGenerator": "Slug Generator",
-    "sortLines": "Sort Lines"
-  },
-  "crypto": {
-    "label": "Cryptography / Security",
-    "hashGenerator": "Hash Generator",
-    "hmacGenerator": "HMAC Generator",
-    "passGenerator": "Password Generator",
-    "uuidGenerator": "UUID Generator"
-  },
-  "encodeDecode": {
-    "label": "Encoders / Decoders",
-    "url": "URL Encoder / Decoder",
-    "base64": "Base64 Encoder / Decoder"
   }
+
 }

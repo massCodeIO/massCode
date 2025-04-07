@@ -2,17 +2,10 @@
   "app": {
     "label": "massCode",
     "preferences": "Preferences",
-    "update": {
-      "label": "Check for Updates...",
-      "message": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
-      "button": ["Go to Download", "OK"],
-      "noUpdate": "There are currently no updates available."
-    },
+    "update": "Check for Updates...",
     "quit": "Quit massCode",
     "about": "About massCode",
-    "hide": "Hide massCode",
-    "hideOther": "Hide Others",
-    "showAll": "Show All"
+    "hide": "Hide massCode"
   },
   "help": {
     "label": "Help",
@@ -38,10 +31,6 @@
       "snippets": "Snippet Collection"
     }
   },
-  "file": {
-    "label": "File",
-    "find": "Find"
-  },
   "view": {
     "label": "View",
     "sortBy": {
@@ -50,18 +39,7 @@
       "dateCreated": "Date Created",
       "name": "Name"
     },
-    "hideSubfolderSnippets": "Hide Subfolder Snippets",
     "compactMode": "Compact Mode"
-  },
-  "edit": {
-    "label": "Edit",
-    "undo": "Undo",
-    "redo": "Redo",
-    "cut": "Cut",
-    "copy": "Copy",
-    "paste": "Paste",
-    "delete": "Delete",
-    "selectAll": "Select All"
   },
   "editor": {
     "label": "Editor",
@@ -87,9 +65,5 @@
   },
   "devtools": {
     "label": "Developer Tools"
-  },
-  "window": {
-    "label": "Window",
-    "minimize": "Minimize"
   }
 }

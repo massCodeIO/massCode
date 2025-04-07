@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useApp } from '@/composables'
-import { useDark } from '@vueuse/core'
+import { useApp, useTheme } from '@/composables'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { Toaster } from 'vue-sonner'
@@ -8,7 +7,7 @@ import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
 useApp()
-useDark()
+useTheme()
 
 async function init() {
   registerIPCListeners()

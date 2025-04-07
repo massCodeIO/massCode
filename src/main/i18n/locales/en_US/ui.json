@@ -56,6 +56,7 @@
       "storage": "Reload Storage"
     },
     "delete": {
+      "common": "Delete",
       "now": "Delete Now",
       "allData": "Delete All Data",
       "trash": "Empty Trash"
@@ -95,6 +96,7 @@
   },
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
-    "search": "Search"
+    "search": "Search",
+    "addTag": "Add Tag"
   }
 }

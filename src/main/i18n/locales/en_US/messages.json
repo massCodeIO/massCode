@@ -41,7 +41,6 @@
   "special": {
     "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}} donate {{-tagEnd}}. It will inspire me to continue development on the project.",
     "unsponsored": "Unsponsored"
-
   },
   "update": {
     "available": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",

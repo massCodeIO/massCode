@@ -262,8 +262,8 @@ async function emptyTrash() {
   const { confirm } = useDialog()
 
   const isConfirmed = await confirm({
-    title: i18n.t('dialog:emptyTrash'),
-    content: i18n.t('dialog:noUndo'),
+    title: i18n.t('messages:confirm.emptyTrash'),
+    content: i18n.t('messages:warning.noUndo'),
   })
 
   if (isConfirmed) {

@@ -51,13 +51,13 @@ function onClickTab(index: number) {
       />
       <div class="ml-2 flex">
         <UiActionButton
-          :tooltip="i18n.t('addDescription')"
+          :tooltip="i18n.t('action.add.description')"
           @click="isShowDescription = !isShowDescription"
         >
           <Type class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
-          :tooltip="i18n.t('newFragment')"
+          :tooltip="i18n.t('action.new.fragment')"
           @click="onAddFragment"
         >
           <Plus class="h-4 w-4" />

@@ -77,8 +77,8 @@ async function onDeleteFolder() {
   )?.name
 
   const isConfirmed = await confirm({
-    title: i18n.t('dialog:deleteConfirm', { name: folderName }),
-    description: i18n.t('dialog:allSnippetsMoveToTrash'),
+    title: i18n.t('messages:confirm.delete', { name: folderName }),
+    description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
   })
 
   if (isConfirmed && contextNodeId.value) {
@@ -152,14 +152,14 @@ provide(treeKeys, {
       </ContextMenu.Trigger>
       <ContextMenu.Content>
         <ContextMenu.Item @click="createFolderAndSelect">
-          {{ i18n.t("newFolder") }}
+          {{ i18n.t("action.new.folder") }}
         </ContextMenu.Item>
         <ContextMenu.Separator />
         <ContextMenu.Item @click="onRenameFolder">
-          {{ i18n.t("rename") }}
+          {{ i18n.t("action.rename") }}
         </ContextMenu.Item>
         <ContextMenu.Item @click="onDeleteFolder">
-          {{ i18n.t("delete") }}
+          {{ i18n.t("action.delete.common") }}
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

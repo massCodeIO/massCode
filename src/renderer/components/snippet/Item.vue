@@ -114,10 +114,10 @@ async function onDelete() {
 
     if (isAllSoftDeleted) {
       const isConfirmed = await confirm({
-        title: i18n.t('dialog:deleteConfirmMultipleSnippets', {
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
           count: selectedSnippetIds.value.length,
         }),
-        content: i18n.t('dialog:noUndo'),
+        content: i18n.t('messages:warning.noUndo'),
       })
 
       if (isConfirmed) {
@@ -136,10 +136,10 @@ async function onDelete() {
   }
   else if (props.snippet.isDeleted) {
     const isConfirmed = await confirm({
-      title: i18n.t('dialog:deleteConfirmPermanently', {
+      title: i18n.t('messages:confirm.deletePermanently', {
         name: props.snippet.name,
       }),
-      content: i18n.t('dialog:noUndo'),
+      content: i18n.t('messages:warning.noUndo'),
     })
 
     if (isConfirmed) {
@@ -262,8 +262,8 @@ onClickOutside(snippetRef, () => {
           <ContextMenu.Item @click="onAddFavorites">
             {{
               isFavoritesLibrarySelected
-                ? i18n.t("removeFromFavorites")
-                : i18n.t("addToFavorites")
+                ? i18n.t("action.remove.fromFavorites")
+                : i18n.t("action.add.toFavorites")
             }}
           </ContextMenu.Item>
           <ContextMenu.Separator />
@@ -271,21 +271,21 @@ onClickOutside(snippetRef, () => {
             :disabled="isDuplicateDisabled"
             @click="onDuplicate"
           >
-            {{ i18n.t("duplicate") }}
+            {{ i18n.t("action.duplicate") }}
           </ContextMenu.Item>
         </template>
         <ContextMenu.Item @click="onDelete">
           {{
             state.libraryFilter === LibraryFilter.Trash
-              ? i18n.t("delete")
-              : i18n.t("moveToTrash")
+              ? i18n.t("action.delete.common")
+              : i18n.t("action.move.toTrash")
           }}
         </ContextMenu.Item>
         <ContextMenu.Item
           v-if="isTrashLibrarySelectd"
           @click="onRestore"
         >
-          {{ i18n.t("restore") }}
+          {{ i18n.t("action.restore") }}
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>

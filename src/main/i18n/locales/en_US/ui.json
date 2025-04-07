@@ -53,7 +53,8 @@
       "fromFavorites": "Remove from Favorites"
     },
     "reload": {
-      "storage": "Reload Storage"
+      "storage": "Reload Storage",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Delete",

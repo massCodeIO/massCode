@@ -16,6 +16,11 @@ const routes = [
         name: 'preferences/storage',
         component: () => import('@/components/preferences/Storage.vue'),
       },
+      {
+        path: 'language',
+        name: 'preferences/language',
+        component: () => import('@/components/preferences/Language.vue'),
+      },
     ],
   },
 ]

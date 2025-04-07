@@ -36,7 +36,8 @@
         "All folders will be first level as JSON file (below v2.1) does not represent nested folders.",
         "Snippets with unsupported languages will be set to default Plain Text."
       ]
-    }
+    },
+    "language": "To apply language changes, you need to reload the app."
   },
   "special": {
     "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}} donate {{-tagEnd}}. It will inspire me to continue development on the project.",

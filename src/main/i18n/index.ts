@@ -5,7 +5,10 @@ import Backend from 'i18next-fs-backend'
 import { store } from '../store'
 import { language } from './language'
 
-const lng = store.preferences.get('language')
+const storedLng = store.preferences.get('language')
+
+const lng
+  = storedLng && Object.keys(language).includes(storedLng) ? storedLng : 'en_US'
 
 i18next.use(Backend).init({
   fallbackLng: 'en_US',

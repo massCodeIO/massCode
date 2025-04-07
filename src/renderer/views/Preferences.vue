@@ -1,18 +1,22 @@
 <script setup lang="ts">
+import { i18n } from '@/electron'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 
-function isActiveRoute(name: string): boolean {
-  return route.name === name
-}
+const isActiveRoute = computed(() => {
+  return (name: string) => route.name === name
+})
 
 const nav = [
   {
-    label: 'Storage',
+    label: i18n.t('preferences:storage.label'),
     name: 'preferences/storage',
-    isActive: isActiveRoute('preferences/storage'),
+  },
+  {
+    label: i18n.t('preferences:language.label'),
+    name: 'preferences/language',
   },
 ]
 </script>
@@ -32,7 +36,7 @@ const nav = [
         >
           <UiMenuItem
             :label="item.label"
-            :is-active="item.isActive"
+            :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
       </PerfectScrollbar>

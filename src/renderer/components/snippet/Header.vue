@@ -1,23 +1,10 @@
 <script setup lang="ts">
-import { useApp, useSnippets } from '@/composables'
+import { useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
-const {
-  isSearch,
-  searchQuery,
-  selectFirstSnippet,
-  createSnippet,
-  clearSearch,
-  search,
-} = useSnippets()
-const { isFocusedSnippetName } = useApp()
-
-async function onAddSnippet() {
-  await createSnippet()
-  selectFirstSnippet()
-  isFocusedSnippetName.value = true
-}
+const { isSearch, searchQuery, createSnippetAndSelect, clearSearch, search }
+  = useSnippets()
 
 watch(searchQuery, (v) => {
   if (v) {
@@ -51,7 +38,7 @@ watch(searchQuery, (v) => {
       <UiActionButton
         v-if="!isSearch"
         :tooltip="i18n.t('action.new.snippet')"
-        @click="onAddSnippet"
+        @click="createSnippetAndSelect"
       >
         <Plus class="h-4 w-4" />
       </UiActionButton>

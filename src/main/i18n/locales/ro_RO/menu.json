@@ -31,6 +31,10 @@
       "snippets": "Colecție de Snippets"
     }
   },
+  "edit": {
+    "label": "Editare",
+    "find": "Căutare"
+  },
   "view": {
     "label": "Vizualizare",
     "sortBy": {

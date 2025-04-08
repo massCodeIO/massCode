@@ -31,6 +31,10 @@
       "snippets": "Συλλογή Snippets"
     }
   },
+  "edit": {
+    "label": "Επεξεργασία",
+    "find": "Εύρεση"
+  },
   "view": {
     "label": "Προβολή",
     "sortBy": {

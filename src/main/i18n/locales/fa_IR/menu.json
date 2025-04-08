@@ -31,6 +31,10 @@
       "snippets": "مجموعه Snippet"
     }
   },
+  "edit": {
+    "label": "ویرایش",
+    "find": "جستجو"
+  },
   "view": {
     "label": "نمایش",
     "sortBy": {

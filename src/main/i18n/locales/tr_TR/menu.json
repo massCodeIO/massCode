@@ -31,6 +31,10 @@
       "snippets": "Snippet Koleksiyonu"
     }
   },
+  "edit": {
+    "label": "Düzenle",
+    "find": "Bul"
+  },
   "view": {
     "label": "Görünüm",
     "sortBy": {

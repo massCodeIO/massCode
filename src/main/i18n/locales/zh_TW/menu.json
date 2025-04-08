@@ -31,6 +31,10 @@
       "snippets": "程式碼片段集合"
     }
   },
+  "edit": {
+    "label": "編輯",
+    "find": "尋找"
+  },
   "view": {
     "label": "檢視",
     "sortBy": {

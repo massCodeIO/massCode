@@ -41,6 +41,10 @@
     },
     "compactMode": "Compact Mode"
   },
+  "edit": {
+    "label": "Edit",
+    "find": "Find"
+  },
   "editor": {
     "label": "Editor",
     "copy": "Copy Snippet to Clipboard",

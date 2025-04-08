@@ -31,6 +31,10 @@
       "snippets": "代码片段集合"
     }
   },
+  "edit": {
+    "label": "编辑",
+    "find": "查找"
+  },
   "view": {
     "label": "视图",
     "sortBy": {

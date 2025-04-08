@@ -3,7 +3,7 @@ import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Type } from 'lucide-vue-next'
 
-const { selectedSnippet, createSnippetContent } = useSnippets()
+const { selectedSnippet, addFragment } = useSnippets()
 const { isFocusedSnippetName, state } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
@@ -23,14 +23,6 @@ const name = computed({
     })
   },
 })
-
-async function onAddFragment() {
-  const index = await createSnippetContent(selectedSnippet.value!.id)
-
-  if (index) {
-    state.snippetContentIndex = index
-  }
-}
 
 function onClickTab(index: number) {
   state.snippetContentIndex = index
@@ -58,7 +50,7 @@ function onClickTab(index: number) {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.new.fragment')"
-          @click="onAddFragment"
+          @click="addFragment"
         >
           <Plus class="h-4 w-4" />
         </UiActionButton>

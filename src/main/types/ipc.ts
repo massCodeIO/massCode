@@ -2,7 +2,16 @@ import type { OpenDialogOptions } from 'electron'
 
 export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
-type MainMenuAction = 'goto-preferences' | 'open-dialog' | 'format'
+type MainMenuAction =
+  | 'add-description'
+  | 'find'
+  | 'format'
+  | 'goto-preferences'
+  | 'new-folder'
+  | 'new-fragment'
+  | 'new-snippet'
+  | 'open-dialog'
+
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
 type SystemAction = 'reload'
 type PrettierAction = 'format'

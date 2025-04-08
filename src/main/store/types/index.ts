@@ -1,5 +1,5 @@
 import type ElectronStore from 'electron-store'
-import type { Settings as EditorSettings } from '~/renderer/composables/types/editor'
+import type { Settings as EditorSettings } from '../../../renderer/composables/types/editor'
 
 export interface AppStore {
   bounds: object

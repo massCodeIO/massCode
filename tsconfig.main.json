@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "rootDir": "src/main",
     "module": "CommonJS",
     "strict": true,
     "inlineSources": true,

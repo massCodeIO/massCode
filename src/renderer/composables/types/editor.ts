@@ -7,6 +7,5 @@ export interface Settings {
   semi: boolean
   singleQuote: boolean
   highlightLine: boolean
-  highlightGutter: boolean
   matchBrackets: boolean
 }

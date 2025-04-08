@@ -26,6 +26,11 @@ const routes = [
         name: 'preferences/appearance',
         component: () => import('@/components/preferences/Appearance.vue'),
       },
+      {
+        path: 'editor',
+        name: 'preferences/editor',
+        component: () => import('@/components/preferences/Editor.vue'),
+      },
     ],
   },
 ]

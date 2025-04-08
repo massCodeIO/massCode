@@ -1,22 +1,20 @@
 import type { Settings } from './types/editor'
+import { store } from '@/electron'
 
 const cursorPosition = reactive({
   row: 0,
   column: 0,
 })
 
-const settings = reactive<Settings>({
-  fontSize: 13,
-  fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
-  wrap: false,
-  tabSize: 2,
-  trailingComma: 'all',
-  semi: false,
-  singleQuote: false,
-  highlightLine: false,
-  highlightGutter: true,
-  matchBrackets: true,
-})
+const settings = reactive<Settings>(store.preferences.get('editor'))
+
+watch(
+  settings,
+  () => {
+    store.preferences.set('editor', JSON.parse(JSON.stringify(settings)))
+  },
+  { deep: true },
+)
 
 export function useEditor() {
   return {

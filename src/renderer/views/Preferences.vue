@@ -15,6 +15,10 @@ const nav = [
     name: 'preferences/storage',
   },
   {
+    label: i18n.t('preferences:editor.label'),
+    name: 'preferences/editor',
+  },
+  {
     label: i18n.t('preferences:language.label'),
     name: 'preferences/language',
   },
@@ -27,7 +31,7 @@ const nav = [
 
 <template>
   <LayoutTwoColumn
-    title="Preferences"
+    :title="i18n.t('preferences:label')"
     @back="() => router.push({ name: 'main' })"
   >
     <template #left>
@@ -46,7 +50,7 @@ const nav = [
       </PerfectScrollbar>
     </template>
     <template #right>
-      <PerfectScrollbar class="h-full px-5">
+      <PerfectScrollbar class="h-full px-5 pb-5">
         <RouterView />
       </PerfectScrollbar>
     </template>

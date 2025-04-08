@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
 import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
@@ -110,13 +110,13 @@ async function init() {
   })
 }
 
-function setValue(value: string) {
+function setValue(value: string, programmatic = true) {
   if (!editor)
     return
 
   const cursor = editor.getCursor()
 
-  isProgrammaticChange.value = true
+  isProgrammaticChange.value = programmatic
   editor?.setValue(value)
 
   nextTick(() => {
@@ -130,6 +130,71 @@ function setValue(value: string) {
 function setLanguage(language: Language) {
   editor?.setOption('mode', language)
 }
+
+async function format() {
+  const availableLang: Language[] = [
+    'css',
+    'dockerfile',
+    'gitignore',
+    'graphqlschema',
+    'html',
+    'ini',
+    'jade',
+    'java',
+    'javascript',
+    'json',
+    'json5',
+    'less',
+    'markdown',
+    'php',
+    'properties',
+    'sass',
+    'scss',
+    'sh',
+    'toml',
+    'typescript',
+    'xml',
+    'yaml',
+  ]
+
+  if (
+    selectedSnippetContent.value?.value
+    && !selectedSnippetContent.value?.language
+  ) {
+    return
+  }
+
+  if (
+    !availableLang.includes(selectedSnippetContent.value?.language as Language)
+  )
+    return
+
+  const lang = selectedSnippetContent.value?.language as Language
+  const value = selectedSnippetContent.value?.value
+  let parser = lang as string
+
+  const shellLike = ['dockerfile', 'gitignore', 'properties', 'ini']
+
+  if (lang === 'javascript')
+    parser = 'babel'
+  if (lang === 'graphqlschema')
+    parser = 'graphql'
+  if (shellLike.includes(lang))
+    parser = 'sh'
+
+  try {
+    const formatted = await ipc.invoke('prettier:format', {
+      text: value,
+      parser,
+    })
+    setValue(formatted, false)
+  }
+  catch (err) {
+    console.error(err)
+  }
+}
+
+ipc.on('main-menu:format', format)
 
 onMounted(() => {
   init()

@@ -123,6 +123,14 @@ const editMenuItems: MenuConfig[] = [
   },
 ]
 
+const editorMenuItems: MenuConfig[] = [
+  {
+    label: i18n.t('menu:editor.format'),
+    accelerator: 'Shift+CommandOrControl+F',
+    click: () => send('main-menu:format'),
+  },
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -135,6 +143,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     role: 'editMenu',
     submenu: createPlatformMenuItems(editMenuItems),
+  },
+  {
+    label: i18n.t('menu:editor.label'),
+    submenu: createPlatformMenuItems(editorMenuItems),
   },
   {
     role: 'windowMenu',

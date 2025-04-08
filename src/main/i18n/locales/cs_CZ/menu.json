@@ -31,6 +31,10 @@
       "snippets": "Kolekce snippetů"
     }
   },
+  "edit": {
+    "label": "Upravit",
+    "find": "Najít"
+  },
   "view": {
     "label": "Zobrazení",
     "sortBy": {

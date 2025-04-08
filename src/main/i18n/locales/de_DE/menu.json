@@ -31,6 +31,10 @@
       "snippets": "Snippet-Sammlung"
     }
   },
+  "edit": {
+    "label": "Bearbeiten",
+    "find": "Suchen"
+  },
   "view": {
     "label": "Ansicht",
     "sortBy": {

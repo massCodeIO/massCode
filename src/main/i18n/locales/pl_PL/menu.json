@@ -31,6 +31,10 @@
       "snippets": "Kolekcja fragmentów"
     }
   },
+  "edit": {
+    "label": "Edycja",
+    "find": "Znajdź"
+  },
   "view": {
     "label": "Widok",
     "sortBy": {

@@ -31,6 +31,10 @@
       "snippets": "スニペットコレクション"
     }
   },
+  "edit": {
+    "label": "編集",
+    "find": "検索"
+  },
   "view": {
     "label": "表示",
     "sortBy": {

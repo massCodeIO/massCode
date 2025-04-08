@@ -65,6 +65,9 @@ importers:
       onigasm:
         specifier: ^2.2.5
         version: 2.2.5
+      prettier:
+        specifier: ^3.5.3
+        version: 3.5.3
       radix-vue:
         specifier: ^1.9.17
         version: 1.9.17(vue@3.5.13(typescript@5.7.3))
@@ -141,12 +144,9 @@ importers:
       nodemon:
         specifier: ^3.1.9
         version: 3.1.9
-      prettier:
-        specifier: ^3.4.2
-        version: 3.4.2
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
-        version: 0.6.11(prettier@3.4.2)
+        version: 0.6.11(prettier@3.5.3)
       sass:
         specifier: ^1.85.1
         version: 1.85.1
@@ -3500,8 +3500,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.4.2:
-    resolution: {integrity: sha512-e9MewbtFo+Fevyuxn/4rrcDAaq0IYxPGLvObpQjiZBMAzB9IGmzlnG9RZy3FFas+eBMu2vA0CszMeduow5dIuQ==}
+  prettier@3.5.3:
+    resolution: {integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -8063,11 +8063,11 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.6.11(prettier@3.4.2):
+  prettier-plugin-tailwindcss@0.6.11(prettier@3.5.3):
     dependencies:
-      prettier: 3.4.2
+      prettier: 3.5.3
 
-  prettier@3.4.2: {}
+  prettier@3.5.3: {}
 
   proc-log@2.0.1: {}
 

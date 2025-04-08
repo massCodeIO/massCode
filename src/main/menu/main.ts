@@ -93,6 +93,32 @@ if (isDev) {
   })
 }
 
+const fileMenuItems: MenuConfig[] = [
+  {
+    label: i18n.t('action.new.snippet'),
+    click: () => send('main-menu:new-snippet'),
+    accelerator: 'CommandOrControl+N',
+  },
+  {
+    label: i18n.t('action.new.fragment'),
+    click: () => send('main-menu:new-fragment'),
+    accelerator: 'CommandOrControl+T',
+  },
+  {
+    label: i18n.t('action.add.description'),
+    click: () => send('main-menu:add-description'),
+    accelerator: 'CommandOrControl+Shift+T',
+  },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('action.new.folder'),
+    click: () => send('main-menu:new-folder'),
+    accelerator: 'CommandOrControl+Shift+N',
+  },
+]
+
 const editMenuItems: MenuConfig[] = [
   {
     role: 'undo',
@@ -121,6 +147,14 @@ const editMenuItems: MenuConfig[] = [
   {
     role: 'selectAll',
   },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:edit.find'),
+    accelerator: 'CommandOrControl+F',
+    click: () => send('main-menu:find'),
+  },
 ]
 
 const editorMenuItems: MenuConfig[] = [
@@ -135,6 +169,11 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
     submenu: createPlatformMenuItems(appMenuItems),
+  },
+  {
+    // role: 'fileMenu',
+    label: 'File',
+    submenu: createPlatformMenuItems(fileMenuItems),
   },
   {
     role: 'editMenu',

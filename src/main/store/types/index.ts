@@ -1,4 +1,5 @@
 import type ElectronStore from 'electron-store'
+import type { Settings as EditorSettings } from '~/renderer/composables/types/editor'
 
 export interface AppStore {
   bounds: object
@@ -23,6 +24,7 @@ export interface PreferencesStore {
   apiPort: number
   language: string
   theme: 'light' | 'dark' | 'auto'
+  editor: EditorSettings
 }
 
 export interface Store {

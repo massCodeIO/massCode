@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const attrs = useAttrs()
 
-const model = defineModel<string>()
+const model = defineModel<string | number>()
 
 function clear() {
   model.value = ''

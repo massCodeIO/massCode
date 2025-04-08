@@ -137,10 +137,6 @@ const menuItems: MenuItemConstructorOptions[] = [
     submenu: createPlatformMenuItems(appMenuItems),
   },
   {
-    label: i18n.t('menu:help.label'),
-    submenu: createPlatformMenuItems(helpMenuItems),
-  },
-  {
     role: 'editMenu',
     submenu: createPlatformMenuItems(editMenuItems),
   },
@@ -150,6 +146,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   },
   {
     role: 'windowMenu',
+  },
+  {
+    label: i18n.t('menu:help.label'),
+    submenu: createPlatformMenuItems(helpMenuItems),
   },
 ]
 

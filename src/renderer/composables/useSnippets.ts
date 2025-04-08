@@ -10,7 +10,8 @@ import { LibraryFilter } from './types'
 import { useApp } from './useApp'
 import { useDialog } from './useDialog'
 
-const { state, saveStateSnapshot, restoreStateSnapshot } = useApp()
+const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
+  = useApp()
 
 const selectedSnippetIds = ref<number[]>([])
 const lastSelectedSnippetId = ref<number | undefined>()
@@ -127,6 +128,12 @@ async function createSnippet() {
   }
 }
 
+async function createSnippetAndSelect() {
+  await createSnippet()
+  selectFirstSnippet()
+  isFocusedSnippetName.value = true
+}
+
 async function duplicateSnippet(snippetId: number) {
   const snippet = snippets.value?.find(s => s.id === snippetId)
 
@@ -178,6 +185,18 @@ async function createSnippetContent(snippetId: number) {
   }
   catch (error) {
     console.error(error)
+  }
+}
+
+async function addFragment() {
+  if (!selectedSnippet.value) {
+    return
+  }
+
+  const index = await createSnippetContent(selectedSnippet.value.id)
+
+  if (index) {
+    state.snippetContentIndex = index
   }
 }
 
@@ -390,6 +409,8 @@ export function useSnippets() {
     isRestoreStateBlocked,
     isSearch,
     lastSelectedSnippetId,
+    addFragment,
+    createSnippetAndSelect,
     search,
     searchQuery,
     selectedSnippet,

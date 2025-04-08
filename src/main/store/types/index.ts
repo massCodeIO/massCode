@@ -1,5 +1,4 @@
 import type ElectronStore from 'electron-store'
-import type { Settings as EditorSettings } from '../../../renderer/composables/types/editor'
 
 export interface AppStore {
   bounds: object
@@ -16,6 +15,18 @@ export interface AppStore {
     libraryFilter?: string
   }
   isAutoMigratedFromJson: boolean
+}
+
+export interface EditorSettings {
+  fontSize: number
+  fontFamily: string
+  wrap: boolean
+  tabSize: number
+  trailingComma: 'all' | 'none' | 'es5'
+  semi: boolean
+  singleQuote: boolean
+  highlightLine: boolean
+  matchBrackets: boolean
 }
 
 export interface PreferencesStore {

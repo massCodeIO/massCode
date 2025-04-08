@@ -56,14 +56,21 @@ const appMenuItems: MenuConfig[] = [
     role: 'hide',
   },
   {
-    label: i18n.t('menu:app.hideOther'),
     platforms: ['darwin'],
     role: 'hideOthers',
   },
   {
-    label: i18n.t('menu:app.showAll'),
     platforms: ['darwin'],
     role: 'unhide',
+  },
+  {
+    type: 'separator' as any,
+    platforms: ['darwin'],
+  },
+  {
+    label: i18n.t('menu:app.quit'),
+    platforms: ['darwin'],
+    role: 'quit',
   },
 ]
 
@@ -86,6 +93,36 @@ if (isDev) {
   })
 }
 
+const editMenuItems: MenuConfig[] = [
+  {
+    role: 'undo',
+  },
+  {
+    role: 'redo',
+  },
+  {
+    type: 'separator',
+  },
+  {
+    role: 'cut',
+  },
+  {
+    role: 'copy',
+  },
+  {
+    role: 'paste',
+  },
+  {
+    role: 'delete',
+  },
+  {
+    type: 'separator',
+  },
+  {
+    role: 'selectAll',
+  },
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -94,6 +131,13 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:help.label'),
     submenu: createPlatformMenuItems(helpMenuItems),
+  },
+  {
+    role: 'editMenu',
+    submenu: createPlatformMenuItems(editMenuItems),
+  },
+  {
+    role: 'windowMenu',
   },
 ]
 

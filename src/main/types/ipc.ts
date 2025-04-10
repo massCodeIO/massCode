@@ -11,6 +11,9 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-snippet'
   | 'open-dialog'
+  | 'font-size-increase'
+  | 'font-size-decrease'
+  | 'font-size-reset'
 
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
 type SystemAction = 'reload'

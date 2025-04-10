@@ -86,6 +86,18 @@ async function init() {
 
   editor.on('scroll', hideScrollbar)
 
+  ipc.on('main-menu:font-size-increase', () => {
+    settings.fontSize++
+  })
+
+  ipc.on('main-menu:font-size-decrease', () => {
+    settings.fontSize--
+  })
+
+  ipc.on('main-menu:font-size-reset', () => {
+    settings.fontSize = 13
+  })
+
   watch(selectedSnippetContent, (v) => {
     nextTick(() => {
       setValue(v?.value || '')
@@ -108,6 +120,15 @@ async function init() {
       editor?.setOption('theme', 'neo')
     }
   })
+
+  watch(
+    () => settings.fontSize,
+    () => {
+      nextTick(() => {
+        editor?.refresh()
+      })
+    },
+  )
 }
 
 function setValue(value: string, programmatic = true) {

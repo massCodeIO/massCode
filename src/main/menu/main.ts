@@ -163,6 +163,24 @@ const editorMenuItems: MenuConfig[] = [
     accelerator: 'Shift+CommandOrControl+F',
     click: () => send('main-menu:format'),
   },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeIncrease'),
+    accelerator: 'CommandOrControl+=',
+    click: () => send('main-menu:font-size-increase'),
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeDecrease'),
+    accelerator: 'CommandOrControl+-',
+    click: () => send('main-menu:font-size-decrease'),
+  },
+  {
+    label: i18n.t('menu:editor.fontSizeReset'),
+    accelerator: 'CommandOrControl+0',
+    click: () => send('main-menu:font-size-reset'),
+  },
 ]
 
 const menuItems: MenuItemConstructorOptions[] = [

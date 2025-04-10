@@ -4,16 +4,17 @@ export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
 type MainMenuAction =
   | 'add-description'
+  | 'copy-snippet'
   | 'find'
+  | 'font-size-decrease'
+  | 'font-size-increase'
+  | 'font-size-reset'
   | 'format'
   | 'goto-preferences'
   | 'new-folder'
   | 'new-fragment'
   | 'new-snippet'
   | 'open-dialog'
-  | 'font-size-increase'
-  | 'font-size-decrease'
-  | 'font-size-reset'
 
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
 type SystemAction = 'reload'

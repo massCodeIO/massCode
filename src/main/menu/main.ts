@@ -159,6 +159,11 @@ const editMenuItems: MenuConfig[] = [
 
 const editorMenuItems: MenuConfig[] = [
   {
+    label: i18n.t('menu:editor.copy'),
+    click: () => send('main-menu:copy-snippet'),
+    accelerator: 'CommandOrControl+Shift+C',
+  },
+  {
     label: i18n.t('menu:editor.format'),
     accelerator: 'Shift+CommandOrControl+F',
     click: () => send('main-menu:format'),

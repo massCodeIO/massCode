@@ -2,7 +2,7 @@
 import type { Language } from '@/components/editor/types'
 import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { useDark, useDebounceFn } from '@vueuse/core'
+import { useClipboard, useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
@@ -97,6 +97,11 @@ async function init() {
 
   ipc.on('main-menu:font-size-reset', () => {
     settings.fontSize = EDITOR_DEFAULTS.fontSize
+  })
+
+  ipc.on('main-menu:copy-snippet', () => {
+    const { copy } = useClipboard({ source: editor?.getValue() || '' })
+    copy()
   })
 
   watch(selectedSnippetContent, (v) => {

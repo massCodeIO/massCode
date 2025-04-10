@@ -8,7 +8,7 @@ export async function format(source: string, parser: string) {
 
   return prettier.format(source, {
     parser,
-    tabWidth: editor.tabSize,
+    tabWidth: Number(editor.tabSize),
     trailingComma: editor.trailingComma,
     semi: editor.semi,
     singleQuote: editor.singleQuote,

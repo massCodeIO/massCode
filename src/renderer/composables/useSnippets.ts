@@ -1,17 +1,17 @@
 import type {
-  SnippetContentsAdd,
+  SnippetContentsUpdate,
   SnippetsQuery,
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
 import { i18n } from '@/electron'
 import { api } from '~/renderer/services/api'
+import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
-import { useApp } from './useApp'
-import { useDialog } from './useDialog'
 
 const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
   = useApp()
+const { folders } = useFolders()
 
 const selectedSnippetIds = ref<number[]>([])
 const lastSelectedSnippetId = ref<number | undefined>()
@@ -103,6 +103,8 @@ async function getSnippets(query?: SnippetsQuery) {
 
 async function createSnippet() {
   try {
+    const folder = folders.value?.find(f => f.id === state.folderId)
+
     const { data } = await api.snippets.postSnippets({
       name: i18n.t('snippet.untitled'),
       folderId: state.folderId || null,
@@ -111,7 +113,7 @@ async function createSnippet() {
     await api.snippets.postSnippetsByIdContents(String(data.id), {
       label: `${i18n.t('fragment')} 1`,
       value: '',
-      language: 'plain_text',
+      language: folder?.defaultLanguage || 'plain_text',
     })
 
     if (
@@ -215,7 +217,7 @@ async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
 async function updateSnippetContent(
   snippetId: number,
   contentId: number,
-  data: SnippetContentsAdd,
+  data: SnippetContentsUpdate,
 ) {
   await api.snippets.patchSnippetsByIdContentsByContentId(
     String(snippetId),

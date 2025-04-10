@@ -2,6 +2,7 @@
 import type { Ref } from 'vue'
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { Node } from './types'
+import { languages } from '@/components/editor/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
@@ -28,8 +29,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const { createFolderAndSelect, deleteFolder, renameFolderId, folders }
-  = useFolders()
+const {
+  createFolderAndSelect,
+  deleteFolder,
+  renameFolderId,
+  folders,
+  updateFolder,
+} = useFolders()
 const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
 
@@ -105,6 +111,16 @@ function onRenameFolder() {
   }, 100)
 }
 
+function onSelectLanguage(language: string) {
+  if (!contextNodeId.value) {
+    return
+  }
+
+  updateFolder(contextNodeId.value, {
+    defaultLanguage: language,
+  })
+}
+
 provide(treeKeys, {
   clickNode,
   contextMenu,
@@ -161,6 +177,25 @@ provide(treeKeys, {
         <ContextMenu.Item @click="onDeleteFolder">
           {{ i18n.t("action.delete.common") }}
         </ContextMenu.Item>
+        <ContextMenu.Separator />
+        <ContextMenu.Sub>
+          <ContextMenu.SubTrigger>
+            {{ i18n.t("action.defaultLanguage") }}
+          </ContextMenu.SubTrigger>
+          <ContextMenu.SubContent>
+            <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+              <div class="max-h-[250px]">
+                <ContextMenu.Item
+                  v-for="language in languages"
+                  :key="language.value"
+                  @click="onSelectLanguage(language.value)"
+                >
+                  {{ language.name }}
+                </ContextMenu.Item>
+              </div>
+            </PerfectScrollbar>
+          </ContextMenu.SubContent>
+        </ContextMenu.Sub>
       </ContextMenu.Content>
     </ContextMenu.Root>
   </PerfectScrollbar>

@@ -1,6 +1,7 @@
 import type { PreferencesStore } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
+import { EDITOR_DEFAULTS } from '../constants'
 
 const isWin = platform() === 'win32'
 
@@ -17,16 +18,6 @@ export default new Store<PreferencesStore>({
     apiPort: 4321,
     language: 'en_US',
     theme: 'auto',
-    editor: {
-      fontSize: 13,
-      fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
-      wrap: false,
-      tabSize: 2,
-      trailingComma: 'all',
-      semi: false,
-      singleQuote: false,
-      highlightLine: false,
-      matchBrackets: true,
-    },
+    editor: EDITOR_DEFAULTS,
   },
 })

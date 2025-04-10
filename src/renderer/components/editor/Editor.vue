@@ -4,6 +4,7 @@ import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
+import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/search/search'
@@ -95,7 +96,7 @@ async function init() {
   })
 
   ipc.on('main-menu:font-size-reset', () => {
-    settings.fontSize = 13
+    settings.fontSize = EDITOR_DEFAULTS.fontSize
   })
 
   watch(selectedSnippetContent, (v) => {

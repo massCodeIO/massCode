@@ -13,6 +13,7 @@ const highlightedSnippetIds = ref<Set<number>>(new Set())
 const highlightedTagId = ref<number>()
 
 const isFocusedSnippetName = ref(false)
+const isShowMarkdown = ref(false)
 
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
@@ -62,5 +63,6 @@ export function useApp() {
     snippetListWidth,
     state,
     stateSnapshots,
+    isShowMarkdown,
   }
 }

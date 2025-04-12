@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
-import { useEditor, useSnippets, useSnippetUpdate } from '@/composables'
+import {
+  useApp,
+  useEditor,
+  useSnippets,
+  useSnippetUpdate,
+} from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
@@ -19,6 +24,7 @@ import 'codemirror/theme/oceanic-next.css'
 const { settings, cursorPosition } = useEditor()
 const { selectedSnippetContent, selectedSnippet, isEmpty, selectedSnippetIds }
   = useSnippets()
+const { isShowMarkdown } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -223,6 +229,21 @@ async function format() {
 
 ipc.on('main-menu:format', format)
 
+// если isShowMarkdown или !isEmpty && selectedSnippetIds.length <= 1
+const isShowHeader = computed(() => {
+  return (
+    isShowMarkdown.value
+    || (!isEmpty.value && selectedSnippetIds.value.length <= 1)
+  )
+})
+// если !isShowMarkdown или !isEmpty && selectedSnippetIds.length <= 1
+const isShowEditor = computed(() => {
+  return (
+    !isShowMarkdown.value
+    && (!isEmpty.value || selectedSnippetIds.value.length > 1)
+  )
+})
+
 onMounted(() => {
   init()
 })
@@ -233,13 +254,14 @@ onMounted(() => {
     data-editor
     class="mt-[var(--title-bar-height)] grid grid-rows-[auto_1fr_auto] overflow-hidden"
   >
-    <EditorHeader v-if="!isEmpty && selectedSnippetIds.length <= 1" />
+    <EditorHeader v-if="isShowHeader" />
     <div
-      v-show="!isEmpty && selectedSnippetIds.length <= 1"
+      v-show="isShowEditor"
       ref="editorRef"
       class="overflow-auto"
     />
-    <EditorFooter v-if="!isEmpty && selectedSnippetIds.length <= 1" />
+    <EditorMarkdown v-if="isShowMarkdown" />
+    <EditorFooter v-if="isShowEditor" />
     <div
       v-if="isEmpty"
       class="row-span-full flex items-center justify-center"

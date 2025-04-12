@@ -51,8 +51,6 @@
     "format": "Formater",
     "previewCode": "Aperçu du code",
     "previewScreenshot": "Aperçu de la capture d'écran",
-    "previewMarkdown": "Aperçu Markdown",
-    "previewMindmap": "Aperçu de la carte mentale",
     "fontSizeIncrease": "Augmenter la taille de la police",
     "fontSizeDecrease": "Diminuer la taille de la police",
     "fontSizeReset": "Réinitialiser la taille de la police"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Mode présentation",
-    "preview": "Aperçu"
+    "preview": "Aperçu",
+    "previewMarkdown": "Aperçu Markdown",
+    "previewMindmap": "Aperçu de la carte mentale"
   },
   "history": {
     "label": "Historique",

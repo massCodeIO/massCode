@@ -15,9 +15,10 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-snippet'
   | 'open-dialog'
+  | 'preview-markdown'
 
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
-type SystemAction = 'reload'
+type SystemAction = 'reload' | 'open-external'
 type PrettierAction = 'format'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>

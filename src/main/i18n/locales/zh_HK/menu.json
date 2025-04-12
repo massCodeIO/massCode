@@ -51,8 +51,6 @@
     "format": "格式化",
     "previewCode": "預覽程式碼",
     "previewScreenshot": "預覽截圖",
-    "previewMarkdown": "預覽 Markdown",
-    "previewMindmap": "預覽思維導圖",
     "fontSizeIncrease": "增大字體",
     "fontSizeDecrease": "減小字體",
     "fontSizeReset": "重置字體大小"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "演示模式",
-    "preview": "預覽"
+    "preview": "預覽",
+    "previewMarkdown": "預覽 Markdown",
+    "previewMindmap": "預覽思維導圖"
   },
   "history": {
     "label": "歷史",

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { Plus, Type } from 'lucide-vue-next'
+import { Eye, Plus, Type } from 'lucide-vue-next'
 
-const { selectedSnippet, addFragment } = useSnippets()
-const { isFocusedSnippetName, state } = useApp()
+const { selectedSnippet, selectedSnippetContent, addFragment } = useSnippets()
+const { isFocusedSnippetName, state, isShowMarkdown } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
@@ -24,6 +24,10 @@ const name = computed({
   },
 })
 
+const isShowMarkdownAction = computed(
+  () => selectedSnippetContent.value?.language === 'markdown',
+)
+
 function onClickTab(index: number) {
   state.snippetContentIndex = index
 }
@@ -42,6 +46,18 @@ function onClickTab(index: number) {
         @blur="isFocusedSnippetName = false"
       />
       <div class="ml-2 flex">
+        <UiActionButton
+          v-if="isShowMarkdownAction"
+          :tooltip="
+            isShowMarkdown
+              ? `${i18n.t('action.hide')} ${i18n.t('menu:markdown.previewMarkdown')}`
+              : i18n.t('menu:markdown.previewMarkdown')
+          "
+          :active="isShowMarkdown"
+          @click="isShowMarkdown = !isShowMarkdown"
+        >
+          <Eye class="h-3 w-3" />
+        </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.add.description')"
           @click="isShowDescription = !isShowDescription"

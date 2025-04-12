@@ -188,6 +188,14 @@ const editorMenuItems: MenuConfig[] = [
   },
 ]
 
+const markdownMenuItems: MenuConfig[] = [
+  {
+    label: i18n.t('menu:markdown.preview'),
+    click: () => send('main-menu:preview-markdown'),
+    accelerator: 'CommandOrControl+Shift+M',
+  },
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -205,6 +213,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:editor.label'),
     submenu: createPlatformMenuItems(editorMenuItems),
+  },
+  {
+    label: i18n.t('menu:markdown.label'),
+    submenu: createPlatformMenuItems(markdownMenuItems),
   },
   {
     role: 'windowMenu',

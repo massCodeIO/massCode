@@ -35,6 +35,8 @@ body {
 
   --color-tooltip: oklch(20% 0 0);
   --color-tooltip-fg: oklch(85% 0 0);
+
+  --color-markdown-code: oklch(97% 0 0);
 }
 
 
@@ -59,5 +61,7 @@ html.dark {
   --color-scrollbar: oklch(100% 0 0 / 0.2);
 
   --color-tooltip-fg: oklch(75% 0 0);
+
+  --color-markdown-code: oklch(30% 0 0);
 }
 

@@ -51,8 +51,6 @@
     "format": "Форматувати",
     "previewCode": "Попередній перегляд коду",
     "previewScreenshot": "Попередній перегляд знімка екрану",
-    "previewMarkdown": "Попередній перегляд Markdown",
-    "previewMindmap": "Попередній перегляд Mindmap",
     "fontSizeIncrease": "Збільшити розмір шрифту",
     "fontSizeDecrease": "Зменшити розмір шрифту",
     "fontSizeReset": "Скинути розмір шрифту"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Режим презентації",
-    "preview": "Попередній перегляд"
+    "preview": "Попередній перегляд",
+    "previewMarkdown": "Попередній перегляд Markdown",
+    "previewMindmap": "Попередній перегляд Mindmap"
   },
   "history": {
     "label": "Історія",

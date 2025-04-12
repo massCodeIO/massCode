@@ -7,13 +7,20 @@ interface Props {
   variant?: Variants['variant']
   size?: Variants['size']
   class?: string
+  active?: boolean
 }
 
 const props = defineProps<Props>()
 </script>
 
 <template>
-  <button :class="cn(variants({ variant, size }), props.class)">
+  <button
+    :class="
+      cn(variants({ variant, size }), props.class, {
+        'bg-button-hover/70 text-white': active,
+      })
+    "
+  >
     <slot />
   </button>
 </template>

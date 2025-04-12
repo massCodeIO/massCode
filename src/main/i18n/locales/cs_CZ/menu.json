@@ -51,8 +51,6 @@
     "format": "Formátovat",
     "previewCode": "Náhled kódu",
     "previewScreenshot": "Náhled snímku obrazovky",
-    "previewMarkdown": "Náhled Markdownu",
-    "previewMindmap": "Náhled myšlenkové mapy",
     "fontSizeIncrease": "Zvětšit velikost písma",
     "fontSizeDecrease": "Zmenšit velikost písma",
     "fontSizeReset": "Obnovit velikost písma"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Prezentační režim",
-    "preview": "Náhled"
+    "preview": "Náhled",
+    "previewMarkdown": "Náhled Markdownu",
+    "previewMindmap": "Náhled myšlenkové mapy"
   },
   "history": {
     "label": "Historie",

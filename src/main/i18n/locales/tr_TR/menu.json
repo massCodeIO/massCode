@@ -51,8 +51,6 @@
     "format": "Biçimlendir",
     "previewCode": "Kodu Önizle",
     "previewScreenshot": "Ekran Görüntüsünü Önizle",
-    "previewMarkdown": "Markdown Önizle",
-    "previewMindmap": "Mindmap Önizle",
     "fontSizeIncrease": "Yazı Boyutunu Artır",
     "fontSizeDecrease": "Yazı Boyutunu Azalt",
     "fontSizeReset": "Yazı Boyutunu Sıfırla"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Sunum Modu",
-    "preview": "Önizleme"
+    "preview": "Önizleme",
+    "previewMarkdown": "Markdown Önizle",
+    "previewMindmap": "Mindmap Önizle"
   },
   "history": {
     "label": "Geçmiş",

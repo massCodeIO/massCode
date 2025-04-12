@@ -51,8 +51,6 @@
     "format": "格式化",
     "previewCode": "预览代码",
     "previewScreenshot": "预览截图",
-    "previewMarkdown": "预览 Markdown",
-    "previewMindmap": "预览思维导图",
     "fontSizeIncrease": "增大字体",
     "fontSizeDecrease": "减小字体",
     "fontSizeReset": "重置字体大小"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "演示模式",
-    "preview": "预览"
+    "preview": "预览",
+    "previewMarkdown": "预览 Markdown",
+    "previewMindmap": "预览思维导图"
   },
   "history": {
     "label": "历史",

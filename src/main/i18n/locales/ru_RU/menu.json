@@ -51,8 +51,6 @@
     "format": "Форматировать",
     "previewCode": "Предпросмотр кода",
     "previewScreenshot": "Предпросмотр скриншота",
-    "previewMarkdown": "Предпросмотр Markdown",
-    "previewMindmap": "Предпросмотр диаграммы связей",
     "fontSizeIncrease": "Увеличить размер шрифта",
     "fontSizeDecrease": "Уменьшить размер шрифта",
     "fontSizeReset": "Сбросить размер шрифта"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Режим презентации",
-    "preview": "Предпросмотр"
+    "preview": "Предпросмотр",
+    "previewMarkdown": "Предпросмотр Markdown",
+    "previewMindmap": "Предпросмотр диаграммы связей"
   },
   "history": {
     "label": "История",

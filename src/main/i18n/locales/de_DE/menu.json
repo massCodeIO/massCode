@@ -51,8 +51,6 @@
     "format": "Formatieren",
     "previewCode": "Code-Vorschau",
     "previewScreenshot": "Screenshot-Vorschau",
-    "previewMarkdown": "Markdown-Vorschau",
-    "previewMindmap": "Mindmap-Vorschau",
     "fontSizeIncrease": "Schriftgröße erhöhen",
     "fontSizeDecrease": "Schriftgröße verringern",
     "fontSizeReset": "Schriftgröße zurücksetzen"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Präsentationsmodus",
-    "preview": "Vorschau"
+    "preview": "Vorschau",
+    "previewMarkdown": "Markdown-Vorschau",
+    "previewMindmap": "Mindmap-Vorschau"
   },
   "history": {
     "label": "Verlauf",

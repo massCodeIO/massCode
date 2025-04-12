@@ -51,8 +51,6 @@
     "format": "Μορφοποίηση",
     "previewCode": "Προεπισκόπηση Κώδικα",
     "previewScreenshot": "Προεπισκόπηση Screenshot",
-    "previewMarkdown": "Προεπισκόπηση Markdown",
-    "previewMindmap": "Προεπισκόπηση Mindmap",
     "fontSizeIncrease": "Αύξηση Μεγέθους Γραμματοσειράς",
     "fontSizeDecrease": "Μείωση Μεγέθους Γραμματοσειράς",
     "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Λειτουργία Παρουσίασης",
-    "preview": "Προεπισκόπηση"
+    "preview": "Προεπισκόπηση",
+    "previewMarkdown": "Προεπισκόπηση Markdown",
+    "previewMindmap": "Προεπισκόπηση Mindmap"
   },
   "history": {
     "label": "Ιστορικό",

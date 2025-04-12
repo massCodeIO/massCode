@@ -51,8 +51,6 @@
     "format": "قالب‌بندی",
     "previewCode": "پیش‌نمایش کد",
     "previewScreenshot": "پیش‌نمایش تصویر",
-    "previewMarkdown": "پیش‌نمایش Markdown",
-    "previewMindmap": "پیش‌نمایش نقشه ذهنی",
     "fontSizeIncrease": "افزایش اندازه فونت",
     "fontSizeDecrease": "کاهش اندازه فونت",
     "fontSizeReset": "بازنشانی اندازه فونت"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "حالت ارائه",
-    "preview": "پیش‌نمایش"
+    "preview": "پیش‌نمایش",
+    "previewMarkdown": "پیش‌نمایش Markdown",
+    "previewMindmap": "پیش‌نمایش نقشه ذهنی"
   },
   "history": {
     "label": "تاریخچه",

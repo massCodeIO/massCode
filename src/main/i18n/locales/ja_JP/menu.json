@@ -51,8 +51,6 @@
     "format": "フォーマット",
     "previewCode": "コードのプレビュー",
     "previewScreenshot": "スクリーンショットのプレビュー",
-    "previewMarkdown": "Markdownのプレビュー",
-    "previewMindmap": "マインドマップのプレビュー",
     "fontSizeIncrease": "フォントサイズを大きく",
     "fontSizeDecrease": "フォントサイズを小さく",
     "fontSizeReset": "フォントサイズをリセット"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "プレゼンテーションモード",
-    "preview": "プレビュー"
+    "preview": "プレビュー",
+    "previewMarkdown": "Markdownのプレビュー",
+    "previewMindmap": "マインドマップのプレビュー"
   },
   "history": {
     "label": "履歴",

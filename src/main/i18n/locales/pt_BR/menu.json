@@ -51,8 +51,6 @@
     "format": "Formatar",
     "previewCode": "Visualizar Código",
     "previewScreenshot": "Visualizar Screenshot",
-    "previewMarkdown": "Visualizar Markdown",
-    "previewMindmap": "Visualizar Mindmap",
     "fontSizeIncrease": "Aumentar Tamanho da Fonte",
     "fontSizeDecrease": "Diminuir Tamanho da Fonte",
     "fontSizeReset": "Redefinir Tamanho da Fonte"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Modo de Apresentação",
-    "preview": "Visualizar"
+    "preview": "Visualizar",
+    "previewMarkdown": "Visualizar Markdown",
+    "previewMindmap": "Visualizar Mindmap"
   },
   "history": {
     "label": "Histórico",

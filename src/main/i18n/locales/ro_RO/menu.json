@@ -51,8 +51,6 @@
     "format": "Formatare",
     "previewCode": "Previzualizare Cod",
     "previewScreenshot": "Previzualizare Screenshot",
-    "previewMarkdown": "Previzualizare Markdown",
-    "previewMindmap": "Previzualizare Mindmap",
     "fontSizeIncrease": "Mărește Dimensiunea Fontului",
     "fontSizeDecrease": "Micșorează Dimensiunea Fontului",
     "fontSizeReset": "Resetează Dimensiunea Fontului"
@@ -60,7 +58,9 @@
   "markdown": {
     "label": "Markdown",
     "presentationMode": "Mod Prezentare",
-    "preview": "Previzualizare"
+    "preview": "Previzualizare",
+    "previewMarkdown": "Previzualizare Markdown",
+    "previewMindmap": "Previzualizare Mindmap"
   },
   "history": {
     "label": "Istoric",

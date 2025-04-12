@@ -229,18 +229,17 @@ async function format() {
 
 ipc.on('main-menu:format', format)
 
-// если isShowMarkdown или !isEmpty && selectedSnippetIds.length <= 1
 const isShowHeader = computed(() => {
   return (
     isShowMarkdown.value
-    || (!isEmpty.value && selectedSnippetIds.value.length <= 1)
+    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
   )
 })
-// если !isShowMarkdown или !isEmpty && selectedSnippetIds.length <= 1
 const isShowEditor = computed(() => {
   return (
     !isShowMarkdown.value
-    && (!isEmpty.value || selectedSnippetIds.value.length > 1)
+    && !isEmpty.value
+    && selectedSnippetIds.value.length === 1
   )
 })
 
@@ -263,18 +262,21 @@ onMounted(() => {
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
     <div
-      v-if="isEmpty"
+      v-if="isEmpty || selectedSnippetIds.length > 1"
       class="row-span-full flex items-center justify-center"
     >
-      {{ i18n.t("snippet.noSelected") }}
-    </div>
-    <div
-      v-if="selectedSnippetIds.length > 1"
-      class="row-span-full flex items-center justify-center"
-    >
-      {{
-        i18n.t("snippet.selectedMultiple", { count: selectedSnippetIds.length })
-      }}
+      <UiEmptyPlaceholder
+        v-if="isEmpty"
+        :text="i18n.t('snippet.noSelected')"
+      />
+      <UiEmptyPlaceholder
+        v-if="!isEmpty && selectedSnippetIds.length > 1"
+        :text="
+          i18n.t('snippet.selectedMultiple', {
+            count: selectedSnippetIds.length,
+          })
+        "
+      />
     </div>
   </div>
 </template>

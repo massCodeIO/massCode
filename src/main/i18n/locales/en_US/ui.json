@@ -97,6 +97,8 @@
   },
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
+    "emptyFoldersList": "No Folders",
+    "emptySnippetsList": "No Snippets",
     "search": "Search",
     "addTag": "Add Tag"
   }

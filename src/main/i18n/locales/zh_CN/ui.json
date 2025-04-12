@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "在代码片段中添加标签以在此处查看",
+    "emptyFoldersList": "没有文件夹",
+    "emptySnippetsList": "没有代码片段",
     "search": "搜索",
     "addTag": "添加标签"
   }

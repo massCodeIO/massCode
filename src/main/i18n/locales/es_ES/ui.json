@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Agregue etiquetas a los snippets para verlos aquí",
+    "emptyFoldersList": "Sin carpetas",
+    "emptySnippetsList": "Sin fragmentos",
     "search": "Buscar",
     "addTag": "Agregar Etiqueta"
   }

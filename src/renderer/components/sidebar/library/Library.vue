@@ -193,12 +193,17 @@ function onResizeTagList(val: number[]) {
     </div>
     <SplitterPanel as-child>
       <Tree
-        v-if="folders"
+        v-if="folders?.length"
         v-model="folders"
         class="px-0.5 pb-1"
         @click-node="onFolderClick"
         @toggle-node="onFolderToggle"
         @drag-node="onFolderDrag"
+      />
+
+      <UiEmptyPlaceholder
+        v-else
+        :text="i18n.t('placeholder.emptyFoldersList')"
       />
     </SplitterPanel>
     <SplitterResizeHandle class="relative cursor-none">

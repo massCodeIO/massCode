@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "在程式碼片段中添加標籤以在此處查看",
+    "emptyFoldersList": "沒有資料夾",
+    "emptySnippetsList": "沒有程式碼片段",
     "search": "搜索",
     "addTag": "添加標籤"
   }

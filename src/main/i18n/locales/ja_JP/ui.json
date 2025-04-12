@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "タグを追加するとここに表示されます",
+    "emptyFoldersList": "フォルダーなし",
+    "emptySnippetsList": "スニペットなし",
     "search": "検索",
     "addTag": "タグを追加"
   }

@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
+    "emptyFoldersList": "Нет папок",
+    "emptySnippetsList": "Нет сниппетов",
     "search": "Поиск",
     "addTag": "Добавить тег"
   }

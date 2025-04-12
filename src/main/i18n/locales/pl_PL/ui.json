@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Dodaj tagi do fragmentów, aby zobaczyć je tutaj",
+    "emptyFoldersList": "Brak folderów",
+    "emptySnippetsList": "Brak snippetów",
     "search": "Szukaj",
     "addTag": "Dodaj tag"
   }

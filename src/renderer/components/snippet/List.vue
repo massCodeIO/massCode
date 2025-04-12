@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { useApp, useGutter, useSnippets } from '@/composables'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
@@ -43,7 +43,10 @@ watch(displayedSnippets, () => {
     <div>
       <SnippetHeader />
     </div>
-    <PerfectScrollbar ref="scrollbarRef">
+    <PerfectScrollbar
+      v-if="displayedSnippets?.length"
+      ref="scrollbarRef"
+    >
       <div class="flex-grow overflow-y-auto px-2">
         <SnippetItem
           v-for="snippet in displayedSnippets"
@@ -52,6 +55,10 @@ watch(displayedSnippets, () => {
         />
       </div>
     </PerfectScrollbar>
+    <UiEmptyPlaceholder
+      v-else
+      :text="i18n.t('placeholder.emptySnippetsList')"
+    />
     <UiGutter ref="gutterRef" />
   </div>
 </template>

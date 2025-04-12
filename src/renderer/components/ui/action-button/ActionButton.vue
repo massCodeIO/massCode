@@ -3,6 +3,7 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 
 interface Props {
   tooltip?: string
+  active?: boolean
 }
 
 defineProps<Props>()
@@ -15,6 +16,7 @@ defineProps<Props>()
         <UiButton
           variant="icon"
           size="icon"
+          :active="active"
           v-bind="$attrs"
         >
           <slot />

@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "برای مشاهده snippetها در اینجا، به آنها برچسب اضافه کنید",
+    "emptyFoldersList": "بدون پوشه",
+    "emptySnippetsList": "بدون اسنیپت",
     "search": "جستجو",
     "addTag": "افزودن برچسب"
   }

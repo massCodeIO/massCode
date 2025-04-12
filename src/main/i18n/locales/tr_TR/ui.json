@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Burada görmek için snippet'lere etiket ekleyin",
+    "emptyFoldersList": "Klasör yok",
+    "emptySnippetsList": "Snippet yok",
     "search": "Ara",
     "addTag": "Etiket Ekle"
   }

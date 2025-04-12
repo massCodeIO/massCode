@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Adăugați tags la snippets pentru a le vedea aici",
+    "emptyFoldersList": "Fără foldere",
+    "emptySnippetsList": "Fără fragmente",
     "search": "Caută",
     "addTag": "Adaugă Tag"
   }

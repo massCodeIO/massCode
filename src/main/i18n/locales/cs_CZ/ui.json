@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Přidejte tagy ke snippetům, aby se zde zobrazily",
+    "emptyFoldersList": "Žádné složky",
+    "emptySnippetsList": "Žádné snippety",
     "search": "Hledat",
     "addTag": "Přidat tag"
   }

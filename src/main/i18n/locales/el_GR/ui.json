@@ -96,6 +96,8 @@
   },
   "placeholder": {
     "emptyTagList": "Προσθέστε tags στα snippets για να τα δείτε εδώ",
+    "emptyFoldersList": "Κανένας φάκελος",
+    "emptySnippetsList": "Κανένα απόσπασμα",
     "search": "Αναζήτηση",
     "addTag": "Προσθήκη Tag"
   }

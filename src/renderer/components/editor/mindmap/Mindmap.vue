@@ -30,7 +30,7 @@ function init() {
   mm = Markmap.create(svgRef.value!, {
     duration: 0,
     style: () => `
-      .markmap-node div { color: var(--color-text); }
+      .markmap-node div { color: var(--color-text); user-select: none; cursor: default; }
       .markmap-node circle { fill: var(--color-bg); }
     `,
   })
@@ -132,7 +132,7 @@ watch(selectedSnippetContent, () => {
     </EditorHeaderTool>
     <div
       ref="mindmapRef"
-      class="h-full"
+      class="h-full cursor-grab"
     >
       <svg
         ref="svgRef"

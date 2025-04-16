@@ -78,6 +78,10 @@ async function onSaveScreenshot(type: 'png' | 'svg' = 'png') {
 onMounted(() => {
   init()
 })
+
+watch(selectedSnippetContent, () => {
+  update()
+})
 </script>
 
 <template>

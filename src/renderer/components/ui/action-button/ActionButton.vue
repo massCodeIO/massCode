@@ -31,6 +31,7 @@ defineProps<Props>()
     v-else
     variant="icon"
     v-bind="$attrs"
+    :active="active"
     size="icon"
   >
     <slot />

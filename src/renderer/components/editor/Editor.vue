@@ -38,6 +38,29 @@ const isProgrammaticChange = ref(false)
 const fontSize = computed(() => `${settings.fontSize}px`)
 const fontFamily = computed(() => settings.fontFamily)
 
+const isShowHeader = computed(() => {
+  return (
+    isShowMarkdown.value
+    || isShowMindmap.value
+    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
+  )
+})
+const isShowEditor = computed(() => {
+  return (
+    !isShowMarkdown.value
+    && !isShowMindmap.value
+    && !isEmpty.value
+    && selectedSnippetIds.value.length === 1
+  )
+})
+
+watch(selectedSnippetContent, () => {
+  if (selectedSnippetContent.value?.language !== 'markdown') {
+    isShowMarkdown.value = false
+    isShowMindmap.value = false
+  }
+})
+
 function getCursorPosition() {
   if (!editor)
     return
@@ -228,22 +251,6 @@ async function format() {
 }
 
 ipc.on('main-menu:format', format)
-
-const isShowHeader = computed(() => {
-  return (
-    isShowMarkdown.value
-    || isShowMindmap.value
-    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
-  )
-})
-const isShowEditor = computed(() => {
-  return (
-    !isShowMarkdown.value
-    && !isShowMindmap.value
-    && !isEmpty.value
-    && selectedSnippetIds.value.length === 1
-  )
-})
 
 onMounted(() => {
   init()

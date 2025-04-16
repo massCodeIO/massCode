@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { Eye, Plus, Type } from 'lucide-vue-next'
+import { Eye, GitFork, Plus, Type } from 'lucide-vue-next'
 
 const { selectedSnippet, selectedSnippetContent, addFragment } = useSnippets()
-const { isFocusedSnippetName, state, isShowMarkdown } = useApp()
+const { isFocusedSnippetName, state, isShowMarkdown, isShowMindmap } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
@@ -28,8 +28,22 @@ const isShowMarkdownAction = computed(
   () => selectedSnippetContent.value?.language === 'markdown',
 )
 
+const isShowTags = computed(() => {
+  return !isShowMindmap.value && !isShowMarkdown.value
+})
+
 function onClickTab(index: number) {
   state.snippetContentIndex = index
+}
+
+function onMarkdownToggle() {
+  isShowMarkdown.value = !isShowMarkdown.value
+  isShowMindmap.value = false
+}
+
+function onMindmapToggle() {
+  isShowMindmap.value = !isShowMindmap.value
+  isShowMarkdown.value = false
 }
 </script>
 
@@ -54,9 +68,21 @@ function onClickTab(index: number) {
               : i18n.t('menu:markdown.previewMarkdown')
           "
           :active="isShowMarkdown"
-          @click="isShowMarkdown = !isShowMarkdown"
+          @click="onMarkdownToggle"
         >
           <Eye class="h-3 w-3" />
+        </UiActionButton>
+        <UiActionButton
+          v-if="isShowMarkdownAction"
+          :tooltip="
+            isShowMindmap
+              ? `${i18n.t('action.hide')} ${i18n.t('menu:markdown.previewMindmap')}`
+              : i18n.t('menu:markdown.previewMindmap')
+          "
+          :active="isShowMindmap"
+          @click="onMindmapToggle"
+        >
+          <GitFork class="h-3 w-3 rotate-90" />
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.add.description')"
@@ -90,7 +116,10 @@ function onClickTab(index: number) {
       />
     </div>
     <EditorDescription v-model:show="isShowDescription" />
-    <div class="pt-1">
+    <div
+      v-if="isShowTags"
+      class="pt-1"
+    >
       <EditorHeaderTags />
     </div>
   </div>

@@ -15,6 +15,7 @@ export const variants = cva(
         sm: 'px-2 h-5',
         md: 'px-4 h-6',
         icon: 'h-5 w-8',
+        iconText: 'h-5 px-2',
       },
     },
 

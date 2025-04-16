@@ -24,7 +24,7 @@ import 'codemirror/theme/oceanic-next.css'
 const { settings, cursorPosition } = useEditor()
 const { selectedSnippetContent, selectedSnippet, isEmpty, selectedSnippetIds }
   = useSnippets()
-const { isShowMarkdown } = useApp()
+const { isShowMarkdown, isShowMindmap } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -232,12 +232,14 @@ ipc.on('main-menu:format', format)
 const isShowHeader = computed(() => {
   return (
     isShowMarkdown.value
+    || isShowMindmap.value
     || (!isEmpty.value && selectedSnippetIds.value.length === 1)
   )
 })
 const isShowEditor = computed(() => {
   return (
     !isShowMarkdown.value
+    && !isShowMindmap.value
     && !isEmpty.value
     && selectedSnippetIds.value.length === 1
   )
@@ -261,6 +263,7 @@ onMounted(() => {
     />
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
+    <EditorMindmap v-if="isShowMindmap" />
     <div
       v-if="isEmpty || selectedSnippetIds.length > 1"
       class="row-span-full flex items-center justify-center"

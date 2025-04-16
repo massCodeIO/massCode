@@ -4,9 +4,12 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 interface Props {
   tooltip?: string
   active?: boolean
+  type?: 'icon' | 'iconText'
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  type: 'icon',
+})
 </script>
 
 <template>
@@ -15,7 +18,7 @@ defineProps<Props>()
       <Tooltip.TooltipTrigger as-child>
         <UiButton
           variant="icon"
-          size="icon"
+          :size="type"
           :active="active"
           v-bind="$attrs"
         >
@@ -32,7 +35,7 @@ defineProps<Props>()
     variant="icon"
     v-bind="$attrs"
     :active="active"
-    size="icon"
+    :size="type"
   >
     <slot />
   </UiButton>

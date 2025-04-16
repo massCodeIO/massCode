@@ -24,7 +24,7 @@ import 'codemirror/theme/oceanic-next.css'
 const { settings, cursorPosition } = useEditor()
 const { selectedSnippetContent, selectedSnippet, isEmpty, selectedSnippetIds }
   = useSnippets()
-const { isShowMarkdown } = useApp()
+const { isShowMarkdown, isShowMindmap } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -37,6 +37,29 @@ const isProgrammaticChange = ref(false)
 
 const fontSize = computed(() => `${settings.fontSize}px`)
 const fontFamily = computed(() => settings.fontFamily)
+
+const isShowHeader = computed(() => {
+  return (
+    isShowMarkdown.value
+    || isShowMindmap.value
+    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
+  )
+})
+const isShowEditor = computed(() => {
+  return (
+    !isShowMarkdown.value
+    && !isShowMindmap.value
+    && !isEmpty.value
+    && selectedSnippetIds.value.length === 1
+  )
+})
+
+watch(selectedSnippetContent, () => {
+  if (selectedSnippetContent.value?.language !== 'markdown') {
+    isShowMarkdown.value = false
+    isShowMindmap.value = false
+  }
+})
 
 function getCursorPosition() {
   if (!editor)
@@ -229,20 +252,6 @@ async function format() {
 
 ipc.on('main-menu:format', format)
 
-const isShowHeader = computed(() => {
-  return (
-    isShowMarkdown.value
-    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
-  )
-})
-const isShowEditor = computed(() => {
-  return (
-    !isShowMarkdown.value
-    && !isEmpty.value
-    && selectedSnippetIds.value.length === 1
-  )
-})
-
 onMounted(() => {
   init()
 })
@@ -261,6 +270,7 @@ onMounted(() => {
     />
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
+    <EditorMindmap v-if="isShowMindmap" />
     <div
       v-if="isEmpty || selectedSnippetIds.length > 1"
       class="row-span-full flex items-center justify-center"

@@ -14,6 +14,7 @@ const highlightedTagId = ref<number>()
 
 const isFocusedSnippetName = ref(false)
 const isShowMarkdown = ref(false)
+const isShowMindmap = ref(false)
 
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
@@ -64,5 +65,6 @@ export function useApp() {
     state,
     stateSnapshots,
     isShowMarkdown,
+    isShowMindmap,
   }
 }

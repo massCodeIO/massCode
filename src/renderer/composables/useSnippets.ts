@@ -13,7 +13,9 @@ const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
   = useApp()
 const { folders } = useFolders()
 
-const selectedSnippetIds = ref<number[]>([])
+const selectedSnippetIds = ref<number[]>(
+  state.snippetId ? [state.snippetId] : [],
+)
 const lastSelectedSnippetId = ref<number | undefined>()
 
 const snippets = shallowRef<SnippetsResponse>()

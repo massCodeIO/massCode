@@ -4,7 +4,7 @@ import { router } from '@/router'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
-const { isShowMarkdown } = useApp()
+const { isShowMarkdown, isShowMindmap } = useApp()
 
 export function registerMainMenuListeners() {
   ipc.on('main-menu:goto-preferences', () => {
@@ -25,5 +25,9 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:preview-markdown', () => {
     isShowMarkdown.value = !isShowMarkdown.value
+  })
+
+  ipc.on('main-menu:preview-mindmap', () => {
+    isShowMindmap.value = !isShowMindmap.value
   })
 }

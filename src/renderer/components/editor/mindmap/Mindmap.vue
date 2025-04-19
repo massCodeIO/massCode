@@ -34,6 +34,7 @@ function init() {
       .markmap-node circle { fill: var(--color-bg); }
     `,
   })
+  svgRef.value?.addEventListener('dblclick', e => e.stopPropagation(), true)
   update()
 }
 

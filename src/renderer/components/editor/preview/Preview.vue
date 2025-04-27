@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useSnippets } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { useDark } from '@vueuse/core'
-import { Moon, RefreshCcw, Sun } from 'lucide-vue-next'
+import { Download, Moon, RefreshCcw, Sun } from 'lucide-vue-next'
 
 const { selectedSnippet } = useSnippets()
 
@@ -42,33 +42,60 @@ const js = computed(() => {
   )
 })
 
-const htmlPreview = computed(() => {
+function generateHtmlPreview(save = false) {
   const cssDefault = `
     body {
       background-color: ${isDarkPreview.value ? 'oklch(24.78% 0 0)' : 'oklch(100% 0 0)'};
     }
-  }
   `
+
+  const jsDefault = `
+    try {
+      ${js.value}
+    } catch (error) {
+      console.error('Error in preview:', error)
+    }
+  `
+
+  const cssCode = save ? css.value : cssDefault + css.value
+  const jsCode = save ? js.value : jsDefault
+
   return `<!DOCTYPE html>
-    <html ${isDarkPreview.value ? 'class="dark"' : ''}>
+    <html>
       <head>
-        <style>${cssDefault}</style>
-        <style>${css.value}</style>
+        <style>${cssCode}</style>
       </head>
-      <body class="h-full w-full">
+      <body>
         ${html.value}
-        <script>
-          try {
-            ${js.value}
-          } catch (error) {
-            console.error('Error in preview:', error)
-          }
-        <\/script>
+        <script>${jsCode}<\/script>
       </body>
     </html>
   `
-})
+}
 
+const htmlPreview = computed(() => generateHtmlPreview())
+
+async function onSaveHtml() {
+  let html = generateHtmlPreview(true)
+
+  try {
+    html = await ipc.invoke('prettier:format', {
+      text: html,
+      parser: 'html',
+    })
+  }
+  catch (error) {
+    console.error(error)
+  }
+
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+
+  a.href = url
+  a.download = `${selectedSnippet.value?.name}.html`
+  a.click()
+}
 watch([html, css, js], () => {
   previewKey.value++
 })
@@ -99,6 +126,13 @@ watch(isDarkPreview, () => {
       </UiActionButton>
     </div>
     <div>
+      <UiActionButton
+        type="icon"
+        :tooltip="`${i18n.t('button.saveAs')} HTML`"
+        @click="onSaveHtml"
+      >
+        <Download class="h-3 w-3" />
+      </UiActionButton>
       <UiActionButton
         type="icon"
         :tooltip="i18n.t('button.refreshPreview')"

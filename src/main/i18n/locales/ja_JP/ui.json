@@ -19,8 +19,10 @@
     "zoomIn": "拡大",
     "zoomOut": "縮小",
     "darkMode": "ダークモード",
+    "toggleDarkMode": "ダークモードの切り替え",
     "background": "背景",
-    "goToDownload": "ダウンロードへ"
+    "goToDownload": "ダウンロードへ",
+    "refreshPreview": "プレビューを更新"
   },
   "action": {
     "close": "閉じる",

@@ -19,8 +19,10 @@
     "zoomIn": "放大",
     "zoomOut": "縮小",
     "darkMode": "深色模式",
+    "toggleDarkMode": "切換深色模式",
     "background": "背景",
-    "goToDownload": "前往下載"
+    "goToDownload": "前往下載",
+    "refreshPreview": "刷新預覽"
   },
   "action": {
     "close": "關閉",

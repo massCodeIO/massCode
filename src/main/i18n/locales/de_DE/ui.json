@@ -19,8 +19,10 @@
     "zoomIn": "Vergrößern",
     "zoomOut": "Verkleinern",
     "darkMode": "Dunkler Modus",
+    "toggleDarkMode": "Dunkelmodus umschalten",
     "background": "Hintergrund",
-    "goToDownload": "Zum Download"
+    "goToDownload": "Zum Download",
+    "refreshPreview": "Vorschau aktualisieren"
   },
   "action": {
     "close": "Schließen",

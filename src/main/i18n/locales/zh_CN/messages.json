@@ -19,7 +19,7 @@
     "deleteTag": "这也将导致所有带有该标签的代码片段移除此标签。",
     "createDb": "请选择其他文件夹",
     "clearDb": "这将永久删除数据库中的所有代码片段、文件夹和标签。",
-    "htmlCssPreview": "添加 HTML 和 CSS 语言的片段以查看结果。",
+    "htmlCssPreview": "添加HTML片段以查看结果。添加CSS进行样式设计，添加JavaScript实现交互功能。",
     "codeBlockRenderer": [
       "使用 Codemirror 时，代码块设置的语言必须对应",
       "languages"

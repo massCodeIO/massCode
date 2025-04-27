@@ -19,7 +19,7 @@
     "deleteTag": "Spowoduje to również usunięcie tego tagu ze wszystkich fragmentów.",
     "createDb": "Proszę wybrać inny folder",
     "clearDb": "Spowoduje to trwałe usunięcie wszystkich Fragmentów, Folderów i Tagów z bazy danych.",
-    "htmlCssPreview": "Dodaj fragmenty z językami HTML i CSS, aby zobaczyć wynik.",
+    "htmlCssPreview": "Dodaj fragment HTML, aby zobaczyć wynik. Dodaj CSS do stylizacji i JavaScript do interaktywności.",
     "codeBlockRenderer": [
       "Podczas używania Codemirror, język ustawiony dla bloku kodu musi odpowiadać jednej z wartości",
       "languages"
@@ -39,7 +39,7 @@
     }
   },
   "special": {
-    "supportMessage": "Cześć, tu Anton 👋<br><br>\nDziękuję za korzystanie z massCode. Jeśli uważasz, że ta aplikacja jest przydatna, proszę rozważ {{-tagStart}} wsparcie {{-tagEnd}}. To zmotywuje mnie do dalszego rozwoju projektu.",
+    "supportMessage": "Cześć, tu Anton 👋<br><br>\nDziękuję za korystanie z massCode. Jeśli uważasz, że ta aplikacja jest przydatna, proszę rozważ {{-tagStart}} wsparcie {{-tagEnd}}. To zmotywuje mnie do dalszego rozwoju projektu.",
     "unsponsored": "Bez sponsora"
   },
   "update": {

@@ -19,8 +19,10 @@
     "zoomIn": "Přiblížit",
     "zoomOut": "Oddálit",
     "darkMode": "Tmavý režim",
+    "toggleDarkMode": "Přepnout tmavý režim",
     "background": "Pozadí",
-    "goToDownload": "Přejít ke stažení"
+    "goToDownload": "Přejít ke stažení",
+    "refreshPreview": "Obnovit náhled"
   },
   "action": {
     "close": "Zavřít",

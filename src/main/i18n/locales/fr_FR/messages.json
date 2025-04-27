@@ -19,7 +19,7 @@
     "deleteTag": "Cela supprimera également cette étiquette de tous les snippets.",
     "createDb": "Veuillez sélectionner un autre dossier",
     "clearDb": "Cela supprimera définitivement tous les Snippets, Dossiers et Étiquettes de la base de données.",
-    "htmlCssPreview": "Ajoutez des fragments avec les langages HTML et CSS pour voir le résultat.",
+    "htmlCssPreview": "Ajoutez un fragment HTML pour voir le résultat. Ajoutez du CSS pour le style et JavaScript pour l'interactivité.",
     "codeBlockRenderer": [
       "Lors de l'utilisation de Codemirror, le langage à définir pour le bloc de code doit correspondre à l'une des valeurs des",
       "languages"

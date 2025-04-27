@@ -19,8 +19,10 @@
     "zoomIn": "Увеличить",
     "zoomOut": "Уменьшить",
     "darkMode": "Темная тема",
+    "toggleDarkMode": "Переключить тёмную тему",
     "background": "Фон",
-    "goToDownload": "Перейти к загрузке"
+    "goToDownload": "Перейти к загрузке",
+    "refreshPreview": "Обновить предпросмотр"
   },
   "action": {
     "close": "Закрыть",

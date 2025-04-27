@@ -19,7 +19,7 @@
     "deleteTag": "這也將導致所有帶有該標籤的程式碼片段移除此標籤。",
     "createDb": "請選擇其他資料夾",
     "clearDb": "這將永久刪除資料庫中的所有程式碼片段、資料夾和標籤。",
-    "htmlCssPreview": "添加 HTML 和 CSS 語言的片段以查看結果。",
+    "htmlCssPreview": "添加HTML片段以查看結果。添加CSS進行樣式設計，添加JavaScript實現互動功能。",
     "codeBlockRenderer": [
       "使用 Codemirror 時，程式碼區塊設置的語言必須對應",
       "languages"

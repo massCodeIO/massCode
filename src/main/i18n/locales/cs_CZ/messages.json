@@ -19,7 +19,7 @@
     "deleteTag": "Toto také způsobí odstranění tohoto tagu ze všech snippetů.",
     "createDb": "Prosím vyberte jinou složku",
     "clearDb": "Toto trvale smaže všechny Snippety, Složky a Tagy z databáze.",
-    "htmlCssPreview": "Pro zobrazení výsledku přidejte fragmenty s jazyky HTML & CSS.",
+    "htmlCssPreview": "Přidejte HTML fragment pro zobrazení výsledku. Přidejte CSS pro stylování a JavaScript pro interaktivitu.",
     "codeBlockRenderer": [
       "Při použití Codemirror musí jazyk nastavený pro blok kódu odpovídat jedné z hodnot",
       "languages"

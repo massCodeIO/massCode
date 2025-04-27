@@ -19,8 +19,10 @@
     "zoomIn": "Mărește",
     "zoomOut": "Micșorează",
     "darkMode": "Mod Întunecat",
+    "toggleDarkMode": "Comută modul întunecat",
     "background": "Fundal",
-    "goToDownload": "Mergi la Descărcare"
+    "goToDownload": "Mergi la Descărcare",
+    "refreshPreview": "Reîmprospătează previzualizarea"
   },
   "action": {
     "close": "Închide",

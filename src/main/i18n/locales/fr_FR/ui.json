@@ -19,8 +19,10 @@
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
     "darkMode": "Mode sombre",
+    "toggleDarkMode": "Basculer le mode sombre",
     "background": "Arrière-plan",
-    "goToDownload": "Aller au téléchargement"
+    "goToDownload": "Aller au téléchargement",
+    "refreshPreview": "Actualiser l'aperçu"
   },
   "action": {
     "close": "Fermer",

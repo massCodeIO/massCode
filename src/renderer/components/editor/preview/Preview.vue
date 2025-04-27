@@ -13,7 +13,9 @@ const isDark = useDark()
 const isDarkPreview = ref(isDark.value)
 
 const defaultHtml = computed(() => {
-  return `<p style="color: ${isDarkPreview.value ? '#fff' : '#000'}; text-align: center;">${i18n.t('messages:warning.htmlCssPreview')}</p>`
+  return `<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-size: 14px;">
+    <p style="color: ${isDarkPreview.value ? 'oklch(75% 0 0)' : 'oklch(20% 0 0)'}; text-align: center;">${i18n.t('messages:warning.htmlCssPreview')}</p>
+  </div>`
 })
 
 const html = computed(() => {
@@ -78,7 +80,7 @@ watch(isDarkPreview, () => {
 
 <template>
   <div
-    class="border-border flex items-center justify-between border-b px-2 py-1"
+    class="border-border flex h-[var(--editor-tool-header-height)] items-center justify-between border-b px-2 py-1"
   >
     <div>
       <UiActionButton
@@ -106,13 +108,15 @@ watch(isDarkPreview, () => {
       </UiActionButton>
     </div>
   </div>
-  <iframe
-    :key="previewKey"
-    data-editor-preview
-    :srcdoc="htmlPreview"
-    sandbox="allow-scripts"
-    frameborder="0"
-    height="100%"
-    width="100%"
-  />
+  <div class="h-[calc(100%-var(--editor-tool-header-height))]">
+    <iframe
+      :key="previewKey"
+      data-editor-preview
+      :srcdoc="htmlPreview"
+      sandbox="allow-scripts"
+      frameborder="0"
+      height="100%"
+      width="100%"
+    />
+  </div>
 </template>

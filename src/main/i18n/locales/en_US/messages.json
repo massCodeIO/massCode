@@ -19,7 +19,7 @@
     "deleteTag": "This will also cause all snippets to have that tag removed.",
     "createDb": "Please select another folder",
     "clearDb": "This will permanently delete all Snippets, Folders, and Tags from the database.",
-    "htmlCssPreview": "Add fragments with HTML & CSS languages to view result.",
+    "htmlCssPreview": "Add HTML fragment to see the result. Add CSS for styling and JavaScript for interactivity.",
     "codeBlockRenderer": [
       "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
       "languages"

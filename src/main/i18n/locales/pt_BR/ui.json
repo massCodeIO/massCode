@@ -19,8 +19,10 @@
     "zoomIn": "Aumentar Zoom",
     "zoomOut": "Diminuir Zoom",
     "darkMode": "Modo Escuro",
+    "toggleDarkMode": "Alternar modo escuro",
     "background": "Plano de Fundo",
-    "goToDownload": "Ir para Download"
+    "goToDownload": "Ir para Download",
+    "refreshPreview": "Atualizar visualização"
   },
   "action": {
     "close": "Fechar",

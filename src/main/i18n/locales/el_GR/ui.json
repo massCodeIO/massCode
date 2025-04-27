@@ -19,8 +19,10 @@
     "zoomIn": "Μεγέθυνση",
     "zoomOut": "Σμίκρυνση",
     "darkMode": "Σκοτεινή Λειτουργία",
+    "toggleDarkMode": "Εναλλαγή σκοτεινής λειτουργίας",
     "background": "Φόντο",
-    "goToDownload": "Μετάβαση στη Λήψη"
+    "goToDownload": "Μετάβαση στη Λήψη",
+    "refreshPreview": "Ανανέωση προεπισκόπησης"
   },
   "action": {
     "close": "Κλείσιμο",

@@ -17,6 +17,7 @@ type MainMenuAction =
   | 'open-dialog'
   | 'preview-markdown'
   | 'preview-mindmap'
+  | 'preview-code'
 
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
 type SystemAction = 'reload' | 'open-external'

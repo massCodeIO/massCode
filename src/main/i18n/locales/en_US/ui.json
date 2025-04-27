@@ -19,8 +19,10 @@
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",
+    "toggleDarkMode": "Toggle Dark Mode",
     "background": "Background",
-    "goToDownload": "Go to Download"
+    "goToDownload": "Go to Download",
+    "refreshPreview": "Refresh Preview"
   },
   "action": {
     "close": "Close",

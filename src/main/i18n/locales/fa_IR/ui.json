@@ -19,8 +19,10 @@
     "zoomIn": "بزرگنمایی",
     "zoomOut": "کوچک‌نمایی",
     "darkMode": "حالت تاریک",
+    "toggleDarkMode": "تغییر حالت تاریک",
     "background": "پس‌زمینه",
-    "goToDownload": "رفتن به دانلود"
+    "goToDownload": "رفتن به دانلود",
+    "refreshPreview": "به‌روزرسانی پیش‌نمایش"
   },
   "action": {
     "close": "بستن",

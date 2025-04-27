@@ -19,8 +19,10 @@
     "zoomIn": "Yakınlaştır",
     "zoomOut": "Uzaklaştır",
     "darkMode": "Karanlık Mod",
+    "toggleDarkMode": "Karanlık modu değiştir",
     "background": "Arka Plan",
-    "goToDownload": "İndirmeye Git"
+    "goToDownload": "İndirmeye Git",
+    "refreshPreview": "Önizlemeyi yenile"
   },
   "action": {
     "close": "Kapat",

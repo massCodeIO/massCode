@@ -19,7 +19,7 @@
     "deleteTag": "Αυτό θα προκαλέσει επίσης την αφαίρεση αυτού του tag από όλα τα snippets.",
     "createDb": "Παρακαλώ επιλέξτε άλλο φάκελο",
     "clearDb": "Αυτό θα διαγράψει οριστικά όλα τα Snippets, Folders και Tags από τη database.",
-    "htmlCssPreview": "Προσθέστε fragments με γλώσσες HTML & CSS για να δείτε το αποτέλεσμα.",
+    "htmlCssPreview": "Προσθέστε ένα τμήμα HTML για να δείτε το αποτέλεσμα. Προσθέστε CSS για στυλ και JavaScript για διαδραστικότητα.",
     "codeBlockRenderer": [
       "Όταν χρησιμοποιείτε το Codemirror, η γλώσσα που θα οριστεί για το code block πρέπει να αντιστοιχεί σε μία από τις τιμές των",
       "languages"

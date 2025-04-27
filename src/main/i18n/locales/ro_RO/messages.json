@@ -19,7 +19,7 @@
     "deleteTag": "Acest lucru va determina și eliminarea tuturor tag-urilor din snippets.",
     "createDb": "Vă rugăm să selectați un alt folder",
     "clearDb": "Aceasta va șterge definitiv toate Snippets, Folders și Tags din database.",
-    "htmlCssPreview": "Adăugați fragmente cu limbaje HTML & CSS pentru a vizualiza rezultatul.",
+    "htmlCssPreview": "Adăugați un fragment HTML pentru a vedea rezultatul. Adăugați CSS pentru stilizare și JavaScript pentru interactivitate.",
     "codeBlockRenderer": [
       "Când utilizați Codemirror, limbajul setat pentru blocul de cod trebuie să corespundă uneia dintre valorile",
       "languages"

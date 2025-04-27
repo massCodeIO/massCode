@@ -19,7 +19,7 @@
     "deleteTag": "Isso também fará com que todas as tags sejam removidas dos snippets.",
     "createDb": "Por favor, selecione outra pasta",
     "clearDb": "Isso excluirá permanentemente todos os Snippets, Pastas e Tags do database.",
-    "htmlCssPreview": "Adicione fragmentos com linguagens HTML & CSS para visualizar o resultado.",
+    "htmlCssPreview": "Adicione um fragmento HTML para ver o resultado. Adicione CSS para estilização e JavaScript para interatividade.",
     "codeBlockRenderer": [
       "Ao usar Codemirror, a linguagem a ser definida para o bloco de código deve corresponder a um dos valores das",
       "languages"

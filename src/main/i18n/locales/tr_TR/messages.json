@@ -19,7 +19,7 @@
     "deleteTag": "Bu, tüm snippet'lerden bu etiketin kaldırılmasına neden olacaktır.",
     "createDb": "Lütfen başka bir klasör seçin",
     "clearDb": "Bu, database'deki tüm Snippet'leri, Klasörleri ve Etiketleri kalıcı olarak silecektir.",
-    "htmlCssPreview": "Sonucu görüntülemek için HTML ve CSS dilleriyle parçalar ekleyin.",
+    "htmlCssPreview": "Sonucu görmek için HTML parçası ekleyin. Stil için CSS ve etkileşim için JavaScript ekleyin.",
     "codeBlockRenderer": [
       "Codemirror kullanırken, kod bloğu için ayarlanacak dilin",
       "languages"

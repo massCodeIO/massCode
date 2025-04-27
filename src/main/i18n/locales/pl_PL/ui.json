@@ -19,8 +19,10 @@
     "zoomIn": "Powiększ",
     "zoomOut": "Pomniejsz",
     "darkMode": "Tryb ciemny",
+    "toggleDarkMode": "Przełącz tryb ciemny",
     "background": "Tło",
-    "goToDownload": "Przejdź do pobierania"
+    "goToDownload": "Przejdź do pobierania",
+    "refreshPreview": "Odśwież podgląd"
   },
   "action": {
     "close": "Zamknij",

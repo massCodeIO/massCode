@@ -9,6 +9,7 @@ import {
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
+import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
@@ -22,9 +23,14 @@ import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
 const { settings, cursorPosition } = useEditor()
-const { selectedSnippetContent, selectedSnippet, isEmpty, selectedSnippetIds }
-  = useSnippets()
-const { isShowMarkdown, isShowMindmap } = useApp()
+const {
+  selectedSnippetContent,
+  selectedSnippet,
+  isEmpty,
+  selectedSnippetIds,
+  isAvailableToCodePreview,
+} = useSnippets()
+const { isShowMarkdown, isShowMindmap, isShowCodePreview } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -58,6 +64,10 @@ watch(selectedSnippetContent, () => {
   if (selectedSnippetContent.value?.language !== 'markdown') {
     isShowMarkdown.value = false
     isShowMindmap.value = false
+  }
+
+  if (!isAvailableToCodePreview.value) {
+    isShowCodePreview.value = false
   }
 })
 
@@ -263,11 +273,24 @@ onMounted(() => {
     class="mt-[var(--title-bar-height)] grid grid-rows-[auto_1fr_auto] overflow-hidden"
   >
     <EditorHeader v-if="isShowHeader" />
-    <div
-      v-show="isShowEditor"
-      ref="editorRef"
+    <SplitterGroup
+      id="editor"
+      direction="vertical"
       class="overflow-auto"
-    />
+    >
+      <SplitterPanel as-child>
+        <div
+          v-show="isShowEditor"
+          ref="editorRef"
+        />
+      </SplitterPanel>
+      <SplitterResizeHandle class="relative cursor-none">
+        <UiGutter orientation="horizontal" />
+      </SplitterResizeHandle>
+      <SplitterPanel v-if="isShowCodePreview">
+        <EditorPreview />
+      </SplitterPanel>
+    </SplitterGroup>
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
     <EditorMindmap v-if="isShowMindmap" />

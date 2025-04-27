@@ -90,6 +90,11 @@ const isEmpty = computed(() => {
   return snippets.value?.length === 0
 })
 
+const isAvailableToCodePreview = computed(() => {
+  const langAvailable = ['html', 'css', 'javascript']
+  return langAvailable.includes(selectedSnippetContent.value?.language || '')
+})
+
 async function getSnippets(query?: SnippetsQuery) {
   const { data } = await api.snippets.getSnippets(
     query || queryByLibraryOrFolderOrSearch.value,
@@ -426,5 +431,6 @@ export function useSnippets() {
     updateSnippet,
     updateSnippetContent,
     updateSnippets,
+    isAvailableToCodePreview,
   }
 }

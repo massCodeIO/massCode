@@ -169,6 +169,11 @@ const editorMenuItems: MenuConfig[] = [
     click: () => send('main-menu:format'),
   },
   {
+    label: i18n.t('menu:editor.previewCode'),
+    click: () => send('main-menu:preview-code'),
+    accelerator: 'CommandOrControl+Shift+P',
+  },
+  {
     type: 'separator',
   },
   {

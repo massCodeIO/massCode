@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { Eye, GitFork, Plus, Type } from 'lucide-vue-next'
+import { Code, Eye, GitFork, Plus, Type } from 'lucide-vue-next'
 
-const { selectedSnippet, selectedSnippetContent, addFragment } = useSnippets()
-const { isFocusedSnippetName, state, isShowMarkdown, isShowMindmap } = useApp()
+const {
+  selectedSnippet,
+  selectedSnippetContent,
+  addFragment,
+  isAvailableToCodePreview,
+} = useSnippets()
+const {
+  isFocusedSnippetName,
+  state,
+  isShowMarkdown,
+  isShowMindmap,
+  isShowCodePreview,
+} = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
@@ -45,6 +56,12 @@ function onMindmapToggle() {
   isShowMindmap.value = !isShowMindmap.value
   isShowMarkdown.value = false
 }
+
+function onCodePreviewToggle() {
+  isShowCodePreview.value = !isShowCodePreview.value
+  isShowMarkdown.value = false
+  isShowMindmap.value = false
+}
 </script>
 
 <template>
@@ -60,6 +77,18 @@ function onMindmapToggle() {
         @blur="isFocusedSnippetName = false"
       />
       <div class="ml-2 flex">
+        <UiActionButton
+          v-if="isAvailableToCodePreview"
+          :tooltip="
+            isShowCodePreview
+              ? `${i18n.t('action.hide')} ${i18n.t('menu:editor.previewCode')}`
+              : i18n.t('menu:editor.previewCode')
+          "
+          :active="isShowCodePreview"
+          @click="onCodePreviewToggle"
+        >
+          <Code class="h-3 w-3" />
+        </UiActionButton>
         <UiActionButton
           v-if="isShowMarkdownAction"
           :tooltip="

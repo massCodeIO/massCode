@@ -274,15 +274,13 @@ onMounted(() => {
   >
     <EditorHeader v-if="isShowHeader" />
     <SplitterGroup
+      v-show="isShowEditor"
       id="editor"
       direction="vertical"
       class="overflow-auto"
     >
       <SplitterPanel as-child>
-        <div
-          v-show="isShowEditor"
-          ref="editorRef"
-        />
+        <div ref="editorRef" />
       </SplitterPanel>
       <SplitterResizeHandle class="relative cursor-none">
         <UiGutter orientation="horizontal" />

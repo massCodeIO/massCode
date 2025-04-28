@@ -2,7 +2,7 @@
 import { useSnippets } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { useDark } from '@vueuse/core'
-import { Download, Moon, RefreshCcw, Sun } from 'lucide-vue-next'
+import { FileDown, Moon, RefreshCcw, Sun } from 'lucide-vue-next'
 
 const { selectedSnippet } = useSnippets()
 
@@ -125,13 +125,15 @@ watch(isDarkPreview, () => {
         />
       </UiActionButton>
     </div>
-    <div>
+    <div class="flex items-center">
       <UiActionButton
-        type="icon"
+        type="iconText"
         :tooltip="`${i18n.t('button.saveAs')} HTML`"
         @click="onSaveHtml"
       >
-        <Download class="h-3 w-3" />
+        <div class="flex items-center gap-1">
+          HTML <FileDown class="h-3 w-3" />
+        </div>
       </UiActionButton>
       <UiActionButton
         type="icon"

@@ -88,7 +88,7 @@ watch(selectedSnippetContent, () => {
 <template>
   <div>
     <EditorHeaderTool>
-      <div class="flex w-full justify-between">
+      <div class="flex w-full items-center justify-between px-2">
         <div>
           <UiActionButton
             :tooltip="i18n.t('button.zoomIn')"

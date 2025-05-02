@@ -30,7 +30,8 @@ const {
   selectedSnippetIds,
   isAvailableToCodePreview,
 } = useSnippets()
-const { isShowMarkdown, isShowMindmap, isShowCodePreview } = useApp()
+const { isShowMarkdown, isShowMindmap, isShowCodePreview, isShowCodeImage }
+  = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -55,6 +56,7 @@ const isShowEditor = computed(() => {
   return (
     !isShowMarkdown.value
     && !isShowMindmap.value
+    && !isShowCodeImage.value
     && !isEmpty.value
     && selectedSnippetIds.value.length === 1
   )
@@ -292,6 +294,7 @@ onMounted(() => {
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
     <EditorMindmap v-if="isShowMindmap" />
+    <EditorCodeImage v-if="isShowCodeImage" />
     <div
       v-if="isEmpty || selectedSnippetIds.length > 1"
       class="row-span-full flex items-center justify-center"

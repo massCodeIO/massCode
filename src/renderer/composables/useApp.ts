@@ -16,6 +16,7 @@ const isFocusedSnippetName = ref(false)
 const isShowMarkdown = ref(false)
 const isShowMindmap = ref(false)
 const isShowCodePreview = ref(false)
+const isShowCodeImage = ref(false)
 
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
@@ -59,6 +60,7 @@ export function useApp() {
     highlightedSnippetIds,
     highlightedTagId,
     isFocusedSnippetName,
+    isShowCodeImage,
     isShowCodePreview,
     isShowMarkdown,
     isShowMindmap,

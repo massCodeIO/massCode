@@ -22,6 +22,11 @@ body {
   --color-button-fg: oklch(0% 0 0);
   --color-button-hover: oklch(95% 0 0);
 
+  --color-switch-inactive: oklch(92% 0 0);
+  --color-switch-active: oklch(32% 0 0);
+  --color-switch-thumb: oklch(100% 0 0);
+  --color-switch-thumb-active: oklch(100% 0 0);
+
   --color-border: oklch(90% 0 0);
 
   --color-text: oklch(20% 0 0);
@@ -50,6 +55,11 @@ html.dark {
   --color-button: oklch(32% 0 0);
   --color-button-fg: oklch(95% 0 0);
   --color-button-hover: oklch(35% 0 0);
+
+  --color-switch-inactive: oklch(32% 0 0);
+  --color-switch-active: oklch(50% 0 0);
+  --color-switch-thumb: oklch(100% 0 0);
+  --color-switch-thumb-active: oklch(100% 0 0);
 
   --color-border: oklch(30% 0 0);
 

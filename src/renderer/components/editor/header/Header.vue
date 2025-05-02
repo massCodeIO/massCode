@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { Code, Eye, GitFork, Plus, Type } from 'lucide-vue-next'
+import { Code, Eye, GitFork, Image, Plus, Type } from 'lucide-vue-next'
 
 const {
   selectedSnippet,
@@ -15,6 +15,7 @@ const {
   isShowMarkdown,
   isShowMindmap,
   isShowCodePreview,
+  isShowCodeImage,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
@@ -40,7 +41,9 @@ const isShowMarkdownAction = computed(
 )
 
 const isShowTags = computed(() => {
-  return !isShowMindmap.value && !isShowMarkdown.value
+  return (
+    !isShowMindmap.value && !isShowMarkdown.value && !isShowCodeImage.value
+  )
 })
 
 function onClickTab(index: number) {
@@ -50,17 +53,29 @@ function onClickTab(index: number) {
 function onMarkdownToggle() {
   isShowMarkdown.value = !isShowMarkdown.value
   isShowMindmap.value = false
+  isShowCodePreview.value = false
+  isShowCodeImage.value = false
 }
 
 function onMindmapToggle() {
   isShowMindmap.value = !isShowMindmap.value
   isShowMarkdown.value = false
+  isShowCodePreview.value = false
+  isShowCodeImage.value = false
 }
 
 function onCodePreviewToggle() {
   isShowCodePreview.value = !isShowCodePreview.value
   isShowMarkdown.value = false
   isShowMindmap.value = false
+  isShowCodeImage.value = false
+}
+
+function onCodeImageToggle() {
+  isShowCodeImage.value = !isShowCodeImage.value
+  isShowMarkdown.value = false
+  isShowMindmap.value = false
+  isShowCodePreview.value = false
 }
 </script>
 
@@ -77,6 +92,13 @@ function onCodePreviewToggle() {
         @blur="isFocusedSnippetName = false"
       />
       <div class="ml-2 flex">
+        <UiActionButton
+          :tooltip="i18n.t('action.add.description')"
+          :active="isShowCodeImage"
+          @click="onCodeImageToggle"
+        >
+          <Image class="h-3 w-3" />
+        </UiActionButton>
         <UiActionButton
           v-if="isAvailableToCodePreview"
           :tooltip="

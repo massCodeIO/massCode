@@ -109,7 +109,7 @@ watch(
       )
 
       const sanitizedHtml = sanitizeHtml(markdownHtml, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
         allowedAttributes: {
           '*': [
             'align',

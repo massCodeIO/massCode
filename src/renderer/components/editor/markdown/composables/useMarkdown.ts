@@ -1,8 +1,11 @@
 import { store } from '@/electron'
 import { useCssVar } from '@vueuse/core'
 
-const scale = ref(store.preferences.get('markdown.scale') as number)
-const scaleToShow = computed(() => scale.value.toFixed(1))
+const scale = useCssVar('--markdown-scale', document.body, {
+  initialValue: store.preferences.get('markdown.scale'),
+})
+
+const scaleToShow = computed(() => Number(scale.value).toFixed(1))
 
 function onZoom(type: 'in' | 'out') {
   const step = 0.1
@@ -23,14 +26,10 @@ function onZoom(type: 'in' | 'out') {
     store.preferences.set('markdown.scale', value)
   }
 
-  scale.value = value
+  scale.value = String(value)
 }
 
 export function useMarkdown() {
-  useCssVar('--markdown-scale', document.body, {
-    initialValue: String(scale.value),
-  })
-
   return {
     onZoom,
     scaleToShow,

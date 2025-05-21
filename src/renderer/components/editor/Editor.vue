@@ -7,7 +7,7 @@ import {
   useSnippetUpdate,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { useClipboard, useDark, useDebounceFn } from '@vueuse/core'
+import { useClipboard, useCssVar, useDark, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
@@ -30,20 +30,36 @@ const {
   selectedSnippetIds,
   isAvailableToCodePreview,
 } = useSnippets()
-const { isShowMarkdown, isShowMindmap, isShowCodePreview, isShowCodeImage }
-  = useApp()
+const {
+  isShowMarkdown,
+  isShowMindmap,
+  isShowCodePreview,
+  isShowCodeImage,
+  isShowMarkdownPresentation,
+} = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
 const isDark = useDark()
 let editor: CodeMirror.Editor | null = null
 
-const editorRef = ref()
-const scrollBarOpacity = ref(1)
 const isProgrammaticChange = ref(false)
 
-const fontSize = computed(() => `${settings.fontSize}px`)
-const fontFamily = computed(() => settings.fontFamily)
+useCssVar('--editor-font-size', document.body, {
+  initialValue: `${settings.fontSize}px`,
+})
+
+useCssVar('--editor-font-family', document.body, {
+  initialValue: settings.fontFamily,
+})
+
+const scrollBarOpacity = useCssVar(
+  '--editor-scrollbar-opacity',
+  document.body,
+  {
+    initialValue: '1',
+  },
+)
 
 const isShowHeader = computed(() => {
   return (
@@ -57,6 +73,7 @@ const isShowEditor = computed(() => {
     !isShowMarkdown.value
     && !isShowMindmap.value
     && !isShowCodeImage.value
+    && !isShowMarkdownPresentation.value
     && !isEmpty.value
     && selectedSnippetIds.value.length === 1
   )
@@ -82,11 +99,16 @@ function getCursorPosition() {
 }
 
 const hideScrollbar = useDebounceFn(() => {
-  scrollBarOpacity.value = 0
+  scrollBarOpacity.value = '0'
 }, 1000)
 
 async function init() {
-  editor = CodeMirror(editorRef.value, {
+  const el = document.getElementById('editor')
+
+  if (!el)
+    return
+
+  editor = CodeMirror(el, {
     value: selectedSnippetContent.value?.value || ' ',
     mode: selectedSnippetContent.value?.language || 'plain_text',
     theme: isDark.value ? 'oceanic-next' : 'neo',
@@ -122,7 +144,7 @@ async function init() {
   editor.on('cursorActivity', getCursorPosition)
 
   editor.on('scroll', () => {
-    scrollBarOpacity.value = 1
+    scrollBarOpacity.value = '1'
     editor?.setOption('scrollbarStyle', 'overlay')
   })
 
@@ -277,12 +299,14 @@ onMounted(() => {
     <EditorHeader v-if="isShowHeader" />
     <SplitterGroup
       v-show="isShowEditor"
-      id="editor"
       direction="vertical"
       class="overflow-auto"
     >
       <SplitterPanel as-child>
-        <div ref="editorRef" />
+        <div
+          id="editor"
+          data-editor-mount
+        />
       </SplitterPanel>
       <SplitterResizeHandle class="relative cursor-none">
         <UiGutter orientation="horizontal" />
@@ -318,9 +342,9 @@ onMounted(() => {
 <style>
 @reference '../../styles.css';
 .CodeMirror {
-  font-size: v-bind(fontSize);
-  font-family: v-bind(fontFamily);
-  line-height: calc(v-bind(fontSize) * 1.5);
+  font-size: var(--editor-font-size);
+  font-family: var(--editor-font-family);
+  line-height: calc(var(--editor-font-size) * 1.5);
   height: 100%;
   background-color: var(--color-bg) !important;
 }
@@ -345,14 +369,14 @@ onMounted(() => {
 .CodeMirror-overlayscroll-vertical div {
   background-color: var(--color-scrollbar);
   width: 7px;
-  opacity: v-bind(scrollBarOpacity);
+  opacity: var(--editor-scrollbar-opacity);
   transition: opacity 0.3s;
 }
 
 .CodeMirror-overlayscroll-horizontal div {
   background-color: var(--color-scrollbar);
   height: 7px;
-  opacity: v-bind(scrollBarOpacity);
+  opacity: var(--editor-scrollbar-opacity);
   transition: opacity 0.3s;
 }
 

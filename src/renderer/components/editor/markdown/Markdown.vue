@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useSnippets } from '@/composables'
-import { ipc } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
+import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
 import sanitizeHtml from 'sanitize-html'
 import { nextTick, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMarkdown } from './composables'
 import 'codemirror/addon/runmode/runmode'
 import 'codemirror/theme/neo.css'
@@ -14,7 +16,9 @@ import 'codemirror/theme/oceanic-next.css'
 
 const { selectedSnippetContent } = useSnippets()
 const isDark = useDark()
-useMarkdown()
+const { scaleToShow, onZoom } = useMarkdown()
+
+const route = useRoute()
 
 const renderedContent = ref('')
 const codeEditors = ref<CodeMirror.Editor[]>([])
@@ -23,6 +27,8 @@ const codeBlocksData = ref<{ id: string, value: string, language?: string }[]>(
 )
 
 const markdownRef = useTemplateRef('markdownRef')
+
+const isShowHeaderTool = route.name !== 'markdown-presentation'
 
 marked.use({
   renderer: {
@@ -47,6 +53,42 @@ marked.use({
     },
   },
 })
+
+async function renderMarkdown() {
+  if (selectedSnippetContent.value?.value) {
+    const markdownHtml = await marked.parse(selectedSnippetContent.value.value)
+
+    const sanitizedHtml = sanitizeHtml(markdownHtml, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
+      allowedAttributes: {
+        '*': [
+          'align',
+          'alt',
+          'height',
+          'href',
+          'name',
+          'src',
+          'target',
+          'width',
+          'class',
+          'type',
+          'checked',
+          'disabled',
+          'id',
+          'data-*',
+        ],
+      },
+      allowedSchemes: ['http', 'https', 'masscode'],
+    })
+
+    renderedContent.value = sanitizedHtml
+  }
+  else {
+    renderedContent.value = ''
+    codeEditors.value = []
+    codeBlocksData.value = []
+  }
+}
 
 function renderCodeBlockEditors() {
   codeEditors.value = []
@@ -100,47 +142,11 @@ function onLinkClick(event: MouseEvent) {
   }
 }
 
-watch(
-  selectedSnippetContent,
-  async () => {
-    if (selectedSnippetContent.value?.value) {
-      const markdownHtml = await marked.parse(
-        selectedSnippetContent.value.value,
-      )
+watch(selectedSnippetContent, async () => renderMarkdown(), {
+  immediate: true,
+})
 
-      const sanitizedHtml = sanitizeHtml(markdownHtml, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
-        allowedAttributes: {
-          '*': [
-            'align',
-            'alt',
-            'height',
-            'href',
-            'name',
-            'src',
-            'target',
-            'width',
-            'class',
-            'type',
-            'checked',
-            'disabled',
-            'id',
-            'data-*',
-          ],
-        },
-        allowedSchemes: ['http', 'https', 'masscode'],
-      })
-
-      renderedContent.value = sanitizedHtml
-    }
-    else {
-      renderedContent.value = ''
-      codeEditors.value = []
-      codeBlocksData.value = []
-    }
-  },
-  { immediate: true },
-)
+watch(scaleToShow, () => renderMarkdown())
 
 watch(renderedContent, () => {
   nextTick(() => {
@@ -161,14 +167,35 @@ watch(isDark, (value) => {
 </script>
 
 <template>
-  <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-    <div
-      ref="markdownRef"
-      class="markdown-content"
-    >
-      <div v-html="renderedContent" />
-    </div>
-  </PerfectScrollbar>
+  <div>
+    <EditorHeaderTool v-if="isShowHeaderTool">
+      <div class="flex w-full justify-end gap-2 px-2">
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomOut')"
+          @click="onZoom('out')"
+        >
+          <Minus class="h-3 w-3" />
+        </UiActionButton>
+        <div class="tabular-nums select-none">
+          {{ scaleToShow }}
+        </div>
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomIn')"
+          @click="onZoom('in')"
+        >
+          <Plus class="h-3 w-3" />
+        </UiActionButton>
+      </div>
+    </EditorHeaderTool>
+    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+      <div
+        ref="markdownRef"
+        class="markdown-content"
+      >
+        <div v-html="renderedContent" />
+      </div>
+    </PerfectScrollbar>
+  </div>
 </template>
 
 <style>

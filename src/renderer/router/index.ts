@@ -33,6 +33,11 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/markdown-presentation',
+    name: 'markdown-presentation',
+    component: () => import('@/views/MarkdownPresentation.vue'),
+  },
 ]
 
 export const router = createRouter({

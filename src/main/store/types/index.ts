@@ -29,6 +29,10 @@ export interface EditorSettings {
   matchBrackets: boolean
 }
 
+export interface MarkdownSettings {
+  scale: number
+}
+
 export interface PreferencesStore {
   storagePath: string
   backupPath: string
@@ -36,6 +40,7 @@ export interface PreferencesStore {
   language: string
   theme: 'light' | 'dark' | 'auto'
   editor: EditorSettings
+  markdown: MarkdownSettings
 }
 
 export interface Store {

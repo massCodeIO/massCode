@@ -14,6 +14,7 @@ const highlightedTagId = ref<number>()
 
 const isFocusedSnippetName = ref(false)
 const isShowMarkdown = ref(false)
+const isShowMarkdownPresentation = ref(false)
 const isShowMindmap = ref(false)
 const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
@@ -63,6 +64,7 @@ export function useApp() {
     isShowCodeImage,
     isShowCodePreview,
     isShowMarkdown,
+    isShowMarkdownPresentation,
     isShowMindmap,
     restoreStateSnapshot,
     saveStateSnapshot,

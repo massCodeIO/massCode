@@ -223,14 +223,23 @@ watch(isDark, (value) => {
 
 .markdown-content ul,
 .markdown-content ol {
-  @apply mb-4 ml-8 pl-0;
+  @apply mb-4 ml-8;
+  list-style-position: outside;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
 }
 
 .markdown-content ul ul,
 .markdown-content ol ol,
 .markdown-content ul ol,
 .markdown-content ol ul {
-  @apply mb-0;
+  @apply mb-0 ml-6;
 }
 
 .markdown-content li {
@@ -285,7 +294,7 @@ watch(isDark, (value) => {
 }
 
 .markdown-content hr {
-  @apply my-6 h-1 border-0 bg-[var(--color-border)] p-0;
+  @apply my-6 border-t border-[var(--color-border)] p-0;
 }
 
 .markdown-content .CodeMirror {

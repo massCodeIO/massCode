@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { Code, Eye, GitFork, Image, Plus, Type } from 'lucide-vue-next'
+import {
+  Code,
+  Eye,
+  GitFork,
+  Image,
+  Plus,
+  Presentation,
+  Type,
+} from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 
 const {
   selectedSnippet,
@@ -14,10 +23,13 @@ const {
   state,
   isShowMarkdown,
   isShowMindmap,
+  isShowMarkdownPresentation,
   isShowCodePreview,
   isShowCodeImage,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
+
+const router = useRouter()
 
 const isShowDescription = ref(false)
 
@@ -53,13 +65,25 @@ function onClickTab(index: number) {
 function onMarkdownToggle() {
   isShowMarkdown.value = !isShowMarkdown.value
   isShowMindmap.value = false
+  isShowMarkdownPresentation.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
+}
+
+function onMarkdownPresentationToggle() {
+  isShowMarkdownPresentation.value = !isShowMarkdownPresentation.value
+  isShowMarkdown.value = false
+  isShowMindmap.value = false
+  isShowCodePreview.value = false
+  isShowCodeImage.value = false
+
+  router.push({ name: 'markdown-presentation' })
 }
 
 function onMindmapToggle() {
   isShowMindmap.value = !isShowMindmap.value
   isShowMarkdown.value = false
+  isShowMarkdownPresentation.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
 }
@@ -67,6 +91,7 @@ function onMindmapToggle() {
 function onCodePreviewToggle() {
   isShowCodePreview.value = !isShowCodePreview.value
   isShowMarkdown.value = false
+  isShowMarkdownPresentation.value = false
   isShowMindmap.value = false
   isShowCodeImage.value = false
 }
@@ -74,6 +99,7 @@ function onCodePreviewToggle() {
 function onCodeImageToggle() {
   isShowCodeImage.value = !isShowCodeImage.value
   isShowMarkdown.value = false
+  isShowMarkdownPresentation.value = false
   isShowMindmap.value = false
   isShowCodePreview.value = false
 }
@@ -110,6 +136,18 @@ function onCodeImageToggle() {
           @click="onCodePreviewToggle"
         >
           <Code class="h-3 w-3" />
+        </UiActionButton>
+        <UiActionButton
+          v-if="isShowMarkdownAction"
+          :tooltip="
+            isShowMarkdownPresentation
+              ? i18n.t('action.hide')
+              : i18n.t('menu:markdown.presentationMode')
+          "
+          :active="isShowMarkdownPresentation"
+          @click="onMarkdownPresentationToggle"
+        >
+          <Presentation class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
           v-if="isShowMarkdownAction"

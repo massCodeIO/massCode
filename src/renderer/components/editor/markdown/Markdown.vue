@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { useSnippets } from '@/composables'
-import { ipc } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
+import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
 import sanitizeHtml from 'sanitize-html'
 import { nextTick, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useMarkdown } from './composables'
 import 'codemirror/addon/runmode/runmode'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
 const { selectedSnippetContent } = useSnippets()
 const isDark = useDark()
+const { scaleToShow, onZoom } = useMarkdown()
+
+const route = useRoute()
 
 const renderedContent = ref('')
 const codeEditors = ref<CodeMirror.Editor[]>([])
@@ -21,6 +27,8 @@ const codeBlocksData = ref<{ id: string, value: string, language?: string }[]>(
 )
 
 const markdownRef = useTemplateRef('markdownRef')
+
+const isShowHeaderTool = route.name !== 'markdown-presentation'
 
 marked.use({
   renderer: {
@@ -45,6 +53,42 @@ marked.use({
     },
   },
 })
+
+async function renderMarkdown() {
+  if (selectedSnippetContent.value?.value) {
+    const markdownHtml = await marked.parse(selectedSnippetContent.value.value)
+
+    const sanitizedHtml = sanitizeHtml(markdownHtml, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
+      allowedAttributes: {
+        '*': [
+          'align',
+          'alt',
+          'height',
+          'href',
+          'name',
+          'src',
+          'target',
+          'width',
+          'class',
+          'type',
+          'checked',
+          'disabled',
+          'id',
+          'data-*',
+        ],
+      },
+      allowedSchemes: ['http', 'https', 'masscode'],
+    })
+
+    renderedContent.value = sanitizedHtml
+  }
+  else {
+    renderedContent.value = ''
+    codeEditors.value = []
+    codeBlocksData.value = []
+  }
+}
 
 function renderCodeBlockEditors() {
   codeEditors.value = []
@@ -98,47 +142,11 @@ function onLinkClick(event: MouseEvent) {
   }
 }
 
-watch(
-  selectedSnippetContent,
-  async () => {
-    if (selectedSnippetContent.value?.value) {
-      const markdownHtml = await marked.parse(
-        selectedSnippetContent.value.value,
-      )
+watch(selectedSnippetContent, async () => renderMarkdown(), {
+  immediate: true,
+})
 
-      const sanitizedHtml = sanitizeHtml(markdownHtml, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-        allowedAttributes: {
-          '*': [
-            'align',
-            'alt',
-            'height',
-            'href',
-            'name',
-            'src',
-            'target',
-            'width',
-            'class',
-            'type',
-            'checked',
-            'disabled',
-            'id',
-            'data-*',
-          ],
-        },
-        allowedSchemes: ['http', 'https', 'masscode'],
-      })
-
-      renderedContent.value = sanitizedHtml
-    }
-    else {
-      renderedContent.value = ''
-      codeEditors.value = []
-      codeBlocksData.value = []
-    }
-  },
-  { immediate: true },
-)
+watch(scaleToShow, () => renderMarkdown())
 
 watch(renderedContent, () => {
   nextTick(() => {
@@ -159,128 +167,170 @@ watch(isDark, (value) => {
 </script>
 
 <template>
-  <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-    <div
-      ref="markdownRef"
-      class="markdown-content"
-    >
-      <div v-html="renderedContent" />
-    </div>
-  </PerfectScrollbar>
+  <div>
+    <EditorHeaderTool v-if="isShowHeaderTool">
+      <div class="flex w-full justify-end gap-2 px-2">
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomOut')"
+          @click="onZoom('out')"
+        >
+          <Minus class="h-3 w-3" />
+        </UiActionButton>
+        <div class="tabular-nums select-none">
+          {{ scaleToShow }}
+        </div>
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomIn')"
+          @click="onZoom('in')"
+        >
+          <Plus class="h-3 w-3" />
+        </UiActionButton>
+      </div>
+    </EditorHeaderTool>
+    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+      <div
+        ref="markdownRef"
+        class="markdown-content"
+      >
+        <div v-html="renderedContent" />
+      </div>
+    </PerfectScrollbar>
+  </div>
 </template>
 
-<style scoped>
+<style>
 @reference '../../../styles.css';
+
 .markdown-content {
-  @apply overflow-auto p-4 font-sans text-base leading-6 text-[var(--color-text)];
+  @apply overflow-auto p-4 font-sans text-[var(--color-text)];
+  font-size: calc(1rem * var(--markdown-scale));
+  line-height: 1.5;
 }
 
-.markdown-content :deep(h1) {
-  @apply my-4 border-b border-[var(--color-border)] pb-2 text-4xl font-semibold text-[var(--color-text)] first-of-type:mt-0;
+.markdown-content h1 {
+  @apply my-4 border-b border-[var(--color-border)] pb-2 font-semibold text-[var(--color-text)] first-of-type:mt-0;
+  font-size: calc(2.25rem * var(--markdown-scale));
 }
 
-.markdown-content :deep(h2) {
-  @apply my-5 border-b border-[var(--color-border)] pb-2 text-3xl font-semibold text-[var(--color-text)] first-of-type:mt-0;
+.markdown-content h2 {
+  @apply my-5 border-b border-[var(--color-border)] pb-2 font-semibold text-[var(--color-text)] first-of-type:mt-0;
+  font-size: calc(1.875rem * var(--markdown-scale));
 }
 
-.markdown-content :deep(h3) {
-  @apply my-6 text-2xl font-semibold text-[var(--color-text)];
+.markdown-content h3 {
+  @apply my-6 font-semibold text-[var(--color-text)];
+  font-size: calc(1.5rem * var(--markdown-scale));
 }
 
-.markdown-content :deep(h4) {
-  @apply my-7 text-xl font-semibold text-[var(--color-text)];
+.markdown-content h4 {
+  @apply my-7 font-semibold text-[var(--color-text)];
+  font-size: calc(1.25rem * var(--markdown-scale));
 }
 
-.markdown-content :deep(p) {
+.markdown-content p {
   @apply mb-4;
+  font-size: calc(1rem * var(--markdown-scale));
 }
 
-.markdown-content :deep(a) {
+.markdown-content a {
   @apply text-blue-600 no-underline dark:text-blue-400;
 }
 
-.markdown-content :deep(a:hover) {
+.markdown-content a:hover {
   @apply underline;
 }
 
-.markdown-content :deep(strong) {
+.markdown-content strong {
   @apply font-semibold;
 }
 
-.markdown-content :deep(em) {
+.markdown-content em {
   @apply italic;
 }
 
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
-  @apply mb-4 ml-8 pl-0;
+.markdown-content ul,
+.markdown-content ol {
+  @apply mb-4 ml-8;
+  list-style-position: outside;
 }
 
-.markdown-content :deep(ul ul),
-.markdown-content :deep(ol ol),
-.markdown-content :deep(ul ol),
-.markdown-content :deep(ol ul) {
-  @apply mb-0;
+.markdown-content ul {
+  list-style-type: disc;
 }
 
-.markdown-content :deep(li) {
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+  @apply mb-0 ml-6;
+}
+
+.markdown-content li {
   @apply mb-1;
 }
 
-.markdown-content :deep(blockquote) {
+.markdown-content blockquote {
   @apply mb-4 border-l-4 border-[var(--color-border)] pl-4 text-[var(--color-text-muted)];
 }
 
-.markdown-content :deep(code) {
-  @apply rounded bg-[rgba(27,31,35,0.05)] px-1 py-0.5 text-sm dark:bg-[rgba(255,255,255,0.1)];
+.markdown-content code {
+  @apply rounded bg-[rgba(27,31,35,0.05)] px-1 py-0.5 dark:bg-[rgba(255,255,255,0.1)];
+  font-size: calc(0.875rem * var(--markdown-scale));
   font-family:
     "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
-.markdown-content :deep(pre) {
-  @apply mb-4 overflow-auto rounded bg-[var(--color-button)] p-4 text-sm leading-5 dark:bg-[var(--color-button)];
+.markdown-content pre {
+  @apply mb-4 overflow-auto rounded bg-[var(--color-button)] p-4 leading-5 dark:bg-[var(--color-button)];
+  font-size: calc(0.875rem * var(--markdown-scale));
   font-family:
     "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
-.markdown-content :deep(pre code) {
+.markdown-content pre code {
   @apply m-0 border-0 bg-transparent p-0 text-base;
 }
 
-.markdown-content :deep(table) {
+.markdown-content table {
   @apply mb-4 block border-collapse overflow-x-auto;
 }
 
-.markdown-content :deep(tr) {
+.markdown-content tr {
   @apply border-t border-[var(--color-border)];
 }
 
-.markdown-content :deep(td),
-.markdown-content :deep(th) {
+.markdown-content td,
+.markdown-content th {
   @apply border border-[var(--color-border)] p-2;
 }
 
-.markdown-content :deep(th) {
+.markdown-content th {
   @apply bg-[var(--color-button)] font-semibold dark:bg-[var(--color-button)];
 }
 
-.markdown-content :deep(tr:nth-child(2n)) {
+.markdown-content tr:nth-child(2n) {
   @apply bg-[var(--color-button)] dark:bg-[var(--color-button)];
 }
 
-.markdown-content :deep(img) {
+.markdown-content img {
   @apply box-content max-w-full;
 }
 
-.markdown-content :deep(hr) {
-  @apply my-6 h-1 border-0 bg-[var(--color-border)] p-0;
+.markdown-content hr {
+  @apply my-6 border-t border-[var(--color-border)] p-0;
 }
 
-.markdown-content :deep(.CodeMirror) {
-  @apply !bg-markdown-code overflow-auto rounded-md p-4 text-sm leading-5;
+.markdown-content .CodeMirror {
+  @apply !bg-markdown-code overflow-auto rounded-md p-4;
+  font-size: calc(0.875rem * var(--markdown-scale));
+  line-height: calc(0.875rem * var(--markdown-scale) * 1.5);
 }
 
-.markdown-content :deep(.code-block) > div {
+.markdown-content .code-block > div {
   @apply overflow-hidden;
 }
 </style>

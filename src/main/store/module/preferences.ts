@@ -19,5 +19,8 @@ export default new Store<PreferencesStore>({
     language: 'en_US',
     theme: 'auto',
     editor: EDITOR_DEFAULTS,
+    markdown: {
+      scale: 1,
+    },
   },
 })

@@ -45,7 +45,7 @@ let editor: CodeMirror.Editor | null = null
 
 const isProgrammaticChange = ref(false)
 
-useCssVar('--editor-font-size', document.body, {
+const fontSize = useCssVar('--editor-font-size', document.body, {
   initialValue: `${settings.fontSize}px`,
 })
 
@@ -152,14 +152,17 @@ async function init() {
 
   ipc.on('main-menu:font-size-increase', () => {
     settings.fontSize++
+    fontSize.value = `${settings.fontSize}px`
   })
 
   ipc.on('main-menu:font-size-decrease', () => {
     settings.fontSize--
+    fontSize.value = `${settings.fontSize}px`
   })
 
   ipc.on('main-menu:font-size-reset', () => {
     settings.fontSize = EDITOR_DEFAULTS.fontSize
+    fontSize.value = `${settings.fontSize}px`
   })
 
   ipc.on('main-menu:copy-snippet', () => {

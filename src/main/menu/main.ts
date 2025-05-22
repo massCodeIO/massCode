@@ -204,6 +204,14 @@ const markdownMenuItems: MenuConfig[] = [
     click: () => send('main-menu:preview-mindmap'),
     accelerator: 'CommandOrControl+Shift+I',
   },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:markdown.presentationMode'),
+    click: () => send('main-menu:presentation-mode'),
+    accelerator: 'CommandOrControl+Shift+P',
+  },
 ]
 
 const menuItems: MenuItemConstructorOptions[] = [

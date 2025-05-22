@@ -4,7 +4,12 @@ import { router, RouterName } from '@/router'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
-const { isShowMarkdown, isShowMindmap, isShowCodePreview } = useApp()
+const {
+  isShowMarkdown,
+  isShowMindmap,
+  isShowCodePreview,
+  isShowMarkdownPresentation,
+} = useApp()
 
 export function registerMainMenuListeners() {
   ipc.on('main-menu:goto-preferences', () => {
@@ -33,5 +38,10 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:preview-code', () => {
     isShowCodePreview.value = !isShowCodePreview.value
+  })
+
+  ipc.on('main-menu:presentation-mode', () => {
+    isShowMarkdownPresentation.value = !isShowMarkdownPresentation.value
+    router.push({ name: RouterName.markdownPresentation })
   })
 }

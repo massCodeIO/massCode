@@ -1,6 +1,6 @@
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { ipc } from '@/electron'
-import { router } from '@/router'
+import { router, RouterName } from '@/router'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
@@ -8,7 +8,7 @@ const { isShowMarkdown, isShowMindmap, isShowCodePreview } = useApp()
 
 export function registerMainMenuListeners() {
   ipc.on('main-menu:goto-preferences', () => {
-    router.push({ name: 'preferences/storage' })
+    router.push({ name: RouterName.preferences })
   })
 
   ipc.on('main-menu:new-snippet', () => {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useApp, useSnippets } from '@/composables'
+import { router, RouterName } from '@/router'
 import { useFullscreen, useMagicKeys } from '@vueuse/core'
 import {
   ArrowLeft,
@@ -10,7 +11,6 @@ import {
   Plus,
   X,
 } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
 import { useMarkdown } from './composables'
 
 const { isShowMarkdownPresentation } = useApp()
@@ -19,8 +19,6 @@ const { scaleToShow, onZoom } = useMarkdown()
 
 const { isFullscreen, toggle } = useFullscreen()
 const { left, right, escape } = useMagicKeys()
-
-const router = useRouter()
 
 const mdSnippetIds = computed(() => {
   return displayedSnippets.value
@@ -35,7 +33,7 @@ const currentIndex = computed(
 
 function onClose() {
   isShowMarkdownPresentation.value = false
-  router.push({ name: 'main' })
+  router.push({ name: RouterName.main })
 }
 
 function onPrevNext(direction: 'prev' | 'next') {

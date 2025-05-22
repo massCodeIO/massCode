@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { i18n } from '@/electron'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { router, RouterName } from '@/router'
+import { RouterLink, useRoute } from 'vue-router'
 
-const router = useRouter()
 const route = useRoute()
 
 const isActiveRoute = computed(() => {
@@ -12,19 +12,19 @@ const isActiveRoute = computed(() => {
 const nav = [
   {
     label: i18n.t('preferences:storage.label'),
-    name: 'preferences/storage',
+    name: RouterName.preferencesStorage,
   },
   {
     label: i18n.t('preferences:editor.label'),
-    name: 'preferences/editor',
+    name: RouterName.preferencesEditor,
   },
   {
     label: i18n.t('preferences:language.label'),
-    name: 'preferences/language',
+    name: RouterName.preferencesLanguage,
   },
   {
     label: i18n.t('preferences:appearance.label'),
-    name: 'preferences/appearance',
+    name: RouterName.preferencesAppearance,
   },
 ]
 </script>
@@ -32,7 +32,7 @@ const nav = [
 <template>
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
-    @back="() => router.push({ name: 'main' })"
+    @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>
       <PerfectScrollbar class="h-full px-2">

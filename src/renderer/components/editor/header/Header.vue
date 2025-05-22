@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
+import { router, RouterName } from '@/router'
+
 import {
   Code,
   Eye,
@@ -10,7 +12,6 @@ import {
   Presentation,
   Type,
 } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
 
 const {
   selectedSnippet,
@@ -28,8 +29,6 @@ const {
   isShowCodeImage,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
-
-const router = useRouter()
 
 const isShowDescription = ref(false)
 
@@ -77,7 +76,7 @@ function onMarkdownPresentationToggle() {
   isShowCodePreview.value = false
   isShowCodeImage.value = false
 
-  router.push({ name: 'markdown-presentation' })
+  router.push({ name: RouterName.markdownPresentation })
 }
 
 function onMindmapToggle() {

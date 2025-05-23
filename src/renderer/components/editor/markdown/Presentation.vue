@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useApp, useSnippets } from '@/composables'
+import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useFullscreen, useMagicKeys } from '@vueuse/core'
 import {
@@ -10,7 +11,9 @@ import {
   Minus,
   Plus,
   X,
+  Zap,
 } from 'lucide-vue-next'
+import { ref } from 'vue'
 import { useMarkdown } from './composables'
 
 const { isShowMarkdownPresentation } = useApp()
@@ -18,7 +21,9 @@ const { selectSnippet, displayedSnippets, selectedSnippet } = useSnippets()
 const { scaleToShow, onZoom } = useMarkdown()
 
 const { isFullscreen, toggle } = useFullscreen()
-const { left, right, escape } = useMagicKeys()
+const { left, right, escape, meta, ctrl, l } = useMagicKeys()
+
+const isLaserPointerActive = ref(false)
 
 const mdSnippetIds = computed(() => {
   return displayedSnippets.value
@@ -55,6 +60,10 @@ function onFullscreen() {
   toggle()
 }
 
+function toggleLaserPointer() {
+  isLaserPointerActive.value = !isLaserPointerActive.value
+}
+
 watch(left, (v) => {
   if (v)
     onPrevNext('prev')
@@ -68,6 +77,12 @@ watch(right, (v) => {
 watch(escape, (v) => {
   if (v)
     onClose()
+})
+
+watchEffect(() => {
+  if ((meta.value || ctrl.value) && l.value) {
+    isLaserPointerActive.value = !isLaserPointerActive.value
+  }
 })
 </script>
 
@@ -87,7 +102,10 @@ watch(escape, (v) => {
     </PerfectScrollbar>
     <div class="flex items-center justify-between px-8">
       <div class="flex items-center">
-        <UiActionButton @click="onFullscreen">
+        <UiActionButton
+          :tooltip="i18n.t('button.fullscreen')"
+          @click="onFullscreen"
+        >
           <Expand
             v-if="!isFullscreen"
             class="h-3 w-3"
@@ -97,20 +115,39 @@ watch(escape, (v) => {
             class="h-3 w-3"
           />
         </UiActionButton>
-        <UiActionButton @click="onPrevNext('prev')">
+        <UiActionButton
+          :tooltip="i18n.t('button.prev')"
+          @click="onPrevNext('prev')"
+        >
           <ArrowLeft class="h-3 w-3" />
         </UiActionButton>
-        <UiActionButton @click="onPrevNext('next')">
+        <UiActionButton
+          :tooltip="i18n.t('button.next')"
+          @click="onPrevNext('next')"
+        >
           <ArrowRight class="h-3 w-3" />
         </UiActionButton>
+        <UiActionButton
+          :active="isLaserPointerActive"
+          :tooltip="i18n.t('button.laserPointer')"
+          @click="toggleLaserPointer"
+        >
+          <Zap class="h-3 w-3" />
+        </UiActionButton>
         <div class="flex items-center gap-2">
-          <UiActionButton @click="onZoom('out')">
+          <UiActionButton
+            :tooltip="i18n.t('button.zoomOut')"
+            @click="onZoom('out')"
+          >
             <Minus class="h-3 w-3" />
           </UiActionButton>
           <div class="tabular-nums select-none">
             {{ scaleToShow }}
           </div>
-          <UiActionButton @click="onZoom('in')">
+          <UiActionButton
+            :tooltip="i18n.t('button.zoomIn')"
+            @click="onZoom('in')"
+          >
             <Plus class="h-3 w-3" />
           </UiActionButton>
         </div>
@@ -121,5 +158,6 @@ watch(escape, (v) => {
         </div>
       </div>
     </div>
+    <EditorMarkdownLaserPointer :is-active="isLaserPointerActive" />
   </div>
 </template>

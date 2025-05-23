@@ -11,6 +11,7 @@ type MainMenuAction =
   | 'font-size-reset'
   | 'format'
   | 'goto-preferences'
+  | 'goto-devtools'
   | 'new-folder'
   | 'new-fragment'
   | 'new-snippet'

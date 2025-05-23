@@ -8,6 +8,8 @@ export const RouterName = {
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
   markdownPresentation: 'markdown-presentation',
+  devtools: 'devtools',
+  devtoolsTextCaseConverter: 'devtools/text/case-converter',
 }
 
 const routes = [
@@ -47,6 +49,19 @@ const routes = [
     path: '/markdown-presentation',
     name: RouterName.markdownPresentation,
     component: () => import('@/views/MarkdownPresentation.vue'),
+  },
+  {
+    path: '/devtools',
+    name: RouterName.devtools,
+    component: () => import('@/views/Devtools.vue'),
+    children: [
+      {
+        path: 'text/case-converter',
+        name: RouterName.devtoolsTextCaseConverter,
+        component: () =>
+          import('~/renderer/components/devtools/converters/CaseConverter.vue'),
+      },
+    ],
   },
 ]
 

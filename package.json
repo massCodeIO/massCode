@@ -37,6 +37,7 @@
     "@elysiajs/swagger": "^1.2.2",
     "@vueuse/core": "^12.7.0",
     "better-sqlite3": "^11.8.1",
+    "change-case": "^5.4.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "codemirror": "^5.65.18",

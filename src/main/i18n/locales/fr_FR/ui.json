@@ -22,7 +22,11 @@
     "toggleDarkMode": "Basculer le mode sombre",
     "background": "Arrière-plan",
     "goToDownload": "Aller au téléchargement",
-    "refreshPreview": "Actualiser l'aperçu"
+    "refreshPreview": "Actualiser l'aperçu",
+    "laserPointer": "Pointeur laser",
+    "fullscreen": "Plein écran",
+    "prev": "Précédent",
+    "next": "Suivant"
   },
   "action": {
     "close": "Fermer",

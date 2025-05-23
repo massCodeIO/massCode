@@ -22,7 +22,11 @@
     "toggleDarkMode": "Comută modul întunecat",
     "background": "Fundal",
     "goToDownload": "Mergi la Descărcare",
-    "refreshPreview": "Reîmprospătează previzualizarea"
+    "refreshPreview": "Reîmprospătează previzualizarea",
+    "laserPointer": "Pointer laser",
+    "fullscreen": "Ecran complet",
+    "prev": "Anterior",
+    "next": "Următor"
   },
   "action": {
     "close": "Închide",

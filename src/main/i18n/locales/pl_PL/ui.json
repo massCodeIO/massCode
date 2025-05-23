@@ -22,7 +22,11 @@
     "toggleDarkMode": "Przełącz tryb ciemny",
     "background": "Tło",
     "goToDownload": "Przejdź do pobierania",
-    "refreshPreview": "Odśwież podgląd"
+    "refreshPreview": "Odśwież podgląd",
+    "laserPointer": "Wskaźnik laserowy",
+    "fullscreen": "Pełny ekran",
+    "prev": "Poprzedni",
+    "next": "Następny"
   },
   "action": {
     "close": "Zamknij",

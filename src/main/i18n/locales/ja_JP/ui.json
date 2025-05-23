@@ -22,7 +22,11 @@
     "toggleDarkMode": "ダークモードの切り替え",
     "background": "背景",
     "goToDownload": "ダウンロードへ",
-    "refreshPreview": "プレビューを更新"
+    "refreshPreview": "プレビューを更新",
+    "laserPointer": "レーザーポインター",
+    "fullscreen": "フルスクリーン",
+    "prev": "前へ",
+    "next": "次へ"
   },
   "action": {
     "close": "閉じる",

@@ -22,7 +22,11 @@
     "toggleDarkMode": "Toggle Dark Mode",
     "background": "Background",
     "goToDownload": "Go to Download",
-    "refreshPreview": "Refresh Preview"
+    "refreshPreview": "Refresh Preview",
+    "laserPointer": "Laser Pointer",
+    "fullscreen": "Full Screen",
+    "prev": "Prev",
+    "next": "Next"
   },
   "action": {
     "close": "Close",

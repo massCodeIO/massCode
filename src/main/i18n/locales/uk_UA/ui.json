@@ -22,7 +22,11 @@
     "toggleDarkMode": "Перемкнути темний режим",
     "background": "Фон",
     "goToDownload": "Перейти до завантаження",
-    "refreshPreview": "Оновити попередній перегляд"
+    "refreshPreview": "Оновити попередній перегляд",
+    "laserPointer": "Лазерна указка",
+    "fullscreen": "Повний екран",
+    "prev": "Попередній",
+    "next": "Наступний"
   },
   "action": {
     "close": "Закрити",

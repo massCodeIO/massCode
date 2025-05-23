@@ -22,7 +22,11 @@
     "toggleDarkMode": "Εναλλαγή σκοτεινής λειτουργίας",
     "background": "Φόντο",
     "goToDownload": "Μετάβαση στη Λήψη",
-    "refreshPreview": "Ανανέωση προεπισκόπησης"
+    "refreshPreview": "Ανανέωση προεπισκόπησης",
+    "laserPointer": "Δείκτης λέιζερ",
+    "fullscreen": "Πλήρης οθόνη",
+    "prev": "Προηγούμενο",
+    "next": "Επόμενο"
   },
   "action": {
     "close": "Κλείσιμο",

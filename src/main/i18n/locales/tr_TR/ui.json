@@ -22,7 +22,11 @@
     "toggleDarkMode": "Karanlık modu değiştir",
     "background": "Arka Plan",
     "goToDownload": "İndirmeye Git",
-    "refreshPreview": "Önizlemeyi yenile"
+    "refreshPreview": "Önizlemeyi yenile",
+    "laserPointer": "Lazer işaretçi",
+    "fullscreen": "Tam ekran",
+    "prev": "Önceki",
+    "next": "Sonraki"
   },
   "action": {
     "close": "Kapat",

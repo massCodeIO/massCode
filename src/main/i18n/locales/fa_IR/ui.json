@@ -22,7 +22,11 @@
     "toggleDarkMode": "تغییر حالت تاریک",
     "background": "پس‌زمینه",
     "goToDownload": "رفتن به دانلود",
-    "refreshPreview": "به‌روزرسانی پیش‌نمایش"
+    "refreshPreview": "به‌روزرسانی پیش‌نمایش",
+    "laserPointer": "اشاره‌گر لیزری",
+    "fullscreen": "تمام صفحه",
+    "prev": "قبلی",
+    "next": "بعدی"
   },
   "action": {
     "close": "بستن",

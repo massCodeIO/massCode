@@ -22,7 +22,11 @@
     "toggleDarkMode": "Alternar modo escuro",
     "background": "Plano de Fundo",
     "goToDownload": "Ir para Download",
-    "refreshPreview": "Atualizar visualização"
+    "refreshPreview": "Atualizar visualização",
+    "laserPointer": "Ponteiro laser",
+    "fullscreen": "Tela cheia",
+    "prev": "Anterior",
+    "next": "Próximo"
   },
   "action": {
     "close": "Fechar",

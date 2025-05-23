@@ -22,7 +22,11 @@
     "toggleDarkMode": "Dunkelmodus umschalten",
     "background": "Hintergrund",
     "goToDownload": "Zum Download",
-    "refreshPreview": "Vorschau aktualisieren"
+    "refreshPreview": "Vorschau aktualisieren",
+    "laserPointer": "Laserpointer",
+    "fullscreen": "Vollbild",
+    "prev": "Zurück",
+    "next": "Weiter"
   },
   "action": {
     "close": "Schließen",

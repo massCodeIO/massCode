@@ -22,7 +22,11 @@
     "toggleDarkMode": "切換深色模式",
     "background": "背景",
     "goToDownload": "前往下載",
-    "refreshPreview": "刷新預覽"
+    "refreshPreview": "刷新預覽",
+    "laserPointer": "激光指針",
+    "fullscreen": "全屏",
+    "prev": "上一個",
+    "next": "下一個"
   },
   "action": {
     "close": "關閉",

@@ -22,7 +22,11 @@
     "toggleDarkMode": "Přepnout tmavý režim",
     "background": "Pozadí",
     "goToDownload": "Přejít ke stažení",
-    "refreshPreview": "Obnovit náhled"
+    "refreshPreview": "Obnovit náhled",
+    "laserPointer": "Laserové ukazovátko",
+    "fullscreen": "Celá obrazovka",
+    "prev": "Předchozí",
+    "next": "Další"
   },
   "action": {
     "close": "Zavřít",

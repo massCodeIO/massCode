@@ -22,7 +22,11 @@
     "toggleDarkMode": "Переключить тёмную тему",
     "background": "Фон",
     "goToDownload": "Перейти к загрузке",
-    "refreshPreview": "Обновить предпросмотр"
+    "refreshPreview": "Обновить предпросмотр",
+    "laserPointer": "Лазерная указка",
+    "fullscreen": "Полный экран",
+    "prev": "Назад",
+    "next": "Далее"
   },
   "action": {
     "close": "Закрыть",

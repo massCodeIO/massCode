@@ -13,6 +13,7 @@ interface Props {
   focus?: boolean
   select?: boolean
   disabled?: boolean
+  readonly?: boolean
 }
 
 defineOptions({
@@ -59,11 +60,12 @@ watchEffect(() => {
         cn(variants({ variant }), props.class),
         { 'pr-9': clearable && model },
         { 'text-text-muted cursor-not-allowed': disabled },
+        { 'text-text-muted': readonly },
       ]"
       :placeholder="placeholder"
       :type="type"
       v-bind="attrs"
-      :disabled="disabled"
+      :disabled="disabled || readonly"
     >
     <UiButton
       v-if="clearable && model"

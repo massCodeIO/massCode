@@ -22,6 +22,10 @@ const nav = [
     label: i18n.t('devtools:converters.textToAscii.label'),
     name: RouterName.devtoolsTextToAscii,
   },
+  {
+    label: i18n.t('devtools:converters.base64.label'),
+    name: RouterName.devtoolsBase64Converter,
+  },
 ]
 </script>
 

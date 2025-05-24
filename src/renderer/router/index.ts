@@ -12,6 +12,7 @@ export const RouterName = {
   devtoolsTextCaseConverter: 'devtools/text/case-converter',
   devtoolsTextToUnicode: 'devtools/text/to-unicode',
   devtoolsTextToAscii: 'devtools/text/to-ascii',
+  devtoolsBase64Converter: 'devtools/base64-converter',
 }
 
 const routes = [
@@ -75,6 +76,14 @@ const routes = [
         component: () =>
           import(
             '~/renderer/components/devtools/converters/TextToAsciiBinary.vue'
+          ),
+      },
+      {
+        path: 'base64-converter',
+        name: RouterName.devtoolsBase64Converter,
+        component: () =>
+          import(
+            '~/renderer/components/devtools/converters/Base64Converter.vue'
           ),
       },
     ],

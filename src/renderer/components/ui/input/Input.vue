@@ -9,11 +9,12 @@ interface Props {
   class?: string
   placeholder?: string
   clearable?: boolean
-  type?: 'text' | 'number'
+  type?: 'text' | 'textarea' | 'number'
   focus?: boolean
   select?: boolean
   disabled?: boolean
   readonly?: boolean
+  rows?: number
 }
 
 defineOptions({
@@ -52,8 +53,9 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div :class="{ 'relative flex': clearable && model }">
+  <div class="relative flex">
     <input
+      v-if="type !== 'textarea'"
       ref="inputRef"
       v-model="model"
       :class="[
@@ -67,6 +69,20 @@ watchEffect(() => {
       v-bind="attrs"
       :disabled="disabled || readonly"
     >
+    <textarea
+      v-else
+      v-model="model"
+      :class="[
+        cn(variants({ variant }), props.class),
+        { 'pr-9': clearable && model },
+        { 'text-text-muted cursor-not-allowed': disabled },
+        { 'text-text-muted': readonly },
+      ]"
+      :placeholder="placeholder"
+      :rows="rows || 3"
+      v-bind="attrs"
+      :disabled="disabled || readonly"
+    />
     <UiButton
       v-if="clearable && model"
       class="absolute top-1/2 right-2 -translate-y-1/2"

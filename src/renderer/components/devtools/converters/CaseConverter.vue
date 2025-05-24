@@ -82,7 +82,6 @@ const output = computed(() => {
       :title="title"
       :description="description"
     />
-
     <div class="space-y-2">
       <UiHeading
         :title="i18n.t('devtools:form.inputString')"

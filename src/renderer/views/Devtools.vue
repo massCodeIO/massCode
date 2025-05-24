@@ -18,6 +18,10 @@ const nav = [
     label: i18n.t('devtools:converters.textToUnicode.label'),
     name: RouterName.devtoolsTextToUnicode,
   },
+  {
+    label: i18n.t('devtools:converters.textToAscii.label'),
+    name: RouterName.devtoolsTextToAscii,
+  },
 ]
 </script>
 

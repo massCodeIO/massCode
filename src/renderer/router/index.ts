@@ -11,6 +11,7 @@ export const RouterName = {
   devtools: 'devtools',
   devtoolsTextCaseConverter: 'devtools/text/case-converter',
   devtoolsTextToUnicode: 'devtools/text/to-unicode',
+  devtoolsTextToAscii: 'devtools/text/to-ascii',
 }
 
 const routes = [
@@ -67,6 +68,14 @@ const routes = [
         name: RouterName.devtoolsTextToUnicode,
         component: () =>
           import('~/renderer/components/devtools/converters/TextToUnicode.vue'),
+      },
+      {
+        path: 'text/to-ascii',
+        name: RouterName.devtoolsTextToAscii,
+        component: () =>
+          import(
+            '~/renderer/components/devtools/converters/TextToAsciiBinary.vue'
+          ),
       },
     ],
   },

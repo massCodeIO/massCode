@@ -10,6 +10,7 @@ export const RouterName = {
   markdownPresentation: 'markdown-presentation',
   devtools: 'devtools',
   devtoolsTextCaseConverter: 'devtools/text/case-converter',
+  devtoolsTextToUnicode: 'devtools/text/to-unicode',
 }
 
 const routes = [
@@ -60,6 +61,12 @@ const routes = [
         name: RouterName.devtoolsTextCaseConverter,
         component: () =>
           import('~/renderer/components/devtools/converters/CaseConverter.vue'),
+      },
+      {
+        path: 'text/to-unicode',
+        name: RouterName.devtoolsTextToUnicode,
+        component: () =>
+          import('~/renderer/components/devtools/converters/TextToUnicode.vue'),
       },
     ],
   },

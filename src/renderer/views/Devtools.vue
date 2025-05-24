@@ -11,8 +11,12 @@ const isActiveRoute = computed(() => {
 
 const nav = [
   {
-    label: i18n.t('devtools:textTools.caseConverter'),
+    label: i18n.t('devtools:converters.caseConverter.label'),
     name: RouterName.devtoolsTextCaseConverter,
+  },
+  {
+    label: i18n.t('devtools:converters.textToUnicode.label'),
+    name: RouterName.devtoolsTextToUnicode,
   },
 ]
 </script>

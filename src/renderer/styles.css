@@ -11,6 +11,34 @@ body {
   color: var(--color-text)
 }
 
+.scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar);
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:active {
+  opacity: 1;
+}
+
+
 
 @theme {
   --color-primary: oklch(50% 0.19 260);

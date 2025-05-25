@@ -15,6 +15,7 @@ interface Props {
   disabled?: boolean
   readonly?: boolean
   rows?: number
+  error?: string
 }
 
 defineOptions({
@@ -53,44 +54,53 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="relative flex">
-    <input
-      v-if="type !== 'textarea'"
-      ref="inputRef"
-      v-model="model"
-      :class="[
-        cn(variants({ variant }), props.class),
-        { 'pr-9': clearable && model },
-        { 'text-text-muted cursor-not-allowed': disabled },
-        { 'text-text-muted': readonly },
-      ]"
-      :placeholder="placeholder"
-      :type="type"
-      v-bind="attrs"
-      :disabled="disabled || readonly"
+  <div>
+    <div class="relative flex">
+      <input
+        v-if="type !== 'textarea'"
+        ref="inputRef"
+        v-model="model"
+        :class="[
+          cn(variants({ variant }), props.class),
+          { 'pr-9': clearable && model },
+          { 'text-text-muted cursor-not-allowed': disabled },
+          { 'text-text-muted': readonly },
+          { 'border-red-500': error },
+        ]"
+        :placeholder="placeholder"
+        :type="type"
+        v-bind="attrs"
+        :disabled="disabled || readonly"
+      >
+      <textarea
+        v-else
+        v-model="model"
+        class="scrollbar"
+        :class="[
+          cn(variants({ variant }), props.class),
+          { 'pr-9': clearable && model },
+          { 'text-text-muted cursor-not-allowed': disabled },
+          { 'text-text-muted': readonly },
+          { 'border-red-500': error },
+        ]"
+        :placeholder="placeholder"
+        :rows="rows || 3"
+        v-bind="attrs"
+        :disabled="disabled || readonly"
+      />
+      <div
+        v-if="clearable && model"
+        class="border-border absolute top-1/2 right-3 -translate-y-1/2 rounded-full border p-0.5"
+        @click="clear"
+      >
+        <X class="text-text-muted h-3 w-3" />
+      </div>
+    </div>
+    <div
+      v-if="error"
+      class="text-sm text-red-500"
     >
-    <textarea
-      v-else
-      v-model="model"
-      :class="[
-        cn(variants({ variant }), props.class),
-        { 'pr-9': clearable && model },
-        { 'text-text-muted cursor-not-allowed': disabled },
-        { 'text-text-muted': readonly },
-      ]"
-      :placeholder="placeholder"
-      :rows="rows || 3"
-      v-bind="attrs"
-      :disabled="disabled || readonly"
-    />
-    <UiButton
-      v-if="clearable && model"
-      class="absolute top-1/2 right-2 -translate-y-1/2"
-      variant="icon"
-      size="sm"
-      @click="clear"
-    >
-      <X class="h-3 w-3" />
-    </UiButton>
+      {{ error }}
+    </div>
   </div>
 </template>

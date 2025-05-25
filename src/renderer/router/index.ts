@@ -13,6 +13,7 @@ export const RouterName = {
   devtoolsTextToUnicode: 'devtools/text/to-unicode',
   devtoolsTextToAscii: 'devtools/text/to-ascii',
   devtoolsBase64Converter: 'devtools/base64-converter',
+  devtoolsJsonToYaml: 'devtools/json-to-yaml',
 }
 
 const routes = [
@@ -62,29 +63,31 @@ const routes = [
         path: 'text/case-converter',
         name: RouterName.devtoolsTextCaseConverter,
         component: () =>
-          import('~/renderer/components/devtools/converters/CaseConverter.vue'),
+          import('@/components/devtools/converters/CaseConverter.vue'),
       },
       {
         path: 'text/to-unicode',
         name: RouterName.devtoolsTextToUnicode,
         component: () =>
-          import('~/renderer/components/devtools/converters/TextToUnicode.vue'),
+          import('@/components/devtools/converters/TextToUnicode.vue'),
       },
       {
         path: 'text/to-ascii',
         name: RouterName.devtoolsTextToAscii,
         component: () =>
-          import(
-            '~/renderer/components/devtools/converters/TextToAsciiBinary.vue'
-          ),
+          import('@/components/devtools/converters/TextToAsciiBinary.vue'),
       },
       {
         path: 'base64-converter',
         name: RouterName.devtoolsBase64Converter,
         component: () =>
-          import(
-            '~/renderer/components/devtools/converters/Base64Converter.vue'
-          ),
+          import('@/components/devtools/converters/Base64Converter.vue'),
+      },
+      {
+        path: 'json-to-yaml',
+        name: RouterName.devtoolsJsonToYaml,
+        component: () =>
+          import('@/components/devtools/converters/JsonToYaml.vue'),
       },
     ],
   },

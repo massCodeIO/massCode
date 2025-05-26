@@ -68,7 +68,7 @@ const cryptoNav = [
     <template #left>
       <PerfectScrollbar class="h-full px-2">
         <div class="text-text-muted mb-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:group.converters") }}
+          {{ i18n.t("devtools:converters.label") }}
         </div>
         <RouterLink
           v-for="item in convertersNav"
@@ -82,7 +82,7 @@ const cryptoNav = [
           />
         </RouterLink>
         <div class="text-text-muted my-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:group.crypto") }}
+          {{ i18n.t("devtools:crypto.label") }}
         </div>
         <RouterLink
           v-for="item in cryptoNav"

@@ -82,7 +82,6 @@ const output = computed(() => convert())
         :title="i18n.t('devtools:form.input')"
         :level="3"
       />
-
       <UiInput
         v-model="text"
         :placeholder="i18n.t('devtools:form.placeholder.input')"

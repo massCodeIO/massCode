@@ -126,7 +126,6 @@ const output = computed(() => convert())
         :title="i18n.t('devtools:form.output')"
         :level="3"
       />
-
       <UiInput
         :model-value="output"
         type="textarea"

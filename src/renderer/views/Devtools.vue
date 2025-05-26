@@ -39,6 +39,13 @@ const convertersNav = [
     name: RouterName.devtoolsJsonToXml,
   },
 ]
+
+const cryptoNav = [
+  {
+    label: i18n.t('devtools:crypto.hash.label'),
+    name: RouterName.devtoolsHash,
+  },
+]
 </script>
 
 <template>
@@ -65,7 +72,7 @@ const convertersNav = [
         <div class="text-text-muted my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:group.crypto") }}
         </div>
-        <!-- <RouterLink
+        <RouterLink
           v-for="item in cryptoNav"
           :key="item.name"
           class="cursor-default"
@@ -75,7 +82,7 @@ const convertersNav = [
             :label="item.label"
             :is-active="isActiveRoute(item.name)"
           />
-        </RouterLink> -->
+        </RouterLink>
       </PerfectScrollbar>
     </template>
     <template #right>

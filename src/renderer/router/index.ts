@@ -16,6 +16,7 @@ export const RouterName = {
   devtoolsJsonToYaml: 'devtools/json-to-yaml',
   devtoolsJsonToToml: 'devtools/json-to-toml',
   devtoolsJsonToXml: 'devtools/json-to-xml',
+  devtoolsHash: 'devtools/hash',
 }
 
 const routes = [
@@ -102,6 +103,11 @@ const routes = [
         name: RouterName.devtoolsJsonToXml,
         component: () =>
           import('@/components/devtools/converters/JsonToXml.vue'),
+      },
+      {
+        path: 'hash',
+        name: RouterName.devtoolsHash,
+        component: () => import('@/components/devtools/crypto/Hash.vue'),
       },
     ],
   },

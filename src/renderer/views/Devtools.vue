@@ -49,6 +49,10 @@ const cryptoNav = [
     label: i18n.t('devtools:crypto.hmac.label'),
     name: RouterName.devtoolsHmac,
   },
+  {
+    label: i18n.t('devtools:crypto.password.label'),
+    name: RouterName.devtoolsPassword,
+  },
 ]
 </script>
 

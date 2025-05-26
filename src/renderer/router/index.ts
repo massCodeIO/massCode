@@ -18,6 +18,7 @@ export const RouterName = {
   devtoolsJsonToXml: 'devtools/json-to-xml',
   devtoolsHash: 'devtools/hash',
   devtoolsHmac: 'devtools/hmac',
+  devtoolsPassword: 'devtools/password',
 }
 
 const routes = [
@@ -114,6 +115,11 @@ const routes = [
         path: 'hmac',
         name: RouterName.devtoolsHmac,
         component: () => import('@/components/devtools/crypto/Hmac.vue'),
+      },
+      {
+        path: 'password',
+        name: RouterName.devtoolsPassword,
+        component: () => import('@/components/devtools/crypto/Password.vue'),
       },
     ],
   },

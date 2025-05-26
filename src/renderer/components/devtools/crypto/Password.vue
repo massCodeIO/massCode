@@ -112,6 +112,7 @@ onMounted(() => {
         type="number"
         :placeholder="i18n.t('devtools:form.length')"
         description="Max 2048"
+        class="w-64"
       />
       <div class="flex gap-2">
         <div class="flex items-center gap-2">

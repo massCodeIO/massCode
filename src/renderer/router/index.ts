@@ -21,6 +21,7 @@ export const RouterName = {
   devtoolsPassword: 'devtools/password',
   devtoolsUuid: 'devtools/uuid',
   devtoolsUrlParser: 'devtools/url-parser',
+  devtoolsSlugify: 'devtools/slugify',
 } as const
 
 const routes = [
@@ -132,6 +133,11 @@ const routes = [
         path: 'url-parser',
         name: RouterName.devtoolsUrlParser,
         component: () => import('@/components/devtools/web/UrlParser.vue'),
+      },
+      {
+        path: 'slugify',
+        name: RouterName.devtoolsSlugify,
+        component: () => import('@/components/devtools/web/Slugify.vue'),
       },
     ],
   },

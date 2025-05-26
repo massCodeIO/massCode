@@ -64,6 +64,10 @@ const webNav = [
     label: i18n.t('devtools:web.urlParser.label'),
     name: RouterName.devtoolsUrlParser,
   },
+  {
+    label: i18n.t('devtools:web.slugify.label'),
+    name: RouterName.devtoolsSlugify,
+  },
 ]
 </script>
 

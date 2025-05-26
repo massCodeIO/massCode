@@ -17,7 +17,7 @@ export function registerMainMenuListeners() {
   })
 
   ipc.on('main-menu:goto-devtools', () => {
-    router.push({ name: RouterName.devtools })
+    router.push({ name: RouterName.devtoolsCaseConverter })
   })
 
   ipc.on('main-menu:new-snippet', () => {

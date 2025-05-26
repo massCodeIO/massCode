@@ -19,6 +19,7 @@ export const RouterName = {
   devtoolsHash: 'devtools/hash',
   devtoolsHmac: 'devtools/hmac',
   devtoolsPassword: 'devtools/password',
+  devtoolsUuid: 'devtools/uuid',
 }
 
 const routes = [
@@ -120,6 +121,11 @@ const routes = [
         path: 'password',
         name: RouterName.devtoolsPassword,
         component: () => import('@/components/devtools/crypto/Password.vue'),
+      },
+      {
+        path: 'uuid',
+        name: RouterName.devtoolsUuid,
+        component: () => import('@/components/devtools/crypto/Uuid.vue'),
       },
     ],
   },

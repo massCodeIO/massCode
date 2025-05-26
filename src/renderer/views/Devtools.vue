@@ -53,6 +53,10 @@ const cryptoNav = [
     label: i18n.t('devtools:crypto.password.label'),
     name: RouterName.devtoolsPassword,
   },
+  {
+    label: i18n.t('devtools:crypto.uuid.label'),
+    name: RouterName.devtoolsUuid,
+  },
 ]
 </script>
 

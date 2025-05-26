@@ -15,6 +15,7 @@ export const RouterName = {
   devtoolsBase64Converter: 'devtools/base64-converter',
   devtoolsJsonToYaml: 'devtools/json-to-yaml',
   devtoolsJsonToToml: 'devtools/json-to-toml',
+  devtoolsJsonToXml: 'devtools/json-to-xml',
 }
 
 const routes = [
@@ -95,6 +96,12 @@ const routes = [
         name: RouterName.devtoolsJsonToToml,
         component: () =>
           import('@/components/devtools/converters/JsonToToml.vue'),
+      },
+      {
+        path: 'json-to-xml',
+        name: RouterName.devtoolsJsonToXml,
+        component: () =>
+          import('@/components/devtools/converters/JsonToXml.vue'),
       },
     ],
   },

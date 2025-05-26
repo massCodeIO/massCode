@@ -16,6 +16,7 @@ interface Props {
   readonly?: boolean
   rows?: number
   error?: string
+  description?: string
 }
 
 defineOptions({
@@ -88,6 +89,7 @@ watchEffect(() => {
         v-bind="attrs"
         :disabled="disabled || readonly"
       />
+
       <div
         v-if="clearable && model"
         class="border-border absolute top-1/2 right-3 -translate-y-1/2 rounded-full border p-0.5"
@@ -95,6 +97,12 @@ watchEffect(() => {
       >
         <X class="text-text-muted h-3 w-3" />
       </div>
+    </div>
+    <div
+      v-if="description"
+      class="text-text-muted mt-1 text-xs"
+    >
+      {{ description }}
     </div>
     <div
       v-if="error"

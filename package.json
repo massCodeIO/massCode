@@ -62,6 +62,7 @@
     "radix-vue": "^1.9.17",
     "sanitize-html": "^2.15.0",
     "tailwind-merge": "^3.0.2",
+    "toml": "^3.0.0",
     "vue-sonner": "^1.3.0",
     "vue3-perfect-scrollbar": "^2.0.0"
   },

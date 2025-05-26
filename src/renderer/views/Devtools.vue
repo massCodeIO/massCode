@@ -30,6 +30,10 @@ const convertersNav = [
     label: i18n.t('devtools:converters.jsonToYaml.label'),
     name: RouterName.devtoolsJsonToYaml,
   },
+  {
+    label: i18n.t('devtools:converters.jsonToToml.label'),
+    name: RouterName.devtoolsJsonToToml,
+  },
 ]
 </script>
 

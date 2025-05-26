@@ -9,9 +9,9 @@ export const RouterName = {
   preferencesEditor: 'preferences/editor',
   markdownPresentation: 'markdown-presentation',
   devtools: 'devtools',
-  devtoolsTextCaseConverter: 'devtools/text/case-converter',
-  devtoolsTextToUnicode: 'devtools/text/to-unicode',
-  devtoolsTextToAscii: 'devtools/text/to-ascii',
+  devtoolsCaseConverter: 'devtools/case-converter',
+  devtoolsTextToUnicode: 'devtools/text-to-unicode',
+  devtoolsTextToAscii: 'devtools/text-to-ascii',
   devtoolsBase64Converter: 'devtools/base64-converter',
   devtoolsJsonToYaml: 'devtools/json-to-yaml',
   devtoolsJsonToToml: 'devtools/json-to-toml',
@@ -20,7 +20,8 @@ export const RouterName = {
   devtoolsHmac: 'devtools/hmac',
   devtoolsPassword: 'devtools/password',
   devtoolsUuid: 'devtools/uuid',
-}
+  devtoolsUrlParser: 'devtools/url-parser',
+} as const
 
 const routes = [
   {
@@ -67,7 +68,7 @@ const routes = [
     children: [
       {
         path: 'text/case-converter',
-        name: RouterName.devtoolsTextCaseConverter,
+        name: RouterName.devtoolsCaseConverter,
         component: () =>
           import('@/components/devtools/converters/CaseConverter.vue'),
       },
@@ -126,6 +127,11 @@ const routes = [
         path: 'uuid',
         name: RouterName.devtoolsUuid,
         component: () => import('@/components/devtools/crypto/Uuid.vue'),
+      },
+      {
+        path: 'url-parser',
+        name: RouterName.devtoolsUrlParser,
+        component: () => import('@/components/devtools/web/UrlParser.vue'),
       },
     ],
   },

@@ -12,7 +12,7 @@ const isActiveRoute = computed(() => {
 const convertersNav = [
   {
     label: i18n.t('devtools:converters.caseConverter.label'),
-    name: RouterName.devtoolsTextCaseConverter,
+    name: RouterName.devtoolsCaseConverter,
   },
   {
     label: i18n.t('devtools:converters.textToUnicode.label'),
@@ -58,6 +58,13 @@ const cryptoNav = [
     name: RouterName.devtoolsUuid,
   },
 ]
+
+const webNav = [
+  {
+    label: i18n.t('devtools:web.urlParser.label'),
+    name: RouterName.devtoolsUrlParser,
+  },
+]
 </script>
 
 <template>
@@ -86,6 +93,20 @@ const cryptoNav = [
         </div>
         <RouterLink
           v-for="item in cryptoNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+        <div class="text-text-muted my-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:web.label") }}
+        </div>
+        <RouterLink
+          v-for="item in webNav"
           :key="item.name"
           class="cursor-default"
           :to="{ name: item.name }"

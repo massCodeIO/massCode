@@ -73,18 +73,18 @@ function copyHash(type: keyof typeof hashTypes) {
     />
     <div class="space-y-2">
       <UiHeading
-        :title="i18n.t('devtools:form.inputString')"
+        :title="i18n.t('devtools:form.input')"
         :level="3"
       />
       <UiInput
         v-model="text"
-        :placeholder="i18n.t('devtools:form.placeholder.input')"
+        :placeholder="i18n.t('devtools:form.placeholder.text')"
         clearable
       />
     </div>
     <div class="space-y-4">
       <UiHeading
-        :title="i18n.t('devtools:form.outputString')"
+        :title="i18n.t('devtools:form.output')"
         :level="3"
       />
       <div

@@ -84,7 +84,7 @@ const output = computed(() => convert())
       />
       <UiInput
         v-model="text"
-        :placeholder="i18n.t('devtools:form.placeholder.input')"
+        :placeholder="i18n.t('devtools:form.placeholder.text')"
         :error="error"
         type="textarea"
         clearable

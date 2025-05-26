@@ -13,10 +13,11 @@ const description = computed(() =>
   i18n.t('devtools:converters.base64.description'),
 )
 
-// Функция для конвертации текста в Base64
 function textToBase64(input: string): string {
   try {
-    return btoa(unescape(encodeURIComponent(input)))
+    const encoder = new TextEncoder()
+    const data = encoder.encode(input)
+    return btoa(String.fromCharCode(...data))
   }
   catch (error) {
     console.error('Error encoding to Base64:', error)
@@ -26,7 +27,13 @@ function textToBase64(input: string): string {
 
 function base64ToText(input: string): string {
   try {
-    return decodeURIComponent(escape(atob(input)))
+    const binaryString = atob(input)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    const decoder = new TextDecoder()
+    return decoder.decode(bytes)
   }
   catch (error) {
     console.error('Error decoding from Base64:', error)

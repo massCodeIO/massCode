@@ -65,6 +65,10 @@ const webNav = [
     name: RouterName.devtoolsUrlParser,
   },
   {
+    label: i18n.t('devtools:web.urlEncoder.label'),
+    name: RouterName.devtoolsUrlEncoder,
+  },
+  {
     label: i18n.t('devtools:web.slugify.label'),
     name: RouterName.devtoolsSlugify,
   },

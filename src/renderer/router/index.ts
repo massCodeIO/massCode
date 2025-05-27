@@ -22,6 +22,7 @@ export const RouterName = {
   devtoolsUuid: 'devtools/uuid',
   devtoolsUrlParser: 'devtools/url-parser',
   devtoolsSlugify: 'devtools/slugify',
+  devtoolsUrlEncoder: 'devtools/url-encoder',
 } as const
 
 const routes = [
@@ -138,6 +139,11 @@ const routes = [
         path: 'slugify',
         name: RouterName.devtoolsSlugify,
         component: () => import('@/components/devtools/web/Slugify.vue'),
+      },
+      {
+        path: 'url-encoder',
+        name: RouterName.devtoolsUrlEncoder,
+        component: () => import('@/components/devtools/web/UrlEncoder.vue'),
       },
     ],
   },

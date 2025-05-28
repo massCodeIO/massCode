@@ -38,6 +38,10 @@ const convertersNav = [
     label: i18n.t('devtools:converters.jsonToXml.label'),
     name: RouterName.devtoolsJsonToXml,
   },
+  {
+    label: i18n.t('devtools:converters.colorConverter.label'),
+    name: RouterName.devtoolsColorConverter,
+  },
 ]
 
 const cryptoNav = [

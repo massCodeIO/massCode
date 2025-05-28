@@ -23,6 +23,7 @@ export const RouterName = {
   devtoolsUrlParser: 'devtools/url-parser',
   devtoolsSlugify: 'devtools/slugify',
   devtoolsUrlEncoder: 'devtools/url-encoder',
+  devtoolsColorConverter: 'devtools/color-converter',
 } as const
 
 const routes = [
@@ -144,6 +145,12 @@ const routes = [
         path: 'url-encoder',
         name: RouterName.devtoolsUrlEncoder,
         component: () => import('@/components/devtools/web/UrlEncoder.vue'),
+      },
+      {
+        path: 'color-converter',
+        name: RouterName.devtoolsColorConverter,
+        component: () =>
+          import('@/components/devtools/converters/ColorConverter.vue'),
       },
     ],
   },

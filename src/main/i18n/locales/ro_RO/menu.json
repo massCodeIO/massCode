@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "Preferințe",
+    "devtools": "Instrumente pentru Dezvoltatori",
     "update": "Verifică Actualizări...",
     "quit": "Închide massCode",
     "about": "Despre massCode",

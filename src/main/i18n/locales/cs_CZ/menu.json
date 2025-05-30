@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "Předvolby",
+    "devtools": "Vývojářské nástroje",
     "update": "Zkontrolovat aktualizace...",
     "quit": "Ukončit massCode",
     "about": "O aplikaci massCode",

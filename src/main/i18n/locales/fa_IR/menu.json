@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "تنظیمات",
+    "devtools": "ابزارهای توسعه",
     "update": "بررسی به‌روزرسانی‌ها...",
     "quit": "خروج از massCode",
     "about": "درباره massCode",

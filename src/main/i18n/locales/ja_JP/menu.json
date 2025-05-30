@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "環境設定",
+    "devtools": "開発者ツール",
     "update": "アップデートを確認...",
     "quit": "massCodeを終了",
     "about": "massCodeについて",

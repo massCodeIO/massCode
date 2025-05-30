@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "Προτιμήσεις",
+    "devtools": "Developer Tools",
     "update": "Έλεγχος για Ενημερώσεις...",
     "quit": "Έξοδος από το massCode",
     "about": "Σχετικά με το massCode",

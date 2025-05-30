@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "Preferências",
+    "devtools": "Ferramentas de Desenvolvedor",
     "update": "Verificar Atualizações...",
     "quit": "Sair do massCode",
     "about": "Sobre o massCode",

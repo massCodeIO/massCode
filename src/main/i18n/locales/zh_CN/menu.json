@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "首选项",
+    "devtools": "开发者工具",
     "update": "检查更新...",
     "quit": "退出 massCode",
     "about": "关于 massCode",

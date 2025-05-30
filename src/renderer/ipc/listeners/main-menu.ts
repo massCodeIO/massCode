@@ -16,6 +16,10 @@ export function registerMainMenuListeners() {
     router.push({ name: RouterName.preferences })
   })
 
+  ipc.on('main-menu:goto-devtools', () => {
+    router.push({ name: RouterName.devtoolsCaseConverter })
+  })
+
   ipc.on('main-menu:new-snippet', () => {
     createSnippetAndSelect()
   })

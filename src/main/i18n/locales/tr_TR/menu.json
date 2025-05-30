@@ -2,6 +2,7 @@
   "app": {
     "label": "massCode",
     "preferences": "Tercihler",
+    "devtools": "Geliştirici Araçları",
     "update": "Güncellemeleri Kontrol Et...",
     "quit": "massCode'dan Çık",
     "about": "massCode Hakkında",

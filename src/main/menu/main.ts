@@ -51,6 +51,15 @@ const appMenuItems: MenuConfig[] = [
     platforms: ['darwin'],
   },
   {
+    id: 'devtools',
+    label: i18n.t('menu:app.devtools'),
+    accelerator: 'CommandOrControl+.',
+    click: () => send('main-menu:goto-devtools'),
+  },
+  {
+    type: 'separator' as any,
+  },
+  {
     label: i18n.t('menu:app.hide'),
     platforms: ['darwin'],
     role: 'hide',

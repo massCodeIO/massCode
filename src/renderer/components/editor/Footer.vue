@@ -3,7 +3,7 @@ import * as Command from '@/components/ui/shadcn/command'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { useEditor, useSnippets } from '@/composables'
 import { Check } from 'lucide-vue-next'
-import { languages } from './languages'
+import { languages } from './grammars/languages'
 
 const { cursorPosition } = useEditor()
 const { selectedSnippetContent, selectedSnippet, updateSnippetContent }

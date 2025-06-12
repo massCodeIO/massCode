@@ -2,7 +2,7 @@
 import type { Ref } from 'vue'
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { Node } from './types'
-import { languages } from '@/components/editor/languages'
+import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'

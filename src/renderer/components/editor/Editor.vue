@@ -150,6 +150,34 @@ async function init() {
 
   editor.on('scroll', hideScrollbar)
 
+  editor.on('drop', async (cm, e) => {
+    if (selectedSnippetContent.value?.language === 'markdown') {
+      const file = e.dataTransfer?.files[0]
+
+      if (!file)
+        return
+
+      if (!file.type.startsWith('image/'))
+        return
+
+      try {
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Array.from(new Uint8Array(arrayBuffer))
+
+        // Вызываем IPC хендлер для сохранения файла из буфера
+        const relativePath = await ipc.invoke('fs:assets', {
+          buffer,
+          fileName: file.name,
+        })
+
+        cm.replaceSelection(`![${file.name}](./${relativePath})`)
+      }
+      catch (error) {
+        console.error('Ошибка при добавлении изображения:', error)
+      }
+    }
+  })
+
   ipc.on('main-menu:font-size-increase', () => {
     settings.fontSize++
     fontSize.value = `${settings.fontSize}px`

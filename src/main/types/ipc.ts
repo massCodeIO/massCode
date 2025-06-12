@@ -24,17 +24,20 @@ type MainMenuAction =
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
 type SystemAction = 'reload' | 'open-external'
 type PrettierAction = 'format'
+type FsAction = 'assets'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>
 export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
+export type FsChannel = CombineWith<FsAction, 'fs'>
 
 export type Channel =
   | MainMenuChannel
   | DBChannel
   | SystemChannel
   | PrettierChannel
+  | FsChannel
 
 export interface DialogOptions {
   properties?: OpenDialogOptions['properties']
@@ -44,4 +47,8 @@ export interface DialogOptions {
 export interface PrettierOptions {
   text: string
   parser: string
+}
+
+export interface FsAssetsOptions {
+  path: string
 }

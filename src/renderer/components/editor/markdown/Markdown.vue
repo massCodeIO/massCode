@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSnippets } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { Minus, Plus } from 'lucide-vue-next'
@@ -13,6 +13,8 @@ import { useMarkdown } from './composables'
 import 'codemirror/addon/runmode/runmode'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
+
+const isDev = import.meta.env.DEV
 
 const { selectedSnippetContent } = useSnippets()
 const isDark = useDark()
@@ -58,7 +60,7 @@ async function renderMarkdown() {
   if (selectedSnippetContent.value?.value) {
     const markdownHtml = await marked.parse(selectedSnippetContent.value.value)
 
-    const sanitizedHtml = sanitizeHtml(markdownHtml, {
+    let sanitizedHtml = sanitizeHtml(markdownHtml, {
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
       allowedAttributes: {
         '*': [
@@ -80,6 +82,13 @@ async function renderMarkdown() {
       },
       allowedSchemes: ['http', 'https', 'masscode'],
     })
+
+    const re = /src="\.\//g
+    const path = store.preferences.get('storagePath')
+
+    sanitizedHtml = isDev
+      ? sanitizedHtml.replace(re, `src="file://${path}/`)
+      : sanitizedHtml.replace(re, `src="${path}/`)
 
     renderedContent.value = sanitizedHtml
   }
@@ -167,35 +176,33 @@ watch(isDark, (value) => {
 </script>
 
 <template>
-  <div>
-    <EditorHeaderTool v-if="isShowHeaderTool">
-      <div class="flex w-full justify-end gap-2 px-2">
-        <UiActionButton
-          :tooltip="i18n.t('button.zoomOut')"
-          @click="onZoom('out')"
-        >
-          <Minus class="h-3 w-3" />
-        </UiActionButton>
-        <div class="tabular-nums select-none">
-          {{ scaleToShow }}
-        </div>
-        <UiActionButton
-          :tooltip="i18n.t('button.zoomIn')"
-          @click="onZoom('in')"
-        >
-          <Plus class="h-3 w-3" />
-        </UiActionButton>
-      </div>
-    </EditorHeaderTool>
-    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-      <div
-        ref="markdownRef"
-        class="markdown-content"
+  <EditorHeaderTool v-if="isShowHeaderTool">
+    <div class="flex w-full justify-end gap-2 px-2">
+      <UiActionButton
+        :tooltip="i18n.t('button.zoomOut')"
+        @click="onZoom('out')"
       >
-        <div v-html="renderedContent" />
+        <Minus class="h-3 w-3" />
+      </UiActionButton>
+      <div class="tabular-nums select-none">
+        {{ scaleToShow }}
       </div>
-    </PerfectScrollbar>
-  </div>
+      <UiActionButton
+        :tooltip="i18n.t('button.zoomIn')"
+        @click="onZoom('in')"
+      >
+        <Plus class="h-3 w-3" />
+      </UiActionButton>
+    </div>
+  </EditorHeaderTool>
+  <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+    <div
+      ref="markdownRef"
+      class="markdown-content"
+    >
+      <div v-html="renderedContent" />
+    </div>
+  </PerfectScrollbar>
 </template>
 
 <style>

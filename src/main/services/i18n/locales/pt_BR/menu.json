@@ -29,10 +29,11 @@
     },
     "donate": {
       "openCollective": "Doação coletiva",
-      "payPal": "Doação via PayPal"
+      "payPal": "Doação via PayPal",
+      "gumroad": "Doação via Gumroad (Visa, Mastercard, etc.)"
     },
     "twitter": "Twitter",
-    "devTools": "Ferramentas do desenvolvedor",
+    "devTools": "Ativar Ferramentas do desenvolvedor",
     "links": {
       "snippets": "Coleção de snippet"
     }
@@ -69,6 +70,7 @@
     "previewCode": "Pré-visualizar código",
     "previewScreenshot": "Pré-visualizar captura de tela",
     "previewMarkdown": "Pré-visualizar marcador",
+    "previewMindmap": "Pré-visualizar Mindmap",
     "fontSizeIncrease": "Aumentar tamanho da fonte",
     "fontSizeDecrease": "Diminuir tamanho da fonte",
     "fontSizeReset": "Redefinir tamanho da fonte"
@@ -82,5 +84,12 @@
     "label": "Histórico",
     "back": "Voltar",
     "forward": "Avançar"
+  },
+  "devtools": {
+    "label": "Ferramentas do desenvolvedor"
+  },
+  "window": {
+    "label": "Janela",
+    "minimize": "Minimizar"
   }
 }

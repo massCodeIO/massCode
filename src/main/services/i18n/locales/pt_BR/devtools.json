@@ -1,0 +1,44 @@
+{
+  "form": {
+    "inputString": "String de Entrada",
+    "outputString": "String de Saída",
+    "inputUrl": "URL de Entrada",
+    "outputUrl": "URL de Saída",
+    "parsedUrl": "URL Analisada",
+    "splitQueryString": "Dividir Query String",
+    "key": "Chave",
+    "value": "Valor",
+    "component": "Componente",
+    "result": "Resultado",
+    "secretKey": "Chave Secreta",
+    "algorithm": "Algoritmo",
+    "version": "Versão",
+    "amount": "Quantidade",
+    "type": "Tipo",
+    "length": "Comprimento",
+    "options": "Opções",
+    "numbers": "Números",
+    "symbols": "Símbolos",
+    "lowercase": "Minúsculas",
+    "uppercase": "Maiúsculas"
+  },
+  "textTools": {
+    "label": "Ferramentas de Texto",
+    "caseConverter": "Conversor de Caixa",
+    "urlParser": "Analisador de URL",
+    "slugGenerator": "Gerador de Slug",
+    "sortLines": "Ordenar Linhas"
+  },
+  "crypto": {
+    "label": "Criptografia / Segurança",
+    "hashGenerator": "Gerador de Hash",
+    "hmacGenerator": "Gerador de HMAC",
+    "passGenerator": "Gerador de Senha",
+    "uuidGenerator": "Gerador de UUID"
+  },
+  "encodeDecode": {
+    "label": "Codificadores / Decodificadores",
+    "url": "Codificador / Decodificador de URL",
+    "base64": "Codificador / Decodificador Base64"
+  }
+}

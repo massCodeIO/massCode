@@ -25,7 +25,7 @@ export function registerSystemListeners() {
 
         await getSnippets({ folderId })
 
-        selectFolder(Number(folderId))
+        await selectFolder(Number(folderId))
         selectSnippet(Number(snippetId))
       }
     }

@@ -13,10 +13,90 @@ const folders = shallowRef<FoldersTreeResponse>()
 
 const renameFolderId = ref<number | null>(null)
 
-async function getFolders() {
+function findParentFolderIds(folderId: number, allFolders: any[]): number[] {
+  const parentIds: number[] = []
+
+  function findParents(currentFolderId: number) {
+    const folder = allFolders.find(f => f.id === currentFolderId)
+    if (folder && folder.parentId) {
+      parentIds.push(folder.parentId)
+      findParents(folder.parentId)
+    }
+  }
+
+  findParents(folderId)
+  return parentIds
+}
+
+async function ensureSelectedFolderIsVisible() {
+  if (!state.folderId || !folders.value) {
+    return
+  }
+
+  const flatFolders: any[] = []
+
+  function flattenFolders(folderList: any[]) {
+    folderList.forEach((folder) => {
+      flatFolders.push(folder)
+      if (folder.children && folder.children.length > 0) {
+        flattenFolders(folder.children)
+      }
+    })
+  }
+
+  flattenFolders(folders.value)
+
+  const parentIds = findParentFolderIds(state.folderId, flatFolders)
+
+  if (parentIds.length === 0) {
+    return
+  }
+
+  const foldersToOpen = parentIds.filter((parentId) => {
+    const folder = flatFolders.find(f => f.id === parentId)
+    return folder && folder.isOpen === 0
+  })
+
+  if (foldersToOpen.length === 0) {
+    return
+  }
+
+  try {
+    const updateResults = await Promise.allSettled(
+      foldersToOpen.map(folderId =>
+        api.folders.patchFoldersById(String(folderId), { isOpen: 1 }),
+      ),
+    )
+
+    const failedUpdates = updateResults
+      .map((result, index) => ({ result, folderId: foldersToOpen[index] }))
+      .filter(({ result }) => result.status === 'rejected')
+
+    if (failedUpdates.length > 0) {
+      console.warn('Some folders failed to open:', failedUpdates)
+    }
+
+    await getFolders(false)
+  }
+  catch (error) {
+    console.error('Error while opening parent folders:', error)
+    try {
+      await getFolders(false)
+    }
+    catch (fallbackError) {
+      console.error('Failed to refresh folders:', fallbackError)
+    }
+  }
+}
+
+async function getFolders(shouldEnsureVisibility = true) {
   try {
     const { data } = await api.folders.getFoldersTree()
     folders.value = data
+
+    if (shouldEnsureVisibility) {
+      await ensureSelectedFolderIsVisible()
+    }
   }
   catch (error) {
     console.error(error)
@@ -29,7 +109,7 @@ async function createFolder() {
       name: i18n.t('folder.untitled'),
     })
 
-    await getFolders()
+    await getFolders(false)
 
     return data.id
   }
@@ -43,7 +123,7 @@ async function createFolderAndSelect() {
   const id = await createFolder()
 
   if (id) {
-    selectFolder(Number(id))
+    await selectFolder(Number(id))
     clearSnippetsState()
     scrollToElement(`[id="${id}"]`)
     renameFolderId.value = Number(id)
@@ -53,7 +133,7 @@ async function createFolderAndSelect() {
 async function updateFolder(folderId: number, data: FoldersUpdate) {
   try {
     await api.folders.patchFoldersById(String(folderId), data)
-    await getFolders()
+    await getFolders(false)
 
     if (folderId === state.folderId) {
       const { getSnippets } = useSnippets()
@@ -68,17 +148,21 @@ async function updateFolder(folderId: number, data: FoldersUpdate) {
 async function deleteFolder(folderId: number) {
   try {
     await api.folders.deleteFoldersById(String(folderId))
-    await getFolders()
+    await getFolders(false)
   }
   catch (error) {
     console.error(error)
   }
 }
-function selectFolder(folderId: number) {
+async function selectFolder(folderId: number) {
   state.folderId = folderId
   state.libraryFilter = undefined
   state.tagId = undefined
   state.snippetId = undefined
+
+  if (folders.value && folders.value.length > 0) {
+    await ensureSelectedFolderIsVisible()
+  }
 }
 
 export function useFolders() {

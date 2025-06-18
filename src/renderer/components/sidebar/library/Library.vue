@@ -68,7 +68,7 @@ async function onFolderClick(id: number) {
     clearSearch()
 
     await getSnippets({ folderId: id })
-    selectFolder(id)
+    await selectFolder(id)
     selectFirstSnippet()
   }
 }

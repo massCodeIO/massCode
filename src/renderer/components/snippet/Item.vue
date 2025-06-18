@@ -4,7 +4,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
 
 interface Props {
@@ -17,6 +17,7 @@ const {
   highlightedSnippetIds,
   highlightedFolderId,
   isFocusedSnippetName,
+  focusedSnippetId,
   state,
 } = useApp()
 
@@ -33,11 +34,12 @@ const {
 } = useSnippets()
 
 const { confirm } = useDialog()
+const { copy } = useClipboard()
 
-const isFocused = ref(false)
 const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => state.snippetId === props.snippet.id)
+
 const isInMultiSelection = computed(
   () =>
     selectedSnippetIds.value.length > 1
@@ -46,6 +48,8 @@ const isInMultiSelection = computed(
 const isHighlighted = computed(() =>
   highlightedSnippetIds.value.has(props.snippet.id),
 )
+
+const isFocused = computed(() => focusedSnippetId.value === props.snippet.id)
 
 const isDuplicateDisabled = computed(
   () => highlightedSnippetIds.value.size > 1,
@@ -73,7 +77,7 @@ const folderName = computed(() => {
 
 function onSnippetClick(id: number, event: MouseEvent) {
   selectSnippet(id, event.shiftKey)
-  isFocused.value = true
+  focusedSnippetId.value = id
 }
 
 function onClickContextMenu() {
@@ -185,6 +189,13 @@ async function onDuplicate() {
   isFocusedSnippetName.value = true
 }
 
+function onCopySnippetLink() {
+  // copy(`masscode://folder/${state.folderId}/snippet/${props.snippet.id}`)
+  copy(
+    `masscode://goto?folderId=${state.folderId}&snippetId=${props.snippet.id}`,
+  )
+}
+
 function onDragStart(event: DragEvent) {
   const ids
     = selectedSnippetIds.value.length > 1
@@ -218,7 +229,7 @@ function onDragStart(event: DragEvent) {
 }
 
 onClickOutside(snippetRef, () => {
-  isFocused.value = false
+  focusedSnippetId.value = undefined
   highlightedSnippetIds.value.clear()
 })
 </script>
@@ -265,6 +276,10 @@ onClickOutside(snippetRef, () => {
                 ? i18n.t("action.remove.fromFavorites")
                 : i18n.t("action.add.toFavorites")
             }}
+          </ContextMenu.Item>
+          <ContextMenu.Separator />
+          <ContextMenu.Item @click="onCopySnippetLink">
+            {{ i18n.t("action.copy.snippetLink") }}
           </ContextMenu.Item>
           <ContextMenu.Separator />
           <ContextMenu.Item

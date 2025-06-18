@@ -22,7 +22,7 @@ type MainMenuAction =
   | 'presentation-mode'
 
 type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
-type SystemAction = 'reload' | 'open-external'
+type SystemAction = 'reload' | 'open-external' | 'deep-link'
 type PrettierAction = 'format'
 type FsAction = 'assets'
 

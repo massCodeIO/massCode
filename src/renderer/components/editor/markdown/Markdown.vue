@@ -45,9 +45,8 @@ marked.use({
       return `<div id="${id}" class="code-block"></div>`
     },
     link({ href, text }) {
-      if (/^masscode:\/\/snippets/.test(href)) {
-        const id = href.split('/').pop()
-        return `<a href="${href}" class="snippet-link" data-snippet-id="${id}">${text}</a>`
+      if (href.startsWith('masscode://')) {
+        return `<a href="${href}" class="deep-link">${text}</a>`
       }
       else {
         return `<a href="${href}" class="external">${text}</a>`
@@ -134,19 +133,10 @@ function onLinkClick(event: MouseEvent) {
 
   if (target.tagName === 'A') {
     const href = target.getAttribute('href')
-    if (href) {
-      if (target.classList.contains('snippet-link')) {
-        const snippetId = target.getAttribute('data-snippet-id')
-        if (snippetId) {
-          // TODO: Implement snippet link
 
-          event.preventDefault()
-        }
-      }
-      else if (target.classList.contains('external')) {
-        ipc.invoke('system:open-external', href)
-        event.preventDefault()
-      }
+    if (href && target.classList.contains('external')) {
+      ipc.invoke('system:open-external', href)
+      event.preventDefault()
     }
   }
 }
@@ -176,33 +166,38 @@ watch(isDark, (value) => {
 </script>
 
 <template>
-  <EditorHeaderTool v-if="isShowHeaderTool">
-    <div class="flex w-full justify-end gap-2 px-2">
-      <UiActionButton
-        :tooltip="i18n.t('button.zoomOut')"
-        @click="onZoom('out')"
-      >
-        <Minus class="h-3 w-3" />
-      </UiActionButton>
-      <div class="tabular-nums select-none">
-        {{ scaleToShow }}
+  <div
+    data-editor-markdown
+    class="grid grid-rows-[auto_1fr] overflow-scroll"
+  >
+    <EditorHeaderTool v-if="isShowHeaderTool">
+      <div class="flex w-full justify-end gap-2 px-2">
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomOut')"
+          @click="onZoom('out')"
+        >
+          <Minus class="h-3 w-3" />
+        </UiActionButton>
+        <div class="tabular-nums select-none">
+          {{ scaleToShow }}
+        </div>
+        <UiActionButton
+          :tooltip="i18n.t('button.zoomIn')"
+          @click="onZoom('in')"
+        >
+          <Plus class="h-3 w-3" />
+        </UiActionButton>
       </div>
-      <UiActionButton
-        :tooltip="i18n.t('button.zoomIn')"
-        @click="onZoom('in')"
+    </EditorHeaderTool>
+    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+      <div
+        ref="markdownRef"
+        class="markdown-content"
       >
-        <Plus class="h-3 w-3" />
-      </UiActionButton>
-    </div>
-  </EditorHeaderTool>
-  <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-    <div
-      ref="markdownRef"
-      class="markdown-content"
-    >
-      <div v-html="renderedContent" />
-    </div>
-  </PerfectScrollbar>
+        <div v-html="renderedContent" />
+      </div>
+    </PerfectScrollbar>
+  </div>
 </template>
 
 <style>

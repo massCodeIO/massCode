@@ -11,6 +11,8 @@ const state = reactive<SavedState>(store.app.get('state') as SavedState)
 const highlightedFolderId = ref<number>()
 const highlightedSnippetIds = ref<Set<number>>(new Set())
 const highlightedTagId = ref<number>()
+const focusedFolderId = ref<number | undefined>()
+const focusedSnippetId = ref<number | undefined>()
 
 const isFocusedSnippetName = ref(false)
 const isShowMarkdown = ref(false)
@@ -57,6 +59,8 @@ watch(state, () => {
 
 export function useApp() {
   return {
+    focusedFolderId,
+    focusedSnippetId,
     highlightedFolderId,
     highlightedSnippetIds,
     highlightedTagId,

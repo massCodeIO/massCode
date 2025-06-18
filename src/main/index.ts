@@ -11,9 +11,21 @@ import { store } from './store'
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
 
 const isDev = process.env.NODE_ENV === 'development'
+const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
 let isQuitting = false
+
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('masscode', process.execPath, [
+      path.resolve(process.argv[1]),
+    ])
+  }
+}
+else {
+  app.setAsDefaultProtocolClient('masscode')
+}
 
 function createWindow() {
   const bounds = store.app.get('bounds')
@@ -54,37 +66,60 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
-  createWindow()
-  registerIPC()
+if (!gotTheLock) {
+  app.quit()
+}
+else {
+  app.whenReady().then(() => {
+    createWindow()
+    registerIPC()
 
-  initApi()
+    initApi()
 
-  if (store.app.get('isAutoMigratedFromJson')) {
-    return
-  }
+    if (store.app.get('isAutoMigratedFromJson')) {
+      return
+    }
 
-  try {
-    const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
-    const jsonData = readFileSync(jsonDbPath, 'utf8')
+    try {
+      const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
+      const jsonData = readFileSync(jsonDbPath, 'utf8')
 
-    migrateJsonToSqlite(JSON.parse(jsonData))
-    store.app.set('isAutoMigratedFromJson', true)
-  }
-  catch (err) {
-    console.error('Error on auto migration JSON to SQLite:', err)
-  }
-})
+      migrateJsonToSqlite(JSON.parse(jsonData))
+      store.app.set('isAutoMigratedFromJson', true)
+    }
+    catch (err) {
+      console.error('Error on auto migration JSON to SQLite:', err)
+    }
+  })
 
-app.on('activate', () => {
-  mainWindow.show()
-})
+  app.on('activate', () => {
+    mainWindow.show()
+  })
 
-app.on('before-quit', () => {
-  isQuitting = true
-})
+  app.on('before-quit', () => {
+    isQuitting = true
+  })
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin')
-    app.quit()
-})
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin')
+      app.quit()
+  })
+
+  app.on('second-instance', (_, argv) => {
+    if (mainWindow) {
+      mainWindow.isMinimized() ? mainWindow.restore() : mainWindow.focus()
+    }
+
+    if (process.platform !== 'darwin') {
+      const url = argv.find(i => i.startsWith('masscode://'))
+      BrowserWindow.getFocusedWindow()?.webContents.send(
+        'system:deep-link',
+        url,
+      )
+    }
+  })
+
+  app.on('open-url', (_, url) => {
+    BrowserWindow.getFocusedWindow()?.webContents.send('system:deep-link', url)
+  })
+}

@@ -31,15 +31,19 @@ const {
   contextMenu,
 } = inject(treeKeys)!
 
-const { highlightedFolderId, highlightedSnippetIds, highlightedTagId, state }
-  = useApp()
+const {
+  highlightedFolderId,
+  highlightedSnippetIds,
+  highlightedTagId,
+  state,
+  focusedFolderId,
+} = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 const { updateFolder, renameFolderId } = useFolders()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
 const isDragged = ref(false)
-const isFocused = ref(false)
 
 const rowRef = ref<HTMLElement>()
 
@@ -56,9 +60,11 @@ const isHovered = computed(() => {
 })
 
 const isSelected = computed(() => state.folderId === props.node.id)
+
 const isHighlighted = computed(
   () => highlightedFolderId.value === props.node.id,
 )
+const isFocused = computed(() => focusedFolderId.value === props.node.id)
 
 const isShowBetweenLine = computed(() => {
   if (!isAllowed.value)
@@ -99,7 +105,7 @@ function onClickNode(id: string | number) {
   highlightedFolderId.value = undefined
   highlightedTagId.value = undefined
   state.tagId = undefined
-  isFocused.value = true
+  focusedFolderId.value = Number(id)
   clickNode(Number(id))
 }
 
@@ -203,7 +209,7 @@ async function onDrop(e: DragEvent) {
 }
 
 onClickOutside(rowRef, () => {
-  isFocused.value = false
+  focusedFolderId.value = undefined
   highlightedFolderId.value = undefined
 })
 

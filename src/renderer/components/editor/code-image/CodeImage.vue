@@ -217,10 +217,6 @@ onMounted(() => {
               {{ i18n.t("button.background") }}
             </span>
           </div>
-          <!-- <div class="flex items-center gap-2">
-            <div class="w-4 h-4 rounded-sm gradient-disco border border-text" />
-            <div class="w-4 h-4 rounded-sm gradient-salad" />
-          </div> -->
           <EditorCodeImageBackgroundSwitch v-model:active="activeBackground" />
         </div>
         <div>

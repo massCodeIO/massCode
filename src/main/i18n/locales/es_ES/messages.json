@@ -39,7 +39,7 @@
     }
   },
   "special": {
-    "supportMessage": "Hola, soy Anton 👋<br><br>\nGracias por usar massCode. Si encuentras útil esta aplicación, por favor {{-tagStart}} dona {{-tagEnd}}. Me inspirará a continuar el desarrollo del proyecto.",
+    "supportMessage": "Hola, soy Anton 👋<br><br>\nGracias por usar massCode. Si encuentras útil esta aplicación, por favor {{-tagStart}}dona{{-tagEnd}}. Me inspirará a continuar el desarrollo del proyecto.",
     "unsponsored": "Sin patrocinio"
   },
   "update": {

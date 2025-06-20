@@ -1,0 +1,41 @@
+{
+  "appId": "io.masscode.app",
+  "productName": "massCode",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "build/renderer/**/*",
+    "build/main/**/*",
+    "!build/**/*.map"
+  ],
+  "artifactName": "${productName}-${version}-${arch}-sponsored.${ext}",
+  "mac": {
+    "target": "dmg",
+    "icon": "build/icons/icon.icns",
+    "entitlements": "build/entitlements.mac.plist",
+    "category": "public.app-category.productivity",
+    "hardenedRuntime": false,
+    "identity": null
+  },
+  "win": {
+    "target": ["nsis", "portable"],
+    "icon": "build/icons/icon.ico"
+  },
+  "linux": {
+    "target": ["AppImage", "snap"],
+    "icon": "build/icons/icon.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "shortcutName": "massCode"
+  },
+  "protocols": [
+    {
+      "name": "massCode",
+      "schemes": ["masscode"]
+    }
+  ]
+}

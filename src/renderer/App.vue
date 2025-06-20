@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useApp, useTheme } from '@/composables'
+import { useApp, useNotifications, useTheme } from '@/composables'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { Toaster } from 'vue-sonner'
@@ -8,6 +8,7 @@ import { registerIPCListeners } from './ipc'
 
 useApp()
 useTheme()
+useNotifications()
 
 async function init() {
   registerIPCListeners()
@@ -24,7 +25,7 @@ init()
     class="absolute top-0 z-50 h-[var(--title-bar-height)] w-full select-none"
   />
   <RouterView />
-  <Toaster />
+  <Toaster style="--width: 356px; --offset: 12px" />
 </template>
 
 <style>

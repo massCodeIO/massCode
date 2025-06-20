@@ -2,6 +2,8 @@ import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
 import { useCssVar } from '@vueuse/core'
 
+const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
+
 const stateSnapshots = reactive<Record<StateAction, SavedState>>({
   beforeSearch: {},
 })
@@ -70,6 +72,7 @@ export function useApp() {
     isShowMarkdown,
     isShowMarkdownPresentation,
     isShowMindmap,
+    isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,
     sidebarWidth,

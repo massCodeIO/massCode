@@ -7,6 +7,7 @@ export function useSonner() {
     toast.custom(markRaw(Sonner), {
       componentProps: config,
       duration: config.action ? Infinity : config.duration || 5000,
+      onDismiss: config.onClose,
     })
   }
 

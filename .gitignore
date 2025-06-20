@@ -1,6 +1,7 @@
 dist
 build/main
 build/renderer
+scripts/build-sponsored.sh
 
 node_modules
 .DS_Store

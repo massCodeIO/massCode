@@ -453,6 +453,17 @@ export const migrateFromSnippetsLabNew = (path: string) => {
   console.log('Migrate is done')
 }
 
+const SL_STATIC_LANG_MAPPING: Record<string, Language> = {
+  'bash': 'sh',
+  'batch': 'batchfile',
+  'c': 'c_cpp',
+  'coffeescript': 'coffee',
+  'cpp': 'c_cpp',
+  'docker': 'dockerfile',
+  'go': 'golang',
+  'graphql': 'graphqlschema',
+}
+
 const convertSLLanguage = (
   language: string,
   languages: LanguageOption[],
@@ -462,6 +473,11 @@ const convertSLLanguage = (
     language = language.replace(/Lexer$/, '')
   }
 
-  const _language = snakeCase(language.toLowerCase())
-  return languages.find(i => i.value === _language)?.value || 'plain_text'
+  language = SL_STATIC_LANG_MAPPING[language.toLowerCase()] || language
+
+  const match = languages.find(i => {
+    return i.value === snakeCase(language) ||
+      i.value === language.toLowerCase()
+  })
+  return match?.value || 'plain_text'
 }

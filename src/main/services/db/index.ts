@@ -462,6 +462,10 @@ const convertSLLanguage = (
     language = language.replace(/Lexer$/, '')
   }
 
+  if (language.toLowerCase() === 'bash') {
+    language = 'sh'
+  }
+
   const _language = snakeCase(language.toLowerCase())
   return languages.find(i => i.value === _language)?.value || 'plain_text'
 }

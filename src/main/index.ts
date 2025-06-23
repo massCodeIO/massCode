@@ -7,6 +7,7 @@ import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
 import { mainMenu } from './menu/main'
 import { store } from './store'
+import { checkForUpdates } from './updates'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
 
@@ -73,8 +74,8 @@ else {
   app.whenReady().then(() => {
     createWindow()
     registerIPC()
-
     initApi()
+    checkForUpdates()
 
     if (store.app.get('isAutoMigratedFromJson')) {
       return

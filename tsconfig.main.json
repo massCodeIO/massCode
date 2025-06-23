@@ -3,6 +3,7 @@
     "target": "ES2023",
     "rootDir": "src/main",
     "module": "CommonJS",
+    "resolveJsonModule": true,
     "strict": true,
     "inlineSources": true,
     "outDir": "build/main",

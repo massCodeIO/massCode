@@ -4,7 +4,6 @@ import { store } from '@/electron'
 import { addDays } from 'date-fns'
 
 const INTERVAL = 1000 * 60 * 60 * 3 // 3 часа
-const isDev = import.meta.env.DEV
 
 const { sonner } = useSonner()
 const { isSponsored } = useApp()
@@ -25,7 +24,7 @@ function initFirstDonateNotification() {
 }
 
 function showDonateNotification() {
-  if (isSponsored || isDev) {
+  if (isSponsored) {
     return
   }
 

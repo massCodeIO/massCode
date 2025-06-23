@@ -1,8 +1,7 @@
 import Donate from '@/components/ui/sonner/templates/Donate.vue'
+import { useApp, useSonner } from '@/composables'
 import { store } from '@/electron'
 import { addDays } from 'date-fns'
-import { useApp } from './useApp'
-import { useSonner } from './useSonner'
 
 const INTERVAL = 1000 * 60 * 60 * 3 // 3 часа
 const isDev = import.meta.env.DEV
@@ -64,8 +63,6 @@ function startNotificationCheck() {
   }, INTERVAL)
 }
 
-export function useNotifications() {
-  onMounted(() => {
-    startNotificationCheck()
-  })
+export function donateNotification() {
+  startNotificationCheck()
 }

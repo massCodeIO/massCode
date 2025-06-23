@@ -39,7 +39,7 @@
     }
   },
   "special": {
-    "supportMessage": "Merhaba, ben Anton 👋<br><br>\nmassCode'u kullandığınız için teşekkürler. Bu uygulamayı faydalı buluyorsanız, lütfen {{-tagStart}} bağış yapın {{-tagEnd}}. Bu beni projenin geliştirilmesine devam etmem için teşvik edecektir.",
+    "supportMessage": "Merhaba, ben Anton 👋<br><br>\nmassCode'u kullandığınız için teşekkürler. Bu uygulamayı faydalı buluyorsanız, lütfen {{-tagStart}}bağış yapın{{-tagEnd}}. Bu beni projenin geliştirilmesine devam etmem için teşvik edecektir.",
     "unsponsored": "Sponsorsuz"
   },
   "update": {

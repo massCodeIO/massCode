@@ -15,6 +15,7 @@ export interface AppStore {
     libraryFilter?: string
   }
   isAutoMigratedFromJson: boolean
+  nextDonateNotification?: number
 }
 
 export interface EditorSettings {

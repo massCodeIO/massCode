@@ -5,6 +5,7 @@ import { useApp } from './useApp'
 import { useSonner } from './useSonner'
 
 const INTERVAL = 1000 * 60 * 60 * 3 // 3 часа
+const isDev = import.meta.env.DEV
 
 const { sonner } = useSonner()
 const { isSponsored } = useApp()
@@ -25,7 +26,7 @@ function initFirstDonateNotification() {
 }
 
 function showDonateNotification() {
-  if (isSponsored) {
+  if (isSponsored || isDev) {
     return
   }
 

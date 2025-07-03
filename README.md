@@ -27,7 +27,6 @@
 <p align="center">
   Extensions:
   <a href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant">VS Code</a> |
-  <a href="https://www.raycast.com/antonreshetov/masscode">Raycast</a> |
   <a href="https://github.com/massCodeIO/assistant-alfred">Alfred</a>
 </p>
 

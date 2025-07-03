@@ -21,7 +21,8 @@ export const EDITOR_DEFAULTS: EditorSettings = {
   singleQuote: true,
   highlightLine: false,
   highlightGutter: false,
-  matchBrackets: false
+  matchBrackets: false,
+  showFragments: false
 }
 
 const SCREENSHOT_DEFAULTS: ScreenshotSettings = {

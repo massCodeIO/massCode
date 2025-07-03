@@ -37,6 +37,12 @@
           name="matchBrackets"
         />
       </AppFormItem>
+      <AppFormItem :label="i18n.t('preferences:editor.showFragments')">
+        <AppCheckbox
+          v-model="appStore.editor.showFragments"
+          name="showFragments"
+        />
+      </AppFormItem>
       <h4>{{ i18n.t('preferences:editor.prettier.label') }}</h4>
       <AppFormItem
         :label="i18n.t('preferences:editor.prettier.trailingComma.label')"

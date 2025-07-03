@@ -82,7 +82,9 @@ export const useSnippetStore = defineStore('snippets', {
     fragmentCount: state => state.selected?.content?.length,
     tagsCount: state => state.selected?.tagsIds?.length,
     isFragmentsShow (): boolean {
-      return this.fragmentCount ? this.fragmentCount > 1 : false
+      const appStore = useAppStore()
+      if (appStore.editor.showFragments === true) return true
+      else return this.fragmentCount ? this.fragmentCount > 1 : false
     },
     isTagsShow (): boolean {
       const appStore = useAppStore()

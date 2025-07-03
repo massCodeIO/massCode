@@ -30,11 +30,12 @@ else {
 
 function createWindow() {
   const bounds = store.app.get('bounds')
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     ...bounds,
-    titleBarStyle: 'hidden',
+    titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,

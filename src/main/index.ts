@@ -58,13 +58,13 @@ function createWindow() {
   mainWindow.on('close', (event) => {
     store.app.set('bounds', mainWindow.getBounds())
 
-    if (!isQuitting) {
+    if (process.platform === 'darwin' && !isQuitting) {
       event.preventDefault()
       mainWindow.hide()
+      return
     }
-    else {
-      mainWindow.destroy()
-    }
+
+    mainWindow.destroy()
   })
 }
 

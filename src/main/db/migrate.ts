@@ -55,7 +55,7 @@ export function migrateJsonToSqlite(jsonData: JSONDB) {
             folder.createdAt,
             folder.updatedAt,
             folder.icon || null,
-            folder.index,
+            folder.index ?? 0,
           )
           folderIdMap[folder.id] = Number(result.lastInsertRowid)
         })

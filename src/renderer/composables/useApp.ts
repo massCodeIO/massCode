@@ -17,6 +17,7 @@ const focusedFolderId = ref<number | undefined>()
 const focusedSnippetId = ref<number | undefined>()
 
 const isFocusedSnippetName = ref(false)
+const isFocusedSearch = ref(false)
 const isShowMarkdown = ref(false)
 const isShowMarkdownPresentation = ref(false)
 const isShowMindmap = ref(false)
@@ -67,6 +68,7 @@ export function useApp() {
     highlightedSnippetIds,
     highlightedTagId,
     isFocusedSnippetName,
+    isFocusedSearch,
     isShowCodeImage,
     isShowCodePreview,
     isShowMarkdown,

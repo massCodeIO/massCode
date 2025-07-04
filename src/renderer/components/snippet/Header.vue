@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
-import { i18n } from '@/electron'
+import { useApp, useSnippets } from '@/composables'
+import { i18n, ipc } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
 const { isSearch, searchQuery, createSnippetAndSelect, clearSearch, search }
   = useSnippets()
+const { isFocusedSearch } = useApp()
+
+ipc.on('main-menu:find', () => {
+  isFocusedSearch.value = true
+})
 
 watch(searchQuery, (v) => {
   if (v) {
@@ -25,6 +30,8 @@ watch(searchQuery, (v) => {
           v-model="searchQuery"
           :placeholder="i18n.t('placeholder.search')"
           variant="ghost"
+          :focus="isFocusedSearch"
+          @blur="isFocusedSearch = false"
         />
       </div>
       <UiButton

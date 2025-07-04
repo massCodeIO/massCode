@@ -36,6 +36,7 @@ const {
   isShowCodePreview,
   isShowCodeImage,
   isShowMarkdownPresentation,
+  isFocusedSearch,
 } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
@@ -176,6 +177,13 @@ async function init() {
         console.error('Ошибка при добавлении изображения:', error)
       }
     }
+  })
+
+  // Убираем горячие клавиши по умолчанию
+  editor.setOption('extraKeys', {
+    'Cmd-F': () => {
+      isFocusedSearch.value = true
+    },
   })
 
   ipc.on('main-menu:font-size-increase', () => {

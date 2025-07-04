@@ -13,7 +13,7 @@ const {
 
 export function registerMainMenuListeners() {
   ipc.on('main-menu:goto-preferences', () => {
-    router.push({ name: RouterName.preferences })
+    router.push({ name: RouterName.preferencesStorage })
   })
 
   ipc.on('main-menu:goto-devtools', () => {

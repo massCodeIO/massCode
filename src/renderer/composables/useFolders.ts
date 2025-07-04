@@ -89,6 +89,26 @@ async function ensureSelectedFolderIsVisible() {
   }
 }
 
+function getFolderByIdFromTree(
+  nodes: any[] | undefined,
+  id: number | null,
+): FoldersTreeResponse[0] | undefined {
+  if (!nodes || id === null) {
+    return undefined
+  }
+  for (const node of nodes) {
+    if (node.id === id) {
+      return node
+    }
+    if (node.children?.length) {
+      const foundFolder = getFolderByIdFromTree(node.children, id)
+      if (foundFolder) {
+        return foundFolder
+      }
+    }
+  }
+}
+
 async function getFolders(shouldEnsureVisibility = true) {
   try {
     const { data } = await api.folders.getFoldersTree()
@@ -171,6 +191,7 @@ export function useFolders() {
     createFolderAndSelect,
     deleteFolder,
     folders,
+    getFolderByIdFromTree,
     getFolders,
     renameFolderId,
     selectFolder,

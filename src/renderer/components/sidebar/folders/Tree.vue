@@ -36,6 +36,7 @@ const {
   renameFolderId,
   folders,
   updateFolder,
+  getFolderByIdFromTree,
 } = useFolders()
 const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
@@ -79,8 +80,9 @@ function contextMenu(node: Node, event: MouseEvent) {
 async function onDeleteFolder() {
   const { confirm } = useDialog()
 
-  const folderName = folders.value?.find(
-    folder => folder.id === contextNodeId.value,
+  const folderName = getFolderByIdFromTree(
+    folders.value,
+    contextNodeId.value,
   )?.name
 
   const isConfirmed = await confirm({

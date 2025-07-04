@@ -6,6 +6,7 @@ import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
+import { scrollToElement } from '@/utils'
 import { treeKeys } from './keys'
 import TreeNode from './TreeNode.vue'
 
@@ -93,6 +94,13 @@ async function onDeleteFolder() {
     if (contextNodeId.value === state.folderId) {
       state.folderId = undefined
       clearSnippetsState()
+
+      const firstFolder = folders.value?.[0]
+
+      if (firstFolder) {
+        state.folderId = firstFolder.id
+        scrollToElement(`[id="${state.folderId}"]`)
+      }
     }
 
     nextTick(() => {

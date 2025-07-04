@@ -35,7 +35,10 @@ const nav = [
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>
-      <PerfectScrollbar class="h-full px-2">
+      <PerfectScrollbar
+        class="h-full px-2"
+        :options="{ minScrollbarLength: 20 }"
+      >
         <RouterLink
           v-for="item in nav"
           :key="item.name"
@@ -50,7 +53,10 @@ const nav = [
       </PerfectScrollbar>
     </template>
     <template #right>
-      <PerfectScrollbar class="h-full px-5 pb-5">
+      <PerfectScrollbar
+        class="h-full px-5 pb-5"
+        :options="{ minScrollbarLength: 20 }"
+      >
         <RouterView />
       </PerfectScrollbar>
     </template>

@@ -46,6 +46,7 @@ watch(displayedSnippets, () => {
     <PerfectScrollbar
       v-if="displayedSnippets?.length"
       ref="scrollbarRef"
+      :options="{ minScrollbarLength: 20 }"
     >
       <div class="flex-grow overflow-y-auto px-2">
         <SnippetItem

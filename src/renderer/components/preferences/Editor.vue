@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Select from '@/components/ui/shadcn/select'
+import { Switch } from '@/components/ui/shadcn/switch'
 import { useEditor } from '@/composables'
 import { i18n } from '@/electron'
 
@@ -61,13 +61,13 @@ watch(
         </Select.Select>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:editor.highlightLine')">
-        <Checkbox
+        <Switch
           :checked="settings.highlightLine"
           @update:checked="settings.highlightLine = $event"
         />
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:editor.matchBrackets')">
-        <Checkbox
+        <Switch
           :checked="settings.matchBrackets"
           @update:checked="settings.matchBrackets = $event"
         />
@@ -95,7 +95,7 @@ watch(
         </Select.Select>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:editor.prettier.semi')">
-        <Checkbox
+        <Switch
           :checked="settings.semi"
           @update:checked="settings.semi = $event"
         />
@@ -103,7 +103,7 @@ watch(
       <UiMenuFormItem
         :label="i18n.t('preferences:editor.prettier.singleQuote')"
       >
-        <Checkbox
+        <Switch
           :checked="settings.singleQuote"
           @update:checked="settings.singleQuote = $event"
         />

@@ -179,7 +179,6 @@ async function init() {
     }
   })
 
-  // Убираем горячие клавиши по умолчанию
   editor.setOption('extraKeys', {
     'Cmd-F': () => {
       isFocusedSearch.value = true

@@ -1,7 +1,7 @@
 import * as jsonServer from '@masscode/json-server'
 import { store } from '../../store'
 import { nanoid } from 'nanoid'
-import { API_PORT } from '../../config'
+import { API_PORT, API_HOST } from '../../config'
 import path from 'path'
 import type { DB, Folder, Snippet, Tag } from '@shared/types/main/db'
 import type { Server } from 'http'
@@ -132,7 +132,7 @@ export class ApiServer {
 
     app.use(router)
 
-    const server = app.listen(API_PORT, () => {
+    const server = app.listen(API_PORT, API_HOST, () => {
       console.log(`API server is running on port ${API_PORT}`)
     }) as ServerWithDestroy
 

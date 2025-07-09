@@ -3,6 +3,7 @@
   "line": "Ligne",
   "column": "Colonne",
   "fragment": "Fragment",
+  "path": "Chemin",
   "button": {
     "back": "Retour",
     "cancel": "Annuler",

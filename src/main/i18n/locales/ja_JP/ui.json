@@ -3,6 +3,7 @@
   "line": "行",
   "column": "列",
   "fragment": "フラグメント",
+  "path": "パス",
   "button": {
     "back": "戻る",
     "cancel": "キャンセル",

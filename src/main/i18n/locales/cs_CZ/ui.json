@@ -3,6 +3,7 @@
   "line": "Řádek",
   "column": "Sloupec",
   "fragment": "Fragment",
+  "path": "Cesta",
   "button": {
     "back": "Zpět",
     "cancel": "Zrušit",

@@ -42,3 +42,10 @@ export interface JSONDB {
   snippets: Snippet[]
   tags: Tag[]
 }
+
+export interface Backup {
+  name: string
+  path: string
+  size: number
+  createdAt: Date
+}

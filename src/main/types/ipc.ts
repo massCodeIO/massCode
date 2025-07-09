@@ -21,7 +21,18 @@ type MainMenuAction =
   | 'preview-code'
   | 'presentation-mode'
 
-type DBAction = 'relaod' | 'move' | 'migrate' | 'clear'
+type DBAction =
+  | 'relaod'
+  | 'move'
+  | 'migrate'
+  | 'clear'
+  | 'backup'
+  | 'restore'
+  | 'delete-backup'
+  | 'backup-list'
+  | 'start-auto-backup'
+  | 'stop-auto-backup'
+
 type SystemAction =
   | 'reload'
   | 'open-external'

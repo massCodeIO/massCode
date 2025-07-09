@@ -34,14 +34,22 @@ export interface MarkdownSettings {
   scale: number
 }
 
+export interface BackupSettings {
+  path: string
+  enabled: boolean
+  interval: number
+  maxBackups: number
+  lastBackupTime?: number
+}
+
 export interface PreferencesStore {
   storagePath: string
-  backupPath: string
   apiPort: number
   language: string
   theme: 'light' | 'dark' | 'auto'
   editor: EditorSettings
   markdown: MarkdownSettings
+  backup: BackupSettings
 }
 
 export interface Store {

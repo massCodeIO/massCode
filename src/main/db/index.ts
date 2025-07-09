@@ -7,6 +7,8 @@ import fs from 'fs-extra'
 import { store } from '../store'
 
 const DB_NAME = 'massCode.db'
+// const BACKUP_DB_NAME = 'massCode-backup.db'
+// const MANUAL_BACKUP_DB_NAME = 'massCode-manual-backup.db'
 const isDev = process.env.NODE_ENV === 'development'
 
 let db: Database.Database | null = null
@@ -372,5 +374,44 @@ export async function getBackupList() {
   catch (error) {
     console.error('Error getting backup list:', error)
     return []
+  }
+}
+
+export async function moveBackupStorage(newPath: string) {
+  try {
+    const backupSettings = store.preferences.get('backup')
+
+    const newPathExists = await fs.exists(newPath)
+
+    if (!newPathExists) {
+      throw new Error(`Target directory does not exist: ${newPath}`)
+    }
+
+    const newPathStat = await fs.stat(newPath)
+
+    if (!newPathStat.isDirectory()) {
+      throw new Error(`Target path is not a directory: ${newPath}`)
+    }
+
+    const files = await fs.readdir(backupSettings.path)
+    const backupFiles = files.filter(
+      file =>
+        (file.startsWith('massCode-backup-')
+          || file.startsWith('massCode-manual-backup-'))
+        && file.endsWith('.db'),
+    )
+
+    for (const file of backupFiles) {
+      const sourcePath = path.join(backupSettings.path, file)
+      const targetPath = path.join(newPath, file)
+
+      await fs.move(sourcePath, targetPath, { overwrite: true })
+    }
+
+    store.preferences.set('backup.path', newPath)
+  }
+  catch (error) {
+    console.error('Error while moving backup storage:', error)
+    throw error
   }
 }

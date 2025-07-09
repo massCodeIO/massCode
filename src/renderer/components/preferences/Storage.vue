@@ -219,6 +219,44 @@ async function deleteBackup(backupPath: string) {
   })
 }
 
+async function moveBackupStorage() {
+  const result = await ipc.invoke<DialogOptions, string>(
+    'main-menu:open-dialog',
+    {
+      properties: ['openDirectory', 'createDirectory'],
+    },
+  )
+
+  if (result) {
+    await ipc.invoke('db:move-backup', result)
+    sonner({
+      message: i18n.t('messages:success.backup.moved'),
+      type: 'success',
+    })
+  }
+}
+
+async function openBackupStorage() {
+  const result = await ipc.invoke<DialogOptions, string>(
+    'main-menu:open-dialog',
+    {
+      properties: ['openDirectory'],
+    },
+  )
+
+  if (result) {
+    backupSettings.path = result
+    store.preferences.set('backup', JSON.parse(JSON.stringify(backupSettings)))
+  }
+
+  if (isShowBackupList.value) {
+    await showBackupList()
+    nextTick(() => {
+      scrollRef.value?.ps?.update()
+    })
+  }
+}
+
 async function showBackupList() {
   backups.value = (await ipc.invoke('db:backup-list', null)) as Backup[]
   isShowBackupList.value = true
@@ -264,7 +302,7 @@ watch(
 <template>
   <div class="space-y-5">
     <UiMenuFormSection :label="i18n.t('preferences:storage.section.main')">
-      <UiMenuFormItem :label="i18n.t('preferences:storage.label')">
+      <UiMenuFormItem :label="i18n.t('path')">
         <UiInput
           v-model="storagePath"
           disabled
@@ -320,6 +358,29 @@ watch(
       </UiMenuFormItem>
     </UiMenuFormSection>
     <UiMenuFormSection :label="i18n.t('preferences:storage.backup.label')">
+      <UiMenuFormItem :label="i18n.t('path')">
+        <UiInput
+          v-model="backupSettings.path"
+          disabled
+          size="sm"
+        />
+        <template #actions>
+          <div class="flex gap-2">
+            <UiButton
+              size="md"
+              @click="moveBackupStorage"
+            >
+              {{ i18n.t("action.move.storage") }}
+            </UiButton>
+            <UiButton
+              size="md"
+              @click="openBackupStorage"
+            >
+              {{ i18n.t("action.open.storage") }}
+            </UiButton>
+          </div>
+        </template>
+      </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:storage.backup.enabled')">
         <Switch
           :checked="backupSettings.enabled"

@@ -3,6 +3,7 @@
   "line": "Wiersz",
   "column": "Kolumna",
   "fragment": "Fragment",
+  "path": "Ścieżka",
   "button": {
     "back": "Wstecz",
     "cancel": "Anuluj",

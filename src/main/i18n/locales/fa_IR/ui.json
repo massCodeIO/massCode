@@ -3,6 +3,7 @@
   "line": "خط",
   "column": "ستون",
   "fragment": "قطعه",
+  "path": "مسیر",
   "button": {
     "back": "بازگشت",
     "cancel": "لغو",

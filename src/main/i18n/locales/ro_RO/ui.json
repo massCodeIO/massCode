@@ -3,6 +3,7 @@
   "line": "Linie",
   "column": "Coloană",
   "fragment": "Fragment",
+  "path": "Cale",
   "button": {
     "back": "Înapoi",
     "cancel": "Anulare",

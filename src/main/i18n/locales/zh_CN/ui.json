@@ -3,6 +3,7 @@
   "line": "行",
   "column": "列",
   "fragment": "片段",
+  "path": "路径",
   "button": {
     "back": "返回",
     "cancel": "取消",

@@ -3,6 +3,7 @@
   "line": "Рядок",
   "column": "Стовпець",
   "fragment": "Fragment",
+  "path": "Шлях",
   "button": {
     "back": "Назад",
     "cancel": "Скасувати",

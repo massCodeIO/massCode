@@ -3,6 +3,7 @@
   "line": "Zeile",
   "column": "Spalte",
   "fragment": "Fragment",
+  "path": "Pfad",
   "button": {
     "back": "Zurück",
     "cancel": "Abbrechen",

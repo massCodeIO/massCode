@@ -3,6 +3,7 @@
   "line": "Satır",
   "column": "Sütun",
   "fragment": "Fragment",
+  "path": "Yol",
   "button": {
     "back": "Geri",
     "cancel": "İptal",

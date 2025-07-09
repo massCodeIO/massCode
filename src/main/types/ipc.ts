@@ -32,6 +32,7 @@ type DBAction =
   | 'backup-list'
   | 'start-auto-backup'
   | 'stop-auto-backup'
+  | 'move-backup'
 
 type SystemAction =
   | 'reload'

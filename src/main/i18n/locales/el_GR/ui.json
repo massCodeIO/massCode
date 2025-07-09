@@ -3,6 +3,7 @@
   "line": "Γραμμή",
   "column": "Στήλη",
   "fragment": "Fragment",
+  "path": "Διαδρομή",
   "button": {
     "back": "Πίσω",
     "cancel": "Ακύρωση",

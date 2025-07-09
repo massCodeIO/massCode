@@ -6,6 +6,7 @@ import {
   createBackup,
   deleteBackup,
   getBackupList,
+  moveBackupStorage,
   moveDB,
   reloadDB,
   restoreFromBackup,
@@ -55,6 +56,10 @@ export function registerDBHandlers() {
 
   ipcMain.handle<string, void>('db:delete-backup', async (_, payload) => {
     await deleteBackup(payload)
+  })
+
+  ipcMain.handle<string, void>('db:move-backup', async (_, payload) => {
+    await moveBackupStorage(payload)
   })
 
   ipcMain.handle('db:start-auto-backup', async () => {

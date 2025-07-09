@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
+import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
+
+const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
 
 const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
@@ -27,6 +31,10 @@ const nav = [
     name: RouterName.preferencesAppearance,
   },
 ]
+
+provide(preferencesKeys, {
+  scrollRef,
+})
 </script>
 
 <template>
@@ -54,6 +62,7 @@ const nav = [
     </template>
     <template #right>
       <PerfectScrollbar
+        ref="scrollRef"
         class="h-full px-5 pb-5"
         :options="{ minScrollbarLength: 20 }"
       >

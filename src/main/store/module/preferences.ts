@@ -14,13 +14,18 @@ export default new Store<PreferencesStore>({
 
   defaults: {
     storagePath,
-    backupPath,
     apiPort: 4321,
     language: 'en_US',
     theme: 'auto',
     editor: EDITOR_DEFAULTS,
     markdown: {
       scale: 1,
+    },
+    backup: {
+      path: backupPath,
+      enabled: true,
+      interval: 6,
+      maxBackups: 5,
     },
   },
 })

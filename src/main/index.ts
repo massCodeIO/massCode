@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { app, BrowserWindow, Menu } from 'electron'
 import { initApi } from './api'
+import { startAutoBackup } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
 import { mainMenu } from './menu/main'
@@ -77,6 +78,7 @@ else {
     registerIPC()
     initApi()
     checkForUpdates()
+    startAutoBackup()
 
     if (store.app.get('isAutoMigratedFromJson')) {
       return

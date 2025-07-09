@@ -1,10 +1,31 @@
 {
   "label": "Preferences",
   "storage": {
+    "section": {
+      "main": "Main",
+      "backup": "Backup"
+    },
     "label": "Storage",
     "migrate": "Migrate",
     "count": "Count",
-    "clearDatabase": "Clear Database"
+    "clearDatabase": "Clear Database",
+    "backup": {
+      "label": "Backup",
+      "enabled": "Auto Backup",
+      "interval": {
+        "label": "Interval",
+        "1": "Every hour",
+        "6": "Every 6 hours",
+        "12": "Every 12 hours",
+        "24": "Every 24 hours"
+      },
+      "maxBackups": "Maximum Backups",
+      "createNow": "Create Backup Now",
+      "restore": "Restore from Backup",
+      "list": "Backup List",
+      "lastBackup": "Last Backup",
+      "noBackups": "No backups found"
+    }
   },
   "editor": {
     "label": "Editor",

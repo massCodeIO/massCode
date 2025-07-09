@@ -77,6 +77,11 @@
     },
     "copy": {
       "snippetLink": "Copy Snippet Link"
+    },
+    "backup": {
+      "create": "Create Backup",
+      "restore": "Restore from Backup",
+      "showList": "Show List"
     }
   },
   "sidebar": {

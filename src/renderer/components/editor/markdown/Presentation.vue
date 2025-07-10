@@ -89,7 +89,7 @@ watchEffect(() => {
 <template>
   <div class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden">
     <UiButton
-      class="absolute top-2 right-2 z-50"
+      class="absolute top-6 right-2 z-50"
       variant="icon"
       @click="onClose"
     >

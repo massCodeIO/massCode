@@ -27,8 +27,8 @@
 
   --color-button: hsl(44, 60%, 85%);
   --color-button-hover: var(--color-contrast-low-alt);
-  --color-button-action-hover: var(--color-contrast-lower-alt3); 
-  
+  --color-button-action-hover: var(--color-contrast-lower-alt3);
+
   --color-checkbox: var(--color-contrast-lower-alt);
 
   --color-input: var(--color-contrast-lower-alt);
@@ -48,7 +48,7 @@
 
 [data-theme='dark:one'] {
   --color-primary: hsl(215, 69%, 45%);
-  
+
   --color-bg: hsl(220, 13%, 18%);
 
   --color-contrast-lower: hsl(220, 13%, 20%);
@@ -57,12 +57,12 @@
   --color-contrast-lower-alt3: hsl(220, 13%, 30%);
   --color-contrast-lower-low: hsl(220, 13%, 40%);
   --color-contrast-medium: hsl(220, 13%, 50%);
-  
+
   --color-border: var(--color-contrast-lower-alt2);
-  
+
   --color-snippet-list: var(--color-bg);
   --color-snippet-selected: var(--color-contrast-lower-alt);
-  
+
   --color-sidebar: var(--color-bg);
   --color-sidebar-item-selected: var(--color-contrast-lower-alt);
   --color-sidebar-icon: var(--color-text);
@@ -71,8 +71,8 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
-  --color-button-action-hover: var(--color-contrast-lower-alt2); 
+  --color-button-action: var(--color-contrast-low);
+  --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
 
@@ -85,7 +85,7 @@
   --color-primary: hsl(215, 69%, 45%);
 
   // при конвертации в hsl цвет отличается, поэтому оставляем в hex
-  --color-bg: #282A36; 
+  --color-bg: #282A36;
 
   --color-contrast-lower: hsl(231, 15%, 20%);
   --color-contrast-lower-alt: hsl(231, 15%, 22%);
@@ -107,7 +107,7 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
@@ -143,7 +143,7 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
@@ -178,7 +178,7 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
@@ -214,7 +214,7 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
@@ -252,7 +252,7 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);
@@ -289,7 +289,44 @@
 
   --color-button: var(--color-contrast-lower-alt);
   --color-button-hover: var(--color-contrast-lower-alt2);
-  --color-button-action: var(--color-contrast-low); 
+  --color-button-action: var(--color-contrast-low);
+  --color-button-action-hover: var(--color-contrast-lower-alt2);
+
+  --color-input: var(--color-bg);
+
+  --color-menu-selected: var(--color-contrast-lower-alt);
+
+  --color-tag-delete: var(--color-contrast-lower-alt3);
+}
+
+[data-theme='dark:matrix'] {
+  --color-primary: hsla(140, 100%, 50%, 0.514);
+
+  // при конвертации в hsl цвет отличается, поэтому оставляем в hex
+  --color-bg: #000000;
+
+
+  --color-contrast-lower: hsla(140, 100%, 50%, 0.250);
+  --color-contrast-lower-alt: hsla(140, 100%, 50%, 0.250);
+  --color-contrast-lower-alt2: hsla(140, 100%, 50%, 0.250);
+  --color-contrast-lower-alt3: #000000;
+  --color-contrast-lower-low: #000000;
+  --color-contrast-medium: #000000;
+
+  --color-snippet-list: var(--color-bg);
+  --color-snippet-selected: var(--color-contrast-lower-alt);
+
+  --color-sidebar: var(--color-bg);
+  --color-sidebar-item-selected: var(--color-contrast-lower-alt);
+  --color-sidebar-icon: var(--color-text);
+
+  --color-border: var(--color-contrast-lower-alt2);
+
+  --color-text: hsl(140, 100%, 50%);
+
+  --color-button: var(--color-contrast-lower-alt);
+  --color-button-hover: var(--color-contrast-lower-alt2);
+  --color-button-action: var(--color-contrast-low);
   --color-button-action-hover: var(--color-contrast-lower-alt2);
 
   --color-input: var(--color-bg);

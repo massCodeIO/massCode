@@ -8,6 +8,7 @@ export type Theme =
   | 'dark:monokai'
   | 'dark:one'
   | 'dark:tokyo-night'
+  | 'dark:matrix'
   | 'light:github'
   | 'light:material'
   | 'light:solarized'

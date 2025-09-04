@@ -85,6 +85,16 @@ export const themes: ThemeConfig[] = [
     }
   },
   {
+    name: 'Matrix',
+    label: 'Matrix',
+    value: 'dark:matrix',
+    loader: () => import('./themes/matrix.tmTheme.json'),
+    gutterSettings: {
+      background: '#1C2029',
+      divider: '#1C2029'
+    }
+  },
+  {
     name: 'GitHub',
     label: 'GitHub',
     value: 'light:github',

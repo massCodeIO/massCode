@@ -66,7 +66,7 @@ const isShowHeader = computed(() => {
   return (
     isShowMarkdown.value
     || isShowMindmap.value
-    || (!isEmpty.value && selectedSnippetIds.value.length === 1)
+    || (!isEmpty.value && selectedSnippet.value !== undefined)
   )
 })
 const isShowEditor = computed(() => {
@@ -76,7 +76,7 @@ const isShowEditor = computed(() => {
     && !isShowCodeImage.value
     && !isShowMarkdownPresentation.value
     && !isEmpty.value
-    && selectedSnippetIds.value.length === 1
+    && selectedSnippet.value !== undefined
   )
 })
 
@@ -358,11 +358,15 @@ onMounted(() => {
     <EditorMindmap v-if="isShowMindmap" />
     <EditorCodeImage v-if="isShowCodeImage" />
     <div
-      v-if="isEmpty || selectedSnippetIds.length > 1"
+      v-if="
+        isEmpty
+          || selectedSnippetIds.length > 1
+          || selectedSnippet === undefined
+      "
       class="row-span-full flex items-center justify-center"
     >
       <UiEmptyPlaceholder
-        v-if="isEmpty"
+        v-if="isEmpty || selectedSnippet === undefined"
         :text="i18n.t('snippet.noSelected')"
       />
       <UiEmptyPlaceholder

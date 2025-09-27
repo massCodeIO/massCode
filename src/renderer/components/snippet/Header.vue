@@ -3,8 +3,16 @@ import { useApp, useSnippets } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
-const { isSearch, searchQuery, createSnippetAndSelect, clearSearch, search }
-  = useSnippets()
+const {
+  isSearch,
+  searchQuery,
+  createSnippetAndSelect,
+  clearSearch,
+  search,
+  searchSelectedIndex,
+  selectSearchSnippet,
+  displayedSnippets,
+} = useSnippets()
 const { isFocusedSearch } = useApp()
 
 ipc.on('main-menu:find', () => {
@@ -19,6 +27,26 @@ watch(searchQuery, (v) => {
     clearSearch(true)
   }
 })
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    const nextIndex = Math.min(
+      searchSelectedIndex.value + 1,
+      (displayedSnippets.value?.length || 0) - 1,
+    )
+    selectSearchSnippet(nextIndex)
+  }
+  else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    const prevIndex = Math.max(searchSelectedIndex.value - 1, 0)
+    selectSearchSnippet(prevIndex)
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    clearSearch(true)
+  }
+}
 </script>
 
 <template>
@@ -32,6 +60,7 @@ watch(searchQuery, (v) => {
           variant="ghost"
           :focus="isFocusedSearch"
           @blur="isFocusedSearch = false"
+          @keydown="onKeydown"
         />
       </div>
       <UiButton

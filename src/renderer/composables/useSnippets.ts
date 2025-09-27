@@ -5,6 +5,7 @@ import type {
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
 import { i18n } from '@/electron'
+import { scrollToElement } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
@@ -24,6 +25,7 @@ const snippetsBySearch = shallowRef<SnippetsResponse>()
 const searchQuery = ref('')
 const isSearch = ref(false)
 const isRestoreStateBlocked = ref(false)
+const searchSelectedIndex = ref<number>(-1)
 
 const displayedSnippets = computed(() => {
   if (isSearch.value) {
@@ -383,10 +385,27 @@ async function search() {
 
     await getSnippets({ search: searchQuery.value })
     selectFirstSnippet()
+    searchSelectedIndex.value = 0
+    nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
   }
   else {
     isSearch.value = false
   }
+}
+
+function selectSearchSnippet(index: number) {
+  if (
+    !displayedSnippets.value
+    || index < 0
+    || index >= displayedSnippets.value.length
+  ) {
+    return
+  }
+
+  const snippet = displayedSnippets.value[index]
+  selectSnippet(snippet.id)
+  searchSelectedIndex.value = index
+  nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
 }
 
 function clearSearch(restoreState = false) {
@@ -396,6 +415,7 @@ function clearSearch(restoreState = false) {
 
   searchQuery.value = ''
   isSearch.value = false
+  searchSelectedIndex.value = -1
 }
 
 export function useSnippets() {
@@ -422,11 +442,13 @@ export function useSnippets() {
     createSnippetAndSelect,
     search,
     searchQuery,
+    searchSelectedIndex,
     selectedSnippet,
     selectedSnippetContent,
     selectedSnippetIds,
     selectedSnippets,
     selectFirstSnippet,
+    selectSearchSnippet,
     selectSnippet,
     updateSnippet,
     updateSnippetContent,

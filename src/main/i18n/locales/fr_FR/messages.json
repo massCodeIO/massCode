@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?",
+    "deletePermanently": "Êtes-vous sûr de vouloir supprimer définitivement \"{{name}}\" ?",
+    "deleteConfirmMultipleSnippets": "Êtes-vous sûr de vouloir supprimer définitivement les {{count}} snippets sélectionnés ?",
+    "emptyTrash": "Êtes-vous sûr de vouloir supprimer définitivement tous les snippets de la Corbeille ?",
+    "clearDb": "Êtes-vous sûr de vouloir effacer la base de données ?",
+    "migrateDb": [
+      "Êtes-vous sûr de vouloir migrer ?",
+      "Pendant la migration, la bibliothèque actuelle sera écrasée."
+    ]
+  },
+  "success": {
+    "migrate": "Base de données migrée avec succès."
+  },
+  "warning": {
+    "noUndo": "Vous ne pouvez pas annuler cette action.",
+    "allSnippetsMoveToTrash": "Tous les snippets de ce dossier seront déplacés dans la corbeille.",
+    "deleteTag": "Cela supprimera également cette étiquette de tous les snippets.",
+    "createDb": "Veuillez sélectionner un autre dossier",
+    "clearDb": "Cela supprimera définitivement tous les Snippets, Dossiers et Étiquettes de la base de données.",
+    "htmlCssPreview": "Ajoutez un fragment HTML pour voir le résultat. Ajoutez du CSS pour le style et JavaScript pour l'interactivité.",
+    "codeBlockRenderer": [
+      "Lors de l'utilisation de Codemirror, le langage à définir pour le bloc de code doit correspondre à l'une des valeurs des",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Pour utiliser des services de synchronisation comme iCloud Drive, Google Drive ou Dropbox, déplacez simplement le stockage vers les dossiers synchronisés correspondants",
+    "migrate": {
+      "fromV3": "Pour migrer depuis massCode v3, sélectionnez le dossier contenant le fichier JSON.",
+      "fromSnippetsLab": "Pour migrer depuis SnippetsLab, sélectionnez le fichier JSON.",
+      "snippetsLabLimitations": [
+        "Quelques limitations. Pendant la migration depuis SnippetsLab :",
+        "Tous les dossiers seront au premier niveau car le fichier JSON (inférieur à v2.1) ne représente pas les dossiers imbriqués.",
+        "Les snippets avec des langages non supportés seront définis par défaut en Plain Text."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Salut, c'est Anton 👋<br><br>\nMerci d'utiliser massCode. Si vous trouvez cette application utile, veuillez {{-tagStart}}faire un don{{-tagEnd}}. Cela m'inspirera à continuer le développement du projet.",
+    "unsponsored": "Non sponsorisé"
+  },
+  "update": {
+    "available": "La version {{newVersion}} est maintenant disponible au téléchargement.\nVotre version est {{oldVersion}}.",
+    "noAvailable": "Il n'y a actuellement aucune mise à jour disponible."
+  }
+}

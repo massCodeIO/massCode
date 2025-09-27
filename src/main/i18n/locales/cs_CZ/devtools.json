@@ -1,0 +1,143 @@
+{
+  "label": "Vývojářské nástroje",
+  "converters": {
+    "label": "Převodníky",
+    "caseConverter": {
+      "label": "Převodník velikosti písmen",
+      "description": "Transformace textu do různých velikostí písmen",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Text na Unicode",
+      "description": "Převod textu na Unicode a naopak",
+      "modes": {
+        "textToUnicode": "Text → Unicode",
+        "unicodeToText": "Unicode → Text"
+      }
+    },
+    "textToAscii": {
+      "label": "Text na ASCII Binary",
+      "description": "Převod textu na ASCII binary a naopak",
+      "modes": {
+        "textToAscii": "Text → ASCII",
+        "asciiToText": "ASCII → Text"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Kódování nebo dekódování textu do Base64",
+      "modes": {
+        "textToBase64": "Text → Base64",
+        "base64ToText": "Base64 → Text"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON na YAML",
+      "description": "Převod JSON na YAML a naopak",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON na TOML",
+      "description": "Převod JSON na TOML a naopak",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON na XML",
+      "description": "Převod JSON na XML a naopak",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Převodník barev",
+      "description": "Převod barev mezi různými formáty"
+    }
+  },
+  "crypto": {
+    "label": "Kryptografie / Bezpečnost",
+    "hash": {
+      "label": "Generátor hash",
+      "description": "Generování hashů z textu"
+    },
+    "hmac": {
+      "label": "Generátor HMAC",
+      "description": "Generování autentizačního kódu zprávy založeného na hash (HMAC) složeného z klíče a zprávy"
+    },
+    "password": {
+      "label": "Generátor hesel",
+      "description": "Generování bezpečného hesla"
+    },
+    "uuid": {
+      "label": "Generátor UUID",
+      "description": "Generování univerzálního jedinečného identifikátoru (UUID)"
+    }
+  },
+  "web": {
+    "label": "Web",
+    "urlParser": {
+      "label": "Parser URL",
+      "description": "Parsování URL na komponenty"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Kódování nebo dekódování URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Převod textu na URL-přátelský slug"
+    }
+  },
+  "form": {
+    "input": "Vstup",
+    "output": "Výstup",
+    "inputString": "Vstupní řetězec",
+    "outputString": "Výstupní řetězec",
+    "inputUrl": "Vstupní URL",
+    "outputUrl": "Výstupní URL",
+    "parsedUrl": "Parsovaná URL",
+    "splitQueryString": "Rozdělit Query String",
+    "key": "Klíč",
+    "value": "Hodnota",
+    "component": "Komponenta",
+    "result": "Výsledek",
+    "secretKey": "Tajný klíč",
+    "algorithm": "Algoritmus",
+    "version": "Verze",
+    "amount": "Množství",
+    "type": "Typ",
+    "length": "Délka",
+    "options": "Možnosti",
+    "numbers": "Čísla",
+    "symbols": "Symboly",
+    "lowercase": "Malá písmena",
+    "uppercase": "Velká písmena",
+    "placeholder": {
+      "text": "Zadejte text",
+      "value": "Zadejte hodnotu",
+      "secretKey": "Zadejte tajný klíč",
+      "url": "Zadejte URL"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "total": "Celkem",
+  "line": "Řádek",
+  "column": "Sloupec",
+  "fragment": "Fragment",
+  "path": "Cesta",
+  "button": {
+    "back": "Zpět",
+    "cancel": "Zrušit",
+    "clear": "Vymazat",
+    "confirm": "Potvrdit",
+    "copy": "Kopírovat",
+    "fit": "Přizpůsobit",
+    "generate": "Generovat",
+    "ok": "OK",
+    "revers": "Obrátit",
+    "saveAs": "Uložit jako",
+    "sort": "Seřadit",
+    "update": ["Přejít na GitHub", "OK"],
+    "zoomIn": "Přiblížit",
+    "zoomOut": "Oddálit",
+    "darkMode": "Tmavý režim",
+    "toggleDarkMode": "Přepnout tmavý režim",
+    "background": "Pozadí",
+    "goToDownload": "Přejít ke stažení",
+    "refreshPreview": "Obnovit náhled",
+    "laserPointer": "Laserové ukazovátko",
+    "fullscreen": "Celá obrazovka",
+    "prev": "Předchozí",
+    "next": "Další"
+  },
+  "action": {
+    "close": "Zavřít",
+    "defaultLanguage": "Výchozí jazyk",
+    "duplicate": "Duplikovat",
+    "rename": "Přejmenovat",
+    "restore": "Obnovit",
+    "setCustomIcon": "Nastavit vlastní ikonu",
+    "show": "Zobrazit",
+    "hide": "Skrýt",
+    "new": {
+      "storage": "Nové úložiště",
+      "folder": "Nová složka",
+      "snippet": "Nový snippet",
+      "fragment": "Nový fragment"
+    },
+    "add": {
+      "description": "Přidat popis",
+      "tag": "Přidat tag",
+      "toFavorites": "Přidat do oblíbených"
+    },
+    "open": {
+      "storage": "Otevřít úložiště"
+    },
+    "move": {
+      "storage": "Přesunout úložiště",
+      "toTrash": "Přesunout do koše"
+    },
+    "remove": {
+      "fromFavorites": "Odebrat z oblíbených"
+    },
+    "reload": {
+      "storage": "Znovu načíst úložiště"
+    },
+    "delete": {
+      "common": "Smazat",
+      "now": "Smazat nyní",
+      "allData": "Smazat všechna data",
+      "trash": "Vyprázdnit koš"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Ze SnippetsLab",
+      "fromV3": "Z massCode v3"
+    },
+    "export": {
+      "toHtml": "Exportovat do HTML"
+    },
+    "copy": {
+      "snippetLink": "Kopírovat odkaz na snippet"
+    }
+  },
+  "sidebar": {
+    "inbox": "Doručené",
+    "favorites": "Oblíbené",
+    "allSnippets": "Všechny snippety",
+    "trash": "Koš",
+    "folders": "Složky",
+    "library": "Knihovna",
+    "tags": "Tagy"
+  },
+  "folder": {
+    "untitled": "Nepojmenovaná složka",
+    "plural": "Složky",
+    "collapseAll": "Sbalit vše",
+    "expandAll": "Rozbalit vše"
+  },
+  "snippet": {
+    "untitled": "Nepojmenovaný snippet",
+    "plural": "Snippety",
+    "emptyName": "Zadejte název snippetu",
+    "selectedMultiple": "{{count}} vybraných snippetů",
+    "noSelected": "Není vybrán žádný snippet"
+  },
+  "placeholder": {
+    "emptyTagList": "Přidejte tagy ke snippetům, aby se zde zobrazily",
+    "emptyFoldersList": "Žádné složky",
+    "emptySnippetsList": "Žádné snippety",
+    "search": "Hledat",
+    "addTag": "Přidat tag"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Настройки",
+    "devtools": "Инструменты разработчика",
+    "update": "Проверить обновления...",
+    "quit": "Выйти из massCode",
+    "about": "О massCode",
+    "hide": "Скрыть massCode"
+  },
+  "help": {
+    "label": "Помощь",
+    "website": "Веб-сайт",
+    "documentation": "Документация",
+    "viewInGitHub": "Открыть на GitHub",
+    "changeLog": "История изменений",
+    "reportIssue": "Сообщить о проблеме",
+    "giveStar": "Поставить звезду",
+    "extension": {
+      "vscode": "Расширение VS Code",
+      "raycast": "Расширение Raycast",
+      "alfred": "Расширение Alfred"
+    },
+    "donate": {
+      "openCollective": "Поддержать через Open Collective",
+      "payPal": "Поддержать через PayPal",
+      "gumroad": "Поддержать через Gumroad (Visa, Mastercard и др.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Инструменты разработчика",
+    "links": {
+      "snippets": "Коллекция сниппетов"
+    }
+  },
+  "edit": {
+    "label": "Правка",
+    "find": "Найти"
+  },
+  "view": {
+    "label": "Вид",
+    "sortBy": {
+      "label": "Сортировать сниппеты по",
+      "dateModified": "Дате изменения",
+      "dateCreated": "Дате создания",
+      "name": "Имени"
+    },
+    "compactMode": "Компактный режим"
+  },
+  "editor": {
+    "label": "Редактор",
+    "copy": "Копировать сниппет в буфер обмена",
+    "format": "Форматировать",
+    "previewCode": "Предпросмотр кода",
+    "previewScreenshot": "Предпросмотр скриншота",
+    "fontSizeIncrease": "Увеличить размер шрифта",
+    "fontSizeDecrease": "Уменьшить размер шрифта",
+    "fontSizeReset": "Сбросить размер шрифта"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Режим презентации",
+    "preview": "Предпросмотр",
+    "previewMarkdown": "Предпросмотр Markdown",
+    "previewMindmap": "Предпросмотр диаграммы связей"
+  },
+  "history": {
+    "label": "История",
+    "back": "Назад",
+    "forward": "Вперед"
+  },
+  "devtools": {
+    "label": "Инструменты разработчика"
+  }
+}

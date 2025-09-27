@@ -1,0 +1,111 @@
+{
+  "total": "Всего",
+  "line": "Строка",
+  "column": "Столбец",
+  "fragment": "Фрагмент",
+  "path": "Путь",
+  "button": {
+    "back": "Назад",
+    "cancel": "Отмена",
+    "clear": "Очистить",
+    "confirm": "Подтвердить",
+    "copy": "Копировать",
+    "fit": "По размеру",
+    "generate": "Сгенерировать",
+    "ok": "OK",
+    "revers": "Обратить",
+    "saveAs": "Сохранить как",
+    "sort": "Сортировать",
+    "update": ["Перейти на GitHub", "OK"],
+    "zoomIn": "Увеличить",
+    "zoomOut": "Уменьшить",
+    "darkMode": "Темная тема",
+    "toggleDarkMode": "Переключить тёмную тему",
+    "background": "Фон",
+    "goToDownload": "Перейти к загрузке",
+    "refreshPreview": "Обновить предпросмотр",
+    "laserPointer": "Лазерная указка",
+    "fullscreen": "Полный экран",
+    "prev": "Назад",
+    "next": "Далее"
+  },
+  "action": {
+    "close": "Закрыть",
+    "defaultLanguage": "Язык по умолчанию",
+    "duplicate": "Дублировать",
+    "rename": "Переименовать",
+    "restore": "Восстановить",
+    "setCustomIcon": "Установить свою иконку",
+    "show": "Показать",
+    "hide": "Скрыть",
+    "new": {
+      "storage": "Новое хранилище",
+      "folder": "Новая папка",
+      "snippet": "Новый сниппет",
+      "fragment": "Новый фрагмент"
+    },
+    "add": {
+      "description": "Добавить описание",
+      "tag": "Добавить тег",
+      "toFavorites": "Добавить в избранное"
+    },
+    "open": {
+      "storage": "Открыть хранилище"
+    },
+    "move": {
+      "storage": "Переместить хранилище",
+      "toTrash": "Переместить в корзину"
+    },
+    "remove": {
+      "fromFavorites": "Удалить из избранного"
+    },
+    "reload": {
+      "storage": "Перезагрузить хранилище"
+    },
+    "delete": {
+      "common": "Удалить",
+      "now": "Удалить сейчас",
+      "allData": "Удалить все данные",
+      "trash": "Очистить корзину"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Из SnippetsLab",
+      "fromV3": "Из massCode v3"
+    },
+    "export": {
+      "toHtml": "Экспорт в HTML"
+    },
+    "copy": {
+      "snippetLink": "Копировать ссылку на сниппет"
+    }
+  },
+  "sidebar": {
+    "inbox": "Входящие",
+    "favorites": "Избранное",
+    "allSnippets": "Все сниппеты",
+    "trash": "Корзина",
+    "folders": "Папки",
+    "library": "Библиотека",
+    "tags": "Теги"
+  },
+  "folder": {
+    "untitled": "Папка без названия",
+    "plural": "Папки",
+    "collapseAll": "Свернуть все",
+    "expandAll": "Развернуть все"
+  },
+  "snippet": {
+    "untitled": "Сниппет без названия",
+    "plural": "Сниппеты",
+    "emptyName": "Введите название сниппета",
+    "selectedMultiple": "Выбрано сниппетов: {{count}}",
+    "noSelected": "Нет выбранных сниппетов"
+  },
+  "placeholder": {
+    "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
+    "emptyFoldersList": "Нет папок",
+    "emptySnippetsList": "Нет сниппетов",
+    "search": "Поиск",
+    "addTag": "Добавить тег"
+  }
+}

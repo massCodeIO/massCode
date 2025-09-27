@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferências",
+    "devtools": "Ferramentas de Desenvolvedor",
+    "update": "Verificar Atualizações...",
+    "quit": "Sair do massCode",
+    "about": "Sobre o massCode",
+    "hide": "Ocultar massCode"
+  },
+  "help": {
+    "label": "Ajuda",
+    "website": "Website",
+    "documentation": "Documentação",
+    "viewInGitHub": "Ver no GitHub",
+    "changeLog": "Log de Alterações",
+    "reportIssue": "Reportar Problema",
+    "giveStar": "Dar uma Estrela",
+    "extension": {
+      "vscode": "Extensão VS Code",
+      "raycast": "Extensão Raycast",
+      "alfred": "Extensão Alfred"
+    },
+    "donate": {
+      "openCollective": "Doar no Open Collective",
+      "payPal": "Doar via PayPal",
+      "gumroad": "Doar via Gumroad (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Alternar Ferramentas de Desenvolvedor",
+    "links": {
+      "snippets": "Coleção de Snippets"
+    }
+  },
+  "edit": {
+    "label": "Editar",
+    "find": "Procurar"
+  },
+  "view": {
+    "label": "Visualizar",
+    "sortBy": {
+      "label": "Ordenar Snippets Por",
+      "dateModified": "Data de Modificação",
+      "dateCreated": "Data de Criação",
+      "name": "Nome"
+    },
+    "compactMode": "Modo Compacto"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copiar Snippet para Área de Transferência",
+    "format": "Formatar",
+    "previewCode": "Visualizar Código",
+    "previewScreenshot": "Visualizar Screenshot",
+    "fontSizeIncrease": "Aumentar Tamanho da Fonte",
+    "fontSizeDecrease": "Diminuir Tamanho da Fonte",
+    "fontSizeReset": "Redefinir Tamanho da Fonte"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Modo de Apresentação",
+    "preview": "Visualizar",
+    "previewMarkdown": "Visualizar Markdown",
+    "previewMindmap": "Visualizar Mindmap"
+  },
+  "history": {
+    "label": "Histórico",
+    "back": "Voltar",
+    "forward": "Avançar"
+  },
+  "devtools": {
+    "label": "Ferramentas de Desenvolvedor"
+  }
+}

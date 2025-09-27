@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Einstellungen",
+    "devtools": "Entwicklerwerkzeuge",
+    "update": "Nach Updates suchen...",
+    "quit": "massCode beenden",
+    "about": "Über massCode",
+    "hide": "massCode ausblenden"
+  },
+  "help": {
+    "label": "Hilfe",
+    "website": "Website",
+    "documentation": "Dokumentation",
+    "viewInGitHub": "In GitHub anzeigen",
+    "changeLog": "Änderungsprotokoll",
+    "reportIssue": "Problem melden",
+    "giveStar": "Stern geben",
+    "extension": {
+      "vscode": "VS Code Erweiterung",
+      "raycast": "Raycast Erweiterung",
+      "alfred": "Alfred Erweiterung"
+    },
+    "donate": {
+      "openCollective": "Über Open Collective spenden",
+      "payPal": "Über PayPal spenden",
+      "gumroad": "Über Gumroad spenden (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Entwicklerwerkzeuge ein-/ausblenden",
+    "links": {
+      "snippets": "Snippet-Sammlung"
+    }
+  },
+  "edit": {
+    "label": "Bearbeiten",
+    "find": "Suchen"
+  },
+  "view": {
+    "label": "Ansicht",
+    "sortBy": {
+      "label": "Snippets sortieren nach",
+      "dateModified": "Änderungsdatum",
+      "dateCreated": "Erstellungsdatum",
+      "name": "Name"
+    },
+    "compactMode": "Kompakter Modus"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Snippet in Zwischenablage kopieren",
+    "format": "Formatieren",
+    "previewCode": "Code-Vorschau",
+    "previewScreenshot": "Screenshot-Vorschau",
+    "fontSizeIncrease": "Schriftgröße erhöhen",
+    "fontSizeDecrease": "Schriftgröße verringern",
+    "fontSizeReset": "Schriftgröße zurücksetzen"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Präsentationsmodus",
+    "preview": "Vorschau",
+    "previewMarkdown": "Markdown-Vorschau",
+    "previewMindmap": "Mindmap-Vorschau"
+  },
+  "history": {
+    "label": "Verlauf",
+    "back": "Zurück",
+    "forward": "Vorwärts"
+  },
+  "devtools": {
+    "label": "Entwicklerwerkzeuge"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "تنظیمات",
+    "devtools": "ابزارهای توسعه",
+    "update": "بررسی به‌روزرسانی‌ها...",
+    "quit": "خروج از massCode",
+    "about": "درباره massCode",
+    "hide": "مخفی کردن massCode"
+  },
+  "help": {
+    "label": "راهنما",
+    "website": "وب‌سایت",
+    "documentation": "مستندات",
+    "viewInGitHub": "مشاهده در GitHub",
+    "changeLog": "تغییرات",
+    "reportIssue": "گزارش مشکل",
+    "giveStar": "دادن ستاره",
+    "extension": {
+      "vscode": "افزونه VS Code",
+      "raycast": "افزونه Raycast",
+      "alfred": "افزونه Alfred"
+    },
+    "donate": {
+      "openCollective": "حمایت مالی در Open Collective",
+      "payPal": "حمایت مالی از طریق PayPal",
+      "gumroad": "حمایت مالی از طریق Gumroad (Visa، Mastercard و غیره)"
+    },
+    "twitter": "Twitter",
+    "devTools": "تغییر وضعیت ابزارهای توسعه",
+    "links": {
+      "snippets": "مجموعه Snippet"
+    }
+  },
+  "edit": {
+    "label": "ویرایش",
+    "find": "جستجو"
+  },
+  "view": {
+    "label": "نمایش",
+    "sortBy": {
+      "label": "مرتب‌سازی Snippetها بر اساس",
+      "dateModified": "تاریخ ویرایش",
+      "dateCreated": "تاریخ ایجاد",
+      "name": "نام"
+    },
+    "compactMode": "حالت فشرده"
+  },
+  "editor": {
+    "label": "ویرایشگر",
+    "copy": "کپی Snippet به کلیپ‌بورد",
+    "format": "قالب‌بندی",
+    "previewCode": "پیش‌نمایش کد",
+    "previewScreenshot": "پیش‌نمایش تصویر",
+    "fontSizeIncrease": "افزایش اندازه فونت",
+    "fontSizeDecrease": "کاهش اندازه فونت",
+    "fontSizeReset": "بازنشانی اندازه فونت"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "حالت ارائه",
+    "preview": "پیش‌نمایش",
+    "previewMarkdown": "پیش‌نمایش Markdown",
+    "previewMindmap": "پیش‌نمایش نقشه ذهنی"
+  },
+  "history": {
+    "label": "تاریخچه",
+    "back": "عقب",
+    "forward": "جلو"
+  },
+  "devtools": {
+    "label": "ابزارهای توسعه"
+  }
+}

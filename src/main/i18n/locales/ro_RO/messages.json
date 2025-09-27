@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "Sigur doriți să ștergeți \"{{name}}\"?",
+    "deletePermanently": "Sigur doriți să ștergeți definitiv \"{{name}}\"?",
+    "deleteConfirmMultipleSnippets": "Sigur doriți să ștergeți definitiv {{count}} snippets selectate?",
+    "emptyTrash": "Sigur doriți să ștergeți definitiv toate snippets din Coșul de gunoi?",
+    "clearDb": "Sigur doriți să ștergeți database-ul?",
+    "migrateDb": [
+      "Sigur doriți să migrați?",
+      "În timpul migrării, biblioteca curentă va fi suprascrisă."
+    ]
+  },
+  "success": {
+    "migrate": "DB a fost migrat cu succes."
+  },
+  "warning": {
+    "noUndo": "Nu puteți anula această acțiune.",
+    "allSnippetsMoveToTrash": "Toate snippets din acest folder vor fi mutate în coșul de gunoi.",
+    "deleteTag": "Acest lucru va determina și eliminarea tuturor tag-urilor din snippets.",
+    "createDb": "Vă rugăm să selectați un alt folder",
+    "clearDb": "Aceasta va șterge definitiv toate Snippets, Folders și Tags din database.",
+    "htmlCssPreview": "Adăugați un fragment HTML pentru a vedea rezultatul. Adăugați CSS pentru stilizare și JavaScript pentru interactivitate.",
+    "codeBlockRenderer": [
+      "Când utilizați Codemirror, limbajul setat pentru blocul de cod trebuie să corespundă uneia dintre valorile",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Pentru a utiliza servicii de sincronizare precum iCloud Drive, Google Drive sau Dropbox, mutați storage-ul în folderele sincronizate corespunzătoare",
+    "migrate": {
+      "fromV3": "Pentru a migra de la massCode v3, selectați folderul care conține fișierul JSON.",
+      "fromSnippetsLab": "Pentru a migra de la SnippetsLab, selectați fișierul JSON.",
+      "snippetsLabLimitations": [
+        "Câteva limitări. În timpul migrării de la SnippetsLab:",
+        "Toate folderele vor fi de primul nivel, deoarece fișierul JSON (sub v2.1) nu reprezintă foldere imbricate.",
+        "Snippets cu limbaje neacceptate vor fi setate la Plain Text implicit."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Bună, sunt Anton 👋<br><br>\nMulțumesc că folosești massCode. Dacă găsești această aplicație utilă, te rog {{-tagStart}}donează{{-tagEnd}}. Mă va inspira să continui dezvoltarea proiectului.",
+    "unsponsored": "Nesponsorizat"
+  },
+  "update": {
+    "available": "Versiunea {{newVersion}} este disponibilă pentru descărcare.\nVersiunea ta este {{oldVersion}}.",
+    "noAvailable": "Nu există actualizări disponibile în prezent."
+  }
+}

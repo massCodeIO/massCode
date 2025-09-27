@@ -10,15 +10,14 @@ module.exports = {
         'docs',
         'feat',
         'fix',
-        'perf',
         'polish',
         'refactor',
         'release',
         'revert',
         'style',
         'test',
-        'types'
-      ]
-    ]
-  }
+        'types',
+      ],
+    ],
+  },
 }

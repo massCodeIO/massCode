@@ -1,0 +1,50 @@
+{
+  "label": "Einstellungen",
+  "storage": {
+    "label": "Speicher",
+    "migrate": "Migrieren",
+    "count": "Anzahl",
+    "clearDatabase": "Datenbank leeren"
+  },
+  "editor": {
+    "label": "Editor",
+    "fontSize": "Schriftgröße",
+    "fontFamily": "Schriftart",
+    "wrap": {
+      "label": "Umbruch",
+      "wordWrap": "Zeilenumbruch",
+      "off": "Aus"
+    },
+    "tabSize": "Tabgröße",
+    "showInvisibles": "Unsichtbare Zeichen anzeigen",
+    "highlightLine": "Zeile hervorheben",
+    "highlightGutter": "Zeilennummern hervorheben",
+    "matchBrackets": "Klammern hervorheben",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Abschließendes Komma",
+        "none": "Keins",
+        "all": "Alle",
+        "es5": "ES5"
+      },
+      "semi": "Semikolon",
+      "singleQuote": "Einfache Anführungszeichen"
+    }
+  },
+  "appearance": {
+    "label": "Erscheinungsbild",
+    "theme": {
+      "label": "Theme",
+      "light": "Hell",
+      "dark": "Dunkel"
+    }
+  },
+  "language": {
+    "label": "Sprache"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Code-Block Renderer"
+  }
+}

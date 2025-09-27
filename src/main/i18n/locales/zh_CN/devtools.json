@@ -1,0 +1,143 @@
+{
+  "label": "开发者工具",
+  "converters": {
+    "label": "转换器",
+    "caseConverter": {
+      "label": "大小写转换器",
+      "description": "将文本转换为不同的大小写格式",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "文本转Unicode",
+      "description": "将文本转换为Unicode，反之亦然",
+      "modes": {
+        "textToUnicode": "文本 → Unicode",
+        "unicodeToText": "Unicode → 文本"
+      }
+    },
+    "textToAscii": {
+      "label": "文本转ASCII Binary",
+      "description": "将文本转换为ASCII binary，反之亦然",
+      "modes": {
+        "textToAscii": "文本 → ASCII",
+        "asciiToText": "ASCII → 文本"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "将文本编码或解码为Base64",
+      "modes": {
+        "textToBase64": "文本 → Base64",
+        "base64ToText": "Base64 → 文本"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON转YAML",
+      "description": "将JSON转换为YAML，反之亦然",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON转TOML",
+      "description": "将JSON转换为TOML，反之亦然",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON转XML",
+      "description": "将JSON转换为XML，反之亦然",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "颜色转换器",
+      "description": "在不同格式之间转换颜色"
+    }
+  },
+  "crypto": {
+    "label": "加密 / 安全",
+    "hash": {
+      "label": "哈希生成器",
+      "description": "从文本生成哈希值"
+    },
+    "hmac": {
+      "label": "HMAC生成器",
+      "description": "生成由密钥和消息组成的基于哈希的消息认证码（HMAC）"
+    },
+    "password": {
+      "label": "密码生成器",
+      "description": "生成安全密码"
+    },
+    "uuid": {
+      "label": "UUID生成器",
+      "description": "生成通用唯一标识符（UUID）"
+    }
+  },
+  "web": {
+    "label": "网络",
+    "urlParser": {
+      "label": "URL解析器",
+      "description": "将URL解析为其组件"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "编码或解码URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "将文本转换为URL友好的slug"
+    }
+  },
+  "form": {
+    "input": "输入",
+    "output": "输出",
+    "inputString": "输入字符串",
+    "outputString": "输出字符串",
+    "inputUrl": "输入URL",
+    "outputUrl": "输出URL",
+    "parsedUrl": "解析的URL",
+    "splitQueryString": "分割Query String",
+    "key": "键",
+    "value": "值",
+    "component": "组件",
+    "result": "结果",
+    "secretKey": "密钥",
+    "algorithm": "算法",
+    "version": "版本",
+    "amount": "数量",
+    "type": "类型",
+    "length": "长度",
+    "options": "选项",
+    "numbers": "数字",
+    "symbols": "符号",
+    "lowercase": "小写",
+    "uppercase": "大写",
+    "placeholder": {
+      "text": "输入文本",
+      "value": "输入值",
+      "secretKey": "输入密钥",
+      "url": "输入URL"
+    }
+  }
+}

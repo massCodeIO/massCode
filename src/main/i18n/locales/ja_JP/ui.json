@@ -1,0 +1,111 @@
+{
+  "total": "合計",
+  "line": "行",
+  "column": "列",
+  "fragment": "フラグメント",
+  "path": "パス",
+  "button": {
+    "back": "戻る",
+    "cancel": "キャンセル",
+    "clear": "クリア",
+    "confirm": "確認",
+    "copy": "コピー",
+    "fit": "フィット",
+    "generate": "生成",
+    "ok": "OK",
+    "revers": "反転",
+    "saveAs": "名前を付けて保存",
+    "sort": "並べ替え",
+    "update": ["GitHubへ移動", "OK"],
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "darkMode": "ダークモード",
+    "toggleDarkMode": "ダークモードの切り替え",
+    "background": "背景",
+    "goToDownload": "ダウンロードへ",
+    "refreshPreview": "プレビューを更新",
+    "laserPointer": "レーザーポインター",
+    "fullscreen": "フルスクリーン",
+    "prev": "前へ",
+    "next": "次へ"
+  },
+  "action": {
+    "close": "閉じる",
+    "defaultLanguage": "デフォルト言語",
+    "duplicate": "複製",
+    "rename": "名前変更",
+    "restore": "復元",
+    "setCustomIcon": "カスタムアイコンを設定",
+    "show": "表示",
+    "hide": "非表示",
+    "new": {
+      "storage": "新規ストレージ",
+      "folder": "新規フォルダ",
+      "snippet": "新規スニペット",
+      "fragment": "新規フラグメント"
+    },
+    "add": {
+      "description": "説明を追加",
+      "tag": "タグを追加",
+      "toFavorites": "お気に入りに追加"
+    },
+    "open": {
+      "storage": "ストレージを開く"
+    },
+    "move": {
+      "storage": "ストレージを移動",
+      "toTrash": "ゴミ箱へ移動"
+    },
+    "remove": {
+      "fromFavorites": "お気に入りから削除"
+    },
+    "reload": {
+      "storage": "ストレージを再読み込み"
+    },
+    "delete": {
+      "common": "削除",
+      "now": "今すぐ削除",
+      "allData": "すべてのデータを削除",
+      "trash": "ゴミ箱を空にする"
+    },
+    "migrate": {
+      "fromSnippetsLab": "SnippetsLabから",
+      "fromV3": "massCode v3から"
+    },
+    "export": {
+      "toHtml": "HTMLにエクスポート"
+    },
+    "copy": {
+      "snippetLink": "スニペットリンクをコピー"
+    }
+  },
+  "sidebar": {
+    "inbox": "受信トレイ",
+    "favorites": "お気に入り",
+    "allSnippets": "すべてのスニペット",
+    "trash": "ゴミ箱",
+    "folders": "フォルダ",
+    "library": "ライブラリ",
+    "tags": "タグ"
+  },
+  "folder": {
+    "untitled": "無題のフォルダ",
+    "plural": "フォルダ",
+    "collapseAll": "すべて折りたたむ",
+    "expandAll": "すべて展開"
+  },
+  "snippet": {
+    "untitled": "無題のスニペット",
+    "plural": "スニペット",
+    "emptyName": "スニペット名を入力",
+    "selectedMultiple": "{{count}}個のスニペットを選択",
+    "noSelected": "スニペットが選択されていません"
+  },
+  "placeholder": {
+    "emptyTagList": "タグを追加するとここに表示されます",
+    "emptyFoldersList": "フォルダーなし",
+    "emptySnippetsList": "スニペットなし",
+    "search": "検索",
+    "addTag": "タグを追加"
+  }
+}

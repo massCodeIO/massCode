@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "Czy na pewno chcesz usunąć \"{{name}}\"?",
+    "deletePermanently": "Czy na pewno chcesz trwale usunąć \"{{name}}\"?",
+    "deleteConfirmMultipleSnippets": "Czy na pewno chcesz trwale usunąć {{count}} wybranych fragmentów?",
+    "emptyTrash": "Czy na pewno chcesz trwale usunąć wszystkie fragmenty z Kosza?",
+    "clearDb": "Czy na pewno chcesz wyczyścić bazę danych?",
+    "migrateDb": [
+      "Czy na pewno chcesz przeprowadzić migrację?",
+      "Podczas migracji obecna biblioteka zostanie nadpisana."
+    ]
+  },
+  "success": {
+    "migrate": "Pomyślnie przeprowadzono migrację bazy danych."
+  },
+  "warning": {
+    "noUndo": "Tej operacji nie można cofnąć.",
+    "allSnippetsMoveToTrash": "Wszystkie fragmenty z tego folderu zostaną przeniesione do kosza.",
+    "deleteTag": "Spowoduje to również usunięcie tego tagu ze wszystkich fragmentów.",
+    "createDb": "Proszę wybrać inny folder",
+    "clearDb": "Spowoduje to trwałe usunięcie wszystkich Fragmentów, Folderów i Tagów z bazy danych.",
+    "htmlCssPreview": "Dodaj fragment HTML, aby zobaczyć wynik. Dodaj CSS do stylizacji i JavaScript do interaktywności.",
+    "codeBlockRenderer": [
+      "Podczas używania Codemirror, język ustawiony dla bloku kodu musi odpowiadać jednej z wartości",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Aby korzystać z usług synchronizacji takich jak iCloud Drive, Google Drive lub Dropbox, wystarczy przenieść magazyn do odpowiednich folderów synchronizacji",
+    "migrate": {
+      "fromV3": "Aby przeprowadzić migrację z massCode v3, wybierz folder zawierający plik JSON.",
+      "fromSnippetsLab": "Aby przeprowadzić migrację ze SnippetsLab, wybierz plik JSON.",
+      "snippetsLabLimitations": [
+        "Pewne ograniczenia podczas migracji ze SnippetsLab:",
+        "Wszystkie foldery będą na pierwszym poziomie, ponieważ plik JSON (poniżej v2.1) nie obsługuje zagnieżdżonych folderów.",
+        "Fragmenty z nieobsługiwanymi językami zostaną ustawione na domyślny Plain Text."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Cześć, tu Anton 👋<br><br>\nDziękuję za korystanie z massCode. Jeśli uważasz, że ta aplikacja jest przydatna, proszę rozważ {{-tagStart}}wsparcie{{-tagEnd}}. To zmotywuje mnie do dalszego rozwoju projektu.",
+    "unsponsored": "Bez sponsora"
+  },
+  "update": {
+    "available": "Wersja {{newVersion}} jest dostępna do pobrania.\nTwoja wersja to {{oldVersion}}.",
+    "noAvailable": "Obecnie nie ma dostępnych aktualizacji."
+  }
+}

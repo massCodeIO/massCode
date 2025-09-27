@@ -1,0 +1,111 @@
+{
+  "total": "Total",
+  "line": "Línea",
+  "column": "Columna",
+  "fragment": "Fragmento",
+  "path": "Ruta",
+  "button": {
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "clear": "Limpiar",
+    "confirm": "Confirmar",
+    "copy": "Copiar",
+    "fit": "Ajustar",
+    "generate": "Generar",
+    "ok": "OK",
+    "revers": "Invertir",
+    "saveAs": "Guardar como",
+    "sort": "Ordenar",
+    "update": ["Ir a GitHub", "OK"],
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "darkMode": "Modo Oscuro",
+    "toggleDarkMode": "Alternar modo oscuro",
+    "background": "Fondo",
+    "goToDownload": "Ir a Descargar",
+    "refreshPreview": "Actualizar vista previa",
+    "laserPointer": "Puntero láser",
+    "fullscreen": "Pantalla completa",
+    "prev": "Anterior",
+    "next": "Siguiente"
+  },
+  "action": {
+    "close": "Cerrar",
+    "defaultLanguage": "Lenguaje Predeterminado",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "restore": "Restaurar",
+    "setCustomIcon": "Establecer Icono Personalizado",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "new": {
+      "storage": "Nuevo Almacenamiento",
+      "folder": "Nueva Carpeta",
+      "snippet": "Nuevo Snippet",
+      "fragment": "Nuevo Fragmento"
+    },
+    "add": {
+      "description": "Agregar Descripción",
+      "tag": "Agregar Etiqueta",
+      "toFavorites": "Agregar a Favoritos"
+    },
+    "open": {
+      "storage": "Abrir Almacenamiento"
+    },
+    "move": {
+      "storage": "Mover Almacenamiento",
+      "toTrash": "Mover a la Papelera"
+    },
+    "remove": {
+      "fromFavorites": "Eliminar de Favoritos"
+    },
+    "reload": {
+      "storage": "Recargar Almacenamiento"
+    },
+    "delete": {
+      "common": "Eliminar",
+      "now": "Eliminar Ahora",
+      "allData": "Eliminar Todos los Datos",
+      "trash": "Vaciar Papelera"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Desde SnippetsLab",
+      "fromV3": "Desde massCode v3"
+    },
+    "export": {
+      "toHtml": "Exportar a HTML"
+    },
+    "copy": {
+      "snippetLink": "Copiar Enlace del Snippet"
+    }
+  },
+  "sidebar": {
+    "inbox": "Bandeja de entrada",
+    "favorites": "Favoritos",
+    "allSnippets": "Todos los Snippets",
+    "trash": "Papelera",
+    "folders": "Carpetas",
+    "library": "Biblioteca",
+    "tags": "Etiquetas"
+  },
+  "folder": {
+    "untitled": "Carpeta sin título",
+    "plural": "Carpetas",
+    "collapseAll": "Contraer Todo",
+    "expandAll": "Expandir Todo"
+  },
+  "snippet": {
+    "untitled": "Snippet sin título",
+    "plural": "Snippets",
+    "emptyName": "Escriba el nombre del snippet",
+    "selectedMultiple": "{{count}} Snippets Seleccionados",
+    "noSelected": "Ningún Snippet Seleccionado"
+  },
+  "placeholder": {
+    "emptyTagList": "Agregue etiquetas a los snippets para verlos aquí",
+    "emptyFoldersList": "Sin carpetas",
+    "emptySnippetsList": "Sin fragmentos",
+    "search": "Buscar",
+    "addTag": "Agregar Etiqueta"
+  }
+}

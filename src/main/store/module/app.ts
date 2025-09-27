@@ -1,5 +1,6 @@
+import type { AppStore } from '../types'
 import Store from 'electron-store'
-import type { AppStore } from '@shared/types/main/store'
+import { APP_DEFAULTS } from '../constants'
 
 export default new Store<AppStore>({
   name: 'app',
@@ -7,10 +8,12 @@ export default new Store<AppStore>({
 
   defaults: {
     bounds: {},
-    sidebarWidth: 180,
-    snippetListWidth: 250,
-    sort: 'updatedAt',
-    hideSubfolderSnippets: false,
-    compactMode: false
-  }
+    sizes: {
+      sidebarWidth: APP_DEFAULTS.sizes.sidebar,
+      snippetListWidth: APP_DEFAULTS.sizes.snippetList,
+      tagsListHeight: APP_DEFAULTS.sizes.tagsList,
+    },
+    state: {},
+    isAutoMigratedFromJson: false,
+  },
 })

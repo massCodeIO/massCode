@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "環境設定",
+    "devtools": "開発者ツール",
+    "update": "アップデートを確認...",
+    "quit": "massCodeを終了",
+    "about": "massCodeについて",
+    "hide": "massCodeを隠す"
+  },
+  "help": {
+    "label": "ヘルプ",
+    "website": "ウェブサイト",
+    "documentation": "ドキュメント",
+    "viewInGitHub": "GitHubで表示",
+    "changeLog": "変更履歴",
+    "reportIssue": "問題を報告",
+    "giveStar": "スターを付ける",
+    "extension": {
+      "vscode": "VS Code拡張機能",
+      "raycast": "Raycast拡張機能",
+      "alfred": "Alfred拡張機能"
+    },
+    "donate": {
+      "openCollective": "Open Collectiveで寄付",
+      "payPal": "PayPalで寄付",
+      "gumroad": "Gumroadで寄付（Visa、Mastercard等）"
+    },
+    "twitter": "Twitter",
+    "devTools": "開発者ツールの切り替え",
+    "links": {
+      "snippets": "スニペットコレクション"
+    }
+  },
+  "edit": {
+    "label": "編集",
+    "find": "検索"
+  },
+  "view": {
+    "label": "表示",
+    "sortBy": {
+      "label": "スニペットの並び替え",
+      "dateModified": "更新日時",
+      "dateCreated": "作成日時",
+      "name": "名前"
+    },
+    "compactMode": "コンパクトモード"
+  },
+  "editor": {
+    "label": "エディタ",
+    "copy": "スニペットをクリップボードにコピー",
+    "format": "フォーマット",
+    "previewCode": "コードのプレビュー",
+    "previewScreenshot": "スクリーンショットのプレビュー",
+    "fontSizeIncrease": "フォントサイズを大きく",
+    "fontSizeDecrease": "フォントサイズを小さく",
+    "fontSizeReset": "フォントサイズをリセット"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "プレゼンテーションモード",
+    "preview": "プレビュー",
+    "previewMarkdown": "Markdownのプレビュー",
+    "previewMindmap": "マインドマップのプレビュー"
+  },
+  "history": {
+    "label": "履歴",
+    "back": "戻る",
+    "forward": "進む"
+  },
+  "devtools": {
+    "label": "開発者ツール"
+  }
+}

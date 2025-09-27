@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferencje",
+    "devtools": "Narzędzia deweloperskie",
+    "update": "Sprawdź aktualizacje...",
+    "quit": "Zakończ massCode",
+    "about": "O massCode",
+    "hide": "Ukryj massCode"
+  },
+  "help": {
+    "label": "Pomoc",
+    "website": "Strona internetowa",
+    "documentation": "Dokumentacja",
+    "viewInGitHub": "Zobacz na GitHub",
+    "changeLog": "Lista zmian",
+    "reportIssue": "Zgłoś problem",
+    "giveStar": "Dodaj gwiazdkę",
+    "extension": {
+      "vscode": "Rozszerzenie VS Code",
+      "raycast": "Rozszerzenie Raycast",
+      "alfred": "Rozszerzenie Alfred"
+    },
+    "donate": {
+      "openCollective": "Wesprzyj przez Open Collective",
+      "payPal": "Wesprzyj przez PayPal",
+      "gumroad": "Wesprzyj przez Gumroad (Visa, Mastercard, itp.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Przełącz narzędzia deweloperskie",
+    "links": {
+      "snippets": "Kolekcja fragmentów"
+    }
+  },
+  "edit": {
+    "label": "Edycja",
+    "find": "Znajdź"
+  },
+  "view": {
+    "label": "Widok",
+    "sortBy": {
+      "label": "Sortuj fragmenty według",
+      "dateModified": "Data modyfikacji",
+      "dateCreated": "Data utworzenia",
+      "name": "Nazwa"
+    },
+    "compactMode": "Tryb kompaktowy"
+  },
+  "editor": {
+    "label": "Edytor",
+    "copy": "Kopiuj fragment do schowka",
+    "format": "Formatuj",
+    "previewCode": "Podgląd kodu",
+    "previewScreenshot": "Podgląd zrzutu ekranu",
+    "fontSizeIncrease": "Zwiększ rozmiar czcionki",
+    "fontSizeDecrease": "Zmniejsz rozmiar czcionki",
+    "fontSizeReset": "Resetuj rozmiar czcionki"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Tryb prezentacji",
+    "preview": "Podgląd",
+    "previewMarkdown": "Podgląd Markdown",
+    "previewMindmap": "Podgląd mapy myśli"
+  },
+  "history": {
+    "label": "Historia",
+    "back": "Wstecz",
+    "forward": "Dalej"
+  },
+  "devtools": {
+    "label": "Narzędzia deweloperskie"
+  }
+}

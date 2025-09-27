@@ -1,6 +1,6 @@
-name: "\U0001F41E Bug report"
+name: 🐞 Bug report
 description: Report an issue with massCode
-title: "[Bug]: "
+title: '[Bug]: '
 labels: [pending triage]
 body:
   - type: markdown

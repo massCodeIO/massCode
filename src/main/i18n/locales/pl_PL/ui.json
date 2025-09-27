@@ -1,0 +1,111 @@
+{
+  "total": "Łącznie",
+  "line": "Wiersz",
+  "column": "Kolumna",
+  "fragment": "Fragment",
+  "path": "Ścieżka",
+  "button": {
+    "back": "Wstecz",
+    "cancel": "Anuluj",
+    "clear": "Wyczyść",
+    "confirm": "Potwierdź",
+    "copy": "Kopiuj",
+    "fit": "Dopasuj",
+    "generate": "Generuj",
+    "ok": "OK",
+    "revers": "Odwróć",
+    "saveAs": "Zapisz jako",
+    "sort": "Sortuj",
+    "update": ["Przejdź do GitHub", "OK"],
+    "zoomIn": "Powiększ",
+    "zoomOut": "Pomniejsz",
+    "darkMode": "Tryb ciemny",
+    "toggleDarkMode": "Przełącz tryb ciemny",
+    "background": "Tło",
+    "goToDownload": "Przejdź do pobierania",
+    "refreshPreview": "Odśwież podgląd",
+    "laserPointer": "Wskaźnik laserowy",
+    "fullscreen": "Pełny ekran",
+    "prev": "Poprzedni",
+    "next": "Następny"
+  },
+  "action": {
+    "close": "Zamknij",
+    "defaultLanguage": "Domyślny język",
+    "duplicate": "Duplikuj",
+    "rename": "Zmień nazwę",
+    "restore": "Przywróć",
+    "setCustomIcon": "Ustaw własną ikonę",
+    "show": "Pokaż",
+    "hide": "Ukryj",
+    "new": {
+      "storage": "Nowy magazyn",
+      "folder": "Nowy folder",
+      "snippet": "Nowy fragment kodu",
+      "fragment": "Nowy fragment"
+    },
+    "add": {
+      "description": "Dodaj opis",
+      "tag": "Dodaj tag",
+      "toFavorites": "Dodaj do ulubionych"
+    },
+    "open": {
+      "storage": "Otwórz magazyn"
+    },
+    "move": {
+      "storage": "Przenieś magazyn",
+      "toTrash": "Przenieś do kosza"
+    },
+    "remove": {
+      "fromFavorites": "Usuń z ulubionych"
+    },
+    "reload": {
+      "storage": "Przeładuj magazyn"
+    },
+    "delete": {
+      "common": "Usuń",
+      "now": "Usuń teraz",
+      "allData": "Usuń wszystkie dane",
+      "trash": "Opróżnij kosz"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Ze SnippetsLab",
+      "fromV3": "Z massCode v3"
+    },
+    "export": {
+      "toHtml": "Eksportuj do HTML"
+    },
+    "copy": {
+      "snippetLink": "Kopiuj link do fragmentu"
+    }
+  },
+  "sidebar": {
+    "inbox": "Skrzynka odbiorcza",
+    "favorites": "Ulubione",
+    "allSnippets": "Wszystkie fragmenty",
+    "trash": "Kosz",
+    "folders": "Foldery",
+    "library": "Biblioteka",
+    "tags": "Tagi"
+  },
+  "folder": {
+    "untitled": "Folder bez nazwy",
+    "plural": "Foldery",
+    "collapseAll": "Zwiń wszystkie",
+    "expandAll": "Rozwiń wszystkie"
+  },
+  "snippet": {
+    "untitled": "Fragment bez nazwy",
+    "plural": "Fragmenty",
+    "emptyName": "Wpisz nazwę fragmentu",
+    "selectedMultiple": "Wybrano {{count}} fragmentów",
+    "noSelected": "Nie wybrano fragmentu"
+  },
+  "placeholder": {
+    "emptyTagList": "Dodaj tagi do fragmentów, aby zobaczyć je tutaj",
+    "emptyFoldersList": "Brak folderów",
+    "emptySnippetsList": "Brak snippetów",
+    "search": "Szukaj",
+    "addTag": "Dodaj tag"
+  }
+}

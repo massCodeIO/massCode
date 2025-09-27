@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten?",
+    "deletePermanently": "Sind Sie sicher, dass Sie \"{{name}}\" endgültig löschen möchten?",
+    "deleteConfirmMultipleSnippets": "Sind Sie sicher, dass Sie {{count}} ausgewählte Snippets endgültig löschen möchten?",
+    "emptyTrash": "Sind Sie sicher, dass Sie alle Snippets im Papierkorb endgültig löschen möchten?",
+    "clearDb": "Sind Sie sicher, dass Sie die Datenbank leeren möchten?",
+    "migrateDb": [
+      "Sind Sie sicher, dass Sie migrieren möchten?",
+      "Während der Migration wird die aktuelle Bibliothek überschrieben."
+    ]
+  },
+  "success": {
+    "migrate": "Datenbank erfolgreich migriert."
+  },
+  "warning": {
+    "noUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "allSnippetsMoveToTrash": "Alle Snippets in diesem Ordner werden in den Papierkorb verschoben.",
+    "deleteTag": "Dies führt auch dazu, dass dieser Tag von allen Snippets entfernt wird.",
+    "createDb": "Bitte wählen Sie einen anderen Ordner",
+    "clearDb": "Dadurch werden alle Snippets, Ordner und Tags dauerhaft aus der Datenbank gelöscht.",
+    "htmlCssPreview": "Fügen Sie ein HTML-Fragment hinzu, um das Ergebnis zu sehen. Fügen Sie CSS für das Styling und JavaScript für Interaktivität hinzu.",
+    "codeBlockRenderer": [
+      "Bei Verwendung von Codemirror muss die für den Codeblock einzustellende Sprache einem der Werte der",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Um Sync-Dienste wie iCloud Drive, Google Drive oder Dropbox zu nutzen, verschieben Sie den Speicher einfach in die entsprechenden synchronisierten Ordner",
+    "migrate": {
+      "fromV3": "Um von massCode v3 zu migrieren, wählen Sie den Ordner mit der JSON-Datei aus.",
+      "fromSnippetsLab": "Um von SnippetsLab zu migrieren, wählen Sie die JSON-Datei aus.",
+      "snippetsLabLimitations": [
+        "Einige Einschränkungen bei der Migration von SnippetsLab:",
+        "Alle Ordner werden auf der ersten Ebene sein, da die JSON-Datei (unter v2.1) keine verschachtelten Ordner darstellt.",
+        "Snippets mit nicht unterstützten Sprachen werden auf Standard Plain Text gesetzt."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Hallo, hier ist Anton 👋<br><br>\nDanke, dass Sie massCode nutzen. Wenn Sie diese App nützlich finden, bitte {{-tagStart}}spenden{{-tagEnd}} Sie. Es wird mich inspirieren, die Entwicklung des Projekts fortzusetzen.",
+    "unsponsored": "Nicht gesponsert"
+  },
+  "update": {
+    "available": "Version {{newVersion}} steht jetzt zum Download bereit.\nIhre Version ist {{oldVersion}}.",
+    "noAvailable": "Derzeit sind keine Updates verfügbar."
+  }
+}

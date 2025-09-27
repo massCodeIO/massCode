@@ -1,0 +1,111 @@
+{
+  "total": "Σύνολο",
+  "line": "Γραμμή",
+  "column": "Στήλη",
+  "fragment": "Fragment",
+  "path": "Διαδρομή",
+  "button": {
+    "back": "Πίσω",
+    "cancel": "Ακύρωση",
+    "clear": "Καθαρισμός",
+    "confirm": "Επιβεβαίωση",
+    "copy": "Αντιγραφή",
+    "fit": "Προσαρμογή",
+    "generate": "Δημιουργία",
+    "ok": "OK",
+    "revers": "Αντιστροφή",
+    "saveAs": "Αποθήκευση ως",
+    "sort": "Ταξινόμηση",
+    "update": ["Μετάβαση στο GitHub", "OK"],
+    "zoomIn": "Μεγέθυνση",
+    "zoomOut": "Σμίκρυνση",
+    "darkMode": "Σκοτεινή Λειτουργία",
+    "toggleDarkMode": "Εναλλαγή σκοτεινής λειτουργίας",
+    "background": "Φόντο",
+    "goToDownload": "Μετάβαση στη Λήψη",
+    "refreshPreview": "Ανανέωση προεπισκόπησης",
+    "laserPointer": "Δείκτης λέιζερ",
+    "fullscreen": "Πλήρης οθόνη",
+    "prev": "Προηγούμενο",
+    "next": "Επόμενο"
+  },
+  "action": {
+    "close": "Κλείσιμο",
+    "defaultLanguage": "Προεπιλεγμένη Γλώσσα",
+    "duplicate": "Αντίγραφο",
+    "rename": "Μετονομασία",
+    "restore": "Επαναφορά",
+    "setCustomIcon": "Ορισμός Προσαρμοσμένου Εικονιδίου",
+    "show": "Εμφάνιση",
+    "hide": "Απόκρυψη",
+    "new": {
+      "storage": "Νέο Storage",
+      "folder": "Νέος Φάκελος",
+      "snippet": "Νέο Snippet",
+      "fragment": "Νέο Fragment"
+    },
+    "add": {
+      "description": "Προσθήκη Περιγραφής",
+      "tag": "Προσθήκη Tag",
+      "toFavorites": "Προσθήκη στα Αγαπημένα"
+    },
+    "open": {
+      "storage": "Άνοιγμα Storage"
+    },
+    "move": {
+      "storage": "Μετακίνηση Storage",
+      "toTrash": "Μετακίνηση στον Κάδο"
+    },
+    "remove": {
+      "fromFavorites": "Αφαίρεση από τα Αγαπημένα"
+    },
+    "reload": {
+      "storage": "Επαναφόρτωση Storage"
+    },
+    "delete": {
+      "common": "Διαγραφή",
+      "now": "Διαγραφή Τώρα",
+      "allData": "Διαγραφή Όλων των Δεδομένων",
+      "trash": "Άδειασμα Κάδου"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Από SnippetsLab",
+      "fromV3": "Από massCode v3"
+    },
+    "export": {
+      "toHtml": "Εξαγωγή σε HTML"
+    },
+    "copy": {
+      "snippetLink": "Αντιγραφή Συνδέσμου Snippet"
+    }
+  },
+  "sidebar": {
+    "inbox": "Εισερχόμενα",
+    "favorites": "Αγαπημένα",
+    "allSnippets": "Όλα τα Snippets",
+    "trash": "Κάδος",
+    "folders": "Φάκελοι",
+    "library": "Βιβλιοθήκη",
+    "tags": "Tags"
+  },
+  "folder": {
+    "untitled": "Φάκελος χωρίς τίτλο",
+    "plural": "Φάκελοι",
+    "collapseAll": "Σύμπτυξη Όλων",
+    "expandAll": "Ανάπτυξη Όλων"
+  },
+  "snippet": {
+    "untitled": "Snippet χωρίς τίτλο",
+    "plural": "Snippets",
+    "emptyName": "Πληκτρολογήστε όνομα snippet",
+    "selectedMultiple": "{{count}} Επιλεγμένα Snippets",
+    "noSelected": "Δεν έχει επιλεγεί Snippet"
+  },
+  "placeholder": {
+    "emptyTagList": "Προσθέστε tags στα snippets για να τα δείτε εδώ",
+    "emptyFoldersList": "Κανένας φάκελος",
+    "emptySnippetsList": "Κανένα απόσπασμα",
+    "search": "Αναζήτηση",
+    "addTag": "Προσθήκη Tag"
+  }
+}

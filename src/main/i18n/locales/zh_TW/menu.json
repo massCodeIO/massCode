@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "偏好設定",
+    "devtools": "開發者工具",
+    "update": "檢查更新...",
+    "quit": "退出 massCode",
+    "about": "關於 massCode",
+    "hide": "隱藏 massCode"
+  },
+  "help": {
+    "label": "幫助",
+    "website": "網站",
+    "documentation": "文檔",
+    "viewInGitHub": "在 GitHub 上查看",
+    "changeLog": "更新日誌",
+    "reportIssue": "報告問題",
+    "giveStar": "給個星星",
+    "extension": {
+      "vscode": "VS Code 擴展",
+      "raycast": "Raycast 擴展",
+      "alfred": "Alfred 擴展"
+    },
+    "donate": {
+      "openCollective": "在 Open Collective 上贊助",
+      "payPal": "通過 PayPal 贊助",
+      "gumroad": "通過 Gumroad 贊助（Visa、Mastercard 等）"
+    },
+    "twitter": "Twitter",
+    "devTools": "切換開發者工具",
+    "links": {
+      "snippets": "程式碼片段集合"
+    }
+  },
+  "edit": {
+    "label": "編輯",
+    "find": "尋找"
+  },
+  "view": {
+    "label": "檢視",
+    "sortBy": {
+      "label": "程式碼片段排序方式",
+      "dateModified": "修改日期",
+      "dateCreated": "創建日期",
+      "name": "名稱"
+    },
+    "compactMode": "緊湊模式"
+  },
+  "editor": {
+    "label": "編輯器",
+    "copy": "複製程式碼片段到剪貼板",
+    "format": "格式化",
+    "previewCode": "預覽程式碼",
+    "previewScreenshot": "預覽截圖",
+    "fontSizeIncrease": "增大字體",
+    "fontSizeDecrease": "減小字體",
+    "fontSizeReset": "重置字體大小"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "演示模式",
+    "preview": "預覽",
+    "previewMarkdown": "預覽 Markdown",
+    "previewMindmap": "預覽思維導圖"
+  },
+  "history": {
+    "label": "歷史",
+    "back": "後退",
+    "forward": "前進"
+  },
+  "devtools": {
+    "label": "開發者工具"
+  }
+}

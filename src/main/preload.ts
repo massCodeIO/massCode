@@ -1,45 +1,46 @@
+import type { AppStore, PreferencesStore } from './store/types'
+import type { EventCallback } from './types'
+import type { Channel } from './types/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
-import {
-  isDbExist,
-  migrate,
-  migrateFromSnippetsLab,
-  move,
-  createDb
-} from './services/db'
+import i18n from './i18n'
 import { store } from './store'
-import type { ElectronBridge } from '@shared/types/main'
-import { platform } from 'os'
-import i18n from './services/i18n'
-import { version } from '../../package.json'
 
 contextBridge.exposeInMainWorld('electron', {
   ipc: {
-    invoke: (channel, payload) => ipcRenderer.invoke(channel, payload),
-    on: (channel, cb) => ipcRenderer.on(channel, cb),
-    once: (channel, cb) => ipcRenderer.once(channel, cb)
+    on: (channel: Channel, cb: EventCallback) => ipcRenderer.on(channel, cb),
+    send: (channel: Channel, data: any, cb: EventCallback) => {
+      ipcRenderer.send(channel, data)
+      if (cb && typeof cb === 'function') {
+        ipcRenderer.on(channel, cb)
+      }
+    },
+    invoke: (channel: Channel, data: any) => ipcRenderer.invoke(channel, data),
+    removeListener: (channel: Channel, cb: EventCallback) =>
+      ipcRenderer.removeListener(channel, cb),
+    removeListeners: (channel: Channel) =>
+      ipcRenderer.removeAllListeners(channel),
+  },
+  db: {
+    query: (sql: string, params: any[] = []) =>
+      ipcRenderer.invoke('db-query', { sql, params }),
   },
   store: {
     app: {
-      get: name => store.app.get(name),
-      set: (name, value) => store.app.set(name, value),
-      delete: name => store.app.delete(name)
+      get: (name: keyof AppStore) => store.app.get(name),
+      set: <T extends keyof AppStore>(name: T, value: AppStore[T]) =>
+        store.app.set(name, value),
+      delete: (name: keyof AppStore) => store.app.delete(name),
     },
     preferences: {
-      get: name => store.preferences.get(name),
-      set: (name, value) => store.preferences.set(name, value),
-      delete: name => store.preferences.delete(name)
-    }
-  },
-  db: {
-    create: () => createDb(),
-    migrate: path => migrate(path),
-    migrateFromSnippetsLab: path => migrateFromSnippetsLab(path),
-    move: (from, to) => move(from, to),
-    isExist: path => isDbExist(path)
+      get: (name: keyof PreferencesStore) => store.preferences.get(name),
+      set: <T extends keyof PreferencesStore>(
+        name: T,
+        value: PreferencesStore[T],
+      ) => store.preferences.set(name, value),
+      delete: (name: keyof PreferencesStore) => store.preferences.delete(name),
+    },
   },
   i18n: {
-    t: (key, options) => i18n.t(key, options)
+    t: (key: string, options?: any) => i18n.t(key, options),
   },
-  platform: () => platform(),
-  version
-} as ElectronBridge)
+})

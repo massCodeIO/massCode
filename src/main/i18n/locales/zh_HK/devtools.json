@@ -1,0 +1,143 @@
+{
+  "label": "開發者工具",
+  "converters": {
+    "label": "轉換器",
+    "caseConverter": {
+      "label": "大小寫轉換器",
+      "description": "將文字轉換為不同的大小寫格式",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "文字轉Unicode",
+      "description": "將文字轉換為Unicode，反之亦然",
+      "modes": {
+        "textToUnicode": "文字 → Unicode",
+        "unicodeToText": "Unicode → 文字"
+      }
+    },
+    "textToAscii": {
+      "label": "文字轉ASCII Binary",
+      "description": "將文字轉換為ASCII binary，反之亦然",
+      "modes": {
+        "textToAscii": "文字 → ASCII",
+        "asciiToText": "ASCII → 文字"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "將文字編碼或解碼為Base64",
+      "modes": {
+        "textToBase64": "文字 → Base64",
+        "base64ToText": "Base64 → 文字"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON轉YAML",
+      "description": "將JSON轉換為YAML，反之亦然",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON轉TOML",
+      "description": "將JSON轉換為TOML，反之亦然",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON轉XML",
+      "description": "將JSON轉換為XML，反之亦然",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "顏色轉換器",
+      "description": "在不同格式之間轉換顏色"
+    }
+  },
+  "crypto": {
+    "label": "加密 / 安全",
+    "hash": {
+      "label": "雜湊產生器",
+      "description": "從文字產生雜湊值"
+    },
+    "hmac": {
+      "label": "HMAC產生器",
+      "description": "產生由金鑰和訊息組成的基於雜湊的訊息認證碼（HMAC）"
+    },
+    "password": {
+      "label": "密碼產生器",
+      "description": "產生安全密碼"
+    },
+    "uuid": {
+      "label": "UUID產生器",
+      "description": "產生通用唯一識別碼（UUID）"
+    }
+  },
+  "web": {
+    "label": "網絡",
+    "urlParser": {
+      "label": "URL解析器",
+      "description": "將URL解析為其組件"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "編碼或解碼URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "將文字轉換為URL友好的slug"
+    }
+  },
+  "form": {
+    "input": "輸入",
+    "output": "輸出",
+    "inputString": "輸入字串",
+    "outputString": "輸出字串",
+    "inputUrl": "輸入URL",
+    "outputUrl": "輸出URL",
+    "parsedUrl": "解析的URL",
+    "splitQueryString": "分割Query String",
+    "key": "金鑰",
+    "value": "值",
+    "component": "組件",
+    "result": "結果",
+    "secretKey": "秘密金鑰",
+    "algorithm": "演算法",
+    "version": "版本",
+    "amount": "數量",
+    "type": "類型",
+    "length": "長度",
+    "options": "選項",
+    "numbers": "數字",
+    "symbols": "符號",
+    "lowercase": "小寫",
+    "uppercase": "大寫",
+    "placeholder": {
+      "text": "輸入文字",
+      "value": "輸入值",
+      "secretKey": "輸入秘密金鑰",
+      "url": "輸入URL"
+    }
+  }
+}

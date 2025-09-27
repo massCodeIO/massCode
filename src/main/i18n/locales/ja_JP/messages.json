@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "「{{name}}」を削除してもよろしいですか？",
+    "deletePermanently": "「{{name}}」を完全に削除してもよろしいですか？",
+    "deleteConfirmMultipleSnippets": "選択された{{count}}個のスニペットを完全に削除してもよろしいですか？",
+    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？",
+    "clearDb": "データベースをクリアしてもよろしいですか？",
+    "migrateDb": [
+      "移行してもよろしいですか？",
+      "移行中、現在のライブラリは上書きされます。"
+    ]
+  },
+  "success": {
+    "migrate": "データベースの移行が完了しました。"
+  },
+  "warning": {
+    "noUndo": "この操作は取り消せません。",
+    "allSnippetsMoveToTrash": "このフォルダ内のすべてのスニペットはゴミ箱に移動されます。",
+    "deleteTag": "このタグを持つすべてのスニペットからタグが削除されます。",
+    "createDb": "別のフォルダを選択してください",
+    "clearDb": "これによりデータベースからすべてのスニペット、フォルダ、タグが完全に削除されます。",
+    "htmlCssPreview": "結果を表示するにはHTMLフラグメントを追加してください。スタイリングにはCSSを、インタラクティブ性にはJavaScriptを追加してください。",
+    "codeBlockRenderer": [
+      "Codemirrorを使用する場合、コードブロックに設定する言語は",
+      "languagesの値の1つに対応している必要があります"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "iCloud Drive、Google Drive、Dropboxなどの同期サービスを使用するには、対応する同期フォルダにストレージを移動するだけです",
+    "migrate": {
+      "fromV3": "massCode v3から移行するには、JSONファイルを含むフォルダを選択してください。",
+      "fromSnippetsLab": "SnippetsLabから移行するには、JSONファイルを選択してください。",
+      "snippetsLabLimitations": [
+        "移行時の制限事項：",
+        "JSONファイル（v2.1以下）はネストされたフォルダを表現できないため、すべてのフォルダは第一階層になります。",
+        "サポートされていない言語のスニペットはデフォルトのPlain Textに設定されます。"
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "こんにちは、Antonです 👋<br><br>\nmassCodeをご利用いただきありがとうございます。このアプリが役立つと感じられましたら、{{-tagStart}}寄付{{-tagEnd}}をご検討ください。プロジェクトの開発を継続する励みになります。",
+    "unsponsored": "未スポンサー"
+  },
+  "update": {
+    "available": "バージョン{{newVersion}}がダウンロード可能です。\n現在のバージョンは{{oldVersion}}です。",
+    "noAvailable": "現在利用可能なアップデートはありません。"
+  }
+}

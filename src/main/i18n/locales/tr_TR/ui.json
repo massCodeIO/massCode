@@ -1,0 +1,111 @@
+{
+  "total": "Toplam",
+  "line": "Satır",
+  "column": "Sütun",
+  "fragment": "Fragment",
+  "path": "Yol",
+  "button": {
+    "back": "Geri",
+    "cancel": "İptal",
+    "clear": "Temizle",
+    "confirm": "Onayla",
+    "copy": "Kopyala",
+    "fit": "Sığdır",
+    "generate": "Oluştur",
+    "ok": "Tamam",
+    "revers": "Ters Çevir",
+    "saveAs": "Farklı Kaydet",
+    "sort": "Sırala",
+    "update": ["GitHub'a Git", "Tamam"],
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "darkMode": "Karanlık Mod",
+    "toggleDarkMode": "Karanlık modu değiştir",
+    "background": "Arka Plan",
+    "goToDownload": "İndirmeye Git",
+    "refreshPreview": "Önizlemeyi yenile",
+    "laserPointer": "Lazer işaretçi",
+    "fullscreen": "Tam ekran",
+    "prev": "Önceki",
+    "next": "Sonraki"
+  },
+  "action": {
+    "close": "Kapat",
+    "defaultLanguage": "Varsayılan Dil",
+    "duplicate": "Çoğalt",
+    "rename": "Yeniden Adlandır",
+    "restore": "Geri Yükle",
+    "setCustomIcon": "Özel İkon Ayarla",
+    "show": "Göster",
+    "hide": "Gizle",
+    "new": {
+      "storage": "Yeni Depolama",
+      "folder": "Yeni Klasör",
+      "snippet": "Yeni Snippet",
+      "fragment": "Yeni Fragment"
+    },
+    "add": {
+      "description": "Açıklama Ekle",
+      "tag": "Etiket Ekle",
+      "toFavorites": "Favorilere Ekle"
+    },
+    "open": {
+      "storage": "Depolama Aç"
+    },
+    "move": {
+      "storage": "Depolamayı Taşı",
+      "toTrash": "Çöp Kutusuna Taşı"
+    },
+    "remove": {
+      "fromFavorites": "Favorilerden Kaldır"
+    },
+    "reload": {
+      "storage": "Depolamayı Yenile"
+    },
+    "delete": {
+      "common": "Sil",
+      "now": "Şimdi Sil",
+      "allData": "Tüm Verileri Sil",
+      "trash": "Çöp Kutusunu Boşalt"
+    },
+    "migrate": {
+      "fromSnippetsLab": "SnippetsLab'den",
+      "fromV3": "massCode v3'ten"
+    },
+    "export": {
+      "toHtml": "HTML Olarak Dışa Aktar"
+    },
+    "copy": {
+      "snippetLink": "Snippet Bağlantısını Kopyala"
+    }
+  },
+  "sidebar": {
+    "inbox": "Gelen Kutusu",
+    "favorites": "Favoriler",
+    "allSnippets": "Tüm Snippet'ler",
+    "trash": "Çöp Kutusu",
+    "folders": "Klasörler",
+    "library": "Kütüphane",
+    "tags": "Etiketler"
+  },
+  "folder": {
+    "untitled": "İsimsiz klasör",
+    "plural": "Klasörler",
+    "collapseAll": "Tümünü Daralt",
+    "expandAll": "Tümünü Genişlet"
+  },
+  "snippet": {
+    "untitled": "İsimsiz snippet",
+    "plural": "Snippet'ler",
+    "emptyName": "Snippet adını yazın",
+    "selectedMultiple": "{{count}} Snippet Seçildi",
+    "noSelected": "Snippet Seçilmedi"
+  },
+  "placeholder": {
+    "emptyTagList": "Burada görmek için snippet'lere etiket ekleyin",
+    "emptyFoldersList": "Klasör yok",
+    "emptySnippetsList": "Snippet yok",
+    "search": "Ara",
+    "addTag": "Etiket Ekle"
+  }
+}

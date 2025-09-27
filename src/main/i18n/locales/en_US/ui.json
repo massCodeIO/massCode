@@ -1,0 +1,117 @@
+{
+  "total": "Total",
+  "line": "Line",
+  "column": "Column",
+  "fragment": "Fragment",
+  "path": "Path",
+  "button": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "fit": "Fit",
+    "generate": "Generate",
+    "ok": "OK",
+    "revers": "Revers",
+    "saveAs": "Save as",
+    "sort": "Sort",
+    "update": ["Go to GitHub", "OK"],
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "darkMode": "Dark Mode",
+    "toggleDarkMode": "Toggle Dark Mode",
+    "background": "Background",
+    "goToDownload": "Go to Download",
+    "refreshPreview": "Refresh Preview",
+    "laserPointer": "Laser Pointer",
+    "fullscreen": "Full Screen",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "action": {
+    "close": "Close",
+    "defaultLanguage": "Default Language",
+    "duplicate": "Duplicate",
+    "rename": "Rename",
+    "restore": "Restore",
+    "setCustomIcon": "Set Custom Icon",
+    "show": "Show",
+    "hide": "Hide",
+    "new": {
+      "storage": "New Storage",
+      "folder": "New Folder",
+      "snippet": "New Snippet",
+      "fragment": "New Fragment"
+    },
+    "add": {
+      "description": "Add Description",
+      "tag": "Add Tag",
+      "toFavorites": "Add to Favorites"
+    },
+    "open": {
+      "storage": "Open Storage"
+    },
+    "move": {
+      "storage": "Move Storage",
+      "toTrash": "Move to Trash"
+    },
+    "remove": {
+      "fromFavorites": "Remove from Favorites"
+    },
+    "reload": {
+      "storage": "Reload Storage",
+      "app": "Reload massCode"
+    },
+    "delete": {
+      "common": "Delete",
+      "now": "Delete Now",
+      "allData": "Delete All Data",
+      "trash": "Empty Trash"
+    },
+    "migrate": {
+      "fromSnippetsLab": "From SnippetsLab",
+      "fromV3": "From massCode v3"
+    },
+    "export": {
+      "toHtml": "Export to HTML"
+    },
+    "copy": {
+      "snippetLink": "Copy Snippet Link"
+    },
+    "backup": {
+      "create": "Create Backup",
+      "restore": "Restore from Backup",
+      "showList": "Show List"
+    }
+  },
+  "sidebar": {
+    "inbox": "Inbox",
+    "favorites": "Favorites",
+    "allSnippets": "All Snippets",
+    "trash": "Trash",
+    "folders": "Folders",
+    "library": "Library",
+    "tags": "Tags"
+  },
+  "folder": {
+    "untitled": "Untitled folder",
+    "plural": "Folders",
+    "collapseAll": "Collapse All",
+    "expandAll": "Expand All"
+  },
+  "snippet": {
+    "untitled": "Untitled snippet",
+    "plural": "Snippets",
+    "emptyName": "Type snippet name",
+    "selectedMultiple": "{{count}} Snippets Selected",
+    "noSelected": "No Snippet Selected"
+  },
+  "placeholder": {
+    "emptyTagList": "Add tags to snippets to see them here",
+    "emptyFoldersList": "No Folders",
+    "emptySnippetsList": "No Snippets",
+    "search": "Search",
+    "addTag": "Add Tag"
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "label": "開発者ツール",
+  "converters": {
+    "label": "コンバーター",
+    "caseConverter": {
+      "label": "ケースコンバーター",
+      "description": "テキストを異なるケースに変換",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "テキストからUnicode",
+      "description": "テキストをUnicodeに変換、またはその逆",
+      "modes": {
+        "textToUnicode": "テキスト → Unicode",
+        "unicodeToText": "Unicode → テキスト"
+      }
+    },
+    "textToAscii": {
+      "label": "テキストからASCII Binary",
+      "description": "テキストをASCII binaryに変換、またはその逆",
+      "modes": {
+        "textToAscii": "テキスト → ASCII",
+        "asciiToText": "ASCII → テキスト"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "テキストをBase64にエンコード、またはデコード",
+      "modes": {
+        "textToBase64": "テキスト → Base64",
+        "base64ToText": "Base64 → テキスト"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSONからYAML",
+      "description": "JSONをYAMLに変換、またはその逆",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSONからTOML",
+      "description": "JSONをTOMLに変換、またはその逆",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSONからXML",
+      "description": "JSONをXMLに変換、またはその逆",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "カラーコンバーター",
+      "description": "色を異なるフォーマット間で変換"
+    }
+  },
+  "crypto": {
+    "label": "暗号化 / セキュリティ",
+    "hash": {
+      "label": "ハッシュジェネレーター",
+      "description": "テキストからハッシュを生成"
+    },
+    "hmac": {
+      "label": "HMACジェネレーター",
+      "description": "キーとメッセージから構成されるハッシュベースメッセージ認証コード（HMAC）を生成"
+    },
+    "password": {
+      "label": "パスワードジェネレーター",
+      "description": "安全なパスワードを生成"
+    },
+    "uuid": {
+      "label": "UUIDジェネレーター",
+      "description": "汎用一意識別子（UUID）を生成"
+    }
+  },
+  "web": {
+    "label": "ウェブ",
+    "urlParser": {
+      "label": "URLパーサー",
+      "description": "URLをコンポーネントに解析"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "URLをエンコード、またはデコード",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "テキストをURL対応のslugに変換"
+    }
+  },
+  "form": {
+    "input": "入力",
+    "output": "出力",
+    "inputString": "入力文字列",
+    "outputString": "出力文字列",
+    "inputUrl": "入力URL",
+    "outputUrl": "出力URL",
+    "parsedUrl": "解析されたURL",
+    "splitQueryString": "Query Stringを分割",
+    "key": "キー",
+    "value": "値",
+    "component": "コンポーネント",
+    "result": "結果",
+    "secretKey": "秘密キー",
+    "algorithm": "アルゴリズム",
+    "version": "バージョン",
+    "amount": "数量",
+    "type": "タイプ",
+    "length": "長さ",
+    "options": "オプション",
+    "numbers": "数字",
+    "symbols": "記号",
+    "lowercase": "小文字",
+    "uppercase": "大文字",
+    "placeholder": {
+      "text": "テキストを入力",
+      "value": "値を入力",
+      "secretKey": "秘密キーを入力",
+      "url": "URLを入力"
+    }
+  }
+}

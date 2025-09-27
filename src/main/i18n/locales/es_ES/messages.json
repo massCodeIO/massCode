@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "¿Estás seguro de que quieres eliminar \"{{name}}\"?",
+    "deletePermanently": "¿Estás seguro de que quieres eliminar permanentemente \"{{name}}\"?",
+    "deleteConfirmMultipleSnippets": "¿Estás seguro de que quieres eliminar permanentemente {{count}} snippets seleccionados?",
+    "emptyTrash": "¿Estás seguro de que quieres eliminar permanentemente todos los snippets de la Papelera?",
+    "clearDb": "¿Estás seguro de que quieres limpiar la base de datos?",
+    "migrateDb": [
+      "¿Estás seguro de que quieres migrar?",
+      "Durante la migración, la biblioteca actual será sobrescrita."
+    ]
+  },
+  "success": {
+    "migrate": "Base de datos migrada exitosamente."
+  },
+  "warning": {
+    "noUndo": "No podrás deshacer esta acción.",
+    "allSnippetsMoveToTrash": "Todos los snippets en esta carpeta se moverán a la papelera.",
+    "deleteTag": "Esto también causará que se elimine la etiqueta de todos los snippets.",
+    "createDb": "Por favor selecciona otra carpeta",
+    "clearDb": "Esto eliminará permanentemente todos los Snippets, Carpetas y Etiquetas de la base de datos.",
+    "htmlCssPreview": "Agregue un fragmento HTML para ver el resultado. Agregue CSS para el estilo y JavaScript para la interactividad.",
+    "codeBlockRenderer": [
+      "Al usar Codemirror, el lenguaje a establecer para el bloque de código debe corresponder a uno de los valores de los",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Para usar servicios de sincronización como iCloud Drive, Google Drive o Dropbox, simplemente mueve el almacenamiento a las carpetas sincronizadas correspondientes",
+    "migrate": {
+      "fromV3": "Para migrar desde massCode v3 selecciona la carpeta que contiene el archivo JSON.",
+      "fromSnippetsLab": "Para migrar desde SnippetsLab selecciona el archivo JSON.",
+      "snippetsLabLimitations": [
+        "Algunas limitaciones. Durante la migración desde SnippetsLab:",
+        "Todas las carpetas serán de primer nivel ya que el archivo JSON (inferior a v2.1) no representa carpetas anidadas.",
+        "Los snippets con lenguajes no soportados se establecerán como Plain Text por defecto."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Hola, soy Anton 👋<br><br>\nGracias por usar massCode. Si encuentras útil esta aplicación, por favor {{-tagStart}}dona{{-tagEnd}}. Me inspirará a continuar el desarrollo del proyecto.",
+    "unsponsored": "Sin patrocinio"
+  },
+  "update": {
+    "available": "La versión {{newVersion}} está disponible para descargar.\nTu versión es {{oldVersion}}.",
+    "noAvailable": "Actualmente no hay actualizaciones disponibles."
+  }
+}

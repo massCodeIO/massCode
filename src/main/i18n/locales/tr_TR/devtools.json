@@ -1,0 +1,143 @@
+{
+  "label": "Geliştirici Araçları",
+  "converters": {
+    "label": "Dönüştürücüler",
+    "caseConverter": {
+      "label": "Büyük/Küçük Harf Dönüştürücü",
+      "description": "Metni farklı büyük/küçük harf biçimlerine dönüştür",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Metin Unicode'a",
+      "description": "Metni Unicode'a dönüştür ve tersi",
+      "modes": {
+        "textToUnicode": "Metin → Unicode",
+        "unicodeToText": "Unicode → Metin"
+      }
+    },
+    "textToAscii": {
+      "label": "Metin ASCII Binary'ye",
+      "description": "Metni ASCII binary'ye dönüştür ve tersi",
+      "modes": {
+        "textToAscii": "Metin → ASCII",
+        "asciiToText": "ASCII → Metin"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Metni Base64'e kodla veya çöz",
+      "modes": {
+        "textToBase64": "Metin → Base64",
+        "base64ToText": "Base64 → Metin"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON'dan YAML'a",
+      "description": "JSON'u YAML'a dönüştür ve tersi",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON'dan TOML'a",
+      "description": "JSON'u TOML'a dönüştür ve tersi",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON'dan XML'e",
+      "description": "JSON'u XML'e dönüştür ve tersi",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Renk Dönüştürücü",
+      "description": "Renkleri farklı formatlar arasında dönüştür"
+    }
+  },
+  "crypto": {
+    "label": "Kriptografi / Güvenlik",
+    "hash": {
+      "label": "Hash Üretici",
+      "description": "Metinden hash üret"
+    },
+    "hmac": {
+      "label": "HMAC Üretici",
+      "description": "Anahtar ve mesajdan oluşan hash tabanlı mesaj kimlik doğrulama kodu (HMAC) üret"
+    },
+    "password": {
+      "label": "Şifre Üretici",
+      "description": "Güvenli şifre üret"
+    },
+    "uuid": {
+      "label": "UUID Üretici",
+      "description": "Evrensel benzersiz tanımlayıcı (UUID) üret"
+    }
+  },
+  "web": {
+    "label": "Web",
+    "urlParser": {
+      "label": "URL Ayrıştırıcı",
+      "description": "URL'yi bileşenlerine ayrıştır"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "URL'yi kodla veya çöz",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Metni URL dostu slug'a dönüştür"
+    }
+  },
+  "form": {
+    "input": "Giriş",
+    "output": "Çıkış",
+    "inputString": "Giriş Dizesi",
+    "outputString": "Çıkış Dizesi",
+    "inputUrl": "Giriş URL",
+    "outputUrl": "Çıkış URL",
+    "parsedUrl": "Ayrıştırılmış URL",
+    "splitQueryString": "Query String'i Böl",
+    "key": "Anahtar",
+    "value": "Değer",
+    "component": "Bileşen",
+    "result": "Sonuç",
+    "secretKey": "Gizli Anahtar",
+    "algorithm": "Algoritma",
+    "version": "Sürüm",
+    "amount": "Miktar",
+    "type": "Tür",
+    "length": "Uzunluk",
+    "options": "Seçenekler",
+    "numbers": "Sayılar",
+    "symbols": "Semboller",
+    "lowercase": "Küçük harf",
+    "uppercase": "Büyük harf",
+    "placeholder": {
+      "text": "Metin girin",
+      "value": "Değer girin",
+      "secretKey": "Gizli anahtar girin",
+      "url": "URL girin"
+    }
+  }
+}

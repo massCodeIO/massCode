@@ -1,36 +1,26 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "strict": true,
     "jsx": "preserve",
-    "sourceMap": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
-    "outDir": "./build",
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "paths": {
-      "@/*": ["./src/renderer/*"],
-      "@renderer/*": ["./src/renderer/*"],
-      "@main/*": ["./src/main/*"],
-      "@shared/*": ["./src/shared/*"]
+      "~/*": ["src/*"],
+      "@/*": ["src/renderer/*"]
     },
-    "types": ["unplugin-icons/types/vue"]
+    "resolveJsonModule": true,
+    "types": ["vite/client", "node"],
+    "strict": true,
+    "sourceMap": true,
+    "esModuleInterop": true
   },
   "include": [
-    "./src/renderer/**/*.ts",
-    "./src/renderer/**/*.d.ts",
-    "./src/renderer/**/*.tsx",
-    "./src/renderer/**/*.vue",
-    "./src/main/**/*.ts",
-    "./src/main/**/*.d.ts",
-    "./src/shared/**/*.ts",
-    "./src/shared/**/*.d.ts"
-  ],
-  "exclude": [
-    "./node_modules"
+    "src/renderer/**/*.ts",
+    "src/renderer/**/*.d.ts",
+    "src/renderer/**/*.tsx",
+    "src/renderer/**/*.vue",
+    "src/main/types/**/*.ts"
   ]
 }

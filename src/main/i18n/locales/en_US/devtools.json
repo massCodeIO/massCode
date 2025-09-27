@@ -1,0 +1,143 @@
+{
+  "label": "Developer Tools",
+  "converters": {
+    "label": "Converters",
+    "caseConverter": {
+      "label": "Case Converter",
+      "description": "Transform text to different cases",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Text to Unicode",
+      "description": "Convert text to Unicode and vice versa",
+      "modes": {
+        "textToUnicode": "Text → Unicode",
+        "unicodeToText": "Unicode → Text"
+      }
+    },
+    "textToAscii": {
+      "label": "Text to ASCII Binary",
+      "description": "Convert text to ASCII binary and vice versa",
+      "modes": {
+        "textToAscii": "Text → ASCII",
+        "asciiToText": "ASCII → Text"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Encode or decode text to Base64",
+      "modes": {
+        "textToBase64": "Text → Base64",
+        "base64ToText": "Base64 → Text"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON to YAML",
+      "description": "Convert JSON to YAML and vice versa",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON to TOML",
+      "description": "Convert JSON to TOML and vice versa",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON to XML",
+      "description": "Convert JSON to XML and vice versa",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Color Converter",
+      "description": "Convert color between different formats"
+    }
+  },
+  "crypto": {
+    "label": "Cryptography / Security",
+    "hash": {
+      "label": "Hash Generator",
+      "description": "Generate hashes from text"
+    },
+    "hmac": {
+      "label": "HMAC Generator",
+      "description": "Generate hash-based message authentication code (HMAC) composed of a key and a message"
+    },
+    "password": {
+      "label": "Password Generator",
+      "description": "Generate a secure password"
+    },
+    "uuid": {
+      "label": "UUID Generator",
+      "description": "Generate a universal unique identifier (UUID)"
+    }
+  },
+  "web": {
+    "label": "Web",
+    "urlParser": {
+      "label": "URL Parser",
+      "description": "Parse a URL into its components"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Encode or decode URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Convert text to a URL-friendly slug"
+    }
+  },
+  "form": {
+    "input": "Input",
+    "output": "Output",
+    "inputString": "Input String",
+    "outputString": "Output String",
+    "inputUrl": "Input URL",
+    "outputUrl": "Output URL",
+    "parsedUrl": "Parsed URL",
+    "splitQueryString": "Split Query String",
+    "key": "Key",
+    "value": "Value",
+    "component": "Component",
+    "result": "Result",
+    "secretKey": "Secret Key",
+    "algorithm": "Algorithm",
+    "version": "Version",
+    "amount": "Amount",
+    "type": "Type",
+    "length": "Length",
+    "options": "Options",
+    "numbers": "Numbers",
+    "symbols": "Symbols",
+    "lowercase": "Lowercase",
+    "uppercase": "Uppercase",
+    "placeholder": {
+      "text": "Enter a text",
+      "value": "Enter a value",
+      "secretKey": "Enter a secret key",
+      "url": "Enter a URL"
+    }
+  }
+}

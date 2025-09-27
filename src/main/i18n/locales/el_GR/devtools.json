@@ -1,0 +1,143 @@
+{
+  "label": "Εργαλεία Προγραμματιστή",
+  "converters": {
+    "label": "Μετατροπείς",
+    "caseConverter": {
+      "label": "Μετατροπέας Κεφαλαίων",
+      "description": "Μετατροπή κειμένου σε διαφορετικές μορφές κεφαλαίων",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Κείμενο σε Unicode",
+      "description": "Μετατροπή κειμένου σε Unicode και αντίστροφα",
+      "modes": {
+        "textToUnicode": "Κείμενο → Unicode",
+        "unicodeToText": "Unicode → Κείμενο"
+      }
+    },
+    "textToAscii": {
+      "label": "Κείμενο σε ASCII Binary",
+      "description": "Μετατροπή κειμένου σε ASCII binary και αντίστροφα",
+      "modes": {
+        "textToAscii": "Κείμενο → ASCII",
+        "asciiToText": "ASCII → Κείμενο"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Κωδικοποίηση ή αποκωδικοποίηση κειμένου σε Base64",
+      "modes": {
+        "textToBase64": "Κείμενο → Base64",
+        "base64ToText": "Base64 → Κείμενο"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON σε YAML",
+      "description": "Μετατροπή JSON σε YAML και αντίστροφα",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON σε TOML",
+      "description": "Μετατροπή JSON σε TOML και αντίστροφα",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON σε XML",
+      "description": "Μετατροπή JSON σε XML και αντίστροφα",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Μετατροπέας Χρωμάτων",
+      "description": "Μετατροπή χρωμάτων μεταξύ διαφορετικών μορφών"
+    }
+  },
+  "crypto": {
+    "label": "Κρυπτογραφία / Ασφάλεια",
+    "hash": {
+      "label": "Γεννήτρια Hash",
+      "description": "Δημιουργία hash από κείμενο"
+    },
+    "hmac": {
+      "label": "Γεννήτρια HMAC",
+      "description": "Δημιουργία κώδικα πιστοποίησης μηνύματος βασισμένου σε hash (HMAC) που αποτελείται από κλειδί και μήνυμα"
+    },
+    "password": {
+      "label": "Γεννήτρια Κωδικών",
+      "description": "Δημιουργία ασφαλούς κωδικού"
+    },
+    "uuid": {
+      "label": "Γεννήτρια UUID",
+      "description": "Δημιουργία παγκόσμιου μοναδικού αναγνωριστικού (UUID)"
+    }
+  },
+  "web": {
+    "label": "Ιστός",
+    "urlParser": {
+      "label": "Αναλυτής URL",
+      "description": "Ανάλυση URL στα στοιχεία του"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Κωδικοποίηση ή αποκωδικοποίηση URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Μετατροπή κειμένου σε φιλικό προς URL slug"
+    }
+  },
+  "form": {
+    "input": "Είσοδος",
+    "output": "Έξοδος",
+    "inputString": "Συμβολοσειρά Εισόδου",
+    "outputString": "Συμβολοσειρά Εξόδου",
+    "inputUrl": "URL Εισόδου",
+    "outputUrl": "URL Εξόδου",
+    "parsedUrl": "Αναλυμένο URL",
+    "splitQueryString": "Διαχωρισμός Query String",
+    "key": "Κλειδί",
+    "value": "Τιμή",
+    "component": "Στοιχείο",
+    "result": "Αποτέλεσμα",
+    "secretKey": "Μυστικό Κλειδί",
+    "algorithm": "Αλγόριθμος",
+    "version": "Έκδοση",
+    "amount": "Ποσότητα",
+    "type": "Τύπος",
+    "length": "Μήκος",
+    "options": "Επιλογές",
+    "numbers": "Αριθμοί",
+    "symbols": "Σύμβολα",
+    "lowercase": "Πεζά",
+    "uppercase": "Κεφαλαία",
+    "placeholder": {
+      "text": "Εισάγετε κείμενο",
+      "value": "Εισάγετε τιμή",
+      "secretKey": "Εισάγετε μυστικό κλειδί",
+      "url": "Εισάγετε URL"
+    }
+  }
+}

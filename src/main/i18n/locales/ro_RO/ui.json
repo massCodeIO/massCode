@@ -1,0 +1,111 @@
+{
+  "total": "Total",
+  "line": "Linie",
+  "column": "Coloană",
+  "fragment": "Fragment",
+  "path": "Cale",
+  "button": {
+    "back": "Înapoi",
+    "cancel": "Anulare",
+    "clear": "Șterge",
+    "confirm": "Confirmă",
+    "copy": "Copiază",
+    "fit": "Potrivește",
+    "generate": "Generează",
+    "ok": "OK",
+    "revers": "Inversează",
+    "saveAs": "Salvează ca",
+    "sort": "Sortează",
+    "update": ["Mergi la GitHub", "OK"],
+    "zoomIn": "Mărește",
+    "zoomOut": "Micșorează",
+    "darkMode": "Mod Întunecat",
+    "toggleDarkMode": "Comută modul întunecat",
+    "background": "Fundal",
+    "goToDownload": "Mergi la Descărcare",
+    "refreshPreview": "Reîmprospătează previzualizarea",
+    "laserPointer": "Pointer laser",
+    "fullscreen": "Ecran complet",
+    "prev": "Anterior",
+    "next": "Următor"
+  },
+  "action": {
+    "close": "Închide",
+    "defaultLanguage": "Limbaj Implicit",
+    "duplicate": "Duplică",
+    "rename": "Redenumește",
+    "restore": "Restaurează",
+    "setCustomIcon": "Setează Iconiță Personalizată",
+    "show": "Arată",
+    "hide": "Ascunde",
+    "new": {
+      "storage": "Storage Nou",
+      "folder": "Folder Nou",
+      "snippet": "Snippet Nou",
+      "fragment": "Fragment Nou"
+    },
+    "add": {
+      "description": "Adaugă Descriere",
+      "tag": "Adaugă Tag",
+      "toFavorites": "Adaugă la Favorite"
+    },
+    "open": {
+      "storage": "Deschide Storage"
+    },
+    "move": {
+      "storage": "Mută Storage",
+      "toTrash": "Mută la Coșul de Gunoi"
+    },
+    "remove": {
+      "fromFavorites": "Elimină din Favorite"
+    },
+    "reload": {
+      "storage": "Reîncarcă Storage"
+    },
+    "delete": {
+      "common": "Șterge",
+      "now": "Șterge Acum",
+      "allData": "Șterge Toate Datele",
+      "trash": "Golește Coșul de Gunoi"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Din SnippetsLab",
+      "fromV3": "Din massCode v3"
+    },
+    "export": {
+      "toHtml": "Exportă în HTML"
+    },
+    "copy": {
+      "snippetLink": "Copiază Link-ul Snippet-ului"
+    }
+  },
+  "sidebar": {
+    "inbox": "Inbox",
+    "favorites": "Favorite",
+    "allSnippets": "Toate Snippets",
+    "trash": "Coș de Gunoi",
+    "folders": "Foldere",
+    "library": "Bibliotecă",
+    "tags": "Tags"
+  },
+  "folder": {
+    "untitled": "Folder fără titlu",
+    "plural": "Foldere",
+    "collapseAll": "Restrânge Tot",
+    "expandAll": "Extinde Tot"
+  },
+  "snippet": {
+    "untitled": "Snippet fără titlu",
+    "plural": "Snippets",
+    "emptyName": "Introduceți numele snippet-ului",
+    "selectedMultiple": "{{count}} Snippets Selectate",
+    "noSelected": "Niciun Snippet Selectat"
+  },
+  "placeholder": {
+    "emptyTagList": "Adăugați tags la snippets pentru a le vedea aici",
+    "emptyFoldersList": "Fără foldere",
+    "emptySnippetsList": "Fără fragmente",
+    "search": "Caută",
+    "addTag": "Adaugă Tag"
+  }
+}

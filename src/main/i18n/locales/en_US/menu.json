@@ -1,0 +1,78 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferences",
+    "devtools": "Developer Tools",
+    "update": "Check for Updates...",
+    "quit": "Quit massCode",
+    "about": "About massCode",
+    "hide": "Hide massCode"
+  },
+  "help": {
+    "label": "Help",
+    "website": "Website",
+    "documentation": "Documentation",
+    "viewInGitHub": "View in GitHub",
+    "changeLog": "Change Log",
+    "reportIssue": "Report Issue",
+    "giveStar": "Give a Star",
+    "extension": {
+      "vscode": "VS Code Extension",
+      "raycast": "Raycast Extension",
+      "alfred": "Alfred Extension"
+    },
+    "donate": {
+      "openCollective": "Donate on Open Collective",
+      "payPal": "Donate via PayPal",
+      "gumroad": "Donate via Gumroad (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Toggle Developer Tools",
+    "links": {
+      "snippets": "Snippet Collection"
+    }
+  },
+  "view": {
+    "label": "View",
+    "sortBy": {
+      "label": "Sort Snippets By",
+      "dateModified": "Date Modified",
+      "dateCreated": "Date Created",
+      "name": "Name"
+    },
+    "compactMode": "Compact Mode"
+  },
+  "edit": {
+    "label": "Edit",
+    "find": "Find"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copy Snippet to Clipboard",
+    "format": "Format",
+    "previewCode": "Preview Code",
+    "previewScreenshot": "Preview Screenshot",
+    "fontSizeIncrease": "Font Size Increase",
+    "fontSizeDecrease": "Font Size Decrease",
+    "fontSizeReset": "Font Size Reset"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "preview": "Preview",
+    "previewMarkdown": "Preview Markdown",
+    "presentationMode": "Presentation Mode",
+    "previewMindmap": "Preview Mindmap"
+  },
+  "history": {
+    "label": "History",
+    "back": "Back",
+    "forward": "Forward"
+  },
+  "devtools": {
+    "label": "Developer Tools"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  }
+}

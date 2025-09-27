@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "您確定要刪除 \"{{name}}\" 嗎？",
+    "deletePermanently": "您確定要永久刪除 \"{{name}}\" 嗎？",
+    "deleteConfirmMultipleSnippets": "您確定要永久刪除已選擇的 {{count}} 個程式碼片段嗎？",
+    "emptyTrash": "您確定要永久刪除回收桶中的所有程式碼片段嗎？",
+    "clearDb": "您確定要清空資料庫嗎？",
+    "migrateDb": [
+      "您確定要進行遷移嗎？",
+      "在遷移過程中，當前的程式庫將被覆蓋。"
+    ]
+  },
+  "success": {
+    "migrate": "資料庫遷移成功。"
+  },
+  "warning": {
+    "noUndo": "此操作無法撤銷。",
+    "allSnippetsMoveToTrash": "此資料夾中的所有程式碼片段將被移至回收桶。",
+    "deleteTag": "這也將導致所有具有該標籤的程式碼片段移除標籤。",
+    "createDb": "請選擇其他資料夾",
+    "clearDb": "這將永久刪除資料庫中的所有程式碼片段、資料夾和標籤。",
+    "htmlCssPreview": "添加HTML片段以查看結果。添加CSS進行樣式設計，添加JavaScript實現互動功能。",
+    "codeBlockRenderer": [
+      "使用 Codemirror 時，代碼塊的語言設置必須對應於",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "要使用 iCloud Drive、Google Drive 或 Dropbox 等同步服務，只需將儲存位置移至相應的同步資料夾",
+    "migrate": {
+      "fromV3": "要從 massCode v3 遷移，請選擇包含 JSON 文件的資料夾。",
+      "fromSnippetsLab": "要從 SnippetsLab 遷移，請選擇 JSON 文件。",
+      "snippetsLabLimitations": [
+        "一些限制。從 SnippetsLab 遷移時：",
+        "所有資料夾將為第一層級，因為 JSON 文件（2.1 版以下）不支援巢狀資料夾。",
+        "不支援的語言的程式碼片段將設置為預設的純文字。"
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "嗨，我是 Anton 👋<br><br>\n感謝使用 massCode。如果您覺得這個應用程式有用，請{{-tagStart}}贊助{{-tagEnd}}。這將激勵我繼續開發這個專案。",
+    "unsponsored": "未贊助"
+  },
+  "update": {
+    "available": "版本 {{newVersion}} 現已可供下載。\n您的版本是 {{oldVersion}}。",
+    "noAvailable": "目前沒有可用的更新。"
+  }
+}

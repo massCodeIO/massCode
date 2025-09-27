@@ -1,0 +1,111 @@
+{
+  "total": "总计",
+  "line": "行",
+  "column": "列",
+  "fragment": "片段",
+  "path": "路径",
+  "button": {
+    "back": "返回",
+    "cancel": "取消",
+    "clear": "清除",
+    "confirm": "确认",
+    "copy": "复制",
+    "fit": "适应",
+    "generate": "生成",
+    "ok": "确定",
+    "revers": "反转",
+    "saveAs": "另存为",
+    "sort": "排序",
+    "update": ["前往 GitHub", "确定"],
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "darkMode": "深色模式",
+    "toggleDarkMode": "切换深色模式",
+    "background": "背景",
+    "goToDownload": "前往下载",
+    "refreshPreview": "刷新预览",
+    "laserPointer": "激光指针",
+    "fullscreen": "全屏",
+    "prev": "上一个",
+    "next": "下一个"
+  },
+  "action": {
+    "close": "关闭",
+    "defaultLanguage": "默认语言",
+    "duplicate": "复制",
+    "rename": "重命名",
+    "restore": "恢复",
+    "setCustomIcon": "设置自定义图标",
+    "show": "显示",
+    "hide": "隐藏",
+    "new": {
+      "storage": "新建存储",
+      "folder": "新建文件夹",
+      "snippet": "新建代码片段",
+      "fragment": "新建片段"
+    },
+    "add": {
+      "description": "添加描述",
+      "tag": "添加标签",
+      "toFavorites": "添加到收藏"
+    },
+    "open": {
+      "storage": "打开存储"
+    },
+    "move": {
+      "storage": "移动存储",
+      "toTrash": "移到回收站"
+    },
+    "remove": {
+      "fromFavorites": "从收藏中移除"
+    },
+    "reload": {
+      "storage": "重新加载存储"
+    },
+    "delete": {
+      "common": "删除",
+      "now": "立即删除",
+      "allData": "删除所有数据",
+      "trash": "清空回收站"
+    },
+    "migrate": {
+      "fromSnippetsLab": "从 SnippetsLab 导入",
+      "fromV3": "从 massCode v3 导入"
+    },
+    "export": {
+      "toHtml": "导出为 HTML"
+    },
+    "copy": {
+      "snippetLink": "复制代码片段链接"
+    }
+  },
+  "sidebar": {
+    "inbox": "收件箱",
+    "favorites": "收藏",
+    "allSnippets": "所有代码片段",
+    "trash": "回收站",
+    "folders": "文件夹",
+    "library": "库",
+    "tags": "标签"
+  },
+  "folder": {
+    "untitled": "未命名文件夹",
+    "plural": "文件夹",
+    "collapseAll": "全部折叠",
+    "expandAll": "全部展开"
+  },
+  "snippet": {
+    "untitled": "未命名代码片段",
+    "plural": "代码片段",
+    "emptyName": "输入代码片段名称",
+    "selectedMultiple": "已选择 {{count}} 个代码片段",
+    "noSelected": "未选择代码片段"
+  },
+  "placeholder": {
+    "emptyTagList": "在代码片段中添加标签以在此处查看",
+    "emptyFoldersList": "没有文件夹",
+    "emptySnippetsList": "没有代码片段",
+    "search": "搜索",
+    "addTag": "添加标签"
+  }
+}

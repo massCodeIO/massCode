@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "Opravdu chcete smazat \"{{name}}\"?",
+    "deletePermanently": "Opravdu chcete trvale smazat \"{{name}}\"?",
+    "deleteConfirmMultipleSnippets": "Opravdu chcete trvale smazat {{count}} vybraných snippetů?",
+    "emptyTrash": "Opravdu chcete trvale smazat všechny snippety v Koši?",
+    "clearDb": "Opravdu chcete vymazat databázi?",
+    "migrateDb": [
+      "Opravdu chcete provést migraci?",
+      "Během migrace bude současná knihovna přepsána."
+    ]
+  },
+  "success": {
+    "migrate": "Databáze byla úspěšně migrována."
+  },
+  "warning": {
+    "noUndo": "Tuto akci nelze vrátit zpět.",
+    "allSnippetsMoveToTrash": "Všechny snippety v této složce budou přesunuty do koše.",
+    "deleteTag": "Toto také způsobí odstranění tohoto tagu ze všech snippetů.",
+    "createDb": "Prosím vyberte jinou složku",
+    "clearDb": "Toto trvale smaže všechny Snippety, Složky a Tagy z databáze.",
+    "htmlCssPreview": "Přidejte HTML fragment pro zobrazení výsledku. Přidejte CSS pro stylování a JavaScript pro interaktivitu.",
+    "codeBlockRenderer": [
+      "Při použití Codemirror musí jazyk nastavený pro blok kódu odpovídat jedné z hodnot",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "Pro použití synchronizačních služeb jako iCloud Drive, Google Drive nebo Dropbox jednoduše přesuňte úložiště do odpovídajících synchronizovaných složek",
+    "migrate": {
+      "fromV3": "Pro migraci z massCode v3 vyberte složku obsahující JSON soubor.",
+      "fromSnippetsLab": "Pro migraci ze SnippetsLab vyberte JSON soubor.",
+      "snippetsLabLimitations": [
+        "Některá omezení. Během migrace ze SnippetsLab:",
+        "Všechny složky budou na první úrovni, protože JSON soubor (pod v2.1) nepodporuje vnořené složky.",
+        "Snippety s nepodporovanými jazyky budou nastaveny na výchozí Plain Text."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Ahoj, tady Anton 👋<br><br>\nDěkuji za používání massCode. Pokud vám tato aplikace přijde užitečná, prosím {{-tagStart}}přispějte{{-tagEnd}}. Bude mě to motivovat k dalšímu vývoji projektu.",
+    "unsponsored": "Bez sponzorů"
+  },
+  "update": {
+    "available": "Verze {{newVersion}} je nyní k dispozici ke stažení.\nVaše verze je {{oldVersion}}.",
+    "noAvailable": "V současné době nejsou k dispozici žádné aktualizace."
+  }
+}

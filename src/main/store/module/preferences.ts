@@ -1,42 +1,31 @@
+import type { PreferencesStore } from '../types'
+import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
-import { homedir, platform } from 'os'
-import type { PreferencesStore } from '@shared/types/main/store'
+import { EDITOR_DEFAULTS } from '../constants'
 
 const isWin = platform() === 'win32'
 
-const defaultPath = isWin ? homedir() + '\\massCode' : homedir() + '/massCode'
-const backupPath = isWin ? `${defaultPath}\\backups` : `${defaultPath}/backups`
+const storagePath = isWin ? `${homedir()}\\massCode` : `${homedir()}/massCode`
+const backupPath = isWin ? `${storagePath}\\backups` : `${storagePath}/backups`
 
 export default new Store<PreferencesStore>({
   name: 'preferences',
   cwd: 'v2',
 
   defaults: {
-    storagePath: defaultPath,
-    backupPath,
-    theme: 'light:github',
-    editor: {
-      wrap: true,
-      fontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
-      fontSize: 12,
-      tabSize: 2,
-      trailingComma: 'none',
-      semi: false,
-      singleQuote: true,
-      highlightLine: false,
-      highlightGutter: false,
-      matchBrackets: false
-    },
-    screenshot: {
-      background: false,
-      gradient: ['#D02F98', '#9439CA'],
-      darkMode: true,
-      width: 600
-    },
+    storagePath,
+    apiPort: 4321,
+    language: 'en_US',
+    theme: 'auto',
+    editor: EDITOR_DEFAULTS,
     markdown: {
-      presentationScale: 1.3,
-      codeRenderer: 'highlight.js'
+      scale: 1,
     },
-    language: 'en'
-  }
+    backup: {
+      path: backupPath,
+      enabled: true,
+      interval: 6,
+      maxBackups: 5,
+    },
+  },
 })

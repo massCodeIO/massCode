@@ -1,111 +1,145 @@
-<template>
-  <AppLayoutOneColumn
-    :title="i18n.t('menu:devtools.label')"
-    @close="toHome"
-  >
-    <AppMenu v-model="appStore.selectedDevtoolsMenu">
-      <AppMenuGroup
-        :label="i18n.t('devtools:textTools.label')"
-        name="textTools"
-      >
-        <AppMenuItem
-          group="textTools"
-          :name="i18n.t('devtools:textTools.caseConverter')"
-          value="textTools.caseConverter"
-        >
-          <CaseConverterTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="textTools"
-          :name="i18n.t('devtools:textTools.slugGenerator')"
-          value="textTools.slugGenerator"
-        >
-          <SlugTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="textTools"
-          :name="i18n.t('devtools:textTools.sortLines')"
-          value="textTools.sortLines"
-        >
-          <SortTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="textTools"
-          :name="i18n.t('devtools:textTools.urlParser')"
-          value="textTools.urlParser"
-        >
-          <UrlParserTool />
-        </AppMenuItem>
-      </AppMenuGroup>
-      <AppMenuGroup
-        :label="i18n.t('devtools:crypto.label')"
-        name="cryptoTools"
-      >
-        <AppMenuItem
-          group="cryptoTools"
-          :name="i18n.t('devtools:crypto.hashGenerator')"
-          value="cryptoTools.hashGenerator"
-        >
-          <HashTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="cryptoTools"
-          :name="i18n.t('devtools:crypto.hmacGenerator')"
-          value="cryptoTools.hmacGenerator"
-        >
-          <HmacTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="cryptoTools"
-          :name="i18n.t('devtools:crypto.passGenerator')"
-          value="cryptoTools.passGenerator"
-        >
-          <PassTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="cryptoTools"
-          :name="i18n.t('devtools:crypto.uuidGenerator')"
-          value="cryptoTools.uuidGenerator"
-        >
-          <UuidTool />
-        </AppMenuItem>
-      </AppMenuGroup>
-      <AppMenuGroup
-        :label="i18n.t('devtools:encodeDecode.label')"
-        name="encodeDecodeTools"
-      >
-        <AppMenuItem
-          group="encodeDecodeTools"
-          :name="i18n.t('devtools:encodeDecode.url')"
-          value="encodeDecode.url"
-        >
-          <UrlEncodeDecodeTool />
-        </AppMenuItem>
-        <AppMenuItem
-          group="encodeDecodeTools"
-          :name="i18n.t('devtools:encodeDecode.base64')"
-          value="encodeDecode.base64"
-        >
-          <Base64EncodeDecodeTool />
-        </AppMenuItem>
-      </AppMenuGroup>
-    </AppMenu>
-  </AppLayoutOneColumn>
-</template>
-
 <script setup lang="ts">
 import { i18n } from '@/electron'
-import { track } from '@/services/analytics'
-import router from '@/router'
-import { useAppStore } from '@/store/app'
+import { router, RouterName } from '@/router'
+import { useRoute } from 'vue-router'
 
-const appStore = useAppStore()
+const route = useRoute()
 
-const toHome = () => {
-  router.push('/')
-}
+const isActiveRoute = computed(() => {
+  return (name: string) => route.name === name
+})
 
-track('devtools')
+const convertersNav = [
+  {
+    label: i18n.t('devtools:converters.caseConverter.label'),
+    name: RouterName.devtoolsCaseConverter,
+  },
+  {
+    label: i18n.t('devtools:converters.textToUnicode.label'),
+    name: RouterName.devtoolsTextToUnicode,
+  },
+  {
+    label: i18n.t('devtools:converters.textToAscii.label'),
+    name: RouterName.devtoolsTextToAscii,
+  },
+  {
+    label: i18n.t('devtools:converters.base64.label'),
+    name: RouterName.devtoolsBase64Converter,
+  },
+  {
+    label: i18n.t('devtools:converters.jsonToYaml.label'),
+    name: RouterName.devtoolsJsonToYaml,
+  },
+  {
+    label: i18n.t('devtools:converters.jsonToToml.label'),
+    name: RouterName.devtoolsJsonToToml,
+  },
+  {
+    label: i18n.t('devtools:converters.jsonToXml.label'),
+    name: RouterName.devtoolsJsonToXml,
+  },
+  {
+    label: i18n.t('devtools:converters.colorConverter.label'),
+    name: RouterName.devtoolsColorConverter,
+  },
+]
+
+const cryptoNav = [
+  {
+    label: i18n.t('devtools:crypto.hash.label'),
+    name: RouterName.devtoolsHash,
+  },
+  {
+    label: i18n.t('devtools:crypto.hmac.label'),
+    name: RouterName.devtoolsHmac,
+  },
+  {
+    label: i18n.t('devtools:crypto.password.label'),
+    name: RouterName.devtoolsPassword,
+  },
+  {
+    label: i18n.t('devtools:crypto.uuid.label'),
+    name: RouterName.devtoolsUuid,
+  },
+]
+
+const webNav = [
+  {
+    label: i18n.t('devtools:web.urlParser.label'),
+    name: RouterName.devtoolsUrlParser,
+  },
+  {
+    label: i18n.t('devtools:web.urlEncoder.label'),
+    name: RouterName.devtoolsUrlEncoder,
+  },
+  {
+    label: i18n.t('devtools:web.slugify.label'),
+    name: RouterName.devtoolsSlugify,
+  },
+]
 </script>
 
-<style lang="scss" scoped></style>
+<template>
+  <LayoutTwoColumn
+    :title="i18n.t('devtools:label')"
+    @back="() => router.push({ name: RouterName.main })"
+  >
+    <template #left>
+      <PerfectScrollbar
+        class="h-full px-2"
+        :options="{ minScrollbarLength: 20 }"
+      >
+        <div class="text-text-muted mb-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:converters.label") }}
+        </div>
+        <RouterLink
+          v-for="item in convertersNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+        <div class="text-text-muted my-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:crypto.label") }}
+        </div>
+        <RouterLink
+          v-for="item in cryptoNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+        <div class="text-text-muted my-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:web.label") }}
+        </div>
+        <RouterLink
+          v-for="item in webNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+      </PerfectScrollbar>
+    </template>
+    <template #right>
+      <PerfectScrollbar
+        class="h-full px-5 pb-5"
+        :options="{ minScrollbarLength: 20 }"
+      >
+        <RouterView />
+      </PerfectScrollbar>
+    </template>
+  </LayoutTwoColumn>
+</template>

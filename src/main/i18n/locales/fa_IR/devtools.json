@@ -1,0 +1,143 @@
+{
+  "label": "ابزارهای توسعه‌دهنده",
+  "converters": {
+    "label": "مبدل‌ها",
+    "caseConverter": {
+      "label": "مبدل حروف بزرگ و کوچک",
+      "description": "تبدیل متن به فرمت‌های مختلف حروف",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "متن به Unicode",
+      "description": "تبدیل متن به Unicode و برعکس",
+      "modes": {
+        "textToUnicode": "متن ← Unicode",
+        "unicodeToText": "Unicode ← متن"
+      }
+    },
+    "textToAscii": {
+      "label": "متن به ASCII Binary",
+      "description": "تبدیل متن به ASCII binary و برعکس",
+      "modes": {
+        "textToAscii": "متن ← ASCII",
+        "asciiToText": "ASCII ← متن"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "رمزگذاری یا رمزگشایی متن به Base64",
+      "modes": {
+        "textToBase64": "متن ← Base64",
+        "base64ToText": "Base64 ← متن"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON به YAML",
+      "description": "تبدیل JSON به YAML و برعکس",
+      "modes": {
+        "jsonToYaml": "JSON ← YAML",
+        "yamlToJson": "YAML ← JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON به TOML",
+      "description": "تبدیل JSON به TOML و برعکس",
+      "modes": {
+        "jsonToToml": "JSON ← TOML",
+        "tomlToJson": "TOML ← JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON به XML",
+      "description": "تبدیل JSON به XML و برعکس",
+      "modes": {
+        "jsonToXml": "JSON ← XML",
+        "xmlToJson": "XML ← JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "مبدل رنگ",
+      "description": "تبدیل رنگ‌ها بین فرمت‌های مختلف"
+    }
+  },
+  "crypto": {
+    "label": "رمزنگاری / امنیت",
+    "hash": {
+      "label": "تولیدکننده Hash",
+      "description": "تولید hash از متن"
+    },
+    "hmac": {
+      "label": "تولیدکننده HMAC",
+      "description": "تولید کد احراز هویت پیام مبتنی بر hash (HMAC) متشکل از کلید و پیام"
+    },
+    "password": {
+      "label": "تولیدکننده رمز عبور",
+      "description": "تولید رمز عبور امن"
+    },
+    "uuid": {
+      "label": "تولیدکننده UUID",
+      "description": "تولید شناسه منحصر به فرد جهانی (UUID)"
+    }
+  },
+  "web": {
+    "label": "وب",
+    "urlParser": {
+      "label": "تجزیه‌کننده URL",
+      "description": "تجزیه URL به اجزای آن"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "رمزگذاری یا رمزگشایی URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "تبدیل متن به slug سازگار با URL"
+    }
+  },
+  "form": {
+    "input": "ورودی",
+    "output": "خروجی",
+    "inputString": "رشته ورودی",
+    "outputString": "رشته خروجی",
+    "inputUrl": "URL ورودی",
+    "outputUrl": "URL خروجی",
+    "parsedUrl": "URL تجزیه شده",
+    "splitQueryString": "تقسیم Query String",
+    "key": "کلید",
+    "value": "مقدار",
+    "component": "جزء",
+    "result": "نتیجه",
+    "secretKey": "کلید مخفی",
+    "algorithm": "الگوریتم",
+    "version": "نسخه",
+    "amount": "مقدار",
+    "type": "نوع",
+    "length": "طول",
+    "options": "گزینه‌ها",
+    "numbers": "اعداد",
+    "symbols": "نمادها",
+    "lowercase": "حروف کوچک",
+    "uppercase": "حروف بزرگ",
+    "placeholder": {
+      "text": "متن وارد کنید",
+      "value": "مقدار وارد کنید",
+      "secretKey": "کلید مخفی وارد کنید",
+      "url": "URL وارد کنید"
+    }
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "label": "Outils de développement",
+  "converters": {
+    "label": "Convertisseurs",
+    "caseConverter": {
+      "label": "Convertisseur de casse",
+      "description": "Transformer le texte en différentes casses",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Texte vers Unicode",
+      "description": "Convertir le texte en Unicode et vice versa",
+      "modes": {
+        "textToUnicode": "Texte → Unicode",
+        "unicodeToText": "Unicode → Texte"
+      }
+    },
+    "textToAscii": {
+      "label": "Texte vers ASCII Binary",
+      "description": "Convertir le texte en ASCII binary et vice versa",
+      "modes": {
+        "textToAscii": "Texte → ASCII",
+        "asciiToText": "ASCII → Texte"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Encoder ou décoder le texte en Base64",
+      "modes": {
+        "textToBase64": "Texte → Base64",
+        "base64ToText": "Base64 → Texte"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON vers YAML",
+      "description": "Convertir JSON en YAML et vice versa",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON vers TOML",
+      "description": "Convertir JSON en TOML et vice versa",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON vers XML",
+      "description": "Convertir JSON en XML et vice versa",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Convertisseur de couleurs",
+      "description": "Convertir les couleurs entre différents formats"
+    }
+  },
+  "crypto": {
+    "label": "Cryptographie / Sécurité",
+    "hash": {
+      "label": "Générateur de hash",
+      "description": "Générer des hashes à partir de texte"
+    },
+    "hmac": {
+      "label": "Générateur HMAC",
+      "description": "Générer un code d'authentification de message basé sur le hash (HMAC) composé d'une clé et d'un message"
+    },
+    "password": {
+      "label": "Générateur de mot de passe",
+      "description": "Générer un mot de passe sécurisé"
+    },
+    "uuid": {
+      "label": "Générateur UUID",
+      "description": "Générer un identifiant unique universel (UUID)"
+    }
+  },
+  "web": {
+    "label": "Web",
+    "urlParser": {
+      "label": "Analyseur URL",
+      "description": "Analyser une URL en ses composants"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Encoder ou décoder une URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Convertir le texte en slug compatible URL"
+    }
+  },
+  "form": {
+    "input": "Entrée",
+    "output": "Sortie",
+    "inputString": "Chaîne d'entrée",
+    "outputString": "Chaîne de sortie",
+    "inputUrl": "URL d'entrée",
+    "outputUrl": "URL de sortie",
+    "parsedUrl": "URL analysée",
+    "splitQueryString": "Diviser Query String",
+    "key": "Clé",
+    "value": "Valeur",
+    "component": "Composant",
+    "result": "Résultat",
+    "secretKey": "Clé secrète",
+    "algorithm": "Algorithme",
+    "version": "Version",
+    "amount": "Quantité",
+    "type": "Type",
+    "length": "Longueur",
+    "options": "Options",
+    "numbers": "Chiffres",
+    "symbols": "Symboles",
+    "lowercase": "Minuscules",
+    "uppercase": "Majuscules",
+    "placeholder": {
+      "text": "Entrez un texte",
+      "value": "Entrez une valeur",
+      "secretKey": "Entrez une clé secrète",
+      "url": "Entrez une URL"
+    }
+  }
+}

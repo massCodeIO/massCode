@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Προτιμήσεις",
+    "devtools": "Developer Tools",
+    "update": "Έλεγχος για Ενημερώσεις...",
+    "quit": "Έξοδος από το massCode",
+    "about": "Σχετικά με το massCode",
+    "hide": "Απόκρυψη massCode"
+  },
+  "help": {
+    "label": "Βοήθεια",
+    "website": "Ιστοσελίδα",
+    "documentation": "Τεκμηρίωση",
+    "viewInGitHub": "Προβολή στο GitHub",
+    "changeLog": "Αρχείο Αλλαγών",
+    "reportIssue": "Αναφορά Προβλήματος",
+    "giveStar": "Δώστε ένα Αστέρι",
+    "extension": {
+      "vscode": "VS Code Extension",
+      "raycast": "Raycast Extension",
+      "alfred": "Alfred Extension"
+    },
+    "donate": {
+      "openCollective": "Δωρεά στο Open Collective",
+      "payPal": "Δωρεά μέσω PayPal",
+      "gumroad": "Δωρεά μέσω Gumroad (Visa, Mastercard, κλπ.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Εναλλαγή Developer Tools",
+    "links": {
+      "snippets": "Συλλογή Snippets"
+    }
+  },
+  "edit": {
+    "label": "Επεξεργασία",
+    "find": "Εύρεση"
+  },
+  "view": {
+    "label": "Προβολή",
+    "sortBy": {
+      "label": "Ταξινόμηση Snippets κατά",
+      "dateModified": "Ημερομηνία Τροποποίησης",
+      "dateCreated": "Ημερομηνία Δημιουργίας",
+      "name": "Όνομα"
+    },
+    "compactMode": "Συμπαγής Λειτουργία"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Αντιγραφή Snippet στο Πρόχειρο",
+    "format": "Μορφοποίηση",
+    "previewCode": "Προεπισκόπηση Κώδικα",
+    "previewScreenshot": "Προεπισκόπηση Screenshot",
+    "fontSizeIncrease": "Αύξηση Μεγέθους Γραμματοσειράς",
+    "fontSizeDecrease": "Μείωση Μεγέθους Γραμματοσειράς",
+    "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Λειτουργία Παρουσίασης",
+    "preview": "Προεπισκόπηση",
+    "previewMarkdown": "Προεπισκόπηση Markdown",
+    "previewMindmap": "Προεπισκόπηση Mindmap"
+  },
+  "history": {
+    "label": "Ιστορικό",
+    "back": "Πίσω",
+    "forward": "Μπροστά"
+  },
+  "devtools": {
+    "label": "Developer Tools"
+  }
+}

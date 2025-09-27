@@ -1,0 +1,111 @@
+{
+  "total": "Всього",
+  "line": "Рядок",
+  "column": "Стовпець",
+  "fragment": "Fragment",
+  "path": "Шлях",
+  "button": {
+    "back": "Назад",
+    "cancel": "Скасувати",
+    "clear": "Очистити",
+    "confirm": "Підтвердити",
+    "copy": "Копіювати",
+    "fit": "За розміром",
+    "generate": "Згенерувати",
+    "ok": "OK",
+    "revers": "Реверс",
+    "saveAs": "Зберегти як",
+    "sort": "Сортувати",
+    "update": ["Перейти на GitHub", "OK"],
+    "zoomIn": "Збільшити",
+    "zoomOut": "Зменшити",
+    "darkMode": "Темний режим",
+    "toggleDarkMode": "Перемкнути темний режим",
+    "background": "Фон",
+    "goToDownload": "Перейти до завантаження",
+    "refreshPreview": "Оновити попередній перегляд",
+    "laserPointer": "Лазерна указка",
+    "fullscreen": "Повний екран",
+    "prev": "Попередній",
+    "next": "Наступний"
+  },
+  "action": {
+    "close": "Закрити",
+    "defaultLanguage": "Мова за замовчуванням",
+    "duplicate": "Дублювати",
+    "rename": "Перейменувати",
+    "restore": "Відновити",
+    "setCustomIcon": "Встановити власну іконку",
+    "show": "Показати",
+    "hide": "Приховати",
+    "new": {
+      "storage": "Нове сховище",
+      "folder": "Нова папка",
+      "snippet": "Новий сніпет",
+      "fragment": "Новий фрагмент"
+    },
+    "add": {
+      "description": "Додати опис",
+      "tag": "Додати тег",
+      "toFavorites": "Додати до обраного"
+    },
+    "open": {
+      "storage": "Відкрити сховище"
+    },
+    "move": {
+      "storage": "Перемістити сховище",
+      "toTrash": "Перемістити до кошика"
+    },
+    "remove": {
+      "fromFavorites": "Видалити з обраного"
+    },
+    "reload": {
+      "storage": "Перезавантажити сховище"
+    },
+    "delete": {
+      "common": "Видалити",
+      "now": "Видалити зараз",
+      "allData": "Видалити всі дані",
+      "trash": "Очистити кошик"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Зі SnippetsLab",
+      "fromV3": "З massCode v3"
+    },
+    "export": {
+      "toHtml": "Експортувати в HTML"
+    },
+    "copy": {
+      "snippetLink": "Копіювати посилання на сніпет"
+    }
+  },
+  "sidebar": {
+    "inbox": "Вхідні",
+    "favorites": "Обране",
+    "allSnippets": "Всі сніпети",
+    "trash": "Кошик",
+    "folders": "Папки",
+    "library": "Бібліотека",
+    "tags": "Теги"
+  },
+  "folder": {
+    "untitled": "Папка без назви",
+    "plural": "Папки",
+    "collapseAll": "Згорнути все",
+    "expandAll": "Розгорнути все"
+  },
+  "snippet": {
+    "untitled": "Сніпет без назви",
+    "plural": "Сніпети",
+    "emptyName": "Введіть назву сніпета",
+    "selectedMultiple": "Вибрано {{count}} сніпетів",
+    "noSelected": "Сніпети не вибрані"
+  },
+  "placeholder": {
+    "emptyTagList": "Додайте теги до сніпетів, щоб побачити їх тут",
+    "emptyFoldersList": "Немає папок",
+    "emptySnippetsList": "Немає сніппетів",
+    "search": "Пошук",
+    "addTag": "Додати тег"
+  }
+}

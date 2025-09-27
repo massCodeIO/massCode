@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+:root {
+  --title-bar-height: 20px;
+  --editor-tool-header-height: 28px;
+}
+
+body {
+  font-size: 14px;
+  background-color: var(--color-bg);
+  color: var(--color-text)
+}
+
+.scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar);
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:active {
+  opacity: 1;
+}
+
+
+
+@theme {
+  --color-primary: oklch(50% 0.19 260);
+
+  --color-bg: oklch(100% 0 0);
+  --color-fg: oklch(0% 0 0);
+
+  --color-button: oklch(92% 0 0);
+  --color-button-fg: oklch(0% 0 0);
+  --color-button-hover: oklch(95% 0 0);
+
+  --color-switch-inactive: oklch(92% 0 0);
+  --color-switch-active: oklch(32% 0 0);
+  --color-switch-thumb: oklch(100% 0 0);
+  --color-switch-thumb-active: oklch(100% 0 0);
+
+  --color-border: oklch(90% 0 0);
+
+  --color-text: oklch(20% 0 0);
+  --color-text-muted: oklch(60% 0 0);
+
+  --color-list-selection: oklch(92% 0 0);
+  --color-list-selection-fg: oklch(20% 0 0);
+  --color-list-focus: var(--color-primary);
+  --color-list-focus-fg: oklch(100% 0 0);
+
+  --color-scrollbar: oklch(0% 0 0 / 0.2);
+
+  --color-tooltip: oklch(20% 0 0);
+  --color-tooltip-fg: oklch(85% 0 0);
+
+  --color-markdown-code: oklch(97% 0 0);
+}
+
+
+html.dark {
+  --color-primary: oklch(50% 0.19 260);
+
+  --color-bg: oklch(24.78% 0 0);
+  --color-fg: oklch(100% 0 0);
+
+  --color-button: oklch(32% 0 0);
+  --color-button-fg: oklch(95% 0 0);
+  --color-button-hover: oklch(35% 0 0);
+
+  --color-switch-inactive: oklch(32% 0 0);
+  --color-switch-active: oklch(50% 0 0);
+  --color-switch-thumb: oklch(100% 0 0);
+  --color-switch-thumb-active: oklch(100% 0 0);
+
+  --color-border: oklch(30% 0 0);
+
+  --color-text: oklch(75% 0 0);
+  --color-text-muted: oklch(60% 0 0);
+
+  --color-list-selection: oklch(32% 0 0);
+  --color-list-selection-fg: oklch(95% 0 0);
+
+  --color-scrollbar: oklch(100% 0 0 / 0.2);
+
+  --color-tooltip-fg: oklch(75% 0 0);
+
+  --color-markdown-code: oklch(30% 0 0);
+}
+

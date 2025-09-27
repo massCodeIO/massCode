@@ -3,5 +3,5 @@ import preferences from './module/preferences'
 
 export const store = {
   app,
-  preferences
+  preferences,
 }

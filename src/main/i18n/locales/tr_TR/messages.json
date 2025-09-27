@@ -1,0 +1,49 @@
+{
+  "confirm": {
+    "delete": "\"{{name}}\" öğesini silmek istediğinizden emin misiniz?",
+    "deletePermanently": "\"{{name}}\" öğesini kalıcı olarak silmek istediğinizden emin misiniz?",
+    "deleteConfirmMultipleSnippets": "{{count}} seçili snippet'i kalıcı olarak silmek istediğinizden emin misiniz?",
+    "emptyTrash": "Çöp Kutusu'ndaki tüm snippet'leri kalıcı olarak silmek istediğinizden emin misiniz?",
+    "clearDb": "Database'i temizlemek istediğinizden emin misiniz?",
+    "migrateDb": [
+      "Taşımak istediğinizden emin misiniz?",
+      "Taşıma sırasında mevcut kütüphane üzerine yazılacaktır."
+    ]
+  },
+  "success": {
+    "migrate": "Database başarıyla taşındı."
+  },
+  "warning": {
+    "noUndo": "Bu işlemi geri alamazsınız.",
+    "allSnippetsMoveToTrash": "Bu klasördeki tüm snippet'ler çöp kutusuna taşınacak.",
+    "deleteTag": "Bu, tüm snippet'lerden bu etiketin kaldırılmasına neden olacaktır.",
+    "createDb": "Lütfen başka bir klasör seçin",
+    "clearDb": "Bu, database'deki tüm Snippet'leri, Klasörleri ve Etiketleri kalıcı olarak silecektir.",
+    "htmlCssPreview": "Sonucu görmek için HTML parçası ekleyin. Stil için CSS ve etkileşim için JavaScript ekleyin.",
+    "codeBlockRenderer": [
+      "Codemirror kullanırken, kod bloğu için ayarlanacak dilin",
+      "languages"
+    ]
+  },
+  "error": {},
+  "description": {
+    "storage": "iCloud Drive, Google Drive veya Dropbox gibi senkronizasyon servislerini kullanmak için depolamayı ilgili senkronize klasörlere taşımanız yeterlidir",
+    "migrate": {
+      "fromV3": "massCode v3'ten taşımak için JSON dosyasını içeren klasörü seçin.",
+      "fromSnippetsLab": "SnippetsLab'den taşımak için JSON dosyasını seçin.",
+      "snippetsLabLimitations": [
+        "Bazı Sınırlamalar. SnippetsLab'den taşıma sırasında:",
+        "JSON dosyası (v2.1'in altında) iç içe klasörleri temsil etmediğinden tüm klasörler birinci seviye olacaktır.",
+        "Desteklenmeyen dillere sahip snippet'ler varsayılan Plain Text olarak ayarlanacaktır."
+      ]
+    }
+  },
+  "special": {
+    "supportMessage": "Merhaba, ben Anton 👋<br><br>\nmassCode'u kullandığınız için teşekkürler. Bu uygulamayı faydalı buluyorsanız, lütfen {{-tagStart}}bağış yapın{{-tagEnd}}. Bu beni projenin geliştirilmesine devam etmem için teşvik edecektir.",
+    "unsponsored": "Sponsorsuz"
+  },
+  "update": {
+    "available": "{{newVersion}} sürümü artık indirilebilir.\nSizin sürümünüz {{oldVersion}}.",
+    "noAvailable": "Şu anda mevcut güncelleme yok."
+  }
+}

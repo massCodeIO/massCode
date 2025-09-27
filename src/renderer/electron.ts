@@ -1,1 +1,3 @@
-export const { ipc, store, db, platform, i18n, version } = window.electron
+const { ipc, db, store, i18n } = window.electron
+
+export { db, i18n, ipc, store }

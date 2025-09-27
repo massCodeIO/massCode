@@ -1,0 +1,143 @@
+{
+  "label": "Instrumente pentru Dezvoltatori",
+  "converters": {
+    "label": "Convertoare",
+    "caseConverter": {
+      "label": "Convertor de Majuscule",
+      "description": "Transformă textul în diferite formate de majuscule",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Text în Unicode",
+      "description": "Convertește textul în Unicode și invers",
+      "modes": {
+        "textToUnicode": "Text → Unicode",
+        "unicodeToText": "Unicode → Text"
+      }
+    },
+    "textToAscii": {
+      "label": "Text în ASCII Binary",
+      "description": "Convertește textul în ASCII binary și invers",
+      "modes": {
+        "textToAscii": "Text → ASCII",
+        "asciiToText": "ASCII → Text"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Codifică sau decodifică textul în Base64",
+      "modes": {
+        "textToBase64": "Text → Base64",
+        "base64ToText": "Base64 → Text"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON în YAML",
+      "description": "Convertește JSON în YAML și invers",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON în TOML",
+      "description": "Convertește JSON în TOML și invers",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON în XML",
+      "description": "Convertește JSON în XML și invers",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Convertor de Culori",
+      "description": "Convertește culorile între diferite formate"
+    }
+  },
+  "crypto": {
+    "label": "Criptografie / Securitate",
+    "hash": {
+      "label": "Generator Hash",
+      "description": "Generează hash-uri din text"
+    },
+    "hmac": {
+      "label": "Generator HMAC",
+      "description": "Generează cod de autentificare a mesajului bazat pe hash (HMAC) compus dintr-o cheie și un mesaj"
+    },
+    "password": {
+      "label": "Generator de Parole",
+      "description": "Generează o parolă sigură"
+    },
+    "uuid": {
+      "label": "Generator UUID",
+      "description": "Generează un identificator unic universal (UUID)"
+    }
+  },
+  "web": {
+    "label": "Web",
+    "urlParser": {
+      "label": "Analizor URL",
+      "description": "Analizează un URL în componentele sale"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Codifică sau decodifică URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Convertește textul într-un slug prietenos cu URL"
+    }
+  },
+  "form": {
+    "input": "Intrare",
+    "output": "Ieșire",
+    "inputString": "Șir de Intrare",
+    "outputString": "Șir de Ieșire",
+    "inputUrl": "URL de Intrare",
+    "outputUrl": "URL de Ieșire",
+    "parsedUrl": "URL Analizat",
+    "splitQueryString": "Împarte Query String",
+    "key": "Cheie",
+    "value": "Valoare",
+    "component": "Componentă",
+    "result": "Rezultat",
+    "secretKey": "Cheie Secretă",
+    "algorithm": "Algoritm",
+    "version": "Versiune",
+    "amount": "Cantitate",
+    "type": "Tip",
+    "length": "Lungime",
+    "options": "Opțiuni",
+    "numbers": "Numere",
+    "symbols": "Simboluri",
+    "lowercase": "Minuscule",
+    "uppercase": "Majuscule",
+    "placeholder": {
+      "text": "Introduceți un text",
+      "value": "Introduceți o valoare",
+      "secretKey": "Introduceți o cheie secretă",
+      "url": "Introduceți un URL"
+    }
+  }
+}

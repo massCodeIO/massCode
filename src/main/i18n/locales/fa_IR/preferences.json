@@ -1,0 +1,50 @@
+{
+  "label": "تنظیمات",
+  "storage": {
+    "label": "ذخیره‌سازی",
+    "migrate": "مهاجرت",
+    "count": "تعداد",
+    "clearDatabase": "پاک کردن پایگاه داده"
+  },
+  "editor": {
+    "label": "ویرایشگر",
+    "fontSize": "اندازه فونت",
+    "fontFamily": "خانواده فونت",
+    "wrap": {
+      "label": "شکستن خط",
+      "wordWrap": "شکستن کلمه",
+      "off": "خاموش"
+    },
+    "tabSize": "اندازه تب",
+    "showInvisibles": "نمایش نامرئی‌ها",
+    "highlightLine": "برجسته کردن خط",
+    "highlightGutter": "برجسته کردن حاشیه",
+    "matchBrackets": "تطبیق پرانتزها",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "کاما انتهایی",
+        "none": "هیچ",
+        "all": "همه",
+        "es5": "ES5"
+      },
+      "semi": "نقطه‌ویرگول",
+      "singleQuote": "تک کوتیشن"
+    }
+  },
+  "appearance": {
+    "label": "ظاهر",
+    "theme": {
+      "label": "تم",
+      "light": "روشن",
+      "dark": "تاریک"
+    }
+  },
+  "language": {
+    "label": "زبان"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "رندرکننده بلوک کد"
+  }
+}

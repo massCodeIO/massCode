@@ -1,0 +1,143 @@
+{
+  "label": "Інструменти розробника",
+  "converters": {
+    "label": "Конвертери",
+    "caseConverter": {
+      "label": "Конвертер регістру",
+      "description": "Перетворення тексту в різні регістри",
+      "caseType": {
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "camelcase": "Camelcase",
+        "capitalize": "Capitalize",
+        "constantcase": "Constantcase",
+        "snakecase": "Snakecase",
+        "kebabcase": "Kebabcase",
+        "pascalcase": "Pascalcase",
+        "dotcase": "Dotcase",
+        "pathcase": "Pathcase"
+      }
+    },
+    "textToUnicode": {
+      "label": "Текст в Unicode",
+      "description": "Конвертація тексту в Unicode і навпаки",
+      "modes": {
+        "textToUnicode": "Текст → Unicode",
+        "unicodeToText": "Unicode → Текст"
+      }
+    },
+    "textToAscii": {
+      "label": "Текст в ASCII Binary",
+      "description": "Конвертація тексту в ASCII binary і навпаки",
+      "modes": {
+        "textToAscii": "Текст → ASCII",
+        "asciiToText": "ASCII → Текст"
+      }
+    },
+    "base64": {
+      "label": "Base64 Encoder / Decoder",
+      "description": "Кодування або декодування тексту в Base64",
+      "modes": {
+        "textToBase64": "Текст → Base64",
+        "base64ToText": "Base64 → Текст"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON в YAML",
+      "description": "Конвертація JSON в YAML і навпаки",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON в TOML",
+      "description": "Конвертація JSON в TOML і навпаки",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON в XML",
+      "description": "Конвертація JSON в XML і навпаки",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "Конвертер кольорів",
+      "description": "Конвертація кольорів між різними форматами"
+    }
+  },
+  "crypto": {
+    "label": "Криптографія / Безпека",
+    "hash": {
+      "label": "Генератор хешів",
+      "description": "Генерація хешів з тексту"
+    },
+    "hmac": {
+      "label": "HMAC Генератор",
+      "description": "Генерація коду автентифікації повідомлень на основі хешу (HMAC) з ключа та повідомлення"
+    },
+    "password": {
+      "label": "Генератор паролів",
+      "description": "Генерація безпечного пароля"
+    },
+    "uuid": {
+      "label": "UUID Генератор",
+      "description": "Генерація універсального унікального ідентифікатора (UUID)"
+    }
+  },
+  "web": {
+    "label": "Веб",
+    "urlParser": {
+      "label": "URL Парсер",
+      "description": "Розбір URL на компоненти"
+    },
+    "urlEncoder": {
+      "label": "URL Encoder / Decoder",
+      "description": "Кодування або декодування URL",
+      "modes": {
+        "urlEncode": "URL Encode",
+        "urlDecode": "URL Decode"
+      }
+    },
+    "slugify": {
+      "label": "Slugify",
+      "description": "Перетворення тексту в URL-сумісний slug"
+    }
+  },
+  "form": {
+    "input": "Введення",
+    "output": "Виведення",
+    "inputString": "Вхідний рядок",
+    "outputString": "Вихідний рядок",
+    "inputUrl": "Вхідний URL",
+    "outputUrl": "Вихідний URL",
+    "parsedUrl": "Розібраний URL",
+    "splitQueryString": "Розділити Query String",
+    "key": "Ключ",
+    "value": "Значення",
+    "component": "Компонент",
+    "result": "Результат",
+    "secretKey": "Секретний ключ",
+    "algorithm": "Алгоритм",
+    "version": "Версія",
+    "amount": "Кількість",
+    "type": "Тип",
+    "length": "Довжина",
+    "options": "Опції",
+    "numbers": "Цифри",
+    "symbols": "Символи",
+    "lowercase": "Малі літери",
+    "uppercase": "Великі літери",
+    "placeholder": {
+      "text": "Введіть текст",
+      "value": "Введіть значення",
+      "secretKey": "Введіть секретний ключ",
+      "url": "Введіть URL"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Preferencias",
+    "devtools": "Herramientas de Desarrollo",
+    "update": "Buscar Actualizaciones...",
+    "quit": "Salir de massCode",
+    "about": "Acerca de massCode",
+    "hide": "Ocultar massCode"
+  },
+  "help": {
+    "label": "Ayuda",
+    "website": "Sitio Web",
+    "documentation": "Documentación",
+    "viewInGitHub": "Ver en GitHub",
+    "changeLog": "Registro de Cambios",
+    "reportIssue": "Reportar Problema",
+    "giveStar": "Dar una Estrella",
+    "extension": {
+      "vscode": "Extensión VS Code",
+      "raycast": "Extensión Raycast",
+      "alfred": "Extensión Alfred"
+    },
+    "donate": {
+      "openCollective": "Donar en Open Collective",
+      "payPal": "Donar vía PayPal",
+      "gumroad": "Donar vía Gumroad (Visa, Mastercard, etc.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Alternar Herramientas de Desarrollo",
+    "links": {
+      "snippets": "Colección de Snippets"
+    }
+  },
+  "edit": {
+    "label": "Editar",
+    "find": "Buscar"
+  },
+  "view": {
+    "label": "Vista",
+    "sortBy": {
+      "label": "Ordenar Snippets Por",
+      "dateModified": "Fecha de Modificación",
+      "dateCreated": "Fecha de Creación",
+      "name": "Nombre"
+    },
+    "compactMode": "Modo Compacto"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Copiar Snippet al Portapapeles",
+    "format": "Formatear",
+    "previewCode": "Vista Previa del Código",
+    "previewScreenshot": "Vista Previa de Captura",
+    "fontSizeIncrease": "Aumentar Tamaño de Fuente",
+    "fontSizeDecrease": "Disminuir Tamaño de Fuente",
+    "fontSizeReset": "Restablecer Tamaño de Fuente"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Modo Presentación",
+    "preview": "Vista Previa",
+    "previewMarkdown": "Vista Previa de Markdown",
+    "previewMindmap": "Vista Previa de Mapa Mental"
+  },
+  "history": {
+    "label": "Historial",
+    "back": "Atrás",
+    "forward": "Adelante"
+  },
+  "devtools": {
+    "label": "Herramientas de Desarrollo"
+  }
+}

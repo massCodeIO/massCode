@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Předvolby",
+    "devtools": "Vývojářské nástroje",
+    "update": "Zkontrolovat aktualizace...",
+    "quit": "Ukončit massCode",
+    "about": "O aplikaci massCode",
+    "hide": "Skrýt massCode"
+  },
+  "help": {
+    "label": "Nápověda",
+    "website": "Webové stránky",
+    "documentation": "Dokumentace",
+    "viewInGitHub": "Zobrazit na GitHubu",
+    "changeLog": "Seznam změn",
+    "reportIssue": "Nahlásit problém",
+    "giveStar": "Dát hvězdičku",
+    "extension": {
+      "vscode": "VS Code rozšíření",
+      "raycast": "Raycast rozšíření",
+      "alfred": "Alfred rozšíření"
+    },
+    "donate": {
+      "openCollective": "Přispět na Open Collective",
+      "payPal": "Přispět přes PayPal",
+      "gumroad": "Přispět přes Gumroad (Visa, Mastercard, atd.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Přepnout vývojářské nástroje",
+    "links": {
+      "snippets": "Kolekce snippetů"
+    }
+  },
+  "edit": {
+    "label": "Upravit",
+    "find": "Najít"
+  },
+  "view": {
+    "label": "Zobrazení",
+    "sortBy": {
+      "label": "Seřadit snippety podle",
+      "dateModified": "Data úpravy",
+      "dateCreated": "Data vytvoření",
+      "name": "Názvu"
+    },
+    "compactMode": "Kompaktní režim"
+  },
+  "editor": {
+    "label": "Editor",
+    "copy": "Kopírovat snippet do schránky",
+    "format": "Formátovat",
+    "previewCode": "Náhled kódu",
+    "previewScreenshot": "Náhled snímku obrazovky",
+    "fontSizeIncrease": "Zvětšit velikost písma",
+    "fontSizeDecrease": "Zmenšit velikost písma",
+    "fontSizeReset": "Obnovit velikost písma"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Prezentační režim",
+    "preview": "Náhled",
+    "previewMarkdown": "Náhled Markdownu",
+    "previewMindmap": "Náhled myšlenkové mapy"
+  },
+  "history": {
+    "label": "Historie",
+    "back": "Zpět",
+    "forward": "Vpřed"
+  },
+  "devtools": {
+    "label": "Vývojářské nástroje"
+  }
+}

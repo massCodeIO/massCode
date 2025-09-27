@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "首选项",
+    "devtools": "开发者工具",
+    "update": "检查更新...",
+    "quit": "退出 massCode",
+    "about": "关于 massCode",
+    "hide": "隐藏 massCode"
+  },
+  "help": {
+    "label": "帮助",
+    "website": "网站",
+    "documentation": "文档",
+    "viewInGitHub": "在 GitHub 中查看",
+    "changeLog": "更新日志",
+    "reportIssue": "报告问题",
+    "giveStar": "点个赞",
+    "extension": {
+      "vscode": "VS Code 扩展",
+      "raycast": "Raycast 扩展",
+      "alfred": "Alfred 扩展"
+    },
+    "donate": {
+      "openCollective": "在 Open Collective 上捐赠",
+      "payPal": "通过 PayPal 捐赠",
+      "gumroad": "通过 Gumroad 捐赠（Visa、Mastercard 等）"
+    },
+    "twitter": "Twitter",
+    "devTools": "切换开发者工具",
+    "links": {
+      "snippets": "代码片段集合"
+    }
+  },
+  "edit": {
+    "label": "编辑",
+    "find": "查找"
+  },
+  "view": {
+    "label": "视图",
+    "sortBy": {
+      "label": "代码片段排序方式",
+      "dateModified": "修改日期",
+      "dateCreated": "创建日期",
+      "name": "名称"
+    },
+    "compactMode": "紧凑模式"
+  },
+  "editor": {
+    "label": "编辑器",
+    "copy": "复制代码片段到剪贴板",
+    "format": "格式化",
+    "previewCode": "预览代码",
+    "previewScreenshot": "预览截图",
+    "fontSizeIncrease": "增大字体",
+    "fontSizeDecrease": "减小字体",
+    "fontSizeReset": "重置字体大小"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "演示模式",
+    "preview": "预览",
+    "previewMarkdown": "预览 Markdown",
+    "previewMindmap": "预览思维导图"
+  },
+  "history": {
+    "label": "历史",
+    "back": "后退",
+    "forward": "前进"
+  },
+  "devtools": {
+    "label": "开发者工具"
+  }
+}

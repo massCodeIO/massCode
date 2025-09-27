@@ -1,0 +1,111 @@
+{
+  "total": "總計",
+  "line": "行",
+  "column": "列",
+  "fragment": "片段",
+  "path": "路徑",
+  "button": {
+    "back": "返回",
+    "cancel": "取消",
+    "clear": "清除",
+    "confirm": "確認",
+    "copy": "複製",
+    "fit": "適應",
+    "generate": "生成",
+    "ok": "確定",
+    "revers": "反轉",
+    "saveAs": "另存為",
+    "sort": "排序",
+    "update": ["前往 GitHub", "確定"],
+    "zoomIn": "放大",
+    "zoomOut": "縮小",
+    "darkMode": "深色模式",
+    "toggleDarkMode": "切換深色模式",
+    "background": "背景",
+    "goToDownload": "前往下載",
+    "refreshPreview": "刷新預覽",
+    "laserPointer": "激光指針",
+    "fullscreen": "全屏",
+    "prev": "上一個",
+    "next": "下一個"
+  },
+  "action": {
+    "close": "關閉",
+    "defaultLanguage": "預設語言",
+    "duplicate": "複製",
+    "rename": "重命名",
+    "restore": "恢復",
+    "setCustomIcon": "設置自定義圖標",
+    "show": "顯示",
+    "hide": "隱藏",
+    "new": {
+      "storage": "新建存儲",
+      "folder": "新建資料夾",
+      "snippet": "新建程式碼片段",
+      "fragment": "新建片段"
+    },
+    "add": {
+      "description": "添加描述",
+      "tag": "添加標籤",
+      "toFavorites": "添加到收藏"
+    },
+    "open": {
+      "storage": "打開存儲"
+    },
+    "move": {
+      "storage": "移動存儲",
+      "toTrash": "移到回收桶"
+    },
+    "remove": {
+      "fromFavorites": "從收藏中移除"
+    },
+    "reload": {
+      "storage": "重新加載存儲"
+    },
+    "delete": {
+      "common": "刪除",
+      "now": "立即刪除",
+      "allData": "刪除所有數據",
+      "trash": "清空回收桶"
+    },
+    "migrate": {
+      "fromSnippetsLab": "從 SnippetsLab 導入",
+      "fromV3": "從 massCode v3 導入"
+    },
+    "export": {
+      "toHtml": "導出為 HTML"
+    },
+    "copy": {
+      "snippetLink": "複製程式碼片段鏈接"
+    }
+  },
+  "sidebar": {
+    "inbox": "收件箱",
+    "favorites": "收藏",
+    "allSnippets": "所有程式碼片段",
+    "trash": "回收桶",
+    "folders": "資料夾",
+    "library": "庫",
+    "tags": "標籤"
+  },
+  "folder": {
+    "untitled": "未命名資料夾",
+    "plural": "資料夾",
+    "collapseAll": "全部折疊",
+    "expandAll": "全部展開"
+  },
+  "snippet": {
+    "untitled": "未命名程式碼片段",
+    "plural": "程式碼片段",
+    "emptyName": "輸入程式碼片段名稱",
+    "selectedMultiple": "已選擇 {{count}} 個程式碼片段",
+    "noSelected": "未選擇程式碼片段"
+  },
+  "placeholder": {
+    "emptyTagList": "在程式碼片段中添加標籤以在此處查看",
+    "emptyFoldersList": "沒有資料夾",
+    "emptySnippetsList": "沒有程式碼片段",
+    "search": "搜索",
+    "addTag": "添加標籤"
+  }
+}

@@ -1,6 +1,5 @@
-
 <p align="center">
-  <img src="./preview.png">
+  <img src="./.github/assets/logo.png" alt="massCode" width="150">
 </p>
 
 <h1 align="center">massCode</h1>
@@ -10,7 +9,6 @@
   <br>
   Inspired by applications like SnippetsLab and Quiver.
 </p>
-
 
 <p align="center">
   <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/massCodeIO/massCode">
@@ -27,8 +25,7 @@
 <p align="center">
   Extensions:
   <a href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant">VS Code</a> |
-  <a href="https://www.raycast.com/antonreshetov/masscode">Raycast</a> |
-  <a href="https://github.com/massCodeIO/assistant-alfred">Alfred</a>
+  <a href="https://www.raycast.com/antonreshetov/masscode">Raycast</a>
 </p>
 
 <p align="center">
@@ -47,10 +44,11 @@
 
 ## Support
 
-massCode is open source project and completely free to use.
+massCode is an open-source project and completely free to use.
 
-However, the amount of effort needed to maintain and develop new features for the project is not sustainable without proper financial backing. You can support massCode development via the following methods:
+Maintaining and adding new features requires significant time and effort. If you find massCode useful, consider supporting its development. Your contribution helps keep the project alive and moving forward.
 
+You can support massCode through the following channels:
 <div align="center">
 
 [![Donate via Open Collective](https://img.shields.io/badge/donate-Open%20Collective-blue.svg?style=popout&logo=opencollective)](https://opencollective.com/masscode)
@@ -60,63 +58,66 @@ However, the amount of effort needed to maintain and develop new features for th
 </div>
 
 ## Features
+
 ### Organization
-massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
+
+Organize your snippets with multi-level folders and tags. Each snippet can contain multiple fragments (tabs), giving you fine-grained control over structure and grouping.
 
 ### Editor
-massCode uses [Codemirror](https://github.com/codemirror/codemirror5) as the basis for the editor and `.tmLanguage` as the grammar for syntax highlighting. This tandem opens the door to over [600](https://github.com/github/linguist/blob/master/vendor/README.md) existing grammars. The application currently supports more than [160](https://github.com/massCodeIO/massCode/tree/master/src/renderer/components/editor) grammars. In addition to `.tmLanguage`, the application supports `.tmTheme` for themes. There is also support for [Prettier](https://prettier.io) for code formatting. 
 
-### Real-time Render for HTML & CSS
-You can not only collect snippets, but also see the rendering result for HTML and CSS in real time. Test the idea or just view the result.
+Built on [CodeMirror](https://github.com/codemirror/codemirror5) with `.tmLanguage` grammars for syntax highlighting.
+
+* Supports over [600 grammars](https://github.com/github/linguist/blob/master/vendor/README.md), with 160+ available out of the box.
+* Integrated [Prettier](https://prettier.io) for clean, consistent code formatting.
+
+### Real-time HTML & CSS Preview
+
+Write and instantly preview HTML and CSS snippets. Perfect for prototyping, testing ideas, or quick visual checks.
 
 ### Markdown
-massCode allows you to write in Markdown and provide support to syntax highlighting, tables, list and other formatting. Also massCode supports [Mermaid](https://mermaid-js.github.io/mermaid/#) - diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically.
+
+Full Markdown support with syntax highlighting, tables, lists, and more.
+
+* Integrated [Mermaid](https://mermaid-js.github.io/mermaid/#) for dynamic diagrams and charts.
 
 ### Presentation Mode
 
-massCode allows you to make a presentation out of a sequence of snippets. It's great for classroom use, team meetings, conferences or simply reviewing notes on your own.
+Turn a sequence of snippets into a presentation. Useful for classrooms, team meetings, conference talks, or simply walking through your own notes.
 
 ### Mindmap
 
-massCode allows you to create mental maps from markdown, making the process of creating and editing maps fast and intuitively understandable. It's a great way to organize and structure information visually.
-
-### Search
-It is impossible to imagine a productive snippets manager without quick access to snippets. Therefore massCode has a fast full-text search with highlighting of the search query.
-
-### Autosave
-massCode automatically saves any changes you make during work, so you don't have to worry about losing changes.
-
-### Sync
-You can use any service that provides cloud synchronization, such as iCloud Drive, Google Drive, Dropbox or other similar.
-
-### Database
-massCode uses a simple JSON to store your data. The database files are on your local computer.
+Generate mind maps from Markdown. Fast, intuitive, and ideal for structuring and visualizing ideas.
 
 ### Integrations
-massCode supports extensions for [VS Code](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant), [Raycast](https://www.raycast.com/antonreshetov/masscode) and [Alfred](https://github.com/massCodeIO/assistant-alfred), which gives even more possibilities to use application. With the VS Code extension you get practically zen mode, search for the necessary snippets and insert them immediately or save the selected code sections as a snippet.
+
+Extend your workflow with:
+
+* [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant): zen mode snippet search, instant insertion, and save selected code as snippets.
+* [Raycast Extension](https://www.raycast.com/antonreshetov/masscode): quick snippet access directly from Raycast.
 
 ### Beautiful Screenshots
-Create beautiful snippet images on different backgrounds and in different modes
+
+Export snippets as polished images with customizable themes and backgrounds.
 
 ### Developer Tools
-massCode provides developers with a range of convenient tools, such as:
--  Text tools: Case Converter, Slug Generator, Sort Lines, URL Parser
--  Cryptography & Security: Hash, HMAC, Password and UUID Generators
--  Encoders & Decoders: URL, Base64
 
+Handy built-in utilities for everyday dev tasks:
+
+* **Text Tools**: Case Converter, Slug Generator, URL Parser
+* **Crypto & Security**: Hash/HMAC, Password Generator, UUID
+* **Encoders/Decoders**: URL, Base64, JSON ⇄ TOML/XML/YAML, Text ⇄ ASCII/Binary/Unicode, Color Converter
+
+---
 
 ## Overview
 
-The goal of creating this application was mostly my own growth as a developer. Also, I wanted this project to absorb the best of such applications already on the market (both free and paid). At the same time, I wanted this project to be an open source project.
+massCode was created as a personal learning project and evolved into an open-source tool. The goal: combine the best features of snippet managers (free and paid) into one flexible, developer-friendly application.
 
 ## Follow
  - News and updates on [Twitter](https://twitter.com/anton_reshetov).
  - [Discussions](https://github.com/massCodeIO/massCode/discussions).
 
 ![](.github/assets/subscribe.gif)
-
-## Other
-You can also [download](https://github.com/antonreshetov/massCode) massCode v1.
 
 ## License
 

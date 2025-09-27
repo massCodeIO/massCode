@@ -1,0 +1,50 @@
+{
+  "label": "偏好設定",
+  "storage": {
+    "label": "儲存庫",
+    "migrate": "遷移",
+    "count": "數量",
+    "clearDatabase": "清空資料庫"
+  },
+  "editor": {
+    "label": "編輯器",
+    "fontSize": "字體大小",
+    "fontFamily": "字體",
+    "wrap": {
+      "label": "換行",
+      "wordWrap": "自動換行",
+      "off": "關閉"
+    },
+    "tabSize": "縮排大小",
+    "showInvisibles": "顯示不可見字符",
+    "highlightLine": "高亮當前行",
+    "highlightGutter": "高亮行號",
+    "matchBrackets": "括號匹配",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "尾隨逗號",
+        "none": "無",
+        "all": "全部",
+        "es5": "ES5"
+      },
+      "semi": "分號",
+      "singleQuote": "單引號"
+    }
+  },
+  "appearance": {
+    "label": "外觀",
+    "theme": {
+      "label": "主題",
+      "light": "淺色",
+      "dark": "深色"
+    }
+  },
+  "language": {
+    "label": "語言"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "代碼塊渲染器"
+  }
+}

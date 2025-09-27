@@ -1,17 +1,25 @@
-import { createMenu } from '../components/menu'
-import type { MenuItemConstructorOptions } from 'electron'
-import { shell, dialog, BrowserWindow } from 'electron'
-import { version } from '../../../package.json'
-import os from 'os'
-import { checkForUpdate } from '../services/update-check'
-import { store } from '../store'
-import i18n from '../services/i18n'
+/* eslint-disable node/prefer-global/process */
+import type { MenuConfig } from './utils'
+import os from 'node:os'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  type MenuItemConstructorOptions,
+  shell,
+} from 'electron'
+import { repository } from '../../../package.json'
+import i18n from '../i18n'
+import { send } from '../ipc'
+import { fethUpdates } from '../updates'
+import { createMenu, createPlatformMenuItems } from './utils'
+
+const year = new Date().getFullYear()
+const version = app.getVersion()
 
 const isDev = process.env.NODE_ENV === 'development'
-const isMac = process.platform === 'darwin'
-const year = new Date().getFullYear()
 
-const aboutApp = () => {
+function aboutApp() {
   dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
     title: 'massCode',
     message: 'massCode',
@@ -24,546 +32,274 @@ const aboutApp = () => {
       V8: ${process.versions.v8}
       OS: ${os.type()} ${os.arch()} ${os.release()}
       ©2019-${year} Anton Reshetov <reshetov.art@gmail.com>
-    `
+    `,
   })
 }
 
-const appMenuCommon: Record<
-'preferences' | 'quit' | 'update' | 'devtools',
-MenuItemConstructorOptions
-> = {
-  preferences: {
-    label: i18n.t('menu:app.preferences'),
-    accelerator: 'CommandOrControl+,',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:preferences'
-      )
-    }
+const appMenuItems: MenuConfig[] = [
+  {
+    id: 'about',
+    label: i18n.t('menu:app.about'),
+    platforms: ['darwin'],
+    click: () => aboutApp(),
   },
-  devtools: {
-    label: i18n.t('menu:devtools.label') + '...',
-    accelerator: 'CommandOrControl+.',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:devtools')
-    }
-  },
-  update: {
-    label: i18n.t('menu:app.update.label'),
+  {
+    id: 'update',
+    label: i18n.t('menu:app.update'),
     click: async () => {
-      const newVersion = await checkForUpdate()
+      const latestVersion = await fethUpdates()
 
-      if (newVersion) {
+      if (latestVersion) {
         const buttonId = dialog.showMessageBoxSync(
           BrowserWindow.getFocusedWindow()!,
           {
-            message: i18n.t('menu:app.update.message', {
-              newVersion,
-              oldVersion: version
+            message: i18n.t('messages:update.available', {
+              newVersion: latestVersion,
+              oldVersion: version,
             }),
-            buttons: [
-              i18n.t('menu:app.update.button.0'),
-              i18n.t('menu:app.update.button.1')
-            ],
+            buttons: [i18n.t('button.update.0'), i18n.t('button.update.1')],
             defaultId: 0,
-            cancelId: 1
-          }
+            cancelId: 1,
+          },
         )
 
         if (buttonId === 0) {
-          shell.openExternal('https://masscode.io/download/latest-release.html')
+          shell.openExternal(`${repository}/releases`)
         }
-      } else {
+      }
+      else {
         dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
-          message: i18n.t('menu:app.update.noUpdate')
+          message: i18n.t('messages:update.noAvailable'),
         })
       }
-    }
-  },
-  quit: {
-    label: i18n.t('menu:app.quit'),
-    role: 'quit'
-  }
-}
-
-const appMenuMac: MenuItemConstructorOptions[] = [
-  {
-    label: i18n.t('menu:app.about'),
-    click: () => aboutApp()
+    },
   },
   {
-    ...appMenuCommon.update
+    type: 'separator',
   },
   {
-    type: 'separator'
+    id: 'preferences',
+    label: i18n.t('menu:app.preferences'),
+    accelerator: 'CommandOrControl+,',
+    click: () => send('main-menu:goto-preferences'),
   },
   {
-    ...appMenuCommon.preferences
+    type: 'separator' as any,
+    platforms: ['darwin'],
   },
   {
-    type: 'separator'
+    id: 'devtools',
+    label: i18n.t('menu:app.devtools'),
+    accelerator: 'CommandOrControl+.',
+    click: () => send('main-menu:goto-devtools'),
   },
   {
-    ...appMenuCommon.devtools
-  },
-  {
-    type: 'separator'
+    type: 'separator' as any,
   },
   {
     label: i18n.t('menu:app.hide'),
-    role: 'hide'
+    platforms: ['darwin'],
+    role: 'hide',
   },
   {
-    label: i18n.t('menu:app.hideOther'),
-    role: 'hideOthers'
+    platforms: ['darwin'],
+    role: 'hideOthers',
   },
   {
-    label: i18n.t('menu:app.showAll'),
-    role: 'unhide'
+    platforms: ['darwin'],
+    role: 'unhide',
   },
   {
-    type: 'separator'
+    type: 'separator' as any,
+    platforms: ['darwin'],
   },
   {
-    ...appMenuCommon.quit
-  }
+    label: i18n.t('menu:app.quit'),
+    platforms: ['darwin'],
+    role: 'quit',
+  },
 ]
 
-const appMenu: MenuItemConstructorOptions[] = [
-  { ...appMenuCommon.update },
-  { type: 'separator' },
-  { ...appMenuCommon.preferences },
-  { ...appMenuCommon.devtools },
-  { type: 'separator' },
-  { ...appMenuCommon.quit }
-]
-
-const helpMenu: MenuItemConstructorOptions[] = [
+const helpMenuItems: MenuConfig[] = [
   {
+    id: 'about',
     label: i18n.t('menu:app.about'),
-    click: () => aboutApp()
-  },
-  {
-    label: i18n.t('menu:help.website'),
-    click: () => {
-      shell.openExternal('https://masscode.io')
-    }
-  },
-  {
-    label: i18n.t('menu:help.documentation'),
-    click: () => {
-      shell.openExternal('https://masscode.io/documentation')
-    }
-  },
-  {
-    label: i18n.t('menu:help.twitter'),
-    click: () => {
-      shell.openExternal('https://twitter.com/anton_reshetov')
-    }
-  },
-  {
-    type: 'separator'
-  },
-  {
-    label: i18n.t('menu:help.viewInGitHub'),
-    click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode')
-    }
-  },
-  {
-    label: i18n.t('menu:help.changeLog'),
-    click: () => {
-      shell.openExternal(
-        'https://github.com/massCodeIO/massCode/blob/master/CHANGELOG.md'
-      )
-    }
-  },
-  {
-    label: i18n.t('menu:help.reportIssue'),
-    click: () => {
-      shell.openExternal(
-        'https://github.com/massCodeIO/massCode/issues/new/choose'
-      )
-    }
-  },
-  {
-    label: i18n.t('menu:help.giveStar'),
-    click: () => {
-      shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
-    }
-  },
-  {
-    type: 'separator'
-  },
-  {
-    label: i18n.t('menu:help.extension.vscode'),
-    click: () => {
-      shell.openExternal(
-        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant'
-      )
-    }
-  },
-  {
-    label: i18n.t('menu:help.extension.raycast'),
-    click: () => {
-      shell.openExternal('https://www.raycast.com/antonreshetov/masscode')
-    }
-  },
-  {
-    label: i18n.t('menu:help.extension.alfred'),
-    click: () => {
-      shell.openExternal('https://github.com/massCodeIO/assistant-alfred')
-    }
-  },
-  {
-    type: 'separator'
-  },
-  {
-    label: i18n.t('menu:help.links.snippets'),
-    click: () => {
-      shell.openExternal('https://masscode.io/snippets')
-    }
-  },
-  {
-    type: 'separator'
-  },
-  {
-    label: i18n.t('menu:help.donate.openCollective'),
-    click: () => {
-      shell.openExternal('https://opencollective.com/masscode')
-    }
-  },
-  {
-    label: i18n.t('menu:help.donate.gumroad'),
-    click: () => {
-      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
-    }
-  },
-  {
-    label: i18n.t('menu:help.donate.payPal'),
-    click: () => {
-      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
-    }
-  },
-  {
-    type: 'separator'
+    click: () => aboutApp(),
   },
   {
     label: i18n.t('menu:help.devTools'),
-    role: 'toggleDevTools'
-  }
+    role: 'toggleDevTools',
+  },
 ]
 
 if (isDev) {
-  helpMenu.push({
+  helpMenuItems.push({
     label: 'Reload',
-    role: 'reload'
+    role: 'reload',
   })
 }
 
-const fileMenu: MenuItemConstructorOptions[] = [
+const fileMenuItems: MenuConfig[] = [
   {
-    label: i18n.t('newSnippet'),
+    label: i18n.t('action.new.snippet'),
+    click: () => send('main-menu:new-snippet'),
     accelerator: 'CommandOrControl+N',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:new-snippet'
-      )
-    }
   },
   {
-    label: i18n.t('newFragment'),
+    label: i18n.t('action.new.fragment'),
+    click: () => send('main-menu:new-fragment'),
     accelerator: 'CommandOrControl+T',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:new-fragment'
-      )
-    }
   },
   {
-    label: i18n.t('addDescription'),
+    label: i18n.t('action.add.description'),
+    click: () => send('main-menu:add-description'),
     accelerator: 'CommandOrControl+Shift+T',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:add-description'
-      )
-    }
   },
   {
-    type: 'separator'
+    type: 'separator',
   },
   {
-    label: i18n.t('newFolder'),
+    label: i18n.t('action.new.folder'),
+    click: () => send('main-menu:new-folder'),
     accelerator: 'CommandOrControl+Shift+N',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:new-folder')
-    }
+  },
+]
+
+const editMenuItems: MenuConfig[] = [
+  {
+    role: 'undo',
   },
   {
-    type: 'separator'
+    role: 'redo',
   },
   {
-    label: i18n.t('menu:file.find'),
+    type: 'separator',
+  },
+  {
+    role: 'cut',
+  },
+  {
+    role: 'copy',
+  },
+  {
+    role: 'paste',
+  },
+  {
+    role: 'delete',
+  },
+  {
+    type: 'separator',
+  },
+  {
+    role: 'selectAll',
+  },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:edit.find'),
     accelerator: 'CommandOrControl+F',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send('main-menu:search')
-    }
-  }
+    click: () => send('main-menu:find'),
+  },
 ]
 
-const viewMenu: MenuItemConstructorOptions[] = [
-  {
-    label: i18n.t('menu:view.sortBy.label'),
-    submenu: [
-      {
-        label: i18n.t('menu:view.sortBy.dateModified'),
-        type: 'radio',
-        checked: store.app.get('sort') === 'updatedAt',
-        click: () => {
-          BrowserWindow.getFocusedWindow()?.webContents.send(
-            'main-menu:sort-snippets',
-            'updatedAt'
-          )
-        }
-      },
-      {
-        label: i18n.t('menu:view.sortBy.dateCreated'),
-        type: 'radio',
-        checked: store.app.get('sort') === 'createdAt',
-        click: () => {
-          BrowserWindow.getFocusedWindow()?.webContents.send(
-            'main-menu:sort-snippets',
-            'createdAt'
-          )
-        }
-      },
-      {
-        label: i18n.t('menu:view.sortBy.name'),
-        type: 'radio',
-        checked: store.app.get('sort') === 'name',
-        click: () => {
-          BrowserWindow.getFocusedWindow()?.webContents.send(
-            'main-menu:sort-snippets',
-            'name'
-          )
-        }
-      }
-    ]
-  },
-  {
-    label: i18n.t('menu:view.hideSubfolderSnippets'),
-    type: 'checkbox',
-    checked: store.app.get('hideSubfolderSnippets'),
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:hide-subfolder-snippets'
-      )
-    }
-  },
-  {
-    label: i18n.t('menu:view.compactMode'),
-    type: 'checkbox',
-    checked: store.app.get('compactMode'),
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:compact-mode-snippets'
-      )
-    }
-  }
-]
-
-const editorMenu: MenuItemConstructorOptions[] = [
+const editorMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:editor.copy'),
-    accelerator: 'Shift+CommandOrControl+C',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:copy-snippet'
-      )
-    }
+    click: () => send('main-menu:copy-snippet'),
+    accelerator: 'CommandOrControl+Shift+C',
   },
   {
     label: i18n.t('menu:editor.format'),
     accelerator: 'Shift+CommandOrControl+F',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:format-snippet'
-      )
-    }
+    click: () => send('main-menu:format'),
   },
   {
     label: i18n.t('menu:editor.previewCode'),
-    accelerator: 'Shift+CommandOrControl+P',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:preview-code'
-      )
-    }
+    click: () => send('main-menu:preview-code'),
+    accelerator: 'CommandOrControl+Shift+P',
   },
   {
-    type: 'separator'
+    type: 'separator',
   },
   {
     label: i18n.t('menu:editor.fontSizeIncrease'),
     accelerator: 'CommandOrControl+=',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:font-size-increase'
-      )
-    }
+    click: () => send('main-menu:font-size-increase'),
   },
   {
     label: i18n.t('menu:editor.fontSizeDecrease'),
     accelerator: 'CommandOrControl+-',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:font-size-decrease'
-      )
-    }
+    click: () => send('main-menu:font-size-decrease'),
   },
   {
     label: i18n.t('menu:editor.fontSizeReset'),
     accelerator: 'CommandOrControl+0',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:font-size-reset'
-      )
-    }
-  }
+    click: () => send('main-menu:font-size-reset'),
+  },
 ]
 
-const markdownMenu: MenuItemConstructorOptions[] = [
+const markdownMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:markdown.preview'),
-    accelerator: 'Shift+CommandOrControl+M',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:preview-markdown'
-      )
-    }
+    click: () => send('main-menu:preview-markdown'),
+    accelerator: 'CommandOrControl+Shift+M',
   },
   {
-    label: i18n.t('menu:editor.previewMindmap'),
-    accelerator: 'Shift+CommandOrControl+I',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:preview-mindmap'
-      )
-    }
+    label: i18n.t('menu:markdown.previewMindmap'),
+    click: () => send('main-menu:preview-mindmap'),
+    accelerator: 'CommandOrControl+Shift+I',
   },
   {
-    type: 'separator'
+    type: 'separator',
   },
   {
     label: i18n.t('menu:markdown.presentationMode'),
-    accelerator: 'Alt+CommandOrControl+P',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:presentation-mode'
-      )
-    }
-  }
-]
-
-const editMenu: MenuItemConstructorOptions[] = [
-  {
-    label: i18n.t('menu:edit.undo'),
-    role: 'undo'
+    click: () => send('main-menu:presentation-mode'),
+    accelerator: 'CommandOrControl+Shift+P',
   },
-  {
-    label: i18n.t('menu:edit.redo'),
-    role: 'redo'
-  },
-  { type: 'separator' },
-  {
-    label: i18n.t('menu:edit.cut'),
-    role: 'cut'
-  },
-  {
-    label: i18n.t('menu:edit.copy'),
-    role: 'copy'
-  },
-  {
-    label: i18n.t('menu:edit.paste'),
-    role: 'paste'
-  },
-  {
-    label: i18n.t('menu:edit.delete'),
-    role: 'delete'
-  },
-  { type: 'separator' },
-  {
-    label: i18n.t('menu:edit.selectAll'),
-    role: 'selectAll'
-  }
-]
-
-const historyMenu: MenuItemConstructorOptions[] = [
-  {
-    label: i18n.t('menu:history.back'),
-    accelerator: 'CommandOrControl+[',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:history-back'
-      )
-    }
-  },
-  {
-    label: i18n.t('menu:history.forward'),
-    accelerator: 'CommandOrControl+]',
-    click: () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        'main-menu:history-forward'
-      )
-    }
-  }
 ]
 
 const windowMenu: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:window.minimize'),
     accelerator: 'CommandOrControl+M',
-    role: 'minimize'
-  }
+    role: 'minimize',
+  },
 ]
 
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
-    submenu: isMac ? appMenuMac : appMenu
+    submenu: createPlatformMenuItems(appMenuItems),
   },
   {
-    label: i18n.t('menu:file.label'),
-    submenu: fileMenu
+    label: 'File',
+    submenu: createPlatformMenuItems(fileMenuItems),
   },
   {
-    label: i18n.t('menu:view.label'),
-    submenu: viewMenu
-  },
-  {
-    label: i18n.t('menu:edit.label'),
-    submenu: editMenu
+    role: 'editMenu',
+    submenu: createPlatformMenuItems(editMenuItems),
   },
   {
     label: i18n.t('menu:editor.label'),
-    submenu: editorMenu
+    submenu: createPlatformMenuItems(editorMenuItems),
   },
   {
     label: i18n.t('menu:markdown.label'),
-    submenu: markdownMenu
+    submenu: createPlatformMenuItems(markdownMenuItems),
   },
   {
-    label: i18n.t('menu:history.label'),
-    submenu: historyMenu
+    role: 'windowMenu',
   },
   {
     label: i18n.t('menu:window.label'),
-    submenu: windowMenu
+    submenu: windowMenu,
   },
   {
     label: i18n.t('menu:help.label'),
-    submenu: helpMenu
-  }
+    submenu: createPlatformMenuItems(helpMenuItems),
+  },
 ]
 
 export const mainMenu = createMenu(menuItems)

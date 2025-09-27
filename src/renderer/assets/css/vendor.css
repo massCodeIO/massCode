@@ -1,0 +1,50 @@
+
+.ps:hover > .ps__rail-y {
+  opacity: 1 !important;
+}
+.ps:hover > .ps__rail-x {
+  opacity: 1 !important;
+}
+
+.ps__rail-y {
+  background-color: transparent !important;
+  width: 5px;
+}
+
+.ps__rail-y:hover .ps__thumb-y {
+  width: 5px;
+}
+
+.ps__rail-x {
+  background-color: transparent !important;
+  width: 5px;
+}
+
+.ps__rail-x:hover {
+  height: 4px;
+  background-color: transparent !important;
+}
+
+.ps__rail-x:hover .ps__thumb-x {
+  height: 5px;
+}
+
+.ps__thumb-x,
+.ps__thumb-y {
+  background-color: var(--color-scrollbar) !important;
+  z-index: 50;
+}
+
+.ps__thumb-y {
+  width: 5px;
+  /* right: 0; */
+}
+
+.ps__thumb-x {
+  height: 5px;
+}
+
+.ps--scrolling-y > .ps__rail-y {
+  opacity: 1 !important;
+  /* background-color: var(--color-scrollbar) !important; */
+}

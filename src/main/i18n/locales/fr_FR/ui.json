@@ -1,0 +1,111 @@
+{
+  "total": "Total",
+  "line": "Ligne",
+  "column": "Colonne",
+  "fragment": "Fragment",
+  "path": "Chemin",
+  "button": {
+    "back": "Retour",
+    "cancel": "Annuler",
+    "clear": "Effacer",
+    "confirm": "Confirmer",
+    "copy": "Copier",
+    "fit": "Ajuster",
+    "generate": "Générer",
+    "ok": "OK",
+    "revers": "Inverser",
+    "saveAs": "Enregistrer sous",
+    "sort": "Trier",
+    "update": ["Aller sur GitHub", "OK"],
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "darkMode": "Mode sombre",
+    "toggleDarkMode": "Basculer le mode sombre",
+    "background": "Arrière-plan",
+    "goToDownload": "Aller au téléchargement",
+    "refreshPreview": "Actualiser l'aperçu",
+    "laserPointer": "Pointeur laser",
+    "fullscreen": "Plein écran",
+    "prev": "Précédent",
+    "next": "Suivant"
+  },
+  "action": {
+    "close": "Fermer",
+    "defaultLanguage": "Langue par défaut",
+    "duplicate": "Dupliquer",
+    "rename": "Renommer",
+    "restore": "Restaurer",
+    "setCustomIcon": "Définir une icône personnalisée",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "new": {
+      "storage": "Nouveau stockage",
+      "folder": "Nouveau dossier",
+      "snippet": "Nouveau snippet",
+      "fragment": "Nouveau fragment"
+    },
+    "add": {
+      "description": "Ajouter une description",
+      "tag": "Ajouter un tag",
+      "toFavorites": "Ajouter aux favoris"
+    },
+    "open": {
+      "storage": "Ouvrir le stockage"
+    },
+    "move": {
+      "storage": "Déplacer le stockage",
+      "toTrash": "Déplacer vers la corbeille"
+    },
+    "remove": {
+      "fromFavorites": "Retirer des favoris"
+    },
+    "reload": {
+      "storage": "Recharger le stockage"
+    },
+    "delete": {
+      "common": "Supprimer",
+      "now": "Supprimer maintenant",
+      "allData": "Supprimer toutes les données",
+      "trash": "Vider la corbeille"
+    },
+    "migrate": {
+      "fromSnippetsLab": "Depuis SnippetsLab",
+      "fromV3": "Depuis massCode v3"
+    },
+    "export": {
+      "toHtml": "Exporter en HTML"
+    },
+    "copy": {
+      "snippetLink": "Copier le lien du snippet"
+    }
+  },
+  "sidebar": {
+    "inbox": "Boîte de réception",
+    "favorites": "Favoris",
+    "allSnippets": "Tous les snippets",
+    "trash": "Corbeille",
+    "folders": "Dossiers",
+    "library": "Bibliothèque",
+    "tags": "Tags"
+  },
+  "folder": {
+    "untitled": "Dossier sans titre",
+    "plural": "Dossiers",
+    "collapseAll": "Tout réduire",
+    "expandAll": "Tout développer"
+  },
+  "snippet": {
+    "untitled": "Snippet sans titre",
+    "plural": "Snippets",
+    "emptyName": "Saisissez le nom du snippet",
+    "selectedMultiple": "{{count}} snippets sélectionnés",
+    "noSelected": "Aucun snippet sélectionné"
+  },
+  "placeholder": {
+    "emptyTagList": "Ajoutez des tags aux snippets pour les voir ici",
+    "emptyFoldersList": "Aucun dossier",
+    "emptySnippetsList": "Aucun snippet",
+    "search": "Rechercher",
+    "addTag": "Ajouter un tag"
+  }
+}

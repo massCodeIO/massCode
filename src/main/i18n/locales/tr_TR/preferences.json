@@ -1,0 +1,50 @@
+{
+  "label": "Tercihler",
+  "storage": {
+    "label": "Depolama",
+    "migrate": "Taşı",
+    "count": "Sayı",
+    "clearDatabase": "Database'i Temizle"
+  },
+  "editor": {
+    "label": "Editör",
+    "fontSize": "Yazı Boyutu",
+    "fontFamily": "Yazı Tipi",
+    "wrap": {
+      "label": "Kaydırma",
+      "wordWrap": "Kelime Kaydırma",
+      "off": "Kapalı"
+    },
+    "tabSize": "Sekme Boyutu",
+    "showInvisibles": "Görünmezleri Göster",
+    "highlightLine": "Satırı Vurgula",
+    "highlightGutter": "Kenar Boşluğunu Vurgula",
+    "matchBrackets": "Parantezleri Eşleştir",
+    "prettier": {
+      "label": "Prettier",
+      "trailingComma": {
+        "label": "Sondaki Virgül",
+        "none": "Yok",
+        "all": "Hepsi",
+        "es5": "ES5"
+      },
+      "semi": "Noktalı Virgül",
+      "singleQuote": "Tek Tırnak"
+    }
+  },
+  "appearance": {
+    "label": "Görünüm",
+    "theme": {
+      "label": "Tema",
+      "light": "Açık",
+      "dark": "Koyu"
+    }
+  },
+  "language": {
+    "label": "Dil"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "codeRenderer": "Kod Bloğu Görüntüleyici"
+  }
+}

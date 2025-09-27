@@ -1,0 +1,74 @@
+{
+  "app": {
+    "label": "massCode",
+    "preferences": "Tercihler",
+    "devtools": "Geliştirici Araçları",
+    "update": "Güncellemeleri Kontrol Et...",
+    "quit": "massCode'dan Çık",
+    "about": "massCode Hakkında",
+    "hide": "massCode'u Gizle"
+  },
+  "help": {
+    "label": "Yardım",
+    "website": "Web Sitesi",
+    "documentation": "Dokümantasyon",
+    "viewInGitHub": "GitHub'da Görüntüle",
+    "changeLog": "Değişiklik Günlüğü",
+    "reportIssue": "Sorun Bildir",
+    "giveStar": "Yıldız Ver",
+    "extension": {
+      "vscode": "VS Code Eklentisi",
+      "raycast": "Raycast Eklentisi",
+      "alfred": "Alfred Eklentisi"
+    },
+    "donate": {
+      "openCollective": "Open Collective'de Bağış Yap",
+      "payPal": "PayPal ile Bağış Yap",
+      "gumroad": "Gumroad ile Bağış Yap (Visa, Mastercard, vb.)"
+    },
+    "twitter": "Twitter",
+    "devTools": "Geliştirici Araçlarını Aç/Kapat",
+    "links": {
+      "snippets": "Snippet Koleksiyonu"
+    }
+  },
+  "edit": {
+    "label": "Düzenle",
+    "find": "Bul"
+  },
+  "view": {
+    "label": "Görünüm",
+    "sortBy": {
+      "label": "Snippet'leri Sırala",
+      "dateModified": "Değiştirilme Tarihi",
+      "dateCreated": "Oluşturulma Tarihi",
+      "name": "İsim"
+    },
+    "compactMode": "Kompakt Mod"
+  },
+  "editor": {
+    "label": "Editör",
+    "copy": "Snippet'i Panoya Kopyala",
+    "format": "Biçimlendir",
+    "previewCode": "Kodu Önizle",
+    "previewScreenshot": "Ekran Görüntüsünü Önizle",
+    "fontSizeIncrease": "Yazı Boyutunu Artır",
+    "fontSizeDecrease": "Yazı Boyutunu Azalt",
+    "fontSizeReset": "Yazı Boyutunu Sıfırla"
+  },
+  "markdown": {
+    "label": "Markdown",
+    "presentationMode": "Sunum Modu",
+    "preview": "Önizleme",
+    "previewMarkdown": "Markdown Önizle",
+    "previewMindmap": "Mindmap Önizle"
+  },
+  "history": {
+    "label": "Geçmiş",
+    "back": "Geri",
+    "forward": "İleri"
+  },
+  "devtools": {
+    "label": "Geliştirici Araçları"
+  }
+}

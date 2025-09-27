@@ -1,0 +1,111 @@
+{
+  "total": "مجموع",
+  "line": "خط",
+  "column": "ستون",
+  "fragment": "قطعه",
+  "path": "مسیر",
+  "button": {
+    "back": "بازگشت",
+    "cancel": "لغو",
+    "clear": "پاک کردن",
+    "confirm": "تایید",
+    "copy": "کپی",
+    "fit": "متناسب",
+    "generate": "تولید",
+    "ok": "تایید",
+    "revers": "معکوس",
+    "saveAs": "ذخیره به عنوان",
+    "sort": "مرتب‌سازی",
+    "update": ["رفتن به GitHub", "تایید"],
+    "zoomIn": "بزرگنمایی",
+    "zoomOut": "کوچک‌نمایی",
+    "darkMode": "حالت تاریک",
+    "toggleDarkMode": "تغییر حالت تاریک",
+    "background": "پس‌زمینه",
+    "goToDownload": "رفتن به دانلود",
+    "refreshPreview": "به‌روزرسانی پیش‌نمایش",
+    "laserPointer": "اشاره‌گر لیزری",
+    "fullscreen": "تمام صفحه",
+    "prev": "قبلی",
+    "next": "بعدی"
+  },
+  "action": {
+    "close": "بستن",
+    "defaultLanguage": "زبان پیش‌فرض",
+    "duplicate": "تکثیر",
+    "rename": "تغییر نام",
+    "restore": "بازیابی",
+    "setCustomIcon": "تنظیم آیکون سفارشی",
+    "show": "نمایش",
+    "hide": "پنهان",
+    "new": {
+      "storage": "فضای ذخیره‌سازی جدید",
+      "folder": "پوشه جدید",
+      "snippet": "Snippet جدید",
+      "fragment": "قطعه جدید"
+    },
+    "add": {
+      "description": "افزودن توضیحات",
+      "tag": "افزودن برچسب",
+      "toFavorites": "افزودن به علاقه‌مندی‌ها"
+    },
+    "open": {
+      "storage": "باز کردن فضای ذخیره‌سازی"
+    },
+    "move": {
+      "storage": "انتقال فضای ذخیره‌سازی",
+      "toTrash": "انتقال به سطل زباله"
+    },
+    "remove": {
+      "fromFavorites": "حذف از علاقه‌مندی‌ها"
+    },
+    "reload": {
+      "storage": "بارگذاری مجدد فضای ذخیره‌سازی"
+    },
+    "delete": {
+      "common": "حذف",
+      "now": "حذف اکنون",
+      "allData": "حذف تمام داده‌ها",
+      "trash": "خالی کردن سطل زباله"
+    },
+    "migrate": {
+      "fromSnippetsLab": "از SnippetsLab",
+      "fromV3": "از massCode v3"
+    },
+    "export": {
+      "toHtml": "خروجی به HTML"
+    },
+    "copy": {
+      "snippetLink": "کپی لینک Snippet"
+    }
+  },
+  "sidebar": {
+    "inbox": "صندوق ورودی",
+    "favorites": "علاقه‌مندی‌ها",
+    "allSnippets": "همه Snippetها",
+    "trash": "سطل زباله",
+    "folders": "پوشه‌ها",
+    "library": "کتابخانه",
+    "tags": "برچسب‌ها"
+  },
+  "folder": {
+    "untitled": "پوشه بدون عنوان",
+    "plural": "پوشه‌ها",
+    "collapseAll": "بستن همه",
+    "expandAll": "باز کردن همه"
+  },
+  "snippet": {
+    "untitled": "Snippet بدون عنوان",
+    "plural": "Snippetها",
+    "emptyName": "نام snippet را وارد کنید",
+    "selectedMultiple": "{{count}} Snippet انتخاب شده",
+    "noSelected": "هیچ Snippet انتخاب نشده"
+  },
+  "placeholder": {
+    "emptyTagList": "برای مشاهده snippetها در اینجا، به آنها برچسب اضافه کنید",
+    "emptyFoldersList": "بدون پوشه",
+    "emptySnippetsList": "بدون اسنیپت",
+    "search": "جستجو",
+    "addTag": "افزودن برچسب"
+  }
+}

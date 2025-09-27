@@ -1,6 +1,5 @@
-
 <p align="center">
-  <img src="./preview.png">
+  <img src="./.github/assets/logo.png" alt="massCode" width="150">
 </p>
 
 <h1 align="center">massCode</h1>
@@ -10,7 +9,6 @@
   <br>
   Inspired by applications like SnippetsLab and Quiver.
 </p>
-
 
 <p align="center">
   <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/massCodeIO/massCode">
@@ -64,7 +62,7 @@ However, the amount of effort needed to maintain and develop new features for th
 massCode allows you to organize snippets using multi-level folders as well as tags. Each snippet has fragments - tabs, which gives even greater level of organization.
 
 ### Editor
-massCode uses [Codemirror](https://github.com/codemirror/codemirror5) as the basis for the editor and `.tmLanguage` as the grammar for syntax highlighting. This tandem opens the door to over [600](https://github.com/github/linguist/blob/master/vendor/README.md) existing grammars. The application currently supports more than [160](https://github.com/massCodeIO/massCode/tree/master/src/renderer/components/editor) grammars. In addition to `.tmLanguage`, the application supports `.tmTheme` for themes. There is also support for [Prettier](https://prettier.io) for code formatting. 
+massCode uses [Codemirror](https://github.com/codemirror/codemirror5) as the basis for the editor and `.tmLanguage` as the grammar for syntax highlighting. This tandem opens the door to over [600](https://github.com/github/linguist/blob/master/vendor/README.md) existing grammars. The application currently supports more than [160](https://github.com/massCodeIO/massCode/tree/master/src/renderer/components/editor) grammars. In addition to `.tmLanguage`, the application supports `.tmTheme` for themes. There is also support for [Prettier](https://prettier.io) for code formatting.
 
 ### Real-time Render for HTML & CSS
 You can not only collect snippets, but also see the rendering result for HTML and CSS in real time. Test the idea or just view the result.
@@ -103,7 +101,6 @@ massCode provides developers with a range of convenient tools, such as:
 -  Text tools: Case Converter, Slug Generator, Sort Lines, URL Parser
 -  Cryptography & Security: Hash, HMAC, Password and UUID Generators
 -  Encoders & Decoders: URL, Base64
-
 
 ## Overview
 

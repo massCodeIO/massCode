@@ -260,6 +260,14 @@ const markdownMenuItems: MenuConfig[] = [
   },
 ]
 
+const windowMenu: MenuItemConstructorOptions[] = [
+  {
+    label: i18n.t('menu:window.minimize'),
+    accelerator: 'CommandOrControl+M',
+    role: 'minimize',
+  },
+]
+
 const menuItems: MenuItemConstructorOptions[] = [
   {
     label: i18n.t('menu:app.label'),
@@ -283,6 +291,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   },
   {
     role: 'windowMenu',
+  },
+  {
+    label: i18n.t('menu:window.label'),
+    submenu: windowMenu,
   },
   {
     label: i18n.t('menu:help.label'),

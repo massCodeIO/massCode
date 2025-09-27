@@ -70,5 +70,9 @@
   },
   "devtools": {
     "label": "Developer Tools"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
   }
 }

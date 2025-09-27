@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch: # Allow manual trigger
+    inputs:
+      tag:
+        description: 'Tag for release (e.g., v1.0.0)'
+        required: true
+        default: v4.0.0
 
 jobs:
   build:
@@ -50,11 +55,12 @@ jobs:
         run: pnpm run build:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name || inputs.tag }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: masscode-${{ matrix.platform }}-${{ github.ref_name }}
+          name: masscode-${{ matrix.platform }}-${{ env.TAG }}
           path: |
             dist/*.dmg
             dist/*.pkg
@@ -69,7 +75,7 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
@@ -94,6 +100,7 @@ jobs:
         with:
           files: |
             artifacts/masscode-*/*
+          tag_name: ${{ github.ref_name || inputs.tag }}
           draft: true
           generate_release_notes: true
           append_body: true

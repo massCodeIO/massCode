@@ -1,6 +1,6 @@
 import type { GrammarOption, Language } from '../types'
 import { activateLanguage, addGrammar } from 'codemirror-textmate'
-import { auxGrammars } from './aux'
+import { auxGrammars } from './auxiliary-grammars'
 import { languages } from './languages'
 
 export async function loadGrammars() {

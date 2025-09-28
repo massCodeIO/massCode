@@ -3,6 +3,9 @@
 </p>
 
 <h1 align="center">massCode</h1>
+<p align="center">
+A free, open-source code snippet manager to create, organize, and instantly access your personal snippet library.
+</p>
 
 <p align="center">
   <strong>Built with Electron, Vue & Codemirror.</strong>
@@ -107,14 +110,51 @@ Handy built-in utilities for everyday dev tasks:
 * **Crypto & Security**: Hash/HMAC, Password Generator, UUID
 * **Encoders/Decoders**: URL, Base64, JSON ⇄ TOML/XML/YAML, Text ⇄ ASCII/Binary/Unicode, Color Converter
 
----
-
 ## Overview
 
 massCode was created as a personal learning project and evolved into an open-source tool. The goal: combine the best features of snippet managers (free and paid) into one flexible, developer-friendly application.
 
+## Build Locally
+
+### Prerequisites
+
+- Node.js (>=20.16.0)
+- pnpm (>= 9.0.0)
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Build
+
+To build for current platform:
+
+```bash
+pnpm build
+```
+
+To build for a specific platform:
+
+```bash
+pnpm build:mac    # macOS
+pnpm build:win    # Windows
+pnpm build:linux  # Linux
+```
+
+### Development
+
+To run in development mode:
+
+```bash
+pnpm dev
+```
+
+This will start the application with hot reloading.
+
 ## Follow
- - News and updates on [Twitter](https://twitter.com/anton_reshetov).
+ - News and updates on [X](https://x.com/anton_reshetov).
  - [Discussions](https://github.com/massCodeIO/massCode/discussions).
 
 ![](.github/assets/subscribe.gif)

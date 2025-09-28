@@ -324,6 +324,10 @@ async function format() {
 
 ipc.on('main-menu:format', format)
 
+function onSplitterLayout() {
+  editor?.refresh()
+}
+
 onMounted(() => {
   init()
 })
@@ -339,8 +343,9 @@ onMounted(() => {
       v-show="isShowEditor"
       direction="vertical"
       class="overflow-auto"
+      @layout="onSplitterLayout"
     >
-      <SplitterPanel as-child>
+      <SplitterPanel>
         <div
           id="editor"
           data-editor-mount

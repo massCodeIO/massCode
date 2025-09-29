@@ -7,6 +7,10 @@ You can preview it below:
   <img src="./preview-matrix.png" alt="Matrix theme preview">
 </p>
 
+<b>Disclaimer</b>
+
+This theme is inspired by the visual style of *The Matrix* movie. It is not affiliated with, endorsed by, or associated with Warner Bros. or any official Matrix franchise rights holders. All trademarks and copyrights belong to their respective owners.
+
 <hr>
 
 <h1 align="center">Original README</h1>

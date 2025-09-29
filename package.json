@@ -36,7 +36,7 @@
     "@elysiajs/node": "^1.2.5",
     "@elysiajs/swagger": "^1.2.2",
     "@vueuse/core": "^12.7.0",
-    "better-sqlite3": "^11.8.1",
+    "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "chroma-js": "^3.1.2",
     "class-variance-authority": "^0.7.1",

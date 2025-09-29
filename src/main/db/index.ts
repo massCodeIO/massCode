@@ -14,6 +14,19 @@ const isDev = process.env.NODE_ENV === 'development'
 let db: Database.Database | null = null
 let backupTimer: NodeJS.Timeout | null = null
 
+function tableExists(db: Database.Database, table: string): boolean {
+  const row = db
+    .prepare(
+      `
+    SELECT name 
+    FROM sqlite_master 
+    WHERE type='table' AND name=?
+  `,
+    )
+    .get(table)
+  return !!row
+}
+
 export function useDB() {
   if (db)
     return db
@@ -144,15 +157,26 @@ export function clearDB() {
   try {
     const db = useDB()
     const stmt = db.transaction(() => {
-      // Сначала удаляем записи из таблиц со внешними ключами
-      db.prepare('DELETE FROM snippet_tags').run()
-      db.prepare('DELETE FROM snippet_contents').run()
-      db.prepare('DELETE FROM snippets').run()
-      // Затем удаляем записи из основных таблиц
-      db.prepare('DELETE FROM tags').run()
-      db.prepare('DELETE FROM folders').run()
-      // Сбрасываем автоинкрементные счетчики, чтобы id начинались с 1
-      db.prepare('DELETE FROM sqlite_sequence').run()
+      const tables = [
+        // Таблицы со внешними ключами должны быть первыми
+        'snippet_tags',
+        'snippet_contents',
+        'snippets',
+        // Остальные таблицы можно удалить в любом порядке
+        'tags',
+        'folders',
+      ]
+
+      for (const table of tables) {
+        if (tableExists(db, table)) {
+          db.prepare(`DELETE FROM ${table}`).run()
+        }
+      }
+
+      // Сброс автоинкремента — тоже только если таблица есть
+      if (tableExists(db, 'sqlite_sequence')) {
+        db.prepare('DELETE FROM sqlite_sequence').run()
+      }
     })
 
     stmt()

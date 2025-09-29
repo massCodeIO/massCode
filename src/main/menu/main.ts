@@ -217,7 +217,7 @@ const editorMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:editor.previewCode'),
     click: () => send('main-menu:preview-code'),
-    accelerator: 'CommandOrControl+Shift+P',
+    accelerator: 'Alt+CommandOrControl+P',
   },
   {
     type: 'separator',

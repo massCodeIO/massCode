@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/electron-builder",
   "appId": "io.masscode.app",
   "productName": "massCode",
   "directories": {
@@ -29,7 +30,11 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "shortcutName": "massCode"
+    "shortcutName": "massCode",
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-${arch}-portable.${ext}"
   },
   "protocols": [
     {

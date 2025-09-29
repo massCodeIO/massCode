@@ -48,12 +48,12 @@ export function migrateJsonToSqlite(jsonData: JSONDB) {
         // Миграция папок
         jsonData.folders.forEach((folder) => {
           const result = insertFolderStmt.run(
-            folder.name,
+            folder.name || 'Untitled Folder',
             folder.defaultLanguage || 'plain_text',
             null, // parentId обновим позже
             folder.isOpen ? 1 : 0,
-            folder.createdAt,
-            folder.updatedAt,
+            folder.createdAt || Date.now(),
+            folder.updatedAt || Date.now(),
             folder.icon || null,
             folder.index ?? 0,
           )
@@ -74,9 +74,9 @@ export function migrateJsonToSqlite(jsonData: JSONDB) {
         // Миграция тегов
         jsonData.tags.forEach((tag) => {
           const result = insertTagStmt.run(
-            tag.name,
-            tag.createdAt,
-            tag.updatedAt,
+            tag.name || 'Untitled Tag',
+            tag.createdAt || Date.now(),
+            tag.updatedAt || Date.now(),
           )
           tagIdMap[tag.id] = Number(result.lastInsertRowid)
         })
@@ -86,13 +86,13 @@ export function migrateJsonToSqlite(jsonData: JSONDB) {
           // Определяем новый id папки для сниппета
           const mappedFolderId = folderIdMap[snippet.folderId] || null
           const result = insertSnippetStmt.run(
-            snippet.name,
+            snippet.name || 'Untitled Snippet',
             snippet.description || null,
             mappedFolderId,
             snippet.isDeleted ? 1 : 0,
             snippet.isFavorites ? 1 : 0,
-            snippet.createdAt,
-            snippet.updatedAt,
+            snippet.createdAt || Date.now(),
+            snippet.updatedAt || Date.now(),
           )
           const newSnippetId = Number(result.lastInsertRowid)
           snippetIdMap[snippet.id] = newSnippetId

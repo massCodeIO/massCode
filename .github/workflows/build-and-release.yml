@@ -111,7 +111,7 @@ jobs:
         run: pnpm run rebuild
 
       - name: Build application
-        run: pnpm exec vite build && pnpm run build:main && pnpm exec electron-builder --config electron-builder.sponsored.json --${{ matrix.platform }} ${{ matrix.arch }}
+        run: pnpm run build:sponsored:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name || inputs.tag }}

@@ -68,6 +68,8 @@ jobs:
             dist/*.msi
             dist/*.AppImage
             dist/*.snap
+            !dist/*.yml
+            !dist/*.blockmap
           if-no-files-found: warn
           retention-days: 30
 
@@ -128,6 +130,8 @@ jobs:
             dist/*.msi
             dist/*.AppImage
             dist/*.snap
+            !dist/*.yml
+            !dist/*.blockmap
           if-no-files-found: warn
           retention-days: 30
 

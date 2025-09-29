@@ -153,6 +153,14 @@ pnpm dev
 
 This will start the application with hot reloading.
 
+## Troubleshooting
+
+If you encounter the error message "massCode" is damaged and can't be opened. You should move it to the Trash while installing software on macOS, it may be due to security settings restrictions in macOS. To solve this problem, please try the following command in Terminal:
+
+```bash
+sudo xattr -r -d com.apple.quarantine /Applications/massCode.app
+```
+
 ## Follow
  - News and updates on [X](https://x.com/anton_reshetov).
  - [Discussions](https://github.com/massCodeIO/massCode/discussions).

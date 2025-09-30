@@ -7,12 +7,23 @@ import fs from 'fs-extra'
 import { store } from '../store'
 
 const DB_NAME = 'massCode.db'
-// const BACKUP_DB_NAME = 'massCode-backup.db'
-// const MANUAL_BACKUP_DB_NAME = 'massCode-manual-backup.db'
 const isDev = process.env.NODE_ENV === 'development'
 
 let db: Database.Database | null = null
 let backupTimer: NodeJS.Timeout | null = null
+
+function isSqliteFile(dbPath: string): boolean {
+  try {
+    if (!fs.existsSync(dbPath))
+      return false
+
+    const buffer = fs.readFileSync(dbPath).subarray(0, 16)
+    return buffer.toString('ascii') === 'SQLite format 3\x00'
+  }
+  catch {
+    return false
+  }
+}
 
 function tableExists(db: Database.Database, table: string): boolean {
   const row = db
@@ -32,6 +43,14 @@ export function useDB() {
     return db
 
   const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+
+  if (fs.existsSync(dbPath) && !isSqliteFile(dbPath)) {
+    const backupPath = `${dbPath}.old`
+    try {
+      fs.moveSync(dbPath, backupPath)
+    }
+    catch {}
+  }
 
   try {
     db = new Database(dbPath, {

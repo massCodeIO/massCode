@@ -24,7 +24,7 @@
     "icon": "build/icons/icon.ico"
   },
   "linux": {
-    "target": ["AppImage", "snap"],
+    "target": ["AppImage"],
     "icon": "build/icons/icon.png"
   },
   "nsis": {

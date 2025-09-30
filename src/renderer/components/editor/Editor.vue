@@ -345,7 +345,7 @@ onMounted(() => {
       class="overflow-auto"
       @layout="onSplitterLayout"
     >
-      <SplitterPanel>
+      <SplitterPanel as-child>
         <div
           id="editor"
           data-editor-mount

@@ -55,12 +55,11 @@ jobs:
         run: pnpm run build:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name || inputs.tag }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: masscode-${{ matrix.platform }}-${{ env.TAG }}
+          name: masscode-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
           path: |
             dist/*.dmg
             dist/*.pkg
@@ -117,13 +116,12 @@ jobs:
         run: pnpm run build:sponsored:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name || inputs.tag }}
           VITE_SPONSORED: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sponsored-${{ matrix.platform }}-${{ env.TAG }}
+          name: sponsored-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
           path: |
             dist/*.dmg
             dist/*.pkg
@@ -153,7 +151,14 @@ jobs:
           path: artifacts
 
       - name: Display structure of downloaded files
-        run: ls -la artifacts/
+        run: ls -lR artifacts/
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release-files
+          find artifacts/masscode-* -type f \( -name "massCode-*.dmg" -o -name "massCode-*.pkg" -o -name "massCode-*.exe" -o -name "massCode-*.msi" -o -name "massCode-*.AppImage" -o -name "massCode-*.snap" \) ! -name "*-sponsored.*" -exec cp {} release-files/ \;
+          echo "Files prepared for release:"
+          ls -lh release-files/
 
       - name: Get package version
         id: package-version
@@ -164,13 +169,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/masscode-*/*.dmg
-            artifacts/masscode-*/*.pkg
-            artifacts/masscode-*/*.exe
-            artifacts/masscode-*/*.msi
-            artifacts/masscode-*/*.AppImage
-            artifacts/masscode-*/*.snap
+          files: release-files/*
           tag_name: ${{ github.ref_name || inputs.tag }}
           draft: true
           generate_release_notes: true

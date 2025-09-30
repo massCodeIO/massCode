@@ -68,6 +68,7 @@ jobs:
             dist/*.msi
             dist/*.AppImage
             dist/*.snap
+            !dist/*-sponsored.*
             !dist/*.yml
             !dist/*.blockmap
           if-no-files-found: warn
@@ -145,9 +146,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - name: Download artifacts from "build" job
         uses: actions/download-artifact@v4
         with:
+          pattern: masscode-*
           path: artifacts
 
       - name: Display structure of downloaded files
@@ -163,7 +165,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/masscode-*/*
+            artifacts/masscode-*/*.dmg
+            artifacts/masscode-*/*.pkg
+            artifacts/masscode-*/*.exe
+            artifacts/masscode-*/*.msi
+            artifacts/masscode-*/*.AppImage
+            artifacts/masscode-*/*.snap
           tag_name: ${{ github.ref_name || inputs.tag }}
           draft: true
           generate_release_notes: true

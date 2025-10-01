@@ -27,19 +27,20 @@ body:
     validations:
       required: true
   - type: input
-    id: version
+    id: app_details
     attributes:
-      label: Version
-      description: What version of massCode are you running?
-      placeholder: e.g. 2.0.0, 2.1.0-beta.6
+      label: App Version and Architecture
+      description: What version and architecture of massCode are you running? You can get this info from the About massCode in app menu.
+      placeholder: e.g. 4.0.1 (arm64)
     validations:
       required: true
-  - type: input
-    id: os
+  - type: textarea
+    id: system
     attributes:
-      label: OS
-      description: What version of OS are you using?
-      placeholder: e.g. macOS Monterey 12.1, Windows 10
+      label: System info
+      description: Output of `npx envinfo --system`
+      render: shell
+      placeholder: System
     validations:
       required: true
   - type: checkboxes

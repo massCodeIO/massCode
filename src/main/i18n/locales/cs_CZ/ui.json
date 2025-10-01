@@ -35,7 +35,8 @@
     "duplicate": "Duplikovat",
     "rename": "Přejmenovat",
     "restore": "Obnovit",
-    "setCustomIcon": "Nastavit vlastní ikonu",
+    "setCustomIcon": "Nastavit ikonu",
+    "removeCustomIcon": "Odebrat ikonu",
     "show": "Zobrazit",
     "hide": "Skrýt",
     "new": {

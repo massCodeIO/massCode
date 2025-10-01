@@ -35,7 +35,8 @@
     "duplicate": "تکثیر",
     "rename": "تغییر نام",
     "restore": "بازیابی",
-    "setCustomIcon": "تنظیم آیکون سفارشی",
+    "setCustomIcon": "تنظیم آیکون",
+    "removeCustomIcon": "حذف آیکون",
     "show": "نمایش",
     "hide": "پنهان",
     "new": {

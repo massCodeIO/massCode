@@ -35,7 +35,8 @@
     "duplicate": "Duplizieren",
     "rename": "Umbenennen",
     "restore": "Wiederherstellen",
-    "setCustomIcon": "Benutzerdefiniertes Icon festlegen",
+    "setCustomIcon": "Icon festlegen",
+    "removeCustomIcon": "Icon entfernen",
     "show": "Anzeigen",
     "hide": "Ausblenden",
     "new": {

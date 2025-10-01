@@ -16,7 +16,7 @@ export interface DialogOptions {
   description?: string
   confirmText?: string
   cancelText?: string
-  content?: any
+  content?: string | Component
 }
 
 export function useDialog() {
@@ -119,34 +119,38 @@ export function useDialog() {
                             ],
                           },
                         ),
-                        content
+                        content && typeof content === 'string'
                           ? h('div', { class: '' }, { default: () => content })
+                          : content && typeof content === 'object'
+                            ? h(content)
+                            : null,
+                        confirmText && cancelText
+                          ? h(
+                              Dialog.DialogFooter,
+                              {},
+                              {
+                                default: () => [
+                                  h(
+                                    Button,
+                                    {
+                                      size: 'md',
+                                      onClick: onCancel,
+                                    },
+                                    { default: () => cancelText },
+                                  ),
+                                  h(
+                                    Button,
+                                    {
+                                      variant: 'primary',
+                                      size: 'md',
+                                      onClick: onConfirm,
+                                    },
+                                    { default: () => confirmText },
+                                  ),
+                                ],
+                              },
+                            )
                           : null,
-                        h(
-                          Dialog.DialogFooter,
-                          {},
-                          {
-                            default: () => [
-                              h(
-                                Button,
-                                {
-                                  size: 'md',
-                                  onClick: onCancel,
-                                },
-                                { default: () => cancelText },
-                              ),
-                              h(
-                                Button,
-                                {
-                                  variant: 'primary',
-                                  size: 'md',
-                                  onClick: onConfirm,
-                                },
-                                { default: () => confirmText },
-                              ),
-                            ],
-                          },
-                        ),
                       ],
                     },
                   ),

@@ -35,7 +35,8 @@
     "duplicate": "Duplicate",
     "rename": "Rename",
     "restore": "Restore",
-    "setCustomIcon": "Set Custom Icon",
+    "setCustomIcon": "Set Icon",
+    "removeCustomIcon": "Remove Icon",
     "show": "Show",
     "hide": "Hide",
     "new": {

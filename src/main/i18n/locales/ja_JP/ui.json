@@ -35,7 +35,8 @@
     "duplicate": "複製",
     "rename": "名前変更",
     "restore": "復元",
-    "setCustomIcon": "カスタムアイコンを設定",
+    "setCustomIcon": "アイコンを設定",
+    "removeCustomIcon": "アイコンを削除",
     "show": "表示",
     "hide": "非表示",
     "new": {

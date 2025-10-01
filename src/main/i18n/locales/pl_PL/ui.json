@@ -35,7 +35,8 @@
     "duplicate": "Duplikuj",
     "rename": "Zmień nazwę",
     "restore": "Przywróć",
-    "setCustomIcon": "Ustaw własną ikonę",
+    "setCustomIcon": "Ustaw ikonę",
+    "removeCustomIcon": "Usuń ikonę",
     "show": "Pokaż",
     "hide": "Ukryj",
     "new": {

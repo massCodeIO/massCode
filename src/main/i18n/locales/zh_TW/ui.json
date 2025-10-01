@@ -35,7 +35,8 @@
     "duplicate": "複製",
     "rename": "重命名",
     "restore": "還原",
-    "setCustomIcon": "設置自定義圖標",
+    "setCustomIcon": "設置圖標",
+    "removeCustomIcon": "刪除圖標",
     "show": "顯示",
     "hide": "隱藏",
     "new": {

@@ -35,7 +35,8 @@
     "duplicate": "Duplică",
     "rename": "Redenumește",
     "restore": "Restaurează",
-    "setCustomIcon": "Setează Iconiță Personalizată",
+    "setCustomIcon": "Setează Iconiță",
+    "removeCustomIcon": "Elimină Iconița",
     "show": "Arată",
     "hide": "Ascunde",
     "new": {

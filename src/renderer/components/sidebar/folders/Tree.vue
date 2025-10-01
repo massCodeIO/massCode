@@ -7,6 +7,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { scrollToElement } from '@/utils'
+import CustomIcons from './custom-icons/CustomIcons.vue'
 import { treeKeys } from './keys'
 import TreeNode from './TreeNode.vue'
 
@@ -37,6 +38,7 @@ const {
   folders,
   updateFolder,
   getFolderByIdFromTree,
+  getFolders,
 } = useFolders()
 const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
@@ -46,7 +48,7 @@ const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
 
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
-const contextNodeId = ref<number | null>(null)
+const contextNode = ref<Node | null>(null)
 
 function clickNode(id: number) {
   return emit('clickNode', id)
@@ -67,7 +69,7 @@ function toggleNode(node: Node) {
  * Так же такое решение избавит от n кол-ва ContextMenu на каждый узел.
  */
 function contextMenu(node: Node, event: MouseEvent) {
-  contextNodeId.value = node.id
+  contextNode.value = node
   contextMenuTriggerRef.value?.dispatchEvent(
     new MouseEvent('contextmenu', {
       bubbles: false,
@@ -78,11 +80,14 @@ function contextMenu(node: Node, event: MouseEvent) {
 }
 
 async function onDeleteFolder() {
+  if (!contextNode.value)
+    return
+
   const { confirm } = useDialog()
 
   const folderName = getFolderByIdFromTree(
     folders.value,
-    contextNodeId.value,
+    contextNode.value.id,
   )?.name
 
   const isConfirmed = await confirm({
@@ -90,10 +95,10 @@ async function onDeleteFolder() {
     description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
   })
 
-  if (isConfirmed && contextNodeId.value) {
-    await deleteFolder(contextNodeId.value)
+  if (isConfirmed) {
+    await deleteFolder(contextNode.value.id)
 
-    if (contextNodeId.value === state.folderId) {
+    if (contextNode.value.id === state.folderId) {
       state.folderId = undefined
       clearSnippetsState()
 
@@ -117,18 +122,46 @@ function onRenameFolder() {
   // FIXME: Костыль для того чтобы input в TreeNode фокусировался,
   // разобраться почему не работает nextTick
   setTimeout(() => {
-    renameFolderId.value = contextNodeId.value
+    if (!contextNode.value)
+      return
+
+    renameFolderId.value = contextNode.value.id
   }, 100)
 }
 
 function onSelectLanguage(language: string) {
-  if (!contextNodeId.value) {
+  if (!contextNode.value) {
     return
   }
 
-  updateFolder(contextNodeId.value, {
+  updateFolder(contextNode.value.id, {
     defaultLanguage: language,
   })
+}
+
+function onSetCustomIcon() {
+  if (!contextNode.value)
+    return
+
+  const { showDialog } = useDialog()
+
+  showDialog({
+    title: i18n.t('action.setCustomIcon'),
+    content: h(CustomIcons, {
+      nodeId: contextNode.value.id,
+    }),
+  })
+}
+
+async function onRemoveCustomIcon() {
+  if (!contextNode.value)
+    return
+
+  updateFolder(contextNode.value.id, {
+    icon: null,
+  })
+
+  await getFolders()
 }
 
 provide(treeKeys, {
@@ -186,6 +219,16 @@ provide(treeKeys, {
         </ContextMenu.Item>
         <ContextMenu.Item @click="onDeleteFolder">
           {{ i18n.t("action.delete.common") }}
+        </ContextMenu.Item>
+        <ContextMenu.Separator />
+        <ContextMenu.Item @click="onSetCustomIcon">
+          {{ i18n.t("action.setCustomIcon") }}
+        </ContextMenu.Item>
+        <ContextMenu.Item
+          v-if="contextNode?.icon"
+          @click="onRemoveCustomIcon"
+        >
+          {{ i18n.t("action.removeCustomIcon") }}
         </ContextMenu.Item>
         <ContextMenu.Separator />
         <ContextMenu.Sub>

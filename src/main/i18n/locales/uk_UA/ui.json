@@ -35,7 +35,8 @@
     "duplicate": "Дублювати",
     "rename": "Перейменувати",
     "restore": "Відновити",
-    "setCustomIcon": "Встановити власну іконку",
+    "setCustomIcon": "Встановити іконку",
+    "removeCustomIcon": "Видалити іконку",
     "show": "Показати",
     "hide": "Приховати",
     "new": {

@@ -59,6 +59,7 @@ body {
 
   --color-text: oklch(20% 0 0);
   --color-text-muted: oklch(60% 0 0);
+  --color-text-highlight: oklch(90.5% 0.182 98.111);
 
   --color-list-selection: oklch(92% 0 0);
   --color-list-selection-fg: oklch(20% 0 0);
@@ -93,6 +94,7 @@ html.dark {
 
   --color-text: oklch(75% 0 0);
   --color-text-muted: oklch(60% 0 0);
+  --color-text-highlight: oklch(90.5% 0.182 98.111);
 
   --color-list-selection: oklch(32% 0 0);
   --color-list-selection-fg: oklch(95% 0 0);

@@ -29,6 +29,7 @@ const {
   isEmpty,
   selectedSnippetIds,
   isAvailableToCodePreview,
+  searchQuery,
 } = useSnippets()
 const {
   isShowMarkdown,
@@ -43,6 +44,7 @@ const { addToUpdateContentQueue } = useSnippetUpdate()
 
 const isDark = useDark()
 let editor: CodeMirror.Editor | null = null
+let currentSearchOverlay: any = null
 
 const isProgrammaticChange = ref(false)
 
@@ -208,6 +210,11 @@ async function init() {
   watch(selectedSnippetContent, (v) => {
     nextTick(() => {
       setValue(v?.value || '')
+      nextTick(() => {
+        if (searchQuery.value) {
+          updateSearchOverlay()
+        }
+      })
     })
   })
 
@@ -328,8 +335,72 @@ function onSplitterLayout() {
   editor?.refresh()
 }
 
+function createSearchOverlay(query: string) {
+  if (!query)
+    return null
+
+  let regexp: RegExp
+
+  try {
+    regexp = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+  }
+  catch {
+    return null
+  }
+
+  return {
+    token: (stream: any) => {
+      regexp.lastIndex = stream.pos
+      const match = regexp.exec(stream.string)
+      if (match && match.index === stream.pos) {
+        stream.pos += match[0].length
+        return 'searching'
+      }
+      else if (match) {
+        stream.pos = match.index
+      }
+      else {
+        stream.skipToEnd()
+      }
+    },
+  }
+}
+
+function updateSearchOverlay() {
+  if (!editor)
+    return
+
+  if (currentSearchOverlay) {
+    editor.removeOverlay(currentSearchOverlay)
+    currentSearchOverlay = null
+  }
+
+  if (searchQuery.value) {
+    currentSearchOverlay = createSearchOverlay(searchQuery.value)
+    if (currentSearchOverlay) {
+      editor.addOverlay(currentSearchOverlay)
+
+      // Scroll to the first match
+      const cursor = editor.getSearchCursor(
+        searchQuery.value,
+        { line: 0, ch: 0 },
+        true,
+      )
+      if (cursor.findNext()) {
+        editor.scrollIntoView(cursor.from(), 50)
+      }
+    }
+  }
+}
+
 onMounted(() => {
   init()
+
+  watch(searchQuery, () => {
+    nextTick(() => {
+      updateSearchOverlay()
+    })
+  })
 })
 </script>
 
@@ -429,5 +500,11 @@ onMounted(() => {
 
 .CodeMirror-scrollbar-filler {
   background-color: transparent;
+}
+
+.CodeMirror .cm-searching {
+  background-color: var(--color-text-highlight);
+  color: black !important;
+  border-radius: 2px;
 }
 </style>

@@ -77,6 +77,9 @@ function init() {
 
 function onCopy() {
   copy(editor?.getValue() || '')
+  editorRef.value?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+  )
 }
 
 onMounted(() => {

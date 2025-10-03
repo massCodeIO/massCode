@@ -159,8 +159,17 @@ This will start the application with hot reloading.
 
 ## Troubleshooting
 
-If you encounter the error message "massCode" is damaged and can't be opened. You should move it to the Trash while installing software on macOS, it may be due to security settings restrictions in macOS. To solve this problem, please try the following command in Terminal:
+### macOS
 
+If you encounter the error message "massCode" is damaged and can't be opened. You should move it to the Trash while installing software on macOS, it may be due to security settings restrictions in macOS.
+
+**Option 1: System Settings (macOS 13+)**
+1. Open **System Settings** → **Privacy & Security**
+2. Scroll down to find "massCode" in the list of blocked applications
+3. Click **Allow Anyway** or **Open Anyway**
+4. You may need to enter your administrator password
+
+**Option 2: Terminal command**
 ```bash
 sudo xattr -r -d com.apple.quarantine /Applications/massCode.app
 ```

@@ -52,6 +52,7 @@
     "format": "Форматировать",
     "previewCode": "Предпросмотр кода",
     "previewScreenshot": "Предпросмотр скриншота",
+    "previewJson": "Предпросмотр JSON",
     "fontSizeIncrease": "Увеличить размер шрифта",
     "fontSizeDecrease": "Уменьшить размер шрифта",
     "fontSizeReset": "Сбросить размер шрифта"

@@ -38,6 +38,7 @@ const {
   isShowCodeImage,
   isShowMarkdownPresentation,
   isFocusedSearch,
+  isShowJsonVisualizer,
 } = useApp()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
@@ -77,6 +78,7 @@ const isShowEditor = computed(() => {
     && !isShowMindmap.value
     && !isShowCodeImage.value
     && !isShowMarkdownPresentation.value
+    && !isShowJsonVisualizer.value
     && !isEmpty.value
     && selectedSnippet.value !== undefined
   )
@@ -86,6 +88,10 @@ watch(selectedSnippetContent, () => {
   if (selectedSnippetContent.value?.language !== 'markdown') {
     isShowMarkdown.value = false
     isShowMindmap.value = false
+  }
+
+  if (selectedSnippetContent.value?.language !== 'json') {
+    isShowJsonVisualizer.value = false
   }
 
   if (!isAvailableToCodePreview.value) {
@@ -243,6 +249,12 @@ async function init() {
       })
     },
   )
+
+  watch(searchQuery, () => {
+    nextTick(() => {
+      updateSearchOverlay()
+    })
+  })
 }
 
 function setValue(value: string, programmatic = true) {
@@ -395,12 +407,6 @@ function updateSearchOverlay() {
 
 onMounted(() => {
   init()
-
-  watch(searchQuery, () => {
-    nextTick(() => {
-      updateSearchOverlay()
-    })
-  })
 })
 </script>
 
@@ -433,6 +439,7 @@ onMounted(() => {
     <EditorFooter v-if="isShowEditor" />
     <EditorMindmap v-if="isShowMindmap" />
     <EditorCodeImage v-if="isShowCodeImage" />
+    <EditorJsonVisualizer v-if="isShowJsonVisualizer" />
     <div
       v-if="
         isEmpty

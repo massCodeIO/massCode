@@ -220,6 +220,11 @@ const editorMenuItems: MenuConfig[] = [
     accelerator: 'Alt+CommandOrControl+P',
   },
   {
+    label: i18n.t('menu:editor.previewJson'),
+    click: () => send('main-menu:preview-json'),
+    accelerator: 'Alt+CommandOrControl+J',
+  },
+  {
     type: 'separator',
   },
   {

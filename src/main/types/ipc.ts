@@ -19,6 +19,7 @@ type MainMenuAction =
   | 'preview-markdown'
   | 'preview-mindmap'
   | 'preview-code'
+  | 'preview-json'
   | 'presentation-mode'
 
 type DBAction =

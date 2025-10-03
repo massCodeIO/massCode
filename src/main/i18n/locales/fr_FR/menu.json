@@ -52,6 +52,7 @@
     "format": "Formater",
     "previewCode": "Aperçu du code",
     "previewScreenshot": "Aperçu de la capture d'écran",
+    "previewJson": "Aperçu JSON",
     "fontSizeIncrease": "Augmenter la taille de la police",
     "fontSizeDecrease": "Diminuer la taille de la police",
     "fontSizeReset": "Réinitialiser la taille de la police"

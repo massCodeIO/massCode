@@ -44,7 +44,9 @@
       "dateCreated": "Ημερομηνία Δημιουργίας",
       "name": "Όνομα"
     },
-    "compactMode": "Συμπαγής Λειτουργία"
+    "compactMode": "Συμπαγής Λειτουργία",
+    "showSidebar": "Show/Hide Sidebar",
+    "hideSidebar": "Hide Sidebar"
   },
   "editor": {
     "label": "Editor",

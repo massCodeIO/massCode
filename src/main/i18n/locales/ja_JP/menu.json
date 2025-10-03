@@ -44,7 +44,9 @@
       "dateCreated": "作成日時",
       "name": "名前"
     },
-    "compactMode": "コンパクトモード"
+    "compactMode": "コンパクトモード",
+    "showSidebar": "Show/Hide Sidebar",
+    "hideSidebar": "Hide Sidebar"
   },
   "editor": {
     "label": "エディタ",

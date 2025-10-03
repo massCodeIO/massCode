@@ -39,6 +39,8 @@
     "removeCustomIcon": "Usuń ikonę",
     "show": "Pokaż",
     "hide": "Ukryj",
+    "showSidebar": "Pokaż pasek boczny",
+    "hideSidebar": "Ukryj pasek boczny",
     "new": {
       "storage": "Nowy magazyn",
       "folder": "Nowy folder",

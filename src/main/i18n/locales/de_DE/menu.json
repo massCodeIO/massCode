@@ -44,7 +44,8 @@
       "dateCreated": "Erstellungsdatum",
       "name": "Name"
     },
-    "compactMode": "Kompakter Modus"
+    "compactMode": "Kompakter Modus",
+    "showSidebar": "Seitenleiste ein-/ausblenden"
   },
   "editor": {
     "label": "Editor",

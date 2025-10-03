@@ -44,7 +44,8 @@
       "dateCreated": "Date de création",
       "name": "Nom"
     },
-    "compactMode": "Mode compact"
+    "compactMode": "Mode compact",
+    "showSidebar": "Afficher/masquer la barre latérale"
   },
   "editor": {
     "label": "Éditeur",

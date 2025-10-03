@@ -44,7 +44,9 @@
       "dateCreated": "تاریخ ایجاد",
       "name": "نام"
     },
-    "compactMode": "حالت فشرده"
+    "compactMode": "حالت فشرده",
+    "showSidebar": "Show/Hide Sidebar",
+    "hideSidebar": "Hide Sidebar"
   },
   "editor": {
     "label": "ویرایشگر",

@@ -44,7 +44,9 @@
       "dateCreated": "創建日期",
       "name": "名稱"
     },
-    "compactMode": "緊湊模式"
+    "compactMode": "緊湊模式",
+    "showSidebar": "Show/Hide Sidebar",
+    "hideSidebar": "Hide Sidebar"
   },
   "editor": {
     "label": "編輯器",

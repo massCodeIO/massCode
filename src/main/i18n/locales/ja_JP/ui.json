@@ -39,6 +39,8 @@
     "removeCustomIcon": "アイコンを削除",
     "show": "表示",
     "hide": "非表示",
+    "showSidebar": "サイドバーを表示",
+    "hideSidebar": "サイドバーを非表示",
     "new": {
       "storage": "新規ストレージ",
       "folder": "新規フォルダ",

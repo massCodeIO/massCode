@@ -39,6 +39,8 @@
     "removeCustomIcon": "Supprimer l'icône",
     "show": "Afficher",
     "hide": "Masquer",
+    "showSidebar": "Afficher la barre latérale",
+    "hideSidebar": "Masquer la barre latérale",
     "new": {
       "storage": "Nouveau stockage",
       "folder": "Nouveau dossier",

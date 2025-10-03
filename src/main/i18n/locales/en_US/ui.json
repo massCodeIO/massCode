@@ -39,6 +39,8 @@
     "removeCustomIcon": "Remove Icon",
     "show": "Show",
     "hide": "Hide",
+    "showSidebar": "Show Sidebar",
+    "hideSidebar": "Hide Sidebar",
     "new": {
       "storage": "New Storage",
       "folder": "New Folder",

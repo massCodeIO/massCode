@@ -18,4 +18,5 @@ export interface SavedState {
   folderId?: number
   tagId?: number
   libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
+  isSidebarHidden?: boolean
 }

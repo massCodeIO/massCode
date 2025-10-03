@@ -39,6 +39,8 @@
     "removeCustomIcon": "删除图标",
     "show": "显示",
     "hide": "隐藏",
+    "showSidebar": "显示侧边栏",
+    "hideSidebar": "隐藏侧边栏",
     "new": {
       "storage": "新建存储",
       "folder": "新建文件夹",

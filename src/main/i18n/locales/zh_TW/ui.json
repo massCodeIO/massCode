@@ -39,6 +39,8 @@
     "removeCustomIcon": "刪除圖標",
     "show": "顯示",
     "hide": "隱藏",
+    "showSidebar": "顯示側邊欄",
+    "hideSidebar": "隱藏側邊欄",
     "new": {
       "storage": "新建儲存庫",
       "folder": "新建資料夾",

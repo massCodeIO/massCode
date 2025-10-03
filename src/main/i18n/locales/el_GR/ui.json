@@ -39,6 +39,8 @@
     "removeCustomIcon": "Αφαίρεση Εικονιδίου",
     "show": "Εμφάνιση",
     "hide": "Απόκρυψη",
+    "showSidebar": "Εμφάνιση πλευρικής γραμμής",
+    "hideSidebar": "Απόκρυψη πλευρικής γραμμής",
     "new": {
       "storage": "Νέο Storage",
       "folder": "Νέος Φάκελος",

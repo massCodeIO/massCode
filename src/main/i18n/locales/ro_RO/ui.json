@@ -39,6 +39,8 @@
     "removeCustomIcon": "Elimină Iconița",
     "show": "Arată",
     "hide": "Ascunde",
+    "showSidebar": "Afișează bara laterală",
+    "hideSidebar": "Ascunde bara laterală",
     "new": {
       "storage": "Storage Nou",
       "folder": "Folder Nou",

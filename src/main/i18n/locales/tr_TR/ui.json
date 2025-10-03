@@ -39,6 +39,8 @@
     "removeCustomIcon": "İkonu Kaldır",
     "show": "Göster",
     "hide": "Gizle",
+    "showSidebar": "Kenar Çubuğunu Göster",
+    "hideSidebar": "Kenar Çubuğunu Gizle",
     "new": {
       "storage": "Yeni Depolama",
       "folder": "Yeni Klasör",

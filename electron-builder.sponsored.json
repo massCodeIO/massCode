@@ -14,9 +14,9 @@
   "mac": {
     "target": "dmg",
     "icon": "build/icons/icon.icns",
-    "entitlements": "build/entitlements.mac.plist",
+    "entitlements": "build/entitlements.mac.inherit.plist",
     "category": "public.app-category.productivity",
-    "hardenedRuntime": false,
+    "hardenedRuntime": true,
     "identity": null
   },
   "win": {

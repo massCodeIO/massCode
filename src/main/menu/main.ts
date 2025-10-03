@@ -340,6 +340,14 @@ const editorMenuItems: MenuConfig[] = [
   },
 ]
 
+const viewMenuItems: MenuConfig[] = [
+  {
+    label: i18n.t('menu:view.showSidebar'),
+    click: () => send('main-menu:toggle-sidebar'),
+    accelerator: 'Alt+CommandOrControl+B',
+  },
+]
+
 const markdownMenuItems: MenuConfig[] = [
   {
     label: i18n.t('menu:markdown.preview'),
@@ -373,6 +381,10 @@ const menuItems: MenuItemConstructorOptions[] = [
   {
     role: 'editMenu',
     submenu: createPlatformMenuItems(editMenuItems),
+  },
+  {
+    label: i18n.t('menu:view.label'),
+    submenu: createPlatformMenuItems(viewMenuItems),
   },
   {
     label: i18n.t('menu:editor.label'),

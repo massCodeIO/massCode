@@ -39,6 +39,8 @@
     "removeCustomIcon": "Odebrat ikonu",
     "show": "Zobrazit",
     "hide": "Skrýt",
+    "showSidebar": "Zobrazit postranní panel",
+    "hideSidebar": "Skrýt postranní panel",
     "new": {
       "storage": "Nové úložiště",
       "folder": "Nová složka",

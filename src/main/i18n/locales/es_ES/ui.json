@@ -39,6 +39,8 @@
     "removeCustomIcon": "Eliminar Icono",
     "show": "Mostrar",
     "hide": "Ocultar",
+    "showSidebar": "Mostrar barra lateral",
+    "hideSidebar": "Ocultar barra lateral",
     "new": {
       "storage": "Nuevo Almacenamiento",
       "folder": "Nueva Carpeta",

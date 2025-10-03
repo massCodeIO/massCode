@@ -39,6 +39,8 @@
     "removeCustomIcon": "Icon entfernen",
     "show": "Anzeigen",
     "hide": "Ausblenden",
+    "showSidebar": "Seitenleiste anzeigen",
+    "hideSidebar": "Seitenleiste ausblenden",
     "new": {
       "storage": "Neuer Speicher",
       "folder": "Neuer Ordner",

@@ -2,6 +2,8 @@ import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
 import { useCssVar } from '@vueuse/core'
 
+const HIDDEN_SIDEBAR_WIDTH = 0
+
 const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
 
 const stateSnapshots = reactive<Record<StateAction, SavedState>>({
@@ -9,6 +11,15 @@ const stateSnapshots = reactive<Record<StateAction, SavedState>>({
 })
 
 const state = reactive<SavedState>(store.app.get('state') as SavedState)
+const storedSidebarHidden = store.app.get('state.isSidebarHidden') as
+  | boolean
+  | undefined
+const isSidebarHidden = ref(
+  storedSidebarHidden ?? state.isSidebarHidden ?? false,
+)
+
+if (state.isSidebarHidden === undefined)
+  state.isSidebarHidden = isSidebarHidden.value
 
 const highlightedFolderId = ref<number>()
 const highlightedSnippetIds = ref<Set<number>>(new Set())
@@ -28,8 +39,13 @@ const isShowJsonVisualizer = ref(false)
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
 
-sidebarWidth.value = `${store.app.get('sizes.sidebarWidth')}px`
+const storedSidebarWidth = store.app.get('sizes.sidebarWidth') as number
+
+sidebarWidth.value = `${storedSidebarWidth}px`
 snippetListWidth.value = `${store.app.get('sizes.snippetListWidth')}px`
+
+if (isSidebarHidden.value)
+  sidebarWidth.value = `${HIDDEN_SIDEBAR_WIDTH}px`
 
 function saveStateSnapshot(action: StateAction): void {
   stateSnapshots[action] = {
@@ -38,6 +54,7 @@ function saveStateSnapshot(action: StateAction): void {
     tagId: state.tagId,
     snippetContentIndex: state.snippetContentIndex,
     libraryFilter: state.libraryFilter,
+    isSidebarHidden: isSidebarHidden.value,
   }
 }
 
@@ -55,10 +72,23 @@ function restoreStateSnapshot(action: StateAction): void {
     state.tagId = snapshot.tagId
   if (snapshot.snippetContentIndex !== undefined)
     state.snippetContentIndex = snapshot.snippetContentIndex
+  if (snapshot.isSidebarHidden !== undefined)
+    isSidebarHidden.value = snapshot.isSidebarHidden
 }
 
-watch(state, () => {
-  store.app.set('state', JSON.parse(JSON.stringify(state)))
+watch(
+  state,
+  () => {
+    store.app.set('state', JSON.parse(JSON.stringify(state)))
+  },
+  { deep: true },
+)
+
+watch(isSidebarHidden, (value) => {
+  state.isSidebarHidden = value
+  sidebarWidth.value = value
+    ? `${HIDDEN_SIDEBAR_WIDTH}px`
+    : `${store.app.get('sizes.sidebarWidth')}px`
 })
 
 export function useApp() {
@@ -76,6 +106,7 @@ export function useApp() {
     isShowMarkdownPresentation,
     isShowMindmap,
     isShowJsonVisualizer,
+    isSidebarHidden,
     isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,

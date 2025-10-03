@@ -13,6 +13,7 @@ export interface AppStore {
     folderId?: number
     tagId?: number
     libraryFilter?: string
+    isSidebarHidden?: boolean
   }
   isAutoMigratedFromJson: boolean
   nextDonateNotification?: number

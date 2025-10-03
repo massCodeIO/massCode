@@ -21,6 +21,7 @@ type MainMenuAction =
   | 'preview-code'
   | 'preview-json'
   | 'presentation-mode'
+  | 'toggle-sidebar'
 
 type DBAction =
   | 'relaod'

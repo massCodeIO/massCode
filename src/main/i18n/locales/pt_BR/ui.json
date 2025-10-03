@@ -39,6 +39,8 @@
     "removeCustomIcon": "Remover Ícone",
     "show": "Mostrar",
     "hide": "Ocultar",
+    "showSidebar": "Mostrar barra lateral",
+    "hideSidebar": "Ocultar barra lateral",
     "new": {
       "storage": "Novo Storage",
       "folder": "Nova Pasta",

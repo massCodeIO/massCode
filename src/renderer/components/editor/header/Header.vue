@@ -8,6 +8,8 @@ import {
   Eye,
   Image,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Presentation,
   Type,
@@ -28,6 +30,7 @@ const {
   isShowCodePreview,
   isShowCodeImage,
   isShowJsonVisualizer,
+  isSidebarHidden,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
@@ -139,6 +142,24 @@ function onJsonVisualizerToggle() {
         @blur="isFocusedSnippetName = false"
       />
       <div class="ml-2 flex">
+        <UiActionButton
+          class="mr-1"
+          :tooltip="
+            isSidebarHidden
+              ? i18n.t('action.showSidebar')
+              : i18n.t('action.hideSidebar')
+          "
+          @click="isSidebarHidden = !isSidebarHidden"
+        >
+          <PanelLeftOpen
+            v-if="isSidebarHidden"
+            class="h-3 w-3"
+          />
+          <PanelLeftClose
+            v-else
+            class="h-3 w-3"
+          />
+        </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('menu:editor.previewScreenshot')"
           :active="isShowCodeImage"

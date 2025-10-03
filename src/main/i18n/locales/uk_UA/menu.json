@@ -44,7 +44,9 @@
       "dateCreated": "Датою створення",
       "name": "Назвою"
     },
-    "compactMode": "Компактний режим"
+    "compactMode": "Компактний режим",
+    "showSidebar": "Show/Hide Sidebar",
+    "hideSidebar": "Hide Sidebar"
   },
   "editor": {
     "label": "Редактор",

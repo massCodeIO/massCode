@@ -34,6 +34,7 @@
   },
   "view": {
     "label": "View",
+    "showSidebar": "Show/Hide Sidebar",
     "sortBy": {
       "label": "Sort Snippets By",
       "dateModified": "Date Modified",

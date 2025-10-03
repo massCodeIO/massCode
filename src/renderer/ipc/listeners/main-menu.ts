@@ -10,6 +10,7 @@ const {
   isShowCodePreview,
   isShowMarkdownPresentation,
   isShowJsonVisualizer,
+  isSidebarHidden,
 } = useApp()
 
 export function registerMainMenuListeners() {
@@ -52,5 +53,9 @@ export function registerMainMenuListeners() {
   ipc.on('main-menu:presentation-mode', () => {
     isShowMarkdownPresentation.value = !isShowMarkdownPresentation.value
     router.push({ name: RouterName.markdownPresentation })
+  })
+
+  ipc.on('main-menu:toggle-sidebar', () => {
+    isSidebarHidden.value = !isSidebarHidden.value
   })
 }

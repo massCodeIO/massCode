@@ -39,6 +39,8 @@
     "removeCustomIcon": "حذف آیکون",
     "show": "نمایش",
     "hide": "پنهان",
+    "showSidebar": "نمایش نوار کناری",
+    "hideSidebar": "مخفی کردن نوار کناری",
     "new": {
       "storage": "فضای ذخیره‌سازی جدید",
       "folder": "پوشه جدید",

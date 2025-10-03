@@ -122,9 +122,105 @@ const appMenuItems: MenuConfig[] = [
 
 const helpMenuItems: MenuConfig[] = [
   {
-    id: 'about',
     label: i18n.t('menu:app.about'),
     click: () => aboutApp(),
+  },
+  {
+    label: i18n.t('menu:help.website'),
+    click: () => {
+      shell.openExternal('https://masscode.io')
+    },
+  },
+  {
+    label: i18n.t('menu:help.documentation'),
+    click: () => {
+      shell.openExternal('https://masscode.io/documentation')
+    },
+  },
+  {
+    label: i18n.t('menu:help.twitter'),
+    click: () => {
+      shell.openExternal('https://twitter.com/anton_reshetov')
+    },
+  },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:help.viewInGitHub'),
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/massCode')
+    },
+  },
+  {
+    label: i18n.t('menu:help.changeLog'),
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/massCode/releases')
+    },
+  },
+  {
+    label: i18n.t('menu:help.reportIssue'),
+    click: () => {
+      shell.openExternal(
+        'https://github.com/massCodeIO/massCode/issues/new/choose',
+      )
+    },
+  },
+  {
+    label: i18n.t('menu:help.giveStar'),
+    click: () => {
+      shell.openExternal('https://github.com/massCodeIO/massCode/stargazers')
+    },
+  },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:help.extension.vscode'),
+    click: () => {
+      shell.openExternal(
+        'https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant',
+      )
+    },
+  },
+  // {
+  //   label: i18n.t('menu:help.extension.raycast'),
+  //   click: () => {
+  //     shell.openExternal('https://www.raycast.com/antonreshetov/masscode')
+  //   },
+  // },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:help.links.snippets'),
+    click: () => {
+      shell.openExternal('https://masscode.io/snippets')
+    },
+  },
+  {
+    type: 'separator',
+  },
+  {
+    label: i18n.t('menu:help.donate.openCollective'),
+    click: () => {
+      shell.openExternal('https://opencollective.com/masscode')
+    },
+  },
+  {
+    label: i18n.t('menu:help.donate.gumroad'),
+    click: () => {
+      shell.openExternal('https://antonreshetov.gumroad.com/l/masscode')
+    },
+  },
+  {
+    label: i18n.t('menu:help.donate.payPal'),
+    click: () => {
+      shell.openExternal('https://www.paypal.com/paypalme/antongithub')
+    },
+  },
+  {
+    type: 'separator',
   },
   {
     label: i18n.t('menu:help.devTools'),

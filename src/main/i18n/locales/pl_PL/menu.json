@@ -45,8 +45,7 @@
       "name": "Nazwa"
     },
     "compactMode": "Tryb kompaktowy",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Pokaż/ukryj pasek boczny"
   },
   "editor": {
     "label": "Edytor",

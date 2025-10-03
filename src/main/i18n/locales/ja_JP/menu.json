@@ -45,8 +45,7 @@
       "name": "名前"
     },
     "compactMode": "コンパクトモード",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "サイドバーの表示/非表示"
   },
   "editor": {
     "label": "エディタ",

@@ -45,8 +45,7 @@
       "name": "Назвою"
     },
     "compactMode": "Компактний режим",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Показати/приховати бічну панель"
   },
   "editor": {
     "label": "Редактор",

@@ -45,8 +45,7 @@
       "name": "Nume"
     },
     "compactMode": "Mod Compact",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Afișează/ascunde bara laterală"
   },
   "editor": {
     "label": "Editor",

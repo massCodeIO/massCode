@@ -45,8 +45,7 @@
       "name": "Názvu"
     },
     "compactMode": "Kompaktní režim",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Zobrazit/skrýt postranní panel"
   },
   "editor": {
     "label": "Editor",

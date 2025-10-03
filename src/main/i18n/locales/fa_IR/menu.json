@@ -45,8 +45,7 @@
       "name": "نام"
     },
     "compactMode": "حالت فشرده",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "نمایش/پنهان کردن نوار کناری"
   },
   "editor": {
     "label": "ویرایشگر",

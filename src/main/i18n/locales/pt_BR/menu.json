@@ -45,8 +45,7 @@
       "name": "Nome"
     },
     "compactMode": "Modo Compacto",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Mostrar/ocultar barra lateral"
   },
   "editor": {
     "label": "Editor",

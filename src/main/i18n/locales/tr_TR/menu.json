@@ -45,8 +45,7 @@
       "name": "İsim"
     },
     "compactMode": "Kompakt Mod",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Kenar Çubuğunu Göster/Gizle"
   },
   "editor": {
     "label": "Editör",

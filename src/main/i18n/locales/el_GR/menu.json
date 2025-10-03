@@ -45,8 +45,7 @@
       "name": "Όνομα"
     },
     "compactMode": "Συμπαγής Λειτουργία",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "Εμφάνιση/απόκρυψη πλαϊνής γραμμής"
   },
   "editor": {
     "label": "Editor",

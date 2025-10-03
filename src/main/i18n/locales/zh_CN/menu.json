@@ -45,8 +45,7 @@
       "name": "名称"
     },
     "compactMode": "紧凑模式",
-    "showSidebar": "Show/Hide Sidebar",
-    "hideSidebar": "Hide Sidebar"
+    "showSidebar": "显示/隐藏侧边栏"
   },
   "editor": {
     "label": "编辑器",

@@ -9,6 +9,7 @@ const {
   isShowMindmap,
   isShowCodePreview,
   isShowMarkdownPresentation,
+  isShowJsonVisualizer,
 } = useApp()
 
 export function registerMainMenuListeners() {
@@ -42,6 +43,10 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:preview-code', () => {
     isShowCodePreview.value = !isShowCodePreview.value
+  })
+
+  ipc.on('main-menu:preview-json', () => {
+    isShowJsonVisualizer.value = !isShowJsonVisualizer.value
   })
 
   ipc.on('main-menu:presentation-mode', () => {

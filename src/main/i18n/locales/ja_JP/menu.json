@@ -52,6 +52,7 @@
     "format": "フォーマット",
     "previewCode": "コードのプレビュー",
     "previewScreenshot": "スクリーンショットのプレビュー",
+    "previewJson": "JSON プレビュー",
     "fontSizeIncrease": "フォントサイズを大きく",
     "fontSizeDecrease": "フォントサイズを小さく",
     "fontSizeReset": "フォントサイズをリセット"

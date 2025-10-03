@@ -52,6 +52,7 @@
     "format": "Formatieren",
     "previewCode": "Code-Vorschau",
     "previewScreenshot": "Screenshot-Vorschau",
+    "previewJson": "JSON-Vorschau",
     "fontSizeIncrease": "Schriftgröße erhöhen",
     "fontSizeDecrease": "Schriftgröße verringern",
     "fontSizeReset": "Schriftgröße zurücksetzen"

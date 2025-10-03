@@ -6,8 +6,8 @@ import { router, RouterName } from '@/router'
 import {
   Code,
   Eye,
-  GitFork,
   Image,
+  Network,
   Plus,
   Presentation,
   Type,
@@ -27,6 +27,7 @@ const {
   isShowMarkdownPresentation,
   isShowCodePreview,
   isShowCodeImage,
+  isShowJsonVisualizer,
 } = useApp()
 const { addToUpdateQueue } = useSnippetUpdate()
 
@@ -51,9 +52,16 @@ const isShowMarkdownAction = computed(
   () => selectedSnippetContent.value?.language === 'markdown',
 )
 
+const isShowJsonVisualizerAction = computed(
+  () => selectedSnippetContent.value?.language === 'json',
+)
+
 const isShowTags = computed(() => {
   return (
-    !isShowMindmap.value && !isShowMarkdown.value && !isShowCodeImage.value
+    !isShowMindmap.value
+    && !isShowMarkdown.value
+    && !isShowCodeImage.value
+    && !isShowJsonVisualizer.value
   )
 })
 
@@ -67,6 +75,7 @@ function onMarkdownToggle() {
   isShowMarkdownPresentation.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
 }
 
 function onMarkdownPresentationToggle() {
@@ -75,6 +84,7 @@ function onMarkdownPresentationToggle() {
   isShowMindmap.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
 
   router.push({ name: RouterName.markdownPresentation })
 }
@@ -85,6 +95,7 @@ function onMindmapToggle() {
   isShowMarkdownPresentation.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
 }
 
 function onCodePreviewToggle() {
@@ -93,6 +104,7 @@ function onCodePreviewToggle() {
   isShowMarkdownPresentation.value = false
   isShowMindmap.value = false
   isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
 }
 
 function onCodeImageToggle() {
@@ -101,6 +113,16 @@ function onCodeImageToggle() {
   isShowMarkdownPresentation.value = false
   isShowMindmap.value = false
   isShowCodePreview.value = false
+  isShowJsonVisualizer.value = false
+}
+
+function onJsonVisualizerToggle() {
+  isShowJsonVisualizer.value = !isShowJsonVisualizer.value
+  isShowMarkdown.value = false
+  isShowMarkdownPresentation.value = false
+  isShowMindmap.value = false
+  isShowCodePreview.value = false
+  isShowCodeImage.value = false
 }
 </script>
 
@@ -118,7 +140,7 @@ function onCodeImageToggle() {
       />
       <div class="ml-2 flex">
         <UiActionButton
-          :tooltip="i18n.t('action.add.description')"
+          :tooltip="i18n.t('menu:editor.previewScreenshot')"
           :active="isShowCodeImage"
           @click="onCodeImageToggle"
         >
@@ -149,6 +171,14 @@ function onCodeImageToggle() {
           <Presentation class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
+          v-if="isShowJsonVisualizerAction"
+          :tooltip="i18n.t('menu:editor.previewJson')"
+          :active="isShowJsonVisualizer"
+          @click="onJsonVisualizerToggle"
+        >
+          <Network class="h-3 w-3 -rotate-90" />
+        </UiActionButton>
+        <UiActionButton
           v-if="isShowMarkdownAction"
           :tooltip="
             isShowMarkdown
@@ -170,7 +200,7 @@ function onCodeImageToggle() {
           :active="isShowMindmap"
           @click="onMindmapToggle"
         >
-          <GitFork class="h-3 w-3 rotate-90" />
+          <Network class="h-3 w-3 -rotate-90" />
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.add.description')"

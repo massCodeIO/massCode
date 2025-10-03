@@ -52,6 +52,7 @@
     "format": "格式化",
     "previewCode": "預覽程式碼",
     "previewScreenshot": "預覽截圖",
+    "previewJson": "預覽 JSON",
     "fontSizeIncrease": "增大字體",
     "fontSizeDecrease": "減小字體",
     "fontSizeReset": "重置字體大小"

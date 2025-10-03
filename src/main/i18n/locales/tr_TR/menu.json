@@ -52,6 +52,7 @@
     "format": "Biçimlendir",
     "previewCode": "Kodu Önizle",
     "previewScreenshot": "Ekran Görüntüsünü Önizle",
+    "previewJson": "JSON Önizleme",
     "fontSizeIncrease": "Yazı Boyutunu Artır",
     "fontSizeDecrease": "Yazı Boyutunu Azalt",
     "fontSizeReset": "Yazı Boyutunu Sıfırla"

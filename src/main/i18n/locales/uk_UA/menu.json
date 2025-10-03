@@ -52,6 +52,7 @@
     "format": "Форматувати",
     "previewCode": "Попередній перегляд коду",
     "previewScreenshot": "Попередній перегляд знімка екрану",
+    "previewJson": "Попередній перегляд JSON",
     "fontSizeIncrease": "Збільшити розмір шрифту",
     "fontSizeDecrease": "Зменшити розмір шрифту",
     "fontSizeReset": "Скинути розмір шрифту"

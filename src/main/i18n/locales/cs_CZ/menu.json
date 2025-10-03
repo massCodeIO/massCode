@@ -52,6 +52,7 @@
     "format": "Formátovat",
     "previewCode": "Náhled kódu",
     "previewScreenshot": "Náhled snímku obrazovky",
+    "previewJson": "Náhled JSON",
     "fontSizeIncrease": "Zvětšit velikost písma",
     "fontSizeDecrease": "Zmenšit velikost písma",
     "fontSizeReset": "Obnovit velikost písma"

@@ -23,6 +23,7 @@ const isShowMarkdownPresentation = ref(false)
 const isShowMindmap = ref(false)
 const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
+const isShowJsonVisualizer = ref(false)
 
 const sidebarWidth = useCssVar('--sidebar-width')
 const snippetListWidth = useCssVar('--snippet-list-width')
@@ -74,6 +75,7 @@ export function useApp() {
     isShowMarkdown,
     isShowMarkdownPresentation,
     isShowMindmap,
+    isShowJsonVisualizer,
     isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,

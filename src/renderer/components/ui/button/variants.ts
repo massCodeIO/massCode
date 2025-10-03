@@ -9,7 +9,7 @@ export const variants = cva(
         default: 'bg-button text-button-fg hover:bg-button-hover',
         primary: 'bg-primary text-white hover:bg-primary/70',
         danger: 'bg-red-700 text-white hover:bg-red-700/70',
-        icon: 'bg-transparent hover:bg-button-hover hover:[&>svg]:text-button-fg hover:text-button-fg',
+        icon: 'bg-transparent hover:bg-button-hover hover:[&>svg]:text-button-fg hover:text-button-fg [&>svg]:text-button-fg',
       },
       size: {
         sm: 'px-2 h-5',

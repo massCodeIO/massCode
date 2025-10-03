@@ -52,6 +52,7 @@
     "format": "Formatear",
     "previewCode": "Vista Previa del Código",
     "previewScreenshot": "Vista Previa de Captura",
+    "previewJson": "Vista previa JSON",
     "fontSizeIncrease": "Aumentar Tamaño de Fuente",
     "fontSizeDecrease": "Disminuir Tamaño de Fuente",
     "fontSizeReset": "Restablecer Tamaño de Fuente"

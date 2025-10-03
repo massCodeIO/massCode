@@ -91,12 +91,9 @@ Turn a sequence of snippets into a presentation. Useful for classrooms, team mee
 
 Generate mind maps from Markdown. Fast, intuitive, and ideal for structuring and visualizing ideas.
 
-### Integrations
+### JSON Visualizer
 
-Extend your workflow with:
-
-* [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant): zen mode snippet search, instant insertion, and save selected code as snippets.
-* [Raycast Extension](https://www.raycast.com/antonreshetov/masscode): quick snippet access directly from Raycast.
+Visualize and explore your JSON data with an interactive graph view. Perfect for quickly inspecting complex responses, APIs, or configuration files.
 
 ### Beautiful Screenshots
 
@@ -109,6 +106,13 @@ Handy built-in utilities for everyday dev tasks:
 * **Text Tools**: Case Converter, Slug Generator, URL Parser
 * **Crypto & Security**: Hash/HMAC, Password Generator, UUID
 * **Encoders/Decoders**: URL, Base64, JSON ⇄ TOML/XML/YAML, Text ⇄ ASCII/Binary/Unicode, Color Converter
+
+### Integrations
+
+Extend your workflow with:
+
+* [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant): zen mode snippet search, instant insertion, and save selected code as snippets.
+* [Raycast Extension](https://www.raycast.com/antonreshetov/masscode): quick snippet access directly from Raycast.
 
 ## Overview
 

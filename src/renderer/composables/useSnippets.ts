@@ -182,12 +182,15 @@ async function duplicateSnippet(snippetId: number) {
 
 async function createSnippetContent(snippetId: number) {
   const lastContentIndex = selectedSnippet.value?.contents.length || 0
+  const folder = folders.value?.find(
+    f => f.id === selectedSnippet.value?.folder?.id,
+  )
 
   try {
     await api.snippets.postSnippetsByIdContents(String(snippetId), {
       label: `${i18n.t('fragment')} ${lastContentIndex + 1}`,
       value: '',
-      language: 'plain_text',
+      language: folder?.defaultLanguage || 'plain_text',
     })
 
     await getSnippets(queryByLibraryOrFolderOrSearch.value)

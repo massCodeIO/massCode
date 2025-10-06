@@ -432,12 +432,14 @@ onMounted(() => {
           data-editor-mount
         />
       </SplitterPanel>
-      <SplitterResizeHandle class="relative cursor-none">
-        <UiGutter orientation="horizontal" />
-      </SplitterResizeHandle>
-      <SplitterPanel v-if="isShowCodePreview">
-        <EditorPreview />
-      </SplitterPanel>
+      <template v-if="isShowCodePreview">
+        <SplitterResizeHandle class="relative cursor-none">
+          <UiGutter orientation="horizontal" />
+        </SplitterResizeHandle>
+        <SplitterPanel>
+          <EditorPreview />
+        </SplitterPanel>
+      </template>
     </SplitterGroup>
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />

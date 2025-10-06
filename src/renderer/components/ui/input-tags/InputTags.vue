@@ -347,7 +347,7 @@ watch(
   >
     <PerfectScrollbar
       ref="scrollbarRef"
-      :options="{ minScrollbarLength: 20 }"
+      :options="{ minScrollbarLength: 20, suppressScrollX: true }"
     >
       <ul class="w-full p-1">
         <li

@@ -38,6 +38,7 @@ watch(selectedSnippet, () => {
       v-model="description"
       :focus="show"
       variant="ghost"
+      :scrollbar-options="{ suppressScrollX: true }"
     />
   </div>
 </template>

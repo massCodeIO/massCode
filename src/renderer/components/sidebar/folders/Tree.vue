@@ -178,7 +178,7 @@ provide(treeKeys, {
   <PerfectScrollbar
     v-if="modelValue.length"
     ref="scrollRef"
-    :options="{ minScrollbarLength: 20 }"
+    :options="{ minScrollbarLength: 20, suppressScrollX: true }"
   >
     <ContextMenu.Root>
       <ContextMenu.Trigger as-child>

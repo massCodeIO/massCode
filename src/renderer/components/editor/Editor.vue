@@ -66,6 +66,8 @@ const scrollBarOpacity = useCssVar(
 )
 
 const isShowHeader = computed(() => {
+  if (selectedSnippetIds.value.length > 1)
+    return false
   return (
     isShowMarkdown.value
     || isShowMindmap.value
@@ -73,6 +75,8 @@ const isShowHeader = computed(() => {
   )
 })
 const isShowEditor = computed(() => {
+  if (selectedSnippetIds.value.length > 1)
+    return false
   return (
     !isShowMarkdown.value
     && !isShowMindmap.value

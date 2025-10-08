@@ -1,3 +1,22 @@
+# [4.2.0](https://github.com/massCodeIO/massCode/compare/v4.1.0...v4.2.0) (2025-10-08)
+
+
+### Bug Fixes
+
+* **editor:** prevent header and editor display for multiple selected snippets ([e1d4ccd](https://github.com/massCodeIO/massCode/commit/e1d4ccd995f5d1ea14f50d9d8bef51101ffb4bb1))
+* **editor:** show code preview panel ([5e91b74](https://github.com/massCodeIO/massCode/commit/5e91b74c93a57b491bf4b84241e8b2ff664551dd))
+* **i18n:** update sidebar toggle translations ([f819f4a](https://github.com/massCodeIO/massCode/commit/f819f4acd83f90387e8644b88e871f5451b17d40))
+* **scrollbar:** suppress horizontal scrolling ([53f6aef](https://github.com/massCodeIO/massCode/commit/53f6aef8497be9aad13b680d801a7bbcd8312198))
+* **snippets:** use default folder language for fragments [#611](https://github.com/massCodeIO/massCode/issues/611) ([#612](https://github.com/massCodeIO/massCode/issues/612)) ([4c52a5e](https://github.com/massCodeIO/massCode/commit/4c52a5e4a6c607dbb8009dd1c660f964a474e3a0))
+* update entitlements and enable hardened runtime for macOS builds ([d350977](https://github.com/massCodeIO/massCode/commit/d350977b02c158789b887f7cf54981310c738bd4))
+
+
+### Features
+
+* add show/hide sidebar toggle ([#610](https://github.com/massCodeIO/massCode/issues/610)) ([64cc14f](https://github.com/massCodeIO/massCode/commit/64cc14f803ed27490c8cfe087ccb3c3d9fd523ee))
+
+
+
 # [4.1.0](https://github.com/massCodeIO/massCode/compare/v4.0.4...v4.1.0) (2025-10-03)
 
 

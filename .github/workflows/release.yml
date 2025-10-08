@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for release (e.g., v1.0.0)'
+        required: true
+        default: v4.0.0
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Rebuild native dependencies
+        run: pnpm run rebuild
+
+      - name: Build application
+        run: pnpm run build:${{ matrix.platform }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: masscode-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
+          path: |
+            dist/*.dmg
+            dist/*.pkg
+            dist/*.exe
+            dist/*.msi
+            dist/*.AppImage
+            dist/*.snap
+            !dist/*-sponsored.*
+            !dist/*.yml
+            !dist/*.blockmap
+          if-no-files-found: warn
+          retention-days: 30
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts from "build" job
+        uses: actions/download-artifact@v4
+        with:
+          pattern: masscode-*
+          path: artifacts
+
+      - name: Generate changelog
+        run: npx changelogithub --output release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          tag_name: ${{ github.ref_name || inputs.tag }}
+          draft: true
+          body_path: release-notes.md
+          generate_release_notes: true
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

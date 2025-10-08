@@ -1,0 +1,63 @@
+name: Build Sponsored
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-sponsored:
+    name: Build Sponsored for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Rebuild native dependencies
+        run: pnpm run rebuild
+
+      - name: Build application (sponsored)
+        run: pnpm run build:sponsored:${{ matrix.platform }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SPONSORED: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sponsored-${{ matrix.platform }}-${{ github.ref_name }}
+          path: |
+            dist/*.dmg
+            dist/*.pkg
+            dist/*.exe
+            dist/*.msi
+            dist/*.AppImage
+            dist/*.snap
+          if-no-files-found: warn
+          retention-days: 30
+
+

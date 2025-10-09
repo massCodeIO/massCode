@@ -9,6 +9,7 @@ import { registerIPC } from './ipc'
 import { mainMenu } from './menu/main'
 import { store } from './store'
 import { checkForUpdates } from './updates'
+import { log } from './utils'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
 
@@ -73,12 +74,41 @@ if (!gotTheLock) {
   app.quit()
 }
 else {
-  app.whenReady().then(() => {
-    createWindow()
-    registerIPC()
-    initApi()
-    checkForUpdates()
-    startAutoBackup()
+  app.whenReady().then(async () => {
+    try {
+      createWindow()
+    }
+    catch (error) {
+      log('Error creating window', error)
+    }
+
+    try {
+      registerIPC()
+    }
+    catch (error) {
+      log('Error registering IPC', error)
+    }
+
+    try {
+      initApi()
+    }
+    catch (error) {
+      log('Error initializing API', error)
+    }
+
+    try {
+      checkForUpdates()
+    }
+    catch (error) {
+      log('Error checking for updates', error)
+    }
+
+    try {
+      await startAutoBackup()
+    }
+    catch (error) {
+      log('Error starting auto backup', error)
+    }
 
     if (store.app.get('isAutoMigratedFromJson')) {
       return
@@ -92,7 +122,7 @@ else {
       store.app.set('isAutoMigratedFromJson', true)
     }
     catch (err) {
-      console.error('Error on auto migration JSON to SQLite:', err)
+      log('Error on auto migration JSON to SQLite', err)
     }
   })
 
@@ -125,5 +155,23 @@ else {
 
   app.on('open-url', (_, url) => {
     BrowserWindow.getFocusedWindow()?.webContents.send('system:deep-link', url)
+  })
+
+  // Global error handlers
+  process.on('uncaughtException', (err) => {
+    BrowserWindow.getFocusedWindow()?.webContents.send('system:error', {
+      source: 'main',
+      message: err.message,
+      stack: err.stack,
+    })
+  })
+
+  process.on('unhandledRejection', (reason) => {
+    const err = reason instanceof Error ? reason : new Error(String(reason))
+    BrowserWindow.getFocusedWindow()?.webContents.send('system:error', {
+      source: 'main',
+      message: err.message,
+      stack: err.stack,
+    })
   })
 }

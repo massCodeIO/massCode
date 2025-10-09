@@ -5,6 +5,7 @@ import Database from 'better-sqlite3'
 import { format } from 'date-fns'
 import fs from 'fs-extra'
 import { store } from '../store'
+import { log } from '../utils'
 
 const DB_NAME = 'massCode.db'
 const isDev = process.env.NODE_ENV === 'development'
@@ -136,7 +137,7 @@ export function useDB() {
     return db
   }
   catch (error) {
-    console.error('Database initialization failed:', error)
+    log('Database initialization failed', error)
     throw error
   }
 }
@@ -167,7 +168,7 @@ export function reloadDB() {
     console.log(`Database successfully reloaded: ${dbPath}`)
   }
   catch (error) {
-    console.error('Error while reloading the database:', error)
+    log('Error while reloading the database', error)
     throw error
   }
 }
@@ -201,7 +202,7 @@ export function clearDB() {
     stmt()
   }
   catch (error) {
-    console.error('Error while clearing the database:', error)
+    log('Error while clearing the database', error)
     throw error
   }
 }
@@ -228,7 +229,7 @@ export async function moveDB(path: string) {
     reloadDB()
   }
   catch (error) {
-    console.error('Error while moving the database:', error)
+    log('Error while moving the database', error)
     throw error
   }
 }
@@ -256,7 +257,7 @@ export async function createBackup(manual = false) {
     return backupFilePath
   }
   catch (error) {
-    console.error('Error creating database backup:', error)
+    log('Error creating database backup', error)
     throw error
   }
 }
@@ -338,12 +339,12 @@ export async function startAutoBackup() {
         }
       }
       catch (error) {
-        console.error('Error during scheduled backup:', error)
+        log('Error during scheduled backup', error)
       }
     }, intervalMs)
   }
   catch (error) {
-    console.error('Error starting auto backup:', error)
+    log('Error starting auto backup', error)
   }
 }
 
@@ -377,7 +378,7 @@ export async function restoreFromBackup(backupFilePath: string) {
     console.warn(`Database restored from backup: ${backupFilePath}`)
   }
   catch (error) {
-    console.error('Error restoring database from backup:', error)
+    log('Error restoring database from backup', error)
     throw error
   }
 }
@@ -415,7 +416,7 @@ export async function getBackupList() {
     )
   }
   catch (error) {
-    console.error('Error getting backup list:', error)
+    log('Error getting backup list', error)
     return []
   }
 }
@@ -454,7 +455,7 @@ export async function moveBackupStorage(newPath: string) {
     store.preferences.set('backup.path', newPath)
   }
   catch (error) {
-    console.error('Error while moving backup storage:', error)
+    log('Error while moving backup storage', error)
     throw error
   }
 }

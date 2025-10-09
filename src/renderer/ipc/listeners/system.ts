@@ -48,4 +48,8 @@ export function registerSystemListeners() {
       },
     })
   })
+
+  ipc.on('system:error', (_, payload) => {
+    console.error(`[system][${payload.context}]`, payload)
+  })
 }

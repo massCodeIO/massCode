@@ -41,6 +41,7 @@ type SystemAction =
   | 'open-external'
   | 'deep-link'
   | 'update-available'
+  | 'error'
 type PrettierAction = 'format'
 type FsAction = 'assets'
 

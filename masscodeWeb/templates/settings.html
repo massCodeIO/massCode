@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - massCode Web Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'SF Pro Display', sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #edf2f7;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .form-help {
+            display: block;
+            font-size: 13px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input[type="number"] {
+            max-width: 200px;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .form-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            min-height: 42px;
+        }
+
+        .tag {
+            background: #edf2f7;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            color: #718096;
+            font-weight: bold;
+        }
+
+        .tag-remove:hover {
+            color: #e53e3e;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .secret-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .secret-input-group .form-input {
+            flex: 1;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Settings</h1>
+        <div class="header-actions">
+            <a href="/" class="btn btn-secondary">← Back to Home</a>
+            <button id="saveBtn" class="btn btn-primary">Save Configuration</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alertContainer"></div>
+        
+        <div id="loadingIndicator" class="loading">
+            <div class="spinner"></div>
+            <p>Loading configuration...</p>
+        </div>
+
+        <div id="settingsForm" style="display: none;">
+            <!-- Application Configuration -->
+            <div class="settings-section">
+                <div class="section-header">📦 Application Configuration</div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="app_autoLoadDatabase">
+                        <span>Auto-load Database on Startup</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="app_autoRestartOnSave">
+                        <span>Auto-restart Application on Save</span>
+                    </label>
+                    <small class="form-help">Automatically restart the application after saving configuration changes</small>
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label class="form-label">Max Upload Size (MB)</label>
+                        <input type="number" class="form-input" id="app_maxUploadSizeMB">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Upload Directory</label>
+                        <input type="text" class="form-input" id="app_uploadDirectory">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Server Configuration -->
+            <div class="settings-section">
+                <div class="section-header">🖥️ Server Configuration</div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label class="form-label">Host</label>
+                        <input type="text" class="form-input" id="server_host">
+                        <small class="form-help">Use "0.0.0.0" to allow external access, "127.0.0.1" for local only</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-input" id="server_port">
+                        <small class="form-help">Server port number</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="server_debug">
+                        <span>Debug Mode (Enable only in development)</span>
+                    </label>
+                    <small class="form-help">Enables auto-reload and detailed error messages</small>
+                </div>
+            </div>
+
+            <!-- Security Configuration -->
+            <div class="settings-section">
+                <div class="section-header">🔐 Security Configuration</div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="security_enabled">
+                        <span>Enable Authentication</span>
+                    </label>
+                    <small class="form-help">Require users to authenticate before accessing the application</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Authentication Type</label>
+                    <select class="form-select" id="security_authType">
+                        <option value="github">GitHub OAuth</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Secret Key</label>
+                    <div class="secret-input-group">
+                        <input type="password" class="form-input" id="security_secretKey" readonly>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="generateSecretKey()">Generate New</button>
+                    </div>
+                    <small class="form-help">Flask session secret key (keep this secure!)</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Lifetime (seconds)</label>
+                    <input type="number" class="form-input" id="security_sessionLifetime">
+                    <small class="form-help">How long users stay logged in (86400 = 24 hours)</small>
+                </div>
+                
+                <div class="section-header" style="margin-top: 24px;">GitHub OAuth Settings</div>
+                <div class="alert alert-info">
+                    <strong>Setup Instructions:</strong><br>
+                    1. Go to <a href="https://github.com/settings/developers" target="_blank">GitHub Developer Settings</a><br>
+                    2. Create a new OAuth App<br>
+                    3. Set Authorization callback URL to match the URL below<br>
+                    4. Copy the Client ID and Client Secret here
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Client ID</label>
+                    <input type="text" class="form-input" id="security_github_clientId">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Client Secret</label>
+                    <input type="password" class="form-input" id="security_github_clientSecret">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Callback URL</label>
+                    <input type="text" class="form-input" id="security_github_callbackUrl">
+                    <small class="form-help">Must match the callback URL in your GitHub OAuth App settings</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Allowed Users (GitHub usernames)</label>
+                    <div id="allowedUsersContainer" class="tag-input-container">
+                        <input type="text" class="tag-input" id="allowedUsersInput" placeholder="Type username and press Enter">
+                    </div>
+                    <small class="form-help">Leave empty to allow all authenticated users</small>
+                </div>
+                
+                <div class="section-header" style="margin-top: 24px;">🔑 API Tokens</div>
+                <div class="alert alert-info">
+                    <strong>API Tokens for Scripts:</strong><br>
+                    Generate tokens for sync scripts to upload databases without browser login.<br>
+                    You can copy tokens anytime from the list below.
+                </div>
+                
+                <!-- Create Token Form -->
+                <div class="form-group" style="border: 1px solid #ddd; padding: 16px; border-radius: 4px; background: #f9f9f9;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Generate New Token</h4>
+                    <div class="grid" style="gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Token Name</label>
+                            <input type="text" class="form-input" id="newTokenName" placeholder="e.g., Desktop Sync Script">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Expires in Days (0 = Never)</label>
+                            <input type="number" class="form-input" id="newTokenExpires" value="365" min="0">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="createToken()">Generate Token</button>
+                </div>
+                
+                <div id="tokensList" class="form-group">
+                    <!-- Tokens will be loaded here -->
+                </div>
+            </div>
+
+            <!-- UI Configuration -->
+            <div class="settings-section">
+                <div class="section-header">🎨 UI Configuration</div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label class="form-label">Default Theme</label>
+                        <select class="form-select" id="ui_defaultTheme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="auto">Auto (System)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="ui_showWelcomeMessage">
+                            <span>Show Welcome Message</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="ui_enableAnimations">
+                        <span>Enable Animations</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Backup Configuration -->
+            <div class="settings-section">
+                <div class="section-header">💾 Backup Configuration</div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="backup_enabled">
+                        <span>Enable Automatic Backups</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="backup_autoBackupOnUpload">
+                        <span>Auto-backup on Database Upload</span>
+                    </label>
+                </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label class="form-label">Max Backups</label>
+                        <input type="number" class="form-input" id="backup_maxBackups">
+                        <small class="form-help">Number of backup files to keep</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Backup Directory</label>
+                        <input type="text" class="form-input" id="backup_backupDirectory">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logging Configuration -->
+            <div class="settings-section">
+                <div class="section-header">📝 Logging Configuration</div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label class="form-label">Log Level</label>
+                        <select class="form-select" id="logging_level">
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                            <option value="CRITICAL">CRITICAL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="logging_logToFile">
+                            <span>Log to File</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Log Directory</label>
+                    <input type="text" class="form-input" id="logging_logDirectory">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = null;
+        let allowedUsers = [];
+
+        // Load configuration on page load
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/settings/config');
+                if (!response.ok) throw new Error('Failed to load configuration');
+                
+                currentConfig = await response.json();
+                populateForm(currentConfig);
+                
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('settingsForm').style.display = 'block';
+            } catch (error) {
+                showAlert('error', 'Failed to load configuration: ' + error.message);
+            }
+        }
+
+        // Populate form with config values
+        function populateForm(config) {
+            // Server
+            document.getElementById('server_host').value = config.server.host;
+            document.getElementById('server_port').value = config.server.port;
+            document.getElementById('server_debug').checked = config.server.debug;
+
+            // Security
+            document.getElementById('security_enabled').checked = config.security.enabled;
+            document.getElementById('security_authType').value = config.security.authType;
+            document.getElementById('security_secretKey').value = config.security.secretKey;
+            document.getElementById('security_sessionLifetime').value = config.security.sessionLifetime;
+            document.getElementById('security_github_clientId').value = config.security.github.clientId;
+            document.getElementById('security_github_clientSecret').value = config.security.github.clientSecret;
+            document.getElementById('security_github_callbackUrl').value = config.security.github.callbackUrl;
+            
+            allowedUsers = config.security.github.allowedUsers || [];
+            renderAllowedUsers();
+
+            // App
+            document.getElementById('app_autoLoadDatabase').checked = config.app.autoLoadDatabase;
+            document.getElementById('app_autoRestartOnSave').checked = config.app.autoRestartOnSave || false;
+            document.getElementById('app_maxUploadSizeMB').value = config.app.maxUploadSizeMB;
+            document.getElementById('app_uploadDirectory').value = config.app.uploadDirectory;
+
+            // UI
+            document.getElementById('ui_defaultTheme').value = config.ui.defaultTheme;
+            document.getElementById('ui_showWelcomeMessage').checked = config.ui.showWelcomeMessage;
+            document.getElementById('ui_enableAnimations').checked = config.ui.enableAnimations;
+
+            // Backup
+            document.getElementById('backup_enabled').checked = config.backup.enabled;
+            document.getElementById('backup_autoBackupOnUpload').checked = config.backup.autoBackupOnUpload;
+            document.getElementById('backup_maxBackups').value = config.backup.maxBackups;
+            document.getElementById('backup_backupDirectory').value = config.backup.backupDirectory;
+
+            // Logging
+            document.getElementById('logging_level').value = config.logging.level;
+            document.getElementById('logging_logToFile').checked = config.logging.logToFile;
+            document.getElementById('logging_logDirectory').value = config.logging.logDirectory;
+        }
+
+        // Collect form values into config object
+        function collectFormData() {
+            return {
+                server: {
+                    host: document.getElementById('server_host').value,
+                    port: parseInt(document.getElementById('server_port').value),
+                    debug: document.getElementById('server_debug').checked
+                },
+                security: {
+                    enabled: document.getElementById('security_enabled').checked,
+                    authType: document.getElementById('security_authType').value,
+                    secretKey: document.getElementById('security_secretKey').value,
+                    sessionLifetime: parseInt(document.getElementById('security_sessionLifetime').value),
+                    github: {
+                        clientId: document.getElementById('security_github_clientId').value,
+                        clientSecret: document.getElementById('security_github_clientSecret').value,
+                        callbackUrl: document.getElementById('security_github_callbackUrl').value,
+                        allowedUsers: allowedUsers
+                    }
+                },
+                app: {
+                    autoLoadDatabase: document.getElementById('app_autoLoadDatabase').checked,
+                    autoRestartOnSave: document.getElementById('app_autoRestartOnSave').checked,
+                    maxUploadSizeMB: parseInt(document.getElementById('app_maxUploadSizeMB').value),
+                    uploadDirectory: document.getElementById('app_uploadDirectory').value
+                },
+                ui: {
+                    defaultTheme: document.getElementById('ui_defaultTheme').value,
+                    showWelcomeMessage: document.getElementById('ui_showWelcomeMessage').checked,
+                    enableAnimations: document.getElementById('ui_enableAnimations').checked
+                },
+                backup: {
+                    enabled: document.getElementById('backup_enabled').checked,
+                    autoBackupOnUpload: document.getElementById('backup_autoBackupOnUpload').checked,
+                    maxBackups: parseInt(document.getElementById('backup_maxBackups').value),
+                    backupDirectory: document.getElementById('backup_backupDirectory').value
+                },
+                logging: {
+                    level: document.getElementById('logging_level').value,
+                    logToFile: document.getElementById('logging_logToFile').checked,
+                    logDirectory: document.getElementById('logging_logDirectory').value
+                }
+            };
+        }
+
+        // Save configuration
+        async function saveConfig() {
+            const config = collectFormData();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch('/api/settings/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', result.message);
+                    currentConfig = config;
+                    
+                    // 如果启用了自动重启，等待 2 秒后调用重启 API
+                    if (result.autoRestart) {
+                        setTimeout(async () => {
+                            try {
+                                await fetch('/api/restart', { method: 'POST' });
+                                showAlert('info', 'Application is restarting. Page will reload in 5 seconds...');
+                                // 5 秒后自动刷新页面
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 5000);
+                            } catch (error) {
+                                showAlert('error', 'Auto-restart failed. Please restart manually.');
+                            }
+                        }, 2000);
+                    }
+                } else {
+                    showAlert('error', result.error || 'Failed to save configuration');
+                }
+            } catch (error) {
+                showAlert('error', 'Failed to save configuration: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Configuration';
+            }
+        }
+
+        // Generate new secret key
+        async function generateSecretKey() {
+            try {
+                const response = await fetch('/api/settings/generate-secret-key', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                document.getElementById('security_secretKey').value = result.secretKey;
+                showAlert('info', 'New secret key generated. Don\'t forget to save!');
+            } catch (error) {
+                showAlert('error', 'Failed to generate secret key: ' + error.message);
+            }
+        }
+
+        // Allowed users tag management
+        function renderAllowedUsers() {
+            const container = document.getElementById('allowedUsersContainer');
+            const input = document.getElementById('allowedUsersInput');
+            
+            // Clear existing tags
+            const existingTags = container.querySelectorAll('.tag');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Add tags
+            allowedUsers.forEach((user, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `
+                    ${user}
+                    <span class="tag-remove" onclick="removeAllowedUser(${index})">×</span>
+                `;
+                container.insertBefore(tag, input);
+            });
+        }
+
+        function addAllowedUser(username) {
+            username = username.trim();
+            if (username && !allowedUsers.includes(username)) {
+                allowedUsers.push(username);
+                renderAllowedUsers();
+            }
+        }
+
+        function removeAllowedUser(index) {
+            allowedUsers.splice(index, 1);
+            renderAllowedUsers();
+        }
+
+        // Show alert message
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // API Token Management
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/tokens');
+                if (response.ok) {
+                    const tokens = await response.json();
+                    renderTokens(tokens);
+                }
+            } catch (error) {
+                console.error('Failed to load tokens:', error);
+            }
+        }
+
+        function renderTokens(tokens) {
+            const container = document.getElementById('tokensList');
+            if (tokens.length === 0) {
+                container.innerHTML = '<p style="color: #999;">No API tokens created yet.</p>';
+                return;
+            }
+
+            let html = '<h4 style="margin: 16px 0 8px 0; font-size: 14px; font-weight: 600;">Existing Tokens</h4>';
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="border-bottom: 2px solid #ddd; text-align: left;">';
+            html += '<th style="padding: 8px;">Name</th>';
+            html += '<th style="padding: 8px;">Token</th>';
+            html += '<th style="padding: 8px;">Created</th>';
+            html += '<th style="padding: 8px;">Expires</th>';
+            html += '<th style="padding: 8px;">Actions</th>';
+            html += '</tr></thead><tbody>';
+
+            tokens.forEach(token => {
+                const created = new Date(token.createdAt).toLocaleDateString();
+                const expires = token.expiresAt ? new Date(token.expiresAt).toLocaleDateString() : 'Never';
+                html += `<tr style="border-bottom: 1px solid #eee;">`;
+                html += `<td style="padding: 8px; font-weight: 500;">${token.name}</td>`;
+                html += `<td style="padding: 8px; font-family: monospace; font-size: 12px;">`;
+                html += `<div style="display: flex; gap: 8px; align-items: center;">`;
+                html += `<input type="text" readonly value="${token.token}" style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5; font-family: monospace; font-size: 11px;" id="token-${token.id}">`;
+                html += `<button class="btn btn-sm" onclick="copyToken('${token.id}')" style="background: #28a745; white-space: nowrap;">Copy</button>`;
+                html += `</div>`;
+                html += `</td>`;
+                html += `<td style="padding: 8px;">${created}</td>`;
+                html += `<td style="padding: 8px;">${expires}</td>`;
+                html += `<td style="padding: 8px;">`;
+                html += `<button class="btn btn-sm" style="background: #dc3545;" onclick="deleteToken('${token.id}', '${token.name}')">Delete</button>`;
+                html += `</td></tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function createToken() {
+            const nameInput = document.getElementById('newTokenName');
+            const expiresInput = document.getElementById('newTokenExpires');
+            
+            const name = nameInput.value.trim();
+            if (!name) {
+                showAlert('error', 'Please enter a token name');
+                return;
+            }
+
+            const days = parseInt(expiresInput.value) || 365;
+
+            try {
+                const response = await fetch('/api/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        expiresDays: days
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('✅ Token created successfully!');
+                    
+                    // Clear form
+                    nameInput.value = '';
+                    expiresInput.value = '365';
+                    
+                    // Reload list
+                    loadTokens();
+                } else {
+                    const error = await response.json();
+                    showAlert('error', 'Failed to create token: ' + error.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Failed to create token: ' + error.message);
+            }
+        }
+
+        function copyToken(tokenId) {
+            const input = document.getElementById('token-' + tokenId);
+            if (!input) return;
+
+            // Select the text
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+
+            // Try to copy using execCommand (more compatible)
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('✅ Token copied to clipboard!');
+                } else {
+                    alert('❌ Failed to copy. Please manually copy the token.');
+                }
+            } catch (err) {
+                alert('❌ Failed to copy. Please manually copy the token.');
+            }
+
+            // Deselect
+            window.getSelection().removeAllRanges();
+        }
+
+        async function deleteToken(tokenId, tokenName) {
+            if (!confirm(`Delete token "${tokenName}"?\n\nThis cannot be undone!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/tokens/${tokenId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('✅ Token deleted successfully!');
+                    loadTokens(); // Reload list
+                } else {
+                    const error = await response.json();
+                    showAlert('error', 'Failed to delete token: ' + error.error);
+                }
+            } catch (error) {
+                showAlert('error', 'Failed to delete token: ' + error.message);
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Bind save button
+            document.getElementById('saveBtn').addEventListener('click', saveConfig);
+            
+            // Handle allowed users input
+            const input = document.getElementById('allowedUsersInput');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addAllowedUser(input.value);
+                        input.value = '';
+                    }
+                });
+            }
+            
+            // Load config and tokens after DOM is ready
+            loadConfig();
+            loadTokens();
+        });
+    </script>
+</body>
+</html>

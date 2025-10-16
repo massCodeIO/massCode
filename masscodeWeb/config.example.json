@@ -1,0 +1,55 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false
+  },
+  "security": {
+    "enabled": true,
+    "authType": "github",
+    "secretKey": "your-secret-key-here-must-be-at-least-32-characters-long",
+    "sessionLifetime": 86400,
+    "github": {
+      "clientId": "your-github-oauth-client-id",
+      "clientSecret": "your-github-oauth-client-secret",
+      "callbackUrl": "http://your-domain.com:5000/auth/callback",
+      "allowedUsers": [
+        "github-username1",
+        "github-username2",
+        "github-username3"
+      ]
+    },
+    "apiTokens": [
+      {
+        "id": "example-token-id",
+        "token": "your-api-token-here",
+        "name": "example-token-name",
+        "createdAt": "2025-01-01T00:00:00.000000",
+        "expiresAt": "2026-01-01T00:00:00.000000",
+        "lastUsed": null
+      }
+    ]
+  },
+  "app": {
+    "autoLoadDatabase": true,
+    "autoRestartOnSave": true,
+    "maxUploadSizeMB": 100,
+    "uploadDirectory": "uploads"
+  },
+  "ui": {
+    "defaultTheme": "dark",
+    "showWelcomeMessage": true,
+    "enableAnimations": true
+  },
+  "backup": {
+    "enabled": false,
+    "autoBackupOnUpload": true,
+    "maxBackups": 5,
+    "backupDirectory": "backups"
+  },
+  "logging": {
+    "level": "INFO",
+    "logToFile": false,
+    "logDirectory": "logs"
+  }
+}

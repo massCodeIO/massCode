@@ -1,0 +1,5 @@
+{
+  "serverUrl": "http://your-server-domain.com:5000",
+  "apiToken": "your-api-token-here",
+  "dbPath": "/path/to/your/massCode.db"
+}

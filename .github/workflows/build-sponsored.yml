@@ -12,6 +12,13 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
+            arch: universal
+          - os: macos-latest
+            platform: mac
+            arch: x64
+          - os: macos-latest
+            platform: mac
+            arch: arm64
           - os: windows-latest
             platform: win
           - os: ubuntu-latest

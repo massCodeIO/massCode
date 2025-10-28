@@ -63,7 +63,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: masscode-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
+          name: masscode-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name || inputs.tag }}
           path: |
             dist/*.dmg
             dist/*.pkg

@@ -10,13 +10,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            platform: mac
-            arch: universal
-          - os: macos-latest
+          - os: macos-15-intel
             platform: mac
             arch: x64
-          - os: macos-latest
+          - os: macos-15
             platform: mac
             arch: arm64
           - os: windows-latest
@@ -45,10 +42,20 @@ jobs:
         run: pnpm install
 
       - name: Rebuild native dependencies
-        run: pnpm run rebuild
+        run: |
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            pnpm run rebuild --arch ${{ matrix.arch }}
+          else
+            pnpm run rebuild
+          fi
 
       - name: Build application (sponsored)
-        run: pnpm run build:sponsored:${{ matrix.platform }}
+        run: |
+          if [ "${{ matrix.platform }}" = "mac" ]; then
+            pnpm run build:sponsored:${{ matrix.platform }}:${{ matrix.arch }}
+          else
+            pnpm run build:sponsored:${{ matrix.platform }}
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SPONSORED: true

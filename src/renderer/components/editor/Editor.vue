@@ -217,9 +217,11 @@ async function init() {
     copy()
   })
 
-  watch(selectedSnippetContent, (v) => {
+  watch(selectedSnippetContent, (v, oldV) => {
     nextTick(() => {
-      setValue(v?.value || '')
+      const isNewValue = v?.id !== oldV?.id
+      // Не сохраняем вьюпорт при смене фрагмента/сниппета
+      setValue(v?.value || '', true, !isNewValue)
       nextTick(() => {
         if (searchQuery.value) {
           updateSearchOverlay()
@@ -261,21 +263,32 @@ async function init() {
   })
 }
 
-function setValue(value: string, programmatic = true) {
+function setValue(value: string, programmatic = true, preserveViewport = true) {
   if (!editor)
     return
 
-  const cursor = editor.getCursor()
+  const current = editor.getValue()
+  if (current === value)
+    return
+
+  const cursor = preserveViewport ? editor.getCursor() : null
+  const { left, top } = preserveViewport
+    ? editor.getScrollInfo()
+    : { left: 0, top: 0 }
 
   isProgrammaticChange.value = programmatic
-  editor?.setValue(value)
+  editor.setValue(value)
+  isProgrammaticChange.value = false
 
-  nextTick(() => {
-    isProgrammaticChange.value = false
-  })
-
-  if (cursor)
-    editor.setCursor(cursor)
+  if (preserveViewport) {
+    if (cursor)
+      editor.setCursor(cursor)
+    editor.scrollTo(left, top)
+  }
+  else {
+    editor.setCursor({ line: 0, ch: 0 })
+    editor.scrollTo(0, 0)
+  }
 }
 
 function setLanguage(language: Language) {

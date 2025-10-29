@@ -1,3 +1,17 @@
+## [4.2.2](https://github.com/massCodeIO/massCode/compare/v4.2.1...v4.2.2) (2025-10-29)
+
+
+### Bug Fixes
+
+* **db:** ensure directory exists before accessing the db ([#628](https://github.com/massCodeIO/massCode/issues/628)) ([d20bd9a](https://github.com/massCodeIO/massCode/commit/d20bd9a2aa44e58d36abd019936761afeb439766))
+* **editor:** jumping scroll when editing ([#629](https://github.com/massCodeIO/massCode/issues/629)) ([ee7e384](https://github.com/massCodeIO/massCode/commit/ee7e38458c541c455b74203ec6a59749090bd758))
+
+
+
+## [4.2.1](https://github.com/massCodeIO/massCode/compare/v4.2.0...v4.2.1) (2025-10-28)
+
+
+
 # [4.2.0](https://github.com/massCodeIO/massCode/compare/v4.1.0...v4.2.0) (2025-10-08)
 
 

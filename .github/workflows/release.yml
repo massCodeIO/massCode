@@ -49,21 +49,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Rebuild native dependencies
-        run: |
-          if [ "${{ matrix.platform }}" = "mac" ]; then
-            pnpm run rebuild --arch ${{ matrix.arch }}
-          else
-            pnpm run rebuild
-          fi
+      - name: Rebuild native dependencies (macOS)
+        if: matrix.platform == 'mac'
+        run: pnpm run rebuild --arch ${{ matrix.arch }}
 
-      - name: Build application
-        run: |
-          if [ "${{ matrix.platform }}" = "mac" ]; then
-            pnpm run build:${{ matrix.platform }}:${{ matrix.arch }}
-          else
-            pnpm run build:${{ matrix.platform }}
-          fi
+      - name: Rebuild native dependencies (other platforms)
+        if: matrix.platform != 'mac'
+        run: pnpm run rebuild
+
+      - name: Build application (macOS)
+        if: matrix.platform == 'mac'
+        run: pnpm run build:${{ matrix.platform }}:${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build application (other platforms)
+        if: matrix.platform != 'mac'
+        run: pnpm run build:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

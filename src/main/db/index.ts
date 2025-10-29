@@ -44,6 +44,11 @@ export function useDB() {
     return db
 
   const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+  const dbDir = path.dirname(dbPath)
+
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true })
+  }
 
   if (fs.existsSync(dbPath) && !isSqliteFile(dbPath)) {
     const backupPath = `${dbPath}.old`

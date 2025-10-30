@@ -30,6 +30,10 @@ const nav = [
     label: i18n.t('preferences:appearance.label'),
     name: RouterName.preferencesAppearance,
   },
+  {
+    label: 'API Port',
+    name: RouterName.preferencesAPI,
+  },
 ]
 
 provide(preferencesKeys, {

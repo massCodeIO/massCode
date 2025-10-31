@@ -13,7 +13,7 @@ watch(apiPort, (value) => {
 
 <template>
   <div class="space-y-5">
-    <UiMenuFormItem label="API Port">
+    <UiMenuFormItem :label="i18n.t('preferences:api.port.label')">
       <UiInput
         v-model="apiPort"
         type="number"
@@ -23,8 +23,7 @@ watch(apiPort, (value) => {
         class="w-32"
       />
       <template #description>
-        Port number for the API server (requires app restart to take effect).
-        Valid range: 1024-65535.
+        {{ i18n.t("preferences:api.port.description") }}
       </template>
       <template #actions>
         <UiButton

@@ -68,5 +68,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Code block Renderer"
+  },
+  "api": {
+    "label": "API Port",
+    "port": {
+      "label": "API Port",
+      "description": "Port number for the API server (requires app restart to take effect). Valid range: 1024-65535."
+    }
   }
 }

@@ -31,7 +31,7 @@ const nav = [
     name: RouterName.preferencesAppearance,
   },
   {
-    label: 'API Port',
+    label: i18n.t('preferences:api.label'),
     name: RouterName.preferencesAPI,
   },
 ]

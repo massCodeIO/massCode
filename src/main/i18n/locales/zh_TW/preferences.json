@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "代碼塊渲染器"
+  },
+  "api": {
+    "label": "API 連接埠",
+    "port": {
+      "label": "API 連接埠",
+      "description": "API 伺服器的連接埠號碼（需要重新啟動應用程式）。有效範圍：1024-65535。"
+    }
   }
 }

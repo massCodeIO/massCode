@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Kod Bloğu Görüntüleyici"
+  },
+  "api": {
+    "label": "API Portu",
+    "port": {
+      "label": "API Portu",
+      "description": "API sunucusu için port numarası (uygulamayı yeniden başlatmak gerekir). Geçerli aralık: 1024-65535."
+    }
   }
 }

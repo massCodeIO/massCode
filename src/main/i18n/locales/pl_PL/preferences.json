@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Renderer bloków kodu"
+  },
+  "api": {
+    "label": "Port API",
+    "port": {
+      "label": "Port API",
+      "description": "Numer portu dla serwera API (wymaga ponownego uruchomienia aplikacji). Prawidłowy zakres: 1024-65535."
+    }
   }
 }

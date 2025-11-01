@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Renderer kódových bloků"
+  },
+  "api": {
+    "label": "API Port",
+    "port": {
+      "label": "API Port",
+      "description": "Číslo portu pro API server (vyžaduje restart aplikace). Platný rozsah: 1024-65535."
+    }
   }
 }

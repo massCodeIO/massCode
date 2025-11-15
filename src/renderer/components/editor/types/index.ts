@@ -120,6 +120,7 @@ export type Language =
   | 'pig'
   | 'plain_text'
   | 'powershell'
+  | 'powerquery'
   | 'praat'
   | 'prisma'
   | 'prolog'

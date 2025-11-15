@@ -641,6 +641,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.powershell',
   },
   {
+    name: 'Power Query',
+    value: 'powerquery',
+    grammar: () => import('./textmate/powerquery.tmLanguage.json'),
+    scopeName: 'source.powerquery',
+  },
+  {
     name: 'Praat',
     value: 'praat',
     grammar: () => import('./textmate/praat.tmLanguage.json'),
@@ -992,7 +998,6 @@ export const oldLanguageMap: Record<any, Language> = {
   'objective-c': 'objectivec',
   'pascaligo': 'plain_text',
   'postiats': 'plain_text',
-  'powerquery': 'plain_text',
   'pug': 'jade',
   'redis': 'plain_text',
   'sb': 'plain_text',

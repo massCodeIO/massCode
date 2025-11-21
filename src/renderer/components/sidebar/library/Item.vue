@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SnippetsQuery } from '~/renderer/services/api/generated'
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { onClickOutside } from '@vueuse/core'
 
@@ -13,6 +13,7 @@ interface Props {
 }
 
 const { state } = useApp()
+const { clearFolderSelection } = useFolders()
 
 const { getSnippets, selectFirstSnippet, clearSearch, isRestoreStateBlocked }
   = useSnippets()
@@ -29,7 +30,7 @@ async function onItemClick(
   clearSearch()
 
   state.libraryFilter = id
-  state.folderId = undefined
+  clearFolderSelection()
   state.tagId = undefined
 
   const query: SnippetsQuery = {}

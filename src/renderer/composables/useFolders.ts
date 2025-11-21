@@ -123,11 +123,16 @@ async function getFolders(shouldEnsureVisibility = true) {
   }
 }
 
-async function createFolder() {
+async function createFolder(parentId?: number) {
   try {
     const { data } = await api.folders.postFolders({
       name: i18n.t('folder.untitled'),
+      ...(parentId !== undefined && { parentId }),
     })
+
+    if (parentId) {
+      await updateFolder(parentId, { isOpen: 1 })
+    }
 
     await getFolders(false)
 
@@ -138,9 +143,9 @@ async function createFolder() {
   }
 }
 
-async function createFolderAndSelect() {
+async function createFolderAndSelect(parentId?: number) {
   const { clearSnippetsState } = useSnippets()
-  const id = await createFolder()
+  const id = await createFolder(parentId)
 
   if (id) {
     await selectFolder(Number(id))

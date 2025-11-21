@@ -160,6 +160,9 @@ export type SnippetsResponse = {
 
 export interface FoldersAdd {
   name: string;
+  parentId?:
+    | (string | (string | (string | (string | (string | (string | number))))))
+    | null;
 }
 
 export type FoldersResponse = {
@@ -465,7 +468,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 3.11.0
+ * @version 4.2.2
  *
  * Development documentation
  */

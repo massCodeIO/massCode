@@ -210,7 +210,7 @@ provide(treeKeys, {
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Content>
-        <ContextMenu.Item @click="createFolderAndSelect">
+        <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
           {{ i18n.t("action.new.folder") }}
         </ContextMenu.Item>
         <ContextMenu.Separator />

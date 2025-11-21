@@ -186,7 +186,7 @@ function onResizeTagList(val: number[]) {
       </div>
       <UiActionButton
         :tooltip="i18n.t('action.new.folder')"
-        @click="createFolderAndSelect"
+        @click="createFolderAndSelect()"
       >
         <Plus class="h-4 w-4" />
       </UiActionButton>

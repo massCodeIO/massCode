@@ -3,29 +3,41 @@ import { computed, reactive } from 'vue'
 
 export const store = reactive<Store>({})
 
+const draggedNodes = computed<Node[]>(() => {
+  if (store.dragNodes?.length) {
+    return store.dragNodes
+  }
+
+  return store.dragNode ? [store.dragNode] : []
+})
+
+export const dragNodeIds = computed<(string | number)[]>(() =>
+  draggedNodes.value.map(node => node.id),
+)
+
 export const dragNodeChildrenIds = computed(() => {
   const ids: (string | number)[] = []
 
   const findIds = (nodes: Node[]) => {
-    nodes.forEach((i) => {
-      ids.push(i.id)
+    nodes.forEach((node) => {
+      ids.push(node.id)
 
-      if (i.children && i.children.length) {
-        findIds(i.children)
+      if (node.children?.length) {
+        findIds(node.children)
       }
     })
   }
 
-  findIds(store.dragNode?.children || [])
+  draggedNodes.value.forEach(node => findIds(node.children || []))
 
   return ids
 })
 
 export const isAllowed = computed(() => {
-  if (!store.dragNode || !store.dragEnterNode)
+  if (!draggedNodes.value.length || !store.dragEnterNode)
     return false
 
-  const isSameNode = store.dragNode?.id === store.dragEnterNode?.id
+  const isSameNode = dragNodeIds.value.includes(store.dragEnterNode.id)
   const isChildrenNode = dragNodeChildrenIds.value.includes(
     store.dragEnterNode!.id,
   )
@@ -35,6 +47,7 @@ export const isAllowed = computed(() => {
 
 export function useFolders() {
   return {
+    dragNodeIds,
     dragNodeChildrenIds,
     isAllowed,
     store,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
-import type { Node } from './types'
+import type { Node, Position } from './types'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
@@ -20,8 +20,11 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: Node[]): void
-  (e: 'clickNode', value: number): void
-  (e: 'dragNode', value: { node: Node, target: Node, position: string }): void
+  (e: 'clickNode', value: { id: number, event?: MouseEvent }): void
+  (
+    e: 'dragNode',
+    value: { nodes: Node[], target: Node, position: Position },
+  ): void
   (e: 'toggleNode', value: Node): void
 }
 
@@ -39,6 +42,9 @@ const {
   updateFolder,
   getFolderByIdFromTree,
   getFolders,
+  selectedFolderIds,
+  clearFolderSelection,
+  selectFolder,
 } = useFolders()
 const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
@@ -49,13 +55,22 @@ const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
 const contextNode = ref<Node | null>(null)
+const isContextMultiSelection = computed(() => {
+  if (!contextNode.value)
+    return false
 
-function clickNode(id: number) {
-  return emit('clickNode', id)
+  if (selectedFolderIds.value.length <= 1)
+    return false
+
+  return selectedFolderIds.value.includes(contextNode.value.id)
+})
+
+function clickNode(id: number, event?: MouseEvent) {
+  return emit('clickNode', { id, event })
 }
 
-function dragNode(node: Node, target: Node, position: string) {
-  return emit('dragNode', { node, target, position })
+function dragNode(nodes: Node[], target: Node, position: Position) {
+  return emit('dragNode', { nodes, target, position })
 }
 
 function toggleNode(node: Node) {
@@ -84,38 +99,47 @@ async function onDeleteFolder() {
     return
 
   const { confirm } = useDialog()
-
+  const activeBeforeDelete = state.folderId
+  const targetIds = selectedFolderIds.value.includes(contextNode.value.id)
+    ? [...selectedFolderIds.value]
+    : [contextNode.value.id]
   const folderName = getFolderByIdFromTree(
     folders.value,
     contextNode.value.id,
   )?.name
 
   const isConfirmed = await confirm({
-    title: i18n.t('messages:confirm.delete', { name: folderName }),
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('sidebar.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
     description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
   })
 
-  if (isConfirmed) {
-    await deleteFolder(contextNode.value.id)
+  if (!isConfirmed)
+    return
 
-    if (contextNode.value.id === state.folderId) {
-      state.folderId = undefined
-      clearSnippetsState()
+  await Promise.all(targetIds.map(id => deleteFolder(id, false)))
+  await getFolders(false)
 
-      const firstFolder = folders.value?.[0]
+  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
+    clearSnippetsState()
+    const fallbackId = selectedFolderIds.value[0]
 
-      if (firstFolder) {
-        state.folderId = firstFolder.id
-        scrollToElement(`[id="${state.folderId}"]`)
-      }
+    if (fallbackId) {
+      await selectFolder(fallbackId)
+      scrollToElement(`[id="${fallbackId}"]`)
     }
-
-    nextTick(() => {
-      if (scrollRef.value) {
-        scrollRef.value.ps?.update()
-      }
-    })
+    else {
+      clearFolderSelection()
+    }
   }
+
+  nextTick(() => {
+    scrollRef.value?.ps?.update()
+  })
 }
 
 function onRenameFolder() {
@@ -210,45 +234,52 @@ provide(treeKeys, {
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Content>
-        <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
-          {{ i18n.t("action.new.folder") }}
-        </ContextMenu.Item>
-        <ContextMenu.Separator />
-        <ContextMenu.Item @click="onRenameFolder">
-          {{ i18n.t("action.rename") }}
-        </ContextMenu.Item>
-        <ContextMenu.Item @click="onDeleteFolder">
-          {{ i18n.t("action.delete.common") }}
-        </ContextMenu.Item>
-        <ContextMenu.Separator />
-        <ContextMenu.Item @click="onSetCustomIcon">
-          {{ i18n.t("action.setCustomIcon") }}
-        </ContextMenu.Item>
-        <ContextMenu.Item
-          v-if="contextNode?.icon"
-          @click="onRemoveCustomIcon"
-        >
-          {{ i18n.t("action.removeCustomIcon") }}
-        </ContextMenu.Item>
-        <ContextMenu.Separator />
-        <ContextMenu.Sub>
-          <ContextMenu.SubTrigger>
-            {{ i18n.t("action.defaultLanguage") }}
-          </ContextMenu.SubTrigger>
-          <ContextMenu.SubContent>
-            <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-              <div class="max-h-[250px]">
-                <ContextMenu.Item
-                  v-for="language in languages"
-                  :key="language.value"
-                  @click="onSelectLanguage(language.value)"
-                >
-                  {{ language.name }}
-                </ContextMenu.Item>
-              </div>
-            </PerfectScrollbar>
-          </ContextMenu.SubContent>
-        </ContextMenu.Sub>
+        <template v-if="isContextMultiSelection">
+          <ContextMenu.Item @click="onDeleteFolder">
+            {{ i18n.t("action.delete.common") }}
+          </ContextMenu.Item>
+        </template>
+        <template v-else>
+          <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
+            {{ i18n.t("action.new.folder") }}
+          </ContextMenu.Item>
+          <ContextMenu.Separator />
+          <ContextMenu.Item @click="onRenameFolder">
+            {{ i18n.t("action.rename") }}
+          </ContextMenu.Item>
+          <ContextMenu.Item @click="onDeleteFolder">
+            {{ i18n.t("action.delete.common") }}
+          </ContextMenu.Item>
+          <ContextMenu.Separator />
+          <ContextMenu.Item @click="onSetCustomIcon">
+            {{ i18n.t("action.setCustomIcon") }}
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            v-if="contextNode?.icon"
+            @click="onRemoveCustomIcon"
+          >
+            {{ i18n.t("action.removeCustomIcon") }}
+          </ContextMenu.Item>
+          <ContextMenu.Separator />
+          <ContextMenu.Sub>
+            <ContextMenu.SubTrigger>
+              {{ i18n.t("action.defaultLanguage") }}
+            </ContextMenu.SubTrigger>
+            <ContextMenu.SubContent>
+              <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+                <div class="max-h-[250px]">
+                  <ContextMenu.Item
+                    v-for="language in languages"
+                    :key="language.value"
+                    @click="onSelectLanguage(language.value)"
+                  >
+                    {{ language.name }}
+                  </ContextMenu.Item>
+                </div>
+              </PerfectScrollbar>
+            </ContextMenu.SubContent>
+          </ContextMenu.Sub>
+        </template>
       </ContextMenu.Content>
     </ContextMenu.Root>
   </PerfectScrollbar>

@@ -5,7 +5,7 @@ import type {
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
 import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import { getContiguousSelection, scrollToElement } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
@@ -316,19 +316,16 @@ function selectSnippet(snippetId: number, withShift = false) {
   if (state.snippetId !== undefined) {
     const source = isSearch.value ? snippetsBySearch.value : snippets.value
 
-    if (source) {
-      const anchorIndex = source.findIndex(s => s.id === state.snippetId)
-      const currentIndex = source.findIndex(s => s.id === snippetId)
+    if (source?.length) {
+      const orderedIds = source.map(snippet => snippet.id)
+      const rangeSelection = getContiguousSelection(
+        orderedIds,
+        state.snippetId,
+        snippetId,
+      )
 
-      if (anchorIndex !== -1 && currentIndex !== -1) {
-        const startIndex = Math.min(anchorIndex, currentIndex)
-        const endIndex = Math.max(anchorIndex, currentIndex)
-
-        const newSelection = source
-          .slice(startIndex, endIndex + 1)
-          .map(s => s.id)
-        selectedSnippetIds.value = newSelection
-
+      if (rangeSelection.length) {
+        selectedSnippetIds.value = rangeSelection
         lastSelectedSnippetId.value = snippetId
         state.snippetContentIndex = 0
       }

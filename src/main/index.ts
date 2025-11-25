@@ -1,5 +1,5 @@
 /* eslint-disable node/prefer-global/process */
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { app, BrowserWindow, Menu } from 'electron'
 import { initApi } from './api'
@@ -115,12 +115,7 @@ else {
     }
 
     try {
-      const storagePath = store.preferences.get('storagePath')
-      const jsonDbPath = `${storagePath}/db.json`
-
-      if (!existsSync(jsonDbPath))
-        return
-
+      const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
       const jsonData = readFileSync(jsonDbPath, 'utf8')
 
       migrateJsonToSqlite(JSON.parse(jsonData))

@@ -87,6 +87,7 @@ async function renderMarkdown() {
       'mtd',
       'ms',
     ]
+    const svgTags = ['svg', 'path', 'g']
 
     const defaultAllowedAttributes = sanitizeHtml.defaults.allowedAttributes
     const mergedAllowedAttributes = {
@@ -117,15 +118,48 @@ async function renderMarkdown() {
       'mspace': ['width'],
       'mstyle': ['scriptlevel', 'displaystyle', 'mathvariant'],
       'annotation': ['encoding'],
+      'svg': [
+        'xmlns',
+        'width',
+        'height',
+        'viewBox',
+        'viewbox',
+        'role',
+        'aria-hidden',
+        'focusable',
+        'preserveAspectRatio',
+        'preserveaspectratio',
+      ],
+      'path': [
+        'fill',
+        'fill-rule',
+        'stroke',
+        'stroke-width',
+        'stroke-linecap',
+        'stroke-linejoin',
+        'stroke-miterlimit',
+        'stroke-dasharray',
+        'stroke-dashoffset',
+        'd',
+        'transform',
+        'clip-path',
+      ],
+      'g': ['fill', 'stroke', 'stroke-width', 'transform', 'clip-path'],
     }
 
     let sanitizedHtml = sanitizeHtml(markdownHtml, {
       allowedTags: sanitizeHtml.defaults.allowedTags
         .concat(['img', 'del'])
-        .concat(mathTags),
+        .concat(mathTags)
+        .concat(svgTags),
       allowedAttributes: mergedAllowedAttributes,
       allowedSchemes: ['http', 'https', 'masscode'],
     })
+
+    // sanitize-html lowercases SVG attributes; KaTeX needs viewBox/preserveAspectRatio casing for radicals
+    sanitizedHtml = sanitizedHtml
+      .replace(/viewbox=/g, 'viewBox=')
+      .replace(/preserveaspectratio=/g, 'preserveAspectRatio=')
 
     const re = /src="\.\//g
     const path = store.preferences.get('storagePath')

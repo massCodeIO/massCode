@@ -27,6 +27,7 @@ const {
   selectFolder,
   createFolderAndSelect,
   updateFolder,
+  selectedFolderIds,
 } = useFolders()
 
 const tagsListHeight = store.app.get('sizes.tagsListHeight') as number
@@ -62,13 +63,29 @@ async function initGetSnippets() {
 
 initGetSnippets()
 
-async function onFolderClick(id: number) {
-  if (state.folderId !== id) {
+async function onFolderClick({
+  id,
+  event,
+}: {
+  id: number
+  event?: MouseEvent
+}) {
+  if (event?.shiftKey) {
+    await selectFolder(id, { mode: 'range', ensureVisibility: false })
+    return
+  }
+
+  if (event && (event.metaKey || event.ctrlKey)) {
+    await selectFolder(id, { mode: 'toggle', ensureVisibility: false })
+    return
+  }
+
+  if (state.folderId !== id || selectedFolderIds.value.length > 1) {
     isRestoreStateBlocked.value = true
     clearSearch()
 
-    await getSnippets({ folderId: id })
     await selectFolder(id)
+    await getSnippets({ folderId: id })
     selectFirstSnippet()
   }
 }
@@ -85,29 +102,45 @@ async function onFolderToggle(node: Node) {
 }
 
 async function onFolderDrag({
-  node,
+  nodes,
   target,
   position,
 }: {
-  node: Node
+  nodes: Node[]
   target: Node
-  position: string
+  position: 'before' | 'after' | 'center'
 }) {
   try {
-    const isDraggingUp = node.orderIndex > target.orderIndex
+    // Фильтруем узлы, исключая целевой, чтобы избежать перемещения папки в себя
+    const movableNodes = nodes.filter(node => node.id !== target.id)
 
-    // Определяем новые значения для parentId и orderIndex
-    let newParentId: number | null = null
-    let newOrderIndex: number = 0
+    if (!movableNodes.length) {
+      return
+    }
 
     if (position === 'center') {
       // Перемещение внутрь целевой папки
-      newParentId = Number(target.id)
-      newOrderIndex = target.children?.length || 0
+      const destinationParentId = Number(target.id)
+      let orderIndex = target.children?.length || 0
+
+      for (const node of movableNodes) {
+        await updateFolder(node.id, {
+          parentId: destinationParentId,
+          orderIndex,
+        })
+        orderIndex += 1
+      }
+
+      return
     }
-    else {
-      // Перемещение до или после целевой папки
-      newParentId = target.parentId || null
+
+    // Перемещение до или после целевой папки
+    for (const node of movableNodes) {
+      const isDraggingUp = node.orderIndex > target.orderIndex
+
+      const newParentId: number | null = target.parentId || null
+      let newOrderIndex: number
+
       if (node.parentId === target.parentId) {
         // Если перемещаем внутри одного списка, корректируем по направлению и позиции
         if (position === 'after') {
@@ -126,12 +159,12 @@ async function onFolderDrag({
         newOrderIndex
           = position === 'after' ? target.orderIndex + 1 : target.orderIndex
       }
-    }
 
-    updateFolder(node.id, {
-      parentId: newParentId,
-      orderIndex: newOrderIndex,
-    })
+      await updateFolder(node.id, {
+        parentId: newParentId,
+        orderIndex: newOrderIndex,
+      })
+    }
   }
   catch (error) {
     console.error('Folder update error:', error)

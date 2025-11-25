@@ -1,9 +1,9 @@
 import type { InjectionKey, Ref } from 'vue'
-import type { Node } from './types'
+import type { Node, Position } from './types'
 
 export interface TreeInjection {
-  clickNode: (id: number) => void
-  dragNode: (node: Node, target: Node, position: string) => void
+  clickNode: (id: number, event?: MouseEvent) => void
+  dragNode: (nodes: Node[], target: Node, position: Position) => void
   focusHandler?: (isFocused: Ref<boolean>) => void
   isHoveredByIdDisabled: Ref<boolean>
   toggleNode: (node: Node) => void

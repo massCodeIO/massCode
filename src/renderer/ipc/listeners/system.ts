@@ -3,7 +3,7 @@ import { ipc } from '@/electron'
 import { repository } from '../../../../package.json'
 
 const {
-  highlightedFolderId,
+  highlightedFolderIds,
   highlightedSnippetIds,
   focusedSnippetId,
   focusedFolderId,
@@ -20,7 +20,7 @@ export function registerSystemListeners() {
       const snippetId = u.searchParams.get('snippetId')
 
       if (folderId && snippetId) {
-        highlightedFolderId.value = undefined
+        highlightedFolderIds.value.clear()
         highlightedSnippetIds.value.clear()
         focusedSnippetId.value = undefined
         focusedFolderId.value = undefined

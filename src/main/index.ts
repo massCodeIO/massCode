@@ -19,6 +19,12 @@ const gotTheLock = app.requestSingleInstanceLock()
 let mainWindow: BrowserWindow
 let isQuitting = false
 
+if (process.env.NO_ELECTRON_SANDBOX === '1') {
+  // Some sandboxed environments (CI, containers) cannot run the Chromium sandbox
+  app.commandLine.appendSwitch('no-sandbox')
+  app.commandLine.appendSwitch('disable-setuid-sandbox')
+}
+
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('masscode', process.execPath, [

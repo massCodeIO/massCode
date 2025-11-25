@@ -21,7 +21,7 @@ const isSidebarHidden = ref(
 if (state.isSidebarHidden === undefined)
   state.isSidebarHidden = isSidebarHidden.value
 
-const highlightedFolderId = ref<number>()
+const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedSnippetIds = ref<Set<number>>(new Set())
 const highlightedTagId = ref<number>()
 const focusedFolderId = ref<number | undefined>()
@@ -95,7 +95,7 @@ export function useApp() {
   return {
     focusedFolderId,
     focusedSnippetId,
-    highlightedFolderId,
+    highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,
     isFocusedSnippetName,

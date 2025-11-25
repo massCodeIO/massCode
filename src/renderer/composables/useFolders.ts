@@ -5,13 +5,183 @@ import type {
 import { useApp, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { scrollToElement } from '../utils'
+import { getContiguousSelection, scrollToElement } from '../utils'
 
 const { state } = useApp()
 
 const folders = shallowRef<FoldersTreeResponse>()
 
 const renameFolderId = ref<number | null>(null)
+
+const selectedFolderIds = ref<number[]>(state.folderId ? [state.folderId] : [])
+const lastSelectedFolderId = ref<number | undefined>(state.folderId)
+
+function flattenFolderTree(
+  nodes?: FoldersTreeResponse,
+  acc: FoldersTreeResponse[0][] = [],
+) {
+  if (!nodes) {
+    return acc
+  }
+
+  nodes.forEach((folder) => {
+    acc.push(folder)
+
+    if (folder.children?.length) {
+      flattenFolderTree(folder.children, acc)
+    }
+  })
+
+  return acc
+}
+
+const flatFolderList = computed(() => flattenFolderTree(folders.value))
+
+const folderOrderMap = computed(() => {
+  const map = new Map<number, number>()
+
+  flatFolderList.value.forEach((folder, index) => {
+    map.set(folder.id, index)
+  })
+
+  return map
+})
+
+function sortFolderIdsByTreeOrder(ids: number[]) {
+  const seen = new Set<number>()
+
+  return ids
+    .filter((id) => {
+      if (seen.has(id)) {
+        return false
+      }
+      seen.add(id)
+      return folderOrderMap.value.has(id)
+    })
+    .sort((a, b) => {
+      const orderA = folderOrderMap.value.get(a) ?? Number.MAX_SAFE_INTEGER
+      const orderB = folderOrderMap.value.get(b) ?? Number.MAX_SAFE_INTEGER
+
+      return orderA - orderB
+    })
+}
+
+function syncSelectedFoldersWithTree() {
+  const orderedIds = flatFolderList.value.map(folder => folder.id)
+
+  if (!orderedIds.length) {
+    clearFolderSelection()
+    return
+  }
+
+  const filteredSelection = selectedFolderIds.value.filter(id =>
+    folderOrderMap.value.has(id),
+  )
+
+  if (!filteredSelection.length) {
+    const fallbackId
+      = state.folderId && folderOrderMap.value.has(state.folderId)
+        ? state.folderId
+        : orderedIds[0]
+
+    if (fallbackId) {
+      setFolderSelection([fallbackId])
+    }
+    else {
+      clearFolderSelection()
+    }
+
+    return
+  }
+
+  setFolderSelection(filteredSelection)
+}
+
+watch(
+  () => state.folderId,
+  (folderId) => {
+    if (folderId === undefined) {
+      selectedFolderIds.value = []
+      lastSelectedFolderId.value = undefined
+      return
+    }
+
+    if (!selectedFolderIds.value.includes(folderId)) {
+      selectedFolderIds.value = sortFolderIdsByTreeOrder([
+        folderId,
+        ...selectedFolderIds.value,
+      ])
+    }
+  },
+)
+
+function clearFolderSelection() {
+  selectedFolderIds.value = []
+  state.folderId = undefined
+  state.snippetId = undefined
+  lastSelectedFolderId.value = undefined
+}
+
+function setFolderSelection(ids: number[]) {
+  if (!ids.length) {
+    clearFolderSelection()
+    return
+  }
+
+  const orderedSelection = sortFolderIdsByTreeOrder(ids)
+  selectedFolderIds.value = orderedSelection
+  state.folderId = orderedSelection[0]
+  lastSelectedFolderId.value = orderedSelection[orderedSelection.length - 1]
+}
+
+function applySingleFolderSelection(folderId: number) {
+  selectedFolderIds.value = [folderId]
+  state.folderId = folderId
+  lastSelectedFolderId.value = folderId
+}
+
+function applyRangeFolderSelection(folderId: number) {
+  const orderedIds = flatFolderList.value.map(folder => folder.id)
+
+  if (!orderedIds.length) {
+    applySingleFolderSelection(folderId)
+    return
+  }
+
+  const anchorId = state.folderId ?? selectedFolderIds.value[0] ?? folderId
+  const rangeSelection = getContiguousSelection(orderedIds, anchorId, folderId)
+
+  if (!rangeSelection.length) {
+    applySingleFolderSelection(folderId)
+    return
+  }
+
+  selectedFolderIds.value = rangeSelection
+  lastSelectedFolderId.value = folderId
+}
+
+function applyToggleFolderSelection(folderId: number) {
+  if (selectedFolderIds.value.includes(folderId)) {
+    if (selectedFolderIds.value.length === 1) {
+      return
+    }
+
+    selectedFolderIds.value = selectedFolderIds.value.filter(
+      id => id !== folderId,
+    )
+    state.folderId = selectedFolderIds.value[0]
+    lastSelectedFolderId.value
+      = selectedFolderIds.value[selectedFolderIds.value.length - 1]
+    return
+  }
+
+  selectedFolderIds.value = sortFolderIdsByTreeOrder([
+    ...selectedFolderIds.value,
+    folderId,
+  ])
+  state.folderId = folderId
+  lastSelectedFolderId.value = folderId
+}
 
 function findParentFolderIds(folderId: number, allFolders: any[]): number[] {
   const parentIds: number[] = []
@@ -33,27 +203,14 @@ async function ensureSelectedFolderIsVisible() {
     return
   }
 
-  const flatFolders: any[] = []
-
-  function flattenFolders(folderList: any[]) {
-    folderList.forEach((folder) => {
-      flatFolders.push(folder)
-      if (folder.children && folder.children.length > 0) {
-        flattenFolders(folder.children)
-      }
-    })
-  }
-
-  flattenFolders(folders.value)
-
-  const parentIds = findParentFolderIds(state.folderId, flatFolders)
+  const parentIds = findParentFolderIds(state.folderId, flatFolderList.value)
 
   if (parentIds.length === 0) {
     return
   }
 
   const foldersToOpen = parentIds.filter((parentId) => {
-    const folder = flatFolders.find(f => f.id === parentId)
+    const folder = flatFolderList.value.find(f => f.id === parentId)
     return folder && folder.isOpen === 0
   })
 
@@ -113,6 +270,7 @@ async function getFolders(shouldEnsureVisibility = true) {
   try {
     const { data } = await api.folders.getFoldersTree()
     folders.value = data
+    syncSelectedFoldersWithTree()
 
     if (shouldEnsureVisibility) {
       await ensureSelectedFolderIsVisible()
@@ -165,22 +323,44 @@ async function updateFolder(folderId: number, data: FoldersUpdate) {
   }
 }
 
-async function deleteFolder(folderId: number) {
+async function deleteFolder(folderId: number, shouldRefresh = true) {
   try {
     await api.folders.deleteFoldersById(String(folderId))
-    await getFolders(false)
+    if (shouldRefresh) {
+      await getFolders(false)
+    }
   }
   catch (error) {
     console.error(error)
   }
 }
-async function selectFolder(folderId: number) {
-  state.folderId = folderId
-  state.libraryFilter = undefined
-  state.tagId = undefined
-  state.snippetId = undefined
 
-  if (folders.value && folders.value.length > 0) {
+interface SelectFolderOptions {
+  mode?: 'single' | 'range' | 'toggle'
+  ensureVisibility?: boolean
+}
+
+async function selectFolder(
+  folderId: number,
+  options: SelectFolderOptions = {},
+) {
+  const mode = options.mode ?? 'single'
+  const shouldEnsureVisibility = options.ensureVisibility ?? mode === 'single'
+
+  if (mode === 'range') {
+    applyRangeFolderSelection(folderId)
+  }
+  else if (mode === 'toggle') {
+    applyToggleFolderSelection(folderId)
+  }
+  else {
+    applySingleFolderSelection(folderId)
+    state.libraryFilter = undefined
+    state.tagId = undefined
+    state.snippetId = undefined
+  }
+
+  if (folders.value?.length && shouldEnsureVisibility) {
     await ensureSelectedFolderIsVisible()
   }
 }
@@ -189,11 +369,15 @@ export function useFolders() {
   return {
     createFolder,
     createFolderAndSelect,
+    clearFolderSelection,
     deleteFolder,
     folders,
     getFolderByIdFromTree,
     getFolders,
+    lastSelectedFolderId,
     renameFolderId,
+    selectedFolderIds,
+    setFolderSelection,
     selectFolder,
     updateFolder,
   }

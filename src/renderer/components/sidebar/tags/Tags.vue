@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useDialog, useSnippets, useTags } from '@/composables'
+import {
+  useApp,
+  useDialog,
+  useFolders,
+  useSnippets,
+  useTags,
+} from '@/composables'
 import { i18n } from '@/electron'
 
 const { tags, getTags, deleteTag } = useTags()
@@ -12,6 +18,7 @@ const {
   clearSearch,
   isRestoreStateBlocked,
 } = useSnippets()
+const { clearFolderSelection } = useFolders()
 
 getTags()
 
@@ -19,7 +26,7 @@ const idToDelete = ref(0)
 
 async function onTagClick(tagId: number) {
   state.tagId = tagId
-  state.folderId = undefined
+  clearFolderSelection()
   state.libraryFilter = undefined
 
   isRestoreStateBlocked.value = true

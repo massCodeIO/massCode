@@ -15,7 +15,7 @@ const props = defineProps<Props>()
 
 const {
   highlightedSnippetIds,
-  highlightedFolderId,
+  highlightedFolderIds,
   isFocusedSnippetName,
   focusedSnippetId,
   state,
@@ -81,7 +81,7 @@ function onSnippetClick(id: number, event: MouseEvent) {
 }
 
 function onClickContextMenu() {
-  highlightedFolderId.value = undefined
+  highlightedFolderIds.value.clear()
   highlightedSnippetIds.value.clear()
   highlightedSnippetIds.value.add(props.snippet.id)
 

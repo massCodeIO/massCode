@@ -89,6 +89,9 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      katex:
+        specifier: ^0.16.22
+        version: 0.16.22
       ky:
         specifier: ^1.7.5
         version: 1.7.5
@@ -98,6 +101,9 @@ importers:
       marked:
         specifier: ^15.0.8
         version: 15.0.8
+      marked-katex-extension:
+        specifier: ^3.0.1
+        version: 3.0.6(marked@15.0.8)
       markmap-lib:
         specifier: ^0.18.11
         version: 0.18.11(markmap-common@0.18.9)
@@ -1285,6 +1291,9 @@ packages:
 
   '@types/jsonfile@6.1.4':
     resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
+
+  '@types/katex@0.16.7':
+    resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
 
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
@@ -3462,6 +3471,11 @@ packages:
 
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
+
+  marked-katex-extension@3.0.6:
+    resolution: {integrity: sha512-X1XPjXVFcE0zo6oCcHuIOUrFCzUNMOPXqh05c18kNEB/htLSohrJTzOSWhDnNyVynoTiYrl8IhwZu6C0lTNFAQ==}
+    peerDependencies:
+      marked: '>=4 <10'
 
   marked@15.0.8:
     resolution: {integrity: sha512-rli4l2LyZqpQuRve5C0rkn6pj3hT8EWPC+zkAxFTAJLxRbENfTAhEQq9itrmf1Y81QtAX5D/MYlGlIomNgj9lA==}
@@ -6090,6 +6104,8 @@ snapshots:
     dependencies:
       '@types/node': 22.13.1
 
+  '@types/katex@0.16.7': {}
+
   '@types/keyv@3.1.4':
     dependencies:
       '@types/node': 22.13.1
@@ -8635,6 +8651,12 @@ snapshots:
       uc.micro: 2.1.0
 
   markdown-table@3.0.4: {}
+
+  marked-katex-extension@3.0.6(marked@15.0.8):
+    dependencies:
+      '@types/katex': 0.16.7
+      katex: 0.16.22
+      marked: 15.0.8
 
   marked@15.0.8: {}
 

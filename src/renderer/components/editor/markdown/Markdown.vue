@@ -5,6 +5,7 @@ import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
+import markedKatex from 'marked-katex-extension'
 import mermaid from 'mermaid'
 import sanitizeHtml from 'sanitize-html'
 import { nextTick, ref, watch } from 'vue'
@@ -13,6 +14,7 @@ import { useMarkdown } from './composables'
 import 'codemirror/addon/runmode/runmode'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
+import 'katex/dist/katex.min.css'
 
 const isDev = import.meta.env.DEV
 
@@ -31,6 +33,8 @@ const codeBlocksData = ref<{ id: string, value: string, language?: string }[]>(
 const markdownRef = useTemplateRef('markdownRef')
 
 const isShowHeaderTool = route.name !== 'markdown-presentation'
+
+marked.use(markedKatex({ throwOnError: false }))
 
 marked.use({
   renderer: {
@@ -59,26 +63,67 @@ async function renderMarkdown() {
   if (selectedSnippetContent.value?.value) {
     const markdownHtml = await marked.parse(selectedSnippetContent.value.value)
 
+    const mathTags = [
+      'math',
+      'semantics',
+      'mrow',
+      'mi',
+      'mn',
+      'mo',
+      'mfrac',
+      'msup',
+      'msub',
+      'msqrt',
+      'mstyle',
+      'mspace',
+      'msubsup',
+      'mtext',
+      'annotation',
+      'mover',
+      'munder',
+      'munderover',
+      'mtable',
+      'mtr',
+      'mtd',
+      'ms',
+    ]
+
+    const defaultAllowedAttributes = sanitizeHtml.defaults.allowedAttributes
+    const mergedAllowedAttributes = {
+      ...defaultAllowedAttributes,
+      '*': [
+        ...(defaultAllowedAttributes['*'] || []),
+        'align',
+        'alt',
+        'height',
+        'href',
+        'name',
+        'src',
+        'target',
+        'width',
+        'class',
+        'type',
+        'checked',
+        'disabled',
+        'id',
+        'data-*',
+        'style',
+        'aria-hidden',
+        'aria-label',
+        'display',
+      ],
+      'math': ['xmlns', 'display'],
+      'mfrac': ['linethickness'],
+      'mspace': ['width'],
+      'mstyle': ['scriptlevel', 'displaystyle', 'mathvariant'],
+      'annotation': ['encoding'],
+    }
+
     let sanitizedHtml = sanitizeHtml(markdownHtml, {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
-      allowedAttributes: {
-        '*': [
-          'align',
-          'alt',
-          'height',
-          'href',
-          'name',
-          'src',
-          'target',
-          'width',
-          'class',
-          'type',
-          'checked',
-          'disabled',
-          'id',
-          'data-*',
-        ],
-      },
+      allowedTags: sanitizeHtml.defaults.allowedTags
+        .concat(['img', 'del'])
+        .concat(mathTags),
+      allowedAttributes: mergedAllowedAttributes,
       allowedSchemes: ['http', 'https', 'masscode'],
     })
 

@@ -84,7 +84,9 @@
     "toml": "^3.0.0",
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
-    "vue3-perfect-scrollbar": "^2.0.0"
+    "vue3-perfect-scrollbar": "^2.0.0",
+    "katex": "^0.16.22",
+    "marked-katex-extension": "^3.0.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",

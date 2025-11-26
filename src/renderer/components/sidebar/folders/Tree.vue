@@ -240,7 +240,7 @@ provide(treeKeys, {
           </ContextMenu.Item>
         </template>
         <template v-else>
-          <ContextMenu.Item @click="createFolderAndSelect">
+          <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
             {{ i18n.t("action.new.folder") }}
           </ContextMenu.Item>
           <ContextMenu.Separator />

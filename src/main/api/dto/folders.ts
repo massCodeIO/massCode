@@ -2,6 +2,7 @@ import Elysia, { t } from 'elysia'
 
 const foldersAdd = t.Object({
   name: t.String(),
+  parentId: t.Optional(t.Union([t.Number(), t.Null()])),
 })
 
 const foldersUpdate = t.Object({

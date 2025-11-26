@@ -90,18 +90,19 @@ app
     '/',
     ({ body }) => {
       const db = useDB()
-      const { name } = body
+      const { name, parentId } = body
       const now = Date.now()
 
+      //  (parentId)
       const { maxOrder } = db
         .prepare(
           `
         SELECT COALESCE(MAX(orderIndex), -1) as maxOrder 
         FROM folders 
-        WHERE parentId IS NULL 
+        WHERE parentId ${parentId ? '= ?' : 'IS NULL'}
       `,
         )
-        .get() as { maxOrder: number }
+        .get(...(parentId ? [parentId] : [])) as { maxOrder: number }
 
       const newOrder = maxOrder + 1
 
@@ -120,7 +121,7 @@ app
       const { lastInsertRowid } = stmt.run(
         name,
         'plain_text',
-        null,
+        parentId ?? null,
         0,
         now,
         now,

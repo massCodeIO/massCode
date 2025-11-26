@@ -1,3 +1,19 @@
+# [4.3.0](https://github.com/massCodeIO/massCode/compare/v4.2.2...v4.3.0) (2025-11-26)
+
+
+### Bug Fixes
+
+* **folders:** ensure context and toolbar folder creation respect parent ([#640](https://github.com/massCodeIO/massCode/issues/640)) ([b2877c2](https://github.com/massCodeIO/massCode/commit/b2877c29994f4c227da967e801dc13d3731aeba0))
+
+
+### Features
+
+* **editor:** add Power Query (M) language support ([#639](https://github.com/massCodeIO/massCode/issues/639)) ([a49b5d0](https://github.com/massCodeIO/massCode/commit/a49b5d04ab28cd1bc163a24f8b8c431c72baa6f5))
+* **folders:** add multi-selection ([#641](https://github.com/massCodeIO/massCode/issues/641)) ([daef94f](https://github.com/massCodeIO/massCode/commit/daef94f718fd7ec9611f8c21a618c8a33f833feb))
+* **preferences:** add api port to preference option ([#631](https://github.com/massCodeIO/massCode/issues/631)) ([d542824](https://github.com/massCodeIO/massCode/commit/d542824361becdcfcd7bd980adff8a7f8f0354ce))
+
+
+
 ## [4.2.2](https://github.com/massCodeIO/massCode/compare/v4.2.1...v4.2.2) (2025-10-29)
 
 

@@ -23,115 +23,51 @@ export interface SnippetContentsUpdate {
 
 export interface SnippetsAdd {
   name: string;
-  folderId?:
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      )
-    | null;
+  folderId?: number | null;
 }
 
 export interface SnippetsUpdate {
   name?: string;
-  folderId?:
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      )
-    | null;
+  folderId?: number | null;
   description?: string | null;
   /**
    * @min 0
    * @max 1
    */
-  isDeleted?:
-    | string
-    | (string | (string | (string | (string | (string | (string | number))))));
+  isDeleted?: number;
   /**
    * @min 0
    * @max 1
    */
-  isFavorites?:
-    | string
-    | (string | (string | (string | (string | (string | (string | number))))));
+  isFavorites?: number;
 }
 
 export interface SnippetsCountsResponse {
-  total:
-    | string
-    | (string | (string | (string | (string | (string | (string | number))))));
-  trash:
-    | string
-    | (string | (string | (string | (string | (string | (string | number))))));
+  total: number;
+  trash: number;
 }
 
 export interface SnippetsQuery {
   search?: string;
   sort?: string;
   order?: "ASC" | "DESC";
-  folderId?:
-    | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
-  tagId?:
-    | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+  folderId?: number;
+  tagId?: number;
   /**
    * @min 0
    * @max 1
    */
-  isFavorites?:
-    | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+  isFavorites?: number;
   /**
    * @min 0
    * @max 1
    */
-  isDeleted?:
-    | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+  isDeleted?: number;
   /**
    * @min 0
    * @max 1
    */
-  isInbox?:
-    | string
-    | (
-        | string
-        | (
-            | string
-            | (string | (string | (string | (string | (string | number)))))
-          )
-      );
+  isInbox?: number;
 }
 
 export type SnippetsResponse = {
@@ -160,9 +96,7 @@ export type SnippetsResponse = {
 
 export interface FoldersAdd {
   name: string;
-  parentId?:
-    | (string | (string | (string | (string | (string | (string | number))))))
-    | null;
+  parentId?: number | null;
 }
 
 export type FoldersResponse = {
@@ -181,19 +115,13 @@ export interface FoldersUpdate {
   name?: string;
   icon?: string | null;
   defaultLanguage?: string;
-  parentId?:
-    | (string | (string | (string | (string | (string | (string | number))))))
-    | null;
+  parentId?: number | null;
   /**
    * @min 0
    * @max 1
    */
-  isOpen?:
-    | string
-    | (string | (string | (string | (string | (string | number)))));
-  orderIndex?:
-    | string
-    | (string | (string | (string | (string | (string | number)))));
+  isOpen?: number;
+  orderIndex?: number;
 }
 
 export type FoldersTreeResponse = {
@@ -219,7 +147,7 @@ export type TagsResponse = {
 }[];
 
 export interface TagsAddResponse {
-  id: string | (string | (string | (string | (string | number))));
+  id: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -468,7 +396,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 4.2.2
+ * @version 4.3.0
  *
  * Development documentation
  */
@@ -488,78 +416,23 @@ export class Api<
         search?: string;
         sort?: string;
         order?: "ASC" | "DESC";
-        folderId?:
-          | string
-          | (
-              | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
-            );
-        tagId?:
-          | string
-          | (
-              | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
-            );
+        folderId?: number;
+        tagId?: number;
         /**
          * @min 0
          * @max 1
          */
-        isFavorites?:
-          | string
-          | (
-              | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
-            );
+        isFavorites?: number;
         /**
          * @min 0
          * @max 1
          */
-        isDeleted?:
-          | string
-          | (
-              | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
-            );
+        isDeleted?: number;
         /**
          * @min 0
          * @max 1
          */
-        isInbox?:
-          | string
-          | (
-              | string
-              | (
-                  | string
-                  | (
-                      | string
-                      | (string | (string | (string | (string | number))))
-                    )
-                )
-            );
+        isInbox?: number;
       },
       params: RequestParams = {},
     ) =>

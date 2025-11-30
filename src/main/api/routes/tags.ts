@@ -49,7 +49,7 @@ app
   // Удаление тега и удаление его из всех сниппетов
   .delete(
     '/:id',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const tag = db
         .prepare(
@@ -60,7 +60,7 @@ app
         .get(params.id)
 
       if (!tag) {
-        return error(404, { message: 'Tag not found' })
+        return status(404, { message: 'Tag not found' })
       }
 
       const transaction = db.transaction(() => {

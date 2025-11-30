@@ -231,7 +231,7 @@ app
   // Обновление сниппета
   .patch(
     '/:id',
-    ({ params, body, error }) => {
+    ({ params, body, status }) => {
       const db = useDB()
       const { id } = params
 
@@ -264,7 +264,7 @@ app
       }
 
       if (updateFields.length === 0) {
-        return error(400, { message: 'Need at least one field to update' })
+        return status(400, { message: 'Need at least one field to update' })
       }
 
       updateFields.push('updatedAt = ?')
@@ -283,7 +283,7 @@ app
       const result = stmt.run(...updateParams)
 
       if (!result.changes) {
-        return error(404, { message: 'Snippet not found' })
+        return status(404, { message: 'Snippet not found' })
       }
 
       return { message: 'Snippet updated' }
@@ -298,7 +298,7 @@ app
   // Обновление содержимого сниппета
   .patch(
     '/:id/contents/:contentId',
-    ({ params, body, error }) => {
+    ({ params, body, status }) => {
       const db = useDB()
       const { id, contentId } = params
 
@@ -321,7 +321,7 @@ app
       }
 
       if (updateFields.length === 0) {
-        return error(400, { message: 'Need at least one field to update' })
+        return status(400, { message: 'Need at least one field to update' })
       }
 
       updateParams.push(contentId)
@@ -335,7 +335,7 @@ app
       const contentsResult = contentsStmt.run(...updateParams)
 
       if (!contentsResult.changes) {
-        return error(404, { message: 'Snippet content not found' })
+        return status(404, { message: 'Snippet content not found' })
       }
 
       // Обновляем дату сниппета только если были реальные изменения в данных
@@ -348,7 +348,7 @@ app
         const snippetResult = snippetsStmt.run(now, id)
 
         if (!snippetResult.changes) {
-          return error(404, { message: 'Snippet not found' })
+          return status(404, { message: 'Snippet not found' })
         }
       }
 
@@ -364,7 +364,7 @@ app
   // Добавление тега к сниппету
   .post(
     '/:id/tags/:tagId',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const { id, tagId } = params
 
@@ -378,7 +378,7 @@ app
         .get(id)
 
       if (!snippet) {
-        return error(404, { message: 'Snippet not found' })
+        return status(404, { message: 'Snippet not found' })
       }
 
       // Проверяем, существует ли тег
@@ -391,7 +391,7 @@ app
         .get(tagId)
 
       if (!tag) {
-        return error(404, { message: 'Tag not found' })
+        return status(404, { message: 'Tag not found' })
       }
 
       // Добавляем связь между сниппетом и тегом
@@ -415,7 +415,7 @@ app
   // Удаление тега из сниппета
   .delete(
     '/:id/tags/:tagId',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const { id, tagId } = params
 
@@ -429,7 +429,7 @@ app
         .get(id)
 
       if (!snippet) {
-        return error(404, { message: 'Snippet not found' })
+        return status(404, { message: 'Snippet not found' })
       }
 
       // Проверяем, существует ли тег
@@ -442,7 +442,7 @@ app
         .get(tagId)
 
       if (!tag) {
-        return error(404, { message: 'Tag not found' })
+        return status(404, { message: 'Tag not found' })
       }
 
       // Удаляем связь между сниппетом и тегом
@@ -456,7 +456,7 @@ app
       const result = stmt.run(id, tagId)
 
       if (!result.changes) {
-        return error(404, {
+        return status(404, {
           message: 'Tag is not associated with this snippet',
         })
       }
@@ -472,7 +472,7 @@ app
   // Удаление сниппета
   .delete(
     '/:id',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const { id } = params
 
@@ -485,7 +485,7 @@ app
         .get(id)
 
       if (!snippet) {
-        return error(404, { message: 'Snippet not found' })
+        return status(404, { message: 'Snippet not found' })
       }
 
       const transaction = db.transaction(() => {
@@ -524,7 +524,7 @@ app
   // Удаление всех сниппетов в корзине
   .delete(
     '/trash',
-    ({ error }) => {
+    ({ status }) => {
       const db = useDB()
       const deletedSnippets = db
         .prepare(
@@ -535,7 +535,7 @@ app
         .all() as { id: number }[]
 
       if (deletedSnippets.length === 0) {
-        return error(404, { message: 'No snippets in trash' })
+        return status(404, { message: 'No snippets in trash' })
       }
 
       const transaction = db.transaction(() => {
@@ -582,7 +582,7 @@ app
   // Удаление содержимого сниппета
   .delete(
     '/:id/contents/:contentId',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const { contentId } = params
 
@@ -595,7 +595,7 @@ app
         .run(contentId)
 
       if (!result.changes) {
-        return error(404, { message: 'Snippet content not found' })
+        return status(404, { message: 'Snippet content not found' })
       }
 
       return { message: 'Snippet content deleted' }

@@ -42,7 +42,7 @@ app
   // Получение папок в виде древовидной структуры
   .get(
     '/tree',
-    () => {
+    (): any => {
       const db = useDB()
       const allFolders = db
         .prepare(

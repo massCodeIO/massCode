@@ -42,7 +42,7 @@ app
   // Получение папок в виде древовидной структуры
   .get(
     '/tree',
-    () => {
+    (): any => {
       const db = useDB()
       const allFolders = db
         .prepare(
@@ -141,7 +141,7 @@ app
   // Обновление папки
   .patch(
     '/:id',
-    ({ params, body, error }) => {
+    ({ params, body, status }) => {
       const db = useDB()
       const { id } = params
       const now = Date.now()
@@ -187,7 +187,7 @@ app
       }
 
       if (updateFields.length === 0) {
-        return error(400, { message: 'Need at least one field to update' })
+        return status(400, { message: 'Need at least one field to update' })
       }
 
       updateFields.push('updatedAt = ?')
@@ -204,7 +204,7 @@ app
           | undefined
 
         if (!folder) {
-          return error(404, { message: 'Folder not found' })
+          return status(404, { message: 'Folder not found' })
         }
 
         // Обновляем порядок, только если изменился родитель или индекс
@@ -301,7 +301,7 @@ app
   // Удаление папки
   .delete(
     '/:id',
-    ({ params, error }) => {
+    ({ params, status }) => {
       const db = useDB()
       const { id } = params
 
@@ -314,7 +314,7 @@ app
         .get(id)
 
       if (!folder) {
-        return error(404, { message: 'Folder not found' })
+        return status(404, { message: 'Folder not found' })
       }
 
       const transaction = db.transaction(() => {

@@ -90,7 +90,7 @@ else {
     }
 
     try {
-      initApi()
+      await initApi()
     }
     catch (error) {
       log('Error initializing API', error)

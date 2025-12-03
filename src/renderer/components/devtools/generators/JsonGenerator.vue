@@ -376,9 +376,7 @@ watch(count, (v) => {
                     :key="group.category"
                   >
                     <Select.SelectLabel>
-                      {{
-                        group.category
-                      }}
+                      {{ group.category }}
                     </Select.SelectLabel>
                     <Select.SelectItem
                       v-for="option in group.options"
@@ -392,11 +390,11 @@ watch(count, (v) => {
                 </Select.SelectContent>
               </Select.Select>
               <UiButton
-                size="icon"
                 variant="icon"
+                size="md"
                 @click="removeField(element.id)"
               >
-                <Trash2 class="h-4 w-4" />
+                <Trash2 class="h-3 w-3" />
               </UiButton>
             </div>
           </template>

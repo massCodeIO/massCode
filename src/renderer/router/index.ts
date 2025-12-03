@@ -25,6 +25,7 @@ export const RouterName = {
   devtoolsSlugify: 'devtools/slugify',
   devtoolsUrlEncoder: 'devtools/url-encoder',
   devtoolsColorConverter: 'devtools/color-converter',
+  devtoolsJsonGenerator: 'devtools/json-generator',
 } as const
 
 const routes = [
@@ -157,6 +158,12 @@ const routes = [
         name: RouterName.devtoolsColorConverter,
         component: () =>
           import('@/components/devtools/converters/ColorConverter.vue'),
+      },
+      {
+        path: 'json-generator',
+        name: RouterName.devtoolsJsonGenerator,
+        component: () =>
+          import('@/components/devtools/generators/JsonGenerator.vue'),
       },
     ],
   },

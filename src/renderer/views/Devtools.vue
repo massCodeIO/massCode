@@ -77,6 +77,13 @@ const webNav = [
     name: RouterName.devtoolsSlugify,
   },
 ]
+
+const generatorsNav = [
+  {
+    label: i18n.t('devtools:generators.json.label'),
+    name: RouterName.devtoolsJsonGenerator,
+  },
+]
 </script>
 
 <template>
@@ -122,6 +129,20 @@ const webNav = [
         </div>
         <RouterLink
           v-for="item in webNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+        <div class="text-text-muted my-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:generators.label") }}
+        </div>
+        <RouterLink
+          v-for="item in generatorsNav"
           :key="item.name"
           class="cursor-default"
           :to="{ name: item.name }"

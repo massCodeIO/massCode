@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 
 const input = ref('')
 const isUrlDecode = ref(false)
@@ -11,7 +11,7 @@ const description = computed(() =>
   i18n.t('devtools:web.urlEncoder.description'),
 )
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const output = computed(() => {
   if (isUrlDecode.value) {

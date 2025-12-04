@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import * as Select from '@/components/ui/shadcn/select'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import { faker } from '@faker-js/faker'
-import { useClipboard } from '@vueuse/core'
 import { GripVertical, Plus, Trash2 } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
 
@@ -22,7 +22,7 @@ const fields = ref<Field[]>([
 const count = ref(10)
 const output = ref('')
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const title = computed(() => i18n.t('devtools:generators.json.label'))
 const description = computed(() =>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import {
   camelCase,
@@ -64,8 +65,10 @@ function convert(input: string, type: keyof typeof caseType): string {
   }
 }
 
+const copy = useCopyToClipboard()
+
 function copyCase(type: keyof typeof caseType) {
-  navigator.clipboard.writeText(convert(text.value, type))
+  copy(convert(text.value, type))
 }
 
 const output = computed(() => {

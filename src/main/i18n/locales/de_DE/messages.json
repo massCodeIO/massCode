@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Datenbank erfolgreich migriert."
+    "copied": "In die Zwischenablage kopiert",
+    "migrate": "Datenbank erfolgreich migriert.",
+    "backup": {
+      "created": "Sicherung erfolgreich erstellt.",
+      "restored": "Sicherung erfolgreich wiederhergestellt.",
+      "deleted": "Sicherung erfolgreich gelöscht."
+    }
   },
   "warning": {
     "noUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",

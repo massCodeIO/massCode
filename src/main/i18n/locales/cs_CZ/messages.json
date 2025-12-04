@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Databáze byla úspěšně migrována."
+    "copied": "Zkopírováno do schránky",
+    "migrate": "Databáze byla úspěšně migrována.",
+    "backup": {
+      "created": "Záloha byla úspěšně vytvořena.",
+      "restored": "Záloha byla úspěšně obnovena.",
+      "deleted": "Záloha byla úspěšně smazána."
+    }
   },
   "warning": {
     "noUndo": "Tuto akci nelze vrátit zpět.",

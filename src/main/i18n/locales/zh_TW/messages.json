@@ -11,6 +11,11 @@
     ]
   },
   "success": {
+    "copied": "已複製",
+    "backup": {
+      "created": "備份已建立",
+      "restored": "備份已還原"
+    },
     "migrate": "資料庫遷移成功。"
   },
   "warning": {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 
 const text = ref('')
 const isBase64ToText = ref(false)
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const title = computed(() => i18n.t('devtools:converters.base64.label'))
 const description = computed(() =>

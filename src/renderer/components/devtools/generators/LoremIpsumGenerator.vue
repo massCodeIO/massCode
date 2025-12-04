@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import * as Select from '@/components/ui/shadcn/select'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import { faker } from '@faker-js/faker'
-import { useClipboard } from '@vueuse/core'
 
 type LoremType = 'words' | 'sentences' | 'paragraphs'
 
@@ -12,7 +12,7 @@ const loremType = ref<LoremType>('sentences')
 const count = ref(10)
 const output = ref('')
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const title = computed(() => i18n.t('devtools:generators.lorem.label'))
 const description = computed(() =>

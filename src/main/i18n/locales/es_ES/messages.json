@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Base de datos migrada exitosamente."
+    "copied": "Copiado al portapapeles",
+    "migrate": "Base de datos migrada exitosamente.",
+    "backup": {
+      "created": "Copia de seguridad creada exitosamente.",
+      "restored": "Copia de seguridad restaurada exitosamente.",
+      "deleted": "Copia de seguridad eliminada exitosamente."
+    }
   },
   "warning": {
     "noUndo": "No podrás deshacer esta acción.",

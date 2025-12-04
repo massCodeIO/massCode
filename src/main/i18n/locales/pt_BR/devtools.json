@@ -2,6 +2,17 @@
   "label": "Ferramentas de Desenvolvimento",
   "generators": {
     "label": "Geradores",
+    "lorem": {
+      "label": "Gerador Lorem Ipsum",
+      "description": "Gerar texto de espaço reservado",
+      "selectType": "Selecionar tipo",
+      "maxCount": "Máx {{count}}",
+      "types": {
+        "words": "Palavras",
+        "sentences": "Frases",
+        "paragraphs": "Parágrafos"
+      }
+    },
     "json": {
       "label": "Gerador JSON",
       "description": "Gerar dados JSON aleatórios com vários tipos de campos",

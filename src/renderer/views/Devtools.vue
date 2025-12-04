@@ -83,6 +83,10 @@ const generatorsNav = [
     label: i18n.t('devtools:generators.json.label'),
     name: RouterName.devtoolsJsonGenerator,
   },
+  {
+    label: i18n.t('devtools:generators.lorem.label'),
+    name: RouterName.devtoolsLoremIpsumGenerator,
+  },
 ]
 </script>
 

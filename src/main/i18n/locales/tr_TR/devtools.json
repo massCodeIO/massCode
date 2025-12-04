@@ -2,6 +2,17 @@
   "label": "Geliştirici Araçları",
   "generators": {
     "label": "Üreteçler",
+    "lorem": {
+      "label": "Lorem Ipsum Üreteci",
+      "description": "Lorem Ipsum yer tutucu metni oluştur",
+      "selectType": "Tür seç",
+      "maxCount": "Maks {{count}}",
+      "types": {
+        "words": "Kelimeler",
+        "sentences": "Cümleler",
+        "paragraphs": "Paragraflar"
+      }
+    },
     "json": {
       "label": "JSON Üreteci",
       "description": "Çeşitli alan türleriyle rastgele JSON verileri oluştur",

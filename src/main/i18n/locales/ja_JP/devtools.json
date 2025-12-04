@@ -2,6 +2,17 @@
   "label": "開発者ツール",
   "generators": {
     "label": "ジェネレーター",
+    "lorem": {
+      "label": "Lorem Ipsum ジェネレーター",
+      "description": "プレースホルダーテキストを生成",
+      "selectType": "タイプを選択",
+      "maxCount": "最大 {{count}}",
+      "types": {
+        "words": "単語",
+        "sentences": "文",
+        "paragraphs": "段落"
+      }
+    },
     "json": {
       "label": "JSON ジェネレーター",
       "description": "さまざまなフィールドタイプでランダムな JSON データを生成",

@@ -2,6 +2,17 @@
   "label": "Инструменты разработчика",
   "generators": {
     "label": "Генераторы",
+    "lorem": {
+      "label": "Lorem Ipsum генератор",
+      "description": "Генерация текста-заполнителя",
+      "selectType": "Выберите тип",
+      "maxCount": "Максимум {{count}}",
+      "types": {
+        "words": "Слова",
+        "sentences": "Предложения",
+        "paragraphs": "Параграфы"
+      }
+    },
     "json": {
       "label": "JSON генератор",
       "description": "Генерация случайных JSON данных с различными типами полей",

@@ -2,6 +2,17 @@
   "label": "Instrumente pentru Dezvoltatori",
   "generators": {
     "label": "Generatoare",
+    "lorem": {
+      "label": "Generator Lorem Ipsum",
+      "description": "Generează text substituent",
+      "selectType": "Selectează tipul",
+      "maxCount": "Max {{count}}",
+      "types": {
+        "words": "Cuvinte",
+        "sentences": "Propoziții",
+        "paragraphs": "Paragrafe"
+      }
+    },
     "json": {
       "label": "Generator JSON",
       "description": "Generează date JSON aleatorii cu diferite tipuri de câmpuri",

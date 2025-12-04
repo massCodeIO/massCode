@@ -2,6 +2,17 @@
   "label": "Narzędzia deweloperskie",
   "generators": {
     "label": "Generatory",
+    "lorem": {
+      "label": "Generator Lorem Ipsum",
+      "description": "Generuj tekst zastępczy",
+      "selectType": "Wybierz typ",
+      "maxCount": "Maks {{count}}",
+      "types": {
+        "words": "Słowa",
+        "sentences": "Zdania",
+        "paragraphs": "Akapity"
+      }
+    },
     "json": {
       "label": "Generator JSON",
       "description": "Generuj losowe dane JSON z różnymi typami pól",

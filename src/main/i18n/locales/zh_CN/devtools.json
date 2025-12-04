@@ -2,6 +2,17 @@
   "label": "开发者工具",
   "generators": {
     "label": "生成器",
+    "lorem": {
+      "label": "Lorem Ipsum 生成器",
+      "description": "生成占位符文本",
+      "selectType": "选择类型",
+      "maxCount": "最大 {{count}}",
+      "types": {
+        "words": "单词",
+        "sentences": "句子",
+        "paragraphs": "段落"
+      }
+    },
     "json": {
       "label": "JSON 生成器",
       "description": "使用各种字段类型生成随机 JSON 数据",

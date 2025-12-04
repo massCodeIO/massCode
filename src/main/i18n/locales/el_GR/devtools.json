@@ -2,6 +2,17 @@
   "label": "Εργαλεία Προγραμματιστή",
   "generators": {
     "label": "Γεννήτριες",
+    "lorem": {
+      "label": "Γεννήτρια Lorem Ipsum",
+      "description": "Δημιουργία κειμένου κράτησης θέσης",
+      "selectType": "Επιλέξτε τύπο",
+      "maxCount": "Μέγιστο {{count}}",
+      "types": {
+        "words": "Λέξεις",
+        "sentences": "Προτάσεις",
+        "paragraphs": "Παράγραφοι"
+      }
+    },
     "json": {
       "label": "Γεννήτρια JSON",
       "description": "Δημιουργία τυχαίων δεδομένων JSON με διάφορους τύπους πεδίων",

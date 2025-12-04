@@ -2,6 +2,17 @@
   "label": "Herramientas de desarrollo",
   "generators": {
     "label": "Generadores",
+    "lorem": {
+      "label": "Generador Lorem Ipsum",
+      "description": "Generar texto de marcador de posición",
+      "selectType": "Seleccionar tipo",
+      "maxCount": "Máx {{count}}",
+      "types": {
+        "words": "Palabras",
+        "sentences": "Oraciones",
+        "paragraphs": "Párrafos"
+      }
+    },
     "json": {
       "label": "Generador JSON",
       "description": "Generar datos JSON aleatorios con varios tipos de campos",

@@ -2,6 +2,17 @@
   "label": "Entwicklertools",
   "generators": {
     "label": "Generatoren",
+    "lorem": {
+      "label": "Lorem Ipsum Generator",
+      "description": "Platzhalter-Text generieren",
+      "selectType": "Typ auswählen",
+      "maxCount": "Max {{count}}",
+      "types": {
+        "words": "Wörter",
+        "sentences": "Sätze",
+        "paragraphs": "Absätze"
+      }
+    },
     "json": {
       "label": "JSON Generator",
       "description": "Zufällige JSON-Daten mit verschiedenen Feldtypen generieren",

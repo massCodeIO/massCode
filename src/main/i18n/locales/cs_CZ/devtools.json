@@ -2,6 +2,17 @@
   "label": "Vývojářské nástroje",
   "generators": {
     "label": "Generátory",
+    "lorem": {
+      "label": "Generátor Lorem Ipsum",
+      "description": "Generovat zástupný text",
+      "selectType": "Vybrat typ",
+      "maxCount": "Max {{count}}",
+      "types": {
+        "words": "Slova",
+        "sentences": "Věty",
+        "paragraphs": "Odstavce"
+      }
+    },
     "json": {
       "label": "JSON generátor",
       "description": "Generovat náhodná JSON data s různými typy polí",

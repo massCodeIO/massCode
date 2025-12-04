@@ -2,6 +2,17 @@
   "label": "ابزارهای توسعه‌دهنده",
   "generators": {
     "label": "تولیدکننده‌ها",
+    "lorem": {
+      "label": "تولیدکننده Lorem Ipsum",
+      "description": "تولید متن نگهدارنده",
+      "selectType": "نوع را انتخاب کنید",
+      "maxCount": "حداکثر {{count}}",
+      "types": {
+        "words": "کلمات",
+        "sentences": "جمله‌ها",
+        "paragraphs": "پاراگراف‌ها"
+      }
+    },
     "json": {
       "label": "تولیدکننده JSON",
       "description": "تولید داده‌های JSON تصادفی با انواع مختلف فیلد",

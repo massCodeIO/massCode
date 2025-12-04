@@ -2,6 +2,17 @@
   "label": "Developer Tools",
   "generators": {
     "label": "Generators",
+    "lorem": {
+      "label": "Lorem Ipsum Generator",
+      "description": "Generate placeholder text",
+      "selectType": "Select type",
+      "maxCount": "Max {{count}}",
+      "types": {
+        "words": "Words",
+        "sentences": "Sentences",
+        "paragraphs": "Paragraphs"
+      }
+    },
     "json": {
       "label": "JSON Generator",
       "description": "Generate random JSON data with various field types",

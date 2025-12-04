@@ -2,6 +2,17 @@
   "label": "Інструменти розробника",
   "generators": {
     "label": "Генератори",
+    "lorem": {
+      "label": "Генератор Lorem Ipsum",
+      "description": "Генерація тексту-заповнювача",
+      "selectType": "Виберіть тип",
+      "maxCount": "Макс {{count}}",
+      "types": {
+        "words": "Слова",
+        "sentences": "Речення",
+        "paragraphs": "Параграфи"
+      }
+    },
     "json": {
       "label": "JSON генератор",
       "description": "Генерувати випадкові JSON дані з різними типами полів",

@@ -2,6 +2,17 @@
   "label": "Outils de développement",
   "generators": {
     "label": "Générateurs",
+    "lorem": {
+      "label": "Générateur Lorem Ipsum",
+      "description": "Générer du texte d'espace réservé",
+      "selectType": "Sélectionner le type",
+      "maxCount": "Max {{count}}",
+      "types": {
+        "words": "Mots",
+        "sentences": "Phrases",
+        "paragraphs": "Paragraphes"
+      }
+    },
     "json": {
       "label": "Générateur JSON",
       "description": "Générer des données JSON aléatoires avec différents types de champs",

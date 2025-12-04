@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import slugify from 'slugify'
 
 const input = ref('')
@@ -8,7 +8,7 @@ const input = ref('')
 const title = computed(() => i18n.t('devtools:web.slugify.label'))
 const description = computed(() => i18n.t('devtools:web.slugify.description'))
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 function slugifyText(text: string) {
   return slugify(text, {

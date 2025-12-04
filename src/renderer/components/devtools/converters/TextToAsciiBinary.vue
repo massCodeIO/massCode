@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 
 const text = ref('')
 const isAsciiToText = ref(false)
@@ -11,7 +11,7 @@ const description = computed(() =>
   i18n.t('devtools:converters.textToAscii.description'),
 )
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 function convertTextToAscii(input: string): string {
   if (!input) {

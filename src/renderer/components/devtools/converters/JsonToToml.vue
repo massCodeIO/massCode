@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import * as toml from 'toml'
 
 const text = ref('')
@@ -9,7 +9,7 @@ const error = ref('')
 
 const isTomlToJson = ref(false)
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const title = computed(() => i18n.t('devtools:converters.jsonToToml.label'))
 const description = computed(() =>

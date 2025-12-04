@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "数据库迁移成功。"
+    "copied": "已复制到剪贴板",
+    "migrate": "数据库迁移成功。",
+    "backup": {
+      "created": "备份创建成功。",
+      "restored": "备份恢复成功。",
+      "deleted": "备份删除成功。"
+    }
   },
   "warning": {
     "noUndo": "此操作无法撤消。",

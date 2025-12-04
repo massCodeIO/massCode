@@ -15,6 +15,7 @@
     }
   },
   "success": {
+    "copied": "Copied to clipboard",
     "migrate": "DB successfully migrated.",
     "backup": {
       "created": "Backup successfully created.",

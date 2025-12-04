@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import chroma from 'chroma-js'
 // @ts-expect-error some
 import { colornames } from 'color-name-list'
@@ -16,7 +16,7 @@ const description = computed(() =>
   i18n.t('devtools:converters.colorConverter.description'),
 )
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const selectedColor = ref('#154696')
 

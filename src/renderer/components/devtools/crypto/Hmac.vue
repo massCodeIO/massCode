@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import md5 from 'crypto-js/hmac-md5'
 import ripemd160 from 'crypto-js/hmac-ripemd160'
 import sha1 from 'crypto-js/hmac-sha1'
@@ -11,7 +11,7 @@ import sha384 from 'crypto-js/hmac-sha384'
 import sha512 from 'crypto-js/hmac-sha512'
 import { Copy } from 'lucide-vue-next'
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const text = ref('')
 const secretKey = ref('')

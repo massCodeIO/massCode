@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
 
 const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
@@ -88,6 +90,15 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
+
+watch(
+  () => route.name,
+  () => {
+    nextTick(() => {
+      scrollRef.value?.ps?.update()
+    })
+  },
+)
 </script>
 
 <template>
@@ -160,6 +171,7 @@ const generatorsNav = [
     </template>
     <template #right>
       <PerfectScrollbar
+        ref="scrollRef"
         class="h-full px-5 pb-5"
         :options="{ minScrollbarLength: 20 }"
       >

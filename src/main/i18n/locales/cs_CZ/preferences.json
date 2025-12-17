@@ -1,10 +1,31 @@
 {
   "label": "Předvolby",
   "storage": {
+    "section": {
+      "main": "Hlavní",
+      "backup": "Záloha"
+    },
     "label": "Úložiště",
     "migrate": "Migrovat",
     "count": "Počet",
-    "clearDatabase": "Vymazat databázi"
+    "clearDatabase": "Vymazat databázi",
+    "backup": {
+      "label": "Záloha",
+      "enabled": "Automatická záloha",
+      "interval": {
+        "label": "Interval",
+        "1": "Každou hodinu",
+        "6": "Každých 6 hodin",
+        "12": "Každých 12 hodin",
+        "24": "Každých 24 hodin"
+      },
+      "maxBackups": "Maximální počet záloh",
+      "createNow": "Vytvořit zálohu nyní",
+      "restore": "Obnovit ze zálohy",
+      "list": "Seznam záloh",
+      "lastBackup": "Poslední záloha",
+      "noBackups": "Nebyly nalezeny žádné zálohy"
+    }
   },
   "editor": {
     "label": "Editor",
@@ -37,7 +58,8 @@
     "theme": {
       "label": "Motiv",
       "light": "Světlý",
-      "dark": "Tmavý"
+      "dark": "Tmavý",
+      "system": "Systémový"
     }
   },
   "language": {
@@ -45,7 +67,7 @@
   },
   "markdown": {
     "label": "Markdown",
-    "codeRenderer": "Renderer kódových bloků"
+    "codeRenderer": "Renderer bloků kódu"
   },
   "api": {
     "label": "API Port",

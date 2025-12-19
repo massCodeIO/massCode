@@ -1,3 +1,21 @@
+# [4.4.0](https://github.com/massCodeIO/massCode/compare/v4.3.0...v4.4.0) (2025-12-19)
+
+
+### Bug Fixes
+
+* **devtools:** update scroll position on change route ([864afb1](https://github.com/massCodeIO/massCode/commit/864afb181dfc2d17d46d9d8af9ffae152c044ed8))
+* **elysia:** prevent DB hangs during saves ([#643](https://github.com/massCodeIO/massCode/issues/643)) ([f6583b7](https://github.com/massCodeIO/massCode/commit/f6583b7cb2d4555b008820a9121bd46808955f09))
+* **i18n:** fix Czech translations ([#651](https://github.com/massCodeIO/massCode/issues/651)) ([55367e2](https://github.com/massCodeIO/massCode/commit/55367e2334075d559b12c92d2e12c4e9ea8aa49f))
+
+
+### Features
+
+* **devtools:** add JSON generator ([#644](https://github.com/massCodeIO/massCode/issues/644)) ([630cf86](https://github.com/massCodeIO/massCode/commit/630cf8629a8d06cc16e7980b8f562bc778851033))
+* **devtools:** add Lorem Ipsum generator ([#645](https://github.com/massCodeIO/massCode/issues/645)) ([332362a](https://github.com/massCodeIO/massCode/commit/332362ae73c4338f00f99715f4be3173a39d2615))
+* **devtools:** add notifications for copy to clipboard ([#646](https://github.com/massCodeIO/massCode/issues/646)) ([00755ba](https://github.com/massCodeIO/massCode/commit/00755ba5aab109ee151458d062cae6462e14a101))
+
+
+
 # [4.3.0](https://github.com/massCodeIO/massCode/compare/v4.2.2...v4.3.0) (2025-11-26)
 
 

@@ -12,7 +12,7 @@ import { LibraryFilter } from './types'
 
 const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
   = useApp()
-const { folders } = useFolders()
+const { folders, getFolderByIdFromTree } = useFolders()
 
 const selectedSnippetIds = ref<number[]>(
   state.snippetId ? [state.snippetId] : [],
@@ -112,7 +112,7 @@ async function getSnippets(query?: SnippetsQuery) {
 
 async function createSnippet() {
   try {
-    const folder = folders.value?.find(f => f.id === state.folderId)
+    const folder = getFolderByIdFromTree(folders.value, state.folderId || null)
 
     const { data } = await api.snippets.postSnippets({
       name: i18n.t('snippet.untitled'),
@@ -182,8 +182,9 @@ async function duplicateSnippet(snippetId: number) {
 
 async function createSnippetContent(snippetId: number) {
   const lastContentIndex = selectedSnippet.value?.contents.length || 0
-  const folder = folders.value?.find(
-    f => f.id === selectedSnippet.value?.folder?.id,
+  const folder = getFolderByIdFromTree(
+    folders.value,
+    selectedSnippet.value?.folder?.id || null,
   )
 
   try {

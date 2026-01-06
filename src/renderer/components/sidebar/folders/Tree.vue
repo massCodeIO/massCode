@@ -65,6 +65,16 @@ const isContextMultiSelection = computed(() => {
   return selectedFolderIds.value.includes(contextNode.value.id)
 })
 
+const contextNodeDefaultLanguage = computed(() => {
+  if (!contextNode.value)
+    return ''
+
+  return (
+    getFolderByIdFromTree(folders.value, contextNode.value.id)
+      ?.defaultLanguage || ''
+  )
+})
+
 function clickNode(id: number, event?: MouseEvent) {
   return emit('clickNode', { id, event })
 }
@@ -161,6 +171,17 @@ function onSelectLanguage(language: string) {
   updateFolder(contextNode.value.id, {
     defaultLanguage: language,
   })
+}
+
+function scrollToSelectedLanguage(el: any, isSelected: boolean) {
+  if (isSelected && el) {
+    nextTick(() => {
+      const element = el.$el || el
+      if (element instanceof HTMLElement) {
+        element.scrollIntoView({ block: 'center' })
+      }
+    })
+  }
 }
 
 function onSetCustomIcon() {
@@ -268,13 +289,21 @@ provide(treeKeys, {
             <ContextMenu.SubContent>
               <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
                 <div class="max-h-[250px]">
-                  <ContextMenu.Item
+                  <ContextMenu.CheckboxItem
                     v-for="language in languages"
                     :key="language.value"
+                    :ref="
+                      (el) =>
+                        scrollToSelectedLanguage(
+                          el,
+                          contextNodeDefaultLanguage === language.value,
+                        )
+                    "
+                    :checked="contextNodeDefaultLanguage === language.value"
                     @click="onSelectLanguage(language.value)"
                   >
                     {{ language.name }}
-                  </ContextMenu.Item>
+                  </ContextMenu.CheckboxItem>
                 </div>
               </PerfectScrollbar>
             </ContextMenu.SubContent>

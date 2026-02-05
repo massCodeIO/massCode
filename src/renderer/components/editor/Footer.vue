@@ -31,9 +31,9 @@ const selectedLanguageName = computed(() => {
 })
 
 function fuzzySearch(list: string[], searchTerm: string) {
-  return list.filter((name) => {
-    // Реализуем нечеткий поиск, разбивая поисковый запрос на символы
-    // и проверяя их последовательное вхождение в название языка
+  return list.filter((value) => {
+    const language = languages.find(l => l.value === value)
+    const name = language?.name || value
     const searchChars = searchTerm.toLowerCase().split('')
     let currentIndex = 0
 

@@ -563,6 +563,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.nix',
   },
   {
+    name: 'Nushell',
+    value: 'nu',
+    grammar: () => import('./textmate/nu.tmLanguage.json'),
+    scopeName: 'source.nushell',
+  },
+  {
     name: 'NSIS',
     value: 'nsis',
     grammar: () => import('./textmate/nsis.tmLanguage.json'),

@@ -1,0 +1,6037 @@
+{
+  "fileTypes": [
+    "p",
+    "w",
+    "i",
+    "cls"
+  ],
+  "name": "OpenEdge ABL",
+  "patterns": [
+    {
+      "include": "#statements"
+    }
+  ],
+  "repository": {
+    "trigger-procedure": {
+      "begin": "(?i)\\b(trigger)\\s+(proce(?:dure|dur|du|d)?)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=:|\\.)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#variable-as"
+        },
+        {
+          "include": "#variable-like"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "procedure-definition": {
+      "name": "meta.procedure.abl",
+      "comment": "Look ahead to the procedure name, quoted or not. It will be resolved in the patterns. 'Names must begin with a letter.' from https://docs.progress.com/bundle/openedge-abl-manage-applications/page/Name-limits.html",
+      "begin": "(?i)\\s*(proce(?:dure|dur|du|d)?)\\s+(?=[a-zA-Z_])",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=:|\\.)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\b(private|external|cdecl|pascal|stdcall|ordinal|(persist(?:ent|en|e)?)|thread-safe|in|super)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "match": "([a-zA-Z_][a-zA-Z0-9_#$\\-%&\\.]+)(?<!\\.)",
+          "comment": "A procedure name may contain a . but cannot end in one, unless the procedure name is in quotes",
+          "captures": {
+            "1": {
+              "name": "entity.name.procedure.abl"
+            }
+          }
+        },
+        {
+          "include": "#argument-reference"
+        },
+        {
+          "include": "#preprocessor-reference"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "translation-attribute": {
+      "comment": "The attribute must have one of L, R, T, or C and/or a U and/or one integer value. For example, R1 as the attribute value for Label.",
+      "match": "(:[LlRrTtCcUu]\\d*)\\b",
+      "captures": {
+        "1": {
+          "name": "support.other.abl"
+        }
+      }
+    },
+    "language-functions": {
+      "match": "(?i)\\b(opsys|(provers(?:ion|io|i)?)|guid|generate-uuid)\\b",
+      "comment": "These are functions that do not require parens when called.",
+      "captures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      }
+    },
+    "function-definition": {
+      "name": "meta.define.function.abl",
+      "begin": "(?i)\\b(function)\\s+([a-zA-Z0-9_][a-zA-Z0-9_#$\\-%&]+)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      },
+      "end": "(\\.|:)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\b(map|to)\\s+(?!to\\s+)([a-zA-Z_][a-zA-Z0-9_#$\\-%&]+)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "entity.name.function.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(returns|private|class|extent|in|super|forward|map)\\b",
+          "comment": "Captures the allowed keywords before the parenthesis. Some keywords are after the 'parens' when there are no parens used",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#function-parameter-definition"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "comment": "This captures everything after the parens, which may contain variables and methods",
+          "begin": "(?i)(?<=\\)|in)",
+          "end": "(?=(\\.|:)\\s)",
+          "patterns": [
+            {
+              "match": "\\b([Ii][Nn])\\b",
+              "captures": {
+                "1": {
+                  "name": "keyword.other.abl"
+                }
+              }
+            },
+            {
+              "match": "\\b([Ss][Uu][Pp][Ee][Rr])\\b",
+              "captures": {
+                "1": {
+                  "name": "keyword.other.abl"
+                }
+              }
+            },
+            {
+              "include": "#type-member-call"
+            },
+            {
+              "include": "#variable-name"
+            },
+            {
+              "include": "#keywords"
+            },
+            {
+              "include": "#comment"
+            },
+            {
+              "include": "#string"
+            },
+            {
+              "include": "#preprocessors"
+            }
+          ]
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#type-name"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "method-definition": {
+      "name": "meta.define.method.abl",
+      "begin": "(?i)^\\s*(method|constructor|destructor)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "comment": "The lookahead on the regex for the closing colon is required to make this scope end properly",
+      "end": "(?=:|\\.)",
+      "patterns": [
+        {
+          "include": "#access-modifier"
+        },
+        {
+          "match": "(?i)\\s*(void)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "begin": "(?i)\\s*([a-zA-Z0-9_]+[a-zA-Z0-9_\\-{}#$%&]*)?\\s*(\\()\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.abl"
+            },
+            "2": {
+              "name": "meta.brace.round.js"
+            }
+          },
+          "end": "(\\))",
+          "endCaptures": {
+            "1": {
+              "name": "meta.brace.round.js"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#parameter-definition"
+            }
+          ]
+        },
+        {
+          "include": "#parameter-as"
+        },
+        {
+          "include": "#string",
+          "comment": "For the return type"
+        },
+        {
+          "include": "#extent",
+          "comment": "For the return type"
+        },
+        {
+          "include": "#primitive-type",
+          "comment": "For the return type"
+        },
+        {
+          "comment": "The last word on the line is assumed to me the method name. Legal ABL can have each word of the method definition on its own line, so this rule may not return the correct values",
+          "match": "(?i)\\b([a-zA-Z0-9_]+[a-zA-Z0-9_\\-{}#$%&]*)\\b\\R",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.abl"
+            }
+          }
+        },
+        {
+          "include": "#dll-type",
+          "comment": "For the return type"
+        },
+        {
+          "include": "#type-names",
+          "comment": "For the return type"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "end-function-procedure-method-block": {
+      "match": "(?i)\\s*(end)\\s*(method|procedure|function)?\\s*(?=\\.)\\s*",
+      "comment": "This regex exists to make sure that END PROCEDURE is not seen as a new procedure block",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "as-type": {
+      "begin": "\\s*([Aa][Ss])\\s*([Cc][Ll][Aa][Ss]{2})?",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "\\s*(\\.|\\,|\\s*)",
+      "patterns": [
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "parameter-definition": {
+      "name": "meta.define.parameter.abl",
+      "patterns": [
+        {
+          "match": "(?i)\\s*((input-o(?:utput|utpu|utp|u)?)|input|output|append|bind|by-value|(presel(?:ect|ec|e)?)|buffer|(param(?:eter|ete|et|e)?)|no-undo)\\s*",
+          "comment": "Certain keywords like NO-UNDO are 'gathered' by a DEFINE INPUT PARAMETER statement. ",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\s*(dataset-handle|table-handle)\\s+([a-zA-Z][a-zA-Z0-9_\\-]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "variable.parameter.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\s*(dataset)\\s+([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.dataset.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\s*(table)\\s+([a-zA-Z][a-zA-Z0-9_\\-]*)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "include": "#parameter-as"
+        },
+        {
+          "match": "(?i)\\s*((char(?:acter|acte|act|ac|a)?)|com-handle|date|datetime-tz|datetime|(dec(?:imal|ima|im|i)?)|handle|int64|(int(?:eger|ege|eg|e)?)|(log(?:ical|ica|ic|i)?)|(longch(?:ar|a)?)|memptr|raw|recid|rowid|(widget-h(?:andle|andl|and|an|a)?))(?![=a-zA-Z0-9_\\-])\\s*(,*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.abl"
+            },
+            "2": {
+              "name": "punctuation.separator.comma.abl"
+            }
+          }
+        },
+        {
+          "match": "\\s*(,)\\s*",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.comma.abl"
+            }
+          }
+        },
+        {
+          "include": "#buffer-for-table"
+        },
+        {
+          "include": "#extent"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#decimals"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "function-parameter-definition": {
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/Parameter-definition-syntax.html",
+      "name": "meta.function.parameters",
+      "begin": "(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#parameter-definition"
+        }
+      ]
+    },
+    "statements": {
+      "name": "meta.statements.abl",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#buffer-copy"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#argument-reference"
+        },
+        {
+          "include": "#trigger-procedure"
+        },
+        {
+          "include": "#abl-function-variable-arg"
+        },
+        {
+          "include": "#while-expression"
+        },
+        {
+          "include": "#rowid-function"
+        },
+        {
+          "include": "#var-statement"
+        },
+        {
+          "include": "#input-output-from-to"
+        },
+        {
+          "include": "#function-definition"
+        },
+        {
+          "include": "#record-buffer-functions"
+        },
+        {
+          "include": "#create-statement"
+        },
+        {
+          "include": "#can-find"
+        },
+        {
+          "include": "#release"
+        },
+        {
+          "include": "#copy-lob"
+        },
+        {
+          "include": "#event-un-subscribe"
+        },
+        {
+          "include": "#dataset-name"
+        },
+        {
+          "include": "#buffer-name"
+        },
+        {
+          "include": "#temp-table-name"
+        },
+        {
+          "include": "#annotation"
+        },
+        {
+          "include": "#undo-statement"
+        },
+        {
+          "include": "#block-statement"
+        },
+        {
+          "include": "#block-label"
+        },
+        {
+          "include": "#end-block"
+        },
+        {
+          "include": "#end-function-procedure-method-block"
+        },
+        {
+          "include": "#find-record"
+        },
+        {
+          "include": "#type-argument-function"
+        },
+        {
+          "include": "#get-class"
+        },
+        {
+          "include": "#if-then"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#translation-attribute"
+        },
+        {
+          "include": "#break-group"
+        },
+        {
+          "include": "#event-un-subscribe"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#unqualified-method-call"
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#method-definition"
+        },
+        {
+          "include": "#access-modifier"
+        },
+        {
+          "match": "(?i)\\s*(void)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#declarations"
+        },
+        {
+          "include": "#decimals"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#timestamp-constant"
+        },
+        {
+          "include": "#break-by"
+        },
+        {
+          "include": "#new-record"
+        },
+        {
+          "include": "#type-reference"
+        },
+        {
+          "include": "#procedure-definition"
+        },
+        {
+          "include": "#for-join"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#label-variable"
+        },
+        {
+          "include": "#define-field"
+        },
+        {
+          "include": "#define-like"
+        },
+        {
+          "include": "#format-constant"
+        },
+        {
+          "include": "#escape-endline"
+        },
+        {
+          "include": "#dll-type"
+        },
+        {
+          "include": "#parameter-as"
+        },
+        {
+          "include": "#buffer-for-table"
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#property-accessor"
+        },
+        {
+          "include": "#for-each-table"
+        },
+        {
+          "include": "#for-each-join"
+        },
+        {
+          "include": "#of-phrase"
+        },
+        {
+          "include": "#db-dot-table-dot-field",
+          "comment": "this include must be after any type references so that eg get-class(package.type) can continue to work"
+        },
+        {
+          "include": "#code-block"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#punctuation-semicolon"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#punctuation-colon"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#variable-name"
+        },
+        {
+          "include": "#punctuation-period"
+        },
+        {
+          "include": "#punctuation-colon"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "include": "#define"
+        }
+      ]
+    },
+    "break-by": {
+      "match": "(?i)\\s*((break)\\s+)?(by)\\s+(([a-zA-Z][a-zA-Z_\\-#$%]*\\.)?([a-zA-Z][a-zA-Z_\\-#$%]*\\.)([a-zA-Z][a-zA-Z_\\-#$%]*)(\\[\\d+\\])?)\\b",
+      "comment": "The match needs a space capture before the BREAK, not a word break",
+      "captures": {
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "keyword.other.abl"
+        },
+        "4": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "preprocessor-directives": {
+      "patterns": [
+        {
+          "match": "(?i)((&)(elseif|endif|else|then|if))\\s*",
+          "captures": {
+            "2": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "3": {
+              "name": "keyword.control.directive.conditional.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)((&)(message))\\s*",
+          "captures": {
+            "2": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "3": {
+              "name": "storage.type.function.abl"
+            }
+          }
+        }
+      ]
+    },
+    "preprocessor-reference": {
+      "patterns": [
+        {
+          "comment": "https://docs.progress.com/bundle/abl-reference/page/Preprocessor-name-reference.html#Preprocessor-name-reference",
+          "match": "(?i)\\s*(({)(&)(window-system|line-number|batch-mode|file-name|sequence|opsys|process-architecture)\\s*(}))",
+          "captures": {
+            "1": {
+              "name": "meta.preprocessor.abl"
+            },
+            "2": {
+              "name": "punctuation.section.abl"
+            },
+            "3": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "4": {
+              "name": "entity.name.function.preprocessor.abl"
+            },
+            "5": {
+              "name": "punctuation.section.abl"
+            }
+          }
+        },
+        {
+          "match": "\\s*(({)(&)([a-zA-Z0-9_\\-#$%\\s\\(\\)]+)\\s*(}))",
+          "captures": {
+            "1": {
+              "name": "meta.preprocessor.abl"
+            },
+            "2": {
+              "name": "punctuation.section.abl"
+            },
+            "3": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "4": {
+              "name": "entity.name.function.preprocessor.abl"
+            },
+            "5": {
+              "name": "punctuation.section.abl"
+            }
+          }
+        }
+      ]
+    },
+    "preprocessors": {
+      "patterns": [
+        {
+          "include": "#analyze-suspend-resume"
+        },
+        {
+          "include": "#global-scoped-define"
+        },
+        {
+          "include": "#preprocessor-directives"
+        },
+        {
+          "include": "#preprocessor-functions"
+        },
+        {
+          "include": "#preprocessor-reference"
+        }
+      ]
+    },
+    "type-names": {
+      "patterns": [
+        {
+          "include": "#type-name-generic"
+        },
+        {
+          "include": "#type-name"
+        }
+      ]
+    },
+    "type-reference": {
+      "patterns": [
+        {
+          "include": "#define-type"
+        },
+        {
+          "include": "#get-class"
+        },
+        {
+          "include": "#new-class"
+        },
+        {
+          "include": "#using"
+        },
+        {
+          "include": "#type-argument-function"
+        }
+      ]
+    },
+    "using": {
+      "name": "meta.using.abl",
+      "begin": "\\s*([Uu][Ss][Ii][Nn][Gg])\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(\\.)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "comment": "Captures USING foo.bar.* . Since package names are filesystem names, needs unicode",
+          "match": "(?i)\\s*((([\\w#$%]+|progress)(\\.[\\w#$%]+)*)\\.\\*)\\s*",
+          "captures": {
+            "2": {
+              "name": "entity.name.package.abl"
+            }
+          }
+        },
+        {
+          "match": "\\s*([Ff][Rr][Oo][Mm]|[Pp][Rr][Oo][Pp][Aa][Tt][Hh]|[Aa][Ss][Ss][Ee][Mm][Bb][Ll][Yy])\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#type-name"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "define-type": {
+      "patterns": [
+        {
+          "include": "#define-class"
+        },
+        {
+          "include": "#define-interface"
+        },
+        {
+          "include": "#define-enum-type"
+        }
+      ]
+    },
+    "type-name-generic": {
+      "comment": "Scope names from https://www.sublimetext.com/docs/scope_naming.html . Types are files, so support unicode",
+      "name": "meta.generic.abl",
+      "begin": "(?i)\\s*(([\\w#$%\\-]+)(\\.[\\w#$%\\-]+)*\\s*)\\s*(<)",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.name.type.abl"
+        },
+        "4": {
+          "name": "punctuation.definition.generic.begin.abl"
+        }
+      },
+      "end": "(>)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.generic.end.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#type-name-generic"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#type-name"
+        }
+      ]
+    },
+    "type-name": {
+      "comment": "Type names are files, so support unicode",
+      "match": "(?i)\\b([\\w#$%\\-]+(\\.[\\w#$%\\-]+)*)\\b",
+      "captures": {
+        "1": {
+          "name": "entity.name.type.abl"
+        }
+      }
+    },
+    "define-class": {
+      "comment": "Type names are files, so support unicode",
+      "name": "meta.define.class.abl",
+      "begin": "\\b(?<![#$\\-_%&])([Cc][Ll][Aa][Ss]{2})\\b(?![#$\\-_%&])",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "\\s*(:)\\s*",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\b(serializable|abstract|final|use-widget-pool|inherits|implements)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "define-interface": {
+      "comment": "Type names are files, so support unicode",
+      "name": "meta.define.interface.abl",
+      "begin": "(?i)\\b(interface)\\s+([\\w#$%]+[\\w#$%\\.]*(\\s*<\\s*[\\w#$%\\.]+\\s*\\>)?)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.type.abl"
+        }
+      },
+      "end": "\\s*(:)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\s*(inherits|implements)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "inherits-implements-type": {
+      "comment": "Type names are files, so support unicode",
+      "name": "meta.define-type.implements.abl",
+      "begin": "(?i)\\s*(implements|inherits)\\s*(([\\w#$%]+|progress)(\\.[\\w#$%]+)*(?<!\\.))\\s*",
+      "end": "(?i)\\s*(serializable|abstract|final|use-widget-pool|inherits|implements+?)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.type.abl"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "define-enum-type": {
+      "patterns": [
+        {
+          "name": "meta.define.enum.abl",
+          "comment": "Type names are files, so support unicode",
+          "match": "(?i)\\b(enum)\\s+([\\w#$%\\.]+)\\s*(flags)?\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "entity.name.type.abl"
+            },
+            "3": {
+              "name": "keyword.other.abl"
+            },
+            "4": {
+              "name": "punctuation.terminator.abl"
+            }
+          }
+        }
+      ]
+    },
+    "define-enum-member": {
+      "begin": "(?i)\\b(enum)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "match": "\\b([a-zA-Z][a-zA-Z0-9_#$%]*)\\b",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.abl"
+            }
+          }
+        }
+      ]
+    },
+    "attribute-access": {
+      "begin": ":",
+      "end": "(?=:)|(?=\\s*)",
+      "comment": "",
+      "patterns": []
+    },
+    "parens": {
+      "match": "\\(|\\)",
+      "name": "meta.brace.round.js"
+    },
+    "new-class": {
+      "comment": "A dash/minus is not a word boundary, so we need to make sure we don't capture constructs like new-variable",
+      "begin": "(?i)\\b(new)\\b(?!\\-)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\()",
+      "patterns": [
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "abl-function-variable-arg": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(set-size)\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#variable-name"
+        }
+      ]
+    },
+    "get-class": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(get-class)\\s*(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "find-record": {
+      "match": "(?i)\\s*(find)\\s+(first|last|next|prev|current)?\\s*([a-zA-Z_][a-zA-Z0-9#$\\-_%&]+(\\.[a-zA-Z_][a-zA-Z0-9#$\\-_%&]*)?)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "field-name": {
+      "comment": "Just a field name",
+      "patterns": [
+        {
+          "match": "\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?\\s*(\\[\\d+\\]))\\s*",
+          "captures": {
+            "1": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "match": "\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*",
+          "captures": {
+            "1": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        }
+      ]
+    },
+    "db-dot-table-dot-field": {
+      "match": "(?i)(?<=^|\\s|\\(|,)(([a-zA-Z][a-zA-Z0-9#$\\-_%&]*\\.)?([a-zA-Z_][a-zA-Z0-9#$\\-_%&]*\\.)([a-zA-Z_][a-zA-Z0-9#$\\-_%&]*)(\\[\\d+\\])?)",
+      "comment": "Looks for format of 'table.field', with an optional preceding 'db.'. This pattern may conflict with type names",
+      "captures": {
+        "1": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "db-dot-table": {
+      "match": "(?i)\\b([a-zA-Z_][a-zA-Z0-9#$\\-_%&]*(\\.[a-zA-Z_][a-zA-Z0-9#$\\-_%&]*)?)(?=[^a-zA-Z0-9#$\\-_%&])",
+      "comment": "Looks for format of 'table', with an optional preceding 'db.'. This pattern may conflict with type names. The last option must not be a word boundary since that includes dashes",
+      "captures": {
+        "1": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "break-group": {
+      "match": "(?i)\\s*(first-of|first|last-of|last)\\s*(\\()\\s*([a-zA-Z][a-zA-Z#$\\-_%&]*\\.[a-zA-Z_][a-zA-Z#$\\-_%&]*(\\.[a-zA-Z_][a-zA-Z#$\\-_%&]*)?)\\s*(\\))\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        },
+        "3": {
+          "name": "storage.data.table.abl"
+        },
+        "4": {
+          "name": "meta.brace.round.js"
+        }
+      }
+    },
+    "of-phrase": {
+      "patterns": [
+        {
+          "comment": " This matches OF <table>",
+          "match": "\\s*([Oo][Ff])\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z_][a-zA-Z0-9_\\-#$%]*)?)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "comment": " This matches <table> OF <table>",
+          "match": "(?i)\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z_][a-zA-Z0-9_\\-#$%]*)?)\\s+(of)\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z_][a-zA-Z0-9_\\-#$%]*)?)\\s*",
+          "captures": {
+            "1": {
+              "name": "storage.data.table.abl"
+            },
+            "3": {
+              "name": "keyword.other.abl"
+            },
+            "4": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        }
+      ]
+    },
+    "for-join": {
+      "comment": "Captures something like ', salesrep where' or 'salesrep where', when the latter is at the beginning of a line. 'OF' phrases handled by of-phrase",
+      "match": "(?i)(?<=,|^)\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z_][a-zA-Z0-9_\\-#$%]*)?)\\s+(?=where|no-lock|(exclusive-l(?:ock|oc|o)?)|(share(?:-lock|-loc|-lo|-l|-)?)|tenant-where|use-index|table-scan|using|(no-prefe(?:tch|tc|t)?)|left|outer-join|break|by|(transact(?:ion|io|i)?))\\s*",
+      "captures": {
+        "1": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "for-each-join": {
+      "begin": "(?i)\\b(each|first|last)\\b(?<!\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "storage.data.table.abl"
+        }
+      },
+      "end": "(?i)\\s*(?=where|no-lock|(exclusive-l(?:ock|oc|o)?)|(share(?:-lock|-loc|-lo|-l|-)?)|tenant-where|use-index|table-scan|using|(no-prefe(?:tch|tc|t)?)|left|outer-join|break|by|(transact(?:ion|io|i)?)|,|:)\\s*",
+      "patterns": [
+        {
+          "include": "#fields-except-list"
+        },
+        {
+          "include": "#of-phrase"
+        },
+        {
+          "comment": "Intended to catch joins like ', table of table2', since the first table name is matched by the begin",
+          "match": "(?i)\\s*(of)\\s+([a-zA-Z][a-zA-Z_\\-#$%]*(\\.[a-zA-Z][a-zA-Z_\\-#$%]*)?)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "match": "\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*",
+          "comment": "Matches the table name in the case of eg ',each table' ",
+          "captures": {
+            "1": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        }
+      ]
+    },
+    "for-each-table": {
+      "begin": "(?i)(?<=\\s|\\b|^)(for|(presel(?:ect|ec|e)?))[\\s+|$]",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)\\s*(?=where|no-lock|(exclusive-l(?:ock|oc|o)?)|(share(?:-lock|-loc|-lo|-l|-)?)|tenant-where|use-index|table-scan|using|(no-prefe(?:tch|tc|t)?)|left|outer-join|break|by|(transact(?:ion|io|i)?)|,|:|on)\\s*",
+      "patterns": [
+        {
+          "match": "(?i)\\s*(each|first|last|of)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#fields-except-list"
+        },
+        {
+          "include": "#of-phrase"
+        },
+        {
+          "include": "#field-name"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#while-expression"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "fields-except-list": {
+      "begin": "(?i)\\s*(fields|except)\\s*(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#field-name"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "record-buffer-functions": {
+      "comment": "this capture does not include the NOT function since it is impossible to determine whether this is a new class or a new record.",
+      "match": "(?i)\\b((?:avail(?:able|abl|ab|a)?)|locked|ambiguous)\\s*(\\()?\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*(\\))?",
+      "captures": {
+        "1": {
+          "name": "support.function.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        },
+        "3": {
+          "name": "storage.data.table.abl"
+        },
+        "5": {
+          "name": "meta.brace.round.js"
+        }
+      }
+    },
+    "copy-lob": {
+      "comment": "Has its own rule because of the 'FOR length' option, which is parsed as a 'FOR EACH' type statement",
+      "begin": "(?i)\\b(copy-lob)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#code-block"
+        }
+      ]
+    },
+    "type-argument-function": {
+      "name": "meta.function-call.abl",
+      "begin": "\\s*([Cc][Aa][Ss][Tt]|[Tt][Yy][Pp][Ee]-[Oo][Ff])\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(?<=\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "begin": "(?<=\\()",
+          "end": "(,)",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.separator.comma.abl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#function-arguments-no-parens"
+            },
+            {
+              "include": "#parens"
+            }
+          ]
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "code-block": {
+      "patterns": [
+        {
+          "include": "#create-statement"
+        },
+        {
+          "include": "#record-buffer-functions"
+        },
+        {
+          "include": "#can-find"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#break-group"
+        },
+        {
+          "include": "#block-undo-leave-next-retry"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#include-file"
+        },
+        {
+          "include": "#run-statement"
+        },
+        {
+          "include": "#define"
+        },
+        {
+          "include": "#block-statement"
+        },
+        {
+          "include": "#end-block"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#new-record"
+        },
+        {
+          "include": "#type-reference"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#variable-name"
+        },
+        {
+          "include": "#static-object-property-call"
+        },
+        {
+          "include": "#punctuation-period"
+        },
+        {
+          "include": "#punctuation-colon"
+        }
+      ]
+    },
+    "property-accessor": {
+      "patterns": [
+        {
+          "include": "#property-get-set-super"
+        },
+        {
+          "include": "#property-get-set-empty"
+        },
+        {
+          "include": "#property-get-set-block"
+        }
+      ]
+    },
+    "property-get-set-super": {
+      "match": "(?i)\\b(get|set)\\s+(super)\\s*(?=\\.)",
+      "comment": "This is a call to the parent class' property getter or setter",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "property-get-set-empty": {
+      "comment": "This rule is needed since for 'plain' gets and sets, there's no END",
+      "match": "\\b([Gg][Ee][Tt]|[Ss][Ee][Tt])\\s*(?=\\.)",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "property-get-set-block": {
+      "begin": "\\s*(?<!:)\\s*([Gg][Ee][Tt]|[Ss][Ee][Tt])\\b(?![#$\\-_%&])",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "\\s*([Ee][Nn][Dd])\\s*([Gg][Ee][Tt]|[Ss][Ee][Tt])?\\s*(?=\\.)\\s*",
+      "comment": "The end capture does a lookahead on . so that the 'define' capture can end ",
+      "endCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-parameter-definition"
+        },
+        {
+          "include": "#code-block"
+        },
+        {
+          "include": "#punctuation-colon"
+        }
+      ]
+    },
+    "parameter-as": {
+      "begin": "\\s*([a-zA-Z0-9_\\-#$%]+)\\s+([Aa][Ss])\\s+",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.parameter.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\s|\\)|\\.|,)",
+      "patterns": [
+        {
+          "match": "\\s*([Cc][Ll][Aa][Ss]{2})\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#dll-type"
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#punctuation-period"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "input-output-from-to": {
+      "begin": "(?i)\\b(input|output)\\s+((stream|stream-handle)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s+)?(from|to)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "keyword.other.abl"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#variable-name"
+            }
+          ]
+        },
+        "5": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(?=\\.|target|source)",
+      "comment": "End with TARGET or SOURCE since these are the only options that take variables as arguments, and they must be the last options",
+      "patterns": [
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#opsys-device-name"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "opsys-device-name": {
+      "match": "([_\\w\\/\\-\\\\$:\\.]+)(?<!\\.)",
+      "comment": "For this regex to work, a device name may have periods in its name, but cannot end in one. File names support unicode",
+      "captures": {
+        "1": {
+          "name": "storage.other.opsys-device.abl"
+        }
+      }
+    },
+    "define-variable-name": {
+      "match": "(?i)(var(?:iable|iabl|iab|ia|i)?)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "variable.other.abl"
+        }
+      }
+    },
+    "variable-as": {
+      "match": "\\s*([a-zA-Z0-9_\\-#$%\\-]+)\\s+([Aa][Ss])\\b",
+      "captures": {
+        "1": {
+          "name": "variable.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "variable-like": {
+      "match": "(?i)\\s*([a-zA-Z0-9_\\-#$%\\-]+)\\s+(?=like)\\s*",
+      "captures": {
+        "1": {
+          "name": "variable.other.abl"
+        }
+      }
+    },
+    "property-as": {
+      "match": "\\s*([a-zA-Z0-9_\\-#$%]+)\\s+([Aa][Ss])\\s*",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "field-as-object": {
+      "comment": "This is to capture 'FIELD x AS Object'. As of OE 12.7 only Progress.Lang.Object is allowed as a type name. If/when this changes, this regex becomes trickier",
+      "match": "(?i)\\s*((progress\\.lang\\.)?object)\\s*",
+      "captures": {
+        "1": {
+          "name": "entity.name.type.abl"
+        }
+      }
+    },
+    "annotation": {
+      "patterns": [
+        {
+          "include": "#annotation-attributes"
+        },
+        {
+          "include": "#annotation-simple"
+        }
+      ]
+    },
+    "annotation-simple": {
+      "name": "meta.declaration.annotation.abl",
+      "match": "(^|\\s*)(\\@[a-zA-Z_][a-zA-Z0-9_#$\\-%&\\.]+)\\s*(?=\\.)",
+      "captures": {
+        "2": {
+          "name": "entity.name.tag.abl"
+        }
+      }
+    },
+    "annotation-attributes": {
+      "name": "meta.declaration.annotation.abl",
+      "begin": "(^|\\s+)(\\@[a-zA-Z_][a-zA-Z0-9_#$\\-%&\\.]*)\\s*(?=\\()",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.name.tag.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "match": "\\s*([a-zA-Z_][a-zA-Z0-9_#$\\-%&]+)(?=[\\=\\s$])",
+          "captures": {
+            "1": {
+              "name": "entity.other.attribute-name.abl"
+            }
+          }
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#operator-no-space"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "define": {
+      "name": "meta.define.abl",
+      "begin": "(?i)\\s*(def(?:ine|in|i)?)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(\\.)(?!\\w)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\s*(new|(glob(?:al|a|)?)|shared)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#serializable"
+        },
+        {
+          "include": "#access-modifier"
+        },
+        {
+          "include": "#define-enum-member"
+        },
+        {
+          "include": "#define-variable"
+        },
+        {
+          "include": "#define-parameter"
+        },
+        {
+          "include": "#define-button"
+        },
+        {
+          "include": "#define-dataset"
+        },
+        {
+          "include": "#define-query"
+        },
+        {
+          "include": "#define-browse"
+        },
+        {
+          "include": "#fields-except-list"
+        },
+        {
+          "include": "#define-event"
+        },
+        {
+          "include": "#define-property"
+        },
+        {
+          "include": "#property-accessor"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#define-field"
+        },
+        {
+          "include": "#parameter-as"
+        },
+        {
+          "include": "#define-stream"
+        },
+        {
+          "include": "#define-buffer"
+        },
+        {
+          "include": "#define-frame"
+        },
+        {
+          "include": "#for-table"
+        },
+        {
+          "include": "#buffer-for-table"
+        },
+        {
+          "include": "#define-table"
+        },
+        {
+          "include": "#define-index"
+        },
+        {
+          "include": "#define-like"
+        },
+        {
+          "include": "#field-as-object"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#extent"
+        },
+        {
+          "include": "#decimals"
+        },
+        {
+          "include": "#format-constant"
+        },
+        {
+          "include": "#timestamp-constant"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#dll-type"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#function-parameter-definition"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#label-variable"
+        },
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "define-field": {
+      "match": "(?i)\\s*(field)\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "cache-value": {
+      "match": "\\b([Cc][Aa][Cc][Hh][Ee])\\s+(0[xX]\\h+)?|(\\-?[0-9]+(\\.[0-9]+)?)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "constant.numeric.source.abl"
+        }
+      }
+    },
+    "define-query": {
+      "begin": "(?i)\\b(query)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "variable.other.abl"
+        }
+      },
+      "end": "(?i)(?=\\.\\s*)",
+      "patterns": [
+        {
+          "match": "(?i)\\b(for|scrolling|(rcode-info(?:rmation|rmatio|rmati|rmat|rma|rm|r)?))\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#cache-value"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#fields-except-list"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#keywords"
+        }
+      ]
+    },
+    "define-browse": {
+      "begin": "(?i)\\b(browse)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "variable.other.abl"
+        }
+      },
+      "end": "(?i)\\b(?=\\.)",
+      "patterns": [
+        {
+          "match": "\\b([Qq][Uu][Ee][Rr][Yy])\\s+([a-zA-Z][a-zA-Z0-9\\-_#$%\\&]+)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "variable.other.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b((share(?:-lock|-loc|-lo|-l|-)?)|(exclusive-l(?:ock|oc|o)?)|no-lock|no-wait|(disp(?:lay|la|l)?))\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "define-parameter": {
+      "begin": "(?i)\\b(param(?:eter|ete|et|e)?)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(?=\\.)|\\b(?=(bgc(?:olor|olo|ol|o)?)|(column-lab(?:el|e)?)|context-help-id|dcolor|decimals|drop-target|extent|font|(fgc(?:olor|olo|ol|o)?)|(form(?:at|a)?)|initial|label|(mouse-p(?:ointer|ointe|oint|oin|oi|o)?)|no-undo|not|(case-sen(?:sitive|sitiv|siti|sit|si|s)?)|(pfc(?:olor|olo|ol|o)?)|view-as|triggers)\\b",
+      "comment": "The end capture does a lookahead on . so that the 'define' capture can end ",
+      "patterns": [
+        {
+          "match": "(?i)\\b(table)\\s+(for)\\s+([a-zA-Z][a-zA-Z_\\-#$%]*(\\.[a-zA-Z][a-zA-Z_\\-#$%]*)?)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "keyword.other.abl"
+            },
+            "3": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(table-handle|dataset-handle)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "variable.other.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(dataset)\\s+(for)\\s+([a-zA-Z_\\-#$%]+(\\.[a-zA-Z_\\-#$%]+)?)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "keyword.other.abl"
+            },
+            "3": {
+              "name": "storage.data.dataset.abl"
+            }
+          }
+        },
+        {
+          "include": "#parameter-as"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "define-property": {
+      "begin": "(?i)\\b(property)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "comment": "This match just gets the definition of the property; the getter and setter are handled separately",
+      "end": "\\s*(?=[Gg][Ee][Tt]|[Ss][Ee][Tt])",
+      "patterns": [
+        {
+          "include": "#property-as"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#extent"
+        },
+        {
+          "include": "#decimals"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#timestamp-constant"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "dataset-name": {
+      "match": "(?i)\\s*(dataset)\\s+([a-zA-Z][a-zA-Z0-9_\\-]*)",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.dataset.abl"
+        }
+      }
+    },
+    "buffer-name": {
+      "match": "(?i)\\b(buffer)\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "temp-table-name": {
+      "match": "(?i)\\b(temp-table)\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*)",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "create-widget": {
+      "match": "(?i)\\s*(create)\\s+(button|combo-box|(?:control-fram(?:e)?)|dialog-box|editor|fill-in|(?:fram(?:e)?)|image|menu|menu-item|radio-set|(?:rect(?:angle|angl|ang|an|a)?)|selection-list|slider|sub-menu|text|toggle-box|window)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "variable.other.abl"
+        }
+      }
+    },
+    "create-statement": {
+      "patterns": [
+        {
+          "include": "#create-buffer"
+        },
+        {
+          "include": "#create-alias"
+        },
+        {
+          "include": "#create-widget"
+        },
+        {
+          "include": "#create-with-expression"
+        },
+        {
+          "include": "#create-record"
+        }
+      ]
+    },
+    "create-record": {
+      "match": "(?i)\\s*(create)\\s+([a-zA-Z][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*((for)\\s+(tenant))?\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        },
+        "5": {
+          "name": "keyword.other.abl"
+        },
+        "6": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "create-alias": {
+      "begin": "(?i)\\s*(create)\\s+(alias)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "match": "\\b([a-zA-Z0-9][a-zA-Z0-9_\\-]*)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.data.database.abl"
+            }
+          }
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "create-with-expression": {
+      "comment": "The variable, temp-table field, etc used to store the created expression, will be dealt with by other scopes",
+      "match": "(?i)\\s*(create)\\s+(browse|call|client-principal|database|dataset|data-source|query|sax-attributes|sax-reader|sax-writer|server|server-socket|soap-header|soap-header-entryref|socket|temp-table|widget-pool|x-document|x-noderef)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "create-buffer": {
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/CREATE-BUFFER-statement.html",
+      "begin": "\\s*([Cc][Rr][Ee][Aa][Tt][Ee])\\s+([Bb][Uu][Ff][Ff][Ee][Rr])\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(((buffer-n(?:ame|am|a)?)|in)\\b)|(?=\\.)",
+      "endCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "patterns": [
+        {
+          "match": "(?i)\\s*(for|table|no-error)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#define-table"
+        },
+        {
+          "include": "#buffer-name"
+        },
+        {
+          "include": "#temp-table-name"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessor-reference"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#variable-name"
+        }
+      ]
+    },
+    "define-index": {
+      "begin": "(?i)\\s*(index)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      },
+      "end": "(?i)(?=\\bindex\\b|\\.)",
+      "patterns": [
+        {
+          "match": "(?i)\\b(AS|IS|UNIQUE|PRIMARY|WORD-INDEX|(asc(?:ending|endin|endi|end|en|e)?)|(desc(?:ending|endin|endi|end|en|e)?))\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "define-dataset": {
+      "begin": "(?i)\\b(dataset)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.dataset.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "comment": "The end capture does a lookahead on . so that the 'define' capture can end ",
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "match": "(?i)\\b((?:data-rel(?:ation|atio|ati|at|a)?)|parent-id-relation)\\s*([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)",
+          "comment": "Manually capture these so that we can name the relation name properly",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.dataset.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(relation-fi(?:elds|eld|el|e)?)\\b",
+          "comment": "This ABL function is handled manually, because we know that the arguments are only table.field names, and the standard abl-function scopes assign these values to variable scopes",
+          "captures": {
+            "1": {
+              "name": "support.function.abl"
+            }
+          }
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "define-event": {
+      "match": "(?i)\\b(event)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "define-button": {
+      "begin": "(?i)\\s*(button)\\s+([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "variable.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#from-x-and-y"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "from-x-and-y": {
+      "match": "(?i)\\b(from)\\s+(X)\\s+((0(x)[\\h]+)|(\\-?[[0-9]]+(\\.[[0-9]]+)?))\\s+(y)\\s+((0(x)[\\h]+)|(\\-?[[0-9]]+(\\.[[0-9]]+)?))\\s+ ",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "6": {
+          "name": "constant.numeric.source.abl"
+        },
+        "8": {
+          "name": "keyword.other.abl"
+        },
+        "12": {
+          "name": "constant.numeric.source.abl"
+        }
+      }
+    },
+    "define-buffer": {
+      "begin": "(?i)\\s*(buffer)\\b(?![#$\\-_%&])",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#for-table"
+        },
+        {
+          "include": "#buffer-for-table"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "define-frame": {
+      "begin": "(?i)\\s*((?:fram(?:e)?))\\s*([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "variable.other.abl"
+        }
+      },
+      "end": "(?=[Ww][Ii][Tt][Hh]|\\.(?!\\w))",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#variable-name"
+        }
+      ]
+    },
+    "define-variable": {
+      "comment": "This rule captures just the variable name and the data type. Based on https://docs.progress.com/bundle/abl-reference/page/DEFINE-VARIABLE-statement.html",
+      "begin": "(?i)\\s*(var(?:iable|iabl|iab|ia|i)?)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(?=\\.)|\\b(?=(bgc(?:olor|olo|ol|o)?)|(column-lab(?:el|e)?)|context-help-id|dcolor|decimals|drop-target|extent|font|(fgc(?:olor|olo|ol|o)?)|(form(?:at|a)?)|(init(?:ial|ia|i)?)|label|(mouse-p(?:ointer|ointe|oint|oin|oi|o)?)|no-undo|not|(case-sen(?:sitive|sitiv|siti|sit|si|s)?)|(pfc(?:olor|olo|ol|o)?)|view-as|triggers)\\b",
+      "patterns": [
+        {
+          "match": "\\b([Cc][Ll][Aa][Ss][Ss])\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#variable-as"
+        },
+        {
+          "include": "#variable-like"
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#define-like"
+        },
+        {
+          "comment": "needs to be before the #keywords include",
+          "include": "#type-names"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "label-variable": {
+      "match": "(?i)\\s*([a-zA-Z0-9_\\-#$%]+)\\s+(label)\\s*",
+      "captures": {
+        "1": {
+          "name": "variable.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "format-constant": {
+      "comment": "DATE/TIME/TZ fields can have an unquoted format if it's something like 99/99/9999",
+      "match": "(?i)\\b((?:form(?:at|a)?))\\s+(9+/9+/9+)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "constant.language.source.abl"
+        }
+      }
+    },
+    "define-table": {
+      "match": "(?i)(?<=\\b)(temp-table|before-table)\\s*([a-zA-Z_][a-zA-Z0-9_\\-#$%]*)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "buffer-for-table": {
+      "comment": "1 to 32 characters; can consist of any combination of letters (a-z or A-Z), numbers (0-9), and these special characters: # $ - _ % & Names must begin with a letter.",
+      "match": "(?i)\\s*(?!do|repeat|for)([a-zA-Z][a-zA-Z_0-9\\-#$%]*)\\s+(for)\\s+((temp-table)\\s+)?([a-zA-Z][a-zA-Z0-9_\\-#$%]*)\\s*",
+      "captures": {
+        "1": {
+          "name": "storage.data.table.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "4": {
+          "name": "keyword.other.abl"
+        },
+        "5": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "double-colon-field-name": {
+      "match": "\\s*::([a-zA-Z_\\-#$%]+)\\s*",
+      "captures": {
+        "1": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "for-table": {
+      "match": "(?i)\\s*(for)\\s+((temp-table)\\s+)?([a-zA-Z_\\-#$%]+)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "keyword.other.abl"
+        },
+        "4": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "can-find": {
+      "comment": "This captures CAN-FIND( until either the closing brace, or a keyword like WHERE or a lock status. Based on the doc at https://docs.progress.com/bundle/abl-reference/page/CAN-FIND-function.html",
+      "begin": "(?i)\\s*(can-find)\\s*(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(?i)\\b(?=\\)|where|no-lock|(share(?:-lock|-loc|-lo|-l|-)?)|using|(no-prefe(?:tch|tc|t)?)|no-wait)\\s*",
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "match": "(?i)\\b(first|last)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#use-index"
+        },
+        {
+          "include": "#of-phrase"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        }
+      ]
+    },
+    "use-index": {
+      "match": "(?i)\\b(use-index)\\s+([a-zA-Z_][a-zA-Z0-9_\\-$]*)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "access-modifier": {
+      "match": "(?i)\\s*(package-private|private|package-protected|protected|public|static|override|abstract|final)\\s+",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "serializable": {
+      "match": "(?i)\\b(non-serializable|serializable)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "var-statement": {
+      "name": "meta.define.abl",
+      "begin": "^\\s*(var)\\s+",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(\\s([a-zA-Z][a-zA-Z0-9_\\-#$%]*))",
+      "endCaptures": {
+        "2": {
+          "name": "variable.other.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#access-modifier"
+        },
+        {
+          "include": "#serializable"
+        },
+        {
+          "comment": "This capture must use spaces and not word boundaries because the 'end' is on a space. This also captures class names that are ABL primitive type names, for example OpenEdge.Core.Memptr in its short form",
+          "match": "(?i)\\s*(class)\\s*(blob|character|char|clob|com-handle|date|datetime|datetime-tz|decimal|handle|int64|integer|int|logical|longchar|memptr|raw|recid|rowid|widget-handle)?",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "entity.name.type.abl"
+            }
+          }
+        },
+        {
+          "include": "#primitive-type"
+        },
+        {
+          "include": "#type-names"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "define-stream": {
+      "name": "meta.define.stream.abl",
+      "match": "(?i)\\s*(stream)\\s*([a-zA-Z][a-zA-Z0-9_\\-#$%\\-]*)",
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/DEFINE-STREAM-statement.html",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "patterns": [
+            {
+              "include": "#variable-name"
+            }
+          ]
+        }
+      }
+    },
+    "define-like": {
+      "match": "(?i)\\s*(like|like-sequential)\\s+(([a-zA-Z][a-zA-Z_\\-#$%]*\\.)?([a-zA-Z][a-zA-Z0-9_\\-#$%]*\\.)?([a-zA-Z][a-zA-Z0-9_\\-#$%]*))",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "block-label": {
+      "match": "(?i)^\\s*(?!((?:transact(?:ion|io|i)?)|no-lock|(?:exclusive-l(?:ock|oc|o)?)|(?:share(?:-lock|-loc|-lo|-l|-)?)):)([a-zA-Z][a-zA-Z0-9_\\-#$%\\-$#]*)(:)\\s",
+      "comment": "A colon followed by a space is only legal is for block labels. Block labels must also be at the beginning of a line. Scope name is per https://www.sublimetext.com/docs/scope_naming.html",
+      "captures": {
+        "2": {
+          "name": "entity.name.label.abl"
+        },
+        "3": {
+          "name": "punctuation.terminator.abl"
+        }
+      }
+    },
+    "end-block": {
+      "comment": "Certain blocks have the option of END <block name>",
+      "match": "(?i)\\s*(end)\\s+(CASE|CATCH|CLASS|CONSTRUCTOR|DESTRUCTOR|ENUM|FINALLY|FUNCTION|GET|INTERFACE|METHOD|PROCEDURE|SET|TRIGGERS)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "block-statement": {
+      "begin": "(?i)(?<!end)\\s*(do|repeat|finally)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "comment": "The end condition is look forward AND backward for the colon, since contained conditions may terminate on a line-ending, which may contain the colon",
+      "end": "\\s*(?=:)|(?<=:)|(?=\\.)|(?<=\\.)\\s*",
+      "name": "meta.block.abl",
+      "patterns": [
+        {
+          "match": "(?i)\\b((transact(?:ion|io|i)?)|stop-after|and|or)\\b",
+          "name": "keyword.other.abl"
+        },
+        {
+          "include": "#logical-expression"
+        },
+        {
+          "include": "#while-expression"
+        },
+        {
+          "include": "#for-record"
+        },
+        {
+          "match": "(?i)\\b((transact(?:ion|io|i)?)|stop-after)\\b",
+          "name": "keyword.other.abl"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#punctuation-colon"
+        },
+        {
+          "include": "#branch-options"
+        }
+      ]
+    },
+    "from-to-by": {
+      "begin": "\\s*([a-zA-Z0-9_\\-#$%$\\-_%&]+)\\s+(=)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.other.abl"
+        },
+        "2": {
+          "name": "keyword.operator.source.abl"
+        }
+      },
+      "end": "(?i)(?=(transact(?:ion|io|i)?)|on|:|with|while)",
+      "patterns": [
+        {
+          "match": "(?i)\\s+(to|by)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#branch-options"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "event-un-subscribe": {
+      "begin": "(?i)((\\?:)|(:))(unsubscribe|subscribe)\\s*(\\()",
+      "beginCaptures": {
+        "2": {
+          "name": "keyword.operator.source.abl"
+        },
+        "3": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "4": {
+          "name": "entity.name.function.abl"
+        },
+        "5": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "comment": "Captures the static class before the : of Subscribe ( [ subscriber : ] handler-method ). Type names are files, so support unicode",
+          "match": "\\s*([\\w#$%\\-]+(\\.[\\w#$%\\-]+)+)\\s*(:)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.abl"
+            },
+            "3": {
+              "name": "punctuation.separator.colon.abl"
+            }
+          }
+        },
+        {
+          "comment": "Captures the variable before the : or , of Subscribe( [ subscriber-handle , ] handler-procedure ) or Subscribe ( [ subscriber : ] handler-method )",
+          "match": "\\s*([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s*((,)|(:))\\s*",
+          "captures": {
+            "1": {
+              "name": "variable.other.abl"
+            },
+            "3": {
+              "name": "punctuation.separator.comma.abl"
+            },
+            "4": {
+              "name": "punctuation.separator.colon.abl"
+            }
+          }
+        },
+        {
+          "comment": "Subscribe( handler-procedure or handler-method)",
+          "match": "\\s*([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\s*",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.abl"
+            }
+          }
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "release": {
+      "begin": "(?i)\\s*(release)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\.)",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "match": "(?i)\\s*(object)\\s+(.*)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "variable.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#db-dot-table"
+        }
+      ]
+    },
+    "for-record": {
+      "comment": "this regex just tries to capture a bunch (6) of tables",
+      "match": "(?i)\\s*(for)\\s+([a-zA-Z_\\-#$%]*)\\s*(,)?\\s*([a-zA-Z_\\-#$%]*)?\\s*(,)?\\s*([a-zA-Z_\\-#$%]*)?\\s*(,)?\\s*([a-zA-Z_\\-#$%]*)?\\s*(,)?\\s*([a-zA-Z_\\-#$%]*)?\\s*(,)?\\s*([a-zA-Z_\\-#$%]*)?",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "storage.data.table.abl"
+        },
+        "3": {
+          "name": "punctuation.separator.comma.abl"
+        },
+        "4": {
+          "name": "storage.data.table.abl"
+        },
+        "5": {
+          "name": "punctuation.separator.comma.abl"
+        },
+        "6": {
+          "name": "storage.data.table.abl"
+        },
+        "7": {
+          "name": "punctuation.separator.comma.abl"
+        },
+        "8": {
+          "name": "storage.data.table.abl"
+        },
+        "9": {
+          "name": "punctuation.separator.comma.abl"
+        },
+        "10": {
+          "name": "storage.data.table.abl"
+        },
+        "11": {
+          "name": "punctuation.separator.comma.abl"
+        },
+        "12": {
+          "name": "storage.data.table.abl"
+        }
+      }
+    },
+    "on-error-endkey-stop": {
+      "match": "(?i)\\s*(on)\\s+(endkey|error|stop|quit)\\s+(undo)\\s*(?!leave|next|retry|return|throw)([a-zA-Z0-9_\\-#$%\\-$]*)?\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "keyword.other.abl"
+        },
+        "4": {
+          "name": "entity.name.label.abl"
+        }
+      }
+    },
+    "block-undo-leave-next-retry": {
+      "comment": "Covers NEXT, LEAVE, RETRY and UNDO with block labels that are not preceded by UNDO, ",
+      "match": "(?i)\\s*(?<!,)\\s*(leave|next|retry|undo)\\b(?!on)(\\s+([a-zA-Z0-9_\\-#$%\\-$]*))?\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "entity.name.label.abl"
+        }
+      }
+    },
+    "branch-leave-next-retry-throw": {
+      "match": "(?i)\\s*(?<=,)\\s*(leave|next|retry|throw)\\s*(?!on)([a-zA-Z0-9_\\-#$%\\-$]*)?\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.label.abl"
+        }
+      }
+    },
+    "branch-return-value-single": {
+      "comment": "RETURN 'return-value'",
+      "begin": "(?i)\\s*(return)(\\s+(error))?\\s+(')",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "punctuation.definition.string.begin.abl"
+        }
+      },
+      "name": "string.quoted.single.abl",
+      "end": "(')",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#escape-char"
+        }
+      ]
+    },
+    "escape-char": {
+      "match": "~.",
+      "name": "constant.character.escape.abl"
+    },
+    "escape-endline": {
+      "match": "(~)\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.continuation"
+        }
+      }
+    },
+    "branch-return-value-double": {
+      "comment": "RETURN \"return-value\"",
+      "begin": "(?i)\\s*(return)(\\s+(error))?\\s+(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        },
+        "3": {
+          "name": "punctuation.definition.string.begin.abl"
+        }
+      },
+      "end": "(\")",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#escape-char"
+        }
+      ]
+    },
+    "branch-return-no-apply": {
+      "comment": "RETURN NO-APPLY",
+      "match": "(?i)\\s*(return)\\s+(no-apply)\\s*",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "branch-return-error-expression": {
+      "begin": "(?i)\\s*(return)\\s+(error)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "comment": " This regex captures to the end of the line, or the colon, whichever comes first",
+      "end": "(?=:|$)",
+      "patterns": [
+        {
+          "include": "#new-class"
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "undo-statement": {
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/UNDO-statement.html",
+      "begin": "(?i)\\s*(undo)\\s*([a-zA-Z0-9_\\-#$%\\-$]*)?\\s*(,)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "entity.name.label.abl"
+        },
+        "3": {
+          "name": "punctuation.separator.comma.abl"
+        }
+      },
+      "end": "(?=[\\.:](?![a-zA-Z0-9_\\-#$%]))",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "match": "(?i)\\s*(leave|next|retry)\\s([a-zA-Z0-9_\\-#$%\\-$]*)?",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "entity.name.label.abl"
+            }
+          }
+        },
+        {
+          "include": "#new-class"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#code-block"
+        },
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#function-arguments-no-parens"
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#punctuation-colon"
+        }
+      ]
+    },
+    "branch-options": {
+      "patterns": [
+        {
+          "include": "#on-error-endkey-stop"
+        },
+        {
+          "include": "#branch-leave-next-retry-throw"
+        },
+        {
+          "include": "#branch-return-value-double"
+        },
+        {
+          "include": "#branch-return-value-single"
+        },
+        {
+          "include": "#branch-return-no-apply"
+        },
+        {
+          "include": "#branch-return-error-expression"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "while-expression": {
+      "begin": "(?i)\\s*(while)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(?=(transact(?:ion|io|i)?)|on|:|with)",
+      "patterns": [
+        {
+          "include": "#logical-expression"
+        },
+        {
+          "include": "#branch-options"
+        }
+      ]
+    },
+    "analyze-suspend-resume": {
+      "begin": "(?i)(&analyze-suspend|&analyze-resume)\\s*",
+      "end": "(?=(?://|/\\*))|$",
+      "name": "comment.preprocessor.analyze-suspend.abl"
+    },
+    "global-scoped-define": {
+      "patterns": [
+        {
+          "begin": "(?i)^\\s*((&)(scop(?:ed-define|ed-defin|ed-defi|ed-def|ed-de|ed-d|ed-|ed|e)?))\\s*",
+          "name": "meta.preprocessor.abl",
+          "beginCaptures": {
+            "2": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "3": {
+              "name": "keyword.control.directive.define.abl"
+            },
+            "4": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "end": "([\\.a-zA-Z0-9_\\-#$%\\/]+)\\s*",
+          "endCaptures": {
+            "1": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#escape-endline"
+            }
+          ]
+        },
+        {
+          "begin": "(?i)^\\s*((&)(glob(?:al-define|al-defin|al-defi|al-def|al-de|al-d|al-|al|a)?))\\s*",
+          "name": "meta.preprocessor.abl",
+          "beginCaptures": {
+            "2": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "3": {
+              "name": "keyword.control.directive.define.abl"
+            },
+            "4": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "end": "([\\.a-zA-Z0-9_\\-#$%\\/]+)\\s*",
+          "endCaptures": {
+            "1": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#escape-endline"
+            }
+          ]
+        },
+        {
+          "begin": "(?i)((&)(undef(?:ine|in|i)?))\\s*([\\.a-zA-Z0-9_\\-#$%\\/]*)\\s*",
+          "name": "meta.preprocessor.abl",
+          "beginCaptures": {
+            "2": {
+              "name": "punctuation.definition.preprocessor.abl"
+            },
+            "3": {
+              "name": "keyword.control.directive.define.abl"
+            },
+            "4": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "end": "([\\.a-zA-Z0-9_\\-#$%\\/]+)\\s*",
+          "endCaptures": {
+            "1": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#escape-char"
+            }
+          ]
+        }
+      ]
+    },
+    "preprocessor-functions": {
+      "begin": "\\s*([Dd][Ee][Ff][Ii][Nn][Ee][Dd])\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.function.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "match": "([a-zA-Z0-9_\\-#$%]+)",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.preprocessor.abl"
+            }
+          }
+        }
+      ],
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      }
+    },
+    "if-then": {
+      "begin": "\\b([Ii][Ff])\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#logical-expression"
+        }
+      ],
+      "end": "\\b(?=[Tt][Hh][Ee][Nn])\\b"
+    },
+    "logical-expression": {
+      "patterns": [
+        {
+          "match": "\\b([Aa][Nn][Dd]|[Oo][Rr])\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#code-block"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#keywords"
+        }
+      ]
+    },
+    "function-arguments": {
+      "name": "meta.function.arguments.abl",
+      "comment": "Captures what's between ( and ) when calling a function, excluding the braces ",
+      "begin": "(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "end": "(?=\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#parens"
+        },
+        {
+          "include": "#function-arguments-no-parens"
+        }
+      ]
+    },
+    "function-arguments-no-parens": {
+      "name": "meta.function.arguments.abl",
+      "patterns": [
+        {
+          "match": "(?i)\\s*((input-o(?:utput|utpu|utp|u)?)|output|input|table-handle|dataset-handle|append|by-value|by-reference|bind)\\b(?![#$\\-_%&])",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(dataset)\\s+([a-zA-Z_\\-#$%]+(\\.[a-zA-Z_\\-#$%]+)?)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.dataset.abl"
+            }
+          }
+        },
+        {
+          "match": "(?i)\\b(temp-table|table|buffer)\\s+([a-zA-Z_\\-#$%]+(\\.[a-zA-Z_\\-#$%]+)?)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            },
+            "2": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#array-literal"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#timestamp-constant"
+        },
+        {
+          "include": "#type-reference"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#can-find"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "static-object-property-call": {
+      "comment": "This rule only captures dotted type name and not single class names. Type names are files, so support unicode.",
+      "match": "(?i)\\s*(([\\w#$%\\-]+|progress)(\\.[\\w#$%\\-]+)+)\\s*((\\?:)|(:))([\\w\\-]+)\\s*",
+      "captures": {
+        "1": {
+          "name": "entity.name.type.abl"
+        },
+        "4": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "7": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "unqualified-method-call": {
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b(?=\\()",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "property-call": {
+      "match": "((\\?:)|(:))([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)\\b",
+      "captures": {
+        "2": {
+          "name": "keyword.operator.source.abl"
+        },
+        "3": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "4": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "type-member-call": {
+      "patterns": [
+        {
+          "include": "#property-call"
+        },
+        {
+          "include": "#unqualified-method-call"
+        },
+        {
+          "include": "#static-object-property-call"
+        }
+      ]
+    },
+    "variable-name": {
+      "comment": "1 to 128 characters; can consist of any combination of letters (a-z or A-Z), numbers (0-9), and these special characters: #$-_%& Names must begin with a letter (from https://docs.progress.com/bundle/openedge-abl-manage-applications/page/Name-limits.html)",
+      "match": "(?<=^|\\s|\\[|\\(|,)([a-zA-Z_][a-zA-Z0-9_#$\\-%&]*)(?=\\.\\s|\\.$|,|:|\\?:|\\s|\\)|\\]|\\[|$)",
+      "name": "variable.other.abl"
+    },
+    "extent": {
+      "match": "(?i)\\s*(extent)\\s*((0x)?\\h+\\b)?",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "constant.numeric.source.abl"
+        }
+      }
+    },
+    "decimals": {
+      "match": "(?i)\\s*(decimals)\\s((0x)?\\h+)?",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "constant.numeric.source.abl"
+        }
+      }
+    },
+    "ordinal": {
+      "match": "(?i)\\s*(ordinal)\\s((0x)?\\h+)?",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        },
+        "2": {
+          "name": "constant.numeric.source.abl"
+        }
+      }
+    },
+    "array-literal": {
+      "name": "meta.array.literal.abl",
+      "begin": "\\[",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.bracket.square.begin.abl"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.bracket.square.end.abl"
+        }
+      },
+      "patterns": [
+        {
+          "comment": "See https://docs.progress.com/bundle/abl-reference/page/Array-reference.html for array ranges",
+          "match": "(?i)\\s+(for)\\s+",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "array-use": {
+      "name": "meta.array.literal.abl",
+      "begin": "\\[",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.bracket.square.begin.abl"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.bracket.square.end.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#punctuation-comma"
+        }
+      ]
+    },
+    "expression": {
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#timestamp-constant"
+        },
+        {
+          "include": "#constant"
+        },
+        {
+          "include": "#numeric"
+        },
+        {
+          "include": "#variable-name"
+        },
+        {
+          "include": "#double-colon-field-name"
+        }
+      ]
+    },
+    "parameter-name": {
+      "match": "(?<=^|\\s)(a-zA-Z0-9_\\-#$%|-)+(?=\\s)",
+      "name": "variable.parameter.abl"
+    },
+    "run-statement": {
+      "begin": "\\b([Rr][Uu][Nn])\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)(?=\\.|value|set|persistent|single-run|singleton|on|no-error|in|asynchronous|\\()",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#preprocessor-reference"
+        },
+        {
+          "include": "#argument-reference"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#procedure-name"
+        }
+      ]
+    },
+    "procedure-name": {
+      "comment": "(External) Program names are files, so need to support unicode.",
+      "match": "([\\w\\-\\$\\@\\/\\\\\\.]{1,256})(?=\\b|\\.$)",
+      "captures": {
+        "1": {
+          "name": "entity.name.procedure.abl"
+        }
+      }
+    },
+    "include-file": {
+      "name": "meta.include.abl",
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/Include-file-reference.html. Filesystem names can be unicode",      
+      "begin": "({)\\s*(?!&)(([\"]?)([\\\\\/\\w$\\-\\.]+)([\"]?))",
+      "beginCaptures": { 
+        "1": {
+          "name": "punctuation.section.abl"
+        },
+        "3": {
+          "name": "punctuation.definition.string.begin.abl"
+        },
+        "4": {
+          "name": "entity.name.include.abl"          
+        },
+        "5": {
+          "name": "punctuation.definition.string.end.abl"
+        }
+      },
+      "end": "\\s*(\\s*})\\s*",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.abl"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#preprocessor-reference"
+        },
+        {
+          "include": "#argument-reference"
+        },
+        {
+          "match": "(?<=\\s)(&[a-zA-Z0-9][a-zA-Z0-9_\\-#$%#$\\-%\\.]+)\\s*(=)?",
+          "name": "meta.include.argument.abl",
+          "comment": "This is intended to catch '&arg' and '&arg=' ",
+          "captures": {
+            "1": {
+              "name": "support.other.argument.abl"
+            },
+            "2": {
+              "name": "keyword.operator.source.abl"
+            }
+          }
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "match": "([a-zA-Z0-9][a-zA-Z0-9_\\-#$%#$\\-%\\.:]+)\\b",
+          "comment": "non-string argument values",
+          "captures": {
+            "1": {
+              "name": "support.other.argument.abl"
+            }
+          }
+        },
+        {
+          "match": "(?<=\\=)(/\\*+)|(\\*+/)|(//)",
+          "comment": "Comment start/stop argument values",
+          "captures": {
+            "0": {
+              "name": "support.other.argument.abl"
+            }
+          }
+        },
+        {
+          "include": "#preprocessor-reference"
+        },
+        {
+          "comment": "Argument references can be passed into includes as arguments",
+          "include": "#argument-reference"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "argument-reference": {
+      "comment": "ONly unnamed arguments are captured here. Names arguments are treated as preprocessors, since its impossible to tell them apart https://docs.progress.com/bundle/abl-reference/page/Argument-reference.html",
+      "match": "\\s*(({)([0-9]+|\\*\\s*)(}))\\s*",
+      "captures": {
+        "1": {
+          "name": "meta.argument.abl"
+        },
+        "2": {
+          "name": "punctuation.section.abl"
+        },
+        "3": {
+          "name": "support.other.argument.abl"
+        },
+        "4": {
+          "name": "punctuation.section.abl"
+        }
+      }
+    },
+    "comment": {
+      "patterns": [
+        {
+          "include": "#singlelinecomment"
+        },
+        {
+          "include": "#multilinecomment"
+        }
+      ]
+    },
+    "singlelinecomment": {
+      "match": "//.*$",
+      "comment": "Was comment.source.abl but should be changed, per https://macromates.com/manual/en/language_grammars",
+      "name": "comment.line.double-slash.abl"
+    },
+    "multilinecomment": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "contentName": "comment",
+      "name": "comment.block.source.abl",
+      "patterns": [
+        {
+          "include": "#multilinecomment",
+          "name": "comment.block.source.abl"
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#singlequotedstring"
+        },
+        {
+          "include": "#doublequotedstring"
+        },
+        {
+          "include": "#translation-attribute"
+        }
+      ]
+    },
+    "singlequotedstring": {
+      "begin": "(')",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.begin.abl"
+        }
+      },
+      "end": "(?i)(')(:[L|R|T|C|U]\\d*\\b)?",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.abl"
+        },
+        "2": {
+          "name": "support.other.abl"
+        }
+      },
+      "name": "string.quoted.single.abl",
+      "patterns": [
+        {
+          "include": "#escape-char"
+        }
+      ]
+    },
+    "doublequotedstring": {
+      "begin": "(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.begin.abl"
+        }
+      },
+      "end": "(?i)(\")(:[LlRrTtCcUu]\\d*\\b)?",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.abl"
+        },
+        "2": {
+          "name": "support.other.abl"
+        }
+      },
+      "name": "string.quoted.double.abl",
+      "patterns": [
+        {
+          "include": "#escape-char"
+        }
+      ]
+    },
+    "dll-type": {
+      "match": "(?i)\\b(byte|unsigned-short|short|unsigned-long|long|int64|float)\\b",
+      "captures": {
+        "1": {
+          "name": "storage.type.abl"
+        }
+      },
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/Data-types.html"
+    },
+    "primitive-type": {
+      "match": "(?i)(?<=^|\\s)(blob|(ch(?:aracter|aracte|aract|arac|ara|ar|a)?)|c|clob|com-handle|(da(?:tetime-tz|tetime|te|t)?)|(de(?:cimal|cima|cim|ci|c)?)|handle|int64|(int(?:eger|ege|eg|e)?)|in|i|(log(?:ical|ica|ic|i)?)|lo|l|(longch(?:ar|a)?)|memptr|raw|recid|rowid|widget-handle)(?![=a-zA-Z0-9_\\-#$%\\-])",
+      "captures": {
+        "1": {
+          "name": "storage.type.abl"
+        }
+      },
+      "comment": "https://docs.progress.com/bundle/abl-reference/page/Data-types.html"
+    },
+    "numeric": {
+      "match": "(?<![a-zA-Z0-9_\\-#$%-])(0[xX]\\h+)|([+\\-]?\\.?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+\\-]?[0-9]+)?)",
+      "name": "constant.numeric.source.abl"
+    },
+    "abl-system-handles": {
+      "match": "(?i)\\b(active-window|audit-control|audit-policy|clipboard|codebase-locator|color-table|compiler|current-window|debugger|default-window|dslog-manager|(error-stat(?:us|u)?)|(file-info(?:rmation|rmatio|rmati|rmat|rma|rm|r)?)|font-table|(last-even(?:t)?)|log-manager|profiler|(rcode-info(?:rmation|rmatio|rmati|rmat|rma|rm|r)?)|security-policy|self|session|source-procedure|super|target-procedure|this-object|this-procedure|web-context)\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "variable.language.abl"
+        },
+        "2": {
+          "name": "punctuation.separator.colon.abl"
+        }
+      }
+    },
+    "timestamp-constant": {
+      "match": "(?i)(?<=^|\\s|\\b)(today|now)(?!a-zA-Z0-9_\\-#$%|-)",
+      "comment": "These are constants that can be used in initial values. This excludes MTIME and ETIME",
+      "name": "constant.language.abl"
+    },
+    "constant": {
+      "match": "(?i)(?<=^|\\b|\\s|\\()(true|false|yes|no|\\?)(?![a-zA-Z0-9_\\-#$%:])",
+      "name": "constant.language.abl"
+    },
+    "punctuation-colon": {
+      "match": ":",
+      "name": "punctuation.terminator.abl"
+    },
+    "punctuation-separator": {
+      "name": "punctuation.separator.abl",
+      "patterns": [
+        {
+          "include": "#punctuation-comma"
+        },
+        {
+          "match": "(:)",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.colon.abl"
+            }
+          }
+        },
+        {
+          "match": "(\\.)",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.period.abl"
+            }
+          }
+        }
+      ]
+    },
+    "punctuation-comma": {
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.comma.abl"
+        }
+      },
+      "match": "(,)"
+    },
+    "punctuation-semicolon": {
+      "captures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "match": "(;)"
+    },
+    "punctuation-period": {
+      "captures": {
+        "1": {
+          "name": "punctuation.terminator.abl"
+        }
+      },
+      "match": "(\\.)"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "include": "#operator-no-space"
+        },
+        {
+          "include": "#operator-with-space"
+        },
+        {
+          "include": "#operator-with-trailing-space"
+        }
+      ]
+    },
+    "operator-no-space": {
+      "match": "(\\+=|-=|\\\\=|\\*=|<=|<>|>=|=|<|>)",
+      "captures": {
+        "1": {
+          "name": "keyword.operator.source.abl"
+        }
+      }
+    },
+    "operator-with-space": {
+      "match": "(?i)(?<=\\s)(contains|begins|matches|eq|le|lt|ge|gt|ne|\\+|-|\\*|/)(?=\\s|\\()",
+      "comment": "Lookahead and -behind for the spaces",
+      "captures": {
+        "1": {
+          "name": "keyword.operator.source.abl"
+        }
+      }
+    },
+    "operator-with-trailing-space": {
+      "match": "\\b([Nn][Oo][Tt])(?=\\s|\\()",
+      "comment": "Lookahead only for the spaces, so that in particular the NOT is captured properly",
+      "captures": {
+        "1": {
+          "name": "keyword.operator.source.abl"
+        }
+      }
+    },
+    "rowid-function": {
+      "match": "(?i)\\s*(rowid)\\s*(\\()\\s*([a-zA-Z_][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*(\\))",
+      "captures": {
+        "1": {
+          "name": "support.function.abl"
+        },
+        "2": {
+          "name": "meta.brace.round.js"
+        },
+        "3": {
+          "name": "storage.data.table.abl"
+        },
+        "5": {
+          "name": "meta.brace.round.js"
+        }
+      }
+    },
+    "new-record": {
+      "comment": "This scope MUST be called after before type-reference (especially new-class) to avoid types being captured as tables",
+      "patterns": [
+        {
+          "comment": " NEW\\s+( <buffer> )",
+          "match": "(?i)\\s*(new)\\s+(\\()\\s*([a-zA-Z_][a-zA-Z0-9_\\-#$%]*(\\.[a-zA-Z][a-zA-Z0-9_\\-#$%]*)?)\\s*(\\))",
+          "captures": {
+            "1": {
+              "name": "support.function.abl"
+            },
+            "2": {
+              "name": "meta.brace.round.js"
+            },
+            "3": {
+              "name": "storage.data.table.abl"
+            },
+            "5": {
+              "name": "meta.brace.round.js"
+            }
+          }
+        },
+        {
+          "comment": " NEW <buffer>. The position of the negative lookahead (?!...) is very important",
+          "match": "(?i)\\s*((new)\\s+(?!.*\\()([a-zA-Z_{][a-zA-Z0-9_\\-#$%\\.{&}]*))",
+          "captures": {
+            "2": {
+              "name": "support.function.abl"
+            },
+            "3": {
+              "name": "storage.data.table.abl"
+            }
+          }
+        }
+      ]
+    },
+    "assign-statment": {
+      "patterns": [
+        {
+          "include": "#abl-functions"
+        },
+        {
+          "include": "#language-functions"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#argument-reference"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "include": "#attribute-access"
+        },
+        {
+          "include": "#buffer-name"
+        },
+        {
+          "include": "#can-find"
+        },
+        {
+          "include": "#abl-system-handles"
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#extent"
+        },
+        {
+          "include": "#function-arguments"
+        },
+        {
+          "include": "#get-class"
+        },
+        {
+          "include": "#handle-attributes"
+        },
+        {
+          "include": "#handle-methods"
+        },
+        {
+          "include": "#if-then"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#type-member-call"
+        },
+        {
+          "include": "#include-file"
+        },
+        {
+          "include": "#new-record"
+        },
+        {
+          "include": "#new-class"
+        },
+        {
+          "include": "#record-buffer-functions"
+        },
+        {
+          "include": "#rowid-function"
+        },
+        {
+          "include": "#type-names"
+        }
+      ]
+    },
+    "buffer-copy": {
+      "begin": "(?i)\\s*(buffer-copy)\\s*(?!\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?=\\s*[Aa][Ss][Ss][Ii][Gg][Nn]|\\.)",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        },
+        {
+          "match": "(?i)\\s*(using|except|to|no-lobs|no-error)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.other.abl"
+            }
+          }
+        },
+        {
+          "include": "#db-dot-table-dot-field"
+        },
+        {
+          "include": "#db-dot-table"
+        },
+        {
+          "include": "#field-name"
+        }
+      ]
+    },
+    "using-except": {
+      "begin": "(?i)\\b(using|except)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      },
+      "end": "(?i)\\s*(?=to|using|except)\\b",
+      "patterns": [
+        {
+          "include": "#field-name"
+        },
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#preprocessors"
+        }
+      ]
+    },
+    "keywords": {
+      "comment": "These scopes contain statements, not all the keywords. Methods, attributes and functions have their own scopes.",
+      "patterns": [
+        {
+          "include": "#keywords-A"
+        },
+        {
+          "include": "#keywords-B"
+        },
+        {
+          "include": "#keywords-C"
+        },
+        {
+          "include": "#keywords-D"
+        },
+        {
+          "include": "#keywords-E"
+        },
+        {
+          "include": "#keywords-F"
+        },
+        {
+          "include": "#keywords-G"
+        },
+        {
+          "include": "#keywords-H"
+        },
+        {
+          "include": "#keywords-I"
+        },
+        {
+          "include": "#keywords-J"
+        },
+        {
+          "include": "#keywords-K"
+        },
+        {
+          "include": "#keywords-L"
+        },
+        {
+          "include": "#keywords-M"
+        },
+        {
+          "include": "#keywords-N"
+        },
+        {
+          "include": "#keywords-O"
+        },
+        {
+          "include": "#keywords-P"
+        },
+        {
+          "include": "#keywords-Q"
+        },
+        {
+          "include": "#keywords-R"
+        },
+        {
+          "include": "#keywords-S"
+        },
+        {
+          "include": "#keywords-T"
+        },
+        {
+          "include": "#keywords-U"
+        },
+        {
+          "include": "#keywords-V"
+        },
+        {
+          "include": "#keywords-W"
+        },
+        {
+          "include": "#keywords-X"
+        },
+        {
+          "include": "#keywords-Y"
+        }
+      ]
+    },
+    "keywords-A": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(a(?:bort|bstract|ccumulate?|ccumula?|ccumu?|cross|ctive-form|ctive-window|dd|dvise|ggregate|lert-box|ll|llow-replication|lter|lternate-key|mbiguous?|mbiguo?|mbig|nd|nsi-only|ny|ny-key|ny-printable|nywhere|ppend|ppend-line|pplication|pply|rray-message?|rray-messa?|rray-mes?|rray-m|s|s-cursor|scending?|scendi?|scen?|sc|sk-overwrite|ssembly|ssign|t|ttach|ttachment|ttribute-type|udit-control|udit-policy|uthorization|uto-endkey|uto-go|utomatic|vailable?|vailab?|vail|verage?|vera?|ve|vg))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-B": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(b(?:ack-tab|ackspace|ackwards?|ase-key|ase64|atch|efore-hide?|efore-hi?|egins|ell|etween|gcolor?|gcol?|gc|ig-endian|inary|ind|ind-where|lob|lock|lock-level?|lock-lev|order-bottom?|order-bott?|order-bo?|order-left?|order-le?|order-right?|order-rig?|order-r|order-top?|order-t|oth|ottom|ottom-column|reak|reak-line|rowse|rowse-column-data-types|rowse-column-formats|rowse-column-labels|rowse-header|tos|uffer|uffer-compare?|uffer-compa?|uffer-copy|uttons?|uttons?|y|y-pointer|y-reference|y-value|y-variant-pointer?|y-variant-point|yte))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-C": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(c(?:ache|ache-size|all|ancel-pick|ase|atch|decl|entered?|enter|hained|haracter_length|haracter?|haract?|hara?|heck|heck-mem-stomp|hoices|hoose|lass|lear|lient-principal|lipboard|lob|lose|odebase-locator|ol|ol-of|ollate|olon|olon-aligned?|olon-align|olor|olor-table|olumn-codepage|olumn-label-bgcolor?|olumn-label-bgcol?|olumn-label-bgc|olumn-label-dcolor|olumn-label-fgcolor?|olumn-label-fgcol?|olumn-label-fgc|olumn-label-font|olumn-label-height-chars?|olumn-label-height-cha?|olumn-label-height-c|olumn-label-height-pixels?|olumn-label-height-pixe?|olumn-label-height-pi?|olumn-label?|olumn-lab|olumn-of|olumns?|om-self|ombo-box|ommand|ompares?|ompiler??|omponent-handle|omponent-self|onnect|onstrained|onstructor|ontainer-event|ontains|ontents|ontext|ontext-help-id|ontext-popup?|ontext-pop|ontrol|ontrol-container?|ontrol-contain?|ontrol-conta?|ontrol-frame?|onvert|opy|opy-lob|ount|reate|reate-on-add|reate-test-file|tos|urrent|urrent-language?|urrent-langua?|urrent-lang|urrent-value|urrent_date|ursor-down|ursor-left|ursor-right|ursor-up|ursor?|urs|ut))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-D": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(d(?:ata-bind?|ata-bi?|ata-refresh-line|ata-refresh-page|ata-relation?|ata-relati?|ata-rela?|ata-source|atabase|ataset|ataset-handle|color|de|de-notify|ebug-list|ebug-set-tenant|ebugger|eclare|efault|efault-action|efault-button?|efault-butt?|efault-extension?|efault-extensi?|efault-exten?|efault-ext?|efault-pop-up|efault-untranslatable|efault-window|efer-lob-fetch|efine-user-event-manager|efine?|efi?|el|elegate|elete|elete-character|elete-column|elete-end-line|elete-field|elete-word|elimiter|escending?|escendi?|escen?|esc|eselect|eselect-extend|eselection|eselection-extend|estructor|etach|ialog-box|ialog-help|ictionary?|ictiona?|ictio?|ict|ir|isabled??|isconnect?|isconne?|iscon|ismiss-menu|isplay?|ispl?|istinct|ll-call-type|os??|os-end|otnet-clr-loaded|ouble|own|rop|rop-down|rop-down-list|rop-file-notify|rop-target|slog-manager|ump|ynamic-current-value|ynamic-new|ynamic-property))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-E": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(e(?:ach|cho|dge|dge-pixels?|dge-pixe?|dge-pi?|diting|ditor|ditor-backtab|ditor-tab|lse|mpty|mpty-selection|nable|nd|nd-box-selection|nd-error|nd-key|nd-move|nd-resize|nd-row-resize|nd-search|ndkey|nter-menubar|ntry|num|q|rror|rror-status?|rror-stat|scape|vent|vent-handler-context|vents|xcept|xclusive|xclusive-lock?|xclusive-lo?|xclusive-web-user?|xclusive-web-us?|xclusive-web-?|xecute|xists|xit|xpire|xplicit|xport|xtended|xtent|xternal|xtract))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-F": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(f(?:alse|alse-leaks|etch|gcolor?|gcol?|gc|ields?|ile|ile-access-date?|ile-access-da?|ile-access-time?|ile-access-ti?|ile-information?|ile-informati?|ile-informa?|ile-infor?|ilename|ill-in|ilters|inal|inally|ind|ind-case-sensitive|ind-global|ind-next|ind-next-occurrence|ind-prev-occurrence|ind-previous|ind-select|ind-wrap-around|inder|irehose-cursor|irst|ix-codepage|ixed-only|lags|lat-button|loat|ocus|ocus-in|ont|ont-table|or|orce-file|oreign-key-hidden|ormat?|orm|ormat?|orm|orwards?|rame-value?|rame-val|rame?|rom|rom-chars?|rom-cha?|rom-c|rom-current?|rom-curre?|rom-cur|rom-pixels?|rom-pixe?|rom-pi?|romnoreorder|ull-height|unction|unction-call-type))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-G": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(g(?:e|enerate-md5|et|et-attr-call-type|et-dir|et-file|et-key-value?|et-key-val|et-text-height|et-text-width|etbyte|lobal?|lob|o|o-on|oto|rant|rant-archive|raphic-edge?|raphic-ed?|rayed|rid-set|rid-unit-height|rid-unit-width|roup|t))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-H": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(h(?:aving|eader|eight|elp|elp-context?|elp-conte?|elp-con|elp-topic|elpfile-name?|elpfile-na?|idden|ide|int|ome|oriz-end|oriz-home|oriz-scroll-drag|ost-byte-order))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-I": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(i(?:f|mage|mage-down|mage-insensitive|mage-size|mage-size-chars?|mage-size-cha?|mage-size-c|mage-size-pixels?|mage-size-pixe?|mage-size-pi?|mage-up|mplements|mport|n|ndex-hint|ndexed-reposition|ndicator|nformation?|nformati?|nforma?|nfor?|nherit-color-mode|nherits|nit|nitial|nitial-dir|nitial-filter|nitiate|nner|nput|nput-output?|nput-outp?|nput-ou?|nsert|nsert-column|nsert-field|nsert-field-data|nsert-field-label|nsert-mode|nterface|nto|s|tem|teration-changed))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-J": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(join(?:|-by-sqldb|-on-select))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-K": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(ke(?:ep-frame-z-order?|ep-frame-z-ord?|ep-frame-z-o?|ep-frame-z|ep-messages|ep-tab-order|y-code|y-function?|y-functi?|y-func|y-label|ycache-join))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-L": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(l(?:abel|abel-pfcolor?|abel-pfcol?|abel-pfc|andscape|ast-event?|ast-key|e|eading|eak-detection|eave|eft|eft-aligned?|eft-align|eft-end|ength|ike|ike-sequential|ine-down|ine-left|ine-right|ine-up|isting?|isti|ittle-endian|oad|oad-from|oad-picture|oad-result-into|ob-dir|ocked|og-id|og-manager|ong|ongchar?|ongch|ookahead|ower|t))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-M": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(m(?:achine-class|ain-menu|ap|argin-extra|argin-height|argin-height-chars?|argin-height-cha?|argin-height-c|argin-height-pixels?|argin-height-pixe?|argin-height-pi?|argin-width|argin-width-chars?|argin-width-cha?|argin-width-c|argin-width-pixels?|argin-width-pixe?|argin-width-pi?|atches|ax|ax-button|ax-height|ax-rows|ax-size|ax-width|aximize|d5-value|emptr|enu|enu-drop|enu-item|enubar|essage|essage-area|essage-area-msg|essage-line|ethod|in-height|in-schema-marshall?|in-size|in-width|od|odulo|ouse|ouse-pointer?|ouse-point?|ouse-poi?|ouse-p|ove|pe|ultiple-key|ust-exist))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-N": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(n(?:amespace-prefix|amespace-uri|ative|e|ested|ew|ew-instance|ew-line|ext|ext-error|ext-frame|ext-prompt|ext-word|o|o-apply|o-array-message?|o-array-messa?|o-array-mes?|o-array-m|o-assign|o-attr|o-attr-list?|o-attr-li?|o-attr-space?|o-attr-spa?|o-attr-s|o-auto-trim?|o-auto-validate|o-bind-where|o-box|o-column-scrolling?|o-column-scrolli?|o-column-scrol?|o-column-scr?|o-console|o-convert|o-convert-3d-colors?|o-convert-3d-colo?|o-convert-3d-co?|o-convert-3d-?|o-debug|o-drag|o-echo|o-error|o-fill?|o-fi?|o-firehose-cursor|o-focus|o-help|o-hide|o-index-hint|o-inherit-bgcolor?|o-inherit-bgcol?|o-inherit-bgc|o-inherit-fgcolor?|o-inherit-fgcol?|o-inherit-fgc|o-join-by-sqldb|o-keycache-join|o-labels?|o-lobs|o-lock|o-lookahead|o-map|o-message?|o-messa?|o-mes|o-pause|o-prefetch?|o-prefet?|o-query-order-added?|o-query-order-add?|o-query-order-a?|o-query-order?|o-query-ord?|o-query-o|o-query-unique-added?|o-query-unique-add?|o-query-unique-a?|o-query-unique?|o-query-uniq?|o-query-un?|o-return-value?|o-return-val|o-row-markers|o-schema-marshall?|o-scrollbar-vertical?|o-scrollbar-vertic?|o-scrollbar-vert?|o-scrollbar-ve?|o-scrolling|o-separate-connection|o-separators|o-tab-stop?|o-tab-st?|o-tab-?|o-underline?|o-underli?|o-under?|o-undo??|o-wait|o-word-wrap|ode-type|on-serializable|one|ot-active|ull|um-copies|um-selected|umeric))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-O": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(o(?:bject|ctet_length|ff??|ff-end|ff-home|k|k-cancel|ld|le-invoke-locale?|le-invoke-loca|le-names-locale?|le-names-loca|n|pen|pen-line-above|ption|ptions-file|r|rdered-join|rientation|s-append|s-command|s-copy|s-create-dir|s-delete|s-dir|s-rename|s2|s400|therwise|ut-of-data|uter|uter-join|utput|verlay|verride))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-P": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(p(?:ackage-private|ackage-protected|age|age-bottom?|age-bott?|age-down|age-left|age-right|age-right-text|age-up|age-width?|age-wid|aged|arameter?|aramet?|aram|arent-id-field|arent-window-close|artial-key|ascal|aste|ause|erformance?|erforman?|erform?|erfo?|fcolor?|fcol?|fc|ick|ick-area|ick-both|ixels|ortrait|recision|reprocess?|reproce?|reselect?|resele?|rev|rev-frame|rev-word|rinter|rinter-setup|rivate|rivileges|rocedure-call-type|rocedure-complete|rocedure?|rocedu?|roce|rocess|rofile-file|rofiler|rompt|rompt-for?|rompt-f|romsgs|ropath|roperty|rotected|ublic|ublish|ut|ut-bits|ut-bytes??|ut-double|ut-float|ut-int64|ut-key-value?|ut-key-val|ut-long|ut-short|ut-string|ut-unsigned-long|ut-unsigned-short|utbyte))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-Q": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(qu(?:ery|ery-tuning|estion|it))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-R": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(r(?:adio-set|aw|aw-transfer|code-information?|code-informati?|code-informa?|code-infor?|ead-available|ead-exact-num|ead-response|eadkey|eal|ecall|ectangle?|ectang?|ecta?|ecursive|eference-only|einstate|elease|epeat|eplication-create|eplication-delete|eplication-write|eports|eposition|eposition-backwards?|eposition-backwar?|eposition-backw?|eposition-forwards?|eposition-forwar?|eposition-forw|eposition-parent-relation?|eposition-parent-relati?|eposition-parent-rela?|equest|esize|esult|esume-display|etain|etry-cancel|eturn|eturn-to-start-dir?|eturn-value?|eturn-val|eturns|everse-from|evert|evoke|ight|ight-aligned?|ight-align|ight-end|outine-level|ow|ow-created|ow-deleted|ow-display|ow-entry|ow-height|ow-leave|ow-modified|ow-of|ow-unmodified|ule|ule-row|ule-y|un|un-procedure?|un-procedu?|un-proce?))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-S": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(s(?:ave|ave-as|ax-attributes|ax-complete?|ax-comple|ax-parser-error|ax-reader|ax-running|ax-uninitialized|ax-write-begin|ax-write-complete|ax-write-content|ax-write-element|ax-write-error|ax-write-idle|ax-write-tag|ax-writer|ax-xml|chema|creen|creen-io|croll|croll-bars|croll-horizontal|croll-left|croll-mode|croll-notify|croll-right|croll-vertical|crollable|crollbar-drag|crolled-row-position?|crolled-row-positi?|crolled-row-posi?|crolling|earch-self|earch-target|ection|ecurity-policy|eek|elect|elect-extend|elect-on-join|elect-repositioned-row|elected-items|election|election-extend|election-list|elf|end|ensitive|eparate-connection|eparators|erializable|erialize-hidden|erialize-name|erver|erver-socket|ession|et|et-attr-call-type|et-byte-order|et-cell-focus|et-contents|et-db-logging|et-event-manager-option|et-option|et-pointer-value?|et-pointer-val|et-state|ettings|hare-lock?|hare-lo?|hare-?|hared|hort|how-in-taskbar?|how-in-taskb?|how-stats?|ide-labels?|ide-labe?|ignature|ilent|imple|ingle|ingle-character|ingle-run|ize|ize-chars?|ize-cha?|ize-c|ize-pixels?|ize-pixe?|ize-pi?|kip|kip-group-duplicates|kip-schema-check|lider|mallint|oap-fault|oap-header|oap-header-entryref|ocket|ome|ource|ource-procedure|pace|ql|tart|tart-box-selection|tart-extend-box-selection|tart-mem-check|tart-move|tart-resize|tart-row-resize|tart-search|tarting|tatic|tatus|tatus-area|tatus-area-msg|tdcall|tomp-detection|tomp-frequency|top|top-after|top-display|top-mem-check|tored-procedure?|tored-procedu?|tored-proce?|tream|tream-handle|tream-io|tring-xref|ub-average?|ub-avera?|ub-ave|ub-count|ub-maximum?|ub-maxim?|ub-max|ub-menu|ub-menu-help|ub-minimum?|ub-minim?|ub-min|ub-total|ubscribe|ubstring?|ubstri?|um|ummary|uper|uspend|ystem-dialog|ystem-help))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-T": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(t(?:ab|able-scan|arget|arget-procedure|emp-table|enant|enant-where|erm|erminal|erminate|ext|ext-cursor|ext-seg-growth?|ext-seg-grow?|ext-seg-gr?|ext-seg-?|hen|his-object|his-procedure|hree-d|hrough|hrow|hru|itle|o|ooltip|op|op-column|opic|otal|railing|rans|ransaction-mode|ransaction?|ransacti?|riggers??|rue|tcodepage))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-U": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(u(?:nbuffered?|nbuffer?|nbuff|nderline?|nderli?|ndo|nformatted?|nformatt?|nforma?|nion|nique|nix|nix-end|nless-hidden|nload|nsigned-byte|nsigned-int64|nsigned-integer|nsigned-long|nsigned-short|nsubscribe|p|pdate|pper|se|se-dict-exps?|se-dict-ex?|se-dict-?|se-dic|se-filename|se-index|se-revvideo|se-text|se-underline|se-widget-pool|ser|sing|tc-offset))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-V": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(v(?:6frame|alidate|alue|alue-changed|alues|ar|ariable?|ariab?|ari?|erbose?|erbo?|ertical?|ertic?|ert|iew|iew-as|irtual-height|irtual-width|ms|oid))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-W": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(w(?:ait|ait-for|arning|eb-context?|eb-conte?|eb-con|eb-notify|hen|here|hile|idget|idget-id|idget-pool|idth|indow-close|indow-delayed-minimize?|indow-delayed-minimi?|indow-delayed-mini?|indow-maximized?|indow-maximiz?|indow-maxim|indow-minimized?|indow-minimiz?|indow-minim|indow-name|indow-normal|indow-resized|indow-restored|ith|ord-index|ork-table?|ork-tab|orkfile|rite))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-X": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(x(?:-document|-noderef|-of|code|ml-data-type|ml-node-name|ml-node-type|or|ref|ref-xml))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "keywords-Y": {
+      "comment": "The keyword must not have a trailing variable character (one of #$-_%&)",
+      "match": "(?i)\\b(y(?:-of|ear|ear-offset|es|es-no|es-no-cancel))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "keyword.other.abl"
+        }
+      }
+    },
+    "handle-attributes": {
+      "patterns": [
+        {
+          "include": "#handle-attributes-A"
+        },
+        {
+          "include": "#handle-attributes-B"
+        },
+        {
+          "include": "#handle-attributes-C"
+        },
+        {
+          "include": "#handle-attributes-D"
+        },
+        {
+          "include": "#handle-attributes-E"
+        },
+        {
+          "include": "#handle-attributes-F"
+        },
+        {
+          "include": "#handle-attributes-G"
+        },
+        {
+          "include": "#handle-attributes-H"
+        },
+        {
+          "include": "#handle-attributes-I"
+        },
+        {
+          "include": "#handle-attributes-K"
+        },
+        {
+          "include": "#handle-attributes-L"
+        },
+        {
+          "include": "#handle-attributes-M"
+        },
+        {
+          "include": "#handle-attributes-N"
+        },
+        {
+          "include": "#handle-attributes-O"
+        },
+        {
+          "include": "#handle-attributes-P"
+        },
+        {
+          "include": "#handle-attributes-Q"
+        },
+        {
+          "include": "#handle-attributes-R"
+        },
+        {
+          "include": "#handle-attributes-S"
+        },
+        {
+          "include": "#handle-attributes-T"
+        },
+        {
+          "include": "#handle-attributes-U"
+        },
+        {
+          "include": "#handle-attributes-V"
+        },
+        {
+          "include": "#handle-attributes-W"
+        },
+        {
+          "include": "#handle-attributes-X"
+        },
+        {
+          "include": "#handle-attributes-Y"
+        }
+      ]
+    },
+    "handle-attributes-A": {
+      "match": "(?i)(:)(a(?:ccelerator|ctive|ctor|dm-data|fter-buffer|fter-rowid|fter-table|llow-column-searching|llow-prev-deserialization|lways-on-top|mbiguous?|mbiguo?|mbig|ppl-alert-boxes?|ppl-alert-box?|ppl-alert-b?|ppl-alert|ppl-context-id|ppserver-info|ppserver-password|ppserver-userid|sync-request-count|sync-request-handle|synchronous|ttached-pairlist|ttr-space?|ttr-spa?|ttr-s?|ttr|ttribute-names|udit-event-context|uto-completion?|uto-completi?|uto-comple?|uto-comp|uto-delete|uto-delete-xml|uto-end-key|uto-go|uto-indent?|uto-inde?|uto-resize|uto-return?|uto-retu?|uto-synchronize|uto-validate?|uto-valida?|uto-vali?|uto-zap?|uto-z|vailable-formats|vailable?|vailab?|vail))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-B": {
+      "match": "(?i)(:)(b(?:ackground?|ackgrou?|ackgr?|ack|ase-ade|asic-logging|atch-mode|atch-size|efore-buffer|efore-rowid|efore-table|gcolor?|gcol?|gc|lank|lock-iteration-display|order-bottom-chars?|order-bottom-cha?|order-bottom-c|order-bottom-pixels?|order-bottom-pixe?|order-bottom-pi?|order-left-chars?|order-left-cha?|order-left-c|order-left-pixels?|order-left-pixe?|order-left-pi?|order-right-chars?|order-right-cha?|order-right-c|order-right-pixels?|order-right-pixe?|order-right-pi?|order-top-chars?|order-top-cha?|order-top-c|order-top-pixels?|order-top-pixe?|order-top-pi?|ox|ox-selectable?|ox-selectab?|ox-select|uffer-chars|uffer-field|uffer-group-id|uffer-group-name|uffer-handle|uffer-lines|uffer-name?|uffer-na?|uffer-partition-id|uffer-tenant-id|uffer-tenant-name|ytes-read|ytes-written))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-C": {
+      "match": "(?i)(:)(c(?:ache|all-name|all-type|an-create?|an-crea|an-delete?|an-dele|an-do-domain-support|an-read|an-write?|ancel-button|ancelled|areful-paint|ase-sensitive?|ase-sensiti?|ase-sensi?|ase-sen|entered?|enter|harset|hecked|hild-buffer|hild-num|lass-type|lient-connection-id|lient-tty|lient-type|lient-workstation|ode|odepage|olumn-bgcolor?|olumn-bgcol?|olumn-bgc|olumn-dcolor|olumn-fgcolor?|olumn-fgcol?|olumn-fgc|olumn-font|olumn-label?|olumn-lab|olumn-movable|olumn-pfcolor?|olumn-pfcol?|olumn-pfc|olumn-read-only|olumn-resizable|olumn-scrolling?|olumn-scrolli?|olumn-scrol?|olumn-scr?|olumns?|om-handle|omplete|onfig-name|ontext-help|ontext-help-file|ontext-help-id|ontrol-box|onvert-3d-colors?|onvert-3d-colo?|onvert-3d-co?|onvert-3d-?|overage|pcase|pcoll|pinternal?|pintern?|pinte?|plog|pprint|prcodein|prcodeout|pstream|pterm|rc-value?|rc-val|urrent-changed|urrent-column|urrent-environment?|urrent-environme?|urrent-environ?|urrent-envir?|urrent-env|urrent-iteration|urrent-request-info|urrent-response-info|urrent-result-row|urrent-row-modified|urrent-window|ursor-char|ursor-line|ursor-offset))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-D": {
+      "match": "(?i)(:)(d(?:ata-entry-return?|ata-entry-retu?|ata-source|ata-source-complete-map|ata-source-modified|ata-source-rowid|ata-type?|ata-ty?|ataset|ate-format?|ate-form?|ate-fo?|b-context|b-list|b-references|bname|color|de-error|de-id?|de-item|de-name|de-topic|eblank|ebug-alert|ecimals|efault|efault-buffer-handle|efault-button?|efault-butt?|efault-commit|efault-string|efault-value|elimiter|escription?|escripti?|irectory|isable-auto-zap|isplay-timezone|isplay-type?|isplay-ty?|omain-description|omain-name|omain-type|own|rag-enabled|rop-target|ynamic))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-E": {
+      "match": "(?i)(:)(e(?:dge-chars?|dge-cha?|dge-c|dge-pixels?|dge-pixe?|dge-pi?|dit-can-paste|dit-can-undo|mpty|nabled|ncoding|ncryption-salt|nd-user-prompt|ntity-expansion-limit|ntry-types-list|rror|rror-column?|rror-colu?|rror-object|rror-object-detail|rror-row|rror-stack-trace|rror-string|vent-group-id|vent-handler|vent-handler-object|vent-procedure|vent-procedure-context|vent-type?|vent-ty?|xclusive-id|xecution-log|xit-code|xpand|xpandable|xtent))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-F": {
+      "match": "(?i)(:)(f(?:gcolor?|gcol?|gc|ile-create-date?|ile-create-da?|ile-create-time?|ile-create-ti?|ile-mod-date?|ile-mod-da?|ile-mod-time?|ile-mod-ti?|ile-name|ile-offset?|ile-offs?|ile-size|ile-type|ill-mode|ill-where-string|illed|irst-async-request?|irst-async-reque?|irst-async-req?|irst-async-r?|irst-async|irst-buffer|irst-child|irst-column|irst-data-source|irst-dataset|irst-form|irst-object|irst-procedure?|irst-procedu?|irst-proce?|irst-query|irst-server-socket|irst-server?|irst-serv|irst-socket|irst-tab-item?|irst-tab-it?|it-last-column|lat-button|ocused-row|ocused-row-selected|ont|oreground?|oregrou?|oregr?|ore|oreign-key-hidden|orm-input|orm-long-input|ormatted?|ormat?|orm|orward-only|ragment?|rame-col|rame-name|rame-row|rame-spacing?|rame-spaci?|rame-spa|rame-x|rame-y|rame?|requency|ull-height-chars?|ull-height-cha?|ull-height-c|ull-height-pixels?|ull-height-pixe?|ull-height-pi?|ull-pathname?|ull-pathna?|ull-width-chars?|ull-width-cha?|ull-width-c?|ull-width|ull-width-pixels?|ull-width-pixe?|ull-width-pi?|unction))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-G": {
+      "match": "(?i)(:)(gr(?:aphic-edge?|aphic-ed?|id-factor-horizontal?|id-factor-horizont?|id-factor-horizo?|id-factor-hori?|id-factor-ho?|id-factor-vertical?|id-factor-vertic?|id-factor-vert?|id-factor-ve?|id-snap|id-unit-height-chars?|id-unit-height-cha?|id-unit-height-c|id-unit-height-pixels?|id-unit-height-pixe?|id-unit-height-pi?|id-unit-width-chars?|id-unit-width-cha?|id-unit-width-c|id-unit-width-pixels?|id-unit-width-pixe?|id-unit-width-pi?|id-visible|oup-box))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-H": {
+      "match": "(?i)(:)(h(?:andler??|as-lobs|as-records|eight-chars?|eight-cha?|eight-c|eight-pixels?|eight-pixe?|eight-pi?|elp|idden|orizontal?|orizont?|orizo?|ori|tml-charset|tml-end-of-line|tml-end-of-page|tml-frame-begin|tml-frame-end|tml-header-begin|tml-header-end|tml-title-begin|tml-title-end|wnd))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-I": {
+      "match": "(?i)(:)(i(?:cfparameter?|cfparamet?|cfparam|con|gnore-current-modified?|gnore-current-modifi?|gnore-current-modi?|mage|mage-down|mage-insensitive|mage-up|mmediate-display|n-handle|ndex|ndex-information?|ndex-informati?|ndex-informa?|ndex-infor?|nherit-bgcolor?|nherit-bgcol?|nherit-bgc|nherit-fgcolor?|nherit-fgcol?|nherit-fgc|nitial|nner-chars|nner-lines|nput-value|nstantiating-procedure|nternal-entries|s-class?|s-json|s-multi-tenant|s-open|s-parameter-set|s-partitioned?|s-xml|tems-per-row))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-K": {
+      "match": "(?i)(:)(ke(?:ep-connection-open|ep-frame-z-order?|ep-frame-z-ord?|ep-frame-z-o?|ep-frame-z|ep-security-cache|ys??))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-L": {
+      "match": "(?i)(:)(l(?:abel|abel-bgcolor?|abel-bgcol?|abel-bgc|abel-dcolor?|abel-dcol?|abel-dc|abel-fgcolor?|abel-fgcol?|abel-fgc|abel-font|abels|abels-have-colons|anguages?|arge|arge-to-small|ast-async-request?|ast-async-reque?|ast-async-req?|ast-async-r?|ast-async|ast-batch|ast-child|ast-form|ast-object|ast-procedure?|ast-procedu?|ast-proce|ast-server-socket|ast-server?|ast-serv|ast-socket|ast-tab-item?|ast-tab-it?|ength|ibrary|ibrary-calling-convention|ine|ist-item-pairs|ist-items|istings|iteral-question|ocal-host|ocal-name|ocal-port|ocal-version-info|ocator-column-number|ocator-line-number|ocator-public-id|ocator-system-id|ocator-type|ocked|og-entry-types|og-threshold|ogfile-name|ogging-level|ogin-expiration-timestamp|ogin-host|ogin-state))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-M": {
+      "match": "(?i)(:)(m(?:andatory|anual-highlight|ax-button|ax-chars|ax-data-guess|ax-height-chars?|ax-height-cha?|ax-height-c|ax-height-pixels?|ax-height-pixe?|ax-height-pi?|ax-value?|ax-val|ax-width-chars?|ax-width-cha?|ax-width-c|ax-width-pixels?|ax-width-pixe?|ax-width-pi?|aximum-level|enu-bar|enu-key?|enu-k|enu-mouse?|enu-mou?|enu-m|erge-by-field|essage-area|essage-area-font|in-button|in-column-width-chars?|in-column-width-cha?|in-column-width-c|in-column-width-pixels?|in-column-width-pixe?|in-column-width-pi?|in-height-chars?|in-height-cha?|in-height-c|in-height-pixels?|in-height-pixe?|in-height-pi?|in-schema-marshall?|in-value?|in-val|in-width-chars?|in-width-cha?|in-width-c|in-width-pixels?|in-width-pixe?|in-width-pi?|odified|ouse-pointer?|ouse-point?|ouse-poi?|ouse-p|ovable|ulti-compile|ultiple|ultitasking-interval|ust-understand))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-N": {
+      "match": "(?i)(:)(n(?:ame|amespace-prefix|amespace-uri|eeds-appserver-prompt|eeds-prompt|ested|ew|ew-row|ext-column?|ext-colu?|ext-rowid|ext-sibling|ext-tab-item?|o-current-value|o-empty-space|o-focus|o-schema-marshall?|o-validate?|o-valida?|o-vali?|ode-value|onamespace-schema-location|um-buffers|um-buttons?|um-butto?|um-but|um-child-relations|um-children|um-columns?|um-colum?|um-col|um-dropped-files|um-entries|um-fields|um-formats|um-header-entries|um-items|um-iterations|um-lines|um-locked-columns?|um-locked-colum?|um-locked-col|um-log-files|um-messages|um-parameters|um-references|um-relations|um-replaced?|um-replac?|um-repl|um-results|um-selected-rows|um-selected-widgets|um-source-buffers|um-tabs|um-to-retain|um-top-buffers|um-visible-columns?|um-visible-colum?|um-visible-col|umeric-decimal-point?|umeric-decimal-poi?|umeric-decimal-p?|umeric-decimal?|umeric-decim?|umeric-dec|umeric-format?|umeric-form?|umeric-fo?|umeric-separator?|umeric-separat?|umeric-separ?|umeric-sep))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-O": {
+      "match": "(?i)(:)(o(?:n-frame-border?|n-frame-bord?|n-frame-bo?|n-frame-?|ptions|rdinal|rigin-handle|rigin-rowid|verlay|wner|wner-document))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-P": {
+      "match": "(?i)(:)(p(?:age-bottom?|age-bott?|age-top|arameter?|aramet?|aram|arent|arent-buffer|arent-fields-after|arent-fields-before|arent-id-relation|arent-relation?|arent-relati?|arent-rela?|arse-status|assword-field|athname|be-hash-algorithm?|be-hash-algorit?|be-hash-algor?|be-hash-alg|be-key-rounds|ersistent-cache-disabled|ersistent-procedure|ersistent?|ersiste?|fcolor?|fcol?|fc|ixels-per-column?|ixels-per-colu?|ixels-per-row|opup-menu?|opup-me?|opup-only?|opup-on?|osition|refer-dataset|repare-string|repared|rev-column?|rev-colu?|rev-sibling|rev-tab-item?|rev-tab-it?|rimary|rimary-passphrase|rinter-control-handle|rinter-hdc|rinter-name|rinter-port|rivate-data?|rivate-da?|rocedure-name|rocedure-type|rofiling|rogress-source?|rogress-sour?|rogress-so?|roxy|roxy-password|roxy-userid|ublic-id|ublished-events))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-Q": {
+      "match": "(?i)(:)(qu(?:alified-user-id|ery|ery-off-end|it))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-R": {
+      "match": "(?i)(:)(r(?:adio-buttons|ead-only|ecid|ecord-length?|ecord-leng?|ecursive|efreshable|ejected|elation-fields?|elation-fiel?|elation-fi|elations-active|emote|emote-host|emote-port|eposition|equest-info|esizable?|esizab?|esize|esponse-info|estart-row|estart-rowid|etain-shape?|etain-sha?|etain-s|eturn-inserted?|eturn-insert?|eturn-inse?|eturn-value-data-type|eturn-value-dll-type|eturn-value?|eturn-val|oles??|ounded|ow|ow-height-chars?|ow-height-cha?|ow-height-c|ow-height-pixels?|ow-height-pixe?|ow-height-pi?|ow-markers?|ow-marke?|ow-mar?|ow-resizable|ow-state|owid))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-S": {
+      "match": "(?i)(:)(s(?:ave-where-string|chema-change|chema-location|chema-marshal|chema-path|creen-lines|creen-value?|creen-val|croll-bars|crollable|crollbar-horizontal?|crollbar-horizont?|crollbar-horizo?|crollbar-hori?|crollbar-ho?|crollbar-vertical?|crollbar-vertic?|crollbar-vert?|crollbar-ve?|eal-timestamp|electable|elected|election-end|election-start|election-text|ensitive|eparator-fgcolor?|eparator-fgcol?|eparator-fgc|eparators|erialize-hidden|erialize-name|erver|erver-connection-bound-request?|erver-connection-bound-reque?|erver-connection-bound-req?|erver-connection-bound?|erver-connection-bou?|erver-connection-context?|erver-connection-conte?|erver-connection-con?|erver-connection-id|erver-operating-mode|ession-end|ession-id|how-in-taskbar?|how-in-taskb?|ide-label-handle?|ide-label-hand?|ide-label-ha?|ide-labels|ignature-value|ingle-run|ingleton|kip-deleted-record?|kip-deleted-reco?|mall-icon|mall-title|oap-fault-actor|oap-fault-code|oap-fault-detail|oap-fault-misunderstood-header|oap-fault-node|oap-fault-role|oap-fault-string|oap-fault-subcode|oap-version|ort|ort-ascending|ort-number|sl-server-name|tandalone|tartup-parameters|tate-detail|tatistics|tatus-area|tatus-area-font|top|top-object|topped?|tream|tretch-to-fit|trict|trict-entity-resolution|ubtype|uper-procedures?|uper-procedur?|uper-proced?|uper-proc|uppress-namespace-processing|uppress-warnings-list|uppress-warnings?|uppress-warnin?|uppress-warn?|uppress-wa?|ymmetric-encryption-aad|ymmetric-encryption-algorithm|ymmetric-encryption-iv|ymmetric-encryption-key|ymmetric-support|ystem-alert-boxes?|ystem-alert-box?|ystem-alert-b?|ystem-alert|ystem-id))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-T": {
+      "match": "(?i)(:)(t(?:ab-position|ab-stop|able|able-crc-list|able-handle|able-list|able-number?|able-numb?|emp-directory?|emp-directo?|emp-direc?|emp-dir|ext-selected|hread-safe|hree-d|ic-marks|ime-source|imezone|itle|itle-bgcolor?|itle-bgcol?|itle-bgc|itle-dcolor?|itle-dcol?|itle-dc|itle-fgcolor?|itle-fgcol?|itle-fgc|itle-font?|itle-fo|oggle-box|ooltips??|op-nav-query|op-only|race-filter|racing|racking-changes|rans-init-procedure?|rans-init-procedu?|rans-init-proce?|ransaction?|ransacti?|ransparent?|ranspare?|ype))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-U": {
+      "match": "(?i)(:)(u(?:ndo|ndo-throw-scope|nique-id|nique-match|rl|rl-password|rl-userid|ser-id))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-V": {
+      "match": "(?i)(:)(v(?:6display|alidate-expression?|alidate-message|alidate-xml|alidation-enabled|alue|ersion|iew-as|iew-first-column-on-reopen|irtual-height-chars?|irtual-height-cha?|irtual-height-c|irtual-height-pixels?|irtual-height-pixe?|irtual-height-pi?|irtual-width-chars?|irtual-width-cha?|irtual-width-c|irtual-width-pixels?|irtual-width-pixe?|irtual-width-pi?|isible))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-W": {
+      "match": "(?i)(:)(w(?:arning|c-admin-app|here-string|idget-enter?|idget-ent?|idget-e|idget-id|idget-leave?|idget-lea?|idget-l|idth-chars?|idth-cha?|idth-c|idth-pixels?|idth-pixe?|idth-pi?|indow|indow-state?|indow-sta|indow-system?|indow-syst?|ord-wrap|ork-area-height-pixels?|ork-area-height-pixe?|ork-area-height-pi?|ork-area-width-pixels?|ork-area-width-pixe?|ork-area-width-pi?|ork-area-x|ork-area-y|rite-status))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-X": {
+      "match": "(?i)(:)(x(?:|-document|code-session-key|ml-data-type|ml-entity-expansion-limit|ml-node-name|ml-node-type|ml-schema-path?|ml-strict-entity-resolution|ml-suppress-namespace-processing))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-attributes-Y": {
+      "match": "(?i)(:)(y(?:|ear-offset))\\b(?![#$\\-_%&])",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "entity.name.function.abl"
+        }
+      }
+    },
+    "handle-methods": {
+      "patterns": [
+        {
+          "include": "#handle-methods-A"
+        },
+        {
+          "include": "#handle-methods-B"
+        },
+        {
+          "include": "#handle-methods-C"
+        },
+        {
+          "include": "#handle-methods-D"
+        },
+        {
+          "include": "#handle-methods-E"
+        },
+        {
+          "include": "#handle-methods-F"
+        },
+        {
+          "include": "#handle-methods-G"
+        },
+        {
+          "include": "#handle-methods-I"
+        },
+        {
+          "include": "#handle-methods-L"
+        },
+        {
+          "include": "#handle-methods-M"
+        },
+        {
+          "include": "#handle-methods-N"
+        },
+        {
+          "include": "#handle-methods-Q"
+        },
+        {
+          "include": "#handle-methods-R"
+        },
+        {
+          "include": "#handle-methods-S"
+        },
+        {
+          "include": "#handle-methods-T"
+        },
+        {
+          "include": "#handle-methods-U"
+        },
+        {
+          "include": "#handle-methods-V"
+        },
+        {
+          "include": "#handle-methods-W"
+        }
+      ]
+    },
+    "handle-methods-A": {
+      "begin": "(?i)(:)(a(?:ccept-changes|ccept-row-changes|dd-buffer|dd-calc-column?|dd-calc-colu?|dd-columns-from|dd-events-procedure?|dd-events-procedu?|dd-events-proce?|dd-fields-from|dd-first|dd-header-entry|dd-index-field|dd-last|dd-like-column?|dd-like-colu?|dd-like-field|dd-like-index|dd-new-field|dd-new-index|dd-parent-id-relation|dd-relation?|dd-relati?|dd-rela?|dd-schema-location|dd-source-buffer|dd-super-procedure?|dd-super-procedu?|dd-super-proce?|ppend-child|pply-callback|ttach-data-source|uthentication-failed))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-B": {
+      "begin": "(?i)(:)(b(?:egin-event-group|uffer-compare?|uffer-compa?|uffer-copy|uffer-create|uffer-delete|uffer-export|uffer-export-fields|uffer-field|uffer-import|uffer-import-fields|uffer-release?|uffer-validate|uffer-value))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-C": {
+      "begin": "(?i)(:)(c(?:ancel-break|ancel-requests|ancel-requests-after|lear|lear-appl-context|lear-log|lear-selection?|lear-selecti?|lear-sort-arrows?|lone-node|lose-log|onnect|onnected|onvert-to-offset?|onvert-to-offs|opy-dataset|opy-sax-attributes|opy-temp-table|reate-like|reate-like-sequential|reate-node|reate-node-namespace|reate-result-list-entry|urrent-query))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-D": {
+      "begin": "(?i)(:)(d(?:ebug?|eclare-namespace|elete|elete-char|elete-current-row|elete-header-entry|elete-line|elete-node|elete-result-list-entry|elete-selected-rows??|eselect-focused-row|eselect-rows|eselect-selected-row|etach-data-source|isable|isable-connections|isable-dump-triggers|isable-load-triggers|isconnect?|isconne?|iscon|isplay-message|ump-logging-now))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-E": {
+      "begin": "(?i)(:)(e(?:dit-clear|dit-copy|dit-cut|dit-paste|dit-undo|mpty-dataset|mpty-temp-table|nable|nable-connections|ncode-domain-access-code|ncrypt-audit-mac-key|nd-document|nd-element|nd-event-group|nd-file-drop|ntry|xport|xport-principal))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-F": {
+      "begin": "(?i)(:)(f(?:etch-selected-row|ill|ind-by-rowid|ind-current|ind-first|ind-last|ind-unique|irst-of))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-G": {
+      "begin": "(?i)(:)(get-(?:attribute|attribute-node|binary-data|blue-value?|blue-val?|blue-v?|blue|browse-column?|browse-colu?|buffer-handle|bytes-available|callback-proc-context|callback-proc-name|cgi-list|cgi-long-value|cgi-value|changes|child|child-relation?|child-relati?|child-rela?|client|column|config-value|current?|curre?|dataset-buffer|document-element|dropped-file|dynamic|error-column|error-row|file-name|file-offset?|first?|green-value?|green-val?|green-v?|green|header-entry?|index-by-namespace-name|index-by-qname|iteration|last|localname-by-index|message|message-type|next|node|number|parent|prev|printers|property|qname-by-index|red-value?|red-val?|red-v?|red|relation?|relati?|rela?|repositioned-row|rgb-value?|rgb-val?|rgb-v?|rgb|row|safe-user|selected-widget?|selected-widg?|selected-wi?|selected-?|serialized|signature|socket-option|source-buffer|tab-item|text-height-chars?|text-height-cha?|text-height-c|text-height-pixels?|text-height-pixe?|text-height-pi?|text-width-chars?|text-width-cha?|text-width-c|text-width-pixels?|text-width-pixe?|text-width-pi?|top-buffer|type-by-index|type-by-namespace-name|type-by-qname|uri-by-index|value-by-index|value-by-namespace-name|value-by-qname|wait-state?|wait-sta?|wait-s?|wait))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-I": {
+      "begin": "(?i)(:)(i(?:mport-node|mport-principal|ncrement-exclusive-id|ndex-information?|ndex-informati?|ndex-informa?|ndex-infor?|nitialize|nitialize-document-type|nitiate|nsert|nsert-attribute|nsert-backtab?|nsert-backt?|nsert-bac?|nsert-b|nsert-before|nsert-file|nsert-row|nsert-string|nsert-tab?|nsert-t|nvoke|s-row-selected|s-selected))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-L": {
+      "begin": "(?i)(:)(l(?:ast-of|ist-property-names|oad|oad-domains|oad-icon|oad-image|oad-image-down|oad-image-insensitive|oad-image-up|oad-mouse-pointer?|oad-mouse-point?|oad-mouse-poi?|oad-mouse-p|oad-small-icon|ock-registration|og-audit-event|ogout|ongchar-to-node-value|ookup))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-M": {
+      "begin": "(?i)(:)(m(?:ark-new|ark-row-state|emptr-to-node-value|erge-changes|erge-row-changes|ove-after-tab-item?|ove-after-tab-it?|ove-after-tab-?|ove-after-ta?|ove-after-?|ove-before-tab-item?|ove-before-tab-it?|ove-before-tab-?|ove-before-ta?|ove-before-?|ove-befor|ove-column?|ove-colu?|ove-to-bottom?|ove-to-bott?|ove-to-bo?|ove-to-eof|ove-to-top?|ove-to-t))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-N": {
+      "begin": "(?i)(:)(no(?:de-value-to-longchar|de-value-to-memptr|rmalize))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-Q": {
+      "begin": "(?i)(:)(query-(?:close|open|prepare))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-R": {
+      "begin": "(?i)(:)(r(?:aw-transfer|ead|ead-file|ead-json|ead-xml|ead-xmlschema|efresh|efresh-audit-policy|egister-domain|eject-changes|eject-row-changes|emove-attribute|emove-child|emove-events-procedure?|emove-events-procedu?|emove-events-proce?|emove-super-procedure?|emove-super-procedu?|emove-super-proce?|eplace|eplace-child|eplace-selection-text|eposition-to-row|eposition-to-rowid|eset))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-S": {
+      "begin": "(?i)(:)(s(?:ave|ave-file|ave-row-changes|ax-parse|ax-parse-first|ax-parse-next|croll-to-current-row|croll-to-item?|croll-to-it?|croll-to-selected-row|eal|earch|elect-all|elect-focused-row|elect-next-row|elect-prev-row|elect-row|erialize-row|et-actor|et-appl-context|et-attribute|et-attribute-node|et-blue-value?|et-blue-val?|et-blue-v?|et-blue|et-break|et-buffers|et-callback|et-callback-procedure|et-client|et-commit|et-connect-procedure|et-dynamic|et-green-value?|et-green-val?|et-green-v?|et-green|et-input-source|et-must-understand|et-node|et-numeric-format?|et-numeric-form|et-output-destination|et-parameter|et-property|et-read-response-procedure|et-red-value?|et-red-val?|et-red-v?|et-red|et-repositioned-row|et-rgb-value?|et-rgb-val?|et-rgb-v?|et-rgb|et-role|et-rollback|et-safe-user|et-selection|et-serialized|et-socket-option|et-sort-arrow|et-wait-state?|et-wait-sta?|et-wait-s?|et-wait|tart-document|tart-element|top-parsing|tring-value|ynchronize))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-T": {
+      "begin": "(?i)(:)(te(?:mp-table-prepare?|nant-id|nant-name))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-U": {
+      "begin": "(?i)(:)(u(?:pdate-attribute|rl-decode|rl-encode|ser-data))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-V": {
+      "begin": "(?i)(:)(validate(?:|-domain-access-code|-seal))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "handle-methods-W": {
+      "begin": "(?i)(:)(write(?:|-cdata|-characters|-comment|-data|-data-element|-empty-element|-entity-ref|-external-dtd|-fragment|-json|-message|-processing-instruction|-xml|-xmlschema))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.separator.colon.abl"
+        },
+        "2": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions": {
+      "patterns": [
+        {
+          "include": "#abl-functions-A"
+        },
+        {
+          "include": "#abl-functions-B"
+        },
+        {
+          "include": "#abl-functions-C"
+        },
+        {
+          "include": "#abl-functions-D"
+        },
+        {
+          "include": "#abl-functions-E"
+        },
+        {
+          "include": "#abl-functions-F"
+        },
+        {
+          "include": "#abl-functions-G"
+        },
+        {
+          "include": "#abl-functions-H"
+        },
+        {
+          "include": "#abl-functions-I"
+        },
+        {
+          "include": "#abl-functions-K"
+        },
+        {
+          "include": "#abl-functions-L"
+        },
+        {
+          "include": "#abl-functions-M"
+        },
+        {
+          "include": "#abl-functions-N"
+        },
+        {
+          "include": "#abl-functions-O"
+        },
+        {
+          "include": "#abl-functions-P"
+        },
+        {
+          "include": "#abl-functions-Q"
+        },
+        {
+          "include": "#abl-functions-R"
+        },
+        {
+          "include": "#abl-functions-S"
+        },
+        {
+          "include": "#abl-functions-T"
+        },
+        {
+          "include": "#abl-functions-U"
+        },
+        {
+          "include": "#abl-functions-V"
+        },
+        {
+          "include": "#abl-functions-W"
+        },
+        {
+          "include": "#abl-functions-Y"
+        }
+      ]
+    },
+    "abl-functions-A": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(a(?:bsolute?|bsolu?|bso?|ccumulate?|ccumula?|ccumu?|dd-interval|lias|mbiguous?|mbiguo?|mbig|scending?|scendi?|scen?|sc|udit-enabled|vailable?|vailab?|vail))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-B": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(b(?:ase64-decode|ase64-encode|ox|uffer-group-id|uffer-group-name|uffer-partition-id|uffer-tenant-id|uffer-tenant-name))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-C": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(c(?:an-do|an-find|an-query|an-set|aps|ast|hr|odepage-convert|ompares?|onnected|ount-of|urrent-changed|urrent-language?|urrent-langua?|urrent-lang|urrent-result-row|urrent-value))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-D": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(d(?:ata-source-modified|ataservers|ate|atetime|atetime-tz|ay|b-remote-host|bcodepage|bcollation|bname|bparam|brestrictions?|brestrictio?|brestrict?|brestri?|brest|btaskid|btype|bversion?|bversi?|ecimal?|ecim?|ec|ecrypt|efined|ynamic-cast|ynamic-current-value|ynamic-enum|ynamic-function?|ynamic-functi?|ynamic-func|ynamic-invoke|ynamic-next-value|ynamic-property))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-E": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(e(?:ncode|ncrypt|ntered|ntry|rror|time|xp|xtent))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-F": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(f(?:ill|irst|irst-of|rame-col|rame-db|rame-down|rame-field|rame-file|rame-index?|rame-line|rame-name|rame-row|rame-value?|rame-val))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-G": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(g(?:ateways?|enerate-pbe-key|enerate-pbe-salt|enerate-random-key|enerate-uuid|et-bits|et-byte|et-byte-order|et-bytes|et-class|et-codepages?|et-codepages?|et-collations??|et-collation?|et-collati?|et-colla?|et-db-client|et-double|et-effective-tenant-id|et-effective-tenant-name|et-float|et-int64|et-long|et-pointer-value|et-short|et-size|et-string|et-unsigned-long|et-unsigned-short|o-pending?|o-pendi?|uid))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-H": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(h(?:andle|ash-code|ex-decode|ex-encode))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-I": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(i(?:ndex|nput|nt64|nteger?|nteg?|nt|nterval|s-attr-space?|s-attr-spa?|s-attr-s?|s-attr|s-codepage-fixed|s-column-codepage|s-db-multi-tenant|s-lead-byte|so-date))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-K": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(k(?:blabel|eycode|eyfunction?|eyfuncti?|eyfunc|eylabel|eyword|eyword-all))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-L": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(l(?:ast|ast-of|astkey|c|dbname|eft-trim|ength|ibrary|ine-counter?|ine-count|ist-events|ist-query-attrs|ist-set-attrs|ist-widgets|ocked|og|ogical?|ogic?|og?|ookup|ower))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-M": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(m(?:aximum|d5-digest|ember|essage-digest|essage-lines|inimum?|inim?|in|onth|time))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-N": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(n(?:ew|ext-value|ormalize|ot|ow|um-aliases?|um-alias?|um-ali|um-dbs|um-entries|um-results))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-O": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(o(?:psys|s-dir|s-drives?|s-error|s-getenv))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-P": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(p(?:age-number?|age-numb?|age-size|dbname|roc-handle?|roc-hand?|roc-ha|roc-status?|roc-stat?|roc-st|rocess-architecture|rogram-name|rogress|romsgs|ropath|roversion?|roversi?))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-Q": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(qu(?:ery-off-end|oter))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-R": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(r(?:-index|andom|aw|ecid|ecord-length?|ecord-leng?|ejected|elation-fields?|elation-fiel?|elation-fi|eplace|etry|eturn|eturn-value?|eturn-val|gb-value?|gb-val?|gb-v|ight-trim|ound|ow-state|owid))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-S": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(s(?:creen-lines|dbname|earch|eek|et-db-client|et-effective-tenant|et-size|etuserid?|etuser|ha1-digest|kip|pace|qrt|sl-server-name|tring|ubstitute?|ubstitu?|ubsti?|ubstring?|ubstri?|uper))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-T": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(t(?:enant-id|enant-name|enant-name-to-id|erminal|his-object|ime|imezone|o-rowid|oday|ransaction?|ransacti?|rim|runcate?|runca?|ype-of))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-U": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(u(?:nbox|serid))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-V": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(val(?:id-event|id-handle|id-object|ue))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-W": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(w(?:eekday|idget-handle?|idget-hand?|idget-ha?))\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    },
+    "abl-functions-Y": {
+      "name": "meta.function-call.abl",
+      "begin": "(?i)\\s*(year)\\s*(?=\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.abl"
+        }
+      },
+      "end": "(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "meta.brace.round.js"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#function-arguments"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.abl",
+  "uuid": "075bb86e-03ea-4fea-bac0-e11b9dc73e03"
+}

@@ -6,6 +6,7 @@ import { store } from '../store'
 import { importEsm } from '../utils'
 import folders from './routes/folders'
 import snippets from './routes/snippets'
+import system from './routes/system'
 import tags from './routes/tags'
 
 export async function initApi() {
@@ -30,6 +31,7 @@ export async function initApi() {
     )
     .use(snippets)
     .use(folders)
+    .use(system)
     .use(tags)
     .listen(port)
 

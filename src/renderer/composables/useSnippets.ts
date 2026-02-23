@@ -27,6 +27,46 @@ const isSearch = ref(false)
 const isRestoreStateBlocked = ref(false)
 const searchSelectedIndex = ref<number>(-1)
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function getNextIndexedName(baseName: string, existingNames: string[]): string {
+  const normalizedBase = baseName.trim()
+  const indexedNameRe = new RegExp(
+    `^${escapeRegExp(normalizedBase)}(?:\\s+(\\d+))?$`,
+    'i',
+  )
+
+  let maxIndex = 0
+
+  existingNames.forEach((name) => {
+    const match = name.trim().match(indexedNameRe)
+    if (!match) {
+      return
+    }
+
+    const index = match[1] ? Number(match[1]) : 0
+    if (Number.isFinite(index)) {
+      maxIndex = Math.max(maxIndex, index)
+    }
+  })
+
+  return `${normalizedBase} ${maxIndex + 1}`
+}
+
+async function getSnippetNamesForCreate(
+  folderId: number | null,
+): Promise<string[]> {
+  const query: SnippetsQuery
+    = folderId !== null
+      ? { folderId, isDeleted: 0 }
+      : { isInbox: 1, isDeleted: 0 }
+  const { data } = await api.snippets.getSnippets(query)
+
+  return data.map(snippet => snippet.name)
+}
+
 const displayedSnippets = computed(() => {
   if (isSearch.value) {
     return snippetsBySearch.value
@@ -112,11 +152,17 @@ async function getSnippets(query?: SnippetsQuery) {
 
 async function createSnippet() {
   try {
-    const folder = getFolderByIdFromTree(folders.value, state.folderId || null)
+    const targetFolderId = state.folderId || null
+    const folder = getFolderByIdFromTree(folders.value, targetFolderId)
+    const existingNames = await getSnippetNamesForCreate(targetFolderId)
+    const nextSnippetName = getNextIndexedName(
+      i18n.t('snippet.untitled'),
+      existingNames,
+    )
 
     const { data } = await api.snippets.postSnippets({
-      name: i18n.t('snippet.untitled'),
-      folderId: state.folderId || null,
+      name: nextSnippetName,
+      folderId: targetFolderId,
     })
 
     await api.snippets.postSnippetsByIdContents(String(data.id), {

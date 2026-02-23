@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { app, BrowserWindow, Menu } from 'electron'
+import { version } from '../../package.json'
 import { initApi } from './api'
 import { startAutoBackup } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
@@ -18,6 +19,35 @@ const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
 let isQuitting = false
+
+const SQLITE_SUNSET_VERSION = '5.0.0'
+
+function shouldShowReleaseNotice(): boolean {
+  if (isDev) {
+    return false
+  }
+
+  const lastSeenVersion = store.app.get('lastSeenReleaseNoticeVersion')
+  if (lastSeenVersion === version) {
+    return false
+  }
+
+  const major = Number.parseInt(version.split('.')[0] || '0', 10)
+  return major === 4
+}
+
+function showReleaseNotice() {
+  if (!shouldShowReleaseNotice()) {
+    return
+  }
+
+  mainWindow.webContents.send('system:release-notice', {
+    sqliteSunsetVersion: SQLITE_SUNSET_VERSION,
+    version,
+  })
+
+  store.app.set('lastSeenReleaseNoticeVersion', version)
+}
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -56,6 +86,10 @@ function createWindow() {
       path.join(__dirname, '../../build/renderer/index.html'),
     )
   }
+
+  mainWindow.webContents.once('did-finish-load', () => {
+    showReleaseNotice()
+  })
 
   mainWindow.on('close', (event) => {
     store.app.set('bounds', mainWindow.getBounds())

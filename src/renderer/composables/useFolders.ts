@@ -16,6 +16,43 @@ const renameFolderId = ref<number | null>(null)
 const selectedFolderIds = ref<number[]>(state.folderId ? [state.folderId] : [])
 const lastSelectedFolderId = ref<number | undefined>(state.folderId)
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function getNextIndexedName(baseName: string, existingNames: string[]): string {
+  const normalizedBase = baseName.trim()
+  const indexedNameRe = new RegExp(
+    `^${escapeRegExp(normalizedBase)}(?:\\s+(\\d+))?$`,
+    'i',
+  )
+
+  let maxIndex = 0
+
+  existingNames.forEach((name) => {
+    const match = name.trim().match(indexedNameRe)
+    if (!match) {
+      return
+    }
+
+    const index = match[1] ? Number(match[1]) : 0
+    if (Number.isFinite(index)) {
+      maxIndex = Math.max(maxIndex, index)
+    }
+  })
+
+  return `${normalizedBase} ${maxIndex + 1}`
+}
+
+function getNextUntitledFolderName(parentId?: number): string {
+  const normalizedParentId = parentId ?? null
+  const siblingNames = flattenFolderTree(folders.value)
+    .filter(folder => (folder.parentId ?? null) === normalizedParentId)
+    .map(folder => folder.name)
+
+  return getNextIndexedName(i18n.t('folder.untitled'), siblingNames)
+}
+
 function flattenFolderTree(
   nodes?: FoldersTreeResponse,
   acc: FoldersTreeResponse[0][] = [],
@@ -283,8 +320,10 @@ async function getFolders(shouldEnsureVisibility = true) {
 
 async function createFolder(parentId?: number) {
   try {
+    const nextFolderName = getNextUntitledFolderName(parentId)
+
     const { data } = await api.folders.postFolders({
-      name: i18n.t('folder.untitled'),
+      name: nextFolderName,
       ...(parentId !== undefined && { parentId }),
     })
 

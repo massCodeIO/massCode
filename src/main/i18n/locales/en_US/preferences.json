@@ -7,7 +7,20 @@
     },
     "label": "Storage",
     "migrate": "Migrate",
+    "migrateMarkdownToSqlite": "Migrate Markdown to SQLite",
+    "migrateSqliteToMarkdown": "Migrate SQLite to Markdown",
     "count": "Count",
+    "vaultPath": "Vault Path",
+    "engine": {
+      "label": "Storage Engine",
+      "sqlite": "SQLite",
+      "markdown": "Markdown Vault"
+    },
+    "syncMode": {
+      "label": "Sync Mode",
+      "manual": "Manual",
+      "realtime": "Real-time"
+    },
     "clearDatabase": "Clear Database",
     "backup": {
       "label": "Backup",

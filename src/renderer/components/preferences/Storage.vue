@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Backup } from '~/main/db/types'
+import type { PreferencesStore } from '~/main/store/types'
 import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import * as Select from '@/components/ui/shadcn/select'
@@ -14,12 +15,58 @@ import { preferencesKeys } from './keys'
 const { sonner } = useSonner()
 const { scrollRef } = inject(preferencesKeys)!
 
+function normalizeStorageEngine(
+  engine: string | undefined,
+): PreferencesStore['storage']['engine'] {
+  return engine === 'markdown' ? 'markdown' : 'sqlite'
+}
+
+function getDefaultVaultPath(baseStoragePath: string): string {
+  const separator = baseStoragePath.includes('\\') ? '\\' : '/'
+  const hasTrailingSeparator
+    = baseStoragePath.endsWith('\\') || baseStoragePath.endsWith('/')
+
+  return `${baseStoragePath}${hasTrailingSeparator ? '' : separator}markdown-vault`
+}
+
 const storagePath = ref(store.preferences.get('storagePath'))
+const storageSettings = reactive<PreferencesStore['storage']>({
+  engine: normalizeStorageEngine(
+    (store.preferences.get('storage') as Partial<PreferencesStore['storage']>)
+      ?.engine as string | undefined,
+  ),
+  syncMode: 'manual',
+  vaultPath: null,
+  ...(store.preferences.get('storage') as Partial<PreferencesStore['storage']>),
+})
+storageSettings.engine = normalizeStorageEngine(
+  storageSettings.engine as string,
+)
 const backupSettings = reactive(store.preferences.get('backup'))
 const backups = ref<Backup[]>([])
 
 const isShowBackupList = ref(false)
 const isRestoringBackup = ref(false)
+
+const storageEngineOptions = [
+  { label: i18n.t('preferences:storage.engine.sqlite'), value: 'sqlite' },
+  { label: i18n.t('preferences:storage.engine.markdown'), value: 'markdown' },
+]
+
+const storageSyncModeOptions = [
+  { label: i18n.t('preferences:storage.syncMode.manual'), value: 'manual' },
+  { label: i18n.t('preferences:storage.syncMode.realtime'), value: 'realtime' },
+]
+
+const isMarkdownEngine = computed(() => storageSettings.engine === 'markdown')
+const isSqliteEngine = computed(() => storageSettings.engine === 'sqlite')
+const effectiveVaultPath = computed(() => {
+  if (storageSettings.vaultPath && storageSettings.vaultPath.trim()) {
+    return storageSettings.vaultPath
+  }
+
+  return getDefaultVaultPath(storagePath.value)
+})
 
 const backupItervalOptions = [
   { label: i18n.t('preferences:storage.backup.interval.1'), value: 1 },
@@ -94,6 +141,103 @@ async function openStorage() {
       const e = err as Error
       sonner({ message: e.message, type: 'error' })
     }
+  }
+}
+
+async function onStorageEngineChange(value: string) {
+  storageSettings.engine = value as PreferencesStore['storage']['engine']
+  store.preferences.set('storage.engine', storageSettings.engine)
+
+  if (storageSettings.engine === 'sqlite') {
+    await ipc.invoke('db:start-auto-backup', null)
+  }
+  else {
+    await ipc.invoke('db:stop-auto-backup', null)
+  }
+
+  getSnippetsCounts()
+}
+
+function onStorageSyncModeChange(value: string) {
+  storageSettings.syncMode = value as PreferencesStore['storage']['syncMode']
+}
+
+async function openVaultStorage() {
+  const result = await ipc.invoke<DialogOptions, string>(
+    'main-menu:open-dialog',
+    {
+      properties: ['openDirectory', 'createDirectory'],
+    },
+  )
+
+  if (result) {
+    storageSettings.vaultPath = result
+  }
+}
+
+async function migrateSqliteToMarkdown() {
+  const { confirm } = useDialog()
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.migrateToMarkdown.0'),
+    content: i18n.t('messages:confirm.migrateToMarkdown.1'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  try {
+    const result = await ipc.invoke<
+      undefined,
+      { folders: number, snippets: number, tags: number }
+    >('db:migrate-to-markdown', undefined)
+
+    sonner({
+      message: i18n.t('messages:success.migrateToMarkdown', {
+        folders: result.folders,
+        snippets: result.snippets,
+        tags: result.tags,
+      }),
+      type: 'success',
+    })
+    await getSnippetsCounts()
+  }
+  catch (err) {
+    const e = err as Error
+    sonner({ message: e.message, type: 'error' })
+  }
+}
+
+async function migrateMarkdownToSqlite() {
+  const { confirm } = useDialog()
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.migrateToSqlite.0'),
+    content: i18n.t('messages:confirm.migrateToSqlite.1'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  try {
+    const result = await ipc.invoke<
+      undefined,
+      { folders: number, snippets: number, tags: number }
+    >('db:migrate-to-sqlite', undefined)
+
+    sonner({
+      message: i18n.t('messages:success.migrateToSqlite', {
+        folders: result.folders,
+        snippets: result.snippets,
+        tags: result.tags,
+      }),
+      type: 'success',
+    })
+    await getSnippetsCounts()
+  }
+  catch (err) {
+    const e = err as Error
+    sonner({ message: e.message, type: 'error' })
   }
 }
 
@@ -297,12 +441,67 @@ watch(
   },
   { deep: true },
 )
+
+watch(
+  storageSettings,
+  () => {
+    store.preferences.set(
+      'storage',
+      JSON.parse(JSON.stringify(storageSettings)),
+    )
+  },
+  { deep: true },
+)
 </script>
 
 <template>
   <div class="space-y-5">
     <UiMenuFormSection :label="i18n.t('preferences:storage.section.main')">
-      <UiMenuFormItem :label="i18n.t('path')">
+      <UiMenuFormItem :label="i18n.t('preferences:storage.engine.label')">
+        <Select.Select
+          :model-value="storageSettings.engine"
+          @update:model-value="onStorageEngineChange"
+        >
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="option in storageEngineOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+      </UiMenuFormItem>
+      <UiMenuFormItem
+        v-if="isMarkdownEngine"
+        :label="i18n.t('preferences:storage.syncMode.label')"
+      >
+        <Select.Select
+          :model-value="storageSettings.syncMode"
+          @update:model-value="onStorageSyncModeChange"
+        >
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="option in storageSyncModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+      </UiMenuFormItem>
+      <UiMenuFormItem
+        v-if="isSqliteEngine"
+        :label="i18n.t('path')"
+      >
         <UiInput
           v-model="storagePath"
           disabled
@@ -328,7 +527,28 @@ watch(
           {{ i18n.t("messages:description.storage") }}
         </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:storage.migrate')">
+      <UiMenuFormItem :label="i18n.t('preferences:storage.vaultPath')">
+        <UiInput
+          :model-value="effectiveVaultPath"
+          disabled
+          size="sm"
+        />
+        <template #actions>
+          <UiButton
+            size="md"
+            @click="openVaultStorage"
+          >
+            {{ i18n.t("action.open.storage") }}
+          </UiButton>
+        </template>
+        <template #description>
+          {{ i18n.t("messages:description.storageVault") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem
+        v-if="isSqliteEngine"
+        :label="i18n.t('preferences:storage.migrate')"
+      >
         <UiButton
           size="md"
           @click="migrateFromV3"
@@ -339,7 +559,32 @@ watch(
           {{ i18n.t("messages:description.migrate.fromV3") }}
         </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:storage.clearDatabase')">
+      <UiMenuFormItem
+        v-if="isSqliteEngine"
+        :label="i18n.t('preferences:storage.migrateSqliteToMarkdown')"
+      >
+        <UiButton
+          size="md"
+          @click="migrateSqliteToMarkdown"
+        >
+          {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}
+        </UiButton>
+      </UiMenuFormItem>
+      <UiMenuFormItem
+        v-if="isMarkdownEngine"
+        :label="i18n.t('preferences:storage.migrateMarkdownToSqlite')"
+      >
+        <UiButton
+          size="md"
+          @click="migrateMarkdownToSqlite"
+        >
+          {{ i18n.t("preferences:storage.migrateMarkdownToSqlite") }}
+        </UiButton>
+      </UiMenuFormItem>
+      <UiMenuFormItem
+        v-if="isSqliteEngine"
+        :label="i18n.t('preferences:storage.clearDatabase')"
+      >
         <UiButton
           size="md"
           variant="danger"
@@ -357,7 +602,10 @@ watch(
         {{ counts.trash }}
       </UiMenuFormItem>
     </UiMenuFormSection>
-    <UiMenuFormSection :label="i18n.t('preferences:storage.backup.label')">
+    <UiMenuFormSection
+      v-if="isSqliteEngine"
+      :label="i18n.t('preferences:storage.backup.label')"
+    >
       <UiMenuFormItem :label="i18n.t('path')">
         <UiInput
           v-model="backupSettings.path"

@@ -104,6 +104,12 @@ function sortFolderIdsByTreeOrder(ids: number[]) {
 }
 
 function syncSelectedFoldersWithTree() {
+  // Если выбрана системная папка (Inbox, Favorites, All, Trash),
+  // selectedFolderIds законно пуст — не нужно назначать fallback
+  if (state.libraryFilter) {
+    return
+  }
+
   const orderedIds = flatFolderList.value.map(folder => folder.id)
 
   if (!orderedIds.length) {

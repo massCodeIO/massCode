@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
-const path = require('node:path')
 const { performance } = require('node:perf_hooks')
 const process = require('node:process')
-const fs = require('fs-extra')
 
 function getErrorMessage(error) {
   if (error instanceof Error) {
@@ -28,8 +26,6 @@ function parseArgs(argv) {
     keep: false,
     query: '',
     snippets: 100,
-    timeoutMs: 10_000,
-    vault: '',
   }
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -59,18 +55,6 @@ function parseArgs(argv) {
       continue
     }
 
-    if (argument === '--vault') {
-      options.vault = String(argv[index + 1] || '')
-      index += 1
-      continue
-    }
-
-    if (argument === '--timeout') {
-      options.timeoutMs = Number(argv[index + 1] || options.timeoutMs)
-      index += 1
-      continue
-    }
-
     if (argument === '--keep') {
       options.keep = true
     }
@@ -84,10 +68,6 @@ function parseArgs(argv) {
     = Number.isFinite(options.fragments) && options.fragments > 0
       ? Math.trunc(options.fragments)
       : 3
-  options.timeoutMs
-    = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
-      ? Math.trunc(options.timeoutMs)
-      : 10_000
 
   return options
 }
@@ -140,8 +120,8 @@ function formatDuration(duration) {
 }
 
 function printMetrics(metrics) {
-  console.log('\nMarkdown Load Test Results')
-  console.log('--------------------------')
+  console.log('\nLoad Test Results')
+  console.log('-----------------')
 
   metrics.forEach((metric) => {
     const payload
@@ -151,20 +131,6 @@ function printMetrics(metrics) {
 
     console.log(`${metric.name}: ${formatDuration(metric.duration)}${payload}`)
   })
-}
-
-async function waitFor(predicate, timeoutMs) {
-  const startedAt = performance.now()
-
-  while (performance.now() - startedAt <= timeoutMs) {
-    if (await predicate()) {
-      return true
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 75))
-  }
-
-  return false
 }
 
 async function createSnippet(baseUrl, name) {
@@ -240,39 +206,12 @@ async function main() {
     method: 'GET',
   })
 
-  if (engineResponse.engine !== 'markdown') {
-    throw new Error(
-      `Current storage engine is "${engineResponse.engine}". Switch to "markdown" before running this script.`,
-    )
-  }
-
-  const syncModeResponse = await requestJson(
-    baseUrl,
-    '/system/storage-sync-mode',
-    {
-      method: 'GET',
-    },
-  )
-  const vaultPathResponse = await requestJson(
-    baseUrl,
-    '/system/storage-vault-path',
-    {
-      method: 'GET',
-    },
-  )
-  const vaultPath = options.vault || vaultPathResponse.vaultPath
-
-  if (!vaultPath) {
-    throw new Error('Vault path is not configured')
-  }
-
   const runToken = Date.now()
   const snippetPrefix = `load-test-${runToken}`
   const createdSnippetIds = []
 
   console.log(`API: ${baseUrl}`)
-  console.log(`Vault: ${vaultPath}`)
-  console.log(`Sync mode: ${syncModeResponse.syncMode}`)
+  console.log(`Engine: ${engineResponse.engine}`)
   console.log(
     `Preparing snippets: ${options.snippets} x ${options.fragments} fragments`,
   )
@@ -359,48 +298,6 @@ async function main() {
       }
     }),
   )
-
-  if (syncModeResponse.syncMode === 'realtime') {
-    const watchedSnippetName = `${snippetPrefix}-snippet-1`
-    const watchedSnippetPath = path.join(
-      vaultPath,
-      '.masscode',
-      'inbox',
-      `${watchedSnippetName}.md`,
-    )
-
-    if (fs.pathExistsSync(watchedSnippetPath)) {
-      const externalToken = `${snippetPrefix}-external-${Date.now()}`
-
-      fs.appendFileSync(
-        watchedSnippetPath,
-        `\n\n## Fragment: External\n\
-\`\`\`typescript\n\
-export const external = '${externalToken}'\n\
-\`\`\`\n`,
-        'utf8',
-      )
-
-      metrics.push(
-        await measure('watcherSync(external file change)', async () => {
-          const synced = await waitFor(async () => {
-            const snippets = await getSnippets(baseUrl, {
-              search: externalToken,
-            })
-
-            return snippets.some(
-              snippet => snippet.name === watchedSnippetName,
-            )
-          }, options.timeoutMs)
-
-          return {
-            synced,
-            timeoutMs: options.timeoutMs,
-          }
-        }),
-      )
-    }
-  }
 
   printMetrics(metrics)
 

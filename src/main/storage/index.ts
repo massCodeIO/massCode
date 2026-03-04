@@ -8,9 +8,20 @@ import {
 import { sqliteStorageProvider } from './providers/sqlite'
 
 const markdownStorageProvider = createMarkdownStorageProvider()
+let resolvedEngine: string | null = null
+let resolvedSyncMode: string | null = null
+let resolvedProvider: StorageProvider | null = null
 
 function resolveProvider(engine: string): StorageProvider {
   const syncMode = store.preferences.get('storage.syncMode') as string
+
+  if (
+    resolvedProvider
+    && resolvedEngine === engine
+    && resolvedSyncMode === syncMode
+  ) {
+    return resolvedProvider
+  }
 
   if (engine === 'markdown') {
     if (syncMode === 'realtime') {
@@ -20,12 +31,20 @@ function resolveProvider(engine: string): StorageProvider {
       stopMarkdownWatcher()
     }
 
-    return markdownStorageProvider
+    resolvedEngine = engine
+    resolvedSyncMode = syncMode
+    resolvedProvider = markdownStorageProvider
+
+    return resolvedProvider
   }
 
   stopMarkdownWatcher()
 
-  return sqliteStorageProvider
+  resolvedEngine = engine
+  resolvedSyncMode = syncMode
+  resolvedProvider = sqliteStorageProvider
+
+  return resolvedProvider
 }
 
 export function useStorage(): StorageProvider {

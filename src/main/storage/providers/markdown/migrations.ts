@@ -12,6 +12,7 @@ import {
   findFolderById,
   getPaths,
   getVaultPath,
+  INVALID_NAME_CHARS_RE,
   loadSnippets,
   type MarkdownSnippet,
   type MarkdownState,
@@ -28,6 +29,7 @@ import {
   syncRuntimeWithDisk,
   throwStorageError,
   validateEntryName,
+  WINDOWS_RESERVED_NAME_RE,
   writeSnippetToFile,
 } from './runtime'
 
@@ -49,9 +51,6 @@ function clearVaultForMigration(paths: Paths): void {
   fs.emptyDirSync(paths.trashDirPath)
 }
 
-const INVALID_NAME_CHARS_RE = /[<>:"/\\|?*]/g
-const WINDOWS_RESERVED_NAME_RE
-  = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i
 const RESERVED_ROOT_FOLDER_NAMES = new Set(['.masscode', 'inbox', 'trash'])
 
 function removeControlChars(value: string): string {
@@ -371,7 +370,7 @@ export function migrateSqliteToMarkdownStorage(): {
 
   const runtimeSnippets = loadSnippets(paths, state)
   syncCounters(state, runtimeSnippets)
-  saveState(paths, state)
+  saveState(paths, state, { immediate: true })
   setRuntimeCache(paths, state, runtimeSnippets)
 
   return {

@@ -1,5 +1,6 @@
 import type { FolderRecord, SnippetRecord, TagRecord } from '../../contracts'
 import path from 'node:path'
+import process from 'node:process'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { store } from '../../../store'
@@ -16,6 +17,11 @@ const LEGACY_INBOX_RELATIVE_PATH = INBOX_DIR_NAME
 const LEGACY_TRASH_RELATIVE_PATH = TRASH_DIR_NAME
 
 const RESERVED_ROOT_NAMES = new Set([INBOX_DIR_NAME, TRASH_DIR_NAME])
+const NEW_LINE_SPLIT_RE = /\r?\n/
+const SEARCH_DIACRITICS_RE = /[\u0300-\u036F]/g
+const SEARCH_WORD_RE = /[\p{L}\p{N}_]+/gu
+const STATE_WRITE_DEBOUNCE_MS = 100
+export const INVALID_NAME_CHARS_RE = /[<>:"/\\|?*]/g
 const INVALID_NAME_CHARS = new Set([
   '<',
   '>',
@@ -27,10 +33,14 @@ const INVALID_NAME_CHARS = new Set([
   '?',
   '*',
 ])
-const WINDOWS_RESERVED_NAME_RE
+export const WINDOWS_RESERVED_NAME_RE
   = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i
 
 let markdownRuntimeCache: MarkdownRuntimeCache | null = null
+const pendingStateWriteByPath = new Map<string, string>()
+const stateContentCacheByPath = new Map<string, string>()
+const stateFlushTimerByPath = new Map<string, NodeJS.Timeout>()
+let stateWriteHooksRegistered = false
 
 export interface MarkdownTagState extends TagRecord {
   createdAt: number
@@ -134,9 +144,27 @@ export interface MarkdownSnippet {
 }
 
 export interface MarkdownRuntimeCache {
+  contentOwnerByContentId: Map<
+    number,
+    {
+      contentIndex: number
+      snippet: MarkdownSnippet
+    }
+  >
+  folderById: Map<number, FolderRecord>
   paths: Paths
+  searchQueryCache: Map<string, number[]>
+  searchSnippetTextById: Map<number, string>
+  searchTokenToSnippetIds: Map<string, Set<number>>
+  searchTokensBySnippetId: Map<number, string[]>
+  searchIndexDirty: boolean
+  snippetById: Map<number, MarkdownSnippet>
   snippets: MarkdownSnippet[]
   state: MarkdownState
+}
+
+export interface SaveStateOptions {
+  immediate?: boolean
 }
 
 export interface SqliteSnippetRow {
@@ -278,6 +306,208 @@ function normalizeErrorMessage(error: unknown): string {
   }
 
   return 'Unexpected storage error'
+}
+
+function normalizeSearchValue(value: string | null | undefined): string {
+  if (!value) {
+    return ''
+  }
+
+  return value
+    .normalize('NFD')
+    .replace(SEARCH_DIACRITICS_RE, '')
+    .toLocaleLowerCase()
+}
+
+function splitSearchWords(value: string): string[] {
+  return value.match(SEARCH_WORD_RE) || []
+}
+
+function createWordTrigrams(value: string): string[] {
+  if (value.length < 3) {
+    return []
+  }
+
+  const trigrams: string[] = []
+  for (let index = 0; index <= value.length - 3; index += 1) {
+    trigrams.push(value.slice(index, index + 3))
+  }
+
+  return trigrams
+}
+
+function buildSearchTokens(normalizedText: string): string[] {
+  const uniqueTokens = new Set<string>()
+  const words = splitSearchWords(normalizedText)
+
+  words.forEach((word) => {
+    uniqueTokens.add(`w:${word}`)
+    createWordTrigrams(word).forEach(trigram =>
+      uniqueTokens.add(`g:${trigram}`),
+    )
+  })
+
+  return [...uniqueTokens]
+}
+
+function getSnippetSearchText(snippet: MarkdownSnippet): string {
+  return normalizeSearchValue(
+    [
+      snippet.name,
+      snippet.description || '',
+      ...snippet.contents.map(content => content.value || ''),
+    ].join('\n'),
+  )
+}
+
+function buildSearchIndex(snippets: MarkdownSnippet[]): {
+  searchSnippetTextById: Map<number, string>
+  searchTokenToSnippetIds: Map<string, Set<number>>
+  searchTokensBySnippetId: Map<number, string[]>
+} {
+  const searchSnippetTextById = new Map<number, string>()
+  const searchTokenToSnippetIds = new Map<string, Set<number>>()
+  const searchTokensBySnippetId = new Map<number, string[]>()
+
+  snippets.forEach((snippet) => {
+    const searchText = getSnippetSearchText(snippet)
+    const tokens = buildSearchTokens(searchText)
+
+    searchSnippetTextById.set(snippet.id, searchText)
+    searchTokensBySnippetId.set(snippet.id, tokens)
+
+    tokens.forEach((token) => {
+      const tokenBucket
+        = searchTokenToSnippetIds.get(token) || new Set<number>()
+      tokenBucket.add(snippet.id)
+      searchTokenToSnippetIds.set(token, tokenBucket)
+    })
+  })
+
+  return {
+    searchSnippetTextById,
+    searchTokenToSnippetIds,
+    searchTokensBySnippetId,
+  }
+}
+
+function invalidateRuntimeSearchIndex(state: MarkdownState): void {
+  if (!markdownRuntimeCache || markdownRuntimeCache.state !== state) {
+    return
+  }
+
+  markdownRuntimeCache.searchIndexDirty = true
+  markdownRuntimeCache.searchQueryCache.clear()
+}
+
+function ensureRuntimeSearchIndex(
+  snippets: MarkdownSnippet[],
+): MarkdownRuntimeCache | null {
+  const runtimeCache
+    = markdownRuntimeCache?.snippets === snippets ? markdownRuntimeCache : null
+
+  if (!runtimeCache) {
+    return null
+  }
+
+  if (!runtimeCache.searchIndexDirty) {
+    return runtimeCache
+  }
+
+  const {
+    searchSnippetTextById,
+    searchTokenToSnippetIds,
+    searchTokensBySnippetId,
+  } = buildSearchIndex(snippets)
+
+  runtimeCache.searchSnippetTextById = searchSnippetTextById
+  runtimeCache.searchTokenToSnippetIds = searchTokenToSnippetIds
+  runtimeCache.searchTokensBySnippetId = searchTokensBySnippetId
+  runtimeCache.searchQueryCache.clear()
+  runtimeCache.searchIndexDirty = false
+
+  return runtimeCache
+}
+
+function intersectSnippetIdSets(
+  firstSet: Set<number>,
+  secondSet: Set<number>,
+): Set<number> {
+  const [smallSet, largeSet]
+    = firstSet.size <= secondSet.size
+      ? [firstSet, secondSet]
+      : [secondSet, firstSet]
+  const intersection = new Set<number>()
+
+  smallSet.forEach((id) => {
+    if (largeSet.has(id)) {
+      intersection.add(id)
+    }
+  })
+
+  return intersection
+}
+
+function getSnippetIdsBySearchQuery(
+  snippets: MarkdownSnippet[],
+  searchQuery: string,
+): Set<number> {
+  const normalizedSearchQuery = normalizeSearchValue(searchQuery).trim()
+  if (!normalizedSearchQuery) {
+    return new Set(snippets.map(snippet => snippet.id))
+  }
+
+  const runtimeCache = ensureRuntimeSearchIndex(snippets)
+  if (!runtimeCache) {
+    return new Set(
+      snippets
+        .filter(snippet =>
+          getSnippetSearchText(snippet).includes(normalizedSearchQuery),
+        )
+        .map(snippet => snippet.id),
+    )
+  }
+
+  const cachedSnippetIds = runtimeCache.searchQueryCache.get(
+    normalizedSearchQuery,
+  )
+  if (cachedSnippetIds) {
+    return new Set(cachedSnippetIds)
+  }
+
+  const queryTokens = buildSearchTokens(normalizedSearchQuery)
+  let candidateSnippetIds: Set<number> | null = null
+
+  for (const token of queryTokens) {
+    const tokenMatches = runtimeCache.searchTokenToSnippetIds.get(token)
+    if (!tokenMatches) {
+      runtimeCache.searchQueryCache.set(normalizedSearchQuery, [])
+      return new Set()
+    }
+
+    candidateSnippetIds = candidateSnippetIds
+      ? intersectSnippetIdSets(candidateSnippetIds, tokenMatches)
+      : new Set(tokenMatches)
+
+    if (candidateSnippetIds.size === 0) {
+      runtimeCache.searchQueryCache.set(normalizedSearchQuery, [])
+      return new Set()
+    }
+  }
+
+  const matchedSnippetIds: number[] = []
+  const snippetIdsToCheck
+    = candidateSnippetIds || new Set(snippets.map(snippet => snippet.id))
+
+  snippetIdsToCheck.forEach((snippetId) => {
+    const searchText = runtimeCache.searchSnippetTextById.get(snippetId) || ''
+    if (searchText.includes(normalizedSearchQuery)) {
+      matchedSnippetIds.push(snippetId)
+    }
+  })
+
+  runtimeCache.searchQueryCache.set(normalizedSearchQuery, matchedSnippetIds)
+  return new Set(matchedSnippetIds)
 }
 
 function normalizeFolderUiState(
@@ -471,7 +701,7 @@ function splitFrontmatter(source: string): {
 
 function parseBodyFragments(body: string): MarkdownBodyFragment[] {
   const fragments: MarkdownBodyFragment[] = []
-  const lines = body.split(/\r?\n/)
+  const lines = body.split(NEW_LINE_SPLIT_RE)
 
   let lineIndex = 0
   while (lineIndex < lines.length) {
@@ -521,13 +751,17 @@ function parseBodyFragments(body: string): MarkdownBodyFragment[] {
 }
 
 function ensureStateFile(paths: Paths): void {
+  registerStateWriteHooks()
+
   fs.ensureDirSync(paths.vaultPath)
   fs.ensureDirSync(paths.metaDirPath)
   fs.ensureDirSync(paths.inboxDirPath)
   fs.ensureDirSync(paths.trashDirPath)
 
   if (!fs.pathExistsSync(paths.statePath)) {
-    fs.writeJSONSync(paths.statePath, createDefaultState(), { spaces: 2 })
+    const defaultStateContent = `${JSON.stringify(createDefaultState(), null, 2)}\n`
+    fs.writeFileSync(paths.statePath, defaultStateContent, 'utf8')
+    stateContentCacheByPath.set(paths.statePath, defaultStateContent)
   }
 }
 
@@ -563,8 +797,83 @@ function loadState(paths: Paths): MarkdownState {
   }
 }
 
-function saveState(paths: Paths, state: MarkdownState): void {
+function getPersistedStateContent(statePath: string): string {
+  const cachedStateContent = stateContentCacheByPath.get(statePath)
+  if (cachedStateContent !== undefined) {
+    return cachedStateContent
+  }
+
+  const persistedStateContent = fs.pathExistsSync(statePath)
+    ? fs.readFileSync(statePath, 'utf8')
+    : ''
+
+  stateContentCacheByPath.set(statePath, persistedStateContent)
+  return persistedStateContent
+}
+
+function flushPendingStateWriteByPath(statePath: string): void {
+  const pendingStateContent = pendingStateWriteByPath.get(statePath)
+  if (pendingStateContent === undefined) {
+    return
+  }
+
+  const flushTimer = stateFlushTimerByPath.get(statePath)
+  if (flushTimer) {
+    clearTimeout(flushTimer)
+    stateFlushTimerByPath.delete(statePath)
+  }
+
+  const persistedStateContent = getPersistedStateContent(statePath)
+  if (persistedStateContent !== pendingStateContent) {
+    fs.ensureDirSync(path.dirname(statePath))
+    fs.writeFileSync(statePath, pendingStateContent, 'utf8')
+  }
+
+  stateContentCacheByPath.set(statePath, pendingStateContent)
+  pendingStateWriteByPath.delete(statePath)
+}
+
+function scheduleStateFlush(statePath: string): void {
+  const flushTimer = stateFlushTimerByPath.get(statePath)
+  if (flushTimer) {
+    clearTimeout(flushTimer)
+  }
+
+  const nextFlushTimer = setTimeout(
+    () => flushPendingStateWriteByPath(statePath),
+    STATE_WRITE_DEBOUNCE_MS,
+  )
+  stateFlushTimerByPath.set(statePath, nextFlushTimer)
+}
+
+function flushPendingStateWrite(paths: Paths): void {
+  flushPendingStateWriteByPath(paths.statePath)
+}
+
+function flushPendingStateWrites(): void {
+  const pathsWithPendingWrites = [...pendingStateWriteByPath.keys()]
+  pathsWithPendingWrites.forEach(statePath =>
+    flushPendingStateWriteByPath(statePath),
+  )
+}
+
+function registerStateWriteHooks(): void {
+  if (stateWriteHooksRegistered) {
+    return
+  }
+
+  stateWriteHooksRegistered = true
+  process.once('beforeExit', flushPendingStateWrites)
+  process.once('exit', flushPendingStateWrites)
+}
+
+function saveState(
+  paths: Paths,
+  state: MarkdownState,
+  options?: SaveStateOptions,
+): void {
   syncFolderUiWithFolders(state)
+  invalidateRuntimeSearchIndex(state)
 
   const nextVersion = Math.max(state.version, 2)
   state.version = nextVersion
@@ -578,15 +887,25 @@ function saveState(paths: Paths, state: MarkdownState): void {
   }
 
   const nextContent = `${JSON.stringify(persistedState, null, 2)}\n`
-
-  if (fs.pathExistsSync(paths.statePath)) {
-    const currentContent = fs.readFileSync(paths.statePath, 'utf8')
-    if (currentContent === nextContent) {
-      return
-    }
+  const statePath = paths.statePath
+  const pendingContent = pendingStateWriteByPath.get(statePath)
+  if (pendingContent === nextContent) {
+    return
   }
 
-  fs.writeFileSync(paths.statePath, nextContent, 'utf8')
+  const persistedContent = getPersistedStateContent(statePath)
+  if (persistedContent === nextContent && pendingContent === undefined) {
+    return
+  }
+
+  pendingStateWriteByPath.set(statePath, nextContent)
+
+  if (options?.immediate) {
+    flushPendingStateWrite(paths)
+    return
+  }
+
+  scheduleStateFlush(statePath)
 }
 
 function listMarkdownFiles(rootPath: string, currentPath = rootPath): string[] {
@@ -599,6 +918,7 @@ function listMarkdownFiles(rootPath: string, currentPath = rootPath): string[] {
 
   entries.forEach((entry) => {
     const absolutePath = path.join(currentPath, entry.name)
+    const isHiddenEntry = entry.name.startsWith('.')
 
     if (entry.isDirectory()) {
       if (currentPath === rootPath && entry.name === META_DIR_NAME) {
@@ -610,11 +930,15 @@ function listMarkdownFiles(rootPath: string, currentPath = rootPath): string[] {
         return
       }
 
+      if (isHiddenEntry) {
+        return
+      }
+
       files.push(...listMarkdownFiles(rootPath, absolutePath))
       return
     }
 
-    if (entry.isFile() && entry.name.endsWith('.md')) {
+    if (entry.isFile() && !isHiddenEntry && entry.name.endsWith('.md')) {
       const relativePath = path.relative(rootPath, absolutePath)
       files.push(toPosixPath(relativePath))
     }
@@ -719,7 +1043,28 @@ function findFolderById(
   state: MarkdownState,
   folderId: number,
 ): FolderRecord | undefined {
-  return state.folders.find(folder => folder.id === folderId)
+  const runtimeCache
+    = markdownRuntimeCache?.state === state ? markdownRuntimeCache : null
+
+  if (runtimeCache) {
+    if (runtimeCache.folderById.size !== state.folders.length) {
+      runtimeCache.folderById = new Map(
+        state.folders.map(folder => [folder.id, folder]),
+      )
+    }
+
+    const folderFromIndex = runtimeCache.folderById.get(folderId)
+    if (folderFromIndex) {
+      return folderFromIndex
+    }
+  }
+
+  const folder = state.folders.find(item => item.id === folderId)
+  if (folder && runtimeCache) {
+    runtimeCache.folderById.set(folderId, folder)
+  }
+
+  return folder
 }
 
 function getFolderPathById(
@@ -1016,8 +1361,8 @@ function readFrontmatterIdFromSnippetFile(snippetPath: string): number | null {
 
 function readSnippetFromFile(
   paths: Paths,
-  state: MarkdownState,
   entry: MarkdownSnippetIndexItem,
+  pathToFolderIdMap: ReadonlyMap<string, number>,
 ): MarkdownSnippet | null {
   const snippetPath = path.join(paths.vaultPath, entry.filePath)
 
@@ -1058,7 +1403,6 @@ function readSnippetFromFile(
   const normalizedFileDirectory = normalizeDirectoryPath(
     path.posix.dirname(entry.filePath),
   )
-  const pathToFolderIdMap = buildPathToFolderIdMap(state)
 
   let folderId = normalizeNullableNumber(frontmatter.folderId)
   if (isInboxSnippetDirectory(normalizedFileDirectory)) {
@@ -1099,8 +1443,10 @@ function readSnippetFromFile(
 }
 
 function loadSnippets(paths: Paths, state: MarkdownState): MarkdownSnippet[] {
+  const pathToFolderIdMap = buildPathToFolderIdMap(state)
+
   return state.snippets
-    .map(item => readSnippetFromFile(paths, state, item))
+    .map(item => readSnippetFromFile(paths, item, pathToFolderIdMap))
     .filter((snippet): snippet is MarkdownSnippet => !!snippet)
 }
 
@@ -1133,6 +1479,8 @@ function syncCounters(state: MarkdownState, snippets: MarkdownSnippet[]): void {
 }
 
 function syncStateWithDisk(paths: Paths): MarkdownState {
+  flushPendingStateWrite(paths)
+
   const state = loadState(paths)
   syncFoldersWithDisk(paths, state)
 
@@ -1165,7 +1513,7 @@ function syncStateWithDisk(paths: Paths): MarkdownState {
   const snippets = loadSnippets(paths, state)
   syncCounters(state, snippets)
   syncFolderMetadataFiles(paths, state)
-  saveState(paths, state)
+  saveState(paths, state, { immediate: true })
 
   return state
 }
@@ -1175,8 +1523,45 @@ function setRuntimeCache(
   state: MarkdownState,
   snippets: MarkdownSnippet[],
 ): MarkdownRuntimeCache {
+  const folderById = new Map<number, FolderRecord>()
+  state.folders.forEach(folder => folderById.set(folder.id, folder))
+
+  const snippetById = new Map<number, MarkdownSnippet>()
+  const contentOwnerByContentId = new Map<
+    number,
+    {
+      contentIndex: number
+      snippet: MarkdownSnippet
+    }
+  >()
+
+  snippets.forEach((snippet) => {
+    snippetById.set(snippet.id, snippet)
+
+    snippet.contents.forEach((content, contentIndex) => {
+      contentOwnerByContentId.set(content.id, {
+        contentIndex,
+        snippet,
+      })
+    })
+  })
+
+  const {
+    searchSnippetTextById,
+    searchTokenToSnippetIds,
+    searchTokensBySnippetId,
+  } = buildSearchIndex(snippets)
+
   markdownRuntimeCache = {
+    contentOwnerByContentId,
+    folderById,
     paths,
+    searchIndexDirty: false,
+    searchQueryCache: new Map(),
+    searchSnippetTextById,
+    searchTokenToSnippetIds,
+    searchTokensBySnippetId,
+    snippetById,
     snippets,
     state,
   }
@@ -1379,6 +1764,140 @@ function areRuntimeCachesEqual(
   return areSnippetsEqual(previousCache.snippets, nextCache.snippets)
 }
 
+function getStateSnippetIndexByFilePath(
+  state: MarkdownState,
+  filePath: string,
+): number {
+  const normalizedFilePath = filePath.toLowerCase()
+
+  return state.snippets.findIndex(
+    item => item.filePath.toLowerCase() === normalizedFilePath,
+  )
+}
+
+function syncSnippetFileWithDisk(
+  paths: Paths,
+  changedFilePath: string,
+): MarkdownRuntimeCache | null {
+  if (
+    !markdownRuntimeCache
+    || markdownRuntimeCache.paths.vaultPath !== paths.vaultPath
+  ) {
+    return null
+  }
+
+  const normalizedFilePath = toPosixPath(changedFilePath).trim()
+  if (
+    !normalizedFilePath
+    || path.posix.extname(normalizedFilePath).toLowerCase() !== '.md'
+  ) {
+    return null
+  }
+
+  const state = markdownRuntimeCache.state
+  const snippets = markdownRuntimeCache.snippets
+  const snippetAbsolutePath = path.join(paths.vaultPath, normalizedFilePath)
+  const normalizedFileDirectory = normalizeDirectoryPath(
+    path.posix.dirname(normalizedFilePath),
+  )
+  const pathToFolderIdMap = buildPathToFolderIdMap(state)
+
+  if (
+    !isInboxSnippetDirectory(normalizedFileDirectory)
+    && !isTrashSnippetDirectory(normalizedFileDirectory)
+    && normalizedFileDirectory
+    && !pathToFolderIdMap.has(normalizedFileDirectory)
+  ) {
+    return null
+  }
+
+  const snippetIndexInState = getStateSnippetIndexByFilePath(
+    state,
+    normalizedFilePath,
+  )
+  const snippetExistsOnDisk = fs.pathExistsSync(snippetAbsolutePath)
+
+  if (!snippetExistsOnDisk) {
+    if (snippetIndexInState === -1) {
+      return markdownRuntimeCache
+    }
+
+    const removedSnippetId = state.snippets[snippetIndexInState].id
+    state.snippets.splice(snippetIndexInState, 1)
+
+    const snippetIndexInRuntime = snippets.findIndex(
+      snippet => snippet.id === removedSnippetId,
+    )
+    if (snippetIndexInRuntime !== -1) {
+      snippets.splice(snippetIndexInRuntime, 1)
+    }
+
+    saveState(paths, state)
+    return setRuntimeCache(paths, state, snippets)
+  }
+
+  let snippetIndexItem
+    = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
+
+  if (!snippetIndexItem) {
+    const existingSnippetIds = new Set<number>(
+      state.snippets.map(item => item.id),
+    )
+    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+
+    if (!snippetId || existingSnippetIds.has(snippetId)) {
+      snippetId = state.counters.snippetId + 1
+      state.counters.snippetId = snippetId
+    }
+
+    snippetIndexItem = {
+      filePath: normalizedFilePath,
+      id: snippetId,
+    }
+    state.snippets.push(snippetIndexItem)
+  }
+  else {
+    snippetIndexItem.filePath = normalizedFilePath
+  }
+
+  const syncedSnippet = readSnippetFromFile(
+    paths,
+    snippetIndexItem,
+    pathToFolderIdMap,
+  )
+
+  if (!syncedSnippet) {
+    return null
+  }
+
+  const snippetIndexInRuntime = snippets.findIndex(
+    snippet => snippet.id === syncedSnippet.id,
+  )
+  if (snippetIndexInRuntime === -1) {
+    snippets.push(syncedSnippet)
+  }
+  else {
+    snippets[snippetIndexInRuntime] = syncedSnippet
+  }
+
+  const maxSnippetContentId = syncedSnippet.contents.reduce(
+    (maxId, content) => Math.max(maxId, content.id),
+    0,
+  )
+  state.counters.snippetId = Math.max(
+    state.counters.snippetId,
+    syncedSnippet.id,
+  )
+  state.counters.contentId = Math.max(
+    state.counters.contentId,
+    maxSnippetContentId,
+  )
+
+  saveState(paths, state)
+
+  return setRuntimeCache(paths, state, snippets)
+}
+
 function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
   const state = syncStateWithDisk(paths)
   const snippets = loadSnippets(paths, state)
@@ -1398,6 +1917,7 @@ function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {
 }
 
 function resetRuntimeCache(): void {
+  flushPendingStateWrites()
   markdownRuntimeCache = null
 }
 
@@ -1451,8 +1971,18 @@ function serializeSnippet(snippet: MarkdownSnippet): string {
 
 function writeSnippetToFile(paths: Paths, snippet: MarkdownSnippet): void {
   const snippetPath = path.join(paths.vaultPath, snippet.filePath)
+  const nextContent = serializeSnippet(snippet)
+
   fs.ensureDirSync(path.dirname(snippetPath))
-  fs.writeFileSync(snippetPath, serializeSnippet(snippet), 'utf8')
+
+  if (fs.pathExistsSync(snippetPath)) {
+    const currentContent = fs.readFileSync(snippetPath, 'utf8')
+    if (currentContent === nextContent) {
+      return
+    }
+  }
+
+  fs.writeFileSync(snippetPath, nextContent, 'utf8')
 }
 
 function upsertSnippetIndex(
@@ -1498,10 +2028,73 @@ function buildSnippetTargetPath(
   return directory ? path.posix.join(directory, fileName) : fileName
 }
 
+type DirectoryEntriesCache = Map<string, string[]>
+
+function getCachedDirectoryEntries(
+  directoryPath: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
+): string[] {
+  if (!directoryEntriesCache) {
+    return fs.readdirSync(directoryPath)
+  }
+
+  const cachedEntries = directoryEntriesCache.get(directoryPath)
+  if (cachedEntries) {
+    return cachedEntries
+  }
+
+  const entries = fs.readdirSync(directoryPath)
+  directoryEntriesCache.set(directoryPath, [...entries])
+  return entries
+}
+
+function removeDirectoryEntryFromCache(
+  directoryPath: string,
+  fileName: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
+): void {
+  if (!directoryEntriesCache) {
+    return
+  }
+
+  const entries = directoryEntriesCache.get(directoryPath)
+  if (!entries) {
+    return
+  }
+
+  const normalizedFileName = fileName.toLowerCase()
+  const nextEntries = entries.filter(
+    entry => entry.toLowerCase() !== normalizedFileName,
+  )
+
+  directoryEntriesCache.set(directoryPath, nextEntries)
+}
+
+function upsertDirectoryEntryInCache(
+  directoryPath: string,
+  fileName: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
+): void {
+  if (!directoryEntriesCache) {
+    return
+  }
+
+  const entries
+    = directoryEntriesCache.get(directoryPath) || fs.readdirSync(directoryPath)
+  const normalizedFileName = fileName.toLowerCase()
+  const nextEntries = entries.filter(
+    entry => entry.toLowerCase() !== normalizedFileName,
+  )
+
+  nextEntries.push(fileName)
+  directoryEntriesCache.set(directoryPath, nextEntries)
+}
+
 function assertSnippetPathAvailable(
   paths: Paths,
   targetRelativePath: string,
   excludeRelativePath?: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
 ): void {
   const targetAbsolutePath = path.join(paths.vaultPath, targetRelativePath)
   const targetDirectory = path.dirname(targetAbsolutePath)
@@ -1512,7 +2105,10 @@ function assertSnippetPathAvailable(
 
   fs.ensureDirSync(targetDirectory)
 
-  const entries = fs.readdirSync(targetDirectory)
+  const entries = getCachedDirectoryEntries(
+    targetDirectory,
+    directoryEntriesCache,
+  )
   for (const entry of entries) {
     const entryAbsolutePath = path.join(targetDirectory, entry)
 
@@ -1533,6 +2129,7 @@ function getUniqueSnippetPath(
   paths: Paths,
   targetRelativePath: string,
   excludeRelativePath?: string,
+  directoryEntriesCache?: DirectoryEntriesCache,
 ): string {
   const targetAbsolutePath = path.join(paths.vaultPath, targetRelativePath)
   const targetDirectory = path.dirname(targetAbsolutePath)
@@ -1543,7 +2140,10 @@ function getUniqueSnippetPath(
 
   fs.ensureDirSync(targetDirectory)
 
-  const entries = fs.readdirSync(targetDirectory)
+  const entries = getCachedDirectoryEntries(
+    targetDirectory,
+    directoryEntriesCache,
+  )
   const hasCaseInsensitiveConflict = (candidateFileName: string): boolean => {
     return entries.some((entry) => {
       const entryAbsolutePath = path.join(targetDirectory, entry)
@@ -1585,6 +2185,7 @@ function getUniqueSnippetPath(
 
 export interface PersistSnippetOptions {
   allowRenameOnConflict?: boolean
+  directoryEntriesCache?: Map<string, string[]>
 }
 
 function persistSnippet(
@@ -1596,13 +2197,24 @@ function persistSnippet(
 ): void {
   let targetPath = buildSnippetTargetPath(state, snippet)
   const sourcePath = previousFilePath ?? snippet.filePath
+  const directoryEntriesCache = options?.directoryEntriesCache
 
   if (options?.allowRenameOnConflict) {
-    targetPath = getUniqueSnippetPath(paths, targetPath, sourcePath)
+    targetPath = getUniqueSnippetPath(
+      paths,
+      targetPath,
+      sourcePath,
+      directoryEntriesCache,
+    )
     snippet.name = path.posix.basename(targetPath, '.md')
   }
   else {
-    assertSnippetPathAvailable(paths, targetPath, sourcePath)
+    assertSnippetPathAvailable(
+      paths,
+      targetPath,
+      sourcePath,
+      directoryEntriesCache,
+    )
   }
 
   const sourceAbsolutePath = sourcePath
@@ -1618,10 +2230,21 @@ function persistSnippet(
   ) {
     fs.ensureDirSync(path.dirname(targetAbsolutePath))
     fs.moveSync(sourceAbsolutePath, targetAbsolutePath, { overwrite: false })
+
+    removeDirectoryEntryFromCache(
+      path.dirname(sourceAbsolutePath),
+      path.basename(sourceAbsolutePath),
+      directoryEntriesCache,
+    )
   }
 
   snippet.filePath = targetPath
   writeSnippetToFile(paths, snippet)
+  upsertDirectoryEntryInCache(
+    path.dirname(targetAbsolutePath),
+    path.basename(targetAbsolutePath),
+    directoryEntriesCache,
+  )
   upsertSnippetIndex(state, snippet)
 }
 
@@ -1672,7 +2295,28 @@ function findSnippetById(
   snippets: MarkdownSnippet[],
   id: number,
 ): MarkdownSnippet | undefined {
-  return snippets.find(snippet => snippet.id === id)
+  const runtimeCache
+    = markdownRuntimeCache?.snippets === snippets ? markdownRuntimeCache : null
+
+  if (runtimeCache) {
+    if (runtimeCache.snippetById.size !== snippets.length) {
+      runtimeCache.snippetById = new Map(
+        snippets.map(snippet => [snippet.id, snippet]),
+      )
+    }
+
+    const snippetFromIndex = runtimeCache.snippetById.get(id)
+    if (snippetFromIndex) {
+      return snippetFromIndex
+    }
+  }
+
+  const snippet = snippets.find(item => item.id === id)
+  if (snippet && runtimeCache) {
+    runtimeCache.snippetById.set(id, snippet)
+  }
+
+  return snippet
 }
 
 function findSnippetByContentId(
@@ -1682,17 +2326,40 @@ function findSnippetByContentId(
   contentIndex: number
   snippet: MarkdownSnippet
 } | null {
+  const runtimeCache
+    = markdownRuntimeCache?.snippets === snippets ? markdownRuntimeCache : null
+
+  if (runtimeCache) {
+    const indexedOwner = runtimeCache.contentOwnerByContentId.get(contentId)
+    if (
+      indexedOwner
+      && indexedOwner.snippet.contents[indexedOwner.contentIndex]?.id === contentId
+    ) {
+      return indexedOwner
+    }
+  }
+
   for (const snippet of snippets) {
     const contentIndex = snippet.contents.findIndex(
       content => content.id === contentId,
     )
 
     if (contentIndex !== -1) {
-      return {
+      const ownedContent = {
         contentIndex,
         snippet,
       }
+
+      if (runtimeCache) {
+        runtimeCache.contentOwnerByContentId.set(contentId, ownedContent)
+      }
+
+      return ownedContent
     }
+  }
+
+  if (runtimeCache) {
+    runtimeCache.contentOwnerByContentId.delete(contentId)
   }
 
   return null
@@ -1720,6 +2387,7 @@ export {
   getNextFolderOrder,
   getPaths,
   getRuntimeCache,
+  getSnippetIdsBySearchQuery,
   getSnippetTargetDirectory,
   getVaultPath,
   loadSnippets,
@@ -1734,6 +2402,7 @@ export {
   syncCounters,
   syncFolderMetadataFiles,
   syncRuntimeWithDisk,
+  syncSnippetFileWithDisk,
   syncStateWithDisk,
   throwStorageError,
   validateEntryName,

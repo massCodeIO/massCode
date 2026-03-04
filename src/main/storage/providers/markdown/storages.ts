@@ -31,6 +31,7 @@ import {
   getNextFolderOrder,
   getPaths,
   getRuntimeCache,
+  getSnippetIdsBySearchQuery,
   getSnippetTargetDirectory,
   getVaultPath,
   type MarkdownSnippet,
@@ -39,7 +40,6 @@ import {
   persistSnippet,
   resolveUniqueSiblingFolderName,
   saveState,
-  syncCounters,
   syncFolderMetadataFiles,
   throwStorageError,
   validateEntryName,
@@ -72,6 +72,62 @@ function createFolderTree(folders: FolderRecord[]): FolderTreeRecord[] {
   return rootFolders
 }
 
+function sortFoldersForTree(folders: FolderRecord[]): FolderRecord[] {
+  const folderByParent = new Map<number | null, FolderRecord[]>()
+  const knownFolderIds = new Set<number>(folders.map(folder => folder.id))
+
+  folders.forEach((folder) => {
+    const parentId
+      = folder.parentId !== null && knownFolderIds.has(folder.parentId)
+        ? folder.parentId
+        : null
+    const siblings = folderByParent.get(parentId) || []
+
+    siblings.push(folder)
+    folderByParent.set(parentId, siblings)
+  })
+
+  folderByParent.forEach((siblings, parentId) => {
+    siblings.sort((firstFolder, secondFolder) => {
+      if (firstFolder.orderIndex !== secondFolder.orderIndex) {
+        return firstFolder.orderIndex - secondFolder.orderIndex
+      }
+
+      return firstFolder.id - secondFolder.id
+    })
+    folderByParent.set(parentId, siblings)
+  })
+
+  const orderedFolders: FolderRecord[] = []
+  const visitedFolderIds = new Set<number>()
+
+  const visitChildren = (parentId: number | null): void => {
+    const children = folderByParent.get(parentId) || []
+    children.forEach((child) => {
+      if (visitedFolderIds.has(child.id)) {
+        return
+      }
+
+      visitedFolderIds.add(child.id)
+      orderedFolders.push(child)
+      visitChildren(child.id)
+    })
+  }
+
+  visitChildren(null)
+
+  folders.forEach((folder) => {
+    if (visitedFolderIds.has(folder.id)) {
+      return
+    }
+
+    orderedFolders.push(folder)
+    visitChildren(folder.id)
+  })
+
+  return orderedFolders
+}
+
 function findFolderDescendants(
   folders: FolderRecord[],
   folderId: number,
@@ -101,23 +157,7 @@ function createFoldersStorage(): FoldersStorage {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return createFolderTree(
-        [...state.folders].sort((a, b) => {
-          if (a.parentId === b.parentId) {
-            return a.orderIndex - b.orderIndex
-          }
-
-          if (a.parentId === null) {
-            return -1
-          }
-
-          if (b.parentId === null) {
-            return 1
-          }
-
-          return a.parentId - b.parentId
-        }),
-      )
+      return createFolderTree(sortFoldersForTree([...state.folders]))
     },
     createFolder: (input) => {
       const paths = getPaths(getVaultPath())
@@ -394,6 +434,7 @@ function createFoldersStorage(): FoldersStorage {
       const oldFolderPathMap = buildFolderPathMap(state)
       const descendantIds = findFolderDescendants(state.folders, id)
       const removedFolderIds = new Set<number>([id, ...descendantIds])
+      const directoryEntriesCache = new Map<string, string[]>()
 
       snippets.forEach((snippet) => {
         if (
@@ -406,6 +447,7 @@ function createFoldersStorage(): FoldersStorage {
           snippet.updatedAt = Date.now()
           persistSnippet(paths, state, snippet, previousPath, {
             allowRenameOnConflict: true,
+            directoryEntriesCache,
           })
         }
       })
@@ -448,9 +490,7 @@ function createTagsStorage(): TagsStorage {
     },
     createTag: (name) => {
       const paths = getPaths(getVaultPath())
-      const { state, snippets } = getRuntimeCache(paths)
-
-      syncCounters(state, snippets)
+      const { state } = getRuntimeCache(paths)
 
       const id = state.counters.tagId + 1
       state.counters.tagId = id
@@ -498,60 +538,46 @@ function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const normalizedSearchQuery = query.search?.toLowerCase()
+      const searchSnippetIds = query.search?.trim()
+        ? getSnippetIdsBySearchQuery(snippets, query.search)
+        : null
       const normalizedOrder = query.order || 'DESC'
 
-      const result = snippets
+      const filteredSnippets = snippets.filter((snippet) => {
+        if (searchSnippetIds && !searchSnippetIds.has(snippet.id)) {
+          return false
+        }
+
+        if (query.folderId && snippet.folderId !== query.folderId) {
+          return false
+        }
+
+        if (query.isInbox && snippet.folderId !== null) {
+          return false
+        }
+
+        if (query.tagId && !snippet.tags.includes(query.tagId)) {
+          return false
+        }
+
+        if (query.isFavorites && snippet.isFavorites !== 1) {
+          return false
+        }
+
+        if (query.isDeleted) {
+          if (snippet.isDeleted !== 1) {
+            return false
+          }
+        }
+        else if (snippet.isDeleted !== 0) {
+          return false
+        }
+
+        return true
+      })
+
+      const result = filteredSnippets
         .map(snippet => createSnippetRecord(snippet, state))
-        .filter((snippet) => {
-          if (normalizedSearchQuery) {
-            const inName = snippet.name
-              .toLowerCase()
-              .includes(normalizedSearchQuery)
-            const inDescription = (snippet.description || '')
-              .toLowerCase()
-              .includes(normalizedSearchQuery)
-            const inContent = snippet.contents.some(content =>
-              (content.value || '')
-                .toLowerCase()
-                .includes(normalizedSearchQuery),
-            )
-
-            if (!inName && !inDescription && !inContent) {
-              return false
-            }
-          }
-
-          if (query.folderId && snippet.folder?.id !== query.folderId) {
-            return false
-          }
-
-          if (query.isInbox && snippet.folder !== null) {
-            return false
-          }
-
-          if (
-            query.tagId
-            && !snippet.tags.some(tag => tag.id === query.tagId)
-          ) {
-            return false
-          }
-
-          if (query.isFavorites && snippet.isFavorites !== 1) {
-            return false
-          }
-
-          if (query.isDeleted) {
-            if (snippet.isDeleted !== 1) {
-              return false
-            }
-          }
-          else if (snippet.isDeleted !== 0) {
-            return false
-          }
-
-          return true
-        })
         .sort((a, b) => {
           if (normalizedOrder === 'ASC') {
             return a.createdAt - b.createdAt
@@ -574,8 +600,6 @@ function createSnippetsStorage(): SnippetsStorage {
     createSnippet: (input) => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
-
-      syncCounters(state, snippets)
 
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
@@ -616,8 +640,6 @@ function createSnippetsStorage(): SnippetsStorage {
       if (!snippet) {
         throwStorageError('SNIPPET_NOT_FOUND', 'Snippet not found')
       }
-
-      syncCounters(state, snippets)
 
       const contentId = state.counters.contentId + 1
       state.counters.contentId = contentId

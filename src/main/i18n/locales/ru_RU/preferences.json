@@ -2,6 +2,10 @@
   "label": "Настройки",
   "storage": {
     "label": "Хранилище",
+    "section": {
+      "migration": "Миграция",
+      "dangerZone": "Опасная зона"
+    },
     "migrate": "Миграция",
     "count": "Количество",
     "clearDatabase": "Очистить базу данных"

@@ -3,6 +3,8 @@
   "storage": {
     "section": {
       "main": "Main",
+      "migration": "Migration",
+      "dangerZone": "Danger Zone",
       "backup": "Backup"
     },
     "label": "Storage",

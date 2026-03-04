@@ -162,6 +162,12 @@ async function openVaultStorage() {
 
   if (result) {
     storageSettings.vaultPath = result
+    await nextTick()
+    await getSnippetsCounts()
+    sonner({
+      message: i18n.t('messages:success.vaultLoaded'),
+      type: 'success',
+    })
   }
 }
 
@@ -446,6 +452,7 @@ watch(
 
 <template>
   <div class="space-y-5">
+    <!-- Section 1: Main -->
     <UiMenuFormSection :label="i18n.t('preferences:storage.section.main')">
       <UiMenuFormItem :label="i18n.t('preferences:storage.engine.label')">
         <Select.Select
@@ -495,7 +502,10 @@ watch(
           {{ i18n.t("messages:description.storage") }}
         </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:storage.vaultPath')">
+      <UiMenuFormItem
+        v-if="isMarkdownEngine"
+        :label="i18n.t('preferences:storage.vaultPath')"
+      >
         <UiInput
           :model-value="effectiveVaultPath"
           disabled
@@ -506,13 +516,22 @@ watch(
             size="md"
             @click="openVaultStorage"
           >
-            {{ i18n.t("action.open.storage") }}
+            {{ i18n.t("action.select.directory") }}
           </UiButton>
         </template>
         <template #description>
           {{ i18n.t("messages:description.storageVault") }}
         </template>
       </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:storage.count')">
+        {{ i18n.t("total") }}: {{ counts.total }},
+        {{ i18n.t("sidebar.trash") }}:
+        {{ counts.trash }}
+      </UiMenuFormItem>
+    </UiMenuFormSection>
+
+    <!-- Section 2: Migration -->
+    <UiMenuFormSection :label="i18n.t('preferences:storage.section.migration')">
       <UiMenuFormItem
         v-if="isSqliteEngine"
         :label="i18n.t('preferences:storage.migrate')"
@@ -539,6 +558,27 @@ watch(
         </UiButton>
       </UiMenuFormItem>
       <UiMenuFormItem
+        v-if="isSqliteEngine"
+        :label="i18n.t('preferences:storage.vaultPath')"
+      >
+        <UiInput
+          :model-value="effectiveVaultPath"
+          disabled
+          size="sm"
+        />
+        <template #actions>
+          <UiButton
+            size="md"
+            @click="openVaultStorage"
+          >
+            {{ i18n.t("action.select.directory") }}
+          </UiButton>
+        </template>
+        <template #description>
+          {{ i18n.t("messages:description.storageVault") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem
         v-if="isMarkdownEngine"
         :label="i18n.t('preferences:storage.migrateMarkdownToSqlite')"
       >
@@ -549,10 +589,14 @@ watch(
           {{ i18n.t("preferences:storage.migrateMarkdownToSqlite") }}
         </UiButton>
       </UiMenuFormItem>
-      <UiMenuFormItem
-        v-if="isSqliteEngine"
-        :label="i18n.t('preferences:storage.clearDatabase')"
-      >
+    </UiMenuFormSection>
+
+    <!-- Section 3: Danger Zone (SQLite only) -->
+    <UiMenuFormSection
+      v-if="isSqliteEngine"
+      :label="i18n.t('preferences:storage.section.dangerZone')"
+    >
+      <UiMenuFormItem :label="i18n.t('preferences:storage.clearDatabase')">
         <UiButton
           size="md"
           variant="danger"
@@ -564,12 +608,9 @@ watch(
           {{ i18n.t("messages:warning.clearDb") }}
         </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:storage.count')">
-        {{ i18n.t("total") }}: {{ counts.total }},
-        {{ i18n.t("sidebar.trash") }}:
-        {{ counts.trash }}
-      </UiMenuFormItem>
     </UiMenuFormSection>
+
+    <!-- Section 4: Backup (SQLite only) -->
     <UiMenuFormSection
       v-if="isSqliteEngine"
       :label="i18n.t('preferences:storage.backup.label')"

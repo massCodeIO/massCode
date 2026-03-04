@@ -87,6 +87,9 @@
       "create": "Create Backup",
       "restore": "Restore from Backup",
       "showList": "Show List"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
   },
   "sidebar": {

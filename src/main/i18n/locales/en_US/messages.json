@@ -27,6 +27,7 @@
     "migrate": "DB successfully migrated.",
     "migrateToMarkdown": "SQLite migrated to markdown vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "migrateToSqlite": "Markdown vault migrated to SQLite. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultLoaded": "Vault successfully loaded.",
     "backup": {
       "created": "Backup successfully created.",
       "restored": "Backup successfully restored.",
@@ -49,8 +50,8 @@
     "backup": "Backup operation failed"
   },
   "description": {
-    "storage": "To use sync services like iCloud Drive, Google Drive or Dropbox, simply move storage to the corresponding synced folders",
-    "storageVault": "Choose the markdown vault directory for markdown storage mode.",
+    "storage": "The directory where the SQLite database is stored.",
+    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
     "migrate": {
       "fromV3": "To migrate from massCode v3 select the folder containing the JSON file.",
       "fromSnippetsLab": "To migrate from SnippetsLab select JSON file.",

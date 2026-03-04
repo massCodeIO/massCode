@@ -475,10 +475,17 @@ function getSnippetIdsBySearchQuery(
     return new Set(cachedSnippetIds)
   }
 
-  const queryTokens = buildSearchTokens(normalizedSearchQuery)
+  const queryWords = splitSearchWords(normalizedSearchQuery)
+  const queryTrigrams = new Set<string>()
+  queryWords.forEach((word) => {
+    createWordTrigrams(word).forEach(trigram =>
+      queryTrigrams.add(`g:${trigram}`),
+    )
+  })
+
   let candidateSnippetIds: Set<number> | null = null
 
-  for (const token of queryTokens) {
+  for (const token of queryTrigrams) {
     const tokenMatches = runtimeCache.searchTokenToSnippetIds.get(token)
     if (!tokenMatches) {
       runtimeCache.searchQueryCache.set(normalizedSearchQuery, [])

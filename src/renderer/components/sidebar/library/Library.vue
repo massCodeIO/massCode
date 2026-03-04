@@ -6,6 +6,7 @@ import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
+import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
@@ -20,6 +21,7 @@ const {
   emptyTrash,
   isRestoreStateBlocked,
   clearSearch,
+  displayedSnippets,
 } = useSnippets()
 const {
   getFolders,
@@ -57,7 +59,11 @@ async function initGetSnippets() {
   await getSnippets()
 
   nextTick(() => {
-    scrollToElement('[data-snippet-item].is-selected')
+    const index
+      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
+    if (index >= 0) {
+      scrollToSnippetIndex(index)
+    }
   })
 }
 

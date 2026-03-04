@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { useApp, useGutter, useSnippets } from '@/composables'
+import { snippetScrollerRef } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
-const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
 
 const { snippetListWidth } = useApp()
 const { displayedSnippets } = useSnippets()
@@ -24,14 +23,6 @@ watch(width, () => {
   snippetListWidth.value = `${width.value}px`
   store.app.set('sizes.snippetListWidth', width.value)
 })
-
-watch(displayedSnippets, () => {
-  nextTick(() => {
-    if (scrollbarRef.value) {
-      scrollbarRef.value.ps?.update()
-    }
-  })
-})
 </script>
 
 <template>
@@ -43,19 +34,17 @@ watch(displayedSnippets, () => {
     <div>
       <SnippetHeader />
     </div>
-    <PerfectScrollbar
+    <RecycleScroller
       v-if="displayedSnippets?.length"
-      ref="scrollbarRef"
-      :options="{ minScrollbarLength: 20, suppressScrollX: true }"
+      ref="snippetScrollerRef"
+      v-slot="{ item }"
+      class="scrollbar flex-grow px-2"
+      :items="displayedSnippets"
+      :item-size="58"
+      key-field="id"
     >
-      <div class="flex-grow overflow-y-auto px-2">
-        <SnippetItem
-          v-for="snippet in displayedSnippets"
-          :key="snippet.id"
-          :snippet="snippet"
-        />
-      </div>
-    </PerfectScrollbar>
+      <SnippetItem :snippet="item" />
+    </RecycleScroller>
     <UiEmptyPlaceholder
       v-else
       :text="i18n.t('placeholder.emptySnippetsList')"

@@ -5,10 +5,11 @@ import type {
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
 import { i18n } from '@/electron'
-import { getContiguousSelection, scrollToElement } from '@/utils'
+import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
+import { scrollToSnippetIndex } from './useSnippetScroller'
 
 const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
   = useApp()
@@ -283,7 +284,7 @@ async function updateSnippetContent(
     String(contentId),
     data,
   )
-  getSnippets(queryByLibraryOrFolderOrSearch.value)
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function deleteSnippet(snippetId: number) {
@@ -433,7 +434,7 @@ async function search() {
     await getSnippets({ search: searchQuery.value })
     selectFirstSnippet()
     searchSelectedIndex.value = 0
-    nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
+    nextTick(() => scrollToSnippetIndex(0))
   }
   else {
     isSearch.value = false
@@ -452,7 +453,7 @@ function selectSearchSnippet(index: number) {
   const snippet = displayedSnippets.value[index]
   selectSnippet(snippet.id)
   searchSelectedIndex.value = index
-  nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
+  nextTick(() => scrollToSnippetIndex(index))
 }
 
 function clearSearch(restoreState = false) {

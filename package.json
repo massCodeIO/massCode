@@ -31,8 +31,8 @@
     "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
     "copy:locales": "node scripts/copy-locales.js",
-    "markdown:load-test": "node scripts/markdown-load-test.js",
-    "markdown:seed": "node scripts/markdown-seed-snippets.js",
+    "bench:load-test": "node scripts/bench-load-test.js",
+    "bench:seed": "node scripts/bench-seed.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -89,6 +89,7 @@
     "toml": "^3.0.0",
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
+    "vue-virtual-scroller": "2.0.0-beta.8",
     "vue3-perfect-scrollbar": "^2.0.0",
     "vuedraggable": "^4.1.0"
   },

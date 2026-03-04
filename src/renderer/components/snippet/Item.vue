@@ -238,7 +238,7 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="border-border relative px-1 not-first:border-t focus-visible:outline-none [&+.is-selected+div]:border-transparent"
+    class="border-border relative border-b px-1 focus-visible:outline-none"
     :class="{
       'is-selected': isSelected,
       'is-multi-selected': isInMultiSelection,

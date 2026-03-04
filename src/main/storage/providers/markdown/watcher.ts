@@ -3,7 +3,6 @@ import path from 'node:path'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
 import {
-  areRuntimeCachesEqual,
   ensureStateFile,
   getPaths,
   getVaultPath,
@@ -152,7 +151,7 @@ function scheduleStateSync(
         || syncRuntimeWithDisk(paths)
         : syncRuntimeWithDisk(paths)
 
-      if (!previousCache || !areRuntimeCachesEqual(previousCache, nextCache)) {
+      if (!previousCache || nextCache !== previousCache) {
         BrowserWindow.getAllWindows().forEach((window) => {
           window.webContents.send('system:storage-synced')
         })

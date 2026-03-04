@@ -38,7 +38,6 @@ export interface MarkdownSettings {
 
 export interface StorageSettings {
   engine: 'sqlite' | 'markdown'
-  syncMode: 'manual' | 'realtime'
   vaultPath: string | null
 }
 

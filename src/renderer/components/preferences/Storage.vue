@@ -35,7 +35,6 @@ const storageSettings = reactive<PreferencesStore['storage']>({
     (store.preferences.get('storage') as Partial<PreferencesStore['storage']>)
       ?.engine as string | undefined,
   ),
-  syncMode: 'manual',
   vaultPath: null,
   ...(store.preferences.get('storage') as Partial<PreferencesStore['storage']>),
 })
@@ -51,11 +50,6 @@ const isRestoringBackup = ref(false)
 const storageEngineOptions = [
   { label: i18n.t('preferences:storage.engine.sqlite'), value: 'sqlite' },
   { label: i18n.t('preferences:storage.engine.markdown'), value: 'markdown' },
-]
-
-const storageSyncModeOptions = [
-  { label: i18n.t('preferences:storage.syncMode.manual'), value: 'manual' },
-  { label: i18n.t('preferences:storage.syncMode.realtime'), value: 'realtime' },
 ]
 
 const isMarkdownEngine = computed(() => storageSettings.engine === 'markdown')
@@ -156,10 +150,6 @@ async function onStorageEngineChange(value: string) {
   }
 
   getSnippetsCounts()
-}
-
-function onStorageSyncModeChange(value: string) {
-  storageSettings.syncMode = value as PreferencesStore['storage']['syncMode']
 }
 
 async function openVaultStorage() {
@@ -468,28 +458,6 @@ watch(
           <Select.SelectContent>
             <Select.SelectItem
               v-for="option in storageEngineOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
-      </UiMenuFormItem>
-      <UiMenuFormItem
-        v-if="isMarkdownEngine"
-        :label="i18n.t('preferences:storage.syncMode.label')"
-      >
-        <Select.Select
-          :model-value="storageSettings.syncMode"
-          @update:model-value="onStorageSyncModeChange"
-        >
-          <Select.SelectTrigger class="w-64">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem
-              v-for="option in storageSyncModeOptions"
               :key="option.value"
               :value="option.value"
             >

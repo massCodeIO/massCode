@@ -9,30 +9,17 @@ import { sqliteStorageProvider } from './providers/sqlite'
 
 const markdownStorageProvider = createMarkdownStorageProvider()
 let resolvedEngine: string | null = null
-let resolvedSyncMode: string | null = null
 let resolvedProvider: StorageProvider | null = null
 
 function resolveProvider(engine: string): StorageProvider {
-  const syncMode = store.preferences.get('storage.syncMode') as string
-
-  if (
-    resolvedProvider
-    && resolvedEngine === engine
-    && resolvedSyncMode === syncMode
-  ) {
+  if (resolvedProvider && resolvedEngine === engine) {
     return resolvedProvider
   }
 
   if (engine === 'markdown') {
-    if (syncMode === 'realtime') {
-      startMarkdownWatcher()
-    }
-    else {
-      stopMarkdownWatcher()
-    }
+    startMarkdownWatcher()
 
     resolvedEngine = engine
-    resolvedSyncMode = syncMode
     resolvedProvider = markdownStorageProvider
 
     return resolvedProvider
@@ -41,7 +28,6 @@ function resolveProvider(engine: string): StorageProvider {
   stopMarkdownWatcher()
 
   resolvedEngine = engine
-  resolvedSyncMode = syncMode
   resolvedProvider = sqliteStorageProvider
 
   return resolvedProvider

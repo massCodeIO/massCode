@@ -33,22 +33,6 @@ app.get(
   },
 )
 
-app.get(
-  '/storage-sync-mode',
-  () => {
-    const syncMode = store.preferences.get('storage.syncMode')
-
-    return {
-      syncMode,
-    }
-  },
-  {
-    detail: {
-      tags: ['System'],
-    },
-  },
-)
-
 app.post(
   '/storage-cache/reset',
   () => {

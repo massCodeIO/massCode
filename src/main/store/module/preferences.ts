@@ -20,7 +20,6 @@ const preferencesStore = new Store<PreferencesStore>({
     editor: EDITOR_DEFAULTS,
     storage: {
       engine: 'sqlite',
-      syncMode: 'manual',
       vaultPath: null,
     },
     markdown: {

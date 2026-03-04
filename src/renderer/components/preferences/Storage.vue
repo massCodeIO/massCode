@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/shadcn/switch'
 import { useDialog, useSonner } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { format } from 'date-fns'
-import { RotateCcw, Trash2 } from 'lucide-vue-next'
+import { LoaderCircle, RotateCcw, Trash2 } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 import { preferencesKeys } from './keys'
 
@@ -80,8 +80,14 @@ const counts = reactive<SnippetsCountsResponse>({
   total: 0,
   trash: 0,
 })
+const isLoadingCounts = ref(false)
+let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 
 async function getSnippetsCounts() {
+  loadingCountsTimer = setTimeout(() => {
+    isLoadingCounts.value = true
+  }, 300)
+
   try {
     const { data } = await api.snippets.getSnippetsCounts()
 
@@ -90,6 +96,10 @@ async function getSnippetsCounts() {
   }
   catch (err) {
     console.error(err)
+  }
+  finally {
+    clearTimeout(loadingCountsTimer!)
+    isLoadingCounts.value = false
   }
 }
 
@@ -524,9 +534,15 @@ watch(
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:storage.count')">
-        {{ i18n.t("total") }}: {{ counts.total }},
-        {{ i18n.t("sidebar.trash") }}:
-        {{ counts.trash }}
+        <LoaderCircle
+          v-if="isLoadingCounts"
+          class="h-4 w-4 animate-spin"
+        />
+        <template v-else>
+          {{ i18n.t("total") }}: {{ counts.total }},
+          {{ i18n.t("sidebar.trash") }}:
+          {{ counts.trash }}
+        </template>
       </UiMenuFormItem>
     </UiMenuFormSection>
 

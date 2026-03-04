@@ -70,7 +70,7 @@
     "unsponsored": "Unsponsored"
   },
   "release": {
-    "mdVaultAndSqliteSunset": "New in {{version}}: Markdown Vault is now available. SQLite storage will be removed in v{{sqliteSunsetVersion}}."
+    "mdVaultAvailable": "New: Markdown Vault storage is now available! SQLite will be removed in v{{sqliteSunsetVersion}}."
   },
   "update": {
     "available": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",

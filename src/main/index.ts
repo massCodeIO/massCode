@@ -1,7 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { version } from '../../package.json'
 import { initApi } from './api'
 import { startAutoBackup } from './db'
@@ -22,11 +22,7 @@ let isQuitting = false
 
 const SQLITE_SUNSET_VERSION = '5.0.0'
 
-function shouldShowReleaseNotice(): boolean {
-  if (isDev) {
-    return false
-  }
-
+function shouldShowFeatureNotice(): boolean {
   const lastSeenVersion = store.app.get('lastSeenReleaseNoticeVersion')
   if (lastSeenVersion === version) {
     return false
@@ -36,14 +32,13 @@ function shouldShowReleaseNotice(): boolean {
   return major === 4
 }
 
-function showReleaseNotice() {
-  if (!shouldShowReleaseNotice()) {
+function showFeatureNotice() {
+  if (!shouldShowFeatureNotice()) {
     return
   }
 
-  mainWindow.webContents.send('system:release-notice', {
+  mainWindow.webContents.send('system:feature-notice', {
     sqliteSunsetVersion: SQLITE_SUNSET_VERSION,
-    version,
   })
 
   store.app.set('lastSeenReleaseNoticeVersion', version)
@@ -87,8 +82,8 @@ function createWindow() {
     )
   }
 
-  mainWindow.webContents.once('did-finish-load', () => {
-    showReleaseNotice()
+  ipcMain.once('system:renderer-ready', () => {
+    showFeatureNotice()
   })
 
   mainWindow.on('close', (event) => {

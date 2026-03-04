@@ -1,5 +1,6 @@
 import { useApp, useFolders, useSnippets, useSonner } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { router, RouterName } from '@/router'
 import { repository } from '../../../../package.json'
 
 const {
@@ -17,7 +18,6 @@ let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 interface ReleaseNoticePayload {
   sqliteSunsetVersion?: string
-  version?: string
 }
 
 async function refreshAfterStorageSync() {
@@ -76,17 +76,16 @@ export function registerSystemListeners() {
     })
   })
 
-  ipc.on('system:release-notice', (_, payload: ReleaseNoticePayload) => {
+  ipc.on('system:feature-notice', (_, payload: ReleaseNoticePayload) => {
     sonner({
-      message: i18n.t('messages:release.mdVaultAndSqliteSunset', {
+      message: i18n.t('messages:release.mdVaultAvailable', {
         sqliteSunsetVersion: payload?.sqliteSunsetVersion || '5.0.0',
-        version: payload?.version || '',
       }),
       type: 'success',
       action: {
-        label: i18n.t('button.goToDownload'),
+        label: i18n.t('button.goToSettings'),
         onClick: () => {
-          ipc.invoke('system:open-external', `${repository}/releases`)
+          router.push({ name: RouterName.preferencesStorage })
         },
       },
     })

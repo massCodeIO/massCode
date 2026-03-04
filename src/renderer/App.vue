@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useApp, useTheme } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { Toaster } from 'vue-sonner'
@@ -13,6 +13,7 @@ useTheme()
 
 async function init() {
   registerIPCListeners()
+  ipc.send('system:renderer-ready', null, () => {})
   loadWASM(onigasmFile)
   await loadGrammars()
   notifications()

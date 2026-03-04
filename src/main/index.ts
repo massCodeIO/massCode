@@ -20,16 +20,22 @@ const gotTheLock = app.requestSingleInstanceLock()
 let mainWindow: BrowserWindow
 let isQuitting = false
 
+// TODO: Удаление уведомления о функции в версии 5.0.0
 const SQLITE_SUNSET_VERSION = '5.0.0'
 
 function shouldShowFeatureNotice(): boolean {
   const lastSeenVersion = store.app.get('lastSeenReleaseNoticeVersion')
-  if (lastSeenVersion === version) {
+  const lastSeenMajor = Number.parseInt(
+    (lastSeenVersion || '').split('.')[0] || '0',
+    10,
+  )
+  const currentMajor = Number.parseInt(version.split('.')[0] || '0', 10)
+
+  if (lastSeenMajor >= currentMajor) {
     return false
   }
 
-  const major = Number.parseInt(version.split('.')[0] || '0', 10)
-  return major === 4
+  return currentMajor === 4
 }
 
 function showFeatureNotice() {

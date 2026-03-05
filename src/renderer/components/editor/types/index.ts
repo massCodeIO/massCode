@@ -111,6 +111,7 @@ export type Language =
   | 'nunjucks'
   | 'objectivec'
   | 'ocaml'
+  | 'oeabl'
   | 'pascal'
   | 'perl'
   | 'perl6'

@@ -587,6 +587,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.ocaml',
   },
   {
+    name: 'OpenEdge ABL',
+    value: 'oeabl',
+    grammar: () => import('./textmate/oeabl.tmLanguage.json'),
+    scopeName: 'source.oeabl',
+  },
+  {
     name: 'OpenGL',
     value: 'glsl',
     grammar: () => import('./textmate/glsl.tmLanguage.json'),

@@ -67,6 +67,12 @@
     "label": "Appearance",
     "theme": {
       "label": "Theme",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Light",
       "dark": "Dark",
       "system": "System"

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useSnippets, useTheme } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
-import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
@@ -17,7 +16,7 @@ import 'codemirror/theme/oceanic-next.css'
 const isDev = import.meta.env.DEV
 
 const { selectedSnippetContent } = useSnippets()
-const isDark = useDark()
+const { isDark, getEditorThemeName } = useTheme()
 const { scaleToShow, onZoom } = useMarkdown()
 
 const route = useRoute()
@@ -108,7 +107,7 @@ function renderCodeBlockEditors() {
       const editor = CodeMirror(container as HTMLElement, {
         value: blockData.value,
         mode: blockData.language,
-        theme: isDark.value ? 'oceanic-next' : 'neo',
+        theme: getEditorThemeName(),
         readOnly: true,
         lineNumbers: false,
         lineWrapping: true,
@@ -157,11 +156,17 @@ watch(renderedContent, () => {
   })
 })
 
-watch(isDark, (value) => {
-  const theme = value ? 'oceanic-next' : 'neo'
-  codeEditors.value.forEach((editor) => {
-    editor.setOption('theme', theme)
-  })
+watch(
+  () => getEditorThemeName(),
+  (theme) => {
+    codeEditors.value.forEach((editor) => {
+      editor.setOption('theme', theme)
+    })
+  },
+)
+
+watch(isDark, () => {
+  renderMermaidBlocks()
 })
 </script>
 

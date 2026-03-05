@@ -7,6 +7,7 @@ import { initApi } from './api'
 import { startAutoBackup } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
+import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { mainMenu } from './menu/main'
 import { store } from './store'
 import { checkForUpdates } from './updates'
@@ -125,6 +126,13 @@ else {
     }
 
     try {
+      startThemeWatcher()
+    }
+    catch (error) {
+      log('Error starting theme watcher', error)
+    }
+
+    try {
       await initApi()
     }
     catch (error) {
@@ -167,6 +175,7 @@ else {
 
   app.on('before-quit', () => {
     isQuitting = true
+    stopThemeWatcher()
   })
 
   app.on('window-all-closed', () => {

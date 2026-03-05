@@ -5,9 +5,10 @@ import {
   useEditor,
   useSnippets,
   useSnippetUpdate,
+  useTheme,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { useClipboard, useCssVar, useDark, useDebounceFn } from '@vueuse/core'
+import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
@@ -40,10 +41,10 @@ const {
   isFocusedSearch,
   isShowJsonVisualizer,
 } = useApp()
+const { getEditorThemeName } = useTheme()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
-const isDark = useDark()
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
 
@@ -124,7 +125,7 @@ async function init() {
   editor = CodeMirror(el, {
     value: selectedSnippetContent.value?.value || ' ',
     mode: selectedSnippetContent.value?.language || 'plain_text',
-    theme: isDark.value ? 'oceanic-next' : 'neo',
+    theme: getEditorThemeName(),
     lineWrapping: settings.wrap,
     lineNumbers: true,
     tabSize: settings.tabSize,
@@ -238,14 +239,12 @@ async function init() {
     })
   })
 
-  watch(isDark, (v) => {
-    if (v) {
-      editor?.setOption('theme', 'oceanic-next')
-    }
-    else {
-      editor?.setOption('theme', 'neo')
-    }
-  })
+  watch(
+    () => getEditorThemeName(),
+    (themeName) => {
+      editor?.setOption('theme', themeName)
+    },
+  )
 
   watch(
     () => settings.fontSize,

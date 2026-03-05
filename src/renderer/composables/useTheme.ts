@@ -237,7 +237,7 @@ async function processThemeReloadQueue(): Promise<void> {
   }
 }
 
-function getEditorThemeName(): string {
+const editorThemeName = computed(() => {
   const baseTheme
     = resolvedThemeType.value === 'dark' ? DARK_EDITOR_THEME : LIGHT_EDITOR_THEME
 
@@ -250,23 +250,11 @@ function getEditorThemeName(): string {
   }
 
   return baseTheme
-}
+})
 
 async function initTheme(): Promise<void> {
   await loadCustomThemes()
-
-  const selectedTheme = currentThemeId.value
-
-  if (isBuiltInTheme(selectedTheme)) {
-    applyBuiltInTheme(selectedTheme)
-    return
-  }
-
-  const isApplied = await applyCustomTheme(selectedTheme)
-
-  if (!isApplied) {
-    fallbackToAuto()
-  }
+  await setTheme(currentThemeId.value)
 }
 
 function onThemeChanged() {
@@ -297,6 +285,6 @@ export function useTheme() {
     isDark,
     setTheme,
     loadCustomThemes,
-    getEditorThemeName,
+    editorThemeName,
   }
 }

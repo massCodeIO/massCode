@@ -301,9 +301,9 @@ async function openThemesDir(): Promise<void> {
 
 function resolveThemeTemplatePath(): string {
   const themesDir = ensureThemesDir()
-  let index = 0
+  const maxAttempts = 1000
 
-  while (true) {
+  for (let index = 0; index < maxAttempts; index++) {
     const suffix = index === 0 ? '' : `-${index}`
     const fileName = `${THEME_TEMPLATE_BASE_NAME}${suffix}${THEME_FILE_EXT}`
     const filePath = path.join(themesDir, fileName)
@@ -311,9 +311,11 @@ function resolveThemeTemplatePath(): string {
     if (!existsSync(filePath)) {
       return filePath
     }
-
-    index += 1
   }
+
+  throw new Error(
+    `Could not find available theme template name after ${maxAttempts} attempts`,
+  )
 }
 
 function createThemeTemplate(): string {

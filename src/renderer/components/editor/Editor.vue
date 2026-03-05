@@ -41,7 +41,7 @@ const {
   isFocusedSearch,
   isShowJsonVisualizer,
 } = useApp()
-const { getEditorThemeName } = useTheme()
+const { editorThemeName } = useTheme()
 
 const { addToUpdateContentQueue } = useSnippetUpdate()
 
@@ -125,7 +125,7 @@ async function init() {
   editor = CodeMirror(el, {
     value: selectedSnippetContent.value?.value || ' ',
     mode: selectedSnippetContent.value?.language || 'plain_text',
-    theme: getEditorThemeName(),
+    theme: editorThemeName.value,
     lineWrapping: settings.wrap,
     lineNumbers: true,
     tabSize: settings.tabSize,
@@ -239,12 +239,9 @@ async function init() {
     })
   })
 
-  watch(
-    () => getEditorThemeName(),
-    (themeName) => {
-      editor?.setOption('theme', themeName)
-    },
-  )
+  watch(editorThemeName, (themeName) => {
+    editor?.setOption('theme', themeName)
+  })
 
   watch(
     () => settings.fontSize,

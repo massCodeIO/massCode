@@ -16,7 +16,7 @@ import 'codemirror/theme/oceanic-next.css'
 const isDev = import.meta.env.DEV
 
 const { selectedSnippetContent } = useSnippets()
-const { isDark, getEditorThemeName } = useTheme()
+const { isDark, editorThemeName } = useTheme()
 const { scaleToShow, onZoom } = useMarkdown()
 
 const route = useRoute()
@@ -107,7 +107,7 @@ function renderCodeBlockEditors() {
       const editor = CodeMirror(container as HTMLElement, {
         value: blockData.value,
         mode: blockData.language,
-        theme: getEditorThemeName(),
+        theme: editorThemeName.value,
         readOnly: true,
         lineNumbers: false,
         lineWrapping: true,
@@ -156,14 +156,11 @@ watch(renderedContent, () => {
   })
 })
 
-watch(
-  () => getEditorThemeName(),
-  (theme) => {
-    codeEditors.value.forEach((editor) => {
-      editor.setOption('theme', theme)
-    })
-  },
-)
+watch(editorThemeName, (theme) => {
+  codeEditors.value.forEach((editor) => {
+    editor.setOption('theme', theme)
+  })
+})
 
 watch(isDark, () => {
   renderMermaidBlocks()

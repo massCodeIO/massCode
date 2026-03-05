@@ -5,13 +5,15 @@ import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import * as Select from '@/components/ui/shadcn/select'
 import { Switch } from '@/components/ui/shadcn/switch'
-import { useDialog, useSonner } from '@/composables'
+import { useDialog, useFolders, useSnippets, useSonner } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { format } from 'date-fns'
 import { LoaderCircle, RotateCcw, Trash2 } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
 const { sonner } = useSonner()
+const { getFolders } = useFolders()
+const { getSnippets } = useSnippets()
 
 function normalizeStorageEngine(
   engine: string | undefined,
@@ -81,10 +83,19 @@ const counts = reactive<SnippetsCountsResponse>({
 const isLoadingCounts = ref(false)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 
-async function getSnippetsCounts() {
+function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
     isLoadingCounts.value = true
   }, 300)
+}
+
+function hideLoadingCounts() {
+  clearTimeout(loadingCountsTimer!)
+  isLoadingCounts.value = false
+}
+
+async function getSnippetsCounts() {
+  showLoadingCounts()
 
   try {
     const { data } = await api.snippets.getSnippetsCounts()
@@ -96,8 +107,7 @@ async function getSnippetsCounts() {
     console.error(err)
   }
   finally {
-    clearTimeout(loadingCountsTimer!)
-    isLoadingCounts.value = false
+    hideLoadingCounts()
   }
 }
 
@@ -157,7 +167,9 @@ async function onStorageEngineChange(value: string) {
     await ipc.invoke('db:stop-auto-backup', null)
   }
 
-  getSnippetsCounts()
+  await getFolders(false)
+  await getSnippets()
+  await getSnippetsCounts()
 }
 
 async function openVaultStorage() {
@@ -171,7 +183,17 @@ async function openVaultStorage() {
   if (result) {
     storageSettings.vaultPath = result
     await nextTick()
-    await getSnippetsCounts()
+    showLoadingCounts()
+    try {
+      await getFolders(false)
+      await getSnippets()
+      const { data } = await api.snippets.getSnippetsCounts()
+      counts.total = data.total
+      counts.trash = data.trash
+    }
+    finally {
+      hideLoadingCounts()
+    }
     sonner({
       message: i18n.t('messages:success.vaultLoaded'),
       type: 'success',

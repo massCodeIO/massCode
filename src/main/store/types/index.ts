@@ -53,7 +53,7 @@ export interface PreferencesStore {
   storagePath: string
   apiPort: number
   language: string
-  theme: 'light' | 'dark' | 'auto'
+  theme: string
   editor: EditorSettings
   storage: StorageSettings
   markdown: MarkdownSettings

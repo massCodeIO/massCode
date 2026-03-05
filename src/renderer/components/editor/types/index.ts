@@ -107,6 +107,7 @@ export type Language =
   | 'nginx'
   | 'nim'
   | 'nix'
+  | 'nu'
   | 'nsis'
   | 'nunjucks'
   | 'objectivec'

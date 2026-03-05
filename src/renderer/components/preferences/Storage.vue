@@ -160,16 +160,26 @@ async function onStorageEngineChange(value: string) {
   storageSettings.engine = value as PreferencesStore['storage']['engine']
   store.preferences.set('storage.engine', storageSettings.engine)
 
-  if (storageSettings.engine === 'sqlite') {
-    await ipc.invoke('db:start-auto-backup', null)
-  }
-  else {
-    await ipc.invoke('db:stop-auto-backup', null)
-  }
+  showLoadingCounts()
 
-  await getFolders(false)
-  await getSnippets()
-  await getSnippetsCounts()
+  try {
+    if (storageSettings.engine === 'sqlite') {
+      await ipc.invoke('db:start-auto-backup', null)
+    }
+    else {
+      await ipc.invoke('db:stop-auto-backup', null)
+    }
+
+    await getFolders(false)
+    await getSnippets()
+
+    const { data } = await api.snippets.getSnippetsCounts()
+    counts.total = data.total
+    counts.trash = data.trash
+  }
+  finally {
+    hideLoadingCounts()
+  }
 }
 
 async function openVaultStorage() {

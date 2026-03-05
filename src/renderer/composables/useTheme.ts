@@ -26,6 +26,16 @@ const currentCustomTheme = ref<ThemeFile | null>(null)
 const isDark = computed(() => resolvedThemeType.value === 'dark')
 
 let isInitialized = false
+let isThemeReloadInProgress = false
+let hasPendingThemeReload = false
+
+function persistThemePreference(id: string): void {
+  if (store.preferences.get('theme') === id) {
+    return
+  }
+
+  store.preferences.set('theme', id)
+}
 
 function isBuiltInTheme(id: string): id is BuiltInThemeId {
   return BUILT_IN_THEMES.has(id as BuiltInThemeId)
@@ -135,7 +145,7 @@ function applyBuiltInTheme(id: BuiltInThemeId): void {
   resolvedThemeType.value = getBuiltInThemeType(id)
   currentThemeId.value = id
 
-  store.preferences.set('theme', id)
+  persistThemePreference(id)
 }
 
 async function applyCustomTheme(id: string): Promise<boolean> {
@@ -151,7 +161,7 @@ async function applyCustomTheme(id: string): Promise<boolean> {
   currentThemeId.value = id
 
   applyCustomThemeStyle(theme)
-  store.preferences.set('theme', id)
+  persistThemePreference(id)
 
   return true
 }
@@ -205,6 +215,28 @@ async function handleThemesChanged(): Promise<void> {
   await setTheme(selectedId)
 }
 
+async function processThemeReloadQueue(): Promise<void> {
+  if (isThemeReloadInProgress) {
+    hasPendingThemeReload = true
+    return
+  }
+
+  isThemeReloadInProgress = true
+
+  try {
+    do {
+      hasPendingThemeReload = false
+      await handleThemesChanged()
+    } while (hasPendingThemeReload)
+  }
+  catch (error) {
+    console.error('Failed to process theme updates', error)
+  }
+  finally {
+    isThemeReloadInProgress = false
+  }
+}
+
 function getEditorThemeName(): string {
   const baseTheme
     = resolvedThemeType.value === 'dark' ? DARK_EDITOR_THEME : LIGHT_EDITOR_THEME
@@ -238,7 +270,7 @@ async function initTheme(): Promise<void> {
 }
 
 function onThemeChanged() {
-  void handleThemesChanged()
+  void processThemeReloadQueue()
 }
 
 watch(

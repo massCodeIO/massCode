@@ -60,6 +60,7 @@ let themeWatcherTimer: NodeJS.Timeout | null = null
 let watchedThemesDir: string | null = null
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
+const reportedThemeIssues = new Map<string, string>()
 
 type ChokidarWatch = (
   path: string | readonly string[],
@@ -100,6 +101,27 @@ function ensureThemesDir(): string {
   return THEMES_DIR
 }
 
+function reportThemeIssue(
+  fileName: string,
+  reason: string,
+  error?: unknown,
+): void {
+  const message = `${fileName}: ${reason}`
+
+  if (reportedThemeIssues.get(fileName) === message) {
+    return
+  }
+
+  reportedThemeIssues.set(fileName, message)
+
+  if (error) {
+    console.warn(`[theme] ${message}`, error)
+    return
+  }
+
+  console.warn(`[theme] ${message}`)
+}
+
 function isThemeType(value: unknown): value is ThemeType {
   return value === 'light' || value === 'dark'
 }
@@ -114,7 +136,7 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 
 function parseThemeFile(raw: unknown, fileName: string): ThemeFile | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    log('theme:invalid-file', new Error(`Invalid JSON object in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid JSON object')
     return null
   }
 
@@ -127,29 +149,31 @@ function parseThemeFile(raw: unknown, fileName: string): ThemeFile | null {
   }
 
   if (typeof data.name !== 'string' || !data.name.trim()) {
-    log('theme:invalid-file', new Error(`Invalid name in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid name')
     return null
   }
 
   if (!isThemeType(data.type)) {
-    log('theme:invalid-file', new Error(`Invalid type in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid type')
     return null
   }
 
   if (data.author !== undefined && typeof data.author !== 'string') {
-    log('theme:invalid-file', new Error(`Invalid author in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid author')
     return null
   }
 
   if (data.colors !== undefined && !isStringRecord(data.colors)) {
-    log('theme:invalid-file', new Error(`Invalid colors in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid colors')
     return null
   }
 
   if (data.editorColors !== undefined && !isStringRecord(data.editorColors)) {
-    log('theme:invalid-file', new Error(`Invalid editorColors in ${fileName}`))
+    reportThemeIssue(fileName, 'Invalid editorColors')
     return null
   }
+
+  reportedThemeIssues.delete(fileName)
 
   return {
     name: data.name.trim(),
@@ -211,7 +235,7 @@ function readThemeFromFile(
     return parseThemeFile(parsed, fileName)
   }
   catch (error) {
-    log('theme:read-file', error)
+    reportThemeIssue(fileName, 'Failed to read or parse JSON', error)
     return null
   }
 }

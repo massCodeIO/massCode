@@ -30,7 +30,7 @@ const gridTemplateColumns = computed(() => {
     class="relative grid h-screen flex-1 overflow-hidden"
     :style="{ gridTemplateColumns }"
   >
-    <div class="grid h-full grid-rows-[auto_1fr] overflow-hidden">
+    <div class="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden">
       <div
         class="mt-2 flex items-center justify-between gap-2 overflow-hidden px-2 pt-[var(--title-bar-height)] pb-2"
       >
@@ -45,12 +45,12 @@ const gridTemplateColumns = computed(() => {
           <ArrowLeft class="h-4 w-4" />
         </UiActionButton>
       </div>
-      <div class="h-full overflow-auto">
+      <div class="h-full min-h-0 overflow-auto">
         <slot name="left" />
       </div>
     </div>
     <div class="bg-border" />
-    <div class="mt-2 h-full overflow-auto pt-[var(--title-bar-height)]">
+    <div class="mt-2 h-full min-h-0 overflow-auto pt-[var(--title-bar-height)]">
       <slot name="right" />
     </div>
   </div>

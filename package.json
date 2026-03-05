@@ -90,7 +90,6 @@
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
     "vue-virtual-scroller": "2.0.0-beta.8",
-    "vue3-perfect-scrollbar": "^2.0.0",
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {

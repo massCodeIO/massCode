@@ -8,7 +8,6 @@ interface Props {
   class?: string
   placeholder?: string
   focus?: boolean
-  scrollbarOptions?: any
 }
 
 const props = defineProps<Props>()
@@ -34,10 +33,7 @@ watchEffect(() => {
 
 <template>
   <div class="relative">
-    <PerfectScrollbar
-      :options="scrollbarOptions"
-      class="max-h-[100px]"
-    >
+    <div class="scrollbar max-h-[100px] overflow-x-hidden overflow-y-auto">
       <div
         ref="inputRef"
         :class="[cn(variants({ variant }), props.class)]"
@@ -50,6 +46,6 @@ watchEffect(() => {
       >
         {{ model }}
       </div>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>

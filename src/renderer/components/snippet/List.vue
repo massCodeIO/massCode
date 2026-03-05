@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { useApp, useGutter, useSnippets } from '@/composables'
-import { snippetScrollerRef } from '@/composables/useSnippetScroller'
+import { setSnippetScrollerRef } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
+const snippetScrollerLocalRef = ref<{
+  scrollToItem: (index: number) => void
+} | null>(null)
+const isInitialSnippetPositionRestored = ref(false)
+const SNIPPET_ITEM_SIZE = 61
 
-const { snippetListWidth } = useApp()
+const { snippetListWidth, state } = useApp()
 const { displayedSnippets } = useSnippets()
 
 const { width } = useGutter({
@@ -23,6 +28,41 @@ watch(width, () => {
   snippetListWidth.value = `${width.value}px`
   store.app.set('sizes.snippetListWidth', width.value)
 })
+
+function setScrollerRef(
+  value: { scrollToItem: (index: number) => void } | null,
+) {
+  snippetScrollerLocalRef.value = value
+  setSnippetScrollerRef(value)
+}
+
+watch(
+  [displayedSnippets, () => state.snippetId, snippetScrollerLocalRef],
+  ([snippets, snippetId, scroller]) => {
+    if (isInitialSnippetPositionRestored.value)
+      return
+
+    if (!scroller || !snippets?.length || snippetId === undefined)
+      return
+
+    const index = snippets.findIndex(snippet => snippet.id === snippetId)
+
+    if (index < 0)
+      return
+
+    isInitialSnippetPositionRestored.value = true
+
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        scroller.scrollToItem(index)
+      })
+    })
+  },
+  {
+    immediate: true,
+    flush: 'post',
+  },
+)
 </script>
 
 <template>
@@ -36,11 +76,11 @@ watch(width, () => {
     </div>
     <RecycleScroller
       v-if="displayedSnippets?.length"
-      ref="snippetScrollerRef"
+      :ref="setScrollerRef"
       v-slot="{ item }"
       class="scrollbar flex-grow px-2"
       :items="displayedSnippets"
-      :item-size="58"
+      :item-size="SNIPPET_ITEM_SIZE"
       key-field="id"
     >
       <SnippetItem :snippet="item" />

@@ -168,7 +168,7 @@ watch(isDark, (value) => {
 <template>
   <div
     data-editor-markdown
-    class="grid grid-rows-[auto_1fr] overflow-scroll"
+    class="grid grid-rows-[auto_1fr] overflow-hidden"
   >
     <EditorHeaderTool v-if="isShowHeaderTool">
       <div class="flex w-full justify-end gap-2 px-2">
@@ -189,14 +189,14 @@ watch(isDark, (value) => {
         </UiActionButton>
       </div>
     </EditorHeaderTool>
-    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+    <div class="scrollbar h-full min-h-0 overflow-y-auto">
       <div
         ref="markdownRef"
         class="markdown-content"
       >
         <div v-html="renderedContent" />
       </div>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>
 
@@ -204,7 +204,7 @@ watch(isDark, (value) => {
 @reference '../../../styles.css';
 
 .markdown-content {
-  @apply overflow-auto p-4 font-sans text-[var(--color-text)];
+  @apply p-4 font-sans text-[var(--color-text)];
   font-size: calc(1rem * var(--markdown-scale));
   line-height: 1.5;
 }

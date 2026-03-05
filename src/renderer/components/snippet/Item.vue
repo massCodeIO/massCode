@@ -311,19 +311,19 @@ onClickOutside(snippetRef, () => {
 @reference "../../styles.css";
 [data-snippet-item] {
   &.is-selected {
-    @apply bg-list-selection text-list-selection-fg rounded-md;
+    @apply bg-list-selection text-list-selection-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-selection-fg;
     }
   }
   &.is-multi-selected {
-    @apply bg-list-selection/80 text-list-selection-fg rounded-md;
+    @apply bg-list-selection/80 text-list-selection-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-selection-fg;
     }
   }
   &.is-focused:not(.is-multi-selected) {
-    @apply bg-list-focus text-list-focus-fg rounded-md;
+    @apply bg-list-focus text-list-focus-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-focus-fg;
     }

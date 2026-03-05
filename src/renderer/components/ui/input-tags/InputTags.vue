@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { TagItem } from './types'
 import { i18n } from '@/electron'
 import { X } from 'lucide-vue-next'
@@ -34,9 +33,7 @@ const isFocused = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
 const suggestionsRef = ref<HTMLDivElement | null>(null)
-const scrollbarRef = ref<
-  (PerfectScrollbarExpose & { $el: HTMLElement }) | null
->(null)
+const scrollContainerRef = ref<HTMLDivElement | null>(null)
 
 const dropdownStyle = ref({
   top: '0px',
@@ -58,8 +55,8 @@ function updateDropdownPosition() {
         width: `${rect.width}px`,
       }
 
-      if (scrollbarRef.value?.$el) {
-        scrollbarRef.value.$el.style.maxHeight = `${maxHeight}px`
+      if (scrollContainerRef.value) {
+        scrollContainerRef.value.style.maxHeight = `${maxHeight}px`
       }
     }
   })
@@ -183,7 +180,7 @@ function handleKeydown(e: KeyboardEvent) {
 function ensureSelectedSuggestionVisible() {
   nextTick(() => {
     const listItems = suggestionsRef.value?.querySelectorAll('li')
-    const scrollContainer = suggestionsRef.value?.querySelector('.ps')
+    const scrollContainer = scrollContainerRef.value
 
     if (listItems && scrollContainer && selectedSuggestionIndex.value >= 0) {
       const selectedItem = listItems[selectedSuggestionIndex.value]
@@ -295,17 +292,6 @@ watch(isFocused, (newValue) => {
     updateDropdownPosition()
   }
 })
-
-watch(
-  () => filteredSuggestions.value,
-  () => {
-    nextTick(() => {
-      if (scrollbarRef.value) {
-        scrollbarRef.value.ps?.update()
-      }
-    })
-  },
-)
 </script>
 
 <template>
@@ -345,9 +331,9 @@ watch(
     class="bg-bg border-border fixed z-50 rounded-md border shadow-lg"
     :style="dropdownStyle"
   >
-    <PerfectScrollbar
-      ref="scrollbarRef"
-      :options="{ minScrollbarLength: 20, suppressScrollX: true }"
+    <div
+      ref="scrollContainerRef"
+      class="scrollbar max-h-[240px] overflow-x-hidden overflow-y-auto"
     >
       <ul class="w-full p-1">
         <li
@@ -366,6 +352,6 @@ watch(
           {{ suggestion.name }}
         </li>
       </ul>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>

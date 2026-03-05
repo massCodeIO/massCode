@@ -10,10 +10,8 @@ import { i18n, ipc, store } from '@/electron'
 import { format } from 'date-fns'
 import { LoaderCircle, RotateCcw, Trash2 } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
-import { preferencesKeys } from './keys'
 
 const { sonner } = useSonner()
-const { scrollRef } = inject(preferencesKeys)!
 
 function normalizeStorageEngine(
   engine: string | undefined,
@@ -310,9 +308,6 @@ async function createBackup() {
 
   if (isShowBackupList.value) {
     await showBackupList()
-    nextTick(() => {
-      scrollRef.value?.ps?.update()
-    })
   }
 }
 
@@ -363,10 +358,6 @@ async function deleteBackup(backupPath: string) {
     message: i18n.t('messages:success.backup.deleted'),
     type: 'success',
   })
-
-  nextTick(() => {
-    scrollRef.value?.ps?.update()
-  })
 }
 
 async function moveBackupStorage() {
@@ -401,9 +392,6 @@ async function openBackupStorage() {
 
   if (isShowBackupList.value) {
     await showBackupList()
-    nextTick(() => {
-      scrollRef.value?.ps?.update()
-    })
   }
 }
 
@@ -435,9 +423,6 @@ function isManualBackup(backup: Backup) {
 
 function hideBackupList() {
   isShowBackupList.value = false
-  nextTick(() => {
-    scrollRef.value?.ps?.update()
-  })
 }
 
 watch(

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Props } from './types'
-import { CheckCircle2, Info, X, XCircle } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-vue-next'
 
 interface Emits {
   (e: 'closeToast'): void
@@ -22,6 +22,9 @@ const icon = computed(() => {
   if (props.type === 'error') {
     return XCircle
   }
+  if (props.type === 'warning') {
+    return AlertTriangle
+  }
 
   return Info
 })
@@ -32,6 +35,7 @@ const icon = computed(() => {
     class="bg-bg border-border relative w-[var(--width)] rounded-md border p-3 shadow-lg"
     :class="{
       'border-red-700': type === 'error',
+      'border-yellow-600': type === 'warning',
     }"
   >
     <div
@@ -51,6 +55,7 @@ const icon = computed(() => {
           :class="{
             'text-red-700': type === 'error',
             'text-green-500': type === 'success',
+            'text-yellow-600': type === 'warning',
           }"
         />
       </div>

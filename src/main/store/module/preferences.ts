@@ -8,7 +8,7 @@ const isWin = platform() === 'win32'
 const storagePath = isWin ? `${homedir()}\\massCode` : `${homedir()}/massCode`
 const backupPath = isWin ? `${storagePath}\\backups` : `${storagePath}/backups`
 
-export default new Store<PreferencesStore>({
+const preferencesStore = new Store<PreferencesStore>({
   name: 'preferences',
   cwd: 'v2',
 
@@ -18,6 +18,10 @@ export default new Store<PreferencesStore>({
     language: 'en_US',
     theme: 'auto',
     editor: EDITOR_DEFAULTS,
+    storage: {
+      engine: 'sqlite',
+      vaultPath: null,
+    },
     markdown: {
       scale: 1,
     },
@@ -29,3 +33,5 @@ export default new Store<PreferencesStore>({
     },
   },
 })
+
+export default preferencesStore

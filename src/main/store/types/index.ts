@@ -17,6 +17,7 @@ export interface AppStore {
   }
   isAutoMigratedFromJson: boolean
   nextDonateNotification?: number
+  lastSeenReleaseNoticeVersion?: string
 }
 
 export interface EditorSettings {
@@ -35,6 +36,11 @@ export interface MarkdownSettings {
   scale: number
 }
 
+export interface StorageSettings {
+  engine: 'sqlite' | 'markdown'
+  vaultPath: string | null
+}
+
 export interface BackupSettings {
   path: string
   enabled: boolean
@@ -49,6 +55,7 @@ export interface PreferencesStore {
   language: string
   theme: 'light' | 'dark' | 'auto'
   editor: EditorSettings
+  storage: StorageSettings
   markdown: MarkdownSettings
   backup: BackupSettings
 }

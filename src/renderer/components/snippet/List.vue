@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { useApp, useGutter, useSnippets } from '@/composables'
+import { setSnippetScrollerRef } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const listRef = ref<HTMLElement>()
 const gutterRef = ref<{ $el: HTMLElement }>()
-const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
+const snippetScrollerLocalRef = ref<{
+  scrollToItem: (index: number) => void
+} | null>(null)
+const isInitialSnippetPositionRestored = ref(false)
+const SNIPPET_ITEM_SIZE = 61
 
-const { snippetListWidth } = useApp()
+const { snippetListWidth, state } = useApp()
 const { displayedSnippets } = useSnippets()
 
 const { width } = useGutter({
@@ -25,13 +29,40 @@ watch(width, () => {
   store.app.set('sizes.snippetListWidth', width.value)
 })
 
-watch(displayedSnippets, () => {
-  nextTick(() => {
-    if (scrollbarRef.value) {
-      scrollbarRef.value.ps?.update()
-    }
-  })
-})
+function setScrollerRef(
+  value: { scrollToItem: (index: number) => void } | null,
+) {
+  snippetScrollerLocalRef.value = value
+  setSnippetScrollerRef(value)
+}
+
+watch(
+  [displayedSnippets, () => state.snippetId, snippetScrollerLocalRef],
+  ([snippets, snippetId, scroller]) => {
+    if (isInitialSnippetPositionRestored.value)
+      return
+
+    if (!scroller || !snippets?.length || snippetId === undefined)
+      return
+
+    const index = snippets.findIndex(snippet => snippet.id === snippetId)
+
+    if (index < 0)
+      return
+
+    isInitialSnippetPositionRestored.value = true
+
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        scroller.scrollToItem(index)
+      })
+    })
+  },
+  {
+    immediate: true,
+    flush: 'post',
+  },
+)
 </script>
 
 <template>
@@ -43,19 +74,17 @@ watch(displayedSnippets, () => {
     <div>
       <SnippetHeader />
     </div>
-    <PerfectScrollbar
+    <RecycleScroller
       v-if="displayedSnippets?.length"
-      ref="scrollbarRef"
-      :options="{ minScrollbarLength: 20, suppressScrollX: true }"
+      :ref="setScrollerRef"
+      v-slot="{ item }"
+      class="scrollbar flex-grow px-2"
+      :items="displayedSnippets"
+      :item-size="SNIPPET_ITEM_SIZE"
+      key-field="id"
     >
-      <div class="flex-grow overflow-y-auto px-2">
-        <SnippetItem
-          v-for="snippet in displayedSnippets"
-          :key="snippet.id"
-          :snippet="snippet"
-        />
-      </div>
-    </PerfectScrollbar>
+      <SnippetItem :snippet="item" />
+    </RecycleScroller>
     <UiEmptyPlaceholder
       v-else
       :text="i18n.t('placeholder.emptySnippetsList')"

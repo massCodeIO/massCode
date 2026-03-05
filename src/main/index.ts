@@ -1,7 +1,8 @@
 /* eslint-disable node/prefer-global/process */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { version } from '../../package.json'
 import { initApi } from './api'
 import { startAutoBackup } from './db'
 import { migrateJsonToSqlite } from './db/migrate'
@@ -18,6 +19,36 @@ const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
 let isQuitting = false
+
+// TODO: Удаление уведомления о функции в версии 5.0.0
+const SQLITE_SUNSET_VERSION = '5.0.0'
+
+function shouldShowFeatureNotice(): boolean {
+  const lastSeenVersion = store.app.get('lastSeenReleaseNoticeVersion')
+  const lastSeenMajor = Number.parseInt(
+    (lastSeenVersion || '').split('.')[0] || '0',
+    10,
+  )
+  const currentMajor = Number.parseInt(version.split('.')[0] || '0', 10)
+
+  if (lastSeenMajor >= currentMajor) {
+    return false
+  }
+
+  return currentMajor === 4
+}
+
+function showFeatureNotice() {
+  if (!shouldShowFeatureNotice()) {
+    return
+  }
+
+  mainWindow.webContents.send('system:feature-notice', {
+    sqliteSunsetVersion: SQLITE_SUNSET_VERSION,
+  })
+
+  store.app.set('lastSeenReleaseNoticeVersion', version)
+}
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -56,6 +87,10 @@ function createWindow() {
       path.join(__dirname, '../../build/renderer/index.html'),
     )
   }
+
+  ipcMain.once('system:renderer-ready', () => {
+    showFeatureNotice()
+  })
 
   mainWindow.on('close', (event) => {
     store.app.set('bounds', mainWindow.getBounds())

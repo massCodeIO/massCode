@@ -3,11 +3,21 @@
   "storage": {
     "section": {
       "main": "Main",
+      "migration": "Migration",
+      "dangerZone": "Danger Zone",
       "backup": "Backup"
     },
     "label": "Storage",
     "migrate": "Migrate",
+    "migrateMarkdownToSqlite": "Migrate Markdown to SQLite",
+    "migrateSqliteToMarkdown": "Migrate SQLite to Markdown",
     "count": "Count",
+    "vaultPath": "Vault Path",
+    "engine": {
+      "label": "Storage Engine",
+      "sqlite": "SQLite",
+      "markdown": "Markdown Vault"
+    },
     "clearDatabase": "Clear Database",
     "backup": {
       "label": "Backup",

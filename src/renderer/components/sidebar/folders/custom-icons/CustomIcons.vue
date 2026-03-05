@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import UiInput from '~/renderer/components/ui/input/Input.vue'
 import { useFolders } from '~/renderer/composables'
 import { icons, iconsSet } from './icons'
@@ -100,8 +99,8 @@ watch(selectedIndex, () => {
         @keydown="onKeydown"
       />
     </div>
-    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-      <div class="grid max-h-[200px] auto-rows-[36px] grid-cols-8 gap-2">
+    <div class="scrollbar max-h-[200px] overflow-y-auto">
+      <div class="grid auto-rows-[36px] grid-cols-8 gap-2">
         <div
           v-for="(icon, index) in iconsBySearch"
           :id="`icon-${index}`"
@@ -120,6 +119,6 @@ watch(selectedIndex, () => {
           />
         </div>
       </div>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>

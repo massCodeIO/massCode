@@ -31,6 +31,8 @@
     "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
     "copy:locales": "node scripts/copy-locales.js",
+    "bench:load-test": "node scripts/bench-load-test.js",
+    "bench:seed": "node scripts/bench-seed.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -52,6 +54,7 @@
     "@vueuse/core": "^12.7.0",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
+    "chokidar": "^4.0.3",
     "chroma-js": "^3.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -86,7 +89,7 @@
     "toml": "^3.0.0",
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
-    "vue3-perfect-scrollbar": "^2.0.0",
+    "vue-virtual-scroller": "2.0.0-beta.8",
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {

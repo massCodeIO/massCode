@@ -76,29 +76,31 @@ function onUpdateContextMenu(bool: boolean) {
 </script>
 
 <template>
-  <PerfectScrollbar
+  <div
     v-if="tags.length"
     data-sidebar-tags
-    :options="{ minScrollbarLength: 20, suppressScrollX: true }"
+    class="h-full min-h-0"
   >
-    <ContextMenu.Root @update:open="onUpdateContextMenu">
-      <ContextMenu.Trigger>
-        <SidebarTagsItem
-          v-for="tag in tags"
-          :id="tag.id"
-          :key="tag.id"
-          :name="tag.name"
-          @click="onTagClick(tag.id)"
-          @contextmenu="onClickContextMenu(tag.id)"
-        />
-      </ContextMenu.Trigger>
-      <ContextMenu.Content>
-        <ContextMenu.Item @click="onDelete">
-          {{ i18n.t("action.delete.common") }}
-        </ContextMenu.Item>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
-  </PerfectScrollbar>
+    <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
+      <ContextMenu.Root @update:open="onUpdateContextMenu">
+        <ContextMenu.Trigger>
+          <SidebarTagsItem
+            v-for="tag in tags"
+            :id="tag.id"
+            :key="tag.id"
+            :name="tag.name"
+            @click="onTagClick(tag.id)"
+            @contextmenu="onClickContextMenu(tag.id)"
+          />
+        </ContextMenu.Trigger>
+        <ContextMenu.Content>
+          <ContextMenu.Item @click="onDelete">
+            {{ i18n.t("action.delete.common") }}
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Root>
+    </div>
+  </div>
   <UiEmptyPlaceholder
     v-else
     :text="i18n.t('placeholder.emptyTagList')"

@@ -27,6 +27,7 @@ const highlightedTagId = ref<number>()
 const focusedFolderId = ref<number | undefined>()
 const focusedSnippetId = ref<number | undefined>()
 
+const isAppLoading = ref(true)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
 const isShowMarkdown = ref(false)
@@ -95,6 +96,7 @@ export function useApp() {
   return {
     focusedFolderId,
     focusedSnippetId,
+    isAppLoading,
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,

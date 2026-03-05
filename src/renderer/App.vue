@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { Toaster } from 'vue-sonner'
@@ -8,7 +9,22 @@ import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 import { notifications } from './services/notifications'
 
-const { isSponsored } = useApp()
+const { isSponsored, isAppLoading } = useApp()
+
+const showLoader = ref(false)
+let loaderTimer: ReturnType<typeof setTimeout> | null = null
+
+loaderTimer = setTimeout(() => {
+  showLoader.value = true
+}, 300)
+
+watch(isAppLoading, (value) => {
+  if (!value) {
+    clearTimeout(loaderTimer!)
+    showLoader.value = false
+  }
+})
+
 useTheme()
 
 async function init() {
@@ -34,6 +50,15 @@ init()
     {{ i18n.t("messages:special.unsponsored") }}
   </div>
   <RouterView />
+  <div
+    v-if="isAppLoading"
+    class="bg-bg absolute inset-0 z-50 flex flex-col items-center justify-center"
+  >
+    <template v-if="showLoader">
+      App loading...
+      <LoaderCircle class="text-text-muted mt-4 h-5 w-5 animate-spin" />
+    </template>
+  </div>
   <Toaster style="--width: 356px; --offset: 12px" />
 </template>
 

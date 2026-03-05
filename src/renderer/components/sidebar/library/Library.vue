@@ -12,7 +12,7 @@ import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
-const { state } = useApp()
+const { state, isAppLoading } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
@@ -66,8 +66,6 @@ async function initGetFolders() {
   })
 }
 
-initGetFolders()
-
 async function initGetSnippets() {
   await getSnippets()
 
@@ -80,7 +78,12 @@ async function initGetSnippets() {
   })
 }
 
-initGetSnippets()
+async function initApp() {
+  await Promise.all([initGetFolders(), initGetSnippets()])
+  isAppLoading.value = false
+}
+
+initApp()
 
 async function onFolderClick({
   id,

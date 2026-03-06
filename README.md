@@ -108,12 +108,32 @@ Handy built-in utilities for everyday dev tasks:
 * **Crypto & Security**: Hash/HMAC, Password Generator, UUID
 * **Encoders/Decoders**: URL, Base64, JSON ⇄ TOML/XML/YAML, Text ⇄ ASCII/Binary/Unicode, Color Converter
 
+### Custom Themes
+
+Fully customize the UI and editor syntax highlighting with JSON theme files stored in `~/.massCode/themes/`. Supports light and dark types with live reload.
+
 ### Integrations
 
 Extend your workflow with:
 
 * [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant): zen mode snippet search, instant insertion, and save selected code as snippets.
 * [Raycast Extension](https://www.raycast.com/antonreshetov/masscode): quick snippet access directly from Raycast.
+
+## Storage
+
+massCode supports two storage engines — you can switch between them in **Settings → Storage**.
+
+### SQLite
+
+The default storage engine. All data is stored in a single SQLite database file.
+
+### Markdown Vault
+
+Store snippets as plain `.md` files on disk. No database — just files with frontmatter metadata. The vault structure mirrors your folder hierarchy.
+
+* **Git-friendly** — track changes, sync via GitHub or any Git remote.
+* **Cloud sync** — works with iCloud, Dropbox, Syncthing, or any file sync service.
+* **Live sync** — massCode watches the vault directory and picks up external changes in real time.
 
 ## Overview
 

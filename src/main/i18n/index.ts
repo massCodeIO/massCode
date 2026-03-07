@@ -14,15 +14,7 @@ i18next.use(Backend).init({
   fallbackLng: 'en_US',
   lng,
   debug: false,
-  ns: [
-    'devtools',
-    'math-notebook',
-    'menu',
-    'messages',
-    'preferences',
-    'special',
-    'ui',
-  ],
+  ns: ['devtools', 'menu', 'messages', 'preferences', 'special', 'ui'],
   defaultNS: 'ui',
   initImmediate: false,
   preload: readdirSync(join(__dirname, './locales')).filter((fileName) => {

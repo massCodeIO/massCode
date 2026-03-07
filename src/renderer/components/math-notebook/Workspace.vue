@@ -99,7 +99,7 @@ function handleActiveLine(line: number) {
     </div>
     <div class="text-center">
       <p class="text-text-muted/60 text-[13px]">
-        {{ i18n.t("math-notebook:newSheet") }}
+        {{ i18n.t("mathNotebook.newSheet") }}
       </p>
     </div>
   </div>

@@ -12,7 +12,7 @@ onMounted(() => {
 
 <template>
   <LayoutTwoColumn
-    :title="i18n.t('math-notebook:label')"
+    :title="i18n.t('mathNotebook.label')"
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>

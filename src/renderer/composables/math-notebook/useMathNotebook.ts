@@ -68,7 +68,7 @@ const debouncedPersist = useDebounceFn(persist, 500)
 export function useMathNotebook() {
   function createSheet() {
     const nextSheetName = getNextIndexedName(
-      i18n.t('math-notebook:untitled'),
+      i18n.t('mathNotebook.untitled'),
       sheets.value.map(sheet => sheet.name),
     )
     const sheet: MathSheet = {

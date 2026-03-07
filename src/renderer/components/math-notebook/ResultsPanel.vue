@@ -96,7 +96,7 @@ function getResultClasses(result: LineResult, index: number) {
       >
         <template v-if="copiedIndex === index">
           <span class="truncate text-[11px] tracking-wider opacity-80">
-            {{ i18n.t("math-notebook:copied") }}
+            {{ i18n.t("mathNotebook.copied") }}
           </span>
         </template>
         <template v-else>
@@ -123,7 +123,7 @@ function getResultClasses(result: LineResult, index: number) {
         <span
           class="text-text-muted/60 text-[10px] font-medium tracking-[0.1em] uppercase"
         >
-          {{ i18n.t("math-notebook:total") }}
+          {{ i18n.t("total") }}
         </span>
         <span
           class="hover:text-primary cursor-pointer font-mono text-[13px] font-medium tracking-wide transition-colors"
@@ -138,7 +138,7 @@ function getResultClasses(result: LineResult, index: number) {
       class="border-border/40 mb-2 flex h-[28px] shrink-0 items-center justify-end border-t px-2"
     >
       <UiActionButton
-        :tooltip="i18n.t('math-notebook:total')"
+        :tooltip="i18n.t('total')"
         @click="showTotal = !showTotal"
       >
         <Sigma

@@ -59,13 +59,15 @@ function formatDate(timestamp: number) {
 
 <template>
   <div class="flex h-full flex-col overflow-hidden">
-    <div class="flex items-center justify-center px-2 pb-2">
+    <div class="_mt-1 flex items-center justify-between px-2 pb-2 select-none">
+      <div class="text-[10px] font-bold uppercase">
+        {{ i18n.t("mathNotebook.sheetList") }}
+      </div>
       <UiActionButton
-        type="iconText"
-        :tooltip="i18n.t('math-notebook:newSheet')"
+        :tooltip="i18n.t('mathNotebook.newSheet')"
         @click="handleCreateSheet"
       >
-        <Plus class="mr-1 h-4 w-4" /> Add new
+        <Plus class="h-4 w-4" />
       </UiActionButton>
     </div>
 
@@ -125,14 +127,14 @@ function formatDate(timestamp: number) {
 
         <ContextMenu.Content>
           <ContextMenu.Item @click="startRename(sheet.id, sheet.name)">
-            {{ i18n.t("math-notebook:renameSheet") }}
+            {{ i18n.t("action.rename") }}
           </ContextMenu.Item>
           <ContextMenu.Separator />
           <ContextMenu.Item
             class="text-red-400"
             @click="deleteSheet(sheet.id)"
           >
-            {{ i18n.t("math-notebook:deleteSheet") }}
+            {{ i18n.t("action.delete.common") }}
           </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Root>
@@ -141,7 +143,7 @@ function formatDate(timestamp: number) {
         v-if="sheets.length === 0"
         class="text-text-muted/30 mt-8 text-center text-[12px]"
       >
-        {{ i18n.t("math-notebook:newSheet") }}
+        {{ i18n.t("placeholder.emptySheetList") }}
       </div>
     </div>
   </div>

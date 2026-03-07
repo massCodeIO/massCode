@@ -12,7 +12,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const containerRef = ref<HTMLElement>()
 const showTotal = ref(true)
 const copiedIndex = ref<number | null>(null)
 
@@ -35,14 +34,11 @@ const formattedTotal = computed(() => {
     : total.value.toLocaleString('en-US', { maximumFractionDigits: 6 })
 })
 
-watch(
-  () => props.scrollTop,
-  (val) => {
-    if (containerRef.value) {
-      containerRef.value.scrollTop = val
-    }
-  },
-)
+const resultsStyle = computed(() => {
+  return {
+    transform: `translate3d(0, ${-Math.max(props.scrollTop, 0)}px, 0)`,
+  }
+})
 
 function handleClickResult(result: LineResult, index: number) {
   if (result.value) {
@@ -88,42 +84,44 @@ function getResultClasses(result: LineResult, index: number) {
 
 <template>
   <div class="flex h-full flex-col overflow-hidden">
-    <div
-      ref="containerRef"
-      class="min-h-0 flex-1 overflow-hidden py-1 pr-3 pl-3"
-    >
+    <div class="min-h-0 flex-1 overflow-hidden py-1 pr-3 pl-3">
       <div
-        v-for="(result, index) in results"
-        :key="index"
-        :class="getResultClasses(result, index)"
-        @click="handleClickResult(result, index)"
+        class="will-change-transform"
+        :style="resultsStyle"
       >
-        <template v-if="copiedIndex === index">
-          <span class="truncate text-[11px] tracking-wider opacity-80">
-            {{ i18n.t("mathNotebook.copied") }}
-          </span>
-        </template>
-        <template v-else-if="result.type === 'pending'">
-          <LoaderCircle class="h-3.5 w-3.5 animate-spin" />
-        </template>
-        <template v-else-if="result.error && result.showError">
-          <span class="truncate">
-            {{ result.error }}
-          </span>
-        </template>
-        <template v-else>
-          <span
-            v-if="result.value"
-            class="truncate"
-            :class="{
-              'font-medium':
-                ['number', 'aggregate'].includes(result.type)
-                && props.activeLine === index,
-            }"
-          >
-            {{ result.value }}
-          </span>
-        </template>
+        <div
+          v-for="(result, index) in results"
+          :key="index"
+          :class="getResultClasses(result, index)"
+          @click="handleClickResult(result, index)"
+        >
+          <template v-if="copiedIndex === index">
+            <span class="truncate text-[11px] tracking-wider opacity-80">
+              {{ i18n.t("mathNotebook.copied") }}
+            </span>
+          </template>
+          <template v-else-if="result.type === 'pending'">
+            <LoaderCircle class="h-3.5 w-3.5 animate-spin" />
+          </template>
+          <template v-else-if="result.error && result.showError">
+            <span class="truncate">
+              {{ result.error }}
+            </span>
+          </template>
+          <template v-else>
+            <span
+              v-if="result.value"
+              class="truncate"
+              :class="{
+                'font-medium':
+                  ['number', 'aggregate'].includes(result.type)
+                  && props.activeLine === index,
+              }"
+            >
+              {{ result.value }}
+            </span>
+          </template>
+        </div>
       </div>
     </div>
 

@@ -250,6 +250,15 @@ function parseDateParts(value: string, now: Date, timeZone: string) {
     }
   }
 
+  const dottedMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?$/)
+  if (dottedMatch) {
+    return {
+      year: Number(dottedMatch[3] || currentDateParts.year),
+      month: Number(dottedMatch[2]),
+      day: Number(dottedMatch[1]),
+    }
+  }
+
   const monthNameMatch = trimmed.match(
     /^([a-z]+)\s+(\d{1,2})(?:\s+(\d{4}))?$/i,
   )
@@ -380,6 +389,64 @@ function parseZonedTemporalExpression(value: string, now: Date) {
   }
 
   return parseTemporalBody(resolved.expression, now, resolved.timeZone)
+}
+
+export function parseExplicitLocalTemporalExpression(value: string, now: Date) {
+  const trimmed = value.trim()
+  const localTimeZone = getLocalTimeZone()
+
+  if (!trimmed) {
+    return null
+  }
+
+  const timeAtEndMatch = trimmed.match(
+    /^(.*\S)\s+(\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)$/i,
+  )
+  if (timeAtEndMatch) {
+    const dateParts = parseDateParts(timeAtEndMatch[1], now, localTimeZone)
+    const timeParts = parseClockParts(timeAtEndMatch[2])
+
+    if (dateParts && timeParts) {
+      return {
+        date: new Date(
+          dateParts.year,
+          dateParts.month - 1,
+          dateParts.day,
+          timeParts.hour,
+          timeParts.minute,
+        ),
+        explicitDate: true,
+      }
+    }
+  }
+
+  const leadingTime = splitTemporalExpressionWithLeadingTime(trimmed)
+  if (leadingTime) {
+    const dateParts = parseDateParts(leadingTime.remainder, now, localTimeZone)
+
+    if (dateParts) {
+      return {
+        date: new Date(
+          dateParts.year,
+          dateParts.month - 1,
+          dateParts.day,
+          leadingTime.timeParts.hour,
+          leadingTime.timeParts.minute,
+        ),
+        explicitDate: true,
+      }
+    }
+  }
+
+  const dateParts = parseDateParts(trimmed, now, localTimeZone)
+  if (!dateParts) {
+    return null
+  }
+
+  return {
+    date: new Date(dateParts.year, dateParts.month - 1, dateParts.day, 0, 0),
+    explicitDate: true,
+  }
 }
 
 function resolveCurrentTimeZoneExpression(line: string) {

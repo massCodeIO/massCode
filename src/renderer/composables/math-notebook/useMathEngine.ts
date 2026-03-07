@@ -18,6 +18,7 @@ import {
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
+  parseExplicitLocalTemporalExpression,
 } from './math-engine/timeZones'
 
 export type { LineResult } from './math-engine/types'
@@ -255,6 +256,14 @@ function evaluateDateLikeExpression(
     return timeZoneResult.rawResult
   }
 
+  const localTemporalResult = parseExplicitLocalTemporalExpression(
+    expression,
+    now,
+  )
+  if (localTemporalResult) {
+    return localTemporalResult.date
+  }
+
   try {
     const result = math.evaluate(expression, scope)
     return result instanceof Date ? result : null
@@ -355,6 +364,43 @@ function evaluateDateArithmeticLine(
   return {
     lineResult: formatResult(currentDate),
     rawResult: currentDate,
+  }
+}
+
+function evaluateDateAssignmentLine(
+  line: string,
+  now: Date,
+  scope: Record<string, any>,
+): SpecialLineResult | null {
+  const assignmentIndex = line.indexOf('=')
+  if (assignmentIndex <= 0) {
+    return null
+  }
+
+  const variableName = line.slice(0, assignmentIndex).trim()
+  if (!/^[a-z_]\w*$/i.test(variableName)) {
+    return null
+  }
+
+  const expression = line.slice(assignmentIndex + 1).trim()
+  if (!expression) {
+    return null
+  }
+
+  const dateValue = evaluateDateLikeExpression(expression, now, scope)
+
+  if (!dateValue) {
+    return null
+  }
+
+  scope[variableName] = dateValue
+
+  return {
+    lineResult: {
+      ...formatResult(dateValue),
+      type: 'assignment',
+    },
+    rawResult: dateValue,
   }
 }
 
@@ -476,6 +522,18 @@ export function useMathEngine() {
         }
 
         const processed = preprocessMathExpression(trimmed)
+
+        const dateAssignmentResult = evaluateDateAssignmentLine(
+          processed,
+          currentDate,
+          scope,
+        )
+        if (dateAssignmentResult) {
+          results.push(dateAssignmentResult.lineResult)
+          prevResult = dateAssignmentResult.rawResult
+          continue
+        }
+
         const dateArithmeticResult = evaluateDateArithmeticLine(
           processed,
           currentDate,
@@ -484,6 +542,16 @@ export function useMathEngine() {
         if (dateArithmeticResult) {
           results.push(dateArithmeticResult.lineResult)
           prevResult = dateArithmeticResult.rawResult
+          continue
+        }
+
+        const localTemporalResult = parseExplicitLocalTemporalExpression(
+          processed,
+          currentDate,
+        )
+        if (localTemporalResult) {
+          results.push(formatResult(localTemporalResult.date))
+          prevResult = localTemporalResult.date
           continue
         }
 

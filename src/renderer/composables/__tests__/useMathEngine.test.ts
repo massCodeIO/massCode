@@ -670,6 +670,14 @@ describe('fromunix', () => {
       new Date((1446587186 + 2 * 86400) * 1000).toLocaleString(),
     )
   })
+
+  it('local dotted date assignment + 2 day', () => {
+    const results = evalLines('x = 12.03.2025\nx + 2 day')
+    expect(results[0].type).toBe('assignment')
+    expect(results[0].value).toBe(new Date(2025, 2, 12).toLocaleString())
+    expect(results[1].type).toBe('date')
+    expect(results[1].value).toBe(new Date(2025, 2, 14).toLocaleString())
+  })
 })
 
 describe('time zones', () => {

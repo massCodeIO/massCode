@@ -23,6 +23,7 @@
     "toggleDarkMode": "Přepnout tmavý režim",
     "background": "Pozadí",
     "goToDownload": "Přejít ke stažení",
+    "goToSettings": "Přejít do nastavení",
     "refreshPreview": "Obnovit náhled",
     "laserPointer": "Laserové ukazovátko",
     "fullscreen": "Celá obrazovka",
@@ -86,6 +87,9 @@
       "create": "Vytvořit zálohu",
       "restore": "Obnovit ze zálohy",
       "delete": "Smazat zálohu"
+    },
+    "select": {
+      "directory": "Vybrat složku"
     }
   },
   "sidebar": {

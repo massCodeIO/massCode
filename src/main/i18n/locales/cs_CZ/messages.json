@@ -9,6 +9,14 @@
       "Opravdu chcete provést migraci?",
       "Během migrace bude současná knihovna přepsána."
     ],
+    "migrateToMarkdown": [
+      "Migrovat SQLite do Markdown vaultu?",
+      "Vybraný vault bude přepsán současnou SQLite knihovnou."
+    ],
+    "migrateToSqlite": [
+      "Migrovat Markdown vault do SQLite?",
+      "Současná data v SQLite budou nahrazena daty z Markdown vaultu."
+    ],
     "backup": {
       "restore": "Opravdu chcete obnovit ze zálohy?",
       "delete": "Opravdu chcete smazat tuto zálohu?"
@@ -17,6 +25,9 @@
   "success": {
     "copied": "Zkopírováno do schránky",
     "migrate": "Databáze byla úspěšně migrována.",
+    "migrateToMarkdown": "SQLite byl migrován do Markdown vaultu. Složky: {{folders}}, snippety: {{snippets}}, tagy: {{tags}}.",
+    "migrateToSqlite": "Markdown vault byl migrován do SQLite. Složky: {{folders}}, snippety: {{snippets}}, tagy: {{tags}}.",
+    "vaultLoaded": "Vault byl úspěšně načten.",
     "backup": {
       "created": "Záloha byla úspěšně vytvořena.",
       "restored": "Záloha byla úspěšně obnovena.",
@@ -40,6 +51,7 @@
   },
   "description": {
     "storage": "Pro použití synchronizačních služeb jako iCloud Drive, Google Drive nebo Dropbox jednoduše přesuňte úložiště do odpovídajících synchronizovaných složek",
+    "storageVault": "Vyberte složku vaultu. Pro synchronizaci mezi zařízeními vyberte složku v iCloud Drive, Google Drive nebo Dropbox.",
     "migrate": {
       "fromV3": "Pro migraci z massCode v3 vyberte složku obsahující JSON soubor.",
       "fromSnippetsLab": "Pro migraci ze SnippetsLab vyberte JSON soubor.",
@@ -57,6 +69,9 @@
   "special": {
     "supportMessage": "Ahoj, tady Anton 👋<br><br>\nDěkuji za používání massCode. Pokud vám tato aplikace přijde užitečná, prosím {{-tagStart}}přispějte{{-tagEnd}}. Bude mě to motivovat k dalšímu vývoji projektu.",
     "unsponsored": "Bez sponzorů"
+  },
+  "release": {
+    "mdVaultAvailable": "Novinka: Úložiště Markdown Vault je nyní k dispozici! SQLite bude odstraněno ve v{{sqliteSunsetVersion}}."
   },
   "update": {
     "available": "Verze {{newVersion}} je nyní k dispozici ke stažení.\nVaše verze je {{oldVersion}}.",

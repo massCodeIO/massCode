@@ -1,7 +1,5 @@
 import { all, create } from 'mathjs'
 
-import { DEFAULT_CURRENCY_RATES } from './constants'
-
 function createUnitSafe(
   mathInstance: ReturnType<typeof create>,
   name: string,
@@ -124,8 +122,4 @@ export function createMathInstance(currencyRates: Record<string, number>) {
   }
 
   return mathInstance
-}
-
-export function createDefaultMathInstance() {
-  return createMathInstance(DEFAULT_CURRENCY_RATES)
 }

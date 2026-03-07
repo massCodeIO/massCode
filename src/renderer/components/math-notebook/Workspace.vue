@@ -6,10 +6,12 @@ import { Calculator } from 'lucide-vue-next'
 
 interface CurrencyRatesPayload {
   rates: Record<string, number>
+  source: 'live' | 'cache' | 'unavailable'
 }
 
 const { activeSheet, updateSheet } = useMathNotebook()
-const { evaluateDocument, updateCurrencyRates } = useMathEngine()
+const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
+  = useMathEngine()
 
 const scrollTop = ref(0)
 const activeLine = ref(0)
@@ -44,11 +46,23 @@ onMounted(async () => {
       'system:currency-rates',
       null,
     )
-    updateCurrencyRates(payload.rates)
+    if (payload.source === 'unavailable') {
+      setCurrencyServiceState(
+        'unavailable',
+        i18n.t('mathNotebook.currencyUnavailable'),
+      )
+    }
+    else {
+      updateCurrencyRates(payload.rates)
+    }
     results.value = evaluateDocument(content.value)
   }
   catch {
-    // The engine already has static fallback rates.
+    setCurrencyServiceState(
+      'unavailable',
+      i18n.t('mathNotebook.currencyUnavailable'),
+    )
+    results.value = evaluateDocument(content.value)
   }
 })
 
@@ -97,10 +111,10 @@ function handleActiveLine(line: number) {
         :stroke-width="1"
       />
     </div>
-    <div class="text-center">
+    <!-- <div class="text-center">
       <p class="text-text-muted/60 text-[13px]">
         {{ i18n.t("mathNotebook.newSheet") }}
       </p>
-    </div>
+    </div> -->
   </div>
 </template>

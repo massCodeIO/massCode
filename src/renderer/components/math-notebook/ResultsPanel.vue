@@ -2,7 +2,7 @@
 import type { LineResult } from '@/composables/math-notebook'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { Sigma } from 'lucide-vue-next'
+import { LoaderCircle, Sigma } from 'lucide-vue-next'
 
 interface Props {
   results: LineResult[]
@@ -66,6 +66,10 @@ function getResultClasses(result: LineResult, index: number) {
     return `${base} text-red-400/50`
   }
 
+  if (result.type === 'pending') {
+    return `${base} text-text-muted/40`
+  }
+
   if (result.type === 'comment') {
     return `${base} text-text-muted/40`
   }
@@ -97,6 +101,14 @@ function getResultClasses(result: LineResult, index: number) {
         <template v-if="copiedIndex === index">
           <span class="truncate text-[11px] tracking-wider opacity-80">
             {{ i18n.t("mathNotebook.copied") }}
+          </span>
+        </template>
+        <template v-else-if="result.type === 'pending'">
+          <LoaderCircle class="h-3.5 w-3.5 animate-spin" />
+        </template>
+        <template v-else-if="result.error && result.showError">
+          <span class="truncate">
+            {{ result.error }}
           </span>
         </template>
         <template v-else>

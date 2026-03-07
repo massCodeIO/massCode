@@ -2,36 +2,6 @@ import { store } from './store'
 
 const CACHE_TTL = 1000 * 60 * 60
 
-const fallbackCurrencyRates: Record<string, number> = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  CAD: 1.36,
-  RUB: 89.5,
-  JPY: 149.5,
-  CNY: 7.24,
-  CHF: 0.88,
-  AUD: 1.53,
-  KRW: 1320,
-  INR: 83.1,
-  BRL: 4.97,
-  MXN: 17.15,
-  PLN: 4.02,
-  SEK: 10.42,
-  NOK: 10.55,
-  DKK: 6.87,
-  CZK: 22.7,
-  HUF: 355,
-  TRY: 30.2,
-  NZD: 1.63,
-  SGD: 1.34,
-  HKD: 7.82,
-  ZAR: 18.6,
-  THB: 35.2,
-  UAH: 37.5,
-  ILS: 3.65,
-}
-
 interface CurrencyRatesApiResponse {
   result?: string
   rates?: Record<string, number>
@@ -41,11 +11,11 @@ interface CurrencyRatesApiResponse {
 export interface CurrencyRatesPayload {
   rates: Record<string, number>
   fetchedAt: number
-  source: 'live' | 'cache' | 'static'
+  source: 'live' | 'cache' | 'unavailable'
 }
 
 function normalizeRates(rates: Record<string, number>) {
-  const normalized = { ...fallbackCurrencyRates }
+  const normalized: Record<string, number> = { USD: 1 }
 
   Object.entries(rates).forEach(([code, value]) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -104,9 +74,9 @@ export async function getCurrencyRates(): Promise<CurrencyRatesPayload> {
     }
 
     return {
-      rates: { ...fallbackCurrencyRates },
+      rates: {},
       fetchedAt: 0,
-      source: 'static',
+      source: 'unavailable',
     }
   }
 }

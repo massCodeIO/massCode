@@ -119,7 +119,8 @@
     "sheetList": "Sheet List",
     "newSheet": "New Sheet",
     "untitled": "Untitled",
-    "copied": "Copied"
+    "copied": "Copied",
+    "currencyUnavailable": "Currency rates service unavailable"
   },
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",

@@ -2,7 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMathEngine } from '../math-notebook/useMathEngine'
 
-const { evaluateDocument } = useMathEngine()
+const TEST_CURRENCY_RATES = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  CAD: 1.36,
+}
+
+const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
+  = useMathEngine()
 
 function evalLine(expr: string) {
   return evaluateDocument(expr)[0]
@@ -28,6 +36,10 @@ function expectDateWithYear(expr: string, year: string) {
   expect(result.type).toBe('date')
   expect(result.value).toContain(year)
 }
+
+beforeEach(() => {
+  updateCurrencyRates(TEST_CURRENCY_RATES)
+})
 
 describe('arithmetic', () => {
   it('addition', () => expectValue('10 + 5', '15'))
@@ -186,6 +198,25 @@ describe('scales', () => {
 })
 
 describe('currency', () => {
+  it('waits for currency rates while loading', () => {
+    setCurrencyServiceState('loading')
+
+    const result = evalLine('100 USD to EUR')
+    expect(result.type).toBe('pending')
+    expect(result.value).toBeNull()
+  })
+
+  it('shows service unavailable when rates cannot be loaded', () => {
+    setCurrencyServiceState(
+      'unavailable',
+      'Currency rates service unavailable',
+    )
+
+    const result = evalLine('100 USD to EUR')
+    expect(result.type).toBe('empty')
+    expect(result.error).toBe('Currency rates service unavailable')
+  })
+
   it('$ symbol', () => {
     const result = evalLine('$30')
     expect(result.type).toBe('unit')

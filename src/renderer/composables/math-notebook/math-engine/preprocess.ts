@@ -4,6 +4,7 @@ import {
   knownUnitTokens,
   NUMI_TIME_UNIT_TOKEN_MAP,
   NUMI_UNARY_FUNCTIONS,
+  SUPPORTED_CURRENCY_CODES,
   weightContextPattern,
 } from './constants'
 
@@ -36,6 +37,10 @@ function preprocessQuotedText(line: string): string {
   }
 
   return tokens.join(' ')
+}
+
+function sanitizeForCurrencyDetection(line: string) {
+  return preprocessQuotedText(preprocessLabels(line))
 }
 
 function preprocessGroupedNumbers(line: string): string {
@@ -342,6 +347,43 @@ export function splitByKeyword(line: string, keywords: string[]) {
   }
 
   return null
+}
+
+export function hasCurrencyExpression(line: string) {
+  const sanitized = sanitizeForCurrencyDetection(line)
+
+  if (!sanitized) {
+    return false
+  }
+
+  if (
+    Object.keys(currencySymbols).some(symbol => sanitized.includes(symbol))
+  ) {
+    return true
+  }
+
+  const currencyCodePattern = new RegExp(
+    `\\b(${SUPPORTED_CURRENCY_CODES.join('|')})\\b`,
+    'i',
+  )
+  if (currencyCodePattern.test(sanitized)) {
+    return true
+  }
+
+  return Object.keys(currencyWordNames).some((currencyName) => {
+    if (!new RegExp(`\\b${currencyName}\\b`, 'i').test(sanitized)) {
+      return false
+    }
+
+    if (
+      (currencyName === 'pound' || currencyName === 'pounds')
+      && weightContextPattern.test(sanitized)
+    ) {
+      return false
+    }
+
+    return true
+  })
 }
 
 export function preprocessMathExpression(line: string) {

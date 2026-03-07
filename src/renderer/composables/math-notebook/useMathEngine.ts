@@ -1,17 +1,20 @@
 import type {
   CssContext,
+  CurrencyServiceState,
   LineResult,
   SpecialLineResult,
 } from './math-engine/types'
 import {
-  DEFAULT_CURRENCY_RATES,
   DEFAULT_EM_IN_PX,
   DEFAULT_PPI,
   HUMANIZED_UNIT_NAMES,
 } from './math-engine/constants'
 import { evaluateCssLine } from './math-engine/css'
 import { createMathInstance } from './math-engine/mathInstance'
-import { preprocessMathExpression } from './math-engine/preprocess'
+import {
+  hasCurrencyExpression,
+  preprocessMathExpression,
+} from './math-engine/preprocess'
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
@@ -24,7 +27,9 @@ interface FormatDirective {
   expression: string
 }
 
-let activeCurrencyRates = { ...DEFAULT_CURRENCY_RATES }
+let activeCurrencyRates: Record<string, number> = {}
+let currencyServiceState: CurrencyServiceState = 'loading'
+let currencyUnavailableMessage = ''
 let math = createMathInstance(activeCurrencyRates)
 
 function detectFormatDirective(line: string): FormatDirective {
@@ -413,6 +418,24 @@ export function useMathEngine() {
       }
 
       try {
+        if (
+          currencyServiceState !== 'ready'
+          && hasCurrencyExpression(trimmed)
+        ) {
+          results.push(
+            currencyServiceState === 'loading'
+              ? { value: null, error: null, type: 'pending' }
+              : {
+                  value: null,
+                  error: currencyUnavailableMessage,
+                  showError: true,
+                  type: 'empty',
+                },
+          )
+          prevResult = undefined
+          continue
+        }
+
         const timeZoneDifferenceResult = evaluateTimeZoneDifferenceLine(
           trimmed,
           currentDate,
@@ -514,15 +537,30 @@ export function useMathEngine() {
   }
 
   function updateCurrencyRates(rates: Record<string, number>) {
+    currencyServiceState = 'ready'
+    currencyUnavailableMessage = ''
     activeCurrencyRates = {
-      ...activeCurrencyRates,
       ...rates,
     }
     math = createMathInstance(activeCurrencyRates)
   }
 
+  function setCurrencyServiceState(
+    state: CurrencyServiceState,
+    errorMessage = '',
+  ) {
+    currencyServiceState = state
+    currencyUnavailableMessage = state === 'unavailable' ? errorMessage : ''
+
+    if (state !== 'ready') {
+      activeCurrencyRates = {}
+      math = createMathInstance(activeCurrencyRates)
+    }
+  }
+
   return {
     evaluateDocument,
+    setCurrencyServiceState,
     updateCurrencyRates,
   }
 }

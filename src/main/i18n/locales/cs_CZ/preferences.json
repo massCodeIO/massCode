@@ -3,11 +3,21 @@
   "storage": {
     "section": {
       "main": "Hlavní",
+      "migration": "Migrace",
+      "dangerZone": "Nebezpečná zóna",
       "backup": "Záloha"
     },
     "label": "Úložiště",
     "migrate": "Migrovat",
+    "migrateMarkdownToSqlite": "Migrovat Markdown do SQLite",
+    "migrateSqliteToMarkdown": "Migrovat SQLite do Markdown",
     "count": "Počet",
+    "vaultPath": "Cesta k vaultu",
+    "engine": {
+      "label": "Úložiště",
+      "sqlite": "SQLite",
+      "markdown": "Markdown Vault"
+    },
     "clearDatabase": "Vymazat databázi",
     "backup": {
       "label": "Záloha",
@@ -57,6 +67,12 @@
     "label": "Vzhled",
     "theme": {
       "label": "Motiv",
+      "builtIn": "Vestavěný",
+      "custom": "Vlastní",
+      "themesDir": "Složka s motivy",
+      "createTemplate": "Vytvořit šablonu motivu",
+      "openThemesDir": "Otevřít složku s motivy",
+      "dirDescription": "Umístěte své JSON soubory s motivy do této složky.",
       "light": "Světlý",
       "dark": "Tmavý",
       "system": "Systémový"

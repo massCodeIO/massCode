@@ -94,6 +94,12 @@ const appMenuItems: MenuConfig[] = [
     click: () => send('main-menu:goto-devtools'),
   },
   {
+    id: 'math-notebook',
+    label: i18n.t('menu:app.mathNotebook'),
+    accelerator: 'CommandOrControl+Shift+.',
+    click: () => send('main-menu:goto-math-notebook'),
+  },
+  {
     type: 'separator' as any,
   },
   {

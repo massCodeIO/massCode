@@ -1,0 +1,836 @@
+/* eslint-disable test/prefer-lowercase-title */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useMathEngine } from '../useMathEngine'
+
+const { evaluateDocument } = useMathEngine()
+
+function evalLine(expr: string) {
+  return evaluateDocument(expr)[0]
+}
+
+function evalLines(text: string) {
+  return evaluateDocument(text)
+}
+
+function expectValue(expr: string, expected: string) {
+  const result = evalLine(expr)
+  expect(result.value).toBe(expected)
+}
+
+function expectNumericClose(expr: string, expected: number, precision = 2) {
+  const result = evalLine(expr)
+  const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+  expect(num).toBeCloseTo(expected, precision)
+}
+
+function expectDateWithYear(expr: string, year: string) {
+  const result = evalLine(expr)
+  expect(result.type).toBe('date')
+  expect(result.value).toContain(year)
+}
+
+describe('arithmetic', () => {
+  it('addition', () => expectValue('10 + 5', '15'))
+  it('subtraction', () => expectValue('20 - 3', '17'))
+  it('multiplication', () => expectValue('4 * 5', '20'))
+  it('division', () => expectValue('100 / 4', '25'))
+  it('parentheses', () => expectValue('(2 + 3) * 4', '20'))
+  it('exponent', () => expectValue('2 ^ 10', '1,024'))
+  it('negative numbers', () => expectValue('-5 + 3', '-2'))
+  it('decimal', () => expectValue('0.1 + 0.2', '0.3'))
+  it('complex expression', () => expectValue('2 + 3 * 4 - 1', '13'))
+  it('implicit multiplication', () => expectValue('6 (3)', '18'))
+  it('grouped thousands', () => expectValue('5 300', '5,300'))
+})
+
+describe('numi aliases', () => {
+  it('fact', () => expectValue('fact(5)', '120'))
+  it('arcsin', () => expectNumericClose('arcsin(1)', Math.PI / 2, 4))
+  it('arccos', () => expectNumericClose('arccos(1)', 0, 4))
+  it('arctan', () => expectNumericClose('arctan(1)', Math.PI / 4, 4))
+  it('root 2 (8)', () => expectNumericClose('root 2 (8)', Math.sqrt(8), 4))
+  it('log 2 (8)', () => expectNumericClose('log 2 (8)', 3, 4))
+})
+
+describe('word operators', () => {
+  it('times', () => expectValue('8 times 9', '72'))
+  it('plus', () => expectValue('10 plus 5', '15'))
+  it('and', () => expectValue('10 and 5', '15'))
+  it('with', () => expectValue('10 with 5', '15'))
+  it('minus', () => expectValue('20 minus 3', '17'))
+  it('subtract', () => expectValue('20 subtract 3', '17'))
+  it('without', () => expectValue('20 without 3', '17'))
+  it('multiplied by', () => expectValue('3 multiplied by 4', '12'))
+  it('divide', () => expectValue('100 divide 4', '25'))
+  it('divide by', () => expectValue('100 divide by 4', '25'))
+  it('mul', () => expectValue('5 mul 6', '30'))
+  it('mod', () => expectValue('17 mod 5', '2'))
+
+  it('does not replace words inside variable names', () => {
+    const results = evalLines('width = 100\nwidth * 2')
+    expect(results[1].value).toBe('200')
+  })
+})
+
+describe('variables', () => {
+  it('assignment and reuse', () => {
+    const results = evalLines('v = 20\nv * 7')
+    expect(results[0].value).toBe('20')
+    expect(results[0].type).toBe('assignment')
+    expect(results[1].value).toBe('140')
+  })
+
+  it('multiple variables', () => {
+    const results = evalLines('a = 10\nb = 20\na + b')
+    expect(results[2].value).toBe('30')
+  })
+
+  it('variable with word operator', () => {
+    const results = evalLines('v = 20\nv times 7')
+    expect(results[1].value).toBe('140')
+  })
+
+  it('variable reassignment', () => {
+    const results = evalLines('x = 5\nx = 10\nx + 1')
+    expect(results[2].value).toBe('11')
+  })
+})
+
+describe('labels', () => {
+  it('strip label and evaluate', () => {
+    expectNumericClose('Price: 11 + 34.45', 45.45)
+  })
+
+  it('label with currency', () => {
+    const result = evalLine('Total: $100')
+    expect(result.type).toBe('unit')
+  })
+
+  it('label with multi-word', () => {
+    expectNumericClose('Monthly cost: 1200 / 12', 100)
+  })
+
+  it('no label — colon in time is not a label', () => {
+    const result = evalLine('10 + 5')
+    expect(result.value).toBe('15')
+  })
+})
+
+describe('quoted text', () => {
+  it('ignores inline quoted fragments', () => {
+    const result = evalLine('$275 for the "Model 227"')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+    expectNumericClose('$275 for the "Model 227"', 275)
+  })
+})
+
+describe('percentage basic', () => {
+  it('X + Y%', () => expectNumericClose('100 + 15%', 115))
+  it('X - Y%', () => expectNumericClose('200 - 10%', 180))
+  it('Y% of X', () => expectNumericClose('15% of 200', 30))
+})
+
+describe('percentage advanced', () => {
+  it('Y% on X', () => expectNumericClose('5% on 200', 210))
+  it('Y% off X', () => expectNumericClose('5% off 200', 190))
+  it('X as a % of Y', () => expectNumericClose('50 as a % of 100', 50))
+  it('X as a % on Y', () => expectNumericClose('70 as a % on 20', 250))
+  it('X as a % off Y', () => expectNumericClose('20 as a % off 70', 71.43))
+  it('Y% of what is X', () => expectNumericClose('5% of what is 6', 120))
+  it('Y% on what is X', () => expectNumericClose('5% on what is 6', 5.71))
+  it('Y% off what is X', () => expectNumericClose('5% off what is 6', 6.32))
+})
+
+describe('scales', () => {
+  it('2k', () => {
+    const result = evalLine('2k')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(2000)
+  })
+
+  it('2 K stays kelvin', () => {
+    const result = evalLine('2 K')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('K')
+  })
+
+  it('3M (millions)', () => {
+    const result = evalLine('3M')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(3000000)
+  })
+
+  it('1.5 billion', () => {
+    const result = evalLine('1.5 billion')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(1500000000)
+  })
+
+  it('10 thousand', () => {
+    const result = evalLine('10 thousand')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(10000)
+  })
+
+  it('5 million', () => {
+    const result = evalLine('5 million')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(5000000)
+  })
+
+  it('$2k as currency unit', () => {
+    const result = evalLine('$2k')
+    expect(result.type).toBe('unit')
+  })
+})
+
+describe('currency', () => {
+  it('$ symbol', () => {
+    const result = evalLine('$30')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+  })
+
+  it('€ symbol', () => {
+    const result = evalLine('€50')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('EUR')
+  })
+
+  it('£ symbol', () => {
+    const result = evalLine('£20')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('GBP')
+  })
+
+  it('ISO code', () => {
+    const result = evalLine('30 USD')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+  })
+
+  it('currency addition', () => {
+    const result = evalLine('$10 + $20')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+  })
+
+  it('currency conversion', () => {
+    const result = evalLine('100 USD to EUR')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('EUR')
+    expectNumericClose('100 USD to EUR', 92)
+  })
+
+  it('label with currency', () => {
+    const result = evalLine('Price: $11 + $34.45')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+  })
+
+  it('currency word names', () => {
+    const result = evalLine('5 dollars + 10 dollars')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('USD')
+    expectNumericClose('5 dollars + 10 dollars', 15)
+  })
+})
+
+describe('unit conversion', () => {
+  it('stacked units', () => {
+    const result = evalLine('1 meter 20 cm')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('m')
+    expectNumericClose('1 meter 20 cm', 1.2, 2)
+  })
+
+  it('stacked units inside addition', () => {
+    const result = evalLine('1 meter 20 cm + 1 cm')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('m')
+    expectNumericClose('1 meter 20 cm + 1 cm', 1.21, 2)
+  })
+
+  it('stacked time units inside addition', () => {
+    const result = evalLine('1 hour 20 minutes + 30 minutes')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('hour')
+    expectNumericClose('1 hour 20 minutes + 30 minutes', 1.8333, 3)
+  })
+
+  it('stacked imperial units inside subtraction', () => {
+    const result = evalLine('10 ft 4 inch - 1 inch')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('ft')
+    expectNumericClose('10 ft 4 inch - 1 inch', 10.25, 2)
+  })
+
+  it('stacked units with conversion', () => {
+    const result = evalLine('1 meter 20 cm to cm')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('cm')
+    expectNumericClose('1 meter 20 cm to cm', 120, 2)
+  })
+
+  it('km to mile', () => {
+    const result = evalLine('5 km to mile')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('mile')
+  })
+
+  it('celsius to fahrenheit', () => {
+    const result = evalLine('100 celsius to fahrenheit')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('fahrenheit')
+  })
+
+  it('kg to lb', () => {
+    const result = evalLine('1 kg to lb')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('lb')
+  })
+
+  it('inch to cm', () => {
+    const result = evalLine('1 inch to cm')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('cm')
+  })
+
+  it('as is alias for to', () => {
+    const result = evalLine('5 km as mile')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('mile')
+  })
+
+  it('into is alias for to', () => {
+    const result = evalLine('5 km into mile')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('mile')
+  })
+
+  it('nautical mile alias', () => {
+    const result = evalLine('1 nautical mile to mile')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('mile')
+    expectNumericClose('1 nautical mile to mile', 1.15078, 4)
+  })
+
+  it('centner alias', () => {
+    const result = evalLine('1 centner to kg')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('kg')
+    expectNumericClose('1 centner to kg', 100, 2)
+  })
+
+  it('pound alias', () => {
+    const result = evalLine('1 pound to lb')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('lb')
+    expectNumericClose('1 pound to lb', 1, 2)
+  })
+
+  it('carat alias', () => {
+    const result = evalLine('1 carat to gram')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('gram')
+    expectNumericClose('1 carat to gram', 0.2, 2)
+  })
+})
+
+describe('css units', () => {
+  it('pt to px', () => expectNumericClose('12 pt in px', 16, 1))
+  it('pt into px', () => expectNumericClose('12 pt into px', 16, 1))
+
+  it('custom em', () => {
+    const results = evalLines('em = 20px\n1.2 em in px')
+    expect(results[0].type).toBe('assignment')
+    expect(results[0].value).toBe('20 px')
+    expectCloseInResults(results[1], 24)
+  })
+
+  it('custom ppi', () => {
+    const results = evalLines('ppi = 326\n1 cm in px')
+    expect(results[0].type).toBe('assignment')
+    expect(results[0].value).toBe('326')
+    expectCloseInResults(results[1], 128.35)
+  })
+})
+
+describe('math functions', () => {
+  it('sqrt without parentheses', () => expectValue('sqrt 16', '4'))
+  it('round without parentheses', () => expectValue('round 3.45', '3'))
+  it('cbrt without parentheses', () => expectValue('cbrt 8', '2'))
+  it('sqrt', () => expectValue('sqrt(16)', '4'))
+  it('abs', () => expectValue('abs(-42)', '42'))
+  it('round', () => expectValue('round(3.7)', '4'))
+  it('ceil', () => expectValue('ceil(3.2)', '4'))
+  it('floor', () => expectValue('floor(3.9)', '3'))
+
+  it('sin(45 deg)', () => expectNumericClose('sin(45 deg)', 0.7071))
+  it('sin 45°', () => expectNumericClose('sin 45°', 0.7071))
+  it('cos(pi)', () => expectNumericClose('cos(pi)', -1))
+  it('log(100)', () => {
+    const result = evalLine('log(100)')
+    expect(result.error).toBeNull()
+    expect(result.value).not.toBeNull()
+  })
+  it('ln(e)', () => expectNumericClose('ln(e)', 1))
+  it('round(1 month in days)', () =>
+    expectValue('round(1 month in days)', '30'))
+  it('round 1 month in days', () => expectValue('round 1 month in days', '30'))
+})
+
+describe('strict time semantics', () => {
+  it('1 month in days', () =>
+    expectNumericClose('1 month in days', 365 / 12, 3))
+  it('1 year in days', () => expectNumericClose('1 year in days', 365, 3))
+  it('2 hours + 30 minutes', () =>
+    expectNumericClose('2 hours + 30 minutes', 2.5, 2))
+})
+
+describe('number format', () => {
+  it('in hex', () => {
+    const result = evalLine('255 in hex')
+    expect(result.value).toBe('0xFF')
+  })
+
+  it('in bin', () => {
+    const result = evalLine('10 in bin')
+    expect(result.value).toBe('0b1010')
+  })
+
+  it('in oct', () => {
+    const result = evalLine('255 in oct')
+    expect(result.value).toBe('0o377')
+  })
+
+  it('in sci', () => {
+    const result = evalLine('5300 in sci')
+    expect(result.value).toBe('5.3e+3')
+  })
+
+  it('grouped thousands in sci', () => {
+    const result = evalLine('5 300 in sci')
+    expect(result.value).toBe('5.3e+3')
+  })
+
+  it('in scientific', () => {
+    const result = evalLine('5300 in scientific')
+    expect(result.value).toBe('5.3e+3')
+  })
+
+  it('hex input', () => expectValue('0xFF', '255'))
+  it('binary input', () => expectValue('0b1010', '10'))
+  it('octal input', () => expectValue('0o377', '255'))
+
+  it('0xFF in hex roundtrip', () => {
+    const result = evalLine('0xFF in hex')
+    expect(result.value).toBe('0xFF')
+  })
+})
+
+describe('area and volume aliases', () => {
+  it('sq alias', () => {
+    const result = evalLine('20 sq cm to cm^2')
+    expect(result.type).toBe('unit')
+    expectNumericClose('20 sq cm to cm^2', 20, 2)
+  })
+
+  it('square alias', () => {
+    const result = evalLine('30 square inches to inch^2')
+    expect(result.type).toBe('unit')
+    expectNumericClose('30 square inches to inch^2', 30, 2)
+  })
+
+  it('sqm alias', () => {
+    const result = evalLine('11 sqm to m^2')
+    expect(result.type).toBe('unit')
+    expectNumericClose('11 sqm to m^2', 11, 2)
+  })
+
+  it('cubic alias', () => {
+    const result = evalLine('30 cubic inches to inch^3')
+    expect(result.type).toBe('unit')
+    expectNumericClose('30 cubic inches to inch^3', 30, 2)
+  })
+
+  it('cbm alias', () => {
+    const result = evalLine('11 cbm to m^3')
+    expect(result.type).toBe('unit')
+    expectNumericClose('11 cbm to m^3', 11, 2)
+  })
+})
+
+describe('long-tail units', () => {
+  it('point', () => expectNumericClose('1 point to inch', 1 / 72, 4))
+  it('line', () => expectNumericClose('1 line to inch', 1 / 12, 4))
+  it('hand', () => expectNumericClose('1 hand to inch', 4, 4))
+  it('rod', () => expectNumericClose('1 rod to ft', 16.5, 4))
+  it('chain', () => expectNumericClose('1 chain to ft', 66, 4))
+  it('furlong', () => expectNumericClose('1 furlong to mile', 0.125, 4))
+  it('cable', () => expectNumericClose('1 cable to m', 185.2, 4))
+  it('league', () => expectNumericClose('1 league to mile', 3, 4))
+  it('are', () => expectNumericClose('1 are to m^2', 100, 4))
+  it('tea spoon alias', () =>
+    expectNumericClose('1 tea spoon to teaspoon', 1, 4))
+  it('table spoon alias', () =>
+    expectNumericClose('1 table spoon to tablespoon', 1, 4))
+  it('degree to radian', () =>
+    expectNumericClose('1 degree to radian', Math.PI / 180, 4))
+  it('radian to degree', () =>
+    expectNumericClose('1 radian to degree', 180 / Math.PI, 4))
+})
+
+describe('prev', () => {
+  it('references previous line result', () => {
+    const results = evalLines('10 + 5\nprev * 2')
+    expect(results[0].value).toBe('15')
+    expect(results[1].value).toBe('30')
+  })
+
+  it('chain prev across multiple lines', () => {
+    const results = evalLines('10\nprev + 5\nprev * 2')
+    expect(results[0].value).toBe('10')
+    expect(results[1].value).toBe('15')
+    expect(results[2].value).toBe('30')
+  })
+
+  it('prev resets after empty line', () => {
+    const results = evalLines('10\n\nprev + 5')
+    expect(results[0].value).toBe('10')
+    expect(results[1].type).toBe('empty')
+    expect(results[2].error).not.toBeNull()
+  })
+
+  it('prev - 10', () => {
+    const results = evalLines('75\nprev - 10')
+    expect(results[1].value).toBe('65')
+  })
+
+  it('date prev + 1 day', () => {
+    const results = evalLines('fromunix(1446587186)\nprev + 1 day')
+    expect(results[1].type).toBe('date')
+    expect(results[1].value).toBe(
+      new Date((1446587186 + 86400) * 1000).toLocaleString(),
+    )
+  })
+})
+
+describe('sum and total', () => {
+  it('sum of lines above', () => {
+    const results = evalLines('10 + 5\n20 * 3\nsum')
+    expect(results[0].value).toBe('15')
+    expect(results[1].value).toBe('60')
+    expect(results[2].value).toBe('75')
+    expect(results[2].type).toBe('aggregate')
+  })
+
+  it('total is alias for sum', () => {
+    const results = evalLines('10\n20\n30\ntotal')
+    expect(results[3].value).toBe('60')
+  })
+
+  it('sum resets after empty line', () => {
+    const results = evalLines('10\n20\n\n5\n15\nsum')
+    expect(results[5].value).toBe('20')
+  })
+
+  it('sum of zero lines', () => {
+    const results = evalLines('\nsum')
+    expect(results[1].value).toBe('0')
+  })
+
+  it('case insensitive', () => {
+    const results = evalLines('10\n20\nSUM')
+    expect(results[2].value).toBe('30')
+  })
+})
+
+describe('average and avg', () => {
+  it('average of lines above', () => {
+    const results = evalLines('10\n20\n30\naverage')
+    expect(results[3].value).toBe('20')
+    expect(results[3].type).toBe('aggregate')
+  })
+
+  it('avg is alias', () => {
+    const results = evalLines('10\n20\n30\navg')
+    expect(results[3].value).toBe('20')
+  })
+
+  it('average resets after empty line', () => {
+    const results = evalLines('10\n20\n\n100\naverage')
+    expect(results[4].value).toBe('100')
+  })
+
+  it('case insensitive', () => {
+    const results = evalLines('10\n30\nAVERAGE')
+    expect(results[2].value).toBe('20')
+  })
+})
+
+describe('comments', () => {
+  it('// comment', () => {
+    const result = evalLine('// This is a comment')
+    expect(result.type).toBe('comment')
+    expect(result.value).toBeNull()
+  })
+
+  it('# comment', () => {
+    const result = evalLine('# This is a header')
+    expect(result.type).toBe('comment')
+    expect(result.value).toBeNull()
+  })
+
+  it('comment does not break prev', () => {
+    const results = evalLines('10\n// comment\nprev + 5')
+    expect(results[0].value).toBe('10')
+    expect(results[1].type).toBe('comment')
+    expect(results[2].value).toBe('15')
+  })
+
+  it('comment does not affect sum', () => {
+    const results = evalLines('10\n// comment\n20\nsum')
+    expect(results[3].value).toBe('30')
+  })
+})
+
+describe('empty lines', () => {
+  it('empty line produces empty result', () => {
+    const result = evalLine('')
+    expect(result.type).toBe('empty')
+    expect(result.value).toBeNull()
+  })
+
+  it('whitespace-only line is empty', () => {
+    const result = evalLine('   ')
+    expect(result.type).toBe('empty')
+    expect(result.value).toBeNull()
+  })
+})
+
+describe('fromunix', () => {
+  it('converts unix timestamp to date', () => {
+    const result = evalLine('fromunix(1446587186)')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('fromunix(0) is epoch', () => {
+    const result = evalLine('fromunix(0)')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain('1970')
+  })
+
+  it('fromunix + 2 day', () => {
+    const result = evalLine('fromunix(1446587186) + 2 day')
+    expect(result.type).toBe('date')
+    expect(result.value).toBe(
+      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString(),
+    )
+  })
+
+  it('date variable + 2 day', () => {
+    const results = evalLines('d = fromunix(1446587186)\nd + 2 day')
+    expect(results[0].type).toBe('assignment')
+    expect(results[1].type).toBe('date')
+    expect(results[1].value).toBe(
+      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString(),
+    )
+  })
+})
+
+describe('time zones', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-06T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('PST time', () => {
+    const result = evalLine('PST time')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('time()', () => {
+    const result = evalLine('time()')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('time() + 1 day', () => {
+    const result = evalLine('time() + 1 day')
+    expect(result.type).toBe('date')
+    expect(result.value).toBe(
+      new Date('2026-03-07T12:00:00Z').toLocaleString(),
+    )
+  })
+
+  it('now()', () => {
+    const result = evalLine('now()')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('now + 1 day', () => {
+    const result = evalLine('now + 1 day')
+    expect(result.type).toBe('date')
+    expect(result.value).toBe(
+      new Date('2026-03-07T12:00:00Z').toLocaleString(),
+    )
+  })
+
+  it('Time in Madrid', () => {
+    const result = evalLine('Time in Madrid')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('now in Madrid', () => {
+    const result = evalLine('now in Madrid')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('Berlin now', () => {
+    const result = evalLine('Berlin now')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('PST time - Berlin time', () => {
+    const result = evalLine('PST time - Berlin time')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('hour')
+    expectNumericClose('PST time - Berlin time', -9, 2)
+  })
+
+  it('2:30 pm HKT in Berlin', () => {
+    const result = evalLine('2:30 pm HKT in Berlin')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('2:30 pm New York in Berlin', () => {
+    const result = evalLine('2:30 pm New York in Berlin')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('2026-03-06 PST in Berlin', () => {
+    expectDateWithYear('2026-03-06 PST in Berlin', '2026')
+  })
+
+  it('2026-03-06 2:30 pm PST in Berlin', () => {
+    expectDateWithYear('2026-03-06 2:30 pm PST in Berlin', '2026')
+  })
+
+  it('Mar 6 2026 PST in Berlin', () => {
+    expectDateWithYear('Mar 6 2026 PST in Berlin', '2026')
+  })
+
+  it('2:30 pm Mar 6 2026 PST in Berlin', () => {
+    expectDateWithYear('2:30 pm Mar 6 2026 PST in Berlin', '2026')
+  })
+
+  it('tomorrow PST in Berlin', () => {
+    expectDateWithYear('tomorrow PST in Berlin', '2026')
+  })
+})
+
+describe('constants', () => {
+  it('pi', () => expectNumericClose('pi', 3.14159, 4))
+  it('e', () => expectNumericClose('e', 2.71828, 4))
+})
+
+describe('bitwise operations', () => {
+  it('AND', () => expectValue('5 & 3', '1'))
+  it('OR', () => expectValue('5 | 3', '7'))
+  it('XOR', () => expectValue('5 xor 3', '6'))
+  it('left shift', () => expectValue('1 << 4', '16'))
+  it('right shift', () => expectValue('16 >> 2', '4'))
+})
+
+describe('error handling', () => {
+  it('invalid expression returns error', () => {
+    const result = evalLine('hello world')
+    expect(result.error).not.toBeNull()
+    expect(result.type).toBe('empty')
+  })
+
+  it('division by zero', () => {
+    const result = evalLine('1 / 0')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('undefined variable', () => {
+    const result = evalLine('unknownVar + 1')
+    expect(result.error).not.toBeNull()
+  })
+})
+
+describe('full document integration', () => {
+  it('numi-style document', () => {
+    const doc = [
+      '8 times 9',
+      '$2k',
+      'Price: $11 + $34.45',
+      'v = 20',
+      'v times 7',
+      '100 + 15%',
+      '5% on 200',
+      '5% off 200',
+      '50 as a % of 100',
+      '5% of what is 6',
+      '// This is comment',
+      '# Header',
+      '',
+      '10 + 5',
+      '20 * 3',
+      'sum',
+      'prev - 10',
+      '0xFF in hex',
+      '5300 in sci',
+      'sqrt(16)',
+    ].join('\n')
+
+    const results = evalLines(doc)
+
+    expect(results[0].value).toBe('72')
+    expect(results[1].type).toBe('unit')
+    expect(results[2].type).toBe('unit')
+    expect(results[3].type).toBe('assignment')
+    expect(results[3].value).toBe('20')
+    expect(results[4].value).toBe('140')
+    expectCloseInResults(results[5], 115)
+    expectCloseInResults(results[6], 210)
+    expectCloseInResults(results[7], 190)
+    expectCloseInResults(results[8], 50)
+    expectCloseInResults(results[9], 120)
+    expect(results[10].type).toBe('comment')
+    expect(results[10].value).toBeNull()
+    expect(results[11].type).toBe('comment')
+    expect(results[11].value).toBeNull()
+    expect(results[12].type).toBe('empty')
+    expect(results[13].value).toBe('15')
+    expect(results[14].value).toBe('60')
+    expect(results[15].value).toBe('75')
+    expect(results[16].value).toBe('65')
+    expect(results[17].value).toBe('0xFF')
+    expect(results[18].value).toBe('5.3e+3')
+    expect(results[19].value).toBe('4')
+  })
+})
+
+function expectCloseInResults(
+  result: ReturnType<typeof evalLine>,
+  expected: number,
+) {
+  const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+  expect(num).toBeCloseTo(expected, 1)
+}

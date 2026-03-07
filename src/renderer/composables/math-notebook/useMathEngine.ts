@@ -2,22 +2,22 @@ import type {
   CssContext,
   LineResult,
   SpecialLineResult,
-} from './mathEngine/types'
+} from './math-engine/types'
 import {
   DEFAULT_CURRENCY_RATES,
   DEFAULT_EM_IN_PX,
   DEFAULT_PPI,
   HUMANIZED_UNIT_NAMES,
-} from './mathEngine/constants'
-import { evaluateCssLine } from './mathEngine/css'
-import { createMathInstance } from './mathEngine/mathInstance'
-import { preprocessMathExpression } from './mathEngine/preprocess'
+} from './math-engine/constants'
+import { evaluateCssLine } from './math-engine/css'
+import { createMathInstance } from './math-engine/mathInstance'
+import { preprocessMathExpression } from './math-engine/preprocess'
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
-} from './mathEngine/timeZones'
+} from './math-engine/timeZones'
 
-export type { LineResult } from './mathEngine/types'
+export type { LineResult } from './math-engine/types'
 
 interface FormatDirective {
   format: 'hex' | 'bin' | 'oct' | 'sci' | null

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LineResult } from '@/composables/useMathEngine'
+import type { LineResult } from '@/composables/math-notebook'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import { Sigma } from 'lucide-vue-next'

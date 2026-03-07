@@ -1,6 +1,6 @@
 /* eslint-disable test/prefer-lowercase-title */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useMathEngine } from '../useMathEngine'
+import { useMathEngine } from '../math-notebook/useMathEngine'
 
 const { evaluateDocument } = useMathEngine()
 

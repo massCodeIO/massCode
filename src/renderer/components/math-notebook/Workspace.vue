@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LineResult } from '@/composables/useMathEngine'
+import type { LineResult } from '@/composables/math-notebook'
 import { useMathEngine, useMathNotebook } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { Calculator } from 'lucide-vue-next'

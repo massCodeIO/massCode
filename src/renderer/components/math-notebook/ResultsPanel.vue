@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { LineResult } from '@/composables/math-notebook'
 import { useCopyToClipboard } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { LoaderCircle, Sigma } from 'lucide-vue-next'
 
 interface Props {
@@ -14,6 +14,8 @@ const props = defineProps<Props>()
 
 const showTotal = ref(true)
 const copy = useCopyToClipboard()
+const MATH_NOTEBOOK_DOCUMENTATION_URL
+  = 'https://masscode.io/documentation/math-notebook.html'
 
 const total = computed(() => {
   return props.results.reduce((sum, r) => {
@@ -84,6 +86,10 @@ function getResultValueClasses(result: LineResult) {
 
   return base
 }
+
+function openDocumentation() {
+  void ipc.invoke('system:open-external', MATH_NOTEBOOK_DOCUMENTATION_URL)
+}
 </script>
 
 <template>
@@ -150,8 +156,14 @@ function getResultValueClasses(result: LineResult) {
     </transition>
 
     <div
-      class="border-border/40 mb-2 flex h-[28px] shrink-0 items-center justify-end border-t px-2"
+      class="border-border/40 mb-2 flex h-[28px] shrink-0 items-center justify-between border-t px-2"
     >
+      <UiActionButton
+        type="iconText"
+        @click="openDocumentation"
+      >
+        {{ i18n.t("menu:help.documentation") }}
+      </UiActionButton>
       <UiActionButton
         :tooltip="i18n.t('total')"
         @click="showTotal = !showTotal"

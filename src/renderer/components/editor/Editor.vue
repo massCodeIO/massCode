@@ -43,7 +43,11 @@ const {
 } = useApp()
 const { editorThemeName } = useTheme()
 
-const { addToUpdateContentQueue } = useSnippetUpdate()
+const {
+  addToUpdateContentQueue,
+  getPendingContentUpdate,
+  isContentUpdateBusy,
+} = useSnippetUpdate()
 
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
@@ -223,8 +227,29 @@ async function init() {
   watch(selectedSnippetContent, (v, oldV) => {
     nextTick(() => {
       const isNewValue = v?.id !== oldV?.id
+      const isSameContent = v?.id === oldV?.id
+      const snippetId = selectedSnippet.value?.id
+      const contentId = v?.id
+      let nextValue = v?.value || ''
+
+      if (snippetId && contentId) {
+        const pendingUpdate = getPendingContentUpdate(snippetId, contentId)
+        if (pendingUpdate) {
+          nextValue = pendingUpdate.value || ''
+        }
+
+        if (
+          isSameContent
+          && isContentUpdateBusy(snippetId, contentId)
+          && editor
+          && editor.getValue() !== nextValue
+        ) {
+          return
+        }
+      }
+
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
-      setValue(v?.value || '', true, !isNewValue)
+      setValue(nextValue, true, !isNewValue)
       nextTick(() => {
         if (searchQuery.value) {
           updateSearchOverlay()

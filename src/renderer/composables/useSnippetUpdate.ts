@@ -22,6 +22,10 @@ const { updateSnippetContent, updateSnippet } = useSnippets()
 
 const updateQueue = ref<Map<string, UpdateQueueItem>>(new Map())
 const updateContentQueue = ref<Map<string, UpdateContentQueueItem>>(new Map())
+const contentUpdateTimers = ref<Map<string, ReturnType<typeof setTimeout>>>(
+  new Map(),
+)
+const inFlightContentKeys = ref<Set<string>>(new Set())
 
 const updateDebounced = useDebounceFn((snippetId: number) => {
   const key = `${snippetId}`
@@ -33,18 +37,47 @@ const updateDebounced = useDebounceFn((snippetId: number) => {
   }
 }, UPDATE_DEBOUNCE_TIME)
 
-const updateContentDebounced = useDebounceFn(
-  (snippetId: number, contentId: number) => {
-    const key = `${snippetId}-${contentId}`
-    const update = updateContentQueue.value.get(key)
+function getContentUpdateKey(snippetId: number, contentId: number) {
+  return `${snippetId}-${contentId}`
+}
 
-    if (update) {
-      updateSnippetContent(update.snippetId, update.contentId, update.data)
-      updateContentQueue.value.delete(key)
+async function flushContentUpdate(key: string) {
+  const update = updateContentQueue.value.get(key)
+  if (!update) {
+    return
+  }
+
+  updateContentQueue.value.delete(key)
+  inFlightContentKeys.value.add(key)
+
+  try {
+    await updateSnippetContent(update.snippetId, update.contentId, update.data)
+  }
+  catch (error) {
+    console.error(error)
+  }
+  finally {
+    inFlightContentKeys.value.delete(key)
+
+    if (updateContentQueue.value.has(key)) {
+      scheduleContentUpdate(key)
     }
-  },
-  UPDATE_DEBOUNCE_TIME,
-)
+  }
+}
+
+function scheduleContentUpdate(key: string) {
+  const pendingTimer = contentUpdateTimers.value.get(key)
+  if (pendingTimer) {
+    clearTimeout(pendingTimer)
+  }
+
+  const timer = setTimeout(() => {
+    contentUpdateTimers.value.delete(key)
+    void flushContentUpdate(key)
+  }, UPDATE_DEBOUNCE_TIME)
+
+  contentUpdateTimers.value.set(key, timer)
+}
 
 function addToUpdateQueue(snippetId: number, data: SnippetsUpdate) {
   const key = `${snippetId}`
@@ -57,14 +90,40 @@ function addToUpdateContentQueue(
   contentId: number,
   data: SnippetContentsAdd,
 ) {
-  const key = `${snippetId}-${contentId}`
+  const key = getContentUpdateKey(snippetId, contentId)
   updateContentQueue.value.set(key, { snippetId, contentId, data })
-  updateContentDebounced(snippetId, contentId)
+
+  if (inFlightContentKeys.value.has(key)) {
+    return
+  }
+
+  scheduleContentUpdate(key)
+}
+
+function getPendingContentUpdate(snippetId: number, contentId: number) {
+  const key = getContentUpdateKey(snippetId, contentId)
+  return updateContentQueue.value.get(key)?.data
+}
+
+function isContentUpdateBusy(snippetId: number, contentId: number) {
+  const key = getContentUpdateKey(snippetId, contentId)
+  return (
+    updateContentQueue.value.has(key) || inFlightContentKeys.value.has(key)
+  )
+}
+
+function hasBusyContentUpdates() {
+  return (
+    updateContentQueue.value.size > 0 || inFlightContentKeys.value.size > 0
+  )
 }
 
 export function useSnippetUpdate() {
   return {
     addToUpdateContentQueue,
     addToUpdateQueue,
+    getPendingContentUpdate,
+    hasBusyContentUpdates,
+    isContentUpdateBusy,
   }
 }

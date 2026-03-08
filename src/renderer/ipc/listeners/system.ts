@@ -1,4 +1,10 @@
-import { useApp, useFolders, useSnippets, useSonner } from '@/composables'
+import {
+  useApp,
+  useFolders,
+  useSnippets,
+  useSnippetUpdate,
+  useSonner,
+} from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { repository } from '../../../../package.json'
@@ -13,6 +19,7 @@ const {
 const { selectFolder, getFolders } = useFolders()
 const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
   = useSnippets()
+const { hasBusyContentUpdates } = useSnippetUpdate()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -39,6 +46,24 @@ async function refreshAfterStorageSync() {
   }
 }
 
+function scheduleStorageSyncRefresh() {
+  if (storageSyncDebounceTimer) {
+    clearTimeout(storageSyncDebounceTimer)
+    storageSyncDebounceTimer = null
+  }
+
+  storageSyncDebounceTimer = setTimeout(() => {
+    if (hasBusyContentUpdates()) {
+      scheduleStorageSyncRefresh()
+      return
+    }
+
+    refreshAfterStorageSync().catch((error) => {
+      console.error('Failed to refresh after storage sync:', error)
+    })
+  }, 300)
+}
+
 export function registerSystemListeners() {
   ipc.on('system:deep-link', async (_, url: string) => {
     try {
@@ -47,15 +72,18 @@ export function registerSystemListeners() {
       const snippetId = u.searchParams.get('snippetId')
 
       if (folderId && snippetId) {
+        const nextFolderId = Number(folderId)
+        const nextSnippetId = Number(snippetId)
+
         highlightedFolderIds.value.clear()
         highlightedSnippetIds.value.clear()
         focusedSnippetId.value = undefined
         focusedFolderId.value = undefined
 
-        await getSnippets({ folderId })
+        await getSnippets({ folderId: nextFolderId })
 
-        await selectFolder(Number(folderId))
-        selectSnippet(Number(snippetId))
+        await selectFolder(nextFolderId)
+        selectSnippet(nextSnippetId)
       }
     }
     catch (error) {
@@ -92,16 +120,7 @@ export function registerSystemListeners() {
   })
 
   ipc.on('system:storage-synced', () => {
-    if (storageSyncDebounceTimer) {
-      clearTimeout(storageSyncDebounceTimer)
-      storageSyncDebounceTimer = null
-    }
-
-    storageSyncDebounceTimer = setTimeout(() => {
-      refreshAfterStorageSync().catch((error) => {
-        console.error('Failed to refresh after storage sync:', error)
-      })
-    }, 300)
+    scheduleStorageSyncRefresh()
   })
 
   ipc.on('system:error', (_, payload) => {

@@ -499,6 +499,9 @@ watch(
             </Select.SelectItem>
           </Select.SelectContent>
         </Select.Select>
+        <template #description>
+          {{ i18n.t("messages:description.storageEngine") }}
+        </template>
       </UiMenuFormItem>
       <UiMenuFormItem
         v-if="isSqliteEngine"

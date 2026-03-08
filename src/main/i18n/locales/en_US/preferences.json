@@ -9,14 +9,14 @@
     },
     "label": "Storage",
     "migrate": "Migrate",
-    "migrateMarkdownToSqlite": "Migrate Markdown to SQLite",
-    "migrateSqliteToMarkdown": "Migrate SQLite to Markdown",
+    "migrateMarkdownToSqlite": "Rollback to SQLite",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Count",
     "vaultPath": "Vault Path",
     "engine": {
       "label": "Storage Engine",
-      "sqlite": "SQLite",
-      "markdown": "Markdown Vault"
+      "sqlite": "SQLite (Legacy)",
+      "markdown": "Markdown Vault (Recommended)"
     },
     "clearDatabase": "Clear Database",
     "backup": {

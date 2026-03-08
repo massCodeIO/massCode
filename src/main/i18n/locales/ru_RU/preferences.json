@@ -7,7 +7,15 @@
       "dangerZone": "Опасная зона"
     },
     "migrate": "Миграция",
+    "migrateMarkdownToSqlite": "Откатиться на SQLite",
+    "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",
+    "vaultPath": "Путь к vault",
+    "engine": {
+      "label": "Движок хранилища",
+      "sqlite": "SQLite (устаревающий)",
+      "markdown": "Markdown Vault (рекомендуется)"
+    },
     "clearDatabase": "Очистить базу данных"
   },
   "editor": {

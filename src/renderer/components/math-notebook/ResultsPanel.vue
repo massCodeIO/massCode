@@ -46,7 +46,7 @@ function handleClickResult(result: LineResult) {
 
 function getResultClasses(result: LineResult) {
   const base
-    = 'flex h-[22px] items-center justify-end font-mono text-[13px] leading-[22px] transition-all duration-100'
+    = 'flex h-[22px] select-none items-center justify-end font-mono text-[13px] leading-[22px] transition-all duration-100'
 
   if (result.error) {
     return `${base} text-red-400/50`
@@ -61,11 +61,11 @@ function getResultClasses(result: LineResult) {
   }
 
   if (result.type === 'assignment') {
-    return `${base} group text-text-muted/70 cursor-pointer`
+    return `${base} group text-text-muted/70`
   }
 
   if (result.value) {
-    return `${base} group cursor-pointer`
+    return `${base} group`
   }
 
   return base
@@ -137,7 +137,7 @@ function getResultValueClasses(result: LineResult) {
           {{ i18n.t("total") }}
         </span>
         <span
-          class="group flex h-[22px] min-w-0 flex-1 cursor-pointer items-center justify-end font-mono text-[13px] leading-[22px]"
+          class="group flex h-[22px] min-w-0 flex-1 items-center justify-end font-mono text-[13px] leading-[22px] select-none"
           @click="copy(formattedTotal)"
         >
           <span

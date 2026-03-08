@@ -106,7 +106,7 @@ const highlightStyle = computed(() => {
     <div class="math-editor relative min-w-0 flex-1">
       <div
         aria-hidden="true"
-        class="math-editor-highlight pointer-events-none absolute inset-0 overflow-hidden"
+        class="math-editor-highlight pointer-events-none absolute inset-0 z-10 overflow-hidden"
       >
         <pre
           class="min-h-full w-max min-w-full py-1 pr-4 pl-3 font-mono text-[13px] leading-[22px] tracking-wide whitespace-pre will-change-transform"
@@ -117,7 +117,7 @@ const highlightStyle = computed(() => {
       <textarea
         ref="textareaRef"
         :value="modelValue"
-        class="math-editor-textarea scrollbar selection:bg-list-selection absolute inset-0 h-full w-full resize-none bg-transparent py-1 pr-4 pl-3 font-mono text-[13px] leading-[22px] tracking-wide text-transparent outline-none"
+        class="math-editor-textarea scrollbar selection:bg-list-selection/50 absolute inset-0 z-0 h-full w-full resize-none bg-transparent py-1 pr-4 pl-3 font-mono text-[13px] leading-[22px] tracking-wide text-transparent outline-none"
         spellcheck="false"
         wrap="off"
         @input="handleInput"

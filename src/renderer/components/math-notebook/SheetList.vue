@@ -2,6 +2,7 @@
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useMathNotebook } from '@/composables'
 import { i18n } from '@/electron'
+import { format } from 'date-fns'
 import { FileText, Plus } from 'lucide-vue-next'
 
 const {
@@ -46,14 +47,6 @@ function finishRename(id: string) {
 
 function cancelRename() {
   editingId.value = null
-}
-
-function formatDate(timestamp: number) {
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
 }
 </script>
 
@@ -118,7 +111,7 @@ function formatDate(timestamp: number) {
                       : 'text-text-muted/40'
                   "
                 >
-                  {{ formatDate(sheet.updatedAt) }}
+                  {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
                 </div>
               </template>
             </div>

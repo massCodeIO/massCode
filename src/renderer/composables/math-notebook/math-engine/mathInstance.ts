@@ -38,32 +38,32 @@ export function createMathInstance(currencyRates: Record<string, number>) {
   )
 
   createUnitSafe(mathInstance, 'USD', { aliases: ['usd'] })
-  createUnitSafe(mathInstance, 'numisecond', {
+  createUnitSafe(mathInstance, 'mcsecond', {
     definition: '1 second',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numiminute', {
-    definition: '60 numisecond',
+  createUnitSafe(mathInstance, 'mcminute', {
+    definition: '60 mcsecond',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numihour', {
-    definition: '60 numiminute',
+  createUnitSafe(mathInstance, 'mchour', {
+    definition: '60 mcminute',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numiday', {
-    definition: '24 numihour',
+  createUnitSafe(mathInstance, 'mcday', {
+    definition: '24 mchour',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numiweek', {
-    definition: '7 numiday',
+  createUnitSafe(mathInstance, 'mcweek', {
+    definition: '7 mcday',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numiyear', {
-    definition: '365 numiday',
+  createUnitSafe(mathInstance, 'mcyear', {
+    definition: '365 mcday',
     aliases: [],
   })
-  createUnitSafe(mathInstance, 'numimonth', {
-    definition: `${365 / 12} numiday`,
+  createUnitSafe(mathInstance, 'mcmonth', {
+    definition: `${365 / 12} mcday`,
     aliases: [],
   })
   createUnitSafe(mathInstance, 'are', {

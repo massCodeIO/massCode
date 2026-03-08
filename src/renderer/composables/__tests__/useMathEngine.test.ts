@@ -55,7 +55,7 @@ describe('arithmetic', () => {
   it('grouped thousands', () => expectValue('5 300', '5,300'))
 })
 
-describe('numi aliases', () => {
+describe('math aliases', () => {
   it('fact', () => expectValue('fact(5)', '120'))
   it('arcsin', () => expectNumericClose('arcsin(1)', Math.PI / 2, 4))
   it('arccos', () => expectNumericClose('arccos(1)', 0, 4))
@@ -814,7 +814,7 @@ describe('error handling', () => {
 })
 
 describe('full document integration', () => {
-  it('numi-style document', () => {
+  it('full document', () => {
     const doc = [
       '8 times 9',
       '$2k',

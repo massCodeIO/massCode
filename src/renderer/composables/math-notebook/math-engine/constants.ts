@@ -168,13 +168,13 @@ export const knownUnitTokens = new Set([
   'radians',
   'degree',
   'degrees',
-  'numisecond',
-  'numiminute',
-  'numihour',
-  'numiday',
-  'numiweek',
-  'numimonth',
-  'numiyear',
+  'mcsecond',
+  'mcminute',
+  'mchour',
+  'mcday',
+  'mcweek',
+  'mcmonth',
+  'mcyear',
   'px',
   'pixel',
   'pixels',
@@ -223,7 +223,7 @@ export const timeZoneAliases: Record<string, string> = {
 
 export const DEFAULT_EM_IN_PX = 16
 export const DEFAULT_PPI = 96
-export const NUMI_UNARY_FUNCTIONS = [
+export const MATH_UNARY_FUNCTIONS = [
   'sqrt',
   'cbrt',
   'abs',
@@ -243,34 +243,34 @@ export const NUMI_UNARY_FUNCTIONS = [
   'tanh',
 ] as const
 
-export const NUMI_TIME_UNIT_TOKEN_MAP: Record<string, string> = {
-  second: 'numisecond',
-  seconds: 'numisecond',
-  minute: 'numiminute',
-  minutes: 'numiminute',
-  hour: 'numihour',
-  hours: 'numihour',
-  day: 'numiday',
-  days: 'numiday',
-  week: 'numiweek',
-  weeks: 'numiweek',
-  month: 'numimonth',
-  months: 'numimonth',
-  year: 'numiyear',
-  years: 'numiyear',
+export const TIME_UNIT_TOKEN_MAP: Record<string, string> = {
+  second: 'mcsecond',
+  seconds: 'mcsecond',
+  minute: 'mcminute',
+  minutes: 'mcminute',
+  hour: 'mchour',
+  hours: 'mchour',
+  day: 'mcday',
+  days: 'mcday',
+  week: 'mcweek',
+  weeks: 'mcweek',
+  month: 'mcmonth',
+  months: 'mcmonth',
+  year: 'mcyear',
+  years: 'mcyear',
 }
 
 export const HUMANIZED_UNIT_NAMES: Record<
   string,
   { singular: string, plural: string }
 > = {
-  numisecond: { singular: 'second', plural: 'seconds' },
-  numiminute: { singular: 'minute', plural: 'minutes' },
-  numihour: { singular: 'hour', plural: 'hours' },
-  numiday: { singular: 'day', plural: 'days' },
-  numiweek: { singular: 'week', plural: 'weeks' },
-  numimonth: { singular: 'month', plural: 'months' },
-  numiyear: { singular: 'year', plural: 'years' },
+  mcsecond: { singular: 'second', plural: 'seconds' },
+  mcminute: { singular: 'minute', plural: 'minutes' },
+  mchour: { singular: 'hour', plural: 'hours' },
+  mcday: { singular: 'day', plural: 'days' },
+  mcweek: { singular: 'week', plural: 'weeks' },
+  mcmonth: { singular: 'month', plural: 'months' },
+  mcyear: { singular: 'year', plural: 'years' },
   nauticalmile: { singular: 'nautical mile', plural: 'nautical miles' },
   centner: { singular: 'centner', plural: 'centners' },
   point: { singular: 'point', plural: 'points' },

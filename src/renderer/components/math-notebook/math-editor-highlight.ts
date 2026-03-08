@@ -1,7 +1,7 @@
 import {
   currencySymbols,
   knownUnitTokens,
-  NUMI_UNARY_FUNCTIONS,
+  MATH_UNARY_FUNCTIONS,
   timeZoneAliases,
 } from '@/composables/math-notebook/math-engine/constants'
 
@@ -20,7 +20,7 @@ const unitTokens = new Set([
 ])
 
 const builtinTokens = new Set([
-  ...NUMI_UNARY_FUNCTIONS,
+  ...MATH_UNARY_FUNCTIONS,
   'fromunix',
   'root',
   'log',

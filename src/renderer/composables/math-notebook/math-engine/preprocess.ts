@@ -2,9 +2,9 @@ import {
   currencySymbols,
   currencyWordNames,
   knownUnitTokens,
-  NUMI_TIME_UNIT_TOKEN_MAP,
-  NUMI_UNARY_FUNCTIONS,
+  MATH_UNARY_FUNCTIONS,
   SUPPORTED_CURRENCY_CODES,
+  TIME_UNIT_TOKEN_MAP,
   weightContextPattern,
 } from './constants'
 
@@ -55,7 +55,7 @@ function preprocessDegreeSigns(line: string): string {
 function preprocessTimeUnits(line: string): string {
   return line.replace(
     /\b(seconds?|minutes?|hours?|days?|weeks?|months?|years?)\b/gi,
-    match => NUMI_TIME_UNIT_TOKEN_MAP[match.toLowerCase()] || match,
+    match => TIME_UNIT_TOKEN_MAP[match.toLowerCase()] || match,
   )
 }
 
@@ -130,7 +130,7 @@ function preprocessAreaVolumeAliases(line: string): string {
   return line
 }
 
-function preprocessNumiFunctionExpression(expression: string): string {
+function preprocessFunctionExpression(expression: string): string {
   const trimmed = expression.trim()
   const openIndex = trimmed.indexOf('(')
   const closeIndex = trimmed.endsWith(')') ? trimmed.length - 1 : -1
@@ -153,7 +153,7 @@ function preprocessNumiFunctionExpression(expression: string): string {
     }
   }
 
-  const unaryFunctionsPattern = NUMI_UNARY_FUNCTIONS.join('|')
+  const unaryFunctionsPattern = MATH_UNARY_FUNCTIONS.join('|')
   const unaryMatch = trimmed.match(
     new RegExp(`^(${unaryFunctionsPattern})\\s+(.+)$`, 'i'),
   )
@@ -164,22 +164,22 @@ function preprocessNumiFunctionExpression(expression: string): string {
   return expression
 }
 
-function preprocessNumiFunctionSyntax(line: string): string {
+function preprocessFunctionSyntax(line: string): string {
   const assignmentIndex = line.indexOf('=')
   if (assignmentIndex > 0) {
     const left = line.slice(0, assignmentIndex).trim()
     const right = line.slice(assignmentIndex + 1).trim()
 
     if (/^[a-z_]\w*$/i.test(left) && right) {
-      return `${line.slice(0, assignmentIndex + 1)} ${preprocessNumiFunctionExpression(right)}`
+      return `${line.slice(0, assignmentIndex + 1)} ${preprocessFunctionExpression(right)}`
     }
   }
 
-  return preprocessNumiFunctionExpression(line)
+  return preprocessFunctionExpression(line)
 }
 
 function preprocessFunctionConversions(line: string): string {
-  const unaryFunctionsPattern = NUMI_UNARY_FUNCTIONS.join('|')
+  const unaryFunctionsPattern = MATH_UNARY_FUNCTIONS.join('|')
 
   return line.replace(
     new RegExp(
@@ -398,7 +398,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessScales(processed)
   processed = preprocessAreaVolumeAliases(processed)
   processed = preprocessStackedUnits(processed)
-  processed = preprocessNumiFunctionSyntax(processed)
+  processed = preprocessFunctionSyntax(processed)
   processed = preprocessFunctionConversions(processed)
   processed = preprocessImplicitMultiplication(processed)
   processed = preprocessWordOperators(processed)

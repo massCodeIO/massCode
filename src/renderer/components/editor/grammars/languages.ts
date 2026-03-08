@@ -563,6 +563,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.nix',
   },
   {
+    name: 'Nushell',
+    value: 'nu',
+    grammar: () => import('./textmate/nu.tmLanguage.json'),
+    scopeName: 'source.nushell',
+  },
+  {
     name: 'NSIS',
     value: 'nsis',
     grammar: () => import('./textmate/nsis.tmLanguage.json'),
@@ -585,6 +591,12 @@ export const languages: LanguageOption[] = [
     value: 'ocaml',
     grammar: () => import('./textmate/ocaml.tmLanguage.json'),
     scopeName: 'source.ocaml',
+  },
+  {
+    name: 'OpenEdge ABL',
+    value: 'oeabl',
+    grammar: () => import('./textmate/oeabl.tmLanguage.json'),
+    scopeName: 'source.oeabl',
   },
   {
     name: 'OpenGL',

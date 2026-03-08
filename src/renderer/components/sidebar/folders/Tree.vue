@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import type { Node, Position } from './types'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
@@ -50,7 +49,6 @@ const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
 
 const contextMenuTriggerRef = useTemplateRef('contextMenuTriggerRef')
-const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
 
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
@@ -146,10 +144,6 @@ async function onDeleteFolder() {
       clearFolderSelection()
     }
   }
-
-  nextTick(() => {
-    scrollRef.value?.ps?.update()
-  })
 }
 
 function onRenameFolder() {
@@ -220,75 +214,73 @@ provide(treeKeys, {
 </script>
 
 <template>
-  <PerfectScrollbar
+  <div
     v-if="modelValue.length"
-    ref="scrollRef"
-    :options="{ minScrollbarLength: 20, suppressScrollX: true }"
+    class="h-full min-h-0"
   >
-    <ContextMenu.Root>
-      <ContextMenu.Trigger as-child>
-        <div
-          ref="contextMenuTriggerRef"
-          data-folder-tree
-          v-bind="$attrs"
-        >
-          <TreeNode
-            v-for="(node, index) in modelValue"
-            :key="node.id"
-            :node="node"
-            :nodes="modelValue"
-            :index="index"
-            :hovered-node-id="hoveredNodeId"
+    <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
+      <ContextMenu.Root>
+        <ContextMenu.Trigger as-child>
+          <div
+            ref="contextMenuTriggerRef"
+            data-folder-tree
           >
-            <template #default="slotProps">
-              <slot
-                v-if="slotProps && slotProps.node"
-                :node="slotProps.node"
-                :deep="slotProps.deep"
-                :hovered-node-id="hoveredNodeId"
-              />
-              <template v-else>
-                {{ node.name }} s
+            <TreeNode
+              v-for="(node, index) in modelValue"
+              :key="node.id"
+              :node="node"
+              :nodes="modelValue"
+              :index="index"
+              :hovered-node-id="hoveredNodeId"
+            >
+              <template #default="slotProps">
+                <slot
+                  v-if="slotProps && slotProps.node"
+                  :node="slotProps.node"
+                  :deep="slotProps.deep"
+                  :hovered-node-id="hoveredNodeId"
+                />
+                <template v-else>
+                  {{ node.name }} s
+                </template>
               </template>
-            </template>
-          </TreeNode>
-        </div>
-      </ContextMenu.Trigger>
-      <ContextMenu.Content>
-        <template v-if="isContextMultiSelection">
-          <ContextMenu.Item @click="onDeleteFolder">
-            {{ i18n.t("action.delete.common") }}
-          </ContextMenu.Item>
-        </template>
-        <template v-else>
-          <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
-            {{ i18n.t("action.new.folder") }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Item @click="onRenameFolder">
-            {{ i18n.t("action.rename") }}
-          </ContextMenu.Item>
-          <ContextMenu.Item @click="onDeleteFolder">
-            {{ i18n.t("action.delete.common") }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Item @click="onSetCustomIcon">
-            {{ i18n.t("action.setCustomIcon") }}
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            v-if="contextNode?.icon"
-            @click="onRemoveCustomIcon"
-          >
-            {{ i18n.t("action.removeCustomIcon") }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Sub>
-            <ContextMenu.SubTrigger>
-              {{ i18n.t("action.defaultLanguage") }}
-            </ContextMenu.SubTrigger>
-            <ContextMenu.SubContent>
-              <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-                <div class="max-h-[250px]">
+            </TreeNode>
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Content>
+          <template v-if="isContextMultiSelection">
+            <ContextMenu.Item @click="onDeleteFolder">
+              {{ i18n.t("action.delete.common") }}
+            </ContextMenu.Item>
+          </template>
+          <template v-else>
+            <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
+              {{ i18n.t("action.new.folder") }}
+            </ContextMenu.Item>
+            <ContextMenu.Separator />
+            <ContextMenu.Item @click="onRenameFolder">
+              {{ i18n.t("action.rename") }}
+            </ContextMenu.Item>
+            <ContextMenu.Item @click="onDeleteFolder">
+              {{ i18n.t("action.delete.common") }}
+            </ContextMenu.Item>
+            <ContextMenu.Separator />
+            <ContextMenu.Item @click="onSetCustomIcon">
+              {{ i18n.t("action.setCustomIcon") }}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              v-if="contextNode?.icon"
+              @click="onRemoveCustomIcon"
+            >
+              {{ i18n.t("action.removeCustomIcon") }}
+            </ContextMenu.Item>
+            <ContextMenu.Separator />
+            <ContextMenu.Sub>
+              <ContextMenu.SubTrigger>
+                {{ i18n.t("action.defaultLanguage") }}
+              </ContextMenu.SubTrigger>
+              <ContextMenu.SubContent>
+                <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
                   <ContextMenu.CheckboxItem
                     v-for="language in languages"
                     :key="language.value"
@@ -305,11 +297,11 @@ provide(treeKeys, {
                     {{ language.name }}
                   </ContextMenu.CheckboxItem>
                 </div>
-              </PerfectScrollbar>
-            </ContextMenu.SubContent>
-          </ContextMenu.Sub>
-        </template>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
-  </PerfectScrollbar>
+              </ContextMenu.SubContent>
+            </ContextMenu.Sub>
+          </template>
+        </ContextMenu.Content>
+      </ContextMenu.Root>
+    </div>
+  </div>
 </template>

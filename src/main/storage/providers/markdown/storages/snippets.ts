@@ -1,0 +1,447 @@
+import type {
+  SnippetContentUpdateInput,
+  SnippetContentUpdateResult,
+  SnippetsCount,
+  SnippetsQueryInput,
+  SnippetsStorage,
+  SnippetTagDeleteRelationResult,
+  SnippetTagRelationResult,
+  SnippetUpdateResult,
+} from '../../../contracts'
+import path from 'node:path'
+import fs from 'fs-extra'
+import {
+  createSnippetRecord,
+  findFolderById,
+  findSnippetByContentId,
+  findSnippetById,
+  getPaths,
+  getRuntimeCache,
+  getSnippetIdsBySearchQuery,
+  getSnippetTargetDirectory,
+  getVaultPath,
+  type MarkdownSnippet,
+  normalizeDirectoryPath,
+  persistSnippet,
+  saveState,
+  throwStorageError,
+  validateEntryName,
+  writeSnippetToFile,
+} from '../runtime'
+
+export function createSnippetsStorage(): SnippetsStorage {
+  return {
+    getSnippets: (query: SnippetsQueryInput) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+
+      const searchSnippetIds = query.search?.trim()
+        ? getSnippetIdsBySearchQuery(snippets, query.search)
+        : null
+      const normalizedOrder = query.order || 'DESC'
+
+      const filteredSnippets = snippets.filter((snippet) => {
+        if (searchSnippetIds && !searchSnippetIds.has(snippet.id)) {
+          return false
+        }
+
+        if (query.folderId && snippet.folderId !== query.folderId) {
+          return false
+        }
+
+        if (query.isInbox && snippet.folderId !== null) {
+          return false
+        }
+
+        if (query.tagId && !snippet.tags.includes(query.tagId)) {
+          return false
+        }
+
+        if (query.isFavorites && snippet.isFavorites !== 1) {
+          return false
+        }
+
+        if (query.isDeleted) {
+          if (snippet.isDeleted !== 1) {
+            return false
+          }
+        }
+        else if (snippet.isDeleted !== 0) {
+          return false
+        }
+
+        return true
+      })
+
+      const result = filteredSnippets
+        .map(snippet => createSnippetRecord(snippet, state))
+        .sort((a, b) => {
+          if (normalizedOrder === 'ASC') {
+            return a.createdAt - b.createdAt
+          }
+
+          return b.createdAt - a.createdAt
+        })
+
+      return result
+    },
+    getSnippetsCounts: (): SnippetsCount => {
+      const paths = getPaths(getVaultPath())
+      const { snippets } = getRuntimeCache(paths)
+
+      return {
+        total: snippets.length,
+        trash: snippets.filter(snippet => snippet.isDeleted === 1).length,
+      }
+    },
+    createSnippet: (input) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+
+      const name = validateEntryName(input.name, 'snippet')
+      const folderId = input.folderId ?? null
+
+      if (folderId !== null && !findFolderById(state, folderId)) {
+        throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
+      }
+
+      const id = state.counters.snippetId + 1
+      state.counters.snippetId = id
+
+      const now = Date.now()
+      const snippet: MarkdownSnippet = {
+        contents: [],
+        createdAt: now,
+        description: null,
+        filePath: '',
+        folderId,
+        id,
+        isDeleted: 0,
+        isFavorites: 0,
+        name,
+        tags: [],
+        updatedAt: now,
+      }
+
+      persistSnippet(paths, state, snippet)
+      snippets.push(snippet)
+      saveState(paths, state)
+
+      return { id }
+    },
+    createSnippetContent: (snippetId, input) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, snippetId)
+
+      if (!snippet) {
+        throwStorageError('SNIPPET_NOT_FOUND', 'Snippet not found')
+      }
+
+      const contentId = state.counters.contentId + 1
+      state.counters.contentId = contentId
+
+      snippet.contents.push({
+        id: contentId,
+        label: input.label,
+        language: input.language,
+        value: input.value,
+      })
+
+      snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, snippet)
+      saveState(paths, state)
+
+      return { id: contentId }
+    },
+    updateSnippet: (id, input): SnippetUpdateResult => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, id)
+
+      if (!snippet) {
+        return {
+          invalidInput: false,
+          notFound: true,
+        }
+      }
+
+      const hasAnyField
+        = 'name' in input
+          || 'description' in input
+          || 'folderId' in input
+          || 'isFavorites' in input
+          || 'isDeleted' in input
+
+      if (!hasAnyField) {
+        return {
+          invalidInput: true,
+          notFound: false,
+        }
+      }
+
+      const previousPath = snippet.filePath
+      const wasDeleted = snippet.isDeleted
+
+      if ('name' in input) {
+        snippet.name = validateEntryName(input.name || snippet.name, 'snippet')
+      }
+
+      if ('description' in input) {
+        snippet.description = input.description ?? null
+      }
+
+      if ('folderId' in input) {
+        const nextFolderId = input.folderId ?? null
+
+        if (nextFolderId !== null && !findFolderById(state, nextFolderId)) {
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
+        }
+
+        snippet.folderId = nextFolderId
+      }
+
+      if ('isFavorites' in input) {
+        snippet.isFavorites = input.isFavorites || 0
+      }
+
+      if ('isDeleted' in input) {
+        snippet.isDeleted = input.isDeleted || 0
+      }
+
+      const movedToTrash = wasDeleted !== 1 && snippet.isDeleted === 1
+      const previousDirectory = normalizeDirectoryPath(
+        path.posix.dirname(previousPath),
+      )
+      const nextDirectory = getSnippetTargetDirectory(state, snippet)
+      const movedBetweenDirectories = previousDirectory !== nextDirectory
+
+      snippet.updatedAt = Date.now()
+      persistSnippet(paths, state, snippet, previousPath, {
+        allowRenameOnConflict: movedToTrash || movedBetweenDirectories,
+      })
+      saveState(paths, state)
+
+      return {
+        invalidInput: false,
+        notFound: false,
+      }
+    },
+    updateSnippetContent: (
+      snippetId,
+      contentId,
+      input: SnippetContentUpdateInput,
+    ): SnippetContentUpdateResult => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+
+      const hasAnyField
+        = 'label' in input || 'value' in input || 'language' in input
+
+      if (!hasAnyField) {
+        return {
+          invalidInput: true,
+          notFound: false,
+          parentNotFound: false,
+        }
+      }
+
+      const ownedContent = findSnippetByContentId(snippets, contentId)
+      if (!ownedContent) {
+        return {
+          invalidInput: false,
+          notFound: true,
+          parentNotFound: false,
+        }
+      }
+
+      const { contentIndex, snippet: contentOwnerSnippet } = ownedContent
+      const content = contentOwnerSnippet.contents[contentIndex]
+
+      if ('label' in input) {
+        content.label = input.label || content.label
+      }
+
+      if ('value' in input) {
+        content.value = input.value ?? null
+      }
+
+      if ('language' in input) {
+        content.language = input.language || content.language
+      }
+
+      let parentNotFound = false
+      if (contentOwnerSnippet.id === snippetId) {
+        contentOwnerSnippet.updatedAt = Date.now()
+        writeSnippetToFile(paths, contentOwnerSnippet)
+      }
+      else {
+        writeSnippetToFile(paths, contentOwnerSnippet)
+
+        const targetSnippet = findSnippetById(snippets, snippetId)
+        if (targetSnippet) {
+          targetSnippet.updatedAt = Date.now()
+          writeSnippetToFile(paths, targetSnippet)
+        }
+        else {
+          parentNotFound = true
+        }
+      }
+
+      saveState(paths, state)
+
+      return {
+        invalidInput: false,
+        notFound: false,
+        parentNotFound,
+      }
+    },
+    addTagToSnippet: (snippetId, tagId): SnippetTagRelationResult => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, snippetId)
+
+      if (!snippet) {
+        return {
+          notFound: false,
+          snippetFound: false,
+          tagFound: true,
+        }
+      }
+
+      const tag = state.tags.find(item => item.id === tagId)
+      if (!tag) {
+        return {
+          notFound: false,
+          snippetFound: true,
+          tagFound: false,
+        }
+      }
+
+      if (!snippet.tags.includes(tagId)) {
+        snippet.tags.push(tagId)
+        writeSnippetToFile(paths, snippet)
+        saveState(paths, state)
+      }
+
+      return {
+        notFound: false,
+        snippetFound: true,
+        tagFound: true,
+      }
+    },
+    deleteTagFromSnippet: (
+      snippetId,
+      tagId,
+    ): SnippetTagDeleteRelationResult => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, snippetId)
+
+      if (!snippet) {
+        return {
+          notFound: false,
+          relationFound: true,
+          snippetFound: false,
+          tagFound: true,
+        }
+      }
+
+      const tag = state.tags.find(item => item.id === tagId)
+      if (!tag) {
+        return {
+          notFound: false,
+          relationFound: true,
+          snippetFound: true,
+          tagFound: false,
+        }
+      }
+
+      const relationFound = snippet.tags.includes(tagId)
+      if (relationFound) {
+        snippet.tags = snippet.tags.filter(item => item !== tagId)
+        writeSnippetToFile(paths, snippet)
+        saveState(paths, state)
+      }
+
+      return {
+        notFound: false,
+        relationFound,
+        snippetFound: true,
+        tagFound: true,
+      }
+    },
+    deleteSnippet: (id) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+
+      const snippetIndex = state.snippets.findIndex(
+        snippet => snippet.id === id,
+      )
+      if (snippetIndex === -1) {
+        return { deleted: false }
+      }
+
+      const snippet = state.snippets[snippetIndex]
+      fs.removeSync(path.join(paths.vaultPath, snippet.filePath))
+
+      state.snippets.splice(snippetIndex, 1)
+      const snippetRuntimeIndex = snippets.findIndex(
+        snippet => snippet.id === id,
+      )
+      if (snippetRuntimeIndex !== -1) {
+        snippets.splice(snippetRuntimeIndex, 1)
+      }
+      saveState(paths, state)
+
+      return { deleted: true }
+    },
+    emptyTrash: () => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+
+      const deletedSnippetIds = new Set<number>(
+        snippets
+          .filter(snippet => snippet.isDeleted === 1)
+          .map(snippet => snippet.id),
+      )
+
+      if (!deletedSnippetIds.size) {
+        return { deletedCount: 0 }
+      }
+
+      state.snippets = state.snippets.filter((snippet) => {
+        if (deletedSnippetIds.has(snippet.id)) {
+          fs.removeSync(path.join(paths.vaultPath, snippet.filePath))
+          return false
+        }
+
+        return true
+      })
+      const nextSnippets = snippets.filter(
+        snippet => !deletedSnippetIds.has(snippet.id),
+      )
+      snippets.splice(0, snippets.length, ...nextSnippets)
+
+      saveState(paths, state)
+
+      return { deletedCount: deletedSnippetIds.size }
+    },
+    deleteSnippetContent: (contentId) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const ownedContent = findSnippetByContentId(snippets, contentId)
+
+      if (!ownedContent) {
+        return { deleted: false }
+      }
+
+      ownedContent.snippet.contents.splice(ownedContent.contentIndex, 1)
+      ownedContent.snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, ownedContent.snippet)
+      saveState(paths, state)
+
+      return { deleted: true }
+    },
+  }
+}

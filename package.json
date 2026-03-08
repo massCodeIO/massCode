@@ -1,6 +1,6 @@
 {
   "name": "masscode",
-  "version": "4.4.0",
+  "version": "4.6.0",
   "description": "A free and open source code snippets manager for developers",
   "author": {
     "name": "Anton Reshetov",
@@ -31,6 +31,10 @@
     "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
     "copy:locales": "node scripts/copy-locales.js",
+    "bench:load-test": "node scripts/bench-load-test.js",
+    "bench:seed": "node scripts/bench-seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -52,6 +56,7 @@
     "@vueuse/core": "^12.7.0",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
+    "chokidar": "^4.0.3",
     "chroma-js": "^3.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -73,6 +78,7 @@
     "marked": "^15.0.8",
     "markmap-lib": "^0.18.11",
     "markmap-view": "^0.18.10",
+    "mathjs": "^15.1.1",
     "mermaid": "^11.6.0",
     "nanoid": "^3.3.8",
     "nearest-color": "^0.4.4",
@@ -86,7 +92,7 @@
     "toml": "^3.0.0",
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
-    "vue3-perfect-scrollbar": "^2.0.0",
+    "vue-virtual-scroller": "2.0.0-beta.8",
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
@@ -125,6 +131,7 @@
     "unplugin-auto-import": "^19.1.0",
     "unplugin-vue-components": "^28.4.0",
     "vite": "^6.1.1",
+    "vitest": "^4.0.18",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

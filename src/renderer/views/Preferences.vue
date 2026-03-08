@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -7,7 +6,7 @@ import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const scrollRef = useTemplateRef<PerfectScrollbarExpose>('scrollRef')
+const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
 
 const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
@@ -47,10 +46,7 @@ provide(preferencesKeys, {
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>
-      <PerfectScrollbar
-        class="h-full px-2"
-        :options="{ minScrollbarLength: 20 }"
-      >
+      <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
         <RouterLink
           v-for="item in nav"
           :key="item.name"
@@ -62,16 +58,15 @@ provide(preferencesKeys, {
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-      </PerfectScrollbar>
+      </div>
     </template>
     <template #right>
-      <PerfectScrollbar
+      <div
         ref="scrollRef"
-        class="h-full px-5 pb-5"
-        :options="{ minScrollbarLength: 20 }"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pb-5"
       >
         <RouterView />
-      </PerfectScrollbar>
+      </div>
     </template>
   </LayoutTwoColumn>
 </template>

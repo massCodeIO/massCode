@@ -238,7 +238,7 @@ onClickOutside(snippetRef, () => {
   <div
     ref="snippetRef"
     data-snippet-item
-    class="border-border relative px-1 not-first:border-t focus-visible:outline-none [&+.is-selected+div]:border-transparent"
+    class="border-border relative border-b px-1 focus-visible:outline-none"
     :class="{
       'is-selected': isSelected,
       'is-multi-selected': isInMultiSelection,
@@ -311,19 +311,19 @@ onClickOutside(snippetRef, () => {
 @reference "../../styles.css";
 [data-snippet-item] {
   &.is-selected {
-    @apply bg-list-selection text-list-selection-fg rounded-md;
+    @apply bg-list-selection text-list-selection-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-selection-fg;
     }
   }
   &.is-multi-selected {
-    @apply bg-list-selection/80 text-list-selection-fg rounded-md;
+    @apply bg-list-selection/80 text-list-selection-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-selection-fg;
     }
   }
   &.is-focused:not(.is-multi-selected) {
-    @apply bg-list-focus text-list-focus-fg rounded-md;
+    @apply bg-list-focus text-list-focus-fg z-10 rounded-md border-transparent;
     .meta {
       @apply text-list-focus-fg;
     }

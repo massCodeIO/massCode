@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
+import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
+import { APP_DEFAULTS } from '~/main/store/constants'
 
-const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
-
-const { state } = useApp()
+const { state, isAppLoading } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
   emptyTrash,
   isRestoreStateBlocked,
   clearSearch,
+  displayedSnippets,
 } = useSnippets()
 const {
   getFolders,
@@ -30,7 +30,22 @@ const {
   selectedFolderIds,
 } = useFolders()
 
-const tagsListHeight = store.app.get('sizes.tagsListHeight') as number
+const MIN_TAGS_PANEL_SIZE = 12
+
+function normalizeTagsListHeight(value: number | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return APP_DEFAULTS.sizes.tagsList
+  }
+
+  return Math.max(
+    MIN_TAGS_PANEL_SIZE,
+    Math.min(100 - MIN_TAGS_PANEL_SIZE, value),
+  )
+}
+
+const tagsListHeight = normalizeTagsListHeight(
+  store.app.get('sizes.tagsListHeight') as number | undefined,
+)
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
@@ -51,17 +66,36 @@ async function initGetFolders() {
   })
 }
 
-initGetFolders()
-
 async function initGetSnippets() {
   await getSnippets()
 
   nextTick(() => {
-    scrollToElement('[data-snippet-item].is-selected')
+    const index
+      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
+    if (index >= 0) {
+      scrollToSnippetIndex(index)
+    }
   })
 }
 
-initGetSnippets()
+async function initApp() {
+  isAppLoading.value = true
+
+  const results = await Promise.allSettled([
+    initGetFolders(),
+    initGetSnippets(),
+  ])
+
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error('App init error:', result.reason)
+    }
+  })
+
+  isAppLoading.value = false
+}
+
+void initApp()
 
 async function onFolderClick({
   id,
@@ -171,16 +205,8 @@ async function onFolderDrag({
   }
 }
 
-watch(folders, () => {
-  nextTick(() => {
-    if (scrollbarRef.value) {
-      scrollbarRef.value.ps?.update()
-    }
-  })
-})
-
 function onResizeTagList(val: number[]) {
-  store.app.set('sizes.tagsListHeight', val[1])
+  store.app.set('sizes.tagsListHeight', normalizeTagsListHeight(val[1]))
 }
 </script>
 
@@ -249,6 +275,7 @@ function onResizeTagList(val: number[]) {
     </div>
     <SplitterPanel
       as-child
+      :min-size="MIN_TAGS_PANEL_SIZE"
       :default-size="tagsListHeight"
     >
       <SidebarTags class="px-1 pb-1" />

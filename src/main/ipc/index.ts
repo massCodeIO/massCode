@@ -5,9 +5,10 @@ import { registerDialogHandlers } from './handlers/dialog'
 import { registerFsHandlers } from './handlers/fs'
 import { registerPrettierHandlers } from './handlers/prettier'
 import { registerSystemHandlers } from './handlers/system'
+import { registerThemeHandlers } from './handlers/theme'
 
-export function send(channel: Channel) {
-  BrowserWindow.getFocusedWindow()?.webContents.send(channel)
+export function send(channel: Channel, payload?: unknown) {
+  BrowserWindow.getFocusedWindow()?.webContents.send(channel, payload)
 }
 
 export function registerIPC() {
@@ -16,4 +17,5 @@ export function registerIPC() {
   registerSystemHandlers()
   registerPrettierHandlers()
   registerFsHandlers()
+  registerThemeHandlers()
 }

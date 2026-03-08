@@ -22,11 +22,14 @@ type MainMenuAction =
   | 'preview-json'
   | 'presentation-mode'
   | 'toggle-sidebar'
+  | 'goto-math-notebook'
 
 type DBAction =
   | 'relaod'
   | 'move'
   | 'migrate'
+  | 'migrate-to-markdown'
+  | 'migrate-to-sqlite'
   | 'clear'
   | 'backup'
   | 'restore'
@@ -37,19 +40,25 @@ type DBAction =
   | 'move-backup'
 
 type SystemAction =
+  | 'currency-rates'
   | 'reload'
   | 'open-external'
   | 'deep-link'
   | 'update-available'
+  | 'feature-notice'
+  | 'renderer-ready'
+  | 'storage-synced'
   | 'error'
 type PrettierAction = 'format'
 type FsAction = 'assets'
+type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>
 export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
 export type FsChannel = CombineWith<FsAction, 'fs'>
+export type ThemeChannel = CombineWith<ThemeAction, 'theme'>
 
 export type Channel =
   | MainMenuChannel
@@ -57,6 +66,7 @@ export type Channel =
   | SystemChannel
   | PrettierChannel
   | FsChannel
+  | ThemeChannel
 
 export interface DialogOptions {
   properties?: OpenDialogOptions['properties']

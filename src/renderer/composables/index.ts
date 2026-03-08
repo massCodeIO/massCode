@@ -1,3 +1,4 @@
+export * from './math-notebook'
 export * from './useApp'
 export * from './useCopyToClipboard'
 export * from './useDialog'

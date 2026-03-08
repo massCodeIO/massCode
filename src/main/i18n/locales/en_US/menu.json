@@ -6,7 +6,8 @@
     "update": "Check for Updates...",
     "quit": "Quit massCode",
     "about": "About massCode",
-    "hide": "Hide massCode"
+    "hide": "Hide massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Help",

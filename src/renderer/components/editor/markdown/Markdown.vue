@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useSnippets, useTheme } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
-import { useDark } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
@@ -17,7 +16,7 @@ import 'codemirror/theme/oceanic-next.css'
 const isDev = import.meta.env.DEV
 
 const { selectedSnippetContent } = useSnippets()
-const isDark = useDark()
+const { isDark, editorThemeName } = useTheme()
 const { scaleToShow, onZoom } = useMarkdown()
 
 const route = useRoute()
@@ -108,7 +107,7 @@ function renderCodeBlockEditors() {
       const editor = CodeMirror(container as HTMLElement, {
         value: blockData.value,
         mode: blockData.language,
-        theme: isDark.value ? 'oceanic-next' : 'neo',
+        theme: editorThemeName.value,
         readOnly: true,
         lineNumbers: false,
         lineWrapping: true,
@@ -157,18 +156,21 @@ watch(renderedContent, () => {
   })
 })
 
-watch(isDark, (value) => {
-  const theme = value ? 'oceanic-next' : 'neo'
+watch(editorThemeName, (theme) => {
   codeEditors.value.forEach((editor) => {
     editor.setOption('theme', theme)
   })
+})
+
+watch(isDark, () => {
+  renderMermaidBlocks()
 })
 </script>
 
 <template>
   <div
     data-editor-markdown
-    class="grid grid-rows-[auto_1fr] overflow-scroll"
+    class="grid grid-rows-[auto_1fr] overflow-hidden"
   >
     <EditorHeaderTool v-if="isShowHeaderTool">
       <div class="flex w-full justify-end gap-2 px-2">
@@ -189,14 +191,14 @@ watch(isDark, (value) => {
         </UiActionButton>
       </div>
     </EditorHeaderTool>
-    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+    <div class="scrollbar h-full min-h-0 overflow-y-auto">
       <div
         ref="markdownRef"
         class="markdown-content"
       >
         <div v-html="renderedContent" />
       </div>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>
 
@@ -204,7 +206,7 @@ watch(isDark, (value) => {
 @reference '../../../styles.css';
 
 .markdown-content {
-  @apply overflow-auto p-4 font-sans text-[var(--color-text)];
+  @apply p-4 font-sans text-[var(--color-text)];
   font-size: calc(1rem * var(--markdown-scale));
   line-height: 1.5;
 }

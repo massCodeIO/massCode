@@ -3,11 +3,21 @@
   "storage": {
     "section": {
       "main": "Main",
+      "migration": "Migration",
+      "dangerZone": "Danger Zone",
       "backup": "Backup"
     },
     "label": "Storage",
     "migrate": "Migrate",
+    "migrateMarkdownToSqlite": "Rollback to SQLite",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Count",
+    "vaultPath": "Vault Path",
+    "engine": {
+      "label": "Storage Engine",
+      "sqlite": "SQLite (Legacy)",
+      "markdown": "Markdown Vault (Recommended)"
+    },
     "clearDatabase": "Clear Database",
     "backup": {
       "label": "Backup",
@@ -57,6 +67,12 @@
     "label": "Appearance",
     "theme": {
       "label": "Theme",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Light",
       "dark": "Dark",
       "system": "System"

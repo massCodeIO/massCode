@@ -1,4 +1,8 @@
-import type { AppStore, PreferencesStore } from './store/types'
+import type {
+  AppStore,
+  MathNotebookStore,
+  PreferencesStore,
+} from './store/types'
 import type { EventCallback } from './types'
 import type { Channel } from './types/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
@@ -38,6 +42,15 @@ contextBridge.exposeInMainWorld('electron', {
         value: PreferencesStore[T],
       ) => store.preferences.set(name, value),
       delete: (name: keyof PreferencesStore) => store.preferences.delete(name),
+    },
+    mathNotebook: {
+      get: (name: keyof MathNotebookStore) => store.mathNotebook.get(name),
+      set: <T extends keyof MathNotebookStore>(
+        name: T,
+        value: MathNotebookStore[T],
+      ) => store.mathNotebook.set(name, value),
+      delete: (name: keyof MathNotebookStore) =>
+        store.mathNotebook.delete(name),
     },
   },
   i18n: {

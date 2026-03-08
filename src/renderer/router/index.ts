@@ -27,6 +27,7 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  mathNotebook: 'math-notebook',
 } as const
 
 const routes = [
@@ -173,6 +174,11 @@ const routes = [
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
       },
     ],
+  },
+  {
+    path: '/math-notebook',
+    name: RouterName.mathNotebook,
+    component: () => import('@/views/MathNotebook.vue'),
   },
 ]
 

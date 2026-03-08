@@ -95,11 +95,11 @@ watchEffect(() => {
     >
       <X class="h-3 w-3" />
     </UiButton>
-    <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
+    <div class="scrollbar h-full min-h-0 overflow-y-auto">
       <div class="overflow-auto p-5">
         <EditorMarkdown :key="scaleToShow" />
       </div>
-    </PerfectScrollbar>
+    </div>
     <div class="flex items-center justify-between px-8">
       <div class="flex items-center">
         <UiActionButton

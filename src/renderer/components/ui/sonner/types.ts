@@ -1,7 +1,7 @@
 export interface Props {
   message?: string
   component?: Component
-  type?: 'default' | 'success' | 'error'
+  type?: 'default' | 'success' | 'error' | 'warning'
   closeButton?: boolean
   duration?: number
   action?: {

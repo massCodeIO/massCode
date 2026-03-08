@@ -129,6 +129,8 @@ async function init() {
     lineWrapping: settings.wrap,
     lineNumbers: true,
     tabSize: settings.tabSize,
+    indentUnit: settings.tabSize,
+    indentWithTabs: true,
     autoCloseBrackets: true,
     matchBrackets: settings.matchBrackets,
     styleActiveLine: settings.highlightLine,
@@ -249,6 +251,16 @@ async function init() {
       nextTick(() => {
         editor?.refresh()
       })
+    },
+  )
+
+  watch(
+    () => settings.tabSize,
+    (tabSize) => {
+      const normalizedTabSize = Math.max(1, Number(tabSize) || 1)
+
+      editor?.setOption('tabSize', normalizedTabSize)
+      editor?.setOption('indentUnit', normalizedTabSize)
     },
   )
 

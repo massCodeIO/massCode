@@ -1,29 +1,50 @@
 <script setup lang="ts">
 import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { RouterName } from '@/router'
 import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
+import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 import { notifications } from './services/notifications'
 
 const { isSponsored, isAppLoading } = useApp()
+const route = useRoute()
 
 const showLoader = ref(false)
-let loaderTimer: ReturnType<typeof setTimeout> | null = null
 
-loaderTimer = setTimeout(() => {
-  showLoader.value = true
-}, 300)
+const isMainRoute = computed(() => route.name === RouterName.main)
+const isLoaderVisible = computed(() => isMainRoute.value && isAppLoading.value)
 
-watch(isAppLoading, (value) => {
-  if (!value) {
-    clearTimeout(loaderTimer!)
-    showLoader.value = false
-  }
-})
+watch(
+  isLoaderVisible,
+  (value) => {
+    if (!value) {
+      showLoader.value = false
+      return
+    }
+
+    const timer = setTimeout(() => {
+      showLoader.value = true
+    }, 300)
+
+    onWatcherCleanup(() => clearTimeout(timer))
+  },
+  { immediate: true },
+)
+
+watch(
+  isMainRoute,
+  (value) => {
+    if (!value) {
+      isAppLoading.value = false
+    }
+  },
+  { immediate: true },
+)
 
 useTheme()
 
@@ -51,11 +72,11 @@ init()
   </div>
   <RouterView />
   <div
-    v-if="isAppLoading"
+    v-if="isLoaderVisible"
     class="bg-bg absolute inset-0 z-50 flex flex-col items-center justify-center"
   >
     <template v-if="showLoader">
-      App loading...
+      {{ i18n.t("loading") }}
       <LoaderCircle class="text-text-muted mt-4 h-5 w-5 animate-spin" />
     </template>
   </div>

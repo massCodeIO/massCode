@@ -122,6 +122,7 @@
     "copied": "Copied",
     "currencyUnavailable": "Currency rates service unavailable"
   },
+  "loading": "App loading...",
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
     "emptyFoldersList": "No Folders",

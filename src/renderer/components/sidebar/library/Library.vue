@@ -79,11 +79,23 @@ async function initGetSnippets() {
 }
 
 async function initApp() {
-  await Promise.all([initGetFolders(), initGetSnippets()])
+  isAppLoading.value = true
+
+  const results = await Promise.allSettled([
+    initGetFolders(),
+    initGetSnippets(),
+  ])
+
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error('App init error:', result.reason)
+    }
+  })
+
   isAppLoading.value = false
 }
 
-initApp()
+void initApp()
 
 async function onFolderClick({
   id,

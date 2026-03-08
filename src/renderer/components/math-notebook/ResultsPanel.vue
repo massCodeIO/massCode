@@ -13,8 +13,6 @@ interface Props {
 const props = defineProps<Props>()
 
 const showTotal = ref(true)
-const copiedIndex = ref<number | null>(null)
-
 const copy = useCopyToClipboard()
 
 const total = computed(() => {
@@ -40,23 +38,15 @@ const resultsStyle = computed(() => {
   }
 })
 
-function handleClickResult(result: LineResult, index: number) {
+function handleClickResult(result: LineResult) {
   if (result.value) {
     copy(result.value)
-    copiedIndex.value = index
-    setTimeout(() => {
-      copiedIndex.value = null
-    }, 600)
   }
 }
 
-function getResultClasses(result: LineResult, index: number) {
+function getResultClasses(result: LineResult) {
   const base
     = 'flex h-[22px] items-center justify-end font-mono text-[13px] leading-[22px] transition-all duration-100'
-
-  if (copiedIndex.value === index) {
-    return `${base} text-primary scale-[1.02] origin-right`
-  }
 
   if (result.error) {
     return `${base} text-red-400/50`
@@ -71,11 +61,25 @@ function getResultClasses(result: LineResult, index: number) {
   }
 
   if (result.type === 'assignment') {
-    return `${base} text-text-muted/70 cursor-pointer hover:text-text`
+    return `${base} group text-text-muted/70 cursor-pointer`
   }
 
   if (result.value) {
-    return `${base} cursor-pointer hover:text-primary`
+    return `${base} group cursor-pointer`
+  }
+
+  return base
+}
+
+function getResultValueClasses(result: LineResult) {
+  const base = 'truncate rounded-md px-1.5 transition-colors duration-100'
+
+  if (result.type === 'assignment') {
+    return `${base} group-hover:bg-list-selection/70`
+  }
+
+  if (result.value) {
+    return `${base} group-hover:bg-primary group-hover:text-white`
   }
 
   return base
@@ -92,15 +96,10 @@ function getResultClasses(result: LineResult, index: number) {
         <div
           v-for="(result, index) in results"
           :key="index"
-          :class="getResultClasses(result, index)"
-          @click="handleClickResult(result, index)"
+          :class="getResultClasses(result)"
+          @click="handleClickResult(result)"
         >
-          <template v-if="copiedIndex === index">
-            <span class="truncate text-[11px] tracking-wider opacity-80">
-              {{ i18n.t("mathNotebook.copied") }}
-            </span>
-          </template>
-          <template v-else-if="result.type === 'pending'">
+          <template v-if="result.type === 'pending'">
             <LoaderCircle class="h-3.5 w-3.5 animate-spin" />
           </template>
           <template v-else-if="result.error && result.showError">
@@ -111,12 +110,14 @@ function getResultClasses(result: LineResult, index: number) {
           <template v-else>
             <span
               v-if="result.value"
-              class="truncate"
-              :class="{
-                'font-medium':
-                  ['number', 'aggregate'].includes(result.type)
-                  && props.activeLine === index,
-              }"
+              :class="[
+                getResultValueClasses(result),
+                {
+                  'font-medium':
+                    ['number', 'aggregate'].includes(result.type)
+                    && props.activeLine === index,
+                },
+              ]"
             >
               {{ result.value }}
             </span>
@@ -128,18 +129,22 @@ function getResultClasses(result: LineResult, index: number) {
     <transition name="total-slide">
       <div
         v-if="showTotal"
-        class="border-border/60 flex h-[34px] shrink-0 items-center justify-between border-t px-3"
+        class="border-border/60 flex h-[34px] shrink-0 items-center gap-2 border-t px-3"
       >
         <span
-          class="text-text-muted/60 text-[10px] font-medium tracking-[0.1em] uppercase"
+          class="text-text-muted/60 shrink-0 text-[10px] font-medium tracking-[0.1em] uppercase"
         >
           {{ i18n.t("total") }}
         </span>
         <span
-          class="hover:text-primary cursor-pointer font-mono text-[13px] font-medium tracking-wide transition-colors"
+          class="group flex h-[22px] min-w-0 flex-1 cursor-pointer items-center justify-end font-mono text-[13px] leading-[22px]"
           @click="copy(formattedTotal)"
         >
-          {{ formattedTotal }}
+          <span
+            class="group-hover:bg-primary truncate rounded-md px-1.5 transition-colors duration-100 group-hover:text-white"
+          >
+            {{ formattedTotal }}
+          </span>
         </span>
       </div>
     </transition>

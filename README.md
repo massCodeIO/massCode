@@ -96,6 +96,10 @@ Generate mind maps from Markdown. Fast, intuitive, and ideal for structuring and
 
 Visualize and explore your JSON data with an interactive graph view. Perfect for quickly inspecting complex responses, APIs, or configuration files.
 
+### Math Notebook
+
+A calculator notepad inspired by [Numi](https://numi.app). Write expressions in natural language and get instant results on each line. Supports arithmetic, percentages, unit conversions, 28 currencies with live rates, date & time operations, variables, and more.
+
 ### Beautiful Screenshots
 
 Export snippets as polished images with customizable themes and backgrounds.
@@ -123,17 +127,17 @@ Extend your workflow with:
 
 massCode supports two storage engines — you can switch between them in **Settings → Storage**.
 
-### SQLite
-
-The default storage engine. All data is stored in a single SQLite database file.
-
 ### Markdown Vault
 
-Store snippets as plain `.md` files on disk. No database — just files with frontmatter metadata. The vault structure mirrors your folder hierarchy.
+The default storage engine. Snippets are stored as plain `.md` files on disk with frontmatter metadata. The vault structure mirrors your folder hierarchy.
 
 * **Git-friendly** — track changes, sync via GitHub or any Git remote.
 * **Cloud sync** — works with iCloud, Dropbox, Syncthing, or any file sync service.
 * **Live sync** — massCode watches the vault directory and picks up external changes in real time.
+
+### SQLite (Legacy)
+
+All data is stored in a single SQLite database file. SQLite engine is deprecated and will be removed in future versions. Please migrate to Markdown Vault.
 
 ## Overview
 

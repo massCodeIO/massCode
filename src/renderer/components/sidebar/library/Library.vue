@@ -12,7 +12,7 @@ import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
-const { state, isAppLoading } = useApp()
+const { state, isAppLoading, isCodeSpaceInitialized } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
@@ -79,6 +79,11 @@ async function initGetSnippets() {
 }
 
 async function initApp() {
+  if (isCodeSpaceInitialized.value) {
+    isAppLoading.value = false
+    return
+  }
+
   isAppLoading.value = true
 
   const results = await Promise.allSettled([
@@ -91,6 +96,10 @@ async function initApp() {
       console.error('App init error:', result.reason)
     }
   })
+
+  isCodeSpaceInitialized.value = results.every(
+    result => result.status === 'fulfilled',
+  )
 
   isAppLoading.value = false
 }

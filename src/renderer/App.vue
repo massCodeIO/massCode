@@ -2,6 +2,7 @@
 import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { RouterName } from '@/router'
+import { isSpaceRouteName } from '@/spaceDefinitions'
 import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
@@ -11,7 +12,7 @@ import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 import { notifications } from './services/notifications'
 
-const { isSponsored, isAppLoading } = useApp()
+const { isAppLoading } = useApp()
 const route = useRoute()
 
 const showLoader = ref(false)
@@ -64,13 +65,15 @@ init()
     data-title-bar
     class="absolute top-0 z-50 h-[var(--title-bar-height)] w-full select-none"
   />
-  <div
-    v-if="!isSponsored"
-    class="text-text-muted absolute top-1 right-2 z-50 text-[11px] uppercase"
-  >
-    {{ i18n.t("messages:special.unsponsored") }}
-  </div>
-  <RouterView />
+  <RouterView v-slot="{ Component, route: currentRoute }">
+    <AppSpaceShell v-if="isSpaceRouteName(currentRoute.name)">
+      <component :is="Component" />
+    </AppSpaceShell>
+    <component
+      :is="Component"
+      v-else
+    />
+  </RouterView>
   <div
     v-if="isLoaderVisible"
     class="bg-bg absolute inset-0 z-50 flex flex-col items-center justify-center"

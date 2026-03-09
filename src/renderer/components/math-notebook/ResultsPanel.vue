@@ -156,7 +156,7 @@ function openDocumentation() {
     </transition>
 
     <div
-      class="border-border/40 mb-2 flex h-[28px] shrink-0 items-center justify-between border-t px-2"
+      class="border-border/40 mb-1 flex h-[28px] shrink-0 items-center justify-between border-t px-2"
     >
       <UiActionButton
         type="iconText"

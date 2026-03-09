@@ -7,7 +7,7 @@ export interface TreeInjection {
   focusHandler?: (isFocused: Ref<boolean>) => void
   isHoveredByIdDisabled: Ref<boolean>
   toggleNode: (node: Node) => void
-  contextMenu: (node: Node, event: MouseEvent) => void
+  contextMenu: (node: Node) => void
 }
 
 export const treeKeys: InjectionKey<TreeInjection> = Symbol('tree')

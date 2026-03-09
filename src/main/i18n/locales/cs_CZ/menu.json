@@ -1,7 +1,7 @@
 {
   "app": {
     "label": "massCode",
-    "preferences": "Předvolby",
+    "preferences": "Nastavení",
     "devtools": "Vývojářské nástroje",
     "update": "Zkontrolovat aktualizace...",
     "quit": "Ukončit massCode",
@@ -72,5 +72,9 @@
   },
   "devtools": {
     "label": "Vývojářské nástroje"
+  },
+  "window": {
+    "label": "Okno",
+    "minimize": "Minimalizovat"
   }
 }

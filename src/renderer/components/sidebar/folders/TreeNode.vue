@@ -32,14 +32,20 @@ const {
 } = inject(treeKeys)!
 
 const {
-  highlightedFolderId,
+  highlightedFolderIds,
   highlightedSnippetIds,
   highlightedTagId,
   state,
   focusedFolderId,
 } = useApp()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
-const { updateFolder, renameFolderId } = useFolders()
+const {
+  updateFolder,
+  renameFolderId,
+  selectedFolderIds,
+  folders,
+  getFolderByIdFromTree,
+} = useFolders()
 
 const hoveredId = ref()
 const overPosition = ref<Position>()
@@ -60,9 +66,14 @@ const isHovered = computed(() => {
 })
 
 const isSelected = computed(() => state.folderId === props.node.id)
+const isMultiSelected = computed(
+  () =>
+    selectedFolderIds.value.length > 1
+    && selectedFolderIds.value.includes(props.node.id),
+)
 
-const isHighlighted = computed(
-  () => highlightedFolderId.value === props.node.id,
+const isHighlighted = computed(() =>
+  highlightedFolderIds.value.has(props.node.id),
 )
 const isFocused = computed(() => focusedFolderId.value === props.node.id)
 
@@ -97,44 +108,113 @@ const betweenLineStyle = computed(() => {
   return style
 })
 
+function getNodeById(id: number) {
+  return getFolderByIdFromTree(folders.value, id) as Node | undefined
+}
+
+function hasSelectedAncestor(node: Node, selection: Set<number>) {
+  let parentId = node.parentId
+
+  while (parentId) {
+    if (selection.has(parentId)) {
+      return true
+    }
+
+    parentId = getNodeById(parentId)?.parentId || null
+  }
+
+  return false
+}
+
+function getDraggedNodes() {
+  const selection = selectedFolderIds.value.includes(Number(props.node.id))
+    ? selectedFolderIds.value
+    : [Number(props.node.id)]
+
+  const selectionSet = new Set(selection)
+
+  return selection
+    .map(id => getNodeById(Number(id)))
+    .filter((node): node is Node => Boolean(node))
+    .filter(node => !hasSelectedAncestor(node, selectionSet))
+}
+
 function onClickArrow(node: Node) {
   toggleNode(node)
 }
 
-function onClickNode(id: string | number) {
-  highlightedFolderId.value = undefined
+function onClickNode(id: string | number, event?: MouseEvent) {
+  highlightedFolderIds.value.clear()
   highlightedTagId.value = undefined
   state.tagId = undefined
   focusedFolderId.value = Number(id)
-  clickNode(Number(id))
+  clickNode(Number(id), event)
 }
 
 function onClickContextMenu(e: MouseEvent) {
-  highlightedFolderId.value = props.node.id
+  highlightedFolderIds.value.clear()
+  highlightedFolderIds.value.add(Number(props.node.id))
+
+  if (
+    selectedFolderIds.value.length > 1
+    && selectedFolderIds.value.includes(Number(props.node.id))
+  ) {
+    selectedFolderIds.value.forEach(folderId =>
+      highlightedFolderIds.value.add(Number(folderId)),
+    )
+  }
+
   highlightedSnippetIds.value.clear()
   contextMenu(props.node, e)
 }
 
 function onDragStart(e: DragEvent) {
-  store.dragNode = props.node
+  let draggedNodes = getDraggedNodes()
+
+  if (!draggedNodes.length) {
+    draggedNodes = [props.node]
+  }
+
+  const isMultiFolderDrag
+    = selectedFolderIds.value.length > 1
+      && selectedFolderIds.value.includes(Number(props.node.id))
+  const ghostCount = isMultiFolderDrag
+    ? selectedFolderIds.value.length
+    : draggedNodes.length
+
+  store.dragNodes = draggedNodes
+  store.dragNode = draggedNodes[0] || props.node
   isHoveredByIdDisabled.value = true
+  isDragged.value = true
 
   const el = document.createElement('div')
-  el.className = 'fixed left-[-100%] text-fg'
+  el.className
+    = 'fixed left-[-100%] text-fg truncate max-w-[200px] flex items-center'
 
   el.id = 'ghost'
-  el.innerHTML = props.node.name
+  el.innerHTML
+    = ghostCount > 1
+      ? `
+        <span class="rounded-full bg-primary text-white px-2 py-0.5 text-xs ml-3">
+          ${ghostCount}
+        </span>
+      `
+      : props.node.name
 
   document.body.appendChild(el)
 
   e.dataTransfer!.setDragImage(el, 0, 0)
   setTimeout(() => el.remove(), 0)
 
-  e.dataTransfer!.setData('node', JSON.stringify(props.node))
+  e.dataTransfer!.setData(
+    'folderIds',
+    JSON.stringify(draggedNodes.map(node => node.id)),
+  )
 }
 
 function onDragEnd() {
   store.dragNode = undefined
+  store.dragNodes = undefined
   store.dragEnterNode = undefined
   overPosition.value = undefined
   isDragged.value = false
@@ -149,7 +229,11 @@ function onDragEnter() {
 function onDragOver(e: DragEvent) {
   hoveredId.value = props.node.id
 
-  if (props.node?.id === store.dragNode?.id)
+  const isDraggingNode
+    = store.dragNodes?.some(node => node.id === props.node.id)
+      || store.dragNode?.id === props.node.id
+
+  if (isDraggingNode)
     return
 
   const height = rowRef.value!.offsetHeight
@@ -201,8 +285,14 @@ async function onDrop(e: DragEvent) {
   if (!store.dragNode || !isAllowed.value)
     return
 
-  if (overPosition.value) {
-    dragNode(store.dragNode, props.node, overPosition.value)
+  const draggedNodes = store.dragNodes?.length
+    ? store.dragNodes
+    : store.dragNode
+      ? [store.dragNode]
+      : []
+
+  if (overPosition.value && draggedNodes.length) {
+    dragNode(draggedNodes, props.node, overPosition.value)
   }
 
   overPosition.value = undefined
@@ -210,7 +300,7 @@ async function onDrop(e: DragEvent) {
 
 onClickOutside(rowRef, () => {
   focusedFolderId.value = undefined
-  highlightedFolderId.value = undefined
+  highlightedFolderIds.value.clear()
 })
 
 function onUpdateName() {
@@ -260,12 +350,13 @@ if (focusHandler)
         'is-hovered':
           (isHovered && isAllowed) || hoveredNodeId === String(node.id),
         'is-selected': isSelected,
+        'is-multi-selected': isMultiSelected,
         'is-focused': isFocused,
         'is-highlighted': isHighlighted,
       }"
       @dragenter.stop="onDragEnter"
       @dragover="onDragOver"
-      @click="onClickNode(node.id)"
+      @click="(event) => onClickNode(node.id, event)"
     >
       <span class="node__name relative z-10 flex w-full items-center">
         <div
@@ -372,7 +463,8 @@ if (focusHandler)
     &.is-hovered,
     &.is-selected,
     &.is-focused,
-    &.is-highlighted {
+    &.is-highlighted,
+    &.is-multi-selected {
       @apply text-list-selection-fg;
       &::before {
         content: "";
@@ -384,6 +476,12 @@ if (focusHandler)
       @apply text-list-selection-fg;
       &::before {
         @apply bg-list-selection;
+      }
+    }
+    &.is-multi-selected {
+      @apply text-list-selection-fg;
+      &::before {
+        @apply bg-list-selection/80;
       }
     }
     &.is-focused,

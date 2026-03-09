@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Database başarıyla taşındı."
+    "copied": "Panoya kopyalandı",
+    "migrate": "Database başarıyla taşındı.",
+    "backup": {
+      "created": "Yedek başarıyla oluşturuldu.",
+      "restored": "Yedek başarıyla geri yüklendi.",
+      "deleted": "Yedek başarıyla silindi."
+    }
   },
   "warning": {
     "noUndo": "Bu işlemi geri alamazsınız.",

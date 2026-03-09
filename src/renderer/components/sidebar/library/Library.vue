@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import type { Node } from '@/components/sidebar/folders/types'
-import type { PerfectScrollbarExpose } from 'vue3-perfect-scrollbar'
 import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
+import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
+import { APP_DEFAULTS } from '~/main/store/constants'
 
-const scrollbarRef = ref<PerfectScrollbarExpose | null>(null)
-
-const { state } = useApp()
+const { state, isAppLoading } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
   emptyTrash,
   isRestoreStateBlocked,
   clearSearch,
+  displayedSnippets,
 } = useSnippets()
 const {
   getFolders,
@@ -27,9 +27,25 @@ const {
   selectFolder,
   createFolderAndSelect,
   updateFolder,
+  selectedFolderIds,
 } = useFolders()
 
-const tagsListHeight = store.app.get('sizes.tagsListHeight') as number
+const MIN_TAGS_PANEL_SIZE = 12
+
+function normalizeTagsListHeight(value: number | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return APP_DEFAULTS.sizes.tagsList
+  }
+
+  return Math.max(
+    MIN_TAGS_PANEL_SIZE,
+    Math.min(100 - MIN_TAGS_PANEL_SIZE, value),
+  )
+}
+
+const tagsListHeight = normalizeTagsListHeight(
+  store.app.get('sizes.tagsListHeight') as number | undefined,
+)
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
@@ -50,25 +66,60 @@ async function initGetFolders() {
   })
 }
 
-initGetFolders()
-
 async function initGetSnippets() {
   await getSnippets()
 
   nextTick(() => {
-    scrollToElement('[data-snippet-item].is-selected')
+    const index
+      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
+    if (index >= 0) {
+      scrollToSnippetIndex(index)
+    }
   })
 }
 
-initGetSnippets()
+async function initApp() {
+  isAppLoading.value = true
 
-async function onFolderClick(id: number) {
-  if (state.folderId !== id) {
+  const results = await Promise.allSettled([
+    initGetFolders(),
+    initGetSnippets(),
+  ])
+
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error('App init error:', result.reason)
+    }
+  })
+
+  isAppLoading.value = false
+}
+
+void initApp()
+
+async function onFolderClick({
+  id,
+  event,
+}: {
+  id: number
+  event?: MouseEvent
+}) {
+  if (event?.shiftKey) {
+    await selectFolder(id, { mode: 'range', ensureVisibility: false })
+    return
+  }
+
+  if (event && (event.metaKey || event.ctrlKey)) {
+    await selectFolder(id, { mode: 'toggle', ensureVisibility: false })
+    return
+  }
+
+  if (state.folderId !== id || selectedFolderIds.value.length > 1) {
     isRestoreStateBlocked.value = true
     clearSearch()
 
-    await getSnippets({ folderId: id })
     await selectFolder(id)
+    await getSnippets({ folderId: id })
     selectFirstSnippet()
   }
 }
@@ -85,29 +136,45 @@ async function onFolderToggle(node: Node) {
 }
 
 async function onFolderDrag({
-  node,
+  nodes,
   target,
   position,
 }: {
-  node: Node
+  nodes: Node[]
   target: Node
-  position: string
+  position: 'before' | 'after' | 'center'
 }) {
   try {
-    const isDraggingUp = node.orderIndex > target.orderIndex
+    // Фильтруем узлы, исключая целевой, чтобы избежать перемещения папки в себя
+    const movableNodes = nodes.filter(node => node.id !== target.id)
 
-    // Определяем новые значения для parentId и orderIndex
-    let newParentId: number | null = null
-    let newOrderIndex: number = 0
+    if (!movableNodes.length) {
+      return
+    }
 
     if (position === 'center') {
       // Перемещение внутрь целевой папки
-      newParentId = Number(target.id)
-      newOrderIndex = target.children?.length || 0
+      const destinationParentId = Number(target.id)
+      let orderIndex = target.children?.length || 0
+
+      for (const node of movableNodes) {
+        await updateFolder(node.id, {
+          parentId: destinationParentId,
+          orderIndex,
+        })
+        orderIndex += 1
+      }
+
+      return
     }
-    else {
-      // Перемещение до или после целевой папки
-      newParentId = target.parentId || null
+
+    // Перемещение до или после целевой папки
+    for (const node of movableNodes) {
+      const isDraggingUp = node.orderIndex > target.orderIndex
+
+      const newParentId: number | null = target.parentId || null
+      let newOrderIndex: number
+
       if (node.parentId === target.parentId) {
         // Если перемещаем внутри одного списка, корректируем по направлению и позиции
         if (position === 'after') {
@@ -126,28 +193,20 @@ async function onFolderDrag({
         newOrderIndex
           = position === 'after' ? target.orderIndex + 1 : target.orderIndex
       }
-    }
 
-    updateFolder(node.id, {
-      parentId: newParentId,
-      orderIndex: newOrderIndex,
-    })
+      await updateFolder(node.id, {
+        parentId: newParentId,
+        orderIndex: newOrderIndex,
+      })
+    }
   }
   catch (error) {
     console.error('Folder update error:', error)
   }
 }
 
-watch(folders, () => {
-  nextTick(() => {
-    if (scrollbarRef.value) {
-      scrollbarRef.value.ps?.update()
-    }
-  })
-})
-
 function onResizeTagList(val: number[]) {
-  store.app.set('sizes.tagsListHeight', val[1])
+  store.app.set('sizes.tagsListHeight', normalizeTagsListHeight(val[1]))
 }
 </script>
 
@@ -186,7 +245,7 @@ function onResizeTagList(val: number[]) {
       </div>
       <UiActionButton
         :tooltip="i18n.t('action.new.folder')"
-        @click="createFolderAndSelect"
+        @click="createFolderAndSelect()"
       >
         <Plus class="h-4 w-4" />
       </UiActionButton>
@@ -216,6 +275,7 @@ function onResizeTagList(val: number[]) {
     </div>
     <SplitterPanel
       as-child
+      :min-size="MIN_TAGS_PANEL_SIZE"
       :default-size="tagsListHeight"
     >
       <SidebarTags class="px-1 pb-1" />

@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Code block Renderer"
+  },
+  "api": {
+    "label": "Θύρα API",
+    "port": {
+      "label": "Θύρα API",
+      "description": "Αριθμός θύρας για τον διακομιστή API (απαιτείται επανεκκίνηση της εφαρμογής). Έγκυρο εύρος: 1024-65535."
+    }
   }
 }

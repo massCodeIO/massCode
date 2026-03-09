@@ -80,6 +80,9 @@
     },
     "copy": {
       "snippetLink": "Копировать ссылку на сниппет"
+    },
+    "select": {
+      "directory": "Выбрать директорию"
     }
   },
   "sidebar": {
@@ -104,10 +107,26 @@
     "selectedMultiple": "Выбрано сниппетов: {{count}}",
     "noSelected": "Нет выбранных сниппетов"
   },
+  "mathNotebook": {
+    "label": "Математический блокнот",
+    "sheetList": "Список листов",
+    "newSheet": "Новый лист",
+    "untitled": "Без названия",
+    "copied": "Скопировано",
+    "currencyUnavailable": "Сервис курсов валют недоступен"
+  },
+  "spaces": {
+    "label": "Пространства",
+    "codeTooltip": "Сниппеты кода",
+    "toolsTooltip": "Инструменты разработчика",
+    "mathTooltip": "Математический блокнот"
+  },
+  "loading": "Загрузка приложения...",
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
     "emptyFoldersList": "Нет папок",
     "emptySnippetsList": "Нет сниппетов",
+    "emptySheetList": "Нет листов",
     "search": "Поиск",
     "addTag": "Добавить тег"
   }

@@ -14,7 +14,7 @@ const props = defineProps<Props>()
 const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
   = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
-const { highlightedSnippetIds, highlightedFolderId, state } = useApp()
+const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
 const tabRef = ref<HTMLDivElement>()
 const isEdit = ref(false)
@@ -38,7 +38,7 @@ const name = computed({
 
 function onClickContextMenu() {
   highlightedSnippetIds.value.clear()
-  highlightedFolderId.value = undefined
+  highlightedFolderIds.value.clear()
 }
 
 async function onDelete() {

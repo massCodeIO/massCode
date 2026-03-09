@@ -241,7 +241,7 @@ onMounted(() => {
         </div>
       </div>
     </EditorHeaderTool>
-    <PerfectScrollbar class="notebook-grid">
+    <div class="scrollbar notebook-grid h-full min-h-0 overflow-auto">
       <div class="relative flex justify-center p-9">
         <div
           ref="backgroundRef"
@@ -344,7 +344,7 @@ onMounted(() => {
           />
         </div>
       </div>
-    </PerfectScrollbar>
+    </div>
   </div>
 </template>
 

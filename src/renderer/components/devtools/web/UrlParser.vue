@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import { Copy } from 'lucide-vue-next'
 
 const inputRrl = ref('')
@@ -10,7 +10,7 @@ const description = computed(() =>
   i18n.t('devtools:web.urlParser.description'),
 )
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 const url = computed(() => {
   let url: URL | null = null

@@ -563,6 +563,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.nix',
   },
   {
+    name: 'Nushell',
+    value: 'nu',
+    grammar: () => import('./textmate/nu.tmLanguage.json'),
+    scopeName: 'source.nushell',
+  },
+  {
     name: 'NSIS',
     value: 'nsis',
     grammar: () => import('./textmate/nsis.tmLanguage.json'),
@@ -585,6 +591,12 @@ export const languages: LanguageOption[] = [
     value: 'ocaml',
     grammar: () => import('./textmate/ocaml.tmLanguage.json'),
     scopeName: 'source.ocaml',
+  },
+  {
+    name: 'OpenEdge ABL',
+    value: 'oeabl',
+    grammar: () => import('./textmate/oeabl.tmLanguage.json'),
+    scopeName: 'source.oeabl',
   },
   {
     name: 'OpenGL',
@@ -639,6 +651,12 @@ export const languages: LanguageOption[] = [
     value: 'powershell',
     grammar: () => import('./textmate/powershell.tmLanguage.json'),
     scopeName: 'source.powershell',
+  },
+  {
+    name: 'Power Query',
+    value: 'powerquery',
+    grammar: () => import('./textmate/powerquery.tmLanguage.json'),
+    scopeName: 'source.powerquery',
   },
   {
     name: 'Praat',
@@ -992,7 +1010,6 @@ export const oldLanguageMap: Record<any, Language> = {
   'objective-c': 'objectivec',
   'pascaligo': 'plain_text',
   'postiats': 'plain_text',
-  'powerquery': 'plain_text',
   'pug': 'jade',
   'redis': 'plain_text',
   'sb': 'plain_text',

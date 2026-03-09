@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 
 const includeNumbers = ref(true)
 const includeSymbols = ref(true)
@@ -15,7 +15,7 @@ const description = computed(() =>
   i18n.t('devtools:crypto.password.description'),
 )
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 function generatePassword() {
   const numbers = '0123456789'

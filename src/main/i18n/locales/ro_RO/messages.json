@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "DB a fost migrat cu succes."
+    "copied": "Copiat în clipboard",
+    "migrate": "DB a fost migrat cu succes.",
+    "backup": {
+      "created": "Backup creat cu succes.",
+      "restored": "Backup restaurat cu succes.",
+      "deleted": "Backup șters cu succes."
+    }
   },
   "warning": {
     "noUndo": "Nu puteți anula această acțiune.",

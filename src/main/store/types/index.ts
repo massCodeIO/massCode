@@ -17,6 +17,7 @@ export interface AppStore {
   }
   isAutoMigratedFromJson: boolean
   nextDonateNotification?: number
+  lastSeenReleaseNoticeVersion?: string
 }
 
 export interface EditorSettings {
@@ -35,6 +36,11 @@ export interface MarkdownSettings {
   scale: number
 }
 
+export interface StorageSettings {
+  engine: 'sqlite' | 'markdown'
+  vaultPath: string | null
+}
+
 export interface BackupSettings {
   path: string
   enabled: boolean
@@ -47,13 +53,38 @@ export interface PreferencesStore {
   storagePath: string
   apiPort: number
   language: string
-  theme: 'light' | 'dark' | 'auto'
+  theme: string
   editor: EditorSettings
+  storage: StorageSettings
   markdown: MarkdownSettings
   backup: BackupSettings
+}
+
+export interface MathSheet {
+  id: string
+  name: string
+  content: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface MathNotebookStore {
+  sheets: MathSheet[]
+  activeSheetId: string | null
+}
+
+export interface CurrencyRatesCache {
+  rates: Record<string, number>
+  fetchedAt: number
+}
+
+export interface CurrencyRatesStore {
+  cache: CurrencyRatesCache | null
 }
 
 export interface Store {
   app: ElectronStore<AppStore>
   preferences: ElectronStore<PreferencesStore>
+  mathNotebook: ElectronStore<MathNotebookStore>
+  currencyRates: ElectronStore<CurrencyRatesStore>
 }

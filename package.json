@@ -1,6 +1,6 @@
 {
   "name": "masscode",
-  "version": "4.2.0",
+  "version": "4.6.0",
   "description": "A free and open source code snippets manager for developers",
   "author": {
     "name": "Anton Reshetov",
@@ -17,16 +17,24 @@
     "dev:main": "nodemon",
     "dev:start": "cross-env NODE_ENV=development electronmon .",
     "build": "vite build && npm run build:main && electron-builder",
-    "build:mac": "vite build && npm run build:main && electron-builder --mac --x64 --arm64",
+    "build:mac": "vite build && npm run build:main && npm run build:mac:x64 && npm run build:mac:arm64",
+    "build:mac:x64": "vite build && npm run build:main && electron-builder --mac --x64",
+    "build:mac:arm64": "vite build && npm run build:main && electron-builder --mac --arm64",
     "build:win": "vite build && npm run build:main && electron-builder --win --x64",
     "build:linux": "vite build && npm run build:main && electron-builder --linux --x64",
-    "build:sponsored:mac": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --mac --x64 --arm64",
+    "build:sponsored:mac": "vite build && npm run build:main && npm run build:sponsored:mac:x64 && npm run build:sponsored:mac:arm64",
+    "build:sponsored:mac:x64": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --mac --x64",
+    "build:sponsored:mac:arm64": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --mac --arm64",
     "build:sponsored:win": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --win --x64",
     "build:sponsored:linux": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --linux --x64",
     "build:all": "vite build && npm run build:main && npm run build:mac && npm run build:win && npm run build:linux",
     "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
     "copy:locales": "node scripts/copy-locales.js",
+    "bench:load-test": "node scripts/bench-load-test.js",
+    "bench:seed": "node scripts/bench-seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -37,8 +45,10 @@
   "dependencies": {
     "@dagrejs/dagre": "^1.1.5",
     "@elysiajs/cors": "^1.2.0",
-    "@elysiajs/node": "^1.2.5",
-    "@elysiajs/swagger": "^1.2.2",
+    "@elysiajs/node": "^1.4.2",
+    "@elysiajs/swagger": "^1.3.1",
+    "@faker-js/faker": "^10.1.0",
+    "@sinclair/typebox": "^0.34.41",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.46.5",
@@ -46,6 +56,7 @@
     "@vueuse/core": "^12.7.0",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
+    "chokidar": "^4.0.3",
     "chroma-js": "^3.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -56,7 +67,7 @@
     "date-fns": "^4.1.0",
     "dom-to-image": "^2.6.0",
     "electron-store": "^8.2.0",
-    "elysia": "^1.2.15",
+    "elysia": "^1.4.16",
     "fs-extra": "^11.3.0",
     "i18next": "^24.2.2",
     "i18next-fs-backend": "^2.6.0",
@@ -67,6 +78,7 @@
     "marked": "^15.0.8",
     "markmap-lib": "^0.18.11",
     "markmap-view": "^0.18.10",
+    "mathjs": "^15.1.1",
     "mermaid": "^11.6.0",
     "nanoid": "^3.3.8",
     "nearest-color": "^0.4.4",
@@ -80,7 +92,8 @@
     "toml": "^3.0.0",
     "uuid": "^11.1.0",
     "vue-sonner": "^1.3.0",
-    "vue3-perfect-scrollbar": "^2.0.0"
+    "vue-virtual-scroller": "2.0.0-beta.8",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",
@@ -118,8 +131,15 @@
     "unplugin-auto-import": "^19.1.0",
     "unplugin-vue-components": "^28.4.0",
     "vite": "^6.1.1",
+    "vitest": "^4.0.18",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron"
+    ]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",

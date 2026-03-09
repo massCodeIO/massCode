@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as Select from '@/components/ui/shadcn/select'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 import { v1, v4 } from 'uuid'
 
 type UuidType = 'v1' | 'v4'
@@ -24,7 +24,7 @@ const uuidTypeOptions = [
 const title = computed(() => i18n.t('devtools:crypto.uuid.label'))
 const description = computed(() => i18n.t('devtools:crypto.uuid.description'))
 
-const { copy } = useClipboard()
+const copy = useCopyToClipboard()
 
 function generateUuid(type: UuidType) {
   if (type === 'v1') {

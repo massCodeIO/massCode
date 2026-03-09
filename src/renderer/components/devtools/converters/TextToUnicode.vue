@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Switch } from '@/components/ui/shadcn/switch'
+import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useClipboard } from '@vueuse/core'
 
 const text = ref('')
 const isUnicodeToText = ref(false)
@@ -10,6 +10,8 @@ const title = computed(() => i18n.t('devtools:converters.textToUnicode.label'))
 const description = computed(() =>
   i18n.t('devtools:converters.textToUnicode.description'),
 )
+
+const copy = useCopyToClipboard()
 
 function convertTextToUnicode(input: string): string {
   if (!input) {
@@ -57,8 +59,6 @@ function convert() {
 }
 
 const output = computed(() => convert())
-
-const { copy } = useClipboard()
 </script>
 
 <template>

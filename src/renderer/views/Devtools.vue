@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { i18n } from '@/electron'
-import { router, RouterName } from '@/router'
+import { RouterName } from '@/router'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -77,18 +77,26 @@ const webNav = [
     name: RouterName.devtoolsSlugify,
   },
 ]
+
+const generatorsNav = [
+  {
+    label: i18n.t('devtools:generators.json.label'),
+    name: RouterName.devtoolsJsonGenerator,
+  },
+  {
+    label: i18n.t('devtools:generators.lorem.label'),
+    name: RouterName.devtoolsLoremIpsumGenerator,
+  },
+]
 </script>
 
 <template>
   <LayoutTwoColumn
     :title="i18n.t('devtools:label')"
-    @back="() => router.push({ name: RouterName.main })"
+    :show-back="false"
   >
     <template #left>
-      <PerfectScrollbar
-        class="h-full px-2"
-        :options="{ minScrollbarLength: 20 }"
-      >
+      <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
         <div class="text-text-muted mb-2 text-[10px] uppercase">
           {{ i18n.t("devtools:converters.label") }}
         </div>
@@ -131,15 +139,26 @@ const webNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-      </PerfectScrollbar>
+        <div class="text-text-muted my-2 text-[10px] uppercase">
+          {{ i18n.t("devtools:generators.label") }}
+        </div>
+        <RouterLink
+          v-for="item in generatorsNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+      </div>
     </template>
     <template #right>
-      <PerfectScrollbar
-        class="h-full px-5 pb-5"
-        :options="{ minScrollbarLength: 20 }"
-      >
+      <div class="scrollbar h-full min-h-0 overflow-y-auto px-5 pb-5">
         <RouterView />
-      </PerfectScrollbar>
+      </div>
     </template>
   </LayoutTwoColumn>
 </template>

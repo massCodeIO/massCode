@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Pomyślnie przeprowadzono migrację bazy danych."
+    "copied": "Skopiowano do schowka",
+    "migrate": "Pomyślnie przeprowadzono migrację bazy danych.",
+    "backup": {
+      "created": "Kopia zapasowa została pomyślnie utworzona.",
+      "restored": "Kopia zapasowa została pomyślnie przywrócona.",
+      "deleted": "Kopia zapasowa została pomyślnie usunięta."
+    }
   },
   "warning": {
     "noUndo": "Tej operacji nie można cofnąć.",

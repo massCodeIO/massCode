@@ -7,6 +7,7 @@ export const RouterName = {
   preferencesLanguage: 'preferences/language',
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
+  preferencesAPI: 'preferences/api',
   markdownPresentation: 'markdown-presentation',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -24,6 +25,9 @@ export const RouterName = {
   devtoolsSlugify: 'devtools/slugify',
   devtoolsUrlEncoder: 'devtools/url-encoder',
   devtoolsColorConverter: 'devtools/color-converter',
+  devtoolsJsonGenerator: 'devtools/json-generator',
+  devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  mathNotebook: 'math-notebook',
 } as const
 
 const routes = [
@@ -56,6 +60,11 @@ const routes = [
         path: 'editor',
         name: RouterName.preferencesEditor,
         component: () => import('@/components/preferences/Editor.vue'),
+      },
+      {
+        path: 'api',
+        name: RouterName.preferencesAPI,
+        component: () => import('@/components/preferences/API.vue'),
       },
     ],
   },
@@ -152,7 +161,24 @@ const routes = [
         component: () =>
           import('@/components/devtools/converters/ColorConverter.vue'),
       },
+      {
+        path: 'json-generator',
+        name: RouterName.devtoolsJsonGenerator,
+        component: () =>
+          import('@/components/devtools/generators/JsonGenerator.vue'),
+      },
+      {
+        path: 'lorem-ipsum-generator',
+        name: RouterName.devtoolsLoremIpsumGenerator,
+        component: () =>
+          import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
+      },
     ],
+  },
+  {
+    path: '/math-notebook',
+    name: RouterName.mathNotebook,
+    component: () => import('@/views/MathNotebook.vue'),
   },
 ]
 

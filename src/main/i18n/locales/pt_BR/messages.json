@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "DB migrado com sucesso."
+    "copied": "Copiado para a área de transferência",
+    "migrate": "DB migrado com sucesso.",
+    "backup": {
+      "created": "Backup criado com sucesso.",
+      "restored": "Backup restaurado com sucesso.",
+      "deleted": "Backup excluído com sucesso."
+    }
   },
   "warning": {
     "noUndo": "Você não pode desfazer esta ação.",

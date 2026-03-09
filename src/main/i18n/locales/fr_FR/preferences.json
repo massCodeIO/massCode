@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Rendu des blocs de code"
+  },
+  "api": {
+    "label": "Port API",
+    "port": {
+      "label": "Port API",
+      "description": "Numéro de port pour le serveur API (nécessite un redémarrage de l'application). Plage valide: 1024-65535."
+    }
   }
 }

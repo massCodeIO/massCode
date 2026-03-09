@@ -46,5 +46,12 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Renderizador de Bloco de Código"
+  },
+  "api": {
+    "label": "Porta API",
+    "port": {
+      "label": "Porta API",
+      "description": "Número da porta para o servidor API (requer reinicialização do aplicativo). Faixa válida: 1024-65535."
+    }
   }
 }

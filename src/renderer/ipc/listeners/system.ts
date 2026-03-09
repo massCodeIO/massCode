@@ -1,16 +1,68 @@
-import { useApp, useFolders, useSnippets, useSonner } from '@/composables'
-import { ipc } from '@/electron'
+import {
+  useApp,
+  useFolders,
+  useSnippets,
+  useSnippetUpdate,
+  useSonner,
+} from '@/composables'
+import { i18n, ipc } from '@/electron'
+import { router, RouterName } from '@/router'
 import { repository } from '../../../../package.json'
 
 const {
-  highlightedFolderId,
+  state,
+  highlightedFolderIds,
   highlightedSnippetIds,
   focusedSnippetId,
   focusedFolderId,
 } = useApp()
-const { selectFolder } = useFolders()
-const { selectSnippet, getSnippets } = useSnippets()
+const { selectFolder, getFolders } = useFolders()
+const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
+  = useSnippets()
+const { hasBusyContentUpdates } = useSnippetUpdate()
 const { sonner } = useSonner()
+let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+interface ReleaseNoticePayload {
+  sqliteSunsetVersion?: string
+}
+
+async function refreshAfterStorageSync() {
+  const selectedSnippetId = state.snippetId
+
+  await getFolders(false)
+  await getSnippets()
+
+  if (!selectedSnippetId) {
+    return
+  }
+
+  const snippetExists = displayedSnippets.value?.some(
+    snippet => snippet.id === selectedSnippetId,
+  )
+
+  if (!snippetExists) {
+    selectFirstSnippet()
+  }
+}
+
+function scheduleStorageSyncRefresh() {
+  if (storageSyncDebounceTimer) {
+    clearTimeout(storageSyncDebounceTimer)
+    storageSyncDebounceTimer = null
+  }
+
+  storageSyncDebounceTimer = setTimeout(() => {
+    if (hasBusyContentUpdates()) {
+      scheduleStorageSyncRefresh()
+      return
+    }
+
+    refreshAfterStorageSync().catch((error) => {
+      console.error('Failed to refresh after storage sync:', error)
+    })
+  }, 300)
+}
 
 export function registerSystemListeners() {
   ipc.on('system:deep-link', async (_, url: string) => {
@@ -20,15 +72,18 @@ export function registerSystemListeners() {
       const snippetId = u.searchParams.get('snippetId')
 
       if (folderId && snippetId) {
-        highlightedFolderId.value = undefined
+        const nextFolderId = Number(folderId)
+        const nextSnippetId = Number(snippetId)
+
+        highlightedFolderIds.value.clear()
         highlightedSnippetIds.value.clear()
         focusedSnippetId.value = undefined
         focusedFolderId.value = undefined
 
-        await getSnippets({ folderId })
+        await getSnippets({ folderId: nextFolderId })
 
-        await selectFolder(Number(folderId))
-        selectSnippet(Number(snippetId))
+        await selectFolder(nextFolderId)
+        selectSnippet(nextSnippetId)
       }
     }
     catch (error) {
@@ -47,6 +102,25 @@ export function registerSystemListeners() {
         },
       },
     })
+  })
+
+  ipc.on('system:feature-notice', (_, payload: ReleaseNoticePayload) => {
+    sonner({
+      message: i18n.t('messages:release.mdVaultAvailable', {
+        sqliteSunsetVersion: payload?.sqliteSunsetVersion || '5.0.0',
+      }),
+      type: 'success',
+      action: {
+        label: i18n.t('button.goToSettings'),
+        onClick: () => {
+          router.push({ name: RouterName.preferencesStorage })
+        },
+      },
+    })
+  })
+
+  ipc.on('system:storage-synced', () => {
+    scheduleStorageSyncRefresh()
   })
 
   ipc.on('system:error', (_, payload) => {

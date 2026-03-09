@@ -8,10 +8,20 @@
     "migrateDb": [
       "Opravdu chcete provést migraci?",
       "Během migrace bude současná knihovna přepsána."
-    ]
+    ],
+    "backup": {
+      "restore": "Opravdu chcete obnovit ze zálohy?",
+      "delete": "Opravdu chcete smazat tuto zálohu?"
+    }
   },
   "success": {
-    "migrate": "Databáze byla úspěšně migrována."
+    "copied": "Zkopírováno do schránky",
+    "migrate": "Databáze byla úspěšně migrována.",
+    "backup": {
+      "created": "Záloha byla úspěšně vytvořena.",
+      "restored": "Záloha byla úspěšně obnovena.",
+      "deleted": "Záloha byla úspěšně smazána."
+    }
   },
   "warning": {
     "noUndo": "Tuto akci nelze vrátit zpět.",
@@ -25,7 +35,9 @@
       "languages"
     ]
   },
-  "error": {},
+  "error": {
+    "backup": "Operace zálohování selhala"
+  },
   "description": {
     "storage": "Pro použití synchronizačních služeb jako iCloud Drive, Google Drive nebo Dropbox jednoduše přesuňte úložiště do odpovídajících synchronizovaných složek",
     "migrate": {
@@ -36,6 +48,10 @@
         "Všechny složky budou na první úrovni, protože JSON soubor (pod v2.1) nepodporuje vnořené složky.",
         "Snippety s nepodporovanými jazyky budou nastaveny na výchozí Plain Text."
       ]
+    },
+    "language": "Pro aplikaci změny jazyka je nutné aplikaci znovu načíst.",
+    "backup": {
+      "manual": "Manuální záloha nebude automaticky smazána, když počet záloh překročí limit."
     }
   },
   "special": {

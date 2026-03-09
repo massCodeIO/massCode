@@ -5,14 +5,15 @@ import type {
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
 import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
+import { scrollToSnippetIndex } from './useSnippetScroller'
 
 const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
   = useApp()
-const { folders } = useFolders()
+const { folders, getFolderByIdFromTree } = useFolders()
 
 const selectedSnippetIds = ref<number[]>(
   state.snippetId ? [state.snippetId] : [],
@@ -26,6 +27,46 @@ const searchQuery = ref('')
 const isSearch = ref(false)
 const isRestoreStateBlocked = ref(false)
 const searchSelectedIndex = ref<number>(-1)
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function getNextIndexedName(baseName: string, existingNames: string[]): string {
+  const normalizedBase = baseName.trim()
+  const indexedNameRe = new RegExp(
+    `^${escapeRegExp(normalizedBase)}(?:\\s+(\\d+))?$`,
+    'i',
+  )
+
+  let maxIndex = 0
+
+  existingNames.forEach((name) => {
+    const match = name.trim().match(indexedNameRe)
+    if (!match) {
+      return
+    }
+
+    const index = match[1] ? Number(match[1]) : 0
+    if (Number.isFinite(index)) {
+      maxIndex = Math.max(maxIndex, index)
+    }
+  })
+
+  return `${normalizedBase} ${maxIndex + 1}`
+}
+
+async function getSnippetNamesForCreate(
+  folderId: number | null,
+): Promise<string[]> {
+  const query: SnippetsQuery
+    = folderId !== null
+      ? { folderId, isDeleted: 0 }
+      : { isInbox: 1, isDeleted: 0 }
+  const { data } = await api.snippets.getSnippets(query)
+
+  return data.map(snippet => snippet.name)
+}
 
 const displayedSnippets = computed(() => {
   if (isSearch.value) {
@@ -112,11 +153,17 @@ async function getSnippets(query?: SnippetsQuery) {
 
 async function createSnippet() {
   try {
-    const folder = folders.value?.find(f => f.id === state.folderId)
+    const targetFolderId = state.folderId || null
+    const folder = getFolderByIdFromTree(folders.value, targetFolderId)
+    const existingNames = await getSnippetNamesForCreate(targetFolderId)
+    const nextSnippetName = getNextIndexedName(
+      i18n.t('snippet.untitled'),
+      existingNames,
+    )
 
     const { data } = await api.snippets.postSnippets({
-      name: i18n.t('snippet.untitled'),
-      folderId: state.folderId || null,
+      name: nextSnippetName,
+      folderId: targetFolderId,
     })
 
     await api.snippets.postSnippetsByIdContents(String(data.id), {
@@ -182,8 +229,9 @@ async function duplicateSnippet(snippetId: number) {
 
 async function createSnippetContent(snippetId: number) {
   const lastContentIndex = selectedSnippet.value?.contents.length || 0
-  const folder = folders.value?.find(
-    f => f.id === selectedSnippet.value?.folder?.id,
+  const folder = getFolderByIdFromTree(
+    folders.value,
+    selectedSnippet.value?.folder?.id || null,
   )
 
   try {
@@ -236,7 +284,7 @@ async function updateSnippetContent(
     String(contentId),
     data,
   )
-  getSnippets(queryByLibraryOrFolderOrSearch.value)
+  await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function deleteSnippet(snippetId: number) {
@@ -316,19 +364,16 @@ function selectSnippet(snippetId: number, withShift = false) {
   if (state.snippetId !== undefined) {
     const source = isSearch.value ? snippetsBySearch.value : snippets.value
 
-    if (source) {
-      const anchorIndex = source.findIndex(s => s.id === state.snippetId)
-      const currentIndex = source.findIndex(s => s.id === snippetId)
+    if (source?.length) {
+      const orderedIds = source.map(snippet => snippet.id)
+      const rangeSelection = getContiguousSelection(
+        orderedIds,
+        state.snippetId,
+        snippetId,
+      )
 
-      if (anchorIndex !== -1 && currentIndex !== -1) {
-        const startIndex = Math.min(anchorIndex, currentIndex)
-        const endIndex = Math.max(anchorIndex, currentIndex)
-
-        const newSelection = source
-          .slice(startIndex, endIndex + 1)
-          .map(s => s.id)
-        selectedSnippetIds.value = newSelection
-
+      if (rangeSelection.length) {
+        selectedSnippetIds.value = rangeSelection
         lastSelectedSnippetId.value = snippetId
         state.snippetContentIndex = 0
       }
@@ -389,7 +434,7 @@ async function search() {
     await getSnippets({ search: searchQuery.value })
     selectFirstSnippet()
     searchSelectedIndex.value = 0
-    nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
+    nextTick(() => scrollToSnippetIndex(0))
   }
   else {
     isSearch.value = false
@@ -408,7 +453,7 @@ function selectSearchSnippet(index: number) {
   const snippet = displayedSnippets.value[index]
   selectSnippet(snippet.id)
   searchSelectedIndex.value = index
-  nextTick(() => scrollToElement('[data-snippet-item].is-selected'))
+  nextTick(() => scrollToSnippetIndex(index))
 }
 
 function clearSearch(restoreState = false) {

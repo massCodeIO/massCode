@@ -5,9 +5,10 @@ import {
   useEditor,
   useSnippets,
   useSnippetUpdate,
+  useTheme,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { useClipboard, useCssVar, useDark, useDebounceFn } from '@vueuse/core'
+import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
@@ -40,10 +41,14 @@ const {
   isFocusedSearch,
   isShowJsonVisualizer,
 } = useApp()
+const { editorThemeName } = useTheme()
 
-const { addToUpdateContentQueue } = useSnippetUpdate()
+const {
+  addToUpdateContentQueue,
+  getPendingContentUpdate,
+  isContentUpdateBusy,
+} = useSnippetUpdate()
 
-const isDark = useDark()
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
 
@@ -124,10 +129,12 @@ async function init() {
   editor = CodeMirror(el, {
     value: selectedSnippetContent.value?.value || ' ',
     mode: selectedSnippetContent.value?.language || 'plain_text',
-    theme: isDark.value ? 'oceanic-next' : 'neo',
+    theme: editorThemeName.value,
     lineWrapping: settings.wrap,
     lineNumbers: true,
     tabSize: settings.tabSize,
+    indentUnit: settings.tabSize,
+    indentWithTabs: true,
     autoCloseBrackets: true,
     matchBrackets: settings.matchBrackets,
     styleActiveLine: settings.highlightLine,
@@ -217,9 +224,32 @@ async function init() {
     copy()
   })
 
-  watch(selectedSnippetContent, (v) => {
+  watch(selectedSnippetContent, (v, oldV) => {
     nextTick(() => {
-      setValue(v?.value || '')
+      const isNewValue = v?.id !== oldV?.id
+      const isSameContent = v?.id === oldV?.id
+      const snippetId = selectedSnippet.value?.id
+      const contentId = v?.id
+      let nextValue = v?.value || ''
+
+      if (snippetId && contentId) {
+        const pendingUpdate = getPendingContentUpdate(snippetId, contentId)
+        if (pendingUpdate) {
+          nextValue = pendingUpdate.value || ''
+        }
+
+        if (
+          isSameContent
+          && isContentUpdateBusy(snippetId, contentId)
+          && editor
+          && editor.getValue() !== nextValue
+        ) {
+          return
+        }
+      }
+
+      // Не сохраняем вьюпорт при смене фрагмента/сниппета
+      setValue(nextValue, true, !isNewValue)
       nextTick(() => {
         if (searchQuery.value) {
           updateSearchOverlay()
@@ -236,13 +266,8 @@ async function init() {
     })
   })
 
-  watch(isDark, (v) => {
-    if (v) {
-      editor?.setOption('theme', 'oceanic-next')
-    }
-    else {
-      editor?.setOption('theme', 'neo')
-    }
+  watch(editorThemeName, (themeName) => {
+    editor?.setOption('theme', themeName)
   })
 
   watch(
@@ -254,6 +279,16 @@ async function init() {
     },
   )
 
+  watch(
+    () => settings.tabSize,
+    (tabSize) => {
+      const normalizedTabSize = Math.max(1, Number(tabSize) || 1)
+
+      editor?.setOption('tabSize', normalizedTabSize)
+      editor?.setOption('indentUnit', normalizedTabSize)
+    },
+  )
+
   watch(searchQuery, () => {
     nextTick(() => {
       updateSearchOverlay()
@@ -261,21 +296,32 @@ async function init() {
   })
 }
 
-function setValue(value: string, programmatic = true) {
+function setValue(value: string, programmatic = true, preserveViewport = true) {
   if (!editor)
     return
 
-  const cursor = editor.getCursor()
+  const current = editor.getValue()
+  if (current === value)
+    return
+
+  const cursor = preserveViewport ? editor.getCursor() : null
+  const { left, top } = preserveViewport
+    ? editor.getScrollInfo()
+    : { left: 0, top: 0 }
 
   isProgrammaticChange.value = programmatic
-  editor?.setValue(value)
+  editor.setValue(value)
+  isProgrammaticChange.value = false
 
-  nextTick(() => {
-    isProgrammaticChange.value = false
-  })
-
-  if (cursor)
-    editor.setCursor(cursor)
+  if (preserveViewport) {
+    if (cursor)
+      editor.setCursor(cursor)
+    editor.scrollTo(left, top)
+  }
+  else {
+    editor.setCursor({ line: 0, ch: 0 })
+    editor.scrollTo(0, 0)
+  }
 }
 
 function setLanguage(language: Language) {

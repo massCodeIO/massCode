@@ -63,7 +63,8 @@
       "fromFavorites": "Odebrat z oblíbených"
     },
     "reload": {
-      "storage": "Znovu načíst úložiště"
+      "storage": "Znovu načíst úložiště",
+      "app": "Znovu načíst aplikaci"
     },
     "delete": {
       "common": "Smazat",
@@ -80,6 +81,11 @@
     },
     "copy": {
       "snippetLink": "Kopírovat odkaz na snippet"
+    },
+    "backup": {
+      "create": "Vytvořit zálohu",
+      "restore": "Obnovit ze zálohy",
+      "delete": "Smazat zálohu"
     }
   },
   "sidebar": {

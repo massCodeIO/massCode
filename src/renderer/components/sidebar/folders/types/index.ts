@@ -8,5 +8,6 @@ export interface Node extends FoldersItem {
 
 export interface Store {
   dragNode?: Node
+  dragNodes?: Node[]
   dragEnterNode?: Node
 }

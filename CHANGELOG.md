@@ -1,3 +1,51 @@
+# [4.4.0](https://github.com/massCodeIO/massCode/compare/v4.3.0...v4.4.0) (2025-12-19)
+
+
+### Bug Fixes
+
+* **devtools:** update scroll position on change route ([864afb1](https://github.com/massCodeIO/massCode/commit/864afb181dfc2d17d46d9d8af9ffae152c044ed8))
+* **elysia:** prevent DB hangs during saves ([#643](https://github.com/massCodeIO/massCode/issues/643)) ([f6583b7](https://github.com/massCodeIO/massCode/commit/f6583b7cb2d4555b008820a9121bd46808955f09))
+* **i18n:** fix Czech translations ([#651](https://github.com/massCodeIO/massCode/issues/651)) ([55367e2](https://github.com/massCodeIO/massCode/commit/55367e2334075d559b12c92d2e12c4e9ea8aa49f))
+
+
+### Features
+
+* **devtools:** add JSON generator ([#644](https://github.com/massCodeIO/massCode/issues/644)) ([630cf86](https://github.com/massCodeIO/massCode/commit/630cf8629a8d06cc16e7980b8f562bc778851033))
+* **devtools:** add Lorem Ipsum generator ([#645](https://github.com/massCodeIO/massCode/issues/645)) ([332362a](https://github.com/massCodeIO/massCode/commit/332362ae73c4338f00f99715f4be3173a39d2615))
+* **devtools:** add notifications for copy to clipboard ([#646](https://github.com/massCodeIO/massCode/issues/646)) ([00755ba](https://github.com/massCodeIO/massCode/commit/00755ba5aab109ee151458d062cae6462e14a101))
+
+
+
+# [4.3.0](https://github.com/massCodeIO/massCode/compare/v4.2.2...v4.3.0) (2025-11-26)
+
+
+### Bug Fixes
+
+* **folders:** ensure context and toolbar folder creation respect parent ([#640](https://github.com/massCodeIO/massCode/issues/640)) ([b2877c2](https://github.com/massCodeIO/massCode/commit/b2877c29994f4c227da967e801dc13d3731aeba0))
+
+
+### Features
+
+* **editor:** add Power Query (M) language support ([#639](https://github.com/massCodeIO/massCode/issues/639)) ([a49b5d0](https://github.com/massCodeIO/massCode/commit/a49b5d04ab28cd1bc163a24f8b8c431c72baa6f5))
+* **folders:** add multi-selection ([#641](https://github.com/massCodeIO/massCode/issues/641)) ([daef94f](https://github.com/massCodeIO/massCode/commit/daef94f718fd7ec9611f8c21a618c8a33f833feb))
+* **preferences:** add api port to preference option ([#631](https://github.com/massCodeIO/massCode/issues/631)) ([d542824](https://github.com/massCodeIO/massCode/commit/d542824361becdcfcd7bd980adff8a7f8f0354ce))
+
+
+
+## [4.2.2](https://github.com/massCodeIO/massCode/compare/v4.2.1...v4.2.2) (2025-10-29)
+
+
+### Bug Fixes
+
+* **db:** ensure directory exists before accessing the db ([#628](https://github.com/massCodeIO/massCode/issues/628)) ([d20bd9a](https://github.com/massCodeIO/massCode/commit/d20bd9a2aa44e58d36abd019936761afeb439766))
+* **editor:** jumping scroll when editing ([#629](https://github.com/massCodeIO/massCode/issues/629)) ([ee7e384](https://github.com/massCodeIO/massCode/commit/ee7e38458c541c455b74203ec6a59749090bd758))
+
+
+
+## [4.2.1](https://github.com/massCodeIO/massCode/compare/v4.2.0...v4.2.1) (2025-10-28)
+
+
+
 # [4.2.0](https://github.com/massCodeIO/massCode/compare/v4.1.0...v4.2.0) (2025-10-08)
 
 

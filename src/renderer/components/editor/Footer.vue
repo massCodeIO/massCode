@@ -31,9 +31,9 @@ const selectedLanguageName = computed(() => {
 })
 
 function fuzzySearch(list: string[], searchTerm: string) {
-  return list.filter((name) => {
-    // Реализуем нечеткий поиск, разбивая поисковый запрос на символы
-    // и проверяя их последовательное вхождение в название языка
+  return list.filter((value) => {
+    const language = languages.find(l => l.value === value)
+    const name = language?.name || value
     const searchChars = searchTerm.toLowerCase().split('')
     let currentIndex = 0
 
@@ -72,26 +72,24 @@ function fuzzySearch(list: string[], searchTerm: string) {
             <Command.CommandEmpty>No language found</Command.CommandEmpty>
             <Command.CommandList>
               <Command.CommandGroup>
-                <PerfectScrollbar :options="{ minScrollbarLength: 20 }">
-                  <div class="_overflow-y-auto max-h-[150px]">
-                    <Command.CommandItem
-                      v-for="language in languages"
-                      :key="language.value"
-                      :value="language.value"
-                      @select="onSelect(language.value)"
-                    >
-                      {{ language.name }}
-                      <Check
-                        class="ml-auto h-4 w-4"
-                        :class="
-                          selectedSnippetContent?.language === language.value
-                            ? 'opacity-100'
-                            : 'opacity-0'
-                        "
-                      />
-                    </Command.CommandItem>
-                  </div>
-                </PerfectScrollbar>
+                <div class="scrollbar max-h-[150px] overflow-y-auto">
+                  <Command.CommandItem
+                    v-for="language in languages"
+                    :key="language.value"
+                    :value="language.value"
+                    @select="onSelect(language.value)"
+                  >
+                    {{ language.name }}
+                    <Check
+                      class="ml-auto h-4 w-4"
+                      :class="
+                        selectedSnippetContent?.language === language.value
+                          ? 'opacity-100'
+                          : 'opacity-0'
+                      "
+                    />
+                  </Command.CommandItem>
+                </div>
               </Command.CommandGroup>
             </Command.CommandList>
           </Command.Command>

@@ -11,7 +11,13 @@
     ]
   },
   "success": {
-    "migrate": "Base de données migrée avec succès."
+    "copied": "Copié dans le presse-papiers",
+    "migrate": "Base de données migrée avec succès.",
+    "backup": {
+      "created": "Sauvegarde créée avec succès.",
+      "restored": "Sauvegarde restaurée avec succès.",
+      "deleted": "Sauvegarde supprimée avec succès."
+    }
   },
   "warning": {
     "noUndo": "Vous ne pouvez pas annuler cette action.",

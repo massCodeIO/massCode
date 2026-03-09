@@ -1,7 +1,10 @@
 const child_process = require('node:child_process')
 const { styleText } = require('node:util')
+const Store = require('electron-store')
 
-const url = `http://localhost:4321/swagger/json`
+const store = new Store({ name: 'preferences', cwd: 'v2' })
+const apiPort = store.get('apiPort', 4321)
+const url = `http://localhost:${apiPort}/swagger/json`
 
 async function generateApi() {
   try {

@@ -10,8 +10,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-15-intel
             platform: mac
+            arch: x64
+          - os: macos-15
+            platform: mac
+            arch: arm64
           - os: windows-latest
             platform: win
           - os: ubuntu-latest
@@ -37,10 +41,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Rebuild native dependencies
+      - name: Rebuild native dependencies (macOS)
+        if: matrix.platform == 'mac'
+        run: pnpm run rebuild --arch ${{ matrix.arch }}
+
+      - name: Rebuild native dependencies (other platforms)
+        if: matrix.platform != 'mac'
         run: pnpm run rebuild
 
-      - name: Build application (sponsored)
+      - name: Build application (sponsored macOS)
+        if: matrix.platform == 'mac'
+        run: pnpm run build:sponsored:${{ matrix.platform }}:${{ matrix.arch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SPONSORED: true
+
+      - name: Build application (sponsored other platforms)
+        if: matrix.platform != 'mac'
         run: pnpm run build:sponsored:${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,7 +66,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sponsored-${{ matrix.platform }}-${{ github.ref_name }}
+          name: sponsored-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name }}
           path: |
             dist/*.dmg
             dist/*.pkg

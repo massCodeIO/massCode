@@ -13,6 +13,10 @@ const isDev = process.env.NODE_ENV === 'development'
 let db: Database.Database | null = null
 let backupTimer: NodeJS.Timeout | null = null
 
+function isSqliteStorageEngine(): boolean {
+  return store.preferences.get('storage.engine') === 'sqlite'
+}
+
 function isSqliteFile(dbPath: string): boolean {
   try {
     if (!fs.existsSync(dbPath))
@@ -44,6 +48,11 @@ export function useDB() {
     return db
 
   const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+  const dbDir = path.dirname(dbPath)
+
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true })
+  }
 
   if (fs.existsSync(dbPath) && !isSqliteFile(dbPath)) {
     const backupPath = `${dbPath}.old`
@@ -236,6 +245,10 @@ export async function moveDB(path: string) {
 
 export async function createBackup(manual = false) {
   try {
+    if (!isSqliteStorageEngine()) {
+      return null
+    }
+
     const db = useDB()
     const backupSettings = store.preferences.get('backup')
 
@@ -296,6 +309,10 @@ export async function deleteBackup(backupPath: string) {
 }
 
 function shouldCreateBackup() {
+  if (!isSqliteStorageEngine()) {
+    return false
+  }
+
   const backupSettings = store.preferences.get('backup')
 
   if (!backupSettings.enabled) {
@@ -318,6 +335,11 @@ export async function startAutoBackup() {
   try {
     if (backupTimer) {
       clearInterval(backupTimer)
+      backupTimer = null
+    }
+
+    if (!isSqliteStorageEngine()) {
+      return
     }
 
     const backupSettings = store.preferences.get('backup')

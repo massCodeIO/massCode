@@ -7,6 +7,8 @@ interface Props {
   title: string
   leftSize?: string
   rightSize?: string
+  showBack?: boolean
+  topSpace?: number
 }
 
 interface Emits {
@@ -16,12 +18,20 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   leftSize: '220px',
   rightSize: '1fr',
+  showBack: true,
+  topSpace: 0,
 })
 
 const emit = defineEmits<Emits>()
 
 const gridTemplateColumns = computed(() => {
   return `${props.leftSize} 1px ${props.rightSize}`
+})
+
+const leftHeaderStyle = computed(() => {
+  return {
+    paddingTop: `calc(var(--title-bar-height) + ${props.topSpace}px)`,
+  }
 })
 </script>
 
@@ -32,12 +42,14 @@ const gridTemplateColumns = computed(() => {
   >
     <div class="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden">
       <div
-        class="mt-2 flex items-center justify-between gap-2 overflow-hidden px-2 pt-[var(--title-bar-height)] pb-2"
+        class="flex items-center justify-between gap-2 overflow-hidden px-2 pb-2"
+        :style="leftHeaderStyle"
       >
         <div class="truncate font-bold">
           {{ title }}
         </div>
         <UiActionButton
+          v-if="showBack"
           :tooltip="i18n.t('button.back')"
           class="shrink-0"
           @click="() => emit('back')"
@@ -50,7 +62,7 @@ const gridTemplateColumns = computed(() => {
       </div>
     </div>
     <div class="bg-border" />
-    <div class="mt-2 h-full min-h-0 overflow-auto pt-[var(--title-bar-height)]">
+    <div class="h-full min-h-0 overflow-auto pt-[var(--title-bar-height)]">
       <slot name="right" />
     </div>
   </div>

@@ -4,6 +4,7 @@ import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { RouterLink, useRoute } from 'vue-router'
 
+const isMac = navigator.userAgent.toLowerCase().includes('mac')
 const route = useRoute()
 
 const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
@@ -43,6 +44,7 @@ provide(preferencesKeys, {
 <template>
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
+    :top-space="isMac ? 16 : 0"
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>

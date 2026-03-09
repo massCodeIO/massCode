@@ -75,3 +75,4 @@ fix(i18n): pt_BR translation
 2. Consider the context in which the phrase is used
 3. Maintain a consistent style and terminology throughout the translation
 4. Verify that your translation fits the UI components (text length, line breaks)
+5. For narrow navigation areas such as the space rail, keep product labels short and stable. If a locale would make the label too long, it is acceptable to omit that locale-specific label and rely on the `en_US` fallback while adding localized tooltip keys instead.

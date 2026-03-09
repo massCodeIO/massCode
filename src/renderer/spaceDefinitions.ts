@@ -9,6 +9,7 @@ export type SpaceId = 'code' | 'tools' | 'math'
 export interface SpaceDefinition {
   id: SpaceId
   label: string
+  tooltip: string
   icon: Component
   to: RouteLocationRaw
   isActive: (routeName: RouteRecordName | null | undefined) => boolean
@@ -29,6 +30,7 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
     {
       id: 'code',
       label: i18n.t('spaces.code'),
+      tooltip: i18n.t('spaces.codeTooltip'),
       icon: Code2,
       to: { name: RouterName.main },
       isActive: routeName => routeName === RouterName.main,
@@ -36,6 +38,7 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
     {
       id: 'tools',
       label: i18n.t('spaces.tools'),
+      tooltip: i18n.t('spaces.toolsTooltip'),
       icon: Blocks,
       to: { name: RouterName.devtoolsCaseConverter },
       isActive: routeName =>
@@ -44,6 +47,7 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
     {
       id: 'math',
       label: i18n.t('spaces.math'),
+      tooltip: i18n.t('spaces.mathTooltip'),
       icon: Calculator,
       to: { name: RouterName.mathNotebook },
       isActive: routeName => routeName === RouterName.mathNotebook,

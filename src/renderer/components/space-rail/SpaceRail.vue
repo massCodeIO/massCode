@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { RouterName } from '@/router'
@@ -28,32 +29,41 @@ const spaces = computed(() => {
     class="flex h-full flex-col items-center px-2 pt-[calc(var(--title-bar-height)+8px)] pb-3"
     :aria-label="i18n.t('spaces.label')"
   >
-    <div class="flex w-full flex-col gap-1">
-      <RouterLink
-        v-for="space in spaces"
-        :key="space.id"
-        v-slot="{ navigate }"
-        custom
-        :to="space.to"
-      >
-        <button
-          type="button"
-          class="text-text-muted hover:bg-list-selection flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
-          :class="{
-            'bg-list-selection text-list-selection-fg': space.active,
-          }"
-          @click="navigate"
+    <Tooltip.TooltipProvider>
+      <div class="flex w-full flex-col gap-1">
+        <RouterLink
+          v-for="space in spaces"
+          :key="space.id"
+          v-slot="{ navigate }"
+          custom
+          :to="space.to"
         >
-          <component
-            :is="space.icon"
-            class="h-4 w-4 shrink-0"
-          />
-          <span class="text-[10px] leading-none font-medium select-none">
-            {{ space.label }}
-          </span>
-        </button>
-      </RouterLink>
-    </div>
+          <Tooltip.Tooltip>
+            <Tooltip.TooltipTrigger as-child>
+              <button
+                type="button"
+                class="text-text-muted hover:bg-list-selection flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
+                :class="{
+                  'bg-list-selection text-list-selection-fg': space.active,
+                }"
+                @click="navigate"
+              >
+                <component
+                  :is="space.icon"
+                  class="h-4 w-4 shrink-0"
+                />
+                <span class="text-[10px] leading-none font-medium select-none">
+                  {{ space.label }}
+                </span>
+              </button>
+            </Tooltip.TooltipTrigger>
+            <Tooltip.TooltipContent side="right">
+              {{ space.tooltip }}
+            </Tooltip.TooltipContent>
+          </Tooltip.Tooltip>
+        </RouterLink>
+      </div>
+    </Tooltip.TooltipProvider>
     <div
       v-if="!isSponsored"
       class="mt-auto flex flex-1 flex-col items-center justify-end gap-2 pb-2"

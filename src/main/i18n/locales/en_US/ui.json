@@ -123,9 +123,13 @@
     "currencyUnavailable": "Currency rates service unavailable"
   },
   "spaces": {
+    "label": "Spaces",
     "code": "Code",
     "tools": "Tools",
-    "math": "Math"
+    "math": "Math",
+    "codeTooltip": "Code snippets",
+    "toolsTooltip": "Developer tools",
+    "mathTooltip": "Math notebook"
   },
   "loading": "App loading...",
   "placeholder": {

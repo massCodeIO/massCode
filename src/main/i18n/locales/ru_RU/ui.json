@@ -116,9 +116,10 @@
     "currencyUnavailable": "Сервис курсов валют недоступен"
   },
   "spaces": {
-    "code": "Code",
-    "tools": "Tools",
-    "math": "Math"
+    "label": "Пространства",
+    "codeTooltip": "Сниппеты кода",
+    "toolsTooltip": "Инструменты разработчика",
+    "mathTooltip": "Математический блокнот"
   },
   "loading": "Загрузка приложения...",
   "placeholder": {

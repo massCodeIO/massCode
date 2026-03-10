@@ -18,6 +18,7 @@ export interface AppStore {
   isAutoMigratedFromJson: boolean
   nextDonateNotification?: number
   lastSeenReleaseNoticeVersion?: string
+  lastNotifiedUpdateVersion?: string
 }
 
 export interface EditorSettings {

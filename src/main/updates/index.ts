@@ -1,6 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 import { repository, version } from '../../../package.json'
 import { send } from '../ipc'
+import { store } from '../store'
 
 interface GitHubRelease {
   tag_name: string
@@ -8,8 +9,69 @@ interface GitHubRelease {
 
 const INTERVAL = 1000 * 60 * 60 * 3 // 3 часа
 const isDev = process.env.NODE_ENV === 'development'
+const currentVersionParts = parseVersion(version)!
+const currentMajorVersion = currentVersionParts[0]
 
-export async function fethUpdates() {
+function parseVersion(rawVersion: string): [number, number, number] | null {
+  const normalizedVersion = rawVersion.trim().replace(/^v/, '')
+  const match = normalizedVersion.match(/^(\d+)\.(\d+)\.(\d+)$/)
+
+  if (!match) {
+    return null
+  }
+
+  return [
+    Number.parseInt(match[1], 10),
+    Number.parseInt(match[2], 10),
+    Number.parseInt(match[3], 10),
+  ]
+}
+
+function compareVersions(
+  left: [number, number, number],
+  right: [number, number, number],
+): 1 | -1 | 0 {
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] === right[i]) {
+      continue
+    }
+
+    return left[i] > right[i] ? 1 : -1
+  }
+
+  return 0
+}
+
+function getLatestReleaseVersion(releases: GitHubRelease[]) {
+  let latestParsedVersion: [number, number, number] | null = null
+
+  for (const release of releases) {
+    const parsedVersion = parseVersion(release.tag_name)
+    if (!parsedVersion || parsedVersion[0] !== currentMajorVersion) {
+      continue
+    }
+
+    if (
+      !latestParsedVersion
+      || compareVersions(parsedVersion, latestParsedVersion) > 0
+    ) {
+      latestParsedVersion = parsedVersion
+    }
+  }
+
+  return latestParsedVersion?.join('.')
+}
+
+function isNewerVersion(versionToCompare: string) {
+  const parsedVersion = parseVersion(versionToCompare)
+  if (!parsedVersion) {
+    return false
+  }
+
+  return compareVersions(parsedVersion, currentVersionParts) > 0
+}
+
+export async function fetchUpdates() {
   if (isDev) {
     return
   }
@@ -18,25 +80,18 @@ export async function fethUpdates() {
     const url = `${repository.replace('github.com', 'api.github.com/repos')}/releases`
 
     const response = await fetch(url)
-    const data = (await response.json()) as GitHubRelease[]
-
-    if (!data) {
+    if (!response.ok) {
       return
     }
 
-    const releases = data.filter((release) => {
-      const tagName = release.tag_name.replace('v', '')
-      return tagName.startsWith('4.')
-    })
+    const data = (await response.json()) as GitHubRelease[]
+    if (!Array.isArray(data) || data.length === 0) {
+      return
+    }
 
-    if (releases.length > 0) {
-      const latestRelease = releases[0]
-      const latestVersion = latestRelease.tag_name.replace('v', '')
-
-      if (latestVersion !== version) {
-        send('system:update-available')
-        return latestVersion as string
-      }
+    const latestVersion = getLatestReleaseVersion(data)
+    if (latestVersion && isNewerVersion(latestVersion)) {
+      return latestVersion
     }
   }
   catch (err) {
@@ -44,10 +99,25 @@ export async function fethUpdates() {
   }
 }
 
+async function notifyAboutUpdate() {
+  const latestVersion = await fetchUpdates()
+  if (!latestVersion) {
+    return
+  }
+
+  const lastNotifiedVersion = store.app.get('lastNotifiedUpdateVersion')
+  if (lastNotifiedVersion === latestVersion) {
+    return
+  }
+
+  send('system:update-available')
+  store.app.set('lastNotifiedUpdateVersion', latestVersion)
+}
+
 export function checkForUpdates() {
-  fethUpdates()
+  void notifyAboutUpdate()
 
   setInterval(() => {
-    fethUpdates()
+    void notifyAboutUpdate()
   }, INTERVAL)
 }

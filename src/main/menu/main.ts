@@ -11,7 +11,7 @@ import {
 import { repository } from '../../../package.json'
 import i18n from '../i18n'
 import { send } from '../ipc'
-import { fethUpdates } from '../updates'
+import { fetchUpdates } from '../updates'
 import { createMenu, createPlatformMenuItems } from './utils'
 
 const year = new Date().getFullYear()
@@ -47,7 +47,7 @@ const appMenuItems: MenuConfig[] = [
     id: 'update',
     label: i18n.t('menu:app.update'),
     click: async () => {
-      const latestVersion = await fethUpdates()
+      const latestVersion = await fetchUpdates()
 
       if (latestVersion) {
         const buttonId = dialog.showMessageBoxSync(

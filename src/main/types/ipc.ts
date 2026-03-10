@@ -22,6 +22,7 @@ type MainMenuAction =
   | 'preview-json'
   | 'presentation-mode'
   | 'toggle-sidebar'
+  | 'goto-math-notebook'
 
 type DBAction =
   | 'relaod'
@@ -39,6 +40,7 @@ type DBAction =
   | 'move-backup'
 
 type SystemAction =
+  | 'currency-rates'
   | 'reload'
   | 'open-external'
   | 'deep-link'

@@ -10,11 +10,11 @@
       "During migrate, the current library will be overwritten."
     ],
     "migrateToMarkdown": [
-      "Migrate SQLite to Markdown vault?",
+      "Migrate to Markdown Vault?",
       "The selected vault will be overwritten with the current SQLite library."
     ],
     "migrateToSqlite": [
-      "Migrate Markdown vault to SQLite?",
+      "Rollback to SQLite?",
       "Current SQLite data will be replaced with data from markdown vault."
     ],
     "backup": {
@@ -25,8 +25,8 @@
   "success": {
     "copied": "Copied to clipboard",
     "migrate": "DB successfully migrated.",
-    "migrateToMarkdown": "SQLite migrated to markdown vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
-    "migrateToSqlite": "Markdown vault migrated to SQLite. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "migrateToSqlite": "Rolled back to SQLite. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultLoaded": "Vault successfully loaded.",
     "backup": {
       "created": "Backup successfully created.",
@@ -51,6 +51,7 @@
   },
   "description": {
     "storage": "The directory where the SQLite database is stored.",
+    "storageEngine": "Markdown Vault is the new recommended storage format. SQLite remains available for compatibility and rollback.",
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
     "migrate": {
       "fromV3": "To migrate from massCode v3 select the folder containing the JSON file.",

@@ -28,6 +28,7 @@ const focusedFolderId = ref<number | undefined>()
 const focusedSnippetId = ref<number | undefined>()
 
 const isAppLoading = ref(true)
+const isCodeSpaceInitialized = ref(false)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
 const isShowMarkdown = ref(false)
@@ -97,6 +98,7 @@ export function useApp() {
     focusedFolderId,
     focusedSnippetId,
     isAppLoading,
+    isCodeSpaceInitialized,
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,

@@ -48,8 +48,6 @@ const {
 const { state } = useApp()
 const { clearSnippetsState } = useSnippets()
 
-const contextMenuTriggerRef = useTemplateRef('contextMenuTriggerRef')
-
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
 const contextNode = ref<Node | null>(null)
@@ -85,21 +83,8 @@ function toggleNode(node: Node) {
   return emit('toggleNode', node)
 }
 
-/**
- * Поскольку в TreeNode есть @contextmenu.stop, то для того чтобы
- * предотвратить высплытие в родительский узел для корректной подсветки,
- * используем программную отправку события contextmenu.
- * Так же такое решение избавит от n кол-ва ContextMenu на каждый узел.
- */
-function contextMenu(node: Node, event: MouseEvent) {
+function contextMenu(node: Node) {
   contextNode.value = node
-  contextMenuTriggerRef.value?.dispatchEvent(
-    new MouseEvent('contextmenu', {
-      bubbles: false,
-      clientX: event.clientX,
-      clientY: event.clientY,
-    }),
-  )
 }
 
 async function onDeleteFolder() {
@@ -221,10 +206,7 @@ provide(treeKeys, {
     <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
       <ContextMenu.Root>
         <ContextMenu.Trigger as-child>
-          <div
-            ref="contextMenuTriggerRef"
-            data-folder-tree
-          >
+          <div data-folder-tree>
             <TreeNode
               v-for="(node, index) in modelValue"
               :key="node.id"

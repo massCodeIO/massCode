@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { i18n } from '@/electron'
-import { router, RouterName } from '@/router'
+import { RouterName } from '@/router'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -93,7 +93,7 @@ const generatorsNav = [
 <template>
   <LayoutTwoColumn
     :title="i18n.t('devtools:label')"
-    @back="() => router.push({ name: RouterName.main })"
+    :show-back="false"
   >
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">

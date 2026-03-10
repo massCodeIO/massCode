@@ -151,7 +151,7 @@ function onClickNode(id: string | number, event?: MouseEvent) {
   clickNode(Number(id), event)
 }
 
-function onClickContextMenu(e: MouseEvent) {
+function onClickContextMenu() {
   highlightedFolderIds.value.clear()
   highlightedFolderIds.value.add(Number(props.node.id))
 
@@ -165,7 +165,7 @@ function onClickContextMenu(e: MouseEvent) {
   }
 
   highlightedSnippetIds.value.clear()
-  contextMenu(props.node, e)
+  contextMenu(props.node)
 }
 
 function onDragStart(e: DragEvent) {
@@ -340,7 +340,6 @@ if (focusHandler)
     @dragend.stop="onDragEnd"
     @drop.stop="onDrop"
     @dragover.prevent
-    @contextmenu.stop="onClickContextMenu"
   >
     <div
       :id="String(node.id)"
@@ -357,6 +356,7 @@ if (focusHandler)
       @dragenter.stop="onDragEnter"
       @dragover="onDragOver"
       @click="(event) => onClickNode(node.id, event)"
+      @contextmenu="onClickContextMenu"
     >
       <span class="node__name relative z-10 flex w-full items-center">
         <div

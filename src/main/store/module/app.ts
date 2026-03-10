@@ -16,5 +16,6 @@ export default new Store<AppStore>({
     state: {},
     isAutoMigratedFromJson: false,
     lastSeenReleaseNoticeVersion: '',
+    lastNotifiedUpdateVersion: '',
   },
 })

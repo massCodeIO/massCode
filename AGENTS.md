@@ -12,7 +12,17 @@ Follow these rules strictly when generating code for massCode.
 - **Backend:** Electron (Main), `better-sqlite3` (DB), Elysia.js (API)
 - **Utilities:** `@vueuse/core`, `vue-sonner` (Notifications)
 
-## 2. Architecture & Communication
+## 2. Philosophy
+
+**YAGNI — simplicity above all.** Do not overcomplicate code for hypothetical future scenarios. The minimum viable implementation is the correct implementation. Three similar lines of code are better than a premature abstraction.
+
+Signs of overengineering:
+- A function guards against a case that will never happen
+- A factory used in exactly one place that doesn't encapsulate state
+- Abstraction for its own sake (a wrapper around a single line of code)
+- Constants or patterns invented in advance without a real need
+
+## 3. Architecture & Communication
 
 **Strict Separation of Concerns:**
 
@@ -24,7 +34,16 @@ Follow these rules strictly when generating code for massCode.
 
 **Data Flow:** Renderer → REST API (Elysia) → Service/DB Layer → Response
 
-## 3. Critical Rules & Conventions
+## 4. File Naming
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Vue components | PascalCase | `Folders.vue`, `CreateDialog.vue` |
+| TypeScript files | camelCase | `useSnippets.ts`, `errorMessage.ts` |
+
+Composables get a `use` prefix. The file name matches the exported function name: `useSnippets.ts` → `export function useSnippets()`.
+
+## 5. Critical Rules & Conventions
 
 ### A. Imports (STRICT)
 
@@ -70,7 +89,7 @@ Follow these rules strictly when generating code for massCode.
 - **Default Namespace:** The `ui` namespace is the default. You can use `i18n.t('key.path')` instead of `i18n.t('ui:key.path')`.
 - **Imports:** `import { i18n } from '@/electron'`
 
-## 4. UI/UX Guidelines
+## 6. UI/UX Guidelines
 
 - **Variants:** Use `cva` for component variants.
 - **Classes:** Use `cn()` to merge Tailwind classes.
@@ -85,7 +104,18 @@ Follow these rules strictly when generating code for massCode.
   - **Missing Elements:** If a required UI element does not exist, create it in `src/renderer/components/ui/` first, following established patterns (Tailwind, cva, cn), then use it.
   - **Naming:** They are auto-imported with a `Ui` prefix (e.g., `<UiButton />`, `<UiInput />`, `<UiCheckbox />`).
 
-## 5. Development Workflow & Commands
+## 7. Component Decomposition
+
+Split a component when it exceeds ~300 lines or has more than 3 unrelated responsibilities:
+
+1. Extract constants and static data
+2. Extract pure functions into utils (only if used in multiple places)
+3. Move state and effects into a composable
+4. Break the template into child components
+
+Keep no logic in `<template>` more complex than a ternary operator.
+
+## 8. Development Workflow & Commands
 
 **Linting (CRITICAL):**
 
@@ -99,7 +129,7 @@ Follow these rules strictly when generating code for massCode.
 - `pnpm api:generate`: Regenerate API client (required after API changes)
 - `pnpm build`: Build for production
 
-## 6. Code Examples
+## 9. Code Examples
 
 **Component Setup:**
 

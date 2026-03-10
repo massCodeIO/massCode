@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --title-bar-height: 20px;
+  --title-bar-height: 10px;
   --editor-tool-header-height: 28px;
 }
 

@@ -43,7 +43,11 @@ const {
 } = useApp()
 const { editorThemeName } = useTheme()
 
-const { addToUpdateContentQueue } = useSnippetUpdate()
+const {
+  addToUpdateContentQueue,
+  getPendingContentUpdate,
+  isContentUpdateBusy,
+} = useSnippetUpdate()
 
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
@@ -129,6 +133,8 @@ async function init() {
     lineWrapping: settings.wrap,
     lineNumbers: true,
     tabSize: settings.tabSize,
+    indentUnit: settings.tabSize,
+    indentWithTabs: true,
     autoCloseBrackets: true,
     matchBrackets: settings.matchBrackets,
     styleActiveLine: settings.highlightLine,
@@ -221,8 +227,29 @@ async function init() {
   watch(selectedSnippetContent, (v, oldV) => {
     nextTick(() => {
       const isNewValue = v?.id !== oldV?.id
+      const isSameContent = v?.id === oldV?.id
+      const snippetId = selectedSnippet.value?.id
+      const contentId = v?.id
+      let nextValue = v?.value || ''
+
+      if (snippetId && contentId) {
+        const pendingUpdate = getPendingContentUpdate(snippetId, contentId)
+        if (pendingUpdate) {
+          nextValue = pendingUpdate.value || ''
+        }
+
+        if (
+          isSameContent
+          && isContentUpdateBusy(snippetId, contentId)
+          && editor
+          && editor.getValue() !== nextValue
+        ) {
+          return
+        }
+      }
+
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
-      setValue(v?.value || '', true, !isNewValue)
+      setValue(nextValue, true, !isNewValue)
       nextTick(() => {
         if (searchQuery.value) {
           updateSearchOverlay()
@@ -249,6 +276,16 @@ async function init() {
       nextTick(() => {
         editor?.refresh()
       })
+    },
+  )
+
+  watch(
+    () => settings.tabSize,
+    (tabSize) => {
+      const normalizedTabSize = Math.max(1, Number(tabSize) || 1)
+
+      editor?.setOption('tabSize', normalizedTabSize)
+      editor?.setOption('indentUnit', normalizedTabSize)
     },
   )
 

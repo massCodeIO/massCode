@@ -479,7 +479,7 @@ watch(
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="space-y-4">
     <!-- Section 1: Main -->
     <UiMenuFormSection :label="i18n.t('preferences:storage.section.main')">
       <UiMenuFormItem :label="i18n.t('preferences:storage.engine.label')">
@@ -632,6 +632,7 @@ watch(
     <UiMenuFormSection
       v-if="isSqliteEngine"
       :label="i18n.t('preferences:storage.section.dangerZone')"
+      variant="danger"
     >
       <UiMenuFormItem :label="i18n.t('preferences:storage.clearDatabase')">
         <Button

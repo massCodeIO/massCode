@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import slugify from 'slugify'
@@ -46,12 +47,12 @@ const output = computed(() => slugifyText(input.value))
         :model-value="output"
         readonly
       />
-      <UiButton
-        size="md"
+      <Button
+        variant="outline"
         @click="copy(output)"
       >
         {{ i18n.t("button.copy") }}
-      </UiButton>
+      </Button>
     </div>
   </div>
 </template>

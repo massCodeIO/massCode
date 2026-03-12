@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { i18n, ipc, store } from '@/electron'
 
 const apiPort = ref(store.preferences.get('apiPort'))
@@ -26,12 +27,12 @@ watch(apiPort, (value) => {
         {{ i18n.t("preferences:api.port.description") }}
       </template>
       <template #actions>
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="ipc.invoke('system:reload', null)"
         >
           {{ i18n.t("action.reload.app") }}
-        </UiButton>
+        </Button>
       </template>
     </UiMenuFormItem>
   </div>

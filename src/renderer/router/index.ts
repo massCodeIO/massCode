@@ -27,6 +27,7 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
 } as const
 
@@ -172,6 +173,11 @@ const routes = [
         name: RouterName.devtoolsLoremIpsumGenerator,
         component: () =>
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
+      },
+      {
+        path: 'shadcn-comparison',
+        name: RouterName.devtoolsShadcnComparison,
+        component: () => import('@/components/devtools/ShadcnComparison.vue'),
       },
     ],
   },

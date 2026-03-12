@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { SelectLabelProps } from 'radix-vue'
+import type { SelectLabelProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
-import { SelectLabel } from 'radix-vue'
+import { SelectLabel } from 'reka-ui'
 
 const props = defineProps<
   SelectLabelProps & { class?: HTMLAttributes['class'] }
@@ -11,9 +11,8 @@ const props = defineProps<
 
 <template>
   <SelectLabel
-    :class="
-      cn('text-text-muted py-0.5 pr-2 pl-8 text-xs font-semibold', props.class)
-    "
+    data-slot="select-label"
+    :class="cn('text-muted-foreground px-2 py-1.5 text-xs', props.class)"
   >
     <slot />
   </SelectLabel>

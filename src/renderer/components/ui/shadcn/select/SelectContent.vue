@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { SelectContentEmits, SelectContentProps } from 'radix-vue'
+import type { SelectContentEmits, SelectContentProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
+import { reactiveOmit } from '@vueuse/core'
 import {
   SelectContent,
   SelectPortal,
   SelectViewport,
   useForwardPropsEmits,
-} from 'radix-vue'
-import { computed } from 'vue'
+} from 'reka-ui'
 import { SelectScrollDownButton, SelectScrollUpButton } from '.'
 
 defineOptions({
@@ -23,11 +23,7 @@ const props = withDefaults(
 )
 const emits = defineEmits<SelectContentEmits>()
 
-const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
-
-  return delegated
-})
+const delegatedProps = reactiveOmit(props, 'class')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
@@ -35,10 +31,13 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <SelectPortal>
     <SelectContent
-      v-bind="{ ...forwarded, ...$attrs }"
+      data-slot="select-content"
+      v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(
-          'border-border bg-bg text-text relative z-50 max-h-96 min-w-32 overflow-hidden rounded-md border p-1 shadow-md',
+          'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--reka-select-content-available-height) min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-md border shadow-md',
+          position === 'popper'
+            && 'w-full min-w-[var(--reka-select-trigger-width)] data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
           props.class,
         )
       "
@@ -47,8 +46,9 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <SelectViewport
         :class="
           cn(
-            'h-full w-full',
-            position === 'popper' && 'min-w-[--radix-select-trigger-width]',
+            'p-1',
+            position === 'popper'
+              && 'w-full min-w-[var(--reka-select-trigger-width)] scroll-my-1',
           )
         "
       >

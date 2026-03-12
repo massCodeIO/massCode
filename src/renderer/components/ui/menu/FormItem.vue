@@ -16,12 +16,14 @@ const props = defineProps<Props>()
     </div>
     <div class="space-y-2">
       <slot />
-      <div
+      <UiText
         v-if="$slots.description"
-        class="text-text-muted text-sm"
+        as="div"
+        variant="base"
+        muted
       >
         <slot name="description" />
-      </div>
+      </UiText>
       <div v-if="$slots.actions">
         <slot name="actions" />
       </div>

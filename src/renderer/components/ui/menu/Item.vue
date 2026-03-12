@@ -9,8 +9,10 @@ defineProps<Props>()
 
 <template>
   <div
-    class="hover:bg-list-selection flex items-center rounded-md"
-    :class="{ 'bg-list-selection text-list-selection-fg': isActive }"
+    class="flex items-center rounded-md"
+    :class="
+      isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent-hover'
+    "
   >
     <div class="ml-5.5 truncate select-none">
       {{ label }}

@@ -8,9 +8,15 @@ defineProps<Props>()
 
 <template>
   <div class="[&:not(:first-child)]:mt-5">
-    <div class="pb-2 text-xs font-bold uppercase">
+    <UiText
+      as="div"
+      variant="xs"
+      weight="bold"
+      uppercase
+      class="pb-2"
+    >
       {{ label }}
-    </div>
+    </UiText>
     <div class="space-y-5">
       <slot />
     </div>

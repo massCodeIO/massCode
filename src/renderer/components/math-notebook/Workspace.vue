@@ -105,14 +105,14 @@ function handleActiveLine(line: number) {
     v-else
     class="flex h-full flex-col items-center justify-center gap-4"
   >
-    <div class="text-text-muted/20">
+    <div class="text-muted-foreground/20">
       <Calculator
         class="h-16 w-16"
         :stroke-width="1"
       />
     </div>
     <!-- <div class="text-center">
-      <p class="text-text-muted/60 text-[13px]">
+      <p class="text-muted-foreground/60 text-[13px]">
         {{ i18n.t("mathNotebook.newSheet") }}
       </p>
     </div> -->

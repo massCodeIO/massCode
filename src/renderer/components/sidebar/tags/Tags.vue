@@ -82,8 +82,8 @@ function onUpdateContextMenu(bool: boolean) {
     class="h-full min-h-0"
   >
     <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
-      <ContextMenu.Root @update:open="onUpdateContextMenu">
-        <ContextMenu.Trigger>
+      <ContextMenu.ContextMenu @update:open="onUpdateContextMenu">
+        <ContextMenu.ContextMenuTrigger>
           <SidebarTagsItem
             v-for="tag in tags"
             :id="tag.id"
@@ -92,13 +92,13 @@ function onUpdateContextMenu(bool: boolean) {
             @click="onTagClick(tag.id)"
             @contextmenu="onClickContextMenu(tag.id)"
           />
-        </ContextMenu.Trigger>
-        <ContextMenu.Content>
-          <ContextMenu.Item @click="onDelete">
+        </ContextMenu.ContextMenuTrigger>
+        <ContextMenu.ContextMenuContent>
+          <ContextMenu.ContextMenuItem @click="onDelete">
             {{ i18n.t("action.delete.common") }}
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
+          </ContextMenu.ContextMenuItem>
+        </ContextMenu.ContextMenuContent>
+      </ContextMenu.ContextMenu>
     </div>
   </div>
   <UiEmptyPlaceholder

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { i18n, ipc, store } from '@/electron'
 import { language } from '~/main/i18n/language'
@@ -36,12 +37,12 @@ watch(selectedLanguage, (value) => {
         </Select.SelectContent>
       </Select.Select>
       <template #actions>
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="ipc.invoke('system:reload', null)"
         >
           {{ i18n.t("action.reload.app") }}
-        </UiButton>
+        </Button>
       </template>
     </UiMenuFormItem>
   </div>

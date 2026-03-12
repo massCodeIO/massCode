@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
@@ -55,12 +56,12 @@ const output = computed(() => {
         :model-value="output"
         readonly
       />
-      <UiButton
-        size="md"
+      <Button
+        variant="outline"
         @click="copy(output)"
       >
         {{ i18n.t("button.copy") }}
-      </UiButton>
+      </Button>
     </div>
   </div>
 </template>

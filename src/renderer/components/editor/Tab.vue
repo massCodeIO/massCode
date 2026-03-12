@@ -63,29 +63,29 @@ async function onDelete() {
     class="border-border border-r px-2 py-0.5 select-none last:border-r-0"
     @contextmenu="onClickContextMenu"
   >
-    <ContextMenu.Root v-if="!isEdit">
-      <ContextMenu.Trigger>
+    <ContextMenu.ContextMenu v-if="!isEdit">
+      <ContextMenu.ContextMenuTrigger>
         <div
           class="truncate"
           @dblclick="isEdit = true"
         >
           {{ name }}
         </div>
-      </ContextMenu.Trigger>
-      <ContextMenu.Content>
-        <ContextMenu.Item @click="isEdit = true">
+      </ContextMenu.ContextMenuTrigger>
+      <ContextMenu.ContextMenuContent>
+        <ContextMenu.ContextMenuItem @click="isEdit = true">
           {{ i18n.t("action.rename") }} "<span class="max-w-36 truncate">{{
             name
           }}</span>"
-        </ContextMenu.Item>
-        <ContextMenu.Separator />
-        <ContextMenu.Item @click="onDelete">
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuItem @click="onDelete">
           {{ i18n.t("action.delete.common") }} "<span
             class="max-w-36 truncate"
           >{{ name }}</span>"
-        </ContextMenu.Item>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
+        </ContextMenu.ContextMenuItem>
+      </ContextMenu.ContextMenuContent>
+    </ContextMenu.ContextMenu>
     <UiInput
       v-else
       v-model="name"

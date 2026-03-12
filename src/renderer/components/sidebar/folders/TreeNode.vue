@@ -189,7 +189,7 @@ function onDragStart(e: DragEvent) {
 
   const el = document.createElement('div')
   el.className
-    = 'fixed left-[-100%] text-fg truncate max-w-[200px] flex items-center'
+    = 'fixed left-[-100%] text-foreground truncate max-w-[200px] flex items-center'
 
   el.id = 'ghost'
   el.innerHTML
@@ -439,7 +439,7 @@ if (focusHandler)
         cx="5"
         cy="5"
         r="3"
-        stroke="var(--color-primary)"
+        stroke="var(--primary)"
         fill="none"
         stroke-width="2"
       />
@@ -448,7 +448,7 @@ if (focusHandler)
         x2="8"
         y1="5"
         y2="5"
-        stroke="var(--color-primary)"
+        stroke="var(--primary)"
         stroke-width="2"
       />
     </svg>
@@ -465,36 +465,36 @@ if (focusHandler)
     &.is-focused,
     &.is-highlighted,
     &.is-multi-selected {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
       &::before {
         content: "";
         left: v-bind(hoveredOffsetStyle);
-        @apply bg-list-focus absolute top-0 right-0 bottom-0 z-0 rounded-md;
+        @apply bg-primary absolute top-0 right-0 bottom-0 z-0 rounded-md;
       }
     }
     &.is-selected {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
       &::before {
-        @apply bg-list-selection;
+        @apply bg-accent;
       }
     }
     &.is-multi-selected {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
       &::before {
-        @apply bg-list-selection/80;
+        @apply bg-accent/80;
       }
     }
     &.is-focused,
     &.is-hovered {
-      @apply text-list-focus-fg;
+      @apply text-primary-foreground;
       &::before {
-        @apply bg-list-focus;
+        @apply bg-primary;
       }
     }
     &.is-highlighted {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
       &::before {
-        @apply border-list-focus border-2 bg-transparent;
+        @apply border-primary border-2 bg-transparent;
       }
     }
   }

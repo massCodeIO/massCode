@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import {
@@ -108,20 +109,24 @@ const output = computed(() => {
           v-for="[type, label] in Object.entries(caseType)"
           :key="type"
         >
-          <div class="text-text-secondary text-sm font-medium">
+          <UiText
+            as="div"
+            variant="base"
+            weight="medium"
+          >
             {{ label }}
-          </div>
+          </UiText>
           <UiInput
             :model-value="output.find((item) => item.label === label)?.value"
             readonly
           />
-          <UiButton
+          <Button
             variant="icon"
-            size="md"
+            size="icon"
             @click="copyCase(type as keyof typeof caseType)"
           >
-            <Copy class="h-3 w-3" />
-          </UiButton>
+            <Copy />
+          </Button>
         </template>
       </div>
     </div>

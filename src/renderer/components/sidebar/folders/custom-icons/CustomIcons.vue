@@ -106,11 +106,7 @@ watch(selectedIndex, () => {
           :id="`icon-${index}`"
           :key="icon.name"
           class="user-select-none flex items-center justify-center rounded-md"
-          :class="
-            index === selectedIndex
-              ? 'bg-button-hover'
-              : 'hover:bg-button-hover'
-          "
+          :class="index === selectedIndex ? 'bg-muted' : 'hover:bg-muted'"
           @click="onSet(icon.name!)"
         >
           <span

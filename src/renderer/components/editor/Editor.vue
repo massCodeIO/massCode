@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
+import * as Resizable from '@/components/ui/shadcn/resizable'
 import {
   useApp,
   useEditor,
@@ -10,7 +11,6 @@ import {
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
-import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
@@ -463,30 +463,28 @@ onMounted(() => {
 <template>
   <div
     data-editor
-    class="mt-[var(--title-bar-height)] grid grid-rows-[auto_1fr_auto] overflow-hidden"
+    class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--title-bar-height)]"
   >
     <EditorHeader v-if="isShowHeader" />
-    <SplitterGroup
+    <Resizable.ResizablePanelGroup
       v-show="isShowEditor"
       direction="vertical"
       class="overflow-auto"
       @layout="onSplitterLayout"
     >
-      <SplitterPanel as-child>
+      <Resizable.ResizablePanel as-child>
         <div
           id="editor"
           data-editor-mount
         />
-      </SplitterPanel>
+      </Resizable.ResizablePanel>
       <template v-if="isShowCodePreview">
-        <SplitterResizeHandle class="relative cursor-none">
-          <UiGutter orientation="horizontal" />
-        </SplitterResizeHandle>
-        <SplitterPanel>
+        <Resizable.ResizableHandle />
+        <Resizable.ResizablePanel>
           <EditorPreview />
-        </SplitterPanel>
+        </Resizable.ResizablePanel>
       </template>
-    </SplitterGroup>
+    </Resizable.ResizablePanelGroup>
     <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
     <EditorMindmap v-if="isShowMindmap" />
@@ -523,35 +521,35 @@ onMounted(() => {
   font-family: var(--editor-font-family);
   line-height: calc(var(--editor-font-size) * 1.5);
   height: 100%;
-  background-color: var(--color-bg) !important;
+  background-color: var(--background) !important;
 }
 
 .CodeMirror-gutters {
-  background-color: var(--color-bg) !important;
+  background-color: var(--background) !important;
 }
 
 .CodeMirror-linenumber {
-  color: var(--color-text-muted) !important;
+  color: var(--muted-foreground) !important;
 }
 
 .CodeMirror-cursor {
-  border-left: 2px solid var(--color-fg) !important;
+  border-left: 2px solid var(--foreground) !important;
   background-color: transparent !important;
 }
 
 .CodeMirror-selected {
-  background-color: var(--color-list-selection) !important;
+  background-color: var(--accent) !important;
 }
 
 .CodeMirror-overlayscroll-vertical div {
-  background-color: var(--color-scrollbar);
+  background-color: var(--scrollbar);
   width: 7px;
   opacity: var(--editor-scrollbar-opacity);
   transition: opacity 0.3s;
 }
 
 .CodeMirror-overlayscroll-horizontal div {
-  background-color: var(--color-scrollbar);
+  background-color: var(--scrollbar);
   height: 7px;
   opacity: var(--editor-scrollbar-opacity);
   transition: opacity 0.3s;
@@ -562,7 +560,7 @@ onMounted(() => {
 }
 
 .CodeMirror .cm-searching {
-  background-color: var(--color-text-highlight);
+  background-color: var(--text-highlight);
   color: black !important;
   border-radius: 2px;
 }

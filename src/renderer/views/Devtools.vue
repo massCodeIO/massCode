@@ -88,6 +88,13 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
+
+const uiNav = [
+  {
+    label: 'shadcn demo',
+    name: RouterName.devtoolsShadcnComparison,
+  },
+]
 </script>
 
 <template>
@@ -97,7 +104,7 @@ const generatorsNav = [
   >
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
-        <div class="text-text-muted mb-2 text-[10px] uppercase">
+        <div class="text-muted-foreground mb-2 text-[10px] uppercase">
           {{ i18n.t("devtools:converters.label") }}
         </div>
         <RouterLink
@@ -111,7 +118,7 @@ const generatorsNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:crypto.label") }}
         </div>
         <RouterLink
@@ -125,7 +132,7 @@ const generatorsNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:web.label") }}
         </div>
         <RouterLink
@@ -139,11 +146,25 @@ const generatorsNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:generators.label") }}
         </div>
         <RouterLink
           v-for="item in generatorsNav"
+          :key="item.name"
+          class="cursor-default"
+          :to="{ name: item.name }"
+        >
+          <UiMenuItem
+            :label="item.label"
+            :is-active="isActiveRoute(item.name)"
+          />
+        </RouterLink>
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
+          demo
+        </div>
+        <RouterLink
+          v-for="item in uiNav"
           :key="item.name"
           class="cursor-default"
           :to="{ name: item.name }"

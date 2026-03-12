@@ -30,8 +30,8 @@ function init() {
   mm = Markmap.create(svgRef.value!, {
     duration: 0,
     style: () => `
-      .markmap-node div { color: var(--color-text); user-select: none; cursor: default; }
-      .markmap-node circle { fill: var(--color-bg); }
+      .markmap-node div { color: var(--foreground); user-select: none; cursor: default; }
+      .markmap-node circle { fill: var(--background); }
     `,
   })
   svgRef.value?.addEventListener('dblclick', e => e.stopPropagation(), true)

@@ -132,7 +132,7 @@ function onJsonVisualizerToggle() {
 <template>
   <div data-editor-header>
     <div
-      class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2"
+      class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
     >
       <UiInput
         v-model="name"
@@ -248,7 +248,7 @@ function onJsonVisualizerToggle() {
         :index="index"
         :name="i.label"
         :class="{
-          'bg-list-selection text-list-selection-fg':
+          'bg-accent text-accent-foreground':
             state.snippetContentIndex === index,
         }"
         @click="onClickTab(index)"

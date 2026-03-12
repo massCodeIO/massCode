@@ -53,9 +53,14 @@ function cancelRename() {
 <template>
   <div class="flex h-full flex-col overflow-hidden">
     <div class="_mt-1 flex items-center justify-between px-2 pb-2 select-none">
-      <div class="text-[10px] font-bold uppercase">
+      <UiText
+        as="div"
+        variant="caption"
+        weight="bold"
+        uppercase
+      >
         {{ i18n.t("mathNotebook.sheetList") }}
-      </div>
+      </UiText>
       <UiActionButton
         :tooltip="i18n.t('mathNotebook.newSheet')"
         @click="handleCreateSheet"
@@ -65,17 +70,17 @@ function cancelRename() {
     </div>
 
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-2">
-      <ContextMenu.Root
+      <ContextMenu.ContextMenu
         v-for="sheet in sheets"
         :key="sheet.id"
       >
-        <ContextMenu.Trigger as-child>
+        <ContextMenu.ContextMenuTrigger as-child>
           <div
             class="group mb-0.5 flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-75"
             :class="
               activeSheetId === sheet.id
-                ? 'bg-list-selection text-list-selection-fg'
-                : 'hover:bg-list-selection/50'
+                ? 'bg-accent text-accent-foreground'
+                : 'hover:bg-accent-hover'
             "
             @click="selectSheet(sheet.id)"
             @dblclick="startRename(sheet.id, sheet.name)"
@@ -84,8 +89,8 @@ function cancelRename() {
               class="h-3.5 w-3.5 shrink-0 transition-colors"
               :class="
                 activeSheetId === sheet.id
-                  ? 'text-list-selection-fg/60'
-                  : 'text-text-muted/40'
+                  ? 'text-accent-foreground'
+                  : 'text-muted-foreground'
               "
               :stroke-width="1.5"
             />
@@ -100,41 +105,42 @@ function cancelRename() {
                 @click.stop
               >
               <template v-else>
-                <div class="truncate text-[13px] leading-tight">
+                <UiText
+                  as="div"
+                  variant="sm"
+                  class="truncate leading-tight"
+                >
                   {{ sheet.name }}
-                </div>
-                <div
-                  class="text-[10px] leading-tight transition-colors"
-                  :class="
-                    activeSheetId === sheet.id
-                      ? 'text-list-selection-fg/40'
-                      : 'text-text-muted/40'
-                  "
+                </UiText>
+                <UiText
+                  as="div"
+                  variant="caption"
+                  class="leading-tight transition-colors"
+                  muted
                 >
                   {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
-                </div>
+                </UiText>
               </template>
             </div>
           </div>
-        </ContextMenu.Trigger>
+        </ContextMenu.ContextMenuTrigger>
 
-        <ContextMenu.Content>
-          <ContextMenu.Item @click="startRename(sheet.id, sheet.name)">
-            {{ i18n.t("action.rename") }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Item
-            class="text-red-400"
-            @click="deleteSheet(sheet.id)"
+        <ContextMenu.ContextMenuContent>
+          <ContextMenu.ContextMenuItem
+            @click="startRename(sheet.id, sheet.name)"
           >
+            {{ i18n.t("action.rename") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="deleteSheet(sheet.id)">
             {{ i18n.t("action.delete.common") }}
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
+          </ContextMenu.ContextMenuItem>
+        </ContextMenu.ContextMenuContent>
+      </ContextMenu.ContextMenu>
 
       <div
         v-if="sheets.length === 0"
-        class="text-text-muted/30 mt-8 text-center text-[12px]"
+        class="text-muted-foreground mt-8 text-center text-[12px]"
       >
         {{ i18n.t("placeholder.emptySheetList") }}
       </div>

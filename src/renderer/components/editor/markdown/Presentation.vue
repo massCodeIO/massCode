@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useApp, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -88,13 +89,13 @@ watchEffect(() => {
 
 <template>
   <div class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden">
-    <UiButton
+    <Button
       class="absolute top-6 right-2 z-50"
-      variant="icon"
+      variant="ghost"
       @click="onClose"
     >
       <X class="h-3 w-3" />
-    </UiButton>
+    </Button>
     <div class="scrollbar h-full min-h-0 overflow-y-auto">
       <div class="overflow-auto p-5">
         <EditorMarkdown :key="scaleToShow" />

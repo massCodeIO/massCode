@@ -1,12 +1,10 @@
 <script setup lang="ts">
+import type { ContextMenuSubTriggerProps } from 'reka-ui'
+import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
+import { reactiveOmit } from '@vueuse/core'
 import { ChevronRight } from 'lucide-vue-next'
-import {
-  ContextMenuSubTrigger,
-  type ContextMenuSubTriggerProps,
-  useForwardProps,
-} from 'radix-vue'
-import { computed, type HTMLAttributes } from 'vue'
+import { ContextMenuSubTrigger, useForwardProps } from 'reka-ui'
 
 const props = defineProps<
   ContextMenuSubTriggerProps & {
@@ -15,27 +13,24 @@ const props = defineProps<
   }
 >()
 
-const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
-
-  return delegated
-})
+const delegatedProps = reactiveOmit(props, 'class')
 
 const forwardedProps = useForwardProps(delegatedProps)
 </script>
 
 <template>
   <ContextMenuSubTrigger
+    data-slot="context-menu-sub-trigger"
+    :data-inset="inset ? '' : undefined"
     v-bind="forwardedProps"
     :class="
       cn(
-        'focus:bg-list-selection focus:text-list-selection-fg data-[state=open]:bg-list-selection data-[state=open]:text-list-selection-fg flex cursor-default items-center rounded-sm px-2 py-0.5 text-sm outline-none select-none',
-        inset && 'pl-8',
+        'focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=\'size-\'])]:size-4',
         props.class,
       )
     "
   >
     <slot />
-    <ChevronRight class="ml-auto h-4 w-4" />
+    <ChevronRight class="ml-auto" />
   </ContextMenuSubTrigger>
 </template>

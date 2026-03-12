@@ -31,7 +31,7 @@ function formatValue(value: any) {
 
 <template>
   <div
-    class="max-w-[350px] min-w-[200px] cursor-pointer rounded-lg border-2 border-emerald-500 bg-white p-3 shadow-md transition-all duration-200 hover:border-emerald-600 hover:shadow-lg dark:bg-[var(--color-bg)]"
+    class="dark:bg-background max-w-[350px] min-w-[200px] cursor-pointer rounded-lg border-2 border-emerald-500 bg-white p-3 shadow-md transition-all duration-200 hover:border-emerald-600 hover:shadow-lg"
   >
     <Handle
       type="target"
@@ -40,13 +40,13 @@ function formatValue(value: any) {
 
     <div class="flex flex-col gap-2">
       <div
-        class="flex items-center justify-between border-b border-[var(--color-border)] pb-2"
+        class="border-border flex items-center justify-between border-b pb-2"
       >
-        <span class="text-sm font-semibold text-[var(--color-text)]">{{
+        <span class="text-foreground text-sm font-semibold">{{
           data.label
         }}</span>
         <span
-          class="rounded bg-[var(--color-button)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]"
+          class="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs"
         >Array [{{ data.length }}]</span>
       </div>
       <div class="flex flex-col gap-1">
@@ -56,9 +56,12 @@ function formatValue(value: any) {
           class="flex gap-1.5 text-xs leading-relaxed"
         >
           <span class="font-medium text-emerald-500">[{{ index }}]:</span>
-          <span class="font-mono break-words text-[var(--color-text-muted)]">{{
-            formatValue(item)
-          }}</span>
+          <UiText
+            mono
+            class="text-muted-foreground break-words"
+          >
+            {{ formatValue(item) }}
+          </UiText>
         </div>
       </div>
     </div>

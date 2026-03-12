@@ -208,7 +208,7 @@ function onDragStart(event: DragEvent) {
 
   if (selectedSnippetIds.value.length > 1) {
     el.className
-      = 'fixed left-[-100%] text-fg truncate max-w-[200px] flex items-center'
+      = 'fixed left-[-100%] text-foreground truncate max-w-[200px] flex items-center'
     el.id = 'ghost'
     el.innerHTML = `
       <span class="rounded-full bg-primary text-white px-2 py-0.5 text-xs ml-3">
@@ -217,7 +217,7 @@ function onDragStart(event: DragEvent) {
     `
   }
   else {
-    el.className = 'fixed left-[-100%] text-fg truncate max-w-[200px]'
+    el.className = 'fixed left-[-100%] text-foreground truncate max-w-[200px]'
     el.id = 'ghost'
     el.innerHTML = props.snippet.name
   }
@@ -250,92 +250,100 @@ onClickOutside(snippetRef, () => {
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"
   >
-    <ContextMenu.Root>
-      <ContextMenu.Trigger>
+    <ContextMenu.ContextMenu>
+      <ContextMenu.ContextMenuTrigger>
         <div class="flex flex-col p-2 select-none">
           <div
             class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
           >
             {{ snippet.name || i18n.t("snippet.untitled") }}
           </div>
-          <div class="meta text-text-muted flex justify-between text-xs">
+          <UiText
+            as="div"
+            variant="xs"
+            muted
+            class="meta flex justify-between"
+          >
             <div>
               {{ folderName }}
             </div>
             <div>
               {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
             </div>
-          </div>
+          </UiText>
         </div>
-      </ContextMenu.Trigger>
-      <ContextMenu.Content>
+      </ContextMenu.ContextMenuTrigger>
+      <ContextMenu.ContextMenuContent>
         <template v-if="!isTrashLibrarySelectd">
-          <ContextMenu.Item @click="onAddFavorites">
+          <ContextMenu.ContextMenuItem @click="onAddFavorites">
             {{
               isFavoritesLibrarySelected
                 ? i18n.t("action.remove.fromFavorites")
                 : i18n.t("action.add.toFavorites")
             }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Item @click="onCopySnippetLink">
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onCopySnippetLink">
             {{ i18n.t("action.copy.snippetLink") }}
-          </ContextMenu.Item>
-          <ContextMenu.Separator />
-          <ContextMenu.Item
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem
             :disabled="isDuplicateDisabled"
             @click="onDuplicate"
           >
             {{ i18n.t("action.duplicate") }}
-          </ContextMenu.Item>
+          </ContextMenu.ContextMenuItem>
         </template>
-        <ContextMenu.Item @click="onDelete">
+        <ContextMenu.ContextMenuItem @click="onDelete">
           {{
             state.libraryFilter === LibraryFilter.Trash
               ? i18n.t("action.delete.common")
               : i18n.t("action.move.toTrash")
           }}
-        </ContextMenu.Item>
-        <ContextMenu.Item
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem
           v-if="isTrashLibrarySelectd"
           @click="onRestore"
         >
           {{ i18n.t("action.restore") }}
-        </ContextMenu.Item>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
+        </ContextMenu.ContextMenuItem>
+      </ContextMenu.ContextMenuContent>
+    </ContextMenu.ContextMenu>
   </div>
 </template>
 
 <style lang="scss">
 @reference "../../styles.css";
 [data-snippet-item] {
+  &:not(.is-selected):not(.is-focused):not(.is-multi-selected) {
+    @apply hover:bg-accent-hover hover:rounded-md;
+  }
   &.is-selected {
-    @apply bg-list-selection text-list-selection-fg z-10 rounded-md border-transparent;
+    @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
     .meta {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
     }
   }
   &.is-multi-selected {
-    @apply bg-list-selection/80 text-list-selection-fg z-10 rounded-md border-transparent;
+    @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
     .meta {
-      @apply text-list-selection-fg;
+      @apply text-accent-foreground;
     }
   }
   &.is-focused:not(.is-multi-selected) {
-    @apply bg-list-focus text-list-focus-fg z-10 rounded-md border-transparent;
+    @apply bg-primary text-primary-foreground z-10 rounded-md border-transparent;
     .meta {
-      @apply text-list-focus-fg;
+      @apply text-primary-foreground;
     }
   }
   &.is-highlighted {
-    @apply outline-list-focus rounded-md outline-2 -outline-offset-2;
+    @apply outline-primary rounded-md outline-2 -outline-offset-2;
     &.is-focused,
     &.is-selected,
     &.is-multi-selected {
-      @apply bg-bg text-list-selection-fg;
+      @apply bg-background text-accent-foreground;
       .meta {
-        @apply text-list-selection-fg;
+        @apply text-accent-foreground;
       }
     }
   }

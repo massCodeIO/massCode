@@ -206,28 +206,28 @@ watch(isDark, () => {
 @reference '../../../styles.css';
 
 .markdown-content {
-  @apply p-4 font-sans text-[var(--color-text)];
+  @apply text-foreground p-4 font-sans;
   font-size: calc(1rem * var(--markdown-scale));
   line-height: 1.5;
 }
 
 .markdown-content h1 {
-  @apply my-4 border-b border-[var(--color-border)] pb-2 font-semibold text-[var(--color-text)] first-of-type:mt-0;
+  @apply border-border text-foreground my-4 border-b pb-2 font-semibold first-of-type:mt-0;
   font-size: calc(2.25rem * var(--markdown-scale));
 }
 
 .markdown-content h2 {
-  @apply my-5 border-b border-[var(--color-border)] pb-2 font-semibold text-[var(--color-text)] first-of-type:mt-0;
+  @apply border-border text-foreground my-5 border-b pb-2 font-semibold first-of-type:mt-0;
   font-size: calc(1.875rem * var(--markdown-scale));
 }
 
 .markdown-content h3 {
-  @apply my-6 font-semibold text-[var(--color-text)];
+  @apply text-foreground my-6 font-semibold;
   font-size: calc(1.5rem * var(--markdown-scale));
 }
 
 .markdown-content h4 {
-  @apply my-7 font-semibold text-[var(--color-text)];
+  @apply text-foreground my-7 font-semibold;
   font-size: calc(1.25rem * var(--markdown-scale));
 }
 
@@ -278,7 +278,7 @@ watch(isDark, () => {
 }
 
 .markdown-content blockquote {
-  @apply mb-4 border-l-4 border-[var(--color-border)] pl-4 text-[var(--color-text-muted)];
+  @apply border-border text-muted-foreground mb-4 border-l-4 pl-4;
 }
 
 .markdown-content code {
@@ -289,7 +289,7 @@ watch(isDark, () => {
 }
 
 .markdown-content pre {
-  @apply mb-4 overflow-auto rounded bg-[var(--color-button)] p-4 leading-5 dark:bg-[var(--color-button)];
+  @apply bg-muted dark:bg-muted mb-4 overflow-auto rounded p-4 leading-5;
   font-size: calc(0.875rem * var(--markdown-scale));
   font-family:
     "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -304,20 +304,20 @@ watch(isDark, () => {
 }
 
 .markdown-content tr {
-  @apply border-t border-[var(--color-border)];
+  @apply border-border border-t;
 }
 
 .markdown-content td,
 .markdown-content th {
-  @apply border border-[var(--color-border)] p-2;
+  @apply border-border border p-2;
 }
 
 .markdown-content th {
-  @apply bg-[var(--color-button)] font-semibold dark:bg-[var(--color-button)];
+  @apply bg-muted dark:bg-muted font-semibold;
 }
 
 .markdown-content tr:nth-child(2n) {
-  @apply bg-[var(--color-button)] dark:bg-[var(--color-button)];
+  @apply bg-muted dark:bg-muted;
 }
 
 .markdown-content img {
@@ -325,11 +325,11 @@ watch(isDark, () => {
 }
 
 .markdown-content hr {
-  @apply my-6 border-t border-[var(--color-border)] p-0;
+  @apply border-border my-6 border-t p-0;
 }
 
 .markdown-content .CodeMirror {
-  @apply !bg-markdown-code overflow-auto rounded-md p-4;
+  @apply !bg-muted overflow-auto rounded-md p-4;
   font-size: calc(0.875rem * var(--markdown-scale));
   line-height: calc(0.875rem * var(--markdown-scale) * 1.5);
 }

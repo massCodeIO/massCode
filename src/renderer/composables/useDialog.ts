@@ -1,4 +1,4 @@
-import Button from '@/components/ui/button/Button.vue'
+import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { i18n } from '@/electron'
 import { useEventListener } from '@vueuse/core'
@@ -133,7 +133,7 @@ export function useDialog() {
                                   h(
                                     Button,
                                     {
-                                      size: 'md',
+                                      variant: 'outline',
                                       onClick: onCancel,
                                     },
                                     { default: () => cancelText },
@@ -141,8 +141,6 @@ export function useDialog() {
                                   h(
                                     Button,
                                     {
-                                      variant: 'primary',
-                                      size: 'md',
                                       onClick: onConfirm,
                                     },
                                     { default: () => confirmText },

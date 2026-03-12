@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { LineResult } from '@/composables/math-notebook'
+import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { LoaderCircle, Sigma } from 'lucide-vue-next'
@@ -51,19 +52,19 @@ function getResultClasses(result: LineResult) {
     = 'flex h-[22px] select-none items-center justify-end font-mono text-[13px] leading-[22px] transition-all duration-100'
 
   if (result.error) {
-    return `${base} text-red-400/50`
+    return `${base} text-destructive`
   }
 
   if (result.type === 'pending') {
-    return `${base} text-text-muted/40`
+    return `${base} text-muted-foreground`
   }
 
   if (result.type === 'comment') {
-    return `${base} text-text-muted/40`
+    return `${base} text-muted-foreground`
   }
 
   if (result.type === 'assignment') {
-    return `${base} group text-text-muted/70`
+    return `${base} group text-muted-foreground`
   }
 
   if (result.value) {
@@ -77,7 +78,7 @@ function getResultValueClasses(result: LineResult) {
   const base = 'truncate rounded-md px-1.5 transition-colors duration-100'
 
   if (result.type === 'assignment') {
-    return `${base} group-hover:bg-list-selection/70`
+    return `${base} group-hover:bg-accent-hover`
   }
 
   if (result.value) {
@@ -135,13 +136,16 @@ function openDocumentation() {
     <transition name="total-slide">
       <div
         v-if="showTotal"
-        class="border-border/60 flex h-[34px] shrink-0 items-center gap-2 border-t px-3"
+        class="border-border flex h-[34px] shrink-0 items-center gap-2 border-t px-3"
       >
-        <span
-          class="text-text-muted/60 shrink-0 text-[10px] font-medium tracking-[0.1em] uppercase"
+        <UiText
+          variant="caption"
+          weight="medium"
+          uppercase
+          class="text-muted-foreground shrink-0 tracking-[0.1em]"
         >
           {{ i18n.t("total") }}
-        </span>
+        </UiText>
         <span
           class="group flex h-[22px] min-w-0 flex-1 items-center justify-end font-mono text-[13px] leading-[22px] select-none"
           @click="copy(formattedTotal)"
@@ -156,22 +160,20 @@ function openDocumentation() {
     </transition>
 
     <div
-      class="border-border/40 mb-1 flex h-[28px] shrink-0 items-center justify-between border-t px-2"
+      class="border-border flex h-[34px] shrink-0 items-center justify-between border-t px-2"
     >
-      <UiActionButton
-        type="iconText"
+      <Button
+        variant="ghost"
+        size="sm"
         @click="openDocumentation"
       >
         {{ i18n.t("menu:help.documentation") }}
-      </UiActionButton>
+      </Button>
       <UiActionButton
         :tooltip="i18n.t('total')"
         @click="showTotal = !showTotal"
       >
-        <Sigma
-          class="h-3.5 w-3.5 transition-colors"
-          :class="showTotal ? 'text-primary' : 'text-text-muted/40'"
-        />
+        <Sigma class="text-foreground h-3.5 w-3.5 transition-colors" />
       </UiActionButton>
     </div>
   </div>

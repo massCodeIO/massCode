@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
@@ -111,19 +112,15 @@ void loadCustomThemes()
       </template>
       <template #actions>
         <div class="flex gap-2">
-          <UiButton
-            size="md"
+          <Button
+            variant="outline"
             @click="openThemesDir"
           >
             {{ i18n.t("preferences:appearance.theme.openDir") }}
-          </UiButton>
-          <UiButton
-            size="md"
-            variant="primary"
-            @click="createThemeTemplate"
-          >
+          </Button>
+          <Button @click="createThemeTemplate">
             {{ i18n.t("preferences:appearance.theme.createTemplate") }}
-          </UiButton>
+          </Button>
         </div>
       </template>
     </UiMenuFormItem>

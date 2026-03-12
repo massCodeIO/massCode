@@ -204,8 +204,8 @@ provide(treeKeys, {
     class="h-full min-h-0"
   >
     <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
-      <ContextMenu.Root>
-        <ContextMenu.Trigger as-child>
+      <ContextMenu.ContextMenu>
+        <ContextMenu.ContextMenuTrigger as-child>
           <div data-folder-tree>
             <TreeNode
               v-for="(node, index) in modelValue"
@@ -228,42 +228,44 @@ provide(treeKeys, {
               </template>
             </TreeNode>
           </div>
-        </ContextMenu.Trigger>
-        <ContextMenu.Content>
+        </ContextMenu.ContextMenuTrigger>
+        <ContextMenu.ContextMenuContent>
           <template v-if="isContextMultiSelection">
-            <ContextMenu.Item @click="onDeleteFolder">
+            <ContextMenu.ContextMenuItem @click="onDeleteFolder">
               {{ i18n.t("action.delete.common") }}
-            </ContextMenu.Item>
+            </ContextMenu.ContextMenuItem>
           </template>
           <template v-else>
-            <ContextMenu.Item @click="createFolderAndSelect(contextNode?.id)">
+            <ContextMenu.ContextMenuItem
+              @click="createFolderAndSelect(contextNode?.id)"
+            >
               {{ i18n.t("action.new.folder") }}
-            </ContextMenu.Item>
-            <ContextMenu.Separator />
-            <ContextMenu.Item @click="onRenameFolder">
+            </ContextMenu.ContextMenuItem>
+            <ContextMenu.ContextMenuSeparator />
+            <ContextMenu.ContextMenuItem @click="onRenameFolder">
               {{ i18n.t("action.rename") }}
-            </ContextMenu.Item>
-            <ContextMenu.Item @click="onDeleteFolder">
+            </ContextMenu.ContextMenuItem>
+            <ContextMenu.ContextMenuItem @click="onDeleteFolder">
               {{ i18n.t("action.delete.common") }}
-            </ContextMenu.Item>
-            <ContextMenu.Separator />
-            <ContextMenu.Item @click="onSetCustomIcon">
+            </ContextMenu.ContextMenuItem>
+            <ContextMenu.ContextMenuSeparator />
+            <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
               {{ i18n.t("action.setCustomIcon") }}
-            </ContextMenu.Item>
-            <ContextMenu.Item
+            </ContextMenu.ContextMenuItem>
+            <ContextMenu.ContextMenuItem
               v-if="contextNode?.icon"
               @click="onRemoveCustomIcon"
             >
               {{ i18n.t("action.removeCustomIcon") }}
-            </ContextMenu.Item>
-            <ContextMenu.Separator />
-            <ContextMenu.Sub>
-              <ContextMenu.SubTrigger>
+            </ContextMenu.ContextMenuItem>
+            <ContextMenu.ContextMenuSeparator />
+            <ContextMenu.ContextMenuSub>
+              <ContextMenu.ContextMenuSubTrigger>
                 {{ i18n.t("action.defaultLanguage") }}
-              </ContextMenu.SubTrigger>
-              <ContextMenu.SubContent>
+              </ContextMenu.ContextMenuSubTrigger>
+              <ContextMenu.ContextMenuSubContent>
                 <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
-                  <ContextMenu.CheckboxItem
+                  <ContextMenu.ContextMenuCheckboxItem
                     v-for="language in languages"
                     :key="language.value"
                     :ref="
@@ -277,13 +279,13 @@ provide(treeKeys, {
                     @click="onSelectLanguage(language.value)"
                   >
                     {{ language.name }}
-                  </ContextMenu.CheckboxItem>
+                  </ContextMenu.ContextMenuCheckboxItem>
                 </div>
-              </ContextMenu.SubContent>
-            </ContextMenu.Sub>
+              </ContextMenu.ContextMenuSubContent>
+            </ContextMenu.ContextMenuSub>
           </template>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
+        </ContextMenu.ContextMenuContent>
+      </ContextMenu.ContextMenu>
     </div>
   </div>
 </template>

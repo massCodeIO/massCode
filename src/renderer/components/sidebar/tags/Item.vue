@@ -34,7 +34,8 @@ onClickOutside(tagRef, () => {
     :data-selected="isSelected ? 'true' : undefined"
     :data-focused="isFocused ? 'true' : undefined"
     :data-highlighted="isHighlighted ? 'true' : undefined"
-    class="data-[selected=true]:bg-list-selection data-[focused=true]:bg-list-focus! data-[focused=true]:text-list-focus-fg data-[highlighted=true]:outline-primary flex items-center gap-2 rounded-md px-6 select-none data-[highlighted=true]:bg-transparent! data-[highlighted=true]:outline-2 data-[highlighted=true]:-outline-offset-2"
+    class="data-[selected=true]:bg-accent data-[focused=true]:bg-primary! data-[focused=true]:text-primary-foreground data-[highlighted=true]:outline-primary flex items-center gap-2 rounded-md px-6 select-none data-[highlighted=true]:bg-transparent! data-[highlighted=true]:outline-2 data-[highlighted=true]:-outline-offset-2"
+    :class="{ 'hover:bg-accent-hover': !isSelected && !isFocused }"
     @click="onClickItem"
   >
     <Tag class="h-3 w-3 shrink-0" />

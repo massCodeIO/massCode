@@ -91,7 +91,7 @@ const generatorsNav = [
 
 const uiNav = [
   {
-    label: 'shadcn2 demo',
+    label: 'shadcn demo',
     name: RouterName.devtoolsShadcnComparison,
   },
 ]
@@ -104,7 +104,7 @@ const uiNav = [
   >
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
-        <div class="text-text-muted mb-2 text-[10px] uppercase">
+        <div class="text-muted-foreground mb-2 text-[10px] uppercase">
           {{ i18n.t("devtools:converters.label") }}
         </div>
         <RouterLink
@@ -118,7 +118,7 @@ const uiNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:crypto.label") }}
         </div>
         <RouterLink
@@ -132,7 +132,7 @@ const uiNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:web.label") }}
         </div>
         <RouterLink
@@ -146,7 +146,7 @@ const uiNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           {{ i18n.t("devtools:generators.label") }}
         </div>
         <RouterLink
@@ -160,7 +160,7 @@ const uiNav = [
             :is-active="isActiveRoute(item.name)"
           />
         </RouterLink>
-        <div class="text-text-muted my-2 text-[10px] uppercase">
+        <div class="text-muted-foreground my-2 text-[10px] uppercase">
           demo
         </div>
         <RouterLink

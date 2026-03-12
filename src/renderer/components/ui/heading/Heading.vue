@@ -25,11 +25,13 @@ const levelStyles = computed(() => {
     >
       {{ title }}
     </component>
-    <p
+    <UiText
       v-if="description"
-      class="text-text-muted text-sm"
+      as="p"
+      variant="base"
+      muted
     >
       {{ description }}
-    </p>
+    </UiText>
   </div>
 </template>

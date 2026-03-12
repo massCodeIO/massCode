@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { Check } from 'lucide-vue-next'
 import { cardTitleClass, copy, demoStackClass, surfaceClass } from './copy'
 
@@ -25,32 +26,31 @@ const rootContentEditable = ref('Editable note')
           {{ copy.cards.buttons }}
         </h3>
         <div class="flex flex-wrap gap-2">
-          <UiButton>{{ copy.states.default }}</UiButton>
-          <UiButton variant="primary">
+          <Button variant="outline">
+            {{ copy.states.default }}
+          </Button>
+          <Button>
             {{ copy.states.primary }}
-          </UiButton>
-          <UiButton variant="danger">
+          </Button>
+          <Button variant="destructive">
             {{ copy.states.danger }}
-          </UiButton>
-          <UiButton active>
+          </Button>
+          <Button variant="outline">
             {{ copy.states.active }}
-          </UiButton>
-          <UiButton
-            variant="icon"
-            size="icon"
-          >
+          </Button>
+          <Button variant="ghost">
             <Check />
-          </UiButton>
-          <UiButton
-            variant="icon"
-            size="iconText"
-          >
+          </Button>
+          <Button variant="ghost">
             <Check />
             {{ copy.states.iconText }}
-          </UiButton>
-          <UiButton disabled>
+          </Button>
+          <Button
+            variant="outline"
+            disabled
+          >
             {{ copy.states.disabled }}
-          </UiButton>
+          </Button>
         </div>
       </div>
 

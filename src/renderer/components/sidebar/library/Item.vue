@@ -63,7 +63,8 @@ onClickOutside(itemRef, () => {
     data-sidebar-item
     :data-selected="isSelected ? 'true' : undefined"
     :data-focused="isFocused ? 'true' : undefined"
-    class="data-[selected=true]:bg-list-selection data-[focused=true]:bg-list-focus! data-[focused=true]:text-list-focus-fg rounded-md"
+    class="data-[selected=true]:bg-accent data-[focused=true]:bg-primary! data-[focused=true]:text-primary-foreground rounded-md"
+    :class="{ 'hover:bg-accent-hover': !isSelected && !isFocused }"
     @click="onItemClick(id)"
   >
     <div class="ml-5.5 flex items-center">

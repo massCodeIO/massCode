@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import chroma from 'chroma-js'
@@ -348,12 +349,12 @@ watch(
           </span>
         </div>
         <div class="mt-2 w-full text-center">
-          <UiButton
-            size="md"
+          <Button
+            variant="outline"
             @click="copy(colorName)"
           >
             {{ i18n.t("button.copy") }}
-          </UiButton>
+          </Button>
         </div>
       </div>
 
@@ -364,21 +365,25 @@ watch(
           v-for="[type, label] in Object.entries(colorFormats)"
           :key="type"
         >
-          <div class="text-text-secondary text-sm font-medium">
+          <UiText
+            as="div"
+            variant="base"
+            weight="medium"
+          >
             {{ label }}
-          </div>
+          </UiText>
           <UiInput
             v-model="colors[type as keyof typeof colors]"
             @focus="onFieldFocus(type)"
             @blur="onFieldBlur"
           />
-          <UiButton
+          <Button
             variant="icon"
-            size="md"
+            size="icon"
             @click="onCopy(type as keyof typeof colorFormats)"
           >
-            <Copy class="h-3 w-3" />
-          </UiButton>
+            <Copy />
+          </Button>
         </template>
       </div>
     </div>

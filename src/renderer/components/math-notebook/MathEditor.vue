@@ -96,8 +96,8 @@ const highlightStyle = computed(() => {
         <div
           v-for="num in lineNumbers"
           :key="num"
-          class="text-text-muted/40 h-[22px] font-mono text-[12px] leading-[22px] transition-colors duration-75"
-          :class="{ '!text-text-muted': activeLine === num - 1 }"
+          class="text-muted-foreground/40 h-[22px] font-mono text-[12px] leading-[22px] transition-colors duration-75"
+          :class="{ '!text-muted-foreground': activeLine === num - 1 }"
         >
           {{ num }}
         </div>
@@ -117,7 +117,7 @@ const highlightStyle = computed(() => {
       <textarea
         ref="textareaRef"
         :value="modelValue"
-        class="math-editor-textarea scrollbar selection:bg-list-selection/50 absolute inset-0 z-0 h-full w-full resize-none bg-transparent py-1 pr-4 pl-3 font-mono text-[13px] leading-[22px] tracking-wide text-transparent outline-none"
+        class="math-editor-textarea scrollbar selection:bg-accent/50 absolute inset-0 z-0 h-full w-full resize-none bg-transparent py-1 pr-4 pl-3 font-mono text-[13px] leading-[22px] tracking-wide text-transparent outline-none"
         spellcheck="false"
         wrap="off"
         @input="handleInput"
@@ -147,11 +147,11 @@ const highlightStyle = computed(() => {
 }
 
 .math-editor-highlight {
-  color: var(--color-text);
+  color: var(--foreground);
 }
 
 .math-editor-textarea {
-  caret-color: var(--color-text);
+  caret-color: var(--foreground);
 }
 
 .math-editor-highlight :deep(.mn-editor-token) {

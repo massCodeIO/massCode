@@ -7,7 +7,7 @@ Follow these rules strictly when generating code for massCode.
 
 - **Framework:** Vue 3 (Composition API, `<script setup lang="ts">`)
 - **Styling:** TailwindCSS v4 (`@tailwindcss/vite`), `tailwind-merge`, `cva`
-- **UI:** Custom components (`src/renderer/components/ui`), Shadcn (based on `radix-vue`), `lucide-vue-next` icons
+- **UI:** Custom components (`src/renderer/components/ui`), Shadcn (based on `reka-ui`), `lucide-vue-next` icons
 - **State:** Vue Composables (No Vuex/Pinia)
 - **Backend:** Electron (Main), `better-sqlite3` (DB), Elysia.js (API)
 - **Utilities:** `@vueuse/core`, `vue-sonner` (Notifications)

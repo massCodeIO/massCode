@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Command from '@/components/ui/shadcn/command'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { useEditor, useSnippets } from '@/composables'
@@ -10,6 +11,7 @@ const { selectedSnippetContent, selectedSnippet, updateSnippetContent }
   = useSnippets()
 
 const isOpen = ref(false)
+const languageListRef = ref<HTMLElement>()
 
 function onSelect(value: string) {
   isOpen.value = false
@@ -46,6 +48,27 @@ function fuzzySearch(list: string[], searchTerm: string) {
     })
   })
 }
+
+function scrollToSelectedLanguage() {
+  const selectedLanguage = selectedSnippetContent.value?.language
+
+  if (!languageListRef.value || !selectedLanguage)
+    return
+
+  const selectedItem = Array.from(
+    languageListRef.value.querySelectorAll<HTMLElement>('[data-language-item]'),
+  ).find(item => item.dataset.languageItem === selectedLanguage)
+
+  selectedItem?.scrollIntoView({ block: 'center' })
+}
+
+watch(isOpen, async (open) => {
+  if (!open)
+    return
+
+  await nextTick()
+  requestAnimationFrame(scrollToSelectedLanguage)
+})
 </script>
 
 <template>
@@ -56,15 +79,18 @@ function fuzzySearch(list: string[], searchTerm: string) {
     <div>
       <Popover.Popover v-model:open="isOpen">
         <Popover.PopoverTrigger as-child>
-          <UiButton
-            variant="icon"
+          <Button
+            variant="ghost"
             class="-ml-1"
           >
             {{ selectedLanguageName }}
-          </UiButton>
+          </Button>
         </Popover.PopoverTrigger>
-        <Popover.PopoverContent class="w-auto py-0">
-          <Command.Command :filter-function="fuzzySearch as any">
+        <Popover.PopoverContent class="w-auto px-1 py-0">
+          <Command.Command
+            :filter-function="fuzzySearch as any"
+            :model-value="selectedSnippetContent?.language"
+          >
             <Command.CommandInput
               class="h-9"
               placeholder="Select Language Mode"
@@ -72,10 +98,15 @@ function fuzzySearch(list: string[], searchTerm: string) {
             <Command.CommandEmpty>No language found</Command.CommandEmpty>
             <Command.CommandList>
               <Command.CommandGroup>
-                <div class="scrollbar max-h-[150px] overflow-y-auto">
+                <div
+                  ref="languageListRef"
+                  class="scrollbar max-h-[150px] overflow-y-auto"
+                >
                   <Command.CommandItem
                     v-for="language in languages"
                     :key="language.value"
+                    :data-language-item="language.value"
+                    class="hover:bg-accent-hover transition-colors"
                     :value="language.value"
                     @select="onSelect(language.value)"
                   >

@@ -64,8 +64,8 @@ watchEffect(() => {
         :class="[
           cn(variants({ variant }), props.class),
           { 'pr-9': clearable && model },
-          { 'text-text-muted cursor-not-allowed': disabled },
-          { 'text-text-muted': readonly },
+          { 'text-muted-foreground cursor-not-allowed': disabled },
+          { 'text-muted-foreground': readonly },
           { 'border-red-500': error },
         ]"
         :placeholder="placeholder"
@@ -80,8 +80,8 @@ watchEffect(() => {
         :class="[
           cn(variants({ variant }), props.class),
           { 'pr-9': clearable && model },
-          { 'text-text-muted cursor-not-allowed': disabled },
-          { 'text-text-muted': readonly },
+          { 'text-muted-foreground cursor-not-allowed': disabled },
+          { 'text-muted-foreground': readonly },
           { 'border-red-500': error },
         ]"
         :placeholder="placeholder"
@@ -95,15 +95,18 @@ watchEffect(() => {
         class="border-border absolute top-1/2 right-3 -translate-y-1/2 rounded-full border p-0.5"
         @click="clear"
       >
-        <X class="text-text-muted h-3 w-3" />
+        <X class="text-muted-foreground h-3 w-3" />
       </div>
     </div>
-    <div
+    <UiText
       v-if="description"
-      class="text-text-muted mt-1 text-xs"
+      as="div"
+      variant="xs"
+      muted
+      class="mt-1"
     >
       {{ description }}
-    </div>
+    </UiText>
     <div
       v-if="error"
       class="text-sm text-red-500"

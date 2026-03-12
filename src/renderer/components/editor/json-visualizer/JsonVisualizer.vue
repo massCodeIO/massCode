@@ -208,7 +208,7 @@ setInteractive(false)
     >
       <div
         ref="vueFlowRef"
-        class="bg-bg relative h-full"
+        class="bg-background relative h-full"
       >
         <VueFlow
           v-if="nodes.length > 0"
@@ -231,7 +231,7 @@ setInteractive(false)
       <div class="absolute bottom-3 left-3 z-10">
         <div
           v-if="nodes.length > 0"
-          class="rounded bg-[var(--color-button)] px-2 py-0.5 text-sm select-none"
+          class="bg-muted rounded px-2 py-0.5 text-sm select-none"
         >
           {{ nodes.length }} nodes | {{ edges.length }} edges
         </div>

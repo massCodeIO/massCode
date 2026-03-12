@@ -5,17 +5,17 @@ export const demoStackClass = 'space-y-3'
 export const options = ['alpha', 'beta', 'gamma'] as const
 
 export const copy = {
-  title: 'shadcn2 demo',
+  title: 'shadcn demo',
   description:
-    'Сравнение root UI-адаптеров, legacy shadcn и нового набора shadcn2 перед заменой импортов в приложении.',
+    'Сравнение root UI-адаптеров, legacy shadcn и нового набора shadcn перед заменой импортов в приложении.',
   sections: {
     rootUi: 'Root UI adapters',
     rootUiDescription:
-      'Совместимые обёртки, которые сохраняют текущий API приложения, но уже опираются на shadcn2.',
+      'Совместимые обёртки, которые сохраняют текущий API приложения, но уже опираются на shadcn.',
     legacyShadcn: 'Legacy shadcn',
     legacyShadcnDescription:
       'Текущие компоненты на базе Radix, которые пока используются в приложении.',
-    newShadcn2: 'shadcn2',
+    newShadcn2: 'shadcn',
     newShadcn2Description:
       'CLI-сгенерированные компоненты на базе Reka, приведённые к масштабу 28px и переведённые на shadcn color tokens.',
   },

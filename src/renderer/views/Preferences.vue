@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
+import { Code, Globe, HardDrive, Palette, Plug } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 
 const isMac = navigator.userAgent.toLowerCase().includes('mac')
@@ -13,26 +15,31 @@ const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
 })
 
-const nav = [
+const nav: { label: string, name: string, icon: Component }[] = [
   {
     label: i18n.t('preferences:storage.label'),
     name: RouterName.preferencesStorage,
+    icon: HardDrive,
   },
   {
     label: i18n.t('preferences:editor.label'),
     name: RouterName.preferencesEditor,
+    icon: Code,
   },
   {
     label: i18n.t('preferences:language.label'),
     name: RouterName.preferencesLanguage,
+    icon: Globe,
   },
   {
     label: i18n.t('preferences:appearance.label'),
     name: RouterName.preferencesAppearance,
+    icon: Palette,
   },
   {
     label: i18n.t('preferences:api.label'),
     name: RouterName.preferencesAPI,
+    icon: Plug,
   },
 ]
 
@@ -58,14 +65,21 @@ provide(preferencesKeys, {
           <UiMenuItem
             :label="item.label"
             :is-active="isActiveRoute(item.name)"
-          />
+          >
+            <template #icon>
+              <component
+                :is="item.icon"
+                class="h-4 w-4"
+              />
+            </template>
+          </UiMenuItem>
         </RouterLink>
       </div>
     </template>
     <template #right>
       <div
         ref="scrollRef"
-        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pb-5"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pt-3 pb-5"
       >
         <RouterView />
       </div>

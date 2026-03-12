@@ -10,8 +10,8 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-  <div :class="cn('grid max-w-3xl grid-cols-[200px_1fr] gap-2', props.class)">
-    <div>
+  <div :class="cn('grid grid-cols-[200px_1fr] gap-2', props.class)">
+    <div class="flex min-h-9 items-start text-sm font-medium">
       {{ label }}
     </div>
     <div class="space-y-2">

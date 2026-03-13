@@ -16,6 +16,7 @@ import {
   LEGACY_TRASH_RELATIVE_PATH,
   META_DIR_NAME,
   runtimeRef,
+  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   TRASH_RELATIVE_PATH,
 } from './constants'
@@ -65,6 +66,10 @@ export function listMarkdownFiles(
     const isHiddenEntry = entry.name.startsWith('.')
 
     if (entry.isDirectory()) {
+      if (currentPath === rootPath && entry.name === SPACES_DIR_NAME) {
+        return
+      }
+
       if (currentPath === rootPath && entry.name === META_DIR_NAME) {
         const inboxPath = path.join(absolutePath, INBOX_DIR_NAME)
         const trashPath = path.join(absolutePath, TRASH_DIR_NAME)

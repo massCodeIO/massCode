@@ -4,6 +4,7 @@ import type {
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
@@ -161,6 +162,7 @@ async function createSnippet() {
       existingNames,
     )
 
+    markPersistedStorageMutation()
     const { data } = await api.snippets.postSnippets({
       name: nextSnippetName,
       folderId: targetFolderId,
@@ -263,6 +265,7 @@ async function addFragment() {
 }
 
 async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
+  markPersistedStorageMutation()
   await api.snippets.patchSnippetsById(String(snippetId), data)
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
@@ -279,6 +282,7 @@ async function updateSnippetContent(
   contentId: number,
   data: SnippetContentsUpdate,
 ) {
+  markPersistedStorageMutation()
   await api.snippets.patchSnippetsByIdContentsByContentId(
     String(snippetId),
     String(contentId),
@@ -288,6 +292,7 @@ async function updateSnippetContent(
 }
 
 async function deleteSnippet(snippetId: number) {
+  markPersistedStorageMutation()
   await api.snippets.deleteSnippetsById(String(snippetId))
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }

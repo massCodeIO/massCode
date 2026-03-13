@@ -2,17 +2,25 @@
 export {
   INBOX_DIR_NAME,
   INVALID_NAME_CHARS_RE,
+  LEGACY_FOLDER_META_FILE_NAME,
   META_DIR_NAME,
+  META_FILE_NAME,
   peekRuntimeCache,
+  SPACE_STATE_FILE_NAME,
+  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   WINDOWS_RESERVED_NAME_RE,
 } from './constants'
 
 // Normalizers
-export { normalizeFlag } from './normalizers'
+export { normalizeFlag, normalizeFolderOrderIndices } from './normalizers'
 
 // Parser
-export { writeFolderMetadataFile } from './parser'
+export {
+  readYamlObjectFile,
+  writeFolderMetadataFile,
+  writeYamlObjectFile,
+} from './parser'
 
 // Paths
 export {
@@ -41,6 +49,20 @@ export {
   persistSnippet,
   writeSnippetToFile,
 } from './snippets'
+
+// Spaces
+export {
+  ensureSpaceDirectory,
+  getSpaceDirPath,
+  getSpaceStatePath,
+} from './spaces'
+
+// Space State
+export {
+  readSpaceState,
+  writeSpaceState,
+  writeSpaceStateImmediate,
+} from './spaceState'
 
 // State
 export {

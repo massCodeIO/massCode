@@ -11,6 +11,7 @@ import {
   type Paths,
   peekRuntimeCache,
   resetRuntimeCache,
+  SPACES_DIR_NAME,
   syncRuntimeWithDisk,
   syncSnippetFileWithDisk,
   TRASH_DIR_NAME,
@@ -91,11 +92,24 @@ function shouldIgnoreWatchPath(paths: Paths, watchPath: string): boolean {
     return false
   }
 
-  if (path.posix.basename(relativePath) === '.masscode-folder.yml') {
+  const basename = path.posix.basename(relativePath)
+
+  // Never ignore meta files (both legacy and new)
+  if (basename === '.meta.yaml' || basename === '.masscode-folder.yml') {
     return false
   }
 
   const normalizedRelativePath = relativePath.toLowerCase()
+
+  // Never ignore __spaces__/ directory and its contents
+  const spacesPrefix = SPACES_DIR_NAME.toLowerCase()
+  if (
+    normalizedRelativePath === spacesPrefix
+    || normalizedRelativePath.startsWith(`${spacesPrefix}/`)
+  ) {
+    return false
+  }
+
   const metaPrefix = META_DIR_NAME.toLowerCase()
   if (normalizedRelativePath === metaPrefix) {
     return false

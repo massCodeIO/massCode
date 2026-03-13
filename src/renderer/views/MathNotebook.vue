@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { useApp } from '@/composables'
+import { useApp, useMathNotebook } from '@/composables'
 import { i18n } from '@/electron'
 
 const { isAppLoading } = useApp()
+const { init } = useMathNotebook()
 
-onMounted(() => {
+onMounted(async () => {
+  await init()
   isAppLoading.value = false
 })
 </script>

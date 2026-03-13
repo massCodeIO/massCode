@@ -12,10 +12,12 @@ import {
   INBOX_DIR_NAME,
   META_DIR_NAME,
   runtimeRef,
+  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
 } from './constants'
 import {
   normalizeFlag,
+  normalizeFolderOrderIndices,
   normalizeNumber,
   normalizePositiveInteger,
 } from './normalizers'
@@ -46,6 +48,15 @@ import {
   syncFolderUiWithFolders,
 } from './state'
 
+function isTechnicalRootFolder(name: string): boolean {
+  return (
+    name === META_DIR_NAME
+    || name === INBOX_DIR_NAME
+    || name === TRASH_DIR_NAME
+    || name === SPACES_DIR_NAME
+  )
+}
+
 export function listUserFolders(
   paths: Paths,
   currentPath = paths.vaultPath,
@@ -62,12 +73,7 @@ export function listUserFolders(
       return
     }
 
-    if (
-      currentPath === paths.vaultPath
-      && (entry.name === META_DIR_NAME
-        || entry.name === INBOX_DIR_NAME
-        || entry.name === TRASH_DIR_NAME)
-    ) {
+    if (currentPath === paths.vaultPath && isTechnicalRootFolder(entry.name)) {
       return
     }
 
@@ -122,7 +128,9 @@ function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
     const parentPath = normalizeDirectoryPath(path.posix.dirname(folderPath))
     const parentId = parentPath ? pathToFolderId.get(parentPath) || null : null
 
-    const metadataFolderId = normalizePositiveInteger(metadata.masscode_id)
+    const metadataFolderId = normalizePositiveInteger(
+      metadata.id ?? metadata.masscode_id,
+    )
     const pathFolderId = oldFolderIdByPath.get(folderPath) || null
 
     let folderId
@@ -198,6 +206,7 @@ function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
 
   state.folders = nextFoldersState
   state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
+  normalizeFolderOrderIndices(state.folders)
   syncFolderUiWithFolders(state)
 }
 

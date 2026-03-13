@@ -1,7 +1,7 @@
 import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
 import { i18n } from '@/electron'
-import { RouterName } from '@/router'
+import { router, RouterName } from '@/router'
 import { Blocks, Calculator, Code2 } from 'lucide-vue-next'
 
 export type SpaceId = 'code' | 'tools' | 'math'
@@ -59,4 +59,10 @@ export function isSpaceRouteName(
   routeName: RouteRecordName | null | undefined,
 ) {
   return getSpaceDefinitions().some(space => space.isActive(routeName))
+}
+
+export function getActiveSpaceId(): SpaceId | null {
+  const routeName = router.currentRoute.value.name
+  const space = getSpaceDefinitions().find(s => s.isActive(routeName))
+  return space?.id ?? null
 }

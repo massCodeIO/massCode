@@ -52,6 +52,7 @@ type SystemAction =
 type PrettierAction = 'format'
 type FsAction = 'assets'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
+type SpacesAction = 'math:read' | 'math:write'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>
@@ -59,6 +60,7 @@ export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
 export type FsChannel = CombineWith<FsAction, 'fs'>
 export type ThemeChannel = CombineWith<ThemeAction, 'theme'>
+export type SpacesChannel = CombineWith<SpacesAction, 'spaces'>
 
 export type Channel =
   | MainMenuChannel
@@ -67,6 +69,7 @@ export type Channel =
   | PrettierChannel
   | FsChannel
   | ThemeChannel
+  | SpacesChannel
 
 export interface DialogOptions {
   properties?: OpenDialogOptions['properties']

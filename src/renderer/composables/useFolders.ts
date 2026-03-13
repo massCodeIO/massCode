@@ -3,6 +3,7 @@ import type {
   FoldersUpdate,
 } from '@/services/api/generated'
 import { useApp, useSnippets } from '@/composables'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection, scrollToElement } from '../utils'
@@ -328,6 +329,7 @@ async function createFolder(parentId?: number) {
   try {
     const nextFolderName = getNextUntitledFolderName(parentId)
 
+    markPersistedStorageMutation()
     const { data } = await api.folders.postFolders({
       name: nextFolderName,
       ...(parentId !== undefined && { parentId }),
@@ -360,6 +362,7 @@ async function createFolderAndSelect(parentId?: number) {
 
 async function updateFolder(folderId: number, data: FoldersUpdate) {
   try {
+    markPersistedStorageMutation()
     await api.folders.patchFoldersById(String(folderId), data)
     await getFolders(false)
 
@@ -375,6 +378,7 @@ async function updateFolder(folderId: number, data: FoldersUpdate) {
 
 async function deleteFolder(folderId: number, shouldRefresh = true) {
   try {
+    markPersistedStorageMutation()
     await api.folders.deleteFoldersById(String(folderId))
     if (shouldRefresh) {
       await getFolders(false)

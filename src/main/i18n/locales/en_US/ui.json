@@ -93,6 +93,7 @@
     }
   },
   "sidebar": {
+    "title": "Code Snippets",
     "inbox": "Inbox",
     "favorites": "Favorites",
     "allSnippets": "All Snippets",

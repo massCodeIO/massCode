@@ -14,6 +14,8 @@ export interface MarkdownFolderMetadataFile {
   createdAt?: number
   defaultLanguage?: string
   icon?: string | null
+  id?: number
+  /** @deprecated Use `id` instead. Kept for legacy `.masscode-folder.yml` migration. */
   masscode_id?: number
   name?: string
   orderIndex?: number

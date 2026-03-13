@@ -1,12 +1,15 @@
 import {
   useApp,
   useFolders,
+  useMathNotebook,
   useSnippets,
   useSnippetUpdate,
   useSonner,
+  useStorageMutation,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
+import { getActiveSpaceId } from '@/spaceDefinitions'
 import { repository } from '../../../../package.json'
 
 const {
@@ -20,6 +23,8 @@ const { selectFolder, getFolders } = useFolders()
 const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
   = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
+const { shouldSkipStorageSyncRefresh } = useStorageMutation()
+const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -27,7 +32,7 @@ interface ReleaseNoticePayload {
   sqliteSunsetVersion?: string
 }
 
-async function refreshAfterStorageSync() {
+async function refreshCodeSpace() {
   const selectedSnippetId = state.snippetId
 
   await getFolders(false)
@@ -46,6 +51,22 @@ async function refreshAfterStorageSync() {
   }
 }
 
+async function refreshAfterStorageSync() {
+  const activeSpace = getActiveSpaceId()
+
+  switch (activeSpace) {
+    case 'math':
+      await reloadMathFromDisk()
+      break
+    case 'tools':
+      break
+    case 'code':
+    default:
+      await refreshCodeSpace()
+      break
+  }
+}
+
 function scheduleStorageSyncRefresh() {
   if (storageSyncDebounceTimer) {
     clearTimeout(storageSyncDebounceTimer)
@@ -53,7 +74,7 @@ function scheduleStorageSyncRefresh() {
   }
 
   storageSyncDebounceTimer = setTimeout(() => {
-    if (hasBusyContentUpdates()) {
+    if (shouldSkipStorageSyncRefresh() || hasBusyContentUpdates()) {
       scheduleStorageSyncRefresh()
       return
     }

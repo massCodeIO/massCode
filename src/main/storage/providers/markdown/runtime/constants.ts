@@ -4,14 +4,21 @@ export const META_DIR_NAME = '.masscode'
 export const STATE_FILE_NAME = 'state.json'
 export const INBOX_DIR_NAME = 'inbox'
 export const TRASH_DIR_NAME = 'trash'
-export const FOLDER_META_FILE_NAME = '.masscode-folder.yml'
+export const SPACES_DIR_NAME = '__spaces__'
+export const META_FILE_NAME = '.meta.yaml'
+export const SPACE_STATE_FILE_NAME = '.state.yaml'
+export const LEGACY_FOLDER_META_FILE_NAME = '.masscode-folder.yml'
 
 export const INBOX_RELATIVE_PATH = `${META_DIR_NAME}/${INBOX_DIR_NAME}`
 export const TRASH_RELATIVE_PATH = `${META_DIR_NAME}/${TRASH_DIR_NAME}`
 export const LEGACY_INBOX_RELATIVE_PATH = INBOX_DIR_NAME
 export const LEGACY_TRASH_RELATIVE_PATH = TRASH_DIR_NAME
 
-export const RESERVED_ROOT_NAMES = new Set([INBOX_DIR_NAME, TRASH_DIR_NAME])
+export const RESERVED_ROOT_NAMES = new Set([
+  INBOX_DIR_NAME,
+  TRASH_DIR_NAME,
+  SPACES_DIR_NAME,
+])
 export const NEW_LINE_SPLIT_RE = /\r?\n/
 export const SEARCH_DIACRITICS_RE = /[\u0300-\u036F]/g
 export const SEARCH_WORD_RE = /[\p{L}\p{N}_]+/gu

@@ -78,10 +78,41 @@ Composables get a `use` prefix. The file name matches the exported function name
 ### D. System & IPC
 
 - **File System/System Ops:** Use `ipc.invoke('channel:action', data)`.
-- **Channels:** `fs:*`, `system:*`, `db:*`, `main-menu:*`, `prettier:*`.
+- **Channels:** `fs:*`, `system:*`, `db:*`, `main-menu:*`, `prettier:*`, `spaces:*`.
 - **Renderer:** Access Electron only via `src/renderer/electron.ts`.
 
-### E. Localization
+### E. Spaces Architecture
+
+massCode uses a **Spaces** system to organize different functional areas:
+
+| Space | ID | Description |
+|-------|----|-------------|
+| Code | `code` | Main snippet management (folders, snippets, tags) |
+| Tools | `tools` | Developer utilities (converters, generators) |
+| Math | `math` | Math Notebook with calculation sheets |
+
+**Space Definitions:** `src/renderer/spaceDefinitions.ts` — `SpaceId`, `getSpaceDefinitions()`, `getActiveSpaceId()`.
+
+**Space State Persistence (Markdown Engine):**
+- Each space can store its state in `__spaces__/{spaceId}/.state.yaml` inside the vault.
+- Runtime utilities: `src/main/storage/providers/markdown/runtime/spaces.ts` — `ensureSpaceDirectory()`, `getSpaceStatePath()`.
+- Generic YAML read/write: `src/main/storage/providers/markdown/runtime/spaceState.ts` — `readSpaceState<T>()`, `writeSpaceState()`.
+- Space state writes use the same debounce/flush infrastructure as `state.json` (`pendingStateWriteByPath` in `constants.ts`), so they flush automatically on app exit.
+- `__spaces__/` directory exists **only in markdown engine**. When engine is `sqlite`, spaces fall back to `electron-store`.
+
+**Space IPC Channels:**
+- `spaces:math:read` — read Math Notebook state (auto-migrates from electron-store on first read in markdown mode).
+- `spaces:math:write` — persist Math Notebook state.
+- Handlers: `src/main/ipc/handlers/spaces.ts`.
+
+**Space-Aware Sync:**
+- `system:storage-synced` event dispatches refresh based on `getActiveSpaceId()`:
+  - `code` / `null` → refresh folders + snippets
+  - `math` → `reloadFromDisk()` via `useMathNotebook()`
+  - `tools` → no-op (no vault data)
+- Mutable operations must call `markPersistedStorageMutation()` to prevent sync loops.
+
+### F. Localization
 
 - **Primary Language:** English (EN) is the base language. All new keys **MUST** be added to `src/main/i18n/locales/en_US/` first.
 - **Strictly No Hardcoding:** Never use hardcoded strings in templates or logic. Always use the localization system.

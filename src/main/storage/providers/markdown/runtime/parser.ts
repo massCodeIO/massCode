@@ -9,50 +9,108 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { FOLDER_META_FILE_NAME, NEW_LINE_SPLIT_RE } from './constants'
+import {
+  LEGACY_FOLDER_META_FILE_NAME,
+  META_FILE_NAME,
+  NEW_LINE_SPLIT_RE,
+} from './constants'
 
-export function getFolderMetaFilePath(
-  paths: Paths,
-  folderRelativePath: string,
-): string {
-  return path.join(paths.vaultPath, folderRelativePath, FOLDER_META_FILE_NAME)
+export function readYamlObjectFile<T>(filePath: string): T | null {
+  if (!fs.pathExistsSync(filePath)) {
+    return null
+  }
+
+  try {
+    const source = fs.readFileSync(filePath, 'utf8')
+    const parsed = yaml.load(source)
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null
+    }
+
+    return parsed as T
+  }
+  catch {
+    return null
+  }
+}
+
+export function writeYamlObjectFile(
+  filePath: string,
+  data: Record<string, unknown>,
+): void {
+  const body = yaml
+    .dump(data, {
+      lineWidth: -1,
+      noRefs: true,
+      sortKeys: false,
+    })
+    .trim()
+
+  fs.ensureDirSync(path.dirname(filePath))
+  fs.writeFileSync(filePath, `${body}\n`, 'utf8')
 }
 
 export function readFolderMetadata(
   paths: Paths,
   folderRelativePath: string,
 ): MarkdownFolderMetadataFile {
-  const metadataPath = getFolderMetaFilePath(paths, folderRelativePath)
+  const folderAbsPath = path.join(paths.vaultPath, folderRelativePath)
+  const metaPath = path.join(folderAbsPath, META_FILE_NAME)
+  const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
 
-  if (!fs.pathExistsSync(metadataPath)) {
+  // Step 1: Try .meta.yaml
+  const metaData = readYamlObjectFile<MarkdownFolderMetadataFile>(metaPath)
+  if (metaData) {
+    return metaData
+  }
+
+  // Step 2: Try legacy .masscode-folder.yml
+  const legacyData = readYamlObjectFile<MarkdownFolderMetadataFile>(legacyPath)
+  if (!legacyData) {
     return {}
+  }
+
+  // Step 3: Migrate legacy → .meta.yaml
+  const migrated: MarkdownFolderMetadataFile = { ...legacyData }
+  if (migrated.masscode_id !== undefined && migrated.masscode_id !== null) {
+    migrated.id = migrated.masscode_id
+    delete migrated.masscode_id
   }
 
   try {
-    const source = fs.readFileSync(metadataPath, 'utf8')
-    const parsed = yaml.load(source)
-
-    if (!parsed || typeof parsed !== 'object') {
-      return {}
-    }
-
-    return parsed as MarkdownFolderMetadataFile
+    writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
+    fs.removeSync(legacyPath)
   }
   catch {
-    return {}
+    // Migration failed — non-critical, we still have the data
   }
+
+  return migrated
 }
 
-export function serializeFolderMetadata(folder: FolderRecord): string {
-  const payload: MarkdownFolderMetadataFile = {
+export function serializeFolderMetadata(
+  folder: FolderRecord,
+): Record<string, unknown> {
+  return {
+    id: folder.id,
     createdAt: folder.createdAt,
     defaultLanguage: folder.defaultLanguage,
     icon: folder.icon,
-    masscode_id: folder.id,
     name: folder.name,
     orderIndex: folder.orderIndex,
     updatedAt: folder.updatedAt,
   }
+}
+
+export function writeFolderMetadataFile(
+  paths: Paths,
+  folderRelativePath: string,
+  folder: FolderRecord,
+): void {
+  const folderAbsPath = path.join(paths.vaultPath, folderRelativePath)
+  const metaPath = path.join(folderAbsPath, META_FILE_NAME)
+  const payload = serializeFolderMetadata(folder)
 
   const body = yaml
     .dump(payload, {
@@ -62,25 +120,28 @@ export function serializeFolderMetadata(folder: FolderRecord): string {
     })
     .trim()
 
-  return `${body}\n`
-}
+  const nextContent = `${body}\n`
 
-export function writeFolderMetadataFile(
-  paths: Paths,
-  folderRelativePath: string,
-  folder: FolderRecord,
-): void {
-  const metadataPath = getFolderMetaFilePath(paths, folderRelativePath)
-  const nextContent = serializeFolderMetadata(folder)
-
-  if (fs.pathExistsSync(metadataPath)) {
-    const currentContent = fs.readFileSync(metadataPath, 'utf8')
+  if (fs.pathExistsSync(metaPath)) {
+    const currentContent = fs.readFileSync(metaPath, 'utf8')
     if (currentContent === nextContent) {
       return
     }
   }
 
-  fs.writeFileSync(metadataPath, nextContent, 'utf8')
+  fs.ensureDirSync(folderAbsPath)
+  fs.writeFileSync(metaPath, nextContent, 'utf8')
+
+  // Clean up legacy file if it exists
+  const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
+  if (fs.pathExistsSync(legacyPath)) {
+    try {
+      fs.removeSync(legacyPath)
+    }
+    catch {
+      // Non-critical
+    }
+  }
 }
 
 export function splitFrontmatter(source: string): {

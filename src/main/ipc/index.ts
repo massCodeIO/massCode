@@ -4,6 +4,7 @@ import { registerDBHandlers } from './handlers/db'
 import { registerDialogHandlers } from './handlers/dialog'
 import { registerFsHandlers } from './handlers/fs'
 import { registerPrettierHandlers } from './handlers/prettier'
+import { registerSpacesHandlers } from './handlers/spaces'
 import { registerSystemHandlers } from './handlers/system'
 import { registerThemeHandlers } from './handlers/theme'
 
@@ -18,4 +19,5 @@ export function registerIPC() {
   registerPrettierHandlers()
   registerFsHandlers()
   registerThemeHandlers()
+  registerSpacesHandlers()
 }

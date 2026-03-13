@@ -14,6 +14,21 @@ const CUSTOM_STYLE_ID = 'masscode-custom-theme'
 const LIGHT_EDITOR_THEME = 'neo'
 const DARK_EDITOR_THEME = 'oceanic-next'
 
+const TOKEN_MIGRATION_MAP: Record<string, string> = {
+  'color-primary': 'primary',
+  'color-bg': 'background',
+  'color-fg': 'foreground',
+  'color-text': 'foreground',
+  'color-text-muted': 'muted-foreground',
+  'color-border': 'border',
+  'color-button': 'muted',
+  'color-list-selection': 'accent',
+  'color-list-selection-fg': 'accent-foreground',
+  'color-scrollbar': 'scrollbar',
+}
+
+const DROPPED_TOKENS = new Set(['color-button-hover'])
+
 const storedThemeId = String(store.preferences.get('theme') || 'auto')
 
 const colorMode = useColorMode()
@@ -85,8 +100,16 @@ function buildThemeCss(theme: ThemeFile): string {
 
   if (theme.colors) {
     const colorVars = Object.entries(theme.colors)
-      .filter(([key, value]) => isValidCssToken(key) && Boolean(value.trim()))
-      .map(([key, value]) => `  --${key}: ${value};`)
+      .filter(
+        ([key, value]) =>
+          !DROPPED_TOKENS.has(key)
+          && isValidCssToken(key)
+          && Boolean(value.trim()),
+      )
+      .map(([key, value]) => {
+        const resolvedKey = TOKEN_MIGRATION_MAP[key] ?? key
+        return `  --${resolvedKey}: ${value};`
+      })
 
     if (colorVars.length) {
       chunks.push(`${themeSelector} {`)

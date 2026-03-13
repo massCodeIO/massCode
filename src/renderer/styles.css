@@ -11,9 +11,9 @@
   /* Core */
   --background: oklch(100% 0 0);
   --foreground: oklch(20% 0 0);
-  --card: oklch(97% 0 0);
+  --card: color-mix(in oklch, var(--foreground) 4%, var(--background));
   --card-foreground: oklch(20% 0 0);
-  --popover: oklch(100% 0 0);
+  --popover: var(--background);
   --popover-foreground: oklch(20% 0 0);
   --primary: oklch(50% 0.19 260);
   --primary-foreground: oklch(100% 0 0);
@@ -22,7 +22,7 @@
   --muted: oklch(97% 0 0);
   --muted-foreground: oklch(60% 0 0);
   --accent: oklch(92% 0 0);
-  --accent-hover: oklch(96% 0 0);
+  --accent-hover: color-mix(in oklch, var(--accent) 50%, var(--background));
   --accent-foreground: oklch(20% 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(90% 0 0);
@@ -55,9 +55,9 @@
   /* Core */
   --background: oklch(24.78% 0 0);
   --foreground: oklch(75% 0 0);
-  --card: oklch(22% 0 0);
+  --card: color-mix(in oklch, var(--foreground) 4%, var(--background));
   --card-foreground: oklch(75% 0 0);
-  --popover: oklch(24.78% 0 0);
+  --popover: var(--background);
   --popover-foreground: oklch(75% 0 0);
   --primary: oklch(50% 0.19 260);
   --primary-foreground: oklch(100% 0 0);
@@ -66,7 +66,7 @@
   --muted: oklch(27% 0 0);
   --muted-foreground: oklch(60% 0 0);
   --accent: oklch(32% 0 0);
-  --accent-hover: oklch(28% 0 0);
+  --accent-hover: color-mix(in oklch, var(--accent) 50%, var(--background));
   --accent-foreground: oklch(95% 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(30% 0 0);

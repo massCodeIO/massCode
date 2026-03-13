@@ -33,8 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
         cn(
           'rounded-lg border p-5',
           props.variant === 'danger'
-            ? 'border-destructive/20 bg-destructive/5'
-            : 'border-border bg-card',
+            ? 'border-destructive/20 bg-[color-mix(in_oklch,var(--destructive)_5%,var(--background))]'
+            : 'border-border bg-[color-mix(in_oklch,var(--foreground)_4%,var(--background))]',
         )
       "
     >

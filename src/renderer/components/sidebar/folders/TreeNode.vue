@@ -61,6 +61,8 @@ const hasChildren = computed(
 
 const isFirst = computed(() => props.index === 0)
 
+const isDraggingSnippet = ref(false)
+
 const isHovered = computed(() => {
   return props.node.id === hoveredId.value && overPosition.value === 'center'
 })
@@ -98,11 +100,11 @@ const betweenLineStyle = computed(() => {
   }
 
   if (overPosition.value === 'before') {
-    style.top = '-6px'
+    style.top = '-4px'
   }
 
   if (overPosition.value === 'after') {
-    style.bottom = '-6px'
+    style.bottom = '-4px'
   }
 
   return style
@@ -229,6 +231,14 @@ function onDragEnter() {
 function onDragOver(e: DragEvent) {
   hoveredId.value = props.node.id
 
+  if (e.dataTransfer?.types.includes('snippetids')) {
+    isDraggingSnippet.value = true
+    overPosition.value = 'center'
+    return
+  }
+
+  isDraggingSnippet.value = false
+
   const isDraggingNode
     = store.dragNodes?.some(node => node.id === props.node.id)
       || store.dragNode?.id === props.node.id
@@ -254,6 +264,7 @@ function onDragOver(e: DragEvent) {
 function onDragLeave() {
   hoveredId.value = undefined
   overPosition.value = undefined
+  isDraggingSnippet.value = false
 }
 
 async function onDrop(e: DragEvent) {
@@ -265,6 +276,9 @@ async function onDrop(e: DragEvent) {
   if (snippets && snippets.length > 0) {
     // Если все сниппеты уже в папке и не удалены
     if (snippets.every(s => s.folder?.id === props.node.id && !s.isDeleted)) {
+      hoveredId.value = undefined
+      overPosition.value = undefined
+      isDraggingSnippet.value = false
       return
     }
 
@@ -280,6 +294,11 @@ async function onDrop(e: DragEvent) {
     if (state.snippetId && ids.includes(state.snippetId)) {
       selectFirstSnippet()
     }
+
+    hoveredId.value = undefined
+    overPosition.value = undefined
+    isDraggingSnippet.value = false
+    return
   }
 
   if (!store.dragNode || !isAllowed.value)
@@ -329,7 +348,7 @@ if (focusHandler)
 <template>
   <div
     data-folder-tree-node
-    class="node user-select-none relative *:mt-[2px]"
+    class="node user-select-none relative"
     :class="{
       'has-children': hasChildren,
       'is-dragged': isDragged,
@@ -344,10 +363,12 @@ if (focusHandler)
     <div
       :id="String(node.id)"
       ref="rowRef"
-      class="node__row user-select-none relative flex"
+      class="node__row user-select-none relative flex py-px"
       :class="{
         'is-hovered':
-          (isHovered && isAllowed) || hoveredNodeId === String(node.id),
+          (isHovered && isAllowed)
+          || (isHovered && isDraggingSnippet)
+          || hoveredNodeId === String(node.id),
         'is-selected': isSelected,
         'is-multi-selected': isMultiSelected,
         'is-focused': isFocused,
@@ -432,6 +453,7 @@ if (focusHandler)
     </template>
     <svg
       v-if="isShowBetweenLine"
+      class="pointer-events-none z-20"
       height="10"
       :style="betweenLineStyle"
     >
@@ -469,23 +491,33 @@ if (focusHandler)
       &::before {
         content: "";
         left: v-bind(hoveredOffsetStyle);
-        @apply bg-primary absolute top-0 right-0 bottom-0 z-0 rounded-md;
+        @apply absolute top-0 right-0 bottom-0 z-0 rounded-md;
+      }
+    }
+    &:hover:not(.is-selected):not(.is-focused):not(.is-multi-selected) {
+      @apply text-accent-foreground;
+      &::before {
+        content: "";
+        left: v-bind(hoveredOffsetStyle);
+        @apply bg-accent-hover absolute top-0 right-0 bottom-0 z-0 rounded-md;
+      }
+    }
+    &.is-hovered {
+      &::before {
+        @apply bg-accent-hover;
       }
     }
     &.is-selected {
-      @apply text-accent-foreground;
       &::before {
         @apply bg-accent;
       }
     }
     &.is-multi-selected {
-      @apply text-accent-foreground;
       &::before {
         @apply bg-accent/80;
       }
     }
-    &.is-focused,
-    &.is-hovered {
+    &.is-focused {
       @apply text-primary-foreground;
       &::before {
         @apply bg-primary;

@@ -51,7 +51,7 @@ function onKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="border-border mt-[var(--title-bar-height)] mb-2 border-b pb-1">
+  <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
       <Search class="text-muted-foreground ml-1 h-4 w-4" />
       <div class="flex-grow">

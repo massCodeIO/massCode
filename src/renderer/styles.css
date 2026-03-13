@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --title-bar-height: 10px;
+  --content-top-offset: 8px;
   --editor-tool-header-height: 28px;
   --radius: 0.625rem;
 

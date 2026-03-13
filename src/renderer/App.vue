@@ -4,6 +4,7 @@ import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { RouterName } from '@/router'
 import { isSpaceRouteName } from '@/spaceDefinitions'
+import { isMac } from '@/utils'
 import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
@@ -64,8 +65,9 @@ init()
 <template>
   <Tooltip.TooltipProvider>
     <div
+      v-if="isMac"
       data-title-bar
-      class="absolute top-0 z-50 h-[var(--title-bar-height)] w-full select-none"
+      class="absolute top-0 z-50 h-3 w-full select-none"
     />
     <RouterView v-slot="{ Component, route: currentRoute }">
       <AppSpaceShell v-if="isSpaceRouteName(currentRoute.name)">

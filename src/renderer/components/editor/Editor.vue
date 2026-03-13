@@ -463,7 +463,7 @@ onMounted(() => {
 <template>
   <div
     data-editor
-    class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--title-bar-height)]"
+    class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
     <EditorHeader v-if="isShowHeader" />
     <Resizable.ResizablePanelGroup

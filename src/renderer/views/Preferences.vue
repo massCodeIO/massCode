@@ -3,10 +3,10 @@ import type { Component } from 'vue'
 import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
+import { isMac } from '@/utils'
 import { Code, Globe, HardDrive, Palette, Plug } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 
-const isMac = navigator.userAgent.toLowerCase().includes('mac')
 const route = useRoute()
 
 const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
@@ -51,7 +51,7 @@ provide(preferencesKeys, {
 <template>
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
-    :top-space="isMac ? 16 : 0"
+    :top-space="isMac ? 16 : 6"
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>

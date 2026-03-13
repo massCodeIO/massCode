@@ -5,7 +5,7 @@ import { i18n } from '@/electron'
 <template>
   <div
     data-sidebar
-    class="flex h-full flex-col px-1 pt-[var(--title-bar-height)]"
+    class="flex h-full flex-col px-1 pt-[var(--content-top-offset)]"
   >
     <UiText
       as="div"

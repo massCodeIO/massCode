@@ -4,6 +4,7 @@ import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
+import { isMac } from '@/utils'
 import { Settings } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
@@ -26,7 +27,8 @@ const spaces = computed(() => {
 
 <template>
   <nav
-    class="flex h-full flex-col items-center px-2 pt-[calc(var(--title-bar-height)+8px)] pb-3"
+    class="flex h-full flex-col items-center px-2 pb-3"
+    :class="isMac ? 'pt-[calc(var(--content-top-offset)+8px)]' : 'pt-3'"
     :aria-label="i18n.t('spaces.label')"
   >
     <div class="flex w-full flex-col gap-1">

@@ -107,6 +107,15 @@ function shouldIgnoreWatchPath(paths: Paths, watchPath: string): boolean {
     normalizedRelativePath === spacesPrefix
     || normalizedRelativePath.startsWith(`${spacesPrefix}/`)
   ) {
+    // Ignore __spaces__/notes/ for snippet sync (notes has its own storage)
+    const notesSpacePrefix = `${spacesPrefix}/notes`
+    if (
+      normalizedRelativePath === notesSpacePrefix
+      || normalizedRelativePath.startsWith(`${notesSpacePrefix}/`)
+    ) {
+      return true
+    }
+
     return false
   }
 

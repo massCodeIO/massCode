@@ -127,14 +127,25 @@ function buildDecorations(view: EditorView) {
         if (type === 'FencedCode') {
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
+          const baseStyle
+            = 'background:color-mix(in srgb, var(--background) 90%, var(--foreground));font-family:var(--font-mono);font-size:0.9em;padding-left:16px;padding-right:16px'
+
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
+            let style = baseStyle
+
+            if (i === startLine.number) {
+              style
+                += ';border-top-left-radius:6px;border-top-right-radius:6px;padding-top:8px'
+            }
+            if (i === endLine.number) {
+              style
+                += ';border-bottom-left-radius:6px;border-bottom-right-radius:6px;padding-bottom:8px'
+            }
+
             decorations.push(
               Decoration.line({
-                attributes: {
-                  style:
-                    'background:color-mix(in srgb, var(--background) 90%, var(--foreground));font-family:var(--font-mono);font-size:0.9em',
-                },
+                attributes: { style },
               }).range(line.from),
             )
           }

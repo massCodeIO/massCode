@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { useTheme } from '@/composables'
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentWithTab,
-} from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap, placeholder } from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
 import { hideMarkup } from './cm-extensions/hideMarkup'
+import { listIndent } from './cm-extensions/listIndent'
 import { markdownDecorations } from './cm-extensions/markdownDecorations'
 
 const content = defineModel<string>('content', { default: '' })
@@ -63,7 +59,7 @@ function createEditorState(doc: string): EditorState {
       lightTheme,
       EditorView.lineWrapping,
       history(),
-      keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+      keymap.of([...listIndent, ...defaultKeymap, ...historyKeymap]),
       markdown({
         base: markdownLanguage,
         codeLanguages: languages,

@@ -42,7 +42,7 @@ function hasInvalidNameChars(name: string): boolean {
 
 export function validateEntryName(
   name: string,
-  kind: 'folder' | 'snippet',
+  kind: 'folder' | 'note' | 'snippet',
 ): string {
   const normalized = normalizeName(name)
 

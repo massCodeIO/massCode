@@ -174,7 +174,7 @@ function buildDecorations(view: EditorView) {
             Decoration.mark({
               attributes: {
                 style:
-                  'text-decoration:underline;color:var(--accent);cursor:pointer',
+                  'text-decoration:underline;color:var(--primary);cursor:pointer',
               },
             }).range(node.from, node.to),
           )

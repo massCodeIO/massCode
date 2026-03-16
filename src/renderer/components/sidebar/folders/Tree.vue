@@ -1,20 +1,18 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
+import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import type { Node, Position } from './types'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
+import { Tree as UiTree } from '@/components/ui/tree'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { scrollToElement } from '@/utils'
+import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
-import { treeKeys } from './keys'
-import TreeNode from './TreeNode.vue'
 
 interface Props {
   modelValue: Node[]
   selectedId?: string | number
-  contextMenuHandler?: () => Promise<boolean>
-  focusHandler?: (isFocused: Ref) => void
 }
 
 interface Emits {
@@ -27,16 +25,12 @@ interface Emits {
   (e: 'toggleNode', value: Node): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  contextMenuHandler: () => Promise.resolve(true),
-})
-
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const {
   createFolderAndSelect,
   deleteFolder,
-  renameFolderId,
   folders,
   updateFolder,
   getFolderByIdFromTree,
@@ -45,47 +39,188 @@ const {
   clearFolderSelection,
   selectFolder,
 } = useFolders()
-const { state } = useApp()
-const { clearSnippetsState } = useSnippets()
+const {
+  state,
+  highlightedFolderIds,
+  highlightedSnippetIds,
+  highlightedTagId,
+  focusedFolderId,
+} = useApp()
+const {
+  clearSnippetsState,
+  displayedSnippets,
+  updateSnippets,
+  selectFirstSnippet,
+} = useSnippets()
 
-const hoveredNodeId = ref('')
-const isHoveredByIdDisabled = ref(false)
+// --- Data mapping ---
+
+function mapToTreeNode(folder: Node): TreeNodeType {
+  return {
+    id: folder.id,
+    label: folder.name,
+    isExpanded: Boolean(folder.isOpen),
+    children: folder.children?.map(mapToTreeNode) || [],
+  }
+}
+
+const treeData = computed(() => props.modelValue.map(mapToTreeNode))
+
+const selectedIds = computed({
+  get: () => selectedFolderIds.value as (string | number)[],
+  set: (val) => {
+    selectedFolderIds.value = val as number[]
+  },
+})
+
+const editableId = ref<string | number | null>(null)
+
+const focusedId = computed({
+  get: () => focusedFolderId.value as string | number | undefined,
+  set: (val) => {
+    focusedFolderId.value = val as number | undefined
+  },
+})
+
+const highlightedIds = computed({
+  get: () => highlightedFolderIds.value as Set<string | number>,
+  set: (val) => {
+    highlightedFolderIds.value.clear()
+    val.forEach(id => highlightedFolderIds.value.add(id as number))
+  },
+})
+
+// --- Context menu state ---
+
 const contextNode = ref<Node | null>(null)
+
 const isContextMultiSelection = computed(() => {
   if (!contextNode.value)
     return false
-
   if (selectedFolderIds.value.length <= 1)
     return false
-
   return selectedFolderIds.value.includes(contextNode.value.id)
 })
 
 const contextNodeDefaultLanguage = computed(() => {
   if (!contextNode.value)
     return ''
-
   return (
     getFolderByIdFromTree(folders.value, contextNode.value.id)
       ?.defaultLanguage || ''
   )
 })
 
-function clickNode(id: number, event?: MouseEvent) {
-  return emit('clickNode', { id, event })
+// --- Event handlers ---
+
+function onClickNode({
+  node,
+  event,
+}: {
+  node: TreeNodeType
+  event?: MouseEvent
+}) {
+  highlightedFolderIds.value.clear()
+  highlightedTagId.value = undefined
+  state.tagId = undefined
+  emit('clickNode', { id: Number(node.id), event })
 }
 
-function dragNode(nodes: Node[], target: Node, position: Position) {
-  return emit('dragNode', { nodes, target, position })
+function onDblclickNode(node: TreeNodeType) {
+  setTimeout(() => {
+    editableId.value = node.id
+  }, 100)
 }
 
-function toggleNode(node: Node) {
-  return emit('toggleNode', node)
+function onToggleNode(node: TreeNodeType) {
+  const folderNode = getFolderByIdFromTree(
+    folders.value,
+    Number(node.id),
+  ) as Node
+  if (folderNode) {
+    emit('toggleNode', folderNode)
+  }
 }
 
-function contextMenu(node: Node) {
-  contextNode.value = node
+function onDragNode({
+  nodes,
+  target,
+  position,
+}: {
+  nodes: TreeNodeType[]
+  target: TreeNodeType
+  position: Position
+}) {
+  const folderNodes = nodes
+    .map(n => getFolderByIdFromTree(folders.value, Number(n.id)))
+    .filter((n): n is Node => Boolean(n))
+  const folderTarget = getFolderByIdFromTree(
+    folders.value,
+    Number(target.id),
+  ) as Node
+
+  if (folderNodes.length && folderTarget) {
+    emit('dragNode', { nodes: folderNodes, target: folderTarget, position })
+  }
 }
+
+async function onExternalDrop({
+  data,
+  target,
+}: {
+  data: DataTransfer
+  target: TreeNodeType
+  position: Position
+}) {
+  const snippetIds = JSON.parse(data.getData('snippetIds') || '[]')
+  const snippets = displayedSnippets.value?.filter(s =>
+    snippetIds.includes(s.id),
+  )
+
+  if (!snippets?.length)
+    return
+
+  const folderId = Number(target.id)
+
+  if (snippets.every(s => s.folder?.id === folderId && !s.isDeleted))
+    return
+
+  const ids = snippets.map(s => s.id)
+  const updateData = snippets.map(() => ({
+    folderId,
+    isDeleted: 0,
+  }))
+
+  await updateSnippets(ids, updateData)
+
+  if (state.snippetId && ids.includes(state.snippetId)) {
+    selectFirstSnippet()
+  }
+}
+
+function onContextMenu({
+  node,
+}: {
+  node: TreeNodeType
+  selectedNodes: TreeNodeType[]
+}) {
+  contextNode.value = getFolderByIdFromTree(
+    folders.value,
+    Number(node.id),
+  ) as Node
+  highlightedSnippetIds.value.clear()
+}
+
+function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
+  updateFolder(Number(node.id), { name: value })
+  editableId.value = null
+}
+
+function onCancelEdit() {
+  editableId.value = null
+}
+
+// --- Context menu actions ---
 
 async function onDeleteFolder() {
   if (!contextNode.value)
@@ -132,24 +267,17 @@ async function onDeleteFolder() {
 }
 
 function onRenameFolder() {
-  // FIXME: Костыль для того чтобы input в TreeNode фокусировался,
-  // разобраться почему не работает nextTick
   setTimeout(() => {
     if (!contextNode.value)
       return
-
-    renameFolderId.value = contextNode.value.id
+    editableId.value = contextNode.value.id
   }, 100)
 }
 
 function onSelectLanguage(language: string) {
-  if (!contextNode.value) {
+  if (!contextNode.value)
     return
-  }
-
-  updateFolder(contextNode.value.id, {
-    defaultLanguage: language,
-  })
+  updateFolder(contextNode.value.id, { defaultLanguage: language })
 }
 
 function scrollToSelectedLanguage(el: any, isSelected: boolean) {
@@ -181,111 +309,102 @@ async function onRemoveCustomIcon() {
   if (!contextNode.value)
     return
 
-  updateFolder(contextNode.value.id, {
-    icon: null,
-  })
-
+  updateFolder(contextNode.value.id, { icon: null })
   await getFolders()
 }
-
-provide(treeKeys, {
-  clickNode,
-  contextMenu,
-  dragNode,
-  focusHandler: props.focusHandler,
-  isHoveredByIdDisabled,
-  toggleNode,
-})
 </script>
 
 <template>
-  <div
-    v-if="modelValue.length"
-    class="h-full min-h-0"
-  >
-    <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
-      <ContextMenu.ContextMenu>
-        <ContextMenu.ContextMenuTrigger as-child>
-          <div data-folder-tree>
-            <TreeNode
-              v-for="(node, index) in modelValue"
-              :key="node.id"
-              :node="node"
-              :nodes="modelValue"
-              :index="index"
-              :hovered-node-id="hoveredNodeId"
-            >
-              <template #default="slotProps">
-                <slot
-                  v-if="slotProps && slotProps.node"
-                  :node="slotProps.node"
-                  :deep="slotProps.deep"
-                  :hovered-node-id="hoveredNodeId"
-                />
-                <template v-else>
-                  {{ node.name }} s
-                </template>
-              </template>
-            </TreeNode>
+  <ContextMenu.ContextMenu>
+    <ContextMenu.ContextMenuTrigger as-child>
+      <UiTree
+        :model-value="treeData"
+        :selected-ids="selectedIds"
+        :editable-id="editableId"
+        :focused-id="focusedId"
+        :highlighted-ids="highlightedIds"
+        @click-node="onClickNode"
+        @dblclick-node="onDblclickNode"
+        @toggle-node="onToggleNode"
+        @drag-node="onDragNode"
+        @external-drop="onExternalDrop"
+        @context-menu="onContextMenu"
+        @update-label="onUpdateLabel"
+        @cancel-edit="onCancelEdit"
+        @update:selected-ids="selectedIds = $event"
+        @update:editable-id="editableId = $event"
+        @update:focused-id="focusedId = $event"
+        @update:highlighted-ids="highlightedIds = $event"
+      >
+        <template #icon="{ node }">
+          <div class="mr-1.5 flex flex-shrink-0 items-center">
+            <UiFolderIcon
+              v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
+              :name="getFolderByIdFromTree(folders, Number(node.id))!.icon!"
+            />
+            <Folder
+              v-else
+              class="h-4 w-4"
+            />
           </div>
-        </ContextMenu.ContextMenuTrigger>
-        <ContextMenu.ContextMenuContent>
-          <template v-if="isContextMultiSelection">
-            <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-              {{ i18n.t("action.delete.common") }}
-            </ContextMenu.ContextMenuItem>
-          </template>
-          <template v-else>
-            <ContextMenu.ContextMenuItem
-              @click="createFolderAndSelect(contextNode?.id)"
-            >
-              {{ i18n.t("action.new.folder") }}
-            </ContextMenu.ContextMenuItem>
-            <ContextMenu.ContextMenuSeparator />
-            <ContextMenu.ContextMenuItem @click="onRenameFolder">
-              {{ i18n.t("action.rename") }}
-            </ContextMenu.ContextMenuItem>
-            <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-              {{ i18n.t("action.delete.common") }}
-            </ContextMenu.ContextMenuItem>
-            <ContextMenu.ContextMenuSeparator />
-            <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
-              {{ i18n.t("action.setCustomIcon") }}
-            </ContextMenu.ContextMenuItem>
-            <ContextMenu.ContextMenuItem
-              v-if="contextNode?.icon"
-              @click="onRemoveCustomIcon"
-            >
-              {{ i18n.t("action.removeCustomIcon") }}
-            </ContextMenu.ContextMenuItem>
-            <ContextMenu.ContextMenuSeparator />
-            <ContextMenu.ContextMenuSub>
-              <ContextMenu.ContextMenuSubTrigger>
-                {{ i18n.t("action.defaultLanguage") }}
-              </ContextMenu.ContextMenuSubTrigger>
-              <ContextMenu.ContextMenuSubContent>
-                <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
-                  <ContextMenu.ContextMenuCheckboxItem
-                    v-for="language in languages"
-                    :key="language.value"
-                    :ref="
-                      (el) =>
-                        scrollToSelectedLanguage(
-                          el,
-                          contextNodeDefaultLanguage === language.value,
-                        )
-                    "
-                    :checked="contextNodeDefaultLanguage === language.value"
-                    @click="onSelectLanguage(language.value)"
-                  >
-                    {{ language.name }}
-                  </ContextMenu.ContextMenuCheckboxItem>
-                </div>
-              </ContextMenu.ContextMenuSubContent>
-            </ContextMenu.ContextMenuSub>
-          </template>
-        </ContextMenu.ContextMenuContent>
-      </ContextMenu.ContextMenu>
-    </div>
-  </div>
+        </template>
+      </UiTree>
+    </ContextMenu.ContextMenuTrigger>
+    <ContextMenu.ContextMenuContent>
+      <template v-if="isContextMultiSelection">
+        <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+          {{ i18n.t("action.delete.common") }}
+        </ContextMenu.ContextMenuItem>
+      </template>
+      <template v-else>
+        <ContextMenu.ContextMenuItem
+          @click="createFolderAndSelect(contextNode?.id)"
+        >
+          {{ i18n.t("action.new.folder") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuItem @click="onRenameFolder">
+          {{ i18n.t("action.rename") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+          {{ i18n.t("action.delete.common") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
+          {{ i18n.t("action.setCustomIcon") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem
+          v-if="contextNode?.icon"
+          @click="onRemoveCustomIcon"
+        >
+          {{ i18n.t("action.removeCustomIcon") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuSub>
+          <ContextMenu.ContextMenuSubTrigger>
+            {{ i18n.t("action.defaultLanguage") }}
+          </ContextMenu.ContextMenuSubTrigger>
+          <ContextMenu.ContextMenuSubContent>
+            <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
+              <ContextMenu.ContextMenuCheckboxItem
+                v-for="language in languages"
+                :key="language.value"
+                :ref="
+                  (el) =>
+                    scrollToSelectedLanguage(
+                      el,
+                      contextNodeDefaultLanguage === language.value,
+                    )
+                "
+                :checked="contextNodeDefaultLanguage === language.value"
+                @click="onSelectLanguage(language.value)"
+              >
+                {{ language.name }}
+              </ContextMenu.ContextMenuCheckboxItem>
+            </div>
+          </ContextMenu.ContextMenuSubContent>
+        </ContextMenu.ContextMenuSub>
+      </template>
+    </ContextMenu.ContextMenuContent>
+  </ContextMenu.ContextMenu>
 </template>

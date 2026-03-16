@@ -13,54 +13,55 @@ const HIDEABLE_MARKS = new Set([
   'QuoteMark',
 ])
 
-const FENCED_CODE_MARKS = new Set(['CodeMark', 'CodeInfo'])
+const LINE_BASED_MARKS = new Set(['HeaderMark', 'QuoteMark'])
 
-function getCursorLineNumbers(view: EditorView): Set<number> {
-  const lines = new Set<number>()
+function isCursorInRange(view: EditorView, from: number, to: number): boolean {
   for (const range of view.state.selection.ranges) {
-    const startLine = view.state.doc.lineAt(range.from).number
-    const endLine = view.state.doc.lineAt(range.to).number
-    for (let i = startLine; i <= endLine; i++) {
-      lines.add(i)
-    }
-  }
-  return lines
-}
-
-function isCursorInsideFencedCode(
-  view: EditorView,
-  cursorLines: Set<number>,
-  nodeFrom: number,
-): boolean {
-  let fencedCode: { from: number, to: number } | null = null
-
-  syntaxTree(view.state).iterate({
-    from: nodeFrom,
-    to: nodeFrom,
-    enter(n) {
-      if (n.name === 'FencedCode') {
-        fencedCode = { from: n.from, to: n.to }
-      }
-    },
-  })
-
-  if (!fencedCode)
-    return false
-
-  const { from, to } = fencedCode
-  const startLine = view.state.doc.lineAt(from).number
-  const endLine = view.state.doc.lineAt(to).number
-
-  for (let i = startLine; i <= endLine; i++) {
-    if (cursorLines.has(i))
+    if (range.from >= from && range.from <= to)
+      return true
+    if (range.to >= from && range.to <= to)
       return true
   }
   return false
 }
 
+function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
+  for (const range of view.state.selection.ranges) {
+    const startLine = view.state.doc.lineAt(range.from).number
+    const endLine = view.state.doc.lineAt(range.to).number
+    if (lineNumber >= startLine && lineNumber <= endLine)
+      return true
+  }
+  return false
+}
+
+function shouldShowMark(
+  view: EditorView,
+  node: {
+    name: string
+    from: number
+    to: number
+    node: { parent: { name: string, from: number, to: number } | null }
+  },
+): boolean {
+  if (LINE_BASED_MARKS.has(node.name)) {
+    const line = view.state.doc.lineAt(node.from)
+    return isCursorOnLine(view, line.number)
+  }
+
+  const parent = node.node.parent
+  if (!parent)
+    return false
+
+  if (parent.name === 'FencedCode') {
+    return isCursorInRange(view, parent.from, parent.to)
+  }
+
+  return isCursorInRange(view, parent.from, parent.to)
+}
+
 function buildHideDecorations(view: EditorView) {
   const decorations: Range<Decoration>[] = []
-  const cursorLines = getCursorLineNumbers(view)
 
   for (const { from, to } of view.visibleRanges) {
     syntaxTree(view.state).iterate({
@@ -73,15 +74,8 @@ function buildHideDecorations(view: EditorView) {
         if (node.from === node.to)
           return
 
-        if (FENCED_CODE_MARKS.has(node.name)) {
-          if (isCursorInsideFencedCode(view, cursorLines, node.from))
-            return
-        }
-        else {
-          const line = view.state.doc.lineAt(node.from)
-          if (cursorLines.has(line.number))
-            return
-        }
+        if (shouldShowMark(view, node))
+          return
 
         let end = node.to
         if (node.name === 'HeaderMark') {

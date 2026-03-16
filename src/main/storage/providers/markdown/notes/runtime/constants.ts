@@ -3,11 +3,12 @@ import path from 'node:path'
 import {
   INBOX_DIR_NAME,
   META_DIR_NAME,
+  META_FILE_NAME,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
 } from '../../runtime/constants'
 
-export { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME }
+export { INBOX_DIR_NAME, META_DIR_NAME, META_FILE_NAME, TRASH_DIR_NAME }
 
 export const NOTES_SPACE_ID = 'notes'
 

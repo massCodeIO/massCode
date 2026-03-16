@@ -302,7 +302,7 @@ async function ensureSelectedFolderIsVisible() {
   try {
     const updateResults = await Promise.allSettled(
       foldersToOpen.map(folderId =>
-        (api as any).noteFolders.patchNoteFoldersById(String(folderId), {
+        api.noteFolders.patchNoteFoldersById(String(folderId), {
           isOpen: 1,
         }),
       ),
@@ -353,7 +353,7 @@ function getFolderByIdFromTree(
 
 async function getNoteFolders(shouldEnsureVisibility = true) {
   try {
-    const { data } = await (api as any).noteFolders.getNoteFoldersTree()
+    const { data } = await api.noteFolders.getNoteFoldersTree()
     folders.value = data
     syncSelectedFoldersWithTree()
 
@@ -371,7 +371,7 @@ async function createNoteFolder(parentId?: number) {
     const nextFolderName = getNextUntitledFolderName(parentId)
 
     markPersistedStorageMutation()
-    const { data } = await (api as any).noteFolders.postNoteFolders({
+    const { data } = await api.noteFolders.postNoteFolders({
       name: nextFolderName,
       ...(parentId !== undefined && { parentId }),
     })
@@ -404,7 +404,7 @@ async function createNoteFolderAndSelect(parentId?: number) {
 async function updateNoteFolder(folderId: number, data: NoteFoldersUpdate) {
   try {
     markPersistedStorageMutation()
-    await (api as any).noteFolders.patchNoteFoldersById(String(folderId), data)
+    await api.noteFolders.patchNoteFoldersById(String(folderId), data)
     await getNoteFolders(false)
 
     if (folderId === notesState.folderId) {
@@ -420,7 +420,7 @@ async function updateNoteFolder(folderId: number, data: NoteFoldersUpdate) {
 async function deleteNoteFolder(folderId: number, shouldRefresh = true) {
   try {
     markPersistedStorageMutation()
-    await (api as any).noteFolders.deleteNoteFoldersById(String(folderId))
+    await api.noteFolders.deleteNoteFoldersById(String(folderId))
     if (shouldRefresh) {
       await getNoteFolders(false)
     }

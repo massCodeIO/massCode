@@ -175,7 +175,7 @@ async function getNoteNamesForCreate(
     = folderId !== null
       ? { folderId, isDeleted: 0 }
       : { isInbox: 1, isDeleted: 0 }
-  const { data } = await (api as any).notes.getNotes(query)
+  const { data } = await api.notes.getNotes(query)
 
   return data.map((note: NoteRecord) => note.name)
 }
@@ -183,7 +183,7 @@ async function getNoteNamesForCreate(
 // --- CRUD ---
 
 async function getNotes(query?: NotesQuery) {
-  const { data } = await (api as any).notes.getNotes(
+  const { data } = await api.notes.getNotes(
     query || queryByLibraryOrFolderOrSearch.value,
   )
 
@@ -205,7 +205,7 @@ async function createNote() {
     )
 
     markPersistedStorageMutation()
-    await (api as any).notes.postNotes({
+    await api.notes.postNotes({
       name: nextNoteName,
       folderId: targetFolderId,
     })
@@ -232,24 +232,24 @@ async function createNoteAndSelect() {
 
 async function updateNote(noteId: number, data: NotesUpdate) {
   markPersistedStorageMutation()
-  await (api as any).notes.patchNotesById(String(noteId), data)
+  await api.notes.patchNotesById(String(noteId), data)
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function updateNoteContent(noteId: number, content: string) {
   markPersistedStorageMutation()
-  await (api as any).notes.patchNotesByIdContent(String(noteId), { content })
+  await api.notes.patchNotesByIdContent(String(noteId), { content })
 }
 
 async function deleteNote(noteId: number) {
   markPersistedStorageMutation()
-  await (api as any).notes.deleteNotesById(String(noteId))
+  await api.notes.deleteNotesById(String(noteId))
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
 async function deleteNotes(noteIds: number[]) {
   for (const noteId of noteIds) {
-    await (api as any).notes.deleteNotesById(String(noteId))
+    await api.notes.deleteNotesById(String(noteId))
   }
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
@@ -263,7 +263,7 @@ async function emptyTrash() {
   })
 
   if (isConfirmed) {
-    await (api as any).notes.deleteNotesTrash()
+    await api.notes.deleteNotesTrash()
     await getNotes(queryByLibraryOrFolderOrSearch.value)
   }
 }
@@ -272,10 +272,7 @@ async function emptyTrash() {
 
 async function addTagToNote(tagId: number, noteId: number) {
   try {
-    await (api as any).notes.postNotesByIdTagsByTagId(
-      String(noteId),
-      String(tagId),
-    )
+    await api.notes.postNotesByIdTagsByTagId(String(noteId), String(tagId))
     await getNotes(queryByLibraryOrFolderOrSearch.value)
   }
   catch (error) {
@@ -285,10 +282,7 @@ async function addTagToNote(tagId: number, noteId: number) {
 
 async function deleteTagFromNote(tagId: number, noteId: number) {
   try {
-    await (api as any).notes.deleteNotesByIdTagsByTagId(
-      String(noteId),
-      String(tagId),
-    )
+    await api.notes.deleteNotesByIdTagsByTagId(String(noteId), String(tagId))
     await getNotes(queryByLibraryOrFolderOrSearch.value)
   }
   catch (error) {

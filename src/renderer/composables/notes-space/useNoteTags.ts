@@ -20,7 +20,7 @@ const isLoading = ref(false)
 async function getNoteTags() {
   try {
     isLoading.value = true
-    const { data } = await (api as any).noteTags.getNoteTags()
+    const { data } = await api.noteTags.getNoteTags()
     tags.value = data
   }
   catch (error) {
@@ -32,14 +32,14 @@ async function getNoteTags() {
 }
 
 async function addNoteTag(tagName: string) {
-  const { data } = await (api as any).noteTags.postNoteTags({ name: tagName })
+  const { data } = await api.noteTags.postNoteTags({ name: tagName })
 
   return data.id as number
 }
 
 async function updateNoteTag(tagId: number, tagName: string) {
   try {
-    await (api as any).noteTags.patchNoteTagsById(String(tagId), {
+    await api.noteTags.patchNoteTagsById(String(tagId), {
       name: tagName,
     })
     await getNoteTags()
@@ -51,7 +51,7 @@ async function updateNoteTag(tagId: number, tagName: string) {
 
 async function deleteNoteTag(tagId: number) {
   try {
-    await (api as any).noteTags.deleteNoteTagsById(String(tagId))
+    await api.noteTags.deleteNoteTagsById(String(tagId))
     await getNoteTags()
   }
   catch (error) {

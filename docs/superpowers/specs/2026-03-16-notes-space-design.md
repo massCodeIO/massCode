@@ -98,7 +98,9 @@ Separate tag set from Code space. Tags stored in `__spaces__/notes/.masscode/sta
 
 The existing vault watcher in `watcher.ts` watches the entire `vaultPath`. The `listMarkdownFiles()` function already skips `__spaces__/`, so note files will NOT be indexed as snippets. However, file changes inside `__spaces__/notes/` will trigger watcher events.
 
-**Solution:** Extend `shouldIgnoreWatchPath()` in `watcher.ts` to ignore paths under `__spaces__/notes/` for snippet sync. The notes storage manages its own sync independently — it does NOT use the snippet watcher. Notes sync is triggered explicitly via API calls (CRUD operations update the runtime cache directly). External changes (e.g. vault sync from another device) trigger `system:storage-synced`, which the renderer handles per-space.
+**Solution:** Extend `shouldIgnoreWatchPath()` in `watcher.ts` to ignore paths under `__spaces__/notes/` specifically for snippet sync. Important: the ignore must target `__spaces__/notes/` only, NOT `__spaces__/` broadly — `__spaces__/math/.state.yaml` changes must still propagate for math space sync.
+
+The notes storage manages its own sync independently — it does NOT use the snippet watcher. Notes sync is triggered explicitly via API calls (CRUD operations update the runtime cache directly). External changes (e.g. vault sync from another device) trigger `system:storage-synced`, which the renderer handles per-space.
 
 ### Paths
 
@@ -172,7 +174,7 @@ interface NoteTagsStorage {
 }
 ```
 
-Extend `useStorage()` to return notes storages: `storage.notes`, `storage.noteFolders`, `storage.noteTags`. These are only available when markdown engine is active (notes space is markdown-only).
+Notes storages are accessed via a separate `useNotesStorage()` function (NOT added to `StorageProvider` interface, since that serves both engines). `useNotesStorage()` returns `{ notes, noteFolders, noteTags }` and is only available when markdown engine is active. API routes call `useNotesStorage()` directly.
 
 ### Storage provider file structure
 
@@ -181,7 +183,7 @@ src/main/storage/providers/markdown/
   notes/
     runtime/
       constants.ts       # getNotesPaths(), notes-specific reserved names
-      state.ts           # read/write NotesStateFile, debounce/flush (own pendingWrite)
+      state.ts           # read/write NotesStateFile, reuses shared pendingStateWriteByPath
       sync.ts            # syncFoldersWithDisk, loadNotes, getRuntimeCache
       paths.ts           # buildFolderPathMap for notes root
       notes.ts           # readNoteFromFile, persistNote, buildNoteTargetPath
@@ -197,8 +199,12 @@ src/main/storage/providers/markdown/
 
 Reuses from `markdown/runtime/` (import directly):
 - `validation.ts` — `validateEntryName()`, `INVALID_NAME_CHARS`
-- `parser.ts` — `readFolderMetadata()`, `writeFolderMetadata()`, `splitFrontmatter()` (but NOT `parseBodyFragments()` or `serializeSnippet()` — these are snippet-specific)
+- `parser.ts` — `splitFrontmatter()` (but NOT `parseBodyFragments()` or `serializeSnippet()` — these are snippet-specific)
 - `normalizers.ts` — `normalizeFlag()`, timestamps
+
+**Folder metadata:** Notes writes its own `writeNoteFolderMetadata()` and `readNoteFolderMetadata()` because the existing `writeFolderMetadataFile()` takes `FolderRecord` (with `defaultLanguage`) which is incompatible with `NoteFolderRecord`. The note versions are simpler — same YAML format but without `defaultLanguage` field.
+
+**State debounce:** Notes `state.ts` reuses the existing path-keyed `pendingStateWriteByPath` / `stateFlushTimerByPath` maps from `markdown/runtime/constants.ts`. Since maps are keyed by file path, the notes state path (`__spaces__/notes/.masscode/state.json`) naturally coexists with the snippet state path. This ensures `beforeExit` flush hooks cover notes state too.
 
 New note-specific functions (in `notes/runtime/notes.ts`):
 - `serializeNote()` — frontmatter + raw markdown body
@@ -317,6 +323,8 @@ On `system:storage-synced`:
 - If `getActiveSpaceId() === 'notes'` -> refresh folders + notes + tags
 - Notes runtime cache is reloaded from disk (re-read state.json + note files)
 - This handles external vault sync (e.g. from another device)
+
+**Important:** The switch in `system.ts:refreshAfterStorageSync()` must add a `'notes'` case. Without it, notes space would fall through to the `code`/default case and trigger a snippet refresh instead.
 
 ## 4. Localization & Integration
 

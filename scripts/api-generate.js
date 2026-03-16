@@ -1,8 +1,20 @@
 const child_process = require('node:child_process')
+const os = require('node:os')
+const path = require('node:path')
+
 const { styleText } = require('node:util')
 const Store = require('electron-store')
 
-const store = new Store({ name: 'preferences', cwd: 'v2' })
+// When running outside Electron, electron-store can't resolve app data path.
+// Provide it explicitly via the `cwd` option.
+const appDataDir = path.join(
+  os.homedir(),
+  'Library',
+  'Application Support',
+  'massCode',
+  'v2',
+)
+const store = new Store({ name: 'preferences', cwd: appDataDir })
 const apiPort = store.get('apiPort', 4321)
 const url = `http://localhost:${apiPort}/swagger/json`
 

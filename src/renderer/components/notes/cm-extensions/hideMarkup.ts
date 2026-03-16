@@ -8,9 +8,12 @@ const HIDEABLE_MARKS = new Set([
   'EmphasisMark',
   'StrikethroughMark',
   'CodeMark',
+  'CodeInfo',
   'LinkMark',
   'QuoteMark',
 ])
+
+const FENCED_CODE_MARKS = new Set(['CodeMark', 'CodeInfo'])
 
 function getCursorLineNumbers(view: EditorView): Set<number> {
   const lines = new Set<number>()
@@ -22,6 +25,37 @@ function getCursorLineNumbers(view: EditorView): Set<number> {
     }
   }
   return lines
+}
+
+function isCursorInsideFencedCode(
+  view: EditorView,
+  cursorLines: Set<number>,
+  nodeFrom: number,
+): boolean {
+  let fencedCode: { from: number, to: number } | null = null
+
+  syntaxTree(view.state).iterate({
+    from: nodeFrom,
+    to: nodeFrom,
+    enter(n) {
+      if (n.name === 'FencedCode') {
+        fencedCode = { from: n.from, to: n.to }
+      }
+    },
+  })
+
+  if (!fencedCode)
+    return false
+
+  const { from, to } = fencedCode
+  const startLine = view.state.doc.lineAt(from).number
+  const endLine = view.state.doc.lineAt(to).number
+
+  for (let i = startLine; i <= endLine; i++) {
+    if (cursorLines.has(i))
+      return true
+  }
+  return false
 }
 
 function buildHideDecorations(view: EditorView) {
@@ -39,11 +73,24 @@ function buildHideDecorations(view: EditorView) {
         if (node.from === node.to)
           return
 
-        const line = view.state.doc.lineAt(node.from)
-        if (cursorLines.has(line.number))
-          return
+        if (FENCED_CODE_MARKS.has(node.name)) {
+          if (isCursorInsideFencedCode(view, cursorLines, node.from))
+            return
+        }
+        else {
+          const line = view.state.doc.lineAt(node.from)
+          if (cursorLines.has(line.number))
+            return
+        }
 
-        decorations.push(Decoration.replace({}).range(node.from, node.to))
+        let end = node.to
+        if (node.name === 'HeaderMark') {
+          const after = view.state.sliceDoc(node.to, node.to + 1)
+          if (after === ' ')
+            end = node.to + 1
+        }
+
+        decorations.push(Decoration.replace({}).range(node.from, end))
       },
     })
   }

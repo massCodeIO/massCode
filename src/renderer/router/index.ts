@@ -29,6 +29,7 @@ export const RouterName = {
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
   devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
+  notesSpace: 'notes-space',
   dev: 'dev',
 } as const
 
@@ -186,6 +187,11 @@ const routes = [
     path: '/math-notebook',
     name: RouterName.mathNotebook,
     component: () => import('@/views/MathNotebook.vue'),
+  },
+  {
+    path: '/notes',
+    name: RouterName.notesSpace,
+    component: () => import('@/views/NotesSpace.vue'),
   },
   {
     path: '/dev',

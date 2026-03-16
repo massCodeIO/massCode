@@ -46,7 +46,8 @@
       "storage": "New Storage",
       "folder": "New Folder",
       "snippet": "New Snippet",
-      "fragment": "New Fragment"
+      "fragment": "New Fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Add Description",
@@ -115,6 +116,13 @@
     "selectedMultiple": "{{count}} Snippets Selected",
     "noSelected": "No Snippet Selected"
   },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "emptyName": "Type note name",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
   "mathNotebook": {
     "label": "Math Notebook",
     "sheetList": "Sheet List",
@@ -128,15 +136,19 @@
     "code": "Code",
     "tools": "Tools",
     "math": "Math",
+    "notes": "Notes",
     "codeTooltip": "Code snippets",
     "toolsTooltip": "Developer tools",
-    "mathTooltip": "Math notebook"
+    "mathTooltip": "Math notebook",
+    "notesTooltip": "Notes"
   },
   "loading": "App loading...",
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
     "emptyFoldersList": "No Folders",
     "emptySnippetsList": "No Snippets",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
     "search": "Search",
     "addTag": "Add Tag"

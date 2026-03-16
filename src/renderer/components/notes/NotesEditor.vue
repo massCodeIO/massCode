@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { useTheme } from '@/composables'
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { EditorState } from '@codemirror/state'
@@ -58,7 +63,7 @@ function createEditorState(doc: string): EditorState {
       lightTheme,
       EditorView.lineWrapping,
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap]),
+      keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
       markdown({
         base: markdownLanguage,
         codeLanguages: languages,

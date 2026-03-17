@@ -157,6 +157,10 @@ export function getNoteIdsBySearchQuery(
 
   if (queryWords.length > 0) {
     for (const word of queryWords) {
+      if (word.length < 3) {
+        continue
+      }
+
       const wordTrigrams = createWordTrigrams(word)
       let wordCandidates: Set<number> | null = null
 

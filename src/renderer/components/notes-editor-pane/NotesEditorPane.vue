@@ -33,7 +33,7 @@ const content = computed({
   >
     <div data-notes-editor-header>
       <div
-        class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+        class="border-border grid min-h-7 grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
       >
         <UiInput
           v-model="name"
@@ -42,9 +42,12 @@ const content = computed({
           :select="isFocusedNoteName"
           @blur="isFocusedNoteName = false"
         />
-        <div class="ml-2 flex">
+        <div class="ml-2 flex h-7 items-center">
           <!-- Action buttons slot for future use -->
         </div>
+      </div>
+      <div class="pt-1">
+        <NotesEditorPaneNotesEditorTags />
       </div>
     </div>
     <div class="min-h-0 flex-1">

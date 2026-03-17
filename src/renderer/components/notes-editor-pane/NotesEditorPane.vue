@@ -1,8 +1,20 @@
 <script setup lang="ts">
-import { useNotes } from '@/composables'
+import { useNotes, useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
 
-const { selectedNote, updateNoteContent } = useNotes()
+const { selectedNote, updateNote, updateNoteContent } = useNotes()
+const { isFocusedNoteName } = useNotesApp()
+
+const name = computed({
+  get() {
+    return selectedNote.value?.name
+  },
+  set(v: string) {
+    if (selectedNote.value) {
+      updateNote(selectedNote.value.id, { name: v })
+    }
+  },
+})
 
 const content = computed({
   get: () => selectedNote.value?.content ?? '',
@@ -17,9 +29,27 @@ const content = computed({
 <template>
   <div
     v-if="selectedNote"
-    class="h-full pt-[var(--content-top-offset)]"
+    class="flex h-full flex-col pt-[var(--content-top-offset)]"
   >
-    <NotesEditor v-model:content="content" />
+    <div data-notes-editor-header>
+      <div
+        class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+      >
+        <UiInput
+          v-model="name"
+          variant="ghost"
+          class="w-full truncate px-0"
+          :select="isFocusedNoteName"
+          @blur="isFocusedNoteName = false"
+        />
+        <div class="ml-2 flex">
+          <!-- Action buttons slot for future use -->
+        </div>
+      </div>
+    </div>
+    <div class="min-h-0 flex-1">
+      <NotesEditor v-model:content="content" />
+    </div>
   </div>
   <div
     v-else

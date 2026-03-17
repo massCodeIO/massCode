@@ -220,11 +220,7 @@ function onResizeTagList(val: number[]) {
 </script>
 
 <template>
-  <Resizable.ResizablePanelGroup
-    id="1"
-    direction="vertical"
-    @layout="onResizeTagList"
-  >
+  <div class="flex h-full min-h-0 flex-col">
     <div
       class="shrink-0 overflow-hidden"
       data-sidebar-library
@@ -248,54 +244,75 @@ function onResizeTagList(val: number[]) {
         </ContextMenu.ContextMenuContent>
       </ContextMenu.ContextMenu>
     </div>
-    <div class="mt-1 flex items-center justify-between py-1 pl-1 select-none">
-      <UiText
-        as="div"
-        variant="caption"
-        weight="bold"
-        uppercase
-      >
-        {{ i18n.t("sidebar.folders") }}
-      </UiText>
-      <UiActionButton
-        :tooltip="i18n.t('action.new.folder')"
-        @click="createFolderAndSelect()"
-      >
-        <Plus class="h-4 w-4" />
-      </UiActionButton>
-    </div>
-    <Resizable.ResizablePanel as-child>
-      <Tree
-        v-if="folders?.length"
-        v-model="folders"
-        class="px-0.5 pb-1"
-        @click-node="onFolderClick"
-        @toggle-node="onFolderToggle"
-        @drag-node="onFolderDrag"
-      />
 
-      <UiEmptyPlaceholder
-        v-else
-        :text="i18n.t('placeholder.emptyFoldersList')"
-      />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <div class="flex items-center justify-between py-1 pl-1 select-none">
-      <UiText
-        as="div"
-        variant="caption"
-        weight="bold"
-        uppercase
-      >
-        {{ i18n.t("sidebar.tags") }}
-      </UiText>
-    </div>
-    <Resizable.ResizablePanel
-      as-child
-      :min-size="MIN_TAGS_PANEL_SIZE"
-      :default-size="tagsListHeight"
+    <Resizable.ResizablePanelGroup
+      id="1"
+      direction="vertical"
+      class="min-h-0 flex-1"
+      @layout="onResizeTagList"
     >
-      <SidebarTags class="px-1 pb-1" />
-    </Resizable.ResizablePanel>
-  </Resizable.ResizablePanelGroup>
+      <Resizable.ResizablePanel>
+        <div class="flex h-full min-h-0 flex-col">
+          <div
+            class="mt-1 flex items-center justify-between py-1 pl-1 select-none"
+          >
+            <UiText
+              as="div"
+              variant="caption"
+              weight="bold"
+              uppercase
+            >
+              {{ i18n.t("sidebar.folders") }}
+            </UiText>
+            <UiActionButton
+              :tooltip="i18n.t('action.new.folder')"
+              @click="createFolderAndSelect()"
+            >
+              <Plus class="h-4 w-4" />
+            </UiActionButton>
+          </div>
+
+          <div class="min-h-0 flex-1">
+            <Tree
+              v-if="folders?.length"
+              v-model="folders"
+              class="h-full px-0.5 pb-1"
+              @click-node="onFolderClick"
+              @toggle-node="onFolderToggle"
+              @drag-node="onFolderDrag"
+            />
+
+            <UiEmptyPlaceholder
+              v-else
+              :text="i18n.t('placeholder.emptyFoldersList')"
+            />
+          </div>
+        </div>
+      </Resizable.ResizablePanel>
+
+      <Resizable.ResizableHandle />
+
+      <Resizable.ResizablePanel
+        :min-size="MIN_TAGS_PANEL_SIZE"
+        :default-size="tagsListHeight"
+      >
+        <div class="flex h-full min-h-0 flex-col">
+          <div class="flex items-center justify-between py-1 pl-1 select-none">
+            <UiText
+              as="div"
+              variant="caption"
+              weight="bold"
+              uppercase
+            >
+              {{ i18n.t("sidebar.tags") }}
+            </UiText>
+          </div>
+
+          <div class="min-h-0 flex-1">
+            <SidebarTags class="h-full px-1 pb-1" />
+          </div>
+        </div>
+      </Resizable.ResizablePanel>
+    </Resizable.ResizablePanelGroup>
+  </div>
 </template>

@@ -315,96 +315,98 @@ async function onRemoveCustomIcon() {
 </script>
 
 <template>
-  <ContextMenu.ContextMenu>
-    <ContextMenu.ContextMenuTrigger as-child>
-      <UiTree
-        :model-value="treeData"
-        :selected-ids="selectedIds"
-        :editable-id="editableId"
-        :focused-id="focusedId"
-        :highlighted-ids="highlightedIds"
-        @click-node="onClickNode"
-        @dblclick-node="onDblclickNode"
-        @toggle-node="onToggleNode"
-        @drag-node="onDragNode"
-        @external-drop="onExternalDrop"
-        @context-menu="onContextMenu"
-        @update-label="onUpdateLabel"
-        @cancel-edit="onCancelEdit"
-        @update:selected-ids="selectedIds = $event"
-        @update:editable-id="editableId = $event"
-        @update:focused-id="focusedId = $event"
-        @update:highlighted-ids="highlightedIds = $event"
-      >
-        <template #icon="{ node }">
-          <div class="mr-1.5 flex flex-shrink-0 items-center">
-            <UiFolderIcon
-              v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-              :name="getFolderByIdFromTree(folders, Number(node.id))!.icon!"
-            />
-            <Folder
-              v-else
-              class="h-4 w-4"
-            />
-          </div>
-        </template>
-      </UiTree>
-    </ContextMenu.ContextMenuTrigger>
-    <ContextMenu.ContextMenuContent>
-      <template v-if="isContextMultiSelection">
-        <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-          {{ i18n.t("action.delete.common") }}
-        </ContextMenu.ContextMenuItem>
-      </template>
-      <template v-else>
-        <ContextMenu.ContextMenuItem
-          @click="createFolderAndSelect(contextNode?.id)"
+  <div class="h-full min-h-0">
+    <ContextMenu.ContextMenu>
+      <ContextMenu.ContextMenuTrigger as-child>
+        <UiTree
+          :model-value="treeData"
+          :selected-ids="selectedIds"
+          :editable-id="editableId"
+          :focused-id="focusedId"
+          :highlighted-ids="highlightedIds"
+          @click-node="onClickNode"
+          @dblclick-node="onDblclickNode"
+          @toggle-node="onToggleNode"
+          @drag-node="onDragNode"
+          @external-drop="onExternalDrop"
+          @context-menu="onContextMenu"
+          @update-label="onUpdateLabel"
+          @cancel-edit="onCancelEdit"
+          @update:selected-ids="selectedIds = $event"
+          @update:editable-id="editableId = $event"
+          @update:focused-id="focusedId = $event"
+          @update:highlighted-ids="highlightedIds = $event"
         >
-          {{ i18n.t("action.new.folder") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuItem @click="onRenameFolder">
-          {{ i18n.t("action.rename") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-          {{ i18n.t("action.delete.common") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
-          {{ i18n.t("action.setCustomIcon") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuItem
-          v-if="contextNode?.icon"
-          @click="onRemoveCustomIcon"
-        >
-          {{ i18n.t("action.removeCustomIcon") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuSub>
-          <ContextMenu.ContextMenuSubTrigger>
-            {{ i18n.t("action.defaultLanguage") }}
-          </ContextMenu.ContextMenuSubTrigger>
-          <ContextMenu.ContextMenuSubContent>
-            <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
-              <ContextMenu.ContextMenuCheckboxItem
-                v-for="language in languages"
-                :key="language.value"
-                :ref="
-                  (el) =>
-                    scrollToSelectedLanguage(
-                      el,
-                      contextNodeDefaultLanguage === language.value,
-                    )
-                "
-                :checked="contextNodeDefaultLanguage === language.value"
-                @click="onSelectLanguage(language.value)"
-              >
-                {{ language.name }}
-              </ContextMenu.ContextMenuCheckboxItem>
+          <template #icon="{ node }">
+            <div class="mr-1.5 flex flex-shrink-0 items-center">
+              <UiFolderIcon
+                v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
+                :name="getFolderByIdFromTree(folders, Number(node.id))!.icon!"
+              />
+              <Folder
+                v-else
+                class="h-4 w-4"
+              />
             </div>
-          </ContextMenu.ContextMenuSubContent>
-        </ContextMenu.ContextMenuSub>
-      </template>
-    </ContextMenu.ContextMenuContent>
-  </ContextMenu.ContextMenu>
+          </template>
+        </UiTree>
+      </ContextMenu.ContextMenuTrigger>
+      <ContextMenu.ContextMenuContent>
+        <template v-if="isContextMultiSelection">
+          <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+            {{ i18n.t("action.delete.common") }}
+          </ContextMenu.ContextMenuItem>
+        </template>
+        <template v-else>
+          <ContextMenu.ContextMenuItem
+            @click="createFolderAndSelect(contextNode?.id)"
+          >
+            {{ i18n.t("action.new.folder") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onRenameFolder">
+            {{ i18n.t("action.rename") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+            {{ i18n.t("action.delete.common") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
+            {{ i18n.t("action.setCustomIcon") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuItem
+            v-if="contextNode?.icon"
+            @click="onRemoveCustomIcon"
+          >
+            {{ i18n.t("action.removeCustomIcon") }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuSub>
+            <ContextMenu.ContextMenuSubTrigger>
+              {{ i18n.t("action.defaultLanguage") }}
+            </ContextMenu.ContextMenuSubTrigger>
+            <ContextMenu.ContextMenuSubContent>
+              <div class="scrollbar max-h-[250px] min-h-0 overflow-y-auto">
+                <ContextMenu.ContextMenuCheckboxItem
+                  v-for="language in languages"
+                  :key="language.value"
+                  :ref="
+                    (el) =>
+                      scrollToSelectedLanguage(
+                        el,
+                        contextNodeDefaultLanguage === language.value,
+                      )
+                  "
+                  :checked="contextNodeDefaultLanguage === language.value"
+                  @click="onSelectLanguage(language.value)"
+                >
+                  {{ language.name }}
+                </ContextMenu.ContextMenuCheckboxItem>
+              </div>
+            </ContextMenu.ContextMenuSubContent>
+          </ContextMenu.ContextMenuSub>
+        </template>
+      </ContextMenu.ContextMenuContent>
+    </ContextMenu.ContextMenu>
+  </div>
 </template>

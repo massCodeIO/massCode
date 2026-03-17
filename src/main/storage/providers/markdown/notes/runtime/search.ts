@@ -2,8 +2,15 @@ import type { MarkdownNote, NotesRuntimeCache, NotesState } from './types'
 import { SEARCH_DIACRITICS_RE, SEARCH_WORD_RE } from '../../runtime/constants'
 import { notesRuntimeRef } from './constants'
 
-function normalizeSearchValue(value: string): string {
-  return value.normalize('NFD').replace(SEARCH_DIACRITICS_RE, '').toLowerCase()
+function normalizeSearchValue(value: string | null | undefined): string {
+  if (!value) {
+    return ''
+  }
+
+  return value
+    .normalize('NFD')
+    .replace(SEARCH_DIACRITICS_RE, '')
+    .toLocaleLowerCase()
 }
 
 function splitSearchWords(value: string): string[] {
@@ -79,33 +86,37 @@ export function buildNotesSearchIndex(notes: MarkdownNote[]): {
   return { searchTokenToNoteIds, searchTokensByNoteId, searchNoteTextById }
 }
 
-export function invalidateNotesSearchIndex(_state: NotesState): void {
+export function invalidateNotesSearchIndex(state: NotesState): void {
   const cache = notesRuntimeRef.cache
-  if (cache) {
-    cache.searchIndexDirty = true
-    cache.searchQueryCache.clear()
+  if (!cache || cache.state !== state) {
+    return
   }
+
+  cache.searchIndexDirty = true
+  cache.searchQueryCache.clear()
 }
 
 function ensureNotesSearchIndex(
   notes: MarkdownNote[],
 ): NotesRuntimeCache | null {
   const cache = notesRuntimeRef.cache
-  if (!cache) {
+  const runtimeCache = cache?.notes === notes ? cache : null
+  if (!runtimeCache) {
     return null
   }
 
-  if (!cache.searchIndexDirty) {
-    return cache
+  if (!runtimeCache.searchIndexDirty) {
+    return runtimeCache
   }
 
   const index = buildNotesSearchIndex(notes)
-  cache.searchTokenToNoteIds = index.searchTokenToNoteIds
-  cache.searchTokensByNoteId = index.searchTokensByNoteId
-  cache.searchNoteTextById = index.searchNoteTextById
-  cache.searchIndexDirty = false
+  runtimeCache.searchTokenToNoteIds = index.searchTokenToNoteIds
+  runtimeCache.searchTokensByNoteId = index.searchTokensByNoteId
+  runtimeCache.searchNoteTextById = index.searchNoteTextById
+  runtimeCache.searchQueryCache.clear()
+  runtimeCache.searchIndexDirty = false
 
-  return cache
+  return runtimeCache
 }
 
 function intersectSets(
@@ -149,7 +160,7 @@ export function getNoteIdsBySearchQuery(
 
   const cachedResult = runtimeCache.searchQueryCache.get(normalizedQuery)
   if (cachedResult) {
-    return cachedResult
+    return [...cachedResult]
   }
 
   const queryWords = splitSearchWords(normalizedQuery)
@@ -213,6 +224,6 @@ export function getNoteIdsBySearchQuery(
     }
   })
 
-  runtimeCache.searchQueryCache.set(normalizedQuery, results)
-  return results
+  runtimeCache.searchQueryCache.set(normalizedQuery, [...results])
+  return [...results]
 }

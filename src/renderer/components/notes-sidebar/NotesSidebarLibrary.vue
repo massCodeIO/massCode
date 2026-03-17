@@ -11,6 +11,7 @@ const { clearFolderSelection } = useNoteFolders()
 const {
   getNotes,
   selectFirstNote,
+  withNotesLoading,
   clearSearch,
   isRestoreStateBlocked,
   emptyTrash,
@@ -38,27 +39,30 @@ async function onItemClick(
   id: (typeof LibraryFilter)[keyof typeof LibraryFilter],
 ) {
   focusedItemId.value = id
-  isRestoreStateBlocked.value = true
-  clearSearch()
 
-  notesState.libraryFilter = id
-  clearFolderSelection()
-  notesState.tagId = undefined
+  await withNotesLoading(async () => {
+    isRestoreStateBlocked.value = true
+    clearSearch()
 
-  if (id === LibraryFilter.Favorites) {
-    await getNotes({ isFavorites: 1 })
-  }
-  else if (id === LibraryFilter.Trash) {
-    await getNotes({ isDeleted: 1 })
-  }
-  else if (id === LibraryFilter.All) {
-    await getNotes({ isDeleted: 0 })
-  }
-  else if (id === LibraryFilter.Inbox) {
-    await getNotes({ isInbox: 1 })
-  }
+    notesState.libraryFilter = id
+    clearFolderSelection()
+    notesState.tagId = undefined
 
-  selectFirstNote()
+    if (id === LibraryFilter.Favorites) {
+      await getNotes({ isFavorites: 1 })
+    }
+    else if (id === LibraryFilter.Trash) {
+      await getNotes({ isDeleted: 1 })
+    }
+    else if (id === LibraryFilter.All) {
+      await getNotes({ isDeleted: 0 })
+    }
+    else if (id === LibraryFilter.Inbox) {
+      await getNotes({ isInbox: 1 })
+    }
+
+    selectFirstNote()
+  })
 }
 
 onClickOutside(itemRef, () => {

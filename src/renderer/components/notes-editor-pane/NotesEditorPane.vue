@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { useNotes, useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
+import { LoaderCircle } from 'lucide-vue-next'
 
-const { selectedNote, updateNote, updateNoteContent } = useNotes()
+const {
+  selectedNote,
+  updateNote,
+  updateNoteContent,
+  isNotesLoading,
+  isNotesLoadingVisible,
+} = useNotes()
 const { isFocusedNoteName } = useNotesApp()
 
 const name = computed({
@@ -57,6 +64,16 @@ const content = computed({
       />
     </div>
   </div>
+  <div
+    v-else-if="isNotesLoadingVisible"
+    class="text-muted-foreground flex h-full items-center justify-center"
+  >
+    <LoaderCircle class="h-4 w-4 animate-spin" />
+  </div>
+  <div
+    v-else-if="isNotesLoading"
+    class="h-full"
+  />
   <div
     v-else
     class="text-muted-foreground flex h-full items-center justify-center"

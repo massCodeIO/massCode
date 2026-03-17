@@ -15,6 +15,7 @@ const {
   getNotes,
   selectFirstNote,
   clearNotes,
+  withNotesLoading,
   clearSearch,
   isRestoreStateBlocked,
 } = useNotes()
@@ -23,15 +24,17 @@ const { clearFolderSelection } = useNoteFolders()
 const idToDelete = ref(0)
 
 async function onTagClick(tagId: number) {
-  notesState.tagId = tagId
-  clearFolderSelection()
-  notesState.libraryFilter = undefined
+  await withNotesLoading(async () => {
+    notesState.tagId = tagId
+    clearFolderSelection()
+    notesState.libraryFilter = undefined
 
-  isRestoreStateBlocked.value = true
-  clearSearch()
+    isRestoreStateBlocked.value = true
+    clearSearch()
 
-  await getNotes({ tagId })
-  selectFirstNote()
+    await getNotes({ tagId })
+    selectFirstNote()
+  })
 }
 
 function onClickContextMenu(tagId: number) {

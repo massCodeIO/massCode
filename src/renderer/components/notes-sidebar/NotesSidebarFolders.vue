@@ -55,6 +55,7 @@ const {
   clearNotesState,
   displayedNotes,
   getNotes,
+  withNotesLoading,
   selectFirstNote,
   clearSearch,
   isRestoreStateBlocked,
@@ -139,9 +140,11 @@ async function onClickNode({
     isRestoreStateBlocked.value = true
     clearSearch()
 
-    await selectNoteFolder(id)
-    await getNotes({ folderId: id })
-    selectFirstNote()
+    await withNotesLoading(async () => {
+      await selectNoteFolder(id)
+      await getNotes({ folderId: id })
+      selectFirstNote()
+    })
   }
 }
 

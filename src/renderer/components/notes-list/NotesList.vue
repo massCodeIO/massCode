@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useNotes, useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
+import { LoaderCircle } from 'lucide-vue-next'
 
 const NOTE_ITEM_SIZE = 61
 
 const { notesState } = useNotesApp()
-const { displayedNotes } = useNotes()
+const { displayedNotes, isNotesLoading, isNotesLoadingVisible } = useNotes()
 
 const noteScrollerRef = ref<{
   scrollToItem: (index: number) => void
@@ -61,8 +62,18 @@ watch(
       <NotesListItem :note="item" />
     </RecycleScroller>
     <UiEmptyPlaceholder
-      v-else
+      v-else-if="!isNotesLoading"
       :text="i18n.t('placeholder.emptyNotesList')"
+    />
+    <div
+      v-else-if="isNotesLoadingVisible"
+      class="text-muted-foreground flex flex-1 items-center justify-center"
+    >
+      <LoaderCircle class="h-4 w-4 animate-spin" />
+    </div>
+    <div
+      v-else
+      class="flex-1"
     />
   </div>
 </template>

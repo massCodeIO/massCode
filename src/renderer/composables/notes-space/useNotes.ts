@@ -74,6 +74,8 @@ const searchQuery = ref('')
 const isSearch = ref(false)
 const isRestoreStateBlocked = ref(false)
 const searchSelectedIndex = ref<number>(-1)
+const notesLoadingCounter = ref(0)
+const isNotesLoadingVisible = ref(false)
 const contentUpdateQueue = ref<Map<number, string>>(new Map())
 const contentUpdateTimers = ref<Map<number, ReturnType<typeof setTimeout>>>(
   new Map(),
@@ -81,6 +83,8 @@ const contentUpdateTimers = ref<Map<number, ReturnType<typeof setTimeout>>>(
 const inFlightContentUpdateIds = ref<Set<number>>(new Set())
 
 const CONTENT_UPDATE_DEBOUNCE_MS = 500
+const NOTES_LOADING_VISIBILITY_DELAY_MS = 300
+let notesLoadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
 
 // --- Computed ---
 
@@ -144,6 +148,42 @@ const isEmpty = computed(() => {
 
   return notes.value?.length === 0
 })
+
+const isNotesLoading = computed(() => notesLoadingCounter.value > 0)
+
+function clearNotesLoadingVisibilityTimer() {
+  if (!notesLoadingVisibilityTimer) {
+    return
+  }
+
+  clearTimeout(notesLoadingVisibilityTimer)
+  notesLoadingVisibilityTimer = undefined
+}
+
+watch(
+  isNotesLoading,
+  (loading) => {
+    if (loading) {
+      if (isNotesLoadingVisible.value || notesLoadingVisibilityTimer) {
+        return
+      }
+
+      notesLoadingVisibilityTimer = setTimeout(() => {
+        notesLoadingVisibilityTimer = undefined
+
+        if (notesLoadingCounter.value > 0) {
+          isNotesLoadingVisible.value = true
+        }
+      }, NOTES_LOADING_VISIBILITY_DELAY_MS)
+
+      return
+    }
+
+    clearNotesLoadingVisibilityTimer()
+    isNotesLoadingVisible.value = false
+  },
+  { immediate: true },
+)
 
 // --- Utility ---
 
@@ -250,15 +290,28 @@ function hasBusyNoteContentUpdates() {
 // --- CRUD ---
 
 async function getNotes(query?: NotesQuery) {
-  const { data } = await api.notes.getNotes(
-    query || queryByLibraryOrFolderOrSearch.value,
-  )
+  return withNotesLoading(async () => {
+    const { data } = await api.notes.getNotes(
+      query || queryByLibraryOrFolderOrSearch.value,
+    )
 
-  if (isSearch.value) {
-    notesBySearch.value = data
+    if (isSearch.value) {
+      notesBySearch.value = data
+    }
+    else {
+      notes.value = data
+    }
+  })
+}
+
+async function withNotesLoading<T>(loader: () => Promise<T>): Promise<T> {
+  notesLoadingCounter.value += 1
+
+  try {
+    return await loader()
   }
-  else {
-    notes.value = data
+  finally {
+    notesLoadingCounter.value = Math.max(0, notesLoadingCounter.value - 1)
   }
 }
 
@@ -501,6 +554,8 @@ export function useNotes() {
     getNotes,
     hasBusyNoteContentUpdates,
     isEmpty,
+    isNotesLoading,
+    isNotesLoadingVisible,
     isRestoreStateBlocked,
     isSearch,
     lastSelectedNoteId,
@@ -517,5 +572,6 @@ export function useNotes() {
     updateNote,
     updateNotes,
     updateNoteContent,
+    withNotesLoading,
   }
 }

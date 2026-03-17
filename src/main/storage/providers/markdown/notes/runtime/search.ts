@@ -10,15 +10,14 @@ function splitSearchWords(value: string): string[] {
   return value.match(SEARCH_WORD_RE) || []
 }
 
-function createWordTrigrams(word: string): string[] {
-  const trigrams: string[] = []
-  if (word.length < 3) {
-    trigrams.push(word)
-    return trigrams
+function createWordTrigrams(value: string): string[] {
+  if (value.length < 3) {
+    return []
   }
 
-  for (let i = 0; i <= word.length - 3; i++) {
-    trigrams.push(word.slice(i, i + 3))
+  const trigrams: string[] = []
+  for (let index = 0; index <= value.length - 3; index += 1) {
+    trigrams.push(value.slice(index, index + 3))
   }
 
   return trigrams

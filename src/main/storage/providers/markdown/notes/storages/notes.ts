@@ -18,7 +18,7 @@ import { validateEntryName } from '../../runtime/validation'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
-import { getNoteIdsBySearchQuery } from '../runtime/search'
+import { getNoteIdsBySearchQuery, invalidateNotesSearchIndex } from '../runtime/search'
 import { saveNotesState } from '../runtime/state'
 import { getNotesRuntimeCache } from '../runtime/sync'
 
@@ -207,7 +207,7 @@ export function createNotesNotesStorage(): NotesStorage {
 
     updateNoteContent(id: number, content: string): NoteUpdateResult {
       const paths = resolvePaths()
-      const { notes } = getNotesRuntimeCache(paths)
+      const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, id)
 
       if (!note) {
@@ -217,6 +217,7 @@ export function createNotesNotesStorage(): NotesStorage {
       note.content = content
       note.updatedAt = Date.now()
       writeNoteToFile(paths, note)
+      invalidateNotesSearchIndex(state)
 
       return { invalidInput: false, notFound: false }
     },

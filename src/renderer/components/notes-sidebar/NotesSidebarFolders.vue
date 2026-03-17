@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
+import * as Resizable from '@/components/ui/shadcn/resizable'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
   useDialog,
@@ -8,11 +9,29 @@ import {
   useNotes,
   useNotesApp,
 } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
+import { APP_DEFAULTS } from '~/main/store/constants'
 
 type Position = 'after' | 'before' | 'center'
+
+const MIN_TAGS_PANEL_SIZE = 12
+
+function normalizeTagsListHeight(value: number | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return APP_DEFAULTS.sizes.tagsList
+  }
+
+  return Math.max(
+    MIN_TAGS_PANEL_SIZE,
+    Math.min(100 - MIN_TAGS_PANEL_SIZE, value),
+  )
+}
+
+const tagsListHeight = normalizeTagsListHeight(
+  store.app.get('sizes.notesTagsListHeight') as number | undefined,
+)
 
 const {
   notesState,
@@ -319,6 +338,13 @@ function onRenameFolder() {
     editableId.value = contextNode.value.id
   }, 100)
 }
+
+function onResizeTagList(layout: number[]) {
+  store.app.set(
+    'sizes.notesTagsListHeight',
+    normalizeTagsListHeight(layout[1]),
+  )
+}
 </script>
 
 <template>
@@ -338,62 +364,94 @@ function onRenameFolder() {
       <Plus class="h-4 w-4" />
     </UiActionButton>
   </div>
-  <div class="min-h-0 flex-1 overflow-y-auto">
-    <ContextMenu.ContextMenu>
-      <ContextMenu.ContextMenuTrigger as-child>
-        <UiTree
-          v-if="treeData.length"
-          :model-value="treeData"
-          :selected-ids="selectedIds"
-          :editable-id="editableId"
-          :focused-id="focusedId"
-          :highlighted-ids="highlightedIds"
-          class="px-0.5 pb-1"
-          @click-node="onClickNode"
-          @dblclick-node="onDblclickNode"
-          @toggle-node="onToggleNode"
-          @drag-node="onDragNode"
-          @external-drop="onExternalDrop"
-          @context-menu="onContextMenu"
-          @update-label="onUpdateLabel"
-          @cancel-edit="onCancelEdit"
-          @update:selected-ids="selectedIds = $event"
-          @update:editable-id="editableId = $event"
-          @update:focused-id="focusedId = $event"
-          @update:highlighted-ids="highlightedIds = $event"
-        >
-          <template #icon>
-            <div class="mr-1.5 flex flex-shrink-0 items-center">
-              <Folder class="h-4 w-4" />
-            </div>
-          </template>
-        </UiTree>
-      </ContextMenu.ContextMenuTrigger>
-      <UiEmptyPlaceholder
-        v-if="!treeData.length"
-        :text="i18n.t('placeholder.emptyFoldersList')"
-      />
-      <ContextMenu.ContextMenuContent>
-        <template v-if="isContextMultiSelection">
-          <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-            {{ i18n.t("action.delete.common") }}
-          </ContextMenu.ContextMenuItem>
-        </template>
-        <template v-else>
-          <ContextMenu.ContextMenuItem
-            @click="createNoteFolderAndSelect(contextNode?.id)"
+  <Resizable.ResizablePanelGroup
+    direction="vertical"
+    class="min-h-0 flex-1"
+    @layout="onResizeTagList"
+  >
+    <Resizable.ResizablePanel>
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <ContextMenu.ContextMenu>
+          <ContextMenu.ContextMenuTrigger as-child>
+            <UiTree
+              v-if="treeData.length"
+              :model-value="treeData"
+              :selected-ids="selectedIds"
+              :editable-id="editableId"
+              :focused-id="focusedId"
+              :highlighted-ids="highlightedIds"
+              class="h-full px-0.5 pb-1"
+              @click-node="onClickNode"
+              @dblclick-node="onDblclickNode"
+              @toggle-node="onToggleNode"
+              @drag-node="onDragNode"
+              @external-drop="onExternalDrop"
+              @context-menu="onContextMenu"
+              @update-label="onUpdateLabel"
+              @cancel-edit="onCancelEdit"
+              @update:selected-ids="selectedIds = $event"
+              @update:editable-id="editableId = $event"
+              @update:focused-id="focusedId = $event"
+              @update:highlighted-ids="highlightedIds = $event"
+            >
+              <template #icon>
+                <div class="mr-1.5 flex flex-shrink-0 items-center">
+                  <Folder class="h-4 w-4" />
+                </div>
+              </template>
+            </UiTree>
+          </ContextMenu.ContextMenuTrigger>
+          <UiEmptyPlaceholder
+            v-if="!treeData.length"
+            :text="i18n.t('placeholder.emptyFoldersList')"
+          />
+          <ContextMenu.ContextMenuContent>
+            <template v-if="isContextMultiSelection">
+              <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+                {{ i18n.t("action.delete.common") }}
+              </ContextMenu.ContextMenuItem>
+            </template>
+            <template v-else>
+              <ContextMenu.ContextMenuItem
+                @click="createNoteFolderAndSelect(contextNode?.id)"
+              >
+                {{ i18n.t("action.new.folder") }}
+              </ContextMenu.ContextMenuItem>
+              <ContextMenu.ContextMenuSeparator />
+              <ContextMenu.ContextMenuItem @click="onRenameFolder">
+                {{ i18n.t("action.rename") }}
+              </ContextMenu.ContextMenuItem>
+              <ContextMenu.ContextMenuItem @click="onDeleteFolder">
+                {{ i18n.t("action.delete.common") }}
+              </ContextMenu.ContextMenuItem>
+            </template>
+          </ContextMenu.ContextMenuContent>
+        </ContextMenu.ContextMenu>
+      </div>
+    </Resizable.ResizablePanel>
+
+    <Resizable.ResizableHandle />
+
+    <Resizable.ResizablePanel
+      :min-size="MIN_TAGS_PANEL_SIZE"
+      :default-size="tagsListHeight"
+    >
+      <div class="flex h-full min-h-0 flex-col">
+        <div class="flex items-center justify-between py-1 pl-1 select-none">
+          <UiText
+            as="div"
+            variant="caption"
+            weight="bold"
+            uppercase
           >
-            {{ i18n.t("action.new.folder") }}
-          </ContextMenu.ContextMenuItem>
-          <ContextMenu.ContextMenuSeparator />
-          <ContextMenu.ContextMenuItem @click="onRenameFolder">
-            {{ i18n.t("action.rename") }}
-          </ContextMenu.ContextMenuItem>
-          <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-            {{ i18n.t("action.delete.common") }}
-          </ContextMenu.ContextMenuItem>
-        </template>
-      </ContextMenu.ContextMenuContent>
-    </ContextMenu.ContextMenu>
-  </div>
+            {{ i18n.t("sidebar.tags") }}
+          </UiText>
+        </div>
+
+        <div class="min-h-0 flex-1 px-1 pb-1">
+          <NotesSidebarTags />
+        </div>
+      </div>
+    </Resizable.ResizablePanel>
+  </Resizable.ResizablePanelGroup>
 </template>

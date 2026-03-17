@@ -77,9 +77,9 @@ function onUpdateContextMenu(isOpen: boolean) {
   <div
     v-if="tags.length"
     data-notes-sidebar-tags
-    class="max-h-32 min-h-0"
+    class="h-full min-h-0"
   >
-    <div class="scrollbar max-h-32 min-h-0 overflow-x-hidden overflow-y-auto">
+    <div class="scrollbar h-full min-h-0 overflow-x-hidden overflow-y-auto">
       <ContextMenu.ContextMenu @update:open="onUpdateContextMenu">
         <ContextMenu.ContextMenuTrigger>
           <NotesSidebarTagItem
@@ -99,13 +99,8 @@ function onUpdateContextMenu(isOpen: boolean) {
       </ContextMenu.ContextMenu>
     </div>
   </div>
-  <UiText
+  <UiEmptyPlaceholder
     v-else
-    as="div"
-    variant="xs"
-    muted
-    class="px-2 pb-1"
-  >
-    {{ i18n.t("placeholder.emptyNotesTagList") }}
-  </UiText>
+    :text="i18n.t('placeholder.emptyNotesTagList')"
+  />
 </template>

@@ -43,6 +43,7 @@ const {
   selectFirstNote,
   selectedNoteIds,
   updateNote,
+  updateNotes,
   deleteNote,
   deleteNotes,
   displayedNotes,
@@ -104,9 +105,8 @@ async function onAddFavorites() {
   const isFavorites = isFavoritesLibrarySelected.value ? 0 : 1
 
   if (selectedNoteIds.value.length > 1) {
-    for (const id of selectedNoteIds.value) {
-      await updateNote(id, { isFavorites })
-    }
+    const notesData = selectedNoteIds.value.map(() => ({ isFavorites }))
+    await updateNotes(selectedNoteIds.value, notesData)
   }
   else {
     await updateNote(props.note.id, { isFavorites })
@@ -139,9 +139,11 @@ async function onDelete() {
       }
     }
     else {
-      for (const id of selectedNoteIds.value) {
-        await updateNote(id, { folderId: null, isDeleted: 1 })
-      }
+      const notesData = selectedNoteIds.value.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+      await updateNotes(selectedNoteIds.value, notesData)
     }
   }
   else if (props.note.isDeleted) {
@@ -167,9 +169,11 @@ async function onDelete() {
 
 async function onRestore() {
   if (selectedNoteIds.value.length > 1) {
-    for (const id of selectedNoteIds.value) {
-      await updateNote(id, { folderId: null, isDeleted: 0 })
-    }
+    const notesData = selectedNoteIds.value.map(() => ({
+      folderId: null,
+      isDeleted: 0,
+    }))
+    await updateNotes(selectedNoteIds.value, notesData)
   }
   else {
     await updateNote(props.note.id, { folderId: null, isDeleted: 0 })

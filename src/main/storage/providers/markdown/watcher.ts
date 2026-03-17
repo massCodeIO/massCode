@@ -3,6 +3,12 @@ import path from 'node:path'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
 import {
+  getNotesPaths,
+  peekNotesRuntimeCache,
+  resetNotesRuntimeCache,
+  syncNotesRuntimeWithDisk,
+} from './notes/runtime'
+import {
   ensureStateFile,
   getPaths,
   getVaultPath,
@@ -22,6 +28,7 @@ let markdownWatchTimer: NodeJS.Timeout | null = null
 let watchedVaultPath: string | null = null
 let pendingFilePath: string | null = null
 let hasPendingFullSync = false
+let hasPendingNotesSync = false
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
 
@@ -29,6 +36,8 @@ type ChokidarWatch = (
   path: string | readonly string[],
   options?: ChokidarOptions,
 ) => FSWatcher
+
+const NOTES_SPACE_WATCH_PREFIX = `${SPACES_DIR_NAME.toLowerCase()}/notes`
 
 async function getChokidarWatch(): Promise<ChokidarWatch> {
   if (chokidarWatchLoader) {
@@ -107,15 +116,6 @@ function shouldIgnoreWatchPath(paths: Paths, watchPath: string): boolean {
     normalizedRelativePath === spacesPrefix
     || normalizedRelativePath.startsWith(`${spacesPrefix}/`)
   ) {
-    // Ignore __spaces__/notes/ for snippet sync (notes has its own storage)
-    const notesSpacePrefix = `${spacesPrefix}/notes`
-    if (
-      normalizedRelativePath === notesSpacePrefix
-      || normalizedRelativePath.startsWith(`${notesSpacePrefix}/`)
-    ) {
-      return true
-    }
-
     return false
   }
 
@@ -141,18 +141,42 @@ function shouldIgnoreWatchPath(paths: Paths, watchPath: string): boolean {
     .some(segment => segment.startsWith('.'))
 }
 
+function isNotesWatchPath(relativePath: string | null): boolean {
+  if (!relativePath) {
+    return false
+  }
+
+  const normalizedRelativePath = relativePath.toLowerCase()
+  return (
+    normalizedRelativePath === NOTES_SPACE_WATCH_PREFIX
+    || normalizedRelativePath.startsWith(`${NOTES_SPACE_WATCH_PREFIX}/`)
+  )
+}
+
 function scheduleStateSync(
   paths: Paths,
   changedPath: string | null,
   forceFullSync = false,
 ): void {
-  if (forceFullSync || !changedPath) {
+  const changedNotesPath = isNotesWatchPath(changedPath)
+  if (changedNotesPath) {
+    hasPendingNotesSync = true
+  }
+
+  if (changedNotesPath) {
+    // Notes space has separate runtime cache sync path.
+  }
+  else if (forceFullSync || !changedPath) {
     hasPendingFullSync = true
+
+    if (forceFullSync && !changedPath) {
+      hasPendingNotesSync = true
+    }
   }
   else if (pendingFilePath && pendingFilePath !== changedPath) {
     hasPendingFullSync = true
   }
-  else {
+  else if (changedPath) {
     pendingFilePath = changedPath
   }
 
@@ -164,17 +188,39 @@ function scheduleStateSync(
   markdownWatchTimer = setTimeout(() => {
     try {
       const previousCache = peekRuntimeCache()
+      const previousNotesCache = peekNotesRuntimeCache()
       const changedFilePath = hasPendingFullSync ? null : pendingFilePath
+      const shouldSyncCode = hasPendingFullSync || changedFilePath !== null
+      const shouldSyncNotes = hasPendingNotesSync
 
       hasPendingFullSync = false
+      hasPendingNotesSync = false
       pendingFilePath = null
 
-      const nextCache = changedFilePath
-        ? syncSnippetFileWithDisk(paths, changedFilePath)
-        || syncRuntimeWithDisk(paths)
-        : syncRuntimeWithDisk(paths)
+      let nextCache = previousCache
+      if (shouldSyncCode) {
+        if (changedFilePath) {
+          const syncedSnippetCache = syncSnippetFileWithDisk(
+            paths,
+            changedFilePath,
+          )
+          nextCache = syncedSnippetCache || syncRuntimeWithDisk(paths)
+        }
+        else {
+          nextCache = syncRuntimeWithDisk(paths)
+        }
+      }
+      const nextNotesCache = shouldSyncNotes
+        ? syncNotesRuntimeWithDisk(getNotesPaths(paths.vaultPath))
+        : previousNotesCache
 
-      if (!previousCache || nextCache !== previousCache) {
+      const hasCodeChanges
+        = shouldSyncCode && (!previousCache || nextCache !== previousCache)
+      const hasNotesChanges
+        = shouldSyncNotes
+          && (!previousNotesCache || nextNotesCache !== previousNotesCache)
+
+      if (hasCodeChanges || hasNotesChanges) {
         BrowserWindow.getAllWindows().forEach((window) => {
           window.webContents.send('system:storage-synced')
         })
@@ -202,17 +248,28 @@ export function stopMarkdownWatcher(): void {
   watchedVaultPath = null
   pendingFilePath = null
   hasPendingFullSync = false
+  hasPendingNotesSync = false
   resetRuntimeCache()
+  resetNotesRuntimeCache()
 }
 
 export function startMarkdownWatcher(): void {
   const paths = getPaths(getVaultPath())
   const runtimeCache = peekRuntimeCache()
+  const notesPaths = getNotesPaths(paths.vaultPath)
+  const notesRuntimeCache = peekNotesRuntimeCache()
 
   if (markdownWatcher && watchedVaultPath === paths.vaultPath) {
     if (!runtimeCache || runtimeCache.paths.vaultPath !== paths.vaultPath) {
       ensureStateFile(paths)
       syncRuntimeWithDisk(paths)
+    }
+
+    if (
+      !notesRuntimeCache
+      || notesRuntimeCache.paths.notesRoot !== notesPaths.notesRoot
+    ) {
+      syncNotesRuntimeWithDisk(notesPaths)
     }
 
     return
@@ -221,6 +278,7 @@ export function startMarkdownWatcher(): void {
   stopMarkdownWatcher()
   ensureStateFile(paths)
   syncRuntimeWithDisk(paths)
+  syncNotesRuntimeWithDisk(notesPaths)
 
   const startToken = ++watcherStartToken
 
@@ -259,11 +317,19 @@ export function startMarkdownWatcher(): void {
             normalizeRelativeWatchPath(paths, changedPath),
           )
         })
-        .on('addDir', () => {
-          scheduleStateSync(paths, null, true)
+        .on('addDir', (changedPath: string) => {
+          scheduleStateSync(
+            paths,
+            normalizeRelativeWatchPath(paths, changedPath),
+            true,
+          )
         })
-        .on('unlinkDir', () => {
-          scheduleStateSync(paths, null, true)
+        .on('unlinkDir', (changedPath: string) => {
+          scheduleStateSync(
+            paths,
+            normalizeRelativeWatchPath(paths, changedPath),
+            true,
+          )
         })
         .on('error', (error: unknown) => {
           log('storage:markdown:watcher-error', error)

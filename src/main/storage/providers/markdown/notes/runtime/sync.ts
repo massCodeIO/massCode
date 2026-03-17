@@ -140,7 +140,7 @@ export function syncNotesFoldersWithDisk(
       icon: metadata.icon ?? previousFolder?.icon ?? null,
       isOpen: previousFolderUi
         ? normalizeFlag(previousFolderUi.isOpen)
-        : normalizeFlag(previousFolder?.isOpen ?? metadata.orderIndex),
+        : normalizeFlag(previousFolder?.isOpen, 0),
       orderIndex: normalizeNumber(
         metadata.orderIndex ?? previousFolder?.orderIndex,
         0,

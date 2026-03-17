@@ -87,7 +87,7 @@ export function readNoteFromFile(
   }
 
   return {
-    content: body.trim(),
+    content: body,
     createdAt: normalizeNumber(fm.createdAt, now),
     description: fm.description ?? null,
     filePath: entry.filePath,

@@ -25,7 +25,7 @@ const libraryItems = [
   },
   {
     id: LibraryFilter.All,
-    name: i18n.t('sidebar.allSnippets'),
+    name: i18n.t('sidebar.allNotes'),
     icon: Archive,
   },
   { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },

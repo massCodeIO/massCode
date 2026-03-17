@@ -14,11 +14,14 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
-import { validateEntryName } from '../../runtime/validation'
+import { throwStorageError, validateEntryName } from '../../runtime/validation'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
-import { getNoteIdsBySearchQuery, invalidateNotesSearchIndex } from '../runtime/search'
+import {
+  getNoteIdsBySearchQuery,
+  invalidateNotesSearchIndex,
+} from '../runtime/search'
 import { saveNotesState } from '../runtime/state'
 import { getNotesRuntimeCache } from '../runtime/sync'
 
@@ -177,7 +180,16 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       if (input.folderId !== undefined) {
-        note.folderId = input.folderId ?? null
+        const nextFolderId = input.folderId ?? null
+
+        if (
+          nextFolderId !== null
+          && !findNotesFolderById(state, nextFolderId)
+        ) {
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
+        }
+
+        note.folderId = nextFolderId
         pathMayChange = true
       }
 

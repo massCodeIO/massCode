@@ -74,6 +74,13 @@ const searchQuery = ref('')
 const isSearch = ref(false)
 const isRestoreStateBlocked = ref(false)
 const searchSelectedIndex = ref<number>(-1)
+const contentUpdateQueue = ref<Map<number, string>>(new Map())
+const contentUpdateTimers = ref<Map<number, ReturnType<typeof setTimeout>>>(
+  new Map(),
+)
+const inFlightContentUpdateIds = ref<Set<number>>(new Set())
+
+const CONTENT_UPDATE_DEBOUNCE_MS = 500
 
 // --- Computed ---
 
@@ -180,6 +187,66 @@ async function getNoteNamesForCreate(
   return data.map((note: NoteRecord) => note.name)
 }
 
+function updateLocalNoteContent(noteId: number, content: string) {
+  const now = Date.now()
+
+  function updateCollection(collection?: NotesResponse) {
+    const note = collection?.find(item => item.id === noteId)
+    if (note) {
+      note.content = content
+      note.updatedAt = now
+    }
+  }
+
+  updateCollection(notes.value)
+  updateCollection(notesBySearch.value)
+}
+
+function scheduleContentUpdate(noteId: number) {
+  const currentTimer = contentUpdateTimers.value.get(noteId)
+  if (currentTimer) {
+    clearTimeout(currentTimer)
+  }
+
+  const timer = setTimeout(() => {
+    contentUpdateTimers.value.delete(noteId)
+    void flushContentUpdate(noteId)
+  }, CONTENT_UPDATE_DEBOUNCE_MS)
+
+  contentUpdateTimers.value.set(noteId, timer)
+}
+
+async function flushContentUpdate(noteId: number) {
+  const content = contentUpdateQueue.value.get(noteId)
+  if (content === undefined) {
+    return
+  }
+
+  contentUpdateQueue.value.delete(noteId)
+  inFlightContentUpdateIds.value.add(noteId)
+
+  try {
+    markPersistedStorageMutation()
+    await api.notes.patchNotesByIdContent(String(noteId), { content })
+  }
+  catch (error) {
+    console.error(error)
+  }
+  finally {
+    inFlightContentUpdateIds.value.delete(noteId)
+
+    if (contentUpdateQueue.value.has(noteId)) {
+      scheduleContentUpdate(noteId)
+    }
+  }
+}
+
+function hasBusyNoteContentUpdates() {
+  return (
+    contentUpdateQueue.value.size > 0 || inFlightContentUpdateIds.value.size > 0
+  )
+}
+
 // --- CRUD ---
 
 async function getNotes(query?: NotesQuery) {
@@ -236,9 +303,25 @@ async function updateNote(noteId: number, data: NotesUpdate) {
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
-async function updateNoteContent(noteId: number, content: string) {
+async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
   markPersistedStorageMutation()
-  await api.notes.patchNotesByIdContent(String(noteId), { content })
+
+  for (const [index, noteId] of noteIds.entries()) {
+    await api.notes.patchNotesById(String(noteId), data[index])
+  }
+
+  await getNotes(queryByLibraryOrFolderOrSearch.value)
+}
+
+function updateNoteContent(noteId: number, content: string) {
+  updateLocalNoteContent(noteId, content)
+  contentUpdateQueue.value.set(noteId, content)
+
+  if (inFlightContentUpdateIds.value.has(noteId)) {
+    return
+  }
+
+  scheduleContentUpdate(noteId)
 }
 
 async function deleteNote(noteId: number) {
@@ -248,6 +331,8 @@ async function deleteNote(noteId: number) {
 }
 
 async function deleteNotes(noteIds: number[]) {
+  markPersistedStorageMutation()
+
   for (const noteId of noteIds) {
     await api.notes.deleteNotesById(String(noteId))
   }
@@ -414,6 +499,7 @@ export function useNotes() {
     displayedNotes,
     emptyTrash,
     getNotes,
+    hasBusyNoteContentUpdates,
     isEmpty,
     isRestoreStateBlocked,
     isSearch,
@@ -429,6 +515,7 @@ export function useNotes() {
     selectNote,
     selectSearchNote,
     updateNote,
+    updateNotes,
     updateNoteContent,
   }
 }

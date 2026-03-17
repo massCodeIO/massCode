@@ -66,6 +66,16 @@ void initNotesSpace()
       {{ i18n.t("sidebar.library") }}
     </UiText>
     <NotesSidebarLibrary />
+    <UiText
+      as="div"
+      variant="caption"
+      weight="bold"
+      uppercase
+      class="mt-2 flex gap-1 pb-1 pl-1 select-none"
+    >
+      {{ i18n.t("sidebar.tags") }}
+    </UiText>
+    <NotesSidebarTags />
     <NotesSidebarFolders />
   </div>
 </template>

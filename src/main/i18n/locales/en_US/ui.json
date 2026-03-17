@@ -98,6 +98,7 @@
     "inbox": "Inbox",
     "favorites": "Favorites",
     "allSnippets": "All Snippets",
+    "allNotes": "All Notes",
     "trash": "Trash",
     "folders": "Folders",
     "library": "Library",
@@ -145,6 +146,7 @@
   "loading": "App loading...",
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "No Folders",
     "emptySnippetsList": "No Snippets",
     "emptyNotesList": "No Notes",

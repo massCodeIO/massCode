@@ -29,7 +29,7 @@ const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
 const { getNoteFolders } = useNoteFolders()
-const { getNotes } = useNotes()
+const { getNotes, hasBusyNoteContentUpdates } = useNotes()
 const { getNoteTags } = useNoteTags()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -85,7 +85,11 @@ function scheduleStorageSyncRefresh() {
   }
 
   storageSyncDebounceTimer = setTimeout(() => {
-    if (shouldSkipStorageSyncRefresh() || hasBusyContentUpdates()) {
+    if (
+      shouldSkipStorageSyncRefresh()
+      || hasBusyContentUpdates()
+      || hasBusyNoteContentUpdates()
+    ) {
       scheduleStorageSyncRefresh()
       return
     }

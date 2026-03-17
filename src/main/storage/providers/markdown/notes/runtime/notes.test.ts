@@ -1,9 +1,9 @@
-import type { NotesPaths } from './types'
+import type { MarkdownNote, NotesPaths } from './types'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { readNoteFromFile } from './notes'
+import { readNoteFromFile, serializeNote } from './notes'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -105,5 +105,37 @@ describe('readNoteFromFile', () => {
     expect(note?.content).toBe(
       '\n  leading spaces\nline 2\ntrailing spaces   \n',
     )
+  })
+
+  it('keeps content unchanged after serialize and read round-trip', () => {
+    const paths = createNotesPaths()
+    const relativePath = 'roundtrip.md'
+    const absolutePath = path.join(paths.notesRoot, relativePath)
+    const now = Date.now()
+
+    const note: MarkdownNote = {
+      content: 'title\nline 1\nline 2',
+      createdAt: now,
+      description: null,
+      filePath: relativePath,
+      folderId: null,
+      id: 7,
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Roundtrip',
+      tags: [],
+      updatedAt: now,
+    }
+
+    fs.writeFileSync(absolutePath, serializeNote(note), 'utf8')
+
+    const loaded = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: note.id },
+      new Map(),
+    )
+
+    expect(loaded).not.toBeNull()
+    expect(loaded?.content).toBe(note.content)
   })
 })

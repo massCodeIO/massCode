@@ -58,7 +58,7 @@ export function serializeNote(note: MarkdownNote): string {
     return `---\n${frontmatterText}\n---\n`
   }
 
-  return `---\n${frontmatterText}\n---\n\n${note.content}\n`
+  return `---\n${frontmatterText}\n---\n${note.content}`
 }
 
 export function readNoteFromFile(

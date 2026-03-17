@@ -1,3 +1,4 @@
+import type { NotesResponse } from '../dto/notes'
 import Elysia from 'elysia'
 import { useNotesStorage } from '../../storage'
 import { commonAddResponse } from '../dto/common/response'
@@ -63,10 +64,13 @@ app
     '/',
     ({ query }) => {
       const storage = useNotesStorage()
-      return storage.notes.getNotes(query)
+      const result = storage.notes.getNotes(query)
+
+      return result as NotesResponse
     },
     {
       query: 'notesQuery',
+      response: 'notesResponse',
       detail: {
         tags: ['Notes'],
       },

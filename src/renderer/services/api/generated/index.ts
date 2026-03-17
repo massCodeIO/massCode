@@ -164,6 +164,25 @@ export interface NotesCountsResponse {
   trash: number;
 }
 
+export type NotesResponse = {
+  id: number;
+  name: string;
+  description: string | null;
+  content: string;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
+}[];
+
 export interface NotesQuery {
   search?: string;
   sort?: string;
@@ -950,10 +969,11 @@ export class Api<
       },
       params: RequestParams = {},
     ) =>
-      this.request<void, any>({
+      this.request<NotesResponse, any>({
         path: `/notes/`,
         method: "GET",
         query: query,
+        format: "json",
         ...params,
       }),
 

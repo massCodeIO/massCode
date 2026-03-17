@@ -18,6 +18,31 @@ const notesContentUpdate = t.Object({
   content: t.String(),
 })
 
+const noteItem = t.Object({
+  id: t.Number(),
+  name: t.String(),
+  description: t.Union([t.String(), t.Null()]),
+  content: t.String(),
+  tags: t.Array(
+    t.Object({
+      id: t.Number(),
+      name: t.String(),
+    }),
+  ),
+  folder: t.Nullable(
+    t.Object({
+      id: t.Number(),
+      name: t.String(),
+    }),
+  ),
+  isFavorites: t.Number(),
+  isDeleted: t.Number(),
+  createdAt: t.Number(),
+  updatedAt: t.Number(),
+})
+
+const notesResponse = t.Array(noteItem)
+
 const notesCountsResponse = t.Object({
   total: t.Number(),
   trash: t.Number(),
@@ -27,6 +52,7 @@ export const notesDTO = new Elysia().model({
   notesAdd,
   notesContentUpdate,
   notesCountsResponse,
+  notesResponse,
   notesQuery: t.Object({
     ...commonQuery.properties,
     folderId: t.Optional(t.Number()),
@@ -39,4 +65,5 @@ export const notesDTO = new Elysia().model({
 })
 
 export type NotesAdd = typeof notesAdd.static
+export type NotesResponse = typeof notesResponse.static
 export type NotesCountsResponse = typeof notesCountsResponse.static

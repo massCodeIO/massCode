@@ -1,4 +1,4 @@
-import type { MarkdownNote, NotesState } from './types'
+import type { MarkdownNote, NotesRuntimeCache, NotesState } from './types'
 import { SEARCH_DIACRITICS_RE, SEARCH_WORD_RE } from '../../runtime/constants'
 import { notesRuntimeRef } from './constants'
 
@@ -88,10 +88,16 @@ export function invalidateNotesSearchIndex(_state: NotesState): void {
   }
 }
 
-function ensureNotesSearchIndex(notes: MarkdownNote[]): void {
+function ensureNotesSearchIndex(
+  notes: MarkdownNote[],
+): NotesRuntimeCache | null {
   const cache = notesRuntimeRef.cache
-  if (!cache || !cache.searchIndexDirty) {
-    return
+  if (!cache) {
+    return null
+  }
+
+  if (!cache.searchIndexDirty) {
+    return cache
   }
 
   const index = buildNotesSearchIndex(notes)
@@ -99,81 +105,111 @@ function ensureNotesSearchIndex(notes: MarkdownNote[]): void {
   cache.searchTokensByNoteId = index.searchTokensByNoteId
   cache.searchNoteTextById = index.searchNoteTextById
   cache.searchIndexDirty = false
+
+  return cache
+}
+
+function intersectSets(
+  firstSet: Set<number>,
+  secondSet: Set<number>,
+): Set<number> {
+  const [smallSet, largeSet]
+    = firstSet.size <= secondSet.size
+      ? [firstSet, secondSet]
+      : [secondSet, firstSet]
+  const intersection = new Set<number>()
+
+  smallSet.forEach((id) => {
+    if (largeSet.has(id)) {
+      intersection.add(id)
+    }
+  })
+
+  return intersection
 }
 
 export function getNoteIdsBySearchQuery(
   notes: MarkdownNote[],
   searchQuery: string,
 ): number[] {
-  const cache = notesRuntimeRef.cache
-  if (!cache) {
-    return []
-  }
-
-  const normalizedQuery = normalizeSearchValue(searchQuery.trim())
+  const normalizedQuery = normalizeSearchValue(searchQuery).trim()
   if (!normalizedQuery) {
     return notes.map(n => n.id)
   }
 
-  const cached = cache.searchQueryCache.get(normalizedQuery)
-  if (cached) {
-    return cached
+  const runtimeCache = ensureNotesSearchIndex(notes)
+  if (!runtimeCache) {
+    // Fallback: linear scan
+    return notes
+      .filter((note) => {
+        const searchText = normalizeSearchValue(buildNoteSearchText(note))
+        return searchText.includes(normalizedQuery)
+      })
+      .map(n => n.id)
   }
 
-  ensureNotesSearchIndex(notes)
+  const cachedResult = runtimeCache.searchQueryCache.get(normalizedQuery)
+  if (cachedResult) {
+    return cachedResult
+  }
 
   const queryWords = splitSearchWords(normalizedQuery)
-  if (queryWords.length === 0) {
-    return notes.map(n => n.id)
-  }
-
   let candidateIds: Set<number> | null = null
 
-  for (const word of queryWords) {
-    const wordCandidates = new Set<number>()
-    const trigrams = createWordTrigrams(word)
+  if (queryWords.length > 0) {
+    for (const word of queryWords) {
+      const wordTrigrams = createWordTrigrams(word)
+      let wordCandidates: Set<number> | null = null
 
-    for (const trigram of trigrams) {
-      const token = `g:${trigram}`
-      const noteIds = cache.searchTokenToNoteIds.get(token)
-      if (noteIds) {
-        for (const id of noteIds) {
-          wordCandidates.add(id)
+      for (const trigram of wordTrigrams) {
+        const trigramNoteIds = runtimeCache.searchTokenToNoteIds.get(
+          `g:${trigram}`,
+        )
+        if (!trigramNoteIds || trigramNoteIds.size === 0) {
+          wordCandidates = new Set()
+          break
+        }
+
+        wordCandidates
+          = wordCandidates === null
+            ? new Set(trigramNoteIds)
+            : intersectSets(wordCandidates, trigramNoteIds)
+
+        if (wordCandidates.size === 0) {
+          break
         }
       }
-    }
 
-    if (candidateIds === null) {
-      candidateIds = wordCandidates
-    }
-    else {
-      for (const id of candidateIds) {
-        if (!wordCandidates.has(id)) {
-          candidateIds.delete(id)
-        }
+      if (wordCandidates === null) {
+        const exactWordNoteIds
+          = runtimeCache.searchTokenToNoteIds.get(`w:${word}`)
+            || new Set<number>()
+        wordCandidates = exactWordNoteIds
+      }
+
+      candidateIds
+        = candidateIds === null
+          ? wordCandidates
+          : intersectSets(candidateIds, wordCandidates)
+
+      if (candidateIds.size === 0) {
+        runtimeCache.searchQueryCache.set(normalizedQuery, [])
+        return []
       }
     }
   }
 
-  if (!candidateIds || candidateIds.size === 0) {
-    cache.searchQueryCache.set(normalizedQuery, [])
-    return []
-  }
-
-  // Filter by full text match
+  // Final verification: full text substring match
   const results: number[] = []
-  for (const id of candidateIds) {
-    const text = cache.searchNoteTextById.get(id)
-    if (!text) {
-      continue
-    }
+  const idsToCheck = candidateIds || new Set(notes.map(n => n.id))
 
-    const allWordsMatch = queryWords.every(word => text.includes(word))
-    if (allWordsMatch) {
-      results.push(id)
+  idsToCheck.forEach((noteId) => {
+    const searchText = runtimeCache.searchNoteTextById.get(noteId) || ''
+    if (searchText.includes(normalizedQuery)) {
+      results.push(noteId)
     }
-  }
+  })
 
-  cache.searchQueryCache.set(normalizedQuery, results)
+  runtimeCache.searchQueryCache.set(normalizedQuery, results)
   return results
 }

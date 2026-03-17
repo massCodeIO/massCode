@@ -16,6 +16,7 @@ import {
   normalizeFlag,
   normalizeFolderUiState,
 } from '../../runtime/normalizers'
+import { invalidateNotesSearchIndex } from './search'
 
 export function createDefaultNotesState(): NotesState {
   return {
@@ -144,6 +145,7 @@ export function saveNotesState(
   options?: { immediate?: boolean },
 ): void {
   syncNotesFolderUiWithFolders(state)
+  invalidateNotesSearchIndex(state)
 
   const nextVersion = Math.max(state.version, 1)
   state.version = nextVersion

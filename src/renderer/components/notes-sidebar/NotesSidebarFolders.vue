@@ -34,10 +34,12 @@ const {
 } = useNoteFolders()
 const {
   clearNotesState,
+  displayedNotes,
   getNotes,
   selectFirstNote,
   clearSearch,
   isRestoreStateBlocked,
+  updateNote,
 } = useNotes()
 
 // --- Data mapping ---
@@ -217,6 +219,35 @@ async function onDragNode({
   }
 }
 
+async function onExternalDrop({
+  data,
+  target,
+}: {
+  data: DataTransfer
+  target: TreeNodeType
+  position: Position
+}) {
+  const noteIds = JSON.parse(data.getData('noteIds') || '[]') as number[]
+  const matchedNotes = displayedNotes.value?.filter(n =>
+    noteIds.includes(n.id),
+  )
+
+  if (!matchedNotes?.length)
+    return
+
+  const folderId = Number(target.id)
+
+  if (matchedNotes.every(n => n.folder?.id === folderId && !n.isDeleted))
+    return
+
+  for (const note of matchedNotes) {
+    await updateNote(note.id, { folderId, isDeleted: 0 })
+  }
+
+  await getNotes()
+  selectFirstNote()
+}
+
 function onContextMenu({
   node,
 }: {
@@ -322,6 +353,7 @@ function onRenameFolder() {
           @dblclick-node="onDblclickNode"
           @toggle-node="onToggleNode"
           @drag-node="onDragNode"
+          @external-drop="onExternalDrop"
           @context-menu="onContextMenu"
           @update-label="onUpdateLabel"
           @cancel-edit="onCancelEdit"

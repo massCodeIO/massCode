@@ -48,7 +48,10 @@ const content = computed({
       </div>
     </div>
     <div class="min-h-0 flex-1">
-      <NotesEditor v-model:content="content" />
+      <NotesEditor
+        :key="selectedNote.id"
+        v-model:content="content"
+      />
     </div>
   </div>
   <div

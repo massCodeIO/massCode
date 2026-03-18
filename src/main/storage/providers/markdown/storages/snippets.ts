@@ -9,7 +9,6 @@ import type {
   SnippetUpdateResult,
 } from '../../../contracts'
 import path from 'node:path'
-import fs from 'fs-extra'
 import {
   createSnippetRecord,
   findFolderById,
@@ -28,6 +27,10 @@ import {
   validateEntryName,
   writeSnippetToFile,
 } from '../runtime'
+import {
+  deleteEntityFromStateAndDisk,
+  emptyEntityTrashFromStateAndDisk,
+} from '../runtime/shared/entityStorage'
 
 export function createSnippetsStorage(): SnippetsStorage {
   return {
@@ -375,57 +378,36 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const snippetIndex = state.snippets.findIndex(
-        snippet => snippet.id === id,
-      )
-      if (snippetIndex === -1) {
-        return { deleted: false }
+      const result = deleteEntityFromStateAndDisk({
+        id,
+        rootPath: paths.vaultPath,
+        runtimeEntities: snippets,
+        stateEntities: state.snippets,
+      })
+      if (!result.deleted) {
+        return result
       }
 
-      const snippet = state.snippets[snippetIndex]
-      fs.removeSync(path.join(paths.vaultPath, snippet.filePath))
-
-      state.snippets.splice(snippetIndex, 1)
-      const snippetRuntimeIndex = snippets.findIndex(
-        snippet => snippet.id === id,
-      )
-      if (snippetRuntimeIndex !== -1) {
-        snippets.splice(snippetRuntimeIndex, 1)
-      }
       saveState(paths, state)
 
-      return { deleted: true }
+      return result
     },
     emptyTrash: () => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const deletedSnippetIds = new Set<number>(
-        snippets
-          .filter(snippet => snippet.isDeleted === 1)
-          .map(snippet => snippet.id),
-      )
-
-      if (!deletedSnippetIds.size) {
-        return { deletedCount: 0 }
-      }
-
-      state.snippets = state.snippets.filter((snippet) => {
-        if (deletedSnippetIds.has(snippet.id)) {
-          fs.removeSync(path.join(paths.vaultPath, snippet.filePath))
-          return false
-        }
-
-        return true
+      const result = emptyEntityTrashFromStateAndDisk({
+        rootPath: paths.vaultPath,
+        runtimeEntities: snippets,
+        stateEntities: state.snippets,
       })
-      const nextSnippets = snippets.filter(
-        snippet => !deletedSnippetIds.has(snippet.id),
-      )
-      snippets.splice(0, snippets.length, ...nextSnippets)
+      if (!result.deletedCount) {
+        return result
+      }
 
       saveState(paths, state)
 
-      return { deletedCount: deletedSnippetIds.size }
+      return result
     },
     deleteSnippetContent: (contentId) => {
       const paths = getPaths(getVaultPath())

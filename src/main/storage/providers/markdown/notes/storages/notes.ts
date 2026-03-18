@@ -10,10 +10,12 @@ import type {
   NoteUpdateResult,
 } from '../../../../contracts'
 import type { MarkdownNote, NotesState } from '../runtime/types'
-import path from 'node:path'
-import fs from 'fs-extra'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import {
+  deleteEntityFromStateAndDisk,
+  emptyEntityTrashFromStateAndDisk,
+} from '../../runtime/shared/entityStorage'
 import { throwStorageError, validateEntryName } from '../../runtime/validation'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
@@ -245,51 +247,35 @@ export function createNotesNotesStorage(): NotesStorage {
     deleteNote(id: number) {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
-      const note = findNoteById(notes, id)
-
-      if (!note) {
-        return { deleted: false }
-      }
-
-      const absolutePath = path.join(paths.notesRoot, note.filePath)
-      if (fs.pathExistsSync(absolutePath)) {
-        fs.removeSync(absolutePath)
-      }
-
-      state.notes = state.notes.filter(n => n.id !== id)
-      const noteIndex = notes.indexOf(note)
-      if (noteIndex !== -1) {
-        notes.splice(noteIndex, 1)
+      const result = deleteEntityFromStateAndDisk({
+        id,
+        rootPath: paths.notesRoot,
+        runtimeEntities: notes,
+        stateEntities: state.notes,
+      })
+      if (!result.deleted) {
+        return result
       }
 
       saveNotesState(paths, state)
-      return { deleted: true }
+      return result
     },
 
     emptyTrash() {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
 
-      const trashNotes = notes.filter(n => n.isDeleted === 1)
-      let deletedCount = 0
-
-      for (const note of trashNotes) {
-        const absolutePath = path.join(paths.notesRoot, note.filePath)
-        if (fs.pathExistsSync(absolutePath)) {
-          fs.removeSync(absolutePath)
-        }
-
-        state.notes = state.notes.filter(n => n.id !== note.id)
-        const index = notes.indexOf(note)
-        if (index !== -1) {
-          notes.splice(index, 1)
-        }
-
-        deletedCount += 1
+      const result = emptyEntityTrashFromStateAndDisk({
+        rootPath: paths.notesRoot,
+        runtimeEntities: notes,
+        stateEntities: state.notes,
+      })
+      if (!result.deletedCount) {
+        return result
       }
 
       saveNotesState(paths, state)
-      return { deletedCount }
+      return result
     },
 
     addTagToNote(noteId: number, tagId: number): NoteTagRelationResult {

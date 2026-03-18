@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useDialog,
@@ -24,6 +25,7 @@ const {
   folders,
   getFolderByIdFromTree,
   getNoteFolders,
+  updateNoteFolder,
   selectedFolderIds,
   clearFolderSelection,
   selectNoteFolder,
@@ -90,6 +92,32 @@ function onRenameFolder() {
     emit('update:editableId', props.contextNode.id)
   }, 100)
 }
+
+function onSetCustomIcon() {
+  if (!props.contextNode)
+    return
+
+  const { showDialog } = useDialog()
+
+  showDialog({
+    title: i18n.t('action.setCustomIcon'),
+    content: h(CustomIcons, {
+      nodeId: props.contextNode.id,
+      onSetIcon: async (nodeId: number, iconName: string) => {
+        await updateNoteFolder(nodeId, { icon: iconName })
+        await getNoteFolders(false)
+      },
+    }),
+  })
+}
+
+async function onRemoveCustomIcon() {
+  if (!props.contextNode)
+    return
+
+  await updateNoteFolder(props.contextNode.id, { icon: null })
+  await getNoteFolders(false)
+}
 </script>
 
 <template>
@@ -111,6 +139,16 @@ function onRenameFolder() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem @click="onDeleteFolder">
         {{ i18n.t("action.delete.common") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuSeparator />
+      <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
+        {{ i18n.t("action.setCustomIcon") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-if="contextNode?.icon"
+        @click="onRemoveCustomIcon"
+      >
+        {{ i18n.t("action.removeCustomIcon") }}
       </ContextMenu.ContextMenuItem>
     </template>
   </ContextMenu.ContextMenuContent>

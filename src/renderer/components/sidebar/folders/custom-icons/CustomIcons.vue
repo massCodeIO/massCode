@@ -5,6 +5,7 @@ import { icons, iconsSet } from './icons'
 
 interface Props {
   nodeId: number
+  onSetIcon?: (nodeId: number, iconName: string) => Promise<void>
 }
 
 const props = defineProps<Props>()
@@ -49,10 +50,13 @@ async function onSet(name: string) {
   if (!props.nodeId)
     return
 
-  await updateFolder(props.nodeId, {
-    icon: name,
-  })
-  await getFolders()
+  if (props.onSetIcon) {
+    await props.onSetIcon(props.nodeId, name)
+  }
+  else {
+    await updateFolder(props.nodeId, { icon: name })
+    await getFolders()
+  }
 
   containerRef.value?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),

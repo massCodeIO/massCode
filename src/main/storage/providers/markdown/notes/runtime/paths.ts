@@ -1,61 +1,22 @@
 import type { NotesFolderRecord, NotesState } from './types'
-import path from 'node:path'
+import {
+  buildFolderPathMap as buildFolderPathMapShared,
+  buildPathToFolderIdMap as buildPathToFolderIdMapShared,
+  getFolderSiblings as getFolderSiblingsShared,
+  getNextFolderOrder as getNextFolderOrderShared,
+} from '../../runtime/shared/folderIndex'
 import { notesRuntimeRef } from './constants'
 
 export function buildNotesFolderPathMap(
   state: NotesState,
 ): Map<number, string> {
-  const folderById = new Map<number, NotesFolderRecord>()
-  state.folders.forEach(folder => folderById.set(folder.id, folder))
-
-  const resolvedMap = new Map<number, string>()
-  const visiting = new Set<number>()
-
-  const resolveFolderPath = (folderId: number): string => {
-    const existingPath = resolvedMap.get(folderId)
-    if (existingPath !== undefined) {
-      return existingPath
-    }
-
-    const folder = folderById.get(folderId)
-    if (!folder) {
-      return ''
-    }
-
-    if (visiting.has(folderId)) {
-      return folder.name
-    }
-
-    visiting.add(folderId)
-
-    const parentPath
-      = folder.parentId !== null ? resolveFolderPath(folder.parentId) : ''
-    const currentPath = parentPath
-      ? path.posix.join(parentPath, folder.name)
-      : folder.name
-
-    resolvedMap.set(folderId, currentPath)
-    visiting.delete(folderId)
-
-    return currentPath
-  }
-
-  state.folders.forEach(folder => resolveFolderPath(folder.id))
-
-  return resolvedMap
+  return buildFolderPathMapShared(state.folders)
 }
 
 export function buildPathToNotesFolderIdMap(
   state: NotesState,
 ): Map<string, number> {
-  const folderPathMap = buildNotesFolderPathMap(state)
-  const pathMap = new Map<string, number>()
-
-  folderPathMap.forEach((folderPath, folderId) => {
-    pathMap.set(folderPath, folderId)
-  })
-
-  return pathMap
+  return buildPathToFolderIdMapShared(state.folders)
 }
 
 export function findNotesFolderById(
@@ -99,27 +60,12 @@ export function getNotesFolderSiblings(
   parentId: number | null,
   excludeId?: number,
 ): NotesFolderRecord[] {
-  return state.folders.filter((folder) => {
-    if (folder.parentId !== parentId) {
-      return false
-    }
-
-    if (excludeId !== undefined && folder.id === excludeId) {
-      return false
-    }
-
-    return true
-  })
+  return getFolderSiblingsShared(state.folders, parentId, excludeId)
 }
 
 export function getNextNotesFolderOrder(
   state: NotesState,
   parentId: number | null,
 ): number {
-  return (
-    state.folders
-      .filter(folder => folder.parentId === parentId)
-      .reduce((maxOrder, folder) => Math.max(maxOrder, folder.orderIndex), -1)
-      + 1
-  )
+  return getNextFolderOrderShared(state.folders, parentId)
 }

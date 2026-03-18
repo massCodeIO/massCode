@@ -8,6 +8,12 @@ import {
   runtimeRef,
   TRASH_DIR_NAME,
 } from './constants'
+import {
+  buildFolderPathMap as buildFolderPathMapShared,
+  buildPathToFolderIdMap as buildPathToFolderIdMapShared,
+  getFolderSiblings as getFolderSiblingsShared,
+  getNextFolderOrder as getNextFolderOrderShared,
+} from './shared/folderIndex'
 
 export function getVaultPath(): string {
   const configuredVaultPath = store.preferences.get('storage.vaultPath') as
@@ -42,57 +48,13 @@ export {
 } from './shared/path'
 
 export function buildFolderPathMap(state: MarkdownState): Map<number, string> {
-  const folderById = new Map<number, FolderRecord>()
-  state.folders.forEach(folder => folderById.set(folder.id, folder))
-
-  const resolvedMap = new Map<number, string>()
-  const visiting = new Set<number>()
-
-  const resolveFolderPath = (folderId: number): string => {
-    const existingPath = resolvedMap.get(folderId)
-    if (existingPath !== undefined) {
-      return existingPath
-    }
-
-    const folder = folderById.get(folderId)
-    if (!folder) {
-      return ''
-    }
-
-    if (visiting.has(folderId)) {
-      return folder.name
-    }
-
-    visiting.add(folderId)
-
-    const parentPath
-      = folder.parentId !== null ? resolveFolderPath(folder.parentId) : ''
-    const currentPath = parentPath
-      ? path.posix.join(parentPath, folder.name)
-      : folder.name
-
-    resolvedMap.set(folderId, currentPath)
-    visiting.delete(folderId)
-
-    return currentPath
-  }
-
-  state.folders.forEach(folder => resolveFolderPath(folder.id))
-
-  return resolvedMap
+  return buildFolderPathMapShared(state.folders)
 }
 
 export function buildPathToFolderIdMap(
   state: MarkdownState,
 ): Map<string, number> {
-  const folderPathMap = buildFolderPathMap(state)
-  const pathMap = new Map<string, number>()
-
-  folderPathMap.forEach((folderPath, folderId) => {
-    pathMap.set(folderPath, folderId)
-  })
-
-  return pathMap
+  return buildPathToFolderIdMapShared(state.folders)
 }
 
 export function findFolderById(
@@ -136,27 +98,12 @@ export function getFolderSiblings(
   parentId: number | null,
   excludeId?: number,
 ): FolderRecord[] {
-  return state.folders.filter((folder) => {
-    if (folder.parentId !== parentId) {
-      return false
-    }
-
-    if (excludeId !== undefined && folder.id === excludeId) {
-      return false
-    }
-
-    return true
-  })
+  return getFolderSiblingsShared(state.folders, parentId, excludeId)
 }
 
 export function getNextFolderOrder(
   state: MarkdownState,
   parentId: number | null,
 ): number {
-  return (
-    state.folders
-      .filter(folder => folder.parentId === parentId)
-      .reduce((maxOrder, folder) => Math.max(maxOrder, folder.orderIndex), -1)
-      + 1
-  )
+  return getNextFolderOrderShared(state.folders, parentId)
 }

@@ -30,7 +30,7 @@ import {
   normalizeDirectoryPath,
   toPosixPath,
 } from './paths'
-import { buildSearchIndex } from './search'
+import { buildSearchIndex, getSnippetSearchText } from './search'
 import {
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
@@ -325,21 +325,11 @@ export function setRuntimeCache(
     })
   })
 
-  const {
-    searchSnippetTextById,
-    searchTokenToSnippetIds,
-    searchTokensBySnippetId,
-  } = buildSearchIndex(snippets)
-
   runtimeRef.cache = {
     contentOwnerByContentId,
     folderById,
     paths,
-    searchIndexDirty: false,
-    searchQueryCache: new Map(),
-    searchSnippetTextById,
-    searchTokenToSnippetIds,
-    searchTokensBySnippetId,
+    searchIndex: buildSearchIndex(snippets, getSnippetSearchText),
     snippetById,
     snippets,
     state,

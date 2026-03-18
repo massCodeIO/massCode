@@ -39,7 +39,7 @@ const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
 
     return {
       counters: { ...defaults.counters, ...raw.counters },
-      folderUi: raw.folderUi ?? {},
+      folderUi: (raw.folderUi ?? {}) as NotesState['folderUi'],
       folders: legacyFolders,
       notes: Array.isArray(raw.notes) ? raw.notes : [],
       tags: Array.isArray(raw.tags) ? raw.tags : [],

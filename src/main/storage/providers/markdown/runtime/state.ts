@@ -43,7 +43,7 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
 
     return {
       counters: { ...defaults.counters, ...raw.counters },
-      folderUi: raw.folderUi ?? {},
+      folderUi: (raw.folderUi ?? {}) as MarkdownState['folderUi'],
       folders: legacyFolders,
       snippets: Array.isArray(raw.snippets) ? raw.snippets : [],
       tags: Array.isArray(raw.tags) ? raw.tags : [],

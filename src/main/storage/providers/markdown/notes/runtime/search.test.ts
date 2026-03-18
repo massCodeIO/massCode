@@ -69,11 +69,13 @@ afterEach(() => {
 })
 
 describe('getNoteIdsBySearchQuery', () => {
-  it('finds notes for one-character query when runtime index is used', () => {
+  it('short query that is not a standalone word returns no results via index', () => {
     const notes = [createNote(1, 'Alpha'), createNote(2, 'Beta')]
     notesRuntimeRef.cache = createRuntimeCache(notes)
 
-    expect(getNoteIdsBySearchQuery(notes, 'a')).toEqual([1, 2])
+    // "a" is not a standalone word in "Alpha" or "Beta", so it won't match
+    // via exact-word lookup — aligned with snippets behavior
+    expect(getNoteIdsBySearchQuery(notes, 'a')).toEqual([])
   })
 
   it('does not use runtime cache when notes array differs from cached one', () => {
@@ -102,6 +104,18 @@ describe('getNoteIdsBySearchQuery', () => {
     firstResult.push(999)
 
     expect(getNoteIdsBySearchQuery(notes, 'alpha')).toEqual([1])
+  })
+
+  it('short standalone words participate in narrowing candidates (aligned with snippets)', () => {
+    const notes = [
+      { ...createNote(1, 'Note'), content: 'an ox runs' },
+      { ...createNote(2, 'Note'), content: 'a cat runs' },
+    ]
+    notesRuntimeRef.cache = createRuntimeCache(notes)
+
+    // "ox" is a standalone word in note 1; short words now go through
+    // the exact-word path instead of being skipped
+    expect(getNoteIdsBySearchQuery(notes, 'ox')).toEqual([1])
   })
 
   it('handles nullish search query without throwing', () => {

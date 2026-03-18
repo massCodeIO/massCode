@@ -22,6 +22,7 @@ import {
   syncSnippetFileWithDisk,
   TRASH_DIR_NAME,
 } from './runtime'
+import { toPosixPath } from './runtime/shared/path'
 
 let markdownWatcher: FSWatcher | null = null
 let markdownWatchTimer: NodeJS.Timeout | null = null
@@ -66,10 +67,6 @@ async function getChokidarWatch(): Promise<ChokidarWatch> {
     })
 
   return chokidarWatchLoader
-}
-
-function toPosixPath(filePath: string): string {
-  return filePath.replaceAll('\\', '/')
 }
 
 function normalizeRelativeWatchPath(

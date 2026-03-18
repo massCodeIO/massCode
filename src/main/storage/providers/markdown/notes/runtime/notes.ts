@@ -11,6 +11,10 @@ import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
+import {
+  listMarkdownFiles as listMarkdownFilesShared,
+  toPosixPath,
+} from '../../runtime/shared/path'
 import { validateEntryName } from '../../runtime/validation'
 import {
   INBOX_DIR_NAME,
@@ -21,10 +25,6 @@ import {
   TRASH_DIR_NAME,
 } from './constants'
 import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
-
-function toPosixPath(filePath: string): string {
-  return filePath.replaceAll('\\', '/')
-}
 
 export function toNoteFileName(name: string): string {
   const normalized = validateEntryName(name, 'note')
@@ -269,48 +269,10 @@ export function findNoteById(
 }
 
 export function listNoteMarkdownFiles(notesRoot: string): string[] {
-  const files: string[] = []
-
-  function walk(dir: string, relativeDir: string): void {
-    if (!fs.pathExistsSync(dir)) {
-      return
-    }
-
-    const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-    for (const entry of entries) {
-      const entryName = entry.name
-      const isHiddenEntry = entryName.startsWith('.')
-
-      const entryAbsolutePath = path.join(dir, entryName)
-      const entryRelativePath = relativeDir
-        ? `${relativeDir}/${entryName}`
-        : entryName
-
-      if (entry.isDirectory()) {
-        // At root level, explicitly enter .masscode for inbox/trash
-        if (relativeDir === '' && entryName === META_DIR_NAME) {
-          const inboxPath = path.join(entryAbsolutePath, INBOX_DIR_NAME)
-          const trashPath = path.join(entryAbsolutePath, TRASH_DIR_NAME)
-
-          walk(inboxPath, `${entryRelativePath}/${INBOX_DIR_NAME}`)
-          walk(trashPath, `${entryRelativePath}/${TRASH_DIR_NAME}`)
-          continue
-        }
-
-        // Skip all other hidden directories
-        if (isHiddenEntry) {
-          continue
-        }
-
-        walk(entryAbsolutePath, entryRelativePath)
-      }
-      else if (!isHiddenEntry && entryName.toLowerCase().endsWith('.md')) {
-        files.push(entryRelativePath)
-      }
-    }
-  }
-
-  walk(notesRoot, '')
-  return files
+  return listMarkdownFilesShared(
+    notesRoot,
+    META_DIR_NAME,
+    INBOX_DIR_NAME,
+    TRASH_DIR_NAME,
+  )
 }

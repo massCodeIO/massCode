@@ -35,25 +35,11 @@ export function getPaths(vaultPath: string): Paths {
   }
 }
 
-export function toPosixPath(filePath: string): string {
-  return filePath.replaceAll('\\', '/')
-}
-
-export function depthOfRelativePath(relativePath: string): number {
-  if (!relativePath) {
-    return 0
-  }
-
-  return relativePath.split('/').length
-}
-
-export function normalizeDirectoryPath(relativePath: string): string {
-  if (!relativePath || relativePath === '.') {
-    return ''
-  }
-
-  return toPosixPath(relativePath)
-}
+export {
+  depthOfRelativePath,
+  normalizeDirectoryPath,
+  toPosixPath,
+} from './shared/path'
 
 export function buildFolderPathMap(state: MarkdownState): Map<number, string> {
   const folderById = new Map<number, FolderRecord>()

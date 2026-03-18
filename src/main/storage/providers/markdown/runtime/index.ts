@@ -38,6 +38,14 @@ export {
 // Search
 export { getSnippetIdsBySearchQuery } from './search'
 
+// Shared folder utilities
+export {
+  buildFolderTree,
+  collectDescendantIds,
+  sortFoldersForTree,
+} from './shared/folderIndex'
+export type { WithChildren } from './shared/folderIndex'
+
 // Snippets
 export {
   buildSnippetTargetPath,

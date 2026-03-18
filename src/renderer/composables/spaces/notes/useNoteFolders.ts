@@ -1,29 +1,21 @@
+import type { NoteFoldersTreeResponse } from './useNoteFolderTree'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
+
 import { getContiguousSelection, scrollToElement } from '@/utils'
+
+import {
+  findParentFolderIds,
+  flattenFolderTree,
+  getFolderByIdFromTree,
+} from './useNoteFolderTree'
 import { useNotes } from './useNotes'
 import { useNotesApp } from './useNotesApp'
 
 const { notesState } = useNotesApp()
 
 // --- Types ---
-// These mirror the generated API types that will exist after api:generate.
-// Once api:generate runs, replace with imports from '@/services/api/generated'.
-
-interface NoteFolderTreeItem {
-  id: number
-  name: string
-  createdAt: number
-  updatedAt: number
-  icon: string | null
-  parentId: number | null
-  isOpen: number
-  orderIndex: number
-  children: NoteFolderTreeItem[]
-}
-
-type NoteFoldersTreeResponse = NoteFolderTreeItem[]
 
 interface NoteFoldersUpdate {
   name?: string
@@ -81,25 +73,6 @@ function getNextUntitledFolderName(parentId?: number): string {
     .map(folder => folder.name)
 
   return getNextIndexedName(i18n.t('folder.untitled'), siblingNames)
-}
-
-function flattenFolderTree(
-  nodes?: NoteFoldersTreeResponse,
-  acc: NoteFolderTreeItem[] = [],
-) {
-  if (!nodes) {
-    return acc
-  }
-
-  nodes.forEach((folder) => {
-    acc.push(folder)
-
-    if (folder.children?.length) {
-      flattenFolderTree(folder.children, acc)
-    }
-  })
-
-  return acc
 }
 
 const flatFolderList = computed(() => flattenFolderTree(folders.value))
@@ -259,23 +232,6 @@ function applyToggleFolderSelection(folderId: number) {
 
 // --- Visibility helpers ---
 
-function findParentFolderIds(folderId: number, allFolders: any[]): number[] {
-  const parentIds: number[] = []
-
-  function findParents(currentFolderId: number) {
-    const folder = allFolders.find(
-      (f: NoteFolderTreeItem) => f.id === currentFolderId,
-    )
-    if (folder && folder.parentId) {
-      parentIds.push(folder.parentId)
-      findParents(folder.parentId)
-    }
-  }
-
-  findParents(folderId)
-  return parentIds
-}
-
 async function ensureSelectedFolderIsVisible() {
   if (!notesState.folderId || !folders.value) {
     return
@@ -325,26 +281,6 @@ async function ensureSelectedFolderIsVisible() {
     }
     catch (fallbackError) {
       console.error('Failed to refresh note folders:', fallbackError)
-    }
-  }
-}
-
-function getFolderByIdFromTree(
-  nodes: NoteFolderTreeItem[] | undefined,
-  id: number | null,
-): NoteFolderTreeItem | undefined {
-  if (!nodes || id === null) {
-    return undefined
-  }
-  for (const node of nodes) {
-    if (node.id === id) {
-      return node
-    }
-    if (node.children?.length) {
-      const foundFolder = getFolderByIdFromTree(node.children, id)
-      if (foundFolder) {
-        return foundFolder
-      }
     }
   }
 }

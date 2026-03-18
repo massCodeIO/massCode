@@ -1,5 +1,6 @@
 export { useNoteContent } from './useNoteContent'
 export { useNoteFolders } from './useNoteFolders'
+export { useNoteFolderTree } from './useNoteFolderTree'
 export { useNotes } from './useNotes'
 export { useNotesApp } from './useNotesApp'
 export { useNoteSearch } from './useNoteSearch'

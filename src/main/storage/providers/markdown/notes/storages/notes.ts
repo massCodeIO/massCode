@@ -122,12 +122,12 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getNotesRuntimeCache(paths)
 
       const name = validateEntryName(input.name, 'note')
-      let folderId = input.folderId ?? null
+      const folderId = input.folderId ?? null
 
       if (folderId !== null) {
         const folder = findNotesFolderById(state, folderId)
         if (!folder) {
-          folderId = null
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
         }
       }
 
@@ -165,6 +165,16 @@ export function createNotesNotesStorage(): NotesStorage {
 
       if (!note) {
         return { invalidInput: false, notFound: true }
+      }
+
+      if (
+        input.name === undefined
+        && input.description === undefined
+        && input.folderId === undefined
+        && input.isFavorites === undefined
+        && input.isDeleted === undefined
+      ) {
+        return { invalidInput: true, notFound: false }
       }
 
       const previousFilePath = note.filePath

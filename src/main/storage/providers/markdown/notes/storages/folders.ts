@@ -203,6 +203,16 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         return { invalidInput: false, notFound: true }
       }
 
+      if (
+        input.name === undefined
+        && input.parentId === undefined
+        && input.icon === undefined
+        && input.isOpen === undefined
+        && input.orderIndex === undefined
+      ) {
+        return { invalidInput: true, notFound: false }
+      }
+
       const now = Date.now()
       let pathChanged = false
 
@@ -245,6 +255,10 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         }
 
         if (newParentId !== folder.parentId) {
+          if (input.name === undefined) {
+            assertUniqueSiblingName(state, newParentId, folder.name, id)
+          }
+
           pathChanged = true
           folder.parentId = newParentId
         }

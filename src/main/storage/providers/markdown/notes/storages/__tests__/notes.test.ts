@@ -115,4 +115,27 @@ describe('notes storage validations', () => {
     const result = storage.createNote({ name: 'Normal Note' })
     expect(result.id).toBeGreaterThan(0)
   })
+
+  it('keeps newest created note first after content updates of older notes', () => {
+    vi.useFakeTimers()
+
+    try {
+      const storage = createNotesNotesStorage()
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+      const { id: firstId } = storage.createNote({ name: 'First' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.000Z'))
+      const { id: secondId } = storage.createNote({ name: 'Second' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:02.000Z'))
+      storage.updateNoteContent(firstId, 'updated older note')
+
+      const orderedIds = storage.getNotes({}).map(note => note.id)
+      expect(orderedIds).toEqual([secondId, firstId])
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
 })

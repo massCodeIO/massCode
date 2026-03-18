@@ -9,7 +9,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
+import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import {
   listMarkdownFiles as listMarkdownFilesShared,
@@ -34,6 +34,59 @@ export function toNoteFileName(name: string): string {
   }
 
   return `${normalized}.md`
+}
+
+function normalizeTimestamp(value: unknown, fallback: number): number {
+  if (value instanceof Date) {
+    const timestamp = value.getTime()
+    if (Number.isFinite(timestamp)) {
+      return timestamp
+    }
+  }
+
+  const numericValue = Number(value)
+  if (Number.isFinite(numericValue)) {
+    return numericValue
+  }
+
+  if (typeof value === 'string') {
+    const parsedDate = Date.parse(value)
+    if (Number.isFinite(parsedDate)) {
+      return parsedDate
+    }
+  }
+
+  return fallback
+}
+
+function isFinitePositiveTimestamp(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+}
+
+function getFileTimestampFallbacks(
+  absolutePath: string,
+  now: number,
+): { createdAt: number, updatedAt: number } {
+  try {
+    const stats = fs.statSync(absolutePath)
+    const updatedAt = isFinitePositiveTimestamp(stats.mtimeMs)
+      ? stats.mtimeMs
+      : now
+    const createdAt = isFinitePositiveTimestamp(stats.birthtimeMs)
+      ? stats.birthtimeMs
+      : updatedAt
+
+    return {
+      createdAt,
+      updatedAt,
+    }
+  }
+  catch {
+    return {
+      createdAt: now,
+      updatedAt: now,
+    }
+  }
 }
 
 export function serializeNote(note: MarkdownNote): string {
@@ -79,6 +132,7 @@ export function readNoteFromFile(
   const { body, frontmatter } = splitFrontmatter(source)
   const fm = frontmatter as NotesFrontmatter
   const now = Date.now()
+  const timestampFallbacks = getFileTimestampFallbacks(absolutePath, now)
 
   // Infer folderId from file path if not in frontmatter
   let folderId: number | null = fm.folderId ?? null
@@ -91,7 +145,7 @@ export function readNoteFromFile(
 
   return {
     content: body,
-    createdAt: normalizeNumber(fm.createdAt, now),
+    createdAt: normalizeTimestamp(fm.createdAt, timestampFallbacks.createdAt),
     description: fm.description ?? null,
     filePath: entry.filePath,
     folderId,
@@ -102,7 +156,7 @@ export function readNoteFromFile(
     tags: Array.isArray(fm.tags)
       ? fm.tags.filter(t => typeof t === 'number')
       : [],
-    updatedAt: normalizeNumber(fm.updatedAt, now),
+    updatedAt: normalizeTimestamp(fm.updatedAt, timestampFallbacks.updatedAt),
   }
 }
 

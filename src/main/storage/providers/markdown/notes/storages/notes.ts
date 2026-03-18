@@ -98,7 +98,7 @@ export function createNotesNotesStorage(): NotesStorage {
           (note, query) =>
             query.tagId === undefined || note.tags.includes(query.tagId),
         ],
-        getSortValue: note => note.updatedAt,
+        getSortValue: note => note.createdAt,
         query,
       })
 

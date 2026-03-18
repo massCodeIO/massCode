@@ -138,4 +138,74 @@ describe('readNoteFromFile', () => {
     expect(loaded).not.toBeNull()
     expect(loaded?.content).toBe(note.content)
   })
+
+  it('parses quoted ISO timestamps from frontmatter as stable unix ms', () => {
+    vi.useFakeTimers()
+
+    try {
+      vi.setSystemTime(new Date('2026-03-18T19:40:00.000Z'))
+
+      const paths = createNotesPaths()
+      const relativePath = 'legacy-date-note.md'
+      const absolutePath = path.join(paths.notesRoot, relativePath)
+      const createdAtIso = '2026-03-18T10:00:00.000Z'
+      const updatedAtIso = '2026-03-18T11:00:00.000Z'
+      const source
+        = '---\n'
+          + 'id: 10\n'
+          + 'name: Legacy Date Note\n'
+          + `createdAt: "${createdAtIso}"\n`
+          + `updatedAt: "${updatedAtIso}"\n`
+          + '---\n'
+          + 'body'
+
+      fs.writeFileSync(absolutePath, source, 'utf8')
+
+      const note = readNoteFromFile(
+        paths,
+        { filePath: relativePath, id: 10 },
+        new Map(),
+      )
+
+      expect(note).not.toBeNull()
+      expect(note?.createdAt).toBe(new Date(createdAtIso).getTime())
+      expect(note?.updatedAt).toBe(new Date(updatedAtIso).getTime())
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps timestamps stable for markdown files without frontmatter', () => {
+    vi.useFakeTimers()
+
+    try {
+      const paths = createNotesPaths()
+      const relativePath = 'plain.md'
+      const absolutePath = path.join(paths.notesRoot, relativePath)
+      fs.writeFileSync(absolutePath, '# Plain markdown note', 'utf8')
+
+      vi.setSystemTime(new Date('2026-03-18T10:00:00.000Z'))
+      const firstRead = readNoteFromFile(
+        paths,
+        { filePath: relativePath, id: 11 },
+        new Map(),
+      )
+
+      vi.setSystemTime(new Date('2026-03-18T12:00:00.000Z'))
+      const secondRead = readNoteFromFile(
+        paths,
+        { filePath: relativePath, id: 11 },
+        new Map(),
+      )
+
+      expect(firstRead).not.toBeNull()
+      expect(secondRead).not.toBeNull()
+      expect(secondRead?.createdAt).toBe(firstRead?.createdAt)
+      expect(secondRead?.updatedAt).toBe(firstRead?.updatedAt)
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
 })

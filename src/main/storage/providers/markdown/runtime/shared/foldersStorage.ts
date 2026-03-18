@@ -1,8 +1,12 @@
 import path from 'node:path'
 import fs from 'fs-extra'
+import { throwStorageError } from '../validation'
 import {
   buildFolderTree,
+  collectDescendantIds,
+  findFolderByIdPure,
   type FolderLike,
+  reorderFolderSiblings,
   sortFoldersForTree,
   type WithChildren,
 } from './folderIndex'
@@ -121,4 +125,68 @@ export function removeFolderPathsFromDisk(
 
     fs.removeSync(absolutePath)
   })
+}
+
+export function assertFolderMoveTargetValid<TFolder extends FolderLike>(
+  folders: TFolder[],
+  folderId: number,
+  targetParentId: number | null,
+): void {
+  if (targetParentId === null) {
+    return
+  }
+
+  if (!findFolderByIdPure(folders, targetParentId)) {
+    throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
+  }
+
+  const descendants = collectDescendantIds(folders, folderId)
+  if (descendants.has(targetParentId)) {
+    throwStorageError(
+      'INVALID_NAME',
+      'Folder cannot be moved into its own subtree',
+    )
+  }
+}
+
+export function applyFolderParentAndOrder<TFolder extends FolderLike>(
+  folders: TFolder[],
+  folder: TFolder,
+  targetParentId: number | null,
+  targetOrderIndex: number,
+): { parentChanged: boolean } {
+  const currentParentId = folder.parentId
+  const currentOrderIndex = folder.orderIndex
+
+  reorderFolderSiblings(
+    folders,
+    folder.id,
+    currentParentId,
+    currentOrderIndex,
+    targetParentId,
+    targetOrderIndex,
+  )
+  folder.parentId = targetParentId
+  folder.orderIndex = targetOrderIndex
+
+  return { parentChanged: targetParentId !== currentParentId }
+}
+
+export function moveFolderDirectoryOnDisk(
+  rootPath: string,
+  oldRelativePath: string,
+  newRelativePath: string,
+): void {
+  if (!oldRelativePath || !newRelativePath) {
+    return
+  }
+
+  const oldAbsolutePath = path.join(rootPath, oldRelativePath)
+  if (!fs.pathExistsSync(oldAbsolutePath)) {
+    return
+  }
+
+  const newAbsolutePath = path.join(rootPath, newRelativePath)
+  fs.ensureDirSync(path.dirname(newAbsolutePath))
+  fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
 }

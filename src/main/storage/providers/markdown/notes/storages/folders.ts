@@ -5,18 +5,17 @@ import type {
   NotesFoldersStorage,
 } from '../../../../contracts'
 import path from 'node:path'
-import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { collectDescendantIds } from '../../runtime/shared/folderIndex'
 import {
-  collectDescendantIds,
-  reorderFolderSiblings,
-} from '../../runtime/shared/folderIndex'
-import {
+  applyFolderParentAndOrder,
+  assertFolderMoveTargetValid,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
+  moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
 } from '../../runtime/shared/foldersStorage'
 import {
@@ -171,8 +170,6 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         folder.name = name
       }
 
-      const currentParentId = folder.parentId
-      const currentOrderIndex = folder.orderIndex
       const targetParentId
         = input.parentId !== undefined
           ? (input.parentId ?? null)
@@ -185,38 +182,21 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       if (input.parentId !== undefined) {
         const newParentId = input.parentId ?? null
 
-        if (newParentId !== null) {
-          const parent = findNotesFolderById(state, newParentId)
-          if (!parent) {
-            throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
-          }
-
-          const descendants = collectDescendantIds(state.folders, id)
-          if (descendants.has(newParentId)) {
-            throwStorageError(
-              'INVALID_NAME',
-              'Folder cannot be moved into its own subtree',
-            )
-          }
-        }
+        assertFolderMoveTargetValid(state.folders, id, newParentId)
 
         if (newParentId !== folder.parentId && input.name === undefined) {
           assertUniqueSiblingFolderName(state, newParentId, folder.name, id)
         }
       }
 
-      reorderFolderSiblings(
+      const { parentChanged } = applyFolderParentAndOrder(
         state.folders,
-        id,
-        currentParentId,
-        currentOrderIndex,
+        folder,
         targetParentId,
         targetOrderIndex,
       )
-      folder.parentId = targetParentId
-      folder.orderIndex = targetOrderIndex
 
-      if (targetParentId !== currentParentId) {
+      if (parentChanged) {
         pathChanged = true
       }
 
@@ -243,13 +223,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             oldPath,
           )
 
-          const oldAbsPath = path.join(paths.notesRoot, oldPath)
-          const newAbsPath = path.join(paths.notesRoot, newPath)
-
-          if (fs.pathExistsSync(oldAbsPath)) {
-            fs.ensureDirSync(path.dirname(newAbsPath))
-            fs.moveSync(oldAbsPath, newAbsPath, { overwrite: false })
-          }
+          moveFolderDirectoryOnDisk(paths.notesRoot, oldPath, newPath)
 
           for (const note of notes) {
             if (note.filePath.startsWith(`${oldPath}/`)) {

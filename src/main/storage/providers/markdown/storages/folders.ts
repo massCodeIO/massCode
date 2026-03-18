@@ -17,7 +17,6 @@ import {
   normalizeDirectoryPath,
   normalizeFlag,
   persistSnippet,
-  reorderFolderSiblings,
   resolveUniqueSiblingFolderName,
   saveState,
   syncFolderMetadataFiles,
@@ -25,10 +24,13 @@ import {
   validateEntryName,
 } from '../runtime'
 import {
+  applyFolderParentAndOrder,
+  assertFolderMoveTargetValid,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
+  moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
 } from '../runtime/shared/foldersStorage'
 
@@ -127,17 +129,7 @@ export function createFoldersStorage(): FoldersStorage {
       const targetParentId
         = 'parentId' in input ? (input.parentId ?? null) : folder.parentId
 
-      if (targetParentId !== null && !findFolderById(state, targetParentId)) {
-        throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
-      }
-
-      const descendants = collectDescendantIds(state.folders, id)
-      if (targetParentId !== null && descendants.has(targetParentId)) {
-        throwStorageError(
-          'INVALID_NAME',
-          'Folder cannot be moved into its own subtree',
-        )
-      }
+      assertFolderMoveTargetValid(state.folders, id, targetParentId)
 
       assertNotReservedRootFolderName(targetParentId, targetName)
 
@@ -154,23 +146,18 @@ export function createFoldersStorage(): FoldersStorage {
         assertUniqueSiblingFolderName(state, targetParentId, targetName, id)
       }
 
-      const currentParentId = folder.parentId
       const currentOrderIndex = folder.orderIndex
       const targetOrderIndex
         = 'orderIndex' in input
           ? (input.orderIndex ?? currentOrderIndex)
           : currentOrderIndex
 
-      reorderFolderSiblings(
+      applyFolderParentAndOrder(
         state.folders,
-        id,
-        currentParentId,
-        currentOrderIndex,
+        folder,
         targetParentId,
         targetOrderIndex,
       )
-      folder.parentId = targetParentId
-      folder.orderIndex = targetOrderIndex
 
       if ('name' in input || folder.name !== targetName) {
         folder.name = targetName
@@ -205,13 +192,11 @@ export function createFoldersStorage(): FoldersStorage {
           oldFolderPath,
         )
 
-        const oldAbsolutePath = path.join(paths.vaultPath, oldFolderPath)
-        const newAbsolutePath = path.join(paths.vaultPath, newFolderPath)
-
-        if (fs.pathExistsSync(oldAbsolutePath)) {
-          fs.ensureDirSync(path.dirname(newAbsolutePath))
-          fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
-        }
+        moveFolderDirectoryOnDisk(
+          paths.vaultPath,
+          oldFolderPath,
+          newFolderPath,
+        )
 
         const affectedFolderIds = collectDescendantIds(state.folders, id)
         affectedFolderIds.add(id)

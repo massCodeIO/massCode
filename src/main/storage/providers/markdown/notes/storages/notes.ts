@@ -12,6 +12,7 @@ import type {
 import type { MarkdownNote, NotesState } from '../runtime/types'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import {
   addTagToEntity,
@@ -194,17 +195,14 @@ export function createNotesNotesStorage(): NotesStorage {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, id)
+      const result = updateEntityBodyContent({
+        content,
+        entity: note,
+        onAfterPersist: () => invalidateNotesSearchIndex(state),
+        persistEntity: note => writeNoteToFile(paths, note),
+      })
 
-      if (!note) {
-        return { invalidInput: false, notFound: true }
-      }
-
-      note.content = content
-      note.updatedAt = Date.now()
-      writeNoteToFile(paths, note)
-      invalidateNotesSearchIndex(state)
-
-      return { invalidInput: false, notFound: false }
+      return { invalidInput: false, notFound: result.notFound }
     },
 
     deleteNote(id: number) {

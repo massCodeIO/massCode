@@ -181,20 +181,35 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     const label = line.slice('## Fragment:'.length).trim() || 'Fragment'
     lineIndex += 1
 
-    if (lineIndex >= lines.length || !lines[lineIndex].startsWith('```')) {
+    if (lineIndex >= lines.length) {
       continue
     }
 
-    const language = lines[lineIndex].slice(3).trim() || 'plain_text'
+    const fenceLine = lines[lineIndex]
+    let fenceLength = 0
+
+    while (
+      fenceLength < fenceLine.length
+      && fenceLine.charCodeAt(fenceLength) === 96
+    ) {
+      fenceLength += 1
+    }
+
+    if (fenceLength < 3) {
+      continue
+    }
+
+    const fence = '`'.repeat(fenceLength)
+    const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
     lineIndex += 1
 
     const valueLines: string[] = []
-    while (lineIndex < lines.length && !lines[lineIndex].startsWith('```')) {
+    while (lineIndex < lines.length && lines[lineIndex].trim() !== fence) {
       valueLines.push(lines[lineIndex])
       lineIndex += 1
     }
 
-    if (lineIndex < lines.length && lines[lineIndex].startsWith('```')) {
+    if (lineIndex < lines.length && lines[lineIndex].trim() === fence) {
       lineIndex += 1
     }
 
@@ -214,6 +229,20 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
   }
 
   return fragments
+}
+
+function getSnippetFence(value: string): string {
+  const matches = value.match(/`+/g) || []
+  let maxLength = 0
+
+  for (const match of matches) {
+    if (match.length > maxLength) {
+      maxLength = match.length
+    }
+  }
+
+  const fenceLength = Math.max(3, maxLength + 1)
+  return '`'.repeat(fenceLength)
 }
 
 export function serializeSnippet(snippet: MarkdownSnippet): string {
@@ -247,8 +276,9 @@ export function serializeSnippet(snippet: MarkdownSnippet): string {
       const label = content.label.replace(/\r?\n/g, ' ').trim() || 'Fragment'
       const language = content.language.trim() || 'plain_text'
       const value = content.value || ''
+      const fence = getSnippetFence(value)
 
-      return `## Fragment: ${label}\n\`\`\`${language}\n${value}\n\`\`\``
+      return `## Fragment: ${label}\n${fence}${language}\n${value}\n${fence}`
     })
     .join('\n\n')
 

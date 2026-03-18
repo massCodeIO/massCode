@@ -2,7 +2,7 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it } from 'vitest'
-import { getNotesPaths } from './constants'
+import { getNotesPaths } from '../constants'
 
 const tempDirs: string[] = []
 

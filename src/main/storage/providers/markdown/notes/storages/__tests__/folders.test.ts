@@ -3,9 +3,9 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ensureNotesStateFile } from '../runtime/state'
-import { resetNotesRuntimeCache } from '../runtime/sync'
-import { createNotesNotesStorage } from './notes'
+import { ensureNotesStateFile } from '../../runtime/state'
+import { resetNotesRuntimeCache } from '../../runtime/sync'
+import { createNotesFoldersStorage } from '../folders'
 
 let tempVaultPath = ''
 
@@ -59,7 +59,7 @@ vi.mock('electron', () => ({
   },
 }))
 
-vi.mock('../../../../../store', () => ({
+vi.mock('../../../../../../store', () => ({
   store: {
     preferences: {
       get: (key: string) => {
@@ -73,9 +73,9 @@ vi.mock('../../../../../store', () => ({
   },
 }))
 
-describe('notes storage validations', () => {
+describe('folders storage validations', () => {
   beforeEach(() => {
-    tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'notes-storage-'))
+    tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'folders-storage-'))
     resetNotesRuntimeCache()
 
     const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
@@ -96,23 +96,39 @@ describe('notes storage validations', () => {
     }
   })
 
-  it('updateNote with empty patch returns invalidInput', () => {
-    const storage = createNotesNotesStorage()
-    const { id } = storage.createNote({ name: 'Test Note' })
-    const result = storage.updateNote(id, {})
+  it('updateFolder with empty patch returns invalidInput', () => {
+    const storage = createNotesFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Test Folder' })
+    const result = storage.updateFolder(id, {})
     expect(result).toEqual({ invalidInput: true, notFound: false })
   })
 
-  it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {
-    const storage = createNotesNotesStorage()
-    expect(() => storage.createNote({ name: 'Test', folderId: 99999 })).toThrow(
-      'FOLDER_NOT_FOUND',
+  it('moving folder to sibling with same name throws NAME_CONFLICT', () => {
+    const storage = createNotesFoldersStorage()
+
+    // Create a parent folder
+    const { id: parentId } = storage.createFolder({ name: 'Parent' })
+
+    // Create two folders: one at root named "Dupe", one inside Parent named "Dupe"
+    storage.createFolder({ name: 'Dupe', parentId })
+    const { id: rootDupeId } = storage.createFolder({ name: 'Dupe' })
+
+    // Move rootDupe into Parent — should conflict with existing "Dupe" child
+    expect(() => storage.updateFolder(rootDupeId, { parentId })).toThrow(
+      'NAME_CONFLICT',
     )
   })
 
-  it('createNote without folderId succeeds', () => {
-    const storage = createNotesNotesStorage()
-    const result = storage.createNote({ name: 'Normal Note' })
-    expect(result.id).toBeGreaterThan(0)
+  it('rename to existing disk directory throws NAME_CONFLICT', () => {
+    const storage = createNotesFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Source' })
+    storage.getFolders()
+
+    const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
+    fs.ensureDirSync(path.join(notesRoot, 'Target'))
+
+    expect(() => storage.updateFolder(id, { name: 'Target' })).toThrow(
+      'NAME_CONFLICT',
+    )
   })
 })

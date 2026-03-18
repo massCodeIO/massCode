@@ -1,14 +1,14 @@
-import type { NotesPaths } from './types'
+import type { NotesPaths } from '../types'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createDefaultNotesState, saveNotesState } from './state'
+import { createDefaultNotesState, saveNotesState } from '../state'
 import {
   syncNotesFoldersWithDisk,
   syncNotesRuntimeWithDisk,
   syncNotesWithDisk,
-} from './sync'
+} from '../sync'
 
 vi.mock('electron-store', () => {
   class MockStore {

@@ -3,7 +3,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { describe, expect, it, vi } from 'vitest'
 
-import { listNoteMarkdownFiles } from './notes'
+import { listNoteMarkdownFiles } from '../notes'
 
 // Required: listNoteMarkdownFiles imports from modules that transitively
 // depend on electron-store and electron via the store module.

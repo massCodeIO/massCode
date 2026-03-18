@@ -1,9 +1,9 @@
-import type { MarkdownNote, NotesPaths } from './types'
+import type { MarkdownNote, NotesPaths } from '../types'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { readNoteFromFile, serializeNote } from './notes'
+import { readNoteFromFile, serializeNote } from '../notes'
 
 vi.mock('electron-store', () => {
   class MockStore {

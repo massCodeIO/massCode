@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDialog, useNotes, useNotesApp } from '@/composables'
+import { useDialog, useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
@@ -46,8 +46,8 @@ const {
   updateNotes,
   deleteNote,
   deleteNotes,
-  displayedNotes,
 } = useNotes()
+const { displayedNotes } = useNoteSearch()
 
 const { confirm } = useDialog()
 

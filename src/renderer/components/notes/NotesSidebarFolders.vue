@@ -8,6 +8,7 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNoteSearch,
 } from '@/composables'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
@@ -53,14 +54,13 @@ const {
 } = useNoteFolders()
 const {
   clearNotesState,
-  displayedNotes,
   getNotes,
   withNotesLoading,
   selectFirstNote,
-  clearSearch,
   isRestoreStateBlocked,
   updateNote,
 } = useNotes()
+const { clearSearch, displayedNotes } = useNoteSearch()
 
 // --- Data mapping ---
 

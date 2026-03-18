@@ -3,6 +3,7 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNoteSearch,
   useNoteTags,
 } from '@/composables'
 import { i18n } from '@/electron'
@@ -10,7 +11,8 @@ import { scrollToElement } from '@/utils'
 
 const { isNotesSpaceInitialized, notesState } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
-const { getNotes, selectFirstNote, displayedNotes } = useNotes()
+const { getNotes, selectFirstNote } = useNotes()
+const { displayedNotes } = useNoteSearch()
 const { getNoteTags } = useNoteTags()
 
 async function initNotesSpace() {

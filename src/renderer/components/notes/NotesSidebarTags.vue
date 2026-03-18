@@ -5,6 +5,7 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNoteSearch,
   useNoteTags,
 } from '@/composables'
 import { i18n } from '@/electron'
@@ -16,9 +17,9 @@ const {
   selectFirstNote,
   clearNotes,
   withNotesLoading,
-  clearSearch,
   isRestoreStateBlocked,
 } = useNotes()
+const { clearSearch } = useNoteSearch()
 const { clearFolderSelection } = useNoteFolders()
 
 const idToDelete = ref(0)

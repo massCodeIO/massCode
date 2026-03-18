@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useNoteFolders, useNotes, useNotesApp } from '@/composables'
+import {
+  useNoteFolders,
+  useNotes,
+  useNotesApp,
+  useNoteSearch,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
@@ -12,10 +17,10 @@ const {
   getNotes,
   selectFirstNote,
   withNotesLoading,
-  clearSearch,
   isRestoreStateBlocked,
   emptyTrash,
 } = useNotes()
+const { clearSearch } = useNoteSearch()
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },

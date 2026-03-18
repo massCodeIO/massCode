@@ -1,6 +1,7 @@
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { api } from '~/renderer/services/api'
-import { notes, notesBySearch } from './useNotes'
+import { notes } from './useNotes'
+import { notesBySearch } from './useNoteSearch'
 
 // --- Types ---
 

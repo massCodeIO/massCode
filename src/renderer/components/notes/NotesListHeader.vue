@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import { useNotes, useNotesApp } from '@/composables'
+import { useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
+const { isSearch, createNoteAndSelect } = useNotes()
 const {
-  isSearch,
   searchQuery,
-  createNoteAndSelect,
   clearSearch,
   search,
   searchSelectedIndex,
   selectSearchNote,
   displayedNotes,
-} = useNotes()
+} = useNoteSearch()
 const { isFocusedSearch } = useNotesApp()
 
 watch(searchQuery, (v) => {

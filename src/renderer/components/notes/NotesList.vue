@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { useNotes, useNotesApp } from '@/composables'
+import { useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { i18n } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const NOTE_ITEM_SIZE = 61
 
 const { notesState } = useNotesApp()
-const { displayedNotes, isNotesLoading, isNotesLoadingVisible } = useNotes()
+const { isNotesLoading, isNotesLoadingVisible } = useNotes()
+const { displayedNotes } = useNoteSearch()
 
 const noteScrollerRef = ref<{
   scrollToItem: (index: number) => void

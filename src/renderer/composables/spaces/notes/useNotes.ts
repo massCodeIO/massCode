@@ -6,13 +6,9 @@ import { api } from '~/renderer/services/api'
 import { LibraryFilter } from '../../types'
 import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
+import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
-const {
-  notesState,
-  saveNotesStateSnapshot,
-  restoreNotesStateSnapshot,
-  isFocusedNoteName,
-} = useNotesApp()
+const { notesState, isFocusedNoteName } = useNotesApp()
 
 // --- Types ---
 // These mirror the generated API types that will exist after api:generate.
@@ -69,26 +65,14 @@ export const selectedNoteIds = ref<number[]>(
 const lastSelectedNoteId = ref<number | undefined>()
 
 export const notes = shallowRef<NotesResponse>()
-export const notesBySearch = shallowRef<NotesResponse>()
 
-const searchQuery = ref('')
-const isSearch = ref(false)
-const isRestoreStateBlocked = ref(false)
-const searchSelectedIndex = ref<number>(-1)
+export const isRestoreStateBlocked = ref(false)
 const notesLoadingCounter = ref(0)
 const isNotesLoadingVisible = ref(false)
 const NOTES_LOADING_VISIBILITY_DELAY_MS = 300
 let notesLoadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
 
 // --- Computed ---
-
-const displayedNotes = computed(() => {
-  if (isSearch.value) {
-    return notesBySearch.value
-  }
-
-  return notes.value
-})
 
 const selectedNote = computed(() => {
   if (isSearch.value) {
@@ -223,7 +207,7 @@ async function getNoteNamesForCreate(
 
 // --- CRUD ---
 
-async function getNotes(query?: NotesQuery) {
+export async function getNotes(query?: NotesQuery) {
   return withNotesLoading(async () => {
     const { data } = await api.notes.getNotes(
       query || queryByLibraryOrFolderOrSearch.value,
@@ -353,7 +337,7 @@ async function deleteTagFromNote(tagId: number, noteId: number) {
 
 // --- Selection ---
 
-function selectNote(noteId: number, withShift = false) {
+export function selectNote(noteId: number, withShift = false) {
   if (!withShift) {
     selectedNoteIds.value = [noteId]
     notesState.noteId = noteId
@@ -384,7 +368,7 @@ function selectNote(noteId: number, withShift = false) {
   }
 }
 
-function selectFirstNote() {
+export function selectFirstNote() {
   let firstNote: NoteRecord | undefined
 
   if (isSearch.value) {
@@ -417,50 +401,6 @@ function clearNotesState() {
   notesState.noteId = undefined
 }
 
-// --- Search ---
-
-async function search() {
-  if (searchQuery.value) {
-    if (!isSearch.value) {
-      saveNotesStateSnapshot('beforeSearch')
-    }
-
-    isSearch.value = true
-    isRestoreStateBlocked.value = false
-
-    await getNotes({ search: searchQuery.value })
-    selectFirstNote()
-    searchSelectedIndex.value = 0
-  }
-  else {
-    isSearch.value = false
-  }
-}
-
-function selectSearchNote(index: number) {
-  if (
-    !displayedNotes.value
-    || index < 0
-    || index >= displayedNotes.value.length
-  ) {
-    return
-  }
-
-  const note = displayedNotes.value[index]
-  selectNote(note.id)
-  searchSelectedIndex.value = index
-}
-
-function clearSearch(restoreState = false) {
-  if (restoreState && !isRestoreStateBlocked.value) {
-    restoreNotesStateSnapshot('beforeSearch')
-  }
-
-  searchQuery.value = ''
-  isSearch.value = false
-  searchSelectedIndex.value = -1
-}
-
 export function useNotes() {
   const { hasBusyNoteContentUpdates, updateNoteContent } = useNoteContent()
 
@@ -468,13 +408,11 @@ export function useNotes() {
     addTagToNote,
     clearNotes,
     clearNotesState,
-    clearSearch,
     createNote,
     createNoteAndSelect,
     deleteNote,
     deleteNotes,
     deleteTagFromNote,
-    displayedNotes,
     emptyTrash,
     getNotes,
     hasBusyNoteContentUpdates,
@@ -485,15 +423,11 @@ export function useNotes() {
     isSearch,
     lastSelectedNoteId,
     notes,
-    search,
-    searchQuery,
-    searchSelectedIndex,
     selectedNote,
     selectedNoteIds,
     selectedNotes,
     selectFirstNote,
     selectNote,
-    selectSearchNote,
     updateNote,
     updateNotes,
     updateNoteContent,

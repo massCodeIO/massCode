@@ -2,15 +2,9 @@ import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
-import {
-  Blocks,
-  Calculator,
-  Code2,
-  FlaskConical,
-  Notebook,
-} from 'lucide-vue-next'
+import { Blocks, Calculator, Code2, Notebook } from 'lucide-vue-next'
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'dev' | 'notes'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
 
 export interface SpaceDefinition {
   id: SpaceId
@@ -65,14 +59,6 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       icon: Notebook,
       to: { name: RouterName.notesSpace },
       isActive: routeName => routeName === RouterName.notesSpace,
-    },
-    {
-      id: 'dev',
-      label: 'Dev',
-      tooltip: 'Development playground',
-      icon: FlaskConical,
-      to: { name: RouterName.dev },
-      isActive: routeName => routeName === RouterName.dev,
     },
   ]
 }

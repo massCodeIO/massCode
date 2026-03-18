@@ -30,7 +30,6 @@ export const RouterName = {
   devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
   notesSpace: 'notes-space',
-  dev: 'dev',
 } as const
 
 const routes = [
@@ -192,11 +191,6 @@ const routes = [
     path: '/notes',
     name: RouterName.notesSpace,
     component: () => import('@/components/notes/NotesSpace.vue'),
-  },
-  {
-    path: '/dev',
-    name: RouterName.dev,
-    component: () => import('@/views/Dev.vue'),
   },
 ]
 

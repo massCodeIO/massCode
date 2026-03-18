@@ -4,7 +4,6 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import * as Resizable from '@/components/ui/shadcn/resizable'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
-  useDialog,
   useNoteFolderDragDrop,
   useNoteFolders,
   useNotes,
@@ -12,7 +11,6 @@ import {
   useNoteSearch,
 } from '@/composables'
 import { i18n, store } from '@/electron'
-import { scrollToElement } from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
@@ -42,22 +40,14 @@ const {
 } = useNotesApp()
 const {
   createNoteFolderAndSelect,
-  deleteNoteFolder,
   folders,
   updateNoteFolder,
   getFolderByIdFromTree,
-  getNoteFolders,
   selectedFolderIds,
-  clearFolderSelection,
   selectNoteFolder,
 } = useNoteFolders()
-const {
-  clearNotesState,
-  getNotes,
-  withNotesLoading,
-  selectFirstNote,
-  isRestoreStateBlocked,
-} = useNotes()
+const { getNotes, withNotesLoading, selectFirstNote, isRestoreStateBlocked }
+  = useNotes()
 const { clearSearch } = useNoteSearch()
 const { onDragNode, onExternalDrop } = useNoteFolderDragDrop()
 
@@ -101,14 +91,6 @@ const highlightedIds = computed({
 // --- Context menu state ---
 
 const contextNode = ref<any>(null)
-
-const isContextMultiSelection = computed(() => {
-  if (!contextNode.value)
-    return false
-  if (selectedFolderIds.value.length <= 1)
-    return false
-  return selectedFolderIds.value.includes(contextNode.value.id)
-})
 
 // --- Event handlers ---
 
@@ -181,59 +163,6 @@ function onCancelEdit() {
   editableId.value = null
 }
 
-// --- Context menu actions ---
-
-async function onDeleteFolder() {
-  if (!contextNode.value)
-    return
-
-  const { confirm } = useDialog()
-  const activeBeforeDelete = notesState.folderId
-  const targetIds = selectedFolderIds.value.includes(contextNode.value.id)
-    ? [...selectedFolderIds.value]
-    : [contextNode.value.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    contextNode.value.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('sidebar.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteNoteFolder(id, false)))
-  await getNoteFolders(false)
-
-  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
-    clearNotesState()
-    const fallbackId = selectedFolderIds.value[0]
-
-    if (fallbackId) {
-      await selectNoteFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
-    }
-    else {
-      clearFolderSelection()
-    }
-  }
-}
-
-function onRenameFolder() {
-  setTimeout(() => {
-    if (!contextNode.value)
-      return
-    editableId.value = contextNode.value.id
-  }, 100)
-}
-
 function onResizeTagList(layout: number[]) {
   store.app.set(
     'sizes.notesTagsListHeight',
@@ -300,27 +229,11 @@ function onResizeTagList(layout: number[]) {
             v-if="!treeData.length"
             :text="i18n.t('placeholder.emptyFoldersList')"
           />
-          <ContextMenu.ContextMenuContent>
-            <template v-if="isContextMultiSelection">
-              <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-                {{ i18n.t("action.delete.common") }}
-              </ContextMenu.ContextMenuItem>
-            </template>
-            <template v-else>
-              <ContextMenu.ContextMenuItem
-                @click="createNoteFolderAndSelect(contextNode?.id)"
-              >
-                {{ i18n.t("action.new.folder") }}
-              </ContextMenu.ContextMenuItem>
-              <ContextMenu.ContextMenuSeparator />
-              <ContextMenu.ContextMenuItem @click="onRenameFolder">
-                {{ i18n.t("action.rename") }}
-              </ContextMenu.ContextMenuItem>
-              <ContextMenu.ContextMenuItem @click="onDeleteFolder">
-                {{ i18n.t("action.delete.common") }}
-              </ContextMenu.ContextMenuItem>
-            </template>
-          </ContextMenu.ContextMenuContent>
+          <NotesSidebarFolderContextMenu
+            :context-node="contextNode"
+            :editable-id="editableId"
+            @update:editable-id="editableId = $event"
+          />
         </ContextMenu.ContextMenu>
       </div>
     </Resizable.ResizablePanel>

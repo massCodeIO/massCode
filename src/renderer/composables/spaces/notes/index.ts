@@ -1,4 +1,5 @@
 export { useNoteContent } from './useNoteContent'
+export { useNoteFolderDragDrop } from './useNoteFolderDragDrop'
 export { useNoteFolders } from './useNoteFolders'
 export { useNoteFolderTree } from './useNoteFolderTree'
 export { useNotes } from './useNotes'

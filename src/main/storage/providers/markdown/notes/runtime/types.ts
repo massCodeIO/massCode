@@ -1,3 +1,5 @@
+import type { SearchIndex } from '../../runtime/shared/searchEngine'
+
 export interface NotesPaths {
   inboxDirPath: string
   metaDirPath: string
@@ -108,11 +110,7 @@ export interface NotesRuntimeCache {
   noteById: Map<number, MarkdownNote>
   notes: MarkdownNote[]
   paths: NotesPaths
-  searchIndexDirty: boolean
-  searchNoteTextById: Map<number, string>
-  searchQueryCache: Map<string, number[]>
-  searchTokenToNoteIds: Map<string, Set<number>>
-  searchTokensByNoteId: Map<number, string[]>
+  searchIndex: SearchIndex
   state: NotesState
 }
 

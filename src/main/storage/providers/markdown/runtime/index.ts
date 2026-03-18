@@ -42,6 +42,7 @@ export { getSnippetIdsBySearchQuery } from './search'
 export {
   buildFolderTree,
   collectDescendantIds,
+  reorderFolderSiblings,
   sortFoldersForTree,
 } from './shared/folderIndex'
 export type { WithChildren } from './shared/folderIndex'

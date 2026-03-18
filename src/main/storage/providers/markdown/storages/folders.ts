@@ -19,6 +19,7 @@ import {
   normalizeDirectoryPath,
   normalizeFlag,
   persistSnippet,
+  reorderFolderSiblings,
   resolveUniqueSiblingFolderName,
   saveState,
   sortFoldersForTree,
@@ -157,61 +158,16 @@ export function createFoldersStorage(): FoldersStorage {
           ? (input.orderIndex ?? currentOrderIndex)
           : currentOrderIndex
 
-      if (
-        targetParentId !== currentParentId
-        || targetOrderIndex !== currentOrderIndex
-      ) {
-        if (targetParentId === currentParentId) {
-          if (targetOrderIndex > currentOrderIndex) {
-            state.folders.forEach((item) => {
-              if (
-                item.id !== folder.id
-                && item.parentId === currentParentId
-                && item.orderIndex > currentOrderIndex
-                && item.orderIndex <= targetOrderIndex
-              ) {
-                item.orderIndex -= 1
-              }
-            })
-          }
-          else {
-            state.folders.forEach((item) => {
-              if (
-                item.id !== folder.id
-                && item.parentId === currentParentId
-                && item.orderIndex >= targetOrderIndex
-                && item.orderIndex < currentOrderIndex
-              ) {
-                item.orderIndex += 1
-              }
-            })
-          }
-        }
-        else {
-          state.folders.forEach((item) => {
-            if (
-              item.id !== folder.id
-              && item.parentId === currentParentId
-              && item.orderIndex > currentOrderIndex
-            ) {
-              item.orderIndex -= 1
-            }
-          })
-
-          state.folders.forEach((item) => {
-            if (
-              item.id !== folder.id
-              && item.parentId === targetParentId
-              && item.orderIndex >= targetOrderIndex
-            ) {
-              item.orderIndex += 1
-            }
-          })
-        }
-
-        folder.parentId = targetParentId
-        folder.orderIndex = targetOrderIndex
-      }
+      reorderFolderSiblings(
+        state.folders,
+        id,
+        currentParentId,
+        currentOrderIndex,
+        targetParentId,
+        targetOrderIndex,
+      )
+      folder.parentId = targetParentId
+      folder.orderIndex = targetOrderIndex
 
       if ('name' in input || folder.name !== targetName) {
         folder.name = targetName

@@ -1,6 +1,5 @@
 import type {
   MarkdownNote,
-  NotesFolderDiskEntry,
   NotesPaths,
   NotesRuntimeCache,
   NotesState,
@@ -8,6 +7,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { listUserFoldersFromDisk } from '../../runtime/shared/folderScan'
 import { syncFoldersStateFromDisk } from '../../runtime/shared/folderSync'
 import { notesRuntimeRef } from './constants'
 import { listNoteMarkdownFiles, loadNotes } from './notes'
@@ -23,59 +23,16 @@ import {
   saveNotesState,
 } from './state'
 
-function listUserFolders(
-  notesRoot: string,
-  paths: NotesPaths,
-): NotesFolderDiskEntry[] {
-  const result: NotesFolderDiskEntry[] = []
-
-  function walk(dir: string, relativeDir: string): void {
-    if (!fs.pathExistsSync(dir)) {
-      return
-    }
-
-    const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) {
-        continue
-      }
-
-      const entryName = entry.name
-
-      // Skip hidden and technical directories
-      if (entryName.startsWith('.')) {
-        continue
-      }
-
-      const entryRelativePath = relativeDir
-        ? `${relativeDir}/${entryName}`
-        : entryName
-
-      result.push({
-        metadata: {},
-        path: entryRelativePath,
-      })
-
-      walk(path.join(dir, entryName), entryRelativePath)
-    }
-  }
-
-  walk(notesRoot, '')
-
-  // Read metadata for each folder
-  for (const entry of result) {
-    entry.metadata = readNotesFolderMetadata(paths, entry.path)
-  }
-
-  return result
-}
-
 export function syncNotesFoldersWithDisk(
   paths: NotesPaths,
   state: NotesState,
 ): void {
-  const diskFolders = listUserFolders(paths.notesRoot, paths)
+  const diskFolders = listUserFoldersFromDisk({
+    readMetadata: relativePath =>
+      readNotesFolderMetadata(paths, relativePath),
+    rootPath: paths.notesRoot,
+    shouldSkipDirectory: ({ entryName }) => entryName.startsWith('.'),
+  })
   syncFoldersStateFromDisk(
     state,
     diskFolders,

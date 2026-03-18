@@ -1,6 +1,5 @@
 import type { FolderRecord } from '../../../contracts'
 import type {
-  MarkdownFolderDiskEntry,
   MarkdownRuntimeCache,
   MarkdownSnippet,
   MarkdownState,
@@ -24,6 +23,7 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { listUserFoldersFromDisk } from './shared/folderScan'
 import { syncFoldersStateFromDisk } from './shared/folderSync'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import {
@@ -51,43 +51,13 @@ function isTechnicalRootFolder(name: string): boolean {
   )
 }
 
-export function listUserFolders(
-  paths: Paths,
-  currentPath = paths.vaultPath,
-): MarkdownFolderDiskEntry[] {
-  if (!fs.pathExistsSync(currentPath)) {
-    return []
-  }
-
-  const entries = fs.readdirSync(currentPath, { withFileTypes: true })
-  const folders: MarkdownFolderDiskEntry[] = []
-
-  entries.forEach((entry) => {
-    if (!entry.isDirectory()) {
-      return
-    }
-
-    if (currentPath === paths.vaultPath && isTechnicalRootFolder(entry.name)) {
-      return
-    }
-
-    const absolutePath = path.join(currentPath, entry.name)
-    const relativePath = toPosixPath(
-      path.relative(paths.vaultPath, absolutePath),
-    )
-
-    folders.push({
-      metadata: readFolderMetadata(paths, relativePath),
-      path: relativePath,
-    })
-    folders.push(...listUserFolders(paths, absolutePath))
-  })
-
-  return folders
-}
-
 function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
-  const diskFolders = listUserFolders(paths)
+  const diskFolders = listUserFoldersFromDisk({
+    readMetadata: relativePath => readFolderMetadata(paths, relativePath),
+    rootPath: paths.vaultPath,
+    shouldSkipDirectory: ({ entryName, isRoot }) =>
+      isRoot && isTechnicalRootFolder(entryName),
+  })
   syncFoldersStateFromDisk(
     state,
     diskFolders,

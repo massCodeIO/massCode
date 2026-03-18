@@ -12,6 +12,50 @@ interface DeletableEntityLike {
   isDeleted: number
 }
 
+interface NamedEntityLike {
+  id: number
+  name: string
+}
+
+export interface CreateEntityContext {
+  folderId: number | null
+  id: number
+  name: string
+  now: number
+}
+
+interface CreateEntityInput<TEntity extends NamedEntityLike> {
+  entities: TEntity[]
+  folderId: number | null
+  name: string
+  hasFolder: (folderId: number) => boolean
+  onFolderNotFound: () => never
+  nextId: () => number
+  createEntity: (context: CreateEntityContext) => TEntity
+  persistEntity: (entity: TEntity) => void
+}
+
+export function createEntityInStateAndDisk<TEntity extends NamedEntityLike>(
+  input: CreateEntityInput<TEntity>,
+): { id: number } {
+  if (input.folderId !== null && !input.hasFolder(input.folderId)) {
+    input.onFolderNotFound()
+  }
+
+  const id = input.nextId()
+  const entity = input.createEntity({
+    folderId: input.folderId,
+    id,
+    name: input.name,
+    now: Date.now(),
+  })
+
+  input.persistEntity(entity)
+  input.entities.push(entity)
+
+  return { id }
+}
+
 interface EntityDeleteInput<
   TStateIndex extends EntityIndexLike,
   TRuntimeEntity extends EntityIndexLike,
@@ -104,4 +148,46 @@ export function emptyEntityTrashFromStateAndDisk<
   )
 
   return { deletedCount: deletedEntities.length }
+}
+
+interface EntityWithTags {
+  tags: number[]
+  updatedAt: number
+}
+
+interface AddTagToEntityInput<TEntity extends EntityWithTags> {
+  entity: TEntity | undefined
+  onUpdated: (entity: TEntity) => void
+  tagExists: boolean
+  tagId: number
+}
+
+export function addTagToEntity<TEntity extends EntityWithTags>(
+  input: AddTagToEntityInput<TEntity>,
+): { entityFound: boolean, tagFound: boolean, updated: boolean } {
+  if (!input.entity || !input.tagExists) {
+    return {
+      entityFound: !!input.entity,
+      tagFound: input.tagExists,
+      updated: false,
+    }
+  }
+
+  if (!input.entity.tags.includes(input.tagId)) {
+    input.entity.tags.push(input.tagId)
+    input.entity.updatedAt = Date.now()
+    input.onUpdated(input.entity)
+
+    return {
+      entityFound: true,
+      tagFound: true,
+      updated: true,
+    }
+  }
+
+  return {
+    entityFound: true,
+    tagFound: true,
+    updated: false,
+  }
 }

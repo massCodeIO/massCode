@@ -28,6 +28,8 @@ import {
   writeSnippetToFile,
 } from '../runtime'
 import {
+  addTagToEntity,
+  createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   emptyEntityTrashFromStateAndDisk,
 } from '../runtime/shared/entityStorage'
@@ -103,34 +105,36 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
-
-      if (folderId !== null && !findFolderById(state, folderId)) {
-        throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
-      }
-
-      const id = state.counters.snippetId + 1
-      state.counters.snippetId = id
-
-      const now = Date.now()
-      const snippet: MarkdownSnippet = {
-        contents: [],
-        createdAt: now,
-        description: null,
-        filePath: '',
+      const result = createEntityInStateAndDisk<MarkdownSnippet>({
+        createEntity: ({ folderId, id, name, now }) => ({
+          contents: [],
+          createdAt: now,
+          description: null,
+          filePath: '',
+          folderId,
+          id,
+          isDeleted: 0,
+          isFavorites: 0,
+          name,
+          tags: [],
+          updatedAt: now,
+        }),
+        entities: snippets,
         folderId,
-        id,
-        isDeleted: 0,
-        isFavorites: 0,
+        hasFolder: folderId => !!findFolderById(state, folderId),
         name,
-        tags: [],
-        updatedAt: now,
-      }
+        nextId: () => {
+          state.counters.snippetId += 1
+          return state.counters.snippetId
+        },
+        onFolderNotFound: () =>
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
+        persistEntity: snippet => persistSnippet(paths, state, snippet),
+      })
 
-      persistSnippet(paths, state, snippet)
-      snippets.push(snippet)
       saveState(paths, state)
 
-      return { id }
+      return result
     },
     createSnippetContent: (snippetId, input) => {
       const paths = getPaths(getVaultPath())
@@ -303,34 +307,21 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, snippetId)
-
-      if (!snippet) {
-        return {
-          notFound: false,
-          snippetFound: false,
-          tagFound: true,
-        }
-      }
-
       const tag = state.tags.find(item => item.id === tagId)
-      if (!tag) {
-        return {
-          notFound: false,
-          snippetFound: true,
-          tagFound: false,
-        }
-      }
-
-      if (!snippet.tags.includes(tagId)) {
-        snippet.tags.push(tagId)
-        writeSnippetToFile(paths, snippet)
+      const result = addTagToEntity({
+        entity: snippet,
+        onUpdated: snippet => writeSnippetToFile(paths, snippet),
+        tagExists: !!tag,
+        tagId,
+      })
+      if (result.updated) {
         saveState(paths, state)
       }
 
       return {
         notFound: false,
-        snippetFound: true,
-        tagFound: true,
+        snippetFound: result.entityFound,
+        tagFound: result.tagFound,
       }
     },
     deleteTagFromSnippet: (

@@ -3,6 +3,8 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  addTagToEntity,
+  createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   emptyEntityTrashFromStateAndDisk,
 } from '../entityStorage'
@@ -73,6 +75,56 @@ describe('deleteEntityFromStateAndDisk', () => {
   })
 })
 
+describe('createEntityInStateAndDisk', () => {
+  it('throws through onFolderNotFound when folder is missing', () => {
+    const entities: Array<{ id: number, name: string }> = []
+    const error = new Error('FOLDER_NOT_FOUND:Folder not found')
+
+    expect(() =>
+      createEntityInStateAndDisk({
+        createEntity: ({ id, name }) => ({ id, name }),
+        entities,
+        folderId: 10,
+        hasFolder: () => false,
+        name: 'Note',
+        nextId: () => 1,
+        onFolderNotFound: () => {
+          throw error
+        },
+        persistEntity: () => {},
+      }),
+    ).toThrow(error)
+  })
+
+  it('creates entity, persists it and appends to runtime list', () => {
+    const entities: Array<{ id: number, name: string }> = []
+    const persisted: Array<{ id: number, name: string }> = []
+    let idCounter = 0
+
+    const result = createEntityInStateAndDisk({
+      createEntity: ({ id, name }) => ({ id, name }),
+      entities,
+      folderId: null,
+      hasFolder: () => true,
+      name: 'Snippet',
+      nextId: () => {
+        idCounter += 1
+        return idCounter
+      },
+      onFolderNotFound: () => {
+        throw new Error('should not happen')
+      },
+      persistEntity: (entity) => {
+        persisted.push(entity)
+      },
+    })
+
+    expect(result).toEqual({ id: 1 })
+    expect(entities).toEqual([{ id: 1, name: 'Snippet' }])
+    expect(persisted).toEqual([{ id: 1, name: 'Snippet' }])
+  })
+})
+
 describe('emptyEntityTrashFromStateAndDisk', () => {
   it('returns deletedCount=0 when trash is empty', () => {
     const rootPath = createTempRoot()
@@ -127,5 +179,60 @@ describe('emptyEntityTrashFromStateAndDisk', () => {
     ).toBe(true)
     expect(stateEntities.map(entity => entity.id)).toEqual([1])
     expect(runtimeEntities.map(entity => entity.id)).toEqual([1])
+  })
+})
+
+describe('addTagToEntity', () => {
+  it('returns not found flags when entity or tag is missing', () => {
+    const result = addTagToEntity({
+      entity: undefined,
+      onUpdated: () => {},
+      tagExists: false,
+      tagId: 1,
+    })
+
+    expect(result).toEqual({
+      entityFound: false,
+      tagFound: false,
+      updated: false,
+    })
+  })
+
+  it('adds tag exactly once and reports update status', () => {
+    const entity = {
+      tags: [] as number[],
+      updatedAt: 1,
+    }
+    let updatesCount = 0
+
+    const first = addTagToEntity({
+      entity,
+      onUpdated: () => {
+        updatesCount += 1
+      },
+      tagExists: true,
+      tagId: 7,
+    })
+    const second = addTagToEntity({
+      entity,
+      onUpdated: () => {
+        updatesCount += 1
+      },
+      tagExists: true,
+      tagId: 7,
+    })
+
+    expect(first).toEqual({
+      entityFound: true,
+      tagFound: true,
+      updated: true,
+    })
+    expect(second).toEqual({
+      entityFound: true,
+      tagFound: true,
+      updated: false,
+    })
+    expect(entity.tags).toEqual([7])
+    expect(updatesCount).toBe(1)
   })
 })

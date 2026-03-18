@@ -13,6 +13,8 @@ import type { MarkdownNote, NotesState } from '../runtime/types'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
+  addTagToEntity,
+  createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   emptyEntityTrashFromStateAndDisk,
 } from '../../runtime/shared/entityStorage'
@@ -123,39 +125,39 @@ export function createNotesNotesStorage(): NotesStorage {
 
       const name = validateEntryName(input.name, 'note')
       const folderId = input.folderId ?? null
-
-      if (folderId !== null) {
-        const folder = findNotesFolderById(state, folderId)
-        if (!folder) {
-          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
-        }
-      }
-
-      state.counters.noteId += 1
-      const noteId = state.counters.noteId
-      const now = Date.now()
-
-      const note: MarkdownNote = {
-        content: '',
-        createdAt: now,
-        description: null,
-        filePath: '',
+      const result = createEntityInStateAndDisk<MarkdownNote>({
+        createEntity: ({ folderId, id, name, now }) => ({
+          content: '',
+          createdAt: now,
+          description: null,
+          filePath: '',
+          folderId,
+          id,
+          isDeleted: 0,
+          isFavorites: 0,
+          name,
+          tags: [],
+          updatedAt: now,
+        }),
+        entities: notes,
         folderId,
-        id: noteId,
-        isDeleted: 0,
-        isFavorites: 0,
+        hasFolder: folderId => !!findNotesFolderById(state, folderId),
         name,
-        tags: [],
-        updatedAt: now,
-      }
-
-      persistNote(paths, state, note, undefined, {
-        allowRenameOnConflict: true,
+        nextId: () => {
+          state.counters.noteId += 1
+          return state.counters.noteId
+        },
+        onFolderNotFound: () =>
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
+        persistEntity: note =>
+          persistNote(paths, state, note, undefined, {
+            allowRenameOnConflict: true,
+          }),
       })
-      notes.push(note)
+
       saveNotesState(paths, state)
 
-      return { id: noteId }
+      return result
     },
 
     updateNote(id: number, input: NoteUpdateInput): NoteUpdateResult {
@@ -283,18 +285,18 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, noteId)
       const tag = state.tags.find(t => t.id === tagId)
+      const result = addTagToEntity({
+        entity: note,
+        onUpdated: note => writeNoteToFile(paths, note),
+        tagExists: !!tag,
+        tagId,
+      })
 
-      if (!note || !tag) {
-        return { noteFound: !!note, notFound: false, tagFound: !!tag }
+      return {
+        noteFound: result.entityFound,
+        notFound: false,
+        tagFound: result.tagFound,
       }
-
-      if (!note.tags.includes(tagId)) {
-        note.tags.push(tagId)
-        note.updatedAt = Date.now()
-        writeNoteToFile(paths, note)
-      }
-
-      return { noteFound: true, notFound: false, tagFound: true }
     },
 
     deleteTagFromNote(

@@ -100,6 +100,62 @@ export function getNextFolderOrder<T extends FolderLike>(
   )
 }
 
+export function sortFoldersForTree<T extends FolderLike>(folders: T[]): T[] {
+  const folderByParent = new Map<number | null, T[]>()
+  const knownFolderIds = new Set<number>(folders.map(folder => folder.id))
+
+  folders.forEach((folder) => {
+    const parentId
+      = folder.parentId !== null && knownFolderIds.has(folder.parentId)
+        ? folder.parentId
+        : null
+    const siblings = folderByParent.get(parentId) || []
+
+    siblings.push(folder)
+    folderByParent.set(parentId, siblings)
+  })
+
+  folderByParent.forEach((siblings) => {
+    siblings.sort((a, b) => {
+      if (a.orderIndex !== b.orderIndex) {
+        return a.orderIndex - b.orderIndex
+      }
+
+      return a.id - b.id
+    })
+  })
+
+  const orderedFolders: T[] = []
+  const visitedFolderIds = new Set<number>()
+
+  const visitChildren = (parentId: number | null): void => {
+    const children = folderByParent.get(parentId) || []
+    children.forEach((child) => {
+      if (visitedFolderIds.has(child.id)) {
+        return
+      }
+
+      visitedFolderIds.add(child.id)
+      orderedFolders.push(child)
+      visitChildren(child.id)
+    })
+  }
+
+  visitChildren(null)
+
+  folders.forEach((folder) => {
+    if (visitedFolderIds.has(folder.id)) {
+      return
+    }
+
+    visitedFolderIds.add(folder.id)
+    orderedFolders.push(folder)
+    visitChildren(folder.id)
+  })
+
+  return orderedFolders
+}
+
 export function collectDescendantIds<T extends FolderLike>(
   folders: T[],
   parentId: number,

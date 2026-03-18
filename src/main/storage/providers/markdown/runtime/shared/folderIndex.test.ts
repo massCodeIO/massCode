@@ -7,6 +7,7 @@ import {
   findFolderByIdPure,
   getFolderSiblings,
   getNextFolderOrder,
+  sortFoldersForTree,
 } from './folderIndex'
 
 function folder(
@@ -130,6 +131,59 @@ describe('getNextFolderOrder', () => {
   it('scopes to correct parent', () => {
     const folders = [folder(1, 'Root', null, 10), folder(2, 'Child', 1, 2)]
     expect(getNextFolderOrder(folders, 1)).toBe(3)
+  })
+})
+
+describe('sortFoldersForTree', () => {
+  it('returns empty array for empty input', () => {
+    expect(sortFoldersForTree([])).toEqual([])
+  })
+
+  it('sorts siblings by orderIndex', () => {
+    const folders = [
+      folder(1, 'B', null, 2),
+      folder(2, 'A', null, 0),
+      folder(3, 'C', null, 1),
+    ]
+    const sorted = sortFoldersForTree(folders)
+    expect(sorted.map(f => f.id)).toEqual([2, 3, 1])
+  })
+
+  it('uses id as tiebreaker for equal orderIndex', () => {
+    const folders = [
+      folder(3, 'C', null, 0),
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 0),
+    ]
+    const sorted = sortFoldersForTree(folders)
+    expect(sorted.map(f => f.id)).toEqual([1, 2, 3])
+  })
+
+  it('produces depth-first order', () => {
+    const folders = [
+      folder(1, 'Root1', null, 0),
+      folder(2, 'Root2', null, 1),
+      folder(3, 'Child1-of-Root1', 1, 0),
+      folder(4, 'Child1-of-Root2', 2, 0),
+    ]
+    const sorted = sortFoldersForTree(folders)
+    expect(sorted.map(f => f.id)).toEqual([1, 3, 2, 4])
+  })
+
+  it('treats orphaned folders as roots', () => {
+    const folders = [folder(1, 'Root', null, 0), folder(2, 'Orphan', 999, 0)]
+    const sorted = sortFoldersForTree(folders)
+    expect(sorted.map(f => f.id)).toEqual([1, 2])
+    expect(sorted).toHaveLength(2)
+  })
+
+  it('handles circular references without infinite loop', () => {
+    const folders = [
+      { id: 1, name: 'A', parentId: 2, orderIndex: 0 },
+      { id: 2, name: 'B', parentId: 1, orderIndex: 0 },
+    ]
+    const sorted = sortFoldersForTree(folders)
+    expect(sorted).toHaveLength(2)
   })
 })
 

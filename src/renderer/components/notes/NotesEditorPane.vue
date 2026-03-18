@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { useNotes, useNotesApp } from '@/composables'
+import { useNotes, useNotesApp, useNoteUpdate } from '@/composables'
 import { i18n } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const {
   selectedNote,
-  updateNote,
   updateNoteContent,
   isNotesLoading,
   isNotesLoadingVisible,
 } = useNotes()
+const { addToUpdateQueue } = useNoteUpdate()
 const { isFocusedNoteName } = useNotesApp()
 
 const name = computed({
@@ -18,7 +18,7 @@ const name = computed({
   },
   set(v: string) {
     if (selectedNote.value) {
-      updateNote(selectedNote.value.id, { name: v })
+      addToUpdateQueue(selectedNote.value.id, { name: v })
     }
   },
 })

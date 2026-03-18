@@ -4,7 +4,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultNotesState } from './state'
-import { syncNotesFoldersWithDisk } from './sync'
+import { syncNotesFoldersWithDisk, syncNotesWithDisk } from './sync'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -95,5 +95,48 @@ describe('syncNotesFoldersWithDisk', () => {
 
     expect(state.folders).toHaveLength(1)
     expect(state.folders[0].isOpen).toBe(0)
+  })
+})
+
+describe('syncNotesWithDisk', () => {
+  it('includes notes from .masscode/inbox after sync', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'inbox-note.md'),
+      '---\nid: 1\nname: inbox-note\n---\n',
+      'utf8',
+    )
+    const state = createDefaultNotesState()
+    syncNotesWithDisk(paths, state)
+    expect(state.notes).toHaveLength(1)
+    expect(state.notes[0].filePath).toBe('.masscode/inbox/inbox-note.md')
+  })
+
+  it('includes notes from .masscode/trash after sync', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.trashDirPath)
+    fs.writeFileSync(
+      path.join(paths.trashDirPath, 'deleted-note.md'),
+      '---\nid: 2\nname: deleted-note\n---\n',
+      'utf8',
+    )
+    const state = createDefaultNotesState()
+    syncNotesWithDisk(paths, state)
+    expect(state.notes).toHaveLength(1)
+    expect(state.notes[0].filePath).toBe('.masscode/trash/deleted-note.md')
+  })
+
+  it('does not include files from .git', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(path.join(paths.notesRoot, '.git'))
+    fs.writeFileSync(
+      path.join(paths.notesRoot, '.git', 'HEAD.md'),
+      'not a note',
+      'utf8',
+    )
+    const state = createDefaultNotesState()
+    syncNotesWithDisk(paths, state)
+    expect(state.notes).toHaveLength(0)
   })
 })

@@ -13,9 +13,12 @@ import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { validateEntryName } from '../../runtime/validation'
 import {
+  INBOX_DIR_NAME,
+  META_DIR_NAME,
   NOTES_INBOX_RELATIVE_PATH,
   NOTES_TRASH_RELATIVE_PATH,
   notesRuntimeRef,
+  TRASH_DIR_NAME,
 } from './constants'
 import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
 
@@ -277,11 +280,7 @@ export function listNoteMarkdownFiles(notesRoot: string): string[] {
 
     for (const entry of entries) {
       const entryName = entry.name
-
-      // Skip hidden files/directories
-      if (entryName.startsWith('.')) {
-        continue
-      }
+      const isHiddenEntry = entryName.startsWith('.')
 
       const entryAbsolutePath = path.join(dir, entryName)
       const entryRelativePath = relativeDir
@@ -289,9 +288,24 @@ export function listNoteMarkdownFiles(notesRoot: string): string[] {
         : entryName
 
       if (entry.isDirectory()) {
+        // At root level, explicitly enter .masscode for inbox/trash
+        if (relativeDir === '' && entryName === META_DIR_NAME) {
+          const inboxPath = path.join(entryAbsolutePath, INBOX_DIR_NAME)
+          const trashPath = path.join(entryAbsolutePath, TRASH_DIR_NAME)
+
+          walk(inboxPath, `${entryRelativePath}/${INBOX_DIR_NAME}`)
+          walk(trashPath, `${entryRelativePath}/${TRASH_DIR_NAME}`)
+          continue
+        }
+
+        // Skip all other hidden directories
+        if (isHiddenEntry) {
+          continue
+        }
+
         walk(entryAbsolutePath, entryRelativePath)
       }
-      else if (entryName.toLowerCase().endsWith('.md')) {
+      else if (!isHiddenEntry && entryName.toLowerCase().endsWith('.md')) {
         files.push(entryRelativePath)
       }
     }

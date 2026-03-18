@@ -160,7 +160,7 @@ export function syncNotesFoldersWithDisk(
   state.folders = nextFolders
 }
 
-function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
+export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
   const mdFiles = listNoteMarkdownFiles(paths.notesRoot)
 
   // Build existing path -> id map from state

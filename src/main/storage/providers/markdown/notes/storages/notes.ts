@@ -12,6 +12,7 @@ import type {
 import type { MarkdownNote, NotesState } from '../runtime/types'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import {
   addTagToEntity,
   applyEntityUpdateFields,
@@ -74,43 +75,31 @@ export function createNotesNotesStorage(): NotesStorage {
   return {
     getNotes(query: NotesQueryInput): NoteRecord[] {
       const { state, notes } = getCache()
-
-      let filtered = notes
-
-      if (query.isDeleted !== undefined) {
-        filtered = filtered.filter(
-          n => n.isDeleted === normalizeFlag(query.isDeleted),
-        )
-      }
-      else {
-        filtered = filtered.filter(n => n.isDeleted === 0)
-      }
-
-      if (query.folderId !== undefined) {
-        filtered = filtered.filter(n => n.folderId === query.folderId)
-      }
-
-      if (query.isInbox !== undefined && query.isInbox) {
-        filtered = filtered.filter(
-          n => n.folderId === null && n.isDeleted === 0,
-        )
-      }
-
-      if (query.isFavorites !== undefined && query.isFavorites) {
-        filtered = filtered.filter(n => n.isFavorites === 1)
-      }
-
-      if (query.tagId !== undefined) {
-        filtered = filtered.filter(n => n.tags.includes(query.tagId!))
-      }
-
-      if (query.search) {
-        const matchedIds = getNoteIdsBySearchQuery(notes, query.search)
-        filtered = filtered.filter(n => matchedIds.has(n.id))
-      }
-
-      const order = query.order === 'ASC' ? 1 : -1
-      filtered.sort((a, b) => (a.updatedAt - b.updatedAt) * order)
+      const matchedIds = query.search
+        ? getNoteIdsBySearchQuery(notes, query.search)
+        : null
+      const filtered = filterAndSortByQuery({
+        entities: notes,
+        filters: [
+          note => !matchedIds || matchedIds.has(note.id),
+          (note, query) =>
+            query.isDeleted !== undefined
+              ? note.isDeleted === normalizeFlag(query.isDeleted)
+              : note.isDeleted === 0,
+          (note, query) =>
+            query.folderId === undefined || note.folderId === query.folderId,
+          (note, query) =>
+            !(query.isInbox !== undefined && query.isInbox)
+            || (note.folderId === null && note.isDeleted === 0),
+          (note, query) =>
+            !(query.isFavorites !== undefined && query.isFavorites)
+            || note.isFavorites === 1,
+          (note, query) =>
+            query.tagId === undefined || note.tags.includes(query.tagId),
+        ],
+        getSortValue: note => note.updatedAt,
+        query,
+      })
 
       return filtered.map(n => createNoteRecord(n, state))
     },

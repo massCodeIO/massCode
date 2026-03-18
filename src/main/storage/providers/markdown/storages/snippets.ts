@@ -27,6 +27,7 @@ import {
   validateEntryName,
   writeSnippetToFile,
 } from '../runtime'
+import { filterAndSortByQuery } from '../runtime/shared/entityQuery'
 import {
   addTagToEntity,
   applyEntityUpdateFields,
@@ -46,50 +47,22 @@ export function createSnippetsStorage(): SnippetsStorage {
       const searchSnippetIds = query.search?.trim()
         ? getSnippetIdsBySearchQuery(snippets, query.search)
         : null
-      const normalizedOrder = query.order || 'DESC'
-
-      const filteredSnippets = snippets.filter((snippet) => {
-        if (searchSnippetIds && !searchSnippetIds.has(snippet.id)) {
-          return false
-        }
-
-        if (query.folderId && snippet.folderId !== query.folderId) {
-          return false
-        }
-
-        if (query.isInbox && snippet.folderId !== null) {
-          return false
-        }
-
-        if (query.tagId && !snippet.tags.includes(query.tagId)) {
-          return false
-        }
-
-        if (query.isFavorites && snippet.isFavorites !== 1) {
-          return false
-        }
-
-        if (query.isDeleted) {
-          if (snippet.isDeleted !== 1) {
-            return false
-          }
-        }
-        else if (snippet.isDeleted !== 0) {
-          return false
-        }
-
-        return true
-      })
-
-      const result = filteredSnippets
-        .map(snippet => createSnippetRecord(snippet, state))
-        .sort((a, b) => {
-          if (normalizedOrder === 'ASC') {
-            return a.createdAt - b.createdAt
-          }
-
-          return b.createdAt - a.createdAt
-        })
+      const result = filterAndSortByQuery({
+        entities: snippets,
+        filters: [
+          snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
+          (snippet, query) =>
+            !query.folderId || snippet.folderId === query.folderId,
+          (snippet, query) => !query.isInbox || snippet.folderId === null,
+          (snippet, query) =>
+            !query.tagId || snippet.tags.includes(query.tagId),
+          (snippet, query) => !query.isFavorites || snippet.isFavorites === 1,
+          (snippet, query) =>
+            query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
+        ],
+        getSortValue: snippet => snippet.createdAt,
+        query,
+      }).map(snippet => createSnippetRecord(snippet, state))
 
       return result
     },

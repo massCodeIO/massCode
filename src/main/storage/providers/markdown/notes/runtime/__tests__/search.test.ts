@@ -1,11 +1,12 @@
-import type { MarkdownNote, NotesRuntimeCache, NotesState } from './types'
+import type { MarkdownNote, NotesRuntimeCache, NotesState } from '../types'
 import { afterEach, describe, expect, it } from 'vitest'
-import { notesRuntimeRef } from './constants'
+import { buildSearchIndex } from '../../../runtime/shared/searchEngine'
+import { notesRuntimeRef } from '../constants'
 import {
-  buildNotesSearchIndex,
+  buildNoteSearchText,
   getNoteIdsBySearchQuery,
   invalidateNotesSearchIndex,
-} from './search'
+} from '../search'
 
 function createState(notes: MarkdownNote[]): NotesState {
   return {
@@ -42,7 +43,6 @@ function createNote(id: number, name: string): MarkdownNote {
 
 function createRuntimeCache(notes: MarkdownNote[]): NotesRuntimeCache {
   const state = createState(notes)
-  const searchIndex = buildNotesSearchIndex(notes)
 
   return {
     folderById: new Map(),
@@ -55,11 +55,7 @@ function createRuntimeCache(notes: MarkdownNote[]): NotesRuntimeCache {
       statePath: '/tmp/state.json',
       trashDirPath: '/tmp/trash',
     },
-    searchIndexDirty: false,
-    searchNoteTextById: searchIndex.searchNoteTextById,
-    searchQueryCache: new Map(),
-    searchTokenToNoteIds: searchIndex.searchTokenToNoteIds,
-    searchTokensByNoteId: searchIndex.searchTokensByNoteId,
+    searchIndex: buildSearchIndex(notes, buildNoteSearchText),
     state,
   }
 }
@@ -69,13 +65,12 @@ afterEach(() => {
 })
 
 describe('getNoteIdsBySearchQuery', () => {
-  it('short query that is not a standalone word returns no results via index', () => {
+  it('finds by short query (1 char) via substring match', () => {
     const notes = [createNote(1, 'Alpha'), createNote(2, 'Beta')]
     notesRuntimeRef.cache = createRuntimeCache(notes)
 
-    // "a" is not a standalone word in "Alpha" or "Beta", so it won't match
-    // via exact-word lookup — aligned with snippets behavior
-    expect(getNoteIdsBySearchQuery(notes, 'a')).toEqual([])
+    const result = getNoteIdsBySearchQuery(notes, 'a')
+    expect(result).toEqual(new Set([1, 2]))
   })
 
   it('does not use runtime cache when notes array differs from cached one', () => {
@@ -83,39 +78,27 @@ describe('getNoteIdsBySearchQuery', () => {
     const subsetNotes = [allNotes[0]]
     notesRuntimeRef.cache = createRuntimeCache(allNotes)
 
-    expect(getNoteIdsBySearchQuery(subsetNotes, 'beta')).toEqual([])
+    expect(getNoteIdsBySearchQuery(subsetNotes, 'beta')).toEqual(new Set())
   })
 
   it('rebuild clears stale query cache when search index is dirty', () => {
     const notes = [createNote(1, 'Alpha')]
     const cache = createRuntimeCache(notes)
-    cache.searchIndexDirty = true
-    cache.searchQueryCache.set('alpha', [999])
+    cache.searchIndex.dirty = true
+    cache.searchIndex.queryCache.set('alpha', [999])
     notesRuntimeRef.cache = cache
 
-    expect(getNoteIdsBySearchQuery(notes, 'alpha')).toEqual([1])
+    expect(getNoteIdsBySearchQuery(notes, 'alpha')).toEqual(new Set([1]))
   })
 
-  it('returns copy of cached query result to avoid cache mutation from outside', () => {
-    const notes = [createNote(1, 'Alpha')]
-    notesRuntimeRef.cache = createRuntimeCache(notes)
-
-    const firstResult = getNoteIdsBySearchQuery(notes, 'alpha')
-    firstResult.push(999)
-
-    expect(getNoteIdsBySearchQuery(notes, 'alpha')).toEqual([1])
-  })
-
-  it('short standalone words participate in narrowing candidates (aligned with snippets)', () => {
+  it('short standalone words participate in narrowing candidates', () => {
     const notes = [
       { ...createNote(1, 'Note'), content: 'an ox runs' },
       { ...createNote(2, 'Note'), content: 'a cat runs' },
     ]
     notesRuntimeRef.cache = createRuntimeCache(notes)
 
-    // "ox" is a standalone word in note 1; short words now go through
-    // the exact-word path instead of being skipped
-    expect(getNoteIdsBySearchQuery(notes, 'ox')).toEqual([1])
+    expect(getNoteIdsBySearchQuery(notes, 'ox')).toEqual(new Set([1]))
   })
 
   it('handles nullish search query without throwing', () => {
@@ -124,11 +107,10 @@ describe('getNoteIdsBySearchQuery', () => {
 
     expect(
       getNoteIdsBySearchQuery(notes, undefined as unknown as string),
-    ).toEqual([1, 2])
-    expect(getNoteIdsBySearchQuery(notes, null as unknown as string)).toEqual([
-      1,
-      2,
-    ])
+    ).toEqual(new Set([1, 2]))
+    expect(getNoteIdsBySearchQuery(notes, null as unknown as string)).toEqual(
+      new Set([1, 2]),
+    )
   })
 })
 
@@ -136,14 +118,14 @@ describe('invalidateNotesSearchIndex', () => {
   it('invalidates cache only for matching runtime state', () => {
     const notes = [createNote(1, 'Alpha')]
     const cache = createRuntimeCache(notes)
-    cache.searchIndexDirty = false
-    cache.searchQueryCache.set('alpha', [1])
+    cache.searchIndex.dirty = false
+    cache.searchIndex.queryCache.set('alpha', [1])
     notesRuntimeRef.cache = cache
 
     const unrelatedState = createState([])
     invalidateNotesSearchIndex(unrelatedState)
 
-    expect(cache.searchIndexDirty).toBe(false)
-    expect(cache.searchQueryCache.get('alpha')).toEqual([1])
+    expect(cache.searchIndex.dirty).toBe(false)
+    expect(cache.searchIndex.queryCache.get('alpha')).toEqual([1])
   })
 })

@@ -5,19 +5,18 @@ import type {
   Paths,
   SaveStateOptions,
 } from './types'
-import path from 'node:path'
-import process from 'node:process'
 import fs from 'fs-extra'
-import {
-  pendingStateWriteByPath,
-  STATE_WRITE_DEBOUNCE_MS,
-  stateContentCacheByPath,
-  stateFlushTimerByPath,
-} from './constants'
+import { stateContentCacheByPath } from './constants'
 import { normalizeFlag, normalizeFolderUiState } from './normalizers'
 import { invalidateRuntimeSearchIndex } from './search'
+import {
+  flushPendingStateWriteByPath,
+  flushPendingStateWrites,
+  registerStateWriteHooks,
+  scheduleStateFlush,
+} from './shared/stateWriter'
 
-let stateWriteHooksRegistered = false
+export { flushPendingStateWrites }
 
 export function createDefaultState(): MarkdownState {
   return {
@@ -48,74 +47,8 @@ export function syncFolderUiWithFolders(state: MarkdownState): void {
   state.folderUi = nextFolderUi
 }
 
-function getPersistedStateContent(statePath: string): string {
-  const cachedStateContent = stateContentCacheByPath.get(statePath)
-  if (cachedStateContent !== undefined) {
-    return cachedStateContent
-  }
-
-  const persistedStateContent = fs.pathExistsSync(statePath)
-    ? fs.readFileSync(statePath, 'utf8')
-    : ''
-
-  stateContentCacheByPath.set(statePath, persistedStateContent)
-  return persistedStateContent
-}
-
-function flushPendingStateWriteByPath(statePath: string): void {
-  const pendingStateContent = pendingStateWriteByPath.get(statePath)
-  if (pendingStateContent === undefined) {
-    return
-  }
-
-  const flushTimer = stateFlushTimerByPath.get(statePath)
-  if (flushTimer) {
-    clearTimeout(flushTimer)
-    stateFlushTimerByPath.delete(statePath)
-  }
-
-  const persistedStateContent = getPersistedStateContent(statePath)
-  if (persistedStateContent !== pendingStateContent) {
-    fs.ensureDirSync(path.dirname(statePath))
-    fs.writeFileSync(statePath, pendingStateContent, 'utf8')
-  }
-
-  stateContentCacheByPath.set(statePath, pendingStateContent)
-  pendingStateWriteByPath.delete(statePath)
-}
-
-function scheduleStateFlush(statePath: string): void {
-  const flushTimer = stateFlushTimerByPath.get(statePath)
-  if (flushTimer) {
-    clearTimeout(flushTimer)
-  }
-
-  const nextFlushTimer = setTimeout(
-    () => flushPendingStateWriteByPath(statePath),
-    STATE_WRITE_DEBOUNCE_MS,
-  )
-  stateFlushTimerByPath.set(statePath, nextFlushTimer)
-}
-
 export function flushPendingStateWrite(paths: Paths): void {
   flushPendingStateWriteByPath(paths.statePath)
-}
-
-export function flushPendingStateWrites(): void {
-  const pathsWithPendingWrites = [...pendingStateWriteByPath.keys()]
-  pathsWithPendingWrites.forEach(statePath =>
-    flushPendingStateWriteByPath(statePath),
-  )
-}
-
-function registerStateWriteHooks(): void {
-  if (stateWriteHooksRegistered) {
-    return
-  }
-
-  stateWriteHooksRegistered = true
-  process.once('beforeExit', flushPendingStateWrites)
-  process.once('exit', flushPendingStateWrites)
 }
 
 export function ensureStateFile(paths: Paths): void {
@@ -185,23 +118,10 @@ export function saveState(
   }
 
   const nextContent = `${JSON.stringify(persistedState, null, 2)}\n`
-  const statePath = paths.statePath
-  const pendingContent = pendingStateWriteByPath.get(statePath)
-  if (pendingContent === nextContent) {
-    return
-  }
 
-  const persistedContent = getPersistedStateContent(statePath)
-  if (persistedContent === nextContent && pendingContent === undefined) {
-    return
-  }
-
-  pendingStateWriteByPath.set(statePath, nextContent)
-
-  if (options?.immediate) {
-    flushPendingStateWrite(paths)
-    return
-  }
-
-  scheduleStateFlush(statePath)
+  scheduleStateFlush(
+    paths.statePath,
+    nextContent,
+    options?.immediate ? { immediate: true } : undefined,
+  )
 }

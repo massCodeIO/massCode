@@ -54,7 +54,7 @@ const content = computed({
         </div>
       </div>
       <div class="pt-1">
-        <NotesEditorPaneNotesEditorTags />
+        <NotesEditorTags />
       </div>
     </div>
     <div class="min-h-0 flex-1">

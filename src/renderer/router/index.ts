@@ -191,7 +191,7 @@ const routes = [
   {
     path: '/notes',
     name: RouterName.notesSpace,
-    component: () => import('@/views/NotesSpace.vue'),
+    component: () => import('@/components/notes/NotesSpace.vue'),
   },
   {
     path: '/dev',

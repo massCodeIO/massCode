@@ -26,7 +26,7 @@ const lightTheme = EditorView.theme({
   },
   '.cm-content': {
     fontFamily: 'var(--font-sans)',
-    padding: '16px 24px',
+    padding: '4px 16px',
     caretColor: 'var(--foreground)',
   },
   '.cm-cursor': {

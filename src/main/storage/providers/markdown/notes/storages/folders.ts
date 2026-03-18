@@ -12,6 +12,7 @@ import { getVaultPath } from '../../runtime/paths'
 import {
   buildFolderTree,
   collectDescendantIds,
+  reorderFolderSiblings,
   sortFoldersForTree,
 } from '../../runtime/shared/folderIndex'
 import { throwStorageError, validateEntryName } from '../../runtime/validation'
@@ -181,6 +182,17 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         folder.name = name
       }
 
+      const currentParentId = folder.parentId
+      const currentOrderIndex = folder.orderIndex
+      const targetParentId
+        = input.parentId !== undefined
+          ? (input.parentId ?? null)
+          : folder.parentId
+      const targetOrderIndex
+        = input.orderIndex !== undefined
+          ? normalizeNumber(input.orderIndex, folder.orderIndex)
+          : folder.orderIndex
+
       if (input.parentId !== undefined) {
         const newParentId = input.parentId ?? null
 
@@ -199,14 +211,24 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
           }
         }
 
-        if (newParentId !== folder.parentId) {
-          if (input.name === undefined) {
-            assertUniqueSiblingName(state, newParentId, folder.name, id)
-          }
-
-          pathChanged = true
-          folder.parentId = newParentId
+        if (newParentId !== folder.parentId && input.name === undefined) {
+          assertUniqueSiblingName(state, newParentId, folder.name, id)
         }
+      }
+
+      reorderFolderSiblings(
+        state.folders,
+        id,
+        currentParentId,
+        currentOrderIndex,
+        targetParentId,
+        targetOrderIndex,
+      )
+      folder.parentId = targetParentId
+      folder.orderIndex = targetOrderIndex
+
+      if (targetParentId !== currentParentId) {
+        pathChanged = true
       }
 
       if (input.icon !== undefined) {
@@ -215,13 +237,6 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
       if (input.isOpen !== undefined) {
         folder.isOpen = normalizeFlag(input.isOpen)
-      }
-
-      if (input.orderIndex !== undefined) {
-        folder.orderIndex = normalizeNumber(
-          input.orderIndex,
-          folder.orderIndex,
-        )
       }
 
       folder.updatedAt = now

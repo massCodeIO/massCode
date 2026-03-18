@@ -1,20 +1,6 @@
-import type {
-  NotesFolderUIState,
-  NotesPaths,
-  NotesState,
-  NotesStateFile,
-} from './types'
-import fs from 'fs-extra'
-import { stateContentCacheByPath } from '../../runtime/constants'
-import {
-  normalizeFlag,
-  normalizeFolderUiState,
-} from '../../runtime/normalizers'
-import {
-  flushPendingStateWriteByPath,
-  registerStateWriteHooks,
-  scheduleStateFlush,
-} from '../../runtime/shared/stateWriter'
+import type { NotesPaths, NotesState, NotesStateFile } from './types'
+import { createStateAdapter } from '../../runtime/shared/stateAdapter'
+import { syncFolderUiWithFolders } from '../../runtime/shared/stateUtils'
 import { invalidateNotesSearchIndex } from './search'
 
 export function createDefaultNotesState(): NotesState {
@@ -32,93 +18,46 @@ export function createDefaultNotesState(): NotesState {
   }
 }
 
-export function syncNotesFolderUiWithFolders(state: NotesState): void {
-  const nextFolderUi: Record<string, NotesFolderUIState> = {}
-
-  state.folders.forEach((folder) => {
-    const isOpen = normalizeFlag(folder.isOpen)
-    folder.isOpen = isOpen
-    nextFolderUi[String(folder.id)] = { isOpen }
-  })
-
-  state.folderUi = nextFolderUi
-}
-
-export function ensureNotesStateFile(paths: NotesPaths): void {
-  registerStateWriteHooks()
-
-  fs.ensureDirSync(paths.notesRoot)
-  fs.ensureDirSync(paths.metaDirPath)
-  fs.ensureDirSync(paths.inboxDirPath)
-  fs.ensureDirSync(paths.trashDirPath)
-
-  if (!fs.pathExistsSync(paths.statePath)) {
-    const defaultStateContent = `${JSON.stringify(createDefaultNotesState(), null, 2)}\n`
-    fs.writeFileSync(paths.statePath, defaultStateContent, 'utf8')
-    stateContentCacheByPath.set(paths.statePath, defaultStateContent)
-  }
-}
-
-export function loadNotesState(paths: NotesPaths): NotesState {
-  ensureNotesStateFile(paths)
-
-  const defaultState = createDefaultNotesState()
-  const rawState = fs.readJSONSync(paths.statePath) as NotesStateFile
-  const legacyFolders = Array.isArray(rawState.folders) ? rawState.folders : []
-  const folderUi = normalizeFolderUiState(rawState.folderUi)
-
-  if (Object.keys(folderUi).length === 0 && legacyFolders.length) {
-    legacyFolders.forEach((folder) => {
-      folderUi[String(folder.id)] = {
-        isOpen: normalizeFlag(folder.isOpen),
-      }
-    })
-  }
-
-  return {
-    counters: {
-      ...defaultState.counters,
-      ...rawState.counters,
-    },
-    folderUi,
-    folders: legacyFolders,
-    notes: Array.isArray(rawState.notes) ? rawState.notes : [],
-    tags: Array.isArray(rawState.tags) ? rawState.tags : [],
-    version:
-      typeof rawState.version === 'number'
-        ? rawState.version
-        : defaultState.version,
-  }
-}
-
-export function saveNotesState(
-  paths: NotesPaths,
-  state: NotesState,
-  options?: { immediate?: boolean },
-): void {
-  syncNotesFolderUiWithFolders(state)
-  invalidateNotesSearchIndex(state)
-
-  const nextVersion = Math.max(state.version, 1)
-  state.version = nextVersion
-
-  const persistedState: NotesStateFile = {
+const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
+  createDefaultState: createDefaultNotesState,
+  minVersion: 1,
+  getDirs: paths => [
+    paths.notesRoot,
+    paths.metaDirPath,
+    paths.inboxDirPath,
+    paths.trashDirPath,
+  ],
+  toPersistedState: state => ({
     counters: state.counters,
     folderUi: state.folderUi,
     notes: state.notes,
     tags: state.tags,
-    version: nextVersion,
-  }
+    version: state.version,
+  }),
+  parseRawState: (raw, defaults) => {
+    const legacyFolders = Array.isArray(raw.folders) ? raw.folders : []
 
-  const nextContent = `${JSON.stringify(persistedState, null, 2)}\n`
+    return {
+      counters: { ...defaults.counters, ...raw.counters },
+      folderUi: raw.folderUi ?? {},
+      folders: legacyFolders,
+      notes: Array.isArray(raw.notes) ? raw.notes : [],
+      tags: Array.isArray(raw.tags) ? raw.tags : [],
+      version: typeof raw.version === 'number' ? raw.version : defaults.version,
+    }
+  },
+  onBeforeSave: (state) => {
+    syncFolderUiWithFolders(state)
+    invalidateNotesSearchIndex(state)
+  },
+})
 
-  scheduleStateFlush(
-    paths.statePath,
-    nextContent,
-    options?.immediate ? { immediate: true } : undefined,
-  )
-}
+export const {
+  ensureStateFile: ensureNotesStateFile,
+  loadState: loadNotesState,
+  saveState: saveNotesState,
+} = adapter
 
 export function flushPendingNotesStateWrite(paths: NotesPaths): void {
-  flushPendingStateWriteByPath(paths.statePath)
+  adapter.flushPendingWrite(paths)
 }

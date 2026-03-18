@@ -1,4 +1,3 @@
-import type { FolderRecord } from '../../../contracts'
 import type { MarkdownFolderUIState } from './types'
 
 export function normalizeNumber(value: unknown, fallback = 0): number {
@@ -62,8 +61,14 @@ export function normalizeFolderUiState(
   return normalized
 }
 
-export function normalizeFolderOrderIndices(folders: FolderRecord[]): void {
-  const childrenByParent = new Map<number | null, FolderRecord[]>()
+export function normalizeFolderOrderIndices<
+  T extends {
+    id: number
+    parentId: number | null
+    orderIndex: number
+  },
+>(folders: T[]): void {
+  const childrenByParent = new Map<number | null, T[]>()
 
   for (const folder of folders) {
     const siblings = childrenByParent.get(folder.parentId)

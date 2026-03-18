@@ -15,22 +15,16 @@ import {
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
 } from './constants'
-import {
-  normalizeFlag,
-  normalizeFolderOrderIndices,
-  normalizeNumber,
-  normalizePositiveInteger,
-} from './normalizers'
 import { readFolderMetadata, writeFolderMetadataFile } from './parser'
 import {
   buildFolderPathMap,
   buildPathToFolderIdMap,
-  depthOfRelativePath,
   findFolderById,
   normalizeDirectoryPath,
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { syncFoldersStateFromDisk } from './shared/folderSync'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import {
   getStateSnippetIndexByFilePath,
@@ -94,119 +88,29 @@ export function listUserFolders(
 
 function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
   const diskFolders = listUserFolders(paths)
-  const oldFoldersById = new Map<number, FolderRecord>(
-    state.folders.map(folder => [folder.id, folder]),
+  syncFoldersStateFromDisk(
+    state,
+    diskFolders,
+    ({ base, metadata, previousFolder }) => {
+      const defaultLanguage
+        = typeof metadata.defaultLanguage === 'string'
+          && metadata.defaultLanguage.trim()
+          ? metadata.defaultLanguage
+          : previousFolder?.defaultLanguage || 'plain_text'
+      const icon
+        = metadata.icon === null
+          ? null
+          : typeof metadata.icon === 'string'
+            ? metadata.icon
+            : (previousFolder?.icon ?? null)
+
+      return {
+        ...base,
+        defaultLanguage,
+        icon,
+      }
+    },
   )
-  const oldFolderPathMap = buildFolderPathMap(state)
-  const oldFolderIdByPath = new Map<string, number>()
-  oldFolderPathMap.forEach((folderPath, folderId) => {
-    oldFolderIdByPath.set(folderPath, folderId)
-  })
-
-  const orderedDiskFolders = [...diskFolders].sort((a, b) => {
-    const depthA = depthOfRelativePath(a.path)
-    const depthB = depthOfRelativePath(b.path)
-
-    if (depthA !== depthB) {
-      return depthA - depthB
-    }
-
-    return a.path.localeCompare(b.path)
-  })
-
-  const nextFoldersState: FolderRecord[] = []
-  const pathToFolderId = new Map<string, number>()
-  const usedFolderIds = new Set<number>()
-  let nextFolderId = Math.max(
-    state.counters.folderId,
-    ...state.folders.map(folder => folder.id),
-  )
-
-  for (const diskFolder of orderedDiskFolders) {
-    const metadata = diskFolder.metadata
-    const folderPath = diskFolder.path
-    const parentPath = normalizeDirectoryPath(path.posix.dirname(folderPath))
-    const parentId = parentPath ? pathToFolderId.get(parentPath) || null : null
-
-    const metadataFolderId = normalizePositiveInteger(
-      metadata.id ?? metadata.masscode_id,
-    )
-    const pathFolderId = oldFolderIdByPath.get(folderPath) || null
-
-    let folderId
-      = metadataFolderId && !usedFolderIds.has(metadataFolderId)
-        ? metadataFolderId
-        : null
-
-    if (!folderId && pathFolderId && !usedFolderIds.has(pathFolderId)) {
-      folderId = pathFolderId
-    }
-
-    if (!folderId) {
-      nextFolderId += 1
-      folderId = nextFolderId
-    }
-
-    usedFolderIds.add(folderId)
-    pathToFolderId.set(folderPath, folderId)
-
-    const previousFolder = oldFoldersById.get(folderId)
-    const now = Date.now()
-    const createdAt = normalizeNumber(
-      metadata.createdAt,
-      previousFolder?.createdAt ?? now,
-    )
-    const updatedAt = normalizeNumber(
-      metadata.updatedAt,
-      previousFolder?.updatedAt ?? createdAt,
-    )
-    const defaultLanguage
-      = typeof metadata.defaultLanguage === 'string'
-        && metadata.defaultLanguage.trim()
-        ? metadata.defaultLanguage
-        : previousFolder?.defaultLanguage || 'plain_text'
-    const icon
-      = metadata.icon === null
-        ? null
-        : typeof metadata.icon === 'string'
-          ? metadata.icon
-          : (previousFolder?.icon ?? null)
-    const fallbackOrderIndex
-      = nextFoldersState
-        .filter(folder => folder.parentId === parentId)
-        .reduce(
-          (maxOrder, folder) => Math.max(maxOrder, folder.orderIndex),
-          -1,
-        ) + 1
-    const orderIndex = Math.max(
-      0,
-      Math.trunc(
-        normalizeNumber(
-          metadata.orderIndex,
-          previousFolder?.orderIndex ?? fallbackOrderIndex,
-        ),
-      ),
-    )
-
-    nextFoldersState.push({
-      createdAt,
-      defaultLanguage,
-      icon,
-      id: folderId,
-      isOpen: normalizeFlag(
-        state.folderUi[String(folderId)]?.isOpen,
-        previousFolder?.isOpen ?? 0,
-      ),
-      name: path.posix.basename(folderPath),
-      orderIndex,
-      parentId,
-      updatedAt,
-    })
-  }
-
-  state.folders = nextFoldersState
-  state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
-  normalizeFolderOrderIndices(state.folders)
   syncFolderUiWithFolders(state)
 }
 

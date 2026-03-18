@@ -3,7 +3,7 @@ import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
-import { LibraryFilter } from '../types'
+import { LibraryFilter } from '../../types'
 import { useNotesApp } from './useNotesApp'
 
 const {

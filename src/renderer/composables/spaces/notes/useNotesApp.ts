@@ -1,4 +1,4 @@
-import type { LibraryFilter } from '../types'
+import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
 
 export type NotesStateAction = 'beforeSearch'

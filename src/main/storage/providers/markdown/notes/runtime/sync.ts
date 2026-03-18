@@ -13,6 +13,7 @@ import {
   normalizeFlag,
   normalizeFolderOrderIndices,
   normalizeNumber,
+  normalizePositiveInteger,
 } from '../../runtime/normalizers'
 import { notesRuntimeRef } from './constants'
 import { listNoteMarkdownFiles, loadNotes } from './notes'
@@ -22,7 +23,11 @@ import {
 } from './parser'
 import { buildNotesFolderPathMap } from './paths'
 import { buildNoteSearchText, buildSearchIndex } from './search'
-import { loadNotesState, saveNotesState } from './state'
+import {
+  flushPendingNotesStateWrite,
+  loadNotesState,
+  saveNotesState,
+} from './state'
 
 function toPosixPath(filePath: string): string {
   return filePath.replaceAll('\\', '/')
@@ -100,10 +105,19 @@ export function syncNotesFoldersWithDisk(
 
   const previousFolderById = new Map<number, NotesFolderRecord>()
   state.folders.forEach(f => previousFolderById.set(f.id, f))
+  const oldFolderPathMap = buildNotesFolderPathMap(state)
+  const oldFolderIdByPath = new Map<string, number>()
+  oldFolderPathMap.forEach((folderPath, folderId) => {
+    oldFolderIdByPath.set(folderPath, folderId)
+  })
 
   const resolvedIdByPath = new Map<string, number>()
   const usedIds = new Set<number>()
   const nextFolders: NotesFolderRecord[] = []
+  let nextFolderId = Math.max(
+    state.counters.folderId,
+    ...state.folders.map(folder => folder.id),
+  )
   const now = Date.now()
 
   for (const diskFolder of diskFolders) {
@@ -116,14 +130,21 @@ export function syncNotesFoldersWithDisk(
       = parentPath === '.' ? null : (resolvedIdByPath.get(parentPath) ?? null)
 
     // Resolve ID
-    let folderId: number | undefined
-    if (metadata.id && !usedIds.has(metadata.id)) {
-      folderId = metadata.id
+    const metadataFolderId = normalizePositiveInteger(metadata.id)
+    const pathFolderId = oldFolderIdByPath.get(folderRelativePath) || null
+
+    let folderId
+      = metadataFolderId && !usedIds.has(metadataFolderId)
+        ? metadataFolderId
+        : null
+
+    if (!folderId && pathFolderId && !usedIds.has(pathFolderId)) {
+      folderId = pathFolderId
     }
 
     if (!folderId) {
-      state.counters.folderId += 1
-      folderId = state.counters.folderId
+      nextFolderId += 1
+      folderId = nextFolderId
     }
 
     usedIds.add(folderId)
@@ -132,18 +153,35 @@ export function syncNotesFoldersWithDisk(
     const folderName = path.posix.basename(folderRelativePath)
     const previousFolder = previousFolderById.get(folderId)
     const previousFolderUi = state.folderUi[String(folderId)]
+    const fallbackOrderIndex
+      = nextFolders
+        .filter(folder => folder.parentId === parentId)
+        .reduce(
+          (maxOrder, folder) => Math.max(maxOrder, folder.orderIndex),
+          -1,
+        ) + 1
 
     nextFolders.push({
       id: folderId,
       name: folderName,
       parentId,
-      icon: metadata.icon ?? previousFolder?.icon ?? null,
+      icon:
+        metadata.icon === null
+          ? null
+          : typeof metadata.icon === 'string'
+            ? metadata.icon
+            : (previousFolder?.icon ?? null),
       isOpen: previousFolderUi
         ? normalizeFlag(previousFolderUi.isOpen)
         : normalizeFlag(previousFolder?.isOpen, 0),
-      orderIndex: normalizeNumber(
-        metadata.orderIndex ?? previousFolder?.orderIndex,
+      orderIndex: Math.max(
         0,
+        Math.trunc(
+          normalizeNumber(
+            metadata.orderIndex,
+            previousFolder?.orderIndex ?? fallbackOrderIndex,
+          ),
+        ),
       ),
       createdAt: normalizeNumber(
         metadata.createdAt ?? previousFolder?.createdAt,
@@ -158,6 +196,7 @@ export function syncNotesFoldersWithDisk(
 
   normalizeFolderOrderIndices(nextFolders as any)
   state.folders = nextFolders
+  state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
 }
 
 export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
@@ -267,6 +306,7 @@ function setNotesRuntimeCache(
 }
 
 export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
+  flushPendingNotesStateWrite(paths)
   const state = loadNotesState(paths)
 
   syncNotesFoldersWithDisk(paths, state)

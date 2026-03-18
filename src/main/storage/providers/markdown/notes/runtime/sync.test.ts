@@ -3,8 +3,12 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createDefaultNotesState } from './state'
-import { syncNotesFoldersWithDisk, syncNotesWithDisk } from './sync'
+import { createDefaultNotesState, saveNotesState } from './state'
+import {
+  syncNotesFoldersWithDisk,
+  syncNotesRuntimeWithDisk,
+  syncNotesWithDisk,
+} from './sync'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -96,6 +100,47 @@ describe('syncNotesFoldersWithDisk', () => {
     expect(state.folders).toHaveLength(1)
     expect(state.folders[0].isOpen).toBe(0)
   })
+
+  it('normalizes invalid metadata folder id', () => {
+    const paths = createNotesPaths()
+    const folderPath = path.join(paths.notesRoot, 'Projects')
+    fs.ensureDirSync(folderPath)
+    fs.writeFileSync(path.join(folderPath, '.meta.yaml'), 'id: -7\n', 'utf8')
+
+    const state = createDefaultNotesState()
+    syncNotesFoldersWithDisk(paths, state)
+
+    expect(state.folders).toHaveLength(1)
+    expect(state.folders[0].id).toBeGreaterThan(0)
+    expect(state.folders[0].id).not.toBe(-7)
+  })
+
+  it('reuses previous folder id by path when metadata id is missing', () => {
+    const paths = createNotesPaths()
+    const folderPath = path.join(paths.notesRoot, 'Projects')
+    fs.ensureDirSync(folderPath)
+
+    const now = Date.now()
+    const state = createDefaultNotesState()
+    state.counters.folderId = 5
+    state.folders = [
+      {
+        createdAt: now,
+        icon: null,
+        id: 5,
+        isOpen: 1,
+        name: 'Projects',
+        orderIndex: 0,
+        parentId: null,
+        updatedAt: now,
+      },
+    ]
+
+    syncNotesFoldersWithDisk(paths, state)
+
+    expect(state.folders).toHaveLength(1)
+    expect(state.folders[0].id).toBe(5)
+  })
 })
 
 describe('syncNotesWithDisk', () => {
@@ -138,5 +183,25 @@ describe('syncNotesWithDisk', () => {
     const state = createDefaultNotesState()
     syncNotesWithDisk(paths, state)
     expect(state.notes).toHaveLength(0)
+  })
+})
+
+describe('syncNotesRuntimeWithDisk', () => {
+  it('flushes pending state writes before loading state', () => {
+    const paths = createNotesPaths()
+    const state = createDefaultNotesState()
+    state.counters.tagId = 1
+    state.tags.push({
+      createdAt: 1,
+      id: 1,
+      name: 'pending-tag',
+      updatedAt: 1,
+    })
+
+    saveNotesState(paths, state)
+    const cache = syncNotesRuntimeWithDisk(paths)
+
+    expect(cache.state.tags).toHaveLength(1)
+    expect(cache.state.tags[0].name).toBe('pending-tag')
   })
 })

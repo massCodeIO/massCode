@@ -4,7 +4,11 @@ import type {
   NoteFolderUpdateResult,
   NotesFoldersStorage,
 } from '../../../../contracts'
-import type { NotesFolderRecord, NotesState } from '../runtime/types'
+import type {
+  NotesFolderRecord,
+  NotesPaths,
+  NotesState,
+} from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
@@ -69,6 +73,39 @@ function assertUniqueSiblingName(
       'NAME_CONFLICT',
       'Folder with this name already exists on this level',
     )
+  }
+}
+
+function assertDirectoryNameAvailable(
+  paths: NotesPaths,
+  parentRelativePath: string,
+  folderName: string,
+  excludeRelativePath?: string,
+): void {
+  const parentAbsolutePath = parentRelativePath
+    ? path.join(paths.notesRoot, parentRelativePath)
+    : paths.notesRoot
+  fs.ensureDirSync(parentAbsolutePath)
+
+  const excludeAbsolutePath = excludeRelativePath
+    ? path.join(paths.notesRoot, excludeRelativePath)
+    : null
+  const entries = fs.readdirSync(parentAbsolutePath)
+  const normalizedFolderName = folderName.toLowerCase()
+
+  for (const entry of entries) {
+    const entryAbsolutePath = path.join(parentAbsolutePath, entry)
+
+    if (excludeAbsolutePath && entryAbsolutePath === excludeAbsolutePath) {
+      continue
+    }
+
+    if (entry.toLowerCase() === normalizedFolderName) {
+      throwStorageError(
+        'NAME_CONFLICT',
+        'Folder with this name already exists on this level',
+      )
+    }
   }
 }
 
@@ -249,12 +286,20 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         const newPath = newFolderPathMap.get(id)
 
         if (oldPath && newPath && oldPath !== newPath) {
+          const targetParentPath = path.posix.dirname(newPath)
+          assertDirectoryNameAvailable(
+            paths,
+            targetParentPath === '.' ? '' : targetParentPath,
+            path.posix.basename(newPath),
+            oldPath,
+          )
+
           const oldAbsPath = path.join(paths.notesRoot, oldPath)
           const newAbsPath = path.join(paths.notesRoot, newPath)
 
           if (fs.pathExistsSync(oldAbsPath)) {
             fs.ensureDirSync(path.dirname(newAbsPath))
-            fs.moveSync(oldAbsPath, newAbsPath)
+            fs.moveSync(oldAbsPath, newAbsPath, { overwrite: false })
           }
 
           for (const note of notes) {

@@ -118,4 +118,17 @@ describe('folders storage validations', () => {
       'NAME_CONFLICT',
     )
   })
+
+  it('rename to existing disk directory throws NAME_CONFLICT', () => {
+    const storage = createNotesFoldersStorage()
+    const { id } = storage.createFolder({ name: 'Source' })
+    storage.getFolders()
+
+    const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
+    fs.ensureDirSync(path.join(notesRoot, 'Target'))
+
+    expect(() => storage.updateFolder(id, { name: 'Target' })).toThrow(
+      'NAME_CONFLICT',
+    )
+  })
 })

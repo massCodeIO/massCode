@@ -231,7 +231,7 @@ function syncNotesCounters(state: NotesState): void {
   state.counters.tagId = maxTagId
 }
 
-function syncNotesFolderMetadataFiles(
+export function syncNotesFolderMetadataFiles(
   paths: NotesPaths,
   state: NotesState,
 ): void {

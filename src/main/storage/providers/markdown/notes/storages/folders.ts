@@ -30,7 +30,10 @@ import {
   getNotesFolderSiblings,
 } from '../runtime/paths'
 import { saveNotesState } from '../runtime/state'
-import { getNotesRuntimeCache } from '../runtime/sync'
+import {
+  getNotesRuntimeCache,
+  syncNotesFolderMetadataFiles,
+} from '../runtime/sync'
 
 function assertNotReservedRootName(
   parentId: number | null,
@@ -266,20 +269,9 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             }
           }
         }
-
-        const finalPath = newFolderPathMap.get(id)
-        if (finalPath) {
-          writeNotesFolderMetadataFile(paths, finalPath, folder)
-        }
-      }
-      else {
-        const folderPathMap = buildNotesFolderPathMap(state)
-        const folderPath = folderPathMap.get(id)
-        if (folderPath) {
-          writeNotesFolderMetadataFile(paths, folderPath, folder)
-        }
       }
 
+      syncNotesFolderMetadataFiles(paths, state)
       saveNotesState(paths, state)
       return { invalidInput: false, notFound: false }
     },

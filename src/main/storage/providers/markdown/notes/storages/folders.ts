@@ -4,11 +4,7 @@ import type {
   NoteFolderUpdateResult,
   NotesFoldersStorage,
 } from '../../../../contracts'
-import type {
-  NotesFolderRecord,
-  NotesPaths,
-  NotesState,
-} from '../runtime/types'
+import type { NotesFolderRecord } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
@@ -19,7 +15,12 @@ import {
   reorderFolderSiblings,
   sortFoldersForTree,
 } from '../../runtime/shared/folderIndex'
-import { throwStorageError, validateEntryName } from '../../runtime/validation'
+import {
+  assertDirectoryNameAvailableAtRoot,
+  assertUniqueSiblingFolderName,
+  throwStorageError,
+  validateEntryName,
+} from '../../runtime/validation'
 import {
   getNotesPaths,
   META_DIR_NAME,
@@ -31,7 +32,6 @@ import {
   buildNotesFolderPathMap,
   findNotesFolderById,
   getNextNotesFolderOrder,
-  getNotesFolderSiblings,
 } from '../runtime/paths'
 import { saveNotesState } from '../runtime/state'
 import {
@@ -54,58 +54,6 @@ function assertNotReservedRootName(
       'RESERVED_NAME',
       'This folder name is reserved for technical folder',
     )
-  }
-}
-
-function assertUniqueSiblingName(
-  state: NotesState,
-  parentId: number | null,
-  name: string,
-  excludeId?: number,
-): void {
-  const normalizedName = name.toLowerCase()
-  const hasConflict = getNotesFolderSiblings(state, parentId, excludeId).some(
-    folder => folder.name.toLowerCase() === normalizedName,
-  )
-
-  if (hasConflict) {
-    throwStorageError(
-      'NAME_CONFLICT',
-      'Folder with this name already exists on this level',
-    )
-  }
-}
-
-function assertDirectoryNameAvailable(
-  paths: NotesPaths,
-  parentRelativePath: string,
-  folderName: string,
-  excludeRelativePath?: string,
-): void {
-  const parentAbsolutePath = parentRelativePath
-    ? path.join(paths.notesRoot, parentRelativePath)
-    : paths.notesRoot
-  fs.ensureDirSync(parentAbsolutePath)
-
-  const excludeAbsolutePath = excludeRelativePath
-    ? path.join(paths.notesRoot, excludeRelativePath)
-    : null
-  const entries = fs.readdirSync(parentAbsolutePath)
-  const normalizedFolderName = folderName.toLowerCase()
-
-  for (const entry of entries) {
-    const entryAbsolutePath = path.join(parentAbsolutePath, entry)
-
-    if (excludeAbsolutePath && entryAbsolutePath === excludeAbsolutePath) {
-      continue
-    }
-
-    if (entry.toLowerCase() === normalizedFolderName) {
-      throwStorageError(
-        'NAME_CONFLICT',
-        'Folder with this name already exists on this level',
-      )
-    }
   }
 }
 
@@ -137,7 +85,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       const parentId = input.parentId ?? null
 
       assertNotReservedRootName(parentId, name)
-      assertUniqueSiblingName(state, parentId, name)
+      assertUniqueSiblingFolderName(state, parentId, name)
 
       if (parentId !== null) {
         const parent = findNotesFolderById(state, parentId)
@@ -213,7 +161,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             : folder.parentId
 
         assertNotReservedRootName(parentId, name)
-        assertUniqueSiblingName(state, parentId, name, id)
+        assertUniqueSiblingFolderName(state, parentId, name, id)
 
         if (name !== folder.name) {
           pathChanged = true
@@ -252,7 +200,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         }
 
         if (newParentId !== folder.parentId && input.name === undefined) {
-          assertUniqueSiblingName(state, newParentId, folder.name, id)
+          assertUniqueSiblingFolderName(state, newParentId, folder.name, id)
         }
       }
 
@@ -287,8 +235,8 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
         if (oldPath && newPath && oldPath !== newPath) {
           const targetParentPath = path.posix.dirname(newPath)
-          assertDirectoryNameAvailable(
-            paths,
+          assertDirectoryNameAvailableAtRoot(
+            paths.notesRoot,
             targetParentPath === '.' ? '' : targetParentPath,
             path.posix.basename(newPath),
             oldPath,

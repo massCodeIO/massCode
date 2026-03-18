@@ -19,6 +19,7 @@ import {
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
+  getEntityDeleteCounts,
 } from '../../runtime/shared/entityStorage'
 import { throwStorageError, validateEntryName } from '../../runtime/validation'
 import { getNotesPaths } from '../runtime/constants'
@@ -116,9 +117,7 @@ export function createNotesNotesStorage(): NotesStorage {
 
     getNotesCounts(): NotesCount {
       const { notes } = getCache()
-      const total = notes.filter(n => n.isDeleted === 0).length
-      const trash = notes.filter(n => n.isDeleted === 1).length
-      return { total, trash }
+      return getEntityDeleteCounts(notes)
     },
 
     createNote(input: NoteCreateInput) {

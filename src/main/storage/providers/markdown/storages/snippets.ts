@@ -34,6 +34,7 @@ import {
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
+  getEntityDeleteCounts,
 } from '../runtime/shared/entityStorage'
 
 export function createSnippetsStorage(): SnippetsStorage {
@@ -96,10 +97,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { snippets } = getRuntimeCache(paths)
 
-      return {
-        total: snippets.length,
-        trash: snippets.filter(snippet => snippet.isDeleted === 1).length,
-      }
+      return getEntityDeleteCounts(snippets, { includeDeletedInTotal: true })
     },
     createSnippet: (input) => {
       const paths = getPaths(getVaultPath())

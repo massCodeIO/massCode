@@ -12,6 +12,10 @@ interface DeletableEntityLike {
   isDeleted: number
 }
 
+interface DeletionStateEntityLike {
+  isDeleted: number
+}
+
 interface NamedEntityLike {
   id: number
   name: string
@@ -166,6 +170,20 @@ export function applyEntityUpdateFields<
     pathMayChange,
     previousIsDeleted,
   }
+}
+
+export function getEntityDeleteCounts<TEntity extends DeletionStateEntityLike>(
+  entities: TEntity[],
+  options?: {
+    includeDeletedInTotal?: boolean
+  },
+): { total: number, trash: number } {
+  const trash = entities.filter(entity => entity.isDeleted === 1).length
+  const total = options?.includeDeletedInTotal
+    ? entities.length
+    : entities.filter(entity => entity.isDeleted === 0).length
+
+  return { total, trash }
 }
 
 interface EntityDeleteInput<

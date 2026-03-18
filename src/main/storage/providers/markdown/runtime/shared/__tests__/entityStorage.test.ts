@@ -9,6 +9,7 @@ import {
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
+  getEntityDeleteCounts,
 } from '../entityStorage'
 
 const tempDirs: string[] = []
@@ -233,6 +234,32 @@ describe('applyEntityUpdateFields', () => {
       isDeleted: 1,
       isFavorites: 0,
       name: 'Current',
+    })
+  })
+})
+
+describe('getEntityDeleteCounts', () => {
+  it('returns active/trash split by default', () => {
+    const result = getEntityDeleteCounts([
+      { isDeleted: 0 },
+      { isDeleted: 1 },
+      { isDeleted: 0 },
+    ])
+
+    expect(result).toEqual({
+      total: 2,
+      trash: 1,
+    })
+  })
+
+  it('can include deleted entities into total', () => {
+    const result = getEntityDeleteCounts([{ isDeleted: 0 }, { isDeleted: 1 }], {
+      includeDeletedInTotal: true,
+    })
+
+    expect(result).toEqual({
+      total: 2,
+      trash: 1,
     })
   })
 })

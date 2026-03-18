@@ -8,6 +8,7 @@ import {
   findFolderByIdPure,
   getFolderSiblings,
   getNextFolderOrder,
+  reorderFolderSiblings,
   sortFoldersForTree,
 } from './folderIndex'
 
@@ -283,5 +284,78 @@ describe('collectDescendantIds', () => {
     ]
     const result = collectDescendantIds(folders, 1)
     expect(result).toEqual(new Set([2]))
+  })
+})
+
+describe('reorderFolderSiblings', () => {
+  it('no-ops when nothing changed', () => {
+    const folders = [
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 1),
+      folder(3, 'C', null, 2),
+    ]
+    reorderFolderSiblings(folders, 1, null, 0, null, 0)
+    expect(folders.map(f => f.orderIndex)).toEqual([0, 1, 2])
+  })
+
+  it('shifts siblings down when moving within same parent (move down)', () => {
+    const folders = [
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 1),
+      folder(3, 'C', null, 2),
+      folder(4, 'D', null, 3),
+    ]
+    reorderFolderSiblings(folders, 1, null, 0, null, 2)
+    expect(folders[1].orderIndex).toBe(0)
+    expect(folders[2].orderIndex).toBe(1)
+    expect(folders[3].orderIndex).toBe(3)
+    expect(folders[0].orderIndex).toBe(0)
+  })
+
+  it('shifts siblings up when moving within same parent (move up)', () => {
+    const folders = [
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 1),
+      folder(3, 'C', null, 2),
+      folder(4, 'D', null, 3),
+    ]
+    reorderFolderSiblings(folders, 4, null, 3, null, 1)
+    expect(folders[1].orderIndex).toBe(2)
+    expect(folders[2].orderIndex).toBe(3)
+    expect(folders[0].orderIndex).toBe(0)
+  })
+
+  it('adjusts both parents when moving across parents', () => {
+    const folders = [
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 1),
+      folder(3, 'C', null, 2),
+      folder(4, 'X', 10, 0),
+      folder(5, 'Y', 10, 1),
+    ]
+    reorderFolderSiblings(folders, 2, null, 1, 10, 0)
+    expect(folders[2].orderIndex).toBe(1)
+    expect(folders[0].orderIndex).toBe(0)
+    expect(folders[3].orderIndex).toBe(1)
+    expect(folders[4].orderIndex).toBe(2)
+  })
+
+  it('does not affect folders in unrelated parents', () => {
+    const folders = [
+      folder(1, 'A', null, 0),
+      folder(2, 'B', null, 1),
+      folder(3, 'X', 99, 0),
+      folder(4, 'Y', 99, 1),
+    ]
+    reorderFolderSiblings(folders, 1, null, 0, null, 1)
+    expect(folders[2].orderIndex).toBe(0)
+    expect(folders[3].orderIndex).toBe(1)
+  })
+
+  it('does not mutate the moved folder itself', () => {
+    const folders = [folder(1, 'A', null, 0), folder(2, 'B', null, 1)]
+    reorderFolderSiblings(folders, 1, null, 0, null, 1)
+    expect(folders[0].orderIndex).toBe(0)
+    expect(folders[0].parentId).toBeNull()
   })
 })

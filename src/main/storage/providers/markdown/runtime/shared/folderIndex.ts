@@ -189,6 +189,70 @@ export function buildFolderTree<T extends FolderLike>(
   return rootFolders
 }
 
+export function reorderFolderSiblings<T extends FolderLike>(
+  folders: T[],
+  folderId: number,
+  currentParentId: number | null,
+  currentOrderIndex: number,
+  targetParentId: number | null,
+  targetOrderIndex: number,
+): void {
+  if (
+    currentParentId === targetParentId
+    && currentOrderIndex === targetOrderIndex
+  ) {
+    return
+  }
+
+  if (targetParentId === currentParentId) {
+    if (targetOrderIndex > currentOrderIndex) {
+      folders.forEach((item) => {
+        if (
+          item.id !== folderId
+          && item.parentId === currentParentId
+          && item.orderIndex > currentOrderIndex
+          && item.orderIndex <= targetOrderIndex
+        ) {
+          item.orderIndex -= 1
+        }
+      })
+    }
+    else {
+      folders.forEach((item) => {
+        if (
+          item.id !== folderId
+          && item.parentId === currentParentId
+          && item.orderIndex >= targetOrderIndex
+          && item.orderIndex < currentOrderIndex
+        ) {
+          item.orderIndex += 1
+        }
+      })
+    }
+  }
+  else {
+    folders.forEach((item) => {
+      if (
+        item.id !== folderId
+        && item.parentId === currentParentId
+        && item.orderIndex > currentOrderIndex
+      ) {
+        item.orderIndex -= 1
+      }
+    })
+
+    folders.forEach((item) => {
+      if (
+        item.id !== folderId
+        && item.parentId === targetParentId
+        && item.orderIndex >= targetOrderIndex
+      ) {
+        item.orderIndex += 1
+      }
+    })
+  }
+}
+
 export function collectDescendantIds<T extends FolderLike>(
   folders: T[],
   parentId: number,

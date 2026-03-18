@@ -10,11 +10,14 @@ import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
-  buildFolderTree,
   collectDescendantIds,
   reorderFolderSiblings,
-  sortFoldersForTree,
 } from '../../runtime/shared/folderIndex'
+import {
+  getFoldersSortedByCreatedAt,
+  getFoldersTreeSorted,
+  resolveFolderRelativePath,
+} from '../../runtime/shared/foldersStorage'
 import {
   assertDirectoryNameAvailableAtRoot,
   assertUniqueSiblingFolderName,
@@ -69,12 +72,12 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
   return {
     getFolders() {
       const { state } = getCache()
-      return [...state.folders].sort((a, b) => b.createdAt - a.createdAt)
+      return getFoldersSortedByCreatedAt(state.folders)
     },
 
     getFoldersTree() {
       const { state } = getCache()
-      return buildFolderTree(sortFoldersForTree([...state.folders]))
+      return getFoldersTreeSorted(state.folders)
     },
 
     createFolder(input: NoteFolderCreateInput) {
@@ -95,11 +98,11 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       }
 
       const folderPathMap = buildNotesFolderPathMap(state)
-      const parentPath
-        = parentId !== null ? folderPathMap.get(parentId) : undefined
-      const folderRelativePath = parentPath
-        ? path.posix.join(parentPath, name)
-        : name
+      const folderRelativePath = resolveFolderRelativePath(
+        folderPathMap,
+        parentId,
+        name,
+      )
       const folderAbsPath = path.join(paths.notesRoot, folderRelativePath)
       fs.ensureDirSync(folderAbsPath)
 

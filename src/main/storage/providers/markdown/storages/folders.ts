@@ -6,7 +6,6 @@ import {
   assertNotReservedRootFolderName,
   assertUniqueSiblingFolderName,
   buildFolderPathMap,
-  buildFolderTree,
   buildSnippetTargetPath,
   collectDescendantIds,
   depthOfRelativePath,
@@ -22,11 +21,14 @@ import {
   reorderFolderSiblings,
   resolveUniqueSiblingFolderName,
   saveState,
-  sortFoldersForTree,
   syncFolderMetadataFiles,
   throwStorageError,
   validateEntryName,
 } from '../runtime'
+import {
+  getFoldersSortedByCreatedAt,
+  getFoldersTreeSorted,
+} from '../runtime/shared/foldersStorage'
 
 export function createFoldersStorage(): FoldersStorage {
   return {
@@ -34,13 +36,13 @@ export function createFoldersStorage(): FoldersStorage {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return [...state.folders].sort((a, b) => b.createdAt - a.createdAt)
+      return getFoldersSortedByCreatedAt(state.folders)
     },
     getFoldersTree: () => {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return buildFolderTree(sortFoldersForTree([...state.folders]))
+      return getFoldersTreeSorted(state.folders)
     },
     createFolder: (input) => {
       const paths = getPaths(getVaultPath())

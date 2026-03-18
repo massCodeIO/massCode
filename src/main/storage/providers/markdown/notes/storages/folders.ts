@@ -18,6 +18,7 @@ import {
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
   replaceSubtreePathPrefix,
+  resolveFolderUpdateTargets,
   updateChildEntityPaths,
 } from '../../runtime/shared/foldersStorage'
 import {
@@ -172,14 +173,11 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         folder.name = name
       }
 
-      const targetParentId
-        = input.parentId !== undefined
-          ? (input.parentId ?? null)
-          : folder.parentId
-      const targetOrderIndex
-        = input.orderIndex !== undefined
-          ? normalizeNumber(input.orderIndex, folder.orderIndex)
-          : folder.orderIndex
+      const { targetOrderIndex, targetParentId } = resolveFolderUpdateTargets(
+        folder,
+        input,
+        normalizeNumber,
+      )
 
       if (input.parentId !== undefined) {
         const newParentId = input.parentId ?? null

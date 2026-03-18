@@ -1,5 +1,7 @@
 import type {
   MarkdownNote,
+  NotesFolderMetadataFile,
+  NotesFolderRecord,
   NotesPaths,
   NotesRuntimeCache,
   NotesState,
@@ -7,8 +9,10 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { listUserFoldersFromDisk } from '../../runtime/shared/folderScan'
-import { syncFoldersStateFromDisk } from '../../runtime/shared/folderSync'
+import {
+  syncFolderMetadataFilesByPathMap,
+  syncFoldersStateFromDiskAtRoot,
+} from '../../runtime/shared/folderSync'
 import { notesRuntimeRef } from './constants'
 import { listNoteMarkdownFiles, loadNotes } from './notes'
 import {
@@ -27,16 +31,8 @@ export function syncNotesFoldersWithDisk(
   paths: NotesPaths,
   state: NotesState,
 ): void {
-  const diskFolders = listUserFoldersFromDisk({
-    readMetadata: relativePath =>
-      readNotesFolderMetadata(paths, relativePath),
-    rootPath: paths.notesRoot,
-    shouldSkipDirectory: ({ entryName }) => entryName.startsWith('.'),
-  })
-  syncFoldersStateFromDisk(
-    state,
-    diskFolders,
-    ({ base, metadata, previousFolder }) => ({
+  syncFoldersStateFromDiskAtRoot<NotesFolderRecord, NotesFolderMetadataFile>({
+    buildFolder: ({ base, metadata, previousFolder }) => ({
       ...base,
       icon:
         metadata.icon === null
@@ -45,7 +41,12 @@ export function syncNotesFoldersWithDisk(
             ? metadata.icon
             : (previousFolder?.icon ?? null),
     }),
-  )
+    readMetadata: relativePath =>
+      readNotesFolderMetadata(paths, relativePath),
+    rootPath: paths.notesRoot,
+    shouldSkipDirectory: ({ entryName }) => entryName.startsWith('.'),
+    state,
+  })
 }
 
 export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
@@ -124,13 +125,12 @@ export function syncNotesFolderMetadataFiles(
   state: NotesState,
 ): void {
   const folderPathMap = buildNotesFolderPathMap(state)
-
-  for (const folder of state.folders) {
-    const folderPath = folderPathMap.get(folder.id)
-    if (folderPath) {
-      writeNotesFolderMetadataFile(paths, folderPath, folder)
-    }
-  }
+  syncFolderMetadataFilesByPathMap(
+    state.folders,
+    folderPathMap,
+    (folderPath, folder) =>
+      writeNotesFolderMetadataFile(paths, folderPath, folder),
+  )
 }
 
 function setNotesRuntimeCache(

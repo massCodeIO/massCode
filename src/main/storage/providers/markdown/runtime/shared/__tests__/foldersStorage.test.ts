@@ -13,6 +13,7 @@ import {
   createFolderInStateAndDisk,
   moveFolderDirectoryOnDisk,
   replaceSubtreePathPrefix,
+  resolveFolderUpdateTargets,
   updateChildEntityPaths,
 } from '../foldersStorage'
 
@@ -212,5 +213,39 @@ describe('updateChildEntityPaths', () => {
     expect(changed).toEqual([
       { nextPath: 'New/a.md', previousPath: 'Old/a.md' },
     ])
+  })
+})
+
+describe('resolveFolderUpdateTargets', () => {
+  it('uses folder values when input does not provide parent or order', () => {
+    const folder = makeFolder(1, 'Root', null, 3)
+
+    const result = resolveFolderUpdateTargets(folder, {})
+
+    expect(result).toEqual({
+      targetOrderIndex: 3,
+      targetParentId: null,
+    })
+  })
+
+  it('normalizes order index and parent from input', () => {
+    const folder = makeFolder(1, 'Root', 4, 7)
+
+    const result = resolveFolderUpdateTargets(
+      folder,
+      {
+        orderIndex: '12',
+        parentId: 2,
+      },
+      (value, fallback) => {
+        const numericValue = Number(value)
+        return Number.isFinite(numericValue) ? numericValue : fallback
+      },
+    )
+
+    expect(result).toEqual({
+      targetOrderIndex: 12,
+      targetParentId: 2,
+    })
   })
 })

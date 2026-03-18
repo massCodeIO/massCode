@@ -6,6 +6,7 @@ import {
   normalizePositiveInteger,
 } from '../normalizers'
 import { buildFolderPathMap } from './folderIndex'
+import { listUserFoldersFromDisk } from './folderScan'
 import { depthOfRelativePath, normalizeDirectoryPath } from './path'
 
 export interface FolderMetadataSyncSource {
@@ -164,4 +165,44 @@ export function syncFoldersStateFromDisk<
   normalizeFolderOrderIndices(nextFolders)
   state.folders = nextFolders
   state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
+}
+
+export function syncFoldersStateFromDiskAtRoot<
+  TFolder extends SyncFolderBase,
+  TMetadata extends FolderMetadataSyncSource,
+>(input: {
+  buildFolder: (input: BuildSyncedFolderInput<TFolder, TMetadata>) => TFolder
+  readMetadata: (relativePath: string) => TMetadata
+  rootPath: string
+  shouldSkipDirectory?: (input: {
+    entryName: string
+    isRoot: boolean
+    relativePath: string
+  }) => boolean
+  state: FolderSyncState<TFolder>
+}): void {
+  const diskFolders = listUserFoldersFromDisk({
+    readMetadata: input.readMetadata,
+    rootPath: input.rootPath,
+    shouldSkipDirectory: input.shouldSkipDirectory,
+  })
+
+  syncFoldersStateFromDisk(input.state, diskFolders, input.buildFolder)
+}
+
+export function syncFolderMetadataFilesByPathMap<
+  TFolder extends { id: number },
+>(
+  folders: TFolder[],
+  folderPathMap: ReadonlyMap<number, string>,
+  writeMetadata: (folderPath: string, folder: TFolder) => void,
+): void {
+  folders.forEach((folder) => {
+    const folderPath = folderPathMap.get(folder.id)
+    if (!folderPath) {
+      return
+    }
+
+    writeMetadata(folderPath, folder)
+  })
 }

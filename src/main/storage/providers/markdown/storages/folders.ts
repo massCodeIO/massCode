@@ -32,6 +32,7 @@ import {
   getFoldersTreeSorted,
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
+  resolveFolderUpdateTargets,
   updateChildEntityPaths,
 } from '../runtime/shared/foldersStorage'
 
@@ -127,8 +128,13 @@ export function createFoldersStorage(): FoldersStorage {
         = 'name' in input
           ? validateEntryName(input.name || folder.name, 'folder')
           : folder.name
-      const targetParentId
-        = 'parentId' in input ? (input.parentId ?? null) : folder.parentId
+      const { targetOrderIndex, targetParentId } = resolveFolderUpdateTargets(
+        folder,
+        {
+          orderIndex: input.orderIndex,
+          parentId: input.parentId,
+        },
+      )
 
       assertFolderMoveTargetValid(state.folders, id, targetParentId)
 
@@ -146,12 +152,6 @@ export function createFoldersStorage(): FoldersStorage {
       else {
         assertUniqueSiblingFolderName(state, targetParentId, targetName, id)
       }
-
-      const currentOrderIndex = folder.orderIndex
-      const targetOrderIndex
-        = 'orderIndex' in input
-          ? (input.orderIndex ?? currentOrderIndex)
-          : currentOrderIndex
 
       applyFolderParentAndOrder(
         state.folders,

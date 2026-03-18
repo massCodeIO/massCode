@@ -175,6 +175,32 @@ export function applyFolderParentAndOrder<TFolder extends FolderLike>(
   return { parentChanged: targetParentId !== currentParentId }
 }
 
+export function resolveFolderUpdateTargets<
+  TFolder extends FolderLike,
+  TInput extends {
+    orderIndex?: unknown
+    parentId?: number | null
+  },
+>(
+  folder: TFolder,
+  input: TInput,
+  normalizeOrderIndex?: (value: unknown, fallback: number) => number,
+): { targetOrderIndex: number, targetParentId: number | null } {
+  const targetParentId
+    = input.parentId !== undefined ? (input.parentId ?? null) : folder.parentId
+  const targetOrderIndex
+    = input.orderIndex !== undefined
+      ? normalizeOrderIndex
+        ? normalizeOrderIndex(input.orderIndex, folder.orderIndex)
+        : ((input.orderIndex as number | null) ?? folder.orderIndex)
+      : folder.orderIndex
+
+  return {
+    targetOrderIndex,
+    targetParentId,
+  }
+}
+
 export function moveFolderDirectoryOnDisk(
   rootPath: string,
   oldRelativePath: string,

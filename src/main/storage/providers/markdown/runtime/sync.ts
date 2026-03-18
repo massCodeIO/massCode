@@ -1,5 +1,6 @@
 import type { FolderRecord } from '../../../contracts'
 import type {
+  MarkdownFolderMetadataFile,
   MarkdownRuntimeCache,
   MarkdownSnippet,
   MarkdownState,
@@ -23,8 +24,10 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
-import { listUserFoldersFromDisk } from './shared/folderScan'
-import { syncFoldersStateFromDisk } from './shared/folderSync'
+import {
+  syncFolderMetadataFilesByPathMap,
+  syncFoldersStateFromDiskAtRoot,
+} from './shared/folderSync'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import {
   getStateSnippetIndexByFilePath,
@@ -52,16 +55,8 @@ function isTechnicalRootFolder(name: string): boolean {
 }
 
 function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
-  const diskFolders = listUserFoldersFromDisk({
-    readMetadata: relativePath => readFolderMetadata(paths, relativePath),
-    rootPath: paths.vaultPath,
-    shouldSkipDirectory: ({ entryName, isRoot }) =>
-      isRoot && isTechnicalRootFolder(entryName),
-  })
-  syncFoldersStateFromDisk(
-    state,
-    diskFolders,
-    ({ base, metadata, previousFolder }) => {
+  syncFoldersStateFromDiskAtRoot<FolderRecord, MarkdownFolderMetadataFile>({
+    buildFolder: ({ base, metadata, previousFolder }) => {
       const defaultLanguage
         = typeof metadata.defaultLanguage === 'string'
           && metadata.defaultLanguage.trim()
@@ -80,7 +75,12 @@ function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
         icon,
       }
     },
-  )
+    readMetadata: relativePath => readFolderMetadata(paths, relativePath),
+    rootPath: paths.vaultPath,
+    shouldSkipDirectory: ({ entryName, isRoot }) =>
+      isRoot && isTechnicalRootFolder(entryName),
+    state,
+  })
   syncFolderUiWithFolders(state)
 }
 
@@ -89,15 +89,16 @@ export function syncFolderMetadataFiles(
   state: MarkdownState,
 ): void {
   const folderPathMap = buildFolderPathMap(state)
-
-  folderPathMap.forEach((folderPath, folderId) => {
-    const folder = findFolderById(state, folderId)
-    if (!folder) {
-      return
-    }
-
-    writeFolderMetadataFile(paths, folderPath, folder)
-  })
+  syncFolderMetadataFilesByPathMap(
+    state.folders,
+    folderPathMap,
+    (folderPath, folder) => {
+      const syncedFolder = findFolderById(state, folder.id)
+      if (syncedFolder) {
+        writeFolderMetadataFile(paths, folderPath, syncedFolder)
+      }
+    },
+  )
 }
 
 export function syncCounters(

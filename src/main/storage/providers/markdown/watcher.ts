@@ -9,6 +9,7 @@ import {
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
 import {
+  CODE_SPACE_ID,
   ensureStateFile,
   getPaths,
   getVaultPath,
@@ -39,6 +40,7 @@ type ChokidarWatch = (
 ) => FSWatcher
 
 const NOTES_SPACE_WATCH_PREFIX = `${SPACES_DIR_NAME.toLowerCase()}/notes`
+const CODE_SPACE_WATCH_PREFIX = `${SPACES_DIR_NAME.toLowerCase()}/${CODE_SPACE_ID.toLowerCase()}`
 
 async function getChokidarWatch(): Promise<ChokidarWatch> {
   if (chokidarWatchLoader) {
@@ -70,7 +72,7 @@ async function getChokidarWatch(): Promise<ChokidarWatch> {
 }
 
 function normalizeRelativeWatchPath(
-  paths: Paths,
+  watchRootPath: string,
   changedPath: string,
 ): string | null {
   const normalizedChangedPath = changedPath.trim()
@@ -80,10 +82,8 @@ function normalizeRelativeWatchPath(
 
   const absolutePath = path.isAbsolute(normalizedChangedPath)
     ? normalizedChangedPath
-    : path.join(paths.vaultPath, normalizedChangedPath)
-  const relativePath = toPosixPath(
-    path.relative(paths.vaultPath, absolutePath),
-  )
+    : path.join(watchRootPath, normalizedChangedPath)
+  const relativePath = toPosixPath(path.relative(watchRootPath, absolutePath))
 
   if (!relativePath || relativePath === '.' || relativePath.startsWith('../')) {
     return null
@@ -92,8 +92,11 @@ function normalizeRelativeWatchPath(
   return relativePath
 }
 
-function shouldIgnoreWatchPath(paths: Paths, watchPath: string): boolean {
-  const relativePath = normalizeRelativeWatchPath(paths, watchPath)
+function shouldIgnoreWatchPath(
+  watchRootPath: string,
+  watchPath: string,
+): boolean {
+  const relativePath = normalizeRelativeWatchPath(watchRootPath, watchPath)
   if (!relativePath) {
     return false
   }
@@ -150,12 +153,44 @@ function isNotesWatchPath(relativePath: string | null): boolean {
   )
 }
 
+function isCodeWatchPath(relativePath: string | null): boolean {
+  if (!relativePath) {
+    return false
+  }
+
+  const normalizedRelativePath = relativePath.toLowerCase()
+  return (
+    normalizedRelativePath === CODE_SPACE_WATCH_PREFIX
+    || normalizedRelativePath.startsWith(`${CODE_SPACE_WATCH_PREFIX}/`)
+  )
+}
+
+function toCodeRelativePath(relativePath: string): string | null {
+  const normalizedRelativePath = relativePath.toLowerCase()
+
+  if (normalizedRelativePath === CODE_SPACE_WATCH_PREFIX) {
+    return null
+  }
+
+  const codePrefix = `${CODE_SPACE_WATCH_PREFIX}/`
+  if (!normalizedRelativePath.startsWith(codePrefix)) {
+    return null
+  }
+
+  return relativePath.slice(codePrefix.length)
+}
+
 function scheduleStateSync(
+  vaultRootPath: string,
   paths: Paths,
   changedPath: string | null,
   forceFullSync = false,
 ): void {
   const changedNotesPath = isNotesWatchPath(changedPath)
+  const changedCodePath = isCodeWatchPath(changedPath)
+  const changedCodeRelativePath
+    = changedPath && changedCodePath ? toCodeRelativePath(changedPath) : null
+
   if (changedNotesPath) {
     hasPendingNotesSync = true
   }
@@ -170,11 +205,17 @@ function scheduleStateSync(
       hasPendingNotesSync = true
     }
   }
-  else if (pendingFilePath && pendingFilePath !== changedPath) {
-    hasPendingFullSync = true
+  else if (changedCodeRelativePath) {
+    if (pendingFilePath && pendingFilePath !== changedCodeRelativePath) {
+      hasPendingFullSync = true
+    }
+    else {
+      pendingFilePath = changedCodeRelativePath
+    }
   }
-  else if (changedPath) {
-    pendingFilePath = changedPath
+  else if (!changedNotesPath) {
+    hasPendingFullSync = true
+    hasPendingNotesSync = true
   }
 
   if (markdownWatchTimer) {
@@ -208,7 +249,7 @@ function scheduleStateSync(
         }
       }
       const nextNotesCache = shouldSyncNotes
-        ? syncNotesRuntimeWithDisk(getNotesPaths(paths.vaultPath))
+        ? syncNotesRuntimeWithDisk(getNotesPaths(vaultRootPath))
         : previousNotesCache
 
       const hasCodeChanges
@@ -251,12 +292,13 @@ export function stopMarkdownWatcher(): void {
 }
 
 export function startMarkdownWatcher(): void {
-  const paths = getPaths(getVaultPath())
+  const vaultRootPath = getVaultPath()
+  const paths = getPaths(vaultRootPath)
   const runtimeCache = peekRuntimeCache()
-  const notesPaths = getNotesPaths(paths.vaultPath)
+  const notesPaths = getNotesPaths(vaultRootPath)
   const notesRuntimeCache = peekNotesRuntimeCache()
 
-  if (markdownWatcher && watchedVaultPath === paths.vaultPath) {
+  if (markdownWatcher && watchedVaultPath === vaultRootPath) {
     if (!runtimeCache || runtimeCache.paths.vaultPath !== paths.vaultPath) {
       ensureStateFile(paths)
       syncRuntimeWithDisk(paths)
@@ -285,46 +327,52 @@ export function startMarkdownWatcher(): void {
         return
       }
 
-      const watcher = watch(paths.vaultPath, {
+      const watcher = watch(vaultRootPath, {
         awaitWriteFinish: {
           pollInterval: 100,
           stabilityThreshold: 200,
         },
         ignoreInitial: true,
-        ignored: (watchPath: string) => shouldIgnoreWatchPath(paths, watchPath),
+        ignored: (watchPath: string) =>
+          shouldIgnoreWatchPath(vaultRootPath, watchPath),
         persistent: true,
       })
 
       watcher
         .on('add', (changedPath: string) => {
           scheduleStateSync(
+            vaultRootPath,
             paths,
-            normalizeRelativeWatchPath(paths, changedPath),
+            normalizeRelativeWatchPath(vaultRootPath, changedPath),
           )
         })
         .on('change', (changedPath: string) => {
           scheduleStateSync(
+            vaultRootPath,
             paths,
-            normalizeRelativeWatchPath(paths, changedPath),
+            normalizeRelativeWatchPath(vaultRootPath, changedPath),
           )
         })
         .on('unlink', (changedPath: string) => {
           scheduleStateSync(
+            vaultRootPath,
             paths,
-            normalizeRelativeWatchPath(paths, changedPath),
+            normalizeRelativeWatchPath(vaultRootPath, changedPath),
           )
         })
         .on('addDir', (changedPath: string) => {
           scheduleStateSync(
+            vaultRootPath,
             paths,
-            normalizeRelativeWatchPath(paths, changedPath),
+            normalizeRelativeWatchPath(vaultRootPath, changedPath),
             true,
           )
         })
         .on('unlinkDir', (changedPath: string) => {
           scheduleStateSync(
+            vaultRootPath,
             paths,
-            normalizeRelativeWatchPath(paths, changedPath),
+            normalizeRelativeWatchPath(vaultRootPath, changedPath),
             true,
           )
         })
@@ -338,7 +386,7 @@ export function startMarkdownWatcher(): void {
       }
 
       markdownWatcher = watcher
-      watchedVaultPath = paths.vaultPath
+      watchedVaultPath = vaultRootPath
     })
     .catch((error) => {
       if (startToken === watcherStartToken) {

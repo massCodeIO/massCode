@@ -14,6 +14,7 @@ import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
   addTagToEntity,
+  applyEntityUpdateFields,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
@@ -170,54 +171,25 @@ export function createNotesNotesStorage(): NotesStorage {
         return { invalidInput: false, notFound: true }
       }
 
-      if (
-        input.name === undefined
-        && input.description === undefined
-        && input.folderId === undefined
-        && input.isFavorites === undefined
-        && input.isDeleted === undefined
-      ) {
-        return { invalidInput: true, notFound: false }
-      }
-
       const previousFilePath = note.filePath
-      let pathMayChange = false
-
-      if (input.name !== undefined) {
-        note.name = validateEntryName(input.name, 'note')
-        pathMayChange = true
-      }
-
-      if (input.description !== undefined) {
-        note.description = input.description ?? null
-      }
-
-      if (input.folderId !== undefined) {
-        const nextFolderId = input.folderId ?? null
-
-        if (
-          nextFolderId !== null
-          && !findNotesFolderById(state, nextFolderId)
-        ) {
-          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
-        }
-
-        note.folderId = nextFolderId
-        pathMayChange = true
-      }
-
-      if (input.isFavorites !== undefined) {
-        note.isFavorites = normalizeFlag(input.isFavorites)
-      }
-
-      if (input.isDeleted !== undefined) {
-        note.isDeleted = normalizeFlag(input.isDeleted)
-        pathMayChange = true
+      const updateResult = applyEntityUpdateFields({
+        entity: note,
+        fieldPresence: 'defined',
+        folderExists: folderId => !!findNotesFolderById(state, folderId),
+        input,
+        normalizeFlag: value => normalizeFlag(value),
+        onMissingFolder: () =>
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
+        resolveName: (inputName, currentName) =>
+          validateEntryName(inputName ?? currentName, 'note'),
+      })
+      if (!updateResult.hasAnyField) {
+        return { invalidInput: true, notFound: false }
       }
 
       note.updatedAt = Date.now()
 
-      if (pathMayChange) {
+      if (updateResult.pathMayChange) {
         persistNote(paths, state, note, previousFilePath, {
           allowRenameOnConflict: true,
         })

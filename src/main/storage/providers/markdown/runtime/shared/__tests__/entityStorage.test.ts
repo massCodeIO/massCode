@@ -4,6 +4,7 @@ import fs from 'fs-extra'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   addTagToEntity,
+  applyEntityUpdateFields,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
@@ -123,6 +124,116 @@ describe('createEntityInStateAndDisk', () => {
     expect(result).toEqual({ id: 1 })
     expect(entities).toEqual([{ id: 1, name: 'Snippet' }])
     expect(persisted).toEqual([{ id: 1, name: 'Snippet' }])
+  })
+})
+
+describe('applyEntityUpdateFields', () => {
+  it('returns hasAnyField=false when no supported fields are present', () => {
+    const entity = {
+      description: null as string | null,
+      folderId: null as number | null,
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Initial',
+    }
+
+    const result = applyEntityUpdateFields({
+      entity,
+      fieldPresence: 'defined',
+      folderExists: () => true,
+      input: {},
+      normalizeFlag: (value, fallback) => value ?? fallback,
+      onMissingFolder: () => {
+        throw new Error('should not happen')
+      },
+      resolveName: (inputName, currentName) => inputName ?? currentName,
+    })
+
+    expect(result).toEqual({
+      hasAnyField: false,
+      pathMayChange: false,
+      previousIsDeleted: 0,
+    })
+  })
+
+  it('applies patch fields in defined mode and marks path changes', () => {
+    const entity = {
+      description: 'Old',
+      folderId: null as number | null,
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Old name',
+    }
+
+    const result = applyEntityUpdateFields({
+      entity,
+      fieldPresence: 'defined',
+      folderExists: folderId => folderId === 42,
+      input: {
+        description: 'New',
+        folderId: 42,
+        isDeleted: 1,
+        isFavorites: 1,
+        name: 'New name',
+      },
+      normalizeFlag: value => (value ? 1 : 0),
+      onMissingFolder: () => {
+        throw new Error('should not happen')
+      },
+      resolveName: inputName => `normalized:${inputName}`,
+    })
+
+    expect(result).toEqual({
+      hasAnyField: true,
+      pathMayChange: true,
+      previousIsDeleted: 0,
+    })
+    expect(entity).toEqual({
+      description: 'New',
+      folderId: 42,
+      isDeleted: 1,
+      isFavorites: 1,
+      name: 'normalized:New name',
+    })
+  })
+
+  it('treats explicit undefined as present in "in" mode', () => {
+    const entity = {
+      description: 'Old',
+      folderId: null as number | null,
+      isDeleted: 1,
+      isFavorites: 1,
+      name: 'Current',
+    }
+
+    const result = applyEntityUpdateFields({
+      entity,
+      fieldPresence: 'in',
+      folderExists: () => true,
+      input: {
+        description: undefined,
+        isFavorites: undefined,
+        name: undefined,
+      },
+      normalizeFlag: value => value || 0,
+      onMissingFolder: () => {
+        throw new Error('should not happen')
+      },
+      resolveName: (inputName, currentName) => inputName || currentName,
+    })
+
+    expect(result).toEqual({
+      hasAnyField: true,
+      pathMayChange: true,
+      previousIsDeleted: 1,
+    })
+    expect(entity).toEqual({
+      description: null,
+      folderId: null,
+      isDeleted: 1,
+      isFavorites: 0,
+      name: 'Current',
+    })
   })
 })
 

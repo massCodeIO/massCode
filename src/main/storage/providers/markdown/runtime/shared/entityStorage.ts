@@ -17,6 +17,24 @@ interface NamedEntityLike {
   name: string
 }
 
+interface UpdatableEntityLike {
+  description: string | null
+  folderId: number | null
+  isDeleted: number
+  isFavorites: number
+  name: string
+}
+
+interface UpdatableEntityInput {
+  description?: string | null
+  folderId?: number | null
+  isDeleted?: number
+  isFavorites?: number
+  name?: string
+}
+
+type UpdatableEntityField = keyof UpdatableEntityInput
+
 export interface CreateEntityContext {
   folderId: number | null
   id: number
@@ -54,6 +72,100 @@ export function createEntityInStateAndDisk<TEntity extends NamedEntityLike>(
   input.entities.push(entity)
 
   return { id }
+}
+
+interface ApplyEntityUpdateInput<
+  TEntity extends UpdatableEntityLike,
+  TInput extends UpdatableEntityInput,
+> {
+  entity: TEntity
+  fieldPresence: 'defined' | 'in'
+  input: TInput
+  normalizeFlag: (value: number | undefined, fallback: number) => number
+  onMissingFolder: (folderId: number) => never
+  resolveName: (inputName: string | undefined, currentName: string) => string
+  folderExists: (folderId: number) => boolean
+}
+
+function hasInputField<
+  TEntity extends UpdatableEntityLike,
+  TInput extends UpdatableEntityInput,
+>(
+  input: ApplyEntityUpdateInput<TEntity, TInput>,
+  field: UpdatableEntityField,
+): boolean {
+  if (input.fieldPresence === 'in') {
+    return field in input.input
+  }
+
+  const value = (input.input as Record<string, unknown>)[field]
+  return value !== undefined
+}
+
+export function applyEntityUpdateFields<
+  TEntity extends UpdatableEntityLike,
+  TInput extends UpdatableEntityInput,
+>(
+  input: ApplyEntityUpdateInput<TEntity, TInput>,
+): {
+    hasAnyField: boolean
+    pathMayChange: boolean
+    previousIsDeleted: number
+  } {
+  const hasAnyField = (
+    ['name', 'description', 'folderId', 'isFavorites', 'isDeleted'] as const
+  ).some(field => hasInputField(input, field))
+
+  if (!hasAnyField) {
+    return {
+      hasAnyField: false,
+      pathMayChange: false,
+      previousIsDeleted: input.entity.isDeleted,
+    }
+  }
+
+  const previousIsDeleted = input.entity.isDeleted
+  let pathMayChange = false
+
+  if (hasInputField(input, 'name')) {
+    input.entity.name = input.resolveName(input.input.name, input.entity.name)
+    pathMayChange = true
+  }
+
+  if (hasInputField(input, 'description')) {
+    input.entity.description = input.input.description ?? null
+  }
+
+  if (hasInputField(input, 'folderId')) {
+    const nextFolderId = input.input.folderId ?? null
+    if (nextFolderId !== null && !input.folderExists(nextFolderId)) {
+      input.onMissingFolder(nextFolderId)
+    }
+
+    input.entity.folderId = nextFolderId
+    pathMayChange = true
+  }
+
+  if (hasInputField(input, 'isFavorites')) {
+    input.entity.isFavorites = input.normalizeFlag(
+      input.input.isFavorites,
+      input.entity.isFavorites,
+    )
+  }
+
+  if (hasInputField(input, 'isDeleted')) {
+    input.entity.isDeleted = input.normalizeFlag(
+      input.input.isDeleted,
+      input.entity.isDeleted,
+    )
+    pathMayChange = true
+  }
+
+  return {
+    hasAnyField: true,
+    pathMayChange,
+    previousIsDeleted,
+  }
 }
 
 interface EntityDeleteInput<

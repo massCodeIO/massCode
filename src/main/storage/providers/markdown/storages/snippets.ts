@@ -29,6 +29,7 @@ import {
 } from '../runtime'
 import {
   addTagToEntity,
+  applyEntityUpdateFields,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
   deleteTagFromEntity,
@@ -174,50 +175,27 @@ export function createSnippetsStorage(): SnippetsStorage {
         }
       }
 
-      const hasAnyField
-        = 'name' in input
-          || 'description' in input
-          || 'folderId' in input
-          || 'isFavorites' in input
-          || 'isDeleted' in input
-
-      if (!hasAnyField) {
+      const previousPath = snippet.filePath
+      const updateResult = applyEntityUpdateFields({
+        entity: snippet,
+        fieldPresence: 'in',
+        folderExists: folderId => !!findFolderById(state, folderId),
+        input,
+        normalizeFlag: value => value || 0,
+        onMissingFolder: () =>
+          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
+        resolveName: (inputName, currentName) =>
+          validateEntryName(inputName || currentName, 'snippet'),
+      })
+      if (!updateResult.hasAnyField) {
         return {
           invalidInput: true,
           notFound: false,
         }
       }
 
-      const previousPath = snippet.filePath
-      const wasDeleted = snippet.isDeleted
-
-      if ('name' in input) {
-        snippet.name = validateEntryName(input.name || snippet.name, 'snippet')
-      }
-
-      if ('description' in input) {
-        snippet.description = input.description ?? null
-      }
-
-      if ('folderId' in input) {
-        const nextFolderId = input.folderId ?? null
-
-        if (nextFolderId !== null && !findFolderById(state, nextFolderId)) {
-          throwStorageError('FOLDER_NOT_FOUND', 'Folder not found')
-        }
-
-        snippet.folderId = nextFolderId
-      }
-
-      if ('isFavorites' in input) {
-        snippet.isFavorites = input.isFavorites || 0
-      }
-
-      if ('isDeleted' in input) {
-        snippet.isDeleted = input.isDeleted || 0
-      }
-
-      const movedToTrash = wasDeleted !== 1 && snippet.isDeleted === 1
+      const movedToTrash
+        = updateResult.previousIsDeleted !== 1 && snippet.isDeleted === 1
       const previousDirectory = normalizeDirectoryPath(
         path.posix.dirname(previousPath),
       )

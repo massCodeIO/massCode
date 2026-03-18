@@ -36,7 +36,7 @@ export function resolveFolderRelativePath(
   return parentPath ? path.posix.join(parentPath, name) : name
 }
 
-export interface CreateFolderStateBase<TFolder> {
+export interface CreateFolderStateBase<TFolder = unknown> {
   counters: {
     folderId: number
   }
@@ -52,8 +52,7 @@ export interface CreateFolderContext {
 }
 
 export function createFolderInStateAndDisk<
-  TFolder,
-  TState extends CreateFolderStateBase<TFolder>,
+  TState extends CreateFolderStateBase,
 >(input: {
   state: TState
   rootPath: string
@@ -61,8 +60,12 @@ export function createFolderInStateAndDisk<
   name: string
   buildFolderPathMap: (state: TState) => Map<number, string>
   getNextFolderOrder: (state: TState, parentId: number | null) => number
-  createFolder: (context: CreateFolderContext) => TFolder
-}): { folder: TFolder, folderRelativePath: string, id: number } {
+  createFolder: (context: CreateFolderContext) => TState['folders'][number]
+}): {
+    folder: TState['folders'][number]
+    folderRelativePath: string
+    id: number
+  } {
   const folderPathMap = input.buildFolderPathMap(input.state)
   const folderRelativePath = resolveFolderRelativePath(
     folderPathMap,

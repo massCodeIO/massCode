@@ -104,6 +104,7 @@ export function assertUniqueSiblingFolderName(
     folders: {
       id: number
       name: string
+      orderIndex: number
       parentId: number | null
     }[]
   },
@@ -132,6 +133,7 @@ export function resolveUniqueSiblingFolderName(
     folders: {
       id: number
       name: string
+      orderIndex: number
       parentId: number | null
     }[]
   },

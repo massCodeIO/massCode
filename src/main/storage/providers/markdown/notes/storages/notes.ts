@@ -16,6 +16,7 @@ import {
   addTagToEntity,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
+  deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
 } from '../../runtime/shared/entityStorage'
 import { throwStorageError, validateEntryName } from '../../runtime/validation'
@@ -307,35 +308,19 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, noteId)
       const tag = state.tags.find(t => t.id === tagId)
-
-      if (!note || !tag) {
-        return {
-          noteFound: !!note,
-          notFound: false,
-          relationFound: false,
-          tagFound: !!tag,
-        }
-      }
-
-      const tagIndex = note.tags.indexOf(tagId)
-      if (tagIndex === -1) {
-        return {
-          noteFound: true,
-          notFound: false,
-          relationFound: false,
-          tagFound: true,
-        }
-      }
-
-      note.tags.splice(tagIndex, 1)
-      note.updatedAt = Date.now()
-      writeNoteToFile(paths, note)
+      const result = deleteTagFromEntity({
+        entity: note,
+        missingRelationFound: false,
+        onUpdated: note => writeNoteToFile(paths, note),
+        tagExists: !!tag,
+        tagId,
+      })
 
       return {
-        noteFound: true,
+        noteFound: result.entityFound,
         notFound: false,
-        relationFound: true,
-        tagFound: true,
+        relationFound: result.relationFound,
+        tagFound: result.tagFound,
       }
     },
   }

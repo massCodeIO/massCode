@@ -191,3 +191,50 @@ export function addTagToEntity<TEntity extends EntityWithTags>(
     updated: false,
   }
 }
+
+interface DeleteTagFromEntityInput<TEntity extends EntityWithTags> {
+  entity: TEntity | undefined
+  missingRelationFound: boolean
+  onUpdated: (entity: TEntity) => void
+  tagExists: boolean
+  tagId: number
+}
+
+export function deleteTagFromEntity<TEntity extends EntityWithTags>(
+  input: DeleteTagFromEntityInput<TEntity>,
+): {
+    entityFound: boolean
+    relationFound: boolean
+    tagFound: boolean
+    updated: boolean
+  } {
+  if (!input.entity || !input.tagExists) {
+    return {
+      entityFound: !!input.entity,
+      relationFound: input.missingRelationFound,
+      tagFound: input.tagExists,
+      updated: false,
+    }
+  }
+
+  const tagIndex = input.entity.tags.indexOf(input.tagId)
+  if (tagIndex === -1) {
+    return {
+      entityFound: true,
+      relationFound: false,
+      tagFound: true,
+      updated: false,
+    }
+  }
+
+  input.entity.tags.splice(tagIndex, 1)
+  input.entity.updatedAt = Date.now()
+  input.onUpdated(input.entity)
+
+  return {
+    entityFound: true,
+    relationFound: true,
+    tagFound: true,
+    updated: true,
+  }
+}

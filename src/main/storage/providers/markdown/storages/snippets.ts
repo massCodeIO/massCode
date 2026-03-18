@@ -31,6 +31,7 @@ import {
   addTagToEntity,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
+  deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
 } from '../runtime/shared/entityStorage'
 
@@ -331,38 +332,23 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, snippetId)
-
-      if (!snippet) {
-        return {
-          notFound: false,
-          relationFound: true,
-          snippetFound: false,
-          tagFound: true,
-        }
-      }
-
       const tag = state.tags.find(item => item.id === tagId)
-      if (!tag) {
-        return {
-          notFound: false,
-          relationFound: true,
-          snippetFound: true,
-          tagFound: false,
-        }
-      }
-
-      const relationFound = snippet.tags.includes(tagId)
-      if (relationFound) {
-        snippet.tags = snippet.tags.filter(item => item !== tagId)
-        writeSnippetToFile(paths, snippet)
+      const result = deleteTagFromEntity({
+        entity: snippet,
+        missingRelationFound: true,
+        onUpdated: snippet => writeSnippetToFile(paths, snippet),
+        tagExists: !!tag,
+        tagId,
+      })
+      if (result.updated) {
         saveState(paths, state)
       }
 
       return {
         notFound: false,
-        relationFound,
-        snippetFound: true,
-        tagFound: true,
+        relationFound: result.relationFound,
+        snippetFound: result.entityFound,
+        tagFound: result.tagFound,
       }
     },
     deleteSnippet: (id) => {

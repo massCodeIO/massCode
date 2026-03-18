@@ -6,6 +6,7 @@ import {
   addTagToEntity,
   createEntityInStateAndDisk,
   deleteEntityFromStateAndDisk,
+  deleteTagFromEntity,
   emptyEntityTrashFromStateAndDisk,
 } from '../entityStorage'
 
@@ -234,5 +235,73 @@ describe('addTagToEntity', () => {
     })
     expect(entity.tags).toEqual([7])
     expect(updatesCount).toBe(1)
+  })
+})
+
+describe('deleteTagFromEntity', () => {
+  it('returns configurable missing relation state when entity or tag is missing', () => {
+    const result = deleteTagFromEntity({
+      entity: undefined,
+      missingRelationFound: true,
+      onUpdated: () => {},
+      tagExists: false,
+      tagId: 1,
+    })
+
+    expect(result).toEqual({
+      entityFound: false,
+      relationFound: true,
+      tagFound: false,
+      updated: false,
+    })
+  })
+
+  it('removes an existing relation and reports update', () => {
+    const entity = {
+      tags: [2, 7, 9] as number[],
+      updatedAt: 1,
+    }
+    let updatesCount = 0
+
+    const result = deleteTagFromEntity({
+      entity,
+      missingRelationFound: false,
+      onUpdated: () => {
+        updatesCount += 1
+      },
+      tagExists: true,
+      tagId: 7,
+    })
+
+    expect(result).toEqual({
+      entityFound: true,
+      relationFound: true,
+      tagFound: true,
+      updated: true,
+    })
+    expect(entity.tags).toEqual([2, 9])
+    expect(updatesCount).toBe(1)
+  })
+
+  it('reports relationFound=false when relation does not exist', () => {
+    const entity = {
+      tags: [1] as number[],
+      updatedAt: 1,
+    }
+
+    const result = deleteTagFromEntity({
+      entity,
+      missingRelationFound: false,
+      onUpdated: () => {},
+      tagExists: true,
+      tagId: 2,
+    })
+
+    expect(result).toEqual({
+      entityFound: true,
+      relationFound: false,
+      tagFound: true,
+      updated: false,
+    })
   })
 })

@@ -99,3 +99,31 @@ export function getNextFolderOrder<T extends FolderLike>(
       + 1
   )
 }
+
+export function collectDescendantIds<T extends FolderLike>(
+  folders: T[],
+  parentId: number,
+): Set<number> {
+  const descendantIds = new Set<number>()
+  const visited = new Set<number>()
+
+  function collect(targetParentId: number): void {
+    if (visited.has(targetParentId)) {
+      return
+    }
+    visited.add(targetParentId)
+    for (const folder of folders) {
+      if (
+        folder.parentId === targetParentId
+        && folder.id !== parentId
+        && !descendantIds.has(folder.id)
+      ) {
+        descendantIds.add(folder.id)
+        collect(folder.id)
+      }
+    }
+  }
+
+  collect(parentId)
+  return descendantIds
+}

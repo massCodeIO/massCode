@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildFolderPathMap,
   buildPathToFolderIdMap,
+  collectDescendantIds,
   findFolderByIdPure,
   getFolderSiblings,
   getNextFolderOrder,
@@ -129,5 +130,51 @@ describe('getNextFolderOrder', () => {
   it('scopes to correct parent', () => {
     const folders = [folder(1, 'Root', null, 10), folder(2, 'Child', 1, 2)]
     expect(getNextFolderOrder(folders, 1)).toBe(3)
+  })
+})
+
+describe('collectDescendantIds', () => {
+  it('returns empty set for leaf folder', () => {
+    const folders = [folder(1, 'Root')]
+    expect(collectDescendantIds(folders, 1)).toEqual(new Set())
+  })
+
+  it('collects direct children', () => {
+    const folders = [
+      folder(1, 'Root'),
+      folder(2, 'Child1', 1),
+      folder(3, 'Child2', 1),
+    ]
+    expect(collectDescendantIds(folders, 1)).toEqual(new Set([2, 3]))
+  })
+
+  it('collects nested descendants recursively', () => {
+    const folders = [
+      folder(1, 'Root'),
+      folder(2, 'Child', 1),
+      folder(3, 'Grandchild', 2),
+      folder(4, 'GreatGrandchild', 3),
+    ]
+    expect(collectDescendantIds(folders, 1)).toEqual(new Set([2, 3, 4]))
+  })
+
+  it('does not include the parent itself', () => {
+    const folders = [folder(1, 'Root'), folder(2, 'Child', 1)]
+    const result = collectDescendantIds(folders, 1)
+    expect(result.has(1)).toBe(false)
+  })
+
+  it('returns empty set for non-existent parent', () => {
+    const folders = [folder(1, 'Root')]
+    expect(collectDescendantIds(folders, 999)).toEqual(new Set())
+  })
+
+  it('handles circular references without infinite loop', () => {
+    const folders = [
+      { id: 1, name: 'A', parentId: 2, orderIndex: 0 },
+      { id: 2, name: 'B', parentId: 1, orderIndex: 0 },
+    ]
+    const result = collectDescendantIds(folders, 1)
+    expect(result).toEqual(new Set([2]))
   })
 })

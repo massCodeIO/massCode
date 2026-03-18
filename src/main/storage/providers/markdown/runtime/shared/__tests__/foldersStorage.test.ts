@@ -6,13 +6,15 @@ import {
   buildFolderPathMap,
   type FolderLike,
   getNextFolderOrder,
-} from './folderIndex'
+} from '../folderIndex'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
   createFolderInStateAndDisk,
   moveFolderDirectoryOnDisk,
-} from './foldersStorage'
+  replaceSubtreePathPrefix,
+  updateChildEntityPaths,
+} from '../foldersStorage'
 
 interface TestFolder extends FolderLike {
   createdAt: number
@@ -166,5 +168,49 @@ describe('moveFolderDirectoryOnDisk', () => {
     moveFolderDirectoryOnDisk(rootPath, '', 'B')
 
     expect(fs.pathExistsSync(path.join(rootPath, 'A'))).toBe(true)
+  })
+})
+
+describe('replaceSubtreePathPrefix', () => {
+  it('replaces folder prefix for nested file path', () => {
+    const updatedPath = replaceSubtreePathPrefix(
+      'Old/Child/note.md',
+      'Old',
+      'New',
+    )
+
+    expect(updatedPath).toBe('New/Child/note.md')
+  })
+
+  it('keeps path unchanged when file is outside moved subtree', () => {
+    const updatedPath = replaceSubtreePathPrefix('Other/note.md', 'Old', 'New')
+
+    expect(updatedPath).toBe('Other/note.md')
+  })
+})
+
+describe('updateChildEntityPaths', () => {
+  it('updates only selected entities and reports path changes', () => {
+    const entries = [
+      { filePath: 'Old/a.md', folderId: 1 },
+      { filePath: 'Other/b.md', folderId: 2 },
+    ]
+    const changed: Array<{ previousPath: string, nextPath: string }> = []
+
+    updateChildEntityPaths({
+      entries,
+      getNextPath: entry =>
+        replaceSubtreePathPrefix(entry.filePath, 'Old', 'New'),
+      onPathUpdated: (_, previousPath, nextPath) => {
+        changed.push({ nextPath, previousPath })
+      },
+      shouldUpdate: entry => entry.folderId === 1,
+    })
+
+    expect(entries[0].filePath).toBe('New/a.md')
+    expect(entries[1].filePath).toBe('Other/b.md')
+    expect(changed).toEqual([
+      { nextPath: 'New/a.md', previousPath: 'Old/a.md' },
+    ])
   })
 })

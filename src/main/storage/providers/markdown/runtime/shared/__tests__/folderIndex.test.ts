@@ -1,4 +1,4 @@
-import type { FolderLike } from './folderIndex'
+import type { FolderLike } from '../folderIndex'
 import { describe, expect, it } from 'vitest'
 import {
   buildFolderPathMap,
@@ -10,7 +10,7 @@ import {
   getNextFolderOrder,
   reorderFolderSiblings,
   sortFoldersForTree,
-} from './folderIndex'
+} from '../folderIndex'
 
 function folder(
   id: number,

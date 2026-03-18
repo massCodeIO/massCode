@@ -7,7 +7,7 @@ import {
   listMarkdownFiles,
   normalizeDirectoryPath,
   toPosixPath,
-} from './path'
+} from '../path'
 
 describe('toPosixPath', () => {
   it('converts backslashes to forward slashes', () => {

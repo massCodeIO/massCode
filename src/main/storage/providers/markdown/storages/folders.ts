@@ -32,6 +32,7 @@ import {
   getFoldersTreeSorted,
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
+  updateChildEntityPaths,
 } from '../runtime/shared/foldersStorage'
 
 export function createFoldersStorage(): FoldersStorage {
@@ -201,40 +202,33 @@ export function createFoldersStorage(): FoldersStorage {
         const affectedFolderIds = collectDescendantIds(state.folders, id)
         affectedFolderIds.add(id)
 
-        snippets.forEach((snippet) => {
-          if (snippet.isDeleted === 1) {
-            return
-          }
+        updateChildEntityPaths({
+          entries: snippets,
+          getNextPath: snippet => buildSnippetTargetPath(state, snippet),
+          onPathUpdated: (_, previousPath, nextPath) => {
+            const oldSnippetAbsolutePath = path.join(
+              paths.vaultPath,
+              previousPath,
+            )
+            const newSnippetAbsolutePath = path.join(paths.vaultPath, nextPath)
 
-          if (
-            snippet.folderId === null
-            || !affectedFolderIds.has(snippet.folderId)
-          ) {
-            return
-          }
+            if (
+              fs.pathExistsSync(oldSnippetAbsolutePath)
+              && !fs.pathExistsSync(newSnippetAbsolutePath)
+            ) {
+              fs.ensureDirSync(path.dirname(newSnippetAbsolutePath))
+              fs.moveSync(oldSnippetAbsolutePath, newSnippetAbsolutePath, {
+                overwrite: false,
+              })
+            }
+          },
+          shouldUpdate: (snippet) => {
+            if (snippet.isDeleted === 1 || snippet.folderId === null) {
+              return false
+            }
 
-          const previousPath = snippet.filePath
-          snippet.filePath = buildSnippetTargetPath(state, snippet)
-
-          const oldSnippetAbsolutePath = path.join(
-            paths.vaultPath,
-            previousPath,
-          )
-          const newSnippetAbsolutePath = path.join(
-            paths.vaultPath,
-            snippet.filePath,
-          )
-
-          if (
-            previousPath !== snippet.filePath
-            && fs.pathExistsSync(oldSnippetAbsolutePath)
-            && !fs.pathExistsSync(newSnippetAbsolutePath)
-          ) {
-            fs.ensureDirSync(path.dirname(newSnippetAbsolutePath))
-            fs.moveSync(oldSnippetAbsolutePath, newSnippetAbsolutePath, {
-              overwrite: false,
-            })
-          }
+            return affectedFolderIds.has(snippet.folderId)
+          },
         })
       }
 

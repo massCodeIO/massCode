@@ -17,6 +17,8 @@ import {
   getFoldersTreeSorted,
   moveFolderDirectoryOnDisk,
   removeFolderPathsFromDisk,
+  replaceSubtreePathPrefix,
+  updateChildEntityPaths,
 } from '../../runtime/shared/foldersStorage'
 import {
   assertDirectoryNameAvailableAtRoot,
@@ -225,17 +227,17 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
           moveFolderDirectoryOnDisk(paths.notesRoot, oldPath, newPath)
 
-          for (const note of notes) {
-            if (note.filePath.startsWith(`${oldPath}/`)) {
-              const newFilePath = note.filePath.replace(oldPath, newPath)
-              note.filePath = newFilePath
-
+          updateChildEntityPaths({
+            entries: notes,
+            getNextPath: (_, previousPath) =>
+              replaceSubtreePathPrefix(previousPath, oldPath, newPath),
+            onPathUpdated: (note, _previousPath, nextPath) => {
               const indexEntry = state.notes.find(n => n.id === note.id)
               if (indexEntry) {
-                indexEntry.filePath = newFilePath
+                indexEntry.filePath = nextPath
               }
-            }
-          }
+            },
+          })
         }
       }
 

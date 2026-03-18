@@ -193,3 +193,49 @@ export function moveFolderDirectoryOnDisk(
   fs.ensureDirSync(path.dirname(newAbsolutePath))
   fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
 }
+
+export function replaceSubtreePathPrefix(
+  filePath: string,
+  oldFolderPath: string,
+  newFolderPath: string,
+): string {
+  if (!oldFolderPath || !newFolderPath) {
+    return filePath
+  }
+
+  const oldFolderPrefix = `${oldFolderPath}/`
+  if (!filePath.startsWith(oldFolderPrefix)) {
+    return filePath
+  }
+
+  return `${newFolderPath}${filePath.slice(oldFolderPath.length)}`
+}
+
+export function updateChildEntityPaths<
+  TEntity extends { filePath: string },
+>(input: {
+  entries: TEntity[]
+  shouldUpdate?: (entry: TEntity) => boolean
+  getNextPath: (entry: TEntity, previousPath: string) => string
+  onPathUpdated?: (
+    entry: TEntity,
+    previousPath: string,
+    nextPath: string,
+  ) => void
+}): void {
+  input.entries.forEach((entry) => {
+    if (input.shouldUpdate && !input.shouldUpdate(entry)) {
+      return
+    }
+
+    const previousPath = entry.filePath
+    const nextPath = input.getNextPath(entry, previousPath)
+
+    if (!nextPath || nextPath === previousPath) {
+      return
+    }
+
+    entry.filePath = nextPath
+    input.onPathUpdated?.(entry, previousPath, nextPath)
+  })
+}

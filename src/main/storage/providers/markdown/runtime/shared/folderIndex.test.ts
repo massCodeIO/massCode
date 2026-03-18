@@ -2,6 +2,7 @@ import type { FolderLike } from './folderIndex'
 import { describe, expect, it } from 'vitest'
 import {
   buildFolderPathMap,
+  buildFolderTree,
   buildPathToFolderIdMap,
   collectDescendantIds,
   findFolderByIdPure,
@@ -184,6 +185,58 @@ describe('sortFoldersForTree', () => {
     ]
     const sorted = sortFoldersForTree(folders)
     expect(sorted).toHaveLength(2)
+  })
+})
+
+describe('buildFolderTree', () => {
+  it('returns empty array for empty input', () => {
+    expect(buildFolderTree([])).toEqual([])
+  })
+
+  it('builds flat list of roots', () => {
+    const folders = [folder(1, 'A'), folder(2, 'B')]
+    const tree = buildFolderTree(folders)
+    expect(tree).toHaveLength(2)
+    expect(tree[0].children).toEqual([])
+    expect(tree[1].children).toEqual([])
+  })
+
+  it('nests children under parents', () => {
+    const folders = [
+      folder(1, 'Root'),
+      folder(2, 'Child1', 1),
+      folder(3, 'Child2', 1),
+    ]
+    const tree = buildFolderTree(folders)
+    expect(tree).toHaveLength(1)
+    expect(tree[0].id).toBe(1)
+    expect(tree[0].children).toHaveLength(2)
+    expect(tree[0].children.map(c => c.id)).toEqual([2, 3])
+  })
+
+  it('builds deeply nested tree', () => {
+    const folders = [
+      folder(1, 'Root'),
+      folder(2, 'Child', 1),
+      folder(3, 'Grandchild', 2),
+    ]
+    const tree = buildFolderTree(folders)
+    expect(tree[0].children[0].children[0].id).toBe(3)
+  })
+
+  it('treats orphaned folders as roots', () => {
+    const folders = [folder(1, 'Root'), folder(2, 'Orphan', 999)]
+    const tree = buildFolderTree(folders)
+    expect(tree).toHaveLength(2)
+    expect(tree.map(n => n.id)).toEqual([1, 2])
+  })
+
+  it('preserves extra properties on folder type', () => {
+    const extended = [
+      { id: 1, name: 'Root', parentId: null, orderIndex: 0, extra: 'data' },
+    ]
+    const tree = buildFolderTree(extended)
+    expect((tree[0] as any).extra).toBe('data')
   })
 })
 

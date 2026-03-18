@@ -7,6 +7,8 @@ export interface FolderLike {
   orderIndex: number
 }
 
+export type WithChildren<T> = T & { children: WithChildren<T>[] }
+
 export function buildFolderPathMap<T extends FolderLike>(
   folders: T[],
 ): Map<number, string> {
@@ -154,6 +156,37 @@ export function sortFoldersForTree<T extends FolderLike>(folders: T[]): T[] {
   })
 
   return orderedFolders
+}
+
+export function buildFolderTree<T extends FolderLike>(
+  folders: T[],
+): WithChildren<T>[] {
+  const folderMap = new Map<number, WithChildren<T>>()
+  const rootFolders: WithChildren<T>[] = []
+
+  folders.forEach((folder) => {
+    folderMap.set(folder.id, {
+      ...folder,
+      children: [],
+    })
+  })
+
+  folderMap.forEach((folder) => {
+    if (folder.parentId === null) {
+      rootFolders.push(folder)
+      return
+    }
+
+    const parent = folderMap.get(folder.parentId)
+    if (parent) {
+      parent.children.push(folder)
+    }
+    else {
+      rootFolders.push(folder)
+    }
+  })
+
+  return rootFolders
 }
 
 export function collectDescendantIds<T extends FolderLike>(

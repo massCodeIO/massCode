@@ -4,15 +4,16 @@ import type {
   NoteFolderUpdateResult,
   NotesFoldersStorage,
 } from '../../../../contracts'
-import type {
-  NotesFolderRecord,
-  NotesFolderTreeRecord,
-  NotesState,
-} from '../runtime/types'
+import type { NotesFolderRecord, NotesState } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import {
+  buildFolderTree,
+  collectDescendantIds,
+  sortFoldersForTree,
+} from '../../runtime/shared/folderIndex'
 import { throwStorageError, validateEntryName } from '../../runtime/validation'
 import {
   getNotesPaths,
@@ -67,59 +68,6 @@ function assertUniqueSiblingName(
   }
 }
 
-function createFolderTree(
-  folders: NotesFolderRecord[],
-): NotesFolderTreeRecord[] {
-  const childrenMap = new Map<number | null, NotesFolderTreeRecord[]>()
-
-  for (const folder of folders) {
-    const treeItem: NotesFolderTreeRecord = { ...folder, children: [] }
-    const siblings = childrenMap.get(folder.parentId)
-    if (siblings) {
-      siblings.push(treeItem)
-    }
-    else {
-      childrenMap.set(folder.parentId, [treeItem])
-    }
-  }
-
-  function attachChildren(items: NotesFolderTreeRecord[]): void {
-    for (const item of items) {
-      const children = childrenMap.get(item.id)
-      if (children) {
-        children.sort((a, b) => a.orderIndex - b.orderIndex)
-        item.children = children
-        attachChildren(children)
-      }
-    }
-  }
-
-  const roots = childrenMap.get(null) || []
-  roots.sort((a, b) => a.orderIndex - b.orderIndex)
-  attachChildren(roots)
-
-  return roots
-}
-
-function findDescendantIds(
-  folders: NotesFolderRecord[],
-  parentId: number,
-): Set<number> {
-  const descendantIds = new Set<number>()
-
-  function collect(targetParentId: number): void {
-    for (const folder of folders) {
-      if (folder.parentId === targetParentId && !descendantIds.has(folder.id)) {
-        descendantIds.add(folder.id)
-        collect(folder.id)
-      }
-    }
-  }
-
-  collect(parentId)
-  return descendantIds
-}
-
 export function createNotesFoldersStorage(): NotesFoldersStorage {
   function resolvePaths() {
     return getNotesPaths(getVaultPath())
@@ -137,10 +85,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
     getFoldersTree() {
       const { state } = getCache()
-      const sorted = [...state.folders].sort(
-        (a, b) => a.orderIndex - b.orderIndex,
-      )
-      return createFolderTree(sorted)
+      return buildFolderTree(sortFoldersForTree([...state.folders]))
     },
 
     createFolder(input: NoteFolderCreateInput) {
@@ -245,7 +190,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
           }
 
-          const descendants = findDescendantIds(state.folders, id)
+          const descendants = collectDescendantIds(state.folders, id)
           if (descendants.has(newParentId)) {
             throwStorageError(
               'INVALID_NAME',
@@ -333,7 +278,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         return { deleted: false }
       }
 
-      const descendantIds = findDescendantIds(state.folders, id)
+      const descendantIds = collectDescendantIds(state.folders, id)
       descendantIds.add(id)
 
       for (const note of notes) {

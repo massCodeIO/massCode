@@ -21,7 +21,7 @@ import {
   writeNotesFolderMetadataFile,
 } from './parser'
 import { buildNotesFolderPathMap } from './paths'
-import { buildNotesSearchIndex } from './search'
+import { buildNoteSearchText, buildSearchIndex } from './search'
 import { loadNotesState, saveNotesState } from './state'
 
 function toPosixPath(filePath: string): string {
@@ -253,18 +253,12 @@ function setNotesRuntimeCache(
   const folderById = new Map(state.folders.map(f => [f.id, f]))
   const noteById = new Map(notes.map(n => [n.id, n]))
 
-  const searchIndex = buildNotesSearchIndex(notes)
-
   const cache: NotesRuntimeCache = {
     folderById,
     noteById,
     notes,
     paths,
-    searchIndexDirty: false,
-    searchNoteTextById: searchIndex.searchNoteTextById,
-    searchQueryCache: new Map(),
-    searchTokenToNoteIds: searchIndex.searchTokenToNoteIds,
-    searchTokensByNoteId: searchIndex.searchTokensByNoteId,
+    searchIndex: buildSearchIndex(notes, buildNoteSearchText),
     state,
   }
 

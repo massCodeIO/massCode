@@ -98,9 +98,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       if (query.search) {
-        const matchedIds = new Set(
-          getNoteIdsBySearchQuery(notes, query.search),
-        )
+        const matchedIds = getNoteIdsBySearchQuery(notes, query.search)
         filtered = filtered.filter(n => matchedIds.has(n.id))
       }
 

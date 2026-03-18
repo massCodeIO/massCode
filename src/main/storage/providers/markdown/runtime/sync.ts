@@ -31,6 +31,7 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { syncFolderUiWithFolders } from './shared/stateUtils'
 import {
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
@@ -45,7 +46,6 @@ import {
   flushPendingStateWrites,
   loadState,
   saveState,
-  syncFolderUiWithFolders,
 } from './state'
 
 function isTechnicalRootFolder(name: string): boolean {

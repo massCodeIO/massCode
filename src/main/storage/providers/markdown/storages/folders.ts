@@ -8,7 +8,6 @@ import {
   buildFolderPathMap,
   buildSnippetTargetPath,
   collectDescendantIds,
-  depthOfRelativePath,
   findFolderById,
   getFolderPathById,
   getNextFolderOrder,
@@ -26,8 +25,11 @@ import {
   validateEntryName,
 } from '../runtime'
 import {
+  createFolderInStateAndDisk,
+  getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
+  removeFolderPathsFromDisk,
 } from '../runtime/shared/foldersStorage'
 
 export function createFoldersStorage(): FoldersStorage {
@@ -63,25 +65,24 @@ export function createFoldersStorage(): FoldersStorage {
       const normalizedParentPath = normalizeDirectoryPath(parentPath || '')
       assertDirectoryNameAvailable(paths, normalizedParentPath, name)
 
-      const targetDirectory = normalizedParentPath
-        ? path.join(paths.vaultPath, normalizedParentPath, name)
-        : path.join(paths.vaultPath, name)
-      fs.ensureDirSync(targetDirectory)
-
-      const now = Date.now()
-      const id = state.counters.folderId + 1
-      state.counters.folderId = id
-
-      state.folders.push({
-        createdAt: now,
-        defaultLanguage: 'plain_text',
-        icon: null,
-        id,
-        isOpen: 0,
+      const { id } = createFolderInStateAndDisk({
+        buildFolderPathMap,
+        createFolder: ({ id, name, now, orderIndex, parentId }) => ({
+          createdAt: now,
+          defaultLanguage: 'plain_text',
+          icon: null,
+          id,
+          isOpen: 0,
+          name,
+          orderIndex,
+          parentId,
+          updatedAt: now,
+        }),
+        getNextFolderOrder,
         name,
-        orderIndex: getNextFolderOrder(state, parentId),
         parentId,
-        updatedAt: now,
+        rootPath: paths.vaultPath,
+        state,
       })
 
       syncFolderMetadataFiles(paths, state)
@@ -290,21 +291,16 @@ export function createFoldersStorage(): FoldersStorage {
         }
       })
 
-      const removedFolderPaths = [...removedFolderIds]
-        .map(folderId => oldFolderPathMap.get(folderId))
-        .filter((folderPath): folderPath is string => !!folderPath)
-        .sort((a, b) => depthOfRelativePath(b) - depthOfRelativePath(a))
+      const removedFolderPaths = getFolderPathsByDepth(
+        oldFolderPathMap,
+        removedFolderIds,
+      )
 
       state.folders = state.folders.filter(
         folder => !removedFolderIds.has(folder.id),
       )
 
-      removedFolderPaths.forEach((folderPath) => {
-        const absolutePath = path.join(paths.vaultPath, folderPath)
-        if (fs.pathExistsSync(absolutePath)) {
-          fs.removeSync(absolutePath)
-        }
-      })
+      removeFolderPathsFromDisk(paths.vaultPath, removedFolderPaths)
 
       saveState(paths, state)
 

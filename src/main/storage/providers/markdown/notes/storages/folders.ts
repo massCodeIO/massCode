@@ -4,7 +4,6 @@ import type {
   NoteFolderUpdateResult,
   NotesFoldersStorage,
 } from '../../../../contracts'
-import type { NotesFolderRecord } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
@@ -14,9 +13,11 @@ import {
   reorderFolderSiblings,
 } from '../../runtime/shared/folderIndex'
 import {
+  createFolderInStateAndDisk,
+  getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
   getFoldersTreeSorted,
-  resolveFolderRelativePath,
+  removeFolderPathsFromDisk,
 } from '../../runtime/shared/foldersStorage'
 import {
   assertDirectoryNameAvailableAtRoot,
@@ -97,31 +98,28 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
         }
       }
 
-      const folderPathMap = buildNotesFolderPathMap(state)
-      const folderRelativePath = resolveFolderRelativePath(
-        folderPathMap,
-        parentId,
-        name,
-      )
-      const folderAbsPath = path.join(paths.notesRoot, folderRelativePath)
-      fs.ensureDirSync(folderAbsPath)
-
-      state.counters.folderId += 1
-      const folderId = state.counters.folderId
-      const now = Date.now()
-
-      const folder: NotesFolderRecord = {
-        createdAt: now,
-        icon: null,
+      const {
+        folder,
+        folderRelativePath,
         id: folderId,
-        isOpen: 0,
+      } = createFolderInStateAndDisk({
+        buildFolderPathMap: buildNotesFolderPathMap,
+        createFolder: ({ id, name, now, orderIndex, parentId }) => ({
+          createdAt: now,
+          icon: null,
+          id,
+          isOpen: 0,
+          name,
+          orderIndex,
+          parentId,
+          updatedAt: now,
+        }),
+        getNextFolderOrder: getNextNotesFolderOrder,
         name,
-        orderIndex: getNextNotesFolderOrder(state, parentId),
         parentId,
-        updatedAt: now,
-      }
-
-      state.folders.push(folder)
+        rootPath: paths.notesRoot,
+        state,
+      })
       writeNotesFolderMetadataFile(paths, folderRelativePath, folder)
       saveNotesState(paths, state)
 
@@ -297,28 +295,14 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       }
 
       const folderPathMap = buildNotesFolderPathMap(state)
-      const foldersToDelete = state.folders
-        .filter(f => descendantIds.has(f.id))
-        .sort((a, b) => {
-          const pathA = folderPathMap.get(a.id) || ''
-          const pathB = folderPathMap.get(b.id) || ''
-          return pathB.split('/').length - pathA.split('/').length
-        })
+      const folderPathsToDelete = getFolderPathsByDepth(
+        folderPathMap,
+        descendantIds,
+      )
 
-      for (const f of foldersToDelete) {
-        const folderPath = folderPathMap.get(f.id)
-        if (folderPath) {
-          const absPath = path.join(paths.notesRoot, folderPath)
-          if (fs.pathExistsSync(absPath)) {
-            try {
-              fs.removeSync(absPath)
-            }
-            catch {
-              // Non-critical
-            }
-          }
-        }
-      }
+      removeFolderPathsFromDisk(paths.notesRoot, folderPathsToDelete, {
+        ignoreErrors: true,
+      })
 
       state.folders = state.folders.filter(f => !descendantIds.has(f.id))
       saveNotesState(paths, state)

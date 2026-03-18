@@ -1,47 +1,12 @@
 import type { MarkdownSnippet } from './types'
-import { runtimeRef, SEARCH_DIACRITICS_RE, SEARCH_WORD_RE } from './constants'
-
-function normalizeSearchValue(value: string | null | undefined): string {
-  if (!value) {
-    return ''
-  }
-
-  return value
-    .normalize('NFD')
-    .replace(SEARCH_DIACRITICS_RE, '')
-    .toLocaleLowerCase()
-}
-
-function splitSearchWords(value: string): string[] {
-  return value.match(SEARCH_WORD_RE) || []
-}
-
-function createWordTrigrams(value: string): string[] {
-  if (value.length < 3) {
-    return []
-  }
-
-  const trigrams: string[] = []
-  for (let index = 0; index <= value.length - 3; index += 1) {
-    trigrams.push(value.slice(index, index + 3))
-  }
-
-  return trigrams
-}
-
-function buildSearchTokens(normalizedText: string): string[] {
-  const uniqueTokens = new Set<string>()
-  const words = splitSearchWords(normalizedText)
-
-  words.forEach((word) => {
-    uniqueTokens.add(`w:${word}`)
-    createWordTrigrams(word).forEach(trigram =>
-      uniqueTokens.add(`g:${trigram}`),
-    )
-  })
-
-  return [...uniqueTokens]
-}
+import { runtimeRef } from './constants'
+import {
+  buildSearchTokens,
+  createWordTrigrams,
+  intersectSets,
+  normalizeSearchValue,
+  splitSearchWords,
+} from './shared/searchIndex'
 
 function getSnippetSearchText(snippet: MarkdownSnippet): string {
   return normalizeSearchValue(
@@ -64,7 +29,7 @@ export function buildSearchIndex(snippets: MarkdownSnippet[]): {
 
   snippets.forEach((snippet) => {
     const searchText = getSnippetSearchText(snippet)
-    const tokens = buildSearchTokens(searchText)
+    const tokens = [...buildSearchTokens(searchText)]
 
     searchSnippetTextById.set(snippet.id, searchText)
     searchTokensBySnippetId.set(snippet.id, tokens)
@@ -123,25 +88,6 @@ function ensureRuntimeSearchIndex(
   return runtimeCache
 }
 
-function intersectSnippetIdSets(
-  firstSet: Set<number>,
-  secondSet: Set<number>,
-): Set<number> {
-  const [smallSet, largeSet]
-    = firstSet.size <= secondSet.size
-      ? [firstSet, secondSet]
-      : [secondSet, firstSet]
-  const intersection = new Set<number>()
-
-  smallSet.forEach((id) => {
-    if (largeSet.has(id)) {
-      intersection.add(id)
-    }
-  })
-
-  return intersection
-}
-
 export function getSnippetIdsBySearchQuery(
   snippets: MarkdownSnippet[],
   searchQuery: string,
@@ -188,7 +134,7 @@ export function getSnippetIdsBySearchQuery(
         wordCandidates
           = wordCandidates === null
             ? new Set(trigramSnippetIds)
-            : intersectSnippetIdSets(wordCandidates, trigramSnippetIds)
+            : intersectSets(wordCandidates, trigramSnippetIds)
 
         if (wordCandidates.size === 0) {
           break
@@ -205,7 +151,7 @@ export function getSnippetIdsBySearchQuery(
       candidateSnippetIds
         = candidateSnippetIds === null
           ? wordCandidates
-          : intersectSnippetIdSets(candidateSnippetIds, wordCandidates)
+          : intersectSets(candidateSnippetIds, wordCandidates)
 
       if (candidateSnippetIds.size === 0) {
         runtimeCache.searchQueryCache.set(normalizedSearchQuery, [])

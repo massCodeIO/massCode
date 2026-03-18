@@ -1,5 +1,11 @@
 import type { NoteTagsStorage } from '../../../../contracts'
 import { getVaultPath } from '../../runtime/paths'
+import {
+  createTagInState,
+  deleteTagFromStateAndEntities,
+  getSortedTagRecords,
+  updateTagInState,
+} from '../../runtime/shared/tags'
 import { getNotesPaths } from '../runtime/constants'
 import { writeNoteToFile } from '../runtime/notes'
 import { saveNotesState } from '../runtime/state'
@@ -17,65 +23,52 @@ export function createNoteTagsStorage(): NoteTagsStorage {
   return {
     getTags() {
       const { state } = getCache()
-      return [...state.tags].sort((a, b) => a.name.localeCompare(b.name))
+      return getSortedTagRecords(state.tags)
     },
 
     createTag(name: string) {
       const paths = resolvePaths()
       const { state } = getNotesRuntimeCache(paths)
 
-      state.counters.tagId += 1
-      const tagId = state.counters.tagId
-      const now = Date.now()
-
-      state.tags.push({
-        createdAt: now,
-        id: tagId,
-        name: name.trim(),
-        updatedAt: now,
-      })
+      const result = createTagInState(
+        state,
+        name.trim(),
+        ({ id, name, now }) => ({
+          createdAt: now,
+          id,
+          name,
+          updatedAt: now,
+        }),
+      )
 
       saveNotesState(paths, state)
-      return { id: tagId }
+      return result
     },
 
     updateTag(id: number, name: string) {
       const paths = resolvePaths()
       const { state } = getNotesRuntimeCache(paths)
-      const tag = state.tags.find(t => t.id === id)
-
-      if (!tag) {
-        return { notFound: true }
+      const result = updateTagInState(state.tags, id, name.trim())
+      if (result.notFound) {
+        return result
       }
-
-      tag.name = name.trim()
-      tag.updatedAt = Date.now()
       saveNotesState(paths, state)
 
-      return { notFound: false }
+      return result
     },
 
     deleteTag(id: number) {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
-      const tagIndex = state.tags.findIndex(t => t.id === id)
-
-      if (tagIndex === -1) {
-        return { deleted: false }
-      }
-
-      state.tags.splice(tagIndex, 1)
-
-      for (const note of notes) {
-        const idx = note.tags.indexOf(id)
-        if (idx !== -1) {
-          note.tags.splice(idx, 1)
-          writeNoteToFile(paths, note)
-        }
+      const result = deleteTagFromStateAndEntities(state, notes, id, (note) => {
+        writeNoteToFile(paths, note)
+      })
+      if (!result.deleted) {
+        return result
       }
 
       saveNotesState(paths, state)
-      return { deleted: true }
+      return result
     },
   }
 }

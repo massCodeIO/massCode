@@ -4,6 +4,7 @@ import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from '../../types'
+import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
 
 const {
@@ -62,13 +63,13 @@ interface NotesUpdate {
 
 // --- Module-level state ---
 
-const selectedNoteIds = ref<number[]>(
+export const selectedNoteIds = ref<number[]>(
   notesState.noteId ? [notesState.noteId] : [],
 )
 const lastSelectedNoteId = ref<number | undefined>()
 
-const notes = shallowRef<NotesResponse>()
-const notesBySearch = shallowRef<NotesResponse>()
+export const notes = shallowRef<NotesResponse>()
+export const notesBySearch = shallowRef<NotesResponse>()
 
 const searchQuery = ref('')
 const isSearch = ref(false)
@@ -76,13 +77,6 @@ const isRestoreStateBlocked = ref(false)
 const searchSelectedIndex = ref<number>(-1)
 const notesLoadingCounter = ref(0)
 const isNotesLoadingVisible = ref(false)
-const contentUpdateQueue = ref<Map<number, string>>(new Map())
-const contentUpdateTimers = ref<Map<number, ReturnType<typeof setTimeout>>>(
-  new Map(),
-)
-const inFlightContentUpdateIds = ref<Set<number>>(new Set())
-
-const CONTENT_UPDATE_DEBOUNCE_MS = 500
 const NOTES_LOADING_VISIBILITY_DELAY_MS = 300
 let notesLoadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -227,66 +221,6 @@ async function getNoteNamesForCreate(
   return data.map((note: NoteRecord) => note.name)
 }
 
-function updateLocalNoteContent(noteId: number, content: string) {
-  const now = Date.now()
-
-  function updateCollection(collection?: NotesResponse) {
-    const note = collection?.find(item => item.id === noteId)
-    if (note) {
-      note.content = content
-      note.updatedAt = now
-    }
-  }
-
-  updateCollection(notes.value)
-  updateCollection(notesBySearch.value)
-}
-
-function scheduleContentUpdate(noteId: number) {
-  const currentTimer = contentUpdateTimers.value.get(noteId)
-  if (currentTimer) {
-    clearTimeout(currentTimer)
-  }
-
-  const timer = setTimeout(() => {
-    contentUpdateTimers.value.delete(noteId)
-    void flushContentUpdate(noteId)
-  }, CONTENT_UPDATE_DEBOUNCE_MS)
-
-  contentUpdateTimers.value.set(noteId, timer)
-}
-
-async function flushContentUpdate(noteId: number) {
-  const content = contentUpdateQueue.value.get(noteId)
-  if (content === undefined) {
-    return
-  }
-
-  contentUpdateQueue.value.delete(noteId)
-  inFlightContentUpdateIds.value.add(noteId)
-
-  try {
-    markPersistedStorageMutation()
-    await api.notes.patchNotesByIdContent(String(noteId), { content })
-  }
-  catch (error) {
-    console.error(error)
-  }
-  finally {
-    inFlightContentUpdateIds.value.delete(noteId)
-
-    if (contentUpdateQueue.value.has(noteId)) {
-      scheduleContentUpdate(noteId)
-    }
-  }
-}
-
-function hasBusyNoteContentUpdates() {
-  return (
-    contentUpdateQueue.value.size > 0 || inFlightContentUpdateIds.value.size > 0
-  )
-}
-
 // --- CRUD ---
 
 async function getNotes(query?: NotesQuery) {
@@ -364,17 +298,6 @@ async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
   }
 
   await getNotes(queryByLibraryOrFolderOrSearch.value)
-}
-
-function updateNoteContent(noteId: number, content: string) {
-  updateLocalNoteContent(noteId, content)
-  contentUpdateQueue.value.set(noteId, content)
-
-  if (inFlightContentUpdateIds.value.has(noteId)) {
-    return
-  }
-
-  scheduleContentUpdate(noteId)
 }
 
 async function deleteNote(noteId: number) {
@@ -539,6 +462,8 @@ function clearSearch(restoreState = false) {
 }
 
 export function useNotes() {
+  const { hasBusyNoteContentUpdates, updateNoteContent } = useNoteContent()
+
   return {
     addTagToNote,
     clearNotes,

@@ -191,6 +191,7 @@ describe('readNoteFromFile', () => {
         { filePath: relativePath, id: 11 },
         new Map(),
       )
+      const normalizedSource = fs.readFileSync(absolutePath, 'utf8')
 
       vi.setSystemTime(new Date('2026-03-18T12:00:00.000Z'))
       const secondRead = readNoteFromFile(
@@ -201,6 +202,9 @@ describe('readNoteFromFile', () => {
 
       expect(firstRead).not.toBeNull()
       expect(secondRead).not.toBeNull()
+      expect(normalizedSource.startsWith('---\n')).toBe(true)
+      expect(normalizedSource).toContain('createdAt:')
+      expect(normalizedSource).toContain('updatedAt:')
       expect(secondRead?.createdAt).toBe(firstRead?.createdAt)
       expect(secondRead?.updatedAt).toBe(firstRead?.updatedAt)
     }

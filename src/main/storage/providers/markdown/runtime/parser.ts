@@ -147,11 +147,12 @@ export function writeFolderMetadataFile(
 export function splitFrontmatter(source: string): {
   body: string
   frontmatter: MarkdownSnippetFrontmatter
+  hasFrontmatter: boolean
 } {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
 
   if (!match) {
-    return { body: source, frontmatter: {} }
+    return { body: source, frontmatter: {}, hasFrontmatter: false }
   }
 
   const parsed = yaml.load(match[1])
@@ -162,6 +163,7 @@ export function splitFrontmatter(source: string): {
       parsed && typeof parsed === 'object'
         ? (parsed as MarkdownSnippetFrontmatter)
         : {},
+    hasFrontmatter: true,
   }
 }
 

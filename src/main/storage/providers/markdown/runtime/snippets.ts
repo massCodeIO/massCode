@@ -33,60 +33,11 @@ import {
   normalizeDirectoryPath,
 } from './paths'
 import { listMarkdownFiles as listMarkdownFilesShared } from './shared/path'
+import {
+  getFileTimestampFallbacks,
+  normalizeTimestamp,
+} from './shared/timestamp'
 import { throwStorageError, toSnippetFileName } from './validation'
-
-function normalizeTimestamp(value: unknown, fallback: number): number {
-  if (value instanceof Date) {
-    const timestamp = value.getTime()
-    if (Number.isFinite(timestamp)) {
-      return timestamp
-    }
-  }
-
-  const numericValue = Number(value)
-  if (Number.isFinite(numericValue)) {
-    return numericValue
-  }
-
-  if (typeof value === 'string') {
-    const parsedDate = Date.parse(value)
-    if (Number.isFinite(parsedDate)) {
-      return parsedDate
-    }
-  }
-
-  return fallback
-}
-
-function isFinitePositiveTimestamp(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-}
-
-function getFileTimestampFallbacks(
-  absolutePath: string,
-  now: number,
-): { createdAt: number, updatedAt: number } {
-  try {
-    const stats = fs.statSync(absolutePath)
-    const updatedAt = isFinitePositiveTimestamp(stats.mtimeMs)
-      ? stats.mtimeMs
-      : now
-    const createdAt = isFinitePositiveTimestamp(stats.birthtimeMs)
-      ? stats.birthtimeMs
-      : updatedAt
-
-    return {
-      createdAt,
-      updatedAt,
-    }
-  }
-  catch {
-    return {
-      createdAt: now,
-      updatedAt: now,
-    }
-  }
-}
 
 export function isInboxSnippetDirectory(directoryPath: string): boolean {
   return (
@@ -139,7 +90,7 @@ export function readSnippetFromFile(
   }
 
   const source = fs.readFileSync(snippetPath, 'utf8')
-  const { body, frontmatter } = splitFrontmatter(source)
+  const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const now = Date.now()
   const timestampFallbacks = getFileTimestampFallbacks(snippetPath, now)
   const fragments = parseBodyFragments(body)
@@ -190,7 +141,7 @@ export function readSnippetFromFile(
 
   const inferredName = path.posix.basename(entry.filePath, '.md')
 
-  return {
+  const snippet: MarkdownSnippet = {
     contents,
     createdAt: normalizeTimestamp(
       frontmatter.createdAt,
@@ -216,6 +167,12 @@ export function readSnippetFromFile(
       timestampFallbacks.updatedAt,
     ),
   }
+
+  if (!hasFrontmatter) {
+    writeSnippetToFile(paths, snippet)
+  }
+
+  return snippet
 }
 
 export function loadSnippets(

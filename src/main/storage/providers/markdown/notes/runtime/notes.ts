@@ -15,6 +15,10 @@ import {
   listMarkdownFiles as listMarkdownFilesShared,
   toPosixPath,
 } from '../../runtime/shared/path'
+import {
+  getFileTimestampFallbacks,
+  normalizeTimestamp,
+} from '../../runtime/shared/timestamp'
 import { validateEntryName } from '../../runtime/validation'
 import {
   INBOX_DIR_NAME,
@@ -34,59 +38,6 @@ export function toNoteFileName(name: string): string {
   }
 
   return `${normalized}.md`
-}
-
-function normalizeTimestamp(value: unknown, fallback: number): number {
-  if (value instanceof Date) {
-    const timestamp = value.getTime()
-    if (Number.isFinite(timestamp)) {
-      return timestamp
-    }
-  }
-
-  const numericValue = Number(value)
-  if (Number.isFinite(numericValue)) {
-    return numericValue
-  }
-
-  if (typeof value === 'string') {
-    const parsedDate = Date.parse(value)
-    if (Number.isFinite(parsedDate)) {
-      return parsedDate
-    }
-  }
-
-  return fallback
-}
-
-function isFinitePositiveTimestamp(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-}
-
-function getFileTimestampFallbacks(
-  absolutePath: string,
-  now: number,
-): { createdAt: number, updatedAt: number } {
-  try {
-    const stats = fs.statSync(absolutePath)
-    const updatedAt = isFinitePositiveTimestamp(stats.mtimeMs)
-      ? stats.mtimeMs
-      : now
-    const createdAt = isFinitePositiveTimestamp(stats.birthtimeMs)
-      ? stats.birthtimeMs
-      : updatedAt
-
-    return {
-      createdAt,
-      updatedAt,
-    }
-  }
-  catch {
-    return {
-      createdAt: now,
-      updatedAt: now,
-    }
-  }
 }
 
 export function serializeNote(note: MarkdownNote): string {
@@ -129,7 +80,7 @@ export function readNoteFromFile(
   }
 
   const source = fs.readFileSync(absolutePath, 'utf8')
-  const { body, frontmatter } = splitFrontmatter(source)
+  const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const fm = frontmatter as NotesFrontmatter
   const now = Date.now()
   const timestampFallbacks = getFileTimestampFallbacks(absolutePath, now)
@@ -143,7 +94,7 @@ export function readNoteFromFile(
     }
   }
 
-  return {
+  const note: MarkdownNote = {
     content: body,
     createdAt: normalizeTimestamp(fm.createdAt, timestampFallbacks.createdAt),
     description: fm.description ?? null,
@@ -158,6 +109,12 @@ export function readNoteFromFile(
       : [],
     updatedAt: normalizeTimestamp(fm.updatedAt, timestampFallbacks.updatedAt),
   }
+
+  if (!hasFrontmatter) {
+    writeNoteToFile(paths, note)
+  }
+
+  return note
 }
 
 export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {

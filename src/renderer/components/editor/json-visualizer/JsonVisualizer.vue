@@ -183,7 +183,7 @@ setInteractive(false)
         </div>
         <div>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSave('png')"
           >
@@ -192,7 +192,7 @@ setInteractive(false)
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSave('svg')"
           >

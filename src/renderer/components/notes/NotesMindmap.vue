@@ -115,7 +115,7 @@ watch(
         </div>
         <div>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSaveScreenshot('png')"
           >
@@ -124,7 +124,7 @@ watch(
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSaveScreenshot('svg')"
           >

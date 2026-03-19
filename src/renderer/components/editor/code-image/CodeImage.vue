@@ -221,7 +221,7 @@ onMounted(() => {
         </div>
         <div>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSave('png')"
           >
@@ -230,7 +230,7 @@ onMounted(() => {
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSave('svg')"
           >

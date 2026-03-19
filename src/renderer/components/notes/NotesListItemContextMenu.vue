@@ -2,7 +2,8 @@
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useDialog, useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { isMac } from '@/utils'
 
 interface NoteTagInfo {
   id: number
@@ -53,6 +54,12 @@ const isFavoritesLibrarySelected = computed(
 
 const isTrashLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Trash,
+)
+
+const revealInFileManagerLabel = computed(() =>
+  isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager'),
 )
 
 async function onAddFavorites() {
@@ -133,6 +140,10 @@ async function onRestore() {
     await updateNote(props.note.id, { folderId: null, isDeleted: 0 })
   }
 }
+
+function onRevealInFileManager() {
+  void ipc.invoke('system:show-note-in-file-manager', props.note.id)
+}
 </script>
 
 <template>
@@ -147,6 +158,10 @@ async function onRestore() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
     </template>
+    <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
+      {{ revealInFileManagerLabel }}
+    </ContextMenu.ContextMenuItem>
+    <ContextMenu.ContextMenuSeparator />
     <ContextMenu.ContextMenuItem @click="onDelete">
       {{
         notesState.libraryFilter === LibraryFilter.Trash

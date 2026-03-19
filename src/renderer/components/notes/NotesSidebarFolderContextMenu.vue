@@ -7,8 +7,8 @@ import {
   useNotes,
   useNotesApp,
 } from '@/composables'
-import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import { i18n, ipc } from '@/electron'
+import { isMac, scrollToElement } from '@/utils'
 
 const props = defineProps<{
   contextNode: any
@@ -41,6 +41,12 @@ const isContextMultiSelection = computed(() => {
     return false
   return selectedFolderIds.value.includes(props.contextNode.id)
 })
+
+const revealInFileManagerLabel = computed(() =>
+  isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager'),
+)
 
 async function onDeleteFolder() {
   if (!props.contextNode)
@@ -118,6 +124,17 @@ async function onRemoveCustomIcon() {
   await updateNoteFolder(props.contextNode.id, { icon: null })
   await getNoteFolders(false)
 }
+
+function onRevealInFileManager() {
+  if (!props.contextNode) {
+    return
+  }
+
+  void ipc.invoke(
+    'system:show-notes-folder-in-file-manager',
+    Number(props.contextNode.id),
+  )
+}
 </script>
 
 <template>
@@ -137,6 +154,10 @@ async function onRemoveCustomIcon() {
       <ContextMenu.ContextMenuItem @click="onRenameFolder">
         {{ i18n.t("action.rename") }}
       </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
+        {{ revealInFileManagerLabel }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuSeparator />
       <ContextMenu.ContextMenuItem @click="onDeleteFolder">
         {{ i18n.t("action.delete.common") }}
       </ContextMenu.ContextMenuItem>

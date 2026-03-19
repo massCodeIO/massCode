@@ -1,5 +1,13 @@
+import path from 'node:path'
 import { app, ipcMain, shell } from 'electron'
 import { getCurrencyRates } from '../../currencyRates'
+import {
+  findNoteById,
+  getNotesFolderPathById,
+  getNotesPaths,
+  getNotesRuntimeCache,
+} from '../../storage/providers/markdown/notes/runtime'
+import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 
 export function registerSystemHandlers() {
   ipcMain.handle('system:currency-rates', () => {
@@ -14,4 +22,48 @@ export function registerSystemHandlers() {
   ipcMain.handle('system:open-external', (_, url: string) => {
     shell.openExternal(url)
   })
+
+  ipcMain.handle('system:show-note-in-file-manager', (_, noteId: number) => {
+    if (!Number.isFinite(noteId) || noteId <= 0) {
+      return false
+    }
+
+    const notesPaths = getNotesPaths(getVaultPath())
+    const cache = getNotesRuntimeCache(notesPaths)
+    const note = findNoteById(cache.notes, noteId)
+
+    if (!note) {
+      return false
+    }
+
+    const noteAbsolutePath = path.join(notesPaths.notesRoot, note.filePath)
+    shell.showItemInFolder(noteAbsolutePath)
+
+    return true
+  })
+
+  ipcMain.handle(
+    'system:show-notes-folder-in-file-manager',
+    (_, folderId: number) => {
+      if (!Number.isFinite(folderId) || folderId <= 0) {
+        return false
+      }
+
+      const notesPaths = getNotesPaths(getVaultPath())
+      const cache = getNotesRuntimeCache(notesPaths)
+      const folderRelativePath = getNotesFolderPathById(cache.state, folderId)
+
+      if (!folderRelativePath) {
+        return false
+      }
+
+      const folderAbsolutePath = path.join(
+        notesPaths.notesRoot,
+        folderRelativePath,
+      )
+      shell.showItemInFolder(folderAbsolutePath)
+
+      return true
+    },
+  )
 }

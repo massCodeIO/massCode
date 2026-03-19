@@ -43,6 +43,8 @@ type SystemAction =
   | 'currency-rates'
   | 'reload'
   | 'open-external'
+  | 'show-notes-folder-in-file-manager'
+  | 'show-note-in-file-manager'
   | 'deep-link'
   | 'update-available'
   | 'feature-notice'

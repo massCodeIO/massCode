@@ -64,6 +64,10 @@
     "remove": {
       "fromFavorites": "Remove from Favorites"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
       "storage": "Reload Storage",
       "app": "Reload massCode"

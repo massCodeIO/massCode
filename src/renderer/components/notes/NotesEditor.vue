@@ -5,12 +5,18 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { EditorState, type Extension } from '@codemirror/state'
-import { EditorView, keymap, placeholder } from '@codemirror/view'
+import {
+  EditorView,
+  type KeyBinding,
+  keymap,
+  placeholder,
+} from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
+import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
 
 interface Props {
   mode?: 'edit' | 'presentation'
@@ -83,6 +89,17 @@ function createLinkClickHandler() {
     },
   })
 }
+
+const mermaidNavigationKeymap: KeyBinding[] = [
+  {
+    key: 'ArrowDown',
+    run: view => moveSelectionToAdjacentMermaidSource(view, 'down'),
+  },
+  {
+    key: 'ArrowUp',
+    run: view => moveSelectionToAdjacentMermaidSource(view, 'up'),
+  },
+]
 
 const editTheme = EditorView.theme({
   '&': {
@@ -160,6 +177,7 @@ function createEditorState(doc: string): EditorState {
     EditorView.lineWrapping,
     history(),
     keymap.of([
+      ...(isPresentationMode.value ? [] : mermaidNavigationKeymap),
       ...(isPresentationMode.value ? [] : listIndent),
       ...defaultKeymap,
       ...historyKeymap,
@@ -170,8 +188,9 @@ function createEditorState(doc: string): EditorState {
       extensions: GFM,
     }),
     createMermaidBlocks({
-      enabled: isPresentationMode.value,
+      enabled: true,
       isDark: isDark.value,
+      showSourceWhenSelectionInside: !isPresentationMode.value,
     }),
     createMarkdownDecorations({
       interactiveTaskMarkers: !isPresentationMode.value,
@@ -227,7 +246,7 @@ watch(isPresentationMode, () => {
 })
 
 watch(isDark, () => {
-  if (!view || !isPresentationMode.value)
+  if (!view)
     return
 
   isApplyingExternalContent = true

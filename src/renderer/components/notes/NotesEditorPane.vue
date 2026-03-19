@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { useNotes, useNotesApp, useNoteUpdate } from '@/composables'
 import { i18n } from '@/electron'
+import { router, RouterName } from '@/router'
 import {
   InspectionPanel,
   LoaderCircle,
+  Network,
   PanelLeftClose,
   PanelLeftOpen,
+  Presentation,
 } from 'lucide-vue-next'
 
 const {
@@ -18,9 +21,14 @@ const { addToUpdateQueue } = useNoteUpdate()
 const {
   hideNotesSidebar,
   isFocusedNoteName,
+  isNotesMindmapShown,
   isNotesListHidden,
+  isNotesPresentationShown,
   isNotesSidebarHidden,
+  hideNotesViewModes,
   showAllNotesPanels,
+  showNotesMindmap,
+  showNotesPresentation,
   showNotesEditorOnly,
 } = useNotesApp()
 
@@ -40,6 +48,16 @@ const editorOnlyActionTooltip = computed(() =>
     ? i18n.t('action.showSidebarAndList')
     : i18n.t('action.hideSidebarAndList'),
 )
+const mindmapActionTooltip = computed(() =>
+  isNotesMindmapShown.value
+    ? `${i18n.t('action.hide')} ${i18n.t('menu:markdown.previewMindmap')}`
+    : i18n.t('menu:markdown.previewMindmap'),
+)
+const presentationActionTooltip = computed(() =>
+  isNotesPresentationShown.value
+    ? i18n.t('action.hide')
+    : i18n.t('menu:markdown.presentationMode'),
+)
 
 function onSidebarToggle() {
   if (isSidebarOnlyHidden.value) {
@@ -57,6 +75,26 @@ function onEditorOnlyToggle() {
   }
 
   showNotesEditorOnly()
+}
+
+function onMindmapToggle() {
+  if (isNotesMindmapShown.value) {
+    hideNotesViewModes()
+    return
+  }
+
+  showNotesMindmap()
+}
+
+function onPresentationToggle() {
+  if (isNotesPresentationShown.value) {
+    hideNotesViewModes()
+    router.push({ name: RouterName.notesSpace })
+    return
+  }
+
+  showNotesPresentation()
+  router.push({ name: RouterName.notesPresentation })
 }
 
 const name = computed({
@@ -119,14 +157,32 @@ const content = computed({
           >
             <InspectionPanel class="h-3 w-3" />
           </UiActionButton>
+          <UiActionButton
+            :tooltip="mindmapActionTooltip"
+            :active="isNotesMindmapShown"
+            @click="onMindmapToggle"
+          >
+            <Network class="h-3 w-3 -rotate-90" />
+          </UiActionButton>
+          <UiActionButton
+            :tooltip="presentationActionTooltip"
+            :active="isNotesPresentationShown"
+            @click="onPresentationToggle"
+          >
+            <Presentation class="h-3 w-3" />
+          </UiActionButton>
         </div>
       </div>
       <div class="pt-1">
-        <NotesEditorTags />
+        <NotesEditorTags
+          v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+        />
       </div>
     </div>
     <div class="min-h-0 flex-1">
+      <NotesMindmap v-if="isNotesMindmapShown" />
       <NotesEditor
+        v-else
         :key="selectedNote.id"
         v-model:content="content"
       />

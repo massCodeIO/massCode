@@ -70,7 +70,10 @@ init()
       class="absolute top-0 z-50 h-3 w-full select-none"
     />
     <RouterView v-slot="{ Component, route: currentRoute }">
-      <AppSpaceShell v-if="isSpaceRouteName(currentRoute.name)">
+      <AppSpaceShell
+        v-if="isSpaceRouteName(currentRoute.name)"
+        :show-rail="currentRoute.name !== RouterName.notesPresentation"
+      >
         <component :is="Component" />
       </AppSpaceShell>
       <component

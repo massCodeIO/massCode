@@ -33,11 +33,8 @@ const {
   searchQuery,
 } = useSnippets()
 const {
-  isShowMarkdown,
-  isShowMindmap,
   isShowCodePreview,
   isShowCodeImage,
-  isShowMarkdownPresentation,
   isFocusedSearch,
   isShowJsonVisualizer,
 } = useApp()
@@ -73,20 +70,13 @@ const scrollBarOpacity = useCssVar(
 const isShowHeader = computed(() => {
   if (selectedSnippetIds.value.length > 1)
     return false
-  return (
-    isShowMarkdown.value
-    || isShowMindmap.value
-    || (!isEmpty.value && selectedSnippet.value !== undefined)
-  )
+  return !isEmpty.value && selectedSnippet.value !== undefined
 })
 const isShowEditor = computed(() => {
   if (selectedSnippetIds.value.length > 1)
     return false
   return (
-    !isShowMarkdown.value
-    && !isShowMindmap.value
-    && !isShowCodeImage.value
-    && !isShowMarkdownPresentation.value
+    !isShowCodeImage.value
     && !isShowJsonVisualizer.value
     && !isEmpty.value
     && selectedSnippet.value !== undefined
@@ -94,11 +84,6 @@ const isShowEditor = computed(() => {
 })
 
 watch(selectedSnippetContent, () => {
-  if (selectedSnippetContent.value?.language !== 'markdown') {
-    isShowMarkdown.value = false
-    isShowMindmap.value = false
-  }
-
   if (selectedSnippetContent.value?.language !== 'json') {
     isShowJsonVisualizer.value = false
   }
@@ -485,9 +470,7 @@ onMounted(() => {
         </Resizable.ResizablePanel>
       </template>
     </Resizable.ResizablePanelGroup>
-    <EditorMarkdown v-if="isShowMarkdown" />
     <EditorFooter v-if="isShowEditor" />
-    <EditorMindmap v-if="isShowMindmap" />
     <EditorCodeImage v-if="isShowCodeImage" />
     <EditorJsonVisualizer v-if="isShowJsonVisualizer" />
     <div

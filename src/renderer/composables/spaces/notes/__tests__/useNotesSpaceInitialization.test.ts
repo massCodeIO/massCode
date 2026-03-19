@@ -26,12 +26,14 @@ async function setup(options: SetupOptions = {}) {
     const firstNote = displayedNotes.value?.[0]
     notesState.noteId = firstNote?.id
   })
+  const hideNotesViewModes = vi.fn()
   const showAllNotesPanels = vi.fn()
 
   vi.doMock('../useNotesApp', () => ({
     useNotesApp: () => ({
       isNotesSpaceInitialized,
       notesState,
+      hideNotesViewModes,
       showAllNotesPanels,
     }),
   }))
@@ -59,6 +61,7 @@ async function setup(options: SetupOptions = {}) {
     initNotesSpace: useNotesSpaceInitialization().initNotesSpace,
     isNotesSpaceInitialized,
     selectFirstNote,
+    hideNotesViewModes,
     showAllNotesPanels,
   }
 }
@@ -77,6 +80,7 @@ describe('useNotesSpaceInitialization', () => {
     expect(context.getNotes).toHaveBeenCalledTimes(1)
     expect(context.getNoteTags).toHaveBeenCalledTimes(1)
     expect(context.selectFirstNote).not.toHaveBeenCalled()
+    expect(context.hideNotesViewModes).not.toHaveBeenCalled()
     expect(context.showAllNotesPanels).not.toHaveBeenCalled()
     expect(context.isNotesSpaceInitialized.value).toBe(true)
   })
@@ -87,6 +91,7 @@ describe('useNotesSpaceInitialization', () => {
     await context.initNotesSpace()
 
     expect(context.selectFirstNote).toHaveBeenCalledTimes(1)
+    expect(context.hideNotesViewModes).not.toHaveBeenCalled()
     expect(context.showAllNotesPanels).not.toHaveBeenCalled()
   })
 
@@ -96,6 +101,7 @@ describe('useNotesSpaceInitialization', () => {
     await context.initNotesSpace()
 
     expect(context.selectFirstNote).toHaveBeenCalledTimes(1)
+    expect(context.hideNotesViewModes).not.toHaveBeenCalled()
     expect(context.showAllNotesPanels).not.toHaveBeenCalled()
   })
 
@@ -107,6 +113,7 @@ describe('useNotesSpaceInitialization', () => {
 
     await context.initNotesSpace()
 
+    expect(context.hideNotesViewModes).toHaveBeenCalledTimes(1)
     expect(context.showAllNotesPanels).toHaveBeenCalledTimes(1)
   })
 

@@ -1,17 +1,25 @@
-import { useApp, useFolders, useSnippets } from '@/composables'
+import {
+  useApp,
+  useFolders,
+  useNotes,
+  useNotesApp,
+  useSnippets,
+} from '@/composables'
 import { ipc } from '@/electron'
 import { router, RouterName } from '@/router'
+import { getActiveSpaceId } from '@/spaceDefinitions'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
+const { selectedNote } = useNotes()
+const { isShowCodePreview, isShowJsonVisualizer, isSidebarHidden } = useApp()
 const {
-  isShowMarkdown,
-  isShowMindmap,
-  isShowCodePreview,
-  isShowMarkdownPresentation,
-  isShowJsonVisualizer,
-  isSidebarHidden,
-} = useApp()
+  hideNotesViewModes,
+  isNotesMindmapShown,
+  isNotesPresentationShown,
+  showNotesMindmap,
+  showNotesPresentation,
+} = useNotesApp()
 
 export function registerMainMenuListeners() {
   ipc.on('main-menu:goto-preferences', () => {
@@ -34,12 +42,17 @@ export function registerMainMenuListeners() {
     createFolderAndSelect()
   })
 
-  ipc.on('main-menu:preview-markdown', () => {
-    isShowMarkdown.value = !isShowMarkdown.value
-  })
-
   ipc.on('main-menu:preview-mindmap', () => {
-    isShowMindmap.value = !isShowMindmap.value
+    if (getActiveSpaceId() !== 'notes' || !selectedNote.value) {
+      return
+    }
+
+    if (isNotesMindmapShown.value) {
+      hideNotesViewModes()
+      return
+    }
+
+    showNotesMindmap()
   })
 
   ipc.on('main-menu:preview-code', () => {
@@ -51,8 +64,18 @@ export function registerMainMenuListeners() {
   })
 
   ipc.on('main-menu:presentation-mode', () => {
-    isShowMarkdownPresentation.value = !isShowMarkdownPresentation.value
-    router.push({ name: RouterName.markdownPresentation })
+    if (getActiveSpaceId() !== 'notes' || !selectedNote.value) {
+      return
+    }
+
+    if (isNotesPresentationShown.value) {
+      hideNotesViewModes()
+      router.push({ name: RouterName.notesSpace })
+      return
+    }
+
+    showNotesPresentation()
+    router.push({ name: RouterName.notesPresentation })
   })
 
   ipc.on('main-menu:toggle-sidebar', () => {

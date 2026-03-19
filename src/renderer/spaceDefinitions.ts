@@ -58,7 +58,8 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       tooltip: i18n.t('spaces.notesTooltip'),
       icon: Notebook,
       to: { name: RouterName.notesSpace },
-      isActive: routeName => routeName === RouterName.notesSpace,
+      isActive: routeName =>
+        isRouteNameInSpace(routeName, RouterName.notesSpace),
     },
   ]
 }

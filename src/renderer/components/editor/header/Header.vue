@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { router, RouterName } from '@/router'
 
 import {
   Code,
-  Eye,
   Image,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Presentation,
   Type,
 } from 'lucide-vue-next'
 
@@ -24,9 +21,6 @@ const {
 const {
   isFocusedSnippetName,
   state,
-  isShowMarkdown,
-  isShowMindmap,
-  isShowMarkdownPresentation,
   isShowCodePreview,
   isShowCodeImage,
   isShowJsonVisualizer,
@@ -51,79 +45,32 @@ const name = computed({
   },
 })
 
-const isShowMarkdownAction = computed(
-  () => selectedSnippetContent.value?.language === 'markdown',
-)
-
 const isShowJsonVisualizerAction = computed(
   () => selectedSnippetContent.value?.language === 'json',
 )
 
 const isShowTags = computed(() => {
-  return (
-    !isShowMindmap.value
-    && !isShowMarkdown.value
-    && !isShowCodeImage.value
-    && !isShowJsonVisualizer.value
-  )
+  return !isShowCodeImage.value && !isShowJsonVisualizer.value
 })
 
 function onClickTab(index: number) {
   state.snippetContentIndex = index
 }
 
-function onMarkdownToggle() {
-  isShowMarkdown.value = !isShowMarkdown.value
-  isShowMindmap.value = false
-  isShowMarkdownPresentation.value = false
-  isShowCodePreview.value = false
-  isShowCodeImage.value = false
-  isShowJsonVisualizer.value = false
-}
-
-function onMarkdownPresentationToggle() {
-  isShowMarkdownPresentation.value = !isShowMarkdownPresentation.value
-  isShowMarkdown.value = false
-  isShowMindmap.value = false
-  isShowCodePreview.value = false
-  isShowCodeImage.value = false
-  isShowJsonVisualizer.value = false
-
-  router.push({ name: RouterName.markdownPresentation })
-}
-
-function onMindmapToggle() {
-  isShowMindmap.value = !isShowMindmap.value
-  isShowMarkdown.value = false
-  isShowMarkdownPresentation.value = false
-  isShowCodePreview.value = false
-  isShowCodeImage.value = false
-  isShowJsonVisualizer.value = false
-}
-
 function onCodePreviewToggle() {
   isShowCodePreview.value = !isShowCodePreview.value
-  isShowMarkdown.value = false
-  isShowMarkdownPresentation.value = false
-  isShowMindmap.value = false
   isShowCodeImage.value = false
   isShowJsonVisualizer.value = false
 }
 
 function onCodeImageToggle() {
   isShowCodeImage.value = !isShowCodeImage.value
-  isShowMarkdown.value = false
-  isShowMarkdownPresentation.value = false
-  isShowMindmap.value = false
   isShowCodePreview.value = false
   isShowJsonVisualizer.value = false
 }
 
 function onJsonVisualizerToggle() {
   isShowJsonVisualizer.value = !isShowJsonVisualizer.value
-  isShowMarkdown.value = false
-  isShowMarkdownPresentation.value = false
-  isShowMindmap.value = false
   isShowCodePreview.value = false
   isShowCodeImage.value = false
 }
@@ -180,46 +127,10 @@ function onJsonVisualizerToggle() {
           <Code class="h-3 w-3" />
         </UiActionButton>
         <UiActionButton
-          v-if="isShowMarkdownAction"
-          :tooltip="
-            isShowMarkdownPresentation
-              ? i18n.t('action.hide')
-              : i18n.t('menu:markdown.presentationMode')
-          "
-          :active="isShowMarkdownPresentation"
-          @click="onMarkdownPresentationToggle"
-        >
-          <Presentation class="h-3 w-3" />
-        </UiActionButton>
-        <UiActionButton
           v-if="isShowJsonVisualizerAction"
           :tooltip="i18n.t('menu:editor.previewJson')"
           :active="isShowJsonVisualizer"
           @click="onJsonVisualizerToggle"
-        >
-          <Network class="h-3 w-3 -rotate-90" />
-        </UiActionButton>
-        <UiActionButton
-          v-if="isShowMarkdownAction"
-          :tooltip="
-            isShowMarkdown
-              ? `${i18n.t('action.hide')} ${i18n.t('menu:markdown.previewMarkdown')}`
-              : i18n.t('menu:markdown.previewMarkdown')
-          "
-          :active="isShowMarkdown"
-          @click="onMarkdownToggle"
-        >
-          <Eye class="h-3 w-3" />
-        </UiActionButton>
-        <UiActionButton
-          v-if="isShowMarkdownAction"
-          :tooltip="
-            isShowMindmap
-              ? `${i18n.t('action.hide')} ${i18n.t('menu:markdown.previewMindmap')}`
-              : i18n.t('menu:markdown.previewMindmap')
-          "
-          :active="isShowMindmap"
-          @click="onMindmapToggle"
         >
           <Network class="h-3 w-3 -rotate-90" />
         </UiActionButton>

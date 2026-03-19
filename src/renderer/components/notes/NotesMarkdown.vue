@@ -1,25 +1,20 @@
 <script setup lang="ts">
-import { useSnippets, useTheme } from '@/composables'
-import { i18n, ipc, store } from '@/electron'
+import { useMarkdown } from '@/components/editor/markdown/composables'
+import { useNotes, useTheme } from '@/composables'
+import { ipc, store } from '@/electron'
 import CodeMirror from 'codemirror'
-import { Minus, Plus } from 'lucide-vue-next'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
 import sanitizeHtml from 'sanitize-html'
-import { nextTick, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useMarkdown } from './composables'
 import 'codemirror/addon/runmode/runmode'
 import 'codemirror/theme/neo.css'
 import 'codemirror/theme/oceanic-next.css'
 
 const isDev = import.meta.env.DEV
 
-const { selectedSnippetContent } = useSnippets()
+const { selectedNote } = useNotes()
 const { isDark, editorThemeName } = useTheme()
-const { scaleToShow, onZoom } = useMarkdown()
-
-const route = useRoute()
+const { scaleToShow } = useMarkdown()
 
 const renderedContent = ref('')
 const codeEditors = ref<CodeMirror.Editor[]>([])
@@ -28,8 +23,6 @@ const codeBlocksData = ref<{ id: string, value: string, language?: string }[]>(
 )
 
 const markdownRef = useTemplateRef('markdownRef')
-
-const isShowHeaderTool = route.name !== 'markdown-presentation'
 
 marked.use({
   renderer: {
@@ -55,8 +48,10 @@ marked.use({
 })
 
 async function renderMarkdown() {
-  if (selectedSnippetContent.value?.value) {
-    const markdownHtml = await marked.parse(selectedSnippetContent.value.value)
+  const content = selectedNote.value?.content
+
+  if (content) {
+    const markdownHtml = await marked.parse(content)
 
     let sanitizedHtml = sanitizeHtml(markdownHtml, {
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'del']),
@@ -140,9 +135,11 @@ function onLinkClick(event: MouseEvent) {
   }
 }
 
-watch(selectedSnippetContent, async () => renderMarkdown(), {
-  immediate: true,
-})
+watch(
+  () => selectedNote.value?.id,
+  async () => renderMarkdown(),
+  { immediate: true },
+)
 
 watch(scaleToShow, () => renderMarkdown())
 
@@ -168,42 +165,18 @@ watch(isDark, () => {
 </script>
 
 <template>
-  <div
-    data-editor-markdown
-    class="grid grid-rows-[auto_1fr] overflow-hidden"
-  >
-    <EditorHeaderTool v-if="isShowHeaderTool">
-      <div class="flex w-full justify-end gap-2 px-2">
-        <UiActionButton
-          :tooltip="i18n.t('button.zoomOut')"
-          @click="onZoom('out')"
-        >
-          <Minus class="h-3 w-3" />
-        </UiActionButton>
-        <div class="tabular-nums select-none">
-          {{ scaleToShow }}
-        </div>
-        <UiActionButton
-          :tooltip="i18n.t('button.zoomIn')"
-          @click="onZoom('in')"
-        >
-          <Plus class="h-3 w-3" />
-        </UiActionButton>
-      </div>
-    </EditorHeaderTool>
-    <div class="scrollbar h-full min-h-0 overflow-y-auto">
-      <div
-        ref="markdownRef"
-        class="markdown-content"
-      >
-        <div v-html="renderedContent" />
-      </div>
+  <div class="scrollbar h-full min-h-0 overflow-y-auto">
+    <div
+      ref="markdownRef"
+      class="markdown-content"
+    >
+      <div v-html="renderedContent" />
     </div>
   </div>
 </template>
 
 <style>
-@reference '../../../styles.css';
+@reference '../../styles.css';
 
 .markdown-content {
   @apply text-foreground p-4 font-sans;
@@ -321,20 +294,20 @@ watch(isDark, () => {
 }
 
 .markdown-content img {
-  @apply box-content max-w-full;
+  @apply max-w-full;
 }
 
 .markdown-content hr {
-  @apply border-border my-6 border-t p-0;
+  @apply border-border my-6 border-0 border-t;
 }
 
 .markdown-content .CodeMirror {
-  @apply !bg-muted overflow-auto rounded-md p-4;
+  @apply h-auto bg-transparent;
   font-size: calc(0.875rem * var(--markdown-scale));
   line-height: calc(0.875rem * var(--markdown-scale) * 1.5);
 }
 
 .markdown-content .code-block > div {
-  @apply overflow-hidden;
+  @apply h-auto;
 }
 </style>

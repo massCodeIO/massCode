@@ -16,7 +16,6 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-snippet'
   | 'open-dialog'
-  | 'preview-markdown'
   | 'preview-mindmap'
   | 'preview-code'
   | 'preview-json'

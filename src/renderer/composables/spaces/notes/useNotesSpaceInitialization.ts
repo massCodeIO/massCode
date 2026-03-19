@@ -4,8 +4,12 @@ import { useNotesApp } from './useNotesApp'
 import { useNoteSearch } from './useNoteSearch'
 import { useNoteTags } from './useNoteTags'
 
-const { isNotesSpaceInitialized, notesState, showAllNotesPanels }
-  = useNotesApp()
+const {
+  hideNotesViewModes,
+  isNotesSpaceInitialized,
+  notesState,
+  showAllNotesPanels,
+} = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { getNotes, selectFirstNote } = useNotes()
 const { displayedNotes } = useNoteSearch()
@@ -48,6 +52,7 @@ async function initNotesSpace() {
   }
 
   if (!hasSelectedNoteInList(notesState.noteId)) {
+    hideNotesViewModes()
     showAllNotesPanels()
   }
 }

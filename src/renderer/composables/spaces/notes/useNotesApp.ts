@@ -37,6 +37,8 @@ const focusedNoteId = ref<number | undefined>()
 const isNotesSpaceInitialized = ref(false)
 const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
+const isNotesMindmapShown = ref(false)
+const isNotesPresentationShown = ref(false)
 const isNotesSidebarHidden = computed({
   get: () => Boolean(notesState.isSidebarHidden),
   set: (value: boolean) => {
@@ -106,6 +108,21 @@ function showNotesEditorOnly() {
   isNotesListHidden.value = true
 }
 
+function hideNotesViewModes() {
+  isNotesMindmapShown.value = false
+  isNotesPresentationShown.value = false
+}
+
+function showNotesMindmap() {
+  isNotesMindmapShown.value = true
+  isNotesPresentationShown.value = false
+}
+
+function showNotesPresentation() {
+  isNotesPresentationShown.value = true
+  isNotesMindmapShown.value = false
+}
+
 watch(
   notesState,
   () => {
@@ -123,14 +140,19 @@ export function useNotesApp() {
     highlightedTagId,
     isFocusedNoteName,
     isFocusedSearch,
+    isNotesMindmapShown,
     isNotesListHidden,
+    isNotesPresentationShown,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
     hideNotesSidebar,
+    hideNotesViewModes,
     notesState,
     restoreNotesStateSnapshot,
     saveNotesStateSnapshot,
     showAllNotesPanels,
+    showNotesMindmap,
+    showNotesPresentation,
     showNotesEditorOnly,
     stateSnapshots,
   }

@@ -8,7 +8,6 @@ export const RouterName = {
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
   preferencesAPI: 'preferences/api',
-  markdownPresentation: 'markdown-presentation',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
   devtoolsTextToUnicode: 'devtools/text-to-unicode',
@@ -30,6 +29,7 @@ export const RouterName = {
   devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
   notesSpace: 'notes-space',
+  notesPresentation: 'notes-space/presentation',
 } as const
 
 const routes = [
@@ -69,11 +69,6 @@ const routes = [
         component: () => import('@/components/preferences/API.vue'),
       },
     ],
-  },
-  {
-    path: '/markdown-presentation',
-    name: RouterName.markdownPresentation,
-    component: () => import('@/views/MarkdownPresentation.vue'),
   },
   {
     path: '/devtools',
@@ -191,6 +186,11 @@ const routes = [
     path: '/notes',
     name: RouterName.notesSpace,
     component: () => import('@/components/notes/NotesSpace.vue'),
+  },
+  {
+    path: '/notes/presentation',
+    name: RouterName.notesPresentation,
+    component: () => import('@/views/NotesPresentation.vue'),
   },
 ]
 

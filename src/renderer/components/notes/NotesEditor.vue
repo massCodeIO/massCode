@@ -17,6 +17,7 @@ import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
+import { createTableBlocks } from './cm-extensions/tableBlocks'
 
 interface Props {
   mode?: 'edit' | 'presentation'
@@ -193,6 +194,10 @@ function createEditorState(doc: string): EditorState {
     createMermaidBlocks({
       enabled: true,
       isDark: isDark.value,
+      showSourceWhenSelectionInside: !isPresentationMode.value,
+    }),
+    createTableBlocks({
+      enabled: true,
       showSourceWhenSelectionInside: !isPresentationMode.value,
     }),
     createMarkdownDecorations({

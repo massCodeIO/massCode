@@ -10,6 +10,7 @@ import {
   PanelLeftOpen,
   Presentation,
 } from 'lucide-vue-next'
+import { getTextStats } from './textStats'
 
 const {
   selectedNote,
@@ -108,14 +109,28 @@ const name = computed({
   },
 })
 
+const editorContent = ref('')
+
+watch(
+  () => selectedNote.value?.id,
+  () => {
+    editorContent.value = selectedNote.value?.content ?? ''
+  },
+  { immediate: true },
+)
+
 const content = computed({
-  get: () => selectedNote.value?.content ?? '',
+  get: () => editorContent.value,
   set: (value: string) => {
+    editorContent.value = value
+
     if (selectedNote.value) {
       updateNoteContent(selectedNote.value.id, value)
     }
   },
 })
+
+const textStats = computed(() => getTextStats(content.value))
 </script>
 
 <template>
@@ -182,11 +197,27 @@ const content = computed({
     </div>
     <div class="min-h-0 flex-1">
       <NotesMindmap v-if="isNotesMindmapShown" />
-      <NotesEditor
+      <div
         v-else
-        :key="selectedNote.id"
-        v-model:content="content"
-      />
+        class="grid h-full grid-rows-[1fr_auto] overflow-hidden"
+      >
+        <div class="min-h-0">
+          <NotesEditor
+            :key="selectedNote.id"
+            v-model:content="content"
+          />
+        </div>
+        <div
+          data-notes-editor-footer
+          class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
+        >
+          <div />
+          <div class="mr-1">
+            {{ i18n.t("notes.words") }} {{ textStats.words }},
+            {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div

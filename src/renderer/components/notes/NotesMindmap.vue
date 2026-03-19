@@ -93,7 +93,7 @@ watch(
   <div class="grid h-full grid-rows-[auto_1fr]">
     <EditorHeaderTool>
       <div class="flex w-full items-center justify-between px-2">
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             :tooltip="i18n.t('button.zoomIn')"
             @click="onZoom('zoomIn')"
@@ -113,7 +113,7 @@ watch(
             <Maximize class="h-3 w-3" />
           </UiActionButton>
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"

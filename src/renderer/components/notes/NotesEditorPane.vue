@@ -125,7 +125,7 @@ const content = computed({
   >
     <div data-notes-editor-header>
       <div
-        class="border-border grid min-h-7 grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+        class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
       >
         <UiInput
           v-model="name"
@@ -173,10 +173,11 @@ const content = computed({
           </UiActionButton>
         </div>
       </div>
-      <div class="pt-1">
-        <NotesEditorTags
-          v-if="!isNotesMindmapShown && !isNotesPresentationShown"
-        />
+      <div
+        v-if="!isNotesMindmapShown && !isNotesPresentationShown"
+        class="pt-1"
+      >
+        <NotesEditorTags />
       </div>
     </div>
     <div class="min-h-0 flex-1">

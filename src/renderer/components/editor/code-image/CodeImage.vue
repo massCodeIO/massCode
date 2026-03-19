@@ -219,7 +219,7 @@ onMounted(() => {
           </div>
           <EditorCodeImageBackgroundSwitch v-model:active="activeBackground" />
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"

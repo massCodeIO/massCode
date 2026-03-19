@@ -107,7 +107,7 @@ watch(isDarkPreview, () => {
 
 <template>
   <div
-    class="border-border flex h-[var(--editor-tool-header-height)] items-center justify-between border-b px-2 py-1"
+    class="border-border flex h-[var(--editor-tool-header-height)] items-center justify-between border-b px-2"
   >
     <div>
       <UiActionButton

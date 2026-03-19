@@ -25,6 +25,7 @@
   --accent-hover: color-mix(in oklch, var(--accent) 50%, var(--background));
   --accent-foreground: oklch(20% 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --warning: oklch(0.72 0.16 70);
   --border: oklch(90% 0 0);
   --input: oklch(90% 0 0);
   --ring: oklch(50% 0.19 260);
@@ -69,6 +70,7 @@
   --accent-hover: color-mix(in oklch, var(--accent) 50%, var(--background));
   --accent-foreground: oklch(95% 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --warning: oklch(0.78 0.14 75);
   --border: oklch(30% 0 0);
   --input: oklch(30% 0 0);
   --ring: oklch(50% 0.19 260);
@@ -118,6 +120,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

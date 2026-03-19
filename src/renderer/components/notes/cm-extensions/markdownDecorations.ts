@@ -2,6 +2,13 @@ import type { Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
+import {
+  calloutTitleByType,
+  type CalloutTitleMode,
+  type CalloutType,
+  parseBlockquoteCallout,
+  shouldReplaceCalloutMarker,
+} from './callouts'
 
 class HorizontalRuleWidget extends WidgetType {
   toDOM(): HTMLElement {
@@ -70,6 +77,48 @@ class CheckboxWidget extends WidgetType {
     }
 
     return checkbox
+  }
+
+  ignoreEvent(): boolean {
+    return false
+  }
+}
+
+class CalloutTitleWidget extends WidgetType {
+  constructor(
+    readonly title: string,
+    readonly accent: string,
+    readonly markerFrom: number,
+  ) {
+    super()
+  }
+
+  eq(other: CalloutTitleWidget): boolean {
+    return (
+      this.title === other.title
+      && this.accent === other.accent
+      && this.markerFrom === other.markerFrom
+    )
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const root = document.createElement('span')
+    root.style.color = this.accent
+    root.style.fontWeight = '600'
+    root.textContent = this.title
+
+    root.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      view.dispatch({
+        selection: {
+          anchor: Math.min(this.markerFrom + 2, view.state.doc.length),
+        },
+        scrollIntoView: true,
+      })
+      view.focus()
+    })
+
+    return root
   }
 
   ignoreEvent(): boolean {
@@ -158,16 +207,62 @@ const fencedCodeBaseStyle = [
 const blockquoteBaseStyle = [
   'background:var(--muted)',
   'border-left:3px solid var(--primary)',
-  'color:var(--muted-foreground)',
+  'color:var(--foreground)',
   'padding-left:12px',
   'padding-right:12px',
 ].join(';')
 
-interface MarkdownDecorationsOptions {
-  interactiveTaskMarkers?: boolean
+const calloutAccentByType: Record<CalloutType, string> = {
+  NOTE: 'var(--primary)',
+  IMPORTANT: 'var(--destructive)',
+  WARNING: 'var(--warning)',
 }
 
-function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
+const CALLOUT_BACKGROUND_SATURATION = 10
+
+function createCalloutBackground(baseColor: string): string {
+  return `color-mix(in oklch, ${baseColor} ${CALLOUT_BACKGROUND_SATURATION}%, var(--background))`
+}
+
+const calloutBackgroundByType: Record<CalloutType, string> = {
+  NOTE: createCalloutBackground(calloutAccentByType.NOTE),
+  IMPORTANT: createCalloutBackground(calloutAccentByType.IMPORTANT),
+  WARNING: createCalloutBackground(calloutAccentByType.WARNING),
+}
+
+function getCalloutBlockquoteStyle(type: CalloutType) {
+  const accent = calloutAccentByType[type]
+  const background = calloutBackgroundByType[type]
+  return [
+    `background:${background}`,
+    `border-left:3px solid ${accent}`,
+    'color:var(--foreground)',
+    'padding-left:12px',
+    'padding-right:12px',
+  ].join(';')
+}
+
+interface MarkdownDecorationsOptions {
+  interactiveTaskMarkers?: boolean
+  calloutTitleMode?: CalloutTitleMode
+}
+
+function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
+  for (const range of view.state.selection.ranges) {
+    const startLine = view.state.doc.lineAt(range.from).number
+    const endLine = view.state.doc.lineAt(range.to).number
+    if (lineNumber >= startLine && lineNumber <= endLine)
+      return true
+  }
+
+  return false
+}
+
+function buildDecorations(
+  view: EditorView,
+  interactiveTaskMarkers: boolean,
+  calloutTitleMode: CalloutTitleMode,
+) {
   const decorations: Range<Decoration>[] = []
   const indentedListLines = new Set<number>()
 
@@ -265,19 +360,52 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
         if (type === 'Blockquote') {
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
+          const callout = parseBlockquoteCallout(startLine.text)
+          const blockquoteStyle = callout
+            ? getCalloutBlockquoteStyle(callout.type)
+            : blockquoteBaseStyle
+
+          if (callout) {
+            const markerFrom = startLine.from + callout.markerStart
+            const markerTo = startLine.from + callout.markerEnd
+            const accent = calloutAccentByType[callout.type]
+            const replaceMarker = shouldReplaceCalloutMarker(
+              calloutTitleMode,
+              isCursorOnLine(view, startLine.number),
+            )
+
+            if (replaceMarker) {
+              decorations.push(
+                Decoration.replace({
+                  widget: new CalloutTitleWidget(
+                    calloutTitleByType[callout.type],
+                    accent,
+                    markerFrom,
+                  ),
+                }).range(markerFrom, markerTo),
+              )
+            }
+            else {
+              decorations.push(
+                Decoration.mark({
+                  attributes: {
+                    style: `color:${accent};font-weight:700;letter-spacing:0.01em`,
+                  },
+                }).range(markerFrom, markerTo),
+              )
+            }
+          }
 
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
-            let style = `${blockquoteBaseStyle};padding-top:2px;padding-bottom:2px`
+            let style = `${blockquoteStyle};padding-top:2px;padding-bottom:2px`
 
             if (i === startLine.number) {
-              style
-                += ';border-top-right-radius:8px;padding-top:8px;margin-top:6px'
+              style += ';border-top-right-radius:8px;padding-top:8px'
             }
 
             if (i === endLine.number) {
-              style
-                += ';border-bottom-right-radius:8px;padding-bottom:8px;margin-bottom:6px'
+              style += ';border-bottom-right-radius:8px;padding-bottom:8px'
             }
 
             decorations.push(
@@ -369,25 +497,35 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
 export function createMarkdownDecorations(
   options: MarkdownDecorationsOptions = {},
 ) {
-  const { interactiveTaskMarkers = true } = options
+  const { interactiveTaskMarkers = true, calloutTitleMode = 'smart' } = options
 
   return ViewPlugin.fromClass(
     class {
       decorations = Decoration.none
 
       constructor(view: EditorView) {
-        this.decorations = buildDecorations(view, interactiveTaskMarkers)
+        this.decorations = buildDecorations(
+          view,
+          interactiveTaskMarkers,
+          calloutTitleMode,
+        )
       }
 
       update(update: {
         docChanged: boolean
+        selectionSet: boolean
         viewportChanged: boolean
         view: EditorView
       }) {
-        if (update.docChanged || update.viewportChanged) {
+        if (
+          update.docChanged
+          || update.viewportChanged
+          || update.selectionSet
+        ) {
           this.decorations = buildDecorations(
             update.view,
             interactiveTaskMarkers,
+            calloutTitleMode,
           )
         }
       }

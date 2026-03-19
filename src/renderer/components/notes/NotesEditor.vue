@@ -197,6 +197,7 @@ function createEditorState(doc: string): EditorState {
     }),
     createMarkdownDecorations({
       interactiveTaskMarkers: !isPresentationMode.value,
+      calloutTitleMode: isPresentationMode.value ? 'replace' : 'smart',
     }),
     createHideMarkup({ alwaysHide: isPresentationMode.value }),
   ]

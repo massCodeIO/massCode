@@ -8,6 +8,8 @@ import {
   WidgetType,
 } from '@codemirror/view'
 import mermaid from 'mermaid'
+import { editorFocusField } from './editorFocus'
+import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface MermaidBlocksOptions {
   enabled?: boolean
@@ -40,18 +42,41 @@ function isSelectionInsideRange(
   from: number,
   to: number,
 ): boolean {
-  for (const range of state.selection.ranges) {
-    if (range.empty) {
-      if (range.from >= from && range.from <= to)
-        return true
-      continue
-    }
+  const hasFocus = state.field(editorFocusField, false) ?? false
 
-    if (range.from <= to && range.to >= from)
+  for (const range of state.selection.ranges) {
+    if (
+      isSelectionInsideRangeWithFocus(
+        hasFocus,
+        range.from,
+        range.to,
+        from,
+        to,
+        range.empty,
+      )
+    ) {
       return true
+    }
   }
 
   return false
+}
+
+export function applyMermaidRenderSuccess(
+  container: HTMLElement,
+  svg: string,
+) {
+  container.style.display = ''
+  container.innerHTML = svg
+}
+
+export function applyMermaidRenderFailure(
+  container: HTMLElement,
+  error: unknown,
+) {
+  console.error('[notes] Failed to render mermaid diagram', error)
+  container.innerHTML = ''
+  container.style.display = 'none'
 }
 
 async function renderMermaid(
@@ -70,15 +95,10 @@ async function renderMermaid(
 
     const result = await mermaid.render(id, code)
     const svg = typeof result === 'string' ? result : result.svg
-    container.innerHTML = svg
+    applyMermaidRenderSuccess(container, svg)
   }
-  catch {
-    const fallback = document.createElement('pre')
-    fallback.className = 'text-muted-foreground overflow-auto text-xs'
-    fallback.textContent = code
-
-    container.innerHTML = ''
-    container.append(fallback)
+  catch (error) {
+    applyMermaidRenderFailure(container, error)
   }
 }
 

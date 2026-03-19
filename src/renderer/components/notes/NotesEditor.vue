@@ -13,6 +13,7 @@ import {
 } from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
+import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -189,6 +190,7 @@ function createEditorState(doc: string): EditorState {
       ...defaultKeymap,
       ...historyKeymap,
     ]),
+    editorFocusExtension,
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,

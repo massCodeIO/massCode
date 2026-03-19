@@ -46,12 +46,13 @@ export function parseBlockquoteCallout(
 export function shouldReplaceCalloutMarker(
   mode: CalloutTitleMode,
   isCursorOnCalloutLine: boolean,
+  hasFocus = true,
 ): boolean {
   if (mode === 'replace')
     return true
 
   if (mode === 'smart')
-    return !isCursorOnCalloutLine
+    return !hasFocus || !isCursorOnCalloutLine
 
   return false
 }

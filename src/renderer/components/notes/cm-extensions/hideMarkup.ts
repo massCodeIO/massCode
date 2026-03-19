@@ -19,6 +19,10 @@ interface HideMarkupOptions {
   alwaysHide?: boolean
 }
 
+export function canShowMarkup(alwaysHide: boolean, hasFocus: boolean): boolean {
+  return !alwaysHide && hasFocus
+}
+
 export function shouldHideUrlNodeInMarkup(
   nodeName: string,
   parentName: string | null | undefined,
@@ -60,7 +64,7 @@ function shouldShowMark(
   },
   alwaysHide: boolean,
 ): boolean {
-  if (alwaysHide)
+  if (!canShowMarkup(alwaysHide, view.hasFocus))
     return false
 
   if (LINE_BASED_MARKS.has(node.name)) {
@@ -132,12 +136,14 @@ export function createHideMarkup(options: HideMarkupOptions = {}) {
         docChanged: boolean
         selectionSet: boolean
         viewportChanged: boolean
+        focusChanged: boolean
         view: EditorView
       }) {
         if (
           update.docChanged
           || update.selectionSet
           || update.viewportChanged
+          || update.focusChanged
         ) {
           this.decorations = buildHideDecorations(update.view, alwaysHide)
         }

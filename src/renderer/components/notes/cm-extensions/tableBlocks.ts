@@ -7,6 +7,8 @@ import {
   EditorView,
   WidgetType,
 } from '@codemirror/view'
+import { editorFocusField } from './editorFocus'
+import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface TableBlocksOptions {
   enabled?: boolean
@@ -72,15 +74,21 @@ function isSelectionInsideRange(
   from: number,
   to: number,
 ): boolean {
-  for (const range of state.selection.ranges) {
-    if (range.empty) {
-      if (range.from >= from && range.from <= to)
-        return true
-      continue
-    }
+  const hasFocus = state.field(editorFocusField, false) ?? false
 
-    if (range.from <= to && range.to >= from)
+  for (const range of state.selection.ranges) {
+    if (
+      isSelectionInsideRangeWithFocus(
+        hasFocus,
+        range.from,
+        range.to,
+        from,
+        to,
+        range.empty,
+      )
+    ) {
       return true
+    }
   }
 
   return false

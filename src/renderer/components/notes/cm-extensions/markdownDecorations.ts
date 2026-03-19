@@ -355,6 +355,7 @@ function buildDecorations(
             const replaceMarker = shouldReplaceCalloutMarker(
               calloutTitleMode,
               isCursorOnLine(view, startLine.number),
+              view.hasFocus,
             )
 
             if (replaceMarker) {

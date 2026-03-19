@@ -7,7 +7,7 @@ class HorizontalRuleWidget extends WidgetType {
   toDOM(): HTMLElement {
     const hr = document.createElement('hr')
     hr.style.borderTop = '1px solid var(--border)'
-    hr.style.margin = '8px 0'
+    hr.style.margin = '14px 0'
     hr.style.borderBottom = 'none'
     hr.style.borderLeft = 'none'
     hr.style.borderRight = 'none'
@@ -33,16 +33,34 @@ class CheckboxWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const input = document.createElement('input')
-    input.type = 'checkbox'
-    input.checked = this.checked
-    input.style.cursor = this.interactive ? 'pointer' : 'default'
-    input.style.verticalAlign = 'middle'
-    input.style.marginRight = '4px'
-    input.disabled = !this.interactive
+    const checkbox = document.createElement('span')
+    checkbox.setAttribute('aria-hidden', 'true')
+    checkbox.style.display = 'inline-flex'
+    checkbox.style.alignItems = 'center'
+    checkbox.style.justifyContent = 'center'
+    checkbox.style.width = '18px'
+    checkbox.style.height = '18px'
+    checkbox.style.marginRight = '6px'
+    checkbox.style.borderRadius = '4px'
+    checkbox.style.border = `1px solid ${this.checked ? 'var(--primary)' : 'var(--border)'}`
+    checkbox.style.background = this.checked
+      ? 'var(--primary)'
+      : 'var(--background)'
+    checkbox.style.color = 'var(--primary-foreground)'
+    checkbox.style.cursor = this.interactive ? 'pointer' : 'default'
+    checkbox.style.verticalAlign = 'middle'
+
+    if (this.checked) {
+      const checkmark = document.createElement('span')
+      checkmark.textContent = '✓'
+      checkmark.style.fontSize = '12px'
+      checkmark.style.fontWeight = '700'
+      checkmark.style.lineHeight = '1'
+      checkbox.append(checkmark)
+    }
 
     if (this.interactive) {
-      input.addEventListener('mousedown', (e) => {
+      checkbox.addEventListener('mousedown', (e) => {
         e.preventDefault()
         const replacement = this.checked ? '[ ]' : '[x]'
         view.dispatch({
@@ -51,7 +69,7 @@ class CheckboxWidget extends WidgetType {
       })
     }
 
-    return input
+    return checkbox
   }
 
   ignoreEvent(): boolean {
@@ -59,15 +77,91 @@ class CheckboxWidget extends WidgetType {
   }
 }
 
-const headingStyles: Record<string, { fontSize: string, fontWeight: string }>
-  = {
-    ATXHeading1: { fontSize: '1.8em', fontWeight: '700' },
-    ATXHeading2: { fontSize: '1.5em', fontWeight: '700' },
-    ATXHeading3: { fontSize: '1.3em', fontWeight: '600' },
-    ATXHeading4: { fontSize: '1.1em', fontWeight: '600' },
-    ATXHeading5: { fontSize: '1.0em', fontWeight: '600' },
-    ATXHeading6: { fontSize: '0.9em', fontWeight: '600' },
+const headingStyles: Record<
+  string,
+  {
+    fontSize: string
+    fontWeight: string
+    lineHeight: string
+    paddingTop: string
+    paddingBottom: string
   }
+> = {
+  ATXHeading1: {
+    fontSize: '1.95em',
+    fontWeight: '700',
+    lineHeight: '1.25',
+    paddingTop: '0.42em',
+    paddingBottom: '0.2em',
+  },
+  ATXHeading2: {
+    fontSize: '1.65em',
+    fontWeight: '700',
+    lineHeight: '1.28',
+    paddingTop: '0.36em',
+    paddingBottom: '0.18em',
+  },
+  ATXHeading3: {
+    fontSize: '1.42em',
+    fontWeight: '650',
+    lineHeight: '1.3',
+    paddingTop: '0.3em',
+    paddingBottom: '0.15em',
+  },
+  ATXHeading4: {
+    fontSize: '1.22em',
+    fontWeight: '650',
+    lineHeight: '1.34',
+    paddingTop: '0.24em',
+    paddingBottom: '0.12em',
+  },
+  ATXHeading5: {
+    fontSize: '1.08em',
+    fontWeight: '600',
+    lineHeight: '1.4',
+    paddingTop: '0.18em',
+    paddingBottom: '0.08em',
+  },
+  ATXHeading6: {
+    fontSize: '0.96em',
+    fontWeight: '600',
+    lineHeight: '1.42',
+    paddingTop: '0.14em',
+    paddingBottom: '0.06em',
+  },
+}
+
+const inlineCodeStyle = [
+  'background:var(--muted)',
+  'border:1px solid var(--border)',
+  'color:var(--foreground)',
+  'font-family:var(--font-mono)',
+  'padding:1px 6px',
+  'border-radius:6px',
+  'font-size:0.9em',
+  'line-height:1.45',
+].join(';')
+
+const fencedCodeBaseStyle = [
+  'background:var(--card)',
+  'border-left:1px solid var(--border)',
+  'border-right:1px solid var(--border)',
+  'color:var(--foreground)',
+  'font-family:var(--font-mono)',
+  'font-size:13px',
+  'line-height:1.2',
+  'font-variant-ligatures:none',
+  'padding-left:16px',
+  'padding-right:16px',
+].join(';')
+
+const blockquoteBaseStyle = [
+  'background:var(--muted)',
+  'border-left:3px solid var(--primary)',
+  'color:var(--muted-foreground)',
+  'padding-left:12px',
+  'padding-right:12px',
+].join(';')
 
 interface MarkdownDecorationsOptions {
   interactiveTaskMarkers?: boolean
@@ -75,6 +169,7 @@ interface MarkdownDecorationsOptions {
 
 function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
   const decorations: Range<Decoration>[] = []
+  const indentedListLines = new Set<number>()
 
   for (const { from, to } of view.visibleRanges) {
     syntaxTree(view.state).iterate({
@@ -85,12 +180,18 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
 
         // Headings
         if (headingStyles[type]) {
-          const { fontSize, fontWeight } = headingStyles[type]
+          const {
+            fontSize,
+            fontWeight,
+            lineHeight,
+            paddingTop,
+            paddingBottom,
+          } = headingStyles[type]
           const line = view.state.doc.lineAt(node.from)
           decorations.push(
             Decoration.line({
               attributes: {
-                style: `font-size:${fontSize};font-weight:${fontWeight};line-height:1.4`,
+                style: `font-size:${fontSize};font-weight:${fontWeight};line-height:${lineHeight};padding-top:${paddingTop};padding-bottom:${paddingBottom}`,
               },
             }).range(line.from),
           )
@@ -128,8 +229,7 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
           decorations.push(
             Decoration.mark({
               attributes: {
-                style:
-                  'background:color-mix(in srgb, var(--background) 80%, var(--foreground));font-family:var(--font-mono);padding:2px 4px;border-radius:3px;font-size:0.9em',
+                style: inlineCodeStyle,
               },
             }).range(node.from, node.to),
           )
@@ -139,20 +239,18 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
         if (type === 'FencedCode') {
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
-          const baseStyle
-            = 'background:color-mix(in srgb, var(--background) 90%, var(--foreground));font-family:var(--font-mono);font-size:0.9em;padding-left:16px;padding-right:16px'
 
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
-            let style = baseStyle
+            let style = fencedCodeBaseStyle
 
             if (i === startLine.number) {
               style
-                += ';border-top-left-radius:6px;border-top-right-radius:6px;padding-top:8px'
+                += ';border-top:1px solid var(--border);border-top-left-radius:8px;border-top-right-radius:8px;padding-top:10px;margin-top:8px'
             }
             if (i === endLine.number) {
               style
-                += ';border-bottom-left-radius:6px;border-bottom-right-radius:6px;padding-bottom:8px'
+                += ';border-bottom:1px solid var(--border);border-bottom-left-radius:8px;border-bottom-right-radius:8px;padding-bottom:10px;margin-bottom:8px'
             }
 
             decorations.push(
@@ -167,13 +265,25 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
         if (type === 'Blockquote') {
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
+
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
+            let style = `${blockquoteBaseStyle};padding-top:2px;padding-bottom:2px`
+
+            if (i === startLine.number) {
+              style
+                += ';border-top-right-radius:8px;padding-top:8px;margin-top:6px'
+            }
+
+            if (i === endLine.number) {
+              style
+                += ';border-bottom-right-radius:8px;padding-bottom:8px;margin-bottom:6px'
+            }
+
             decorations.push(
               Decoration.line({
                 attributes: {
-                  style:
-                    'border-left:3px solid var(--accent);padding-left:12px;color:var(--muted-foreground)',
+                  style,
                 },
               }).range(line.from),
             )
@@ -205,6 +315,19 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
         if (type === 'TaskMarker') {
           const text = view.state.sliceDoc(node.from, node.to)
           const checked = text.includes('x') || text.includes('X')
+
+          const line = view.state.doc.lineAt(node.from)
+          if (!indentedListLines.has(line.number)) {
+            indentedListLines.add(line.number)
+            decorations.push(
+              Decoration.line({
+                attributes: {
+                  style: 'padding-left:14px',
+                },
+              }).range(line.from),
+            )
+          }
+
           decorations.push(
             Decoration.replace({
               widget: new CheckboxWidget(
@@ -218,6 +341,18 @@ function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
 
         // List marks (bullets, numbers)
         if (type === 'ListMark') {
+          const line = view.state.doc.lineAt(node.from)
+          if (!indentedListLines.has(line.number)) {
+            indentedListLines.add(line.number)
+            decorations.push(
+              Decoration.line({
+                attributes: {
+                  style: 'padding-left:14px',
+                },
+              }).range(line.from),
+            )
+          }
+
           decorations.push(
             Decoration.mark({
               attributes: { style: 'color:var(--muted-foreground)' },

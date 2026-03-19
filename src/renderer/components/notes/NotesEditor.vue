@@ -110,7 +110,8 @@ const editTheme = EditorView.theme({
   },
   '.cm-content': {
     fontFamily: 'var(--font-sans)',
-    padding: '4px 16px',
+    padding: '10px 20px 28px',
+    lineHeight: '1.54',
     caretColor: 'var(--foreground)',
   },
   '.cm-cursor': {
@@ -144,9 +145,11 @@ const presentationTheme = EditorView.theme({
   },
   '.cm-content': {
     fontFamily: 'var(--font-sans)',
-    padding: '16px 20px',
+    padding: '22px 28px 34px',
     fontSize: 'calc(1rem * var(--markdown-scale))',
-    lineHeight: '1.5',
+    lineHeight: '1.58',
+    maxWidth: '980px',
+    margin: '0 auto',
   },
   '.cm-gutters': {
     display: 'none',

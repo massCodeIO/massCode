@@ -12,12 +12,14 @@ import {
   placeholder,
 } from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
+import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
 import { createTableBlocks } from './cm-extensions/tableBlocks'
+import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
 
 interface Props {
   mode?: 'edit' | 'presentation'
@@ -94,11 +96,15 @@ function createLinkClickHandler() {
 const mermaidNavigationKeymap: KeyBinding[] = [
   {
     key: 'ArrowDown',
-    run: view => moveSelectionToAdjacentMermaidSource(view, 'down'),
+    run: view =>
+      moveSelectionToAdjacentMermaidSource(view, 'down')
+      || moveSelectionToAdjacentTableSource(view, 'down'),
   },
   {
     key: 'ArrowUp',
-    run: view => moveSelectionToAdjacentMermaidSource(view, 'up'),
+    run: view =>
+      moveSelectionToAdjacentMermaidSource(view, 'up')
+      || moveSelectionToAdjacentTableSource(view, 'up'),
   },
 ]
 
@@ -200,6 +206,7 @@ function createEditorState(doc: string): EditorState {
       enabled: true,
       showSourceWhenSelectionInside: !isPresentationMode.value,
     }),
+    createCodeHighlight(isDark.value),
     createMarkdownDecorations({
       interactiveTaskMarkers: !isPresentationMode.value,
       calloutTitleMode: isPresentationMode.value ? 'replace' : 'smart',

@@ -19,6 +19,17 @@ interface HideMarkupOptions {
   alwaysHide?: boolean
 }
 
+export function shouldHideUrlNodeInMarkup(
+  nodeName: string,
+  parentName: string | null | undefined,
+): boolean {
+  if (nodeName !== 'URL') {
+    return false
+  }
+
+  return parentName === 'Link' || parentName === 'Image'
+}
+
 function isCursorInRange(view: EditorView, from: number, to: number): boolean {
   for (const range of view.state.selection.ranges) {
     if (range.from >= from && range.from <= to)
@@ -76,7 +87,13 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
       from,
       to,
       enter(node) {
-        if (!HIDEABLE_MARKS.has(node.name))
+        const hideableMark = HIDEABLE_MARKS.has(node.name)
+        const hideableUrl = shouldHideUrlNodeInMarkup(
+          node.name,
+          node.node.parent?.name,
+        )
+
+        if (!hideableMark && !hideableUrl)
           return
 
         if (node.from === node.to)

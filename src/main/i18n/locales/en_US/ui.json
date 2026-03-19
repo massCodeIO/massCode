@@ -42,6 +42,8 @@
     "hide": "Hide",
     "showSidebar": "Show Sidebar",
     "hideSidebar": "Hide Sidebar",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "New Storage",
       "folder": "New Folder",

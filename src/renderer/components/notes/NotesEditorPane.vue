@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { useNotes, useNotesApp, useNoteUpdate } from '@/composables'
 import { i18n } from '@/electron'
-import { LoaderCircle } from 'lucide-vue-next'
+import {
+  InspectionPanel,
+  LoaderCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-vue-next'
 
 const {
   selectedNote,
@@ -10,7 +15,49 @@ const {
   isNotesLoadingVisible,
 } = useNotes()
 const { addToUpdateQueue } = useNoteUpdate()
-const { isFocusedNoteName } = useNotesApp()
+const {
+  hideNotesSidebar,
+  isFocusedNoteName,
+  isNotesListHidden,
+  isNotesSidebarHidden,
+  showAllNotesPanels,
+  showNotesEditorOnly,
+} = useNotesApp()
+
+const isSidebarOnlyHidden = computed(
+  () => isNotesSidebarHidden.value && !isNotesListHidden.value,
+)
+const isEditorOnly = computed(
+  () => isNotesSidebarHidden.value && isNotesListHidden.value,
+)
+const sidebarActionTooltip = computed(() =>
+  isSidebarOnlyHidden.value
+    ? i18n.t('action.showSidebar')
+    : i18n.t('action.hideSidebar'),
+)
+const editorOnlyActionTooltip = computed(() =>
+  isEditorOnly.value
+    ? i18n.t('action.showSidebarAndList')
+    : i18n.t('action.hideSidebarAndList'),
+)
+
+function onSidebarToggle() {
+  if (isSidebarOnlyHidden.value) {
+    showAllNotesPanels()
+    return
+  }
+
+  hideNotesSidebar()
+}
+
+function onEditorOnlyToggle() {
+  if (isEditorOnly.value) {
+    showAllNotesPanels()
+    return
+  }
+
+  showNotesEditorOnly()
+}
 
 const name = computed({
   get() {
@@ -50,7 +97,28 @@ const content = computed({
           @blur="isFocusedNoteName = false"
         />
         <div class="ml-2 flex h-7 items-center">
-          <!-- Action buttons slot for future use -->
+          <UiActionButton
+            class="mr-1"
+            :tooltip="sidebarActionTooltip"
+            :active="isSidebarOnlyHidden"
+            @click="onSidebarToggle"
+          >
+            <PanelLeftOpen
+              v-if="isSidebarOnlyHidden"
+              class="h-3 w-3"
+            />
+            <PanelLeftClose
+              v-else
+              class="h-3 w-3"
+            />
+          </UiActionButton>
+          <UiActionButton
+            :tooltip="editorOnlyActionTooltip"
+            :active="isEditorOnly"
+            @click="onEditorOnlyToggle"
+          >
+            <InspectionPanel class="h-3 w-3" />
+          </UiActionButton>
         </div>
       </div>
       <div class="pt-1">

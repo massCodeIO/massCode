@@ -1,53 +1,21 @@
 <script setup lang="ts">
-import {
-  useNoteFolders,
-  useNotes,
-  useNotesApp,
-  useNoteSearch,
-  useNoteTags,
-} from '@/composables'
+import { useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
 import { scrollToElement } from '@/utils'
 
-const { isNotesSpaceInitialized, notesState } = useNotesApp()
-const { getNoteFolders } = useNoteFolders()
-const { getNotes, selectFirstNote } = useNotes()
-const { displayedNotes } = useNoteSearch()
-const { getNoteTags } = useNoteTags()
+const { notesState } = useNotesApp()
 
-async function initNotesSpace() {
-  if (isNotesSpaceInitialized.value) {
+function scrollToCurrentFolder() {
+  if (!notesState.folderId) {
     return
   }
 
-  const results = await Promise.allSettled([
-    getNoteFolders(),
-    getNotes(),
-    getNoteTags(),
-  ])
-
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      console.error('Notes init error:', result.reason)
-    }
-  })
-
-  isNotesSpaceInitialized.value = results.every(
-    result => result.status === 'fulfilled',
-  )
-
-  if (!notesState.noteId && displayedNotes.value?.length) {
-    selectFirstNote()
-  }
-
-  nextTick(() => {
-    if (notesState.folderId) {
-      scrollToElement(`[id="${notesState.folderId}"]`)
-    }
-  })
+  scrollToElement(`[id="${notesState.folderId}"]`)
 }
 
-void initNotesSpace()
+nextTick(() => {
+  scrollToCurrentFolder()
+})
 </script>
 
 <template>

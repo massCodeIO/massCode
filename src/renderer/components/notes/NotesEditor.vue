@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTheme } from '@/composables'
 import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
@@ -9,6 +10,7 @@ import { GFM } from '@lezer/markdown'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
+import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 
 interface Props {
   mode?: 'edit' | 'presentation'
@@ -18,6 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
   mode: 'edit',
 })
 const content = defineModel<string>('content', { default: '' })
+const { isDark } = useTheme()
 const isPresentationMode = computed(() => props.mode === 'presentation')
 
 const editorContainer = ref<HTMLElement>()
@@ -166,6 +169,10 @@ function createEditorState(doc: string): EditorState {
       codeLanguages: languages,
       extensions: GFM,
     }),
+    createMermaidBlocks({
+      enabled: isPresentationMode.value,
+      isDark: isDark.value,
+    }),
     createMarkdownDecorations({
       interactiveTaskMarkers: !isPresentationMode.value,
     }),
@@ -212,6 +219,15 @@ watch(content, (val) => {
 
 watch(isPresentationMode, () => {
   if (!view)
+    return
+
+  isApplyingExternalContent = true
+  view.setState(createEditorState(content.value))
+  isApplyingExternalContent = false
+})
+
+watch(isDark, () => {
+  if (!view || !isPresentationMode.value)
     return
 
   isApplyingExternalContent = true

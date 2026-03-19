@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useMarkdown } from '@/components/editor/markdown/composables'
-import { Button } from '@/components/ui/shadcn/button'
 import {
   useNotes,
   useNotesApp,
@@ -134,13 +133,12 @@ onUnmounted(() => {
 
 <template>
   <div class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden">
-    <Button
-      class="absolute top-6 right-2 z-50"
-      variant="ghost"
+    <UiActionButton
+      class="absolute top-2 right-2 z-50"
       @click="onClose"
     >
       <X class="h-3 w-3" />
-    </Button>
+    </UiActionButton>
     <div class="scrollbar h-full min-h-0 overflow-y-auto">
       <div class="overflow-auto p-5">
         <NotesMarkdown :key="scaleToShow" />

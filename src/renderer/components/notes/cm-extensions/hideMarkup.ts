@@ -15,6 +15,10 @@ const HIDEABLE_MARKS = new Set([
 
 const LINE_BASED_MARKS = new Set(['HeaderMark', 'QuoteMark'])
 
+interface HideMarkupOptions {
+  alwaysHide?: boolean
+}
+
 function isCursorInRange(view: EditorView, from: number, to: number): boolean {
   for (const range of view.state.selection.ranges) {
     if (range.from >= from && range.from <= to)
@@ -43,7 +47,11 @@ function shouldShowMark(
     to: number
     node: { parent: { name: string, from: number, to: number } | null }
   },
+  alwaysHide: boolean,
 ): boolean {
+  if (alwaysHide)
+    return false
+
   if (LINE_BASED_MARKS.has(node.name)) {
     const line = view.state.doc.lineAt(node.from)
     return isCursorOnLine(view, line.number)
@@ -60,7 +68,7 @@ function shouldShowMark(
   return isCursorInRange(view, parent.from, parent.to)
 }
 
-function buildHideDecorations(view: EditorView) {
+function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
   const decorations: Range<Decoration>[] = []
 
   for (const { from, to } of view.visibleRanges) {
@@ -74,7 +82,7 @@ function buildHideDecorations(view: EditorView) {
         if (node.from === node.to)
           return
 
-        if (shouldShowMark(view, node))
+        if (shouldShowMark(view, node, alwaysHide))
           return
 
         let end = node.to
@@ -92,26 +100,36 @@ function buildHideDecorations(view: EditorView) {
   return Decoration.set(decorations, true)
 }
 
-export const hideMarkup = ViewPlugin.fromClass(
-  class {
-    decorations = Decoration.none
+export function createHideMarkup(options: HideMarkupOptions = {}) {
+  const { alwaysHide = false } = options
 
-    constructor(view: EditorView) {
-      this.decorations = buildHideDecorations(view)
-    }
+  return ViewPlugin.fromClass(
+    class {
+      decorations = Decoration.none
 
-    update(update: {
-      docChanged: boolean
-      selectionSet: boolean
-      viewportChanged: boolean
-      view: EditorView
-    }) {
-      if (update.docChanged || update.selectionSet || update.viewportChanged) {
-        this.decorations = buildHideDecorations(update.view)
+      constructor(view: EditorView) {
+        this.decorations = buildHideDecorations(view, alwaysHide)
       }
-    }
-  },
-  {
-    decorations: v => v.decorations,
-  },
-)
+
+      update(update: {
+        docChanged: boolean
+        selectionSet: boolean
+        viewportChanged: boolean
+        view: EditorView
+      }) {
+        if (
+          update.docChanged
+          || update.selectionSet
+          || update.viewportChanged
+        ) {
+          this.decorations = buildHideDecorations(update.view, alwaysHide)
+        }
+      }
+    },
+    {
+      decorations: v => v.decorations,
+    },
+  )
+}
+
+export const hideMarkup = createHideMarkup()

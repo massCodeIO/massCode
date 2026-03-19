@@ -139,10 +139,11 @@ onUnmounted(() => {
     >
       <X class="h-3 w-3" />
     </UiActionButton>
-    <div class="scrollbar h-full min-h-0 overflow-y-auto">
-      <div class="overflow-auto p-5">
-        <NotesMarkdown :key="scaleToShow" />
-      </div>
+    <div class="h-full min-h-0 p-5">
+      <NotesEditor
+        :content="selectedNote?.content ?? ''"
+        mode="presentation"
+      />
     </div>
     <div class="flex items-center justify-between px-8">
       <div class="flex items-center">

@@ -19,29 +19,37 @@ class CheckboxWidget extends WidgetType {
   constructor(
     readonly checked: boolean,
     readonly pos: number,
+    readonly interactive: boolean,
   ) {
     super()
   }
 
   eq(other: CheckboxWidget): boolean {
-    return this.checked === other.checked && this.pos === other.pos
+    return (
+      this.checked === other.checked
+      && this.pos === other.pos
+      && this.interactive === other.interactive
+    )
   }
 
   toDOM(view: EditorView): HTMLElement {
     const input = document.createElement('input')
     input.type = 'checkbox'
     input.checked = this.checked
-    input.style.cursor = 'pointer'
+    input.style.cursor = this.interactive ? 'pointer' : 'default'
     input.style.verticalAlign = 'middle'
     input.style.marginRight = '4px'
+    input.disabled = !this.interactive
 
-    input.addEventListener('mousedown', (e) => {
-      e.preventDefault()
-      const replacement = this.checked ? '[ ]' : '[x]'
-      view.dispatch({
-        changes: { from: this.pos, to: this.pos + 3, insert: replacement },
+    if (this.interactive) {
+      input.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        const replacement = this.checked ? '[ ]' : '[x]'
+        view.dispatch({
+          changes: { from: this.pos, to: this.pos + 3, insert: replacement },
+        })
       })
-    })
+    }
 
     return input
   }
@@ -61,7 +69,11 @@ const headingStyles: Record<string, { fontSize: string, fontWeight: string }>
     ATXHeading6: { fontSize: '0.9em', fontWeight: '600' },
   }
 
-function buildDecorations(view: EditorView) {
+interface MarkdownDecorationsOptions {
+  interactiveTaskMarkers?: boolean
+}
+
+function buildDecorations(view: EditorView, interactiveTaskMarkers: boolean) {
   const decorations: Range<Decoration>[] = []
 
   for (const { from, to } of view.visibleRanges) {
@@ -195,7 +207,11 @@ function buildDecorations(view: EditorView) {
           const checked = text.includes('x') || text.includes('X')
           decorations.push(
             Decoration.replace({
-              widget: new CheckboxWidget(checked, node.from),
+              widget: new CheckboxWidget(
+                checked,
+                node.from,
+                interactiveTaskMarkers,
+              ),
             }).range(node.from, node.to),
           )
         }
@@ -215,25 +231,36 @@ function buildDecorations(view: EditorView) {
   return Decoration.set(decorations, true)
 }
 
-export const markdownDecorations = ViewPlugin.fromClass(
-  class {
-    decorations = Decoration.none
+export function createMarkdownDecorations(
+  options: MarkdownDecorationsOptions = {},
+) {
+  const { interactiveTaskMarkers = true } = options
 
-    constructor(view: EditorView) {
-      this.decorations = buildDecorations(view)
-    }
+  return ViewPlugin.fromClass(
+    class {
+      decorations = Decoration.none
 
-    update(update: {
-      docChanged: boolean
-      viewportChanged: boolean
-      view: EditorView
-    }) {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = buildDecorations(update.view)
+      constructor(view: EditorView) {
+        this.decorations = buildDecorations(view, interactiveTaskMarkers)
       }
-    }
-  },
-  {
-    decorations: v => v.decorations,
-  },
-)
+
+      update(update: {
+        docChanged: boolean
+        viewportChanged: boolean
+        view: EditorView
+      }) {
+        if (update.docChanged || update.viewportChanged) {
+          this.decorations = buildDecorations(
+            update.view,
+            interactiveTaskMarkers,
+          )
+        }
+      }
+    },
+    {
+      decorations: v => v.decorations,
+    },
+  )
+}
+
+export const markdownDecorations = createMarkdownDecorations()

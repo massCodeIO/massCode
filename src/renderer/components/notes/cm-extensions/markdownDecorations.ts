@@ -9,6 +9,7 @@ import {
   parseBlockquoteCallout,
   shouldReplaceCalloutMarker,
 } from './callouts'
+import { buildFencedCodeLineStyle } from './fencedCodeStyles'
 
 class HorizontalRuleWidget extends WidgetType {
   toDOM(): HTMLElement {
@@ -191,19 +192,6 @@ const inlineCodeStyle = [
   'line-height:1.45',
 ].join(';')
 
-const fencedCodeBaseStyle = [
-  'background:var(--card)',
-  'border-left:1px solid var(--border)',
-  'border-right:1px solid var(--border)',
-  'color:var(--foreground)',
-  'font-family:var(--font-mono)',
-  'font-size:13px',
-  'line-height:1.2',
-  'font-variant-ligatures:none',
-  'padding-left:16px',
-  'padding-right:16px',
-].join(';')
-
 const blockquoteBaseStyle = [
   'background:var(--muted)',
   'border-left:3px solid var(--primary)',
@@ -337,16 +325,11 @@ function buildDecorations(
 
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
-            let style = fencedCodeBaseStyle
-
-            if (i === startLine.number) {
-              style
-                += ';border-top:1px solid var(--border);border-top-left-radius:8px;border-top-right-radius:8px;padding-top:10px;margin-top:8px'
-            }
-            if (i === endLine.number) {
-              style
-                += ';border-bottom:1px solid var(--border);border-bottom-left-radius:8px;border-bottom-right-radius:8px;padding-bottom:10px;margin-bottom:8px'
-            }
+            const style = buildFencedCodeLineStyle(
+              i,
+              startLine.number,
+              endLine.number,
+            )
 
             decorations.push(
               Decoration.line({

@@ -18,6 +18,7 @@ import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
+import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
 import { createTableBlocks } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
 
@@ -133,9 +134,7 @@ const editTheme = EditorView.theme({
   '.cm-gutters': {
     display: 'none',
   },
-  '.cm-scroller': {
-    overflow: 'auto',
-  },
+  ...notesEditorScrollbarTheme,
   '&.cm-focused': {
     outline: 'none',
   },
@@ -161,9 +160,7 @@ const presentationTheme = EditorView.theme({
   '.cm-gutters': {
     display: 'none',
   },
-  '.cm-scroller': {
-    overflow: 'auto',
-  },
+  ...notesEditorScrollbarTheme,
   '.cm-line': {
     padding: '0',
   },

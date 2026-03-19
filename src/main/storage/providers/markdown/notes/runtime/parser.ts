@@ -6,7 +6,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { readYamlObjectFile } from '../../runtime/parser'
+import { readYamlObjectFile } from '../../runtime/shared/yaml'
 import { META_FILE_NAME } from './constants'
 
 export function readNotesFolderMetadata(

@@ -1,4 +1,4 @@
-import type { FolderDiskEntry, FolderMetadataSyncSource } from './folderSync'
+import type { FolderDiskEntry, FolderMetadataSyncSource } from './folderTypes'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { toPosixPath } from './path'

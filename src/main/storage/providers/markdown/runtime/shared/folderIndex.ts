@@ -102,6 +102,40 @@ export function getNextFolderOrder<T extends FolderLike>(
   )
 }
 
+export function normalizeFolderOrderIndices<
+  T extends {
+    id: number
+    parentId: number | null
+    orderIndex: number
+  },
+>(folders: T[]): void {
+  const childrenByParent = new Map<number | null, T[]>()
+
+  for (const folder of folders) {
+    const siblings = childrenByParent.get(folder.parentId)
+    if (siblings) {
+      siblings.push(folder)
+    }
+    else {
+      childrenByParent.set(folder.parentId, [folder])
+    }
+  }
+
+  for (const siblings of childrenByParent.values()) {
+    siblings.sort((a, b) => {
+      if (a.orderIndex !== b.orderIndex) {
+        return a.orderIndex - b.orderIndex
+      }
+
+      return a.id - b.id
+    })
+
+    for (let i = 0; i < siblings.length; i++) {
+      siblings[i].orderIndex = i
+    }
+  }
+}
+
 export function sortFoldersForTree<T extends FolderLike>(folders: T[]): T[] {
   const folderByParent = new Map<number | null, T[]>()
   const knownFolderIds = new Set<number>(folders.map(folder => folder.id))

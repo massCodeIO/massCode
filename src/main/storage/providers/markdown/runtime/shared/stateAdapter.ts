@@ -1,5 +1,5 @@
 import fs from 'fs-extra'
-import { stateContentCacheByPath } from '../constants'
+import { stateContentCacheByPath } from '../cache'
 import { normalizeFlag, normalizeFolderUiState } from '../normalizers'
 import {
   flushPendingStateWriteByPath,

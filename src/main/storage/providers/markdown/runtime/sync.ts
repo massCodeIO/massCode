@@ -8,10 +8,10 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { runtimeRef } from './cache'
 import {
   INBOX_DIR_NAME,
   META_DIR_NAME,
-  runtimeRef,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
 } from './constants'

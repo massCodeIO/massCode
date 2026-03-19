@@ -1,21 +1,15 @@
+import type { FolderDiskEntry, FolderMetadataSyncSource } from './folderTypes'
 import path from 'node:path'
 import {
   normalizeFlag,
-  normalizeFolderOrderIndices,
   normalizeNumber,
   normalizePositiveInteger,
 } from '../normalizers'
-import { buildFolderPathMap } from './folderIndex'
+import { buildFolderPathMap, normalizeFolderOrderIndices } from './folderIndex'
 import { listUserFoldersFromDisk } from './folderScan'
 import { depthOfRelativePath, normalizeDirectoryPath } from './path'
 
-export interface FolderMetadataSyncSource {
-  createdAt?: unknown
-  id?: unknown
-  masscode_id?: unknown
-  orderIndex?: unknown
-  updatedAt?: unknown
-}
+export type { FolderDiskEntry, FolderMetadataSyncSource } from './folderTypes'
 
 export interface SyncFolderBase {
   createdAt: number
@@ -33,11 +27,6 @@ export interface FolderSyncState<TFolder extends SyncFolderBase> {
   }
   folderUi: Record<string, { isOpen?: unknown }>
   folders: TFolder[]
-}
-
-export interface FolderDiskEntry<TMetadata extends FolderMetadataSyncSource> {
-  metadata: TMetadata
-  path: string
 }
 
 export interface BuildSyncedFolderInput<

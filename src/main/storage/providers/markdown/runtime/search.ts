@@ -1,5 +1,5 @@
 import type { MarkdownSnippet } from './types'
-import { runtimeRef } from './constants'
+import { runtimeRef } from './cache'
 import {
   buildSearchIndex,
   invalidateSearchIndex,

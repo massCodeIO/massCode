@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { pendingStateWriteByPath, stateContentCacheByPath } from './constants'
+import { pendingStateWriteByPath, stateContentCacheByPath } from './cache'
 import { scheduleStateFlush } from './shared/stateWriter'
 
 export function readSpaceState<T>(statePath: string): T | null {

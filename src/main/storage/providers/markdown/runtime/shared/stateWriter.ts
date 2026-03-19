@@ -3,10 +3,10 @@ import process from 'node:process'
 import fs from 'fs-extra'
 import {
   pendingStateWriteByPath,
-  STATE_WRITE_DEBOUNCE_MS,
   stateContentCacheByPath,
   stateFlushTimerByPath,
-} from '../constants'
+} from '../cache'
+import { STATE_WRITE_DEBOUNCE_MS } from '../constants'
 
 let hooksRegistered = false
 

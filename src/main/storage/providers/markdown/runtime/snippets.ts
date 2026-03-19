@@ -9,13 +9,13 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { runtimeRef } from './cache'
 import {
   INBOX_DIR_NAME,
   INBOX_RELATIVE_PATH,
   LEGACY_INBOX_RELATIVE_PATH,
   LEGACY_TRASH_RELATIVE_PATH,
   META_DIR_NAME,
-  runtimeRef,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   TRASH_RELATIVE_PATH,

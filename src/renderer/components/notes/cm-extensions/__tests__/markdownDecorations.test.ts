@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   shouldRebuildMarkdownDecorations,
   shouldReplaceHorizontalRule,
+  shouldReplaceTaskMarker,
 } from '../markdownDecorations'
 
 describe('shouldRebuildMarkdownDecorations', () => {
@@ -41,5 +42,24 @@ describe('shouldReplaceHorizontalRule', () => {
 
   it('always replaces separator in presentation mode', () => {
     expect(shouldReplaceHorizontalRule(false, true, true)).toBe(true)
+  })
+})
+
+describe('shouldReplaceTaskMarker', () => {
+  it('replaces when cursor is not on marker line and editor is focused', () => {
+    expect(shouldReplaceTaskMarker(true, true, false)).toBe(true)
+  })
+
+  it('shows raw when cursor is on marker line and editor is focused', () => {
+    expect(shouldReplaceTaskMarker(true, true, true)).toBe(false)
+  })
+
+  it('replaces when editor is not focused', () => {
+    expect(shouldReplaceTaskMarker(true, false, true)).toBe(true)
+  })
+
+  it('always replaces in non-interactive mode (presentation)', () => {
+    expect(shouldReplaceTaskMarker(false, true, true)).toBe(true)
+    expect(shouldReplaceTaskMarker(false, false, false)).toBe(true)
   })
 })

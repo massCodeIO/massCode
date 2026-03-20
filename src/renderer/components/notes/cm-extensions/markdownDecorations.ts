@@ -264,6 +264,17 @@ export function shouldReplaceHorizontalRule(
   return !hasFocus || !isCursorOnRuleLine
 }
 
+export function shouldReplaceTaskMarker(
+  interactive: boolean,
+  hasFocus: boolean,
+  isCursorOnMarkerLine: boolean,
+): boolean {
+  if (!interactive)
+    return true
+
+  return !hasFocus || !isCursorOnMarkerLine
+}
+
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
   for (const range of view.state.selection.ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
@@ -478,15 +489,23 @@ function buildDecorations(
             )
           }
 
-          decorations.push(
-            Decoration.replace({
-              widget: new CheckboxWidget(
-                checked,
-                node.from,
-                interactiveTaskMarkers,
-              ),
-            }).range(node.from, node.to),
-          )
+          if (
+            shouldReplaceTaskMarker(
+              interactiveTaskMarkers,
+              view.hasFocus,
+              isCursorOnLine(view, line.number),
+            )
+          ) {
+            decorations.push(
+              Decoration.replace({
+                widget: new CheckboxWidget(
+                  checked,
+                  node.from,
+                  interactiveTaskMarkers,
+                ),
+              }).range(node.from, node.to),
+            )
+          }
         }
 
         // List marks (bullets, numbers)

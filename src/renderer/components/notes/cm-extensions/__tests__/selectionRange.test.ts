@@ -7,7 +7,7 @@ describe('isSelectionInsideRangeWithFocus', () => {
       true,
     )
     expect(isSelectionInsideRangeWithFocus(true, 30, 30, 10, 30, true)).toBe(
-      false,
+      true,
     )
   })
 
@@ -21,29 +21,29 @@ describe('isSelectionInsideRangeWithFocus', () => {
   })
 
   it('treats ranged selection with overlap as inside', () => {
-    expect(
-      isSelectionInsideRangeWithFocus(true, 5, 15, 10, 30, false),
-    ).toBe(true)
-    expect(
-      isSelectionInsideRangeWithFocus(true, 20, 40, 10, 30, false),
-    ).toBe(true)
+    expect(isSelectionInsideRangeWithFocus(true, 5, 15, 10, 30, false)).toBe(
+      true,
+    )
+    expect(isSelectionInsideRangeWithFocus(true, 20, 40, 10, 30, false)).toBe(
+      true,
+    )
   })
 
   it('treats ranged selection touching only boundary as outside', () => {
-    expect(
-      isSelectionInsideRangeWithFocus(true, 0, 10, 10, 30, false),
-    ).toBe(false)
-    expect(
-      isSelectionInsideRangeWithFocus(true, 30, 40, 10, 30, false),
-    ).toBe(false)
+    expect(isSelectionInsideRangeWithFocus(true, 0, 10, 10, 30, false)).toBe(
+      false,
+    )
+    expect(isSelectionInsideRangeWithFocus(true, 30, 40, 10, 30, false)).toBe(
+      false,
+    )
   })
 
   it('always returns false when editor is not focused', () => {
     expect(isSelectionInsideRangeWithFocus(false, 10, 10, 10, 30, true)).toBe(
       false,
     )
-    expect(
-      isSelectionInsideRangeWithFocus(false, 12, 18, 10, 30, false),
-    ).toBe(false)
+    expect(isSelectionInsideRangeWithFocus(false, 12, 18, 10, 30, false)).toBe(
+      false,
+    )
   })
 })

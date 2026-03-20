@@ -10,7 +10,7 @@ export function isSelectionInsideRangeWithFocus(
     return false
 
   if (isEmpty) {
-    return rangeFrom >= blockFrom && rangeFrom < blockTo
+    return rangeFrom >= blockFrom && rangeFrom <= blockTo
   }
 
   return rangeFrom < blockTo && rangeTo > blockFrom

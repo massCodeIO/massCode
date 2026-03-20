@@ -36,9 +36,7 @@ export function shouldHideUrlNodeInMarkup(
 
 function isCursorInRange(view: EditorView, from: number, to: number): boolean {
   for (const range of view.state.selection.ranges) {
-    if (range.from >= from && range.from <= to)
-      return true
-    if (range.to >= from && range.to <= to)
+    if (range.from <= to && range.to >= from)
       return true
   }
   return false

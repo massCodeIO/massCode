@@ -59,6 +59,39 @@ describe('findTableNavigationTarget', () => {
     expect(target).toBe(state.doc.line(4).from)
   })
 
+  it('moves down into table block when cursor is on non-blank line directly above table', () => {
+    const state = createState(
+      ['before', '| A | B |', '| --- | --- |', '| 1 | 2 |', 'after', ''].join(
+        '\n',
+      ),
+    )
+    const head = state.doc.line(1).from + 3
+
+    const target = findTableNavigationTarget(state, head, 'down')
+
+    expect(target).not.toBeNull()
+    expect(target).toBe(state.doc.line(2).from)
+  })
+
+  it('moves up into table block when cursor is on non-blank line directly below table', () => {
+    const state = createState(
+      [
+        'before',
+        '| A | B |',
+        '| --- | --- |',
+        '| 1 | 2 |',
+        '# Heading',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(5).from + 2
+
+    const target = findTableNavigationTarget(state, head, 'up')
+
+    expect(target).not.toBeNull()
+    expect(target).toBe(state.doc.line(4).from)
+  })
+
   it('does not jump from non-empty line even when only blank lines are between cursor and table', () => {
     const state = createState(
       [

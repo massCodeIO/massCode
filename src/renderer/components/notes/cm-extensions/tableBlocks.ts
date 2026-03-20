@@ -286,8 +286,11 @@ export function createTableBlocks(options: TableBlocksOptions = {}) {
       const selectionChanged = !transaction.startState.selection.eq(
         transaction.state.selection,
       )
+      const focusChanged = transaction.effects.some(e =>
+        e.is(setEditorFocusEffect),
+      )
 
-      if (transaction.docChanged || selectionChanged) {
+      if (transaction.docChanged || selectionChanged || focusChanged) {
         return buildDecorations(
           transaction.state,
           enabled,

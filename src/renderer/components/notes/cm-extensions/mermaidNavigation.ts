@@ -29,19 +29,12 @@ function getMermaidBlockRanges(state: EditorState): MermaidBlockRange[] {
   return ranges
 }
 
-function isLineBlank(state: EditorState, lineNumber: number): boolean {
-  return state.doc.line(lineNumber).text.trim().length === 0
-}
-
 export function findMermaidNavigationTarget(
   state: EditorState,
   head: number,
   direction: 'up' | 'down',
 ): number | null {
   const currentLineNumber = state.doc.lineAt(head).number
-  if (!isLineBlank(state, currentLineNumber))
-    return null
-
   const blocks = getMermaidBlockRanges(state)
 
   if (direction === 'down') {
@@ -85,17 +78,19 @@ export function moveSelectionToAdjacentMermaidSource(
   if (view.state.selection.ranges.length !== 1)
     return false
 
-  const target = findMermaidNavigationTarget(
-    view.state,
-    view.state.selection.main.head,
-    direction,
-  )
+  const head = view.state.selection.main.head
+  const target = findMermaidNavigationTarget(view.state, head, direction)
 
   if (target === null)
     return false
 
+  const currentLine = view.state.doc.lineAt(head)
+  const currentCol = head - currentLine.from
+  const targetLine = view.state.doc.lineAt(target)
+  const clampedCol = Math.min(currentCol, targetLine.length)
+
   view.dispatch({
-    selection: { anchor: target },
+    selection: { anchor: targetLine.from + clampedCol },
     scrollIntoView: true,
   })
 

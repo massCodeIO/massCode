@@ -1,7 +1,7 @@
 import { StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
-const setEditorFocusEffect = StateEffect.define<boolean>()
+export const setEditorFocusEffect = StateEffect.define<boolean>()
 
 export const editorFocusField = StateField.define<boolean>({
   create() {

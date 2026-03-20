@@ -8,7 +8,7 @@ import {
   WidgetType,
 } from '@codemirror/view'
 import mermaid from 'mermaid'
-import { editorFocusField } from './editorFocus'
+import { editorFocusField, setEditorFocusEffect } from './editorFocus'
 import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface MermaidBlocksOptions {
@@ -146,6 +146,7 @@ class MermaidWidget extends WidgetType {
         const anchor = view.state.doc.line(targetLineNumber).from
         view.dispatch({
           selection: { anchor },
+          effects: setEditorFocusEffect.of(true),
           scrollIntoView: true,
         })
         view.focus()

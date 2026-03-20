@@ -7,7 +7,7 @@ import {
   EditorView,
   WidgetType,
 } from '@codemirror/view'
-import { editorFocusField } from './editorFocus'
+import { editorFocusField, setEditorFocusEffect } from './editorFocus'
 import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface TableBlocksOptions {
@@ -121,25 +121,54 @@ class TableWidget extends WidgetType {
       root.addEventListener('mousedown', (event) => {
         event.preventDefault()
         const blockFrom = view.posAtDOM(root, 0)
-        const totalLines = 1 + 1 + this.table.rows.length // header + delimiter + data rows
-        const rootRect = root.getBoundingClientRect()
-        const clickY = event.clientY - rootRect.top
-        const ratio
-          = rootRect.height > 0
-            ? Math.max(0, Math.min(1, clickY / rootRect.height))
-            : 0
-        const lineIndex = Math.min(
-          Math.floor(ratio * totalLines),
-          totalLines - 1,
-        )
         const blockStartLine = view.state.doc.lineAt(blockFrom).number
-        const targetLineNumber = Math.min(
-          blockStartLine + lineIndex,
-          view.state.doc.lines,
-        )
-        const anchor = view.state.doc.line(targetLineNumber).from
+        let anchor = blockFrom
+
+        const cell = (event.target as HTMLElement).closest('td, th')
+        if (cell) {
+          const row = cell.parentElement as HTMLTableRowElement
+          const section = row.parentElement as HTMLTableSectionElement
+          const isHeader = section.tagName === 'THEAD'
+          const colIndex = Array.from(row.children).indexOf(cell)
+
+          let sourceLineOffset = 0
+          if (isHeader) {
+            sourceLineOffset = 0
+          }
+          else {
+            const rowIndex = Array.from(section.children).indexOf(row)
+            sourceLineOffset = 2 + rowIndex
+          }
+
+          const targetLineNumber = Math.min(
+            blockStartLine + sourceLineOffset,
+            view.state.doc.lines,
+          )
+          const lineText = view.state.doc.line(targetLineNumber).text
+          const lineFrom = view.state.doc.line(targetLineNumber).from
+
+          let pipeCount = 0
+          let colStart = 0
+          for (let i = 0; i < lineText.length; i++) {
+            if (lineText[i] === '|') {
+              pipeCount++
+              if (pipeCount === colIndex + 1) {
+                colStart = i + 1
+                break
+              }
+            }
+          }
+
+          while (colStart < lineText.length && lineText[colStart] === ' ') {
+            colStart++
+          }
+
+          anchor = Math.min(lineFrom + colStart, view.state.doc.length)
+        }
+
         view.dispatch({
           selection: { anchor },
+          effects: setEditorFocusEffect.of(true),
           scrollIntoView: true,
         })
         view.focus()

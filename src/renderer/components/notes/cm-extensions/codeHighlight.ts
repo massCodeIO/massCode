@@ -30,10 +30,28 @@ const darkHighlightStyle = HighlightStyle.define([
   { tag: tags.attributeValue, color: 'oklch(72% 0.15 150)' },
 ])
 
+const lightHighlightOverrides = HighlightStyle.define([
+  {
+    tag: [
+      tags.heading,
+      tags.heading1,
+      tags.heading2,
+      tags.heading3,
+      tags.heading4,
+      tags.heading5,
+      tags.heading6,
+    ],
+    textDecoration: 'none !important',
+  },
+])
+
 export function createCodeHighlight(isDark: boolean): Extension {
   if (isDark) {
     return syntaxHighlighting(darkHighlightStyle)
   }
 
-  return syntaxHighlighting(defaultHighlightStyle)
+  return [
+    syntaxHighlighting(defaultHighlightStyle),
+    syntaxHighlighting(lightHighlightOverrides),
+  ]
 }

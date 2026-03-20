@@ -22,19 +22,6 @@ function getTableBlockRanges(state: EditorState): TableBlockRange[] {
   return ranges
 }
 
-function hasOnlyBlankLinesBetween(
-  state: EditorState,
-  fromLine: number,
-  toLine: number,
-): boolean {
-  for (let lineNumber = fromLine + 1; lineNumber < toLine; lineNumber++) {
-    if (state.doc.line(lineNumber).text.trim().length > 0)
-      return false
-  }
-
-  return true
-}
-
 function isLineBlank(state: EditorState, lineNumber: number): boolean {
   return state.doc.line(lineNumber).text.trim().length === 0
 }
@@ -56,13 +43,10 @@ export function findTableNavigationTarget(
       if (blockStartLineNumber <= currentLineNumber)
         continue
 
-      if (
-        hasOnlyBlankLinesBetween(state, currentLineNumber, blockStartLineNumber)
-      ) {
-        return Math.min(block.from + 1, block.to)
-      }
+      if (blockStartLineNumber !== currentLineNumber + 1)
+        return null
 
-      return null
+      return block.from
     }
 
     return null
@@ -77,10 +61,11 @@ export function findTableNavigationTarget(
     if (blockEndLineNumber >= currentLineNumber)
       continue
 
-    if (hasOnlyBlankLinesBetween(state, blockEndLineNumber, currentLineNumber))
-      return Math.max(block.to - 1, block.from)
+    if (blockEndLineNumber !== currentLineNumber - 1)
+      return null
 
-    return null
+    const targetLine = state.doc.lineAt(Math.max(block.to - 1, block.from))
+    return targetLine.from
   }
 
   return null

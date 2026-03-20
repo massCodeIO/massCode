@@ -36,7 +36,7 @@ describe('findTableNavigationTarget', () => {
     const target = findTableNavigationTarget(state, head, 'down')
 
     expect(target).not.toBeNull()
-    expect(target).toBe(state.doc.line(3).from + 1)
+    expect(target).toBe(state.doc.line(3).from)
   })
 
   it('moves up into table block when cursor is on blank line after table', () => {
@@ -56,7 +56,7 @@ describe('findTableNavigationTarget', () => {
     const target = findTableNavigationTarget(state, head, 'up')
 
     expect(target).not.toBeNull()
-    expect(target).toBe(state.doc.line(4).to - 1)
+    expect(target).toBe(state.doc.line(4).from)
   })
 
   it('does not jump from non-empty line even when only blank lines are between cursor and table', () => {
@@ -81,17 +81,51 @@ describe('findTableNavigationTarget', () => {
 
   it('does not jump from separator line to table when moving up', () => {
     const state = createState(
+      ['| A | B |', '| --- | --- |', '| 1 | 2 |', '', '---', 'after', ''].join(
+        '\n',
+      ),
+    )
+    const head = state.doc.line(5).from + 1
+
+    const target = findTableNavigationTarget(state, head, 'up')
+
+    expect(target).toBeNull()
+  })
+
+  it('does not jump when multiple blank lines separate cursor from table', () => {
+    const state = createState(
       [
+        'before',
+        '',
+        '',
         '| A | B |',
         '| --- | --- |',
         '| 1 | 2 |',
-        '',
-        '---',
         'after',
         '',
       ].join('\n'),
     )
-    const head = state.doc.line(5).from + 1
+    const head = state.doc.line(2).from
+
+    const target = findTableNavigationTarget(state, head, 'down')
+
+    expect(target).toBeNull()
+  })
+
+  it('does not jump up when multiple blank lines separate cursor from table', () => {
+    const state = createState(
+      [
+        'before',
+        '| A | B |',
+        '| --- | --- |',
+        '| 1 | 2 |',
+        '',
+        '',
+        'after',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(6).from
 
     const target = findTableNavigationTarget(state, head, 'up')
 

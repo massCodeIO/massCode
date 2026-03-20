@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
 import { useTheme } from '@/composables'
 import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
@@ -24,15 +25,18 @@ import { createTableBlocks } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
 
 interface Props {
-  mode?: 'edit' | 'presentation'
+  mode?: NotesEditorMode
+  presentation?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  mode: 'edit',
+  mode: 'livePreview',
+  presentation: false,
 })
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
-const isPresentationMode = computed(() => props.mode === 'presentation')
+const isRawMode = computed(() => props.mode === 'raw')
+const isPreviewMode = computed(() => props.mode === 'preview')
 
 const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
@@ -180,13 +184,17 @@ const presentationTheme = EditorView.theme({
 })
 
 function createEditorState(doc: string): EditorState {
+  const raw = isRawMode.value
+  const preview = isPreviewMode.value
+  const editable = !preview
+
   const extensions: Extension[] = [
-    isPresentationMode.value ? presentationTheme : editTheme,
+    props.presentation ? presentationTheme : editTheme,
     EditorView.lineWrapping,
     history(),
     keymap.of([
-      ...(isPresentationMode.value ? [] : mermaidNavigationKeymap),
-      ...(isPresentationMode.value ? [] : listIndent),
+      ...(editable && !raw ? mermaidNavigationKeymap : []),
+      ...(editable && !raw ? listIndent : []),
       ...defaultKeymap,
       ...historyKeymap,
     ]),
@@ -196,29 +204,48 @@ function createEditorState(doc: string): EditorState {
       codeLanguages: languages,
       extensions: GFM,
     }),
-    createMermaidBlocks({
-      enabled: true,
-      isDark: isDark.value,
-      showSourceWhenSelectionInside: !isPresentationMode.value,
-    }),
-    createTableBlocks({
-      enabled: true,
-      showSourceWhenSelectionInside: !isPresentationMode.value,
-    }),
     createCodeHighlight(isDark.value),
-    createMarkdownDecorations({
-      interactiveTaskMarkers: !isPresentationMode.value,
-      calloutTitleMode: isPresentationMode.value ? 'replace' : 'smart',
-    }),
-    createHideMarkup({ alwaysHide: isPresentationMode.value }),
   ]
 
-  if (isPresentationMode.value) {
+  if (!raw) {
+    extensions.push(
+      createMermaidBlocks({
+        enabled: true,
+        isDark: isDark.value,
+        showSourceWhenSelectionInside: editable,
+      }),
+      createTableBlocks({
+        enabled: true,
+        showSourceWhenSelectionInside: editable,
+      }),
+      createMarkdownDecorations({
+        interactiveTaskMarkers: editable,
+        calloutTitleMode: preview ? 'replace' : 'smart',
+      }),
+      createHideMarkup({ alwaysHide: preview }),
+    )
+  }
+
+  if (preview) {
     extensions.push(
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
       createLinkClickHandler(),
     )
+
+    if (!props.presentation) {
+      extensions.push(
+        EditorView.theme({
+          '.cm-cursor, .cm-dropCursor': { display: 'none' },
+          '.cm-selectionBackground': {
+            backgroundColor: 'transparent !important',
+          },
+          '&.cm-focused .cm-selectionBackground': {
+            backgroundColor: 'transparent !important',
+          },
+        }),
+      )
+    }
   }
   else {
     extensions.push(placeholder('Start typing...'))
@@ -251,14 +278,17 @@ watch(content, (val) => {
   isApplyingExternalContent = false
 })
 
-watch(isPresentationMode, () => {
-  if (!view)
-    return
+watch(
+  () => props.mode,
+  () => {
+    if (!view)
+      return
 
-  isApplyingExternalContent = true
-  view.setState(createEditorState(content.value))
-  isApplyingExternalContent = false
-})
+    isApplyingExternalContent = true
+    view.setState(createEditorState(content.value))
+    isApplyingExternalContent = false
+  },
+)
 
 watch(isDark, () => {
   if (!view)

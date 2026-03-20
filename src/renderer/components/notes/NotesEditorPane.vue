@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import * as Select from '@/components/ui/shadcn/select'
 import { useNotes, useNotesApp, useNoteUpdate } from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import {
+  BookOpen,
+  Code,
   InspectionPanel,
   LoaderCircle,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
+  Pencil,
   Presentation,
 } from 'lucide-vue-next'
 import { getTextStats } from './textStats'
@@ -26,6 +30,7 @@ const {
   isNotesListHidden,
   isNotesPresentationShown,
   isNotesSidebarHidden,
+  notesEditorMode,
   hideNotesViewModes,
   showAllNotesPanels,
   showNotesMindmap,
@@ -205,13 +210,45 @@ const textStats = computed(() => getTextStats(content.value))
           <NotesEditor
             :key="selectedNote.id"
             v-model:content="content"
+            :mode="notesEditorMode"
           />
         </div>
         <div
           data-notes-editor-footer
           class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
         >
-          <div />
+          <Select.Select v-model="notesEditorMode">
+            <Select.SelectTrigger>
+              <Select.SelectValue>
+                <Code
+                  v-if="notesEditorMode === 'raw'"
+                  class="size-3.5"
+                />
+                <Pencil
+                  v-else-if="notesEditorMode === 'livePreview'"
+                  class="size-3.5"
+                />
+                <BookOpen
+                  v-else
+                  class="size-3.5"
+                />
+              </Select.SelectValue>
+            </Select.SelectTrigger>
+            <Select.SelectContent align="start">
+              <Select.SelectItem value="raw">
+                <Code class="size-3.5" />
+                Raw
+              </Select.SelectItem>
+              <Select.SelectItem value="livePreview">
+                <Pencil class="size-3.5" />
+                Live Preview
+              </Select.SelectItem>
+              <Select.SelectItem value="preview">
+                <BookOpen class="size-3.5" />
+                Preview
+              </Select.SelectItem>
+            </Select.SelectContent>
+          </Select.Select>
           <div class="mr-1">
             {{ i18n.t("notes.words") }} {{ textStats.words }},
             {{ i18n.t("notes.symbols") }} {{ textStats.symbols }}

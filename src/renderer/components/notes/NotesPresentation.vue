@@ -142,7 +142,8 @@ onUnmounted(() => {
     <div class="h-full min-h-0 p-5">
       <NotesEditor
         :content="selectedNote?.content ?? ''"
-        mode="presentation"
+        mode="preview"
+        presentation
       />
     </div>
     <div class="flex items-center justify-between px-8">

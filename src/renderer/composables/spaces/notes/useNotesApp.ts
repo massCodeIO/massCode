@@ -34,6 +34,16 @@ const highlightedTagId = ref<number>()
 const focusedFolderId = ref<number | undefined>()
 const focusedNoteId = ref<number | undefined>()
 
+export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+
+const notesEditorMode = ref<NotesEditorMode>(
+  (store.app.get('notesEditorMode') as NotesEditorMode) || 'livePreview',
+)
+
+watch(notesEditorMode, (mode) => {
+  store.app.set('notesEditorMode', mode)
+})
+
 const isNotesSpaceInitialized = ref(false)
 const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
@@ -143,6 +153,7 @@ export function useNotesApp() {
     isNotesMindmapShown,
     isNotesListHidden,
     isNotesPresentationShown,
+    notesEditorMode,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
     hideNotesSidebar,

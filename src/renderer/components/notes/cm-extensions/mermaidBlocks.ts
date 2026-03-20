@@ -62,10 +62,7 @@ function isSelectionInsideRange(
   return false
 }
 
-export function applyMermaidRenderSuccess(
-  container: HTMLElement,
-  svg: string,
-) {
+export function applyMermaidRenderSuccess(container: HTMLElement, svg: string) {
   container.style.display = ''
   container.innerHTML = svg
 }
@@ -128,8 +125,25 @@ class MermaidWidget extends WidgetType {
     if (this.activateSourceOnClick) {
       root.addEventListener('mousedown', (event) => {
         event.preventDefault()
-        const sourceFrom = view.posAtDOM(root, 0)
-        const anchor = Math.min(sourceFrom + 1, view.state.doc.length)
+        const blockFrom = view.posAtDOM(root, 0)
+        const codeLines = this.code.split('\n')
+        const totalLines = codeLines.length + 2 // opening fence + code + closing fence
+        const rootRect = root.getBoundingClientRect()
+        const clickY = event.clientY - rootRect.top
+        const ratio
+          = rootRect.height > 0
+            ? Math.max(0, Math.min(1, clickY / rootRect.height))
+            : 0
+        const lineIndex = Math.min(
+          Math.floor(ratio * totalLines),
+          totalLines - 1,
+        )
+        const blockStartLine = view.state.doc.lineAt(blockFrom).number
+        const targetLineNumber = Math.min(
+          blockStartLine + lineIndex,
+          view.state.doc.lines,
+        )
+        const anchor = view.state.doc.line(targetLineNumber).from
         view.dispatch({
           selection: { anchor },
           scrollIntoView: true,

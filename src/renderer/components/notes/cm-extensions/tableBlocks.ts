@@ -120,8 +120,24 @@ class TableWidget extends WidgetType {
       root.style.cursor = 'text'
       root.addEventListener('mousedown', (event) => {
         event.preventDefault()
-        const sourceFrom = view.posAtDOM(root, 0)
-        const anchor = Math.min(sourceFrom + 1, view.state.doc.length)
+        const blockFrom = view.posAtDOM(root, 0)
+        const totalLines = 1 + 1 + this.table.rows.length // header + delimiter + data rows
+        const rootRect = root.getBoundingClientRect()
+        const clickY = event.clientY - rootRect.top
+        const ratio
+          = rootRect.height > 0
+            ? Math.max(0, Math.min(1, clickY / rootRect.height))
+            : 0
+        const lineIndex = Math.min(
+          Math.floor(ratio * totalLines),
+          totalLines - 1,
+        )
+        const blockStartLine = view.state.doc.lineAt(blockFrom).number
+        const targetLineNumber = Math.min(
+          blockStartLine + lineIndex,
+          view.state.doc.lines,
+        )
+        const anchor = view.state.doc.line(targetLineNumber).from
         view.dispatch({
           selection: { anchor },
           scrollIntoView: true,

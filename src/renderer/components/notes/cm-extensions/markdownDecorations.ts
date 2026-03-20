@@ -235,6 +235,35 @@ interface MarkdownDecorationsOptions {
   calloutTitleMode?: CalloutTitleMode
 }
 
+interface MarkdownDecorationsUpdateFlags {
+  docChanged: boolean
+  selectionSet: boolean
+  viewportChanged: boolean
+  focusChanged: boolean
+}
+
+export function shouldRebuildMarkdownDecorations(
+  update: MarkdownDecorationsUpdateFlags,
+): boolean {
+  return (
+    update.docChanged
+    || update.viewportChanged
+    || update.selectionSet
+    || update.focusChanged
+  )
+}
+
+export function shouldReplaceHorizontalRule(
+  interactiveTaskMarkers: boolean,
+  hasFocus: boolean,
+  isCursorOnRuleLine: boolean,
+): boolean {
+  if (!interactiveTaskMarkers)
+    return true
+
+  return !hasFocus || !isCursorOnRuleLine
+}
+
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
   for (const range of view.state.selection.ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
@@ -416,11 +445,20 @@ function buildDecorations(
 
         // Horizontal rule
         if (type === 'HorizontalRule') {
-          decorations.push(
-            Decoration.replace({
-              widget: new HorizontalRuleWidget(),
-            }).range(node.from, node.to),
-          )
+          const line = view.state.doc.lineAt(node.from)
+          if (
+            shouldReplaceHorizontalRule(
+              interactiveTaskMarkers,
+              view.hasFocus,
+              isCursorOnLine(view, line.number),
+            )
+          ) {
+            decorations.push(
+              Decoration.replace({
+                widget: new HorizontalRuleWidget(),
+              }).range(node.from, node.to),
+            )
+          }
         }
 
         // Task marker (checkbox)
@@ -499,13 +537,10 @@ export function createMarkdownDecorations(
         docChanged: boolean
         selectionSet: boolean
         viewportChanged: boolean
+        focusChanged: boolean
         view: EditorView
       }) {
-        if (
-          update.docChanged
-          || update.viewportChanged
-          || update.selectionSet
-        ) {
+        if (shouldRebuildMarkdownDecorations(update)) {
           this.decorations = buildDecorations(
             update.view,
             interactiveTaskMarkers,

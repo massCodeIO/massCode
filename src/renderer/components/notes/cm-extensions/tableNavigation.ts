@@ -35,12 +35,19 @@ function hasOnlyBlankLinesBetween(
   return true
 }
 
+function isLineBlank(state: EditorState, lineNumber: number): boolean {
+  return state.doc.line(lineNumber).text.trim().length === 0
+}
+
 export function findTableNavigationTarget(
   state: EditorState,
   head: number,
   direction: 'up' | 'down',
 ): number | null {
   const currentLineNumber = state.doc.lineAt(head).number
+  if (!isLineBlank(state, currentLineNumber))
+    return null
+
   const blocks = getTableBlockRanges(state)
 
   if (direction === 'down') {

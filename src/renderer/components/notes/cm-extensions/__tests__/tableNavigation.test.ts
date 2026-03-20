@@ -19,7 +19,7 @@ function createState(doc: string) {
 }
 
 describe('findTableNavigationTarget', () => {
-  it('moves down into table block when only blank lines are between cursor and table', () => {
+  it('moves down into table block when cursor is on blank line before table', () => {
     const state = createState(
       [
         'before',
@@ -31,7 +31,7 @@ describe('findTableNavigationTarget', () => {
         '',
       ].join('\n'),
     )
-    const head = state.doc.line(1).to
+    const head = state.doc.line(2).from
 
     const target = findTableNavigationTarget(state, head, 'down')
 
@@ -39,7 +39,7 @@ describe('findTableNavigationTarget', () => {
     expect(target).toBe(state.doc.line(3).from + 1)
   })
 
-  it('moves up into table block when only blank lines are between cursor and table', () => {
+  it('moves up into table block when cursor is on blank line after table', () => {
     const state = createState(
       [
         'before',
@@ -51,7 +51,7 @@ describe('findTableNavigationTarget', () => {
         '',
       ].join('\n'),
     )
-    const head = state.doc.line(6).from
+    const head = state.doc.line(5).from
 
     const target = findTableNavigationTarget(state, head, 'up')
 
@@ -59,11 +59,12 @@ describe('findTableNavigationTarget', () => {
     expect(target).toBe(state.doc.line(4).to - 1)
   })
 
-  it('does not jump when non-empty line is between cursor and table', () => {
+  it('does not jump from non-empty line even when only blank lines are between cursor and table', () => {
     const state = createState(
       [
         'before',
         'middle',
+        '',
         '| A | B |',
         '| --- | --- |',
         '| 1 | 2 |',
@@ -71,9 +72,28 @@ describe('findTableNavigationTarget', () => {
         '',
       ].join('\n'),
     )
-    const head = state.doc.line(1).to
+    const head = state.doc.line(2).to
 
     const target = findTableNavigationTarget(state, head, 'down')
+
+    expect(target).toBeNull()
+  })
+
+  it('does not jump from separator line to table when moving up', () => {
+    const state = createState(
+      [
+        '| A | B |',
+        '| --- | --- |',
+        '| 1 | 2 |',
+        '',
+        '---',
+        'after',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(5).from + 1
+
+    const target = findTableNavigationTarget(state, head, 'up')
 
     expect(target).toBeNull()
   })

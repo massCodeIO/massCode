@@ -37,7 +37,7 @@ describe('findMermaidNavigationTarget', () => {
     const target = findMermaidNavigationTarget(state, head, 'down')
 
     expect(target).not.toBeNull()
-    expect(target).toBe(state.doc.line(3).from + 1)
+    expect(target).toBe(state.doc.line(3).from)
   })
 
   it('moves up into mermaid block when cursor is on blank line after block', () => {
@@ -58,7 +58,7 @@ describe('findMermaidNavigationTarget', () => {
     const target = findMermaidNavigationTarget(state, head, 'up')
 
     expect(target).not.toBeNull()
-    expect(target).toBe(state.doc.line(5).to - 1)
+    expect(target).toBe(state.doc.line(5).from)
   })
 
   it('does not jump from non-empty line even when only blank lines are between cursor and block', () => {
@@ -109,6 +109,48 @@ describe('findMermaidNavigationTarget', () => {
     const head = state.doc.line(1).to
 
     const target = findMermaidNavigationTarget(state, head, 'down')
+
+    expect(target).toBeNull()
+  })
+
+  it('does not jump when multiple blank lines separate cursor from block', () => {
+    const state = createState(
+      [
+        'before',
+        '',
+        '',
+        '```mermaid',
+        'flowchart LR',
+        'A-->B',
+        '```',
+        'after',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(2).from
+
+    const target = findMermaidNavigationTarget(state, head, 'down')
+
+    expect(target).toBeNull()
+  })
+
+  it('does not jump up when multiple blank lines separate cursor from block', () => {
+    const state = createState(
+      [
+        'before',
+        '```mermaid',
+        'flowchart LR',
+        'A-->B',
+        '```',
+        '',
+        '',
+        'after',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(7).from
+
+    const target = findMermaidNavigationTarget(state, head, 'up')
 
     expect(target).toBeNull()
   })

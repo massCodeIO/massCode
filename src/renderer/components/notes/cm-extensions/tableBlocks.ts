@@ -149,21 +149,28 @@ class TableWidget extends WidgetType {
 
           let pipeCount = 0
           let colStart = 0
+          let colEnd = lineText.length
           for (let i = 0; i < lineText.length; i++) {
             if (lineText[i] === '|') {
               pipeCount++
               if (pipeCount === colIndex + 1) {
                 colStart = i + 1
+              }
+              else if (pipeCount === colIndex + 2) {
+                colEnd = i
                 break
               }
             }
           }
 
-          while (colStart < lineText.length && lineText[colStart] === ' ') {
+          while (colStart < colEnd && lineText[colStart] === ' ') {
             colStart++
           }
+          while (colEnd > colStart && lineText[colEnd - 1] === ' ') {
+            colEnd--
+          }
 
-          anchor = Math.min(lineFrom + colStart, view.state.doc.length)
+          anchor = Math.min(lineFrom + colEnd, view.state.doc.length)
         }
 
         view.dispatch({

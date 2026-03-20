@@ -85,8 +85,33 @@ class CheckboxWidget extends WidgetType {
   }
 }
 
+const calloutIconPaths: Record<CalloutType, string> = {
+  NOTE: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  IMPORTANT:
+    '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  WARNING:
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+}
+
+function createCalloutIcon(type: CalloutType, color: string): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.setAttribute('width', '14')
+  svg.setAttribute('height', '14')
+  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('fill', 'none')
+  svg.setAttribute('stroke', color)
+  svg.setAttribute('stroke-width', '2')
+  svg.setAttribute('stroke-linecap', 'round')
+  svg.setAttribute('stroke-linejoin', 'round')
+  svg.style.marginRight = '5px'
+  svg.style.flexShrink = '0'
+  svg.innerHTML = calloutIconPaths[type]
+  return svg
+}
+
 class CalloutTitleWidget extends WidgetType {
   constructor(
+    readonly type: CalloutType,
     readonly title: string,
     readonly accent: string,
     readonly markerFrom: number,
@@ -96,7 +121,8 @@ class CalloutTitleWidget extends WidgetType {
 
   eq(other: CalloutTitleWidget): boolean {
     return (
-      this.title === other.title
+      this.type === other.type
+      && this.title === other.title
       && this.accent === other.accent
       && this.markerFrom === other.markerFrom
     )
@@ -106,7 +132,14 @@ class CalloutTitleWidget extends WidgetType {
     const root = document.createElement('span')
     root.style.color = this.accent
     root.style.fontWeight = '600'
-    root.textContent = this.title
+    root.style.display = 'inline-flex'
+    root.style.alignItems = 'center'
+    root.style.verticalAlign = 'baseline'
+    root.style.height = '0'
+    root.style.overflow = 'visible'
+
+    root.append(createCalloutIcon(this.type, this.accent))
+    root.append(this.title)
 
     root.addEventListener('mousedown', (event) => {
       event.preventDefault()
@@ -402,6 +435,7 @@ function buildDecorations(
               decorations.push(
                 Decoration.replace({
                   widget: new CalloutTitleWidget(
+                    callout.type,
                     calloutTitleByType[callout.type],
                     accent,
                     markerFrom,

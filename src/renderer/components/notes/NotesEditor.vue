@@ -16,7 +16,10 @@ import { GFM } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
-import { createImageBlocks } from './cm-extensions/imageBlocks'
+import {
+  createImageBlocks,
+  getImageBlockRanges,
+} from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -101,18 +104,72 @@ function createLinkClickHandler() {
   })
 }
 
-const mermaidNavigationKeymap: KeyBinding[] = [
+function moveSelectionToAdjacentImageSource(
+  view: EditorView,
+  direction: 'up' | 'down',
+): boolean {
+  if (view.state.selection.ranges.length !== 1)
+    return false
+
+  const head = view.state.selection.main.head
+  const currentLineNumber = view.state.doc.lineAt(head).number
+  const blocks = getImageBlockRanges(view.state)
+
+  if (direction === 'down') {
+    for (const block of blocks) {
+      const blockLineNumber = view.state.doc.lineAt(block.from).number
+      if (blockLineNumber <= currentLineNumber)
+        continue
+      if (blockLineNumber !== currentLineNumber + 1)
+        return false
+
+      const currentCol = head - view.state.doc.lineAt(head).from
+      const targetLine = view.state.doc.line(blockLineNumber)
+      const clampedCol = Math.min(currentCol, targetLine.length)
+      view.dispatch({
+        selection: { anchor: targetLine.from + clampedCol },
+        scrollIntoView: true,
+      })
+      return true
+    }
+    return false
+  }
+
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const block = blocks[i]
+    const blockLineNumber = view.state.doc.lineAt(block.from).number
+    if (blockLineNumber >= currentLineNumber)
+      continue
+    if (blockLineNumber !== currentLineNumber - 1)
+      return false
+
+    const currentCol = head - view.state.doc.lineAt(head).from
+    const targetLine = view.state.doc.line(blockLineNumber)
+    const clampedCol = Math.min(currentCol, targetLine.length)
+    view.dispatch({
+      selection: { anchor: targetLine.from + clampedCol },
+      scrollIntoView: true,
+    })
+    return true
+  }
+
+  return false
+}
+
+const navigationKeymap: KeyBinding[] = [
   {
     key: 'ArrowDown',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'down')
-      || moveSelectionToAdjacentTableSource(view, 'down'),
+      || moveSelectionToAdjacentTableSource(view, 'down')
+      || moveSelectionToAdjacentImageSource(view, 'down'),
   },
   {
     key: 'ArrowUp',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'up')
-      || moveSelectionToAdjacentTableSource(view, 'up'),
+      || moveSelectionToAdjacentTableSource(view, 'up')
+      || moveSelectionToAdjacentImageSource(view, 'up'),
   },
 ]
 
@@ -195,7 +252,7 @@ function createEditorState(doc: string): EditorState {
     EditorView.lineWrapping,
     history(),
     keymap.of([
-      ...(editable && !raw ? mermaidNavigationKeymap : []),
+      ...(editable && !raw ? navigationKeymap : []),
       ...(editable && !raw ? listIndent : []),
       ...defaultKeymap,
       ...historyKeymap,

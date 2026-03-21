@@ -218,7 +218,7 @@ const textStats = computed(() => getTextStats(content.value))
           class="border-border flex items-center justify-between border-t px-2 py-1 text-xs tabular-nums"
         >
           <Select.Select v-model="notesEditorMode">
-            <Select.SelectTrigger>
+            <Select.SelectTrigger variant="ghost">
               <Select.SelectValue>
                 <Code
                   v-if="notesEditorMode === 'raw'"

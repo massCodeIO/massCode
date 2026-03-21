@@ -4,7 +4,14 @@ import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { isMac } from '@/utils'
-import { Code, Globe, HardDrive, Palette, Plug } from 'lucide-vue-next'
+import {
+  Code,
+  Globe,
+  HardDrive,
+  Notebook,
+  Palette,
+  Plug,
+} from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -25,6 +32,11 @@ const nav: { label: string, name: string, icon: Component }[] = [
     label: i18n.t('preferences:editor.label'),
     name: RouterName.preferencesEditor,
     icon: Code,
+  },
+  {
+    label: i18n.t('preferences:notesEditor.label'),
+    name: RouterName.preferencesNotesEditor,
+    icon: Notebook,
   },
   {
     label: i18n.t('preferences:language.label'),

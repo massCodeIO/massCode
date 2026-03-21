@@ -3,7 +3,7 @@ const fencedCodeBaseStyle = [
   'border-left:1px solid var(--border)',
   'border-right:1px solid var(--border)',
   'color:var(--foreground)',
-  'font-family:var(--font-mono)',
+  'font-family:var(--notes-code-font, var(--font-mono))',
   'font-size:13px',
   'line-height:1.2',
   'font-variant-ligatures:none',

@@ -1,4 +1,4 @@
-import type { EditorSettings } from './types'
+import type { EditorSettings, NotesEditorSettings } from './types'
 
 export const APP_DEFAULTS = {
   sizes: {
@@ -18,4 +18,14 @@ export const EDITOR_DEFAULTS: EditorSettings = {
   singleQuote: false,
   highlightLine: false,
   matchBrackets: true,
+}
+
+export const NOTES_EDITOR_DEFAULTS: NotesEditorSettings = {
+  fontSize: 14,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  codeFontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
+  lineHeight: 1.54,
+  limitWidth: true,
+  lineNumbers: false,
+  indentSize: 2,
 }

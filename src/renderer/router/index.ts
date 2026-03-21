@@ -7,6 +7,7 @@ export const RouterName = {
   preferencesLanguage: 'preferences/language',
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
+  preferencesNotesEditor: 'preferences/notes-editor',
   preferencesAPI: 'preferences/api',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -62,6 +63,11 @@ const routes = [
         path: 'editor',
         name: RouterName.preferencesEditor,
         component: () => import('@/components/preferences/Editor.vue'),
+      },
+      {
+        path: 'notes-editor',
+        name: RouterName.preferencesNotesEditor,
+        component: () => import('@/components/preferences/NotesEditor.vue'),
       },
       {
         path: 'api',

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
-import { useTheme } from '@/composables'
+import { useNotesEditor, useTheme } from '@/composables'
 import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { indentUnit } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
 import { EditorState, type Extension } from '@codemirror/state'
 import {
   EditorView,
   type KeyBinding,
   keymap,
+  lineNumbers as lineNumbersExtension,
   placeholder,
 } from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
@@ -28,6 +30,7 @@ import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNav
 import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
 import { createTableBlocks } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
+import { createNotesEditTheme } from './theme'
 
 interface Props {
   mode?: NotesEditorMode
@@ -40,6 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
+const { settings: notesSettings } = useNotesEditor()
 const isRawMode = computed(() => props.mode === 'raw')
 const isPreviewMode = computed(() => props.mode === 'preview')
 
@@ -173,40 +177,6 @@ const navigationKeymap: KeyBinding[] = [
   },
 ]
 
-const editTheme = EditorView.theme({
-  '&': {
-    height: '100%',
-    fontSize: '14px',
-    backgroundColor: 'var(--background)',
-    color: 'var(--foreground)',
-  },
-  '.cm-content': {
-    fontFamily: 'var(--font-sans)',
-    padding: '10px 20px 28px',
-    lineHeight: '1.54',
-    caretColor: 'var(--foreground)',
-  },
-  '.cm-cursor': {
-    borderLeftColor: 'var(--foreground)',
-  },
-  '.cm-selectionBackground': {
-    backgroundColor: 'var(--accent) !important',
-  },
-  '&.cm-focused .cm-selectionBackground': {
-    backgroundColor: 'var(--accent) !important',
-  },
-  '.cm-gutters': {
-    display: 'none',
-  },
-  ...notesEditorScrollbarTheme,
-  '&.cm-focused': {
-    outline: 'none',
-  },
-  '.cm-line': {
-    padding: '0',
-  },
-})
-
 const presentationTheme = EditorView.theme({
   '&': {
     height: '100%',
@@ -248,7 +218,9 @@ function createEditorState(doc: string): EditorState {
   const editable = !preview
 
   const extensions: Extension[] = [
-    props.presentation ? presentationTheme : editTheme,
+    props.presentation
+      ? presentationTheme
+      : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
     history(),
     keymap.of([
@@ -258,6 +230,7 @@ function createEditorState(doc: string): EditorState {
       ...historyKeymap,
     ]),
     editorFocusExtension,
+    indentUnit.of(' '.repeat(notesSettings.indentSize)),
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,
@@ -265,6 +238,10 @@ function createEditorState(doc: string): EditorState {
     }),
     createCodeHighlight(isDark.value),
   ]
+
+  if (notesSettings.lineNumbers && raw) {
+    extensions.push(lineNumbersExtension())
+  }
 
   if (!raw) {
     extensions.push(
@@ -353,6 +330,15 @@ watch(
     isApplyingExternalContent = false
   },
 )
+
+watch(notesSettings, () => {
+  if (!view)
+    return
+
+  isApplyingExternalContent = true
+  view.setState(createEditorState(content.value))
+  isApplyingExternalContent = false
+})
 
 watch(isDark, () => {
   if (!view)

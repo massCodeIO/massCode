@@ -218,7 +218,7 @@ const inlineCodeStyle = [
   'background:var(--muted)',
   'border:1px solid var(--border)',
   'color:var(--foreground)',
-  'font-family:var(--font-mono)',
+  'font-family:var(--notes-code-font, var(--font-mono))',
   'padding:1px 6px',
   'border-radius:6px',
   'font-size:0.9em',

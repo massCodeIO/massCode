@@ -33,8 +33,8 @@ export function registerFsHandlers() {
 
   ipcMain.handle('fs:notes-asset', (event, { buffer, ext }) => {
     const vaultPath
-      = store.preferences.get('storage.vaultPath')
-        || join(store.preferences.get('storagePath'), 'markdown-vault')
+      = (store.preferences.get('storage.vaultPath') as string | null)
+        || join(store.preferences.get('storagePath') as string, 'markdown-vault')
 
     return new Promise((resolve, reject) => {
       try {

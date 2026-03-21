@@ -118,8 +118,11 @@ else {
       if (url.hostname === 'notes-asset') {
         const fileName = url.pathname.replace(/^\//, '')
         const vaultPath
-          = store.preferences.get('storage.vaultPath')
-            || path.join(store.preferences.get('storagePath'), 'markdown-vault')
+          = (store.preferences.get('storage.vaultPath') as string | null)
+            || path.join(
+              store.preferences.get('storagePath') as string,
+              'markdown-vault',
+            )
         const filePath = path.join(
           vaultPath,
           '__spaces__',

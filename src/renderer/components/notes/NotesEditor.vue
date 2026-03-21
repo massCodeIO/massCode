@@ -16,6 +16,7 @@ import { GFM } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
+import { createImageBlocks } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
@@ -216,6 +217,10 @@ function createEditorState(doc: string): EditorState {
         showSourceWhenSelectionInside: editable,
       }),
       createTableBlocks({
+        enabled: true,
+        showSourceWhenSelectionInside: editable,
+      }),
+      createImageBlocks({
         enabled: true,
         showSourceWhenSelectionInside: editable,
       }),

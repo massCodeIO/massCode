@@ -51,7 +51,7 @@ type SystemAction =
   | 'storage-synced'
   | 'error'
 type PrettierAction = 'format'
-type FsAction = 'assets'
+type FsAction = 'assets' | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction = 'math:read' | 'math:write'
 

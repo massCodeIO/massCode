@@ -30,4 +30,26 @@ export function registerFsHandlers() {
       }
     })
   })
+
+  ipcMain.handle('fs:notes-asset', (event, { buffer, ext }) => {
+    const vaultPath
+      = store.preferences.get('storage.vaultPath')
+        || join(store.preferences.get('storagePath'), 'markdown-vault')
+
+    return new Promise((resolve, reject) => {
+      try {
+        const assetsPath = join(vaultPath, '__spaces__', 'notes', 'assets')
+        const name = `${nanoid()}${ext}`
+        const dest = join(assetsPath, name)
+
+        ensureDirSync(assetsPath)
+        writeFileSync(dest, Buffer.from(buffer))
+
+        resolve(`masscode://notes-asset/${name}`)
+      }
+      catch (error) {
+        reject(error)
+      }
+    })
+  })
 }

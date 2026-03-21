@@ -16,6 +16,7 @@ import { GFM } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
+import { createImageInsert } from './cm-extensions/imageInsert'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
@@ -249,6 +250,7 @@ function createEditorState(doc: string): EditorState {
   }
   else {
     extensions.push(placeholder('Start typing...'))
+    extensions.push(createImageInsert())
   }
 
   extensions.push(

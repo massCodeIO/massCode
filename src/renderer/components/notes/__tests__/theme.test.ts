@@ -22,7 +22,7 @@ describe('createNotesEditThemeStyles', () => {
       expect.objectContaining({
         fontFamily: settings.fontFamily,
         lineHeight: String(settings.lineHeight),
-        padding: '10px 20px 28px',
+        padding: '10px 20px 28px 4px',
       }),
     )
 
@@ -39,10 +39,23 @@ describe('createNotesEditThemeStyles', () => {
         lineHeight: String(settings.lineHeight),
       }),
     )
+
+    expect(styles['.cm-lineNumbers .cm-gutterElement']).toEqual({
+      padding: '0 3px 0 5px',
+      minWidth: '20px',
+      textAlign: 'right',
+      whiteSpace: 'nowrap',
+    })
   })
 
   it('hides gutters outside raw mode', () => {
     const styles = createNotesEditThemeStyles(false, settings)
+
+    expect(styles['.cm-content']).toEqual(
+      expect.objectContaining({
+        padding: '10px 20px 28px',
+      }),
+    )
 
     expect(styles['.cm-gutters']).toEqual(
       expect.objectContaining({

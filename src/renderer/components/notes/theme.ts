@@ -12,6 +12,7 @@ export interface NotesEditorThemeSettings {
 }
 
 const CONTENT_PADDING = '10px 20px 28px'
+const RAW_CONTENT_PADDING = '10px 20px 28px 4px'
 export function createNotesEditThemeStyles(
   raw: boolean,
   notesSettings: NotesEditorThemeSettings,
@@ -26,7 +27,7 @@ export function createNotesEditThemeStyles(
     },
     '.cm-content': {
       fontFamily: notesSettings.fontFamily,
-      padding: CONTENT_PADDING,
+      padding: raw ? RAW_CONTENT_PADDING : CONTENT_PADDING,
       lineHeight: String(notesSettings.lineHeight),
       caretColor: 'var(--foreground)',
       ...(notesSettings.limitWidth
@@ -57,6 +58,12 @@ export function createNotesEditThemeStyles(
     '.cm-gutterElement': {
       fontFamily: notesSettings.fontFamily,
       lineHeight: String(notesSettings.lineHeight),
+    },
+    '.cm-lineNumbers .cm-gutterElement': {
+      padding: '0 3px 0 5px',
+      minWidth: '20px',
+      textAlign: 'right',
+      whiteSpace: 'nowrap',
     },
     '.cm-line': {
       padding: '0',

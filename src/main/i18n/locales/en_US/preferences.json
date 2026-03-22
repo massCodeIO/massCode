@@ -38,7 +38,7 @@
     }
   },
   "editor": {
-    "label": "Editor",
+    "label": "Code Editor",
     "fontSize": "Font Size",
     "fontFamily": "Font Family",
     "wrap": {
@@ -64,7 +64,7 @@
     }
   },
   "notesEditor": {
-    "label": "Notes Editor",
+    "label": "Note Editor",
     "fontSize": {
       "label": "Font Size",
       "description": "Base font size in pixels for the notes editor."

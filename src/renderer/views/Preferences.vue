@@ -5,7 +5,7 @@ import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { isMac } from '@/utils'
 import {
-  Code,
+  Code2,
   Globe,
   HardDrive,
   Notebook,
@@ -31,7 +31,7 @@ const nav: { label: string, name: string, icon: Component }[] = [
   {
     label: i18n.t('preferences:editor.label'),
     name: RouterName.preferencesEditor,
-    icon: Code,
+    icon: Code2,
   },
   {
     label: i18n.t('preferences:notesEditor.label'),

@@ -148,7 +148,7 @@ setInteractive(false)
   <div>
     <EditorHeaderTool>
       <div class="flex w-full items-center justify-between px-2">
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             :tooltip="i18n.t('button.zoomIn')"
             @click="onZoom('zoomIn')"
@@ -181,9 +181,9 @@ setInteractive(false)
             />
           </UiActionButton>
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSave('png')"
           >
@@ -192,7 +192,7 @@ setInteractive(false)
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSave('svg')"
           >

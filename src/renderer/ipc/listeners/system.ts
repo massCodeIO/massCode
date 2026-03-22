@@ -2,6 +2,9 @@ import {
   useApp,
   useFolders,
   useMathNotebook,
+  useNoteFolders,
+  useNotes,
+  useNoteTags,
   useSnippets,
   useSnippetUpdate,
   useSonner,
@@ -25,6 +28,9 @@ const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const { getNoteFolders } = useNoteFolders()
+const { getNotes, hasBusyNoteContentUpdates } = useNotes()
+const { getNoteTags } = useNoteTags()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -58,6 +64,11 @@ async function refreshAfterStorageSync() {
     case 'math':
       await reloadMathFromDisk()
       break
+    case 'notes':
+      await getNoteFolders()
+      await getNotes()
+      await getNoteTags()
+      break
     case 'tools':
       break
     case 'code':
@@ -74,7 +85,11 @@ function scheduleStorageSyncRefresh() {
   }
 
   storageSyncDebounceTimer = setTimeout(() => {
-    if (shouldSkipStorageSyncRefresh() || hasBusyContentUpdates()) {
+    if (
+      shouldSkipStorageSyncRefresh()
+      || hasBusyContentUpdates()
+      || hasBusyNoteContentUpdates()
+    ) {
       scheduleStorageSyncRefresh()
       return
     }

@@ -50,12 +50,23 @@ export interface BackupSettings {
   lastBackupTime?: number
 }
 
+export interface NotesEditorSettings {
+  fontSize: number
+  fontFamily: string
+  codeFontFamily: string
+  lineHeight: number
+  limitWidth: boolean
+  lineNumbers: boolean
+  indentSize: number
+}
+
 export interface PreferencesStore {
   storagePath: string
   apiPort: number
   language: string
   theme: string
   editor: EditorSettings
+  notesEditor: NotesEditorSettings
   storage: StorageSettings
   markdown: MarkdownSettings
   backup: BackupSettings

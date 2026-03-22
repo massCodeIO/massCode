@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useNotes } from '@/composables'
 import { i18n } from '@/electron'
 import domToImage from 'dom-to-image'
 import { FileDown, Maximize, Minus, Plus } from 'lucide-vue-next'
 import { Transformer } from 'markmap-lib'
 import { Markmap } from 'markmap-view'
 
-const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { selectedNote } = useNotes()
 
 const mindmapRef = useTemplateRef('mindmapRef')
 const svgRef = useTemplateRef('svgRef')
@@ -16,7 +16,7 @@ const transformer = new Transformer()
 let mm: Markmap | null = null
 
 async function update() {
-  const value = selectedSnippetContent.value?.value || '# Empty'
+  const value = selectedNote.value?.content || '# Empty'
 
   const { root } = transformer.transform(value)
 
@@ -35,7 +35,7 @@ function init() {
     `,
   })
   svgRef.value?.addEventListener('dblclick', e => e.stopPropagation(), true)
-  update()
+  void update()
 }
 
 function onZoom(type: 'zoomIn' | 'zoomOut' | 'fit') {
@@ -70,9 +70,10 @@ async function onSaveScreenshot(type: 'png' | 'svg' = 'png') {
     data = await domToImage.toSvg(mindmapRef.value!)
   }
 
+  const name = selectedNote.value?.name || 'note'
   const a = document.createElement('a')
   a.href = data
-  a.download = `${selectedSnippet.value?.name} - ${selectedSnippetContent.value?.label}.${type}`
+  a.download = `${name}.${type}`
   a.click()
 }
 
@@ -80,16 +81,19 @@ onMounted(() => {
   init()
 })
 
-watch(selectedSnippetContent, () => {
-  update()
-})
+watch(
+  () => selectedNote.value?.id,
+  () => {
+    void update()
+  },
+)
 </script>
 
 <template>
-  <div>
+  <div class="grid h-full grid-rows-[auto_1fr]">
     <EditorHeaderTool>
       <div class="flex w-full items-center justify-between px-2">
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             :tooltip="i18n.t('button.zoomIn')"
             @click="onZoom('zoomIn')"
@@ -109,9 +113,9 @@ watch(selectedSnippetContent, () => {
             <Maximize class="h-3 w-3" />
           </UiActionButton>
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSaveScreenshot('png')"
           >
@@ -120,7 +124,7 @@ watch(selectedSnippetContent, () => {
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSaveScreenshot('svg')"
           >
@@ -133,11 +137,11 @@ watch(selectedSnippetContent, () => {
     </EditorHeaderTool>
     <div
       ref="mindmapRef"
-      class="h-full cursor-grab"
+      class="h-full min-h-0 cursor-grab"
     >
       <svg
         ref="svgRef"
-        class="h-[calc(100%-var(--editor-tool-header-height))] w-full"
+        class="h-full w-full"
       />
     </div>
   </div>

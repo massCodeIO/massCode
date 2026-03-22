@@ -4,7 +4,7 @@ import path from 'node:path'
 import { app } from 'electron'
 import Store from 'electron-store'
 import fs from 'fs-extra'
-import { EDITOR_DEFAULTS } from '../constants'
+import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
 
 const isWin = platform() === 'win32'
 
@@ -57,6 +57,7 @@ const preferencesStore = new Store<PreferencesStore>({
     language: 'en_US',
     theme: 'auto',
     editor: EDITOR_DEFAULTS,
+    notesEditor: NOTES_EDITOR_DEFAULTS,
     storage: {
       engine: detectDefaultEngine(),
       vaultPath: null,

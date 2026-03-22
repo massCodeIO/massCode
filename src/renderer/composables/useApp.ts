@@ -28,9 +28,6 @@ const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
-const isShowMarkdown = ref(false)
-const isShowMarkdownPresentation = ref(false)
-const isShowMindmap = ref(false)
 const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
 const isShowJsonVisualizer = ref(false)
@@ -89,9 +86,6 @@ export function useApp() {
     isFocusedSearch,
     isShowCodeImage,
     isShowCodePreview,
-    isShowMarkdown,
-    isShowMarkdownPresentation,
-    isShowMindmap,
     isShowJsonVisualizer,
     isSidebarHidden,
     isSponsored,

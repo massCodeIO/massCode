@@ -4,9 +4,12 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 
 interface Props {
   tooltip?: string
+  size?: 'icon' | 'iconText'
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  size: 'icon',
+})
 </script>
 
 <template>
@@ -14,7 +17,7 @@ defineProps<Props>()
     <Tooltip.TooltipTrigger as-child>
       <Button
         variant="icon"
-        size="icon"
+        :size="props.size"
         v-bind="$attrs"
       >
         <slot />
@@ -27,7 +30,7 @@ defineProps<Props>()
   <Button
     v-else
     variant="icon"
-    size="icon"
+    :size="props.size"
     v-bind="$attrs"
   >
     <slot />

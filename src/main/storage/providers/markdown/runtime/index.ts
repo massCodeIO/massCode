@@ -1,11 +1,13 @@
+export { peekRuntimeCache } from './cache'
+
 // Constants
 export {
+  CODE_SPACE_ID,
   INBOX_DIR_NAME,
   INVALID_NAME_CHARS_RE,
   LEGACY_FOLDER_META_FILE_NAME,
   META_DIR_NAME,
   META_FILE_NAME,
-  peekRuntimeCache,
   SPACE_STATE_FILE_NAME,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
@@ -13,14 +15,10 @@ export {
 } from './constants'
 
 // Normalizers
-export { normalizeFlag, normalizeFolderOrderIndices } from './normalizers'
+export { normalizeFlag } from './normalizers'
 
 // Parser
-export {
-  readYamlObjectFile,
-  writeFolderMetadataFile,
-  writeYamlObjectFile,
-} from './parser'
+export { writeFolderMetadataFile } from './parser'
 
 // Paths
 export {
@@ -37,6 +35,17 @@ export {
 
 // Search
 export { getSnippetIdsBySearchQuery } from './search'
+// Shared folder utilities
+export {
+  buildFolderTree,
+  collectDescendantIds,
+  normalizeFolderOrderIndices,
+  reorderFolderSiblings,
+  sortFoldersForTree,
+} from './shared/folderIndex'
+
+export type { WithChildren } from './shared/folderIndex'
+export { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 // Snippets
 export {

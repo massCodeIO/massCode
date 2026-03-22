@@ -150,6 +150,135 @@ export interface TagsAddResponse {
   id: number;
 }
 
+export interface NotesAdd {
+  name: string;
+  folderId?: number | null;
+}
+
+export interface NotesContentUpdate {
+  content: string;
+}
+
+export interface NotesCountsResponse {
+  total: number;
+  trash: number;
+}
+
+export type NotesResponse = {
+  id: number;
+  name: string;
+  description: string | null;
+  content: string;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
+}[];
+
+export interface NotesQuery {
+  search?: string;
+  sort?: string;
+  order?: "ASC" | "DESC";
+  folderId?: number;
+  tagId?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isInbox?: number;
+}
+
+export interface NotesUpdate {
+  name?: string;
+  folderId?: number | null;
+  description?: string | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
+}
+
+export interface NoteFoldersAdd {
+  name: string;
+  parentId?: number | null;
+}
+
+export type NoteFoldersResponse = {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  icon: string | null;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+}[];
+
+export type NoteFoldersTreeResponse = {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  icon: string | null;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+  children: any[];
+}[];
+
+export interface NoteFoldersUpdate {
+  name?: string;
+  icon?: string | null;
+  parentId?: number | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isOpen?: number;
+  orderIndex?: number;
+}
+
+export interface NoteTagsAdd {
+  name: string;
+}
+
+export interface NoteTagsAddResponse {
+  id: number;
+}
+
+export type NoteTagsResponse = {
+  id: number;
+  name: string;
+}[];
+
+export interface NoteTagsUpdate {
+  name: string;
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -396,7 +525,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 4.3.0
+ * @version 4.7.1
  *
  * Development documentation
  */
@@ -717,6 +846,49 @@ export class Api<
         ...params,
       }),
   };
+  system = {
+    /**
+     * No description
+     *
+     * @tags System
+     * @name GetSystemStorageEngine
+     * @request GET:/system/storage-engine
+     */
+    getSystemStorageEngine: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/system/storage-engine`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name GetSystemStorageVaultPath
+     * @request GET:/system/storage-vault-path
+     */
+    getSystemStorageVaultPath: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/system/storage-vault-path`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name PostSystemStorageCacheReset
+     * @request POST:/system/storage-cache/reset
+     */
+    postSystemStorageCacheReset: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/system/storage-cache/reset`,
+        method: "POST",
+        ...params,
+      }),
+  };
   tags = {
     /**
      * No description
@@ -760,6 +932,342 @@ export class Api<
     deleteTagsById: (id: string, params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/tags/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  notes = {
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name GetNotes
+     * @request GET:/notes/
+     */
+    getNotes: (
+      query?: {
+        search?: string;
+        sort?: string;
+        order?: "ASC" | "DESC";
+        folderId?: number;
+        tagId?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isFavorites?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isDeleted?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isInbox?: number;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<NotesResponse, any>({
+        path: `/notes/`,
+        method: "GET",
+        query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PostNotes
+     * @request POST:/notes/
+     */
+    postNotes: (data: NotesAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/notes/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name GetNotesCounts
+     * @request GET:/notes/counts
+     */
+    getNotesCounts: (params: RequestParams = {}) =>
+      this.request<NotesCountsResponse, any>({
+        path: `/notes/counts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PatchNotesById
+     * @request PATCH:/notes/{id}
+     */
+    patchNotesById: (
+      id: string,
+      data: NotesUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name DeleteNotesById
+     * @request DELETE:/notes/{id}
+     */
+    deleteNotesById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/notes/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PatchNotesByIdContent
+     * @request PATCH:/notes/{id}/content
+     */
+    patchNotesByIdContent: (
+      id: string,
+      data: NotesContentUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}/content`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PostNotesByIdTagsByTagId
+     * @request POST:/notes/{id}/tags/{tagId}
+     */
+    postNotesByIdTagsByTagId: (
+      id: string,
+      tagId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}/tags/${tagId}`,
+        method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name DeleteNotesByIdTagsByTagId
+     * @request DELETE:/notes/{id}/tags/{tagId}
+     */
+    deleteNotesByIdTagsByTagId: (
+      id: string,
+      tagId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}/tags/${tagId}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name DeleteNotesTrash
+     * @request DELETE:/notes/trash
+     */
+    deleteNotesTrash: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/notes/trash`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  noteFolders = {
+    /**
+     * No description
+     *
+     * @tags Note Folders
+     * @name GetNoteFolders
+     * @request GET:/note-folders/
+     */
+    getNoteFolders: (params: RequestParams = {}) =>
+      this.request<NoteFoldersResponse, any>({
+        path: `/note-folders/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Folders
+     * @name PostNoteFolders
+     * @request POST:/note-folders/
+     */
+    postNoteFolders: (data: NoteFoldersAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/note-folders/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Folders
+     * @name GetNoteFoldersTree
+     * @request GET:/note-folders/tree
+     */
+    getNoteFoldersTree: (params: RequestParams = {}) =>
+      this.request<NoteFoldersTreeResponse, any>({
+        path: `/note-folders/tree`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Folders
+     * @name PatchNoteFoldersById
+     * @request PATCH:/note-folders/{id}
+     */
+    patchNoteFoldersById: (
+      id: string,
+      data: NoteFoldersUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/note-folders/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Folders
+     * @name DeleteNoteFoldersById
+     * @request DELETE:/note-folders/{id}
+     */
+    deleteNoteFoldersById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/note-folders/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  noteTags = {
+    /**
+     * No description
+     *
+     * @tags Note Tags
+     * @name GetNoteTags
+     * @request GET:/note-tags/
+     */
+    getNoteTags: (params: RequestParams = {}) =>
+      this.request<NoteTagsResponse, any>({
+        path: `/note-tags/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Tags
+     * @name PostNoteTags
+     * @request POST:/note-tags/
+     */
+    postNoteTags: (data: NoteTagsAdd, params: RequestParams = {}) =>
+      this.request<NoteTagsAddResponse, any>({
+        path: `/note-tags/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Tags
+     * @name PatchNoteTagsById
+     * @request PATCH:/note-tags/{id}
+     */
+    patchNoteTagsById: (
+      id: string,
+      data: NoteTagsUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/note-tags/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Note Tags
+     * @name DeleteNoteTagsById
+     * @request DELETE:/note-tags/{id}
+     */
+    deleteNoteTagsById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/note-tags/${id}`,
         method: "DELETE",
         ...params,
       }),

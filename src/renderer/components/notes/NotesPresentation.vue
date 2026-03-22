@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/shadcn/button'
-import { useApp, useSnippets } from '@/composables'
+import { useMarkdown } from '@/components/editor/markdown/composables'
+import {
+  useNotes,
+  useNotesApp,
+  useNoteSearch,
+  useNotesSpaceInitialization,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { useFullscreen, useMagicKeys } from '@vueuse/core'
@@ -14,46 +19,60 @@ import {
   X,
   Zap,
 } from 'lucide-vue-next'
-import { ref } from 'vue'
-import { useMarkdown } from './composables'
 
-const { isShowMarkdownPresentation } = useApp()
-const { selectSnippet, displayedSnippets, selectedSnippet } = useSnippets()
+const { displayedNotes } = useNoteSearch()
+const { selectedNote, selectNote, isNotesLoading } = useNotes()
+const {
+  hideNotesViewModes,
+  isNotesPresentationShown,
+  showAllNotesPanels,
+  showNotesPresentation,
+} = useNotesApp()
+const { initNotesSpace } = useNotesSpaceInitialization()
 const { scaleToShow, onZoom } = useMarkdown()
 
 const { isFullscreen, toggle } = useFullscreen()
 const { left, right, escape, meta, ctrl, l } = useMagicKeys()
 
 const isLaserPointerActive = ref(false)
+const isClosed = ref(false)
+const isInitCompleted = ref(false)
 
-const mdSnippetIds = computed(() => {
-  return displayedSnippets.value
-    ?.filter(s => s.contents[0].language === 'markdown')
-    .map(i => i.id)
-})
-
-const currentIndex = computed(
-  () =>
-    mdSnippetIds.value?.findIndex(i => selectedSnippet.value?.id === i) || 0,
+const noteIds = computed(
+  () => displayedNotes.value?.map(note => note.id) ?? [],
 )
 
+const currentIndex = computed(() => {
+  const id = selectedNote.value?.id
+  if (id === undefined)
+    return -1
+
+  return noteIds.value.findIndex(noteId => noteId === id)
+})
+
 function onClose() {
-  isShowMarkdownPresentation.value = false
-  router.push({ name: RouterName.main })
+  if (isClosed.value) {
+    return
+  }
+
+  isClosed.value = true
+  isNotesPresentationShown.value = false
+  isLaserPointerActive.value = false
+  showAllNotesPanels()
+  router.push({ name: RouterName.notesSpace })
 }
 
 function onPrevNext(direction: 'prev' | 'next') {
-  let id
-
-  if (direction === 'prev') {
-    id = mdSnippetIds.value?.[currentIndex.value - 1]
-  }
-  else {
-    id = mdSnippetIds.value?.[currentIndex.value + 1]
+  const index = currentIndex.value
+  if (index < 0) {
+    return
   }
 
-  if (id) {
-    selectSnippet(id)
+  const targetIndex = direction === 'prev' ? index - 1 : index + 1
+  const id = noteIds.value[targetIndex]
+
+  if (id !== undefined) {
+    selectNote(id)
   }
 }
 
@@ -65,18 +84,32 @@ function toggleLaserPointer() {
   isLaserPointerActive.value = !isLaserPointerActive.value
 }
 
-watch(left, (v) => {
-  if (v)
+watch(
+  () => [isNotesLoading.value, selectedNote.value?.id] as const,
+  ([loading, id]) => {
+    if (!isInitCompleted.value) {
+      return
+    }
+
+    if (!loading && id === undefined) {
+      onClose()
+    }
+  },
+  { immediate: true },
+)
+
+watch(left, (value) => {
+  if (value)
     onPrevNext('prev')
 })
 
-watch(right, (v) => {
-  if (v)
+watch(right, (value) => {
+  if (value)
     onPrevNext('next')
 })
 
-watch(escape, (v) => {
-  if (v)
+watch(escape, (value) => {
+  if (value)
     onClose()
 })
 
@@ -85,21 +118,33 @@ watchEffect(() => {
     isLaserPointerActive.value = !isLaserPointerActive.value
   }
 })
+
+onMounted(async () => {
+  showNotesPresentation()
+  await initNotesSpace()
+  isInitCompleted.value = true
+})
+
+onUnmounted(() => {
+  isLaserPointerActive.value = false
+  hideNotesViewModes()
+})
 </script>
 
 <template>
   <div class="relative grid h-screen grid-rows-[1fr_40px] overflow-hidden">
-    <Button
-      class="absolute top-6 right-2 z-50"
-      variant="ghost"
+    <UiActionButton
+      class="absolute top-2 right-2 z-50"
       @click="onClose"
     >
       <X class="h-3 w-3" />
-    </Button>
-    <div class="scrollbar h-full min-h-0 overflow-y-auto">
-      <div class="overflow-auto p-5">
-        <EditorMarkdown :key="scaleToShow" />
-      </div>
+    </UiActionButton>
+    <div class="h-full min-h-0 p-5">
+      <NotesEditor
+        :content="selectedNote?.content ?? ''"
+        mode="preview"
+        presentation
+      />
     </div>
     <div class="flex items-center justify-between px-8">
       <div class="flex items-center">
@@ -155,7 +200,7 @@ watchEffect(() => {
       </div>
       <div>
         <div class="tabular-nums select-none">
-          {{ currentIndex + 1 }} / {{ mdSnippetIds?.length }}
+          {{ Math.max(1, currentIndex + 1) }} / {{ noteIds.length }}
         </div>
       </div>
     </div>

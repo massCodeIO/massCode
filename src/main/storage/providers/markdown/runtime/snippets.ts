@@ -9,13 +9,13 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { runtimeRef } from './cache'
 import {
   INBOX_DIR_NAME,
   INBOX_RELATIVE_PATH,
   LEGACY_INBOX_RELATIVE_PATH,
   LEGACY_TRASH_RELATIVE_PATH,
   META_DIR_NAME,
-  runtimeRef,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   TRASH_RELATIVE_PATH,
@@ -31,8 +31,12 @@ import {
   findFolderById,
   getFolderPathById,
   normalizeDirectoryPath,
-  toPosixPath,
 } from './paths'
+import { listMarkdownFiles as listMarkdownFilesShared } from './shared/path'
+import {
+  getFileTimestampFallbacks,
+  normalizeTimestamp,
+} from './shared/timestamp'
 import { throwStorageError, toSnippetFileName } from './validation'
 
 export function isInboxSnippetDirectory(directoryPath: string): boolean {
@@ -50,50 +54,14 @@ export function isTrashSnippetDirectory(directoryPath: string): boolean {
   )
 }
 
-export function listMarkdownFiles(
-  rootPath: string,
-  currentPath = rootPath,
-): string[] {
-  if (!fs.pathExistsSync(currentPath)) {
-    return []
-  }
-
-  const entries = fs.readdirSync(currentPath, { withFileTypes: true })
-  const files: string[] = []
-
-  entries.forEach((entry) => {
-    const absolutePath = path.join(currentPath, entry.name)
-    const isHiddenEntry = entry.name.startsWith('.')
-
-    if (entry.isDirectory()) {
-      if (currentPath === rootPath && entry.name === SPACES_DIR_NAME) {
-        return
-      }
-
-      if (currentPath === rootPath && entry.name === META_DIR_NAME) {
-        const inboxPath = path.join(absolutePath, INBOX_DIR_NAME)
-        const trashPath = path.join(absolutePath, TRASH_DIR_NAME)
-
-        files.push(...listMarkdownFiles(rootPath, inboxPath))
-        files.push(...listMarkdownFiles(rootPath, trashPath))
-        return
-      }
-
-      if (isHiddenEntry) {
-        return
-      }
-
-      files.push(...listMarkdownFiles(rootPath, absolutePath))
-      return
-    }
-
-    if (entry.isFile() && !isHiddenEntry && entry.name.endsWith('.md')) {
-      const relativePath = path.relative(rootPath, absolutePath)
-      files.push(toPosixPath(relativePath))
-    }
-  })
-
-  return files
+export function listMarkdownFiles(rootPath: string): string[] {
+  return listMarkdownFilesShared(
+    rootPath,
+    META_DIR_NAME,
+    INBOX_DIR_NAME,
+    TRASH_DIR_NAME,
+    new Set([SPACES_DIR_NAME]),
+  )
 }
 
 export function readFrontmatterIdFromSnippetFile(
@@ -122,7 +90,9 @@ export function readSnippetFromFile(
   }
 
   const source = fs.readFileSync(snippetPath, 'utf8')
-  const { body, frontmatter } = splitFrontmatter(source)
+  const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
+  const now = Date.now()
+  const timestampFallbacks = getFileTimestampFallbacks(snippetPath, now)
   const fragments = parseBodyFragments(body)
   const metaContents = Array.isArray(frontmatter.contents)
     ? frontmatter.contents
@@ -171,9 +141,12 @@ export function readSnippetFromFile(
 
   const inferredName = path.posix.basename(entry.filePath, '.md')
 
-  return {
+  const snippet: MarkdownSnippet = {
     contents,
-    createdAt: normalizeNumber(frontmatter.createdAt, Date.now()),
+    createdAt: normalizeTimestamp(
+      frontmatter.createdAt,
+      timestampFallbacks.createdAt,
+    ),
     description:
       typeof frontmatter.description === 'string'
       || frontmatter.description === null
@@ -189,8 +162,17 @@ export function readSnippetFromFile(
     name:
       typeof frontmatter.name === 'string' ? frontmatter.name : inferredName,
     tags,
-    updatedAt: normalizeNumber(frontmatter.updatedAt, Date.now()),
+    updatedAt: normalizeTimestamp(
+      frontmatter.updatedAt,
+      timestampFallbacks.updatedAt,
+    ),
   }
+
+  if (!hasFrontmatter) {
+    writeSnippetToFile(paths, snippet)
+  }
+
+  return snippet
 }
 
 export function loadSnippets(

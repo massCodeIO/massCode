@@ -1,6 +1,6 @@
 import type { FolderRecord } from '../../../contracts'
 import type {
-  MarkdownFolderDiskEntry,
+  MarkdownFolderMetadataFile,
   MarkdownRuntimeCache,
   MarkdownSnippet,
   MarkdownState,
@@ -8,29 +8,27 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { runtimeRef } from './cache'
 import {
   INBOX_DIR_NAME,
   META_DIR_NAME,
-  runtimeRef,
   SPACES_DIR_NAME,
   TRASH_DIR_NAME,
 } from './constants'
-import {
-  normalizeFlag,
-  normalizeFolderOrderIndices,
-  normalizeNumber,
-  normalizePositiveInteger,
-} from './normalizers'
 import { readFolderMetadata, writeFolderMetadataFile } from './parser'
 import {
   buildFolderPathMap,
   buildPathToFolderIdMap,
-  depthOfRelativePath,
   findFolderById,
   normalizeDirectoryPath,
   toPosixPath,
 } from './paths'
-import { buildSearchIndex } from './search'
+import { buildSearchIndex, getSnippetSearchText } from './search'
+import {
+  syncFolderMetadataFilesByPathMap,
+  syncFoldersStateFromDiskAtRoot,
+} from './shared/folderSync'
+import { syncFolderUiWithFolders } from './shared/stateUtils'
 import {
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
@@ -45,7 +43,6 @@ import {
   flushPendingStateWrites,
   loadState,
   saveState,
-  syncFolderUiWithFolders,
 } from './state'
 
 function isTechnicalRootFolder(name: string): boolean {
@@ -57,156 +54,33 @@ function isTechnicalRootFolder(name: string): boolean {
   )
 }
 
-export function listUserFolders(
-  paths: Paths,
-  currentPath = paths.vaultPath,
-): MarkdownFolderDiskEntry[] {
-  if (!fs.pathExistsSync(currentPath)) {
-    return []
-  }
-
-  const entries = fs.readdirSync(currentPath, { withFileTypes: true })
-  const folders: MarkdownFolderDiskEntry[] = []
-
-  entries.forEach((entry) => {
-    if (!entry.isDirectory()) {
-      return
-    }
-
-    if (currentPath === paths.vaultPath && isTechnicalRootFolder(entry.name)) {
-      return
-    }
-
-    const absolutePath = path.join(currentPath, entry.name)
-    const relativePath = toPosixPath(
-      path.relative(paths.vaultPath, absolutePath),
-    )
-
-    folders.push({
-      metadata: readFolderMetadata(paths, relativePath),
-      path: relativePath,
-    })
-    folders.push(...listUserFolders(paths, absolutePath))
-  })
-
-  return folders
-}
-
 function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
-  const diskFolders = listUserFolders(paths)
-  const oldFoldersById = new Map<number, FolderRecord>(
-    state.folders.map(folder => [folder.id, folder]),
-  )
-  const oldFolderPathMap = buildFolderPathMap(state)
-  const oldFolderIdByPath = new Map<string, number>()
-  oldFolderPathMap.forEach((folderPath, folderId) => {
-    oldFolderIdByPath.set(folderPath, folderId)
+  syncFoldersStateFromDiskAtRoot<FolderRecord, MarkdownFolderMetadataFile>({
+    buildFolder: ({ base, metadata, previousFolder }) => {
+      const defaultLanguage
+        = typeof metadata.defaultLanguage === 'string'
+          && metadata.defaultLanguage.trim()
+          ? metadata.defaultLanguage
+          : previousFolder?.defaultLanguage || 'plain_text'
+      const icon
+        = metadata.icon === null
+          ? null
+          : typeof metadata.icon === 'string'
+            ? metadata.icon
+            : (previousFolder?.icon ?? null)
+
+      return {
+        ...base,
+        defaultLanguage,
+        icon,
+      }
+    },
+    readMetadata: relativePath => readFolderMetadata(paths, relativePath),
+    rootPath: paths.vaultPath,
+    shouldSkipDirectory: ({ entryName, isRoot }) =>
+      isRoot && isTechnicalRootFolder(entryName),
+    state,
   })
-
-  const orderedDiskFolders = [...diskFolders].sort((a, b) => {
-    const depthA = depthOfRelativePath(a.path)
-    const depthB = depthOfRelativePath(b.path)
-
-    if (depthA !== depthB) {
-      return depthA - depthB
-    }
-
-    return a.path.localeCompare(b.path)
-  })
-
-  const nextFoldersState: FolderRecord[] = []
-  const pathToFolderId = new Map<string, number>()
-  const usedFolderIds = new Set<number>()
-  let nextFolderId = Math.max(
-    state.counters.folderId,
-    ...state.folders.map(folder => folder.id),
-  )
-
-  for (const diskFolder of orderedDiskFolders) {
-    const metadata = diskFolder.metadata
-    const folderPath = diskFolder.path
-    const parentPath = normalizeDirectoryPath(path.posix.dirname(folderPath))
-    const parentId = parentPath ? pathToFolderId.get(parentPath) || null : null
-
-    const metadataFolderId = normalizePositiveInteger(
-      metadata.id ?? metadata.masscode_id,
-    )
-    const pathFolderId = oldFolderIdByPath.get(folderPath) || null
-
-    let folderId
-      = metadataFolderId && !usedFolderIds.has(metadataFolderId)
-        ? metadataFolderId
-        : null
-
-    if (!folderId && pathFolderId && !usedFolderIds.has(pathFolderId)) {
-      folderId = pathFolderId
-    }
-
-    if (!folderId) {
-      nextFolderId += 1
-      folderId = nextFolderId
-    }
-
-    usedFolderIds.add(folderId)
-    pathToFolderId.set(folderPath, folderId)
-
-    const previousFolder = oldFoldersById.get(folderId)
-    const now = Date.now()
-    const createdAt = normalizeNumber(
-      metadata.createdAt,
-      previousFolder?.createdAt ?? now,
-    )
-    const updatedAt = normalizeNumber(
-      metadata.updatedAt,
-      previousFolder?.updatedAt ?? createdAt,
-    )
-    const defaultLanguage
-      = typeof metadata.defaultLanguage === 'string'
-        && metadata.defaultLanguage.trim()
-        ? metadata.defaultLanguage
-        : previousFolder?.defaultLanguage || 'plain_text'
-    const icon
-      = metadata.icon === null
-        ? null
-        : typeof metadata.icon === 'string'
-          ? metadata.icon
-          : (previousFolder?.icon ?? null)
-    const fallbackOrderIndex
-      = nextFoldersState
-        .filter(folder => folder.parentId === parentId)
-        .reduce(
-          (maxOrder, folder) => Math.max(maxOrder, folder.orderIndex),
-          -1,
-        ) + 1
-    const orderIndex = Math.max(
-      0,
-      Math.trunc(
-        normalizeNumber(
-          metadata.orderIndex,
-          previousFolder?.orderIndex ?? fallbackOrderIndex,
-        ),
-      ),
-    )
-
-    nextFoldersState.push({
-      createdAt,
-      defaultLanguage,
-      icon,
-      id: folderId,
-      isOpen: normalizeFlag(
-        state.folderUi[String(folderId)]?.isOpen,
-        previousFolder?.isOpen ?? 0,
-      ),
-      name: path.posix.basename(folderPath),
-      orderIndex,
-      parentId,
-      updatedAt,
-    })
-  }
-
-  state.folders = nextFoldersState
-  state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
-  normalizeFolderOrderIndices(state.folders)
   syncFolderUiWithFolders(state)
 }
 
@@ -215,15 +89,16 @@ export function syncFolderMetadataFiles(
   state: MarkdownState,
 ): void {
   const folderPathMap = buildFolderPathMap(state)
-
-  folderPathMap.forEach((folderPath, folderId) => {
-    const folder = findFolderById(state, folderId)
-    if (!folder) {
-      return
-    }
-
-    writeFolderMetadataFile(paths, folderPath, folder)
-  })
+  syncFolderMetadataFilesByPathMap(
+    state.folders,
+    folderPathMap,
+    (folderPath, folder) => {
+      const syncedFolder = findFolderById(state, folder.id)
+      if (syncedFolder) {
+        writeFolderMetadataFile(paths, folderPath, syncedFolder)
+      }
+    },
+  )
 }
 
 export function syncCounters(
@@ -325,21 +200,11 @@ export function setRuntimeCache(
     })
   })
 
-  const {
-    searchSnippetTextById,
-    searchTokenToSnippetIds,
-    searchTokensBySnippetId,
-  } = buildSearchIndex(snippets)
-
   runtimeRef.cache = {
     contentOwnerByContentId,
     folderById,
     paths,
-    searchIndexDirty: false,
-    searchQueryCache: new Map(),
-    searchSnippetTextById,
-    searchTokenToSnippetIds,
-    searchTokensBySnippetId,
+    searchIndex: buildSearchIndex(snippets, getSnippetSearchText),
     snippetById,
     snippets,
     state,

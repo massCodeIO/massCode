@@ -14,42 +14,7 @@ import {
   META_FILE_NAME,
   NEW_LINE_SPLIT_RE,
 } from './constants'
-
-export function readYamlObjectFile<T>(filePath: string): T | null {
-  if (!fs.pathExistsSync(filePath)) {
-    return null
-  }
-
-  try {
-    const source = fs.readFileSync(filePath, 'utf8')
-    const parsed = yaml.load(source)
-
-    if (!parsed || typeof parsed !== 'object') {
-      return null
-    }
-
-    return parsed as T
-  }
-  catch {
-    return null
-  }
-}
-
-export function writeYamlObjectFile(
-  filePath: string,
-  data: Record<string, unknown>,
-): void {
-  const body = yaml
-    .dump(data, {
-      lineWidth: -1,
-      noRefs: true,
-      sortKeys: false,
-    })
-    .trim()
-
-  fs.ensureDirSync(path.dirname(filePath))
-  fs.writeFileSync(filePath, `${body}\n`, 'utf8')
-}
+import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 export function readFolderMetadata(
   paths: Paths,
@@ -147,11 +112,12 @@ export function writeFolderMetadataFile(
 export function splitFrontmatter(source: string): {
   body: string
   frontmatter: MarkdownSnippetFrontmatter
+  hasFrontmatter: boolean
 } {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
 
   if (!match) {
-    return { body: source, frontmatter: {} }
+    return { body: source, frontmatter: {}, hasFrontmatter: false }
   }
 
   const parsed = yaml.load(match[1])
@@ -162,6 +128,7 @@ export function splitFrontmatter(source: string): {
       parsed && typeof parsed === 'object'
         ? (parsed as MarkdownSnippetFrontmatter)
         : {},
+    hasFrontmatter: true,
   }
 }
 
@@ -181,20 +148,35 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     const label = line.slice('## Fragment:'.length).trim() || 'Fragment'
     lineIndex += 1
 
-    if (lineIndex >= lines.length || !lines[lineIndex].startsWith('```')) {
+    if (lineIndex >= lines.length) {
       continue
     }
 
-    const language = lines[lineIndex].slice(3).trim() || 'plain_text'
+    const fenceLine = lines[lineIndex]
+    let fenceLength = 0
+
+    while (
+      fenceLength < fenceLine.length
+      && fenceLine.charCodeAt(fenceLength) === 96
+    ) {
+      fenceLength += 1
+    }
+
+    if (fenceLength < 3) {
+      continue
+    }
+
+    const fence = '`'.repeat(fenceLength)
+    const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
     lineIndex += 1
 
     const valueLines: string[] = []
-    while (lineIndex < lines.length && !lines[lineIndex].startsWith('```')) {
+    while (lineIndex < lines.length && lines[lineIndex].trim() !== fence) {
       valueLines.push(lines[lineIndex])
       lineIndex += 1
     }
 
-    if (lineIndex < lines.length && lines[lineIndex].startsWith('```')) {
+    if (lineIndex < lines.length && lines[lineIndex].trim() === fence) {
       lineIndex += 1
     }
 
@@ -214,6 +196,20 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
   }
 
   return fragments
+}
+
+function getSnippetFence(value: string): string {
+  const matches = value.match(/`+/g) || []
+  let maxLength = 0
+
+  for (const match of matches) {
+    if (match.length > maxLength) {
+      maxLength = match.length
+    }
+  }
+
+  const fenceLength = Math.max(3, maxLength + 1)
+  return '`'.repeat(fenceLength)
 }
 
 export function serializeSnippet(snippet: MarkdownSnippet): string {
@@ -247,8 +243,9 @@ export function serializeSnippet(snippet: MarkdownSnippet): string {
       const label = content.label.replace(/\r?\n/g, ' ').trim() || 'Fragment'
       const language = content.language.trim() || 'plain_text'
       const value = content.value || ''
+      const fence = getSnippetFence(value)
 
-      return `## Fragment: ${label}\n\`\`\`${language}\n${value}\n\`\`\``
+      return `## Fragment: ${label}\n${fence}${language}\n${value}\n${fence}`
     })
     .join('\n\n')
 

@@ -1,4 +1,4 @@
-import type { MarkdownErrorCode, MarkdownState, Paths } from './types'
+import type { MarkdownErrorCode, Paths } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
 import {
@@ -9,7 +9,7 @@ import {
   WINDOWS_RESERVED_NAME_RE,
 } from './constants'
 import { normalizeErrorMessage } from './normalizers'
-import { getFolderSiblings } from './paths'
+import { getFolderSiblings } from './shared/folderIndex'
 
 export function throwStorageError(
   code: MarkdownErrorCode,
@@ -42,7 +42,7 @@ function hasInvalidNameChars(name: string): boolean {
 
 export function validateEntryName(
   name: string,
-  kind: 'folder' | 'snippet',
+  kind: 'folder' | 'note' | 'snippet',
 ): string {
   const normalized = normalizeName(name)
 
@@ -100,16 +100,25 @@ export function assertNotReservedRootFolderName(
 }
 
 export function assertUniqueSiblingFolderName(
-  state: MarkdownState,
+  state: {
+    folders: {
+      id: number
+      name: string
+      orderIndex: number
+      parentId: number | null
+    }[]
+  },
   parentId: number | null,
   name: string,
   excludeId?: number,
 ): void {
   const normalizedName = name.toLowerCase()
 
-  const hasConflict = getFolderSiblings(state, parentId, excludeId).some(
-    folder => folder.name.toLowerCase() === normalizedName,
-  )
+  const hasConflict = getFolderSiblings(
+    state.folders,
+    parentId,
+    excludeId,
+  ).some(folder => folder.name.toLowerCase() === normalizedName)
 
   if (hasConflict) {
     throwStorageError(
@@ -120,12 +129,19 @@ export function assertUniqueSiblingFolderName(
 }
 
 export function resolveUniqueSiblingFolderName(
-  state: MarkdownState,
+  state: {
+    folders: {
+      id: number
+      name: string
+      orderIndex: number
+      parentId: number | null
+    }[]
+  },
   parentId: number | null,
   name: string,
   excludeId?: number,
 ): string {
-  const siblings = getFolderSiblings(state, parentId, excludeId)
+  const siblings = getFolderSiblings(state.folders, parentId, excludeId)
   const siblingNames = new Set(
     siblings.map(folder => folder.name.toLowerCase()),
   )
@@ -154,13 +170,27 @@ export function assertDirectoryNameAvailable(
   folderName: string,
   excludeRelativePath?: string,
 ): void {
+  assertDirectoryNameAvailableAtRoot(
+    paths.vaultPath,
+    parentRelativePath,
+    folderName,
+    excludeRelativePath,
+  )
+}
+
+export function assertDirectoryNameAvailableAtRoot(
+  rootPath: string,
+  parentRelativePath: string,
+  folderName: string,
+  excludeRelativePath?: string,
+): void {
   const parentAbsolutePath = parentRelativePath
-    ? path.join(paths.vaultPath, parentRelativePath)
-    : paths.vaultPath
+    ? path.join(rootPath, parentRelativePath)
+    : rootPath
   fs.ensureDirSync(parentAbsolutePath)
 
   const excludeAbsolutePath = excludeRelativePath
-    ? path.join(paths.vaultPath, excludeRelativePath)
+    ? path.join(rootPath, excludeRelativePath)
     : null
 
   const entries = fs.readdirSync(parentAbsolutePath)

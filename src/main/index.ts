@@ -3,54 +3,28 @@ import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
-import { version } from '../../package.json'
 import { initApi } from './api'
-import { startAutoBackup } from './db'
-import { migrateJsonToSqlite } from './db/migrate'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { mainMenu } from './menu/main'
+import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { store } from './store'
 import { checkForUpdates } from './updates'
-import { log } from './utils'
+import { importEsm, isSqliteFile, log } from './utils'
 
-process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true' // Отключаем security warnings
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
 
 let mainWindow: BrowserWindow
 let isQuitting = false
-
-// TODO: Удаление уведомления о функции в версии 5.0.0
-const SQLITE_SUNSET_VERSION = '5.0.0'
-
-function shouldShowFeatureNotice(): boolean {
-  const lastSeenVersion = store.app.get('lastSeenReleaseNoticeVersion')
-  const lastSeenMajor = Number.parseInt(
-    (lastSeenVersion || '').split('.')[0] || '0',
-    10,
-  )
-  const currentMajor = Number.parseInt(version.split('.')[0] || '0', 10)
-
-  if (lastSeenMajor >= currentMajor) {
-    return false
-  }
-
-  return currentMajor === 4
-}
-
-function showFeatureNotice() {
-  if (!shouldShowFeatureNotice()) {
-    return
-  }
-
-  mainWindow.webContents.send('system:feature-notice', {
-    sqliteSunsetVersion: SQLITE_SUNSET_VERSION,
-  })
-
-  store.app.set('lastSeenReleaseNoticeVersion', version)
-}
+let migrationResult: {
+  folders: number
+  snippets: number
+  tags: number
+} | null = null
+let migrationError: string | null = null
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -91,7 +65,14 @@ function createWindow() {
   }
 
   ipcMain.once('system:renderer-ready', () => {
-    showFeatureNotice()
+    if (migrationResult) {
+      mainWindow.webContents.send('system:migration-complete', migrationResult)
+    }
+    else if (migrationError) {
+      mainWindow.webContents.send('system:migration-error', {
+        message: migrationError,
+      })
+    }
   })
 
   mainWindow.on('close', (event) => {
@@ -158,6 +139,61 @@ else {
     })
 
     try {
+      const storagePath = store.preferences.get('storagePath')
+      const dbPath = `${storagePath}/massCode.db`
+
+      if (isSqliteFile(dbPath)) {
+        const vaultPath
+          = (store.preferences.get('storage.vaultPath') as string | null)
+            || path.join(storagePath, 'markdown-vault')
+        const statePath = path.join(
+          vaultPath,
+          '__spaces__',
+          'code',
+          '.masscode',
+          'state.json',
+        )
+        let vaultHasData = false
+
+        try {
+          const stateContent = readFileSync(statePath, 'utf8')
+          const state = JSON.parse(stateContent)
+          vaultHasData
+            = Array.isArray(state.snippets) && state.snippets.length > 0
+        }
+        catch {
+          // state.json doesn't exist or is invalid; treat the vault as empty
+        }
+
+        if (!vaultHasData) {
+          const { closeDB } = await importEsm('./db')
+          const { migrateSqliteToMarkdownStorage } = await importEsm(
+            './storage/providers/markdown',
+          )
+
+          migrationResult = migrateSqliteToMarkdownStorage()
+          closeDB()
+
+          store.preferences.delete('storage.engine' as any)
+          store.preferences.delete('backup' as any)
+
+          log('Auto-migration complete', migrationResult)
+        }
+      }
+    }
+    catch (error) {
+      log('Error during auto-migration from SQLite', error)
+      migrationError = error instanceof Error ? error.message : String(error)
+    }
+
+    try {
+      startMarkdownWatcher()
+    }
+    catch (error) {
+      log('Error starting markdown watcher', error)
+    }
+
+    try {
       createWindow()
     }
     catch (error) {
@@ -191,28 +227,6 @@ else {
     catch (error) {
       log('Error checking for updates', error)
     }
-
-    try {
-      await startAutoBackup()
-    }
-    catch (error) {
-      log('Error starting auto backup', error)
-    }
-
-    if (store.app.get('isAutoMigratedFromJson')) {
-      return
-    }
-
-    try {
-      const jsonDbPath = `${store.preferences.get('storagePath')}/db.json`
-      const jsonData = readFileSync(jsonDbPath, 'utf8')
-
-      migrateJsonToSqlite(JSON.parse(jsonData))
-      store.app.set('isAutoMigratedFromJson', true)
-    }
-    catch (err) {
-      log('Error on auto migration JSON to SQLite', err)
-    }
   })
 
   app.on('activate', () => {
@@ -222,6 +236,7 @@ else {
   app.on('before-quit', () => {
     isQuitting = true
     stopThemeWatcher()
+    stopMarkdownWatcher()
   })
 
   app.on('window-all-closed', () => {
@@ -247,7 +262,6 @@ else {
     BrowserWindow.getFocusedWindow()?.webContents.send('system:deep-link', url)
   })
 
-  // Global error handlers
   process.on('uncaughtException', (err) => {
     BrowserWindow.getFocusedWindow()?.webContents.send('system:error', {
       source: 'main',

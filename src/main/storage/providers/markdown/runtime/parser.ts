@@ -9,50 +9,73 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { FOLDER_META_FILE_NAME, NEW_LINE_SPLIT_RE } from './constants'
-
-export function getFolderMetaFilePath(
-  paths: Paths,
-  folderRelativePath: string,
-): string {
-  return path.join(paths.vaultPath, folderRelativePath, FOLDER_META_FILE_NAME)
-}
+import {
+  LEGACY_FOLDER_META_FILE_NAME,
+  META_FILE_NAME,
+  NEW_LINE_SPLIT_RE,
+} from './constants'
+import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 export function readFolderMetadata(
   paths: Paths,
   folderRelativePath: string,
 ): MarkdownFolderMetadataFile {
-  const metadataPath = getFolderMetaFilePath(paths, folderRelativePath)
+  const folderAbsPath = path.join(paths.vaultPath, folderRelativePath)
+  const metaPath = path.join(folderAbsPath, META_FILE_NAME)
+  const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
 
-  if (!fs.pathExistsSync(metadataPath)) {
+  // Step 1: Try .meta.yaml
+  const metaData = readYamlObjectFile<MarkdownFolderMetadataFile>(metaPath)
+  if (metaData) {
+    return metaData
+  }
+
+  // Step 2: Try legacy .masscode-folder.yml
+  const legacyData = readYamlObjectFile<MarkdownFolderMetadataFile>(legacyPath)
+  if (!legacyData) {
     return {}
+  }
+
+  // Step 3: Migrate legacy → .meta.yaml
+  const migrated: MarkdownFolderMetadataFile = { ...legacyData }
+  if (migrated.masscode_id !== undefined && migrated.masscode_id !== null) {
+    migrated.id = migrated.masscode_id
+    delete migrated.masscode_id
   }
 
   try {
-    const source = fs.readFileSync(metadataPath, 'utf8')
-    const parsed = yaml.load(source)
-
-    if (!parsed || typeof parsed !== 'object') {
-      return {}
-    }
-
-    return parsed as MarkdownFolderMetadataFile
+    writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
+    fs.removeSync(legacyPath)
   }
   catch {
-    return {}
+    // Migration failed — non-critical, we still have the data
   }
+
+  return migrated
 }
 
-export function serializeFolderMetadata(folder: FolderRecord): string {
-  const payload: MarkdownFolderMetadataFile = {
+export function serializeFolderMetadata(
+  folder: FolderRecord,
+): Record<string, unknown> {
+  return {
+    id: folder.id,
     createdAt: folder.createdAt,
     defaultLanguage: folder.defaultLanguage,
     icon: folder.icon,
-    masscode_id: folder.id,
     name: folder.name,
     orderIndex: folder.orderIndex,
     updatedAt: folder.updatedAt,
   }
+}
+
+export function writeFolderMetadataFile(
+  paths: Paths,
+  folderRelativePath: string,
+  folder: FolderRecord,
+): void {
+  const folderAbsPath = path.join(paths.vaultPath, folderRelativePath)
+  const metaPath = path.join(folderAbsPath, META_FILE_NAME)
+  const payload = serializeFolderMetadata(folder)
 
   const body = yaml
     .dump(payload, {
@@ -62,35 +85,39 @@ export function serializeFolderMetadata(folder: FolderRecord): string {
     })
     .trim()
 
-  return `${body}\n`
-}
+  const nextContent = `${body}\n`
 
-export function writeFolderMetadataFile(
-  paths: Paths,
-  folderRelativePath: string,
-  folder: FolderRecord,
-): void {
-  const metadataPath = getFolderMetaFilePath(paths, folderRelativePath)
-  const nextContent = serializeFolderMetadata(folder)
-
-  if (fs.pathExistsSync(metadataPath)) {
-    const currentContent = fs.readFileSync(metadataPath, 'utf8')
+  if (fs.pathExistsSync(metaPath)) {
+    const currentContent = fs.readFileSync(metaPath, 'utf8')
     if (currentContent === nextContent) {
       return
     }
   }
 
-  fs.writeFileSync(metadataPath, nextContent, 'utf8')
+  fs.ensureDirSync(folderAbsPath)
+  fs.writeFileSync(metaPath, nextContent, 'utf8')
+
+  // Clean up legacy file if it exists
+  const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
+  if (fs.pathExistsSync(legacyPath)) {
+    try {
+      fs.removeSync(legacyPath)
+    }
+    catch {
+      // Non-critical
+    }
+  }
 }
 
 export function splitFrontmatter(source: string): {
   body: string
   frontmatter: MarkdownSnippetFrontmatter
+  hasFrontmatter: boolean
 } {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
 
   if (!match) {
-    return { body: source, frontmatter: {} }
+    return { body: source, frontmatter: {}, hasFrontmatter: false }
   }
 
   const parsed = yaml.load(match[1])
@@ -101,6 +128,7 @@ export function splitFrontmatter(source: string): {
       parsed && typeof parsed === 'object'
         ? (parsed as MarkdownSnippetFrontmatter)
         : {},
+    hasFrontmatter: true,
   }
 }
 
@@ -120,20 +148,35 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
     const label = line.slice('## Fragment:'.length).trim() || 'Fragment'
     lineIndex += 1
 
-    if (lineIndex >= lines.length || !lines[lineIndex].startsWith('```')) {
+    if (lineIndex >= lines.length) {
       continue
     }
 
-    const language = lines[lineIndex].slice(3).trim() || 'plain_text'
+    const fenceLine = lines[lineIndex]
+    let fenceLength = 0
+
+    while (
+      fenceLength < fenceLine.length
+      && fenceLine.charCodeAt(fenceLength) === 96
+    ) {
+      fenceLength += 1
+    }
+
+    if (fenceLength < 3) {
+      continue
+    }
+
+    const fence = '`'.repeat(fenceLength)
+    const language = fenceLine.slice(fenceLength).trim() || 'plain_text'
     lineIndex += 1
 
     const valueLines: string[] = []
-    while (lineIndex < lines.length && !lines[lineIndex].startsWith('```')) {
+    while (lineIndex < lines.length && lines[lineIndex].trim() !== fence) {
       valueLines.push(lines[lineIndex])
       lineIndex += 1
     }
 
-    if (lineIndex < lines.length && lines[lineIndex].startsWith('```')) {
+    if (lineIndex < lines.length && lines[lineIndex].trim() === fence) {
       lineIndex += 1
     }
 
@@ -153,6 +196,20 @@ export function parseBodyFragments(body: string): MarkdownBodyFragment[] {
   }
 
   return fragments
+}
+
+function getSnippetFence(value: string): string {
+  const matches = value.match(/`+/g) || []
+  let maxLength = 0
+
+  for (const match of matches) {
+    if (match.length > maxLength) {
+      maxLength = match.length
+    }
+  }
+
+  const fenceLength = Math.max(3, maxLength + 1)
+  return '`'.repeat(fenceLength)
 }
 
 export function serializeSnippet(snippet: MarkdownSnippet): string {
@@ -186,8 +243,9 @@ export function serializeSnippet(snippet: MarkdownSnippet): string {
       const label = content.label.replace(/\r?\n/g, ' ').trim() || 'Fragment'
       const language = content.language.trim() || 'plain_text'
       const value = content.value || ''
+      const fence = getSnippetFence(value)
 
-      return `## Fragment: ${label}\n\`\`\`${language}\n${value}\n\`\`\``
+      return `## Fragment: ${label}\n${fence}${language}\n${value}\n${fence}`
     })
     .join('\n\n')
 

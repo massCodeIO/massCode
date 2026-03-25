@@ -23,7 +23,7 @@ watch(
 </script>
 
 <template>
-  <div>
+  <div class="space-y-4">
     <UiMenuFormSection :label="i18n.t('preferences:editor.label')">
       <UiMenuFormItem :label="i18n.t('preferences:editor.fontSize')">
         <UiInput

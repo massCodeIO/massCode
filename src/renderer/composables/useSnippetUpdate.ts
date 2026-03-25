@@ -4,6 +4,7 @@ import type {
 } from '../services/api/generated'
 import { useDebounceFn } from '@vueuse/core'
 import { useSnippets } from './useSnippets'
+import { markUserEdit } from './useStorageMutation'
 
 interface UpdateQueueItem {
   snippetId: number
@@ -80,6 +81,7 @@ function scheduleContentUpdate(key: string) {
 }
 
 function addToUpdateQueue(snippetId: number, data: SnippetsUpdate) {
+  markUserEdit()
   const key = `${snippetId}`
   updateQueue.value.set(key, { snippetId, data })
   updateDebounced(snippetId)
@@ -90,6 +92,7 @@ function addToUpdateContentQueue(
   contentId: number,
   data: SnippetContentsAdd,
 ) {
+  markUserEdit()
   const key = getContentUpdateKey(snippetId, contentId)
   updateContentQueue.value.set(key, { snippetId, contentId, data })
 

@@ -1,8 +1,5 @@
 import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
-import { useCssVar } from '@vueuse/core'
-
-const HIDDEN_SIDEBAR_WIDTH = 0
 
 const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
 
@@ -31,23 +28,9 @@ const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
-const isShowMarkdown = ref(false)
-const isShowMarkdownPresentation = ref(false)
-const isShowMindmap = ref(false)
 const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
 const isShowJsonVisualizer = ref(false)
-
-const sidebarWidth = useCssVar('--sidebar-width')
-const snippetListWidth = useCssVar('--snippet-list-width')
-
-const storedSidebarWidth = store.app.get('sizes.sidebarWidth') as number
-
-sidebarWidth.value = `${storedSidebarWidth}px`
-snippetListWidth.value = `${store.app.get('sizes.snippetListWidth')}px`
-
-if (isSidebarHidden.value)
-  sidebarWidth.value = `${HIDDEN_SIDEBAR_WIDTH}px`
 
 function saveStateSnapshot(action: StateAction): void {
   stateSnapshots[action] = {
@@ -88,9 +71,6 @@ watch(
 
 watch(isSidebarHidden, (value) => {
   state.isSidebarHidden = value
-  sidebarWidth.value = value
-    ? `${HIDDEN_SIDEBAR_WIDTH}px`
-    : `${store.app.get('sizes.sidebarWidth')}px`
 })
 
 export function useApp() {
@@ -106,16 +86,11 @@ export function useApp() {
     isFocusedSearch,
     isShowCodeImage,
     isShowCodePreview,
-    isShowMarkdown,
-    isShowMarkdownPresentation,
-    isShowMindmap,
     isShowJsonVisualizer,
     isSidebarHidden,
     isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,
-    sidebarWidth,
-    snippetListWidth,
     state,
     stateSnapshots,
   }

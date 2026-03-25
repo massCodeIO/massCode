@@ -16,7 +16,6 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-snippet'
   | 'open-dialog'
-  | 'preview-markdown'
   | 'preview-mindmap'
   | 'preview-code'
   | 'preview-json'
@@ -43,6 +42,8 @@ type SystemAction =
   | 'currency-rates'
   | 'reload'
   | 'open-external'
+  | 'show-notes-folder-in-file-manager'
+  | 'show-note-in-file-manager'
   | 'deep-link'
   | 'update-available'
   | 'feature-notice'
@@ -50,8 +51,9 @@ type SystemAction =
   | 'storage-synced'
   | 'error'
 type PrettierAction = 'format'
-type FsAction = 'assets'
+type FsAction = 'assets' | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
+type SpacesAction = 'math:read' | 'math:write'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>
@@ -59,6 +61,7 @@ export type SystemChannel = CombineWith<SystemAction, 'system'>
 export type PrettierChannel = CombineWith<PrettierAction, 'prettier'>
 export type FsChannel = CombineWith<FsAction, 'fs'>
 export type ThemeChannel = CombineWith<ThemeAction, 'theme'>
+export type SpacesChannel = CombineWith<SpacesAction, 'spaces'>
 
 export type Channel =
   | MainMenuChannel
@@ -67,6 +70,7 @@ export type Channel =
   | PrettierChannel
   | FsChannel
   | ThemeChannel
+  | SpacesChannel
 
 export interface DialogOptions {
   properties?: OpenDialogOptions['properties']

@@ -5,6 +5,7 @@ import { icons, iconsSet } from './icons'
 
 interface Props {
   nodeId: number
+  onSetIcon?: (nodeId: number, iconName: string) => Promise<void>
 }
 
 const props = defineProps<Props>()
@@ -49,10 +50,13 @@ async function onSet(name: string) {
   if (!props.nodeId)
     return
 
-  await updateFolder(props.nodeId, {
-    icon: name,
-  })
-  await getFolders()
+  if (props.onSetIcon) {
+    await props.onSetIcon(props.nodeId, name)
+  }
+  else {
+    await updateFolder(props.nodeId, { icon: name })
+    await getFolders()
+  }
 
   containerRef.value?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
@@ -106,11 +110,7 @@ watch(selectedIndex, () => {
           :id="`icon-${index}`"
           :key="icon.name"
           class="user-select-none flex items-center justify-center rounded-md"
-          :class="
-            index === selectedIndex
-              ? 'bg-button-hover'
-              : 'hover:bg-button-hover'
-          "
+          :class="index === selectedIndex ? 'bg-muted' : 'hover:bg-muted'"
           @click="onSet(icon.name!)"
         >
           <span

@@ -1,9 +1,15 @@
+export { peekRuntimeCache } from './cache'
+
 // Constants
 export {
+  CODE_SPACE_ID,
   INBOX_DIR_NAME,
   INVALID_NAME_CHARS_RE,
+  LEGACY_FOLDER_META_FILE_NAME,
   META_DIR_NAME,
-  peekRuntimeCache,
+  META_FILE_NAME,
+  SPACE_STATE_FILE_NAME,
+  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   WINDOWS_RESERVED_NAME_RE,
 } from './constants'
@@ -29,6 +35,17 @@ export {
 
 // Search
 export { getSnippetIdsBySearchQuery } from './search'
+// Shared folder utilities
+export {
+  buildFolderTree,
+  collectDescendantIds,
+  normalizeFolderOrderIndices,
+  reorderFolderSiblings,
+  sortFoldersForTree,
+} from './shared/folderIndex'
+
+export type { WithChildren } from './shared/folderIndex'
+export { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 // Snippets
 export {
@@ -41,6 +58,20 @@ export {
   persistSnippet,
   writeSnippetToFile,
 } from './snippets'
+
+// Spaces
+export {
+  ensureSpaceDirectory,
+  getSpaceDirPath,
+  getSpaceStatePath,
+} from './spaces'
+
+// Space State
+export {
+  readSpaceState,
+  writeSpaceState,
+  writeSpaceStateImmediate,
+} from './spaceState'
 
 // State
 export {

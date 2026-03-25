@@ -27,17 +27,20 @@ const THEME_TEMPLATE: ThemeFile = {
   author: '',
   type: 'light',
   colors: {
-    'color-primary': 'hsl(277, 22%, 57%)',
-    'color-bg': 'hsl(35, 67%, 96%)',
-    'color-fg': 'hsl(245, 18%, 40%)',
-    'color-text': 'hsl(245, 18%, 40%)',
-    'color-text-muted': 'hsl(270, 10%, 53%)',
-    'color-border': 'hsl(30, 24%, 88%)',
-    'color-button': 'hsl(34, 52%, 91%)',
-    'color-button-hover': 'hsl(34, 42%, 88%)',
-    'color-list-selection': 'hsl(34, 38%, 89%)',
-    'color-list-selection-fg': 'hsl(245, 18%, 40%)',
-    'color-scrollbar': 'hsla(270, 14%, 73%, 0.5)',
+    'primary': 'hsl(277, 22%, 57%)',
+    'primary-foreground': 'hsl(0, 0%, 100%)',
+    'background': 'hsl(35, 67%, 96%)',
+    'foreground': 'hsl(245, 18%, 40%)',
+    'accent': 'hsl(34, 38%, 89%)',
+    'accent-hover': 'hsl(34, 42%, 92%)',
+    'accent-foreground': 'hsl(245, 18%, 40%)',
+    'muted': 'hsl(34, 52%, 91%)',
+    'muted-foreground': 'hsl(270, 10%, 53%)',
+    'card': 'hsl(35, 50%, 94%)',
+    'popover': 'hsl(35, 67%, 96%)',
+    'popover-foreground': 'hsl(245, 18%, 40%)',
+    'border': 'hsl(30, 24%, 88%)',
+    'scrollbar': 'hsla(270, 14%, 73%, 0.5)',
   },
   editorColors: {
     'editor-keyword': 'hsl(277, 22%, 57%)',
@@ -54,6 +57,21 @@ const THEME_TEMPLATE: ThemeFile = {
     'editor-bracket': 'hsl(245, 18%, 40%)',
   },
 }
+
+const TOKEN_MIGRATION_MAP: Record<string, string> = {
+  'color-primary': 'primary',
+  'color-bg': 'background',
+  'color-fg': 'foreground',
+  'color-text': 'foreground',
+  'color-text-muted': 'muted-foreground',
+  'color-border': 'border',
+  'color-button': 'muted',
+  'color-list-selection': 'accent',
+  'color-list-selection-fg': 'accent-foreground',
+  'color-scrollbar': 'scrollbar',
+}
+
+const DROPPED_TOKENS = new Set(['color-button-hover'])
 
 let themeWatcher: FSWatcher | null = null
 let themeWatcherTimer: NodeJS.Timeout | null = null
@@ -224,6 +242,33 @@ function resolveThemeFilePath(id: string): string | null {
   return filePath
 }
 
+function migrateThemeColors(colors: Record<string, string>): {
+  migrated: Record<string, string>
+  changed: boolean
+} {
+  const result: Record<string, string> = {}
+  let changed = false
+
+  for (const [key, value] of Object.entries(colors)) {
+    if (DROPPED_TOKENS.has(key)) {
+      changed = true
+      continue
+    }
+
+    const newKey = TOKEN_MIGRATION_MAP[key]
+
+    if (newKey) {
+      result[newKey] = value
+      changed = true
+    }
+    else {
+      result[key] = value
+    }
+  }
+
+  return { migrated: result, changed }
+}
+
 function readThemeFromFile(
   filePath: string,
   fileName: string,
@@ -231,8 +276,34 @@ function readThemeFromFile(
   try {
     const content = readFileSync(filePath, 'utf8')
     const parsed = JSON.parse(content) as unknown
+    const theme = parseThemeFile(parsed, fileName)
 
-    return parseThemeFile(parsed, fileName)
+    if (!theme) {
+      return null
+    }
+
+    if (theme.colors) {
+      const { migrated, changed } = migrateThemeColors(theme.colors)
+
+      if (changed) {
+        theme.colors = migrated
+
+        try {
+          const raw = parsed as Record<string, unknown>
+          raw.colors = migrated
+          writeFileSync(filePath, `${JSON.stringify(raw, null, 2)}\n`, 'utf8')
+          console.warn(`[theme] Migrated ${fileName} to new token format`)
+        }
+        catch (writeError) {
+          console.warn(
+            `[theme] Failed to write migrated theme ${fileName}`,
+            writeError,
+          )
+        }
+      }
+    }
+
+    return theme
   }
   catch (error) {
     reportThemeIssue(fileName, 'Failed to read or parse JSON', error)

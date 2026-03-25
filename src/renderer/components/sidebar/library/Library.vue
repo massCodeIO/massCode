@@ -3,13 +3,13 @@ import type { Node } from '@/components/sidebar/folders/types'
 import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
+import * as Resizable from '@/components/ui/shadcn/resizable'
 import { useApp, useFolders, useSnippets } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
-import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'radix-vue'
 import { APP_DEFAULTS } from '~/main/store/constants'
 
 const { state, isAppLoading, isCodeSpaceInitialized } = useApp()
@@ -220,17 +220,13 @@ function onResizeTagList(val: number[]) {
 </script>
 
 <template>
-  <SplitterGroup
-    id="1"
-    direction="vertical"
-    @layout="onResizeTagList"
-  >
+  <div class="flex h-full min-h-0 flex-col">
     <div
       class="shrink-0 overflow-hidden"
       data-sidebar-library
     >
-      <ContextMenu.Root>
-        <ContextMenu.Trigger>
+      <ContextMenu.ContextMenu>
+        <ContextMenu.ContextMenuTrigger>
           <div class="px-1">
             <LibraryItem
               v-for="i in libraryItems"
@@ -240,54 +236,83 @@ function onResizeTagList(val: number[]) {
               :icon="i.icon"
             />
           </div>
-        </ContextMenu.Trigger>
-        <ContextMenu.Content>
-          <ContextMenu.Item @click="emptyTrash">
+        </ContextMenu.ContextMenuTrigger>
+        <ContextMenu.ContextMenuContent>
+          <ContextMenu.ContextMenuItem @click="emptyTrash">
             {{ i18n.t("action.delete.trash") }}
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
+          </ContextMenu.ContextMenuItem>
+        </ContextMenu.ContextMenuContent>
+      </ContextMenu.ContextMenu>
     </div>
-    <div class="mt-1 flex items-center justify-between py-1 pl-1 select-none">
-      <div class="text-[10px] font-bold uppercase">
-        {{ i18n.t("sidebar.folders") }}
-      </div>
-      <UiActionButton
-        :tooltip="i18n.t('action.new.folder')"
-        @click="createFolderAndSelect()"
-      >
-        <Plus class="h-4 w-4" />
-      </UiActionButton>
-    </div>
-    <SplitterPanel as-child>
-      <Tree
-        v-if="folders?.length"
-        v-model="folders"
-        class="px-0.5 pb-1"
-        @click-node="onFolderClick"
-        @toggle-node="onFolderToggle"
-        @drag-node="onFolderDrag"
-      />
 
-      <UiEmptyPlaceholder
-        v-else
-        :text="i18n.t('placeholder.emptyFoldersList')"
-      />
-    </SplitterPanel>
-    <SplitterResizeHandle class="relative cursor-none">
-      <UiGutter orientation="horizontal" />
-    </SplitterResizeHandle>
-    <div class="flex items-center justify-between py-1 pl-1 select-none">
-      <div class="text-[10px] font-bold uppercase">
-        {{ i18n.t("sidebar.tags") }}
-      </div>
-    </div>
-    <SplitterPanel
-      as-child
-      :min-size="MIN_TAGS_PANEL_SIZE"
-      :default-size="tagsListHeight"
+    <Resizable.ResizablePanelGroup
+      id="1"
+      direction="vertical"
+      class="min-h-0 flex-1"
+      @layout="onResizeTagList"
     >
-      <SidebarTags class="px-1 pb-1" />
-    </SplitterPanel>
-  </SplitterGroup>
+      <Resizable.ResizablePanel>
+        <div class="flex h-full min-h-0 flex-col">
+          <div
+            class="mt-1 flex items-center justify-between py-1 pl-1 select-none"
+          >
+            <UiText
+              as="div"
+              variant="caption"
+              weight="bold"
+              uppercase
+            >
+              {{ i18n.t("sidebar.folders") }}
+            </UiText>
+            <UiActionButton
+              :tooltip="i18n.t('action.new.folder')"
+              @click="createFolderAndSelect()"
+            >
+              <Plus class="h-4 w-4" />
+            </UiActionButton>
+          </div>
+
+          <div class="min-h-0 flex-1">
+            <Tree
+              v-if="folders?.length"
+              v-model="folders"
+              class="h-full px-0.5 pb-1"
+              @click-node="onFolderClick"
+              @toggle-node="onFolderToggle"
+              @drag-node="onFolderDrag"
+            />
+
+            <UiEmptyPlaceholder
+              v-else
+              :text="i18n.t('placeholder.emptyFoldersList')"
+            />
+          </div>
+        </div>
+      </Resizable.ResizablePanel>
+
+      <Resizable.ResizableHandle />
+
+      <Resizable.ResizablePanel
+        :min-size="MIN_TAGS_PANEL_SIZE"
+        :default-size="tagsListHeight"
+      >
+        <div class="flex h-full min-h-0 flex-col">
+          <div class="flex items-center justify-between py-1 pl-1 select-none">
+            <UiText
+              as="div"
+              variant="caption"
+              weight="bold"
+              uppercase
+            >
+              {{ i18n.t("sidebar.tags") }}
+            </UiText>
+          </div>
+
+          <div class="min-h-0 flex-1">
+            <SidebarTags class="h-full px-1 pb-1" />
+          </div>
+        </div>
+      </Resizable.ResizablePanel>
+    </Resizable.ResizablePanelGroup>
+  </div>
 </template>

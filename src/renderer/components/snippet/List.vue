@@ -1,33 +1,16 @@
 <script setup lang="ts">
-import { useApp, useGutter, useSnippets } from '@/composables'
+import { useApp, useSnippets } from '@/composables'
 import { setSnippetScrollerRef } from '@/composables/useSnippetScroller'
-import { i18n, store } from '@/electron'
-import { APP_DEFAULTS } from '~/main/store/constants'
+import { i18n } from '@/electron'
 
-const listRef = ref<HTMLElement>()
-const gutterRef = ref<{ $el: HTMLElement }>()
 const snippetScrollerLocalRef = ref<{
   scrollToItem: (index: number) => void
 } | null>(null)
 const isInitialSnippetPositionRestored = ref(false)
 const SNIPPET_ITEM_SIZE = 61
 
-const { snippetListWidth, state } = useApp()
+const { state } = useApp()
 const { displayedSnippets } = useSnippets()
-
-const { width } = useGutter({
-  target: listRef,
-  gutter: gutterRef,
-  orientation: 'vertical',
-  options: {
-    minWidth: APP_DEFAULTS.sizes.snippetList,
-  },
-})
-
-watch(width, () => {
-  snippetListWidth.value = `${width.value}px`
-  store.app.set('sizes.snippetListWidth', width.value)
-})
 
 function setScrollerRef(
   value: { scrollToItem: (index: number) => void } | null,
@@ -67,9 +50,8 @@ watch(
 
 <template>
   <div
-    ref="listRef"
     data-snippets-list
-    class="relative flex h-screen flex-col"
+    class="flex h-full flex-col"
   >
     <div>
       <SnippetHeader />
@@ -89,6 +71,5 @@ watch(
       v-else
       :text="i18n.t('placeholder.emptySnippetsList')"
     />
-    <UiGutter ref="gutterRef" />
   </div>
 </template>

@@ -1,5 +1,6 @@
 import type { MathSheet } from '~/main/store/types'
-import { i18n, store } from '@/electron'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import { i18n, ipc } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
 import { nanoid } from 'nanoid'
 
@@ -31,41 +32,43 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
   return `${normalizedBase} ${maxIndex + 1}`
 }
 
-function loadSheets(): MathSheet[] {
-  try {
-    const raw = store.mathNotebook.get('sheets')
-    return Array.isArray(raw) ? JSON.parse(JSON.stringify(raw)) : []
-  }
-  catch {
-    return []
-  }
-}
-
-function loadActiveSheetId(): string | null {
-  try {
-    return store.mathNotebook.get('activeSheetId') as string | null
-  }
-  catch {
-    return null
-  }
-}
-
-const sheets = ref<MathSheet[]>(loadSheets())
-const activeSheetId = ref<string | null>(loadActiveSheetId())
+const sheets = ref<MathSheet[]>([])
+const activeSheetId = ref<string | null>(null)
+let initialized = false
 
 const activeSheet = computed(() => {
   return sheets.value.find(s => s.id === activeSheetId.value)
 })
 
 function persist() {
-  const raw = JSON.parse(JSON.stringify(sheets.value)) as MathSheet[]
-  store.mathNotebook.set('sheets', raw)
-  store.mathNotebook.set('activeSheetId', activeSheetId.value)
+  markPersistedStorageMutation()
+  ipc.invoke('spaces:math:write', {
+    sheets: JSON.parse(JSON.stringify(sheets.value)),
+    activeSheetId: activeSheetId.value,
+  })
 }
 
 const debouncedPersist = useDebounceFn(persist, 500)
 
+async function loadFromDisk() {
+  const data = await ipc.invoke('spaces:math:read', null)
+  sheets.value = Array.isArray(data?.sheets) ? data.sheets : []
+  activeSheetId.value = data?.activeSheetId ?? null
+}
+
 export function useMathNotebook() {
+  async function init() {
+    if (initialized) {
+      return
+    }
+    initialized = true
+    await loadFromDisk()
+  }
+
+  async function reloadFromDisk() {
+    await loadFromDisk()
+  }
+
   function createSheet() {
     const nextSheetName = getNextIndexedName(
       i18n.t('mathNotebook.untitled'),
@@ -128,6 +131,8 @@ export function useMathNotebook() {
     sheets,
     activeSheetId,
     activeSheet,
+    init,
+    reloadFromDisk,
     createSheet,
     deleteSheet,
     updateSheet,

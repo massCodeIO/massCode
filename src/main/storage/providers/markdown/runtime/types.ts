@@ -1,4 +1,5 @@
 import type { FolderRecord, TagRecord } from '../../../contracts'
+import type { SearchIndex } from './shared/searchEngine'
 
 export interface MarkdownTagState extends TagRecord {
   createdAt: number
@@ -14,6 +15,8 @@ export interface MarkdownFolderMetadataFile {
   createdAt?: number
   defaultLanguage?: string
   icon?: string | null
+  id?: number
+  /** @deprecated Use `id` instead. Kept for legacy `.masscode-folder.yml` migration. */
   masscode_id?: number
   name?: string
   orderIndex?: number
@@ -111,11 +114,7 @@ export interface MarkdownRuntimeCache {
   >
   folderById: Map<number, FolderRecord>
   paths: Paths
-  searchQueryCache: Map<string, number[]>
-  searchSnippetTextById: Map<number, string>
-  searchTokenToSnippetIds: Map<string, Set<number>>
-  searchTokensBySnippetId: Map<number, string[]>
-  searchIndexDirty: boolean
+  searchIndex: SearchIndex
   snippetById: Map<number, MarkdownSnippet>
   snippets: MarkdownSnippet[]
   state: MarkdownState

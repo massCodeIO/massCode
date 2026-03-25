@@ -1,3 +1,8 @@
+import type {
+  NotesFolderRecord,
+  NotesFolderTreeRecord,
+} from './providers/markdown/notes/runtime/types'
+
 export interface TagRecord {
   id: number
   name: string
@@ -177,4 +182,132 @@ export interface StorageProvider {
   folders: FoldersStorage
   snippets: SnippetsStorage
   tags: TagsStorage
+}
+
+// --- Notes Space Contracts ---
+
+export interface NoteRecord {
+  id: number
+  name: string
+  description: string | null
+  content: string
+  tags: NoteTagRecord[]
+  folder: NoteFolderInfo | null
+  isFavorites: number
+  isDeleted: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface NoteTagRecord {
+  id: number
+  name: string
+}
+
+export interface NoteFolderInfo {
+  id: number
+  name: string
+}
+
+export interface NotesQueryInput {
+  search?: string
+  order?: 'ASC' | 'DESC'
+  folderId?: number
+  tagId?: number
+  isFavorites?: number
+  isDeleted?: number
+  isInbox?: number
+}
+
+export interface NoteCreateInput {
+  name: string
+  folderId?: number | null
+}
+
+export interface NoteUpdateInput {
+  name?: string
+  folderId?: number | null
+  description?: string | null
+  isDeleted?: number
+  isFavorites?: number
+}
+
+export interface NoteUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface NoteTagRelationResult {
+  notFound: false
+  noteFound: boolean
+  tagFound: boolean
+}
+
+export interface NoteTagDeleteRelationResult {
+  notFound: false
+  noteFound: boolean
+  tagFound: boolean
+  relationFound: boolean
+}
+
+export interface NotesCount {
+  total: number
+  trash: number
+}
+
+export interface NoteFolderCreateInput {
+  name: string
+  parentId?: number | null
+}
+
+export interface NoteFolderUpdateInput {
+  name?: string
+  icon?: string | null
+  parentId?: number | null
+  isOpen?: number
+  orderIndex?: number
+}
+
+export interface NoteFolderUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface NotesStorageProvider {
+  folders: NotesFoldersStorage
+  notes: NotesStorage
+  tags: NoteTagsStorage
+}
+
+export interface NotesFoldersStorage {
+  createFolder: (input: NoteFolderCreateInput) => { id: number }
+  deleteFolder: (id: number) => { deleted: boolean }
+  getFolders: () => NotesFolderRecord[]
+  getFoldersTree: () => NotesFolderTreeRecord[]
+  updateFolder: (
+    id: number,
+    input: NoteFolderUpdateInput,
+  ) => NoteFolderUpdateResult
+}
+
+export interface NotesStorage {
+  addTagToNote: (noteId: number, tagId: number) => NoteTagRelationResult
+  createNote: (input: NoteCreateInput) => { id: number }
+  deleteNote: (id: number) => { deleted: boolean }
+  deleteTagFromNote: (
+    noteId: number,
+    tagId: number,
+  ) => NoteTagDeleteRelationResult
+  emptyTrash: () => { deletedCount: number }
+  getNotes: (query: NotesQueryInput) => NoteRecord[]
+  getNotesCounts: () => NotesCount
+  updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
+  updateNoteContent: (id: number, content: string) => NoteUpdateResult
+}
+
+export interface NoteTagsStorage {
+  createTag: (name: string) => { id: number }
+  deleteTag: (id: number) => { deleted: boolean }
+  getTags: () => NoteTagRecord[]
+  updateTag: (id: number, name: string) => { notFound: boolean }
 }

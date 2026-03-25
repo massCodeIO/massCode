@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Props } from './types'
+import { Button } from '@/components/ui/shadcn/button'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-vue-next'
 
 interface Emits {
@@ -32,7 +33,7 @@ const icon = computed(() => {
 
 <template>
   <div
-    class="bg-bg border-border relative w-[var(--width)] rounded-md border p-3 shadow-lg"
+    class="bg-background border-border relative w-[var(--width)] rounded-md border p-3 shadow-lg"
     :class="{
       'border-red-700': type === 'error',
       'border-yellow-600': type === 'warning',
@@ -40,7 +41,7 @@ const icon = computed(() => {
   >
     <div
       v-if="closeButton"
-      class="border-border bg-bg hover:bg-button-hover absolute -top-2.5 -left-2.5 rounded-full border p-0.5"
+      class="border-border bg-background hover:bg-muted absolute -top-2.5 -left-2.5 rounded-full border p-0.5"
     >
       <X
         class="text-text h-4 w-4"
@@ -69,14 +70,14 @@ const icon = computed(() => {
           @close-toast="emit('closeToast')"
         />
       </div>
-      <UiButton
+      <Button
         v-if="action"
         class="shrink-0"
-        size="md"
+        variant="outline"
         @click="onActionClick"
       >
         {{ action.label }}
-      </UiButton>
+      </Button>
     </div>
   </div>
 </template>

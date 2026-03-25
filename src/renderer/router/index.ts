@@ -7,8 +7,8 @@ export const RouterName = {
   preferencesLanguage: 'preferences/language',
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
+  preferencesNotesEditor: 'preferences/notes-editor',
   preferencesAPI: 'preferences/api',
-  markdownPresentation: 'markdown-presentation',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
   devtoolsTextToUnicode: 'devtools/text-to-unicode',
@@ -27,7 +27,10 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
+  notesSpace: 'notes-space',
+  notesPresentation: 'notes-space/presentation',
 } as const
 
 const routes = [
@@ -62,16 +65,16 @@ const routes = [
         component: () => import('@/components/preferences/Editor.vue'),
       },
       {
+        path: 'notes-editor',
+        name: RouterName.preferencesNotesEditor,
+        component: () => import('@/components/preferences/NotesEditor.vue'),
+      },
+      {
         path: 'api',
         name: RouterName.preferencesAPI,
         component: () => import('@/components/preferences/API.vue'),
       },
     ],
-  },
-  {
-    path: '/markdown-presentation',
-    name: RouterName.markdownPresentation,
-    component: () => import('@/views/MarkdownPresentation.vue'),
   },
   {
     path: '/devtools',
@@ -173,12 +176,27 @@ const routes = [
         component: () =>
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
       },
+      {
+        path: 'shadcn-comparison',
+        name: RouterName.devtoolsShadcnComparison,
+        component: () => import('@/components/devtools/ShadcnComparison.vue'),
+      },
     ],
   },
   {
     path: '/math-notebook',
     name: RouterName.mathNotebook,
     component: () => import('@/views/MathNotebook.vue'),
+  },
+  {
+    path: '/notes',
+    name: RouterName.notesSpace,
+    component: () => import('@/components/notes/NotesSpace.vue'),
+  },
+  {
+    path: '/notes/presentation',
+    name: RouterName.notesPresentation,
+    component: () => import('@/views/NotesPresentation.vue'),
   },
 ]
 

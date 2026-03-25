@@ -42,11 +42,14 @@
     "hide": "Hide",
     "showSidebar": "Show Sidebar",
     "hideSidebar": "Hide Sidebar",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "New Storage",
       "folder": "New Folder",
       "snippet": "New Snippet",
-      "fragment": "New Fragment"
+      "fragment": "New Fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Add Description",
@@ -62,6 +65,10 @@
     },
     "remove": {
       "fromFavorites": "Remove from Favorites"
+    },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
     },
     "reload": {
       "storage": "Reload Storage",
@@ -93,9 +100,11 @@
     }
   },
   "sidebar": {
+    "title": "Code Snippets",
     "inbox": "Inbox",
     "favorites": "Favorites",
     "allSnippets": "All Snippets",
+    "allNotes": "All Notes",
     "trash": "Trash",
     "folders": "Folders",
     "library": "Library",
@@ -114,6 +123,15 @@
     "selectedMultiple": "{{count}} Snippets Selected",
     "noSelected": "No Snippet Selected"
   },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
+    "emptyName": "Type note name",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
   "mathNotebook": {
     "label": "Math Notebook",
     "sheetList": "Sheet List",
@@ -127,15 +145,20 @@
     "code": "Code",
     "tools": "Tools",
     "math": "Math",
+    "notes": "Notes",
     "codeTooltip": "Code snippets",
     "toolsTooltip": "Developer tools",
-    "mathTooltip": "Math notebook"
+    "mathTooltip": "Math notebook",
+    "notesTooltip": "Notes"
   },
   "loading": "App loading...",
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "No Folders",
     "emptySnippetsList": "No Snippets",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
     "search": "Search",
     "addTag": "Add Tag"

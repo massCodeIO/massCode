@@ -107,11 +107,10 @@ watch(isDarkPreview, () => {
 
 <template>
   <div
-    class="border-border flex h-[var(--editor-tool-header-height)] items-center justify-between border-b px-2 py-1"
+    class="border-border flex h-[var(--editor-tool-header-height)] items-center justify-between border-b px-2"
   >
     <div>
       <UiActionButton
-        type="icon"
         :tooltip="i18n.t('button.toggleDarkMode')"
         @click="isDarkPreview = !isDarkPreview"
       >
@@ -127,7 +126,7 @@ watch(isDarkPreview, () => {
     </div>
     <div class="flex items-center">
       <UiActionButton
-        type="iconText"
+        size="iconText"
         :tooltip="`${i18n.t('button.saveAs')} HTML`"
         @click="onSaveHtml"
       >
@@ -136,7 +135,6 @@ watch(isDarkPreview, () => {
         </div>
       </UiActionButton>
       <UiActionButton
-        type="icon"
         :tooltip="i18n.t('button.refreshPreview')"
         @click="previewKey++"
       >

@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { preferencesKeys } from '@/components/preferences/keys'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
+import { isMac } from '@/utils'
+import {
+  Code2,
+  Globe,
+  HardDrive,
+  Notebook,
+  Palette,
+  Plug,
+} from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 
-const isMac = navigator.userAgent.toLowerCase().includes('mac')
 const route = useRoute()
 
 const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
@@ -13,26 +22,36 @@ const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
 })
 
-const nav = [
+const nav: { label: string, name: string, icon: Component }[] = [
   {
     label: i18n.t('preferences:storage.label'),
     name: RouterName.preferencesStorage,
+    icon: HardDrive,
   },
   {
     label: i18n.t('preferences:editor.label'),
     name: RouterName.preferencesEditor,
+    icon: Code2,
+  },
+  {
+    label: i18n.t('preferences:notesEditor.label'),
+    name: RouterName.preferencesNotesEditor,
+    icon: Notebook,
   },
   {
     label: i18n.t('preferences:language.label'),
     name: RouterName.preferencesLanguage,
+    icon: Globe,
   },
   {
     label: i18n.t('preferences:appearance.label'),
     name: RouterName.preferencesAppearance,
+    icon: Palette,
   },
   {
     label: i18n.t('preferences:api.label'),
     name: RouterName.preferencesAPI,
+    icon: Plug,
   },
 ]
 
@@ -44,7 +63,7 @@ provide(preferencesKeys, {
 <template>
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
-    :top-space="isMac ? 16 : 0"
+    :top-space="isMac ? 16 : 6"
     @back="() => router.push({ name: RouterName.main })"
   >
     <template #left>
@@ -58,14 +77,21 @@ provide(preferencesKeys, {
           <UiMenuItem
             :label="item.label"
             :is-active="isActiveRoute(item.name)"
-          />
+          >
+            <template #icon>
+              <component
+                :is="item.icon"
+                class="h-4 w-4"
+              />
+            </template>
+          </UiMenuItem>
         </RouterLink>
       </div>
     </template>
     <template #right>
       <div
         ref="scrollRef"
-        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pb-5"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-5 pt-3 pb-5"
       >
         <RouterView />
       </div>

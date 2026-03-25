@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useApp, useSnippets } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
@@ -50,9 +51,9 @@ function onKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="border-border mt-[var(--title-bar-height)] mb-2 border-b">
-    <div class="flex items-center">
-      <Search class="text-text-muted ml-1 h-4 w-4" />
+  <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
+    <div class="flex items-center px-1">
+      <Search class="text-muted-foreground ml-1 h-4 w-4" />
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"
@@ -63,14 +64,13 @@ function onKeydown(event: KeyboardEvent) {
           @keydown="onKeydown"
         />
       </div>
-      <UiButton
+      <Button
         v-if="searchQuery"
-        variant="icon"
-        size="icon"
+        variant="ghost"
         @click="clearSearch(true)"
       >
         <X class="h-4 w-4" />
-      </UiButton>
+      </Button>
       <UiActionButton
         v-if="!isSearch"
         :tooltip="i18n.t('action.new.snippet')"

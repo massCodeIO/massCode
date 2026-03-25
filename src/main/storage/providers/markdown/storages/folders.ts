@@ -1,9 +1,4 @@
-import type {
-  FolderRecord,
-  FoldersStorage,
-  FolderTreeRecord,
-  FolderUpdateResult,
-} from '../../../contracts'
+import type { FoldersStorage, FolderUpdateResult } from '../../../contracts'
 import path from 'node:path'
 import fs from 'fs-extra'
 import {
@@ -12,7 +7,7 @@ import {
   assertUniqueSiblingFolderName,
   buildFolderPathMap,
   buildSnippetTargetPath,
-  depthOfRelativePath,
+  collectDescendantIds,
   findFolderById,
   getFolderPathById,
   getNextFolderOrder,
@@ -28,105 +23,18 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../runtime'
-
-function createFolderTree(folders: FolderRecord[]): FolderTreeRecord[] {
-  const folderMap = new Map<number, FolderTreeRecord>()
-  const rootFolders: FolderTreeRecord[] = []
-
-  folders.forEach((folder) => {
-    folderMap.set(folder.id, {
-      ...folder,
-      children: [],
-    })
-  })
-
-  folderMap.forEach((folder) => {
-    if (folder.parentId === null) {
-      rootFolders.push(folder)
-      return
-    }
-
-    const parent = folderMap.get(folder.parentId)
-    if (parent) {
-      parent.children.push(folder)
-    }
-  })
-
-  return rootFolders
-}
-
-function sortFoldersForTree(folders: FolderRecord[]): FolderRecord[] {
-  const folderByParent = new Map<number | null, FolderRecord[]>()
-  const knownFolderIds = new Set<number>(folders.map(folder => folder.id))
-
-  folders.forEach((folder) => {
-    const parentId
-      = folder.parentId !== null && knownFolderIds.has(folder.parentId)
-        ? folder.parentId
-        : null
-    const siblings = folderByParent.get(parentId) || []
-
-    siblings.push(folder)
-    folderByParent.set(parentId, siblings)
-  })
-
-  folderByParent.forEach((siblings, parentId) => {
-    siblings.sort((firstFolder, secondFolder) => {
-      if (firstFolder.orderIndex !== secondFolder.orderIndex) {
-        return firstFolder.orderIndex - secondFolder.orderIndex
-      }
-
-      return firstFolder.id - secondFolder.id
-    })
-    folderByParent.set(parentId, siblings)
-  })
-
-  const orderedFolders: FolderRecord[] = []
-  const visitedFolderIds = new Set<number>()
-
-  const visitChildren = (parentId: number | null): void => {
-    const children = folderByParent.get(parentId) || []
-    children.forEach((child) => {
-      if (visitedFolderIds.has(child.id)) {
-        return
-      }
-
-      visitedFolderIds.add(child.id)
-      orderedFolders.push(child)
-      visitChildren(child.id)
-    })
-  }
-
-  visitChildren(null)
-
-  folders.forEach((folder) => {
-    if (visitedFolderIds.has(folder.id)) {
-      return
-    }
-
-    orderedFolders.push(folder)
-    visitChildren(folder.id)
-  })
-
-  return orderedFolders
-}
-
-function findFolderDescendants(
-  folders: FolderRecord[],
-  folderId: number,
-): number[] {
-  const directChildren = folders
-    .filter(folder => folder.parentId === folderId)
-    .map(folder => folder.id)
-
-  let descendants = [...directChildren]
-
-  for (const childId of directChildren) {
-    descendants = descendants.concat(findFolderDescendants(folders, childId))
-  }
-
-  return descendants
-}
+import {
+  applyFolderParentAndOrder,
+  assertFolderMoveTargetValid,
+  createFolderInStateAndDisk,
+  getFolderPathsByDepth,
+  getFoldersSortedByCreatedAt,
+  getFoldersTreeSorted,
+  moveFolderDirectoryOnDisk,
+  removeFolderPathsFromDisk,
+  resolveFolderUpdateTargets,
+  updateChildEntityPaths,
+} from '../runtime/shared/foldersStorage'
 
 export function createFoldersStorage(): FoldersStorage {
   return {
@@ -134,13 +42,13 @@ export function createFoldersStorage(): FoldersStorage {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return [...state.folders].sort((a, b) => b.createdAt - a.createdAt)
+      return getFoldersSortedByCreatedAt(state.folders)
     },
     getFoldersTree: () => {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return createFolderTree(sortFoldersForTree([...state.folders]))
+      return getFoldersTreeSorted(state.folders)
     },
     createFolder: (input) => {
       const paths = getPaths(getVaultPath())
@@ -161,25 +69,24 @@ export function createFoldersStorage(): FoldersStorage {
       const normalizedParentPath = normalizeDirectoryPath(parentPath || '')
       assertDirectoryNameAvailable(paths, normalizedParentPath, name)
 
-      const targetDirectory = normalizedParentPath
-        ? path.join(paths.vaultPath, normalizedParentPath, name)
-        : path.join(paths.vaultPath, name)
-      fs.ensureDirSync(targetDirectory)
-
-      const now = Date.now()
-      const id = state.counters.folderId + 1
-      state.counters.folderId = id
-
-      state.folders.push({
-        createdAt: now,
-        defaultLanguage: 'plain_text',
-        icon: null,
-        id,
-        isOpen: 0,
+      const { id } = createFolderInStateAndDisk({
+        buildFolderPathMap,
+        createFolder: ({ id, name, now, orderIndex, parentId }) => ({
+          createdAt: now,
+          defaultLanguage: 'plain_text',
+          icon: null,
+          id,
+          isOpen: 0,
+          name,
+          orderIndex,
+          parentId,
+          updatedAt: now,
+        }),
+        getNextFolderOrder,
         name,
-        orderIndex: getNextFolderOrder(state, parentId),
         parentId,
-        updatedAt: now,
+        rootPath: paths.vaultPath,
+        state,
       })
 
       syncFolderMetadataFiles(paths, state)
@@ -221,20 +128,15 @@ export function createFoldersStorage(): FoldersStorage {
         = 'name' in input
           ? validateEntryName(input.name || folder.name, 'folder')
           : folder.name
-      const targetParentId
-        = 'parentId' in input ? (input.parentId ?? null) : folder.parentId
+      const { targetOrderIndex, targetParentId } = resolveFolderUpdateTargets(
+        folder,
+        {
+          orderIndex: input.orderIndex,
+          parentId: input.parentId,
+        },
+      )
 
-      if (targetParentId !== null && !findFolderById(state, targetParentId)) {
-        throwStorageError('FOLDER_NOT_FOUND', 'Parent folder not found')
-      }
-
-      const descendants = findFolderDescendants(state.folders, id)
-      if (targetParentId !== null && descendants.includes(targetParentId)) {
-        throwStorageError(
-          'INVALID_NAME',
-          'Folder cannot be moved into its own subtree',
-        )
-      }
+      assertFolderMoveTargetValid(state.folders, id, targetParentId)
 
       assertNotReservedRootFolderName(targetParentId, targetName)
 
@@ -251,68 +153,12 @@ export function createFoldersStorage(): FoldersStorage {
         assertUniqueSiblingFolderName(state, targetParentId, targetName, id)
       }
 
-      const currentParentId = folder.parentId
-      const currentOrderIndex = folder.orderIndex
-      const targetOrderIndex
-        = 'orderIndex' in input
-          ? (input.orderIndex ?? currentOrderIndex)
-          : currentOrderIndex
-
-      if (
-        targetParentId !== currentParentId
-        || targetOrderIndex !== currentOrderIndex
-      ) {
-        if (targetParentId === currentParentId) {
-          if (targetOrderIndex > currentOrderIndex) {
-            state.folders.forEach((item) => {
-              if (
-                item.id !== folder.id
-                && item.parentId === currentParentId
-                && item.orderIndex > currentOrderIndex
-                && item.orderIndex <= targetOrderIndex
-              ) {
-                item.orderIndex -= 1
-              }
-            })
-          }
-          else {
-            state.folders.forEach((item) => {
-              if (
-                item.id !== folder.id
-                && item.parentId === currentParentId
-                && item.orderIndex >= targetOrderIndex
-                && item.orderIndex < currentOrderIndex
-              ) {
-                item.orderIndex += 1
-              }
-            })
-          }
-        }
-        else {
-          state.folders.forEach((item) => {
-            if (
-              item.id !== folder.id
-              && item.parentId === currentParentId
-              && item.orderIndex > currentOrderIndex
-            ) {
-              item.orderIndex -= 1
-            }
-          })
-
-          state.folders.forEach((item) => {
-            if (
-              item.id !== folder.id
-              && item.parentId === targetParentId
-              && item.orderIndex >= targetOrderIndex
-            ) {
-              item.orderIndex += 1
-            }
-          })
-        }
-
-        folder.parentId = targetParentId
-        folder.orderIndex = targetOrderIndex
-      }
+      applyFolderParentAndOrder(
+        state.folders,
+        folder,
+        targetParentId,
+        targetOrderIndex,
+      )
 
       if ('name' in input || folder.name !== targetName) {
         folder.name = targetName
@@ -347,53 +193,42 @@ export function createFoldersStorage(): FoldersStorage {
           oldFolderPath,
         )
 
-        const oldAbsolutePath = path.join(paths.vaultPath, oldFolderPath)
-        const newAbsolutePath = path.join(paths.vaultPath, newFolderPath)
+        moveFolderDirectoryOnDisk(
+          paths.vaultPath,
+          oldFolderPath,
+          newFolderPath,
+        )
 
-        if (fs.pathExistsSync(oldAbsolutePath)) {
-          fs.ensureDirSync(path.dirname(newAbsolutePath))
-          fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
-        }
+        const affectedFolderIds = collectDescendantIds(state.folders, id)
+        affectedFolderIds.add(id)
 
-        const affectedFolderIds = new Set<number>([
-          id,
-          ...findFolderDescendants(state.folders, id),
-        ])
+        updateChildEntityPaths({
+          entries: snippets,
+          getNextPath: snippet => buildSnippetTargetPath(state, snippet),
+          onPathUpdated: (_, previousPath, nextPath) => {
+            const oldSnippetAbsolutePath = path.join(
+              paths.vaultPath,
+              previousPath,
+            )
+            const newSnippetAbsolutePath = path.join(paths.vaultPath, nextPath)
 
-        snippets.forEach((snippet) => {
-          if (snippet.isDeleted === 1) {
-            return
-          }
+            if (
+              fs.pathExistsSync(oldSnippetAbsolutePath)
+              && !fs.pathExistsSync(newSnippetAbsolutePath)
+            ) {
+              fs.ensureDirSync(path.dirname(newSnippetAbsolutePath))
+              fs.moveSync(oldSnippetAbsolutePath, newSnippetAbsolutePath, {
+                overwrite: false,
+              })
+            }
+          },
+          shouldUpdate: (snippet) => {
+            if (snippet.isDeleted === 1 || snippet.folderId === null) {
+              return false
+            }
 
-          if (
-            snippet.folderId === null
-            || !affectedFolderIds.has(snippet.folderId)
-          ) {
-            return
-          }
-
-          const previousPath = snippet.filePath
-          snippet.filePath = buildSnippetTargetPath(state, snippet)
-
-          const oldSnippetAbsolutePath = path.join(
-            paths.vaultPath,
-            previousPath,
-          )
-          const newSnippetAbsolutePath = path.join(
-            paths.vaultPath,
-            snippet.filePath,
-          )
-
-          if (
-            previousPath !== snippet.filePath
-            && fs.pathExistsSync(oldSnippetAbsolutePath)
-            && !fs.pathExistsSync(newSnippetAbsolutePath)
-          ) {
-            fs.ensureDirSync(path.dirname(newSnippetAbsolutePath))
-            fs.moveSync(oldSnippetAbsolutePath, newSnippetAbsolutePath, {
-              overwrite: false,
-            })
-          }
+            return affectedFolderIds.has(snippet.folderId)
+          },
         })
       }
 
@@ -415,8 +250,8 @@ export function createFoldersStorage(): FoldersStorage {
       }
 
       const oldFolderPathMap = buildFolderPathMap(state)
-      const descendantIds = findFolderDescendants(state.folders, id)
-      const removedFolderIds = new Set<number>([id, ...descendantIds])
+      const removedFolderIds = collectDescendantIds(state.folders, id)
+      removedFolderIds.add(id)
       const directoryEntriesCache = new Map<string, string[]>()
 
       snippets.forEach((snippet) => {
@@ -435,21 +270,16 @@ export function createFoldersStorage(): FoldersStorage {
         }
       })
 
-      const removedFolderPaths = [...removedFolderIds]
-        .map(folderId => oldFolderPathMap.get(folderId))
-        .filter((folderPath): folderPath is string => !!folderPath)
-        .sort((a, b) => depthOfRelativePath(b) - depthOfRelativePath(a))
+      const removedFolderPaths = getFolderPathsByDepth(
+        oldFolderPathMap,
+        removedFolderIds,
+      )
 
       state.folders = state.folders.filter(
         folder => !removedFolderIds.has(folder.id),
       )
 
-      removedFolderPaths.forEach((folderPath) => {
-        const absolutePath = path.join(paths.vaultPath, folderPath)
-        if (fs.pathExistsSync(absolutePath)) {
-          fs.removeSync(absolutePath)
-        }
-      })
+      removeFolderPathsFromDisk(paths.vaultPath, removedFolderPaths)
 
       saveState(paths, state)
 

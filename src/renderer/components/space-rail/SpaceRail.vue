@@ -4,6 +4,7 @@ import { useApp, useTheme } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
+import { isMac } from '@/utils'
 import { Settings } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
@@ -26,44 +27,49 @@ const spaces = computed(() => {
 
 <template>
   <nav
-    class="flex h-full flex-col items-center px-2 pt-[calc(var(--title-bar-height)+8px)] pb-3"
+    class="flex h-full flex-col items-center px-2 pb-3"
+    :class="isMac ? 'pt-[calc(var(--content-top-offset)+8px)]' : 'pt-3'"
     :aria-label="i18n.t('spaces.label')"
   >
-    <Tooltip.TooltipProvider>
-      <div class="flex w-full flex-col gap-1">
-        <RouterLink
-          v-for="space in spaces"
-          :key="space.id"
-          v-slot="{ navigate }"
-          custom
-          :to="space.to"
-        >
-          <Tooltip.Tooltip>
-            <Tooltip.TooltipTrigger as-child>
-              <button
-                type="button"
-                class="text-text-muted hover:bg-list-selection flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
-                :class="{
-                  'bg-list-selection text-list-selection-fg': space.active,
-                }"
-                @click="navigate"
+    <div class="flex w-full flex-col gap-1">
+      <RouterLink
+        v-for="space in spaces"
+        :key="space.id"
+        v-slot="{ navigate }"
+        custom
+        :to="space.to"
+      >
+        <Tooltip.Tooltip>
+          <Tooltip.TooltipTrigger as-child>
+            <button
+              type="button"
+              class="text-muted-foreground flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
+              :class="
+                space.active
+                  ? 'bg-accent text-accent-foreground'
+                  : 'hover:bg-accent-hover'
+              "
+              @click="navigate"
+            >
+              <component
+                :is="space.icon"
+                class="h-4 w-4 shrink-0"
+              />
+              <UiText
+                variant="caption"
+                weight="medium"
+                class="leading-none select-none"
               >
-                <component
-                  :is="space.icon"
-                  class="h-4 w-4 shrink-0"
-                />
-                <span class="text-[10px] leading-none font-medium select-none">
-                  {{ space.label }}
-                </span>
-              </button>
-            </Tooltip.TooltipTrigger>
-            <Tooltip.TooltipContent side="right">
-              {{ space.tooltip }}
-            </Tooltip.TooltipContent>
-          </Tooltip.Tooltip>
-        </RouterLink>
-      </div>
-    </Tooltip.TooltipProvider>
+                {{ space.label }}
+              </UiText>
+            </button>
+          </Tooltip.TooltipTrigger>
+          <Tooltip.TooltipContent side="right">
+            {{ space.tooltip }}
+          </Tooltip.TooltipContent>
+        </Tooltip.Tooltip>
+      </RouterLink>
+    </div>
     <div
       v-if="!isSponsored"
       class="mt-auto flex flex-1 flex-col items-center justify-end gap-2 pb-2"
@@ -84,20 +90,21 @@ const spaces = computed(() => {
         custom
         :to="{ name: RouterName.preferencesStorage }"
       >
-        <button
-          type="button"
-          class="text-text-muted hover:bg-list-selection hover:text-list-selection-fg flex h-8 w-8 cursor-default items-center justify-center rounded-lg transition-colors"
-          :title="i18n.t('preferences:label')"
+        <UiActionButton
+          :tooltip="i18n.t('preferences:label')"
           @click="navigate"
         >
           <Settings class="h-4 w-4" />
-        </button>
+        </UiActionButton>
       </RouterLink>
-      <div
-        class="text-text-muted/55 text-[10px] leading-none font-medium select-none"
+      <UiText
+        as="div"
+        variant="caption"
+        weight="medium"
+        class="text-muted-foreground/55 leading-none select-none"
       >
         v{{ packageJson.version }}
-      </div>
+      </UiText>
     </div>
   </nav>
 </template>

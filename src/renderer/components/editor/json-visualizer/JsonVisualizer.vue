@@ -148,7 +148,7 @@ setInteractive(false)
   <div>
     <EditorHeaderTool>
       <div class="flex w-full items-center justify-between px-2">
-        <div>
+        <div class="flex items-center">
           <UiActionButton
             :tooltip="i18n.t('button.zoomIn')"
             @click="onZoom('zoomIn')"
@@ -181,9 +181,9 @@ setInteractive(false)
             />
           </UiActionButton>
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSave('png')"
           >
@@ -192,7 +192,7 @@ setInteractive(false)
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSave('svg')"
           >
@@ -208,7 +208,7 @@ setInteractive(false)
     >
       <div
         ref="vueFlowRef"
-        class="bg-bg relative h-full"
+        class="bg-background relative h-full"
       >
         <VueFlow
           v-if="nodes.length > 0"
@@ -231,7 +231,7 @@ setInteractive(false)
       <div class="absolute bottom-3 left-3 z-10">
         <div
           v-if="nodes.length > 0"
-          class="rounded bg-[var(--color-button)] px-2 py-0.5 text-sm select-none"
+          class="bg-muted rounded px-2 py-0.5 text-sm select-none"
         >
           {{ nodes.length }} nodes | {{ edges.length }} edges
         </div>

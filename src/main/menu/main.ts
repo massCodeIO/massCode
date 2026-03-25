@@ -356,11 +356,6 @@ const viewMenuItems: MenuConfig[] = [
 
 const markdownMenuItems: MenuConfig[] = [
   {
-    label: i18n.t('menu:markdown.preview'),
-    click: () => send('main-menu:preview-markdown'),
-    accelerator: 'CommandOrControl+Shift+M',
-  },
-  {
     label: i18n.t('menu:markdown.previewMindmap'),
     click: () => send('main-menu:preview-mindmap'),
     accelerator: 'CommandOrControl+Shift+I',

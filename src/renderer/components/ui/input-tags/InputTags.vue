@@ -303,13 +303,13 @@ watch(isFocused, (newValue) => {
     <div
       v-for="(tag, index) in tags"
       :key="tag.id"
-      class="bg-list-selection text-text flex items-center rounded-sm px-1.5 py-0.5 text-xs select-none"
+      class="bg-accent text-text flex items-center rounded-sm px-1.5 py-0.5 text-xs select-none"
       :class="{ 'ring-primary ring-1': warningTagIndex === index }"
       @click="resetWarning"
     >
       <div>{{ tag.name }}</div>
       <X
-        class="hover:text-text-muted relative top-[1px] -mr-0.5 ml-1 h-3 w-3"
+        class="hover:text-muted-foreground relative top-[1px] -mr-0.5 ml-1 h-3 w-3"
         @click.stop="removeTag(index)"
       />
     </div>
@@ -328,7 +328,7 @@ watch(isFocused, (newValue) => {
   <div
     v-if="isFocused && filteredSuggestions.length > 0"
     ref="suggestionsRef"
-    class="bg-bg border-border fixed z-50 rounded-md border shadow-lg"
+    class="bg-background border-border fixed z-50 rounded-md border shadow-lg"
     :style="dropdownStyle"
   >
     <div
@@ -343,8 +343,8 @@ watch(isFocused, (newValue) => {
           :class="[
             `suggestion-item-${index}`,
             index === selectedSuggestionIndex
-              ? 'bg-list-selection text-text'
-              : 'hover:bg-list-selection',
+              ? 'bg-accent text-text'
+              : 'hover:bg-accent-hover',
           ]"
           @mousedown.prevent="selectSuggestion(suggestion)"
           @mouseover="selectedSuggestionIndex = index"

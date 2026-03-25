@@ -105,18 +105,18 @@ onMounted(() => {
 
 <style>
 html.light [data-dialog-info] {
-  --color-bg: oklch(98% 0 0);
+  --dialog-info-bg: oklch(98% 0 0);
 }
 
 html.dark [data-dialog-info] {
-  --color-bg: oklch(22% 0 0);
+  --dialog-info-bg: oklch(22% 0 0);
 }
 
 [data-dialog-info] .CodeMirror {
-  background: var(--color-bg) !important;
+  background: var(--dialog-info-bg) !important;
 }
 
 [data-dialog-info] .CodeMirror-gutters {
-  background: var(--color-bg) !important;
+  background: var(--dialog-info-bg) !important;
 }
 </style>

@@ -1,7 +1,8 @@
 /* eslint-disable node/prefer-global/process */
 import { readFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
 import { version } from '../../package.json'
 import { initApi } from './api'
 import { startAutoBackup } from './db'
@@ -111,6 +112,51 @@ if (!gotTheLock) {
 }
 else {
   app.whenReady().then(async () => {
+    protocol.handle('masscode', async (request) => {
+      const url = new URL(request.url)
+
+      if (url.hostname === 'notes-asset') {
+        const fileName = url.pathname.replace(/^\//, '')
+        const vaultPath
+          = (store.preferences.get('storage.vaultPath') as string | null)
+            || path.join(
+              store.preferences.get('storagePath') as string,
+              'markdown-vault',
+            )
+        const filePath = path.join(
+          vaultPath,
+          '__spaces__',
+          'notes',
+          'assets',
+          fileName,
+        )
+
+        try {
+          const data = await readFile(filePath)
+          const ext = path.extname(fileName).toLowerCase()
+          const mimeTypes: Record<string, string> = {
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+            '.svg': 'image/svg+xml',
+            '.bmp': 'image/bmp',
+          }
+          return new Response(data, {
+            headers: {
+              'Content-Type': mimeTypes[ext] || 'application/octet-stream',
+            },
+          })
+        }
+        catch {
+          return new Response('Not found', { status: 404 })
+        }
+      }
+
+      return new Response('Not found', { status: 404 })
+    })
+
     try {
       createWindow()
     }

@@ -219,9 +219,9 @@ onMounted(() => {
           </div>
           <EditorCodeImageBackgroundSwitch v-model:active="activeBackground" />
         </div>
-        <div>
+        <div class="flex items-center">
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} PNG`"
             @click="onSave('png')"
           >
@@ -230,7 +230,7 @@ onMounted(() => {
             </div>
           </UiActionButton>
           <UiActionButton
-            type="iconText"
+            size="iconText"
             :tooltip="`${i18n.t('button.saveAs')} SVG`"
             @click="onSave('svg')"
           >
@@ -384,10 +384,10 @@ onMounted(() => {
   background-color: transparent;
 
   background-image:
-    linear-gradient(var(--color-border) 2px, transparent 2px),
-    linear-gradient(90deg, var(--color-border) 2px, transparent 2px),
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+    linear-gradient(var(--border) 2px, transparent 2px),
+    linear-gradient(90deg, var(--border) 2px, transparent 2px),
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
   background-size:
     50px 50px,
     50px 50px,

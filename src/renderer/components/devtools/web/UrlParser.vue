@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
 import { Copy } from 'lucide-vue-next'
@@ -117,20 +118,23 @@ const queryStringKeyValue = computed(() => {
           v-for="[key, value] in Object.entries(output)"
           :key="key"
         >
-          <div class="font-medium">
+          <UiText
+            as="div"
+            weight="medium"
+          >
             {{ value.label }}
-          </div>
+          </UiText>
           <UiInput
             :model-value="value.value"
             readonly
           />
-          <UiButton
+          <Button
             variant="icon"
-            size="md"
+            size="icon"
             @click="copy(value.value || '')"
           >
-            <Copy class="h-3 w-3" />
-          </UiButton>
+            <Copy />
+          </Button>
         </template>
       </div>
       <UiHeading
@@ -144,20 +148,23 @@ const queryStringKeyValue = computed(() => {
           v-for="item in queryStringKeyValue"
           :key="item.key"
         >
-          <div class="font-medium">
+          <UiText
+            as="div"
+            weight="medium"
+          >
             {{ item.key }}
-          </div>
+          </UiText>
           <UiInput
             :model-value="item.value"
             readonly
           />
-          <UiButton
+          <Button
             variant="icon"
-            size="md"
+            size="icon"
             @click="copy(item.value || '')"
           >
-            <Copy class="h-3 w-3" />
-          </UiButton>
+            <Copy />
+          </Button>
         </template>
       </div>
     </div>

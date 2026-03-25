@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import type { TooltipContentEmits, TooltipContentProps } from 'reka-ui'
+import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
+import { reactiveOmit } from '@vueuse/core'
 import {
+  TooltipArrow,
   TooltipContent,
-  type TooltipContentEmits,
-  type TooltipContentProps,
   TooltipPortal,
   useForwardPropsEmits,
-} from 'radix-vue'
-import { computed, type HTMLAttributes } from 'vue'
+} from 'reka-ui'
 
 defineOptions({
   inheritAttrs: false,
@@ -22,27 +23,27 @@ const props = withDefaults(
 
 const emits = defineEmits<TooltipContentEmits>()
 
-const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
-
-  return delegated
-})
-
+const delegatedProps = reactiveOmit(props, 'class')
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>
   <TooltipPortal>
     <TooltipContent
+      data-slot="tooltip-content"
       v-bind="{ ...forwarded, ...$attrs }"
       :class="
         cn(
-          'bg-tooltip text-tooltip-fg z-50 overflow-hidden rounded-md px-2 py-1 text-sm shadow-md',
+          'bg-popover text-popover-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit rounded-md border px-3 py-1.5 text-xs text-balance shadow-md',
           props.class,
         )
       "
     >
       <slot />
+
+      <TooltipArrow
+        class="bg-popover fill-popover z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] border-r border-b"
+      />
     </TooltipContent>
   </TooltipPortal>
 </template>

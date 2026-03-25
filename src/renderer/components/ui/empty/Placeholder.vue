@@ -8,7 +8,7 @@ defineProps<Props>()
 
 <template>
   <div
-    class="text-text-muted flex h-full items-center justify-center text-center"
+    class="text-muted-foreground flex h-full items-center justify-center text-center"
   >
     {{ text }}
   </div>

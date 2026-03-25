@@ -1,4 +1,5 @@
 import type { TagsStorage } from '../../../contracts'
+import type { MarkdownSnippet } from '../runtime'
 import {
   getPaths,
   getRuntimeCache,
@@ -6,6 +7,11 @@ import {
   saveState,
   writeSnippetToFile,
 } from '../runtime'
+import {
+  createTagInState,
+  deleteTagFromStateAndEntities,
+  getSortedTagRecords,
+} from '../runtime/shared/tags'
 
 export function createTagsStorage(): TagsStorage {
   return {
@@ -13,53 +19,42 @@ export function createTagsStorage(): TagsStorage {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      return state.tags
-        .map(tag => ({
-          id: tag.id,
-          name: tag.name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+      return getSortedTagRecords(state.tags)
     },
     createTag: (name) => {
       const paths = getPaths(getVaultPath())
       const { state } = getRuntimeCache(paths)
 
-      const id = state.counters.tagId + 1
-      state.counters.tagId = id
-
-      const now = Date.now()
-      state.tags.push({
+      const result = createTagInState(state, name, ({ id, name, now }) => ({
         createdAt: now,
         id,
         name,
         updatedAt: now,
-      })
+      }))
 
       saveState(paths, state)
 
-      return { id }
+      return result
     },
     deleteTag: (id) => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const tagIndex = state.tags.findIndex(tag => tag.id === id)
-      if (tagIndex === -1) {
-        return { deleted: false }
-      }
-
-      state.tags.splice(tagIndex, 1)
-
-      snippets.forEach((snippet) => {
-        if (snippet.tags.includes(id)) {
-          snippet.tags = snippet.tags.filter(tagId => tagId !== id)
+      const result = deleteTagFromStateAndEntities(
+        state,
+        snippets,
+        id,
+        (snippet: MarkdownSnippet) => {
           writeSnippetToFile(paths, snippet)
-        }
-      })
+        },
+      )
+      if (!result.deleted) {
+        return result
+      }
 
       saveState(paths, state)
 
-      return { deleted: true }
+      return result
     },
   }
 }

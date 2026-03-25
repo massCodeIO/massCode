@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { i18n, ipc, store } from '@/electron'
 import { language } from '~/main/i18n/language'
@@ -16,33 +17,35 @@ watch(selectedLanguage, (value) => {
 </script>
 
 <template>
-  <div class="space-y-5">
-    <UiMenuFormItem :label="i18n.t('preferences:language.label')">
-      <template #description>
-        {{ i18n.t("messages:description.language") }}
-      </template>
-      <Select.Select v-model="selectedLanguage">
-        <Select.SelectTrigger class="w-64">
-          <Select.SelectValue placeholder="Select a language" />
-        </Select.SelectTrigger>
-        <Select.SelectContent>
-          <Select.SelectItem
-            v-for="i in languageOptions"
-            :key="i.value"
-            :value="i.value"
+  <div>
+    <UiMenuFormSection :label="i18n.t('preferences:language.label')">
+      <UiMenuFormItem :label="i18n.t('preferences:language.label')">
+        <template #description>
+          {{ i18n.t("messages:description.language") }}
+        </template>
+        <Select.Select v-model="selectedLanguage">
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue placeholder="Select a language" />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="i in languageOptions"
+              :key="i.value"
+              :value="i.value"
+            >
+              {{ i.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #actions>
+          <Button
+            variant="outline"
+            @click="ipc.invoke('system:reload', null)"
           >
-            {{ i.label }}
-          </Select.SelectItem>
-        </Select.SelectContent>
-      </Select.Select>
-      <template #actions>
-        <UiButton
-          size="md"
-          @click="ipc.invoke('system:reload', null)"
-        >
-          {{ i18n.t("action.reload.app") }}
-        </UiButton>
-      </template>
-    </UiMenuFormItem>
+            {{ i18n.t("action.reload.app") }}
+          </Button>
+        </template>
+      </UiMenuFormItem>
+    </UiMenuFormSection>
   </div>
 </template>

@@ -3,6 +3,7 @@ import type { Backup } from '~/main/db/types'
 import type { PreferencesStore } from '~/main/store/types'
 import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useDialog, useFolders, useSnippets, useSonner } from '@/composables'
@@ -478,7 +479,7 @@ watch(
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="space-y-4">
     <!-- Section 1: Main -->
     <UiMenuFormSection :label="i18n.t('preferences:storage.section.main')">
       <UiMenuFormItem :label="i18n.t('preferences:storage.engine.label')">
@@ -514,18 +515,18 @@ watch(
         />
         <template #actions>
           <div class="flex gap-2">
-            <UiButton
-              size="md"
+            <Button
+              variant="outline"
               @click="moveStorage"
             >
               {{ i18n.t("action.move.storage") }}
-            </UiButton>
-            <UiButton
-              size="md"
+            </Button>
+            <Button
+              variant="outline"
               @click="openStorage"
             >
               {{ i18n.t("action.open.storage") }}
-            </UiButton>
+            </Button>
           </div>
         </template>
         <template #description>
@@ -542,12 +543,12 @@ watch(
           size="sm"
         />
         <template #actions>
-          <UiButton
-            size="md"
+          <Button
+            variant="outline"
             @click="openVaultStorage"
           >
             {{ i18n.t("action.select.directory") }}
-          </UiButton>
+          </Button>
         </template>
         <template #description>
           {{ i18n.t("messages:description.storageVault") }}
@@ -572,12 +573,12 @@ watch(
         v-if="isSqliteEngine"
         :label="i18n.t('preferences:storage.migrate')"
       >
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="migrateFromV3"
         >
           {{ i18n.t("action.migrate.fromV3") }}
-        </UiButton>
+        </Button>
         <template #description>
           {{ i18n.t("messages:description.migrate.fromV3") }}
         </template>
@@ -586,12 +587,12 @@ watch(
         v-if="isSqliteEngine"
         :label="i18n.t('preferences:storage.migrateSqliteToMarkdown')"
       >
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="migrateSqliteToMarkdown"
         >
           {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}
-        </UiButton>
+        </Button>
       </UiMenuFormItem>
       <UiMenuFormItem
         v-if="isSqliteEngine"
@@ -603,12 +604,12 @@ watch(
           size="sm"
         />
         <template #actions>
-          <UiButton
-            size="md"
+          <Button
+            variant="outline"
             @click="openVaultStorage"
           >
             {{ i18n.t("action.select.directory") }}
-          </UiButton>
+          </Button>
         </template>
         <template #description>
           {{ i18n.t("messages:description.storageVault") }}
@@ -618,12 +619,12 @@ watch(
         v-if="isMarkdownEngine"
         :label="i18n.t('preferences:storage.migrateMarkdownToSqlite')"
       >
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="migrateMarkdownToSqlite"
         >
           {{ i18n.t("preferences:storage.migrateMarkdownToSqlite") }}
-        </UiButton>
+        </Button>
       </UiMenuFormItem>
     </UiMenuFormSection>
 
@@ -631,15 +632,15 @@ watch(
     <UiMenuFormSection
       v-if="isSqliteEngine"
       :label="i18n.t('preferences:storage.section.dangerZone')"
+      variant="danger"
     >
       <UiMenuFormItem :label="i18n.t('preferences:storage.clearDatabase')">
-        <UiButton
-          size="md"
-          variant="danger"
+        <Button
+          variant="destructive"
           @click="clearDatabase"
         >
           {{ i18n.t("action.delete.allData") }}
-        </UiButton>
+        </Button>
         <template #description>
           {{ i18n.t("messages:warning.clearDb") }}
         </template>
@@ -659,18 +660,18 @@ watch(
         />
         <template #actions>
           <div class="flex gap-2">
-            <UiButton
-              size="md"
+            <Button
+              variant="outline"
               @click="moveBackupStorage"
             >
               {{ i18n.t("action.move.storage") }}
-            </UiButton>
-            <UiButton
-              size="md"
+            </Button>
+            <Button
+              variant="outline"
               @click="openBackupStorage"
             >
               {{ i18n.t("action.open.storage") }}
-            </UiButton>
+            </Button>
           </div>
         </template>
       </UiMenuFormItem>
@@ -726,28 +727,28 @@ watch(
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:storage.backup.createNow')">
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="createBackup"
         >
           {{ i18n.t("action.backup.create") }}
-        </UiButton>
+        </Button>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:storage.backup.list')">
         <div class="flex gap-2">
-          <UiButton
-            size="md"
+          <Button
+            variant="outline"
             @click="showBackupList"
           >
             {{ i18n.t("action.backup.showList") }}
-          </UiButton>
-          <UiButton
+          </Button>
+          <Button
             v-if="isShowBackupList"
-            size="md"
+            variant="outline"
             @click="hideBackupList"
           >
             {{ i18n.t("action.hide") }}
-          </UiButton>
+          </Button>
         </div>
         <div
           v-if="isShowBackupList"
@@ -759,11 +760,16 @@ watch(
             class="border-border flex items-center justify-between rounded-lg border p-3"
           >
             <div class="flex-1">
-              <div class="text-sm font-medium tabular-nums">
+              <UiText
+                as="div"
+                variant="base"
+                weight="medium"
+                class="tabular-nums"
+              >
                 {{ format(backup.createdAt, "dd.MM.yyyy HH:mm:ss") }} •
                 {{ formatFileSize(backup.size) }}
                 {{ isManualBackup(backup) ? "(manual)" : "" }}
-              </div>
+              </UiText>
             </div>
 
             <UiActionButton
@@ -779,14 +785,14 @@ watch(
             >
               <RotateCcw class="h-3 w-3" />
             </UiActionButton>
-            <!-- <UiButton
+            <!-- <Button
               size="sm"
 
               :disabled="isRestoringBackup"
               @click="restoreBackup(backup.path)"
             >
               {{ i18n.t('action.backup.restore') }}
-            </UiButton> -->
+            </Button> -->
           </div>
         </div>
       </UiMenuFormItem>

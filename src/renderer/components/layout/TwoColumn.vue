@@ -30,7 +30,7 @@ const gridTemplateColumns = computed(() => {
 
 const leftHeaderStyle = computed(() => {
   return {
-    paddingTop: `calc(var(--title-bar-height) + ${props.topSpace}px)`,
+    paddingTop: `calc(var(--content-top-offset) + ${props.topSpace}px)`,
   }
 })
 </script>
@@ -62,7 +62,7 @@ const leftHeaderStyle = computed(() => {
       </div>
     </div>
     <div class="bg-border" />
-    <div class="h-full min-h-0 overflow-auto pt-[var(--title-bar-height)]">
+    <div class="h-full min-h-0 overflow-auto pt-[var(--content-top-offset)]">
       <slot name="right" />
     </div>
   </div>

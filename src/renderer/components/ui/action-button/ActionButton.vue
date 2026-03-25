@@ -1,42 +1,38 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 
 interface Props {
   tooltip?: string
-  active?: boolean
-  type?: 'icon' | 'iconText'
+  size?: 'icon' | 'iconText'
 }
 
-withDefaults(defineProps<Props>(), {
-  type: 'icon',
+const props = withDefaults(defineProps<Props>(), {
+  size: 'icon',
 })
 </script>
 
 <template>
-  <Tooltip.TooltipProvider v-if="tooltip">
-    <Tooltip.Tooltip>
-      <Tooltip.TooltipTrigger as-child>
-        <UiButton
-          variant="icon"
-          :size="type"
-          :active="active"
-          v-bind="$attrs"
-        >
-          <slot />
-        </UiButton>
-      </Tooltip.TooltipTrigger>
-      <Tooltip.TooltipContent>
-        {{ tooltip }}
-      </Tooltip.TooltipContent>
-    </Tooltip.Tooltip>
-  </Tooltip.TooltipProvider>
-  <UiButton
+  <Tooltip.Tooltip v-if="tooltip">
+    <Tooltip.TooltipTrigger as-child>
+      <Button
+        variant="icon"
+        :size="props.size"
+        v-bind="$attrs"
+      >
+        <slot />
+      </Button>
+    </Tooltip.TooltipTrigger>
+    <Tooltip.TooltipContent>
+      {{ tooltip }}
+    </Tooltip.TooltipContent>
+  </Tooltip.Tooltip>
+  <Button
     v-else
     variant="icon"
+    :size="props.size"
     v-bind="$attrs"
-    :active="active"
-    :size="type"
   >
     <slot />
-  </UiButton>
+  </Button>
 </template>

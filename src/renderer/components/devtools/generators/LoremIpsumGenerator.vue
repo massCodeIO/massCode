@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useCopyToClipboard } from '@/composables'
 import { i18n } from '@/electron'
@@ -118,18 +119,18 @@ watch(count, (v) => {
         readonly
       />
       <div class="flex items-center gap-2">
-        <UiButton
-          size="md"
+        <Button
+          variant="outline"
           @click="generate"
         >
           {{ i18n.t("button.generate") }}
-        </UiButton>
-        <UiButton
-          size="md"
+        </Button>
+        <Button
+          variant="outline"
           @click="copy(output)"
         >
           {{ i18n.t("button.copy") }}
-        </UiButton>
+        </Button>
       </div>
     </div>
   </div>

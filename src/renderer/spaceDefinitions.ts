@@ -1,10 +1,10 @@
 import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
 import { i18n } from '@/electron'
-import { RouterName } from '@/router'
-import { Blocks, Calculator, Code2 } from 'lucide-vue-next'
+import { router, RouterName } from '@/router'
+import { Blocks, Calculator, Code2, Notebook } from 'lucide-vue-next'
 
-export type SpaceId = 'code' | 'tools' | 'math'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
 
 export interface SpaceDefinition {
   id: SpaceId
@@ -36,13 +36,13 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       isActive: routeName => routeName === RouterName.main,
     },
     {
-      id: 'tools',
-      label: i18n.t('spaces.tools'),
-      tooltip: i18n.t('spaces.toolsTooltip'),
-      icon: Blocks,
-      to: { name: RouterName.devtoolsCaseConverter },
+      id: 'notes',
+      label: i18n.t('spaces.notes'),
+      tooltip: i18n.t('spaces.notesTooltip'),
+      icon: Notebook,
+      to: { name: RouterName.notesSpace },
       isActive: routeName =>
-        isRouteNameInSpace(routeName, RouterName.devtools),
+        isRouteNameInSpace(routeName, RouterName.notesSpace),
     },
     {
       id: 'math',
@@ -52,6 +52,15 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       to: { name: RouterName.mathNotebook },
       isActive: routeName => routeName === RouterName.mathNotebook,
     },
+    {
+      id: 'tools',
+      label: i18n.t('spaces.tools'),
+      tooltip: i18n.t('spaces.toolsTooltip'),
+      icon: Blocks,
+      to: { name: RouterName.devtoolsCaseConverter },
+      isActive: routeName =>
+        isRouteNameInSpace(routeName, RouterName.devtools),
+    },
   ]
 }
 
@@ -59,4 +68,10 @@ export function isSpaceRouteName(
   routeName: RouteRecordName | null | undefined,
 ) {
   return getSpaceDefinitions().some(space => space.isActive(routeName))
+}
+
+export function getActiveSpaceId(): SpaceId | null {
+  const routeName = router.currentRoute.value.name
+  const space = getSpaceDefinitions().find(s => s.isActive(routeName))
+  return space?.id ?? null
 }

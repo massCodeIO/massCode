@@ -1,0 +1,246 @@
+import type { EditorState } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import { RangeSetBuilder, StateField } from '@codemirror/state'
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  WidgetType,
+} from '@codemirror/view'
+import mermaid from 'mermaid'
+import { editorFocusField, setEditorFocusEffect } from './editorFocus'
+import { isSelectionInsideRangeWithFocus } from './selectionRange'
+
+interface MermaidBlocksOptions {
+  enabled?: boolean
+  isDark?: boolean
+  showSourceWhenSelectionInside?: boolean
+}
+
+let mermaidRenderCounter = 0
+
+function extractMermaidCode(text: string): string | null {
+  const lines = text.split('\n')
+  if (lines.length < 2)
+    return null
+
+  const firstLine = lines[0]?.trim() ?? ''
+  const lastLine = lines.at(-1)?.trim() ?? ''
+
+  if (!firstLine.startsWith('```') || !lastLine.startsWith('```'))
+    return null
+
+  const language = firstLine.slice(3).trim().toLowerCase()
+  if (language !== 'mermaid')
+    return null
+
+  return lines.slice(1, -1).join('\n').trim()
+}
+
+function isSelectionInsideRange(
+  state: EditorState,
+  from: number,
+  to: number,
+): boolean {
+  const hasFocus = state.field(editorFocusField, false) ?? false
+
+  for (const range of state.selection.ranges) {
+    if (
+      isSelectionInsideRangeWithFocus(
+        hasFocus,
+        range.from,
+        range.to,
+        from,
+        to,
+        range.empty,
+      )
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+export function applyMermaidRenderSuccess(container: HTMLElement, svg: string) {
+  container.style.display = ''
+  container.innerHTML = svg
+}
+
+export function applyMermaidRenderFailure(
+  container: HTMLElement,
+  error: unknown,
+) {
+  console.error('[notes] Failed to render mermaid diagram', error)
+  container.innerHTML = ''
+  container.style.display = 'none'
+}
+
+async function renderMermaid(
+  container: HTMLElement,
+  code: string,
+  isDark: boolean,
+) {
+  try {
+    const id = `notes-mermaid-${mermaidRenderCounter++}`
+
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: isDark ? 'dark' : 'default',
+    })
+
+    const result = await mermaid.render(id, code)
+    const svg = typeof result === 'string' ? result : result.svg
+    applyMermaidRenderSuccess(container, svg)
+  }
+  catch (error) {
+    applyMermaidRenderFailure(container, error)
+  }
+}
+
+class MermaidWidget extends WidgetType {
+  constructor(
+    readonly code: string,
+    readonly isDark: boolean,
+    readonly activateSourceOnClick: boolean,
+  ) {
+    super()
+  }
+
+  eq(other: MermaidWidget): boolean {
+    return (
+      this.code === other.code
+      && this.isDark === other.isDark
+      && this.activateSourceOnClick === other.activateSourceOnClick
+    )
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const root = document.createElement('div')
+    root.className = this.activateSourceOnClick
+      ? 'my-3 cursor-text overflow-auto rounded-md border border-border p-4'
+      : 'my-3 overflow-auto rounded-md border border-border p-4'
+
+    if (this.activateSourceOnClick) {
+      root.addEventListener('mousedown', (event) => {
+        event.preventDefault()
+        const blockFrom = view.posAtDOM(root, 0)
+        const codeLines = this.code.split('\n')
+        const totalLines = codeLines.length + 2 // opening fence + code + closing fence
+        const rootRect = root.getBoundingClientRect()
+        const clickY = event.clientY - rootRect.top
+        const ratio
+          = rootRect.height > 0
+            ? Math.max(0, Math.min(1, clickY / rootRect.height))
+            : 0
+        const lineIndex = Math.min(
+          Math.floor(ratio * totalLines),
+          totalLines - 1,
+        )
+        const blockStartLine = view.state.doc.lineAt(blockFrom).number
+        const targetLineNumber = Math.min(
+          blockStartLine + lineIndex,
+          view.state.doc.lines,
+        )
+        const anchor = view.state.doc.line(targetLineNumber).from
+        view.dispatch({
+          selection: { anchor },
+          effects: setEditorFocusEffect.of(true),
+          scrollIntoView: true,
+        })
+        view.focus()
+      })
+    }
+
+    void renderMermaid(root, this.code, this.isDark)
+
+    return root
+  }
+}
+
+function buildDecorations(
+  state: EditorState,
+  enabled: boolean,
+  isDark: boolean,
+  showSourceWhenSelectionInside: boolean,
+) {
+  if (!enabled)
+    return Decoration.none
+
+  const builder = new RangeSetBuilder<Decoration>()
+
+  syntaxTree(state).iterate({
+    enter(node) {
+      if (node.name !== 'FencedCode')
+        return
+
+      if (
+        showSourceWhenSelectionInside
+        && isSelectionInsideRange(state, node.from, node.to)
+      ) {
+        return
+      }
+
+      const code = extractMermaidCode(state.sliceDoc(node.from, node.to))
+      if (!code)
+        return
+
+      builder.add(
+        node.from,
+        node.to,
+        Decoration.replace({
+          block: true,
+          widget: new MermaidWidget(
+            code,
+            isDark,
+            showSourceWhenSelectionInside,
+          ),
+        }),
+      )
+    },
+  })
+
+  return builder.finish()
+}
+
+export function createMermaidBlocks(options: MermaidBlocksOptions = {}) {
+  const {
+    enabled = true,
+    isDark = false,
+    showSourceWhenSelectionInside = false,
+  } = options
+
+  return StateField.define<DecorationSet>({
+    create(state) {
+      return buildDecorations(
+        state,
+        enabled,
+        isDark,
+        showSourceWhenSelectionInside,
+      )
+    },
+    update(decorations, transaction) {
+      const selectionChanged = !transaction.startState.selection.eq(
+        transaction.state.selection,
+      )
+      const focusChanged = transaction.effects.some(e =>
+        e.is(setEditorFocusEffect),
+      )
+
+      if (transaction.docChanged || selectionChanged || focusChanged) {
+        return buildDecorations(
+          transaction.state,
+          enabled,
+          isDark,
+          showSourceWhenSelectionInside,
+        )
+      }
+
+      return decorations.map(transaction.changes)
+    },
+    provide: field => EditorView.decorations.from(field),
+  })
+}
+
+export const mermaidBlocks = createMermaidBlocks()

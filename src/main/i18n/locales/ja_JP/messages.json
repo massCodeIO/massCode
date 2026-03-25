@@ -3,7 +3,11 @@
     "delete": "「{{name}}」を削除してもよろしいですか？",
     "deletePermanently": "「{{name}}」を完全に削除してもよろしいですか？",
     "deleteConfirmMultipleSnippets": "選択された{{count}}個のスニペットを完全に削除してもよろしいですか？",
-    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？"
+    "emptyTrash": "ゴミ箱内のすべてのスニペットを完全に削除してもよろしいですか？",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "クリップボードにコピーしました"
@@ -19,8 +23,12 @@
       "languagesの値の1つに対応している必要があります"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "こんにちは、Antonです 👋<br><br>\nmassCodeをご利用いただきありがとうございます。このアプリが役立つと感じられましたら、{{-tagStart}}寄付{{-tagEnd}}をご検討ください。プロジェクトの開発を継続する励みになります。",
     "unsponsored": "未スポンサー"

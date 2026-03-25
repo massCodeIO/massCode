@@ -3,7 +3,11 @@
     "delete": "您確定要刪除 \"{{name}}\" 嗎？",
     "deletePermanently": "您確定要永久刪除 \"{{name}}\" 嗎？",
     "deleteConfirmMultipleSnippets": "您確定要永久刪除已選擇的 {{count}} 個程式碼片段嗎？",
-    "emptyTrash": "您確定要永久刪除回收桶中的所有程式碼片段嗎？"
+    "emptyTrash": "您確定要永久刪除回收桶中的所有程式碼片段嗎？",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "已複製"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "嗨，我是 Anton 👋<br><br>\n感謝使用 massCode。如果您覺得這個應用程式有用，請{{-tagStart}}贊助{{-tagEnd}}。這將激勵我繼續開發這個專案。",
     "unsponsored": "未贊助"

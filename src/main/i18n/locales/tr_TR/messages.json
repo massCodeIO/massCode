@@ -3,7 +3,11 @@
     "delete": "\"{{name}}\" öğesini silmek istediğinizden emin misiniz?",
     "deletePermanently": "\"{{name}}\" öğesini kalıcı olarak silmek istediğinizden emin misiniz?",
     "deleteConfirmMultipleSnippets": "{{count}} seçili snippet'i kalıcı olarak silmek istediğinizden emin misiniz?",
-    "emptyTrash": "Çöp Kutusu'ndaki tüm snippet'leri kalıcı olarak silmek istediğinizden emin misiniz?"
+    "emptyTrash": "Çöp Kutusu'ndaki tüm snippet'leri kalıcı olarak silmek istediğinizden emin misiniz?",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "Panoya kopyalandı"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "Merhaba, ben Anton 👋<br><br>\nmassCode'u kullandığınız için teşekkürler. Bu uygulamayı faydalı buluyorsanız, lütfen {{-tagStart}}bağış yapın{{-tagEnd}}. Bu beni projenin geliştirilmesine devam etmem için teşvik edecektir.",
     "unsponsored": "Sponsorsuz"

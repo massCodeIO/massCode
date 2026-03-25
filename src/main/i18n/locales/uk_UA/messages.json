@@ -3,7 +3,11 @@
     "delete": "Ви впевнені, що хочете видалити \"{{name}}\"?",
     "deletePermanently": "Ви впевнені, що хочете назавжди видалити \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Ви впевнені, що хочете назавжди видалити {{count}} вибраних сніпетів?",
-    "emptyTrash": "Ви впевнені, що хочете назавжди видалити всі сніпети у Кошику?"
+    "emptyTrash": "Ви впевнені, що хочете назавжди видалити всі сніпети у Кошику?",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "Скопійовано в буфер обміну"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "Привіт, це Антон 👋<br><br>\nДякую за використання massCode. Якщо ви вважаєте цей додаток корисним, будь ласка, {{-tagStart}}підтримайте проект{{-tagEnd}}. Це надихне мене продовжувати розробку проекту.",
     "unsponsored": "Без спонсора"

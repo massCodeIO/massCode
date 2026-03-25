@@ -3,7 +3,11 @@
     "delete": "Sigur doriți să ștergeți \"{{name}}\"?",
     "deletePermanently": "Sigur doriți să ștergeți definitiv \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Sigur doriți să ștergeți definitiv {{count}} snippets selectate?",
-    "emptyTrash": "Sigur doriți să ștergeți definitiv toate snippets din Coșul de gunoi?"
+    "emptyTrash": "Sigur doriți să ștergeți definitiv toate snippets din Coșul de gunoi?",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "Copiat în clipboard"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "Bună, sunt Anton 👋<br><br>\nMulțumesc că folosești massCode. Dacă găsești această aplicație utilă, te rog {{-tagStart}}donează{{-tagEnd}}. Mă va inspira să continui dezvoltarea proiectului.",
     "unsponsored": "Nesponsorizat"

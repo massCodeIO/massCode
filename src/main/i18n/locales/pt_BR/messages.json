@@ -3,7 +3,11 @@
     "delete": "Tem certeza que deseja excluir \"{{name}}\"?",
     "deletePermanently": "Tem certeza que deseja excluir permanentemente \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Tem certeza que deseja excluir permanentemente {{count}} snippets selecionados?",
-    "emptyTrash": "Tem certeza que deseja excluir permanentemente todos os snippets na Lixeira?"
+    "emptyTrash": "Tem certeza que deseja excluir permanentemente todos os snippets na Lixeira?",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "Copiado para a área de transferência"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "Olá, aqui é o Anton 👋<br><br>\nObrigado por usar o massCode. Se você achar este app útil, por favor {{-tagStart}}doe{{-tagEnd}}. Isso me inspirará a continuar o desenvolvimento do projeto.",
     "unsponsored": "Sem patrocínio"

@@ -2,7 +2,12 @@
   "label": "Προτιμήσεις",
   "storage": {
     "label": "Storage",
-    "count": "Πλήθος"
+    "count": "Πλήθος",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editor",

@@ -2,7 +2,12 @@
   "label": "Preferencias",
   "storage": {
     "label": "Almacenamiento",
-    "count": "Cantidad"
+    "count": "Cantidad",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editor",

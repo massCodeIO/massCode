@@ -1,13 +1,16 @@
 import type { Channel } from '../types/ipc'
+import { createRequire } from 'node:module'
 import { BrowserWindow, ipcMain } from 'electron'
 import { store } from '../store'
-import { importEsm, isSqliteFile } from '../utils'
+import { isSqliteFile } from '../utils'
 import { registerDialogHandlers } from './handlers/dialog'
 import { registerFsHandlers } from './handlers/fs'
 import { registerPrettierHandlers } from './handlers/prettier'
 import { registerSpacesHandlers } from './handlers/spaces'
 import { registerSystemHandlers } from './handlers/system'
 import { registerThemeHandlers } from './handlers/theme'
+
+const lazyRequire = createRequire(__filename)
 
 export function send(channel: Channel, payload?: unknown) {
   BrowserWindow.getFocusedWindow()?.webContents.send(channel, payload)
@@ -33,13 +36,16 @@ export function registerIPC() {
       )
     }
 
-    const { closeDB } = await importEsm('../db')
-    const { migrateSqliteToMarkdownStorage } = await importEsm(
+    const { closeDB } = lazyRequire('../db') as typeof import('../db')
+    const { migrateSqliteToMarkdownStorage } = lazyRequire(
       '../storage/providers/markdown',
-    )
-    const result = migrateSqliteToMarkdownStorage()
-    closeDB()
+    ) as typeof import('../storage/providers/markdown')
 
-    return result
+    try {
+      return migrateSqliteToMarkdownStorage()
+    }
+    finally {
+      closeDB()
+    }
   })
 }

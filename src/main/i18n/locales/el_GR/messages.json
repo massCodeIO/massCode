@@ -3,7 +3,11 @@
     "delete": "Είστε βέβαιοι ότι θέλετε να διαγράψετε το \"{{name}}\"?",
     "deletePermanently": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά το \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά τα {{count}} επιλεγμένα snippets;",
-    "emptyTrash": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά όλα τα snippets στον Κάδο Απορριμμάτων;"
+    "emptyTrash": "Είστε βέβαιοι ότι θέλετε να διαγράψετε οριστικά όλα τα snippets στον Κάδο Απορριμμάτων;",
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
+    ]
   },
   "success": {
     "copied": "Αντιγράφηκε στο πρόχειρο"
@@ -19,8 +23,12 @@
       "languages"
     ]
   },
-  "error": {},
-  "description": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
+  "description": {
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
+  },
   "special": {
     "supportMessage": "Γεια σας, ο Anton εδώ 👋<br><br>\nΕυχαριστώ που χρησιμοποιείτε το massCode. Αν βρίσκετε χρήσιμη την εφαρμογή, παρακαλώ {{-tagStart}}κάντε μια δωρεά{{-tagEnd}}. Θα με εμπνεύσει να συνεχίσω την ανάπτυξη του project.",
     "unsponsored": "Χωρίς χορηγία"

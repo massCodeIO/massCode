@@ -2,7 +2,12 @@
   "label": "Preferências",
   "storage": {
     "label": "Storage",
-    "count": "Contagem"
+    "count": "Contagem",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editor",

@@ -2,7 +2,12 @@
   "label": "Tercihler",
   "storage": {
     "label": "Depolama",
-    "count": "Sayı"
+    "count": "Sayı",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editör",

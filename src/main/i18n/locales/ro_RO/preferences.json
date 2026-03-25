@@ -2,7 +2,12 @@
   "label": "Preferințe",
   "storage": {
     "label": "Storage",
-    "count": "Număr"
+    "count": "Număr",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editor",

@@ -3,7 +3,8 @@
   "storage": {
     "label": "Хранилище",
     "section": {
-      "migration": "Миграция"
+      "migration": "Миграция",
+      "main": "Основное"
     },
     "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",

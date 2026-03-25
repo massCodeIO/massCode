@@ -1,6 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
 import { initApi } from './api'
@@ -10,12 +11,13 @@ import { mainMenu } from './menu/main'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { store } from './store'
 import { checkForUpdates } from './updates'
-import { importEsm, isSqliteFile, log } from './utils'
+import { isSqliteFile, log } from './utils'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
+const lazyRequire = createRequire(__filename)
 
 let mainWindow: BrowserWindow
 let isQuitting = false
@@ -157,27 +159,38 @@ else {
 
         try {
           const stateContent = readFileSync(statePath, 'utf8')
-          const state = JSON.parse(stateContent)
-          vaultHasData
-            = Array.isArray(state.snippets) && state.snippets.length > 0
+          const state = JSON.parse(stateContent) as {
+            folders?: unknown[]
+            snippets?: unknown[]
+            tags?: unknown[]
+          }
+
+          vaultHasData = [state.folders, state.snippets, state.tags].some(
+            collection => Array.isArray(collection) && collection.length > 0,
+          )
         }
         catch {
           // state.json doesn't exist or is invalid; treat the vault as empty
         }
 
         if (!vaultHasData) {
-          const { closeDB } = await importEsm('./db')
-          const { migrateSqliteToMarkdownStorage } = await importEsm(
+          const { closeDB } = lazyRequire('./db') as typeof import('./db')
+          const { migrateSqliteToMarkdownStorage } = lazyRequire(
             './storage/providers/markdown',
-          )
+          ) as typeof import('./storage/providers/markdown')
 
-          migrationResult = migrateSqliteToMarkdownStorage()
-          closeDB()
+          try {
+            migrationResult = migrateSqliteToMarkdownStorage()
 
-          store.preferences.delete('storage.engine' as any)
-          store.preferences.delete('backup' as any)
+            store.preferences.delete('storage.engine' as any)
+            store.preferences.delete('backup' as any)
 
-          log('Auto-migration complete', migrationResult)
+            // eslint-disable-next-line no-console
+            console.log('[Auto-migration complete]', migrationResult)
+          }
+          finally {
+            closeDB()
+          }
         }
       }
     }

@@ -2,7 +2,12 @@
   "label": "環境設定",
   "storage": {
     "label": "ストレージ",
-    "count": "カウント"
+    "count": "カウント",
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "エディタ",

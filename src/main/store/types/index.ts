@@ -15,9 +15,7 @@ export interface AppStore {
     libraryFilter?: string
     isSidebarHidden?: boolean
   }
-  isAutoMigratedFromJson: boolean
   nextDonateNotification?: number
-  lastSeenReleaseNoticeVersion?: string
   lastNotifiedUpdateVersion?: string
 }
 
@@ -38,16 +36,7 @@ export interface MarkdownSettings {
 }
 
 export interface StorageSettings {
-  engine: 'sqlite' | 'markdown'
   vaultPath: string | null
-}
-
-export interface BackupSettings {
-  path: string
-  enabled: boolean
-  interval: number
-  maxBackups: number
-  lastBackupTime?: number
 }
 
 export interface NotesEditorSettings {
@@ -69,7 +58,6 @@ export interface PreferencesStore {
   notesEditor: NotesEditorSettings
   storage: StorageSettings
   markdown: MarkdownSettings
-  backup: BackupSettings
 }
 
 export interface MathSheet {

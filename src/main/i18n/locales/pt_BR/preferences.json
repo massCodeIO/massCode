@@ -2,9 +2,7 @@
   "label": "Preferências",
   "storage": {
     "label": "Storage",
-    "migrate": "Migrar",
-    "count": "Contagem",
-    "clearDatabase": "Limpar Database"
+    "count": "Contagem"
   },
   "editor": {
     "label": "Editor",

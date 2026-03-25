@@ -2,9 +2,7 @@
   "label": "Preferințe",
   "storage": {
     "label": "Storage",
-    "migrate": "Migrare",
-    "count": "Număr",
-    "clearDatabase": "Șterge Database"
+    "count": "Număr"
   },
   "editor": {
     "label": "Editor",

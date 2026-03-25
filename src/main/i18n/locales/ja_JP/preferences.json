@@ -2,9 +2,7 @@
   "label": "環境設定",
   "storage": {
     "label": "ストレージ",
-    "migrate": "移行",
-    "count": "カウント",
-    "clearDatabase": "データベースをクリア"
+    "count": "カウント"
   },
   "editor": {
     "label": "エディタ",

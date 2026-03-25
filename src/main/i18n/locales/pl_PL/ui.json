@@ -16,7 +16,10 @@
     "revers": "Odwróć",
     "saveAs": "Zapisz jako",
     "sort": "Sortuj",
-    "update": ["Przejdź do GitHub", "OK"],
+    "update": [
+      "Przejdź do GitHub",
+      "OK"
+    ],
     "zoomIn": "Powiększ",
     "zoomOut": "Pomniejsz",
     "darkMode": "Tryb ciemny",

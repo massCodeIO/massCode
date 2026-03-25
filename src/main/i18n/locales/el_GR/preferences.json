@@ -2,9 +2,7 @@
   "label": "Προτιμήσεις",
   "storage": {
     "label": "Storage",
-    "migrate": "Μετεγκατάσταση",
-    "count": "Πλήθος",
-    "clearDatabase": "Εκκαθάριση Database"
+    "count": "Πλήθος"
   },
   "editor": {
     "label": "Editor",

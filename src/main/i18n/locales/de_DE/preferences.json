@@ -2,9 +2,7 @@
   "label": "Einstellungen",
   "storage": {
     "label": "Speicher",
-    "migrate": "Migrieren",
-    "count": "Anzahl",
-    "clearDatabase": "Datenbank leeren"
+    "count": "Anzahl"
   },
   "editor": {
     "label": "Editor",

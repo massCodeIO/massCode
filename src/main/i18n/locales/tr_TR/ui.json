@@ -16,7 +16,10 @@
     "revers": "Ters Çevir",
     "saveAs": "Farklı Kaydet",
     "sort": "Sırala",
-    "update": ["GitHub'a Git", "Tamam"],
+    "update": [
+      "GitHub'a Git",
+      "Tamam"
+    ],
     "zoomIn": "Yakınlaştır",
     "zoomOut": "Uzaklaştır",
     "darkMode": "Karanlık Mod",

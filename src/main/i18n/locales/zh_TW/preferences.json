@@ -2,9 +2,7 @@
   "label": "偏好設定",
   "storage": {
     "label": "儲存庫",
-    "migrate": "遷移",
-    "count": "數量",
-    "clearDatabase": "清空資料庫"
+    "count": "數量"
   },
   "editor": {
     "label": "編輯器",

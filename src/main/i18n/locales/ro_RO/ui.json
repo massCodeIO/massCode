@@ -16,7 +16,10 @@
     "revers": "Inversează",
     "saveAs": "Salvează ca",
     "sort": "Sortează",
-    "update": ["Mergi la GitHub", "OK"],
+    "update": [
+      "Mergi la GitHub",
+      "OK"
+    ],
     "zoomIn": "Mărește",
     "zoomOut": "Micșorează",
     "darkMode": "Mod Întunecat",

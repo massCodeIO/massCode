@@ -16,7 +16,10 @@
     "revers": "反轉",
     "saveAs": "另存為",
     "sort": "排序",
-    "update": ["前往 GitHub", "確定"],
+    "update": [
+      "前往 GitHub",
+      "確定"
+    ],
     "zoomIn": "放大",
     "zoomOut": "縮小",
     "darkMode": "深色模式",

@@ -2,9 +2,7 @@
   "label": "首选项",
   "storage": {
     "label": "存储",
-    "migrate": "迁移",
-    "count": "数量",
-    "clearDatabase": "清空数据库"
+    "count": "数量"
   },
   "editor": {
     "label": "编辑器",

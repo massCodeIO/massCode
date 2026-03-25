@@ -2,9 +2,7 @@
   "label": "Tercihler",
   "storage": {
     "label": "Depolama",
-    "migrate": "Taşı",
-    "count": "Sayı",
-    "clearDatabase": "Database'i Temizle"
+    "count": "Sayı"
   },
   "editor": {
     "label": "Editör",

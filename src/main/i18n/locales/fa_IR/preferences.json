@@ -2,9 +2,7 @@
   "label": "تنظیمات",
   "storage": {
     "label": "ذخیره‌سازی",
-    "migrate": "مهاجرت",
-    "count": "تعداد",
-    "clearDatabase": "پاک کردن پایگاه داده"
+    "count": "تعداد"
   },
   "editor": {
     "label": "ویرایشگر",

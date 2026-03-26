@@ -2,9 +2,12 @@
   "label": "首选项",
   "storage": {
     "label": "存储",
-    "migrate": "迁移",
     "count": "数量",
-    "clearDatabase": "清空数据库"
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "编辑器",

@@ -16,7 +16,10 @@
     "revers": "Obrátit",
     "saveAs": "Uložit jako",
     "sort": "Seřadit",
-    "update": ["Přejít na GitHub", "OK"],
+    "update": [
+      "Přejít na GitHub",
+      "OK"
+    ],
     "zoomIn": "Přiblížit",
     "zoomOut": "Oddálit",
     "darkMode": "Tmavý režim",
@@ -81,11 +84,6 @@
     },
     "copy": {
       "snippetLink": "Kopírovat odkaz na snippet"
-    },
-    "backup": {
-      "create": "Vytvořit zálohu",
-      "restore": "Obnovit ze zálohy",
-      "delete": "Smazat zálohu"
     }
   },
   "sidebar": {

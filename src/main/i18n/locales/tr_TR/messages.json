@@ -4,45 +4,30 @@
     "deletePermanently": "\"{{name}}\" öğesini kalıcı olarak silmek istediğinizden emin misiniz?",
     "deleteConfirmMultipleSnippets": "{{count}} seçili snippet'i kalıcı olarak silmek istediğinizden emin misiniz?",
     "emptyTrash": "Çöp Kutusu'ndaki tüm snippet'leri kalıcı olarak silmek istediğinizden emin misiniz?",
-    "clearDb": "Database'i temizlemek istediğinizden emin misiniz?",
-    "migrateDb": [
-      "Taşımak istediğinizden emin misiniz?",
-      "Taşıma sırasında mevcut kütüphane üzerine yazılacaktır."
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
     ]
   },
   "success": {
-    "copied": "Panoya kopyalandı",
-    "migrate": "Database başarıyla taşındı.",
-    "backup": {
-      "created": "Yedek başarıyla oluşturuldu.",
-      "restored": "Yedek başarıyla geri yüklendi.",
-      "deleted": "Yedek başarıyla silindi."
-    }
+    "copied": "Panoya kopyalandı"
   },
   "warning": {
     "noUndo": "Bu işlemi geri alamazsınız.",
     "allSnippetsMoveToTrash": "Bu klasördeki tüm snippet'ler çöp kutusuna taşınacak.",
     "deleteTag": "Bu, tüm snippet'lerden bu etiketin kaldırılmasına neden olacaktır.",
     "createDb": "Lütfen başka bir klasör seçin",
-    "clearDb": "Bu, database'deki tüm Snippet'leri, Klasörleri ve Etiketleri kalıcı olarak silecektir.",
     "htmlCssPreview": "Sonucu görmek için HTML parçası ekleyin. Stil için CSS ve etkileşim için JavaScript ekleyin.",
     "codeBlockRenderer": [
       "Codemirror kullanırken, kod bloğu için ayarlanacak dilin",
       "languages"
     ]
   },
-  "error": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
   "description": {
-    "storage": "iCloud Drive, Google Drive veya Dropbox gibi senkronizasyon servislerini kullanmak için depolamayı ilgili senkronize klasörlere taşımanız yeterlidir",
-    "migrate": {
-      "fromV3": "massCode v3'ten taşımak için JSON dosyasını içeren klasörü seçin.",
-      "fromSnippetsLab": "SnippetsLab'den taşımak için JSON dosyasını seçin.",
-      "snippetsLabLimitations": [
-        "Bazı Sınırlamalar. SnippetsLab'den taşıma sırasında:",
-        "JSON dosyası (v2.1'in altında) iç içe klasörleri temsil etmediğinden tüm klasörler birinci seviye olacaktır.",
-        "Desteklenmeyen dillere sahip snippet'ler varsayılan Plain Text olarak ayarlanacaktır."
-      ]
-    }
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "Merhaba, ben Anton 👋<br><br>\nmassCode'u kullandığınız için teşekkürler. Bu uygulamayı faydalı buluyorsanız, lütfen {{-tagStart}}bağış yapın{{-tagEnd}}. Bu beni projenin geliştirilmesine devam etmem için teşvik edecektir.",

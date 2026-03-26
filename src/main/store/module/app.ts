@@ -14,8 +14,6 @@ export default new Store<AppStore>({
       tagsListHeight: APP_DEFAULTS.sizes.tagsList,
     },
     state: {},
-    isAutoMigratedFromJson: false,
-    lastSeenReleaseNoticeVersion: '',
     lastNotifiedUpdateVersion: '',
   },
 })

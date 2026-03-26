@@ -16,7 +16,10 @@
     "revers": "反転",
     "saveAs": "名前を付けて保存",
     "sort": "並べ替え",
-    "update": ["GitHubへ移動", "OK"],
+    "update": [
+      "GitHubへ移動",
+      "OK"
+    ],
     "zoomIn": "拡大",
     "zoomOut": "縮小",
     "darkMode": "ダークモード",

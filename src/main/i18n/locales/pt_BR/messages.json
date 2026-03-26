@@ -4,45 +4,30 @@
     "deletePermanently": "Tem certeza que deseja excluir permanentemente \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Tem certeza que deseja excluir permanentemente {{count}} snippets selecionados?",
     "emptyTrash": "Tem certeza que deseja excluir permanentemente todos os snippets na Lixeira?",
-    "clearDb": "Tem certeza que deseja limpar o database?",
-    "migrateDb": [
-      "Tem certeza que deseja migrar?",
-      "Durante a migração, a biblioteca atual será sobrescrita."
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
     ]
   },
   "success": {
-    "copied": "Copiado para a área de transferência",
-    "migrate": "DB migrado com sucesso.",
-    "backup": {
-      "created": "Backup criado com sucesso.",
-      "restored": "Backup restaurado com sucesso.",
-      "deleted": "Backup excluído com sucesso."
-    }
+    "copied": "Copiado para a área de transferência"
   },
   "warning": {
     "noUndo": "Você não pode desfazer esta ação.",
     "allSnippetsMoveToTrash": "Todos os snippets nesta pasta serão movidos para a lixeira.",
     "deleteTag": "Isso também fará com que todas as tags sejam removidas dos snippets.",
     "createDb": "Por favor, selecione outra pasta",
-    "clearDb": "Isso excluirá permanentemente todos os Snippets, Pastas e Tags do database.",
     "htmlCssPreview": "Adicione um fragmento HTML para ver o resultado. Adicione CSS para estilização e JavaScript para interatividade.",
     "codeBlockRenderer": [
       "Ao usar Codemirror, a linguagem a ser definida para o bloco de código deve corresponder a um dos valores das",
       "languages"
     ]
   },
-  "error": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
   "description": {
-    "storage": "Para usar serviços de sincronização como iCloud Drive, Google Drive ou Dropbox, simplesmente mova o armazenamento para as pastas sincronizadas correspondentes",
-    "migrate": {
-      "fromV3": "Para migrar do massCode v3, selecione a pasta contendo o arquivo JSON.",
-      "fromSnippetsLab": "Para migrar do SnippetsLab, selecione o arquivo JSON.",
-      "snippetsLabLimitations": [
-        "Algumas Limitações. Durante a migração do SnippetsLab:",
-        "Todas as pastas serão de primeiro nível, pois o arquivo JSON (abaixo da v2.1) não representa pastas aninhadas.",
-        "Snippets com linguagens não suportadas serão definidos como Plain Text padrão."
-      ]
-    }
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "Olá, aqui é o Anton 👋<br><br>\nObrigado por usar o massCode. Se você achar este app útil, por favor {{-tagStart}}doe{{-tagEnd}}. Isso me inspirará a continuar o desenvolvimento do projeto.",

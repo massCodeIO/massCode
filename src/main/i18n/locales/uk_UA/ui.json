@@ -16,7 +16,10 @@
     "revers": "Реверс",
     "saveAs": "Зберегти як",
     "sort": "Сортувати",
-    "update": ["Перейти на GitHub", "OK"],
+    "update": [
+      "Перейти на GitHub",
+      "OK"
+    ],
     "zoomIn": "Збільшити",
     "zoomOut": "Зменшити",
     "darkMode": "Темний режим",

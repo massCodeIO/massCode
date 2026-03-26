@@ -2,9 +2,12 @@
   "label": "偏好設置",
   "storage": {
     "label": "存儲",
-    "migrate": "遷移",
     "count": "數量",
-    "clearDatabase": "清空數據庫"
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "編輯器",

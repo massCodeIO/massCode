@@ -851,20 +851,6 @@ export class Api<
      * No description
      *
      * @tags System
-     * @name GetSystemStorageEngine
-     * @request GET:/system/storage-engine
-     */
-    getSystemStorageEngine: (params: RequestParams = {}) =>
-      this.request<void, any>({
-        path: `/system/storage-engine`,
-        method: "GET",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags System
      * @name GetSystemStorageVaultPath
      * @request GET:/system/storage-vault-path
      */

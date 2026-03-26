@@ -16,7 +16,10 @@
     "revers": "Revers",
     "saveAs": "Save as",
     "sort": "Sort",
-    "update": ["Go to GitHub", "OK"],
+    "update": [
+      "Go to GitHub",
+      "OK"
+    ],
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",
@@ -89,11 +92,6 @@
     },
     "copy": {
       "snippetLink": "Copy Snippet Link"
-    },
-    "backup": {
-      "create": "Create Backup",
-      "restore": "Restore from Backup",
-      "showList": "Show List"
     },
     "select": {
       "directory": "Select Directory"

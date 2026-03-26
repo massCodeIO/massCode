@@ -23,20 +23,7 @@ type MainMenuAction =
   | 'toggle-sidebar'
   | 'goto-math-notebook'
 
-type DBAction =
-  | 'relaod'
-  | 'move'
-  | 'migrate'
-  | 'migrate-to-markdown'
-  | 'migrate-to-sqlite'
-  | 'clear'
-  | 'backup'
-  | 'restore'
-  | 'delete-backup'
-  | 'backup-list'
-  | 'start-auto-backup'
-  | 'stop-auto-backup'
-  | 'move-backup'
+type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
   | 'currency-rates'
@@ -46,9 +33,10 @@ type SystemAction =
   | 'show-note-in-file-manager'
   | 'deep-link'
   | 'update-available'
-  | 'feature-notice'
   | 'renderer-ready'
   | 'storage-synced'
+  | 'migration-complete'
+  | 'migration-error'
   | 'error'
 type PrettierAction = 'format'
 type FsAction = 'assets' | 'notes-asset'

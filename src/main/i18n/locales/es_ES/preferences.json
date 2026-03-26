@@ -2,9 +2,12 @@
   "label": "Preferencias",
   "storage": {
     "label": "Almacenamiento",
-    "migrate": "Migrar",
     "count": "Cantidad",
-    "clearDatabase": "Limpiar Base de Datos"
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Editor",

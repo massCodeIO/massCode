@@ -2,9 +2,12 @@
   "label": "Налаштування",
   "storage": {
     "label": "Сховище",
-    "migrate": "Міграція",
     "count": "Кількість",
-    "clearDatabase": "Очистити базу даних"
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
   },
   "editor": {
     "label": "Редактор",

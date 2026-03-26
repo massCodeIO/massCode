@@ -2,7 +2,17 @@
 import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
-import { useDialog, useFolders, useSnippets, useSonner } from '@/composables'
+import {
+  resetNotesSpaceInitialization,
+  useDialog,
+  useFolders,
+  useMathNotebook,
+  useNoteFolders,
+  useNotes,
+  useNoteTags,
+  useSnippets,
+  useSonner,
+} from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
@@ -10,6 +20,10 @@ import { api } from '~/renderer/services/api'
 const { sonner } = useSonner()
 const { confirm } = useDialog()
 const { getFolders } = useFolders()
+const { reset: resetMathNotebook } = useMathNotebook()
+const { resetNoteFoldersState } = useNoteFolders()
+const { clearNotesState } = useNotes()
+const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
 
 function getDefaultVaultPath(baseStoragePath: string): string {
@@ -89,6 +103,11 @@ async function openVaultStorage() {
 
   vaultPath.value = result
   store.preferences.set('storage.vaultPath', result)
+  resetMathNotebook()
+  clearNotesState()
+  resetNoteFoldersState()
+  resetNoteTags()
+  resetNotesSpaceInitialization()
 
   await nextTick()
 

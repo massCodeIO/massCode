@@ -168,6 +168,12 @@ function clearFolderSelection() {
   lastSelectedFolderId.value = undefined
 }
 
+function resetNoteFoldersState() {
+  folders.value = []
+  renameFolderId.value = null
+  clearFolderSelection()
+}
+
 function setFolderSelection(ids: number[]) {
   if (!ids.length) {
     clearFolderSelection()
@@ -409,6 +415,7 @@ export function useNoteFolders() {
     getNoteFolders,
     lastSelectedFolderId,
     renameFolderId,
+    resetNoteFoldersState,
     selectedFolderIds,
     selectNoteFolder,
     setFolderSelection,

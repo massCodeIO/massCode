@@ -15,6 +15,10 @@ const { getNotes, selectFirstNote } = useNotes()
 const { displayedNotes } = useNoteSearch()
 const { getNoteTags } = useNoteTags()
 
+export function resetNotesSpaceInitialization() {
+  isNotesSpaceInitialized.value = false
+}
+
 function hasSelectedNoteInList(noteId: number | undefined): boolean {
   if (noteId === undefined || !displayedNotes.value?.length) {
     return false

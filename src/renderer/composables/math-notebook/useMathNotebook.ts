@@ -56,6 +56,12 @@ async function loadFromDisk() {
   activeSheetId.value = data?.activeSheetId ?? null
 }
 
+function resetMathNotebook() {
+  sheets.value = []
+  activeSheetId.value = null
+  initialized = false
+}
+
 export function useMathNotebook() {
   async function init() {
     if (initialized) {
@@ -133,6 +139,7 @@ export function useMathNotebook() {
     activeSheet,
     init,
     reloadFromDisk,
+    reset: resetMathNotebook,
     createSheet,
     deleteSheet,
     updateSheet,

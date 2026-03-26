@@ -24,15 +24,17 @@ export function registerIPC() {
   registerThemeHandlers()
   registerSpacesHandlers()
 
-  ipcMain.handle('db:migrate-to-markdown', async () => {
-    const storagePath = store.preferences.get('storagePath')
-    const dbPath = `${storagePath}/massCode.db`
+  ipcMain.handle('db:migrate-to-markdown', async (_, sqliteDbPath?: string) => {
+    const storagePath = store.preferences.get('storagePath') as string
+    const dbPath
+      = typeof sqliteDbPath === 'string' && sqliteDbPath.trim()
+        ? sqliteDbPath
+        : `${storagePath}/massCode.db`
 
     if (!isSqliteFile(dbPath)) {
       throw new Error(
-        'No valid massCode.db found in storage path. '
-        + 'Place a massCode.db file from a previous version into '
-        + `"${storagePath}" and try again.`,
+        'No valid massCode.db found. '
+        + 'Select a massCode.db file from a previous version and try again.',
       )
     }
 
@@ -42,7 +44,7 @@ export function registerIPC() {
     ) as typeof import('../storage/providers/markdown')
 
     try {
-      return migrateSqliteToMarkdownStorage()
+      return migrateSqliteToMarkdownStorage(dbPath)
     }
     finally {
       closeDB()

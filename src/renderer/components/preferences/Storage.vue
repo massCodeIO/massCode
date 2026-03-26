@@ -113,6 +113,18 @@ async function openVaultStorage() {
 }
 
 async function migrateSqliteToMarkdown() {
+  const sqliteDbPath = await ipc.invoke<DialogOptions, string>(
+    'main-menu:open-dialog',
+    {
+      properties: ['openFile'],
+      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+    },
+  )
+
+  if (!sqliteDbPath) {
+    return
+  }
+
   const isConfirmed = await confirm({
     title: i18n.t('messages:confirm.migrateToMarkdown.0'),
     content: i18n.t('messages:confirm.migrateToMarkdown.1'),
@@ -124,9 +136,9 @@ async function migrateSqliteToMarkdown() {
 
   try {
     const result = await ipc.invoke<
-      undefined,
+      string,
       { folders: number, snippets: number, tags: number }
-    >('db:migrate-to-markdown', undefined)
+    >('db:migrate-to-markdown', sqliteDbPath)
 
     await getFolders(false)
     await getSnippets()

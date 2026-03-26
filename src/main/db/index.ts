@@ -9,12 +9,21 @@ const DB_NAME = 'massCode.db'
 const isDev = process.env.NODE_ENV === 'development'
 
 let db: Database.Database | null = null
+let currentDbPath: string | null = null
 
-export function useDB() {
-  if (db)
+export function useDB(customDbPath?: string) {
+  const dbPath
+    = customDbPath || `${store.preferences.get('storagePath')}/${DB_NAME}`
+
+  if (db && currentDbPath === dbPath)
     return db
 
-  const dbPath = `${store.preferences.get('storagePath')}/${DB_NAME}`
+  if (db) {
+    db.close()
+    db = null
+    currentDbPath = null
+  }
+
   const dbDir = path.dirname(dbPath)
 
   if (!fs.existsSync(dbDir)) {
@@ -26,6 +35,7 @@ export function useDB() {
       // eslint-disable-next-line no-console
       verbose: isDev ? console.log : undefined,
     })
+    currentDbPath = dbPath
 
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
@@ -107,5 +117,6 @@ export function closeDB() {
   if (db) {
     db.close()
     db = null
+    currentDbPath = null
   }
 }

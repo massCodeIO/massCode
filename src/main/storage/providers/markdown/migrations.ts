@@ -208,12 +208,12 @@ function resolveUniqueSnippetPathForMigration(
   )
 }
 
-export function migrateSqliteToMarkdownStorage(): {
+export function migrateSqliteToMarkdownStorage(sqliteDbPath?: string): {
   folders: number
   snippets: number
   tags: number
 } {
-  const db = useDB()
+  const db = useDB(sqliteDbPath)
   const paths = getPaths(getVaultPath())
   ensureStateFile(paths)
 

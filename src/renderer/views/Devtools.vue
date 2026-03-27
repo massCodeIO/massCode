@@ -88,13 +88,6 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
-
-const uiNav = [
-  {
-    label: 'shadcn demo',
-    name: RouterName.devtoolsShadcnComparison,
-  },
-]
 </script>
 
 <template>
@@ -151,20 +144,6 @@ const uiNav = [
         </div>
         <RouterLink
           v-for="item in generatorsNav"
-          :key="item.name"
-          class="cursor-default"
-          :to="{ name: item.name }"
-        >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
-        </RouterLink>
-        <div class="text-muted-foreground my-2 text-[10px] uppercase">
-          demo
-        </div>
-        <RouterLink
-          v-for="item in uiNav"
           :key="item.name"
           class="cursor-default"
           :to="{ name: item.name }"

@@ -21,9 +21,15 @@ nextTick(() => {
 <template>
   <div
     data-notes-sidebar
-    class="flex h-full flex-col px-1 pt-[var(--content-top-offset)]"
+    class="flex h-full flex-col px-1"
+    style="
+      padding-top: calc(var(--content-top-offset) + var(--header-gap, 0px));
+    "
   >
-    <SidebarHeader :title="i18n.t('notes.plural')" />
+    <SidebarHeader
+      :title="i18n.t('notes.plural')"
+      :section-title="i18n.t('common.library')"
+    />
     <NotesSidebarLibrary />
     <NotesSidebarFolders />
   </div>

@@ -176,22 +176,16 @@ function onCancelEdit() {
 </script>
 
 <template>
-  <div class="mt-1 flex items-center justify-between py-1 pl-1 select-none">
-    <UiText
-      as="div"
-      variant="caption"
-      weight="bold"
-      uppercase
-    >
-      {{ i18n.t("common.folders") }}
-    </UiText>
-    <UiActionButton
-      :tooltip="i18n.t('action.new.folder')"
-      @click="createNoteFolderAndSelect()"
-    >
-      <Plus class="h-4 w-4" />
-    </UiActionButton>
-  </div>
+  <SidebarSectionHeader :title="i18n.t('common.folders')">
+    <template #action>
+      <UiActionButton
+        :tooltip="i18n.t('action.new.folder')"
+        @click="createNoteFolderAndSelect()"
+      >
+        <Plus class="h-4 w-4" />
+      </UiActionButton>
+    </template>
+  </SidebarSectionHeader>
   <div class="flex min-h-0 flex-1 flex-col">
     <div class="min-h-0 flex-1">
       <div class="min-h-0 flex-1 overflow-y-auto">
@@ -255,16 +249,7 @@ function onCancelEdit() {
       class="shrink-0 overflow-hidden"
     >
       <div class="flex h-full min-h-0 flex-col">
-        <div class="flex items-center justify-between py-1 pl-1 select-none">
-          <UiText
-            as="div"
-            variant="caption"
-            weight="bold"
-            uppercase
-          >
-            {{ i18n.t("common.tags") }}
-          </UiText>
-        </div>
+        <SidebarSectionHeader :title="i18n.t('common.tags')" />
         <div class="min-h-0 flex-1 px-1 pb-1">
           <NotesSidebarTags />
         </div>

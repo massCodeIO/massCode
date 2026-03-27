@@ -16,6 +16,7 @@ const props = defineProps<Props>()
 const {
   highlightedSnippetIds,
   highlightedFolderIds,
+  isCompactListMode,
   isFocusedSnippetName,
   focusedSnippetId,
   state,
@@ -252,13 +253,31 @@ onClickOutside(snippetRef, () => {
   >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger>
-        <div class="flex flex-col p-2 select-none">
+        <div
+          class="select-none"
+          :class="
+            isCompactListMode
+              ? 'flex items-center gap-2 px-2 py-1.5'
+              : 'flex flex-col p-2'
+          "
+        >
           <div
-            class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
             {{ snippet.name || i18n.t("snippet.untitled") }}
           </div>
           <UiText
+            v-if="isCompactListMode"
+            as="div"
+            variant="xs"
+            muted
+            class="meta shrink-0"
+          >
+            {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+          </UiText>
+          <UiText
+            v-else
             as="div"
             variant="xs"
             muted

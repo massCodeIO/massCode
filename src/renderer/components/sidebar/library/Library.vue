@@ -263,24 +263,19 @@ async function onFolderDrag({
     <div class="flex min-h-0 flex-1 flex-col">
       <div class="min-h-0 flex-1">
         <div class="flex h-full min-h-0 flex-col">
-          <div
-            class="mt-1 flex items-center justify-between py-1 pl-1 select-none"
+          <SidebarSectionHeader
+            class="mt-1"
+            :title="i18n.t('common.folders')"
           >
-            <UiText
-              as="div"
-              variant="caption"
-              weight="bold"
-              uppercase
-            >
-              {{ i18n.t("common.folders") }}
-            </UiText>
-            <UiActionButton
-              :tooltip="i18n.t('action.new.folder')"
-              @click="createFolderAndSelect()"
-            >
-              <Plus class="h-4 w-4" />
-            </UiActionButton>
-          </div>
+            <template #action>
+              <UiActionButton
+                :tooltip="i18n.t('action.new.folder')"
+                @click="createFolderAndSelect()"
+              >
+                <Plus class="h-4 w-4" />
+              </UiActionButton>
+            </template>
+          </SidebarSectionHeader>
 
           <div class="min-h-0 flex-1">
             <Tree
@@ -310,16 +305,7 @@ async function onFolderDrag({
         class="shrink-0 overflow-hidden"
       >
         <div class="flex h-full min-h-0 flex-col">
-          <div class="flex items-center justify-between py-1 pl-1 select-none">
-            <UiText
-              as="div"
-              variant="caption"
-              weight="bold"
-              uppercase
-            >
-              {{ i18n.t("common.tags") }}
-            </UiText>
-          </div>
+          <SidebarSectionHeader :title="i18n.t('common.tags')" />
 
           <div class="min-h-0 flex-1">
             <SidebarTags class="h-full px-1 pb-1" />

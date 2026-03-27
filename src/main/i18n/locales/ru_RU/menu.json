@@ -7,7 +7,7 @@
     "quit": "Выйти из massCode",
     "about": "О massCode",
     "hide": "Скрыть massCode",
-    "mathNotebook": "Math Notebook"
+    "mathNotebook": "Математический блокнот"
   },
   "help": {
     "label": "Помощь",
@@ -75,7 +75,7 @@
     "label": "Инструменты разработчика"
   },
   "window": {
-    "label": "Window",
-    "minimize": "Minimize"
+    "label": "Окно",
+    "minimize": "Свернуть"
   }
 }

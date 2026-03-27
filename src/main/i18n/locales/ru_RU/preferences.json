@@ -37,52 +37,52 @@
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "Редактор заметок",
     "fontSize": {
-      "label": "Font Size",
-      "description": "Base font size in pixels for the notes editor."
+      "label": "Размер шрифта",
+      "description": "Базовый размер шрифта в пикселях для редактора заметок."
     },
     "fontFamily": {
-      "label": "Text Font",
-      "description": "CSS font-family value. Use commas to specify fallbacks."
+      "label": "Шрифт текста",
+      "description": "Значение CSS font-family. Используйте запятые для указания запасных шрифтов."
     },
     "codeFontFamily": {
-      "label": "Monospace Font",
-      "description": "Font for inline code and fenced code blocks."
+      "label": "Моноширинный шрифт",
+      "description": "Шрифт для встроенного кода и блоков кода."
     },
     "lineHeight": {
-      "label": "Line Height",
-      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
-      "compact": "Compact (1.4)",
-      "default": "Default (1.54)",
-      "relaxed": "Relaxed (1.7)"
+      "label": "Межстрочный интервал",
+      "description": "Расстояние между строками. Свободный — легче читать, компактный — больше контента.",
+      "compact": "Компактный (1.4)",
+      "default": "По умолчанию (1.54)",
+      "relaxed": "Свободный (1.7)"
     },
     "indentSize": {
-      "label": "Indent Size",
-      "description": "Number of spaces per indent level for lists and nested content."
+      "label": "Размер отступа",
+      "description": "Количество пробелов на уровень отступа для списков и вложенного контента."
     },
     "limitWidth": {
-      "label": "Limit Width",
-      "description": "Constrain content to a comfortable reading width (700px)."
+      "label": "Ограничить ширину",
+      "description": "Ограничить контент комфортной шириной для чтения (700px)."
     },
     "lineNumbers": {
-      "label": "Line Numbers",
-      "description": "Show line numbers in the gutter. Only available in Raw mode."
+      "label": "Номера строк",
+      "description": "Показывать номера строк. Доступно только в режиме Raw."
     }
   },
   "appearance": {
     "label": "Внешний вид",
     "theme": {
       "label": "Тема",
-      "builtIn": "Built-in",
-      "custom": "Custom",
-      "themesDir": "Themes Directory",
-      "openDir": "Open Themes Directory",
-      "createTemplate": "Create Theme Template",
-      "dirDescription": "Place your JSON theme files in this folder.",
+      "builtIn": "Встроенные",
+      "custom": "Пользовательские",
+      "themesDir": "Директория тем",
+      "openDir": "Открыть директорию тем",
+      "createTemplate": "Создать шаблон темы",
+      "dirDescription": "Разместите JSON-файлы тем в этой папке.",
       "light": "Светлая",
       "dark": "Темная",
-      "system": "System"
+      "system": "Системная"
     }
   },
   "language": {

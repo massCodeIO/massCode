@@ -12,19 +12,19 @@
   "spaces": {
     "label": "Пространства",
     "code": {
-      "label": "Code",
+      "label": "Код",
       "tooltip": "Сниппеты кода",
-      "title": "Code Snippets",
+      "title": "Сниппеты кода",
       "allSnippets": "Все сниппеты"
     },
     "notes": {
-      "label": "Notes",
-      "tooltip": "Notes",
-      "title": "Notes",
-      "allNotes": "All Notes"
+      "label": "Заметки",
+      "tooltip": "Заметки",
+      "title": "Заметки",
+      "allNotes": "Все заметки"
     },
     "math": {
-      "label": "Math",
+      "label": "Математика",
       "tooltip": "Математический блокнот",
       "title": "Математический блокнот",
       "sheetList": "Список листов",
@@ -33,7 +33,7 @@
       "currencyUnavailable": "Сервис курсов валют недоступен"
     },
     "tools": {
-      "label": "Tools",
+      "label": "Инструменты",
       "tooltip": "Инструменты разработчика"
     }
   },
@@ -43,10 +43,10 @@
     "noSelected": "Нет выбранных сниппетов"
   },
   "notes": {
-    "untitled": "Untitled note",
-    "plural": "Notes",
-    "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "untitled": "Заметка без названия",
+    "plural": "Заметки",
+    "selectedMultiple": "Выбрано заметок: {{count}}",
+    "noSelected": "Нет выбранных заметок"
   },
   "folder": {
     "untitled": "Папка без названия"
@@ -68,7 +68,7 @@
     "toggleDarkMode": "Переключить тёмную тему",
     "background": "Фон",
     "goToDownload": "Перейти к загрузке",
-    "goToSettings": "Go to Settings",
+    "goToSettings": "Перейти к настройкам",
     "refreshPreview": "Обновить предпросмотр",
     "laserPointer": "Лазерная указка",
     "fullscreen": "Полный экран",
@@ -87,14 +87,14 @@
     "hide": "Скрыть",
     "showSidebar": "Показать боковую панель",
     "hideSidebar": "Скрыть боковую панель",
-    "showSidebarAndList": "Show Sidebar and List",
-    "hideSidebarAndList": "Hide Sidebar and List",
+    "showSidebarAndList": "Показать боковую панель и список",
+    "hideSidebarAndList": "Скрыть боковую панель и список",
     "new": {
       "storage": "Новое хранилище",
       "folder": "Новая папка",
       "snippet": "Новый сниппет",
       "fragment": "Новый фрагмент",
-      "note": "New Note"
+      "note": "Новая заметка"
     },
     "add": {
       "description": "Добавить описание",
@@ -112,12 +112,12 @@
       "fromFavorites": "Удалить из избранного"
     },
     "reveal": {
-      "inFinder": "Reveal in Finder",
-      "inFileManager": "Show in File Manager"
+      "inFinder": "Показать в Finder",
+      "inFileManager": "Показать в файловом менеджере"
     },
     "reload": {
       "storage": "Перезагрузить хранилище",
-      "app": "Reload massCode"
+      "app": "Перезагрузить massCode"
     },
     "delete": {
       "common": "Удалить",
@@ -141,11 +141,11 @@
   },
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
-    "emptyNotesTagList": "Add tags to notes to see them here",
+    "emptyNotesTagList": "Добавьте теги к заметкам, чтобы увидеть их здесь",
     "emptyFoldersList": "Нет папок",
     "emptySnippetsList": "Нет сниппетов",
-    "emptyNotesList": "No Notes",
-    "searchNotes": "Search notes...",
+    "emptyNotesList": "Нет заметок",
+    "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
     "addTag": "Добавить тег"

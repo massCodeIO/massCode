@@ -29,16 +29,16 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
   return [
     {
       id: 'code',
-      label: i18n.t('spaces.code'),
-      tooltip: i18n.t('spaces.codeTooltip'),
+      label: i18n.t('spaces.code.label'),
+      tooltip: i18n.t('spaces.code.tooltip'),
       icon: Code2,
       to: { name: RouterName.main },
       isActive: routeName => routeName === RouterName.main,
     },
     {
       id: 'notes',
-      label: i18n.t('spaces.notes'),
-      tooltip: i18n.t('spaces.notesTooltip'),
+      label: i18n.t('spaces.notes.label'),
+      tooltip: i18n.t('spaces.notes.tooltip'),
       icon: Notebook,
       to: { name: RouterName.notesSpace },
       isActive: routeName =>
@@ -46,16 +46,16 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
     },
     {
       id: 'math',
-      label: i18n.t('spaces.math'),
-      tooltip: i18n.t('spaces.mathTooltip'),
+      label: i18n.t('spaces.math.label'),
+      tooltip: i18n.t('spaces.math.tooltip'),
       icon: Calculator,
       to: { name: RouterName.mathNotebook },
       isActive: routeName => routeName === RouterName.mathNotebook,
     },
     {
       id: 'tools',
-      label: i18n.t('spaces.tools'),
-      tooltip: i18n.t('spaces.toolsTooltip'),
+      label: i18n.t('spaces.tools.label'),
+      tooltip: i18n.t('spaces.tools.tooltip'),
       icon: Blocks,
       to: { name: RouterName.devtoolsCaseConverter },
       isActive: routeName =>

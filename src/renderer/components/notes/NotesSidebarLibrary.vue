@@ -23,18 +23,18 @@ const {
 const { clearSearch } = useNoteSearch()
 
 const libraryItems = [
-  { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
+  { id: LibraryFilter.Inbox, name: i18n.t('common.inbox'), icon: Inbox },
   {
     id: LibraryFilter.Favorites,
-    name: i18n.t('sidebar.favorites'),
+    name: i18n.t('common.favorites'),
     icon: Star,
   },
   {
     id: LibraryFilter.All,
-    name: i18n.t('sidebar.allNotes'),
+    name: i18n.t('spaces.notes.allNotes'),
     icon: Archive,
   },
-  { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
+  { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
 
 const focusedItemId = ref<string>()

@@ -10,7 +10,7 @@ defineProps<Props>()
 
 <template>
   <div class="px-1">
-    <div class="truncate px-1 pb-2 font-bold leading-5 select-none">
+    <div class="truncate px-1 pb-2 leading-5 font-bold select-none">
       {{ title }}
     </div>
     <UiText
@@ -20,7 +20,7 @@ defineProps<Props>()
       uppercase
       class="flex gap-1 pb-1 pl-1 select-none"
     >
-      {{ i18n.t("sidebar.library") }}
+      {{ i18n.t("common.library") }}
     </UiText>
   </div>
 </template>

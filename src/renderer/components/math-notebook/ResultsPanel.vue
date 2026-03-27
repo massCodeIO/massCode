@@ -144,7 +144,7 @@ function openDocumentation() {
           uppercase
           class="text-muted-foreground shrink-0 tracking-[0.1em]"
         >
-          {{ i18n.t("total") }}
+          {{ i18n.t("common.total") }}
         </UiText>
         <span
           class="group flex h-[22px] min-w-0 flex-1 items-center justify-end font-mono text-[13px] leading-[22px] select-none"
@@ -170,7 +170,7 @@ function openDocumentation() {
         {{ i18n.t("menu:help.documentation") }}
       </Button>
       <UiActionButton
-        :tooltip="i18n.t('total')"
+        :tooltip="i18n.t('common.total')"
         @click="showTotal = !showTotal"
       >
         <Sigma class="text-foreground h-3.5 w-3.5 transition-colors" />

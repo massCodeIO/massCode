@@ -60,10 +60,10 @@ const folderName = computed(() => {
   }
 
   if (props.note.isDeleted) {
-    return i18n.t('sidebar.trash')
+    return i18n.t('common.trash')
   }
 
-  return i18n.t('sidebar.inbox')
+  return i18n.t('common.inbox')
 })
 
 function onNoteClick(id: number, event: MouseEvent) {

@@ -13,7 +13,7 @@ onMounted(async () => {
 
 <template>
   <LayoutTwoColumn
-    :title="i18n.t('mathNotebook.label')"
+    :title="i18n.t('spaces.math.title')"
     :show-back="false"
   >
     <template #left>

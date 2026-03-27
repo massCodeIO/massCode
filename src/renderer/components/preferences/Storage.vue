@@ -210,8 +210,8 @@ async function migrateSqliteToMarkdown() {
         />
 
         <template v-else>
-          {{ i18n.t("total") }}: {{ counts.total }},
-          {{ i18n.t("sidebar.trash") }}: {{ counts.trash }}
+          {{ i18n.t("common.total") }}: {{ counts.total }},
+          {{ i18n.t("common.trash") }}: {{ counts.trash }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

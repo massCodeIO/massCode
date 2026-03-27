@@ -59,10 +59,10 @@ function cancelRename() {
         weight="bold"
         uppercase
       >
-        {{ i18n.t("mathNotebook.sheetList") }}
+        {{ i18n.t("spaces.math.sheetList") }}
       </UiText>
       <UiActionButton
-        :tooltip="i18n.t('mathNotebook.newSheet')"
+        :tooltip="i18n.t('spaces.math.newSheet')"
         @click="handleCreateSheet"
       >
         <Plus class="h-4 w-4" />

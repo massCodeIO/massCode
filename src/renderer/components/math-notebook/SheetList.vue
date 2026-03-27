@@ -3,7 +3,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useApp, useMathNotebook } from '@/composables'
 import { i18n } from '@/electron'
 import { format } from 'date-fns'
-import { FileText, Plus } from 'lucide-vue-next'
+import { FileText } from 'lucide-vue-next'
 
 const { isCompactListMode } = useApp()
 const {
@@ -49,23 +49,14 @@ function finishRename(id: string) {
 function cancelRename() {
   editingId.value = null
 }
+
+defineExpose({
+  handleCreateSheet,
+})
 </script>
 
 <template>
   <div class="flex h-full flex-col overflow-hidden">
-    <div class="-mt-2 px-2">
-      <SidebarSectionHeader :title="i18n.t('spaces.math.sheetList')">
-        <template #action>
-          <UiActionButton
-            :tooltip="i18n.t('spaces.math.newSheet')"
-            @click="handleCreateSheet"
-          >
-            <Plus class="h-4 w-4" />
-          </UiActionButton>
-        </template>
-      </SidebarSectionHeader>
-    </div>
-
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-2">
       <ContextMenu.ContextMenu
         v-for="sheet in sheets"

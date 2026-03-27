@@ -95,9 +95,16 @@ const generatorsNav = [
     :title="i18n.t('devtools:label')"
     :show-back="false"
   >
+    <template #leftHeader>
+      <div class="px-1 pt-[var(--content-top-offset)]">
+        <SidebarHeader
+          :title="i18n.t('devtools:label')"
+          :section-title="i18n.t('devtools:converters.label')"
+        />
+      </div>
+    </template>
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
-        <SidebarSectionHeader :title="i18n.t('devtools:converters.label')" />
         <RouterLink
           v-for="item in convertersNav"
           :key="item.name"
@@ -117,10 +124,7 @@ const generatorsNav = [
             </div>
           </SidebarItem>
         </RouterLink>
-        <SidebarSectionHeader
-          class="mt-1"
-          :title="i18n.t('devtools:crypto.label')"
-        />
+        <SidebarSectionHeader :title="i18n.t('devtools:crypto.label')" />
         <RouterLink
           v-for="item in cryptoNav"
           :key="item.name"
@@ -140,10 +144,7 @@ const generatorsNav = [
             </div>
           </SidebarItem>
         </RouterLink>
-        <SidebarSectionHeader
-          class="mt-1"
-          :title="i18n.t('devtools:web.label')"
-        />
+        <SidebarSectionHeader :title="i18n.t('devtools:web.label')" />
         <RouterLink
           v-for="item in webNav"
           :key="item.name"
@@ -163,10 +164,7 @@ const generatorsNav = [
             </div>
           </SidebarItem>
         </RouterLink>
-        <SidebarSectionHeader
-          class="mt-1"
-          :title="i18n.t('devtools:generators.label')"
-        />
+        <SidebarSectionHeader :title="i18n.t('devtools:generators.label')" />
         <RouterLink
           v-for="item in generatorsNav"
           :key="item.name"

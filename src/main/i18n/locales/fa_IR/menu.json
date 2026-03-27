@@ -42,7 +42,13 @@
       "dateCreated": "تاریخ ایجاد",
       "name": "نام"
     },
-    "compactMode": "حالت فشرده"
+    "compactMode": "حالت فشرده",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "ویرایش",
@@ -57,7 +63,11 @@
     "previewJson": "پیش‌نمایش JSON",
     "fontSizeIncrease": "افزایش اندازه فونت",
     "fontSizeDecrease": "کاهش اندازه فونت",
-    "fontSizeReset": "بازنشانی اندازه فونت"
+    "fontSizeReset": "بازنشانی اندازه فونت",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

@@ -42,7 +42,13 @@
       "dateCreated": "Ημερομηνία Δημιουργίας",
       "name": "Όνομα"
     },
-    "compactMode": "Συμπαγής Λειτουργία"
+    "compactMode": "Συμπαγής Λειτουργία",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Επεξεργασία",
@@ -57,7 +63,11 @@
     "previewJson": "Προεπισκόπηση JSON",
     "fontSizeIncrease": "Αύξηση Μεγέθους Γραμματοσειράς",
     "fontSizeDecrease": "Μείωση Μεγέθους Γραμματοσειράς",
-    "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς"
+    "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

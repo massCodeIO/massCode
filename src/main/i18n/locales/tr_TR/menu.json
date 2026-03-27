@@ -42,7 +42,13 @@
       "dateCreated": "Oluşturulma Tarihi",
       "name": "İsim"
     },
-    "compactMode": "Kompakt Mod"
+    "compactMode": "Kompakt Mod",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Düzenle",
@@ -57,7 +63,11 @@
     "previewJson": "JSON Önizleme",
     "fontSizeIncrease": "Yazı Boyutunu Artır",
     "fontSizeDecrease": "Yazı Boyutunu Azalt",
-    "fontSizeReset": "Yazı Boyutunu Sıfırla"
+    "fontSizeReset": "Yazı Boyutunu Sıfırla",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

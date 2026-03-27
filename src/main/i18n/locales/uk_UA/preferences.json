@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Редактор",
-    "fontSize": "Розмір шрифту",
-    "fontFamily": "Сімейство шрифтів",
+    "fontSize": {
+      "label": "Розмір шрифту",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Сімейство шрифтів",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Перенесення",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Перенесення слів",
       "off": "Вимкнено"
     },
-    "tabSize": "Розмір табуляції",
+    "tabSize": {
+      "label": "Розмір табуляції",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Показати невидимі символи",
-    "highlightLine": "Підсвічування рядка",
+    "highlightLine": {
+      "label": "Підсвічування рядка",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Підсвічування відступів",
-    "matchBrackets": "Парні дужки",
+    "matchBrackets": {
+      "label": "Парні дужки",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Кома в кінці",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Немає",
         "all": "Всюди",
         "es5": "ES5"
       },
-      "semi": "Крапка з комою",
-      "singleQuote": "Одинарні лапки"
+      "semi": {
+        "label": "Крапка з комою",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Одинарні лапки",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

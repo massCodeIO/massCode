@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Edytor",
-    "fontSize": "Rozmiar czcionki",
-    "fontFamily": "Rodzina czcionek",
+    "fontSize": {
+      "label": "Rozmiar czcionki",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Rodzina czcionek",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Zawijanie",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Zawijanie wierszy",
       "off": "Wyłączone"
     },
-    "tabSize": "Rozmiar tabulacji",
+    "tabSize": {
+      "label": "Rozmiar tabulacji",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Pokaż niewidoczne znaki",
-    "highlightLine": "Podświetl linię",
+    "highlightLine": {
+      "label": "Podświetl linię",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Podświetl marginesy",
-    "matchBrackets": "Dopasuj nawiasy",
+    "matchBrackets": {
+      "label": "Dopasuj nawiasy",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Końcowy przecinek",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Brak",
         "all": "Wszystkie",
         "es5": "ES5"
       },
-      "semi": "Średnik",
-      "singleQuote": "Pojedynczy cudzysłów"
+      "semi": {
+        "label": "Średnik",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Pojedynczy cudzysłów",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

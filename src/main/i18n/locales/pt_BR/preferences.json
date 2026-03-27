@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Tamanho da Fonte",
-    "fontFamily": "Família da Fonte",
+    "fontSize": {
+      "label": "Tamanho da Fonte",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Família da Fonte",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Quebra",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Quebra de Palavra",
       "off": "Desligado"
     },
-    "tabSize": "Tamanho do Tab",
+    "tabSize": {
+      "label": "Tamanho do Tab",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Mostrar Invisíveis",
-    "highlightLine": "Destacar Linha",
+    "highlightLine": {
+      "label": "Destacar Linha",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Destacar Gutter",
-    "matchBrackets": "Corresponder Colchetes",
+    "matchBrackets": {
+      "label": "Corresponder Colchetes",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Vírgula Final",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Nenhum",
         "all": "Todos",
         "es5": "ES5"
       },
-      "semi": "Ponto e Vírgula",
-      "singleQuote": "Aspas Simples"
+      "semi": {
+        "label": "Ponto e Vírgula",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Aspas Simples",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

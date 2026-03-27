@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "ویرایشگر",
-    "fontSize": "اندازه فونت",
-    "fontFamily": "خانواده فونت",
+    "fontSize": {
+      "label": "اندازه فونت",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "خانواده فونت",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "شکستن خط",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "شکستن کلمه",
       "off": "خاموش"
     },
-    "tabSize": "اندازه تب",
+    "tabSize": {
+      "label": "اندازه تب",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "نمایش نامرئی‌ها",
-    "highlightLine": "برجسته کردن خط",
+    "highlightLine": {
+      "label": "برجسته کردن خط",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "برجسته کردن حاشیه",
-    "matchBrackets": "تطبیق پرانتزها",
+    "matchBrackets": {
+      "label": "تطبیق پرانتزها",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "کاما انتهایی",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "هیچ",
         "all": "همه",
         "es5": "ES5"
       },
-      "semi": "نقطه‌ویرگول",
-      "singleQuote": "تک کوتیشن"
+      "semi": {
+        "label": "نقطه‌ویرگول",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "تک کوتیشن",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

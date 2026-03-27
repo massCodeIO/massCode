@@ -5,7 +5,6 @@ import {
   INVALID_NAME_CHARS,
   META_DIR_NAME,
   RESERVED_ROOT_NAMES,
-  SPACES_DIR_NAME,
   WINDOWS_RESERVED_NAME_RE,
 } from './constants'
 import { normalizeErrorMessage } from './normalizers'
@@ -87,7 +86,7 @@ export function assertNotReservedRootFolderName(
 ): void {
   const normalizedName = name.toLowerCase()
 
-  if (normalizedName === META_DIR_NAME || normalizedName === SPACES_DIR_NAME) {
+  if (normalizedName === META_DIR_NAME) {
     throwStorageError('RESERVED_NAME', 'This folder name is reserved')
   }
 

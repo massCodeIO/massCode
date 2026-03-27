@@ -9,6 +9,7 @@ import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { mainMenu } from './menu/main'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
+import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
 import { checkForUpdates } from './updates'
 import { isSqliteFile, log } from './utils'
@@ -106,13 +107,8 @@ else {
               store.preferences.get('storagePath') as string,
               'markdown-vault',
             )
-        const filePath = path.join(
-          vaultPath,
-          '__spaces__',
-          'notes',
-          'assets',
-          fileName,
-        )
+        ensureFlatSpacesLayout(vaultPath)
+        const filePath = path.join(vaultPath, 'notes', 'assets', fileName)
 
         try {
           const data = await readFile(filePath)
@@ -148,9 +144,9 @@ else {
         const vaultPath
           = (store.preferences.get('storage.vaultPath') as string | null)
             || path.join(storagePath, 'markdown-vault')
+        ensureFlatSpacesLayout(vaultPath)
         const statePath = path.join(
           vaultPath,
-          '__spaces__',
           'code',
           '.masscode',
           'state.json',

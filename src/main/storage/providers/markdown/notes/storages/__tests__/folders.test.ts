@@ -78,7 +78,7 @@ describe('folders storage validations', () => {
     tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'folders-storage-'))
     resetNotesRuntimeCache()
 
-    const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
+    const notesRoot = path.join(tempVaultPath, 'notes')
     const metaDirPath = path.join(notesRoot, '.masscode')
 
     ensureNotesStateFile({
@@ -124,7 +124,7 @@ describe('folders storage validations', () => {
     const { id } = storage.createFolder({ name: 'Source' })
     storage.getFolders()
 
-    const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
+    const notesRoot = path.join(tempVaultPath, 'notes')
     fs.ensureDirSync(path.join(notesRoot, 'Target'))
 
     expect(() => storage.updateFolder(id, { name: 'Target' })).toThrow(

@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('getNotesPaths', () => {
-  it('migrates nested notes space from __spaces__/code to root __spaces__/notes', () => {
+  it('migrates nested notes space from legacy code root to flat notes root', () => {
     const vaultPath = createTempDir()
     const legacyNotesRoot = path.join(
       vaultPath,
@@ -42,18 +42,16 @@ describe('getNotesPaths', () => {
 
     const notesPaths = getNotesPaths(vaultPath)
 
-    expect(notesPaths.notesRoot).toBe(
-      path.join(vaultPath, '__spaces__', 'notes'),
-    )
+    expect(notesPaths.notesRoot).toBe(path.join(vaultPath, 'notes'))
     expect(
       fs.pathExistsSync(path.join(notesPaths.notesRoot, 'Folder', 'note.md')),
     ).toBe(true)
     expect(fs.pathExistsSync(legacyNotesRoot)).toBe(false)
   })
 
-  it('merges nested notes space into existing root notes space', () => {
+  it('merges nested notes space into existing flat notes space', () => {
     const vaultPath = createTempDir()
-    const notesRoot = path.join(vaultPath, '__spaces__', 'notes')
+    const notesRoot = path.join(vaultPath, 'notes')
     fs.ensureDirSync(path.join(notesRoot, '.masscode'))
     fs.writeFileSync(
       path.join(notesRoot, '.masscode', 'state.json'),
@@ -62,13 +60,7 @@ describe('getNotesPaths', () => {
     )
     fs.writeFileSync(path.join(notesRoot, 'root-note.md'), '# Root')
 
-    const legacyNotesRoot = path.join(
-      vaultPath,
-      '__spaces__',
-      'code',
-      '__spaces__',
-      'notes',
-    )
+    const legacyNotesRoot = path.join(vaultPath, 'code', '__spaces__', 'notes')
     fs.ensureDirSync(legacyNotesRoot)
     fs.writeFileSync(path.join(legacyNotesRoot, 'legacy-note.md'), '# Legacy')
 

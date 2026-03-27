@@ -8,7 +8,7 @@ import {
   CODE_SPACE_ID,
   INBOX_DIR_NAME,
   META_DIR_NAME,
-  SPACES_DIR_NAME,
+  SPACE_IDS,
   STATE_FILE_NAME,
   TRASH_DIR_NAME,
 } from './constants'
@@ -18,6 +18,7 @@ import {
   getFolderSiblings as getFolderSiblingsShared,
   getNextFolderOrder as getNextFolderOrderShared,
 } from './shared/folderIndex'
+import { getSpaceDirPath } from './spaces'
 
 export function getVaultPath(): string {
   const configuredVaultPath = store.preferences.get('storage.vaultPath') as
@@ -147,7 +148,7 @@ function collectLegacyCodeEntries(vaultPath: string): Set<string> {
     && fs.pathExistsSync(path.join(vaultPath, META_DIR_NAME))
   ) {
     fs.readdirSync(vaultPath).forEach((entry) => {
-      if (entry !== SPACES_DIR_NAME) {
+      if (entry !== '__spaces__' && !SPACE_IDS.has(entry)) {
         entries.add(entry)
       }
     })
@@ -177,7 +178,7 @@ function migrateLegacyCodeDataToCodeSpace(
   fs.ensureDirSync(codeRootPath)
 
   legacyEntries.forEach((entry) => {
-    if (entry === SPACES_DIR_NAME) {
+    if (entry === '__spaces__' || SPACE_IDS.has(entry)) {
       return
     }
 
@@ -206,7 +207,7 @@ function migrateLegacyCodeDataToCodeSpace(
 }
 
 function resolveCodeVaultPath(vaultPath: string): string {
-  const codeRootPath = path.join(vaultPath, SPACES_DIR_NAME, CODE_SPACE_ID)
+  const codeRootPath = getSpaceDirPath(vaultPath, CODE_SPACE_ID)
   const shouldMigrateLegacyData
     = hasLegacyCodeData(vaultPath)
       && (!fs.pathExistsSync(codeRootPath) || !isCodeSpaceInitialized(codeRootPath))

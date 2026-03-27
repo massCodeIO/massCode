@@ -1,6 +1,8 @@
 import type { Channel } from '../types/ipc'
+import type { MainMenuContext } from '../types/menu'
 import { createRequire } from 'node:module'
 import { BrowserWindow, ipcMain } from 'electron'
+import { updateMainMenu } from '../menu/main'
 import { store } from '../store'
 import { isSqliteFile } from '../utils'
 import { registerDialogHandlers } from './handlers/dialog'
@@ -23,6 +25,10 @@ export function registerIPC() {
   registerFsHandlers()
   registerThemeHandlers()
   registerSpacesHandlers()
+
+  ipcMain.on('main-menu:update-context', (_, payload: MainMenuContext) => {
+    updateMainMenu(payload)
+  })
 
   ipcMain.handle('db:migrate-to-markdown', async (_, sqliteDbPath?: string) => {
     const storagePath = store.preferences.get('storagePath') as string

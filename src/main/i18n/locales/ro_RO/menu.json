@@ -42,7 +42,13 @@
       "dateCreated": "Data Creării",
       "name": "Nume"
     },
-    "compactMode": "Mod Compact"
+    "compactMode": "Mod Compact",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Editare",
@@ -57,7 +63,11 @@
     "previewJson": "Previzualizare JSON",
     "fontSizeIncrease": "Mărește Dimensiunea Fontului",
     "fontSizeDecrease": "Micșorează Dimensiunea Fontului",
-    "fontSizeReset": "Resetează Dimensiunea Fontului"
+    "fontSizeReset": "Resetează Dimensiunea Fontului",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

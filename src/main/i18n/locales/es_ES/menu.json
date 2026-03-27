@@ -42,7 +42,13 @@
       "dateCreated": "Fecha de Creación",
       "name": "Nombre"
     },
-    "compactMode": "Modo Compacto"
+    "compactMode": "Modo Compacto",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Editar",
@@ -57,7 +63,11 @@
     "previewJson": "Vista previa JSON",
     "fontSizeIncrease": "Aumentar Tamaño de Fuente",
     "fontSizeDecrease": "Disminuir Tamaño de Fuente",
-    "fontSizeReset": "Restablecer Tamaño de Fuente"
+    "fontSizeReset": "Restablecer Tamaño de Fuente",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

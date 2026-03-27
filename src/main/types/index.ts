@@ -11,7 +11,7 @@ declare global {
     electron: {
       ipc: {
         on: (channel: Channel, cb: EventCallback) => void
-        send: (channel: Channel, data: any, cb: EventCallback) => void
+        send: (channel: Channel, data: any, cb?: EventCallback) => void
         invoke: <T, U = any>(channel: Channel, data: T) => Promise<U>
         removeListener: (channel: Channel, cb: EventCallback) => void
         removeListeners: (channel: Channel) => void

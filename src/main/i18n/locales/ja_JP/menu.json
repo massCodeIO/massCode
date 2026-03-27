@@ -42,7 +42,13 @@
       "dateCreated": "作成日時",
       "name": "名前"
     },
-    "compactMode": "コンパクトモード"
+    "compactMode": "コンパクトモード",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "編集",
@@ -57,7 +63,11 @@
     "previewJson": "JSON プレビュー",
     "fontSizeIncrease": "フォントサイズを大きく",
     "fontSizeDecrease": "フォントサイズを小さく",
-    "fontSizeReset": "フォントサイズをリセット"
+    "fontSizeReset": "フォントサイズをリセット",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

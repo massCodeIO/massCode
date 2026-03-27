@@ -1,5 +1,11 @@
 import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
+import {
+  getLayoutModeFromNotesPanels,
+  getNextLayoutModeForSidebarToggle,
+  getNotesPanelsFromLayoutMode,
+  type LayoutMode,
+} from '../../layoutModes'
 
 export type NotesStateAction = 'beforeSearch'
 
@@ -49,24 +55,28 @@ const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
 const isNotesMindmapShown = ref(false)
 const isNotesPresentationShown = ref(false)
+const notesLayoutMode = computed<LayoutMode>({
+  get: () =>
+    getLayoutModeFromNotesPanels({
+      isSidebarHidden: Boolean(notesState.isSidebarHidden),
+      isListHidden: Boolean(notesState.isListHidden),
+    }),
+  set: (value) => {
+    const panels = getNotesPanelsFromLayoutMode(value)
+    notesState.isSidebarHidden = panels.isSidebarHidden
+    notesState.isListHidden = panels.isListHidden
+  },
+})
 const isNotesSidebarHidden = computed({
-  get: () => Boolean(notesState.isSidebarHidden),
+  get: () => notesLayoutMode.value !== 'all-panels',
   set: (value: boolean) => {
-    notesState.isSidebarHidden = value
-
-    if (!value) {
-      notesState.isListHidden = false
-    }
+    notesLayoutMode.value = value ? 'list-editor' : 'all-panels'
   },
 })
 const isNotesListHidden = computed({
-  get: () => Boolean(notesState.isListHidden),
+  get: () => notesLayoutMode.value === 'editor-only',
   set: (value: boolean) => {
-    notesState.isListHidden = value
-
-    if (value) {
-      notesState.isSidebarHidden = true
-    }
+    notesLayoutMode.value = value ? 'editor-only' : 'list-editor'
   },
 })
 
@@ -104,18 +114,25 @@ function restoreNotesStateSnapshot(action: NotesStateAction): void {
 }
 
 function showAllNotesPanels() {
-  isNotesSidebarHidden.value = false
-  isNotesListHidden.value = false
+  notesLayoutMode.value = 'all-panels'
 }
 
 function hideNotesSidebar() {
-  isNotesSidebarHidden.value = true
-  isNotesListHidden.value = false
+  notesLayoutMode.value = 'list-editor'
 }
 
 function showNotesEditorOnly() {
-  isNotesSidebarHidden.value = true
-  isNotesListHidden.value = true
+  notesLayoutMode.value = 'editor-only'
+}
+
+function setNotesLayoutMode(value: LayoutMode) {
+  notesLayoutMode.value = value
+}
+
+function toggleNotesSidebar() {
+  notesLayoutMode.value = getNextLayoutModeForSidebarToggle(
+    notesLayoutMode.value,
+  )
 }
 
 function hideNotesViewModes() {
@@ -152,6 +169,7 @@ export function useNotesApp() {
     isFocusedSearch,
     isNotesMindmapShown,
     isNotesListHidden,
+    notesLayoutMode,
     isNotesPresentationShown,
     notesEditorMode,
     isNotesSidebarHidden,
@@ -161,10 +179,12 @@ export function useNotesApp() {
     notesState,
     restoreNotesStateSnapshot,
     saveNotesStateSnapshot,
+    setNotesLayoutMode,
     showAllNotesPanels,
     showNotesMindmap,
     showNotesPresentation,
     showNotesEditorOnly,
     stateSnapshots,
+    toggleNotesSidebar,
   }
 }

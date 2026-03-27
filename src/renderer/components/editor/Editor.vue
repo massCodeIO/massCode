@@ -11,7 +11,6 @@ import {
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
-import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/search/search'
@@ -51,7 +50,7 @@ let currentSearchOverlay: any = null
 
 const isProgrammaticChange = ref(false)
 
-const fontSize = useCssVar('--editor-font-size', document.body, {
+useCssVar('--editor-font-size', document.body, {
   initialValue: `${settings.fontSize}px`,
 })
 
@@ -187,21 +186,6 @@ async function init() {
     'Cmd-F': () => {
       isFocusedSearch.value = true
     },
-  })
-
-  ipc.on('main-menu:font-size-increase', () => {
-    settings.fontSize++
-    fontSize.value = `${settings.fontSize}px`
-  })
-
-  ipc.on('main-menu:font-size-decrease', () => {
-    settings.fontSize--
-    fontSize.value = `${settings.fontSize}px`
-  })
-
-  ipc.on('main-menu:font-size-reset', () => {
-    settings.fontSize = EDITOR_DEFAULTS.fontSize
-    fontSize.value = `${settings.fontSize}px`
   })
 
   ipc.on('main-menu:copy-snippet', () => {

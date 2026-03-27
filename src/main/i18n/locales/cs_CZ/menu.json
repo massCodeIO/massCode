@@ -42,7 +42,13 @@
       "dateCreated": "Data vytvoření",
       "name": "Názvu"
     },
-    "compactMode": "Kompaktní režim"
+    "compactMode": "Kompaktní režim",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Upravit",
@@ -57,7 +63,11 @@
     "previewJson": "Náhled JSON",
     "fontSizeIncrease": "Zvětšit velikost písma",
     "fontSizeDecrease": "Zmenšit velikost písma",
-    "fontSizeReset": "Obnovit velikost písma"
+    "fontSizeReset": "Obnovit velikost písma",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Okno",
     "minimize": "Minimalizovat"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

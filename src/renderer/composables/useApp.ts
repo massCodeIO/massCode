@@ -1,5 +1,10 @@
 import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
+import {
+  getCodeLayoutModeFromLegacyState,
+  getNextLayoutModeForSidebarToggle,
+  type LayoutMode,
+} from './layoutModes'
 
 const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
 
@@ -11,10 +16,25 @@ const state = reactive<SavedState>(store.app.get('state') as SavedState)
 const storedSidebarHidden = store.app.get('state.isSidebarHidden') as
   | boolean
   | undefined
-const isSidebarHidden = ref(
-  storedSidebarHidden ?? state.isSidebarHidden ?? false,
+const storedCodeLayoutMode = store.app.get('state.codeLayoutMode') as
+  | LayoutMode
+  | undefined
+const codeLayoutMode = ref<LayoutMode>(
+  storedCodeLayoutMode
+  ?? state.codeLayoutMode
+  ?? getCodeLayoutModeFromLegacyState(
+    storedSidebarHidden ?? state.isSidebarHidden,
+  ),
 )
+const isSidebarHidden = computed({
+  get: () => codeLayoutMode.value !== 'all-panels',
+  set: (value: boolean) => {
+    codeLayoutMode.value = value ? 'list-editor' : 'all-panels'
+  },
+})
 
+if (state.codeLayoutMode === undefined)
+  state.codeLayoutMode = codeLayoutMode.value
 if (state.isSidebarHidden === undefined)
   state.isSidebarHidden = isSidebarHidden.value
 
@@ -39,6 +59,7 @@ function saveStateSnapshot(action: StateAction): void {
     tagId: state.tagId,
     snippetContentIndex: state.snippetContentIndex,
     libraryFilter: state.libraryFilter,
+    codeLayoutMode: codeLayoutMode.value,
     isSidebarHidden: isSidebarHidden.value,
   }
 }
@@ -57,8 +78,12 @@ function restoreStateSnapshot(action: StateAction): void {
     state.tagId = snapshot.tagId
   if (snapshot.snippetContentIndex !== undefined)
     state.snippetContentIndex = snapshot.snippetContentIndex
-  if (snapshot.isSidebarHidden !== undefined)
+  if (snapshot.codeLayoutMode !== undefined) {
+    codeLayoutMode.value = snapshot.codeLayoutMode
+  }
+  else if (snapshot.isSidebarHidden !== undefined) {
     isSidebarHidden.value = snapshot.isSidebarHidden
+  }
 }
 
 watch(
@@ -69,12 +94,24 @@ watch(
   { deep: true },
 )
 
-watch(isSidebarHidden, (value) => {
-  state.isSidebarHidden = value
+watch(codeLayoutMode, (value) => {
+  state.codeLayoutMode = value
+  state.isSidebarHidden = value !== 'all-panels'
 })
+
+function setCodeLayoutMode(value: LayoutMode) {
+  codeLayoutMode.value = value
+}
+
+function toggleCodeSidebar() {
+  codeLayoutMode.value = getNextLayoutModeForSidebarToggle(
+    codeLayoutMode.value,
+  )
+}
 
 export function useApp() {
   return {
+    codeLayoutMode,
     focusedFolderId,
     focusedSnippetId,
     isAppLoading,
@@ -91,7 +128,9 @@ export function useApp() {
     isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,
+    setCodeLayoutMode,
     state,
     stateSnapshots,
+    toggleCodeSidebar,
   }
 }

@@ -42,7 +42,13 @@
       "dateCreated": "創建日期",
       "name": "名稱"
     },
-    "compactMode": "緊湊模式"
+    "compactMode": "緊湊模式",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "編輯",
@@ -57,7 +63,11 @@
     "previewJson": "預覽 JSON",
     "fontSizeIncrease": "增大字體",
     "fontSizeDecrease": "減小字體",
-    "fontSizeReset": "重置字體大小"
+    "fontSizeReset": "重置字體大小",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

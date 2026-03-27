@@ -7,7 +7,7 @@ import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
 import { initApi } from './api'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
-import { mainMenu } from './menu/main'
+import { createMainMenu } from './menu/main'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
@@ -55,7 +55,7 @@ function createWindow() {
     },
   })
 
-  Menu.setApplicationMenu(mainMenu)
+  Menu.setApplicationMenu(createMainMenu())
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
@@ -203,17 +203,17 @@ else {
     }
 
     try {
-      createWindow()
-    }
-    catch (error) {
-      log('Error creating window', error)
-    }
-
-    try {
       registerIPC()
     }
     catch (error) {
       log('Error registering IPC', error)
+    }
+
+    try {
+      createWindow()
+    }
+    catch (error) {
+      log('Error creating window', error)
     }
 
     try {

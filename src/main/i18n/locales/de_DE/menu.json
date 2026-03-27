@@ -42,7 +42,13 @@
       "dateCreated": "Erstellungsdatum",
       "name": "Name"
     },
-    "compactMode": "Kompakter Modus"
+    "compactMode": "Kompakter Modus",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "Bearbeiten",
@@ -57,7 +63,11 @@
     "previewJson": "JSON-Vorschau",
     "fontSizeIncrease": "Schriftgröße erhöhen",
     "fontSizeDecrease": "Schriftgröße verringern",
-    "fontSizeReset": "Schriftgröße zurücksetzen"
+    "fontSizeReset": "Schriftgröße zurücksetzen",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

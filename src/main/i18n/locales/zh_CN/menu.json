@@ -42,7 +42,13 @@
       "dateCreated": "创建日期",
       "name": "名称"
     },
-    "compactMode": "紧凑模式"
+    "compactMode": "紧凑模式",
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
   },
   "edit": {
     "label": "编辑",
@@ -57,7 +63,11 @@
     "previewJson": "预览 JSON",
     "fontSizeIncrease": "增大字体",
     "fontSizeDecrease": "减小字体",
-    "fontSizeReset": "重置字体大小"
+    "fontSizeReset": "重置字体大小",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
@@ -77,5 +87,9 @@
   "window": {
     "label": "Window",
     "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

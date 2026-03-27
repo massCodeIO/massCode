@@ -49,7 +49,7 @@ onMounted(async () => {
     if (payload.source === 'unavailable') {
       setCurrencyServiceState(
         'unavailable',
-        i18n.t('mathNotebook.currencyUnavailable'),
+        i18n.t('spaces.math.currencyUnavailable'),
       )
     }
     else {
@@ -60,7 +60,7 @@ onMounted(async () => {
   catch {
     setCurrencyServiceState(
       'unavailable',
-      i18n.t('mathNotebook.currencyUnavailable'),
+      i18n.t('spaces.math.currencyUnavailable'),
     )
     results.value = evaluateDocument(content.value)
   }
@@ -113,7 +113,7 @@ function handleActiveLine(line: number) {
     </div>
     <!-- <div class="text-center">
       <p class="text-muted-foreground/60 text-[13px]">
-        {{ i18n.t("mathNotebook.newSheet") }}
+        {{ i18n.t("spaces.math.newSheet") }}
       </p>
     </div> -->
   </div>

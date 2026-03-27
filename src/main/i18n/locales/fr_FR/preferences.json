@@ -1,13 +1,14 @@
 {
   "label": "Préférences",
   "storage": {
-    "label": "Stockage",
-    "count": "Nombre",
     "section": {
       "main": "Main",
       "migration": "Migration"
     },
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
+    "label": "Stockage",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
+    "count": "Nombre",
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Éditeur",
@@ -35,12 +36,53 @@
       "singleQuote": "Guillemet simple"
     }
   },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
+    }
+  },
   "appearance": {
     "label": "Apparence",
     "theme": {
       "label": "Thème",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Clair",
-      "dark": "Sombre"
+      "dark": "Sombre",
+      "system": "System"
     }
   },
   "language": {

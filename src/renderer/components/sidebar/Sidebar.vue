@@ -7,7 +7,7 @@ import { i18n } from '@/electron'
     data-sidebar
     class="flex h-full flex-col px-1 pt-[var(--content-top-offset)]"
   >
-    <SidebarHeader :title="i18n.t('sidebar.title')" />
+    <SidebarHeader :title="i18n.t('spaces.code.title')" />
     <SidebarLibrary />
   </div>
 </template>

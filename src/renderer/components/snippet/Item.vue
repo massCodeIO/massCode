@@ -69,10 +69,10 @@ const folderName = computed(() => {
   }
 
   if (props.snippet.isDeleted) {
-    return i18n.t('sidebar.trash')
+    return i18n.t('common.trash')
   }
 
-  return i18n.t('sidebar.inbox')
+  return i18n.t('common.inbox')
 })
 
 function onSnippetClick(id: number, event: MouseEvent) {

@@ -77,7 +77,7 @@ export function useMathNotebook() {
 
   function createSheet() {
     const nextSheetName = getNextIndexedName(
-      i18n.t('mathNotebook.untitled'),
+      i18n.t('spaces.math.untitled'),
       sheets.value.map(sheet => sheet.name),
     )
     const sheet: MathSheet = {

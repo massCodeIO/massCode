@@ -1,21 +1,63 @@
 {
-  "total": "合計",
-  "line": "行",
-  "column": "列",
-  "fragment": "フラグメント",
-  "path": "パス",
+  "common": {
+    "total": "合計",
+    "inbox": "受信トレイ",
+    "favorites": "お気に入り",
+    "trash": "ゴミ箱",
+    "folders": "フォルダ",
+    "tags": "タグ",
+    "library": "ライブラリ",
+    "fragment": "フラグメント"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "すべてのスニペット"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "無題のスニペット",
+    "selectedMultiple": "{{count}}個のスニペットを選択",
+    "noSelected": "スニペットが選択されていません"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "無題のフォルダ"
+  },
   "button": {
     "back": "戻る",
     "cancel": "キャンセル",
-    "clear": "クリア",
     "confirm": "確認",
     "copy": "コピー",
     "fit": "フィット",
-    "generate": "生成",
-    "ok": "OK",
-    "revers": "反転",
     "saveAs": "名前を付けて保存",
-    "sort": "並べ替え",
     "update": [
       "GitHubへ移動",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "ダークモードの切り替え",
     "background": "背景",
     "goToDownload": "ダウンロードへ",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "プレビューを更新",
     "laserPointer": "レーザーポインター",
     "fullscreen": "フルスクリーン",
@@ -44,11 +87,14 @@
     "hide": "非表示",
     "showSidebar": "サイドバーを表示",
     "hideSidebar": "サイドバーを非表示",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "新規ストレージ",
       "folder": "新規フォルダ",
       "snippet": "新規スニペット",
-      "fragment": "新規フラグメント"
+      "fragment": "新規フラグメント",
+      "note": "New Note"
     },
     "add": {
       "description": "説明を追加",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "お気に入りから削除"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "ストレージを再読み込み"
+      "storage": "ストレージを再読み込み",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "削除",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "スニペットリンクをコピー"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "受信トレイ",
-    "favorites": "お気に入り",
-    "allSnippets": "すべてのスニペット",
-    "trash": "ゴミ箱",
-    "folders": "フォルダ",
-    "library": "ライブラリ",
-    "tags": "タグ"
-  },
-  "folder": {
-    "untitled": "無題のフォルダ",
-    "plural": "フォルダ",
-    "collapseAll": "すべて折りたたむ",
-    "expandAll": "すべて展開"
-  },
-  "snippet": {
-    "untitled": "無題のスニペット",
-    "plural": "スニペット",
-    "emptyName": "スニペット名を入力",
-    "selectedMultiple": "{{count}}個のスニペットを選択",
-    "noSelected": "スニペットが選択されていません"
   },
   "placeholder": {
     "emptyTagList": "タグを追加するとここに表示されます",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "フォルダーなし",
     "emptySnippetsList": "スニペットなし",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "検索",
     "addTag": "タグを追加"
   }

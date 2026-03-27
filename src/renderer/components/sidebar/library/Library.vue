@@ -48,14 +48,18 @@ const tagsListHeight = normalizeTagsListHeight(
 )
 
 const libraryItems = [
-  { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
+  { id: LibraryFilter.Inbox, name: i18n.t('common.inbox'), icon: Inbox },
   {
     id: LibraryFilter.Favorites,
-    name: i18n.t('sidebar.favorites'),
+    name: i18n.t('common.favorites'),
     icon: Star,
   },
-  { id: LibraryFilter.All, name: i18n.t('sidebar.allSnippets'), icon: Archive },
-  { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
+  {
+    id: LibraryFilter.All,
+    name: i18n.t('spaces.code.allSnippets'),
+    icon: Archive,
+  },
+  { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
 
 async function initGetFolders() {
@@ -262,7 +266,7 @@ function onResizeTagList(val: number[]) {
               weight="bold"
               uppercase
             >
-              {{ i18n.t("sidebar.folders") }}
+              {{ i18n.t("common.folders") }}
             </UiText>
             <UiActionButton
               :tooltip="i18n.t('action.new.folder')"
@@ -304,7 +308,7 @@ function onResizeTagList(val: number[]) {
               weight="bold"
               uppercase
             >
-              {{ i18n.t("sidebar.tags") }}
+              {{ i18n.t("common.tags") }}
             </UiText>
           </div>
 

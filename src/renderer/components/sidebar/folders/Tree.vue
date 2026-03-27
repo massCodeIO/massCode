@@ -240,7 +240,7 @@ async function onDeleteFolder() {
     title:
       targetIds.length > 1
         ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('sidebar.folders'),
+            name: i18n.t('common.folders'),
           })
         : i18n.t('messages:confirm.delete', { name: folderName }),
     description: i18n.t('messages:warning:allSnippetsMoveToTrash'),

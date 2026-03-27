@@ -179,7 +179,7 @@ function onResizeTagList(layout: number[]) {
       weight="bold"
       uppercase
     >
-      {{ i18n.t("sidebar.folders") }}
+      {{ i18n.t("common.folders") }}
     </UiText>
     <UiActionButton
       :tooltip="i18n.t('action.new.folder')"
@@ -261,7 +261,7 @@ function onResizeTagList(layout: number[]) {
             weight="bold"
             uppercase
           >
-            {{ i18n.t("sidebar.tags") }}
+            {{ i18n.t("common.tags") }}
           </UiText>
         </div>
 

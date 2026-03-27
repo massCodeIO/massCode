@@ -6,7 +6,8 @@
     "update": "アップデートを確認...",
     "quit": "massCodeを終了",
     "about": "massCodeについて",
-    "hide": "massCodeを隠す"
+    "hide": "massCodeを隠す",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "ヘルプ",
@@ -32,20 +33,20 @@
       "snippets": "スニペットコレクション"
     }
   },
-  "edit": {
-    "label": "編集",
-    "find": "検索"
-  },
   "view": {
     "label": "表示",
+    "showSidebar": "サイドバーの表示/非表示",
     "sortBy": {
       "label": "スニペットの並び替え",
       "dateModified": "更新日時",
       "dateCreated": "作成日時",
       "name": "名前"
     },
-    "compactMode": "コンパクトモード",
-    "showSidebar": "サイドバーの表示/非表示"
+    "compactMode": "コンパクトモード"
+  },
+  "edit": {
+    "label": "編集",
+    "find": "検索"
   },
   "editor": {
     "label": "エディタ",
@@ -60,9 +61,9 @@
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "プレゼンテーションモード",
     "preview": "プレビュー",
     "previewMarkdown": "Markdownのプレビュー",
+    "presentationMode": "プレゼンテーションモード",
     "previewMindmap": "マインドマップのプレビュー"
   },
   "history": {
@@ -72,5 +73,9 @@
   },
   "devtools": {
     "label": "開発者ツール"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
   }
 }

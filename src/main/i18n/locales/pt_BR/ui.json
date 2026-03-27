@@ -1,21 +1,63 @@
 {
-  "total": "Total",
-  "line": "Linha",
-  "column": "Coluna",
-  "fragment": "Fragment",
-  "path": "Caminho",
+  "common": {
+    "total": "Total",
+    "inbox": "Caixa de Entrada",
+    "favorites": "Favoritos",
+    "trash": "Lixeira",
+    "folders": "Pastas",
+    "tags": "Tags",
+    "library": "Biblioteca",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Todos os Snippets"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Snippet sem título",
+    "selectedMultiple": "{{count}} Snippets Selecionados",
+    "noSelected": "Nenhum Snippet Selecionado"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Pasta sem título"
+  },
   "button": {
     "back": "Voltar",
     "cancel": "Cancelar",
-    "clear": "Limpar",
     "confirm": "Confirmar",
     "copy": "Copiar",
     "fit": "Ajustar",
-    "generate": "Gerar",
-    "ok": "OK",
-    "revers": "Reverter",
     "saveAs": "Salvar como",
-    "sort": "Ordenar",
     "update": [
       "Ir para GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Alternar modo escuro",
     "background": "Plano de Fundo",
     "goToDownload": "Ir para Download",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Atualizar visualização",
     "laserPointer": "Ponteiro laser",
     "fullscreen": "Tela cheia",
@@ -44,11 +87,14 @@
     "hide": "Ocultar",
     "showSidebar": "Mostrar barra lateral",
     "hideSidebar": "Ocultar barra lateral",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Novo Storage",
       "folder": "Nova Pasta",
       "snippet": "Novo Snippet",
-      "fragment": "Novo Fragment"
+      "fragment": "Novo Fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Adicionar Descrição",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Remover dos Favoritos"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Recarregar Storage"
+      "storage": "Recarregar Storage",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Excluir",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Copiar Link do Snippet"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Caixa de Entrada",
-    "favorites": "Favoritos",
-    "allSnippets": "Todos os Snippets",
-    "trash": "Lixeira",
-    "folders": "Pastas",
-    "library": "Biblioteca",
-    "tags": "Tags"
-  },
-  "folder": {
-    "untitled": "Pasta sem título",
-    "plural": "Pastas",
-    "collapseAll": "Recolher Tudo",
-    "expandAll": "Expandir Tudo"
-  },
-  "snippet": {
-    "untitled": "Snippet sem título",
-    "plural": "Snippets",
-    "emptyName": "Digite o nome do snippet",
-    "selectedMultiple": "{{count}} Snippets Selecionados",
-    "noSelected": "Nenhum Snippet Selecionado"
   },
   "placeholder": {
     "emptyTagList": "Adicione tags aos snippets para vê-las aqui",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Sem pastas",
     "emptySnippetsList": "Sem snippets",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Pesquisar",
     "addTag": "Adicionar Tag"
   }

@@ -2,8 +2,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { styleText } = require('node:util')
 
-const sourceDir = path.join(__dirname, '../src/main/i18n/locales')
-const targetDir = path.join(__dirname, '../build/main/i18n/locales')
+const sourceDir = path.join(__dirname, '../../src/main/i18n/locales')
+const targetDir = path.join(__dirname, '../../build/main/i18n/locales')
 
 function copyDirRecursive(sourceDir, targetDir) {
   if (!fs.existsSync(targetDir)) {

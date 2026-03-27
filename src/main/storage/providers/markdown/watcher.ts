@@ -1,5 +1,4 @@
 import type { ChokidarOptions, FSWatcher } from 'chokidar'
-import path from 'node:path'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
 import {
@@ -9,27 +8,31 @@ import {
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
 import {
-  CODE_SPACE_ID,
   ensureStateFile,
   getPaths,
   getVaultPath,
-  INBOX_DIR_NAME,
-  META_DIR_NAME,
   type Paths,
   peekRuntimeCache,
   resetRuntimeCache,
-  SPACES_DIR_NAME,
   syncRuntimeWithDisk,
   syncSnippetFileWithDisk,
-  TRASH_DIR_NAME,
 } from './runtime'
-import { toPosixPath } from './runtime/shared/path'
+import {
+  getWatchPathSpaceId,
+  isCodeWatchPath,
+  isMathWatchPath,
+  isNotesWatchPath,
+  normalizeRelativeWatchPath,
+  shouldIgnoreWatchPath,
+  toCodeRelativePath,
+} from './watcherPaths'
 
 let markdownWatcher: FSWatcher | null = null
 let markdownWatchTimer: NodeJS.Timeout | null = null
 let watchedVaultPath: string | null = null
 let pendingFilePath: string | null = null
 let hasPendingFullSync = false
+let hasPendingMathSync = false
 let hasPendingNotesSync = false
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
@@ -38,9 +41,6 @@ type ChokidarWatch = (
   path: string | readonly string[],
   options?: ChokidarOptions,
 ) => FSWatcher
-
-const NOTES_SPACE_WATCH_PREFIX = `${SPACES_DIR_NAME.toLowerCase()}/notes`
-const CODE_SPACE_WATCH_PREFIX = `${SPACES_DIR_NAME.toLowerCase()}/${CODE_SPACE_ID.toLowerCase()}`
 
 async function getChokidarWatch(): Promise<ChokidarWatch> {
   if (chokidarWatchLoader) {
@@ -71,123 +71,20 @@ async function getChokidarWatch(): Promise<ChokidarWatch> {
   return chokidarWatchLoader
 }
 
-function normalizeRelativeWatchPath(
-  watchRootPath: string,
-  changedPath: string,
-): string | null {
-  const normalizedChangedPath = changedPath.trim()
-  if (!normalizedChangedPath) {
-    return null
-  }
-
-  const absolutePath = path.isAbsolute(normalizedChangedPath)
-    ? normalizedChangedPath
-    : path.join(watchRootPath, normalizedChangedPath)
-  const relativePath = toPosixPath(path.relative(watchRootPath, absolutePath))
-
-  if (!relativePath || relativePath === '.' || relativePath.startsWith('../')) {
-    return null
-  }
-
-  return relativePath
-}
-
-function shouldIgnoreWatchPath(
-  watchRootPath: string,
-  watchPath: string,
-): boolean {
-  const relativePath = normalizeRelativeWatchPath(watchRootPath, watchPath)
-  if (!relativePath) {
-    return false
-  }
-
-  const basename = path.posix.basename(relativePath)
-
-  // Never ignore meta files (both legacy and new)
-  if (basename === '.meta.yaml' || basename === '.masscode-folder.yml') {
-    return false
-  }
-
-  const normalizedRelativePath = relativePath.toLowerCase()
-
-  // Never ignore __spaces__/ directory and its contents
-  const spacesPrefix = SPACES_DIR_NAME.toLowerCase()
-  if (
-    normalizedRelativePath === spacesPrefix
-    || normalizedRelativePath.startsWith(`${spacesPrefix}/`)
-  ) {
-    return false
-  }
-
-  const metaPrefix = META_DIR_NAME.toLowerCase()
-  if (normalizedRelativePath === metaPrefix) {
-    return false
-  }
-
-  const inboxPrefix = `${META_DIR_NAME}/${INBOX_DIR_NAME}`.toLowerCase()
-  const trashPrefix = `${META_DIR_NAME}/${TRASH_DIR_NAME}`.toLowerCase()
-  const canContainSnippets
-    = normalizedRelativePath === inboxPrefix
-      || normalizedRelativePath.startsWith(`${inboxPrefix}/`)
-      || normalizedRelativePath === trashPrefix
-      || normalizedRelativePath.startsWith(`${trashPrefix}/`)
-
-  if (canContainSnippets) {
-    return false
-  }
-
-  return normalizedRelativePath
-    .split('/')
-    .some(segment => segment.startsWith('.'))
-}
-
-function isNotesWatchPath(relativePath: string | null): boolean {
-  if (!relativePath) {
-    return false
-  }
-
-  const normalizedRelativePath = relativePath.toLowerCase()
-  return (
-    normalizedRelativePath === NOTES_SPACE_WATCH_PREFIX
-    || normalizedRelativePath.startsWith(`${NOTES_SPACE_WATCH_PREFIX}/`)
-  )
-}
-
-function isCodeWatchPath(relativePath: string | null): boolean {
-  if (!relativePath) {
-    return false
-  }
-
-  const normalizedRelativePath = relativePath.toLowerCase()
-  return (
-    normalizedRelativePath === CODE_SPACE_WATCH_PREFIX
-    || normalizedRelativePath.startsWith(`${CODE_SPACE_WATCH_PREFIX}/`)
-  )
-}
-
-function toCodeRelativePath(relativePath: string): string | null {
-  const normalizedRelativePath = relativePath.toLowerCase()
-
-  if (normalizedRelativePath === CODE_SPACE_WATCH_PREFIX) {
-    return null
-  }
-
-  const codePrefix = `${CODE_SPACE_WATCH_PREFIX}/`
-  if (!normalizedRelativePath.startsWith(codePrefix)) {
-    return null
-  }
-
-  return relativePath.slice(codePrefix.length)
-}
-
 function scheduleStateSync(
   vaultRootPath: string,
   paths: Paths,
   changedPath: string | null,
   forceFullSync = false,
 ): void {
+  const changedSpaceId = getWatchPathSpaceId(changedPath)
+  if (changedPath && !changedSpaceId) {
+    return
+  }
+
   const changedNotesPath = isNotesWatchPath(changedPath)
   const changedCodePath = isCodeWatchPath(changedPath)
+  const changedMathPath = isMathWatchPath(changedPath)
   const changedCodeRelativePath
     = changedPath && changedCodePath ? toCodeRelativePath(changedPath) : null
 
@@ -195,8 +92,15 @@ function scheduleStateSync(
     hasPendingNotesSync = true
   }
 
+  if (changedMathPath) {
+    hasPendingMathSync = true
+  }
+
   if (changedNotesPath) {
     // Notes space has separate runtime cache sync path.
+  }
+  else if (changedMathPath) {
+    // Math space has no main-process cache to sync; broadcast only.
   }
   else if (forceFullSync || !changedPath) {
     hasPendingFullSync = true
@@ -228,10 +132,12 @@ function scheduleStateSync(
       const previousCache = peekRuntimeCache()
       const previousNotesCache = peekNotesRuntimeCache()
       const changedFilePath = hasPendingFullSync ? null : pendingFilePath
+      const shouldNotifyMath = hasPendingMathSync
       const shouldSyncCode = hasPendingFullSync || changedFilePath !== null
       const shouldSyncNotes = hasPendingNotesSync
 
       hasPendingFullSync = false
+      hasPendingMathSync = false
       hasPendingNotesSync = false
       pendingFilePath = null
 
@@ -257,8 +163,9 @@ function scheduleStateSync(
       const hasNotesChanges
         = shouldSyncNotes
           && (!previousNotesCache || nextNotesCache !== previousNotesCache)
+      const hasMathChanges = shouldNotifyMath
 
-      if (hasCodeChanges || hasNotesChanges) {
+      if (hasCodeChanges || hasNotesChanges || hasMathChanges) {
         BrowserWindow.getAllWindows().forEach((window) => {
           window.webContents.send('system:storage-synced')
         })
@@ -286,6 +193,7 @@ export function stopMarkdownWatcher(): void {
   watchedVaultPath = null
   pendingFilePath = null
   hasPendingFullSync = false
+  hasPendingMathSync = false
   hasPendingNotesSync = false
   resetRuntimeCache()
   resetNotesRuntimeCache()

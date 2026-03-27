@@ -41,7 +41,7 @@ else {
 }
 
 function createWindow() {
-  const bounds = store.app.get('window.bounds')
+  const bounds = store.app.get('window.bounds') as Record<string, unknown>
 
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -137,7 +137,7 @@ else {
     })
 
     try {
-      const storagePath = store.preferences.get('storage.rootPath')
+      const storagePath = store.preferences.get('storage.rootPath') as string
       const dbPath = `${storagePath}/massCode.db`
 
       if (isSqliteFile(dbPath)) {

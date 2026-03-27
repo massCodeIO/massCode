@@ -11,7 +11,7 @@ const ASSETS_DIR = 'assets'
 
 export function registerFsHandlers() {
   ipcMain.handle('fs:assets', (event, { buffer, fileName }) => {
-    const storagePath = store.preferences.get('storage.rootPath')
+    const storagePath = store.preferences.get('storage.rootPath') as string
 
     return new Promise((resolve, reject) => {
       try {

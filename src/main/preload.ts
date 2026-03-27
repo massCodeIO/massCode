@@ -23,18 +23,18 @@ contextBridge.exposeInMainWorld('electron', {
     app: {
       get: <T = unknown>(name: string) => store.app.get(name) as T,
       set: (name: string, value: unknown) => store.app.set(name, value),
-      delete: (name: string) => store.app.delete(name),
+      delete: (name: string) => store.app.delete(name as any),
     },
     preferences: {
       get: <T = unknown>(name: string) => store.preferences.get(name) as T,
       set: (name: string, value: unknown) => store.preferences.set(name, value),
-      delete: (name: string) => store.preferences.delete(name),
+      delete: (name: string) => store.preferences.delete(name as any),
     },
     mathNotebook: {
       get: <T = unknown>(name: string) => store.mathNotebook.get(name) as T,
       set: (name: string, value: unknown) =>
         store.mathNotebook.set(name, value),
-      delete: (name: string) => store.mathNotebook.delete(name),
+      delete: (name: string) => store.mathNotebook.delete(name as any),
     },
   },
   i18n: {

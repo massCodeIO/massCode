@@ -6,7 +6,7 @@ import type {
   SpaceLayoutMode,
 } from '../types'
 import Store from 'electron-store'
-import { APP_DEFAULTS } from '../constants'
+import { LAYOUT_DEFAULTS } from '../constants'
 import {
   asRecord,
   isRecord,
@@ -28,7 +28,7 @@ const APP_STORE_DEFAULTS: AppStore = {
     selection: {},
     layout: {
       mode: 'all-panels',
-      tagsListHeight: APP_DEFAULTS.sizes.tagsList,
+      tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
   notes: {
@@ -36,7 +36,7 @@ const APP_STORE_DEFAULTS: AppStore = {
     editorMode: 'livePreview',
     layout: {
       mode: 'all-panels',
-      tagsListHeight: APP_DEFAULTS.sizes.tagsList,
+      tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
   notifications: {
@@ -139,21 +139,25 @@ function sanitizeAppStore(value: unknown): AppStore {
           ['all-panels', 'list-editor', 'editor-only'] as const,
           getLegacyCodeLayoutMode(asRecord(source.state)),
         ),
-        tagsListHeight: readNumber(
-          codeLayoutSource,
-          'tagsListHeight',
-          readNumber(
-            legacySizes,
+        tagsListHeight: (() => {
+          const raw = readNumber(
+            codeLayoutSource,
             'tagsListHeight',
-            APP_STORE_DEFAULTS.code.layout.tagsListHeight,
-          ),
-        ),
+            readNumber(
+              legacySizes,
+              'tagsListHeight',
+              LAYOUT_DEFAULTS.tags.height,
+            ),
+          )
+          return raw < 100 ? LAYOUT_DEFAULTS.tags.height : raw
+        })(),
         threePanel:
           readOptionalNumberArray(codeLayoutSource, 'threePanel')
           || readOptionalNumberArray(legacySizes, 'layout'),
         twoPanel:
-          readOptionalNumberArray(codeLayoutSource, 'twoPanel')
-          || readOptionalNumberArray(legacySizes, 'codeListLayout'),
+          readOptionalNumber(codeLayoutSource, 'twoPanel')
+          ?? readOptionalNumber(legacySizes, 'codeListLayout')
+          ?? undefined,
       },
     },
     notes: {
@@ -180,21 +184,25 @@ function sanitizeAppStore(value: unknown): AppStore {
           ['all-panels', 'list-editor', 'editor-only'] as const,
           getLegacyNotesLayoutMode(asRecord(source.notesState)),
         ),
-        tagsListHeight: readNumber(
-          notesLayoutSource,
-          'tagsListHeight',
-          readNumber(
-            legacySizes,
-            'notesTagsListHeight',
-            APP_STORE_DEFAULTS.notes.layout.tagsListHeight,
-          ),
-        ),
+        tagsListHeight: (() => {
+          const raw = readNumber(
+            notesLayoutSource,
+            'tagsListHeight',
+            readNumber(
+              legacySizes,
+              'notesTagsListHeight',
+              LAYOUT_DEFAULTS.tags.height,
+            ),
+          )
+          return raw < 100 ? LAYOUT_DEFAULTS.tags.height : raw
+        })(),
         threePanel:
           readOptionalNumberArray(notesLayoutSource, 'threePanel')
           || readOptionalNumberArray(legacySizes, 'notesLayout'),
         twoPanel:
-          readOptionalNumberArray(notesLayoutSource, 'twoPanel')
-          || readOptionalNumberArray(legacySizes, 'notesLayoutWithoutSidebar'),
+          readOptionalNumber(notesLayoutSource, 'twoPanel')
+          ?? readOptionalNumber(legacySizes, 'notesLayoutWithoutSidebar')
+          ?? undefined,
       },
     },
     notifications: {

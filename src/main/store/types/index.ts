@@ -29,7 +29,7 @@ export interface AppStore {
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]
-      twoPanel?: number[]
+      twoPanel?: number
     }
   }
   notes: {
@@ -39,7 +39,7 @@ export interface AppStore {
       mode: SpaceLayoutMode
       tagsListHeight: number
       threePanel?: number[]
-      twoPanel?: number[]
+      twoPanel?: number
     }
   }
   notifications: {

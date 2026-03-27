@@ -1,10 +1,16 @@
 /* eslint-disable node/prefer-global/process */
+import type {
+  MainMenuContext,
+  MainMenuLayoutMode,
+  MainMenuPrimaryAction,
+} from '../types/menu'
 import type { MenuConfig } from './utils'
 import os from 'node:os'
 import {
   app,
   BrowserWindow,
   dialog,
+  Menu,
   type MenuItemConstructorOptions,
   shell,
 } from 'electron'
@@ -18,6 +24,34 @@ const year = new Date().getFullYear()
 const version = app.getVersion()
 
 const isDev = process.env.NODE_ENV === 'development'
+
+const defaultMainMenuContext: MainMenuContext = {
+  file: {
+    primaryAction: null,
+    secondaryAction: null,
+    canCreateFragment: false,
+  },
+  view: {
+    layoutMode: null,
+    layoutModes: [],
+    canToggleMindmap: false,
+    isMindmapShown: false,
+    canTogglePresentation: false,
+    isPresentationShown: false,
+  },
+  editor: {
+    kind: null,
+    noteMode: null,
+    canFormat: false,
+    canPreviewCode: false,
+    isCodePreviewShown: false,
+    canPreviewJson: false,
+    isJsonPreviewShown: false,
+    canAdjustFontSize: false,
+  },
+}
+
+let currentMainMenuContext = defaultMainMenuContext
 
 function aboutApp() {
   dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
@@ -84,23 +118,8 @@ const appMenuItems: MenuConfig[] = [
     click: () => send('main-menu:goto-preferences'),
   },
   {
-    type: 'separator' as any,
+    type: 'separator' as const,
     platforms: ['darwin'],
-  },
-  {
-    id: 'devtools',
-    label: i18n.t('menu:app.devtools'),
-    accelerator: 'CommandOrControl+.',
-    click: () => send('main-menu:goto-devtools'),
-  },
-  {
-    id: 'math-notebook',
-    label: i18n.t('menu:app.mathNotebook'),
-    accelerator: 'CommandOrControl+Shift+.',
-    click: () => send('main-menu:goto-math-notebook'),
-  },
-  {
-    type: 'separator' as any,
   },
   {
     label: i18n.t('menu:app.hide'),
@@ -116,7 +135,7 @@ const appMenuItems: MenuConfig[] = [
     role: 'unhide',
   },
   {
-    type: 'separator' as any,
+    type: 'separator' as const,
     platforms: ['darwin'],
   },
   {
@@ -189,12 +208,6 @@ const helpMenuItems: MenuConfig[] = [
       )
     },
   },
-  // {
-  //   label: i18n.t('menu:help.extension.raycast'),
-  //   click: () => {
-  //     shell.openExternal('https://www.raycast.com/antonreshetov/masscode')
-  //   },
-  // },
   {
     type: 'separator',
   },
@@ -241,32 +254,6 @@ if (isDev) {
   })
 }
 
-const fileMenuItems: MenuConfig[] = [
-  {
-    label: i18n.t('action.new.snippet'),
-    click: () => send('main-menu:new-snippet'),
-    accelerator: 'CommandOrControl+N',
-  },
-  {
-    label: i18n.t('action.new.fragment'),
-    click: () => send('main-menu:new-fragment'),
-    accelerator: 'CommandOrControl+T',
-  },
-  {
-    label: i18n.t('action.add.description'),
-    click: () => send('main-menu:add-description'),
-    accelerator: 'CommandOrControl+Shift+T',
-  },
-  {
-    type: 'separator',
-  },
-  {
-    label: i18n.t('action.new.folder'),
-    click: () => send('main-menu:new-folder'),
-    accelerator: 'CommandOrControl+Shift+N',
-  },
-]
-
 const editMenuItems: MenuConfig[] = [
   {
     role: 'undo',
@@ -305,103 +292,297 @@ const editMenuItems: MenuConfig[] = [
   },
 ]
 
-const editorMenuItems: MenuConfig[] = [
-  {
-    label: i18n.t('menu:editor.copy'),
-    click: () => send('main-menu:copy-snippet'),
-    accelerator: 'CommandOrControl+Shift+C',
-  },
-  {
-    label: i18n.t('menu:editor.format'),
-    accelerator: 'Shift+CommandOrControl+F',
-    click: () => send('main-menu:format'),
-  },
-  {
-    label: i18n.t('menu:editor.previewCode'),
-    click: () => send('main-menu:preview-code'),
-    accelerator: 'Alt+CommandOrControl+P',
-  },
-  {
-    label: i18n.t('menu:editor.previewJson'),
-    click: () => send('main-menu:preview-json'),
-    accelerator: 'Alt+CommandOrControl+J',
-  },
-  {
-    type: 'separator',
-  },
-  {
-    label: i18n.t('menu:editor.fontSizeIncrease'),
-    accelerator: 'CommandOrControl+=',
-    click: () => send('main-menu:font-size-increase'),
-  },
-  {
-    label: i18n.t('menu:editor.fontSizeDecrease'),
-    accelerator: 'CommandOrControl+-',
-    click: () => send('main-menu:font-size-decrease'),
-  },
-  {
-    label: i18n.t('menu:editor.fontSizeReset'),
-    accelerator: 'CommandOrControl+0',
-    click: () => send('main-menu:font-size-reset'),
-  },
-]
+function getPrimaryActionLabel(action: MainMenuPrimaryAction) {
+  if (action === 'new-snippet')
+    return i18n.t('action.new.snippet')
+  if (action === 'new-note')
+    return i18n.t('action.new.note')
+  if (action === 'new-sheet')
+    return i18n.t('spaces.math.newSheet')
+  return ''
+}
 
-const viewMenuItems: MenuConfig[] = [
-  {
-    label: i18n.t('menu:view.showSidebar'),
-    click: () => send('main-menu:toggle-sidebar'),
-    accelerator: 'Alt+CommandOrControl+B',
-  },
-]
+function createPrimaryActionClick(action: MainMenuPrimaryAction) {
+  if (action === 'new-snippet') {
+    return () => send('main-menu:new-snippet')
+  }
 
-const markdownMenuItems: MenuConfig[] = [
-  {
-    label: i18n.t('menu:markdown.previewMindmap'),
-    click: () => send('main-menu:preview-mindmap'),
-    accelerator: 'CommandOrControl+Shift+I',
-  },
-  {
-    type: 'separator',
-  },
-  {
-    label: i18n.t('menu:markdown.presentationMode'),
-    click: () => send('main-menu:presentation-mode'),
-    accelerator: 'CommandOrControl+Shift+P',
-  },
-]
+  if (action === 'new-note') {
+    return () => send('main-menu:new-note')
+  }
 
-const menuItems: MenuItemConstructorOptions[] = [
-  {
-    label: i18n.t('menu:app.label'),
-    submenu: createPlatformMenuItems(appMenuItems),
-  },
-  {
-    label: 'File',
-    submenu: createPlatformMenuItems(fileMenuItems),
-  },
-  {
-    role: 'editMenu',
-    submenu: createPlatformMenuItems(editMenuItems),
-  },
-  {
-    label: i18n.t('menu:view.label'),
-    submenu: createPlatformMenuItems(viewMenuItems),
-  },
-  {
-    label: i18n.t('menu:editor.label'),
-    submenu: createPlatformMenuItems(editorMenuItems),
-  },
-  {
-    label: i18n.t('menu:markdown.label'),
-    submenu: createPlatformMenuItems(markdownMenuItems),
-  },
-  {
-    role: 'windowMenu',
-  },
-  {
-    label: i18n.t('menu:help.label'),
-    submenu: createPlatformMenuItems(helpMenuItems),
-  },
-]
+  if (action === 'new-sheet') {
+    return () => send('main-menu:new-sheet')
+  }
 
-export const mainMenu = createMenu(menuItems)
+  return undefined
+}
+
+function createFileMenuItems(context: MainMenuContext): MenuConfig[] {
+  const items: MenuConfig[] = []
+
+  if (context.file.primaryAction) {
+    items.push({
+      label: getPrimaryActionLabel(context.file.primaryAction),
+      accelerator: 'CommandOrControl+N',
+      click: createPrimaryActionClick(context.file.primaryAction),
+    })
+  }
+
+  if (context.file.canCreateFragment) {
+    items.push({
+      label: i18n.t('action.new.fragment'),
+      accelerator: 'CommandOrControl+T',
+      click: () => send('main-menu:new-fragment'),
+    })
+  }
+
+  if (context.file.secondaryAction) {
+    items.push({
+      label: i18n.t('action.new.folder'),
+      accelerator: 'CommandOrControl+Shift+N',
+      click: () =>
+        send(
+          context.file.primaryAction === 'new-note'
+            ? 'main-menu:new-note-folder'
+            : 'main-menu:new-folder',
+        ),
+    })
+  }
+
+  return items
+}
+
+function getSidebarLayoutAccelerator(
+  targetLayout: MainMenuLayoutMode,
+  currentLayout: MainMenuLayoutMode | null,
+) {
+  if (currentLayout === 'all-panels' && targetLayout === 'list-editor') {
+    return 'Alt+CommandOrControl+B'
+  }
+
+  if (currentLayout !== 'all-panels' && targetLayout === 'all-panels') {
+    return 'Alt+CommandOrControl+B'
+  }
+
+  return undefined
+}
+
+function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
+  if (!context.view.layoutModes.length || !context.view.layoutMode) {
+    return []
+  }
+
+  const labels: Record<MainMenuLayoutMode, string> = {
+    'all-panels': i18n.t('menu:view.layout.allPanels'),
+    'list-editor': i18n.t('menu:view.layout.listEditor'),
+    'editor-only': i18n.t('menu:view.layout.editorOnly'),
+  }
+
+  return context.view.layoutModes.map(layoutMode => ({
+    label: labels[layoutMode],
+    type: 'radio',
+    checked: context.view.layoutMode === layoutMode,
+    accelerator: getSidebarLayoutAccelerator(
+      layoutMode,
+      context.view.layoutMode,
+    ),
+    click: () => send('main-menu:set-layout-mode', layoutMode),
+  }))
+}
+
+function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
+  const items = createLayoutMenuItems(context)
+
+  if (context.view.canToggleMindmap || context.view.canTogglePresentation) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push({
+      label: i18n.t('menu:markdown.previewMindmap'),
+      type: 'checkbox',
+      enabled: context.view.canToggleMindmap,
+      checked: context.view.isMindmapShown,
+      click: () => send('main-menu:preview-mindmap'),
+      accelerator: 'CommandOrControl+Shift+I',
+    })
+    items.push({
+      label: i18n.t('menu:markdown.presentationMode'),
+      type: 'checkbox',
+      enabled: context.view.canTogglePresentation,
+      checked: context.view.isPresentationShown,
+      click: () => send('main-menu:presentation-mode'),
+      accelerator: 'CommandOrControl+Shift+P',
+    })
+  }
+
+  return items
+}
+
+function createNotesEditorModeItems(context: MainMenuContext): MenuConfig[] {
+  if (context.editor.kind !== 'notes' || !context.editor.noteMode) {
+    return []
+  }
+
+  return [
+    {
+      label: i18n.t('menu:editor.mode'),
+      submenu: createPlatformMenuItems([
+        {
+          label: i18n.t('menu:editor.modeRaw'),
+          type: 'radio',
+          checked: context.editor.noteMode === 'raw',
+          click: () => send('main-menu:set-notes-editor-mode', 'raw'),
+        },
+        {
+          label: i18n.t('menu:editor.modeLivePreview'),
+          type: 'radio',
+          checked: context.editor.noteMode === 'livePreview',
+          click: () => send('main-menu:set-notes-editor-mode', 'livePreview'),
+        },
+        {
+          label: i18n.t('menu:editor.modePreview'),
+          type: 'radio',
+          checked: context.editor.noteMode === 'preview',
+          click: () => send('main-menu:set-notes-editor-mode', 'preview'),
+        },
+      ]),
+    },
+  ]
+}
+
+function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
+  const items: MenuConfig[] = []
+
+  if (context.editor.kind === 'code') {
+    items.push({
+      label: i18n.t('menu:editor.copy'),
+      click: () => send('main-menu:copy-snippet'),
+      accelerator: 'CommandOrControl+Shift+C',
+    })
+    items.push({
+      label: i18n.t('menu:editor.format'),
+      accelerator: 'Shift+CommandOrControl+F',
+      click: () => send('main-menu:format'),
+    })
+    items.push({
+      label: i18n.t('menu:editor.previewCode'),
+      type: 'checkbox',
+      enabled: context.editor.canPreviewCode,
+      checked: context.editor.isCodePreviewShown,
+      click: () => send('main-menu:preview-code'),
+      accelerator: 'Alt+CommandOrControl+P',
+    })
+    items.push({
+      label: i18n.t('menu:editor.previewJson'),
+      type: 'checkbox',
+      enabled: context.editor.canPreviewJson,
+      checked: context.editor.isJsonPreviewShown,
+      click: () => send('main-menu:preview-json'),
+      accelerator: 'Alt+CommandOrControl+J',
+    })
+  }
+
+  const notesModeItems = createNotesEditorModeItems(context)
+  if (notesModeItems.length) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push(...notesModeItems)
+  }
+
+  if (context.editor.canAdjustFontSize) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push(
+      {
+        label: i18n.t('menu:editor.fontSizeIncrease'),
+        accelerator: 'CommandOrControl+=',
+        click: () => send('main-menu:font-size-increase'),
+      },
+      {
+        label: i18n.t('menu:editor.fontSizeDecrease'),
+        accelerator: 'CommandOrControl+-',
+        click: () => send('main-menu:font-size-decrease'),
+      },
+      {
+        label: i18n.t('menu:editor.fontSizeReset'),
+        accelerator: 'CommandOrControl+0',
+        click: () => send('main-menu:font-size-reset'),
+      },
+    )
+  }
+
+  return items
+}
+
+function createMainMenuTemplate(
+  context: MainMenuContext = currentMainMenuContext,
+): MenuItemConstructorOptions[] {
+  const fileMenuItems = createFileMenuItems(context)
+  const viewMenuItems = createViewMenuItems(context)
+  const editorMenuItems = createEditorMenuItems(context)
+
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: i18n.t('menu:app.label'),
+      submenu: createPlatformMenuItems(appMenuItems),
+    },
+    {
+      role: 'editMenu',
+      submenu: createPlatformMenuItems(editMenuItems),
+    },
+    {
+      role: 'windowMenu',
+    },
+    {
+      label: i18n.t('menu:help.label'),
+      submenu: createPlatformMenuItems(helpMenuItems),
+    },
+  ]
+
+  if (fileMenuItems.length) {
+    template.splice(1, 0, {
+      label: i18n.t('menu:file.label'),
+      submenu: createPlatformMenuItems(fileMenuItems),
+    })
+  }
+
+  const viewInsertIndex = template.findIndex(
+    item => item.role === 'windowMenu',
+  )
+
+  if (viewMenuItems.length) {
+    template.splice(viewInsertIndex, 0, {
+      label: i18n.t('menu:view.label'),
+      submenu: createPlatformMenuItems(viewMenuItems),
+    })
+  }
+
+  if (editorMenuItems.length) {
+    const insertIndex = template.findIndex(
+      item => item.role === 'windowMenu',
+    )
+    template.splice(insertIndex, 0, {
+      label: i18n.t('menu:editor.label'),
+      submenu: createPlatformMenuItems(editorMenuItems),
+    })
+  }
+
+  return template
+}
+
+export function createMainMenu(
+  context: MainMenuContext = currentMainMenuContext,
+) {
+  return createMenu(createMainMenuTemplate(context))
+}
+
+export function updateMainMenu(context: MainMenuContext) {
+  currentMainMenuContext = context
+  Menu.setApplicationMenu(createMainMenu(context))
+}

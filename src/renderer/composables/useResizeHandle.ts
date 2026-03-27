@@ -22,7 +22,8 @@ export function useResizeHandle(
       = options.direction === 'horizontal' ? 'col-resize' : 'row-resize'
 
     const interactable = interact(el).draggable({
-      axis: options.direction === 'horizontal' ? 'x' : 'y',
+      lockAxis: options.direction === 'horizontal' ? 'x' : 'y',
+      startAxis: options.direction === 'horizontal' ? 'x' : 'y',
       cursorChecker: () => cursor,
       listeners: {
         start() {

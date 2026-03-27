@@ -9,12 +9,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import { runtimeRef } from './cache'
-import {
-  INBOX_DIR_NAME,
-  META_DIR_NAME,
-  SPACES_DIR_NAME,
-  TRASH_DIR_NAME,
-} from './constants'
+import { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME } from './constants'
 import { readFolderMetadata, writeFolderMetadataFile } from './parser'
 import {
   buildFolderPathMap,
@@ -47,10 +42,7 @@ import {
 
 function isTechnicalRootFolder(name: string): boolean {
   return (
-    name === META_DIR_NAME
-    || name === INBOX_DIR_NAME
-    || name === TRASH_DIR_NAME
-    || name === SPACES_DIR_NAME
+    name === META_DIR_NAME || name === INBOX_DIR_NAME || name === TRASH_DIR_NAME
   )
 }
 

@@ -78,7 +78,7 @@ describe('notes storage validations', () => {
     tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'notes-storage-'))
     resetNotesRuntimeCache()
 
-    const notesRoot = path.join(tempVaultPath, '__spaces__', 'notes')
+    const notesRoot = path.join(tempVaultPath, 'notes')
     const metaDirPath = path.join(notesRoot, '.masscode')
 
     ensureNotesStateFile({

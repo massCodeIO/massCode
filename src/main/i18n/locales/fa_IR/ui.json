@@ -45,6 +45,8 @@
   "notes": {
     "untitled": "Untitled note",
     "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
     "noSelected": "No Note Selected"
   },

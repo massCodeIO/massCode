@@ -45,6 +45,8 @@
   "notes": {
     "untitled": "Заметка без названия",
     "plural": "Заметки",
+    "words": "Слова",
+    "symbols": "Символы",
     "selectedMultiple": "Выбрано заметок: {{count}}",
     "noSelected": "Нет выбранных заметок"
   },

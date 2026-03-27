@@ -45,7 +45,7 @@ const leftHeaderStyle = computed(() => {
         class="flex items-center justify-between gap-2 overflow-hidden px-2 pb-2"
         :style="leftHeaderStyle"
       >
-        <div class="truncate font-bold">
+        <div class="truncate px-1 leading-5 font-bold select-none">
           {{ title }}
         </div>
         <UiActionButton

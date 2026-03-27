@@ -12,19 +12,15 @@ const stateSnapshots = reactive<Record<StateAction, SavedState>>({
   beforeSearch: {},
 })
 
-const state = reactive<SavedState>(store.app.get('state') as SavedState)
-const storedSidebarHidden = store.app.get('state.isSidebarHidden') as
-  | boolean
-  | undefined
-const storedCodeLayoutMode = store.app.get('state.codeLayoutMode') as
+const state = reactive<SavedState>(
+  store.app.get('code.selection') as SavedState,
+)
+const storedCodeLayoutMode = store.app.get('code.layout.mode') as
   | LayoutMode
   | undefined
 const codeLayoutMode = ref<LayoutMode>(
   storedCodeLayoutMode
-  ?? state.codeLayoutMode
-  ?? getCodeLayoutModeFromLegacyState(
-    storedSidebarHidden ?? state.isSidebarHidden,
-  ),
+  ?? getCodeLayoutModeFromLegacyState(state.isSidebarHidden),
 )
 const isSidebarHidden = computed({
   get: () => codeLayoutMode.value !== 'all-panels',
@@ -32,11 +28,6 @@ const isSidebarHidden = computed({
     codeLayoutMode.value = value ? 'list-editor' : 'all-panels'
   },
 })
-
-if (state.codeLayoutMode === undefined)
-  state.codeLayoutMode = codeLayoutMode.value
-if (state.isSidebarHidden === undefined)
-  state.isSidebarHidden = isSidebarHidden.value
 
 const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedSnippetIds = ref<Set<number>>(new Set())
@@ -47,7 +38,7 @@ const focusedSnippetId = ref<number | undefined>()
 const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
 const isCompactListMode = ref(
-  (store.app.get('compactListMode') as boolean | undefined) ?? false,
+  (store.app.get('ui.compactListMode') as boolean | undefined) ?? false,
 )
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
@@ -92,18 +83,17 @@ function restoreStateSnapshot(action: StateAction): void {
 watch(
   state,
   () => {
-    store.app.set('state', JSON.parse(JSON.stringify(state)))
+    store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
   },
   { deep: true },
 )
 
 watch(codeLayoutMode, (value) => {
-  state.codeLayoutMode = value
-  state.isSidebarHidden = value !== 'all-panels'
+  store.app.set('code.layout.mode', value)
 })
 
 watch(isCompactListMode, (value) => {
-  store.app.set('compactListMode', value)
+  store.app.set('ui.compactListMode', value)
 })
 
 function setCodeLayoutMode(value: LayoutMode) {

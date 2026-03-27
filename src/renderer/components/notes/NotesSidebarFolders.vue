@@ -28,7 +28,7 @@ function normalizeTagsListHeight(value: number | undefined) {
 }
 
 const tagsListHeight = normalizeTagsListHeight(
-  store.app.get('sizes.notesTagsListHeight') as number | undefined,
+  store.app.get('notes.layout.tagsListHeight') as number | undefined,
 )
 
 const {
@@ -165,7 +165,7 @@ function onCancelEdit() {
 
 function onResizeTagList(layout: number[]) {
   store.app.set(
-    'sizes.notesTagsListHeight',
+    'notes.layout.tagsListHeight',
     normalizeTagsListHeight(layout[1]),
   )
 }

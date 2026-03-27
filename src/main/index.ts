@@ -41,7 +41,7 @@ else {
 }
 
 function createWindow() {
-  const bounds = store.app.get('bounds')
+  const bounds = store.app.get('window.bounds')
 
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -79,7 +79,7 @@ function createWindow() {
   })
 
   mainWindow.on('close', (event) => {
-    store.app.set('bounds', mainWindow.getBounds())
+    store.app.set('window.bounds', mainWindow.getBounds())
 
     if (process.platform === 'darwin' && !isQuitting) {
       event.preventDefault()
@@ -104,7 +104,7 @@ else {
         const vaultPath
           = (store.preferences.get('storage.vaultPath') as string | null)
             || path.join(
-              store.preferences.get('storagePath') as string,
+              store.preferences.get('storage.rootPath') as string,
               'markdown-vault',
             )
         ensureFlatSpacesLayout(vaultPath)
@@ -137,7 +137,7 @@ else {
     })
 
     try {
-      const storagePath = store.preferences.get('storagePath')
+      const storagePath = store.preferences.get('storage.rootPath')
       const dbPath = `${storagePath}/massCode.db`
 
       if (isSqliteFile(dbPath)) {

@@ -34,7 +34,9 @@ function getDefaultVaultPath(baseStoragePath: string): string {
   return `${baseStoragePath}${hasTrailingSeparator ? '' : separator}markdown-vault`
 }
 
-const storagePath = ref(store.preferences.get('storagePath'))
+const storagePath = ref<string>(
+  store.preferences.get('storage.rootPath') as string,
+)
 const vaultPath = ref<string | null>(
   (store.preferences.get('storage') as { vaultPath?: string | null })
     ?.vaultPath ?? null,

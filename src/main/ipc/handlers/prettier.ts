@@ -4,7 +4,7 @@ import prettier from 'prettier'
 import { store } from '../../store'
 
 export async function format(source: string, parser: string) {
-  const editor = store.preferences.get('editor')
+  const editor = store.preferences.get('editor.code')
 
   return prettier.format(source, {
     parser,

@@ -6,10 +6,10 @@ import { store } from '@/electron'
 
 const { codeLayoutMode } = useApp()
 
-const storedThreePanelLayout = store.app.get('sizes.layout') as
+const storedThreePanelLayout = store.app.get('code.layout.threePanel') as
   | number[]
   | undefined
-const storedTwoPanelLayout = store.app.get('sizes.codeListLayout') as
+const storedTwoPanelLayout = store.app.get('code.layout.twoPanel') as
   | number[]
   | undefined
 const defaultThreePanelLayout = storedThreePanelLayout || [15, 20, 65]
@@ -18,12 +18,12 @@ const panels = computed(() => getCodePanels(codeLayoutMode.value))
 
 function onLayout(layout: number[]) {
   if (layout.length === 3) {
-    store.app.set('sizes.layout', layout)
+    store.app.set('code.layout.threePanel', layout)
     return
   }
 
   if (layout.length === 2) {
-    store.app.set('sizes.codeListLayout', layout)
+    store.app.set('code.layout.twoPanel', layout)
   }
 }
 </script>

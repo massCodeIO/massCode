@@ -12,11 +12,13 @@ const isShownDonateNotification = ref(false)
 
 function setNextDonateNotification() {
   const nextDonateNotification = addDays(new Date(), 14)
-  store.app.set('nextDonateNotification', nextDonateNotification.getTime())
+  store.app.set('notifications.nextDonateAt', nextDonateNotification.getTime())
 }
 
 function initFirstDonateNotification() {
-  const nextDonateNotification = store.app.get('nextDonateNotification')
+  const nextDonateNotification = store.app.get('notifications.nextDonateAt') as
+    | number
+    | undefined
 
   if (!nextDonateNotification) {
     setNextDonateNotification()
@@ -28,7 +30,9 @@ function showDonateNotification() {
     return
   }
 
-  const nextDonateNotification = store.app.get('nextDonateNotification')
+  const nextDonateNotification = store.app.get('notifications.nextDonateAt') as
+    | number
+    | undefined
   const now = new Date().getTime()
 
   if (

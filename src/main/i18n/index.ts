@@ -5,7 +5,7 @@ import Backend from 'i18next-fs-backend'
 import { store } from '../store'
 import { language } from './language'
 
-const storedLng = store.preferences.get('language')
+const storedLng = store.preferences.get('localization.locale')
 
 const lng
   = storedLng && Object.keys(language).includes(storedLng) ? storedLng : 'en_US'

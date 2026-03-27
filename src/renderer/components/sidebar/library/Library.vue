@@ -44,7 +44,7 @@ function normalizeTagsListHeight(value: number | undefined) {
 }
 
 const tagsListHeight = normalizeTagsListHeight(
-  store.app.get('sizes.tagsListHeight') as number | undefined,
+  store.app.get('code.layout.tagsListHeight') as number | undefined,
 )
 
 const libraryItems = [
@@ -219,7 +219,7 @@ async function onFolderDrag({
 }
 
 function onResizeTagList(val: number[]) {
-  store.app.set('sizes.tagsListHeight', normalizeTagsListHeight(val[1]))
+  store.app.set('code.layout.tagsListHeight', normalizeTagsListHeight(val[1]))
 }
 </script>
 

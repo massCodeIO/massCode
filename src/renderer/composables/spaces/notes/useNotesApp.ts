@@ -3,7 +3,6 @@ import { store } from '@/electron'
 import {
   getLayoutModeFromNotesPanels,
   getNextLayoutModeForSidebarToggle,
-  getNotesPanelsFromLayoutMode,
   type LayoutMode,
 } from '../../layoutModes'
 
@@ -23,16 +22,8 @@ const stateSnapshots = reactive<Record<NotesStateAction, NotesSavedState>>({
 })
 
 const notesState = reactive<NotesSavedState>(
-  (store.app.get('notesState') as NotesSavedState) || {},
+  (store.app.get('notes.selection') as NotesSavedState) || {},
 )
-
-if (notesState.isSidebarHidden === undefined) {
-  notesState.isSidebarHidden = false
-}
-
-if (notesState.isListHidden === undefined) {
-  notesState.isListHidden = false
-}
 
 const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedNoteIds = ref<Set<number>>(new Set())
@@ -43,11 +34,11 @@ const focusedNoteId = ref<number | undefined>()
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
 
 const notesEditorMode = ref<NotesEditorMode>(
-  (store.app.get('notesEditorMode') as NotesEditorMode) || 'livePreview',
+  (store.app.get('notes.editorMode') as NotesEditorMode) || 'livePreview',
 )
 
 watch(notesEditorMode, (mode) => {
-  store.app.set('notesEditorMode', mode)
+  store.app.set('notes.editorMode', mode)
 })
 
 const isNotesSpaceInitialized = ref(false)
@@ -55,18 +46,13 @@ const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
 const isNotesMindmapShown = ref(false)
 const isNotesPresentationShown = ref(false)
-const notesLayoutMode = computed<LayoutMode>({
-  get: () =>
-    getLayoutModeFromNotesPanels({
-      isSidebarHidden: Boolean(notesState.isSidebarHidden),
-      isListHidden: Boolean(notesState.isListHidden),
-    }),
-  set: (value) => {
-    const panels = getNotesPanelsFromLayoutMode(value)
-    notesState.isSidebarHidden = panels.isSidebarHidden
-    notesState.isListHidden = panels.isListHidden
-  },
-})
+const notesLayoutMode = ref<LayoutMode>(
+  (store.app.get('notes.layout.mode') as LayoutMode)
+  || getLayoutModeFromNotesPanels({
+    isSidebarHidden: false,
+    isListHidden: false,
+  }),
+)
 const isNotesSidebarHidden = computed({
   get: () => notesLayoutMode.value !== 'all-panels',
   set: (value: boolean) => {
@@ -153,10 +139,14 @@ function showNotesPresentation() {
 watch(
   notesState,
   () => {
-    store.app.set('notesState', JSON.parse(JSON.stringify(notesState)))
+    store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
   },
   { deep: true },
 )
+
+watch(notesLayoutMode, (mode) => {
+  store.app.set('notes.layout.mode', mode)
+})
 
 export function useNotesApp() {
   return {

@@ -31,7 +31,7 @@ export function registerIPC() {
   })
 
   ipcMain.handle('db:migrate-to-markdown', async (_, sqliteDbPath?: string) => {
-    const storagePath = store.preferences.get('storagePath') as string
+    const storagePath = store.preferences.get('storage.rootPath') as string
     const dbPath
       = typeof sqliteDbPath === 'string' && sqliteDbPath.trim()
         ? sqliteDbPath

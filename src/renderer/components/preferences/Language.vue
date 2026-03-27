@@ -9,10 +9,12 @@ const languageOptions = Object.entries(language).map(([key, value]) => ({
   value: key,
 }))
 
-const selectedLanguage = ref(store.preferences.get('language'))
+const selectedLanguage = ref<string>(
+  store.preferences.get('localization.locale') as string,
+)
 
 watch(selectedLanguage, (value) => {
-  store.preferences.set('language', value)
+  store.preferences.set('localization.locale', value)
 })
 </script>
 

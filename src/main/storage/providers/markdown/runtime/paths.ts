@@ -30,7 +30,7 @@ export function getVaultPath(): string {
     return configuredVaultPath
   }
 
-  const storagePath = store.preferences.get('storagePath') as string
+  const storagePath = store.preferences.get('storage.rootPath') as string
   return path.join(storagePath, 'markdown-vault')
 }
 

@@ -9,6 +9,7 @@ interface Props {
   rightSize?: string
   showBack?: boolean
   topSpace?: number
+  headerGap?: number
 }
 
 interface Emits {
@@ -20,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   rightSize: '1fr',
   showBack: true,
   topSpace: 0,
+  headerGap: 0,
 })
 
 const emit = defineEmits<Emits>()
@@ -31,6 +33,7 @@ const gridTemplateColumns = computed(() => {
 const leftHeaderStyle = computed(() => {
   return {
     paddingTop: `calc(var(--content-top-offset) + ${props.topSpace}px)`,
+    paddingBottom: `${props.headerGap}px`,
   }
 })
 </script>
@@ -41,22 +44,24 @@ const leftHeaderStyle = computed(() => {
     :style="{ gridTemplateColumns }"
   >
     <div class="grid h-full min-h-0 grid-rows-[auto_1fr] overflow-hidden">
-      <div
-        class="flex items-center justify-between gap-2 overflow-hidden px-2 pb-2"
-        :style="leftHeaderStyle"
-      >
-        <div class="truncate px-1 leading-5 font-bold select-none">
-          {{ title }}
-        </div>
-        <UiActionButton
-          v-if="showBack"
-          :tooltip="i18n.t('button.back')"
-          class="shrink-0"
-          @click="() => emit('back')"
+      <slot name="leftHeader">
+        <div
+          class="flex items-center justify-between gap-2 px-2"
+          :style="leftHeaderStyle"
         >
-          <ArrowLeft class="h-4 w-4" />
-        </UiActionButton>
-      </div>
+          <div class="min-w-0 truncate px-1 leading-5 font-bold select-none">
+            {{ title }}
+          </div>
+          <UiActionButton
+            v-if="showBack"
+            :tooltip="i18n.t('button.back')"
+            class="shrink-0"
+            @click="() => emit('back')"
+          >
+            <ArrowLeft class="h-4 w-4" />
+          </UiActionButton>
+        </div>
+      </slot>
       <div class="h-full min-h-0 overflow-auto">
         <slot name="left" />
       </div>

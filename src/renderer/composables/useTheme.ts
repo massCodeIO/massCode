@@ -29,7 +29,9 @@ const TOKEN_MIGRATION_MAP: Record<string, string> = {
 
 const DROPPED_TOKENS = new Set(['color-button-hover'])
 
-const storedThemeId = String(store.preferences.get('theme') || 'auto')
+const storedThemeId = String(
+  store.preferences.get('appearance.theme') || 'auto',
+)
 
 const colorMode = useColorMode()
 const colorModeStore = colorMode.store
@@ -45,11 +47,11 @@ let isThemeReloadInProgress = false
 let hasPendingThemeReload = false
 
 function persistThemePreference(id: string): void {
-  if (store.preferences.get('theme') === id) {
+  if (store.preferences.get('appearance.theme') === id) {
     return
   }
 
-  store.preferences.set('theme', id)
+  store.preferences.set('appearance.theme', id)
 }
 
 function isBuiltInTheme(id: string): id is BuiltInThemeId {

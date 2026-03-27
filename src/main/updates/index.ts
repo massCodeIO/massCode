@@ -105,13 +105,15 @@ async function notifyAboutUpdate() {
     return
   }
 
-  const lastNotifiedVersion = store.app.get('lastNotifiedUpdateVersion')
+  const lastNotifiedVersion = store.app.get(
+    'notifications.lastNotifiedUpdateVersion',
+  )
   if (lastNotifiedVersion === latestVersion) {
     return
   }
 
   send('system:update-available')
-  store.app.set('lastNotifiedUpdateVersion', latestVersion)
+  store.app.set('notifications.lastNotifiedUpdateVersion', latestVersion)
 }
 
 export function checkForUpdates() {

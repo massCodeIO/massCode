@@ -8,11 +8,13 @@ const { initNotesSpace } = useNotesSpaceInitialization()
 
 void initNotesSpace()
 
-const storedLayout = store.app.get('sizes.notesLayout') as number[] | undefined
+const storedLayout = store.app.get('notes.layout.threePanel') as
+  | number[]
+  | undefined
 const defaultLayout = storedLayout || [15, 20, 65]
-const storedLayoutWithoutSidebar = store.app.get(
-  'sizes.notesLayoutWithoutSidebar',
-) as number[] | undefined
+const storedLayoutWithoutSidebar = store.app.get('notes.layout.twoPanel') as
+  | number[]
+  | undefined
 
 function normalizeTwoPanelLayout(
   layout: number[] | undefined,
@@ -49,11 +51,11 @@ const defaultLayoutWithoutSidebar = normalizeTwoPanelLayout(
 )
 
 function onLayout(layout: number[]) {
-  store.app.set('sizes.notesLayout', layout)
+  store.app.set('notes.layout.threePanel', layout)
 }
 
 function onLayoutWithoutSidebar(layout: number[]) {
-  store.app.set('sizes.notesLayoutWithoutSidebar', layout)
+  store.app.set('notes.layout.twoPanel', layout)
 }
 </script>
 

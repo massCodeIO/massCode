@@ -13,7 +13,7 @@ let currentDbPath: string | null = null
 
 export function useDB(customDbPath?: string) {
   const dbPath
-    = customDbPath || `${store.preferences.get('storagePath')}/${DB_NAME}`
+    = customDbPath || `${store.preferences.get('storage.rootPath')}/${DB_NAME}`
 
   if (db && currentDbPath === dbPath)
     return db

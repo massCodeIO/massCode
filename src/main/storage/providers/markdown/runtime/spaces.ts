@@ -2,6 +2,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { PERSISTED_SPACE_IDS, SPACE_STATE_FILE_NAME } from './constants'
 
+// Legacy wrapper directory kept only to migrate early v5 vault layouts.
 const LEGACY_SPACES_DIR_NAME = '__spaces__'
 const migratedVaultPaths = new Set<string>()
 
@@ -69,4 +70,8 @@ export function ensureSpaceDirectory(
 
 export function getSpaceStatePath(vaultPath: string, spaceId: string): string {
   return path.join(getSpaceDirPath(vaultPath, spaceId), SPACE_STATE_FILE_NAME)
+}
+
+export function resetMigrationGuardForTesting(): void {
+  migratedVaultPaths.clear()
 }

@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Velikost písma",
-    "fontFamily": "Rodina písma",
+    "fontSize": {
+      "label": "Velikost písma",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Rodina písma",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Zalamování",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Zalamování slov",
       "off": "Vypnuto"
     },
-    "tabSize": "Velikost tabulátoru",
+    "tabSize": {
+      "label": "Velikost tabulátoru",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Zobrazit neviditelné znaky",
-    "highlightLine": "Zvýraznit řádek",
+    "highlightLine": {
+      "label": "Zvýraznit řádek",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Zvýraznit okraj",
-    "matchBrackets": "Párové závorky",
+    "matchBrackets": {
+      "label": "Párové závorky",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Koncová čárka",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Žádná",
         "all": "Všude",
         "es5": "ES5"
       },
-      "semi": "Středník",
-      "singleQuote": "Jednoduché uvozovky"
+      "semi": {
+        "label": "Středník",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Jednoduché uvozovky",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

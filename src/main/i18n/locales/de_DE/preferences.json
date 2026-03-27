@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Schriftgröße",
-    "fontFamily": "Schriftart",
+    "fontSize": {
+      "label": "Schriftgröße",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Schriftart",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Umbruch",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Zeilenumbruch",
       "off": "Aus"
     },
-    "tabSize": "Tabgröße",
+    "tabSize": {
+      "label": "Tabgröße",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Unsichtbare Zeichen anzeigen",
-    "highlightLine": "Zeile hervorheben",
+    "highlightLine": {
+      "label": "Zeile hervorheben",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Zeilennummern hervorheben",
-    "matchBrackets": "Klammern hervorheben",
+    "matchBrackets": {
+      "label": "Klammern hervorheben",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Abschließendes Komma",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Keins",
         "all": "Alle",
         "es5": "ES5"
       },
-      "semi": "Semikolon",
-      "singleQuote": "Einfache Anführungszeichen"
+      "semi": {
+        "label": "Semikolon",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Einfache Anführungszeichen",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

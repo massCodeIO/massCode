@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Dimensiune Font",
-    "fontFamily": "Familie Font",
+    "fontSize": {
+      "label": "Dimensiune Font",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Familie Font",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Încadrare",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Încadrare Cuvinte",
       "off": "Oprit"
     },
-    "tabSize": "Dimensiune Tab",
+    "tabSize": {
+      "label": "Dimensiune Tab",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Arată Caractere Invizibile",
-    "highlightLine": "Evidențiere Linie",
+    "highlightLine": {
+      "label": "Evidențiere Linie",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Evidențiere Gutter",
-    "matchBrackets": "Potrivire Paranteze",
+    "matchBrackets": {
+      "label": "Potrivire Paranteze",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Virgulă la Final",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Niciuna",
         "all": "Toate",
         "es5": "ES5"
       },
-      "semi": "Punct și Virgulă",
-      "singleQuote": "Ghilimele Simple"
+      "semi": {
+        "label": "Punct și Virgulă",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Ghilimele Simple",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

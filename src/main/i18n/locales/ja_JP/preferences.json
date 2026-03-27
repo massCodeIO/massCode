@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "エディタ",
-    "fontSize": "フォントサイズ",
-    "fontFamily": "フォントファミリー",
+    "fontSize": {
+      "label": "フォントサイズ",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "フォントファミリー",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "折り返し",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "ワードラップ",
       "off": "オフ"
     },
-    "tabSize": "タブサイズ",
+    "tabSize": {
+      "label": "タブサイズ",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "不可視文字を表示",
-    "highlightLine": "現在行をハイライト",
+    "highlightLine": {
+      "label": "現在行をハイライト",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "ガッターをハイライト",
-    "matchBrackets": "括弧の対応を表示",
+    "matchBrackets": {
+      "label": "括弧の対応を表示",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "末尾のカンマ",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "なし",
         "all": "すべて",
         "es5": "ES5"
       },
-      "semi": "セミコロン",
-      "singleQuote": "シングルクォート"
+      "semi": {
+        "label": "セミコロン",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "シングルクォート",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

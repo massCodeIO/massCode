@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "編輯器",
-    "fontSize": "字體大小",
-    "fontFamily": "字體",
+    "fontSize": {
+      "label": "字體大小",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "字體",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "換行",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "自動換行",
       "off": "關閉"
     },
-    "tabSize": "縮進大小",
+    "tabSize": {
+      "label": "縮進大小",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "顯示不可見字符",
-    "highlightLine": "高亮當前行",
+    "highlightLine": {
+      "label": "高亮當前行",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "高亮行號",
-    "matchBrackets": "匹配括號",
+    "matchBrackets": {
+      "label": "匹配括號",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "尾隨逗號",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "無",
         "all": "全部",
         "es5": "ES5"
       },
-      "semi": "分號",
-      "singleQuote": "單引號"
+      "semi": {
+        "label": "分號",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "單引號",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

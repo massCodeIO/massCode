@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Éditeur",
-    "fontSize": "Taille de police",
-    "fontFamily": "Famille de police",
+    "fontSize": {
+      "label": "Taille de police",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Famille de police",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Retour à la ligne",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Retour à la ligne automatique",
       "off": "Désactivé"
     },
-    "tabSize": "Taille de tabulation",
+    "tabSize": {
+      "label": "Taille de tabulation",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Afficher les caractères invisibles",
-    "highlightLine": "Surligner la ligne",
+    "highlightLine": {
+      "label": "Surligner la ligne",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Surligner la gouttière",
-    "matchBrackets": "Correspondance des parenthèses",
+    "matchBrackets": {
+      "label": "Correspondance des parenthèses",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Virgule finale",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Aucune",
         "all": "Toutes",
         "es5": "ES5"
       },
-      "semi": "Point-virgule",
-      "singleQuote": "Guillemet simple"
+      "semi": {
+        "label": "Point-virgule",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Guillemet simple",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

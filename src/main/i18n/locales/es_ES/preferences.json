@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Tamaño de Fuente",
-    "fontFamily": "Familia de Fuente",
+    "fontSize": {
+      "label": "Tamaño de Fuente",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Familia de Fuente",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Ajuste",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Ajuste de Texto",
       "off": "Desactivado"
     },
-    "tabSize": "Tamaño de Tabulación",
+    "tabSize": {
+      "label": "Tamaño de Tabulación",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Mostrar Invisibles",
-    "highlightLine": "Resaltar Línea",
+    "highlightLine": {
+      "label": "Resaltar Línea",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Resaltar Margen",
-    "matchBrackets": "Emparejar Corchetes",
+    "matchBrackets": {
+      "label": "Emparejar Corchetes",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Coma Final",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Ninguna",
         "all": "Todas",
         "es5": "ES5"
       },
-      "semi": "Punto y Coma",
-      "singleQuote": "Comilla Simple"
+      "semi": {
+        "label": "Punto y Coma",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Comilla Simple",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

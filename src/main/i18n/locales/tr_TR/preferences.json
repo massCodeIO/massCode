@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editör",
-    "fontSize": "Yazı Boyutu",
-    "fontFamily": "Yazı Tipi",
+    "fontSize": {
+      "label": "Yazı Boyutu",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Yazı Tipi",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Kaydırma",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Kelime Kaydırma",
       "off": "Kapalı"
     },
-    "tabSize": "Sekme Boyutu",
+    "tabSize": {
+      "label": "Sekme Boyutu",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Görünmezleri Göster",
-    "highlightLine": "Satırı Vurgula",
+    "highlightLine": {
+      "label": "Satırı Vurgula",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Kenar Boşluğunu Vurgula",
-    "matchBrackets": "Parantezleri Eşleştir",
+    "matchBrackets": {
+      "label": "Parantezleri Eşleştir",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Sondaki Virgül",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Yok",
         "all": "Hepsi",
         "es5": "ES5"
       },
-      "semi": "Noktalı Virgül",
-      "singleQuote": "Tek Tırnak"
+      "semi": {
+        "label": "Noktalı Virgül",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Tek Tırnak",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

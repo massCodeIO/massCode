@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Μέγεθος Γραμματοσειράς",
-    "fontFamily": "Οικογένεια Γραμματοσειράς",
+    "fontSize": {
+      "label": "Μέγεθος Γραμματοσειράς",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Οικογένεια Γραμματοσειράς",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Αναδίπλωση",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Αναδίπλωση Λέξεων",
       "off": "Απενεργοποίηση"
     },
-    "tabSize": "Μέγεθος Tab",
+    "tabSize": {
+      "label": "Μέγεθος Tab",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Εμφάνιση Αόρατων Χαρακτήρων",
-    "highlightLine": "Επισήμανση Γραμμής",
+    "highlightLine": {
+      "label": "Επισήμανση Γραμμής",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Επισήμανση Gutter",
-    "matchBrackets": "Αντιστοίχιση Παρενθέσεων",
+    "matchBrackets": {
+      "label": "Αντιστοίχιση Παρενθέσεων",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Κόμμα στο Τέλος",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Κανένα",
         "all": "Όλα",
         "es5": "ES5"
       },
-      "semi": "Ερωτηματικό",
-      "singleQuote": "Μονά Εισαγωγικά"
+      "semi": {
+        "label": "Ερωτηματικό",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Μονά Εισαγωγικά",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

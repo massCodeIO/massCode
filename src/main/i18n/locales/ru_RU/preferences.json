@@ -12,28 +12,51 @@
   },
   "editor": {
     "label": "Редактор",
-    "fontSize": "Размер шрифта",
-    "fontFamily": "Семейство шрифтов",
+    "fontSize": {
+      "label": "Размер шрифта",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Семейство шрифтов",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Перенос",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Перенос слов",
       "off": "Выключен"
     },
-    "tabSize": "Размер отступа",
+    "tabSize": {
+      "label": "Размер отступа",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Показывать невидимые символы",
-    "highlightLine": "Подсветка строки",
+    "highlightLine": {
+      "label": "Подсветка строки",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Подсветка номеров строк",
-    "matchBrackets": "Подсветка скобок",
+    "matchBrackets": {
+      "label": "Подсветка скобок",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Замыкающая запятая",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Нет",
         "all": "Везде",
         "es5": "ES5"
       },
-      "semi": "Точка с запятой",
-      "singleQuote": "Одинарные кавычки"
+      "semi": {
+        "label": "Точка с запятой",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Одинарные кавычки",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {

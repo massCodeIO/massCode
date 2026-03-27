@@ -1,21 +1,63 @@
 {
-  "total": "Σύνολο",
-  "line": "Γραμμή",
-  "column": "Στήλη",
-  "fragment": "Fragment",
-  "path": "Διαδρομή",
+  "common": {
+    "total": "Σύνολο",
+    "inbox": "Εισερχόμενα",
+    "favorites": "Αγαπημένα",
+    "trash": "Κάδος",
+    "folders": "Φάκελοι",
+    "tags": "Tags",
+    "library": "Βιβλιοθήκη",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Όλα τα Snippets"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Snippet χωρίς τίτλο",
+    "selectedMultiple": "{{count}} Επιλεγμένα Snippets",
+    "noSelected": "Δεν έχει επιλεγεί Snippet"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Φάκελος χωρίς τίτλο"
+  },
   "button": {
     "back": "Πίσω",
     "cancel": "Ακύρωση",
-    "clear": "Καθαρισμός",
     "confirm": "Επιβεβαίωση",
     "copy": "Αντιγραφή",
     "fit": "Προσαρμογή",
-    "generate": "Δημιουργία",
-    "ok": "OK",
-    "revers": "Αντιστροφή",
     "saveAs": "Αποθήκευση ως",
-    "sort": "Ταξινόμηση",
     "update": [
       "Μετάβαση στο GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Εναλλαγή σκοτεινής λειτουργίας",
     "background": "Φόντο",
     "goToDownload": "Μετάβαση στη Λήψη",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Ανανέωση προεπισκόπησης",
     "laserPointer": "Δείκτης λέιζερ",
     "fullscreen": "Πλήρης οθόνη",
@@ -44,11 +87,14 @@
     "hide": "Απόκρυψη",
     "showSidebar": "Εμφάνιση πλευρικής γραμμής",
     "hideSidebar": "Απόκρυψη πλευρικής γραμμής",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Νέο Storage",
       "folder": "Νέος Φάκελος",
       "snippet": "Νέο Snippet",
-      "fragment": "Νέο Fragment"
+      "fragment": "Νέο Fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Προσθήκη Περιγραφής",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Αφαίρεση από τα Αγαπημένα"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Επαναφόρτωση Storage"
+      "storage": "Επαναφόρτωση Storage",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Διαγραφή",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Αντιγραφή Συνδέσμου Snippet"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Εισερχόμενα",
-    "favorites": "Αγαπημένα",
-    "allSnippets": "Όλα τα Snippets",
-    "trash": "Κάδος",
-    "folders": "Φάκελοι",
-    "library": "Βιβλιοθήκη",
-    "tags": "Tags"
-  },
-  "folder": {
-    "untitled": "Φάκελος χωρίς τίτλο",
-    "plural": "Φάκελοι",
-    "collapseAll": "Σύμπτυξη Όλων",
-    "expandAll": "Ανάπτυξη Όλων"
-  },
-  "snippet": {
-    "untitled": "Snippet χωρίς τίτλο",
-    "plural": "Snippets",
-    "emptyName": "Πληκτρολογήστε όνομα snippet",
-    "selectedMultiple": "{{count}} Επιλεγμένα Snippets",
-    "noSelected": "Δεν έχει επιλεγεί Snippet"
   },
   "placeholder": {
     "emptyTagList": "Προσθέστε tags στα snippets για να τα δείτε εδώ",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Κανένας φάκελος",
     "emptySnippetsList": "Κανένα απόσπασμα",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Αναζήτηση",
     "addTag": "Προσθήκη Tag"
   }

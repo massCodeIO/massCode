@@ -10,7 +10,9 @@
     ]
   },
   "success": {
-    "copied": "已複製"
+    "copied": "已複製",
+    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
     "noUndo": "此操作無法撤消。",
@@ -27,12 +29,15 @@
     "migration": "Auto-migration from SQLite failed: {{error}}"
   },
   "description": {
+    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
+    "language": "To apply language changes, you need to reload the app.",
     "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "你好，我是 Anton 👋<br><br>\n感謝使用 massCode。如果您覺得這個應用有用，請{{-tagStart}}捐贈{{-tagEnd}}。這將激勵我繼續開發這個項目。",
     "unsponsored": "未贊助"
   },
+  "release": {},
   "update": {
     "available": "版本 {{newVersion}} 現已可供下載。\n您的版本是 {{oldVersion}}。",
     "noAvailable": "目前沒有可用的更新。"

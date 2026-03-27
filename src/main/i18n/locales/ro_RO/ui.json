@@ -1,21 +1,63 @@
 {
-  "total": "Total",
-  "line": "Linie",
-  "column": "Coloană",
-  "fragment": "Fragment",
-  "path": "Cale",
+  "common": {
+    "total": "Total",
+    "inbox": "Inbox",
+    "favorites": "Favorite",
+    "trash": "Coș de Gunoi",
+    "folders": "Foldere",
+    "tags": "Tags",
+    "library": "Bibliotecă",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Toate Snippets"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Snippet fără titlu",
+    "selectedMultiple": "{{count}} Snippets Selectate",
+    "noSelected": "Niciun Snippet Selectat"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Folder fără titlu"
+  },
   "button": {
     "back": "Înapoi",
     "cancel": "Anulare",
-    "clear": "Șterge",
     "confirm": "Confirmă",
     "copy": "Copiază",
     "fit": "Potrivește",
-    "generate": "Generează",
-    "ok": "OK",
-    "revers": "Inversează",
     "saveAs": "Salvează ca",
-    "sort": "Sortează",
     "update": [
       "Mergi la GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Comută modul întunecat",
     "background": "Fundal",
     "goToDownload": "Mergi la Descărcare",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Reîmprospătează previzualizarea",
     "laserPointer": "Pointer laser",
     "fullscreen": "Ecran complet",
@@ -44,11 +87,14 @@
     "hide": "Ascunde",
     "showSidebar": "Afișează bara laterală",
     "hideSidebar": "Ascunde bara laterală",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Storage Nou",
       "folder": "Folder Nou",
       "snippet": "Snippet Nou",
-      "fragment": "Fragment Nou"
+      "fragment": "Fragment Nou",
+      "note": "New Note"
     },
     "add": {
       "description": "Adaugă Descriere",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Elimină din Favorite"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Reîncarcă Storage"
+      "storage": "Reîncarcă Storage",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Șterge",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Copiază Link-ul Snippet-ului"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Inbox",
-    "favorites": "Favorite",
-    "allSnippets": "Toate Snippets",
-    "trash": "Coș de Gunoi",
-    "folders": "Foldere",
-    "library": "Bibliotecă",
-    "tags": "Tags"
-  },
-  "folder": {
-    "untitled": "Folder fără titlu",
-    "plural": "Foldere",
-    "collapseAll": "Restrânge Tot",
-    "expandAll": "Extinde Tot"
-  },
-  "snippet": {
-    "untitled": "Snippet fără titlu",
-    "plural": "Snippets",
-    "emptyName": "Introduceți numele snippet-ului",
-    "selectedMultiple": "{{count}} Snippets Selectate",
-    "noSelected": "Niciun Snippet Selectat"
   },
   "placeholder": {
     "emptyTagList": "Adăugați tags la snippets pentru a le vedea aici",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Fără foldere",
     "emptySnippetsList": "Fără fragmente",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Caută",
     "addTag": "Adaugă Tag"
   }

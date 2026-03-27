@@ -1,21 +1,63 @@
 {
-  "total": "Всего",
-  "line": "Строка",
-  "column": "Столбец",
-  "fragment": "Фрагмент",
-  "path": "Путь",
+  "common": {
+    "total": "Всего",
+    "inbox": "Входящие",
+    "favorites": "Избранное",
+    "trash": "Корзина",
+    "folders": "Папки",
+    "tags": "Теги",
+    "library": "Библиотека",
+    "fragment": "Фрагмент"
+  },
+  "spaces": {
+    "label": "Пространства",
+    "code": {
+      "label": "Code",
+      "tooltip": "Сниппеты кода",
+      "title": "Code Snippets",
+      "allSnippets": "Все сниппеты"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Математический блокнот",
+      "title": "Математический блокнот",
+      "sheetList": "Список листов",
+      "newSheet": "Новый лист",
+      "untitled": "Без названия",
+      "currencyUnavailable": "Сервис курсов валют недоступен"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Инструменты разработчика"
+    }
+  },
+  "snippet": {
+    "untitled": "Сниппет без названия",
+    "selectedMultiple": "Выбрано сниппетов: {{count}}",
+    "noSelected": "Нет выбранных сниппетов"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Папка без названия"
+  },
   "button": {
     "back": "Назад",
     "cancel": "Отмена",
-    "clear": "Очистить",
     "confirm": "Подтвердить",
     "copy": "Копировать",
     "fit": "По размеру",
-    "generate": "Сгенерировать",
-    "ok": "OK",
-    "revers": "Обратить",
     "saveAs": "Сохранить как",
-    "sort": "Сортировать",
     "update": [
       "Перейти на GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Переключить тёмную тему",
     "background": "Фон",
     "goToDownload": "Перейти к загрузке",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Обновить предпросмотр",
     "laserPointer": "Лазерная указка",
     "fullscreen": "Полный экран",
@@ -44,11 +87,14 @@
     "hide": "Скрыть",
     "showSidebar": "Показать боковую панель",
     "hideSidebar": "Скрыть боковую панель",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Новое хранилище",
       "folder": "Новая папка",
       "snippet": "Новый сниппет",
-      "fragment": "Новый фрагмент"
+      "fragment": "Новый фрагмент",
+      "note": "New Note"
     },
     "add": {
       "description": "Добавить описание",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Удалить из избранного"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Перезагрузить хранилище"
+      "storage": "Перезагрузить хранилище",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Удалить",
@@ -88,47 +139,13 @@
       "directory": "Выбрать директорию"
     }
   },
-  "sidebar": {
-    "inbox": "Входящие",
-    "favorites": "Избранное",
-    "allSnippets": "Все сниппеты",
-    "trash": "Корзина",
-    "folders": "Папки",
-    "library": "Библиотека",
-    "tags": "Теги"
-  },
-  "folder": {
-    "untitled": "Папка без названия",
-    "plural": "Папки",
-    "collapseAll": "Свернуть все",
-    "expandAll": "Развернуть все"
-  },
-  "snippet": {
-    "untitled": "Сниппет без названия",
-    "plural": "Сниппеты",
-    "emptyName": "Введите название сниппета",
-    "selectedMultiple": "Выбрано сниппетов: {{count}}",
-    "noSelected": "Нет выбранных сниппетов"
-  },
-  "mathNotebook": {
-    "label": "Математический блокнот",
-    "sheetList": "Список листов",
-    "newSheet": "Новый лист",
-    "untitled": "Без названия",
-    "copied": "Скопировано",
-    "currencyUnavailable": "Сервис курсов валют недоступен"
-  },
-  "spaces": {
-    "label": "Пространства",
-    "codeTooltip": "Сниппеты кода",
-    "toolsTooltip": "Инструменты разработчика",
-    "mathTooltip": "Математический блокнот"
-  },
-  "loading": "Загрузка приложения...",
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Нет папок",
     "emptySnippetsList": "Нет сниппетов",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
     "addTag": "Добавить тег"

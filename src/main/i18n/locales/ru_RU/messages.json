@@ -30,12 +30,14 @@
   },
   "description": {
     "storageVault": "Выберите директорию для хранилища. Для синхронизации между устройствами выберите папку в iCloud Drive, Google Drive или Dropbox.",
+    "language": "To apply language changes, you need to reload the app.",
     "migrateSqliteUtility": "Если у вас есть файл massCode.db из предыдущей версии, используйте эту утилиту, чтобы импортировать данные в текущий Markdown Vault."
   },
   "special": {
     "supportMessage": "Привет, это Антон 👋<br><br>\nСпасибо за использование massCode. Если вы находите это приложение полезным, пожалуйста, {{-tagStart}}поддержите проект{{-tagEnd}}. Это вдохновит меня на продолжение разработки проекта.",
     "unsponsored": "Без спонсорства"
   },
+  "release": {},
   "update": {
     "available": "Версия {{newVersion}} доступна для загрузки.\nВаша версия {{oldVersion}}.",
     "noAvailable": "В настоящее время обновления недоступны."

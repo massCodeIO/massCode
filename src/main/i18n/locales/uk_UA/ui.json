@@ -1,21 +1,63 @@
 {
-  "total": "Всього",
-  "line": "Рядок",
-  "column": "Стовпець",
-  "fragment": "Fragment",
-  "path": "Шлях",
+  "common": {
+    "total": "Всього",
+    "inbox": "Вхідні",
+    "favorites": "Обране",
+    "trash": "Кошик",
+    "folders": "Папки",
+    "tags": "Теги",
+    "library": "Бібліотека",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Всі сніпети"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Сніпет без назви",
+    "selectedMultiple": "Вибрано {{count}} сніпетів",
+    "noSelected": "Сніпети не вибрані"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Папка без назви"
+  },
   "button": {
     "back": "Назад",
     "cancel": "Скасувати",
-    "clear": "Очистити",
     "confirm": "Підтвердити",
     "copy": "Копіювати",
     "fit": "За розміром",
-    "generate": "Згенерувати",
-    "ok": "OK",
-    "revers": "Реверс",
     "saveAs": "Зберегти як",
-    "sort": "Сортувати",
     "update": [
       "Перейти на GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Перемкнути темний режим",
     "background": "Фон",
     "goToDownload": "Перейти до завантаження",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Оновити попередній перегляд",
     "laserPointer": "Лазерна указка",
     "fullscreen": "Повний екран",
@@ -44,11 +87,14 @@
     "hide": "Приховати",
     "showSidebar": "Показати бічну панель",
     "hideSidebar": "Сховати бічну панель",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Нове сховище",
       "folder": "Нова папка",
       "snippet": "Новий сніпет",
-      "fragment": "Новий фрагмент"
+      "fragment": "Новий фрагмент",
+      "note": "New Note"
     },
     "add": {
       "description": "Додати опис",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Видалити з обраного"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Перезавантажити сховище"
+      "storage": "Перезавантажити сховище",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Видалити",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Копіювати посилання на сніпет"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Вхідні",
-    "favorites": "Обране",
-    "allSnippets": "Всі сніпети",
-    "trash": "Кошик",
-    "folders": "Папки",
-    "library": "Бібліотека",
-    "tags": "Теги"
-  },
-  "folder": {
-    "untitled": "Папка без назви",
-    "plural": "Папки",
-    "collapseAll": "Згорнути все",
-    "expandAll": "Розгорнути все"
-  },
-  "snippet": {
-    "untitled": "Сніпет без назви",
-    "plural": "Сніпети",
-    "emptyName": "Введіть назву сніпета",
-    "selectedMultiple": "Вибрано {{count}} сніпетів",
-    "noSelected": "Сніпети не вибрані"
   },
   "placeholder": {
     "emptyTagList": "Додайте теги до сніпетів, щоб побачити їх тут",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Немає папок",
     "emptySnippetsList": "Немає сніппетів",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Пошук",
     "addTag": "Додати тег"
   }

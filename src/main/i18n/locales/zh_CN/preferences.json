@@ -1,13 +1,14 @@
 {
   "label": "首选项",
   "storage": {
-    "label": "存储",
-    "count": "数量",
     "section": {
       "main": "Main",
       "migration": "Migration"
     },
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault"
+    "label": "存储",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
+    "count": "数量",
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "编辑器",
@@ -35,12 +36,53 @@
       "singleQuote": "单引号"
     }
   },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
+    }
+  },
   "appearance": {
     "label": "外观",
     "theme": {
       "label": "主题",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "浅色",
-      "dark": "深色"
+      "dark": "深色",
+      "system": "System"
     }
   },
   "language": {

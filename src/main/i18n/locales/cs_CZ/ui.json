@@ -1,21 +1,63 @@
 {
-  "total": "Celkem",
-  "line": "Řádek",
-  "column": "Sloupec",
-  "fragment": "Fragment",
-  "path": "Cesta",
+  "common": {
+    "total": "Celkem",
+    "inbox": "Doručené",
+    "favorites": "Oblíbené",
+    "trash": "Koš",
+    "folders": "Složky",
+    "tags": "Tagy",
+    "library": "Knihovna",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Všechny snippety"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Nepojmenovaný snippet",
+    "selectedMultiple": "{{count}} vybraných snippetů",
+    "noSelected": "Není vybrán žádný snippet"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Nepojmenovaná složka"
+  },
   "button": {
     "back": "Zpět",
     "cancel": "Zrušit",
-    "clear": "Vymazat",
     "confirm": "Potvrdit",
     "copy": "Kopírovat",
     "fit": "Přizpůsobit",
-    "generate": "Generovat",
-    "ok": "OK",
-    "revers": "Obrátit",
     "saveAs": "Uložit jako",
-    "sort": "Seřadit",
     "update": [
       "Přejít na GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Přepnout tmavý režim",
     "background": "Pozadí",
     "goToDownload": "Přejít ke stažení",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Obnovit náhled",
     "laserPointer": "Laserové ukazovátko",
     "fullscreen": "Celá obrazovka",
@@ -44,11 +87,14 @@
     "hide": "Skrýt",
     "showSidebar": "Zobrazit postranní panel",
     "hideSidebar": "Skrýt postranní panel",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Nové úložiště",
       "folder": "Nová složka",
       "snippet": "Nový snippet",
-      "fragment": "Nový fragment"
+      "fragment": "Nový fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Přidat popis",
@@ -64,6 +110,10 @@
     },
     "remove": {
       "fromFavorites": "Odebrat z oblíbených"
+    },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
     },
     "reload": {
       "storage": "Znovu načíst úložiště",
@@ -84,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Kopírovat odkaz na snippet"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Doručené",
-    "favorites": "Oblíbené",
-    "allSnippets": "Všechny snippety",
-    "trash": "Koš",
-    "folders": "Složky",
-    "library": "Knihovna",
-    "tags": "Tagy"
-  },
-  "folder": {
-    "untitled": "Nepojmenovaná složka",
-    "plural": "Složky",
-    "collapseAll": "Sbalit vše",
-    "expandAll": "Rozbalit vše"
-  },
-  "snippet": {
-    "untitled": "Nepojmenovaný snippet",
-    "plural": "Snippety",
-    "emptyName": "Zadejte název snippetu",
-    "selectedMultiple": "{{count}} vybraných snippetů",
-    "noSelected": "Není vybrán žádný snippet"
   },
   "placeholder": {
     "emptyTagList": "Přidejte tagy ke snippetům, aby se zde zobrazily",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Žádné složky",
     "emptySnippetsList": "Žádné snippety",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Hledat",
     "addTag": "Přidat tag"
   }

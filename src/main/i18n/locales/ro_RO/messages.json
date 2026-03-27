@@ -10,7 +10,9 @@
     ]
   },
   "success": {
-    "copied": "Copiat în clipboard"
+    "copied": "Copiat în clipboard",
+    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
     "noUndo": "Nu puteți anula această acțiune.",
@@ -27,12 +29,15 @@
     "migration": "Auto-migration from SQLite failed: {{error}}"
   },
   "description": {
+    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
+    "language": "To apply language changes, you need to reload the app.",
     "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "Bună, sunt Anton 👋<br><br>\nMulțumesc că folosești massCode. Dacă găsești această aplicație utilă, te rog {{-tagStart}}donează{{-tagEnd}}. Mă va inspira să continui dezvoltarea proiectului.",
     "unsponsored": "Nesponsorizat"
   },
+  "release": {},
   "update": {
     "available": "Versiunea {{newVersion}} este disponibilă pentru descărcare.\nVersiunea ta este {{oldVersion}}.",
     "noAvailable": "Nu există actualizări disponibile în prezent."

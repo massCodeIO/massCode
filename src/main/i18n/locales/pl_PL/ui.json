@@ -1,21 +1,63 @@
 {
-  "total": "Łącznie",
-  "line": "Wiersz",
-  "column": "Kolumna",
-  "fragment": "Fragment",
-  "path": "Ścieżka",
+  "common": {
+    "total": "Łącznie",
+    "inbox": "Skrzynka odbiorcza",
+    "favorites": "Ulubione",
+    "trash": "Kosz",
+    "folders": "Foldery",
+    "tags": "Tagi",
+    "library": "Biblioteka",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Wszystkie fragmenty"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Fragment bez nazwy",
+    "selectedMultiple": "Wybrano {{count}} fragmentów",
+    "noSelected": "Nie wybrano fragmentu"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Folder bez nazwy"
+  },
   "button": {
     "back": "Wstecz",
     "cancel": "Anuluj",
-    "clear": "Wyczyść",
     "confirm": "Potwierdź",
     "copy": "Kopiuj",
     "fit": "Dopasuj",
-    "generate": "Generuj",
-    "ok": "OK",
-    "revers": "Odwróć",
     "saveAs": "Zapisz jako",
-    "sort": "Sortuj",
     "update": [
       "Przejdź do GitHub",
       "OK"
@@ -26,6 +68,7 @@
     "toggleDarkMode": "Przełącz tryb ciemny",
     "background": "Tło",
     "goToDownload": "Przejdź do pobierania",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Odśwież podgląd",
     "laserPointer": "Wskaźnik laserowy",
     "fullscreen": "Pełny ekran",
@@ -44,11 +87,14 @@
     "hide": "Ukryj",
     "showSidebar": "Pokaż pasek boczny",
     "hideSidebar": "Ukryj pasek boczny",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Nowy magazyn",
       "folder": "Nowy folder",
       "snippet": "Nowy fragment kodu",
-      "fragment": "Nowy fragment"
+      "fragment": "Nowy fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Dodaj opis",
@@ -65,8 +111,13 @@
     "remove": {
       "fromFavorites": "Usuń z ulubionych"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Przeładuj magazyn"
+      "storage": "Przeładuj magazyn",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Usuń",
@@ -83,34 +134,19 @@
     },
     "copy": {
       "snippetLink": "Kopiuj link do fragmentu"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Skrzynka odbiorcza",
-    "favorites": "Ulubione",
-    "allSnippets": "Wszystkie fragmenty",
-    "trash": "Kosz",
-    "folders": "Foldery",
-    "library": "Biblioteka",
-    "tags": "Tagi"
-  },
-  "folder": {
-    "untitled": "Folder bez nazwy",
-    "plural": "Foldery",
-    "collapseAll": "Zwiń wszystkie",
-    "expandAll": "Rozwiń wszystkie"
-  },
-  "snippet": {
-    "untitled": "Fragment bez nazwy",
-    "plural": "Fragmenty",
-    "emptyName": "Wpisz nazwę fragmentu",
-    "selectedMultiple": "Wybrano {{count}} fragmentów",
-    "noSelected": "Nie wybrano fragmentu"
   },
   "placeholder": {
     "emptyTagList": "Dodaj tagi do fragmentów, aby zobaczyć je tutaj",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Brak folderów",
     "emptySnippetsList": "Brak snippetów",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Szukaj",
     "addTag": "Dodaj tag"
   }

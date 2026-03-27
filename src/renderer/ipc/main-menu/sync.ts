@@ -3,7 +3,12 @@ import { ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { createMainMenuContext } from './context'
 
-const { codeLayoutMode, isShowCodePreview, isShowJsonVisualizer } = useApp()
+const {
+  codeLayoutMode,
+  isCompactListMode,
+  isShowCodePreview,
+  isShowJsonVisualizer,
+} = useApp()
 const { selectedNote } = useNotes()
 const {
   isNotesMindmapShown,
@@ -19,6 +24,7 @@ export function registerMainMenuContextSync() {
       [
         getActiveSpaceId(),
         codeLayoutMode.value,
+        isCompactListMode.value,
         isAvailableToCodePreview.value,
         selectedSnippetContent.value?.language,
         isShowCodePreview.value,
@@ -34,6 +40,7 @@ export function registerMainMenuContextSync() {
         'main-menu:update-context',
         createMainMenuContext({
           activeSpaceId: getActiveSpaceId(),
+          compactListMode: isCompactListMode.value,
           code: {
             canPreviewCode: isAvailableToCodePreview.value,
             canPreviewJson: selectedSnippetContent.value?.language === 'json',

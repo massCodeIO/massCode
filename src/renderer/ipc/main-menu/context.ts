@@ -21,6 +21,7 @@ interface NotesMenuState {
 
 interface CreateMainMenuContextOptions {
   activeSpaceId: SpaceId | null
+  compactListMode: boolean
   code: CodeMenuState
   notes: NotesMenuState
 }
@@ -44,7 +45,9 @@ export function createMainMenuContext(
       view: {
         layoutMode: options.code.layoutMode,
         layoutModes: sharedLayoutModes,
+        canToggleCompactMode: true,
         canToggleMindmap: false,
+        isCompactMode: options.compactListMode,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -72,7 +75,9 @@ export function createMainMenuContext(
       view: {
         layoutMode: options.notes.layoutMode,
         layoutModes: sharedLayoutModes,
+        canToggleCompactMode: true,
         canToggleMindmap: options.notes.hasSelectedNote,
+        isCompactMode: options.compactListMode,
         isMindmapShown: options.notes.isMindmapShown,
         canTogglePresentation: options.notes.hasSelectedNote,
         isPresentationShown: options.notes.isPresentationShown,
@@ -100,7 +105,9 @@ export function createMainMenuContext(
       view: {
         layoutMode: null,
         layoutModes: [],
+        canToggleCompactMode: true,
         canToggleMindmap: false,
+        isCompactMode: options.compactListMode,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -127,7 +134,9 @@ export function createMainMenuContext(
     view: {
       layoutMode: null,
       layoutModes: [],
+      canToggleCompactMode: false,
       canToggleMindmap: false,
+      isCompactMode: false,
       isMindmapShown: false,
       canTogglePresentation: false,
       isPresentationShown: false,

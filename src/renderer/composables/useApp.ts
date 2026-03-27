@@ -46,6 +46,9 @@ const focusedSnippetId = ref<number | undefined>()
 
 const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
+const isCompactListMode = ref(
+  (store.app.get('compactListMode') as boolean | undefined) ?? false,
+)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
 const isShowCodePreview = ref(false)
@@ -99,8 +102,16 @@ watch(codeLayoutMode, (value) => {
   state.isSidebarHidden = value !== 'all-panels'
 })
 
+watch(isCompactListMode, (value) => {
+  store.app.set('compactListMode', value)
+})
+
 function setCodeLayoutMode(value: LayoutMode) {
   codeLayoutMode.value = value
+}
+
+function toggleCompactListMode() {
+  isCompactListMode.value = !isCompactListMode.value
 }
 
 function toggleCodeSidebar() {
@@ -119,6 +130,7 @@ export function useApp() {
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,
+    isCompactListMode,
     isFocusedSnippetName,
     isFocusedSearch,
     isShowCodeImage,
@@ -132,5 +144,6 @@ export function useApp() {
     state,
     stateSnapshots,
     toggleCodeSidebar,
+    toggleCompactListMode,
   }
 }

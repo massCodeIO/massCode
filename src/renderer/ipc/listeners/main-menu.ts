@@ -28,6 +28,7 @@ const {
   isShowCodePreview,
   isShowJsonVisualizer,
   setCodeLayoutMode,
+  toggleCompactListMode,
   toggleCodeSidebar,
 } = useApp()
 const {
@@ -122,6 +123,18 @@ export function registerMainMenuListeners() {
 
     if (activeSpaceId === 'notes') {
       toggleNotesSidebar()
+    }
+  })
+
+  ipc.on('main-menu:toggle-compact-mode', () => {
+    const activeSpaceId = getActiveSpaceId()
+
+    if (
+      activeSpaceId === 'code'
+      || activeSpaceId === 'notes'
+      || activeSpaceId === 'math'
+    ) {
+      toggleCompactListMode()
     }
   })
 

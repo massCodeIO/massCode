@@ -263,10 +263,7 @@ async function onFolderDrag({
     <div class="flex min-h-0 flex-1 flex-col">
       <div class="min-h-0 flex-1">
         <div class="flex h-full min-h-0 flex-col">
-          <SidebarSectionHeader
-            class="mt-1"
-            :title="i18n.t('common.folders')"
-          >
+          <SidebarSectionHeader :title="i18n.t('common.folders')">
             <template #action>
               <UiActionButton
                 :tooltip="i18n.t('action.new.folder')"

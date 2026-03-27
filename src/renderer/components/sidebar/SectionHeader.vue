@@ -7,7 +7,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="flex items-center justify-between py-1 pl-1 select-none">
+  <div class="flex h-9 items-center justify-between py-1 pl-1 select-none">
     <UiText
       as="div"
       variant="caption"

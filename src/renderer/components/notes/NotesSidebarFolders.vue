@@ -176,10 +176,7 @@ function onCancelEdit() {
 </script>
 
 <template>
-  <SidebarSectionHeader
-    class="mt-1"
-    :title="i18n.t('common.folders')"
-  >
+  <SidebarSectionHeader :title="i18n.t('common.folders')">
     <template #action>
       <UiActionButton
         :tooltip="i18n.t('action.new.folder')"

@@ -26,6 +26,7 @@ type MainMenuAction =
   | 'set-layout-mode'
   | 'set-notes-editor-mode'
   | 'toggle-sidebar'
+  | 'toggle-compact-mode'
   | 'update-context'
   | 'goto-math-notebook'
 

@@ -6,11 +6,16 @@ import { i18n } from '@/electron'
 const snippetScrollerLocalRef = ref<{
   scrollToItem: (index: number) => void
 } | null>(null)
-const isInitialSnippetPositionRestored = ref(false)
 const SNIPPET_ITEM_SIZE = 61
+const SNIPPET_ITEM_COMPACT_SIZE = 37
+const isInitialSnippetPositionRestored = ref(false)
 
-const { state } = useApp()
+const { isCompactListMode, state } = useApp()
 const { displayedSnippets } = useSnippets()
+
+const snippetItemSize = computed(() =>
+  isCompactListMode.value ? SNIPPET_ITEM_COMPACT_SIZE : SNIPPET_ITEM_SIZE,
+)
 
 function setScrollerRef(
   value: { scrollToItem: (index: number) => void } | null,
@@ -62,7 +67,7 @@ watch(
       v-slot="{ item }"
       class="scrollbar flex-grow px-2"
       :items="displayedSnippets"
-      :item-size="SNIPPET_ITEM_SIZE"
+      :item-size="snippetItemSize"
       key-field="id"
     >
       <SnippetItem :snippet="item" />

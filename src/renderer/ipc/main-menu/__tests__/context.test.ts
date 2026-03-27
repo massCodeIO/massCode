@@ -5,6 +5,7 @@ describe('createMainMenuContext', () => {
   it('builds code-space menu context from layout and editor state', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'code',
+      compactListMode: true,
       code: {
         canPreviewCode: true,
         canPreviewJson: true,
@@ -27,8 +28,10 @@ describe('createMainMenuContext', () => {
       secondaryAction: 'new-folder',
     })
     expect(context.view).toEqual({
+      canToggleCompactMode: true,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      isCompactMode: true,
       isMindmapShown: false,
       isPresentationShown: false,
       layoutMode: 'list-editor',
@@ -49,6 +52,7 @@ describe('createMainMenuContext', () => {
   it('builds notes-space menu context with markdown view actions', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'notes',
+      compactListMode: false,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -71,8 +75,10 @@ describe('createMainMenuContext', () => {
       secondaryAction: 'new-folder',
     })
     expect(context.view).toEqual({
+      canToggleCompactMode: true,
       canToggleMindmap: true,
       canTogglePresentation: true,
+      isCompactMode: false,
       isMindmapShown: true,
       isPresentationShown: false,
       layoutMode: 'editor-only',
@@ -93,6 +99,7 @@ describe('createMainMenuContext', () => {
   it('builds math-space menu context with only primary creation action', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'math',
+      compactListMode: true,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -115,8 +122,10 @@ describe('createMainMenuContext', () => {
       secondaryAction: null,
     })
     expect(context.view).toEqual({
+      canToggleCompactMode: true,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      isCompactMode: true,
       isMindmapShown: false,
       isPresentationShown: false,
       layoutMode: null,
@@ -131,6 +140,38 @@ describe('createMainMenuContext', () => {
       isJsonPreviewShown: false,
       kind: null,
       noteMode: null,
+    })
+  })
+
+  it('disables compact mode for spaces without a list', () => {
+    const context = createMainMenuContext({
+      activeSpaceId: 'tools',
+      compactListMode: true,
+      code: {
+        canPreviewCode: false,
+        canPreviewJson: false,
+        isCodePreviewShown: false,
+        isJsonPreviewShown: false,
+        layoutMode: 'all-panels',
+      },
+      notes: {
+        hasSelectedNote: false,
+        isMindmapShown: false,
+        isPresentationShown: false,
+        layoutMode: 'all-panels',
+        mode: 'livePreview',
+      },
+    })
+
+    expect(context.view).toEqual({
+      canToggleCompactMode: false,
+      canToggleMindmap: false,
+      canTogglePresentation: false,
+      isCompactMode: false,
+      isMindmapShown: false,
+      isPresentationShown: false,
+      layoutMode: null,
+      layoutModes: [],
     })
   })
 })

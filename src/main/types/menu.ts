@@ -18,6 +18,8 @@ export interface MainMenuFileContext {
 export interface MainMenuViewContext {
   layoutMode: MainMenuLayoutMode | null
   layoutModes: MainMenuLayoutMode[]
+  canToggleCompactMode: boolean
+  isCompactMode: boolean
   canToggleMindmap: boolean
   isMindmapShown: boolean
   canTogglePresentation: boolean

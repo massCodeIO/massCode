@@ -34,7 +34,9 @@ const defaultMainMenuContext: MainMenuContext = {
   view: {
     layoutMode: null,
     layoutModes: [],
+    canToggleCompactMode: false,
     canToggleMindmap: false,
+    isCompactMode: false,
     isMindmapShown: false,
     canTogglePresentation: false,
     isPresentationShown: false,
@@ -393,6 +395,19 @@ function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
 
 function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   const items = createLayoutMenuItems(context)
+
+  if (context.view.canToggleCompactMode) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push({
+      label: i18n.t('menu:view.compactMode'),
+      type: 'checkbox',
+      checked: context.view.isCompactMode,
+      click: () => send('main-menu:toggle-compact-mode'),
+    })
+  }
 
   if (context.view.canToggleMindmap || context.view.canTogglePresentation) {
     if (items.length) {

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useMathNotebook } from '@/composables'
+import { useApp, useMathNotebook } from '@/composables'
 import { i18n } from '@/electron'
 import { format } from 'date-fns'
 import { FileText, Plus } from 'lucide-vue-next'
 
+const { isCompactListMode } = useApp()
 const {
   sheets,
   activeSheetId,
@@ -105,21 +106,27 @@ function cancelRename() {
                 @click.stop
               >
               <template v-else>
-                <UiText
-                  as="div"
-                  variant="sm"
-                  class="truncate leading-tight"
+                <div
+                  :class="isCompactListMode ? 'flex items-center gap-2' : ''"
                 >
-                  {{ sheet.name }}
-                </UiText>
-                <UiText
-                  as="div"
-                  variant="caption"
-                  class="leading-tight transition-colors"
-                  muted
-                >
-                  {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
-                </UiText>
+                  <UiText
+                    as="div"
+                    variant="sm"
+                    class="truncate leading-tight"
+                    :class="isCompactListMode ? 'flex-1' : ''"
+                  >
+                    {{ sheet.name }}
+                  </UiText>
+                  <UiText
+                    as="div"
+                    variant="caption"
+                    class="leading-tight transition-colors"
+                    :class="isCompactListMode ? 'shrink-0' : ''"
+                    muted
+                  >
+                    {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
+                  </UiText>
+                </div>
               </template>
             </div>
           </div>

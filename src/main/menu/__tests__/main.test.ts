@@ -58,7 +58,9 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: 'all-panels',
         layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        canToggleCompactMode: true,
         canToggleMindmap: false,
+        isCompactMode: true,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -98,10 +100,105 @@ describe('createMainMenu', () => {
       'menu:view.layout.allPanels',
       'menu:view.layout.listEditor',
       'menu:view.layout.editorOnly',
+      undefined,
+      'menu:view.compactMode',
     ])
     expect(viewMenu?.submenu?.some(item => Array.isArray(item.submenu))).toBe(
       false,
     )
+  })
+
+  it('omits compact mode when the current space has no list', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+      },
+      view: {
+        layoutMode: null,
+        layoutModes: [],
+        canToggleCompactMode: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: null,
+        noteMode: null,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, type?: string, checked?: boolean }>
+    }>
+    const viewMenu = template.find(item => item.label === 'menu:view.label')
+    const compactModeItem = viewMenu?.submenu?.find(
+      item => item.label === 'menu:view.compactMode',
+    )
+
+    expect(compactModeItem).toBeUndefined()
+  })
+
+  it('marks compact mode as checked when enabled', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: 'new-sheet',
+        secondaryAction: null,
+        canCreateFragment: false,
+      },
+      view: {
+        layoutMode: null,
+        layoutModes: [],
+        canToggleCompactMode: true,
+        canToggleMindmap: false,
+        isCompactMode: true,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: null,
+        noteMode: null,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, type?: string, checked?: boolean }>
+    }>
+    const viewMenu = template.find(item => item.label === 'menu:view.label')
+    const compactModeItem = viewMenu?.submenu?.find(
+      item => item.label === 'menu:view.compactMode',
+    )
+
+    expect(compactModeItem).toMatchObject({
+      checked: true,
+      type: 'checkbox',
+    })
   })
 
   it('does not include space navigation items in the app menu', async () => {

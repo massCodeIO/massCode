@@ -1,25 +1,60 @@
 <script setup lang="ts">
 import * as Resizable from '@/components/ui/shadcn/resizable'
 import { useApp } from '@/composables'
+import { getCodePanels } from '@/composables/layoutModes'
 import { store } from '@/electron'
 
-const { isSidebarHidden } = useApp()
+const { codeLayoutMode } = useApp()
 
-const storedLayout = store.app.get('sizes.layout') as number[] | undefined
-const defaultLayout = storedLayout || [15, 20, 65]
+const storedThreePanelLayout = store.app.get('sizes.layout') as
+  | number[]
+  | undefined
+const storedTwoPanelLayout = store.app.get('sizes.codeListLayout') as
+  | number[]
+  | undefined
+const defaultThreePanelLayout = storedThreePanelLayout || [15, 20, 65]
+const defaultTwoPanelLayout = storedTwoPanelLayout || [35, 65]
+const panels = computed(() => getCodePanels(codeLayoutMode.value))
 
 function onLayout(layout: number[]) {
-  store.app.set('sizes.layout', layout)
+  if (layout.length === 3) {
+    store.app.set('sizes.layout', layout)
+    return
+  }
+
+  if (layout.length === 2) {
+    store.app.set('sizes.codeListLayout', layout)
+  }
 }
 </script>
 
 <template>
   <div
-    v-if="isSidebarHidden"
+    v-if="!panels.showList"
     class="h-screen"
   >
     <Editor />
   </div>
+  <Resizable.ResizablePanelGroup
+    v-else-if="!panels.showSidebar"
+    direction="horizontal"
+    class="h-screen"
+    @layout="onLayout"
+  >
+    <Resizable.ResizablePanel
+      :default-size="defaultTwoPanelLayout[0]"
+      :min-size="15"
+    >
+      <SnippetList />
+    </Resizable.ResizablePanel>
+    <Resizable.ResizableHandle />
+    <Resizable.ResizablePanel
+      :default-size="defaultTwoPanelLayout[1]"
+      :min-size="30"
+    >
+      <Editor />
+    </Resizable.ResizablePanel>
+  </Resizable.ResizablePanelGroup>
   <Resizable.ResizablePanelGroup
     v-else
     direction="horizontal"
@@ -27,21 +62,21 @@ function onLayout(layout: number[]) {
     @layout="onLayout"
   >
     <Resizable.ResizablePanel
-      :default-size="defaultLayout[0]"
+      :default-size="defaultThreePanelLayout[0]"
       :min-size="10"
     >
       <Sidebar />
     </Resizable.ResizablePanel>
     <Resizable.ResizableHandle />
     <Resizable.ResizablePanel
-      :default-size="defaultLayout[1]"
+      :default-size="defaultThreePanelLayout[1]"
       :min-size="10"
     >
       <SnippetList />
     </Resizable.ResizablePanel>
     <Resizable.ResizableHandle />
     <Resizable.ResizablePanel
-      :default-size="defaultLayout[2]"
+      :default-size="defaultThreePanelLayout[2]"
       :min-size="30"
     >
       <Editor />

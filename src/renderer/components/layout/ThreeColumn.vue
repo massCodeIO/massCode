@@ -8,10 +8,12 @@ const props = withDefaults(
     showList: boolean
     sidebarWidth?: number
     listWidth?: number
+    headerGap?: number
   }>(),
   {
     sidebarWidth: LAYOUT_DEFAULTS.sidebar.width,
     listWidth: LAYOUT_DEFAULTS.list.width,
+    headerGap: 0,
   },
 )
 
@@ -94,7 +96,12 @@ const isResizing = computed(
       :style="{ width: `${internalSidebarWidth}px` }"
       class="shrink-0 overflow-hidden"
     >
-      <slot name="sidebar" />
+      <div
+        class="h-full"
+        :style="{ '--header-gap': `${props.headerGap}px` }"
+      >
+        <slot name="sidebar" />
+      </div>
     </div>
     <div
       v-if="showSidebar"

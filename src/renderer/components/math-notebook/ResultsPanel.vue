@@ -5,6 +5,7 @@ import { useCopyToClipboard } from '@/composables'
 import { formatMathNumber } from '@/composables/math-notebook/math-engine/format'
 import { i18n, ipc } from '@/electron'
 import { LoaderCircle, Sigma } from 'lucide-vue-next'
+import { sumNumericResults } from './sumNumericResults'
 
 interface Props {
   results: LineResult[]
@@ -22,17 +23,7 @@ const MATH_NOTEBOOK_DOCUMENTATION_URL
   = 'https://masscode.io/documentation/math-notebook.html'
 
 const total = computed(() => {
-  return props.results.reduce((sum, r) => {
-    if (r.type === 'number' || r.type === 'assignment') {
-      const raw = r.value || ''
-      if (raw.includes(':'))
-        return sum
-      const num = Number.parseFloat(raw.replace(/[^\d.\-e+]/gi, ''))
-      if (!Number.isNaN(num))
-        return sum + num
-    }
-    return sum
-  }, 0)
+  return sumNumericResults(props.results)
 })
 
 const formattedTotal = computed(() => {

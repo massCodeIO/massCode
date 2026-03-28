@@ -1,5 +1,6 @@
 /* eslint-disable test/prefer-lowercase-title */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { preprocessMathExpression } from '../math-notebook/math-engine/preprocess'
 import { useMathEngine } from '../math-notebook/useMathEngine'
 
 const TEST_CURRENCY_RATES = {
@@ -7,6 +8,7 @@ const TEST_CURRENCY_RATES = {
   EUR: 0.92,
   GBP: 0.79,
   CAD: 1.36,
+  RUB: 90,
 }
 
 const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
@@ -461,6 +463,73 @@ describe('number format', () => {
   })
 })
 
+describe('numericValue for total', () => {
+  it('sets numericValue for plain number', () => {
+    const result = evalLine('42')
+    expect(result.numericValue).toBe(42)
+  })
+
+  it('sets numericValue for arithmetic result', () => {
+    const result = evalLine('10 + 5')
+    expect(result.numericValue).toBe(15)
+  })
+
+  it('sets numericValue for number assignment', () => {
+    const results = evalLines('x = 10')
+    expect(results[0].numericValue).toBe(10)
+  })
+
+  it('does not set numericValue for date', () => {
+    const result = evalLine('now')
+    expect(result.numericValue).toBeUndefined()
+  })
+
+  it('does not set numericValue for date assignment', () => {
+    const results = evalLines('x = 12.03.2025')
+    expect(results[0].numericValue).toBeUndefined()
+  })
+
+  it('does not set numericValue for unit result', () => {
+    const result = evalLine('10 USD')
+    expect(result.numericValue).toBeUndefined()
+  })
+
+  it('does not set numericValue for unit assignment', () => {
+    const results = evalLines('price = 10 USD')
+    expect(results[0].numericValue).toBeUndefined()
+  })
+
+  it('sets intValue for hex format', () => {
+    const result = evalLine('255 in hex')
+    expect(result.numericValue).toBe(255)
+  })
+
+  it('sets intValue (rounded) for hex with float', () => {
+    const result = evalLine('10.6 in hex')
+    expect(result.numericValue).toBe(11)
+  })
+
+  it('sets intValue for bin format', () => {
+    const result = evalLine('255 in bin')
+    expect(result.numericValue).toBe(255)
+  })
+
+  it('sets intValue for oct format', () => {
+    const result = evalLine('255 in oct')
+    expect(result.numericValue).toBe(255)
+  })
+
+  it('sets numericValue for sci format', () => {
+    const result = evalLine('5300 in sci')
+    expect(result.numericValue).toBe(5300)
+  })
+
+  it('does not set numericValue for Infinity', () => {
+    const result = evalLine('1/0')
+    expect(result.numericValue).toBeUndefined()
+  })
+})
+
 describe('area and volume aliases', () => {
   it('sq alias', () => {
     const result = evalLine('20 sq cm to cm^2')
@@ -575,6 +644,118 @@ describe('sum and total', () => {
   it('case insensitive', () => {
     const results = evalLines('10\n20\nSUM')
     expect(results[2].value).toBe('30')
+  })
+})
+
+describe('adjacent digit concatenation', () => {
+  it('concatenates space-separated digits', () => {
+    expectValue('1 1 2', '112')
+  })
+
+  it('works with operators before grouped digits', () => {
+    expectValue('1 + 1 + 1 1 2', '114')
+  })
+
+  it('concatenates two digit groups', () => {
+    expectValue('1 0 + 2 0', '30')
+  })
+
+  it('does not break thousands grouping', () => {
+    expectValue('4 500', '4,500')
+  })
+
+  it('does not break stacked units', () => {
+    const result = evalLine('1 meter 20 cm')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('1.2')
+  })
+})
+
+describe('mixed currency and plain number', () => {
+  it('adds plain number to currency in addition', () => {
+    const result = evalLine('$100 + 10')
+    expect(result.value).toContain('110')
+    expect(result.type).toBe('unit')
+  })
+
+  it('adds plain number to currency with multiple terms', () => {
+    const result = evalLine('$100 + $200 + 10')
+    expect(result.value).toContain('310')
+    expect(result.type).toBe('unit')
+  })
+
+  it('adds plain number before currency', () => {
+    const result = evalLine('10 + $100')
+    expect(result.value).toContain('110')
+    expect(result.type).toBe('unit')
+  })
+
+  it('subtracts plain number from currency', () => {
+    const result = evalLine('$100 - 10')
+    expect(result.value).toContain('90')
+    expect(result.type).toBe('unit')
+  })
+
+  it('does not modify multiplication with plain number', () => {
+    const result = evalLine('$100 * 2')
+    expect(result.value).toContain('200')
+    expect(result.type).toBe('unit')
+  })
+
+  it('does not modify division with plain number', () => {
+    const result = evalLine('$100 / 4')
+    expect(result.value).toContain('25')
+    expect(result.type).toBe('unit')
+  })
+
+  it('does not modify expression without currency', () => {
+    expectValue('10 + 20', '30')
+  })
+
+  it('works with word operator plus', () => {
+    const result = evalLine('$100 plus 10')
+    expect(result.value).toContain('110')
+    expect(result.type).toBe('unit')
+  })
+
+  it('works with word operator minus', () => {
+    const result = evalLine('$100 minus 10')
+    expect(result.value).toContain('90')
+    expect(result.type).toBe('unit')
+  })
+
+  it('does not infer currency for percentage operands', () => {
+    expect(preprocessMathExpression('$100 + 10%')).toBe('100 USD + 10 / 100')
+  })
+
+  it('keeps trailing conversion on the whole inferred expression', () => {
+    const result = evalLine('10 USD + 1 in RUB')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('RUB')
+    expectNumericClose('10 USD + 1 in RUB', 990, 2)
+  })
+})
+
+describe('mixed unit and plain number', () => {
+  it('adds plain number to day unit', () => {
+    const result = evalLine('10 day + 34')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('day')
+    expectNumericClose('10 day + 34', 44, 2)
+  })
+
+  it('adds plain number before day unit', () => {
+    const result = evalLine('34 + 10 day')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('day')
+    expectNumericClose('34 + 10 day', 44, 2)
+  })
+
+  it('adds plain number after adjacent digit concatenation with unit', () => {
+    const result = evalLine('1 0 day + 34')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('day')
+    expectNumericClose('1 0 day + 34', 44, 2)
   })
 })
 

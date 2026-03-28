@@ -84,21 +84,29 @@ function applyFormat(
         value: `0x${intValue.toString(16).toUpperCase()}`,
         error: null,
         type: 'number',
+        numericValue: intValue,
       }
     case 'bin':
       return {
         value: `0b${intValue.toString(2)}`,
         error: null,
         type: 'number',
+        numericValue: intValue,
       }
     case 'oct':
       return {
         value: `0o${intValue.toString(8)}`,
         error: null,
         type: 'number',
+        numericValue: intValue,
       }
     case 'sci':
-      return { value: num.toExponential(), error: null, type: 'number' }
+      return {
+        value: num.toExponential(),
+        error: null,
+        type: 'number',
+        numericValue: num,
+      }
   }
 }
 
@@ -158,10 +166,19 @@ function formatResult(result: any): LineResult {
   }
 
   if (typeof result === 'number') {
+    if (!Number.isFinite(result)) {
+      return {
+        value: formatMathNumber(result, activeLocale, activeDecimalPlaces),
+        error: null,
+        type: 'number',
+      }
+    }
+
     return {
       value: formatMathNumber(result, activeLocale, activeDecimalPlaces),
       error: null,
       type: 'number',
+      numericValue: result,
     }
   }
 

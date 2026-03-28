@@ -2,6 +2,7 @@ export interface LineResult {
   value: string | null
   error: string | null
   showError?: boolean
+  numericValue?: number
   type:
     | 'number'
     | 'unit'

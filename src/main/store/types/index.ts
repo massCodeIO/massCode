@@ -78,6 +78,11 @@ export interface NotesEditorSettings {
   indentSize: number
 }
 
+export interface MathSettings {
+  locale: string
+  decimalPlaces: number
+}
+
 export interface PreferencesStore {
   appearance: {
     theme: string
@@ -96,6 +101,7 @@ export interface PreferencesStore {
     notes: NotesEditorSettings
     markdown: MarkdownSettings
   }
+  math: MathSettings
 }
 
 export interface MathSheet {

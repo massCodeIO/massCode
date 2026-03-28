@@ -1,6 +1,7 @@
 import type {
   EditorSettings,
   MarkdownSettings,
+  MathSettings,
   NotesEditorSettings,
   PreferencesStore,
 } from '../types'
@@ -19,6 +20,11 @@ import {
 const isWin = platform() === 'win32'
 
 const storagePath = isWin ? `${homedir()}\\massCode` : `${homedir()}/massCode`
+
+const MATH_DEFAULTS: MathSettings = {
+  locale: 'en-US',
+  decimalPlaces: 6,
+}
 
 const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
@@ -41,6 +47,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
       scale: 1,
     },
   },
+  math: MATH_DEFAULTS,
 }
 
 function sanitizeCodeEditorSettings(value: unknown): EditorSettings {
@@ -143,6 +150,19 @@ function sanitizeMarkdownSettings(value: unknown): MarkdownSettings {
   }
 }
 
+function sanitizeMathSettings(value: unknown): MathSettings {
+  const source = asRecord(value)
+
+  return {
+    locale: readString(source, 'locale', MATH_DEFAULTS.locale),
+    decimalPlaces: readNumber(
+      source,
+      'decimalPlaces',
+      MATH_DEFAULTS.decimalPlaces,
+    ),
+  }
+}
+
 function sanitizePreferences(value: unknown): PreferencesStore {
   const source = asRecord(value)
   const appearanceSource = asRecord(source.appearance)
@@ -162,6 +182,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
     = Object.keys(asRecord(editorSource.markdown)).length > 0
       ? asRecord(editorSource.markdown)
       : asRecord(source.markdown)
+  const mathSource = asRecord(source.math)
 
   return {
     appearance: {
@@ -210,6 +231,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       notes: sanitizeNotesEditorSettings(notesEditorSource),
       markdown: sanitizeMarkdownSettings(markdownSource),
     },
+    math: sanitizeMathSettings(mathSource),
   }
 }
 

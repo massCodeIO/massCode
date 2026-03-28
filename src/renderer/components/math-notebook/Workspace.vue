@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { LineResult } from '@/composables/math-notebook'
+import type { MathSettings } from '~/main/store/types'
 import { useMathEngine, useMathNotebook } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { Calculator } from 'lucide-vue-next'
 
 interface CurrencyRatesPayload {
@@ -10,8 +11,25 @@ interface CurrencyRatesPayload {
 }
 
 const { activeSheet, updateSheet } = useMathNotebook()
-const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
-  = useMathEngine()
+const {
+  evaluateDocument,
+  setCurrencyServiceState,
+  setFormatSettings,
+  updateCurrencyRates,
+} = useMathEngine()
+
+const mathSettings = reactive(store.preferences.get('math') as MathSettings)
+
+setFormatSettings(mathSettings.locale, mathSettings.decimalPlaces)
+
+watch(
+  mathSettings,
+  () => {
+    store.preferences.set('math', JSON.parse(JSON.stringify(mathSettings)))
+    setFormatSettings(mathSettings.locale, mathSettings.decimalPlaces)
+  },
+  { deep: true },
+)
 
 const scrollTop = ref(0)
 const activeLine = ref(0)
@@ -98,6 +116,8 @@ function handleActiveLine(line: number) {
       :results="results"
       :scroll-top="scrollTop"
       :active-line="activeLine"
+      :locale="mathSettings.locale"
+      :decimal-places="mathSettings.decimalPlaces"
     />
   </div>
 

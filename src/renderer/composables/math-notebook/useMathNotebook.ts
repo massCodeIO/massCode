@@ -1,5 +1,8 @@
 import type { MathSheet } from '~/main/store/types'
-import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import {
+  markPersistedStorageMutation,
+  markUserEdit,
+} from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
 import { nanoid } from 'nanoid'
@@ -113,6 +116,7 @@ export function useMathNotebook() {
   function updateSheet(id: string, content: string) {
     const sheet = sheets.value.find(s => s.id === id)
     if (sheet) {
+      markUserEdit()
       sheet.content = content
       sheet.updatedAt = Date.now()
       debouncedPersist()

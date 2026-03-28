@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 
 const invoke = vi.fn()
+const markPersistedStorageMutation = vi.fn()
+const markUserEdit = vi.fn()
 
 globalThis.ref = ref
 globalThis.computed = computed
@@ -16,7 +18,8 @@ vi.mock('@/electron', () => ({
 }))
 
 vi.mock('@/composables/useStorageMutation', () => ({
-  markPersistedStorageMutation: vi.fn(),
+  markPersistedStorageMutation,
+  markUserEdit,
 }))
 
 describe('useMathNotebook', () => {
@@ -42,5 +45,19 @@ describe('useMathNotebook', () => {
     await notebook.init()
 
     expect(invoke).toHaveBeenCalledTimes(2)
+  })
+
+  it('marks user edit when sheet content changes', async () => {
+    const { useMathNotebook } = await import(
+      '../math-notebook/useMathNotebook'
+    )
+    const notebook = useMathNotebook()
+
+    await notebook.init()
+
+    const sheetId = notebook.createSheet()
+    notebook.updateSheet(sheetId, '1 + 1')
+
+    expect(markUserEdit).toHaveBeenCalledTimes(1)
   })
 })

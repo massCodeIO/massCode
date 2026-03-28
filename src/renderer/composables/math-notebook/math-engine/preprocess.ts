@@ -44,8 +44,13 @@ function sanitizeForCurrencyDetection(line: string) {
 }
 
 function preprocessGroupedNumbers(line: string): string {
-  return line.replace(/\b\d{1,3}(?:\s\d{3})+\b/g, match =>
+  let result = line.replace(/\b\d{1,3}(?:\s\d{3})+\b/g, match =>
     match.replace(/\s+/g, ''))
+
+  result = result.replace(/\b\d+(?:\s+\d+)+\b/g, match =>
+    match.replace(/\s+/g, ''))
+
+  return result
 }
 
 function preprocessDegreeSigns(line: string): string {
@@ -237,6 +242,144 @@ function preprocessCurrencyWords(line: string): string {
   )
 }
 
+function splitTopLevelAddSubTerms(expression: string) {
+  const terms: string[] = []
+  const operators: Array<'+' | '-'> = []
+  let depth = 0
+  let segmentStart = 0
+
+  for (let index = 0; index < expression.length; index++) {
+    const char = expression[index]
+
+    if (char === '(') {
+      depth += 1
+      continue
+    }
+
+    if (char === ')') {
+      depth = Math.max(0, depth - 1)
+      continue
+    }
+
+    if (depth !== 0 || (char !== '+' && char !== '-')) {
+      continue
+    }
+
+    let prevIndex = index - 1
+    while (prevIndex >= 0 && /\s/.test(expression[prevIndex])) {
+      prevIndex -= 1
+    }
+
+    let nextIndex = index + 1
+    while (nextIndex < expression.length && /\s/.test(expression[nextIndex])) {
+      nextIndex += 1
+    }
+
+    if (prevIndex < 0 || nextIndex >= expression.length) {
+      continue
+    }
+
+    if ('+-*/%^,('.includes(expression[prevIndex])) {
+      continue
+    }
+
+    terms.push(expression.slice(segmentStart, index).trim())
+    operators.push(char)
+    segmentStart = index + 1
+  }
+
+  if (operators.length === 0) {
+    return null
+  }
+
+  terms.push(expression.slice(segmentStart).trim())
+
+  if (terms.some(term => !term)) {
+    return null
+  }
+
+  return { terms, operators }
+}
+
+function extractAdditiveUnit(term: string) {
+  const match = term.match(/^-?\d+(?:\.\d+)?\s+([a-z][a-z0-9^]*)$/i)
+  if (!match) {
+    return null
+  }
+
+  return match[1].toUpperCase()
+    in Object.fromEntries(SUPPORTED_CURRENCY_CODES.map(code => [code, true]))
+    ? match[1].toUpperCase()
+    : match[1]
+}
+
+function isPlainNumberTerm(term: string) {
+  return /^-?\d+(?:\.\d+)?$/.test(term)
+}
+
+function inferAdditiveUnitsForPlainNumbers(expression: string) {
+  const split = splitTopLevelAddSubTerms(expression)
+  if (!split) {
+    return expression
+  }
+
+  const explicitUnits = split.terms.map(extractAdditiveUnit)
+
+  let changed = false
+  const inferredTerms = split.terms.map((term, index) => {
+    if (!isPlainNumberTerm(term)) {
+      return term
+    }
+
+    const previousUnit = explicitUnits.slice(0, index).reverse().find(Boolean)
+    const nextUnit = explicitUnits.slice(index + 1).find(Boolean)
+    const inheritedUnit = previousUnit || nextUnit
+
+    if (!inheritedUnit) {
+      return term
+    }
+
+    changed = true
+    return `${term} ${inheritedUnit}`
+  })
+
+  if (!changed) {
+    return expression
+  }
+
+  let rebuilt = inferredTerms[0]
+  for (let index = 0; index < split.operators.length; index++) {
+    rebuilt += ` ${split.operators[index]} ${inferredTerms[index + 1]}`
+  }
+
+  return rebuilt
+}
+
+function inferAdditiveUnits(line: string): string {
+  const conversionSplit = splitByKeyword(line, [
+    ' into ',
+    ' as ',
+    ' to ',
+    ' in ',
+  ])
+  const sourceExpression = conversionSplit ? conversionSplit[0] : line
+  const conversionTarget = conversionSplit ? conversionSplit[1] : null
+
+  const inferredSource = inferAdditiveUnitsForPlainNumbers(sourceExpression)
+  const hasAdditiveSource = splitTopLevelAddSubTerms(sourceExpression) !== null
+
+  if (!hasAdditiveSource) {
+    return line
+  }
+
+  if (!conversionTarget) {
+    return inferredSource
+  }
+
+  const groupedSource = `(${inferredSource})`
+  return `${groupedSource} to ${conversionTarget}`
+}
+
 function preprocessScales(line: string): string {
   return line
     .replace(/(\d+(?:\.\d+)?)\s*k\b/g, '($1 * 1000)')
@@ -402,6 +545,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessFunctionConversions(processed)
   processed = preprocessImplicitMultiplication(processed)
   processed = preprocessWordOperators(processed)
+  processed = inferAdditiveUnits(processed)
   processed = preprocessPercentages(processed)
   processed = preprocessConversions(processed)
   return processed

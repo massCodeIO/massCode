@@ -25,8 +25,115 @@ import {
 export type { LineResult } from './math-engine/types'
 
 interface FormatDirective {
-  format: 'hex' | 'bin' | 'oct' | 'sci' | null
+  format: 'hex' | 'bin' | 'oct' | 'sci' | 'number' | 'dec' | null
   expression: string
+}
+
+interface RoundingDirective {
+  type:
+    | 'dp'
+    | 'round'
+    | 'ceil'
+    | 'floor'
+    | 'nearest'
+    | 'nearestCeil'
+    | 'nearestFloor'
+    | null
+  param: number
+  expression: string
+}
+
+const NEAREST_WORDS: Record<string, number> = {
+  ten: 10,
+  hundred: 100,
+  thousand: 1000,
+  million: 1000000,
+}
+
+function detectRoundingDirective(line: string): RoundingDirective {
+  const lower = line.toLowerCase()
+  let m: RegExpMatchArray | null
+
+  // "to N dp" / "to N digits"
+  m = lower.match(/\s+to\s+(\d+)\s+(?:dp|digits?)$/)
+  if (m) {
+    return {
+      type: 'dp',
+      param: Number(m[1]),
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  // "rounded up to nearest X" / "rounded down to nearest X"
+  m = lower.match(/\s+rounded\s+(up|down)\s+to\s+nearest\s+(\w+)$/)
+  if (m) {
+    const n = NEAREST_WORDS[m[2]] || Number(m[2])
+    if (n > 0) {
+      return {
+        type: m[1] === 'up' ? 'nearestCeil' : 'nearestFloor',
+        param: n,
+        expression: line.slice(0, m.index!).trim(),
+      }
+    }
+  }
+
+  // "rounded to nearest X" / "to nearest X"
+  m = lower.match(/\s+(?:rounded\s+)?to\s+nearest\s+(\w+)$/)
+  if (m) {
+    const n = NEAREST_WORDS[m[1]] || Number(m[1])
+    if (n > 0) {
+      return {
+        type: 'nearest',
+        param: n,
+        expression: line.slice(0, m.index!).trim(),
+      }
+    }
+  }
+
+  // "rounded up" / "rounded down"
+  m = lower.match(/\s+rounded\s+(up|down)$/)
+  if (m) {
+    return {
+      type: m[1] === 'up' ? 'ceil' : 'floor',
+      param: 0,
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  // "rounded"
+  m = lower.match(/\s+rounded$/)
+  if (m) {
+    return {
+      type: 'round',
+      param: 0,
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  return { type: null, param: 0, expression: line }
+}
+
+function applyRounding(value: number, directive: RoundingDirective): number {
+  switch (directive.type) {
+    case 'dp': {
+      const factor = 10 ** directive.param
+      return Math.round(value * factor) / factor
+    }
+    case 'round':
+      return Math.round(value)
+    case 'ceil':
+      return Math.ceil(value)
+    case 'floor':
+      return Math.floor(value)
+    case 'nearest':
+      return Math.round(value / directive.param) * directive.param
+    case 'nearestCeil':
+      return Math.ceil(value / directive.param) * directive.param
+    case 'nearestFloor':
+      return Math.floor(value / directive.param) * directive.param
+    default:
+      return value
+  }
 }
 
 let activeCurrencyRates: Record<string, number> = {}
@@ -36,6 +143,28 @@ let math = createMathInstance(activeCurrencyRates)
 
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
+
+const STRIP_UNIT_SUFFIXES: Record<string, 'number' | 'dec'> = {
+  'as number': 'number',
+  'to number': 'number',
+  'as decimal': 'dec',
+  'to decimal': 'dec',
+  'as dec': 'dec',
+  'to dec': 'dec',
+}
+
+function detectStripUnitDirective(line: string): FormatDirective {
+  const lower = line.toLowerCase()
+  for (const [suffix, format] of Object.entries(STRIP_UNIT_SUFFIXES)) {
+    if (lower.endsWith(suffix)) {
+      return {
+        format,
+        expression: line.slice(0, line.length - suffix.length).trim(),
+      }
+    }
+  }
+  return { format: null, expression: line }
+}
 
 function detectFormatDirective(line: string): FormatDirective {
   const formatMap: Record<string, 'hex' | 'bin' | 'oct' | 'sci'> = {
@@ -63,6 +192,39 @@ function applyFormat(
   result: any,
   format: NonNullable<FormatDirective['format']>,
 ): LineResult {
+  if (format === 'number' || format === 'dec') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: formatMathNumber(num, activeLocale, activeDecimalPlaces),
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
   const num
     = typeof result === 'number'
       ? result
@@ -496,6 +658,39 @@ export function useMathEngine() {
       }
 
       try {
+        const roundingDirective = detectRoundingDirective(trimmed)
+        if (roundingDirective.type) {
+          const roundProcessed = preprocessMathExpression(
+            roundingDirective.expression,
+          )
+          const roundRaw = math.evaluate(roundProcessed, scope)
+          const num = getNumericValue(roundRaw)
+          if (num !== null) {
+            const rounded = applyRounding(num, roundingDirective)
+            const formatted = formatResult(rounded)
+            results.push(formatted)
+            prevResult = rounded
+            numericBlock.push(rounded)
+            continue
+          }
+        }
+
+        const stripDirective = detectStripUnitDirective(trimmed)
+        if (stripDirective.format) {
+          const stripProcessed = preprocessMathExpression(
+            stripDirective.expression,
+          )
+          const stripResult = math.evaluate(stripProcessed, scope)
+          const formatted = applyFormat(stripResult, stripDirective.format)
+          results.push(formatted)
+          prevResult = stripResult
+          const numericValue = getNumericValue(stripResult)
+          if (numericValue !== null) {
+            numericBlock.push(numericValue)
+          }
+          continue
+        }
+
         if (
           currencyServiceState !== 'ready'
           && hasCurrencyExpression(trimmed)
@@ -587,8 +782,9 @@ export function useMathEngine() {
           continue
         }
 
-        const { format, expression } = detectFormatDirective(processed)
-        const toEvaluate = format ? expression : processed
+        const { format, expression: formatExpression }
+          = detectFormatDirective(processed)
+        const toEvaluate = format ? formatExpression : processed
         const result = math.evaluate(toEvaluate, scope)
 
         if (result === undefined) {

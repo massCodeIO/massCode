@@ -415,12 +415,15 @@ function preprocessStackedUnits(line: string): string {
 }
 
 function preprocessImplicitMultiplication(line: string): string {
-  return line.replace(/(\d)\s*\(/g, '$1 * (')
+  return line.replace(/\b(\d+)\s*\(/g, '$1 * (')
 }
 
 function preprocessWordOperators(line: string): string {
   return line
+    .replace(/\bremainder\s+of\s+(\S+)\s+divided\s+by\s+(\S+)/gi, '$1 % $2')
+    .replace(/\bto\s+the\s+power\s+of\b/gi, '^')
     .replace(/\bmultiplied\s+by\b/gi, '*')
+    .replace(/\bdivided\s+by\b/gi, '/')
     .replace(/\bdivide\s+by\b/gi, '/')
     .replace(/(\S+)\s+xor\s+(\S+)/gi, 'bitXor($1, $2)')
     .replace(/\btimes\b/gi, '*')
@@ -436,40 +439,100 @@ function preprocessWordOperators(line: string): string {
 }
 
 function preprocessPercentages(line: string): string {
-  return line
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+of\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / ($1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+on\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / (1 + $1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+off\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / (1 - $1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+of\s+(\d+(?:\.\d+)?)/gi,
-      '($1 / $2) * 100',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+on\s+(\d+(?:\.\d+)?)/gi,
-      '(($1 - $2) / $2) * 100',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+off\s+(\d+(?:\.\d+)?)/gi,
-      '(($2 - $1) / $2) * 100',
-    )
-    .replace(/(\d+(?:\.\d+)?)%\s+on\s+(\d+(?:\.\d+)?)/gi, '$2 * (1 + $1 / 100)')
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+off\s+(\d+(?:\.\d+)?)/gi,
-      '$2 * (1 - $1 / 100)',
-    )
-    .replace(/(\d+(?:\.\d+)?)%\s+of\s+(\d+(?:\.\d+)?)/gi, '$1 / 100 * $2')
-    .replace(/(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 + $2 / 100)')
-    .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 - $2 / 100)')
-    .replace(/(\d+(?:\.\d+)?)%(?!\s*\w)/g, '$1 / 100')
+  return (
+    line
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+of\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / ($1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+on\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / (1 + $1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+off\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / (1 - $1 / 100)',
+      )
+      // X is Y% of what → X / (Y / 100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+of\s+what\b/gi,
+        '$1 / ($2 / 100)',
+      )
+      // X is Y% on what → X / (1 + Y/100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+on\s+what\b/gi,
+        '$1 / (1 + $2 / 100)',
+      )
+      // X is Y% off what → X / (1 - Y/100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+off\s+what\b/gi,
+        '$1 / (1 - $2 / 100)',
+      )
+      // X to Y is what % → ((Y - X) / X) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+is\s+what\s*%/gi,
+        '(($2 - $1) / $1) * 100',
+      )
+      // X to Y as % → ((Y - X) / X) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+as\s*%/gi,
+        '(($2 - $1) / $1) * 100',
+      )
+      // X is what % off Y → ((Y - X) / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '(($2 - $1) / $2) * 100',
+      )
+      // X is what % on Y → ((X - Y) / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '(($1 - $2) / $2) * 100',
+      )
+      // X is what % of Y → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '($1 / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '($1 / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '(($1 - $2) / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '(($2 - $1) / $2) * 100',
+      )
+      // X/Y as % → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s+as\s*%/gi,
+        '($1 / $2) * 100',
+      )
+      // X/Y % → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*%(?!\s*\w)/g,
+        '($1 / $2) * 100',
+      )
+      // 0.35 as % → 0.35 * 100
+      .replace(/(\d+(?:\.\d+)?)\s+as\s*%/gi, '$1 * 100')
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '$2 * (1 + $1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '$2 * (1 - $1 / 100)',
+      )
+      .replace(/(\d+(?:\.\d+)?)%\s+of\s+(\d+(?:\.\d+)?)/gi, '$1 / 100 * $2')
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)%/g,
+        '$1 * (1 + $2 / 100)',
+      )
+      .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 - $2 / 100)')
+      .replace(/(\d+(?:\.\d+)?)%(?!\s*\w)/g, '$1 / 100')
+  )
 }
 
 function preprocessConversions(line: string): string {

@@ -57,6 +57,22 @@ describe('arithmetic', () => {
   it('grouped thousands', () => expectValue('5 300', '5,300'))
 })
 
+describe('rounding', () => {
+  it('to 2 dp', () => expectValue('1/3 to 2 dp', '0.33'))
+  it('to 5 digits', () => expectValue('pi to 5 digits', '3.14159'))
+  it('rounded', () => expectValue('5.5 rounded', '6'))
+  it('rounded down', () => expectValue('5.5 rounded down', '5'))
+  it('rounded up', () => expectValue('5.5 rounded up', '6'))
+  it('to nearest 10', () => expectValue('37 to nearest 10', '40'))
+  it('rounded to nearest thousand', () =>
+    expectValue('2100 to nearest thousand', '2,000'))
+  it('rounded up to nearest 5', () =>
+    expectValue('21 rounded up to nearest 5', '25'))
+  it('rounded down to nearest 3', () =>
+    expectValue('17 rounded down to nearest 3', '15'))
+  it('to nearest hundred', () => expectValue('490 to nearest hundred', '500'))
+})
+
 describe('math aliases', () => {
   it('fact', () => expectValue('fact(5)', '120'))
   it('arcsin', () => expectNumericClose('arcsin(1)', Math.PI / 2, 4))
@@ -64,6 +80,9 @@ describe('math aliases', () => {
   it('arctan', () => expectNumericClose('arctan(1)', Math.PI / 4, 4))
   it('root 2 (8)', () => expectNumericClose('root 2 (8)', Math.sqrt(8), 4))
   it('log 2 (8)', () => expectNumericClose('log 2 (8)', 3, 4))
+  it('exp(1)', () => expectNumericClose('exp(1)', Math.E, 4))
+  it('log2(8)', () => expectNumericClose('log2(8)', 3, 4))
+  it('log10(1000)', () => expectNumericClose('log10(1000)', 3, 4))
 })
 
 describe('word operators', () => {
@@ -79,6 +98,10 @@ describe('word operators', () => {
   it('divide by', () => expectValue('100 divide by 4', '25'))
   it('mul', () => expectValue('5 mul 6', '30'))
   it('mod', () => expectValue('17 mod 5', '2'))
+  it('to the power of', () => expectValue('3 to the power of 2', '9'))
+  it('remainder of X divided by Y', () =>
+    expectValue('remainder of 21 divided by 5', '1'))
+  it('divided by', () => expectValue('1000 divided by 200', '5'))
 
   it('does not replace words inside variable names', () => {
     const results = evalLines('width = 100\nwidth * 2')
@@ -154,6 +177,25 @@ describe('percentage advanced', () => {
   it('Y% of what is X', () => expectNumericClose('5% of what is 6', 120))
   it('Y% on what is X', () => expectNumericClose('5% on what is 6', 5.71))
   it('Y% off what is X', () => expectNumericClose('5% off what is 6', 6.32))
+
+  // Percentage change
+  it('X to Y is what %', () => expectNumericClose('50 to 75 is what %', 50))
+  it('X to Y as %', () => expectNumericClose('40 to 90 as %', 125))
+  it('X is what % off Y', () =>
+    expectNumericClose('180 is what % off 200', 10))
+  it('X is what % on Y', () => expectNumericClose('180 is what % on 150', 20))
+  it('X is what % of Y', () => expectNumericClose('20 is what % of 200', 10))
+  it('X as a % of Y (alt)', () => expectNumericClose('20 as a % of 200', 10))
+
+  // Reverse lookup: X is Y% of/on/off what
+  it('X is Y% of what', () => expectNumericClose('20 is 10% of what', 200))
+  it('X is Y% on what', () => expectNumericClose('220 is 10% on what', 200))
+  it('X is Y% off what', () => expectNumericClose('180 is 10% off what', 200))
+
+  // Decimal/fraction to percentage
+  it('0.35 as %', () => expectNumericClose('0.35 as %', 35))
+  it('X/Y as %', () => expectNumericClose('20/200 as %', 10))
+  it('X/Y %', () => expectNumericClose('20/200 %', 10))
 })
 
 describe('scales', () => {
@@ -456,10 +498,27 @@ describe('number format', () => {
   it('hex input', () => expectValue('0xFF', '255'))
   it('binary input', () => expectValue('0b1010', '10'))
   it('octal input', () => expectValue('0o377', '255'))
+  it('scientific notation input 1e5', () => expectValue('1e5', '100,000'))
+  it('scientific notation input 2.5e3', () => expectValue('2.5e3', '2,500'))
 
   it('0xFF in hex roundtrip', () => {
     const result = evalLine('0xFF in hex')
     expect(result.value).toBe('0xFF')
+  })
+
+  it('$100 as number', () => {
+    const result = evalLine('$100 as number')
+    expect(result.numericValue).toBe(100)
+  })
+
+  it('20% as dec', () => {
+    const result = evalLine('20% as dec')
+    expect(result.value).toBe('0.2')
+  })
+
+  it('50% to decimal', () => {
+    const result = evalLine('50% to decimal')
+    expect(result.value).toBe('0.5')
   })
 })
 

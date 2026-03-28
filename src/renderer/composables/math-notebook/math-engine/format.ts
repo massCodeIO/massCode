@@ -10,5 +10,12 @@ export function formatMathNumber(
 }
 
 export function formatMathDate(date: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale).format(date)
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(date)
 }

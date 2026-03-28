@@ -543,7 +543,7 @@ describe('prev', () => {
     const results = evalLines('fromunix(1446587186)\nprev + 1 day')
     expect(results[1].type).toBe('date')
     expect(results[1].value).toBe(
-      new Date((1446587186 + 86400) * 1000).toLocaleString(),
+      new Date((1446587186 + 86400) * 1000).toLocaleString('en-US'),
     )
   })
 })
@@ -658,7 +658,7 @@ describe('fromunix', () => {
     const result = evalLine('fromunix(1446587186) + 2 day')
     expect(result.type).toBe('date')
     expect(result.value).toBe(
-      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString(),
+      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString('en-US'),
     )
   })
 
@@ -667,16 +667,20 @@ describe('fromunix', () => {
     expect(results[0].type).toBe('assignment')
     expect(results[1].type).toBe('date')
     expect(results[1].value).toBe(
-      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString(),
+      new Date((1446587186 + 2 * 86400) * 1000).toLocaleString('en-US'),
     )
   })
 
   it('local dotted date assignment + 2 day', () => {
     const results = evalLines('x = 12.03.2025\nx + 2 day')
     expect(results[0].type).toBe('assignment')
-    expect(results[0].value).toBe(new Date(2025, 2, 12).toLocaleString())
+    expect(results[0].value).toBe(
+      new Date(2025, 2, 12).toLocaleString('en-US'),
+    )
     expect(results[1].type).toBe('date')
-    expect(results[1].value).toBe(new Date(2025, 2, 14).toLocaleString())
+    expect(results[1].value).toBe(
+      new Date(2025, 2, 14).toLocaleString('en-US'),
+    )
   })
 })
 
@@ -706,7 +710,7 @@ describe('time zones', () => {
     const result = evalLine('time() + 1 day')
     expect(result.type).toBe('date')
     expect(result.value).toBe(
-      new Date('2026-03-07T12:00:00Z').toLocaleString(),
+      new Date('2026-03-07T12:00:00Z').toLocaleString('en-US'),
     )
   })
 
@@ -720,7 +724,7 @@ describe('time zones', () => {
     const result = evalLine('now + 1 day')
     expect(result.type).toBe('date')
     expect(result.value).toBe(
-      new Date('2026-03-07T12:00:00Z').toLocaleString(),
+      new Date('2026-03-07T12:00:00Z').toLocaleString('en-US'),
     )
   })
 

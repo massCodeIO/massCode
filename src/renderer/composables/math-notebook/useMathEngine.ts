@@ -10,6 +10,7 @@ import {
   HUMANIZED_UNIT_NAMES,
 } from './math-engine/constants'
 import { evaluateCssLine } from './math-engine/css'
+import { formatMathDate, formatMathNumber } from './math-engine/format'
 import { createMathInstance } from './math-engine/mathInstance'
 import {
   hasCurrencyExpression,
@@ -32,6 +33,9 @@ let activeCurrencyRates: Record<string, number> = {}
 let currencyServiceState: CurrencyServiceState = 'loading'
 let currencyUnavailableMessage = ''
 let math = createMathInstance(activeCurrencyRates)
+
+let activeLocale = 'en-US'
+let activeDecimalPlaces = 6
 
 function detectFormatDirective(line: string): FormatDirective {
   const formatMap: Record<string, 'hex' | 'bin' | 'oct' | 'sci'> = {
@@ -125,7 +129,7 @@ function formatResult(result: any): LineResult {
 
   if (result instanceof Date) {
     return {
-      value: result.toLocaleString(),
+      value: formatMathDate(result, activeLocale),
       error: null,
       type: 'date',
     }
@@ -138,18 +142,20 @@ function formatResult(result: any): LineResult {
     && result.units
   ) {
     return {
-      value: humanizeFormattedUnits(math.format(result, { precision: 6 })),
+      value: humanizeFormattedUnits(
+        math.format(result, { precision: activeDecimalPlaces }),
+      ),
       error: null,
       type: 'unit',
     }
   }
 
   if (typeof result === 'number') {
-    const formatted = Number.isInteger(result)
-      ? result.toLocaleString('en-US')
-      : result.toLocaleString('en-US', { maximumFractionDigits: 6 })
-
-    return { value: formatted, error: null, type: 'number' }
+    return {
+      value: formatMathNumber(result, activeLocale, activeDecimalPlaces),
+      error: null,
+      type: 'number',
+    }
   }
 
   if (typeof result === 'string') {
@@ -158,7 +164,9 @@ function formatResult(result: any): LineResult {
 
   if (result && typeof result.toString === 'function') {
     return {
-      value: humanizeFormattedUnits(math.format(result, { precision: 6 })),
+      value: humanizeFormattedUnits(
+        math.format(result, { precision: activeDecimalPlaces }),
+      ),
       error: null,
       type: 'number',
     }
@@ -626,9 +634,15 @@ export function useMathEngine() {
     }
   }
 
+  function setFormatSettings(locale: string, decimalPlaces: number) {
+    activeLocale = locale
+    activeDecimalPlaces = decimalPlaces
+  }
+
   return {
     evaluateDocument,
     setCurrencyServiceState,
     updateCurrencyRates,
+    setFormatSettings,
   }
 }

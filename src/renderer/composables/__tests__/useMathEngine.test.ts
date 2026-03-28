@@ -83,6 +83,16 @@ describe('math aliases', () => {
   it('exp(1)', () => expectNumericClose('exp(1)', Math.E, 4))
   it('log2(8)', () => expectNumericClose('log2(8)', 3, 4))
   it('log10(1000)', () => expectNumericClose('log10(1000)', 3, 4))
+
+  // Phrase syntax
+  it('square root of 81', () => expectValue('square root of 81', '9'))
+  it('cube root of 27', () => expectValue('cube root of 27', '3'))
+  it('root 5 of 100', () => expectNumericClose('root 5 of 100', 2.5119, 3))
+  it('log 20 base 4', () => expectNumericClose('log 20 base 4', 2.161, 2))
+  it('81 is 9 to what power', () =>
+    expectNumericClose('81 is 9 to what power', 2, 2))
+  it('27 is 3 to the what', () =>
+    expectNumericClose('27 is 3 to the what', 3, 2))
 })
 
 describe('word operators', () => {

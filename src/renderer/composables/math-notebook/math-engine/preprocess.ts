@@ -135,6 +135,18 @@ function preprocessAreaVolumeAliases(line: string): string {
   return line
 }
 
+function preprocessPhraseFunctions(line: string): string {
+  return line
+    .replace(/\bsquare\s+root\s+of\s+(\S+)/gi, 'sqrt($1)')
+    .replace(/\bcube\s+root\s+of\s+(\S+)/gi, 'cbrt($1)')
+    .replace(/\broot\s+(\d+)\s+of\s+(\S+)/gi, 'root($1, $2)')
+    .replace(/\blog\s+(\S+)\s+base\s+(\S+)/gi, 'log($1, $2)')
+    .replace(
+      /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\s+to\s+(?:what|the\s+what)\s*(?:power)?/gi,
+      'log($1) / log($2)',
+    )
+}
+
 function preprocessFunctionExpression(expression: string): string {
   const trimmed = expression.trim()
   const openIndex = trimmed.indexOf('(')
@@ -604,6 +616,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessScales(processed)
   processed = preprocessAreaVolumeAliases(processed)
   processed = preprocessStackedUnits(processed)
+  processed = preprocessPhraseFunctions(processed)
   processed = preprocessFunctionSyntax(processed)
   processed = preprocessFunctionConversions(processed)
   processed = preprocessImplicitMultiplication(processed)

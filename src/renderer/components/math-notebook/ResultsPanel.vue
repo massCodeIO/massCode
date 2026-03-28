@@ -2,6 +2,7 @@
 import type { LineResult } from '@/composables/math-notebook'
 import { Button } from '@/components/ui/shadcn/button'
 import { useCopyToClipboard } from '@/composables'
+import { formatMathNumber } from '@/composables/math-notebook/math-engine/format'
 import { i18n, ipc } from '@/electron'
 import { LoaderCircle, Sigma } from 'lucide-vue-next'
 
@@ -9,6 +10,8 @@ interface Props {
   results: LineResult[]
   scrollTop: number
   activeLine: number
+  locale: string
+  decimalPlaces: number
 }
 
 const props = defineProps<Props>()
@@ -21,7 +24,9 @@ const MATH_NOTEBOOK_DOCUMENTATION_URL
 const total = computed(() => {
   return props.results.reduce((sum, r) => {
     if (r.type === 'number' || r.type === 'assignment') {
-      const num = Number.parseFloat((r.value || '').replace(/,/g, ''))
+      const num = Number.parseFloat(
+        (r.value || '').replace(/[^\d.\-e+]/gi, ''),
+      )
       if (!Number.isNaN(num))
         return sum + num
     }
@@ -30,9 +35,7 @@ const total = computed(() => {
 })
 
 const formattedTotal = computed(() => {
-  return Number.isInteger(total.value)
-    ? total.value.toLocaleString('en-US')
-    : total.value.toLocaleString('en-US', { maximumFractionDigits: 6 })
+  return formatMathNumber(total.value, props.locale, props.decimalPlaces)
 })
 
 const resultsStyle = computed(() => {

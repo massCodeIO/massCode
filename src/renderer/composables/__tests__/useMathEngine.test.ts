@@ -841,6 +841,46 @@ describe('average and avg', () => {
   })
 })
 
+describe('median', () => {
+  it('median of odd count', () => {
+    const results = evalLines('10\n20\n30\nmedian')
+    expect(results[3].value).toBe('20')
+    expect(results[3].type).toBe('aggregate')
+  })
+
+  it('median of even count', () => {
+    const results = evalLines('10\n20\n30\n40\nmedian')
+    expect(results[4].value).toBe('25')
+  })
+
+  it('median resets after empty line', () => {
+    const results = evalLines('10\n20\n\n100\nmedian')
+    expect(results[4].value).toBe('100')
+  })
+})
+
+describe('count', () => {
+  it('count of lines above', () => {
+    const results = evalLines('10\n20\n30\ncount')
+    expect(results[3].value).toBe('3')
+    expect(results[3].type).toBe('aggregate')
+  })
+
+  it('count resets after empty line', () => {
+    const results = evalLines('10\n20\n\n5\ncount')
+    expect(results[4].value).toBe('1')
+  })
+})
+
+describe('inline aggregates', () => {
+  it('total of list', () => expectValue('total of 3, 4, 7 and 9', '23'))
+  it('average of list', () =>
+    expectNumericClose('average of 36, 42, 19 and 81', 44.5))
+  it('count of list', () => expectValue('count of 1, 2, 3, 4, 5', '5'))
+  it('median of list', () => expectValue('median of 10, 20 and 30', '20'))
+  it('sum of list', () => expectValue('sum of 10, 20, 30', '60'))
+})
+
 describe('comments', () => {
   it('// comment', () => {
     const result = evalLine('// This is a comment')

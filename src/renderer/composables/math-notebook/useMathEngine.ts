@@ -657,6 +657,78 @@ export function useMathEngine() {
         continue
       }
 
+      if (lowerTrimmed === 'median') {
+        if (numericBlock.length > 0) {
+          const sorted = [...numericBlock].sort((a, b) => a - b)
+          const mid = Math.floor(sorted.length / 2)
+          const median
+            = sorted.length % 2 !== 0
+              ? sorted[mid]
+              : (sorted[mid - 1] + sorted[mid]) / 2
+          const formatted = formatResult(median)
+          formatted.type = 'aggregate'
+          results.push(formatted)
+          prevResult = median
+          numericBlock.push(median)
+        }
+        else {
+          results.push(formatResult(0))
+        }
+        continue
+      }
+
+      if (lowerTrimmed === 'count') {
+        const count = numericBlock.length
+        const formatted = formatResult(count)
+        formatted.type = 'aggregate'
+        results.push(formatted)
+        prevResult = count
+        numericBlock.push(count)
+        continue
+      }
+
+      const inlineAggregateMatch = lowerTrimmed.match(
+        /^(total|sum|average|avg|median|count)\s+of\s+/i,
+      )
+      if (inlineAggregateMatch) {
+        const fn = inlineAggregateMatch[1].toLowerCase()
+        const listStr = trimmed.slice(inlineAggregateMatch[0].length)
+        const items = listStr
+          .replace(/\band\b/gi, ',')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+          .map(Number)
+          .filter(n => !Number.isNaN(n))
+
+        if (items.length > 0) {
+          let value: number
+          if (fn === 'total' || fn === 'sum') {
+            value = items.reduce((a, b) => a + b, 0)
+          }
+          else if (fn === 'average' || fn === 'avg') {
+            value = items.reduce((a, b) => a + b, 0) / items.length
+          }
+          else if (fn === 'median') {
+            const sorted = [...items].sort((a, b) => a - b)
+            const mid = Math.floor(sorted.length / 2)
+            value
+              = sorted.length % 2 !== 0
+                ? sorted[mid]
+                : (sorted[mid - 1] + sorted[mid]) / 2
+          }
+          else {
+            value = items.length
+          }
+          const formatted = formatResult(value)
+          formatted.type = 'aggregate'
+          results.push(formatted)
+          prevResult = value
+          numericBlock.push(value)
+          continue
+        }
+      }
+
       try {
         const roundingDirective = detectRoundingDirective(trimmed)
         if (roundingDirective.type) {

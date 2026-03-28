@@ -24,9 +24,10 @@ const MATH_NOTEBOOK_DOCUMENTATION_URL
 const total = computed(() => {
   return props.results.reduce((sum, r) => {
     if (r.type === 'number' || r.type === 'assignment') {
-      const num = Number.parseFloat(
-        (r.value || '').replace(/[^\d.\-e+]/gi, ''),
-      )
+      const raw = r.value || ''
+      if (raw.includes(':'))
+        return sum
+      const num = Number.parseFloat(raw.replace(/[^\d.\-e+]/gi, ''))
       if (!Number.isNaN(num))
         return sum + num
     }

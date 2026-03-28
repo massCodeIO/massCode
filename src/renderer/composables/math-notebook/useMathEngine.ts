@@ -106,18 +106,25 @@ function humanizeFormattedUnits(value: string) {
   return value.replace(
     /(-?\d[\d,]*(?:\.\d+)?)\s+([a-z][a-z0-9]*)\b/gi,
     (match, amountText: string, unitId: string) => {
-      const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
-      if (!displayUnit) {
-        return match
-      }
-
       const numericAmount = Number.parseFloat(amountText.replace(/,/g, ''))
+      if (Number.isNaN(numericAmount))
+        return match
+
+      const formattedAmount = formatMathNumber(
+        numericAmount,
+        activeLocale,
+        activeDecimalPlaces,
+      )
+      const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
+      if (!displayUnit)
+        return `${formattedAmount} ${unitId}`
+
       const unitLabel
         = Math.abs(numericAmount) === 1
           ? displayUnit.singular
           : displayUnit.plural
 
-      return `${amountText} ${unitLabel}`
+      return `${formattedAmount} ${unitLabel}`
     },
   )
 }

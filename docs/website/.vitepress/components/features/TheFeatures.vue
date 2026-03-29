@@ -3,119 +3,75 @@ import FeaturesItem from './FeaturesItem.vue'
 </script>
 
 <template>
-  <div class="features">
-    <FeaturesItem title="Organization">
-      Organize your snippets with multi-level folders and tags. Each snippet can
-      contain multiple fragments (tabs), giving you fine-grained control over
-      structure and grouping.
-    </FeaturesItem>
-    <FeaturesItem title="Editor">
+  <div class="spaces">
+    <FeaturesItem title="Code Snippets">
+      Organize code with multi-level folders, tags, and multi-tab fragments.
       Built on
       <AppLink href="https://github.com/codemirror/codemirror5">
         CodeMirror
       </AppLink>
-      with <code>.tmLanguage</code> grammars for syntax highlighting.
-      <ul>
-        <li>
-          Supports over
-          <AppLink
-            href="https://github.com/github/linguist/blob/master/vendor/README.md"
-          >
-            600 grammars
-          </AppLink>, with 160+ available out of the box.
-        </li>
-        <li>
-          Integrated
-          <AppLink href="https://prettier.io">
-            Prettier
-          </AppLink> for clean,
-          consistent code formatting.
-        </li>
-      </ul>
+      with 160+ syntax grammars and
+      <AppLink href="https://prettier.io">
+        Prettier
+      </AppLink> formatting.
+      Real-time HTML & CSS preview for rapid prototyping, JSON visualizer for
+      exploring complex data structures, and beautiful screenshot export with
+      customizable themes.
     </FeaturesItem>
-    <FeaturesItem title="Real-time HTML & CSS Preview">
-      Write and instantly preview HTML and CSS snippets. Perfect for
-      prototyping, testing ideas, or quick visual checks.
+    <FeaturesItem title="Notes">
+      An Obsidian-like markdown editor with live preview, folders, and tags.
+      Write documentation, keep a dev journal, or draft ideas with full Mermaid
+      diagram support, mindmap generation from headings, and presentation mode
+      for sharing your notes as slide decks.
     </FeaturesItem>
-    <FeaturesItem title="Markdown">
-      Full Markdown support with syntax highlighting, tables, lists, and more.
-      <ul>
-        <li>
-          Integrated
-          <AppLink href="https://mermaid-js.github.io/mermaid/#">
-            Mermaid
-          </AppLink>
-          for dynamic diagrams and charts.
-        </li>
-      </ul>
+    <FeaturesItem title="Math Notebook">
+      A smart notepad where <code>time in Tokyo</code>,
+      <code>density of honey</code>, and
+      <code>$500 invested $1,500 returned</code> just work. 166+ currencies,
+      timezone lookups, unit conversions, finance formulas, and more.
     </FeaturesItem>
-    <FeaturesItem title="Presentation Mode">
-      Turn a sequence of snippets into a presentation. Useful for classrooms,
-      team meetings, conference talks, or simply walking through your own notes.
+    <FeaturesItem title="Developer Tools">
+      Built-in utilities for everyday tasks: case converter, slug generator, URL
+      parser, hash/HMAC generators, password and UUID generators, Base64/URL
+      encoders, JSON to YAML/TOML/XML converters, color converter, and text
+      generators.
     </FeaturesItem>
-    <FeaturesItem title="Mindmap">
-      Generate mind maps from Markdown. Fast, intuitive, and ideal for
-      structuring and visualizing ideas.
-    </FeaturesItem>
-    <FeaturesItem
-      title="Developer Tools"
-      style="grid-column: 1 / 3"
-    >
-      Handy built-in utilities for everyday dev tasks:
-      <ul>
-        <li>
-          <strong>Text Tools</strong>: Case Converter, Slug Generator, URL
-          Parser
-        </li>
-        <li>
-          <strong>Crypto & Security</strong>: Hash/HMAC, Password Generator,
-          UUID
-        </li>
-        <li>
-          <strong>Encoders/Decoders</strong>: URL, Base64, JSON ⇄ TOML/XML/YAML,
-          Text ⇄ ASCII/Binary/Unicode, Color Converter
-        </li>
-      </ul>
-    </FeaturesItem>
-
-    <FeaturesItem title="JSON Visualizer">
-      Visualize and explore your JSON data with an interactive graph view.
-      Perfect for quickly inspecting complex responses, APIs, or configuration
-      files.
-    </FeaturesItem>
+  </div>
+  <div class="extras">
     <FeaturesItem title="Integrations">
-      Extend your workflow with:
-      <ul>
-        <li>
-          <AppLink
-            href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant"
-          >
-            VS Code Extension
-          </AppLink>: zen mode snippet search, instant insertion, and save selected code
-          as snippets.
-        </li>
-        <li>
-          <AppLink href="https://www.raycast.com/antonreshetov/masscode">
-            Raycast Extension
-          </AppLink>: quick snippet access directly from Raycast.
-        </li>
-      </ul>
+      <AppLink
+        href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant"
+      >
+        VS Code Extension
+      </AppLink>
+      for snippet search and insertion.
+      <AppLink href="https://www.raycast.com/antonreshetov/masscode">
+        Raycast Extension
+      </AppLink>
+      for quick access.
     </FeaturesItem>
-    <FeaturesItem title="Beautiful Screenshots">
-      Export snippets as polished images with customizable themes and
-      backgrounds.
+    <FeaturesItem title="Open & Local">
+      Local-first by design. Your notes and snippets stay on your machine as
+      plain Markdown files. Sync with iCloud, Dropbox, or Git, and keep full
+      version history.
     </FeaturesItem>
     <FeaturesItem title="Localization">
-      massCode is available in Čeština, Deutsch, Ελληνικά, English, Español,
-      French, 日本語, Português (Brasil), Română, Русский, Türkçe, Українська,
-      中文 (简体), 中文 (繁體) & 中文 (繁體 香港特別行政區) languages.
+      Available in 15 languages including English, Deutsch, Español, Français,
+      Русский, 日本語, 中文, and more.
     </FeaturesItem>
   </div>
 </template>
 
 <style scoped>
-.features {
-  padding: 24px 0;
+.spaces {
+  padding: 24px 0 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.extras {
+  padding: 12px 0 24px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;

@@ -1,24 +1,21 @@
 ---
 layout: home
-titleTemplate: "A free and open source code snippets manager for developers"
+titleTemplate: "A free and open source developer workspace"
 hero:
   image:
     src: /logo.png
     alt: massCode
   name: massCode
-  text: Boost your productivity
+  text: Your developer workspace
   tagline: |
-    Free, open-source snippet manager for developers. Create, organize, and quickly access your personal code collection.
+    Manage code snippets, write markdown notes, solve calculations, and use built-in developer tools. Free, open source, and works offline.
   actions:
     - theme: brand
-      text: Get massCode
+      text: Download Free
       link: "/download/"
     - theme: alt
       text: Documentation
       link: "/documentation/"
-    - theme: alt
-      text: Snippet Collection
-      link: "/snippets/"
 ---
 
 <TheHome/>

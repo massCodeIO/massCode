@@ -16,7 +16,7 @@ The snippet is created in the folder that is currently selected or in **"Inbox"*
 
 ## Language Selection
 
-In the bottom right corner of the editor press the current snippet language, by default it is **"Plain text"**, then select the language you need from the drop-down list.
+Click the language label in the bottom right of the editor (default is **"Plain text"**), then choose a language from the dropdown.
 
 ## Moving Snippet
 
@@ -39,7 +39,7 @@ Follow one of the following steps:
 
 ## Formatting Snippet
 
-Snippet formatting makes the snippet code formatted.
+Format your snippet code with Prettier.
 
 Follow one of the following steps:
 
@@ -68,15 +68,15 @@ Follow one of the following steps:
 
 Follow these steps:
 
-- Add new [snippet](#adding-a-snippet) or select already created.
-- Add second [fragment](/documentation/fragments.html).
-- Select for fragments HTML & CSS languages.
+- Add a new [snippet](#adding-a-snippet) or select an existing one.
+- Add a second [fragment](/documentation/code/fragments.html).
+- Set fragment languages to HTML & CSS.
 - Select **"Editor"** > **"Preview Code"** from the menu bar or press <kbd>Alt+Cmd+P</kbd> on macOS or <kbd>Ctrl+Alt+P</kbd> on Windows or Linux.
 
 ## JSON Visualizer
 
 <AppVersion text=">=4.1" />
 
-- Add new [snippet](#adding-a-snippet) or select already created.
-- Click on the language selector located at the bottom left of the editor panel, and choose **"JSON"** from the drop-down list.
+- Add a new [snippet](#adding-a-snippet) or select an existing one.
+- Click the language selector in the bottom left of the editor and choose **"JSON"**.
 - Select **"Editor"** > **"Preview JSON"** from the menu bar or press <kbd>Alt+Cmd+J</kbd> on macOS or <kbd>Ctrl+Alt+J</kbd> on Windows or Linux.

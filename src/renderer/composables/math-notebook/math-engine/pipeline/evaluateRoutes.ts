@@ -3,6 +3,7 @@ import type { EvaluatedLine, MathEvaluatorInstance } from './evaluateTypes'
 import type { LineFormatter } from './format'
 import { evaluateCalendarLine } from '../calendar'
 import { evaluateCssLine } from '../css'
+import { evaluateCookingLine } from '../evaluators/cooking'
 import {
   evaluateDateArithmeticLine,
   evaluateDateAssignmentLine,
@@ -80,6 +81,16 @@ export function evaluatePrimaryIntent(
           financeResult.lineResult,
           financeResult.rawResult,
           financeResult.rawResult,
+        )
+      }
+
+      // Cooking calculations
+      const cookingResult = evaluateCookingLine(trimmed)
+      if (cookingResult) {
+        return toEvaluatedLine(
+          cookingResult.lineResult,
+          cookingResult.rawResult,
+          cookingResult.rawResult,
         )
       }
 

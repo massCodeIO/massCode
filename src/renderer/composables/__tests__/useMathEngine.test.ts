@@ -1840,6 +1840,41 @@ describe('comments extensions', () => {
   })
 })
 
+describe('cooking calculations', () => {
+  it('density of yogurt', () => {
+    const result = evalLine('density of yogurt')
+    expect(result.value).toBe('1.06 g/cm³')
+  })
+
+  it('density of olive oil', () => {
+    const result = evalLine('density of olive oil')
+    expect(result.value).toBe('0.916 g/cm³')
+  })
+
+  it('300g butter in cups', () => {
+    const result = evalLine('300g butter in cups')
+    expect(result.numericValue).toBeCloseTo(1.39, 1)
+    expect(result.value).toContain('cup')
+  })
+
+  it('10 cups olive oil in grams', () => {
+    const result = evalLine('10 cups olive oil in grams')
+    expect(result.numericValue).toBeCloseTo(2168, -1)
+    expect(result.value).toContain('grams')
+  })
+
+  it('100g nutella in tablespoons', () => {
+    const result = evalLine('100g nutella in tbsp')
+    expect(result.numericValue).toBeGreaterThan(5)
+    expect(result.value).toContain('tbsp')
+  })
+
+  it('density of honey', () => {
+    const result = evalLine('density of honey')
+    expect(result.value).toBe('1.42 g/cm³')
+  })
+})
+
 describe('error handling', () => {
   it('invalid expression returns error', () => {
     const result = evalLine('hello world')

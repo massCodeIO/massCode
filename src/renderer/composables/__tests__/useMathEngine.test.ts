@@ -541,6 +541,31 @@ describe('unit conversion', () => {
   it('90 deg to rad', () => {
     expectNumericClose('90 deg to rad', 1.5708, 3)
   })
+
+  // Reverse conversion syntax
+  it('meters in 10 km', () => {
+    expectNumericClose('meters in 10 km', 10000, 0)
+  })
+  it('days in 3 weeks', () => {
+    expectNumericClose('days in 3 weeks', 21, 0)
+  })
+
+  // Shorthand conversion
+  it('km m (shorthand)', () => {
+    expectNumericClose('km m', 1000, 0)
+  })
+
+  // Larger unit wins (native math.js)
+  it('1km + 1000m = 2 km', () => {
+    const result = evalLine('1 km + 1000 m')
+    expect(result.value).toContain('km')
+  })
+
+  // Area from multiplication (native math.js)
+  it('10m * 10m = area', () => {
+    const result = evalLine('10 m * 10 m')
+    expect(result.type).toBe('unit')
+  })
 })
 
 describe('css units', () => {

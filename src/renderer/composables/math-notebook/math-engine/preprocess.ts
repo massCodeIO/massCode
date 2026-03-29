@@ -100,6 +100,39 @@ function normalizePowerUnit(unit: string) {
   }
 }
 
+function preprocessReverseConversion(line: string): string {
+  // "meters in 10 km" → "10 km to meters"
+  // "days in 3 weeks" → "3 weeks to days"
+  return line.replace(
+    /^([a-z]+)\s+in\s+(\d+(?:\.\d+)?)\s+([a-z]+)$/i,
+    (_, targetUnit: string, value: string, sourceUnit: string) => {
+      if (
+        knownUnitTokens.has(targetUnit.toLowerCase())
+        && knownUnitTokens.has(sourceUnit.toLowerCase())
+      ) {
+        return `${value} ${sourceUnit} to ${targetUnit}`
+      }
+      return _
+    },
+  )
+}
+
+function preprocessShorthandConversion(line: string): string {
+  // "km m" → "1 km to m" (two unit names = show conversion factor)
+  return line.replace(
+    /^([a-z]+)\s+([a-z]+)$/i,
+    (_, unit1: string, unit2: string) => {
+      if (
+        knownUnitTokens.has(unit1.toLowerCase())
+        && knownUnitTokens.has(unit2.toLowerCase())
+      ) {
+        return `1 ${unit1} to ${unit2}`
+      }
+      return _
+    },
+  )
+}
+
 function preprocessUnitAliases(line: string): string {
   return line
     .replace(/\btea\s+spoons?\b/gi, 'teaspoon')
@@ -696,6 +729,8 @@ export function hasCurrencyExpression(line: string) {
 export function preprocessMathExpression(line: string) {
   let processed = preprocessLabels(line)
   processed = preprocessQuotedText(processed)
+  processed = preprocessReverseConversion(processed)
+  processed = preprocessShorthandConversion(processed)
   processed = preprocessGroupedNumbers(processed)
   processed = preprocessDegreeSigns(processed)
   processed = preprocessUnitAliases(processed)

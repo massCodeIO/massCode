@@ -82,6 +82,12 @@ describe('classify — primary intent', () => {
     expect(c.timezoneOperation).toBe('difference')
   })
 
+  it('2:30 pm HKT in Berlin', () => {
+    const c = classifyRaw('2:30 pm HKT in Berlin')
+    expect(c.primary).toBe('timezone')
+    expect(c.timezoneOperation).toBe('display')
+  })
+
   it('ppi = 326', () => {
     const c = classifyRaw('ppi = 326')
     expect(c.primary).toBe('assignment')
@@ -95,6 +101,8 @@ describe('classify — primary intent', () => {
 
   it('12 pt in px', () =>
     expect(classifyRaw('12 pt in px').primary).toBe('css'))
+  it('12 pt into px', () =>
+    expect(classifyRaw('12 pt into px').primary).toBe('css'))
 
   it('x = 10', () => {
     const c = classifyRaw('x = 10')

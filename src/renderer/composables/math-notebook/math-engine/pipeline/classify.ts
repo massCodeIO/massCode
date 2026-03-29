@@ -37,6 +37,12 @@ const CALENDAR_PREFIXES = [
   /^current\s+timestamp$/,
 ]
 
+const MONTH_TOKEN_RE
+  = /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/
+const RELATIVE_DATE_TOKEN_RE = /\b(?:today|tomorrow|yesterday|now)\b/
+const ISO_DATE_RE = /\b\d{4}-\d{2}-\d{2}\b/
+const CLOCK_RE = /\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/
+
 const TIMEZONE_PATTERNS = [
   /^time$/,
   /^time\(\)$/,
@@ -166,10 +172,9 @@ function detectFeatures(normalized: string, expression: string): LineFeatures {
     hasAssignment: /^[a-z_]\w*\s*=(?!=)/i.test(expression),
     hasConversion: /\b(?:to|in|as|into)\b/.test(normalized),
     hasDateTokens:
-      /\b(?:today|tomorrow|yesterday|now)\b/.test(normalized)
-      || /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/.test(
-        normalized,
-      ),
+      RELATIVE_DATE_TOKEN_RE.test(normalized)
+      || MONTH_TOKEN_RE.test(normalized)
+      || ISO_DATE_RE.test(normalized),
     hasTimezoneTokens:
       /\b(?:time|now)\b/.test(normalized)
       && (/\bin\b/.test(normalized)
@@ -178,6 +183,24 @@ function detectFeatures(normalized: string, expression: string): LineFeatures {
 }
 
 function probeTimezone(normalized: string): boolean {
+  const conversionIndex = normalized.lastIndexOf(' in ')
+  if (conversionIndex > 0) {
+    const source = normalized.slice(0, conversionIndex).trim()
+    const target = normalized.slice(conversionIndex + 4).trim()
+
+    const looksLikeTemporalSource
+      = /\b(?:time|now)\b/.test(source)
+        || CLOCK_RE.test(source)
+        || RELATIVE_DATE_TOKEN_RE.test(source)
+        || MONTH_TOKEN_RE.test(source)
+        || ISO_DATE_RE.test(source)
+        || Object.keys(timeZoneAliases).some(tz => source.includes(tz))
+
+    if (looksLikeTemporalSource && /^[a-z/_ ]+$/.test(target)) {
+      return true
+    }
+  }
+
   return (
     TIMEZONE_PATTERNS.some(re => re.test(normalized))
     || (/\bin\b/.test(normalized) && /\b(?:time|now)\b/.test(normalized))
@@ -195,7 +218,10 @@ function probeCalendar(normalized: string): boolean {
 function probeCss(expression: string, normalized: string): boolean {
   if (CSS_ASSIGNMENT_RE.test(expression))
     return true
-  return CSS_CONVERSION_RE.test(normalized) && /\b(?:to|in)\b/.test(normalized)
+  return (
+    CSS_CONVERSION_RE.test(normalized)
+    && /\b(?:to|in|into|as)\b/.test(normalized)
+  )
 }
 
 function probeDateArithmetic(

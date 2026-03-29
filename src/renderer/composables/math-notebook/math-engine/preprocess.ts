@@ -7,6 +7,7 @@ import {
   TIME_UNIT_TOKEN_MAP,
   weightContextPattern,
 } from './constants'
+import { splitByKeyword } from './utils'
 
 function preprocessLabels(line: string): string {
   const match = line.match(/^([a-z][a-z0-9]*(?:\s[a-z0-9]+)*):\s(\S.*)$/i)
@@ -690,22 +691,6 @@ function preprocessPercentages(line: string): string {
 
 function preprocessConversions(line: string): string {
   return line.replace(/\s+as\s+/gi, ' to ').replace(/\s+into\s+/gi, ' to ')
-}
-
-export function splitByKeyword(line: string, keywords: string[]) {
-  const lowerLine = line.toLowerCase()
-
-  for (const keyword of keywords) {
-    const index = lowerLine.lastIndexOf(keyword)
-    if (index > 0) {
-      return [
-        line.slice(0, index).trim(),
-        line.slice(index + keyword.length).trim(),
-      ] as const
-    }
-  }
-
-  return null
 }
 
 export function hasCurrencyExpression(line: string) {

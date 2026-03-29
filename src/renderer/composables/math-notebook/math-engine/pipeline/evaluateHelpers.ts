@@ -35,6 +35,8 @@ export function stripModifierSuffix(
       'to dec',
       'as fraction',
       'to fraction',
+      'as timespan',
+      'as laptime',
     ]
     for (const suffix of suffixes) {
       if (lower.endsWith(suffix))

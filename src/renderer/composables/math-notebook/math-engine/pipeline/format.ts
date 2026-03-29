@@ -3,6 +3,45 @@ import { HUMANIZED_UNIT_NAMES, SUPPORTED_CURRENCY_CODES } from '../constants'
 import { formatMathDate, formatMathNumber } from '../format'
 import { coerceToNumber, toFraction } from '../utils'
 
+function formatTimespan(totalSeconds: number): string {
+  const abs = Math.abs(totalSeconds)
+  const weeks = Math.floor(abs / 604800)
+  const days = Math.floor((abs % 604800) / 86400)
+  const hours = Math.floor((abs % 86400) / 3600)
+  const minutes = Math.floor((abs % 3600) / 60)
+  const seconds = Math.round(abs % 60)
+
+  const parts: string[] = []
+  if (weeks)
+    parts.push(`${weeks} ${weeks === 1 ? 'week' : 'weeks'}`)
+  if (days)
+    parts.push(`${days} ${days === 1 ? 'day' : 'days'}`)
+  if (hours)
+    parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+  if (minutes)
+    parts.push(`${minutes} min`)
+  if (seconds || parts.length === 0)
+    parts.push(`${seconds} s`)
+  return parts.join(' ')
+}
+
+function formatLaptime(totalSeconds: number): string {
+  const abs = Math.abs(totalSeconds)
+  const h = Math.floor(abs / 3600)
+  const m = Math.floor((abs % 3600) / 60)
+  const s = Math.floor(abs % 60)
+  const ms = Math.round((abs % 1) * 1000)
+
+  const hh = String(h).padStart(2, '0')
+  const mm = String(m).padStart(2, '0')
+  const ss = String(s).padStart(2, '0')
+
+  if (ms > 0) {
+    return `${hh}:${mm}:${ss}.${String(ms).padStart(3, '0')}`
+  }
+  return `${hh}:${mm}:${ss}`
+}
+
 interface MathFormatterInstance {
   format: (value: any, options: { precision: number }) => string
   unit: (value: number, unit: string) => any
@@ -268,6 +307,25 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
         type: 'number',
         numericValue: num,
       }
+    }
+
+    if (strip === 'timespan' || strip === 'laptime') {
+      // Convert unit result to seconds
+      let seconds = num
+      if (
+        result
+        && typeof result === 'object'
+        && typeof result.toNumber === 'function'
+      ) {
+        try {
+          seconds = result.toNumber('s')
+        }
+        catch {
+          /* use coerced num */
+        }
+      }
+      const formatter = strip === 'timespan' ? formatTimespan : formatLaptime
+      return { value: formatter(seconds), error: null, type: 'number' }
     }
 
     return {

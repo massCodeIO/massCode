@@ -127,6 +127,8 @@ const STRIP_SUFFIXES: Record<string, StripUnit> = {
   'to dec': 'dec',
   'as fraction': 'fraction',
   'to fraction': 'fraction',
+  'as timespan': 'timespan',
+  'as laptime': 'laptime',
 }
 
 const MULTIPLIER_SUFFIXES = ['as multiplier', 'to multiplier']

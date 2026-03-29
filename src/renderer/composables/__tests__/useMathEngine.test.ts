@@ -1427,6 +1427,40 @@ describe('calendar calculations', () => {
   })
 })
 
+describe('timespans and laptimes', () => {
+  it('5.5 minutes as timespan', () => {
+    const result = evalLine('5.5 minutes as timespan')
+    expect(result.value).toBe('5 min 30 s')
+  })
+
+  it('4.54 hours as timespan', () => {
+    const result = evalLine('4.54 hours as timespan')
+    expect(result.value).toContain('4 hours')
+    expect(result.value).toContain('min')
+  })
+
+  it('72 days as timespan', () => {
+    const result = evalLine('72 days as timespan')
+    expect(result.value).toContain('10 weeks')
+    expect(result.value).toContain('2 days')
+  })
+
+  it('5.5 minutes as laptime', () => {
+    const result = evalLine('5.5 minutes as laptime')
+    expect(result.value).toBe('00:05:30')
+  })
+
+  it('3h 5m 10s in seconds', () => {
+    const result = evalLine('3h 5m 10s in seconds')
+    expect(result.type).toBe('unit')
+  })
+
+  it('03:04:05 + 01:02:03 as laptime', () => {
+    const result = evalLine('03:04:05 + 01:02:03 as laptime')
+    expect(result.value).toBe('04:06:08')
+  })
+})
+
 describe('timestamps and ISO 8601', () => {
   it('date to timestamp', () => {
     const result = evalLine('January 1, 2020 to timestamp')

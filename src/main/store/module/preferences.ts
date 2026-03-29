@@ -24,6 +24,7 @@ const storagePath = isWin ? `${homedir()}\\massCode` : `${homedir()}/massCode`
 const MATH_DEFAULTS: MathSettings = {
   locale: 'en-US',
   decimalPlaces: 6,
+  dateFormat: 'numeric',
 }
 
 const PREFERENCES_DEFAULTS: PreferencesStore = {
@@ -153,6 +154,9 @@ function sanitizeMarkdownSettings(value: unknown): MarkdownSettings {
 function sanitizeMathSettings(value: unknown): MathSettings {
   const source = asRecord(value)
 
+  const dateFormat = readString(source, 'dateFormat', MATH_DEFAULTS.dateFormat)
+  const validDateFormats = ['numeric', 'short', 'long']
+
   return {
     locale: readString(source, 'locale', MATH_DEFAULTS.locale),
     decimalPlaces: readNumber(
@@ -160,6 +164,9 @@ function sanitizeMathSettings(value: unknown): MathSettings {
       'decimalPlaces',
       MATH_DEFAULTS.decimalPlaces,
     ),
+    dateFormat: validDateFormats.includes(dateFormat)
+      ? (dateFormat as MathSettings['dateFormat'])
+      : MATH_DEFAULTS.dateFormat,
   }
 }
 

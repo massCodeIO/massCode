@@ -124,6 +124,25 @@
     "decimalPlaces": {
       "label": "Decimal Places",
       "description": "Maximum decimal places in results (0\u201314)."
+    },
+    "dateFormat": {
+      "label": "Date Format",
+      "description": "How dates are displayed in results."
+    },
+    "currencyRates": {
+      "label": "Currency Rates",
+      "description": "Exchange rates are cached for 1 hour.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Currency rates updated"
+    },
+    "cryptoRates": {
+      "label": "Crypto Rates",
+      "description": "Cryptocurrency rates via CoinGecko. Rate limit: 10-30 req/min.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Crypto rates updated",
+      "rateLimited": "Rate limit exceeded. Try again later."
     }
   },
   "api": {

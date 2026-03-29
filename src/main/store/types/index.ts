@@ -81,6 +81,7 @@ export interface NotesEditorSettings {
 export interface MathSettings {
   locale: string
   decimalPlaces: number
+  dateFormat: 'numeric' | 'short' | 'long'
 }
 
 export interface PreferencesStore {

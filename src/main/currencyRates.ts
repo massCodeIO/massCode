@@ -153,3 +153,32 @@ export async function getCurrencyRates(): Promise<CurrencyRatesPayload> {
     }
   }
 }
+
+export async function refreshFiatRatesForced(): Promise<CurrencyRatesPayload> {
+  try {
+    const fiatRates = await fetchFiatRates()
+    const cached = store.currencyRates.get('cache')
+    const currentRates = cached?.rates || {}
+    const mergedRates = normalizeRates({ ...currentRates, ...fiatRates })
+
+    const payload = { rates: mergedRates, fetchedAt: Date.now() }
+    store.currencyRates.set('cache', payload)
+
+    return { ...payload, source: 'live' }
+  }
+  catch {
+    return { rates: {}, fetchedAt: 0, source: 'unavailable' }
+  }
+}
+
+export async function refreshCryptoRatesForced(): Promise<CurrencyRatesPayload> {
+  const cryptoRates = await fetchCryptoRates()
+  const cached = store.currencyRates.get('cache')
+  const currentRates = cached?.rates || {}
+  const mergedRates = normalizeRates({ ...currentRates, ...cryptoRates })
+
+  const payload = { rates: mergedRates, fetchedAt: Date.now() }
+  store.currencyRates.set('cache', payload)
+
+  return { ...payload, source: 'live' }
+}

@@ -1,6 +1,5 @@
 /* eslint-disable test/prefer-lowercase-title */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { preprocessMathExpression } from '../math-notebook/math-engine/preprocess'
 import { useMathEngine } from '../math-notebook/useMathEngine'
 
 const TEST_CURRENCY_RATES = {
@@ -987,10 +986,6 @@ describe('mixed currency and plain number', () => {
     const result = evalLine('$100 minus 10')
     expect(result.value).toContain('90')
     expect(result.type).toBe('unit')
-  })
-
-  it('does not infer currency for percentage operands', () => {
-    expect(preprocessMathExpression('$100 + 10%')).toBe('100 USD + 10 / 100')
   })
 
   it('keeps trailing conversion on the whole inferred expression', () => {

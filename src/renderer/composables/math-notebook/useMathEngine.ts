@@ -9,6 +9,7 @@ import {
   DEFAULT_EM_IN_PX,
   DEFAULT_PPI,
   HUMANIZED_UNIT_NAMES,
+  SUPPORTED_CURRENCY_CODES,
 } from './math-engine/constants'
 import { evaluateCssLine } from './math-engine/css'
 import { formatMathDate, formatMathNumber } from './math-engine/format'
@@ -447,6 +448,47 @@ function formatResult(result: any): LineResult {
     && typeof result.toNumber === 'function'
     && result.units
   ) {
+    // Detect compound currency*time units (implicit rate result) and simplify
+    if (Array.isArray(result.units) && result.units.length === 2) {
+      const units = result.units as Array<{
+        unit: { name: string, value: number, base?: { key?: string } }
+        prefix: { value: number }
+        power: number
+      }>
+      const currencyUnit = units.find(
+        u =>
+          u.unit.base?.key?.includes('STUFF')
+          || SUPPORTED_CURRENCY_CODES.includes(u.unit.name),
+      )
+      const timeUnit = units.find(u => u.unit.base?.key === 'TIME')
+      if (
+        currencyUnit
+        && timeUnit
+        && currencyUnit.power === 1
+        && timeUnit.power === 1
+      ) {
+        try {
+          const rawValue = result.value as number
+          const currencyScale
+            = currencyUnit.unit.value * currencyUnit.prefix.value
+          const timeScale = timeUnit.unit.value * timeUnit.prefix.value
+          const currencyAmount
+            = (rawValue / (currencyScale * timeScale)) * currencyScale
+          const simplified = math.unit(currencyAmount, currencyUnit.unit.name)
+          return {
+            value: humanizeFormattedUnits(
+              math.format(simplified, { precision: activeDecimalPlaces }),
+            ),
+            error: null,
+            type: 'unit',
+          }
+        }
+        catch {
+          // Fall through to default formatting
+        }
+      }
+    }
+
     return {
       value: humanizeFormattedUnits(
         math.format(result, { precision: activeDecimalPlaces }),

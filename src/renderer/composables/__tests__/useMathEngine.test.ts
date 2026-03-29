@@ -582,10 +582,10 @@ describe('rates', () => {
     const result = evalLine('30 hours at $30/hour')
     expect(result.type).toBe('unit')
   })
-  it('compound units humanize mcday', () => {
+  it('implicit rate: $30 * 4 days = $120', () => {
     const result = evalLine('$30 * 4 days')
-    expect(result.value).not.toContain('mcday')
-    expect(result.value).toContain('day')
+    expect(result.value).toBe('120 USD')
+    expect(result.type).toBe('unit')
   })
   it('$99 per week * 4 weeks', () => {
     const result = evalLine('$99 per week * 4 weeks')

@@ -1,0 +1,18 @@
+{
+  "name": "masscode-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "massCode documentation website",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.17",
+    "vue-gtag": "^3.7.0"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}

@@ -9,4 +9,8 @@ components.d.ts
 auto-imports.d.ts
 .github/*-instructions.md
 .env
+.env.*
 docs/superpowers
+docs/website/.vitepress/cache
+docs/website/.vitepress/dist
+

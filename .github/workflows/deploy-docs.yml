@@ -1,0 +1,48 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/website/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+          cache-dependency-path: docs/website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm --dir docs/website install
+
+      - name: Build docs
+        run: pnpm docs:build
+        env:
+          VITE_GA: ${{ secrets.VITE_GA }}
+
+      - name: Deploy to server
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -rlptzv --delete
+          path: docs/website/.vitepress/dist/
+          remote_path: /var/www/masscode.io/public/
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}

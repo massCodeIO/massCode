@@ -179,8 +179,6 @@ export const knownUnitTokens = new Set([
   'pixel',
   'pixels',
   'pt',
-  'point',
-  'points',
   'em',
   'mph',
   'kmh',

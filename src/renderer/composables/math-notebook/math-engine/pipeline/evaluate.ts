@@ -122,12 +122,14 @@ export function evaluateClassifiedLine(
       if (classification.modifiers.rounding) {
         const numericValue = getNumericValue(result)
         if (numericValue !== null) {
+          const rounding = classification.modifiers.rounding
           const rounded = formatter.applyRoundingModifier(
             numericValue,
-            classification.modifiers.rounding,
+            rounding,
           )
+          const precision = rounding.type === 'dp' ? rounding.param : undefined
           return {
-            lineResult: formatResult(rounded),
+            lineResult: formatResult(rounded, precision),
             rawResult: rounded,
             numericValue: rounded,
           }

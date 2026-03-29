@@ -75,6 +75,12 @@ describe('rounding', () => {
   it('rounded down to nearest 3', () =>
     expectValue('17 rounded down to nearest 3', '15'))
   it('to nearest hundred', () => expectValue('490 to nearest hundred', '500'))
+  it('to 0 dp', () => expectValue('3.7 to 0 dp', '4'))
+  it('negative rounded', () => expectValue('-5.5 rounded', '-5'))
+  it('negative rounded up', () => expectValue('-5.5 rounded up', '-5'))
+  it('negative rounded down', () => expectValue('-5.5 rounded down', '-6'))
+  it('to nearest 1 (no-op)', () => expectValue('37 to nearest 1', '37'))
+  it('pi to 10 digits', () => expectValue('pi to 10 digits', '3.1415926536'))
 })
 
 describe('math aliases', () => {
@@ -224,6 +230,11 @@ describe('percentage advanced', () => {
   it('0.35 as %', () => expectNumericClose('0.35 as %', 35))
   it('X/Y as %', () => expectNumericClose('20/200 as %', 10))
   it('X/Y %', () => expectNumericClose('20/200 %', 10))
+  it('0% of 100', () => expectNumericClose('0% of 100', 0))
+  it('100% of 250', () => expectNumericClose('100% of 250', 250))
+  it('200% of 50', () => expectNumericClose('200% of 50', 100))
+  it('100 - 100%', () => expectNumericClose('100 - 100%', 0))
+  it('1 as %', () => expectNumericClose('1 as %', 100))
 })
 
 describe('fractions', () => {
@@ -234,6 +245,14 @@ describe('fractions', () => {
   it('50% as fraction', () => {
     const result = evalLine('50% as fraction')
     expect(result.value).toBe('1/2')
+  })
+  it('0.25 as fraction', () => {
+    const result = evalLine('0.25 as fraction')
+    expect(result.value).toBe('1/4')
+  })
+  it('-0.5 as fraction', () => {
+    const result = evalLine('-0.5 as fraction')
+    expect(result.value).toBe('-1/2')
   })
   it('2/3 of 600', () => expectNumericClose('2/3 of 600', 400))
   it('50 is 1/5 of what', () => expectNumericClose('50 is 1/5 of what', 250))
@@ -267,6 +286,14 @@ describe('multipliers', () => {
   it('20 to 40 as x', () => {
     const result = evalLine('20 to 40 as x')
     expect(result.value).toBe('2x')
+  })
+  it('100 to 50 is what x (fractional)', () => {
+    const result = evalLine('100 to 50 is what x')
+    expect(result.value).toBe('0.5x')
+  })
+  it('0/5 as multiplier (zero)', () => {
+    const result = evalLine('0/5 as multiplier')
+    expect(result.value).toBe('0x')
   })
 })
 
@@ -389,6 +416,29 @@ describe('currency', () => {
     expect(result.type).toBe('unit')
     expect(result.value).toContain('USD')
     expectNumericClose('5 dollars + 10 dollars', 15)
+  })
+
+  it('euros word', () => {
+    const result = evalLine('10 euros')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('EUR')
+  })
+
+  it('rubles word', () => {
+    const result = evalLine('500 rubles')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('RUB')
+  })
+
+  it('implicit rate: 4 days * $30', () => {
+    const result = evalLine('4 days * $30')
+    expect(result.value).toBe('120 USD')
+  })
+
+  it('implicit rate: 30 EUR * 4 days', () => {
+    const result = evalLine('30 EUR * 4 days')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('EUR')
   })
 })
 
@@ -725,6 +775,11 @@ describe('number format', () => {
     const result = evalLine('50% to decimal')
     expect(result.value).toBe('0.5')
   })
+
+  it('0 in hex', () => expectValue('0 in hex', '0x0'))
+  it('0 in bin', () => expectValue('0 in bin', '0b0'))
+  it('0.001 in sci', () => expectValue('0.001 in sci', '1e-3'))
+  it('0xFF + 0b1010', () => expectValue('0xFF + 0b1010', '265'))
 })
 
 describe('numericValue for total', () => {
@@ -1344,6 +1399,10 @@ describe('conditional logic', () => {
   it('postfix if (false)', () => expectValue('42 if 5 < 3', '0'))
   it('postfix unless', () => expectValue('42 unless 5 > 3', '0'))
   it('postfix unless (false)', () => expectValue('42 unless 5 < 3', '42'))
+  it('if with and', () => expectValue('if true and false then 1 else 2', '2'))
+  it('expression in postfix if', () => expectValue('10 + 5 if 3 > 2', '15'))
+  it('expression in condition', () =>
+    expectValue('if 5 + 3 > 7 then 10 else 20', '10'))
 })
 
 describe('bitwise operations', () => {
@@ -1414,9 +1473,45 @@ describe('calendar calculations', () => {
     expect(result.value).toBe('28 days')
   })
 
+  it('days in Q1', () => {
+    const result = evalLine('days in Q1')
+    expect(result.numericValue).toBeGreaterThanOrEqual(90)
+    expect(result.numericValue).toBeLessThanOrEqual(91)
+  })
+
+  it('days in Q2', () => {
+    const result = evalLine('days in Q2')
+    expect(result.value).toBe('91 days')
+  })
+
   it('days in Q3', () => {
     const result = evalLine('days in Q3')
     expect(result.value).toBe('92 days')
+  })
+
+  it('days in Q4', () => {
+    const result = evalLine('days in Q4')
+    expect(result.value).toBe('92 days')
+  })
+
+  it('days between same date (0 days)', () => {
+    const result = evalLine('days between March 1 and March 1')
+    expect(result.value).toBe('0 days')
+  })
+
+  it('3 months from now', () => {
+    const result = evalLine('3 months from now')
+    expect(result.type).toBe('date')
+  })
+
+  it('2 years ago', () => {
+    const result = evalLine('2 years ago')
+    expect(result.type).toBe('date')
+  })
+
+  it('1 week from now', () => {
+    const result = evalLine('1 week from now')
+    expect(result.type).toBe('date')
   })
 
   it('3 weeks after March 14, 2019', () => {
@@ -1483,6 +1578,26 @@ describe('clock time intervals', () => {
   it('9am to 5pm', () => {
     const result = evalLine('9am to 5pm')
     expect(result.value).toBe('8 hours')
+  })
+
+  it('12am to 12pm', () => {
+    const result = evalLine('12am to 12pm')
+    expect(result.value).toBe('12 hours')
+  })
+
+  it('11pm to 1am (midnight crossing)', () => {
+    const result = evalLine('11pm to 1am')
+    expect(result.value).toBe('2 hours')
+  })
+
+  it('1.5 hours as timespan', () => {
+    const result = evalLine('1.5 hours as timespan')
+    expect(result.value).toBe('1 hour 30 min')
+  })
+
+  it('0 seconds as timespan', () => {
+    const result = evalLine('0 seconds as timespan')
+    expect(result.value).toBe('0 s')
   })
 })
 

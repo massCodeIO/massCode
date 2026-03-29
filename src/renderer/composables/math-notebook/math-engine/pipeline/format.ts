@@ -95,7 +95,8 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
     return result
   }
 
-  function formatResult(result: any): LineResult {
+  function formatResult(result: any, overridePrecision?: number): LineResult {
+    const effectivePrecision = overridePrecision ?? decimalPlaces
     if (result === undefined || result === null) {
       return { value: null, error: null, type: 'empty' }
     }
@@ -163,7 +164,7 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
 
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: decimalPlaces }),
+          math.format(result, { precision: effectivePrecision }),
         ),
         error: null,
         type: 'unit',
@@ -172,7 +173,7 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
 
     if (typeof result === 'number') {
       return {
-        value: formatMathNumber(result, locale, decimalPlaces),
+        value: formatMathNumber(result, locale, effectivePrecision),
         error: null,
         type: 'number',
         ...(Number.isFinite(result) ? { numericValue: result } : {}),
@@ -186,7 +187,7 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
     if (result && typeof result.toString === 'function') {
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: decimalPlaces }),
+          math.format(result, { precision: effectivePrecision }),
         ),
         error: null,
         type: 'number',

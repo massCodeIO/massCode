@@ -152,7 +152,10 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
             )
             return {
               value: humanizeFormattedUnits(
-                math.format(simplified, { precision: decimalPlaces }),
+                math.format(simplified, {
+                  notation: 'fixed',
+                  precision: decimalPlaces,
+                }),
               ),
               error: null,
               type: 'unit',
@@ -166,7 +169,10 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
 
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: effectivePrecision }),
+          math.format(result, {
+            notation: 'fixed',
+            precision: effectivePrecision,
+          }),
         ),
         error: null,
         type: 'unit',
@@ -189,7 +195,10 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
     if (result && typeof result.toString === 'function') {
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: effectivePrecision }),
+          math.format(result, {
+            notation: 'fixed',
+            precision: effectivePrecision,
+          }),
         ),
         error: null,
         type: 'number',

@@ -872,14 +872,14 @@ describe('numericValue for total', () => {
     expect(results[0].numericValue).toBeUndefined()
   })
 
-  it('does not set numericValue for unit result', () => {
+  it('sets numericValue for unit result', () => {
     const result = evalLine('10 USD')
-    expect(result.numericValue).toBeUndefined()
+    expect(result.numericValue).toBe(10)
   })
 
-  it('does not set numericValue for unit assignment', () => {
+  it('sets numericValue for unit assignment', () => {
     const results = evalLines('price = 10 USD')
-    expect(results[0].numericValue).toBeUndefined()
+    expect(results[0].numericValue).toBe(10)
   })
 
   it('sets intValue for hex format', () => {

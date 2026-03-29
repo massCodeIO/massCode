@@ -167,6 +167,14 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
         }
       }
 
+      let unitNumericValue: number | undefined
+      try {
+        unitNumericValue = result.toNumber()
+      }
+      catch {
+        /* compound units may not convert */
+      }
+
       return {
         value: humanizeFormattedUnits(
           math.format(result, {
@@ -176,6 +184,9 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
         ),
         error: null,
         type: 'unit',
+        ...(unitNumericValue !== undefined
+          ? { numericValue: unitNumericValue }
+          : {}),
       }
     }
 

@@ -71,6 +71,9 @@ export const scalesRule: RewriteRule = {
     const line = ctx.line
       .replace(/(\d+(?:\.\d+)?)\s*k\b/g, '($1 * 1000)')
       .replace(/(\d+(?:\.\d+)?)\s*M\b/g, '($1 * 1000000)')
+      .replace(/(\d+(?:\.\d+)?)\s*(?:bn|B)\b/g, '($1 * 1000000000)')
+      .replace(/(\d+(?:\.\d+)?)\s*(?:tn|T)\b/g, '($1 * 1000000000000)')
+      .replace(/(\d+(?:\.\d+)?)\s+trillion\b/gi, '($1 * 1000000000000)')
       .replace(/(\d+(?:\.\d+)?)\s+billion\b/gi, '($1 * 1000000000)')
       .replace(/(\d+(?:\.\d+)?)\s+million\b/gi, '($1 * 1000000)')
       .replace(/(\d+(?:\.\d+)?)\s+thousand\b/gi, '($1 * 1000)')

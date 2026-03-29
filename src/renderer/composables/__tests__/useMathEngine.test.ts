@@ -1798,6 +1798,48 @@ describe('misc functions', () => {
     expectValue('5 is to 10 as what is to 80', '40'))
 })
 
+describe('large number symbols', () => {
+  it('7B (billion)', () => {
+    const result = evalLine('7B')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(7000000000)
+  })
+
+  it('5bn (billion)', () => {
+    const result = evalLine('5bn')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(5000000000)
+  })
+
+  it('2T (trillion)', () => {
+    const result = evalLine('2T')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(2000000000000)
+  })
+
+  it('10 trillion', () => {
+    const result = evalLine('10 trillion')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBe(10000000000000)
+  })
+})
+
+describe('comments extensions', () => {
+  it('parenthesis comment', () => {
+    const result = evalLine('$999 (for iPhone 16)')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('999')
+  })
+
+  it('end-of-line // comment', () => {
+    expectValue('$128 + $45 // on 10-02-2019', '173 USD')
+  })
+
+  it('parenthesis with just numbers is NOT stripped', () => {
+    expectValue('6(3)', '18')
+  })
+})
+
 describe('error handling', () => {
   it('invalid expression returns error', () => {
     const result = evalLine('hello world')

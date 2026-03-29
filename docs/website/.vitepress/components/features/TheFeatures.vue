@@ -4,58 +4,31 @@ import FeaturesItem from './FeaturesItem.vue'
 
 <template>
   <div class="features">
-    <FeaturesItem title="Organization">
+    <FeaturesItem title="Code Snippets">
       Organize your snippets with multi-level folders and tags. Each snippet can
-      contain multiple fragments (tabs), giving you fine-grained control over
-      structure and grouping.
-    </FeaturesItem>
-    <FeaturesItem title="Editor">
-      Built on
+      contain multiple fragments (tabs). Built on
       <AppLink href="https://github.com/codemirror/codemirror5">
         CodeMirror
       </AppLink>
-      with <code>.tmLanguage</code> grammars for syntax highlighting.
-      <ul>
-        <li>
-          Supports over
-          <AppLink
-            href="https://github.com/github/linguist/blob/master/vendor/README.md"
-          >
-            600 grammars
-          </AppLink>, with 160+ available out of the box.
-        </li>
-        <li>
-          Integrated
-          <AppLink href="https://prettier.io">
-            Prettier
-          </AppLink> for clean,
-          consistent code formatting.
-        </li>
-      </ul>
+      with 160+
+      <AppLink
+        href="https://github.com/github/linguist/blob/master/vendor/README.md"
+      >
+        grammars
+      </AppLink>, <AppLink href="https://prettier.io">
+        Prettier
+      </AppLink> formatting,
+      real-time HTML & CSS preview, and JSON visualizer.
     </FeaturesItem>
-    <FeaturesItem title="Real-time HTML & CSS Preview">
-      Write and instantly preview HTML and CSS snippets. Perfect for
-      prototyping, testing ideas, or quick visual checks.
+    <FeaturesItem title="Notes">
+      An Obsidian-like markdown editor built right into massCode. Write and
+      organize notes with folders, tags, live preview, mindmaps, and
+      presentation mode.
     </FeaturesItem>
-    <FeaturesItem title="Markdown">
-      Full Markdown support with syntax highlighting, tables, lists, and more.
-      <ul>
-        <li>
-          Integrated
-          <AppLink href="https://mermaid-js.github.io/mermaid/#">
-            Mermaid
-          </AppLink>
-          for dynamic diagrams and charts.
-        </li>
-      </ul>
-    </FeaturesItem>
-    <FeaturesItem title="Presentation Mode">
-      Turn a sequence of snippets into a presentation. Useful for classrooms,
-      team meetings, conference talks, or simply walking through your own notes.
-    </FeaturesItem>
-    <FeaturesItem title="Mindmap">
-      Generate mind maps from Markdown. Fast, intuitive, and ideal for
-      structuring and visualizing ideas.
+    <FeaturesItem title="Math Notebook">
+      A calculator notepad with natural language expressions. Currencies,
+      timezones, unit conversions, finance calculations, cooking conversions,
+      and more.
     </FeaturesItem>
     <FeaturesItem
       title="Developer Tools"
@@ -75,13 +48,8 @@ import FeaturesItem from './FeaturesItem.vue'
           <strong>Encoders/Decoders</strong>: URL, Base64, JSON ⇄ TOML/XML/YAML,
           Text ⇄ ASCII/Binary/Unicode, Color Converter
         </li>
+        <li><strong>Generators</strong>: JSON Generator, Lorem Ipsum</li>
       </ul>
-    </FeaturesItem>
-
-    <FeaturesItem title="JSON Visualizer">
-      Visualize and explore your JSON data with an interactive graph view.
-      Perfect for quickly inspecting complex responses, APIs, or configuration
-      files.
     </FeaturesItem>
     <FeaturesItem title="Integrations">
       Extend your workflow with:

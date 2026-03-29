@@ -41,37 +41,42 @@ export default defineConfig({
     sidebar: {
       '/documentation/': [
         {
-          text: 'Essentials',
+          text: 'General',
           items: [
             { text: 'Layout', link: '/documentation/' },
-            { text: 'Library', link: '/documentation/library' },
-            { text: 'Folders', link: '/documentation/folders' },
-            { text: 'Tags', link: '/documentation/tags' },
-            { text: 'Snippets', link: '/documentation/snippets' },
-            { text: 'Fragments', link: '/documentation/fragments' },
-            { text: 'Description', link: '/documentation/description' },
-            { text: 'Search', link: '/documentation/search' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Themes', link: '/documentation/themes' },
           ],
         },
         {
-          text: 'Markdown',
+          text: 'Code',
           items: [
-            { text: 'Markdown', link: '/documentation/markdown.md' },
+            { text: 'Library', link: '/documentation/code/library' },
+            { text: 'Folders', link: '/documentation/code/folders' },
+            { text: 'Tags', link: '/documentation/code/tags' },
+            { text: 'Snippets', link: '/documentation/code/snippets' },
+            { text: 'Fragments', link: '/documentation/code/fragments' },
+            { text: 'Description', link: '/documentation/code/description' },
+            { text: 'Search', link: '/documentation/code/search' },
+          ],
+        },
+        {
+          text: 'Notes',
+          items: [
+            { text: 'Notes', link: '/documentation/notes/' },
           ],
         },
         {
           text: 'Math',
           items: [
-            { text: 'Math Notebook', link: '/documentation/math-notebook.md' },
+            { text: 'Math Notebook', link: '/documentation/math/' },
           ],
         },
         {
           text: 'Tools',
           items: [
-            { text: 'Developers Tools', link: '/documentation/devtools.md' },
+            { text: 'Developer Tools', link: '/documentation/tools/' },
           ],
         },
       ],

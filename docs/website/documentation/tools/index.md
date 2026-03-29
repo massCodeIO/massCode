@@ -24,3 +24,8 @@ massCode provides developers with a range of convenient tools, such as:
 - JSON ⇄ TOML/XML/YAML
 - Text ⇄ ASCII/Binary/Unicode
 - Color Converter
+
+## Generators
+
+- JSON Generator
+- Lorem Ipsum Generator

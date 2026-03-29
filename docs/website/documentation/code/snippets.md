@@ -69,7 +69,7 @@ Follow one of the following steps:
 Follow these steps:
 
 - Add new [snippet](#adding-a-snippet) or select already created.
-- Add second [fragment](/documentation/fragments.html).
+- Add second [fragment](/documentation/code/fragments.html).
 - Select for fragments HTML & CSS languages.
 - Select **"Editor"** > **"Preview Code"** from the menu bar or press <kbd>Alt+Cmd+P</kbd> on macOS or <kbd>Ctrl+Alt+P</kbd> on Windows or Linux.
 

@@ -16,9 +16,6 @@ hero:
     - theme: alt
       text: Documentation
       link: "/documentation/"
-    - theme: alt
-      text: Snippet Collection
-      link: "/snippets/"
 ---
 
 <TheHome/>

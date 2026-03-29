@@ -60,9 +60,11 @@ const TIMEZONE_PATTERNS = [
   /\bnow$/,
   /^time\s+in\s/,
   /^now\s+in\s/,
+  /^date\s+in\s/,
 ]
 
 const TIMEZONE_DIFF_RE = /\s+-\s+(?:\S.*)?\b(?:time|now)\b/
+const TIMEZONE_DIFF_BETWEEN_RE = /^(?:time\s+)?difference\s+between\s/
 
 const CSS_ASSIGNMENT_RE = /^(?:ppi|em)\s*=/i
 const CSS_CONVERSION_RE = /\b(?:px|pt|em)\b/
@@ -216,7 +218,10 @@ function probeTimezone(normalized: string): boolean {
 }
 
 function probeTimezoneDiff(normalized: string): boolean {
-  return TIMEZONE_DIFF_RE.test(normalized)
+  return (
+    TIMEZONE_DIFF_RE.test(normalized)
+    || TIMEZONE_DIFF_BETWEEN_RE.test(normalized)
+  )
 }
 
 function probeCalendar(normalized: string): boolean {

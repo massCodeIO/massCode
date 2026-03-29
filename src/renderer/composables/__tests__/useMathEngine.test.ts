@@ -1265,6 +1265,42 @@ describe('time zones', () => {
   it('tomorrow PST in Berlin', () => {
     expectDateWithYear('tomorrow PST in Berlin', '2026')
   })
+
+  it('airport code: 7:30am LAX in Japan', () => {
+    const result = evalLine('7:30 am LAX in Japan')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('country name: time in Thailand', () => {
+    const result = evalLine('time in Thailand')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('country name: time in Germany', () => {
+    const result = evalLine('time in Germany')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('date in Vancouver', () => {
+    const result = evalLine('date in Vancouver')
+    expect(result.type).toBe('date')
+    expect(result.value).not.toBeNull()
+  })
+
+  it('time difference between Seattle and Moscow', () => {
+    const result = evalLine('time difference between Seattle and Moscow')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('hour')
+  })
+
+  it('difference between PDT & AEST', () => {
+    const result = evalLine('difference between PDT & AEST')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('hour')
+  })
 })
 
 describe('constants', () => {

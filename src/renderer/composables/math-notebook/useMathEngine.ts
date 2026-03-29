@@ -1,8 +1,8 @@
 import type {
   CssContext,
   CurrencyServiceState,
+  LineClassification,
   LineResult,
-  SpecialLineResult,
 } from './math-engine/types'
 import { evaluateCalendarLine } from './math-engine/calendar'
 import {
@@ -12,140 +12,27 @@ import {
   SUPPORTED_CURRENCY_CODES,
 } from './math-engine/constants'
 import { evaluateCssLine } from './math-engine/css'
+import {
+  evaluateBlockAggregate,
+  evaluateInlineAggregate,
+} from './math-engine/evaluators/aggregates'
+import {
+  evaluateDateArithmeticLine,
+  evaluateDateAssignmentLine,
+} from './math-engine/evaluators/dateArithmetic'
 import { formatMathDate, formatMathNumber } from './math-engine/format'
 import { createMathInstance } from './math-engine/mathInstance'
-import {
-  hasCurrencyExpression,
-  preprocessMathExpression,
-} from './math-engine/preprocess'
+import { analysisNormalize } from './math-engine/pipeline/analysisNormalize'
+import { classify } from './math-engine/pipeline/classify'
+import { rewrite } from './math-engine/pipeline/rewrite'
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
   parseExplicitLocalTemporalExpression,
 } from './math-engine/timeZones'
+import { coerceToNumber, toFraction } from './math-engine/utils'
 
 export type { LineResult } from './math-engine/types'
-
-interface FormatDirective {
-  format:
-    | 'hex'
-    | 'bin'
-    | 'oct'
-    | 'sci'
-    | 'number'
-    | 'dec'
-    | 'fraction'
-    | 'multiplier'
-    | null
-  expression: string
-}
-
-interface RoundingDirective {
-  type:
-    | 'dp'
-    | 'round'
-    | 'ceil'
-    | 'floor'
-    | 'nearest'
-    | 'nearestCeil'
-    | 'nearestFloor'
-    | null
-  param: number
-  expression: string
-}
-
-const NEAREST_WORDS: Record<string, number> = {
-  ten: 10,
-  hundred: 100,
-  thousand: 1000,
-  million: 1000000,
-}
-
-function detectRoundingDirective(line: string): RoundingDirective {
-  const lower = line.toLowerCase()
-  let m: RegExpMatchArray | null
-
-  // "to N dp" / "to N digits"
-  m = lower.match(/\s+to\s+(\d+)\s+(?:dp|digits?)$/)
-  if (m) {
-    return {
-      type: 'dp',
-      param: Number(m[1]),
-      expression: line.slice(0, m.index!).trim(),
-    }
-  }
-
-  // "rounded up to nearest X" / "rounded down to nearest X"
-  m = lower.match(/\s+rounded\s+(up|down)\s+to\s+nearest\s+(\w+)$/)
-  if (m) {
-    const n = NEAREST_WORDS[m[2]] || Number(m[2])
-    if (n > 0) {
-      return {
-        type: m[1] === 'up' ? 'nearestCeil' : 'nearestFloor',
-        param: n,
-        expression: line.slice(0, m.index!).trim(),
-      }
-    }
-  }
-
-  // "rounded to nearest X" / "to nearest X"
-  m = lower.match(/\s+(?:rounded\s+)?to\s+nearest\s+(\w+)$/)
-  if (m) {
-    const n = NEAREST_WORDS[m[1]] || Number(m[1])
-    if (n > 0) {
-      return {
-        type: 'nearest',
-        param: n,
-        expression: line.slice(0, m.index!).trim(),
-      }
-    }
-  }
-
-  // "rounded up" / "rounded down"
-  m = lower.match(/\s+rounded\s+(up|down)$/)
-  if (m) {
-    return {
-      type: m[1] === 'up' ? 'ceil' : 'floor',
-      param: 0,
-      expression: line.slice(0, m.index!).trim(),
-    }
-  }
-
-  // "rounded"
-  m = lower.match(/\s+rounded$/)
-  if (m) {
-    return {
-      type: 'round',
-      param: 0,
-      expression: line.slice(0, m.index!).trim(),
-    }
-  }
-
-  return { type: null, param: 0, expression: line }
-}
-
-function applyRounding(value: number, directive: RoundingDirective): number {
-  switch (directive.type) {
-    case 'dp': {
-      const factor = 10 ** directive.param
-      return Math.round(value * factor) / factor
-    }
-    case 'round':
-      return Math.round(value)
-    case 'ceil':
-      return Math.ceil(value)
-    case 'floor':
-      return Math.floor(value)
-    case 'nearest':
-      return Math.round(value / directive.param) * directive.param
-    case 'nearestCeil':
-      return Math.ceil(value / directive.param) * directive.param
-    case 'nearestFloor':
-      return Math.floor(value / directive.param) * directive.param
-    default:
-      return value
-  }
-}
 
 let activeCurrencyRates: Record<string, number> = {}
 let currencyServiceState: CurrencyServiceState = 'loading'
@@ -155,233 +42,7 @@ let math = createMathInstance(activeCurrencyRates)
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
 
-const STRIP_UNIT_SUFFIXES: Record<
-  string,
-  'number' | 'dec' | 'fraction' | 'multiplier'
-> = {
-  'as number': 'number',
-  'to number': 'number',
-  'as decimal': 'dec',
-  'to decimal': 'dec',
-  'as dec': 'dec',
-  'to dec': 'dec',
-  'as fraction': 'fraction',
-  'to fraction': 'fraction',
-  'as multiplier': 'multiplier',
-  'to multiplier': 'multiplier',
-}
-
-function gcd(a: number, b: number): number {
-  a = Math.abs(Math.round(a))
-  b = Math.abs(Math.round(b))
-  while (b) {
-    const t = b
-    b = a % b
-    a = t
-  }
-  return a
-}
-
-function toFraction(decimal: number): string {
-  if (Number.isInteger(decimal))
-    return `${decimal}/1`
-  const sign = decimal < 0 ? '-' : ''
-  const abs = Math.abs(decimal)
-  const precision = 1e10
-  const numerator = Math.round(abs * precision)
-  const denominator = precision
-  const divisor = gcd(numerator, denominator)
-  return `${sign}${numerator / divisor}/${denominator / divisor}`
-}
-
-function detectStripUnitDirective(line: string): FormatDirective {
-  const lower = line.toLowerCase()
-  for (const [suffix, format] of Object.entries(STRIP_UNIT_SUFFIXES)) {
-    if (lower.endsWith(suffix)) {
-      return {
-        format,
-        expression: line.slice(0, line.length - suffix.length).trim(),
-      }
-    }
-  }
-  return { format: null, expression: line }
-}
-
-function detectFormatDirective(line: string): FormatDirective {
-  const formatMap: Record<
-    string,
-    'hex' | 'bin' | 'oct' | 'sci' | 'multiplier'
-  > = {
-    'in hex': 'hex',
-    'in bin': 'bin',
-    'in oct': 'oct',
-    'in sci': 'sci',
-    'in scientific': 'sci',
-    'to multiplier': 'multiplier',
-  }
-  const lower = line.toLowerCase()
-
-  for (const [suffix, format] of Object.entries(formatMap)) {
-    if (lower.endsWith(suffix)) {
-      return {
-        format,
-        expression: line.slice(0, line.length - suffix.length).trim(),
-      }
-    }
-  }
-
-  return { format: null, expression: line }
-}
-
-function applyFormat(
-  result: any,
-  format: NonNullable<FormatDirective['format']>,
-): LineResult {
-  if (format === 'multiplier') {
-    let num: number
-    if (typeof result === 'number') {
-      num = result
-    }
-    else if (
-      result
-      && typeof result === 'object'
-      && typeof result.toNumber === 'function'
-    ) {
-      try {
-        num = result.toNumber()
-      }
-      catch {
-        num = Number.NaN
-      }
-    }
-    else {
-      num = Number(result)
-    }
-
-    if (Number.isNaN(num)) {
-      return { value: String(result), error: null, type: 'number' }
-    }
-
-    return {
-      value: `${formatMathNumber(num, activeLocale, activeDecimalPlaces)}x`,
-      error: null,
-      type: 'number',
-      numericValue: num,
-    }
-  }
-
-  if (format === 'fraction') {
-    let num: number
-    if (typeof result === 'number') {
-      num = result
-    }
-    else if (
-      result
-      && typeof result === 'object'
-      && typeof result.toNumber === 'function'
-    ) {
-      try {
-        num = result.toNumber()
-      }
-      catch {
-        num = Number.NaN
-      }
-    }
-    else {
-      num = Number(result)
-    }
-
-    if (Number.isNaN(num)) {
-      return { value: String(result), error: null, type: 'number' }
-    }
-
-    return {
-      value: toFraction(num),
-      error: null,
-      type: 'number',
-      numericValue: num,
-    }
-  }
-
-  if (format === 'number' || format === 'dec') {
-    let num: number
-    if (typeof result === 'number') {
-      num = result
-    }
-    else if (
-      result
-      && typeof result === 'object'
-      && typeof result.toNumber === 'function'
-    ) {
-      try {
-        num = result.toNumber()
-      }
-      catch {
-        num = Number.NaN
-      }
-    }
-    else {
-      num = Number(result)
-    }
-
-    if (Number.isNaN(num)) {
-      return { value: String(result), error: null, type: 'number' }
-    }
-
-    return {
-      value: formatMathNumber(num, activeLocale, activeDecimalPlaces),
-      error: null,
-      type: 'number',
-      numericValue: num,
-    }
-  }
-
-  const num
-    = typeof result === 'number'
-      ? result
-      : result
-        && typeof result === 'object'
-        && typeof result.toNumber === 'function'
-        ? result.toNumber()
-        : Number(result)
-
-  if (Number.isNaN(num)) {
-    return { value: String(result), error: null, type: 'number' }
-  }
-
-  const intValue = Math.round(num)
-
-  switch (format) {
-    case 'hex':
-      return {
-        value: `0x${intValue.toString(16).toUpperCase()}`,
-        error: null,
-        type: 'number',
-        numericValue: intValue,
-      }
-    case 'bin':
-      return {
-        value: `0b${intValue.toString(2)}`,
-        error: null,
-        type: 'number',
-        numericValue: intValue,
-      }
-    case 'oct':
-      return {
-        value: `0o${intValue.toString(8)}`,
-        error: null,
-        type: 'number',
-        numericValue: intValue,
-      }
-    case 'sci':
-      return {
-        value: num.toExponential(),
-        error: null,
-        type: 'number',
-        numericValue: num,
-      }
-  }
-}
+// --- Formatting helpers (depend on module-level math instance and locale) ---
 
 function humanizeUnitToken(unitId: string) {
   const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
@@ -414,12 +75,9 @@ function humanizeFormattedUnits(value: string) {
     },
   )
 
-  // Humanize remaining standalone unit tokens (e.g. in compound units like "USD mcday")
   result = result.replace(
     /\b(mc(?:second|minute|hour|day|week|month|year))\b/g,
-    (_, unitId: string) => {
-      return humanizeUnitToken(unitId)
-    },
+    (_, unitId: string) => humanizeUnitToken(unitId),
   )
 
   return result
@@ -448,7 +106,7 @@ function formatResult(result: any): LineResult {
     && typeof result.toNumber === 'function'
     && result.units
   ) {
-    // Detect compound currency*time units (implicit rate result) and simplify
+    // Implicit rate simplification: currency * time → currency
     if (Array.isArray(result.units) && result.units.length === 2) {
       const units = result.units as Array<{
         unit: { name: string, value: number, base?: { key?: string } }
@@ -484,7 +142,7 @@ function formatResult(result: any): LineResult {
           }
         }
         catch {
-          // Fall through to default formatting
+          /* fall through */
         }
       }
     }
@@ -499,19 +157,11 @@ function formatResult(result: any): LineResult {
   }
 
   if (typeof result === 'number') {
-    if (!Number.isFinite(result)) {
-      return {
-        value: formatMathNumber(result, activeLocale, activeDecimalPlaces),
-        error: null,
-        type: 'number',
-      }
-    }
-
     return {
       value: formatMathNumber(result, activeLocale, activeDecimalPlaces),
       error: null,
       type: 'number',
-      numericValue: result,
+      ...(Number.isFinite(result) ? { numericValue: result } : {}),
     }
   }
 
@@ -535,7 +185,6 @@ function formatResult(result: any): LineResult {
 function getNumericValue(result: any): number | null {
   if (typeof result === 'number')
     return result
-
   if (
     result
     && typeof result === 'object'
@@ -548,226 +197,172 @@ function getNumericValue(result: any): number | null {
       return null
     }
   }
-
   return null
 }
 
-function splitTopLevelAddSub(expression: string) {
-  const terms: string[] = []
-  const operators: Array<'+' | '-'> = []
-  let depth = 0
-  let segmentStart = 0
+// --- Modifier application ---
 
-  for (let index = 0; index < expression.length; index++) {
-    const char = expression[index]
-
-    if (char === '(') {
-      depth += 1
-      continue
+function applyRoundingModifier(
+  value: number,
+  rounding: NonNullable<LineClassification['modifiers']['rounding']>,
+): number {
+  switch (rounding.type) {
+    case 'dp': {
+      const factor = 10 ** rounding.param
+      return Math.round(value * factor) / factor
     }
-
-    if (char === ')') {
-      depth = Math.max(0, depth - 1)
-      continue
-    }
-
-    if (depth !== 0 || (char !== '+' && char !== '-')) {
-      continue
-    }
-
-    let prevIndex = index - 1
-    while (prevIndex >= 0 && /\s/.test(expression[prevIndex])) {
-      prevIndex -= 1
-    }
-
-    let nextIndex = index + 1
-    while (nextIndex < expression.length && /\s/.test(expression[nextIndex])) {
-      nextIndex += 1
-    }
-
-    if (prevIndex < 0 || nextIndex >= expression.length) {
-      continue
-    }
-
-    if ('+-*/%^,('.includes(expression[prevIndex])) {
-      continue
-    }
-
-    terms.push(expression.slice(segmentStart, index).trim())
-    operators.push(char)
-    segmentStart = index + 1
-  }
-
-  if (operators.length === 0) {
-    return null
-  }
-
-  terms.push(expression.slice(segmentStart).trim())
-
-  if (terms.some(term => !term)) {
-    return null
-  }
-
-  return { terms, operators }
-}
-
-function evaluateDateLikeExpression(
-  expression: string,
-  now: Date,
-  scope: Record<string, any>,
-) {
-  const timeZoneResult = evaluateTimeZoneLine(expression, now)
-  if (timeZoneResult?.rawResult instanceof Date) {
-    return timeZoneResult.rawResult
-  }
-
-  const localTemporalResult = parseExplicitLocalTemporalExpression(
-    expression,
-    now,
-  )
-  if (localTemporalResult) {
-    return localTemporalResult.date
-  }
-
-  try {
-    const result = math.evaluate(expression, scope)
-    return result instanceof Date ? result : null
-  }
-  catch {
-    return null
+    case 'round':
+      return Math.round(value)
+    case 'ceil':
+      return Math.ceil(value)
+    case 'floor':
+      return Math.floor(value)
+    case 'nearest':
+      return Math.round(value / rounding.param) * rounding.param
+    case 'nearestCeil':
+      return Math.ceil(value / rounding.param) * rounding.param
+    case 'nearestFloor':
+      return Math.floor(value / rounding.param) * rounding.param
+    default:
+      return value
   }
 }
 
-function evaluateDurationMilliseconds(
-  expression: string,
-  scope: Record<string, any>,
-) {
-  try {
-    const result = math.evaluate(expression, scope)
-    if (
-      result
-      && typeof result === 'object'
-      && typeof result.toNumber === 'function'
-    ) {
-      const milliseconds = result.toNumber('ms')
-      return Number.isFinite(milliseconds) ? milliseconds : null
+function applyResultFormat(
+  result: any,
+  format: NonNullable<LineClassification['modifiers']['resultFormat']>,
+): LineResult {
+  const num = coerceToNumber(result)
+  if (Number.isNaN(num))
+    return { value: String(result), error: null, type: 'number' }
+
+  if (format === 'multiplier') {
+    return {
+      value: `${formatMathNumber(num, activeLocale, activeDecimalPlaces)}x`,
+      error: null,
+      type: 'number',
+      numericValue: num,
     }
   }
-  catch {
-    return null
-  }
 
-  return null
-}
-
-function evaluateDateArithmeticLine(
-  line: string,
-  now: Date,
-  scope: Record<string, any>,
-): SpecialLineResult | null {
-  const split = splitTopLevelAddSub(line)
-  if (!split) {
-    return null
-  }
-
-  const initialDate = evaluateDateLikeExpression(split.terms[0], now, scope)
-  const initialDuration = initialDate
-    ? null
-    : evaluateDurationMilliseconds(split.terms[0], scope)
-
-  if (!initialDate && initialDuration === null) {
-    return null
-  }
-
-  let currentDate = initialDate ? new Date(initialDate.getTime()) : null
-  let currentDuration = initialDuration
-
-  for (let index = 0; index < split.operators.length; index++) {
-    const operator = split.operators[index]
-    const term = split.terms[index + 1]
-    const nextDate = evaluateDateLikeExpression(term, now, scope)
-    const nextDuration = nextDate
-      ? null
-      : evaluateDurationMilliseconds(term, scope)
-
-    if (currentDate) {
-      if (nextDuration === null) {
-        return null
+  const intValue = Math.round(num)
+  switch (format) {
+    case 'hex':
+      return {
+        value: `0x${intValue.toString(16).toUpperCase()}`,
+        error: null,
+        type: 'number',
+        numericValue: intValue,
       }
-
-      currentDate = new Date(
-        currentDate.getTime()
-        + (operator === '+' ? nextDuration : -nextDuration),
-      )
-      continue
-    }
-
-    if (nextDate) {
-      if (operator !== '+' || currentDuration === null) {
-        return null
+    case 'bin':
+      return {
+        value: `0b${intValue.toString(2)}`,
+        error: null,
+        type: 'number',
+        numericValue: intValue,
       }
-
-      currentDate = new Date(nextDate.getTime() + currentDuration)
-      currentDuration = null
-      continue
-    }
-
-    if (currentDuration === null || nextDuration === null) {
-      return null
-    }
-
-    currentDuration
-      = operator === '+'
-        ? currentDuration + nextDuration
-        : currentDuration - nextDuration
+    case 'oct':
+      return {
+        value: `0o${intValue.toString(8)}`,
+        error: null,
+        type: 'number',
+        numericValue: intValue,
+      }
+    case 'sci':
+      return {
+        value: num.toExponential(),
+        error: null,
+        type: 'number',
+        numericValue: num,
+      }
   }
+}
 
-  if (!currentDate) {
-    return null
+function applyStripUnit(
+  result: any,
+  strip: NonNullable<LineClassification['modifiers']['stripUnit']>,
+): LineResult {
+  const num = coerceToNumber(result)
+  if (Number.isNaN(num))
+    return { value: String(result), error: null, type: 'number' }
+
+  if (strip === 'fraction') {
+    return {
+      value: toFraction(num),
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
   }
 
   return {
-    lineResult: formatResult(currentDate),
-    rawResult: currentDate,
+    value: formatMathNumber(num, activeLocale, activeDecimalPlaces),
+    error: null,
+    type: 'number',
+    numericValue: num,
   }
 }
 
-function evaluateDateAssignmentLine(
-  line: string,
-  now: Date,
-  scope: Record<string, any>,
-): SpecialLineResult | null {
-  const assignmentIndex = line.indexOf('=')
-  if (assignmentIndex <= 0) {
-    return null
+// --- Strip modifier suffix from expression before eval ---
+
+function stripModifierSuffix(
+  raw: string,
+  classification: LineClassification,
+): string {
+  const lower = raw.toLowerCase()
+
+  if (classification.modifiers.rounding) {
+    const patterns = [
+      /\s+to\s+\d+\s+(?:dp|digits?)$/i,
+      /\s+rounded\s+(?:up|down)\s+to\s+nearest\s+\w+$/i,
+      /\s+(?:rounded\s+)?to\s+nearest\s+\w+$/i,
+      /\s+rounded\s+(?:up|down)$/i,
+      /\s+rounded$/i,
+    ]
+    for (const p of patterns) {
+      const m = lower.match(p)
+      if (m)
+        return raw.slice(0, m.index!).trim()
+    }
   }
 
-  const variableName = line.slice(0, assignmentIndex).trim()
-  if (!/^[a-z_]\w*$/i.test(variableName)) {
-    return null
+  if (classification.modifiers.stripUnit) {
+    const suffixes = [
+      'as number',
+      'to number',
+      'as decimal',
+      'to decimal',
+      'as dec',
+      'to dec',
+      'as fraction',
+      'to fraction',
+    ]
+    for (const s of suffixes) {
+      if (lower.endsWith(s))
+        return raw.slice(0, raw.length - s.length).trim()
+    }
   }
 
-  const expression = line.slice(assignmentIndex + 1).trim()
-  if (!expression) {
-    return null
+  if (classification.modifiers.resultFormat) {
+    const suffixes = [
+      'in hex',
+      'in bin',
+      'in oct',
+      'in sci',
+      'in scientific',
+      'as multiplier',
+      'to multiplier',
+    ]
+    for (const s of suffixes) {
+      if (lower.endsWith(s))
+        return raw.slice(0, raw.length - s.length).trim()
+    }
   }
 
-  const dateValue = evaluateDateLikeExpression(expression, now, scope)
-
-  if (!dateValue) {
-    return null
-  }
-
-  scope[variableName] = dateValue
-
-  return {
-    lineResult: {
-      ...formatResult(dateValue),
-      type: 'assignment',
-    },
-    rawResult: dateValue,
-  }
+  return raw
 }
+
+// --- Main composable ---
 
 export function useMathEngine() {
   function evaluateDocument(text: string): LineResult[] {
@@ -786,17 +381,30 @@ export function useMathEngine() {
     let prevResult: any
     let numericBlock: number[] = []
 
+    const mathDeps = {
+      mathEvaluate: (expr: string, s: Record<string, any>) =>
+        math.evaluate(expr, s),
+      formatResult,
+    }
+
     for (const line of lines) {
       const trimmed = line.trim()
 
-      if (!trimmed) {
+      // --- Stage 1: Analysis Normalize ---
+      const view = analysisNormalize(trimmed)
+
+      // --- Stage 2: Classify ---
+      const classification = classify(view)
+
+      // --- Early returns ---
+      if (classification.primary === 'empty') {
         results.push({ value: null, error: null, type: 'empty' })
         prevResult = undefined
         numericBlock = []
         continue
       }
 
-      if (trimmed.startsWith('//') || trimmed.startsWith('#')) {
+      if (classification.primary === 'comment') {
         results.push({ value: null, error: null, type: 'comment' })
         continue
       }
@@ -805,138 +413,36 @@ export function useMathEngine() {
         scope.prev = prevResult
       }
 
-      const lowerTrimmed = trimmed.toLowerCase()
-      if (lowerTrimmed === 'sum' || lowerTrimmed === 'total') {
-        const total = numericBlock.reduce((sum, value) => sum + value, 0)
-        const formatted = formatResult(total)
+      // --- Aggregates (work on numericBlock, before rewrite) ---
+      if (classification.primary === 'aggregate-block') {
+        const keyword = view.normalized.trim()
+        const aggResult = evaluateBlockAggregate(keyword, numericBlock)
+        const value = aggResult?.value ?? 0
+        const formatted = formatResult(value)
         formatted.type = 'aggregate'
         results.push(formatted)
-        prevResult = total
-        numericBlock.push(total)
+        prevResult = value
+        numericBlock.push(value)
         continue
       }
 
-      if (lowerTrimmed === 'average' || lowerTrimmed === 'avg') {
-        const total = numericBlock.reduce((sum, value) => sum + value, 0)
-        const average
-          = numericBlock.length > 0 ? total / numericBlock.length : 0
-        const formatted = formatResult(average)
-        formatted.type = 'aggregate'
-        results.push(formatted)
-        prevResult = average
-        numericBlock.push(average)
-        continue
-      }
-
-      if (lowerTrimmed === 'median') {
-        if (numericBlock.length > 0) {
-          const sorted = [...numericBlock].sort((a, b) => a - b)
-          const mid = Math.floor(sorted.length / 2)
-          const median
-            = sorted.length % 2 !== 0
-              ? sorted[mid]
-              : (sorted[mid - 1] + sorted[mid]) / 2
-          const formatted = formatResult(median)
+      if (classification.primary === 'aggregate-inline') {
+        const aggResult = evaluateInlineAggregate(trimmed)
+        if (aggResult) {
+          const formatted = formatResult(aggResult.value)
           formatted.type = 'aggregate'
           results.push(formatted)
-          prevResult = median
-          numericBlock.push(median)
-        }
-        else {
-          results.push(formatResult(0))
-        }
-        continue
-      }
-
-      if (lowerTrimmed === 'count') {
-        const count = numericBlock.length
-        const formatted = formatResult(count)
-        formatted.type = 'aggregate'
-        results.push(formatted)
-        prevResult = count
-        numericBlock.push(count)
-        continue
-      }
-
-      const inlineAggregateMatch = lowerTrimmed.match(
-        /^(total|sum|average|avg|median|count)\s+of\s+/i,
-      )
-      if (inlineAggregateMatch) {
-        const fn = inlineAggregateMatch[1].toLowerCase()
-        const listStr = trimmed.slice(inlineAggregateMatch[0].length)
-        const items = listStr
-          .replace(/\band\b/gi, ',')
-          .split(',')
-          .map(s => s.trim())
-          .filter(Boolean)
-          .map(Number)
-          .filter(n => !Number.isNaN(n))
-
-        if (items.length > 0) {
-          let value: number
-          if (fn === 'total' || fn === 'sum') {
-            value = items.reduce((a, b) => a + b, 0)
-          }
-          else if (fn === 'average' || fn === 'avg') {
-            value = items.reduce((a, b) => a + b, 0) / items.length
-          }
-          else if (fn === 'median') {
-            const sorted = [...items].sort((a, b) => a - b)
-            const mid = Math.floor(sorted.length / 2)
-            value
-              = sorted.length % 2 !== 0
-                ? sorted[mid]
-                : (sorted[mid - 1] + sorted[mid]) / 2
-          }
-          else {
-            value = items.length
-          }
-          const formatted = formatResult(value)
-          formatted.type = 'aggregate'
-          results.push(formatted)
-          prevResult = value
-          numericBlock.push(value)
+          prevResult = aggResult.value
+          numericBlock.push(aggResult.value)
           continue
         }
       }
 
       try {
-        const roundingDirective = detectRoundingDirective(trimmed)
-        if (roundingDirective.type) {
-          const roundProcessed = preprocessMathExpression(
-            roundingDirective.expression,
-          )
-          const roundRaw = math.evaluate(roundProcessed, scope)
-          const num = getNumericValue(roundRaw)
-          if (num !== null) {
-            const rounded = applyRounding(num, roundingDirective)
-            const formatted = formatResult(rounded)
-            results.push(formatted)
-            prevResult = rounded
-            numericBlock.push(rounded)
-            continue
-          }
-        }
-
-        const stripDirective = detectStripUnitDirective(trimmed)
-        if (stripDirective.format) {
-          const stripProcessed = preprocessMathExpression(
-            stripDirective.expression,
-          )
-          const stripResult = math.evaluate(stripProcessed, scope)
-          const formatted = applyFormat(stripResult, stripDirective.format)
-          results.push(formatted)
-          prevResult = stripResult
-          const numericValue = getNumericValue(stripResult)
-          if (numericValue !== null) {
-            numericBlock.push(numericValue)
-          }
-          continue
-        }
-
+        // --- Currency service gate ---
         if (
           currencyServiceState !== 'ready'
-          && hasCurrencyExpression(trimmed)
+          && classification.features.hasCurrency
         ) {
           results.push(
             currencyServiceState === 'loading'
@@ -952,7 +458,67 @@ export function useMathEngine() {
           continue
         }
 
-        const timeZoneDifferenceResult = evaluateTimeZoneDifferenceLine(
+        // --- Strip modifier suffix from trimmed for speculative handlers ---
+        const effectiveTrimmed = stripModifierSuffix(trimmed, classification)
+
+        // --- Rounding/strip/format early path ---
+        // If modifiers detected, process expression with stripped suffix first
+        if (
+          classification.modifiers.rounding
+          || classification.modifiers.stripUnit
+          || classification.modifiers.resultFormat
+        ) {
+          const strippedView = analysisNormalize(effectiveTrimmed)
+          let processed = rewrite(strippedView, classification)
+          // Strip rewrite-generated suffixes (e.g. multiplier phrases produce "X to multiplier")
+          const processedLower = processed.toLowerCase()
+          if (processedLower.endsWith('to multiplier')) {
+            processed = processed
+              .slice(0, processed.length - 'to multiplier'.length)
+              .trim()
+          }
+          const result = math.evaluate(processed, scope)
+
+          if (result !== undefined) {
+            const { modifiers } = classification
+            if (modifiers.rounding) {
+              const num = getNumericValue(result)
+              if (num !== null) {
+                const rounded = applyRoundingModifier(num, modifiers.rounding)
+                const formatted = formatResult(rounded)
+                results.push(formatted)
+                prevResult = rounded
+                numericBlock.push(rounded)
+                continue
+              }
+            }
+            if (modifiers.stripUnit) {
+              const formatted = applyStripUnit(result, modifiers.stripUnit)
+              results.push(formatted)
+              prevResult = result
+              const nv = getNumericValue(result)
+              if (nv !== null)
+                numericBlock.push(nv)
+              continue
+            }
+            if (modifiers.resultFormat) {
+              const formatted = applyResultFormat(
+                result,
+                modifiers.resultFormat,
+              )
+              results.push(formatted)
+              prevResult = result
+              const nv = getNumericValue(result)
+              if (nv !== null)
+                numericBlock.push(nv)
+              continue
+            }
+          }
+        }
+
+        // --- Speculative handlers (timezone, calendar, css) ---
+
+        const tzDiffResult = evaluateTimeZoneDifferenceLine(
           trimmed,
           currentDate,
           {
@@ -960,37 +526,33 @@ export function useMathEngine() {
             formatResult,
           },
         )
-        if (timeZoneDifferenceResult) {
-          results.push(timeZoneDifferenceResult.lineResult)
-          prevResult = timeZoneDifferenceResult.rawResult
-          const numericValue = getNumericValue(
-            timeZoneDifferenceResult.rawResult,
-          )
-          if (numericValue !== null) {
-            numericBlock.push(numericValue)
-          }
+        if (tzDiffResult) {
+          results.push(tzDiffResult.lineResult)
+          prevResult = tzDiffResult.rawResult
+          const nv = getNumericValue(tzDiffResult.rawResult)
+          if (nv !== null)
+            numericBlock.push(nv)
           continue
         }
 
-        const timeZoneResult = evaluateTimeZoneLine(trimmed, currentDate)
-        if (timeZoneResult) {
-          results.push(timeZoneResult.lineResult)
-          prevResult = timeZoneResult.rawResult
+        const tzResult = evaluateTimeZoneLine(trimmed, currentDate)
+        if (tzResult) {
+          results.push(tzResult.lineResult)
+          prevResult = tzResult.rawResult
           continue
         }
 
-        const calendarResult = evaluateCalendarLine(
+        const calResult = evaluateCalendarLine(
           trimmed,
           currentDate,
           activeLocale,
         )
-        if (calendarResult) {
-          results.push(calendarResult.lineResult)
-          prevResult = calendarResult.rawResult
-          const numericValue = getNumericValue(calendarResult.rawResult)
-          if (numericValue !== null) {
-            numericBlock.push(numericValue)
-          }
+        if (calResult) {
+          results.push(calResult.lineResult)
+          prevResult = calResult.rawResult
+          const nv = getNumericValue(calResult.rawResult)
+          if (nv !== null)
+            numericBlock.push(nv)
           continue
         }
 
@@ -1000,36 +562,46 @@ export function useMathEngine() {
           scope.ppi = cssContext.ppi
           results.push(cssResult.lineResult)
           prevResult = cssResult.rawResult
-          if (typeof cssResult.rawResult === 'number') {
+          if (typeof cssResult.rawResult === 'number')
             numericBlock.push(cssResult.rawResult)
-          }
           continue
         }
 
-        const processed = preprocessMathExpression(trimmed)
+        // --- Stage 3: Rewrite ---
+        const strippedExpression = stripModifierSuffix(
+          view.expression,
+          classification,
+        )
+        const strippedView = { ...view, expression: strippedExpression }
+        const processed = rewrite(strippedView, classification)
 
-        const dateAssignmentResult = evaluateDateAssignmentLine(
+        // --- Date assignment (speculative) ---
+        const dateAssignResult = evaluateDateAssignmentLine(
           processed,
           currentDate,
           scope,
+          mathDeps,
         )
-        if (dateAssignmentResult) {
-          results.push(dateAssignmentResult.lineResult)
-          prevResult = dateAssignmentResult.rawResult
+        if (dateAssignResult) {
+          results.push(dateAssignResult.lineResult)
+          prevResult = dateAssignResult.rawResult
           continue
         }
 
-        const dateArithmeticResult = evaluateDateArithmeticLine(
+        // --- Date arithmetic (speculative) ---
+        const dateArithResult = evaluateDateArithmeticLine(
           processed,
           currentDate,
           scope,
+          mathDeps,
         )
-        if (dateArithmeticResult) {
-          results.push(dateArithmeticResult.lineResult)
-          prevResult = dateArithmeticResult.rawResult
+        if (dateArithResult) {
+          results.push(dateArithResult.lineResult)
+          prevResult = dateArithResult.rawResult
           continue
         }
 
+        // --- Local temporal expression ---
         const localTemporalResult = parseExplicitLocalTemporalExpression(
           processed,
           currentDate,
@@ -1040,10 +612,8 @@ export function useMathEngine() {
           continue
         }
 
-        const { format, expression: formatExpression }
-          = detectFormatDirective(processed)
-        const toEvaluate = format ? formatExpression : processed
-        const result = math.evaluate(toEvaluate, scope)
+        // --- Stage 4: Evaluate (math.js) ---
+        const result = math.evaluate(processed, scope)
 
         if (result === undefined) {
           results.push({ value: null, error: null, type: 'empty' })
@@ -1051,17 +621,7 @@ export function useMathEngine() {
           continue
         }
 
-        if (format) {
-          const formatted = applyFormat(result, format)
-          results.push(formatted)
-          prevResult = result
-          const numericValue = getNumericValue(result)
-          if (numericValue !== null) {
-            numericBlock.push(numericValue)
-          }
-          continue
-        }
-
+        // Default formatting
         const formatted = formatResult(result)
         if (
           /^[a-z_]\w*\s*=/i.test(trimmed)
@@ -1072,10 +632,9 @@ export function useMathEngine() {
 
         results.push(formatted)
         prevResult = result
-        const numericValue = getNumericValue(result)
-        if (numericValue !== null) {
-          numericBlock.push(numericValue)
-        }
+        const nv = getNumericValue(result)
+        if (nv !== null)
+          numericBlock.push(nv)
       }
       catch (error: any) {
         results.push({
@@ -1093,9 +652,7 @@ export function useMathEngine() {
   function updateCurrencyRates(rates: Record<string, number>) {
     currencyServiceState = 'ready'
     currencyUnavailableMessage = ''
-    activeCurrencyRates = {
-      ...rates,
-    }
+    activeCurrencyRates = { ...rates }
     math = createMathInstance(activeCurrencyRates)
   }
 
@@ -1105,7 +662,6 @@ export function useMathEngine() {
   ) {
     currencyServiceState = state
     currencyUnavailableMessage = state === 'unavailable' ? errorMessage : ''
-
     if (state !== 'ready') {
       activeCurrencyRates = {}
       math = createMathInstance(activeCurrencyRates)

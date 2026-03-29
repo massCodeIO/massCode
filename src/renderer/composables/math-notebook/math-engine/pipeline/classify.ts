@@ -114,12 +114,17 @@ const STRIP_SUFFIXES: Record<string, StripUnit> = {
 
 const MULTIPLIER_SUFFIXES = ['as multiplier', 'to multiplier']
 
+const MULTIPLIER_PHRASE_RE
+  = /\bas\s+x\s+(?:of|off)\b|\bas\s+multiplier\s+(?:of|on)\b|\bis\s+what\s+x\b|\bas\s+x\b/
+
 function detectResultFormat(normalized: string): ResultFormat | undefined {
   for (const [suffix, format] of Object.entries(FORMAT_SUFFIXES)) {
     if (normalized.endsWith(suffix))
       return format
   }
   if (MULTIPLIER_SUFFIXES.some(s => normalized.endsWith(s)))
+    return 'multiplier'
+  if (MULTIPLIER_PHRASE_RE.test(normalized))
     return 'multiplier'
   return undefined
 }

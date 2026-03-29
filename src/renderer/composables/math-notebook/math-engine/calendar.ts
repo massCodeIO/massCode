@@ -396,5 +396,73 @@ export function evaluateCalendarLine(
     }
   }
 
+  // "DATE to timestamp"
+  const toTimestampMatch = lower.match(/\s+to\s+timestamp$/)
+  if (toTimestampMatch) {
+    const dateStr = line.slice(0, toTimestampMatch.index!).trim()
+    const date = parseSimpleDate(dateStr, now)
+    if (date) {
+      const ts = Math.floor(date.getTime() / 1000)
+      return {
+        lineResult: {
+          value: String(ts),
+          error: null,
+          type: 'number',
+          numericValue: ts,
+        },
+        rawResult: ts,
+      }
+    }
+  }
+
+  // "DATE as iso8601" / "DATE to iso8601"
+  const iso8601Match = lower.match(/\s+(?:as|to)\s+iso8601$/)
+  if (iso8601Match) {
+    const dateStr = line.slice(0, iso8601Match.index!).trim()
+    const date = parseSimpleDate(dateStr, now)
+    if (date) {
+      const iso = date.toISOString()
+      return {
+        lineResult: { value: iso, error: null, type: 'number' },
+        rawResult: iso,
+      }
+    }
+  }
+
+  // "ISO_STRING to date" (e.g. "2019-04-01T15:30:00 to date")
+  const isoToDateMatch = lower.match(
+    /^(\d{4}-\d{2}-\d{2}t[\d:.]+)\s+to\s+date$/,
+  )
+  if (isoToDateMatch) {
+    const date = new Date(isoToDateMatch[1])
+    if (!Number.isNaN(date.getTime())) {
+      return {
+        lineResult: {
+          value: formatMathDate(date, locale),
+          error: null,
+          type: 'date',
+        },
+        rawResult: date,
+      }
+    }
+  }
+
+  // "LARGE_NUMBER to date" (millisecond timestamp, > 1e12)
+  const msTimestampMatch = lower.match(/^(\d{13,})\s+to\s+date$/)
+  if (msTimestampMatch) {
+    const ms = Number(msTimestampMatch[1])
+    const date = new Date(ms)
+    if (!Number.isNaN(date.getTime())) {
+      return {
+        lineResult: {
+          value: formatMathDate(date, locale),
+          error: null,
+          type: 'date',
+        },
+        rawResult: date,
+      }
+    }
+  }
+
   return null
 }

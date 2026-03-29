@@ -39,6 +39,10 @@ const CALENDAR_PREFIXES = [
   /^workdays\s+from\s/,
   /\s+in\s+workdays$/,
   /^\d+\s+workdays?\s+(?:after|before)\s/,
+  /\s+to\s+timestamp$/,
+  /\s+(?:as|to)\s+iso8601$/,
+  /^\d{4}-\d{2}-\d{2}t[\d:.]+\s+to\s+date$/,
+  /^\d{13,}\s+to\s+date$/,
 ]
 
 const MONTH_TOKEN_RE

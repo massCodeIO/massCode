@@ -1391,6 +1391,29 @@ describe('calendar calculations', () => {
   })
 })
 
+describe('timestamps and ISO 8601', () => {
+  it('date to timestamp', () => {
+    const result = evalLine('January 1, 2020 to timestamp')
+    expect(result.numericValue).toBeGreaterThan(1500000000)
+    expect(result.type).toBe('number')
+  })
+
+  it('date as iso8601', () => {
+    const result = evalLine('June 15, 2020 as iso8601')
+    expect(result.value).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
+  it('ISO string to date', () => {
+    const result = evalLine('2019-04-01T15:30:00 to date')
+    expect(result.type).toBe('date')
+  })
+
+  it('millisecond timestamp to date', () => {
+    const result = evalLine('1733823083000 to date')
+    expect(result.type).toBe('date')
+  })
+})
+
 describe('workdays', () => {
   it('workdays in 3 weeks', () => {
     const result = evalLine('workdays in 3 weeks')

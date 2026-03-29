@@ -144,6 +144,8 @@ const MULTIPLIER_SUFFIXES = ['as multiplier', 'to multiplier']
 const MULTIPLIER_PHRASE_RE
   = /\bas\s+x\s+(?:of|off)\b|\bas\s+multiplier\s+(?:of|on)\b|\bis\s+what\s+x\b|\bas\s+x\b/
 
+const BASE_N_RE = /\s+(?:as|to)\s+base\s+(\d+)$/
+
 function detectResultFormat(normalized: string): ResultFormat | undefined {
   for (const [suffix, format] of Object.entries(FORMAT_SUFFIXES)) {
     if (normalized.endsWith(suffix))
@@ -153,6 +155,24 @@ function detectResultFormat(normalized: string): ResultFormat | undefined {
     return 'multiplier'
   if (MULTIPLIER_PHRASE_RE.test(normalized))
     return 'multiplier'
+
+  const baseMatch = normalized.match(BASE_N_RE)
+  if (baseMatch) {
+    const base = Number(baseMatch[1])
+    if (base === 2)
+      return 'bin'
+    if (base === 8)
+      return 'oct'
+    if (base === 16)
+      return 'hex'
+  }
+
+  // Python-style: hex(...), bin(...)
+  if (/^hex\(.*\)$/i.test(normalized))
+    return 'hex'
+  if (/^bin\(.*\)$/i.test(normalized))
+    return 'bin'
+
   return undefined
 }
 

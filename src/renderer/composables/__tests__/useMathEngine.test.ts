@@ -780,6 +780,31 @@ describe('number format', () => {
   it('0 in bin', () => expectValue('0 in bin', '0b0'))
   it('0.001 in sci', () => expectValue('0.001 in sci', '1e-3'))
   it('0xFF + 0b1010', () => expectValue('0xFF + 0b1010', '265'))
+
+  it('as base 8', () => {
+    const result = evalLine('0b101101 as base 8')
+    expect(result.value).toBe('0o55')
+  })
+
+  it('as base 2', () => {
+    const result = evalLine('0x2D as base 2')
+    expect(result.value).toBe('0b101101')
+  })
+
+  it('hex(99)', () => {
+    const result = evalLine('hex(99)')
+    expect(result.value).toBe('0x63')
+  })
+
+  it('bin(0x73)', () => {
+    const result = evalLine('bin(0x73)')
+    expect(result.value).toBe('0b1110011')
+  })
+
+  it('int(0o55)', () => {
+    const result = evalLine('int(0o55)')
+    expect(result.value).toBe('45')
+  })
 })
 
 describe('numericValue for total', () => {

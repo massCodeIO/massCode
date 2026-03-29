@@ -68,6 +68,10 @@ export const phraseFunctionsRule: RewriteRule = {
       .replace(/\bcube\s+root\s+of\s+(\S+)/gi, 'cbrt($1)')
       .replace(/\broot\s+(\d+)\s+of\s+(\S+)/gi, 'root($1, $2)')
       .replace(/\blog\s+(\S+)\s+base\s+(\S+)/gi, 'log($1, $2)')
+      // Python-style base functions → format directives
+      .replace(/^hex\(([^)]+)\)$/gi, '$1 in hex')
+      .replace(/^bin\(([^)]+)\)$/gi, '$1 in bin')
+      .replace(/^int\(([^)]+)\)$/gi, '$1')
       .replace(
         /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\s+to\s+(?:what|the\s+what)\s*(?:power)?/gi,
         'log($1) / log($2)',

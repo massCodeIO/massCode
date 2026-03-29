@@ -58,6 +58,15 @@ export function stripModifierSuffix(
       if (lower.endsWith(suffix))
         return raw.slice(0, raw.length - suffix.length).trim()
     }
+    const baseMatch = lower.match(/\s+(?:as|to)\s+base\s+\d+$/)
+    if (baseMatch) {
+      return raw.slice(0, baseMatch.index!).trim()
+    }
+    // Python-style: hex(...) → extract inner expression
+    const funcMatch = raw.match(/^(?:hex|bin)\((.+)\)$/i)
+    if (funcMatch) {
+      return funcMatch[1]
+    }
   }
 
   return raw

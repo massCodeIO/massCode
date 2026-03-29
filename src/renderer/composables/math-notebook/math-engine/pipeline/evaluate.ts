@@ -53,13 +53,26 @@ export function evaluateClassifiedLine(
   if (classification.primary === 'aggregate-block') {
     const keyword = view.normalized.trim()
     const aggregate = evaluateBlockAggregate(keyword, numericBlock)
-    const value = aggregate?.value ?? 0
-    const lineResult = formatResult(value)
+    if (!aggregate) {
+      return {
+        lineResult: { value: null, error: null, type: 'empty' },
+        rawResult: undefined,
+      }
+    }
+    let lineResult: LineResult
+    if (aggregate.unit) {
+      const unitResult = math.unit(aggregate.value, aggregate.unit)
+      lineResult = formatResult(unitResult)
+    }
+    else {
+      lineResult = formatResult(aggregate.value)
+    }
     lineResult.type = 'aggregate'
     return {
       lineResult,
-      rawResult: value,
-      numericValue: value,
+      rawResult: aggregate.value,
+      numericValue: aggregate.value,
+      unitName: aggregate.unit,
     }
   }
 

@@ -1028,6 +1028,19 @@ describe('sum and total', () => {
     const results = evalLines('10\n20\nSUM')
     expect(results[2].value).toBe('30')
   })
+
+  it('sum of currency values', () => {
+    const results = evalLines('$100\n$200\n$50\nsum')
+    expect(results[3].type).toBe('aggregate')
+    expect(results[3].value).toContain('350')
+    expect(results[3].value).toContain('USD')
+  })
+
+  it('total of currency values', () => {
+    const results = evalLines('$2k\n$3M\ntotal')
+    expect(results[2].type).toBe('aggregate')
+    expect(results[2].value).toContain('USD')
+  })
 })
 
 describe('adjacent digit concatenation', () => {

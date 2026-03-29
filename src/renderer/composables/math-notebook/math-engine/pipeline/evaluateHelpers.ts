@@ -114,14 +114,41 @@ export function hasUnsupportedModifierCombination(
   return false
 }
 
+function extractUnitInfo(
+  rawResult: any,
+): { numericValue: number, unitName: string } | null {
+  if (
+    rawResult
+    && typeof rawResult === 'object'
+    && typeof rawResult.toNumber === 'function'
+    && Array.isArray(rawResult.units)
+    && rawResult.units.length === 1
+  ) {
+    try {
+      const unitEntry = rawResult.units[0]
+      const unitName = unitEntry?.unit?.name
+      if (unitName && unitEntry.power === 1) {
+        return { numericValue: rawResult.toNumber(), unitName }
+      }
+    }
+    catch {
+      /* ignore */
+    }
+  }
+  return null
+}
+
 export function toEvaluatedLine(
   lineResult: LineResult,
   rawResult: any,
   numericValue?: number | null,
 ): EvaluatedLine {
+  const unitInfo = extractUnitInfo(rawResult)
+
   return {
     lineResult,
     rawResult,
-    numericValue,
+    numericValue: unitInfo?.numericValue ?? numericValue,
+    unitName: unitInfo?.unitName,
   }
 }

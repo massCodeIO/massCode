@@ -39,7 +39,8 @@ export function useMathEngine() {
     const currentDate = new Date()
 
     let prevResult: any
-    let numericBlock: number[] = []
+    let numericBlock: import('./math-engine/evaluators/aggregates').BlockEntry[]
+      = []
     const formatter = createLineFormatter({
       math,
       locale: activeLocale,
@@ -88,7 +89,10 @@ export function useMathEngine() {
           evaluated.numericValue !== undefined
           && evaluated.numericValue !== null
         ) {
-          numericBlock.push(evaluated.numericValue)
+          numericBlock.push({
+            value: evaluated.numericValue,
+            unit: evaluated.unitName,
+          })
         }
       }
       catch (error: any) {

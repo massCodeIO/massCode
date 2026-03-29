@@ -20,7 +20,7 @@ export interface EvaluateClassifiedLineOptions {
   scope: Record<string, any>
   cssContext: CssContext
   currentDate: Date
-  numericBlock: number[]
+  numericBlock: import('../evaluators/aggregates').BlockEntry[]
   math: MathEvaluatorInstance
   formatter: LineFormatter
   currencyServiceState: CurrencyServiceState
@@ -33,6 +33,7 @@ export interface EvaluatedLine {
   lineResult: LineResult
   rawResult: any
   numericValue?: number | null
+  unitName?: string
   resetPrev?: boolean
   resetNumericBlock?: boolean
 }

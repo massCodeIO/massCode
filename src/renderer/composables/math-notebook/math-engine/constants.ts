@@ -241,6 +241,15 @@ export const MATH_UNARY_FUNCTIONS = [
   'sinh',
   'cosh',
   'tanh',
+  'asinh',
+  'acosh',
+  'atanh',
+  'sind',
+  'cosd',
+  'tand',
+  'asind',
+  'acosd',
+  'atand',
 ] as const
 
 export const TIME_UNIT_TOKEN_MAP: Record<string, string> = {

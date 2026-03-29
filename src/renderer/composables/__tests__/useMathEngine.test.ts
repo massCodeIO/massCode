@@ -93,6 +93,20 @@ describe('math aliases', () => {
     expectNumericClose('81 is 9 to what power', 2, 2))
   it('27 is 3 to the what', () =>
     expectNumericClose('27 is 3 to the what', 3, 2))
+
+  // Degree trig functions
+  it('sind(90)', () => expectNumericClose('sind(90)', 1, 4))
+  it('cosd(0)', () => expectNumericClose('cosd(0)', 1, 4))
+  it('tand(45)', () => expectNumericClose('tand(45)', 1, 4))
+  it('asind(0.5)', () => expectNumericClose('asind(0.5)', 30, 4))
+  it('acosd(0.5)', () => expectNumericClose('acosd(0.5)', 60, 4))
+  it('atand(1)', () => expectNumericClose('atand(1)', 45, 4))
+  it('sin(90 degrees)', () => expectNumericClose('sin(90 degrees)', 1, 4))
+
+  // Hyperbolic inverse
+  it('asinh(1)', () => expectNumericClose('asinh(1)', 0.8814, 3))
+  it('acosh(2)', () => expectNumericClose('acosh(2)', 1.317, 2))
+  it('atanh(0.5)', () => expectNumericClose('atanh(0.5)', 0.5493, 3))
 })
 
 describe('word operators', () => {

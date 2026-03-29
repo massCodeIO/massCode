@@ -145,6 +145,7 @@ function preprocessPhraseFunctions(line: string): string {
       /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\s+to\s+(?:what|the\s+what)\s*(?:power)?/gi,
       'log($1) / log($2)',
     )
+    .replace(/\b(sin|cos|tan)\((\d+(?:\.\d+)?)\s+degrees\)/gi, '$1($2 deg)')
 }
 
 function preprocessFunctionExpression(expression: string): string {

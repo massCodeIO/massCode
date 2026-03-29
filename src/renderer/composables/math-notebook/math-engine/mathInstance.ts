@@ -29,6 +29,12 @@ export function createMathInstance(currencyRates: Record<string, number>) {
       arcsin: (x: number) => mathInstance.asin(x),
       arccos: (x: number) => mathInstance.acos(x),
       arctan: (x: number) => mathInstance.atan(x),
+      sind: (x: number) => Math.sin((x * Math.PI) / 180),
+      cosd: (x: number) => Math.cos((x * Math.PI) / 180),
+      tand: (x: number) => Math.tan((x * Math.PI) / 180),
+      asind: (x: number) => (Math.asin(x) * 180) / Math.PI,
+      acosd: (x: number) => (Math.acos(x) * 180) / Math.PI,
+      atand: (x: number) => (Math.atan(x) * 180) / Math.PI,
       unitValue: (value: any) =>
         value && typeof value.toNumber === 'function'
           ? value.toNumber()

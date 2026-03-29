@@ -25,7 +25,7 @@ import {
 export type { LineResult } from './math-engine/types'
 
 interface FormatDirective {
-  format: 'hex' | 'bin' | 'oct' | 'sci' | 'number' | 'dec' | null
+  format: 'hex' | 'bin' | 'oct' | 'sci' | 'number' | 'dec' | 'fraction' | null
   expression: string
 }
 
@@ -144,13 +144,38 @@ let math = createMathInstance(activeCurrencyRates)
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
 
-const STRIP_UNIT_SUFFIXES: Record<string, 'number' | 'dec'> = {
+const STRIP_UNIT_SUFFIXES: Record<string, 'number' | 'dec' | 'fraction'> = {
   'as number': 'number',
   'to number': 'number',
   'as decimal': 'dec',
   'to decimal': 'dec',
   'as dec': 'dec',
   'to dec': 'dec',
+  'as fraction': 'fraction',
+  'to fraction': 'fraction',
+}
+
+function gcd(a: number, b: number): number {
+  a = Math.abs(Math.round(a))
+  b = Math.abs(Math.round(b))
+  while (b) {
+    const t = b
+    b = a % b
+    a = t
+  }
+  return a
+}
+
+function toFraction(decimal: number): string {
+  if (Number.isInteger(decimal))
+    return `${decimal}/1`
+  const sign = decimal < 0 ? '-' : ''
+  const abs = Math.abs(decimal)
+  const precision = 1e10
+  const numerator = Math.round(abs * precision)
+  const denominator = precision
+  const divisor = gcd(numerator, denominator)
+  return `${sign}${numerator / divisor}/${denominator / divisor}`
 }
 
 function detectStripUnitDirective(line: string): FormatDirective {
@@ -192,6 +217,39 @@ function applyFormat(
   result: any,
   format: NonNullable<FormatDirective['format']>,
 ): LineResult {
+  if (format === 'fraction') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: toFraction(num),
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
   if (format === 'number' || format === 'dec') {
     let num: number
     if (typeof result === 'number') {

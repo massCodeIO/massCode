@@ -222,6 +222,19 @@ describe('percentage advanced', () => {
   it('X/Y %', () => expectNumericClose('20/200 %', 10))
 })
 
+describe('fractions', () => {
+  it('2/10 as fraction', () => {
+    const result = evalLine('2/10 as fraction')
+    expect(result.value).toBe('1/5')
+  })
+  it('50% as fraction', () => {
+    const result = evalLine('50% as fraction')
+    expect(result.value).toBe('1/2')
+  })
+  it('2/3 of 600', () => expectNumericClose('2/3 of 600', 400))
+  it('50 is 1/5 of what', () => expectNumericClose('50 is 1/5 of what', 250))
+})
+
 describe('scales', () => {
   it('2k', () => {
     const result = evalLine('2k')

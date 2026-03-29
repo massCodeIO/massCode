@@ -494,6 +494,16 @@ function preprocessWordOperators(line: string): string {
 function preprocessPercentages(line: string): string {
   return (
     line
+      // Z is X/Y of what → Z / (X/Y)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\s+of\s+what\b/gi,
+        '$1 / ($2 / $3)',
+      )
+      // X/Y of Z → (X/Y) * Z (fraction of value)
+      .replace(
+        /(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\b/gi,
+        '($1 / $2) * $3',
+      )
       .replace(
         /(\d+(?:\.\d+)?)%\s+of\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
         '$2 / ($1 / 100)',

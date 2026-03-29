@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from './math-engine/format'
 import type {
   CssContext,
   CurrencyServiceState,
@@ -19,6 +20,7 @@ let math = createMathInstance(activeCurrencyRates)
 
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
+let activeDateFormat: DateFormatStyle = 'numeric'
 
 // --- Main composable ---
 
@@ -37,11 +39,13 @@ export function useMathEngine() {
     const currentDate = new Date()
 
     let prevResult: any
-    let numericBlock: number[] = []
+    let numericBlock: import('./math-engine/evaluators/aggregates').BlockEntry[]
+      = []
     const formatter = createLineFormatter({
       math,
       locale: activeLocale,
       decimalPlaces: activeDecimalPlaces,
+      dateFormat: activeDateFormat,
     })
 
     for (const line of lines) {
@@ -67,6 +71,7 @@ export function useMathEngine() {
           currencyServiceState,
           currencyUnavailableMessage,
           activeLocale,
+          activeDateFormat,
         })
         results.push(evaluated.lineResult)
 
@@ -84,7 +89,10 @@ export function useMathEngine() {
           evaluated.numericValue !== undefined
           && evaluated.numericValue !== null
         ) {
-          numericBlock.push(evaluated.numericValue)
+          numericBlock.push({
+            value: evaluated.numericValue,
+            unit: evaluated.unitName,
+          })
         }
       }
       catch (error: any) {
@@ -120,9 +128,14 @@ export function useMathEngine() {
     }
   }
 
-  function setFormatSettings(locale: string, decimalPlaces: number) {
+  function setFormatSettings(
+    locale: string,
+    decimalPlaces: number,
+    dateFormat: DateFormatStyle = 'numeric',
+  ) {
     activeLocale = locale
     activeDecimalPlaces = decimalPlaces
+    activeDateFormat = dateFormat
   }
 
   return {

@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import type { MathSettings } from '~/main/store/types'
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
+import { useSonner } from '@/composables'
 import {
   formatMathDate,
   formatMathNumber,
 } from '@/composables/math-notebook/math-engine/format'
-import { i18n, store } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
+
+const { toast } = useSonner()
 
 const settings = reactive(store.preferences.get('math') as MathSettings)
+
+// Ensure dateFormat has a default for existing installs
+if (!settings.dateFormat) {
+  settings.dateFormat = 'numeric'
+}
 
 watch(
   settings,
@@ -43,19 +52,60 @@ const decimalPlacesOptions = Array.from({ length: 15 }, (_, i) => ({
   value: String(i),
 }))
 
+const dateFormatOptions = [
+  { label: 'Numeric', value: 'numeric' },
+  { label: 'Short', value: 'short' },
+  { label: 'Long', value: 'long' },
+]
+
 const localePreview = computed(() => {
   const num = formatMathNumber(
     1234.5678,
     settings.locale,
     settings.decimalPlaces,
   )
-  const date = formatMathDate(new Date(), settings.locale)
+  const date = formatMathDate(new Date(), settings.locale, settings.dateFormat)
   return `${num} \u00B7 ${date}`
 })
 
 const decimalPlacesPreview = computed(() => {
   return `1/3 = ${formatMathNumber(1 / 3, settings.locale, settings.decimalPlaces)}`
 })
+
+const dateFormatPreview = computed(() => {
+  return formatMathDate(new Date(), settings.locale, settings.dateFormat)
+})
+
+const isRefreshingFiat = ref(false)
+const isRefreshingCrypto = ref(false)
+
+async function refreshFiatRates() {
+  isRefreshingFiat.value = true
+  try {
+    await ipc.invoke('system:currency-rates-refresh', null)
+    toast(i18n.t('preferences:math.currencyRates.refreshed'))
+  }
+  catch {
+    toast(i18n.t('preferences:math.currencyRates.refreshError'))
+  }
+  finally {
+    isRefreshingFiat.value = false
+  }
+}
+
+async function refreshCryptoRates() {
+  isRefreshingCrypto.value = true
+  try {
+    await ipc.invoke('system:crypto-rates-refresh', null)
+    toast(i18n.t('preferences:math.cryptoRates.refreshed'))
+  }
+  catch {
+    toast(i18n.t('preferences:math.cryptoRates.rateLimited'))
+  }
+  finally {
+    isRefreshingCrypto.value = false
+  }
+}
 </script>
 
 <template>
@@ -102,6 +152,58 @@ const decimalPlacesPreview = computed(() => {
         <template #description>
           {{ i18n.t("preferences:math.decimalPlaces.description") }}
           {{ decimalPlacesPreview }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:math.dateFormat.label')">
+        <Select.Select v-model="settings.dateFormat">
+          <Select.SelectTrigger class="w-64">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="option in dateFormatOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{ i18n.t("preferences:math.dateFormat.description") }}
+          {{ dateFormatPreview }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:math.currencyRates.label')">
+        <Button
+          variant="outline"
+          :disabled="isRefreshingFiat"
+          @click="refreshFiatRates"
+        >
+          {{
+            isRefreshingFiat
+              ? i18n.t("preferences:math.currencyRates.refreshing")
+              : i18n.t("preferences:math.currencyRates.refresh")
+          }}
+        </Button>
+        <template #description>
+          {{ i18n.t("preferences:math.currencyRates.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:math.cryptoRates.label')">
+        <Button
+          variant="outline"
+          :disabled="isRefreshingCrypto"
+          @click="refreshCryptoRates"
+        >
+          {{
+            isRefreshingCrypto
+              ? i18n.t("preferences:math.cryptoRates.refreshing")
+              : i18n.t("preferences:math.cryptoRates.refresh")
+          }}
+        </Button>
+        <template #description>
+          {{ i18n.t("preferences:math.cryptoRates.description") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

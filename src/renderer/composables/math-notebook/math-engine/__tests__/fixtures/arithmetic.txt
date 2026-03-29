@@ -1,0 +1,33 @@
+# Basic arithmetic
+10 + 5
+20 - 3
+4 * 5
+100 / 4
+(2 + 3) * 4
+2 ^ 10
+-5 + 3
+0.1 + 0.2
+
+# Implicit multiplication
+6(3)
+6 (3)
+
+# Grouped thousands
+5 300
+1 000 000
+1km + 1 000m
+
+# Word operators
+8 times 9
+10 plus 5
+20 minus 3
+3 multiplied by 4
+100 divide by 4
+1000 divided by 200
+17 mod 5
+3 to the power of 2
+remainder of 21 divided by 5
+
+# Scientific notation
+1e5
+2.5e3

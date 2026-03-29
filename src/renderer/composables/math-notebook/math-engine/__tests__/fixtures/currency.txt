@@ -1,0 +1,51 @@
+# Currency symbols
+$100
+€50
+£20
+¥1000
+₽5000
+₴200
+₹500
+
+# Prefixed dollar symbols
+US$100
+CA$100
+AU$50
+NZ$75
+HK$200
+R$100
+
+# Currency words
+10 dollars
+5 euros
+500 rubles
+
+# ISO codes
+100 USD
+50 EUR
+1000 JPY
+30 GBP
+
+# Currency arithmetic
+$10 + $20
+$100 - $30
+€50 * 2
+
+# Currency conversion
+100 USD to EUR
+50 GBP to USD
+
+# Implicit rate
+$30 * 4 days
+4 days * $30
+
+# Scales with currency
+$2k
+$3M
+
+# Custom rate
+50 EUR in USD at 1.05 USD/EUR
+
+# Mixed currency and plain number
+$100 + 10
+10 + $100

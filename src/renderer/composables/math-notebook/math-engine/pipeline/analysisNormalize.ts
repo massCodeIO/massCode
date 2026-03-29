@@ -33,10 +33,28 @@ function stripQuotedText(line: string): string {
   return tokens.join(' ')
 }
 
+function stripEndOfLineComment(line: string): string {
+  // "expr // comment" → "expr" (but not "// full line comment")
+  const idx = line.indexOf('//')
+  if (idx > 0) {
+    return line.slice(0, idx).trim()
+  }
+  return line
+}
+
+function stripParenthesisComments(line: string): string {
+  // "$999 (for iPhone 16)" → "$999"
+  // Only strip if preceded by space (not function call like sin(...))
+  // and contains at least one word character sequence
+  return line.replace(/(?<=\s)\((?=[^)]*[a-z]{2})[^)]+\)/gi, '').trim()
+}
+
 export function analysisNormalize(raw: string): AnalysisView {
   const trimmed = raw.trim()
   const { expression: afterLabel, label } = stripLabel(trimmed)
-  const expression = stripQuotedText(afterLabel)
+  let expression = stripQuotedText(afterLabel)
+  expression = stripEndOfLineComment(expression)
+  expression = stripParenthesisComments(expression)
 
   return {
     raw: trimmed,

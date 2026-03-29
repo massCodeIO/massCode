@@ -20,13 +20,21 @@ const {
 
 const mathSettings = reactive(store.preferences.get('math') as MathSettings)
 
-setFormatSettings(mathSettings.locale, mathSettings.decimalPlaces)
+setFormatSettings(
+  mathSettings.locale,
+  mathSettings.decimalPlaces,
+  mathSettings.dateFormat,
+)
 
 watch(
   mathSettings,
   () => {
     store.preferences.set('math', JSON.parse(JSON.stringify(mathSettings)))
-    setFormatSettings(mathSettings.locale, mathSettings.decimalPlaces)
+    setFormatSettings(
+      mathSettings.locale,
+      mathSettings.decimalPlaces,
+      mathSettings.dateFormat,
+    )
   },
   { deep: true },
 )

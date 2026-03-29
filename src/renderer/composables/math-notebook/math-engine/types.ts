@@ -62,7 +62,7 @@ export interface RoundingDirective {
 export interface IntentModifiers {
   rounding?: RoundingDirective
   resultFormat?: 'hex' | 'bin' | 'oct' | 'sci' | 'multiplier'
-  stripUnit?: 'number' | 'dec' | 'fraction'
+  stripUnit?: 'number' | 'dec' | 'fraction' | 'timespan' | 'laptime'
 }
 
 export interface LineFeatures {

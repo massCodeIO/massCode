@@ -68,6 +68,10 @@ export const phraseFunctionsRule: RewriteRule = {
       .replace(/\bcube\s+root\s+of\s+(\S+)/gi, 'cbrt($1)')
       .replace(/\broot\s+(\d+)\s+of\s+(\S+)/gi, 'root($1, $2)')
       .replace(/\blog\s+(\S+)\s+base\s+(\S+)/gi, 'log($1, $2)')
+      // Python-style base functions → format directives
+      .replace(/^hex\(([^)]+)\)$/gi, '$1 in hex')
+      .replace(/^bin\(([^)]+)\)$/gi, '$1 in bin')
+      .replace(/^int\(([^)]+)\)$/gi, '$1')
       .replace(
         /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\s+to\s+(?:what|the\s+what)\s*(?:power)?/gi,
         'log($1) / log($2)',
@@ -243,9 +247,88 @@ export const wordOperatorsRule: RewriteRule = {
   },
 }
 
+export const miscPhrasesRule: RewriteRule = {
+  id: 'misc-phrases',
+  category: 'semantic-rewrite',
+  priority: 250,
+  apply: (ctx) => {
+    const line = ctx.line
+      // min/max
+      .replace(
+        /\b(?:larger|greater)\s+of\s+(\S+)\s+and\s+(\S+)/gi,
+        'max($1, $2)',
+      )
+      .replace(
+        /\b(?:smaller|lesser)\s+of\s+(\S+)\s+and\s+(\S+)/gi,
+        'min($1, $2)',
+      )
+      // half / midpoint
+      .replace(/\bhalf\s+of\s+(\S+)/gi, '($1 / 2)')
+      .replace(
+        /\bmidpoint\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        '(($1 + $2) / 2)',
+      )
+      // random
+      .replace(
+        /\brandom\s+number\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        'random($1, $2)',
+      )
+      // gcd / lcm
+      .replace(/\bgcd\s+of\s+(\S+)\s+and\s+(\S+)/gi, 'gcd($1, $2)')
+      .replace(/\blcm\s+of\s+(\S+)\s+and\s+(\S+)/gi, 'lcm($1, $2)')
+      // permutations / combinations
+      .replace(/\b(\d+)\s+permutations?\s+of\s+(\d+)/gi, 'permutations($2, $1)')
+      .replace(/\b(\d+)\s+combinations?\s+of\s+(\d+)/gi, 'combinations($2, $1)')
+      .replace(/\b(\d+)\s+permutation\s+(\d+)/gi, 'permutations($1, $2)')
+      .replace(/\b(\d+)\s+combination\s+(\d+)/gi, 'combinations($1, $2)')
+      // clamp
+      .replace(
+        /\bclamp\s+(\S+)\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        'max($2, min($3, $1))',
+      )
+      .replace(
+        /\bclamp\s+(\S+)\s+from\s+(\S+)\s+to\s+(\S+)/gi,
+        'max($2, min($3, $1))',
+      )
+      // proportions (rule of three)
+      .replace(
+        /(\S+)\s+is\s+to\s+(\S+)\s+as\s+(\S+)\s+is\s+to\s+what/gi,
+        '($2 * $3 / $1)',
+      )
+      .replace(
+        /(\S+)\s+is\s+to\s+(\S+)\s+as\s+what\s+is\s+to\s+(\S+)/gi,
+        '($1 * $3 / $2)',
+      )
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
+export const customRateRule: RewriteRule = {
+  id: 'custom-rate',
+  category: 'semantic-rewrite',
+  priority: 50,
+  apply: (ctx) => {
+    // "50 EUR in USD at 1.05 USD/EUR" → "50 * 1.05"
+    // "50 EUR in RUB @ 80 RUB/EUR" → "50 * 80"
+    const match = ctx.line.match(
+      /^(\d+(?:\.\d+)?)\s+(\w+)\s+(?:in|to)\s+(\w+)\s+(?:at|@)\s+(\d+(?:\.\d+)?)\s+\w+\/\w+$/i,
+    )
+    if (!match)
+      return null
+    const amount = match[1]
+    const rate = match[4]
+    const targetCurrency = match[3]
+    return { line: `${amount} * ${rate} ${targetCurrency}`, changed: true }
+  },
+}
+
 export const semanticRewriteRules: RewriteRule[] = [
+  customRateRule,
   ratesRule,
   multipliersRule,
+  miscPhrasesRule,
   phraseFunctionsRule,
   functionSyntaxRule,
   functionConversionsRule,

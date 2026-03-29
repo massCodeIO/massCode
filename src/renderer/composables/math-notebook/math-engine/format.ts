@@ -9,13 +9,44 @@ export function formatMathNumber(
   }).format(value)
 }
 
-export function formatMathDate(date: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
+export type DateFormatStyle = 'numeric' | 'short' | 'long'
+
+const MONTH_STYLE: Record<DateFormatStyle, 'numeric' | 'short' | 'long'> = {
+  numeric: 'numeric',
+  short: 'short',
+  long: 'long',
+}
+
+export interface DateFormatOptions {
+  timeZone?: string
+  timeZoneName?: boolean
+  dateOnly?: boolean
+}
+
+export function formatMathDate(
+  date: Date,
+  locale: string,
+  dateFormat: DateFormatStyle = 'numeric',
+  options: DateFormatOptions = {},
+): string {
+  const formatOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
-    month: 'numeric',
+    month: MONTH_STYLE[dateFormat],
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(date)
+  }
+
+  if (!options.dateOnly) {
+    formatOptions.hour = 'numeric'
+    formatOptions.minute = '2-digit'
+  }
+
+  if (options.timeZone) {
+    formatOptions.timeZone = options.timeZone
+  }
+
+  if (options.timeZoneName) {
+    formatOptions.timeZoneName = 'short'
+  }
+
+  return new Intl.DateTimeFormat(locale, formatOptions).format(date)
 }

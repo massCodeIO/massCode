@@ -1,0 +1,74 @@
+# Length
+5 km to mile
+100 cm to inch
+1 meter 20 cm
+10 ft 4 inch
+
+# Mass
+1 kg to lb
+100 gram to ounce
+1 pound to kg
+
+# Temperature
+100 celsius to fahrenheit
+32 fahrenheit to celsius
+
+# Time
+2 hours to minutes
+1 day to hours
+1 week to days
+
+# Speed
+60 mph to m/s
+100 km/h to mph
+10 knots to kmh
+
+# Energy
+1000 calorie to J
+1 kcal to calorie
+1 kWh to J
+
+# Power
+1 hp to W
+
+# Frequency
+1 kHz to Hz
+1 MHz to kHz
+
+# Data
+1 GiB to MiB
+1 GB to MB
+
+# Angle
+90 deg to rad
+pi rad to deg
+
+# Area and volume
+20 sq cm
+10 cubic inches
+sqm
+cbm
+
+# Stacked units
+1 meter 20 cm to cm
+1 hour 20 minutes
+
+# Maritime
+1 nautical mile to mile
+1 fathom to m
+1 light year to km
+
+# Reverse conversion
+meters in 10 km
+days in 3 weeks
+
+# Shorthand
+km m
+
+# Larger unit wins
+1km + 1000m
+1km + 1 000m
+1km + 1 000 m
+
+# Area from multiplication
+10 m * 10 m

@@ -35,6 +35,26 @@ const CALENDAR_PREFIXES = [
   /^days\s+in\s+/,
   /^\d+\s+(?:days?|weeks?|months?|years?)\s+(?:after|before)\s/,
   /^current\s+timestamp$/,
+  /^workdays\s+in\s/,
+  /^workdays\s+from\s/,
+  /\s+in\s+workdays$/,
+  /^\d+\s+workdays?\s+(?:after|before)\s/,
+  /^\d{1,2}(?::\d{2})?(?:\s+(?:(?:am|pm)\s+)?|(?:am|pm)\s+)to\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?$/,
+  /\s+to\s+timestamp$/,
+  /\s+(?:as|to)\s+iso8601$/,
+  /^\d{4}-\d{2}-\d{2}t[\d:.]+\s+to\s+date$/,
+  /^\d{13,}\s+to\s+date$/,
+  // Finance patterns
+  /^\$[\d,.]+\s+(?:after|for)\s+\d/,
+  /^interest\s+on\s/,
+  /^annual\s+return\s+on\s/,
+  /^present\s+value\s+of\s/,
+  /^(?:daily|monthly|annual|total)\s+(?:repayment|interest)\s+on\s/,
+  /^\$[\d,.]+\s+invested\s/,
+  // Cooking
+  /^density\s+of\s/,
+  /^\d+(?:\.\d+)?\s*(?:g|gram|grams|kg|oz|ounce|ounces|lb|pound|pounds)\s+\w/,
+  /^\d+(?:\.\d+)?\s+(?:cups?|tablespoons?|tbsp|teaspoons?|tsp|pints?|quarts?|gallons?|liters?|litres?|ml|milliliters?)\s+\w/,
 ]
 
 const MONTH_TOKEN_RE
@@ -52,9 +72,11 @@ const TIMEZONE_PATTERNS = [
   /\bnow$/,
   /^time\s+in\s/,
   /^now\s+in\s/,
+  /^date\s+in\s/,
 ]
 
 const TIMEZONE_DIFF_RE = /\s+-\s+(?:\S.*)?\b(?:time|now)\b/
+const TIMEZONE_DIFF_BETWEEN_RE = /^(?:time\s+)?difference\s+between\s/
 
 const CSS_ASSIGNMENT_RE = /^(?:ppi|em)\s*=/i
 const CSS_CONVERSION_RE = /\b(?:px|pt|em)\b/
@@ -117,12 +139,16 @@ const STRIP_SUFFIXES: Record<string, StripUnit> = {
   'to dec': 'dec',
   'as fraction': 'fraction',
   'to fraction': 'fraction',
+  'as timespan': 'timespan',
+  'as laptime': 'laptime',
 }
 
 const MULTIPLIER_SUFFIXES = ['as multiplier', 'to multiplier']
 
 const MULTIPLIER_PHRASE_RE
   = /\bas\s+x\s+(?:of|off)\b|\bas\s+multiplier\s+(?:of|on)\b|\bis\s+what\s+x\b|\bas\s+x\b/
+
+const BASE_N_RE = /\s+(?:as|to)\s+base\s+(\d+)$/
 
 function detectResultFormat(normalized: string): ResultFormat | undefined {
   for (const [suffix, format] of Object.entries(FORMAT_SUFFIXES)) {
@@ -133,6 +159,24 @@ function detectResultFormat(normalized: string): ResultFormat | undefined {
     return 'multiplier'
   if (MULTIPLIER_PHRASE_RE.test(normalized))
     return 'multiplier'
+
+  const baseMatch = normalized.match(BASE_N_RE)
+  if (baseMatch) {
+    const base = Number(baseMatch[1])
+    if (base === 2)
+      return 'bin'
+    if (base === 8)
+      return 'oct'
+    if (base === 16)
+      return 'hex'
+  }
+
+  // Python-style: hex(...), bin(...)
+  if (/^hex\(.*\)$/i.test(normalized))
+    return 'hex'
+  if (/^bin\(.*\)$/i.test(normalized))
+    return 'bin'
+
   return undefined
 }
 
@@ -208,7 +252,10 @@ function probeTimezone(normalized: string): boolean {
 }
 
 function probeTimezoneDiff(normalized: string): boolean {
-  return TIMEZONE_DIFF_RE.test(normalized)
+  return (
+    TIMEZONE_DIFF_RE.test(normalized)
+    || TIMEZONE_DIFF_BETWEEN_RE.test(normalized)
+  )
 }
 
 function probeCalendar(normalized: string): boolean {

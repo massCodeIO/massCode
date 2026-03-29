@@ -124,6 +124,26 @@
     "decimalPlaces": {
       "label": "Decimal Places",
       "description": "Maximum decimal places in results (0\u201314)."
+    },
+    "dateFormat": {
+      "label": "Date Format",
+      "description": "How dates are displayed in results."
+    },
+    "currencyRates": {
+      "label": "Currency Rates",
+      "description": "Cached for 1 hour.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Currency rates updated",
+      "refreshError": "Failed to update currency rates"
+    },
+    "cryptoRates": {
+      "label": "Crypto Rates",
+      "description": "Cached for 1 hour. Rate limit: 10-30 req/min.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Crypto rates updated",
+      "rateLimited": "Rate limit exceeded. Try again later."
     }
   },
   "api": {

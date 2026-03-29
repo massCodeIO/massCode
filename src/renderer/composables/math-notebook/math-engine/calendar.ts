@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from './format'
 import type { LineResult } from './types'
 import { MONTH_NAME_TO_INDEX } from './constants'
 import { formatMathDate } from './format'
@@ -70,6 +71,78 @@ function daysResult(count: number): CalendarResult {
   }
 }
 
+function parseClockToMinutes(text: string): number | null {
+  const m = text.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i)
+  if (!m)
+    return null
+  let hours = Number(m[1])
+  const minutes = Number(m[2] || '0')
+  const meridiem = m[3]?.toLowerCase()
+  if (meridiem === 'pm' && hours < 12)
+    hours += 12
+  if (meridiem === 'am' && hours === 12)
+    hours = 0
+  if (hours > 23 || minutes > 59)
+    return null
+  return hours * 60 + minutes
+}
+
+function isWeekday(date: Date): boolean {
+  const day = date.getDay()
+  return day !== 0 && day !== 6
+}
+
+function countWorkdays(start: Date, end: Date): number {
+  let count = 0
+  const d = new Date(start)
+  const direction = end >= start ? 1 : -1
+  const target = end.getTime()
+
+  if (direction === 1) {
+    while (d.getTime() < target) {
+      if (isWeekday(d))
+        count++
+      d.setDate(d.getDate() + 1)
+    }
+  }
+  else {
+    while (d.getTime() > target) {
+      d.setDate(d.getDate() - 1)
+      if (isWeekday(d))
+        count++
+    }
+  }
+
+  return count
+}
+
+function addWorkdays(date: Date, n: number): Date {
+  const result = new Date(date)
+  let remaining = Math.abs(n)
+  const direction = n >= 0 ? 1 : -1
+
+  while (remaining > 0) {
+    result.setDate(result.getDate() + direction)
+    if (isWeekday(result))
+      remaining--
+  }
+
+  return result
+}
+
+function workdaysResult(count: number): CalendarResult {
+  const abs = Math.abs(count)
+  return {
+    lineResult: {
+      value: `${abs} ${abs === 1 ? 'workday' : 'workdays'}`,
+      error: null,
+      type: 'number',
+      numericValue: abs,
+    },
+    rawResult: abs,
+  }
+}
+
 function parseTimeUnit(text: string): string {
   return text.toLowerCase().replace(/s$/, '')
 }
@@ -100,6 +173,7 @@ export function evaluateCalendarLine(
   line: string,
   now: Date,
   locale: string,
+  dateFormat: DateFormatStyle = 'numeric',
 ): CalendarResult | null {
   const lower = line.toLowerCase().trim()
 
@@ -145,7 +219,7 @@ export function evaluateCalendarLine(
     applyDateOffset(today, amount, unit, direction)
     return {
       lineResult: {
-        value: formatMathDate(today, locale),
+        value: formatMathDate(today, locale, dateFormat),
         error: null,
         type: 'date',
       },
@@ -258,11 +332,96 @@ export function evaluateCalendarLine(
       applyDateOffset(date, amount, unit, direction)
       return {
         lineResult: {
-          value: formatMathDate(date, locale),
+          value: formatMathDate(date, locale, dateFormat),
           error: null,
           type: 'date',
         },
         rawResult: date,
+      }
+    }
+  }
+
+  // "workdays in 3 weeks"
+  const workdaysInMatch = lower.match(
+    /^workdays\s+in\s+(\d+)\s+(weeks?|months?|years?)$/,
+  )
+  if (workdaysInMatch) {
+    const amount = Number(workdaysInMatch[1])
+    const unit = parseTimeUnit(workdaysInMatch[2])
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const end = new Date(start)
+    applyDateOffset(end, amount, unit, 1)
+    return workdaysResult(countWorkdays(start, end))
+  }
+
+  // "workdays from DATE to DATE"
+  const workdaysFromMatch = lower.match(/^workdays\s+from\s/)
+  if (workdaysFromMatch) {
+    const rest = line.slice(workdaysFromMatch[0].length)
+    const toIdx = rest.toLowerCase().lastIndexOf(' to ')
+    if (toIdx > 0) {
+      const d1 = parseSimpleDate(rest.slice(0, toIdx), now)
+      const d2 = parseSimpleDate(rest.slice(toIdx + 4), now)
+      if (d1 && d2)
+        return workdaysResult(countWorkdays(d1, d2))
+    }
+  }
+
+  // "DATE to DATE in workdays"
+  const inWorkdaysMatch = lower.match(/\s+in\s+workdays$/)
+  if (inWorkdaysMatch) {
+    const expr = line.slice(0, inWorkdaysMatch.index!).trim()
+    const toIdx = expr.toLowerCase().lastIndexOf(' to ')
+    if (toIdx > 0) {
+      const d1 = parseSimpleDate(expr.slice(0, toIdx), now)
+      const d2 = parseSimpleDate(expr.slice(toIdx + 4), now)
+      if (d1 && d2)
+        return workdaysResult(countWorkdays(d1, d2))
+    }
+  }
+
+  // "DATE + N workdays"
+  const addWorkdaysMatch = lower.match(/^(\d+)\s+workdays?\s+(after|before)\s/)
+  if (addWorkdaysMatch) {
+    const amount = Number(addWorkdaysMatch[1])
+    const direction = addWorkdaysMatch[2] === 'after' ? 1 : -1
+    const rest = line.slice(addWorkdaysMatch[0].length)
+    const date = parseSimpleDate(rest, now)
+    if (date) {
+      const result = addWorkdays(date, amount * direction)
+      return {
+        lineResult: {
+          value: formatMathDate(result, locale, dateFormat),
+          error: null,
+          type: 'date',
+        },
+        rawResult: result,
+      }
+    }
+  }
+
+  // "time1 to time2" → interval (e.g. "7:30 to 20:45", "4pm to 3am")
+  const clockIntervalMatch = lower.match(
+    /^(\d{1,2}(?::\d{2})?\s?(?:am|pm)?)\s+to\s+(\d{1,2}(?::\d{2})?\s?(?:am|pm)?)$/i,
+  )
+  if (clockIntervalMatch) {
+    const t1 = parseClockToMinutes(clockIntervalMatch[1])
+    const t2 = parseClockToMinutes(clockIntervalMatch[2])
+    if (t1 !== null && t2 !== null) {
+      let diff = t2 - t1
+      if (diff < 0)
+        diff += 24 * 60
+      const hours = Math.floor(diff / 60)
+      const minutes = diff % 60
+      const parts: string[] = []
+      if (hours)
+        parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+      if (minutes)
+        parts.push(`${minutes} min`)
+      const value = parts.join(' ') || '0 min'
+      return {
+        lineResult: { value, error: null, type: 'number', numericValue: diff },
+        rawResult: diff,
       }
     }
   }
@@ -278,6 +437,74 @@ export function evaluateCalendarLine(
         numericValue: ts,
       },
       rawResult: ts,
+    }
+  }
+
+  // "DATE to timestamp"
+  const toTimestampMatch = lower.match(/\s+to\s+timestamp$/)
+  if (toTimestampMatch) {
+    const dateStr = line.slice(0, toTimestampMatch.index!).trim()
+    const date = parseSimpleDate(dateStr, now)
+    if (date) {
+      const ts = Math.floor(date.getTime() / 1000)
+      return {
+        lineResult: {
+          value: String(ts),
+          error: null,
+          type: 'number',
+          numericValue: ts,
+        },
+        rawResult: ts,
+      }
+    }
+  }
+
+  // "DATE as iso8601" / "DATE to iso8601"
+  const iso8601Match = lower.match(/\s+(?:as|to)\s+iso8601$/)
+  if (iso8601Match) {
+    const dateStr = line.slice(0, iso8601Match.index!).trim()
+    const date = parseSimpleDate(dateStr, now)
+    if (date) {
+      const iso = date.toISOString()
+      return {
+        lineResult: { value: iso, error: null, type: 'number' },
+        rawResult: iso,
+      }
+    }
+  }
+
+  // "ISO_STRING to date" (e.g. "2019-04-01T15:30:00 to date")
+  const isoToDateMatch = lower.match(
+    /^(\d{4}-\d{2}-\d{2}t[\d:.]+)\s+to\s+date$/,
+  )
+  if (isoToDateMatch) {
+    const date = new Date(isoToDateMatch[1])
+    if (!Number.isNaN(date.getTime())) {
+      return {
+        lineResult: {
+          value: formatMathDate(date, locale, dateFormat),
+          error: null,
+          type: 'date',
+        },
+        rawResult: date,
+      }
+    }
+  }
+
+  // "LARGE_NUMBER to date" (millisecond timestamp, > 1e12)
+  const msTimestampMatch = lower.match(/^(\d{13,})\s+to\s+date$/)
+  if (msTimestampMatch) {
+    const ms = Number(msTimestampMatch[1])
+    const date = new Date(ms)
+    if (!Number.isNaN(date.getTime())) {
+      return {
+        lineResult: {
+          value: formatMathDate(date, locale, dateFormat),
+          error: null,
+          type: 'date',
+        },
+        rawResult: date,
+      }
     }
   }
 

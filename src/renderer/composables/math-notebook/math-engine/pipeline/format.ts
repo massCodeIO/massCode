@@ -1,7 +1,47 @@
+import type { DateFormatStyle } from '../format'
 import type { LineClassification, LineResult } from '../types'
 import { HUMANIZED_UNIT_NAMES, SUPPORTED_CURRENCY_CODES } from '../constants'
 import { formatMathDate, formatMathNumber } from '../format'
 import { coerceToNumber, toFraction } from '../utils'
+
+function formatTimespan(totalSeconds: number): string {
+  const abs = Math.abs(totalSeconds)
+  const weeks = Math.floor(abs / 604800)
+  const days = Math.floor((abs % 604800) / 86400)
+  const hours = Math.floor((abs % 86400) / 3600)
+  const minutes = Math.floor((abs % 3600) / 60)
+  const seconds = Math.round(abs % 60)
+
+  const parts: string[] = []
+  if (weeks)
+    parts.push(`${weeks} ${weeks === 1 ? 'week' : 'weeks'}`)
+  if (days)
+    parts.push(`${days} ${days === 1 ? 'day' : 'days'}`)
+  if (hours)
+    parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+  if (minutes)
+    parts.push(`${minutes} min`)
+  if (seconds || parts.length === 0)
+    parts.push(`${seconds} s`)
+  return parts.join(' ')
+}
+
+function formatLaptime(totalSeconds: number): string {
+  const abs = Math.abs(totalSeconds)
+  const h = Math.floor(abs / 3600)
+  const m = Math.floor((abs % 3600) / 60)
+  const s = Math.floor(abs % 60)
+  const ms = Math.round((abs % 1) * 1000)
+
+  const hh = String(h).padStart(2, '0')
+  const mm = String(m).padStart(2, '0')
+  const ss = String(s).padStart(2, '0')
+
+  if (ms > 0) {
+    return `${hh}:${mm}:${ss}.${String(ms).padStart(3, '0')}`
+  }
+  return `${hh}:${mm}:${ss}`
+}
 
 interface MathFormatterInstance {
   format: (value: any, options: { precision: number }) => string
@@ -12,10 +52,11 @@ interface CreateLineFormatterOptions {
   math: MathFormatterInstance
   locale: string
   decimalPlaces: number
+  dateFormat: DateFormatStyle
 }
 
 export function createLineFormatter(options: CreateLineFormatterOptions) {
-  const { math, locale, decimalPlaces } = options
+  const { math, locale, decimalPlaces, dateFormat } = options
 
   function humanizeUnitToken(unitId: string) {
     const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
@@ -56,7 +97,8 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
     return result
   }
 
-  function formatResult(result: any): LineResult {
+  function formatResult(result: any, overridePrecision?: number): LineResult {
+    const effectivePrecision = overridePrecision ?? decimalPlaces
     if (result === undefined || result === null) {
       return { value: null, error: null, type: 'empty' }
     }
@@ -67,7 +109,7 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
 
     if (result instanceof Date) {
       return {
-        value: formatMathDate(result, locale),
+        value: formatMathDate(result, locale, dateFormat),
         error: null,
         type: 'date',
       }
@@ -110,7 +152,10 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
             )
             return {
               value: humanizeFormattedUnits(
-                math.format(simplified, { precision: decimalPlaces }),
+                math.format(simplified, {
+                  notation: 'fixed',
+                  precision: decimalPlaces,
+                }),
               ),
               error: null,
               type: 'unit',
@@ -122,18 +167,32 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
         }
       }
 
+      let unitNumericValue: number | undefined
+      try {
+        unitNumericValue = result.toNumber()
+      }
+      catch {
+        /* compound units may not convert */
+      }
+
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: decimalPlaces }),
+          math.format(result, {
+            notation: 'fixed',
+            precision: effectivePrecision,
+          }),
         ),
         error: null,
         type: 'unit',
+        ...(unitNumericValue !== undefined
+          ? { numericValue: unitNumericValue }
+          : {}),
       }
     }
 
     if (typeof result === 'number') {
       return {
-        value: formatMathNumber(result, locale, decimalPlaces),
+        value: formatMathNumber(result, locale, effectivePrecision),
         error: null,
         type: 'number',
         ...(Number.isFinite(result) ? { numericValue: result } : {}),
@@ -147,7 +206,10 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
     if (result && typeof result.toString === 'function') {
       return {
         value: humanizeFormattedUnits(
-          math.format(result, { precision: decimalPlaces }),
+          math.format(result, {
+            notation: 'fixed',
+            precision: effectivePrecision,
+          }),
         ),
         error: null,
         type: 'number',
@@ -268,6 +330,25 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
         type: 'number',
         numericValue: num,
       }
+    }
+
+    if (strip === 'timespan' || strip === 'laptime') {
+      // Convert unit result to seconds
+      let seconds = num
+      if (
+        result
+        && typeof result === 'object'
+        && typeof result.toNumber === 'function'
+      ) {
+        try {
+          seconds = result.toNumber('s')
+        }
+        catch {
+          /* use coerced num */
+        }
+      }
+      const formatter = strip === 'timespan' ? formatTimespan : formatLaptime
+      return { value: formatter(seconds), error: null, type: 'number' }
     }
 
     return {

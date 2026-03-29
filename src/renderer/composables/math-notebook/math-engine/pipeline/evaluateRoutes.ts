@@ -1,12 +1,15 @@
+import type { DateFormatStyle } from '../format'
 import type { CssContext, LineClassification } from '../types'
 import type { EvaluatedLine, MathEvaluatorInstance } from './evaluateTypes'
 import type { LineFormatter } from './format'
 import { evaluateCalendarLine } from '../calendar'
 import { evaluateCssLine } from '../css'
+import { evaluateCookingLine } from '../evaluators/cooking'
 import {
   evaluateDateArithmeticLine,
   evaluateDateAssignmentLine,
 } from '../evaluators/dateArithmetic'
+import { evaluateFinanceLine } from '../evaluators/finance'
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
@@ -19,6 +22,7 @@ export function evaluatePrimaryIntent(
   processed: string,
   currentDate: Date,
   activeLocale: string,
+  activeDateFormat: DateFormatStyle,
   cssContext: CssContext,
   scope: Record<string, any>,
   math: MathEvaluatorInstance,
@@ -46,7 +50,12 @@ export function evaluatePrimaryIntent(
         }
       }
 
-      const timeZoneResult = evaluateTimeZoneLine(trimmed, currentDate)
+      const timeZoneResult = evaluateTimeZoneLine(
+        trimmed,
+        currentDate,
+        activeLocale,
+        activeDateFormat,
+      )
       if (timeZoneResult) {
         return toEvaluatedLine(
           timeZoneResult.lineResult,
@@ -62,6 +71,7 @@ export function evaluatePrimaryIntent(
         trimmed,
         currentDate,
         activeLocale,
+        activeDateFormat,
       )
 
       if (calendarResult) {
@@ -69,6 +79,26 @@ export function evaluatePrimaryIntent(
           calendarResult.lineResult,
           calendarResult.rawResult,
           getNumericValue(calendarResult.rawResult),
+        )
+      }
+
+      // Finance calculations
+      const financeResult = evaluateFinanceLine(trimmed, activeLocale)
+      if (financeResult) {
+        return toEvaluatedLine(
+          financeResult.lineResult,
+          financeResult.rawResult,
+          financeResult.rawResult,
+        )
+      }
+
+      // Cooking calculations
+      const cookingResult = evaluateCookingLine(trimmed, activeLocale)
+      if (cookingResult) {
+        return toEvaluatedLine(
+          cookingResult.lineResult,
+          cookingResult.rawResult,
+          cookingResult.rawResult,
         )
       }
 

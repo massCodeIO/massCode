@@ -34,6 +34,8 @@ type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
   | 'currency-rates'
+  | 'currency-rates-refresh'
+  | 'crypto-rates-refresh'
   | 'reload'
   | 'open-external'
   | 'show-notes-folder-in-file-manager'

@@ -108,7 +108,98 @@ export const timeUnits: RewriteRule = {
   },
 }
 
+export const shorthandTimespan: RewriteRule = {
+  id: 'shorthand-timespan',
+  category: 'normalize',
+  priority: 50,
+  apply: (ctx) => {
+    // "3h 5m 10s" → "(3 hours + 5 minutes + 10 seconds)"
+    const match = ctx.line.match(
+      /\b(\d+(?:\.\d+)?)h(?:\s+(\d+(?:\.\d+)?)m)?(?:\s+(\d+(?:\.\d+)?)s)?\b/,
+    )
+    if (!match)
+      return null
+    const parts: string[] = []
+    if (match[1])
+      parts.push(`${match[1]} hours`)
+    if (match[2])
+      parts.push(`${match[2]} minutes`)
+    if (match[3])
+      parts.push(`${match[3]} seconds`)
+    if (parts.length < 2 && !match[2] && !match[3])
+      return null
+    const replacement = `(${parts.join(' + ')})`
+    const line = ctx.line.replace(match[0], replacement)
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
+export const laptimeInput: RewriteRule = {
+  id: 'laptime-input',
+  category: 'normalize',
+  priority: 55,
+  apply: (ctx) => {
+    // "03:04:05" (HH:MM:SS — 2 colons) → "(3 hours + 4 minutes + 5 seconds)"
+    const line = ctx.line.replace(
+      /\b(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?\b/g,
+      (match, h: string, m: string, s: string, ms?: string) => {
+        const parts: string[] = []
+        const hours = Number(h)
+        const minutes = Number(m)
+        const seconds = Number(s)
+        if (hours)
+          parts.push(`${hours} hours`)
+        if (minutes)
+          parts.push(`${minutes} minutes`)
+        const totalSec = ms ? `${seconds}.${ms}` : String(seconds)
+        if (Number(totalSec))
+          parts.push(`${totalSec} seconds`)
+        if (parts.length === 0)
+          return '0 seconds'
+        return `(${parts.join(' + ')})`
+      },
+    )
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
+export const timecodeInput: RewriteRule = {
+  id: 'timecode-input',
+  category: 'normalize',
+  priority: 45,
+  apply: (ctx) => {
+    // "HH:MM:SS:FF" (4 components) with optional "at/@ N fps"
+    // Convert to total frames: (H*3600 + M*60 + S) * fps + FF
+    const fpsMatch = ctx.line.match(/(?:at|@)\s*(\d+)\s*fps/i)
+    const fpsValue = fpsMatch ? Number(fpsMatch[1]) : 24
+
+    const line = ctx.line
+      .replace(/(?:at|@)\s*\d+\s*fps/gi, '') // remove fps declaration
+      .replace(
+        /\b(\d{1,2}):(\d{2}):(\d{2}):(\d{1,3})\b/g,
+        (_match, h: string, m: string, s: string, f: string) => {
+          const totalFrames
+            = (Number(h) * 3600 + Number(m) * 60 + Number(s)) * fpsValue
+              + Number(f)
+          return `${totalFrames} frame`
+        },
+      )
+      .trim()
+
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
 export const normalizeRules: RewriteRule[] = [
+  timecodeInput,
+  shorthandTimespan,
+  laptimeInput,
   groupedNumbers,
   degreeSigns,
   reverseConversion,

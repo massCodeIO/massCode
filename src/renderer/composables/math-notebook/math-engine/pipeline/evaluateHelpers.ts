@@ -35,6 +35,8 @@ export function stripModifierSuffix(
       'to dec',
       'as fraction',
       'to fraction',
+      'as timespan',
+      'as laptime',
     ]
     for (const suffix of suffixes) {
       if (lower.endsWith(suffix))
@@ -55,6 +57,15 @@ export function stripModifierSuffix(
     for (const suffix of suffixes) {
       if (lower.endsWith(suffix))
         return raw.slice(0, raw.length - suffix.length).trim()
+    }
+    const baseMatch = lower.match(/\s+(?:as|to)\s+base\s+\d+$/)
+    if (baseMatch) {
+      return raw.slice(0, baseMatch.index!).trim()
+    }
+    // Python-style: hex(...) → extract inner expression
+    const funcMatch = raw.match(/^(?:hex|bin)\((.+)\)$/i)
+    if (funcMatch) {
+      return funcMatch[1]
     }
   }
 
@@ -103,14 +114,41 @@ export function hasUnsupportedModifierCombination(
   return false
 }
 
+function extractUnitInfo(
+  rawResult: any,
+): { numericValue: number, unitName: string } | null {
+  if (
+    rawResult
+    && typeof rawResult === 'object'
+    && typeof rawResult.toNumber === 'function'
+    && Array.isArray(rawResult.units)
+    && rawResult.units.length === 1
+  ) {
+    try {
+      const unitEntry = rawResult.units[0]
+      const unitName = unitEntry?.unit?.name
+      if (unitName && unitEntry.power === 1) {
+        return { numericValue: rawResult.toNumber(), unitName }
+      }
+    }
+    catch {
+      /* ignore */
+    }
+  }
+  return null
+}
+
 export function toEvaluatedLine(
   lineResult: LineResult,
   rawResult: any,
   numericValue?: number | null,
 ): EvaluatedLine {
+  const unitInfo = extractUnitInfo(rawResult)
+
   return {
     lineResult,
     rawResult,
-    numericValue,
+    numericValue: unitInfo?.numericValue ?? numericValue,
+    unitName: unitInfo?.unitName,
   }
 }

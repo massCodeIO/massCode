@@ -1,6 +1,10 @@
 import path from 'node:path'
 import { app, ipcMain, shell } from 'electron'
-import { getCurrencyRates } from '../../currencyRates'
+import {
+  getCurrencyRates,
+  refreshCryptoRatesForced,
+  refreshFiatRatesForced,
+} from '../../currencyRates'
 import {
   findNoteById,
   getNotesFolderPathById,
@@ -12,6 +16,14 @@ import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 export function registerSystemHandlers() {
   ipcMain.handle('system:currency-rates', () => {
     return getCurrencyRates()
+  })
+
+  ipcMain.handle('system:currency-rates-refresh', () => {
+    return refreshFiatRatesForced()
+  })
+
+  ipcMain.handle('system:crypto-rates-refresh', () => {
+    return refreshCryptoRatesForced()
   })
 
   ipcMain.handle('system:reload', () => {

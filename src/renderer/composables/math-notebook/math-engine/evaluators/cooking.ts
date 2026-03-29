@@ -222,6 +222,21 @@ function formatResult(
   }
 }
 
+function formatDensityResult(value: number, locale: string): CookingResult {
+  return {
+    lineResult: {
+      value: `${value.toLocaleString(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3,
+      })} g/cm³`,
+      error: null,
+      type: 'number',
+      numericValue: value,
+    },
+    rawResult: value,
+  }
+}
+
 export function evaluateCookingLine(
   line: string,
   locale = 'en-US',
@@ -232,15 +247,7 @@ export function evaluateCookingLine(
   if (lower.startsWith('density of ')) {
     const substance = findSubstance(lower.slice(11))
     if (substance) {
-      return {
-        lineResult: {
-          value: `${substance.density} g/cm³`,
-          error: null,
-          type: 'number',
-          numericValue: substance.density,
-        },
-        rawResult: substance.density,
-      }
+      return formatDensityResult(substance.density, locale)
     }
   }
 

@@ -52,6 +52,14 @@ function normalizeRates(rates: Record<string, number>) {
   return normalized
 }
 
+function createPayload(rates: Record<string, number>): CurrencyRatesPayload {
+  return {
+    rates: normalizeRates(rates),
+    fetchedAt: Date.now(),
+    source: 'live',
+  }
+}
+
 async function fetchFiatRates(): Promise<Record<string, number>> {
   const response = await fetch('https://open.er-api.com/v6/latest/USD')
   if (!response.ok) {
@@ -126,21 +134,22 @@ export async function getCurrencyRates(): Promise<CurrencyRatesPayload> {
       throw new Error('No rates fetched')
     }
 
-    // Merge with previous cache so partial fetch doesn't lose existing rates
+    if (
+      !cached
+      && (fiatRates.status !== 'fulfilled' || cryptoRates.status !== 'fulfilled')
+    ) {
+      return createPayload(freshRates)
+    }
+
     const previousRates = cached?.rates || {}
-    const mergedRates = normalizeRates({ ...previousRates, ...freshRates })
+    const payload = createPayload({ ...previousRates, ...freshRates })
 
-    const payload = {
-      rates: mergedRates,
-      fetchedAt: Date.now(),
-    }
+    store.currencyRates.set('cache', {
+      rates: payload.rates,
+      fetchedAt: payload.fetchedAt,
+    })
 
-    store.currencyRates.set('cache', payload)
-
-    return {
-      ...payload,
-      source: 'live',
-    }
+    return payload
   }
   catch {
     if (cached) {
@@ -159,30 +168,35 @@ export async function getCurrencyRates(): Promise<CurrencyRatesPayload> {
 }
 
 export async function refreshFiatRatesForced(): Promise<CurrencyRatesPayload> {
-  try {
-    const fiatRates = await fetchFiatRates()
-    const cached = store.currencyRates.get('cache')
-    const currentRates = cached?.rates || {}
-    const mergedRates = normalizeRates({ ...currentRates, ...fiatRates })
+  const fiatRates = await fetchFiatRates()
+  const cached = store.currencyRates.get('cache')
 
-    const payload = { rates: mergedRates, fetchedAt: Date.now() }
-    store.currencyRates.set('cache', payload)
+  if (!cached) {
+    return createPayload(fiatRates)
+  }
 
-    return { ...payload, source: 'live' }
-  }
-  catch {
-    return { rates: {}, fetchedAt: 0, source: 'unavailable' }
-  }
+  const payload = createPayload({ ...cached.rates, ...fiatRates })
+  store.currencyRates.set('cache', {
+    rates: payload.rates,
+    fetchedAt: payload.fetchedAt,
+  })
+
+  return payload
 }
 
 export async function refreshCryptoRatesForced(): Promise<CurrencyRatesPayload> {
   const cryptoRates = await fetchCryptoRates()
   const cached = store.currencyRates.get('cache')
-  const currentRates = cached?.rates || {}
-  const mergedRates = normalizeRates({ ...currentRates, ...cryptoRates })
 
-  const payload = { rates: mergedRates, fetchedAt: Date.now() }
-  store.currencyRates.set('cache', payload)
+  if (!cached) {
+    return createPayload(cryptoRates)
+  }
 
-  return { ...payload, source: 'live' }
+  const payload = createPayload({ ...cached.rates, ...cryptoRates })
+  store.currencyRates.set('cache', {
+    rates: payload.rates,
+    fetchedAt: payload.fetchedAt,
+  })
+
+  return payload
 }

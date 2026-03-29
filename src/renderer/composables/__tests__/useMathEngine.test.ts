@@ -16,8 +16,12 @@ const TEST_CURRENCY_RATES = {
   TWD: 32.5,
 }
 
-const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
-  = useMathEngine()
+const {
+  evaluateDocument,
+  setCurrencyServiceState,
+  setFormatSettings,
+  updateCurrencyRates,
+} = useMathEngine()
 
 function evalLine(expr: string) {
   return evaluateDocument(expr)[0]
@@ -46,6 +50,7 @@ function expectDateWithYear(expr: string, year: string) {
 
 beforeEach(() => {
   updateCurrencyRates(TEST_CURRENCY_RATES)
+  setFormatSettings('en-US', 6, 'numeric')
 })
 
 describe('arithmetic', () => {
@@ -1896,6 +1901,12 @@ describe('cooking calculations', () => {
   it('density of yogurt', () => {
     const result = evalLine('density of yogurt')
     expect(result.value).toBe('1.06 g/cm³')
+  })
+
+  it('density output respects active locale', () => {
+    setFormatSettings('de-DE', 6, 'numeric')
+    const result = evalLine('density of yogurt')
+    expect(result.value).toBe('1,06 g/cm³')
   })
 
   it('density of olive oil', () => {

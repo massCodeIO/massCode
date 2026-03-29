@@ -382,8 +382,13 @@ function applyFormat(
   }
 }
 
+function humanizeUnitToken(unitId: string) {
+  const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
+  return displayUnit ? displayUnit.plural : unitId
+}
+
 function humanizeFormattedUnits(value: string) {
-  return value.replace(
+  let result = value.replace(
     /(-?\d[\d,]*(?:\.\d+)?)\s+([a-z][a-z0-9]*)\b/gi,
     (match, amountText: string, unitId: string) => {
       const numericAmount = Number.parseFloat(amountText.replace(/,/g, ''))
@@ -407,6 +412,16 @@ function humanizeFormattedUnits(value: string) {
       return `${formattedAmount} ${unitLabel}`
     },
   )
+
+  // Humanize remaining standalone unit tokens (e.g. in compound units like "USD mcday")
+  result = result.replace(
+    /\b(mc(?:second|minute|hour|day|week|month|year))\b/g,
+    (_, unitId: string) => {
+      return humanizeUnitToken(unitId)
+    },
+  )
+
+  return result
 }
 
 function formatResult(result: any): LineResult {

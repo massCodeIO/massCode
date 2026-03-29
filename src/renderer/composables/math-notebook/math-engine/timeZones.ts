@@ -517,7 +517,7 @@ export function evaluateTimeZoneDifferenceLine(
         rest.slice(andIdx + separator[0].length).trim(),
       )
       if (tz1 && tz2) {
-        return computeTimeZoneDifference(tz1, tz2, now, options)
+        return computeTimeZoneDifference(tz2, tz1, now, options)
       }
     }
   }

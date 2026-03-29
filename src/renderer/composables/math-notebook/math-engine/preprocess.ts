@@ -105,6 +105,8 @@ function preprocessUnitAliases(line: string): string {
     .replace(/\btea\s+spoons?\b/gi, 'teaspoon')
     .replace(/\btable\s+spoons?\b/gi, 'tablespoon')
     .replace(/\bnautical\s+miles?\b/gi, 'nauticalmile')
+    .replace(/\blight\s+years?\b/gi, 'lightyear')
+    .replace(/\bkm\/h\b/gi, 'kmh')
 }
 
 function preprocessAreaVolumeAliases(line: string): string {
@@ -696,8 +698,8 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessQuotedText(processed)
   processed = preprocessGroupedNumbers(processed)
   processed = preprocessDegreeSigns(processed)
-  processed = preprocessTimeUnits(processed)
   processed = preprocessUnitAliases(processed)
+  processed = preprocessTimeUnits(processed)
   processed = preprocessCurrencySymbols(processed)
   processed = preprocessCurrencyWords(processed)
   processed = preprocessScales(processed)

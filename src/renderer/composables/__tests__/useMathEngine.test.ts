@@ -479,6 +479,68 @@ describe('unit conversion', () => {
     expect(result.value).toContain('gram')
     expectNumericClose('1 carat to gram', 0.2, 2)
   })
+
+  // Speed
+  it('60 mph to m/s', () => {
+    const result = evalLine('60 mph to m/s')
+    expect(result.type).toBe('unit')
+    expectNumericClose('60 mph to m/s', 26.82, 1)
+  })
+  it('100 km/h to mph', () => {
+    const result = evalLine('100 km/h to mph')
+    expect(result.type).toBe('unit')
+    expectNumericClose('100 km/h to mph', 62.14, 1)
+  })
+  it('10 knots to km/h', () => {
+    expectNumericClose('10 knots to kmh', 18.52, 1)
+  })
+
+  // Energy
+  it('1000 cal to J', () => {
+    expectNumericClose('1000 calorie to J', 4184, 0)
+  })
+  it('1 kcal to calorie', () => {
+    expectNumericClose('1 kcal to calorie', 1000, 0)
+  })
+
+  // Maritime & Astro
+  it('1 fathom to m', () => {
+    expectNumericClose('1 fathom to m', 1.8288, 3)
+  })
+  it('1 light year to km', () => {
+    const result = evalLine('1 light year to km')
+    expect(result.type).toBe('unit')
+  })
+
+  // Mass
+  it('1000 mcg to gram', () => {
+    expectNumericClose('1000 mcg to gram', 0.001, 4)
+  })
+
+  // Volume
+  it('1 bushel to liter', () => {
+    expectNumericClose('1 bushel to liter', 35.24, 1)
+  })
+
+  // Frequency (native math.js)
+  it('1 kHz to Hz', () => {
+    expectNumericClose('1 kHz to Hz', 1000, 0)
+  })
+
+  // Power (native math.js)
+  it('1 hp to W', () => {
+    expectNumericClose('1 hp to W', 745.7, 0)
+  })
+
+  // Data IEC (native math.js)
+  it('1 GiB to MiB', () => {
+    expectNumericClose('1 GiB to MiB', 1024, 0)
+  })
+
+  // Angle
+  it('90 deg to rad', () => {
+    expectNumericClose('90 deg to rad', 1.5708, 3)
+  })
 })
 
 describe('css units', () => {

@@ -117,6 +117,52 @@ export function createMathInstance(currencyRates: Record<string, number>) {
     aliases: ['leagues'],
   })
 
+  // Speed
+  createUnitSafe(mathInstance, 'mph', {
+    definition: '1 mile/hour',
+    aliases: [],
+  })
+  createUnitSafe(mathInstance, 'kmh', {
+    definition: '1 km/hour',
+    aliases: [],
+  })
+  createUnitSafe(mathInstance, 'knot', {
+    definition: '0.514444 m/s',
+    aliases: ['knots', 'kn'],
+  })
+
+  // Energy
+  createUnitSafe(mathInstance, 'calorie', {
+    definition: '4.184 J',
+    aliases: ['cal', 'calories'],
+  })
+  createUnitSafe(mathInstance, 'kilocalorie', {
+    definition: '4184 J',
+    aliases: ['kcal', 'kCal', 'kilocalories'],
+  })
+
+  // Maritime & Astro
+  createUnitSafe(mathInstance, 'fathom', {
+    definition: '1.8288 m',
+    aliases: ['fathoms', 'ftm'],
+  })
+  createUnitSafe(mathInstance, 'lightyear', {
+    definition: '9.461e15 m',
+    aliases: ['lightyears', 'ly'],
+  })
+
+  // Mass
+  createUnitSafe(mathInstance, 'microgram', {
+    definition: '1e-6 gram',
+    aliases: ['micrograms', 'mcg'],
+  })
+
+  // Volume
+  createUnitSafe(mathInstance, 'bushel', {
+    definition: '35.2391 liter',
+    aliases: ['bushels', 'bsh'],
+  })
+
   for (const [code, rate] of Object.entries(currencyRates)) {
     if (code === 'USD')
       continue

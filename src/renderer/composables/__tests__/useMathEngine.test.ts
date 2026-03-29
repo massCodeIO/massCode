@@ -1290,9 +1290,17 @@ describe('time zones', () => {
     expect(result.value).not.toBeNull()
   })
 
-  it('time difference between Seattle and Moscow', () => {
+  it('time difference between Seattle and Moscow (positive)', () => {
     const result = evalLine('time difference between Seattle and Moscow')
     expect(result.type).toBe('unit')
+    expect(result.value).toContain('hour')
+    expect(result.value).not.toContain('-')
+  })
+
+  it('time difference between Moscow and Seattle (negative)', () => {
+    const result = evalLine('time difference between Moscow and Seattle')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('-')
     expect(result.value).toContain('hour')
   })
 

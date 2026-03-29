@@ -44,7 +44,7 @@ function sanitizeForCurrencyDetection(line: string) {
 }
 
 function preprocessGroupedNumbers(line: string): string {
-  let result = line.replace(/\b\d{1,3}(?:\s\d{3})+\b/g, match =>
+  let result = line.replace(/\b\d{1,3}(?:\s\d{3})+(?=\b|[a-z])/gi, match =>
     match.replace(/\s+/g, ''))
 
   result = result.replace(/\b\d+(?:\s+\d+)+\b/g, match =>
@@ -100,11 +100,46 @@ function normalizePowerUnit(unit: string) {
   }
 }
 
+function preprocessReverseConversion(line: string): string {
+  // "meters in 10 km" → "10 km to meters"
+  // "days in 3 weeks" → "3 weeks to days"
+  return line.replace(
+    /^([a-z]+)\s+in\s+(\d+(?:\.\d+)?)\s+([a-z]+)$/i,
+    (_, targetUnit: string, value: string, sourceUnit: string) => {
+      if (
+        knownUnitTokens.has(targetUnit.toLowerCase())
+        && knownUnitTokens.has(sourceUnit.toLowerCase())
+      ) {
+        return `${value} ${sourceUnit} to ${targetUnit}`
+      }
+      return _
+    },
+  )
+}
+
+function preprocessShorthandConversion(line: string): string {
+  // "km m" → "1 km to m" (two unit names = show conversion factor)
+  return line.replace(
+    /^([a-z]+)\s+([a-z]+)$/i,
+    (_, unit1: string, unit2: string) => {
+      if (
+        knownUnitTokens.has(unit1.toLowerCase())
+        && knownUnitTokens.has(unit2.toLowerCase())
+      ) {
+        return `1 ${unit1} to ${unit2}`
+      }
+      return _
+    },
+  )
+}
+
 function preprocessUnitAliases(line: string): string {
   return line
     .replace(/\btea\s+spoons?\b/gi, 'teaspoon')
     .replace(/\btable\s+spoons?\b/gi, 'tablespoon')
     .replace(/\bnautical\s+miles?\b/gi, 'nauticalmile')
+    .replace(/\blight\s+years?\b/gi, 'lightyear')
+    .replace(/\bkm\/h\b/gi, 'kmh')
 }
 
 function preprocessAreaVolumeAliases(line: string): string {
@@ -133,6 +168,74 @@ function preprocessAreaVolumeAliases(line: string): string {
   )
 
   return line
+}
+
+function preprocessRates(line: string): string {
+  return (
+    line
+      // "X per Y" → "X / Y" (e.g. $99 per week → $99 / week)
+      .replace(/\bper\b/gi, '/')
+      // "X at Y/Z" where Y/Z is a rate → "X * Y / Z"
+      // "30 hours at $30/hour" → "30 hours * $30 / hour"
+      .replace(
+        /(\d+(?:\.\d+)?)\s+(\w+)\s+at\s+(\S+)\/(\w+)/gi,
+        '$1 $2 * $3 / $4',
+      )
+      // "X a day for Y" → "X / day * Y" (e.g. $24 a day for a year)
+      .replace(
+        /(\S+)\s+a\s+(day|week|month|year)\s+for\s+(?:a\s+)?(\S+)/gi,
+        '$1 / $2 * 1 $3',
+      )
+  )
+}
+
+function preprocessMultipliers(line: string): string {
+  return (
+    line
+      // X to Y is what x → Y / X as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+is\s+what\s+x\b/gi,
+        '$2 / $1 as multiplier',
+      )
+      // X to Y as x → Y / X as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+as\s+x\b/gi,
+        '$2 / $1 as multiplier',
+      )
+      // X as x of Y → X / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+x\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '$1 / $2 as multiplier',
+      )
+      // X as multiplier of Y → X / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+multiplier\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '$1 / $2 as multiplier',
+      )
+      // X as multiplier on Y → (X - Y) / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+multiplier\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '($1 - $2) / $2 as multiplier',
+      )
+      // X as x off Y → (Y - X) / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+x\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '($2 - $1) / $2 as multiplier',
+      )
+  )
+}
+
+function preprocessPhraseFunctions(line: string): string {
+  return line
+    .replace(/\bsquare\s+root\s+of\s+(\S+)/gi, 'sqrt($1)')
+    .replace(/\bcube\s+root\s+of\s+(\S+)/gi, 'cbrt($1)')
+    .replace(/\broot\s+(\d+)\s+of\s+(\S+)/gi, 'root($1, $2)')
+    .replace(/\blog\s+(\S+)\s+base\s+(\S+)/gi, 'log($1, $2)')
+    .replace(
+      /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\s+to\s+(?:what|the\s+what)\s*(?:power)?/gi,
+      'log($1) / log($2)',
+    )
+    .replace(/\b(sin|cos|tan)\((\d+(?:\.\d+)?)\s+degrees\)/gi, '$1($2 deg)')
 }
 
 function preprocessFunctionExpression(expression: string): string {
@@ -415,61 +518,174 @@ function preprocessStackedUnits(line: string): string {
 }
 
 function preprocessImplicitMultiplication(line: string): string {
-  return line.replace(/(\d)\s*\(/g, '$1 * (')
+  return line.replace(/\b(\d+)\s*\(/g, '$1 * (')
+}
+
+function preprocessConditionals(line: string): string {
+  const lower = line.toLowerCase()
+
+  // if COND then EXPR else EXPR → (COND) ? (EXPR) : (EXPR)
+  const thenIdx = lower.indexOf(' then ')
+  const elseIdx = lower.indexOf(' else ')
+  if (/^if\s/i.test(line) && thenIdx > 2 && elseIdx > thenIdx) {
+    const cond = line.slice(3, thenIdx).trim()
+    const thenExpr = line.slice(thenIdx + 6, elseIdx).trim()
+    const elseExpr = line.slice(elseIdx + 6).trim()
+    return `(${cond}) ? (${thenExpr}) : (${elseExpr})`
+  }
+
+  // EXPR unless COND → (COND) ? 0 : (EXPR) (check before postfix if)
+  const unlessIdx = lower.indexOf(' unless ')
+  if (unlessIdx > 0) {
+    const expr = line.slice(0, unlessIdx).trim()
+    const cond = line.slice(unlessIdx + 8).trim()
+    return `(${cond}) ? 0 : (${expr})`
+  }
+
+  // EXPR if COND → (COND) ? (EXPR) : 0
+  const ifIdx = lower.indexOf(' if ')
+  if (ifIdx > 0) {
+    const expr = line.slice(0, ifIdx).trim()
+    const cond = line.slice(ifIdx + 4).trim()
+    return `(${cond}) ? (${expr}) : 0`
+  }
+
+  // && → and, || → or
+  return line.replace(/&&/g, ' and ').replace(/\|\|/g, ' or ')
 }
 
 function preprocessWordOperators(line: string): string {
-  return line
+  const hasConditional = /\?|[><=!]=?|\btrue\b|\bfalse\b/.test(line)
+
+  let result = line
+    .replace(/\bremainder\s+of\s+(\S+)\s+divided\s+by\s+(\S+)/gi, '$1 % $2')
+    .replace(/\bto\s+the\s+power\s+of\b/gi, '^')
     .replace(/\bmultiplied\s+by\b/gi, '*')
+    .replace(/\bdivided\s+by\b/gi, '/')
     .replace(/\bdivide\s+by\b/gi, '/')
     .replace(/(\S+)\s+xor\s+(\S+)/gi, 'bitXor($1, $2)')
     .replace(/\btimes\b/gi, '*')
     .replace(/\bdivide\b/gi, '/')
     .replace(/\bplus\b/gi, '+')
-    .replace(/\band\b/gi, '+')
     .replace(/\bwith\b/gi, '+')
     .replace(/\bminus\b/gi, '-')
     .replace(/\bsubtract\b/gi, '-')
     .replace(/\bwithout\b/gi, '-')
     .replace(/\bmul\b/gi, '*')
     .replace(/\bmod\b/gi, '%')
+
+  if (!hasConditional) {
+    result = result.replace(/\band\b/gi, '+')
+  }
+
+  return result
 }
 
 function preprocessPercentages(line: string): string {
-  return line
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+of\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / ($1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+on\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / (1 + $1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+off\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
-      '$2 / (1 - $1 / 100)',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+of\s+(\d+(?:\.\d+)?)/gi,
-      '($1 / $2) * 100',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+on\s+(\d+(?:\.\d+)?)/gi,
-      '(($1 - $2) / $2) * 100',
-    )
-    .replace(
-      /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+off\s+(\d+(?:\.\d+)?)/gi,
-      '(($2 - $1) / $2) * 100',
-    )
-    .replace(/(\d+(?:\.\d+)?)%\s+on\s+(\d+(?:\.\d+)?)/gi, '$2 * (1 + $1 / 100)')
-    .replace(
-      /(\d+(?:\.\d+)?)%\s+off\s+(\d+(?:\.\d+)?)/gi,
-      '$2 * (1 - $1 / 100)',
-    )
-    .replace(/(\d+(?:\.\d+)?)%\s+of\s+(\d+(?:\.\d+)?)/gi, '$1 / 100 * $2')
-    .replace(/(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 + $2 / 100)')
-    .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 - $2 / 100)')
-    .replace(/(\d+(?:\.\d+)?)%(?!\s*\w)/g, '$1 / 100')
+  return (
+    line
+      // Z is X/Y of what → Z / (X/Y)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\s+of\s+what\b/gi,
+        '$1 / ($2 / $3)',
+      )
+      // X/Y of Z → (X/Y) * Z (fraction of value)
+      .replace(
+        /(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\b/gi,
+        '($1 / $2) * $3',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+of\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / ($1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+on\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / (1 + $1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+off\s+what\s+is\s+(\d+(?:\.\d+)?)/gi,
+        '$2 / (1 - $1 / 100)',
+      )
+      // X is Y% of what → X / (Y / 100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+of\s+what\b/gi,
+        '$1 / ($2 / 100)',
+      )
+      // X is Y% on what → X / (1 + Y/100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+on\s+what\b/gi,
+        '$1 / (1 + $2 / 100)',
+      )
+      // X is Y% off what → X / (1 - Y/100)
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+(\d+(?:\.\d+)?)%\s+off\s+what\b/gi,
+        '$1 / (1 - $2 / 100)',
+      )
+      // X to Y is what % → ((Y - X) / X) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+is\s+what\s*%/gi,
+        '(($2 - $1) / $1) * 100',
+      )
+      // X to Y as % → ((Y - X) / X) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+as\s*%/gi,
+        '(($2 - $1) / $1) * 100',
+      )
+      // X is what % off Y → ((Y - X) / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '(($2 - $1) / $2) * 100',
+      )
+      // X is what % on Y → ((X - Y) / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '(($1 - $2) / $2) * 100',
+      )
+      // X is what % of Y → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s+is\s+what\s*%\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '($1 / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '($1 / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '(($1 - $2) / $2) * 100',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+a\s+%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '(($2 - $1) / $2) * 100',
+      )
+      // X/Y as % → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s+as\s*%/gi,
+        '($1 / $2) * 100',
+      )
+      // X/Y % → (X / Y) * 100
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*%(?!\s*\w)/g,
+        '($1 / $2) * 100',
+      )
+      // 0.35 as % → 0.35 * 100
+      .replace(/(\d+(?:\.\d+)?)\s+as\s*%/gi, '$1 * 100')
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '$2 * (1 + $1 / 100)',
+      )
+      .replace(
+        /(\d+(?:\.\d+)?)%\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '$2 * (1 - $1 / 100)',
+      )
+      .replace(/(\d+(?:\.\d+)?)%\s+of\s+(\d+(?:\.\d+)?)/gi, '$1 / 100 * $2')
+      .replace(
+        /(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)%/g,
+        '$1 * (1 + $2 / 100)',
+      )
+      .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)%/g, '$1 * (1 - $2 / 100)')
+      .replace(/(\d+(?:\.\d+)?)%(?!\s*\w)/g, '$1 / 100')
+  )
 }
 
 function preprocessConversions(line: string): string {
@@ -532,18 +748,24 @@ export function hasCurrencyExpression(line: string) {
 export function preprocessMathExpression(line: string) {
   let processed = preprocessLabels(line)
   processed = preprocessQuotedText(processed)
+  processed = preprocessReverseConversion(processed)
+  processed = preprocessShorthandConversion(processed)
   processed = preprocessGroupedNumbers(processed)
   processed = preprocessDegreeSigns(processed)
-  processed = preprocessTimeUnits(processed)
   processed = preprocessUnitAliases(processed)
+  processed = preprocessTimeUnits(processed)
   processed = preprocessCurrencySymbols(processed)
   processed = preprocessCurrencyWords(processed)
   processed = preprocessScales(processed)
   processed = preprocessAreaVolumeAliases(processed)
   processed = preprocessStackedUnits(processed)
+  processed = preprocessRates(processed)
+  processed = preprocessMultipliers(processed)
+  processed = preprocessPhraseFunctions(processed)
   processed = preprocessFunctionSyntax(processed)
   processed = preprocessFunctionConversions(processed)
   processed = preprocessImplicitMultiplication(processed)
+  processed = preprocessConditionals(processed)
   processed = preprocessWordOperators(processed)
   processed = inferAdditiveUnits(processed)
   processed = preprocessPercentages(processed)

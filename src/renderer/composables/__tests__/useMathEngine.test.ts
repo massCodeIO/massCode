@@ -55,6 +55,27 @@ describe('arithmetic', () => {
   it('complex expression', () => expectValue('2 + 3 * 4 - 1', '13'))
   it('implicit multiplication', () => expectValue('6 (3)', '18'))
   it('grouped thousands', () => expectValue('5 300', '5,300'))
+  it('grouped thousands with unit suffix', () => {
+    const result = evalLine('1km + 1 000m')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('km')
+  })
+})
+
+describe('rounding', () => {
+  it('to 2 dp', () => expectValue('1/3 to 2 dp', '0.33'))
+  it('to 5 digits', () => expectValue('pi to 5 digits', '3.14159'))
+  it('rounded', () => expectValue('5.5 rounded', '6'))
+  it('rounded down', () => expectValue('5.5 rounded down', '5'))
+  it('rounded up', () => expectValue('5.5 rounded up', '6'))
+  it('to nearest 10', () => expectValue('37 to nearest 10', '40'))
+  it('rounded to nearest thousand', () =>
+    expectValue('2100 to nearest thousand', '2,000'))
+  it('rounded up to nearest 5', () =>
+    expectValue('21 rounded up to nearest 5', '25'))
+  it('rounded down to nearest 3', () =>
+    expectValue('17 rounded down to nearest 3', '15'))
+  it('to nearest hundred', () => expectValue('490 to nearest hundred', '500'))
 })
 
 describe('math aliases', () => {
@@ -64,6 +85,33 @@ describe('math aliases', () => {
   it('arctan', () => expectNumericClose('arctan(1)', Math.PI / 4, 4))
   it('root 2 (8)', () => expectNumericClose('root 2 (8)', Math.sqrt(8), 4))
   it('log 2 (8)', () => expectNumericClose('log 2 (8)', 3, 4))
+  it('exp(1)', () => expectNumericClose('exp(1)', Math.E, 4))
+  it('log2(8)', () => expectNumericClose('log2(8)', 3, 4))
+  it('log10(1000)', () => expectNumericClose('log10(1000)', 3, 4))
+
+  // Phrase syntax
+  it('square root of 81', () => expectValue('square root of 81', '9'))
+  it('cube root of 27', () => expectValue('cube root of 27', '3'))
+  it('root 5 of 100', () => expectNumericClose('root 5 of 100', 2.5119, 3))
+  it('log 20 base 4', () => expectNumericClose('log 20 base 4', 2.161, 2))
+  it('81 is 9 to what power', () =>
+    expectNumericClose('81 is 9 to what power', 2, 2))
+  it('27 is 3 to the what', () =>
+    expectNumericClose('27 is 3 to the what', 3, 2))
+
+  // Degree trig functions
+  it('sind(90)', () => expectNumericClose('sind(90)', 1, 4))
+  it('cosd(0)', () => expectNumericClose('cosd(0)', 1, 4))
+  it('tand(45)', () => expectNumericClose('tand(45)', 1, 4))
+  it('asind(0.5)', () => expectNumericClose('asind(0.5)', 30, 4))
+  it('acosd(0.5)', () => expectNumericClose('acosd(0.5)', 60, 4))
+  it('atand(1)', () => expectNumericClose('atand(1)', 45, 4))
+  it('sin(90 degrees)', () => expectNumericClose('sin(90 degrees)', 1, 4))
+
+  // Hyperbolic inverse
+  it('asinh(1)', () => expectNumericClose('asinh(1)', 0.8814, 3))
+  it('acosh(2)', () => expectNumericClose('acosh(2)', 1.317, 2))
+  it('atanh(0.5)', () => expectNumericClose('atanh(0.5)', 0.5493, 3))
 })
 
 describe('word operators', () => {
@@ -79,6 +127,10 @@ describe('word operators', () => {
   it('divide by', () => expectValue('100 divide by 4', '25'))
   it('mul', () => expectValue('5 mul 6', '30'))
   it('mod', () => expectValue('17 mod 5', '2'))
+  it('to the power of', () => expectValue('3 to the power of 2', '9'))
+  it('remainder of X divided by Y', () =>
+    expectValue('remainder of 21 divided by 5', '1'))
+  it('divided by', () => expectValue('1000 divided by 200', '5'))
 
   it('does not replace words inside variable names', () => {
     const results = evalLines('width = 100\nwidth * 2')
@@ -154,6 +206,69 @@ describe('percentage advanced', () => {
   it('Y% of what is X', () => expectNumericClose('5% of what is 6', 120))
   it('Y% on what is X', () => expectNumericClose('5% on what is 6', 5.71))
   it('Y% off what is X', () => expectNumericClose('5% off what is 6', 6.32))
+
+  // Percentage change
+  it('X to Y is what %', () => expectNumericClose('50 to 75 is what %', 50))
+  it('X to Y as %', () => expectNumericClose('40 to 90 as %', 125))
+  it('X is what % off Y', () =>
+    expectNumericClose('180 is what % off 200', 10))
+  it('X is what % on Y', () => expectNumericClose('180 is what % on 150', 20))
+  it('X is what % of Y', () => expectNumericClose('20 is what % of 200', 10))
+  it('X as a % of Y (alt)', () => expectNumericClose('20 as a % of 200', 10))
+
+  // Reverse lookup: X is Y% of/on/off what
+  it('X is Y% of what', () => expectNumericClose('20 is 10% of what', 200))
+  it('X is Y% on what', () => expectNumericClose('220 is 10% on what', 200))
+  it('X is Y% off what', () => expectNumericClose('180 is 10% off what', 200))
+
+  // Decimal/fraction to percentage
+  it('0.35 as %', () => expectNumericClose('0.35 as %', 35))
+  it('X/Y as %', () => expectNumericClose('20/200 as %', 10))
+  it('X/Y %', () => expectNumericClose('20/200 %', 10))
+})
+
+describe('fractions', () => {
+  it('2/10 as fraction', () => {
+    const result = evalLine('2/10 as fraction')
+    expect(result.value).toBe('1/5')
+  })
+  it('50% as fraction', () => {
+    const result = evalLine('50% as fraction')
+    expect(result.value).toBe('1/2')
+  })
+  it('2/3 of 600', () => expectNumericClose('2/3 of 600', 400))
+  it('50 is 1/5 of what', () => expectNumericClose('50 is 1/5 of what', 250))
+})
+
+describe('multipliers', () => {
+  it('20/5 as multiplier', () => {
+    const result = evalLine('20/5 as multiplier')
+    expect(result.value).toBe('4x')
+  })
+  it('50 as x of 5', () => {
+    const result = evalLine('50 as x of 5')
+    expect(result.value).toBe('10x')
+  })
+  it('2 as multiplier of 1', () => {
+    const result = evalLine('2 as multiplier of 1')
+    expect(result.value).toBe('2x')
+  })
+  it('2 as multiplier on 1', () => {
+    const result = evalLine('2 as multiplier on 1')
+    expect(result.value).toBe('1x')
+  })
+  it('1 as x off 2', () => {
+    const result = evalLine('1 as x off 2')
+    expect(result.value).toBe('0.5x')
+  })
+  it('50 to 75 is what x', () => {
+    const result = evalLine('50 to 75 is what x')
+    expect(result.value).toBe('1.5x')
+  })
+  it('20 to 40 as x', () => {
+    const result = evalLine('20 to 40 as x')
+    expect(result.value).toBe('2x')
+  })
 })
 
 describe('scales', () => {
@@ -369,6 +484,113 @@ describe('unit conversion', () => {
     expect(result.value).toContain('gram')
     expectNumericClose('1 carat to gram', 0.2, 2)
   })
+
+  // Speed
+  it('60 mph to m/s', () => {
+    const result = evalLine('60 mph to m/s')
+    expect(result.type).toBe('unit')
+    expectNumericClose('60 mph to m/s', 26.82, 1)
+  })
+  it('100 km/h to mph', () => {
+    const result = evalLine('100 km/h to mph')
+    expect(result.type).toBe('unit')
+    expectNumericClose('100 km/h to mph', 62.14, 1)
+  })
+  it('10 knots to km/h', () => {
+    expectNumericClose('10 knots to kmh', 18.52, 1)
+  })
+
+  // Energy
+  it('1000 cal to J', () => {
+    expectNumericClose('1000 calorie to J', 4184, 0)
+  })
+  it('1 kcal to calorie', () => {
+    expectNumericClose('1 kcal to calorie', 1000, 0)
+  })
+
+  // Maritime & Astro
+  it('1 fathom to m', () => {
+    expectNumericClose('1 fathom to m', 1.8288, 3)
+  })
+  it('1 light year to km', () => {
+    const result = evalLine('1 light year to km')
+    expect(result.type).toBe('unit')
+  })
+
+  // Mass
+  it('1000 mcg to gram', () => {
+    expectNumericClose('1000 mcg to gram', 0.001, 4)
+  })
+
+  // Volume
+  it('1 bushel to liter', () => {
+    expectNumericClose('1 bushel to liter', 35.24, 1)
+  })
+
+  // Frequency (native math.js)
+  it('1 kHz to Hz', () => {
+    expectNumericClose('1 kHz to Hz', 1000, 0)
+  })
+
+  // Power (native math.js)
+  it('1 hp to W', () => {
+    expectNumericClose('1 hp to W', 745.7, 0)
+  })
+
+  // Data IEC (native math.js)
+  it('1 GiB to MiB', () => {
+    expectNumericClose('1 GiB to MiB', 1024, 0)
+  })
+
+  // Angle
+  it('90 deg to rad', () => {
+    expectNumericClose('90 deg to rad', 1.5708, 3)
+  })
+
+  // Reverse conversion syntax
+  it('meters in 10 km', () => {
+    expectNumericClose('meters in 10 km', 10000, 0)
+  })
+  it('days in 3 weeks', () => {
+    expectNumericClose('days in 3 weeks', 21, 0)
+  })
+
+  // Shorthand conversion
+  it('km m (shorthand)', () => {
+    expectNumericClose('km m', 1000, 0)
+  })
+
+  // Larger unit wins (native math.js)
+  it('1km + 1000m = 2 km', () => {
+    const result = evalLine('1 km + 1000 m')
+    expect(result.value).toContain('km')
+  })
+
+  // Area from multiplication (native math.js)
+  it('10m * 10m = area', () => {
+    const result = evalLine('10 m * 10 m')
+    expect(result.type).toBe('unit')
+  })
+})
+
+describe('rates', () => {
+  it('$50/week * 12 weeks', () => {
+    const result = evalLine('$50/week * 12 weeks')
+    expect(result.type).toBe('unit')
+  })
+  it('30 hours at $30/hour', () => {
+    const result = evalLine('30 hours at $30/hour')
+    expect(result.type).toBe('unit')
+  })
+  it('implicit rate: $30 * 4 days = $120', () => {
+    const result = evalLine('$30 * 4 days')
+    expect(result.value).toBe('120 USD')
+    expect(result.type).toBe('unit')
+  })
+  it('$99 per week * 4 weeks', () => {
+    const result = evalLine('$99 per week * 4 weeks')
+    expect(result.type).toBe('unit')
+  })
 })
 
 describe('css units', () => {
@@ -456,10 +678,27 @@ describe('number format', () => {
   it('hex input', () => expectValue('0xFF', '255'))
   it('binary input', () => expectValue('0b1010', '10'))
   it('octal input', () => expectValue('0o377', '255'))
+  it('scientific notation input 1e5', () => expectValue('1e5', '100,000'))
+  it('scientific notation input 2.5e3', () => expectValue('2.5e3', '2,500'))
 
   it('0xFF in hex roundtrip', () => {
     const result = evalLine('0xFF in hex')
     expect(result.value).toBe('0xFF')
+  })
+
+  it('$100 as number', () => {
+    const result = evalLine('$100 as number')
+    expect(result.numericValue).toBe(100)
+  })
+
+  it('20% as dec', () => {
+    const result = evalLine('20% as dec')
+    expect(result.value).toBe('0.2')
+  })
+
+  it('50% to decimal', () => {
+    const result = evalLine('50% to decimal')
+    expect(result.value).toBe('0.5')
   })
 })
 
@@ -782,6 +1021,46 @@ describe('average and avg', () => {
   })
 })
 
+describe('median', () => {
+  it('median of odd count', () => {
+    const results = evalLines('10\n20\n30\nmedian')
+    expect(results[3].value).toBe('20')
+    expect(results[3].type).toBe('aggregate')
+  })
+
+  it('median of even count', () => {
+    const results = evalLines('10\n20\n30\n40\nmedian')
+    expect(results[4].value).toBe('25')
+  })
+
+  it('median resets after empty line', () => {
+    const results = evalLines('10\n20\n\n100\nmedian')
+    expect(results[4].value).toBe('100')
+  })
+})
+
+describe('count', () => {
+  it('count of lines above', () => {
+    const results = evalLines('10\n20\n30\ncount')
+    expect(results[3].value).toBe('3')
+    expect(results[3].type).toBe('aggregate')
+  })
+
+  it('count resets after empty line', () => {
+    const results = evalLines('10\n20\n\n5\ncount')
+    expect(results[4].value).toBe('1')
+  })
+})
+
+describe('inline aggregates', () => {
+  it('total of list', () => expectValue('total of 3, 4, 7 and 9', '23'))
+  it('average of list', () =>
+    expectNumericClose('average of 36, 42, 19 and 81', 44.5))
+  it('count of list', () => expectValue('count of 1, 2, 3, 4, 5', '5'))
+  it('median of list', () => expectValue('median of 10, 20 and 30', '20'))
+  it('sum of list', () => expectValue('sum of 10, 20, 30', '60'))
+})
+
 describe('comments', () => {
   it('// comment', () => {
     const result = evalLine('// This is a comment')
@@ -970,6 +1249,36 @@ describe('time zones', () => {
 describe('constants', () => {
   it('pi', () => expectNumericClose('pi', 3.14159, 4))
   it('e', () => expectNumericClose('e', 2.71828, 4))
+  it('tau', () => expectNumericClose('tau', 6.28318, 4))
+  it('phi', () => expectNumericClose('phi', 1.61803, 4))
+})
+
+describe('conditional logic', () => {
+  it('if-then-else (true branch)', () =>
+    expectValue('if 5 > 3 then 10 else 20', '10'))
+  it('if-then-else (false branch)', () =>
+    expectValue('if 5 < 3 then 10 else 20', '20'))
+  it('comparison ==', () => expectValue('5 == 5', 'true'))
+  it('comparison !=', () => expectValue('5 != 3', 'true'))
+  it('comparison >', () => expectValue('5 > 3', 'true'))
+  it('comparison <', () => expectValue('5 < 3', 'false'))
+  it('comparison >=', () => expectValue('5 >= 5', 'true'))
+  it('comparison <=', () => expectValue('3 <= 5', 'true'))
+  it('boolean true', () => expectValue('true', 'true'))
+  it('boolean false', () => expectValue('false', 'false'))
+  it('and operator', () => expectValue('true and false', 'false'))
+  it('or operator', () => expectValue('true or false', 'true'))
+  it('&& operator', () => expectValue('true && false', 'false'))
+  it('|| operator', () => expectValue('true || false', 'true'))
+  it('compound condition', () => expectValue('5 > 3 and 10 > 7', 'true'))
+  it('boolean assignment', () => {
+    const results = evalLines('x = true\nx and false')
+    expect(results[1].value).toBe('false')
+  })
+  it('postfix if', () => expectValue('42 if 5 > 3', '42'))
+  it('postfix if (false)', () => expectValue('42 if 5 < 3', '0'))
+  it('postfix unless', () => expectValue('42 unless 5 > 3', '0'))
+  it('postfix unless (false)', () => expectValue('42 unless 5 < 3', '42'))
 })
 
 describe('bitwise operations', () => {
@@ -978,6 +1287,87 @@ describe('bitwise operations', () => {
   it('XOR', () => expectValue('5 xor 3', '6'))
   it('left shift', () => expectValue('1 << 4', '16'))
   it('right shift', () => expectValue('16 >> 2', '4'))
+})
+
+describe('calendar calculations', () => {
+  it('days since a date', () => {
+    const result = evalLine('days since January 1')
+    expect(result.value).toContain('day')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days till a date', () => {
+    const result = evalLine('days till December 25')
+    expect(result.value).toContain('day')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days between two dates', () => {
+    const result = evalLine('days between March 1 and March 31')
+    expect(result.value).toBe('30 days')
+    expect(result.numericValue).toBe(30)
+  })
+
+  it('X from now', () => {
+    const result = evalLine('5 days from now')
+    expect(result.type).toBe('date')
+  })
+
+  it('X ago', () => {
+    const result = evalLine('3 days ago')
+    expect(result.type).toBe('date')
+  })
+
+  it('day of the week on date', () => {
+    const result = evalLine('day of the week on January 24, 1984')
+    expect(result.value).toBe('Tuesday')
+  })
+
+  it('weekday on date', () => {
+    const result = evalLine('weekday on March 9, 2024')
+    expect(result.value).toBe('Saturday')
+  })
+
+  it('week of year', () => {
+    const result = evalLine('week of year')
+    expect(result.numericValue).toBeGreaterThan(0)
+    expect(result.numericValue).toBeLessThanOrEqual(53)
+  })
+
+  it('week number on date', () => {
+    const result = evalLine('week number on March 12, 2021')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days in February 2020 (leap)', () => {
+    const result = evalLine('days in February 2020')
+    expect(result.value).toBe('29 days')
+  })
+
+  it('days in February 2021 (non-leap)', () => {
+    const result = evalLine('days in February 2021')
+    expect(result.value).toBe('28 days')
+  })
+
+  it('days in Q3', () => {
+    const result = evalLine('days in Q3')
+    expect(result.value).toBe('92 days')
+  })
+
+  it('3 weeks after March 14, 2019', () => {
+    const result = evalLine('3 weeks after March 14, 2019')
+    expect(result.type).toBe('date')
+  })
+
+  it('28 days before March 12', () => {
+    const result = evalLine('28 days before March 12')
+    expect(result.type).toBe('date')
+  })
+
+  it('current timestamp', () => {
+    const result = evalLine('current timestamp')
+    expect(result.numericValue).toBeGreaterThan(1000000000)
+  })
 })
 
 describe('error handling', () => {

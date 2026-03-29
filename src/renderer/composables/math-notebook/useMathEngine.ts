@@ -4,10 +4,12 @@ import type {
   LineResult,
   SpecialLineResult,
 } from './math-engine/types'
+import { evaluateCalendarLine } from './math-engine/calendar'
 import {
   DEFAULT_EM_IN_PX,
   DEFAULT_PPI,
   HUMANIZED_UNIT_NAMES,
+  SUPPORTED_CURRENCY_CODES,
 } from './math-engine/constants'
 import { evaluateCssLine } from './math-engine/css'
 import { formatMathDate, formatMathNumber } from './math-engine/format'
@@ -25,8 +27,124 @@ import {
 export type { LineResult } from './math-engine/types'
 
 interface FormatDirective {
-  format: 'hex' | 'bin' | 'oct' | 'sci' | null
+  format:
+    | 'hex'
+    | 'bin'
+    | 'oct'
+    | 'sci'
+    | 'number'
+    | 'dec'
+    | 'fraction'
+    | 'multiplier'
+    | null
   expression: string
+}
+
+interface RoundingDirective {
+  type:
+    | 'dp'
+    | 'round'
+    | 'ceil'
+    | 'floor'
+    | 'nearest'
+    | 'nearestCeil'
+    | 'nearestFloor'
+    | null
+  param: number
+  expression: string
+}
+
+const NEAREST_WORDS: Record<string, number> = {
+  ten: 10,
+  hundred: 100,
+  thousand: 1000,
+  million: 1000000,
+}
+
+function detectRoundingDirective(line: string): RoundingDirective {
+  const lower = line.toLowerCase()
+  let m: RegExpMatchArray | null
+
+  // "to N dp" / "to N digits"
+  m = lower.match(/\s+to\s+(\d+)\s+(?:dp|digits?)$/)
+  if (m) {
+    return {
+      type: 'dp',
+      param: Number(m[1]),
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  // "rounded up to nearest X" / "rounded down to nearest X"
+  m = lower.match(/\s+rounded\s+(up|down)\s+to\s+nearest\s+(\w+)$/)
+  if (m) {
+    const n = NEAREST_WORDS[m[2]] || Number(m[2])
+    if (n > 0) {
+      return {
+        type: m[1] === 'up' ? 'nearestCeil' : 'nearestFloor',
+        param: n,
+        expression: line.slice(0, m.index!).trim(),
+      }
+    }
+  }
+
+  // "rounded to nearest X" / "to nearest X"
+  m = lower.match(/\s+(?:rounded\s+)?to\s+nearest\s+(\w+)$/)
+  if (m) {
+    const n = NEAREST_WORDS[m[1]] || Number(m[1])
+    if (n > 0) {
+      return {
+        type: 'nearest',
+        param: n,
+        expression: line.slice(0, m.index!).trim(),
+      }
+    }
+  }
+
+  // "rounded up" / "rounded down"
+  m = lower.match(/\s+rounded\s+(up|down)$/)
+  if (m) {
+    return {
+      type: m[1] === 'up' ? 'ceil' : 'floor',
+      param: 0,
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  // "rounded"
+  m = lower.match(/\s+rounded$/)
+  if (m) {
+    return {
+      type: 'round',
+      param: 0,
+      expression: line.slice(0, m.index!).trim(),
+    }
+  }
+
+  return { type: null, param: 0, expression: line }
+}
+
+function applyRounding(value: number, directive: RoundingDirective): number {
+  switch (directive.type) {
+    case 'dp': {
+      const factor = 10 ** directive.param
+      return Math.round(value * factor) / factor
+    }
+    case 'round':
+      return Math.round(value)
+    case 'ceil':
+      return Math.ceil(value)
+    case 'floor':
+      return Math.floor(value)
+    case 'nearest':
+      return Math.round(value / directive.param) * directive.param
+    case 'nearestCeil':
+      return Math.ceil(value / directive.param) * directive.param
+    case 'nearestFloor':
+      return Math.floor(value / directive.param) * directive.param
+    default:
+      return value
+  }
 }
 
 let activeCurrencyRates: Record<string, number> = {}
@@ -37,13 +155,69 @@ let math = createMathInstance(activeCurrencyRates)
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
 
+const STRIP_UNIT_SUFFIXES: Record<
+  string,
+  'number' | 'dec' | 'fraction' | 'multiplier'
+> = {
+  'as number': 'number',
+  'to number': 'number',
+  'as decimal': 'dec',
+  'to decimal': 'dec',
+  'as dec': 'dec',
+  'to dec': 'dec',
+  'as fraction': 'fraction',
+  'to fraction': 'fraction',
+  'as multiplier': 'multiplier',
+  'to multiplier': 'multiplier',
+}
+
+function gcd(a: number, b: number): number {
+  a = Math.abs(Math.round(a))
+  b = Math.abs(Math.round(b))
+  while (b) {
+    const t = b
+    b = a % b
+    a = t
+  }
+  return a
+}
+
+function toFraction(decimal: number): string {
+  if (Number.isInteger(decimal))
+    return `${decimal}/1`
+  const sign = decimal < 0 ? '-' : ''
+  const abs = Math.abs(decimal)
+  const precision = 1e10
+  const numerator = Math.round(abs * precision)
+  const denominator = precision
+  const divisor = gcd(numerator, denominator)
+  return `${sign}${numerator / divisor}/${denominator / divisor}`
+}
+
+function detectStripUnitDirective(line: string): FormatDirective {
+  const lower = line.toLowerCase()
+  for (const [suffix, format] of Object.entries(STRIP_UNIT_SUFFIXES)) {
+    if (lower.endsWith(suffix)) {
+      return {
+        format,
+        expression: line.slice(0, line.length - suffix.length).trim(),
+      }
+    }
+  }
+  return { format: null, expression: line }
+}
+
 function detectFormatDirective(line: string): FormatDirective {
-  const formatMap: Record<string, 'hex' | 'bin' | 'oct' | 'sci'> = {
+  const formatMap: Record<
+    string,
+    'hex' | 'bin' | 'oct' | 'sci' | 'multiplier'
+  > = {
     'in hex': 'hex',
     'in bin': 'bin',
     'in oct': 'oct',
     'in sci': 'sci',
     'in scientific': 'sci',
+    'to multiplier': 'multiplier',
   }
   const lower = line.toLowerCase()
 
@@ -63,6 +237,105 @@ function applyFormat(
   result: any,
   format: NonNullable<FormatDirective['format']>,
 ): LineResult {
+  if (format === 'multiplier') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: `${formatMathNumber(num, activeLocale, activeDecimalPlaces)}x`,
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
+  if (format === 'fraction') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: toFraction(num),
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
+  if (format === 'number' || format === 'dec') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: formatMathNumber(num, activeLocale, activeDecimalPlaces),
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
   const num
     = typeof result === 'number'
       ? result
@@ -110,8 +383,13 @@ function applyFormat(
   }
 }
 
+function humanizeUnitToken(unitId: string) {
+  const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
+  return displayUnit ? displayUnit.plural : unitId
+}
+
 function humanizeFormattedUnits(value: string) {
-  return value.replace(
+  let result = value.replace(
     /(-?\d[\d,]*(?:\.\d+)?)\s+([a-z][a-z0-9]*)\b/gi,
     (match, amountText: string, unitId: string) => {
       const numericAmount = Number.parseFloat(amountText.replace(/,/g, ''))
@@ -135,11 +413,25 @@ function humanizeFormattedUnits(value: string) {
       return `${formattedAmount} ${unitLabel}`
     },
   )
+
+  // Humanize remaining standalone unit tokens (e.g. in compound units like "USD mcday")
+  result = result.replace(
+    /\b(mc(?:second|minute|hour|day|week|month|year))\b/g,
+    (_, unitId: string) => {
+      return humanizeUnitToken(unitId)
+    },
+  )
+
+  return result
 }
 
 function formatResult(result: any): LineResult {
   if (result === undefined || result === null) {
     return { value: null, error: null, type: 'empty' }
+  }
+
+  if (typeof result === 'boolean') {
+    return { value: String(result), error: null, type: 'number' }
   }
 
   if (result instanceof Date) {
@@ -156,6 +448,47 @@ function formatResult(result: any): LineResult {
     && typeof result.toNumber === 'function'
     && result.units
   ) {
+    // Detect compound currency*time units (implicit rate result) and simplify
+    if (Array.isArray(result.units) && result.units.length === 2) {
+      const units = result.units as Array<{
+        unit: { name: string, value: number, base?: { key?: string } }
+        prefix: { value: number }
+        power: number
+      }>
+      const currencyUnit = units.find(
+        u =>
+          u.unit.base?.key?.includes('STUFF')
+          || SUPPORTED_CURRENCY_CODES.includes(u.unit.name),
+      )
+      const timeUnit = units.find(u => u.unit.base?.key === 'TIME')
+      if (
+        currencyUnit
+        && timeUnit
+        && currencyUnit.power === 1
+        && timeUnit.power === 1
+      ) {
+        try {
+          const rawValue = result.value as number
+          const currencyScale
+            = currencyUnit.unit.value * currencyUnit.prefix.value
+          const timeScale = timeUnit.unit.value * timeUnit.prefix.value
+          const currencyAmount
+            = (rawValue / (currencyScale * timeScale)) * currencyScale
+          const simplified = math.unit(currencyAmount, currencyUnit.unit.name)
+          return {
+            value: humanizeFormattedUnits(
+              math.format(simplified, { precision: activeDecimalPlaces }),
+            ),
+            error: null,
+            type: 'unit',
+          }
+        }
+        catch {
+          // Fall through to default formatting
+        }
+      }
+    }
+
     return {
       value: humanizeFormattedUnits(
         math.format(result, { precision: activeDecimalPlaces }),
@@ -495,7 +828,112 @@ export function useMathEngine() {
         continue
       }
 
+      if (lowerTrimmed === 'median') {
+        if (numericBlock.length > 0) {
+          const sorted = [...numericBlock].sort((a, b) => a - b)
+          const mid = Math.floor(sorted.length / 2)
+          const median
+            = sorted.length % 2 !== 0
+              ? sorted[mid]
+              : (sorted[mid - 1] + sorted[mid]) / 2
+          const formatted = formatResult(median)
+          formatted.type = 'aggregate'
+          results.push(formatted)
+          prevResult = median
+          numericBlock.push(median)
+        }
+        else {
+          results.push(formatResult(0))
+        }
+        continue
+      }
+
+      if (lowerTrimmed === 'count') {
+        const count = numericBlock.length
+        const formatted = formatResult(count)
+        formatted.type = 'aggregate'
+        results.push(formatted)
+        prevResult = count
+        numericBlock.push(count)
+        continue
+      }
+
+      const inlineAggregateMatch = lowerTrimmed.match(
+        /^(total|sum|average|avg|median|count)\s+of\s+/i,
+      )
+      if (inlineAggregateMatch) {
+        const fn = inlineAggregateMatch[1].toLowerCase()
+        const listStr = trimmed.slice(inlineAggregateMatch[0].length)
+        const items = listStr
+          .replace(/\band\b/gi, ',')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+          .map(Number)
+          .filter(n => !Number.isNaN(n))
+
+        if (items.length > 0) {
+          let value: number
+          if (fn === 'total' || fn === 'sum') {
+            value = items.reduce((a, b) => a + b, 0)
+          }
+          else if (fn === 'average' || fn === 'avg') {
+            value = items.reduce((a, b) => a + b, 0) / items.length
+          }
+          else if (fn === 'median') {
+            const sorted = [...items].sort((a, b) => a - b)
+            const mid = Math.floor(sorted.length / 2)
+            value
+              = sorted.length % 2 !== 0
+                ? sorted[mid]
+                : (sorted[mid - 1] + sorted[mid]) / 2
+          }
+          else {
+            value = items.length
+          }
+          const formatted = formatResult(value)
+          formatted.type = 'aggregate'
+          results.push(formatted)
+          prevResult = value
+          numericBlock.push(value)
+          continue
+        }
+      }
+
       try {
+        const roundingDirective = detectRoundingDirective(trimmed)
+        if (roundingDirective.type) {
+          const roundProcessed = preprocessMathExpression(
+            roundingDirective.expression,
+          )
+          const roundRaw = math.evaluate(roundProcessed, scope)
+          const num = getNumericValue(roundRaw)
+          if (num !== null) {
+            const rounded = applyRounding(num, roundingDirective)
+            const formatted = formatResult(rounded)
+            results.push(formatted)
+            prevResult = rounded
+            numericBlock.push(rounded)
+            continue
+          }
+        }
+
+        const stripDirective = detectStripUnitDirective(trimmed)
+        if (stripDirective.format) {
+          const stripProcessed = preprocessMathExpression(
+            stripDirective.expression,
+          )
+          const stripResult = math.evaluate(stripProcessed, scope)
+          const formatted = applyFormat(stripResult, stripDirective.format)
+          results.push(formatted)
+          prevResult = stripResult
+          const numericValue = getNumericValue(stripResult)
+          if (numericValue !== null) {
+            numericBlock.push(numericValue)
+          }
+          continue
+        }
+
         if (
           currencyServiceState !== 'ready'
           && hasCurrencyExpression(trimmed)
@@ -538,6 +976,21 @@ export function useMathEngine() {
         if (timeZoneResult) {
           results.push(timeZoneResult.lineResult)
           prevResult = timeZoneResult.rawResult
+          continue
+        }
+
+        const calendarResult = evaluateCalendarLine(
+          trimmed,
+          currentDate,
+          activeLocale,
+        )
+        if (calendarResult) {
+          results.push(calendarResult.lineResult)
+          prevResult = calendarResult.rawResult
+          const numericValue = getNumericValue(calendarResult.rawResult)
+          if (numericValue !== null) {
+            numericBlock.push(numericValue)
+          }
           continue
         }
 
@@ -587,8 +1040,9 @@ export function useMathEngine() {
           continue
         }
 
-        const { format, expression } = detectFormatDirective(processed)
-        const toEvaluate = format ? expression : processed
+        const { format, expression: formatExpression }
+          = detectFormatDirective(processed)
+        const toEvaluate = format ? formatExpression : processed
         const result = math.evaluate(toEvaluate, scope)
 
         if (result === undefined) {

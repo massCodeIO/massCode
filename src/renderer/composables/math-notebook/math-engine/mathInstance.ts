@@ -163,6 +163,15 @@ export function createMathInstance(currencyRates: Record<string, number>) {
     aliases: ['bushels', 'bsh'],
   })
 
+  // Video
+  createUnitSafe(mathInstance, 'frame', {
+    aliases: ['frames'],
+  })
+  createUnitSafe(mathInstance, 'fps', {
+    definition: '1 frame/second',
+    aliases: [],
+  })
+
   for (const [code, rate] of Object.entries(currencyRates)) {
     if (code === 'USD')
       continue

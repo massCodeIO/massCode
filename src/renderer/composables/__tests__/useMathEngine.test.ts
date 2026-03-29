@@ -1649,6 +1649,29 @@ describe('workdays', () => {
   })
 })
 
+describe('video timecode', () => {
+  it('30 fps * 3 minutes', () => {
+    const result = evalLine('30 fps * 3 minutes')
+    expect(result.type).toBe('unit')
+  })
+
+  it('timecode to frames: 00:30:10:00 @ 24 fps', () => {
+    const result = evalLine('00:30:10:00 @ 24 fps in frames')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('43,440')
+  })
+
+  it('timecode arithmetic: add 50 frames', () => {
+    const result = evalLine('03:10:20:05 at 30 fps + 50 frames')
+    expect(result.type).toBe('unit')
+  })
+
+  it('default 24 fps for timecode', () => {
+    const result = evalLine('00:00:01:00 in frames')
+    expect(result.value).toContain('24')
+  })
+})
+
 describe('misc functions', () => {
   it('larger of 100 and 200', () =>
     expectValue('larger of 100 and 200', '200'))

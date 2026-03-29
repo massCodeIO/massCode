@@ -214,6 +214,9 @@ export const knownUnitTokens = new Set([
   'bushel',
   'bushels',
   'bsh',
+  'frame',
+  'frames',
+  'fps',
   ...Object.keys(currencyWordNames),
 ])
 
@@ -409,6 +412,7 @@ export const HUMANIZED_UNIT_NAMES: Record<
   lightyear: { singular: 'light year', plural: 'light years' },
   microgram: { singular: 'microgram', plural: 'micrograms' },
   bushel: { singular: 'bushel', plural: 'bushels' },
+  frame: { singular: 'frame', plural: 'frames' },
 }
 
 export const MONTH_NAME_TO_INDEX: Record<string, number> = {

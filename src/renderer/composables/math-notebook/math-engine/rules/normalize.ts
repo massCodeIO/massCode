@@ -167,7 +167,37 @@ export const laptimeInput: RewriteRule = {
   },
 }
 
+export const timecodeInput: RewriteRule = {
+  id: 'timecode-input',
+  category: 'normalize',
+  priority: 45,
+  apply: (ctx) => {
+    // "HH:MM:SS:FF" (4 components) with optional "at/@ N fps"
+    // Convert to total frames: (H*3600 + M*60 + S) * fps + FF
+    const fpsMatch = ctx.line.match(/(?:at|@)\s*(\d+)\s*fps/i)
+    const fpsValue = fpsMatch ? Number(fpsMatch[1]) : 24
+
+    const line = ctx.line
+      .replace(/(?:at|@)\s*\d+\s*fps/gi, '') // remove fps declaration
+      .replace(
+        /\b(\d{1,2}):(\d{2}):(\d{2}):(\d{1,3})\b/g,
+        (_match, h: string, m: string, s: string, f: string) => {
+          const totalFrames
+            = (Number(h) * 3600 + Number(m) * 60 + Number(s)) * fpsValue
+              + Number(f)
+          return `${totalFrames} frame`
+        },
+      )
+      .trim()
+
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
 export const normalizeRules: RewriteRule[] = [
+  timecodeInput,
   shorthandTimespan,
   laptimeInput,
   groupedNumbers,

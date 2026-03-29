@@ -1093,6 +1093,8 @@ describe('time zones', () => {
 describe('constants', () => {
   it('pi', () => expectNumericClose('pi', 3.14159, 4))
   it('e', () => expectNumericClose('e', 2.71828, 4))
+  it('tau', () => expectNumericClose('tau', 6.28318, 4))
+  it('phi', () => expectNumericClose('phi', 1.61803, 4))
 })
 
 describe('bitwise operations', () => {

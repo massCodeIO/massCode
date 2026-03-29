@@ -1,6 +1,6 @@
 import type { LineResult, SpecialLineResult } from './types'
 import { MONTH_NAME_TO_INDEX, timeZoneAliases } from './constants'
-import { splitByKeyword } from './preprocess'
+import { splitByKeyword } from './utils'
 
 interface ParsedTemporalExpression {
   date: Date

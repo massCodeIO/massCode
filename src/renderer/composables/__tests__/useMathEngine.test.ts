@@ -1,6 +1,5 @@
 /* eslint-disable test/prefer-lowercase-title */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { preprocessMathExpression } from '../math-notebook/math-engine/preprocess'
 import { useMathEngine } from '../math-notebook/useMathEngine'
 
 const TEST_CURRENCY_RATES = {
@@ -334,6 +333,14 @@ describe('currency', () => {
     expect(result.error).toBe('Currency rates service unavailable')
   })
 
+  it('does not treat pound weight as currency while loading', () => {
+    setCurrencyServiceState('loading')
+
+    const result = evalLine('1 pound to lb')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('lb')
+  })
+
   it('$ symbol', () => {
     const result = evalLine('$30')
     expect(result.type).toBe('unit')
@@ -382,6 +389,24 @@ describe('currency', () => {
     expect(result.type).toBe('unit')
     expect(result.value).toContain('USD')
     expectNumericClose('5 dollars + 10 dollars', 15)
+  })
+})
+
+describe('modifier compatibility', () => {
+  it('returns controlled error for timezone format modifier', () => {
+    const result = evalLine('time in Paris in hex')
+    expect(result.type).toBe('empty')
+    expect(result.error).toBe(
+      'Modifier is not supported for this expression type',
+    )
+  })
+
+  it('returns controlled error for css rounding modifier', () => {
+    const result = evalLine('12 pt in px rounded')
+    expect(result.type).toBe('empty')
+    expect(result.error).toBe(
+      'Modifier is not supported for this expression type',
+    )
   })
 })
 
@@ -961,10 +986,6 @@ describe('mixed currency and plain number', () => {
     const result = evalLine('$100 minus 10')
     expect(result.value).toContain('90')
     expect(result.type).toBe('unit')
-  })
-
-  it('does not infer currency for percentage operands', () => {
-    expect(preprocessMathExpression('$100 + 10%')).toBe('100 USD + 10 / 100')
   })
 
   it('keeps trailing conversion on the whole inferred expression', () => {

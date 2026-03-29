@@ -485,13 +485,10 @@ function computeTimeZoneDifference(
   tz2: string,
   now: Date,
   options: TimeZoneDifferenceOptions,
-  absolute = false,
 ): SpecialLineResult {
-  let diffHours
+  const diffHours
     = (getTimeZoneOffsetMinutes(now, tz1) - getTimeZoneOffsetMinutes(now, tz2))
       / 60
-  if (absolute)
-    diffHours = Math.abs(diffHours)
   const result = options.createHourUnit(diffHours)
   return {
     lineResult: options.formatResult(result),
@@ -520,7 +517,7 @@ export function evaluateTimeZoneDifferenceLine(
         rest.slice(andIdx + separator[0].length).trim(),
       )
       if (tz1 && tz2) {
-        return computeTimeZoneDifference(tz1, tz2, now, options, true)
+        return computeTimeZoneDifference(tz1, tz2, now, options)
       }
     }
   }

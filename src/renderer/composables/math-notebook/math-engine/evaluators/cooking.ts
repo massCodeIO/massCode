@@ -204,9 +204,10 @@ function findSubstance(text: string): { name: string, density: number } | null {
 function formatResult(
   value: number,
   unit: string,
+  locale: string,
   decimals = 2,
 ): CookingResult {
-  const formatted = value.toLocaleString('en-US', {
+  const formatted = value.toLocaleString(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })
@@ -221,7 +222,10 @@ function formatResult(
   }
 }
 
-export function evaluateCookingLine(line: string): CookingResult | null {
+export function evaluateCookingLine(
+  line: string,
+  locale = 'en-US',
+): CookingResult | null {
   const lower = line.toLowerCase().trim()
 
   // "density of X"
@@ -268,7 +272,7 @@ export function evaluateCookingLine(line: string): CookingResult | null {
 
     if (massUnit && substance && volumeUnit) {
       const volumeInMl = (amount * massUnit) / substance.density
-      return formatResult(volumeInMl / volumeUnit, targetUnit)
+      return formatResult(volumeInMl / volumeUnit, targetUnit, locale)
     }
   }
 
@@ -284,7 +288,7 @@ export function evaluateCookingLine(line: string): CookingResult | null {
 
     if (volumeUnit && substance && massUnit) {
       const massInGrams = amount * volumeUnit * substance.density
-      return formatResult(massInGrams / massUnit, targetUnit, 0)
+      return formatResult(massInGrams / massUnit, targetUnit, locale, 0)
     }
   }
 

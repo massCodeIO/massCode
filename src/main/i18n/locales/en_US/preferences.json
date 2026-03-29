@@ -134,7 +134,8 @@
       "description": "Cached for 1 hour.",
       "refresh": "Refresh",
       "refreshing": "Refreshing...",
-      "refreshed": "Currency rates updated"
+      "refreshed": "Currency rates updated",
+      "refreshError": "Failed to update currency rates"
     },
     "cryptoRates": {
       "label": "Crypto Rates",

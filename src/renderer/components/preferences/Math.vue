@@ -86,7 +86,7 @@ async function refreshFiatRates() {
     toast(i18n.t('preferences:math.currencyRates.refreshed'))
   }
   catch {
-    toast(i18n.t('preferences:math.currencyRates.refreshed'))
+    toast(i18n.t('preferences:math.currencyRates.refreshError'))
   }
   finally {
     isRefreshingFiat.value = false

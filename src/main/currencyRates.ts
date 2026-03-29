@@ -112,22 +112,26 @@ export async function getCurrencyRates(): Promise<CurrencyRatesPayload> {
       fetchCryptoRates(),
     ])
 
-    const rates: Record<string, number> = {}
+    const freshRates: Record<string, number> = {}
 
     if (fiatRates.status === 'fulfilled') {
-      Object.assign(rates, fiatRates.value)
+      Object.assign(freshRates, fiatRates.value)
     }
 
     if (cryptoRates.status === 'fulfilled') {
-      Object.assign(rates, cryptoRates.value)
+      Object.assign(freshRates, cryptoRates.value)
     }
 
-    if (Object.keys(rates).length === 0) {
+    if (Object.keys(freshRates).length === 0) {
       throw new Error('No rates fetched')
     }
 
+    // Merge with previous cache so partial fetch doesn't lose existing rates
+    const previousRates = cached?.rates || {}
+    const mergedRates = normalizeRates({ ...previousRates, ...freshRates })
+
     const payload = {
-      rates: normalizeRates(rates),
+      rates: mergedRates,
       fetchedAt: Date.now(),
     }
 

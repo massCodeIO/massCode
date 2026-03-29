@@ -53,8 +53,8 @@ const CALENDAR_PREFIXES = [
   /^\$[\d,.]+\s+invested\s/,
   // Cooking
   /^density\s+of\s/,
-  /^\d+(?:\.\d+)?\s*(?:g|gram|grams|kg|oz|ounce|ounces|lb|pound|pounds)\s+\w.*(?:[\n\r\u2028\u2029]\s*|[\t\v\f \xA0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF])in\s+/,
-  /^\d+(?:\.\d+)?\s+(?:cups?|tablespoons?|tbsp|teaspoons?|tsp)\s+\w.*(?:[\n\r\u2028\u2029]\s*|[\t\v\f \xA0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF])in\s+/,
+  /^\d+(?:\.\d+)?\s*(?:g|gram|grams|kg|oz|ounce|ounces|lb|pound|pounds)\s+\w/,
+  /^\d+(?:\.\d+)?\s+(?:cups?|tablespoons?|tbsp|teaspoons?|tsp|pints?|quarts?|gallons?|liters?|litres?|ml|milliliters?)\s+\w/,
 ]
 
 const MONTH_TOKEN_RE

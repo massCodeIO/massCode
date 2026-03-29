@@ -5,17 +5,17 @@ interface FinanceResult {
   rawResult: number
 }
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString('en-US', {
+function formatCurrency(value: number, locale: string): string {
+  return value.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
 }
 
-function result(value: number): FinanceResult {
+function currencyResult(value: number, locale: string): FinanceResult {
   return {
     lineResult: {
-      value: `$${formatCurrency(value)}`,
+      value: `$${formatCurrency(value, locale)}`,
       error: null,
       type: 'number',
       numericValue: value,
@@ -24,8 +24,8 @@ function result(value: number): FinanceResult {
   }
 }
 
-function percentResult(value: number): FinanceResult {
-  const formatted = value.toLocaleString('en-US', {
+function percentResult(value: number, locale: string): FinanceResult {
+  const formatted = value.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
@@ -40,8 +40,8 @@ function percentResult(value: number): FinanceResult {
   }
 }
 
-function multiplierResult(value: number): FinanceResult {
-  const formatted = value.toLocaleString('en-US', {
+function multiplierResult(value: number, locale: string): FinanceResult {
+  const formatted = value.toLocaleString(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })
@@ -80,7 +80,10 @@ function getCompoundingN(text: string): number {
   return 1 // yearly
 }
 
-export function evaluateFinanceLine(line: string): FinanceResult | null {
+export function evaluateFinanceLine(
+  line: string,
+  locale = 'en-US',
+): FinanceResult | null {
   const lower = line.toLowerCase()
 
   // Compound interest: "$1,000 after/for 3 years at 7%"
@@ -94,7 +97,7 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
     const n = getCompoundingN(lower)
     if (principal !== null) {
       const total = principal * (1 + rate / n) ** (n * years)
-      return result(total)
+      return currencyResult(total, locale)
     }
   }
 
@@ -109,7 +112,7 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
     const n = getCompoundingN(lower)
     if (principal !== null) {
       const total = principal * (1 + rate / n) ** (n * years)
-      return result(total - principal)
+      return currencyResult(total - principal, locale)
     }
   }
 
@@ -123,7 +126,7 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
       const invested = parseAmount(amounts[0])
       const returned = parseAmount(amounts[1])
       if (invested !== null && returned !== null && invested > 0) {
-        return multiplierResult(returned / invested)
+        return multiplierResult(returned / invested, locale)
       }
     }
   }
@@ -140,7 +143,7 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
       const returned = parseAmount(amounts[1])
       if (invested !== null && returned !== null && invested > 0) {
         const annualReturn = ((returned / invested) ** (1 / years) - 1) * 100
-        return percentResult(annualReturn)
+        return percentResult(annualReturn, locale)
       }
     }
   }
@@ -154,7 +157,7 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
     const years = Number(pvMatch[1])
     const rate = Number(pvMatch[2]) / 100
     if (fv !== null) {
-      return result(fv / (1 + rate) ** years)
+      return currencyResult(fv / (1 + rate) ** years, locale)
     }
   }
 
@@ -174,7 +177,6 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
       const totalMonths = years * 12
 
       if (type === 'repayment') {
-        // Amortizing loan: M = P * [r(1+r)^n] / [(1+r)^n - 1]
         const monthlyPayment
           = monthlyRate > 0
             ? (principal * (monthlyRate * (1 + monthlyRate) ** totalMonths))
@@ -183,17 +185,16 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
 
         switch (period) {
           case 'monthly':
-            return result(monthlyPayment)
+            return currencyResult(monthlyPayment, locale)
           case 'daily':
-            return result((monthlyPayment * 12) / 365)
+            return currencyResult((monthlyPayment * 12) / 365, locale)
           case 'annual':
-            return result(monthlyPayment * 12)
+            return currencyResult(monthlyPayment * 12, locale)
           case 'total':
-            return result(monthlyPayment * totalMonths)
+            return currencyResult(monthlyPayment * totalMonths, locale)
         }
       }
       else {
-        // Interest only: total interest = total repayment - principal
         const monthlyPayment
           = monthlyRate > 0
             ? (principal * (monthlyRate * (1 + monthlyRate) ** totalMonths))
@@ -203,13 +204,13 @@ export function evaluateFinanceLine(line: string): FinanceResult | null {
         const totalInterest = monthlyPayment * totalMonths - principal
         switch (period) {
           case 'total':
-            return result(totalInterest)
+            return currencyResult(totalInterest, locale)
           case 'annual':
-            return result(totalInterest / years)
+            return currencyResult(totalInterest / years, locale)
           case 'monthly':
-            return result(totalInterest / totalMonths)
+            return currencyResult(totalInterest / totalMonths, locale)
           case 'daily':
-            return result(totalInterest / (years * 365))
+            return currencyResult(totalInterest / (years * 365), locale)
         }
       }
     }

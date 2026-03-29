@@ -83,7 +83,7 @@ export function evaluatePrimaryIntent(
       }
 
       // Finance calculations
-      const financeResult = evaluateFinanceLine(trimmed)
+      const financeResult = evaluateFinanceLine(trimmed, activeLocale)
       if (financeResult) {
         return toEvaluatedLine(
           financeResult.lineResult,
@@ -93,7 +93,7 @@ export function evaluatePrimaryIntent(
       }
 
       // Cooking calculations
-      const cookingResult = evaluateCookingLine(trimmed)
+      const cookingResult = evaluateCookingLine(trimmed, activeLocale)
       if (cookingResult) {
         return toEvaluatedLine(
           cookingResult.lineResult,

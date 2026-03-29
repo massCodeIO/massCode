@@ -568,6 +568,21 @@ describe('unit conversion', () => {
   })
 })
 
+describe('rates', () => {
+  it('$50/week * 12 weeks', () => {
+    const result = evalLine('$50/week * 12 weeks')
+    expect(result.type).toBe('unit')
+  })
+  it('30 hours at $30/hour', () => {
+    const result = evalLine('30 hours at $30/hour')
+    expect(result.type).toBe('unit')
+  })
+  it('$99 per week * 4 weeks', () => {
+    const result = evalLine('$99 per week * 4 weeks')
+    expect(result.type).toBe('unit')
+  })
+})
+
 describe('css units', () => {
   it('pt to px', () => expectNumericClose('12 pt in px', 16, 1))
   it('pt into px', () => expectNumericClose('12 pt into px', 16, 1))

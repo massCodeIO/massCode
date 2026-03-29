@@ -170,6 +170,25 @@ function preprocessAreaVolumeAliases(line: string): string {
   return line
 }
 
+function preprocessRates(line: string): string {
+  return (
+    line
+      // "X per Y" → "X / Y" (e.g. $99 per week → $99 / week)
+      .replace(/\bper\b/gi, '/')
+      // "X at Y/Z" where Y/Z is a rate → "X * Y / Z"
+      // "30 hours at $30/hour" → "30 hours * $30 / hour"
+      .replace(
+        /(\d+(?:\.\d+)?)\s+(\w+)\s+at\s+(\S+)\/(\w+)/gi,
+        '$1 $2 * $3 / $4',
+      )
+      // "X a day for Y" → "X / day * Y" (e.g. $24 a day for a year)
+      .replace(
+        /(\S+)\s+a\s+(day|week|month|year)\s+for\s+(?:a\s+)?(\S+)/gi,
+        '$1 / $2 * 1 $3',
+      )
+  )
+}
+
 function preprocessMultipliers(line: string): string {
   return (
     line
@@ -740,6 +759,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessScales(processed)
   processed = preprocessAreaVolumeAliases(processed)
   processed = preprocessStackedUnits(processed)
+  processed = preprocessRates(processed)
   processed = preprocessMultipliers(processed)
   processed = preprocessPhraseFunctions(processed)
   processed = preprocessFunctionSyntax(processed)

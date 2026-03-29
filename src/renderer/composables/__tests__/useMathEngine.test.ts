@@ -8,6 +8,12 @@ const TEST_CURRENCY_RATES = {
   GBP: 0.79,
   CAD: 1.36,
   RUB: 90,
+  AUD: 1.55,
+  NZD: 1.72,
+  HKD: 7.82,
+  JPY: 150,
+  SGD: 1.35,
+  TWD: 32.5,
 }
 
 const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
@@ -439,6 +445,39 @@ describe('currency', () => {
     const result = evalLine('30 EUR * 4 days')
     expect(result.type).toBe('unit')
     expect(result.value).toContain('EUR')
+  })
+})
+
+describe('currency prefixed symbols', () => {
+  it('CA$ symbol (CAD)', () => {
+    const result = evalLine('CA$100')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('CAD')
+  })
+
+  it('AU$ symbol (AUD)', () => {
+    const result = evalLine('AU$50')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('AUD')
+  })
+
+  it('HK$ symbol (HKD)', () => {
+    const result = evalLine('HK$200')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('HKD')
+  })
+
+  it('NZ$ symbol (NZD)', () => {
+    const result = evalLine('NZ$75')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('NZD')
+  })
+})
+
+describe('custom rates', () => {
+  it('50 EUR in USD at 1.05 USD/EUR', () => {
+    const result = evalLine('50 EUR in USD at 1.05 USD/EUR')
+    expect(result.value).toContain('52.5')
   })
 })
 

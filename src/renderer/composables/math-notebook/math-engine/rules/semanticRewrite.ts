@@ -305,7 +305,27 @@ export const miscPhrasesRule: RewriteRule = {
   },
 }
 
+export const customRateRule: RewriteRule = {
+  id: 'custom-rate',
+  category: 'semantic-rewrite',
+  priority: 50,
+  apply: (ctx) => {
+    // "50 EUR in USD at 1.05 USD/EUR" → "50 * 1.05"
+    // "50 EUR in RUB @ 80 RUB/EUR" → "50 * 80"
+    const match = ctx.line.match(
+      /^(\d+(?:\.\d+)?)\s+(\w+)\s+(?:in|to)\s+(\w+)\s+(?:at|@)\s+(\d+(?:\.\d+)?)\s+\w+\/\w+$/i,
+    )
+    if (!match)
+      return null
+    const amount = match[1]
+    const rate = match[4]
+    const targetCurrency = match[3]
+    return { line: `${amount} * ${rate} ${targetCurrency}`, changed: true }
+  },
+}
+
 export const semanticRewriteRules: RewriteRule[] = [
+  customRateRule,
   ratesRule,
   multipliersRule,
   miscPhrasesRule,

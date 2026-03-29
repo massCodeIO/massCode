@@ -1097,6 +1097,34 @@ describe('constants', () => {
   it('phi', () => expectNumericClose('phi', 1.61803, 4))
 })
 
+describe('conditional logic', () => {
+  it('if-then-else (true branch)', () =>
+    expectValue('if 5 > 3 then 10 else 20', '10'))
+  it('if-then-else (false branch)', () =>
+    expectValue('if 5 < 3 then 10 else 20', '20'))
+  it('comparison ==', () => expectValue('5 == 5', 'true'))
+  it('comparison !=', () => expectValue('5 != 3', 'true'))
+  it('comparison >', () => expectValue('5 > 3', 'true'))
+  it('comparison <', () => expectValue('5 < 3', 'false'))
+  it('comparison >=', () => expectValue('5 >= 5', 'true'))
+  it('comparison <=', () => expectValue('3 <= 5', 'true'))
+  it('boolean true', () => expectValue('true', 'true'))
+  it('boolean false', () => expectValue('false', 'false'))
+  it('and operator', () => expectValue('true and false', 'false'))
+  it('or operator', () => expectValue('true or false', 'true'))
+  it('&& operator', () => expectValue('true && false', 'false'))
+  it('|| operator', () => expectValue('true || false', 'true'))
+  it('compound condition', () => expectValue('5 > 3 and 10 > 7', 'true'))
+  it('boolean assignment', () => {
+    const results = evalLines('x = true\nx and false')
+    expect(results[1].value).toBe('false')
+  })
+  it('postfix if', () => expectValue('42 if 5 > 3', '42'))
+  it('postfix if (false)', () => expectValue('42 if 5 < 3', '0'))
+  it('postfix unless', () => expectValue('42 unless 5 > 3', '0'))
+  it('postfix unless (false)', () => expectValue('42 unless 5 < 3', '42'))
+})
+
 describe('bitwise operations', () => {
   it('AND', () => expectValue('5 & 3', '1'))
   it('OR', () => expectValue('5 | 3', '7'))

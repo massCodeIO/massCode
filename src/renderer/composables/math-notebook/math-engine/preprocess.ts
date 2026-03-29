@@ -431,8 +431,43 @@ function preprocessImplicitMultiplication(line: string): string {
   return line.replace(/\b(\d+)\s*\(/g, '$1 * (')
 }
 
+function preprocessConditionals(line: string): string {
+  const lower = line.toLowerCase()
+
+  // if COND then EXPR else EXPR → (COND) ? (EXPR) : (EXPR)
+  const thenIdx = lower.indexOf(' then ')
+  const elseIdx = lower.indexOf(' else ')
+  if (/^if\s/i.test(line) && thenIdx > 2 && elseIdx > thenIdx) {
+    const cond = line.slice(3, thenIdx).trim()
+    const thenExpr = line.slice(thenIdx + 6, elseIdx).trim()
+    const elseExpr = line.slice(elseIdx + 6).trim()
+    return `(${cond}) ? (${thenExpr}) : (${elseExpr})`
+  }
+
+  // EXPR unless COND → (COND) ? 0 : (EXPR) (check before postfix if)
+  const unlessIdx = lower.indexOf(' unless ')
+  if (unlessIdx > 0) {
+    const expr = line.slice(0, unlessIdx).trim()
+    const cond = line.slice(unlessIdx + 8).trim()
+    return `(${cond}) ? 0 : (${expr})`
+  }
+
+  // EXPR if COND → (COND) ? (EXPR) : 0
+  const ifIdx = lower.indexOf(' if ')
+  if (ifIdx > 0) {
+    const expr = line.slice(0, ifIdx).trim()
+    const cond = line.slice(ifIdx + 4).trim()
+    return `(${cond}) ? (${expr}) : 0`
+  }
+
+  // && → and, || → or
+  return line.replace(/&&/g, ' and ').replace(/\|\|/g, ' or ')
+}
+
 function preprocessWordOperators(line: string): string {
-  return line
+  const hasConditional = /\?|[><=!]=?|\btrue\b|\bfalse\b/.test(line)
+
+  let result = line
     .replace(/\bremainder\s+of\s+(\S+)\s+divided\s+by\s+(\S+)/gi, '$1 % $2')
     .replace(/\bto\s+the\s+power\s+of\b/gi, '^')
     .replace(/\bmultiplied\s+by\b/gi, '*')
@@ -442,13 +477,18 @@ function preprocessWordOperators(line: string): string {
     .replace(/\btimes\b/gi, '*')
     .replace(/\bdivide\b/gi, '/')
     .replace(/\bplus\b/gi, '+')
-    .replace(/\band\b/gi, '+')
     .replace(/\bwith\b/gi, '+')
     .replace(/\bminus\b/gi, '-')
     .replace(/\bsubtract\b/gi, '-')
     .replace(/\bwithout\b/gi, '-')
     .replace(/\bmul\b/gi, '*')
     .replace(/\bmod\b/gi, '%')
+
+  if (!hasConditional) {
+    result = result.replace(/\band\b/gi, '+')
+  }
+
+  return result
 }
 
 function preprocessPercentages(line: string): string {
@@ -621,6 +661,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessFunctionSyntax(processed)
   processed = preprocessFunctionConversions(processed)
   processed = preprocessImplicitMultiplication(processed)
+  processed = preprocessConditionals(processed)
   processed = preprocessWordOperators(processed)
   processed = inferAdditiveUnits(processed)
   processed = preprocessPercentages(processed)

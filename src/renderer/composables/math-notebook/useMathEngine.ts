@@ -304,6 +304,10 @@ function formatResult(result: any): LineResult {
     return { value: null, error: null, type: 'empty' }
   }
 
+  if (typeof result === 'boolean') {
+    return { value: String(result), error: null, type: 'number' }
+  }
+
   if (result instanceof Date) {
     return {
       value: formatMathDate(result, activeLocale),

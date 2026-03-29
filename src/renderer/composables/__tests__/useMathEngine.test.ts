@@ -1672,6 +1672,60 @@ describe('video timecode', () => {
   })
 })
 
+describe('finance calculations', () => {
+  it('compound interest yearly', () => {
+    const result = evalLine('$1,000 after 3 years at 7%')
+    expect(result.value).toBe('$1,225.04')
+  })
+
+  it('compound interest monthly', () => {
+    const result = evalLine('$1,000 for 3 years at 7% compounding monthly')
+    expect(result.value).toBe('$1,232.93')
+  })
+
+  it('compound interest quarterly', () => {
+    const result = evalLine('$1,000 for 3 years at 7% compounding quarterly')
+    expect(result.value).toBe('$1,231.44')
+  })
+
+  it('interest on (interest only)', () => {
+    const result = evalLine('interest on $1,000 after 3 years @ 7%')
+    expect(result.value).toBe('$225.04')
+  })
+
+  it('simple ROI', () => {
+    const result = evalLine('$500 invested $1,500 returned')
+    expect(result.value).toBe('3x')
+  })
+
+  it('annual return', () => {
+    const result = evalLine(
+      'annual return on $1,000 invested $2,500 returned after 7 years',
+    )
+    expect(result.value).toBe('13.99%')
+  })
+
+  it('present value', () => {
+    const result = evalLine('present value of $1,000 after 20 years at 10%')
+    expect(result.value).toBe('$148.64')
+  })
+
+  it('monthly repayment', () => {
+    const result = evalLine('monthly repayment on $10,000 over 6 years at 6%')
+    expect(result.value).toBe('$165.73')
+  })
+
+  it('total repayment', () => {
+    const result = evalLine('total repayment on $10,000 over 6 years at 6%')
+    expect(result.value).toBe('$11,932.48')
+  })
+
+  it('total interest', () => {
+    const result = evalLine('total interest on $10,000 over 6 years at 6%')
+    expect(result.value).toBe('$1,932.48')
+  })
+})
+
 describe('misc functions', () => {
   it('larger of 100 and 200', () =>
     expectValue('larger of 100 and 200', '200'))

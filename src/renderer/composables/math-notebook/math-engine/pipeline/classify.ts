@@ -44,6 +44,13 @@ const CALENDAR_PREFIXES = [
   /\s+(?:as|to)\s+iso8601$/,
   /^\d{4}-\d{2}-\d{2}t[\d:.]+\s+to\s+date$/,
   /^\d{13,}\s+to\s+date$/,
+  // Finance patterns
+  /^\$[\d,.]+\s+(?:after|for)\s+\d/,
+  /^interest\s+on\s/,
+  /^annual\s+return\s+on\s/,
+  /^present\s+value\s+of\s/,
+  /^(?:daily|monthly|annual|total)\s+(?:repayment|interest)\s+on\s/,
+  /^\$[\d,.]+\s+invested\s/,
 ]
 
 const MONTH_TOKEN_RE

@@ -7,6 +7,7 @@ import {
   evaluateDateArithmeticLine,
   evaluateDateAssignmentLine,
 } from '../evaluators/dateArithmetic'
+import { evaluateFinanceLine } from '../evaluators/finance'
 import {
   evaluateTimeZoneDifferenceLine,
   evaluateTimeZoneLine,
@@ -69,6 +70,16 @@ export function evaluatePrimaryIntent(
           calendarResult.lineResult,
           calendarResult.rawResult,
           getNumericValue(calendarResult.rawResult),
+        )
+      }
+
+      // Finance calculations
+      const financeResult = evaluateFinanceLine(trimmed)
+      if (financeResult) {
+        return toEvaluatedLine(
+          financeResult.lineResult,
+          financeResult.rawResult,
+          financeResult.rawResult,
         )
       }
 

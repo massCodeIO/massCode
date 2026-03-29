@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from '../format'
 import type { CssContext, LineClassification } from '../types'
 import type { EvaluatedLine, MathEvaluatorInstance } from './evaluateTypes'
 import type { LineFormatter } from './format'
@@ -21,6 +22,7 @@ export function evaluatePrimaryIntent(
   processed: string,
   currentDate: Date,
   activeLocale: string,
+  activeDateFormat: DateFormatStyle,
   cssContext: CssContext,
   scope: Record<string, any>,
   math: MathEvaluatorInstance,
@@ -52,6 +54,7 @@ export function evaluatePrimaryIntent(
         trimmed,
         currentDate,
         activeLocale,
+        activeDateFormat,
       )
       if (timeZoneResult) {
         return toEvaluatedLine(
@@ -68,6 +71,7 @@ export function evaluatePrimaryIntent(
         trimmed,
         currentDate,
         activeLocale,
+        activeDateFormat,
       )
 
       if (calendarResult) {

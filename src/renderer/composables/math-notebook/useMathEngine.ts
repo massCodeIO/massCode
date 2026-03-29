@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from './math-engine/format'
 import type {
   CssContext,
   CurrencyServiceState,
@@ -19,6 +20,7 @@ let math = createMathInstance(activeCurrencyRates)
 
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
+let activeDateFormat: DateFormatStyle = 'numeric'
 
 // --- Main composable ---
 
@@ -42,6 +44,7 @@ export function useMathEngine() {
       math,
       locale: activeLocale,
       decimalPlaces: activeDecimalPlaces,
+      dateFormat: activeDateFormat,
     })
 
     for (const line of lines) {
@@ -67,6 +70,7 @@ export function useMathEngine() {
           currencyServiceState,
           currencyUnavailableMessage,
           activeLocale,
+          activeDateFormat,
         })
         results.push(evaluated.lineResult)
 
@@ -120,9 +124,14 @@ export function useMathEngine() {
     }
   }
 
-  function setFormatSettings(locale: string, decimalPlaces: number) {
+  function setFormatSettings(
+    locale: string,
+    decimalPlaces: number,
+    dateFormat: DateFormatStyle = 'numeric',
+  ) {
     activeLocale = locale
     activeDecimalPlaces = decimalPlaces
+    activeDateFormat = dateFormat
   }
 
   return {

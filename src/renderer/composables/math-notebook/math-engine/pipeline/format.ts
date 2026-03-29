@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from '../format'
 import type { LineClassification, LineResult } from '../types'
 import { HUMANIZED_UNIT_NAMES, SUPPORTED_CURRENCY_CODES } from '../constants'
 import { formatMathDate, formatMathNumber } from '../format'
@@ -51,10 +52,11 @@ interface CreateLineFormatterOptions {
   math: MathFormatterInstance
   locale: string
   decimalPlaces: number
+  dateFormat: DateFormatStyle
 }
 
 export function createLineFormatter(options: CreateLineFormatterOptions) {
-  const { math, locale, decimalPlaces } = options
+  const { math, locale, decimalPlaces, dateFormat } = options
 
   function humanizeUnitToken(unitId: string) {
     const displayUnit = HUMANIZED_UNIT_NAMES[unitId]
@@ -107,7 +109,7 @@ export function createLineFormatter(options: CreateLineFormatterOptions) {
 
     if (result instanceof Date) {
       return {
-        value: formatMathDate(result, locale),
+        value: formatMathDate(result, locale, dateFormat),
         error: null,
         type: 'date',
       }

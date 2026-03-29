@@ -19,6 +19,7 @@ export function evaluateClassifiedLine(
 ): EvaluatedLine {
   const {
     activeLocale,
+    activeDateFormat,
     classification,
     cssContext,
     currencyServiceState,
@@ -172,6 +173,7 @@ export function evaluateClassifiedLine(
     processed,
     currentDate,
     activeLocale,
+    activeDateFormat,
     cssContext,
     scope,
     math,

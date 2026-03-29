@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from './format'
 import type { LineResult } from './types'
 import { MONTH_NAME_TO_INDEX } from './constants'
 import { formatMathDate } from './format'
@@ -172,6 +173,7 @@ export function evaluateCalendarLine(
   line: string,
   now: Date,
   locale: string,
+  dateFormat: DateFormatStyle = 'numeric',
 ): CalendarResult | null {
   const lower = line.toLowerCase().trim()
 
@@ -217,7 +219,7 @@ export function evaluateCalendarLine(
     applyDateOffset(today, amount, unit, direction)
     return {
       lineResult: {
-        value: formatMathDate(today, locale),
+        value: formatMathDate(today, locale, dateFormat),
         error: null,
         type: 'date',
       },
@@ -330,7 +332,7 @@ export function evaluateCalendarLine(
       applyDateOffset(date, amount, unit, direction)
       return {
         lineResult: {
-          value: formatMathDate(date, locale),
+          value: formatMathDate(date, locale, dateFormat),
           error: null,
           type: 'date',
         },
@@ -389,7 +391,7 @@ export function evaluateCalendarLine(
       const result = addWorkdays(date, amount * direction)
       return {
         lineResult: {
-          value: formatMathDate(result, locale),
+          value: formatMathDate(result, locale, dateFormat),
           error: null,
           type: 'date',
         },
@@ -480,7 +482,7 @@ export function evaluateCalendarLine(
     if (!Number.isNaN(date.getTime())) {
       return {
         lineResult: {
-          value: formatMathDate(date, locale),
+          value: formatMathDate(date, locale, dateFormat),
           error: null,
           type: 'date',
         },
@@ -497,7 +499,7 @@ export function evaluateCalendarLine(
     if (!Number.isNaN(date.getTime())) {
       return {
         lineResult: {
-          value: formatMathDate(date, locale),
+          value: formatMathDate(date, locale, dateFormat),
           error: null,
           type: 'date',
         },

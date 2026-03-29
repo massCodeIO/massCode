@@ -1,3 +1,4 @@
+import type { DateFormatStyle } from '../format'
 import type {
   AnalysisView,
   CssContext,
@@ -25,6 +26,7 @@ export interface EvaluateClassifiedLineOptions {
   currencyServiceState: CurrencyServiceState
   currencyUnavailableMessage: string
   activeLocale: string
+  activeDateFormat: DateFormatStyle
 }
 
 export interface EvaluatedLine {

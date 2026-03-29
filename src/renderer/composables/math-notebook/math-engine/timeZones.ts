@@ -1,5 +1,7 @@
+import type { DateFormatStyle } from './format'
 import type { LineResult, SpecialLineResult } from './types'
 import { MONTH_NAME_TO_INDEX, timeZoneAliases } from './constants'
+import { formatMathDate } from './format'
 import { splitByKeyword } from './utils'
 
 interface ParsedTemporalExpression {
@@ -114,23 +116,6 @@ function zonedDateToUtc(
   }
 
   return new Date(utcTimestamp)
-}
-
-function formatTimeZoneDate(
-  date: Date,
-  timeZone: string,
-  locale: string,
-  includeYear = false,
-) {
-  return new Intl.DateTimeFormat(locale, {
-    timeZone,
-    hour: 'numeric',
-    minute: '2-digit',
-    month: 'short',
-    day: 'numeric',
-    ...(includeYear ? { year: 'numeric' as const } : {}),
-    timeZoneName: 'short',
-  }).format(date)
 }
 
 function getTimeZoneOffsetMinutes(date: Date, timeZone: string) {
@@ -554,6 +539,7 @@ export function evaluateTimeZoneLine(
   line: string,
   now: Date,
   locale = 'en-US',
+  dateFormat: DateFormatStyle = 'numeric',
 ): SpecialLineResult | null {
   const lowerLine = line.toLowerCase()
   const localTimeZone = getLocalTimeZone()
@@ -566,7 +552,10 @@ export function evaluateTimeZoneLine(
   ) {
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, localTimeZone, locale),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone: localTimeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -582,7 +571,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone, locale),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -598,7 +590,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone, locale),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -614,7 +609,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone, locale),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -630,7 +628,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone, locale),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -642,14 +643,15 @@ export function evaluateTimeZoneLine(
   if (lowerLine.startsWith('date in ')) {
     const timeZone = resolveTimeZone(line.slice(8))
     if (timeZone) {
-      const formatted = new Intl.DateTimeFormat(locale, {
-        timeZone,
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      }).format(now)
       return {
-        lineResult: { value: formatted, error: null, type: 'date' },
+        lineResult: {
+          value: formatMathDate(now, locale, dateFormat, {
+            timeZone,
+            dateOnly: true,
+          }),
+          error: null,
+          type: 'date',
+        },
         rawResult: now,
       }
     }
@@ -674,12 +676,10 @@ export function evaluateTimeZoneLine(
 
   return {
     lineResult: {
-      value: formatTimeZoneDate(
-        parsedSourceExpression.date,
-        targetTimeZone,
-        locale,
-        parsedSourceExpression.explicitDate,
-      ),
+      value: formatMathDate(parsedSourceExpression.date, locale, dateFormat, {
+        timeZone: targetTimeZone,
+        timeZoneName: true,
+      }),
       error: null,
       type: 'date',
     },

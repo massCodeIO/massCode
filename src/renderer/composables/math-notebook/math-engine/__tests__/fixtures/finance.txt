@@ -1,0 +1,22 @@
+# Compound interest
+$1,000 after 3 years at 7%
+$1,000 for 3 years at 7% compounding monthly
+$1,000 for 3 years at 7% compounding quarterly
+
+# Interest only
+interest on $1,000 after 3 years @ 7%
+interest on $1,000 for 3 years at 7% compounding monthly
+
+# ROI
+$500 invested $1,500 returned
+annual return on $1,000 invested $2,500 returned after 7 years
+
+# Present value
+present value of $1,000 after 20 years at 10%
+
+# Mortgage/Loan repayments
+daily repayment on $10,000 over 6 years at 6%
+monthly repayment on $10,000 over 6 years at 6%
+annual repayment on $10,000 over 6 years at 6%
+total repayment on $10,000 over 6 years at 6%
+total interest on $10,000 over 6 years at 6%

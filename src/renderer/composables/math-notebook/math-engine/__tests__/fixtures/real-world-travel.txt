@@ -1,0 +1,34 @@
+# Travel Planning
+
+## Flight
+Flight cost: $850
+Baggage: $50 * 2
+Total flight: $850 + $100
+
+## Hotel
+rate = $120 per day
+nights = 7
+Hotel total: rate * nights
+
+## Currency
+Budget in EUR: $2,000 in EUR
+time in Paris
+time difference between New York and Paris
+
+## Dates
+Departure: days till June 15
+days between June 15 and June 22
+3 weeks before June 15
+
+## Unit conversions
+Weight limit: 23 kg to lb
+Distance: 5,571 km to miles
+
+## Daily budget
+daily_budget = $2,000 / 7
+daily_budget in EUR
+
+## Tip calculation
+Dinner: €45
+Tip: 15% of €45
+Total: €45 + 15%

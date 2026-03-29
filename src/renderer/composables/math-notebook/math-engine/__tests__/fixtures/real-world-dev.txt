@@ -1,0 +1,51 @@
+# Developer Calculations
+
+## Data sizes
+App bundle: 2.5 MB to KB
+Database: 500 MB to GiB
+Upload limit: 10 GiB to GB
+Cache: 256 MiB to MB
+
+## Network
+Download: 100 Mbps
+Time for 1 GB: 1 GB to Mb
+
+## Screen math
+12 pt in px
+em = 18
+1.5 em in px
+ppi = 326
+1 cm in px
+
+## CSS units
+em = 16
+2.5 em in px
+48 px in pt
+
+## Sprint planning
+Story points: 42
+Velocity: 15
+Sprints needed: 42 / 15
+42 / 15 rounded up
+
+## Time estimates
+3h 30m in minutes
+8 hours * 5 days
+40 hours as timespan
+
+## Video production
+30 fps * 10 minutes
+00:30:00:00 @ 24 fps in frames
+frames_per_hour = 24 * 3600
+
+## Hex/Binary
+255 in hex
+0xFF in bin
+0b11111111
+192 in bin
+168 in hex
+
+## Performance
+Requests: 1500 per second
+Daily: 1500 * 86400
+Daily in sci

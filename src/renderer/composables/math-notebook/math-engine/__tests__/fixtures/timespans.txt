@@ -1,0 +1,23 @@
+# Timespan format
+5.5 minutes as timespan
+4.54 hours as timespan
+72 days as timespan
+1.5 hours as timespan
+0 seconds as timespan
+
+# Laptime format
+5.5 minutes as laptime
+1 hour as laptime
+
+# Shorthand time input
+3h 5m 10s
+3h 5m 10s in seconds
+
+# Laptime input and arithmetic
+03:04:05 + 01:02:03 as laptime
+
+# Video timecode
+03:10:20:05 at 30 fps + 50 frames
+00:30:10:00 @ 24 fps in frames
+30 fps * 3 minutes
+00:00:01:00 in frames

@@ -1,0 +1,74 @@
+# Min/Max
+larger of 100 and 200
+greater of 100 and 200
+smaller of 5 and 10
+lesser of 5 and 10
+
+# Half and midpoint
+half of 175
+midpoint between 150 and 300
+
+# Random
+random number between 1 and 10
+random number between 0 and 1
+
+# GCD and LCM
+gcd of 20 and 30
+lcm of 5 and 8
+
+# Permutations and combinations
+10 permutation 3
+25 combination 3
+3 permutations of 10
+3 combinations of 25
+
+# Clamp
+clamp 26 between 5 and 25
+clamp 4 from 5 to 25
+clamp 15 between 5 and 25
+
+# Proportions (rule of three)
+6 is to 60 as 8 is to what
+5 is to 10 as what is to 80
+
+# Rates
+$50 per week * 12 weeks
+30 hours at $30/hour
+$99 per month * 12 months
+
+# Number formats
+255 in hex
+10 in bin
+255 in oct
+5300 in sci
+0b101101 as base 8
+0x2D as base 2
+hex(99)
+bin(0x73)
+int(0o55)
+0xFF
+0b1010
+0o377
+
+# Bitwise
+5 & 3
+5 | 3
+5 xor 3
+1 << 4
+16 >> 2
+
+# Large number symbols
+2k
+3M
+1.5 billion
+10 trillion
+5bn
+2T
+
+# Cooking
+density of yogurt
+density of olive oil
+density of honey
+300g butter in cups
+10 cups olive oil in grams
+100g nutella in tbsp

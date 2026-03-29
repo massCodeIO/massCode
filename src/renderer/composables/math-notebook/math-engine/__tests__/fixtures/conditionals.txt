@@ -1,0 +1,35 @@
+# If-then-else
+if 5 > 3 then 10 else 20
+if 5 < 3 then 10 else 20
+if true and false then 1 else 2
+if 5 + 3 > 7 then 10 else 20
+
+# Boolean comparisons
+5 == 5
+5 != 3
+5 > 3
+5 < 3
+5 >= 5
+3 <= 5
+
+# Boolean values
+true
+false
+
+# Logical operators
+true and false
+true or false
+true && false
+true || false
+5 > 3 and 10 > 7
+
+# Postfix if/unless
+42 if 5 > 3
+42 if 5 < 3
+42 unless 5 > 3
+42 unless 5 < 3
+10 + 5 if 3 > 2
+
+# Boolean variable
+discount = true
+if discount then 100 - 10% else 100

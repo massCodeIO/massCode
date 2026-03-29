@@ -1,0 +1,23 @@
+# Fractions
+2/10 as fraction
+50% as fraction
+0.25 as fraction
+-0.5 as fraction
+2/3 of 600
+50 is 1/5 of what
+
+# Multipliers
+20/5 as multiplier
+50 as x of 5
+2 as multiplier of 1
+2 as multiplier on 1
+1 as x off 2
+50 to 75 is what x
+20 to 40 as x
+100 to 50 is what x
+0/5 as multiplier
+
+# Strip units
+$100 as number
+20% as dec
+50% to decimal

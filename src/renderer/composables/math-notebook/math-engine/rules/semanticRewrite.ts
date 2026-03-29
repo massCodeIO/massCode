@@ -243,9 +243,68 @@ export const wordOperatorsRule: RewriteRule = {
   },
 }
 
+export const miscPhrasesRule: RewriteRule = {
+  id: 'misc-phrases',
+  category: 'semantic-rewrite',
+  priority: 250,
+  apply: (ctx) => {
+    const line = ctx.line
+      // min/max
+      .replace(
+        /\b(?:larger|greater)\s+of\s+(\S+)\s+and\s+(\S+)/gi,
+        'max($1, $2)',
+      )
+      .replace(
+        /\b(?:smaller|lesser)\s+of\s+(\S+)\s+and\s+(\S+)/gi,
+        'min($1, $2)',
+      )
+      // half / midpoint
+      .replace(/\bhalf\s+of\s+(\S+)/gi, '($1 / 2)')
+      .replace(
+        /\bmidpoint\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        '(($1 + $2) / 2)',
+      )
+      // random
+      .replace(
+        /\brandom\s+number\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        'random($1, $2)',
+      )
+      // gcd / lcm
+      .replace(/\bgcd\s+of\s+(\S+)\s+and\s+(\S+)/gi, 'gcd($1, $2)')
+      .replace(/\blcm\s+of\s+(\S+)\s+and\s+(\S+)/gi, 'lcm($1, $2)')
+      // permutations / combinations
+      .replace(/\b(\d+)\s+permutations?\s+of\s+(\d+)/gi, 'permutations($2, $1)')
+      .replace(/\b(\d+)\s+combinations?\s+of\s+(\d+)/gi, 'combinations($2, $1)')
+      .replace(/\b(\d+)\s+permutation\s+(\d+)/gi, 'permutations($1, $2)')
+      .replace(/\b(\d+)\s+combination\s+(\d+)/gi, 'combinations($1, $2)')
+      // clamp
+      .replace(
+        /\bclamp\s+(\S+)\s+between\s+(\S+)\s+and\s+(\S+)/gi,
+        'max($2, min($3, $1))',
+      )
+      .replace(
+        /\bclamp\s+(\S+)\s+from\s+(\S+)\s+to\s+(\S+)/gi,
+        'max($2, min($3, $1))',
+      )
+      // proportions (rule of three)
+      .replace(
+        /(\S+)\s+is\s+to\s+(\S+)\s+as\s+(\S+)\s+is\s+to\s+what/gi,
+        '($2 * $3 / $1)',
+      )
+      .replace(
+        /(\S+)\s+is\s+to\s+(\S+)\s+as\s+what\s+is\s+to\s+(\S+)/gi,
+        '($1 * $3 / $2)',
+      )
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
 export const semanticRewriteRules: RewriteRule[] = [
   ratesRule,
   multipliersRule,
+  miscPhrasesRule,
   phraseFunctionsRule,
   functionSyntaxRule,
   functionConversionsRule,

@@ -1649,6 +1649,53 @@ describe('workdays', () => {
   })
 })
 
+describe('misc functions', () => {
+  it('larger of 100 and 200', () =>
+    expectValue('larger of 100 and 200', '200'))
+  it('greater of 100 and 200', () =>
+    expectValue('greater of 100 and 200', '200'))
+  it('smaller of 5 and 10', () => expectValue('smaller of 5 and 10', '5'))
+  it('lesser of 5 and 10', () => expectValue('lesser of 5 and 10', '5'))
+
+  it('half of 175', () => expectNumericClose('half of 175', 87.5))
+  it('midpoint between 150 and 300', () =>
+    expectValue('midpoint between 150 and 300', '225'))
+
+  it('random number between 1 and 10', () => {
+    const result = evalLine('random number between 1 and 10')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBeGreaterThanOrEqual(1)
+    expect(num).toBeLessThanOrEqual(10)
+  })
+
+  it('random number between 0 and 1', () => {
+    const result = evalLine('random number between 0 and 1')
+    const num = Number.parseFloat(result.value!.replace(/,/g, ''))
+    expect(num).toBeGreaterThanOrEqual(0)
+    expect(num).toBeLessThanOrEqual(1)
+  })
+
+  it('gcd of 20 and 30', () => expectValue('gcd of 20 and 30', '10'))
+  it('lcm of 5 and 8', () => expectValue('lcm of 5 and 8', '40'))
+
+  it('10 permutation 3', () => expectValue('10 permutation 3', '720'))
+  it('25 combination 3', () => expectValue('25 combination 3', '2,300'))
+  it('3 permutations of 10', () => expectValue('3 permutations of 10', '720'))
+  it('3 combinations of 25', () =>
+    expectValue('3 combinations of 25', '2,300'))
+
+  it('clamp 26 between 5 and 25', () =>
+    expectValue('clamp 26 between 5 and 25', '25'))
+  it('clamp 4 from 5 to 25', () => expectValue('clamp 4 from 5 to 25', '5'))
+  it('clamp 15 between 5 and 25', () =>
+    expectValue('clamp 15 between 5 and 25', '15'))
+
+  it('6 is to 60 as 8 is to what', () =>
+    expectValue('6 is to 60 as 8 is to what', '80'))
+  it('5 is to 10 as what is to 80', () =>
+    expectValue('5 is to 10 as what is to 80', '40'))
+})
+
 describe('error handling', () => {
   it('invalid expression returns error', () => {
     const result = evalLine('hello world')

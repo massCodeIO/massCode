@@ -160,6 +160,9 @@ describe('classify — features', () => {
   it('hasCurrency for USD code', () => {
     expect(classifyRaw('100 USD').features.hasCurrency).toBe(true)
   })
+  it('does not treat pound weight as currency', () => {
+    expect(classifyRaw('1 pound to lb').features.hasCurrency).toBe(false)
+  })
   it('no currency for plain math', () => {
     expect(classifyRaw('10 + 5').features.hasCurrency).toBe(false)
   })

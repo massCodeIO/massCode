@@ -362,6 +362,51 @@ function stripModifierSuffix(
   return raw
 }
 
+const UNSUPPORTED_MODIFIER_ERROR
+  = 'Modifier is not supported for this expression type'
+
+function hasAnyModifier(classification: LineClassification) {
+  return Boolean(
+    classification.modifiers.rounding
+    || classification.modifiers.stripUnit
+    || classification.modifiers.resultFormat,
+  )
+}
+
+function hasUnsupportedModifierCombination(
+  classification: LineClassification,
+  normalizedExpression: string,
+): boolean {
+  if (!hasAnyModifier(classification))
+    return false
+
+  if (
+    classification.primary === 'timezone'
+    || classification.primary === 'calendar'
+    || classification.primary === 'css'
+    || classification.primary === 'date-arithmetic'
+  ) {
+    return true
+  }
+
+  if (
+    classification.primary === 'assignment'
+    && classification.assignmentTarget
+    && classification.assignmentTarget !== 'math'
+  ) {
+    return true
+  }
+
+  if (
+    classification.primary === 'math'
+    && /\b(?:today|tomorrow|yesterday|now)\b/.test(normalizedExpression)
+  ) {
+    return true
+  }
+
+  return false
+}
+
 // --- Main composable ---
 
 export function useMathEngine() {
@@ -460,16 +505,28 @@ export function useMathEngine() {
 
         // --- Strip modifier suffix from trimmed for speculative handlers ---
         const effectiveTrimmed = stripModifierSuffix(trimmed, classification)
+        const effectiveView = analysisNormalize(effectiveTrimmed)
+
+        if (
+          hasUnsupportedModifierCombination(
+            classification,
+            effectiveView.normalized,
+          )
+        ) {
+          results.push({
+            value: null,
+            error: UNSUPPORTED_MODIFIER_ERROR,
+            showError: true,
+            type: 'empty',
+          })
+          prevResult = undefined
+          continue
+        }
 
         // --- Rounding/strip/format early path ---
         // If modifiers detected, process expression with stripped suffix first
-        if (
-          classification.modifiers.rounding
-          || classification.modifiers.stripUnit
-          || classification.modifiers.resultFormat
-        ) {
-          const strippedView = analysisNormalize(effectiveTrimmed)
-          let processed = rewrite(strippedView, classification)
+        if (hasAnyModifier(classification)) {
+          let processed = rewrite(effectiveView, classification)
           // Strip rewrite-generated suffixes (e.g. multiplier phrases produce "X to multiplier")
           const processedLower = processed.toLowerCase()
           if (processedLower.endsWith('to multiplier')) {
@@ -515,6 +572,14 @@ export function useMathEngine() {
             }
           }
         }
+
+        // --- Stage 3: Rewrite ---
+        const strippedExpression = stripModifierSuffix(
+          view.expression,
+          classification,
+        )
+        const strippedView = { ...view, expression: strippedExpression }
+        const processed = rewrite(strippedView, classification)
 
         // --- Speculative handlers (timezone, calendar, css) ---
 
@@ -566,14 +631,6 @@ export function useMathEngine() {
             numericBlock.push(cssResult.rawResult)
           continue
         }
-
-        // --- Stage 3: Rewrite ---
-        const strippedExpression = stripModifierSuffix(
-          view.expression,
-          classification,
-        )
-        const strippedView = { ...view, expression: strippedExpression }
-        const processed = rewrite(strippedView, classification)
 
         // --- Date assignment (speculative) ---
         const dateAssignResult = evaluateDateAssignmentLine(

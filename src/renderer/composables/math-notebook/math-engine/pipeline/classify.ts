@@ -10,6 +10,7 @@ import {
   currencyWordNames,
   SUPPORTED_CURRENCY_CODES,
   timeZoneAliases,
+  weightContextPattern,
 } from '../constants'
 
 const AGGREGATE_BLOCK_KEYWORDS = new Set([
@@ -146,9 +147,19 @@ function detectFeatures(normalized: string, expression: string): LineFeatures {
     expression.includes(s),
   )
   const hasCurrencyCode = currencyCodePattern.test(expression)
-  const hasCurrencyWord = Object.keys(currencyWordNames).some(name =>
-    new RegExp(`\\b${name}\\b`, 'i').test(normalized),
-  )
+  const hasCurrencyWord = Object.keys(currencyWordNames).some((name) => {
+    if (!new RegExp(`\\b${name}\\b`, 'i').test(normalized))
+      return false
+
+    if (
+      (name === 'pound' || name === 'pounds')
+      && weightContextPattern.test(normalized)
+    ) {
+      return false
+    }
+
+    return true
+  })
 
   return {
     hasCurrency: hasCurrencySymbol || hasCurrencyCode || hasCurrencyWord,

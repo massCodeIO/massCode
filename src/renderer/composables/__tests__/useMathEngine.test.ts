@@ -334,6 +334,14 @@ describe('currency', () => {
     expect(result.error).toBe('Currency rates service unavailable')
   })
 
+  it('does not treat pound weight as currency while loading', () => {
+    setCurrencyServiceState('loading')
+
+    const result = evalLine('1 pound to lb')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('lb')
+  })
+
   it('$ symbol', () => {
     const result = evalLine('$30')
     expect(result.type).toBe('unit')
@@ -382,6 +390,24 @@ describe('currency', () => {
     expect(result.type).toBe('unit')
     expect(result.value).toContain('USD')
     expectNumericClose('5 dollars + 10 dollars', 15)
+  })
+})
+
+describe('modifier compatibility', () => {
+  it('returns controlled error for timezone format modifier', () => {
+    const result = evalLine('time in Paris in hex')
+    expect(result.type).toBe('empty')
+    expect(result.error).toBe(
+      'Modifier is not supported for this expression type',
+    )
+  })
+
+  it('returns controlled error for css rounding modifier', () => {
+    const result = evalLine('12 pt in px rounded')
+    expect(result.type).toBe('empty')
+    expect(result.error).toBe(
+      'Modifier is not supported for this expression type',
+    )
   })
 })
 

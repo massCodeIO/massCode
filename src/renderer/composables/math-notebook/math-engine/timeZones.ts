@@ -116,8 +116,13 @@ function zonedDateToUtc(
   return new Date(utcTimestamp)
 }
 
-function formatTimeZoneDate(date: Date, timeZone: string, includeYear = false) {
-  return new Intl.DateTimeFormat('en-US', {
+function formatTimeZoneDate(
+  date: Date,
+  timeZone: string,
+  locale: string,
+  includeYear = false,
+) {
+  return new Intl.DateTimeFormat(locale, {
     timeZone,
     hour: 'numeric',
     minute: '2-digit',
@@ -548,6 +553,7 @@ export function evaluateTimeZoneDifferenceLine(
 export function evaluateTimeZoneLine(
   line: string,
   now: Date,
+  locale = 'en-US',
 ): SpecialLineResult | null {
   const lowerLine = line.toLowerCase()
   const localTimeZone = getLocalTimeZone()
@@ -560,7 +566,7 @@ export function evaluateTimeZoneLine(
   ) {
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, localTimeZone),
+        value: formatTimeZoneDate(now, localTimeZone, locale),
         error: null,
         type: 'date',
       },
@@ -576,7 +582,7 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatTimeZoneDate(now, timeZone, locale),
         error: null,
         type: 'date',
       },
@@ -592,7 +598,7 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatTimeZoneDate(now, timeZone, locale),
         error: null,
         type: 'date',
       },
@@ -608,7 +614,7 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatTimeZoneDate(now, timeZone, locale),
         error: null,
         type: 'date',
       },
@@ -624,7 +630,7 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatTimeZoneDate(now, timeZone, locale),
         error: null,
         type: 'date',
       },
@@ -636,7 +642,7 @@ export function evaluateTimeZoneLine(
   if (lowerLine.startsWith('date in ')) {
     const timeZone = resolveTimeZone(line.slice(8))
     if (timeZone) {
-      const formatted = new Intl.DateTimeFormat('en-US', {
+      const formatted = new Intl.DateTimeFormat(locale, {
         timeZone,
         month: 'long',
         day: 'numeric',
@@ -671,6 +677,7 @@ export function evaluateTimeZoneLine(
       value: formatTimeZoneDate(
         parsedSourceExpression.date,
         targetTimeZone,
+        locale,
         parsedSourceExpression.explicitDate,
       ),
       error: null,

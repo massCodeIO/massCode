@@ -48,7 +48,11 @@ export function evaluatePrimaryIntent(
         }
       }
 
-      const timeZoneResult = evaluateTimeZoneLine(trimmed, currentDate)
+      const timeZoneResult = evaluateTimeZoneLine(
+        trimmed,
+        currentDate,
+        activeLocale,
+      )
       if (timeZoneResult) {
         return toEvaluatedLine(
           timeZoneResult.lineResult,

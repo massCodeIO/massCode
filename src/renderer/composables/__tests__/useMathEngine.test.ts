@@ -235,6 +235,37 @@ describe('fractions', () => {
   it('50 is 1/5 of what', () => expectNumericClose('50 is 1/5 of what', 250))
 })
 
+describe('multipliers', () => {
+  it('20/5 as multiplier', () => {
+    const result = evalLine('20/5 as multiplier')
+    expect(result.value).toBe('4x')
+  })
+  it('50 as x of 5', () => {
+    const result = evalLine('50 as x of 5')
+    expect(result.value).toBe('10x')
+  })
+  it('2 as multiplier of 1', () => {
+    const result = evalLine('2 as multiplier of 1')
+    expect(result.value).toBe('2x')
+  })
+  it('2 as multiplier on 1', () => {
+    const result = evalLine('2 as multiplier on 1')
+    expect(result.value).toBe('1x')
+  })
+  it('1 as x off 2', () => {
+    const result = evalLine('1 as x off 2')
+    expect(result.value).toBe('0.5x')
+  })
+  it('50 to 75 is what x', () => {
+    const result = evalLine('50 to 75 is what x')
+    expect(result.value).toBe('1.5x')
+  })
+  it('20 to 40 as x', () => {
+    const result = evalLine('20 to 40 as x')
+    expect(result.value).toBe('2x')
+  })
+})
+
 describe('scales', () => {
   it('2k', () => {
     const result = evalLine('2k')

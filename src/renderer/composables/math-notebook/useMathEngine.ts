@@ -25,7 +25,16 @@ import {
 export type { LineResult } from './math-engine/types'
 
 interface FormatDirective {
-  format: 'hex' | 'bin' | 'oct' | 'sci' | 'number' | 'dec' | 'fraction' | null
+  format:
+    | 'hex'
+    | 'bin'
+    | 'oct'
+    | 'sci'
+    | 'number'
+    | 'dec'
+    | 'fraction'
+    | 'multiplier'
+    | null
   expression: string
 }
 
@@ -144,7 +153,10 @@ let math = createMathInstance(activeCurrencyRates)
 let activeLocale = 'en-US'
 let activeDecimalPlaces = 6
 
-const STRIP_UNIT_SUFFIXES: Record<string, 'number' | 'dec' | 'fraction'> = {
+const STRIP_UNIT_SUFFIXES: Record<
+  string,
+  'number' | 'dec' | 'fraction' | 'multiplier'
+> = {
   'as number': 'number',
   'to number': 'number',
   'as decimal': 'dec',
@@ -153,6 +165,8 @@ const STRIP_UNIT_SUFFIXES: Record<string, 'number' | 'dec' | 'fraction'> = {
   'to dec': 'dec',
   'as fraction': 'fraction',
   'to fraction': 'fraction',
+  'as multiplier': 'multiplier',
+  'to multiplier': 'multiplier',
 }
 
 function gcd(a: number, b: number): number {
@@ -192,12 +206,16 @@ function detectStripUnitDirective(line: string): FormatDirective {
 }
 
 function detectFormatDirective(line: string): FormatDirective {
-  const formatMap: Record<string, 'hex' | 'bin' | 'oct' | 'sci'> = {
+  const formatMap: Record<
+    string,
+    'hex' | 'bin' | 'oct' | 'sci' | 'multiplier'
+  > = {
     'in hex': 'hex',
     'in bin': 'bin',
     'in oct': 'oct',
     'in sci': 'sci',
     'in scientific': 'sci',
+    'to multiplier': 'multiplier',
   }
   const lower = line.toLowerCase()
 
@@ -217,6 +235,39 @@ function applyFormat(
   result: any,
   format: NonNullable<FormatDirective['format']>,
 ): LineResult {
+  if (format === 'multiplier') {
+    let num: number
+    if (typeof result === 'number') {
+      num = result
+    }
+    else if (
+      result
+      && typeof result === 'object'
+      && typeof result.toNumber === 'function'
+    ) {
+      try {
+        num = result.toNumber()
+      }
+      catch {
+        num = Number.NaN
+      }
+    }
+    else {
+      num = Number(result)
+    }
+
+    if (Number.isNaN(num)) {
+      return { value: String(result), error: null, type: 'number' }
+    }
+
+    return {
+      value: `${formatMathNumber(num, activeLocale, activeDecimalPlaces)}x`,
+      error: null,
+      type: 'number',
+      numericValue: num,
+    }
+  }
+
   if (format === 'fraction') {
     let num: number
     if (typeof result === 'number') {

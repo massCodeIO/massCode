@@ -135,6 +135,42 @@ function preprocessAreaVolumeAliases(line: string): string {
   return line
 }
 
+function preprocessMultipliers(line: string): string {
+  return (
+    line
+      // X to Y is what x → Y / X as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+is\s+what\s+x\b/gi,
+        '$2 / $1 as multiplier',
+      )
+      // X to Y as x → Y / X as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+as\s+x\b/gi,
+        '$2 / $1 as multiplier',
+      )
+      // X as x of Y → X / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+x\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '$1 / $2 as multiplier',
+      )
+      // X as multiplier of Y → X / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+multiplier\s+of\s+(\d+(?:\.\d+)?)/gi,
+        '$1 / $2 as multiplier',
+      )
+      // X as multiplier on Y → (X - Y) / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+multiplier\s+on\s+(\d+(?:\.\d+)?)/gi,
+        '($1 - $2) / $2 as multiplier',
+      )
+      // X as x off Y → (Y - X) / Y as multiplier
+      .replace(
+        /(\d+(?:\.\d+)?)\s+as\s+x\s+off\s+(\d+(?:\.\d+)?)/gi,
+        '($2 - $1) / $2 as multiplier',
+      )
+  )
+}
+
 function preprocessPhraseFunctions(line: string): string {
   return line
     .replace(/\bsquare\s+root\s+of\s+(\S+)/gi, 'sqrt($1)')
@@ -667,6 +703,7 @@ export function preprocessMathExpression(line: string) {
   processed = preprocessScales(processed)
   processed = preprocessAreaVolumeAliases(processed)
   processed = preprocessStackedUnits(processed)
+  processed = preprocessMultipliers(processed)
   processed = preprocessPhraseFunctions(processed)
   processed = preprocessFunctionSyntax(processed)
   processed = preprocessFunctionConversions(processed)

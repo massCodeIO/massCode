@@ -1,69 +1,48 @@
-# Layout
+# Overview
 
-massCode uses a space-based layout.
+massCode is organized into four spaces, each designed for a specific workflow. Switch between them using the space rail on the left side of the app.
 
-The application has a narrow space rail on the left for switching between the main work areas:
-
-- Code
-- Notes
-- Math
-- Tools
+<img :src="withBase('/preview.png')">
 
 ## Code
 
-The Code space uses a three-column layout:
-
-- the first column shows the library, folders, and tags
-- the second column shows snippets from the selected location
-- the third column contains the editor
+Store and organize code snippets with a three-column layout: library, snippet list, and editor.
 
 ## Notes
 
-The Notes space uses a three-column layout similar to Code:
-
-- the first column shows the library, folders, and tags
-- the second column shows notes from the selected location
-- the third column contains the editor
+Write and organize markdown notes. Uses the same three-column layout as Code. Includes live preview, mindmaps, and presentation mode.
 
 ## Math
 
-The Math space provides a calculation notebook with:
-
-- a sheets list on the left
-- a calculator editor on the right
+A calculation notebook with a sheets list on the left and a calculator editor on the right. Write expressions in natural language and get instant results.
 
 ## Tools
 
-The Tools space provides developer utilities with:
+Built-in developer utilities: converters, encoders, generators, and more. Tool categories on the left, tool view on the right.
 
-- a tool categories sidebar on the left
-- the tool view on the right
+## General Settings
 
-## Sidebar Toggle
+### Sidebar Toggle
 
 Toggle the sidebar visibility in Code and Notes spaces:
 
 - Select **"View"** > **"Toggle Sidebar"** from the menu bar or press <kbd>Alt+Cmd+B</kbd> on macOS or <kbd>Alt+Ctrl+B</kbd> on Windows or Linux.
 
-## Font Size
+### Font Size
 
 Adjust the editor font size in Code and Notes spaces:
 
-- <kbd>Cmd+=</kbd> / <kbd>Ctrl+=</kbd> — increase
-- <kbd>Cmd+-</kbd> / <kbd>Ctrl+-</kbd> — decrease
-- <kbd>Cmd+0</kbd> / <kbd>Ctrl+0</kbd> — reset to default
+- <kbd>Cmd+=</kbd> / <kbd>Ctrl+=</kbd> increase
+- <kbd>Cmd+-</kbd> / <kbd>Ctrl+-</kbd> decrease
+- <kbd>Cmd+0</kbd> / <kbd>Ctrl+0</kbd> reset to default
 
-## Preferences
-
-Open application preferences:
+### Preferences
 
 - Press <kbd>Cmd+,</kbd> on macOS or <kbd>Ctrl+,</kbd> on Windows or Linux.
 
-## Compact list mode
+### Compact List Mode
 
-Code and Notes spaces support a compact list mode toggle that reduces the height of items in the snippet and notes lists, allowing you to see more items at once.
-
-<img :src="withBase('/preview.png')">
+Code, Notes, and Math spaces support a compact list mode that reduces the height of items in the lists, allowing you to see more items at once.
 
 <script setup>
 import { withBase } from 'vitepress'

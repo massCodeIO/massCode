@@ -2,7 +2,7 @@
 
 <AppVersion text=">=3.8" />
 
-massCode provides developers with a range of convenient tools, such as:
+Built-in utilities for everyday dev tasks:
 
 ## Text tools
 

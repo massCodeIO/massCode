@@ -1,6 +1,6 @@
 # Fragments
 
-Fragments can also be attributed to the way snippets are organized. You can create tabs inside a snippet, for example, to create different versions of snippets or when a snippet consists of different languages.
+Fragments are tabs inside a snippet. Use them for different versions or languages of the same snippet.
 
 ## Adding a Fragment
 

@@ -3,87 +3,75 @@ import FeaturesItem from './FeaturesItem.vue'
 </script>
 
 <template>
-  <div class="features">
+  <div class="spaces">
     <FeaturesItem title="Code Snippets">
-      Organize your snippets with multi-level folders and tags. Each snippet can
-      contain multiple fragments (tabs). Built on
+      Organize code with multi-level folders, tags, and multi-tab fragments.
+      Built on
       <AppLink href="https://github.com/codemirror/codemirror5">
         CodeMirror
       </AppLink>
-      with 160+
-      <AppLink
-        href="https://github.com/github/linguist/blob/master/vendor/README.md"
-      >
-        grammars
-      </AppLink>, <AppLink href="https://prettier.io">
+      with 160+ syntax grammars and
+      <AppLink href="https://prettier.io">
         Prettier
-      </AppLink> formatting,
-      real-time HTML & CSS preview, and JSON visualizer.
+      </AppLink> formatting.
+      Real-time HTML & CSS preview for rapid prototyping, JSON visualizer for
+      exploring complex data structures, and beautiful screenshot export with
+      customizable themes.
     </FeaturesItem>
     <FeaturesItem title="Notes">
-      An Obsidian-like markdown editor built right into massCode. Write and
-      organize notes with folders, tags, live preview, mindmaps, and
-      presentation mode.
+      An Obsidian-like markdown editor with live preview, folders, and tags.
+      Write documentation, keep a dev journal, or draft ideas with full Mermaid
+      diagram support, mindmap generation from headings, and presentation mode
+      for sharing your notes as slide decks.
     </FeaturesItem>
     <FeaturesItem title="Math Notebook">
-      A calculator notepad with natural language expressions. Currencies,
-      timezones, unit conversions, finance calculations, cooking conversions,
-      and more.
+      A smart notepad where <code>time in Tokyo</code>,
+      <code>density of honey</code>, and
+      <code>$500 invested $1,500 returned</code> just work. 166+ currencies,
+      timezone lookups, unit conversions, finance formulas, and more.
     </FeaturesItem>
-    <FeaturesItem
-      title="Developer Tools"
-      style="grid-column: 1 / 3"
-    >
-      Handy built-in utilities for everyday dev tasks:
-      <ul>
-        <li>
-          <strong>Text Tools</strong>: Case Converter, Slug Generator, URL
-          Parser
-        </li>
-        <li>
-          <strong>Crypto & Security</strong>: Hash/HMAC, Password Generator,
-          UUID
-        </li>
-        <li>
-          <strong>Encoders/Decoders</strong>: URL, Base64, JSON ⇄ TOML/XML/YAML,
-          Text ⇄ ASCII/Binary/Unicode, Color Converter
-        </li>
-        <li><strong>Generators</strong>: JSON Generator, Lorem Ipsum</li>
-      </ul>
+    <FeaturesItem title="Developer Tools">
+      Built-in utilities for everyday tasks: case converter, slug generator, URL
+      parser, hash/HMAC generators, password and UUID generators, Base64/URL
+      encoders, JSON to YAML/TOML/XML converters, color converter, and text
+      generators.
     </FeaturesItem>
+  </div>
+  <div class="extras">
     <FeaturesItem title="Integrations">
-      Extend your workflow with:
-      <ul>
-        <li>
-          <AppLink
-            href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant"
-          >
-            VS Code Extension
-          </AppLink>: zen mode snippet search, instant insertion, and save selected code
-          as snippets.
-        </li>
-        <li>
-          <AppLink href="https://www.raycast.com/antonreshetov/masscode">
-            Raycast Extension
-          </AppLink>: quick snippet access directly from Raycast.
-        </li>
-      </ul>
+      <AppLink
+        href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant"
+      >
+        VS Code Extension
+      </AppLink>
+      for snippet search and insertion.
+      <AppLink href="https://www.raycast.com/antonreshetov/masscode">
+        Raycast Extension
+      </AppLink>
+      for quick access.
     </FeaturesItem>
-    <FeaturesItem title="Beautiful Screenshots">
-      Export snippets as polished images with customizable themes and
-      backgrounds.
+    <FeaturesItem title="Open & Local">
+      Local-first by design. Your notes and snippets stay on your machine as
+      plain Markdown files. Sync with iCloud, Dropbox, or Git, and keep full
+      version history.
     </FeaturesItem>
     <FeaturesItem title="Localization">
-      massCode is available in Čeština, Deutsch, Ελληνικά, English, Español,
-      French, 日本語, Português (Brasil), Română, Русский, Türkçe, Українська,
-      中文 (简体), 中文 (繁體) & 中文 (繁體 香港特別行政區) languages.
+      Available in 15 languages including English, Deutsch, Español, Français,
+      Русский, 日本語, 中文, and more.
     </FeaturesItem>
   </div>
 </template>
 
 <style scoped>
-.features {
-  padding: 24px 0;
+.spaces {
+  padding: 24px 0 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.extras {
+  padding: 12px 0 24px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;

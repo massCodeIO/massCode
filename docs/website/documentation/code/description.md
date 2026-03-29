@@ -1,6 +1,6 @@
 # Description
 
-You can add description for a snippet to a dedicated "Description" area. By default, the description field is hidden if there are no description for the current snippet.
+You can add a description for a snippet to a dedicated "Description" area. By default, the description field is hidden if there is no description for the current snippet.
 
 ## Adding Description
 

@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitepress'
 import { version } from './_data/assets.json'
 
-const description = 'Code snippets manager for developers, developed using web technologies.'
-const ogDescription = 'A free and open source code snippets manager for developers'
+const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, and built-in dev tools.'
+const ogDescription = 'Free, open-source developer workspace: code snippets, notes, math notebook, and 20+ dev tools. All data stored locally.'
 const ogImage = 'https://masscode.io/og-image.png'
 const ogTitle = 'massCode'
 const ogUrl = 'https://masscode.io'
@@ -43,7 +43,7 @@ export default defineConfig({
         {
           text: 'General',
           items: [
-            { text: 'Layout', link: '/documentation/' },
+            { text: 'Overview', link: '/documentation/' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Themes', link: '/documentation/themes' },
@@ -65,6 +65,12 @@ export default defineConfig({
           text: 'Notes',
           items: [
             { text: 'Notes', link: '/documentation/notes/' },
+            { text: 'Library', link: '/documentation/notes/library' },
+            { text: 'Folders', link: '/documentation/notes/folders' },
+            { text: 'Tags', link: '/documentation/notes/tags' },
+            { text: 'Mindmap', link: '/documentation/notes/mindmap' },
+            { text: 'Presentation', link: '/documentation/notes/presentation' },
+            { text: 'Search', link: '/documentation/notes/search' },
           ],
         },
         {

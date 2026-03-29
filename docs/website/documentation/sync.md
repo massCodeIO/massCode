@@ -1,8 +1,8 @@
 # Sync
 
-massCode gives you the ability to synchronize your snippets library across multiple computers.
+massCode gives you the ability to synchronize your data across multiple computers.
 
-Since massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syncing is straightforward — your snippets are just plain files on disk. Point any file sync service to your vault directory:
+Since massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syncing is straightforward — your data is just plain files on disk. Point any file sync service to your vault directory:
 
 - iCloud Drive
 - Dropbox

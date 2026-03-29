@@ -7,7 +7,7 @@ massCode allows you to organize your snippets into multi-level folders. When you
 Follow one of the following steps:
 
 - Select **"File"** > **"New Folder"** from the menu bar.
-- Click **"+"** button opposite **"FOLDERS"** in the library to add a new folder.
+- Click the **"+"** button next to **"FOLDERS"** in the library.
 - Press <kbd>Shift+Cmd+N</kbd> on macOS or <kbd>Shift+Ctrl+N</kbd> on Windows or Linux.
 
 ## Moving to Folder
@@ -19,7 +19,7 @@ Drag and drop the required folder to another folder.
 Call the context menu by right-clicking on the folder and selecting **"Rename"** or **"Delete"**.
 
 ::: warning
-Deleting the folder will cause all snippets in it, as well as in all sub-folders, to move to **"Inbox"**.
+Deleting a folder moves all its snippets and subfolders to **"Inbox"**.
 :::
 
 ## Set the Default Folder Language

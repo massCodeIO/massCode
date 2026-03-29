@@ -164,7 +164,7 @@ $30 to EUR                → ... EUR (live rate)
 
 ## Unit Conversion
 
-Powered by mathjs. Use `to`, `in`, `as`, `into` for conversion.
+Use `to`, `in`, `as`, `into` for conversion.
 
 ```
 5 km to mile                 → 3.10686 mile
@@ -524,8 +524,6 @@ int(0o55)    → 45
 Use `B`/`bn` for billion and `T`/`tn` for trillion, or word forms.
 
 ```
-10 thousand    → 10,000
-1.5 billion    → 1,500,000,000
 10 trillion    → 10,000,000,000,000
 ```
 

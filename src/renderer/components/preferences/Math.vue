@@ -177,7 +177,6 @@ async function refreshCryptoRates() {
       <UiMenuFormItem :label="i18n.t('preferences:math.currencyRates.label')">
         <Button
           variant="outline"
-          size="sm"
           :disabled="isRefreshingFiat"
           @click="refreshFiatRates"
         >
@@ -194,7 +193,6 @@ async function refreshCryptoRates() {
       <UiMenuFormItem :label="i18n.t('preferences:math.cryptoRates.label')">
         <Button
           variant="outline"
-          size="sm"
           :disabled="isRefreshingCrypto"
           @click="refreshCryptoRates"
         >

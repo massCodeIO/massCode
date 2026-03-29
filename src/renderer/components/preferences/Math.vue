@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MathSettings } from '~/main/store/types'
+import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useSonner } from '@/composables'
 import {
@@ -174,7 +175,7 @@ async function refreshCryptoRates() {
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:math.currencyRates.label')">
-        <UiButton
+        <Button
           variant="outline"
           size="sm"
           :disabled="isRefreshingFiat"
@@ -185,13 +186,13 @@ async function refreshCryptoRates() {
               ? i18n.t("preferences:math.currencyRates.refreshing")
               : i18n.t("preferences:math.currencyRates.refresh")
           }}
-        </UiButton>
+        </Button>
         <template #description>
           {{ i18n.t("preferences:math.currencyRates.description") }}
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:math.cryptoRates.label')">
-        <UiButton
+        <Button
           variant="outline"
           size="sm"
           :disabled="isRefreshingCrypto"
@@ -202,7 +203,7 @@ async function refreshCryptoRates() {
               ? i18n.t("preferences:math.cryptoRates.refreshing")
               : i18n.t("preferences:math.cryptoRates.refresh")
           }}
-        </UiButton>
+        </Button>
         <template #description>
           {{ i18n.t("preferences:math.cryptoRates.description") }}
         </template>

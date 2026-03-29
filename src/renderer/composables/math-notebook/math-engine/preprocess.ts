@@ -44,7 +44,7 @@ function sanitizeForCurrencyDetection(line: string) {
 }
 
 function preprocessGroupedNumbers(line: string): string {
-  let result = line.replace(/\b\d{1,3}(?:\s\d{3})+\b/g, match =>
+  let result = line.replace(/\b\d{1,3}(?:\s\d{3})+(?=\b|[a-z])/gi, match =>
     match.replace(/\s+/g, ''))
 
   result = result.replace(/\b\d+(?:\s+\d+)+\b/g, match =>

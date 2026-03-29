@@ -55,6 +55,11 @@ describe('arithmetic', () => {
   it('complex expression', () => expectValue('2 + 3 * 4 - 1', '13'))
   it('implicit multiplication', () => expectValue('6 (3)', '18'))
   it('grouped thousands', () => expectValue('5 300', '5,300'))
+  it('grouped thousands with unit suffix', () => {
+    const result = evalLine('1km + 1 000m')
+    expect(result.type).toBe('unit')
+    expect(result.value).toContain('km')
+  })
 })
 
 describe('rounding', () => {

@@ -138,7 +138,7 @@
     },
     "cryptoRates": {
       "label": "Crypto Rates",
-      "description": "Cached for 1 hour. 21 cryptocurrencies via CoinGecko.",
+      "description": "Cached for 1 hour. 21 cryptocurrencies via CoinGecko. Rate limit: 10-30 req/min.",
       "refresh": "Refresh",
       "refreshing": "Refreshing...",
       "refreshed": "Crypto rates updated",

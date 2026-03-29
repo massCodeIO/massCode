@@ -35,6 +35,10 @@ const CALENDAR_PREFIXES = [
   /^days\s+in\s+/,
   /^\d+\s+(?:days?|weeks?|months?|years?)\s+(?:after|before)\s/,
   /^current\s+timestamp$/,
+  /^workdays\s+in\s/,
+  /^workdays\s+from\s/,
+  /\s+in\s+workdays$/,
+  /^\d+\s+workdays?\s+(?:after|before)\s/,
 ]
 
 const MONTH_TOKEN_RE

@@ -1391,6 +1391,31 @@ describe('calendar calculations', () => {
   })
 })
 
+describe('workdays', () => {
+  it('workdays in 3 weeks', () => {
+    const result = evalLine('workdays in 3 weeks')
+    expect(result.value).toBe('15 workdays')
+    expect(result.numericValue).toBe(15)
+  })
+
+  it('workdays from date to date', () => {
+    const result = evalLine('workdays from March 3 to March 7')
+    expect(result.numericValue).toBeGreaterThan(0)
+    expect(result.value).toContain('workday')
+  })
+
+  it('date to date in workdays', () => {
+    const result = evalLine('March 3 to March 7 in workdays')
+    expect(result.numericValue).toBeGreaterThan(0)
+    expect(result.value).toContain('workday')
+  })
+
+  it('N workdays after date', () => {
+    const result = evalLine('2 workdays after March 3, 2025')
+    expect(result.type).toBe('date')
+  })
+})
+
 describe('error handling', () => {
   it('invalid expression returns error', () => {
     const result = evalLine('hello world')

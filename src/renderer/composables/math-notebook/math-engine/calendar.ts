@@ -70,6 +70,62 @@ function daysResult(count: number): CalendarResult {
   }
 }
 
+function isWeekday(date: Date): boolean {
+  const day = date.getDay()
+  return day !== 0 && day !== 6
+}
+
+function countWorkdays(start: Date, end: Date): number {
+  let count = 0
+  const d = new Date(start)
+  const direction = end >= start ? 1 : -1
+  const target = end.getTime()
+
+  if (direction === 1) {
+    while (d.getTime() < target) {
+      if (isWeekday(d))
+        count++
+      d.setDate(d.getDate() + 1)
+    }
+  }
+  else {
+    while (d.getTime() > target) {
+      d.setDate(d.getDate() - 1)
+      if (isWeekday(d))
+        count++
+    }
+  }
+
+  return count
+}
+
+function addWorkdays(date: Date, n: number): Date {
+  const result = new Date(date)
+  let remaining = Math.abs(n)
+  const direction = n >= 0 ? 1 : -1
+
+  while (remaining > 0) {
+    result.setDate(result.getDate() + direction)
+    if (isWeekday(result))
+      remaining--
+  }
+
+  return result
+}
+
+function workdaysResult(count: number): CalendarResult {
+  const abs = Math.abs(count)
+  return {
+    lineResult: {
+      value: `${abs} ${abs === 1 ? 'workday' : 'workdays'}`,
+      error: null,
+      type: 'number',
+      numericValue: abs,
+    },
+    rawResult: abs,
+  }
+}
+
 function parseTimeUnit(text: string): string {
   return text.toLowerCase().replace(/s$/, '')
 }
@@ -263,6 +319,65 @@ export function evaluateCalendarLine(
           type: 'date',
         },
         rawResult: date,
+      }
+    }
+  }
+
+  // "workdays in 3 weeks"
+  const workdaysInMatch = lower.match(
+    /^workdays\s+in\s+(\d+)\s+(weeks?|months?|years?)$/,
+  )
+  if (workdaysInMatch) {
+    const amount = Number(workdaysInMatch[1])
+    const unit = parseTimeUnit(workdaysInMatch[2])
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const end = new Date(start)
+    applyDateOffset(end, amount, unit, 1)
+    return workdaysResult(countWorkdays(start, end))
+  }
+
+  // "workdays from DATE to DATE"
+  const workdaysFromMatch = lower.match(/^workdays\s+from\s/)
+  if (workdaysFromMatch) {
+    const rest = line.slice(workdaysFromMatch[0].length)
+    const toIdx = rest.toLowerCase().lastIndexOf(' to ')
+    if (toIdx > 0) {
+      const d1 = parseSimpleDate(rest.slice(0, toIdx), now)
+      const d2 = parseSimpleDate(rest.slice(toIdx + 4), now)
+      if (d1 && d2)
+        return workdaysResult(countWorkdays(d1, d2))
+    }
+  }
+
+  // "DATE to DATE in workdays"
+  const inWorkdaysMatch = lower.match(/\s+in\s+workdays$/)
+  if (inWorkdaysMatch) {
+    const expr = line.slice(0, inWorkdaysMatch.index!).trim()
+    const toIdx = expr.toLowerCase().lastIndexOf(' to ')
+    if (toIdx > 0) {
+      const d1 = parseSimpleDate(expr.slice(0, toIdx), now)
+      const d2 = parseSimpleDate(expr.slice(toIdx + 4), now)
+      if (d1 && d2)
+        return workdaysResult(countWorkdays(d1, d2))
+    }
+  }
+
+  // "DATE + N workdays"
+  const addWorkdaysMatch = lower.match(/^(\d+)\s+workdays?\s+(after|before)\s/)
+  if (addWorkdaysMatch) {
+    const amount = Number(addWorkdaysMatch[1])
+    const direction = addWorkdaysMatch[2] === 'after' ? 1 : -1
+    const rest = line.slice(addWorkdaysMatch[0].length)
+    const date = parseSimpleDate(rest, now)
+    if (date) {
+      const result = addWorkdays(date, amount * direction)
+      return {
+        lineResult: {
+          value: formatMathDate(result, locale),
+          error: null,
+          type: 'date',
+        },
+        rawResult: result,
       }
     }
   }

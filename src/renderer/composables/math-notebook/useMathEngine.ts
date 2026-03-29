@@ -4,6 +4,7 @@ import type {
   LineResult,
   SpecialLineResult,
 } from './math-engine/types'
+import { evaluateCalendarLine } from './math-engine/calendar'
 import {
   DEFAULT_EM_IN_PX,
   DEFAULT_PPI,
@@ -918,6 +919,21 @@ export function useMathEngine() {
         if (timeZoneResult) {
           results.push(timeZoneResult.lineResult)
           prevResult = timeZoneResult.rawResult
+          continue
+        }
+
+        const calendarResult = evaluateCalendarLine(
+          trimmed,
+          currentDate,
+          activeLocale,
+        )
+        if (calendarResult) {
+          results.push(calendarResult.lineResult)
+          prevResult = calendarResult.rawResult
+          const numericValue = getNumericValue(calendarResult.rawResult)
+          if (numericValue !== null) {
+            numericBlock.push(numericValue)
+          }
           continue
         }
 

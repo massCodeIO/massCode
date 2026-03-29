@@ -1279,6 +1279,87 @@ describe('bitwise operations', () => {
   it('right shift', () => expectValue('16 >> 2', '4'))
 })
 
+describe('calendar calculations', () => {
+  it('days since a date', () => {
+    const result = evalLine('days since January 1')
+    expect(result.value).toContain('day')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days till a date', () => {
+    const result = evalLine('days till December 25')
+    expect(result.value).toContain('day')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days between two dates', () => {
+    const result = evalLine('days between March 1 and March 31')
+    expect(result.value).toBe('30 days')
+    expect(result.numericValue).toBe(30)
+  })
+
+  it('X from now', () => {
+    const result = evalLine('5 days from now')
+    expect(result.type).toBe('date')
+  })
+
+  it('X ago', () => {
+    const result = evalLine('3 days ago')
+    expect(result.type).toBe('date')
+  })
+
+  it('day of the week on date', () => {
+    const result = evalLine('day of the week on January 24, 1984')
+    expect(result.value).toBe('Tuesday')
+  })
+
+  it('weekday on date', () => {
+    const result = evalLine('weekday on March 9, 2024')
+    expect(result.value).toBe('Saturday')
+  })
+
+  it('week of year', () => {
+    const result = evalLine('week of year')
+    expect(result.numericValue).toBeGreaterThan(0)
+    expect(result.numericValue).toBeLessThanOrEqual(53)
+  })
+
+  it('week number on date', () => {
+    const result = evalLine('week number on March 12, 2021')
+    expect(result.numericValue).toBeGreaterThan(0)
+  })
+
+  it('days in February 2020 (leap)', () => {
+    const result = evalLine('days in February 2020')
+    expect(result.value).toBe('29 days')
+  })
+
+  it('days in February 2021 (non-leap)', () => {
+    const result = evalLine('days in February 2021')
+    expect(result.value).toBe('28 days')
+  })
+
+  it('days in Q3', () => {
+    const result = evalLine('days in Q3')
+    expect(result.value).toBe('92 days')
+  })
+
+  it('3 weeks after March 14, 2019', () => {
+    const result = evalLine('3 weeks after March 14, 2019')
+    expect(result.type).toBe('date')
+  })
+
+  it('28 days before March 12', () => {
+    const result = evalLine('28 days before March 12')
+    expect(result.type).toBe('date')
+  })
+
+  it('current timestamp', () => {
+    const result = evalLine('current timestamp')
+    expect(result.numericValue).toBeGreaterThan(1000000000)
+  })
+})
+
 describe('error handling', () => {
   it('invalid expression returns error', () => {
     const result = evalLine('hello world')

@@ -70,6 +70,22 @@ function daysResult(count: number): CalendarResult {
   }
 }
 
+function parseClockToMinutes(text: string): number | null {
+  const m = text.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i)
+  if (!m)
+    return null
+  let hours = Number(m[1])
+  const minutes = Number(m[2] || '0')
+  const meridiem = m[3]?.toLowerCase()
+  if (meridiem === 'pm' && hours < 12)
+    hours += 12
+  if (meridiem === 'am' && hours === 12)
+    hours = 0
+  if (hours > 23 || minutes > 59)
+    return null
+  return hours * 60 + minutes
+}
+
 function isWeekday(date: Date): boolean {
   const day = date.getDay()
   return day !== 0 && day !== 6
@@ -378,6 +394,32 @@ export function evaluateCalendarLine(
           type: 'date',
         },
         rawResult: result,
+      }
+    }
+  }
+
+  // "time1 to time2" → interval (e.g. "7:30 to 20:45", "4pm to 3am")
+  const clockIntervalMatch = lower.match(
+    /^(\d{1,2}(?::\d{2})?\s?(?:am|pm)?)\s+to\s+(\d{1,2}(?::\d{2})?\s?(?:am|pm)?)$/i,
+  )
+  if (clockIntervalMatch) {
+    const t1 = parseClockToMinutes(clockIntervalMatch[1])
+    const t2 = parseClockToMinutes(clockIntervalMatch[2])
+    if (t1 !== null && t2 !== null) {
+      let diff = t2 - t1
+      if (diff < 0)
+        diff += 24 * 60
+      const hours = Math.floor(diff / 60)
+      const minutes = diff % 60
+      const parts: string[] = []
+      if (hours)
+        parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+      if (minutes)
+        parts.push(`${minutes} min`)
+      const value = parts.join(' ') || '0 min'
+      return {
+        lineResult: { value, error: null, type: 'number', numericValue: diff },
+        rawResult: diff,
       }
     }
   }

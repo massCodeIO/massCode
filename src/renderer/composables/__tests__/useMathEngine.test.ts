@@ -1461,6 +1461,23 @@ describe('timespans and laptimes', () => {
   })
 })
 
+describe('clock time intervals', () => {
+  it('7:30 to 20:45', () => {
+    const result = evalLine('7:30 to 20:45')
+    expect(result.value).toBe('13 hours 15 min')
+  })
+
+  it('4pm to 3am', () => {
+    const result = evalLine('4pm to 3am')
+    expect(result.value).toBe('11 hours')
+  })
+
+  it('9am to 5pm', () => {
+    const result = evalLine('9am to 5pm')
+    expect(result.value).toBe('8 hours')
+  })
+})
+
 describe('timestamps and ISO 8601', () => {
   it('date to timestamp', () => {
     const result = evalLine('January 1, 2020 to timestamp')

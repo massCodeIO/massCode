@@ -2,11 +2,20 @@
 
 <AppVersion text=">=5.0" />
 
-Dedicated space for writing and organizing markdown documents. An Obsidian-like markdown editor built into massCode.
+Notes is the markdown writing space inside massCode. Use it for project documentation, technical notes, drafts, meeting notes, and personal knowledge bases when a snippet is too small and a full note makes more sense.
 
-Access the Notes space by clicking the **Notes** icon in the space rail. The interface uses the same three-column layout as Code: library, notes list, and editor.
+Access Notes from the **Notes** icon in the Space rail. The layout matches Code: Library on the left, notes list in the middle, editor on the right.
 
 <img :src="withBase('/notes.png')">
+
+## When to use Notes
+
+Use Notes when you want to keep markdown documents close to your snippets and daily workflow.
+
+- write technical documentation and reference material
+- keep research notes or project logs
+- prepare presentations from markdown
+- turn note outlines into mind maps
 
 ## Creating a Note
 
@@ -15,7 +24,7 @@ Access the Notes space by clicking the **Notes** icon in the space rail. The int
 
 ## Editor Modes
 
-Switch between three editor modes using the controls at the top of the editor panel.
+Switch between three editor modes using the controls at the top of the editor.
 
 - **Editor** - raw markdown editing.
 - **Live Preview** - split view with source and rendered preview side by side.

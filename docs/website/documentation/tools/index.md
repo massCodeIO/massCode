@@ -2,7 +2,9 @@
 
 <AppVersion text=">=3.8" />
 
-Built-in utilities for everyday dev tasks:
+Tools is for the small developer tasks that should take seconds, not a trip to a random website. Use it when you need to convert, encode, hash, or generate something quickly without leaving massCode.
+
+The available tools are grouped by category:
 
 ## Text tools
 

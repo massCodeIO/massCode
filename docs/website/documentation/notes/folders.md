@@ -1,6 +1,6 @@
 # Folders
 
-Notes can be organized into hierarchical folders.
+Folders help you keep notes organized by project, topic, or area of work. Notes supports hierarchical folders, so you can build a simple tree instead of keeping everything in one long list.
 
 ## Adding a Folder
 
@@ -10,15 +10,17 @@ Notes can be organized into hierarchical folders.
 
 ## Moving to Folder
 
-Drag and drop the required folder to another folder.
+Drag one folder onto another to create a nested structure.
 
 ## Renaming and Deleting
 
-Right-click on the folder and select **"Rename"** or **"Delete"**.
+Right-click the folder and choose **"Rename"** or **"Delete"**.
 
 ## Custom Icons
 
-Right-click on the folder and select **"Set Custom Icon"**.
+Custom icons make larger note libraries easier to scan.
+
+Right-click the folder and choose **"Set Custom Icon"**.
 
 ## Moving Notes
 

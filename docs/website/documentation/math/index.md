@@ -2,7 +2,9 @@
 
 <AppVersion text=">=4.6" />
 
-Calculator-style notepad inspired by [Soulver](https://soulver.app). Write expressions in natural language — results appear instantly on every line.
+Math Notebook is a calculator-style workspace for quick calculations, conversions, and date math inside massCode. Use it when you need to check a number, compare prices, convert units, or work through finance and time calculations without leaving your main workflow.
+
+Write expressions in natural language and get instant results on every line.
 
 ## Arithmetic
 
@@ -302,6 +304,8 @@ Lines starting with `//` or `#` are treated as comments and produce no result.
 ```
 
 ## Date & Time
+
+Many date and time results depend on your current date, locale, and time zone, so some examples below show relative output rather than one fixed value.
 
 ### Current time
 

@@ -1,23 +1,29 @@
 # Storage
 
-All your data is stored locally on your computer. massCode uses **Markdown Vault** as its storage engine — snippets and notes are plain Markdown files on disk.
+massCode stores your data locally on your computer. Snippets and notes live in a **Markdown Vault**, so your content stays as plain Markdown files on disk instead of being locked into a cloud service or a private database format.
 
 ## Markdown Vault
 
 ### Why it matters
 
-- **Your data is just files.** Each snippet and note is a `.md` file with frontmatter metadata. No database, no binary formats. You can read, edit, and organize them with any text editor or file manager.
-- **Git-friendly.** Store your vault in a Git repository, sync via GitHub, track change history — everything works out of the box because it's just files.
-- **Cloud sync.** iCloud, Dropbox, Syncthing — any file sync service will do. No database conflicts.
-- **Live sync.** massCode watches the vault directory in real time via a file watcher. Edit a file externally — the app picks up changes automatically.
+- **Your data is just files.** Each snippet and note is a `.md` file with frontmatter metadata. You can read, edit, move, and back up everything with any text editor or file manager.
+- **No vendor lock-in.** If you stop using massCode, your content still remains readable as plain files.
+- **Git-friendly.** Put the vault in a Git repository, track changes, and sync it through your normal workflow.
+- **Cloud-sync friendly.** iCloud, Dropbox, Google Drive, or Syncthing all work because the vault is just a folder on disk.
+- **Live updates.** massCode watches the vault in real time, so external file changes appear in the app automatically.
 
 ### How it works
 
-The vault structure mirrors your folder hierarchy. Each folder is a directory on disk, each snippet is a `.md` file inside it. Metadata (language, tags, order) is stored in frontmatter, while `.state.json` handles UI state (expanded folders, sort order).
+The vault mirrors your folder structure. Each folder becomes a directory on disk, and each snippet or note becomes a `.md` file inside it. Metadata such as language, tags, and ordering is stored in frontmatter, while `.state.json` stores UI state like expanded folders and sort order.
 
 You can change the vault location in **Settings → Storage**.
 
 ## Migration from SQLite
 
-If you are upgrading from an older version of massCode that used SQLite storage, you can import your existing data. Go to **Settings → Storage** and use the import option to select your old `massCode.db` file. Your snippets and folders will be converted to Markdown Vault format.
+If you are upgrading from an older version of massCode that used SQLite storage, you can import your existing data into Markdown Vault.
 
+- Open **Settings → Storage**
+- Choose the import option
+- Select your old `massCode.db` file
+
+massCode converts your folders and snippets to Markdown Vault format.

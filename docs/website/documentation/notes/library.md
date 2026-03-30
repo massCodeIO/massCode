@@ -1,23 +1,23 @@
 # Library
 
-The library located in the first column consists of system folders **"Inbox"**, **"Favorites"**, **"All Notes"**, **"Trash"**.
+The Library is the first column in the Notes space. It helps you move quickly between system folders and the parts of your note collection you use most often.
 
 ## Inbox
 
-This folder contains all unorganized notes.
+Inbox is the default place for notes that are not yet organized into folders.
 
 ## Favorites
 
-You can add your favorite notes to this folder for quick access.
+Favorites is for notes you want to keep close at hand.
 
 ## All Notes
 
-This folder contains all your notes.
+All Notes shows your entire note collection in one place.
 
 ## Trash
 
-Deleted notes are moved here. You can permanently delete them by right-clicking on **"Trash"** and selecting **"Empty Trash"**.
+Deleted notes are moved to Trash. To remove them permanently, right-click **"Trash"** and choose **"Empty Trash"**.
 
 ::: warning
-Cleaning the trash will result in the complete removal of notes. This action cannot be undone.
+Emptying Trash permanently removes the notes inside it. This action cannot be undone.
 :::

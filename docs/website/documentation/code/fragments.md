@@ -1,10 +1,10 @@
 # Fragments
 
-Fragments are tabs inside a snippet. Use them for different versions or languages of the same snippet.
+Fragments are tabs inside a snippet. Use them when one snippet needs multiple related versions, files, or languages in one place.
 
 ## Adding a Fragment
 
-Follow one of the following steps:
+Use one of these methods:
 
 - Select **"File"** > **"New Fragment"** from the menu bar
 - Click **"+"** button on the top right corner of the editor.
@@ -12,8 +12,8 @@ Follow one of the following steps:
 
 ## Renaming and Deleting
 
-Call the context menu by right-clicking on the fragment and selecting **"Rename"** or **"Delete"**.
+Right-click the fragment tab and choose **"Rename"** or **"Delete"**.
 
 ::: warning
-The deleted fragment cannot be recovered.
+Deleting a fragment removes it permanently.
 :::

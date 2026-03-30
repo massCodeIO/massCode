@@ -1,8 +1,8 @@
 # Sync
 
-massCode gives you the ability to synchronize your data across multiple computers.
+massCode does not require a built-in cloud account or a proprietary sync service. To sync your data across devices, sync your **Markdown Vault** folder with the file service you already trust.
 
-Since massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syncing is straightforward — your data is just plain files on disk. Point any file sync service to your vault directory:
+Because massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syncing is straightforward: your data is just plain files on disk. Point any file sync service at your vault directory:
 
 - iCloud Drive
 - Dropbox
@@ -10,4 +10,10 @@ Since massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syn
 - Syncthing
 - Git repository
 
-There are no database conflicts to worry about. massCode watches the vault directory in real time, so changes made externally are picked up automatically.
+This approach works well if you want:
+
+- the same snippets and notes on multiple computers
+- version history through Git
+- full control over where your data lives
+
+massCode watches the vault directory in real time, so changes made outside the app are picked up automatically.

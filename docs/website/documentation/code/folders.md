@@ -1,10 +1,10 @@
 # Folders
 
-massCode allows you to organize your snippets into multi-level folders. When you select a sidebar folder, all snippets in that folder, as well as in all subfolders, will be displayed in the second column.
+Folders help you organize snippets by project, topic, language, or any structure that fits your workflow. When you select a folder in the sidebar, massCode shows snippets from that folder and all of its subfolders in the second column.
 
 ## Adding a Folder
 
-Follow one of the following steps:
+Use one of these methods:
 
 - Select **"File"** > **"New Folder"** from the menu bar.
 - Click the **"+"** button next to **"FOLDERS"** in the library.
@@ -12,11 +12,11 @@ Follow one of the following steps:
 
 ## Moving to Folder
 
-Drag and drop the required folder to another folder.
+Drag one folder onto another to create a nested folder structure.
 
 ## Renaming and Deleting
 
-Call the context menu by right-clicking on the folder and selecting **"Rename"** or **"Delete"**.
+Right-click the folder and choose **"Rename"** or **"Delete"**.
 
 ::: warning
 Deleting a folder moves all its snippets and subfolders to **"Inbox"**.
@@ -24,13 +24,17 @@ Deleting a folder moves all its snippets and subfolders to **"Inbox"**.
 
 ## Set the Default Folder Language
 
-Call the context menu by right-clicking on the folder and select **"Default Language"**.
+Set a default language when most snippets in a folder use the same syntax.
+
+Right-click the folder and choose **"Default Language"**.
 
 ## Setting a Custom Icon
 
 <AppVersion text=">=3.7" />
 
-Call the context menu by right-clicking on the folder and select **"Set Custom Icon"**.
+Custom icons help large libraries stay easier to scan.
+
+Right-click the folder and choose **"Set Custom Icon"**.
 
 ::: info
 To set the default icon, click the **Reset** button in the icon selection dialog window.

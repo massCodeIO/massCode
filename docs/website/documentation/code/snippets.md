@@ -77,8 +77,17 @@ Use code preview when you want to test a small HTML/CSS idea directly inside mas
 
 <AppVersion text=">=4.1" />
 
-Use JSON Visualizer when you need to inspect nested JSON more easily than in raw text form.
+Use JSON Visualizer when nested JSON is too dense to read comfortably as raw text. massCode turns the current JSON snippet into a visual graph, so objects, arrays, and relationships are easier to scan.
 
 - Add a new [snippet](#adding-a-snippet) or select an existing one.
 - Click the language selector in the editor footer and choose **"JSON"**.
 - Select **"Editor"** > **"Preview JSON"** from the menu bar or press <kbd>Alt+Cmd+J</kbd> on macOS or <kbd>Ctrl+Alt+J</kbd> on Windows or Linux.
+- Use zoom controls and **Fit** to navigate larger payloads.
+- Click a node to inspect its content.
+- Export the visualization as **PNG** or **SVG** when you want to share it.
+
+<img :src="withBase('/json-visually.png')">
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

@@ -3,6 +3,7 @@ import type {
   CodeState,
   NotesEditorMode,
   NotesState,
+  SpaceId,
   SpaceLayoutMode,
 } from '../types'
 import Store from 'electron-store'
@@ -42,6 +43,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   notifications: {
     lastNotifiedUpdateVersion: '',
   },
+  activeSpaceId: 'code',
 }
 
 function sanitizeCodeState(value: unknown): CodeState {
@@ -216,6 +218,12 @@ function sanitizeAppStore(value: unknown): AppStore {
         readOptionalNumber(notificationsSource, 'nextDonateAt')
         ?? readOptionalNumber(source, 'nextDonateNotification'),
     },
+    activeSpaceId: readEnum(
+      source,
+      'activeSpaceId',
+      ['code', 'tools', 'math', 'notes'] as const,
+      APP_STORE_DEFAULTS.activeSpaceId,
+    ) as SpaceId,
   }
 }
 

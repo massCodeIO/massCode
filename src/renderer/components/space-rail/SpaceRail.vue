@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useApp, useTheme } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
@@ -23,6 +23,15 @@ const spaces = computed(() => {
     active: space.isActive(route.name),
   }))
 })
+
+watch(
+  () => spaces.value.find(s => s.active)?.id,
+  (spaceId) => {
+    if (spaceId) {
+      store.app.set('activeSpaceId', spaceId)
+    }
+  },
+)
 </script>
 
 <template>

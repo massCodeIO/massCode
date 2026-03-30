@@ -16,6 +16,8 @@ export interface NotesState {
   libraryFilter?: string
 }
 
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+
 export interface AppStore {
   window: {
     bounds: object
@@ -46,6 +48,7 @@ export interface AppStore {
     nextDonateAt?: number
     lastNotifiedUpdateVersion: string
   }
+  activeSpaceId: SpaceId
 }
 
 export interface EditorSettings {

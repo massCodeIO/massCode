@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useApp, useTheme } from '@/composables'
-import { i18n, ipc } from '@/electron'
-import { RouterName } from '@/router'
-import { isSpaceRouteName } from '@/spaceDefinitions'
+import { i18n, ipc, store } from '@/electron'
+import { router, RouterName } from '@/router'
+import { getSpaceDefinitions, isSpaceRouteName } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
 import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
@@ -51,9 +51,20 @@ watch(
 
 useTheme()
 
+function restoreSavedSpace() {
+  const savedSpaceId = store.app.get<string>('activeSpaceId')
+  if (savedSpaceId && savedSpaceId !== 'code') {
+    const space = getSpaceDefinitions().find(s => s.id === savedSpaceId)
+    if (space) {
+      router.replace(space.to)
+    }
+  }
+}
+
 async function init() {
   registerIPCListeners()
   ipc.send('system:renderer-ready', null, () => {})
+  restoreSavedSpace()
   loadWASM(onigasmFile)
   await loadGrammars()
   notifications()

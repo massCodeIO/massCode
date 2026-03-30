@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 import { preferencesKeys } from '@/components/preferences/keys'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
+import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
 import {
   Calculator,
@@ -70,7 +71,14 @@ provide(preferencesKeys, {
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
     :top-space="isMac ? 16 : 6"
-    @back="() => router.push({ name: RouterName.main })"
+    @back="
+      () => {
+        const savedSpace = getSpaceDefinitions().find(
+          (s) => s.id === store.app.get('activeSpaceId'),
+        );
+        router.push(savedSpace?.to ?? { name: RouterName.main });
+      }
+    "
   >
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">

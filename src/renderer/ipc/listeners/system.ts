@@ -4,6 +4,7 @@ import {
   useMathNotebook,
   useNoteFolders,
   useNotes,
+  useNotesApp,
   useNoteTags,
   useSnippets,
   useSnippetUpdate,
@@ -16,6 +17,7 @@ import { repository } from '../../../../package.json'
 
 const {
   state,
+  isCodeSpaceInitialized,
   highlightedFolderIds,
   highlightedSnippetIds,
   focusedSnippetId,
@@ -27,6 +29,7 @@ const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { getNotes, hasBusyNoteContentUpdates } = useNotes()
 const { getNoteTags } = useNoteTags()
@@ -54,6 +57,8 @@ async function refreshCodeSpace() {
 
 async function refreshAfterStorageSync() {
   const activeSpace = getActiveSpaceId()
+  isCodeSpaceInitialized.value = false
+  isNotesSpaceInitialized.value = false
 
   switch (activeSpace) {
     case 'math':

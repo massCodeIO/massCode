@@ -13,6 +13,7 @@ import {
   Pencil,
   Presentation,
 } from 'lucide-vue-next'
+import { shouldSyncSelectedNoteContent } from './editorSync'
 import { getTextStats } from './textStats'
 
 const {
@@ -88,8 +89,12 @@ const name = computed({
 const editorContent = ref('')
 
 watch(
-  () => selectedNote.value?.id,
-  () => {
+  selectedNote,
+  (nextNote, previousNote) => {
+    if (!shouldSyncSelectedNoteContent(previousNote, nextNote)) {
+      return
+    }
+
     editorContent.value = selectedNote.value?.content ?? ''
   },
   { immediate: true },

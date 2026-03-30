@@ -65,16 +65,36 @@ import FeaturesItem from './FeaturesItem.vue'
 
 <style scoped>
 .spaces {
-  padding: 24px 0 12px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 24px 0 8px;
 }
 
 .extras {
-  padding: 12px 0 24px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 8px 0 24px;
+}
+
+@media (min-width: 768px) {
+  .spaces {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding: 24px 0 12px;
+  }
+
+  .extras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    padding: 12px 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .extras {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 </style>

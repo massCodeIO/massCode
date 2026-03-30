@@ -150,4 +150,12 @@ onMounted(async () => {
 .dark .sponsors-item:hover img {
   filter: none;
 }
+
+@media (max-width: 767px) {
+  .sponsors:not(.sidebar) {
+    .body {
+      grid-template-columns: 1fr;
+    }
+  }
+}
 </style>

@@ -2,7 +2,7 @@
 
 <AppVersion text=">=4.5" />
 
-Starting from v4.5.0, massCode supports custom themes. You can fully customize the look and feel of the app — UI colors and editor syntax highlighting colors.
+Custom themes let you adapt massCode to your workflow and visual preferences. You can change both the app UI colors and the editor syntax highlighting colors.
 
 ## How it works
 
@@ -12,4 +12,4 @@ Starting from v4.5.0, massCode supports custom themes. You can fully customize t
 
 ## Creating a Theme
 
-You can create a new theme directly from **Settings → Themes**. A Rose Pine-based template will be generated as a starting point that you can customize to your liking.
+Create a new theme from **Settings → Themes**. massCode generates a Rose Pine-based JSON template that you can use as a starting point and edit in real time.

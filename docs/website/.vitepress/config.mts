@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitepress'
 import { version } from './_data/assets.json'
 
-const description = 'Code snippets manager for developers, developed using web technologies.'
-const ogDescription = 'A free and open source code snippets manager for developers'
+const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, and built-in dev tools.'
+const ogDescription = 'Free, open-source developer workspace: code snippets, notes, math notebook, and 20+ dev tools. All data stored locally.'
 const ogImage = 'https://masscode.io/og-image.png'
 const ogTitle = 'massCode'
 const ogUrl = 'https://masscode.io'
@@ -41,37 +41,49 @@ export default defineConfig({
     sidebar: {
       '/documentation/': [
         {
-          text: 'Essentials',
+          text: 'General',
           items: [
-            { text: 'Layout', link: '/documentation/' },
-            { text: 'Library', link: '/documentation/library' },
-            { text: 'Folders', link: '/documentation/folders' },
-            { text: 'Tags', link: '/documentation/tags' },
-            { text: 'Snippets', link: '/documentation/snippets' },
-            { text: 'Fragments', link: '/documentation/fragments' },
-            { text: 'Description', link: '/documentation/description' },
-            { text: 'Search', link: '/documentation/search' },
+            { text: 'Overview', link: '/documentation/' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Themes', link: '/documentation/themes' },
           ],
         },
         {
-          text: 'Markdown',
+          text: 'Code',
           items: [
-            { text: 'Markdown', link: '/documentation/markdown.md' },
+            { text: 'Library', link: '/documentation/code/library' },
+            { text: 'Folders', link: '/documentation/code/folders' },
+            { text: 'Tags', link: '/documentation/code/tags' },
+            { text: 'Snippets', link: '/documentation/code/snippets' },
+            { text: 'Fragments', link: '/documentation/code/fragments' },
+            { text: 'Description', link: '/documentation/code/description' },
+            { text: 'Search', link: '/documentation/code/search' },
+          ],
+        },
+        {
+          text: 'Notes',
+          items: [
+            { text: 'Notes', link: '/documentation/notes/' },
+            { text: 'Library', link: '/documentation/notes/library' },
+            { text: 'Folders', link: '/documentation/notes/folders' },
+            { text: 'Tags', link: '/documentation/notes/tags' },
+            { text: 'Mermaid', link: '/documentation/notes/mermaid' },
+            { text: 'Mindmap', link: '/documentation/notes/mindmap' },
+            { text: 'Presentation', link: '/documentation/notes/presentation' },
+            { text: 'Search', link: '/documentation/notes/search' },
           ],
         },
         {
           text: 'Math',
           items: [
-            { text: 'Math Notebook', link: '/documentation/math-notebook.md' },
+            { text: 'Math Notebook', link: '/documentation/math/' },
           ],
         },
         {
           text: 'Tools',
           items: [
-            { text: 'Developers Tools', link: '/documentation/devtools.md' },
+            { text: 'Developer Tools', link: '/documentation/tools/' },
           ],
         },
       ],

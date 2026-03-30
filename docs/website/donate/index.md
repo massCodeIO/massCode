@@ -1,19 +1,17 @@
 # Support massCode development
 
 ::: info
-Everyone who donated will get a special version without the "Unsponsored" label in the upper right corner, as well as a pop-up notification of the donation.
+Everyone who donated will get a special version without the "Unsponsored" label in the lower-left corner of the space rail, as well as a pop-up notification of the donation.
 :::
 
-massCode is open source project and completely free to use.
-
-However, the amount of effort needed to maintain and develop new features for the project is not sustainable without proper financial backing. You can support massCode development via the following methods:
+massCode is free and open source. But building and maintaining a quality tool takes time. Your support helps keep development going and new features coming.
 
 ## Become a backer or sponsor on Open Collective
 
 <VPButton
   href="https://opencollective.com/masscode"
   theme="brand"
-  text="Go to Open Collective"
+  text="Become a Sponsor"
 />
 
 ## One-time donation via Gumroad (Visa, Mastercard, etc.)
@@ -21,7 +19,7 @@ However, the amount of effort needed to maintain and develop new features for th
 <VPButton
   href="https://antonreshetov.gumroad.com/l/masscode"
   theme="brand"
-  text="Go to Gumroad"
+  text="Make a Donation"
 />
 
 ## One-time donation via PayPal
@@ -29,10 +27,10 @@ However, the amount of effort needed to maintain and develop new features for th
 <VPButton
   href="https://paypal.me/antongithub"
   theme="brand"
-  text="Go to PayPal"
+  text="Donate via PayPal"
 />
 
-## On-time donation via Crypto
+## One-time donation via Crypto
 
 <code>TTTjJFcHwX1ZwjtnotAz5yPkyE9G88oXbm</code>
 

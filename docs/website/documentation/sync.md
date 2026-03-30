@@ -1,17 +1,19 @@
 # Sync
 
-massCode gives you the ability to synchronize your snippets library across multiple computers.
+massCode does not require a built-in cloud account or a proprietary sync service. To sync your data across devices, sync your **Markdown Vault** folder with the file service you already trust.
 
-## SQLite Storage
+Because massCode uses [Markdown Vault](/documentation/storage#markdown-vault), syncing is straightforward: your data is just plain files on disk. Point any file sync service at your vault directory:
 
-You can move your storage folder to a location managed by a sync service such as iCloud Drive, Google Drive, or Dropbox, and get the ability to synchronize your library on other computers.
+- iCloud Drive
+- Dropbox
+- Google Drive
+- Syncthing
+- Git repository
 
-::: warning
-When using SQLite storage with cloud sync services, avoid opening the same database from multiple devices simultaneously, as this may cause database conflicts.
-:::
+This approach works well if you want:
 
-## Markdown Vault
+- the same snippets and notes on multiple computers
+- version history through Git
+- full control over where your data lives
 
-<AppVersion text=">=4.5" />
-
-With [Markdown Vault](/documentation/storage#markdown-vault), syncing becomes much simpler since your snippets are just plain files. You can use any file sync service — iCloud, Dropbox, Syncthing, or even a Git repository. There are no database conflicts to worry about, and massCode watches the vault directory in real time, so changes made externally are picked up automatically.
+massCode watches the vault directory in real time, so changes made outside the app are picked up automatically.

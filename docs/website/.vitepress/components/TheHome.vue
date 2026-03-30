@@ -19,11 +19,20 @@ import SponsorsGroup from './sponsors/SponsorsGroup.vue'
 
 <style scoped>
 section {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 1152px;
   margin: 0 auto;
+  padding-inline: 24px;
 
   + section {
     margin-top: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  section {
+    padding-inline: 16px;
   }
 }
 </style>

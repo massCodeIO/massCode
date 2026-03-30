@@ -21,7 +21,7 @@ defineProps<Props>()
 .features-item {
   background-color: var(--vp-c-bg-soft);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
 
   .title {
     line-height: 24px;
@@ -35,6 +35,12 @@ defineProps<Props>()
     font-size: 14px;
     font-weight: 500;
     color: var(--vp-c-text-2);
+  }
+}
+
+@media (min-width: 768px) {
+  .features-item {
+    padding: 24px;
   }
 }
 </style>

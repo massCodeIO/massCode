@@ -1,7 +1,7 @@
 # Support massCode development
 
 ::: info
-Everyone who donated will get a special version without the "Unsponsored" label in the upper right corner, as well as a pop-up notification of the donation.
+Everyone who donated will get a special version without the "Unsponsored" label in the lower-left corner of the space rail, as well as a pop-up notification of the donation.
 :::
 
 massCode is free and open source. But building and maintaining a quality tool takes time. Your support helps keep development going and new features coming.

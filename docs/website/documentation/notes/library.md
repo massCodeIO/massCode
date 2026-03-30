@@ -1,12 +1,23 @@
 # Library
 
-The library is located in the first column and consists of the following system sections:
+The library located in the first column consists of system folders **"Inbox"**, **"Favorites"**, **"All Notes"**, **"Trash"**.
 
-- **Inbox** -- notes without a folder.
-- **Favorites** -- notes marked as favorites for quick access.
-- **All Notes** -- all notes across all folders.
-- **Trash** -- deleted notes. Right-click on **"Trash"** and select **"Empty Trash"** to permanently remove them.
+## Inbox
+
+This folder contains all unorganized notes.
+
+## Favorites
+
+You can add your favorite notes to this folder for quick access.
+
+## All Notes
+
+This folder contains all your notes.
+
+## Trash
+
+Deleted notes are moved here. You can permanently delete them by right-clicking on **"Trash"** and selecting **"Empty Trash"**.
 
 ::: warning
-Emptying the trash will result in the complete removal of notes. This action cannot be undone.
+Cleaning the trash will result in the complete removal of notes. This action cannot be undone.
 :::

@@ -6,6 +6,8 @@ Dedicated space for writing and organizing markdown documents. An Obsidian-like 
 
 Access the Notes space by clicking the **Notes** icon in the space rail. The interface uses the same three-column layout as Code: library, notes list, and editor.
 
+<img :src="withBase('/notes.png')">
+
 ## Creating a Note
 
 - Select **"File"** > **"New Note"** from the menu bar.
@@ -15,9 +17,9 @@ Access the Notes space by clicking the **Notes** icon in the space rail. The int
 
 Switch between three editor modes using the controls at the top of the editor panel.
 
-- **Editor** -- raw markdown editing.
-- **Live Preview** -- split view with source and rendered preview side by side.
-- **Preview** -- read-only rendered view.
+- **Editor** - raw markdown editing.
+- **Live Preview** - split view with source and rendered preview side by side.
+- **Preview** - read-only rendered view.
 
 ## Editor Features
 
@@ -36,8 +38,12 @@ The editor is built on CodeMirror 6 and includes:
 Customize the editor appearance and behavior in preferences:
 
 - **Font size** and **font family**
-- **Code font family** -- separate setting for code blocks
-- **Line height** -- Compact, Default, or Relaxed
+- **Code font family** - separate setting for code blocks
+- **Line height** - Compact, Default, or Relaxed
 - **Indent size**
-- **Limit width** -- toggle to constrain the editor width
-- **Line numbers** -- toggle to show or hide line numbers
+- **Limit width** - toggle to constrain the editor width
+- **Line numbers** - toggle to show or hide line numbers
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

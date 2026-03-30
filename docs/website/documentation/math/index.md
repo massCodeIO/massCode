@@ -1,3 +1,8 @@
+---
+title: Math Notebook
+description: "Use the massCode Math Notebook for natural-language calculations, conversions, currency rates, finance, and date math."
+---
+
 # Math Notebook
 
 <AppVersion text=">=4.6" />

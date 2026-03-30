@@ -1,3 +1,8 @@
+---
+title: Custom Themes
+description: "Create and customize massCode themes to change app colors and editor syntax highlighting with live JSON-based updates."
+---
+
 # Custom Themes
 
 <AppVersion text=">=4.5" />

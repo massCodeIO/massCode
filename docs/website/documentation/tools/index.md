@@ -1,3 +1,8 @@
+---
+title: Developer Tools
+description: "Use built-in developer tools in massCode for text conversion, hashing, HMAC generation, URL parsing, and other quick tasks."
+---
+
 # Developer tools
 
 <AppVersion text=">=3.8" />

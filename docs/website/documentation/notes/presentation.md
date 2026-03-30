@@ -1,3 +1,8 @@
+---
+title: Presentation Mode
+description: "Present markdown notes fullscreen in massCode with keyboard navigation and a built-in laser pointer."
+---
+
 # Presentation Mode
 
 Presentation Mode shows the current note in a clean fullscreen view for meetings, demos, and walkthroughs. Use it when you want to present markdown content without switching to another tool.

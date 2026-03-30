@@ -1,5 +1,6 @@
 ---
-title: Download
+title: Download massCode
+description: "Download the latest massCode builds for macOS, Windows, and Linux. Free, offline-first, and no account required."
 ---
 
 # Select your platform

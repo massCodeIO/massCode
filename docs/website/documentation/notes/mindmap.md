@@ -1,3 +1,8 @@
+---
+title: Mind Maps
+description: "Turn markdown headings into interactive mind maps in massCode and export them as PNG or SVG."
+---
+
 # Mindmap
 
 Mindmap turns the structure of your note into a visual outline. It is most useful for planning, presenting a hierarchy, or checking whether a long note has a clear structure.

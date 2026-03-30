@@ -1,3 +1,8 @@
+---
+title: Documentation Overview
+description: "Explore the massCode documentation for code snippets, markdown notes, math notebook, storage, sync, themes, and built-in developer tools."
+---
+
 # Overview
 
 massCode is a free and open source developer workspace for code snippets, markdown notes, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, a calculator, and a handful of websites, you keep it in four focused Spaces inside one local-first desktop app.

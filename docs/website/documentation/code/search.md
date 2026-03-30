@@ -1,3 +1,8 @@
+---
+title: Code Search
+description: "Search the entire massCode snippet library by title or content to quickly find saved code across folders."
+---
+
 # Search
 
 Search helps you find snippets by title or content across your entire library. Use it when you remember part of the code but not where you saved it.

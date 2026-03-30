@@ -1,3 +1,8 @@
+---
+title: Mermaid Diagrams
+description: "Render Mermaid diagrams directly inside massCode notes for flows, timelines, architectures, and other structured visuals."
+---
+
 # Mermaid
 
 Use Mermaid when a diagram explains something faster than a paragraph. It is a good fit for flows, simple architectures, state changes, timelines, and other structured visual notes.

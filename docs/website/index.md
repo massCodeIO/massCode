@@ -1,6 +1,7 @@
 ---
 layout: home
 titleTemplate: "A free and open source developer workspace"
+description: "Free, open-source developer workspace for code snippets, markdown notes, calculations, and built-in dev tools. Works offline and stores data locally."
 hero:
   image:
     src: /logo.png

@@ -1,3 +1,8 @@
+---
+title: Sync Your Markdown Vault
+description: "Sync massCode across devices by pairing the Markdown Vault with iCloud, Dropbox, Google Drive, Syncthing, or Git."
+---
+
 # Sync
 
 massCode does not require a built-in cloud account or a proprietary sync service. To sync your data across devices, sync your **Markdown Vault** folder with the file service you already trust.

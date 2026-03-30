@@ -1,3 +1,8 @@
+---
+title: Markdown Notes
+description: "Write markdown notes in massCode with live preview, a three-column layout, and features for diagrams, mind maps, and presentations."
+---
+
 # Notes
 
 <AppVersion text=">=5.0" />

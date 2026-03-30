@@ -1,3 +1,8 @@
+---
+title: Notes Library
+description: "Navigate the Notes Library in massCode with Inbox, Favorites, All Notes, and Trash for fast note access."
+---
+
 # Library
 
 The Library is the first column in the Notes space. It helps you move quickly between system folders and the parts of your note collection you use most often.

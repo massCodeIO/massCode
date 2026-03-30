@@ -1,3 +1,8 @@
+---
+title: Notes Folders
+description: "Organize notes in massCode with hierarchical folders, drag-and-drop nesting, and folder rename or delete actions."
+---
+
 # Folders
 
 Folders help you keep notes organized by project, topic, or area of work. Notes supports hierarchical folders, so you can build a simple tree instead of keeping everything in one long list.

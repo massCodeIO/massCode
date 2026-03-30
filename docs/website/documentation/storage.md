@@ -1,3 +1,8 @@
+---
+title: Markdown Vault Storage
+description: "Learn how massCode stores snippets and notes locally in a Markdown Vault with plain files, frontmatter metadata, and Git-friendly structure."
+---
+
 # Storage
 
 massCode stores your data locally on your computer. Snippets and notes live in a **Markdown Vault**, so your content stays as plain Markdown files on disk instead of being locked into a cloud service or a private database format.

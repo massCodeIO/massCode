@@ -1,3 +1,8 @@
+---
+title: Code Snippets
+description: "Save, organize, and edit reusable code snippets in massCode with folders, languages, and searchable snippet content."
+---
+
 # Snippets
 
 Snippets are the core building blocks of the Code space. Use them to save code you reuse across projects, keep reference examples close at hand, and build your own searchable code library over time.

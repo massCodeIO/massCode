@@ -1,27 +1,81 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 import { version } from './_data/assets.json'
 
+const siteUrl = 'https://masscode.io'
+const siteTitle = 'massCode'
 const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, and built-in dev tools.'
-const ogDescription = 'Free, open-source developer workspace: code snippets, notes, math notebook, and 20+ dev tools. All data stored locally.'
-const ogImage = 'https://masscode.io/og-image.png'
-const ogTitle = 'massCode'
-const ogUrl = 'https://masscode.io'
+const ogImage = `${siteUrl}/og-image.png`
 const gsv = 'h-rU1tSutO83wOyvi4syrk_XTvgennlUPkL6fMmq5cI'
 
+function resolvePagePath(relativePath: string) {
+  if (!relativePath || relativePath === 'index.md')
+    return '/'
+
+  if (relativePath.endsWith('/index.md'))
+    return `/${relativePath.slice(0, -'index.md'.length)}`
+
+  return `/${relativePath.replace(/\.md$/, '.html')}`
+}
+
+function resolvePageUrl(relativePath: string) {
+  return new URL(resolvePagePath(relativePath), siteUrl).toString()
+}
+
+function buildSeoHead({
+  relativePath,
+  pageTitle,
+  pageDescription,
+  isNotFound,
+}: {
+  relativePath: string
+  pageTitle: string
+  pageDescription: string
+  isNotFound?: boolean
+}): HeadConfig[] {
+  if (isNotFound)
+    return [['meta', { name: 'robots', content: 'noindex, nofollow' }]]
+
+  const pageUrl = resolvePageUrl(relativePath)
+
+  return [
+    ['link', { rel: 'canonical', href: pageUrl }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: siteTitle }],
+    ['meta', { property: 'og:title', content: pageTitle }],
+    ['meta', { property: 'og:description', content: pageDescription }],
+    ['meta', { property: 'og:url', content: pageUrl }],
+    ['meta', { property: 'og:image', content: ogImage }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: pageTitle }],
+    ['meta', { name: 'twitter:description', content: pageDescription }],
+    ['meta', { name: 'twitter:image', content: ogImage }],
+  ]
+}
+
 export default defineConfig({
-  title: 'massCode',
+  title: siteTitle,
   description,
+
+  sitemap: {
+    hostname: siteUrl,
+    transformItems(items) {
+      return items.filter(item => !item.url.endsWith('/404.html'))
+    },
+  },
 
   head: [
     ['link', { rel: 'icon', type: 'image/png', href: '/logo-64w.png' }],
-    ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: ogTitle }],
-    ['meta', { property: 'og:image', content: ogImage }],
-    ['meta', { property: 'og:url', content: ogUrl }],
-    ['meta', { property: 'og:description', content: ogDescription }],
-    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'google-site-verification', content: gsv }],
   ],
+
+  transformHead({ pageData, title, description }) {
+    return buildSeoHead({
+      relativePath: pageData.relativePath,
+      pageTitle: title,
+      pageDescription: description,
+      isNotFound: pageData.isNotFound,
+    })
+  },
 
   themeConfig: {
     logo: '/logo-64w.png',

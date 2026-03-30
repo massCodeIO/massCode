@@ -1,3 +1,8 @@
+---
+title: Code Tags
+description: "Use tags in massCode to organize snippets across folders, add tag filters, and manage tag deletion safely."
+---
+
 # Tags
 
 Tags are a flexible way to organize snippets across folders. Unlike folders, a snippet can have multiple tags at the same time.

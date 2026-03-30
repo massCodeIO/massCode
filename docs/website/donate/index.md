@@ -1,3 +1,8 @@
+---
+title: Support massCode
+description: "Support massCode development through Open Collective, Gumroad, or crypto donations and help fund new features."
+---
+
 # Support massCode development
 
 ::: info

@@ -1,3 +1,8 @@
+---
+title: Code Library
+description: "Browse the Code Library in massCode, including Inbox, Favorites, All Snippets, and Trash for fast snippet navigation."
+---
+
 # Library
 
 The Library is the first column in the Code space. It gives you a fast way to browse system folders and jump to the part of your snippet collection you need.

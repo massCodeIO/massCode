@@ -1,3 +1,8 @@
+---
+title: Code Folders
+description: "Organize snippets in massCode with nested folders, renaming, moving, and deletion workflows in the Code space."
+---
+
 # Folders
 
 Folders help you organize snippets by project, topic, language, or any structure that fits your workflow. When you select a folder in the sidebar, massCode shows snippets from that folder and all of its subfolders in the second column.

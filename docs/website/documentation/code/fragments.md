@@ -1,3 +1,8 @@
+---
+title: Snippet Fragments
+description: "Use snippet fragments in massCode to keep multiple related files, languages, or versions together in one snippet."
+---
+
 # Fragments
 
 Fragments are tabs inside a snippet. Use them when one snippet needs multiple related versions, files, or languages in one place.

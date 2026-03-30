@@ -1,5 +1,6 @@
 ---
 title: Latest Release
+description: "Read the release notes for the latest massCode update, including new features, fixes, and improvements."
 ---
 
 # v4.6.0

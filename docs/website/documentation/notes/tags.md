@@ -1,3 +1,8 @@
+---
+title: Notes Tags
+description: "Use tags in massCode Notes to organize documents across folders and filter your notes by topic."
+---
+
 # Tags
 
 Tags add a second layer of organization on top of folders. Unlike folders, one note can have multiple tags.

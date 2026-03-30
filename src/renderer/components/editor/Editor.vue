@@ -269,6 +269,21 @@ async function init() {
     },
   )
 
+  watch(
+    isShowEditor,
+    (isVisible, wasVisible) => {
+      if (!isVisible || wasVisible !== false)
+        return
+
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          editor?.refresh()
+        })
+      })
+    },
+    { flush: 'post' },
+  )
+
   watch(searchQuery, () => {
     nextTick(() => {
       updateSearchOverlay()

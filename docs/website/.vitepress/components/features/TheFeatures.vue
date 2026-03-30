@@ -5,59 +5,60 @@ import FeaturesItem from './FeaturesItem.vue'
 <template>
   <div class="spaces">
     <FeaturesItem title="Code Snippets">
-      Organize code with multi-level folders, tags, and multi-tab fragments.
-      Built on
+      Build a reusable code library across projects and languages. Organize
+      snippets with folders, tags, and fragments, then edit them with
       <AppLink href="https://github.com/codemirror/codemirror5">
         CodeMirror
       </AppLink>
-      with 160+ syntax grammars and
+      , format them with
       <AppLink href="https://prettier.io">
         Prettier
-      </AppLink> formatting.
-      Real-time HTML & CSS preview for rapid prototyping, JSON visualizer for
-      exploring complex data structures, and beautiful screenshot export with
-      customizable themes.
+      </AppLink>
+      , preview HTML & CSS in real time, inspect JSON visually, and export
+      polished screenshots when you need to share code.
     </FeaturesItem>
     <FeaturesItem title="Notes">
-      An Obsidian-like markdown editor with live preview, folders, and tags.
-      Write documentation, keep a dev journal, or draft ideas with full Mermaid
-      diagram support, mindmap generation from headings, and presentation mode
-      for sharing your notes as slide decks.
+      Keep technical notes, docs, and drafts next to your snippets. Write in
+      Markdown with live preview, folders, tags, Mermaid diagrams, mindmaps
+      generated from headings, and fullscreen presentation mode for sharing your
+      work.
     </FeaturesItem>
     <FeaturesItem title="Math Notebook">
-      A smart notepad where <code>time in Tokyo</code>,
+      Do the quick calculations that usually break your flow. Natural-language
+      math handles inputs like <code>time in Tokyo</code>,
       <code>density of honey</code>, and
-      <code>$500 invested $1,500 returned</code> just work. 166+ currencies,
-      timezone lookups, unit conversions, finance formulas, and more.
+      <code>$500 invested $1,500 returned</code> for currencies, time zones,
+      unit conversion, finance, and date math.
     </FeaturesItem>
     <FeaturesItem title="Developer Tools">
-      Built-in utilities for everyday tasks: case converter, slug generator, URL
-      parser, hash/HMAC generators, password and UUID generators, Base64/URL
-      encoders, JSON to YAML/TOML/XML converters, color converter, and text
-      generators.
+      Handle the small developer tasks that usually send you to a browser tab.
+      Convert, encode, hash, and generate data right inside massCode with tools
+      for JSON, Base64, URLs, colors, passwords, UUIDs, and more.
     </FeaturesItem>
   </div>
   <div class="extras">
     <FeaturesItem title="Integrations">
+      Bring your snippet library into the tools you already use.
       <AppLink
         href="https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant"
       >
         VS Code Extension
       </AppLink>
-      for snippet search and insertion.
+      for searching and inserting snippets, and
       <AppLink href="https://www.raycast.com/antonreshetov/masscode">
         Raycast Extension
       </AppLink>
-      for quick access.
+      for quick access from anywhere.
     </FeaturesItem>
     <FeaturesItem title="Open & Local">
-      Local-first by design. Your notes and snippets stay on your machine as
-      plain Markdown files. Sync with iCloud, Dropbox, or Git, and keep full
-      version history.
+      Keep your data on your machine and in your control. Notes and snippets are
+      stored as plain Markdown files, so syncing with iCloud, Dropbox, or Git
+      stays simple and portable.
     </FeaturesItem>
     <FeaturesItem title="Localization">
-      Available in 15 languages including English, Deutsch, Español, Français,
-      Русский, 日本語, 中文, and more.
+      Use massCode in the language you are most comfortable with. The app is
+      available in 15 languages, including English, Deutsch, Español, Français,
+      Русский, 日本語, and 中文.
     </FeaturesItem>
   </div>
 </template>

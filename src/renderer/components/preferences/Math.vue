@@ -9,7 +9,7 @@ import {
 } from '@/composables/math-notebook/math-engine/format'
 import { i18n, ipc, store } from '@/electron'
 
-const { toast } = useSonner()
+const { sonner } = useSonner()
 
 const settings = reactive(store.preferences.get('math') as MathSettings)
 
@@ -83,10 +83,16 @@ async function refreshFiatRates() {
   isRefreshingFiat.value = true
   try {
     await ipc.invoke('system:currency-rates-refresh', null)
-    toast(i18n.t('preferences:math.currencyRates.refreshed'))
+    sonner({
+      message: i18n.t('preferences:math.currencyRates.refreshed'),
+      type: 'success',
+    })
   }
   catch {
-    toast(i18n.t('preferences:math.currencyRates.refreshError'))
+    sonner({
+      message: i18n.t('preferences:math.currencyRates.refreshError'),
+      type: 'error',
+    })
   }
   finally {
     isRefreshingFiat.value = false
@@ -97,10 +103,16 @@ async function refreshCryptoRates() {
   isRefreshingCrypto.value = true
   try {
     await ipc.invoke('system:crypto-rates-refresh', null)
-    toast(i18n.t('preferences:math.cryptoRates.refreshed'))
+    sonner({
+      message: i18n.t('preferences:math.cryptoRates.refreshed'),
+      type: 'success',
+    })
   }
   catch {
-    toast(i18n.t('preferences:math.cryptoRates.rateLimited'))
+    sonner({
+      message: i18n.t('preferences:math.cryptoRates.rateLimited'),
+      type: 'error',
+    })
   }
   finally {
     isRefreshingCrypto.value = false

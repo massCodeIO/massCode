@@ -1,43 +1,111 @@
 {
   "label": "環境設定",
   "storage": {
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
     "label": "ストレージ",
-    "migrate": "移行",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "カウント",
-    "clearDatabase": "データベースをクリア"
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "エディタ",
-    "fontSize": "フォントサイズ",
-    "fontFamily": "フォントファミリー",
+    "fontSize": {
+      "label": "フォントサイズ",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "フォントファミリー",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "折り返し",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "ワードラップ",
       "off": "オフ"
     },
-    "tabSize": "タブサイズ",
+    "tabSize": {
+      "label": "タブサイズ",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "不可視文字を表示",
-    "highlightLine": "現在行をハイライト",
+    "highlightLine": {
+      "label": "現在行をハイライト",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "ガッターをハイライト",
-    "matchBrackets": "括弧の対応を表示",
+    "matchBrackets": {
+      "label": "括弧の対応を表示",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "末尾のカンマ",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "なし",
         "all": "すべて",
         "es5": "ES5"
       },
-      "semi": "セミコロン",
-      "singleQuote": "シングルクォート"
+      "semi": {
+        "label": "セミコロン",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "シングルクォート",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "外観",
     "theme": {
       "label": "テーマ",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "ライト",
-      "dark": "ダーク"
+      "dark": "ダーク",
+      "system": "System"
     }
   },
   "language": {

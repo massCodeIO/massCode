@@ -8,7 +8,7 @@ export function registerDialogHandlers() {
 
       const dir = dialog.showOpenDialogSync(BrowserWindow.getFocusedWindow()!, {
         properties: properties || ['openDirectory', 'createDirectory'],
-        filters: filters || [{ name: '*', extensions: ['.db'] }],
+        ...(filters ? { filters } : {}),
       })
 
       if (dir) {

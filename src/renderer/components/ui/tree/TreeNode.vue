@@ -442,7 +442,7 @@ function onCancelEdit() {
           v-else
           ref="editInputRef"
           v-model="editValue"
-          class="outline-primary min-w-0 flex-1 rounded-sm bg-transparent outline outline-1"
+          class="outline-primary mr-1 min-w-0 flex-1 rounded-sm bg-transparent outline outline-1"
           @keydown.esc="onCancelEdit"
           @keydown.enter="onUpdateLabel"
           @blur="onUpdateLabel"

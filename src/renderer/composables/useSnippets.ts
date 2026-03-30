@@ -169,7 +169,7 @@ async function createSnippet() {
     })
 
     await api.snippets.postSnippetsByIdContents(String(data.id), {
-      label: `${i18n.t('fragment')} 1`,
+      label: `${i18n.t('common.fragment')} 1`,
       value: '',
       language: folder?.defaultLanguage || 'plain_text',
     })
@@ -238,7 +238,7 @@ async function createSnippetContent(snippetId: number) {
 
   try {
     await api.snippets.postSnippetsByIdContents(String(snippetId), {
-      label: `${i18n.t('fragment')} ${lastContentIndex + 1}`,
+      label: `${i18n.t('common.fragment')} ${lastContentIndex + 1}`,
       value: '',
       language: folder?.defaultLanguage || 'plain_text',
     })

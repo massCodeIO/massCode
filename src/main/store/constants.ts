@@ -1,11 +1,10 @@
 import type { EditorSettings, NotesEditorSettings } from './types'
 
-export const APP_DEFAULTS = {
-  sizes: {
-    sidebar: 180,
-    snippetList: 250,
-    tagsList: 50, // в %
-  },
+export const LAYOUT_DEFAULTS = {
+  sidebar: { width: 200, min: 120 },
+  list: { width: 300, min: 150 },
+  editor: { min: 300 },
+  tags: { height: 200, min: 80 },
 }
 
 export const EDITOR_DEFAULTS: EditorSettings = {

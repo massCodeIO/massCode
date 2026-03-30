@@ -88,13 +88,6 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
-
-const uiNav = [
-  {
-    label: 'shadcn demo',
-    name: RouterName.devtoolsShadcnComparison,
-  },
-]
 </script>
 
 <template>
@@ -102,77 +95,94 @@ const uiNav = [
     :title="i18n.t('devtools:label')"
     :show-back="false"
   >
+    <template #leftHeader>
+      <div class="px-1 pt-[var(--content-top-offset)]">
+        <SidebarHeader
+          :title="i18n.t('devtools:label')"
+          :section-title="i18n.t('devtools:converters.label')"
+        />
+      </div>
+    </template>
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
-        <div class="text-muted-foreground mb-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:converters.label") }}
-        </div>
         <RouterLink
           v-for="item in convertersNav"
           :key="item.name"
-          class="cursor-default"
+          v-slot="{ navigate }"
+          custom
           :to="{ name: item.name }"
         >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
         </RouterLink>
-        <div class="text-muted-foreground my-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:crypto.label") }}
-        </div>
+        <SidebarSectionHeader :title="i18n.t('devtools:crypto.label')" />
         <RouterLink
           v-for="item in cryptoNav"
           :key="item.name"
-          class="cursor-default"
+          v-slot="{ navigate }"
+          custom
           :to="{ name: item.name }"
         >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
         </RouterLink>
-        <div class="text-muted-foreground my-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:web.label") }}
-        </div>
+        <SidebarSectionHeader :title="i18n.t('devtools:web.label')" />
         <RouterLink
           v-for="item in webNav"
           :key="item.name"
-          class="cursor-default"
+          v-slot="{ navigate }"
+          custom
           :to="{ name: item.name }"
         >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
         </RouterLink>
-        <div class="text-muted-foreground my-2 text-[10px] uppercase">
-          {{ i18n.t("devtools:generators.label") }}
-        </div>
+        <SidebarSectionHeader :title="i18n.t('devtools:generators.label')" />
         <RouterLink
           v-for="item in generatorsNav"
           :key="item.name"
-          class="cursor-default"
+          v-slot="{ navigate }"
+          custom
           :to="{ name: item.name }"
         >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
-        </RouterLink>
-        <div class="text-muted-foreground my-2 text-[10px] uppercase">
-          demo
-        </div>
-        <RouterLink
-          v-for="item in uiNav"
-          :key="item.name"
-          class="cursor-default"
-          :to="{ name: item.name }"
-        >
-          <UiMenuItem
-            :label="item.label"
-            :is-active="isActiveRoute(item.name)"
-          />
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
         </RouterLink>
       </div>
     </template>

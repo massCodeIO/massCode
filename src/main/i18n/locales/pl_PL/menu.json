@@ -6,7 +6,8 @@
     "update": "Sprawdź aktualizacje...",
     "quit": "Zakończ massCode",
     "about": "O massCode",
-    "hide": "Ukryj massCode"
+    "hide": "Ukryj massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Pomoc",
@@ -32,12 +33,9 @@
       "snippets": "Kolekcja fragmentów"
     }
   },
-  "edit": {
-    "label": "Edycja",
-    "find": "Znajdź"
-  },
   "view": {
     "label": "Widok",
+    "showSidebar": "Pokaż/ukryj pasek boczny",
     "sortBy": {
       "label": "Sortuj fragmenty według",
       "dateModified": "Data modyfikacji",
@@ -45,7 +43,16 @@
       "name": "Nazwa"
     },
     "compactMode": "Tryb kompaktowy",
-    "showSidebar": "Pokaż/ukryj pasek boczny"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "Edycja",
+    "find": "Znajdź"
   },
   "editor": {
     "label": "Edytor",
@@ -56,13 +63,17 @@
     "previewJson": "Podgląd JSON",
     "fontSizeIncrease": "Zwiększ rozmiar czcionki",
     "fontSizeDecrease": "Zmniejsz rozmiar czcionki",
-    "fontSizeReset": "Resetuj rozmiar czcionki"
+    "fontSizeReset": "Resetuj rozmiar czcionki",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Tryb prezentacji",
     "preview": "Podgląd",
     "previewMarkdown": "Podgląd Markdown",
+    "presentationMode": "Tryb prezentacji",
     "previewMindmap": "Podgląd mapy myśli"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "Narzędzia deweloperskie"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

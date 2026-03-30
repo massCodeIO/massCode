@@ -1,43 +1,111 @@
 {
   "label": "Preferencias",
   "storage": {
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
     "label": "Almacenamiento",
-    "migrate": "Migrar",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Cantidad",
-    "clearDatabase": "Limpiar Base de Datos"
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Tamaño de Fuente",
-    "fontFamily": "Familia de Fuente",
+    "fontSize": {
+      "label": "Tamaño de Fuente",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Familia de Fuente",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Ajuste",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Ajuste de Texto",
       "off": "Desactivado"
     },
-    "tabSize": "Tamaño de Tabulación",
+    "tabSize": {
+      "label": "Tamaño de Tabulación",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Mostrar Invisibles",
-    "highlightLine": "Resaltar Línea",
+    "highlightLine": {
+      "label": "Resaltar Línea",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Resaltar Margen",
-    "matchBrackets": "Emparejar Corchetes",
+    "matchBrackets": {
+      "label": "Emparejar Corchetes",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Coma Final",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Ninguna",
         "all": "Todas",
         "es5": "ES5"
       },
-      "semi": "Punto y Coma",
-      "singleQuote": "Comilla Simple"
+      "semi": {
+        "label": "Punto y Coma",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Comilla Simple",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "Apariencia",
     "theme": {
       "label": "Tema",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Claro",
-      "dark": "Oscuro"
+      "dark": "Oscuro",
+      "system": "System"
     }
   },
   "language": {

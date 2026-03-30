@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { i18n } from '@/electron'
-
 interface Props {
   title: string
+  sectionTitle?: string
 }
 
 defineProps<Props>()
@@ -10,17 +9,19 @@ defineProps<Props>()
 
 <template>
   <div class="px-1">
-    <div class="truncate px-1 pb-2 font-bold leading-5 select-none">
+    <div class="truncate px-1 leading-5 font-bold select-none">
       {{ title }}
     </div>
-    <UiText
-      as="div"
-      variant="caption"
-      weight="bold"
-      uppercase
-      class="flex gap-1 pb-1 pl-1 select-none"
+    <SidebarSectionHeader
+      v-if="sectionTitle"
+      :title="sectionTitle"
     >
-      {{ i18n.t("sidebar.library") }}
-    </UiText>
+      <template
+        v-if="$slots.action"
+        #action
+      >
+        <slot name="action" />
+      </template>
+    </SidebarSectionHeader>
   </div>
 </template>

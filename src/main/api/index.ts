@@ -18,7 +18,7 @@ export async function initApi() {
   const { node } = await importEsm('@elysiajs/node')
 
   const app = new Elysia({ adapter: node() })
-  const port = store.preferences.get('apiPort')
+  const port = store.preferences.get('api.port')
 
   app
     .use(cors({ origin: '*' }))

@@ -1,24 +1,54 @@
-import type ElectronStore from 'electron-store'
+export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
+export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+
+export interface CodeState {
+  snippetId?: number
+  snippetContentIndex?: number
+  folderId?: number
+  tagId?: number
+  libraryFilter?: string
+}
+
+export interface NotesState {
+  noteId?: number
+  folderId?: number
+  tagId?: number
+  libraryFilter?: string
+}
+
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
 
 export interface AppStore {
-  bounds: object
-  sizes: {
-    sidebarWidth: number
-    snippetListWidth: number
-    tagsListHeight: number
+  window: {
+    bounds: object
   }
-  state: {
-    snippetId?: number
-    snippetContentIndex?: number
-    folderId?: number
-    tagId?: number
-    libraryFilter?: string
-    isSidebarHidden?: boolean
+  ui: {
+    compactListMode: boolean
   }
-  isAutoMigratedFromJson: boolean
-  nextDonateNotification?: number
-  lastSeenReleaseNoticeVersion?: string
-  lastNotifiedUpdateVersion?: string
+  code: {
+    selection: CodeState
+    layout: {
+      mode: SpaceLayoutMode
+      tagsListHeight: number
+      threePanel?: number[]
+      twoPanel?: number
+    }
+  }
+  notes: {
+    selection: NotesState
+    editorMode: NotesEditorMode
+    layout: {
+      mode: SpaceLayoutMode
+      tagsListHeight: number
+      threePanel?: number[]
+      twoPanel?: number
+    }
+  }
+  notifications: {
+    nextDonateAt?: number
+    lastNotifiedUpdateVersion: string
+  }
+  activeSpaceId: SpaceId
 }
 
 export interface EditorSettings {
@@ -38,16 +68,7 @@ export interface MarkdownSettings {
 }
 
 export interface StorageSettings {
-  engine: 'sqlite' | 'markdown'
   vaultPath: string | null
-}
-
-export interface BackupSettings {
-  path: string
-  enabled: boolean
-  interval: number
-  maxBackups: number
-  lastBackupTime?: number
 }
 
 export interface NotesEditorSettings {
@@ -60,16 +81,31 @@ export interface NotesEditorSettings {
   indentSize: number
 }
 
+export interface MathSettings {
+  locale: string
+  decimalPlaces: number
+  dateFormat: 'numeric' | 'short' | 'long'
+}
+
 export interface PreferencesStore {
-  storagePath: string
-  apiPort: number
-  language: string
-  theme: string
-  editor: EditorSettings
-  notesEditor: NotesEditorSettings
-  storage: StorageSettings
-  markdown: MarkdownSettings
-  backup: BackupSettings
+  appearance: {
+    theme: string
+  }
+  localization: {
+    locale: string
+  }
+  api: {
+    port: number
+  }
+  storage: StorageSettings & {
+    rootPath: string
+  }
+  editor: {
+    code: EditorSettings
+    notes: NotesEditorSettings
+    markdown: MarkdownSettings
+  }
+  math: MathSettings
 }
 
 export interface MathSheet {
@@ -94,9 +130,14 @@ export interface CurrencyRatesStore {
   cache: CurrencyRatesCache | null
 }
 
+export interface StoreBridge<_T extends Record<string, any>> {
+  get: <V = unknown>(name: string) => V
+  set: (name: string, value: unknown) => void
+  delete: (name: string) => void
+}
+
 export interface Store {
-  app: ElectronStore<AppStore>
-  preferences: ElectronStore<PreferencesStore>
-  mathNotebook: ElectronStore<MathNotebookStore>
-  currencyRates: ElectronStore<CurrencyRatesStore>
+  app: StoreBridge<AppStore>
+  preferences: StoreBridge<PreferencesStore>
+  mathNotebook: StoreBridge<MathNotebookStore>
 }

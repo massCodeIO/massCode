@@ -4,6 +4,7 @@ import {
   useMathNotebook,
   useNoteFolders,
   useNotes,
+  useNotesApp,
   useNoteTags,
   useSnippets,
   useSnippetUpdate,
@@ -11,12 +12,12 @@ import {
   useStorageMutation,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { router, RouterName } from '@/router'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { repository } from '../../../../package.json'
 
 const {
   state,
+  isCodeSpaceInitialized,
   highlightedFolderIds,
   highlightedSnippetIds,
   focusedSnippetId,
@@ -28,15 +29,12 @@ const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { getNotes, hasBusyNoteContentUpdates } = useNotes()
 const { getNoteTags } = useNoteTags()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
-
-interface ReleaseNoticePayload {
-  sqliteSunsetVersion?: string
-}
 
 async function refreshCodeSpace() {
   const selectedSnippetId = state.snippetId
@@ -59,6 +57,8 @@ async function refreshCodeSpace() {
 
 async function refreshAfterStorageSync() {
   const activeSpace = getActiveSpaceId()
+  isCodeSpaceInitialized.value = false
+  isNotesSpaceInitialized.value = false
 
   switch (activeSpace) {
     case 'math':
@@ -140,18 +140,26 @@ export function registerSystemListeners() {
     })
   })
 
-  ipc.on('system:feature-notice', (_, payload: ReleaseNoticePayload) => {
+  ipc.on(
+    'system:migration-complete',
+    (_, result: { folders: number, snippets: number, tags: number }) => {
+      sonner({
+        message: i18n.t('messages:success.migrateToMarkdown', {
+          folders: result.folders,
+          snippets: result.snippets,
+          tags: result.tags,
+        }),
+        type: 'success',
+      })
+    },
+  )
+
+  ipc.on('system:migration-error', (_, payload: { message: string }) => {
     sonner({
-      message: i18n.t('messages:release.mdVaultAvailable', {
-        sqliteSunsetVersion: payload?.sqliteSunsetVersion || '5.0.0',
+      message: i18n.t('messages:error.migration', {
+        error: payload.message,
       }),
-      type: 'success',
-      action: {
-        label: i18n.t('button.goToSettings'),
-        onClick: () => {
-          router.push({ name: RouterName.preferencesStorage })
-        },
-      },
+      type: 'error',
     })
   })
 

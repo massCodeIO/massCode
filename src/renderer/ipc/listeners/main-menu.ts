@@ -1,27 +1,50 @@
+import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type { MainMenuLayoutMode } from '~/main/types/menu'
 import {
   useApp,
+  useEditor,
   useFolders,
+  useMathNotebook,
+  useNoteFolders,
   useNotes,
   useNotesApp,
+  useNotesEditor,
   useSnippets,
 } from '@/composables'
 import { ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { getActiveSpaceId } from '@/spaceDefinitions'
+import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '~/main/store/constants'
+import { registerMainMenuContextSync } from '../main-menu/sync'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
-const { selectedNote } = useNotes()
-const { isShowCodePreview, isShowJsonVisualizer, isSidebarHidden } = useApp()
+const { createNoteAndSelect, selectedNote } = useNotes()
+const { createNoteFolderAndSelect } = useNoteFolders()
+const { createSheet } = useMathNotebook()
+const { settings: editorSettings } = useEditor()
+const { settings: notesEditorSettings } = useNotesEditor()
+const {
+  isShowCodePreview,
+  isShowJsonVisualizer,
+  setCodeLayoutMode,
+  toggleCompactListMode,
+  toggleCodeSidebar,
+} = useApp()
 const {
   hideNotesViewModes,
   isNotesMindmapShown,
   isNotesPresentationShown,
+  notesEditorMode,
+  setNotesLayoutMode,
   showNotesMindmap,
   showNotesPresentation,
+  toggleNotesSidebar,
 } = useNotesApp()
 
 export function registerMainMenuListeners() {
+  registerMainMenuContextSync()
+
   ipc.on('main-menu:goto-preferences', () => {
     router.push({ name: RouterName.preferencesStorage })
   })
@@ -40,6 +63,18 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:new-folder', () => {
     createFolderAndSelect()
+  })
+
+  ipc.on('main-menu:new-note', () => {
+    createNoteAndSelect()
+  })
+
+  ipc.on('main-menu:new-note-folder', () => {
+    createNoteFolderAndSelect()
+  })
+
+  ipc.on('main-menu:new-sheet', () => {
+    createSheet()
   })
 
   ipc.on('main-menu:preview-mindmap', () => {
@@ -79,10 +114,83 @@ export function registerMainMenuListeners() {
   })
 
   ipc.on('main-menu:toggle-sidebar', () => {
-    isSidebarHidden.value = !isSidebarHidden.value
+    const activeSpaceId = getActiveSpaceId()
+
+    if (activeSpaceId === 'code') {
+      toggleCodeSidebar()
+      return
+    }
+
+    if (activeSpaceId === 'notes') {
+      toggleNotesSidebar()
+    }
+  })
+
+  ipc.on('main-menu:toggle-compact-mode', () => {
+    const activeSpaceId = getActiveSpaceId()
+
+    if (
+      activeSpaceId === 'code'
+      || activeSpaceId === 'notes'
+      || activeSpaceId === 'math'
+    ) {
+      toggleCompactListMode()
+    }
   })
 
   ipc.on('main-menu:goto-math-notebook', () => {
     router.push({ name: RouterName.mathNotebook })
+  })
+
+  ipc.on('main-menu:set-layout-mode', (_, layoutMode?: MainMenuLayoutMode) => {
+    if (!layoutMode) {
+      return
+    }
+
+    const activeSpaceId = getActiveSpaceId()
+
+    if (activeSpaceId === 'code') {
+      setCodeLayoutMode(layoutMode)
+      return
+    }
+
+    if (activeSpaceId === 'notes') {
+      setNotesLayoutMode(layoutMode)
+    }
+  })
+
+  ipc.on('main-menu:set-notes-editor-mode', (_, mode?: NotesEditorMode) => {
+    if (getActiveSpaceId() !== 'notes' || !mode) {
+      return
+    }
+
+    notesEditorMode.value = mode
+  })
+
+  ipc.on('main-menu:font-size-increase', () => {
+    if (getActiveSpaceId() === 'notes') {
+      notesEditorSettings.fontSize++
+      return
+    }
+
+    editorSettings.fontSize++
+  })
+
+  ipc.on('main-menu:font-size-decrease', () => {
+    if (getActiveSpaceId() === 'notes') {
+      notesEditorSettings.fontSize--
+      return
+    }
+
+    editorSettings.fontSize--
+  })
+
+  ipc.on('main-menu:font-size-reset', () => {
+    if (getActiveSpaceId() === 'notes') {
+      notesEditorSettings.fontSize = NOTES_EDITOR_DEFAULTS.fontSize
+      return
+    }
+
+    editorSettings.fontSize = EDITOR_DEFAULTS.fontSize
   })
 }

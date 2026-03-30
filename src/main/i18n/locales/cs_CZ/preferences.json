@@ -3,60 +3,106 @@
   "storage": {
     "section": {
       "main": "Hlavní",
-      "backup": "Záloha"
+      "migration": "Migration"
     },
     "label": "Úložiště",
-    "migrate": "Migrovat",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Počet",
-    "clearDatabase": "Vymazat databázi",
-    "backup": {
-      "label": "Záloha",
-      "enabled": "Automatická záloha",
-      "interval": {
-        "label": "Interval",
-        "1": "Každou hodinu",
-        "6": "Každých 6 hodin",
-        "12": "Každých 12 hodin",
-        "24": "Každých 24 hodin"
-      },
-      "maxBackups": "Maximální počet záloh",
-      "createNow": "Vytvořit zálohu nyní",
-      "restore": "Obnovit ze zálohy",
-      "list": "Seznam záloh",
-      "lastBackup": "Poslední záloha",
-      "noBackups": "Nebyly nalezeny žádné zálohy"
-    }
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Velikost písma",
-    "fontFamily": "Rodina písma",
+    "fontSize": {
+      "label": "Velikost písma",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Rodina písma",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Zalamování",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Zalamování slov",
       "off": "Vypnuto"
     },
-    "tabSize": "Velikost tabulátoru",
+    "tabSize": {
+      "label": "Velikost tabulátoru",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Zobrazit neviditelné znaky",
-    "highlightLine": "Zvýraznit řádek",
+    "highlightLine": {
+      "label": "Zvýraznit řádek",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Zvýraznit okraj",
-    "matchBrackets": "Párové závorky",
+    "matchBrackets": {
+      "label": "Párové závorky",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Koncová čárka",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Žádná",
         "all": "Všude",
         "es5": "ES5"
       },
-      "semi": "Středník",
-      "singleQuote": "Jednoduché uvozovky"
+      "semi": {
+        "label": "Středník",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Jednoduché uvozovky",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "Vzhled",
     "theme": {
       "label": "Motiv",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Světlý",
       "dark": "Tmavý",
       "system": "Systémový"

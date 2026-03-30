@@ -1,3 +1,4 @@
+import type { EditorSettings } from '~/main/store/types'
 import { store } from '@/electron'
 
 const cursorPosition = reactive({
@@ -5,12 +6,14 @@ const cursorPosition = reactive({
   column: 0,
 })
 
-const settings = reactive(store.preferences.get('editor'))
+const settings = reactive(
+  store.preferences.get('editor.code') as EditorSettings,
+)
 
 watch(
   settings,
   () => {
-    store.preferences.set('editor', JSON.parse(JSON.stringify(settings)))
+    store.preferences.set('editor.code', JSON.parse(JSON.stringify(settings)))
   },
   { deep: true },
 )

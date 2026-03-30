@@ -6,7 +6,8 @@
     "update": "Проверить обновления...",
     "quit": "Выйти из massCode",
     "about": "О massCode",
-    "hide": "Скрыть massCode"
+    "hide": "Скрыть massCode",
+    "mathNotebook": "Математический блокнот"
   },
   "help": {
     "label": "Помощь",
@@ -32,25 +33,39 @@
       "snippets": "Коллекция сниппетов"
     }
   },
-  "edit": {
-    "label": "Правка",
-    "find": "Найти"
+  "file": {
+    "label": "Файл",
+    "new": "Создать"
   },
   "view": {
     "label": "Вид",
+    "showSidebar": "Показать/скрыть боковую панель",
+    "layout": {
+      "label": "Макет",
+      "allPanels": "Все панели",
+      "listEditor": "Список + редактор",
+      "editorOnly": "Только редактор"
+    },
     "sortBy": {
       "label": "Сортировать сниппеты по",
       "dateModified": "Дате изменения",
       "dateCreated": "Дате создания",
       "name": "Имени"
     },
-    "compactMode": "Компактный режим",
-    "showSidebar": "Показать/скрыть боковую панель"
+    "compactMode": "Компактный список"
+  },
+  "edit": {
+    "label": "Правка",
+    "find": "Найти"
   },
   "editor": {
     "label": "Редактор",
     "copy": "Копировать сниппет в буфер обмена",
     "format": "Форматировать",
+    "mode": "Режим",
+    "modeRaw": "Исходный",
+    "modeLivePreview": "Живой предпросмотр",
+    "modePreview": "Предпросмотр",
     "previewCode": "Предпросмотр кода",
     "previewScreenshot": "Предпросмотр скриншота",
     "previewJson": "Предпросмотр JSON",
@@ -59,10 +74,9 @@
     "fontSizeReset": "Сбросить размер шрифта"
   },
   "markdown": {
-    "label": "Markdown",
-    "presentationMode": "Режим презентации",
     "preview": "Предпросмотр",
     "previewMarkdown": "Предпросмотр Markdown",
+    "presentationMode": "Режим презентации",
     "previewMindmap": "Предпросмотр диаграммы связей"
   },
   "history": {
@@ -72,5 +86,9 @@
   },
   "devtools": {
     "label": "Инструменты разработчика"
+  },
+  "window": {
+    "label": "Окно",
+    "minimize": "Свернуть"
   }
 }

@@ -4,50 +4,40 @@
     "deletePermanently": "Sigur doriți să ștergeți definitiv \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Sigur doriți să ștergeți definitiv {{count}} snippets selectate?",
     "emptyTrash": "Sigur doriți să ștergeți definitiv toate snippets din Coșul de gunoi?",
-    "clearDb": "Sigur doriți să ștergeți database-ul?",
-    "migrateDb": [
-      "Sigur doriți să migrați?",
-      "În timpul migrării, biblioteca curentă va fi suprascrisă."
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
     ]
   },
   "success": {
     "copied": "Copiat în clipboard",
-    "migrate": "DB a fost migrat cu succes.",
-    "backup": {
-      "created": "Backup creat cu succes.",
-      "restored": "Backup restaurat cu succes.",
-      "deleted": "Backup șters cu succes."
-    }
+    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
     "noUndo": "Nu puteți anula această acțiune.",
     "allSnippetsMoveToTrash": "Toate snippets din acest folder vor fi mutate în coșul de gunoi.",
     "deleteTag": "Acest lucru va determina și eliminarea tuturor tag-urilor din snippets.",
     "createDb": "Vă rugăm să selectați un alt folder",
-    "clearDb": "Aceasta va șterge definitiv toate Snippets, Folders și Tags din database.",
     "htmlCssPreview": "Adăugați un fragment HTML pentru a vedea rezultatul. Adăugați CSS pentru stilizare și JavaScript pentru interactivitate.",
     "codeBlockRenderer": [
       "Când utilizați Codemirror, limbajul setat pentru blocul de cod trebuie să corespundă uneia dintre valorile",
       "languages"
     ]
   },
-  "error": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
   "description": {
-    "storage": "Pentru a utiliza servicii de sincronizare precum iCloud Drive, Google Drive sau Dropbox, mutați storage-ul în folderele sincronizate corespunzătoare",
-    "migrate": {
-      "fromV3": "Pentru a migra de la massCode v3, selectați folderul care conține fișierul JSON.",
-      "fromSnippetsLab": "Pentru a migra de la SnippetsLab, selectați fișierul JSON.",
-      "snippetsLabLimitations": [
-        "Câteva limitări. În timpul migrării de la SnippetsLab:",
-        "Toate folderele vor fi de primul nivel, deoarece fișierul JSON (sub v2.1) nu reprezintă foldere imbricate.",
-        "Snippets cu limbaje neacceptate vor fi setate la Plain Text implicit."
-      ]
-    }
+    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
+    "language": "To apply language changes, you need to reload the app.",
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "Bună, sunt Anton 👋<br><br>\nMulțumesc că folosești massCode. Dacă găsești această aplicație utilă, te rog {{-tagStart}}donează{{-tagEnd}}. Mă va inspira să continui dezvoltarea proiectului.",
     "unsponsored": "Nesponsorizat"
   },
+  "release": {},
   "update": {
     "available": "Versiunea {{newVersion}} este disponibilă pentru descărcare.\nVersiunea ta este {{oldVersion}}.",
     "noAvailable": "Nu există actualizări disponibile în prezent."

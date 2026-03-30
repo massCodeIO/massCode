@@ -8,6 +8,7 @@ export const RouterName = {
   preferencesAppearance: 'preferences/appearance',
   preferencesEditor: 'preferences/editor',
   preferencesNotesEditor: 'preferences/notes-editor',
+  preferencesMath: 'preferences/math',
   preferencesAPI: 'preferences/api',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -27,7 +28,6 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
-  devtoolsShadcnComparison: 'devtools/shadcn-comparison',
   mathNotebook: 'math-notebook',
   notesSpace: 'notes-space',
   notesPresentation: 'notes-space/presentation',
@@ -68,6 +68,11 @@ const routes = [
         path: 'notes-editor',
         name: RouterName.preferencesNotesEditor,
         component: () => import('@/components/preferences/NotesEditor.vue'),
+      },
+      {
+        path: 'math',
+        name: RouterName.preferencesMath,
+        component: () => import('@/components/preferences/Math.vue'),
       },
       {
         path: 'api',
@@ -175,11 +180,6 @@ const routes = [
         name: RouterName.devtoolsLoremIpsumGenerator,
         component: () =>
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
-      },
-      {
-        path: 'shadcn-comparison',
-        name: RouterName.devtoolsShadcnComparison,
-        component: () => import('@/components/devtools/ShadcnComparison.vue'),
       },
     ],
   },

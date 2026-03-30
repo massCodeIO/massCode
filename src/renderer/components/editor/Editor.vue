@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { Language } from '@/components/editor/types'
-import * as Resizable from '@/components/ui/shadcn/resizable'
 import {
   useApp,
   useEditor,
+  useResizeHandle,
   useSnippets,
   useSnippetUpdate,
   useTheme,
@@ -11,7 +11,6 @@ import {
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
-import { EDITOR_DEFAULTS } from '~/main/store/constants'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/search/search'
@@ -49,9 +48,20 @@ const {
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
 
+const previewHandleRef = ref<HTMLElement>()
+const previewHeight = ref(300)
+
+useResizeHandle(previewHandleRef, {
+  direction: 'vertical',
+  onMove(dy) {
+    previewHeight.value = Math.max(100, previewHeight.value - dy)
+    editor?.refresh()
+  },
+})
+
 const isProgrammaticChange = ref(false)
 
-const fontSize = useCssVar('--editor-font-size', document.body, {
+useCssVar('--editor-font-size', document.body, {
   initialValue: `${settings.fontSize}px`,
 })
 
@@ -189,21 +199,6 @@ async function init() {
     },
   })
 
-  ipc.on('main-menu:font-size-increase', () => {
-    settings.fontSize++
-    fontSize.value = `${settings.fontSize}px`
-  })
-
-  ipc.on('main-menu:font-size-decrease', () => {
-    settings.fontSize--
-    fontSize.value = `${settings.fontSize}px`
-  })
-
-  ipc.on('main-menu:font-size-reset', () => {
-    settings.fontSize = EDITOR_DEFAULTS.fontSize
-    fontSize.value = `${settings.fontSize}px`
-  })
-
   ipc.on('main-menu:copy-snippet', () => {
     const { copy } = useClipboard({ source: editor?.getValue() || '' })
     copy()
@@ -272,6 +267,21 @@ async function init() {
       editor?.setOption('tabSize', normalizedTabSize)
       editor?.setOption('indentUnit', normalizedTabSize)
     },
+  )
+
+  watch(
+    isShowEditor,
+    (isVisible, wasVisible) => {
+      if (!isVisible || wasVisible !== false)
+        return
+
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          editor?.refresh()
+        })
+      })
+    },
+    { flush: 'post' },
   )
 
   watch(searchQuery, () => {
@@ -378,10 +388,6 @@ async function format() {
 
 ipc.on('main-menu:format', format)
 
-function onSplitterLayout() {
-  editor?.refresh()
-}
-
 function createSearchOverlay(query: string) {
   if (!query)
     return null
@@ -451,25 +457,28 @@ onMounted(() => {
     class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
     <EditorHeader v-if="isShowHeader" />
-    <Resizable.ResizablePanelGroup
+    <div
       v-show="isShowEditor"
-      direction="vertical"
-      class="overflow-auto"
-      @layout="onSplitterLayout"
+      class="flex min-h-0 flex-1 flex-col overflow-auto"
     >
-      <Resizable.ResizablePanel as-child>
-        <div
-          id="editor"
-          data-editor-mount
-        />
-      </Resizable.ResizablePanel>
+      <div
+        id="editor"
+        data-editor-mount
+        class="min-h-0 flex-1"
+      />
       <template v-if="isShowCodePreview">
-        <Resizable.ResizableHandle />
-        <Resizable.ResizablePanel>
+        <div
+          ref="previewHandleRef"
+          class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+        />
+        <div
+          :style="{ height: `${previewHeight}px` }"
+          class="shrink-0 overflow-hidden"
+        >
           <EditorPreview />
-        </Resizable.ResizablePanel>
+        </div>
       </template>
-    </Resizable.ResizablePanelGroup>
+    </div>
     <EditorFooter v-if="isShowEditor" />
     <EditorCodeImage v-if="isShowCodeImage" />
     <EditorJsonVisualizer v-if="isShowJsonVisualizer" />

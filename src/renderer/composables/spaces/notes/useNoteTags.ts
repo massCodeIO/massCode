@@ -59,12 +59,17 @@ async function deleteNoteTag(tagId: number) {
   }
 }
 
+function resetNoteTags() {
+  tags.value = []
+}
+
 export function useNoteTags() {
   return {
     addNoteTag,
     deleteNoteTag,
     getNoteTags,
     isLoading,
+    resetNoteTags,
     tags,
     updateNoteTag,
   }

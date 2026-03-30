@@ -1,28 +1,76 @@
 {
-  "total": "Всего",
-  "line": "Строка",
-  "column": "Столбец",
-  "fragment": "Фрагмент",
-  "path": "Путь",
+  "common": {
+    "total": "Всего",
+    "inbox": "Входящие",
+    "favorites": "Избранное",
+    "trash": "Корзина",
+    "folders": "Папки",
+    "tags": "Теги",
+    "library": "Библиотека",
+    "fragment": "Фрагмент"
+  },
+  "spaces": {
+    "label": "Пространства",
+    "code": {
+      "label": "Код",
+      "tooltip": "Сниппеты кода",
+      "title": "Сниппеты кода",
+      "allSnippets": "Все сниппеты"
+    },
+    "notes": {
+      "label": "Заметки",
+      "tooltip": "Заметки",
+      "title": "Заметки",
+      "allNotes": "Все заметки"
+    },
+    "math": {
+      "label": "Математика",
+      "tooltip": "Математический блокнот",
+      "title": "Математический блокнот",
+      "sheetList": "Список листов",
+      "newSheet": "Новый лист",
+      "untitled": "Без названия",
+      "currencyUnavailable": "Сервис курсов валют недоступен"
+    },
+    "tools": {
+      "label": "Инструменты",
+      "tooltip": "Инструменты разработчика"
+    }
+  },
+  "snippet": {
+    "untitled": "Сниппет без названия",
+    "selectedMultiple": "Выбрано сниппетов: {{count}}",
+    "noSelected": "Нет выбранных сниппетов"
+  },
+  "notes": {
+    "untitled": "Заметка без названия",
+    "plural": "Заметки",
+    "words": "Слова",
+    "symbols": "Символы",
+    "selectedMultiple": "Выбрано заметок: {{count}}",
+    "noSelected": "Нет выбранных заметок"
+  },
+  "folder": {
+    "untitled": "Папка без названия"
+  },
   "button": {
     "back": "Назад",
     "cancel": "Отмена",
-    "clear": "Очистить",
     "confirm": "Подтвердить",
     "copy": "Копировать",
     "fit": "По размеру",
-    "generate": "Сгенерировать",
-    "ok": "OK",
-    "revers": "Обратить",
     "saveAs": "Сохранить как",
-    "sort": "Сортировать",
-    "update": ["Перейти на GitHub", "OK"],
+    "update": [
+      "Перейти на GitHub",
+      "OK"
+    ],
     "zoomIn": "Увеличить",
     "zoomOut": "Уменьшить",
     "darkMode": "Темная тема",
     "toggleDarkMode": "Переключить тёмную тему",
     "background": "Фон",
     "goToDownload": "Перейти к загрузке",
+    "goToSettings": "Перейти к настройкам",
     "refreshPreview": "Обновить предпросмотр",
     "laserPointer": "Лазерная указка",
     "fullscreen": "Полный экран",
@@ -41,11 +89,14 @@
     "hide": "Скрыть",
     "showSidebar": "Показать боковую панель",
     "hideSidebar": "Скрыть боковую панель",
+    "showSidebarAndList": "Показать боковую панель и список",
+    "hideSidebarAndList": "Скрыть боковую панель и список",
     "new": {
       "storage": "Новое хранилище",
       "folder": "Новая папка",
       "snippet": "Новый сниппет",
-      "fragment": "Новый фрагмент"
+      "fragment": "Новый фрагмент",
+      "note": "Новая заметка"
     },
     "add": {
       "description": "Добавить описание",
@@ -62,8 +113,13 @@
     "remove": {
       "fromFavorites": "Удалить из избранного"
     },
+    "reveal": {
+      "inFinder": "Показать в Finder",
+      "inFileManager": "Показать в файловом менеджере"
+    },
     "reload": {
-      "storage": "Перезагрузить хранилище"
+      "storage": "Перезагрузить хранилище",
+      "app": "Перезагрузить massCode"
     },
     "delete": {
       "common": "Удалить",
@@ -85,49 +141,16 @@
       "directory": "Выбрать директорию"
     }
   },
-  "sidebar": {
-    "inbox": "Входящие",
-    "favorites": "Избранное",
-    "allSnippets": "Все сниппеты",
-    "trash": "Корзина",
-    "folders": "Папки",
-    "library": "Библиотека",
-    "tags": "Теги"
-  },
-  "folder": {
-    "untitled": "Папка без названия",
-    "plural": "Папки",
-    "collapseAll": "Свернуть все",
-    "expandAll": "Развернуть все"
-  },
-  "snippet": {
-    "untitled": "Сниппет без названия",
-    "plural": "Сниппеты",
-    "emptyName": "Введите название сниппета",
-    "selectedMultiple": "Выбрано сниппетов: {{count}}",
-    "noSelected": "Нет выбранных сниппетов"
-  },
-  "mathNotebook": {
-    "label": "Математический блокнот",
-    "sheetList": "Список листов",
-    "newSheet": "Новый лист",
-    "untitled": "Без названия",
-    "copied": "Скопировано",
-    "currencyUnavailable": "Сервис курсов валют недоступен"
-  },
-  "spaces": {
-    "label": "Пространства",
-    "codeTooltip": "Сниппеты кода",
-    "toolsTooltip": "Инструменты разработчика",
-    "mathTooltip": "Математический блокнот"
-  },
-  "loading": "Загрузка приложения...",
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
+    "emptyNotesTagList": "Добавьте теги к заметкам, чтобы увидеть их здесь",
     "emptyFoldersList": "Нет папок",
     "emptySnippetsList": "Нет сниппетов",
+    "emptyNotesList": "Нет заметок",
+    "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
-    "addTag": "Добавить тег"
+    "addTag": "Добавить тег",
+    "selectLanguage": "Выбрать язык"
   }
 }

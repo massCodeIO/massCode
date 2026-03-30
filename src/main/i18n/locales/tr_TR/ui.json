@@ -1,28 +1,76 @@
 {
-  "total": "Toplam",
-  "line": "Satır",
-  "column": "Sütun",
-  "fragment": "Fragment",
-  "path": "Yol",
+  "common": {
+    "total": "Toplam",
+    "inbox": "Gelen Kutusu",
+    "favorites": "Favoriler",
+    "trash": "Çöp Kutusu",
+    "folders": "Klasörler",
+    "tags": "Etiketler",
+    "library": "Kütüphane",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Tüm Snippet'ler"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "İsimsiz snippet",
+    "selectedMultiple": "{{count}} Snippet Seçildi",
+    "noSelected": "Snippet Seçilmedi"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "İsimsiz klasör"
+  },
   "button": {
     "back": "Geri",
     "cancel": "İptal",
-    "clear": "Temizle",
     "confirm": "Onayla",
     "copy": "Kopyala",
     "fit": "Sığdır",
-    "generate": "Oluştur",
-    "ok": "Tamam",
-    "revers": "Ters Çevir",
     "saveAs": "Farklı Kaydet",
-    "sort": "Sırala",
-    "update": ["GitHub'a Git", "Tamam"],
+    "update": [
+      "GitHub'a Git",
+      "Tamam"
+    ],
     "zoomIn": "Yakınlaştır",
     "zoomOut": "Uzaklaştır",
     "darkMode": "Karanlık Mod",
     "toggleDarkMode": "Karanlık modu değiştir",
     "background": "Arka Plan",
     "goToDownload": "İndirmeye Git",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Önizlemeyi yenile",
     "laserPointer": "Lazer işaretçi",
     "fullscreen": "Tam ekran",
@@ -41,11 +89,14 @@
     "hide": "Gizle",
     "showSidebar": "Kenar Çubuğunu Göster",
     "hideSidebar": "Kenar Çubuğunu Gizle",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Yeni Depolama",
       "folder": "Yeni Klasör",
       "snippet": "Yeni Snippet",
-      "fragment": "Yeni Fragment"
+      "fragment": "Yeni Fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Açıklama Ekle",
@@ -62,8 +113,13 @@
     "remove": {
       "fromFavorites": "Favorilerden Kaldır"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Depolamayı Yenile"
+      "storage": "Depolamayı Yenile",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Sil",
@@ -80,34 +136,19 @@
     },
     "copy": {
       "snippetLink": "Snippet Bağlantısını Kopyala"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Gelen Kutusu",
-    "favorites": "Favoriler",
-    "allSnippets": "Tüm Snippet'ler",
-    "trash": "Çöp Kutusu",
-    "folders": "Klasörler",
-    "library": "Kütüphane",
-    "tags": "Etiketler"
-  },
-  "folder": {
-    "untitled": "İsimsiz klasör",
-    "plural": "Klasörler",
-    "collapseAll": "Tümünü Daralt",
-    "expandAll": "Tümünü Genişlet"
-  },
-  "snippet": {
-    "untitled": "İsimsiz snippet",
-    "plural": "Snippet'ler",
-    "emptyName": "Snippet adını yazın",
-    "selectedMultiple": "{{count}} Snippet Seçildi",
-    "noSelected": "Snippet Seçilmedi"
   },
   "placeholder": {
     "emptyTagList": "Burada görmek için snippet'lere etiket ekleyin",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Klasör yok",
     "emptySnippetsList": "Snippet yok",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Ara",
     "addTag": "Etiket Ekle"
   }

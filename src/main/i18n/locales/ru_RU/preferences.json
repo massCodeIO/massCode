@@ -1,55 +1,111 @@
 {
   "label": "Настройки",
   "storage": {
-    "label": "Хранилище",
     "section": {
-      "migration": "Миграция",
-      "dangerZone": "Опасная зона"
+      "main": "Основное",
+      "migration": "Миграция"
     },
-    "migrate": "Миграция",
-    "migrateMarkdownToSqlite": "Откатиться на SQLite",
+    "label": "Хранилище",
     "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",
-    "vaultPath": "Путь к vault",
-    "engine": {
-      "label": "Движок хранилища",
-      "sqlite": "SQLite (устаревающий)",
-      "markdown": "Markdown Vault (рекомендуется)"
-    },
-    "clearDatabase": "Очистить базу данных"
+    "vaultPath": "Путь к vault"
   },
   "editor": {
     "label": "Редактор",
-    "fontSize": "Размер шрифта",
-    "fontFamily": "Семейство шрифтов",
+    "fontSize": {
+      "label": "Размер шрифта",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Семейство шрифтов",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Перенос",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Перенос слов",
       "off": "Выключен"
     },
-    "tabSize": "Размер отступа",
+    "tabSize": {
+      "label": "Размер отступа",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Показывать невидимые символы",
-    "highlightLine": "Подсветка строки",
+    "highlightLine": {
+      "label": "Подсветка строки",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Подсветка номеров строк",
-    "matchBrackets": "Подсветка скобок",
+    "matchBrackets": {
+      "label": "Подсветка скобок",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Замыкающая запятая",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Нет",
         "all": "Везде",
         "es5": "ES5"
       },
-      "semi": "Точка с запятой",
-      "singleQuote": "Одинарные кавычки"
+      "semi": {
+        "label": "Точка с запятой",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Одинарные кавычки",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Редактор заметок",
+    "fontSize": {
+      "label": "Размер шрифта",
+      "description": "Базовый размер шрифта в пикселях для редактора заметок."
+    },
+    "fontFamily": {
+      "label": "Шрифт текста",
+      "description": "Значение CSS font-family. Используйте запятые для указания запасных шрифтов."
+    },
+    "codeFontFamily": {
+      "label": "Моноширинный шрифт",
+      "description": "Шрифт для встроенного кода и блоков кода."
+    },
+    "lineHeight": {
+      "label": "Межстрочный интервал",
+      "description": "Расстояние между строками. Свободный — легче читать, компактный — больше контента.",
+      "compact": "Компактный (1.4)",
+      "default": "По умолчанию (1.54)",
+      "relaxed": "Свободный (1.7)"
+    },
+    "indentSize": {
+      "label": "Размер отступа",
+      "description": "Количество пробелов на уровень отступа для списков и вложенного контента."
+    },
+    "limitWidth": {
+      "label": "Ограничить ширину",
+      "description": "Ограничить контент комфортной шириной для чтения (700px)."
+    },
+    "lineNumbers": {
+      "label": "Номера строк",
+      "description": "Показывать номера строк. Доступно только в режиме Raw."
     }
   },
   "appearance": {
     "label": "Внешний вид",
     "theme": {
       "label": "Тема",
+      "builtIn": "Встроенные",
+      "custom": "Пользовательские",
+      "themesDir": "Директория тем",
+      "openDir": "Открыть директорию тем",
+      "createTemplate": "Создать шаблон темы",
+      "dirDescription": "Разместите JSON-файлы тем в этой папке.",
       "light": "Светлая",
-      "dark": "Темная"
+      "dark": "Темная",
+      "system": "Системная"
     }
   },
   "language": {

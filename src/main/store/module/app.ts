@@ -1,21 +1,237 @@
-import type { AppStore } from '../types'
+import type {
+  AppStore,
+  CodeState,
+  NotesEditorMode,
+  NotesState,
+  SpaceId,
+  SpaceLayoutMode,
+} from '../types'
 import Store from 'electron-store'
-import { APP_DEFAULTS } from '../constants'
+import { LAYOUT_DEFAULTS } from '../constants'
+import {
+  asRecord,
+  isRecord,
+  readEnum,
+  readNumber,
+  readOptionalNumber,
+  readOptionalNumberArray,
+  replaceStoreIfChanged,
+} from '../sanitize'
 
-export default new Store<AppStore>({
-  name: 'app',
-  cwd: 'v2',
-
-  defaults: {
+const APP_STORE_DEFAULTS: AppStore = {
+  window: {
     bounds: {},
-    sizes: {
-      sidebarWidth: APP_DEFAULTS.sizes.sidebar,
-      snippetListWidth: APP_DEFAULTS.sizes.snippetList,
-      tagsListHeight: APP_DEFAULTS.sizes.tagsList,
+  },
+  ui: {
+    compactListMode: false,
+  },
+  code: {
+    selection: {},
+    layout: {
+      mode: 'all-panels',
+      tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
-    state: {},
-    isAutoMigratedFromJson: false,
-    lastSeenReleaseNoticeVersion: '',
+  },
+  notes: {
+    selection: {},
+    editorMode: 'livePreview',
+    layout: {
+      mode: 'all-panels',
+      tagsListHeight: LAYOUT_DEFAULTS.tags.height,
+    },
+  },
+  notifications: {
     lastNotifiedUpdateVersion: '',
   },
+  activeSpaceId: 'code',
+}
+
+function sanitizeCodeState(value: unknown): CodeState {
+  const source = asRecord(value)
+  const state: CodeState = {}
+
+  if (typeof source.snippetId === 'number')
+    state.snippetId = source.snippetId
+  if (typeof source.snippetContentIndex === 'number')
+    state.snippetContentIndex = source.snippetContentIndex
+  if (typeof source.folderId === 'number')
+    state.folderId = source.folderId
+  if (typeof source.tagId === 'number')
+    state.tagId = source.tagId
+  if (typeof source.libraryFilter === 'string')
+    state.libraryFilter = source.libraryFilter
+  return state
+}
+
+function sanitizeNotesState(value: unknown): NotesState {
+  const source = asRecord(value)
+  const state: NotesState = {}
+
+  if (typeof source.noteId === 'number')
+    state.noteId = source.noteId
+  if (typeof source.folderId === 'number')
+    state.folderId = source.folderId
+  if (typeof source.tagId === 'number')
+    state.tagId = source.tagId
+  if (typeof source.libraryFilter === 'string')
+    state.libraryFilter = source.libraryFilter
+  return state
+}
+
+function getLegacyCodeLayoutMode(
+  source: Record<string, unknown>,
+): SpaceLayoutMode {
+  if (
+    ['all-panels', 'list-editor', 'editor-only'].includes(
+      String(source.codeLayoutMode),
+    )
+  ) {
+    return source.codeLayoutMode as SpaceLayoutMode
+  }
+
+  return source.isSidebarHidden === true ? 'editor-only' : 'all-panels'
+}
+
+function getLegacyNotesLayoutMode(
+  source: Record<string, unknown>,
+): SpaceLayoutMode {
+  if (source.isSidebarHidden !== true) {
+    return 'all-panels'
+  }
+
+  return source.isListHidden === true ? 'editor-only' : 'list-editor'
+}
+
+function sanitizeAppStore(value: unknown): AppStore {
+  const source = asRecord(value)
+  const windowSource = asRecord(source.window)
+  const codeSource = asRecord(source.code)
+  const notesSource = asRecord(source.notes)
+  const notificationsSource = asRecord(source.notifications)
+  const legacySizes = asRecord(source.sizes)
+  const codeLayoutSource = asRecord(codeSource.layout)
+  const notesLayoutSource = asRecord(notesSource.layout)
+
+  return {
+    window: {
+      bounds: isRecord(windowSource.bounds)
+        ? windowSource.bounds
+        : isRecord(source.bounds)
+          ? source.bounds
+          : APP_STORE_DEFAULTS.window.bounds,
+    },
+    ui: {
+      compactListMode:
+        typeof asRecord(source.ui).compactListMode === 'boolean'
+          ? Boolean(asRecord(source.ui).compactListMode)
+          : typeof source.compactListMode === 'boolean'
+            ? source.compactListMode
+            : APP_STORE_DEFAULTS.ui.compactListMode,
+    },
+    code: {
+      selection: sanitizeCodeState(
+        Object.keys(asRecord(codeSource.selection)).length > 0
+          ? codeSource.selection
+          : source.state,
+      ),
+      layout: {
+        mode: readEnum(
+          codeLayoutSource,
+          'mode',
+          ['all-panels', 'list-editor', 'editor-only'] as const,
+          getLegacyCodeLayoutMode(asRecord(source.state)),
+        ),
+        tagsListHeight: (() => {
+          const raw = readNumber(
+            codeLayoutSource,
+            'tagsListHeight',
+            readNumber(
+              legacySizes,
+              'tagsListHeight',
+              LAYOUT_DEFAULTS.tags.height,
+            ),
+          )
+          return raw < 100 ? LAYOUT_DEFAULTS.tags.height : raw
+        })(),
+        threePanel:
+          readOptionalNumberArray(codeLayoutSource, 'threePanel')
+          || readOptionalNumberArray(legacySizes, 'layout'),
+        twoPanel:
+          readOptionalNumber(codeLayoutSource, 'twoPanel')
+          ?? readOptionalNumber(legacySizes, 'codeListLayout')
+          ?? undefined,
+      },
+    },
+    notes: {
+      selection: sanitizeNotesState(
+        Object.keys(asRecord(notesSource.selection)).length > 0
+          ? notesSource.selection
+          : source.notesState,
+      ),
+      editorMode: readEnum(
+        notesSource,
+        'editorMode',
+        ['raw', 'livePreview', 'preview'] as const,
+        readEnum(
+          source,
+          'notesEditorMode',
+          ['raw', 'livePreview', 'preview'] as const,
+          APP_STORE_DEFAULTS.notes.editorMode,
+        ) as NotesEditorMode,
+      ),
+      layout: {
+        mode: readEnum(
+          notesLayoutSource,
+          'mode',
+          ['all-panels', 'list-editor', 'editor-only'] as const,
+          getLegacyNotesLayoutMode(asRecord(source.notesState)),
+        ),
+        tagsListHeight: (() => {
+          const raw = readNumber(
+            notesLayoutSource,
+            'tagsListHeight',
+            readNumber(
+              legacySizes,
+              'notesTagsListHeight',
+              LAYOUT_DEFAULTS.tags.height,
+            ),
+          )
+          return raw < 100 ? LAYOUT_DEFAULTS.tags.height : raw
+        })(),
+        threePanel:
+          readOptionalNumberArray(notesLayoutSource, 'threePanel')
+          || readOptionalNumberArray(legacySizes, 'notesLayout'),
+        twoPanel:
+          readOptionalNumber(notesLayoutSource, 'twoPanel')
+          ?? readOptionalNumber(legacySizes, 'notesLayoutWithoutSidebar')
+          ?? undefined,
+      },
+    },
+    notifications: {
+      lastNotifiedUpdateVersion:
+        typeof notificationsSource.lastNotifiedUpdateVersion === 'string'
+          ? notificationsSource.lastNotifiedUpdateVersion
+          : typeof source.lastNotifiedUpdateVersion === 'string'
+            ? source.lastNotifiedUpdateVersion
+            : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
+      nextDonateAt:
+        readOptionalNumber(notificationsSource, 'nextDonateAt')
+        ?? readOptionalNumber(source, 'nextDonateNotification'),
+    },
+    activeSpaceId: readEnum(
+      source,
+      'activeSpaceId',
+      ['code', 'tools', 'math', 'notes'] as const,
+      APP_STORE_DEFAULTS.activeSpaceId,
+    ) as SpaceId,
+  }
+}
+
+const appStore = new Store<AppStore>({
+  name: 'app',
+  cwd: 'v2',
 })
+
+replaceStoreIfChanged(appStore, sanitizeAppStore(appStore.store))
+
+export default appStore

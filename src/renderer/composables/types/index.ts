@@ -1,3 +1,5 @@
+import type { LayoutMode } from '../layoutModes'
+
 export const LibraryFilter = {
   All: 'all',
   Favorites: 'favorites',
@@ -18,5 +20,6 @@ export interface SavedState {
   folderId?: number
   tagId?: number
   libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
+  codeLayoutMode?: LayoutMode
   isSidebarHidden?: boolean
 }

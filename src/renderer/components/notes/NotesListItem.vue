@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useNotes, useNotesApp } from '@/composables'
+import { useApp, useNotes, useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -34,6 +34,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { isCompactListMode } = useApp()
 const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
@@ -60,10 +61,10 @@ const folderName = computed(() => {
   }
 
   if (props.note.isDeleted) {
-    return i18n.t('sidebar.trash')
+    return i18n.t('common.trash')
   }
 
-  return i18n.t('sidebar.inbox')
+  return i18n.t('common.inbox')
 })
 
 function onNoteClick(id: number, event: MouseEvent) {
@@ -135,13 +136,31 @@ onClickOutside(noteRef, () => {
   >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger>
-        <div class="flex flex-col p-2 select-none">
+        <div
+          class="select-none"
+          :class="
+            isCompactListMode
+              ? 'flex items-center gap-2 px-2 py-1.5'
+              : 'flex flex-col p-2'
+          "
+        >
           <div
-            class="mb-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
             {{ note.name || i18n.t("notes.untitled") }}
           </div>
           <UiText
+            v-if="isCompactListMode"
+            as="div"
+            variant="xs"
+            muted
+            class="meta shrink-0"
+          >
+            {{ format(new Date(note.updatedAt), "dd.MM.yyyy") }}
+          </UiText>
+          <UiText
+            v-else
             as="div"
             variant="xs"
             muted

@@ -1,0 +1,38 @@
+# Basic percentages
+15% of 200
+200 + 10%
+200 - 10%
+5% on 200
+5% off 200
+
+# Percentage of value
+50 as a % of 100
+20 as a % of 200
+
+# Percentage change
+50 to 75 is what %
+40 to 90 as %
+
+# Reverse percentage
+180 is what % off 200
+180 is what % on 150
+20 is what % of 200
+
+# Reverse lookup
+20 is 10% of what
+220 is 10% on what
+180 is 10% off what
+
+# Decimal to percentage
+0.35 as %
+1 as %
+
+# Division to percentage
+20/200 as %
+20/200 %
+
+# Edge cases
+0% of 100
+100% of 250
+200% of 50
+100 - 100%

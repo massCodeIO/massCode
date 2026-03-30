@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 import { preferencesKeys } from '@/components/preferences/keys'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
+import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
 import {
+  Calculator,
   Code2,
   Globe,
   HardDrive,
@@ -39,6 +41,11 @@ const nav: { label: string, name: string, icon: Component }[] = [
     icon: Notebook,
   },
   {
+    label: i18n.t('preferences:math.label'),
+    name: RouterName.preferencesMath,
+    icon: Calculator,
+  },
+  {
     label: i18n.t('preferences:language.label'),
     name: RouterName.preferencesLanguage,
     icon: Globe,
@@ -64,7 +71,14 @@ provide(preferencesKeys, {
   <LayoutTwoColumn
     :title="i18n.t('preferences:label')"
     :top-space="isMac ? 16 : 6"
-    @back="() => router.push({ name: RouterName.main })"
+    @back="
+      () => {
+        const savedSpace = getSpaceDefinitions().find(
+          (s) => s.id === store.app.get('activeSpaceId'),
+        );
+        router.push(savedSpace?.to ?? { name: RouterName.main });
+      }
+    "
   >
     <template #left>
       <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">

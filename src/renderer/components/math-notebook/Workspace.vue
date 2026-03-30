@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { LineResult } from '@/composables/math-notebook'
+import type { MathSettings } from '~/main/store/types'
 import { useMathEngine, useMathNotebook } from '@/composables'
-import { i18n, ipc } from '@/electron'
+import { i18n, ipc, store } from '@/electron'
 import { Calculator } from 'lucide-vue-next'
 
 interface CurrencyRatesPayload {
@@ -10,8 +11,33 @@ interface CurrencyRatesPayload {
 }
 
 const { activeSheet, updateSheet } = useMathNotebook()
-const { evaluateDocument, setCurrencyServiceState, updateCurrencyRates }
-  = useMathEngine()
+const {
+  evaluateDocument,
+  setCurrencyServiceState,
+  setFormatSettings,
+  updateCurrencyRates,
+} = useMathEngine()
+
+const mathSettings = reactive(store.preferences.get('math') as MathSettings)
+
+setFormatSettings(
+  mathSettings.locale,
+  mathSettings.decimalPlaces,
+  mathSettings.dateFormat,
+)
+
+watch(
+  mathSettings,
+  () => {
+    store.preferences.set('math', JSON.parse(JSON.stringify(mathSettings)))
+    setFormatSettings(
+      mathSettings.locale,
+      mathSettings.decimalPlaces,
+      mathSettings.dateFormat,
+    )
+  },
+  { deep: true },
+)
 
 const scrollTop = ref(0)
 const activeLine = ref(0)
@@ -49,7 +75,7 @@ onMounted(async () => {
     if (payload.source === 'unavailable') {
       setCurrencyServiceState(
         'unavailable',
-        i18n.t('mathNotebook.currencyUnavailable'),
+        i18n.t('spaces.math.currencyUnavailable'),
       )
     }
     else {
@@ -60,7 +86,7 @@ onMounted(async () => {
   catch {
     setCurrencyServiceState(
       'unavailable',
-      i18n.t('mathNotebook.currencyUnavailable'),
+      i18n.t('spaces.math.currencyUnavailable'),
     )
     results.value = evaluateDocument(content.value)
   }
@@ -98,6 +124,8 @@ function handleActiveLine(line: number) {
       :results="results"
       :scroll-top="scrollTop"
       :active-line="activeLine"
+      :locale="mathSettings.locale"
+      :decimal-places="mathSettings.decimalPlaces"
     />
   </div>
 
@@ -113,7 +141,7 @@ function handleActiveLine(line: number) {
     </div>
     <!-- <div class="text-center">
       <p class="text-muted-foreground/60 text-[13px]">
-        {{ i18n.t("mathNotebook.newSheet") }}
+        {{ i18n.t("spaces.math.newSheet") }}
       </p>
     </div> -->
   </div>

@@ -1,50 +1,51 @@
 <script setup lang="ts">
-import * as Resizable from '@/components/ui/shadcn/resizable'
 import { useApp } from '@/composables'
+import { getCodePanels } from '@/composables/layoutModes'
 import { store } from '@/electron'
 
-const { isSidebarHidden } = useApp()
+const { codeLayoutMode } = useApp()
 
-const storedLayout = store.app.get('sizes.layout') as number[] | undefined
-const defaultLayout = storedLayout || [15, 20, 65]
+const panels = computed(() => getCodePanels(codeLayoutMode.value))
 
-function onLayout(layout: number[]) {
-  store.app.set('sizes.layout', layout)
+const storedThreePanel = store.app.get('code.layout.threePanel') as
+  | number[]
+  | undefined
+
+const sidebarWidth
+  = storedThreePanel?.length === 2 ? storedThreePanel[0] : undefined
+const listWidth = (() => {
+  if (storedThreePanel?.length === 2)
+    return storedThreePanel[1]
+  const twoPanel = store.app.get('code.layout.twoPanel') as number | undefined
+  return twoPanel ?? undefined
+})()
+
+function onResizeEnd(sw: number, lw: number) {
+  store.app.set('code.layout.threePanel', [sw, lw])
+}
+
+function onTwoPanelResize(lw: number) {
+  store.app.set('code.layout.twoPanel', lw)
 }
 </script>
 
 <template>
-  <div
-    v-if="isSidebarHidden"
-    class="h-screen"
+  <LayoutThreeColumn
+    :show-sidebar="panels.showSidebar"
+    :show-list="panels.showList"
+    :sidebar-width="sidebarWidth"
+    :list-width="listWidth"
+    @resize-end="onResizeEnd"
+    @two-panel-resize="onTwoPanelResize"
   >
-    <Editor />
-  </div>
-  <Resizable.ResizablePanelGroup
-    v-else
-    direction="horizontal"
-    class="h-screen"
-    @layout="onLayout"
-  >
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[0]"
-      :min-size="10"
-    >
+    <template #sidebar>
       <Sidebar />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[1]"
-      :min-size="10"
-    >
+    </template>
+    <template #list>
       <SnippetList />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[2]"
-      :min-size="30"
-    >
+    </template>
+    <template #editor>
       <Editor />
-    </Resizable.ResizablePanel>
-  </Resizable.ResizablePanelGroup>
+    </template>
+  </LayoutThreeColumn>
 </template>

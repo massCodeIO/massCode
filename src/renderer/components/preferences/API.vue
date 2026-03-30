@@ -2,12 +2,12 @@
 import { Button } from '@/components/ui/shadcn/button'
 import { i18n, ipc, store } from '@/electron'
 
-const apiPort = ref(store.preferences.get('apiPort'))
+const apiPort = ref<number>(store.preferences.get('api.port') as number)
 
 watch(apiPort, (value) => {
   const port = Number(value)
   if (port >= 1024 && port <= 65535) {
-    store.preferences.set('apiPort', port)
+    store.preferences.set('api.port', port)
   }
 })
 </script>

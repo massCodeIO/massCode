@@ -3,14 +3,18 @@ import type { Node } from '@/components/sidebar/folders/types'
 import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import * as Resizable from '@/components/ui/shadcn/resizable'
-import { useApp, useFolders, useSnippets } from '@/composables'
+import {
+  useApp,
+  useFolders,
+  useResizeHandle,
+  useSnippets,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
 import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
-import { APP_DEFAULTS } from '~/main/store/constants'
+import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
 const { state, isAppLoading, isCodeSpaceInitialized } = useApp()
 const {
@@ -30,32 +34,47 @@ const {
   selectedFolderIds,
 } = useFolders()
 
-const MIN_TAGS_PANEL_SIZE = 12
+const tagsHandleRef = ref<HTMLElement>()
 
-function normalizeTagsListHeight(value: number | undefined) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return APP_DEFAULTS.sizes.tagsList
+function normalizeTagsHeight(value: number | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 100) {
+    return LAYOUT_DEFAULTS.tags.height
   }
-
-  return Math.max(
-    MIN_TAGS_PANEL_SIZE,
-    Math.min(100 - MIN_TAGS_PANEL_SIZE, value),
-  )
+  return Math.max(LAYOUT_DEFAULTS.tags.min, value)
 }
 
-const tagsListHeight = normalizeTagsListHeight(
-  store.app.get('sizes.tagsListHeight') as number | undefined,
+const tagsHeight = ref(
+  normalizeTagsHeight(
+    store.app.get('code.layout.tagsListHeight') as number | undefined,
+  ),
 )
 
+useResizeHandle(tagsHandleRef, {
+  direction: 'vertical',
+  onMove(dy) {
+    tagsHeight.value = Math.max(
+      LAYOUT_DEFAULTS.tags.min,
+      tagsHeight.value - dy,
+    )
+  },
+  onEnd() {
+    store.app.set('code.layout.tagsListHeight', tagsHeight.value)
+  },
+})
+
 const libraryItems = [
-  { id: LibraryFilter.Inbox, name: i18n.t('sidebar.inbox'), icon: Inbox },
+  { id: LibraryFilter.Inbox, name: i18n.t('common.inbox'), icon: Inbox },
   {
     id: LibraryFilter.Favorites,
-    name: i18n.t('sidebar.favorites'),
+    name: i18n.t('common.favorites'),
     icon: Star,
   },
-  { id: LibraryFilter.All, name: i18n.t('sidebar.allSnippets'), icon: Archive },
-  { id: LibraryFilter.Trash, name: i18n.t('sidebar.trash'), icon: Trash },
+  {
+    id: LibraryFilter.All,
+    name: i18n.t('spaces.code.allSnippets'),
+    icon: Archive,
+  },
+  { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
 
 async function initGetFolders() {
@@ -213,10 +232,6 @@ async function onFolderDrag({
     console.error('Folder update error:', error)
   }
 }
-
-function onResizeTagList(val: number[]) {
-  store.app.set('sizes.tagsListHeight', normalizeTagsListHeight(val[1]))
-}
 </script>
 
 <template>
@@ -245,32 +260,19 @@ function onResizeTagList(val: number[]) {
       </ContextMenu.ContextMenu>
     </div>
 
-    <Resizable.ResizablePanelGroup
-      id="1"
-      direction="vertical"
-      class="min-h-0 flex-1"
-      @layout="onResizeTagList"
-    >
-      <Resizable.ResizablePanel>
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="min-h-0 flex-1">
         <div class="flex h-full min-h-0 flex-col">
-          <div
-            class="mt-1 flex items-center justify-between py-1 pl-1 select-none"
-          >
-            <UiText
-              as="div"
-              variant="caption"
-              weight="bold"
-              uppercase
-            >
-              {{ i18n.t("sidebar.folders") }}
-            </UiText>
-            <UiActionButton
-              :tooltip="i18n.t('action.new.folder')"
-              @click="createFolderAndSelect()"
-            >
-              <Plus class="h-4 w-4" />
-            </UiActionButton>
-          </div>
+          <SidebarSectionHeader :title="i18n.t('common.folders')">
+            <template #action>
+              <UiActionButton
+                :tooltip="i18n.t('action.new.folder')"
+                @click="createFolderAndSelect()"
+              >
+                <Plus class="h-4 w-4" />
+              </UiActionButton>
+            </template>
+          </SidebarSectionHeader>
 
           <div class="min-h-0 flex-1">
             <Tree
@@ -288,31 +290,25 @@ function onResizeTagList(val: number[]) {
             />
           </div>
         </div>
-      </Resizable.ResizablePanel>
+      </div>
 
-      <Resizable.ResizableHandle />
+      <div
+        ref="tagsHandleRef"
+        class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+      />
 
-      <Resizable.ResizablePanel
-        :min-size="MIN_TAGS_PANEL_SIZE"
-        :default-size="tagsListHeight"
+      <div
+        :style="{ height: `${tagsHeight}px` }"
+        class="shrink-0 overflow-hidden"
       >
         <div class="flex h-full min-h-0 flex-col">
-          <div class="flex items-center justify-between py-1 pl-1 select-none">
-            <UiText
-              as="div"
-              variant="caption"
-              weight="bold"
-              uppercase
-            >
-              {{ i18n.t("sidebar.tags") }}
-            </UiText>
-          </div>
+          <SidebarSectionHeader :title="i18n.t('common.tags')" />
 
           <div class="min-h-0 flex-1">
             <SidebarTags class="h-full px-1 pb-1" />
           </div>
         </div>
-      </Resizable.ResizablePanel>
-    </Resizable.ResizablePanelGroup>
+      </div>
+    </div>
   </div>
 </template>

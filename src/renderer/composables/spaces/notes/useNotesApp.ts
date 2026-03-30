@@ -1,5 +1,10 @@
 import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
+import {
+  getLayoutModeFromNotesPanels,
+  getNextLayoutModeForSidebarToggle,
+  type LayoutMode,
+} from '../../layoutModes'
 
 export type NotesStateAction = 'beforeSearch'
 
@@ -17,16 +22,8 @@ const stateSnapshots = reactive<Record<NotesStateAction, NotesSavedState>>({
 })
 
 const notesState = reactive<NotesSavedState>(
-  (store.app.get('notesState') as NotesSavedState) || {},
+  (store.app.get('notes.selection') as NotesSavedState) || {},
 )
-
-if (notesState.isSidebarHidden === undefined) {
-  notesState.isSidebarHidden = false
-}
-
-if (notesState.isListHidden === undefined) {
-  notesState.isListHidden = false
-}
 
 const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedNoteIds = ref<Set<number>>(new Set())
@@ -37,11 +34,11 @@ const focusedNoteId = ref<number | undefined>()
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
 
 const notesEditorMode = ref<NotesEditorMode>(
-  (store.app.get('notesEditorMode') as NotesEditorMode) || 'livePreview',
+  (store.app.get('notes.editorMode') as NotesEditorMode) || 'livePreview',
 )
 
 watch(notesEditorMode, (mode) => {
-  store.app.set('notesEditorMode', mode)
+  store.app.set('notes.editorMode', mode)
 })
 
 const isNotesSpaceInitialized = ref(false)
@@ -49,24 +46,23 @@ const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
 const isNotesMindmapShown = ref(false)
 const isNotesPresentationShown = ref(false)
+const notesLayoutMode = ref<LayoutMode>(
+  (store.app.get('notes.layout.mode') as LayoutMode)
+  || getLayoutModeFromNotesPanels({
+    isSidebarHidden: false,
+    isListHidden: false,
+  }),
+)
 const isNotesSidebarHidden = computed({
-  get: () => Boolean(notesState.isSidebarHidden),
+  get: () => notesLayoutMode.value !== 'all-panels',
   set: (value: boolean) => {
-    notesState.isSidebarHidden = value
-
-    if (!value) {
-      notesState.isListHidden = false
-    }
+    notesLayoutMode.value = value ? 'list-editor' : 'all-panels'
   },
 })
 const isNotesListHidden = computed({
-  get: () => Boolean(notesState.isListHidden),
+  get: () => notesLayoutMode.value === 'editor-only',
   set: (value: boolean) => {
-    notesState.isListHidden = value
-
-    if (value) {
-      notesState.isSidebarHidden = true
-    }
+    notesLayoutMode.value = value ? 'editor-only' : 'list-editor'
   },
 })
 
@@ -104,18 +100,25 @@ function restoreNotesStateSnapshot(action: NotesStateAction): void {
 }
 
 function showAllNotesPanels() {
-  isNotesSidebarHidden.value = false
-  isNotesListHidden.value = false
+  notesLayoutMode.value = 'all-panels'
 }
 
 function hideNotesSidebar() {
-  isNotesSidebarHidden.value = true
-  isNotesListHidden.value = false
+  notesLayoutMode.value = 'list-editor'
 }
 
 function showNotesEditorOnly() {
-  isNotesSidebarHidden.value = true
-  isNotesListHidden.value = true
+  notesLayoutMode.value = 'editor-only'
+}
+
+function setNotesLayoutMode(value: LayoutMode) {
+  notesLayoutMode.value = value
+}
+
+function toggleNotesSidebar() {
+  notesLayoutMode.value = getNextLayoutModeForSidebarToggle(
+    notesLayoutMode.value,
+  )
 }
 
 function hideNotesViewModes() {
@@ -136,10 +139,14 @@ function showNotesPresentation() {
 watch(
   notesState,
   () => {
-    store.app.set('notesState', JSON.parse(JSON.stringify(notesState)))
+    store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
   },
   { deep: true },
 )
+
+watch(notesLayoutMode, (mode) => {
+  store.app.set('notes.layout.mode', mode)
+})
 
 export function useNotesApp() {
   return {
@@ -152,6 +159,7 @@ export function useNotesApp() {
     isFocusedSearch,
     isNotesMindmapShown,
     isNotesListHidden,
+    notesLayoutMode,
     isNotesPresentationShown,
     notesEditorMode,
     isNotesSidebarHidden,
@@ -161,10 +169,12 @@ export function useNotesApp() {
     notesState,
     restoreNotesStateSnapshot,
     saveNotesStateSnapshot,
+    setNotesLayoutMode,
     showAllNotesPanels,
     showNotesMindmap,
     showNotesPresentation,
     showNotesEditorOnly,
     stateSnapshots,
+    toggleNotesSidebar,
   }
 }

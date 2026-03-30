@@ -1,6 +1,6 @@
 {
   "name": "masscode",
-  "version": "4.7.1",
+  "version": "5.0.0",
   "description": "A free and open source code snippets manager for developers",
   "author": {
     "name": "Anton Reshetov",
@@ -28,13 +28,18 @@
     "build:sponsored:win": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --win --x64",
     "build:sponsored:linux": "vite build && npm run build:main && electron-builder --config electron-builder.sponsored.json --linux --x64",
     "build:all": "vite build && npm run build:main && npm run build:mac && npm run build:win && npm run build:linux",
-    "build:main": "npm run copy:locales && tsc -p tsconfig.main.json",
+    "build:main": "npm run i18n:copy && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
-    "copy:locales": "node scripts/copy-locales.js",
+    "i18n:copy": "node scripts/i18n/copy-locales.js",
+    "i18n:check": "node scripts/i18n/check-locale-parity.mjs",
     "bench:load-test": "node scripts/bench-load-test.js",
     "bench:seed": "node scripts/bench-seed.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "docs:dev": "pnpm --dir docs/website dev",
+    "docs:generate-assets": "node docs/website/scripts/generate-assets.mjs",
+    "docs:build": "pnpm docs:generate-assets && pnpm --dir docs/website build",
+    "docs:preview": "pnpm --dir docs/website preview",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",
@@ -170,6 +175,5 @@
   },
   "volta": {
     "node": "20.16.0"
-  },
-  "packageManager": "pnpm@10.29.2+sha512.bef43fa759d91fd2da4b319a5a0d13ef7a45bb985a3d7342058470f9d2051a3ba8674e629672654686ef9443ad13a82da2beb9eeb3e0221c87b8154fff9d74b8"
+  }
 }

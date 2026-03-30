@@ -1,6 +1,8 @@
+import type { DateFormatStyle } from './format'
 import type { LineResult, SpecialLineResult } from './types'
 import { MONTH_NAME_TO_INDEX, timeZoneAliases } from './constants'
-import { splitByKeyword } from './preprocess'
+import { formatMathDate } from './format'
+import { splitByKeyword } from './utils'
 
 interface ParsedTemporalExpression {
   date: Date
@@ -114,18 +116,6 @@ function zonedDateToUtc(
   }
 
   return new Date(utcTimestamp)
-}
-
-function formatTimeZoneDate(date: Date, timeZone: string, includeYear = false) {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hour: 'numeric',
-    minute: '2-digit',
-    month: 'short',
-    day: 'numeric',
-    ...(includeYear ? { year: 'numeric' as const } : {}),
-    timeZoneName: 'short',
-  }).format(date)
 }
 
 function getTimeZoneOffsetMinutes(date: Date, timeZone: string) {
@@ -480,11 +470,49 @@ function resolveCurrentTimeZoneExpression(line: string) {
   return null
 }
 
+function computeTimeZoneDifference(
+  tz1: string,
+  tz2: string,
+  now: Date,
+  options: TimeZoneDifferenceOptions,
+): SpecialLineResult {
+  const diffHours
+    = (getTimeZoneOffsetMinutes(now, tz1) - getTimeZoneOffsetMinutes(now, tz2))
+      / 60
+  const result = options.createHourUnit(diffHours)
+  return {
+    lineResult: options.formatResult(result),
+    rawResult: result,
+  }
+}
+
 export function evaluateTimeZoneDifferenceLine(
   line: string,
   now: Date,
   options: TimeZoneDifferenceOptions,
 ): SpecialLineResult | null {
+  // "time difference between X and Y" / "difference between X & Y"
+  const lower = line.toLowerCase()
+  const betweenIdx = lower.indexOf(' between ')
+  if (
+    betweenIdx >= 0
+    && /^(?:time\s+)?difference$/i.test(line.slice(0, betweenIdx).trim())
+  ) {
+    const rest = line.slice(betweenIdx + 9)
+    const andIdx = rest.search(/\s+(?:and|&)\s+/i)
+    if (andIdx > 0) {
+      const separator = rest.match(/\s+(?:and|&)\s+/i)!
+      const tz1 = resolveTimeZone(rest.slice(0, andIdx).trim())
+      const tz2 = resolveTimeZone(
+        rest.slice(andIdx + separator[0].length).trim(),
+      )
+      if (tz1 && tz2) {
+        return computeTimeZoneDifference(tz2, tz1, now, options)
+      }
+    }
+  }
+
+  // "X time - Y time" / "now in X - now in Y"
   const subtractionIndex = line.indexOf(' - ')
   if (subtractionIndex <= 0) {
     return null
@@ -504,21 +532,14 @@ export function evaluateTimeZoneDifferenceLine(
     return null
   }
 
-  const diffHours
-    = (getTimeZoneOffsetMinutes(now, leftTimeZone)
-      - getTimeZoneOffsetMinutes(now, rightTimeZone))
-    / 60
-  const result = options.createHourUnit(diffHours)
-
-  return {
-    lineResult: options.formatResult(result),
-    rawResult: result,
-  }
+  return computeTimeZoneDifference(leftTimeZone, rightTimeZone, now, options)
 }
 
 export function evaluateTimeZoneLine(
   line: string,
   now: Date,
+  locale = 'en-US',
+  dateFormat: DateFormatStyle = 'numeric',
 ): SpecialLineResult | null {
   const lowerLine = line.toLowerCase()
   const localTimeZone = getLocalTimeZone()
@@ -531,7 +552,10 @@ export function evaluateTimeZoneLine(
   ) {
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, localTimeZone),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone: localTimeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -547,7 +571,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -563,7 +590,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -579,7 +609,10 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
@@ -595,11 +628,32 @@ export function evaluateTimeZoneLine(
 
     return {
       lineResult: {
-        value: formatTimeZoneDate(now, timeZone),
+        value: formatMathDate(now, locale, dateFormat, {
+          timeZone,
+          timeZoneName: true,
+        }),
         error: null,
         type: 'date',
       },
       rawResult: now,
+    }
+  }
+
+  // "date in ZONE" → show current date in timezone (date only, no time)
+  if (lowerLine.startsWith('date in ')) {
+    const timeZone = resolveTimeZone(line.slice(8))
+    if (timeZone) {
+      return {
+        lineResult: {
+          value: formatMathDate(now, locale, dateFormat, {
+            timeZone,
+            dateOnly: true,
+          }),
+          error: null,
+          type: 'date',
+        },
+        rawResult: now,
+      }
     }
   }
 
@@ -622,11 +676,10 @@ export function evaluateTimeZoneLine(
 
   return {
     lineResult: {
-      value: formatTimeZoneDate(
-        parsedSourceExpression.date,
-        targetTimeZone,
-        parsedSourceExpression.explicitDate,
-      ),
+      value: formatMathDate(parsedSourceExpression.date, locale, dateFormat, {
+        timeZone: targetTimeZone,
+        timeZoneName: true,
+      }),
       error: null,
       type: 'date',
     },

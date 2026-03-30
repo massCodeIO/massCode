@@ -16,7 +16,6 @@ import {
   LEGACY_INBOX_RELATIVE_PATH,
   LEGACY_TRASH_RELATIVE_PATH,
   META_DIR_NAME,
-  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   TRASH_RELATIVE_PATH,
 } from './constants'
@@ -55,12 +54,13 @@ export function isTrashSnippetDirectory(directoryPath: string): boolean {
 }
 
 export function listMarkdownFiles(rootPath: string): string[] {
+  // This helper always runs inside the resolved code space root, not vault root.
   return listMarkdownFilesShared(
     rootPath,
     META_DIR_NAME,
     INBOX_DIR_NAME,
     TRASH_DIR_NAME,
-    new Set([SPACES_DIR_NAME]),
+    new Set(),
   )
 }
 

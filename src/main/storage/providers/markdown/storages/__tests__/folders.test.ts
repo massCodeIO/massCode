@@ -128,4 +128,12 @@ describe('code folders storage validations', () => {
       'NAME_CONFLICT',
     )
   })
+
+  it('rejects reserved flat space names at root level', () => {
+    const storage = createFoldersStorage()
+
+    expect(() => storage.createFolder({ name: 'math' })).toThrow(
+      'RESERVED_NAME',
+    )
+  })
 })

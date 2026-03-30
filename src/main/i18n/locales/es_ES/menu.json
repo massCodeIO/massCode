@@ -6,7 +6,8 @@
     "update": "Buscar Actualizaciones...",
     "quit": "Salir de massCode",
     "about": "Acerca de massCode",
-    "hide": "Ocultar massCode"
+    "hide": "Ocultar massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Ayuda",
@@ -32,12 +33,9 @@
       "snippets": "Colección de Snippets"
     }
   },
-  "edit": {
-    "label": "Editar",
-    "find": "Buscar"
-  },
   "view": {
     "label": "Vista",
+    "showSidebar": "Mostrar/ocultar barra lateral",
     "sortBy": {
       "label": "Ordenar Snippets Por",
       "dateModified": "Fecha de Modificación",
@@ -45,7 +43,16 @@
       "name": "Nombre"
     },
     "compactMode": "Modo Compacto",
-    "showSidebar": "Mostrar/ocultar barra lateral"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "Editar",
+    "find": "Buscar"
   },
   "editor": {
     "label": "Editor",
@@ -56,13 +63,17 @@
     "previewJson": "Vista previa JSON",
     "fontSizeIncrease": "Aumentar Tamaño de Fuente",
     "fontSizeDecrease": "Disminuir Tamaño de Fuente",
-    "fontSizeReset": "Restablecer Tamaño de Fuente"
+    "fontSizeReset": "Restablecer Tamaño de Fuente",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Modo Presentación",
     "preview": "Vista Previa",
     "previewMarkdown": "Vista Previa de Markdown",
+    "presentationMode": "Modo Presentación",
     "previewMindmap": "Vista Previa de Mapa Mental"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "Herramientas de Desarrollo"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

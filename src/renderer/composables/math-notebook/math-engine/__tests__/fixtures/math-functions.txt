@@ -1,0 +1,47 @@
+# Roots
+sqrt(16)
+cbrt(27)
+square root of 81
+cube root of 27
+root 5 of 100
+
+# Logarithms
+log2(8)
+log10(1000)
+exp(1)
+ln(e)
+log 20 base 4
+81 is 9 to what power
+27 is 3 to the what
+
+# Factorial
+fact(5)
+fact(10)
+
+# Trigonometry (radians)
+sin(pi)
+cos(pi)
+tan(pi/4)
+
+# Trigonometry (degrees)
+sind(90)
+cosd(0)
+tand(45)
+sin(90 degrees)
+asind(0.5)
+acosd(0.5)
+atand(1)
+
+# Hyperbolic
+sinh(1)
+cosh(1)
+tanh(0.5)
+asinh(1)
+acosh(2)
+atanh(0.5)
+
+# Constants
+pi
+e
+tau
+phi

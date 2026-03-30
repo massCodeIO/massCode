@@ -138,9 +138,9 @@ describe('listMarkdownFiles', () => {
 
   it('respects skipDirNames at root level', () => {
     const root = createTmpDir()
-    const spacesDir = path.join(root, '__spaces__')
-    fs.ensureDirSync(spacesDir)
-    fs.writeFileSync(path.join(spacesDir, 'file.md'), 'content')
+    const codeDir = path.join(root, 'code')
+    fs.ensureDirSync(codeDir)
+    fs.writeFileSync(path.join(codeDir, 'file.md'), 'content')
     fs.writeFileSync(path.join(root, 'root.md'), 'content')
 
     const result = listMarkdownFiles(
@@ -148,14 +148,14 @@ describe('listMarkdownFiles', () => {
       META,
       INBOX,
       TRASH,
-      new Set(['__spaces__']),
+      new Set(['code']),
     )
     expect(result).toEqual(['root.md'])
   })
 
   it('does not skip skipDirNames in subdirectories', () => {
     const root = createTmpDir()
-    const nestedDir = path.join(root, 'folder', '__spaces__')
+    const nestedDir = path.join(root, 'folder', 'code')
     fs.ensureDirSync(nestedDir)
     fs.writeFileSync(path.join(nestedDir, 'file.md'), 'content')
 
@@ -164,9 +164,9 @@ describe('listMarkdownFiles', () => {
       META,
       INBOX,
       TRASH,
-      new Set(['__spaces__']),
+      new Set(['code']),
     )
-    expect(result).toEqual(['folder/__spaces__/file.md'])
+    expect(result).toEqual(['folder/code/file.md'])
   })
 
   it('does not enter other subdirectories of meta dir', () => {

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import * as Resizable from '@/components/ui/shadcn/resizable'
 import { useNotesApp, useNotesSpaceInitialization } from '@/composables'
 import { store } from '@/electron'
 
@@ -8,107 +7,45 @@ const { initNotesSpace } = useNotesSpaceInitialization()
 
 void initNotesSpace()
 
-const storedLayout = store.app.get('sizes.notesLayout') as number[] | undefined
-const defaultLayout = storedLayout || [15, 20, 65]
-const storedLayoutWithoutSidebar = store.app.get(
-  'sizes.notesLayoutWithoutSidebar',
-) as number[] | undefined
+const storedThreePanel = store.app.get('notes.layout.threePanel') as
+  | number[]
+  | undefined
 
-function normalizeTwoPanelLayout(
-  layout: number[] | undefined,
-  fallback: number[],
-): number[] {
-  if (
-    !layout
-    || layout.length !== 2
-    || layout.some(value => !Number.isFinite(value) || value <= 0)
-  ) {
-    return fallback
-  }
-
-  return layout
-}
-
-const fallbackLayoutWithoutSidebar = (() => {
-  const listSize = Number(defaultLayout[1]) || 20
-  const editorSize = Number(defaultLayout[2]) || 65
-  const total = listSize + editorSize
-
-  if (total <= 0) {
-    return [24, 76]
-  }
-
-  const normalizedListSize = Math.round((listSize / total) * 100)
-
-  return [normalizedListSize, 100 - normalizedListSize]
+const sidebarWidth
+  = storedThreePanel?.length === 2 ? storedThreePanel[0] : undefined
+const listWidth = (() => {
+  if (storedThreePanel?.length === 2)
+    return storedThreePanel[1]
+  const twoPanel = store.app.get('notes.layout.twoPanel') as number | undefined
+  return twoPanel ?? undefined
 })()
 
-const defaultLayoutWithoutSidebar = normalizeTwoPanelLayout(
-  storedLayoutWithoutSidebar,
-  fallbackLayoutWithoutSidebar,
-)
-
-function onLayout(layout: number[]) {
-  store.app.set('sizes.notesLayout', layout)
+function onResizeEnd(sw: number, lw: number) {
+  store.app.set('notes.layout.threePanel', [sw, lw])
 }
 
-function onLayoutWithoutSidebar(layout: number[]) {
-  store.app.set('sizes.notesLayoutWithoutSidebar', layout)
+function onTwoPanelResize(lw: number) {
+  store.app.set('notes.layout.twoPanel', lw)
 }
 </script>
 
 <template>
-  <div
-    v-if="isNotesSidebarHidden && isNotesListHidden"
-    class="h-screen"
+  <LayoutThreeColumn
+    :show-sidebar="!isNotesSidebarHidden"
+    :show-list="!isNotesListHidden"
+    :sidebar-width="sidebarWidth"
+    :list-width="listWidth"
+    @resize-end="onResizeEnd"
+    @two-panel-resize="onTwoPanelResize"
   >
-    <NotesEditorPane />
-  </div>
-  <Resizable.ResizablePanelGroup
-    v-else-if="isNotesSidebarHidden"
-    direction="horizontal"
-    class="h-screen"
-    @layout="onLayoutWithoutSidebar"
-  >
-    <Resizable.ResizablePanel
-      :default-size="defaultLayoutWithoutSidebar[0]"
-      :min-size="10"
-    >
-      <NotesList />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <Resizable.ResizablePanel
-      :default-size="defaultLayoutWithoutSidebar[1]"
-      :min-size="30"
-    >
-      <NotesEditorPane />
-    </Resizable.ResizablePanel>
-  </Resizable.ResizablePanelGroup>
-  <Resizable.ResizablePanelGroup
-    v-else
-    direction="horizontal"
-    class="h-screen"
-    @layout="onLayout"
-  >
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[0]"
-      :min-size="10"
-    >
+    <template #sidebar>
       <NotesSidebar />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[1]"
-      :min-size="10"
-    >
+    </template>
+    <template #list>
       <NotesList />
-    </Resizable.ResizablePanel>
-    <Resizable.ResizableHandle />
-    <Resizable.ResizablePanel
-      :default-size="defaultLayout[2]"
-      :min-size="30"
-    >
+    </template>
+    <template #editor>
       <NotesEditorPane />
-    </Resizable.ResizablePanel>
-  </Resizable.ResizablePanelGroup>
+    </template>
+  </LayoutThreeColumn>
 </template>

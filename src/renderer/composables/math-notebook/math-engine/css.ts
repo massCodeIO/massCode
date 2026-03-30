@@ -1,6 +1,6 @@
 import type { CssContext, SpecialLineResult } from './types'
 import { lengthInchesByUnit } from './constants'
-import { splitByKeyword } from './preprocess'
+import { splitByKeyword } from './utils'
 
 function normalizeCssUnit(unit: string) {
   const normalized = unit.toLowerCase()

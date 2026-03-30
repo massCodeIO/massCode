@@ -1,0 +1,37 @@
+# Variable assignment
+v = 20
+v * 7
+
+# Multiple variables
+a = 10
+b = 20
+a + b
+
+# Variable reassignment
+x = 5
+x = x + 1
+x
+
+# Prev reference
+10 + 5
+prev * 2
+prev - 5
+
+# Prev resets after empty line
+100
+
+50
+
+# Labels
+Price: $100 + $50
+Monthly cost: 1200 / 12
+
+# Quoted text
+$275 for the "Model 227"
+Boing "747" is $386.8M
+
+# Comments
+// this is a comment
+# this is a heading
+$128 + $45 // on 10-02-2019
+$999 (for iPhone 16)

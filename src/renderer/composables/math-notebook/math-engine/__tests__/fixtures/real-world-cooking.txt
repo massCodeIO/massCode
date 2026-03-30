@@ -1,0 +1,32 @@
+# Banana Bread Recipe Conversion
+
+## Original recipe (US cups)
+2 cups flour
+1 cup sugar
+1/2 cup butter
+3 bananas
+
+## Convert to grams
+300g flour in cups
+200g sugar in cups
+100g butter in cups
+
+## Scale recipe (1.5x)
+300 * 1.5
+200 * 1.5
+100 * 1.5
+
+## Density check
+density of flour
+density of sugar
+density of butter
+density of honey
+
+## Oven temperature
+350 fahrenheit to celsius
+180 celsius to fahrenheit
+
+## Baking time
+45 minutes as timespan
+1.5 hours as timespan
+9:00 am + 45 minutes

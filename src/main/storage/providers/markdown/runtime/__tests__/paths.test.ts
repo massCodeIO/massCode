@@ -80,7 +80,7 @@ afterEach(() => {
 })
 
 describe('getPaths', () => {
-  it('migrates legacy code vault root into __spaces__/code', () => {
+  it('migrates legacy code vault root into code', () => {
     const vaultPath = createTempDir()
 
     fs.ensureDirSync(path.join(vaultPath, '.masscode'))
@@ -114,7 +114,7 @@ describe('getPaths', () => {
 
     const paths = getPaths(vaultPath)
 
-    expect(paths.vaultPath).toBe(path.join(vaultPath, '__spaces__', 'code'))
+    expect(paths.vaultPath).toBe(path.join(vaultPath, 'code'))
     expect(
       fs.pathExistsSync(path.join(paths.vaultPath, '.masscode', 'state.json')),
     ).toBe(true)
@@ -128,7 +128,7 @@ describe('getPaths', () => {
 
   it('keeps existing initialized code space without forced root migration', () => {
     const vaultPath = createTempDir()
-    const codeRoot = path.join(vaultPath, '__spaces__', 'code')
+    const codeRoot = path.join(vaultPath, 'code')
     fs.ensureDirSync(path.join(codeRoot, '.masscode'))
     fs.writeJSONSync(path.join(codeRoot, '.masscode', 'state.json'), {
       counters: {
@@ -172,7 +172,7 @@ describe('getPaths', () => {
 
   it('migrates when code space exists but is not initialized', () => {
     const vaultPath = createTempDir()
-    const codeRoot = path.join(vaultPath, '__spaces__', 'code')
+    const codeRoot = path.join(vaultPath, 'code')
     fs.ensureDirSync(codeRoot)
 
     fs.ensureDirSync(path.join(vaultPath, '.masscode'))
@@ -202,5 +202,92 @@ describe('getPaths', () => {
       true,
     )
     expect(fs.pathExistsSync(path.join(vaultPath, 'Legacy'))).toBe(false)
+  })
+
+  it('flattens __spaces__ wrapper for all known spaces before resolving code path', () => {
+    const vaultPath = createTempDir()
+    const legacyCodeRoot = path.join(vaultPath, '__spaces__', 'code')
+    const legacyNotesRoot = path.join(vaultPath, '__spaces__', 'notes')
+    const legacyMathRoot = path.join(vaultPath, '__spaces__', 'math')
+
+    fs.ensureDirSync(path.join(legacyCodeRoot, '.masscode'))
+    fs.writeJSONSync(path.join(legacyCodeRoot, '.masscode', 'state.json'), {
+      counters: {
+        contentId: 0,
+        folderId: 0,
+        snippetId: 0,
+        tagId: 0,
+      },
+      folderUi: {},
+      folders: [],
+      snippets: [],
+      tags: [],
+      version: 2,
+    })
+    fs.writeFileSync(path.join(legacyCodeRoot, 'snippet.md'), '# Code')
+
+    fs.ensureDirSync(legacyNotesRoot)
+    fs.writeFileSync(path.join(legacyNotesRoot, 'note.md'), '# Note')
+
+    fs.ensureDirSync(legacyMathRoot)
+    fs.writeFileSync(path.join(legacyMathRoot, '.state.yaml'), 'sheets: []')
+
+    const paths = getPaths(vaultPath)
+
+    expect(paths.vaultPath).toBe(path.join(vaultPath, 'code'))
+    expect(fs.pathExistsSync(path.join(vaultPath, 'code', 'snippet.md'))).toBe(
+      true,
+    )
+    expect(fs.pathExistsSync(path.join(vaultPath, 'notes', 'note.md'))).toBe(
+      true,
+    )
+    expect(fs.pathExistsSync(path.join(vaultPath, 'math', '.state.yaml'))).toBe(
+      true,
+    )
+    expect(fs.pathExistsSync(path.join(vaultPath, '__spaces__'))).toBe(false)
+  })
+
+  it('merges partially migrated __spaces__ content into existing flat roots', () => {
+    const vaultPath = createTempDir()
+    const codeRoot = path.join(vaultPath, 'code')
+    const legacyCodeRoot = path.join(vaultPath, '__spaces__', 'code')
+    const notesRoot = path.join(vaultPath, 'notes')
+    const legacyNotesRoot = path.join(vaultPath, '__spaces__', 'notes')
+
+    fs.ensureDirSync(path.join(codeRoot, '.masscode'))
+    fs.writeJSONSync(path.join(codeRoot, '.masscode', 'state.json'), {
+      counters: {
+        contentId: 0,
+        folderId: 0,
+        snippetId: 0,
+        tagId: 0,
+      },
+      folderUi: {},
+      folders: [],
+      snippets: [],
+      tags: [],
+      version: 2,
+    })
+    fs.writeFileSync(path.join(codeRoot, 'root.md'), '# Root')
+
+    fs.ensureDirSync(legacyCodeRoot)
+    fs.writeFileSync(path.join(legacyCodeRoot, 'legacy.md'), '# Legacy')
+
+    fs.ensureDirSync(notesRoot)
+    fs.writeFileSync(path.join(notesRoot, 'existing.md'), '# Existing')
+
+    fs.ensureDirSync(legacyNotesRoot)
+    fs.writeFileSync(path.join(legacyNotesRoot, 'migrated.md'), '# Migrated')
+
+    const paths = getPaths(vaultPath)
+
+    expect(paths.vaultPath).toBe(codeRoot)
+    expect(fs.pathExistsSync(path.join(codeRoot, 'root.md'))).toBe(true)
+    expect(fs.pathExistsSync(path.join(codeRoot, 'legacy.md'))).toBe(true)
+    expect(fs.pathExistsSync(path.join(notesRoot, 'existing.md'))).toBe(true)
+    expect(fs.pathExistsSync(path.join(notesRoot, 'migrated.md'))).toBe(true)
+    expect(fs.pathExistsSync(legacyCodeRoot)).toBe(false)
+    expect(fs.pathExistsSync(legacyNotesRoot)).toBe(false)
+    expect(fs.pathExistsSync(path.join(vaultPath, '__spaces__'))).toBe(false)
   })
 })

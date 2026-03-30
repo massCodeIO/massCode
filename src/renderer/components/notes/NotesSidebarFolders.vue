@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import * as Resizable from '@/components/ui/shadcn/resizable'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
   useNoteFolderDragDrop,
@@ -9,27 +8,39 @@ import {
   useNotes,
   useNotesApp,
   useNoteSearch,
+  useResizeHandle,
 } from '@/composables'
 import { i18n, store } from '@/electron'
 import { Folder, Plus } from 'lucide-vue-next'
-import { APP_DEFAULTS } from '~/main/store/constants'
+import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
-const MIN_TAGS_PANEL_SIZE = 12
+const tagsHandleRef = ref<HTMLElement>()
 
-function normalizeTagsListHeight(value: number | undefined) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return APP_DEFAULTS.sizes.tagsList
+function normalizeTagsHeight(value: number | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 100) {
+    return LAYOUT_DEFAULTS.tags.height
   }
-
-  return Math.max(
-    MIN_TAGS_PANEL_SIZE,
-    Math.min(100 - MIN_TAGS_PANEL_SIZE, value),
-  )
+  return Math.max(LAYOUT_DEFAULTS.tags.min, value)
 }
 
-const tagsListHeight = normalizeTagsListHeight(
-  store.app.get('sizes.notesTagsListHeight') as number | undefined,
+const tagsHeight = ref(
+  normalizeTagsHeight(
+    store.app.get('notes.layout.tagsListHeight') as number | undefined,
+  ),
 )
+
+useResizeHandle(tagsHandleRef, {
+  direction: 'vertical',
+  onMove(dy) {
+    tagsHeight.value = Math.max(
+      LAYOUT_DEFAULTS.tags.min,
+      tagsHeight.value - dy,
+    )
+  },
+  onEnd() {
+    store.app.set('notes.layout.tagsListHeight', tagsHeight.value)
+  },
+})
 
 const {
   notesState,
@@ -162,38 +173,21 @@ function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
 function onCancelEdit() {
   editableId.value = null
 }
-
-function onResizeTagList(layout: number[]) {
-  store.app.set(
-    'sizes.notesTagsListHeight',
-    normalizeTagsListHeight(layout[1]),
-  )
-}
 </script>
 
 <template>
-  <div class="mt-1 flex items-center justify-between py-1 pl-1 select-none">
-    <UiText
-      as="div"
-      variant="caption"
-      weight="bold"
-      uppercase
-    >
-      {{ i18n.t("sidebar.folders") }}
-    </UiText>
-    <UiActionButton
-      :tooltip="i18n.t('action.new.folder')"
-      @click="createNoteFolderAndSelect()"
-    >
-      <Plus class="h-4 w-4" />
-    </UiActionButton>
-  </div>
-  <Resizable.ResizablePanelGroup
-    direction="vertical"
-    class="min-h-0 flex-1"
-    @layout="onResizeTagList"
-  >
-    <Resizable.ResizablePanel>
+  <SidebarSectionHeader :title="i18n.t('common.folders')">
+    <template #action>
+      <UiActionButton
+        :tooltip="i18n.t('action.new.folder')"
+        @click="createNoteFolderAndSelect()"
+      >
+        <Plus class="h-4 w-4" />
+      </UiActionButton>
+    </template>
+  </SidebarSectionHeader>
+  <div class="flex min-h-0 flex-1 flex-col">
+    <div class="min-h-0 flex-1">
       <div class="min-h-0 flex-1 overflow-y-auto">
         <ContextMenu.ContextMenu>
           <ContextMenu.ContextMenuTrigger as-child>
@@ -245,30 +239,21 @@ function onResizeTagList(layout: number[]) {
           />
         </ContextMenu.ContextMenu>
       </div>
-    </Resizable.ResizablePanel>
-
-    <Resizable.ResizableHandle />
-
-    <Resizable.ResizablePanel
-      :min-size="MIN_TAGS_PANEL_SIZE"
-      :default-size="tagsListHeight"
+    </div>
+    <div
+      ref="tagsHandleRef"
+      class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+    />
+    <div
+      :style="{ height: `${tagsHeight}px` }"
+      class="shrink-0 overflow-hidden"
     >
       <div class="flex h-full min-h-0 flex-col">
-        <div class="flex items-center justify-between py-1 pl-1 select-none">
-          <UiText
-            as="div"
-            variant="caption"
-            weight="bold"
-            uppercase
-          >
-            {{ i18n.t("sidebar.tags") }}
-          </UiText>
-        </div>
-
+        <SidebarSectionHeader :title="i18n.t('common.tags')" />
         <div class="min-h-0 flex-1 px-1 pb-1">
           <NotesSidebarTags />
         </div>
       </div>
-    </Resizable.ResizablePanel>
-  </Resizable.ResizablePanelGroup>
+    </div>
+  </div>
 </template>

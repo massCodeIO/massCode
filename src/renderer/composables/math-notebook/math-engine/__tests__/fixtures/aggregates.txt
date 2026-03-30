@@ -1,0 +1,55 @@
+# Sum block
+10
+20
+30
+sum
+
+# Total alias
+10
+20
+total
+
+# Average block
+10
+20
+30
+average
+
+# Avg alias
+10
+30
+avg
+
+# Median (odd count)
+10
+20
+30
+median
+
+# Median (even count)
+10
+20
+30
+40
+median
+
+# Count
+10
+20
+30
+count
+
+# Sum resets after empty line
+10
+20
+
+5
+15
+sum
+
+# Inline aggregates
+total of 3, 4, 7 and 9
+average of 36, 42, 19 and 81
+count of 1, 2, 3, 4, 5
+median of 10, 20 and 30
+sum of 10, 20, 30

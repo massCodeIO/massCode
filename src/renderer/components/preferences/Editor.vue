@@ -25,25 +25,34 @@ watch(
 <template>
   <div class="space-y-4">
     <UiMenuFormSection :label="i18n.t('preferences:editor.label')">
-      <UiMenuFormItem :label="i18n.t('preferences:editor.fontSize')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.fontSize.label')">
         <UiInput
           v-model="settings.fontSize"
           type="number"
           size="sm"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.fontSize.description") }}
+        </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:editor.fontFamily')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.fontFamily.label')">
         <UiInput
           v-model="settings.fontFamily"
           size="sm"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.fontFamily.description") }}
+        </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:editor.tabSize')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.tabSize.label')">
         <UiInput
           v-model="settings.tabSize"
           type="number"
           size="sm"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.tabSize.description") }}
+        </template>
       </UiMenuFormItem>
       <UiMenuFormItem :label="i18n.t('preferences:editor.wrap.label')">
         <Select.Select v-model="wrap">
@@ -59,18 +68,27 @@ watch(
             </Select.SelectItem>
           </Select.SelectContent>
         </Select.Select>
+        <template #description>
+          {{ i18n.t("preferences:editor.wrap.description") }}
+        </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:editor.highlightLine')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.highlightLine.label')">
         <Switch
           :checked="settings.highlightLine"
           @update:checked="settings.highlightLine = $event"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.highlightLine.description") }}
+        </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:editor.matchBrackets')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.matchBrackets.label')">
         <Switch
           :checked="settings.matchBrackets"
           @update:checked="settings.matchBrackets = $event"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.matchBrackets.description") }}
+        </template>
       </UiMenuFormItem>
     </UiMenuFormSection>
     <UiMenuFormSection :label="i18n.t('preferences:editor.prettier.label')">
@@ -93,20 +111,29 @@ watch(
             </Select.SelectItem>
           </Select.SelectContent>
         </Select.Select>
+        <template #description>
+          {{ i18n.t("preferences:editor.prettier.trailingComma.description") }}
+        </template>
       </UiMenuFormItem>
-      <UiMenuFormItem :label="i18n.t('preferences:editor.prettier.semi')">
+      <UiMenuFormItem :label="i18n.t('preferences:editor.prettier.semi.label')">
         <Switch
           :checked="settings.semi"
           @update:checked="settings.semi = $event"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.prettier.semi.description") }}
+        </template>
       </UiMenuFormItem>
       <UiMenuFormItem
-        :label="i18n.t('preferences:editor.prettier.singleQuote')"
+        :label="i18n.t('preferences:editor.prettier.singleQuote.label')"
       >
         <Switch
           :checked="settings.singleQuote"
           @update:checked="settings.singleQuote = $event"
         />
+        <template #description>
+          {{ i18n.t("preferences:editor.prettier.singleQuote.description") }}
+        </template>
       </UiMenuFormItem>
     </UiMenuFormSection>
   </div>

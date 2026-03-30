@@ -1,28 +1,76 @@
 {
-  "total": "总计",
-  "line": "行",
-  "column": "列",
-  "fragment": "片段",
-  "path": "路径",
+  "common": {
+    "total": "总计",
+    "inbox": "收件箱",
+    "favorites": "收藏",
+    "trash": "回收站",
+    "folders": "文件夹",
+    "tags": "标签",
+    "library": "库",
+    "fragment": "片段"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "所有代码片段"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "未命名代码片段",
+    "selectedMultiple": "已选择 {{count}} 个代码片段",
+    "noSelected": "未选择代码片段"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "未命名文件夹"
+  },
   "button": {
     "back": "返回",
     "cancel": "取消",
-    "clear": "清除",
     "confirm": "确认",
     "copy": "复制",
     "fit": "适应",
-    "generate": "生成",
-    "ok": "确定",
-    "revers": "反转",
     "saveAs": "另存为",
-    "sort": "排序",
-    "update": ["前往 GitHub", "确定"],
+    "update": [
+      "前往 GitHub",
+      "确定"
+    ],
     "zoomIn": "放大",
     "zoomOut": "缩小",
     "darkMode": "深色模式",
     "toggleDarkMode": "切换深色模式",
     "background": "背景",
     "goToDownload": "前往下载",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "刷新预览",
     "laserPointer": "激光指针",
     "fullscreen": "全屏",
@@ -41,11 +89,14 @@
     "hide": "隐藏",
     "showSidebar": "显示侧边栏",
     "hideSidebar": "隐藏侧边栏",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "新建存储",
       "folder": "新建文件夹",
       "snippet": "新建代码片段",
-      "fragment": "新建片段"
+      "fragment": "新建片段",
+      "note": "New Note"
     },
     "add": {
       "description": "添加描述",
@@ -62,8 +113,13 @@
     "remove": {
       "fromFavorites": "从收藏中移除"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "重新加载存储"
+      "storage": "重新加载存储",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "删除",
@@ -80,34 +136,19 @@
     },
     "copy": {
       "snippetLink": "复制代码片段链接"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "收件箱",
-    "favorites": "收藏",
-    "allSnippets": "所有代码片段",
-    "trash": "回收站",
-    "folders": "文件夹",
-    "library": "库",
-    "tags": "标签"
-  },
-  "folder": {
-    "untitled": "未命名文件夹",
-    "plural": "文件夹",
-    "collapseAll": "全部折叠",
-    "expandAll": "全部展开"
-  },
-  "snippet": {
-    "untitled": "未命名代码片段",
-    "plural": "代码片段",
-    "emptyName": "输入代码片段名称",
-    "selectedMultiple": "已选择 {{count}} 个代码片段",
-    "noSelected": "未选择代码片段"
   },
   "placeholder": {
     "emptyTagList": "在代码片段中添加标签以在此处查看",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "没有文件夹",
     "emptySnippetsList": "没有代码片段",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "搜索",
     "addTag": "添加标签"
   }

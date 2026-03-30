@@ -6,7 +6,8 @@
     "update": "بررسی به‌روزرسانی‌ها...",
     "quit": "خروج از massCode",
     "about": "درباره massCode",
-    "hide": "مخفی کردن massCode"
+    "hide": "مخفی کردن massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "راهنما",
@@ -32,12 +33,9 @@
       "snippets": "مجموعه Snippet"
     }
   },
-  "edit": {
-    "label": "ویرایش",
-    "find": "جستجو"
-  },
   "view": {
     "label": "نمایش",
+    "showSidebar": "نمایش/پنهان کردن نوار کناری",
     "sortBy": {
       "label": "مرتب‌سازی Snippetها بر اساس",
       "dateModified": "تاریخ ویرایش",
@@ -45,7 +43,16 @@
       "name": "نام"
     },
     "compactMode": "حالت فشرده",
-    "showSidebar": "نمایش/پنهان کردن نوار کناری"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "ویرایش",
+    "find": "جستجو"
   },
   "editor": {
     "label": "ویرایشگر",
@@ -56,13 +63,17 @@
     "previewJson": "پیش‌نمایش JSON",
     "fontSizeIncrease": "افزایش اندازه فونت",
     "fontSizeDecrease": "کاهش اندازه فونت",
-    "fontSizeReset": "بازنشانی اندازه فونت"
+    "fontSizeReset": "بازنشانی اندازه فونت",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "حالت ارائه",
     "preview": "پیش‌نمایش",
     "previewMarkdown": "پیش‌نمایش Markdown",
+    "presentationMode": "حالت ارائه",
     "previewMindmap": "پیش‌نمایش نقشه ذهنی"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "ابزارهای توسعه"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

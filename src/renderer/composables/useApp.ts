@@ -1,5 +1,10 @@
 import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
+import {
+  getCodeLayoutModeFromLegacyState,
+  getNextLayoutModeForSidebarToggle,
+  type LayoutMode,
+} from './layoutModes'
 
 const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
 
@@ -7,16 +12,22 @@ const stateSnapshots = reactive<Record<StateAction, SavedState>>({
   beforeSearch: {},
 })
 
-const state = reactive<SavedState>(store.app.get('state') as SavedState)
-const storedSidebarHidden = store.app.get('state.isSidebarHidden') as
-  | boolean
-  | undefined
-const isSidebarHidden = ref(
-  storedSidebarHidden ?? state.isSidebarHidden ?? false,
+const state = reactive<SavedState>(
+  store.app.get('code.selection') as SavedState,
 )
-
-if (state.isSidebarHidden === undefined)
-  state.isSidebarHidden = isSidebarHidden.value
+const storedCodeLayoutMode = store.app.get('code.layout.mode') as
+  | LayoutMode
+  | undefined
+const codeLayoutMode = ref<LayoutMode>(
+  storedCodeLayoutMode
+  ?? getCodeLayoutModeFromLegacyState(state.isSidebarHidden),
+)
+const isSidebarHidden = computed({
+  get: () => codeLayoutMode.value !== 'all-panels',
+  set: (value: boolean) => {
+    codeLayoutMode.value = value ? 'list-editor' : 'all-panels'
+  },
+})
 
 const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedSnippetIds = ref<Set<number>>(new Set())
@@ -26,6 +37,9 @@ const focusedSnippetId = ref<number | undefined>()
 
 const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
+const isCompactListMode = ref(
+  (store.app.get('ui.compactListMode') as boolean | undefined) ?? false,
+)
 const isFocusedSnippetName = ref(false)
 const isFocusedSearch = ref(false)
 const isShowCodePreview = ref(false)
@@ -39,6 +53,7 @@ function saveStateSnapshot(action: StateAction): void {
     tagId: state.tagId,
     snippetContentIndex: state.snippetContentIndex,
     libraryFilter: state.libraryFilter,
+    codeLayoutMode: codeLayoutMode.value,
     isSidebarHidden: isSidebarHidden.value,
   }
 }
@@ -57,24 +72,47 @@ function restoreStateSnapshot(action: StateAction): void {
     state.tagId = snapshot.tagId
   if (snapshot.snippetContentIndex !== undefined)
     state.snippetContentIndex = snapshot.snippetContentIndex
-  if (snapshot.isSidebarHidden !== undefined)
+  if (snapshot.codeLayoutMode !== undefined) {
+    codeLayoutMode.value = snapshot.codeLayoutMode
+  }
+  else if (snapshot.isSidebarHidden !== undefined) {
     isSidebarHidden.value = snapshot.isSidebarHidden
+  }
 }
 
 watch(
   state,
   () => {
-    store.app.set('state', JSON.parse(JSON.stringify(state)))
+    store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
   },
   { deep: true },
 )
 
-watch(isSidebarHidden, (value) => {
-  state.isSidebarHidden = value
+watch(codeLayoutMode, (value) => {
+  store.app.set('code.layout.mode', value)
 })
+
+watch(isCompactListMode, (value) => {
+  store.app.set('ui.compactListMode', value)
+})
+
+function setCodeLayoutMode(value: LayoutMode) {
+  codeLayoutMode.value = value
+}
+
+function toggleCompactListMode() {
+  isCompactListMode.value = !isCompactListMode.value
+}
+
+function toggleCodeSidebar() {
+  codeLayoutMode.value = getNextLayoutModeForSidebarToggle(
+    codeLayoutMode.value,
+  )
+}
 
 export function useApp() {
   return {
+    codeLayoutMode,
     focusedFolderId,
     focusedSnippetId,
     isAppLoading,
@@ -82,6 +120,7 @@ export function useApp() {
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,
+    isCompactListMode,
     isFocusedSnippetName,
     isFocusedSearch,
     isShowCodeImage,
@@ -91,7 +130,10 @@ export function useApp() {
     isSponsored,
     restoreStateSnapshot,
     saveStateSnapshot,
+    setCodeLayoutMode,
     state,
     stateSnapshots,
+    toggleCodeSidebar,
+    toggleCompactListMode,
   }
 }

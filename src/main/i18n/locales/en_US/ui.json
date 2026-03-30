@@ -1,22 +1,69 @@
 {
-  "total": "Total",
-  "line": "Line",
-  "column": "Column",
-  "fragment": "Fragment",
-  "path": "Path",
+  "common": {
+    "total": "Total",
+    "inbox": "Inbox",
+    "favorites": "Favorites",
+    "trash": "Trash",
+    "folders": "Folders",
+    "tags": "Tags",
+    "library": "Library",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "All Snippets"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Untitled snippet",
+    "selectedMultiple": "{{count}} Snippets Selected",
+    "noSelected": "No Snippet Selected"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Untitled folder"
+  },
   "button": {
     "back": "Back",
     "cancel": "Cancel",
-    "clear": "Clear",
     "confirm": "Confirm",
     "copy": "Copy",
     "fit": "Fit",
-    "generate": "Generate",
-    "ok": "OK",
-    "revers": "Revers",
     "saveAs": "Save as",
-    "sort": "Sort",
-    "update": ["Go to GitHub", "OK"],
+    "update": [
+      "Go to GitHub",
+      "OK"
+    ],
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",
@@ -90,68 +137,10 @@
     "copy": {
       "snippetLink": "Copy Snippet Link"
     },
-    "backup": {
-      "create": "Create Backup",
-      "restore": "Restore from Backup",
-      "showList": "Show List"
-    },
     "select": {
       "directory": "Select Directory"
     }
   },
-  "sidebar": {
-    "title": "Code Snippets",
-    "inbox": "Inbox",
-    "favorites": "Favorites",
-    "allSnippets": "All Snippets",
-    "allNotes": "All Notes",
-    "trash": "Trash",
-    "folders": "Folders",
-    "library": "Library",
-    "tags": "Tags"
-  },
-  "folder": {
-    "untitled": "Untitled folder",
-    "plural": "Folders",
-    "collapseAll": "Collapse All",
-    "expandAll": "Expand All"
-  },
-  "snippet": {
-    "untitled": "Untitled snippet",
-    "plural": "Snippets",
-    "emptyName": "Type snippet name",
-    "selectedMultiple": "{{count}} Snippets Selected",
-    "noSelected": "No Snippet Selected"
-  },
-  "notes": {
-    "untitled": "Untitled note",
-    "plural": "Notes",
-    "words": "Words",
-    "symbols": "Symbols",
-    "emptyName": "Type note name",
-    "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
-  },
-  "mathNotebook": {
-    "label": "Math Notebook",
-    "sheetList": "Sheet List",
-    "newSheet": "New Sheet",
-    "untitled": "Untitled",
-    "copied": "Copied",
-    "currencyUnavailable": "Currency rates service unavailable"
-  },
-  "spaces": {
-    "label": "Spaces",
-    "code": "Code",
-    "tools": "Tools",
-    "math": "Math",
-    "notes": "Notes",
-    "codeTooltip": "Code snippets",
-    "toolsTooltip": "Developer tools",
-    "mathTooltip": "Math notebook",
-    "notesTooltip": "Notes"
-  },
-  "loading": "App loading...",
   "placeholder": {
     "emptyTagList": "Add tags to snippets to see them here",
     "emptyNotesTagList": "Add tags to notes to see them here",
@@ -161,6 +150,7 @@
     "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
     "search": "Search",
-    "addTag": "Add Tag"
+    "addTag": "Add Tag",
+    "selectLanguage": "Select Language"
   }
 }

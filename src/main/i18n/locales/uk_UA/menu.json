@@ -6,7 +6,8 @@
     "update": "Перевірити оновлення...",
     "quit": "Вийти з massCode",
     "about": "Про massCode",
-    "hide": "Приховати massCode"
+    "hide": "Приховати massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Допомога",
@@ -32,12 +33,9 @@
       "snippets": "Колекція сніпетів"
     }
   },
-  "edit": {
-    "label": "Редагувати",
-    "find": "Знайти"
-  },
   "view": {
     "label": "Вигляд",
+    "showSidebar": "Показати/приховати бічну панель",
     "sortBy": {
       "label": "Сортувати сніпети за",
       "dateModified": "Датою зміни",
@@ -45,7 +43,16 @@
       "name": "Назвою"
     },
     "compactMode": "Компактний режим",
-    "showSidebar": "Показати/приховати бічну панель"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "Редагувати",
+    "find": "Знайти"
   },
   "editor": {
     "label": "Редактор",
@@ -56,13 +63,17 @@
     "previewJson": "Попередній перегляд JSON",
     "fontSizeIncrease": "Збільшити розмір шрифту",
     "fontSizeDecrease": "Зменшити розмір шрифту",
-    "fontSizeReset": "Скинути розмір шрифту"
+    "fontSizeReset": "Скинути розмір шрифту",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Режим презентації",
     "preview": "Попередній перегляд",
     "previewMarkdown": "Попередній перегляд Markdown",
+    "presentationMode": "Режим презентації",
     "previewMindmap": "Попередній перегляд Mindmap"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "Інструменти розробника"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

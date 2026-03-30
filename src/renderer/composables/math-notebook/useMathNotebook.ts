@@ -1,5 +1,8 @@
 import type { MathSheet } from '~/main/store/types'
-import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import {
+  markPersistedStorageMutation,
+  markUserEdit,
+} from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
 import { nanoid } from 'nanoid'
@@ -56,6 +59,12 @@ async function loadFromDisk() {
   activeSheetId.value = data?.activeSheetId ?? null
 }
 
+function resetMathNotebook() {
+  sheets.value = []
+  activeSheetId.value = null
+  initialized = false
+}
+
 export function useMathNotebook() {
   async function init() {
     if (initialized) {
@@ -71,7 +80,7 @@ export function useMathNotebook() {
 
   function createSheet() {
     const nextSheetName = getNextIndexedName(
-      i18n.t('mathNotebook.untitled'),
+      i18n.t('spaces.math.untitled'),
       sheets.value.map(sheet => sheet.name),
     )
     const sheet: MathSheet = {
@@ -107,6 +116,7 @@ export function useMathNotebook() {
   function updateSheet(id: string, content: string) {
     const sheet = sheets.value.find(s => s.id === id)
     if (sheet) {
+      markUserEdit()
       sheet.content = content
       sheet.updatedAt = Date.now()
       debouncedPersist()
@@ -133,6 +143,7 @@ export function useMathNotebook() {
     activeSheet,
     init,
     reloadFromDisk,
+    reset: resetMathNotebook,
     createSheet,
     deleteSheet,
     updateSheet,

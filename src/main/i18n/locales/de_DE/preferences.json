@@ -1,43 +1,111 @@
 {
   "label": "Einstellungen",
   "storage": {
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
     "label": "Speicher",
-    "migrate": "Migrieren",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Anzahl",
-    "clearDatabase": "Datenbank leeren"
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Schriftgröße",
-    "fontFamily": "Schriftart",
+    "fontSize": {
+      "label": "Schriftgröße",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Schriftart",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Umbruch",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Zeilenumbruch",
       "off": "Aus"
     },
-    "tabSize": "Tabgröße",
+    "tabSize": {
+      "label": "Tabgröße",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Unsichtbare Zeichen anzeigen",
-    "highlightLine": "Zeile hervorheben",
+    "highlightLine": {
+      "label": "Zeile hervorheben",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Zeilennummern hervorheben",
-    "matchBrackets": "Klammern hervorheben",
+    "matchBrackets": {
+      "label": "Klammern hervorheben",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Abschließendes Komma",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Keins",
         "all": "Alle",
         "es5": "ES5"
       },
-      "semi": "Semikolon",
-      "singleQuote": "Einfache Anführungszeichen"
+      "semi": {
+        "label": "Semikolon",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Einfache Anführungszeichen",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "Erscheinungsbild",
     "theme": {
       "label": "Theme",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "system": "System"
     }
   },
   "language": {

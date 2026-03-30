@@ -130,4 +130,24 @@ describe('useNotesSpaceInitialization', () => {
     expect(context.getNotes).not.toHaveBeenCalled()
     expect(context.getNoteTags).not.toHaveBeenCalled()
   })
+
+  it('loads again after initialization state reset', async () => {
+    const context = await setup({
+      isInitialized: true,
+      noteId: 1,
+      displayedNoteIds: [1, 2, 3],
+    })
+
+    const { resetNotesSpaceInitialization } = await import(
+      '../useNotesSpaceInitialization'
+    )
+
+    resetNotesSpaceInitialization()
+    await context.initNotesSpace()
+
+    expect(context.getNoteFolders).toHaveBeenCalledTimes(1)
+    expect(context.getNotes).toHaveBeenCalledTimes(1)
+    expect(context.getNoteTags).toHaveBeenCalledTimes(1)
+    expect(context.isNotesSpaceInitialized.value).toBe(true)
+  })
 })

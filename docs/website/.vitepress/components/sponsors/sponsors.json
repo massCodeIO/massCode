@@ -1,0 +1,22 @@
+{
+  "special": [
+    {
+      "name": "Digital Ocean",
+      "url": "https://m.do.co/c/f2bb3bfab2e6",
+      "img": "https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg",
+      "text": "Sign Up & Get $100 credits"
+    },
+    {
+      "name": "MySigMail",
+      "url": "https://mysigmail.com?ref=masscode.io",
+      "img": "https://cdn.mysigmail.com/signature/assets/logo.png",
+      "text": "Email Signature Generator"
+    },
+    {
+      "name": "Timefall",
+      "url": "https://github.com/antonreshetov/timefall?ref=masscode.io",
+      "img": "/timefall-logo.png",
+      "text": "Time Management Tool"
+    }
+  ]
+}

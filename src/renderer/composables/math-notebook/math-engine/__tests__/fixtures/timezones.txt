@@ -1,0 +1,43 @@
+# Current time
+time
+now
+time()
+now()
+
+# Time in timezone
+PST time
+time in Paris
+now in Madrid
+Berlin now
+time in Tokyo
+
+# Airport codes
+time in LAX
+time in JFK
+
+# Country names
+time in Thailand
+time in Germany
+time in Japan
+
+# Date in timezone
+date in Vancouver
+
+# Timezone conversion
+2:30 pm HKT in Berlin
+2:30 pm New York in Berlin
+2026-03-06 PST in Berlin
+Mar 6 2026 PST in Berlin
+tomorrow PST in Berlin
+
+# Timezone difference
+PST time - Berlin time
+time difference between Seattle and Moscow
+time difference between Moscow and Seattle
+difference between PDT & AEST
+
+# Date arithmetic
+today + 3 days
+tomorrow - 1 day
+now + 1 day
+now - 5 days

@@ -1,43 +1,111 @@
 {
   "label": "Preferințe",
   "storage": {
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
     "label": "Storage",
-    "migrate": "Migrare",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Număr",
-    "clearDatabase": "Șterge Database"
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Editor",
-    "fontSize": "Dimensiune Font",
-    "fontFamily": "Familie Font",
+    "fontSize": {
+      "label": "Dimensiune Font",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Familie Font",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Încadrare",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Încadrare Cuvinte",
       "off": "Oprit"
     },
-    "tabSize": "Dimensiune Tab",
+    "tabSize": {
+      "label": "Dimensiune Tab",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Arată Caractere Invizibile",
-    "highlightLine": "Evidențiere Linie",
+    "highlightLine": {
+      "label": "Evidențiere Linie",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Evidențiere Gutter",
-    "matchBrackets": "Potrivire Paranteze",
+    "matchBrackets": {
+      "label": "Potrivire Paranteze",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Virgulă la Final",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "Niciuna",
         "all": "Toate",
         "es5": "ES5"
       },
-      "semi": "Punct și Virgulă",
-      "singleQuote": "Ghilimele Simple"
+      "semi": {
+        "label": "Punct și Virgulă",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Ghilimele Simple",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "Aspect",
     "theme": {
       "label": "Temă",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "Luminos",
-      "dark": "Întunecat"
+      "dark": "Întunecat",
+      "system": "System"
     }
   },
   "language": {

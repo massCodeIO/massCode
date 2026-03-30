@@ -24,6 +24,37 @@ Examples:
 - **preferences.json** - Application settings and preferences
 - **devtools.json** - Developer tools and utilities
 
+## ui.json Key Structure
+
+Keys in `ui.json` are organized around the Spaces architecture:
+
+```
+common.*           — shared across spaces (inbox, favorites, trash, folders, tags, library, total, fragment)
+spaces.*           — space definitions and space-specific UI
+  spaces.label     — "Spaces" aria-label
+  spaces.{id}.label    — space name in rail navigation
+  spaces.{id}.tooltip  — space tooltip
+  spaces.{id}.*        — space-specific content (title, allSnippets, sheetList, etc.)
+snippet.*          — snippet entity keys (untitled, selectedMultiple, noSelected)
+notes.*            — note entity keys
+folder.*           — folder entity keys
+button.*           — reusable button labels
+action.*           — context-specific actions
+placeholder.*      — empty states and input placeholders
+```
+
+### Where to place new keys
+
+| Key type | Location | Example |
+|----------|----------|---------|
+| Shared sidebar concept | `common.*` | `common.inbox` |
+| Space label/tooltip | `spaces.{id}.label/tooltip` | `spaces.code.label` |
+| Space-specific UI | `spaces.{id}.*` | `spaces.math.newSheet` |
+| Entity property | `snippet.*`, `notes.*`, `folder.*` | `snippet.untitled` |
+| Reusable button | `button.*` | `button.confirm` |
+| Context action | `action.*` | `action.move.toTrash` |
+| Empty state / placeholder | `placeholder.*` | `placeholder.emptySnippetsList` |
+
 ## Organization Principles
 
 1. **Modularity**: Separate keys by functional blocks
@@ -35,10 +66,11 @@ Examples:
 
 When adding new localization keys:
 
-1. Determine which functional block your key belongs to
+1. Determine which functional block your key belongs to (see ui.json Key Structure above)
 2. Choose the appropriate file based on the content type
 3. Follow the existing structure and naming conventions
 4. Add the key to all language packs
+5. Run `pnpm i18n:check` to verify all locales are in sync
 
 ## Adding New Languages
 

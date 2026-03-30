@@ -1,77 +1,255 @@
-import type { PreferencesStore } from '../types'
+import type {
+  EditorSettings,
+  MarkdownSettings,
+  MathSettings,
+  NotesEditorSettings,
+  PreferencesStore,
+} from '../types'
 import { homedir, platform } from 'node:os'
-import path from 'node:path'
-import { app } from 'electron'
 import Store from 'electron-store'
-import fs from 'fs-extra'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
+import {
+  asRecord,
+  readEnum,
+  readNullableString,
+  readNumber,
+  readString,
+  replaceStoreIfChanged,
+} from '../sanitize'
 
 const isWin = platform() === 'win32'
 
 const storagePath = isWin ? `${homedir()}\\massCode` : `${homedir()}/massCode`
-const backupPath = isWin ? `${storagePath}\\backups` : `${storagePath}/backups`
 
-// Detect the correct default engine BEFORE the store constructor merges
-// defaults into the preferences file. Without this, existing SQLite users
-// who never had a `storage.engine` key would get 'markdown' as default,
-// making all their snippets invisible.
-function detectDefaultEngine(): 'sqlite' | 'markdown' {
-  try {
-    const prefsPath = path.join(
-      app.getPath('userData'),
-      'v2',
-      'preferences.json',
-    )
+const MATH_DEFAULTS: MathSettings = {
+  locale: 'en-US',
+  decimalPlaces: 6,
+  dateFormat: 'numeric',
+}
 
-    if (fs.existsSync(prefsPath)) {
-      const raw = JSON.parse(fs.readFileSync(prefsPath, 'utf8'))
+const PREFERENCES_DEFAULTS: PreferencesStore = {
+  appearance: {
+    theme: 'auto',
+  },
+  localization: {
+    locale: 'en_US',
+  },
+  api: {
+    port: 4321,
+  },
+  storage: {
+    rootPath: storagePath,
+    vaultPath: null,
+  },
+  editor: {
+    code: EDITOR_DEFAULTS,
+    notes: NOTES_EDITOR_DEFAULTS,
+    markdown: {
+      scale: 1,
+    },
+  },
+  math: MATH_DEFAULTS,
+}
 
-      // User already has an explicit engine setting — respect it
-      if (raw.storage?.engine) {
-        return raw.storage.engine
-      }
+function sanitizeCodeEditorSettings(value: unknown): EditorSettings {
+  const source = asRecord(value)
 
-      // No engine setting — check if SQLite DB exists (existing user)
-      const userStoragePath = raw.storagePath || storagePath
-      const dbPath = path.join(userStoragePath, 'massCode.db')
-
-      if (fs.existsSync(dbPath)) {
-        return 'sqlite'
-      }
-    }
+  return {
+    fontSize: readNumber(
+      source,
+      'fontSize',
+      PREFERENCES_DEFAULTS.editor.code.fontSize,
+    ),
+    fontFamily: readString(
+      source,
+      'fontFamily',
+      PREFERENCES_DEFAULTS.editor.code.fontFamily,
+    ),
+    wrap:
+      typeof source.wrap === 'boolean'
+        ? source.wrap
+        : PREFERENCES_DEFAULTS.editor.code.wrap,
+    tabSize: readNumber(
+      source,
+      'tabSize',
+      PREFERENCES_DEFAULTS.editor.code.tabSize,
+    ),
+    trailingComma: readEnum(
+      source,
+      'trailingComma',
+      ['all', 'none', 'es5'] as const,
+      PREFERENCES_DEFAULTS.editor.code.trailingComma,
+    ),
+    semi:
+      typeof source.semi === 'boolean'
+        ? source.semi
+        : PREFERENCES_DEFAULTS.editor.code.semi,
+    singleQuote:
+      typeof source.singleQuote === 'boolean'
+        ? source.singleQuote
+        : PREFERENCES_DEFAULTS.editor.code.singleQuote,
+    highlightLine:
+      typeof source.highlightLine === 'boolean'
+        ? source.highlightLine
+        : PREFERENCES_DEFAULTS.editor.code.highlightLine,
+    matchBrackets:
+      typeof source.matchBrackets === 'boolean'
+        ? source.matchBrackets
+        : PREFERENCES_DEFAULTS.editor.code.matchBrackets,
   }
-  catch {
-    // If anything goes wrong reading the file, fall through to default
-  }
+}
 
-  return 'markdown'
+function sanitizeNotesEditorSettings(value: unknown): NotesEditorSettings {
+  const source = asRecord(value)
+
+  return {
+    fontSize: readNumber(
+      source,
+      'fontSize',
+      PREFERENCES_DEFAULTS.editor.notes.fontSize,
+    ),
+    fontFamily: readString(
+      source,
+      'fontFamily',
+      PREFERENCES_DEFAULTS.editor.notes.fontFamily,
+    ),
+    codeFontFamily: readString(
+      source,
+      'codeFontFamily',
+      PREFERENCES_DEFAULTS.editor.notes.codeFontFamily,
+    ),
+    lineHeight: readNumber(
+      source,
+      'lineHeight',
+      PREFERENCES_DEFAULTS.editor.notes.lineHeight,
+    ),
+    limitWidth:
+      typeof source.limitWidth === 'boolean'
+        ? source.limitWidth
+        : PREFERENCES_DEFAULTS.editor.notes.limitWidth,
+    lineNumbers:
+      typeof source.lineNumbers === 'boolean'
+        ? source.lineNumbers
+        : PREFERENCES_DEFAULTS.editor.notes.lineNumbers,
+    indentSize: readNumber(
+      source,
+      'indentSize',
+      PREFERENCES_DEFAULTS.editor.notes.indentSize,
+    ),
+  }
+}
+
+function sanitizeMarkdownSettings(value: unknown): MarkdownSettings {
+  const source = asRecord(value)
+
+  return {
+    scale: readNumber(
+      source,
+      'scale',
+      PREFERENCES_DEFAULTS.editor.markdown.scale,
+    ),
+  }
+}
+
+function sanitizeMathSettings(value: unknown): MathSettings {
+  const source = asRecord(value)
+
+  const dateFormat = readString(source, 'dateFormat', MATH_DEFAULTS.dateFormat)
+  const validDateFormats = ['numeric', 'short', 'long']
+
+  return {
+    locale: readString(source, 'locale', MATH_DEFAULTS.locale),
+    decimalPlaces: readNumber(
+      source,
+      'decimalPlaces',
+      MATH_DEFAULTS.decimalPlaces,
+    ),
+    dateFormat: validDateFormats.includes(dateFormat)
+      ? (dateFormat as MathSettings['dateFormat'])
+      : MATH_DEFAULTS.dateFormat,
+  }
+}
+
+function sanitizePreferences(value: unknown): PreferencesStore {
+  const source = asRecord(value)
+  const appearanceSource = asRecord(source.appearance)
+  const localizationSource = asRecord(source.localization)
+  const apiSource = asRecord(source.api)
+  const storageSource = asRecord(source.storage)
+  const editorSource = asRecord(source.editor)
+  const codeEditorSource
+    = Object.keys(asRecord(editorSource.code)).length > 0
+      ? asRecord(editorSource.code)
+      : editorSource
+  const notesEditorSource
+    = Object.keys(asRecord(editorSource.notes)).length > 0
+      ? asRecord(editorSource.notes)
+      : asRecord(source.notesEditor)
+  const markdownSource
+    = Object.keys(asRecord(editorSource.markdown)).length > 0
+      ? asRecord(editorSource.markdown)
+      : asRecord(source.markdown)
+  const mathSource = asRecord(source.math)
+
+  return {
+    appearance: {
+      theme: readString(
+        appearanceSource,
+        'theme',
+        readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
+      ),
+    },
+    localization: {
+      locale: readString(
+        localizationSource,
+        'locale',
+        readString(
+          source,
+          'language',
+          PREFERENCES_DEFAULTS.localization.locale,
+        ),
+      ),
+    },
+    api: {
+      port: readNumber(
+        apiSource,
+        'port',
+        readNumber(source, 'apiPort', PREFERENCES_DEFAULTS.api.port),
+      ),
+    },
+    storage: {
+      rootPath: readString(
+        storageSource,
+        'rootPath',
+        readString(
+          source,
+          'storagePath',
+          PREFERENCES_DEFAULTS.storage.rootPath,
+        ),
+      ),
+      vaultPath: readNullableString(
+        storageSource,
+        'vaultPath',
+        PREFERENCES_DEFAULTS.storage.vaultPath,
+      ),
+    },
+    editor: {
+      code: sanitizeCodeEditorSettings(codeEditorSource),
+      notes: sanitizeNotesEditorSettings(notesEditorSource),
+      markdown: sanitizeMarkdownSettings(markdownSource),
+    },
+    math: sanitizeMathSettings(mathSource),
+  }
 }
 
 const preferencesStore = new Store<PreferencesStore>({
   name: 'preferences',
   cwd: 'v2',
-
-  defaults: {
-    storagePath,
-    apiPort: 4321,
-    language: 'en_US',
-    theme: 'auto',
-    editor: EDITOR_DEFAULTS,
-    notesEditor: NOTES_EDITOR_DEFAULTS,
-    storage: {
-      engine: detectDefaultEngine(),
-      vaultPath: null,
-    },
-    markdown: {
-      scale: 1,
-    },
-    backup: {
-      path: backupPath,
-      enabled: true,
-      interval: 6,
-      maxBackups: 5,
-    },
-  },
 })
+
+replaceStoreIfChanged(
+  preferencesStore,
+  sanitizePreferences(preferencesStore.store),
+)
 
 export default preferencesStore

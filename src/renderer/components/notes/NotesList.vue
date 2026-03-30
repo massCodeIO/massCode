@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { useNotes, useNotesApp, useNoteSearch } from '@/composables'
+import { useApp, useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { i18n } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const NOTE_ITEM_SIZE = 61
+const NOTE_ITEM_COMPACT_SIZE = 37
 
+const { isCompactListMode } = useApp()
 const { notesState } = useNotesApp()
 const { isNotesLoading, isNotesLoadingVisible } = useNotes()
 const { displayedNotes } = useNoteSearch()
@@ -13,6 +15,9 @@ const noteScrollerRef = ref<{
   scrollToItem: (index: number) => void
 } | null>(null)
 const isInitialPositionRestored = ref(false)
+const noteItemSize = computed(() =>
+  isCompactListMode.value ? NOTE_ITEM_COMPACT_SIZE : NOTE_ITEM_SIZE,
+)
 
 watch(
   [displayedNotes, () => notesState.noteId, noteScrollerRef],
@@ -57,7 +62,7 @@ watch(
       v-slot="{ item }"
       class="scrollbar flex-grow px-2"
       :items="displayedNotes"
-      :item-size="NOTE_ITEM_SIZE"
+      :item-size="noteItemSize"
       key-field="id"
     >
       <NotesListItem :note="item" />

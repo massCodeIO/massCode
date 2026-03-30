@@ -1,8 +1,3 @@
-import type {
-  AppStore,
-  MathNotebookStore,
-  PreferencesStore,
-} from './store/types'
 import type { EventCallback } from './types'
 import type { Channel } from './types/ipc'
 import { contextBridge, ipcRenderer } from 'electron'
@@ -24,33 +19,22 @@ contextBridge.exposeInMainWorld('electron', {
     removeListeners: (channel: Channel) =>
       ipcRenderer.removeAllListeners(channel),
   },
-  db: {
-    query: (sql: string, params: any[] = []) =>
-      ipcRenderer.invoke('db-query', { sql, params }),
-  },
   store: {
     app: {
-      get: (name: keyof AppStore) => store.app.get(name),
-      set: <T extends keyof AppStore>(name: T, value: AppStore[T]) =>
-        store.app.set(name, value),
-      delete: (name: keyof AppStore) => store.app.delete(name),
+      get: <T = unknown>(name: string) => store.app.get(name) as T,
+      set: (name: string, value: unknown) => store.app.set(name, value),
+      delete: (name: string) => store.app.delete(name as any),
     },
     preferences: {
-      get: (name: keyof PreferencesStore) => store.preferences.get(name),
-      set: <T extends keyof PreferencesStore>(
-        name: T,
-        value: PreferencesStore[T],
-      ) => store.preferences.set(name, value),
-      delete: (name: keyof PreferencesStore) => store.preferences.delete(name),
+      get: <T = unknown>(name: string) => store.preferences.get(name) as T,
+      set: (name: string, value: unknown) => store.preferences.set(name, value),
+      delete: (name: string) => store.preferences.delete(name as any),
     },
     mathNotebook: {
-      get: (name: keyof MathNotebookStore) => store.mathNotebook.get(name),
-      set: <T extends keyof MathNotebookStore>(
-        name: T,
-        value: MathNotebookStore[T],
-      ) => store.mathNotebook.set(name, value),
-      delete: (name: keyof MathNotebookStore) =>
-        store.mathNotebook.delete(name),
+      get: <T = unknown>(name: string) => store.mathNotebook.get(name) as T,
+      set: (name: string, value: unknown) =>
+        store.mathNotebook.set(name, value),
+      delete: (name: string) => store.mathNotebook.delete(name as any),
     },
   },
   i18n: {

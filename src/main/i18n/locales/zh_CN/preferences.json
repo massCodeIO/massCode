@@ -1,43 +1,111 @@
 {
   "label": "首选项",
   "storage": {
+    "section": {
+      "main": "Main",
+      "migration": "Migration"
+    },
     "label": "存储",
-    "migrate": "迁移",
+    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "数量",
-    "clearDatabase": "清空数据库"
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "编辑器",
-    "fontSize": "字体大小",
-    "fontFamily": "字体",
+    "fontSize": {
+      "label": "字体大小",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "字体",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "换行",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "自动换行",
       "off": "关闭"
     },
-    "tabSize": "缩进大小",
+    "tabSize": {
+      "label": "缩进大小",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "显示不可见字符",
-    "highlightLine": "高亮当前行",
+    "highlightLine": {
+      "label": "高亮当前行",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "高亮行号",
-    "matchBrackets": "匹配括号",
+    "matchBrackets": {
+      "label": "匹配括号",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "尾随逗号",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "无",
         "all": "全部",
         "es5": "ES5"
       },
-      "semi": "分号",
-      "singleQuote": "单引号"
+      "semi": {
+        "label": "分号",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "单引号",
+        "description": "Single quotes instead of double quotes."
+      }
+    }
+  },
+  "notesEditor": {
+    "label": "Note Editor",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the notes editor."
+    },
+    "fontFamily": {
+      "label": "Text Font",
+      "description": "CSS font-family value. Use commas to specify fallbacks."
+    },
+    "codeFontFamily": {
+      "label": "Monospace Font",
+      "description": "Font for inline code and fenced code blocks."
+    },
+    "lineHeight": {
+      "label": "Line Height",
+      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "compact": "Compact (1.4)",
+      "default": "Default (1.54)",
+      "relaxed": "Relaxed (1.7)"
+    },
+    "indentSize": {
+      "label": "Indent Size",
+      "description": "Number of spaces per indent level for lists and nested content."
+    },
+    "limitWidth": {
+      "label": "Limit Width",
+      "description": "Constrain content to a comfortable reading width (700px)."
+    },
+    "lineNumbers": {
+      "label": "Line Numbers",
+      "description": "Show line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
     "label": "外观",
     "theme": {
       "label": "主题",
+      "builtIn": "Built-in",
+      "custom": "Custom",
+      "themesDir": "Themes Directory",
+      "openDir": "Open Themes Directory",
+      "createTemplate": "Create Theme Template",
+      "dirDescription": "Place your JSON theme files in this folder.",
       "light": "浅色",
-      "dark": "深色"
+      "dark": "深色",
+      "system": "System"
     }
   },
   "language": {

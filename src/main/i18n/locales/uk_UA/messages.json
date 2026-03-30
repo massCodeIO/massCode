@@ -4,50 +4,40 @@
     "deletePermanently": "Ви впевнені, що хочете назавжди видалити \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Ви впевнені, що хочете назавжди видалити {{count}} вибраних сніпетів?",
     "emptyTrash": "Ви впевнені, що хочете назавжди видалити всі сніпети у Кошику?",
-    "clearDb": "Ви впевнені, що хочете очистити базу даних?",
-    "migrateDb": [
-      "Ви впевнені, що хочете виконати міграцію?",
-      "Під час міграції поточна бібліотека буде перезаписана."
+    "migrateToMarkdown": [
+      "Migrate to Markdown Vault?",
+      "The selected vault will be overwritten with the current SQLite library."
     ]
   },
   "success": {
     "copied": "Скопійовано в буфер обміну",
-    "migrate": "База даних успішно мігрована.",
-    "backup": {
-      "created": "Резервну копію успішно створено.",
-      "restored": "Резервну копію успішно відновлено.",
-      "deleted": "Резервну копію успішно видалено."
-    }
+    "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {
     "noUndo": "Ви не зможете скасувати цю дію.",
     "allSnippetsMoveToTrash": "Всі сніпети в цій папці будуть переміщені до кошика.",
     "deleteTag": "Це також призведе до видалення цього тегу з усіх сніпетів.",
     "createDb": "Будь ласка, виберіть іншу папку",
-    "clearDb": "Це назавжди видалить всі Сніпети, Папки та Теги з бази даних.",
     "htmlCssPreview": "Додайте HTML-фрагмент, щоб побачити результат. Додайте CSS для стилізації та JavaScript для інтерактивності.",
     "codeBlockRenderer": [
       "При використанні Codemirror мова для блоку коду повинна відповідати одному зі значень",
       "languages"
     ]
   },
-  "error": {},
+  "error": {
+    "migration": "Auto-migration from SQLite failed: {{error}}"
+  },
   "description": {
-    "storage": "Щоб використовувати сервіси синхронізації, такі як iCloud Drive, Google Drive або Dropbox, просто перемістіть сховище у відповідні синхронізовані папки",
-    "migrate": {
-      "fromV3": "Для міграції з massCode v3 виберіть папку, що містить JSON файл.",
-      "fromSnippetsLab": "Для міграції зі SnippetsLab виберіть JSON файл.",
-      "snippetsLabLimitations": [
-        "Деякі обмеження. Під час міграції зі SnippetsLab:",
-        "Всі папки будуть першого рівня, оскільки JSON файл (нижче v2.1) не представляє вкладені папки.",
-        "Сніпети з непідтримуваними мовами будуть встановлені за замовчуванням як Plain Text."
-      ]
-    }
+    "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",
+    "language": "To apply language changes, you need to reload the app.",
+    "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
     "supportMessage": "Привіт, це Антон 👋<br><br>\nДякую за використання massCode. Якщо ви вважаєте цей додаток корисним, будь ласка, {{-tagStart}}підтримайте проект{{-tagEnd}}. Це надихне мене продовжувати розробку проекту.",
     "unsponsored": "Без спонсора"
   },
+  "release": {},
   "update": {
     "available": "Версія {{newVersion}} доступна для завантаження.\nВаша версія {{oldVersion}}.",
     "noAvailable": "На даний момент оновлень немає."

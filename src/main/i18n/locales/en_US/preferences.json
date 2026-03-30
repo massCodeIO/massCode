@@ -3,64 +3,60 @@
   "storage": {
     "section": {
       "main": "Main",
-      "migration": "Migration",
-      "dangerZone": "Danger Zone",
-      "backup": "Backup"
+      "migration": "Migration"
     },
     "label": "Storage",
-    "migrate": "Migrate",
-    "migrateMarkdownToSqlite": "Rollback to SQLite",
     "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
     "count": "Count",
-    "vaultPath": "Vault Path",
-    "engine": {
-      "label": "Storage Engine",
-      "sqlite": "SQLite (Legacy)",
-      "markdown": "Markdown Vault (Recommended)"
-    },
-    "clearDatabase": "Clear Database",
-    "backup": {
-      "label": "Backup",
-      "enabled": "Auto Backup",
-      "interval": {
-        "label": "Interval",
-        "1": "Every hour",
-        "6": "Every 6 hours",
-        "12": "Every 12 hours",
-        "24": "Every 24 hours"
-      },
-      "maxBackups": "Maximum Backups",
-      "createNow": "Create Backup Now",
-      "restore": "Restore from Backup",
-      "list": "Backup List",
-      "lastBackup": "Last Backup",
-      "noBackups": "No backups found"
-    }
+    "vaultPath": "Vault Path"
   },
   "editor": {
     "label": "Code Editor",
-    "fontSize": "Font Size",
-    "fontFamily": "Font Family",
+    "fontSize": {
+      "label": "Font Size",
+      "description": "Base font size in pixels for the code editor."
+    },
+    "fontFamily": {
+      "label": "Font Family",
+      "description": "Monospace font for the code editor. Use commas for fallbacks."
+    },
     "wrap": {
       "label": "Wrap",
+      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
       "wordWrap": "Word Wrap",
       "off": "Off"
     },
-    "tabSize": "Tab Size",
+    "tabSize": {
+      "label": "Tab Size",
+      "description": "Number of spaces per tab character for indentation."
+    },
     "showInvisibles": "Show Invisibles",
-    "highlightLine": "Highlight Line",
+    "highlightLine": {
+      "label": "Highlight Line",
+      "description": "Visual highlight on the line where the cursor is positioned."
+    },
     "highlightGutter": "Highlight Gutter",
-    "matchBrackets": "Match Brackets",
+    "matchBrackets": {
+      "label": "Match Brackets",
+      "description": "Matching bracket highlighting near the cursor."
+    },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Trailing Comma",
+        "description": "Trailing commas in multi-line structures when formatting.",
         "none": "None",
         "all": "All",
         "es5": "ES5"
       },
-      "semi": "Semi",
-      "singleQuote": "Single Quote"
+      "semi": {
+        "label": "Semi",
+        "description": "Semicolons at the end of every statement."
+      },
+      "singleQuote": {
+        "label": "Single Quote",
+        "description": "Single quotes instead of double quotes."
+      }
     }
   },
   "notesEditor": {
@@ -71,11 +67,11 @@
     },
     "fontFamily": {
       "label": "Text Font",
-      "description": "CSS font-family value. Use commas to specify fallbacks."
+      "description": "Text font for the notes editor. Use commas for fallbacks."
     },
     "codeFontFamily": {
       "label": "Monospace Font",
-      "description": "Font for inline code and fenced code blocks."
+      "description": "Monospace font for inline code and code blocks in the notes editor. Use commas for fallbacks."
     },
     "lineHeight": {
       "label": "Line Height",
@@ -90,11 +86,11 @@
     },
     "limitWidth": {
       "label": "Limit Width",
-      "description": "Constrain content to a comfortable reading width (700px)."
+      "description": "Maximum content width for comfortable reading (700px)."
     },
     "lineNumbers": {
       "label": "Line Numbers",
-      "description": "Show line numbers in the gutter. Only available in Raw mode."
+      "description": "Line numbers in the gutter. Only available in Raw mode."
     }
   },
   "appearance": {
@@ -106,7 +102,7 @@
       "themesDir": "Themes Directory",
       "openDir": "Open Themes Directory",
       "createTemplate": "Create Theme Template",
-      "dirDescription": "Place your JSON theme files in this folder.",
+      "dirDescription": "Directory for custom JSON theme files.",
       "light": "Light",
       "dark": "Dark",
       "system": "System"
@@ -118,6 +114,37 @@
   "markdown": {
     "label": "Markdown",
     "codeRenderer": "Code block Renderer"
+  },
+  "math": {
+    "label": "Math Notebook",
+    "locale": {
+      "label": "Region",
+      "description": "Number and date display format."
+    },
+    "decimalPlaces": {
+      "label": "Decimal Places",
+      "description": "Maximum decimal places in results (0\u201314)."
+    },
+    "dateFormat": {
+      "label": "Date Format",
+      "description": "How dates are displayed in results."
+    },
+    "currencyRates": {
+      "label": "Currency Rates",
+      "description": "Cached for 1 hour.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Currency rates updated",
+      "refreshError": "Failed to update currency rates"
+    },
+    "cryptoRates": {
+      "label": "Crypto Rates",
+      "description": "Cached for 1 hour. Rate limit: 10-30 req/min.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "refreshed": "Crypto rates updated",
+      "rateLimited": "Rate limit exceeded. Try again later."
+    }
   },
   "api": {
     "label": "API Port",

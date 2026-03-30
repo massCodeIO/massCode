@@ -1,28 +1,76 @@
 {
-  "total": "Total",
-  "line": "Ligne",
-  "column": "Colonne",
-  "fragment": "Fragment",
-  "path": "Chemin",
+  "common": {
+    "total": "Total",
+    "inbox": "Boîte de réception",
+    "favorites": "Favoris",
+    "trash": "Corbeille",
+    "folders": "Dossiers",
+    "tags": "Tags",
+    "library": "Bibliothèque",
+    "fragment": "Fragment"
+  },
+  "spaces": {
+    "label": "Spaces",
+    "code": {
+      "label": "Code",
+      "tooltip": "Code snippets",
+      "title": "Code Snippets",
+      "allSnippets": "Tous les snippets"
+    },
+    "notes": {
+      "label": "Notes",
+      "tooltip": "Notes",
+      "title": "Notes",
+      "allNotes": "All Notes"
+    },
+    "math": {
+      "label": "Math",
+      "tooltip": "Math notebook",
+      "title": "Math Notebook",
+      "sheetList": "Sheet List",
+      "newSheet": "New Sheet",
+      "untitled": "Untitled",
+      "currencyUnavailable": "Currency rates service unavailable"
+    },
+    "tools": {
+      "label": "Tools",
+      "tooltip": "Developer tools"
+    }
+  },
+  "snippet": {
+    "untitled": "Snippet sans titre",
+    "selectedMultiple": "{{count}} snippets sélectionnés",
+    "noSelected": "Aucun snippet sélectionné"
+  },
+  "notes": {
+    "untitled": "Untitled note",
+    "plural": "Notes",
+    "words": "Words",
+    "symbols": "Symbols",
+    "selectedMultiple": "{{count}} Notes Selected",
+    "noSelected": "No Note Selected"
+  },
+  "folder": {
+    "untitled": "Dossier sans titre"
+  },
   "button": {
     "back": "Retour",
     "cancel": "Annuler",
-    "clear": "Effacer",
     "confirm": "Confirmer",
     "copy": "Copier",
     "fit": "Ajuster",
-    "generate": "Générer",
-    "ok": "OK",
-    "revers": "Inverser",
     "saveAs": "Enregistrer sous",
-    "sort": "Trier",
-    "update": ["Aller sur GitHub", "OK"],
+    "update": [
+      "Aller sur GitHub",
+      "OK"
+    ],
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
     "darkMode": "Mode sombre",
     "toggleDarkMode": "Basculer le mode sombre",
     "background": "Arrière-plan",
     "goToDownload": "Aller au téléchargement",
+    "goToSettings": "Go to Settings",
     "refreshPreview": "Actualiser l'aperçu",
     "laserPointer": "Pointeur laser",
     "fullscreen": "Plein écran",
@@ -41,11 +89,14 @@
     "hide": "Masquer",
     "showSidebar": "Afficher la barre latérale",
     "hideSidebar": "Masquer la barre latérale",
+    "showSidebarAndList": "Show Sidebar and List",
+    "hideSidebarAndList": "Hide Sidebar and List",
     "new": {
       "storage": "Nouveau stockage",
       "folder": "Nouveau dossier",
       "snippet": "Nouveau snippet",
-      "fragment": "Nouveau fragment"
+      "fragment": "Nouveau fragment",
+      "note": "New Note"
     },
     "add": {
       "description": "Ajouter une description",
@@ -62,8 +113,13 @@
     "remove": {
       "fromFavorites": "Retirer des favoris"
     },
+    "reveal": {
+      "inFinder": "Reveal in Finder",
+      "inFileManager": "Show in File Manager"
+    },
     "reload": {
-      "storage": "Recharger le stockage"
+      "storage": "Recharger le stockage",
+      "app": "Reload massCode"
     },
     "delete": {
       "common": "Supprimer",
@@ -80,34 +136,19 @@
     },
     "copy": {
       "snippetLink": "Copier le lien du snippet"
+    },
+    "select": {
+      "directory": "Select Directory"
     }
-  },
-  "sidebar": {
-    "inbox": "Boîte de réception",
-    "favorites": "Favoris",
-    "allSnippets": "Tous les snippets",
-    "trash": "Corbeille",
-    "folders": "Dossiers",
-    "library": "Bibliothèque",
-    "tags": "Tags"
-  },
-  "folder": {
-    "untitled": "Dossier sans titre",
-    "plural": "Dossiers",
-    "collapseAll": "Tout réduire",
-    "expandAll": "Tout développer"
-  },
-  "snippet": {
-    "untitled": "Snippet sans titre",
-    "plural": "Snippets",
-    "emptyName": "Saisissez le nom du snippet",
-    "selectedMultiple": "{{count}} snippets sélectionnés",
-    "noSelected": "Aucun snippet sélectionné"
   },
   "placeholder": {
     "emptyTagList": "Ajoutez des tags aux snippets pour les voir ici",
+    "emptyNotesTagList": "Add tags to notes to see them here",
     "emptyFoldersList": "Aucun dossier",
     "emptySnippetsList": "Aucun snippet",
+    "emptyNotesList": "No Notes",
+    "searchNotes": "Search notes...",
+    "emptySheetList": "No Sheets",
     "search": "Rechercher",
     "addTag": "Ajouter un tag"
   }

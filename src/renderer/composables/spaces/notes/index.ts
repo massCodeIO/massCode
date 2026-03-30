@@ -5,6 +5,9 @@ export { useNoteFolderTree } from './useNoteFolderTree'
 export { useNotes } from './useNotes'
 export { useNotesApp } from './useNotesApp'
 export { useNoteSearch } from './useNoteSearch'
-export { useNotesSpaceInitialization } from './useNotesSpaceInitialization'
+export {
+  resetNotesSpaceInitialization,
+  useNotesSpaceInitialization,
+} from './useNotesSpaceInitialization'
 export { useNoteTags } from './useNoteTags'
 export { useNoteUpdate } from './useNoteUpdate'

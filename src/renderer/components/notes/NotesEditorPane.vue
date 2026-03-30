@@ -6,7 +6,6 @@ import { router, RouterName } from '@/router'
 import {
   BookOpen,
   Code,
-  InspectionPanel,
   LoaderCircle,
   Network,
   PanelLeftClose,
@@ -14,6 +13,7 @@ import {
   Pencil,
   Presentation,
 } from 'lucide-vue-next'
+import { shouldSyncSelectedNoteContent } from './editorSync'
 import { getTextStats } from './textStats'
 
 const {
@@ -24,35 +24,21 @@ const {
 } = useNotes()
 const { addToUpdateQueue } = useNoteUpdate()
 const {
-  hideNotesSidebar,
   isFocusedNoteName,
   isNotesMindmapShown,
-  isNotesListHidden,
   isNotesPresentationShown,
   isNotesSidebarHidden,
   notesEditorMode,
   hideNotesViewModes,
-  showAllNotesPanels,
   showNotesMindmap,
   showNotesPresentation,
-  showNotesEditorOnly,
+  toggleNotesSidebar,
 } = useNotesApp()
 
-const isSidebarOnlyHidden = computed(
-  () => isNotesSidebarHidden.value && !isNotesListHidden.value,
-)
-const isEditorOnly = computed(
-  () => isNotesSidebarHidden.value && isNotesListHidden.value,
-)
 const sidebarActionTooltip = computed(() =>
-  isSidebarOnlyHidden.value
+  isNotesSidebarHidden.value
     ? i18n.t('action.showSidebar')
     : i18n.t('action.hideSidebar'),
-)
-const editorOnlyActionTooltip = computed(() =>
-  isEditorOnly.value
-    ? i18n.t('action.showSidebarAndList')
-    : i18n.t('action.hideSidebarAndList'),
 )
 const mindmapActionTooltip = computed(() =>
   isNotesMindmapShown.value
@@ -66,21 +52,7 @@ const presentationActionTooltip = computed(() =>
 )
 
 function onSidebarToggle() {
-  if (isSidebarOnlyHidden.value) {
-    showAllNotesPanels()
-    return
-  }
-
-  hideNotesSidebar()
-}
-
-function onEditorOnlyToggle() {
-  if (isEditorOnly.value) {
-    showAllNotesPanels()
-    return
-  }
-
-  showNotesEditorOnly()
+  toggleNotesSidebar()
 }
 
 function onMindmapToggle() {
@@ -117,8 +89,12 @@ const name = computed({
 const editorContent = ref('')
 
 watch(
-  () => selectedNote.value?.id,
-  () => {
+  selectedNote,
+  (nextNote, previousNote) => {
+    if (!shouldSyncSelectedNoteContent(previousNote, nextNote)) {
+      return
+    }
+
     editorContent.value = selectedNote.value?.content ?? ''
   },
   { immediate: true },
@@ -158,24 +134,17 @@ const textStats = computed(() => getTextStats(content.value))
           <UiActionButton
             class="mr-1"
             :tooltip="sidebarActionTooltip"
-            :active="isSidebarOnlyHidden"
+            :active="isNotesSidebarHidden"
             @click="onSidebarToggle"
           >
             <PanelLeftOpen
-              v-if="isSidebarOnlyHidden"
+              v-if="isNotesSidebarHidden"
               class="h-3 w-3"
             />
             <PanelLeftClose
               v-else
               class="h-3 w-3"
             />
-          </UiActionButton>
-          <UiActionButton
-            :tooltip="editorOnlyActionTooltip"
-            :active="isEditorOnly"
-            @click="onEditorOnlyToggle"
-          >
-            <InspectionPanel class="h-3 w-3" />
           </UiActionButton>
           <UiActionButton
             :tooltip="mindmapActionTooltip"

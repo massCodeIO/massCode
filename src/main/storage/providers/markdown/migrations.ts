@@ -1,7 +1,7 @@
 import type { FolderRecord } from '../../contracts'
 import path from 'node:path'
 import fs from 'fs-extra'
-import { clearDB, useDB } from '../../../db'
+import { useDB } from '../../../db'
 import {
   assertNotReservedRootFolderName,
   buildFolderPathMap,
@@ -26,7 +26,6 @@ import {
   type SqliteSnippetTagRow,
   syncCounters,
   syncFolderMetadataFiles,
-  syncRuntimeWithDisk,
   throwStorageError,
   validateEntryName,
   WINDOWS_RESERVED_NAME_RE,
@@ -209,12 +208,12 @@ function resolveUniqueSnippetPathForMigration(
   )
 }
 
-export function migrateSqliteToMarkdownStorage(): {
+export function migrateSqliteToMarkdownStorage(sqliteDbPath?: string): {
   folders: number
   snippets: number
   tags: number
 } {
-  const db = useDB()
+  const db = useDB(sqliteDbPath)
   const paths = getPaths(getVaultPath())
   ensureStateFile(paths)
 
@@ -376,186 +375,6 @@ export function migrateSqliteToMarkdownStorage(): {
   return {
     folders: state.folders.length,
     snippets: state.snippets.length,
-    tags: state.tags.length,
-  }
-}
-
-export function migrateMarkdownToSqliteStorage(): {
-  folders: number
-  snippets: number
-  tags: number
-} {
-  const paths = getPaths(getVaultPath())
-  const { state, snippets } = syncRuntimeWithDisk(paths)
-  const db = useDB()
-
-  clearDB()
-
-  const folderIds = new Set<number>(state.folders.map(folder => folder.id))
-  const tagIds = new Set<number>(state.tags.map(tag => tag.id))
-
-  const maxFolderId = state.folders.reduce(
-    (maxId, folder) => Math.max(maxId, folder.id),
-    0,
-  )
-  const maxTagId = state.tags.reduce(
-    (maxId, tag) => Math.max(maxId, tag.id),
-    0,
-  )
-  const maxSnippetId = snippets.reduce(
-    (maxId, snippet) => Math.max(maxId, snippet.id),
-    0,
-  )
-  const maxContentId = snippets.reduce((maxId, snippet) => {
-    const snippetMaxContentId = snippet.contents.reduce(
-      (contentMaxId, content) => Math.max(contentMaxId, content.id),
-      0,
-    )
-
-    return Math.max(maxId, snippetMaxContentId)
-  }, 0)
-
-  const insertFolder = db.prepare(`
-    INSERT INTO folders (
-      id,
-      name,
-      defaultLanguage,
-      parentId,
-      isOpen,
-      orderIndex,
-      icon,
-      createdAt,
-      updatedAt
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  const insertTag = db.prepare(`
-    INSERT INTO tags (
-      id,
-      name,
-      createdAt,
-      updatedAt
-    ) VALUES (?, ?, ?, ?)
-  `)
-
-  const insertSnippet = db.prepare(`
-    INSERT INTO snippets (
-      id,
-      name,
-      description,
-      folderId,
-      isDeleted,
-      isFavorites,
-      createdAt,
-      updatedAt
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  const insertSnippetContent = db.prepare(`
-    INSERT INTO snippet_contents (
-      id,
-      snippetId,
-      label,
-      value,
-      language
-    ) VALUES (?, ?, ?, ?, ?)
-  `)
-
-  const insertSnippetTag = db.prepare(`
-    INSERT INTO snippet_tags (
-      snippetId,
-      tagId
-    ) VALUES (?, ?)
-  `)
-
-  const insertSequence = db.prepare(`
-    INSERT INTO sqlite_sequence (name, seq) VALUES (?, ?)
-  `)
-
-  const transaction = db.transaction(() => {
-    state.folders.forEach((folder) => {
-      insertFolder.run(
-        folder.id,
-        folder.name,
-        folder.defaultLanguage || 'plain_text',
-        folder.parentId,
-        folder.isOpen,
-        folder.orderIndex,
-        folder.icon,
-        folder.createdAt || Date.now(),
-        folder.updatedAt || Date.now(),
-      )
-    })
-
-    state.tags.forEach((tag) => {
-      insertTag.run(
-        tag.id,
-        tag.name,
-        tag.createdAt || Date.now(),
-        tag.updatedAt || Date.now(),
-      )
-    })
-
-    snippets.forEach((snippet) => {
-      insertSnippet.run(
-        snippet.id,
-        snippet.name,
-        snippet.description,
-        snippet.folderId !== null && folderIds.has(snippet.folderId)
-          ? snippet.folderId
-          : null,
-        snippet.isDeleted ? 1 : 0,
-        snippet.isFavorites ? 1 : 0,
-        snippet.createdAt,
-        snippet.updatedAt,
-      )
-
-      snippet.contents.forEach((content) => {
-        insertSnippetContent.run(
-          content.id,
-          snippet.id,
-          content.label,
-          content.value,
-          content.language,
-        )
-      })
-
-      snippet.tags.forEach((tagId) => {
-        if (tagIds.has(tagId)) {
-          insertSnippetTag.run(snippet.id, tagId)
-        }
-      })
-    })
-
-    db.prepare(
-      `
-        DELETE FROM sqlite_sequence
-        WHERE name IN ('folders', 'tags', 'snippets', 'snippet_contents')
-      `,
-    ).run()
-
-    if (maxFolderId > 0) {
-      insertSequence.run('folders', maxFolderId)
-    }
-
-    if (maxTagId > 0) {
-      insertSequence.run('tags', maxTagId)
-    }
-
-    if (maxSnippetId > 0) {
-      insertSequence.run('snippets', maxSnippetId)
-    }
-
-    if (maxContentId > 0) {
-      insertSequence.run('snippet_contents', maxContentId)
-    }
-  })
-
-  transaction()
-
-  return {
-    folders: state.folders.length,
-    snippets: snippets.length,
     tags: state.tags.length,
   }
 }

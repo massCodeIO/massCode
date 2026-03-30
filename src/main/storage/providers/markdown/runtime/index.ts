@@ -6,10 +6,13 @@ export {
   INBOX_DIR_NAME,
   INVALID_NAME_CHARS_RE,
   LEGACY_FOLDER_META_FILE_NAME,
+  MATH_SPACE_ID,
   META_DIR_NAME,
   META_FILE_NAME,
+  NOTES_SPACE_ID,
+  PERSISTED_SPACE_IDS,
+  SPACE_IDS,
   SPACE_STATE_FILE_NAME,
-  SPACES_DIR_NAME,
   TRASH_DIR_NAME,
   WINDOWS_RESERVED_NAME_RE,
 } from './constants'
@@ -61,6 +64,7 @@ export {
 
 // Spaces
 export {
+  ensureFlatSpacesLayout,
   ensureSpaceDirectory,
   getSpaceDirPath,
   getSpaceStatePath,

@@ -6,7 +6,8 @@
     "update": "Έλεγχος για Ενημερώσεις...",
     "quit": "Έξοδος από το massCode",
     "about": "Σχετικά με το massCode",
-    "hide": "Απόκρυψη massCode"
+    "hide": "Απόκρυψη massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Βοήθεια",
@@ -32,12 +33,9 @@
       "snippets": "Συλλογή Snippets"
     }
   },
-  "edit": {
-    "label": "Επεξεργασία",
-    "find": "Εύρεση"
-  },
   "view": {
     "label": "Προβολή",
+    "showSidebar": "Εμφάνιση/απόκρυψη πλαϊνής γραμμής",
     "sortBy": {
       "label": "Ταξινόμηση Snippets κατά",
       "dateModified": "Ημερομηνία Τροποποίησης",
@@ -45,7 +43,16 @@
       "name": "Όνομα"
     },
     "compactMode": "Συμπαγής Λειτουργία",
-    "showSidebar": "Εμφάνιση/απόκρυψη πλαϊνής γραμμής"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "Επεξεργασία",
+    "find": "Εύρεση"
   },
   "editor": {
     "label": "Editor",
@@ -56,13 +63,17 @@
     "previewJson": "Προεπισκόπηση JSON",
     "fontSizeIncrease": "Αύξηση Μεγέθους Γραμματοσειράς",
     "fontSizeDecrease": "Μείωση Μεγέθους Γραμματοσειράς",
-    "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς"
+    "fontSizeReset": "Επαναφορά Μεγέθους Γραμματοσειράς",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Λειτουργία Παρουσίασης",
     "preview": "Προεπισκόπηση",
     "previewMarkdown": "Προεπισκόπηση Markdown",
+    "presentationMode": "Λειτουργία Παρουσίασης",
     "previewMindmap": "Προεπισκόπηση Mindmap"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "Developer Tools"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

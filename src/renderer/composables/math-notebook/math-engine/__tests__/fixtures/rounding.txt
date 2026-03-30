@@ -1,0 +1,23 @@
+# Decimal places
+1/3 to 2 dp
+pi to 5 digits
+pi to 10 digits
+1/3 to 0 dp
+
+# Rounded
+5.5 rounded
+5.5 rounded up
+5.5 rounded down
+-5.5 rounded
+-5.5 rounded up
+-5.5 rounded down
+
+# Nearest
+37 to nearest 10
+490 to nearest hundred
+2100 to nearest thousand
+37 to nearest 1
+
+# Nearest ceil/floor
+21 rounded up to nearest 5
+17 rounded down to nearest 3

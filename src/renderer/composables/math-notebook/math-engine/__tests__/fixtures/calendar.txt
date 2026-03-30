@@ -1,0 +1,55 @@
+# Days since/till
+days since January 1
+days till December 25
+days until March 1
+
+# Days between
+days between March 1 and March 31
+days between March 1 and March 1
+
+# Relative dates
+5 days from now
+3 days ago
+3 months from now
+2 years ago
+1 week from now
+
+# Day of the week
+day of the week on January 24, 1984
+weekday on March 9, 2024
+
+# Week numbers
+week of year
+week number on March 12, 2021
+
+# Days in period
+days in February 2020
+days in February 2021
+days in Q1
+days in Q2
+days in Q3
+days in Q4
+
+# Date offsets
+3 weeks after March 14, 2019
+28 days before March 12
+
+# Workdays
+workdays in 3 weeks
+workdays from March 3 to March 7
+March 3 to March 7 in workdays
+2 workdays after March 3, 2025
+
+# Timestamps
+current timestamp
+January 1, 2020 to timestamp
+June 15, 2020 as iso8601
+2019-04-01T15:30:00 to date
+1733823083000 to date
+
+# Clock intervals
+7:30 to 20:45
+4pm to 3am
+9am to 5pm
+12am to 12pm
+11pm to 1am

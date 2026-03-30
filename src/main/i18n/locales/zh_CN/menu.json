@@ -6,7 +6,8 @@
     "update": "检查更新...",
     "quit": "退出 massCode",
     "about": "关于 massCode",
-    "hide": "隐藏 massCode"
+    "hide": "隐藏 massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "帮助",
@@ -32,12 +33,9 @@
       "snippets": "代码片段集合"
     }
   },
-  "edit": {
-    "label": "编辑",
-    "find": "查找"
-  },
   "view": {
     "label": "视图",
+    "showSidebar": "显示/隐藏侧边栏",
     "sortBy": {
       "label": "代码片段排序方式",
       "dateModified": "修改日期",
@@ -45,7 +43,16 @@
       "name": "名称"
     },
     "compactMode": "紧凑模式",
-    "showSidebar": "显示/隐藏侧边栏"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "编辑",
+    "find": "查找"
   },
   "editor": {
     "label": "编辑器",
@@ -56,13 +63,17 @@
     "previewJson": "预览 JSON",
     "fontSizeIncrease": "增大字体",
     "fontSizeDecrease": "减小字体",
-    "fontSizeReset": "重置字体大小"
+    "fontSizeReset": "重置字体大小",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "演示模式",
     "preview": "预览",
     "previewMarkdown": "预览 Markdown",
+    "presentationMode": "演示模式",
     "previewMindmap": "预览思维导图"
   },
   "history": {
@@ -72,5 +83,13 @@
   },
   "devtools": {
     "label": "开发者工具"
+  },
+  "window": {
+    "label": "Window",
+    "minimize": "Minimize"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

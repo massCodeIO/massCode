@@ -6,7 +6,8 @@
     "update": "Zkontrolovat aktualizace...",
     "quit": "Ukončit massCode",
     "about": "O aplikaci massCode",
-    "hide": "Skrýt massCode"
+    "hide": "Skrýt massCode",
+    "mathNotebook": "Math Notebook"
   },
   "help": {
     "label": "Nápověda",
@@ -32,12 +33,9 @@
       "snippets": "Kolekce snippetů"
     }
   },
-  "edit": {
-    "label": "Upravit",
-    "find": "Najít"
-  },
   "view": {
     "label": "Zobrazení",
+    "showSidebar": "Zobrazit/skrýt postranní panel",
     "sortBy": {
       "label": "Seřadit snippety podle",
       "dateModified": "Data úpravy",
@@ -45,7 +43,16 @@
       "name": "Názvu"
     },
     "compactMode": "Kompaktní režim",
-    "showSidebar": "Zobrazit/skrýt postranní panel"
+    "layout": {
+      "label": "Layout",
+      "allPanels": "All Panels",
+      "listEditor": "List + Editor",
+      "editorOnly": "Editor Only"
+    }
+  },
+  "edit": {
+    "label": "Upravit",
+    "find": "Najít"
   },
   "editor": {
     "label": "Editor",
@@ -56,13 +63,17 @@
     "previewJson": "Náhled JSON",
     "fontSizeIncrease": "Zvětšit velikost písma",
     "fontSizeDecrease": "Zmenšit velikost písma",
-    "fontSizeReset": "Obnovit velikost písma"
+    "fontSizeReset": "Obnovit velikost písma",
+    "mode": "Mode",
+    "modeRaw": "Raw",
+    "modeLivePreview": "Live Preview",
+    "modePreview": "Preview"
   },
   "markdown": {
     "label": "Markdown",
-    "presentationMode": "Prezentační režim",
     "preview": "Náhled",
     "previewMarkdown": "Náhled Markdownu",
+    "presentationMode": "Prezentační režim",
     "previewMindmap": "Náhled myšlenkové mapy"
   },
   "history": {
@@ -76,5 +87,9 @@
   "window": {
     "label": "Okno",
     "minimize": "Minimalizovat"
+  },
+  "file": {
+    "label": "File",
+    "new": "New"
   }
 }

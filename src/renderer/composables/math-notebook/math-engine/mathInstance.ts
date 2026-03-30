@@ -29,6 +29,12 @@ export function createMathInstance(currencyRates: Record<string, number>) {
       arcsin: (x: number) => mathInstance.asin(x),
       arccos: (x: number) => mathInstance.acos(x),
       arctan: (x: number) => mathInstance.atan(x),
+      sind: (x: number) => Math.sin((x * Math.PI) / 180),
+      cosd: (x: number) => Math.cos((x * Math.PI) / 180),
+      tand: (x: number) => Math.tan((x * Math.PI) / 180),
+      asind: (x: number) => (Math.asin(x) * 180) / Math.PI,
+      acosd: (x: number) => (Math.acos(x) * 180) / Math.PI,
+      atand: (x: number) => (Math.atan(x) * 180) / Math.PI,
       unitValue: (value: any) =>
         value && typeof value.toNumber === 'function'
           ? value.toNumber()
@@ -109,6 +115,61 @@ export function createMathInstance(currencyRates: Record<string, number>) {
   createUnitSafe(mathInstance, 'league', {
     definition: '3 mile',
     aliases: ['leagues'],
+  })
+
+  // Speed
+  createUnitSafe(mathInstance, 'mph', {
+    definition: '1 mile/hour',
+    aliases: [],
+  })
+  createUnitSafe(mathInstance, 'kmh', {
+    definition: '1 km/hour',
+    aliases: [],
+  })
+  createUnitSafe(mathInstance, 'knot', {
+    definition: '0.514444 m/s',
+    aliases: ['knots', 'kn'],
+  })
+
+  // Energy
+  createUnitSafe(mathInstance, 'calorie', {
+    definition: '4.184 J',
+    aliases: ['cal', 'calories'],
+  })
+  createUnitSafe(mathInstance, 'kilocalorie', {
+    definition: '4184 J',
+    aliases: ['kcal', 'kCal', 'kilocalories'],
+  })
+
+  // Maritime & Astro
+  createUnitSafe(mathInstance, 'fathom', {
+    definition: '1.8288 m',
+    aliases: ['fathoms', 'ftm'],
+  })
+  createUnitSafe(mathInstance, 'lightyear', {
+    definition: '9.461e15 m',
+    aliases: ['lightyears', 'ly'],
+  })
+
+  // Mass
+  createUnitSafe(mathInstance, 'microgram', {
+    definition: '1e-6 gram',
+    aliases: ['micrograms', 'mcg'],
+  })
+
+  // Volume
+  createUnitSafe(mathInstance, 'bushel', {
+    definition: '35.2391 liter',
+    aliases: ['bushels', 'bsh'],
+  })
+
+  // Video
+  createUnitSafe(mathInstance, 'frame', {
+    aliases: ['frames'],
+  })
+  createUnitSafe(mathInstance, 'fps', {
+    definition: '1 frame/second',
+    aliases: [],
   })
 
   for (const [code, rate] of Object.entries(currencyRates)) {

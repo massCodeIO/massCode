@@ -6,14 +6,13 @@ import {
   INBOX_DIR_NAME,
   META_DIR_NAME,
   META_FILE_NAME,
-  SPACES_DIR_NAME,
+  NOTES_SPACE_ID,
   STATE_FILE_NAME,
   TRASH_DIR_NAME,
 } from '../../runtime/constants'
+import { getSpaceDirPath } from '../../runtime/spaces'
 
 export { INBOX_DIR_NAME, META_DIR_NAME, META_FILE_NAME, TRASH_DIR_NAME }
-
-export const NOTES_SPACE_ID = 'notes'
 
 export const NOTES_INBOX_RELATIVE_PATH = `${META_DIR_NAME}/${INBOX_DIR_NAME}`
 export const NOTES_TRASH_RELATIVE_PATH = `${META_DIR_NAME}/${TRASH_DIR_NAME}`
@@ -28,13 +27,7 @@ export const notesRuntimeRef: { cache: NotesRuntimeCache | null } = {
 }
 
 function getLegacyNestedNotesRoot(vaultPath: string): string {
-  return path.join(
-    vaultPath,
-    SPACES_DIR_NAME,
-    CODE_SPACE_ID,
-    SPACES_DIR_NAME,
-    NOTES_SPACE_ID,
-  )
+  return path.join(vaultPath, CODE_SPACE_ID, '__spaces__', NOTES_SPACE_ID)
 }
 
 function hasNotesState(notesRoot: string): boolean {
@@ -66,7 +59,7 @@ function migrateNestedNotesSpace(vaultPath: string, notesRoot: string): void {
 }
 
 export function getNotesPaths(vaultPath: string) {
-  const notesRoot = path.join(vaultPath, SPACES_DIR_NAME, NOTES_SPACE_ID)
+  const notesRoot = getSpaceDirPath(vaultPath, NOTES_SPACE_ID)
   migrateNestedNotesSpace(vaultPath, notesRoot)
   const metaDirPath = path.join(notesRoot, META_DIR_NAME)
 

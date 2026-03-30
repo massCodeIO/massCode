@@ -4,13 +4,14 @@ import { ipcMain } from 'electron'
 import { ensureDirSync, writeFileSync } from 'fs-extra'
 import { nanoid } from 'nanoid'
 import slash from 'slash'
+import { ensureFlatSpacesLayout } from '../../storage/providers/markdown/runtime/spaces'
 import { store } from '../../store'
 
 const ASSETS_DIR = 'assets'
 
 export function registerFsHandlers() {
   ipcMain.handle('fs:assets', (event, { buffer, fileName }) => {
-    const storagePath = store.preferences.get('storagePath')
+    const storagePath = store.preferences.get('storage.rootPath') as string
 
     return new Promise((resolve, reject) => {
       try {
@@ -34,11 +35,15 @@ export function registerFsHandlers() {
   ipcMain.handle('fs:notes-asset', (event, { buffer, ext }) => {
     const vaultPath
       = (store.preferences.get('storage.vaultPath') as string | null)
-        || join(store.preferences.get('storagePath') as string, 'markdown-vault')
+        || join(
+          store.preferences.get('storage.rootPath') as string,
+          'markdown-vault',
+        )
 
     return new Promise((resolve, reject) => {
       try {
-        const assetsPath = join(vaultPath, '__spaces__', 'notes', 'assets')
+        ensureFlatSpacesLayout(vaultPath)
+        const assetsPath = join(vaultPath, 'notes', 'assets')
         const name = `${nanoid()}${ext}`
         const dest = join(assetsPath, name)
 

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/shadcn/button'
 import * as Command from '@/components/ui/shadcn/command'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { useEditor, useSnippets } from '@/composables'
+import { i18n } from '@/electron'
 import { Check } from 'lucide-vue-next'
 import { languages } from './grammars/languages'
 
@@ -82,8 +83,9 @@ watch(isOpen, async (open) => {
           <Button
             variant="ghost"
             class="-ml-1"
+            :class="!selectedLanguageName && 'text-muted-foreground'"
           >
-            {{ selectedLanguageName }}
+            {{ selectedLanguageName || i18n.t("placeholder.selectLanguage") }}
           </Button>
         </Popover.PopoverTrigger>
         <Popover.PopoverContent class="w-auto px-1 py-0">

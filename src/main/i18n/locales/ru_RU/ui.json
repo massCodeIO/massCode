@@ -150,6 +150,7 @@
     "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
-    "addTag": "Добавить тег"
+    "addTag": "Добавить тег",
+    "selectLanguage": "Выбрать язык"
   }
 }

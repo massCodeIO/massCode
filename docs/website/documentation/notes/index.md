@@ -42,6 +42,8 @@ The editor is built on CodeMirror 6 and includes:
 - Image embedding
 - Callout blocks
 
+For visual diagrams in notes, see [Mermaid](/documentation/notes/mermaid).
+
 ## Editor Preferences
 
 Customize the editor appearance and behavior in preferences:

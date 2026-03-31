@@ -54,7 +54,7 @@ Composables get a `use` prefix. The file name matches the exported function name
 
 **✅ ALWAYS IMPORT MANUALLY:**
 
-- Shadcn UI: `import * as Select from '@/components/ui/shadcn/select'`
+- Shadcn UI: `import { Button } from '@/components/ui/shadcn/button'` or `import * as Select from '@/components/ui/shadcn/select'`
 - Composables: `import { useApp } from '@/composables'`
 - Utils: `import { cn } from '@/utils'`
 - VueUse: `import { useClipboard } from '@vueuse/core'`
@@ -78,7 +78,7 @@ Composables get a `use` prefix. The file name matches the exported function name
 ### D. System & IPC
 
 - **File System/System Ops:** Use `ipc.invoke('channel:action', data)`.
-- **Channels:** `fs:*`, `system:*`, `db:*`, `main-menu:*`, `prettier:*`, `spaces:*`.
+- **Channels:** `fs:*`, `system:*`, `db:*`, `main-menu:*`, `prettier:*`, `spaces:*`, `theme:*`.
 - **Renderer:** Access Electron only via `src/renderer/electron.ts`.
 
 ### E. Spaces Architecture
@@ -88,8 +88,9 @@ massCode uses a **Spaces** system to organize different functional areas:
 | Space | ID | Description |
 |-------|----|-------------|
 | Code | `code` | Main snippet management (folders, snippets, tags) |
-| Tools | `tools` | Developer utilities (converters, generators) |
+| Notes | `notes` | Notebook with folders, tags, and markdown notes |
 | Math | `math` | Math Notebook with calculation sheets |
+| Tools | `tools` | Developer utilities (converters, generators) |
 
 **Space Definitions:** `src/renderer/spaceDefinitions.ts` — `SpaceId`, `getSpaceDefinitions()`, `getActiveSpaceId()`.
 
@@ -107,7 +108,8 @@ massCode uses a **Spaces** system to organize different functional areas:
 
 **Space-Aware Sync:**
 - `system:storage-synced` event dispatches refresh based on `getActiveSpaceId()`:
-  - `code` / `null` → refresh folders + snippets
+  - `code` → refresh folders + snippets
+  - `notes` → refresh notes + note folders
   - `math` → `reloadFromDisk()` via `useMathNotebook()`
   - `tools` → no-op (no vault data)
 - Mutable operations must call `markPersistedStorageMutation()` to prevent sync loops.
@@ -119,6 +121,7 @@ massCode uses a **Spaces** system to organize different functional areas:
 - **Usage:** Use `i18n.t('namespace:key.path')` in both templates and scripts.
 - **Default Namespace:** The `ui` namespace is the default. You can use `i18n.t('key.path')` instead of `i18n.t('ui:key.path')`.
 - **Imports:** `import { i18n } from '@/electron'`
+- **After adding/changing locales:** Run `pnpm i18n:copy` to sync locale files.
 
 ## 6. UI/UX Guidelines
 
@@ -133,7 +136,7 @@ massCode uses a **Spaces** system to organize different functional areas:
   - **NEVER** reimplement basic UI elements (buttons, inputs, checkboxes, etc.).
   - **ALWAYS** use existing components from `src/renderer/components/ui/`.
   - **Missing Elements:** If a required UI element does not exist, create it in `src/renderer/components/ui/` first, following established patterns (Tailwind, cva, cn), then use it.
-  - **Naming:** They are auto-imported with a `Ui` prefix (e.g., `<UiButton />`, `<UiInput />`, `<UiCheckbox />`).
+  - **Naming:** They are auto-imported with a `Ui` prefix (e.g., `<UiInput />`, `<UiActionButton />`, `<UiText />`).
 
 ## 7. Component Decomposition
 
@@ -154,6 +157,12 @@ Keep no logic in `<template>` more complex than a ternary operator.
 - **NEVER** run lint on the whole project during a task.
 - Usage: `pnpm lint <path>` or `pnpm lint:fix <path>`
 
+**Testing:**
+
+- **ALWAYS** scope test commands to specific files/dirs when working on a feature.
+- **NEVER** run tests on the whole project during a task.
+- Usage: `pnpm test <path>` or `pnpm test:watch <path>`
+
 **Other Commands:**
 
 - `pnpm dev`: Start dev server
@@ -166,6 +175,7 @@ Keep no logic in `<template>` more complex than a ternary operator.
 
 ```html
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button' // Manual import
 import * as Dialog from '@/components/ui/shadcn/dialog' // Manual import
 import { useSnippets } from '@/composables' // Manual import
 
@@ -175,13 +185,10 @@ const { snippets } = useSnippets()
 
 <template>
   <div>
-    <!-- Use auto-imported UI component -->
-    <UiButton>Click me</UiButton>
-
-    <!-- Use Shadcn components with namespace -->
+    <!-- Use Shadcn components -->
     <Dialog.Dialog>
       <Dialog.DialogTrigger as-child>
-        <UiButton variant="outline">Open</UiButton>
+        <Button variant="outline">Open</Button>
       </Dialog.DialogTrigger>
       <Dialog.DialogContent>
         Snippet count: {{ snippets.length }}

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as Select from '@/components/ui/shadcn/select'
-import { useNotes, useNotesApp, useNoteUpdate } from '@/composables'
+import {
+  useEditableField,
+  useNotes,
+  useNotesApp,
+  useNoteUpdate,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import {
@@ -75,16 +80,23 @@ function onPresentationToggle() {
   router.push({ name: RouterName.notesPresentation })
 }
 
-const name = computed({
-  get() {
-    return selectedNote.value?.name
-  },
-  set(v: string) {
+const {
+  model: name,
+  onFocus: onNameFocus,
+  onBlur,
+} = useEditableField(
+  () => selectedNote.value?.name,
+  (v) => {
     if (selectedNote.value) {
       addToUpdateQueue(selectedNote.value.id, { name: v })
     }
   },
-})
+)
+
+function onNameBlur() {
+  onBlur()
+  isFocusedNoteName.value = false
+}
 
 const editorContent = ref('')
 
@@ -128,7 +140,8 @@ const textStats = computed(() => getTextStats(content.value))
           variant="ghost"
           class="w-full truncate px-0"
           :select="isFocusedNoteName"
-          @blur="isFocusedNoteName = false"
+          @focus="onNameFocus"
+          @blur="onNameBlur"
         />
         <div class="ml-2 flex h-7 items-center">
           <UiActionButton

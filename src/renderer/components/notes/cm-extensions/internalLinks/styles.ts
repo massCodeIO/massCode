@@ -4,14 +4,18 @@ export const internalLinksTheme = EditorView.baseTheme({
   '.cm-internal-link': {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.35rem',
-    padding: '0.1rem 0.45rem',
-    borderRadius: '999px',
+    gap: '0.24rem',
+    padding: '0.02rem 0.3rem',
+    borderRadius: '8px',
     border: '1px solid var(--border)',
     backgroundColor: 'var(--accent)',
     color: 'var(--accent-foreground)',
     cursor: 'pointer',
     verticalAlign: 'baseline',
+    lineHeight: '1.1',
+    fontSize: '0.92em',
+    position: 'relative',
+    top: '1px',
   },
   '.cm-internal-link.is-pending': {
     opacity: '0.8',
@@ -22,6 +26,12 @@ export const internalLinksTheme = EditorView.baseTheme({
   },
   '.cm-internal-link__icon': {
     flexShrink: '0',
+    width: '11px',
+    height: '11px',
+    position: 'relative',
+  },
+  '.cm-internal-link__label': {
+    lineHeight: '1.05',
   },
   '.cm-internal-link-picker': {
     position: 'fixed',

@@ -162,7 +162,7 @@ export function createInternalLinksPreview() {
         popup.addEventListener('mouseleave', () =>
           this.controller.leavePopup(() => this.removePopup()))
 
-        document.body.append(popup)
+        this.view.dom.append(popup)
 
         const rect = target.getBoundingClientRect()
         popup.style.left = `${rect.left}px`

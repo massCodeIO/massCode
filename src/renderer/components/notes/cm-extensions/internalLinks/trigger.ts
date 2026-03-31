@@ -242,7 +242,7 @@ export function createInternalLinksTrigger(
         this.itemsHost.className = 'cm-internal-link-picker__results'
 
         this.popup.append(this.input, this.itemsHost)
-        document.body.append(this.popup)
+        this.view.dom.append(this.popup)
         this.schedulePopupPosition()
 
         const onDocumentMouseDown = (event: MouseEvent) => {

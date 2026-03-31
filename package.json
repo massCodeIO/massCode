@@ -88,7 +88,6 @@
     "js-yaml": "^4.1.0",
     "ky": "^1.7.5",
     "lucide-vue-next": "^0.476.0",
-    "marked": "^15.0.8",
     "markmap-lib": "^0.18.11",
     "markmap-view": "^0.18.10",
     "mathjs": "^15.1.1",

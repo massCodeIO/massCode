@@ -10,7 +10,7 @@
   "repository": "https://github.com/massCodeIO/massCode",
   "main": "build/main/index.js",
   "engines": {
-    "pnpm": ">=9.0.0"
+    "pnpm": ">=10.0.0"
   },
   "scripts": {
     "dev": "npm run build:main && concurrently -k \"vite\" \"npm:dev:main\" \"npm:dev:start\"",
@@ -88,7 +88,6 @@
     "js-yaml": "^4.1.0",
     "ky": "^1.7.5",
     "lucide-vue-next": "^0.476.0",
-    "marked": "^15.0.8",
     "markmap-lib": "^0.18.11",
     "markmap-view": "^0.18.10",
     "mathjs": "^15.1.1",
@@ -174,6 +173,6 @@
     ]
   },
   "volta": {
-    "node": "20.16.0"
+    "node": "24.14.1"
   }
 }

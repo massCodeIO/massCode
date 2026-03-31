@@ -1,0 +1,166 @@
+import {
+  useApp,
+  useFolders,
+  useNoteFolders,
+  useNotes,
+  useNotesApp,
+  useSnippets,
+} from '@/composables'
+import { LibraryFilter } from '@/composables/types'
+import { router, RouterName } from '@/router'
+import { api } from '@/services/api'
+
+interface InternalTarget {
+  type: 'snippet' | 'note'
+  id: number
+}
+
+const {
+  focusedFolderId,
+  focusedSnippetId,
+  highlightedFolderIds,
+  highlightedSnippetIds,
+  state,
+} = useApp()
+const {
+  focusedNoteId,
+  highlightedFolderIds: highlightedNoteFolderIds,
+  highlightedNoteIds,
+  notesState,
+} = useNotesApp()
+
+const { clearFolderSelection, getFolders, selectFolder } = useFolders()
+const { getSnippets, selectSnippet } = useSnippets()
+const {
+  clearFolderSelection: clearNoteFolderSelection,
+  getNoteFolders,
+  selectNoteFolder,
+} = useNoteFolders()
+const { getNotes, selectNote } = useNotes()
+
+function clearCodeNavigationState() {
+  highlightedFolderIds.value.clear()
+  highlightedSnippetIds.value.clear()
+  focusedSnippetId.value = undefined
+  focusedFolderId.value = undefined
+}
+
+function clearNotesNavigationState() {
+  highlightedNoteFolderIds.value.clear()
+  highlightedNoteIds.value.clear()
+  focusedNoteId.value = undefined
+}
+
+async function ensureCodeRoute() {
+  if (router.currentRoute.value.name !== RouterName.main) {
+    await router.push({ name: RouterName.main })
+  }
+}
+
+async function ensureNotesRoute() {
+  if (router.currentRoute.value.name !== RouterName.notesSpace) {
+    await router.push({ name: RouterName.notesSpace })
+  }
+}
+
+export async function openSnippetDeepLink(
+  snippetId: number,
+  legacyFolderId?: number,
+): Promise<void> {
+  clearCodeNavigationState()
+  await ensureCodeRoute()
+
+  try {
+    const { data: snippet } = await api.snippets.getSnippetsById(
+      String(snippetId),
+    )
+
+    if (snippet.folder?.id) {
+      await getFolders(false)
+      await selectFolder(snippet.folder.id)
+      await getSnippets({ folderId: snippet.folder.id })
+    }
+    else {
+      clearFolderSelection()
+      state.tagId = undefined
+      state.libraryFilter = snippet.isDeleted
+        ? LibraryFilter.Trash
+        : LibraryFilter.Inbox
+
+      await getSnippets(snippet.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
+    }
+
+    selectSnippet(snippetId)
+    return
+  }
+  catch (error) {
+    if (!legacyFolderId) {
+      console.error('Failed to open snippet deep link:', error)
+      return
+    }
+  }
+
+  await getFolders(false)
+  await selectFolder(legacyFolderId)
+  await getSnippets({ folderId: legacyFolderId })
+  selectSnippet(snippetId)
+}
+
+export async function openNoteDeepLink(noteId: number): Promise<void> {
+  clearNotesNavigationState()
+  await ensureNotesRoute()
+
+  try {
+    const { data: note } = await api.notes.getNotesById(String(noteId))
+
+    if (note.folder?.id) {
+      await getNoteFolders()
+      await selectNoteFolder(note.folder.id)
+      await getNotes({ folderId: note.folder.id })
+    }
+    else {
+      clearNoteFolderSelection()
+      notesState.tagId = undefined
+      notesState.libraryFilter = note.isDeleted
+        ? LibraryFilter.Trash
+        : LibraryFilter.Inbox
+
+      await getNotes(note.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
+    }
+
+    selectNote(noteId)
+  }
+  catch (error) {
+    console.error('Failed to open note deep link:', error)
+  }
+}
+
+export async function openInternalTarget(
+  target: InternalTarget,
+): Promise<void> {
+  if (target.type === 'snippet') {
+    await openSnippetDeepLink(target.id)
+    return
+  }
+
+  await openNoteDeepLink(target.id)
+}
+
+export async function handleDeepLink(url: string): Promise<void> {
+  const parsed = new URL(url)
+  const snippetId = parsed.searchParams.get('snippetId')
+  const noteId = parsed.searchParams.get('noteId')
+  const legacyFolderId = parsed.searchParams.get('folderId')
+
+  if (snippetId) {
+    await openSnippetDeepLink(
+      Number(snippetId),
+      legacyFolderId ? Number(legacyFolderId) : undefined,
+    )
+    return
+  }
+
+  if (noteId) {
+    await openNoteDeepLink(Number(noteId))
+  }
+}

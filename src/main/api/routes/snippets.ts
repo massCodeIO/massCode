@@ -1,4 +1,8 @@
-import type { SnippetsCountsResponse, SnippetsResponse } from '../dto/snippets'
+import type {
+  SnippetItemResponse,
+  SnippetsCountsResponse,
+  SnippetsResponse,
+} from '../dto/snippets'
 import Elysia from 'elysia'
 import { useStorage } from '../../storage'
 import { commonAddResponse } from '../dto/common/response'
@@ -86,6 +90,25 @@ app
     },
     {
       response: 'snippetsCountsResponse',
+      detail: {
+        tags: ['Snippets'],
+      },
+    },
+  )
+  .get(
+    '/:id',
+    ({ params, status }) => {
+      const storage = useStorage()
+      const snippet = storage.snippets.getSnippetById(Number(params.id))
+
+      if (!snippet) {
+        return status(404, { message: 'Snippet not found' })
+      }
+
+      return snippet as SnippetItemResponse
+    },
+    {
+      response: 'snippetItemResponse',
       detail: {
         tags: ['Snippets'],
       },

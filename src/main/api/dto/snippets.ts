@@ -66,6 +66,7 @@ const snippetsCountsResponse = t.Object({
 export const snippetsDTO = new Elysia().model({
   snippetContentsAdd,
   snippetContentsUpdate,
+  snippetItemResponse: snippetItem,
   snippetsAdd,
   snippetsUpdate,
   snippetsCountsResponse,
@@ -83,3 +84,4 @@ export const snippetsDTO = new Elysia().model({
 export type SnippetsAdd = typeof snippetsAdd.static
 export type SnippetsResponse = typeof snippetsResponse.static
 export type SnippetsCountsResponse = typeof snippetsCountsResponse.static
+export type SnippetItemResponse = typeof snippetItem.static

@@ -116,6 +116,22 @@ describe('notes storage validations', () => {
     expect(result.id).toBeGreaterThan(0)
   })
 
+  it('getNoteById returns the stored note', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Lookup Note' })
+
+    expect(storage.getNoteById(id)).toMatchObject({
+      id,
+      name: 'Lookup Note',
+    })
+  })
+
+  it('getNoteById returns null for unknown ids', () => {
+    const storage = createNotesNotesStorage()
+
+    expect(storage.getNoteById(99999)).toBeNull()
+  })
+
   it('keeps newest created note first after content updates of older notes', () => {
     vi.useFakeTimers()
 

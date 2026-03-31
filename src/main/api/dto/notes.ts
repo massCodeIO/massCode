@@ -52,6 +52,7 @@ export const notesDTO = new Elysia().model({
   notesAdd,
   notesContentUpdate,
   notesCountsResponse,
+  noteItemResponse: noteItem,
   notesResponse,
   notesQuery: t.Object({
     ...commonQuery.properties,
@@ -67,3 +68,4 @@ export const notesDTO = new Elysia().model({
 export type NotesAdd = typeof notesAdd.static
 export type NotesResponse = typeof notesResponse.static
 export type NotesCountsResponse = typeof notesCountsResponse.static
+export type NoteItemResponse = typeof noteItem.static

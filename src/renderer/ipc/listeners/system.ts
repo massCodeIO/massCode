@@ -14,18 +14,11 @@ import {
 import { i18n, ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { repository } from '../../../../package.json'
+import { handleDeepLink } from './deepLinks'
 
-const {
-  state,
-  isCodeSpaceInitialized,
-  highlightedFolderIds,
-  highlightedSnippetIds,
-  focusedSnippetId,
-  focusedFolderId,
-} = useApp()
-const { selectFolder, getFolders } = useFolders()
-const { selectSnippet, getSnippets, selectFirstSnippet, displayedSnippets }
-  = useSnippets()
+const { state, isCodeSpaceInitialized } = useApp()
+const { getFolders } = useFolders()
+const { getSnippets, selectFirstSnippet, displayedSnippets } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
@@ -103,24 +96,7 @@ function scheduleStorageSyncRefresh() {
 export function registerSystemListeners() {
   ipc.on('system:deep-link', async (_, url: string) => {
     try {
-      const u = new URL(url)
-      const folderId = u.searchParams.get('folderId')
-      const snippetId = u.searchParams.get('snippetId')
-
-      if (folderId && snippetId) {
-        const nextFolderId = Number(folderId)
-        const nextSnippetId = Number(snippetId)
-
-        highlightedFolderIds.value.clear()
-        highlightedSnippetIds.value.clear()
-        focusedSnippetId.value = undefined
-        focusedFolderId.value = undefined
-
-        await getSnippets({ folderId: nextFolderId })
-
-        await selectFolder(nextFolderId)
-        selectSnippet(nextSnippetId)
-      }
+      await handleDeepLink(url)
     }
     catch (error) {
       console.error(error)

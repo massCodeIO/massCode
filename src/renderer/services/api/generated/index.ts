@@ -21,6 +21,30 @@ export interface SnippetContentsUpdate {
   language?: string;
 }
 
+export interface SnippetItemResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  contents: {
+    id: number;
+    label: string;
+    value: string | null;
+    language: string;
+  }[];
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface SnippetsAdd {
   name: string;
   folderId?: number | null;
@@ -162,6 +186,25 @@ export interface NotesContentUpdate {
 export interface NotesCountsResponse {
   total: number;
   trash: number;
+}
+
+export interface NoteItemResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  content: string;
+  tags: {
+    id: number;
+    name: string;
+  }[];
+  folder: {
+    id: number;
+    name: string;
+  } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export type NotesResponse = {
@@ -525,7 +568,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 4.7.1
+ * @version 5.0.0
  *
  * Development documentation
  */
@@ -614,24 +657,13 @@ export class Api<
      * No description
      *
      * @tags Snippets
-     * @name PostSnippetsByIdContents
-     * @request POST:/snippets/{id}/contents
+     * @name GetSnippetsById
+     * @request GET:/snippets/{id}
      */
-    postSnippetsByIdContents: (
-      id: string,
-      data: SnippetContentsAdd,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        {
-          id: number | bigint;
-        },
-        any
-      >({
-        path: `/snippets/${id}/contents`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
+    getSnippetsById: (id: string, params: RequestParams = {}) =>
+      this.request<SnippetItemResponse, any>({
+        path: `/snippets/${id}`,
+        method: "GET",
         format: "json",
         ...params,
       }),
@@ -667,6 +699,32 @@ export class Api<
       this.request<void, any>({
         path: `/snippets/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Snippets
+     * @name PostSnippetsByIdContents
+     * @request POST:/snippets/{id}/contents
+     */
+    postSnippetsByIdContents: (
+      id: string,
+      data: SnippetContentsAdd,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/snippets/${id}/contents`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 
@@ -995,6 +1053,21 @@ export class Api<
     getNotesCounts: (params: RequestParams = {}) =>
       this.request<NotesCountsResponse, any>({
         path: `/notes/counts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name GetNotesById
+     * @request GET:/notes/{id}
+     */
+    getNotesById: (id: string, params: RequestParams = {}) =>
+      this.request<NoteItemResponse, any>({
+        path: `/notes/${id}`,
         method: "GET",
         format: "json",
         ...params,

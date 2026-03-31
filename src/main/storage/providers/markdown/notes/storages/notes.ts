@@ -104,6 +104,12 @@ export function createNotesNotesStorage(): NotesStorage {
 
       return filtered.map(n => createNoteRecord(n, state))
     },
+    getNoteById(id: number): NoteRecord | null {
+      const { state, notes } = getCache()
+      const note = findNoteById(notes, id)
+
+      return note ? createNoteRecord(note, state) : null
+    },
 
     getNotesCounts(): NotesCount {
       const { notes } = getCache()

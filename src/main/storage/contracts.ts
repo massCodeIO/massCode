@@ -162,6 +162,7 @@ export interface SnippetsStorage {
     tagId: number,
   ) => SnippetTagDeleteRelationResult
   emptyTrash: () => { deletedCount: number }
+  getSnippetById: (id: number) => SnippetRecord | null
   getSnippets: (query: SnippetsQueryInput) => SnippetRecord[]
   getSnippetsCounts: () => SnippetsCount
   updateSnippet: (id: number, input: SnippetUpdateInput) => SnippetUpdateResult
@@ -299,6 +300,7 @@ export interface NotesStorage {
     tagId: number,
   ) => NoteTagDeleteRelationResult
   emptyTrash: () => { deletedCount: number }
+  getNoteById: (id: number) => NoteRecord | null
   getNotes: (query: NotesQueryInput) => NoteRecord[]
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult

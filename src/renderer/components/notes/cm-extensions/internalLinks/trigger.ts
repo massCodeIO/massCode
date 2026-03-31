@@ -198,7 +198,7 @@ export function createInternalLinksTrigger(
         view: EditorView
       }) {
         if (this.popup) {
-          this.positionPopup()
+          this.schedulePopupPosition()
         }
 
         if (this.popup || (!update.docChanged && !update.selectionSet)) {
@@ -243,7 +243,7 @@ export function createInternalLinksTrigger(
 
         this.popup.append(this.input, this.itemsHost)
         document.body.append(this.popup)
-        this.positionPopup()
+        this.schedulePopupPosition()
 
         const onDocumentMouseDown = (event: MouseEvent) => {
           const target = event.target
@@ -299,18 +299,25 @@ export function createInternalLinksTrigger(
         void this.refreshResults('')
       }
 
-      private positionPopup() {
+      private schedulePopupPosition() {
         if (!this.popup || !this.triggerRange) {
           return
         }
 
-        const coords = this.view.coordsAtPos(this.triggerRange.to)
-        if (!coords) {
-          return
-        }
+        const popup = this.popup
+        const position = this.triggerRange.to
 
-        this.popup.style.left = `${coords.left}px`
-        this.popup.style.top = `${coords.bottom + 6}px`
+        this.view.requestMeasure({
+          read: view => view.coordsAtPos(position),
+          write: (coords) => {
+            if (!popup || !this.popup || popup !== this.popup || !coords) {
+              return
+            }
+
+            popup.style.left = `${coords.left}px`
+            popup.style.top = `${coords.bottom + 6}px`
+          },
+        })
       }
 
       private async refreshResults(query: string) {

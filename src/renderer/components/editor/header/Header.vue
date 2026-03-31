@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { useApp, useSnippets, useSnippetUpdate } from '@/composables'
+import {
+  useApp,
+  useEditableField,
+  useSnippets,
+  useSnippetUpdate,
+} from '@/composables'
 import { i18n } from '@/electron'
 
 import {
@@ -30,11 +35,13 @@ const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
 
-const name = computed({
-  get() {
-    return selectedSnippet?.value?.name
-  },
-  set(v: string) {
+const {
+  model: name,
+  onFocus: onNameFocus,
+  onBlur,
+} = useEditableField(
+  () => selectedSnippet?.value?.name,
+  (v) => {
     addToUpdateQueue(selectedSnippet.value!.id, {
       name: v,
       description: selectedSnippet.value!.description,
@@ -43,7 +50,12 @@ const name = computed({
       isFavorites: selectedSnippet.value!.isFavorites,
     })
   },
-})
+)
+
+function onNameBlur() {
+  onBlur()
+  isFocusedSnippetName.value = false
+}
 
 const isShowJsonVisualizerAction = computed(
   () => selectedSnippetContent.value?.language === 'json',
@@ -86,7 +98,8 @@ function onJsonVisualizerToggle() {
         variant="ghost"
         class="w-full truncate px-0"
         :select="isFocusedSnippetName"
-        @blur="isFocusedSnippetName = false"
+        @focus="onNameFocus"
+        @blur="onNameBlur"
       />
       <div class="ml-2 flex">
         <UiActionButton

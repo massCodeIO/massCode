@@ -191,10 +191,7 @@ async function onDuplicate() {
 }
 
 function onCopySnippetLink() {
-  // copy(`masscode://folder/${state.folderId}/snippet/${props.snippet.id}`)
-  copy(
-    `masscode://goto?folderId=${state.folderId}&snippetId=${props.snippet.id}`,
-  )
+  copy(`masscode://goto?snippetId=${props.snippet.id}`)
 }
 
 function onDragStart(event: DragEvent) {

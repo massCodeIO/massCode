@@ -23,6 +23,7 @@ import {
   getImageBlockRanges,
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
+import { createInternalLinks } from './cm-extensions/internalLinks'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
@@ -265,6 +266,13 @@ function createEditorState(doc: string): EditorState {
       createHideMarkup({ alwaysHide: preview }),
     )
   }
+
+  extensions.push(
+    ...createInternalLinks({
+      editable,
+      mode: props.mode,
+    }),
+  )
 
   if (preview) {
     extensions.push(

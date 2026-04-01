@@ -201,7 +201,36 @@ export function shouldCloseInternalLinksPreviewOnUpdate(
 export function createInternalLinksPreview() {
   const previewPlugin = ViewPlugin.fromClass(
     class {
-      constructor(private readonly view: EditorView) {}
+      private onKeydown = (event: KeyboardEvent) => {
+        if ((event.key !== 'Meta' && event.key !== 'Control') || !hoveredLink) {
+          return
+        }
+
+        const plugin = this.view.plugin(previewPlugin)
+        if (!plugin) {
+          return
+        }
+
+        previewController.enterLink(
+          hoveredLink.dataset.internalLinkBroken !== 'true',
+          () => {
+            if (hoveredLink) {
+              void plugin.showPreview(hoveredLink)
+            }
+          },
+        )
+      }
+
+      private onKeyup = (event: KeyboardEvent) => {
+        if (event.key === 'Meta' || event.key === 'Control') {
+          dismissInternalLinksPreview()
+        }
+      }
+
+      constructor(private readonly view: EditorView) {
+        document.addEventListener('keydown', this.onKeydown)
+        document.addEventListener('keyup', this.onKeyup)
+      }
 
       update(update: { docChanged: boolean, selectionSet: boolean }) {
         if (
@@ -218,6 +247,9 @@ export function createInternalLinksPreview() {
       }
 
       destroy() {
+        document.removeEventListener('keydown', this.onKeydown)
+        document.removeEventListener('keyup', this.onKeyup)
+
         if (previewView.value === this.view) {
           previewController.dispose()
           closeInternalLinksPreview()
@@ -272,12 +304,17 @@ export function createInternalLinksPreview() {
             return
           }
 
+          hoveredLink = link
+
+          if (!event.metaKey && !event.ctrlKey) {
+            return
+          }
+
           const plugin = view.plugin(previewPlugin)
           if (!plugin) {
             return
           }
 
-          hoveredLink = link
           previewController.enterLink(
             link.dataset.internalLinkBroken !== 'true',
             () => {
@@ -287,13 +324,8 @@ export function createInternalLinksPreview() {
             },
           )
         },
-        mouseout(event, view) {
+        mouseout(event) {
           if (!findInternalLinkElement(event.target)) {
-            return
-          }
-
-          const plugin = view.plugin(previewPlugin)
-          if (!plugin) {
             return
           }
 

@@ -5,7 +5,10 @@ import type {
 } from '../dto/snippets'
 import Elysia from 'elysia'
 import { useStorage } from '../../storage'
-import { commonAddResponse } from '../dto/common/response'
+import {
+  commonAddResponse,
+  commonMessageResponse,
+} from '../dto/common/response'
 import { snippetsDTO } from '../dto/snippets'
 
 const app = new Elysia({ prefix: '/snippets' })
@@ -108,7 +111,10 @@ app
       return snippet as SnippetItemResponse
     },
     {
-      response: 'snippetItemResponse',
+      response: {
+        200: 'snippetItemResponse',
+        404: commonMessageResponse,
+      },
       detail: {
         tags: ['Snippets'],
       },

@@ -2,8 +2,26 @@ import type { EditorView } from '@codemirror/view'
 import type { CachedEntityData } from './cache'
 import type { InternalLinkType } from './parser'
 import { ViewPlugin } from '@codemirror/view'
+import { reactive, shallowRef } from 'vue'
 import { entityCache } from './cache'
 import { fetchInternalLinkEntity } from './decorations'
+
+interface InternalLinksPreviewAnchor {
+  left: number
+  top: number
+}
+
+interface InternalLinksPreviewContent {
+  body: string
+  title: string
+  type: InternalLinkType
+}
+
+export const internalLinksPreviewState = reactive({
+  anchor: null as InternalLinksPreviewAnchor | null,
+  content: null as InternalLinksPreviewContent | null,
+  isOpen: false,
+})
 
 export class InternalLinkPreviewController {
   private openTimer: ReturnType<typeof setTimeout> | null = null
@@ -46,9 +64,15 @@ export class InternalLinkPreviewController {
     this.scheduleClose(onClose)
   }
 
-  dispose() {
+  reset() {
+    this.hoveringLink = false
+    this.hoveringPopup = false
     this.clearOpenTimer()
     this.clearCloseTimer()
+  }
+
+  dispose() {
+    this.reset()
   }
 
   private scheduleClose(onClose: () => void) {
@@ -84,53 +108,105 @@ export class InternalLinkPreviewController {
   }
 }
 
+const previewView = shallowRef<EditorView | null>(null)
+const previewController = new InternalLinkPreviewController(300)
+let hoveredLink: HTMLElement | null = null
+let previewCleanupTimer: ReturnType<typeof setTimeout> | null = null
+
+interface ShouldCloseInternalLinksPreviewOnUpdateOptions {
+  docChanged: boolean
+  isOwner: boolean
+  selectionSet: boolean
+}
+
 function getCacheKey(type: InternalLinkType, id: number) {
   return `${type}:${id}`
 }
 
-function buildPreviewContent(entity: CachedEntityData): HTMLElement {
-  const root = document.createElement('div')
-  root.className = 'cm-internal-link-preview__content'
+function buildPreviewContent(
+  entity: CachedEntityData,
+): InternalLinksPreviewContent {
+  return {
+    body:
+      entity.type === 'snippet'
+        ? (entity.firstContent?.value?.trim() ?? '')
+        : (entity.contentExcerpt?.trim() ?? ''),
+    title: entity.name,
+    type: entity.type,
+  }
+}
 
-  const title = document.createElement('div')
-  title.className = 'cm-internal-link-preview__title'
-  title.textContent = entity.name
-  root.append(title)
+export function closeInternalLinksPreview() {
+  internalLinksPreviewState.isOpen = false
 
-  const previewValue
-    = entity.type === 'snippet'
-      ? (entity.firstContent?.value?.trim() ?? '')
-      : (entity.contentExcerpt?.trim() ?? '')
-
-  if (!previewValue) {
-    return root
+  if (previewCleanupTimer) {
+    clearTimeout(previewCleanupTimer)
   }
 
-  const body = document.createElement(
-    entity.type === 'snippet' ? 'pre' : 'div',
-  )
-  body.className = 'cm-internal-link-preview__body'
-  body.textContent = previewValue
-  root.append(body)
+  previewCleanupTimer = setTimeout(() => {
+    if (internalLinksPreviewState.isOpen) {
+      return
+    }
 
-  return root
+    internalLinksPreviewState.anchor = null
+    internalLinksPreviewState.content = null
+    previewCleanupTimer = null
+  }, 180)
+}
+
+export function dismissInternalLinksPreview() {
+  previewController.reset()
+  hoveredLink = null
+  closeInternalLinksPreview()
+}
+
+export function onInternalLinksPreviewPopupEnter() {
+  previewController.enterPopup()
+}
+
+export function onInternalLinksPreviewPopupLeave() {
+  previewController.leavePopup(() => closeInternalLinksPreview())
+}
+
+export function shouldCloseInternalLinksPreviewOnUpdate(
+  options: ShouldCloseInternalLinksPreviewOnUpdateOptions,
+) {
+  if (!options.isOwner) {
+    return false
+  }
+
+  return options.docChanged || options.selectionSet
 }
 
 export function createInternalLinksPreview() {
   const previewPlugin = ViewPlugin.fromClass(
     class {
-      private popup: HTMLDivElement | null = null
-      private controller = new InternalLinkPreviewController(300)
-      private hoveredLink: HTMLElement | null = null
-
       constructor(private readonly view: EditorView) {}
 
-      destroy() {
-        this.controller.dispose()
-        this.removePopup()
+      update(update: { docChanged: boolean, selectionSet: boolean }) {
+        if (
+          !shouldCloseInternalLinksPreviewOnUpdate({
+            docChanged: update.docChanged,
+            isOwner: previewView.value === this.view,
+            selectionSet: update.selectionSet,
+          })
+        ) {
+          return
+        }
+
+        dismissInternalLinksPreview()
       }
 
-      private async showPopup(target: HTMLElement) {
+      destroy() {
+        if (previewView.value === this.view) {
+          previewController.dispose()
+          closeInternalLinksPreview()
+          hoveredLink = null
+          previewView.value = null
+        }
+      }
+
+      async showPreview(target: HTMLElement) {
         const type = target.dataset.internalLinkType as
           | InternalLinkType
           | undefined
@@ -152,31 +228,29 @@ export function createInternalLinksPreview() {
           return
         }
 
-        this.removePopup()
-
-        const popup = document.createElement('div')
-        popup.className = 'cm-internal-link-preview'
-        popup.append(buildPreviewContent(entity.data))
-        popup.addEventListener('mouseenter', () =>
-          this.controller.enterPopup())
-        popup.addEventListener('mouseleave', () =>
-          this.controller.leavePopup(() => this.removePopup()))
-
-        this.view.dom.append(popup)
-
-        const rect = target.getBoundingClientRect()
-        popup.style.left = `${rect.left}px`
-        popup.style.top = `${rect.bottom + 8}px`
-        this.popup = popup
-      }
-
-      private removePopup() {
-        this.popup?.remove()
-        this.popup = null
+        previewView.value = this.view
+        internalLinksPreviewState.anchor = {
+          left: target.getBoundingClientRect().left,
+          top: target.getBoundingClientRect().bottom + 8,
+        }
+        internalLinksPreviewState.content = buildPreviewContent(entity.data)
+        internalLinksPreviewState.isOpen = true
       }
     },
     {
       eventHandlers: {
+        mousedown(event) {
+          const target = event.target
+          if (!(target instanceof HTMLElement)) {
+            return
+          }
+
+          if (!target.closest('[data-internal-link="true"]')) {
+            return
+          }
+
+          dismissInternalLinksPreview()
+        },
         mouseover(event, view) {
           const target = event.target
           if (!(target instanceof HTMLElement)) {
@@ -193,12 +267,12 @@ export function createInternalLinksPreview() {
             return
           }
 
-          plugin.hoveredLink = link
-          plugin.controller.enterLink(
+          hoveredLink = link
+          previewController.enterLink(
             link.dataset.internalLinkBroken !== 'true',
             () => {
-              if (plugin.hoveredLink) {
-                void plugin.showPopup(plugin.hoveredLink)
+              if (hoveredLink) {
+                void plugin.showPreview(hoveredLink)
               }
             },
           )
@@ -218,8 +292,8 @@ export function createInternalLinksPreview() {
             return
           }
 
-          plugin.hoveredLink = null
-          plugin.controller.leaveLink(() => plugin.removePopup())
+          hoveredLink = null
+          previewController.leaveLink(() => closeInternalLinksPreview())
         },
       },
     },

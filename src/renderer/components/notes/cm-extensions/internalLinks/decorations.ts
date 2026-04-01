@@ -1,6 +1,6 @@
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import type { CachedEntity } from './cache'
-import type { InternalLinkType } from './parser'
+import type { InternalLinkMatch, InternalLinkType } from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
@@ -47,7 +47,7 @@ export function shouldShowInternalLinkWidget(
 
   return !selections.some(({ from: selectionFrom, to: selectionTo, empty }) => {
     if (empty) {
-      return selectionFrom >= from && selectionFrom <= to
+      return selectionFrom >= from && selectionFrom < to
     }
 
     return selectionFrom < to && selectionTo > from
@@ -89,18 +89,20 @@ function createTypeIcon(type: InternalLinkType): SVGSVGElement {
 
 class InternalLinkWidget extends WidgetType {
   constructor(
-    readonly link: { id: number, label: string, type: InternalLinkType },
+    readonly link: InternalLinkMatch,
     readonly status: InternalLinkEntityStatus,
+    readonly resolvedTarget: { id: number, type: InternalLinkType } | null,
   ) {
     super()
   }
 
   eq(other: InternalLinkWidget): boolean {
     return (
-      this.link.id === other.link.id
+      this.link.raw === other.link.raw
       && this.link.label === other.link.label
-      && this.link.type === other.link.type
       && this.status === other.status
+      && this.resolvedTarget?.id === other.resolvedTarget?.id
+      && this.resolvedTarget?.type === other.resolvedTarget?.type
     )
   }
 
@@ -108,11 +110,14 @@ class InternalLinkWidget extends WidgetType {
     const root = document.createElement('span')
     root.className = `cm-internal-link is-${this.status}`
     root.dataset.internalLink = 'true'
-    root.dataset.internalLinkId = String(this.link.id)
-    root.dataset.internalLinkType = this.link.type
     root.dataset.internalLinkBroken = String(this.status === 'broken')
 
-    root.append(createTypeIcon(this.link.type))
+    if (this.resolvedTarget) {
+      root.dataset.internalLinkId = String(this.resolvedTarget.id)
+      root.dataset.internalLinkType = this.resolvedTarget.type
+    }
+
+    root.append(createTypeIcon(this.resolvedTarget?.type ?? 'note'))
 
     const label = document.createElement('span')
     label.className = 'cm-internal-link__label'
@@ -121,7 +126,7 @@ class InternalLinkWidget extends WidgetType {
 
     if (this.status === 'broken') {
       root.title = i18n.t(
-        this.link.type === 'snippet'
+        this.resolvedTarget?.type === 'snippet'
           ? 'internalLinks.missing.snippet'
           : 'internalLinks.missing.note',
       )
@@ -137,6 +142,21 @@ class InternalLinkWidget extends WidgetType {
 
 function getCacheKey(type: InternalLinkType, id: number) {
   return `${type}:${id}`
+}
+
+function getTitleCacheKey(title: string) {
+  return `title:${title.trim().toLocaleLowerCase()}`
+}
+
+function findExactNameMatch<T extends { name: string }>(
+  items: T[],
+  title: string,
+): T | undefined {
+  const normalizedTitle = title.trim().toLocaleLowerCase()
+
+  return items.find(
+    item => item.name.trim().toLocaleLowerCase() === normalizedTitle,
+  )
 }
 
 export async function fetchInternalLinkEntity(
@@ -192,18 +212,77 @@ export async function fetchInternalLinkEntity(
   }
 }
 
-function requestEntityRefresh(
-  view: EditorView,
-  type: InternalLinkType,
-  id: number,
-) {
-  const key = getCacheKey(type, id)
+async function resolveInternalLinkByTitle(
+  title: string,
+): Promise<CachedEntity> {
+  try {
+    const [{ data: snippets }, { data: notes }] = await Promise.all([
+      api.snippets.getSnippets({ search: title, isDeleted: 0 }),
+      api.notes.getNotes({ search: title, isDeleted: 0 }),
+    ])
+
+    const snippet = findExactNameMatch(snippets, title)
+    if (snippet) {
+      return {
+        exists: true,
+        data: {
+          firstContent: snippet.contents[0]
+            ? {
+                language: snippet.contents[0].language,
+                value: snippet.contents[0].value,
+              }
+            : null,
+          folder: snippet.folder,
+          id: snippet.id,
+          isDeleted: snippet.isDeleted,
+          name: snippet.name,
+          type: 'snippet',
+        },
+      }
+    }
+
+    const note = findExactNameMatch(notes, title)
+    if (note) {
+      return {
+        exists: true,
+        data: {
+          contentExcerpt: note.content.slice(0, 400).trim(),
+          folder: note.folder,
+          id: note.id,
+          isDeleted: note.isDeleted,
+          name: note.name,
+          type: 'note',
+        },
+      }
+    }
+
+    return { exists: false }
+  }
+  catch {
+    return { exists: false }
+  }
+}
+
+function getInternalLinkCacheKey(link: InternalLinkMatch): string {
+  if (link.legacyTarget) {
+    return getCacheKey(link.legacyTarget.type, link.legacyTarget.id)
+  }
+
+  return getTitleCacheKey(link.target)
+}
+
+function requestEntityRefresh(view: EditorView, link: InternalLinkMatch) {
+  const key = getInternalLinkCacheKey(link)
   if (entityCache.get(key) || entityCache.isPending(key)) {
     return
   }
 
   entityCache.markPending(key)
-  void fetchInternalLinkEntity(type, id).then((entity) => {
+  const request = link.legacyTarget
+    ? fetchInternalLinkEntity(link.legacyTarget.type, link.legacyTarget.id)
+    : resolveInternalLinkByTitle(link.target)
+
+  void request.then((entity) => {
     entityCache.set(key, entity)
     view.dispatch({
       effects: refreshInternalLinksEffect.of(null),
@@ -263,17 +342,23 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
             continue
           }
 
-          const key = getCacheKey(link.type, link.id)
+          const key = getInternalLinkCacheKey(link)
           const entity = entityCache.get(key)
           const status = getInternalLinkEntityStatus(entity)
 
           if (status === 'pending') {
-            requestEntityRefresh(this.view, link.type, link.id)
+            requestEntityRefresh(this.view, link)
           }
 
           decorations.push(
             Decoration.replace({
-              widget: new InternalLinkWidget(link, status),
+              widget: new InternalLinkWidget(
+                link,
+                status,
+                entity?.exists
+                  ? { id: entity.data.id, type: entity.data.type }
+                  : link.legacyTarget,
+              ),
             }).range(link.from, link.to),
           )
         }

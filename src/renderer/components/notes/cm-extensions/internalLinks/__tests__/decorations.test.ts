@@ -68,6 +68,18 @@ describe('shouldShowInternalLinkWidget', () => {
       ),
     ).toBe(false)
   })
+
+  it('renders widget when the caret is exactly at the end of the link', () => {
+    expect(
+      shouldShowInternalLinkWidget(
+        'livePreview',
+        true,
+        [{ from: 20, to: 20, empty: true }],
+        5,
+        20,
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('getInternalLinkEntityStatus', () => {

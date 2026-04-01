@@ -1,10 +1,11 @@
 export type InternalLinkType = 'snippet' | 'note'
 
 export interface InternalLink {
-  type: InternalLinkType
-  id: number
+  alias: string | null
+  legacyTarget: { id: number, type: InternalLinkType } | null
   label: string
   raw: string
+  target: string
 }
 
 export interface InternalLinkMatch extends InternalLink {
@@ -12,13 +13,13 @@ export interface InternalLinkMatch extends InternalLink {
   to: number
 }
 
-const ESCAPABLE_LABEL_CHARACTERS = new Set(['\\', '|', ']'])
+const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
 
-export function escapeLabel(label: string): string {
+export function escapeLinkPart(value: string): string {
   let result = ''
 
-  for (const char of label) {
-    if (ESCAPABLE_LABEL_CHARACTERS.has(char)) {
+  for (const char of value) {
+    if (ESCAPABLE_LINK_CHARACTERS.has(char)) {
       result += `\\${char}`
     }
     else {
@@ -29,14 +30,14 @@ export function escapeLabel(label: string): string {
   return result
 }
 
-function unescapeLabel(label: string): string {
+function unescapeLinkPart(value: string): string {
   let result = ''
 
-  for (let index = 0; index < label.length; index++) {
-    const char = label[index]
-    const nextChar = label[index + 1]
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index]
+    const nextChar = value[index + 1]
 
-    if (char === '\\' && nextChar && ESCAPABLE_LABEL_CHARACTERS.has(nextChar)) {
+    if (char === '\\' && nextChar && ESCAPABLE_LINK_CHARACTERS.has(nextChar)) {
       result += nextChar
       index++
       continue
@@ -48,86 +49,107 @@ function unescapeLabel(label: string): string {
   return result
 }
 
+function readLinkPart(
+  text: string,
+  index: number,
+): { value: string, nextIndex: number, separator: 'pipe' | 'end' | 'eof' } {
+  let rawValue = ''
+
+  while (index < text.length) {
+    const char = text[index]
+
+    if (char === '\n' || char === '\r') {
+      return {
+        nextIndex: index,
+        separator: 'eof',
+        value: rawValue,
+      }
+    }
+
+    if (char === '\\' && index + 1 < text.length) {
+      rawValue += char
+      rawValue += text[index + 1]
+      index += 2
+      continue
+    }
+
+    if (char === '|') {
+      return {
+        nextIndex: index + 1,
+        separator: 'pipe',
+        value: rawValue,
+      }
+    }
+
+    if (char === ']' && text[index + 1] === ']') {
+      return {
+        nextIndex: index + 2,
+        separator: 'end',
+        value: rawValue,
+      }
+    }
+
+    rawValue += char
+    index++
+  }
+
+  return {
+    nextIndex: index,
+    separator: 'eof',
+    value: rawValue,
+  }
+}
+
 function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
   if (text.slice(from, from + 2) !== '[[') {
     return null
   }
 
-  let index = from + 2
-  let type = ''
-
-  while (index < text.length) {
-    const char = text[index]
-    if (char === ':') {
-      break
-    }
-
-    type += char
-    index++
-  }
-
-  if ((type !== 'snippet' && type !== 'note') || text[index] !== ':') {
+  const targetResult = readLinkPart(text, from + 2)
+  if (targetResult.separator === 'eof') {
     return null
   }
 
-  index += 1
+  const target = unescapeLinkPart(targetResult.value)
+  if (!target) {
+    return null
+  }
 
-  let idText = ''
-  while (index < text.length) {
-    const char = text[index]
-    if (char === '|') {
-      break
-    }
+  let alias: string | null = null
+  let to = targetResult.nextIndex
 
-    if (char < '0' || char > '9') {
+  if (targetResult.separator === 'pipe') {
+    const aliasResult = readLinkPart(text, targetResult.nextIndex)
+    if (aliasResult.separator !== 'end') {
       return null
     }
 
-    idText += char
-    index++
-  }
-
-  const id = Number(idText)
-  if (!idText || !Number.isInteger(id) || id <= 0 || text[index] !== '|') {
-    return null
-  }
-
-  index += 1
-
-  let rawLabel = ''
-  while (index < text.length) {
-    const char = text[index]
-
-    if (char === '\\' && index + 1 < text.length) {
-      rawLabel += char
-      rawLabel += text[index + 1]
-      index += 2
-      continue
+    alias = unescapeLinkPart(aliasResult.value)
+    if (!alias) {
+      return null
     }
 
-    if (char === ']' && text[index + 1] === ']') {
-      const to = index + 2
-      if (!rawLabel) {
-        return null
-      }
-
-      const raw = text.slice(from, to)
-
-      return {
-        from,
-        id,
-        label: unescapeLabel(rawLabel),
-        raw,
-        to,
-        type,
-      }
-    }
-
-    rawLabel += char
-    index++
+    to = aliasResult.nextIndex
   }
 
-  return null
+  const raw = text.slice(from, to)
+  const legacyMatch = target.match(/^(snippet|note):(\d+)$/)
+  const legacyTarget = legacyMatch
+    ? {
+        id: Number(legacyMatch[2]),
+        type: legacyMatch[1] as InternalLinkType,
+      }
+    : null
+
+  return {
+    alias,
+    from,
+    legacyTarget,
+    label: alias ?? target,
+    raw,
+    target,
+    to,
+  }
 }
 
 export function parseInternalLink(text: string): InternalLink | null {
@@ -138,10 +160,11 @@ export function parseInternalLink(text: string): InternalLink | null {
   }
 
   return {
-    id: match.id,
+    alias: match.alias,
+    legacyTarget: match.legacyTarget,
     label: match.label,
     raw: match.raw,
-    type: match.type,
+    target: match.target,
   }
 }
 
@@ -165,10 +188,12 @@ export function findInternalLinks(text: string): InternalLinkMatch[] {
   return links
 }
 
-export function buildLinkMarkdown(
-  type: InternalLinkType,
-  id: number,
-  label: string,
-): string {
-  return `[[${type}:${id}|${escapeLabel(label)}]]`
+export function buildLinkMarkdown(target: string, label?: string): string {
+  const escapedTarget = escapeLinkPart(target)
+
+  if (!label || label === target) {
+    return `[[${escapedTarget}]]`
+  }
+
+  return `[[${escapedTarget}|${escapeLinkPart(label)}]]`
 }

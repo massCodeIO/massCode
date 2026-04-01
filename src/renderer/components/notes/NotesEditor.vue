@@ -376,8 +376,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    ref="editorContainer"
-    class="h-full overflow-hidden"
-  />
+  <div class="h-full overflow-hidden">
+    <div
+      ref="editorContainer"
+      class="h-full overflow-hidden"
+    />
+    <NotesInternalLinksOverlay />
+  </div>
 </template>

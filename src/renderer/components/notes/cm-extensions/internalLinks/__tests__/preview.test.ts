@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { InternalLinkPreviewController } from '../preview'
+import {
+  dismissInternalLinksPreview,
+  InternalLinkPreviewController,
+  internalLinksPreviewState,
+  shouldCloseInternalLinksPreviewOnUpdate,
+} from '../preview'
 
 vi.mock('@/electron', () => ({
   i18n: {
@@ -22,6 +27,9 @@ vi.mock('@/services/api', () => ({
 
 beforeEach(() => {
   vi.useFakeTimers()
+  internalLinksPreviewState.anchor = null
+  internalLinksPreviewState.content = null
+  internalLinksPreviewState.isOpen = false
 })
 
 describe('internalLinkPreviewController', () => {
@@ -66,5 +74,75 @@ describe('internalLinkPreviewController', () => {
     vi.advanceTimersByTime(300)
 
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('resets pending hover state when editing starts', () => {
+    const controller = new InternalLinkPreviewController(300)
+    const onOpen = vi.fn()
+
+    controller.enterLink(true, onOpen)
+    controller.reset()
+    vi.advanceTimersByTime(300)
+
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+})
+
+describe('shouldCloseInternalLinksPreviewOnUpdate', () => {
+  it('closes preview when owner view changes selection or document', () => {
+    expect(
+      shouldCloseInternalLinksPreviewOnUpdate({
+        docChanged: true,
+        isOwner: true,
+        selectionSet: false,
+      }),
+    ).toBe(true)
+
+    expect(
+      shouldCloseInternalLinksPreviewOnUpdate({
+        docChanged: false,
+        isOwner: true,
+        selectionSet: true,
+      }),
+    ).toBe(true)
+  })
+
+  it('ignores unrelated updates', () => {
+    expect(
+      shouldCloseInternalLinksPreviewOnUpdate({
+        docChanged: false,
+        isOwner: true,
+        selectionSet: false,
+      }),
+    ).toBe(false)
+
+    expect(
+      shouldCloseInternalLinksPreviewOnUpdate({
+        docChanged: true,
+        isOwner: false,
+        selectionSet: true,
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('dismissInternalLinksPreview', () => {
+  it('closes an already open preview immediately on interaction start', () => {
+    internalLinksPreviewState.anchor = { left: 10, top: 20 }
+    internalLinksPreviewState.content = {
+      body: 'Body',
+      title: 'Title',
+      type: 'note',
+    }
+    internalLinksPreviewState.isOpen = true
+
+    dismissInternalLinksPreview()
+
+    expect(internalLinksPreviewState.isOpen).toBe(false)
+
+    vi.advanceTimersByTime(180)
+
+    expect(internalLinksPreviewState.anchor).toBeNull()
+    expect(internalLinksPreviewState.content).toBeNull()
   })
 })

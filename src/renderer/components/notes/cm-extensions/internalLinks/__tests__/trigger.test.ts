@@ -2,8 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import {
   buildInternalLinkInsertChange,
+  findInternalLinkSearchMatch,
   findInternalLinkTriggerRange,
+  getInternalLinksPickerAnchorFromCoords,
+  getInternalLinkTokenState,
+  handleInternalLinksPickerKey,
+  internalLinksPickerState,
   isInternalLinkPickerEnabled,
+  shouldOpenInternalLinksPicker,
 } from '../trigger'
 
 vi.mock('@/electron', () => ({
@@ -93,17 +99,158 @@ describe('findInternalLinkTriggerRange', () => {
   })
 })
 
+describe('findInternalLinkSearchMatch', () => {
+  it('uses everything after [[ on the current line as query', () => {
+    expect(findInternalLinkSearchMatch('Hello [[doc link', 16)).toEqual({
+      anchor: 16,
+      from: 6,
+      query: 'doc link',
+      to: 16,
+    })
+  })
+
+  it('returns null after the user starts typing an alias via a pipe', () => {
+    expect(
+      findInternalLinkSearchMatch('Hello [[doc link|Alias', 22),
+    ).toBeNull()
+  })
+
+  it('returns null when query already contains a closing bracket', () => {
+    expect(findInternalLinkSearchMatch('Hello [[doc] link', 17)).toBeNull()
+  })
+
+  it('treats editing inside a completed obsidian-style target as search mode', () => {
+    expect(findInternalLinkSearchMatch('Hello [[Doc]] tail', 11)).toEqual({
+      anchor: 11,
+      from: 6,
+      query: 'Doc',
+      to: 13,
+    })
+  })
+
+  it('returns null inside an existing legacy stored internal link payload', () => {
+    expect(
+      findInternalLinkSearchMatch('Hello [[snippet:56|Doc label', 29),
+    ).toBeNull()
+    expect(
+      findInternalLinkSearchMatch('Hello [[note:12|Doc label', 26),
+    ).toBeNull()
+  })
+})
+
+describe('getInternalLinkTokenState', () => {
+  it('keeps completed obsidian-style link editable in target segment', () => {
+    const text = 'Hello [[Repository Pattern]] tail'
+    const linkStart = text.indexOf('[[') + 2
+    const linkEnd = text.indexOf(']]')
+
+    expect(getInternalLinkTokenState(text, linkStart)).toEqual({
+      kind: 'search',
+      match: {
+        anchor: linkStart,
+        from: text.indexOf('[['),
+        query: 'Repository Pattern',
+        to: linkEnd + 2,
+      },
+    })
+    expect(getInternalLinkTokenState(text, linkStart + 5)).toEqual({
+      kind: 'search',
+      match: {
+        anchor: linkStart + 5,
+        from: text.indexOf('[['),
+        query: 'Repository Pattern',
+        to: linkEnd + 2,
+      },
+    })
+    expect(getInternalLinkTokenState(text, linkEnd)).toEqual({
+      kind: 'search',
+      match: {
+        anchor: linkEnd,
+        from: text.indexOf('[['),
+        query: 'Repository Pattern',
+        to: linkEnd + 2,
+      },
+    })
+  })
+
+  it('keeps alias segment of a completed link out of search mode', () => {
+    expect(
+      getInternalLinkTokenState('Hello [[Repository|Shown]] tail', 22),
+    ).toEqual({
+      kind: 'stored_link',
+    })
+  })
+})
+
+describe('shouldOpenInternalLinksPicker', () => {
+  it('opens only on document changes when the picker is currently closed', () => {
+    expect(
+      shouldOpenInternalLinksPicker({
+        docChanged: true,
+        isOpen: false,
+        selectionSet: false,
+      }),
+    ).toBe(true)
+
+    expect(
+      shouldOpenInternalLinksPicker({
+        docChanged: false,
+        isOpen: false,
+        selectionSet: true,
+      }),
+    ).toBe(false)
+
+    expect(
+      shouldOpenInternalLinksPicker({
+        docChanged: false,
+        isOpen: true,
+        selectionSet: true,
+      }),
+    ).toBe(true)
+  })
+})
+
+describe('getInternalLinksPickerAnchorFromCoords', () => {
+  it('anchors the popup below the current text line', () => {
+    expect(
+      getInternalLinksPickerAnchorFromCoords({
+        bottom: 96,
+        left: 144,
+      }),
+    ).toEqual({
+      left: 144,
+      top: 96,
+    })
+  })
+})
+
+describe('handleInternalLinksPickerKey', () => {
+  it('moves active selection with arrow keys', () => {
+    internalLinksPickerState.isOpen = true
+    internalLinksPickerState.activeIndex = 0
+    internalLinksPickerState.items = [
+      { id: 1, locationLabel: 'A', name: 'A', type: 'snippet' },
+      { id: 2, locationLabel: 'B', name: 'B', type: 'note' },
+    ]
+
+    expect(handleInternalLinksPickerKey('ArrowDown')).toBe(true)
+    expect(internalLinksPickerState.activeIndex).toBe(1)
+    expect(handleInternalLinksPickerKey('ArrowUp')).toBe(true)
+    expect(internalLinksPickerState.activeIndex).toBe(0)
+  })
+})
+
 describe('buildInternalLinkInsertChange', () => {
-  it('replaces only the original trigger range', () => {
+  it('replaces only the original trigger range with exact obsidian format', () => {
     expect(
       buildInternalLinkInsertChange(
-        { from: 10, to: 12 },
-        { type: 'note', id: 15, label: 'Array ] draft' },
+        { anchor: 16, from: 10, query: 'Repo', to: 16 },
+        { type: 'note', id: 15, label: 'Repository Pattern with Cache' },
       ),
     ).toEqual({
       from: 10,
-      to: 12,
-      insert: '[[note:15|Array \\] draft]]',
+      to: 16,
+      insert: '[[Repository Pattern with Cache]]',
     })
   })
 })

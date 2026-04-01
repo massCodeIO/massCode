@@ -2,14 +2,21 @@ import type { EditorView } from '@codemirror/view'
 import type { InternalLinkType } from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { ViewPlugin } from '@codemirror/view'
-import { buildLinkMarkdown } from './parser'
+import { Prec } from '@codemirror/state'
+import { keymap, ViewPlugin } from '@codemirror/view'
+import { reactive, shallowRef } from 'vue'
+import { buildLinkMarkdown, parseInternalLink } from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
 
 export interface InternalLinkTriggerRange {
   from: number
   to: number
+}
+
+export interface InternalLinkSearchMatch extends InternalLinkTriggerRange {
+  anchor: number
+  query: string
 }
 
 export interface InternalLinkPickerItem {
@@ -30,6 +37,40 @@ interface SearchableEntity {
   folder: { id: number, name: string } | null
   isDeleted: number
 }
+
+interface InternalLinksPickerAnchor {
+  left: number
+  top: number
+}
+
+interface InternalLinksPickerCoords {
+  bottom: number
+  left: number
+}
+
+interface ShouldOpenInternalLinksPickerOptions {
+  docChanged: boolean
+  isOpen: boolean
+  selectionSet: boolean
+}
+
+type InternalLinkTokenState =
+  | { kind: 'closed' }
+  | { kind: 'stored_link' }
+  | { kind: 'search', match: InternalLinkSearchMatch }
+
+const pickerView = shallowRef<EditorView | null>(null)
+let pickerRange: InternalLinkSearchMatch | null = null
+let searchRequestId = 0
+let pickerCleanupTimer: ReturnType<typeof setTimeout> | null = null
+
+export const internalLinksPickerState = reactive({
+  activeIndex: 0,
+  anchor: null as InternalLinksPickerAnchor | null,
+  isOpen: false,
+  items: [] as InternalLinkPickerItem[],
+  query: '',
+})
 
 export function isInternalLinkPickerEnabled(
   mode: InternalLinksMode,
@@ -56,8 +97,88 @@ export function findInternalLinkTriggerRange(
   }
 }
 
+export function findInternalLinkSearchMatch(
+  text: string,
+  head: number,
+): InternalLinkSearchMatch | null {
+  const state = getInternalLinkTokenState(text, head)
+
+  return state.kind === 'search' ? state.match : null
+}
+
+function isStoredInternalLinkPayload(payload: string): boolean {
+  return /^(?:snippet|note):\d+\|.*$/.test(payload)
+}
+
+export function getInternalLinkTokenState(
+  text: string,
+  head: number,
+): InternalLinkTokenState {
+  const lineStart = text.lastIndexOf('\n', Math.max(0, head - 1)) + 1
+  const lineEndIndex = text.indexOf('\n', head)
+  const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex
+  const linePrefix = text.slice(lineStart, head)
+  const triggerIndex = linePrefix.lastIndexOf('[[')
+
+  if (triggerIndex === -1) {
+    return { kind: 'closed' }
+  }
+
+  const from = lineStart + triggerIndex
+  const tokenAfterTrigger = text.slice(from + 2, lineEnd)
+  const closingIndex = tokenAfterTrigger.indexOf(']]')
+  const fullPayload
+    = closingIndex === -1
+      ? tokenAfterTrigger
+      : tokenAfterTrigger.slice(0, closingIndex)
+  const rawPayload = text.slice(from + 2, head)
+  const headOffset = head - (from + 2)
+  const linkEnd = closingIndex === -1 ? head : from + 2 + closingIndex + 2
+
+  if (rawPayload.includes(']') || rawPayload.includes('\n')) {
+    return { kind: 'closed' }
+  }
+
+  if (isStoredInternalLinkPayload(fullPayload)) {
+    return { kind: 'stored_link' }
+  }
+
+  if (closingIndex !== -1 && parseInternalLink(`[[${fullPayload}]]`)) {
+    const aliasIndex = fullPayload.indexOf('|')
+    const targetEnd = aliasIndex === -1 ? fullPayload.length : aliasIndex
+
+    if (headOffset <= targetEnd) {
+      return {
+        kind: 'search',
+        match: {
+          anchor: head,
+          from,
+          query: fullPayload.slice(0, targetEnd),
+          to: linkEnd,
+        },
+      }
+    }
+
+    return { kind: 'stored_link' }
+  }
+
+  if (rawPayload.includes('|')) {
+    return { kind: 'closed' }
+  }
+
+  return {
+    kind: 'search',
+    match: {
+      anchor: head,
+      from,
+      query: rawPayload,
+      to: head,
+    },
+  }
+}
+
 export function buildInternalLinkInsertChange(
-  range: InternalLinkTriggerRange,
+  range: InternalLinkSearchMatch,
   item: {
     id: number
     label: string
@@ -66,8 +187,8 @@ export function buildInternalLinkInsertChange(
 ) {
   return {
     from: range.from,
+    insert: buildLinkMarkdown(item.label),
     to: range.to,
-    insert: buildLinkMarkdown(item.type, item.id, item.label),
   }
 }
 
@@ -81,71 +202,6 @@ function getLocationLabel(entity: SearchableEntity): string {
   }
 
   return i18n.t('common.inbox')
-}
-
-function createTypeIcon(type: InternalLinkType): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 24 24')
-  svg.setAttribute('width', '14')
-  svg.setAttribute('height', '14')
-  svg.setAttribute('fill', 'none')
-  svg.setAttribute('stroke', 'currentColor')
-  svg.setAttribute('stroke-width', '2')
-  svg.setAttribute('stroke-linecap', 'round')
-  svg.setAttribute('stroke-linejoin', 'round')
-  svg.classList.add('cm-internal-link-picker__icon')
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  path.setAttribute(
-    'd',
-    type === 'snippet'
-      ? 'M8 9l-3 3 3 3M16 9l3 3-3 3M13 6l-2 12'
-      : 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
-  )
-  svg.append(path)
-
-  if (type === 'note') {
-    const second = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'path',
-    )
-    second.setAttribute('d', 'M14 2v6h6M8 13h8M8 17h5')
-    svg.append(second)
-  }
-
-  return svg
-}
-
-function renderPickerItem(
-  item: InternalLinkPickerItem,
-  isActive: boolean,
-): HTMLButtonElement {
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.className = `cm-internal-link-picker__item${isActive ? ' is-active' : ''}`
-
-  const titleRow = document.createElement('span')
-  titleRow.className = 'cm-internal-link-picker__title-row'
-  titleRow.append(createTypeIcon(item.type))
-
-  const name = document.createElement('span')
-  name.className = 'cm-internal-link-picker__name'
-  name.textContent = item.name
-  titleRow.append(name)
-
-  const location = document.createElement('span')
-  location.className = 'cm-internal-link-picker__location'
-  location.textContent = item.locationLabel
-
-  button.append(titleRow, location)
-  return button
-}
-
-function renderGroupTitle(title: string): HTMLElement {
-  const element = document.createElement('div')
-  element.className = 'cm-internal-link-picker__group-title'
-  element.textContent = title
-  return element
 }
 
 async function searchItems(query: string): Promise<InternalLinkPickerItem[]> {
@@ -170,6 +226,172 @@ async function searchItems(query: string): Promise<InternalLinkPickerItem[]> {
   ]
 }
 
+export function setInternalLinksPickerAnchor(
+  anchor: InternalLinksPickerAnchor | null,
+) {
+  if (!internalLinksPickerState.isOpen) {
+    return
+  }
+
+  internalLinksPickerState.anchor = anchor
+}
+
+export function closeInternalLinksPicker(restoreFocus = true) {
+  const view = pickerView.value
+  const activeAnchor = internalLinksPickerState.anchor
+
+  internalLinksPickerState.activeIndex = 0
+  internalLinksPickerState.isOpen = false
+
+  if (pickerCleanupTimer) {
+    clearTimeout(pickerCleanupTimer)
+  }
+
+  pickerCleanupTimer = setTimeout(() => {
+    if (internalLinksPickerState.isOpen) {
+      return
+    }
+
+    internalLinksPickerState.anchor = null
+    internalLinksPickerState.items = []
+    internalLinksPickerState.query = ''
+    pickerRange = null
+    pickerView.value = null
+    pickerCleanupTimer = null
+  }, 180)
+
+  internalLinksPickerState.anchor = activeAnchor
+
+  if (restoreFocus) {
+    view?.focus()
+  }
+}
+
+export async function setInternalLinksPickerQuery(query: string) {
+  internalLinksPickerState.query = query
+  const currentRequestId = ++searchRequestId
+  const items = await searchItems(query)
+
+  if (
+    currentRequestId !== searchRequestId
+    || !internalLinksPickerState.isOpen
+  ) {
+    return
+  }
+
+  internalLinksPickerState.items = items
+  internalLinksPickerState.activeIndex = 0
+}
+
+export function moveInternalLinksPickerSelection(delta: number) {
+  if (!internalLinksPickerState.items.length) {
+    return
+  }
+
+  internalLinksPickerState.activeIndex
+    = (internalLinksPickerState.activeIndex
+      + delta
+      + internalLinksPickerState.items.length)
+    % internalLinksPickerState.items.length
+}
+
+export function getInternalLinksPickerAnchorFromCoords(
+  coords: InternalLinksPickerCoords,
+): InternalLinksPickerAnchor {
+  return {
+    left: coords.left,
+    top: coords.bottom,
+  }
+}
+
+export function handleInternalLinksPickerKey(key: string): boolean {
+  if (!internalLinksPickerState.isOpen) {
+    return false
+  }
+
+  if (key === 'ArrowDown') {
+    moveInternalLinksPickerSelection(1)
+    return true
+  }
+
+  if (key === 'ArrowUp') {
+    moveInternalLinksPickerSelection(-1)
+    return true
+  }
+
+  if (key === 'Enter') {
+    selectInternalLinksPickerItem()
+    return true
+  }
+
+  if (key === 'Escape') {
+    closeInternalLinksPicker(false)
+    return true
+  }
+
+  return false
+}
+
+export function shouldOpenInternalLinksPicker(
+  options: ShouldOpenInternalLinksPickerOptions,
+): boolean {
+  if (options.isOpen) {
+    return options.docChanged || options.selectionSet
+  }
+
+  return options.docChanged
+}
+
+export function selectInternalLinksPickerItem(index?: number) {
+  const view = pickerView.value
+  const range = pickerRange
+  const item
+    = internalLinksPickerState.items[
+      index ?? internalLinksPickerState.activeIndex
+    ]
+
+  if (!view || !range || !item) {
+    return
+  }
+
+  const change = buildInternalLinkInsertChange(range, {
+    id: item.id,
+    label: item.name,
+    type: item.type,
+  })
+
+  view.dispatch({
+    changes: change,
+    selection: {
+      anchor: range.from + change.insert.length,
+    },
+  })
+
+  closeInternalLinksPicker(true)
+}
+
+export function isInternalLinksPickerOwner(view: EditorView): boolean {
+  return pickerView.value === view
+}
+
+function openInternalLinksPicker(
+  view: EditorView,
+  match: InternalLinkSearchMatch,
+) {
+  if (pickerCleanupTimer) {
+    clearTimeout(pickerCleanupTimer)
+    pickerCleanupTimer = null
+  }
+
+  pickerView.value = view
+  pickerRange = match
+  internalLinksPickerState.activeIndex = 0
+  internalLinksPickerState.anchor = null
+  internalLinksPickerState.isOpen = true
+  internalLinksPickerState.items = []
+  void setInternalLinksPickerQuery(match.query)
+}
+
 export function createInternalLinksTrigger(
   options: InternalLinkTriggerOptions,
 ) {
@@ -179,17 +401,8 @@ export function createInternalLinksTrigger(
     return []
   }
 
-  return ViewPlugin.fromClass(
+  const plugin = ViewPlugin.fromClass(
     class {
-      private popup: HTMLDivElement | null = null
-      private input: HTMLInputElement | null = null
-      private itemsHost: HTMLDivElement | null = null
-      private items: InternalLinkPickerItem[] = []
-      private activeIndex = 0
-      private triggerRange: InternalLinkTriggerRange | null = null
-      private searchRequestId = 0
-      private removeDocumentListeners: (() => void) | null = null
-
       constructor(private readonly view: EditorView) {}
 
       update(update: {
@@ -197,248 +410,99 @@ export function createInternalLinksTrigger(
         selectionSet: boolean
         view: EditorView
       }) {
-        if (this.popup) {
-          this.schedulePopupPosition()
-        }
+        const selection = update.view.state.selection.main
 
-        if (this.popup || (!update.docChanged && !update.selectionSet)) {
+        if (!selection.empty) {
+          if (isInternalLinksPickerOwner(this.view)) {
+            closeInternalLinksPicker(false)
+          }
           return
         }
 
-        const head = update.view.state.selection.main.head
-        if (!update.view.state.selection.main.empty) {
-          return
-        }
-
-        const range = findInternalLinkTriggerRange(
+        const tokenState = getInternalLinkTokenState(
           update.view.state.doc.toString(),
-          head,
+          selection.head,
         )
+        const match = tokenState.kind === 'search' ? tokenState.match : null
 
-        if (!range) {
+        if (
+          isInternalLinksPickerOwner(this.view)
+          && internalLinksPickerState.isOpen
+        ) {
+          if (!match) {
+            closeInternalLinksPicker(false)
+            return
+          }
+
+          pickerRange = match
+          if (internalLinksPickerState.query !== match.query) {
+            void setInternalLinksPickerQuery(match.query)
+          }
+          this.schedulePopupPosition(match)
           return
         }
 
-        this.open(range)
+        if (
+          !match
+          || !shouldOpenInternalLinksPicker({
+            docChanged: update.docChanged,
+            isOpen: false,
+            selectionSet: update.selectionSet,
+          })
+        ) {
+          return
+        }
+
+        openInternalLinksPicker(this.view, match)
+        this.schedulePopupPosition(match)
       }
 
       destroy() {
-        this.close(false)
+        if (isInternalLinksPickerOwner(this.view)) {
+          closeInternalLinksPicker(false)
+        }
       }
 
-      private open(range: InternalLinkTriggerRange) {
-        this.triggerRange = range
-        this.popup = document.createElement('div')
-        this.popup.className = 'cm-internal-link-picker'
-
-        this.input = document.createElement('input')
-        this.input.className = 'cm-internal-link-picker__input'
-        this.input.type = 'text'
-        this.input.placeholder = i18n.t(
-          'internalLinks.picker.searchPlaceholder',
-        )
-
-        this.itemsHost = document.createElement('div')
-        this.itemsHost.className = 'cm-internal-link-picker__results'
-
-        this.popup.append(this.input, this.itemsHost)
-        this.view.dom.append(this.popup)
-        this.schedulePopupPosition()
-
-        const onDocumentMouseDown = (event: MouseEvent) => {
-          const target = event.target
-          if (!(target instanceof Node)) {
-            return
-          }
-
-          if (this.popup?.contains(target) || this.view.dom.contains(target)) {
-            return
-          }
-
-          this.close(true)
-        }
-
-        document.addEventListener('mousedown', onDocumentMouseDown)
-        this.removeDocumentListeners = () => {
-          document.removeEventListener('mousedown', onDocumentMouseDown)
-        }
-
-        this.input.addEventListener('input', () => {
-          void this.refreshResults(this.input?.value ?? '')
-        })
-
-        this.input.addEventListener('keydown', (event) => {
-          if (event.key === 'ArrowDown') {
-            event.preventDefault()
-            this.moveSelection(1)
-            return
-          }
-
-          if (event.key === 'ArrowUp') {
-            event.preventDefault()
-            this.moveSelection(-1)
-            return
-          }
-
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            this.insertSelected()
-            return
-          }
-
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            this.close(true)
-          }
-        })
-
-        requestAnimationFrame(() => {
-          this.input?.focus()
-        })
-
-        void this.refreshResults('')
-      }
-
-      private schedulePopupPosition() {
-        if (!this.popup || !this.triggerRange) {
+      private schedulePopupPosition(match: InternalLinkSearchMatch) {
+        if (!isInternalLinksPickerOwner(this.view)) {
           return
         }
 
-        const popup = this.popup
-        const position = this.triggerRange.to
-
         this.view.requestMeasure({
-          read: view => view.coordsAtPos(position),
+          read: view => view.coordsAtPos(match.anchor),
           write: (coords) => {
-            if (!popup || !this.popup || popup !== this.popup || !coords) {
+            if (!coords || !isInternalLinksPickerOwner(this.view)) {
               return
             }
 
-            popup.style.left = `${coords.left}px`
-            popup.style.top = `${coords.bottom + 6}px`
-          },
-        })
-      }
-
-      private async refreshResults(query: string) {
-        if (!this.itemsHost) {
-          return
-        }
-
-        const requestId = ++this.searchRequestId
-        this.itemsHost.textContent = ''
-
-        const items = await searchItems(query)
-        if (requestId !== this.searchRequestId) {
-          return
-        }
-
-        this.items = items
-        this.activeIndex = 0
-        this.renderItems()
-      }
-
-      private renderItems() {
-        if (!this.itemsHost) {
-          return
-        }
-
-        this.itemsHost.textContent = ''
-
-        const snippets = this.items.filter(item => item.type === 'snippet')
-        const notes = this.items.filter(item => item.type === 'note')
-
-        const groups: Array<[string, InternalLinkPickerItem[]]> = [
-          [i18n.t('internalLinks.picker.groups.snippets'), snippets],
-          [i18n.t('internalLinks.picker.groups.notes'), notes],
-        ]
-
-        let absoluteIndex = 0
-
-        for (const [title, items] of groups) {
-          if (!items.length) {
-            continue
-          }
-
-          this.itemsHost.append(renderGroupTitle(title))
-
-          for (const item of items) {
-            const button = renderPickerItem(
-              item,
-              absoluteIndex === this.activeIndex,
+            setInternalLinksPickerAnchor(
+              getInternalLinksPickerAnchorFromCoords(coords),
             )
-            const index = absoluteIndex
-            button.addEventListener('mousedown', (event) => {
-              event.preventDefault()
-              this.activeIndex = index
-              this.insertSelected()
-            })
-            this.itemsHost.append(button)
-            absoluteIndex++
-          }
-        }
-
-        if (!absoluteIndex) {
-          const empty = document.createElement('div')
-          empty.className = 'cm-internal-link-picker__empty'
-          empty.textContent = i18n.t('internalLinks.picker.emptyResults')
-          this.itemsHost.append(empty)
-        }
-      }
-
-      private moveSelection(delta: number) {
-        if (!this.items.length) {
-          return
-        }
-
-        this.activeIndex
-          = (this.activeIndex + delta + this.items.length) % this.items.length
-        this.renderItems()
-      }
-
-      private insertSelected() {
-        if (!this.triggerRange) {
-          return
-        }
-
-        const selected = this.items[this.activeIndex]
-        if (!selected) {
-          return
-        }
-
-        this.view.dispatch({
-          changes: buildInternalLinkInsertChange(this.triggerRange, {
-            id: selected.id,
-            label: selected.name,
-            type: selected.type,
-          }),
-          selection: {
-            anchor:
-              this.triggerRange.from
-              + buildLinkMarkdown(selected.type, selected.id, selected.name)
-                .length,
           },
         })
-
-        this.close(true)
-      }
-
-      private close(restoreFocus: boolean) {
-        this.removeDocumentListeners?.()
-        this.removeDocumentListeners = null
-
-        this.popup?.remove()
-        this.popup = null
-        this.input = null
-        this.itemsHost = null
-        this.items = []
-        this.activeIndex = 0
-        this.triggerRange = null
-
-        if (restoreFocus) {
-          this.view.focus()
-        }
       }
     },
   )
+
+  return [
+    plugin,
+    Prec.highest(
+      keymap.of([
+        {
+          any(view, event) {
+            if (!isInternalLinksPickerOwner(view)) {
+              return false
+            }
+
+            const handled = handleInternalLinksPickerKey(event.key)
+            if (!handled) {
+              return false
+            }
+
+            return true
+          },
+        },
+      ]),
+    ),
+  ]
 }

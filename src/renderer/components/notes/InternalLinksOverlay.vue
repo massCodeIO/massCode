@@ -252,7 +252,7 @@ watch(
       v-if="internalLinksPreviewState.content"
       align="start"
       :side-offset="0"
-      class="max-h-[200px] w-[min(420px,calc(100vw-24px))] overflow-auto p-3"
+      class="scrollbar max-h-[200px] w-[min(420px,calc(100vw-24px))] overflow-auto p-3"
       @mouseenter="onInternalLinksPreviewPopupEnter"
       @mouseleave="onInternalLinksPreviewPopupLeave"
       @open-auto-focus.prevent

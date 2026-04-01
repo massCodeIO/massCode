@@ -265,11 +265,11 @@ watch(
           internalLinksPreviewState.content.body
             && internalLinksPreviewState.content.type === 'snippet'
         "
-        class="mt-2 text-sm leading-5 whitespace-pre-wrap"
+        class="mt-2 text-[13px] leading-5 whitespace-pre-wrap"
       >{{ internalLinksPreviewState.content.body }}</pre>
       <div
         v-else-if="internalLinksPreviewState.content.body"
-        class="mt-2 text-sm leading-5 whitespace-pre-wrap"
+        class="mt-2 text-[13px] leading-5 whitespace-pre-wrap"
       >
         {{ internalLinksPreviewState.content.body }}
       </div>

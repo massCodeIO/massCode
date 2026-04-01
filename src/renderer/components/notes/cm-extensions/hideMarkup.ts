@@ -34,6 +34,27 @@ export function shouldHideUrlNodeInMarkup(
   return parentName === 'Link' || parentName === 'Image'
 }
 
+function isInternalLinkBracket(
+  view: EditorView,
+  node: { name: string, from: number, to: number },
+): boolean {
+  if (node.name !== 'LinkMark') {
+    return false
+  }
+
+  const char = view.state.sliceDoc(node.from, node.to)
+
+  if (char === '[') {
+    return view.state.sliceDoc(node.from - 1, node.from) === '['
+  }
+
+  if (char === ']') {
+    return view.state.sliceDoc(node.to, node.to + 1) === ']'
+  }
+
+  return false
+}
+
 function isCursorInRange(view: EditorView, from: number, to: number): boolean {
   for (const range of view.state.selection.ranges) {
     if (range.from <= to && range.to >= from)
@@ -99,6 +120,9 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
           return
 
         if (node.from === node.to)
+          return
+
+        if (isInternalLinkBracket(view, node))
           return
 
         if (shouldShowMark(view, node, alwaysHide))

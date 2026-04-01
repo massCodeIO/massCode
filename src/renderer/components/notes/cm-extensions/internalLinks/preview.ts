@@ -249,16 +249,20 @@ export function createInternalLinksPreview() {
       destroy() {
         document.removeEventListener('keydown', this.onKeydown)
         document.removeEventListener('keyup', this.onKeyup)
+        hoveredLink = null
 
         if (previewView.value === this.view) {
           previewController.dispose()
           closeInternalLinksPreview()
-          hoveredLink = null
           previewView.value = null
         }
       }
 
       async showPreview(target: HTMLElement) {
+        if (!target.isConnected) {
+          return
+        }
+
         const type = target.dataset.internalLinkType as
           | InternalLinkType
           | undefined

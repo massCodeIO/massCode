@@ -149,7 +149,7 @@ const textStats = computed(() => getTextStats(content.value))
       <div
         class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
       >
-        <div class="flex min-w-0 items-center gap-1">
+        <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
           <div
             v-if="isHistoryVisible"
             class="flex shrink-0 items-center gap-0.5"
@@ -169,14 +169,16 @@ const textStats = computed(() => getTextStats(content.value))
               <ChevronRight class="h-3 w-3" />
             </UiActionButton>
           </div>
-          <UiInput
-            v-model="name"
-            variant="ghost"
-            class="w-full truncate px-0"
-            :select="isFocusedNoteName"
-            @focus="onNameFocus"
-            @blur="onNameBlur"
-          />
+          <div class="min-w-0 flex-1">
+            <UiInput
+              v-model="name"
+              variant="ghost"
+              class="w-full truncate px-0"
+              :select="isFocusedNoteName"
+              @focus="onNameFocus"
+              @blur="onNameBlur"
+            />
+          </div>
         </div>
         <div class="ml-2 flex h-7 items-center">
           <UiActionButton

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 interface SetupOptions {
   noteResponse?: any
@@ -34,6 +34,14 @@ async function setup(options: SetupOptions = {}) {
   const clearNoteFolderSelection = vi.fn()
   const getNotes = vi.fn(async () => undefined)
   const selectNote = vi.fn()
+  const historyEntries = ref<any[]>([])
+  const historyCursor = ref(-1)
+  const isNavigatingHistory = ref(false)
+  const goBack = vi.fn(() => historyEntries.value[0])
+  const goForward = vi.fn(() => historyEntries.value.at(-1))
+  const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
+    await navigate()
+  })
 
   const getSnippetsById = options.snippetThrows
     ? vi.fn(async () => {
@@ -92,8 +100,26 @@ async function setup(options: SetupOptions = {}) {
       getNoteFolders,
       selectNoteFolder,
     }),
+    useNavigationHistory: () => ({
+      canGoBack: computed(() => historyCursor.value > 0),
+      canGoForward: computed(
+        () =>
+          historyCursor.value >= 0
+          && historyCursor.value < historyEntries.value.length - 1,
+      ),
+      cursor: historyCursor,
+      entries: historyEntries,
+      goBack,
+      goForward,
+      isNavigatingHistory,
+      recordNavigation,
+    }),
     useNotes: () => ({
       getNotes,
+      selectedNote: ref({
+        id: 15,
+        name: 'Current note',
+      }),
       selectNote,
     }),
     useNotesApp: () => ({
@@ -104,6 +130,10 @@ async function setup(options: SetupOptions = {}) {
     }),
     useSnippets: () => ({
       getSnippets,
+      selectedSnippet: ref({
+        id: 42,
+        name: 'Current snippet',
+      }),
       selectSnippet,
     }),
   }))
@@ -123,6 +153,7 @@ async function setup(options: SetupOptions = {}) {
     RouterName: {
       main: 'main',
       notesSpace: 'notes-space',
+      notesPresentation: 'notes-space/presentation',
     },
     router,
   }))
@@ -135,12 +166,18 @@ async function setup(options: SetupOptions = {}) {
     getFolders,
     getNotes,
     getSnippets,
+    goBack,
+    goForward,
     initCodeSpace,
     isAppLoading,
     isCodeSpaceInitialized,
+    isNavigatingHistory,
+    historyCursor,
+    historyEntries,
     module,
     notesState,
     pendingCodeNavigation,
+    recordNavigation,
     router,
     selectFolder,
     selectNote,
@@ -206,5 +243,34 @@ describe('deepLinks', () => {
     expect(context.selectFolder).toHaveBeenCalledWith(11)
     expect(context.getSnippets).toHaveBeenCalledWith({ folderId: 11 })
     expect(context.selectSnippet).toHaveBeenCalledWith(42)
+  })
+
+  it('records history when opening internal target', async () => {
+    const context = await setup({
+      snippetRouteName: 'notes-space',
+    })
+
+    await context.module.openInternalTarget({ id: 42, type: 'snippet' })
+
+    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
+    expect(context.selectSnippet).toHaveBeenCalledWith(42)
+  })
+
+  it('restores target from history on back navigation', async () => {
+    const context = await setup({
+      snippetRouteName: 'main',
+    })
+
+    context.goBack.mockReturnValue({
+      id: 15,
+      type: 'note',
+    })
+
+    await context.module.navigateBack()
+
+    expect(context.goBack).toHaveBeenCalledTimes(1)
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'notes-space' })
+    expect(context.selectNote).toHaveBeenCalledWith(15)
+    expect(context.isNavigatingHistory.value).toBe(false)
   })
 })

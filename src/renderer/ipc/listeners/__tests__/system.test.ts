@@ -35,6 +35,18 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
       selectFolder: vi.fn(),
       getFolders,
     }),
+    useNavigationHistory: () => ({
+      canGoBack: ref(false),
+      canGoForward: ref(false),
+      cursor: ref(-1),
+      entries: ref([]),
+      goBack: vi.fn(),
+      goForward: vi.fn(),
+      isNavigatingHistory: ref(false),
+      recordNavigation: vi.fn(async (navigate: () => Promise<void>) => {
+        await navigate()
+      }),
+    }),
     useMathNotebook: () => ({
       reloadFromDisk: reloadMathFromDisk,
     }),
@@ -88,7 +100,11 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
   }))
 
   vi.doMock('@/router', () => ({
-    RouterName: { main: 'main', notesSpace: 'notes-space' },
+    RouterName: {
+      main: 'main',
+      notesSpace: 'notes-space',
+      notesPresentation: 'notes-space/presentation',
+    },
     router: {
       currentRoute: ref({ name: 'main' }),
       push: vi.fn(async () => undefined),

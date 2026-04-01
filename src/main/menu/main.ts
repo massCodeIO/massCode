@@ -435,6 +435,21 @@ function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   return items
 }
 
+function createHistoryMenuItems(): MenuConfig[] {
+  return [
+    {
+      label: i18n.t('menu:history.back'),
+      accelerator: 'CommandOrControl+[',
+      click: () => send('main-menu:navigate-back'),
+    },
+    {
+      label: i18n.t('menu:history.forward'),
+      accelerator: 'CommandOrControl+]',
+      click: () => send('main-menu:navigate-forward'),
+    },
+  ]
+}
+
 function createNotesEditorModeItems(context: MainMenuContext): MenuConfig[] {
   if (context.editor.kind !== 'notes' || !context.editor.noteMode) {
     return []
@@ -539,6 +554,7 @@ function createMainMenuTemplate(
   context: MainMenuContext = currentMainMenuContext,
 ): MenuItemConstructorOptions[] {
   const fileMenuItems = createFileMenuItems(context)
+  const historyMenuItems = createHistoryMenuItems()
   const viewMenuItems = createViewMenuItems(context)
   const editorMenuItems = createEditorMenuItems(context)
 
@@ -550,6 +566,10 @@ function createMainMenuTemplate(
     {
       role: 'editMenu',
       submenu: createPlatformMenuItems(editMenuItems),
+    },
+    {
+      label: i18n.t('menu:history.label'),
+      submenu: createPlatformMenuItems(historyMenuItems),
     },
     {
       role: 'windowMenu',

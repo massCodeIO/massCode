@@ -2,6 +2,7 @@ import {
   initCodeSpace,
   useApp,
   useFolders,
+  useNavigationHistory,
   useNoteFolders,
   useNotes,
   useNotesApp,
@@ -41,6 +42,8 @@ const {
   selectNoteFolder,
 } = useNoteFolders()
 const { getNotes, selectNote } = useNotes()
+const { goBack, goForward, isNavigatingHistory, recordNavigation }
+  = useNavigationHistory()
 
 function clearCodeNavigationState() {
   highlightedFolderIds.value.clear()
@@ -151,12 +154,60 @@ export async function openNoteDeepLink(noteId: number): Promise<void> {
 export async function openInternalTarget(
   target: InternalTarget,
 ): Promise<void> {
-  if (target.type === 'snippet') {
-    await openSnippetDeepLink(target.id)
+  if (isNavigatingHistory.value) {
+    if (target.type === 'snippet') {
+      await openSnippetDeepLink(target.id)
+      return
+    }
+
+    await openNoteDeepLink(target.id)
     return
   }
 
-  await openNoteDeepLink(target.id)
+  await recordNavigation(async () => {
+    if (target.type === 'snippet') {
+      await openSnippetDeepLink(target.id)
+      return
+    }
+
+    await openNoteDeepLink(target.id)
+  })
+}
+
+async function restoreNavigationTarget(target: InternalTarget): Promise<void> {
+  isNavigatingHistory.value = true
+
+  try {
+    if (target.type === 'snippet') {
+      await openSnippetDeepLink(target.id)
+      return
+    }
+
+    await openNoteDeepLink(target.id)
+  }
+  finally {
+    isNavigatingHistory.value = false
+  }
+}
+
+export async function navigateBack(): Promise<void> {
+  const target = goBack()
+
+  if (!target) {
+    return
+  }
+
+  await restoreNavigationTarget(target)
+}
+
+export async function navigateForward(): Promise<void> {
+  const target = goForward()
+
+  if (!target) {
+    return
+  }
+
+  await restoreNavigationTarget(target)
 }
 
 export async function handleDeepLink(url: string): Promise<void> {
@@ -166,14 +217,18 @@ export async function handleDeepLink(url: string): Promise<void> {
   const legacyFolderId = parsed.searchParams.get('folderId')
 
   if (snippetId) {
-    await openSnippetDeepLink(
-      Number(snippetId),
-      legacyFolderId ? Number(legacyFolderId) : undefined,
-    )
+    await recordNavigation(async () => {
+      await openSnippetDeepLink(
+        Number(snippetId),
+        legacyFolderId ? Number(legacyFolderId) : undefined,
+      )
+    })
     return
   }
 
   if (noteId) {
-    await openNoteDeepLink(Number(noteId))
+    await recordNavigation(async () => {
+      await openNoteDeepLink(Number(noteId))
+    })
   }
 }

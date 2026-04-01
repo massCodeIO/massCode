@@ -119,6 +119,26 @@ interface ShouldCloseInternalLinksPreviewOnUpdateOptions {
   selectionSet: boolean
 }
 
+function findInternalLinkElement(
+  target: EventTarget | null,
+): HTMLElement | null {
+  if (
+    !target
+    || typeof target !== 'object'
+    || !('closest' in target)
+    || typeof target.closest !== 'function'
+  ) {
+    return null
+  }
+
+  const link = target.closest('[data-internal-link="true"]')
+  if (!link || typeof link !== 'object' || !('dataset' in link)) {
+    return null
+  }
+
+  return link as HTMLElement
+}
+
 function getCacheKey(type: InternalLinkType, id: number) {
   return `${type}:${id}`
 }
@@ -240,25 +260,15 @@ export function createInternalLinksPreview() {
     {
       eventHandlers: {
         mousedown(event) {
-          const target = event.target
-          if (!(target instanceof HTMLElement)) {
-            return
-          }
-
-          if (!target.closest('[data-internal-link="true"]')) {
+          if (!findInternalLinkElement(event.target)) {
             return
           }
 
           dismissInternalLinksPreview()
         },
         mouseover(event, view) {
-          const target = event.target
-          if (!(target instanceof HTMLElement)) {
-            return
-          }
-
-          const link = target.closest('[data-internal-link="true"]')
-          if (!(link instanceof HTMLElement)) {
+          const link = findInternalLinkElement(event.target)
+          if (!link) {
             return
           }
 
@@ -278,12 +288,7 @@ export function createInternalLinksPreview() {
           )
         },
         mouseout(event, view) {
-          const target = event.target
-          if (!(target instanceof HTMLElement)) {
-            return
-          }
-
-          if (!target.closest('[data-internal-link="true"]')) {
+          if (!findInternalLinkElement(event.target)) {
             return
           }
 

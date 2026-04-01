@@ -111,6 +111,7 @@ class InternalLinkWidget extends WidgetType {
     root.className = `cm-internal-link is-${this.status}`
     root.dataset.internalLink = 'true'
     root.dataset.internalLinkBroken = String(this.status === 'broken')
+    root.dataset.internalLinkFrom = String(this.link.from)
 
     if (this.resolvedTarget) {
       root.dataset.internalLinkId = String(this.resolvedTarget.id)

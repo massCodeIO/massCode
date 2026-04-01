@@ -37,6 +37,7 @@ const focusedSnippetId = ref<number | undefined>()
 
 const isAppLoading = ref(true)
 const isCodeSpaceInitialized = ref(false)
+const pendingCodeNavigation = ref(false)
 const isCompactListMode = ref(
   (store.app.get('ui.compactListMode') as boolean | undefined) ?? false,
 )
@@ -117,6 +118,7 @@ export function useApp() {
     focusedSnippetId,
     isAppLoading,
     isCodeSpaceInitialized,
+    pendingCodeNavigation,
     highlightedFolderIds,
     highlightedSnippetIds,
     highlightedTagId,

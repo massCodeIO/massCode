@@ -65,12 +65,21 @@ async function setup(options: SetupOptions = {}) {
     }),
   }
 
+  const initCodeSpace = vi.fn(async () => undefined)
+  const isAppLoading = ref(false)
+  const isCodeSpaceInitialized = ref(false)
+  const pendingCodeNavigation = ref(false)
+
   vi.doMock('@/composables', () => ({
+    initCodeSpace,
     useApp: () => ({
       focusedFolderId: ref<number | undefined>(),
       focusedSnippetId: ref<number | undefined>(),
       highlightedFolderIds: ref(new Set<number>()),
       highlightedSnippetIds: ref(new Set<number>()),
+      isAppLoading,
+      isCodeSpaceInitialized,
+      pendingCodeNavigation,
       state,
     }),
     useFolders: () => ({
@@ -126,8 +135,12 @@ async function setup(options: SetupOptions = {}) {
     getFolders,
     getNotes,
     getSnippets,
+    initCodeSpace,
+    isAppLoading,
+    isCodeSpaceInitialized,
     module,
     notesState,
+    pendingCodeNavigation,
     router,
     selectFolder,
     selectNote,

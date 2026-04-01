@@ -4,6 +4,7 @@ import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
+  initCodeSpace,
   useApp,
   useFolders,
   useResizeHandle,
@@ -16,7 +17,8 @@ import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
-const { state, isAppLoading, isCodeSpaceInitialized } = useApp()
+const { state, isAppLoading, isCodeSpaceInitialized, pendingCodeNavigation }
+  = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
@@ -26,7 +28,6 @@ const {
   displayedSnippets,
 } = useSnippets()
 const {
-  getFolders,
   folders,
   selectFolder,
   createFolderAndSelect,
@@ -77,48 +78,28 @@ const libraryItems = [
   { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
 
-async function initGetFolders() {
-  await getFolders()
-
-  nextTick(() => {
-    scrollToElement(`[id="${state.folderId}"]`)
-  })
-}
-
-async function initGetSnippets() {
-  await getSnippets()
-
-  nextTick(() => {
-    const index
-      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
-    if (index >= 0) {
-      scrollToSnippetIndex(index)
-    }
-  })
-}
-
 async function initApp() {
+  if (pendingCodeNavigation.value) {
+    return
+  }
+
   if (isCodeSpaceInitialized.value) {
     isAppLoading.value = false
     return
   }
 
   isAppLoading.value = true
+  await initCodeSpace()
 
-  const results = await Promise.allSettled([
-    initGetFolders(),
-    initGetSnippets(),
-  ])
+  nextTick(() => {
+    scrollToElement(`[id="${state.folderId}"]`)
 
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      console.error('App init error:', result.reason)
+    const index
+      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
+    if (index >= 0) {
+      scrollToSnippetIndex(index)
     }
   })
-
-  isCodeSpaceInitialized.value = results.every(
-    result => result.status === 'fulfilled',
-  )
 
   isAppLoading.value = false
 }

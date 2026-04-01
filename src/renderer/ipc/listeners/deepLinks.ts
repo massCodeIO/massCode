@@ -1,4 +1,5 @@
 import {
+  initCodeSpace,
   useApp,
   useFolders,
   useNoteFolders,
@@ -20,6 +21,9 @@ const {
   focusedSnippetId,
   highlightedFolderIds,
   highlightedSnippetIds,
+  isAppLoading,
+  isCodeSpaceInitialized,
+  pendingCodeNavigation,
   state,
 } = useApp()
 const {
@@ -68,6 +72,9 @@ export async function openSnippetDeepLink(
   legacyFolderId?: number,
 ): Promise<void> {
   clearCodeNavigationState()
+  pendingCodeNavigation.value = true
+  isAppLoading.value = true
+
   await ensureCodeRoute()
 
   try {
@@ -91,19 +98,25 @@ export async function openSnippetDeepLink(
     }
 
     selectSnippet(snippetId)
-    return
+    isCodeSpaceInitialized.value = true
   }
   catch (error) {
-    if (!legacyFolderId) {
+    if (legacyFolderId) {
+      await getFolders(false)
+      await selectFolder(legacyFolderId)
+      await getSnippets({ folderId: legacyFolderId })
+      selectSnippet(snippetId)
+      isCodeSpaceInitialized.value = true
+    }
+    else {
       console.error('Failed to open snippet deep link:', error)
-      return
+      await initCodeSpace()
     }
   }
-
-  await getFolders(false)
-  await selectFolder(legacyFolderId)
-  await getSnippets({ folderId: legacyFolderId })
-  selectSnippet(snippetId)
+  finally {
+    pendingCodeNavigation.value = false
+    isAppLoading.value = false
+  }
 }
 
 export async function openNoteDeepLink(noteId: number): Promise<void> {

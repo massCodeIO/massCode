@@ -257,7 +257,7 @@ watch(
       @mouseleave="onInternalLinksPreviewPopupLeave"
       @open-auto-focus.prevent
     >
-      <div class="font-medium">
+      <div class="text-[13px] leading-5 font-medium">
         {{ internalLinksPreviewState.content.title }}
       </div>
       <pre
@@ -265,11 +265,11 @@ watch(
           internalLinksPreviewState.content.body
             && internalLinksPreviewState.content.type === 'snippet'
         "
-        class="mt-2 text-[13px] leading-5 whitespace-pre-wrap"
+        class="mt-2 text-[12px] leading-[1.1rem] whitespace-pre-wrap"
       >{{ internalLinksPreviewState.content.body }}</pre>
       <div
         v-else-if="internalLinksPreviewState.content.body"
-        class="mt-2 text-[13px] leading-5 whitespace-pre-wrap"
+        class="mt-2 text-[12px] leading-[1.1rem] whitespace-pre-wrap"
       >
         {{ internalLinksPreviewState.content.body }}
       </div>

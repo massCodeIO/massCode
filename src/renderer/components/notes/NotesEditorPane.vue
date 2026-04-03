@@ -2,14 +2,18 @@
 import * as Select from '@/components/ui/shadcn/select'
 import {
   useEditableField,
+  useNavigationHistory,
   useNotes,
   useNotesApp,
   useNoteUpdate,
 } from '@/composables'
 import { i18n } from '@/electron'
+import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import {
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Code,
   LoaderCircle,
   Network,
@@ -27,6 +31,7 @@ const {
   isNotesLoading,
   isNotesLoadingVisible,
 } = useNotes()
+const { canGoBack, canGoForward } = useNavigationHistory()
 const { addToUpdateQueue } = useNoteUpdate()
 const {
   isFocusedNoteName,
@@ -55,9 +60,18 @@ const presentationActionTooltip = computed(() =>
     ? i18n.t('action.hide')
     : i18n.t('menu:markdown.presentationMode'),
 )
+const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
 
 function onSidebarToggle() {
   toggleNotesSidebar()
+}
+
+function onBackClick() {
+  void navigateBack()
+}
+
+function onForwardClick() {
+  void navigateForward()
 }
 
 function onMindmapToggle() {
@@ -135,14 +149,37 @@ const textStats = computed(() => getTextStats(content.value))
       <div
         class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
       >
-        <UiInput
-          v-model="name"
-          variant="ghost"
-          class="w-full truncate px-0"
-          :select="isFocusedNoteName"
-          @focus="onNameFocus"
-          @blur="onNameBlur"
-        />
+        <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+          <div
+            v-if="isHistoryVisible"
+            class="flex shrink-0 items-center gap-0.5"
+          >
+            <UiActionButton
+              :disabled="!canGoBack"
+              :tooltip="i18n.t('menu:history.back')"
+              @click="onBackClick"
+            >
+              <ChevronLeft class="h-3 w-3" />
+            </UiActionButton>
+            <UiActionButton
+              :disabled="!canGoForward"
+              :tooltip="i18n.t('menu:history.forward')"
+              @click="onForwardClick"
+            >
+              <ChevronRight class="h-3 w-3" />
+            </UiActionButton>
+          </div>
+          <div class="min-w-0 flex-1">
+            <UiInput
+              v-model="name"
+              variant="ghost"
+              class="w-full truncate px-0"
+              :select="isFocusedNoteName"
+              @focus="onNameFocus"
+              @blur="onNameBlur"
+            />
+          </div>
+        </div>
         <div class="ml-2 flex h-7 items-center">
           <UiActionButton
             class="mr-1"

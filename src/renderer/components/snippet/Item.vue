@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import type { SnippetsResponse } from '@/services/api/generated'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useDialog, useSnippets } from '@/composables'
+import {
+  useApp,
+  useDialog,
+  useNavigationHistory,
+  useSnippets,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { onClickOutside, useClipboard } from '@vueuse/core'
@@ -33,6 +38,7 @@ const {
   deleteSnippets,
   displayedSnippets,
 } = useSnippets()
+const { clearHistory } = useNavigationHistory()
 
 const { confirm } = useDialog()
 const { copy } = useClipboard()
@@ -77,6 +83,7 @@ const folderName = computed(() => {
 })
 
 function onSnippetClick(id: number, event: MouseEvent) {
+  clearHistory()
   selectSnippet(id, event.shiftKey)
   focusedSnippetId.value = id
 }
@@ -191,10 +198,7 @@ async function onDuplicate() {
 }
 
 function onCopySnippetLink() {
-  // copy(`masscode://folder/${state.folderId}/snippet/${props.snippet.id}`)
-  copy(
-    `masscode://goto?folderId=${state.folderId}&snippetId=${props.snippet.id}`,
-  )
+  copy(`masscode://goto?snippetId=${props.snippet.id}`)
 }
 
 function onDragStart(event: DragEvent) {

@@ -71,6 +71,13 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       return result
     },
+    getSnippetById: (id: number) => {
+      const paths = getPaths(getVaultPath())
+      const { state, snippets } = getRuntimeCache(paths)
+      const snippet = findSnippetById(snippets, id)
+
+      return snippet ? createSnippetRecord(snippet, state) : null
+    },
     getSnippetsCounts: (): SnippetsCount => {
       const paths = getPaths(getVaultPath())
       const { snippets } = getRuntimeCache(paths)

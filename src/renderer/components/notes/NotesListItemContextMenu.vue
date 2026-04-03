@@ -4,6 +4,7 @@ import { useDialog, useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
+import { useClipboard } from '@vueuse/core'
 
 interface NoteTagInfo {
   id: number
@@ -47,6 +48,7 @@ const {
 const { displayedNotes } = useNoteSearch()
 
 const { confirm } = useDialog()
+const { copy } = useClipboard()
 
 const isFavoritesLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Favorites,
@@ -144,6 +146,10 @@ async function onRestore() {
 function onRevealInFileManager() {
   void ipc.invoke('system:show-note-in-file-manager', props.note.id)
 }
+
+function onCopyNoteLink() {
+  copy(`masscode://goto?noteId=${props.note.id}`)
+}
 </script>
 
 <template>
@@ -160,6 +166,9 @@ function onRevealInFileManager() {
     </template>
     <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
       {{ revealInFileManagerLabel }}
+    </ContextMenu.ContextMenuItem>
+    <ContextMenu.ContextMenuItem @click="onCopyNoteLink">
+      {{ i18n.t("action.copy.noteLink") }}
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuSeparator />
     <ContextMenu.ContextMenuItem @click="onDelete">

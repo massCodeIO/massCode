@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useNotes, useNotesApp } from '@/composables'
+import {
+  useApp,
+  useNavigationHistory,
+  useNotes,
+  useNotesApp,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -35,6 +40,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { isCompactListMode } = useApp()
+const { clearHistory } = useNavigationHistory()
 const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
@@ -68,6 +74,7 @@ const folderName = computed(() => {
 })
 
 function onNoteClick(id: number, event: MouseEvent) {
+  clearHistory()
   selectNote(id, event.shiftKey)
   focusedNoteId.value = id
 }

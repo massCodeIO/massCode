@@ -18,6 +18,8 @@ type MainMenuAction =
   | 'new-fragment'
   | 'new-sheet'
   | 'new-snippet'
+  | 'navigate-back'
+  | 'navigate-forward'
   | 'open-dialog'
   | 'preview-mindmap'
   | 'preview-code'

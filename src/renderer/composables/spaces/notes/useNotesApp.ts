@@ -42,6 +42,7 @@ watch(notesEditorMode, (mode) => {
 })
 
 const isNotesSpaceInitialized = ref(false)
+const pendingNotesNavigation = ref(false)
 const isFocusedNoteName = ref(false)
 const isFocusedSearch = ref(false)
 const isNotesMindmapShown = ref(false)
@@ -164,6 +165,7 @@ export function useNotesApp() {
     notesEditorMode,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
+    pendingNotesNavigation,
     hideNotesSidebar,
     hideNotesViewModes,
     notesState,

@@ -135,10 +135,25 @@
       "toHtml": "Export to HTML"
     },
     "copy": {
-      "snippetLink": "Copy Snippet Link"
+      "snippetLink": "Copy Snippet Link",
+      "noteLink": "Copy Note Link"
     },
     "select": {
       "directory": "Select Directory"
+    }
+  },
+  "internalLinks": {
+    "picker": {
+      "searchPlaceholder": "Search snippets and notes...",
+      "emptyResults": "No results",
+      "groups": {
+        "snippets": "Snippets",
+        "notes": "Notes"
+      }
+    },
+    "missing": {
+      "snippet": "Snippet not found",
+      "note": "Note not found"
     }
   },
   "placeholder": {

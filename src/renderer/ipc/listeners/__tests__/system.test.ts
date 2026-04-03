@@ -20,17 +20,32 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
   const getNoteTags = vi.fn(async () => undefined)
 
   vi.doMock('@/composables', () => ({
+    initCodeSpace: vi.fn(async () => undefined),
     useApp: () => ({
       state,
       highlightedFolderIds: ref(new Set<number>()),
       highlightedSnippetIds: ref(new Set<number>()),
       focusedSnippetId: ref<number | undefined>(),
       focusedFolderId: ref<number | undefined>(),
+      isAppLoading: ref(false),
       isCodeSpaceInitialized,
+      pendingCodeNavigation: ref(false),
     }),
     useFolders: () => ({
       selectFolder: vi.fn(),
       getFolders,
+    }),
+    useNavigationHistory: () => ({
+      canGoBack: ref(false),
+      canGoForward: ref(false),
+      cursor: ref(-1),
+      entries: ref([]),
+      goBack: vi.fn(),
+      goForward: vi.fn(),
+      isNavigatingHistory: ref(false),
+      recordNavigation: vi.fn(async (navigate: () => Promise<void>) => {
+        await navigate()
+      }),
     }),
     useMathNotebook: () => ({
       reloadFromDisk: reloadMathFromDisk,
@@ -74,6 +89,25 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
         ipcHandlers.set(channel, handler)
       }),
       invoke: vi.fn(),
+    },
+  }))
+
+  vi.doMock('@/services/api', () => ({
+    api: {
+      notes: { getNotesById: vi.fn() },
+      snippets: { getSnippetsById: vi.fn() },
+    },
+  }))
+
+  vi.doMock('@/router', () => ({
+    RouterName: {
+      main: 'main',
+      notesSpace: 'notes-space',
+      notesPresentation: 'notes-space/presentation',
+    },
+    router: {
+      currentRoute: ref({ name: 'main' }),
+      push: vi.fn(async () => undefined),
     },
   }))
 

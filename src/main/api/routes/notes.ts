@@ -1,7 +1,10 @@
-import type { NotesResponse } from '../dto/notes'
+import type { NoteItemResponse, NotesResponse } from '../dto/notes'
 import Elysia from 'elysia'
 import { useNotesStorage } from '../../storage'
-import { commonAddResponse } from '../dto/common/response'
+import {
+  commonAddResponse,
+  commonMessageResponse,
+} from '../dto/common/response'
 import { notesDTO } from '../dto/notes'
 
 const app = new Elysia({ prefix: '/notes' })
@@ -84,6 +87,28 @@ app
     },
     {
       response: 'notesCountsResponse',
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
+  .get(
+    '/:id',
+    ({ params, status }) => {
+      const storage = useNotesStorage()
+      const note = storage.notes.getNoteById(Number(params.id))
+
+      if (!note) {
+        return status(404, { message: 'Note not found' })
+      }
+
+      return note as NoteItemResponse
+    },
+    {
+      response: {
+        200: 'noteItemResponse',
+        404: commonMessageResponse,
+      },
       detail: {
         tags: ['Notes'],
       },

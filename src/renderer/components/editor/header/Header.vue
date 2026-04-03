@@ -2,12 +2,16 @@
 import {
   useApp,
   useEditableField,
+  useNavigationHistory,
   useSnippets,
   useSnippetUpdate,
 } from '@/composables'
 import { i18n } from '@/electron'
+import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 
 import {
+  ChevronLeft,
+  ChevronRight,
   Code,
   Image,
   Network,
@@ -23,6 +27,7 @@ const {
   addFragment,
   isAvailableToCodePreview,
 } = useSnippets()
+const { canGoBack, canGoForward } = useNavigationHistory()
 const {
   isFocusedSnippetName,
   state,
@@ -65,8 +70,18 @@ const isShowTags = computed(() => {
   return !isShowCodeImage.value && !isShowJsonVisualizer.value
 })
 
+const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
+
 function onClickTab(index: number) {
   state.snippetContentIndex = index
+}
+
+function onBackClick() {
+  void navigateBack()
+}
+
+function onForwardClick() {
+  void navigateForward()
 }
 
 function onCodePreviewToggle() {
@@ -93,14 +108,37 @@ function onJsonVisualizerToggle() {
     <div
       class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
     >
-      <UiInput
-        v-model="name"
-        variant="ghost"
-        class="w-full truncate px-0"
-        :select="isFocusedSnippetName"
-        @focus="onNameFocus"
-        @blur="onNameBlur"
-      />
+      <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+        <div
+          v-if="isHistoryVisible"
+          class="flex shrink-0 items-center gap-0.5"
+        >
+          <UiActionButton
+            :disabled="!canGoBack"
+            :tooltip="i18n.t('menu:history.back')"
+            @click="onBackClick"
+          >
+            <ChevronLeft class="h-3 w-3" />
+          </UiActionButton>
+          <UiActionButton
+            :disabled="!canGoForward"
+            :tooltip="i18n.t('menu:history.forward')"
+            @click="onForwardClick"
+          >
+            <ChevronRight class="h-3 w-3" />
+          </UiActionButton>
+        </div>
+        <div class="min-w-0 flex-1">
+          <UiInput
+            v-model="name"
+            variant="ghost"
+            class="w-full truncate px-0"
+            :select="isFocusedSnippetName"
+            @focus="onNameFocus"
+            @blur="onNameBlur"
+          />
+        </div>
+      </div>
       <div class="ml-2 flex">
         <UiActionButton
           class="mr-1"

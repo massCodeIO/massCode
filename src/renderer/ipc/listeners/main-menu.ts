@@ -12,6 +12,7 @@ import {
   useSnippets,
 } from '@/composables'
 import { ipc } from '@/electron'
+import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '~/main/store/constants'
@@ -51,6 +52,14 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:goto-devtools', () => {
     router.push({ name: RouterName.devtoolsCaseConverter })
+  })
+
+  ipc.on('main-menu:navigate-back', () => {
+    void navigateBack()
+  })
+
+  ipc.on('main-menu:navigate-forward', () => {
+    void navigateForward()
   })
 
   ipc.on('main-menu:new-snippet', () => {

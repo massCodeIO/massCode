@@ -43,11 +43,13 @@ The editor is built on CodeMirror 6 and includes:
 - Smart list indentation with automatic ordered list renumbering
 - Tab / Shift-Tab indentation
 - Table navigation between cells
+- Internal links to notes and snippets
 - Mermaid diagram support
 - Image embedding
 - Callout blocks
 
 For visual diagrams in notes, see [Mermaid](/documentation/notes/mermaid).
+For wiki-style links between notes and snippets, see [Internal Links](/documentation/notes/internal-links).
 
 ## Editor Preferences
 

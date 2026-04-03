@@ -23,6 +23,7 @@ import {
   getImageBlockRanges,
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
+import { createInternalLinks } from './cm-extensions/internalLinks'
 import { listIndent } from './cm-extensions/listIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
@@ -266,6 +267,13 @@ function createEditorState(doc: string): EditorState {
     )
   }
 
+  extensions.push(
+    ...createInternalLinks({
+      editable,
+      mode: props.mode,
+    }),
+  )
+
   if (preview) {
     extensions.push(
       EditorState.readOnly.of(true),
@@ -368,8 +376,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    ref="editorContainer"
-    class="h-full overflow-hidden"
-  />
+  <div class="h-full overflow-hidden">
+    <div
+      ref="editorContainer"
+      class="h-full overflow-hidden"
+    />
+    <NotesInternalLinksOverlay />
+  </div>
 </template>

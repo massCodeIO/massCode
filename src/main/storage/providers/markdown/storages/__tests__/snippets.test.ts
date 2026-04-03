@@ -113,4 +113,20 @@ describe('code snippets storage validations', () => {
 
     expect(result.id).toBeGreaterThan(0)
   })
+
+  it('getSnippetById returns the stored snippet', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Lookup Snippet' })
+
+    expect(storage.getSnippetById(id)).toMatchObject({
+      id,
+      name: 'Lookup Snippet',
+    })
+  })
+
+  it('getSnippetById returns null for unknown ids', () => {
+    const storage = createSnippetsStorage()
+
+    expect(storage.getSnippetById(99999)).toBeNull()
+  })
 })

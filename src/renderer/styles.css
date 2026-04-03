@@ -33,6 +33,12 @@
   /* Misc */
   --text-highlight: oklch(90.5% 0.182 98.111);
   --scrollbar: oklch(0% 0 0 / 0.2);
+  --internal-link-bg: oklch(from var(--primary) l c h / 0.12);
+  --internal-link-border: oklch(from var(--primary) l c h / 0.22);
+  --internal-link-fg: var(--primary);
+  --internal-link-bg-hover: oklch(from var(--primary) l c h / 0.18);
+  --internal-link-border-hover: oklch(from var(--primary) l c h / 0.32);
+  --internal-link-fg-hover: var(--primary);
 
   /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
@@ -78,6 +84,12 @@
   /* Misc */
   --text-highlight: oklch(90.5% 0.182 98.111);
   --scrollbar: oklch(100% 0 0 / 0.2);
+  --internal-link-bg: oklch(from var(--primary) l c h / 0.58);
+  --internal-link-border: oklch(from var(--primary) l c h / 0.66);
+  --internal-link-fg: oklch(from var(--primary-foreground) l c h / 0.82);
+  --internal-link-bg-hover: oklch(from var(--primary) l c h / 0.64);
+  --internal-link-border-hover: oklch(from var(--primary) l c h / 0.72);
+  --internal-link-fg-hover: oklch(from var(--primary-foreground) l c h / 0.88);
 
   /* Charts */
   --chart-1: oklch(0.488 0.243 264.376);

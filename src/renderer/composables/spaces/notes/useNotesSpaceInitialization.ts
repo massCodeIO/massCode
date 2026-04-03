@@ -8,6 +8,7 @@ const {
   hideNotesViewModes,
   isNotesSpaceInitialized,
   notesState,
+  pendingNotesNavigation,
   showAllNotesPanels,
 } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
@@ -28,7 +29,7 @@ function hasSelectedNoteInList(noteId: number | undefined): boolean {
 }
 
 async function initNotesSpace() {
-  if (isNotesSpaceInitialized.value) {
+  if (isNotesSpaceInitialized.value || pendingNotesNavigation.value) {
     return
   }
 

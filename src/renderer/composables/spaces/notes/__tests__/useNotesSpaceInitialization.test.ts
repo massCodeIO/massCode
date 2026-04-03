@@ -11,6 +11,7 @@ async function setup(options: SetupOptions = {}) {
   vi.resetModules()
 
   const isNotesSpaceInitialized = ref(options.isInitialized ?? false)
+  const pendingNotesNavigation = ref(false)
   const notesState = {
     noteId: options.noteId,
     folderId: undefined,
@@ -33,6 +34,7 @@ async function setup(options: SetupOptions = {}) {
     useNotesApp: () => ({
       isNotesSpaceInitialized,
       notesState,
+      pendingNotesNavigation,
       hideNotesViewModes,
       showAllNotesPanels,
     }),
@@ -123,6 +125,22 @@ describe('useNotesSpaceInitialization', () => {
       noteId: 1,
       displayedNoteIds: [1, 2, 3],
     })
+
+    await context.initNotesSpace()
+
+    expect(context.getNoteFolders).not.toHaveBeenCalled()
+    expect(context.getNotes).not.toHaveBeenCalled()
+    expect(context.getNoteTags).not.toHaveBeenCalled()
+  })
+
+  it('skips loading while note deep link navigation is pending', async () => {
+    const context = await setup({
+      noteId: 1,
+      displayedNoteIds: [1, 2, 3],
+    })
+
+    const { useNotesApp } = await import('../useNotesApp')
+    useNotesApp().pendingNotesNavigation.value = true
 
     await context.initNotesSpace()
 

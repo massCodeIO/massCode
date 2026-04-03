@@ -6,6 +6,7 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNotesSpaceInitialization,
   useSnippets,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
@@ -31,7 +32,9 @@ const {
   focusedNoteId,
   highlightedFolderIds: highlightedNoteFolderIds,
   highlightedNoteIds,
+  isNotesSpaceInitialized,
   notesState,
+  pendingNotesNavigation,
 } = useNotesApp()
 
 const { clearFolderSelection, getFolders, selectFolder } = useFolders()
@@ -41,7 +44,8 @@ const {
   getNoteFolders,
   selectNoteFolder,
 } = useNoteFolders()
-const { getNotes, selectNote } = useNotes()
+const { clearNotesState, getNotes, selectNote, withNotesLoading } = useNotes()
+const { initNotesSpace } = useNotesSpaceInitialization()
 const { goBack, goForward, isNavigatingHistory, recordNavigation }
   = useNavigationHistory()
 
@@ -124,30 +128,48 @@ export async function openSnippetDeepLink(
 
 export async function openNoteDeepLink(noteId: number): Promise<void> {
   clearNotesNavigationState()
-  await ensureNotesRoute()
+  const isEnteringNotesSpace
+    = router.currentRoute.value.name !== RouterName.notesSpace
+
+  if (isEnteringNotesSpace) {
+    pendingNotesNavigation.value = true
+    clearNotesState()
+  }
 
   try {
-    const { data: note } = await api.notes.getNotesById(String(noteId))
+    await withNotesLoading(async () => {
+      await ensureNotesRoute()
 
-    if (note.folder?.id) {
-      await getNoteFolders()
-      await selectNoteFolder(note.folder.id)
-      await getNotes({ folderId: note.folder.id })
-    }
-    else {
-      clearNoteFolderSelection()
-      notesState.tagId = undefined
-      notesState.libraryFilter = note.isDeleted
-        ? LibraryFilter.Trash
-        : LibraryFilter.Inbox
+      const { data: note } = await api.notes.getNotesById(String(noteId))
 
-      await getNotes(note.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
-    }
+      if (note.folder?.id) {
+        await getNoteFolders()
+        await selectNoteFolder(note.folder.id)
+        await getNotes({ folderId: note.folder.id })
+      }
+      else {
+        clearNoteFolderSelection()
+        notesState.tagId = undefined
+        notesState.libraryFilter = note.isDeleted
+          ? LibraryFilter.Trash
+          : LibraryFilter.Inbox
 
-    selectNote(noteId)
+        await getNotes(note.isDeleted ? { isDeleted: 1 } : { isInbox: 1 })
+      }
+
+      selectNote(noteId)
+      isNotesSpaceInitialized.value = true
+    })
   }
   catch (error) {
     console.error('Failed to open note deep link:', error)
+
+    if (isEnteringNotesSpace) {
+      await initNotesSpace()
+    }
+  }
+  finally {
+    pendingNotesNavigation.value = false
   }
 }
 

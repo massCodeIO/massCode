@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 interface SetupOptions {
   noteResponse?: any
   noteRouteName?: string
+  noteThrows?: boolean
   snippetResponse?: any
   snippetRouteName?: string
   snippetThrows?: boolean
@@ -32,8 +33,12 @@ async function setup(options: SetupOptions = {}) {
   const getNoteFolders = vi.fn(async () => undefined)
   const selectNoteFolder = vi.fn(async () => undefined)
   const clearNoteFolderSelection = vi.fn()
+  const clearNotesState = vi.fn()
   const getNotes = vi.fn(async () => undefined)
   const selectNote = vi.fn()
+  const withNotesLoading = vi.fn(async (loader: () => Promise<void>) => {
+    await loader()
+  })
   const historyEntries = ref<any[]>([])
   const historyCursor = ref(-1)
   const isNavigatingHistory = ref(false)
@@ -56,27 +61,36 @@ async function setup(options: SetupOptions = {}) {
         },
       }))
 
-  const getNotesById = vi.fn(async () => ({
-    data: options.noteResponse ?? {
-      content: 'Hello world',
-      folder: null,
-      id: 15,
-      isDeleted: 1,
-      name: 'Note',
-    },
-  }))
+  const getNotesById = options.noteThrows
+    ? vi.fn(async () => {
+        throw new Error('not found')
+      })
+    : vi.fn(async () => ({
+        data: options.noteResponse ?? {
+          content: 'Hello world',
+          folder: null,
+          id: 15,
+          isDeleted: 1,
+          name: 'Note',
+        },
+      }))
 
   const router = {
-    currentRoute: ref({ name: options.snippetRouteName ?? 'main' }),
+    currentRoute: ref({
+      name: options.noteRouteName ?? options.snippetRouteName ?? 'main',
+    }),
     push: vi.fn(async ({ name }: { name: string }) => {
       router.currentRoute.value = { name }
     }),
   }
 
   const initCodeSpace = vi.fn(async () => undefined)
+  const initNotesSpace = vi.fn(async () => undefined)
   const isAppLoading = ref(false)
   const isCodeSpaceInitialized = ref(false)
+  const isNotesSpaceInitialized = ref(false)
   const pendingCodeNavigation = ref(false)
+  const pendingNotesNavigation = ref(false)
 
   vi.doMock('@/composables', () => ({
     initCodeSpace,
@@ -115,18 +129,25 @@ async function setup(options: SetupOptions = {}) {
       recordNavigation,
     }),
     useNotes: () => ({
+      clearNotesState,
       getNotes,
       selectedNote: ref({
         id: 15,
         name: 'Current note',
       }),
       selectNote,
+      withNotesLoading,
     }),
     useNotesApp: () => ({
       focusedNoteId: ref<number | undefined>(),
       highlightedFolderIds: ref(new Set<number>()),
       highlightedNoteIds: ref(new Set<number>()),
+      isNotesSpaceInitialized,
       notesState,
+      pendingNotesNavigation,
+    }),
+    useNotesSpaceInitialization: () => ({
+      initNotesSpace,
     }),
     useSnippets: () => ({
       getSnippets,
@@ -163,20 +184,24 @@ async function setup(options: SetupOptions = {}) {
   return {
     clearFolderSelection,
     clearNoteFolderSelection,
+    clearNotesState,
     getFolders,
     getNotes,
     getSnippets,
     goBack,
     goForward,
     initCodeSpace,
+    initNotesSpace,
     isAppLoading,
     isCodeSpaceInitialized,
+    isNotesSpaceInitialized,
     isNavigatingHistory,
     historyCursor,
     historyEntries,
     module,
     notesState,
     pendingCodeNavigation,
+    pendingNotesNavigation,
     recordNavigation,
     router,
     selectFolder,
@@ -184,6 +209,7 @@ async function setup(options: SetupOptions = {}) {
     selectNoteFolder,
     selectSnippet,
     state,
+    withNotesLoading,
   }
 }
 
@@ -229,6 +255,9 @@ describe('deepLinks', () => {
     expect(context.notesState.libraryFilter).toBe('trash')
     expect(context.getNotes).toHaveBeenCalledWith({ isDeleted: 1 })
     expect(context.selectNote).toHaveBeenCalledWith(15)
+    expect(context.clearNotesState).toHaveBeenCalledTimes(1)
+    expect(context.isNotesSpaceInitialized.value).toBe(true)
+    expect(context.pendingNotesNavigation.value).toBe(false)
   })
 
   it('falls back to legacy folderId for old snippet deeplinks', async () => {
@@ -272,5 +301,18 @@ describe('deepLinks', () => {
     expect(context.router.push).toHaveBeenCalledWith({ name: 'notes-space' })
     expect(context.selectNote).toHaveBeenCalledWith(15)
     expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
+  it('falls back to notes init when note deep link fails after route change', async () => {
+    const context = await setup({
+      noteRouteName: 'main',
+      noteThrows: true,
+    })
+
+    await context.module.openNoteDeepLink(15)
+
+    expect(context.clearNotesState).toHaveBeenCalledTimes(1)
+    expect(context.initNotesSpace).toHaveBeenCalledTimes(1)
+    expect(context.pendingNotesNavigation.value).toBe(false)
   })
 })

@@ -138,7 +138,8 @@ export default defineConfig({
         {
           text: 'Tools',
           items: [
-            { text: 'Developer Tools', link: '/documentation/tools/' },
+            { text: 'Overview', link: '/documentation/tools/' },
+            { text: 'JSON Diff', link: '/documentation/tools/json-diff' },
           ],
         },
       ],

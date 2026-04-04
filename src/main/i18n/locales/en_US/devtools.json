@@ -190,6 +190,25 @@
       "description": "Convert text to a URL-friendly slug"
     }
   },
+  "compare": {
+    "label": "Compare",
+    "jsonDiff": {
+      "label": "JSON Diff",
+      "description": "Compare and visualize differences between two JSON documents",
+      "original": "Original",
+      "modified": "Modified",
+      "filters": {
+        "added": "Added",
+        "removed": "Removed",
+        "modified": "Modified"
+      },
+      "empty": "Paste JSON into both fields to see the diff",
+      "errors": {
+        "invalidJson": "Invalid JSON",
+        "diffFailed": "Failed to compute diff"
+      }
+    }
+  },
   "form": {
     "input": "Input",
     "output": "Output",

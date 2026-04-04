@@ -28,6 +28,7 @@ export const RouterName = {
   devtoolsColorConverter: 'devtools/color-converter',
   devtoolsJsonGenerator: 'devtools/json-generator',
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
+  devtoolsJsonDiff: 'devtools/json-diff',
   mathNotebook: 'math-notebook',
   notesSpace: 'notes-space',
   notesPresentation: 'notes-space/presentation',
@@ -180,6 +181,11 @@ const routes = [
         name: RouterName.devtoolsLoremIpsumGenerator,
         component: () =>
           import('@/components/devtools/generators/LoremIpsumGenerator.vue'),
+      },
+      {
+        path: 'compare/json-diff',
+        name: RouterName.devtoolsJsonDiff,
+        component: () => import('@/components/devtools/compare/JsonDiff.vue'),
       },
     ],
   },

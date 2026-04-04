@@ -88,6 +88,13 @@ const generatorsNav = [
     name: RouterName.devtoolsLoremIpsumGenerator,
   },
 ]
+
+const compareNav = [
+  {
+    label: i18n.t('devtools:compare.jsonDiff.label'),
+    name: RouterName.devtoolsJsonDiff,
+  },
+]
 </script>
 
 <template>
@@ -167,6 +174,26 @@ const generatorsNav = [
         <SidebarSectionHeader :title="i18n.t('devtools:generators.label')" />
         <RouterLink
           v-for="item in generatorsNav"
+          :key="item.name"
+          v-slot="{ navigate }"
+          custom
+          :to="{ name: item.name }"
+        >
+          <SidebarItem
+            class="cursor-default"
+            :selected="isActiveRoute(item.name)"
+            @click="navigate"
+          >
+            <div class="flex h-[23px] items-center px-2 pl-5.5">
+              <span class="min-w-0 truncate select-none">
+                {{ item.label }}
+              </span>
+            </div>
+          </SidebarItem>
+        </RouterLink>
+        <SidebarSectionHeader :title="i18n.t('devtools:compare.label')" />
+        <RouterLink
+          v-for="item in compareNav"
           :key="item.name"
           v-slot="{ navigate }"
           custom

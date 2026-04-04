@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.2",
     "@codemirror/language-data": "^6.5.2",
@@ -86,6 +87,7 @@
     "i18next-fs-backend": "^2.6.0",
     "interactjs": "^1.10.27",
     "js-yaml": "^4.1.0",
+    "jsondiffpatch": "^0.7.3",
     "ky": "^1.7.5",
     "lucide-vue-next": "^0.476.0",
     "markmap-lib": "^0.18.11",

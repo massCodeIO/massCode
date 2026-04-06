@@ -11,7 +11,7 @@ defineProps<{
   <NotesDashboardSection
     :title="i18n.t('notes.dashboard.activity.summaryTitle')"
   >
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid h-full grid-cols-2 grid-rows-2 gap-3">
       <div class="bg-muted/50 rounded-lg p-4">
         <div class="text-muted-foreground text-xs uppercase">
           {{ i18n.t("notes.dashboard.activity.updatedToday") }}

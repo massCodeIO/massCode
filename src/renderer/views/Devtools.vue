@@ -4,6 +4,14 @@ import { RouterName } from '@/router'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const sidebarRef = useTemplateRef<HTMLElement>('sidebarRef')
+
+onMounted(() => {
+  nextTick(() => {
+    const el = sidebarRef.value?.querySelector('[data-selected="true"]')
+    el?.scrollIntoView({ block: 'center' })
+  })
+})
 
 const isActiveRoute = computed(() => {
   return (name: string) => route.name === name
@@ -121,7 +129,10 @@ const compareNav = [
       </div>
     </template>
     <template #left>
-      <div class="scrollbar h-full min-h-0 overflow-y-auto px-2">
+      <div
+        ref="sidebarRef"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-2"
+      >
         <RouterLink
           v-for="item in convertersNav"
           :key="item.name"

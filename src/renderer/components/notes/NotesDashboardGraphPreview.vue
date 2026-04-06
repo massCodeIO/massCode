@@ -118,15 +118,21 @@ function getPointerPosition(event: PointerEvent) {
     return null
   }
 
-  const rect = previewSvgRef.value.getBoundingClientRect()
+  const matrix = previewSvgRef.value.getScreenCTM()
 
-  if (!rect.width || !rect.height) {
+  if (!matrix) {
     return null
   }
 
+  const point = previewSvgRef.value.createSVGPoint()
+  point.x = event.clientX
+  point.y = event.clientY
+
+  const svgPoint = point.matrixTransform(matrix.inverse())
+
   return {
-    x: ((event.clientX - rect.left) / rect.width) * PREVIEW_WIDTH,
-    y: ((event.clientY - rect.top) / rect.height) * PREVIEW_HEIGHT,
+    x: svgPoint.x,
+    y: svgPoint.y,
   }
 }
 
@@ -332,6 +338,7 @@ watch(
         ref="previewSvgRef"
         class="block h-72 w-full select-none"
         :viewBox="`0 0 ${PREVIEW_WIDTH} ${PREVIEW_HEIGHT}`"
+        preserveAspectRatio="xMidYMid meet"
         @mouseleave="hoveredNodeId = null"
         @pointermove="moveNode"
         @pointerup="stopNodeDrag"

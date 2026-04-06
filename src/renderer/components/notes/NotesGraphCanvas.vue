@@ -156,15 +156,21 @@ function getPointerPosition(event: PointerEvent | WheelEvent) {
     return null
   }
 
-  const rect = graphSvgRef.value.getBoundingClientRect()
+  const matrix = graphSvgRef.value.getScreenCTM()
 
-  if (!rect.width || !rect.height) {
+  if (!matrix) {
     return null
   }
 
+  const point = graphSvgRef.value.createSVGPoint()
+  point.x = event.clientX
+  point.y = event.clientY
+
+  const svgPoint = point.matrixTransform(matrix.inverse())
+
   return {
-    x: ((event.clientX - rect.left) / rect.width) * VIEWBOX_WIDTH,
-    y: ((event.clientY - rect.top) / rect.height) * VIEWBOX_HEIGHT,
+    x: svgPoint.x,
+    y: svgPoint.y,
   }
 }
 
@@ -528,7 +534,7 @@ watch(
           'cursor-grab': !panState.active && !nodeDragState.active,
         }"
         :viewBox="`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
         @pointerdown="startPan"
       >
         <g :transform="`translate(${pan.x}, ${pan.y}) scale(${zoom})`">

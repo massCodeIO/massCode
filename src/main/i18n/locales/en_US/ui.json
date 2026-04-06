@@ -68,7 +68,6 @@
         "activityHeatmap": "Activity Heatmap",
         "activitySummary": "Activity Summary",
         "recent": "Recent Notes",
-        "tagCloud": "Tags Overview",
         "graphPreview": "Graph Preview",
         "topLinked": "Top Linked Notes"
       },
@@ -94,10 +93,6 @@
       "recent": {
         "title": "Recent Notes",
         "empty": "No recent notes yet."
-      },
-      "tags": {
-        "title": "Tags Overview",
-        "empty": "No tags in notes yet."
       },
       "graphPreview": {
         "title": "Knowledge Graph",

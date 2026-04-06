@@ -21,7 +21,6 @@ export interface NotesDashboardWidgets {
   activityHeatmap: boolean
   activitySummary: boolean
   recent: boolean
-  tagCloud: boolean
   graphPreview: boolean
   topLinked: boolean
 }

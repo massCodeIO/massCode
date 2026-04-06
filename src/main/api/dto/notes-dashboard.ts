@@ -29,13 +29,6 @@ const notesDashboardResponse = t.Object({
       updatedAt: t.Number(),
     }),
   ),
-  tags: t.Array(
-    t.Object({
-      id: t.Number(),
-      name: t.String(),
-      noteCount: t.Number(),
-    }),
-  ),
   topLinked: t.Array(
     t.Object({
       id: t.Number(),

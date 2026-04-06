@@ -41,7 +41,6 @@ const APP_STORE_DEFAULTS: AppStore = {
         activityHeatmap: true,
         activitySummary: true,
         recent: true,
-        tagCloud: true,
         graphPreview: true,
         topLinked: true,
       },
@@ -212,10 +211,6 @@ function sanitizeAppStore(value: unknown): AppStore {
               typeof dashSource.recent === 'boolean'
                 ? dashSource.recent
                 : defaults.recent,
-            tagCloud:
-              typeof dashSource.tagCloud === 'boolean'
-                ? dashSource.tagCloud
-                : defaults.tagCloud,
             graphPreview:
               typeof dashSource.graphPreview === 'boolean'
                 ? dashSource.graphPreview

@@ -269,7 +269,6 @@ describe('app store sanitization', () => {
       activityHeatmap: true,
       activitySummary: true,
       recent: false,
-      tagCloud: true,
       graphPreview: true,
       topLinked: true,
     })

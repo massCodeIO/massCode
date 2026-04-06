@@ -34,10 +34,6 @@ const widgetItems: Array<{
     label: i18n.t('notes.dashboard.widgets.recent'),
   },
   {
-    key: 'tagCloud',
-    label: i18n.t('notes.dashboard.widgets.tagCloud'),
-  },
-  {
     key: 'graphPreview',
     label: i18n.t('notes.dashboard.widgets.graphPreview'),
   },

@@ -251,11 +251,6 @@ export interface NotesDashboardResponse {
     } | null;
     updatedAt: number;
   }[];
-  tags: {
-    id: number;
-    name: string;
-    noteCount: number;
-  }[];
   topLinked: {
     id: number;
     name: string;

@@ -86,25 +86,10 @@ onMounted(() => {
             <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
           </div>
         </div>
-
-        <div
-          v-if="dashboardWidgets.tagCloud || dashboardWidgets.graphPreview"
-          class="grid grid-cols-2 gap-4"
-        >
-          <div
-            v-if="dashboardWidgets.tagCloud"
-            :class="dashboardWidgets.graphPreview ? 'col-span-1' : 'col-span-2'"
-          >
-            <NotesDashboardTagCloud :tags="dashboardData.tags" />
-          </div>
-          <div
-            v-if="dashboardWidgets.graphPreview"
-            :class="dashboardWidgets.tagCloud ? 'col-span-1' : 'col-span-2'"
-          >
-            <NotesDashboardGraphPreview
-              :graph-preview="dashboardData.graphPreview"
-            />
-          </div>
+        <div v-if="dashboardWidgets.graphPreview">
+          <NotesDashboardGraphPreview
+            :graph-preview="dashboardData.graphPreview"
+          />
         </div>
       </div>
     </div>

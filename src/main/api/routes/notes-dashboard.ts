@@ -128,14 +128,6 @@ app.use(notesDashboardDTO).get(
       })),
     })
 
-    const tagCounts = new Map<number, number>()
-
-    notes.forEach((note) => {
-      note.tags.forEach((tag) => {
-        tagCounts.set(tag.id, (tagCounts.get(tag.id) ?? 0) + 1)
-      })
-    })
-
     return {
       activity: buildActivity(notes.map(note => note.updatedAt)),
       graphPreview: {
@@ -165,11 +157,6 @@ app.use(notesDashboardDTO).get(
           0,
         ),
       },
-      tags: tags.map(tag => ({
-        id: tag.id,
-        name: tag.name,
-        noteCount: tagCounts.get(tag.id) ?? 0,
-      })),
       topLinked: [...graph.nodes]
         .filter(node => node.incomingLinksCount > 0)
         .sort(

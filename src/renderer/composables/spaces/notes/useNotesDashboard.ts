@@ -8,7 +8,6 @@ export interface NotesDashboardWidgetsState {
   activityHeatmap: boolean
   activitySummary: boolean
   recent: boolean
-  tagCloud: boolean
   graphPreview: boolean
   topLinked: boolean
 }
@@ -18,7 +17,6 @@ const DEFAULT_WIDGETS: NotesDashboardWidgetsState = {
   activityHeatmap: true,
   activitySummary: true,
   recent: true,
-  tagCloud: true,
   graphPreview: true,
   topLinked: true,
 }

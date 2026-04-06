@@ -109,6 +109,22 @@ const neighborIds = computed(() => {
   return neighbors
 })
 
+const activeNeighborhoodIds = computed(() => {
+  const ids = new Set<number>()
+
+  if (!hoveredNodeId.value) {
+    return ids
+  }
+
+  ids.add(hoveredNodeId.value)
+
+  neighborIds.value.get(hoveredNodeId.value)?.forEach((neighborId) => {
+    ids.add(neighborId)
+  })
+
+  return ids
+})
+
 function getPreviewNodeRadius(radius: number) {
   return Math.max(1.8, Math.min(4.8, radius * 0.64))
 }
@@ -216,15 +232,20 @@ function initializePreviewSimulation() {
     .on('tick', schedulePreviewUpdate)
 }
 
-function isNodeHighlighted(nodeId: number) {
+function isNodeDimmed(nodeId: number) {
   if (!hoveredNodeId.value) {
     return false
   }
 
-  return (
-    hoveredNodeId.value === nodeId
-    || neighborIds.value.get(hoveredNodeId.value)?.has(nodeId)
-  )
+  return !activeNeighborhoodIds.value.has(nodeId)
+}
+
+function isEdgeDimmed(source: number, target: number) {
+  if (!hoveredNodeId.value) {
+    return false
+  }
+
+  return source !== hoveredNodeId.value && target !== hoveredNodeId.value
 }
 
 function openNode(nodeId: number) {
@@ -358,14 +379,16 @@ watch(
                   || edge.target === hoveredNodeId
                   || neighborIds.get(hoveredNodeId)?.has(edge.source)
                   || neighborIds.get(hoveredNodeId)?.has(edge.target))
-                ? 'rgba(224,224,224,0.34)'
-                : 'rgba(210,210,210,0.14)'
+                ? 'rgba(139,92,246,0.9)'
+                : isEdgeDimmed(edge.source, edge.target)
+                  ? 'rgba(160,160,160,0.08)'
+                  : 'rgba(210,210,210,0.14)'
             "
             :stroke-width="
               hoveredNodeId
                 && (edge.source === hoveredNodeId || edge.target === hoveredNodeId)
                 ? 0.95
-                : 0.6
+                : 0.5
             "
           />
         </g>
@@ -382,9 +405,13 @@ watch(
             :cy="node.y"
             :r="node.radius + 1.8"
             :fill="
-              isNodeHighlighted(node.id)
-                ? 'rgba(255,255,255,0.08)'
-                : 'rgba(255,255,255,0.02)'
+              hoveredNodeId === node.id
+                ? 'rgba(139,92,246,0.22)'
+                : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
+                  ? 'rgba(139,92,246,0.08)'
+                  : isNodeDimmed(node.id)
+                    ? 'rgba(255,255,255,0.01)'
+                    : 'rgba(255,255,255,0.02)'
             "
           />
           <circle
@@ -393,19 +420,29 @@ watch(
             :r="node.radius"
             :fill="
               hoveredNodeId === node.id
-                ? 'rgba(255,255,255,0.96)'
-                : node.incomingLinksCount > 0
-                  ? 'rgba(220,220,220,0.84)'
-                  : 'rgba(188,188,188,0.78)'
+                ? 'rgba(139,92,246,0.98)'
+                : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
+                  ? 'rgba(238,238,238,0.92)'
+                  : isNodeDimmed(node.id)
+                    ? 'rgba(140,140,140,0.34)'
+                    : node.incomingLinksCount > 0
+                      ? 'rgba(188,188,188,0.6)'
+                      : 'rgba(158,158,158,0.5)'
             "
             @pointerdown.stop="startNodeDrag(node.id, $event)"
           />
           <text
-            v-if="hoveredNodeId === node.id"
-            :x="node.x + node.radius + 5"
-            :y="node.y + 3"
-            text-anchor="start"
-            class="fill-white text-[10px]"
+            v-if="activeNeighborhoodIds.has(node.id)"
+            :x="hoveredNodeId === node.id ? node.x : node.x + node.radius + 5"
+            :y="
+              hoveredNodeId === node.id ? node.y + node.radius + 14 : node.y + 3
+            "
+            :text-anchor="hoveredNodeId === node.id ? 'middle' : 'start'"
+            :class="
+              hoveredNodeId === node.id
+                ? 'fill-white text-[12px] font-medium'
+                : 'fill-white/70 text-[10px]'
+            "
           >
             {{
               node.name.length > 22 ? `${node.name.slice(0, 22)}…` : node.name

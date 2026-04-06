@@ -108,6 +108,22 @@ const activeNeighborIds = computed(() => {
   return neighborsById.value.get(activeNodeId.value) ?? new Set<number>()
 })
 
+const activeNeighborhoodIds = computed(() => {
+  const ids = new Set<number>()
+
+  if (!activeNodeId.value) {
+    return ids
+  }
+
+  ids.add(activeNodeId.value)
+
+  activeNeighborIds.value.forEach((neighborId) => {
+    ids.add(neighborId)
+  })
+
+  return ids
+})
+
 function resetViewport() {
   if (!graphNodes.value.length) {
     zoom.value = 1
@@ -324,12 +340,40 @@ function isNodeHighlighted(nodeId: number) {
   return nodeId === activeNodeId.value || activeNeighborIds.value.has(nodeId)
 }
 
+function isNodeDimmed(nodeId: number) {
+  if (!activeNodeId.value) {
+    return false
+  }
+
+  return !activeNeighborhoodIds.value.has(nodeId)
+}
+
 function isEdgeHighlighted(source: number, target: number) {
   if (!activeNodeId.value) {
     return false
   }
 
   return source === activeNodeId.value || target === activeNodeId.value
+}
+
+function isEdgeDimmed(source: number, target: number) {
+  if (!activeNodeId.value) {
+    return false
+  }
+
+  return !isEdgeHighlighted(source, target)
+}
+
+function getDisplayedNodeRadius(node: ForceGraphNode) {
+  if (activeNodeId.value === node.id) {
+    return node.radius + 2.4
+  }
+
+  if (activeNeighborIds.value.has(node.id)) {
+    return node.radius + 0.8
+  }
+
+  return node.radius
 }
 
 function scheduleGraphUpdate() {
@@ -548,11 +592,13 @@ watch(
               :y2="nodeMap.get(edge.target)?.y"
               :stroke="
                 isEdgeHighlighted(edge.source, edge.target)
-                  ? 'rgba(220,220,220,0.38)'
-                  : 'rgba(208,208,208,0.16)'
+                  ? 'rgba(139,92,246,0.9)'
+                  : isEdgeDimmed(edge.source, edge.target)
+                    ? 'rgba(160,160,160,0.08)'
+                    : 'rgba(208,208,208,0.14)'
               "
               :stroke-width="
-                isEdgeHighlighted(edge.source, edge.target) ? 1.2 : 0.7
+                isEdgeHighlighted(edge.source, edge.target) ? 1.3 : 0.55
               "
             />
           </g>
@@ -567,38 +613,62 @@ watch(
             <circle
               :cx="node.x"
               :cy="node.y"
-              :r="node.radius + 4"
+              :r="getDisplayedNodeRadius(node) + 5"
               :fill="
-                isNodeHighlighted(node.id)
-                  ? 'rgba(255,255,255,0.10)'
-                  : 'rgba(255,255,255,0.02)'
+                activeNodeId === node.id
+                  ? 'rgba(139,92,246,0.22)'
+                  : activeNeighborIds.has(node.id)
+                    ? 'rgba(139,92,246,0.1)'
+                    : isNodeDimmed(node.id)
+                      ? 'rgba(255,255,255,0.01)'
+                      : 'rgba(255,255,255,0.02)'
               "
             />
             <circle
               :cx="node.x"
               :cy="node.y"
-              :r="node.radius"
+              :r="getDisplayedNodeRadius(node)"
               :fill="
                 activeNodeId === node.id
-                  ? 'rgba(255,255,255,0.94)'
-                  : node.incomingLinksCount > 0
-                    ? 'rgba(218,218,218,0.82)'
-                    : 'rgba(186,186,186,0.78)'
+                  ? 'rgba(139,92,246,0.98)'
+                  : activeNeighborIds.has(node.id)
+                    ? 'rgba(238,238,238,0.92)'
+                    : isNodeDimmed(node.id)
+                      ? 'rgba(140,140,140,0.36)'
+                      : node.incomingLinksCount > 0
+                        ? 'rgba(168,168,168,0.52)'
+                        : 'rgba(142,142,142,0.42)'
               "
               :stroke="
-                isNodeHighlighted(node.id)
-                  ? 'rgba(255,255,255,0.9)'
-                  : 'rgba(255,255,255,0.14)'
+                activeNodeId === node.id
+                  ? 'rgba(196,181,253,0.95)'
+                  : activeNeighborIds.has(node.id)
+                    ? 'rgba(255,255,255,0.55)'
+                    : isNodeDimmed(node.id)
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(255,255,255,0.08)'
               "
-              :stroke-width="isNodeHighlighted(node.id) ? 0.9 : 0.45"
+              :stroke-width="isNodeHighlighted(node.id) ? 0.85 : 0.35"
               @pointerdown.stop="startNodeDrag(node.id, $event)"
             />
             <text
-              v-if="activeNodeId === node.id"
-              :x="node.x + node.radius + 8"
-              :y="node.y + 3"
-              text-anchor="start"
-              class="fill-white text-[11px]"
+              v-if="activeNeighborhoodIds.has(node.id)"
+              :x="
+                activeNodeId === node.id
+                  ? node.x
+                  : node.x + getDisplayedNodeRadius(node) + 8
+              "
+              :y="
+                activeNodeId === node.id
+                  ? node.y + getDisplayedNodeRadius(node) + 18
+                  : node.y + 3
+              "
+              :text-anchor="activeNodeId === node.id ? 'middle' : 'start'"
+              :class="
+                activeNodeId === node.id
+                  ? 'fill-white text-[15px] font-medium'
+                  : 'fill-white/70 text-[11px]'
+              "
             >
               {{
                 node.name.length > 26 ? `${node.name.slice(0, 26)}…` : node.name

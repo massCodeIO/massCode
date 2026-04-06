@@ -45,6 +45,15 @@ interface ForceGraphLink extends SimulationLinkDatum<ForceGraphNode> {
   target: number | ForceGraphNode
 }
 
+interface GraphLabel {
+  id: number
+  isActive: boolean
+  text: string
+  textAnchor: 'middle' | 'start'
+  x: number
+  y: number
+}
+
 const {
   graphData,
   graphError,
@@ -122,6 +131,82 @@ const activeNeighborhoodIds = computed(() => {
   })
 
   return ids
+})
+
+const graphLabels = computed<GraphLabel[]>(() => {
+  if (!activeNodeId.value) {
+    return []
+  }
+
+  const labels = graphNodes.value
+    .filter(node => activeNeighborhoodIds.value.has(node.id))
+    .sort((left, right) => {
+      if (left.id === activeNodeId.value) {
+        return -1
+      }
+
+      if (right.id === activeNodeId.value) {
+        return 1
+      }
+
+      return right.incomingLinksCount - left.incomingLinksCount
+    })
+    .map((node) => {
+      const isActive = node.id === activeNodeId.value
+      const radius = getDisplayedNodeRadius(node)
+      const text
+        = node.name.length > 26 ? `${node.name.slice(0, 26)}…` : node.name
+
+      return {
+        id: node.id,
+        isActive,
+        text,
+        textAnchor: isActive ? 'middle' : 'start',
+        x: isActive
+          ? node.x * zoom.value + pan.x
+          : (node.x + radius + 8) * zoom.value + pan.x,
+        y: isActive
+          ? (node.y + radius + 18) * zoom.value + pan.y
+          : (node.y + 3) * zoom.value + pan.y,
+      }
+    })
+
+  const occupiedBoxes: Array<{
+    bottom: number
+    left: number
+    right: number
+    top: number
+  }> = []
+
+  return labels.filter((label) => {
+    const fontSize = label.isActive ? 15 : 11
+    const width = label.text.length * (label.isActive ? 7.4 : 6.1)
+    const left = label.textAnchor === 'middle' ? label.x - width / 2 : label.x
+    const right
+      = label.textAnchor === 'middle' ? label.x + width / 2 : label.x + width
+    const top = label.y - fontSize
+    const bottom = label.y + 4
+    const overlaps = occupiedBoxes.some(
+      box =>
+        left < box.right
+        && right > box.left
+        && top < box.bottom
+        && bottom > box.top,
+    )
+
+    if (overlaps) {
+      return false
+    }
+
+    occupiedBoxes.push({
+      left: left - 4,
+      right: right + 4,
+      top: top - 2,
+      bottom: bottom + 2,
+    })
+
+    return true
+  })
 })
 
 function resetViewport() {
@@ -651,30 +736,24 @@ watch(
               :stroke-width="isNodeHighlighted(node.id) ? 0.85 : 0.35"
               @pointerdown.stop="startNodeDrag(node.id, $event)"
             />
-            <text
-              v-if="activeNeighborhoodIds.has(node.id)"
-              :x="
-                activeNodeId === node.id
-                  ? node.x
-                  : node.x + getDisplayedNodeRadius(node) + 8
-              "
-              :y="
-                activeNodeId === node.id
-                  ? node.y + getDisplayedNodeRadius(node) + 18
-                  : node.y + 3
-              "
-              :text-anchor="activeNodeId === node.id ? 'middle' : 'start'"
-              :class="
-                activeNodeId === node.id
-                  ? 'fill-white text-[15px] font-medium'
-                  : 'fill-white/70 text-[11px]'
-              "
-            >
-              {{
-                node.name.length > 26 ? `${node.name.slice(0, 26)}…` : node.name
-              }}
-            </text>
           </g>
+        </g>
+
+        <g class="pointer-events-none">
+          <text
+            v-for="label in graphLabels"
+            :key="label.id"
+            :x="label.x"
+            :y="label.y"
+            :text-anchor="label.textAnchor"
+            :class="
+              label.isActive
+                ? 'fill-white text-[15px] font-medium'
+                : 'fill-white/42 text-[11px]'
+            "
+          >
+            {{ label.text }}
+          </text>
         </g>
       </svg>
 

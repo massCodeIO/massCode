@@ -98,6 +98,7 @@
       },
       "graphPreview": {
         "title": "Knowledge Graph",
+        "caption": "Hover nodes to inspect local connections.",
         "empty": "No links between notes yet."
       },
       "topLinked": {
@@ -108,6 +109,8 @@
       "graph": {
         "title": "Notes Graph",
         "description": "Browse connections between notes and jump back into the workspace.",
+        "hint": "Drag to pan, use zoom controls or the mouse wheel, and hover a node to inspect its neighborhood.",
+        "meta": "{{links}} incoming links · {{neighbors}} connected notes",
         "empty": "No links between notes yet.",
         "error": "Failed to load notes graph."
       }

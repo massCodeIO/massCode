@@ -41,6 +41,8 @@ export default defineConfig({
     'process': {},
   },
   server: {
+    port: Number(process.env.DEV_PORT) || 5177,
+    strictPort: true,
     watch: {
       ignored: [
         `${root}/src/main/i18n/locales/**/*`,

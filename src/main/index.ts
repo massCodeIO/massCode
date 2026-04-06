@@ -58,7 +58,7 @@ function createWindow() {
   Menu.setApplicationMenu(createMainMenu())
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173')
+    mainWindow.loadURL(`http://localhost:${process.env.DEV_PORT || 5177}`)
     mainWindow.webContents.openDevTools()
   }
   else {

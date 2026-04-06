@@ -131,7 +131,7 @@ const compareNav = [
     <template #left>
       <div
         ref="sidebarRef"
-        class="scrollbar h-full min-h-0 overflow-y-auto px-2"
+        class="scrollbar h-full min-h-0 overflow-y-auto px-2 pb-2"
       >
         <RouterLink
           v-for="item in convertersNav"

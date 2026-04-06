@@ -57,7 +57,7 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       label: i18n.t('spaces.tools.label'),
       tooltip: i18n.t('spaces.tools.tooltip'),
       icon: Blocks,
-      to: { name: RouterName.devtoolsCaseConverter },
+      to: { name: RouterName.devtools },
       isActive: routeName =>
         isRouteNameInSpace(routeName, RouterName.devtools),
     },

@@ -47,11 +47,11 @@ export function registerMainMenuListeners() {
   registerMainMenuContextSync()
 
   ipc.on('main-menu:goto-preferences', () => {
-    router.push({ name: RouterName.preferencesStorage })
+    router.push({ name: RouterName.preferences })
   })
 
   ipc.on('main-menu:goto-devtools', () => {
-    router.push({ name: RouterName.devtoolsCaseConverter })
+    router.push({ name: RouterName.devtools })
   })
 
   ipc.on('main-menu:navigate-back', () => {

@@ -4,6 +4,8 @@ import {
   forceLink,
   forceManyBody,
   forceSimulation,
+  forceX,
+  forceY,
 } from 'd3-force'
 
 interface GraphNodeInput {
@@ -33,10 +35,9 @@ interface ForceGraphLink {
 }
 
 export interface GraphLayoutNode extends GraphNodeInput {
+  radius: number
   x: number
   y: number
-  width: number
-  height: number
 }
 
 export interface GraphLayoutResult {
@@ -46,12 +47,62 @@ export interface GraphLayoutResult {
   edges: GraphEdgeInput[]
 }
 
-function getNodeWidth(node: GraphNodeInput, compact: boolean): number {
-  const minWidth = compact ? 104 : 144
-  const maxWidth = compact ? 156 : 220
-  const computedWidth = node.name.length * (compact ? 6 : 7.5) + 44
+interface GraphBounds {
+  width: number
+  height: number
+  maxX: number
+  maxY: number
+  minX: number
+  minY: number
+}
 
-  return Math.max(minWidth, Math.min(maxWidth, computedWidth))
+export function getNotesGraphNodeRadius(
+  incomingLinksCount: number,
+  compact = false,
+) {
+  const minRadius = compact ? 2.6 : 3.2
+  const maxRadius = compact ? 8 : 12
+  const growth
+    = Math.sqrt(Math.max(0, incomingLinksCount)) * (compact ? 1 : 1.35)
+
+  return Math.min(maxRadius, minRadius + growth)
+}
+
+export function getNotesGraphBounds(
+  nodes: Pick<GraphLayoutNode, 'radius' | 'x' | 'y'>[],
+  padding = 24,
+): GraphBounds {
+  if (!nodes.length) {
+    return {
+      width: 0,
+      height: 0,
+      maxX: 0,
+      maxY: 0,
+      minX: 0,
+      minY: 0,
+    }
+  }
+
+  const bounds = nodes.reduce(
+    (accumulator, node) => ({
+      maxX: Math.max(accumulator.maxX, node.x + node.radius),
+      maxY: Math.max(accumulator.maxY, node.y + node.radius),
+      minX: Math.min(accumulator.minX, node.x - node.radius),
+      minY: Math.min(accumulator.minY, node.y - node.radius),
+    }),
+    {
+      maxX: Number.NEGATIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+      minX: Number.POSITIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+    },
+  )
+
+  return {
+    ...bounds,
+    width: Math.max(240, bounds.maxX - bounds.minX + padding * 2),
+    height: Math.max(160, bounds.maxY - bounds.minY + padding * 2),
+  }
 }
 
 export function buildNotesGraphLayout(
@@ -70,22 +121,21 @@ export function buildNotesGraphLayout(
 
   const compact = Boolean(options.compact)
   const estimatedWidth = compact
-    ? Math.max(420, Math.sqrt(nodes.length) * 140)
-    : Math.max(900, Math.sqrt(nodes.length) * 220)
+    ? Math.max(340, Math.sqrt(nodes.length) * 96)
+    : Math.max(760, Math.sqrt(nodes.length) * 136)
   const estimatedHeight = compact
-    ? Math.max(220, Math.sqrt(nodes.length) * 120)
-    : Math.max(560, Math.sqrt(nodes.length) * 180)
-  const radius = compact ? 70 : 160
+    ? Math.max(220, Math.sqrt(nodes.length) * 76)
+    : Math.max(520, Math.sqrt(nodes.length) * 112)
+  const seedRadius = compact ? 52 : 112
 
   const layoutNodes: ForceGraphNode[] = nodes.map((node, index) => {
     const angle = (index / Math.max(nodes.length, 1)) * Math.PI * 2
 
     return {
       ...node,
-      height: compact ? 38 : 52,
-      width: getNodeWidth(node, compact),
-      x: estimatedWidth / 2 + Math.cos(angle) * radius,
-      y: estimatedHeight / 2 + Math.sin(angle) * radius,
+      radius: getNotesGraphNodeRadius(node.incomingLinksCount, compact),
+      x: estimatedWidth / 2 + Math.cos(angle) * seedRadius,
+      y: estimatedHeight / 2 + Math.sin(angle) * seedRadius,
     }
   })
 
@@ -95,57 +145,48 @@ export function buildNotesGraphLayout(
   }))
 
   const simulation = forceSimulation(layoutNodes)
-    .force('charge', forceManyBody().strength(compact ? -180 : -320))
+    .force(
+      'charge',
+      forceManyBody().strength(
+        node => (compact ? -26 : -42) - node.radius * 2,
+      ),
+    )
     .force('center', forceCenter(estimatedWidth / 2, estimatedHeight / 2))
+    .force('x', forceX(estimatedWidth / 2).strength(compact ? 0.03 : 0.02))
+    .force('y', forceY(estimatedHeight / 2).strength(compact ? 0.03 : 0.02))
     .force(
       'collision',
       forceCollide<ForceGraphNode>()
-        .radius(
-          node =>
-            Math.max(node.width, node.height) * 0.55 + (compact ? 8 : 16),
-        )
-        .strength(1),
+        .radius(node => node.radius + (compact ? 3 : 5))
+        .strength(0.95),
     )
     .force(
       'link',
       forceLink<ForceGraphNode, ForceGraphLink>(layoutLinks)
         .id(node => node.id)
-        .distance(() => (compact ? 56 : 120))
-        .strength(0.18),
+        .distance(() => (compact ? 28 : 46))
+        .strength(compact ? 0.2 : 0.14),
     )
     .stop()
 
-  for (let tick = 0; tick < 220; tick++) {
+  for (let tick = 0; tick < 260; tick++) {
     simulation.tick()
   }
 
   simulation.stop()
 
-  const padding = compact ? 18 : 32
-  const bounds = layoutNodes.reduce(
-    (accumulator, node) => ({
-      maxX: Math.max(accumulator.maxX, (node.x ?? 0) + node.width / 2),
-      maxY: Math.max(accumulator.maxY, (node.y ?? 0) + node.height / 2),
-      minX: Math.min(accumulator.minX, (node.x ?? 0) - node.width / 2),
-      minY: Math.min(accumulator.minY, (node.y ?? 0) - node.height / 2),
-    }),
-    {
-      maxX: Number.NEGATIVE_INFINITY,
-      maxY: Number.NEGATIVE_INFINITY,
-      minX: Number.POSITIVE_INFINITY,
-      minY: Number.POSITIVE_INFINITY,
-    },
-  )
+  const padding = compact ? 14 : 24
+  const bounds = getNotesGraphBounds(layoutNodes, padding)
   const offsetX = padding - bounds.minX
   const offsetY = padding - bounds.minY
 
   return {
-    width: Math.max(320, bounds.maxX - bounds.minX + padding * 2),
-    height: Math.max(180, bounds.maxY - bounds.minY + padding * 2),
+    width: bounds.width,
+    height: bounds.height,
     nodes: layoutNodes.map(node => ({
       ...node,
-      x: (node.x ?? 0) + offsetX,
-      y: (node.y ?? 0) + offsetY,
+      x: node.x + offsetX,
+      y: node.y + offsetY,
     })),
     edges,
   }

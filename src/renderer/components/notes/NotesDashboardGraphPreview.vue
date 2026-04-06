@@ -3,7 +3,6 @@ import type { NotesDashboardResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import { useNotesDashboard, useNotesWorkspaceNavigation } from '@/composables'
 import { i18n } from '@/electron'
-import { Sparkles } from 'lucide-vue-next'
 import { buildNotesGraphLayout } from './notesGraphLayout'
 
 const props = defineProps<{
@@ -35,7 +34,7 @@ const previewGraph = computed(() => {
   const fallbackNodes = props.graphPreview.nodes.filter(
     node => !connectedIds.has(node.id),
   )
-  const selectedNodes = [...prioritizedNodes, ...fallbackNodes].slice(0, 18)
+  const selectedNodes = [...prioritizedNodes, ...fallbackNodes].slice(0, 22)
   const selectedIds = new Set(selectedNodes.map(node => node.id))
   const selectedEdges = props.graphPreview.edges.filter(
     edge => selectedIds.has(edge.source) && selectedIds.has(edge.target),
@@ -63,10 +62,6 @@ const neighborIds = computed(() => {
   return neighbors
 })
 
-function getNodeRadius(incomingLinksCount: number) {
-  return Math.min(11, 3.5 + incomingLinksCount * 1.2)
-}
-
 function isNodeHighlighted(nodeId: number) {
   if (!hoveredNodeId.value) {
     return false
@@ -92,14 +87,15 @@ function isNodeHighlighted(nodeId: number) {
     </template>
     <div
       v-if="previewGraph.nodes.length"
-      class="from-background via-background to-primary/8 overflow-hidden rounded-lg border bg-gradient-to-br bg-radial-[at_20%_20%]"
+      class="overflow-hidden rounded-lg border bg-[#1e1e1e]"
     >
       <svg
         class="block h-72 w-full"
         :viewBox="`0 0 ${previewGraph.width} ${previewGraph.height}`"
+        preserveAspectRatio="none"
         @mouseleave="hoveredNodeId = null"
       >
-        <g opacity="0.85">
+        <g>
           <line
             v-for="edge in previewGraph.edges"
             :key="`${edge.source}-${edge.target}`"
@@ -113,10 +109,15 @@ function isNodeHighlighted(nodeId: number) {
                   || edge.target === hoveredNodeId
                   || neighborIds.get(hoveredNodeId)?.has(edge.source)
                   || neighborIds.get(hoveredNodeId)?.has(edge.target))
-                ? 'oklch(0.72 0.17 250 / 0.45)'
-                : 'oklch(0.72 0 0 / 0.12)'
+                ? 'rgba(224,224,224,0.34)'
+                : 'rgba(210,210,210,0.14)'
             "
-            stroke-width="1.2"
+            :stroke-width="
+              hoveredNodeId
+                && (edge.source === hoveredNodeId || edge.target === hoveredNodeId)
+                ? 1
+                : 0.6
+            "
           />
         </g>
 
@@ -130,64 +131,46 @@ function isNodeHighlighted(nodeId: number) {
           <circle
             :cx="node.x"
             :cy="node.y"
-            :r="getNodeRadius(node.incomingLinksCount) + 5"
+            :r="node.radius + 2.5"
             :fill="
               isNodeHighlighted(node.id)
-                ? 'oklch(0.72 0.17 250 / 0.16)'
-                : 'oklch(0.72 0.1 250 / 0.05)'
+                ? 'rgba(255,255,255,0.08)'
+                : 'rgba(255,255,255,0.02)'
             "
           />
           <circle
             :cx="node.x"
             :cy="node.y"
-            :r="getNodeRadius(node.incomingLinksCount)"
+            :r="node.radius"
             :fill="
               hoveredNodeId === node.id
-                ? 'oklch(0.72 0.17 250)'
+                ? 'rgba(255,255,255,0.96)'
                 : node.incomingLinksCount > 0
-                  ? 'oklch(0.7 0.12 250 / 0.82)'
-                  : 'oklch(0.82 0.01 250 / 0.48)'
+                  ? 'rgba(220,220,220,0.84)'
+                  : 'rgba(188,188,188,0.78)'
             "
           />
           <text
             v-if="hoveredNodeId === node.id"
-            :x="node.x"
-            :y="node.y - getNodeRadius(node.incomingLinksCount) - 10"
-            text-anchor="middle"
-            class="fill-foreground text-[11px] font-medium"
+            :x="node.x + node.radius + 6"
+            :y="node.y + 3"
+            text-anchor="start"
+            class="fill-white text-[10px]"
           >
             {{
               node.name.length > 22 ? `${node.name.slice(0, 22)}…` : node.name
             }}
           </text>
         </g>
-
-        <g opacity="0.55">
-          <circle
-            v-for="node in previewGraph.nodes.filter(
-              (node) => node.incomingLinksCount > 1,
-            )"
-            :key="`pulse-${node.id}`"
-            :cx="node.x"
-            :cy="node.y"
-            :r="getNodeRadius(node.incomingLinksCount) + 10"
-            fill="none"
-            stroke="oklch(0.72 0.17 250 / 0.12)"
-            stroke-width="1"
-          />
-        </g>
       </svg>
       <div
-        class="border-border/60 text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-xs"
+        class="border-border/60 flex items-center justify-between border-t px-3 py-2 text-xs text-white/55"
       >
-        <div class="flex items-center gap-2">
-          <Sparkles class="h-3.5 w-3.5" />
-          {{ i18n.t("notes.dashboard.graphPreview.caption") }}
-        </div>
-        <div>
+        <span>{{ i18n.t("notes.dashboard.graphPreview.caption") }}</span>
+        <span>
           {{ previewGraph.nodes.length }} /
           {{ props.graphPreview.nodes.length }}
-        </div>
+        </span>
       </div>
     </div>
     <UiEmptyPlaceholder

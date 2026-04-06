@@ -1,8 +1,21 @@
 <script setup lang="ts">
+import type {
+  Simulation,
+  SimulationLinkDatum,
+  SimulationNodeDatum,
+} from 'd3-force'
 import { Button } from '@/components/ui/shadcn/button'
 import { useNotesGraph, useNotesWorkspaceNavigation } from '@/composables'
 import { i18n } from '@/electron'
-import { useElementSize } from '@vueuse/core'
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY,
+} from 'd3-force'
 import {
   ArrowLeft,
   LoaderCircle,
@@ -11,7 +24,26 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-vue-next'
-import { buildNotesGraphLayout } from './notesGraphLayout'
+import { buildNotesGraphLayout, getNotesGraphBounds } from './notesGraphLayout'
+
+const VIEWBOX_WIDTH = 1000
+const VIEWBOX_HEIGHT = 720
+
+interface ForceGraphNode extends SimulationNodeDatum {
+  id: number
+  incomingLinksCount: number
+  name: string
+  radius: number
+  x: number
+  y: number
+  fx?: number | null
+  fy?: number | null
+}
+
+interface ForceGraphLink extends SimulationLinkDatum<ForceGraphNode> {
+  source: number | ForceGraphNode
+  target: number | ForceGraphNode
+}
 
 const {
   graphData,
@@ -22,42 +54,45 @@ const {
 } = useNotesGraph()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
 
-const graphViewportRef = ref<HTMLElement>()
-const { width: viewportWidth, height: viewportHeight }
-  = useElementSize(graphViewportRef)
+const graphSvgRef = ref<SVGSVGElement>()
+const graphNodes = shallowRef<ForceGraphNode[]>([])
 const activeNodeId = ref<number | null>(null)
 const zoom = ref(1)
 const pan = reactive({
   x: 0,
   y: 0,
 })
-const dragState = reactive({
+const panState = reactive({
   active: false,
   startX: 0,
   startY: 0,
   x: 0,
   y: 0,
 })
+const nodeDragState = reactive({
+  active: false,
+  moved: false,
+  nodeId: null as number | null,
+  suppressClickUntil: 0,
+})
 
-const graphLayout = computed(() =>
-  buildNotesGraphLayout(
-    graphData.value?.nodes ?? [],
-    graphData.value?.edges ?? [],
-  ),
-)
+let graphSimulation: Simulation<ForceGraphNode, ForceGraphLink> | null = null
+let animationFrameId = 0
 
+const graphEdges = computed(() => graphData.value?.edges ?? [])
 const nodeMap = computed(
-  () => new Map(graphLayout.value.nodes.map(node => [node.id, node])),
+  () => new Map(graphNodes.value.map(node => [node.id, node])),
 )
+const graphBounds = computed(() => getNotesGraphBounds(graphNodes.value, 56))
 
 const neighborsById = computed(() => {
   const neighbors = new Map<number, Set<number>>()
 
-  graphLayout.value.nodes.forEach((node) => {
+  graphNodes.value.forEach((node) => {
     neighbors.set(node.id, new Set())
   })
 
-  graphLayout.value.edges.forEach((edge) => {
+  graphEdges.value.forEach((edge) => {
     neighbors.get(edge.source)?.add(edge.target)
     neighbors.get(edge.target)?.add(edge.source)
   })
@@ -73,68 +108,206 @@ const activeNeighborIds = computed(() => {
   return neighborsById.value.get(activeNodeId.value) ?? new Set<number>()
 })
 
-function getNodeRadius(incomingLinksCount: number) {
-  return Math.min(18, 5 + incomingLinksCount * 1.65)
-}
-
 function resetViewport() {
-  if (
-    !graphLayout.value.nodes.length
-    || !viewportWidth.value
-    || !viewportHeight.value
-  ) {
+  if (!graphNodes.value.length) {
+    zoom.value = 1
+    pan.x = 0
+    pan.y = 0
+
     return
   }
 
   const fittedZoom = Math.min(
-    1.15,
+    1.28,
     Math.max(
-      0.58,
+      0.42,
       Math.min(
-        viewportWidth.value / (graphLayout.value.width + 120),
-        viewportHeight.value / (graphLayout.value.height + 120),
+        VIEWBOX_WIDTH / (graphBounds.value.width + 80),
+        VIEWBOX_HEIGHT / (graphBounds.value.height + 80),
       ),
     ),
   )
 
   zoom.value = Number(fittedZoom.toFixed(2))
-  pan.x = (viewportWidth.value - graphLayout.value.width * zoom.value) / 2
-  pan.y = (viewportHeight.value - graphLayout.value.height * zoom.value) / 2
+  pan.x
+    = (VIEWBOX_WIDTH - graphBounds.value.width * zoom.value) / 2
+      - graphBounds.value.minX * zoom.value
+  pan.y
+    = (VIEWBOX_HEIGHT - graphBounds.value.height * zoom.value) / 2
+      - graphBounds.value.minY * zoom.value
 }
 
 function zoomIn() {
-  zoom.value = Math.min(2.2, Number((zoom.value + 0.12).toFixed(2)))
+  applyZoom((zoom.value + 0.12).toFixed(2), {
+    x: VIEWBOX_WIDTH / 2,
+    y: VIEWBOX_HEIGHT / 2,
+  })
 }
 
 function zoomOut() {
-  zoom.value = Math.max(0.45, Number((zoom.value - 0.12).toFixed(2)))
+  applyZoom((zoom.value - 0.12).toFixed(2), {
+    x: VIEWBOX_WIDTH / 2,
+    y: VIEWBOX_HEIGHT / 2,
+  })
+}
+
+function getPointerPosition(event: PointerEvent | WheelEvent) {
+  if (!graphSvgRef.value) {
+    return null
+  }
+
+  const rect = graphSvgRef.value.getBoundingClientRect()
+
+  if (!rect.width || !rect.height) {
+    return null
+  }
+
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * VIEWBOX_WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * VIEWBOX_HEIGHT,
+  }
+}
+
+function getGraphPosition(event: PointerEvent | WheelEvent) {
+  const pointer = getPointerPosition(event)
+
+  if (!pointer) {
+    return null
+  }
+
+  return {
+    x: (pointer.x - pan.x) / zoom.value,
+    y: (pointer.y - pan.y) / zoom.value,
+  }
+}
+
+function applyZoom(
+  nextZoomValue: string | number,
+  anchor: { x: number, y: number },
+) {
+  const nextZoom = Math.min(2.8, Math.max(0.35, Number(nextZoomValue)))
+  const graphX = (anchor.x - pan.x) / zoom.value
+  const graphY = (anchor.y - pan.y) / zoom.value
+
+  zoom.value = Number(nextZoom.toFixed(2))
+  pan.x = anchor.x - graphX * zoom.value
+  pan.y = anchor.y - graphY * zoom.value
 }
 
 function onWheel(event: WheelEvent) {
-  const direction = event.deltaY > 0 ? -1 : 1
-  const nextZoom = Math.min(2.4, Math.max(0.4, zoom.value + direction * 0.08))
-  zoom.value = Number(nextZoom.toFixed(2))
-}
+  const anchor = getPointerPosition(event)
 
-function startPan(event: PointerEvent) {
-  dragState.active = true
-  dragState.startX = event.clientX
-  dragState.startY = event.clientY
-  dragState.x = pan.x
-  dragState.y = pan.y
-}
-
-function movePan(event: PointerEvent) {
-  if (!dragState.active) {
+  if (!anchor) {
     return
   }
 
-  pan.x = dragState.x + event.clientX - dragState.startX
-  pan.y = dragState.y + event.clientY - dragState.startY
+  const delta = event.deltaY > 0 ? 0.88 : 1.12
+  applyZoom(zoom.value * delta, anchor)
 }
 
-function stopPan() {
-  dragState.active = false
+function startPan(event: PointerEvent) {
+  if (nodeDragState.active || event.button !== 0) {
+    return
+  }
+
+  activeNodeId.value = null
+  panState.active = true
+  panState.startX = event.clientX
+  panState.startY = event.clientY
+  panState.x = pan.x
+  panState.y = pan.y
+
+  graphSvgRef.value?.setPointerCapture(event.pointerId)
+}
+
+function openNode(nodeId: number) {
+  if (Date.now() < nodeDragState.suppressClickUntil) {
+    return
+  }
+
+  void openNoteInNotesWorkspace(nodeId)
+}
+
+function movePan(event: PointerEvent) {
+  if (nodeDragState.active) {
+    const node = nodeDragState.nodeId
+      ? nodeMap.value.get(nodeDragState.nodeId)
+      : null
+    const position = getGraphPosition(event)
+
+    if (!node || !position) {
+      return
+    }
+
+    node.fx = position.x
+    node.fy = position.y
+    node.x = position.x
+    node.y = position.y
+    nodeDragState.moved = true
+    triggerRef(graphNodes)
+
+    return
+  }
+
+  if (!panState.active) {
+    return
+  }
+
+  pan.x = panState.x + event.clientX - panState.startX
+  pan.y = panState.y + event.clientY - panState.startY
+}
+
+function stopInteraction(event?: PointerEvent) {
+  if (nodeDragState.active && nodeDragState.nodeId) {
+    const node = nodeMap.value.get(nodeDragState.nodeId)
+
+    if (node) {
+      node.fx = null
+      node.fy = null
+    }
+
+    if (nodeDragState.moved) {
+      nodeDragState.suppressClickUntil = Date.now() + 150
+    }
+
+    nodeDragState.active = false
+    nodeDragState.moved = false
+    nodeDragState.nodeId = null
+    graphSimulation?.alphaTarget(0)
+  }
+
+  panState.active = false
+
+  if (event && graphSvgRef.value?.hasPointerCapture(event.pointerId)) {
+    graphSvgRef.value.releasePointerCapture(event.pointerId)
+  }
+}
+
+function startNodeDrag(nodeId: number, event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+
+  const node = nodeMap.value.get(nodeId)
+  const position = getGraphPosition(event)
+
+  if (!node || !position) {
+    return
+  }
+
+  activeNodeId.value = nodeId
+  nodeDragState.active = true
+  nodeDragState.moved = false
+  nodeDragState.nodeId = nodeId
+  panState.active = false
+  node.fx = position.x
+  node.fy = position.y
+  node.x = position.x
+  node.y = position.y
+
+  graphSimulation?.alphaTarget(0.22).restart()
+  triggerRef(graphNodes)
+  graphSvgRef.value?.setPointerCapture(event.pointerId)
 }
 
 function isNodeHighlighted(nodeId: number) {
@@ -153,16 +326,116 @@ function isEdgeHighlighted(source: number, target: number) {
   return source === activeNodeId.value || target === activeNodeId.value
 }
 
+function scheduleGraphUpdate() {
+  if (animationFrameId) {
+    return
+  }
+
+  animationFrameId = window.requestAnimationFrame(() => {
+    animationFrameId = 0
+    triggerRef(graphNodes)
+  })
+}
+
+function stopSimulation() {
+  if (animationFrameId) {
+    window.cancelAnimationFrame(animationFrameId)
+    animationFrameId = 0
+  }
+
+  graphSimulation?.on('tick', null)
+  graphSimulation?.stop()
+  graphSimulation = null
+}
+
+function initializeSimulation() {
+  stopSimulation()
+
+  if (!graphData.value?.nodes.length) {
+    graphNodes.value = []
+
+    return
+  }
+
+  const seededLayout = buildNotesGraphLayout(
+    graphData.value.nodes,
+    graphData.value.edges,
+  )
+
+  const nodes = seededLayout.nodes.map(node => ({
+    ...node,
+    fx: null,
+    fy: null,
+  }))
+  const links: ForceGraphLink[] = graphData.value.edges.map(edge => ({
+    source: edge.source,
+    target: edge.target,
+  }))
+
+  graphNodes.value = nodes
+  triggerRef(graphNodes)
+
+  graphSimulation = forceSimulation(nodes)
+    .force(
+      'charge',
+      forceManyBody<ForceGraphNode>().strength(
+        node => -54 - node.radius * 2.4 - node.incomingLinksCount * 2,
+      ),
+    )
+    .force(
+      'collision',
+      forceCollide<ForceGraphNode>()
+        .radius(node => node.radius + 4)
+        .strength(0.95),
+    )
+    .force(
+      'link',
+      forceLink<ForceGraphNode, ForceGraphLink>(links)
+        .id(node => node.id)
+        .distance((link) => {
+          const source
+            = typeof link.source === 'object'
+              ? link.source.incomingLinksCount
+              : 0
+          const target
+            = typeof link.target === 'object'
+              ? link.target.incomingLinksCount
+              : 0
+
+          return 34 + Math.min(26, (source + target) * 1.4)
+        })
+        .strength(0.16),
+    )
+    .force(
+      'center',
+      forceCenter(seededLayout.width / 2, seededLayout.height / 2),
+    )
+    .force('x', forceX(seededLayout.width / 2).strength(0.018))
+    .force('y', forceY(seededLayout.height / 2).strength(0.018))
+    .alpha(0.9)
+    .alphaDecay(0.032)
+    .velocityDecay(0.24)
+    .on('tick', scheduleGraphUpdate)
+
+  nextTick(() => {
+    resetViewport()
+  })
+}
+
 onMounted(() => {
   if (!graphData.value) {
     void getNotesGraph()
   }
 })
 
+onBeforeUnmount(() => {
+  stopSimulation()
+})
+
 watch(
-  [graphLayout, viewportWidth, viewportHeight],
+  () => graphData.value,
   () => {
-    resetViewport()
+    initializeSimulation()
   },
   { immediate: true },
 )
@@ -234,40 +507,34 @@ watch(
     />
 
     <UiEmptyPlaceholder
-      v-else-if="!graphLayout.nodes.length"
+      v-else-if="!graphNodes.length"
       :text="i18n.t('notes.dashboard.graph.empty')"
     />
 
     <div
       v-else
-      ref="graphViewportRef"
-      class="from-background via-background to-primary/10 relative flex-1 overflow-hidden bg-gradient-to-br bg-radial-[at_20%_20%]"
-      @pointerleave="stopPan"
+      class="relative flex-1 overflow-hidden bg-[#1e1e1e]"
+      @pointerleave="stopInteraction"
       @pointermove="movePan"
-      @pointerup="stopPan"
+      @pointerup="stopInteraction"
+      @pointercancel="stopInteraction"
       @wheel.prevent="onWheel"
     >
-      <div class="pointer-events-none absolute inset-0 opacity-60">
-        <div
-          class="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(100,140,255,0.10),_transparent_42%)]"
-        />
-        <div
-          class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(255,255,255,0.06),_transparent_28%)]"
-        />
-      </div>
       <svg
-        class="h-full w-full touch-none"
+        ref="graphSvgRef"
+        class="h-full w-full touch-none select-none"
         :class="{
-          'cursor-grabbing': dragState.active,
-          'cursor-grab': !dragState.active,
+          'cursor-grabbing': panState.active || nodeDragState.active,
+          'cursor-grab': !panState.active && !nodeDragState.active,
         }"
-        viewBox="0 0 1000 720"
+        :viewBox="`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`"
+        preserveAspectRatio="none"
         @pointerdown="startPan"
       >
         <g :transform="`translate(${pan.x}, ${pan.y}) scale(${zoom})`">
-          <g opacity="0.9">
+          <g>
             <line
-              v-for="edge in graphLayout.edges"
+              v-for="edge in graphEdges"
               :key="`${edge.source}-${edge.target}`"
               :x1="nodeMap.get(edge.source)?.x"
               :y1="nodeMap.get(edge.source)?.y"
@@ -275,63 +542,60 @@ watch(
               :y2="nodeMap.get(edge.target)?.y"
               :stroke="
                 isEdgeHighlighted(edge.source, edge.target)
-                  ? 'oklch(0.72 0.17 250 / 0.55)'
-                  : 'oklch(0.75 0 0 / 0.13)'
+                  ? 'rgba(220,220,220,0.38)'
+                  : 'rgba(208,208,208,0.16)'
               "
               :stroke-width="
-                isEdgeHighlighted(edge.source, edge.target) ? 2 : 1.15
+                isEdgeHighlighted(edge.source, edge.target) ? 1.2 : 0.7
               "
             />
           </g>
 
           <g
-            v-for="node in graphLayout.nodes"
+            v-for="node in graphNodes"
             :key="node.id"
             class="cursor-pointer"
-            @click.stop="openNoteInNotesWorkspace(node.id)"
+            @click.stop="openNode(node.id)"
             @mouseenter="activeNodeId = node.id"
           >
             <circle
               :cx="node.x"
               :cy="node.y"
-              :r="getNodeRadius(node.incomingLinksCount) + 10"
+              :r="node.radius + 4"
               :fill="
                 isNodeHighlighted(node.id)
-                  ? 'oklch(0.72 0.17 250 / 0.16)'
-                  : 'oklch(0.72 0.17 250 / 0.05)'
+                  ? 'rgba(255,255,255,0.10)'
+                  : 'rgba(255,255,255,0.02)'
               "
             />
             <circle
               :cx="node.x"
               :cy="node.y"
-              :r="getNodeRadius(node.incomingLinksCount)"
+              :r="node.radius"
               :fill="
                 activeNodeId === node.id
-                  ? 'oklch(0.74 0.19 250)'
+                  ? 'rgba(255,255,255,0.94)'
                   : node.incomingLinksCount > 0
-                    ? 'oklch(0.71 0.12 250 / 0.92)'
-                    : 'oklch(0.86 0.01 250 / 0.45)'
+                    ? 'rgba(218,218,218,0.82)'
+                    : 'rgba(186,186,186,0.78)'
               "
               :stroke="
                 isNodeHighlighted(node.id)
-                  ? 'oklch(0.92 0.02 250 / 0.9)'
-                  : 'oklch(0.92 0.01 250 / 0.16)'
+                  ? 'rgba(255,255,255,0.9)'
+                  : 'rgba(255,255,255,0.14)'
               "
-              :stroke-width="isNodeHighlighted(node.id) ? 1.8 : 1"
+              :stroke-width="isNodeHighlighted(node.id) ? 0.9 : 0.45"
+              @pointerdown.stop="startNodeDrag(node.id, $event)"
             />
             <text
-              v-if="
-                activeNodeId === node.id
-                  || activeNeighborIds.has(node.id)
-                  || node.incomingLinksCount >= 3
-              "
-              :x="node.x + getNodeRadius(node.incomingLinksCount) + 10"
-              :y="node.y + 4"
+              v-if="activeNodeId === node.id"
+              :x="node.x + node.radius + 8"
+              :y="node.y + 3"
               text-anchor="start"
-              class="fill-foreground text-[12px] font-medium"
+              class="fill-white text-[11px]"
             >
               {{
-                node.name.length > 28 ? `${node.name.slice(0, 28)}…` : node.name
+                node.name.length > 26 ? `${node.name.slice(0, 26)}…` : node.name
               }}
             </text>
           </g>
@@ -339,30 +603,16 @@ watch(
       </svg>
 
       <div
-        class="bg-background/70 border-border absolute right-4 bottom-4 max-w-72 rounded-lg border px-3 py-2 backdrop-blur"
+        class="pointer-events-none absolute right-4 bottom-4 text-[11px] text-white/55"
       >
-        <div
-          v-if="activeNodeId"
-          class="space-y-1"
-        >
-          <div class="text-sm font-semibold">
-            {{ nodeMap.get(activeNodeId)?.name }}
-          </div>
-          <div class="text-muted-foreground text-xs">
-            {{
-              i18n.t("notes.dashboard.graph.meta", {
-                links: nodeMap.get(activeNodeId)?.incomingLinksCount ?? 0,
-                neighbors: activeNeighborIds.size,
-              })
-            }}
-          </div>
-        </div>
-        <div
-          v-else
-          class="text-muted-foreground text-xs"
-        >
-          {{ i18n.t("notes.dashboard.graph.hint") }}
-        </div>
+        {{
+          activeNodeId
+            ? i18n.t("notes.dashboard.graph.meta", {
+              links: nodeMap.get(activeNodeId)?.incomingLinksCount ?? 0,
+              neighbors: activeNeighborIds.size,
+            })
+            : i18n.t("notes.dashboard.graph.hint")
+        }}
       </div>
     </div>
   </div>

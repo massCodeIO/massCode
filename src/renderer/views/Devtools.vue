@@ -89,6 +89,16 @@ const generatorsNav = [
   },
 ]
 
+watch(
+  () => route.name,
+  (name) => {
+    if (name && typeof name === 'string' && name.startsWith('devtools/')) {
+      sessionStorage.setItem('devtools:lastRoute', name)
+    }
+  },
+  { immediate: true },
+)
+
 const compareNav = [
   {
     label: i18n.t('devtools:compare.jsonDiff.label'),

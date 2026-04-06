@@ -97,7 +97,7 @@ watch(
       <RouterLink
         v-slot="{ navigate }"
         custom
-        :to="{ name: RouterName.preferencesStorage }"
+        :to="{ name: RouterName.preferences }"
       >
         <UiActionButton
           :tooltip="i18n.t('preferences:label')"

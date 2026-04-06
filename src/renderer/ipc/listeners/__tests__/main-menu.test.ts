@@ -68,8 +68,8 @@ async function setup() {
 
   vi.doMock('@/router', () => ({
     RouterName: {
-      preferencesStorage: 'preferences/storage',
-      devtoolsCaseConverter: 'devtools/case-converter',
+      preferences: 'preferences',
+      devtools: 'devtools',
       notesSpace: 'notes-space',
       mathNotebook: 'math-notebook',
     },

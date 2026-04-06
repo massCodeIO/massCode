@@ -62,6 +62,16 @@ const nav: { label: string, name: string, icon: Component }[] = [
   },
 ]
 
+watch(
+  () => route.name,
+  (name) => {
+    if (name && typeof name === 'string' && name.startsWith('preferences/')) {
+      sessionStorage.setItem('preferences:lastRoute', name)
+    }
+  },
+  { immediate: true },
+)
+
 provide(preferencesKeys, {
   scrollRef,
 })

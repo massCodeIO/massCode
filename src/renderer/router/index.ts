@@ -44,6 +44,10 @@ const routes = [
     path: '/preferences',
     name: RouterName.preferences,
     component: () => import('@/views/Preferences.vue'),
+    redirect: () => {
+      const saved = sessionStorage.getItem('preferences:lastRoute')
+      return { name: saved || RouterName.preferencesStorage }
+    },
     children: [
       {
         path: 'storage',
@@ -86,6 +90,10 @@ const routes = [
     path: '/devtools',
     name: RouterName.devtools,
     component: () => import('@/views/Devtools.vue'),
+    redirect: () => {
+      const saved = sessionStorage.getItem('devtools:lastRoute')
+      return { name: saved || RouterName.devtoolsCaseConverter }
+    },
     children: [
       {
         path: 'text/case-converter',

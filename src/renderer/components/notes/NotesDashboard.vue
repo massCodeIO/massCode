@@ -26,7 +26,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full overflow-auto">
+  <div class="scrollbar h-full overflow-y-auto">
     <div class="mx-auto flex min-h-full max-w-7xl flex-col gap-4 p-5">
       <NotesDashboardHeader />
 

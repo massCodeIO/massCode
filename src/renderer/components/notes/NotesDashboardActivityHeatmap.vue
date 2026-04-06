@@ -117,9 +117,9 @@ const cellSize = computed(() => {
   const labelsWidth = 34
   const usableWidth
     = availableWidth - labelsWidth - (GRID_WEEKS - 1) * cellGap.value
-  const nextSize = Math.floor(usableWidth / GRID_WEEKS)
+  const nextSize = usableWidth / GRID_WEEKS
 
-  return Math.max(7, Math.min(12, nextSize))
+  return Math.max(7, Number(nextSize.toFixed(2)))
 })
 
 function getCellColor(count: number) {

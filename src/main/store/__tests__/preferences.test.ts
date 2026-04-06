@@ -247,4 +247,32 @@ describe('app store sanitization', () => {
       app.get('notes.selection.legacyNotesStateFlag' as any),
     ).toBeUndefined()
   })
+
+  it('adds sanitized defaults for notes dashboard widget visibility', async () => {
+    persistedStateByName.app = {
+      notes: {
+        dashboard: {
+          widgets: {
+            stats: false,
+            recent: false,
+            topLinked: true,
+            garbage: 'bad',
+          },
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('notes.dashboard.widgets' as any)).toEqual({
+      stats: false,
+      activityHeatmap: true,
+      activitySummary: true,
+      recent: false,
+      tagCloud: true,
+      graphPreview: true,
+      topLinked: true,
+    })
+    expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
+  })
 })

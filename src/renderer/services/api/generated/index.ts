@@ -226,6 +226,69 @@ export type NotesResponse = {
   updatedAt: number;
 }[];
 
+export interface NotesDashboardResponse {
+  stats: {
+    notesCount: number;
+    wordsCount: number;
+    foldersCount: number;
+    tagsCount: number;
+  };
+  activity: {
+    days: Record<string, number>;
+    streak: {
+      current: number;
+      max: number;
+    };
+    notesUpdatedToday: number;
+    notesUpdatedLast7Days: number;
+  };
+  recent: {
+    id: number;
+    name: string;
+    folder: {
+      id: number;
+      name: string;
+    } | null;
+    updatedAt: number;
+  }[];
+  tags: {
+    id: number;
+    name: string;
+    noteCount: number;
+  }[];
+  topLinked: {
+    id: number;
+    name: string;
+    incomingLinksCount: number;
+  }[];
+  graphPreview: {
+    nodes: {
+      id: number;
+      name: string;
+      folderId: number | null;
+      incomingLinksCount: number;
+    }[];
+    edges: {
+      source: number;
+      target: number;
+    }[];
+  };
+}
+
+export interface NotesGraphResponse {
+  nodes: {
+    id: number;
+    name: string;
+    folderId: number | null;
+    tagIds: number[];
+    incomingLinksCount: number;
+  }[];
+  edges: {
+    source: number;
+    target: number;
+  }[];
+}
+
 export interface NotesQuery {
   search?: string;
   sort?: string;
@@ -1053,6 +1116,36 @@ export class Api<
     getNotesCounts: (params: RequestParams = {}) =>
       this.request<NotesCountsResponse, any>({
         path: `/notes/counts`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes Dashboard
+     * @name GetNotesDashboard
+     * @request GET:/notes/dashboard
+     */
+    getNotesDashboard: (params: RequestParams = {}) =>
+      this.request<NotesDashboardResponse, any>({
+        path: `/notes/dashboard`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes Dashboard
+     * @name GetNotesGraph
+     * @request GET:/notes/graph
+     */
+    getNotesGraph: (params: RequestParams = {}) =>
+      this.request<NotesGraphResponse, any>({
+        path: `/notes/graph`,
         method: "GET",
         format: "json",
         ...params,

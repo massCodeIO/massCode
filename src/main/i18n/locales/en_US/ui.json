@@ -48,7 +48,70 @@
     "words": "Words",
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "noSelected": "No Note Selected",
+    "dashboard": {
+      "label": "Dashboard",
+      "title": "Notes Dashboard",
+      "description": "A quick overview of note activity, links, and structure.",
+      "empty": "All dashboard widgets are hidden.",
+      "error": "Failed to load notes dashboard.",
+      "actions": {
+        "refresh": "Refresh",
+        "openGraph": "Open Graph",
+        "backToDashboard": "Back to Dashboard",
+        "showAllWidgets": "Show All Widgets"
+      },
+      "widgets": {
+        "title": "Visible Widgets",
+        "description": "Choose which blocks appear on the dashboard.",
+        "stats": "Stats",
+        "activityHeatmap": "Activity Heatmap",
+        "activitySummary": "Activity Summary",
+        "recent": "Recent Notes",
+        "tagCloud": "Tags Overview",
+        "graphPreview": "Graph Preview",
+        "topLinked": "Top Linked Notes"
+      },
+      "stats": {
+        "title": "Overview",
+        "notes": "Notes",
+        "words": "Words",
+        "folders": "Folders",
+        "tags": "Tags"
+      },
+      "activity": {
+        "heatmapTitle": "Activity Heatmap",
+        "heatmapDescription": "Recent note updates by day.",
+        "summaryTitle": "Activity Summary",
+        "updatedToday": "Updated Today",
+        "updatedWeek": "Updated in 7 Days",
+        "currentStreak": "Current Streak",
+        "bestStreak": "Best Streak"
+      },
+      "recent": {
+        "title": "Recent Notes",
+        "empty": "No recent notes yet."
+      },
+      "tags": {
+        "title": "Tags Overview",
+        "empty": "No tags in notes yet."
+      },
+      "graphPreview": {
+        "title": "Knowledge Graph",
+        "empty": "No links between notes yet."
+      },
+      "topLinked": {
+        "title": "Top Linked Notes",
+        "empty": "No linked notes yet.",
+        "incoming": "{{count}} incoming links"
+      },
+      "graph": {
+        "title": "Notes Graph",
+        "description": "Browse connections between notes and jump back into the workspace.",
+        "empty": "No links between notes yet.",
+        "error": "Failed to load notes graph."
+      }
+    }
   },
   "folder": {
     "untitled": "Untitled folder"

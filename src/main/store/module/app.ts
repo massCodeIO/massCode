@@ -35,6 +35,17 @@ const APP_STORE_DEFAULTS: AppStore = {
   notes: {
     selection: {},
     editorMode: 'livePreview',
+    dashboard: {
+      widgets: {
+        stats: true,
+        activityHeatmap: true,
+        activitySummary: true,
+        recent: true,
+        tagCloud: true,
+        graphPreview: true,
+        topLinked: true,
+      },
+    },
     layout: {
       mode: 'all-panels',
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
@@ -179,6 +190,43 @@ function sanitizeAppStore(value: unknown): AppStore {
           APP_STORE_DEFAULTS.notes.editorMode,
         ) as NotesEditorMode,
       ),
+      dashboard: {
+        widgets: (() => {
+          const dashSource = asRecord(asRecord(notesSource.dashboard).widgets)
+          const defaults = APP_STORE_DEFAULTS.notes.dashboard.widgets
+
+          return {
+            stats:
+              typeof dashSource.stats === 'boolean'
+                ? dashSource.stats
+                : defaults.stats,
+            activityHeatmap:
+              typeof dashSource.activityHeatmap === 'boolean'
+                ? dashSource.activityHeatmap
+                : defaults.activityHeatmap,
+            activitySummary:
+              typeof dashSource.activitySummary === 'boolean'
+                ? dashSource.activitySummary
+                : defaults.activitySummary,
+            recent:
+              typeof dashSource.recent === 'boolean'
+                ? dashSource.recent
+                : defaults.recent,
+            tagCloud:
+              typeof dashSource.tagCloud === 'boolean'
+                ? dashSource.tagCloud
+                : defaults.tagCloud,
+            graphPreview:
+              typeof dashSource.graphPreview === 'boolean'
+                ? dashSource.graphPreview
+                : defaults.graphPreview,
+            topLinked:
+              typeof dashSource.topLinked === 'boolean'
+                ? dashSource.topLinked
+                : defaults.topLinked,
+          }
+        })(),
+      },
       layout: {
         mode: readEnum(
           notesLayoutSource,

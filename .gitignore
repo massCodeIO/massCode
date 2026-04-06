@@ -1,6 +1,9 @@
 dist
 build/main
 build/renderer
+build/shared
+build/src
+build/package.json
 scripts/build-sponsored.sh
 
 node_modules
@@ -13,4 +16,3 @@ auto-imports.d.ts
 docs/superpowers
 docs/website/.vitepress/cache
 docs/website/.vitepress/dist
-

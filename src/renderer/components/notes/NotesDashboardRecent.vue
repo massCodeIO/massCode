@@ -1,0 +1,44 @@
+<script setup lang="ts">
+import type { NotesDashboardResponse } from '@/services/api/generated'
+import { useNotesWorkspaceNavigation } from '@/composables'
+import { i18n } from '@/electron'
+
+const props = defineProps<{
+  recent: NotesDashboardResponse['recent']
+}>()
+
+const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: 'numeric',
+  month: 'short',
+})
+</script>
+
+<template>
+  <NotesDashboardSection :title="i18n.t('notes.dashboard.recent.title')">
+    <div
+      v-if="props.recent.length"
+      class="flex flex-col gap-2"
+    >
+      <button
+        v-for="note in props.recent"
+        :key="note.id"
+        class="hover:bg-accent rounded-lg px-3 py-2 text-left transition-colors"
+        @click="openNoteInNotesWorkspace(note.id)"
+      >
+        <div class="truncate text-sm font-medium">
+          {{ note.name }}
+        </div>
+        <div class="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
+          <span>{{ note.folder?.name || i18n.t("common.inbox") }}</span>
+          <span>•</span>
+          <span>{{ dateFormatter.format(note.updatedAt) }}</span>
+        </div>
+      </button>
+    </div>
+    <UiEmptyPlaceholder
+      v-else
+      :text="i18n.t('notes.dashboard.recent.empty')"
+    />
+  </NotesDashboardSection>
+</template>

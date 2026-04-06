@@ -109,7 +109,7 @@ export function buildNotesGraphLayout(
     .force(
       'link',
       forceLink<ForceGraphNode, ForceGraphLink>(layoutLinks)
-        .id(node => String(node.id))
+        .id(node => node.id)
         .distance(() => (compact ? 56 : 120))
         .strength(0.18),
     )

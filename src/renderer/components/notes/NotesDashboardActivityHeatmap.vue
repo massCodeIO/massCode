@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
 import { i18n } from '@/electron'
+import { useElementSize } from '@vueuse/core'
 import { scaleQuantize } from 'd3-scale'
 
 const props = defineProps<{
@@ -32,6 +33,9 @@ const formatters = {
   }),
 }
 
+const heatmapRef = ref<HTMLElement>()
+const { width: heatmapWidth } = useElementSize(heatmapRef)
+
 function getDayKey(date: Date) {
   return [
     date.getFullYear(),
@@ -55,10 +59,8 @@ const cells = computed(() => {
     return {
       count: props.activity.days[key] ?? 0,
       date,
-      dayIndex: date.getDay(),
       key,
       label: `${formatters.weekday.format(date)}, ${formatters.day.format(date)}`,
-      weekIndex: Math.floor(index / GRID_DAYS),
     }
   })
 })
@@ -98,6 +100,27 @@ const totalUpdates = computed(() =>
 )
 
 const legendColors = computed(() => GITHUB_DARK_SCALE)
+const cellGap = computed(() => {
+  if (heatmapWidth.value < 520) {
+    return 2
+  }
+
+  if (heatmapWidth.value < 760) {
+    return 3
+  }
+
+  return 4
+})
+
+const cellSize = computed(() => {
+  const availableWidth = Math.max(320, heatmapWidth.value || 0)
+  const labelsWidth = 34
+  const usableWidth
+    = availableWidth - labelsWidth - (GRID_WEEKS - 1) * cellGap.value
+  const nextSize = Math.floor(usableWidth / GRID_WEEKS)
+
+  return Math.max(7, Math.min(12, nextSize))
+})
 
 function getCellColor(count: number) {
   if (count === 0) {
@@ -113,12 +136,17 @@ function getCellColor(count: number) {
     :title="i18n.t('notes.dashboard.activity.heatmapTitle')"
     :description="i18n.t('notes.dashboard.activity.heatmapDescription')"
   >
-    <div class="space-y-3 overflow-x-auto">
-      <div class="min-w-max">
+    <div
+      ref="heatmapRef"
+      class="space-y-3"
+    >
+      <div class="w-full">
         <div
-          class="text-muted-foreground mb-2 grid gap-[4px] pl-8 text-[10px]"
+          class="text-muted-foreground mb-2 grid text-[10px]"
           :style="{
-            gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, 12px))`,
+            columnGap: `${cellGap}px`,
+            gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
+            paddingLeft: '34px',
           }"
         >
           <div
@@ -132,18 +160,29 @@ function getCellColor(count: number) {
 
         <div class="flex gap-2">
           <div
-            class="text-muted-foreground grid grid-rows-7 gap-[4px] pt-[1px] text-[10px]"
+            class="text-muted-foreground grid grid-rows-7 pt-[1px] text-[10px]"
+            :style="{ rowGap: `${cellGap}px` }"
           >
             <div
               v-for="(label, index) in DAY_LABELS"
               :key="`${label}-${index}`"
-              class="flex h-3 items-center justify-end pr-1 leading-none"
+              class="flex items-center justify-end pr-1 leading-none"
+              :style="{
+                height: `${cellSize}px`,
+                width: '24px',
+              }"
             >
               {{ label }}
             </div>
           </div>
 
-          <div class="grid grid-flow-col grid-rows-7 gap-[4px]">
+          <div
+            class="grid grid-flow-col grid-rows-7"
+            :style="{
+              columnGap: `${cellGap}px`,
+              rowGap: `${cellGap}px`,
+            }"
+          >
             <template
               v-for="week in weeks"
               :key="week[0]?.key"
@@ -151,8 +190,12 @@ function getCellColor(count: number) {
               <button
                 v-for="cell in week"
                 :key="cell.key"
-                class="h-3 w-3 rounded-[2px] transition-transform hover:scale-115"
-                :style="{ backgroundColor: getCellColor(cell.count) }"
+                class="rounded-[2px] transition-transform hover:scale-115"
+                :style="{
+                  backgroundColor: getCellColor(cell.count),
+                  height: `${cellSize}px`,
+                  width: `${cellSize}px`,
+                }"
                 :title="`${cell.label}: ${cell.count}`"
               />
             </template>
@@ -161,7 +204,7 @@ function getCellColor(count: number) {
       </div>
 
       <div
-        class="text-muted-foreground flex items-center justify-between gap-3 text-xs"
+        class="text-muted-foreground flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
       >
         <div>
           {{

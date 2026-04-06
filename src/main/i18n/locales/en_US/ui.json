@@ -86,7 +86,10 @@
         "updatedToday": "Updated Today",
         "updatedWeek": "Updated in 7 Days",
         "currentStreak": "Current Streak",
-        "bestStreak": "Best Streak"
+        "bestStreak": "Best Streak",
+        "less": "Less",
+        "more": "More",
+        "totalLastYear": "{{count}} note updates in the last 53 weeks"
       },
       "recent": {
         "title": "Recent Notes",

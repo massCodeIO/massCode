@@ -1,19 +1,65 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
+import type {
+  Simulation,
+  SimulationLinkDatum,
+  SimulationNodeDatum,
+} from 'd3-force'
 import { Button } from '@/components/ui/shadcn/button'
 import { useNotesDashboard, useNotesWorkspaceNavigation } from '@/composables'
 import { i18n } from '@/electron'
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY,
+} from 'd3-force'
 import { buildNotesGraphLayout } from './notesGraphLayout'
 
 const props = defineProps<{
   graphPreview: NotesDashboardResponse['graphPreview']
 }>()
 
+const PREVIEW_WIDTH = 560
+const PREVIEW_HEIGHT = 240
+const PREVIEW_PADDING = 16
+
+interface PreviewNode extends SimulationNodeDatum {
+  id: number
+  incomingLinksCount: number
+  name: string
+  radius: number
+  x: number
+  y: number
+  fx?: number | null
+  fy?: number | null
+}
+
+interface PreviewLink extends SimulationLinkDatum<PreviewNode> {
+  source: number | PreviewNode
+  target: number | PreviewNode
+}
+
 const { navigateToGraph } = useNotesDashboard()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
-const hoveredNodeId = ref<number | null>(null)
 
-const previewGraph = computed(() => {
+const previewSvgRef = ref<SVGSVGElement>()
+const previewNodes = shallowRef<PreviewNode[]>([])
+const hoveredNodeId = ref<number | null>(null)
+const dragState = reactive({
+  active: false,
+  moved: false,
+  nodeId: null as number | null,
+  suppressClickUntil: 0,
+})
+
+let previewSimulation: Simulation<PreviewNode, PreviewLink> | null = null
+let animationFrameId = 0
+
+const seedGraph = computed(() => {
   const connectedIds = new Set<number>()
 
   props.graphPreview.edges.forEach((edge) => {
@@ -34,7 +80,7 @@ const previewGraph = computed(() => {
   const fallbackNodes = props.graphPreview.nodes.filter(
     node => !connectedIds.has(node.id),
   )
-  const selectedNodes = [...prioritizedNodes, ...fallbackNodes].slice(0, 22)
+  const selectedNodes = [...prioritizedNodes, ...fallbackNodes].slice(0, 24)
   const selectedIds = new Set(selectedNodes.map(node => node.id))
   const selectedEdges = props.graphPreview.edges.filter(
     edge => selectedIds.has(edge.source) && selectedIds.has(edge.target),
@@ -43,24 +89,126 @@ const previewGraph = computed(() => {
   return buildNotesGraphLayout(selectedNodes, selectedEdges, { compact: true })
 })
 
+const previewEdges = computed(() => seedGraph.value.edges)
 const nodeMap = computed(
-  () => new Map(previewGraph.value.nodes.map(node => [node.id, node])),
+  () => new Map(previewNodes.value.map(node => [node.id, node])),
 )
 
 const neighborIds = computed(() => {
   const neighbors = new Map<number, Set<number>>()
 
-  previewGraph.value.nodes.forEach((node) => {
+  previewNodes.value.forEach((node) => {
     neighbors.set(node.id, new Set())
   })
 
-  previewGraph.value.edges.forEach((edge) => {
+  previewEdges.value.forEach((edge) => {
     neighbors.get(edge.source)?.add(edge.target)
     neighbors.get(edge.target)?.add(edge.source)
   })
 
   return neighbors
 })
+
+function getPreviewNodeRadius(radius: number) {
+  return Math.max(1.8, Math.min(4.8, radius * 0.64))
+}
+
+function getPointerPosition(event: PointerEvent) {
+  if (!previewSvgRef.value) {
+    return null
+  }
+
+  const rect = previewSvgRef.value.getBoundingClientRect()
+
+  if (!rect.width || !rect.height) {
+    return null
+  }
+
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * PREVIEW_WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * PREVIEW_HEIGHT,
+  }
+}
+
+function schedulePreviewUpdate() {
+  if (animationFrameId) {
+    return
+  }
+
+  animationFrameId = window.requestAnimationFrame(() => {
+    animationFrameId = 0
+    triggerRef(previewNodes)
+  })
+}
+
+function stopPreviewSimulation() {
+  if (animationFrameId) {
+    window.cancelAnimationFrame(animationFrameId)
+    animationFrameId = 0
+  }
+
+  previewSimulation?.on('tick', null)
+  previewSimulation?.stop()
+  previewSimulation = null
+}
+
+function initializePreviewSimulation() {
+  stopPreviewSimulation()
+
+  if (!seedGraph.value.nodes.length) {
+    previewNodes.value = []
+
+    return
+  }
+
+  const scale = Math.min(
+    (PREVIEW_WIDTH - PREVIEW_PADDING * 2) / seedGraph.value.width,
+    (PREVIEW_HEIGHT - PREVIEW_PADDING * 2) / seedGraph.value.height,
+  )
+  const offsetX = (PREVIEW_WIDTH - seedGraph.value.width * scale) / 2
+  const offsetY = (PREVIEW_HEIGHT - seedGraph.value.height * scale) / 2
+  const nodes = seedGraph.value.nodes.map(node => ({
+    ...node,
+    radius: getPreviewNodeRadius(node.radius),
+    x: node.x * scale + offsetX,
+    y: node.y * scale + offsetY,
+    fx: null,
+    fy: null,
+  }))
+  const links: PreviewLink[] = seedGraph.value.edges.map(edge => ({
+    source: edge.source,
+    target: edge.target,
+  }))
+
+  previewNodes.value = nodes
+  triggerRef(previewNodes)
+
+  previewSimulation = forceSimulation(nodes)
+    .force(
+      'charge',
+      forceManyBody<PreviewNode>().strength(node => -14 - node.radius * 2.8),
+    )
+    .force(
+      'collision',
+      forceCollide<PreviewNode>()
+        .radius(node => node.radius + 1.8)
+        .strength(0.96),
+    )
+    .force(
+      'link',
+      forceLink<PreviewNode, PreviewLink>(links)
+        .id(node => node.id)
+        .distance(16)
+        .strength(0.26),
+    )
+    .force('center', forceCenter(PREVIEW_WIDTH / 2, PREVIEW_HEIGHT / 2))
+    .force('x', forceX(PREVIEW_WIDTH / 2).strength(0.035))
+    .force('y', forceY(PREVIEW_HEIGHT / 2).strength(0.035))
+    .alpha(0.7)
+    .alphaDecay(0.06)
+    .velocityDecay(0.32)
+    .on('tick', schedulePreviewUpdate)
+}
 
 function isNodeHighlighted(nodeId: number) {
   if (!hoveredNodeId.value) {
@@ -72,6 +220,97 @@ function isNodeHighlighted(nodeId: number) {
     || neighborIds.value.get(hoveredNodeId.value)?.has(nodeId)
   )
 }
+
+function openNode(nodeId: number) {
+  if (Date.now() < dragState.suppressClickUntil) {
+    return
+  }
+
+  void openNoteInNotesWorkspace(nodeId)
+}
+
+function startNodeDrag(nodeId: number, event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+
+  const node = nodeMap.value.get(nodeId)
+  const position = getPointerPosition(event)
+
+  if (!node || !position) {
+    return
+  }
+
+  hoveredNodeId.value = nodeId
+  dragState.active = true
+  dragState.moved = false
+  dragState.nodeId = nodeId
+  node.fx = position.x
+  node.fy = position.y
+  node.x = position.x
+  node.y = position.y
+
+  previewSimulation?.alphaTarget(0.18).restart()
+  triggerRef(previewNodes)
+  previewSvgRef.value?.setPointerCapture(event.pointerId)
+}
+
+function moveNode(event: PointerEvent) {
+  if (!dragState.active || !dragState.nodeId) {
+    return
+  }
+
+  const node = nodeMap.value.get(dragState.nodeId)
+  const position = getPointerPosition(event)
+
+  if (!node || !position) {
+    return
+  }
+
+  node.fx = position.x
+  node.fy = position.y
+  node.x = position.x
+  node.y = position.y
+  dragState.moved = true
+  triggerRef(previewNodes)
+}
+
+function stopNodeDrag(event?: PointerEvent) {
+  if (dragState.active && dragState.nodeId) {
+    const node = nodeMap.value.get(dragState.nodeId)
+
+    if (node) {
+      node.fx = null
+      node.fy = null
+    }
+
+    if (dragState.moved) {
+      dragState.suppressClickUntil = Date.now() + 150
+    }
+
+    previewSimulation?.alphaTarget(0)
+  }
+
+  dragState.active = false
+  dragState.moved = false
+  dragState.nodeId = null
+
+  if (event && previewSvgRef.value?.hasPointerCapture(event.pointerId)) {
+    previewSvgRef.value.releasePointerCapture(event.pointerId)
+  }
+}
+
+onBeforeUnmount(() => {
+  stopPreviewSimulation()
+})
+
+watch(
+  seedGraph,
+  () => {
+    initializePreviewSimulation()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -86,18 +325,21 @@ function isNodeHighlighted(nodeId: number) {
       </Button>
     </template>
     <div
-      v-if="previewGraph.nodes.length"
+      v-if="previewNodes.length"
       class="overflow-hidden rounded-lg border bg-[#1e1e1e]"
     >
       <svg
-        class="block h-72 w-full"
-        :viewBox="`0 0 ${previewGraph.width} ${previewGraph.height}`"
-        preserveAspectRatio="none"
+        ref="previewSvgRef"
+        class="block h-72 w-full select-none"
+        :viewBox="`0 0 ${PREVIEW_WIDTH} ${PREVIEW_HEIGHT}`"
         @mouseleave="hoveredNodeId = null"
+        @pointermove="moveNode"
+        @pointerup="stopNodeDrag"
+        @pointercancel="stopNodeDrag"
       >
         <g>
           <line
-            v-for="edge in previewGraph.edges"
+            v-for="edge in previewEdges"
             :key="`${edge.source}-${edge.target}`"
             :x1="nodeMap.get(edge.source)?.x"
             :y1="nodeMap.get(edge.source)?.y"
@@ -115,23 +357,23 @@ function isNodeHighlighted(nodeId: number) {
             :stroke-width="
               hoveredNodeId
                 && (edge.source === hoveredNodeId || edge.target === hoveredNodeId)
-                ? 1
+                ? 0.95
                 : 0.6
             "
           />
         </g>
 
         <g
-          v-for="node in previewGraph.nodes"
+          v-for="node in previewNodes"
           :key="node.id"
           class="cursor-pointer"
-          @click="openNoteInNotesWorkspace(node.id)"
+          @click="openNode(node.id)"
           @mouseenter="hoveredNodeId = node.id"
         >
           <circle
             :cx="node.x"
             :cy="node.y"
-            :r="node.radius + 2.5"
+            :r="node.radius + 1.8"
             :fill="
               isNodeHighlighted(node.id)
                 ? 'rgba(255,255,255,0.08)'
@@ -149,10 +391,11 @@ function isNodeHighlighted(nodeId: number) {
                   ? 'rgba(220,220,220,0.84)'
                   : 'rgba(188,188,188,0.78)'
             "
+            @pointerdown.stop="startNodeDrag(node.id, $event)"
           />
           <text
             v-if="hoveredNodeId === node.id"
-            :x="node.x + node.radius + 6"
+            :x="node.x + node.radius + 5"
             :y="node.y + 3"
             text-anchor="start"
             class="fill-white text-[10px]"
@@ -168,8 +411,7 @@ function isNodeHighlighted(nodeId: number) {
       >
         <span>{{ i18n.t("notes.dashboard.graphPreview.caption") }}</span>
         <span>
-          {{ previewGraph.nodes.length }} /
-          {{ props.graphPreview.nodes.length }}
+          {{ previewNodes.length }} / {{ props.graphPreview.nodes.length }}
         </span>
       </div>
     </div>

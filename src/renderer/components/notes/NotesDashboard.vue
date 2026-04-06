@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useNotesDashboard } from '@/composables'
 import { i18n } from '@/electron'
-import { useElementSize } from '@vueuse/core'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const {
@@ -12,11 +11,6 @@ const {
   isDashboardLoading,
   getNotesDashboard,
 } = useNotesDashboard()
-
-const dashboardGridRef = ref<HTMLElement>()
-const { width: dashboardWidth } = useElementSize(dashboardGridRef)
-
-const isTwoColumnLayout = computed(() => dashboardWidth.value >= 1180)
 
 onMounted(() => {
   if (!dashboardData.value) {
@@ -49,53 +43,68 @@ onMounted(() => {
 
       <div
         v-else-if="dashboardData"
-        ref="dashboardGridRef"
-        class="grid gap-4"
-        :class="isTwoColumnLayout ? 'grid-cols-12' : 'grid-cols-1'"
+        class="flex flex-col gap-4"
       >
         <div
-          v-if="dashboardWidgets.stats"
-          :class="isTwoColumnLayout ? 'col-span-8' : 'col-span-1'"
+          v-if="dashboardWidgets.stats || dashboardWidgets.activitySummary"
+          class="grid grid-cols-2 gap-4"
         >
-          <NotesDashboardStats :stats="dashboardData.stats" />
+          <div
+            v-if="dashboardWidgets.stats"
+            :class="
+              dashboardWidgets.activitySummary ? 'col-span-1' : 'col-span-2'
+            "
+          >
+            <NotesDashboardStats :stats="dashboardData.stats" />
+          </div>
+          <div
+            v-if="dashboardWidgets.activitySummary"
+            :class="dashboardWidgets.stats ? 'col-span-1' : 'col-span-2'"
+          >
+            <NotesDashboardActivitySummary :activity="dashboardData.activity" />
+          </div>
         </div>
-        <div
-          v-if="dashboardWidgets.activitySummary"
-          :class="isTwoColumnLayout ? 'col-span-4' : 'col-span-1'"
-        >
-          <NotesDashboardActivitySummary :activity="dashboardData.activity" />
-        </div>
-        <div
-          v-if="dashboardWidgets.activityHeatmap"
-          :class="isTwoColumnLayout ? 'col-span-12' : 'col-span-1'"
-        >
+
+        <div v-if="dashboardWidgets.activityHeatmap">
           <NotesDashboardActivityHeatmap :activity="dashboardData.activity" />
         </div>
+
         <div
-          v-if="dashboardWidgets.recent"
-          :class="isTwoColumnLayout ? 'col-span-6' : 'col-span-1'"
+          v-if="dashboardWidgets.recent || dashboardWidgets.topLinked"
+          class="grid grid-cols-2 gap-4"
         >
-          <NotesDashboardRecent :recent="dashboardData.recent" />
+          <div
+            v-if="dashboardWidgets.recent"
+            :class="dashboardWidgets.topLinked ? 'col-span-1' : 'col-span-2'"
+          >
+            <NotesDashboardRecent :recent="dashboardData.recent" />
+          </div>
+          <div
+            v-if="dashboardWidgets.topLinked"
+            :class="dashboardWidgets.recent ? 'col-span-1' : 'col-span-2'"
+          >
+            <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
+          </div>
         </div>
+
         <div
-          v-if="dashboardWidgets.topLinked"
-          :class="isTwoColumnLayout ? 'col-span-6' : 'col-span-1'"
+          v-if="dashboardWidgets.tagCloud || dashboardWidgets.graphPreview"
+          class="grid grid-cols-2 gap-4"
         >
-          <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
-        </div>
-        <div
-          v-if="dashboardWidgets.tagCloud"
-          :class="isTwoColumnLayout ? 'col-span-5' : 'col-span-1'"
-        >
-          <NotesDashboardTagCloud :tags="dashboardData.tags" />
-        </div>
-        <div
-          v-if="dashboardWidgets.graphPreview"
-          :class="isTwoColumnLayout ? 'col-span-7' : 'col-span-1'"
-        >
-          <NotesDashboardGraphPreview
-            :graph-preview="dashboardData.graphPreview"
-          />
+          <div
+            v-if="dashboardWidgets.tagCloud"
+            :class="dashboardWidgets.graphPreview ? 'col-span-1' : 'col-span-2'"
+          >
+            <NotesDashboardTagCloud :tags="dashboardData.tags" />
+          </div>
+          <div
+            v-if="dashboardWidgets.graphPreview"
+            :class="dashboardWidgets.tagCloud ? 'col-span-1' : 'col-span-2'"
+          >
+            <NotesDashboardGraphPreview
+              :graph-preview="dashboardData.graphPreview"
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -55,15 +55,9 @@ onMounted(() => {
       >
         <div
           v-if="dashboardWidgets.stats"
-          :class="isTwoColumnLayout ? 'col-span-12' : 'col-span-1'"
-        >
-          <NotesDashboardStats :stats="dashboardData.stats" />
-        </div>
-        <div
-          v-if="dashboardWidgets.activityHeatmap"
           :class="isTwoColumnLayout ? 'col-span-8' : 'col-span-1'"
         >
-          <NotesDashboardActivityHeatmap :activity="dashboardData.activity" />
+          <NotesDashboardStats :stats="dashboardData.stats" />
         </div>
         <div
           v-if="dashboardWidgets.activitySummary"
@@ -72,30 +66,36 @@ onMounted(() => {
           <NotesDashboardActivitySummary :activity="dashboardData.activity" />
         </div>
         <div
+          v-if="dashboardWidgets.activityHeatmap"
+          :class="isTwoColumnLayout ? 'col-span-12' : 'col-span-1'"
+        >
+          <NotesDashboardActivityHeatmap :activity="dashboardData.activity" />
+        </div>
+        <div
           v-if="dashboardWidgets.recent"
-          :class="isTwoColumnLayout ? 'col-span-5' : 'col-span-1'"
+          :class="isTwoColumnLayout ? 'col-span-6' : 'col-span-1'"
         >
           <NotesDashboardRecent :recent="dashboardData.recent" />
         </div>
         <div
+          v-if="dashboardWidgets.topLinked"
+          :class="isTwoColumnLayout ? 'col-span-6' : 'col-span-1'"
+        >
+          <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
+        </div>
+        <div
           v-if="dashboardWidgets.tagCloud"
-          :class="isTwoColumnLayout ? 'col-span-7' : 'col-span-1'"
+          :class="isTwoColumnLayout ? 'col-span-5' : 'col-span-1'"
         >
           <NotesDashboardTagCloud :tags="dashboardData.tags" />
         </div>
         <div
           v-if="dashboardWidgets.graphPreview"
-          :class="isTwoColumnLayout ? 'col-span-8' : 'col-span-1'"
+          :class="isTwoColumnLayout ? 'col-span-7' : 'col-span-1'"
         >
           <NotesDashboardGraphPreview
             :graph-preview="dashboardData.graphPreview"
           />
-        </div>
-        <div
-          v-if="dashboardWidgets.topLinked"
-          :class="isTwoColumnLayout ? 'col-span-4' : 'col-span-1'"
-        >
-          <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
         </div>
       </div>
     </div>

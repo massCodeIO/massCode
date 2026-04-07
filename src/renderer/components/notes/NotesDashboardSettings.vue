@@ -22,24 +22,24 @@ const widgetItems: Array<{
     label: i18n.t('notes.dashboard.widgets.stats'),
   },
   {
-    key: 'activityHeatmap',
-    label: i18n.t('notes.dashboard.widgets.activityHeatmap'),
-  },
-  {
     key: 'activitySummary',
     label: i18n.t('notes.dashboard.widgets.activitySummary'),
+  },
+  {
+    key: 'activityHeatmap',
+    label: i18n.t('notes.dashboard.widgets.activityHeatmap'),
   },
   {
     key: 'recent',
     label: i18n.t('notes.dashboard.widgets.recent'),
   },
   {
-    key: 'graphPreview',
-    label: i18n.t('notes.dashboard.widgets.graphPreview'),
-  },
-  {
     key: 'topLinked',
     label: i18n.t('notes.dashboard.widgets.topLinked'),
+  },
+  {
+    key: 'graphPreview',
+    label: i18n.t('notes.dashboard.widgets.graphPreview'),
   },
 ]
 </script>

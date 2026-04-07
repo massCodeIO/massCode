@@ -64,11 +64,11 @@
       "widgets": {
         "title": "Visible Widgets",
         "description": "Choose which blocks appear on the dashboard.",
-        "stats": "Stats",
+        "stats": "Overview",
         "activityHeatmap": "Activity Heatmap",
         "activitySummary": "Activity Summary",
         "recent": "Recent Notes",
-        "graphPreview": "Graph Preview",
+        "graphPreview": "Knowledge Graph",
         "topLinked": "Top Linked Notes"
       },
       "stats": {

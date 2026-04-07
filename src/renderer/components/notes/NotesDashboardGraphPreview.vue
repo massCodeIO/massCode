@@ -3,6 +3,11 @@ import type { NotesDashboardResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import { useNotesDashboard, useNotesWorkspaceNavigation } from '@/composables'
 import { i18n } from '@/electron'
+import { LocateFixed } from 'lucide-vue-next'
+
+interface GraphSceneExposed {
+  resetViewport: () => void
+}
 
 const props = defineProps<{
   graphPreview: NotesDashboardResponse['graphPreview']
@@ -10,6 +15,7 @@ const props = defineProps<{
 
 const { navigateToGraph } = useNotesDashboard()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
+const graphSceneRef = ref<GraphSceneExposed | null>(null)
 
 const previewGraph = computed(() => {
   const connectedIds = new Set<number>()
@@ -46,21 +52,29 @@ const previewGraph = computed(() => {
 
 <template>
   <NotesDashboardSection :title="i18n.t('notes.dashboard.graphPreview.title')">
-    <template #actions>
-      <Button
-        size="sm"
-        variant="ghost"
-        @click="navigateToGraph"
-      >
-        {{ i18n.t("notes.dashboard.actions.openGraph") }}
-      </Button>
-    </template>
     <div
       v-if="previewGraph.nodes.length"
-      class="overflow-hidden rounded-lg border bg-[#1e1e1e]"
+      class="relative overflow-hidden rounded-lg border bg-[#1e1e1e]"
     >
+      <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          @click="navigateToGraph"
+        >
+          {{ i18n.t("notes.dashboard.actions.openGraph") }}
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          @click="graphSceneRef?.resetViewport()"
+        >
+          <LocateFixed class="h-4 w-4" />
+        </Button>
+      </div>
       <div class="h-72">
         <NotesGraphScene
+          ref="graphSceneRef"
           compact
           :nodes="previewGraph.nodes"
           :edges="previewGraph.edges"

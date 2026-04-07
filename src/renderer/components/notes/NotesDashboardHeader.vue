@@ -9,18 +9,11 @@ const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
 </script>
 
 <template>
-  <div
-    class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+  <UiPageHeader
+    :title="i18n.t('notes.dashboard.title')"
+    :description="i18n.t('notes.dashboard.description')"
   >
-    <div>
-      <h1 class="text-xl font-semibold">
-        {{ i18n.t("notes.dashboard.title") }}
-      </h1>
-      <p class="text-muted-foreground mt-1 text-sm">
-        {{ i18n.t("notes.dashboard.description") }}
-      </p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
+    <template #actions>
       <Button
         size="sm"
         variant="outline"
@@ -50,6 +43,6 @@ const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
           <NotesDashboardSettings />
         </Popover.PopoverContent>
       </Popover.Popover>
-    </div>
-  </div>
+    </template>
+  </UiPageHeader>
 </template>

@@ -37,16 +37,11 @@ onMounted(() => {
 <template>
   <div class="h-full overflow-hidden">
     <div class="mx-auto flex h-full max-w-7xl flex-col gap-4 p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h1 class="text-lg font-semibold">
-            {{ i18n.t("notes.dashboard.graph.title") }}
-          </h1>
-          <p class="text-muted-foreground mt-1 text-sm">
-            {{ i18n.t("notes.dashboard.graph.description") }}
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
+      <UiPageHeader
+        :title="i18n.t('notes.dashboard.graph.title')"
+        :description="i18n.t('notes.dashboard.graph.description')"
+      >
+        <template #actions>
           <Button
             size="sm"
             variant="outline"
@@ -83,8 +78,8 @@ onMounted(() => {
           >
             <LocateFixed class="h-4 w-4" />
           </Button>
-        </div>
-      </div>
+        </template>
+      </UiPageHeader>
 
       <div
         v-if="isGraphLoading && !graphData"

@@ -19,7 +19,7 @@ const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
       <button
         v-for="note in props.topLinked"
         :key="note.id"
-        class="hover:bg-accent rounded-lg px-3 py-2 text-left transition-colors"
+        class="hover:bg-accent-hover rounded-lg px-3 py-2 text-left transition-colors"
         @click="openNoteInNotesWorkspace(note.id)"
       >
         <div class="truncate text-sm font-medium">

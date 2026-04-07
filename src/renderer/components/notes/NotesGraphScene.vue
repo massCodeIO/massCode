@@ -198,6 +198,10 @@ function getEdgeCoordinates(source: number, target: number) {
 }
 
 function getNodeHaloFill(nodeId: number) {
+  if (activeNodeId.value === null) {
+    return 'transparent'
+  }
+
   if (activeNodeId.value === nodeId) {
     return graphPalette.value.nodeHaloActive
   }
@@ -206,11 +210,7 @@ function getNodeHaloFill(nodeId: number) {
     return graphPalette.value.nodeHaloNeighbor
   }
 
-  if (isNodeDimmed(nodeId)) {
-    return graphPalette.value.nodeHaloDimmed
-  }
-
-  return graphPalette.value.nodeHaloBase
+  return 'transparent'
 }
 
 function getNodeFill(node: SceneNode) {

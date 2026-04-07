@@ -12,7 +12,7 @@ defineProps<{
     :title="i18n.t('notes.dashboard.activity.summaryTitle')"
   >
     <div class="grid h-full grid-cols-2 grid-rows-2 gap-3">
-      <div class="bg-muted/50 rounded-lg p-4">
+      <div class="rounded-lg p-4">
         <div class="text-muted-foreground text-xs uppercase">
           {{ i18n.t("notes.dashboard.activity.updatedToday") }}
         </div>
@@ -20,7 +20,7 @@ defineProps<{
           {{ activity.notesUpdatedToday }}
         </div>
       </div>
-      <div class="bg-muted/50 rounded-lg p-4">
+      <div class="rounded-lg p-4">
         <div class="text-muted-foreground text-xs uppercase">
           {{ i18n.t("notes.dashboard.activity.updatedWeek") }}
         </div>
@@ -28,7 +28,7 @@ defineProps<{
           {{ activity.notesUpdatedLast7Days }}
         </div>
       </div>
-      <div class="bg-muted/50 rounded-lg p-4">
+      <div class="rounded-lg p-4">
         <div class="text-muted-foreground text-xs uppercase">
           {{ i18n.t("notes.dashboard.activity.currentStreak") }}
         </div>
@@ -36,7 +36,7 @@ defineProps<{
           {{ activity.streak.current }}
         </div>
       </div>
-      <div class="bg-muted/50 rounded-lg p-4">
+      <div class="rounded-lg p-4">
         <div class="text-muted-foreground text-xs uppercase">
           {{ i18n.t("notes.dashboard.activity.bestStreak") }}
         </div>

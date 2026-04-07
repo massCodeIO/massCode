@@ -57,15 +57,36 @@ interface GraphBounds {
 }
 
 export function getNotesGraphNodeRadius(
-  incomingLinksCount: number,
+  connectedNotesCount: number,
   compact = false,
 ) {
   const minRadius = compact ? 2.6 : 3.2
   const maxRadius = compact ? 8 : 12
   const growth
-    = Math.sqrt(Math.max(0, incomingLinksCount)) * (compact ? 1 : 1.35)
+    = Math.sqrt(Math.max(0, connectedNotesCount)) * (compact ? 1 : 1.35)
 
   return Math.min(maxRadius, minRadius + growth)
+}
+
+export function getNotesGraphConnectedCounts(
+  nodes: GraphNodeInput[],
+  edges: GraphEdgeInput[],
+) {
+  const connectedIdsByNodeId = new Map<number, Set<number>>(
+    nodes.map(node => [node.id, new Set<number>()]),
+  )
+
+  edges.forEach((edge) => {
+    connectedIdsByNodeId.get(edge.source)?.add(edge.target)
+    connectedIdsByNodeId.get(edge.target)?.add(edge.source)
+  })
+
+  return new Map(
+    [...connectedIdsByNodeId.entries()].map(([nodeId, connectedIds]) => [
+      nodeId,
+      connectedIds.size,
+    ]),
+  )
 }
 
 export function getNotesGraphBounds(
@@ -120,6 +141,7 @@ export function buildNotesGraphLayout(
   }
 
   const compact = Boolean(options.compact)
+  const connectedCountsByNodeId = getNotesGraphConnectedCounts(nodes, edges)
   const estimatedWidth = compact
     ? Math.max(340, Math.sqrt(nodes.length) * 96)
     : Math.max(760, Math.sqrt(nodes.length) * 136)
@@ -133,7 +155,10 @@ export function buildNotesGraphLayout(
 
     return {
       ...node,
-      radius: getNotesGraphNodeRadius(node.incomingLinksCount, compact),
+      radius: getNotesGraphNodeRadius(
+        connectedCountsByNodeId.get(node.id) ?? 0,
+        compact,
+      ),
       x: estimatedWidth / 2 + Math.cos(angle) * seedRadius,
       y: estimatedHeight / 2 + Math.sin(angle) * seedRadius,
     }

@@ -3,6 +3,7 @@ import {
   buildGraphSceneLabels,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
+  getGraphSceneViewportTransform,
 } from '../notesGraphScene'
 
 describe('notesGraphScene', () => {
@@ -112,5 +113,81 @@ describe('notesGraphScene', () => {
 
     expect(crowdedLabels[0]?.id).toBe(2)
     expect(crowdedLabels).toHaveLength(1)
+  })
+
+  it('fits graph bounds into a padded viewport', () => {
+    expect(
+      getGraphSceneViewportTransform({
+        bounds: {
+          height: 80,
+          maxX: 160,
+          maxY: 120,
+          minX: 60,
+          minY: 40,
+          width: 100,
+        },
+        compact: true,
+        height: 240,
+        padding: {
+          bottom: 12,
+          left: 16,
+          right: 96,
+          top: 16,
+        },
+        width: 560,
+      }),
+    ).toEqual({
+      panX: 119,
+      panY: 34,
+      zoom: 1.1,
+    })
+  })
+
+  it('centers graphs with minimum padded bounds', () => {
+    expect(
+      getGraphSceneViewportTransform({
+        bounds: {
+          height: 160,
+          maxX: 124,
+          maxY: 108,
+          minX: 96,
+          minY: 80,
+          width: 240,
+        },
+        compact: true,
+        height: 240,
+        width: 560,
+      }),
+    ).toEqual({
+      panX: 159,
+      panY: 16.6,
+      zoom: 1.1,
+    })
+  })
+
+  it('can center viewport around a visual focus point instead of raw bounds center', () => {
+    expect(
+      getGraphSceneViewportTransform({
+        bounds: {
+          height: 160,
+          maxX: 220,
+          maxY: 170,
+          minX: 20,
+          minY: 10,
+          width: 240,
+        },
+        compact: true,
+        focusPoint: {
+          x: 160,
+          y: 90,
+        },
+        height: 240,
+        width: 560,
+      }),
+    ).toEqual({
+      panX: 104,
+      panY: 21,
+      zoom: 1.1,
+    })
   })
 })

@@ -3,6 +3,7 @@ import type { NotesDashboardResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import { useNotesDashboard, useNotesWorkspaceNavigation } from '@/composables'
 import { i18n } from '@/electron'
+import { useElementSize } from '@vueuse/core'
 import { LocateFixed } from 'lucide-vue-next'
 
 interface GraphSceneExposed {
@@ -16,6 +17,14 @@ const props = defineProps<{
 const { navigateToGraph } = useNotesDashboard()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
 const graphSceneRef = ref<GraphSceneExposed | null>(null)
+const graphViewportRef = ref<HTMLElement>()
+const { width: graphViewportWidth, height: graphViewportHeight }
+  = useElementSize(graphViewportRef)
+
+const graphSceneSize = computed(() => ({
+  width: Math.max(560, Math.round(graphViewportWidth.value || 0)),
+  height: Math.max(240, Math.round(graphViewportHeight.value || 0)),
+}))
 
 const previewGraph = computed(() => {
   const connectedIds = new Set<number>()
@@ -72,14 +81,18 @@ const previewGraph = computed(() => {
           <LocateFixed class="h-4 w-4" />
         </Button>
       </div>
-      <div class="h-72">
+      <div
+        ref="graphViewportRef"
+        class="h-72"
+      >
         <NotesGraphScene
           ref="graphSceneRef"
           compact
           :nodes="previewGraph.nodes"
           :edges="previewGraph.edges"
-          :width="560"
-          :height="240"
+          :width="graphSceneSize.width"
+          :height="graphSceneSize.height"
+          :viewport-padding="{ top: 16, right: 108, bottom: 12, left: 16 }"
           @node-click="openNoteInNotesWorkspace"
         />
       </div>

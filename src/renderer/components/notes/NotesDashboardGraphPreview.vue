@@ -17,7 +17,7 @@ import {
   forceX,
   forceY,
 } from 'd3-force'
-import { buildNotesGraphLayout } from './notesGraphLayout'
+import { buildNotesGraphLayout, getNotesGraphBounds } from './notesGraphLayout'
 
 const props = defineProps<{
   graphPreview: NotesDashboardResponse['graphPreview']
@@ -25,7 +25,6 @@ const props = defineProps<{
 
 const PREVIEW_WIDTH = 560
 const PREVIEW_HEIGHT = 240
-const PREVIEW_PADDING = 16
 
 interface PreviewNode extends SimulationNodeDatum {
   id: number
@@ -43,12 +42,33 @@ interface PreviewLink extends SimulationLinkDatum<PreviewNode> {
   target: number | PreviewNode
 }
 
+interface PreviewLabel {
+  id: number
+  isActive: boolean
+  text: string
+  textAnchor: 'middle' | 'start'
+  x: number
+  y: number
+}
+
 const { navigateToGraph } = useNotesDashboard()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
 
 const previewSvgRef = ref<SVGSVGElement>()
 const previewNodes = shallowRef<PreviewNode[]>([])
 const hoveredNodeId = ref<number | null>(null)
+const zoom = ref(1)
+const pan = reactive({
+  x: 0,
+  y: 0,
+})
+const panState = reactive({
+  active: false,
+  startX: 0,
+  startY: 0,
+  x: 0,
+  y: 0,
+})
 const dragState = reactive({
   active: false,
   moved: false,
@@ -76,7 +96,6 @@ const seedGraph = computed(() => {
       return left.name.localeCompare(right.name)
     })
     .filter(node => connectedIds.has(node.id))
-
   const fallbackNodes = props.graphPreview.nodes.filter(
     node => !connectedIds.has(node.id),
   )
@@ -93,6 +112,7 @@ const previewEdges = computed(() => seedGraph.value.edges)
 const nodeMap = computed(
   () => new Map(previewNodes.value.map(node => [node.id, node])),
 )
+const graphBounds = computed(() => getNotesGraphBounds(previewNodes.value, 28))
 
 const neighborIds = computed(() => {
   const neighbors = new Map<number, Set<number>>()
@@ -125,11 +145,128 @@ const activeNeighborhoodIds = computed(() => {
   return ids
 })
 
+const previewLabels = computed<PreviewLabel[]>(() => {
+  if (!hoveredNodeId.value) {
+    return []
+  }
+
+  const labels = previewNodes.value
+    .filter(node => activeNeighborhoodIds.value.has(node.id))
+    .sort((left, right) => {
+      if (left.id === hoveredNodeId.value) {
+        return -1
+      }
+
+      if (right.id === hoveredNodeId.value) {
+        return 1
+      }
+
+      return right.incomingLinksCount - left.incomingLinksCount
+    })
+    .map((node) => {
+      const isActive = node.id === hoveredNodeId.value
+      const radius = getDisplayedNodeRadius(node)
+      const text
+        = node.name.length > 20 ? `${node.name.slice(0, 20)}…` : node.name
+
+      return {
+        id: node.id,
+        isActive,
+        text,
+        textAnchor: isActive ? 'middle' : 'start',
+        x: isActive
+          ? node.x * zoom.value + pan.x
+          : (node.x + radius + 6) * zoom.value + pan.x,
+        y: isActive
+          ? (node.y + radius + 13) * zoom.value + pan.y
+          : (node.y + 3) * zoom.value + pan.y,
+      }
+    })
+
+  const occupiedBoxes: Array<{
+    bottom: number
+    left: number
+    right: number
+    top: number
+  }> = []
+
+  return labels.filter((label) => {
+    const fontSize = label.isActive ? 12 : 10
+    const width = label.text.length * (label.isActive ? 6.2 : 5.6)
+    const left = label.textAnchor === 'middle' ? label.x - width / 2 : label.x
+    const right
+      = label.textAnchor === 'middle' ? label.x + width / 2 : label.x + width
+    const top = label.y - fontSize
+    const bottom = label.y + 4
+    const overlaps = occupiedBoxes.some(
+      box =>
+        left < box.right
+        && right > box.left
+        && top < box.bottom
+        && bottom > box.top,
+    )
+
+    if (overlaps) {
+      return false
+    }
+
+    occupiedBoxes.push({
+      left: left - 3,
+      right: right + 3,
+      top: top - 2,
+      bottom: bottom + 2,
+    })
+
+    return true
+  })
+})
+
 function getPreviewNodeRadius(radius: number) {
   return Math.max(1.8, Math.min(4.8, radius * 0.64))
 }
 
-function getPointerPosition(event: PointerEvent) {
+function getDisplayedNodeRadius(node: PreviewNode) {
+  if (hoveredNodeId.value === node.id) {
+    return node.radius + 1.8
+  }
+
+  if (neighborIds.value.get(hoveredNodeId.value ?? -1)?.has(node.id)) {
+    return node.radius + 0.5
+  }
+
+  return node.radius
+}
+
+function resetViewport() {
+  if (!previewNodes.value.length) {
+    zoom.value = 1
+    pan.x = 0
+    pan.y = 0
+
+    return
+  }
+
+  const fittedZoom = Math.min(
+    1.1,
+    Math.max(
+      0.72,
+      Math.min(
+        PREVIEW_WIDTH / (graphBounds.value.width + 28),
+        PREVIEW_HEIGHT / (graphBounds.value.height + 28),
+      ),
+    ),
+  )
+
+  zoom.value = Number(fittedZoom.toFixed(2))
+  pan.x
+    = (PREVIEW_WIDTH - graphBounds.value.width * zoom.value) / 2
+      - graphBounds.value.minX * zoom.value
+  pan.y
+    = (PREVIEW_HEIGHT - graphBounds.value.height * zoom.value) / 2
+      - graphBounds.value.minY * zoom.value
+}
+
+function getPointerPosition(event: PointerEvent | WheelEvent) {
   if (!previewSvgRef.value) {
     return null
   }
@@ -150,6 +287,146 @@ function getPointerPosition(event: PointerEvent) {
     x: svgPoint.x,
     y: svgPoint.y,
   }
+}
+
+function getGraphPosition(event: PointerEvent | WheelEvent) {
+  const pointer = getPointerPosition(event)
+
+  if (!pointer) {
+    return null
+  }
+
+  return {
+    x: (pointer.x - pan.x) / zoom.value,
+    y: (pointer.y - pan.y) / zoom.value,
+  }
+}
+
+function applyZoom(
+  nextZoomValue: string | number,
+  anchor: { x: number, y: number },
+) {
+  const nextZoom = Math.min(2.4, Math.max(0.58, Number(nextZoomValue)))
+  const graphX = (anchor.x - pan.x) / zoom.value
+  const graphY = (anchor.y - pan.y) / zoom.value
+
+  zoom.value = Number(nextZoom.toFixed(2))
+  pan.x = anchor.x - graphX * zoom.value
+  pan.y = anchor.y - graphY * zoom.value
+}
+
+function onWheel(event: WheelEvent) {
+  const anchor = getPointerPosition(event)
+
+  if (!anchor) {
+    return
+  }
+
+  const delta = event.deltaY > 0 ? 0.9 : 1.1
+  applyZoom(zoom.value * delta, anchor)
+}
+
+function startPan(event: PointerEvent) {
+  if (dragState.active || event.button !== 0) {
+    return
+  }
+
+  hoveredNodeId.value = null
+  panState.active = true
+  panState.startX = event.clientX
+  panState.startY = event.clientY
+  panState.x = pan.x
+  panState.y = pan.y
+
+  previewSvgRef.value?.setPointerCapture(event.pointerId)
+}
+
+function openNode(nodeId: number) {
+  if (Date.now() < dragState.suppressClickUntil) {
+    return
+  }
+
+  void openNoteInNotesWorkspace(nodeId)
+}
+
+function moveInteraction(event: PointerEvent) {
+  if (dragState.active) {
+    const node = dragState.nodeId ? nodeMap.value.get(dragState.nodeId) : null
+    const position = getGraphPosition(event)
+
+    if (!node || !position) {
+      return
+    }
+
+    node.fx = position.x
+    node.fy = position.y
+    node.x = position.x
+    node.y = position.y
+    dragState.moved = true
+    triggerRef(previewNodes)
+
+    return
+  }
+
+  if (!panState.active) {
+    return
+  }
+
+  pan.x = panState.x + event.clientX - panState.startX
+  pan.y = panState.y + event.clientY - panState.startY
+}
+
+function stopInteraction(event?: PointerEvent) {
+  if (dragState.active && dragState.nodeId) {
+    const node = nodeMap.value.get(dragState.nodeId)
+
+    if (node) {
+      node.fx = null
+      node.fy = null
+    }
+
+    if (dragState.moved) {
+      dragState.suppressClickUntil = Date.now() + 150
+    }
+
+    previewSimulation?.alphaTarget(0)
+  }
+
+  dragState.active = false
+  dragState.moved = false
+  dragState.nodeId = null
+  panState.active = false
+
+  if (event && previewSvgRef.value?.hasPointerCapture(event.pointerId)) {
+    previewSvgRef.value.releasePointerCapture(event.pointerId)
+  }
+}
+
+function startNodeDrag(nodeId: number, event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+
+  const node = nodeMap.value.get(nodeId)
+  const position = getGraphPosition(event)
+
+  if (!node || !position) {
+    return
+  }
+
+  hoveredNodeId.value = nodeId
+  dragState.active = true
+  dragState.moved = false
+  dragState.nodeId = nodeId
+  panState.active = false
+  node.fx = position.x
+  node.fy = position.y
+  node.x = position.x
+  node.y = position.y
+
+  previewSimulation?.alphaTarget(0.18).restart()
+  triggerRef(previewNodes)
+  previewSvgRef.value?.setPointerCapture(event.pointerId)
 }
 
 function schedulePreviewUpdate() {
@@ -183,17 +460,9 @@ function initializePreviewSimulation() {
     return
   }
 
-  const scale = Math.min(
-    (PREVIEW_WIDTH - PREVIEW_PADDING * 2) / seedGraph.value.width,
-    (PREVIEW_HEIGHT - PREVIEW_PADDING * 2) / seedGraph.value.height,
-  )
-  const offsetX = (PREVIEW_WIDTH - seedGraph.value.width * scale) / 2
-  const offsetY = (PREVIEW_HEIGHT - seedGraph.value.height * scale) / 2
   const nodes = seedGraph.value.nodes.map(node => ({
     ...node,
     radius: getPreviewNodeRadius(node.radius),
-    x: node.x * scale + offsetX,
-    y: node.y * scale + offsetY,
     fx: null,
     fy: null,
   }))
@@ -223,13 +492,30 @@ function initializePreviewSimulation() {
         .distance(16)
         .strength(0.26),
     )
-    .force('center', forceCenter(PREVIEW_WIDTH / 2, PREVIEW_HEIGHT / 2))
-    .force('x', forceX(PREVIEW_WIDTH / 2).strength(0.035))
-    .force('y', forceY(PREVIEW_HEIGHT / 2).strength(0.035))
+    .force(
+      'center',
+      forceCenter(seedGraph.value.width / 2, seedGraph.value.height / 2),
+    )
+    .force('x', forceX(seedGraph.value.width / 2).strength(0.035))
+    .force('y', forceY(seedGraph.value.height / 2).strength(0.035))
     .alpha(0.7)
     .alphaDecay(0.06)
     .velocityDecay(0.32)
     .on('tick', schedulePreviewUpdate)
+
+  nextTick(() => {
+    resetViewport()
+  })
+}
+
+function isNodeHighlighted(nodeId: number) {
+  if (!hoveredNodeId.value) {
+    return false
+  }
+
+  return (
+    nodeId === hoveredNodeId.value || activeNeighborhoodIds.value.has(nodeId)
+  )
 }
 
 function isNodeDimmed(nodeId: number) {
@@ -240,91 +526,20 @@ function isNodeDimmed(nodeId: number) {
   return !activeNeighborhoodIds.value.has(nodeId)
 }
 
+function isEdgeHighlighted(source: number, target: number) {
+  if (!hoveredNodeId.value) {
+    return false
+  }
+
+  return source === hoveredNodeId.value || target === hoveredNodeId.value
+}
+
 function isEdgeDimmed(source: number, target: number) {
   if (!hoveredNodeId.value) {
     return false
   }
 
-  return source !== hoveredNodeId.value && target !== hoveredNodeId.value
-}
-
-function openNode(nodeId: number) {
-  if (Date.now() < dragState.suppressClickUntil) {
-    return
-  }
-
-  void openNoteInNotesWorkspace(nodeId)
-}
-
-function startNodeDrag(nodeId: number, event: PointerEvent) {
-  if (event.button !== 0) {
-    return
-  }
-
-  const node = nodeMap.value.get(nodeId)
-  const position = getPointerPosition(event)
-
-  if (!node || !position) {
-    return
-  }
-
-  hoveredNodeId.value = nodeId
-  dragState.active = true
-  dragState.moved = false
-  dragState.nodeId = nodeId
-  node.fx = position.x
-  node.fy = position.y
-  node.x = position.x
-  node.y = position.y
-
-  previewSimulation?.alphaTarget(0.18).restart()
-  triggerRef(previewNodes)
-  previewSvgRef.value?.setPointerCapture(event.pointerId)
-}
-
-function moveNode(event: PointerEvent) {
-  if (!dragState.active || !dragState.nodeId) {
-    return
-  }
-
-  const node = nodeMap.value.get(dragState.nodeId)
-  const position = getPointerPosition(event)
-
-  if (!node || !position) {
-    return
-  }
-
-  node.fx = position.x
-  node.fy = position.y
-  node.x = position.x
-  node.y = position.y
-  dragState.moved = true
-  triggerRef(previewNodes)
-}
-
-function stopNodeDrag(event?: PointerEvent) {
-  if (dragState.active && dragState.nodeId) {
-    const node = nodeMap.value.get(dragState.nodeId)
-
-    if (node) {
-      node.fx = null
-      node.fy = null
-    }
-
-    if (dragState.moved) {
-      dragState.suppressClickUntil = Date.now() + 150
-    }
-
-    previewSimulation?.alphaTarget(0)
-  }
-
-  dragState.active = false
-  dragState.moved = false
-  dragState.nodeId = null
-
-  if (event && previewSvgRef.value?.hasPointerCapture(event.pointerId)) {
-    previewSvgRef.value.releasePointerCapture(event.pointerId)
-  }
+  return !isEdgeHighlighted(source, target)
 }
 
 onBeforeUnmount(() => {
@@ -357,96 +572,103 @@ watch(
     >
       <svg
         ref="previewSvgRef"
-        class="block h-72 w-full select-none"
+        class="block h-72 w-full touch-none select-none"
+        :class="{
+          'cursor-grabbing': panState.active || dragState.active,
+          'cursor-grab': !panState.active && !dragState.active,
+        }"
         :viewBox="`0 0 ${PREVIEW_WIDTH} ${PREVIEW_HEIGHT}`"
         preserveAspectRatio="xMidYMid meet"
-        @mouseleave="hoveredNodeId = null"
-        @pointermove="moveNode"
-        @pointerup="stopNodeDrag"
-        @pointercancel="stopNodeDrag"
+        @mouseleave="stopInteraction"
+        @pointermove="moveInteraction"
+        @pointerup="stopInteraction"
+        @pointercancel="stopInteraction"
+        @wheel.prevent="onWheel"
+        @pointerdown="startPan"
       >
-        <g>
-          <line
-            v-for="edge in previewEdges"
-            :key="`${edge.source}-${edge.target}`"
-            :x1="nodeMap.get(edge.source)?.x"
-            :y1="nodeMap.get(edge.source)?.y"
-            :x2="nodeMap.get(edge.target)?.x"
-            :y2="nodeMap.get(edge.target)?.y"
-            :stroke="
-              hoveredNodeId
-                && (edge.source === hoveredNodeId
-                  || edge.target === hoveredNodeId
-                  || neighborIds.get(hoveredNodeId)?.has(edge.source)
-                  || neighborIds.get(hoveredNodeId)?.has(edge.target))
-                ? 'rgba(139,92,246,0.9)'
-                : isEdgeDimmed(edge.source, edge.target)
-                  ? 'rgba(160,160,160,0.08)'
-                  : 'rgba(210,210,210,0.14)'
-            "
-            :stroke-width="
-              hoveredNodeId
-                && (edge.source === hoveredNodeId || edge.target === hoveredNodeId)
-                ? 0.95
-                : 0.5
-            "
-          />
+        <g :transform="`translate(${pan.x}, ${pan.y}) scale(${zoom})`">
+          <g>
+            <line
+              v-for="edge in previewEdges"
+              :key="`${edge.source}-${edge.target}`"
+              :x1="nodeMap.get(edge.source)?.x"
+              :y1="nodeMap.get(edge.source)?.y"
+              :x2="nodeMap.get(edge.target)?.x"
+              :y2="nodeMap.get(edge.target)?.y"
+              :stroke="
+                isEdgeHighlighted(edge.source, edge.target)
+                  ? 'rgba(139,92,246,0.9)'
+                  : isEdgeDimmed(edge.source, edge.target)
+                    ? 'rgba(160,160,160,0.08)'
+                    : 'rgba(210,210,210,0.14)'
+              "
+              :stroke-width="
+                isEdgeHighlighted(edge.source, edge.target) ? 0.95 : 0.5
+              "
+            />
+          </g>
+
+          <g
+            v-for="node in previewNodes"
+            :key="node.id"
+            class="cursor-pointer"
+            @click.stop="openNode(node.id)"
+            @mouseenter="hoveredNodeId = node.id"
+          >
+            <circle
+              :cx="node.x"
+              :cy="node.y"
+              :r="getDisplayedNodeRadius(node) + 1.8"
+              :fill="
+                hoveredNodeId === node.id
+                  ? 'rgba(139,92,246,0.22)'
+                  : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
+                    ? 'rgba(139,92,246,0.08)'
+                    : isNodeDimmed(node.id)
+                      ? 'rgba(255,255,255,0.01)'
+                      : 'rgba(255,255,255,0.02)'
+              "
+            />
+            <circle
+              :cx="node.x"
+              :cy="node.y"
+              :r="getDisplayedNodeRadius(node)"
+              :fill="
+                hoveredNodeId === node.id
+                  ? 'rgba(139,92,246,0.98)'
+                  : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
+                    ? 'rgba(238,238,238,0.92)'
+                    : isNodeDimmed(node.id)
+                      ? 'rgba(140,140,140,0.34)'
+                      : node.incomingLinksCount > 0
+                        ? 'rgba(188,188,188,0.6)'
+                        : 'rgba(158,158,158,0.5)'
+              "
+              :stroke="
+                isNodeHighlighted(node.id)
+                  ? 'rgba(255,255,255,0.4)'
+                  : 'rgba(255,255,255,0.06)'
+              "
+              :stroke-width="isNodeHighlighted(node.id) ? 0.55 : 0.2"
+              @pointerdown.stop="startNodeDrag(node.id, $event)"
+            />
+          </g>
         </g>
 
-        <g
-          v-for="node in previewNodes"
-          :key="node.id"
-          class="cursor-pointer"
-          @click="openNode(node.id)"
-          @mouseenter="hoveredNodeId = node.id"
-        >
-          <circle
-            :cx="node.x"
-            :cy="node.y"
-            :r="node.radius + 1.8"
-            :fill="
-              hoveredNodeId === node.id
-                ? 'rgba(139,92,246,0.22)'
-                : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
-                  ? 'rgba(139,92,246,0.08)'
-                  : isNodeDimmed(node.id)
-                    ? 'rgba(255,255,255,0.01)'
-                    : 'rgba(255,255,255,0.02)'
-            "
-          />
-          <circle
-            :cx="node.x"
-            :cy="node.y"
-            :r="node.radius"
-            :fill="
-              hoveredNodeId === node.id
-                ? 'rgba(139,92,246,0.98)'
-                : neighborIds.get(hoveredNodeId ?? -1)?.has(node.id)
-                  ? 'rgba(238,238,238,0.92)'
-                  : isNodeDimmed(node.id)
-                    ? 'rgba(140,140,140,0.34)'
-                    : node.incomingLinksCount > 0
-                      ? 'rgba(188,188,188,0.6)'
-                      : 'rgba(158,158,158,0.5)'
-            "
-            @pointerdown.stop="startNodeDrag(node.id, $event)"
-          />
+        <g class="pointer-events-none">
           <text
-            v-if="activeNeighborhoodIds.has(node.id)"
-            :x="hoveredNodeId === node.id ? node.x : node.x + node.radius + 5"
-            :y="
-              hoveredNodeId === node.id ? node.y + node.radius + 14 : node.y + 3
-            "
-            :text-anchor="hoveredNodeId === node.id ? 'middle' : 'start'"
+            v-for="label in previewLabels"
+            :key="label.id"
+            :x="label.x"
+            :y="label.y"
+            :text-anchor="label.textAnchor"
             :class="
-              hoveredNodeId === node.id
+              label.isActive
                 ? 'fill-white text-[12px] font-medium'
-                : 'fill-white/70 text-[10px]'
+                : 'fill-white/38 text-[10px]'
             "
           >
-            {{
-              node.name.length > 22 ? `${node.name.slice(0, 22)}…` : node.name
-            }}
+            {{ label.text }}
           </text>
         </g>
       </svg>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
+import { router, RouterName } from '@/router'
 import { scrollToElement } from '@/utils'
+import { LayoutGrid } from 'lucide-vue-next'
 
 const { notesState } = useNotesApp()
 
@@ -16,6 +18,10 @@ function scrollToCurrentFolder() {
 nextTick(() => {
   scrollToCurrentFolder()
 })
+
+async function openDashboard() {
+  await router.push({ name: RouterName.notesDashboard })
+}
 </script>
 
 <template>
@@ -29,7 +35,16 @@ nextTick(() => {
     <SidebarHeader
       :title="i18n.t('notes.plural')"
       :section-title="i18n.t('common.library')"
-    />
+    >
+      <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('notes.dashboard.label')"
+          @click="openDashboard"
+        >
+          <LayoutGrid class="h-4 w-4" />
+        </UiActionButton>
+      </template>
+    </SidebarHeader>
     <NotesSidebarLibrary />
     <NotesSidebarFolders />
   </div>

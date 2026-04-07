@@ -11,8 +11,11 @@ import {
   useResizeHandle,
 } from '@/composables'
 import { i18n, store } from '@/electron'
+import { router, RouterName } from '@/router'
 import { Folder, Plus } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
+import { getVisibleSelectedFolderIds } from './notesSidebarSelection'
 
 const tagsHandleRef = ref<HTMLElement>()
 
@@ -61,6 +64,7 @@ const { getNotes, withNotesLoading, selectFirstNote, isRestoreStateBlocked }
   = useNotes()
 const { clearSearch } = useNoteSearch()
 const { onDragNode, onExternalDrop } = useNoteFolderDragDrop()
+const route = useRoute()
 
 // --- Data mapping ---
 
@@ -76,7 +80,11 @@ function mapToTreeNode(folder: any): TreeNodeType {
 const treeData = computed(() => folders.value?.map(mapToTreeNode) || [])
 
 const selectedIds = computed({
-  get: () => selectedFolderIds.value as (string | number)[],
+  get: () =>
+    getVisibleSelectedFolderIds(
+      typeof route.name === 'string' ? route.name : undefined,
+      selectedFolderIds.value,
+    ) as (string | number)[],
   set: (val) => {
     selectedFolderIds.value = val as number[]
   },
@@ -131,6 +139,10 @@ async function onClickNode({
   if (notesState.folderId !== id || selectedFolderIds.value.length > 1) {
     isRestoreStateBlocked.value = true
     clearSearch()
+
+    if (route.name !== RouterName.notesSpace) {
+      await router.push({ name: RouterName.notesSpace })
+    }
 
     await withNotesLoading(async () => {
       await selectNoteFolder(id)

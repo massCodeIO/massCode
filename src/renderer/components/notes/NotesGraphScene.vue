@@ -21,6 +21,7 @@ import {
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
   shouldClearGraphSceneActiveNode,
+  shouldOpenGraphSceneNodeOnPointerUp,
 } from './notesGraphScene'
 
 interface GraphSceneNodeInput {
@@ -408,6 +409,7 @@ function moveInteraction(event: PointerEvent) {
 
 function stopInteraction(event?: PointerEvent) {
   if (nodeDragState.active && nodeDragState.nodeId) {
+    const draggedNodeId = nodeDragState.nodeId
     const node = nodeMap.value.get(nodeDragState.nodeId)
 
     if (node) {
@@ -417,6 +419,12 @@ function stopInteraction(event?: PointerEvent) {
 
     if (nodeDragState.moved) {
       nodeDragState.suppressClickUntil = Date.now() + 150
+    }
+    else if (
+      shouldOpenGraphSceneNodeOnPointerUp(event?.type, nodeDragState.moved)
+    ) {
+      nodeDragState.suppressClickUntil = Date.now() + 150
+      emit('nodeClick', draggedNodeId)
     }
 
     sceneSimulation?.alphaTarget(0)
@@ -438,9 +446,8 @@ function startNodeDrag(nodeId: number, event: PointerEvent) {
   }
 
   const node = nodeMap.value.get(nodeId)
-  const position = getGraphPosition(event)
 
-  if (!node || !position) {
+  if (!node) {
     return
   }
 
@@ -449,13 +456,8 @@ function startNodeDrag(nodeId: number, event: PointerEvent) {
   nodeDragState.moved = false
   nodeDragState.nodeId = nodeId
   panState.active = false
-  node.fx = position.x
-  node.fy = position.y
-  node.x = position.x
-  node.y = position.y
 
   sceneSimulation?.alphaTarget(props.compact ? 0.18 : 0.22).restart()
-  triggerRef(sceneNodes)
   sceneSvgRef.value?.setPointerCapture(event.pointerId)
 }
 

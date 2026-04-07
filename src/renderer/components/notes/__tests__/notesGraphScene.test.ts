@@ -5,6 +5,7 @@ import {
   getGraphSceneNeighborhoodIds,
   getGraphSceneViewportTransform,
   shouldClearGraphSceneActiveNode,
+  shouldOpenGraphSceneNodeOnPointerUp,
 } from '../notesGraphScene'
 
 describe('notesGraphScene', () => {
@@ -46,6 +47,15 @@ describe('notesGraphScene', () => {
     expect(shouldClearGraphSceneActiveNode(7, 3, false)).toBe(false)
     expect(shouldClearGraphSceneActiveNode(7, null, false)).toBe(true)
     expect(shouldClearGraphSceneActiveNode(7, 7, true)).toBe(false)
+  })
+
+  it('opens a node on pointerup only when it was not dragged', () => {
+    expect(shouldOpenGraphSceneNodeOnPointerUp('pointerup', false)).toBe(true)
+    expect(shouldOpenGraphSceneNodeOnPointerUp('pointerup', true)).toBe(false)
+    expect(shouldOpenGraphSceneNodeOnPointerUp('pointerleave', false)).toBe(
+      false,
+    )
+    expect(shouldOpenGraphSceneNodeOnPointerUp(undefined, false)).toBe(false)
   })
 
   it('keeps labels attached to their nodes even in crowded neighborhoods', () => {

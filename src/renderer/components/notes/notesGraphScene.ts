@@ -145,6 +145,13 @@ export function shouldClearGraphSceneActiveNode(
   return leavingNodeId === null || activeId === leavingNodeId
 }
 
+export function shouldOpenGraphSceneNodeOnPointerUp(
+  eventType: string | undefined,
+  moved: boolean,
+) {
+  return eventType === 'pointerup' && !moved
+}
+
 export function buildGraphSceneLabels(
   options: BuildGraphSceneLabelsOptions,
 ): GraphSceneLabel[] {

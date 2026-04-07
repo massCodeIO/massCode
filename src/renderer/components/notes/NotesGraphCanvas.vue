@@ -46,11 +46,10 @@ onMounted(() => {
       >
         <template #actions>
           <Button
-            size="sm"
             variant="outline"
             @click="navigateBackToDashboard"
           >
-            <ArrowLeft class="mr-2 h-4 w-4" />
+            <ArrowLeft />
             {{ i18n.t("notes.dashboard.actions.backToDashboard") }}
           </Button>
           <Button
@@ -58,14 +57,14 @@ onMounted(() => {
             variant="outline"
             @click="getNotesGraph"
           >
-            <RefreshCw class="h-4 w-4" />
+            <RefreshCw />
           </Button>
           <Button
             size="icon"
             variant="outline"
             @click="graphSceneRef?.resetViewport()"
           >
-            <LocateFixed class="h-4 w-4" />
+            <LocateFixed />
           </Button>
         </template>
       </UiPageHeader>

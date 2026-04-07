@@ -15,19 +15,17 @@ const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
   >
     <template #actions>
       <Button
-        size="sm"
         variant="outline"
         @click="getNotesDashboard"
       >
-        <RefreshCw class="mr-2 h-4 w-4" />
+        <RefreshCw />
         {{ i18n.t("notes.dashboard.actions.refresh") }}
       </Button>
       <Button
-        size="sm"
         variant="outline"
         @click="navigateToGraph"
       >
-        <ChartNetwork class="mr-2 h-4 w-4" />
+        <ChartNetwork />
         {{ i18n.t("notes.dashboard.actions.openGraph") }}
       </Button>
       <Popover.Popover>
@@ -36,7 +34,7 @@ const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
             size="icon"
             variant="outline"
           >
-            <Settings2 class="h-4 w-4" />
+            <Settings2 />
           </Button>
         </Popover.PopoverTrigger>
         <Popover.PopoverContent class="w-80 p-0">

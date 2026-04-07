@@ -75,7 +75,6 @@ const previewGraph = computed(() => {
     >
       <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
         <Button
-          size="sm"
           variant="outline"
           @click="navigateToGraph"
         >
@@ -86,7 +85,7 @@ const previewGraph = computed(() => {
           variant="outline"
           @click="graphSceneRef?.resetViewport()"
         >
-          <LocateFixed class="h-4 w-4" />
+          <LocateFixed />
         </Button>
       </div>
       <div

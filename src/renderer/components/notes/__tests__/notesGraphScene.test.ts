@@ -3,6 +3,7 @@ import {
   buildGraphSceneLabels,
   getGraphSceneBaseNodeFill,
   getGraphSceneDisplayedNodeRadius,
+  getGraphSceneEdgeEndpoints,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
   getGraphSceneViewportFocusPoint,
@@ -56,6 +57,28 @@ describe('notesGraphScene', () => {
     expect(getGraphSceneBaseNodeFill(4, 4, false)).toBe(
       'color-mix(in oklab, var(--foreground) 48%, var(--background))',
     )
+  })
+
+  it('clips graph edges to the edge of node circles', () => {
+    expect(
+      getGraphSceneEdgeEndpoints(
+        {
+          radius: 10,
+          x: 100,
+          y: 100,
+        },
+        {
+          radius: 6,
+          x: 140,
+          y: 100,
+        },
+      ),
+    ).toEqual({
+      x1: 110,
+      x2: 134,
+      y1: 100,
+      y2: 100,
+    })
   })
 
   it('clears hovered node when pointer leaves it without interaction', () => {

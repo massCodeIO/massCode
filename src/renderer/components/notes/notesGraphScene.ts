@@ -165,6 +165,34 @@ export function getGraphSceneBaseNodeFill(
   return `color-mix(in oklab, var(--foreground) ${weight}%, var(--background))`
 }
 
+export function getGraphSceneEdgeEndpoints(
+  source: Pick<GraphSceneNodeLike, 'radius' | 'x' | 'y'>,
+  target: Pick<GraphSceneNodeLike, 'radius' | 'x' | 'y'>,
+) {
+  const dx = target.x - source.x
+  const dy = target.y - source.y
+  const distance = Math.hypot(dx, dy)
+
+  if (!distance) {
+    return {
+      x1: source.x,
+      x2: target.x,
+      y1: source.y,
+      y2: target.y,
+    }
+  }
+
+  const unitX = dx / distance
+  const unitY = dy / distance
+
+  return {
+    x1: Number((source.x + unitX * source.radius).toFixed(2)),
+    x2: Number((target.x - unitX * target.radius).toFixed(2)),
+    y1: Number((source.y + unitY * source.radius).toFixed(2)),
+    y2: Number((target.y - unitY * target.radius).toFixed(2)),
+  }
+}
+
 export function shouldClearGraphSceneActiveNode(
   activeId: number | null,
   leavingNodeId: number | null,

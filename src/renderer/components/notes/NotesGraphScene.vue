@@ -21,6 +21,7 @@ import {
   buildGraphSceneLabels,
   getGraphSceneBaseNodeFill,
   getGraphSceneDisplayedNodeRadius,
+  getGraphSceneEdgeEndpoints,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
   shouldAutoResetGraphSceneViewport,
@@ -172,6 +173,28 @@ function getEdgeStroke(source: number, target: number) {
   }
 
   return graphPalette.value.edgeBase
+}
+
+function getEdgeCoordinates(source: number, target: number) {
+  const sourceNode = nodeMap.value.get(source)
+  const targetNode = nodeMap.value.get(target)
+
+  if (!sourceNode || !targetNode) {
+    return null
+  }
+
+  return getGraphSceneEdgeEndpoints(
+    {
+      radius: getDisplayedNodeRadius(sourceNode),
+      x: sourceNode.x,
+      y: sourceNode.y,
+    },
+    {
+      radius: getDisplayedNodeRadius(targetNode),
+      x: targetNode.x,
+      y: targetNode.y,
+    },
+  )
 }
 
 function getNodeHaloFill(nodeId: number) {
@@ -682,10 +705,10 @@ watch(
           <line
             v-for="edge in edges"
             :key="`${edge.source}-${edge.target}`"
-            :x1="nodeMap.get(edge.source)?.x"
-            :y1="nodeMap.get(edge.source)?.y"
-            :x2="nodeMap.get(edge.target)?.x"
-            :y2="nodeMap.get(edge.target)?.y"
+            :x1="getEdgeCoordinates(edge.source, edge.target)?.x1"
+            :y1="getEdgeCoordinates(edge.source, edge.target)?.y1"
+            :x2="getEdgeCoordinates(edge.source, edge.target)?.x2"
+            :y2="getEdgeCoordinates(edge.source, edge.target)?.y2"
             :stroke="getEdgeStroke(edge.source, edge.target)"
             :stroke-width="
               isEdgeHighlighted(edge.source, edge.target)

@@ -39,13 +39,13 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
       nodeHaloNeighbor: 'oklch(from var(--primary) l c h / 0.1)',
       nodeFillActive: 'var(--primary)',
       nodeFillDimmed: 'oklch(from var(--muted-foreground) l c h / 0.34)',
-      nodeFillNeighbor: 'oklch(from var(--foreground) l c h / 0.92)',
+      nodeFillNeighbor: 'oklch(from var(--primary) l c h / 0.5)',
       nodeLabelActive: 'var(--foreground)',
       nodeLabelMuted: 'oklch(from var(--muted-foreground) l c h / 0.8)',
       nodeStrokeActive: 'oklch(from var(--primary) l c h / 0.95)',
       nodeStrokeBase: 'oklch(from var(--foreground) l c h / 0.08)',
       nodeStrokeDimmed: 'oklch(from var(--foreground) l c h / 0.03)',
-      nodeStrokeNeighbor: 'oklch(from var(--foreground) l c h / 0.55)',
+      nodeStrokeNeighbor: 'oklch(from var(--primary) l c h / 0.3)',
       overlayText: 'oklch(from var(--muted-foreground) l c h / 0.82)',
     }
   }
@@ -62,13 +62,13 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
     nodeHaloNeighbor: 'oklch(from var(--primary) l c h / 0.08)',
     nodeFillActive: 'var(--primary)',
     nodeFillDimmed: 'oklch(from var(--muted-foreground) l c h / 0.3)',
-    nodeFillNeighbor: 'oklch(from var(--foreground) l c h / 0.5)',
+    nodeFillNeighbor: 'oklch(from var(--primary) l c h / 0.3)',
     nodeLabelActive: 'var(--foreground)',
     nodeLabelMuted: 'oklch(from var(--muted-foreground) l c h / 0.9)',
     nodeStrokeActive: 'oklch(from var(--primary) l c h / 0.9)',
     nodeStrokeBase: 'oklch(from var(--foreground) l c h / 0.1)',
     nodeStrokeDimmed: 'oklch(from var(--foreground) l c h / 0.04)',
-    nodeStrokeNeighbor: 'oklch(from var(--foreground) l c h / 0.18)',
+    nodeStrokeNeighbor: 'oklch(from var(--primary) l c h / 0.2)',
     overlayText: 'oklch(from var(--muted-foreground) l c h / 0.92)',
   }
 }

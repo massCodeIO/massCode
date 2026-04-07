@@ -48,7 +48,7 @@ describe('notesGraphScene', () => {
     expect(shouldClearGraphSceneActiveNode(7, 7, true)).toBe(false)
   })
 
-  it('keeps the active label and drops overlapping secondary labels', () => {
+  it('keeps labels attached to their nodes even in crowded neighborhoods', () => {
     const labels = buildGraphSceneLabels({
       activeId: 1,
       compact: false,
@@ -119,8 +119,100 @@ describe('notesGraphScene', () => {
       zoom: 1,
     })
 
-    expect(crowdedLabels[0]?.id).toBe(2)
-    expect(crowdedLabels).toHaveLength(1)
+    expect(crowdedLabels.map(label => label.id)).toEqual([2, 1, 3])
+  })
+
+  it('wraps long labels by words without truncating text', () => {
+    const labels = buildGraphSceneLabels({
+      activeId: 1,
+      compact: false,
+      neighborIds: new Set(),
+      nodes: [
+        {
+          id: 1,
+          incomingLinksCount: 5,
+          name: 'Very Long Active Node Label Example',
+          radius: 4,
+          x: 100,
+          y: 100,
+        },
+      ],
+      pan: { x: 0, y: 0 },
+      zoom: 1,
+    })
+
+    expect(labels[0]?.lines.join(' ')).toBe(
+      'Very Long Active Node Label Example',
+    )
+    expect(labels[0]?.lines.length).toBeGreaterThan(1)
+    expect(labels[0]?.lines.some(line => line.includes('…'))).toBe(false)
+    expect(labels[0]?.fontSize).toBeGreaterThan(18)
+  })
+
+  it('places secondary labels beside their own nodes with consistent alignment', () => {
+    const labels = buildGraphSceneLabels({
+      activeId: 1,
+      compact: false,
+      neighborIds: new Set([2, 3, 4, 5]),
+      nodes: [
+        {
+          id: 1,
+          incomingLinksCount: 5,
+          name: 'Center',
+          radius: 4,
+          x: 100,
+          y: 100,
+        },
+        {
+          id: 2,
+          incomingLinksCount: 2,
+          name: 'Right Node',
+          radius: 4,
+          x: 145,
+          y: 100,
+        },
+        {
+          id: 3,
+          incomingLinksCount: 2,
+          name: 'Left Node',
+          radius: 4,
+          x: 55,
+          y: 100,
+        },
+        {
+          id: 4,
+          incomingLinksCount: 2,
+          name: 'Top Node',
+          radius: 4,
+          x: 100,
+          y: 55,
+        },
+        {
+          id: 5,
+          incomingLinksCount: 2,
+          name: 'Bottom Node',
+          radius: 4,
+          x: 100,
+          y: 145,
+        },
+      ],
+      pan: { x: 0, y: 0 },
+      zoom: 1,
+    })
+
+    const rightLabel = labels.find(label => label.id === 2)
+    const leftLabel = labels.find(label => label.id === 3)
+    const topLabel = labels.find(label => label.id === 4)
+    const bottomLabel = labels.find(label => label.id === 5)
+
+    expect(rightLabel?.textAnchor).toBe('start')
+    expect(rightLabel?.x).toBeGreaterThan(145)
+    expect(leftLabel?.textAnchor).toBe('end')
+    expect(leftLabel?.x).toBeLessThan(55)
+    expect(topLabel?.textAnchor).toBe('start')
+    expect(topLabel?.x).toBeGreaterThan(100)
+    expect(bottomLabel?.textAnchor).toBe('start')
+    expect(bottomLabel?.x).toBeGreaterThan(100)
   })
 
   it('fits graph bounds into a padded viewport', () => {

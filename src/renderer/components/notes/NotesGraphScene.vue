@@ -700,17 +700,19 @@ watch(
           :y="label.y"
           :text-anchor="label.textAnchor"
           :fill="getLabelFill(label.isActive)"
-          :class="
-            label.isActive
-              ? compact
-                ? 'text-[12px] font-medium'
-                : 'text-[15px] font-medium'
-              : compact
-                ? 'text-[10px]'
-                : 'text-[11px]'
-          "
+          :style="{
+            fontSize: `${label.fontSize}px`,
+            fontWeight: label.isActive ? '500' : '400',
+          }"
         >
-          {{ label.text }}
+          <tspan
+            v-for="(line, index) in label.lines"
+            :key="`${label.id}-${index}`"
+            :x="label.x"
+            :dy="index === 0 ? 0 : label.lineHeight"
+          >
+            {{ line }}
+          </tspan>
         </text>
       </g>
     </svg>

@@ -8,10 +8,12 @@ export interface GraphSceneNodeLike {
 }
 
 export interface GraphSceneLabel {
+  fontSize: number
   id: number
   isActive: boolean
-  text: string
-  textAnchor: 'middle' | 'start'
+  lineHeight: number
+  lines: string[]
+  textAnchor: 'end' | 'middle' | 'start'
   x: number
   y: number
 }
@@ -56,6 +58,42 @@ interface GetGraphSceneViewportTransformOptions {
   height: number
   padding?: Partial<GraphSceneViewportPadding>
   width: number
+}
+
+function wrapGraphSceneLabelText(text: string, maxCharactersPerLine: number) {
+  const normalized = text.trim().replace(/\s+/g, ' ')
+
+  if (!normalized) {
+    return []
+  }
+
+  const words = normalized.split(' ')
+  const lines: string[] = []
+  let currentLine = ''
+
+  words.forEach((word) => {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word
+
+    if (currentLine && nextLine.length > maxCharactersPerLine) {
+      lines.push(currentLine)
+      currentLine = word
+      return
+    }
+
+    currentLine = nextLine
+  })
+
+  if (currentLine) {
+    lines.push(currentLine)
+  }
+
+  return lines
+}
+
+function getGraphSceneLabelHeight(
+  label: Pick<GraphSceneLabel, 'fontSize' | 'lineHeight' | 'lines'>,
+) {
+  return label.fontSize + (label.lines.length - 1) * label.lineHeight
 }
 
 export function getGraphSceneNeighborhoodIds(
@@ -114,6 +152,12 @@ export function buildGraphSceneLabels(
     return []
   }
 
+  const activeNode = options.nodes.find(node => node.id === options.activeId)
+
+  if (!activeNode) {
+    return []
+  }
+
   const labels = options.nodes
     .filter(
       node =>
@@ -139,81 +183,57 @@ export function buildGraphSceneLabels(
         options.neighborIds,
         options.compact,
       )
-      const truncateAt = options.compact ? 20 : 26
-      const text
-        = node.name.length > truncateAt
-          ? `${node.name.slice(0, truncateAt)}…`
-          : node.name
-      const textAnchor: GraphSceneLabel['textAnchor'] = isActive
-        ? 'middle'
-        : 'start'
-
-      return {
+      const fontSize = isActive
+        ? options.compact
+          ? 15
+          : 20
+        : options.compact
+          ? 13
+          : 15
+      const lineHeight = fontSize + (isActive ? 3 : 2)
+      const lines = wrapGraphSceneLabelText(
+        node.name,
+        isActive ? (options.compact ? 16 : 18) : options.compact ? 18 : 20,
+      )
+      const label = {
+        fontSize,
         id: node.id,
         isActive,
-        text,
-        textAnchor,
-        x: isActive
-          ? node.x * options.zoom + options.pan.x
-          : (node.x + radius + (options.compact ? 6 : 8)) * options.zoom
-            + options.pan.x,
-        y: isActive
-          ? (node.y + radius + (options.compact ? 13 : 18)) * options.zoom
-          + options.pan.y
-          : (node.y + 3) * options.zoom + options.pan.y,
+        lineHeight,
+        lines,
+      }
+      const textHeight = getGraphSceneLabelHeight(label)
+
+      if (isActive) {
+        return {
+          ...label,
+          textAnchor: 'middle' as const,
+          x: node.x * options.zoom + options.pan.x,
+          y:
+            (node.y + radius + (options.compact ? 14 : 20)) * options.zoom
+            + options.pan.y,
+        }
+      }
+
+      const dx = node.x - activeNode.x
+      const dy = node.y - activeNode.y
+      const horizontalGap = radius + (options.compact ? 7 : 10)
+      const centeredBaseline = node.y - textHeight / 2 + fontSize
+      const isLeft = dx < -(options.compact ? 4 : 6)
+
+      return {
+        ...label,
+        textAnchor: (isLeft ? 'end' : 'start') as const,
+        x:
+          (node.x + (isLeft ? -horizontalGap : horizontalGap)) * options.zoom
+          + options.pan.x,
+        y:
+          (centeredBaseline + (dy < 0 ? -1 : dy > 0 ? 1 : 0)) * options.zoom
+          + options.pan.y,
       }
     })
 
-  const occupiedBoxes: Array<{
-    bottom: number
-    left: number
-    right: number
-    top: number
-  }> = []
-
-  return labels.filter((label) => {
-    const fontSize = label.isActive
-      ? options.compact
-        ? 12
-        : 15
-      : options.compact
-        ? 10
-        : 11
-    const width
-      = label.text.length
-        * (label.isActive
-          ? options.compact
-            ? 6.2
-            : 7.4
-          : options.compact
-            ? 5.6
-            : 6.1)
-    const left = label.textAnchor === 'middle' ? label.x - width / 2 : label.x
-    const right
-      = label.textAnchor === 'middle' ? label.x + width / 2 : label.x + width
-    const top = label.y - fontSize
-    const bottom = label.y + 4
-    const overlaps = occupiedBoxes.some(
-      box =>
-        left < box.right
-        && right > box.left
-        && top < box.bottom
-        && bottom > box.top,
-    )
-
-    if (overlaps) {
-      return false
-    }
-
-    occupiedBoxes.push({
-      left: left - (options.compact ? 3 : 4),
-      right: right + (options.compact ? 3 : 4),
-      top: top - 2,
-      bottom: bottom + 2,
-    })
-
-    return true
-  })
+  return labels
 }
 
 export function getGraphSceneViewportTransform(

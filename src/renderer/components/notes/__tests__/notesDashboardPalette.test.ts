@@ -13,7 +13,6 @@ describe('notesDashboardPalette', () => {
     expect(darkPalette.edgeActive).toContain('var(--primary)')
     expect(darkPalette.nodeLabelActive).toBe('var(--foreground)')
     expect(lightPalette.background).toContain('var(--background)')
-    expect(lightPalette.nodeFillBaseLinked).toContain('var(--foreground)')
     expect(lightPalette.nodeLabelMuted).not.toBe(darkPalette.nodeLabelMuted)
     expect(lightPalette.edgeBase).not.toBe(darkPalette.edgeBase)
   })

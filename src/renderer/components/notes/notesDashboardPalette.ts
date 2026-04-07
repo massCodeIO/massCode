@@ -9,8 +9,6 @@ export interface NotesGraphPalette {
   nodeHaloDimmed: string
   nodeHaloNeighbor: string
   nodeFillActive: string
-  nodeFillBaseLinked: string
-  nodeFillBaseOrphan: string
   nodeFillDimmed: string
   nodeFillNeighbor: string
   nodeLabelActive: string
@@ -40,8 +38,6 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
       nodeHaloDimmed: 'oklch(from var(--foreground) l c h / 0.01)',
       nodeHaloNeighbor: 'oklch(from var(--primary) l c h / 0.1)',
       nodeFillActive: 'var(--primary)',
-      nodeFillBaseLinked: 'oklch(from var(--foreground) l c h / 0.6)',
-      nodeFillBaseOrphan: 'oklch(from var(--muted-foreground) l c h / 0.5)',
       nodeFillDimmed: 'oklch(from var(--muted-foreground) l c h / 0.34)',
       nodeFillNeighbor: 'oklch(from var(--foreground) l c h / 0.92)',
       nodeLabelActive: 'var(--foreground)',
@@ -65,8 +61,6 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
     nodeHaloDimmed: 'oklch(from var(--foreground) l c h / 0.02)',
     nodeHaloNeighbor: 'oklch(from var(--primary) l c h / 0.08)',
     nodeFillActive: 'var(--primary)',
-    nodeFillBaseLinked: 'oklch(from var(--foreground) l c h / 0.56)',
-    nodeFillBaseOrphan: 'oklch(from var(--muted-foreground) l c h / 0.42)',
     nodeFillDimmed: 'oklch(from var(--muted-foreground) l c h / 0.3)',
     nodeFillNeighbor: 'oklch(from var(--foreground) l c h / 0.72)',
     nodeLabelActive: 'var(--foreground)',

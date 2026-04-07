@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildGraphSceneLabels,
+  getGraphSceneBaseNodeFill,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
@@ -42,6 +43,18 @@ describe('notesGraphScene', () => {
     )
     expect(getGraphSceneDisplayedNodeRadius(4, 1, 1, neighborIds, true)).toBe(
       5.8,
+    )
+  })
+
+  it('brightens base node fill as connectivity grows', () => {
+    expect(getGraphSceneBaseNodeFill(0, 4, true)).toBe(
+      'color-mix(in oklab, var(--foreground) 34%, var(--background))',
+    )
+    expect(getGraphSceneBaseNodeFill(2, 4, true)).toBe(
+      'color-mix(in oklab, var(--foreground) 48%, var(--background))',
+    )
+    expect(getGraphSceneBaseNodeFill(4, 4, false)).toBe(
+      'color-mix(in oklab, var(--foreground) 48%, var(--background))',
     )
   })
 

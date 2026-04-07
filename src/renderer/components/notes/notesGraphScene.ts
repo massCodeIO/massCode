@@ -149,6 +149,22 @@ export function getGraphSceneDisplayedNodeRadius(
   return radius
 }
 
+export function getGraphSceneBaseNodeFill(
+  connectedNotesCount: number,
+  maxConnectedNotesCount: number,
+  isDark: boolean,
+) {
+  const normalizedMax = Math.max(1, maxConnectedNotesCount)
+  const ratio = Math.max(0, Math.min(connectedNotesCount / normalizedMax, 1))
+  const minWeight = isDark ? 34 : 18
+  const maxWeight = isDark ? 62 : 48
+  const weight = Number(
+    (minWeight + (maxWeight - minWeight) * ratio).toFixed(1),
+  )
+
+  return `color-mix(in oklab, var(--foreground) ${weight}%, var(--background))`
+}
+
 export function shouldClearGraphSceneActiveNode(
   activeId: number | null,
   leavingNodeId: number | null,

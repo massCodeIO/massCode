@@ -19,6 +19,7 @@ import { getNotesGraphPalette } from './notesDashboardPalette'
 import { buildNotesGraphLayout } from './notesGraphLayout'
 import {
   buildGraphSceneLabels,
+  getGraphSceneBaseNodeFill,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
@@ -126,6 +127,14 @@ const activeNeighborIds = computed(() =>
 const activeNeighborhoodIds = computed(() =>
   getGraphSceneNeighborhoodIds(activeNodeId.value, neighborsById.value),
 )
+const maxConnectedNotesCount = computed(() =>
+  Math.max(
+    0,
+    ...[...neighborsById.value.values()].map(
+      connectedIds => connectedIds.size,
+    ),
+  ),
+)
 
 const sceneLabels = computed(() =>
   buildGraphSceneLabels({
@@ -194,9 +203,11 @@ function getNodeFill(node: SceneNode) {
     return graphPalette.value.nodeFillDimmed
   }
 
-  return node.incomingLinksCount > 0
-    ? graphPalette.value.nodeFillBaseLinked
-    : graphPalette.value.nodeFillBaseOrphan
+  return getGraphSceneBaseNodeFill(
+    neighborsById.value.get(node.id)?.size ?? 0,
+    maxConnectedNotesCount.value,
+    isDark.value,
+  )
 }
 
 function getNodeStroke(nodeId: number) {

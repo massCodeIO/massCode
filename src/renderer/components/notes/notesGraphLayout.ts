@@ -147,7 +147,7 @@ export function buildNotesGraphLayout(
   const simulation = forceSimulation(layoutNodes)
     .force(
       'charge',
-      forceManyBody().strength(
+      forceManyBody<ForceGraphNode>().strength(
         node => (compact ? -26 : -42) - node.radius * 2,
       ),
     )

@@ -1,6 +1,6 @@
 import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
 import { Blocks, Calculator, Code2, Notebook } from 'lucide-vue-next'
 
@@ -25,6 +25,20 @@ function isRouteNameInSpace(
   )
 }
 
+function getSavedNotesRouteName() {
+  const savedRoute = store.app.get<string>('notes.route')
+
+  if (
+    savedRoute === RouterName.notesSpace
+    || savedRoute === RouterName.notesDashboard
+    || savedRoute === RouterName.notesGraph
+  ) {
+    return savedRoute
+  }
+
+  return RouterName.notesSpace
+}
+
 export function getSpaceDefinitions(): SpaceDefinition[] {
   return [
     {
@@ -40,7 +54,7 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       label: i18n.t('spaces.notes.label'),
       tooltip: i18n.t('spaces.notes.tooltip'),
       icon: Notebook,
-      to: { name: RouterName.notesSpace },
+      to: { name: getSavedNotesRouteName() },
       isActive: routeName =>
         isRouteNameInSpace(routeName, RouterName.notesSpace),
     },

@@ -16,6 +16,11 @@ export interface NotesState {
   libraryFilter?: string
 }
 
+export type NotesRouteName =
+  | 'notes-space'
+  | 'notes-space/dashboard'
+  | 'notes-space/graph'
+
 export interface NotesDashboardWidgets {
   stats: boolean
   activityHeatmap: boolean
@@ -45,6 +50,7 @@ export interface AppStore {
   }
   notes: {
     selection: NotesState
+    route: NotesRouteName
     editorMode: NotesEditorMode
     dashboard: {
       widgets: NotesDashboardWidgets

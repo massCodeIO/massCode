@@ -49,6 +49,20 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => route.name,
+  (routeName) => {
+    if (
+      routeName === RouterName.notesSpace
+      || routeName === RouterName.notesDashboard
+      || routeName === RouterName.notesGraph
+    ) {
+      store.app.set('notes.route', routeName)
+    }
+  },
+  { immediate: true },
+)
+
 useTheme()
 
 function restoreSavedSpace() {

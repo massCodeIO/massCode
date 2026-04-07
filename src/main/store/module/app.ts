@@ -2,6 +2,7 @@ import type {
   AppStore,
   CodeState,
   NotesEditorMode,
+  NotesRouteName,
   NotesState,
   SpaceId,
   SpaceLayoutMode,
@@ -34,6 +35,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   notes: {
     selection: {},
+    route: 'notes-space',
     editorMode: 'livePreview',
     dashboard: {
       widgets: {
@@ -178,6 +180,21 @@ function sanitizeAppStore(value: unknown): AppStore {
           ? notesSource.selection
           : source.notesState,
       ),
+      route: readEnum(
+        notesSource,
+        'route',
+        ['notes-space', 'notes-space/dashboard', 'notes-space/graph'] as const,
+        readEnum(
+          source,
+          'notesRoute',
+          [
+            'notes-space',
+            'notes-space/dashboard',
+            'notes-space/graph',
+          ] as const,
+          APP_STORE_DEFAULTS.notes.route,
+        ) as NotesRouteName,
+      ) as NotesRouteName,
       editorMode: readEnum(
         notesSource,
         'editorMode',

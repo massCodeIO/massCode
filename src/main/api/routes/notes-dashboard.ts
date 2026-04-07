@@ -4,6 +4,9 @@ import { useNotesStorage, useStorage } from '../../storage'
 import { buildNotesGraph } from '../../storage/providers/markdown/notes/runtime/graph'
 import { notesDashboardDTO } from '../dto/notes-dashboard'
 
+const RECENT_NOTES_LIMIT = 6
+const TOP_LINKED_NOTES_LIMIT = 6
+
 function countWords(content: string): number {
   if (!content.trim()) {
     return 0
@@ -141,7 +144,7 @@ app.use(notesDashboardDTO).get(
       },
       recent: [...notes]
         .sort((left, right) => right.updatedAt - left.updatedAt)
-        .slice(0, 6)
+        .slice(0, RECENT_NOTES_LIMIT)
         .map(note => ({
           id: note.id,
           name: note.name,
@@ -162,7 +165,7 @@ app.use(notesDashboardDTO).get(
         .sort(
           (left, right) => right.incomingLinksCount - left.incomingLinksCount,
         )
-        .slice(0, 6)
+        .slice(0, TOP_LINKED_NOTES_LIMIT)
         .map(node => ({
           id: node.id,
           incomingLinksCount: node.incomingLinksCount,

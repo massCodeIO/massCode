@@ -28,7 +28,7 @@ export interface NotesHeatmapPalette {
 export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
   if (isDark) {
     return {
-      background: 'var(--background)',
+      background: 'var(--canvas)',
       edgeActive: 'oklch(from var(--primary) l c h / 0.9)',
       edgeBase: 'oklch(from var(--foreground) l c h / 0.14)',
       edgeDimmed: 'oklch(from var(--muted-foreground) l c h / 0.08)',
@@ -51,7 +51,7 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
   }
 
   return {
-    background: 'var(--background)',
+    background: 'var(--canvas)',
     edgeActive: 'oklch(from var(--primary) l c h / 0.82)',
     edgeBase: 'oklch(from var(--foreground) l c h / 0.16)',
     edgeDimmed: 'oklch(from var(--muted-foreground) l c h / 0.08)',

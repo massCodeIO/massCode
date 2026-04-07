@@ -88,7 +88,8 @@
         "bestStreak": "Best Streak",
         "less": "Less",
         "more": "More",
-        "totalLastYear": "{{count}} note updates in the last 53 weeks"
+        "totalLastYear": "{{count}} note updates in the last 53 weeks",
+        "tooltipUpdates": "{{count}} note updates"
       },
       "recent": {
         "title": "Recent Notes",

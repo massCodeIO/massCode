@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
+import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { scaleQuantize } from 'd3-scale'
+import { getNotesHeatmapTooltipLines } from './notesDashboardActivityHeatmap'
 import { getNotesHeatmapPalette } from './notesDashboardPalette'
 
 const props = defineProps<{
@@ -126,6 +128,11 @@ function getCellColor(count: number) {
 
   return colorScale.value(count)
 }
+
+function getTooltipLines(label: string, count: number) {
+  return getNotesHeatmapTooltipLines(label, count, (key, params) =>
+    i18n.t(key, params))
+}
 </script>
 
 <template>
@@ -133,97 +140,121 @@ function getCellColor(count: number) {
     :title="i18n.t('notes.dashboard.activity.heatmapTitle')"
     :description="i18n.t('notes.dashboard.activity.heatmapDescription')"
   >
-    <div
-      ref="heatmapRef"
-      class="space-y-3"
-    >
-      <div class="w-full">
-        <div
-          class="text-muted-foreground mb-2 grid text-[10px]"
-          :style="{
-            columnGap: `${cellGap}px`,
-            gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
-            paddingLeft: '34px',
-          }"
-        >
+    <Tooltip.TooltipProvider :delay-duration="0">
+      <div
+        ref="heatmapRef"
+        class="space-y-3"
+      >
+        <div class="w-full">
           <div
-            v-for="(label, index) in monthLabels"
-            :key="`${label}-${index}`"
-            class="leading-none"
-          >
-            {{ label }}
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <div
-            class="text-muted-foreground grid grid-rows-7 pt-[1px] text-[10px]"
-            :style="{ rowGap: `${cellGap}px` }"
+            class="text-muted-foreground mb-2 grid text-[10px]"
+            :style="{
+              columnGap: `${cellGap}px`,
+              gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
+              paddingLeft: '34px',
+            }"
           >
             <div
-              v-for="(label, index) in DAY_LABELS"
+              v-for="(label, index) in monthLabels"
               :key="`${label}-${index}`"
-              class="flex items-center justify-end pr-1 leading-none"
-              :style="{
-                height: `${cellSize}px`,
-                width: '24px',
-              }"
+              class="leading-none"
             >
               {{ label }}
             </div>
           </div>
 
-          <div
-            class="grid grid-flow-col grid-rows-7"
-            :style="{
-              columnGap: `${cellGap}px`,
-              rowGap: `${cellGap}px`,
-            }"
-          >
-            <template
-              v-for="week in weeks"
-              :key="week[0]?.key"
+          <div class="flex gap-2">
+            <div
+              class="text-muted-foreground grid grid-rows-7 pt-[1px] text-[10px]"
+              :style="{ rowGap: `${cellGap}px` }"
             >
-              <button
-                v-for="cell in week"
-                :key="cell.key"
-                class="rounded-[2px] transition-transform hover:scale-115"
+              <div
+                v-for="(label, index) in DAY_LABELS"
+                :key="`${label}-${index}`"
+                class="flex items-center justify-end pr-1 leading-none"
                 :style="{
-                  backgroundColor: getCellColor(cell.count),
                   height: `${cellSize}px`,
-                  width: `${cellSize}px`,
+                  width: '24px',
                 }"
-                :title="`${cell.label}: ${cell.count}`"
-              />
-            </template>
-          </div>
-        </div>
-      </div>
+              >
+                {{ label }}
+              </div>
+            </div>
 
-      <div
-        class="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
-        :style="{ color: heatmapPalette.legendText }"
-      >
-        <div>
-          {{
-            i18n.t("notes.dashboard.activity.totalLastYear", {
-              count: totalUpdates,
-            })
-          }}
-        </div>
-        <div class="flex items-center gap-2">
-          <span>{{ i18n.t("notes.dashboard.activity.less") }}</span>
-          <div class="flex items-center gap-[4px]">
-            <span
-              v-for="color in legendColors"
-              :key="color"
-              class="h-3 w-3 rounded-[2px]"
-              :style="{ backgroundColor: color }"
-            />
+            <div
+              class="grid grid-flow-col grid-rows-7"
+              :style="{
+                columnGap: `${cellGap}px`,
+                rowGap: `${cellGap}px`,
+              }"
+            >
+              <template
+                v-for="cell in cells"
+                :key="cell.key"
+              >
+                <Tooltip.Tooltip v-if="cell.count > 0">
+                  <Tooltip.TooltipTrigger as-child>
+                    <button
+                      type="button"
+                      class="rounded-[2px] transition-transform hover:scale-115"
+                      :style="{
+                        backgroundColor: getCellColor(cell.count),
+                        height: `${cellSize}px`,
+                        width: `${cellSize}px`,
+                      }"
+                    />
+                  </Tooltip.TooltipTrigger>
+                  <Tooltip.TooltipContent side="top">
+                    <div class="flex flex-col gap-0.5">
+                      <span>{{
+                        getTooltipLines(cell.label, cell.count)[0]
+                      }}</span>
+                      <span class="text-muted-foreground">
+                        {{ getTooltipLines(cell.label, cell.count)[1] }}
+                      </span>
+                    </div>
+                  </Tooltip.TooltipContent>
+                </Tooltip.Tooltip>
+                <button
+                  v-else
+                  type="button"
+                  class="rounded-[2px]"
+                  :style="{
+                    backgroundColor: getCellColor(cell.count),
+                    height: `${cellSize}px`,
+                    width: `${cellSize}px`,
+                  }"
+                />
+              </template>
+            </div>
           </div>
-          <span>{{ i18n.t("notes.dashboard.activity.more") }}</span>
+        </div>
+
+        <div
+          class="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
+          :style="{ color: heatmapPalette.legendText }"
+        >
+          <div>
+            {{
+              i18n.t("notes.dashboard.activity.totalLastYear", {
+                count: totalUpdates,
+              })
+            }}
+          </div>
+          <div class="flex items-center gap-2">
+            <span>{{ i18n.t("notes.dashboard.activity.less") }}</span>
+            <div class="flex items-center gap-[4px]">
+              <span
+                v-for="color in legendColors"
+                :key="color"
+                class="h-3 w-3 rounded-[2px]"
+                :style="{ backgroundColor: color }"
+              />
+            </div>
+            <span>{{ i18n.t("notes.dashboard.activity.more") }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </Tooltip.TooltipProvider>
   </NotesDashboardSection>
 </template>

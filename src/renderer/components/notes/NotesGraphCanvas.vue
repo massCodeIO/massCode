@@ -6,12 +6,7 @@ import {
   useTheme,
 } from '@/composables'
 import { i18n } from '@/electron'
-import {
-  ArrowLeft,
-  LoaderCircle,
-  LocateFixed,
-  RefreshCw,
-} from 'lucide-vue-next'
+import { ArrowLeft, LoaderCircle, LocateFixed } from 'lucide-vue-next'
 import { getNotesGraphPalette } from './notesDashboardPalette'
 import { loadNotesGraphIfNeeded } from './notesGraphLoader'
 
@@ -22,8 +17,8 @@ interface GraphSceneExposed {
 const {
   graphData,
   graphError,
-  isGraphLoading,
   getNotesGraph,
+  isGraphLoading,
   navigateBackToDashboard,
 } = useNotesGraph()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
@@ -51,13 +46,6 @@ onMounted(() => {
           >
             <ArrowLeft />
             {{ i18n.t("notes.dashboard.actions.backToDashboard") }}
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            @click="getNotesGraph"
-          >
-            <RefreshCw />
           </Button>
           <Button
             size="icon"

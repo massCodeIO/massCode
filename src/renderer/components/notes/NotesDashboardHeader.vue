@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/shadcn/button'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { useNotesDashboard } from '@/composables'
 import { i18n } from '@/electron'
-import { ChartNetwork, RefreshCw, Settings2 } from 'lucide-vue-next'
+import { ChartNetwork, Settings2 } from 'lucide-vue-next'
 
-const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
+const { navigateToGraph } = useNotesDashboard()
 </script>
 
 <template>
@@ -14,13 +14,6 @@ const { getNotesDashboard, navigateToGraph } = useNotesDashboard()
     :description="i18n.t('notes.dashboard.description')"
   >
     <template #actions>
-      <Button
-        variant="outline"
-        @click="getNotesDashboard"
-      >
-        <RefreshCw />
-        {{ i18n.t("notes.dashboard.actions.refresh") }}
-      </Button>
       <Button
         variant="outline"
         @click="navigateToGraph"

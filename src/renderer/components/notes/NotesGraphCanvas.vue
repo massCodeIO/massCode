@@ -10,6 +10,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-vue-next'
+import { loadNotesGraphIfNeeded } from './notesGraphLoader'
 
 interface GraphSceneExposed {
   resetViewport: () => void
@@ -27,6 +28,10 @@ const {
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
 
 const graphSceneRef = ref<GraphSceneExposed | null>(null)
+
+onMounted(() => {
+  loadNotesGraphIfNeeded(graphData.value, getNotesGraph)
+})
 </script>
 
 <template>

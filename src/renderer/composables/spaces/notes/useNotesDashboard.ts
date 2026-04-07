@@ -69,6 +69,10 @@ async function getNotesDashboard() {
   }
 }
 
+async function enterNotesDashboard() {
+  await getNotesDashboard()
+}
+
 function setDashboardWidgetVisibility(
   key: keyof NotesDashboardWidgetsState,
   value: boolean,
@@ -89,6 +93,7 @@ export function useNotesDashboard() {
     dashboardData,
     dashboardError,
     dashboardWidgets,
+    enterNotesDashboard,
     hasVisibleWidgets,
     isDashboardLoading,
     getNotesDashboard,

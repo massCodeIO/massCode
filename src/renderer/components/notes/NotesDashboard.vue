@@ -7,15 +7,13 @@ const {
   dashboardData,
   dashboardError,
   dashboardWidgets,
+  enterNotesDashboard,
   hasVisibleWidgets,
   isDashboardLoading,
-  getNotesDashboard,
 } = useNotesDashboard()
 
 onMounted(() => {
-  if (!dashboardData.value) {
-    void getNotesDashboard()
-  }
+  void enterNotesDashboard()
 })
 </script>
 

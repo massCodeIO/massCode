@@ -95,6 +95,18 @@ export function getGraphSceneDisplayedNodeRadius(
   return radius
 }
 
+export function shouldClearGraphSceneActiveNode(
+  activeId: number | null,
+  leavingNodeId: number | null,
+  isInteracting: boolean,
+) {
+  if (isInteracting || activeId === null) {
+    return false
+  }
+
+  return leavingNodeId === null || activeId === leavingNodeId
+}
+
 export function buildGraphSceneLabels(
   options: BuildGraphSceneLabelsOptions,
 ): GraphSceneLabel[] {

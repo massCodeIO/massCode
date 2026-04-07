@@ -20,6 +20,7 @@ import {
   buildGraphSceneLabels,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
+  shouldClearGraphSceneActiveNode,
 } from './notesGraphScene'
 
 interface GraphSceneNodeInput {
@@ -216,6 +217,18 @@ function getLabelFill(isActive: boolean) {
   return isActive
     ? graphPalette.value.nodeLabelActive
     : graphPalette.value.nodeLabelMuted
+}
+
+function clearActiveNode(leavingNodeId: number | null = null) {
+  if (
+    shouldClearGraphSceneActiveNode(
+      activeNodeId.value,
+      leavingNodeId,
+      nodeDragState.active || panState.active,
+    )
+  ) {
+    activeNodeId.value = null
+  }
 }
 
 function resetViewport() {
@@ -651,6 +664,7 @@ watch(
           class="cursor-pointer"
           @click.stop="openNode(node.id)"
           @mouseenter="activeNodeId = node.id"
+          @mouseleave="clearActiveNode(node.id)"
         >
           <circle
             :cx="node.x"

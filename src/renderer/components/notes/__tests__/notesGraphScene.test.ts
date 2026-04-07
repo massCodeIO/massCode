@@ -4,6 +4,7 @@ import {
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
   getGraphSceneViewportTransform,
+  shouldClearGraphSceneActiveNode,
 } from '../notesGraphScene'
 
 describe('notesGraphScene', () => {
@@ -38,6 +39,13 @@ describe('notesGraphScene', () => {
     expect(getGraphSceneDisplayedNodeRadius(4, 1, 1, neighborIds, true)).toBe(
       5.8,
     )
+  })
+
+  it('clears hovered node when pointer leaves it without interaction', () => {
+    expect(shouldClearGraphSceneActiveNode(7, 7, false)).toBe(true)
+    expect(shouldClearGraphSceneActiveNode(7, 3, false)).toBe(false)
+    expect(shouldClearGraphSceneActiveNode(7, null, false)).toBe(true)
+    expect(shouldClearGraphSceneActiveNode(7, 7, true)).toBe(false)
   })
 
   it('keeps the active label and drops overlapping secondary labels', () => {

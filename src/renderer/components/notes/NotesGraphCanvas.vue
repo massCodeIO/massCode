@@ -7,15 +7,11 @@ import {
   LoaderCircle,
   LocateFixed,
   RefreshCw,
-  ZoomIn,
-  ZoomOut,
 } from 'lucide-vue-next'
 import { loadNotesGraphIfNeeded } from './notesGraphLoader'
 
 interface GraphSceneExposed {
   resetViewport: () => void
-  zoomIn: () => void
-  zoomOut: () => void
 }
 
 const {
@@ -49,20 +45,6 @@ onMounted(() => {
           >
             <ArrowLeft class="mr-2 h-4 w-4" />
             {{ i18n.t("notes.dashboard.actions.backToDashboard") }}
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            @click="graphSceneRef?.zoomOut()"
-          >
-            <ZoomOut class="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            @click="graphSceneRef?.zoomIn()"
-          >
-            <ZoomIn class="h-4 w-4" />
           </Button>
           <Button
             size="icon"

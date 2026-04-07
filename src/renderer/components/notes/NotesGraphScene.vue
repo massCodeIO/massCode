@@ -4,6 +4,7 @@ import type {
   SimulationLinkDatum,
   SimulationNodeDatum,
 } from 'd3-force'
+import type { GraphSceneViewportPadding } from './notesGraphScene'
 import { useTheme } from '@/composables'
 import {
   forceCenter,
@@ -15,11 +16,13 @@ import {
   forceY,
 } from 'd3-force'
 import { getNotesGraphPalette } from './notesDashboardPalette'
-import { buildNotesGraphLayout, getNotesGraphBounds } from './notesGraphLayout'
+import { buildNotesGraphLayout } from './notesGraphLayout'
 import {
   buildGraphSceneLabels,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
+  getGraphSceneResetViewportTransform,
+  shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
 } from './notesGraphScene'
@@ -57,6 +60,7 @@ const props = withDefaults(
     edges: GraphSceneEdgeInput[]
     height: number
     nodes: GraphSceneNodeInput[]
+    viewportPadding?: Partial<GraphSceneViewportPadding>
     width: number
   }>(),
   {
@@ -93,14 +97,11 @@ const nodeDragState = reactive({
 
 let sceneSimulation: Simulation<SceneNode, SceneLink> | null = null
 let animationFrameId = 0
+let shouldAutoResetViewport = false
 
 const nodeMap = computed(
   () => new Map(sceneNodes.value.map(node => [node.id, node])),
 )
-const graphBounds = computed(() =>
-  getNotesGraphBounds(sceneNodes.value, props.compact ? 28 : 56),
-)
-
 const neighborsById = computed(() => {
   const neighbors = new Map<number, Set<number>>()
 
@@ -233,43 +234,21 @@ function clearActiveNode(leavingNodeId: number | null = null) {
 }
 
 function resetViewport() {
-  if (!sceneNodes.value.length) {
-    zoom.value = 1
-    pan.x = 0
-    pan.y = 0
+  const viewport = getGraphSceneResetViewportTransform({
+    compact: props.compact,
+    height: props.height,
+    nodes: sceneNodes.value,
+    padding: props.viewportPadding,
+    width: props.width,
+  })
 
-    return
-  }
+  zoom.value = viewport.zoom
+  pan.x = viewport.panX
+  pan.y = viewport.panY
+}
 
-  const fittedZoom = props.compact
-    ? Math.min(
-        1.1,
-        Math.max(
-          0.72,
-          Math.min(
-            props.width / (graphBounds.value.width + 28),
-            props.height / (graphBounds.value.height + 28),
-          ),
-        ),
-      )
-    : Math.min(
-        1.28,
-        Math.max(
-          0.42,
-          Math.min(
-            props.width / (graphBounds.value.width + 80),
-            props.height / (graphBounds.value.height + 80),
-          ),
-        ),
-      )
-
-  zoom.value = Number(fittedZoom.toFixed(2))
-  pan.x
-    = (props.width - graphBounds.value.width * zoom.value) / 2
-      - graphBounds.value.minX * zoom.value
-  pan.y
-    = (props.height - graphBounds.value.height * zoom.value) / 2
-      - graphBounds.value.minY * zoom.value
+function disableAutoResetViewport() {
+  shouldAutoResetViewport = false
 }
 
 function zoomIn() {
@@ -326,6 +305,8 @@ function applyZoom(
   nextZoomValue: string | number,
   anchor: { x: number, y: number },
 ) {
+  disableAutoResetViewport()
+
   const nextZoom = props.compact
     ? Math.min(2.4, Math.max(0.58, Number(nextZoomValue)))
     : Math.min(2.8, Math.max(0.35, Number(nextZoomValue)))
@@ -360,6 +341,7 @@ function startPan(event: PointerEvent) {
     return
   }
 
+  disableAutoResetViewport()
   activeNodeId.value = null
   panState.active = true
   panState.startX = event.clientX
@@ -451,6 +433,7 @@ function startNodeDrag(nodeId: number, event: PointerEvent) {
     return
   }
 
+  disableAutoResetViewport()
   activeNodeId.value = nodeId
   nodeDragState.active = true
   nodeDragState.moved = false
@@ -502,6 +485,17 @@ function scheduleSceneUpdate() {
 
   animationFrameId = window.requestAnimationFrame(() => {
     animationFrameId = 0
+
+    if (
+      shouldAutoResetGraphSceneViewport({
+        isAutoResetEnabled: shouldAutoResetViewport,
+        isNodeDragging: nodeDragState.active,
+        isPanning: panState.active,
+      })
+    ) {
+      resetViewport()
+    }
+
     triggerRef(sceneNodes)
   })
 }
@@ -513,6 +507,7 @@ function stopSimulation() {
   }
 
   sceneSimulation?.on('tick', null)
+  sceneSimulation?.on('end', null)
   sceneSimulation?.stop()
   sceneSimulation = null
 }
@@ -540,6 +535,7 @@ function initializeSimulation() {
   }))
 
   sceneNodes.value = nodes
+  shouldAutoResetViewport = true
   triggerRef(sceneNodes)
 
   sceneSimulation = forceSimulation<SceneNode>(nodes)
@@ -595,6 +591,19 @@ function initializeSimulation() {
     .alphaDecay(props.compact ? 0.06 : 0.032)
     .velocityDecay(props.compact ? 0.32 : 0.24)
     .on('tick', scheduleSceneUpdate)
+    .on('end', () => {
+      if (
+        shouldAutoResetGraphSceneViewport({
+          isAutoResetEnabled: shouldAutoResetViewport,
+          isNodeDragging: nodeDragState.active,
+          isPanning: panState.active,
+        })
+      ) {
+        resetViewport()
+      }
+
+      shouldAutoResetViewport = false
+    })
 
   nextTick(() => {
     resetViewport()
@@ -617,6 +626,25 @@ watch(
     initializeSimulation()
   },
   { immediate: true },
+)
+
+watch(
+  [
+    () => props.width,
+    () => props.height,
+    () => props.viewportPadding?.top ?? 0,
+    () => props.viewportPadding?.right ?? 0,
+    () => props.viewportPadding?.bottom ?? 0,
+    () => props.viewportPadding?.left ?? 0,
+  ],
+  () => {
+    if (!sceneNodes.value.length) {
+      return
+    }
+
+    shouldAutoResetViewport = true
+    resetViewport()
+  },
 )
 </script>
 

@@ -1,3 +1,5 @@
+import { getNotesGraphBounds } from './notesGraphLayout'
+
 export interface GraphSceneNodeLike {
   id: number
   incomingLinksCount: number
@@ -58,6 +60,20 @@ interface GetGraphSceneViewportTransformOptions {
   height: number
   padding?: Partial<GraphSceneViewportPadding>
   width: number
+}
+
+interface GetGraphSceneResetViewportTransformOptions {
+  compact: boolean
+  height: number
+  nodes: GraphSceneNodeLike[]
+  padding?: Partial<GraphSceneViewportPadding>
+  width: number
+}
+
+interface ShouldAutoResetGraphSceneViewportOptions {
+  isAutoResetEnabled: boolean
+  isNodeDragging: boolean
+  isPanning: boolean
 }
 
 function wrapGraphSceneLabelText(text: string, maxCharactersPerLine: number) {
@@ -150,6 +166,46 @@ export function shouldOpenGraphSceneNodeOnPointerUp(
   moved: boolean,
 ) {
   return eventType === 'pointerup' && !moved
+}
+
+export function shouldAutoResetGraphSceneViewport(
+  options: ShouldAutoResetGraphSceneViewportOptions,
+) {
+  return (
+    options.isAutoResetEnabled && !options.isNodeDragging && !options.isPanning
+  )
+}
+
+export function getGraphSceneViewportFocusPoint(nodes: GraphSceneNodeLike[]) {
+  if (!nodes.length) {
+    return null
+  }
+
+  const totalWeight = nodes.reduce(
+    (sum, node) => sum + Math.max(1, node.radius),
+    0,
+  )
+
+  if (totalWeight <= 0) {
+    return null
+  }
+
+  const weightedCenter = nodes.reduce(
+    (sum, node) => {
+      const weight = Math.max(1, node.radius)
+
+      return {
+        x: sum.x + node.x * weight,
+        y: sum.y + node.y * weight,
+      }
+    },
+    { x: 0, y: 0 },
+  )
+
+  return {
+    x: Number((weightedCenter.x / totalWeight).toFixed(2)),
+    y: Number((weightedCenter.y / totalWeight).toFixed(2)),
+  }
 }
 
 export function buildGraphSceneLabels(
@@ -304,4 +360,25 @@ export function getGraphSceneViewportTransform(
     panY: Number(panY.toFixed(2)),
     zoom,
   }
+}
+
+export function getGraphSceneResetViewportTransform(
+  options: GetGraphSceneResetViewportTransformOptions,
+) {
+  if (!options.nodes.length) {
+    return {
+      panX: 0,
+      panY: 0,
+      zoom: 1,
+    }
+  }
+
+  return getGraphSceneViewportTransform({
+    bounds: getNotesGraphBounds(options.nodes, options.compact ? 28 : 56),
+    compact: options.compact,
+    focusPoint: getGraphSceneViewportFocusPoint(options.nodes) ?? undefined,
+    height: options.height,
+    padding: options.padding,
+    width: options.width,
+  })
 }

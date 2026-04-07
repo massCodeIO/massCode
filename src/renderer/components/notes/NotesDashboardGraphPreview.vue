@@ -99,7 +99,6 @@ const previewGraph = computed(() => {
           :edges="previewGraph.edges"
           :width="graphSceneSize.width"
           :height="graphSceneSize.height"
-          :viewport-padding="{ top: 16, right: 108, bottom: 12, left: 16 }"
           @node-click="openNoteInNotesWorkspace"
         />
       </div>

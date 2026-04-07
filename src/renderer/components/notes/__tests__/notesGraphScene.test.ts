@@ -3,7 +3,10 @@ import {
   buildGraphSceneLabels,
   getGraphSceneDisplayedNodeRadius,
   getGraphSceneNeighborhoodIds,
+  getGraphSceneResetViewportTransform,
+  getGraphSceneViewportFocusPoint,
   getGraphSceneViewportTransform,
+  shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
 } from '../notesGraphScene'
@@ -56,6 +59,66 @@ describe('notesGraphScene', () => {
       false,
     )
     expect(shouldOpenGraphSceneNodeOnPointerUp(undefined, false)).toBe(false)
+  })
+
+  it('auto-resets viewport only while graph is not being manipulated', () => {
+    expect(
+      shouldAutoResetGraphSceneViewport({
+        isAutoResetEnabled: true,
+        isNodeDragging: false,
+        isPanning: false,
+      }),
+    ).toBe(true)
+
+    expect(
+      shouldAutoResetGraphSceneViewport({
+        isAutoResetEnabled: false,
+        isNodeDragging: false,
+        isPanning: false,
+      }),
+    ).toBe(false)
+
+    expect(
+      shouldAutoResetGraphSceneViewport({
+        isAutoResetEnabled: true,
+        isNodeDragging: true,
+        isPanning: false,
+      }),
+    ).toBe(false)
+
+    expect(
+      shouldAutoResetGraphSceneViewport({
+        isAutoResetEnabled: true,
+        isNodeDragging: false,
+        isPanning: true,
+      }),
+    ).toBe(false)
+  })
+
+  it('derives viewport focus from the weighted center of visible nodes', () => {
+    expect(
+      getGraphSceneViewportFocusPoint([
+        {
+          id: 1,
+          incomingLinksCount: 1,
+          name: 'Small',
+          radius: 4,
+          x: 100,
+          y: 80,
+        },
+        {
+          id: 2,
+          incomingLinksCount: 3,
+          name: 'Large',
+          radius: 8,
+          x: 220,
+          y: 140,
+        },
+      ]),
+    ).toEqual({
+      x: 180,
+      y: 120,
+    })
   })
 
   it('keeps labels attached to their nodes even in crowded neighborhoods', () => {
@@ -297,6 +360,76 @@ describe('notesGraphScene', () => {
     ).toEqual({
       panX: 104,
       panY: 21,
+      zoom: 1.1,
+    })
+  })
+
+  it('derives centered reset transform from sparse graph nodes', () => {
+    expect(
+      getGraphSceneResetViewportTransform({
+        compact: true,
+        height: 240,
+        nodes: [
+          {
+            id: 1,
+            incomingLinksCount: 2,
+            name: 'Left',
+            radius: 4,
+            x: 100,
+            y: 84,
+          },
+          {
+            id: 2,
+            incomingLinksCount: 1,
+            name: 'Right',
+            radius: 4,
+            x: 120,
+            y: 104,
+          },
+        ],
+        width: 560,
+      }),
+    ).toEqual({
+      panX: 159,
+      panY: 16.6,
+      zoom: 1.1,
+    })
+  })
+
+  it('applies viewport padding when deriving reset transform from graph nodes', () => {
+    expect(
+      getGraphSceneResetViewportTransform({
+        compact: true,
+        height: 240,
+        nodes: [
+          {
+            id: 1,
+            incomingLinksCount: 2,
+            name: 'Left',
+            radius: 4,
+            x: 64,
+            y: 44,
+          },
+          {
+            id: 2,
+            incomingLinksCount: 3,
+            name: 'Right',
+            radius: 4,
+            x: 156,
+            y: 116,
+          },
+        ],
+        padding: {
+          bottom: 12,
+          left: 16,
+          right: 96,
+          top: 16,
+        },
+        width: 560,
+      }),
+    ).toEqual({
+      panX: 119,
+      panY: 34,
       zoom: 1.1,
     })
   })

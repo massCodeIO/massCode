@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
-import { useNotesDashboard, useNotesWorkspaceNavigation } from '@/composables'
+import {
+  useNotesDashboard,
+  useNotesWorkspaceNavigation,
+  useTheme,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { LocateFixed } from 'lucide-vue-next'
+import { getNotesGraphPalette } from './notesDashboardPalette'
 
 interface GraphSceneExposed {
   resetViewport: () => void
@@ -16,10 +21,12 @@ const props = defineProps<{
 
 const { navigateToGraph } = useNotesDashboard()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
+const { isDark } = useTheme()
 const graphSceneRef = ref<GraphSceneExposed | null>(null)
 const graphViewportRef = ref<HTMLElement>()
 const { width: graphViewportWidth, height: graphViewportHeight }
   = useElementSize(graphViewportRef)
+const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
 
 const graphSceneSize = computed(() => ({
   width: Math.max(560, Math.round(graphViewportWidth.value || 0)),
@@ -63,7 +70,8 @@ const previewGraph = computed(() => {
   <NotesDashboardSection :title="i18n.t('notes.dashboard.graphPreview.title')">
     <div
       v-if="previewGraph.nodes.length"
-      class="relative overflow-hidden rounded-lg border bg-[#1e1e1e]"
+      class="relative overflow-hidden rounded-lg border"
+      :style="{ backgroundColor: graphPalette.background }"
     >
       <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
         <Button
@@ -97,7 +105,8 @@ const previewGraph = computed(() => {
         />
       </div>
       <div
-        class="border-border/60 flex items-center justify-between border-t px-3 py-2 text-xs text-white/55"
+        class="border-border/60 flex items-center justify-between border-t px-3 py-2 text-xs"
+        :style="{ color: graphPalette.footerText }"
       >
         <span>{{ i18n.t("notes.dashboard.graphPreview.caption") }}</span>
         <span>

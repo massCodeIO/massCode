@@ -4,6 +4,7 @@ import type {
   SimulationLinkDatum,
   SimulationNodeDatum,
 } from 'd3-force'
+import { useTheme } from '@/composables'
 import {
   forceCenter,
   forceCollide,
@@ -13,6 +14,7 @@ import {
   forceX,
   forceY,
 } from 'd3-force'
+import { getNotesGraphPalette } from './notesDashboardPalette'
 import { buildNotesGraphLayout, getNotesGraphBounds } from './notesGraphLayout'
 import {
   buildGraphSceneLabels,
@@ -67,6 +69,7 @@ const emit = defineEmits<{
 const sceneSvgRef = ref<SVGSVGElement>()
 const sceneNodes = shallowRef<SceneNode[]>([])
 const activeNodeId = ref<number | null>(null)
+const { isDark } = useTheme()
 const zoom = ref(1)
 const pan = reactive({
   x: 0,
@@ -135,6 +138,7 @@ const sceneLabels = computed(() =>
 const activeNode = computed(() =>
   activeNodeId.value ? (nodeMap.value.get(activeNodeId.value) ?? null) : null,
 )
+const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
 
 function getDisplayedNodeRadius(node: SceneNode) {
   return getGraphSceneDisplayedNodeRadius(
@@ -144,6 +148,74 @@ function getDisplayedNodeRadius(node: SceneNode) {
     activeNeighborIds.value,
     props.compact,
   )
+}
+
+function getEdgeStroke(source: number, target: number) {
+  if (isEdgeHighlighted(source, target)) {
+    return graphPalette.value.edgeActive
+  }
+
+  if (isEdgeDimmed(source, target)) {
+    return graphPalette.value.edgeDimmed
+  }
+
+  return graphPalette.value.edgeBase
+}
+
+function getNodeHaloFill(nodeId: number) {
+  if (activeNodeId.value === nodeId) {
+    return graphPalette.value.nodeHaloActive
+  }
+
+  if (activeNeighborIds.value.has(nodeId)) {
+    return graphPalette.value.nodeHaloNeighbor
+  }
+
+  if (isNodeDimmed(nodeId)) {
+    return graphPalette.value.nodeHaloDimmed
+  }
+
+  return graphPalette.value.nodeHaloBase
+}
+
+function getNodeFill(node: SceneNode) {
+  if (activeNodeId.value === node.id) {
+    return graphPalette.value.nodeFillActive
+  }
+
+  if (activeNeighborIds.value.has(node.id)) {
+    return graphPalette.value.nodeFillNeighbor
+  }
+
+  if (isNodeDimmed(node.id)) {
+    return graphPalette.value.nodeFillDimmed
+  }
+
+  return node.incomingLinksCount > 0
+    ? graphPalette.value.nodeFillBaseLinked
+    : graphPalette.value.nodeFillBaseOrphan
+}
+
+function getNodeStroke(nodeId: number) {
+  if (activeNodeId.value === nodeId) {
+    return graphPalette.value.nodeStrokeActive
+  }
+
+  if (activeNeighborIds.value.has(nodeId)) {
+    return graphPalette.value.nodeStrokeNeighbor
+  }
+
+  if (isNodeDimmed(nodeId)) {
+    return graphPalette.value.nodeStrokeDimmed
+  }
+
+  return graphPalette.value.nodeStrokeBase
+}
+
+function getLabelFill(isActive: boolean) {
+  return isActive
+    ? graphPalette.value.nodeLabelActive
+    : graphPalette.value.nodeLabelMuted
 }
 
 function resetViewport() {
@@ -560,15 +632,7 @@ watch(
             :y1="nodeMap.get(edge.source)?.y"
             :x2="nodeMap.get(edge.target)?.x"
             :y2="nodeMap.get(edge.target)?.y"
-            :stroke="
-              isEdgeHighlighted(edge.source, edge.target)
-                ? 'rgba(139,92,246,0.9)'
-                : isEdgeDimmed(edge.source, edge.target)
-                  ? 'rgba(160,160,160,0.08)'
-                  : compact
-                    ? 'rgba(210,210,210,0.14)'
-                    : 'rgba(208,208,208,0.14)'
-            "
+            :stroke="getEdgeStroke(edge.source, edge.target)"
             :stroke-width="
               isEdgeHighlighted(edge.source, edge.target)
                 ? compact
@@ -592,50 +656,14 @@ watch(
             :cx="node.x"
             :cy="node.y"
             :r="getDisplayedNodeRadius(node) + (compact ? 1.8 : 5)"
-            :fill="
-              activeNodeId === node.id
-                ? 'rgba(139,92,246,0.22)'
-                : activeNeighborIds.has(node.id)
-                  ? 'rgba(139,92,246,0.1)'
-                  : isNodeDimmed(node.id)
-                    ? 'rgba(255,255,255,0.01)'
-                    : 'rgba(255,255,255,0.02)'
-            "
+            :fill="getNodeHaloFill(node.id)"
           />
           <circle
             :cx="node.x"
             :cy="node.y"
             :r="getDisplayedNodeRadius(node)"
-            :fill="
-              activeNodeId === node.id
-                ? 'rgba(139,92,246,0.98)'
-                : activeNeighborIds.has(node.id)
-                  ? 'rgba(238,238,238,0.92)'
-                  : isNodeDimmed(node.id)
-                    ? 'rgba(140,140,140,0.34)'
-                    : compact
-                      ? node.incomingLinksCount > 0
-                        ? 'rgba(188,188,188,0.6)'
-                        : 'rgba(158,158,158,0.5)'
-                      : node.incomingLinksCount > 0
-                        ? 'rgba(168,168,168,0.52)'
-                        : 'rgba(142,142,142,0.42)'
-            "
-            :stroke="
-              activeNodeId === node.id
-                ? compact
-                  ? 'rgba(255,255,255,0.4)'
-                  : 'rgba(196,181,253,0.95)'
-                : activeNeighborIds.has(node.id)
-                  ? compact
-                    ? 'rgba(255,255,255,0.4)'
-                    : 'rgba(255,255,255,0.55)'
-                  : isNodeDimmed(node.id)
-                    ? 'rgba(255,255,255,0.03)'
-                    : compact
-                      ? 'rgba(255,255,255,0.06)'
-                      : 'rgba(255,255,255,0.08)'
-            "
+            :fill="getNodeFill(node)"
+            :stroke="getNodeStroke(node.id)"
             :stroke-width="
               isNodeHighlighted(node.id)
                 ? compact
@@ -657,14 +685,15 @@ watch(
           :x="label.x"
           :y="label.y"
           :text-anchor="label.textAnchor"
+          :fill="getLabelFill(label.isActive)"
           :class="
             label.isActive
               ? compact
-                ? 'fill-white text-[12px] font-medium'
-                : 'fill-white text-[15px] font-medium'
+                ? 'text-[12px] font-medium'
+                : 'text-[15px] font-medium'
               : compact
-                ? 'fill-white/38 text-[10px]'
-                : 'fill-white/42 text-[11px]'
+                ? 'text-[10px]'
+                : 'text-[11px]'
           "
         >
           {{ label.text }}

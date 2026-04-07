@@ -1,24 +1,21 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
+import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { scaleQuantize } from 'd3-scale'
+import { getNotesHeatmapPalette } from './notesDashboardPalette'
 
 const props = defineProps<{
   activity: NotesDashboardResponse['activity']
 }>()
+const { isDark } = useTheme()
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const GRID_WEEKS = 53
 const GRID_DAYS = 7
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', '']
-const GITHUB_DARK_SCALE = [
-  'oklch(0.24 0.01 250)',
-  'oklch(0.46 0.09 154)',
-  'oklch(0.58 0.14 154)',
-  'oklch(0.69 0.17 154)',
-  'oklch(0.78 0.19 154)',
-]
+const heatmapPalette = computed(() => getNotesHeatmapPalette(isDark.value))
 
 const formatters = {
   day: new Intl.DateTimeFormat(undefined, {
@@ -72,7 +69,7 @@ const maxCount = computed(() =>
 const colorScale = computed(() =>
   scaleQuantize<string>()
     .domain([1, Math.max(1, maxCount.value)])
-    .range(GITHUB_DARK_SCALE.slice(1)),
+    .range(heatmapPalette.value.scale.slice(1)),
 )
 
 const weeks = computed(() =>
@@ -99,7 +96,7 @@ const totalUpdates = computed(() =>
   cells.value.reduce((sum, cell) => sum + cell.count, 0),
 )
 
-const legendColors = computed(() => GITHUB_DARK_SCALE)
+const legendColors = computed(() => heatmapPalette.value.scale)
 const cellGap = computed(() => {
   if (heatmapWidth.value < 520) {
     return 2
@@ -124,7 +121,7 @@ const cellSize = computed(() => {
 
 function getCellColor(count: number) {
   if (count === 0) {
-    return GITHUB_DARK_SCALE[0]
+    return heatmapPalette.value.scale[0]
   }
 
   return colorScale.value(count)
@@ -204,7 +201,8 @@ function getCellColor(count: number) {
       </div>
 
       <div
-        class="text-muted-foreground flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
+        class="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
+        :style="{ color: heatmapPalette.legendText }"
       >
         <div>
           {{

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import { useNotesGraph, useNotesWorkspaceNavigation } from '@/composables'
+import {
+  useNotesGraph,
+  useNotesWorkspaceNavigation,
+  useTheme,
+} from '@/composables'
 import { i18n } from '@/electron'
 import {
   ArrowLeft,
@@ -8,6 +12,7 @@ import {
   LocateFixed,
   RefreshCw,
 } from 'lucide-vue-next'
+import { getNotesGraphPalette } from './notesDashboardPalette'
 import { loadNotesGraphIfNeeded } from './notesGraphLoader'
 
 interface GraphSceneExposed {
@@ -22,8 +27,10 @@ const {
   navigateBackToDashboard,
 } = useNotesGraph()
 const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
+const { isDark } = useTheme()
 
 const graphSceneRef = ref<GraphSceneExposed | null>(null)
+const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
 
 onMounted(() => {
   loadNotesGraphIfNeeded(graphData.value, getNotesGraph)
@@ -82,7 +89,8 @@ onMounted(() => {
 
       <div
         v-else
-        class="relative flex-1 overflow-hidden rounded-xl border bg-[#1e1e1e]"
+        class="relative flex-1 overflow-hidden rounded-xl border"
+        :style="{ backgroundColor: graphPalette.background }"
       >
         <NotesGraphScene
           ref="graphSceneRef"
@@ -94,7 +102,8 @@ onMounted(() => {
         >
           <template #overlay="{ activeNode, neighborCount }">
             <div
-              class="pointer-events-none absolute right-4 bottom-4 text-[11px] text-white/55"
+              class="pointer-events-none absolute right-4 bottom-4 text-[11px]"
+              :style="{ color: graphPalette.overlayText }"
             >
               {{
                 activeNode

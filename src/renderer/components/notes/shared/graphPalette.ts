@@ -20,10 +20,6 @@ export interface NotesGraphPalette {
   overlayText: string
 }
 
-export interface NotesHeatmapPalette {
-  scale: [string, string, string, string, string]
-}
-
 export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
   if (isDark) {
     return {
@@ -69,17 +65,5 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
     nodeStrokeDimmed: 'oklch(from var(--foreground) l c h / 0.04)',
     nodeStrokeNeighbor: 'oklch(from var(--primary) l c h / 0.2)',
     overlayText: 'oklch(from var(--muted-foreground) l c h / 0.92)',
-  }
-}
-
-export function getNotesHeatmapPalette(isDark: boolean): NotesHeatmapPalette {
-  if (isDark) {
-    return {
-      scale: ['var(--background)', '#0e4429', '#006d32', '#26a641', '#39d353'],
-    }
-  }
-
-  return {
-    scale: ['var(--background)', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
   }
 }

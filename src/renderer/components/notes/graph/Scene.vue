@@ -15,7 +15,7 @@ import {
   forceX,
   forceY,
 } from 'd3-force'
-import { getNotesGraphPalette } from '../notesDashboardPalette'
+import { getNotesGraphPalette } from '../shared/graphPalette'
 import { buildNotesGraphLayout } from './layout'
 import {
   buildGraphSceneLabels,

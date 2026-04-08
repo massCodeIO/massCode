@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getNotesHeatmapPalette } from '../../notesDashboardPalette'
+import { getNotesHeatmapPalette } from '../../shared/heatmapPalette'
 import {
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,

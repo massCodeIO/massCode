@@ -7,7 +7,7 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { ArrowLeft, LoaderCircle, LocateFixed } from 'lucide-vue-next'
-import { getNotesGraphPalette } from '../notesDashboardPalette'
+import { getNotesGraphPalette } from '../shared/graphPalette'
 import { loadNotesGraphIfNeeded } from './loader'
 
 interface GraphSceneExposed {

@@ -4,7 +4,7 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
-import { getNotesHeatmapPalette } from '../notesDashboardPalette'
+import { getNotesHeatmapPalette } from '../shared/heatmapPalette'
 import {
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,

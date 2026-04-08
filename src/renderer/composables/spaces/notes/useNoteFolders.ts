@@ -30,6 +30,7 @@ interface NoteFoldersUpdate {
 const folders = shallowRef<NoteFoldersTreeResponse>()
 
 const renameFolderId = ref<number | null>(null)
+let isApplyingFolderSelection = false
 
 const selectedFolderIds = ref<number[]>(
   notesState.folderId ? [notesState.folderId] : [],
@@ -144,28 +145,30 @@ function syncSelectedFoldersWithTree() {
 watch(
   () => notesState.folderId,
   (folderId) => {
+    if (isApplyingFolderSelection) {
+      return
+    }
+
     if (folderId === undefined) {
       selectedFolderIds.value = []
       lastSelectedFolderId.value = undefined
       return
     }
 
-    if (!selectedFolderIds.value.includes(folderId)) {
-      selectedFolderIds.value = sortFolderIdsByTreeOrder([
-        folderId,
-        ...selectedFolderIds.value,
-      ])
-    }
+    selectedFolderIds.value = [folderId]
+    lastSelectedFolderId.value = folderId
   },
 )
 
 // --- Selection helpers ---
 
 function clearFolderSelection() {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = []
   notesState.folderId = undefined
   notesState.noteId = undefined
   lastSelectedFolderId.value = undefined
+  isApplyingFolderSelection = false
 }
 
 function resetNoteFoldersState() {
@@ -181,15 +184,19 @@ function setFolderSelection(ids: number[]) {
   }
 
   const orderedSelection = sortFolderIdsByTreeOrder(ids)
+  isApplyingFolderSelection = true
   selectedFolderIds.value = orderedSelection
   notesState.folderId = orderedSelection[0]
   lastSelectedFolderId.value = orderedSelection[orderedSelection.length - 1]
+  isApplyingFolderSelection = false
 }
 
 function applySingleFolderSelection(folderId: number) {
+  isApplyingFolderSelection = true
   selectedFolderIds.value = [folderId]
   notesState.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyRangeFolderSelection(folderId: number) {
@@ -209,8 +216,10 @@ function applyRangeFolderSelection(folderId: number) {
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = rangeSelection
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 function applyToggleFolderSelection(folderId: number) {
@@ -219,21 +228,25 @@ function applyToggleFolderSelection(folderId: number) {
       return
     }
 
+    isApplyingFolderSelection = true
     selectedFolderIds.value = selectedFolderIds.value.filter(
       id => id !== folderId,
     )
     notesState.folderId = selectedFolderIds.value[0]
     lastSelectedFolderId.value
       = selectedFolderIds.value[selectedFolderIds.value.length - 1]
+    isApplyingFolderSelection = false
     return
   }
 
+  isApplyingFolderSelection = true
   selectedFolderIds.value = sortFolderIdsByTreeOrder([
     ...selectedFolderIds.value,
     folderId,
   ])
   notesState.folderId = folderId
   lastSelectedFolderId.value = folderId
+  isApplyingFolderSelection = false
 }
 
 // --- Visibility helpers ---

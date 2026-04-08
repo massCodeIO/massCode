@@ -9,7 +9,7 @@ defineProps<Props>()
 
 <template>
   <div>
-    <div class="flex h-9 items-center justify-between py-1 pl-1 select-none">
+    <div class="flex h-7 items-center justify-between pl-1 select-none">
       <div class="truncate leading-5 font-bold">
         {{ title }}
       </div>

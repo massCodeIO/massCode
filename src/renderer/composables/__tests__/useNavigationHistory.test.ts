@@ -70,6 +70,101 @@ describe('useNavigationHistory', () => {
     expect(history.cursor.value).toBe(1)
   })
 
+  it('records graph route before opening a note from graph', async () => {
+    const route = ref({ name: 'notes-space/graph' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        routeName: 'notes-space/graph',
+        type: 'route',
+      },
+      { id: 2, name: 'Note B', type: 'note' },
+    ])
+    expect(history.cursor.value).toBe(1)
+  })
+
+  it('records dashboard route before opening a note from dashboard', async () => {
+    const route = ref({ name: 'notes-space/dashboard' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        routeName: 'notes-space/dashboard',
+        type: 'route',
+      },
+      { id: 2, name: 'Note B', type: 'note' },
+    ])
+    expect(history.cursor.value).toBe(1)
+  })
+
   it('truncates forward history when recording from the middle', async () => {
     const route = ref({ name: 'notes-space' })
     const selectedNote = ref({ id: 1, name: 'Note A' })

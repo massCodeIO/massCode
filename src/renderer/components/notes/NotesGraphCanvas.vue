@@ -21,7 +21,7 @@ const {
   isGraphLoading,
   navigateBackToDashboard,
 } = useNotesGraph()
-const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
+const { openNoteFromGraph } = useNotesWorkspaceNavigation()
 const { isDark } = useTheme()
 
 const graphSceneRef = ref<GraphSceneExposed | null>(null)
@@ -85,7 +85,7 @@ onMounted(() => {
           :edges="graphData.edges"
           :width="1000"
           :height="720"
-          @node-click="openNoteInNotesWorkspace"
+          @node-click="openNoteFromGraph"
         >
           <template #overlay="{ activeNode, neighborCount }">
             <div

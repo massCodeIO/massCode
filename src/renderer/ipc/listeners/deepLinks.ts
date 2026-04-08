@@ -1,3 +1,4 @@
+import type { NavigationHistoryEntry } from '@/composables/useNavigationHistory'
 import {
   initCodeSpace,
   useApp,
@@ -196,10 +197,17 @@ export async function openInternalTarget(
   })
 }
 
-async function restoreNavigationTarget(target: InternalTarget): Promise<void> {
+async function restoreNavigationTarget(
+  target: NavigationHistoryEntry,
+): Promise<void> {
   isNavigatingHistory.value = true
 
   try {
+    if (target.type === 'route') {
+      await router.push({ name: target.routeName })
+      return
+    }
+
     if (target.type === 'snippet') {
       await openSnippetDeepLink(target.id)
       return

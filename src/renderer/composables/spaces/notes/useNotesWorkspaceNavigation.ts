@@ -10,7 +10,7 @@ const { getNotes, selectFirstNote, selectNote } = useNotes()
 const { notesState } = useNotesApp()
 
 export function useNotesWorkspaceNavigation() {
-  async function openNoteInNotesWorkspace(noteId: number) {
+  async function openNoteInNotesWorkspaceInternal(noteId: number) {
     const { data: note } = await api.notes.getNotesById(String(noteId))
 
     await router.push({ name: RouterName.notesSpace })
@@ -31,6 +31,40 @@ export function useNotesWorkspaceNavigation() {
     selectNote(noteId)
   }
 
+  async function openNoteWithOptionalRouteHistory(noteId: number) {
+    const routeName = router.currentRoute.value.name
+    const shouldRecordRouteHistory
+      = routeName === RouterName.notesDashboard
+        || routeName === RouterName.notesGraph
+
+    if (!shouldRecordRouteHistory) {
+      await openNoteInNotesWorkspaceInternal(noteId)
+      return
+    }
+
+    const { useNavigationHistory } = await import(
+      '@/composables/useNavigationHistory'
+    )
+    const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
+
+    if (isNavigatingHistory.value) {
+      await openNoteInNotesWorkspaceInternal(noteId)
+      return
+    }
+
+    await recordNavigation(async () => {
+      await openNoteInNotesWorkspaceInternal(noteId)
+    })
+  }
+
+  async function openNoteInNotesWorkspace(noteId: number) {
+    await openNoteWithOptionalRouteHistory(noteId)
+  }
+
+  async function openNoteFromGraph(noteId: number) {
+    await openNoteWithOptionalRouteHistory(noteId)
+  }
+
   async function openTagInNotesWorkspace(tagId: number) {
     await router.push({ name: RouterName.notesSpace })
     clearSearch()
@@ -43,6 +77,7 @@ export function useNotesWorkspaceNavigation() {
   }
 
   return {
+    openNoteFromGraph,
     openNoteInNotesWorkspace,
     openTagInNotesWorkspace,
   }

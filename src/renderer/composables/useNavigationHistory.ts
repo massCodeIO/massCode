@@ -2,11 +2,20 @@ import { router, RouterName } from '@/router'
 import { useNotes } from './spaces/notes/useNotes'
 import { useSnippets } from './useSnippets'
 
-export interface NavigationHistoryEntry {
+export interface NavigationHistoryRouteEntry {
+  routeName: string
+  type: 'route'
+}
+
+export interface NavigationHistoryEntityEntry {
   id: number
   name: string
   type: 'note' | 'snippet'
 }
+
+export type NavigationHistoryEntry =
+  | NavigationHistoryRouteEntry
+  | NavigationHistoryEntityEntry
 
 export const MAX_HISTORY_SIZE = 50
 
@@ -30,11 +39,33 @@ function isSameEntry(
     return false
   }
 
+  if (left.type === 'route' || right.type === 'route') {
+    return (
+      left.type === 'route'
+      && right.type === 'route'
+      && left.routeName === right.routeName
+    )
+  }
+
   return left.type === right.type && left.id === right.id
 }
 
 function captureCurrentLocation(): NavigationHistoryEntry | undefined {
   const routeName = router.currentRoute.value.name
+
+  if (routeName === RouterName.notesGraph) {
+    return {
+      routeName: RouterName.notesGraph,
+      type: 'route',
+    }
+  }
+
+  if (routeName === RouterName.notesDashboard) {
+    return {
+      routeName: RouterName.notesDashboard,
+      type: 'route',
+    }
+  }
 
   if (
     (routeName === RouterName.notesSpace

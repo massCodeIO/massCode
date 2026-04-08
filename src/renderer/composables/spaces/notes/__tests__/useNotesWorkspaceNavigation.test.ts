@@ -4,12 +4,19 @@ import { reactive, ref } from 'vue'
 async function setup() {
   vi.resetModules()
 
-  const push = vi.fn(async () => undefined)
+  const currentRoute = ref({ name: 'notes-space' })
+  const push = vi.fn(async ({ name }: { name: string }) => {
+    currentRoute.value = { name }
+  })
   const clearSearch = vi.fn()
   const getNotes = vi.fn(async () => undefined)
   const selectFirstNote = vi.fn()
   const selectNote = vi.fn()
   const getNotesById = vi.fn()
+  const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
+    await navigate()
+  })
+  const isNavigatingHistory = ref(false)
 
   const notesState = reactive<{
     noteId?: number
@@ -20,9 +27,12 @@ async function setup() {
 
   vi.doMock('@/router', () => ({
     RouterName: {
+      notesDashboard: 'notes-space/dashboard',
+      notesGraph: 'notes-space/graph',
       notesSpace: 'notes-space',
     },
     router: {
+      currentRoute,
       push,
     },
   }))
@@ -56,17 +66,28 @@ async function setup() {
     },
   }))
 
+  vi.doMock('@/composables/useNavigationHistory', () => ({
+    useNavigationHistory: () => ({
+      isNavigatingHistory,
+      recordNavigation,
+    }),
+  }))
+
   const module = await import('../useNotesWorkspaceNavigation')
 
   return {
     clearSearch,
     getNotes,
     getNotesById,
+    currentRoute,
     notesState,
+    openNoteFromGraph: module.useNotesWorkspaceNavigation().openNoteFromGraph,
     openNoteInNotesWorkspace:
       module.useNotesWorkspaceNavigation().openNoteInNotesWorkspace,
     openTagInNotesWorkspace:
       module.useNotesWorkspaceNavigation().openTagInNotesWorkspace,
+    recordNavigation,
+    isNavigatingHistory,
     push,
     selectFirstNote,
     selectNote,
@@ -135,5 +156,66 @@ describe('useNotesWorkspaceNavigation', () => {
     expect(context.notesState.tagId).toBe(11)
     expect(context.getNotes).toHaveBeenCalledWith({ tagId: 11 })
     expect(context.selectFirstNote).toHaveBeenCalledTimes(1)
+  })
+
+  it('records graph-originated note opens in navigation history', async () => {
+    const context = await setup()
+    context.currentRoute.value = { name: 'notes-space/graph' }
+
+    context.getNotesById.mockResolvedValue({
+      data: {
+        id: 42,
+        folder: {
+          id: 7,
+          name: 'Docs',
+        },
+      },
+    })
+
+    await context.openNoteFromGraph(42)
+
+    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
+    expect(context.selectNote).toHaveBeenCalledWith(42)
+  })
+
+  it('skips history recording for graph opens during history restoration', async () => {
+    const context = await setup()
+
+    context.currentRoute.value = { name: 'notes-space/graph' }
+    context.isNavigatingHistory.value = true
+    context.getNotesById.mockResolvedValue({
+      data: {
+        id: 42,
+        folder: {
+          id: 7,
+          name: 'Docs',
+        },
+      },
+    })
+
+    await context.openNoteFromGraph(42)
+
+    expect(context.recordNavigation).not.toHaveBeenCalled()
+    expect(context.selectNote).toHaveBeenCalledWith(42)
+  })
+
+  it('records dashboard graph note opens in navigation history', async () => {
+    const context = await setup()
+
+    context.currentRoute.value = { name: 'notes-space/dashboard' }
+    context.getNotesById.mockResolvedValue({
+      data: {
+        id: 42,
+        folder: {
+          id: 7,
+          name: 'Docs',
+        },
+      },
+    })
+
+    await context.openNoteInNotesWorkspace(42)
+
+    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
+    expect(context.selectNote).toHaveBeenCalledWith(42)
   })
 })

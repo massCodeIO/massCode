@@ -173,6 +173,7 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('@/router', () => ({
     RouterName: {
       main: 'main',
+      notesGraph: 'notes-space/graph',
       notesSpace: 'notes-space',
       notesPresentation: 'notes-space/presentation',
     },
@@ -300,6 +301,26 @@ describe('deepLinks', () => {
     expect(context.goBack).toHaveBeenCalledTimes(1)
     expect(context.router.push).toHaveBeenCalledWith({ name: 'notes-space' })
     expect(context.selectNote).toHaveBeenCalledWith(15)
+    expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
+  it('restores graph route from history on back navigation', async () => {
+    const context = await setup({
+      snippetRouteName: 'notes-space',
+    })
+
+    context.goBack.mockReturnValue({
+      routeName: 'notes-space/graph',
+      type: 'route',
+    })
+
+    await context.module.navigateBack()
+
+    expect(context.goBack).toHaveBeenCalledTimes(1)
+    expect(context.router.push).toHaveBeenCalledWith({
+      name: 'notes-space/graph',
+    })
+    expect(context.selectNote).not.toHaveBeenCalled()
     expect(context.isNavigatingHistory.value).toBe(false)
   })
 

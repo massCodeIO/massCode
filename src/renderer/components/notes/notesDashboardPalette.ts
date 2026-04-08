@@ -21,7 +21,6 @@ export interface NotesGraphPalette {
 }
 
 export interface NotesHeatmapPalette {
-  legendText: string
   scale: [string, string, string, string, string]
 }
 
@@ -76,13 +75,11 @@ export function getNotesGraphPalette(isDark: boolean): NotesGraphPalette {
 export function getNotesHeatmapPalette(isDark: boolean): NotesHeatmapPalette {
   if (isDark) {
     return {
-      legendText: '#8b949e',
       scale: ['var(--background)', '#0e4429', '#006d32', '#26a641', '#39d353'],
     }
   }
 
   return {
-    legendText: '#57606a',
     scale: ['var(--background)', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
   }
 }

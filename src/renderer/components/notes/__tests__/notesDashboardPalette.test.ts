@@ -21,7 +21,7 @@ describe('notesDashboardPalette', () => {
     expect(lightPalette.edgeBase).not.toBe(darkPalette.edgeBase)
   })
 
-  it('returns github-style heatmap palettes for dark and light themes', () => {
+  it('returns green heatmap palettes for dark and light themes', () => {
     const darkPalette = getNotesHeatmapPalette(true)
     const lightPalette = getNotesHeatmapPalette(false)
 

@@ -219,8 +219,7 @@ function getTooltipLines(label: string, count: number) {
         </div>
 
         <div
-          class="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
-          :style="{ color: heatmapPalette.legendText }"
+          class="text-muted-foreground flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
         >
           <div>
             {{

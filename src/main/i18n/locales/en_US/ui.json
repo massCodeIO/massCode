@@ -68,7 +68,7 @@
         "activityHeatmap": "Activity Heatmap",
         "activitySummary": "Activity Summary",
         "recent": "Recent Notes",
-        "graphPreview": "Knowledge Graph",
+        "graphPreview": "Notes Graph",
         "topLinked": "Top Linked Notes"
       },
       "stats": {
@@ -96,8 +96,7 @@
         "empty": "No recent notes yet."
       },
       "graphPreview": {
-        "title": "Knowledge Graph",
-        "caption": "Hover nodes to inspect local connections.",
+        "title": "Notes Graph",
         "empty": "No links between notes yet."
       },
       "topLinked": {
@@ -107,7 +106,7 @@
       },
       "graph": {
         "title": "Notes Graph",
-        "description": "Browse connections between notes and jump back into the workspace.",
+        "description": "Explore connections between notes and open them in the workspace.",
         "hint": "Drag to pan, use zoom controls or the mouse wheel, and hover a node to inspect its neighborhood.",
         "meta": "{{links}} incoming links · {{neighbors}} connected notes",
         "empty": "No links between notes yet.",

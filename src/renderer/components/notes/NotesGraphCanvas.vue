@@ -88,8 +88,10 @@ onMounted(() => {
           @node-click="openNoteFromGraph"
         >
           <template #overlay="{ activeNode, neighborCount }">
-            <div
-              class="pointer-events-none absolute right-4 bottom-4 text-[11px]"
+            <UiText
+              as="div"
+              variant="xs"
+              class="pointer-events-none absolute right-4 bottom-4"
               :style="{ color: graphPalette.overlayText }"
             >
               {{
@@ -100,7 +102,7 @@ onMounted(() => {
                   })
                   : i18n.t("notes.dashboard.graph.hint")
               }}
-            </div>
+            </UiText>
           </template>
         </NotesGraphScene>
       </div>

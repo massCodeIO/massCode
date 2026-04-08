@@ -100,25 +100,18 @@ const previewGraph = computed(() => {
           :width="graphSceneSize.width"
           :height="graphSceneSize.height"
           @node-click="openNoteInNotesWorkspace"
-        />
-      </div>
-      <div
-        class="border-border/60 flex items-center justify-between border-t px-3 py-2"
-        :style="{ color: graphPalette.footerText }"
-      >
-        <UiText
-          as="span"
-          variant="xs"
         >
-          {{ i18n.t("notes.dashboard.graphPreview.caption") }}
-        </UiText>
-        <UiText
-          as="span"
-          variant="xs"
-        >
-          {{ previewGraph.nodes.length }} /
-          {{ props.graphPreview.nodes.length }}
-        </UiText>
+          <template #overlay>
+            <UiText
+              as="div"
+              variant="xs"
+              class="pointer-events-none absolute right-4 bottom-4"
+              :style="{ color: graphPalette.overlayText }"
+            >
+              {{ i18n.t("notes.dashboard.graph.hint") }}
+            </UiText>
+          </template>
+        </NotesGraphScene>
       </div>
     </div>
     <UiEmptyPlaceholder

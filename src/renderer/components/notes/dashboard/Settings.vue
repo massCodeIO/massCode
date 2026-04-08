@@ -86,7 +86,6 @@ const widgetItems: Array<{
     <div class="border-border border-t px-4 py-3">
       <Button
         class="w-full"
-        size="sm"
         variant="outline"
         @click="showAllDashboardWidgets"
       >

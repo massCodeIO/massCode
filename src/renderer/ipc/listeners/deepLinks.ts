@@ -1,6 +1,7 @@
 import type { NavigationHistoryEntry } from '@/composables/useNavigationHistory'
 import {
   initCodeSpace,
+  queueNavigationUIStateRestore,
   useApp,
   useFolders,
   useNavigationHistory,
@@ -203,6 +204,8 @@ async function restoreNavigationTarget(
   isNavigatingHistory.value = true
 
   try {
+    queueNavigationUIStateRestore(target)
+
     if (target.type === 'route') {
       await router.push({ name: target.routeName })
       return

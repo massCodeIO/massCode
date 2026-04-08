@@ -1,16 +1,22 @@
 import { router, RouterName } from '@/router'
 import { useNotes } from './spaces/notes/useNotes'
+import {
+  captureNavigationUIState,
+  type NavigationHistoryUIState,
+} from './useNavigationUIState'
 import { useSnippets } from './useSnippets'
 
 export interface NavigationHistoryRouteEntry {
   routeName: string
   type: 'route'
+  uiState?: NavigationHistoryUIState
 }
 
 export interface NavigationHistoryEntityEntry {
   id: number
   name: string
   type: 'note' | 'snippet'
+  uiState?: NavigationHistoryUIState
 }
 
 export type NavigationHistoryEntry =
@@ -52,39 +58,52 @@ function isSameEntry(
 
 function captureCurrentLocation(): NavigationHistoryEntry | undefined {
   const routeName = router.currentRoute.value.name
+  let entry: NavigationHistoryEntry | undefined
 
   if (routeName === RouterName.notesGraph) {
-    return {
+    entry = {
       routeName: RouterName.notesGraph,
       type: 'route',
     }
   }
-
-  if (routeName === RouterName.notesDashboard) {
-    return {
+  else if (routeName === RouterName.notesDashboard) {
+    entry = {
       routeName: RouterName.notesDashboard,
       type: 'route',
     }
   }
-
-  if (
+  else if (
     (routeName === RouterName.notesSpace
       || routeName === RouterName.notesPresentation)
     && selectedNote.value
   ) {
-    return {
+    entry = {
       id: selectedNote.value.id,
       name: selectedNote.value.name,
       type: 'note',
     }
   }
-
-  if (routeName === RouterName.main && selectedSnippet.value) {
-    return {
+  else if (routeName === RouterName.main && selectedSnippet.value) {
+    entry = {
       id: selectedSnippet.value.id,
       name: selectedSnippet.value.name,
       type: 'snippet',
     }
+  }
+
+  if (!entry) {
+    return
+  }
+
+  const uiState = captureNavigationUIState(entry)
+
+  if (!uiState) {
+    return entry
+  }
+
+  return {
+    ...entry,
+    uiState,
   }
 }
 

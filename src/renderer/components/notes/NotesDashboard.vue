@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { useNotesDashboard } from '@/composables'
+import {
+  applyPendingNavigationUIStateForRoute,
+  registerNavigationRouteUIState,
+  useNotesDashboard,
+} from '@/composables'
 import { i18n } from '@/electron'
+import { RouterName } from '@/router'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const {
@@ -12,13 +17,53 @@ const {
   isDashboardLoading,
 } = useNotesDashboard()
 
+const dashboardScrollRef = ref<HTMLElement>()
+let unregisterNavigationRouteUIState: (() => void) | undefined
+
 onMounted(() => {
+  if (dashboardScrollRef.value) {
+    unregisterNavigationRouteUIState = registerNavigationRouteUIState(
+      RouterName.notesDashboard,
+      {
+        getScrollTop: () => dashboardScrollRef.value?.scrollTop ?? 0,
+        setScrollTop: (scrollTop) => {
+          dashboardScrollRef.value?.scrollTo({ top: scrollTop })
+        },
+      },
+    )
+
+    nextTick(() => {
+      applyPendingNavigationUIStateForRoute(RouterName.notesDashboard)
+    })
+  }
+
   void enterNotesDashboard()
+})
+
+watch(
+  dashboardData,
+  async (data) => {
+    if (!data) {
+      return
+    }
+
+    await nextTick()
+    applyPendingNavigationUIStateForRoute(RouterName.notesDashboard)
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  unregisterNavigationRouteUIState?.()
+  unregisterNavigationRouteUIState = undefined
 })
 </script>
 
 <template>
-  <div class="scrollbar h-full overflow-y-auto">
+  <div
+    ref="dashboardScrollRef"
+    class="scrollbar h-full overflow-y-auto"
+  >
     <div class="mx-auto flex min-h-full max-w-7xl flex-col gap-4 p-5">
       <NotesDashboardHeader />
 

@@ -8,6 +8,7 @@ describe('useNavigationHistory', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    vi.doUnmock('../useNavigationUIState')
   })
 
   it('records internal target navigation and restores backward and forward', async () => {
@@ -68,6 +69,67 @@ describe('useNavigationHistory', () => {
       type: 'snippet',
     })
     expect(history.cursor.value).toBe(1)
+  })
+
+  it('stores captured ui state alongside the navigation target', async () => {
+    const route = ref({ name: 'notes-space' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../useNavigationUIState', () => ({
+      captureNavigationUIState: vi.fn((entry) => {
+        if (entry.type === 'note' && entry.id === 1) {
+          return { scrollTop: 280 }
+        }
+
+        return undefined
+      }),
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space/dashboard' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        id: 1,
+        name: 'Note A',
+        type: 'note',
+        uiState: { scrollTop: 280 },
+      },
+      {
+        routeName: 'notes-space/dashboard',
+        type: 'route',
+      },
+    ])
   })
 
   it('records graph route before opening a note from graph', async () => {

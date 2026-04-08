@@ -141,6 +141,7 @@ onUnmounted(() => {
     </UiActionButton>
     <div class="h-full min-h-0 p-5">
       <NotesEditor
+        :note-id="selectedNote?.id"
         :content="selectedNote?.content ?? ''"
         mode="preview"
         presentation

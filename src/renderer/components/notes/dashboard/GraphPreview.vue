@@ -8,7 +8,7 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
-import { LocateFixed } from 'lucide-vue-next'
+import { Expand, LocateFixed } from 'lucide-vue-next'
 import { getNotesGraphPalette } from '../shared/graphPalette'
 
 interface GraphSceneExposed {
@@ -75,10 +75,11 @@ const previewGraph = computed(() => {
     >
       <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
         <Button
+          size="icon"
           variant="outline"
           @click="navigateToGraph"
         >
-          {{ i18n.t("notes.dashboard.actions.openGraph") }}
+          <Expand />
         </Button>
         <Button
           size="icon"

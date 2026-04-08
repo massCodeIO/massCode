@@ -115,6 +115,32 @@ function trimEntries(nextEntries: NavigationHistoryEntry[]) {
   return nextEntries.slice(nextEntries.length - MAX_HISTORY_SIZE)
 }
 
+function pushOrReplaceEntry(
+  nextEntries: NavigationHistoryEntry[],
+  entry: NavigationHistoryEntry,
+) {
+  if (isSameEntry(nextEntries.at(-1), entry)) {
+    nextEntries[nextEntries.length - 1] = entry
+    return
+  }
+
+  nextEntries.push(entry)
+}
+
+function syncCurrentEntryWithLocation() {
+  if (cursor.value < 0) {
+    return
+  }
+
+  const current = captureCurrentLocation()
+
+  if (!current || !isSameEntry(entries.value[cursor.value], current)) {
+    return
+  }
+
+  entries.value[cursor.value] = current
+}
+
 async function recordNavigation(navigate: () => Promise<void>) {
   const before = captureCurrentLocation()
 
@@ -128,12 +154,12 @@ async function recordNavigation(navigate: () => Promise<void>) {
 
   const nextEntries = entries.value.slice(0, Math.max(cursor.value + 1, 0))
 
-  if (before && !isSameEntry(nextEntries.at(-1), before)) {
-    nextEntries.push(before)
+  if (before) {
+    pushOrReplaceEntry(nextEntries, before)
   }
 
-  if (after && !isSameEntry(nextEntries.at(-1), after)) {
-    nextEntries.push(after)
+  if (after) {
+    pushOrReplaceEntry(nextEntries, after)
   }
 
   if (!nextEntries.length) {
@@ -149,6 +175,7 @@ function goBack(): NavigationHistoryEntry | undefined {
     return
   }
 
+  syncCurrentEntryWithLocation()
   cursor.value -= 1
   return entries.value[cursor.value]
 }
@@ -158,6 +185,7 @@ function goForward(): NavigationHistoryEntry | undefined {
     return
   }
 
+  syncCurrentEntryWithLocation()
   cursor.value += 1
   return entries.value[cursor.value]
 }

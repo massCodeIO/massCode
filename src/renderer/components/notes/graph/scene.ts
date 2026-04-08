@@ -1,4 +1,4 @@
-import { getNotesGraphBounds } from './notesGraphLayout'
+import { getNotesGraphBounds } from './layout'
 
 export interface GraphSceneNodeLike {
   id: number

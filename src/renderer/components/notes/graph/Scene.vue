@@ -4,7 +4,7 @@ import type {
   SimulationLinkDatum,
   SimulationNodeDatum,
 } from 'd3-force'
-import type { GraphSceneViewportPadding } from './notesGraphScene'
+import type { GraphSceneViewportPadding } from './scene'
 import { useTheme } from '@/composables'
 import {
   forceCenter,
@@ -15,8 +15,8 @@ import {
   forceX,
   forceY,
 } from 'd3-force'
-import { getNotesGraphPalette } from './notesDashboardPalette'
-import { buildNotesGraphLayout } from './notesGraphLayout'
+import { getNotesGraphPalette } from '../notesDashboardPalette'
+import { buildNotesGraphLayout } from './layout'
 import {
   buildGraphSceneLabels,
   getGraphSceneBaseNodeFill,
@@ -27,7 +27,7 @@ import {
   shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
-} from './notesGraphScene'
+} from './scene'
 
 interface GraphSceneNodeInput {
   id: number

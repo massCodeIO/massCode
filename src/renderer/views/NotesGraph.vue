@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NotesGraphPage from '@/components/notes/NotesGraphCanvas.vue'
+import NotesGraphPage from '@/components/notes/graph/Canvas.vue'
 </script>
 
 <template>

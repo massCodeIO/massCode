@@ -3,7 +3,7 @@ import {
   buildNotesGraphLayout,
   getNotesGraphConnectedCounts,
   getNotesGraphNodeRadius,
-} from '../notesGraphLayout'
+} from '../layout'
 
 describe('notesGraphLayout', () => {
   it('counts unique neighbors for each node regardless of link direction', () => {

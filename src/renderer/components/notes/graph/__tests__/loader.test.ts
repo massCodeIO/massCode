@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { loadNotesGraphIfNeeded } from '../notesGraphLoader'
+import { loadNotesGraphIfNeeded } from '../loader'
 
 describe('loadNotesGraphIfNeeded', () => {
   it('loads graph data when it is missing', () => {

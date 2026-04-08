@@ -11,7 +11,7 @@ import {
   shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
-} from '../notesGraphScene'
+} from '../scene'
 
 describe('notesGraphScene', () => {
   it('builds active neighborhood from the active node and its neighbors', () => {

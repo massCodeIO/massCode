@@ -15,7 +15,10 @@ import { router, RouterName } from '@/router'
 import { Folder, Plus } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
-import { getVisibleSelectedFolderIds } from './notesSidebarSelection'
+import {
+  getVisibleSelectedFolderIds,
+  shouldHandleFolderClick,
+} from './notesSidebarSelection'
 
 const tagsHandleRef = ref<HTMLElement>()
 
@@ -136,7 +139,14 @@ async function onClickNode({
     return
   }
 
-  if (notesState.folderId !== id || selectedFolderIds.value.length > 1) {
+  if (
+    shouldHandleFolderClick(
+      typeof route.name === 'string' ? route.name : undefined,
+      notesState.folderId,
+      id,
+      selectedFolderIds.value.length,
+    )
+  ) {
     isRestoreStateBlocked.value = true
     clearSearch()
 

@@ -10,3 +10,16 @@ export function getVisibleSelectedFolderIds(
 
   return selectedFolderIds
 }
+
+export function shouldHandleFolderClick(
+  routeName: string | null | undefined,
+  currentFolderId: number | undefined,
+  targetFolderId: number,
+  selectedCount: number,
+) {
+  return (
+    routeName !== RouterName.notesSpace
+    || currentFolderId !== targetFolderId
+    || selectedCount > 1
+  )
+}

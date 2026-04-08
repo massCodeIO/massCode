@@ -4,11 +4,11 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
+import { getNotesHeatmapPalette } from '../notesDashboardPalette'
 import {
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,
-} from './notesDashboardActivityHeatmap'
-import { getNotesHeatmapPalette } from './notesDashboardPalette'
+} from './activityHeatmap'
 
 const props = defineProps<{
   activity: NotesDashboardResponse['activity']

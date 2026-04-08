@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { getNotesHeatmapPalette } from '../../notesDashboardPalette'
 import {
   getNotesHeatmapColor,
   getNotesHeatmapTooltipLines,
-} from '../notesDashboardActivityHeatmap'
-import { getNotesHeatmapPalette } from '../notesDashboardPalette'
+} from '../activityHeatmap'
 
 describe('notesDashboardActivityHeatmap', () => {
   it('builds tooltip lines for a day with updates', () => {

@@ -1,4 +1,4 @@
-import type { NotesHeatmapPalette } from './notesDashboardPalette'
+import type { NotesHeatmapPalette } from '../notesDashboardPalette'
 
 const HEATMAP_ACTIVITY_THRESHOLDS = [1, 4, 7]
 

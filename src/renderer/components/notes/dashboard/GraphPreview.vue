@@ -9,7 +9,7 @@ import {
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 import { LocateFixed } from 'lucide-vue-next'
-import { getNotesGraphPalette } from './notesDashboardPalette'
+import { getNotesGraphPalette } from '../notesDashboardPalette'
 
 interface GraphSceneExposed {
   resetViewport: () => void

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { getNotesHeatmapTooltipLines } from '../notesDashboardActivityHeatmap'
+import {
+  getNotesHeatmapColor,
+  getNotesHeatmapTooltipLines,
+} from '../notesDashboardActivityHeatmap'
+import { getNotesHeatmapPalette } from '../notesDashboardPalette'
 
 describe('notesDashboardActivityHeatmap', () => {
   it('builds tooltip lines for a day with updates', () => {
@@ -15,5 +19,16 @@ describe('notesDashboardActivityHeatmap', () => {
       'Tue, Apr 7',
       '3 note updates',
     ])
+  })
+
+  it('uses fixed activity thresholds instead of stretching to local max', () => {
+    const palette = getNotesHeatmapPalette(true)
+
+    expect(getNotesHeatmapColor(0, palette)).toBe(palette.scale[0])
+    expect(getNotesHeatmapColor(1, palette)).toBe(palette.scale[1])
+    expect(getNotesHeatmapColor(2, palette)).toBe(palette.scale[1])
+    expect(getNotesHeatmapColor(4, palette)).toBe(palette.scale[2])
+    expect(getNotesHeatmapColor(7, palette)).toBe(palette.scale[3])
+    expect(getNotesHeatmapColor(10, palette)).toBe(palette.scale[4])
   })
 })

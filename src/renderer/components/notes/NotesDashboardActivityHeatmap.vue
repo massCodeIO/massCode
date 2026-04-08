@@ -4,8 +4,10 @@ import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
-import { scaleQuantize } from 'd3-scale'
-import { getNotesHeatmapTooltipLines } from './notesDashboardActivityHeatmap'
+import {
+  getNotesHeatmapColor,
+  getNotesHeatmapTooltipLines,
+} from './notesDashboardActivityHeatmap'
 import { getNotesHeatmapPalette } from './notesDashboardPalette'
 
 const props = defineProps<{
@@ -64,16 +66,6 @@ const cells = computed(() => {
   })
 })
 
-const maxCount = computed(() =>
-  Math.max(1, ...cells.value.map(cell => cell.count)),
-)
-
-const colorScale = computed(() =>
-  scaleQuantize<string>()
-    .domain([1, Math.max(1, maxCount.value)])
-    .range(heatmapPalette.value.scale.slice(1)),
-)
-
 const weeks = computed(() =>
   Array.from({ length: GRID_WEEKS }, (_, weekIndex) =>
     cells.value.slice(weekIndex * GRID_DAYS, weekIndex * GRID_DAYS + GRID_DAYS)),
@@ -122,11 +114,7 @@ const cellSize = computed(() => {
 })
 
 function getCellColor(count: number) {
-  if (count === 0) {
-    return heatmapPalette.value.scale[0]
-  }
-
-  return colorScale.value(count)
+  return getNotesHeatmapColor(count, heatmapPalette.value)
 }
 
 function getTooltipLines(label: string, count: number) {

@@ -13,15 +13,23 @@ defineProps<Props>()
       class="border-border flex items-start justify-between gap-3 border-b px-4 py-3"
     >
       <div class="min-w-0">
-        <h2 class="truncate text-sm font-semibold">
+        <UiText
+          as="h2"
+          variant="base"
+          weight="semibold"
+          class="truncate"
+        >
           {{ title }}
-        </h2>
-        <p
+        </UiText>
+        <UiText
           v-if="description"
-          class="text-muted-foreground mt-1 text-xs"
+          as="p"
+          variant="xs"
+          muted
+          class="mt-1"
         >
           {{ description }}
-        </p>
+        </UiText>
       </div>
       <div class="flex shrink-0 items-center gap-2">
         <slot name="actions" />

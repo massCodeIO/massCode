@@ -47,12 +47,21 @@ const widgetItems: Array<{
 <template>
   <div class="flex flex-col">
     <div class="border-border border-b px-4 py-3">
-      <div class="text-sm font-semibold">
+      <UiText
+        as="div"
+        variant="base"
+        weight="semibold"
+      >
         {{ i18n.t("notes.dashboard.widgets.title") }}
-      </div>
-      <div class="text-muted-foreground mt-1 text-xs">
+      </UiText>
+      <UiText
+        as="div"
+        variant="xs"
+        muted
+        class="mt-1"
+      >
         {{ i18n.t("notes.dashboard.widgets.description") }}
-      </div>
+      </UiText>
     </div>
     <div class="flex flex-col gap-3 px-4 py-4">
       <label
@@ -60,9 +69,12 @@ const widgetItems: Array<{
         :key="item.key"
         class="flex items-center justify-between gap-3"
       >
-        <span class="text-sm">
+        <UiText
+          as="span"
+          variant="base"
+        >
           {{ item.label }}
-        </span>
+        </UiText>
         <Switch
           :model-value="dashboardWidgets[item.key]"
           @update:model-value="

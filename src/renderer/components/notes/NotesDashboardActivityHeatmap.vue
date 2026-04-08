@@ -135,30 +135,36 @@ function getTooltipLines(label: string, count: number) {
       >
         <div class="w-full">
           <div
-            class="text-muted-foreground mb-2 grid text-[10px]"
+            class="mb-2 grid"
             :style="{
               columnGap: `${cellGap}px`,
               gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
               paddingLeft: '34px',
             }"
           >
-            <div
+            <UiText
               v-for="(label, index) in monthLabels"
               :key="`${label}-${index}`"
+              as="div"
+              variant="caption"
+              muted
               class="leading-none"
             >
               {{ label }}
-            </div>
+            </UiText>
           </div>
 
           <div class="flex gap-2">
             <div
-              class="text-muted-foreground grid grid-rows-7 pt-[1px] text-[10px]"
+              class="grid grid-rows-7 pt-[1px]"
               :style="{ rowGap: `${cellGap}px` }"
             >
-              <div
+              <UiText
                 v-for="(label, index) in DAY_LABELS"
                 :key="`${label}-${index}`"
+                as="div"
+                variant="caption"
+                muted
                 class="flex items-center justify-end pr-1 leading-none"
                 :style="{
                   height: `${cellSize}px`,
@@ -166,7 +172,7 @@ function getTooltipLines(label: string, count: number) {
                 }"
               >
                 {{ label }}
-              </div>
+              </UiText>
             </div>
 
             <div
@@ -194,12 +200,19 @@ function getTooltipLines(label: string, count: number) {
                   </Tooltip.TooltipTrigger>
                   <Tooltip.TooltipContent side="top">
                     <div class="flex flex-col gap-0.5">
-                      <span>{{
-                        getTooltipLines(cell.label, cell.count)[0]
-                      }}</span>
-                      <span class="text-muted-foreground">
+                      <UiText
+                        as="span"
+                        variant="xs"
+                      >
+                        {{ getTooltipLines(cell.label, cell.count)[0] }}
+                      </UiText>
+                      <UiText
+                        as="span"
+                        variant="xs"
+                        muted
+                      >
                         {{ getTooltipLines(cell.label, cell.count)[1] }}
-                      </span>
+                      </UiText>
                     </div>
                   </Tooltip.TooltipContent>
                 </Tooltip.Tooltip>
@@ -218,18 +231,27 @@ function getTooltipLines(label: string, count: number) {
           </div>
         </div>
 
-        <div
-          class="text-muted-foreground flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between"
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
         >
-          <div>
+          <span>
             {{
               i18n.t("notes.dashboard.activity.totalLastYear", {
                 count: totalUpdates,
               })
             }}
-          </div>
+          </span>
           <div class="flex items-center gap-2">
-            <span>{{ i18n.t("notes.dashboard.activity.less") }}</span>
+            <UiText
+              as="span"
+              variant="xs"
+              muted
+            >
+              {{ i18n.t("notes.dashboard.activity.less") }}
+            </UiText>
             <div class="flex items-center gap-[4px]">
               <span
                 v-for="color in legendColors"
@@ -238,9 +260,15 @@ function getTooltipLines(label: string, count: number) {
                 :style="{ backgroundColor: color }"
               />
             </div>
-            <span>{{ i18n.t("notes.dashboard.activity.more") }}</span>
+            <UiText
+              as="span"
+              variant="xs"
+              muted
+            >
+              {{ i18n.t("notes.dashboard.activity.more") }}
+            </UiText>
           </div>
-        </div>
+        </UiText>
       </div>
     </Tooltip.TooltipProvider>
   </NotesDashboardSection>

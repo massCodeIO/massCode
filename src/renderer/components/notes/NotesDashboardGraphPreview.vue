@@ -103,14 +103,22 @@ const previewGraph = computed(() => {
         />
       </div>
       <div
-        class="border-border/60 flex items-center justify-between border-t px-3 py-2 text-xs"
+        class="border-border/60 flex items-center justify-between border-t px-3 py-2"
         :style="{ color: graphPalette.footerText }"
       >
-        <span>{{ i18n.t("notes.dashboard.graphPreview.caption") }}</span>
-        <span>
+        <UiText
+          as="span"
+          variant="xs"
+        >
+          {{ i18n.t("notes.dashboard.graphPreview.caption") }}
+        </UiText>
+        <UiText
+          as="span"
+          variant="xs"
+        >
           {{ previewGraph.nodes.length }} /
           {{ props.graphPreview.nodes.length }}
-        </span>
+        </UiText>
       </div>
     </div>
     <UiEmptyPlaceholder

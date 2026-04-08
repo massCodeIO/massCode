@@ -26,14 +26,24 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
         class="hover:bg-accent-hover rounded-lg px-3 py-2 text-left transition-colors"
         @click="openNoteInNotesWorkspace(note.id)"
       >
-        <div class="truncate text-sm font-medium">
+        <UiText
+          as="div"
+          variant="base"
+          weight="medium"
+          class="truncate"
+        >
           {{ note.name }}
-        </div>
-        <div class="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
+        </UiText>
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          class="mt-1 flex items-center gap-2"
+        >
           <span>{{ note.folder?.name || i18n.t("common.inbox") }}</span>
           <span>•</span>
           <span>{{ dateFormatter.format(note.updatedAt) }}</span>
-        </div>
+        </UiText>
       </button>
     </div>
     <UiEmptyPlaceholder

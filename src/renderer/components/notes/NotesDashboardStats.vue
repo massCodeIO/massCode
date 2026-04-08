@@ -13,36 +13,72 @@ const numberFormatter = new Intl.NumberFormat()
   <NotesDashboardSection :title="i18n.t('notes.dashboard.stats.title')">
     <div class="grid h-full grid-cols-2 grid-rows-2 gap-3">
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.stats.notes") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ numberFormatter.format(stats.notesCount) }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.stats.words") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ numberFormatter.format(stats.wordsCount) }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.stats.folders") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ numberFormatter.format(stats.foldersCount) }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.stats.tags") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ numberFormatter.format(stats.tagsCount) }}
-        </div>
+        </UiText>
       </div>
     </div>
   </NotesDashboardSection>

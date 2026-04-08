@@ -22,16 +22,26 @@ const { openNoteInNotesWorkspace } = useNotesWorkspaceNavigation()
         class="hover:bg-accent-hover rounded-lg px-3 py-2 text-left transition-colors"
         @click="openNoteInNotesWorkspace(note.id)"
       >
-        <div class="truncate text-sm font-medium">
+        <UiText
+          as="div"
+          variant="base"
+          weight="medium"
+          class="truncate"
+        >
           {{ note.name }}
-        </div>
-        <div class="text-muted-foreground mt-1 text-xs">
+        </UiText>
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          class="mt-1"
+        >
           {{
             i18n.t("notes.dashboard.topLinked.incoming", {
               count: note.incomingLinksCount,
             })
           }}
-        </div>
+        </UiText>
       </button>
     </div>
     <UiEmptyPlaceholder

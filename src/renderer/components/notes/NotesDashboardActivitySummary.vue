@@ -13,36 +13,72 @@ defineProps<{
   >
     <div class="grid h-full grid-cols-2 grid-rows-2 gap-3">
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.activity.updatedToday") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ activity.notesUpdatedToday }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.activity.updatedWeek") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ activity.notesUpdatedLast7Days }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.activity.currentStreak") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ activity.streak.current }}
-        </div>
+        </UiText>
       </div>
       <div class="rounded-lg p-4">
-        <div class="text-muted-foreground text-xs uppercase">
+        <UiText
+          as="div"
+          variant="xs"
+          muted
+          uppercase
+        >
           {{ i18n.t("notes.dashboard.activity.bestStreak") }}
-        </div>
-        <div class="mt-2 text-2xl font-semibold">
+        </UiText>
+        <UiText
+          as="div"
+          weight="semibold"
+          class="mt-2 text-2xl leading-none"
+        >
           {{ activity.streak.max }}
-        </div>
+        </UiText>
       </div>
     </div>
   </NotesDashboardSection>

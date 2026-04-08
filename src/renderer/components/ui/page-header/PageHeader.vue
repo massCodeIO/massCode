@@ -10,12 +10,21 @@ defineProps<{
     class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
   >
     <div>
-      <h1 class="text-xl font-semibold">
+      <UiText
+        as="h1"
+        variant="xl"
+        weight="semibold"
+      >
         {{ title }}
-      </h1>
-      <p class="text-muted-foreground mt-1 text-sm">
+      </UiText>
+      <UiText
+        as="p"
+        variant="base"
+        muted
+        class="mt-1"
+      >
         {{ description }}
-      </p>
+      </UiText>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <slot name="actions" />

@@ -41,6 +41,12 @@ interface LegacyStateFolderLike {
   parentId: number | null
 }
 
+interface MarkdownStateCollectionsLike {
+  folders?: unknown[]
+  snippets?: unknown[]
+  tags?: unknown[]
+}
+
 function toTopLevelEntry(relativePath: string): string | null {
   const normalized = relativePath
     .replaceAll('\\', '/')
@@ -230,6 +236,25 @@ export function getPaths(vaultPath: string): Paths {
     statePath: path.join(metaDirPath, 'state.json'),
     trashDirPath: path.join(metaDirPath, TRASH_DIR_NAME),
     vaultPath: codeVaultPath,
+  }
+}
+
+export function hasMarkdownVaultData(vaultPath: string): boolean {
+  const { statePath } = getPaths(vaultPath)
+
+  if (!fs.pathExistsSync(statePath)) {
+    return false
+  }
+
+  try {
+    const state = fs.readJSONSync(statePath) as MarkdownStateCollectionsLike
+
+    return [state.folders, state.snippets, state.tags].some(
+      collection => Array.isArray(collection) && collection.length > 0,
+    )
+  }
+  catch {
+    return false
   }
 }
 

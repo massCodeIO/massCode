@@ -33,6 +33,7 @@ export {
   getNextFolderOrder,
   getPaths,
   getVaultPath,
+  hasMarkdownVaultData,
   normalizeDirectoryPath,
 } from './paths'
 

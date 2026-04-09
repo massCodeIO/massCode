@@ -11,7 +11,7 @@
   /* Core */
   --background: oklch(100% 0 0);
   --foreground: oklch(20% 0 0);
-  --card: color-mix(in oklch, var(--foreground) 4%, var(--background));
+  --card: color-mix(in oklch, var(--foreground) 2%, var(--background));
   --card-foreground: oklch(20% 0 0);
   --popover: var(--background);
   --popover-foreground: oklch(20% 0 0);

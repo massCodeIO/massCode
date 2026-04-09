@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
+import * as Card from '@/components/ui/shadcn/card'
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
@@ -124,152 +125,165 @@ function getTooltipLines(label: string, count: number) {
 </script>
 
 <template>
-  <NotesDashboardSection
-    :title="i18n.t('notes.dashboard.activity.heatmapTitle')"
-    :description="i18n.t('notes.dashboard.activity.heatmapDescription')"
-  >
-    <Tooltip.TooltipProvider :delay-duration="0">
-      <div
-        ref="heatmapRef"
-        class="space-y-3"
-      >
-        <div class="w-full">
-          <div
-            class="mb-2 grid"
-            :style="{
-              columnGap: `${cellGap}px`,
-              gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
-              paddingLeft: '34px',
-            }"
-          >
-            <UiText
-              v-for="(label, index) in monthLabels"
-              :key="`${label}-${index}`"
-              as="div"
-              variant="caption"
-              muted
-              class="leading-none"
-            >
-              {{ label }}
-            </UiText>
-          </div>
-
-          <div class="flex gap-2">
+  <Card.Card class="h-full">
+    <Card.CardHeader class="border-b">
+      <Card.CardTitle>
+        {{ i18n.t("notes.dashboard.activity.heatmapTitle") }}
+      </Card.CardTitle>
+      <Card.CardDescription>
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("notes.dashboard.activity.heatmapDescription") }}
+        </UiText>
+      </Card.CardDescription>
+    </Card.CardHeader>
+    <Card.CardContent class="min-h-0 flex-1">
+      <Tooltip.TooltipProvider :delay-duration="0">
+        <div
+          ref="heatmapRef"
+          class="space-y-3"
+        >
+          <div class="w-full">
             <div
-              class="grid grid-rows-7 pt-[1px]"
-              :style="{ rowGap: `${cellGap}px` }"
+              class="mb-2 grid"
+              :style="{
+                columnGap: `${cellGap}px`,
+                gridTemplateColumns: `repeat(${GRID_WEEKS}, minmax(0, ${cellSize}px))`,
+                paddingLeft: '34px',
+              }"
             >
               <UiText
-                v-for="(label, index) in DAY_LABELS"
+                v-for="(label, index) in monthLabels"
                 :key="`${label}-${index}`"
                 as="div"
                 variant="caption"
                 muted
-                class="flex items-center justify-end pr-1 leading-none"
-                :style="{
-                  height: `${cellSize}px`,
-                  width: '24px',
-                }"
+                class="leading-none"
               >
                 {{ label }}
               </UiText>
             </div>
 
-            <div
-              class="grid grid-flow-col grid-rows-7"
-              :style="{
-                columnGap: `${cellGap}px`,
-                rowGap: `${cellGap}px`,
-              }"
-            >
-              <template
-                v-for="cell in cells"
-                :key="cell.key"
+            <div class="flex gap-2">
+              <div
+                class="grid grid-rows-7 pt-[1px]"
+                :style="{ rowGap: `${cellGap}px` }"
               >
-                <Tooltip.Tooltip v-if="cell.count > 0">
-                  <Tooltip.TooltipTrigger as-child>
-                    <button
-                      type="button"
-                      class="rounded-[2px] transition-transform hover:scale-115"
-                      :style="{
-                        backgroundColor: getCellColor(cell.count),
-                        height: `${cellSize}px`,
-                        width: `${cellSize}px`,
-                      }"
-                    />
-                  </Tooltip.TooltipTrigger>
-                  <Tooltip.TooltipContent side="top">
-                    <div class="flex flex-col gap-0.5">
-                      <UiText
-                        as="span"
-                        variant="xs"
-                      >
-                        {{ getTooltipLines(cell.label, cell.count)[0] }}
-                      </UiText>
-                      <UiText
-                        as="span"
-                        variant="xs"
-                        muted
-                      >
-                        {{ getTooltipLines(cell.label, cell.count)[1] }}
-                      </UiText>
-                    </div>
-                  </Tooltip.TooltipContent>
-                </Tooltip.Tooltip>
-                <button
-                  v-else
-                  type="button"
-                  class="rounded-[2px]"
+                <UiText
+                  v-for="(label, index) in DAY_LABELS"
+                  :key="`${label}-${index}`"
+                  as="div"
+                  variant="caption"
+                  muted
+                  class="flex items-center justify-end pr-1 leading-none"
                   :style="{
-                    backgroundColor: getCellColor(cell.count),
                     height: `${cellSize}px`,
-                    width: `${cellSize}px`,
+                    width: '24px',
                   }"
-                />
-              </template>
-            </div>
-          </div>
-        </div>
+                >
+                  {{ label }}
+                </UiText>
+              </div>
 
-        <UiText
-          as="div"
-          variant="xs"
-          muted
-          class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-        >
-          <span>
-            {{
-              i18n.t("notes.dashboard.activity.totalLastYear", {
-                count: totalUpdates,
-              })
-            }}
-          </span>
-          <div class="flex items-center gap-2">
-            <UiText
-              as="span"
-              variant="xs"
-              muted
-            >
-              {{ i18n.t("notes.dashboard.activity.less") }}
-            </UiText>
-            <div class="flex items-center gap-[4px]">
-              <span
-                v-for="color in legendColors"
-                :key="color"
-                class="h-3 w-3 rounded-[2px]"
-                :style="{ backgroundColor: color }"
-              />
+              <div
+                class="grid grid-flow-col grid-rows-7"
+                :style="{
+                  columnGap: `${cellGap}px`,
+                  rowGap: `${cellGap}px`,
+                }"
+              >
+                <template
+                  v-for="cell in cells"
+                  :key="cell.key"
+                >
+                  <Tooltip.Tooltip v-if="cell.count > 0">
+                    <Tooltip.TooltipTrigger as-child>
+                      <button
+                        type="button"
+                        class="rounded-[2px] transition-transform hover:scale-115"
+                        :style="{
+                          backgroundColor: getCellColor(cell.count),
+                          height: `${cellSize}px`,
+                          width: `${cellSize}px`,
+                        }"
+                      />
+                    </Tooltip.TooltipTrigger>
+                    <Tooltip.TooltipContent side="top">
+                      <div class="flex flex-col gap-0.5">
+                        <UiText
+                          as="span"
+                          variant="xs"
+                        >
+                          {{ getTooltipLines(cell.label, cell.count)[0] }}
+                        </UiText>
+                        <UiText
+                          as="span"
+                          variant="xs"
+                          muted
+                        >
+                          {{ getTooltipLines(cell.label, cell.count)[1] }}
+                        </UiText>
+                      </div>
+                    </Tooltip.TooltipContent>
+                  </Tooltip.Tooltip>
+                  <button
+                    v-else
+                    type="button"
+                    class="rounded-[2px]"
+                    :style="{
+                      backgroundColor: getCellColor(cell.count),
+                      height: `${cellSize}px`,
+                      width: `${cellSize}px`,
+                    }"
+                  />
+                </template>
+              </div>
             </div>
-            <UiText
-              as="span"
-              variant="xs"
-              muted
-            >
-              {{ i18n.t("notes.dashboard.activity.more") }}
-            </UiText>
           </div>
-        </UiText>
-      </div>
-    </Tooltip.TooltipProvider>
-  </NotesDashboardSection>
+
+          <UiText
+            as="div"
+            variant="xs"
+            muted
+            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+          >
+            <span>
+              {{
+                i18n.t("notes.dashboard.activity.totalLastYear", {
+                  count: totalUpdates,
+                })
+              }}
+            </span>
+            <div class="flex items-center gap-2">
+              <UiText
+                as="span"
+                variant="xs"
+                muted
+              >
+                {{ i18n.t("notes.dashboard.activity.less") }}
+              </UiText>
+              <div class="flex items-center gap-[4px]">
+                <span
+                  v-for="color in legendColors"
+                  :key="color"
+                  class="h-3 w-3 rounded-[2px]"
+                  :style="{ backgroundColor: color }"
+                />
+              </div>
+              <UiText
+                as="span"
+                variant="xs"
+                muted
+              >
+                {{ i18n.t("notes.dashboard.activity.more") }}
+              </UiText>
+            </div>
+          </UiText>
+        </div>
+      </Tooltip.TooltipProvider>
+    </Card.CardContent>
+  </Card.Card>
 </template>

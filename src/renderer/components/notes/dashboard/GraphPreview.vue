@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
+import * as Card from '@/components/ui/shadcn/card'
 import {
   useNotesDashboard,
   useNotesWorkspaceNavigation,
@@ -67,46 +68,53 @@ const previewGraph = computed(() => {
 </script>
 
 <template>
-  <NotesDashboardSection :title="i18n.t('notes.dashboard.graphPreview.title')">
-    <div
-      v-if="previewGraph.nodes.length"
-      class="relative overflow-hidden rounded-lg border"
-      :style="{ backgroundColor: graphPalette.background }"
-    >
-      <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="outline"
-          @click="navigateToGraph"
-        >
-          <Expand />
-        </Button>
-        <Button
-          size="icon"
-          variant="outline"
-          @click="graphSceneRef?.resetViewport()"
-        >
-          <LocateFixed />
-        </Button>
-      </div>
+  <Card.Card class="h-full">
+    <Card.CardHeader class="border-b">
+      <Card.CardTitle>
+        {{ i18n.t("notes.dashboard.graphPreview.title") }}
+      </Card.CardTitle>
+    </Card.CardHeader>
+    <Card.CardContent class="min-h-0 flex-1">
       <div
-        ref="graphViewportRef"
-        class="h-64 xl:h-[22rem]"
+        v-if="previewGraph.nodes.length"
+        class="relative overflow-hidden rounded-lg border"
+        :style="{ backgroundColor: graphPalette.background }"
       >
-        <NotesGraphScene
-          ref="graphSceneRef"
-          compact
-          :nodes="previewGraph.nodes"
-          :edges="previewGraph.edges"
-          :width="graphSceneSize.width"
-          :height="graphSceneSize.height"
-          @node-click="openNoteInNotesWorkspace"
-        />
+        <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="outline"
+            @click="navigateToGraph"
+          >
+            <Expand />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            @click="graphSceneRef?.resetViewport()"
+          >
+            <LocateFixed />
+          </Button>
+        </div>
+        <div
+          ref="graphViewportRef"
+          class="h-64 xl:h-[22rem]"
+        >
+          <NotesGraphScene
+            ref="graphSceneRef"
+            compact
+            :nodes="previewGraph.nodes"
+            :edges="previewGraph.edges"
+            :width="graphSceneSize.width"
+            :height="graphSceneSize.height"
+            @node-click="openNoteInNotesWorkspace"
+          />
+        </div>
       </div>
-    </div>
-    <UiEmptyPlaceholder
-      v-else
-      :text="i18n.t('notes.dashboard.graphPreview.empty')"
-    />
-  </NotesDashboardSection>
+      <UiEmptyPlaceholder
+        v-else
+        :text="i18n.t('notes.dashboard.graphPreview.empty')"
+      />
+    </Card.CardContent>
+  </Card.Card>
 </template>

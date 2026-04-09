@@ -8,6 +8,7 @@
   "files": [
     "build/renderer/**/*",
     "build/main/**/*",
+    "build/shared/**/*",
     "!build/**/*.map"
   ],
   "artifactName": "${productName}-${version}-${arch}-sponsored.${ext}",

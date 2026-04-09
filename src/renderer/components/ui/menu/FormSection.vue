@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import * as Card from '@/components/ui/shadcn/card'
 import { cn } from '@/utils'
 
 interface Props {
@@ -28,21 +29,21 @@ const props = withDefaults(defineProps<Props>(), {
         {{ description }}
       </p>
     </div>
-    <div
+    <Card.Card
       :class="
         cn(
-          'rounded-lg border p-5',
           props.variant === 'danger'
-            ? 'border-destructive/20 bg-[color-mix(in_oklch,var(--destructive)_5%,var(--background))]'
-            : 'border-border bg-[color-mix(in_oklch,var(--foreground)_4%,var(--background))]',
+            && 'border-destructive/20 bg-[color-mix(in_oklch,var(--destructive)_5%,var(--card))]',
         )
       "
     >
-      <div
-        class="divide-border/40 divide-y [&>*]:py-4 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0"
-      >
-        <slot />
-      </div>
-    </div>
+      <Card.CardContent class="p-5">
+        <div
+          class="divide-border/40 divide-y [&>*]:py-4 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0"
+        >
+          <slot />
+        </div>
+      </Card.CardContent>
+    </Card.Card>
   </div>
 </template>

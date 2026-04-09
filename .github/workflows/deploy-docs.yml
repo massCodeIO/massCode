@@ -1,11 +1,6 @@
 name: Deploy Docs
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'docs/website/**'
   workflow_dispatch:
 
 jobs:

@@ -52,7 +52,7 @@
     "dashboard": {
       "label": "Dashboard",
       "title": "Notes Dashboard",
-      "description": "A quick overview of note activity, links, and structure.",
+      "description": "Your notes activity, links, and structure.",
       "empty": "All dashboard widgets are hidden.",
       "error": "Failed to load notes dashboard.",
       "actions": {

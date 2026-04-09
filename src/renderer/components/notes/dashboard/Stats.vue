@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import type { NotesDashboardResponse } from '@/services/api/generated'
+import { useTheme } from '@/composables'
 import { i18n } from '@/electron'
+import { getNotesHeatmapPalette } from '../shared/heatmapPalette'
 
 defineProps<{
   activity: NotesDashboardResponse['activity']
   stats: NotesDashboardResponse['stats']
 }>()
 
+const { isDark } = useTheme()
 const numberFormatter = new Intl.NumberFormat()
+const heatmapPalette = computed(() => getNotesHeatmapPalette(isDark.value))
+const activityDotStyle = computed(() => ({
+  backgroundColor: heatmapPalette.value.scale[3],
+}))
 </script>
 
 <template>
@@ -53,7 +60,12 @@ const numberFormatter = new Intl.NumberFormat()
           variant="xs"
           muted
           uppercase
+          class="flex items-center gap-2"
         >
+          <span
+            class="inline-block size-2 rounded-full"
+            :style="activityDotStyle"
+          />
           {{ i18n.t("notes.dashboard.activity.updatedWeek") }}
         </UiText>
         <UiText
@@ -104,7 +116,12 @@ const numberFormatter = new Intl.NumberFormat()
           variant="xs"
           muted
           uppercase
+          class="flex items-center gap-2"
         >
+          <span
+            class="inline-block size-2 rounded-full"
+            :style="activityDotStyle"
+          />
           {{ i18n.t("notes.dashboard.activity.updatedToday") }}
         </UiText>
         <UiText

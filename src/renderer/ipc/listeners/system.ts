@@ -1,4 +1,6 @@
 import {
+  normalizeCodeSelectionState,
+  normalizeNotesSelectionState,
   useApp,
   useFolders,
   useMathNotebook,
@@ -12,6 +14,7 @@ import {
   useSnippetUpdate,
   useSonner,
   useStorageMutation,
+  useTags,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -21,13 +24,14 @@ import { handleDeepLink } from './deepLinks'
 
 const { state, isCodeSpaceInitialized } = useApp()
 const { getFolders } = useFolders()
-const { getSnippets, selectFirstSnippet, displayedSnippets } = useSnippets()
+const { getTags } = useTags()
+const { selectFirstSnippet, displayedSnippets } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
-const { getNotes, hasBusyNoteContentUpdates } = useNotes()
+const { hasBusyNoteContentUpdates } = useNotes()
 const { getNoteTags } = useNoteTags()
 const { getNotesDashboard } = useNotesDashboard()
 const { getNotesGraph } = useNotesGraph()
@@ -38,7 +42,8 @@ async function refreshCodeSpace() {
   const selectedSnippetId = state.snippetId
 
   await getFolders(false)
-  await getSnippets()
+  await getTags()
+  await normalizeCodeSelectionState()
 
   if (!selectedSnippetId) {
     return
@@ -64,8 +69,8 @@ async function refreshAfterStorageSync() {
       break
     case 'notes':
       await getNoteFolders()
-      await getNotes()
       await getNoteTags()
+      await normalizeNotesSelectionState()
 
       if (router.currentRoute.value.name === RouterName.notesDashboard) {
         await getNotesDashboard()

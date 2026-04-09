@@ -10,6 +10,7 @@ interface SetupOptions {
 async function setup(options: SetupOptions = {}) {
   vi.resetModules()
 
+  const callOrder: string[] = []
   const isNotesSpaceInitialized = ref(options.isInitialized ?? false)
   const pendingNotesNavigation = ref(false)
   const notesState = {
@@ -20,9 +21,18 @@ async function setup(options: SetupOptions = {}) {
     (options.displayedNoteIds ?? []).map(id => ({ id })),
   )
 
-  const getNoteFolders = vi.fn(async () => undefined)
-  const getNotes = vi.fn(async () => undefined)
-  const getNoteTags = vi.fn(async () => undefined)
+  const getNoteFolders = vi.fn(async () => {
+    callOrder.push('getNoteFolders')
+  })
+  const getNotes = vi.fn(async () => {
+    callOrder.push('getNotes')
+  })
+  const getNoteTags = vi.fn(async () => {
+    callOrder.push('getNoteTags')
+  })
+  const normalizeNotesSelectionState = vi.fn(async () => {
+    callOrder.push('normalizeNotesSelectionState')
+  })
   const selectFirstNote = vi.fn(() => {
     const firstNote = displayedNotes.value?.[0]
     notesState.noteId = firstNote?.id
@@ -48,6 +58,9 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('../useNoteTags', () => ({
     useNoteTags: () => ({ getNoteTags }),
   }))
+  vi.doMock('../useNotesSelectionNormalization', () => ({
+    normalizeNotesSelectionState,
+  }))
   vi.doMock('../useNoteSearch', () => ({
     useNoteSearch: () => ({ displayedNotes }),
   }))
@@ -57,11 +70,13 @@ async function setup(options: SetupOptions = {}) {
   )
 
   return {
+    callOrder,
     getNoteFolders,
     getNotes,
     getNoteTags,
     initNotesSpace: useNotesSpaceInitialization().initNotesSpace,
     isNotesSpaceInitialized,
+    normalizeNotesSelectionState,
     selectFirstNote,
     hideNotesViewModes,
     showAllNotesPanels,
@@ -73,14 +88,28 @@ beforeEach(() => {
 })
 
 describe('useNotesSpaceInitialization', () => {
+  it('loads note folders and tags before normalizing notes selection state', async () => {
+    const context = await setup({ noteId: 2, displayedNoteIds: [1, 2, 3] })
+
+    await context.initNotesSpace()
+
+    expect(context.callOrder).toEqual([
+      'getNoteFolders',
+      'getNoteTags',
+      'normalizeNotesSelectionState',
+    ])
+    expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
+    expect(context.getNotes).not.toHaveBeenCalled()
+  })
+
   it('loads notes entities and keeps selected note when it exists', async () => {
     const context = await setup({ noteId: 2, displayedNoteIds: [1, 2, 3] })
 
     await context.initNotesSpace()
 
     expect(context.getNoteFolders).toHaveBeenCalledTimes(1)
-    expect(context.getNotes).toHaveBeenCalledTimes(1)
     expect(context.getNoteTags).toHaveBeenCalledTimes(1)
+    expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
     expect(context.selectFirstNote).not.toHaveBeenCalled()
     expect(context.hideNotesViewModes).not.toHaveBeenCalled()
     expect(context.showAllNotesPanels).not.toHaveBeenCalled()
@@ -164,8 +193,8 @@ describe('useNotesSpaceInitialization', () => {
     await context.initNotesSpace()
 
     expect(context.getNoteFolders).toHaveBeenCalledTimes(1)
-    expect(context.getNotes).toHaveBeenCalledTimes(1)
     expect(context.getNoteTags).toHaveBeenCalledTimes(1)
+    expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
     expect(context.isNotesSpaceInitialized.value).toBe(true)
   })
 })

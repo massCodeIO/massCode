@@ -1,5 +1,4 @@
 /* eslint-disable node/prefer-global/process */
-import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
@@ -145,29 +144,10 @@ else {
           = (store.preferences.get('storage.vaultPath') as string | null)
             || path.join(storagePath, 'markdown-vault')
         ensureFlatSpacesLayout(vaultPath)
-        const statePath = path.join(
-          vaultPath,
-          'code',
-          '.masscode',
-          'state.json',
-        )
-        let vaultHasData = false
-
-        try {
-          const stateContent = readFileSync(statePath, 'utf8')
-          const state = JSON.parse(stateContent) as {
-            folders?: unknown[]
-            snippets?: unknown[]
-            tags?: unknown[]
-          }
-
-          vaultHasData = [state.folders, state.snippets, state.tags].some(
-            collection => Array.isArray(collection) && collection.length > 0,
-          )
-        }
-        catch {
-          // state.json doesn't exist or is invalid; treat the vault as empty
-        }
+        const { hasMarkdownVaultData } = lazyRequire(
+          './storage/providers/markdown',
+        ) as typeof import('./storage/providers/markdown')
+        const vaultHasData = hasMarkdownVaultData(vaultPath)
 
         if (!vaultHasData) {
           const { closeDB } = lazyRequire('./db') as typeof import('./db')

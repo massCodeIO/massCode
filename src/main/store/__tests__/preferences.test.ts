@@ -267,7 +267,6 @@ describe('app store sanitization', () => {
     expect(app.get('notes.dashboard.widgets' as any)).toEqual({
       stats: false,
       activityHeatmap: true,
-      activitySummary: true,
       recent: false,
       graphPreview: true,
       topLinked: true,

@@ -33,54 +33,9 @@ function buildActivity(updatedAtList: number[]) {
     days[dayKey] = (days[dayKey] ?? 0) + 1
   })
 
-  const activeDays = Object.keys(days).sort()
-  let max = 0
-  let current = 0
-  let streak = 0
-  let previousDayTime: number | null = null
-
-  activeDays.forEach((dayKey) => {
-    const dayTime = new Date(`${dayKey}T00:00:00`).getTime()
-
-    if (
-      previousDayTime !== null
-      && dayTime - previousDayTime === 24 * 60 * 60 * 1000
-    ) {
-      streak += 1
-    }
-    else {
-      streak = 1
-    }
-
-    max = Math.max(max, streak)
-    previousDayTime = dayTime
-  })
-
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayTime = today.getTime()
-  const todayKey = getDayKey(todayTime)
-  const yesterdayKey = getDayKey(todayTime - 24 * 60 * 60 * 1000)
-
-  if (days[todayKey]) {
-    current = 1
-    let cursor = todayTime - 24 * 60 * 60 * 1000
-
-    while (days[getDayKey(cursor)]) {
-      current += 1
-      cursor -= 24 * 60 * 60 * 1000
-    }
-  }
-  else if (days[yesterdayKey]) {
-    current = 1
-    let cursor = todayTime - 2 * 24 * 60 * 60 * 1000
-
-    while (days[getDayKey(cursor)]) {
-      current += 1
-      cursor -= 24 * 60 * 60 * 1000
-    }
-  }
-
   const todayStart = todayTime
   const sevenDaysAgo = todayTime - 6 * 24 * 60 * 60 * 1000
 
@@ -92,10 +47,6 @@ function buildActivity(updatedAtList: number[]) {
     notesUpdatedToday: updatedAtList.filter(
       updatedAt => updatedAt >= todayStart,
     ).length,
-    streak: {
-      current,
-      max,
-    },
   }
 }
 

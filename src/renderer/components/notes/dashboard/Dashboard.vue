@@ -88,24 +88,11 @@ onUnmounted(() => {
         v-else-if="dashboardData"
         class="flex flex-col gap-4"
       >
-        <div
-          v-if="dashboardWidgets.stats || dashboardWidgets.activitySummary"
-          class="grid grid-cols-2 gap-4"
-        >
-          <div
-            v-if="dashboardWidgets.stats"
-            :class="
-              dashboardWidgets.activitySummary ? 'col-span-1' : 'col-span-2'
-            "
-          >
-            <NotesDashboardStats :stats="dashboardData.stats" />
-          </div>
-          <div
-            v-if="dashboardWidgets.activitySummary"
-            :class="dashboardWidgets.stats ? 'col-span-1' : 'col-span-2'"
-          >
-            <NotesDashboardActivitySummary :activity="dashboardData.activity" />
-          </div>
+        <div v-if="dashboardWidgets.stats">
+          <NotesDashboardStats
+            :activity="dashboardData.activity"
+            :stats="dashboardData.stats"
+          />
         </div>
 
         <div v-if="dashboardWidgets.activityHeatmap">

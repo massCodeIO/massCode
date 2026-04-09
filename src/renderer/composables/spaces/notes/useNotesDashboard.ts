@@ -6,7 +6,6 @@ import { api } from '@/services/api'
 export interface NotesDashboardWidgetsState {
   stats: boolean
   activityHeatmap: boolean
-  activitySummary: boolean
   recent: boolean
   graphPreview: boolean
   topLinked: boolean
@@ -15,7 +14,6 @@ export interface NotesDashboardWidgetsState {
 const DEFAULT_WIDGETS: NotesDashboardWidgetsState = {
   stats: true,
   activityHeatmap: true,
-  activitySummary: true,
   recent: true,
   graphPreview: true,
   topLinked: true,
@@ -24,11 +22,15 @@ const DEFAULT_WIDGETS: NotesDashboardWidgetsState = {
 function readDashboardWidgets(): NotesDashboardWidgetsState {
   const saved = store.app.get('notes.dashboard.widgets') as
     | Partial<NotesDashboardWidgetsState>
+    | Record<string, boolean>
     | undefined
 
   return {
-    ...DEFAULT_WIDGETS,
-    ...saved,
+    stats: saved?.stats ?? DEFAULT_WIDGETS.stats,
+    activityHeatmap: saved?.activityHeatmap ?? DEFAULT_WIDGETS.activityHeatmap,
+    recent: saved?.recent ?? DEFAULT_WIDGETS.recent,
+    graphPreview: saved?.graphPreview ?? DEFAULT_WIDGETS.graphPreview,
+    topLinked: saved?.topLinked ?? DEFAULT_WIDGETS.topLinked,
   }
 }
 

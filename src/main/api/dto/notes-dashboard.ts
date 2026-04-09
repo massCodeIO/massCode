@@ -9,10 +9,6 @@ const notesDashboardResponse = t.Object({
   }),
   activity: t.Object({
     days: t.Record(t.String(), t.Number()),
-    streak: t.Object({
-      current: t.Number(),
-      max: t.Number(),
-    }),
     notesUpdatedToday: t.Number(),
     notesUpdatedLast7Days: t.Number(),
   }),

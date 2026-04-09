@@ -41,7 +41,6 @@ const APP_STORE_DEFAULTS: AppStore = {
       widgets: {
         stats: true,
         activityHeatmap: true,
-        activitySummary: true,
         recent: true,
         graphPreview: true,
         topLinked: true,
@@ -220,10 +219,6 @@ function sanitizeAppStore(value: unknown): AppStore {
               typeof dashSource.activityHeatmap === 'boolean'
                 ? dashSource.activityHeatmap
                 : defaults.activityHeatmap,
-            activitySummary:
-              typeof dashSource.activitySummary === 'boolean'
-                ? dashSource.activitySummary
-                : defaults.activitySummary,
             recent:
               typeof dashSource.recent === 'boolean'
                 ? dashSource.recent

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-async function setup() {
+async function setup(savedWidgets?: Record<string, boolean>) {
   vi.resetModules()
 
   const vue = await import('vue')
@@ -13,7 +13,7 @@ async function setup() {
 
   const getDashboard = vi.fn()
   const push = vi.fn(async () => undefined)
-  const storeGet = vi.fn(() => undefined)
+  const storeGet = vi.fn(() => savedWidgets)
   const storeSet = vi.fn()
 
   vi.doMock('@/services/api', () => ({
@@ -59,6 +59,30 @@ beforeEach(() => {
 })
 
 describe('useNotesDashboard', () => {
+  it('drops legacy activity summary widget from persisted settings', async () => {
+    const { context, storeGet } = await setup({
+      activitySummary: true,
+      activityHeatmap: false,
+      graphPreview: false,
+      recent: false,
+      stats: false,
+      topLinked: false,
+    })
+
+    expect(storeGet).toHaveBeenCalledWith('notes.dashboard.widgets')
+    expect(context.dashboardWidgets.value).toEqual({
+      activityHeatmap: false,
+      graphPreview: false,
+      recent: false,
+      stats: false,
+      topLinked: false,
+    })
+    expect(
+      Object.hasOwn(context.dashboardWidgets.value, 'activitySummary'),
+    ).toBe(false)
+    expect(context.hasVisibleWidgets.value).toBe(false)
+  })
+
   it('refreshes dashboard data on every enter even when cached data already exists', async () => {
     const { context, getDashboard } = await setup()
 

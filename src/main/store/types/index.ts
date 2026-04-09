@@ -24,7 +24,6 @@ export type NotesRouteName =
 export interface NotesDashboardWidgets {
   stats: boolean
   activityHeatmap: boolean
-  activitySummary: boolean
   recent: boolean
   graphPreview: boolean
   topLinked: boolean

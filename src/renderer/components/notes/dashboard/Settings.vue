@@ -22,10 +22,6 @@ const widgetItems: Array<{
     label: i18n.t('notes.dashboard.widgets.stats'),
   },
   {
-    key: 'activitySummary',
-    label: i18n.t('notes.dashboard.widgets.activitySummary'),
-  },
-  {
     key: 'activityHeatmap',
     label: i18n.t('notes.dashboard.widgets.activityHeatmap'),
   },

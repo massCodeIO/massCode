@@ -119,6 +119,7 @@ export default defineConfig({
           text: 'Notes',
           items: [
             { text: 'Notes', link: '/documentation/notes/' },
+            { text: 'Dashboard', link: '/documentation/notes/dashboard' },
             { text: 'Library', link: '/documentation/notes/library' },
             { text: 'Folders', link: '/documentation/notes/folders' },
             { text: 'Tags', link: '/documentation/notes/tags' },

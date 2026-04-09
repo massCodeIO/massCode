@@ -93,7 +93,9 @@ Use massCode as a focused snippet workspace with multi-level folders, tags, and 
 
 Write longer markdown documents right next to your snippets: project docs, drafts, research notes, and personal knowledge bases.
 
+- Dashboard with activity overview, recent notes, top linked notes, and a notes graph preview
 - Editor, Live Preview, and Preview modes
+- Fullscreen notes graph for exploring internal links between notes
 - Integrated [Mermaid](https://mermaid-js.github.io/mermaid/#) diagrams
 - Mind maps generated from markdown heading structure
 - Fullscreen presentation mode for demos and meetings

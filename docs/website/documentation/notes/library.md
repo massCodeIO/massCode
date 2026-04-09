@@ -1,11 +1,25 @@
 ---
 title: Notes Library
-description: "Navigate the Notes Library in massCode with Inbox, Favorites, All Notes, and Trash for fast note access."
+description: "Navigate the Notes Library in massCode with Dashboard, Inbox, Favorites, All Notes, and Trash for fast note access."
 ---
 
 # Library
 
-The Library is the first column in the Notes space. It helps you move quickly between system folders and the parts of your note collection you use most often.
+The Library is the first column in the Notes space. It helps you move quickly between the Notes Dashboard, system folders, and the parts of your note collection you use most often.
+
+## Dashboard
+
+Use the grid button in the Notes sidebar header to open the [Dashboard](/documentation/notes/dashboard).
+
+Dashboard gives you a summary view before you pick a note:
+
+- Note and word totals
+- Recent activity heatmap
+- Recent notes
+- Top linked notes
+- Notes graph preview
+
+From Dashboard, you can open notes directly or switch into the fullscreen Notes Graph.
 
 ## Inbox
 

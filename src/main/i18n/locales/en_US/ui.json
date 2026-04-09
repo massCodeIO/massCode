@@ -48,7 +48,66 @@
     "words": "Words",
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "noSelected": "No Note Selected",
+    "dashboard": {
+      "label": "Dashboard",
+      "title": "Notes Dashboard",
+      "description": "Your notes activity, links, and structure.",
+      "empty": "All dashboard widgets are hidden.",
+      "error": "Failed to load notes dashboard.",
+      "actions": {
+        "refresh": "Refresh",
+        "backToDashboard": "Back to Dashboard",
+        "showAllWidgets": "Show All Widgets"
+      },
+      "widgets": {
+        "title": "Visible Widgets",
+        "description": "Choose which blocks appear on the dashboard.",
+        "stats": "Overview",
+        "activityHeatmap": "Activity Heatmap",
+        "recent": "Recent Notes",
+        "graphPreview": "Notes Graph",
+        "topLinked": "Top Linked Notes"
+      },
+      "stats": {
+        "title": "Overview",
+        "notes": "Notes",
+        "words": "Words",
+        "folders": "Folders",
+        "tags": "Tags"
+      },
+      "activity": {
+        "heatmapTitle": "Activity Heatmap",
+        "heatmapDescription": "Recent note updates by day.",
+        "updatedToday": "Updated Today",
+        "updatedWeek": "Updated in 7 Days",
+        "less": "Less",
+        "more": "More",
+        "totalLastYear": "{{count}} note updates in the last 53 weeks",
+        "tooltipUpdates": "{{count}} note updates"
+      },
+      "recent": {
+        "title": "Recent Notes",
+        "empty": "No recent notes yet."
+      },
+      "graphPreview": {
+        "title": "Notes Graph",
+        "empty": "No links between notes yet."
+      },
+      "topLinked": {
+        "title": "Top Linked Notes",
+        "empty": "No linked notes yet.",
+        "incoming": "{{count}} incoming links"
+      },
+      "graph": {
+        "title": "Notes Graph",
+        "description": "Explore connections between notes and open them in the workspace.",
+        "hint": "Drag to pan, use zoom controls or the mouse wheel, and hover a node to inspect its neighborhood.",
+        "meta": "{{links}} incoming links · {{neighbors}} connected notes",
+        "empty": "No links between notes yet.",
+        "error": "Failed to load notes graph."
+      }
+    }
   },
   "folder": {
     "untitled": "Untitled folder"

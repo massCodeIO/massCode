@@ -2,6 +2,7 @@ import type {
   AppStore,
   CodeState,
   NotesEditorMode,
+  NotesRouteName,
   NotesState,
   SpaceId,
   SpaceLayoutMode,
@@ -34,7 +35,17 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   notes: {
     selection: {},
+    route: 'notes-space',
     editorMode: 'livePreview',
+    dashboard: {
+      widgets: {
+        stats: true,
+        activityHeatmap: true,
+        recent: true,
+        graphPreview: true,
+        topLinked: true,
+      },
+    },
     layout: {
       mode: 'all-panels',
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
@@ -168,6 +179,21 @@ function sanitizeAppStore(value: unknown): AppStore {
           ? notesSource.selection
           : source.notesState,
       ),
+      route: readEnum(
+        notesSource,
+        'route',
+        ['notes-space', 'notes-space/dashboard', 'notes-space/graph'] as const,
+        readEnum(
+          source,
+          'notesRoute',
+          [
+            'notes-space',
+            'notes-space/dashboard',
+            'notes-space/graph',
+          ] as const,
+          APP_STORE_DEFAULTS.notes.route,
+        ) as NotesRouteName,
+      ) as NotesRouteName,
       editorMode: readEnum(
         notesSource,
         'editorMode',
@@ -179,6 +205,35 @@ function sanitizeAppStore(value: unknown): AppStore {
           APP_STORE_DEFAULTS.notes.editorMode,
         ) as NotesEditorMode,
       ),
+      dashboard: {
+        widgets: (() => {
+          const dashSource = asRecord(asRecord(notesSource.dashboard).widgets)
+          const defaults = APP_STORE_DEFAULTS.notes.dashboard.widgets
+
+          return {
+            stats:
+              typeof dashSource.stats === 'boolean'
+                ? dashSource.stats
+                : defaults.stats,
+            activityHeatmap:
+              typeof dashSource.activityHeatmap === 'boolean'
+                ? dashSource.activityHeatmap
+                : defaults.activityHeatmap,
+            recent:
+              typeof dashSource.recent === 'boolean'
+                ? dashSource.recent
+                : defaults.recent,
+            graphPreview:
+              typeof dashSource.graphPreview === 'boolean'
+                ? dashSource.graphPreview
+                : defaults.graphPreview,
+            topLinked:
+              typeof dashSource.topLinked === 'boolean'
+                ? dashSource.topLinked
+                : defaults.topLinked,
+          }
+        })(),
+      },
       layout: {
         mode: readEnum(
           notesLayoutSource,

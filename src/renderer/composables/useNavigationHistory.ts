@@ -1,12 +1,27 @@
 import { router, RouterName } from '@/router'
 import { useNotes } from './spaces/notes/useNotes'
+import {
+  captureNavigationUIState,
+  type NavigationHistoryUIState,
+} from './useNavigationUIState'
 import { useSnippets } from './useSnippets'
 
-export interface NavigationHistoryEntry {
+export interface NavigationHistoryRouteEntry {
+  routeName: string
+  type: 'route'
+  uiState?: NavigationHistoryUIState
+}
+
+export interface NavigationHistoryEntityEntry {
   id: number
   name: string
   type: 'note' | 'snippet'
+  uiState?: NavigationHistoryUIState
 }
+
+export type NavigationHistoryEntry =
+  | NavigationHistoryRouteEntry
+  | NavigationHistoryEntityEntry
 
 export const MAX_HISTORY_SIZE = 50
 
@@ -30,30 +45,65 @@ function isSameEntry(
     return false
   }
 
+  if (left.type === 'route' || right.type === 'route') {
+    return (
+      left.type === 'route'
+      && right.type === 'route'
+      && left.routeName === right.routeName
+    )
+  }
+
   return left.type === right.type && left.id === right.id
 }
 
 function captureCurrentLocation(): NavigationHistoryEntry | undefined {
   const routeName = router.currentRoute.value.name
+  let entry: NavigationHistoryEntry | undefined
 
-  if (
+  if (routeName === RouterName.notesGraph) {
+    entry = {
+      routeName: RouterName.notesGraph,
+      type: 'route',
+    }
+  }
+  else if (routeName === RouterName.notesDashboard) {
+    entry = {
+      routeName: RouterName.notesDashboard,
+      type: 'route',
+    }
+  }
+  else if (
     (routeName === RouterName.notesSpace
       || routeName === RouterName.notesPresentation)
     && selectedNote.value
   ) {
-    return {
+    entry = {
       id: selectedNote.value.id,
       name: selectedNote.value.name,
       type: 'note',
     }
   }
-
-  if (routeName === RouterName.main && selectedSnippet.value) {
-    return {
+  else if (routeName === RouterName.main && selectedSnippet.value) {
+    entry = {
       id: selectedSnippet.value.id,
       name: selectedSnippet.value.name,
       type: 'snippet',
     }
+  }
+
+  if (!entry) {
+    return
+  }
+
+  const uiState = captureNavigationUIState(entry)
+
+  if (!uiState) {
+    return entry
+  }
+
+  return {
+    ...entry,
+    uiState,
   }
 }
 
@@ -63,6 +113,32 @@ function trimEntries(nextEntries: NavigationHistoryEntry[]) {
   }
 
   return nextEntries.slice(nextEntries.length - MAX_HISTORY_SIZE)
+}
+
+function pushOrReplaceEntry(
+  nextEntries: NavigationHistoryEntry[],
+  entry: NavigationHistoryEntry,
+) {
+  if (isSameEntry(nextEntries.at(-1), entry)) {
+    nextEntries[nextEntries.length - 1] = entry
+    return
+  }
+
+  nextEntries.push(entry)
+}
+
+function syncCurrentEntryWithLocation() {
+  if (cursor.value < 0) {
+    return
+  }
+
+  const current = captureCurrentLocation()
+
+  if (!current || !isSameEntry(entries.value[cursor.value], current)) {
+    return
+  }
+
+  entries.value[cursor.value] = current
 }
 
 async function recordNavigation(navigate: () => Promise<void>) {
@@ -78,12 +154,12 @@ async function recordNavigation(navigate: () => Promise<void>) {
 
   const nextEntries = entries.value.slice(0, Math.max(cursor.value + 1, 0))
 
-  if (before && !isSameEntry(nextEntries.at(-1), before)) {
-    nextEntries.push(before)
+  if (before) {
+    pushOrReplaceEntry(nextEntries, before)
   }
 
-  if (after && !isSameEntry(nextEntries.at(-1), after)) {
-    nextEntries.push(after)
+  if (after) {
+    pushOrReplaceEntry(nextEntries, after)
   }
 
   if (!nextEntries.length) {
@@ -99,6 +175,7 @@ function goBack(): NavigationHistoryEntry | undefined {
     return
   }
 
+  syncCurrentEntryWithLocation()
   cursor.value -= 1
   return entries.value[cursor.value]
 }
@@ -108,6 +185,7 @@ function goForward(): NavigationHistoryEntry | undefined {
     return
   }
 
+  syncCurrentEntryWithLocation()
   cursor.value += 1
   return entries.value[cursor.value]
 }

@@ -8,9 +8,17 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="px-1">
-    <div class="truncate px-1 leading-5 font-bold select-none">
-      {{ title }}
+  <div>
+    <div class="flex h-7 items-center justify-between pl-1 select-none">
+      <div class="truncate leading-5 font-bold">
+        {{ title }}
+      </div>
+      <div
+        v-if="$slots.actions"
+        class="flex items-center gap-1"
+      >
+        <slot name="actions" />
+      </div>
     </div>
     <SidebarSectionHeader
       v-if="sectionTitle"

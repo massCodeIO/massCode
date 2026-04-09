@@ -8,6 +8,7 @@ describe('useNavigationHistory', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    vi.doUnmock('../useNavigationUIState')
   })
 
   it('records internal target navigation and restores backward and forward', async () => {
@@ -68,6 +69,324 @@ describe('useNavigationHistory', () => {
       type: 'snippet',
     })
     expect(history.cursor.value).toBe(1)
+  })
+
+  it('stores captured ui state alongside the navigation target', async () => {
+    const route = ref({ name: 'notes-space' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../useNavigationUIState', () => ({
+      captureNavigationUIState: vi.fn((entry) => {
+        if (entry.type === 'note' && entry.id === 1) {
+          return { scrollTop: 280 }
+        }
+
+        return undefined
+      }),
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space/dashboard' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        id: 1,
+        name: 'Note A',
+        type: 'note',
+        uiState: { scrollTop: 280 },
+      },
+      {
+        routeName: 'notes-space/dashboard',
+        type: 'route',
+      },
+    ])
+  })
+
+  it('records graph route before opening a note from graph', async () => {
+    const route = ref({ name: 'notes-space/graph' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        routeName: 'notes-space/graph',
+        type: 'route',
+      },
+      { id: 2, name: 'Note B', type: 'note' },
+    ])
+    expect(history.cursor.value).toBe(1)
+  })
+
+  it('records dashboard route before opening a note from dashboard', async () => {
+    const route = ref({ name: 'notes-space/dashboard' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        routeName: 'notes-space/dashboard',
+        type: 'route',
+      },
+      { id: 2, name: 'Note B', type: 'note' },
+    ])
+    expect(history.cursor.value).toBe(1)
+  })
+
+  it('updates route ui state when recording again from the same dashboard entry', async () => {
+    const route = ref({ name: 'notes-space/dashboard' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+    let dashboardScrollTop = 120
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../useNavigationUIState', async () => {
+      const actual = await vi.importActual('../useNavigationUIState')
+
+      return {
+        ...actual,
+        captureNavigationUIState: vi.fn((entry) => {
+          if (
+            entry.type === 'route'
+            && entry.routeName === 'notes-space/dashboard'
+          ) {
+            return { scrollTop: dashboardScrollTop }
+          }
+
+          return undefined
+        }),
+      }
+    })
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    expect(history.goBack()).toEqual({
+      routeName: 'notes-space/dashboard',
+      type: 'route',
+      uiState: { scrollTop: 120 },
+    })
+
+    route.value = { name: 'notes-space/dashboard' }
+    selectedNote.value = { id: 1, name: 'Note A' }
+    dashboardScrollTop = 420
+
+    await history.recordNavigation(async () => {
+      route.value = { name: 'notes-space' }
+      selectedNote.value = { id: 3, name: 'Note C' }
+    })
+
+    expect(history.entries.value).toEqual([
+      {
+        routeName: 'notes-space/dashboard',
+        type: 'route',
+        uiState: { scrollTop: 420 },
+      },
+      { id: 3, name: 'Note C', type: 'note' },
+    ])
+    expect(history.goBack()).toEqual({
+      routeName: 'notes-space/dashboard',
+      type: 'route',
+      uiState: { scrollTop: 420 },
+    })
+  })
+
+  it('updates current note ui state before moving backward and forward', async () => {
+    const route = ref({ name: 'notes-space' })
+    const selectedNote = ref({ id: 1, name: 'Note A' })
+    const selectedSnippet = ref<{ id: number, name: string }>()
+    const noteScrollTopById: Record<number, number> = {
+      1: 120,
+      2: 0,
+    }
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        main: 'main',
+        notesDashboard: 'notes-space/dashboard',
+        notesGraph: 'notes-space/graph',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../useNavigationUIState', async () => {
+      const actual = await vi.importActual('../useNavigationUIState')
+
+      return {
+        ...actual,
+        captureNavigationUIState: vi.fn((entry) => {
+          if (entry.type === 'note') {
+            return { scrollTop: noteScrollTopById[entry.id] ?? 0 }
+          }
+
+          return undefined
+        }),
+      }
+    })
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      selectedNote.value = { id: 2, name: 'Note B' }
+    })
+
+    noteScrollTopById[2] = 360
+
+    expect(history.goBack()).toEqual({
+      id: 1,
+      name: 'Note A',
+      type: 'note',
+      uiState: { scrollTop: 120 },
+    })
+
+    selectedNote.value = { id: 1, name: 'Note A' }
+
+    expect(history.goForward()).toEqual({
+      id: 2,
+      name: 'Note B',
+      type: 'note',
+      uiState: { scrollTop: 360 },
+    })
   })
 
   it('truncates forward history when recording from the middle', async () => {

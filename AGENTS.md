@@ -135,6 +135,7 @@ massCode uses a **Spaces** system to organize different functional areas:
 - **Component Usage (STRICT):**
   - **NEVER** reimplement basic UI elements (buttons, inputs, checkboxes, etc.).
   - **ALWAYS** use existing components from `src/renderer/components/ui/`.
+  - **Typography:** Use `UiText` for text rendering by default. Do not hand-roll text styles with `text-*`, `font-*`, or `text-muted-foreground` when an appropriate `UiText` variant fits. If `UiText` lacks a needed size/style, compose it with extra classes instead of replacing it with raw HTML.
   - **Missing Elements:** If a required UI element does not exist, create it in `src/renderer/components/ui/` first, following established patterns (Tailwind, cva, cn), then use it.
   - **Naming:** They are auto-imported with a `Ui` prefix (e.g., `<UiInput />`, `<UiActionButton />`, `<UiText />`).
 
@@ -148,6 +149,14 @@ Split a component when it exceeds ~300 lines or has more than 3 unrelated respon
 4. Break the template into child components
 
 Keep no logic in `<template>` more complex than a ternary operator.
+
+**Feature Subdirectories:**
+
+- When a domain area grows into a clear subsystem (for example `notes/dashboard`), group its related components and local helpers into a dedicated subdirectory instead of keeping everything flat in the parent folder.
+- This applies not only to `.vue` components, but also to local `ts/js` helpers, tests, fixtures, styles, and other files that belong only to that subsystem.
+- Inside such a subdirectory, do **not** repeat the full parent prefix in file names. Prefer `dashboard/Dashboard.vue`, `dashboard/Header.vue`, `dashboard/Section.vue` over `dashboard/NotesDashboardHeader.vue`.
+- This project uses component auto-import with directory namespaces, so `notes/dashboard/Dashboard.vue` resolves to `NotesDashboard`, `notes/dashboard/Header.vue` resolves to `NotesDashboardHeader`, etc.
+- Keep only files that are truly local to that subsystem in the subdirectory. Shared files used by multiple slices should remain at the higher level or be renamed into a more general shared helper.
 
 ## 8. Development Workflow & Commands
 

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { useNotesApp, useNotesSpaceInitialization } from '@/composables'
 import { store } from '@/electron'
+import { RouterName } from '@/router'
+import { useRoute } from 'vue-router'
 
 const { isNotesListHidden, isNotesSidebarHidden } = useNotesApp()
 const { initNotesSpace } = useNotesSpaceInitialization()
+const route = useRoute()
 
 void initNotesSpace()
 
@@ -27,12 +30,20 @@ function onResizeEnd(sw: number, lw: number) {
 function onTwoPanelResize(lw: number) {
   store.app.set('notes.layout.twoPanel', lw)
 }
+
+const isWorkspaceRoute = computed(() => route.name === RouterName.notesSpace)
+const isSidebarShown = computed(() =>
+  isWorkspaceRoute.value ? !isNotesSidebarHidden.value : true,
+)
+const isListShown = computed(() =>
+  isWorkspaceRoute.value ? !isNotesListHidden.value : false,
+)
 </script>
 
 <template>
   <LayoutThreeColumn
-    :show-sidebar="!isNotesSidebarHidden"
-    :show-list="!isNotesListHidden"
+    :show-sidebar="isSidebarShown"
+    :show-list="isListShown"
     :sidebar-width="sidebarWidth"
     :list-width="listWidth"
     @resize-end="onResizeEnd"
@@ -45,7 +56,8 @@ function onTwoPanelResize(lw: number) {
       <NotesList />
     </template>
     <template #editor>
-      <NotesEditorPane />
+      <NotesEditorPane v-if="isWorkspaceRoute" />
+      <RouterView v-else />
     </template>
   </LayoutThreeColumn>
 </template>

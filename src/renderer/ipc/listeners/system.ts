@@ -5,6 +5,8 @@ import {
   useNoteFolders,
   useNotes,
   useNotesApp,
+  useNotesDashboard,
+  useNotesGraph,
   useNoteTags,
   useSnippets,
   useSnippetUpdate,
@@ -12,6 +14,7 @@ import {
   useStorageMutation,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { router, RouterName } from '@/router'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { repository } from '../../../../package.json'
 import { handleDeepLink } from './deepLinks'
@@ -26,6 +29,8 @@ const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { getNotes, hasBusyNoteContentUpdates } = useNotes()
 const { getNoteTags } = useNoteTags()
+const { getNotesDashboard } = useNotesDashboard()
+const { getNotesGraph } = useNotesGraph()
 const { sonner } = useSonner()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -61,6 +66,14 @@ async function refreshAfterStorageSync() {
       await getNoteFolders()
       await getNotes()
       await getNoteTags()
+
+      if (router.currentRoute.value.name === RouterName.notesDashboard) {
+        await getNotesDashboard()
+      }
+
+      if (router.currentRoute.value.name === RouterName.notesGraph) {
+        await getNotesGraph()
+      }
       break
     case 'tools':
       break

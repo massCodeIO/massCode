@@ -47,6 +47,7 @@ async function setup(options: SetupOptions = {}) {
   const recordNavigation = vi.fn(async (navigate: () => Promise<void>) => {
     await navigate()
   })
+  const queueNavigationUIStateRestore = vi.fn()
 
   const getSnippetsById = options.snippetThrows
     ? vi.fn(async () => {
@@ -94,6 +95,7 @@ async function setup(options: SetupOptions = {}) {
 
   vi.doMock('@/composables', () => ({
     initCodeSpace,
+    queueNavigationUIStateRestore,
     useApp: () => ({
       focusedFolderId: ref<number | undefined>(),
       focusedSnippetId: ref<number | undefined>(),
@@ -173,6 +175,7 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('@/router', () => ({
     RouterName: {
       main: 'main',
+      notesGraph: 'notes-space/graph',
       notesSpace: 'notes-space',
       notesPresentation: 'notes-space/presentation',
     },
@@ -202,6 +205,7 @@ async function setup(options: SetupOptions = {}) {
     notesState,
     pendingCodeNavigation,
     pendingNotesNavigation,
+    queueNavigationUIStateRestore,
     recordNavigation,
     router,
     selectFolder,
@@ -298,8 +302,32 @@ describe('deepLinks', () => {
     await context.module.navigateBack()
 
     expect(context.goBack).toHaveBeenCalledTimes(1)
+    expect(context.queueNavigationUIStateRestore).toHaveBeenCalledWith({
+      id: 15,
+      type: 'note',
+    })
     expect(context.router.push).toHaveBeenCalledWith({ name: 'notes-space' })
     expect(context.selectNote).toHaveBeenCalledWith(15)
+    expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
+  it('restores graph route from history on back navigation', async () => {
+    const context = await setup({
+      snippetRouteName: 'notes-space',
+    })
+
+    context.goBack.mockReturnValue({
+      routeName: 'notes-space/graph',
+      type: 'route',
+    })
+
+    await context.module.navigateBack()
+
+    expect(context.goBack).toHaveBeenCalledTimes(1)
+    expect(context.router.push).toHaveBeenCalledWith({
+      name: 'notes-space/graph',
+    })
+    expect(context.selectNote).not.toHaveBeenCalled()
     expect(context.isNavigatingHistory.value).toBe(false)
   })
 

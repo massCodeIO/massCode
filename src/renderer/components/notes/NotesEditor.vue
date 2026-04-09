@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
-import { useNotesEditor, useTheme } from '@/composables'
+import {
+  applyPendingNavigationUIStateForNote,
+  registerNavigationNoteUIState,
+  useNotesEditor,
+  useTheme,
+} from '@/composables'
 import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
@@ -35,6 +40,7 @@ import { createNotesEditTheme } from './theme'
 
 interface Props {
   mode?: NotesEditorMode
+  noteId?: number
   presentation?: boolean
 }
 
@@ -51,6 +57,7 @@ const isPreviewMode = computed(() => props.mode === 'preview')
 const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
 let isApplyingExternalContent = false
+let unregisterNavigationNoteUIState: (() => void) | undefined
 
 const markdownLinkRegExp = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g
 const autolinkRegExp = /<(https?:\/\/[^>\s]+|masscode:\/\/[^>\s]+)>/g
@@ -357,6 +364,30 @@ watch(isDark, () => {
   isApplyingExternalContent = false
 })
 
+async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
+  unregisterNavigationNoteUIState?.()
+  unregisterNavigationNoteUIState = undefined
+
+  if (!view || noteId === undefined) {
+    return
+  }
+
+  unregisterNavigationNoteUIState = registerNavigationNoteUIState(noteId, {
+    getScrollTop: () => view?.scrollDOM.scrollTop ?? 0,
+    setScrollTop: (scrollTop) => {
+      view?.scrollDOM.scrollTo({ top: scrollTop })
+    },
+  })
+
+  await nextTick()
+  applyPendingNavigationUIStateForNote(noteId)
+}
+
+watch(
+  () => props.noteId,
+  noteId => syncNavigationNoteUIStateRegistration(noteId),
+)
+
 onMounted(() => {
   if (!editorContainer.value)
     return
@@ -365,9 +396,14 @@ onMounted(() => {
     state: createEditorState(content.value),
     parent: editorContainer.value,
   })
+
+  void syncNavigationNoteUIStateRegistration()
 })
 
 onUnmounted(() => {
+  unregisterNavigationNoteUIState?.()
+  unregisterNavigationNoteUIState = undefined
+
   if (view) {
     view.destroy()
     view = null

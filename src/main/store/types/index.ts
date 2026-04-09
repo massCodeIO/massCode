@@ -16,6 +16,19 @@ export interface NotesState {
   libraryFilter?: string
 }
 
+export type NotesRouteName =
+  | 'notes-space'
+  | 'notes-space/dashboard'
+  | 'notes-space/graph'
+
+export interface NotesDashboardWidgets {
+  stats: boolean
+  activityHeatmap: boolean
+  recent: boolean
+  graphPreview: boolean
+  topLinked: boolean
+}
+
 export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
 
 export interface AppStore {
@@ -36,7 +49,11 @@ export interface AppStore {
   }
   notes: {
     selection: NotesState
+    route: NotesRouteName
     editorMode: NotesEditorMode
+    dashboard: {
+      widgets: NotesDashboardWidgets
+    }
     layout: {
       mode: SpaceLayoutMode
       tagsListHeight: number

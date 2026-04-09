@@ -213,9 +213,9 @@ describe('app store sanitization', () => {
     })
     expect(app.get('code.layout.mode' as any)).toBe('all-panels')
     expect(app.get('ui.compactListMode' as any)).toBe(true)
-    expect(app.get('code.layout.tagsListHeight' as any)).toBe(30)
+    expect(app.get('code.layout.tagsListHeight' as any)).toBe(200)
     expect(app.get('code.layout.threePanel' as any)).toEqual([15, 20, 65])
-    expect(app.get('code.layout.twoPanel' as any)).toEqual([35, 65])
+    expect(app.get('code.layout.twoPanel' as any)).toBeUndefined()
     expect(app.get('notes.selection' as any)).toEqual({
       noteId: 20,
       folderId: 7,
@@ -223,8 +223,8 @@ describe('app store sanitization', () => {
     expect(app.get('notes.editorMode' as any)).toBe('preview')
     expect(app.get('notes.layout.mode' as any)).toBe('list-editor')
     expect(app.get('notes.layout.threePanel' as any)).toEqual([10, 25, 65])
-    expect(app.get('notes.layout.twoPanel' as any)).toEqual([28, 72])
-    expect(app.get('notes.layout.tagsListHeight' as any)).toBe(40)
+    expect(app.get('notes.layout.twoPanel' as any)).toBeUndefined()
+    expect(app.get('notes.layout.tagsListHeight' as any)).toBe(200)
     expect(app.get('notifications.nextDonateAt' as any)).toBe(
       1_700_000_000_000,
     )
@@ -246,5 +246,43 @@ describe('app store sanitization', () => {
     expect(
       app.get('notes.selection.legacyNotesStateFlag' as any),
     ).toBeUndefined()
+  })
+
+  it('adds sanitized defaults for notes dashboard widget visibility', async () => {
+    persistedStateByName.app = {
+      notes: {
+        dashboard: {
+          widgets: {
+            stats: false,
+            recent: false,
+            topLinked: true,
+            garbage: 'bad',
+          },
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('notes.dashboard.widgets' as any)).toEqual({
+      stats: false,
+      activityHeatmap: true,
+      recent: false,
+      graphPreview: true,
+      topLinked: true,
+    })
+    expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps persisted notes route when it is a valid string', async () => {
+    persistedStateByName.app = {
+      notes: {
+        route: 'notes-space/dashboard',
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('notes.route' as any)).toBe('notes-space/dashboard')
   })
 })

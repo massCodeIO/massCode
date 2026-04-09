@@ -1,12 +1,20 @@
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import type { CachedEntity } from './cache'
-import type { InternalLinkMatch, InternalLinkType } from './parser'
+import type {
+  InternalLinkLookupItem,
+  InternalLinkMatch,
+  InternalLinkType,
+} from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
 import { entityCache } from './cache'
-import { findInternalLinks } from './parser'
+import {
+  findInternalLinks,
+  normalizeInternalLinkLookupKey,
+  resolveInternalLinkTargetByTitle,
+} from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
 
@@ -146,18 +154,7 @@ function getCacheKey(type: InternalLinkType, id: number) {
 }
 
 function getTitleCacheKey(title: string) {
-  return `title:${title.trim().toLocaleLowerCase()}`
-}
-
-function findExactNameMatch<T extends { name: string }>(
-  items: T[],
-  title: string,
-): T | undefined {
-  const normalizedTitle = title.trim().toLocaleLowerCase()
-
-  return items.find(
-    item => item.name.trim().toLocaleLowerCase() === normalizedTitle,
-  )
+  return `title:${normalizeInternalLinkLookupKey(title)}`
 }
 
 export async function fetchInternalLinkEntity(
@@ -222,8 +219,29 @@ async function resolveInternalLinkByTitle(
       api.notes.getNotes({ search: title, isDeleted: 0 }),
     ])
 
-    const snippet = findExactNameMatch(snippets, title)
-    if (snippet) {
+    const resolvedTarget = resolveInternalLinkTargetByTitle(title, [
+      ...snippets.map<InternalLinkLookupItem>(snippet => ({
+        id: snippet.id,
+        name: snippet.name,
+        type: 'snippet',
+      })),
+      ...notes.map<InternalLinkLookupItem>(note => ({
+        id: note.id,
+        name: note.name,
+        type: 'note',
+      })),
+    ])
+
+    if (!resolvedTarget) {
+      return { exists: false }
+    }
+
+    if (resolvedTarget.type === 'snippet') {
+      const snippet = snippets.find(item => item.id === resolvedTarget.id)
+      if (!snippet) {
+        return { exists: false }
+      }
+
       return {
         exists: true,
         data: {
@@ -242,22 +260,22 @@ async function resolveInternalLinkByTitle(
       }
     }
 
-    const note = findExactNameMatch(notes, title)
-    if (note) {
-      return {
-        exists: true,
-        data: {
-          contentExcerpt: note.content.slice(0, 400).trim(),
-          folder: note.folder,
-          id: note.id,
-          isDeleted: note.isDeleted,
-          name: note.name,
-          type: 'note',
-        },
-      }
+    const note = notes.find(item => item.id === resolvedTarget.id)
+    if (!note) {
+      return { exists: false }
     }
 
-    return { exists: false }
+    return {
+      exists: true,
+      data: {
+        contentExcerpt: note.content.slice(0, 400).trim(),
+        folder: note.folder,
+        id: note.id,
+        isDeleted: note.isDeleted,
+        name: note.name,
+        type: 'note',
+      },
+    }
   }
   catch {
     return { exists: false }

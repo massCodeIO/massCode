@@ -230,6 +230,7 @@ const textStats = computed(() => getTextStats(content.value))
             :key="selectedNote.id"
             v-model:content="content"
             :mode="notesEditorMode"
+            :note-id="selectedNote.id"
           />
         </div>
         <div

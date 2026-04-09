@@ -31,6 +31,8 @@ export const RouterName = {
   devtoolsJsonDiff: 'devtools/json-diff',
   mathNotebook: 'math-notebook',
   notesSpace: 'notes-space',
+  notesDashboard: 'notes-space/dashboard',
+  notesGraph: 'notes-space/graph',
   notesPresentation: 'notes-space/presentation',
 } as const
 
@@ -206,6 +208,18 @@ const routes = [
     path: '/notes',
     name: RouterName.notesSpace,
     component: () => import('@/components/notes/NotesSpace.vue'),
+    children: [
+      {
+        path: 'dashboard',
+        name: RouterName.notesDashboard,
+        component: () => import('@/views/NotesDashboard.vue'),
+      },
+      {
+        path: 'graph',
+        name: RouterName.notesGraph,
+        component: () => import('@/views/NotesGraph.vue'),
+      },
+    ],
   },
   {
     path: '/notes/presentation',

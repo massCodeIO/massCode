@@ -8,8 +8,10 @@ import {
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
+import { router, RouterName } from '@/router'
 import { onClickOutside } from '@vueuse/core'
 import { Archive, Inbox, Star, Trash } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 
 const { notesState } = useNotesApp()
 const { clearFolderSelection } = useNoteFolders()
@@ -21,6 +23,7 @@ const {
   emptyTrash,
 } = useNotes()
 const { clearSearch } = useNoteSearch()
+const route = useRoute()
 
 const libraryItems = [
   { id: LibraryFilter.Inbox, name: i18n.t('common.inbox'), icon: Inbox },
@@ -40,10 +43,19 @@ const libraryItems = [
 const focusedItemId = ref<string>()
 const itemRef = ref<HTMLElement>()
 
-async function onItemClick(
-  id: (typeof LibraryFilter)[keyof typeof LibraryFilter],
-) {
+function isItemSelected(item: (typeof libraryItems)[number]) {
+  return (
+    route.name === RouterName.notesSpace && notesState.libraryFilter === item.id
+  )
+}
+
+async function onItemClick(item: (typeof libraryItems)[number]) {
+  const { id } = item
   focusedItemId.value = id
+
+  if (route.name !== RouterName.notesSpace) {
+    await router.push({ name: RouterName.notesSpace })
+  }
 
   await withNotesLoading(async () => {
     isRestoreStateBlocked.value = true
@@ -88,17 +100,14 @@ onClickOutside(itemRef, () => {
             v-for="item in libraryItems"
             :key="item.id"
             data-sidebar-item
-            :data-selected="
-              notesState.libraryFilter === item.id ? 'true' : undefined
-            "
+            :data-selected="isItemSelected(item) ? 'true' : undefined"
             :data-focused="focusedItemId === item.id ? 'true' : undefined"
             class="data-[selected=true]:bg-accent data-[focused=true]:bg-primary! data-[focused=true]:text-primary-foreground rounded-md"
             :class="{
               'hover:bg-accent-hover':
-                notesState.libraryFilter !== item.id
-                && focusedItemId !== item.id,
+                !isItemSelected(item) && focusedItemId !== item.id,
             }"
-            @click="onItemClick(item.id)"
+            @click="onItemClick(item)"
           >
             <div class="ml-5.5 flex items-center">
               <component

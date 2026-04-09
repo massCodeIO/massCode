@@ -1,6 +1,6 @@
 ---
 title: Markdown Notes
-description: "Write markdown notes in massCode with live preview, a three-column layout, and features for diagrams, mind maps, and presentations."
+description: "Write markdown notes in massCode with a Notes Dashboard, live preview, a three-column layout, and features for diagrams, mind maps, and presentations."
 ---
 
 # Notes
@@ -9,7 +9,7 @@ description: "Write markdown notes in massCode with live preview, a three-column
 
 Notes is the markdown writing space inside massCode. Use it for project documentation, technical notes, drafts, meeting notes, and personal knowledge bases when a snippet is too small and a full note makes more sense.
 
-Access Notes from the **Notes** icon in the Space rail. The layout matches Code: Library on the left, notes list in the middle, editor on the right.
+Access Notes from the **Notes** icon in the Space rail. The layout matches Code: Library on the left, notes list in the middle, editor on the right. You can also open the [Notes Dashboard](/documentation/notes/dashboard) from the grid button in the Notes sidebar to see activity, recent notes, and graph-based navigation before opening a document.
 
 <img :src="withBase('/notes.png')">
 
@@ -26,6 +26,20 @@ Use Notes when you want to keep markdown documents close to your snippets and da
 
 - Select **"File"** > **"New Note"** from the menu bar.
 - Press <kbd>Cmd+N</kbd> on macOS or <kbd>Ctrl+N</kbd> on Windows or Linux.
+
+## Dashboard
+
+<AppVersion text=">=5.1" />
+
+Dashboard gives Notes a home screen with a quick overview of your markdown workspace.
+
+- Overview cards for notes, words, folders, and tags
+- Activity Heatmap for recent note updates
+- Recent Notes and Top Linked Notes lists
+- Notes Graph preview with a shortcut to the fullscreen graph
+- Widget visibility settings for hiding blocks you do not need
+
+See [Dashboard](/documentation/notes/dashboard) for the full walkthrough.
 
 ## Editor Modes
 

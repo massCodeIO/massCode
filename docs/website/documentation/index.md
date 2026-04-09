@@ -1,6 +1,6 @@
 ---
 title: Documentation Overview
-description: "Explore the massCode documentation for code snippets, markdown notes, math notebook, storage, sync, themes, and built-in developer tools."
+description: "Explore the massCode documentation for code snippets, markdown notes, math notebook, storage, sync, themes, JSON Diff, and built-in developer tools."
 ---
 
 # Overview
@@ -25,7 +25,7 @@ Math is a calculator-style notebook for quick development math without leaving m
 
 ## Tools
 
-Tools covers the small one-off tasks that usually send you to a browser tab: encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
+Tools covers the small one-off tasks that usually send you to a browser tab: JSON comparison, encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
 
 ## General Settings
 

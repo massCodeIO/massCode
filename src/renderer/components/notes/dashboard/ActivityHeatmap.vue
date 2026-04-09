@@ -233,7 +233,9 @@ function getTooltipLines(label: string, count: number) {
                     v-else
                     type="button"
                     class="rounded-[2px]"
-                    :class="!isDark ? 'border-border bg-muted border' : ''"
+                    :class="
+                      !isDark ? 'border-border/70 bg-background border' : ''
+                    "
                     :style="{
                       height: `${cellSize}px`,
                       width: `${cellSize}px`,
@@ -275,7 +277,7 @@ function getTooltipLines(label: string, count: number) {
                   class="h-3 w-3 rounded-[2px]"
                   :class="
                     !isDark && index === 0
-                      ? 'border-border bg-muted border'
+                      ? 'border-border/70 bg-background border'
                       : ''
                   "
                   :style="

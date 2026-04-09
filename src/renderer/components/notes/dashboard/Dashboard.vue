@@ -88,11 +88,27 @@ onUnmounted(() => {
         v-else-if="dashboardData"
         class="flex flex-col gap-4"
       >
-        <div v-if="dashboardWidgets.stats">
-          <NotesDashboardStats
-            :activity="dashboardData.activity"
-            :stats="dashboardData.stats"
-          />
+        <div
+          v-if="dashboardWidgets.stats || dashboardWidgets.graphPreview"
+          class="grid grid-cols-3 gap-4"
+        >
+          <div
+            v-if="dashboardWidgets.stats"
+            :class="dashboardWidgets.graphPreview ? 'col-span-2' : 'col-span-3'"
+          >
+            <NotesDashboardStats
+              :activity="dashboardData.activity"
+              :stats="dashboardData.stats"
+            />
+          </div>
+          <div
+            v-if="dashboardWidgets.graphPreview"
+            :class="dashboardWidgets.stats ? 'col-span-1' : 'col-span-3'"
+          >
+            <NotesDashboardGraphPreview
+              :graph-preview="dashboardData.graphPreview"
+            />
+          </div>
         </div>
 
         <div v-if="dashboardWidgets.activityHeatmap">
@@ -115,11 +131,6 @@ onUnmounted(() => {
           >
             <NotesDashboardTopLinked :top-linked="dashboardData.topLinked" />
           </div>
-        </div>
-        <div v-if="dashboardWidgets.graphPreview">
-          <NotesDashboardGraphPreview
-            :graph-preview="dashboardData.graphPreview"
-          />
         </div>
       </div>
     </div>

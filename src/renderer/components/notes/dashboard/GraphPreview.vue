@@ -29,8 +29,8 @@ const { width: graphViewportWidth, height: graphViewportHeight }
 const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
 
 const graphSceneSize = computed(() => ({
-  width: Math.max(560, Math.round(graphViewportWidth.value || 0)),
-  height: Math.max(240, Math.round(graphViewportHeight.value || 0)),
+  width: Math.max(320, Math.round(graphViewportWidth.value || 0)),
+  height: Math.max(220, Math.round(graphViewportHeight.value || 0)),
 }))
 
 const previewGraph = computed(() => {
@@ -91,7 +91,7 @@ const previewGraph = computed(() => {
       </div>
       <div
         ref="graphViewportRef"
-        class="h-72"
+        class="h-64 xl:h-[22rem]"
       >
         <NotesGraphScene
           ref="graphSceneRef"
@@ -101,18 +101,7 @@ const previewGraph = computed(() => {
           :width="graphSceneSize.width"
           :height="graphSceneSize.height"
           @node-click="openNoteInNotesWorkspace"
-        >
-          <template #overlay>
-            <UiText
-              as="div"
-              variant="xs"
-              class="pointer-events-none absolute right-4 bottom-4"
-              :style="{ color: graphPalette.overlayText }"
-            >
-              {{ i18n.t("notes.dashboard.graph.hint") }}
-            </UiText>
-          </template>
-        </NotesGraphScene>
+        />
       </div>
     </div>
     <UiEmptyPlaceholder

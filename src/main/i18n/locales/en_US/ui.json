@@ -65,7 +65,6 @@
         "description": "Choose which blocks appear on the dashboard.",
         "stats": "Overview",
         "activityHeatmap": "Activity Heatmap",
-        "activitySummary": "Activity Summary",
         "recent": "Recent Notes",
         "graphPreview": "Notes Graph",
         "topLinked": "Top Linked Notes"
@@ -80,11 +79,8 @@
       "activity": {
         "heatmapTitle": "Activity Heatmap",
         "heatmapDescription": "Recent note updates by day.",
-        "summaryTitle": "Activity Summary",
         "updatedToday": "Updated Today",
         "updatedWeek": "Updated in 7 Days",
-        "currentStreak": "Current Streak",
-        "bestStreak": "Best Streak",
         "less": "Less",
         "more": "More",
         "totalLastYear": "{{count}} note updates in the last 53 weeks",

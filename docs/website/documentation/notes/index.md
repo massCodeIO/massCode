@@ -29,6 +29,8 @@ Use Notes when you want to keep markdown documents close to your snippets and da
 
 ## Dashboard
 
+<AppVersion text=">=5.1" />
+
 Dashboard gives Notes a home screen with a quick overview of your markdown workspace.
 
 - Overview cards for notes, words, folders, and tags

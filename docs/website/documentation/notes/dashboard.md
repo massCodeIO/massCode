@@ -5,7 +5,11 @@ description: "Use the Notes Dashboard in massCode to see note activity, recent n
 
 # Dashboard
 
+<AppVersion text=">=5.1" />
+
 Dashboard is the home screen for Notes. Use it to get an overview of your note base before opening a specific note.
+
+<img :src="withBase('/notes-dashboard.png')">
 
 ## Opening Dashboard
 
@@ -78,3 +82,7 @@ The full Notes Graph opens from the graph preview.
 - Use **Back to Dashboard** to return
 
 The graph is useful for exploring how notes connect through internal links. For link syntax and navigation, see [Internal Links](/documentation/notes/internal-links).
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

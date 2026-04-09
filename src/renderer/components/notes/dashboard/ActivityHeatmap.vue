@@ -233,10 +233,13 @@ function getTooltipLines(label: string, count: number) {
                     v-else
                     type="button"
                     class="rounded-[2px]"
+                    :class="!isDark ? 'border-border bg-muted border' : ''"
                     :style="{
-                      backgroundColor: getCellColor(cell.count),
                       height: `${cellSize}px`,
                       width: `${cellSize}px`,
+                      ...(isDark
+                        ? { backgroundColor: getCellColor(cell.count) }
+                        : {}),
                     }"
                   />
                 </template>
@@ -267,10 +270,19 @@ function getTooltipLines(label: string, count: number) {
               </UiText>
               <div class="flex items-center gap-[4px]">
                 <span
-                  v-for="color in legendColors"
+                  v-for="(color, index) in legendColors"
                   :key="color"
                   class="h-3 w-3 rounded-[2px]"
-                  :style="{ backgroundColor: color }"
+                  :class="
+                    !isDark && index === 0
+                      ? 'border-border bg-muted border'
+                      : ''
+                  "
+                  :style="
+                    !isDark && index === 0
+                      ? undefined
+                      : { backgroundColor: color }
+                  "
                 />
               </div>
               <UiText

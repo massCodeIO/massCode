@@ -1,6 +1,7 @@
 export * from './math-notebook'
 export * from './spaces/notes'
 export * from './useApp'
+export * from './useCodeSelectionNormalization'
 export * from './useCodeSpaceInit'
 export * from './useCopyToClipboard'
 export * from './useDialog'

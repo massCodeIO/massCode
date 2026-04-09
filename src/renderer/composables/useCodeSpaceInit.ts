@@ -1,13 +1,14 @@
 import { useApp } from './useApp'
+import { normalizeCodeSelectionState } from './useCodeSelectionNormalization'
 import { useFolders } from './useFolders'
-import { useSnippets } from './useSnippets'
+import { useTags } from './useTags'
 
 const { isCodeSpaceInitialized } = useApp()
 const { getFolders } = useFolders()
-const { getSnippets } = useSnippets()
+const { getTags } = useTags()
 
 export async function initCodeSpace(): Promise<void> {
-  const results = await Promise.allSettled([getFolders(), getSnippets()])
+  const results = await Promise.allSettled([getFolders(), getTags()])
 
   results.forEach((result) => {
     if (result.status === 'rejected') {
@@ -18,4 +19,8 @@ export async function initCodeSpace(): Promise<void> {
   isCodeSpaceInitialized.value = results.every(
     result => result.status === 'fulfilled',
   )
+
+  if (isCodeSpaceInitialized.value) {
+    await normalizeCodeSelectionState()
+  }
 }

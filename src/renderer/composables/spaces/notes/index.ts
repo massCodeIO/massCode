@@ -8,6 +8,7 @@ export { useNotesDashboard } from './useNotesDashboard'
 export type { NotesDashboardWidgetsState } from './useNotesDashboard'
 export { useNoteSearch } from './useNoteSearch'
 export { useNotesGraph } from './useNotesGraph'
+export { normalizeNotesSelectionState } from './useNotesSelectionNormalization'
 export {
   resetNotesSpaceInitialization,
   useNotesSpaceInitialization,

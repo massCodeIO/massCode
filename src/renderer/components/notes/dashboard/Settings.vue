@@ -22,6 +22,10 @@ const widgetItems: Array<{
     label: i18n.t('notes.dashboard.widgets.stats'),
   },
   {
+    key: 'graphPreview',
+    label: i18n.t('notes.dashboard.widgets.graphPreview'),
+  },
+  {
     key: 'activityHeatmap',
     label: i18n.t('notes.dashboard.widgets.activityHeatmap'),
   },
@@ -32,10 +36,6 @@ const widgetItems: Array<{
   {
     key: 'topLinked',
     label: i18n.t('notes.dashboard.widgets.topLinked'),
-  },
-  {
-    key: 'graphPreview',
-    label: i18n.t('notes.dashboard.widgets.graphPreview'),
   },
 ]
 </script>

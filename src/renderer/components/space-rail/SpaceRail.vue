@@ -80,10 +80,10 @@ watch(
       </RouterLink>
     </div>
     <div
-      v-if="!isSponsored"
       class="mt-auto flex flex-1 flex-col items-center justify-end gap-2 pb-2"
     >
       <span
+        v-if="!isSponsored"
         class="cursor-pointer text-center text-[9px] leading-none font-semibold tracking-[0.14em] uppercase select-none [writing-mode:sideways-lr]"
         :class="isDark ? 'text-amber-300/70' : 'text-violet-500/70'"
         role="link"

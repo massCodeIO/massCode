@@ -19,6 +19,10 @@ describe('arithmetic', () => {
   it('subtraction', () => expectValue('20 - 3', '17'))
   it('multiplication', () => expectValue('4 * 5', '20'))
   it('division', () => expectValue('100 / 4', '25'))
+  it('prefers division over ambiguous slash dates', () => {
+    expectNumericClose('4/3', 4 / 3, 4)
+    expectNumericClose('22/11', 2, 4)
+  })
   it('parentheses', () => expectValue('(2 + 3) * 4', '20'))
   it('exponent', () => expectValue('2 ^ 10', '1,024'))
   it('negative numbers', () => expectValue('-5 + 3', '-2'))
@@ -30,6 +34,32 @@ describe('arithmetic', () => {
     const result = evalLine('1km + 1 000m')
     expect(result.type).toBe('unit')
     expect(result.value).toContain('km')
+  })
+})
+
+describe('locale-aware full slash dates', () => {
+  it('uses mdy parsing for en-US', () => {
+    setFormatSettings('en-US', 6, 'numeric')
+
+    const result = evalLine('11/22/2005')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain(
+      new Date(2005, 10, 22).toLocaleDateString('en-US'),
+    )
+
+    expectNumericClose('22/11/2005', 22 / 11 / 2005, 6)
+  })
+
+  it('uses dmy parsing for en-GB', () => {
+    setFormatSettings('en-GB', 6, 'numeric')
+
+    const result = evalLine('22/11/2005')
+    expect(result.type).toBe('date')
+    expect(result.value).toContain(
+      new Date(2005, 10, 22).toLocaleDateString('en-GB'),
+    )
+
+    expectNumericClose('11/22/2005', 11 / 22 / 2005, 6)
   })
 })
 

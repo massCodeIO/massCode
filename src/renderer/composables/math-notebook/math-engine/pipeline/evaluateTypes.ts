@@ -41,4 +41,5 @@ export interface EvaluatedLine {
 export interface MathDeps {
   mathEvaluate: (expression: string, scope: Record<string, any>) => any
   formatResult: LineFormatter['formatResult']
+  locale: string
 }

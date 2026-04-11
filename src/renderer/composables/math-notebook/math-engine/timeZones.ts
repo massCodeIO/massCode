@@ -14,6 +14,10 @@ interface TimeZoneDifferenceOptions {
   formatResult: (value: any) => LineResult
 }
 
+type NumericDateOrder = 'mdy' | 'dmy' | 'ymd'
+
+const numericDateOrderCache = new Map<string, NumericDateOrder>()
+
 function getLocalTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 }
@@ -202,7 +206,74 @@ function shiftDateParts(
   }
 }
 
-function parseDateParts(value: string, now: Date, timeZone: string) {
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  if (
+    !Number.isInteger(year)
+    || !Number.isInteger(month)
+    || !Number.isInteger(day)
+  ) {
+    return false
+  }
+
+  if (month < 1 || month > 12 || day < 1) {
+    return false
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate()
+  return day <= daysInMonth
+}
+
+function toDateParts(year: number, month: number, day: number) {
+  if (!isValidDateParts(year, month, day)) {
+    return null
+  }
+
+  return { year, month, day }
+}
+
+function getNumericDateOrder(locale: string): NumericDateOrder {
+  const cachedOrder = numericDateOrderCache.get(locale)
+  if (cachedOrder) {
+    return cachedOrder
+  }
+
+  let order: NumericDateOrder = 'dmy'
+
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    }).formatToParts(new Date(2001, 10, 22))
+    const signature = parts
+      .filter(
+        part =>
+          part.type === 'year' || part.type === 'month' || part.type === 'day',
+      )
+      .map(part => part.type)
+      .join('-')
+
+    if (signature === 'month-day-year') {
+      order = 'mdy'
+    }
+    else if (signature === 'year-month-day') {
+      order = 'ymd'
+    }
+  }
+  catch {
+    order = 'dmy'
+  }
+
+  numericDateOrderCache.set(locale, order)
+  return order
+}
+
+function parseDateParts(
+  value: string,
+  now: Date,
+  timeZone: string,
+  locale = 'en-US',
+) {
   const trimmed = value.trim().replace(/,/g, '')
   const currentDateParts = getCurrentDatePartsInTimeZone(now, timeZone)
 
@@ -224,29 +295,47 @@ function parseDateParts(value: string, now: Date, timeZone: string) {
 
   const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
   if (isoMatch) {
-    return {
-      year: Number(isoMatch[1]),
-      month: Number(isoMatch[2]),
-      day: Number(isoMatch[3]),
-    }
+    return toDateParts(
+      Number(isoMatch[1]),
+      Number(isoMatch[2]),
+      Number(isoMatch[3]),
+    )
   }
 
-  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/)
-  if (slashMatch) {
-    return {
-      year: Number(slashMatch[3] || currentDateParts.year),
-      month: Number(slashMatch[1]),
-      day: Number(slashMatch[2]),
+  const slashYearLastMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (slashYearLastMatch) {
+    const order = getNumericDateOrder(locale)
+    const year = Number(slashYearLastMatch[3])
+    const left = Number(slashYearLastMatch[1])
+    const right = Number(slashYearLastMatch[2])
+
+    if (order === 'mdy') {
+      return toDateParts(year, left, right)
     }
+
+    if (order === 'dmy') {
+      return toDateParts(year, right, left)
+    }
+
+    return null
+  }
+
+  const slashYearFirstMatch = trimmed.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/)
+  if (slashYearFirstMatch && getNumericDateOrder(locale) === 'ymd') {
+    return toDateParts(
+      Number(slashYearFirstMatch[1]),
+      Number(slashYearFirstMatch[2]),
+      Number(slashYearFirstMatch[3]),
+    )
   }
 
   const dottedMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?$/)
   if (dottedMatch) {
-    return {
-      year: Number(dottedMatch[3] || currentDateParts.year),
-      month: Number(dottedMatch[2]),
-      day: Number(dottedMatch[1]),
-    }
+    return toDateParts(
+      Number(dottedMatch[3] || currentDateParts.year),
+      Number(dottedMatch[2]),
+      Number(dottedMatch[1]),
+    )
   }
 
   const monthNameMatch = trimmed.match(
@@ -258,11 +347,11 @@ function parseDateParts(value: string, now: Date, timeZone: string) {
       return null
     }
 
-    return {
-      year: Number(monthNameMatch[3] || currentDateParts.year),
-      month: monthIndex,
-      day: Number(monthNameMatch[2]),
-    }
+    return toDateParts(
+      Number(monthNameMatch[3] || currentDateParts.year),
+      monthIndex,
+      Number(monthNameMatch[2]),
+    )
   }
 
   return null
@@ -291,6 +380,7 @@ function parseTemporalBody(
   value: string,
   now: Date,
   timeZone: string,
+  locale = 'en-US',
 ): ParsedTemporalExpression | null {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -317,7 +407,7 @@ function parseTemporalBody(
     /^(.*\S)\s+(\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)$/i,
   )
   if (timeAtEndMatch) {
-    const dateParts = parseDateParts(timeAtEndMatch[1], now, timeZone)
+    const dateParts = parseDateParts(timeAtEndMatch[1], now, timeZone, locale)
     const timeParts = parseClockParts(timeAtEndMatch[2])
 
     if (dateParts && timeParts) {
@@ -337,7 +427,12 @@ function parseTemporalBody(
 
   const leadingTime = splitTemporalExpressionWithLeadingTime(trimmed)
   if (leadingTime) {
-    const dateParts = parseDateParts(leadingTime.remainder, now, timeZone)
+    const dateParts = parseDateParts(
+      leadingTime.remainder,
+      now,
+      timeZone,
+      locale,
+    )
 
     if (dateParts) {
       return {
@@ -354,7 +449,7 @@ function parseTemporalBody(
     }
   }
 
-  const dateParts = parseDateParts(trimmed, now, timeZone)
+  const dateParts = parseDateParts(trimmed, now, timeZone, locale)
   if (dateParts) {
     return {
       date: zonedDateToUtc(
@@ -372,16 +467,24 @@ function parseTemporalBody(
   return null
 }
 
-function parseZonedTemporalExpression(value: string, now: Date) {
+function parseZonedTemporalExpression(
+  value: string,
+  now: Date,
+  locale = 'en-US',
+) {
   const resolved = resolveTrailingTimeZone(value)
   if (!resolved) {
     return null
   }
 
-  return parseTemporalBody(resolved.expression, now, resolved.timeZone)
+  return parseTemporalBody(resolved.expression, now, resolved.timeZone, locale)
 }
 
-export function parseExplicitLocalTemporalExpression(value: string, now: Date) {
+export function parseExplicitLocalTemporalExpression(
+  value: string,
+  now: Date,
+  locale = 'en-US',
+) {
   const trimmed = value.trim()
   const localTimeZone = getLocalTimeZone()
 
@@ -389,11 +492,21 @@ export function parseExplicitLocalTemporalExpression(value: string, now: Date) {
     return null
   }
 
+  // Bare numeric M/D is too ambiguous and should remain arithmetic.
+  if (/^\d{1,2}\/\d{1,2}$/.test(trimmed)) {
+    return null
+  }
+
   const timeAtEndMatch = trimmed.match(
     /^(.*\S)\s+(\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)$/i,
   )
   if (timeAtEndMatch) {
-    const dateParts = parseDateParts(timeAtEndMatch[1], now, localTimeZone)
+    const dateParts = parseDateParts(
+      timeAtEndMatch[1],
+      now,
+      localTimeZone,
+      locale,
+    )
     const timeParts = parseClockParts(timeAtEndMatch[2])
 
     if (dateParts && timeParts) {
@@ -412,7 +525,12 @@ export function parseExplicitLocalTemporalExpression(value: string, now: Date) {
 
   const leadingTime = splitTemporalExpressionWithLeadingTime(trimmed)
   if (leadingTime) {
-    const dateParts = parseDateParts(leadingTime.remainder, now, localTimeZone)
+    const dateParts = parseDateParts(
+      leadingTime.remainder,
+      now,
+      localTimeZone,
+      locale,
+    )
 
     if (dateParts) {
       return {
@@ -428,7 +546,7 @@ export function parseExplicitLocalTemporalExpression(value: string, now: Date) {
     }
   }
 
-  const dateParts = parseDateParts(trimmed, now, localTimeZone)
+  const dateParts = parseDateParts(trimmed, now, localTimeZone, locale)
   if (!dateParts) {
     return null
   }
@@ -668,8 +786,8 @@ export function evaluateTimeZoneLine(
   }
 
   const parsedSourceExpression
-    = parseZonedTemporalExpression(conversionParts[0], now)
-      || parseTemporalBody(conversionParts[0], now, localTimeZone)
+    = parseZonedTemporalExpression(conversionParts[0], now, locale)
+      || parseTemporalBody(conversionParts[0], now, localTimeZone, locale)
   if (!parsedSourceExpression) {
     return null
   }

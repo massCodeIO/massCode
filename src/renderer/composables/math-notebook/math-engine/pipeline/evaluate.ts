@@ -201,11 +201,13 @@ export function evaluateClassifiedLine(
     mathEvaluate: (expression: string, nextScope: Record<string, any>) =>
       math.evaluate(expression, nextScope),
     formatResult,
+    locale: activeLocale,
   }
   return evaluateMathPath(
     trimmed,
     processed,
     currentDate,
+    activeLocale,
     scope,
     math,
     mathDeps,

@@ -2,7 +2,7 @@
 import type { Variants } from './variants'
 import { cn } from '@/utils'
 import { Folder } from 'lucide-vue-next'
-import { materialIconInnerSvgClass, resolveFolderIcon } from './icons'
+import { resolveFolderIcon } from './icons'
 import { variants } from './variants'
 
 interface Props {
@@ -26,12 +26,13 @@ const iconClass = computed(() =>
     :class="iconClass"
     :data-icon-name="resolvedIcon.name"
   />
-  <div
-    v-else-if="resolvedIcon?.svg"
-    :class="cn(iconClass, materialIconInnerSvgClass)"
+  <img
+    v-else-if="resolvedIcon?.src"
+    :alt="resolvedIcon.name"
+    :class="cn(iconClass, 'object-contain')"
     :data-icon-name="resolvedIcon.name"
-    v-html="resolvedIcon.svg"
-  />
+    :src="resolvedIcon.src"
+  >
   <Folder
     v-else
     :class="iconClass"

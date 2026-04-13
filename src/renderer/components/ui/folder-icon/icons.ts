@@ -7,9 +7,6 @@ const files = import.meta.glob('@/assets/svg/icons/**.svg', {
   query: '?raw',
 })
 const re = /\/([^/]+)\.svg$/
-const materialIconInnerSvgClass
-  = '[&_svg]:block [&_svg]:size-full overflow-hidden'
-
 type FolderIconSource = 'material' | 'lucide'
 type FolderIconFilter = 'all' | FolderIconSource
 
@@ -23,6 +20,7 @@ interface FolderIconOption {
   name: string
   searchValue: string
   source: FolderIconSource
+  src?: string
   svg?: string
   value: string
 }
@@ -45,7 +43,37 @@ function createFolderIconValue(source: FolderIconSource, name: string) {
   return `${source}:${name}`
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function sanitizeMaterialIconSvg(name: string, svg: string) {
+  const prefix = `folder-icon-${name.replace(/[^\w-]/g, '-')}-`
+  const ids = [...svg.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => id)
+
+  if (ids.length === 0)
+    return svg
+
+  return ids.reduce((result, id) => {
+    const uniqueId = `${prefix}${id}`
+    const escapedId = escapeRegExp(id)
+
+    return result
+      .replace(new RegExp(`\\bid="${escapedId}"`, 'g'), `id="${uniqueId}"`)
+      .replace(new RegExp(`url\\(#${escapedId}\\)`, 'g'), `url(#${uniqueId})`)
+      .replace(
+        new RegExp(`\\b(xlink:href|href)="#${escapedId}"`, 'g'),
+        `$1="#${uniqueId}"`,
+      )
+  }, svg)
+}
+
+function createMaterialIconSrc(svg: string) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
 const materialIconsSet: Record<string, string> = {}
+const materialIconSrcSet: Record<string, string> = {}
 
 const materialIcons: FolderIconOption[] = Object.entries(files)
   .flatMap(([path, raw]) => {
@@ -54,15 +82,17 @@ const materialIcons: FolderIconOption[] = Object.entries(files)
     if (!name)
       return []
 
-    const svg = raw as string
+    const svg = sanitizeMaterialIconSvg(name, raw as string)
 
     materialIconsSet[name] = svg
+    materialIconSrcSet[name] = createMaterialIconSrc(svg)
 
     return [
       {
         name,
         searchValue: name.toLowerCase(),
         source: 'material' as const,
+        src: materialIconSrcSet[name],
         svg,
         value: createFolderIconValue('material', name),
       },
@@ -135,14 +165,16 @@ function resolveFolderIcon(value?: string | null): FolderIconOption | null {
 
   if (parsedValue.source === 'material') {
     const svg = materialIconsSet[parsedValue.name]
+    const src = materialIconSrcSet[parsedValue.name]
 
-    if (!svg)
+    if (!svg || !src)
       return null
 
     return {
       name: parsedValue.name,
       searchValue: parsedValue.name.toLowerCase(),
       source: parsedValue.source,
+      src,
       svg,
       value: createFolderIconValue(parsedValue.source, parsedValue.name),
     }
@@ -195,7 +227,6 @@ export {
   groupFolderIcons,
   materialIcons as icons,
   materialIconsSet as iconsSet,
-  materialIconInnerSvgClass,
   materialIcons,
   materialIconsSet,
   parseFolderIconValue,

@@ -3,7 +3,6 @@ import {
   createFolderIconValue,
   getFilteredFolderIcons,
   groupFolderIcons,
-  materialIconInnerSvgClass,
   parseFolderIconValue,
   resolveFolderIcon,
 } from '../icons'
@@ -114,8 +113,36 @@ describe('folder icon filtering', () => {
 })
 
 describe('material icon rendering', () => {
-  it('includes sizing classes for nested svg content', () => {
-    expect(materialIconInnerSvgClass).toContain('[&_svg]:size-full')
-    expect(materialIconInnerSvgClass).toContain('[&_svg]:block')
+  it('resolves material icons to isolated data urls', () => {
+    const icon = resolveFolderIcon('typescript')
+
+    expect(icon?.src).toMatch(/^data:image\/svg\+xml;charset=utf-8,/)
+    expect(icon?.svg).toContain('<svg')
+  })
+
+  it('prefixes inline svg ids to avoid collisions between icons', () => {
+    const gitpod = resolveFolderIcon('gitpod')
+    const vuexStore = resolveFolderIcon('vuex-store')
+
+    expect(gitpod?.svg).toContain('id="folder-icon-gitpod-a"')
+    expect(gitpod?.svg).toContain('clip-path="url(#folder-icon-gitpod-a)"')
+    expect(gitpod?.svg).not.toContain('clip-path="url(#a)"')
+
+    expect(vuexStore?.svg).toContain('id="folder-icon-vuex-store-a"')
+    expect(vuexStore?.svg).toContain(
+      'clip-path="url(#folder-icon-vuex-store-a)"',
+    )
+    expect(vuexStore?.svg).not.toContain('clip-path="url(#a)"')
+  })
+
+  it('updates href references inside defs when ids are prefixed', () => {
+    const docker = resolveFolderIcon('folder-docker')
+
+    expect(docker?.svg).toContain('id="folder-icon-folder-docker-a"')
+    expect(docker?.svg).toContain('id="folder-icon-folder-docker-b"')
+    expect(docker?.svg).toContain('xlink:href="#folder-icon-folder-docker-a"')
+    expect(docker?.svg).toContain(
+      'clip-path="url(#folder-icon-folder-docker-b)"',
+    )
   })
 })

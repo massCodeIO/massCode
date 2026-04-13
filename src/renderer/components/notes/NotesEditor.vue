@@ -6,7 +6,6 @@ import {
   useNotesEditor,
   useTheme,
 } from '@/composables'
-import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentUnit } from '@codemirror/language'
@@ -22,6 +21,7 @@ import {
 import { GFM } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
+import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import {
   createImageBlocks,
@@ -58,63 +58,6 @@ const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
 let isApplyingExternalContent = false
 let unregisterNavigationNoteUIState: (() => void) | undefined
-
-const markdownLinkRegExp = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g
-const autolinkRegExp = /<(https?:\/\/[^>\s]+|masscode:\/\/[^>\s]+)>/g
-const plainUrlRegExp = /(https?:\/\/[^\s)]+)/g
-
-function extractUrlAtOffset(lineText: string, offset: number): string | null {
-  for (const pattern of [markdownLinkRegExp, autolinkRegExp, plainUrlRegExp]) {
-    pattern.lastIndex = 0
-    let match = pattern.exec(lineText)
-
-    while (match) {
-      const from = match.index
-      const to = from + match[0].length
-      if (offset >= from && offset <= to) {
-        return match[1] ?? match[0]
-      }
-
-      match = pattern.exec(lineText)
-    }
-  }
-
-  return null
-}
-
-function createLinkClickHandler() {
-  return EditorView.domEventHandlers({
-    click(event, view) {
-      const target = event.target
-      if (!(target instanceof HTMLElement))
-        return false
-
-      const pos = view.posAtCoords({
-        x: event.clientX,
-        y: event.clientY,
-      })
-      if (pos === null)
-        return false
-
-      const line = view.state.doc.lineAt(pos)
-      const url = extractUrlAtOffset(line.text, pos - line.from)
-      if (!url)
-        return false
-
-      if (
-        !url.startsWith('http://')
-        && !url.startsWith('https://')
-        && !url.startsWith('masscode://')
-      ) {
-        return false
-      }
-
-      event.preventDefault()
-      void ipc.invoke('system:open-external', url)
-      return true
-    },
-  })
-}
 
 function moveSelectionToAdjacentImageSource(
   view: EditorView,
@@ -285,7 +228,6 @@ function createEditorState(doc: string): EditorState {
     extensions.push(
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
-      createLinkClickHandler(),
     )
 
     if (!props.presentation) {
@@ -305,6 +247,10 @@ function createEditorState(doc: string): EditorState {
   else {
     extensions.push(placeholder('Start typing...'))
     extensions.push(createImageInsert())
+  }
+
+  if (!raw) {
+    extensions.push(createExternalLinksNavigation())
   }
 
   extensions.push(

@@ -18,14 +18,14 @@ const props = defineProps<Props>()
 const { updateFolder, getFolders } = useFolders()
 
 const search = ref('')
-const filter = ref<FolderIconFilter>('all')
+const filter = ref<FolderIconFilter>('material')
 
 const containerRef = useTemplateRef('containerRef')
+const listRef = useTemplateRef('listRef')
 
 const filterOptions = computed<
   Array<{ label: string, value: FolderIconFilter }>
 >(() => [
-  { label: i18n.t('folder.iconPicker.filters.all'), value: 'all' },
   { label: i18n.t('folder.iconPicker.filters.material'), value: 'material' },
   { label: i18n.t('folder.iconPicker.filters.lucide'), value: 'lucide' },
 ])
@@ -91,6 +91,9 @@ watch(search, () => {
 
 watch(filter, () => {
   selectedIndex.value = -1
+  nextTick(() => {
+    listRef.value?.scrollTo({ top: 0 })
+  })
 })
 
 watch(
@@ -140,7 +143,10 @@ watch(selectedIndex, () => {
         </UiShadcnTabsList>
       </UiShadcnTabs>
     </div>
-    <div class="scrollbar max-h-[280px] overflow-y-auto">
+    <div
+      ref="listRef"
+      class="scrollbar max-h-[280px] overflow-y-auto"
+    >
       <div
         v-if="iconSections.length"
         class="space-y-4"

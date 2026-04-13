@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import UiInput from '~/renderer/components/ui/input/Input.vue'
+import {
+  type FolderIconFilter,
+  type FolderIconSource,
+  getFilteredFolderIcons,
+  groupFolderIcons,
+} from '@/components/ui/folder-icon/icons'
+import { i18n } from '@/electron'
 import { useFolders } from '~/renderer/composables'
-import { icons, iconsSet } from './icons'
 
 interface Props {
   nodeId: number
@@ -13,20 +18,28 @@ const props = defineProps<Props>()
 const { updateFolder, getFolders } = useFolders()
 
 const search = ref('')
+const filter = ref<FolderIconFilter>('material')
 
 const containerRef = useTemplateRef('containerRef')
+const listRef = useTemplateRef('listRef')
 
-const iconsBySearch = computed(() => {
-  if (search.value === '') {
-    return icons
-  }
-  return icons.filter(i => i.name?.includes(search.value.toLowerCase()))
-})
+const filterOptions = computed<
+  Array<{ label: string, value: FolderIconFilter }>
+>(() => [
+  { label: i18n.t('folder.iconPicker.filters.material'), value: 'material' },
+  { label: i18n.t('folder.iconPicker.filters.lucide'), value: 'lucide' },
+])
+
+const visibleIcons = computed(() =>
+  getFilteredFolderIcons(search.value, filter.value),
+)
+
+const iconSections = computed(() => groupFolderIcons(visibleIcons.value))
 
 const selectedIndex = ref(-1)
 
 function onKeydown(e: KeyboardEvent) {
-  const len = iconsBySearch.value.length
+  const len = visibleIcons.value.length
 
   if (e.key === 'ArrowDown') {
     e.preventDefault()
@@ -42,19 +55,28 @@ function onKeydown(e: KeyboardEvent) {
   }
   else if (e.key === 'Enter') {
     e.preventDefault()
-    onSet(iconsBySearch.value[selectedIndex.value].name!)
+
+    const icon = visibleIcons.value[selectedIndex.value]
+
+    if (icon) {
+      onSet(icon.value)
+    }
   }
 }
 
-async function onSet(name: string) {
+function getSectionTitle(source: FolderIconSource) {
+  return i18n.t(`folder.iconPicker.filters.${source}`)
+}
+
+async function onSet(value: string) {
   if (!props.nodeId)
     return
 
   if (props.onSetIcon) {
-    await props.onSetIcon(props.nodeId, name)
+    await props.onSetIcon(props.nodeId, value)
   }
   else {
-    await updateFolder(props.nodeId, { icon: name })
+    await updateFolder(props.nodeId, { icon: value })
     await getFolders()
   }
 
@@ -63,17 +85,21 @@ async function onSet(name: string) {
   )
 }
 
-watch(
-  () => search.value,
-  () => {
-    selectedIndex.value = -1
-  },
-)
+watch(search, () => {
+  selectedIndex.value = -1
+})
+
+watch(filter, () => {
+  selectedIndex.value = -1
+  nextTick(() => {
+    listRef.value?.scrollTo({ top: 0 })
+  })
+})
 
 watch(
-  () => iconsBySearch.value,
+  visibleIcons,
   () => {
-    if (selectedIndex.value >= iconsBySearch.value.length) {
+    if (selectedIndex.value >= visibleIcons.value.length) {
       selectedIndex.value = -1
     }
   },
@@ -96,28 +122,81 @@ watch(selectedIndex, () => {
     ref="containerRef"
     class="space-y-5"
   >
-    <div>
+    <div class="space-y-3">
       <UiInput
         v-model="search"
-        placeholder="Search..."
+        :placeholder="i18n.t('folder.iconPicker.searchPlaceholder')"
         @keydown="onKeydown"
       />
+      <UiShadcnTabs
+        v-model="filter"
+        class="gap-0"
+      >
+        <UiShadcnTabsList>
+          <UiShadcnTabsTrigger
+            v-for="item in filterOptions"
+            :key="item.value"
+            :value="item.value"
+          >
+            {{ item.label }}
+          </UiShadcnTabsTrigger>
+        </UiShadcnTabsList>
+      </UiShadcnTabs>
     </div>
-    <div class="scrollbar max-h-[200px] overflow-y-auto">
-      <div class="grid auto-rows-[36px] grid-cols-8 gap-2">
+    <div
+      ref="listRef"
+      class="scrollbar max-h-[280px] overflow-y-auto"
+    >
+      <div
+        v-if="iconSections.length"
+        class="space-y-4"
+      >
         <div
-          v-for="(icon, index) in iconsBySearch"
-          :id="`icon-${index}`"
-          :key="icon.name"
-          class="user-select-none flex items-center justify-center rounded-md"
-          :class="index === selectedIndex ? 'bg-muted' : 'hover:bg-muted'"
-          @click="onSet(icon.name!)"
+          v-for="section in iconSections"
+          :key="section.source"
+          class="space-y-2"
         >
-          <span
-            class="*:size-5"
-            v-html="iconsSet[icon.name!]"
-          />
+          <UiText
+            as="div"
+            variant="xs"
+            weight="medium"
+            muted
+            uppercase
+            class="px-1 tracking-[0.08em]"
+          >
+            {{ getSectionTitle(section.source) }}
+          </UiText>
+          <div class="grid auto-rows-[36px] grid-cols-8 gap-2">
+            <div
+              v-for="icon in section.items"
+              :id="`icon-${visibleIcons.findIndex((item) => item.value === icon.value)}`"
+              :key="icon.value"
+              class="user-select-none flex items-center justify-center rounded-md"
+              :class="
+                visibleIcons[selectedIndex]?.value === icon.value
+                  ? 'bg-muted'
+                  : 'hover:bg-muted'
+              "
+              @click="onSet(icon.value)"
+            >
+              <UiFolderIcon
+                :name="icon.value"
+                class="size-5"
+              />
+            </div>
+          </div>
         </div>
+      </div>
+      <div
+        v-else
+        class="flex min-h-24 items-center justify-center px-4 text-center"
+      >
+        <UiText
+          variant="sm"
+          muted
+        >
+          {{ i18n.t("folder.iconPicker.emptyResults") }}
+        </UiText>
       </div>
     </div>
   </div>

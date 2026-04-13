@@ -110,7 +110,16 @@
     }
   },
   "folder": {
-    "untitled": "Папка без названия"
+    "untitled": "Папка без названия",
+    "iconPicker": {
+      "searchPlaceholder": "Поиск иконок...",
+      "emptyResults": "Иконки не найдены",
+      "filters": {
+        "all": "Все",
+        "material": "Material",
+        "lucide": "Lucide"
+      }
+    }
   },
   "button": {
     "back": "Назад",

@@ -110,7 +110,16 @@
     }
   },
   "folder": {
-    "untitled": "Untitled folder"
+    "untitled": "Untitled folder",
+    "iconPicker": {
+      "searchPlaceholder": "Search icons...",
+      "emptyResults": "No icons found",
+      "filters": {
+        "all": "All",
+        "material": "Material",
+        "lucide": "Lucide"
+      }
+    }
   },
   "button": {
     "back": "Back",

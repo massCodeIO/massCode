@@ -7,6 +7,8 @@
     },
     "label": "Storage",
     "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
+    "moveVault": "Move Vault",
+    "movingVault": "Moving vault...",
     "count": "Count",
     "vaultPath": "Vault Path"
   },

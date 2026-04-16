@@ -11,7 +11,12 @@ import {
   getNotesPaths,
   getNotesRuntimeCache,
 } from '../../storage/providers/markdown/notes/runtime'
+import {
+  getDirectoryState,
+  moveVault,
+} from '../../storage/providers/markdown/runtime/moveVault'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { store } from '../../store'
 
 export function registerSystemHandlers() {
   ipcMain.handle('system:currency-rates', () => {
@@ -24,6 +29,22 @@ export function registerSystemHandlers() {
 
   ipcMain.handle('system:crypto-rates-refresh', () => {
     return refreshCryptoRatesForced()
+  })
+
+  ipcMain.handle(
+    'system:get-directory-state',
+    (_, payload: { path: string }) => {
+      return getDirectoryState(payload.path)
+    },
+  )
+
+  ipcMain.handle('system:move-vault', (_, payload: { targetPath: string }) => {
+    const sourcePath = getVaultPath()
+
+    moveVault(sourcePath, payload.targetPath)
+    store.preferences.set('storage.vaultPath', payload.targetPath)
+
+    return { vaultPath: payload.targetPath }
   })
 
   ipcMain.handle('system:reload', () => {

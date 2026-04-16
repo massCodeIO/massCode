@@ -17,6 +17,15 @@ import { i18n, ipc, store } from '@/electron'
 import { LoaderCircle } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
+interface DirectoryStateResponse {
+  exists: boolean
+  isEmpty: boolean
+}
+
+interface MoveVaultResponse {
+  vaultPath: string
+}
+
 const { sonner } = useSonner()
 const { confirm } = useDialog()
 const { getFolders } = useFolders()
@@ -55,6 +64,7 @@ const counts = reactive<SnippetsCountsResponse>({
   trash: 0,
 })
 const isLoadingCounts = ref(false)
+const isMovingVault = ref(false)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 
 function showLoadingCounts() {
@@ -91,7 +101,25 @@ async function getSnippetsCounts() {
 
 getSnippetsCounts()
 
+async function resetAndReloadVaultData() {
+  resetMathNotebook()
+  clearNotesState()
+  resetNoteFoldersState()
+  resetNoteTags()
+  resetNotesSpaceInitialization()
+
+  await nextTick()
+
+  await getFolders(false)
+  await getSnippets()
+  await getSnippetsCounts()
+}
+
 async function openVaultStorage() {
+  if (isMovingVault.value) {
+    return
+  }
+
   const result = await ipc.invoke<DialogOptions, string>(
     'main-menu:open-dialog',
     {
@@ -105,27 +133,7 @@ async function openVaultStorage() {
 
   vaultPath.value = result
   store.preferences.set('storage.vaultPath', result)
-  resetMathNotebook()
-  clearNotesState()
-  resetNoteFoldersState()
-  resetNoteTags()
-  resetNotesSpaceInitialization()
-
-  await nextTick()
-
-  showLoadingCounts()
-
-  try {
-    await getFolders(false)
-    await getSnippets()
-
-    const { data } = await api.snippets.getSnippetsCounts()
-    counts.total = data.total
-    counts.trash = data.trash
-  }
-  finally {
-    hideLoadingCounts()
-  }
+  await resetAndReloadVaultData()
 
   sonner({
     message: i18n.t('messages:success.vaultLoaded'),
@@ -133,7 +141,70 @@ async function openVaultStorage() {
   })
 }
 
+async function moveVaultStorage() {
+  if (isMovingVault.value) {
+    return
+  }
+
+  const targetPath = await ipc.invoke<DialogOptions, string>(
+    'main-menu:open-dialog',
+    {
+      properties: ['openDirectory', 'createDirectory'],
+    },
+  )
+
+  if (!targetPath) {
+    return
+  }
+
+  const directoryState = await ipc.invoke<
+    { path: string },
+    DirectoryStateResponse
+  >('system:get-directory-state', {
+    path: targetPath,
+  })
+
+  if (!directoryState.isEmpty) {
+    const isConfirmed = await confirm({
+      title: i18n.t('messages:confirm.moveVaultOverwrite.0'),
+      content: i18n.t('messages:confirm.moveVaultOverwrite.1'),
+    })
+
+    if (!isConfirmed) {
+      return
+    }
+  }
+
+  isMovingVault.value = true
+
+  try {
+    const result = await ipc.invoke<{ targetPath: string }, MoveVaultResponse>(
+      'system:move-vault',
+      { targetPath },
+    )
+
+    vaultPath.value = result.vaultPath
+    await resetAndReloadVaultData()
+
+    sonner({
+      message: i18n.t('messages:success.vaultMoved'),
+      type: 'success',
+    })
+  }
+  catch (err) {
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+  }
+  finally {
+    isMovingVault.value = false
+  }
+}
+
 async function migrateSqliteToMarkdown() {
+  if (isMovingVault.value) {
+    return
+  }
+
   const sqliteDbPath = await ipc.invoke<DialogOptions, string>(
     'main-menu:open-dialog',
     {
@@ -192,16 +263,43 @@ async function migrateSqliteToMarkdown() {
         />
 
         <template #actions>
-          <Button
-            variant="outline"
-            @click="openVaultStorage"
-          >
-            {{ i18n.t("action.select.directory") }}
-          </Button>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              :disabled="isMovingVault"
+              @click="openVaultStorage"
+            >
+              {{ i18n.t("action.select.directory") }}
+            </Button>
+
+            <Button
+              variant="outline"
+              :disabled="isMovingVault"
+              @click="moveVaultStorage"
+            >
+              <LoaderCircle
+                v-if="isMovingVault"
+                class="mr-2 h-4 w-4 animate-spin"
+              />
+              {{ i18n.t("preferences:storage.moveVault") }}
+            </Button>
+          </div>
         </template>
 
         <template #description>
-          {{ i18n.t("messages:description.storageVault") }}
+          <div class="space-y-2">
+            <div>
+              {{ i18n.t("messages:description.storageVault") }}
+            </div>
+
+            <div
+              v-if="isMovingVault"
+              class="flex items-center gap-2"
+            >
+              <LoaderCircle class="h-4 w-4 animate-spin" />
+              <span>{{ i18n.t("preferences:storage.movingVault") }}</span>
+            </div>
+          </div>
         </template>
       </UiMenuFormItem>
 
@@ -224,6 +322,7 @@ async function migrateSqliteToMarkdown() {
       >
         <Button
           variant="outline"
+          :disabled="isMovingVault"
           @click="migrateSqliteToMarkdown"
         >
           {{ i18n.t("preferences:storage.migrateSqliteToMarkdown") }}

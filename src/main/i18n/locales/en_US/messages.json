@@ -4,6 +4,10 @@
     "deletePermanently": "Are you sure you want to permanently delete \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
     "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
+    "moveVaultOverwrite": [
+      "Overwrite selected directory?",
+      "The selected directory is not empty. Its contents will be overwritten by the current vault."
+    ],
     "migrateToMarkdown": [
       "Migrate to Markdown Vault?",
       "The selected vault will be overwritten with the current SQLite library."
@@ -12,6 +16,7 @@
   "success": {
     "copied": "Copied to clipboard",
     "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
+    "vaultMoved": "Vault successfully moved.",
     "vaultLoaded": "Vault successfully loaded."
   },
   "warning": {

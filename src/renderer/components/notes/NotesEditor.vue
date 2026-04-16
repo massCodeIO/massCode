@@ -30,6 +30,7 @@ import {
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { createInternalLinks } from './cm-extensions/internalLinks'
 import { listIndent } from './cm-extensions/listIndent'
+import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
@@ -214,6 +215,7 @@ function createEditorState(doc: string): EditorState {
         calloutTitleMode: preview ? 'replace' : 'smart',
       }),
       createHideMarkup({ alwaysHide: preview }),
+      createListLineIndent({ interactiveTaskMarkers: editable }),
     )
   }
 

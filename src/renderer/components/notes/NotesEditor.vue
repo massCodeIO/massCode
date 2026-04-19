@@ -10,7 +10,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentUnit } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
-import { EditorState, type Extension } from '@codemirror/state'
+import { EditorState, type Extension, Prec } from '@codemirror/state'
 import {
   EditorView,
   type KeyBinding,
@@ -175,9 +175,9 @@ function createEditorState(doc: string): EditorState {
       : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
     history(),
+    Prec.highest(keymap.of(editable && !raw ? listIndent : [])),
     keymap.of([
       ...(editable && !raw ? navigationKeymap : []),
-      ...(editable && !raw ? listIndent : []),
       ...defaultKeymap,
       ...historyKeymap,
     ]),

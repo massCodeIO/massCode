@@ -89,36 +89,48 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
           })
         }
 
+        function pushLineDecoration(
+          line: ReturnType<typeof view.state.doc.line>,
+          indentPx: number,
+        ) {
+          const px = Math.round(indentPx * 10) / 10
+          const padPx = Math.round((indentPx + BASE_INDENT_PX) * 10) / 10
+
+          decorations.push(
+            Decoration.line({
+              attributes: {
+                style: `text-indent:-${px}px;padding-left:${padPx}px`,
+              },
+            }).range(line.from),
+          )
+        }
+
         for (const { from, to } of view.visibleRanges) {
           syntaxTree(view.state).iterate({
             from,
             to,
-            enter(node) {
-              if (node.name !== 'ListMark')
+            leave(node) {
+              if (node.name !== 'ListItem')
                 return
 
-              const line = view.state.doc.lineAt(node.from)
-              if (processedLines.has(line.number))
-                return
-              processedLines.add(line.number)
-
-              const match = parseListPrefix(line.text)
+              const firstLine = view.state.doc.lineAt(node.from)
+              const match = parseListPrefix(firstLine.text)
               if (!match)
                 return
 
-              const taskMarker = taskMarkersByLine.get(line.number)
-              let indentPx: number
+              const taskMarker = taskMarkersByLine.get(firstLine.number)
+              let firstLineIndent: number
 
               if (taskMarker) {
                 const widgetShown = shouldReplaceTaskMarker(
                   interactiveTaskMarkers,
                   view.hasFocus,
-                  isCursorOnLine(view, line.number),
+                  isCursorOnLine(view, firstLine.number),
                 )
 
                 if (widgetShown) {
                   const textBefore = view.state.sliceDoc(
-                    line.from,
+                    firstLine.from,
                     taskMarker.from,
                   )
                   const charAfter = view.state.sliceDoc(
@@ -126,26 +138,33 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
                     taskMarker.to + 1,
                   )
                   const spacer = charAfter === ' ' ? ' ' : ''
-                  indentPx = measure(textBefore + spacer) + CHECKBOX_WIDGET_PX
+                  firstLineIndent
+                    = measure(textBefore + spacer) + CHECKBOX_WIDGET_PX
                 }
                 else {
-                  indentPx = measure(match[0])
+                  firstLineIndent = measure(match[0])
                 }
               }
               else {
-                indentPx = measure(match[1])
+                firstLineIndent = measure(match[1])
               }
 
-              const px = Math.round(indentPx * 10) / 10
-              const padPx = Math.round((indentPx + BASE_INDENT_PX) * 10) / 10
+              const continuationIndent = measure(match[1])
 
-              decorations.push(
-                Decoration.line({
-                  attributes: {
-                    style: `text-indent:-${px}px;padding-left:${padPx}px`,
-                  },
-                }).range(line.from),
+              if (!processedLines.has(firstLine.number)) {
+                processedLines.add(firstLine.number)
+                pushLineDecoration(firstLine, firstLineIndent)
+              }
+
+              const lastLine = view.state.doc.lineAt(
+                Math.max(node.to - 1, node.from),
               )
+              for (let ln = firstLine.number + 1; ln <= lastLine.number; ln++) {
+                if (processedLines.has(ln))
+                  continue
+                processedLines.add(ln)
+                pushLineDecoration(view.state.doc.line(ln), continuationIndent)
+              }
             },
           })
         }

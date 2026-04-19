@@ -36,18 +36,17 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
       private ruler: HTMLSpanElement
       private widthCache = new Map<string, number>()
 
-      constructor(view: EditorView) {
+      constructor(_view: EditorView) {
         this.ruler = document.createElement('span')
-        Object.assign(this.ruler.style, {
-          position: 'absolute',
-          visibility: 'hidden',
-          height: '0',
-          overflow: 'hidden',
-          whiteSpace: 'pre',
-          pointerEvents: 'none',
-        })
-        view.contentDOM.appendChild(this.ruler)
-        this.decorations = this.build(view)
+        this.ruler.style.cssText
+          = 'position:absolute;left:-9999px;top:-9999px;white-space:pre;pointer-events:none;'
+        document.body.appendChild(this.ruler)
+      }
+
+      private syncFont(view: EditorView) {
+        const cs = getComputedStyle(view.contentDOM)
+        this.ruler.style.fontFamily = cs.fontFamily
+        this.ruler.style.fontSize = cs.fontSize
       }
 
       private measure(text: string): number {
@@ -63,6 +62,8 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
       }
 
       private build(view: EditorView) {
+        this.syncFont(view)
+
         const decorations: Range<Decoration>[] = []
         const processedLines = new Set<number>()
         const measure = this.measure.bind(this)
@@ -141,7 +142,7 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
               decorations.push(
                 Decoration.line({
                   attributes: {
-                    style: `text-indent:-${px}px;padding-inline-start:${padPx}px`,
+                    style: `text-indent:-${px}px;padding-left:${padPx}px`,
                   },
                 }).range(line.from),
               )

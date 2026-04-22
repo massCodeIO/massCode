@@ -117,6 +117,7 @@ class InternalLinkWidget extends WidgetType {
   toDOM(): HTMLElement {
     const root = document.createElement('span')
     root.className = `cm-internal-link is-${this.status}`
+    root.style.textIndent = '0'
     root.dataset.internalLink = 'true'
     root.dataset.internalLinkBroken = String(this.status === 'broken')
     root.dataset.internalLinkFrom = String(this.link.from)

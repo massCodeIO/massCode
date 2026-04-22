@@ -129,7 +129,7 @@ export const listIndent: KeyBinding[] = [
       if (listRe.test(currentLine.text)) {
         firstLine = currentLine
       }
-      else if (/^\s/.test(currentLine.text) || currentLine.text === '') {
+      else if (/^\s/.test(currentLine.text)) {
         for (let ln = currentLine.number - 1; ln >= 1; ln--) {
           const prevLine = state.doc.line(ln)
           if (listRe.test(prevLine.text)) {

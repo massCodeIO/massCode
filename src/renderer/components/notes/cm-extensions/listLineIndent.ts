@@ -164,8 +164,11 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
               for (let ln = firstLine.number + 1; ln <= lastLine.number; ln++) {
                 if (processedLines.has(ln))
                   continue
+                const line = view.state.doc.line(ln)
+                if (!/^\s/.test(line.text))
+                  continue
                 processedLines.add(ln)
-                pushLineDecoration(view.state.doc.line(ln), continuationIndent)
+                pushLineDecoration(line, continuationIndent)
               }
             },
           })

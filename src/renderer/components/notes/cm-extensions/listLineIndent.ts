@@ -36,11 +36,12 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
       private ruler: HTMLSpanElement
       private widthCache = new Map<string, number>()
 
-      constructor(_view: EditorView) {
+      constructor(view: EditorView) {
         this.ruler = document.createElement('span')
         this.ruler.style.cssText
           = 'position:absolute;left:-9999px;top:-9999px;white-space:pre;pointer-events:none;'
         document.body.appendChild(this.ruler)
+        this.decorations = this.build(view)
       }
 
       private syncFont(view: EditorView) {
@@ -109,6 +110,7 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
           syntaxTree(view.state).iterate({
             from,
             to,
+            enter() {},
             leave(node) {
               if (node.name !== 'ListItem')
                 return

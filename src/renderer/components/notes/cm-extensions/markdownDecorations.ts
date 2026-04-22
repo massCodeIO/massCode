@@ -57,6 +57,7 @@ class CheckboxWidget extends WidgetType {
     checkbox.style.color = 'var(--primary-foreground)'
     checkbox.style.cursor = this.interactive ? 'pointer' : 'default'
     checkbox.style.verticalAlign = 'middle'
+    checkbox.style.textIndent = '0'
 
     if (this.checked) {
       const checkmark = document.createElement('span')
@@ -325,7 +326,6 @@ function buildDecorations(
   calloutTitleMode: CalloutTitleMode,
 ) {
   const decorations: Range<Decoration>[] = []
-  const indentedListLines = new Set<number>()
 
   for (const { from, to } of view.visibleRanges) {
     syntaxTree(view.state).iterate({
@@ -512,17 +512,6 @@ function buildDecorations(
           const checked = text.includes('x') || text.includes('X')
 
           const line = view.state.doc.lineAt(node.from)
-          if (!indentedListLines.has(line.number)) {
-            indentedListLines.add(line.number)
-            decorations.push(
-              Decoration.line({
-                attributes: {
-                  style: 'padding-left:14px',
-                },
-              }).range(line.from),
-            )
-          }
-
           if (
             shouldReplaceTaskMarker(
               interactiveTaskMarkers,
@@ -544,18 +533,6 @@ function buildDecorations(
 
         // List marks (bullets, numbers)
         if (type === 'ListMark') {
-          const line = view.state.doc.lineAt(node.from)
-          if (!indentedListLines.has(line.number)) {
-            indentedListLines.add(line.number)
-            decorations.push(
-              Decoration.line({
-                attributes: {
-                  style: 'padding-left:14px',
-                },
-              }).range(line.from),
-            )
-          }
-
           decorations.push(
             Decoration.mark({
               attributes: { style: 'color:var(--muted-foreground)' },

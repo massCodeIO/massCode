@@ -37,6 +37,7 @@ const {
   contextMenu,
   updateLabel,
   cancelEdit,
+  getValidationMessage,
   editableId,
   selectedIds,
   focusedId,
@@ -78,6 +79,9 @@ const isFocused = computed(() => focusedId.value === props.node.id)
 const isHighlighted = computed(() => highlightedIds.value.has(props.node.id))
 
 const isEditing = computed(() => editableId.value === props.node.id)
+const validationMessage = computed(() => {
+  return getValidationMessage?.(props.node, editValue.value) || ''
+})
 
 const isDragActive = computed(() => Boolean(dragStore.dragNode))
 
@@ -357,8 +361,12 @@ function onDrop(e: DragEvent) {
 
 // --- Inline Edit ---
 
-function onUpdateLabel() {
+function submitEdit() {
   const trimmed = editValue.value.trim()
+
+  if (validationMessage.value) {
+    return
+  }
 
   if (trimmed === '' || editValue.value === props.node.label) {
     editValue.value = props.node.label
@@ -367,6 +375,15 @@ function onUpdateLabel() {
   }
 
   updateLabel(props.node, editValue.value)
+}
+
+function onBlurEdit() {
+  if (validationMessage.value) {
+    onCancelEdit()
+    return
+  }
+
+  submitEdit()
 }
 
 function onCancelEdit() {
@@ -438,16 +455,21 @@ function onCancelEdit() {
             {{ node.label }}
           </span>
         </template>
-        <input
+        <UiInputValidationTooltip
           v-else
-          ref="editInputRef"
-          v-model="editValue"
-          class="outline-primary mr-1 min-w-0 flex-1 rounded-sm bg-transparent outline outline-1"
-          @keydown.esc="onCancelEdit"
-          @keydown.enter="onUpdateLabel"
-          @blur="onUpdateLabel"
-          @click.stop
+          :open="Boolean(validationMessage)"
+          :message="validationMessage"
         >
+          <input
+            ref="editInputRef"
+            v-model="editValue"
+            class="outline-primary mr-1 min-w-0 flex-1 rounded-sm bg-transparent outline outline-1"
+            @keydown.esc="onCancelEdit"
+            @keydown.enter="submitEdit"
+            @blur="onBlurEdit"
+            @click.stop
+          >
+        </UiInputValidationTooltip>
       </span>
     </div>
     <template v-if="node.children">

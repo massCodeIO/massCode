@@ -31,7 +31,12 @@
     ]
   },
   "error": {
-    "migration": "Auto-migration from SQLite failed: {{error}}"
+    "migration": "Auto-migration from SQLite failed: {{error}}",
+    "entryNameEmpty": "Name cannot be empty.",
+    "entryNameLeadingDot": "Name cannot start with a dot.",
+    "entryNameInvalidChars": "Name cannot contain these characters: {{- chars}}",
+    "entryNameTrailingDot": "Name cannot end with a dot.",
+    "entryNameWindowsReserved": "This name is reserved on Windows."
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",

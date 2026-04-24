@@ -40,3 +40,5 @@ export function getContiguousSelection(
 
   return orderedIds.slice(startIndex, endIndex + 1)
 }
+
+export * from './entryNameValidationMessage'

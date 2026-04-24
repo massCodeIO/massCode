@@ -10,6 +10,7 @@ interface Props {
   focusedId?: string | number | undefined
   highlightedIds?: Set<string | number>
   indent?: number
+  getValidationMessage?: (node: TreeNode, value: string) => string
 }
 
 interface Emits {
@@ -142,6 +143,7 @@ provide(treeInjectionKey, {
   contextMenu,
   updateLabel: updateLabelHandler,
   cancelEdit: cancelEditHandler,
+  getValidationMessage: props.getValidationMessage,
   isHoveredByIdDisabled,
   editableId: internalEditableId,
   selectedIds: internalSelectedIds,

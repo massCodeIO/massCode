@@ -49,6 +49,10 @@ export function validateEntryName(
     throwStorageError('INVALID_NAME', `${kind} name is empty or invalid`)
   }
 
+  if (normalized.startsWith('.')) {
+    throwStorageError('INVALID_NAME', `${kind} name cannot start with a dot`)
+  }
+
   if (hasInvalidNameChars(normalized)) {
     throwStorageError(
       'INVALID_NAME',

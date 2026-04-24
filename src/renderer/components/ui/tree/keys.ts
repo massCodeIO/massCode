@@ -18,6 +18,7 @@ export interface TreeInjection {
   contextMenu: (node: TreeNode) => void
   updateLabel: (node: TreeNode, value: string) => void
   cancelEdit: (node: TreeNode) => void
+  getValidationMessage?: (node: TreeNode, value: string) => string
   isHoveredByIdDisabled: Ref<boolean>
   editableId: Ref<string | number | null>
   selectedIds: Ref<(string | number)[]>

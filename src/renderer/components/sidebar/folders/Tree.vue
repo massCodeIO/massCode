@@ -6,7 +6,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
+import { getEntryNameValidationMessage, scrollToElement } from '@/utils'
 import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
 
@@ -110,6 +110,10 @@ const contextNodeDefaultLanguage = computed(() => {
       ?.defaultLanguage || ''
   )
 })
+
+function getFolderValidationMessage(_node: TreeNodeType, value: string) {
+  return getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+}
 
 // --- Event handlers ---
 
@@ -324,6 +328,7 @@ async function onRemoveCustomIcon() {
           :editable-id="editableId"
           :focused-id="focusedId"
           :highlighted-ids="highlightedIds"
+          :get-validation-message="getFolderValidationMessage"
           @click-node="onClickNode"
           @dblclick-node="onDblclickNode"
           @toggle-node="onToggleNode"

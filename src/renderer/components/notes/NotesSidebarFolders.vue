@@ -12,6 +12,7 @@ import {
 } from '@/composables'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
+import { getEntryNameValidationMessage } from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
@@ -113,6 +114,10 @@ const highlightedIds = computed({
 // --- Context menu state ---
 
 const contextNode = ref<any>(null)
+
+function getFolderValidationMessage(_node: TreeNodeType, value: string) {
+  return getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+}
 
 // --- Event handlers ---
 
@@ -220,6 +225,7 @@ function onCancelEdit() {
               :editable-id="editableId"
               :focused-id="focusedId"
               :highlighted-ids="highlightedIds"
+              :get-validation-message="getFolderValidationMessage"
               class="h-full px-0.5 pb-1"
               @click-node="onClickNode"
               @dblclick-node="onDblclickNode"

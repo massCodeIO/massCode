@@ -13,12 +13,8 @@ interface NotesGraphDataLike {
 }
 
 export function loadNotesGraphIfNeeded(
-  graphData: NotesGraphDataLike | null,
+  _graphData: NotesGraphDataLike | null,
   getNotesGraph: () => unknown,
 ) {
-  if (graphData) {
-    return
-  }
-
   getNotesGraph()
 }

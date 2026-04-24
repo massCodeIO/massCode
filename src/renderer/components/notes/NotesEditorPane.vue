@@ -22,6 +22,10 @@ import {
   Pencil,
   Presentation,
 } from 'lucide-vue-next'
+import {
+  formatEntryNameValidationChars,
+  getEntryNameValidationIssue,
+} from '~/shared/entryNameValidation'
 import { shouldSyncSelectedNoteContent } from './editorSync'
 import { getTextStats } from './textStats'
 
@@ -61,6 +65,7 @@ const presentationActionTooltip = computed(() =>
     : i18n.t('menu:markdown.presentationMode'),
 )
 const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
+const isNameFocused = ref(false)
 
 function onSidebarToggle() {
   toggleNotesSidebar()
@@ -98,16 +103,66 @@ const {
   model: name,
   onFocus: onNameFocus,
   onBlur,
+  reset: resetName,
 } = useEditableField(
   () => selectedNote.value?.name,
   (v) => {
+    if (getEntryNameValidationIssue(v)) {
+      return
+    }
+
     if (selectedNote.value) {
       addToUpdateQueue(selectedNote.value.id, { name: v })
     }
   },
 )
 
+const nameValidationIssue = computed(() =>
+  getEntryNameValidationIssue(name.value),
+)
+const nameValidationMessage = computed(() => {
+  const issue = nameValidationIssue.value
+
+  if (!issue) {
+    return ''
+  }
+
+  if (issue.code === 'invalidChars') {
+    return i18n.t('messages:error.entryNameInvalidChars', {
+      chars: formatEntryNameValidationChars(issue.chars),
+    })
+  }
+
+  if (issue.code === 'leadingDot') {
+    return i18n.t('messages:error.entryNameLeadingDot')
+  }
+
+  if (issue.code === 'trailingDot') {
+    return i18n.t('messages:error.entryNameTrailingDot')
+  }
+
+  if (issue.code === 'windowsReserved') {
+    return i18n.t('messages:error.entryNameWindowsReserved')
+  }
+
+  return i18n.t('messages:error.entryNameEmpty')
+})
+
+const isNameValidationTooltipOpen = computed(() => {
+  return isNameFocused.value && Boolean(nameValidationMessage.value)
+})
+
+function onNoteNameFocus() {
+  isNameFocused.value = true
+  onNameFocus()
+}
+
 function onNameBlur() {
+  if (nameValidationIssue.value) {
+    resetName()
+  }
+
+  isNameFocused.value = false
   onBlur()
   isFocusedNoteName.value = false
 }
@@ -170,14 +225,19 @@ const textStats = computed(() => getTextStats(content.value))
             </UiActionButton>
           </div>
           <div class="min-w-0 flex-1">
-            <UiInput
-              v-model="name"
-              variant="ghost"
-              class="w-full truncate px-0"
-              :select="isFocusedNoteName"
-              @focus="onNameFocus"
-              @blur="onNameBlur"
-            />
+            <UiInputValidationTooltip
+              :open="isNameValidationTooltipOpen"
+              :message="nameValidationMessage"
+            >
+              <UiInput
+                v-model="name"
+                variant="ghost"
+                class="w-full truncate px-0"
+                :select="isFocusedNoteName"
+                @focus="onNoteNameFocus"
+                @blur="onNameBlur"
+              />
+            </UiInputValidationTooltip>
           </div>
         </div>
         <div class="ml-2 flex h-7 items-center">

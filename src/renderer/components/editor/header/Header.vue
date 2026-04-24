@@ -8,7 +8,6 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
-
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,6 +19,10 @@ import {
   Plus,
   Type,
 } from 'lucide-vue-next'
+import {
+  formatEntryNameValidationChars,
+  getEntryNameValidationIssue,
+} from '~/shared/entryNameValidation'
 
 const {
   selectedSnippet,
@@ -39,14 +42,20 @@ const {
 const { addToUpdateQueue } = useSnippetUpdate()
 
 const isShowDescription = ref(false)
+const isNameFocused = ref(false)
 
 const {
   model: name,
   onFocus: onNameFocus,
   onBlur,
+  reset: resetName,
 } = useEditableField(
   () => selectedSnippet?.value?.name,
   (v) => {
+    if (getEntryNameValidationIssue(v)) {
+      return
+    }
+
     addToUpdateQueue(selectedSnippet.value!.id, {
       name: v,
       description: selectedSnippet.value!.description,
@@ -57,7 +66,52 @@ const {
   },
 )
 
+const nameValidationIssue = computed(() =>
+  getEntryNameValidationIssue(name.value),
+)
+const nameValidationMessage = computed(() => {
+  const issue = nameValidationIssue.value
+
+  if (!issue) {
+    return ''
+  }
+
+  if (issue.code === 'invalidChars') {
+    return i18n.t('messages:error.entryNameInvalidChars', {
+      chars: formatEntryNameValidationChars(issue.chars),
+    })
+  }
+
+  if (issue.code === 'leadingDot') {
+    return i18n.t('messages:error.entryNameLeadingDot')
+  }
+
+  if (issue.code === 'trailingDot') {
+    return i18n.t('messages:error.entryNameTrailingDot')
+  }
+
+  if (issue.code === 'windowsReserved') {
+    return i18n.t('messages:error.entryNameWindowsReserved')
+  }
+
+  return i18n.t('messages:error.entryNameEmpty')
+})
+
+const isNameValidationTooltipOpen = computed(() => {
+  return isNameFocused.value && Boolean(nameValidationMessage.value)
+})
+
+function onSnippetNameFocus() {
+  isNameFocused.value = true
+  onNameFocus()
+}
+
 function onNameBlur() {
+  if (nameValidationIssue.value) {
+    resetName()
+  }
+
+  isNameFocused.value = false
   onBlur()
   isFocusedSnippetName.value = false
 }
@@ -129,14 +183,19 @@ function onJsonVisualizerToggle() {
           </UiActionButton>
         </div>
         <div class="min-w-0 flex-1">
-          <UiInput
-            v-model="name"
-            variant="ghost"
-            class="w-full truncate px-0"
-            :select="isFocusedSnippetName"
-            @focus="onNameFocus"
-            @blur="onNameBlur"
-          />
+          <UiInputValidationTooltip
+            :open="isNameValidationTooltipOpen"
+            :message="nameValidationMessage"
+          >
+            <UiInput
+              v-model="name"
+              variant="ghost"
+              class="w-full truncate px-0"
+              :select="isFocusedSnippetName"
+              @focus="onSnippetNameFocus"
+              @blur="onNameBlur"
+            />
+          </UiInputValidationTooltip>
         </div>
       </div>
       <div class="ml-2 flex">

@@ -10,7 +10,7 @@ describe('loadNotesGraphIfNeeded', () => {
     expect(getNotesGraph).toHaveBeenCalledOnce()
   })
 
-  it('does not reload graph data when it already exists', () => {
+  it('reloads graph data when entering graph with cached data', () => {
     const getNotesGraph = vi.fn()
 
     loadNotesGraphIfNeeded(
@@ -21,6 +21,6 @@ describe('loadNotesGraphIfNeeded', () => {
       getNotesGraph,
     )
 
-    expect(getNotesGraph).not.toHaveBeenCalled()
+    expect(getNotesGraph).toHaveBeenCalledOnce()
   })
 })

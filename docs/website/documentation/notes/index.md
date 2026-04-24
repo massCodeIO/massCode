@@ -56,11 +56,22 @@ The editor is built on CodeMirror 6 and includes:
 - Syntax highlighting for fenced code blocks
 - Smart list indentation with automatic ordered list renumbering
 - Tab / Shift-Tab indentation
+- Inline markdown formatting shortcuts in editable modes
 - Table navigation between cells
 - Internal links to notes and snippets
 - Mermaid diagram support
 - Image embedding
 - Callout blocks
+
+## Formatting Shortcuts
+
+The following shortcuts work in **Editor** and **Live Preview** modes:
+
+- <kbd>Cmd+B</kbd> / <kbd>Ctrl+B</kbd> for **bold**
+- <kbd>Cmd+I</kbd> / <kbd>Ctrl+I</kbd> for *italic*
+- <kbd>Cmd+Shift+S</kbd> / <kbd>Ctrl+Shift+S</kbd> for ~~strikethrough~~
+
+Press the same shortcut again to remove the markdown markers from the current selection.
 
 For visual diagrams in notes, see [Mermaid](/documentation/notes/mermaid).
 For wiki-style links between notes and snippets, see [Internal Links](/documentation/notes/internal-links).

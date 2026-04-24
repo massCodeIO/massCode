@@ -33,12 +33,16 @@ export const SEARCH_WORD_RE = /[\p{L}\p{N}_]+/gu
 export const STATE_WRITE_DEBOUNCE_MS = 100
 export const INVALID_NAME_CHARS_RE = /[<>:"/\\|?*]/g
 export const INVALID_NAME_CHARS = new Set([
+  '#',
   '<',
   '>',
   ':',
   '"',
   '/',
   '\\',
+  '[',
+  ']',
+  '^',
   '|',
   '?',
   '*',

@@ -23,6 +23,12 @@ The vault mirrors your folder structure. Each folder becomes a directory on disk
 
 You can change the vault location in **Settings → Storage**.
 
+### File Name Restrictions
+
+Because Markdown Vault maps folders, snippets, and notes directly to files and directories on disk, massCode applies a small set of cross-platform naming rules.
+
+Names cannot contain `< > : " / \ | ? * # [ ] ^`, cannot start or end with `.`, and cannot use Windows reserved names such as `CON`, `PRN`, `AUX`, `NUL`, `COM1`, or `LPT1`. These rules keep filenames portable across Windows, macOS, and Linux while also avoiding conflicts with Obsidian-style Markdown links and block references in shared vault workflows.
+
 ## Migration from SQLite
 
 If you are upgrading from an older version of massCode that used SQLite storage, you can import your existing data into Markdown Vault.

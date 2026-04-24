@@ -32,6 +32,7 @@ import { createInternalLinks } from './cm-extensions/internalLinks'
 import { listIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
+import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
 import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
@@ -177,6 +178,7 @@ function createEditorState(doc: string): EditorState {
     history(),
     Prec.highest(keymap.of(editable && !raw ? listIndent : [])),
     keymap.of([
+      ...(editable ? markdownShortcuts : []),
       ...(editable && !raw ? navigationKeymap : []),
       ...defaultKeymap,
       ...historyKeymap,

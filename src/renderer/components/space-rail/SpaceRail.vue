@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
-import { useApp, useTheme } from '@/composables'
-import { i18n, ipc, store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { RouterName } from '@/router'
 import { getSpaceDefinitions } from '@/spaceDefinitions'
 import { isMac } from '@/utils'
@@ -9,13 +8,7 @@ import { Settings } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import packageJson from '../../../../package.json'
 
-const { isSponsored } = useApp()
-const { isDark } = useTheme()
 const route = useRoute()
-
-function openDonatePage() {
-  void ipc.invoke('system:open-external', 'https://masscode.io/donate/')
-}
 
 const spaces = computed(() => {
   return getSpaceDefinitions().map(space => ({
@@ -80,20 +73,9 @@ watch(
       </RouterLink>
     </div>
     <div
-      class="mt-auto flex flex-1 flex-col items-center justify-end gap-2 pb-2"
+      class="mt-auto flex min-h-0 flex-1 flex-col items-center justify-end gap-2 overflow-hidden pb-2"
     >
-      <span
-        v-if="!isSponsored"
-        class="cursor-pointer text-center text-[9px] leading-none font-semibold tracking-[0.14em] uppercase select-none [writing-mode:sideways-lr]"
-        :class="isDark ? 'text-amber-300/70' : 'text-violet-500/70'"
-        role="link"
-        tabindex="0"
-        @click="openDonatePage"
-        @keydown.enter="openDonatePage"
-        @keydown.space.prevent="openDonatePage"
-      >
-        {{ i18n.t("messages:special.unsponsored") }}
-      </span>
+      <SpaceRailUnsponsored />
       <RouterLink
         v-slot="{ navigate }"
         custom

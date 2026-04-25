@@ -188,6 +188,9 @@ importers:
       toml:
         specifier: ^3.0.0
         version: 3.0.0
+      typed.js:
+        specifier: ^2.1.0
+        version: 2.1.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -5249,6 +5252,9 @@ packages:
   typed-function@4.2.2:
     resolution: {integrity: sha512-VwaXim9Gp1bngi/q3do8hgttYn2uC3MoT/gfuMWylnj1IeZBUAyPddHZlo1K05BDoj8DYPpMdiHqH1dDYdJf2A==}
     engines: {node: '>= 18'}
+
+  typed.js@2.1.0:
+    resolution: {integrity: sha512-bDuXEf7YcaKN4g08NMTUM6G90XU25CK3bh6U0THC/Mod/QPKlEt9g/EjvbYB8x2Qwr2p6J6I3NrsoYaVnY6wsQ==}
 
   typescript@5.7.3:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
@@ -11270,6 +11276,8 @@ snapshots:
   type-fest@2.19.0: {}
 
   typed-function@4.2.2: {}
+
+  typed.js@2.1.0: {}
 
   typescript@5.7.3: {}
 

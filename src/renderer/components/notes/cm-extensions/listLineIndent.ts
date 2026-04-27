@@ -13,6 +13,30 @@ export function parseListPrefix(text: string) {
   return text.match(LIST_PREFIX_RE)
 }
 
+export function getListContinuationLineNumbers(
+  view: EditorView,
+  from: number,
+  to: number,
+): number[] {
+  const firstLine = view.state.doc.lineAt(from)
+  const lastLine = view.state.doc.lineAt(Math.max(to - 1, from))
+  const lineNumbers: number[] = []
+
+  for (let ln = firstLine.number + 1; ln <= lastLine.number; ln++) {
+    const line = view.state.doc.line(ln)
+
+    if (line.text.trim() === '')
+      break
+
+    if (!/^\s/.test(line.text))
+      break
+
+    lineNumbers.push(ln)
+  }
+
+  return lineNumbers
+}
+
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
   for (const range of view.state.selection.ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
@@ -158,15 +182,14 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
                 pushLineDecoration(firstLine, firstLineIndent)
               }
 
-              const lastLine = view.state.doc.lineAt(
-                Math.max(node.to - 1, node.from),
-              )
-              for (let ln = firstLine.number + 1; ln <= lastLine.number; ln++) {
+              for (const ln of getListContinuationLineNumbers(
+                view,
+                node.from,
+                node.to,
+              )) {
                 if (processedLines.has(ln))
                   continue
                 const line = view.state.doc.line(ln)
-                if (!/^\s/.test(line.text))
-                  continue
                 processedLines.add(ln)
                 pushLineDecoration(line, continuationIndent)
               }

@@ -29,7 +29,7 @@ import {
 } from './cm-extensions/imageBlocks'
 import { createImageInsert } from './cm-extensions/imageInsert'
 import { createInternalLinks } from './cm-extensions/internalLinks'
-import { listIndent } from './cm-extensions/listIndent'
+import { createListIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
 import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
@@ -169,6 +169,7 @@ function createEditorState(doc: string): EditorState {
   const raw = isRawMode.value
   const preview = isPreviewMode.value
   const editable = !preview
+  const notesIndentUnit = ' '.repeat(Math.max(1, notesSettings.indentSize))
 
   const extensions: Extension[] = [
     props.presentation
@@ -176,7 +177,9 @@ function createEditorState(doc: string): EditorState {
       : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
     history(),
-    Prec.highest(keymap.of(editable && !raw ? listIndent : [])),
+    Prec.highest(
+      keymap.of(editable ? createListIndent({ indent: notesIndentUnit }) : []),
+    ),
     keymap.of([
       ...(editable ? markdownShortcuts : []),
       ...(editable && !raw ? navigationKeymap : []),
@@ -184,7 +187,7 @@ function createEditorState(doc: string): EditorState {
       ...historyKeymap,
     ]),
     editorFocusExtension,
-    indentUnit.of(' '.repeat(notesSettings.indentSize)),
+    indentUnit.of(notesIndentUnit),
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,

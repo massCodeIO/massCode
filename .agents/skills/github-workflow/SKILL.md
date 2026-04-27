@@ -83,5 +83,5 @@ git branch -d <branch-name>
 ## Commit
 
 - Только однострочный заголовок conventional commit.
-- Без скоупа проекта (`feat:`, `fix:`, а не `feat(notes):`).
+- Используй подходящий scope для коммитов и PR (`feat(notes):`, 'fix(math):).
 - Без тела, без `Co-Authored-By`.

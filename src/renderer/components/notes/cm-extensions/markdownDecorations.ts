@@ -1,7 +1,8 @@
-import type { Range } from '@codemirror/state'
+import type { EditorState, Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { syntaxTree } from '@codemirror/language'
+import { highlightingFor, syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
+import { tags } from '@lezer/highlight'
 import {
   calloutTitleByType,
   type CalloutTitleMode,
@@ -241,6 +242,8 @@ const calloutAccentByType: Record<CalloutType, string> = {
 }
 
 const CALLOUT_BACKGROUND_SATURATION = 10
+const FALLBACK_LIST_MARK_RE = /^([ \t]*)([-*+]|\d+\.)(?=\s)/
+const LIST_MARK_FALLBACK_STYLE = 'color:var(--muted-foreground)'
 
 function createCalloutBackground(baseColor: string): string {
   return `color-mix(in oklch, ${baseColor} ${CALLOUT_BACKGROUND_SATURATION}%, var(--background))`
@@ -318,6 +321,68 @@ function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
   }
 
   return false
+}
+
+interface MarkerRange {
+  from: number
+  to: number
+}
+
+function rangeKey(from: number, to: number): string {
+  return `${from}:${to}`
+}
+
+function isInsideAnyRange(position: number, ranges: MarkerRange[]): boolean {
+  return ranges.some(range => position >= range.from && position < range.to)
+}
+
+export function getFallbackListMarkerRanges(
+  state: EditorState,
+  from = 0,
+  to = state.doc.length,
+): MarkerRange[] {
+  const parsedMarkers = new Set<string>()
+  const codeRanges: MarkerRange[] = []
+
+  syntaxTree(state).iterate({
+    from,
+    to,
+    enter(node) {
+      if (node.name === 'ListMark') {
+        parsedMarkers.add(rangeKey(node.from, node.to))
+      }
+
+      if (node.name === 'FencedCode' || node.name === 'CodeBlock') {
+        codeRanges.push({ from: node.from, to: node.to })
+      }
+    },
+  })
+
+  const ranges: MarkerRange[] = []
+  const startLine = state.doc.lineAt(from).number
+  const endLine = state.doc.lineAt(Math.max(from, to)).number
+
+  for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+    const line = state.doc.line(lineNumber)
+    if (line.from > to || line.to < from)
+      continue
+
+    if (isInsideAnyRange(line.from, codeRanges))
+      continue
+
+    const match = line.text.match(FALLBACK_LIST_MARK_RE)
+    if (!match)
+      continue
+
+    const markerFrom = line.from + match[1].length
+    const markerTo = markerFrom + match[2].length
+    if (parsedMarkers.has(rangeKey(markerFrom, markerTo)))
+      continue
+
+    ranges.push({ from: markerFrom, to: markerTo })
+  }
+
+  return ranges
 }
 
 function buildDecorations(
@@ -535,12 +600,25 @@ function buildDecorations(
         if (type === 'ListMark') {
           decorations.push(
             Decoration.mark({
-              attributes: { style: 'color:var(--muted-foreground)' },
+              attributes: { style: LIST_MARK_FALLBACK_STYLE },
             }).range(node.from, node.to),
           )
         }
       },
     })
+
+    const listMarkClass = highlightingFor(view.state, [
+      tags.processingInstruction,
+    ])
+    for (const marker of getFallbackListMarkerRanges(view.state, from, to)) {
+      decorations.push(
+        Decoration.mark({
+          attributes: listMarkClass
+            ? { class: listMarkClass }
+            : { style: LIST_MARK_FALLBACK_STYLE },
+        }).range(marker.from, marker.to),
+      )
+    }
   }
 
   return Decoration.set(decorations, true)

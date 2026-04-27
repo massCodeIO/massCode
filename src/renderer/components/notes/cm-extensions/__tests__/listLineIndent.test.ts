@@ -1,5 +1,44 @@
+import type { EditorView } from '@codemirror/view'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
+import { languages } from '@codemirror/language-data'
+import { EditorState } from '@codemirror/state'
+import { GFM } from '@lezer/markdown'
 import { describe, expect, it } from 'vitest'
-import { parseListPrefix } from '../listLineIndent'
+import {
+  getListContinuationLineNumbers,
+  parseListPrefix,
+} from '../listLineIndent'
+
+function createViewLike(doc: string) {
+  return {
+    state: EditorState.create({
+      doc,
+      extensions: [
+        markdown({
+          base: markdownLanguage,
+          codeLanguages: languages,
+          extensions: GFM,
+        }),
+      ],
+    }),
+  } as EditorView
+}
+
+function getFirstListItemRange(view: EditorView) {
+  let range: { from: number, to: number } | null = null
+
+  syntaxTree(view.state).iterate({
+    enter(node) {
+      if (!range && node.name === 'ListItem') {
+        range = { from: node.from, to: node.to }
+      }
+    },
+  })
+
+  expect(range).not.toBeNull()
+  return range!
+}
 
 describe('parseListPrefix', () => {
   it('matches unordered list markers', () => {
@@ -53,5 +92,27 @@ describe('parseListPrefix', () => {
     expect(parseListPrefix('# heading')).toBeNull()
     expect(parseListPrefix('> quote')).toBeNull()
     expect(parseListPrefix('')).toBeNull()
+  })
+})
+
+describe('getListContinuationLineNumbers', () => {
+  it('stops visual list indentation at a blank line', () => {
+    const doc = ['- item', '', '  existing indented text'].join('\n')
+    const view = createViewLike(doc)
+    const range = getFirstListItemRange(view)
+
+    expect(getListContinuationLineNumbers(view, range.from, range.to)).toEqual(
+      [],
+    )
+  })
+
+  it('keeps direct indented continuation lines in the list item', () => {
+    const doc = ['- item', '  continuation'].join('\n')
+    const view = createViewLike(doc)
+    const range = getFirstListItemRange(view)
+
+    expect(getListContinuationLineNumbers(view, range.from, range.to)).toEqual([
+      2,
+    ])
   })
 })

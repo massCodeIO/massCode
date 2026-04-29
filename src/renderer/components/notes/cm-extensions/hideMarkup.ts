@@ -7,6 +7,7 @@ const HIDEABLE_MARKS = new Set([
   'HeaderMark',
   'EmphasisMark',
   'StrikethroughMark',
+  'HighlightMark',
   'CodeMark',
   'CodeInfo',
   'LinkMark',

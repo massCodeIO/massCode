@@ -151,4 +151,8 @@ export const markdownShortcuts: KeyBinding[] = [
     key: 'Mod-Shift-s',
     run: createInlineMarkdownCommand('~~'),
   },
+  {
+    key: 'Mod-Shift-h',
+    run: createInlineMarkdownCommand('=='),
+  },
 ]

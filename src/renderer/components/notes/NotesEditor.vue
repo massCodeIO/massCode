@@ -32,6 +32,7 @@ import { createInternalLinks } from './cm-extensions/internalLinks'
 import { createListIndent } from './cm-extensions/listIndent'
 import { createListLineIndent } from './cm-extensions/listLineIndent'
 import { createMarkdownDecorations } from './cm-extensions/markdownDecorations'
+import { Highlight } from './cm-extensions/markdownHighlight'
 import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
@@ -191,7 +192,7 @@ function createEditorState(doc: string): EditorState {
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,
-      extensions: GFM,
+      extensions: [GFM, Highlight],
     }),
     createCodeHighlight(isDark.value),
   ]

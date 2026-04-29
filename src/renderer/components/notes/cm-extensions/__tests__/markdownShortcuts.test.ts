@@ -51,14 +51,25 @@ describe('toggleInlineMarkdown', () => {
       text: 'hello ~~world~~',
     })
   })
+
+  it('wraps selected text with highlight markers', () => {
+    expect(toggleInlineMarkdown('hello world', 6, 11, '==')).toEqual({
+      selection: {
+        from: 8,
+        to: 13,
+      },
+      text: 'hello ==world==',
+    })
+  })
 })
 
 describe('markdownShortcuts', () => {
-  it('registers bold, italic, and strikethrough shortcuts', () => {
+  it('registers bold, italic, strikethrough, and highlight shortcuts', () => {
     expect(markdownShortcuts.map(binding => binding.key)).toEqual([
       'Mod-b',
       'Mod-i',
       'Mod-Shift-s',
+      'Mod-Shift-h',
     ])
   })
 })

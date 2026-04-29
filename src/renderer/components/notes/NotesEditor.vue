@@ -18,7 +18,7 @@ import {
   lineNumbers as lineNumbersExtension,
   placeholder,
 } from '@codemirror/view'
-import { GFM } from '@lezer/markdown'
+import { GFM, type MarkdownConfig } from '@lezer/markdown'
 import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
@@ -166,6 +166,10 @@ const presentationTheme = EditorView.theme({
   },
 })
 
+const NoSetextHeading: MarkdownConfig = {
+  remove: ['SetextHeading'],
+}
+
 function createEditorState(doc: string): EditorState {
   const raw = isRawMode.value
   const preview = isPreviewMode.value
@@ -192,7 +196,7 @@ function createEditorState(doc: string): EditorState {
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,
-      extensions: [GFM, Highlight],
+      extensions: [GFM, Highlight, NoSetextHeading],
     }),
     createCodeHighlight(isDark.value),
   ]

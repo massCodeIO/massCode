@@ -5,6 +5,14 @@ import {
 
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string
 
+export type EntryNameConflictKind = 'note' | 'snippet' | 'folder'
+
+const CONFLICT_MESSAGE_KEYS: Record<EntryNameConflictKind, string> = {
+  folder: 'messages:error.entryNameFolderConflict',
+  note: 'messages:error.entryNameNoteConflict',
+  snippet: 'messages:error.entryNameSnippetConflict',
+}
+
 export function getEntryNameValidationMessage(
   name: string,
   translate: TranslateFn,
@@ -34,4 +42,11 @@ export function getEntryNameValidationMessage(
   }
 
   return translate('messages:error.entryNameEmpty')
+}
+
+export function getEntryNameConflictMessage(
+  kind: EntryNameConflictKind,
+  translate: TranslateFn,
+): string {
+  return translate(CONFLICT_MESSAGE_KEYS[kind])
 }

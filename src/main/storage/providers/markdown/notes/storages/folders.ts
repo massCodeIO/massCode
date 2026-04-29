@@ -24,6 +24,7 @@ import {
 import {
   assertDirectoryNameAvailableAtRoot,
   assertUniqueSiblingFolderName,
+  resolveUniqueSiblingFolderName,
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
@@ -156,22 +157,10 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       const oldFolderPathMap = buildNotesFolderPathMap(state)
       const oldPath = oldFolderPathMap.get(id)
 
-      if (input.name !== undefined) {
-        const name = validateEntryName(input.name, 'folder')
-        const parentId
-          = input.parentId !== undefined
-            ? (input.parentId ?? null)
-            : folder.parentId
-
-        assertNotReservedRootName(parentId, name)
-        assertUniqueSiblingFolderName(state, parentId, name, id)
-
-        if (name !== folder.name) {
-          pathChanged = true
-        }
-
-        folder.name = name
-      }
+      let targetName
+        = input.name !== undefined
+          ? validateEntryName(input.name, 'folder')
+          : folder.name
 
       const { targetOrderIndex, targetParentId } = resolveFolderUpdateTargets(
         folder,
@@ -180,13 +169,27 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       )
 
       if (input.parentId !== undefined) {
-        const newParentId = input.parentId ?? null
+        assertFolderMoveTargetValid(state.folders, id, targetParentId)
+      }
 
-        assertFolderMoveTargetValid(state.folders, id, newParentId)
+      assertNotReservedRootName(targetParentId, targetName)
 
-        if (newParentId !== folder.parentId && input.name === undefined) {
-          assertUniqueSiblingFolderName(state, newParentId, folder.name, id)
-        }
+      const isParentChanged = targetParentId !== folder.parentId
+      if (isParentChanged) {
+        targetName = resolveUniqueSiblingFolderName(
+          state,
+          targetParentId,
+          targetName,
+          id,
+        )
+      }
+      else if (targetName !== folder.name) {
+        assertUniqueSiblingFolderName(state, targetParentId, targetName, id)
+      }
+
+      if (targetName !== folder.name) {
+        folder.name = targetName
+        pathChanged = true
       }
 
       const { parentChanged } = applyFolderParentAndOrder(

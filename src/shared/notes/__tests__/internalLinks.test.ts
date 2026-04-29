@@ -5,6 +5,7 @@ import {
   findInternalLinks,
   parseInternalLink,
   resolveInternalLinkTargetByTitle,
+  rewriteInternalLinkTarget,
 } from '../internalLinks'
 
 describe('parseInternalLink', () => {
@@ -135,6 +136,74 @@ describe('findInternalLinks', () => {
   it('does not parse links that cross line breaks', () => {
     expect(findInternalLinks('See [[Repository\nPattern]] here')).toEqual([])
     expect(parseInternalLink('[[Repository\nPattern]]')).toBeNull()
+  })
+})
+
+describe('rewriteInternalLinkTarget', () => {
+  it('rewrites a plain link target', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        'See [[Old Name]] for details',
+        'Old Name',
+        'New Name',
+      ),
+    ).toBe('See [[New Name]] for details')
+  })
+
+  it('keeps the alias when rewriting a target', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        'See [[Old Name|shown text]] for details',
+        'Old Name',
+        'New Name',
+      ),
+    ).toBe('See [[New Name|shown text]] for details')
+  })
+
+  it('matches case-insensitively', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        'See [[old name]] and [[OLD NAME]]',
+        'Old Name',
+        'New Name',
+      ),
+    ).toBe('See [[New Name]] and [[New Name]]')
+  })
+
+  it('rewrites multiple occurrences in one pass', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        '[[Old]] before [[Old|alias]] middle [[Other]] end',
+        'Old',
+        'New',
+      ),
+    ).toBe('[[New]] before [[New|alias]] middle [[Other]] end')
+  })
+
+  it('escapes special characters in the new target', () => {
+    expect(
+      rewriteInternalLinkTarget('See [[Old]] here', 'Old', 'foo | bar'),
+    ).toBe('See [[foo \\| bar]] here')
+  })
+
+  it('returns null when nothing changes', () => {
+    expect(
+      rewriteInternalLinkTarget('See [[Other]] end', 'Old', 'New'),
+    ).toBeNull()
+    expect(rewriteInternalLinkTarget('no links here', 'Old', 'New')).toBeNull()
+  })
+
+  it('does not rewrite legacy id-based targets', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        'See [[note:42]] and [[Old]]',
+        'note:42',
+        'Something',
+      ),
+    ).toBeNull()
+    expect(
+      rewriteInternalLinkTarget('See [[note:42|Old]]', 'Old', 'New'),
+    ).toBeNull()
   })
 })
 

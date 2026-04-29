@@ -203,7 +203,9 @@
       "toHtml": "Export to HTML"
     },
     "copy": {
+      "snippet": "Copy Snippet",
       "snippetLink": "Copy Snippet Link",
+      "note": "Copy Note",
       "noteLink": "Copy Note Link"
     },
     "select": {

@@ -2,6 +2,7 @@
 import type { Language } from '@/components/editor/types'
 import {
   useApp,
+  useDonations,
   useEditor,
   useResizeHandle,
   useSnippets,
@@ -202,6 +203,7 @@ async function init() {
   ipc.on('main-menu:copy-snippet', () => {
     const { copy } = useClipboard({ source: editor?.getValue() || '' })
     copy()
+    useDonations().incrementCopy('code')
   })
 
   watch(selectedSnippetContent, (v, oldV) => {

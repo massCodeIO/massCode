@@ -29,6 +29,13 @@ You can also provide custom visible text with an alias:
 
 massCode resolves internal links by item name. A target can be either a note or a snippet.
 
+If two notes share the same name, qualify the link with a folder path:
+
+```md
+[[Folder/Note]]
+[[Parent/Child/Note]]
+```
+
 ## Creating Links
 
 Start typing `[[` in the Notes editor to open the internal links picker.
@@ -38,7 +45,7 @@ Start typing `[[` in the Notes editor to open the internal links picker.
 - Press <kbd>Enter</kbd> to insert the active result.
 - Use the arrow keys to move through the list.
 
-The inserted link keeps the readable wiki-link format in your markdown.
+The picker inserts the shortest unambiguous form: just the name when it is unique, or a folder path when another item shares the same name.
 
 ## Opening Links
 

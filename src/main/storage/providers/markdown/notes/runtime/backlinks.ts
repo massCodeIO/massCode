@@ -14,13 +14,15 @@ import { writeNoteToFile } from './notes'
 import { buildNotesFolderPathMap } from './paths'
 import { invalidateNotesSearchIndex } from './search'
 
-interface RewriteBacklinksAfterRenameInput {
+interface RewriteBacklinksAfterNoteUpdateInput {
   paths: NotesPaths
   state: NotesState
   notes: MarkdownNote[]
-  renamedNoteId: number
+  updatedNoteId: number
   previousName: string
   nextName: string
+  previousFolderId: number | null
+  nextFolderId: number | null
 }
 
 interface ShortestUniqueLookupItem {
@@ -64,50 +66,72 @@ function loadSnippetLookup(): InternalLinkLookupItem[] {
   }
 }
 
-export function rewriteBacklinksAfterNoteRename(
-  input: RewriteBacklinksAfterRenameInput,
+export function rewriteBacklinksAfterNoteUpdate(
+  input: RewriteBacklinksAfterNoteUpdateInput,
 ): number {
-  const { paths, state, notes, renamedNoteId, previousName, nextName } = input
+  const {
+    paths,
+    state,
+    notes,
+    updatedNoteId,
+    previousName,
+    nextName,
+    previousFolderId,
+    nextFolderId,
+  } = input
 
   const previousKey = normalizeInternalLinkLookupKey(previousName)
   if (!previousKey) {
     return 0
   }
 
-  if (previousKey === normalizeInternalLinkLookupKey(nextName)) {
+  const nameChanged = previousKey !== normalizeInternalLinkLookupKey(nextName)
+  const folderChanged = previousFolderId !== nextFolderId
+  if (!nameChanged && !folderChanged) {
     return 0
   }
 
   const snippetLookup = loadSnippetLookup()
   const folderPathMap = buildNotesFolderPathMap(state)
 
-  const getNoteFolderPath = (note: MarkdownNote): string =>
-    note.folderId === null ? '' : (folderPathMap.get(note.folderId) ?? '')
+  const resolveFolderPath = (folderId: number | null): string =>
+    folderId === null ? '' : (folderPathMap.get(folderId) ?? '')
 
-  const buildNoteLookup = (renameApplied: boolean): InternalLinkLookupItem[] =>
+  const previousFolderPath = resolveFolderPath(previousFolderId)
+  const nextFolderPath = resolveFolderPath(nextFolderId)
+
+  const buildNoteLookup = (
+    appliedNameAndFolder: 'previous' | 'next',
+  ): InternalLinkLookupItem[] =>
     notes
       .filter(note => note.isDeleted === 0)
-      .map(note => ({
-        folderPath: getNoteFolderPath(note),
-        id: note.id,
-        name:
-          note.id === renamedNoteId
-            ? renameApplied
-              ? nextName
-              : previousName
-            : note.name,
-        type: 'note' as const,
-      }))
+      .map((note) => {
+        if (note.id !== updatedNoteId) {
+          return {
+            folderPath:
+              note.folderId === null
+                ? ''
+                : (folderPathMap.get(note.folderId) ?? ''),
+            id: note.id,
+            name: note.name,
+            type: 'note' as const,
+          }
+        }
 
-  const preLookup = [...snippetLookup, ...buildNoteLookup(false)]
-  const postLookup = [...snippetLookup, ...buildNoteLookup(true)]
+        return {
+          folderPath:
+            appliedNameAndFolder === 'previous'
+              ? previousFolderPath
+              : nextFolderPath,
+          id: note.id,
+          name: appliedNameAndFolder === 'previous' ? previousName : nextName,
+          type: 'note' as const,
+        }
+      })
 
-  const renamedNote = notes.find(note => note.id === renamedNoteId)
-  if (!renamedNote) {
-    return 0
-  }
+  const preLookup = [...snippetLookup, ...buildNoteLookup('previous')]
+  const postLookup = [...snippetLookup, ...buildNoteLookup('next')]
 
-  const renamedFolderPath = getNoteFolderPath(renamedNote)
   const shortestUniqueCandidates: ShortestUniqueLookupItem[] = postLookup.map(
     item => ({
       folderPath: item.folderPath ?? '',
@@ -116,10 +140,10 @@ export function rewriteBacklinksAfterNoteRename(
       type: item.type,
     }),
   )
-  const renamedTarget = pickShortestUniqueLinkTarget(
+  const updatedTarget = pickShortestUniqueLinkTarget(
     {
-      folderPath: renamedFolderPath,
-      id: renamedNoteId,
+      folderPath: nextFolderPath,
+      id: updatedNoteId,
       name: nextName,
       type: 'note',
     },
@@ -130,11 +154,13 @@ export function rewriteBacklinksAfterNoteRename(
   const now = Date.now()
 
   for (const note of notes) {
-    if (note.id === renamedNoteId || note.isDeleted || !note.content) {
+    if (note.id === updatedNoteId || note.isDeleted || !note.content) {
       continue
     }
 
-    const linkerFolderPath = getNoteFolderPath(note)
+    const linkerFolderPath
+      = note.folderId === null ? '' : (folderPathMap.get(note.folderId) ?? '')
+
     const rewritten = rewriteInternalLinks(note.content, (match) => {
       if (match.legacyTarget) {
         return null
@@ -148,12 +174,12 @@ export function rewriteBacklinksAfterNoteRename(
       if (
         resolved === null
         || resolved.type !== 'note'
-        || resolved.id !== renamedNoteId
+        || resolved.id !== updatedNoteId
       ) {
         return null
       }
 
-      return renamedTarget
+      return updatedTarget
     })
 
     if (rewritten === null) {

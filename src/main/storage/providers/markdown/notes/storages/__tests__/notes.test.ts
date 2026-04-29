@@ -415,4 +415,78 @@ describe('notes storage validations', () => {
       'See [[Folder A/Bar|the foo]] for context',
     )
   })
+
+  it('rewrites path-based backlink when the target note is moved between folders', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    const folderC = folders.createFolder({ name: 'Folder C', parentId: null })
+    storage.updateNote(target.id, { folderId: folderC.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder C/Foo]] here',
+    )
+  })
+
+  it('promotes a bare backlink to a path when the moved note loses uniqueness', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+    const folderC = folders.createFolder({ name: 'Folder C', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker', folderId: folderA.id })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    storage.updateNote(target.id, { folderId: folderC.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder C/Foo]] here',
+    )
+  })
+
+  it('skips backlink rewrite when neither name nor folder changes', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    storage.updateNote(target.id, { isFavorites: 1 })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Foo]] here',
+    )
+  })
+
+  it('handles simultaneous rename and move in a single update', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    storage.updateNote(target.id, { folderId: folderB.id, name: 'Bar' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe('See [[Bar]] here')
+  })
 })

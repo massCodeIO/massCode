@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import * as Select from '@/components/ui/shadcn/select'
 import {
+  useDonations,
   useEditableField,
   useNavigationHistory,
   useNotes,
   useNotesApp,
   useNoteUpdate,
 } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import { getEntryNameConflictMessage } from '@/utils'
+import { useClipboard } from '@vueuse/core'
 import {
   BookOpen,
   ChevronLeft,
@@ -232,6 +234,15 @@ const content = computed({
 })
 
 const textStats = computed(() => getTextStats(content.value))
+
+const { copy } = useClipboard()
+
+ipc.on('main-menu:copy-note', () => {
+  if (!selectedNote.value)
+    return
+  copy(selectedNote.value.content)
+  useDonations().incrementCopy('notes')
+})
 </script>
 
 <template>

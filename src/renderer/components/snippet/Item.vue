@@ -4,6 +4,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useApp,
   useDialog,
+  useDonations,
   useNavigationHistory,
   useSnippets,
 } from '@/composables'
@@ -201,6 +202,11 @@ function onCopySnippetLink() {
   copy(`masscode://goto?snippetId=${props.snippet.id}`)
 }
 
+function onCopySnippetContent() {
+  copy(props.snippet.contents[0]?.value || '')
+  useDonations().incrementCopy('code')
+}
+
 function onDragStart(event: DragEvent) {
   const ids
     = selectedSnippetIds.value.length > 1
@@ -306,6 +312,9 @@ onClickOutside(snippetRef, () => {
             }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onCopySnippetContent">
+            {{ i18n.t("action.copy.snippet") }}
+          </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuItem @click="onCopySnippetLink">
             {{ i18n.t("action.copy.snippetLink") }}
           </ContextMenu.ContextMenuItem>

@@ -60,7 +60,8 @@
   },
   "editor": {
     "label": "Editor",
-    "copy": "Copy Snippet to Clipboard",
+    "copySnippet": "Copy Snippet",
+    "copyNote": "Copy Note",
     "format": "Format",
     "mode": "Mode",
     "modeRaw": "Raw",

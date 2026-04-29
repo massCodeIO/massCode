@@ -4,6 +4,7 @@ export type CombineWith<T extends string, U extends string> = `${U}:${T}`
 
 type MainMenuAction =
   | 'add-description'
+  | 'copy-note'
   | 'copy-snippet'
   | 'find'
   | 'font-size-decrease'

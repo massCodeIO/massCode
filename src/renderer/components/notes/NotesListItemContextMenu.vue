@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDialog, useNotes, useNotesApp, useNoteSearch } from '@/composables'
+import {
+  useDialog,
+  useDonations,
+  useNotes,
+  useNotesApp,
+  useNoteSearch,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
@@ -150,6 +156,11 @@ function onRevealInFileManager() {
 function onCopyNoteLink() {
   copy(`masscode://goto?noteId=${props.note.id}`)
 }
+
+function onCopyNoteContent() {
+  copy(props.note.content)
+  useDonations().incrementCopy('notes')
+}
 </script>
 
 <template>
@@ -166,6 +177,9 @@ function onCopyNoteLink() {
     </template>
     <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
       {{ revealInFileManagerLabel }}
+    </ContextMenu.ContextMenuItem>
+    <ContextMenu.ContextMenuItem @click="onCopyNoteContent">
+      {{ i18n.t("action.copy.note") }}
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuItem @click="onCopyNoteLink">
       {{ i18n.t("action.copy.noteLink") }}

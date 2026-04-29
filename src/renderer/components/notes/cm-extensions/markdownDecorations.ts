@@ -445,6 +445,18 @@ function buildDecorations(
           )
         }
 
+        // Highlight (==text==)
+        if (type === 'Highlight') {
+          decorations.push(
+            Decoration.mark({
+              attributes: {
+                style:
+                  'background:var(--text-highlight);color:#1f2937;border-radius:3px;padding:0 2px',
+              },
+            }).range(node.from, node.to),
+          )
+        }
+
         // Inline code
         if (type === 'InlineCode') {
           decorations.push(

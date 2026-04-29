@@ -1,4 +1,5 @@
 import { useDialog } from '@/composables/useDialog'
+import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
@@ -252,6 +253,8 @@ async function createNote() {
       name: nextNoteName,
       folderId: targetFolderId,
     })
+
+    useDonations().incrementCreated('notes')
 
     if (
       notesState.libraryFilter === LibraryFilter.Trash

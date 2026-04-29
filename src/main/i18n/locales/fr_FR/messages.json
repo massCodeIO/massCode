@@ -34,7 +34,6 @@
     "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
-    "supportMessage": "Salut, c'est Anton 👋<br><br>\nMerci d'utiliser massCode. Si vous trouvez cette application utile, veuillez {{-tagStart}}faire un don{{-tagEnd}}. Cela m'inspirera à continuer le développement du projet.",
     "unsponsored": "Non sponsorisé"
   },
   "release": {},

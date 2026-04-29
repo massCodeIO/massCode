@@ -1,4 +1,5 @@
 import type { MathSheet } from '~/main/store/types'
+import { useDonations } from '@/composables/useDonations'
 import {
   markPersistedStorageMutation,
   markUserEdit,
@@ -93,6 +94,8 @@ export function useMathNotebook() {
     sheets.value = [...sheets.value, sheet]
     activeSheetId.value = sheet.id
     persist()
+
+    useDonations().incrementCreated('math')
 
     return sheet.id
   }

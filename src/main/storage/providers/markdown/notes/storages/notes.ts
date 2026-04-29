@@ -23,7 +23,11 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../../runtime/shared/entityStorage'
-import { throwStorageError, validateEntryName } from '../../runtime/validation'
+import {
+  assertUniqueSiblingEntryName,
+  throwStorageError,
+  validateEntryName,
+} from '../../runtime/validation'
 import { rewriteBacklinksAfterNoteRename } from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
@@ -123,6 +127,7 @@ export function createNotesNotesStorage(): NotesStorage {
 
       const name = validateEntryName(input.name, 'note')
       const folderId = input.folderId ?? null
+      assertUniqueSiblingEntryName(notes, folderId, name, 'note')
       const result = createEntityInStateAndDisk<MarkdownNote>({
         createEntity: ({ folderId, id, name, now }) => ({
           content: '',
@@ -169,6 +174,7 @@ export function createNotesNotesStorage(): NotesStorage {
 
       const previousFilePath = note.filePath
       const previousName = note.name
+      const previousFolderId = note.folderId
       const updateResult = applyEntityUpdateFields({
         entity: note,
         fieldPresence: 'defined',
@@ -177,8 +183,25 @@ export function createNotesNotesStorage(): NotesStorage {
         normalizeFlag: value => normalizeFlag(value),
         onMissingFolder: () =>
           throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
-        resolveName: (inputName, currentName) =>
-          validateEntryName(inputName ?? currentName, 'note'),
+        resolveName: (inputName, currentName) => {
+          const next = validateEntryName(inputName ?? currentName, 'note')
+          const isFolderChanging
+            = input.folderId !== undefined
+              && (input.folderId ?? null) !== previousFolderId
+          if (
+            !isFolderChanging
+            && next.toLowerCase() !== currentName.toLowerCase()
+          ) {
+            assertUniqueSiblingEntryName(
+              notes,
+              previousFolderId,
+              next,
+              'note',
+              note.id,
+            )
+          }
+          return next
+        },
       })
       if (!updateResult.hasAnyField) {
         return { invalidInput: true, notFound: false }

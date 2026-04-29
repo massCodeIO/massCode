@@ -102,6 +102,36 @@ export function assertNotReservedRootFolderName(
   }
 }
 
+export function assertUniqueSiblingEntryName(
+  entries: {
+    id: number
+    name: string
+    isDeleted: number
+    folderId: number | null
+  }[],
+  folderId: number | null,
+  name: string,
+  kind: 'note' | 'snippet',
+  excludeId?: number,
+): void {
+  const normalizedName = name.toLowerCase()
+
+  const hasConflict = entries.some(
+    entry =>
+      entry.id !== excludeId
+      && entry.isDeleted === 0
+      && entry.folderId === folderId
+      && entry.name.toLowerCase() === normalizedName,
+  )
+
+  if (hasConflict) {
+    throwStorageError(
+      'NAME_CONFLICT',
+      `${kind === 'note' ? 'Note' : 'Snippet'} with this name already exists in this folder`,
+    )
+  }
+}
+
 export function assertUniqueSiblingFolderName(
   state: {
     folders: {

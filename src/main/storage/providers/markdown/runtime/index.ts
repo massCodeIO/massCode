@@ -126,6 +126,7 @@ export type {
 export {
   assertDirectoryNameAvailable,
   assertNotReservedRootFolderName,
+  assertUniqueSiblingEntryName,
   assertUniqueSiblingFolderName,
   getMarkdownStorageErrorMessage,
   resolveUniqueSiblingFolderName,

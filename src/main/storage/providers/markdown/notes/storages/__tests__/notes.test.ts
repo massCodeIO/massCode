@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ensureNotesStateFile } from '../../runtime/state'
 import { resetNotesRuntimeCache } from '../../runtime/sync'
+import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
 
 let tempVaultPath = ''
@@ -132,6 +133,72 @@ describe('notes storage validations', () => {
     expect(storage.getNoteById(99999)).toBeNull()
   })
 
+  it('createNote throws NAME_CONFLICT for duplicate name in same folder', () => {
+    const storage = createNotesNotesStorage()
+    storage.createNote({ name: 'Duplicate' })
+
+    expect(() => storage.createNote({ name: 'Duplicate' })).toThrow(
+      'NAME_CONFLICT',
+    )
+    expect(() => storage.createNote({ name: 'duplicate' })).toThrow(
+      'NAME_CONFLICT',
+    )
+  })
+
+  it('createNote allows duplicate name in a different folder', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+    const folder = folders.createFolder({ name: 'Folder A', parentId: null })
+
+    storage.createNote({ name: 'Shared' })
+
+    expect(() =>
+      storage.createNote({ name: 'Shared', folderId: folder.id }),
+    ).not.toThrow()
+  })
+
+  it('createNote allows reusing the name of a deleted note', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Reusable' })
+    storage.updateNote(id, { isDeleted: 1 })
+
+    expect(() => storage.createNote({ name: 'Reusable' })).not.toThrow()
+  })
+
+  it('updateNote rename to existing sibling name throws NAME_CONFLICT', () => {
+    const storage = createNotesNotesStorage()
+    storage.createNote({ name: 'Alpha' })
+    const { id: bravoId } = storage.createNote({ name: 'Bravo' })
+
+    expect(() => storage.updateNote(bravoId, { name: 'Alpha' })).toThrow(
+      'NAME_CONFLICT',
+    )
+  })
+
+  it('updateNote rename to same name (case-insensitive) is a no-op for uniqueness', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Stable' })
+
+    expect(() => storage.updateNote(id, { name: 'stable' })).not.toThrow()
+    expect(storage.getNoteById(id)?.name).toBe('stable')
+  })
+
+  it('updateNote move into folder with conflicting name auto-renames', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+    const target = folders.createFolder({ name: 'Target', parentId: null })
+
+    storage.createNote({ name: 'Shared', folderId: target.id })
+    const { id: movingId } = storage.createNote({ name: 'Shared' })
+
+    storage.updateNote(movingId, { folderId: target.id })
+
+    const moved = storage.getNoteById(movingId)
+    expect(moved?.folder?.id).toBe(target.id)
+    expect(moved?.name.toLowerCase()).not.toBe('shared')
+    expect(moved?.name.toLowerCase()).toContain('shared')
+  })
+
   it('keeps newest created note first after content updates of older notes', () => {
     vi.useFakeTimers()
 
@@ -200,10 +267,17 @@ describe('notes storage validations', () => {
   })
 
   it('rewrites only links that resolved to the renamed note when duplicate names exist', () => {
+    const folders = createNotesFoldersStorage()
     const storage = createNotesNotesStorage()
 
-    const earlier = storage.createNote({ name: 'Shared Name' })
-    storage.createNote({ name: 'Shared Name' })
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const earlier = storage.createNote({
+      name: 'Shared Name',
+      folderId: folderA.id,
+    })
+    storage.createNote({ name: 'Shared Name', folderId: folderB.id })
 
     const linker = storage.createNote({ name: 'Linker' })
     storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')
@@ -216,10 +290,17 @@ describe('notes storage validations', () => {
   })
 
   it('does not rewrite links that resolve to a different note than the renamed one', () => {
+    const folders = createNotesFoldersStorage()
     const storage = createNotesNotesStorage()
 
-    storage.createNote({ name: 'Shared Name' })
-    const later = storage.createNote({ name: 'Shared Name' })
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    storage.createNote({ name: 'Shared Name', folderId: folderA.id })
+    const later = storage.createNote({
+      name: 'Shared Name',
+      folderId: folderB.id,
+    })
 
     const linker = storage.createNote({ name: 'Linker' })
     storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')

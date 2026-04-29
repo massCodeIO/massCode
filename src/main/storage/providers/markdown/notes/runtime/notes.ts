@@ -223,6 +223,9 @@ export function persistNote(
   let resolvedPath: string
   if (options?.allowRenameOnConflict) {
     resolvedPath = getUniqueNotePath(paths, state, targetPath, currentFilePath)
+    if (resolvedPath !== targetPath) {
+      note.name = path.posix.basename(resolvedPath, '.md')
+    }
   }
   else {
     resolvedPath = targetPath

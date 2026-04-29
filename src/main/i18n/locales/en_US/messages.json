@@ -36,7 +36,10 @@
     "entryNameLeadingDot": "Name cannot start with a dot.",
     "entryNameInvalidChars": "Name cannot contain these characters: {{- chars}}",
     "entryNameTrailingDot": "Name cannot end with a dot.",
-    "entryNameWindowsReserved": "This name is reserved on Windows."
+    "entryNameWindowsReserved": "This name is reserved on Windows.",
+    "entryNameNoteConflict": "A note with this name already exists in this folder.",
+    "entryNameSnippetConflict": "A snippet with this name already exists in this folder.",
+    "entryNameFolderConflict": "A folder with this name already exists at this level."
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",

@@ -245,6 +245,35 @@ export function normalizeInternalLinkLookupKey(name: string): string {
   return name.trim().toLocaleLowerCase()
 }
 
+export function rewriteInternalLinks(
+  text: string,
+  mapMatch: (match: InternalLinkMatch) => string | null,
+): string | null {
+  const matches = findInternalLinks(text)
+  let result = ''
+  let cursor = 0
+  let changed = false
+
+  for (const match of matches) {
+    const nextTarget = mapMatch(match)
+    if (nextTarget === null) {
+      continue
+    }
+
+    result += text.slice(cursor, match.from)
+    result += buildLinkMarkdown(nextTarget, match.alias ?? undefined)
+    cursor = match.to
+    changed = true
+  }
+
+  if (!changed) {
+    return null
+  }
+
+  result += text.slice(cursor)
+  return result
+}
+
 export function rewriteInternalLinkTarget(
   text: string,
   oldTarget: string,
@@ -256,36 +285,21 @@ export function rewriteInternalLinkTarget(
     return null
   }
 
-  const matches = findInternalLinks(text)
-  let result = ''
-  let cursor = 0
-  let changed = false
-
-  for (const match of matches) {
+  return rewriteInternalLinks(text, (match) => {
     if (match.legacyTarget) {
-      continue
+      return null
     }
 
     if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
-      continue
+      return null
     }
 
     if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
-      continue
+      return null
     }
 
-    result += text.slice(cursor, match.from)
-    result += buildLinkMarkdown(newTarget, match.alias ?? undefined)
-    cursor = match.to
-    changed = true
-  }
-
-  if (!changed) {
-    return null
-  }
-
-  result += text.slice(cursor)
-  return result
+    return newTarget
+  })
 }
 
 function normalizeFolderPath(folderPath: string | undefined): string {

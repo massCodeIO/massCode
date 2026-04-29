@@ -5,6 +5,7 @@ export {
   normalizeInternalLinkLookupKey,
   parseInternalLink,
   resolveInternalLinkTargetByTitle,
+  splitInternalLinkTarget,
 } from '../../../../../shared/notes/internalLinks'
 
 export type {

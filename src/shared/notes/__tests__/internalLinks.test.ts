@@ -347,10 +347,45 @@ describe('resolveInternalLinkTargetByTitle', () => {
     ).toBeNull()
   })
 
-  it('returns null for path-based targets (resolved by path elsewhere)', () => {
+  it('resolves a path-based target to the matching note in that folder', () => {
     expect(
       resolveInternalLinkTargetByTitle('Projects/Architecture', [
-        { id: 12, name: 'Architecture', type: 'note' },
+        { folderPath: '', id: 1, name: 'Architecture', type: 'note' },
+        { folderPath: 'Projects', id: 2, name: 'Architecture', type: 'note' },
+        { folderPath: 'Other', id: 3, name: 'Architecture', type: 'note' },
+      ]),
+    ).toEqual({ id: 2, type: 'note' })
+  })
+
+  it('resolves a nested path-based target', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Work/2026/Plans', [
+        { folderPath: 'Work', id: 1, name: 'Plans', type: 'note' },
+        { folderPath: 'Work/2026', id: 2, name: 'Plans', type: 'note' },
+      ]),
+    ).toEqual({ id: 2, type: 'note' })
+  })
+
+  it('matches path-based targets case-insensitively', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('projects/architecture', [
+        { folderPath: 'Projects', id: 1, name: 'Architecture', type: 'note' },
+      ]),
+    ).toEqual({ id: 1, type: 'note' })
+  })
+
+  it('returns null when path-based target has no matching note', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Missing/Architecture', [
+        { folderPath: 'Projects', id: 1, name: 'Architecture', type: 'note' },
+      ]),
+    ).toBeNull()
+  })
+
+  it('does not match snippets via path-based targets', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Projects/Architecture', [
+        { id: 1, name: 'Architecture', type: 'snippet' },
       ]),
     ).toBeNull()
   })

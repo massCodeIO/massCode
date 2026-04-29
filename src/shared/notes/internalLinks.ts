@@ -317,6 +317,20 @@ function buildFolderAncestorWalk(folderPath: string): string[] {
   return ancestors
 }
 
+function buildPathLookupKey(pathSegments: string[], basename: string): string {
+  return [...pathSegments, basename]
+    .map(segment => normalizeInternalLinkLookupKey(segment))
+    .join('/')
+}
+
+function buildCandidatePathLookupKey(item: InternalLinkLookupItem): string {
+  const folderSegments = normalizeFolderPath(item.folderPath)
+    .split('/')
+    .filter(segment => segment.length > 0)
+
+  return buildPathLookupKey(folderSegments, item.name)
+}
+
 export function resolveInternalLinkTargetByTitle(
   target: string,
   items: InternalLinkLookupItem[],
@@ -324,11 +338,26 @@ export function resolveInternalLinkTargetByTitle(
 ): { id: number, type: InternalLinkType } | null {
   const { basename, pathSegments } = splitInternalLinkTarget(target)
 
-  if (pathSegments.length > 0) {
+  if (!basename) {
     return null
   }
 
-  if (!basename) {
+  if (pathSegments.length > 0) {
+    const targetPathKey = buildPathLookupKey(pathSegments, basename)
+
+    const noteMatch = items.find(
+      item =>
+        item.type === 'note'
+        && buildCandidatePathLookupKey(item) === targetPathKey,
+    )
+
+    if (noteMatch) {
+      return {
+        id: noteMatch.id,
+        type: 'note',
+      }
+    }
+
     return null
   }
 

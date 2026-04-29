@@ -70,6 +70,7 @@ The following shortcuts work in **Editor** and **Live Preview** modes:
 - <kbd>Cmd+B</kbd> / <kbd>Ctrl+B</kbd> for **bold**
 - <kbd>Cmd+I</kbd> / <kbd>Ctrl+I</kbd> for *italic*
 - <kbd>Cmd+Shift+S</kbd> / <kbd>Ctrl+Shift+S</kbd> for ~~strikethrough~~
+- <kbd>Cmd+Shift+H</kbd> / <kbd>Ctrl+Shift+H</kbd> for <span style="background-color: yellow;color:black;padding:1px 2px;">highlight</span>
 
 Press the same shortcut again to remove the markdown markers from the current selection.
 

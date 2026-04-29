@@ -28,7 +28,10 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
-import { rewriteBacklinksAfterNoteUpdate } from '../runtime/backlinks'
+import {
+  promoteBareBacklinksAfterNoteCreate,
+  rewriteBacklinksAfterNoteUpdate,
+} from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
@@ -156,6 +159,13 @@ export function createNotesNotesStorage(): NotesStorage {
           persistNote(paths, state, note, undefined, {
             allowRenameOnConflict: true,
           }),
+      })
+
+      promoteBareBacklinksAfterNoteCreate({
+        newNoteId: result.id,
+        notes,
+        paths,
+        state,
       })
 
       saveNotesState(paths, state)

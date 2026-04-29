@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { useNotesApp } from '@/composables'
+import { useNavigationHistory, useNotesApp } from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { scrollToElement } from '@/utils'
 import { LayoutGrid } from 'lucide-vue-next'
 
 const { notesState } = useNotesApp()
+const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
 
 function scrollToCurrentFolder() {
   if (!notesState.folderId) {
@@ -20,7 +21,18 @@ nextTick(() => {
 })
 
 async function openDashboard() {
-  await router.push({ name: RouterName.notesDashboard })
+  if (router.currentRoute.value.name === RouterName.notesDashboard) {
+    return
+  }
+
+  if (isNavigatingHistory.value) {
+    await router.push({ name: RouterName.notesDashboard })
+    return
+  }
+
+  await recordNavigation(async () => {
+    await router.push({ name: RouterName.notesDashboard })
+  })
 }
 </script>
 

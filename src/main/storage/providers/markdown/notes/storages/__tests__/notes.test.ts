@@ -221,4 +221,109 @@ describe('notes storage validations', () => {
       vi.useRealTimers()
     }
   })
+
+  it('rewrites internal links in backlinking notes when a note is renamed', () => {
+    const storage = createNotesNotesStorage()
+
+    const target = storage.createNote({ name: 'Old Name' })
+    const linker = storage.createNote({ name: 'Linker' })
+    const aliasLinker = storage.createNote({ name: 'Alias Linker' })
+    const unrelated = storage.createNote({ name: 'Unrelated' })
+
+    storage.updateNoteContent(linker.id, 'See [[Old Name]] for context')
+    storage.updateNoteContent(
+      aliasLinker.id,
+      'See [[old name|the old]] for context',
+    )
+    storage.updateNoteContent(unrelated.id, 'See [[Other Note]] here')
+
+    storage.updateNote(target.id, { name: 'New Name' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[New Name]] for context',
+    )
+    expect(storage.getNoteById(aliasLinker.id)?.content).toBe(
+      'See [[New Name|the old]] for context',
+    )
+    expect(storage.getNoteById(unrelated.id)?.content).toBe(
+      'See [[Other Note]] here',
+    )
+  })
+
+  it('does not touch the renamed note own content during backlink rewrite', () => {
+    const storage = createNotesNotesStorage()
+
+    const target = storage.createNote({ name: 'Old Name' })
+    storage.updateNoteContent(
+      target.id,
+      'Self reference [[Old Name]] should remain',
+    )
+
+    storage.updateNote(target.id, { name: 'New Name' })
+
+    expect(storage.getNoteById(target.id)?.content).toBe(
+      'Self reference [[Old Name]] should remain',
+    )
+  })
+
+  it('rewrites only links that resolved to the renamed note when duplicate names exist', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const earlier = storage.createNote({
+      name: 'Shared Name',
+      folderId: folderA.id,
+    })
+    storage.createNote({ name: 'Shared Name', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')
+
+    storage.updateNote(earlier.id, { name: 'Renamed One' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Renamed One]] here',
+    )
+  })
+
+  it('does not rewrite links that resolve to a different note than the renamed one', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    storage.createNote({ name: 'Shared Name', folderId: folderA.id })
+    const later = storage.createNote({
+      name: 'Shared Name',
+      folderId: folderB.id,
+    })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')
+
+    storage.updateNote(later.id, { name: 'Renamed Two' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Shared Name]] here',
+    )
+  })
+
+  it('skips backlink rewrite for deleted notes', () => {
+    const storage = createNotesNotesStorage()
+
+    const target = storage.createNote({ name: 'Old Name' })
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Old Name]] for context')
+    storage.updateNote(linker.id, { isDeleted: 1 })
+
+    storage.updateNote(target.id, { name: 'New Name' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Old Name]] for context',
+    )
+  })
 })

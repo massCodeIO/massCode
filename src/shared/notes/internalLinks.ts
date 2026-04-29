@@ -208,6 +208,49 @@ export function normalizeInternalLinkLookupKey(name: string): string {
   return name.trim().toLocaleLowerCase()
 }
 
+export function rewriteInternalLinkTarget(
+  text: string,
+  oldTarget: string,
+  newTarget: string,
+  shouldRewriteMatch?: (match: InternalLinkMatch) => boolean,
+): string | null {
+  const oldKey = normalizeInternalLinkLookupKey(oldTarget)
+  if (!oldKey) {
+    return null
+  }
+
+  const matches = findInternalLinks(text)
+  let result = ''
+  let cursor = 0
+  let changed = false
+
+  for (const match of matches) {
+    if (match.legacyTarget) {
+      continue
+    }
+
+    if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
+      continue
+    }
+
+    if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
+      continue
+    }
+
+    result += text.slice(cursor, match.from)
+    result += buildLinkMarkdown(newTarget, match.alias ?? undefined)
+    cursor = match.to
+    changed = true
+  }
+
+  if (!changed) {
+    return null
+  }
+
+  result += text.slice(cursor)
+  return result
+}
+
 export function resolveInternalLinkTargetByTitle(
   title: string,
   items: InternalLinkLookupItem[],

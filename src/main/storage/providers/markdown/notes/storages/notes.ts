@@ -28,6 +28,7 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
+import { rewriteBacklinksAfterNoteRename } from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
@@ -172,6 +173,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       const previousFilePath = note.filePath
+      const previousName = note.name
       const previousFolderId = note.folderId
       const updateResult = applyEntityUpdateFields({
         entity: note,
@@ -214,6 +216,17 @@ export function createNotesNotesStorage(): NotesStorage {
       }
       else {
         writeNoteToFile(paths, note)
+      }
+
+      if (note.name !== previousName) {
+        rewriteBacklinksAfterNoteRename({
+          notes,
+          nextName: note.name,
+          paths,
+          previousName,
+          renamedNoteId: note.id,
+          state,
+        })
       }
 
       saveNotesState(paths, state)

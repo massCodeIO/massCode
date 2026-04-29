@@ -34,6 +34,14 @@ interface PromoteBareBacklinksOnConflictInput {
   conflictNoteIds: number[]
 }
 
+interface RewriteBacklinksAfterFolderUpdateInput {
+  paths: NotesPaths
+  state: NotesState
+  notes: MarkdownNote[]
+  oldFolderPathMap: Map<number, string>
+  newFolderPathMap: Map<number, string>
+}
+
 interface ShortestUniqueLookupItem {
   id: number
   type: InternalLinkType
@@ -337,6 +345,143 @@ export function promoteBareBacklinksOnConflict(
   }
 
   return total
+}
+
+export function rewriteBacklinksAfterFolderUpdate(
+  input: RewriteBacklinksAfterFolderUpdateInput,
+): number {
+  const { paths, state, notes, oldFolderPathMap, newFolderPathMap } = input
+
+  const affectedFolderIds = new Set<number>()
+  for (const folder of state.folders) {
+    if (oldFolderPathMap.get(folder.id) !== newFolderPathMap.get(folder.id)) {
+      affectedFolderIds.add(folder.id)
+    }
+  }
+
+  if (affectedFolderIds.size === 0) {
+    return 0
+  }
+
+  const affectedNoteIds = new Set<number>()
+  for (const note of notes) {
+    if (
+      note.isDeleted === 0
+      && note.folderId !== null
+      && affectedFolderIds.has(note.folderId)
+    ) {
+      affectedNoteIds.add(note.id)
+    }
+  }
+
+  if (affectedNoteIds.size === 0) {
+    return 0
+  }
+
+  const snippetLookup = loadSnippetLookup()
+
+  const buildLookup = (
+    folderPathMap: Map<number, string>,
+  ): InternalLinkLookupItem[] => [
+    ...snippetLookup,
+    ...notes
+      .filter(note => note.isDeleted === 0)
+      .map(note => ({
+        folderPath:
+          note.folderId === null
+            ? ''
+            : (folderPathMap.get(note.folderId) ?? ''),
+        id: note.id,
+        name: note.name,
+        type: 'note' as const,
+      })),
+  ]
+
+  const preLookup = buildLookup(oldFolderPathMap)
+  const postLookup = buildLookup(newFolderPathMap)
+
+  const shortestUniqueCandidates: ShortestUniqueLookupItem[] = postLookup.map(
+    item => ({
+      folderPath: item.folderPath ?? '',
+      id: item.id,
+      name: item.name,
+      type: item.type,
+    }),
+  )
+
+  let rewrittenCount = 0
+  const now = Date.now()
+
+  for (const linker of notes) {
+    if (linker.isDeleted || !linker.content) {
+      continue
+    }
+
+    const oldLinkerFolderPath
+      = linker.folderId === null
+        ? ''
+        : (oldFolderPathMap.get(linker.folderId) ?? '')
+
+    const rewritten = rewriteInternalLinks(linker.content, (match) => {
+      if (match.legacyTarget) {
+        return null
+      }
+      if (match.pathSegments.length === 0) {
+        return null
+      }
+
+      const resolved = resolveInternalLinkTargetByTitle(
+        match.target,
+        preLookup,
+        { linkerFolderPath: oldLinkerFolderPath },
+      )
+      if (
+        resolved === null
+        || resolved.type !== 'note'
+        || !affectedNoteIds.has(resolved.id)
+      ) {
+        return null
+      }
+
+      const targetItem = postLookup.find(
+        item => item.type === 'note' && item.id === resolved.id,
+      )
+      if (!targetItem) {
+        return null
+      }
+
+      const newTarget = pickShortestUniqueLinkTarget(
+        {
+          folderPath: targetItem.folderPath ?? '',
+          id: targetItem.id,
+          name: targetItem.name,
+          type: 'note',
+        },
+        shortestUniqueCandidates,
+      )
+
+      if (newTarget === match.target) {
+        return null
+      }
+
+      return newTarget
+    })
+
+    if (rewritten === null) {
+      continue
+    }
+
+    linker.content = rewritten
+    linker.updatedAt = now
+    writeNoteToFile(paths, linker)
+    rewrittenCount++
+  }
+
+  if (rewrittenCount > 0) {
+    invalidateNotesSearchIndex(state)
+  }
+
+  return rewrittenCount
 }
 
 export function promoteBareBacklinksAfterNoteCreate(input: {

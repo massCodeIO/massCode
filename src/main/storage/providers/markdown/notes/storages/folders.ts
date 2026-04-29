@@ -28,6 +28,7 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
+import { rewriteBacklinksAfterFolderUpdate } from '../runtime/backlinks'
 import {
   getNotesPaths,
   META_DIR_NAME,
@@ -238,6 +239,14 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
                 indexEntry.filePath = nextPath
               }
             },
+          })
+
+          rewriteBacklinksAfterFolderUpdate({
+            newFolderPathMap,
+            notes,
+            oldFolderPathMap,
+            paths,
+            state,
           })
         }
       }

@@ -2,8 +2,10 @@ export type InternalLinkType = 'snippet' | 'note'
 
 export interface InternalLink {
   alias: string | null
+  basename: string
   legacyTarget: { id: number, type: InternalLinkType } | null
   label: string
+  pathSegments: string[]
   raw: string
   target: string
 }
@@ -17,9 +19,38 @@ export interface InternalLinkLookupItem {
   id: number
   name: string
   type: InternalLinkType
+  folderPath?: string
+}
+
+export interface ResolveInternalLinkOptions {
+  linkerFolderPath?: string
 }
 
 const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
+const LEGACY_TARGET_RE = /^(?:snippet|note):\d+$/
+
+export function splitInternalLinkTarget(target: string): {
+  basename: string
+  pathSegments: string[]
+} {
+  if (!target || LEGACY_TARGET_RE.test(target)) {
+    return { basename: target, pathSegments: [] }
+  }
+
+  const segments = target
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+
+  if (segments.length === 0) {
+    return { basename: '', pathSegments: [] }
+  }
+
+  return {
+    basename: segments[segments.length - 1],
+    pathSegments: segments.slice(0, -1),
+  }
+}
 
 export function escapeLinkPart(value: string): string {
   let result = ''
@@ -147,11 +178,15 @@ function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
       }
     : null
 
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
   return {
     alias,
+    basename,
     from,
     legacyTarget,
     label: alias ?? target,
+    pathSegments,
     raw,
     target,
     to,
@@ -167,8 +202,10 @@ export function parseInternalLink(text: string): InternalLink | null {
 
   return {
     alias: match.alias,
+    basename: match.basename,
     legacyTarget: match.legacyTarget,
     label: match.label,
+    pathSegments: match.pathSegments,
     raw: match.raw,
     target: match.target,
   }
@@ -208,37 +245,23 @@ export function normalizeInternalLinkLookupKey(name: string): string {
   return name.trim().toLocaleLowerCase()
 }
 
-export function rewriteInternalLinkTarget(
+export function rewriteInternalLinks(
   text: string,
-  oldTarget: string,
-  newTarget: string,
-  shouldRewriteMatch?: (match: InternalLinkMatch) => boolean,
+  mapMatch: (match: InternalLinkMatch) => string | null,
 ): string | null {
-  const oldKey = normalizeInternalLinkLookupKey(oldTarget)
-  if (!oldKey) {
-    return null
-  }
-
   const matches = findInternalLinks(text)
   let result = ''
   let cursor = 0
   let changed = false
 
   for (const match of matches) {
-    if (match.legacyTarget) {
-      continue
-    }
-
-    if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
-      continue
-    }
-
-    if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
+    const nextTarget = mapMatch(match)
+    if (nextTarget === null) {
       continue
     }
 
     result += text.slice(cursor, match.from)
-    result += buildLinkMarkdown(newTarget, match.alias ?? undefined)
+    result += buildLinkMarkdown(nextTarget, match.alias ?? undefined)
     cursor = match.to
     changed = true
   }
@@ -251,11 +274,108 @@ export function rewriteInternalLinkTarget(
   return result
 }
 
+export function rewriteInternalLinkTarget(
+  text: string,
+  oldTarget: string,
+  newTarget: string,
+  shouldRewriteMatch?: (match: InternalLinkMatch) => boolean,
+): string | null {
+  const oldKey = normalizeInternalLinkLookupKey(oldTarget)
+  if (!oldKey) {
+    return null
+  }
+
+  return rewriteInternalLinks(text, (match) => {
+    if (match.legacyTarget) {
+      return null
+    }
+
+    if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
+      return null
+    }
+
+    if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
+      return null
+    }
+
+    return newTarget
+  })
+}
+
+function normalizeFolderPath(folderPath: string | undefined): string {
+  if (!folderPath) {
+    return ''
+  }
+
+  return folderPath
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+    .join('/')
+}
+
+function buildFolderAncestorWalk(folderPath: string): string[] {
+  const normalized = normalizeFolderPath(folderPath)
+
+  if (!normalized) {
+    return ['']
+  }
+
+  const segments = normalized.split('/')
+  const ancestors: string[] = []
+
+  for (let index = segments.length; index >= 0; index -= 1) {
+    ancestors.push(segments.slice(0, index).join('/'))
+  }
+
+  return ancestors
+}
+
+function buildPathLookupKey(pathSegments: string[], basename: string): string {
+  return [...pathSegments, basename]
+    .map(segment => normalizeInternalLinkLookupKey(segment))
+    .join('/')
+}
+
+function buildCandidatePathLookupKey(item: InternalLinkLookupItem): string {
+  const folderSegments = normalizeFolderPath(item.folderPath)
+    .split('/')
+    .filter(segment => segment.length > 0)
+
+  return buildPathLookupKey(folderSegments, item.name)
+}
+
 export function resolveInternalLinkTargetByTitle(
-  title: string,
+  target: string,
   items: InternalLinkLookupItem[],
+  options?: ResolveInternalLinkOptions,
 ): { id: number, type: InternalLinkType } | null {
-  const normalizedTitle = normalizeInternalLinkLookupKey(title)
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
+  if (!basename) {
+    return null
+  }
+
+  if (pathSegments.length > 0) {
+    const targetPathKey = buildPathLookupKey(pathSegments, basename)
+
+    const noteMatch = items.find(
+      item =>
+        item.type === 'note'
+        && buildCandidatePathLookupKey(item) === targetPathKey,
+    )
+
+    if (noteMatch) {
+      return {
+        id: noteMatch.id,
+        type: 'note',
+      }
+    }
+
+    return null
+  }
+
+  const normalizedTitle = normalizeInternalLinkLookupKey(basename)
 
   const snippet = items.find(
     item =>
@@ -270,18 +390,40 @@ export function resolveInternalLinkTargetByTitle(
     }
   }
 
-  const note = items.find(
+  const noteCandidates = items.filter(
     item =>
       item.type === 'note'
       && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
   )
 
-  if (note) {
+  if (noteCandidates.length === 0) {
+    return null
+  }
+
+  if (noteCandidates.length === 1) {
     return {
-      id: note.id,
-      type: note.type,
+      id: noteCandidates[0].id,
+      type: 'note',
     }
   }
 
-  return null
+  const ancestors = buildFolderAncestorWalk(options?.linkerFolderPath ?? '')
+
+  for (const ancestorPath of ancestors) {
+    const match = noteCandidates.find(
+      candidate => normalizeFolderPath(candidate.folderPath) === ancestorPath,
+    )
+
+    if (match) {
+      return {
+        id: match.id,
+        type: 'note',
+      }
+    }
+  }
+
+  return {
+    id: noteCandidates[0].id,
+    type: 'note',
+  }
 }

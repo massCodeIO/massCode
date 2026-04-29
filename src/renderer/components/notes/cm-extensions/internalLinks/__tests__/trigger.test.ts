@@ -9,6 +9,7 @@ import {
   handleInternalLinksPickerKey,
   internalLinksPickerState,
   isInternalLinkPickerEnabled,
+  pickShortestUniqueInsertTarget,
   shouldOpenInternalLinksPicker,
 } from '../trigger'
 
@@ -245,12 +246,129 @@ describe('buildInternalLinkInsertChange', () => {
     expect(
       buildInternalLinkInsertChange(
         { anchor: 16, from: 10, query: 'Repo', to: 16 },
-        { type: 'note', id: 15, label: 'Repository Pattern with Cache' },
+        'Repository Pattern with Cache',
       ),
     ).toEqual({
       from: 10,
       to: 16,
       insert: '[[Repository Pattern with Cache]]',
     })
+  })
+})
+
+describe('pickShortestUniqueInsertTarget', () => {
+  it('returns bare name for snippets regardless of duplicates', () => {
+    const selected = {
+      folderPath: 'A',
+      id: 1,
+      locationLabel: 'A',
+      name: 'Shared',
+      type: 'snippet' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'B',
+        id: 2,
+        locationLabel: 'B',
+        name: 'Shared',
+        type: 'note' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe('Shared')
+  })
+
+  it('returns bare name when no other note shares the same name', () => {
+    const selected = {
+      folderPath: 'Projects',
+      id: 1,
+      locationLabel: 'Projects',
+      name: 'Repository Pattern',
+      type: 'note' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'Other',
+        id: 2,
+        locationLabel: 'Other',
+        name: 'Other Note',
+        type: 'note' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe(
+      'Repository Pattern',
+    )
+  })
+
+  it('returns full folder path when another note shares the same name', () => {
+    const selected = {
+      folderPath: 'Projects/Active',
+      id: 1,
+      locationLabel: 'Active',
+      name: 'Repository Pattern',
+      type: 'note' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'Archive',
+        id: 2,
+        locationLabel: 'Archive',
+        name: 'Repository Pattern',
+        type: 'note' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe(
+      'Projects/Active/Repository Pattern',
+    )
+  })
+
+  it('matches duplicate names case-insensitively', () => {
+    const selected = {
+      folderPath: 'Projects',
+      id: 1,
+      locationLabel: 'Projects',
+      name: 'Repository Pattern',
+      type: 'note' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'Archive',
+        id: 2,
+        locationLabel: 'Archive',
+        name: 'repository pattern',
+        type: 'note' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe(
+      'Projects/Repository Pattern',
+    )
+  })
+
+  it('returns bare name for a root-level note even with duplicates', () => {
+    const selected = {
+      id: 1,
+      locationLabel: 'inbox',
+      name: 'Shared',
+      type: 'note' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'Folder',
+        id: 2,
+        locationLabel: 'Folder',
+        name: 'Shared',
+        type: 'note' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe('Shared')
   })
 })

@@ -28,7 +28,10 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
-import { rewriteBacklinksAfterNoteRename } from '../runtime/backlinks'
+import {
+  promoteBareBacklinksAfterNoteCreate,
+  rewriteBacklinksAfterNoteUpdate,
+} from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
 import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
@@ -158,6 +161,13 @@ export function createNotesNotesStorage(): NotesStorage {
           }),
       })
 
+      promoteBareBacklinksAfterNoteCreate({
+        newNoteId: result.id,
+        notes,
+        paths,
+        state,
+      })
+
       saveNotesState(paths, state)
 
       return result
@@ -218,14 +228,16 @@ export function createNotesNotesStorage(): NotesStorage {
         writeNoteToFile(paths, note)
       }
 
-      if (note.name !== previousName) {
-        rewriteBacklinksAfterNoteRename({
-          notes,
+      if (note.name !== previousName || note.folderId !== previousFolderId) {
+        rewriteBacklinksAfterNoteUpdate({
+          nextFolderId: note.folderId,
           nextName: note.name,
+          notes,
           paths,
+          previousFolderId,
           previousName,
-          renamedNoteId: note.id,
           state,
+          updatedNoteId: note.id,
         })
       }
 

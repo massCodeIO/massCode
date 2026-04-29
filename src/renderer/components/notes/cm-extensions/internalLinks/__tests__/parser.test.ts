@@ -10,8 +10,10 @@ describe('parseInternalLink', () => {
   it('parses a link without alias', () => {
     expect(parseInternalLink('[[Repository Pattern with Cache]]')).toEqual({
       alias: null,
+      basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repository Pattern with Cache',
+      pathSegments: [],
       raw: '[[Repository Pattern with Cache]]',
       target: 'Repository Pattern with Cache',
     })
@@ -22,8 +24,10 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[Repository Pattern with Cache|Repo Pattern]]'),
     ).toEqual({
       alias: 'Repo Pattern',
+      basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repo Pattern',
+      pathSegments: [],
       raw: '[[Repository Pattern with Cache|Repo Pattern]]',
       target: 'Repository Pattern with Cache',
     })
@@ -38,8 +42,10 @@ describe('parseInternalLink', () => {
   it('handles escaped characters in the target and alias', () => {
     expect(parseInternalLink('[[Array \\] draft|foo \\| bar]]')).toEqual({
       alias: 'foo | bar',
+      basename: 'Array ] draft',
       legacyTarget: null,
       label: 'foo | bar',
+      pathSegments: [],
       raw: '[[Array \\] draft|foo \\| bar]]',
       target: 'Array ] draft',
     })
@@ -48,8 +54,10 @@ describe('parseInternalLink', () => {
   it('handles escaped backslashes', () => {
     expect(parseInternalLink('[[path\\\\file|Alias\\\\Text]]')).toEqual({
       alias: 'Alias\\Text',
+      basename: 'path\\file',
       legacyTarget: null,
       label: 'Alias\\Text',
+      pathSegments: [],
       raw: '[[path\\\\file|Alias\\\\Text]]',
       target: 'path\\file',
     })
@@ -60,8 +68,10 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[snippet:57|Repository Pattern with Cache]]'),
     ).toEqual({
       alias: 'Repository Pattern with Cache',
+      basename: 'snippet:57',
       legacyTarget: { id: 57, type: 'snippet' },
       label: 'Repository Pattern with Cache',
+      pathSegments: [],
       raw: '[[snippet:57|Repository Pattern with Cache]]',
       target: 'snippet:57',
     })

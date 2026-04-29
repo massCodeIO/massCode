@@ -326,4 +326,240 @@ describe('notes storage validations', () => {
       'See [[Old Name]] for context',
     )
   })
+
+  it('rewrites a path-based backlink when the target note is renamed', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folder = folders.createFolder({ name: 'Projects', parentId: null })
+    const target = storage.createNote({
+      name: 'Repository Pattern',
+      folderId: folder.id,
+    })
+    const linker = storage.createNote({ name: 'Linker' })
+
+    storage.updateNoteContent(
+      linker.id,
+      'See [[Projects/Repository Pattern]] here',
+    )
+
+    storage.updateNote(target.id, { name: 'Repository Cache' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Repository Cache]] here',
+    )
+  })
+
+  it('writes path-based target when next name collides with another note', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({
+      name: 'Foo',
+      folderId: folderA.id,
+    })
+    storage.createNote({ name: 'Bar', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] for context')
+
+    storage.updateNote(target.id, { name: 'Bar' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Bar]] for context',
+    )
+  })
+
+  it('rewrites a path-based backlink to a different path when folder differs', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({
+      name: 'Foo',
+      folderId: folderA.id,
+    })
+    storage.createNote({ name: 'Bar', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    storage.updateNote(target.id, { name: 'Bar' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Bar]] here',
+    )
+  })
+
+  it('preserves alias when rewriting path-based backlinks', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Bar', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Foo|the foo]] for context')
+
+    storage.updateNote(target.id, { name: 'Bar' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Bar|the foo]] for context',
+    )
+  })
+
+  it('rewrites path-based backlink when the target note is moved between folders', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    const folderC = folders.createFolder({ name: 'Folder C', parentId: null })
+    storage.updateNote(target.id, { folderId: folderC.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder C/Foo]] here',
+    )
+  })
+
+  it('promotes a bare backlink to a path when the moved note loses uniqueness', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+    const folderC = folders.createFolder({ name: 'Folder C', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    const linker = storage.createNote({ name: 'Linker', folderId: folderA.id })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    storage.updateNote(target.id, { folderId: folderC.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder C/Foo]] here',
+    )
+  })
+
+  it('skips backlink rewrite when neither name nor folder changes', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    storage.updateNote(target.id, { isFavorites: 1 })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Foo]] here',
+    )
+  })
+
+  it('handles simultaneous rename and move in a single update', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const target = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Folder A/Foo]] here')
+
+    storage.updateNote(target.id, { folderId: folderB.id, name: 'Bar' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe('See [[Bar]] here')
+  })
+
+  it('promotes pre-existing note bare backlinks when a new colliding note is created', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const existing = storage.createNote({ name: 'Foo', folderId: folderA.id })
+
+    const linker = storage.createNote({ name: 'Linker', folderId: folderA.id })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Folder A/Foo]] here',
+    )
+    expect(storage.getNoteById(existing.id)?.name).toBe('Foo')
+  })
+
+  it('promotes other same-named note bare backlinks when rename creates a collision', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+
+    const renamed = storage.createNote({ name: 'Foo', folderId: folderA.id })
+    storage.createNote({ name: 'Bar', folderId: folderB.id })
+
+    const otherLinker = storage.createNote({
+      name: 'Linker',
+      folderId: folderB.id,
+    })
+    storage.updateNoteContent(otherLinker.id, 'See [[Bar]] for context')
+
+    storage.updateNote(renamed.id, { name: 'Bar' })
+
+    expect(storage.getNoteById(otherLinker.id)?.content).toBe(
+      'See [[Folder B/Bar]] for context',
+    )
+  })
+
+  it('does not promote bare backlinks when no collision is introduced', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderA = folders.createFolder({ name: 'Folder A', parentId: null })
+    storage.createNote({ name: 'Foo', folderId: folderA.id })
+
+    const linker = storage.createNote({ name: 'Linker', folderId: folderA.id })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    storage.createNote({ name: 'Bar', folderId: folderA.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe('See [[Foo]] here')
+  })
+
+  it('leaves bare backlinks unchanged when colliding note has no folder path', () => {
+    const folders = createNotesFoldersStorage()
+    const storage = createNotesNotesStorage()
+
+    const folderB = folders.createFolder({ name: 'Folder B', parentId: null })
+    storage.createNote({ name: 'Foo' })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Foo]] here')
+
+    storage.createNote({ name: 'Foo', folderId: folderB.id })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe('See [[Foo]] here')
+  })
 })

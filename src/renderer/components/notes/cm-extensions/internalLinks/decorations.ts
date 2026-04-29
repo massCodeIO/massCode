@@ -10,10 +10,12 @@ import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
 import { entityCache } from './cache'
+import { buildNoteFolderPathMap } from './folderPath'
 import {
   findInternalLinks,
   normalizeInternalLinkLookupKey,
   resolveInternalLinkTargetByTitle,
+  splitInternalLinkTarget,
 } from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
@@ -131,7 +133,7 @@ class InternalLinkWidget extends WidgetType {
 
     const label = document.createElement('span')
     label.className = 'cm-internal-link__label'
-    label.textContent = this.link.label
+    label.textContent = this.link.alias ?? this.link.basename
     root.append(label)
 
     if (this.status === 'broken') {
@@ -215,10 +217,19 @@ async function resolveInternalLinkByTitle(
   title: string,
 ): Promise<CachedEntity> {
   try {
-    const [{ data: snippets }, { data: notes }] = await Promise.all([
-      api.snippets.getSnippets({ search: title, isDeleted: 0 }),
-      api.notes.getNotes({ search: title, isDeleted: 0 }),
-    ])
+    const { basename } = splitInternalLinkTarget(title)
+    if (!basename) {
+      return { exists: false }
+    }
+
+    const [{ data: snippets }, { data: notes }, { data: noteFolders }]
+      = await Promise.all([
+        api.snippets.getSnippets({ search: basename, isDeleted: 0 }),
+        api.notes.getNotes({ search: basename, isDeleted: 0 }),
+        api.noteFolders.getNoteFolders(),
+      ])
+
+    const folderPathById = buildNoteFolderPathMap(noteFolders)
 
     const resolvedTarget = resolveInternalLinkTargetByTitle(title, [
       ...snippets.map<InternalLinkLookupItem>(snippet => ({
@@ -227,6 +238,9 @@ async function resolveInternalLinkByTitle(
         type: 'snippet',
       })),
       ...notes.map<InternalLinkLookupItem>(note => ({
+        folderPath: note.folder
+          ? folderPathById.get(note.folder.id)
+          : undefined,
         id: note.id,
         name: note.name,
         type: 'note',

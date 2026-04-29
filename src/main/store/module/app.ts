@@ -1,6 +1,7 @@
 import type {
   AppStore,
   CodeState,
+  DonationsState,
   NotesEditorMode,
   NotesRouteName,
   NotesState,
@@ -16,6 +17,7 @@ import {
   readNumber,
   readOptionalNumber,
   readOptionalNumberArray,
+  readString,
   replaceStoreIfChanged,
 } from '../sanitize'
 
@@ -53,6 +55,34 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   notifications: {
     lastNotifiedUpdateVersion: '',
+  },
+  donations: {
+    lastActiveDay: '',
+    currentStreak: 0,
+    copies: {
+      code: 0,
+      notes: 0,
+      math: 0,
+      tools: 0,
+    },
+    created: {
+      code: 0,
+      notes: 0,
+      math: 0,
+    },
+    lastShownCopyMilestones: {
+      code: 0,
+      notes: 0,
+      math: 0,
+      tools: 0,
+    },
+    lastShownCreatedMilestones: {
+      code: 0,
+      notes: 0,
+      math: 0,
+    },
+    shownStreakMilestones: [],
+    lastGreetingDay: '',
   },
   activeSpaceId: 'code',
 }
@@ -111,6 +141,77 @@ function getLegacyNotesLayoutMode(
   }
 
   return source.isListHidden === true ? 'editor-only' : 'list-editor'
+}
+
+function sanitizeDonations(value: unknown): DonationsState {
+  const source = asRecord(value)
+  const copiesSource = asRecord(source.copies)
+  const createdSource = asRecord(source.created)
+  const copyMilestonesSource = asRecord(source.lastShownCopyMilestones)
+  const createdMilestonesSource = asRecord(source.lastShownCreatedMilestones)
+  const defaults = APP_STORE_DEFAULTS.donations
+  const shownStreaks = readOptionalNumberArray(source, 'shownStreakMilestones')
+
+  return {
+    lastActiveDay: readString(source, 'lastActiveDay', defaults.lastActiveDay),
+    currentStreak: readNumber(source, 'currentStreak', defaults.currentStreak),
+    copies: {
+      code: readNumber(copiesSource, 'code', defaults.copies.code),
+      notes: readNumber(copiesSource, 'notes', defaults.copies.notes),
+      math: readNumber(copiesSource, 'math', defaults.copies.math),
+      tools: readNumber(copiesSource, 'tools', defaults.copies.tools),
+    },
+    created: {
+      code: readNumber(createdSource, 'code', defaults.created.code),
+      notes: readNumber(createdSource, 'notes', defaults.created.notes),
+      math: readNumber(createdSource, 'math', defaults.created.math),
+    },
+    lastShownCopyMilestones: {
+      code: readNumber(
+        copyMilestonesSource,
+        'code',
+        defaults.lastShownCopyMilestones.code,
+      ),
+      notes: readNumber(
+        copyMilestonesSource,
+        'notes',
+        defaults.lastShownCopyMilestones.notes,
+      ),
+      math: readNumber(
+        copyMilestonesSource,
+        'math',
+        defaults.lastShownCopyMilestones.math,
+      ),
+      tools: readNumber(
+        copyMilestonesSource,
+        'tools',
+        defaults.lastShownCopyMilestones.tools,
+      ),
+    },
+    lastShownCreatedMilestones: {
+      code: readNumber(
+        createdMilestonesSource,
+        'code',
+        defaults.lastShownCreatedMilestones.code,
+      ),
+      notes: readNumber(
+        createdMilestonesSource,
+        'notes',
+        defaults.lastShownCreatedMilestones.notes,
+      ),
+      math: readNumber(
+        createdMilestonesSource,
+        'math',
+        defaults.lastShownCreatedMilestones.math,
+      ),
+    },
+    shownStreakMilestones: shownStreaks ?? [...defaults.shownStreakMilestones],
+    lastGreetingDay: readString(
+      source,
+      'lastGreetingDay',
+      defaults.lastGreetingDay,
+    ),
+  }
 }
 
 function sanitizeAppStore(value: unknown): AppStore {
@@ -269,10 +370,8 @@ function sanitizeAppStore(value: unknown): AppStore {
           : typeof source.lastNotifiedUpdateVersion === 'string'
             ? source.lastNotifiedUpdateVersion
             : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
-      nextDonateAt:
-        readOptionalNumber(notificationsSource, 'nextDonateAt')
-        ?? readOptionalNumber(source, 'nextDonateNotification'),
     },
+    donations: sanitizeDonations(source.donations),
     activeSpaceId: readEnum(
       source,
       'activeSpaceId',

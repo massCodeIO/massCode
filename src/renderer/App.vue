@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
-import { useApp, useTheme } from '@/composables'
+import {
+  useActivityTracker,
+  useApp,
+  useCopyTracker,
+  useDonationTriggers,
+  useTheme,
+} from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
 import { getSpaceDefinitions, isSpaceRouteName } from '@/spaceDefinitions'
@@ -12,9 +18,8 @@ import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
-import { notifications } from './services/notifications'
 
-const { isAppLoading } = useApp()
+const { isAppLoading, isSponsored } = useApp()
 const route = useRoute()
 
 const showLoader = ref(false)
@@ -81,7 +86,11 @@ async function init() {
   restoreSavedSpace()
   loadWASM(onigasmFile)
   await loadGrammars()
-  notifications()
+  useActivityTracker()
+  useCopyTracker()
+  if (!isSponsored) {
+    useDonationTriggers()
+  }
 }
 
 init()

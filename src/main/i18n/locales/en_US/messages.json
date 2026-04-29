@@ -47,8 +47,39 @@
     "migrateSqliteUtility": "If you have a massCode.db file from a previous version, use this utility to import your data into the current Markdown Vault."
   },
   "special": {
-    "supportMessage": "Hi, Anton here 👋<br><br>\nThanks for using massCode. If you find this app useful, please {{-tagStart}}donate{{-tagEnd}}. It will inspire me to continue development on the project.",
     "unsponsored": "Unsponsored"
+  },
+  "donations": {
+    "trigger": {
+      "copy": {
+        "code": "{{count}} snippets copied 🚀",
+        "notes": "{{count}} notes copied 🚀",
+        "math": "{{count}} math results copied 🚀",
+        "tools": "{{count}} tool outputs copied 🚀"
+      },
+      "created": {
+        "code": "{{count}} snippets created 🎉",
+        "notes": "{{count}} notes created 🎉",
+        "math": "{{count}} sheets created 🎉"
+      },
+      "streak_7": {
+        "title": "7 days in a row 🔥"
+      },
+      "streak_30": {
+        "title": "A month with massCode 🎊"
+      },
+      "streak_100": {
+        "title": "100 days with massCode 🏆"
+      }
+    },
+    "body": {
+      "full": "Hi, Anton here 👋\nI build and maintain massCode on my own. If it helps your work, please support the project so it can keep growing.",
+      "short": "Enjoying massCode? Please support the project so it can keep growing."
+    },
+    "actions": {
+      "support": "Support",
+      "dismiss": "Not now"
+    }
   },
   "release": {},
   "update": {

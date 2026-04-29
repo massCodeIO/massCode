@@ -4,6 +4,7 @@ import type {
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
+import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
@@ -178,6 +179,8 @@ async function createSnippet() {
       value: '',
       language: folder?.defaultLanguage || 'plain_text',
     })
+
+    useDonations().incrementCreated('code')
 
     if (
       state.libraryFilter === LibraryFilter.Trash

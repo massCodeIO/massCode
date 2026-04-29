@@ -31,6 +31,35 @@ export interface NotesDashboardWidgets {
 
 export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
 
+export interface DonationsState {
+  lastActiveDay: string
+  currentStreak: number
+  copies: {
+    code: number
+    notes: number
+    math: number
+    tools: number
+  }
+  created: {
+    code: number
+    notes: number
+    math: number
+  }
+  lastShownCopyMilestones: {
+    code: number
+    notes: number
+    math: number
+    tools: number
+  }
+  lastShownCreatedMilestones: {
+    code: number
+    notes: number
+    math: number
+  }
+  shownStreakMilestones: number[]
+  lastGreetingDay: string
+}
+
 export interface AppStore {
   window: {
     bounds: object
@@ -62,9 +91,9 @@ export interface AppStore {
     }
   }
   notifications: {
-    nextDonateAt?: number
     lastNotifiedUpdateVersion: string
   }
+  donations: DonationsState
   activeSpaceId: SpaceId
 }
 

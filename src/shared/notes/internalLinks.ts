@@ -2,8 +2,10 @@ export type InternalLinkType = 'snippet' | 'note'
 
 export interface InternalLink {
   alias: string | null
+  basename: string
   legacyTarget: { id: number, type: InternalLinkType } | null
   label: string
+  pathSegments: string[]
   raw: string
   target: string
 }
@@ -20,6 +22,30 @@ export interface InternalLinkLookupItem {
 }
 
 const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
+const LEGACY_TARGET_RE = /^(?:snippet|note):\d+$/
+
+export function splitInternalLinkTarget(target: string): {
+  basename: string
+  pathSegments: string[]
+} {
+  if (!target || LEGACY_TARGET_RE.test(target)) {
+    return { basename: target, pathSegments: [] }
+  }
+
+  const segments = target
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+
+  if (segments.length === 0) {
+    return { basename: '', pathSegments: [] }
+  }
+
+  return {
+    basename: segments[segments.length - 1],
+    pathSegments: segments.slice(0, -1),
+  }
+}
 
 export function escapeLinkPart(value: string): string {
   let result = ''
@@ -147,11 +173,15 @@ function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
       }
     : null
 
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
   return {
     alias,
+    basename,
     from,
     legacyTarget,
     label: alias ?? target,
+    pathSegments,
     raw,
     target,
     to,
@@ -167,8 +197,10 @@ export function parseInternalLink(text: string): InternalLink | null {
 
   return {
     alias: match.alias,
+    basename: match.basename,
     legacyTarget: match.legacyTarget,
     label: match.label,
+    pathSegments: match.pathSegments,
     raw: match.raw,
     target: match.target,
   }

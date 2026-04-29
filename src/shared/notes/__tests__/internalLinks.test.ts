@@ -6,14 +6,17 @@ import {
   parseInternalLink,
   resolveInternalLinkTargetByTitle,
   rewriteInternalLinkTarget,
+  splitInternalLinkTarget,
 } from '../internalLinks'
 
 describe('parseInternalLink', () => {
   it('parses a link without alias', () => {
     expect(parseInternalLink('[[Repository Pattern with Cache]]')).toEqual({
       alias: null,
+      basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repository Pattern with Cache',
+      pathSegments: [],
       raw: '[[Repository Pattern with Cache]]',
       target: 'Repository Pattern with Cache',
     })
@@ -24,10 +27,48 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[Repository Pattern with Cache|Repo Pattern]]'),
     ).toEqual({
       alias: 'Repo Pattern',
+      basename: 'Repository Pattern with Cache',
       legacyTarget: null,
       label: 'Repo Pattern',
+      pathSegments: [],
       raw: '[[Repository Pattern with Cache|Repo Pattern]]',
       target: 'Repository Pattern with Cache',
+    })
+  })
+
+  it('parses a link with a folder path', () => {
+    expect(parseInternalLink('[[Projects/Repository Pattern]]')).toEqual({
+      alias: null,
+      basename: 'Repository Pattern',
+      legacyTarget: null,
+      label: 'Projects/Repository Pattern',
+      pathSegments: ['Projects'],
+      raw: '[[Projects/Repository Pattern]]',
+      target: 'Projects/Repository Pattern',
+    })
+  })
+
+  it('parses a link with a nested folder path', () => {
+    expect(parseInternalLink('[[Work/Projects/Repository Pattern]]')).toEqual({
+      alias: null,
+      basename: 'Repository Pattern',
+      legacyTarget: null,
+      label: 'Work/Projects/Repository Pattern',
+      pathSegments: ['Work', 'Projects'],
+      raw: '[[Work/Projects/Repository Pattern]]',
+      target: 'Work/Projects/Repository Pattern',
+    })
+  })
+
+  it('parses a path-based link with alias', () => {
+    expect(parseInternalLink('[[Projects/Repository Pattern|Repo]]')).toEqual({
+      alias: 'Repo',
+      basename: 'Repository Pattern',
+      legacyTarget: null,
+      label: 'Repo',
+      pathSegments: ['Projects'],
+      raw: '[[Projects/Repository Pattern|Repo]]',
+      target: 'Projects/Repository Pattern',
     })
   })
 
@@ -40,8 +81,10 @@ describe('parseInternalLink', () => {
   it('handles escaped characters in the target and alias', () => {
     expect(parseInternalLink('[[Array \\] draft|foo \\| bar]]')).toEqual({
       alias: 'foo | bar',
+      basename: 'Array ] draft',
       legacyTarget: null,
       label: 'foo | bar',
+      pathSegments: [],
       raw: '[[Array \\] draft|foo \\| bar]]',
       target: 'Array ] draft',
     })
@@ -50,8 +93,10 @@ describe('parseInternalLink', () => {
   it('handles escaped backslashes', () => {
     expect(parseInternalLink('[[path\\\\file|Alias\\\\Text]]')).toEqual({
       alias: 'Alias\\Text',
+      basename: 'path\\file',
       legacyTarget: null,
       label: 'Alias\\Text',
+      pathSegments: [],
       raw: '[[path\\\\file|Alias\\\\Text]]',
       target: 'path\\file',
     })
@@ -62,10 +107,60 @@ describe('parseInternalLink', () => {
       parseInternalLink('[[snippet:57|Repository Pattern with Cache]]'),
     ).toEqual({
       alias: 'Repository Pattern with Cache',
+      basename: 'snippet:57',
       legacyTarget: { id: 57, type: 'snippet' },
       label: 'Repository Pattern with Cache',
+      pathSegments: [],
       raw: '[[snippet:57|Repository Pattern with Cache]]',
       target: 'snippet:57',
+    })
+  })
+})
+
+describe('splitInternalLinkTarget', () => {
+  it('treats a target without slashes as a bare basename', () => {
+    expect(splitInternalLinkTarget('My Note')).toEqual({
+      basename: 'My Note',
+      pathSegments: [],
+    })
+  })
+
+  it('extracts the trailing segment as the basename', () => {
+    expect(splitInternalLinkTarget('Projects/My Note')).toEqual({
+      basename: 'My Note',
+      pathSegments: ['Projects'],
+    })
+  })
+
+  it('handles deeply nested paths', () => {
+    expect(splitInternalLinkTarget('Work/2026/Q2/Plans')).toEqual({
+      basename: 'Plans',
+      pathSegments: ['Work', '2026', 'Q2'],
+    })
+  })
+
+  it('strips leading slashes and empty segments', () => {
+    expect(splitInternalLinkTarget('/Projects//My Note')).toEqual({
+      basename: 'My Note',
+      pathSegments: ['Projects'],
+    })
+  })
+
+  it('does not split legacy id-based targets', () => {
+    expect(splitInternalLinkTarget('snippet:57')).toEqual({
+      basename: 'snippet:57',
+      pathSegments: [],
+    })
+    expect(splitInternalLinkTarget('note:42')).toEqual({
+      basename: 'note:42',
+      pathSegments: [],
+    })
+  })
+
+  it('returns empty fields for trailing-slash-only targets', () => {
+    expect(splitInternalLinkTarget('Projects/')).toEqual({
+      basename: 'Projects',
+      pathSegments: [],
     })
   })
 })

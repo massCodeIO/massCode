@@ -199,16 +199,32 @@ describe('notes storage validations', () => {
     )
   })
 
-  it('skips backlink rewrite when another active note shares the previous name', () => {
+  it('rewrites only links that resolved to the renamed note when duplicate names exist', () => {
     const storage = createNotesNotesStorage()
 
-    const target = storage.createNote({ name: 'Shared Name' })
+    const earlier = storage.createNote({ name: 'Shared Name' })
     storage.createNote({ name: 'Shared Name' })
 
     const linker = storage.createNote({ name: 'Linker' })
     storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')
 
-    storage.updateNote(target.id, { name: 'Renamed One' })
+    storage.updateNote(earlier.id, { name: 'Renamed One' })
+
+    expect(storage.getNoteById(linker.id)?.content).toBe(
+      'See [[Renamed One]] here',
+    )
+  })
+
+  it('does not rewrite links that resolve to a different note than the renamed one', () => {
+    const storage = createNotesNotesStorage()
+
+    storage.createNote({ name: 'Shared Name' })
+    const later = storage.createNote({ name: 'Shared Name' })
+
+    const linker = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linker.id, 'See [[Shared Name]] here')
+
+    storage.updateNote(later.id, { name: 'Renamed Two' })
 
     expect(storage.getNoteById(linker.id)?.content).toBe(
       'See [[Shared Name]] here',

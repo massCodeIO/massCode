@@ -212,6 +212,7 @@ export function rewriteInternalLinkTarget(
   text: string,
   oldTarget: string,
   newTarget: string,
+  shouldRewriteMatch?: (match: InternalLinkMatch) => boolean,
 ): string | null {
   const oldKey = normalizeInternalLinkLookupKey(oldTarget)
   if (!oldKey) {
@@ -229,6 +230,10 @@ export function rewriteInternalLinkTarget(
     }
 
     if (normalizeInternalLinkLookupKey(match.target) !== oldKey) {
+      continue
+    }
+
+    if (shouldRewriteMatch && !shouldRewriteMatch(match)) {
       continue
     }
 

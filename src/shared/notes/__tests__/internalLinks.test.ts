@@ -205,6 +205,17 @@ describe('rewriteInternalLinkTarget', () => {
       rewriteInternalLinkTarget('See [[note:42|Old]]', 'Old', 'New'),
     ).toBeNull()
   })
+
+  it('skips matches that the predicate rejects', () => {
+    expect(
+      rewriteInternalLinkTarget(
+        '[[Old]] keep [[Old|alias]] rewrite',
+        'Old',
+        'New',
+        match => match.alias !== null,
+      ),
+    ).toBe('[[Old]] keep [[New|alias]] rewrite')
+  })
 })
 
 describe('resolveInternalLinkTargetByTitle', () => {

@@ -1,6 +1,11 @@
+import type {
+  InternalLinkLookupItem,
+  InternalLinkMatch,
+} from '../../../../../../shared/notes/internalLinks'
 import type { MarkdownNote, NotesPaths, NotesState } from './types'
 import {
   normalizeInternalLinkLookupKey,
+  resolveInternalLinkTargetByTitle,
   rewriteInternalLinkTarget,
 } from '../../../../../../shared/notes/internalLinks'
 import { getPaths, getVaultPath } from '../../runtime/paths'
@@ -31,32 +36,46 @@ export function rewriteBacklinksAfterNoteRename(
     return 0
   }
 
+  let snippetLookup: InternalLinkLookupItem[] = []
+  try {
+    const markdownCache = getRuntimeCache(getPaths(getVaultPath()))
+    snippetLookup = markdownCache.snippets
+      .filter(snippet => snippet.isDeleted === 0)
+      .map(snippet => ({
+        id: snippet.id,
+        name: snippet.name,
+        type: 'snippet' as const,
+      }))
+  }
+  catch {
+    snippetLookup = []
+  }
+
   if (
-    notes.some(
-      note =>
-        note.id !== renamedNoteId
-        && note.isDeleted === 0
-        && normalizeInternalLinkLookupKey(note.name) === previousKey,
+    snippetLookup.some(
+      snippet => normalizeInternalLinkLookupKey(snippet.name) === previousKey,
     )
   ) {
     return 0
   }
 
-  let snippetShadowsName = false
-  try {
-    const markdownCache = getRuntimeCache(getPaths(getVaultPath()))
-    snippetShadowsName = markdownCache.snippets.some(
-      snippet =>
-        snippet.isDeleted === 0
-        && normalizeInternalLinkLookupKey(snippet.name) === previousKey,
-    )
-  }
-  catch {
-    snippetShadowsName = false
-  }
+  const noteLookup: InternalLinkLookupItem[] = notes
+    .filter(note => note.isDeleted === 0)
+    .map(note => ({
+      id: note.id,
+      name: note.id === renamedNoteId ? previousName : note.name,
+      type: 'note' as const,
+    }))
 
-  if (snippetShadowsName) {
-    return 0
+  const lookup = [...snippetLookup, ...noteLookup]
+
+  const shouldRewriteMatch = (match: InternalLinkMatch): boolean => {
+    const resolved = resolveInternalLinkTargetByTitle(match.target, lookup)
+    return (
+      resolved !== null
+      && resolved.type === 'note'
+      && resolved.id === renamedNoteId
+    )
   }
 
   let rewrittenCount = 0
@@ -71,6 +90,7 @@ export function rewriteBacklinksAfterNoteRename(
       note.content,
       previousName,
       nextName,
+      shouldRewriteMatch,
     )
     if (rewritten === null) {
       continue

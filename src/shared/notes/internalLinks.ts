@@ -19,6 +19,11 @@ export interface InternalLinkLookupItem {
   id: number
   name: string
   type: InternalLinkType
+  folderPath?: string
+}
+
+export interface ResolveInternalLinkOptions {
+  linkerFolderPath?: string
 }
 
 const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
@@ -283,11 +288,51 @@ export function rewriteInternalLinkTarget(
   return result
 }
 
+function normalizeFolderPath(folderPath: string | undefined): string {
+  if (!folderPath) {
+    return ''
+  }
+
+  return folderPath
+    .split('/')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0)
+    .join('/')
+}
+
+function buildFolderAncestorWalk(folderPath: string): string[] {
+  const normalized = normalizeFolderPath(folderPath)
+
+  if (!normalized) {
+    return ['']
+  }
+
+  const segments = normalized.split('/')
+  const ancestors: string[] = []
+
+  for (let index = segments.length; index >= 0; index -= 1) {
+    ancestors.push(segments.slice(0, index).join('/'))
+  }
+
+  return ancestors
+}
+
 export function resolveInternalLinkTargetByTitle(
-  title: string,
+  target: string,
   items: InternalLinkLookupItem[],
+  options?: ResolveInternalLinkOptions,
 ): { id: number, type: InternalLinkType } | null {
-  const normalizedTitle = normalizeInternalLinkLookupKey(title)
+  const { basename, pathSegments } = splitInternalLinkTarget(target)
+
+  if (pathSegments.length > 0) {
+    return null
+  }
+
+  if (!basename) {
+    return null
+  }
+
+  const normalizedTitle = normalizeInternalLinkLookupKey(basename)
 
   const snippet = items.find(
     item =>
@@ -302,18 +347,40 @@ export function resolveInternalLinkTargetByTitle(
     }
   }
 
-  const note = items.find(
+  const noteCandidates = items.filter(
     item =>
       item.type === 'note'
       && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
   )
 
-  if (note) {
+  if (noteCandidates.length === 0) {
+    return null
+  }
+
+  if (noteCandidates.length === 1) {
     return {
-      id: note.id,
-      type: note.type,
+      id: noteCandidates[0].id,
+      type: 'note',
     }
   }
 
-  return null
+  const ancestors = buildFolderAncestorWalk(options?.linkerFolderPath ?? '')
+
+  for (const ancestorPath of ancestors) {
+    const match = noteCandidates.find(
+      candidate => normalizeFolderPath(candidate.folderPath) === ancestorPath,
+    )
+
+    if (match) {
+      return {
+        id: match.id,
+        type: 'note',
+      }
+    }
+  }
+
+  return {
+    id: noteCandidates[0].id,
+    type: 'note',
+  }
 }

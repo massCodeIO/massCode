@@ -346,4 +346,73 @@ describe('resolveInternalLinkTargetByTitle', () => {
       ]),
     ).toBeNull()
   })
+
+  it('returns null for path-based targets (resolved by path elsewhere)', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Projects/Architecture', [
+        { id: 12, name: 'Architecture', type: 'note' },
+      ]),
+    ).toBeNull()
+  })
+
+  it('prefers a note in the linker folder when multiple notes share the basename', () => {
+    expect(
+      resolveInternalLinkTargetByTitle(
+        'Foo',
+        [
+          { folderPath: '', id: 1, name: 'Foo', type: 'note' },
+          { folderPath: 'Work', id: 2, name: 'Foo', type: 'note' },
+          { folderPath: 'Work/Projects', id: 3, name: 'Foo', type: 'note' },
+        ],
+        { linkerFolderPath: 'Work/Projects' },
+      ),
+    ).toEqual({ id: 3, type: 'note' })
+  })
+
+  it('walks up to the linker parent when no match is in the same folder', () => {
+    expect(
+      resolveInternalLinkTargetByTitle(
+        'Foo',
+        [
+          { folderPath: '', id: 1, name: 'Foo', type: 'note' },
+          { folderPath: 'Work', id: 2, name: 'Foo', type: 'note' },
+        ],
+        { linkerFolderPath: 'Work/Projects' },
+      ),
+    ).toEqual({ id: 2, type: 'note' })
+  })
+
+  it('reaches the root folder during the ancestor walk', () => {
+    expect(
+      resolveInternalLinkTargetByTitle(
+        'Foo',
+        [
+          { folderPath: '', id: 1, name: 'Foo', type: 'note' },
+          { folderPath: 'Other', id: 2, name: 'Foo', type: 'note' },
+        ],
+        { linkerFolderPath: 'Work/Projects' },
+      ),
+    ).toEqual({ id: 1, type: 'note' })
+  })
+
+  it('falls back to the first candidate when no ancestor matches', () => {
+    expect(
+      resolveInternalLinkTargetByTitle(
+        'Foo',
+        [
+          { folderPath: 'Other', id: 1, name: 'Foo', type: 'note' },
+          { folderPath: 'Stuff', id: 2, name: 'Foo', type: 'note' },
+        ],
+        { linkerFolderPath: 'Work/Projects' },
+      ),
+    ).toEqual({ id: 1, type: 'note' })
+  })
+
+  it('returns the single matching note without proximity context', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Foo', [
+        { folderPath: 'Work/Projects', id: 1, name: 'Foo', type: 'note' },
+      ]),
+    ).toEqual({ id: 1, type: 'note' })
+  })
 })

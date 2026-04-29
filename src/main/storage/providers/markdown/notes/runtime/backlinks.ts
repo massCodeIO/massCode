@@ -11,6 +11,7 @@ import {
 import { getPaths, getVaultPath } from '../../runtime/paths'
 import { getRuntimeCache } from '../../runtime/sync'
 import { writeNoteToFile } from './notes'
+import { buildNotesFolderPathMap } from './paths'
 import { invalidateNotesSearchIndex } from './search'
 
 interface RewriteBacklinksAfterRenameInput {
@@ -59,9 +60,15 @@ export function rewriteBacklinksAfterNoteRename(
     return 0
   }
 
+  const folderPathMap = buildNotesFolderPathMap(state)
+
+  const getNoteFolderPath = (note: MarkdownNote): string =>
+    note.folderId === null ? '' : (folderPathMap.get(note.folderId) ?? '')
+
   const noteLookup: InternalLinkLookupItem[] = notes
     .filter(note => note.isDeleted === 0)
     .map(note => ({
+      folderPath: getNoteFolderPath(note),
       id: note.id,
       name: note.id === renamedNoteId ? previousName : note.name,
       type: 'note' as const,
@@ -69,21 +76,24 @@ export function rewriteBacklinksAfterNoteRename(
 
   const lookup = [...snippetLookup, ...noteLookup]
 
-  const shouldRewriteMatch = (match: InternalLinkMatch): boolean => {
-    const resolved = resolveInternalLinkTargetByTitle(match.target, lookup)
-    return (
-      resolved !== null
-      && resolved.type === 'note'
-      && resolved.id === renamedNoteId
-    )
-  }
-
   let rewrittenCount = 0
   const now = Date.now()
 
   for (const note of notes) {
     if (note.id === renamedNoteId || note.isDeleted || !note.content) {
       continue
+    }
+
+    const linkerFolderPath = getNoteFolderPath(note)
+    const shouldRewriteMatch = (match: InternalLinkMatch): boolean => {
+      const resolved = resolveInternalLinkTargetByTitle(match.target, lookup, {
+        linkerFolderPath,
+      })
+      return (
+        resolved !== null
+        && resolved.type === 'note'
+        && resolved.id === renamedNoteId
+      )
     }
 
     const rewritten = rewriteInternalLinkTarget(

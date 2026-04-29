@@ -10,6 +10,7 @@ import type {
 } from '../../../contracts'
 import path from 'node:path'
 import {
+  assertUniqueSiblingEntryName,
   createSnippetRecord,
   findFolderById,
   findSnippetByContentId,
@@ -90,6 +91,7 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
+      assertUniqueSiblingEntryName(snippets, folderId, name, 'snippet')
       const result = createEntityInStateAndDisk<MarkdownSnippet>({
         createEntity: ({ folderId, id, name, now }) => ({
           contents: [],
@@ -159,6 +161,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       const previousPath = snippet.filePath
+      const previousFolderId = snippet.folderId
       const updateResult = applyEntityUpdateFields({
         entity: snippet,
         fieldPresence: 'in',
@@ -167,8 +170,25 @@ export function createSnippetsStorage(): SnippetsStorage {
         normalizeFlag: value => value || 0,
         onMissingFolder: () =>
           throwStorageError('FOLDER_NOT_FOUND', 'Folder not found'),
-        resolveName: (inputName, currentName) =>
-          validateEntryName(inputName || currentName, 'snippet'),
+        resolveName: (inputName, currentName) => {
+          const next = validateEntryName(inputName || currentName, 'snippet')
+          const isFolderChanging
+            = 'folderId' in input
+              && (input.folderId ?? null) !== previousFolderId
+          if (
+            !isFolderChanging
+            && next.toLowerCase() !== currentName.toLowerCase()
+          ) {
+            assertUniqueSiblingEntryName(
+              snippets,
+              previousFolderId,
+              next,
+              'snippet',
+              snippet.id,
+            )
+          }
+          return next
+        },
       })
       if (!updateResult.hasAnyField) {
         return {

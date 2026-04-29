@@ -31,7 +31,10 @@
     "entryNameLeadingDot": "Имя не может начинаться с точки.",
     "entryNameInvalidChars": "Имя не может содержать эти символы: {{- chars}}",
     "entryNameTrailingDot": "Имя не может заканчиваться точкой.",
-    "entryNameWindowsReserved": "Это имя зарезервировано в Windows."
+    "entryNameWindowsReserved": "Это имя зарезервировано в Windows.",
+    "entryNameNoteConflict": "В этой папке уже есть заметка с таким именем.",
+    "entryNameSnippetConflict": "В этой папке уже есть сниппет с таким именем.",
+    "entryNameFolderConflict": "Папка с таким именем уже существует на этом уровне."
   },
   "description": {
     "storageVault": "Выберите директорию для хранилища. Для синхронизации между устройствами выберите папку в iCloud Drive, Google Drive или Dropbox.",

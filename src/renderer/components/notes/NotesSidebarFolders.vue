@@ -12,7 +12,10 @@ import {
 } from '@/composables'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
-import { getEntryNameValidationMessage } from '@/utils'
+import {
+  getEntryNameConflictMessage,
+  getEntryNameValidationMessage,
+} from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
@@ -115,8 +118,49 @@ const highlightedIds = computed({
 
 const contextNode = ref<any>(null)
 
-function getFolderValidationMessage(_node: TreeNodeType, value: string) {
-  return getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+function flattenFolders(nodes: any[], acc: any[] = []): any[] {
+  for (const folder of nodes) {
+    acc.push(folder)
+    if (folder.children?.length) {
+      flattenFolders(folder.children, acc)
+    }
+  }
+
+  return acc
+}
+
+function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
+  const folderId = Number(node.id)
+  const folder = getFolderByIdFromTree(folders.value, folderId)
+  if (!folder) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || normalized === folder.name.toLowerCase()) {
+    return false
+  }
+
+  const parentId = folder.parentId ?? null
+  return flattenFolders(folders.value || []).some(
+    sibling =>
+      sibling.id !== folderId
+      && (sibling.parentId ?? null) === parentId
+      && sibling.name.toLowerCase() === normalized,
+  )
+}
+
+function getFolderValidationMessage(node: TreeNodeType, value: string) {
+  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+  if (message) {
+    return message
+  }
+
+  if (hasSiblingFolderConflict(node, value)) {
+    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
+  }
+
+  return ''
 }
 
 // --- Event handlers ---

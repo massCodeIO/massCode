@@ -6,7 +6,11 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
 import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
-import { getEntryNameValidationMessage, scrollToElement } from '@/utils'
+import {
+  getEntryNameConflictMessage,
+  getEntryNameValidationMessage,
+  scrollToElement,
+} from '@/utils'
 import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
 
@@ -111,8 +115,49 @@ const contextNodeDefaultLanguage = computed(() => {
   )
 })
 
-function getFolderValidationMessage(_node: TreeNodeType, value: string) {
-  return getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+function flattenFolders(nodes: Node[], acc: Node[] = []): Node[] {
+  for (const folder of nodes) {
+    acc.push(folder)
+    if (folder.children?.length) {
+      flattenFolders(folder.children, acc)
+    }
+  }
+
+  return acc
+}
+
+function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
+  const folderId = Number(node.id)
+  const folder = getFolderByIdFromTree(folders.value, folderId)
+  if (!folder) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || normalized === folder.name.toLowerCase()) {
+    return false
+  }
+
+  const parentId = folder.parentId ?? null
+  return flattenFolders((folders.value ?? []) as Node[]).some(
+    sibling =>
+      sibling.id !== folderId
+      && (sibling.parentId ?? null) === parentId
+      && sibling.name.toLowerCase() === normalized,
+  )
+}
+
+function getFolderValidationMessage(node: TreeNodeType, value: string) {
+  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
+  if (message) {
+    return message
+  }
+
+  if (hasSiblingFolderConflict(node, value)) {
+    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
+  }
+
+  return ''
 }
 
 // --- Event handlers ---

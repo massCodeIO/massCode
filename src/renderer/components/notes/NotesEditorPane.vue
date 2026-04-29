@@ -10,6 +10,7 @@ import {
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
+import { getEntryNameConflictMessage } from '@/utils'
 import {
   BookOpen,
   ChevronLeft,
@@ -30,6 +31,7 @@ import { shouldSyncSelectedNoteContent } from './editorSync'
 import { getTextStats } from './textStats'
 
 const {
+  notes,
   selectedNote,
   updateNoteContent,
   isNotesLoading,
@@ -37,6 +39,20 @@ const {
 } = useNotes()
 const { canGoBack, canGoForward } = useNavigationHistory()
 const { addToUpdateQueue } = useNoteUpdate()
+
+function hasSiblingNoteNameConflict(value: string, excludeId: number) {
+  const normalized = value.trim().toLowerCase()
+  if (!normalized || !selectedNote.value) {
+    return false
+  }
+  const folderId = selectedNote.value.folder?.id ?? null
+  return (notes.value ?? []).some(
+    note =>
+      note.id !== excludeId
+      && (note.folder?.id ?? null) === folderId
+      && note.name.toLowerCase() === normalized,
+  )
+}
 const {
   isFocusedNoteName,
   isNotesMindmapShown,
@@ -111,41 +127,64 @@ const {
       return
     }
 
-    if (selectedNote.value) {
-      addToUpdateQueue(selectedNote.value.id, { name: v })
+    if (!selectedNote.value) {
+      return
     }
+
+    if (hasSiblingNoteNameConflict(v, selectedNote.value.id)) {
+      return
+    }
+
+    addToUpdateQueue(selectedNote.value.id, { name: v })
   },
 )
 
 const nameValidationIssue = computed(() =>
   getEntryNameValidationIssue(name.value),
 )
+const hasNameConflict = computed(() => {
+  if (nameValidationIssue.value || !selectedNote.value) {
+    return false
+  }
+
+  if (
+    name.value.trim().toLowerCase() === selectedNote.value.name.toLowerCase()
+  ) {
+    return false
+  }
+
+  return hasSiblingNoteNameConflict(name.value, selectedNote.value.id)
+})
 const nameValidationMessage = computed(() => {
   const issue = nameValidationIssue.value
 
-  if (!issue) {
-    return ''
+  if (issue) {
+    if (issue.code === 'invalidChars') {
+      return i18n.t('messages:error.entryNameInvalidChars', {
+        chars: formatEntryNameValidationChars(issue.chars),
+      })
+    }
+
+    if (issue.code === 'leadingDot') {
+      return i18n.t('messages:error.entryNameLeadingDot')
+    }
+
+    if (issue.code === 'trailingDot') {
+      return i18n.t('messages:error.entryNameTrailingDot')
+    }
+
+    if (issue.code === 'windowsReserved') {
+      return i18n.t('messages:error.entryNameWindowsReserved')
+    }
+
+    return i18n.t('messages:error.entryNameEmpty')
   }
 
-  if (issue.code === 'invalidChars') {
-    return i18n.t('messages:error.entryNameInvalidChars', {
-      chars: formatEntryNameValidationChars(issue.chars),
-    })
+  if (hasNameConflict.value) {
+    return getEntryNameConflictMessage('note', i18n.t.bind(i18n))
   }
 
-  if (issue.code === 'leadingDot') {
-    return i18n.t('messages:error.entryNameLeadingDot')
-  }
-
-  if (issue.code === 'trailingDot') {
-    return i18n.t('messages:error.entryNameTrailingDot')
-  }
-
-  if (issue.code === 'windowsReserved') {
-    return i18n.t('messages:error.entryNameWindowsReserved')
-  }
-
-  return i18n.t('messages:error.entryNameEmpty')
+  return ''
 })
 
 const isNameValidationTooltipOpen = computed(() => {
@@ -158,7 +197,7 @@ function onNoteNameFocus() {
 }
 
 function onNameBlur() {
-  if (nameValidationIssue.value) {
+  if (nameValidationIssue.value || hasNameConflict.value) {
     resetName()
   }
 

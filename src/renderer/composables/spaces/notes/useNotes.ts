@@ -196,13 +196,18 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
 async function getNoteNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
-  const query: NotesQuery
-    = folderId !== null
-      ? { folderId, isDeleted: 0 }
-      : { isInbox: 1, isDeleted: 0 }
+  const query: NotesQuery = { isDeleted: 0 }
+  if (folderId !== null) {
+    query.folderId = folderId
+  }
+  else {
+    query.isInbox = 1
+  }
   const { data } = await api.notes.getNotes(query)
 
-  return data.map((note: NoteRecord) => note.name)
+  return data
+    .filter((note: NoteRecord) => (note.folder?.id ?? null) === folderId)
+    .map((note: NoteRecord) => note.name)
 }
 
 // --- CRUD ---

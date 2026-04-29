@@ -60,13 +60,18 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
 async function getSnippetNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
-  const query: SnippetsQuery
-    = folderId !== null
-      ? { folderId, isDeleted: 0 }
-      : { isInbox: 1, isDeleted: 0 }
+  const query: SnippetsQuery = { isDeleted: 0 }
+  if (folderId !== null) {
+    query.folderId = folderId
+  }
+  else {
+    query.isInbox = 1
+  }
   const { data } = await api.snippets.getSnippets(query)
 
-  return data.map(snippet => snippet.name)
+  return data
+    .filter(snippet => (snippet.folder?.id ?? null) === folderId)
+    .map(snippet => snippet.name)
 }
 
 const displayedSnippets = computed(() => {

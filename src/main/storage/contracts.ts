@@ -1,4 +1,17 @@
 import type {
+  HttpAuth,
+  HttpBodyType,
+  HttpEnvironmentRecord,
+  HttpFolderRecord,
+  HttpFolderTreeRecord,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpHistoryRecord,
+  HttpMethod,
+  HttpQueryEntry,
+  HttpRequestRecord,
+} from './providers/markdown/http/runtime/types'
+import type {
   NotesFolderRecord,
   NotesFolderTreeRecord,
 } from './providers/markdown/notes/runtime/types'
@@ -312,4 +325,122 @@ export interface NoteTagsStorage {
   deleteTag: (id: number) => { deleted: boolean }
   getTags: () => NoteTagRecord[]
   updateTag: (id: number, name: string) => { notFound: boolean }
+}
+
+// --- HTTP Space Contracts ---
+
+export interface HttpFolderCreateInput {
+  name: string
+  parentId?: number | null
+}
+
+export interface HttpFolderUpdateInput {
+  name?: string
+  parentId?: number | null
+  isOpen?: number
+  orderIndex?: number
+}
+
+export interface HttpFolderUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpRequestCreateInput {
+  name: string
+  folderId?: number | null
+  method?: HttpMethod
+  url?: string
+}
+
+export interface HttpRequestUpdateInput {
+  name?: string
+  folderId?: number | null
+  method?: HttpMethod
+  url?: string
+  headers?: HttpHeaderEntry[]
+  query?: HttpQueryEntry[]
+  bodyType?: HttpBodyType
+  body?: string | null
+  formData?: HttpFormDataEntry[]
+  auth?: HttpAuth
+  description?: string
+}
+
+export interface HttpRequestUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpEnvironmentCreateInput {
+  name: string
+  variables?: Record<string, string>
+}
+
+export interface HttpEnvironmentUpdateInput {
+  name?: string
+  variables?: Record<string, string>
+}
+
+export interface HttpEnvironmentUpdateResult {
+  invalidInput: boolean
+  notFound: boolean
+}
+
+export interface HttpHistoryAppendInput {
+  requestId: number | null
+  method: HttpMethod
+  url: string
+  status: number | null
+  durationMs: number
+  sizeBytes: number
+  requestedAt: number
+  error?: string
+}
+
+export interface HttpFoldersStorage {
+  createFolder: (input: HttpFolderCreateInput) => { id: number }
+  deleteFolder: (id: number) => { deleted: boolean }
+  getFolders: () => HttpFolderRecord[]
+  getFoldersTree: () => HttpFolderTreeRecord[]
+  updateFolder: (
+    id: number,
+    input: HttpFolderUpdateInput,
+  ) => HttpFolderUpdateResult
+}
+
+export interface HttpRequestsStorage {
+  createRequest: (input: HttpRequestCreateInput) => { id: number }
+  deleteRequest: (id: number) => { deleted: boolean }
+  getRequestById: (id: number) => HttpRequestRecord | null
+  getRequests: () => HttpRequestRecord[]
+  updateRequest: (
+    id: number,
+    input: HttpRequestUpdateInput,
+  ) => HttpRequestUpdateResult
+}
+
+export interface HttpEnvironmentsStorage {
+  createEnvironment: (input: HttpEnvironmentCreateInput) => { id: number }
+  deleteEnvironment: (id: number) => { deleted: boolean }
+  getActiveEnvironmentId: () => number | null
+  getEnvironments: () => HttpEnvironmentRecord[]
+  setActiveEnvironment: (id: number | null) => { notFound: boolean }
+  updateEnvironment: (
+    id: number,
+    input: HttpEnvironmentUpdateInput,
+  ) => HttpEnvironmentUpdateResult
+}
+
+export interface HttpHistoryStorage {
+  appendEntry: (input: HttpHistoryAppendInput) => { id: number }
+  clear: () => void
+  getEntries: () => HttpHistoryRecord[]
+}
+
+export interface HttpStorageProvider {
+  environments: HttpEnvironmentsStorage
+  folders: HttpFoldersStorage
+  history: HttpHistoryStorage
+  requests: HttpRequestsStorage
 }

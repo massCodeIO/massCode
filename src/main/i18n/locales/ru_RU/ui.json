@@ -36,7 +36,11 @@
       "label": "HTTP",
       "tooltip": "HTTP-клиент",
       "title": "HTTP-клиент",
-      "untitledRequest": "Безымянный запрос"
+      "untitledRequest": "Безымянный запрос",
+      "empty": "Пока нет запросов",
+      "action": {
+        "newRequest": "Новый запрос"
+      }
     },
     "tools": {
       "label": "Инструменты",

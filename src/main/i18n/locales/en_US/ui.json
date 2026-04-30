@@ -36,7 +36,11 @@
       "label": "HTTP",
       "tooltip": "HTTP client",
       "title": "HTTP Client",
-      "untitledRequest": "Untitled request"
+      "untitledRequest": "Untitled request",
+      "empty": "No requests yet",
+      "action": {
+        "newRequest": "New request"
+      }
     },
     "tools": {
       "label": "Tools",

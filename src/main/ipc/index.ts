@@ -7,6 +7,7 @@ import { store } from '../store'
 import { isSqliteFile } from '../utils'
 import { registerDialogHandlers } from './handlers/dialog'
 import { registerFsHandlers } from './handlers/fs'
+import { registerHttpHandlers } from './handlers/http'
 import { registerPrettierHandlers } from './handlers/prettier'
 import { registerSpacesHandlers } from './handlers/spaces'
 import { registerSystemHandlers } from './handlers/system'
@@ -25,6 +26,7 @@ export function registerIPC() {
   registerFsHandlers()
   registerThemeHandlers()
   registerSpacesHandlers()
+  registerHttpHandlers()
 
   ipcMain.on('main-menu:update-context', (_, payload: MainMenuContext) => {
     updateMainMenu(payload)

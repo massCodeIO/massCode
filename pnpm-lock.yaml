@@ -191,6 +191,9 @@ importers:
       typed.js:
         specifier: ^2.1.0
         version: 2.1.0
+      undici:
+        specifier: ^6.21.2
+        version: 6.21.2
       uuid:
         specifier: ^11.1.0
         version: 11.1.0

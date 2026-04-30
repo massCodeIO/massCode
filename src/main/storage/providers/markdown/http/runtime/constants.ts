@@ -6,3 +6,7 @@ export const HTTP_HISTORY_CAP = 200
 export const httpRuntimeRef: { cache: HttpRuntimeCache | null } = {
   cache: null,
 }
+
+export function peekHttpRuntimeCache(): HttpRuntimeCache | null {
+  return httpRuntimeRef.cache
+}

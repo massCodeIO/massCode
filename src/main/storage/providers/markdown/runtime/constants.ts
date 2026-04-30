@@ -13,6 +13,7 @@ export const PERSISTED_SPACE_IDS = [
   CODE_SPACE_ID,
   MATH_SPACE_ID,
   NOTES_SPACE_ID,
+  HTTP_SPACE_ID,
 ] as const
 export const SPACE_IDS = new Set<string>(PERSISTED_SPACE_IDS)
 

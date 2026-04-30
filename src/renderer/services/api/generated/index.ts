@@ -376,6 +376,202 @@ export interface NoteTagsUpdate {
   name: string;
 }
 
+export interface HttpFoldersAdd {
+  name: string;
+  parentId?: number | null;
+}
+
+export type HttpFoldersResponse = {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+}[];
+
+export type HttpFoldersTreeResponse = {
+  id: number;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  parentId: number | null;
+  isOpen: number;
+  orderIndex: number;
+  children: any[];
+}[];
+
+export interface HttpFoldersUpdate {
+  name?: string;
+  parentId?: number | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isOpen?: number;
+  orderIndex?: number;
+}
+
+export interface HttpRequestItemResponse {
+  id: number;
+  name: string;
+  folderId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  headers: {
+    key: string;
+    value: string;
+  }[];
+  query: {
+    key: string;
+    value: string;
+  }[];
+  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  body: string | null;
+  formData: {
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth: {
+    type: "none" | "bearer" | "basic";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description: string;
+  filePath: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface HttpRequestsAdd {
+  name: string;
+  folderId?: number | null;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url?: string;
+}
+
+export type HttpRequestsResponse = {
+  id: number;
+  name: string;
+  folderId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  headers: {
+    key: string;
+    value: string;
+  }[];
+  query: {
+    key: string;
+    value: string;
+  }[];
+  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  body: string | null;
+  formData: {
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth: {
+    type: "none" | "bearer" | "basic";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description: string;
+  filePath: string;
+  createdAt: number;
+  updatedAt: number;
+}[];
+
+export interface HttpRequestsUpdate {
+  name?: string;
+  folderId?: number | null;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url?: string;
+  headers?: {
+    key: string;
+    value: string;
+  }[];
+  query?: {
+    key: string;
+    value: string;
+  }[];
+  bodyType?: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  body?: string | null;
+  formData?: {
+    key: string;
+    type: "text" | "file";
+    value: string;
+  }[];
+  auth?: {
+    type: "none" | "bearer" | "basic";
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  description?: string;
+}
+
+export interface HttpEnvironmentItemResponse {
+  id: number;
+  name: string;
+  variables: object;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface HttpEnvironmentsAdd {
+  name: string;
+  variables?: object;
+}
+
+export interface HttpEnvironmentsResponse {
+  activeId: number | null;
+  items: {
+    id: number;
+    name: string;
+    variables: object;
+    createdAt: number;
+    updatedAt: number;
+  }[];
+}
+
+export interface HttpEnvironmentsSetActive {
+  id: number | null;
+}
+
+export interface HttpEnvironmentsUpdate {
+  name?: string;
+  variables?: object;
+}
+
+export interface HttpHistoryItemResponse {
+  id: number;
+  requestId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  status: number | null;
+  durationMs: number;
+  sizeBytes: number;
+  requestedAt: number;
+  error?: string;
+}
+
+export type HttpHistoryResponse = {
+  id: number;
+  requestId: number | null;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+  url: string;
+  status: number | null;
+  durationMs: number;
+  sizeBytes: number;
+  requestedAt: number;
+  error?: string;
+}[];
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -622,7 +818,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.0.0
+ * @version 5.2.0
  *
  * Development documentation
  */
@@ -1421,6 +1617,309 @@ export class Api<
     deleteNoteTagsById: (id: string, params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/note-tags/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpFolders = {
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name GetHttpFolders
+     * @request GET:/http-folders/
+     */
+    getHttpFolders: (params: RequestParams = {}) =>
+      this.request<HttpFoldersResponse, any>({
+        path: `/http-folders/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name PostHttpFolders
+     * @request POST:/http-folders/
+     */
+    postHttpFolders: (data: HttpFoldersAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-folders/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name GetHttpFoldersTree
+     * @request GET:/http-folders/tree
+     */
+    getHttpFoldersTree: (params: RequestParams = {}) =>
+      this.request<HttpFoldersTreeResponse, any>({
+        path: `/http-folders/tree`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name PatchHttpFoldersById
+     * @request PATCH:/http-folders/{id}
+     */
+    patchHttpFoldersById: (
+      id: string,
+      data: HttpFoldersUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-folders/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Folders
+     * @name DeleteHttpFoldersById
+     * @request DELETE:/http-folders/{id}
+     */
+    deleteHttpFoldersById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-folders/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpRequests = {
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name GetHttpRequests
+     * @request GET:/http-requests/
+     */
+    getHttpRequests: (params: RequestParams = {}) =>
+      this.request<HttpRequestsResponse, any>({
+        path: `/http-requests/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PostHttpRequests
+     * @request POST:/http-requests/
+     */
+    postHttpRequests: (data: HttpRequestsAdd, params: RequestParams = {}) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-requests/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name GetHttpRequestsById
+     * @request GET:/http-requests/{id}
+     */
+    getHttpRequestsById: (id: string, params: RequestParams = {}) =>
+      this.request<
+        HttpRequestItemResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PatchHttpRequestsById
+     * @request PATCH:/http-requests/{id}
+     */
+    patchHttpRequestsById: (
+      id: string,
+      data: HttpRequestsUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-requests/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name DeleteHttpRequestsById
+     * @request DELETE:/http-requests/{id}
+     */
+    deleteHttpRequestsById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-requests/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+  };
+  httpEnvironments = {
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name GetHttpEnvironments
+     * @request GET:/http-environments/
+     */
+    getHttpEnvironments: (params: RequestParams = {}) =>
+      this.request<HttpEnvironmentsResponse, any>({
+        path: `/http-environments/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PostHttpEnvironments
+     * @request POST:/http-environments/
+     */
+    postHttpEnvironments: (
+      data: HttpEnvironmentsAdd,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        {
+          id: number | bigint;
+        },
+        any
+      >({
+        path: `/http-environments/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PatchHttpEnvironmentsById
+     * @request PATCH:/http-environments/{id}
+     */
+    patchHttpEnvironmentsById: (
+      id: string,
+      data: HttpEnvironmentsUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-environments/${id}`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name DeleteHttpEnvironmentsById
+     * @request DELETE:/http-environments/{id}
+     */
+    deleteHttpEnvironmentsById: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-environments/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Environments
+     * @name PostHttpEnvironmentsActive
+     * @request POST:/http-environments/active
+     */
+    postHttpEnvironmentsActive: (
+      data: HttpEnvironmentsSetActive,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/http-environments/active`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  httpHistory = {
+    /**
+     * No description
+     *
+     * @tags HTTP History
+     * @name GetHttpHistory
+     * @request GET:/http-history/
+     */
+    getHttpHistory: (params: RequestParams = {}) =>
+      this.request<HttpHistoryResponse, any>({
+        path: `/http-history/`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP History
+     * @name DeleteHttpHistory
+     * @request DELETE:/http-history/
+     */
+    deleteHttpHistory: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-history/`,
         method: "DELETE",
         ...params,
       }),

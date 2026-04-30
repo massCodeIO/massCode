@@ -41,7 +41,7 @@ function hasInvalidNameChars(name: string): boolean {
 
 export function validateEntryName(
   name: string,
-  kind: 'folder' | 'note' | 'snippet',
+  kind: 'folder' | 'note' | 'snippet' | 'request',
 ): string {
   const normalized = normalizeName(name)
 
@@ -106,12 +106,12 @@ export function assertUniqueSiblingEntryName(
   entries: {
     id: number
     name: string
-    isDeleted: number
+    isDeleted?: number
     folderId: number | null
   }[],
   folderId: number | null,
   name: string,
-  kind: 'note' | 'snippet',
+  kind: 'note' | 'snippet' | 'request',
   excludeId?: number,
 ): void {
   const normalizedName = name.toLowerCase()
@@ -119,15 +119,17 @@ export function assertUniqueSiblingEntryName(
   const hasConflict = entries.some(
     entry =>
       entry.id !== excludeId
-      && entry.isDeleted === 0
+      && (entry.isDeleted ?? 0) === 0
       && entry.folderId === folderId
       && entry.name.toLowerCase() === normalizedName,
   )
 
   if (hasConflict) {
+    const label
+      = kind === 'note' ? 'Note' : kind === 'snippet' ? 'Snippet' : 'Request'
     throwStorageError(
       'NAME_CONFLICT',
-      `${kind === 'note' ? 'Note' : 'Snippet'} with this name already exists in this folder`,
+      `${label} with this name already exists in this folder`,
     )
   }
 }

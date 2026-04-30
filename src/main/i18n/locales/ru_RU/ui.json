@@ -35,7 +35,8 @@
     "http": {
       "label": "HTTP",
       "tooltip": "HTTP-клиент",
-      "title": "HTTP-клиент"
+      "title": "HTTP-клиент",
+      "untitledRequest": "Безымянный запрос"
     },
     "tools": {
       "label": "Инструменты",

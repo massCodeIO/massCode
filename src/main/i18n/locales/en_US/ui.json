@@ -35,7 +35,8 @@
     "http": {
       "label": "HTTP",
       "tooltip": "HTTP client",
-      "title": "HTTP Client"
+      "title": "HTTP Client",
+      "untitledRequest": "Untitled request"
     },
     "tools": {
       "label": "Tools",

@@ -38,3 +38,25 @@ If you are upgrading from an older version of massCode that used SQLite storage,
 - Select your old `massCode.db` file
 
 massCode converts your folders and snippets to Markdown Vault format.
+
+## Migration from v3 `db.json`
+
+massCode v5 does not read `db.json` directly. If you are upgrading from massCode v3, first migrate the v3 JSON database through massCode v4, then migrate from v4 to v5.
+
+The supported upgrade path is:
+
+```text
+v3 db.json -> v4 massCode.db -> v5 Markdown Vault
+```
+
+Before upgrading, make a backup copy of your existing `db.json`.
+
+To migrate from v3:
+
+- Install and open [massCode v4.7.1](https://github.com/massCodeIO/massCode/releases/tag/v4.7.1)
+- Confirm that your snippets are visible in v4
+- Confirm that v4 created a `massCode.db` file
+- Install and open massCode v5
+- Import the `massCode.db` file into Markdown Vault from **Settings -> Storage**
+
+If you still have only `db.json`, massCode v5 cannot import it on its own. Restore your `db.json` backup and complete the v4 migration step first.

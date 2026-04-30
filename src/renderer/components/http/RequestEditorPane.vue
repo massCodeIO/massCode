@@ -7,13 +7,13 @@ const { currentRequest } = useHttpRequests()
 <template>
   <div class="flex h-full flex-col pt-[var(--content-top-offset)]">
     <div class="min-h-0 flex-1 basis-3/5">
-      <RequestEditor />
+      <HttpRequestEditor />
     </div>
     <div
       v-if="currentRequest"
       class="border-border min-h-0 flex-1 basis-2/5 border-t"
     >
-      <ResponsePanel />
+      <HttpResponsePanel />
     </div>
   </div>
 </template>

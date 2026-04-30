@@ -5,17 +5,25 @@ import { i18n } from '@/electron'
 const { httpState } = useHttpApp()
 const { requests } = useHttpRequests()
 
+const searchQuery = ref('')
+
 const displayedRequests = computed(() => {
-  if (httpState.folderId === undefined) {
-    return requests.value
+  const folderFiltered
+    = httpState.folderId === undefined
+      ? requests.value
+      : requests.value.filter(r => r.folderId === httpState.folderId)
+
+  const term = searchQuery.value.trim().toLowerCase()
+  if (!term) {
+    return folderFiltered
   }
-  return requests.value.filter(r => r.folderId === httpState.folderId)
+  return folderFiltered.filter(r => r.name.toLowerCase().includes(term))
 })
 </script>
 
 <template>
   <div class="flex h-full flex-col">
-    <RequestsListHeader />
+    <HttpRequestsListHeader v-model:search-query="searchQuery" />
     <div
       v-if="displayedRequests.length === 0"
       class="flex-1"
@@ -26,7 +34,7 @@ const displayedRequests = computed(() => {
       v-else
       class="scrollbar flex-grow overflow-y-auto px-2"
     >
-      <RequestsListItem
+      <HttpRequestsListItem
         v-for="request in displayedRequests"
         :key="request.id"
         :request="request"

@@ -20,10 +20,10 @@ onMounted(() => {
       <HttpSidebar />
     </template>
     <template #list>
-      <RequestsList />
+      <HttpRequestsList />
     </template>
     <template #editor>
-      <RequestEditorPane />
+      <HttpRequestEditorPane />
     </template>
   </LayoutThreeColumn>
 </template>

@@ -32,6 +32,11 @@
       "untitled": "Untitled",
       "currencyUnavailable": "Currency rates service unavailable"
     },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP client",
+      "title": "HTTP Client"
+    },
     "tools": {
       "label": "Tools",
       "tooltip": "Developer tools"

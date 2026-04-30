@@ -80,6 +80,8 @@ async function refreshAfterStorageSync() {
         await getNotesGraph()
       }
       break
+    case 'http':
+      break
     case 'tools':
       break
     case 'code':

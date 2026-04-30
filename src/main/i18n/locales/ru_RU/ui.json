@@ -32,6 +32,11 @@
       "untitled": "Без названия",
       "currencyUnavailable": "Сервис курсов валют недоступен"
     },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP-клиент",
+      "title": "HTTP-клиент"
+    },
     "tools": {
       "label": "Инструменты",
       "tooltip": "Инструменты разработчика"

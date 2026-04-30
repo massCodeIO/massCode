@@ -2,9 +2,9 @@ import type { Component } from 'vue'
 import type { RouteLocationRaw, RouteRecordName } from 'vue-router'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
-import { Blocks, Calculator, Code2, Notebook } from 'lucide-vue-next'
+import { Blocks, Calculator, Code2, Notebook, Send } from 'lucide-vue-next'
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http'
 
 export interface SpaceDefinition {
   id: SpaceId
@@ -65,6 +65,15 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       icon: Calculator,
       to: { name: RouterName.mathNotebook },
       isActive: routeName => routeName === RouterName.mathNotebook,
+    },
+    {
+      id: 'http',
+      label: i18n.t('spaces.http.label'),
+      tooltip: i18n.t('spaces.http.tooltip'),
+      icon: Send,
+      to: { name: RouterName.httpSpace },
+      isActive: routeName =>
+        isRouteNameInSpace(routeName, RouterName.httpSpace),
     },
     {
       id: 'tools',

@@ -21,7 +21,7 @@ export function useCopyTracker() {
     lastCopyAt = now
 
     const space = getActiveSpaceId()
-    if (!space) {
+    if (!space || space === 'http') {
       return
     }
 

@@ -1,43 +1,21 @@
-export type HttpMethod =
-  | 'GET'
-  | 'POST'
-  | 'PUT'
-  | 'PATCH'
-  | 'DELETE'
-  | 'HEAD'
-  | 'OPTIONS'
+import type {
+  HttpAuth,
+  HttpBodyType,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpMethod,
+  HttpQueryEntry,
+} from '../../../../../types/http'
 
-export type HttpBodyType =
-  | 'none'
-  | 'json'
-  | 'text'
-  | 'form-urlencoded'
-  | 'multipart'
-
-export type HttpAuthType = 'none' | 'bearer' | 'basic'
-
-export interface HttpHeaderEntry {
-  key: string
-  value: string
-}
-
-export interface HttpQueryEntry {
-  key: string
-  value: string
-}
-
-export interface HttpFormDataEntry {
-  key: string
-  type: 'text' | 'file'
-  value: string
-}
-
-export interface HttpAuth {
-  type: HttpAuthType
-  token?: string
-  username?: string
-  password?: string
-}
+export type {
+  HttpAuth,
+  HttpAuthType,
+  HttpBodyType,
+  HttpFormDataEntry,
+  HttpHeaderEntry,
+  HttpMethod,
+  HttpQueryEntry,
+} from '../../../../../types/http'
 
 export interface HttpRequestFrontmatter {
   id?: number

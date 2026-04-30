@@ -3,49 +3,21 @@ import type { Dispatcher } from 'undici'
 import type {
   HttpAuth,
   HttpBodyType,
+  HttpExecutePayload,
+  HttpExecuteRequest,
+  HttpExecuteResult,
   HttpFormDataEntry,
   HttpHeaderEntry,
   HttpMethod,
   HttpQueryEntry,
-} from '../../storage/providers/markdown/http/runtime/types'
+  HttpResponseBodyKind,
+} from '../../types/http'
 import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
 import { request as undiciRequest } from 'undici'
 import { useHttpStorage } from '../../storage'
-
-export interface HttpExecuteRequest {
-  method: HttpMethod
-  url: string
-  headers: HttpHeaderEntry[]
-  query: HttpQueryEntry[]
-  bodyType: HttpBodyType
-  body: string | null
-  formData: HttpFormDataEntry[]
-  auth: HttpAuth
-}
-
-export interface HttpExecutePayload {
-  request: HttpExecuteRequest
-  requestId: number | null
-  environmentId: number | null
-  timeoutMs?: number
-}
-
-export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
-
-export interface HttpExecuteResult {
-  status: number | null
-  statusText: string
-  headers: HttpHeaderEntry[]
-  body: string
-  bodyKind: HttpResponseBodyKind
-  durationMs: number
-  sizeBytes: number
-  truncated: boolean
-  error?: string
-}
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000

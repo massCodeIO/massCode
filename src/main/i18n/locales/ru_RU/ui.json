@@ -38,8 +38,28 @@
       "title": "HTTP-клиент",
       "untitledRequest": "Безымянный запрос",
       "empty": "Пока нет запросов",
+      "allRequests": "Все запросы",
       "action": {
         "newRequest": "Новый запрос"
+      },
+      "editor": {
+        "noSelected": "Запрос не выбран",
+        "urlPlaceholder": "Введите URL запроса",
+        "send": "Отправить",
+        "save": "Сохранить",
+        "tabs": {
+          "params": "Параметры",
+          "headers": "Заголовки",
+          "body": "Тело",
+          "auth": "Авторизация",
+          "description": "Описание"
+        },
+        "keyValue": {
+          "key": "Ключ",
+          "value": "Значение",
+          "addRow": "Добавить строку",
+          "empty": "Нет записей"
+        }
       }
     },
     "tools": {

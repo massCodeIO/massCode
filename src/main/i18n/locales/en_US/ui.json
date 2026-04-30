@@ -38,8 +38,28 @@
       "title": "HTTP Client",
       "untitledRequest": "Untitled request",
       "empty": "No requests yet",
+      "allRequests": "All Requests",
       "action": {
         "newRequest": "New request"
+      },
+      "editor": {
+        "noSelected": "No request selected",
+        "urlPlaceholder": "Enter request URL",
+        "send": "Send",
+        "save": "Save",
+        "tabs": {
+          "params": "Params",
+          "headers": "Headers",
+          "body": "Body",
+          "auth": "Auth",
+          "description": "Description"
+        },
+        "keyValue": {
+          "key": "Key",
+          "value": "Value",
+          "addRow": "Add row",
+          "empty": "No entries"
+        }
       }
     },
     "tools": {

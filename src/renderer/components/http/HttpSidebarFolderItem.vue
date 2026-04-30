@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { HttpFolderTreeItem } from '@/composables/spaces/http/useHttpFolders'
-import type { HttpRequestListItem } from '@/composables/spaces/http/useHttpRequests'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useHttpFolders, useHttpRequests } from '@/composables'
+import { useHttpApp, useHttpFolders, useHttpRequests } from '@/composables'
 import { i18n } from '@/electron'
 import { cn } from '@/utils'
 import { ChevronRight, Folder } from 'lucide-vue-next'
@@ -14,16 +13,19 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { httpState } = useHttpApp()
 const {
   createHttpFolderAndSelect,
   deleteHttpFolder,
   renameFolderId,
+  selectHttpFolder,
   updateHttpFolder,
 } = useHttpFolders()
-const { createHttpRequestAndSelect, requests } = useHttpRequests()
+const { createHttpRequestAndSelect } = useHttpRequests()
 
 const isOpen = computed(() => Boolean(props.folder.isOpen))
 const isRenaming = computed(() => renameFolderId.value === props.folder.id)
+const isSelected = computed(() => httpState.folderId === props.folder.id)
 
 const renameValue = ref(props.folder.name)
 
@@ -33,12 +35,12 @@ watch(isRenaming, (renaming) => {
   }
 })
 
-const childRequests = computed<HttpRequestListItem[]>(() =>
-  requests.value.filter(r => r.folderId === props.folder.id),
-)
-
 async function toggleOpen() {
   await updateHttpFolder(props.folder.id, { isOpen: isOpen.value ? 0 : 1 })
+}
+
+function onSelect() {
+  selectHttpFolder(props.folder.id)
 }
 
 async function commitRename() {
@@ -81,17 +83,25 @@ async function onDelete() {
           :class="
             cn(
               'group flex h-7 cursor-pointer items-center gap-1 rounded px-2 text-sm',
-              'hover:bg-accent/60',
+              isSelected
+                ? 'bg-accent text-accent-foreground'
+                : 'hover:bg-accent/60',
             )
           "
           :style="{ paddingLeft: `${props.depth * 12 + 4}px` }"
-          @click="toggleOpen"
+          @click="onSelect"
           @dblclick="startRename"
         >
-          <ChevronRight
-            class="h-3.5 w-3.5 shrink-0 transition-transform"
-            :class="{ 'rotate-90': isOpen }"
-          />
+          <button
+            type="button"
+            class="text-muted-foreground hover:text-foreground -ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center"
+            @click.stop="toggleOpen"
+          >
+            <ChevronRight
+              class="h-3.5 w-3.5 transition-transform"
+              :class="{ 'rotate-90': isOpen }"
+            />
+          </button>
           <Folder class="h-4 w-4 shrink-0" />
           <input
             v-if="isRenaming"
@@ -133,12 +143,6 @@ async function onDelete() {
         v-for="child in props.folder.children"
         :key="child.id"
         :folder="child"
-        :depth="props.depth + 1"
-      />
-      <HttpSidebarRequestItem
-        v-for="request in childRequests"
-        :key="request.id"
-        :request="request"
         :depth="props.depth + 1"
       />
     </div>

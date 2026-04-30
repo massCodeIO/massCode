@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { useApp } from '@/composables'
-import { i18n } from '@/electron'
+import { useApp, useHttpSpaceInit } from '@/composables'
 
 const { isAppLoading } = useApp()
+const { initHttpSpace } = useHttpSpaceInit()
+
+void initHttpSpace()
 
 onMounted(() => {
   isAppLoading.value = false
@@ -10,9 +12,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen items-center justify-center">
-    <UiText class="text-muted-foreground">
-      {{ i18n.t("spaces.http.title") }}
-    </UiText>
-  </div>
+  <LayoutThreeColumn
+    :show-sidebar="true"
+    :show-list="true"
+  >
+    <template #sidebar>
+      <HttpSidebar />
+    </template>
+    <template #list>
+      <RequestEditor />
+    </template>
+    <template #editor>
+      <ResponsePanel />
+    </template>
+  </LayoutThreeColumn>
 </template>

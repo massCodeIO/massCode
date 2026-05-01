@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'xs',
 })
 
-const variants = cva('font-mono font-semibold tracking-tight', {
+const variants = cva('font-mono font-semibold tracking-tight uppercase', {
   variants: {
     method: {
       GET: 'text-emerald-600 dark:text-emerald-400',
@@ -30,10 +30,6 @@ const variants = cva('font-mono font-semibold tracking-tight', {
     },
   },
 })
-
-function shortLabel(method: HttpMethod): string {
-  return method === 'OPTIONS' ? 'OPT' : method === 'DELETE' ? 'DEL' : method
-}
 </script>
 
 <template>
@@ -42,6 +38,6 @@ function shortLabel(method: HttpMethod): string {
       cn(variants({ method: props.method, size: props.size }), props.class)
     "
   >
-    {{ shortLabel(props.method) }}
+    {{ props.method }}
   </span>
 </template>

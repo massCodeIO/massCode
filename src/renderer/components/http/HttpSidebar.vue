@@ -183,7 +183,7 @@ function onCancelEdit() {
         </UiActionButton>
       </template>
     </SidebarHeader>
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
       <ContextMenu.ContextMenu>
         <ContextMenu.ContextMenuTrigger as-child>
           <UiTree

@@ -162,7 +162,7 @@ function copyBody() {
           </Button>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-auto">
+        <div class="scrollbar min-h-0 flex-1 overflow-auto">
           <Tabs.TabsContent
             value="body"
             class="m-0"

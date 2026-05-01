@@ -140,7 +140,7 @@ async function onSend() {
           </Tabs.TabsTrigger>
         </Tabs.TabsList>
       </div>
-      <div class="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+      <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <Tabs.TabsContent value="params">
           <HttpKeyValueTable v-model="currentDraft.query" />
         </Tabs.TabsContent>

@@ -20,6 +20,9 @@ describe('createMainMenuContext', () => {
         layoutMode: 'all-panels',
         mode: 'livePreview',
       },
+      http: {
+        layoutMode: 'all-panels',
+      },
     })
 
     expect(context.file).toEqual({
@@ -66,6 +69,9 @@ describe('createMainMenuContext', () => {
         isPresentationShown: false,
         layoutMode: 'editor-only',
         mode: 'preview',
+      },
+      http: {
+        layoutMode: 'all-panels',
       },
     })
 
@@ -114,6 +120,9 @@ describe('createMainMenuContext', () => {
         layoutMode: 'all-panels',
         mode: 'livePreview',
       },
+      http: {
+        layoutMode: 'all-panels',
+      },
     })
 
     expect(context.file).toEqual({
@@ -130,6 +139,56 @@ describe('createMainMenuContext', () => {
       isPresentationShown: false,
       layoutMode: null,
       layoutModes: [],
+    })
+    expect(context.editor).toEqual({
+      canAdjustFontSize: false,
+      canFormat: false,
+      canPreviewCode: false,
+      canPreviewJson: false,
+      isCodePreviewShown: false,
+      isJsonPreviewShown: false,
+      kind: null,
+      noteMode: null,
+    })
+  })
+
+  it('builds http-space menu context with layout-only view actions', () => {
+    const context = createMainMenuContext({
+      activeSpaceId: 'http',
+      compactListMode: false,
+      code: {
+        canPreviewCode: false,
+        canPreviewJson: false,
+        isCodePreviewShown: false,
+        isJsonPreviewShown: false,
+        layoutMode: 'all-panels',
+      },
+      notes: {
+        hasSelectedNote: false,
+        isMindmapShown: false,
+        isPresentationShown: false,
+        layoutMode: 'all-panels',
+        mode: 'livePreview',
+      },
+      http: {
+        layoutMode: 'list-editor',
+      },
+    })
+
+    expect(context.file).toEqual({
+      canCreateFragment: false,
+      primaryAction: null,
+      secondaryAction: null,
+    })
+    expect(context.view).toEqual({
+      canToggleCompactMode: false,
+      canToggleMindmap: false,
+      canTogglePresentation: false,
+      isCompactMode: false,
+      isMindmapShown: false,
+      isPresentationShown: false,
+      layoutMode: 'list-editor',
+      layoutModes: ['all-panels', 'list-editor', 'editor-only'],
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: false,
@@ -160,6 +219,9 @@ describe('createMainMenuContext', () => {
         isPresentationShown: false,
         layoutMode: 'all-panels',
         mode: 'livePreview',
+      },
+      http: {
+        layoutMode: 'all-panels',
       },
     })
 

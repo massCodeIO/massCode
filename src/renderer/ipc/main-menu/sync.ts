@@ -1,4 +1,10 @@
-import { useApp, useNotes, useNotesApp, useSnippets } from '@/composables'
+import {
+  useApp,
+  useHttpApp,
+  useNotes,
+  useNotesApp,
+  useSnippets,
+} from '@/composables'
 import { ipc } from '@/electron'
 import { getActiveSpaceId } from '@/spaceDefinitions'
 import { createMainMenuContext } from './context'
@@ -16,6 +22,7 @@ const {
   notesEditorMode,
   notesLayoutMode,
 } = useNotesApp()
+const { httpLayoutMode } = useHttpApp()
 const { isAvailableToCodePreview, selectedSnippetContent } = useSnippets()
 
 export function registerMainMenuContextSync() {
@@ -34,6 +41,7 @@ export function registerMainMenuContextSync() {
         isNotesPresentationShown.value,
         notesLayoutMode.value,
         notesEditorMode.value,
+        httpLayoutMode.value,
       ] as const,
     () => {
       ipc.send(
@@ -54,6 +62,9 @@ export function registerMainMenuContextSync() {
             isPresentationShown: isNotesPresentationShown.value,
             layoutMode: notesLayoutMode.value,
             mode: notesEditorMode.value,
+          },
+          http: {
+            layoutMode: httpLayoutMode.value,
           },
         }),
       )

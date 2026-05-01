@@ -19,11 +19,16 @@ interface NotesMenuState {
   mode: NotesEditorMode
 }
 
+interface HttpMenuState {
+  layoutMode: LayoutMode
+}
+
 interface CreateMainMenuContextOptions {
   activeSpaceId: SpaceId | null
   compactListMode: boolean
   code: CodeMenuState
   notes: NotesMenuState
+  http: HttpMenuState
 }
 
 const sharedLayoutModes: MainMenuLayoutMode[] = [
@@ -91,6 +96,36 @@ export function createMainMenuContext(
         canPreviewJson: false,
         isJsonPreviewShown: false,
         canAdjustFontSize: true,
+      },
+    }
+  }
+
+  if (options.activeSpaceId === 'http') {
+    return {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+      },
+      view: {
+        layoutMode: options.http.layoutMode,
+        layoutModes: sharedLayoutModes,
+        canToggleCompactMode: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: null,
+        noteMode: null,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
       },
     }
   }

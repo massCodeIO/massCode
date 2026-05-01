@@ -4,6 +4,7 @@ import {
   useApp,
   useEditor,
   useFolders,
+  useHttpApp,
   useMathNotebook,
   useNoteFolders,
   useNotes,
@@ -42,6 +43,7 @@ const {
   showNotesPresentation,
   toggleNotesSidebar,
 } = useNotesApp()
+const { setHttpLayoutMode, toggleHttpSidebar } = useHttpApp()
 
 export function registerMainMenuListeners() {
   registerMainMenuContextSync()
@@ -132,6 +134,11 @@ export function registerMainMenuListeners() {
 
     if (activeSpaceId === 'notes') {
       toggleNotesSidebar()
+      return
+    }
+
+    if (activeSpaceId === 'http') {
+      toggleHttpSidebar()
     }
   })
 
@@ -165,6 +172,11 @@ export function registerMainMenuListeners() {
 
     if (activeSpaceId === 'notes') {
       setNotesLayoutMode(layoutMode)
+      return
+    }
+
+    if (activeSpaceId === 'http') {
+      setHttpLayoutMode(layoutMode)
     }
   })
 

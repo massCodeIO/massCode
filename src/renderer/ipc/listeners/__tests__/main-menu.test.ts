@@ -46,6 +46,10 @@ async function setup() {
       showNotesPresentation: vi.fn(),
       toggleNotesSidebar: vi.fn(),
     }),
+    useHttpApp: () => ({
+      setHttpLayoutMode: vi.fn(),
+      toggleHttpSidebar: vi.fn(),
+    }),
     useNotesEditor: () => ({
       settings: { fontSize: 14 },
     }),

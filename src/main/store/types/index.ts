@@ -16,6 +16,11 @@ export interface NotesState {
   libraryFilter?: string
 }
 
+export interface HttpState {
+  requestId?: number
+  folderId?: number
+}
+
 export type NotesRouteName =
   | 'notes-space'
   | 'notes-space/dashboard'
@@ -89,6 +94,9 @@ export interface AppStore {
       threePanel?: number[]
       twoPanel?: number
     }
+  }
+  http: {
+    selection: HttpState
   }
   notifications: {
     lastNotifiedUpdateVersion: string

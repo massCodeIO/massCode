@@ -2,6 +2,7 @@ import type {
   AppStore,
   CodeState,
   DonationsState,
+  HttpState,
   NotesEditorMode,
   NotesRouteName,
   NotesState,
@@ -34,6 +35,9 @@ const APP_STORE_DEFAULTS: AppStore = {
       mode: 'all-panels',
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
+  },
+  http: {
+    selection: {},
   },
   notes: {
     selection: {},
@@ -101,6 +105,17 @@ function sanitizeCodeState(value: unknown): CodeState {
     state.tagId = source.tagId
   if (typeof source.libraryFilter === 'string')
     state.libraryFilter = source.libraryFilter
+  return state
+}
+
+function sanitizeHttpState(value: unknown): HttpState {
+  const source = asRecord(value)
+  const state: HttpState = {}
+
+  if (typeof source.requestId === 'number')
+    state.requestId = source.requestId
+  if (typeof source.folderId === 'number')
+    state.folderId = source.folderId
   return state
 }
 
@@ -218,6 +233,7 @@ function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
   const codeSource = asRecord(source.code)
+  const httpSource = asRecord(source.http)
   const notesSource = asRecord(source.notes)
   const notificationsSource = asRecord(source.notifications)
   const legacySizes = asRecord(source.sizes)
@@ -273,6 +289,9 @@ function sanitizeAppStore(value: unknown): AppStore {
           ?? readOptionalNumber(legacySizes, 'codeListLayout')
           ?? undefined,
       },
+    },
+    http: {
+      selection: sanitizeHttpState(httpSource.selection),
     },
     notes: {
       selection: sanitizeNotesState(

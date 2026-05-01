@@ -2,7 +2,8 @@ import type { DonationsState, SpaceId } from '~/main/store/types'
 import { store } from '@/electron'
 import { format } from 'date-fns'
 
-type CreatedSpace = Exclude<SpaceId, 'tools'>
+type CopySpace = Exclude<SpaceId, 'http'>
+type CreatedSpace = Exclude<SpaceId, 'tools' | 'http'>
 
 const initial = store.app.get<DonationsState>('donations')
 
@@ -25,7 +26,7 @@ function dayDiff(a: string, b: string) {
   return Math.round(ms / (1000 * 60 * 60 * 24))
 }
 
-function incrementCopy(space: SpaceId) {
+function incrementCopy(space: CopySpace) {
   state.copies[space] += 1
   markActiveDay()
 }
@@ -53,7 +54,7 @@ function markActiveDay() {
   state.lastActiveDay = now
 }
 
-function markCopyMilestoneShown(space: SpaceId, milestone: number) {
+function markCopyMilestoneShown(space: CopySpace, milestone: number) {
   state.lastShownCopyMilestones[space] = milestone
 }
 

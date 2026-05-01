@@ -4,11 +4,12 @@ import { useDonations } from '@/composables/useDonations'
 import { i18n } from '@/electron'
 import { toast } from 'vue-sonner'
 
-type CreatedSpace = Exclude<SpaceId, 'tools'>
+type CopySpace = Exclude<SpaceId, 'http'>
+type CreatedSpace = Exclude<SpaceId, 'tools' | 'http'>
 
 const COPY_INTERVAL = 25
 const CREATED_INTERVAL = 25
-const COPY_SPACES: SpaceId[] = ['code', 'notes', 'math', 'tools']
+const COPY_SPACES: CopySpace[] = ['code', 'notes', 'math', 'tools']
 const CREATED_SPACES: CreatedSpace[] = ['code', 'notes', 'math']
 const STREAK_MILESTONES = [7, 30, 100] as const
 

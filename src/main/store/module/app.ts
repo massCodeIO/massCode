@@ -394,7 +394,7 @@ function sanitizeAppStore(value: unknown): AppStore {
     activeSpaceId: readEnum(
       source,
       'activeSpaceId',
-      ['code', 'tools', 'math', 'notes'] as const,
+      ['code', 'tools', 'math', 'notes', 'http'] as const,
       APP_STORE_DEFAULTS.activeSpaceId,
     ) as SpaceId,
   }

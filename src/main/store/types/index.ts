@@ -34,7 +34,7 @@ export interface NotesDashboardWidgets {
   topLinked: boolean
 }
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http'
 
 export interface DonationsState {
   lastActiveDay: string

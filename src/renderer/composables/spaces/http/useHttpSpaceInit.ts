@@ -4,9 +4,9 @@ import { useHttpFolders } from './useHttpFolders'
 import { useHttpHistory } from './useHttpHistory'
 import { useHttpRequests } from './useHttpRequests'
 
-const { isHttpSpaceInitialized } = useHttpApp()
+const { httpState, isHttpSpaceInitialized } = useHttpApp()
 const { getHttpFolders } = useHttpFolders()
-const { getHttpRequests } = useHttpRequests()
+const { getHttpRequests, requests, selectHttpRequest } = useHttpRequests()
 const { getHttpEnvironments } = useHttpEnvironments()
 const { getHttpHistory } = useHttpHistory()
 
@@ -34,6 +34,14 @@ async function initHttpSpace() {
   isHttpSpaceInitialized.value = results.every(
     result => result.status === 'fulfilled',
   )
+
+  const persistedRequestId = httpState.requestId
+  if (
+    persistedRequestId !== undefined
+    && requests.value.some(r => r.id === persistedRequestId)
+  ) {
+    await selectHttpRequest(persistedRequestId)
+  }
 }
 
 export function useHttpSpaceInit() {

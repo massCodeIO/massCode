@@ -80,6 +80,76 @@ function getNextUntitledRequestName(folderId: number | null): string {
   )
 }
 
+type HttpQueryItem = HttpRequestDraft['query'][number]
+
+function splitUrl(url: string): {
+  path: string
+  query: string
+  fragment: string
+} {
+  const hashIdx = url.indexOf('#')
+  const fragment = hashIdx === -1 ? '' : url.slice(hashIdx)
+  const beforeHash = hashIdx === -1 ? url : url.slice(0, hashIdx)
+  const qIdx = beforeHash.indexOf('?')
+  const path = qIdx === -1 ? beforeHash : beforeHash.slice(0, qIdx)
+  const query = qIdx === -1 ? '' : beforeHash.slice(qIdx + 1)
+  return { path, query, fragment }
+}
+
+function combineUrl(parts: {
+  path: string
+  query: string
+  fragment: string
+}): string {
+  return (
+    parts.path + (parts.query ? `?${parts.query}` : '') + (parts.fragment || '')
+  )
+}
+
+function parseQueryString(qs: string): Array<{ key: string, value: string }> {
+  if (!qs)
+    return []
+  return qs.split('&').map((part) => {
+    const eqIdx = part.indexOf('=')
+    if (eqIdx === -1)
+      return { key: part, value: '' }
+    return { key: part.slice(0, eqIdx), value: part.slice(eqIdx + 1) }
+  })
+}
+
+function buildQueryString(query: HttpQueryItem[]): string {
+  const enabled = query.filter(q => q.enabled !== false && q.key)
+  if (!enabled.length)
+    return ''
+  return enabled.map(q => `${q.key}=${q.value}`).join('&')
+}
+
+function applyQueryToUrl(url: string, query: HttpQueryItem[]): string {
+  const parts = splitUrl(url)
+  return combineUrl({ ...parts, query: buildQueryString(query) })
+}
+
+function applyUrlToQuery(
+  url: string,
+  existingQuery: HttpQueryItem[],
+): HttpQueryItem[] {
+  const parsed = parseQueryString(splitUrl(url).query)
+  const enabledExisting = existingQuery.filter(q => q.enabled !== false)
+  const disabledExisting = existingQuery.filter(q => q.enabled === false)
+
+  const next: HttpQueryItem[] = parsed.map((p, i) => {
+    const matched = enabledExisting[i]
+    return {
+      key: p.key,
+      value: p.value,
+      description: matched?.description ?? '',
+      enabled: true,
+    }
+  })
+
+  return [...next, ...disabledExisting]
+}
+
 function toDraft(request: HttpRequest): HttpRequestDraft {
   return {
     name: request.name,
@@ -94,6 +164,16 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
     auth: { ...request.auth },
     description: request.description,
   }
+}
+
+let skipUrlWatch = false
+let skipQueryWatch = false
+
+function assignDraft(request: HttpRequest | null) {
+  skipUrlWatch = true
+  skipQueryWatch = true
+  currentRequest.value = request
+  currentDraft.value = request ? toDraft(request) : null
 }
 
 const isCurrentRequestDirty = computed(() => {
@@ -166,10 +246,8 @@ async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
     await getHttpRequests()
     if (currentRequest.value?.id === requestId) {
       const fresh = await getHttpRequestById(requestId)
-      if (fresh) {
-        currentRequest.value = fresh
-        currentDraft.value = toDraft(fresh)
-      }
+      if (fresh)
+        assignDraft(fresh)
     }
   }
   catch (error) {
@@ -183,8 +261,7 @@ async function deleteHttpRequest(requestId: number) {
     await api.httpRequests.deleteHttpRequestsById(String(requestId))
     if (httpState.requestId === requestId) {
       httpState.requestId = undefined
-      currentRequest.value = null
-      currentDraft.value = null
+      assignDraft(null)
     }
     await getHttpRequests()
   }
@@ -202,8 +279,7 @@ function selectFirstRequest() {
     httpState.requestId = undefined
     selectedRequestIds.value = []
     lastSelectedRequestId.value = undefined
-    currentRequest.value = null
-    currentDraft.value = null
+    assignDraft(null)
   }
 }
 
@@ -215,8 +291,7 @@ async function selectHttpRequest(
     httpState.requestId = undefined
     selectedRequestIds.value = []
     lastSelectedRequestId.value = undefined
-    currentRequest.value = null
-    currentDraft.value = null
+    assignDraft(null)
     return
   }
 
@@ -240,14 +315,7 @@ async function selectHttpRequest(
   httpState.requestId = requestId
 
   const fresh = await getHttpRequestById(requestId)
-  if (fresh) {
-    currentRequest.value = fresh
-    currentDraft.value = toDraft(fresh)
-  }
-  else {
-    currentRequest.value = null
-    currentDraft.value = null
-  }
+  assignDraft(fresh)
 }
 
 async function saveCurrentRequest() {
@@ -277,12 +345,51 @@ async function saveCurrentRequest() {
 function discardCurrentRequestChanges() {
   if (!currentRequest.value)
     return
+  skipUrlWatch = true
+  skipQueryWatch = true
   currentDraft.value = toDraft(currentRequest.value)
 }
 
 const autoSaveDebounced = useDebounceFn(() => {
   void saveCurrentRequest()
 }, AUTO_SAVE_DEBOUNCE_MS)
+
+watch(
+  () => currentDraft.value?.url,
+  () => {
+    if (skipUrlWatch) {
+      skipUrlWatch = false
+      return
+    }
+    const draft = currentDraft.value
+    if (!draft)
+      return
+    const next = applyUrlToQuery(draft.url, draft.query)
+    if (JSON.stringify(next) !== JSON.stringify(draft.query)) {
+      skipQueryWatch = true
+      draft.query = next
+    }
+  },
+)
+
+watch(
+  () => currentDraft.value?.query,
+  () => {
+    if (skipQueryWatch) {
+      skipQueryWatch = false
+      return
+    }
+    const draft = currentDraft.value
+    if (!draft)
+      return
+    const next = applyQueryToUrl(draft.url, draft.query)
+    if (next !== draft.url) {
+      skipUrlWatch = true
+      draft.url = next
+    }
+  },
+  { deep: true },
+)
 
 watch(
   currentDraft,

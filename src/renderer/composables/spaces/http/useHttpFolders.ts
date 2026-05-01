@@ -13,6 +13,7 @@ import {
   flattenFolderTree,
   getFolderByIdFromTree,
 } from './useHttpFolderTree'
+import { useHttpRequests } from './useHttpRequests'
 
 export type HttpFolderItem = HttpFoldersResponse[number]
 
@@ -310,11 +311,26 @@ async function updateHttpFolder(folderId: number, data: HttpFoldersUpdate) {
 
 async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
   try {
+    const { currentRequest, getHttpRequests, requests, selectHttpRequest }
+      = useHttpRequests()
+    const selectedRequestId = currentRequest.value?.id
+
     markPersistedStorageMutation()
     await api.httpFolders.deleteHttpFoldersById(String(folderId))
+
     if (httpState.folderId === folderId) {
       httpState.folderId = undefined
     }
+
+    await getHttpRequests()
+
+    if (
+      selectedRequestId !== undefined
+      && !requests.value.some(request => request.id === selectedRequestId)
+    ) {
+      await selectHttpRequest(undefined)
+    }
+
     if (shouldRefresh) {
       await getHttpFolders(false)
     }

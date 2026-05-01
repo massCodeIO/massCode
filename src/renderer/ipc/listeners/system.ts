@@ -3,6 +3,7 @@ import {
   normalizeNotesSelectionState,
   useApp,
   useFolders,
+  useHttpSpaceInit,
   useMathNotebook,
   useNoteFolders,
   useNotes,
@@ -29,6 +30,7 @@ const { selectFirstSnippet, displayedSnippets } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const { refreshHttpSpaceFromDisk } = useHttpSpaceInit()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { hasBusyNoteContentUpdates } = useNotes()
@@ -81,6 +83,7 @@ async function refreshAfterStorageSync() {
       }
       break
     case 'http':
+      await refreshHttpSpaceFromDisk()
       break
     case 'tools':
       break

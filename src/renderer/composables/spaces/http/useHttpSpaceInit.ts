@@ -18,6 +18,11 @@ async function initHttpSpace() {
   if (isHttpSpaceInitialized.value)
     return
 
+  await refreshHttpSpaceFromDisk()
+}
+
+async function refreshHttpSpaceFromDisk() {
+  const selectedRequestId = httpState.requestId
   const results = await Promise.allSettled([
     getHttpFolders(),
     getHttpRequests(),
@@ -35,17 +40,23 @@ async function initHttpSpace() {
     result => result.status === 'fulfilled',
   )
 
-  const persistedRequestId = httpState.requestId
+  const persistedRequestId = selectedRequestId ?? httpState.requestId
   if (
     persistedRequestId !== undefined
     && requests.value.some(r => r.id === persistedRequestId)
   ) {
     await selectHttpRequest(persistedRequestId)
+    return
+  }
+
+  if (persistedRequestId !== undefined) {
+    await selectHttpRequest(undefined)
   }
 }
 
 export function useHttpSpaceInit() {
   return {
     initHttpSpace,
+    refreshHttpSpaceFromDisk,
   }
 }

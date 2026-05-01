@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
+async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
   vi.resetModules()
   vi.useFakeTimers()
 
@@ -21,6 +21,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
   const getNotes = vi.fn(async () => undefined)
   const getNoteTags = vi.fn(async () => undefined)
   const normalizeNotesSelectionState = vi.fn(async () => undefined)
+  const refreshHttpSpaceFromDisk = vi.fn(async () => undefined)
 
   vi.doMock('@/composables', () => ({
     initCodeSpace: vi.fn(async () => undefined),
@@ -56,6 +57,9 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
     }),
     useMathNotebook: () => ({
       reloadFromDisk: reloadMathFromDisk,
+    }),
+    useHttpSpaceInit: () => ({
+      refreshHttpSpaceFromDisk,
     }),
     useNoteFolders: () => ({
       getNoteFolders,
@@ -142,6 +146,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'tools' | null) {
     getNotes,
     getNoteTags,
     getSnippets,
+    refreshHttpSpaceFromDisk,
     ipcHandlers,
     isCodeSpaceInitialized,
     isNotesSpaceInitialized,
@@ -196,5 +201,16 @@ describe('registerSystemListeners', () => {
     expect(context.getNoteTags).toHaveBeenCalledTimes(1)
     expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
     expect(context.getNotes).not.toHaveBeenCalled()
+  })
+
+  it('refreshes http space from disk', async () => {
+    const context = await setup('http')
+
+    context.ipcHandlers.get('system:storage-synced')?.(undefined)
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(context.refreshHttpSpaceFromDisk).toHaveBeenCalledTimes(1)
+    expect(context.getFolders).not.toHaveBeenCalled()
+    expect(context.getNoteFolders).not.toHaveBeenCalled()
   })
 })

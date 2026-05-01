@@ -29,23 +29,23 @@ let view: EditorView | null = null
 let isApplyingExternalValue = false
 const languageCompartment = new Compartment()
 
-const jsonError = ref<string | null>(null)
+const isJsonInvalid = ref(false)
 
 function validateJson(value: string) {
   if (props.language !== 'json') {
-    jsonError.value = null
+    isJsonInvalid.value = false
     return
   }
   if (!value.trim()) {
-    jsonError.value = null
+    isJsonInvalid.value = false
     return
   }
   try {
     JSON.parse(value)
-    jsonError.value = null
+    isJsonInvalid.value = false
   }
-  catch (error) {
-    jsonError.value = error instanceof Error ? error.message : String(error)
+  catch {
+    isJsonInvalid.value = true
   }
 }
 
@@ -145,7 +145,7 @@ watch(
       effects: languageCompartment.reconfigure(getLanguageExtension()),
     })
     if (props.language !== 'json')
-      jsonError.value = null
+      isJsonInvalid.value = false
   },
 )
 
@@ -168,7 +168,7 @@ onUnmounted(() => {
   <div class="flex flex-col gap-1">
     <div
       class="bg-background overflow-hidden rounded-md border"
-      :class="jsonError ? 'border-red-500' : 'border-input'"
+      :class="isJsonInvalid ? 'border-red-500' : 'border-input'"
     >
       <div
         ref="editorContainer"
@@ -176,10 +176,10 @@ onUnmounted(() => {
       />
     </div>
     <div
-      v-if="jsonError"
+      v-if="isJsonInvalid"
       class="text-xs text-red-500"
     >
-      {{ i18n.t("spaces.http.editor.body.jsonInvalid") }}: {{ jsonError }}
+      {{ i18n.t("spaces.http.editor.body.jsonInvalid") }}
     </div>
   </div>
 </template>

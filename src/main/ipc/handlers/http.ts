@@ -63,11 +63,11 @@ function interpolateRequest(
     method: request.method,
     url: interpolate(request.url, variables),
     headers: request.headers.map(h => ({
-      key: h.key,
+      ...h,
       value: interpolate(h.value, variables),
     })),
     query: request.query.map(q => ({
-      key: q.key,
+      ...q,
       value: interpolate(q.value, variables),
     })),
     bodyType: request.bodyType,
@@ -113,9 +113,11 @@ export function applyAuth(
 
 function buildUrl(rawUrl: string, query: HttpQueryEntry[]): string {
   const url = new URL(rawUrl)
-  for (const { key, value } of query) {
-    if (key) {
-      url.searchParams.append(key, value)
+  for (const entry of query) {
+    if (entry.enabled === false)
+      continue
+    if (entry.key) {
+      url.searchParams.append(entry.key, entry.value)
     }
   }
   return url.toString()
@@ -123,9 +125,11 @@ function buildUrl(rawUrl: string, query: HttpQueryEntry[]): string {
 
 function toHeadersObject(entries: HttpHeaderEntry[]): Record<string, string> {
   const obj: Record<string, string> = {}
-  for (const { key, value } of entries) {
-    if (key) {
-      obj[key] = value
+  for (const entry of entries) {
+    if (entry.enabled === false)
+      continue
+    if (entry.key) {
+      obj[entry.key] = entry.value
     }
   }
   return obj

@@ -27,11 +27,15 @@ const httpAuthType = t.Union([
 const httpHeaderEntry = t.Object({
   key: t.String(),
   value: t.String(),
+  description: t.Optional(t.String()),
+  enabled: t.Optional(t.Boolean()),
 })
 
 const httpQueryEntry = t.Object({
   key: t.String(),
   value: t.String(),
+  description: t.Optional(t.String()),
+  enabled: t.Optional(t.Boolean()),
 })
 
 const httpFormDataEntry = t.Object({

@@ -422,10 +422,14 @@ export interface HttpRequestItemResponse {
   headers: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   query: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
   body: string | null;
@@ -462,10 +466,14 @@ export type HttpRequestsResponse = {
   headers: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   query: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
   body: string | null;
@@ -494,10 +502,14 @@ export interface HttpRequestsUpdate {
   headers?: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   query?: {
     key: string;
     value: string;
+    description?: string;
+    enabled?: boolean;
   }[];
   bodyType?: "none" | "json" | "text" | "form-urlencoded" | "multipart";
   body?: string | null;

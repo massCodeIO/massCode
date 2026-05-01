@@ -19,11 +19,15 @@ export type HttpAuthType = 'none' | 'bearer' | 'basic'
 export interface HttpHeaderEntry {
   key: string
   value: string
+  description?: string
+  enabled?: boolean
 }
 
 export interface HttpQueryEntry {
   key: string
   value: string
+  description?: string
+  enabled?: boolean
 }
 
 export interface HttpFormDataEntry {

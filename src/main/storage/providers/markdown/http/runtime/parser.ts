@@ -90,12 +90,26 @@ function normalizeKeyValueEntries<T extends { key: string, value: string }>(
     })
 }
 
+function pickKvExtras(entry: Record<string, unknown>): {
+  description?: string
+  enabled?: boolean
+} {
+  const extras: { description?: string, enabled?: boolean } = {}
+  if (typeof entry.description === 'string') {
+    extras.description = entry.description
+  }
+  if (typeof entry.enabled === 'boolean') {
+    extras.enabled = entry.enabled
+  }
+  return extras
+}
+
 function normalizeHeaders(raw: unknown): HttpHeaderEntry[] {
-  return normalizeKeyValueEntries<HttpHeaderEntry>(raw)
+  return normalizeKeyValueEntries<HttpHeaderEntry>(raw, pickKvExtras)
 }
 
 function normalizeQuery(raw: unknown): HttpQueryEntry[] {
-  return normalizeKeyValueEntries<HttpQueryEntry>(raw)
+  return normalizeKeyValueEntries<HttpQueryEntry>(raw, pickKvExtras)
 }
 
 function normalizeFormData(raw: unknown): HttpFormDataEntry[] {

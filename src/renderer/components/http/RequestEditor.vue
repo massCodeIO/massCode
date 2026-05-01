@@ -148,13 +148,13 @@ async function onSend() {
           <HttpKeyValueTable v-model="currentDraft.headers" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="body">
-          <RequestBodyTab v-model="currentDraft" />
+          <HttpRequestBodyTab v-model="currentDraft" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="auth">
-          <RequestAuthTab v-model="currentDraft" />
+          <HttpRequestAuthTab v-model="currentDraft" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="description">
-          <RequestDescriptionTab v-model="currentDraft" />
+          <HttpRequestDescriptionTab v-model="currentDraft" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="pre-request">
           <UiText class="text-muted-foreground text-xs">

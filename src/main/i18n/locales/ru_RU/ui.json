@@ -50,8 +50,7 @@
           "headers": "Заголовки",
           "body": "Тело",
           "auth": "Авторизация",
-          "description": "Описание",
-          "preRequest": "Pre-request"
+          "description": "Описание"
         },
         "keyValue": {
           "key": "Ключ",

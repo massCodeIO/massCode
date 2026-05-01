@@ -50,8 +50,7 @@
           "headers": "Headers",
           "body": "Body",
           "auth": "Auth",
-          "description": "Description",
-          "preRequest": "Pre-request"
+          "description": "Description"
         },
         "keyValue": {
           "key": "Key",

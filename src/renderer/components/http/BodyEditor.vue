@@ -110,9 +110,13 @@ function createEditorState(doc: string): EditorState {
     EditorView.updateListener.of((update) => {
       if (!update.docChanged || isApplyingExternalValue)
         return
-      const value = update.state.doc.toString()
-      model.value = value
-      validateJson(value)
+      model.value = update.state.doc.toString()
+    }),
+    EditorView.domEventHandlers({
+      blur() {
+        validateJson(view?.state.doc.toString() ?? '')
+        return false
+      },
     }),
   ]
 
@@ -130,7 +134,6 @@ watch(model, (value) => {
     changes: { from: 0, to: current.length, insert: value ?? '' },
   })
   isApplyingExternalValue = false
-  validateJson(value ?? '')
 })
 
 watch(
@@ -141,7 +144,8 @@ watch(
     view.dispatch({
       effects: languageCompartment.reconfigure(getLanguageExtension()),
     })
-    validateJson(model.value)
+    if (props.language !== 'json')
+      jsonError.value = null
   },
 )
 
@@ -152,7 +156,6 @@ onMounted(() => {
     state: createEditorState(model.value),
     parent: editorContainer.value,
   })
-  validateJson(model.value)
 })
 
 onUnmounted(() => {

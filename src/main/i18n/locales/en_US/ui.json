@@ -50,6 +50,7 @@
           "headers": "Headers",
           "body": "Body",
           "auth": "Auth",
+          "description": "Description",
           "preRequest": "Pre-request"
         },
         "keyValue": {
@@ -58,6 +59,33 @@
           "description": "Description",
           "addRow": "Add row",
           "empty": "No entries"
+        },
+        "body": {
+          "typeNone": "None",
+          "typeJson": "JSON",
+          "typeText": "Text",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "Enter request body",
+          "fieldType": {
+            "text": "Text",
+            "file": "File"
+          },
+          "filePlaceholder": "Select file path"
+        },
+        "auth": {
+          "typeNone": "No Auth",
+          "typeBearer": "Bearer Token",
+          "typeBasic": "Basic Auth",
+          "token": "Token",
+          "tokenPlaceholder": "Enter token",
+          "username": "Username",
+          "usernamePlaceholder": "Enter username",
+          "password": "Password",
+          "passwordPlaceholder": "Enter password"
+        },
+        "description": {
+          "placeholder": "Add a description for this request"
         }
       }
     },

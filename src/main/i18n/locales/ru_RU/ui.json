@@ -50,6 +50,7 @@
           "headers": "Заголовки",
           "body": "Тело",
           "auth": "Авторизация",
+          "description": "Описание",
           "preRequest": "Pre-request"
         },
         "keyValue": {
@@ -58,6 +59,33 @@
           "description": "Описание",
           "addRow": "Добавить строку",
           "empty": "Нет записей"
+        },
+        "body": {
+          "typeNone": "Без тела",
+          "typeJson": "JSON",
+          "typeText": "Text",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "Введите тело запроса",
+          "fieldType": {
+            "text": "Текст",
+            "file": "Файл"
+          },
+          "filePlaceholder": "Укажите путь к файлу"
+        },
+        "auth": {
+          "typeNone": "Без авторизации",
+          "typeBearer": "Bearer Token",
+          "typeBasic": "Basic Auth",
+          "token": "Токен",
+          "tokenPlaceholder": "Введите токен",
+          "username": "Логин",
+          "usernamePlaceholder": "Введите логин",
+          "password": "Пароль",
+          "passwordPlaceholder": "Введите пароль"
+        },
+        "description": {
+          "placeholder": "Добавьте описание для этого запроса"
         }
       }
     },

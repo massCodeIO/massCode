@@ -20,9 +20,9 @@ const HTTP_METHODS: HttpMethod[] = [
 const { currentDraft, currentRequest, saveCurrentRequest } = useHttpRequests()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
 
-const activeTab = ref<'params' | 'headers' | 'body' | 'auth' | 'pre-request'>(
-  'params',
-)
+const activeTab = ref<
+  'params' | 'headers' | 'body' | 'auth' | 'description' | 'pre-request'
+>('params')
 
 const paramsCount = computed(() => currentDraft.value?.query.length ?? 0)
 const headersCount = computed(() => currentDraft.value?.headers.length ?? 0)
@@ -132,6 +132,9 @@ async function onSend() {
               {{ authIndicator }}
             </span>
           </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger value="description">
+            {{ i18n.t("spaces.http.editor.tabs.description") }}
+          </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="pre-request">
             {{ i18n.t("spaces.http.editor.tabs.preRequest") }}
           </Tabs.TabsTrigger>
@@ -145,14 +148,13 @@ async function onSend() {
           <HttpKeyValueTable v-model="currentDraft.headers" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="body">
-          <UiText class="text-muted-foreground text-xs">
-            {{ i18n.t("spaces.http.editor.tabs.body") }}: TODO
-          </UiText>
+          <RequestBodyTab v-model="currentDraft" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="auth">
-          <UiText class="text-muted-foreground text-xs">
-            {{ i18n.t("spaces.http.editor.tabs.auth") }}: TODO
-          </UiText>
+          <RequestAuthTab v-model="currentDraft" />
+        </Tabs.TabsContent>
+        <Tabs.TabsContent value="description">
+          <RequestDescriptionTab v-model="currentDraft" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="pre-request">
           <UiText class="text-muted-foreground text-xs">

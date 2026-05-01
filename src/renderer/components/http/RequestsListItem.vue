@@ -164,7 +164,9 @@ onClickOutside(itemRef, () => {
               <span
                 v-else
                 class="opacity-60"
-              >(no url)</span>
+              >
+                {{ i18n.t("spaces.http.noUrl") }}
+              </span>
             </span>
             <span class="shrink-0 tabular-nums">
               {{ format(new Date(props.request.updatedAt), "dd.MM.yyyy") }}

@@ -38,6 +38,7 @@
       "title": "HTTP-клиент",
       "untitledRequest": "Безымянный запрос",
       "empty": "Пока нет запросов",
+      "noUrl": "Нет URL",
       "action": {
         "newRequest": "Новый запрос"
       },

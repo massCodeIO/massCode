@@ -38,6 +38,7 @@
       "title": "HTTP Client",
       "untitledRequest": "Untitled request",
       "empty": "No requests yet",
+      "noUrl": "No URL",
       "action": {
         "newRequest": "New request"
       },

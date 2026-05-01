@@ -38,7 +38,6 @@
       "title": "HTTP Client",
       "untitledRequest": "Untitled request",
       "empty": "No requests yet",
-      "allRequests": "All Requests",
       "action": {
         "newRequest": "New request"
       },
@@ -46,13 +45,12 @@
         "noSelected": "No request selected",
         "urlPlaceholder": "Enter request URL",
         "send": "Send",
-        "save": "Save",
         "tabs": {
           "params": "Params",
           "headers": "Headers",
           "body": "Body",
           "auth": "Auth",
-          "description": "Description"
+          "preRequest": "Pre-request"
         },
         "keyValue": {
           "key": "Key",

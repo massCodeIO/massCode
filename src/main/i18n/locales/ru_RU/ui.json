@@ -38,7 +38,6 @@
       "title": "HTTP-клиент",
       "untitledRequest": "Безымянный запрос",
       "empty": "Пока нет запросов",
-      "allRequests": "Все запросы",
       "action": {
         "newRequest": "Новый запрос"
       },
@@ -46,13 +45,12 @@
         "noSelected": "Запрос не выбран",
         "urlPlaceholder": "Введите URL запроса",
         "send": "Отправить",
-        "save": "Сохранить",
         "tabs": {
           "params": "Параметры",
           "headers": "Заголовки",
           "body": "Тело",
           "auth": "Авторизация",
-          "description": "Описание"
+          "preRequest": "Pre-request"
         },
         "keyValue": {
           "key": "Ключ",

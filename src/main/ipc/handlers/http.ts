@@ -113,6 +113,10 @@ export function applyAuth(
 
 function buildUrl(rawUrl: string, query: HttpQueryEntry[]): string {
   const url = new URL(rawUrl)
+  if (query.length > 0) {
+    url.search = ''
+  }
+
   for (const entry of query) {
     if (entry.enabled === false)
       continue

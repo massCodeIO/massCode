@@ -71,7 +71,8 @@
             "text": "Text",
             "file": "File"
           },
-          "filePlaceholder": "Select file path"
+          "filePlaceholder": "Select file path",
+          "jsonInvalid": "Invalid JSON"
         },
         "auth": {
           "typeNone": "No Auth",

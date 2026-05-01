@@ -3,7 +3,6 @@ import type { HttpRequestDraft } from '@/composables'
 import type { HttpBodyType } from '~/main/types/http'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
-import { Textarea } from '@/components/ui/shadcn/textarea'
 import { i18n } from '@/electron'
 import { Plus, Trash2 } from 'lucide-vue-next'
 
@@ -62,14 +61,14 @@ function removeFormDataRow(index: number) {
       </Select.Select>
     </div>
 
-    <Textarea
+    <HttpBodyEditor
       v-if="
         bodyType === 'json'
           || bodyType === 'text'
           || bodyType === 'form-urlencoded'
       "
       v-model="bodyText"
-      class="min-h-40 font-mono"
+      :language="bodyType"
       :placeholder="i18n.t('spaces.http.editor.body.placeholder')"
     />
 

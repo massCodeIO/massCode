@@ -71,7 +71,8 @@
             "text": "Текст",
             "file": "Файл"
           },
-          "filePlaceholder": "Укажите путь к файлу"
+          "filePlaceholder": "Укажите путь к файлу",
+          "jsonInvalid": "Невалидный JSON"
         },
         "auth": {
           "typeNone": "Без авторизации",

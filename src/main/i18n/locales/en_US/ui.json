@@ -57,6 +57,7 @@
         "keyValue": {
           "key": "Key",
           "value": "Value",
+          "description": "Description",
           "addRow": "Add row",
           "empty": "No entries"
         }

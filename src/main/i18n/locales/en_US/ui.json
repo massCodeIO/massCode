@@ -87,6 +87,22 @@
         "description": {
           "placeholder": "Add a description for this request"
         }
+      },
+      "response": {
+        "empty": "No response yet",
+        "executing": "Sending request",
+        "status": "Status",
+        "time": "Time",
+        "size": "Size",
+        "tabs": {
+          "body": "Body",
+          "headers": "Headers"
+        },
+        "error": "Request failed",
+        "truncated": "Response truncated",
+        "binaryNotice": "Binary response not displayed",
+        "copy": "Copy",
+        "copied": "Copied"
       }
     },
     "tools": {

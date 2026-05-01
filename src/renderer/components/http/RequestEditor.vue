@@ -3,9 +3,8 @@ import type { HttpMethod } from '~/main/types/http'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
-import { useHttpExecute, useHttpFolders, useHttpRequests } from '@/composables'
+import { useHttpExecute, useHttpRequests } from '@/composables'
 import { i18n } from '@/electron'
-import { format } from 'date-fns'
 import { LoaderCircle, Send } from 'lucide-vue-next'
 
 const HTTP_METHODS: HttpMethod[] = [
@@ -19,7 +18,6 @@ const HTTP_METHODS: HttpMethod[] = [
 ]
 
 const { currentDraft, currentRequest, saveCurrentRequest } = useHttpRequests()
-const { folders, getFolderByIdFromTree } = useHttpFolders()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
 
 const activeTab = ref<'params' | 'headers' | 'body' | 'auth' | 'pre-request'>(
@@ -33,24 +31,6 @@ const authIndicator = computed(() => {
   if (!type || type === 'none')
     return null
   return type
-})
-
-const folderName = computed(() => {
-  if (!currentRequest.value)
-    return null
-  const folderId = currentRequest.value.folderId
-  if (folderId === null)
-    return i18n.t('common.inbox')
-  return (
-    getFolderByIdFromTree(folders.value, folderId)?.name
-    ?? i18n.t('common.inbox')
-  )
-})
-
-const updatedAtFormatted = computed(() => {
-  if (!currentRequest.value)
-    return null
-  return format(new Date(currentRequest.value.updatedAt), 'dd.MM.yyyy')
 })
 
 async function onSend() {
@@ -112,7 +92,6 @@ async function onSend() {
           v-else
           class="size-3.5"
         />
-        <!-- {{ i18n.t("spaces.http.editor.send") }} -->
       </Button>
     </div>
     <Tabs.Tabs
@@ -157,15 +136,6 @@ async function onSend() {
             {{ i18n.t("spaces.http.editor.tabs.preRequest") }}
           </Tabs.TabsTrigger>
         </Tabs.TabsList>
-        <UiText
-          variant="xs"
-          muted
-          class="flex shrink-0 items-center gap-1.5 px-1"
-        >
-          <span class="truncate">{{ folderName }}</span>
-          <span>·</span>
-          <span class="tabular-nums">{{ updatedAtFormatted }}</span>
-        </UiText>
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <Tabs.TabsContent value="params">

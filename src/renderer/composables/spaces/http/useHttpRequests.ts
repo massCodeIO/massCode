@@ -4,10 +4,17 @@ import type {
   HttpRequestsResponse,
   HttpRequestsUpdate,
 } from '@/services/api/generated'
-import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import {
+  markPersistedStorageMutation,
+  markUserEdit,
+} from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
+import { getContiguousSelection } from '@/utils'
+import { useDebounceFn } from '@vueuse/core'
 import { useHttpApp } from './useHttpApp'
+
+const AUTO_SAVE_DEBOUNCE_MS = 500
 
 export type HttpRequestListItem = HttpRequestsResponse[number]
 export type HttpRequest = HttpRequestItemResponse
@@ -31,9 +38,12 @@ const requests = shallowRef<HttpRequestsResponse>([])
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
 
-const renameRequestId = ref<number | null>(null)
-
 const { httpState } = useHttpApp()
+
+const selectedRequestIds = ref<number[]>(
+  httpState.requestId ? [httpState.requestId] : [],
+)
+const lastSelectedRequestId = ref<number | undefined>(httpState.requestId)
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -146,7 +156,6 @@ async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
   const id = await createHttpRequest(payload)
   if (id) {
     await selectHttpRequest(id)
-    renameRequestId.value = id
   }
 }
 
@@ -184,14 +193,51 @@ async function deleteHttpRequest(requestId: number) {
   }
 }
 
-async function selectHttpRequest(requestId: number | undefined) {
-  httpState.requestId = requestId
+function selectFirstRequest() {
+  const first = requests.value?.[0]
+  if (first) {
+    void selectHttpRequest(first.id)
+  }
+  else {
+    httpState.requestId = undefined
+    selectedRequestIds.value = []
+    lastSelectedRequestId.value = undefined
+    currentRequest.value = null
+    currentDraft.value = null
+  }
+}
 
+async function selectHttpRequest(
+  requestId: number | undefined,
+  withShift = false,
+) {
   if (requestId === undefined) {
+    httpState.requestId = undefined
+    selectedRequestIds.value = []
+    lastSelectedRequestId.value = undefined
     currentRequest.value = null
     currentDraft.value = null
     return
   }
+
+  if (withShift && httpState.requestId !== undefined && requests.value.length) {
+    const orderedIds = requests.value.map(r => r.id)
+    const rangeSelection = getContiguousSelection(
+      orderedIds,
+      httpState.requestId,
+      requestId,
+    )
+
+    if (rangeSelection.length) {
+      selectedRequestIds.value = rangeSelection
+      lastSelectedRequestId.value = requestId
+      return
+    }
+  }
+
+  selectedRequestIds.value = [requestId]
+  lastSelectedRequestId.value = requestId
+  httpState.requestId = requestId
 
   const fresh = await getHttpRequestById(requestId)
   if (fresh) {
@@ -234,11 +280,27 @@ function discardCurrentRequestChanges() {
   currentDraft.value = toDraft(currentRequest.value)
 }
 
+const autoSaveDebounced = useDebounceFn(() => {
+  void saveCurrentRequest()
+}, AUTO_SAVE_DEBOUNCE_MS)
+
+watch(
+  currentDraft,
+  () => {
+    if (!isCurrentRequestDirty.value)
+      return
+    markUserEdit()
+    autoSaveDebounced()
+  },
+  { deep: true },
+)
+
 function resetHttpRequestsState() {
   requests.value = []
   currentRequest.value = null
   currentDraft.value = null
-  renameRequestId.value = null
+  selectedRequestIds.value = []
+  lastSelectedRequestId.value = undefined
   httpState.requestId = undefined
 }
 
@@ -253,10 +315,12 @@ export function useHttpRequests() {
     getHttpRequestById,
     getHttpRequests,
     isCurrentRequestDirty,
-    renameRequestId,
+    lastSelectedRequestId,
     requests,
     resetHttpRequestsState,
     saveCurrentRequest,
+    selectedRequestIds,
+    selectFirstRequest,
     selectHttpRequest,
     updateHttpRequest,
   }

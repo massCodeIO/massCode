@@ -10,4 +10,5 @@ export type {
   HttpRequestListItem,
 } from './useHttpRequests'
 export { useHttpRequests } from './useHttpRequests'
+export { useHttpSearch } from './useHttpSearch'
 export { resetHttpSpaceInit, useHttpSpaceInit } from './useHttpSpaceInit'

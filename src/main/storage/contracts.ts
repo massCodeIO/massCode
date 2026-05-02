@@ -346,6 +346,10 @@ export interface HttpFolderUpdateResult {
   notFound: boolean
 }
 
+export interface HttpRequestsQueryInput {
+  search?: string
+}
+
 export interface HttpRequestCreateInput {
   name: string
   folderId?: number | null
@@ -413,7 +417,7 @@ export interface HttpRequestsStorage {
   createRequest: (input: HttpRequestCreateInput) => { id: number }
   deleteRequest: (id: number) => { deleted: boolean }
   getRequestById: (id: number) => HttpRequestRecord | null
-  getRequests: () => HttpRequestRecord[]
+  getRequests: (query?: HttpRequestsQueryInput) => HttpRequestRecord[]
   updateRequest: (
     id: number,
     input: HttpRequestUpdateInput,

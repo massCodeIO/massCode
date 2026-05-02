@@ -65,13 +65,14 @@ app
   .use(httpRequestsDTO)
   .get(
     '/',
-    () => {
+    ({ query }) => {
       const storage = useHttpStorage()
-      const result = storage.requests.getRequests()
+      const result = storage.requests.getRequests(query)
 
       return result as HttpRequestsResponse
     },
     {
+      query: 'httpRequestsQuery',
       response: 'httpRequestsResponse',
       detail: {
         tags: ['HTTP Requests'],

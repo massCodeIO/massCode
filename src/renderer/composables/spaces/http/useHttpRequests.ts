@@ -13,6 +13,7 @@ import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
 import { useDebounceFn } from '@vueuse/core'
 import { useHttpApp } from './useHttpApp'
+import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
 
 const AUTO_SAVE_DEBOUNCE_MS = 500
 
@@ -34,7 +35,8 @@ export type HttpRequestDraft = Pick<
   | 'description'
 >
 
-const requests = shallowRef<HttpRequestsResponse>([])
+export const requests = shallowRef<HttpRequestsResponse>([])
+export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
 
@@ -185,29 +187,36 @@ const isCurrentRequestDirty = computed(() => {
   )
 })
 
-async function getHttpRequests() {
+export async function getHttpRequests(query?: { search?: string }) {
   try {
-    const { data } = await api.httpRequests.getHttpRequests()
-    requests.value = data
+    const { data } = await api.httpRequests.getHttpRequests(query)
+    if (query?.search) {
+      requestsBySearch.value = data
+    }
+    else {
+      requests.value = data
+    }
   }
   catch (error) {
     console.error(error)
   }
 }
 
-async function getHttpRequestById(
-  requestId: number,
-): Promise<HttpRequest | null> {
-  try {
-    const { data } = await api.httpRequests.getHttpRequestsById(
-      String(requestId),
-    )
-    return data
+async function refreshHttpRequests() {
+  if (isSearch.value && searchQuery.value) {
+    await getHttpRequests({ search: searchQuery.value })
   }
-  catch (error) {
-    console.error(error)
-    return null
+  else {
+    await getHttpRequests()
   }
+}
+
+function findHttpRequestById(requestId: number): HttpRequest | null {
+  return (
+    requestsBySearch.value?.find(r => r.id === requestId)
+    ?? requests.value.find(r => r.id === requestId)
+    ?? null
+  )
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -223,7 +232,7 @@ async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
       ...(payload?.url !== undefined && { url: payload.url }),
     })
 
-    await getHttpRequests()
+    await refreshHttpRequests()
 
     return Number(data.id)
   }
@@ -235,7 +244,7 @@ async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
 async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
   const id = await createHttpRequest(payload)
   if (id) {
-    await selectHttpRequest(id)
+    selectHttpRequest(id)
   }
 }
 
@@ -243,11 +252,11 @@ async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
   try {
     markPersistedStorageMutation()
     await api.httpRequests.patchHttpRequestsById(String(requestId), data)
-    await getHttpRequests()
+    await refreshHttpRequests()
     if (currentRequest.value?.id === requestId) {
-      const fresh = await getHttpRequestById(requestId)
+      const fresh = findHttpRequestById(requestId)
       if (fresh)
-        assignDraft(fresh)
+        currentRequest.value = fresh
     }
   }
   catch (error) {
@@ -263,17 +272,18 @@ async function deleteHttpRequest(requestId: number) {
       httpState.requestId = undefined
       assignDraft(null)
     }
-    await getHttpRequests()
+    await refreshHttpRequests()
   }
   catch (error) {
     console.error(error)
   }
 }
 
-function selectFirstRequest() {
-  const first = requests.value?.[0]
+export function selectFirstRequest() {
+  const source = isSearch.value ? requestsBySearch.value || [] : requests.value
+  const first = source?.[0]
   if (first) {
-    void selectHttpRequest(first.id)
+    selectHttpRequest(first.id)
   }
   else {
     httpState.requestId = undefined
@@ -283,7 +293,7 @@ function selectFirstRequest() {
   }
 }
 
-async function selectHttpRequest(
+export function selectHttpRequest(
   requestId: number | undefined,
   withShift = false,
 ) {
@@ -314,8 +324,7 @@ async function selectHttpRequest(
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  const fresh = await getHttpRequestById(requestId)
-  assignDraft(fresh)
+  assignDraft(findHttpRequestById(requestId))
 }
 
 async function saveCurrentRequest() {
@@ -404,6 +413,7 @@ watch(
 
 function resetHttpRequestsState() {
   requests.value = []
+  requestsBySearch.value = undefined
   currentRequest.value = null
   currentDraft.value = null
   selectedRequestIds.value = []
@@ -419,9 +429,9 @@ export function useHttpRequests() {
     currentRequest,
     deleteHttpRequest,
     discardCurrentRequestChanges,
-    getHttpRequestById,
     getHttpRequests,
     isCurrentRequestDirty,
+    isRestoreStateBlocked,
     lastSelectedRequestId,
     requests,
     resetHttpRequestsState,

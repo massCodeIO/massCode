@@ -1,5 +1,6 @@
 import type {
   HttpRequestCreateInput,
+  HttpRequestsQueryInput,
   HttpRequestsStorage,
   HttpRequestUpdateInput,
   HttpRequestUpdateResult,
@@ -88,10 +89,21 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
   }
 
   return {
-    getRequests() {
+    getRequests(query?: HttpRequestsQueryInput) {
       const { requestById } = getCache()
-      return [...requestById.values()].sort(
+      const all = [...requestById.values()].sort(
         (a, b) => b.createdAt - a.createdAt,
+      )
+
+      const search = query?.search?.trim().toLowerCase()
+      if (!search) {
+        return all
+      }
+
+      return all.filter(
+        request =>
+          request.name.toLowerCase().includes(search)
+          || request.url.toLowerCase().includes(search),
       )
     },
 

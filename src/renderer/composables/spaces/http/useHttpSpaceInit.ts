@@ -45,12 +45,12 @@ async function refreshHttpSpaceFromDisk() {
     persistedRequestId !== undefined
     && requests.value.some(r => r.id === persistedRequestId)
   ) {
-    await selectHttpRequest(persistedRequestId)
+    selectHttpRequest(persistedRequestId)
     return
   }
 
   if (persistedRequestId !== undefined) {
-    await selectHttpRequest(undefined)
+    selectHttpRequest(undefined)
   }
 }
 

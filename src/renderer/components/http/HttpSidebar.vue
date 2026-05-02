@@ -6,6 +6,8 @@ import {
   useHttpApp,
   useHttpFolderDragDrop,
   useHttpFolders,
+  useHttpRequests,
+  useHttpSearch,
 } from '@/composables'
 import { i18n } from '@/electron'
 import {
@@ -24,6 +26,8 @@ const {
   selectedFolderIds,
   selectHttpFolder,
 } = useHttpFolders()
+const { isRestoreStateBlocked } = useHttpRequests()
+const { clearSearch } = useHttpSearch()
 const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
 
 function mapToTreeNode(folder: any): TreeNodeType {
@@ -124,6 +128,9 @@ async function onClickNode({
     await selectHttpFolder(id, { mode: 'toggle', ensureVisibility: false })
     return
   }
+
+  isRestoreStateBlocked.value = true
+  clearSearch()
 
   await selectHttpFolder(id)
 }

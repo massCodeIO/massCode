@@ -457,6 +457,10 @@ export interface HttpRequestsAdd {
   url?: string;
 }
 
+export interface HttpRequestsQuery {
+  search?: string;
+}
+
 export type HttpRequestsResponse = {
   id: number;
   name: string;
@@ -1728,10 +1732,16 @@ export class Api<
      * @name GetHttpRequests
      * @request GET:/http-requests/
      */
-    getHttpRequests: (params: RequestParams = {}) =>
+    getHttpRequests: (
+      query?: {
+        search?: string;
+      },
+      params: RequestParams = {},
+    ) =>
       this.request<HttpRequestsResponse, any>({
         path: `/http-requests/`,
         method: "GET",
+        query: query,
         format: "json",
         ...params,
       }),

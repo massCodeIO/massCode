@@ -92,9 +92,14 @@ const httpRequestItem = t.Object({
 
 const httpRequestsResponse = t.Array(httpRequestItem)
 
+const httpRequestsQuery = t.Object({
+  search: t.Optional(t.String()),
+})
+
 export const httpRequestsDTO = new Elysia().model({
   httpRequestItemResponse: httpRequestItem,
   httpRequestsAdd,
+  httpRequestsQuery,
   httpRequestsResponse,
   httpRequestsUpdate,
 })

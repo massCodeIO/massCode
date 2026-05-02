@@ -328,7 +328,7 @@ async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
       selectedRequestId !== undefined
       && !requests.value.some(request => request.id === selectedRequestId)
     ) {
-      await selectHttpRequest(undefined)
+      selectHttpRequest(undefined)
     }
 
     if (shouldRefresh) {

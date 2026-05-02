@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { HttpMethod } from '~/main/types/http'
-import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import { useHttpExecute, useHttpRequests } from '@/composables'
@@ -50,9 +49,12 @@ async function onSend() {
     v-else-if="currentDraft"
     class="flex h-full flex-col"
   >
-    <div class="border-border flex items-center gap-2 border-b px-3 pb-1">
+    <div class="border-border flex items-center gap-1 border-b px-2 pb-1">
       <Select.Select v-model="currentDraft.method">
-        <Select.SelectTrigger class="w-24">
+        <Select.SelectTrigger
+          variant="ghost"
+          class="w-24"
+        >
           <Select.SelectValue>
             <HttpMethodBadge
               :method="currentDraft.method"
@@ -73,14 +75,16 @@ async function onSend() {
           </Select.SelectItem>
         </Select.SelectContent>
       </Select.Select>
-      <div class="w-full">
+      <div class="min-w-0 flex-1">
         <UiInput
           v-model="currentDraft.url"
-          class="flex-1 font-mono"
+          variant="ghost"
+          class="w-full font-mono"
           :placeholder="i18n.t('spaces.http.editor.urlPlaceholder')"
         />
       </div>
-      <Button
+      <UiActionButton
+        :tooltip="i18n.t('spaces.http.editor.send')"
         :disabled="isExecuting || !currentDraft.url"
         @click="onSend"
       >
@@ -92,7 +96,7 @@ async function onSend() {
           v-else
           class="size-3.5"
         />
-      </Button>
+      </UiActionButton>
     </div>
     <Tabs.Tabs
       v-model="activeTab"

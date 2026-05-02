@@ -2,7 +2,7 @@
 import * as Popover from '@/components/ui/shadcn/popover'
 import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
-import { Check, Globe, Settings2 } from 'lucide-vue-next'
+import { Braces, Check, Settings2 } from 'lucide-vue-next'
 
 const {
   environments,
@@ -40,10 +40,7 @@ function onOpenManager() {
   <Popover.Popover v-model:open="isPopoverOpen">
     <Popover.PopoverTrigger as-child>
       <UiActionButton :tooltip="tooltip">
-        <Globe
-          class="size-3.5"
-          :class="{ 'text-primary': activeEnvironmentId !== null }"
-        />
+        <Braces :class="{ 'text-primary': activeEnvironmentId !== null }" />
       </UiActionButton>
     </Popover.PopoverTrigger>
     <Popover.PopoverContent

@@ -101,12 +101,9 @@ async function onSend() {
       >
         <LoaderCircle
           v-if="isExecuting"
-          class="size-3.5 animate-spin"
+          class="animate-spin"
         />
-        <Send
-          v-else
-          class="size-3.5"
-        />
+        <Send v-else />
       </UiActionButton>
     </div>
     <Tabs.Tabs
@@ -114,7 +111,7 @@ async function onSend() {
       class="flex min-h-0 flex-1 flex-col gap-0"
     >
       <div
-        class="border-border flex items-center justify-between border-b px-3 py-1"
+        class="border-border flex items-center justify-between border-b px-2 py-1"
       >
         <Tabs.TabsList>
           <Tabs.TabsTrigger value="params">

@@ -79,7 +79,7 @@ async function onSend() {
         <UiInput
           v-model="currentDraft.url"
           variant="ghost"
-          class="w-full font-mono"
+          class="w-full"
           :placeholder="i18n.t('spaces.http.editor.urlPlaceholder')"
         />
       </div>

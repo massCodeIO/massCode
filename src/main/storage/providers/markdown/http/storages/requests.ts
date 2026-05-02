@@ -79,6 +79,45 @@ function moveRequestFile(
   fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
 }
 
+function getUniqueRequestFilePath(
+  httpRoot: string,
+  targetPath: string,
+  currentFilePath: string | null,
+): string {
+  const targetAbsolutePath = path.join(httpRoot, targetPath)
+
+  if (!fs.pathExistsSync(targetAbsolutePath)) {
+    return targetPath
+  }
+
+  if (currentFilePath) {
+    const currentAbsolutePath = path.join(httpRoot, currentFilePath)
+    if (
+      targetAbsolutePath.toLowerCase() === currentAbsolutePath.toLowerCase()
+    ) {
+      return targetPath
+    }
+  }
+
+  const dir = path.posix.dirname(targetPath)
+  const ext = path.posix.extname(targetPath)
+  const baseName = path.posix.basename(targetPath, ext)
+
+  for (let suffix = 1; suffix <= 10_000; suffix += 1) {
+    const candidatePath = path.posix.join(dir, `${baseName} ${suffix}${ext}`)
+    const candidateAbsolutePath = path.join(httpRoot, candidatePath)
+
+    if (!fs.pathExistsSync(candidateAbsolutePath)) {
+      return candidatePath
+    }
+  }
+
+  throwStorageError(
+    'NAME_CONFLICT',
+    'Cannot generate unique request file name',
+  )
+}
+
 export function createHttpRequestsStorage(): HttpRequestsStorage {
   function resolvePaths() {
     return getHttpPaths(getVaultPath())
@@ -216,9 +255,10 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
           : record.name
 
       const isFolderChanging = nextFolderId !== record.folderId
-      const isNameChanging = nextName !== record.name
+      const isNameChanging
+        = nextName.toLowerCase() !== record.name.toLowerCase()
 
-      if (isFolderChanging || isNameChanging) {
+      if (!isFolderChanging && isNameChanging) {
         const siblingEntries = [...cache.requestById.values()]
           .filter(r => r.id !== id)
           .map(r => ({ folderId: r.folderId, id: r.id, name: r.name }))
@@ -253,23 +293,31 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
       record.updatedAt = Date.now()
 
-      let nextFilePath = record.filePath
       if (
         previousName !== record.name
         || previousFolderId !== record.folderId
       ) {
-        nextFilePath = buildRequestFilePath(
+        const targetPath = buildRequestFilePath(
           state,
           record.folderId,
           record.name,
         )
-        if (nextFilePath !== previousFilePath) {
-          moveRequestFile(paths.httpRoot, previousFilePath, nextFilePath)
-          record.filePath = nextFilePath
+        const resolvedPath = getUniqueRequestFilePath(
+          paths.httpRoot,
+          targetPath,
+          previousFilePath,
+        )
+        if (resolvedPath !== targetPath) {
+          record.name = path.posix.basename(resolvedPath, '.md')
+        }
+
+        if (resolvedPath !== previousFilePath) {
+          moveRequestFile(paths.httpRoot, previousFilePath, resolvedPath)
+          record.filePath = resolvedPath
 
           const indexEntry = state.requests.find(entry => entry.id === id)
           if (indexEntry) {
-            indexEntry.filePath = nextFilePath
+            indexEntry.filePath = resolvedPath
           }
         }
       }

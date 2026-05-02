@@ -66,10 +66,7 @@ async function onSend() {
     </div>
     <div class="border-border flex items-center gap-1 border-b px-2 py-1">
       <Select.Select v-model="currentDraft.method">
-        <Select.SelectTrigger
-          variant="ghost"
-          class="w-24"
-        >
+        <Select.SelectTrigger class="w-24">
           <Select.SelectValue>
             <HttpMethodBadge
               :method="currentDraft.method"

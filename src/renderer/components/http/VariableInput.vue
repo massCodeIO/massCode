@@ -36,12 +36,14 @@ function createTheme() {
       backgroundColor: 'transparent',
       color: 'var(--foreground)',
       fontSize: '14px',
+      width: '100%',
     },
     '.cm-scroller': {
       overflowY: 'hidden',
+      lineHeight: '1.5',
     },
     '.cm-content': {
-      padding: '0.125rem 0.5rem',
+      padding: '0 0.5rem',
       caretColor: 'var(--foreground)',
     },
     '.cm-line': {
@@ -141,6 +143,6 @@ onUnmounted(() => {
 <template>
   <div
     ref="editorContainer"
-    class="w-full cursor-text rounded-md border border-transparent bg-transparent"
+    class="border-border focus-within:border-primary flex h-7 w-full cursor-text items-center rounded-md border bg-[color-mix(in_oklch,var(--foreground)_2%,var(--background))]"
   />
 </template>

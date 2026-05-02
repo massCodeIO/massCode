@@ -76,10 +76,8 @@ async function onSend() {
         </Select.SelectContent>
       </Select.Select>
       <div class="min-w-0 flex-1">
-        <UiInput
+        <HttpVariableInput
           v-model="currentDraft.url"
-          variant="ghost"
-          class="w-full"
           :placeholder="i18n.t('spaces.http.editor.urlPlaceholder')"
         />
       </div>

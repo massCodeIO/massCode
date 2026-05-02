@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Extension } from '@codemirror/state'
 import { notesEditorScrollbarTheme } from '@/components/notes/cm-extensions/scrollbarTheme'
+import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import {
   defaultKeymap,
@@ -12,6 +13,10 @@ import { json } from '@codemirror/lang-json'
 import { indentUnit } from '@codemirror/language'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap, placeholder } from '@codemirror/view'
+import {
+  refreshVariables,
+  varInterpolationExtension,
+} from './cm-extensions/varInterpolation'
 
 interface Props {
   language?: 'json' | 'text' | 'form-urlencoded'
@@ -25,9 +30,15 @@ const props = withDefaults(defineProps<Props>(), {
 const model = defineModel<string>({ default: '' })
 const editorContainer = ref<HTMLElement>()
 
+const { activeEnvironment } = useHttpEnvironments()
+
 let view: EditorView | null = null
 let isApplyingExternalValue = false
 const languageCompartment = new Compartment()
+
+function getVariables(): Record<string, string> {
+  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
+}
 
 const isJsonInvalid = ref(false)
 
@@ -107,6 +118,7 @@ function createEditorState(doc: string): EditorState {
     keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
     placeholder(props.placeholder ?? ''),
     languageCompartment.of(getLanguageExtension()),
+    varInterpolationExtension({ getVariables }),
     EditorView.updateListener.of((update) => {
       if (!update.docChanged || isApplyingExternalValue)
         return
@@ -147,6 +159,15 @@ watch(
     if (props.language !== 'json')
       isJsonInvalid.value = false
   },
+)
+
+watch(
+  () => activeEnvironment.value?.variables,
+  () => {
+    if (view)
+      refreshVariables(view)
+  },
+  { deep: true },
 )
 
 onMounted(() => {

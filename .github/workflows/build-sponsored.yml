@@ -76,5 +76,3 @@ jobs:
             dist/*.snap
           if-no-files-found: warn
           retention-days: 30
-
-

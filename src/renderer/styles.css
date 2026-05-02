@@ -39,6 +39,8 @@
   --internal-link-bg-hover: oklch(from var(--primary) l c h / 0.18);
   --internal-link-border-hover: oklch(from var(--primary) l c h / 0.32);
   --internal-link-fg-hover: var(--primary);
+  --http-var-known-fg: var(--primary);
+  --http-var-known-bg: oklch(from var(--primary) l c h / 0.14);
   --diff-added-bg: oklch(0.9 0.07 150);
   --diff-removed-bg: oklch(0.91 0.06 25);
   --diff-modified-bg: oklch(0.93 0.08 90);
@@ -99,6 +101,8 @@
   --internal-link-bg-hover: oklch(from var(--primary) l c h / 0.64);
   --internal-link-border-hover: oklch(from var(--primary) l c h / 0.72);
   --internal-link-fg-hover: oklch(from var(--primary-foreground) l c h / 0.88);
+  --http-var-known-fg: oklch(0.6 0.11 260);
+  --http-var-known-bg: oklch(from var(--primary) l c h / 0.32);
   --diff-added-bg: oklch(0.34 0.06 155);
   --diff-removed-bg: oklch(0.35 0.05 25);
   --diff-modified-bg: oklch(0.38 0.06 90);

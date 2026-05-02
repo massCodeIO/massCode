@@ -104,18 +104,17 @@ function varCompletionSource(opts: VarInterpolationOptions) {
 
 const varInterpolationTheme = EditorView.theme({
   '.cm-var': {
-    padding: '0 5px',
-    borderRadius: '4px',
+    borderRadius: '3px',
     boxDecorationBreak: 'clone',
     WebkitBoxDecorationBreak: 'clone',
   },
   '.cm-var-known': {
-    color: 'var(--primary)',
-    backgroundColor: 'color-mix(in oklch, var(--primary) 16%, transparent)',
+    color: 'var(--http-var-known-fg)',
+    backgroundColor: 'var(--http-var-known-bg)',
   },
   '.cm-var-unknown': {
     color: 'var(--destructive)',
-    backgroundColor: 'color-mix(in oklch, var(--destructive) 16%, transparent)',
+    backgroundColor: 'oklch(from var(--destructive) l c h / 0.16)',
   },
   '.cm-tooltip.cm-tooltip-autocomplete': {
     backgroundColor: 'var(--popover)',

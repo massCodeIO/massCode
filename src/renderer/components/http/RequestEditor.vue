@@ -4,7 +4,12 @@ import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import { useHttpExecute, useHttpRequests } from '@/composables'
 import { i18n } from '@/electron'
+import {
+  getEntryNameConflictMessage,
+  getEntryNameValidationMessage,
+} from '@/utils'
 import { LoaderCircle, Send } from 'lucide-vue-next'
+import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 
 const HTTP_METHODS: HttpMethod[] = [
   'GET',
@@ -16,7 +21,12 @@ const HTTP_METHODS: HttpMethod[] = [
   'OPTIONS',
 ]
 
-const { currentDraft, currentRequest, saveCurrentRequest } = useHttpRequests()
+const {
+  currentDraft,
+  currentRequest,
+  hasSiblingRequestNameConflict,
+  saveCurrentRequest,
+} = useHttpRequests()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
 
 const activeTab = ref<'params' | 'headers' | 'body' | 'auth' | 'description'>(
@@ -31,6 +41,60 @@ const authIndicator = computed(() => {
     return null
   return type
 })
+
+const isNameFocused = ref(false)
+
+const hasNameConflict = computed(() => {
+  if (!currentDraft.value || !currentRequest.value)
+    return false
+  if (getEntryNameValidationIssue(currentDraft.value.name))
+    return false
+  if (
+    currentDraft.value.name.trim().toLowerCase()
+    === currentRequest.value.name.toLowerCase()
+  ) {
+    return false
+  }
+  return hasSiblingRequestNameConflict(
+    currentDraft.value.name,
+    currentRequest.value.id,
+    currentDraft.value.folderId,
+  )
+})
+
+const nameValidationMessage = computed(() => {
+  if (!currentDraft.value)
+    return ''
+  const issueMessage = getEntryNameValidationMessage(
+    currentDraft.value.name,
+    i18n.t.bind(i18n),
+  )
+  if (issueMessage)
+    return issueMessage
+  if (hasNameConflict.value)
+    return getEntryNameConflictMessage('request', i18n.t.bind(i18n))
+  return ''
+})
+
+const isNameValidationTooltipOpen = computed(
+  () => isNameFocused.value && Boolean(nameValidationMessage.value),
+)
+
+function onNameFocus() {
+  isNameFocused.value = true
+}
+
+function onNameBlur() {
+  if (
+    currentDraft.value
+    && currentRequest.value
+    && (getEntryNameValidationIssue(currentDraft.value.name)
+      || hasNameConflict.value)
+  ) {
+    currentDraft.value.name = currentRequest.value.name
+  }
+  isNameFocused.value = false
+}
 
 async function onSend() {
   await saveCurrentRequest()
@@ -54,12 +118,19 @@ async function onSend() {
     >
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
         <div class="min-w-0 flex-1">
-          <UiInput
-            v-model="currentDraft.name"
-            variant="ghost"
-            class="w-full truncate px-0"
-            :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
-          />
+          <UiInputValidationTooltip
+            :open="isNameValidationTooltipOpen"
+            :message="nameValidationMessage"
+          >
+            <UiInput
+              v-model="currentDraft.name"
+              variant="ghost"
+              class="w-full truncate px-0"
+              :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
+              @focus="onNameFocus"
+              @blur="onNameBlur"
+            />
+          </UiInputValidationTooltip>
         </div>
       </div>
       <div class="flex h-7 items-center" />

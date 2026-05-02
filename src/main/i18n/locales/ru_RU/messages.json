@@ -34,6 +34,7 @@
     "entryNameWindowsReserved": "Это имя зарезервировано в Windows.",
     "entryNameNoteConflict": "В этой папке уже есть заметка с таким именем.",
     "entryNameSnippetConflict": "В этой папке уже есть сниппет с таким именем.",
+    "entryNameRequestConflict": "В этой папке уже есть запрос с таким именем.",
     "entryNameFolderConflict": "Папка с таким именем уже существует на этом уровне."
   },
   "description": {

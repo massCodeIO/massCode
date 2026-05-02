@@ -12,6 +12,7 @@ import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
 import { useDebounceFn } from '@vueuse/core'
+import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 import { useHttpApp } from './useHttpApp'
 import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
 
@@ -327,6 +328,22 @@ export function selectHttpRequest(
   assignDraft(findHttpRequestById(requestId))
 }
 
+function hasSiblingRequestNameConflict(
+  name: string,
+  excludeId: number,
+  folderId: number | null,
+): boolean {
+  const normalized = name.trim().toLowerCase()
+  if (!normalized)
+    return false
+  return requests.value.some(
+    request =>
+      request.id !== excludeId
+      && (request.folderId ?? null) === (folderId ?? null)
+      && request.name.toLowerCase() === normalized,
+  )
+}
+
 async function saveCurrentRequest() {
   if (!currentRequest.value || !currentDraft.value)
     return
@@ -334,6 +351,18 @@ async function saveCurrentRequest() {
     return
 
   const draft = currentDraft.value
+  if (getEntryNameValidationIssue(draft.name))
+    return
+  if (
+    hasSiblingRequestNameConflict(
+      draft.name,
+      currentRequest.value.id,
+      draft.folderId,
+    )
+  ) {
+    return
+  }
+
   const update: HttpRequestsUpdate = {
     name: draft.name,
     folderId: draft.folderId,
@@ -430,6 +459,7 @@ export function useHttpRequests() {
     deleteHttpRequest,
     discardCurrentRequestChanges,
     getHttpRequests,
+    hasSiblingRequestNameConflict,
     isCurrentRequestDirty,
     isRestoreStateBlocked,
     lastSelectedRequestId,

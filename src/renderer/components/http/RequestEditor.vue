@@ -83,6 +83,7 @@ async function onSend() {
           :placeholder="i18n.t('spaces.http.editor.urlPlaceholder')"
         />
       </div>
+      <HttpEnvironmentSwitcher />
       <UiActionButton
         :tooltip="i18n.t('spaces.http.editor.send')"
         :disabled="isExecuting || !currentDraft.url"

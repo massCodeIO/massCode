@@ -40,7 +40,26 @@
       "empty": "Пока нет запросов",
       "noUrl": "Нет URL",
       "action": {
-        "newRequest": "Новый запрос"
+        "newRequest": "Новый запрос",
+        "newEnvironment": "Новое окружение",
+        "manageEnvironments": "Управление окружениями",
+        "deleteEnvironment": "Удалить окружение"
+      },
+      "environments": {
+        "title": "Окружения",
+        "none": "Без окружения",
+        "activeTooltip": "Окружение: {{name}}",
+        "selectTooltip": "Выбрать окружение",
+        "manage": "Управление окружениями…",
+        "empty": "Окружений пока нет",
+        "untitled": "Безымянное окружение",
+        "namePlaceholder": "Название окружения",
+        "variables": "Переменные",
+        "noVariables": "Переменных пока нет",
+        "varKey": "Переменная",
+        "varValue": "Значение",
+        "addVariable": "Добавить переменную",
+        "noEnvironmentSelected": "Выберите окружение, чтобы отредактировать его переменные"
       },
       "editor": {
         "noSelected": "Запрос не выбран",

@@ -40,7 +40,26 @@
       "empty": "No requests yet",
       "noUrl": "No URL",
       "action": {
-        "newRequest": "New request"
+        "newRequest": "New request",
+        "newEnvironment": "New environment",
+        "manageEnvironments": "Manage environments",
+        "deleteEnvironment": "Delete environment"
+      },
+      "environments": {
+        "title": "Environments",
+        "none": "No environment",
+        "activeTooltip": "Environment: {{name}}",
+        "selectTooltip": "Select environment",
+        "manage": "Manage environments…",
+        "empty": "No environments yet",
+        "untitled": "Untitled environment",
+        "namePlaceholder": "Environment name",
+        "variables": "Variables",
+        "noVariables": "No variables yet",
+        "varKey": "Variable",
+        "varValue": "Value",
+        "addVariable": "Add variable",
+        "noEnvironmentSelected": "Select an environment to edit its variables"
       },
       "editor": {
         "noSelected": "No request selected",

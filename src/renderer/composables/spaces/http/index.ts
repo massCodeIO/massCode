@@ -1,4 +1,5 @@
 export { useHttpApp } from './useHttpApp'
+export type { HttpEnvironment } from './useHttpEnvironments'
 export { useHttpEnvironments } from './useHttpEnvironments'
 export { useHttpExecute } from './useHttpExecute'
 export { useHttpFolderDragDrop } from './useHttpFolderDragDrop'

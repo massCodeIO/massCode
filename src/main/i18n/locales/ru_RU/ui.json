@@ -63,6 +63,7 @@
       },
       "editor": {
         "noSelected": "Запрос не выбран",
+        "namePlaceholder": "Название запроса",
         "urlPlaceholder": "Введите URL запроса",
         "send": "Отправить",
         "tabs": {

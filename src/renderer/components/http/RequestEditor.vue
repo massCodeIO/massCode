@@ -49,7 +49,22 @@ async function onSend() {
     v-else-if="currentDraft"
     class="flex h-full flex-col"
   >
-    <div class="border-border flex items-center gap-1 border-b px-2 pb-1">
+    <div
+      class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
+    >
+      <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+        <div class="min-w-0 flex-1">
+          <UiInput
+            v-model="currentDraft.name"
+            variant="ghost"
+            class="w-full truncate px-0"
+            :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
+          />
+        </div>
+      </div>
+      <div class="flex h-7 items-center" />
+    </div>
+    <div class="border-border flex items-center gap-1 border-b px-2 py-1">
       <Select.Select v-model="currentDraft.method">
         <Select.SelectTrigger
           variant="ghost"

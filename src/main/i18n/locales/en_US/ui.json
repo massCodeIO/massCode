@@ -63,6 +63,7 @@
       },
       "editor": {
         "noSelected": "No request selected",
+        "namePlaceholder": "Request name",
         "urlPlaceholder": "Enter request URL",
         "send": "Send",
         "tabs": {

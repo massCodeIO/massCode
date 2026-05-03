@@ -35,7 +35,7 @@ function openManager() {
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-0.5 pb-1">
       <button
         type="button"
-        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md px-2 py-px text-left"
+        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md py-px pr-2 pl-6 text-left"
         :class="{ 'bg-accent': activeEnvironmentId === null }"
         @click="onSelectEnvironment(null)"
       >
@@ -59,7 +59,7 @@ function openManager() {
         v-for="env in environments"
         :key="env.id"
         type="button"
-        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md px-2 py-px text-left"
+        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md py-px pr-2 pl-6 text-left"
         :class="{ 'bg-accent': activeEnvironmentId === env.id }"
         @click="onSelectEnvironment(env.id)"
       >

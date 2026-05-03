@@ -274,6 +274,28 @@ describe('app store sanitization', () => {
     expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
   })
 
+  it('keeps persisted http layout values', async () => {
+    persistedStateByName.app = {
+      http: {
+        layout: {
+          mode: 'list-editor',
+          threePanel: [20, 30],
+          twoPanel: 35,
+          responsePanelHeight: 360,
+          garbage: 'bad',
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('http.layout.mode' as any)).toBe('list-editor')
+    expect(app.get('http.layout.threePanel' as any)).toEqual([20, 30])
+    expect(app.get('http.layout.twoPanel' as any)).toBe(35)
+    expect(app.get('http.layout.responsePanelHeight' as any)).toBe(360)
+    expect(app.get('http.layout.garbage' as any)).toBeUndefined()
+  })
+
   it('keeps persisted notes route when it is a valid string', async () => {
     persistedStateByName.app = {
       notes: {

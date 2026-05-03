@@ -97,6 +97,12 @@ export interface AppStore {
   }
   http: {
     selection: HttpState
+    layout: {
+      mode: SpaceLayoutMode
+      threePanel?: number[]
+      twoPanel?: number
+      responsePanelHeight?: number
+    }
   }
   notifications: {
     lastNotifiedUpdateVersion: string

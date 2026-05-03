@@ -38,6 +38,9 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   http: {
     selection: {},
+    layout: {
+      mode: 'all-panels',
+    },
   },
   notes: {
     selection: {},
@@ -238,6 +241,7 @@ function sanitizeAppStore(value: unknown): AppStore {
   const notificationsSource = asRecord(source.notifications)
   const legacySizes = asRecord(source.sizes)
   const codeLayoutSource = asRecord(codeSource.layout)
+  const httpLayoutSource = asRecord(httpSource.layout)
   const notesLayoutSource = asRecord(notesSource.layout)
 
   return {
@@ -292,6 +296,28 @@ function sanitizeAppStore(value: unknown): AppStore {
     },
     http: {
       selection: sanitizeHttpState(httpSource.selection),
+      layout: {
+        mode: readEnum(
+          httpLayoutSource,
+          'mode',
+          ['all-panels', 'list-editor', 'editor-only'] as const,
+          APP_STORE_DEFAULTS.http.layout.mode,
+        ),
+        threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
+        twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
+        responsePanelHeight: (() => {
+          const raw = readOptionalNumber(
+            httpLayoutSource,
+            'responsePanelHeight',
+          )
+          if (raw === undefined) {
+            return undefined
+          }
+          return raw < LAYOUT_DEFAULTS.http.responsePanel.min
+            ? LAYOUT_DEFAULTS.http.responsePanel.height
+            : raw
+        })(),
+      },
     },
     notes: {
       selection: sanitizeNotesState(

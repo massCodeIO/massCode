@@ -5,6 +5,9 @@ export const LAYOUT_DEFAULTS = {
   list: { width: 300, min: 150 },
   editor: { min: 300 },
   tags: { height: 200, min: 80 },
+  http: {
+    responsePanel: { height: 300, min: 120 },
+  },
 }
 
 export const EDITOR_DEFAULTS: EditorSettings = {

@@ -34,6 +34,7 @@ const variants = cva('font-mono font-semibold tracking-tight uppercase', {
 
 <template>
   <span
+    :data-method="props.method"
     :class="
       cn(variants({ method: props.method, size: props.size }), props.class)
     "

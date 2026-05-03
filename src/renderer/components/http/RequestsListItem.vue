@@ -182,14 +182,14 @@ onClickOutside(itemRef, () => {
   >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger>
-        <div class="flex flex-col gap-1 px-2 py-2 select-none">
-          <div class="flex items-baseline gap-2">
+        <div class="flex flex-col p-2 select-none">
+          <div class="mb-2 flex items-baseline gap-2">
             <HttpMethodBadge
               :method="props.request.method"
               size="sm"
-              class="shrink-0"
+              class="method-badge shrink-0"
             />
-            <UiText class="flex-1 truncate text-sm">
+            <UiText class="title flex-1 truncate text-sm">
               {{ props.request.name }}
             </UiText>
           </div>
@@ -250,20 +250,92 @@ onClickOutside(itemRef, () => {
   }
   &.is-selected {
     @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
+    .title {
+      @apply text-accent-foreground;
+    }
     .meta {
       @apply text-accent-foreground;
+    }
+    .method-badge[data-method="GET"] {
+      @apply text-emerald-700 dark:text-emerald-300;
+    }
+    .method-badge[data-method="POST"] {
+      @apply text-amber-700 dark:text-amber-300;
+    }
+    .method-badge[data-method="PUT"] {
+      @apply text-blue-700 dark:text-blue-300;
+    }
+    .method-badge[data-method="PATCH"] {
+      @apply text-violet-700 dark:text-violet-300;
+    }
+    .method-badge[data-method="DELETE"] {
+      @apply text-rose-700 dark:text-rose-300;
+    }
+    .method-badge[data-method="HEAD"] {
+      @apply text-cyan-700 dark:text-cyan-300;
+    }
+    .method-badge[data-method="OPTIONS"] {
+      @apply text-zinc-700 dark:text-zinc-300;
     }
   }
   &.is-multi-selected {
     @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
+    .title {
+      @apply text-accent-foreground;
+    }
     .meta {
       @apply text-accent-foreground;
+    }
+    .method-badge[data-method="GET"] {
+      @apply text-emerald-700 dark:text-emerald-300;
+    }
+    .method-badge[data-method="POST"] {
+      @apply text-amber-700 dark:text-amber-300;
+    }
+    .method-badge[data-method="PUT"] {
+      @apply text-blue-700 dark:text-blue-300;
+    }
+    .method-badge[data-method="PATCH"] {
+      @apply text-violet-700 dark:text-violet-300;
+    }
+    .method-badge[data-method="DELETE"] {
+      @apply text-rose-700 dark:text-rose-300;
+    }
+    .method-badge[data-method="HEAD"] {
+      @apply text-cyan-700 dark:text-cyan-300;
+    }
+    .method-badge[data-method="OPTIONS"] {
+      @apply text-zinc-700 dark:text-zinc-300;
     }
   }
   &.is-focused:not(.is-multi-selected) {
     @apply bg-primary text-primary-foreground z-10 rounded-md border-transparent;
+    .title {
+      @apply text-primary-foreground;
+    }
     .meta {
       @apply text-primary-foreground;
+    }
+    .method-badge[data-method="GET"] {
+      @apply text-emerald-200;
+    }
+    .method-badge[data-method="POST"] {
+      @apply text-amber-200;
+    }
+    .method-badge[data-method="PUT"] {
+      @apply text-blue-100;
+    }
+    .method-badge[data-method="PATCH"] {
+      @apply text-violet-200;
+    }
+    .method-badge[data-method="DELETE"] {
+      @apply text-rose-200;
+    }
+    .method-badge[data-method="HEAD"] {
+      @apply text-cyan-200;
+    }
+    .method-badge[data-method="OPTIONS"] {
+      @apply text-zinc-100;
     }
   }
   &.is-highlighted {
@@ -272,6 +344,9 @@ onClickOutside(itemRef, () => {
     &.is-selected,
     &.is-multi-selected {
       @apply bg-background text-accent-foreground;
+      .title {
+        @apply text-accent-foreground;
+      }
       .meta {
         @apply text-accent-foreground;
       }

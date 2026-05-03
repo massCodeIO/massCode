@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/shadcn/button'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import { useCopyToClipboard, useHttpExecute } from '@/composables'
 import { i18n } from '@/electron'
@@ -40,6 +39,22 @@ const formattedBody = computed(() => {
   return response.body
 })
 
+const formattedHeaders = computed(() => {
+  const response = lastResponse.value
+  if (!response)
+    return ''
+
+  return response.headers
+    .map(header => `${header.key}: ${header.value}`)
+    .join('\n')
+})
+
+const copyValue = computed(() => {
+  return activeTab.value === 'headers'
+    ? formattedHeaders.value
+    : formattedBody.value
+})
+
 function formatSize(bytes: number): string {
   if (bytes < 1024)
     return `${bytes} B`
@@ -54,9 +69,9 @@ function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(2)} s`
 }
 
-function copyBody() {
-  if (formattedBody.value)
-    copy(formattedBody.value)
+function copyActiveTab() {
+  if (copyValue.value)
+    copy(copyValue.value)
 }
 </script>
 
@@ -150,16 +165,13 @@ function copyBody() {
               </span>
             </Tabs.TabsTrigger>
           </Tabs.TabsList>
-          <Button
-            v-if="activeTab === 'body' && formattedBody"
-            variant="ghost"
-            size="sm"
-            class="h-6 gap-1 px-2 text-xs"
-            @click="copyBody"
+          <UiActionButton
+            v-if="copyValue"
+            :tooltip="i18n.t('spaces.http.editor.response.copy')"
+            @click="copyActiveTab"
           >
-            <Copy class="size-3" />
-            {{ i18n.t("spaces.http.editor.response.copy") }}
-          </Button>
+            <Copy class="size-4" />
+          </UiActionButton>
         </div>
 
         <div class="scrollbar min-h-0 flex-1 overflow-auto">

@@ -1,9 +1,15 @@
 <script setup lang="ts">
+import type { HttpRequestPreviewFormat } from './requestPreview'
 import { i18n } from '@/electron'
 
-defineProps<{
+const props = defineProps<{
   content: string
+  format: HttpRequestPreviewFormat
 }>()
+
+const viewerLanguage = computed(() => {
+  return props.format === 'http' ? 'http' : 'shell'
+})
 </script>
 
 <template>
@@ -20,6 +26,7 @@ defineProps<{
       v-else
       class="min-h-0 flex-1"
       :content="content"
+      :language="viewerLanguage"
     />
   </div>
 </template>

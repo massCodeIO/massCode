@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import type { Extension } from '@codemirror/state'
-import { notesEditorScrollbarTheme } from '@/components/notes/cm-extensions/scrollbarTheme'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
+import { useTheme } from '@/composables'
 import { json } from '@codemirror/lang-json'
+import { StreamLanguage } from '@codemirror/language'
+import { http } from '@codemirror/legacy-modes/mode/http'
+import { shell } from '@codemirror/legacy-modes/mode/shell'
 import { EditorState } from '@codemirror/state'
 import {
   drawSelection,
@@ -11,11 +16,14 @@ import {
   lineNumbers,
 } from '@codemirror/view'
 
+type CodeViewerLanguage = 'plain' | 'json' | 'http' | 'shell'
+
 const props = defineProps<{
   content: string
-  language?: 'plain' | 'json'
+  language?: CodeViewerLanguage
 }>()
 
+const { isDark } = useTheme()
 const editorContainer = ref<HTMLElement>()
 
 let view: EditorView | null = null
@@ -66,7 +74,7 @@ function createViewerTheme() {
       backgroundColor:
         'color-mix(in oklch, var(--primary) 24%, transparent) !important',
     },
-    ...notesEditorScrollbarTheme,
+    ...editorScrollbarTheme,
   })
 }
 
@@ -79,25 +87,27 @@ function createEditorState(doc: string): EditorState {
     EditorState.readOnly.of(true),
     EditorView.editable.of(false),
     keymap.of([]),
+    createCodeHighlight(isDark.value),
   ]
 
   if (props.language === 'json') {
     extensions.push(json())
+  }
+  else if (props.language === 'http') {
+    extensions.push(StreamLanguage.define(http))
+  }
+  else if (props.language === 'shell') {
+    extensions.push(StreamLanguage.define(shell))
   }
 
   return EditorState.create({ doc, extensions })
 }
 
 watch(
-  () => [props.content, props.language] as const,
+  () => [props.content, props.language, isDark.value] as const,
   ([content]) => {
     if (!view)
       return
-
-    const current = view.state.doc.toString()
-    if (current === content) {
-      return
-    }
 
     view.setState(createEditorState(content))
   },

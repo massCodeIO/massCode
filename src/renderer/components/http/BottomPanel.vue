@@ -170,7 +170,10 @@ function copyPreview() {
         value="preview"
         class="m-0 h-full"
       >
-        <HttpRequestPreviewPanel :content="previewContent" />
+        <HttpRequestPreviewPanel
+          :content="previewContent"
+          :format="previewFormat"
+        />
       </Tabs.TabsContent>
       <Tabs.TabsContent
         value="response"

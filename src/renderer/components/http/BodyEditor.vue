@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Extension } from '@codemirror/state'
-import { notesEditorScrollbarTheme } from '@/components/notes/cm-extensions/scrollbarTheme'
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import {
@@ -105,7 +105,7 @@ function createBodyEditorTheme() {
     '.cm-placeholder': {
       color: 'var(--muted-foreground)',
     },
-    ...notesEditorScrollbarTheme,
+    ...editorScrollbarTheme,
   })
 }
 

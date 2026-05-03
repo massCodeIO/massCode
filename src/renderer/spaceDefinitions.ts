@@ -59,14 +59,6 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
         isRouteNameInSpace(routeName, RouterName.notesSpace),
     },
     {
-      id: 'math',
-      label: i18n.t('spaces.math.label'),
-      tooltip: i18n.t('spaces.math.tooltip'),
-      icon: Calculator,
-      to: { name: RouterName.mathNotebook },
-      isActive: routeName => routeName === RouterName.mathNotebook,
-    },
-    {
       id: 'http',
       label: i18n.t('spaces.http.label'),
       tooltip: i18n.t('spaces.http.tooltip'),
@@ -74,6 +66,14 @@ export function getSpaceDefinitions(): SpaceDefinition[] {
       to: { name: RouterName.httpSpace },
       isActive: routeName =>
         isRouteNameInSpace(routeName, RouterName.httpSpace),
+    },
+    {
+      id: 'math',
+      label: i18n.t('spaces.math.label'),
+      tooltip: i18n.t('spaces.math.tooltip'),
+      icon: Calculator,
+      to: { name: RouterName.mathNotebook },
+      isActive: routeName => routeName === RouterName.mathNotebook,
     },
     {
       id: 'tools',

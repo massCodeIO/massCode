@@ -9,19 +9,6 @@ const copy = useCopyToClipboard()
 
 const activeTab = ref<'body' | 'headers'>('body')
 
-const statusClass = computed(() => {
-  const status = lastResponse.value?.status
-  if (!status)
-    return 'text-muted-foreground'
-  if (status >= 200 && status < 300)
-    return 'text-green-500'
-  if (status >= 300 && status < 400)
-    return 'text-blue-500'
-  if (status >= 400 && status < 500)
-    return 'text-yellow-500'
-  return 'text-red-500'
-})
-
 const formattedBody = computed(() => {
   const response = lastResponse.value
   if (!response)
@@ -55,20 +42,6 @@ const copyValue = computed(() => {
     : formattedBody.value
 })
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024)
-    return `${bytes} B`
-  if (bytes < 1024 * 1024)
-    return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000)
-    return `${ms} ms`
-  return `${(ms / 1000).toFixed(2)} s`
-}
-
 function copyActiveTab() {
   if (copyValue.value)
     copy(copyValue.value)
@@ -96,47 +69,6 @@ function copyActiveTab() {
       v-else
       class="flex min-h-0 flex-1 flex-col"
     >
-      <div
-        class="border-border flex items-center gap-4 border-b px-3 py-1.5 text-xs"
-      >
-        <div class="flex items-center gap-1">
-          <span class="text-muted-foreground">
-            {{ i18n.t("spaces.http.editor.response.status") }}:
-          </span>
-          <span
-            class="font-mono font-semibold"
-            :class="statusClass"
-          >
-            {{ lastResponse.status ?? "-" }}
-            <template v-if="lastResponse.statusText">
-              {{ lastResponse.statusText }}
-            </template>
-          </span>
-        </div>
-        <div class="flex items-center gap-1">
-          <span class="text-muted-foreground">
-            {{ i18n.t("spaces.http.editor.response.time") }}:
-          </span>
-          <span class="font-mono">{{
-            formatDuration(lastResponse.durationMs)
-          }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <span class="text-muted-foreground">
-            {{ i18n.t("spaces.http.editor.response.size") }}:
-          </span>
-          <span class="font-mono">{{
-            formatSize(lastResponse.sizeBytes)
-          }}</span>
-        </div>
-        <span
-          v-if="lastResponse.truncated"
-          class="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]"
-        >
-          {{ i18n.t("spaces.http.editor.response.truncated") }}
-        </span>
-      </div>
-
       <div
         v-if="lastError"
         class="border-border bg-destructive/10 text-destructive border-b px-3 py-1.5 text-xs"

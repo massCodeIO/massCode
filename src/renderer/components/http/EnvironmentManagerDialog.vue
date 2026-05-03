@@ -4,7 +4,7 @@ import * as Dialog from '@/components/ui/shadcn/dialog'
 import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
-import { Check, Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
 
 interface VariableEntry {
   key: string
@@ -181,13 +181,17 @@ async function onSelectEnvironment(id: number) {
 
 <template>
   <Dialog.Dialog v-model:open="open">
-    <Dialog.DialogContent class="sm:max-w-3xl">
+    <Dialog.DialogContent
+      class="grid-rows-[auto_minmax(0,1fr)] overflow-hidden sm:max-w-3xl"
+    >
       <Dialog.DialogHeader>
         <Dialog.DialogTitle>
           {{ i18n.t("spaces.http.environments.title") }}
         </Dialog.DialogTitle>
       </Dialog.DialogHeader>
-      <div class="grid min-h-[420px] grid-cols-[200px_1fr] gap-4">
+      <div
+        class="grid h-[min(560px,calc(100vh-8rem))] min-h-0 grid-cols-[200px_minmax(0,1fr)] gap-4"
+      >
         <div class="border-border flex flex-col rounded border">
           <div
             class="border-border flex items-center justify-between border-b px-2 py-1"
@@ -213,17 +217,13 @@ async function onSelectEnvironment(id: number) {
               v-for="env in environments"
               :key="env.id"
               type="button"
-              class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm"
-              :class="{
-                'bg-accent': selectedEnvId === env.id,
-              }"
+              class="flex h-[21px] w-full items-center rounded-md px-2 text-left text-sm"
+              :class="
+                selectedEnvId === env.id ? 'bg-accent' : 'hover:bg-accent-hover'
+              "
               @click="onSelectEnvironment(env.id)"
             >
               <span class="truncate">{{ env.name }}</span>
-              <Check
-                v-if="activeEnvironmentId === env.id"
-                class="size-3.5 flex-shrink-0"
-              />
             </button>
           </div>
         </div>
@@ -236,14 +236,16 @@ async function onSelectEnvironment(id: number) {
         </div>
         <div
           v-else
-          class="flex min-w-0 flex-col gap-3"
+          class="flex min-h-0 min-w-0 flex-col gap-3"
         >
           <UiInput
             v-model="localName"
             variant="default"
             :placeholder="i18n.t('spaces.http.environments.namePlaceholder')"
           />
-          <div class="border-border flex flex-1 flex-col rounded border">
+          <div
+            class="border-border flex min-h-0 flex-1 flex-col rounded border"
+          >
             <div
               class="text-muted-foreground border-border grid grid-cols-[1fr_1fr_24px] items-center gap-2 border-b px-2 py-1.5 text-[10px] font-semibold tracking-wider uppercase"
             >

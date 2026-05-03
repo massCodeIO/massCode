@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
-import { Check, Settings2 } from 'lucide-vue-next'
+import { Settings2 } from 'lucide-vue-next'
 
 const { environments, activeEnvironmentId, setActiveHttpEnvironment }
   = useHttpEnvironments()
@@ -35,17 +35,15 @@ function openManager() {
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-0.5 pb-1">
       <button
         type="button"
-        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md py-px pr-2 pl-6 text-left"
-        :class="{ 'bg-accent': activeEnvironmentId === null }"
+        class="flex h-[21px] w-full items-center rounded-md pr-2 pl-6 text-left text-sm"
+        :class="
+          activeEnvironmentId === null ? 'bg-accent' : 'hover:bg-accent-hover'
+        "
         @click="onSelectEnvironment(null)"
       >
         <span class="text-muted-foreground truncate">
           {{ i18n.t("spaces.http.environments.none") }}
         </span>
-        <Check
-          v-if="activeEnvironmentId === null"
-          class="size-3.5 flex-shrink-0"
-        />
       </button>
 
       <div
@@ -59,15 +57,13 @@ function openManager() {
         v-for="env in environments"
         :key="env.id"
         type="button"
-        class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md py-px pr-2 pl-6 text-left"
-        :class="{ 'bg-accent': activeEnvironmentId === env.id }"
+        class="flex h-[21px] w-full items-center rounded-md pr-2 pl-6 text-left text-sm"
+        :class="
+          activeEnvironmentId === env.id ? 'bg-accent' : 'hover:bg-accent-hover'
+        "
         @click="onSelectEnvironment(env.id)"
       >
         <span class="truncate">{{ env.name }}</span>
-        <Check
-          v-if="activeEnvironmentId === env.id"
-          class="size-3.5 flex-shrink-0"
-        />
       </button>
     </div>
 

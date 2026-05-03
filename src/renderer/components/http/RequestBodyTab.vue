@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import type { HttpRequestDraft } from '@/composables'
 import type { HttpBodyType } from '~/main/types/http'
-import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import { useHttpSettings } from '@/composables'
 import { i18n } from '@/electron'
-import { Plus, Trash2 } from 'lucide-vue-next'
 
 const draft = defineModel<HttpRequestDraft>({ required: true })
 const { settings } = useHttpSettings()
@@ -19,6 +17,24 @@ const BODY_TYPES: { value: HttpBodyType, labelKey: string }[] = [
     labelKey: 'spaces.http.editor.body.typeFormUrlencoded',
   },
   { value: 'multipart', labelKey: 'spaces.http.editor.body.typeMultipart' },
+]
+
+const FORM_DATA_COLUMNS = [
+  {
+    key: 'key',
+    label: i18n.t('spaces.http.editor.keyValue.key'),
+    placeholder: i18n.t('spaces.http.editor.keyValue.key'),
+  },
+  {
+    key: 'type',
+    label: i18n.t('spaces.http.editor.body.fieldType.text'),
+    width: '120px',
+  },
+  {
+    key: 'value',
+    label: i18n.t('spaces.http.editor.keyValue.value'),
+    placeholder: i18n.t('spaces.http.editor.keyValue.value'),
+  },
 ]
 
 const bodyType = computed({
@@ -36,11 +52,7 @@ const bodyText = computed({
 })
 
 function addFormDataRow() {
-  draft.value.formData.push({ key: '', type: 'text', value: '' })
-}
-
-function removeFormDataRow(index: number) {
-  draft.value.formData.splice(index, 1)
+  return { key: '', type: 'text', value: '' }
 }
 </script>
 
@@ -78,67 +90,44 @@ function removeFormDataRow(index: number) {
 
     <div
       v-else-if="bodyType === 'multipart'"
-      class="flex flex-col"
+      class="min-h-0 flex-1"
     >
-      <div
-        class="text-muted-foreground border-border grid grid-cols-[1fr_120px_1fr_24px] items-center gap-2 border-b px-2 py-1.5 text-[10px] font-semibold tracking-wider uppercase"
+      <HttpKeyValueTable
+        v-model="draft.formData"
+        :columns="FORM_DATA_COLUMNS"
+        :show-enabled="false"
+        actions="delete"
+        grid-template-columns="1fr 120px 1fr 24px"
+        :create-entry="addFormDataRow"
       >
-        <span>{{ i18n.t("spaces.http.editor.keyValue.key") }}</span>
-        <span>{{ i18n.t("spaces.http.editor.body.fieldType.text") }}</span>
-        <span>{{ i18n.t("spaces.http.editor.keyValue.value") }}</span>
-        <span />
-      </div>
-      <div
-        v-for="(entry, index) in draft.formData"
-        :key="index"
-        class="border-border hover:bg-accent-hover grid grid-cols-[1fr_120px_1fr_24px] items-center gap-2 border-b px-2 py-1"
-      >
-        <UiInput
-          v-model="entry.key"
-          class="!h-7 font-mono"
-          variant="ghost"
-          :placeholder="i18n.t('spaces.http.editor.keyValue.key')"
-        />
-        <Select.Select v-model="entry.type">
-          <Select.SelectTrigger class="!h-7 w-full">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem value="text">
-              {{ i18n.t("spaces.http.editor.body.fieldType.text") }}
-            </Select.SelectItem>
-            <Select.SelectItem value="file">
-              {{ i18n.t("spaces.http.editor.body.fieldType.file") }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
-        <UiInput
-          v-model="entry.value"
-          class="!h-7 font-mono"
-          variant="ghost"
-          :placeholder="
-            entry.type === 'file'
-              ? i18n.t('spaces.http.editor.body.filePlaceholder')
-              : i18n.t('spaces.http.editor.keyValue.value')
-          "
-        />
-        <button
-          type="button"
-          class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex h-6 w-6 items-center justify-center rounded"
-          @click="removeFormDataRow(index)"
-        >
-          <Trash2 class="h-3.5 w-3.5" />
-        </button>
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        class="text-muted-foreground hover:text-foreground mt-1 inline-flex h-7 w-fit items-center gap-1 rounded px-2 text-xs"
-        @click="addFormDataRow"
-      >
-        <Plus class="h-3.5 w-3.5" />
-        {{ i18n.t("spaces.http.editor.keyValue.addRow") }}
-      </Button>
+        <template #cell-type="{ entry }">
+          <Select.Select v-model="entry.type">
+            <Select.SelectTrigger class="!h-6 w-full">
+              <Select.SelectValue />
+            </Select.SelectTrigger>
+            <Select.SelectContent>
+              <Select.SelectItem value="text">
+                {{ i18n.t("spaces.http.editor.body.fieldType.text") }}
+              </Select.SelectItem>
+              <Select.SelectItem value="file">
+                {{ i18n.t("spaces.http.editor.body.fieldType.file") }}
+              </Select.SelectItem>
+            </Select.SelectContent>
+          </Select.Select>
+        </template>
+        <template #cell-value="{ entry, column }">
+          <UiInput
+            v-model="entry.value"
+            class="!h-6"
+            variant="ghost"
+            :placeholder="
+              entry.type === 'file'
+                ? i18n.t('spaces.http.editor.body.filePlaceholder')
+                : column.placeholder
+            "
+          />
+        </template>
+      </HttpKeyValueTable>
     </div>
   </div>
 </template>

@@ -15,6 +15,19 @@ const AUTO_SAVE_DEBOUNCE_MS = 500
 
 const open = defineModel<boolean>('open', { required: true })
 
+const VARIABLE_COLUMNS = [
+  {
+    key: 'key',
+    label: i18n.t('spaces.http.environments.varKey'),
+    placeholder: i18n.t('spaces.http.environments.varKey'),
+  },
+  {
+    key: 'value',
+    label: i18n.t('spaces.http.environments.varValue'),
+    placeholder: i18n.t('spaces.http.environments.varValue'),
+  },
+]
+
 const {
   environments,
   activeEnvironmentId,
@@ -194,15 +207,11 @@ async function onDeleteEnvironment() {
   selectedEnvId.value = environments.value[0]?.id ?? null
 }
 
-function addVariable() {
-  localVariables.value.push({ key: '', value: '' })
+function createVariable(): VariableEntry {
+  return { key: '', value: '' }
 }
 
-async function removeVariable(index: number) {
-  const variable = localVariables.value[index]
-  if (!variable)
-    return
-
+async function confirmRemoveVariable(variable: VariableEntry) {
   if (hasVariableContent(variable)) {
     const key = variable.key.trim()
     const isConfirmed = await confirm({
@@ -213,10 +222,10 @@ async function removeVariable(index: number) {
     })
 
     if (!isConfirmed)
-      return
+      return false
   }
 
-  localVariables.value.splice(index, 1)
+  return true
 }
 
 async function onSelectEnvironment(id: number) {
@@ -294,54 +303,17 @@ async function onSelectEnvironment(id: number) {
           <div
             class="border-border flex min-h-0 flex-1 flex-col rounded border"
           >
-            <div
-              class="text-muted-foreground border-border grid grid-cols-[1fr_1fr_24px] items-center gap-2 border-b px-2 py-1.5 text-[10px] font-semibold tracking-wider uppercase"
-            >
-              <span>{{ i18n.t("spaces.http.environments.varKey") }}</span>
-              <span>{{ i18n.t("spaces.http.environments.varValue") }}</span>
-              <span />
-            </div>
-            <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
-              <div
-                v-if="localVariables.length === 0"
-                class="text-muted-foreground px-2 py-2 text-xs"
-              >
-                {{ i18n.t("spaces.http.environments.noVariables") }}
-              </div>
-              <div
-                v-for="(entry, index) in localVariables"
-                :key="index"
-                class="border-border hover:bg-accent-hover grid grid-cols-[1fr_1fr_24px] items-center gap-2 border-b px-2 py-1 last:border-b-0"
-              >
-                <UiInput
-                  v-model="entry.key"
-                  class="!h-7 font-mono"
-                  variant="ghost"
-                  :placeholder="i18n.t('spaces.http.environments.varKey')"
-                />
-                <UiInput
-                  v-model="entry.value"
-                  class="!h-7 font-mono"
-                  variant="ghost"
-                  :placeholder="i18n.t('spaces.http.environments.varValue')"
-                />
-                <button
-                  type="button"
-                  class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-6 items-center justify-center rounded"
-                  @click="removeVariable(index)"
-                >
-                  <Trash2 class="size-3.5" />
-                </button>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="text-muted-foreground hover:text-foreground border-border inline-flex h-7 w-fit items-center gap-1 rounded px-2 text-xs"
-              @click="addVariable"
-            >
-              <Plus class="size-3.5" />
-              {{ i18n.t("spaces.http.environments.addVariable") }}
-            </button>
+            <HttpKeyValueTable
+              v-model="localVariables"
+              :columns="VARIABLE_COLUMNS"
+              :show-enabled="false"
+              actions="delete"
+              grid-template-columns="1fr 1fr 24px"
+              :create-entry="createVariable"
+              :before-remove="confirmRemoveVariable"
+              :empty-text="i18n.t('spaces.http.environments.noVariables')"
+              :add-label="i18n.t('spaces.http.environments.addVariable')"
+            />
           </div>
           <div class="flex justify-end">
             <button

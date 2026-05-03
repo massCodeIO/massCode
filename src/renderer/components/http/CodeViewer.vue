@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Extension } from '@codemirror/state'
 import { notesEditorScrollbarTheme } from '@/components/notes/cm-extensions/scrollbarTheme'
+import { json } from '@codemirror/lang-json'
 import { EditorState } from '@codemirror/state'
 import {
   drawSelection,
@@ -12,13 +13,14 @@ import {
 
 const props = defineProps<{
   content: string
+  language?: 'plain' | 'json'
 }>()
 
 const editorContainer = ref<HTMLElement>()
 
 let view: EditorView | null = null
 
-function createPreviewTheme() {
+function createViewerTheme() {
   return EditorView.theme({
     '&': {
       height: '100%',
@@ -70,7 +72,7 @@ function createPreviewTheme() {
 
 function createEditorState(doc: string): EditorState {
   const extensions: Extension[] = [
-    createPreviewTheme(),
+    createViewerTheme(),
     lineNumbers(),
     highlightActiveLineGutter(),
     drawSelection(),
@@ -79,22 +81,25 @@ function createEditorState(doc: string): EditorState {
     keymap.of([]),
   ]
 
+  if (props.language === 'json') {
+    extensions.push(json())
+  }
+
   return EditorState.create({ doc, extensions })
 }
 
 watch(
-  () => props.content,
-  (content) => {
+  () => [props.content, props.language] as const,
+  ([content]) => {
     if (!view)
       return
 
     const current = view.state.doc.toString()
-    if (current === content)
+    if (current === content) {
       return
+    }
 
-    view.dispatch({
-      changes: { from: 0, to: current.length, insert: content },
-    })
+    view.setState(createEditorState(content))
   },
 )
 

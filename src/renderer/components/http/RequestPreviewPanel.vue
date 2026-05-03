@@ -16,7 +16,7 @@ defineProps<{
         {{ i18n.t("spaces.http.editor.preview.empty") }}
       </UiText>
     </div>
-    <HttpRequestPreviewCode
+    <HttpCodeViewer
       v-else
       class="min-h-0 flex-1"
       :content="content"

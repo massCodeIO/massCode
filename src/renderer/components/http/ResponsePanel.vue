@@ -42,6 +42,10 @@ const copyValue = computed(() => {
     : formattedBody.value
 })
 
+const bodyViewerLanguage = computed(() => {
+  return lastResponse.value?.bodyKind === 'json' ? 'json' : 'plain'
+})
+
 function copyActiveTab() {
   if (copyValue.value)
     copy(copyValue.value)
@@ -106,10 +110,10 @@ function copyActiveTab() {
           </UiActionButton>
         </div>
 
-        <div class="scrollbar min-h-0 flex-1 overflow-auto">
+        <div class="min-h-0 flex-1">
           <Tabs.TabsContent
             value="body"
-            class="m-0"
+            class="m-0 h-full"
           >
             <div
               v-if="lastResponse.bodyKind === 'binary'"
@@ -117,14 +121,15 @@ function copyActiveTab() {
             >
               {{ i18n.t("spaces.http.editor.response.binaryNotice") }}
             </div>
-            <pre
+            <HttpCodeViewer
               v-else
-              class="px-3 py-2 font-mono text-xs whitespace-pre-wrap"
-            >{{ formattedBody }}</pre>
+              :content="formattedBody"
+              :language="bodyViewerLanguage"
+            />
           </Tabs.TabsContent>
           <Tabs.TabsContent
             value="headers"
-            class="m-0"
+            class="scrollbar m-0 h-full overflow-auto"
           >
             <div class="flex flex-col">
               <div

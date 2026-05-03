@@ -8,7 +8,7 @@ A free, open-source developer workspace.
 </p>
 
 <p align="center">
-  <strong>Snippets, notes, calculations, and dev tools in one local-first app.</strong>
+  <strong>Snippets, notes, HTTP requests, calculations, and dev tools in one local-first app.</strong>
   <br>
   Your data stays on your machine as plain Markdown files.
 </p>
@@ -75,7 +75,7 @@ massCode is free and open source. But building and maintaining a quality tool ta
 
 ## About
 
-Originally a snippet manager, massCode now brings together snippets, notes, calculations, and developer tools in one desktop app, so everyday work stays in one place.
+Originally a snippet manager, massCode now brings together snippets, notes, HTTP requests, calculations, and developer tools in one desktop app, so everyday work stays in one place.
 
 ## Features
 
@@ -101,6 +101,17 @@ Write longer markdown documents right next to your snippets: project docs, draft
 - Fullscreen presentation mode for demos and meetings
 - Callout blocks and image embedding
 
+### HTTP Client
+
+Keep API requests close to your code snippets and project notes with a lightweight HTTP client built into massCode.
+
+- Organize requests with folders and custom folder icons
+- Use environments and `{{variables}}` for local, staging, and production APIs
+- Edit params, headers, body, auth, and markdown descriptions
+- Preview requests as raw HTTP or cURL before sending
+- Inspect response status, time, size, body, and headers
+- Send the current request with <kbd>Cmd+Enter</kbd> on macOS or <kbd>Ctrl+Enter</kbd> on Windows and Linux
+
 ### Math Notebook
 
 A calculator-style notebook for natural-language calculations, conversions, and date math without leaving your workflow.
@@ -122,7 +133,7 @@ Built-in utilities for the small tasks that usually send you to a browser tab:
 
 ## Markdown Vault
 
-Your snippets and notes live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.
+Your snippets, notes, and HTTP requests live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.
 
 - **Git-friendly** - track changes and sync via any Git remote
 - **Cloud sync** - works with iCloud, Dropbox, Google Drive, Syncthing

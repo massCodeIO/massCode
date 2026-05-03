@@ -1,13 +1,13 @@
 ---
 title: Internal Links
-description: "Link notes and snippets together inside massCode Notes with wiki-style links, hover previews, and back-forward navigation."
+description: "Link notes, snippets, and HTTP requests together inside massCode Notes with wiki-style links, hover previews, and back-forward navigation."
 ---
 
 # Internal Links
 
-<AppVersion text=">=5.1.0" />
+<AppVersion text=">=5.1" />
 
-Internal Links let you connect notes and snippets with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets from prose, and move through related material without leaving massCode.
+Internal Links let you connect notes, snippets, and HTTP requests with wiki-style links directly inside Notes. Use them to build lightweight documentation, link reference snippets or saved API requests from prose, and move through related material without leaving massCode.
 
 <img :src="withBase('/notes-internal-links.png')">
 
@@ -27,7 +27,7 @@ You can also provide custom visible text with an alias:
 [[Fetch helper|request snippet]]
 ```
 
-massCode resolves internal links by item name. A target can be either a note or a snippet.
+massCode resolves internal links by item name. A target can be a note, a snippet, or an HTTP request.
 
 If two notes share the same name, qualify the link with a folder path:
 
@@ -40,7 +40,7 @@ If two notes share the same name, qualify the link with a folder path:
 
 Start typing `[[` in the Notes editor to open the internal links picker.
 
-- The picker searches both notes and snippets.
+- The picker searches notes, snippets, and HTTP requests.
 - Results show the item name and its current location.
 - Press <kbd>Enter</kbd> to insert the active result.
 - Use the arrow keys to move through the list.
@@ -53,6 +53,7 @@ Hold <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> on Windows or Linux, then click 
 
 - If the target is a note, massCode opens it in Notes.
 - If the target is a snippet, massCode switches to Code and opens the snippet there.
+- If the target is an HTTP request, massCode switches to HTTP and opens the request there.
 
 Broken links stay visible, but they appear dimmed and struck through so you can spot missing targets.
 
@@ -62,6 +63,7 @@ Hover an internal link while holding <kbd>Cmd</kbd> on macOS or <kbd>Ctrl</kbd> 
 
 - Note links show a text excerpt.
 - Snippet links show the first snippet fragment.
+- HTTP request links show the method, URL, and description.
 
 This helps you confirm the target before you navigate away from the current note.
 
@@ -78,9 +80,10 @@ The history is specific to internal-link navigation. If you manually select anot
 ## When to Use Internal Links
 
 - Link architecture notes to implementation snippets
+- Link API docs to saved HTTP requests
 - Connect meeting notes to reference code
-- Build personal knowledge-base pages that jump between notes and snippets
-- Keep long-form docs in Notes while linking reusable code examples from Code
+- Build personal knowledge-base pages that jump between notes, snippets, and requests
+- Keep long-form docs in Notes while linking reusable code examples from Code and API checks from HTTP
 
 <script setup>
 import { withBase } from 'vitepress'

@@ -329,9 +329,15 @@ async function deleteHttpRequest(requestId: number) {
   }
 }
 
-export function selectFirstRequest() {
+export function selectFirstRequest(options?: { folderId?: number | null }) {
   const source = isSearch.value ? requestsBySearch.value || [] : requests.value
-  const first = source?.[0]
+  const filteredSource = options
+    ? source.filter(
+        request => (request.folderId ?? null) === (options.folderId ?? null),
+      )
+    : source
+  const first = filteredSource?.[0]
+
   if (first) {
     selectHttpRequest(first.id)
   }

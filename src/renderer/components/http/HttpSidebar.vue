@@ -21,8 +21,12 @@ import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 const ENVIRONMENTS_PANEL_DEFAULTS
   = LAYOUT_DEFAULTS.http.environmentsPanel ?? LAYOUT_DEFAULTS.tags
 
-const { highlightedFolderIds, highlightedRequestIds, focusedFolderId }
-  = useHttpApp()
+const {
+  highlightedFolderIds,
+  highlightedRequestIds,
+  focusedFolderId,
+  httpState,
+} = useHttpApp()
 const {
   createHttpFolderAndSelect,
   folders,
@@ -31,7 +35,8 @@ const {
   selectedFolderIds,
   selectHttpFolder,
 } = useHttpFolders()
-const { isRestoreStateBlocked } = useHttpRequests()
+const { getHttpRequests, isRestoreStateBlocked, selectFirstRequest }
+  = useHttpRequests()
 const { clearSearch } = useHttpSearch()
 const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
 
@@ -169,10 +174,15 @@ async function onClickNode({
     return
   }
 
+  if (httpState.folderId === id && selectedFolderIds.value.length === 1)
+    return
+
   isRestoreStateBlocked.value = true
   clearSearch()
 
   await selectHttpFolder(id)
+  await getHttpRequests()
+  selectFirstRequest({ folderId: id })
 }
 
 function onDblclickNode(node: TreeNodeType) {

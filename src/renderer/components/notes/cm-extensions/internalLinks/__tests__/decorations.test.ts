@@ -18,7 +18,10 @@ vi.mock('@/electron', () => ({
 
 vi.mock('@/services/api', () => ({
   api: {
+    httpRequests: { getHttpRequestsById: vi.fn(), getHttpRequests: vi.fn() },
+    httpFolders: { getHttpFolders: vi.fn() },
     notes: { getNotesById: vi.fn() },
+    noteFolders: { getNoteFolders: vi.fn() },
     snippets: { getSnippetsById: vi.fn() },
   },
 }))

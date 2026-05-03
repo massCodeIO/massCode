@@ -317,6 +317,22 @@
       "directory": "Выбрать директорию"
     }
   },
+  "internalLinks": {
+    "picker": {
+      "searchPlaceholder": "Поиск сниппетов, HTTP-запросов и заметок...",
+      "emptyResults": "Нет результатов",
+      "groups": {
+        "snippets": "Сниппеты",
+        "httpRequests": "HTTP-запросы",
+        "notes": "Заметки"
+      }
+    },
+    "missing": {
+      "snippet": "Сниппет не найден",
+      "httpRequest": "HTTP-запрос не найден",
+      "note": "Заметка не найдена"
+    }
+  },
   "placeholder": {
     "emptyTagList": "Добавьте теги к сниппетам, чтобы увидеть их здесь",
     "emptyNotesTagList": "Добавьте теги к заметкам, чтобы увидеть их здесь",

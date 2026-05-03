@@ -1,4 +1,5 @@
 import { router, RouterName } from '@/router'
+import { useHttpRequests } from './spaces/http/useHttpRequests'
 import { useNotes } from './spaces/notes/useNotes'
 import {
   captureNavigationUIState,
@@ -15,7 +16,7 @@ export interface NavigationHistoryRouteEntry {
 export interface NavigationHistoryEntityEntry {
   id: number
   name: string
-  type: 'note' | 'snippet'
+  type: 'note' | 'snippet' | 'http-request'
   uiState?: NavigationHistoryUIState
 }
 
@@ -31,6 +32,7 @@ const isNavigatingHistory = ref(false)
 
 const { selectedNote } = useNotes()
 const { selectedSnippet } = useSnippets()
+const { currentRequest } = useHttpRequests()
 
 const canGoBack = computed(() => cursor.value > 0)
 const canGoForward = computed(
@@ -88,6 +90,13 @@ function captureCurrentLocation(): NavigationHistoryEntry | undefined {
       id: selectedSnippet.value.id,
       name: selectedSnippet.value.name,
       type: 'snippet',
+    }
+  }
+  else if (routeName === RouterName.httpSpace && currentRequest.value) {
+    entry = {
+      id: currentRequest.value.id,
+      name: currentRequest.value.name,
+      type: 'http-request',
     }
   }
 

@@ -8,6 +8,7 @@ export interface CachedEntityData {
   isDeleted: number
   firstContent?: { language: string, value: string | null } | null
   contentExcerpt?: string
+  request?: { method: string, url: string, description: string }
 }
 
 export type CachedEntity =

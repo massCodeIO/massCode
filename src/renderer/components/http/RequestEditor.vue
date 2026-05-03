@@ -2,13 +2,18 @@
 import type { HttpMethod } from '~/main/types/http'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
-import { useHttpExecute, useHttpRequests } from '@/composables'
+import {
+  useHttpExecute,
+  useHttpRequests,
+  useNavigationHistory,
+} from '@/composables'
 import { i18n } from '@/electron'
+import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
-import { LoaderCircle, Send } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, LoaderCircle, Send } from 'lucide-vue-next'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 
 const HTTP_METHODS: HttpMethod[] = [
@@ -28,6 +33,7 @@ const {
   saveCurrentRequest,
 } = useHttpRequests()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
+const { canGoBack, canGoForward } = useNavigationHistory()
 
 const activeTab = ref<'params' | 'headers' | 'body' | 'auth' | 'description'>(
   'params',
@@ -79,6 +85,15 @@ const nameValidationMessage = computed(() => {
 const isNameValidationTooltipOpen = computed(
   () => isNameFocused.value && Boolean(nameValidationMessage.value),
 )
+const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
+
+function onBackClick() {
+  void navigateBack()
+}
+
+function onForwardClick() {
+  void navigateForward()
+}
 
 function onNameFocus() {
   isNameFocused.value = true
@@ -117,6 +132,25 @@ async function onSend() {
       class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
     >
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+        <div
+          v-if="isHistoryVisible"
+          class="flex shrink-0 items-center gap-0.5"
+        >
+          <UiActionButton
+            :disabled="!canGoBack"
+            :tooltip="i18n.t('menu:history.back')"
+            @click="onBackClick"
+          >
+            <ChevronLeft class="h-3 w-3" />
+          </UiActionButton>
+          <UiActionButton
+            :disabled="!canGoForward"
+            :tooltip="i18n.t('menu:history.forward')"
+            @click="onForwardClick"
+          >
+            <ChevronRight class="h-3 w-3" />
+          </UiActionButton>
+        </div>
         <div class="min-w-0 flex-1">
           <UiInputValidationTooltip
             :open="isNameValidationTooltipOpen"

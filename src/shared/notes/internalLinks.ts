@@ -1,4 +1,4 @@
-export type InternalLinkType = 'snippet' | 'note'
+export type InternalLinkType = 'snippet' | 'note' | 'http-request'
 
 export interface InternalLink {
   alias: string | null
@@ -27,7 +27,7 @@ export interface ResolveInternalLinkOptions {
 }
 
 const ESCAPABLE_LINK_CHARACTERS = new Set(['\\', '|', ']'])
-const LEGACY_TARGET_RE = /^(?:snippet|note):\d+$/
+const LEGACY_TARGET_RE = /^(?:snippet|note|http-request):\d+$/
 
 export function splitInternalLinkTarget(target: string): {
   basename: string
@@ -170,7 +170,7 @@ function parseLinkAt(text: string, from: number): InternalLinkMatch | null {
   }
 
   const raw = text.slice(from, to)
-  const legacyMatch = target.match(/^(snippet|note):(\d+)$/)
+  const legacyMatch = target.match(/^(snippet|note|http-request):(\d+)$/)
   const legacyTarget = legacyMatch
     ? {
         id: Number(legacyMatch[2]),
@@ -359,16 +359,16 @@ export function resolveInternalLinkTargetByTitle(
   if (pathSegments.length > 0) {
     const targetPathKey = buildPathLookupKey(pathSegments, basename)
 
-    const noteMatch = items.find(
+    const pathMatch = items.find(
       item =>
-        item.type === 'note'
+        (item.type === 'note' || item.type === 'http-request')
         && buildCandidatePathLookupKey(item) === targetPathKey,
     )
 
-    if (noteMatch) {
+    if (pathMatch) {
       return {
-        id: noteMatch.id,
-        type: 'note',
+        id: pathMatch.id,
+        type: pathMatch.type,
       }
     }
 
@@ -397,7 +397,18 @@ export function resolveInternalLinkTargetByTitle(
   )
 
   if (noteCandidates.length === 0) {
-    return null
+    const httpRequest = items.find(
+      item =>
+        item.type === 'http-request'
+        && normalizeInternalLinkLookupKey(item.name) === normalizedTitle,
+    )
+
+    return httpRequest
+      ? {
+          id: httpRequest.id,
+          type: httpRequest.type,
+        }
+      : null
   }
 
   if (noteCandidates.length === 1) {

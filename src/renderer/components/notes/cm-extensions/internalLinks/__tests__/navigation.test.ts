@@ -71,6 +71,34 @@ describe('handleInternalLinkMouseDown', () => {
     expect(openInternalTarget).toHaveBeenCalledWith({ id: 15, type: 'note' })
   })
 
+  it('navigates to HTTP request links', () => {
+    const preventDefault = vi.fn()
+    const dispatch = vi.fn()
+
+    const handled = handleInternalLinkMouseDown(
+      { dispatch } as any,
+      {
+        ctrlKey: false,
+        metaKey: true,
+        preventDefault,
+      } as unknown as MouseEvent,
+      createLinkElement({
+        internalLinkBroken: 'false',
+        internalLinkFrom: '10',
+        internalLinkId: '8',
+        internalLinkType: 'http-request',
+      }),
+    )
+
+    expect(handled).toBe(true)
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+    expect(dispatch).not.toHaveBeenCalled()
+    expect(openInternalTarget).toHaveBeenCalledWith({
+      id: 8,
+      type: 'http-request',
+    })
+  })
+
   it('moves caret into the raw link on plain mousedown', () => {
     const preventDefault = vi.fn()
     const dispatch = vi.fn()

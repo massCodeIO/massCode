@@ -9,6 +9,11 @@ describe('useNavigationHistory', () => {
     vi.resetModules()
     vi.clearAllMocks()
     vi.doUnmock('../useNavigationUIState')
+    vi.doMock('../spaces/http/useHttpRequests', () => ({
+      useHttpRequests: () => ({
+        currentRequest: ref(),
+      }),
+    }))
   })
 
   it('records internal target navigation and restores backward and forward', async () => {
@@ -225,6 +230,55 @@ describe('useNavigationHistory', () => {
       { id: 2, name: 'Note B', type: 'note' },
     ])
     expect(history.cursor.value).toBe(1)
+  })
+
+  it('records HTTP request targets', async () => {
+    const route = ref({ name: 'http-space' })
+    const selectedNote = ref<{ id: number, name: string }>()
+    const selectedSnippet = ref<{ id: number, name: string }>()
+    const currentRequest = ref({ id: 8, name: 'Create snippet' })
+
+    vi.doMock('@/router', () => ({
+      RouterName: {
+        httpSpace: 'http-space',
+        main: 'main',
+        notesSpace: 'notes-space',
+        notesPresentation: 'notes-space/presentation',
+      },
+      router: {
+        currentRoute: route,
+      },
+    }))
+
+    vi.doMock('../spaces/http/useHttpRequests', () => ({
+      useHttpRequests: () => ({
+        currentRequest,
+      }),
+    }))
+
+    vi.doMock('../spaces/notes/useNotes', () => ({
+      useNotes: () => ({
+        selectedNote,
+      }),
+    }))
+
+    vi.doMock('../useSnippets', () => ({
+      useSnippets: () => ({
+        selectedSnippet,
+      }),
+    }))
+
+    const { useNavigationHistory } = await import('../useNavigationHistory')
+    const history = useNavigationHistory()
+
+    await history.recordNavigation(async () => {
+      currentRequest.value = { id: 9, name: 'Delete snippet' }
+    })
+
+    expect(history.entries.value).toEqual([
+      { id: 8, name: 'Create snippet', type: 'http-request' },
+      { id: 9, name: 'Delete snippet', type: 'http-request' },
+    ])
   })
 
   it('updates route ui state when recording again from the same dashboard entry', async () => {

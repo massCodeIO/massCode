@@ -49,7 +49,10 @@ export function handleInternalLinkMouseDown(
     const type = link.dataset.internalLinkType
     const id = Number(link.dataset.internalLinkId)
 
-    if ((type !== 'snippet' && type !== 'note') || !id) {
+    if (
+      (type !== 'snippet' && type !== 'note' && type !== 'http-request')
+      || !id
+    ) {
       return false
     }
 

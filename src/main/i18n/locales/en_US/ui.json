@@ -319,15 +319,17 @@
   },
   "internalLinks": {
     "picker": {
-      "searchPlaceholder": "Search snippets and notes...",
+      "searchPlaceholder": "Search snippets, HTTP requests, and notes...",
       "emptyResults": "No results",
       "groups": {
         "snippets": "Snippets",
+        "httpRequests": "HTTP Requests",
         "notes": "Notes"
       }
     },
     "missing": {
       "snippet": "Snippet not found",
+      "httpRequest": "HTTP request not found",
       "note": "Note not found"
     }
   },

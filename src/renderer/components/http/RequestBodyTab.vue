@@ -43,7 +43,7 @@ function removeFormDataRow(index: number) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex h-full min-h-0 flex-col gap-2">
     <div class="flex items-center">
       <Select.Select v-model="bodyType">
         <Select.SelectTrigger class="w-48">
@@ -70,6 +70,7 @@ function removeFormDataRow(index: number) {
       v-model="bodyText"
       :language="bodyType"
       :placeholder="i18n.t('spaces.http.editor.body.placeholder')"
+      class="min-h-0 flex-1"
     />
 
     <div

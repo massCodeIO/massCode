@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Extension } from '@codemirror/state'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
-import { useHttpEnvironments } from '@/composables'
+import { useHttpEnvironments, useTheme } from '@/composables'
 import { i18n } from '@/electron'
 import {
   defaultKeymap,
@@ -12,7 +13,13 @@ import {
 import { json } from '@codemirror/lang-json'
 import { indentUnit } from '@codemirror/language'
 import { Compartment, EditorState } from '@codemirror/state'
-import { EditorView, keymap, placeholder } from '@codemirror/view'
+import {
+  EditorView,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+  placeholder,
+} from '@codemirror/view'
 import {
   refreshVariables,
   varInterpolationExtension,
@@ -31,10 +38,12 @@ const model = defineModel<string>({ default: '' })
 const editorContainer = ref<HTMLElement>()
 
 const { activeEnvironment } = useHttpEnvironments()
+const { isDark } = useTheme()
 
 let view: EditorView | null = null
 let isApplyingExternalValue = false
 const languageCompartment = new Compartment()
+const highlightCompartment = new Compartment()
 
 function getVariables(): Record<string, string> {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
@@ -69,21 +78,38 @@ function getLanguageExtension(): Extension {
 function createBodyEditorTheme() {
   return EditorView.theme({
     '&': {
-      minHeight: '10rem',
+      height: '100%',
+      minHeight: '14rem',
       backgroundColor: 'var(--background)',
       color: 'var(--foreground)',
       fontSize: '12px',
       fontFamily: 'var(--font-mono)',
     },
+    '.cm-scroller': {
+      height: '100%',
+      overflow: 'auto',
+    },
     '.cm-content': {
-      padding: '0.5rem',
+      minWidth: 'max-content',
+      padding: '0.5rem 0.75rem',
       caretColor: 'var(--foreground)',
     },
     '.cm-line': {
       padding: '0',
     },
     '.cm-gutters': {
-      display: 'none',
+      borderRight: '1px solid var(--border)',
+      backgroundColor: 'var(--background)',
+      color: 'var(--muted-foreground)',
+    },
+    '.cm-lineNumbers .cm-gutterElement': {
+      minWidth: '2rem',
+      padding: '0 0.5rem',
+      fontSize: '11px',
+    },
+    '.cm-activeLineGutter': {
+      backgroundColor: 'transparent',
+      color: 'var(--foreground)',
     },
     '&.cm-focused': {
       outline: 'none',
@@ -112,12 +138,15 @@ function createBodyEditorTheme() {
 function createEditorState(doc: string): EditorState {
   const extensions: Extension[] = [
     createBodyEditorTheme(),
+    lineNumbers(),
+    highlightActiveLineGutter(),
     EditorView.lineWrapping,
     history(),
     indentUnit.of('  '),
     keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
     placeholder(props.placeholder ?? ''),
     languageCompartment.of(getLanguageExtension()),
+    highlightCompartment.of(createCodeHighlight(isDark.value)),
     varInterpolationExtension({ getVariables }),
     EditorView.updateListener.of((update) => {
       if (!update.docChanged || isApplyingExternalValue)
@@ -161,6 +190,16 @@ watch(
   },
 )
 
+watch(isDark, () => {
+  if (!view)
+    return
+  view.dispatch({
+    effects: highlightCompartment.reconfigure(
+      createCodeHighlight(isDark.value),
+    ),
+  })
+})
+
 watch(
   () => activeEnvironment.value?.variables,
   () => {
@@ -186,14 +225,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
+  <div class="flex min-h-0 flex-col gap-1">
     <div
-      class="bg-background overflow-hidden rounded-md border"
+      class="bg-background min-h-0 flex-1 overflow-hidden rounded-md border"
       :class="isJsonInvalid ? 'border-red-500' : 'border-input'"
     >
       <div
         ref="editorContainer"
-        class="cursor-text"
+        class="h-full min-h-[14rem] cursor-text"
       />
     </div>
     <div

@@ -220,19 +220,34 @@ async function onSend() {
         </Tabs.TabsList>
       </div>
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
-        <Tabs.TabsContent value="params">
+        <Tabs.TabsContent
+          value="params"
+          class="h-full"
+        >
           <HttpKeyValueTable v-model="currentDraft.query" />
         </Tabs.TabsContent>
-        <Tabs.TabsContent value="headers">
+        <Tabs.TabsContent
+          value="headers"
+          class="h-full"
+        >
           <HttpKeyValueTable v-model="currentDraft.headers" />
         </Tabs.TabsContent>
-        <Tabs.TabsContent value="body">
+        <Tabs.TabsContent
+          value="body"
+          class="h-full"
+        >
           <HttpRequestBodyTab v-model="currentDraft" />
         </Tabs.TabsContent>
-        <Tabs.TabsContent value="auth">
+        <Tabs.TabsContent
+          value="auth"
+          class="h-full"
+        >
           <HttpRequestAuthTab v-model="currentDraft" />
         </Tabs.TabsContent>
-        <Tabs.TabsContent value="description">
+        <Tabs.TabsContent
+          value="description"
+          class="h-full"
+        >
           <HttpRequestDescriptionTab v-model="currentDraft" />
         </Tabs.TabsContent>
       </div>

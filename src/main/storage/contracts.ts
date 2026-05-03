@@ -331,11 +331,13 @@ export interface NoteTagsStorage {
 
 export interface HttpFolderCreateInput {
   name: string
+  icon?: string | null
   parentId?: number | null
 }
 
 export interface HttpFolderUpdateInput {
   name?: string
+  icon?: string | null
   parentId?: number | null
   isOpen?: number
   orderIndex?: number

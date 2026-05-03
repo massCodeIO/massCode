@@ -378,12 +378,14 @@ export interface NoteTagsUpdate {
 
 export interface HttpFoldersAdd {
   name: string;
+  icon?: string | null;
   parentId?: number | null;
 }
 
 export type HttpFoldersResponse = {
   id: number;
   name: string;
+  icon: string | null;
   createdAt: number;
   updatedAt: number;
   parentId: number | null;
@@ -394,6 +396,7 @@ export type HttpFoldersResponse = {
 export type HttpFoldersTreeResponse = {
   id: number;
   name: string;
+  icon: string | null;
   createdAt: number;
   updatedAt: number;
   parentId: number | null;
@@ -404,6 +407,7 @@ export type HttpFoldersTreeResponse = {
 
 export interface HttpFoldersUpdate {
   name?: string;
+  icon?: string | null;
   parentId?: number | null;
   /**
    * @min 0

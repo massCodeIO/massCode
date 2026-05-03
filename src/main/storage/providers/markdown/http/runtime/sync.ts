@@ -128,6 +128,7 @@ function reconcileFolders(
     nextFolders.push({
       id,
       name,
+      icon: null,
       parentId,
       isOpen: 0,
       orderIndex: nextFolders.length,

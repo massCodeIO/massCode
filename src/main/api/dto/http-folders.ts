@@ -2,11 +2,13 @@ import Elysia, { t } from 'elysia'
 
 const httpFoldersAdd = t.Object({
   name: t.String(),
+  icon: t.Optional(t.Union([t.String(), t.Null()])),
   parentId: t.Optional(t.Union([t.Number(), t.Null()])),
 })
 
 const httpFoldersUpdate = t.Object({
   name: t.Optional(t.String()),
+  icon: t.Optional(t.Union([t.String(), t.Null()])),
   parentId: t.Optional(t.Union([t.Number(), t.Null()])),
   isOpen: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
   orderIndex: t.Optional(t.Number()),
@@ -15,6 +17,7 @@ const httpFoldersUpdate = t.Object({
 const httpFoldersItem = t.Object({
   id: t.Number(),
   name: t.String(),
+  icon: t.Union([t.String(), t.Null()]),
   createdAt: t.Number(),
   updatedAt: t.Number(),
   parentId: t.Union([t.Number(), t.Null()]),

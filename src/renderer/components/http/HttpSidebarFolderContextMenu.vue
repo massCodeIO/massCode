@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useDialog, useHttpFolders, useHttpRequests } from '@/composables'
 import { i18n } from '@/electron'
@@ -19,6 +20,7 @@ const {
   folders,
   getFolderByIdFromTree,
   getHttpFolders,
+  updateHttpFolder,
   selectedFolderIds,
   clearFolderSelection,
   selectHttpFolder,
@@ -84,6 +86,31 @@ function onRenameFolder() {
     emit('update:editableId', props.contextNode.id)
   }, 100)
 }
+
+function onSetCustomIcon() {
+  if (!props.contextNode)
+    return
+
+  const { showDialog } = useDialog()
+  showDialog({
+    title: i18n.t('action.setCustomIcon'),
+    content: h(CustomIcons, {
+      nodeId: props.contextNode.id,
+      onSetIcon: async (nodeId: number, iconName: string) => {
+        await updateHttpFolder(nodeId, { icon: iconName })
+        await getHttpFolders(false)
+      },
+    }),
+  })
+}
+
+async function onRemoveCustomIcon() {
+  if (!props.contextNode)
+    return
+
+  await updateHttpFolder(props.contextNode.id, { icon: null })
+  await getHttpFolders(false)
+}
 </script>
 
 <template>
@@ -108,6 +135,16 @@ function onRenameFolder() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem @click="onDeleteFolder">
         {{ i18n.t("action.delete.common") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuSeparator />
+      <ContextMenu.ContextMenuItem @click="onSetCustomIcon">
+        {{ i18n.t("action.setCustomIcon") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-if="contextNode?.icon"
+        @click="onRemoveCustomIcon"
+      >
+        {{ i18n.t("action.removeCustomIcon") }}
       </ContextMenu.ContextMenuItem>
     </template>
   </ContextMenu.ContextMenuContent>

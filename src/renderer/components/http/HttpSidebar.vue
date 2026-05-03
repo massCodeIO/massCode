@@ -256,9 +256,18 @@ function onCancelEdit() {
               @update:focused-id="focusedId = $event"
               @update:highlighted-ids="highlightedIds = $event"
             >
-              <template #icon>
+              <template #icon="{ node }">
                 <div class="mr-1.5 flex flex-shrink-0 items-center">
-                  <Folder class="h-4 w-4" />
+                  <UiFolderIcon
+                    v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
+                    :name="
+                      getFolderByIdFromTree(folders, Number(node.id))!.icon!
+                    "
+                  />
+                  <Folder
+                    v-else
+                    class="h-4 w-4"
+                  />
                 </div>
               </template>
             </UiTree>

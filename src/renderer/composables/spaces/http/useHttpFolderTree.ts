@@ -1,6 +1,7 @@
 export interface HttpFolderTreeItem {
   id: number
   name: string
+  icon: string | null
   createdAt: number
   updatedAt: number
   parentId: number | null

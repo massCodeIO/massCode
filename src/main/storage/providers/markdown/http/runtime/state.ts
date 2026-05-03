@@ -1,5 +1,6 @@
 import type {
   HttpCounters,
+  HttpFolderRecord,
   HttpPaths,
   HttpState,
   HttpStateFile,
@@ -45,6 +46,21 @@ function normalizeCounters(
   }
 }
 
+function normalizeFolders(raw: HttpStateFile['folders']): HttpFolderRecord[] {
+  if (!Array.isArray(raw))
+    return []
+
+  return raw.map(folder => ({
+    ...folder,
+    icon:
+      folder.icon === null
+        ? null
+        : typeof folder.icon === 'string'
+          ? folder.icon
+          : null,
+  }))
+}
+
 export function ensureHttpStateFile(paths: HttpPaths): void {
   fs.ensureDirSync(paths.httpRoot)
 
@@ -66,7 +82,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
   return {
     version: typeof raw.version === 'number' ? raw.version : defaults.version,
     counters: normalizeCounters(raw.counters),
-    folders: Array.isArray(raw.folders) ? raw.folders : [],
+    folders: normalizeFolders(raw.folders),
     requests: Array.isArray(raw.requests) ? raw.requests : [],
     environments: Array.isArray(raw.environments) ? raw.environments : [],
     activeEnvironmentId:

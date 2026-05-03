@@ -36,6 +36,7 @@ export interface HttpRequestFrontmatter {
 export interface HttpFolderRecord {
   id: number
   name: string
+  icon: string | null
   parentId: number | null
   isOpen: number
   orderIndex: number

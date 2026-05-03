@@ -104,6 +104,7 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         createFolder: ({ id, name, now, orderIndex, parentId }) => ({
           createdAt: now,
           id,
+          icon: input.icon ?? null,
           isOpen: 0,
           name,
           orderIndex,
@@ -137,6 +138,7 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
 
       if (
         input.name === undefined
+        && input.icon === undefined
         && input.parentId === undefined
         && input.isOpen === undefined
         && input.orderIndex === undefined
@@ -196,6 +198,10 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
 
       if (input.isOpen !== undefined) {
         folder.isOpen = normalizeFlag(input.isOpen)
+      }
+
+      if (input.icon !== undefined) {
+        folder.icon = input.icon
       }
 
       folder.updatedAt = now

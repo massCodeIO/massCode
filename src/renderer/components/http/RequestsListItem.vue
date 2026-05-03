@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import type { HttpRequestListItem } from '@/composables/spaces/http/useHttpRequests'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDialog, useHttpApp, useHttpRequests } from '@/composables'
-import { i18n } from '@/electron'
-import { onClickOutside } from '@vueuse/core'
+import {
+  useDialog,
+  useDonations,
+  useHttpApp,
+  useHttpEnvironments,
+  useHttpRequests,
+} from '@/composables'
+import { i18n, ipc } from '@/electron'
+import { isMac } from '@/utils'
+import { onClickOutside, useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
+import { buildHttpPreview } from './requestPreview'
 
 interface Props {
   request: HttpRequestListItem
@@ -20,10 +28,13 @@ const {
 } = useHttpApp()
 const {
   deleteHttpRequest,
+  duplicateHttpRequest,
   selectFirstRequest,
   selectHttpRequest,
   selectedRequestIds,
 } = useHttpRequests()
+const { activeEnvironment } = useHttpEnvironments()
+const { copy } = useClipboard()
 
 const itemRef = ref<HTMLDivElement>()
 
@@ -37,6 +48,16 @@ const isHighlighted = computed(() =>
   highlightedRequestIds.value.has(props.request.id),
 )
 const isFocused = computed(() => focusedRequestId.value === props.request.id)
+const isDuplicateDisabled = computed(() => selectedRequestIds.value.length > 1)
+const revealInFileManagerLabel = computed(() =>
+  isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager'),
+)
+
+const previewVariables = computed<Record<string, string>>(() => {
+  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
+})
 
 function onClick(event: MouseEvent) {
   selectHttpRequest(props.request.id, event.shiftKey)
@@ -83,6 +104,27 @@ async function onDelete() {
   if (wasCurrentSelected) {
     selectFirstRequest()
   }
+}
+
+async function onDuplicate() {
+  const id = await duplicateHttpRequest(props.request.id)
+  if (id) {
+    selectHttpRequest(id)
+    focusedRequestId.value = id
+  }
+}
+
+function onRevealInFileManager() {
+  void ipc.invoke('system:show-http-request-in-file-manager', props.request.id)
+}
+
+function onCopyRequest() {
+  copy(buildHttpPreview(props.request, { variables: previewVariables.value }))
+  useDonations().incrementCopy('http')
+}
+
+function onCopyRequestLink() {
+  copy(`masscode://goto?httpRequestId=${props.request.id}`)
 }
 
 function onDragStart(event: DragEvent) {
@@ -175,6 +217,23 @@ onClickOutside(itemRef, () => {
         </div>
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
+        <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
+          {{ revealInFileManagerLabel }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @click="onCopyRequest">
+          {{ i18n.t("action.copy.request") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @click="onCopyRequestLink">
+          {{ i18n.t("action.copy.requestLink") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuItem
+          :disabled="isDuplicateDisabled"
+          @click="onDuplicate"
+        >
+          {{ i18n.t("action.duplicate") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
         <ContextMenu.ContextMenuItem @click="onDelete">
           {{ i18n.t("action.delete.common") }}
         </ContextMenu.ContextMenuItem>

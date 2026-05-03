@@ -252,6 +252,52 @@ async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
   }
 }
 
+async function duplicateHttpRequest(requestId: number) {
+  const source = findHttpRequestById(requestId)
+  if (!source) {
+    return
+  }
+
+  try {
+    const folderId = source.folderId ?? null
+    const siblingNames = requests.value
+      .filter(request => (request.folderId ?? null) === folderId)
+      .map(request => request.name)
+    const copyBaseName = `${source.name} - copy`
+    const name = siblingNames.some(
+      sibling => sibling.toLowerCase() === copyBaseName.toLowerCase(),
+    )
+      ? getNextIndexedName(copyBaseName, siblingNames)
+      : copyBaseName
+
+    markPersistedStorageMutation()
+    const { data } = await api.httpRequests.postHttpRequests({
+      folderId,
+      method: source.method,
+      name,
+      url: source.url,
+    })
+    const id = Number(data.id)
+
+    await api.httpRequests.patchHttpRequestsById(String(id), {
+      auth: { ...source.auth },
+      body: source.body,
+      bodyType: source.bodyType,
+      description: source.description,
+      formData: source.formData.map(entry => ({ ...entry })),
+      headers: source.headers.map(entry => ({ ...entry })),
+      query: source.query.map(entry => ({ ...entry })),
+    })
+
+    await refreshHttpRequests()
+
+    return id
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
   try {
     markPersistedStorageMutation()
@@ -460,6 +506,7 @@ export function useHttpRequests() {
     currentDraft,
     currentRequest,
     deleteHttpRequest,
+    duplicateHttpRequest,
     discardCurrentRequestChanges,
     getHttpRequests,
     hasSiblingRequestNameConflict,

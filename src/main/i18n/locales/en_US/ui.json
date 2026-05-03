@@ -311,7 +311,9 @@
       "snippet": "Copy Snippet",
       "snippetLink": "Copy Snippet Link",
       "note": "Copy Note",
-      "noteLink": "Copy Note Link"
+      "noteLink": "Copy Note Link",
+      "request": "Copy Request",
+      "requestLink": "Copy Request Link"
     },
     "select": {
       "directory": "Select Directory"

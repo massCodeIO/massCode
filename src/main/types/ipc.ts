@@ -43,6 +43,7 @@ type SystemAction =
   | 'reload'
   | 'move-vault'
   | 'open-external'
+  | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'
   | 'show-note-in-file-manager'
   | 'deep-link'

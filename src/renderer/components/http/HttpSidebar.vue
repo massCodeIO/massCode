@@ -8,13 +8,18 @@ import {
   useHttpFolders,
   useHttpRequests,
   useHttpSearch,
+  useResizeHandle,
 } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, store } from '@/electron'
 import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
 import { Folder, Plus } from 'lucide-vue-next'
+import { LAYOUT_DEFAULTS } from '~/main/store/constants'
+
+const ENVIRONMENTS_PANEL_DEFAULTS
+  = LAYOUT_DEFAULTS.http.environmentsPanel ?? LAYOUT_DEFAULTS.tags
 
 const { highlightedFolderIds, highlightedRequestIds, focusedFolderId }
   = useHttpApp()
@@ -29,6 +34,41 @@ const {
 const { isRestoreStateBlocked } = useHttpRequests()
 const { clearSearch } = useHttpSearch()
 const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
+
+const environmentsHandleRef = ref<HTMLElement>()
+
+function normalizeEnvironmentsHeight(value: number | undefined) {
+  if (
+    typeof value !== 'number'
+    || Number.isNaN(value)
+    || value < ENVIRONMENTS_PANEL_DEFAULTS.min
+  ) {
+    return ENVIRONMENTS_PANEL_DEFAULTS.height
+  }
+  return value
+}
+
+const environmentsHeight = ref(
+  normalizeEnvironmentsHeight(
+    store.app.get('http.layout.environmentsListHeight') as number | undefined,
+  ),
+)
+
+useResizeHandle(environmentsHandleRef, {
+  direction: 'vertical',
+  onMove(dy) {
+    environmentsHeight.value = Math.max(
+      ENVIRONMENTS_PANEL_DEFAULTS.min,
+      environmentsHeight.value - dy,
+    )
+  },
+  onEnd() {
+    store.app.set(
+      'http.layout.environmentsListHeight',
+      environmentsHeight.value,
+    )
+  },
+})
 
 function mapToTreeNode(folder: any): TreeNodeType {
   return {
@@ -190,48 +230,62 @@ function onCancelEdit() {
         </UiActionButton>
       </template>
     </SidebarHeader>
-    <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
-      <ContextMenu.ContextMenu>
-        <ContextMenu.ContextMenuTrigger as-child>
-          <UiTree
-            v-if="treeData.length"
-            :model-value="treeData"
-            :selected-ids="selectedIds"
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
+        <ContextMenu.ContextMenu>
+          <ContextMenu.ContextMenuTrigger as-child>
+            <UiTree
+              v-if="treeData.length"
+              :model-value="treeData"
+              :selected-ids="selectedIds"
+              :editable-id="editableId"
+              :focused-id="focusedId"
+              :highlighted-ids="highlightedIds"
+              :get-validation-message="getFolderValidationMessage"
+              class="h-full px-0.5 pb-1"
+              @click-node="onClickNode"
+              @dblclick-node="onDblclickNode"
+              @toggle-node="onToggleNode"
+              @drag-node="onDragNode"
+              @external-drop="onExternalDrop"
+              @context-menu="onContextMenu"
+              @update-label="onUpdateLabel"
+              @cancel-edit="onCancelEdit"
+              @update:selected-ids="selectedIds = $event"
+              @update:editable-id="editableId = $event"
+              @update:focused-id="focusedId = $event"
+              @update:highlighted-ids="highlightedIds = $event"
+            >
+              <template #icon>
+                <div class="mr-1.5 flex flex-shrink-0 items-center">
+                  <Folder class="h-4 w-4" />
+                </div>
+              </template>
+            </UiTree>
+          </ContextMenu.ContextMenuTrigger>
+          <UiEmptyPlaceholder
+            v-if="!treeData.length"
+            :text="i18n.t('placeholder.emptyFoldersList')"
+          />
+          <HttpSidebarFolderContextMenu
+            :context-node="contextNode"
             :editable-id="editableId"
-            :focused-id="focusedId"
-            :highlighted-ids="highlightedIds"
-            :get-validation-message="getFolderValidationMessage"
-            class="h-full px-0.5 pb-1"
-            @click-node="onClickNode"
-            @dblclick-node="onDblclickNode"
-            @toggle-node="onToggleNode"
-            @drag-node="onDragNode"
-            @external-drop="onExternalDrop"
-            @context-menu="onContextMenu"
-            @update-label="onUpdateLabel"
-            @cancel-edit="onCancelEdit"
-            @update:selected-ids="selectedIds = $event"
             @update:editable-id="editableId = $event"
-            @update:focused-id="focusedId = $event"
-            @update:highlighted-ids="highlightedIds = $event"
-          >
-            <template #icon>
-              <div class="mr-1.5 flex flex-shrink-0 items-center">
-                <Folder class="h-4 w-4" />
-              </div>
-            </template>
-          </UiTree>
-        </ContextMenu.ContextMenuTrigger>
-        <UiEmptyPlaceholder
-          v-if="!treeData.length"
-          :text="i18n.t('placeholder.emptyFoldersList')"
-        />
-        <HttpSidebarFolderContextMenu
-          :context-node="contextNode"
-          :editable-id="editableId"
-          @update:editable-id="editableId = $event"
-        />
-      </ContextMenu.ContextMenu>
+          />
+        </ContextMenu.ContextMenu>
+      </div>
+
+      <div
+        ref="environmentsHandleRef"
+        class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"
+      />
+
+      <div
+        :style="{ height: `${environmentsHeight}px` }"
+        class="shrink-0 overflow-hidden"
+      >
+        <HttpEnvironmentsPanel />
+      </div>
     </div>
   </div>
 </template>

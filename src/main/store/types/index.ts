@@ -99,6 +99,7 @@ export interface AppStore {
     selection: HttpState
     layout: {
       mode: SpaceLayoutMode
+      environmentsListHeight: number
       threePanel?: number[]
       twoPanel?: number
       responsePanelHeight?: number

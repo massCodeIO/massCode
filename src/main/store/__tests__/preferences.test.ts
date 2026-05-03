@@ -279,6 +279,7 @@ describe('app store sanitization', () => {
       http: {
         layout: {
           mode: 'list-editor',
+          environmentsListHeight: 180,
           threePanel: [20, 30],
           twoPanel: 35,
           responsePanelHeight: 360,
@@ -290,6 +291,7 @@ describe('app store sanitization', () => {
     const { default: app } = await import('../module/app')
 
     expect(app.get('http.layout.mode' as any)).toBe('list-editor')
+    expect(app.get('http.layout.environmentsListHeight' as any)).toBe(180)
     expect(app.get('http.layout.threePanel' as any)).toEqual([20, 30])
     expect(app.get('http.layout.twoPanel' as any)).toBe(35)
     expect(app.get('http.layout.responsePanelHeight' as any)).toBe(360)

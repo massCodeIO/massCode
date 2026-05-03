@@ -40,6 +40,7 @@ const APP_STORE_DEFAULTS: AppStore = {
     selection: {},
     layout: {
       mode: 'all-panels',
+      environmentsListHeight: LAYOUT_DEFAULTS.http.environmentsPanel.height,
     },
   },
   notes: {
@@ -303,6 +304,16 @@ function sanitizeAppStore(value: unknown): AppStore {
           ['all-panels', 'list-editor', 'editor-only'] as const,
           APP_STORE_DEFAULTS.http.layout.mode,
         ),
+        environmentsListHeight: (() => {
+          const raw = readNumber(
+            httpLayoutSource,
+            'environmentsListHeight',
+            LAYOUT_DEFAULTS.http.environmentsPanel.height,
+          )
+          return raw < LAYOUT_DEFAULTS.http.environmentsPanel.min
+            ? LAYOUT_DEFAULTS.http.environmentsPanel.height
+            : raw
+        })(),
         threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
         twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
         responsePanelHeight: (() => {

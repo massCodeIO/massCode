@@ -6,6 +6,7 @@ export const LAYOUT_DEFAULTS = {
   editor: { min: 300 },
   tags: { height: 200, min: 80 },
   http: {
+    environmentsPanel: { height: 200, min: 80 },
     responsePanel: { height: 300, min: 120 },
   },
 }

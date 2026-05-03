@@ -4,7 +4,7 @@ import * as Dialog from '@/components/ui/shadcn/dialog'
 import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { Check, Plus, Trash2 } from 'lucide-vue-next'
 
 interface VariableEntry {
   key: string
@@ -213,16 +213,16 @@ async function onSelectEnvironment(id: number) {
               v-for="env in environments"
               :key="env.id"
               type="button"
-              class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
+              class="hover:bg-accent flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm"
               :class="{
                 'bg-accent': selectedEnvId === env.id,
               }"
               @click="onSelectEnvironment(env.id)"
             >
               <span class="truncate">{{ env.name }}</span>
-              <span
+              <Check
                 v-if="activeEnvironmentId === env.id"
-                class="bg-primary ml-auto inline-block size-1.5 rounded-full"
+                class="size-3.5 flex-shrink-0"
               />
             </button>
           </div>

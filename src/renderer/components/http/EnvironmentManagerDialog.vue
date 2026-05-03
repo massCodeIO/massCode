@@ -240,6 +240,8 @@ async function onSelectEnvironment(id: number) {
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
       class="grid-rows-[auto_minmax(0,1fr)] overflow-hidden sm:max-w-3xl"
+      @open-auto-focus="(e) => e.preventDefault()"
+      @close-auto-focus="(e) => e.preventDefault()"
     >
       <Dialog.DialogHeader>
         <Dialog.DialogTitle>

@@ -13,6 +13,7 @@ import {
   Notebook,
   Palette,
   Plug,
+  Send,
 } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -39,6 +40,11 @@ const nav: { label: string, name: string, icon: Component }[] = [
     label: i18n.t('preferences:notesEditor.label'),
     name: RouterName.preferencesNotesEditor,
     icon: Notebook,
+  },
+  {
+    label: i18n.t('preferences:http.label'),
+    name: RouterName.preferencesHttp,
+    icon: Send,
   },
   {
     label: i18n.t('preferences:math.label'),

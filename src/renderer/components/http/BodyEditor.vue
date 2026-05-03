@@ -28,11 +28,16 @@ import {
 interface Props {
   language?: 'json' | 'text' | 'form-urlencoded'
   placeholder?: string
+  wrapLines?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   language: 'text',
+  wrapLines: true,
 })
+
+const { '.cm-scroller': editorScrollerTheme, ...editorScrollbarRestTheme }
+  = editorScrollbarTheme
 
 const model = defineModel<string>({ default: '' })
 const editorContainer = ref<HTMLElement>()
@@ -44,6 +49,8 @@ let view: EditorView | null = null
 let isApplyingExternalValue = false
 const languageCompartment = new Compartment()
 const highlightCompartment = new Compartment()
+const themeCompartment = new Compartment()
+const wrapCompartment = new Compartment()
 
 function getVariables(): Record<string, string> {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
@@ -75,7 +82,7 @@ function getLanguageExtension(): Extension {
   return []
 }
 
-function createBodyEditorTheme() {
+function createBodyEditorTheme(wrapLines: boolean) {
   return EditorView.theme({
     '&': {
       height: '100%',
@@ -86,16 +93,29 @@ function createBodyEditorTheme() {
       fontFamily: 'var(--font-mono)',
     },
     '.cm-scroller': {
+      ...editorScrollerTheme,
       height: '100%',
-      overflow: 'auto',
     },
     '.cm-content': {
-      minWidth: 'max-content',
+      ...(wrapLines
+        ? {
+            boxSizing: 'border-box',
+            width: '100%',
+          }
+        : {
+            minWidth: 'max-content',
+          }),
       padding: '0.5rem 0.75rem',
       caretColor: 'var(--foreground)',
     },
     '.cm-line': {
       padding: '0',
+      ...(wrapLines
+        ? {
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+          }
+        : {}),
     },
     '.cm-gutters': {
       borderRight: '1px solid var(--border)',
@@ -131,16 +151,16 @@ function createBodyEditorTheme() {
     '.cm-placeholder': {
       color: 'var(--muted-foreground)',
     },
-    ...editorScrollbarTheme,
+    ...editorScrollbarRestTheme,
   })
 }
 
 function createEditorState(doc: string): EditorState {
   const extensions: Extension[] = [
-    createBodyEditorTheme(),
+    themeCompartment.of(createBodyEditorTheme(props.wrapLines)),
     lineNumbers(),
     highlightActiveLineGutter(),
-    EditorView.lineWrapping,
+    wrapCompartment.of(props.wrapLines ? EditorView.lineWrapping : []),
     history(),
     indentUnit.of('  '),
     keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
@@ -199,6 +219,22 @@ watch(isDark, () => {
     ),
   })
 })
+
+watch(
+  () => props.wrapLines,
+  () => {
+    if (!view)
+      return
+    view.dispatch({
+      effects: [
+        themeCompartment.reconfigure(createBodyEditorTheme(props.wrapLines)),
+        wrapCompartment.reconfigure(
+          props.wrapLines ? EditorView.lineWrapping : [],
+        ),
+      ],
+    })
+  },
+)
 
 watch(
   () => activeEnvironment.value?.variables,

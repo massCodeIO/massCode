@@ -158,6 +158,12 @@ export interface MathSettings {
   dateFormat: 'numeric' | 'short' | 'long'
 }
 
+export interface HttpSettings {
+  wrapLines: boolean
+  defaultPreviewFormat: 'http' | 'curl'
+  autoSwitchToResponse: boolean
+}
+
 export interface PreferencesStore {
   appearance: {
     theme: string
@@ -177,6 +183,7 @@ export interface PreferencesStore {
     markdown: MarkdownSettings
   }
   math: MathSettings
+  http: HttpSettings
 }
 
 export interface MathSheet {

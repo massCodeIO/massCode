@@ -115,6 +115,23 @@
     "label": "Markdown",
     "codeRenderer": "Рендер блоков кода"
   },
+  "http": {
+    "label": "HTTP Client",
+    "wrapLines": {
+      "label": "Перенос строк",
+      "description": "Переносить длинные строки в превью HTTP, теле запроса и просмотре ответа."
+    },
+    "defaultPreviewFormat": {
+      "label": "Формат превью по умолчанию",
+      "description": "Формат, который выбран по умолчанию в панели превью запроса.",
+      "http": "HTTP",
+      "curl": "cURL"
+    },
+    "autoSwitchToResponse": {
+      "label": "Показывать ответ после отправки",
+      "description": "Переключать нижнюю панель на Response, когда запрос начинается или завершается."
+    }
+  },
   "api": {
     "label": "Порт API",
     "port": {

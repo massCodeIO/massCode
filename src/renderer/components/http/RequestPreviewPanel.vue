@@ -5,6 +5,7 @@ import { i18n } from '@/electron'
 const props = defineProps<{
   content: string
   format: HttpRequestPreviewFormat
+  wrapLines?: boolean
 }>()
 
 const viewerLanguage = computed(() => {
@@ -27,6 +28,7 @@ const viewerLanguage = computed(() => {
       class="min-h-0 flex-1"
       :content="content"
       :language="viewerLanguage"
+      :wrap-lines="props.wrapLines"
     />
   </div>
 </template>

@@ -166,6 +166,40 @@ describe('preferences store sanitization', () => {
       preferences.get('editor.markdown.legacyMarkdownFlag' as any),
     ).toBeUndefined()
   })
+
+  it('keeps persisted http settings and prunes stale values', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: false,
+        defaultPreviewFormat: 'curl',
+        autoSwitchToResponse: false,
+        garbage: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(false)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('curl')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(false)
+    expect(preferences.get('http.garbage' as any)).toBeUndefined()
+  })
+
+  it('adds sanitized defaults for invalid http settings', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: 'bad',
+        defaultPreviewFormat: 'bad',
+        autoSwitchToResponse: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(true)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('http')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(true)
+  })
 })
 
 describe('app store sanitization', () => {

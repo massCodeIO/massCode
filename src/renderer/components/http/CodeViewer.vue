@@ -18,17 +18,26 @@ import {
 
 type CodeViewerLanguage = 'plain' | 'json' | 'http' | 'shell'
 
-const props = defineProps<{
-  content: string
-  language?: CodeViewerLanguage
-}>()
+const props = withDefaults(
+  defineProps<{
+    content: string
+    language?: CodeViewerLanguage
+    wrapLines?: boolean
+  }>(),
+  {
+    wrapLines: true,
+  },
+)
+
+const { '.cm-scroller': editorScrollerTheme, ...editorScrollbarRestTheme }
+  = editorScrollbarTheme
 
 const { isDark } = useTheme()
 const editorContainer = ref<HTMLElement>()
 
 let view: EditorView | null = null
 
-function createViewerTheme() {
+function createViewerTheme(wrapLines: boolean) {
   return EditorView.theme({
     '&': {
       height: '100%',
@@ -38,16 +47,29 @@ function createViewerTheme() {
       fontFamily: 'var(--font-mono)',
     },
     '.cm-scroller': {
+      ...editorScrollerTheme,
       height: '100%',
-      overflow: 'auto',
     },
     '.cm-content': {
-      minWidth: 'max-content',
+      ...(wrapLines
+        ? {
+            boxSizing: 'border-box',
+            width: '100%',
+          }
+        : {
+            minWidth: 'max-content',
+          }),
       padding: '0.5rem 0.75rem',
       caretColor: 'transparent',
     },
     '.cm-line': {
       padding: '0',
+      ...(wrapLines
+        ? {
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+          }
+        : {}),
     },
     '.cm-gutters': {
       borderRight: '1px solid var(--border)',
@@ -74,13 +96,13 @@ function createViewerTheme() {
       backgroundColor:
         'color-mix(in oklch, var(--primary) 24%, transparent) !important',
     },
-    ...editorScrollbarTheme,
+    ...editorScrollbarRestTheme,
   })
 }
 
 function createEditorState(doc: string): EditorState {
   const extensions: Extension[] = [
-    createViewerTheme(),
+    createViewerTheme(props.wrapLines),
     lineNumbers(),
     highlightActiveLineGutter(),
     drawSelection(),
@@ -89,6 +111,10 @@ function createEditorState(doc: string): EditorState {
     keymap.of([]),
     createCodeHighlight(isDark.value),
   ]
+
+  if (props.wrapLines) {
+    extensions.push(EditorView.lineWrapping)
+  }
 
   if (props.language === 'json') {
     extensions.push(json())
@@ -104,7 +130,7 @@ function createEditorState(doc: string): EditorState {
 }
 
 watch(
-  () => [props.content, props.language, isDark.value] as const,
+  () => [props.content, props.language, props.wrapLines, isDark.value] as const,
   ([content]) => {
     if (!view)
       return

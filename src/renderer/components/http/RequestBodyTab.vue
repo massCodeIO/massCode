@@ -3,10 +3,12 @@ import type { HttpRequestDraft } from '@/composables'
 import type { HttpBodyType } from '~/main/types/http'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
+import { useHttpSettings } from '@/composables'
 import { i18n } from '@/electron'
 import { Plus, Trash2 } from 'lucide-vue-next'
 
 const draft = defineModel<HttpRequestDraft>({ required: true })
+const { settings } = useHttpSettings()
 
 const BODY_TYPES: { value: HttpBodyType, labelKey: string }[] = [
   { value: 'none', labelKey: 'spaces.http.editor.body.typeNone' },
@@ -69,6 +71,7 @@ function removeFormDataRow(index: number) {
       "
       v-model="bodyText"
       :language="bodyType"
+      :wrap-lines="settings.wrapLines"
       :placeholder="i18n.t('spaces.http.editor.body.placeholder')"
       class="min-h-0 flex-1"
     />

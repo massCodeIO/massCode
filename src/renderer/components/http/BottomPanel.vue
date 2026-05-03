@@ -8,6 +8,7 @@ import {
   useHttpEnvironments,
   useHttpExecute,
   useHttpRequests,
+  useHttpSettings,
 } from '@/composables'
 import { i18n } from '@/electron'
 import { Copy } from 'lucide-vue-next'
@@ -18,11 +19,17 @@ type BottomPanelTab = 'preview' | 'response'
 const { currentDraft } = useHttpRequests()
 const { activeEnvironment } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
+const { settings } = useHttpSettings()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
 const activeTab = ref<BottomPanelTab>('preview')
-const previewFormat = ref<HttpRequestPreviewFormat>('http')
+const previewFormat = computed<HttpRequestPreviewFormat>({
+  get: () => settings.defaultPreviewFormat,
+  set: (value) => {
+    settings.defaultPreviewFormat = value
+  },
+})
 
 const previewVariables = computed<Record<string, string>>(() => {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
@@ -64,19 +71,19 @@ function formatDuration(ms: number): string {
 }
 
 watch(lastResponse, (response, previous) => {
-  if (response && response !== previous) {
+  if (settings.autoSwitchToResponse && response && response !== previous) {
     activeTab.value = 'response'
   }
 })
 
 watch(isExecuting, (executing) => {
-  if (executing) {
+  if (settings.autoSwitchToResponse && executing) {
     activeTab.value = 'response'
   }
 })
 
 watch(lastError, (error) => {
-  if (error) {
+  if (settings.autoSwitchToResponse && error) {
     activeTab.value = 'response'
   }
 })
@@ -184,6 +191,7 @@ function copyPreview() {
         <HttpRequestPreviewPanel
           :content="previewContent"
           :format="previewFormat"
+          :wrap-lines="settings.wrapLines"
         />
       </Tabs.TabsContent>
       <Tabs.TabsContent

@@ -9,6 +9,7 @@ export const RouterName = {
   preferencesEditor: 'preferences/editor',
   preferencesNotesEditor: 'preferences/notes-editor',
   preferencesMath: 'preferences/math',
+  preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -81,6 +82,11 @@ const routes = [
         path: 'math',
         name: RouterName.preferencesMath,
         component: () => import('@/components/preferences/Math.vue'),
+      },
+      {
+        path: 'http',
+        name: RouterName.preferencesHttp,
+        component: () => import('@/components/preferences/Http.vue'),
       },
       {
         path: 'api',

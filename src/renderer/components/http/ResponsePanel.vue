@@ -4,11 +4,13 @@ import {
   useCopyToClipboard,
   useDonations,
   useHttpExecute,
+  useHttpSettings,
 } from '@/composables'
 import { i18n } from '@/electron'
 import { Copy, LoaderCircle } from 'lucide-vue-next'
 
 const { lastResponse, lastError, isExecuting } = useHttpExecute()
+const { settings } = useHttpSettings()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
@@ -132,6 +134,7 @@ function copyActiveTab() {
               v-else
               :content="formattedBody"
               :language="bodyViewerLanguage"
+              :wrap-lines="settings.wrapLines"
             />
           </Tabs.TabsContent>
           <Tabs.TabsContent

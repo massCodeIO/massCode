@@ -1,5 +1,6 @@
 import type {
   EditorSettings,
+  HttpSettings,
   MarkdownSettings,
   MathSettings,
   NotesEditorSettings,
@@ -27,6 +28,12 @@ const MATH_DEFAULTS: MathSettings = {
   dateFormat: 'numeric',
 }
 
+const HTTP_DEFAULTS: HttpSettings = {
+  wrapLines: true,
+  defaultPreviewFormat: 'http',
+  autoSwitchToResponse: true,
+}
+
 const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
     theme: 'auto',
@@ -49,6 +56,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
     },
   },
   math: MATH_DEFAULTS,
+  http: HTTP_DEFAULTS,
 }
 
 function sanitizeCodeEditorSettings(value: unknown): EditorSettings {
@@ -170,6 +178,27 @@ function sanitizeMathSettings(value: unknown): MathSettings {
   }
 }
 
+function sanitizeHttpSettings(value: unknown): HttpSettings {
+  const source = asRecord(value)
+
+  return {
+    wrapLines:
+      typeof source.wrapLines === 'boolean'
+        ? source.wrapLines
+        : HTTP_DEFAULTS.wrapLines,
+    defaultPreviewFormat: readEnum(
+      source,
+      'defaultPreviewFormat',
+      ['http', 'curl'] as const,
+      HTTP_DEFAULTS.defaultPreviewFormat,
+    ),
+    autoSwitchToResponse:
+      typeof source.autoSwitchToResponse === 'boolean'
+        ? source.autoSwitchToResponse
+        : HTTP_DEFAULTS.autoSwitchToResponse,
+  }
+}
+
 function sanitizePreferences(value: unknown): PreferencesStore {
   const source = asRecord(value)
   const appearanceSource = asRecord(source.appearance)
@@ -190,6 +219,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       ? asRecord(editorSource.markdown)
       : asRecord(source.markdown)
   const mathSource = asRecord(source.math)
+  const httpSource = asRecord(source.http)
 
   return {
     appearance: {
@@ -239,6 +269,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       markdown: sanitizeMarkdownSettings(markdownSource),
     },
     math: sanitizeMathSettings(mathSource),
+    http: sanitizeHttpSettings(httpSource),
   }
 }
 

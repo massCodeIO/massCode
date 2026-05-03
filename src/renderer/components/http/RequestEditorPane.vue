@@ -103,7 +103,7 @@ useResizeHandle(responseHandleRef, {
         responsePanelHeight === undefined ? 'flex-1 basis-2/5' : 'shrink-0'
       "
     >
-      <HttpResponsePanel />
+      <HttpBottomPanel />
     </div>
   </div>
 </template>

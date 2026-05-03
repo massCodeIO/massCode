@@ -108,6 +108,17 @@
         "description": {
           "placeholder": "Add a description for this request"
         },
+        "panels": {
+          "preview": "Preview",
+          "response": "Response"
+        },
+        "preview": {
+          "empty": "No request preview",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
         "response": {
           "empty": "No response yet",
           "executing": "Sending request",

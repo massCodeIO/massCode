@@ -108,6 +108,17 @@
         "description": {
           "placeholder": "Добавьте описание для этого запроса"
         },
+        "panels": {
+          "preview": "Превью",
+          "response": "Ответ"
+        },
+        "preview": {
+          "empty": "Нет превью запроса",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
         "response": {
           "empty": "Ответа пока нет",
           "executing": "Отправка запроса",

@@ -25,6 +25,8 @@ const { activeEnvironment } = useHttpEnvironments()
 const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
 let isApplyingExternalValue = false
+const URL_INPUT_FONT_FAMILY
+  = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
 function getVariables(): Record<string, string> {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
@@ -36,6 +38,7 @@ function createTheme() {
       backgroundColor: 'transparent',
       color: 'var(--foreground)',
       fontSize: '14px',
+      fontFamily: URL_INPUT_FONT_FAMILY,
       width: '100%',
     },
     '.cm-scroller': {
@@ -45,9 +48,11 @@ function createTheme() {
     '.cm-content': {
       padding: '0 0.5rem',
       caretColor: 'var(--foreground)',
+      fontFamily: URL_INPUT_FONT_FAMILY,
     },
     '.cm-line': {
       padding: '0',
+      fontFamily: URL_INPUT_FONT_FAMILY,
     },
     '.cm-gutters': {
       display: 'none',

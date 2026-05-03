@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { HttpEnvironment } from '@/composables'
 import * as Dialog from '@/components/ui/shadcn/dialog'
-import { useHttpEnvironments } from '@/composables'
+import { useDialog, useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
 import { Plus, Trash2 } from 'lucide-vue-next'
@@ -23,6 +23,7 @@ const {
   getHttpEnvironments,
   updateHttpEnvironment,
 } = useHttpEnvironments()
+const { confirm } = useDialog()
 
 const selectedEnvId = ref<number | null>(null)
 const localName = ref('')
@@ -147,6 +148,23 @@ function getNextUntitledName(): string {
   return `${base} ${index}`
 }
 
+function hasVariableContent(variable: VariableEntry): boolean {
+  return Boolean(variable.key.trim() || variable.value.trim())
+}
+
+function isUntitledEnvironmentName(name: string): boolean {
+  const base = i18n.t('spaces.http.environments.untitled')
+  return name === base || name.startsWith(`${base} `)
+}
+
+function isEnvironmentEmpty(): boolean {
+  const name = localName.value.trim()
+  return (
+    (!name || isUntitledEnvironmentName(name))
+    && !localVariables.value.some(hasVariableContent)
+  )
+}
+
 async function onAddEnvironment() {
   await flushPendingUpdate()
   const name = getNextUntitledName()
@@ -159,6 +177,19 @@ async function onDeleteEnvironment() {
   const env = selectedEnv.value
   if (!env)
     return
+
+  if (!isEnvironmentEmpty()) {
+    const isConfirmed = await confirm({
+      title: i18n.t('messages:confirm.delete', {
+        name: localName.value.trim() || env.name,
+      }),
+      content: i18n.t('messages:warning.noUndo'),
+    })
+
+    if (!isConfirmed)
+      return
+  }
+
   await deleteHttpEnvironment(env.id)
   selectedEnvId.value = environments.value[0]?.id ?? null
 }
@@ -167,7 +198,24 @@ function addVariable() {
   localVariables.value.push({ key: '', value: '' })
 }
 
-function removeVariable(index: number) {
+async function removeVariable(index: number) {
+  const variable = localVariables.value[index]
+  if (!variable)
+    return
+
+  if (hasVariableContent(variable)) {
+    const key = variable.key.trim()
+    const isConfirmed = await confirm({
+      title: key
+        ? i18n.t('messages:confirm.deleteVariable', { name: key })
+        : i18n.t('messages:confirm.deleteUnnamedVariable'),
+      content: i18n.t('messages:warning.noUndo'),
+    })
+
+    if (!isConfirmed)
+      return
+  }
+
   localVariables.value.splice(index, 1)
 }
 

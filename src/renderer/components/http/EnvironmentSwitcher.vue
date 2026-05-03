@@ -46,6 +46,7 @@ function onOpenManager() {
     <Popover.PopoverContent
       align="end"
       class="w-64 p-1"
+      @close-auto-focus="(e) => e.preventDefault()"
     >
       <div
         class="text-muted-foreground px-2 py-1 text-[10px] font-semibold tracking-wider uppercase"

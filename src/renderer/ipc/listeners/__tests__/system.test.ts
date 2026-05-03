@@ -11,6 +11,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
   }
   const isCodeSpaceInitialized = ref(true)
   const isNotesSpaceInitialized = ref(true)
+  const isHttpSpaceInitialized = ref(true)
   const displayedSnippets = ref<{ id: number }[]>([])
   const getTags = vi.fn(async () => undefined)
   const normalizeCodeSelectionState = vi.fn(async () => undefined)
@@ -60,6 +61,9 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     }),
     useHttpSpaceInit: () => ({
       refreshHttpSpaceFromDisk,
+    }),
+    useHttpApp: () => ({
+      isHttpSpaceInitialized,
     }),
     useNoteFolders: () => ({
       getNoteFolders,
@@ -135,6 +139,10 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     getActiveSpaceId: vi.fn(() => activeSpace),
   }))
 
+  vi.doMock('../deepLinks', () => ({
+    handleDeepLink: vi.fn(async () => undefined),
+  }))
+
   const { registerSystemListeners } = await import('../system')
 
   registerSystemListeners()
@@ -149,6 +157,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     refreshHttpSpaceFromDisk,
     ipcHandlers,
     isCodeSpaceInitialized,
+    isHttpSpaceInitialized,
     isNotesSpaceInitialized,
     normalizeCodeSelectionState,
     normalizeNotesSelectionState,
@@ -164,7 +173,7 @@ afterEach(() => {
 })
 
 describe('registerSystemListeners', () => {
-  it('invalidates code and notes initialization after storage sync', async () => {
+  it('invalidates space initialization after storage sync', async () => {
     const context = await setup('tools')
 
     context.ipcHandlers.get('system:storage-synced')?.(undefined)
@@ -172,6 +181,7 @@ describe('registerSystemListeners', () => {
 
     expect(context.isCodeSpaceInitialized.value).toBe(false)
     expect(context.isNotesSpaceInitialized.value).toBe(false)
+    expect(context.isHttpSpaceInitialized.value).toBe(false)
     expect(context.getFolders).not.toHaveBeenCalled()
     expect(context.getSnippets).not.toHaveBeenCalled()
     expect(context.getNoteFolders).not.toHaveBeenCalled()
@@ -210,6 +220,7 @@ describe('registerSystemListeners', () => {
     await vi.advanceTimersByTimeAsync(300)
 
     expect(context.refreshHttpSpaceFromDisk).toHaveBeenCalledTimes(1)
+    expect(context.isHttpSpaceInitialized.value).toBe(false)
     expect(context.getFolders).not.toHaveBeenCalled()
     expect(context.getNoteFolders).not.toHaveBeenCalled()
   })

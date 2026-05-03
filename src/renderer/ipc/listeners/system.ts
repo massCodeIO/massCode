@@ -3,6 +3,7 @@ import {
   normalizeNotesSelectionState,
   useApp,
   useFolders,
+  useHttpApp,
   useHttpSpaceInit,
   useMathNotebook,
   useNoteFolders,
@@ -24,6 +25,7 @@ import { repository } from '../../../../package.json'
 import { handleDeepLink } from './deepLinks'
 
 const { state, isCodeSpaceInitialized } = useApp()
+const { isHttpSpaceInitialized } = useHttpApp()
 const { getFolders } = useFolders()
 const { getTags } = useTags()
 const { selectFirstSnippet, displayedSnippets } = useSnippets()
@@ -64,6 +66,7 @@ async function refreshAfterStorageSync() {
   const activeSpace = getActiveSpaceId()
   isCodeSpaceInitialized.value = false
   isNotesSpaceInitialized.value = false
+  isHttpSpaceInitialized.value = false
 
   switch (activeSpace) {
     case 'math':

@@ -5,8 +5,6 @@ description: "Create, edit, preview, send, duplicate, and inspect HTTP requests 
 
 # Requests
 
-<AppVersion text=">=5.3" />
-
 Requests are the main items in the HTTP space. Each request stores the method, URL, params, headers, body, auth settings, and a markdown description.
 
 ## Creating Requests

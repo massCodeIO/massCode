@@ -5,8 +5,6 @@ description: "Use HTTP environments in massCode to manage reusable variables for
 
 # Environments
 
-<AppVersion text=">=5.3" />
-
 Environments store reusable variables for requests. Use them for values that change between local, staging, and production APIs, such as base URLs, user IDs, organization IDs, and tokens.
 
 <img :src="withBase('/http-envs.png')">

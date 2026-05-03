@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { HttpRequestPreviewFormat } from './requestPreview'
-import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
@@ -74,7 +73,7 @@ function copyPreview() {
         class="flex items-center gap-1"
       >
         <Select.Select v-model="previewFormat">
-          <Select.SelectTrigger class="h-6 w-24 text-xs">
+          <Select.SelectTrigger class="w-24">
             <Select.SelectValue />
           </Select.SelectTrigger>
           <Select.SelectContent>
@@ -87,16 +86,13 @@ function copyPreview() {
           </Select.SelectContent>
         </Select.Select>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          class="h-6 gap-1 px-2 text-xs"
+        <UiActionButton
+          :tooltip="i18n.t('spaces.http.editor.response.copy')"
           :disabled="!previewContent"
           @click="copyPreview"
         >
-          <Copy class="size-3" />
-          {{ i18n.t("spaces.http.editor.response.copy") }}
-        </Button>
+          <Copy class="size-4" />
+        </UiActionButton>
       </div>
     </div>
 

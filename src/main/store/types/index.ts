@@ -16,6 +16,11 @@ export interface NotesState {
   libraryFilter?: string
 }
 
+export interface HttpState {
+  requestId?: number
+  folderId?: number
+}
+
 export type NotesRouteName =
   | 'notes-space'
   | 'notes-space/dashboard'
@@ -29,32 +34,42 @@ export interface NotesDashboardWidgets {
   topLinked: boolean
 }
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http'
 
 export interface DonationsState {
   lastActiveDay: string
   currentStreak: number
   copies: {
     code: number
+    http: number
     notes: number
     math: number
     tools: number
   }
   created: {
     code: number
+    http: number
     notes: number
     math: number
   }
+  sent: {
+    http: number
+  }
   lastShownCopyMilestones: {
     code: number
+    http: number
     notes: number
     math: number
     tools: number
   }
   lastShownCreatedMilestones: {
     code: number
+    http: number
     notes: number
     math: number
+  }
+  lastShownSentMilestones: {
+    http: number
   }
   shownStreakMilestones: number[]
   lastGreetingDay: string
@@ -88,6 +103,16 @@ export interface AppStore {
       tagsListHeight: number
       threePanel?: number[]
       twoPanel?: number
+    }
+  }
+  http: {
+    selection: HttpState
+    layout: {
+      mode: SpaceLayoutMode
+      environmentsListHeight: number
+      threePanel?: number[]
+      twoPanel?: number
+      responsePanelHeight?: number
     }
   }
   notifications: {
@@ -133,6 +158,12 @@ export interface MathSettings {
   dateFormat: 'numeric' | 'short' | 'long'
 }
 
+export interface HttpSettings {
+  wrapLines: boolean
+  defaultPreviewFormat: 'http' | 'curl'
+  autoSwitchToResponse: boolean
+}
+
 export interface PreferencesStore {
   appearance: {
     theme: string
@@ -152,6 +183,7 @@ export interface PreferencesStore {
     markdown: MarkdownSettings
   }
   math: MathSettings
+  http: HttpSettings
 }
 
 export interface MathSheet {

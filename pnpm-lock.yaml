@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.20.1
+        version: 6.20.1
       '@codemirror/commands':
         specifier: ^6.10.3
         version: 6.10.3
@@ -21,6 +24,9 @@ importers:
         specifier: ^6.12.2
         version: 6.12.2
       '@codemirror/language-data':
+        specifier: ^6.5.2
+        version: 6.5.2
+      '@codemirror/legacy-modes':
         specifier: ^6.5.2
         version: 6.5.2
       '@codemirror/state':
@@ -191,6 +197,9 @@ importers:
       typed.js:
         specifier: ^2.1.0
         version: 2.1.0
+      undici:
+        specifier: ^6.21.2
+        version: 6.21.2
       uuid:
         specifier: ^11.1.0
         version: 11.1.0

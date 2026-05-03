@@ -146,6 +146,19 @@ function getCacheKey(type: InternalLinkType, id: number) {
 function buildPreviewContent(
   entity: CachedEntityData,
 ): InternalLinksPreviewContent {
+  if (entity.type === 'http-request') {
+    return {
+      body: [
+        [entity.request?.method, entity.request?.url].filter(Boolean).join(' '),
+        entity.request?.description.trim(),
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+      title: entity.name,
+      type: entity.type,
+    }
+  }
+
   return {
     body:
       entity.type === 'snippet'

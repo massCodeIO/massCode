@@ -32,6 +32,111 @@
       "untitled": "Untitled",
       "currencyUnavailable": "Currency rates service unavailable"
     },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP client",
+      "title": "HTTP Client",
+      "untitledRequest": "Untitled request",
+      "empty": "No requests yet",
+      "noUrl": "No URL",
+      "action": {
+        "newRequest": "New request",
+        "newEnvironment": "New environment",
+        "manageEnvironments": "Manage environments",
+        "deleteEnvironment": "Delete environment"
+      },
+      "environments": {
+        "title": "Environments",
+        "none": "No environment",
+        "activeTooltip": "Environment: {{name}}",
+        "selectTooltip": "Select environment",
+        "manage": "Manage environments…",
+        "empty": "No environments yet",
+        "untitled": "Untitled environment",
+        "namePlaceholder": "Environment name",
+        "variables": "Variables",
+        "noVariables": "No variables yet",
+        "varKey": "Variable",
+        "varValue": "Value",
+        "addVariable": "Add variable",
+        "noEnvironmentSelected": "Select an environment to edit its variables"
+      },
+      "editor": {
+        "noSelected": "No request selected",
+        "namePlaceholder": "Request name",
+        "urlPlaceholder": "Enter request URL",
+        "send": "Send",
+        "tabs": {
+          "params": "Params",
+          "headers": "Headers",
+          "body": "Body",
+          "auth": "Auth",
+          "description": "Description"
+        },
+        "keyValue": {
+          "key": "Key",
+          "value": "Value",
+          "description": "Description",
+          "addRow": "Add row",
+          "empty": "No entries"
+        },
+        "body": {
+          "typeNone": "None",
+          "typeJson": "JSON",
+          "typeText": "Text",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "Enter request body",
+          "fieldType": {
+            "text": "Text",
+            "file": "File"
+          },
+          "filePlaceholder": "Select file path",
+          "jsonInvalid": "Invalid JSON"
+        },
+        "auth": {
+          "typeNone": "No Auth",
+          "typeBearer": "Bearer Token",
+          "typeBasic": "Basic Auth",
+          "token": "Token",
+          "tokenPlaceholder": "Enter token",
+          "username": "Username",
+          "usernamePlaceholder": "Enter username",
+          "password": "Password",
+          "passwordPlaceholder": "Enter password"
+        },
+        "description": {
+          "placeholder": "Add a description for this request"
+        },
+        "panels": {
+          "preview": "Preview",
+          "response": "Response"
+        },
+        "preview": {
+          "empty": "No request preview",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
+        "response": {
+          "empty": "No response yet",
+          "executing": "Sending request",
+          "status": "Status",
+          "time": "Time",
+          "size": "Size",
+          "tabs": {
+            "body": "Body",
+            "headers": "Headers"
+          },
+          "error": "Request failed",
+          "truncated": "Response truncated",
+          "binaryNotice": "Binary response not displayed",
+          "copy": "Copy",
+          "copied": "Copied"
+        }
+      }
+    },
     "tools": {
       "label": "Tools",
       "tooltip": "Developer tools"
@@ -206,7 +311,9 @@
       "snippet": "Copy Snippet",
       "snippetLink": "Copy Snippet Link",
       "note": "Copy Note",
-      "noteLink": "Copy Note Link"
+      "noteLink": "Copy Note Link",
+      "request": "Copy Request",
+      "requestLink": "Copy Request Link"
     },
     "select": {
       "directory": "Select Directory"
@@ -214,15 +321,17 @@
   },
   "internalLinks": {
     "picker": {
-      "searchPlaceholder": "Search snippets and notes...",
+      "searchPlaceholder": "Search snippets, HTTP requests, and notes...",
       "emptyResults": "No results",
       "groups": {
         "snippets": "Snippets",
+        "httpRequests": "HTTP Requests",
         "notes": "Notes"
       }
     },
     "missing": {
       "snippet": "Snippet not found",
+      "httpRequest": "HTTP request not found",
       "note": "Note not found"
     }
   },

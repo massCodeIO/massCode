@@ -5,12 +5,13 @@ import {
 
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string
 
-export type EntryNameConflictKind = 'note' | 'snippet' | 'folder'
+export type EntryNameConflictKind = 'note' | 'snippet' | 'folder' | 'request'
 
 const CONFLICT_MESSAGE_KEYS: Record<EntryNameConflictKind, string> = {
   folder: 'messages:error.entryNameFolderConflict',
   note: 'messages:error.entryNameNoteConflict',
   snippet: 'messages:error.entryNameSnippetConflict',
+  request: 'messages:error.entryNameRequestConflict',
 }
 
 export function getEntryNameValidationMessage(

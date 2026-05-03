@@ -1,11 +1,11 @@
 ---
 title: Documentation Overview
-description: "Explore the massCode documentation for code snippets, markdown notes, math notebook, storage, sync, themes, JSON Diff, and built-in developer tools."
+description: "Explore the massCode documentation for code snippets, markdown notes, HTTP requests, math notebook, storage, sync, themes, JSON Diff, and built-in developer tools."
 ---
 
 # Overview
 
-massCode is a free and open source developer workspace for code snippets, markdown notes, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, a calculator, and a handful of websites, you keep it in four focused Spaces inside one local-first desktop app.
+massCode is a free and open source developer workspace for code snippets, markdown notes, HTTP requests, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, an HTTP client, a calculator, and a handful of websites, you keep it in focused Spaces inside one local-first desktop app.
 
 Switch between Spaces using the rail on the left side of the app.
 
@@ -18,6 +18,10 @@ Use Code to build a reusable snippet library across projects and languages. The 
 ## Notes
 
 Use Notes for longer markdown documents that do not fit well into snippets: project notes, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview, a notes graph, mindmaps, and fullscreen presentation mode.
+
+## HTTP
+
+Use HTTP as a lightweight API client inside massCode. Store requests in folders, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
 
 ## Math
 

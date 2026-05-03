@@ -2,6 +2,7 @@ import type {
   AppStore,
   CodeState,
   DonationsState,
+  HttpState,
   NotesEditorMode,
   NotesRouteName,
   NotesState,
@@ -35,6 +36,13 @@ const APP_STORE_DEFAULTS: AppStore = {
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
+  http: {
+    selection: {},
+    layout: {
+      mode: 'all-panels',
+      environmentsListHeight: LAYOUT_DEFAULTS.http.environmentsPanel.height,
+    },
+  },
   notes: {
     selection: {},
     route: 'notes-space',
@@ -61,25 +69,35 @@ const APP_STORE_DEFAULTS: AppStore = {
     currentStreak: 0,
     copies: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
       tools: 0,
     },
     created: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
     },
+    sent: {
+      http: 0,
+    },
     lastShownCopyMilestones: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
       tools: 0,
     },
     lastShownCreatedMilestones: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
+    },
+    lastShownSentMilestones: {
+      http: 0,
     },
     shownStreakMilestones: [],
     lastGreetingDay: '',
@@ -101,6 +119,17 @@ function sanitizeCodeState(value: unknown): CodeState {
     state.tagId = source.tagId
   if (typeof source.libraryFilter === 'string')
     state.libraryFilter = source.libraryFilter
+  return state
+}
+
+function sanitizeHttpState(value: unknown): HttpState {
+  const source = asRecord(value)
+  const state: HttpState = {}
+
+  if (typeof source.requestId === 'number')
+    state.requestId = source.requestId
+  if (typeof source.folderId === 'number')
+    state.folderId = source.folderId
   return state
 }
 
@@ -147,8 +176,10 @@ function sanitizeDonations(value: unknown): DonationsState {
   const source = asRecord(value)
   const copiesSource = asRecord(source.copies)
   const createdSource = asRecord(source.created)
+  const sentSource = asRecord(source.sent)
   const copyMilestonesSource = asRecord(source.lastShownCopyMilestones)
   const createdMilestonesSource = asRecord(source.lastShownCreatedMilestones)
+  const sentMilestonesSource = asRecord(source.lastShownSentMilestones)
   const defaults = APP_STORE_DEFAULTS.donations
   const shownStreaks = readOptionalNumberArray(source, 'shownStreakMilestones')
 
@@ -157,20 +188,30 @@ function sanitizeDonations(value: unknown): DonationsState {
     currentStreak: readNumber(source, 'currentStreak', defaults.currentStreak),
     copies: {
       code: readNumber(copiesSource, 'code', defaults.copies.code),
+      http: readNumber(copiesSource, 'http', defaults.copies.http),
       notes: readNumber(copiesSource, 'notes', defaults.copies.notes),
       math: readNumber(copiesSource, 'math', defaults.copies.math),
       tools: readNumber(copiesSource, 'tools', defaults.copies.tools),
     },
     created: {
       code: readNumber(createdSource, 'code', defaults.created.code),
+      http: readNumber(createdSource, 'http', defaults.created.http),
       notes: readNumber(createdSource, 'notes', defaults.created.notes),
       math: readNumber(createdSource, 'math', defaults.created.math),
+    },
+    sent: {
+      http: readNumber(sentSource, 'http', defaults.sent.http),
     },
     lastShownCopyMilestones: {
       code: readNumber(
         copyMilestonesSource,
         'code',
         defaults.lastShownCopyMilestones.code,
+      ),
+      http: readNumber(
+        copyMilestonesSource,
+        'http',
+        defaults.lastShownCopyMilestones.http,
       ),
       notes: readNumber(
         copyMilestonesSource,
@@ -194,6 +235,11 @@ function sanitizeDonations(value: unknown): DonationsState {
         'code',
         defaults.lastShownCreatedMilestones.code,
       ),
+      http: readNumber(
+        createdMilestonesSource,
+        'http',
+        defaults.lastShownCreatedMilestones.http,
+      ),
       notes: readNumber(
         createdMilestonesSource,
         'notes',
@@ -203,6 +249,13 @@ function sanitizeDonations(value: unknown): DonationsState {
         createdMilestonesSource,
         'math',
         defaults.lastShownCreatedMilestones.math,
+      ),
+    },
+    lastShownSentMilestones: {
+      http: readNumber(
+        sentMilestonesSource,
+        'http',
+        defaults.lastShownSentMilestones.http,
       ),
     },
     shownStreakMilestones: shownStreaks ?? [...defaults.shownStreakMilestones],
@@ -218,10 +271,12 @@ function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
   const codeSource = asRecord(source.code)
+  const httpSource = asRecord(source.http)
   const notesSource = asRecord(source.notes)
   const notificationsSource = asRecord(source.notifications)
   const legacySizes = asRecord(source.sizes)
   const codeLayoutSource = asRecord(codeSource.layout)
+  const httpLayoutSource = asRecord(httpSource.layout)
   const notesLayoutSource = asRecord(notesSource.layout)
 
   return {
@@ -272,6 +327,41 @@ function sanitizeAppStore(value: unknown): AppStore {
           readOptionalNumber(codeLayoutSource, 'twoPanel')
           ?? readOptionalNumber(legacySizes, 'codeListLayout')
           ?? undefined,
+      },
+    },
+    http: {
+      selection: sanitizeHttpState(httpSource.selection),
+      layout: {
+        mode: readEnum(
+          httpLayoutSource,
+          'mode',
+          ['all-panels', 'list-editor', 'editor-only'] as const,
+          APP_STORE_DEFAULTS.http.layout.mode,
+        ),
+        environmentsListHeight: (() => {
+          const raw = readNumber(
+            httpLayoutSource,
+            'environmentsListHeight',
+            LAYOUT_DEFAULTS.http.environmentsPanel.height,
+          )
+          return raw < LAYOUT_DEFAULTS.http.environmentsPanel.min
+            ? LAYOUT_DEFAULTS.http.environmentsPanel.height
+            : raw
+        })(),
+        threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
+        twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
+        responsePanelHeight: (() => {
+          const raw = readOptionalNumber(
+            httpLayoutSource,
+            'responsePanelHeight',
+          )
+          if (raw === undefined) {
+            return undefined
+          }
+          return raw < LAYOUT_DEFAULTS.http.responsePanel.min
+            ? LAYOUT_DEFAULTS.http.responsePanel.height
+            : raw
+        })(),
       },
     },
     notes: {
@@ -375,7 +465,7 @@ function sanitizeAppStore(value: unknown): AppStore {
     activeSpaceId: readEnum(
       source,
       'activeSpaceId',
-      ['code', 'tools', 'math', 'notes'] as const,
+      ['code', 'tools', 'math', 'notes', 'http'] as const,
       APP_STORE_DEFAULTS.activeSpaceId,
     ) as SpaceId,
   }

@@ -4,6 +4,9 @@ import {
   useApp,
   useEditor,
   useFolders,
+  useHttpApp,
+  useHttpExecute,
+  useHttpRequests,
   useMathNotebook,
   useNoteFolders,
   useNotes,
@@ -42,6 +45,9 @@ const {
   showNotesPresentation,
   toggleNotesSidebar,
 } = useNotesApp()
+const { setHttpLayoutMode, toggleHttpSidebar } = useHttpApp()
+const { executeCurrentRequest, isExecuting } = useHttpExecute()
+const { currentDraft, saveCurrentRequest } = useHttpRequests()
 
 export function registerMainMenuListeners() {
   registerMainMenuContextSync()
@@ -132,6 +138,11 @@ export function registerMainMenuListeners() {
 
     if (activeSpaceId === 'notes') {
       toggleNotesSidebar()
+      return
+    }
+
+    if (activeSpaceId === 'http') {
+      toggleHttpSidebar()
     }
   })
 
@@ -165,6 +176,11 @@ export function registerMainMenuListeners() {
 
     if (activeSpaceId === 'notes') {
       setNotesLayoutMode(layoutMode)
+      return
+    }
+
+    if (activeSpaceId === 'http') {
+      setHttpLayoutMode(layoutMode)
     }
   })
 
@@ -174,6 +190,19 @@ export function registerMainMenuListeners() {
     }
 
     notesEditorMode.value = mode
+  })
+
+  ipc.on('main-menu:send-http-request', async () => {
+    if (
+      getActiveSpaceId() !== 'http'
+      || !currentDraft.value?.url
+      || isExecuting.value
+    ) {
+      return
+    }
+
+    await saveCurrentRequest()
+    await executeCurrentRequest()
   })
 
   ipc.on('main-menu:font-size-increase', () => {

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import {
   applyPendingNavigationUIStateForNote,
   registerNavigationNoteUIState,
@@ -19,7 +21,6 @@ import {
   placeholder,
 } from '@codemirror/view'
 import { GFM, type MarkdownConfig } from '@lezer/markdown'
-import { createCodeHighlight } from './cm-extensions/codeHighlight'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
@@ -36,7 +37,6 @@ import { Highlight } from './cm-extensions/markdownHighlight'
 import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
-import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
 import { createTableBlocks } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
 import { createNotesEditTheme } from './theme'
@@ -148,7 +148,7 @@ const presentationTheme = EditorView.theme({
   '.cm-gutters': {
     display: 'none',
   },
-  ...notesEditorScrollbarTheme,
+  ...editorScrollbarTheme,
   '.cm-line': {
     padding: '0',
   },

@@ -2,6 +2,12 @@ import type { ChokidarOptions, FSWatcher } from 'chokidar'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
 import {
+  getHttpPaths,
+  peekHttpRuntimeCache,
+  resetHttpRuntimeCache,
+  syncHttpRuntimeWithDisk,
+} from './http'
+import {
   getNotesPaths,
   peekNotesRuntimeCache,
   resetNotesRuntimeCache,
@@ -20,6 +26,7 @@ import {
 import {
   getWatchPathSpaceId,
   isCodeWatchPath,
+  isHttpWatchPath,
   isMathWatchPath,
   isNotesWatchPath,
   normalizeRelativeWatchPath,
@@ -34,6 +41,7 @@ let pendingFilePath: string | null = null
 let hasPendingFullSync = false
 let hasPendingMathSync = false
 let hasPendingNotesSync = false
+let hasPendingHttpSync = false
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
 
@@ -85,6 +93,7 @@ function scheduleStateSync(
   const changedNotesPath = isNotesWatchPath(changedPath)
   const changedCodePath = isCodeWatchPath(changedPath)
   const changedMathPath = isMathWatchPath(changedPath)
+  const changedHttpPath = isHttpWatchPath(changedPath)
   const changedCodeRelativePath
     = changedPath && changedCodePath ? toCodeRelativePath(changedPath) : null
 
@@ -96,17 +105,25 @@ function scheduleStateSync(
     hasPendingMathSync = true
   }
 
+  if (changedHttpPath) {
+    hasPendingHttpSync = true
+  }
+
   if (changedNotesPath) {
     // Notes space has separate runtime cache sync path.
   }
   else if (changedMathPath) {
     // Math space has no main-process cache to sync; broadcast only.
   }
+  else if (changedHttpPath) {
+    // HTTP space has separate runtime cache sync path.
+  }
   else if (forceFullSync || !changedPath) {
     hasPendingFullSync = true
 
     if (forceFullSync && !changedPath) {
       hasPendingNotesSync = true
+      hasPendingHttpSync = true
     }
   }
   else if (changedCodeRelativePath) {
@@ -131,14 +148,17 @@ function scheduleStateSync(
     try {
       const previousCache = peekRuntimeCache()
       const previousNotesCache = peekNotesRuntimeCache()
+      const previousHttpCache = peekHttpRuntimeCache()
       const changedFilePath = hasPendingFullSync ? null : pendingFilePath
       const shouldNotifyMath = hasPendingMathSync
       const shouldSyncCode = hasPendingFullSync || changedFilePath !== null
       const shouldSyncNotes = hasPendingNotesSync
+      const shouldSyncHttp = hasPendingHttpSync
 
       hasPendingFullSync = false
       hasPendingMathSync = false
       hasPendingNotesSync = false
+      hasPendingHttpSync = false
       pendingFilePath = null
 
       let nextCache = previousCache
@@ -157,6 +177,9 @@ function scheduleStateSync(
       const nextNotesCache = shouldSyncNotes
         ? syncNotesRuntimeWithDisk(getNotesPaths(vaultRootPath))
         : previousNotesCache
+      const nextHttpCache = shouldSyncHttp
+        ? syncHttpRuntimeWithDisk(getHttpPaths(vaultRootPath))
+        : previousHttpCache
 
       const hasCodeChanges
         = shouldSyncCode && (!previousCache || nextCache !== previousCache)
@@ -164,8 +187,16 @@ function scheduleStateSync(
         = shouldSyncNotes
           && (!previousNotesCache || nextNotesCache !== previousNotesCache)
       const hasMathChanges = shouldNotifyMath
+      const hasHttpChanges
+        = shouldSyncHttp
+          && (!previousHttpCache || nextHttpCache !== previousHttpCache)
 
-      if (hasCodeChanges || hasNotesChanges || hasMathChanges) {
+      if (
+        hasCodeChanges
+        || hasNotesChanges
+        || hasMathChanges
+        || hasHttpChanges
+      ) {
         BrowserWindow.getAllWindows().forEach((window) => {
           window.webContents.send('system:storage-synced')
         })
@@ -195,8 +226,10 @@ export function stopMarkdownWatcher(): void {
   hasPendingFullSync = false
   hasPendingMathSync = false
   hasPendingNotesSync = false
+  hasPendingHttpSync = false
   resetRuntimeCache()
   resetNotesRuntimeCache()
+  resetHttpRuntimeCache()
 }
 
 export function startMarkdownWatcher(): void {
@@ -205,6 +238,8 @@ export function startMarkdownWatcher(): void {
   const runtimeCache = peekRuntimeCache()
   const notesPaths = getNotesPaths(vaultRootPath)
   const notesRuntimeCache = peekNotesRuntimeCache()
+  const httpPaths = getHttpPaths(vaultRootPath)
+  const httpRuntimeCache = peekHttpRuntimeCache()
 
   if (markdownWatcher && watchedVaultPath === vaultRootPath) {
     if (!runtimeCache || runtimeCache.paths.vaultPath !== paths.vaultPath) {
@@ -219,6 +254,13 @@ export function startMarkdownWatcher(): void {
       syncNotesRuntimeWithDisk(notesPaths)
     }
 
+    if (
+      !httpRuntimeCache
+      || httpRuntimeCache.paths.httpRoot !== httpPaths.httpRoot
+    ) {
+      syncHttpRuntimeWithDisk(httpPaths)
+    }
+
     return
   }
 
@@ -226,6 +268,7 @@ export function startMarkdownWatcher(): void {
   ensureStateFile(paths)
   syncRuntimeWithDisk(paths)
   syncNotesRuntimeWithDisk(notesPaths)
+  syncHttpRuntimeWithDisk(httpPaths)
 
   const startToken = ++watcherStartToken
 

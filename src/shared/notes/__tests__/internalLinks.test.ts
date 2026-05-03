@@ -115,6 +115,18 @@ describe('parseInternalLink', () => {
       target: 'snippet:57',
     })
   })
+
+  it('keeps HTTP request id metadata for stored internal link payloads', () => {
+    expect(parseInternalLink('[[http-request:8|Create snippet]]')).toEqual({
+      alias: 'Create snippet',
+      basename: 'http-request:8',
+      legacyTarget: { id: 8, type: 'http-request' },
+      label: 'Create snippet',
+      pathSegments: [],
+      raw: '[[http-request:8|Create snippet]]',
+      target: 'http-request:8',
+    })
+  })
 })
 
 describe('splitInternalLinkTarget', () => {
@@ -153,6 +165,10 @@ describe('splitInternalLinkTarget', () => {
     })
     expect(splitInternalLinkTarget('note:42')).toEqual({
       basename: 'note:42',
+      pathSegments: [],
+    })
+    expect(splitInternalLinkTarget('http-request:8')).toEqual({
+      basename: 'http-request:8',
       pathSegments: [],
     })
   })
@@ -338,6 +354,18 @@ describe('resolveInternalLinkTargetByTitle', () => {
     })
   })
 
+  it('returns an HTTP request when there is no exact snippet or note title match', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('Create snippet', [
+        { id: 57, name: 'Architecture Draft', type: 'snippet' },
+        { id: 8, name: 'Create snippet', type: 'http-request' },
+      ]),
+    ).toEqual({
+      id: 8,
+      type: 'http-request',
+    })
+  })
+
   it('does not use partial matches', () => {
     expect(
       resolveInternalLinkTargetByTitle('Architecture', [
@@ -355,6 +383,19 @@ describe('resolveInternalLinkTargetByTitle', () => {
         { folderPath: 'Other', id: 3, name: 'Architecture', type: 'note' },
       ]),
     ).toEqual({ id: 2, type: 'note' })
+  })
+
+  it('resolves a path-based target to the matching HTTP request in that folder', () => {
+    expect(
+      resolveInternalLinkTargetByTitle('API/Create snippet', [
+        {
+          folderPath: 'API',
+          id: 8,
+          name: 'Create snippet',
+          type: 'http-request',
+        },
+      ]),
+    ).toEqual({ id: 8, type: 'http-request' })
   })
 
   it('resolves a nested path-based target', () => {

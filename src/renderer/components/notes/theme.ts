@@ -1,5 +1,5 @@
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import { EditorView } from '@codemirror/view'
-import { notesEditorScrollbarTheme } from './cm-extensions/scrollbarTheme'
 
 export interface NotesEditorThemeSettings {
   fontSize: number
@@ -51,7 +51,7 @@ export function createNotesEditThemeStyles(
       lineHeight: String(notesSettings.lineHeight),
       ...(notesSettings.lineNumbers && raw ? {} : { display: 'none' }),
     },
-    ...notesEditorScrollbarTheme,
+    ...editorScrollbarTheme,
     '&.cm-focused': {
       outline: 'none',
     },

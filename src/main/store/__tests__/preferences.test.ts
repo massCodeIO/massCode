@@ -166,6 +166,40 @@ describe('preferences store sanitization', () => {
       preferences.get('editor.markdown.legacyMarkdownFlag' as any),
     ).toBeUndefined()
   })
+
+  it('keeps persisted http settings and prunes stale values', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: false,
+        defaultPreviewFormat: 'curl',
+        autoSwitchToResponse: false,
+        garbage: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(false)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('curl')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(false)
+    expect(preferences.get('http.garbage' as any)).toBeUndefined()
+  })
+
+  it('adds sanitized defaults for invalid http settings', async () => {
+    persistedStateByName.preferences = {
+      http: {
+        wrapLines: 'bad',
+        defaultPreviewFormat: 'bad',
+        autoSwitchToResponse: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('http.wrapLines' as any)).toBe(true)
+    expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('http')
+    expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(true)
+  })
 })
 
 describe('app store sanitization', () => {
@@ -272,6 +306,54 @@ describe('app store sanitization', () => {
       topLinked: true,
     })
     expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps persisted http layout values', async () => {
+    persistedStateByName.app = {
+      http: {
+        layout: {
+          mode: 'list-editor',
+          environmentsListHeight: 180,
+          threePanel: [20, 30],
+          twoPanel: 35,
+          responsePanelHeight: 360,
+          garbage: 'bad',
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('http.layout.mode' as any)).toBe('list-editor')
+    expect(app.get('http.layout.environmentsListHeight' as any)).toBe(180)
+    expect(app.get('http.layout.threePanel' as any)).toEqual([20, 30])
+    expect(app.get('http.layout.twoPanel' as any)).toBe(35)
+    expect(app.get('http.layout.responsePanelHeight' as any)).toBe(360)
+    expect(app.get('http.layout.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps persisted http donation counters', async () => {
+    persistedStateByName.app = {
+      donations: {
+        copies: { http: 12 },
+        created: { http: 7 },
+        sent: { http: 31 },
+        lastShownCopyMilestones: { http: 25 },
+        lastShownCreatedMilestones: { http: 25 },
+        lastShownSentMilestones: { http: 25 },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('donations.copies.http' as any)).toBe(12)
+    expect(app.get('donations.created.http' as any)).toBe(7)
+    expect(app.get('donations.sent.http' as any)).toBe(31)
+    expect(app.get('donations.lastShownCopyMilestones.http' as any)).toBe(25)
+    expect(app.get('donations.lastShownCreatedMilestones.http' as any)).toBe(
+      25,
+    )
+    expect(app.get('donations.lastShownSentMilestones.http' as any)).toBe(25)
   })
 
   it('keeps persisted notes route when it is a valid string', async () => {

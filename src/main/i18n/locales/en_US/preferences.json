@@ -148,6 +148,23 @@
       "rateLimited": "Rate limit exceeded. Try again later."
     }
   },
+  "http": {
+    "label": "HTTP Client",
+    "wrapLines": {
+      "label": "Wrap Lines",
+      "description": "Wrap long lines in HTTP preview, request body, and response viewers."
+    },
+    "defaultPreviewFormat": {
+      "label": "Default Preview Format",
+      "description": "Format selected by default in the request preview panel.",
+      "http": "HTTP",
+      "curl": "cURL"
+    },
+    "autoSwitchToResponse": {
+      "label": "Show Response After Send",
+      "description": "Switch the bottom panel to Response when a request starts or finishes."
+    }
+  },
   "api": {
     "label": "API Port",
     "port": {

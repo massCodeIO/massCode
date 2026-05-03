@@ -5,6 +5,10 @@ import { Elysia } from 'elysia'
 import { store } from '../store'
 import { importEsm } from '../utils'
 import folders from './routes/folders'
+import httpEnvironments from './routes/http-environments'
+import httpFolders from './routes/http-folders'
+import httpHistory from './routes/http-history'
+import httpRequests from './routes/http-requests'
 import noteFolders from './routes/note-folders'
 import noteTags from './routes/note-tags'
 import notes from './routes/notes'
@@ -43,6 +47,10 @@ export async function initApi() {
     .use(notes)
     .use(noteFolders)
     .use(noteTags)
+    .use(httpFolders)
+    .use(httpRequests)
+    .use(httpEnvironments)
+    .use(httpHistory)
     .listen(port)
 
   // eslint-disable-next-line no-console

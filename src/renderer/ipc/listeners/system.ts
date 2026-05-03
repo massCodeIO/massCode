@@ -3,6 +3,8 @@ import {
   normalizeNotesSelectionState,
   useApp,
   useFolders,
+  useHttpApp,
+  useHttpSpaceInit,
   useMathNotebook,
   useNoteFolders,
   useNotes,
@@ -23,12 +25,14 @@ import { repository } from '../../../../package.json'
 import { handleDeepLink } from './deepLinks'
 
 const { state, isCodeSpaceInitialized } = useApp()
+const { isHttpSpaceInitialized } = useHttpApp()
 const { getFolders } = useFolders()
 const { getTags } = useTags()
 const { selectFirstSnippet, displayedSnippets } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const { refreshHttpSpaceFromDisk } = useHttpSpaceInit()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
 const { hasBusyNoteContentUpdates } = useNotes()
@@ -62,6 +66,7 @@ async function refreshAfterStorageSync() {
   const activeSpace = getActiveSpaceId()
   isCodeSpaceInitialized.value = false
   isNotesSpaceInitialized.value = false
+  isHttpSpaceInitialized.value = false
 
   switch (activeSpace) {
     case 'math':
@@ -79,6 +84,9 @@ async function refreshAfterStorageSync() {
       if (router.currentRoute.value.name === RouterName.notesGraph) {
         await getNotesGraph()
       }
+      break
+    case 'http':
+      await refreshHttpSpaceFromDisk()
       break
     case 'tools':
       break

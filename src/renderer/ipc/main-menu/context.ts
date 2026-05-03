@@ -19,11 +19,17 @@ interface NotesMenuState {
   mode: NotesEditorMode
 }
 
+interface HttpMenuState {
+  layoutMode: LayoutMode
+  canSendRequest: boolean
+}
+
 interface CreateMainMenuContextOptions {
   activeSpaceId: SpaceId | null
   compactListMode: boolean
   code: CodeMenuState
   notes: NotesMenuState
+  http: HttpMenuState
 }
 
 const sharedLayoutModes: MainMenuLayoutMode[] = [
@@ -55,6 +61,7 @@ export function createMainMenuContext(
       editor: {
         kind: 'code',
         noteMode: null,
+        canSendRequest: false,
         canFormat: true,
         canPreviewCode: options.code.canPreviewCode,
         isCodePreviewShown: options.code.isCodePreviewShown,
@@ -85,12 +92,44 @@ export function createMainMenuContext(
       editor: {
         kind: 'notes',
         noteMode: options.notes.mode,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
         canPreviewJson: false,
         isJsonPreviewShown: false,
         canAdjustFontSize: true,
+      },
+    }
+  }
+
+  if (options.activeSpaceId === 'http') {
+    return {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+      },
+      view: {
+        layoutMode: options.http.layoutMode,
+        layoutModes: sharedLayoutModes,
+        canToggleCompactMode: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: 'http',
+        noteMode: null,
+        canSendRequest: options.http.canSendRequest,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
       },
     }
   }
@@ -115,6 +154,7 @@ export function createMainMenuContext(
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -144,6 +184,7 @@ export function createMainMenuContext(
     editor: {
       kind: null,
       noteMode: null,
+      canSendRequest: false,
       canFormat: false,
       canPreviewCode: false,
       isCodePreviewShown: false,

@@ -6,7 +6,7 @@ export type MainMenuPrimaryAction =
   | 'new-sheet'
   | null
 export type MainMenuSecondaryAction = 'new-folder' | null
-export type MainMenuEditorKind = 'code' | 'notes' | null
+export type MainMenuEditorKind = 'code' | 'notes' | 'http' | null
 export type MainMenuNotesEditorMode = 'raw' | 'livePreview' | 'preview' | null
 
 export interface MainMenuFileContext {
@@ -29,6 +29,7 @@ export interface MainMenuViewContext {
 export interface MainMenuEditorContext {
   kind: MainMenuEditorKind
   noteMode: MainMenuNotesEditorMode
+  canSendRequest: boolean
   canFormat: boolean
   canPreviewCode: boolean
   isCodePreviewShown: boolean

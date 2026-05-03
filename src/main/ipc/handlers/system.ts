@@ -6,6 +6,10 @@ import {
   refreshFiatRatesForced,
 } from '../../currencyRates'
 import {
+  getHttpPaths,
+  getHttpRuntimeCache,
+} from '../../storage/providers/markdown/http'
+import {
   findNoteById,
   getNotesFolderPathById,
   getNotesPaths,
@@ -74,6 +78,31 @@ export function registerSystemHandlers() {
 
     return true
   })
+
+  ipcMain.handle(
+    'system:show-http-request-in-file-manager',
+    (_, requestId: number) => {
+      if (!Number.isFinite(requestId) || requestId <= 0) {
+        return false
+      }
+
+      const httpPaths = getHttpPaths(getVaultPath())
+      const cache = getHttpRuntimeCache(httpPaths)
+      const request = cache.requestById.get(requestId)
+
+      if (!request) {
+        return false
+      }
+
+      const requestAbsolutePath = path.join(
+        httpPaths.httpRoot,
+        request.filePath,
+      )
+      shell.showItemInFolder(requestAbsolutePath)
+
+      return true
+    },
+  )
 
   ipcMain.handle(
     'system:show-notes-folder-in-file-manager',

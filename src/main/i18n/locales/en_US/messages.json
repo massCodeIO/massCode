@@ -1,6 +1,8 @@
 {
   "confirm": {
     "delete": "Are you sure you want to delete \"{{name}}\"?",
+    "deleteVariable": "Are you sure you want to delete variable \"{{name}}\"?",
+    "deleteUnnamedVariable": "Are you sure you want to delete this variable?",
     "deletePermanently": "Are you sure you want to permanently delete \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
     "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
@@ -39,6 +41,7 @@
     "entryNameWindowsReserved": "This name is reserved on Windows.",
     "entryNameNoteConflict": "A note with this name already exists in this folder.",
     "entryNameSnippetConflict": "A snippet with this name already exists in this folder.",
+    "entryNameRequestConflict": "A request with this name already exists in this folder.",
     "entryNameFolderConflict": "A folder with this name already exists at this level."
   },
   "description": {
@@ -53,14 +56,19 @@
     "trigger": {
       "copy": {
         "code": "{{count}} snippets copied 🚀",
+        "http": "{{count}} HTTP items copied 🚀",
         "notes": "{{count}} notes copied 🚀",
         "math": "{{count}} math results copied 🚀",
         "tools": "{{count}} tool outputs copied 🚀"
       },
       "created": {
         "code": "{{count}} snippets created 🎉",
+        "http": "{{count}} HTTP requests created 🎉",
         "notes": "{{count}} notes created 🎉",
         "math": "{{count}} sheets created 🎉"
+      },
+      "sent": {
+        "http": "{{count}} HTTP requests sent 🚀"
       },
       "streak_7": {
         "title": "7 days in a row 🔥"

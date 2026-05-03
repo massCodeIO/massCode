@@ -27,7 +27,10 @@ vi.mock('@/electron', () => ({
 
 vi.mock('@/services/api', () => ({
   api: {
+    httpFolders: { getHttpFolders: vi.fn() },
+    httpRequests: { getHttpRequests: vi.fn() },
     notes: { getNotes: vi.fn() },
+    noteFolders: { getNoteFolders: vi.fn() },
     snippets: { getSnippets: vi.fn() },
   },
 }))
@@ -135,6 +138,9 @@ describe('findInternalLinkSearchMatch', () => {
     ).toBeNull()
     expect(
       findInternalLinkSearchMatch('Hello [[note:12|Doc label', 26),
+    ).toBeNull()
+    expect(
+      findInternalLinkSearchMatch('Hello [[http-request:8|Create snippet', 37),
     ).toBeNull()
   })
 })
@@ -324,6 +330,30 @@ describe('pickShortestUniqueInsertTarget', () => {
 
     expect(pickShortestUniqueInsertTarget(selected, items)).toBe(
       'Projects/Active/Repository Pattern',
+    )
+  })
+
+  it('returns full folder path when another HTTP request shares the same name', () => {
+    const selected = {
+      folderPath: 'API',
+      id: 1,
+      locationLabel: 'API',
+      name: 'Create snippet',
+      type: 'http-request' as const,
+    }
+    const items = [
+      selected,
+      {
+        folderPath: 'Admin',
+        id: 2,
+        locationLabel: 'Admin',
+        name: 'Create snippet',
+        type: 'http-request' as const,
+      },
+    ]
+
+    expect(pickShortestUniqueInsertTarget(selected, items)).toBe(
+      'API/Create snippet',
     )
   })
 

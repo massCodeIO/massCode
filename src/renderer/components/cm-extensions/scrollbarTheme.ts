@@ -1,4 +1,4 @@
-export const notesEditorScrollbarTheme = {
+export const editorScrollbarTheme = {
   '.cm-scroller': {
     overflow: 'auto',
     scrollbarWidth: 'auto',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { notesEditorScrollbarTheme } from '@/components/notes/cm-extensions/scrollbarTheme'
+import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import {
   defaultKeymap,
   history,
@@ -79,7 +79,7 @@ function createJsonDiffTheme() {
     '.cm-placeholder': {
       color: 'var(--muted-foreground)',
     },
-    ...notesEditorScrollbarTheme,
+    ...editorScrollbarTheme,
   })
 }
 

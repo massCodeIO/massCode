@@ -133,6 +133,14 @@ export default defineConfig({
           ],
         },
         {
+          text: 'HTTP',
+          items: [
+            { text: 'HTTP Client', link: '/documentation/http/' },
+            { text: 'Requests', link: '/documentation/http/requests' },
+            { text: 'Environments', link: '/documentation/http/environments' },
+          ],
+        },
+        {
           text: 'Math',
           items: [
             { text: 'Math Notebook', link: '/documentation/math/' },

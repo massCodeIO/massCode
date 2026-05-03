@@ -43,6 +43,7 @@ type SystemAction =
   | 'reload'
   | 'move-vault'
   | 'open-external'
+  | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'
   | 'show-note-in-file-manager'
   | 'deep-link'
@@ -55,7 +56,7 @@ type SystemAction =
 type PrettierAction = 'format'
 type FsAction = 'assets' | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
-type SpacesAction = 'math:read' | 'math:write'
+type SpacesAction = 'math:read' | 'math:write' | 'http:execute'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>

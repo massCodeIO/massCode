@@ -4,7 +4,7 @@ import * as Popover from '@/components/ui/shadcn/popover'
 import { i18n } from '@/electron'
 import { cn } from '@/utils'
 import { useWindowSize } from '@vueuse/core'
-import { Code2, FileText } from 'lucide-vue-next'
+import { Code2, FileText, Send } from 'lucide-vue-next'
 import {
   getInternalLinksPickerLayout,
   INTERNAL_LINKS_PICKER_WIDTH,
@@ -88,12 +88,20 @@ const pickerGroups = computed(() => {
   const notes = internalLinksPickerState.items.filter(
     item => item.type === 'note',
   )
+  const httpRequests = internalLinksPickerState.items.filter(
+    item => item.type === 'http-request',
+  )
 
   return [
     {
       items: snippets,
       key: 'snippet',
       title: i18n.t('internalLinks.picker.groups.snippets'),
+    },
+    {
+      items: httpRequests,
+      key: 'http-request',
+      title: i18n.t('internalLinks.picker.groups.httpRequests'),
     },
     {
       items: notes,
@@ -104,7 +112,15 @@ const pickerGroups = computed(() => {
 })
 
 function getItemIcon(type: InternalLinkPickerItem['type']) {
-  return type === 'snippet' ? Code2 : FileText
+  if (type === 'snippet') {
+    return Code2
+  }
+
+  if (type === 'http-request') {
+    return Send
+  }
+
+  return FileText
 }
 
 function getPickerItemKey(item: InternalLinkPickerItem) {

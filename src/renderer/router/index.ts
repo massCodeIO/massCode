@@ -9,6 +9,7 @@ export const RouterName = {
   preferencesEditor: 'preferences/editor',
   preferencesNotesEditor: 'preferences/notes-editor',
   preferencesMath: 'preferences/math',
+  preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -30,6 +31,7 @@ export const RouterName = {
   devtoolsLoremIpsumGenerator: 'devtools/lorem-ipsum-generator',
   devtoolsJsonDiff: 'devtools/json-diff',
   mathNotebook: 'math-notebook',
+  httpSpace: 'http-space',
   notesSpace: 'notes-space',
   notesDashboard: 'notes-space/dashboard',
   notesGraph: 'notes-space/graph',
@@ -80,6 +82,11 @@ const routes = [
         path: 'math',
         name: RouterName.preferencesMath,
         component: () => import('@/components/preferences/Math.vue'),
+      },
+      {
+        path: 'http',
+        name: RouterName.preferencesHttp,
+        component: () => import('@/components/preferences/Http.vue'),
       },
       {
         path: 'api',
@@ -203,6 +210,11 @@ const routes = [
     path: '/math-notebook',
     name: RouterName.mathNotebook,
     component: () => import('@/views/MathNotebook.vue'),
+  },
+  {
+    path: '/http',
+    name: RouterName.httpSpace,
+    component: () => import('@/views/HttpSpace.vue'),
   },
   {
     path: '/notes',

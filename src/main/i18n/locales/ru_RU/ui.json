@@ -32,6 +32,111 @@
       "untitled": "Без названия",
       "currencyUnavailable": "Сервис курсов валют недоступен"
     },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP-клиент",
+      "title": "HTTP-клиент",
+      "untitledRequest": "Безымянный запрос",
+      "empty": "Пока нет запросов",
+      "noUrl": "Нет URL",
+      "action": {
+        "newRequest": "Новый запрос",
+        "newEnvironment": "Новое окружение",
+        "manageEnvironments": "Управление окружениями",
+        "deleteEnvironment": "Удалить окружение"
+      },
+      "environments": {
+        "title": "Окружения",
+        "none": "Без окружения",
+        "activeTooltip": "Окружение: {{name}}",
+        "selectTooltip": "Выбрать окружение",
+        "manage": "Управление окружениями…",
+        "empty": "Окружений пока нет",
+        "untitled": "Безымянное окружение",
+        "namePlaceholder": "Название окружения",
+        "variables": "Переменные",
+        "noVariables": "Переменных пока нет",
+        "varKey": "Переменная",
+        "varValue": "Значение",
+        "addVariable": "Добавить переменную",
+        "noEnvironmentSelected": "Выберите окружение, чтобы отредактировать его переменные"
+      },
+      "editor": {
+        "noSelected": "Запрос не выбран",
+        "namePlaceholder": "Название запроса",
+        "urlPlaceholder": "Введите URL запроса",
+        "send": "Отправить",
+        "tabs": {
+          "params": "Параметры",
+          "headers": "Заголовки",
+          "body": "Тело",
+          "auth": "Авторизация",
+          "description": "Описание"
+        },
+        "keyValue": {
+          "key": "Ключ",
+          "value": "Значение",
+          "description": "Описание",
+          "addRow": "Добавить строку",
+          "empty": "Нет записей"
+        },
+        "body": {
+          "typeNone": "Без тела",
+          "typeJson": "JSON",
+          "typeText": "Text",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "Введите тело запроса",
+          "fieldType": {
+            "text": "Текст",
+            "file": "Файл"
+          },
+          "filePlaceholder": "Укажите путь к файлу",
+          "jsonInvalid": "Невалидный JSON"
+        },
+        "auth": {
+          "typeNone": "Без авторизации",
+          "typeBearer": "Bearer Token",
+          "typeBasic": "Basic Auth",
+          "token": "Токен",
+          "tokenPlaceholder": "Введите токен",
+          "username": "Логин",
+          "usernamePlaceholder": "Введите логин",
+          "password": "Пароль",
+          "passwordPlaceholder": "Введите пароль"
+        },
+        "description": {
+          "placeholder": "Добавьте описание для этого запроса"
+        },
+        "panels": {
+          "preview": "Превью",
+          "response": "Ответ"
+        },
+        "preview": {
+          "empty": "Нет превью запроса",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
+        "response": {
+          "empty": "Ответа пока нет",
+          "executing": "Отправка запроса",
+          "status": "Статус",
+          "time": "Время",
+          "size": "Размер",
+          "tabs": {
+            "body": "Тело",
+            "headers": "Заголовки"
+          },
+          "error": "Ошибка запроса",
+          "truncated": "Ответ обрезан",
+          "binaryNotice": "Бинарный ответ не отображается",
+          "copy": "Копировать",
+          "copied": "Скопировано"
+        }
+      }
+    },
     "tools": {
       "label": "Инструменты",
       "tooltip": "Инструменты разработчика"
@@ -206,10 +311,28 @@
       "snippet": "Копировать сниппет",
       "snippetLink": "Копировать ссылку на сниппет",
       "note": "Копировать заметку",
-      "noteLink": "Копировать ссылку на заметку"
+      "noteLink": "Копировать ссылку на заметку",
+      "request": "Копировать запрос",
+      "requestLink": "Копировать ссылку на запрос"
     },
     "select": {
       "directory": "Выбрать директорию"
+    }
+  },
+  "internalLinks": {
+    "picker": {
+      "searchPlaceholder": "Поиск сниппетов, HTTP-запросов и заметок...",
+      "emptyResults": "Нет результатов",
+      "groups": {
+        "snippets": "Сниппеты",
+        "httpRequests": "HTTP-запросы",
+        "notes": "Заметки"
+      }
+    },
+    "missing": {
+      "snippet": "Сниппет не найден",
+      "httpRequest": "HTTP-запрос не найден",
+      "note": "Заметка не найдена"
     }
   },
   "placeholder": {

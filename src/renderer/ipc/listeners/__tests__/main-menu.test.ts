@@ -9,6 +9,11 @@ async function setup() {
   const ipcHandlers = new Map<string, (...args: any[]) => void>()
   const navigateBack = vi.fn(async () => undefined)
   const navigateForward = vi.fn(async () => undefined)
+  const executeCurrentRequest = vi.fn(async () => undefined)
+  const saveCurrentRequest = vi.fn(async () => undefined)
+  const currentDraft = ref({ url: 'https://example.com' })
+  const isExecuting = ref(false)
+  const getActiveSpaceId = vi.fn(() => 'code')
 
   vi.doMock('@/composables', () => ({
     useApp: () => ({
@@ -46,6 +51,18 @@ async function setup() {
       showNotesPresentation: vi.fn(),
       toggleNotesSidebar: vi.fn(),
     }),
+    useHttpApp: () => ({
+      setHttpLayoutMode: vi.fn(),
+      toggleHttpSidebar: vi.fn(),
+    }),
+    useHttpExecute: () => ({
+      executeCurrentRequest,
+      isExecuting,
+    }),
+    useHttpRequests: () => ({
+      currentDraft,
+      saveCurrentRequest,
+    }),
     useNotesEditor: () => ({
       settings: { fontSize: 14 },
     }),
@@ -79,7 +96,7 @@ async function setup() {
   }))
 
   vi.doMock('@/spaceDefinitions', () => ({
-    getActiveSpaceId: vi.fn(() => 'code'),
+    getActiveSpaceId,
   }))
 
   vi.doMock('~/main/store/constants', () => ({
@@ -97,8 +114,13 @@ async function setup() {
 
   return {
     ipcHandlers,
+    currentDraft,
+    executeCurrentRequest,
+    getActiveSpaceId,
+    isExecuting,
     navigateBack,
     navigateForward,
+    saveCurrentRequest,
   }
 }
 
@@ -115,5 +137,24 @@ describe('registerMainMenuListeners', () => {
 
     expect(context.navigateBack).toHaveBeenCalledTimes(1)
     expect(context.navigateForward).toHaveBeenCalledTimes(1)
+  })
+
+  it('saves and sends the current http request from the menu shortcut', async () => {
+    const context = await setup()
+    context.getActiveSpaceId.mockReturnValue('http')
+
+    await context.ipcHandlers.get('main-menu:send-http-request')?.()
+
+    expect(context.saveCurrentRequest).toHaveBeenCalledTimes(1)
+    expect(context.executeCurrentRequest).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores send request outside http space', async () => {
+    const context = await setup()
+
+    await context.ipcHandlers.get('main-menu:send-http-request')?.()
+
+    expect(context.saveCurrentRequest).not.toHaveBeenCalled()
+    expect(context.executeCurrentRequest).not.toHaveBeenCalled()
   })
 })

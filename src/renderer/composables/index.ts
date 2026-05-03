@@ -1,4 +1,5 @@
 export * from './math-notebook'
+export * from './spaces/http'
 export * from './spaces/notes'
 export * from './useActivityTracker'
 export * from './useApp'

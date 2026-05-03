@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 
 interface SetupOptions {
+  httpRequestResponse?: any
+  httpRequestThrows?: boolean
   noteResponse?: any
   noteRouteName?: string
   noteThrows?: boolean
@@ -29,6 +31,11 @@ async function setup(options: SetupOptions = {}) {
   const clearFolderSelection = vi.fn()
   const getSnippets = vi.fn(async () => undefined)
   const selectSnippet = vi.fn()
+  const getHttpFolders = vi.fn(async () => undefined)
+  const selectHttpFolder = vi.fn(async () => undefined)
+  const clearHttpFolderSelection = vi.fn()
+  const getHttpRequests = vi.fn(async () => undefined)
+  const selectHttpRequest = vi.fn()
 
   const getNoteFolders = vi.fn(async () => undefined)
   const selectNoteFolder = vi.fn(async () => undefined)
@@ -76,6 +83,20 @@ async function setup(options: SetupOptions = {}) {
         },
       }))
 
+  const getHttpRequestsById = options.httpRequestThrows
+    ? vi.fn(async () => {
+        throw new Error('not found')
+      })
+    : vi.fn(async () => ({
+        data: options.httpRequestResponse ?? {
+          folderId: 4,
+          id: 8,
+          method: 'GET',
+          name: 'HTTP request',
+          url: 'https://example.com',
+        },
+      }))
+
   const router = {
     currentRoute: ref({
       name: options.noteRouteName ?? options.snippetRouteName ?? 'main',
@@ -87,8 +108,10 @@ async function setup(options: SetupOptions = {}) {
 
   const initCodeSpace = vi.fn(async () => undefined)
   const initNotesSpace = vi.fn(async () => undefined)
+  const initHttpSpace = vi.fn(async () => undefined)
   const isAppLoading = ref(false)
   const isCodeSpaceInitialized = ref(false)
+  const isHttpSpaceInitialized = ref(false)
   const isNotesSpaceInitialized = ref(false)
   const pendingCodeNavigation = ref(false)
   const pendingNotesNavigation = ref(false)
@@ -110,6 +133,24 @@ async function setup(options: SetupOptions = {}) {
       clearFolderSelection,
       getFolders,
       selectFolder,
+    }),
+    useHttpApp: () => ({
+      focusedRequestId: ref<number | undefined>(),
+      highlightedFolderIds: ref(new Set<number>()),
+      highlightedRequestIds: ref(new Set<number>()),
+      isHttpSpaceInitialized,
+    }),
+    useHttpFolders: () => ({
+      clearFolderSelection: clearHttpFolderSelection,
+      getHttpFolders,
+      selectHttpFolder,
+    }),
+    useHttpRequests: () => ({
+      getHttpRequests,
+      selectHttpRequest,
+    }),
+    useHttpSpaceInit: () => ({
+      initHttpSpace,
     }),
     useNoteFolders: () => ({
       clearFolderSelection: clearNoteFolderSelection,
@@ -169,12 +210,16 @@ async function setup(options: SetupOptions = {}) {
       snippets: {
         getSnippetsById,
       },
+      httpRequests: {
+        getHttpRequestsById,
+      },
     },
   }))
 
   vi.doMock('@/router', () => ({
     RouterName: {
       main: 'main',
+      httpSpace: 'http-space',
       notesGraph: 'notes-space/graph',
       notesSpace: 'notes-space',
       notesPresentation: 'notes-space/presentation',
@@ -186,17 +231,22 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     clearFolderSelection,
+    clearHttpFolderSelection,
     clearNoteFolderSelection,
     clearNotesState,
     getFolders,
+    getHttpFolders,
+    getHttpRequests,
     getNotes,
     getSnippets,
     goBack,
     goForward,
     initCodeSpace,
+    initHttpSpace,
     initNotesSpace,
     isAppLoading,
     isCodeSpaceInitialized,
+    isHttpSpaceInitialized,
     isNotesSpaceInitialized,
     isNavigatingHistory,
     historyCursor,
@@ -209,6 +259,8 @@ async function setup(options: SetupOptions = {}) {
     recordNavigation,
     router,
     selectFolder,
+    selectHttpFolder,
+    selectHttpRequest,
     selectNote,
     selectNoteFolder,
     selectSnippet,
@@ -264,6 +316,46 @@ describe('deepLinks', () => {
     expect(context.pendingNotesNavigation.value).toBe(false)
   })
 
+  it('opens HTTP request links in the request folder context', async () => {
+    const context = await setup({
+      httpRequestResponse: {
+        folderId: 4,
+        id: 8,
+        method: 'POST',
+        name: 'Create snippet',
+        url: 'https://example.com/snippets',
+      },
+      snippetRouteName: 'notes-space',
+    })
+
+    await context.module.openHttpRequestDeepLink(8)
+
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
+    expect(context.getHttpRequests).toHaveBeenCalledTimes(1)
+    expect(context.getHttpFolders).toHaveBeenCalledTimes(1)
+    expect(context.selectHttpFolder).toHaveBeenCalledWith(4)
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
+    expect(context.isHttpSpaceInitialized.value).toBe(true)
+  })
+
+  it('opens root HTTP request links without a folder selection', async () => {
+    const context = await setup({
+      httpRequestResponse: {
+        folderId: null,
+        id: 8,
+        method: 'GET',
+        name: 'List snippets',
+        url: 'https://example.com/snippets',
+      },
+    })
+
+    await context.module.openHttpRequestDeepLink(8)
+
+    expect(context.clearHttpFolderSelection).toHaveBeenCalledTimes(1)
+    expect(context.selectHttpFolder).not.toHaveBeenCalled()
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
+  })
+
   it('falls back to legacy folderId for old snippet deeplinks', async () => {
     const context = await setup({
       snippetThrows: true,
@@ -287,6 +379,17 @@ describe('deepLinks', () => {
 
     expect(context.recordNavigation).toHaveBeenCalledTimes(1)
     expect(context.selectSnippet).toHaveBeenCalledWith(42)
+  })
+
+  it('records history when opening an internal HTTP request target', async () => {
+    const context = await setup({
+      snippetRouteName: 'notes-space',
+    })
+
+    await context.module.openInternalTarget({ id: 8, type: 'http-request' })
+
+    expect(context.recordNavigation).toHaveBeenCalledTimes(1)
+    expect(context.selectHttpRequest).toHaveBeenCalledWith(8)
   })
 
   it('restores target from history on back navigation', async () => {

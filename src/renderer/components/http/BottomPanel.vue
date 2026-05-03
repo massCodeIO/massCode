@@ -5,6 +5,7 @@ import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
   useCopyToClipboard,
   useDonations,
+  useHttpEnvironments,
   useHttpExecute,
   useHttpRequests,
 } from '@/composables'
@@ -15,6 +16,7 @@ import { buildRequestPreview } from './requestPreview'
 type BottomPanelTab = 'preview' | 'response'
 
 const { currentDraft } = useHttpRequests()
+const { activeEnvironment } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
@@ -22,10 +24,16 @@ const { incrementCopy } = useDonations()
 const activeTab = ref<BottomPanelTab>('preview')
 const previewFormat = ref<HttpRequestPreviewFormat>('http')
 
+const previewVariables = computed<Record<string, string>>(() => {
+  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
+})
+
 const previewContent = computed(() => {
   if (!currentDraft.value)
     return ''
-  return buildRequestPreview(currentDraft.value, previewFormat.value)
+  return buildRequestPreview(currentDraft.value, previewFormat.value, {
+    variables: previewVariables.value,
+  })
 })
 
 const statusClass = computed(() => {

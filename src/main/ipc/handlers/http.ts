@@ -17,21 +17,17 @@ import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
 import { request as undiciRequest } from 'undici'
+import { interpolateHttpVariables } from '../../../shared/httpVariables'
 import { useHttpStorage } from '../../storage'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
-const VAR_PATTERN = /\{\{\s*([\w.-]+)\s*\}\}/g
 
 export function interpolate(
   template: string,
   variables: Record<string, string>,
 ): string {
-  return template.replace(VAR_PATTERN, (match, key: string) => {
-    return Object.prototype.hasOwnProperty.call(variables, key)
-      ? variables[key]
-      : match
-  })
+  return interpolateHttpVariables(template, variables)
 }
 
 function interpolateAuth(

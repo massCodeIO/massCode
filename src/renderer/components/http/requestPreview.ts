@@ -1,7 +1,12 @@
 import type { HttpRequestDraft } from '@/composables'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
+import { interpolateHttpVariables } from '~/shared/httpVariables'
 
 export type HttpRequestPreviewFormat = 'http' | 'curl'
+
+interface HttpRequestPreviewOptions {
+  variables?: Record<string, string>
+}
 
 const BODY_CONTENT_TYPES: Partial<
   Record<HttpRequestDraft['bodyType'], string>
@@ -164,11 +169,70 @@ function bodyLines(draft: HttpRequestDraft): string[] {
   return []
 }
 
-export function buildHttpPreview(draft: HttpRequestDraft): string {
-  const url = buildPreviewUrl(draft)
+function interpolateAuth(
+  auth: HttpAuth,
+  variables: Record<string, string>,
+): HttpAuth {
+  return {
+    type: auth.type,
+    token:
+      auth.token !== undefined
+        ? interpolateHttpVariables(auth.token, variables)
+        : auth.token,
+    username:
+      auth.username !== undefined
+        ? interpolateHttpVariables(auth.username, variables)
+        : auth.username,
+    password:
+      auth.password !== undefined
+        ? interpolateHttpVariables(auth.password, variables)
+        : auth.password,
+  }
+}
+
+function interpolateDraft(
+  draft: HttpRequestDraft,
+  variables: Record<string, string> | undefined,
+): HttpRequestDraft {
+  if (!variables || Object.keys(variables).length === 0) {
+    return draft
+  }
+
+  return {
+    ...draft,
+    url: interpolateHttpVariables(draft.url, variables),
+    headers: draft.headers.map(header => ({
+      ...header,
+      value: interpolateHttpVariables(header.value, variables),
+    })),
+    query: draft.query.map(entry => ({
+      ...entry,
+      value: interpolateHttpVariables(entry.value, variables),
+    })),
+    body:
+      draft.body !== null
+        ? interpolateHttpVariables(draft.body, variables)
+        : draft.body,
+    formData: draft.formData.map(entry => ({
+      ...entry,
+      value:
+        entry.type === 'text'
+          ? interpolateHttpVariables(entry.value, variables)
+          : entry.value,
+    })),
+    auth: interpolateAuth(draft.auth, variables),
+  }
+}
+
+export function buildHttpPreview(
+  draft: HttpRequestDraft,
+  options: HttpRequestPreviewOptions = {},
+): string {
+  const previewDraft = interpolateDraft(draft, options.variables)
+  const url = buildPreviewUrl(previewDraft)
   const { host, target } = getHttpUrlParts(url)
-  const headers = getPreviewHeaders(draft)
-  const lines = [`${draft.method} ${target || '/'} HTTP/1.1`]
+  const headers = getPreviewHeaders(previewDraft)
+  const lines = [`${previewDraft.method} ${target || '/'} HTTP/1.1`]
 
   if (host && !hasHeader(headers, 'host')) {
     lines.push(`Host: ${host}`)
@@ -178,7 +242,7 @@ export function buildHttpPreview(draft: HttpRequestDraft): string {
     lines.push(`${header.key}: ${header.value}`)
   }
 
-  const body = bodyLines(draft)
+  const body = bodyLines(previewDraft)
   if (body.length > 0) {
     lines.push('', ...body)
   }
@@ -186,39 +250,46 @@ export function buildHttpPreview(draft: HttpRequestDraft): string {
   return lines.join('\n')
 }
 
-export function buildCurlPreview(draft: HttpRequestDraft): string {
-  const url = buildPreviewUrl(draft)
+export function buildCurlPreview(
+  draft: HttpRequestDraft,
+  options: HttpRequestPreviewOptions = {},
+): string {
+  const previewDraft = interpolateDraft(draft, options.variables)
+  const url = buildPreviewUrl(previewDraft)
   const indent = '     '
   const lines = [
-    `curl -X ${shellDoubleQuote(draft.method)} ${shellDoubleQuote(url)}`,
+    `curl -X ${shellDoubleQuote(previewDraft.method)} ${shellDoubleQuote(url)}`,
   ]
 
-  for (const header of getPreviewHeaders(draft)) {
+  for (const header of getPreviewHeaders(previewDraft)) {
     lines.push(
       `${indent}-H ${shellSingleQuote(`${header.key}: ${header.value}`)}`,
     )
   }
 
-  if (draft.bodyType === 'multipart') {
-    for (const entry of draft.formData.filter(entry => entry.key)) {
+  if (previewDraft.bodyType === 'multipart') {
+    for (const entry of previewDraft.formData.filter(entry => entry.key)) {
       const value = entry.type === 'file' ? `@${entry.value}` : entry.value
       lines.push(`${indent}-F ${shellSingleQuote(`${entry.key}=${value}`)}`)
     }
   }
-  else if (draft.bodyType !== 'none' && draft.body) {
-    lines.push(`${indent}-d ${shellAnsiCString(draft.body)}`)
+  else if (previewDraft.bodyType !== 'none' && previewDraft.body) {
+    lines.push(`${indent}-d ${shellAnsiCString(previewDraft.body)}`)
   }
 
   const command = lines
     .map((line, index) => (index === lines.length - 1 ? line : `${line} \\`))
     .join('\n')
 
-  return [`## ${draft.name}`, command].join('\n')
+  return [`## ${previewDraft.name}`, command].join('\n')
 }
 
 export function buildRequestPreview(
   draft: HttpRequestDraft,
   format: HttpRequestPreviewFormat,
+  options: HttpRequestPreviewOptions = {},
 ): string {
-  return format === 'http' ? buildHttpPreview(draft) : buildCurlPreview(draft)
+  return format === 'http'
+    ? buildHttpPreview(draft, options)
+    : buildCurlPreview(draft, options)
 }

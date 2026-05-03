@@ -21,6 +21,7 @@ interface NotesMenuState {
 
 interface HttpMenuState {
   layoutMode: LayoutMode
+  canSendRequest: boolean
 }
 
 interface CreateMainMenuContextOptions {
@@ -60,6 +61,7 @@ export function createMainMenuContext(
       editor: {
         kind: 'code',
         noteMode: null,
+        canSendRequest: false,
         canFormat: true,
         canPreviewCode: options.code.canPreviewCode,
         isCodePreviewShown: options.code.isCodePreviewShown,
@@ -90,6 +92,7 @@ export function createMainMenuContext(
       editor: {
         kind: 'notes',
         noteMode: options.notes.mode,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -118,8 +121,9 @@ export function createMainMenuContext(
         isPresentationShown: false,
       },
       editor: {
-        kind: null,
+        kind: 'http',
         noteMode: null,
+        canSendRequest: options.http.canSendRequest,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -150,6 +154,7 @@ export function createMainMenuContext(
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -179,6 +184,7 @@ export function createMainMenuContext(
     editor: {
       kind: null,
       noteMode: null,
+      canSendRequest: false,
       canFormat: false,
       canPreviewCode: false,
       isCodePreviewShown: false,

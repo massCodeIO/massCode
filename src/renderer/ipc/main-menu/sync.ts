@@ -1,6 +1,8 @@
 import {
   useApp,
   useHttpApp,
+  useHttpExecute,
+  useHttpRequests,
   useNotes,
   useNotesApp,
   useSnippets,
@@ -23,6 +25,8 @@ const {
   notesLayoutMode,
 } = useNotesApp()
 const { httpLayoutMode } = useHttpApp()
+const { isExecuting } = useHttpExecute()
+const { currentDraft } = useHttpRequests()
 const { isAvailableToCodePreview, selectedSnippetContent } = useSnippets()
 
 export function registerMainMenuContextSync() {
@@ -42,6 +46,8 @@ export function registerMainMenuContextSync() {
         notesLayoutMode.value,
         notesEditorMode.value,
         httpLayoutMode.value,
+        currentDraft.value?.url,
+        isExecuting.value,
       ] as const,
     () => {
       ipc.send(
@@ -65,6 +71,8 @@ export function registerMainMenuContextSync() {
           },
           http: {
             layoutMode: httpLayoutMode.value,
+            canSendRequest:
+              Boolean(currentDraft.value?.url) && !isExecuting.value,
           },
         }),
       )

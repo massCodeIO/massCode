@@ -44,6 +44,7 @@ const defaultMainMenuContext: MainMenuContext = {
   editor: {
     kind: null,
     noteMode: null,
+    canSendRequest: false,
     canFormat: false,
     canPreviewCode: false,
     isCodePreviewShown: false,
@@ -519,6 +520,15 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
       label: i18n.t('menu:editor.copyNote'),
       click: () => send('main-menu:copy-note'),
       accelerator: 'CommandOrControl+Shift+C',
+    })
+  }
+
+  if (context.editor.kind === 'http') {
+    items.push({
+      label: i18n.t('menu:editor.sendRequest'),
+      enabled: context.editor.canSendRequest,
+      click: () => send('main-menu:send-http-request'),
+      accelerator: 'CommandOrControl+Enter',
     })
   }
 

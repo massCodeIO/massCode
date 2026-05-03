@@ -22,6 +22,7 @@ describe('createMainMenuContext', () => {
       },
       http: {
         layoutMode: 'all-panels',
+        canSendRequest: false,
       },
     })
 
@@ -42,6 +43,7 @@ describe('createMainMenuContext', () => {
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: true,
+      canSendRequest: false,
       canFormat: true,
       canPreviewCode: true,
       canPreviewJson: true,
@@ -72,6 +74,7 @@ describe('createMainMenuContext', () => {
       },
       http: {
         layoutMode: 'all-panels',
+        canSendRequest: false,
       },
     })
 
@@ -92,6 +95,7 @@ describe('createMainMenuContext', () => {
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: true,
+      canSendRequest: false,
       canFormat: false,
       canPreviewCode: false,
       canPreviewJson: false,
@@ -122,6 +126,7 @@ describe('createMainMenuContext', () => {
       },
       http: {
         layoutMode: 'all-panels',
+        canSendRequest: false,
       },
     })
 
@@ -142,6 +147,7 @@ describe('createMainMenuContext', () => {
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: false,
+      canSendRequest: false,
       canFormat: false,
       canPreviewCode: false,
       canPreviewJson: false,
@@ -172,6 +178,7 @@ describe('createMainMenuContext', () => {
       },
       http: {
         layoutMode: 'list-editor',
+        canSendRequest: true,
       },
     })
 
@@ -192,12 +199,13 @@ describe('createMainMenuContext', () => {
     })
     expect(context.editor).toEqual({
       canAdjustFontSize: false,
+      canSendRequest: true,
       canFormat: false,
       canPreviewCode: false,
       canPreviewJson: false,
       isCodePreviewShown: false,
       isJsonPreviewShown: false,
-      kind: null,
+      kind: 'http',
       noteMode: null,
     })
   })
@@ -222,6 +230,7 @@ describe('createMainMenuContext', () => {
       },
       http: {
         layoutMode: 'all-panels',
+        canSendRequest: false,
       },
     })
 

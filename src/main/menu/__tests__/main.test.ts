@@ -68,6 +68,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: 'code',
         noteMode: null,
+        canSendRequest: false,
         canFormat: true,
         canPreviewCode: true,
         isCodePreviewShown: false,
@@ -130,6 +131,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -175,6 +177,7 @@ describe('createMainMenu', () => {
       editor: {
         kind: null,
         noteMode: null,
+        canSendRequest: false,
         canFormat: false,
         canPreviewCode: false,
         isCodePreviewShown: false,
@@ -216,5 +219,62 @@ describe('createMainMenu', () => {
 
     expect(labels).not.toContain('menu:app.devtools')
     expect(labels).not.toContain('menu:app.mathNotebook')
+  })
+
+  it('renders send request in the editor menu for http space', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+      },
+      view: {
+        layoutMode: 'all-panels',
+        layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        canToggleCompactMode: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: 'http',
+        noteMode: null,
+        canSendRequest: true,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{
+        label?: string
+        accelerator?: string
+        enabled?: boolean
+      }>
+    }>
+    const fileMenu = template.find(item => item.label === 'menu:file.label')
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+    const sendRequestItem = editorMenu?.submenu?.find(
+      item => item.label === 'menu:editor.sendRequest',
+    )
+
+    expect(fileMenu).toBeUndefined()
+    expect(sendRequestItem).toMatchObject({
+      accelerator: 'CommandOrControl+Enter',
+      enabled: true,
+    })
   })
 })

@@ -165,7 +165,7 @@ async function onSend() {
         />
       </div>
       <UiActionButton
-        :tooltip="i18n.t('spaces.http.editor.send')"
+        :aria-label="i18n.t('spaces.http.editor.send')"
         :disabled="isExecuting || !currentDraft.url"
         @click="onSend"
       >

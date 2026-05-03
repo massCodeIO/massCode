@@ -54,14 +54,19 @@
     "trigger": {
       "copy": {
         "code": "{{count}} snippets copied 🚀",
+        "http": "{{count}} HTTP items copied 🚀",
         "notes": "{{count}} notes copied 🚀",
         "math": "{{count}} math results copied 🚀",
         "tools": "{{count}} tool outputs copied 🚀"
       },
       "created": {
         "code": "{{count}} snippets created 🎉",
+        "http": "{{count}} HTTP requests created 🎉",
         "notes": "{{count}} notes created 🎉",
         "math": "{{count}} sheets created 🎉"
+      },
+      "sent": {
+        "http": "{{count}} HTTP requests sent 🚀"
       },
       "streak_7": {
         "title": "7 days in a row 🔥"

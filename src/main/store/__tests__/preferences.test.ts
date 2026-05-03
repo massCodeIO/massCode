@@ -298,6 +298,30 @@ describe('app store sanitization', () => {
     expect(app.get('http.layout.garbage' as any)).toBeUndefined()
   })
 
+  it('keeps persisted http donation counters', async () => {
+    persistedStateByName.app = {
+      donations: {
+        copies: { http: 12 },
+        created: { http: 7 },
+        sent: { http: 31 },
+        lastShownCopyMilestones: { http: 25 },
+        lastShownCreatedMilestones: { http: 25 },
+        lastShownSentMilestones: { http: 25 },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('donations.copies.http' as any)).toBe(12)
+    expect(app.get('donations.created.http' as any)).toBe(7)
+    expect(app.get('donations.sent.http' as any)).toBe(31)
+    expect(app.get('donations.lastShownCopyMilestones.http' as any)).toBe(25)
+    expect(app.get('donations.lastShownCreatedMilestones.http' as any)).toBe(
+      25,
+    )
+    expect(app.get('donations.lastShownSentMilestones.http' as any)).toBe(25)
+  })
+
   it('keeps persisted notes route when it is a valid string', async () => {
     persistedStateByName.app = {
       notes: {

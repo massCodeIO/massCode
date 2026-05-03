@@ -4,6 +4,7 @@ import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
   useCopyToClipboard,
+  useDonations,
   useHttpExecute,
   useHttpRequests,
 } from '@/composables'
@@ -16,6 +17,7 @@ type BottomPanelTab = 'preview' | 'response'
 const { currentDraft } = useHttpRequests()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const copy = useCopyToClipboard()
+const { incrementCopy } = useDonations()
 
 const activeTab = ref<BottomPanelTab>('preview')
 const previewFormat = ref<HttpRequestPreviewFormat>('http')
@@ -74,6 +76,7 @@ watch(lastError, (error) => {
 function copyPreview() {
   if (previewContent.value) {
     copy(previewContent.value)
+    incrementCopy('http')
   }
 }
 </script>

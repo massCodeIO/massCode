@@ -41,25 +41,35 @@ export interface DonationsState {
   currentStreak: number
   copies: {
     code: number
+    http: number
     notes: number
     math: number
     tools: number
   }
   created: {
     code: number
+    http: number
     notes: number
     math: number
   }
+  sent: {
+    http: number
+  }
   lastShownCopyMilestones: {
     code: number
+    http: number
     notes: number
     math: number
     tools: number
   }
   lastShownCreatedMilestones: {
     code: number
+    http: number
     notes: number
     math: number
+  }
+  lastShownSentMilestones: {
+    http: number
   }
   shownStreakMilestones: number[]
   lastGreetingDay: string

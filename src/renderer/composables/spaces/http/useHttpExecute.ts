@@ -3,6 +3,7 @@ import type {
   HttpExecuteRequest,
   HttpExecuteResult,
 } from '~/main/types/http'
+import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { ipc } from '@/electron'
 import { useHttpEnvironments } from './useHttpEnvironments'
@@ -16,6 +17,7 @@ const lastError = ref<string | null>(null)
 
 const { currentDraft, currentRequest } = useHttpRequests()
 const { activeEnvironmentId } = useHttpEnvironments()
+const { incrementSent } = useDonations()
 
 function buildExecuteRequest(): HttpExecuteRequest | null {
   const draft = currentDraft.value
@@ -50,6 +52,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
 
   try {
     markPersistedStorageMutation()
+    incrementSent('http')
     const response = (await ipc.invoke(
       'spaces:http:execute',
       payload,

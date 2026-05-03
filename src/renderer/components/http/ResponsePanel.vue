@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import * as Tabs from '@/components/ui/shadcn/tabs'
-import { useCopyToClipboard, useHttpExecute } from '@/composables'
+import {
+  useCopyToClipboard,
+  useDonations,
+  useHttpExecute,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { Copy, LoaderCircle } from 'lucide-vue-next'
 
 const { lastResponse, lastError, isExecuting } = useHttpExecute()
 const copy = useCopyToClipboard()
+const { incrementCopy } = useDonations()
 
 const activeTab = ref<'body' | 'headers'>('body')
 
@@ -47,8 +52,10 @@ const bodyViewerLanguage = computed(() => {
 })
 
 function copyActiveTab() {
-  if (copyValue.value)
+  if (copyValue.value) {
     copy(copyValue.value)
+    incrementCopy('http')
+  }
 }
 </script>
 

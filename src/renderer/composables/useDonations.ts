@@ -2,8 +2,9 @@ import type { DonationsState, SpaceId } from '~/main/store/types'
 import { store } from '@/electron'
 import { format } from 'date-fns'
 
-type CopySpace = Exclude<SpaceId, 'http'>
-type CreatedSpace = Exclude<SpaceId, 'tools' | 'http'>
+type CopySpace = SpaceId
+type CreatedSpace = Exclude<SpaceId, 'tools'>
+type SentSpace = Extract<SpaceId, 'http'>
 
 const initial = store.app.get<DonationsState>('donations')
 
@@ -36,6 +37,11 @@ function incrementCreated(space: CreatedSpace) {
   markActiveDay()
 }
 
+function incrementSent(space: SentSpace) {
+  state.sent[space] += 1
+  markActiveDay()
+}
+
 function markActiveDay() {
   const now = today()
 
@@ -62,6 +68,10 @@ function markCreatedMilestoneShown(space: CreatedSpace, milestone: number) {
   state.lastShownCreatedMilestones[space] = milestone
 }
 
+function markSentMilestoneShown(space: SentSpace, milestone: number) {
+  state.lastShownSentMilestones[space] = milestone
+}
+
 function markStreakMilestoneShown(milestone: number) {
   if (!state.shownStreakMilestones.includes(milestone)) {
     state.shownStreakMilestones.push(milestone)
@@ -78,9 +88,11 @@ export function useDonations() {
     today,
     incrementCopy,
     incrementCreated,
+    incrementSent,
     markActiveDay,
     markCopyMilestoneShown,
     markCreatedMilestoneShown,
+    markSentMilestoneShown,
     markStreakMilestoneShown,
     setGreetingDay,
   }

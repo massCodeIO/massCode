@@ -4,13 +4,16 @@ import { useDonations } from '@/composables/useDonations'
 import { i18n } from '@/electron'
 import { toast } from 'vue-sonner'
 
-type CopySpace = Exclude<SpaceId, 'http'>
-type CreatedSpace = Exclude<SpaceId, 'tools' | 'http'>
+type CopySpace = SpaceId
+type CreatedSpace = Exclude<SpaceId, 'tools'>
+type SentSpace = Extract<SpaceId, 'http'>
 
 const COPY_INTERVAL = 25
 const CREATED_INTERVAL = 25
-const COPY_SPACES: CopySpace[] = ['code', 'notes', 'math', 'tools']
-const CREATED_SPACES: CreatedSpace[] = ['code', 'notes', 'math']
+const SENT_INTERVAL = 25
+const COPY_SPACES: CopySpace[] = ['code', 'http', 'notes', 'math', 'tools']
+const CREATED_SPACES: CreatedSpace[] = ['code', 'http', 'notes', 'math']
+const SENT_SPACES: SentSpace[] = ['http']
 const STREAK_MILESTONES = [7, 30, 100] as const
 
 function getIntervalMilestone(total: number, interval: number): number | null {
@@ -38,6 +41,7 @@ export function useDonationTriggers() {
     today,
     markCopyMilestoneShown,
     markCreatedMilestoneShown,
+    markSentMilestoneShown,
     markStreakMilestoneShown,
     setGreetingDay,
   } = useDonations()
@@ -110,6 +114,33 @@ export function useDonationTriggers() {
 
         showToast(
           i18n.t(`messages:donations.trigger.created.${space}`, {
+            count: milestone,
+          }),
+        )
+      },
+    )
+  })
+
+  SENT_SPACES.forEach((space) => {
+    watch(
+      () => donations.sent[space],
+      (count) => {
+        const milestone = getIntervalMilestone(count, SENT_INTERVAL)
+        if (
+          milestone === null
+          || milestone <= donations.lastShownSentMilestones[space]
+        ) {
+          return
+        }
+
+        markSentMilestoneShown(space, milestone)
+
+        if (isToastVisible.value) {
+          return
+        }
+
+        showToast(
+          i18n.t(`messages:donations.trigger.sent.${space}`, {
             count: milestone,
           }),
         )

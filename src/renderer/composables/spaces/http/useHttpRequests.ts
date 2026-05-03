@@ -4,6 +4,7 @@ import type {
   HttpRequestsResponse,
   HttpRequestsUpdate,
 } from '@/services/api/generated'
+import { useDonations } from '@/composables/useDonations'
 import {
   markPersistedStorageMutation,
   markUserEdit,
@@ -42,6 +43,7 @@ const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
 
 const { httpState } = useHttpApp()
+const { incrementCreated } = useDonations()
 
 const selectedRequestIds = ref<number[]>(
   httpState.requestId ? [httpState.requestId] : [],
@@ -233,6 +235,7 @@ async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
       ...(payload?.url !== undefined && { url: payload.url }),
     })
 
+    incrementCreated('http')
     await refreshHttpRequests()
 
     return Number(data.id)

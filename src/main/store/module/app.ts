@@ -69,25 +69,35 @@ const APP_STORE_DEFAULTS: AppStore = {
     currentStreak: 0,
     copies: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
       tools: 0,
     },
     created: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
     },
+    sent: {
+      http: 0,
+    },
     lastShownCopyMilestones: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
       tools: 0,
     },
     lastShownCreatedMilestones: {
       code: 0,
+      http: 0,
       notes: 0,
       math: 0,
+    },
+    lastShownSentMilestones: {
+      http: 0,
     },
     shownStreakMilestones: [],
     lastGreetingDay: '',
@@ -166,8 +176,10 @@ function sanitizeDonations(value: unknown): DonationsState {
   const source = asRecord(value)
   const copiesSource = asRecord(source.copies)
   const createdSource = asRecord(source.created)
+  const sentSource = asRecord(source.sent)
   const copyMilestonesSource = asRecord(source.lastShownCopyMilestones)
   const createdMilestonesSource = asRecord(source.lastShownCreatedMilestones)
+  const sentMilestonesSource = asRecord(source.lastShownSentMilestones)
   const defaults = APP_STORE_DEFAULTS.donations
   const shownStreaks = readOptionalNumberArray(source, 'shownStreakMilestones')
 
@@ -176,20 +188,30 @@ function sanitizeDonations(value: unknown): DonationsState {
     currentStreak: readNumber(source, 'currentStreak', defaults.currentStreak),
     copies: {
       code: readNumber(copiesSource, 'code', defaults.copies.code),
+      http: readNumber(copiesSource, 'http', defaults.copies.http),
       notes: readNumber(copiesSource, 'notes', defaults.copies.notes),
       math: readNumber(copiesSource, 'math', defaults.copies.math),
       tools: readNumber(copiesSource, 'tools', defaults.copies.tools),
     },
     created: {
       code: readNumber(createdSource, 'code', defaults.created.code),
+      http: readNumber(createdSource, 'http', defaults.created.http),
       notes: readNumber(createdSource, 'notes', defaults.created.notes),
       math: readNumber(createdSource, 'math', defaults.created.math),
+    },
+    sent: {
+      http: readNumber(sentSource, 'http', defaults.sent.http),
     },
     lastShownCopyMilestones: {
       code: readNumber(
         copyMilestonesSource,
         'code',
         defaults.lastShownCopyMilestones.code,
+      ),
+      http: readNumber(
+        copyMilestonesSource,
+        'http',
+        defaults.lastShownCopyMilestones.http,
       ),
       notes: readNumber(
         copyMilestonesSource,
@@ -213,6 +235,11 @@ function sanitizeDonations(value: unknown): DonationsState {
         'code',
         defaults.lastShownCreatedMilestones.code,
       ),
+      http: readNumber(
+        createdMilestonesSource,
+        'http',
+        defaults.lastShownCreatedMilestones.http,
+      ),
       notes: readNumber(
         createdMilestonesSource,
         'notes',
@@ -222,6 +249,13 @@ function sanitizeDonations(value: unknown): DonationsState {
         createdMilestonesSource,
         'math',
         defaults.lastShownCreatedMilestones.math,
+      ),
+    },
+    lastShownSentMilestones: {
+      http: readNumber(
+        sentMilestonesSource,
+        'http',
+        defaults.lastShownSentMilestones.http,
       ),
     },
     shownStreakMilestones: shownStreaks ?? [...defaults.shownStreakMilestones],

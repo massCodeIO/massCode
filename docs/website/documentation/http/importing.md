@@ -5,8 +5,6 @@ description: "Import OpenAPI, Postman, and Bruno collections into the massCode H
 
 # Importing Collections
 
-<AppVersion text=">=5.3" />
-
 Use import when you already have API collections or specifications in another tool and want to bring them into the HTTP space without recreating requests by hand.
 
 <img :src="withBase('/http-import.png')">

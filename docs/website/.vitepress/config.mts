@@ -82,6 +82,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Documentation', link: '/documentation/' },
+      { text: 'Sponsor', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
         text: version,

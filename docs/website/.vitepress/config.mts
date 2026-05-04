@@ -138,6 +138,7 @@ export default defineConfig({
             { text: 'HTTP Client', link: '/documentation/http/' },
             { text: 'Requests', link: '/documentation/http/requests' },
             { text: 'Environments', link: '/documentation/http/environments' },
+            { text: 'Importing Collections', link: '/documentation/http/importing' },
           ],
         },
         {

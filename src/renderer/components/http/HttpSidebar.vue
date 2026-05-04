@@ -4,6 +4,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
   useHttpApp,
+  useHttpEnvironments,
   useHttpFolderDragDrop,
   useHttpFolders,
   useHttpRequests,
@@ -15,7 +16,7 @@ import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
-import { Folder, Plus } from 'lucide-vue-next'
+import { Folder, Plus, Upload } from 'lucide-vue-next'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
 const ENVIRONMENTS_PANEL_DEFAULTS
@@ -30,6 +31,7 @@ const {
 const {
   createHttpFolderAndSelect,
   folders,
+  getHttpFolders,
   updateHttpFolder,
   getFolderByIdFromTree,
   selectedFolderIds,
@@ -37,10 +39,12 @@ const {
 } = useHttpFolders()
 const { getHttpRequests, isRestoreStateBlocked, selectFirstRequest }
   = useHttpRequests()
+const { getHttpEnvironments } = useHttpEnvironments()
 const { clearSearch } = useHttpSearch()
 const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
 
 const environmentsHandleRef = ref<HTMLElement>()
+const isImportDialogOpen = ref(false)
 
 function normalizeEnvironmentsHeight(value: number | undefined) {
   if (
@@ -218,6 +222,12 @@ function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
 function onCancelEdit() {
   editableId.value = null
 }
+
+async function onImported() {
+  await getHttpFolders(false)
+  await getHttpRequests()
+  await getHttpEnvironments()
+}
 </script>
 
 <template>
@@ -231,6 +241,14 @@ function onCancelEdit() {
       :title="i18n.t('spaces.http.title')"
       :section-title="i18n.t('common.folders')"
     >
+      <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('spaces.http.action.import')"
+          @click="isImportDialogOpen = true"
+        >
+          <Upload class="h-4 w-4" />
+        </UiActionButton>
+      </template>
       <template #action>
         <UiActionButton
           :tooltip="i18n.t('action.new.folder')"
@@ -240,6 +258,10 @@ function onCancelEdit() {
         </UiActionButton>
       </template>
     </SidebarHeader>
+    <HttpImportDialog
+      v-model:open="isImportDialogOpen"
+      @imported="onImported"
+    />
     <div class="flex min-h-0 flex-1 flex-col">
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
         <ContextMenu.ContextMenu>

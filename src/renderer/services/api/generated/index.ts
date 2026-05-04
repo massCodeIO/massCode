@@ -592,6 +592,54 @@ export type HttpHistoryResponse = {
   error?: string;
 }[];
 
+export interface HttpImportApplyInput {
+  files: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+  }[];
+  selectedCollectionIndexes?: number[];
+  selectedEnvironmentIndexes?: number[];
+}
+
+export interface HttpImportApplyResponse {
+  collections: number;
+  createdCollectionNames: string[];
+  environments: number;
+  folders: number;
+  requests: number;
+  warnings: {
+    message: string;
+    source: string;
+  }[];
+}
+
+export interface HttpImportPreviewInput {
+  files: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+  }[];
+}
+
+export interface HttpImportPreviewResponse {
+  collections: {
+    folders: number;
+    index: number;
+    name: string;
+    requests: number;
+  }[];
+  environments: {
+    index: number;
+    name: string;
+    variables: number;
+  }[];
+  warnings: {
+    message: string;
+    source: string;
+  }[];
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -1947,6 +1995,57 @@ export class Api<
       this.request<void, any>({
         path: `/http-history/`,
         method: "DELETE",
+        ...params,
+      }),
+  };
+  httpImport = {
+    /**
+     * No description
+     *
+     * @tags HTTP Import
+     * @name PostHttpImportPreview
+     * @request POST:/http-import/preview
+     */
+    postHttpImportPreview: (
+      data: HttpImportPreviewInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpImportPreviewResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-import/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Import
+     * @name PostHttpImportApply
+     * @request POST:/http-import/apply
+     */
+    postHttpImportApply: (
+      data: HttpImportApplyInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpImportApplyResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-import/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

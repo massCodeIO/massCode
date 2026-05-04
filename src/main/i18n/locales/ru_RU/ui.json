@@ -40,6 +40,7 @@
       "empty": "Пока нет запросов",
       "noUrl": "Нет URL",
       "action": {
+        "import": "Импорт",
         "newRequest": "Новый запрос",
         "newEnvironment": "Новое окружение",
         "manageEnvironments": "Управление окружениями",
@@ -60,6 +61,28 @@
         "varValue": "Значение",
         "addVariable": "Добавить переменную",
         "noEnvironmentSelected": "Выберите окружение, чтобы отредактировать его переменные"
+      },
+      "import": {
+        "title": "Импорт HTTP-коллекции",
+        "description": "Импортируйте OpenAPI JSON/YAML, Postman Collection v2.1 JSON, Postman Environment JSON и Bruno OpenCollection YAML или ZIP.",
+        "formats": "Выбрать файлы импорта",
+        "postman": "Postman Collection",
+        "postmanHint": "Выберите JSON коллекции и, опционально, JSON окружения.",
+        "fileHint": "Перетащите файлы сюда или выберите их, чтобы увидеть предпросмотр импорта.",
+        "chooseFiles": "Выбрать файлы",
+        "previewing": "Чтение файлов",
+        "collections": "Коллекции",
+        "requests": "Запросы",
+        "environments": "Окружения",
+        "collectionMeta": "{{folders}} папок, {{requests}} запросов",
+        "variablesMeta": "{{variables}} переменных",
+        "plainTextNotice": "Переменные окружений сохраняются в vault как обычный текст.",
+        "warnings": "Предупреждения",
+        "import": "Импортировать",
+        "importing": "Импорт",
+        "imported": "Импортировано запросов: {{requests}}, коллекций: {{collections}}.",
+        "createdFolders": "Создано: {{names}}",
+        "error": "Не удалось импортировать"
       },
       "editor": {
         "noSelected": "Запрос не выбран",

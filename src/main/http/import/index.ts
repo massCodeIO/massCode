@@ -5,11 +5,15 @@ import type {
   HttpImportResult,
   HttpImportSelection,
 } from './types'
+import { parseOpenCollectionFiles } from './opencollection'
 import { persistHttpImportResult } from './persist'
 import { parsePostmanFiles } from './postman'
+import { expandZipFiles } from './zip'
 
-export function previewHttpImport(files: HttpImportFile[]): HttpImportPreview {
-  const result = parseHttpImportFiles(files)
+export async function previewHttpImport(
+  files: HttpImportFile[],
+): Promise<HttpImportPreview> {
+  const result = await parseHttpImportFiles(files)
 
   return {
     collections: result.collections.map((collection, index) => ({
@@ -27,17 +31,25 @@ export function previewHttpImport(files: HttpImportFile[]): HttpImportPreview {
   }
 }
 
-export function applyHttpImport(
+export async function applyHttpImport(
   files: HttpImportFile[],
   selection: HttpImportSelection,
-): HttpImportPersistSummary {
-  return persistHttpImportResult(parseHttpImportFiles(files), selection)
+): Promise<HttpImportPersistSummary> {
+  return persistHttpImportResult(await parseHttpImportFiles(files), selection)
 }
 
-export function parseHttpImportFiles(
+export async function parseHttpImportFiles(
   files: HttpImportFile[],
-): HttpImportResult {
-  return parsePostmanFiles(files)
+): Promise<HttpImportResult> {
+  const expandedFiles = await expandZipFiles(files)
+  const postman = parsePostmanFiles(expandedFiles)
+  const openCollection = parseOpenCollectionFiles(expandedFiles)
+
+  return {
+    collections: [...postman.collections, ...openCollection.collections],
+    environments: [...postman.environments, ...openCollection.environments],
+    warnings: [...postman.warnings, ...openCollection.warnings],
+  }
 }
 
 export type {

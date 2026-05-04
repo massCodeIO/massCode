@@ -94,6 +94,7 @@
     "interactjs": "^1.10.27",
     "js-yaml": "^4.1.0",
     "jsondiffpatch": "^0.7.3",
+    "jszip": "^3.10.1",
     "ky": "^1.7.5",
     "lucide-vue-next": "^0.476.0",
     "markmap-lib": "^0.18.11",

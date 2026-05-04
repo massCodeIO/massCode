@@ -26,9 +26,11 @@ app
   .use(httpImportDTO)
   .post(
     '/preview',
-    ({ body, status }) => {
+    async ({ body, status }) => {
       try {
-        return previewHttpImport(body.files) as HttpImportPreviewResponse
+        return (await previewHttpImport(
+          body.files,
+        )) as HttpImportPreviewResponse
       }
       catch (error) {
         return mapImportError(status, error)
@@ -47,12 +49,12 @@ app
   )
   .post(
     '/apply',
-    ({ body, status }) => {
+    async ({ body, status }) => {
       try {
-        return applyHttpImport(body.files, {
+        return (await applyHttpImport(body.files, {
           selectedCollectionIndexes: body.selectedCollectionIndexes,
           selectedEnvironmentIndexes: body.selectedEnvironmentIndexes,
-        }) as HttpImportApplyResponse
+        })) as HttpImportApplyResponse
       }
       catch (error) {
         return mapImportError(status, error)

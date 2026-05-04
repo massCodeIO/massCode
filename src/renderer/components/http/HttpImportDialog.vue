@@ -8,6 +8,13 @@ import * as Dialog from '@/components/ui/shadcn/dialog'
 import { markPersistedStorageMutation, useSonner } from '@/composables'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
+import { AlertTriangle } from 'lucide-vue-next'
+
+interface ImportDialogFile {
+  name: string
+  content: string
+  encoding?: 'text' | 'base64'
+}
 
 const emit = defineEmits<{
   imported: []
@@ -15,7 +22,7 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const fileInputRef = ref<HTMLInputElement>()
-const files = ref<Array<{ name: string, content: string }>>([])
+const files = ref<ImportDialogFile[]>([])
 const preview = ref<HttpImportPreviewResponse | null>(null)
 const lastSummary = ref<HttpImportApplyResponse | null>(null)
 const errorMessage = ref('')
@@ -60,10 +67,43 @@ function openFilePicker() {
   fileInputRef.value?.click()
 }
 
-async function readFile(file: File) {
+function isZipFile(file: File): boolean {
+  return file.name.toLowerCase().endsWith('.zip')
+}
+
+function getImportFileName(file: File): string {
+  return (
+    (file as File & { webkitRelativePath?: string }).webkitRelativePath
+    || file.name
+  )
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  const chunkSize = 0x8000
+  const chunks: string[] = []
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    chunks.push(
+      String.fromCharCode(...bytes.subarray(index, index + chunkSize)),
+    )
+  }
+
+  return btoa(chunks.join(''))
+}
+
+async function readFile(file: File): Promise<ImportDialogFile> {
+  if (isZipFile(file)) {
+    return {
+      content: arrayBufferToBase64(await file.arrayBuffer()),
+      encoding: 'base64',
+      name: getImportFileName(file),
+    }
+  }
+
   return {
     content: await file.text(),
-    name: file.name,
+    name: getImportFileName(file),
   }
 }
 
@@ -157,7 +197,7 @@ async function applyImport() {
         <input
           ref="fileInputRef"
           type="file"
-          accept=".json,application/json"
+          accept=".json,.yaml,.yml,.zip,application/json,application/yaml,application/x-yaml,application/zip,application/x-zip-compressed"
           multiple
           class="hidden"
           @change="onFilesSelected"
@@ -181,7 +221,7 @@ async function applyImport() {
                 variant="sm"
                 weight="medium"
               >
-                {{ i18n.t("spaces.http.import.postman") }}
+                {{ i18n.t("spaces.http.import.formats") }}
               </UiText>
               <UiText
                 as="p"
@@ -362,25 +402,30 @@ async function applyImport() {
 
           <div
             v-if="preview.warnings.length"
-            class="border-border rounded-md border p-2"
+            class="border-warning/45 bg-warning/10 rounded-md border p-3"
           >
-            <UiText
-              as="div"
-              variant="xs"
-              muted
-              weight="medium"
-            >
-              {{ i18n.t("spaces.http.import.warnings") }}
-            </UiText>
-            <ul class="mt-1 max-h-28 space-y-1 overflow-y-auto">
-              <li
-                v-for="(warning, index) in preview.warnings"
-                :key="`${warning.source}-${index}`"
-                class="text-muted-foreground text-xs"
-              >
-                {{ warning.source }}: {{ warning.message }}
-              </li>
-            </ul>
+            <div class="flex items-start gap-2">
+              <AlertTriangle class="text-warning mt-0.5 size-4 shrink-0" />
+              <div class="min-w-0 flex-1">
+                <UiText
+                  as="div"
+                  variant="sm"
+                  weight="medium"
+                >
+                  {{ i18n.t("spaces.http.import.warnings") }}
+                </UiText>
+                <ul class="mt-1 max-h-28 space-y-1 overflow-y-auto">
+                  <li
+                    v-for="(warning, index) in preview.warnings"
+                    :key="`${warning.source}-${index}`"
+                    class="text-foreground/80 text-xs leading-5"
+                  >
+                    <span class="font-medium">{{ warning.source }}</span>:
+                    {{ warning.message }}
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 

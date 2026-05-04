@@ -2,6 +2,7 @@ import Elysia, { t } from 'elysia'
 
 const httpImportFile = t.Object({
   content: t.String(),
+  encoding: t.Optional(t.Union([t.Literal('text'), t.Literal('base64')])),
   name: t.String(),
 })
 

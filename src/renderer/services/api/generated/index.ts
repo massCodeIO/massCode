@@ -595,6 +595,7 @@ export type HttpHistoryResponse = {
 export interface HttpImportApplyInput {
   files: {
     content: string;
+    encoding?: "text" | "base64";
     name: string;
   }[];
   selectedCollectionIndexes?: number[];
@@ -616,6 +617,7 @@ export interface HttpImportApplyResponse {
 export interface HttpImportPreviewInput {
   files: {
     content: string;
+    encoding?: "text" | "base64";
     name: string;
   }[];
 }

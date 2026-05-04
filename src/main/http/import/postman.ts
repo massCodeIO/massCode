@@ -46,6 +46,10 @@ function readJsonFile(file: HttpImportFile, warnings: HttpImportWarning[]) {
   }
 }
 
+function isJsonFile(file: HttpImportFile): boolean {
+  return file.name.toLowerCase().endsWith('.json')
+}
+
 function isPostmanCollection(value: unknown): value is UnknownRecord {
   if (!isRecord(value) || !isRecord(value.info)) {
     return false
@@ -369,6 +373,9 @@ export function parsePostmanFiles(files: HttpImportFile[]): HttpImportResult {
   const environments: HttpImportEnvironment[] = []
 
   for (const file of files) {
+    if (!isJsonFile(file))
+      continue
+
     const raw = readJsonFile(file, warnings)
     if (!raw) {
       continue

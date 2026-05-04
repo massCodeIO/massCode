@@ -63,6 +63,7 @@ export interface HttpImportPersistSummary {
 export interface HttpImportFile {
   name: string
   content: string
+  encoding?: 'text' | 'base64'
 }
 
 export interface HttpImportSelection {

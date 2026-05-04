@@ -120,4 +120,19 @@ describe('parsePostmanFiles', () => {
       }),
     )
   })
+
+  it('ignores non-JSON files without warnings', () => {
+    const result = parsePostmanFiles([
+      {
+        content: 'info:\n  name: Bruno\n',
+        name: 'opencollection.yml',
+      },
+    ])
+
+    expect(result).toEqual({
+      collections: [],
+      environments: [],
+      warnings: [],
+    })
+  })
 })

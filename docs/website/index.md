@@ -9,7 +9,7 @@ hero:
   name: massCode
   text: Your developer workspace
   tagline: |
-    Manage code snippets, write markdown notes, solve calculations, and use built-in developer tools. Free, open source, and works offline.
+    Manage code snippets, write markdown notes, send HTTP requests, solve calculations, and use built-in developer tools. Free, open source, and works offline.
   actions:
     - theme: brand
       text: Download Free

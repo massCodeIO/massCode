@@ -23,6 +23,12 @@ import FeaturesItem from './FeaturesItem.vue'
       generated from headings, and fullscreen presentation mode for sharing your
       work.
     </FeaturesItem>
+    <FeaturesItem title="HTTP Client">
+      Save and send API requests without leaving your workspace. Organize
+      requests in folders, switch environments, preview outgoing HTTP or cURL,
+      inspect responses, and import collections from OpenAPI, Postman, and
+      Bruno.
+    </FeaturesItem>
     <FeaturesItem title="Math Notebook">
       Do the quick calculations that usually break your flow. Natural-language
       math handles inputs like <code>time in Tokyo</code>,
@@ -80,7 +86,7 @@ import FeaturesItem from './FeaturesItem.vue'
 
 @media (min-width: 768px) {
   .spaces {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 24px;
     padding: 24px 0 12px;
   }
@@ -89,6 +95,14 @@ import FeaturesItem from './FeaturesItem.vue'
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
     padding: 12px 0 24px;
+  }
+
+  .spaces > :nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+
+  .spaces > :nth-child(n + 3) {
+    grid-column: span 2;
   }
 }
 

@@ -28,6 +28,7 @@ type MainMenuAction =
   | 'presentation-mode'
   | 'set-layout-mode'
   | 'set-notes-editor-mode'
+  | 'send-http-request'
   | 'toggle-sidebar'
   | 'toggle-compact-mode'
   | 'update-context'

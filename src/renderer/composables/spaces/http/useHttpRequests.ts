@@ -14,6 +14,12 @@ import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
 import { useDebounceFn } from '@vueuse/core'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
+import {
+  applyQueryToUrl,
+  applyUrlToQuery,
+  getDisplayUrl,
+  getPersistedUrl,
+} from './urlQuery'
 import { useHttpApp } from './useHttpApp'
 import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
 
@@ -85,84 +91,16 @@ function getNextUntitledRequestName(folderId: number | null): string {
   )
 }
 
-type HttpQueryItem = HttpRequestDraft['query'][number]
-
-function splitUrl(url: string): {
-  path: string
-  query: string
-  fragment: string
-} {
-  const hashIdx = url.indexOf('#')
-  const fragment = hashIdx === -1 ? '' : url.slice(hashIdx)
-  const beforeHash = hashIdx === -1 ? url : url.slice(0, hashIdx)
-  const qIdx = beforeHash.indexOf('?')
-  const path = qIdx === -1 ? beforeHash : beforeHash.slice(0, qIdx)
-  const query = qIdx === -1 ? '' : beforeHash.slice(qIdx + 1)
-  return { path, query, fragment }
-}
-
-function combineUrl(parts: {
-  path: string
-  query: string
-  fragment: string
-}): string {
-  return (
-    parts.path + (parts.query ? `?${parts.query}` : '') + (parts.fragment || '')
-  )
-}
-
-function parseQueryString(qs: string): Array<{ key: string, value: string }> {
-  if (!qs)
-    return []
-  return qs.split('&').map((part) => {
-    const eqIdx = part.indexOf('=')
-    if (eqIdx === -1)
-      return { key: part, value: '' }
-    return { key: part.slice(0, eqIdx), value: part.slice(eqIdx + 1) }
-  })
-}
-
-function buildQueryString(query: HttpQueryItem[]): string {
-  const enabled = query.filter(q => q.enabled !== false && q.key)
-  if (!enabled.length)
-    return ''
-  return enabled.map(q => `${q.key}=${q.value}`).join('&')
-}
-
-function applyQueryToUrl(url: string, query: HttpQueryItem[]): string {
-  const parts = splitUrl(url)
-  return combineUrl({ ...parts, query: buildQueryString(query) })
-}
-
-function applyUrlToQuery(
-  url: string,
-  existingQuery: HttpQueryItem[],
-): HttpQueryItem[] {
-  const parsed = parseQueryString(splitUrl(url).query)
-  const enabledExisting = existingQuery.filter(q => q.enabled !== false)
-  const disabledExisting = existingQuery.filter(q => q.enabled === false)
-
-  const next: HttpQueryItem[] = parsed.map((p, i) => {
-    const matched = enabledExisting[i]
-    return {
-      key: p.key,
-      value: p.value,
-      description: matched?.description ?? '',
-      enabled: true,
-    }
-  })
-
-  return [...next, ...disabledExisting]
-}
-
 function toDraft(request: HttpRequest): HttpRequestDraft {
+  const query = request.query.map(q => ({ ...q }))
+
   return {
     name: request.name,
     folderId: request.folderId,
     method: request.method,
-    url: request.url,
+    url: getDisplayUrl(request.url, query),
     headers: request.headers.map(h => ({ ...h })),
-    query: request.query.map(q => ({ ...q })),
+    query,
     bodyType: request.bodyType,
     body: request.body,
     formData: request.formData.map(f => ({ ...f })),
@@ -422,7 +360,7 @@ async function saveCurrentRequest() {
     name: draft.name,
     folderId: draft.folderId,
     method: draft.method,
-    url: draft.url,
+    url: getPersistedUrl(draft.url, draft.query),
     headers: draft.headers,
     query: draft.query,
     bodyType: draft.bodyType,

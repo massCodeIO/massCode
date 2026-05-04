@@ -78,11 +78,19 @@ function clearSearch(restoreState = false) {
   }
 }
 
+function resetHttpSearchState() {
+  requestsBySearch.value = undefined
+  searchQuery.value = ''
+  isSearch.value = false
+  searchSelectedIndex.value = -1
+}
+
 export function useHttpSearch() {
   return {
     clearSearch,
     displayedRequests,
     isSearch,
+    resetHttpSearchState,
     search,
     searchQuery,
     searchSelectedIndex,

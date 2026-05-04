@@ -241,21 +241,21 @@ async function onImported() {
       :title="i18n.t('spaces.http.title')"
       :section-title="i18n.t('common.folders')"
     >
+      <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('spaces.http.action.import')"
+          @click="isImportDialogOpen = true"
+        >
+          <Upload class="h-4 w-4" />
+        </UiActionButton>
+      </template>
       <template #action>
-        <div class="flex items-center gap-1">
-          <UiActionButton
-            :tooltip="i18n.t('spaces.http.action.import')"
-            @click="isImportDialogOpen = true"
-          >
-            <Upload class="h-4 w-4" />
-          </UiActionButton>
-          <UiActionButton
-            :tooltip="i18n.t('action.new.folder')"
-            @click="createHttpFolderAndSelect()"
-          >
-            <Plus class="h-4 w-4" />
-          </UiActionButton>
-        </div>
+        <UiActionButton
+          :tooltip="i18n.t('action.new.folder')"
+          @click="createHttpFolderAndSelect()"
+        >
+          <Plus class="h-4 w-4" />
+        </UiActionButton>
       </template>
     </SidebarHeader>
     <HttpImportDialog

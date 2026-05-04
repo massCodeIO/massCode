@@ -92,6 +92,18 @@ function restoreNotesStateSnapshot(action: NotesStateAction): void {
     notesState.tagId = snapshot.tagId
   if (snapshot.libraryFilter !== undefined)
     notesState.libraryFilter = snapshot.libraryFilter
+
+  if (
+    snapshot.isSidebarHidden !== undefined
+    && snapshot.isListHidden !== undefined
+  ) {
+    notesLayoutMode.value = getLayoutModeFromNotesPanels({
+      isListHidden: snapshot.isListHidden,
+      isSidebarHidden: snapshot.isSidebarHidden,
+    })
+    return
+  }
+
   if (snapshot.isSidebarHidden !== undefined) {
     isNotesSidebarHidden.value = snapshot.isSidebarHidden
   }

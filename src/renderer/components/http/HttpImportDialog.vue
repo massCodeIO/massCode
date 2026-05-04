@@ -3,6 +3,7 @@ import type {
   HttpImportApplyResponse,
   HttpImportPreviewResponse,
 } from '@/services/api/generated'
+import * as Alert from '@/components/ui/shadcn/alert'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { markPersistedStorageMutation, useSonner } from '@/composables'
@@ -400,33 +401,27 @@ async function applyImport() {
             </UiText>
           </div>
 
-          <div
+          <Alert.Alert
             v-if="preview.warnings.length"
-            class="border-warning/45 bg-warning/10 rounded-md border p-3"
+            class="border-warning/45 bg-warning/10 text-foreground"
           >
-            <div class="flex items-start gap-2">
-              <AlertTriangle class="text-warning mt-0.5 size-4 shrink-0" />
-              <div class="min-w-0 flex-1">
-                <UiText
-                  as="div"
-                  variant="sm"
-                  weight="medium"
+            <AlertTriangle class="text-warning" />
+            <Alert.AlertTitle>
+              {{ i18n.t("spaces.http.import.warnings") }}
+            </Alert.AlertTitle>
+            <Alert.AlertDescription class="text-foreground/80">
+              <ul class="max-h-28 space-y-1 overflow-y-auto">
+                <li
+                  v-for="(warning, index) in preview.warnings"
+                  :key="`${warning.source}-${index}`"
+                  class="text-xs leading-5"
                 >
-                  {{ i18n.t("spaces.http.import.warnings") }}
-                </UiText>
-                <ul class="mt-1 max-h-28 space-y-1 overflow-y-auto">
-                  <li
-                    v-for="(warning, index) in preview.warnings"
-                    :key="`${warning.source}-${index}`"
-                    class="text-foreground/80 text-xs leading-5"
-                  >
-                    <span class="font-medium">{{ warning.source }}</span>:
-                    {{ warning.message }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+                  <span class="font-medium">{{ warning.source }}</span>:
+                  {{ warning.message }}
+                </li>
+              </ul>
+            </Alert.AlertDescription>
+          </Alert.Alert>
         </div>
 
         <div

@@ -3,9 +3,14 @@ import type { DialogOptions } from '~/main/types/ipc'
 import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import {
+  resetHttpSpaceState,
   resetNotesSpaceInitialization,
   useDialog,
   useFolders,
+  useHttpEnvironments,
+  useHttpFolders,
+  useHttpHistory,
+  useHttpRequests,
   useMathNotebook,
   useNoteFolders,
   useNotes,
@@ -29,6 +34,10 @@ interface MoveVaultResponse {
 const { sonner } = useSonner()
 const { confirm } = useDialog()
 const { getFolders } = useFolders()
+const { getHttpFolders } = useHttpFolders()
+const { getHttpRequests } = useHttpRequests()
+const { getHttpEnvironments } = useHttpEnvironments()
+const { getHttpHistory } = useHttpHistory()
 const { reset: resetMathNotebook } = useMathNotebook()
 const { resetNoteFoldersState } = useNoteFolders()
 const { clearNotesState } = useNotes()
@@ -107,11 +116,18 @@ async function resetAndReloadVaultData() {
   resetNoteFoldersState()
   resetNoteTags()
   resetNotesSpaceInitialization()
+  resetHttpSpaceState()
 
   await nextTick()
 
-  await getFolders(false)
-  await getSnippets()
+  await Promise.allSettled([
+    getFolders(false),
+    getSnippets(),
+    getHttpFolders(false),
+    getHttpRequests(),
+    getHttpEnvironments(),
+    getHttpHistory(),
+  ])
   await getSnippetsCounts()
 }
 

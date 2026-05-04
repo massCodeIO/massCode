@@ -13,4 +13,8 @@ export type {
 export { useHttpRequests } from './useHttpRequests'
 export { useHttpSearch } from './useHttpSearch'
 export { useHttpSettings } from './useHttpSettings'
-export { resetHttpSpaceInit, useHttpSpaceInit } from './useHttpSpaceInit'
+export {
+  resetHttpSpaceInit,
+  resetHttpSpaceState,
+  useHttpSpaceInit,
+} from './useHttpSpaceInit'

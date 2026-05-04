@@ -1,17 +1,33 @@
 import { useHttpApp } from './useHttpApp'
 import { useHttpEnvironments } from './useHttpEnvironments'
+import { useHttpExecute } from './useHttpExecute'
 import { useHttpFolders } from './useHttpFolders'
 import { useHttpHistory } from './useHttpHistory'
 import { useHttpRequests } from './useHttpRequests'
+import { useHttpSearch } from './useHttpSearch'
 
 const { httpState, isHttpSpaceInitialized } = useHttpApp()
-const { getHttpFolders } = useHttpFolders()
-const { getHttpRequests, requests, selectHttpRequest } = useHttpRequests()
-const { getHttpEnvironments } = useHttpEnvironments()
-const { getHttpHistory } = useHttpHistory()
+const { getHttpFolders, resetHttpFoldersState } = useHttpFolders()
+const { getHttpRequests, requests, resetHttpRequestsState, selectHttpRequest }
+  = useHttpRequests()
+const { getHttpEnvironments, resetHttpEnvironmentsState }
+  = useHttpEnvironments()
+const { getHttpHistory, resetHttpHistoryState } = useHttpHistory()
+const { resetHttpExecuteState } = useHttpExecute()
+const { resetHttpSearchState } = useHttpSearch()
 
 export function resetHttpSpaceInit() {
   isHttpSpaceInitialized.value = false
+}
+
+export function resetHttpSpaceState() {
+  resetHttpSpaceInit()
+  resetHttpSearchState()
+  resetHttpExecuteState()
+  resetHttpRequestsState()
+  resetHttpFoldersState()
+  resetHttpEnvironmentsState()
+  resetHttpHistoryState()
 }
 
 async function initHttpSpace() {
@@ -58,5 +74,6 @@ export function useHttpSpaceInit() {
   return {
     initHttpSpace,
     refreshHttpSpaceFromDisk,
+    resetHttpSpaceState,
   }
 }

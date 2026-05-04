@@ -40,6 +40,7 @@
       "empty": "No requests yet",
       "noUrl": "No URL",
       "action": {
+        "import": "Import",
         "newRequest": "New request",
         "newEnvironment": "New environment",
         "manageEnvironments": "Manage environments",
@@ -60,6 +61,27 @@
         "varValue": "Value",
         "addVariable": "Add variable",
         "noEnvironmentSelected": "Select an environment to edit its variables"
+      },
+      "import": {
+        "title": "Import HTTP collection",
+        "description": "Import Postman Collection v2.1 and optional Postman Environment JSON files.",
+        "postman": "Postman Collection",
+        "postmanHint": "Choose one collection JSON and, optionally, an environment JSON.",
+        "fileHint": "Choose files or drag and drop JSON files here.",
+        "chooseFiles": "Choose files",
+        "previewing": "Reading files",
+        "collections": "Collections",
+        "requests": "Requests",
+        "environments": "Environments",
+        "collectionMeta": "{{folders}} folders, {{requests}} requests",
+        "variablesMeta": "{{variables}} variables",
+        "plainTextNotice": "Environment variables are stored as plain text in the vault.",
+        "warnings": "Warnings",
+        "import": "Import",
+        "importing": "Importing",
+        "imported": "Imported {{requests}} requests in {{collections}} collections.",
+        "createdFolders": "Created: {{names}}",
+        "error": "Import failed"
       },
       "editor": {
         "noSelected": "No request selected",

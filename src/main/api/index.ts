@@ -8,6 +8,7 @@ import folders from './routes/folders'
 import httpEnvironments from './routes/http-environments'
 import httpFolders from './routes/http-folders'
 import httpHistory from './routes/http-history'
+import httpImport from './routes/http-import'
 import httpRequests from './routes/http-requests'
 import noteFolders from './routes/note-folders'
 import noteTags from './routes/note-tags'
@@ -51,6 +52,7 @@ export async function initApi() {
     .use(httpRequests)
     .use(httpEnvironments)
     .use(httpHistory)
+    .use(httpImport)
     .listen(port)
 
   // eslint-disable-next-line no-console

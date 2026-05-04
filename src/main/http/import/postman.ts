@@ -67,6 +67,14 @@ function isPostmanEnvironment(value: unknown): value is UnknownRecord {
   )
 }
 
+function isOpenApiDocument(value: unknown): boolean {
+  return (
+    isRecord(value)
+    && isRecord(value.paths)
+    && (typeof value.openapi === 'string' || typeof value.swagger === 'string')
+  )
+}
+
 function getKeyValueArrayValue(
   value: unknown,
   key: string,
@@ -400,6 +408,9 @@ export function parsePostmanFiles(files: HttpImportFile[]): HttpImportResult {
       environments.push(parseEnvironment(raw, file.name, warnings))
       continue
     }
+
+    if (isOpenApiDocument(raw))
+      continue
 
     addWarning(warnings, file.name, 'Unsupported import file skipped')
   }

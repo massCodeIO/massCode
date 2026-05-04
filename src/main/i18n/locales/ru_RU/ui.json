@@ -64,11 +64,11 @@
       },
       "import": {
         "title": "Импорт HTTP-коллекции",
-        "description": "Импортируйте Postman Collection v2.1 JSON, Postman Environment JSON и Bruno OpenCollection YAML или ZIP.",
+        "description": "Импортируйте Postman Collection v2.1 JSON, Postman Environment JSON, OpenAPI JSON/YAML и Bruno OpenCollection YAML или ZIP.",
         "formats": "Поддерживаемые форматы",
         "postman": "Postman Collection",
         "postmanHint": "Выберите JSON коллекции и, опционально, JSON окружения.",
-        "fileHint": "Выберите или перетащите сюда Postman JSON, Bruno YAML или ZIP-файлы.",
+        "fileHint": "Выберите или перетащите сюда Postman JSON, OpenAPI JSON/YAML, Bruno YAML или ZIP-файлы.",
         "chooseFiles": "Выбрать файлы",
         "previewing": "Чтение файлов",
         "collections": "Коллекции",

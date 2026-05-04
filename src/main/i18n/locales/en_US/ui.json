@@ -64,11 +64,11 @@
       },
       "import": {
         "title": "Import HTTP collection",
-        "description": "Import Postman Collection v2.1 JSON, Postman Environment JSON, and Bruno OpenCollection YAML or ZIP files.",
+        "description": "Import Postman Collection v2.1 JSON, Postman Environment JSON, OpenAPI JSON/YAML, and Bruno OpenCollection YAML or ZIP files.",
         "formats": "Supported formats",
         "postman": "Postman Collection",
         "postmanHint": "Choose one collection JSON and, optionally, an environment JSON.",
-        "fileHint": "Choose or drag Postman JSON, Bruno YAML, or ZIP files here.",
+        "fileHint": "Choose or drag Postman JSON, OpenAPI JSON/YAML, Bruno YAML, or ZIP files here.",
         "chooseFiles": "Choose files",
         "previewing": "Reading files",
         "collections": "Collections",

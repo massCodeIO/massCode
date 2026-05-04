@@ -5,6 +5,7 @@ import type {
   HttpImportResult,
   HttpImportSelection,
 } from './types'
+import { parseOpenApiFiles } from './openapi'
 import { parseOpenCollectionFiles } from './opencollection'
 import { persistHttpImportResult } from './persist'
 import { parsePostmanFiles } from './postman'
@@ -44,11 +45,24 @@ export async function parseHttpImportFiles(
   const expandedFiles = await expandZipFiles(files)
   const postman = parsePostmanFiles(expandedFiles)
   const openCollection = parseOpenCollectionFiles(expandedFiles)
+  const openApi = parseOpenApiFiles(expandedFiles)
 
   return {
-    collections: [...postman.collections, ...openCollection.collections],
-    environments: [...postman.environments, ...openCollection.environments],
-    warnings: [...postman.warnings, ...openCollection.warnings],
+    collections: [
+      ...postman.collections,
+      ...openCollection.collections,
+      ...openApi.collections,
+    ],
+    environments: [
+      ...postman.environments,
+      ...openCollection.environments,
+      ...openApi.environments,
+    ],
+    warnings: [
+      ...postman.warnings,
+      ...openCollection.warnings,
+      ...openApi.warnings,
+    ],
   }
 }
 

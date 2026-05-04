@@ -21,7 +21,7 @@ Use Notes for longer markdown documents that do not fit well into snippets: proj
 
 ## HTTP
 
-Use HTTP as a lightweight API client inside massCode. Store requests in folders, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
+Use HTTP as a lightweight API client inside massCode. Store requests in folders, import collections from OpenAPI, Postman, or Bruno, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
 
 ## Math
 

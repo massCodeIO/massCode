@@ -406,14 +406,12 @@ async function applyImport() {
       <Dialog.DialogFooter class="gap-2">
         <Button
           variant="outline"
-          size="sm"
           :disabled="isApplying"
           @click="open = false"
         >
           {{ i18n.t("action.close") }}
         </Button>
         <Button
-          size="sm"
           :disabled="!hasImportableItems || isApplying || isPreviewing"
           @click="applyImport"
         >

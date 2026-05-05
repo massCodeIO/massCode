@@ -153,6 +153,7 @@
             "headers": "Headers"
           },
           "error": "Request failed",
+          "noResponse": "No response received",
           "truncated": "Response truncated",
           "binaryNotice": "Binary response not displayed",
           "copy": "Copy",

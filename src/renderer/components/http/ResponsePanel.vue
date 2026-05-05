@@ -7,7 +7,7 @@ import {
   useHttpSettings,
 } from '@/composables'
 import { i18n } from '@/electron'
-import { Copy, LoaderCircle } from 'lucide-vue-next'
+import { AlertCircle, Copy, LoaderCircle } from 'lucide-vue-next'
 
 const { lastResponse, lastError, isExecuting } = useHttpExecute()
 const { settings } = useHttpSettings()
@@ -53,6 +53,16 @@ const bodyViewerLanguage = computed(() => {
   return lastResponse.value?.bodyKind === 'json' ? 'json' : 'plain'
 })
 
+const responseError = computed(() => {
+  if (lastError.value)
+    return lastError.value
+  if (lastResponse.value?.error)
+    return lastResponse.value.error
+  if (lastResponse.value?.status === null)
+    return i18n.t('spaces.http.editor.response.noResponse')
+  return null
+})
+
 function copyActiveTab() {
   if (copyValue.value) {
     copy(copyValue.value)
@@ -71,6 +81,24 @@ function copyActiveTab() {
       {{ i18n.t("spaces.http.editor.response.executing") }}
     </div>
     <div
+      v-else-if="responseError"
+      class="flex flex-1 items-center justify-center px-4"
+    >
+      <div
+        class="border-destructive/25 bg-destructive/10 flex max-w-[min(36rem,calc(100%-2rem))] items-start gap-3 rounded-md border px-4 py-3"
+      >
+        <AlertCircle class="text-destructive mt-0.5 size-4 shrink-0" />
+        <div class="min-w-0 space-y-1">
+          <div class="text-destructive text-sm font-medium">
+            {{ i18n.t("spaces.http.editor.response.error") }}
+          </div>
+          <div class="text-destructive font-mono text-xs break-words">
+            {{ responseError }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
       v-else-if="!lastResponse"
       class="flex flex-1 items-center justify-center"
     >
@@ -83,10 +111,11 @@ function copyActiveTab() {
       class="flex min-h-0 flex-1 flex-col"
     >
       <div
-        v-if="lastError"
+        v-if="responseError"
         class="border-border bg-destructive/10 text-destructive border-b px-3 py-1.5 text-xs"
       >
-        {{ i18n.t("spaces.http.editor.response.error") }}: {{ lastError }}
+        {{ i18n.t("spaces.http.editor.response.error") }}:
+        {{ responseError }}
       </div>
 
       <Tabs.Tabs

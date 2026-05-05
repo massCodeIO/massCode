@@ -216,6 +216,115 @@ function getContentType(headers: IncomingHttpHeaders): string | undefined {
   return value
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined
+}
+
+function getNestedCause(error: unknown): Record<string, unknown> | null {
+  return asRecord(asRecord(error)?.cause)
+}
+
+function collectErrorCandidates(
+  error: unknown,
+  seen = new Set<unknown>(),
+): unknown[] {
+  const record = asRecord(error)
+  if (!record || seen.has(error))
+    return [error]
+
+  seen.add(error)
+
+  const candidates = [error]
+  const cause = record.cause
+  if (cause !== undefined) {
+    candidates.push(...collectErrorCandidates(cause, seen))
+  }
+
+  if (Array.isArray(record.errors)) {
+    for (const nested of record.errors) {
+      candidates.push(...collectErrorCandidates(nested, seen))
+    }
+  }
+
+  return candidates
+}
+
+function formatHostPort(source: Record<string, unknown>): string | undefined {
+  const address = stringValue(source.address)
+  const port = numberValue(source.port)
+  if (!address)
+    return undefined
+  return port === undefined ? address : `${address}:${port}`
+}
+
+function formatDetailedRequestError(source: unknown): string | undefined {
+  const record = asRecord(source)
+  if (!record)
+    return undefined
+
+  const code = stringValue(record.code)
+  const syscall = stringValue(record.syscall)
+  const hostPort = formatHostPort(record)
+
+  if (code && hostPort)
+    return [syscall, code, hostPort].filter(Boolean).join(' ')
+
+  return undefined
+}
+
+function getErrorMessage(error: unknown): string | undefined {
+  return stringValue(asRecord(error)?.message)
+}
+
+export function formatHttpRequestError(error: unknown): string {
+  const candidates = collectErrorCandidates(error)
+  const detailedCandidates = candidates
+    .map(candidate => ({
+      message: formatDetailedRequestError(candidate),
+      record: asRecord(candidate),
+    }))
+    .filter(candidate => candidate.message)
+
+  const ipv4Detailed = detailedCandidates.find((candidate) => {
+    return stringValue(candidate.record?.address)?.includes('.') === true
+  })
+
+  if (ipv4Detailed?.message)
+    return ipv4Detailed.message
+
+  if (detailedCandidates[0]?.message)
+    return detailedCandidates[0].message
+
+  const causeMessage = getErrorMessage(getNestedCause(error))
+  if (causeMessage && causeMessage !== 'AggregateError')
+    return causeMessage
+
+  const nestedMessage = candidates
+    .slice(1)
+    .map(candidate => getErrorMessage(candidate))
+    .find(message => message && message !== 'AggregateError')
+
+  if (nestedMessage)
+    return nestedMessage
+
+  if (error instanceof Error && error.message)
+    return error.message
+
+  return String(error)
+}
+
 async function readBodyCapped(
   body: NodeJS.ReadableStream,
   cap: number,
@@ -355,7 +464,7 @@ async function executeHttpRequest(
   }
   catch (error) {
     const durationMs = Math.round(performance.now() - startedAtPerf)
-    const message = error instanceof Error ? error.message : String(error)
+    const message = formatHttpRequestError(error)
     const isAbort = error instanceof Error && error.name === 'AbortError'
 
     appendHistory(

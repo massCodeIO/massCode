@@ -31,6 +31,12 @@
       "newNoteSubtitle": "Создать заметку",
       "newHttpRequest": "Новый HTTP-запрос",
       "newHttpRequestSubtitle": "Создать HTTP-запрос",
+      "newCodeFolder": "Новая папка кода",
+      "newCodeFolderSubtitle": "Создать папку в Коде",
+      "newNotesFolder": "Новая папка заметок",
+      "newNotesFolderSubtitle": "Создать папку в Заметках",
+      "newHttpFolder": "Новая HTTP-папка",
+      "newHttpFolderSubtitle": "Создать папку в HTTP",
       "openPreferences": "Открыть настройки",
       "openPreferencesSubtitle": "Изменить настройки massCode"
     }

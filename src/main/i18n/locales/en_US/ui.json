@@ -31,6 +31,12 @@
       "newNoteSubtitle": "Create a note",
       "newHttpRequest": "New HTTP request",
       "newHttpRequestSubtitle": "Create an HTTP request",
+      "newCodeFolder": "New code folder",
+      "newCodeFolderSubtitle": "Create a folder in Code",
+      "newNotesFolder": "New notes folder",
+      "newNotesFolderSubtitle": "Create a folder in Notes",
+      "newHttpFolder": "New HTTP folder",
+      "newHttpFolderSubtitle": "Create a folder in HTTP",
       "openPreferences": "Open preferences",
       "openPreferencesSubtitle": "Change massCode settings"
     }

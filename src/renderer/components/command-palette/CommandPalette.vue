@@ -26,16 +26,23 @@ const {
 
 const isOpeningResult = ref(false)
 const activeIndex = ref(0)
+let commandModeCaretFrame: number | undefined
 
 const normalizedQuery = computed(() => query.value.trim().toLowerCase())
+const isCommandMode = computed(() => query.value.startsWith('>'))
+const normalizedSearchQuery = computed(() =>
+  isCommandMode.value
+    ? query.value.slice(1).trim().toLowerCase()
+    : normalizedQuery.value,
+)
 
 function matchesQuery(result: CommandPaletteResult) {
-  if (!normalizedQuery.value) {
+  if (!normalizedSearchQuery.value) {
     return true
   }
 
   return getSearchValues(result).some(value =>
-    value.toLowerCase().includes(normalizedQuery.value),
+    value.toLowerCase().includes(normalizedSearchQuery.value),
   )
 }
 
@@ -52,6 +59,7 @@ function getSearchKeywords(result: CommandPaletteResult) {
 
   if (result.type === 'command') {
     keywords.push(result.command.id)
+    keywords.push(...result.command.keywords)
   }
 
   if (result.type === 'space') {
@@ -73,7 +81,7 @@ function rankLocalResults(results: CommandPaletteResult[]) {
           keywords: getSearchKeywords(result),
         },
         {
-          query: normalizedQuery.value,
+          query: normalizedSearchQuery.value,
           usageById: usageById.value as Map<
             string,
             CommandPaletteUsageScoreEntry
@@ -92,13 +100,13 @@ function rankLocalResults(results: CommandPaletteResult[]) {
 }
 
 function isStrongLocalMatch(result: CommandPaletteResult) {
-  if (!normalizedQuery.value) {
+  if (!normalizedSearchQuery.value) {
     return false
   }
 
   return getSearchValues(result)
     .flatMap(value => value.toLowerCase().split(/[^a-z0-9]+/))
-    .some(token => token.startsWith(normalizedQuery.value))
+    .some(token => token.startsWith(normalizedSearchQuery.value))
 }
 
 const matchedCommandResults = computed<CommandPaletteResult[]>(() =>
@@ -130,11 +138,12 @@ const isEmpty = computed(
     hasQuery.value
     && !isSearching.value
     && matchedCommandResults.value.length === 0
-    && matchedSpaceResults.value.length === 0
-    && contentResults.value.length === 0,
+    && (isCommandMode.value
+      || (matchedSpaceResults.value.length === 0
+        && contentResults.value.length === 0)),
 )
 
-const showRootResults = computed(() => !hasQuery.value)
+const showRootResults = computed(() => !hasQuery.value && !isCommandMode.value)
 
 const rootResults = computed<CommandPaletteResult[]>(() => [
   ...recentResults.value,
@@ -145,6 +154,10 @@ const rootResults = computed<CommandPaletteResult[]>(() => [
 const visibleResults = computed<CommandPaletteResult[]>(() => {
   if (showRootResults.value) {
     return rootResults.value
+  }
+
+  if (isCommandMode.value) {
+    return matchedCommandResults.value
   }
 
   return [
@@ -210,8 +223,43 @@ async function scrollActiveResultIntoView() {
     ?.scrollIntoView({ block: 'nearest' })
 }
 
+async function moveCommandModeCaretToEnd() {
+  await nextTick()
+
+  if (commandModeCaretFrame !== undefined) {
+    cancelAnimationFrame(commandModeCaretFrame)
+  }
+
+  commandModeCaretFrame = requestAnimationFrame(() => {
+    commandModeCaretFrame = undefined
+
+    if (!isOpen.value || query.value !== '>') {
+      return
+    }
+
+    const input = document.querySelector<HTMLInputElement>(
+      '[data-slot="command-input"]',
+    )
+
+    if (!input || input.value !== '>') {
+      return
+    }
+
+    input.focus()
+    input.setSelectionRange(input.value.length, input.value.length)
+  })
+}
+
 function onInputKeydown(event: KeyboardEvent) {
   if (event.isComposing) {
+    return
+  }
+
+  if (event.key === 'Escape' && isCommandMode.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    activeIndex.value = 0
+    setQuery('')
     return
   }
 
@@ -271,6 +319,12 @@ watch(
 
 watch(isOpen, () => {
   activeIndex.value = 0
+})
+
+watch([isOpen, query], () => {
+  if (isOpen.value && query.value === '>') {
+    moveCommandModeCaretToEnd()
+  }
 })
 
 watch(activeResultId, () => {
@@ -348,7 +402,22 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && primaryCommandResults.length"
+        v-if="isCommandMode && matchedCommandResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in matchedCommandResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="!isCommandMode && hasQuery && primaryCommandResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -363,7 +432,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && primarySpaceResults.length"
+        v-if="!isCommandMode && hasQuery && primarySpaceResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >
@@ -378,7 +447,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && contentResults.length"
+        v-if="!isCommandMode && hasQuery && contentResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.results')"
       >
@@ -393,7 +462,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && secondaryCommandResults.length"
+        v-if="!isCommandMode && hasQuery && secondaryCommandResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -408,7 +477,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && secondarySpaceResults.length"
+        v-if="!isCommandMode && hasQuery && secondarySpaceResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >

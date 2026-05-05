@@ -113,7 +113,8 @@ function getUsageScore(
   const recencyScore = Math.max(0, 1_200 - ageDays * 120)
   const frequencyScore = Math.min(1_800, Math.log2(usage.openCount + 1) * 450)
   const lastQuery = normalizeSearchValue(usage.lastQuery || '')
-  const lastQueryScore = query && lastQuery === query ? 1_200 : 0
+  const lastQueryScore
+    = query && (lastQuery === query || lastQuery === `>${query}`) ? 1_200 : 0
 
   return recencyScore + frequencyScore + lastQueryScore
 }

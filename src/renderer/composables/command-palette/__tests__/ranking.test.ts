@@ -84,6 +84,32 @@ describe('command palette ranking', () => {
     expect(ranked.map(result => result.id)).toEqual(['second', 'first'])
   })
 
+  it('uses command-mode lastQuery to boost repeated command intent', () => {
+    const ranked = rankCommandPaletteResults(
+      [
+        { id: 'first', title: 'New snippet' },
+        { id: 'second', title: 'New note' },
+      ],
+      {
+        query: 'new',
+        now,
+        usageById: new Map([
+          [
+            'second',
+            {
+              id: 'second',
+              openedAt: now,
+              openCount: 1,
+              lastQuery: '>new',
+            },
+          ],
+        ]),
+      },
+    )
+
+    expect(ranked.map(result => result.id)).toEqual(['second', 'first'])
+  })
+
   it('keeps deterministic order for equal scores', () => {
     const ranked = rankCommandPaletteResults(
       [

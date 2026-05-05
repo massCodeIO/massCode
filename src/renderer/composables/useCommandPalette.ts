@@ -60,6 +60,7 @@ interface CommandPaletteCommand {
   title: string
   subtitle: string
   icon: Component
+  keywords: string[]
   spaceId?: SpaceId
   run: () => Promise<void>
 }
@@ -395,6 +396,7 @@ const contentResults = computed<CommandPaletteResult[]>(() =>
 )
 
 const hasQuery = computed(() => query.value.trim().length > 0)
+const isCommandMode = computed(() => query.value.startsWith('>'))
 
 function resetSearchResults() {
   settledSearchQuery.value = ''
@@ -451,7 +453,7 @@ function setQuery(value: string) {
   searchRunId += 1
   query.value = value
 
-  if (!search) {
+  if (!search || isCommandMode.value) {
     resetSearchResults()
     isSearching.value = false
     return
@@ -463,6 +465,11 @@ function setQuery(value: string) {
 
 function openPalette() {
   isOpen.value = true
+}
+
+function openCommandMode() {
+  isOpen.value = true
+  setQuery('>')
 }
 
 function closePalette() {
@@ -543,6 +550,57 @@ async function createHttpRequestFromPalette() {
   await httpRequestsApi.createHttpRequestAndSelect({ folderId: null })
 }
 
+async function createCodeFolderFromPalette() {
+  const [{ useApp }, { useFolders }, { useSnippets }] = await Promise.all([
+    import('@/composables/useApp'),
+    import('@/composables/useFolders'),
+    import('@/composables/useSnippets'),
+  ])
+  const codeApp = useApp()
+  const codeFolders = useFolders()
+  const codeSnippets = useSnippets()
+
+  codeSnippets.isRestoreStateBlocked.value = true
+  codeSnippets.clearSearch(false)
+  codeApp.state.tagId = undefined
+  codeApp.focusedFolderId.value = undefined
+  codeApp.highlightedFolderIds.value.clear()
+  codeApp.highlightedTagId.value = undefined
+
+  await router.push({ name: RouterName.main })
+  await codeFolders.createFolderAndSelect()
+}
+
+async function createNotesFolderFromPalette() {
+  const { useNoteFolders } = await import('@/composables/spaces/notes')
+  const noteFolders = useNoteFolders()
+  const notesApi = useNotes()
+
+  notesApi.isRestoreStateBlocked.value = true
+  noteSearch.clearSearch(false)
+  notesApp.hideNotesViewModes()
+  notesApp.notesState.tagId = undefined
+  notesApp.focusedFolderId.value = undefined
+  notesApp.highlightedFolderIds.value.clear()
+  notesApp.highlightedTagId.value = undefined
+
+  await router.push({ name: RouterName.notesSpace })
+  await noteFolders.createNoteFolderAndSelect()
+}
+
+async function createHttpFolderFromPalette() {
+  const httpFolders = useHttpFolders()
+  const httpRequestsApi = useHttpRequests()
+
+  httpRequestsApi.isRestoreStateBlocked.value = true
+  httpSearch.clearSearch(false)
+  httpApp.focusedFolderId.value = undefined
+  httpApp.highlightedFolderIds.value.clear()
+
+  await router.push({ name: RouterName.httpSpace })
+  await httpFolders.createHttpFolderAndSelect()
+}
+
 async function openPreferencesFromPalette() {
   await router.push({ name: RouterName.preferences })
 }
@@ -554,6 +612,7 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       title: i18n.t('commandPalette.actions.newSnippet'),
       subtitle: i18n.t('commandPalette.actions.newSnippetSubtitle'),
       icon: getSpaceIcon('code'),
+      keywords: ['create', 'code', 'snippet'],
       spaceId: 'code',
       run: createSnippetFromPalette,
     },
@@ -562,6 +621,7 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       title: i18n.t('commandPalette.actions.newNote'),
       subtitle: i18n.t('commandPalette.actions.newNoteSubtitle'),
       icon: getSpaceIcon('notes'),
+      keywords: ['create', 'notes', 'note'],
       spaceId: 'notes',
       run: createNoteFromPalette,
     },
@@ -570,14 +630,43 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       title: i18n.t('commandPalette.actions.newHttpRequest'),
       subtitle: i18n.t('commandPalette.actions.newHttpRequestSubtitle'),
       icon: getSpaceIcon('http'),
+      keywords: ['create', 'http', 'request'],
       spaceId: 'http',
       run: createHttpRequestFromPalette,
+    },
+    {
+      id: 'new-code-folder',
+      title: i18n.t('commandPalette.actions.newCodeFolder'),
+      subtitle: i18n.t('commandPalette.actions.newCodeFolderSubtitle'),
+      icon: getSpaceIcon('code'),
+      keywords: ['create', 'code', 'folder'],
+      spaceId: 'code',
+      run: createCodeFolderFromPalette,
+    },
+    {
+      id: 'new-notes-folder',
+      title: i18n.t('commandPalette.actions.newNotesFolder'),
+      subtitle: i18n.t('commandPalette.actions.newNotesFolderSubtitle'),
+      icon: getSpaceIcon('notes'),
+      keywords: ['create', 'notes', 'note', 'folder'],
+      spaceId: 'notes',
+      run: createNotesFolderFromPalette,
+    },
+    {
+      id: 'new-http-folder',
+      title: i18n.t('commandPalette.actions.newHttpFolder'),
+      subtitle: i18n.t('commandPalette.actions.newHttpFolderSubtitle'),
+      icon: getSpaceIcon('http'),
+      keywords: ['create', 'http', 'request', 'folder'],
+      spaceId: 'http',
+      run: createHttpFolderFromPalette,
     },
     {
       id: 'open-preferences',
       title: i18n.t('commandPalette.actions.openPreferences'),
       subtitle: i18n.t('commandPalette.actions.openPreferencesSubtitle'),
       icon: Settings,
+      keywords: ['settings', 'preferences'],
       run: openPreferencesFromPalette,
     },
   ]
@@ -729,6 +818,11 @@ async function openResult(result: CommandPaletteResult) {
 useEventListener(window, 'keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'p') {
     event.preventDefault()
+    if (event.shiftKey) {
+      openCommandMode()
+      return
+    }
+
     togglePalette()
   }
 })
@@ -748,6 +842,7 @@ export function useCommandPalette() {
     isOpen,
     isSearching,
     noteResults,
+    openCommandMode,
     openPalette,
     openResult,
     query,

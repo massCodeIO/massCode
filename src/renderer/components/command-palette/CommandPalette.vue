@@ -70,6 +70,10 @@ function getSearchKeywords(result: CommandPaletteResult) {
 }
 
 function rankLocalResults(results: CommandPaletteResult[]) {
+  if (!normalizedSearchQuery.value) {
+    return results
+  }
+
   return results
     .map((result, index) => ({
       index,

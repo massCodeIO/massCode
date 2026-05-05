@@ -7,7 +7,7 @@ import {
   useHttpSettings,
 } from '@/composables'
 import { i18n } from '@/electron'
-import { Copy, LoaderCircle } from 'lucide-vue-next'
+import { AlertCircle, Copy, LoaderCircle } from 'lucide-vue-next'
 
 const { lastResponse, lastError, isExecuting } = useHttpExecute()
 const { settings } = useHttpSettings()
@@ -84,10 +84,19 @@ function copyActiveTab() {
       v-else-if="responseError"
       class="flex flex-1 items-center justify-center px-4"
     >
-      <UiText class="text-destructive text-center text-sm">
-        {{ i18n.t("spaces.http.editor.response.error") }}:
-        {{ responseError }}
-      </UiText>
+      <div
+        class="border-destructive/25 bg-destructive/10 flex max-w-[min(36rem,calc(100%-2rem))] items-start gap-3 rounded-md border px-4 py-3"
+      >
+        <AlertCircle class="text-destructive mt-0.5 size-4 shrink-0" />
+        <div class="min-w-0 space-y-1">
+          <div class="text-destructive text-sm font-medium">
+            {{ i18n.t("spaces.http.editor.response.error") }}
+          </div>
+          <div class="text-destructive font-mono text-xs break-words">
+            {{ responseError }}
+          </div>
+        </div>
+      </div>
     </div>
     <div
       v-else-if="!lastResponse"

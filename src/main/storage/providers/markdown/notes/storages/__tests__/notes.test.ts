@@ -133,6 +133,23 @@ describe('notes storage validations', () => {
     expect(storage.getNoteById(99999)).toBeNull()
   })
 
+  it('can limit search to note names', () => {
+    const storage = createNotesNotesStorage()
+    const named = storage.createNote({ name: 'Compose Notes' })
+    const contentOnly = storage.createNote({ name: 'API Notes' })
+
+    storage.updateNoteContent(contentOnly.id, 'docker compose up')
+
+    expect(
+      storage.getNotes({ search: 'compose' }).map(note => note.id),
+    ).toContain(contentOnly.id)
+    expect(
+      storage
+        .getNotes({ search: 'compose', searchNameOnly: 1 })
+        .map(note => note.id),
+    ).toEqual([named.id])
+  })
+
   it('createNote throws NAME_CONFLICT for duplicate name in same folder', () => {
     const storage = createNotesNotesStorage()
     storage.createNote({ name: 'Duplicate' })

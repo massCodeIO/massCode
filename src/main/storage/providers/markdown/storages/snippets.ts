@@ -50,12 +50,18 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
-      const searchSnippetIds = query.search?.trim()
-        ? getSnippetIdsBySearchQuery(snippets, query.search)
-        : null
+      const search = query.search?.trim().toLowerCase()
+      const searchSnippetIds
+        = search && !query.searchNameOnly
+          ? getSnippetIdsBySearchQuery(snippets, search)
+          : null
       const result = filterAndSortByQuery({
         entities: snippets,
         filters: [
+          snippet =>
+            !search
+            || !query.searchNameOnly
+            || snippet.name.toLowerCase().includes(search),
           snippet => !searchSnippetIds || searchSnippetIds.has(snippet.id),
           (snippet, query) =>
             !query.folderId || snippet.folderId === query.folderId,

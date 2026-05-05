@@ -329,9 +329,9 @@ async function runSearch(value: string) {
 
   const [snippetsResult, notesResult, httpRequestsResult]
     = await Promise.allSettled([
-      api.snippets.getSnippets({ search, isDeleted: 0 }),
-      api.notes.getNotes({ search, isDeleted: 0 }),
-      api.httpRequests.getHttpRequests({ search }),
+      api.snippets.getSnippets({ search, searchNameOnly: 1, isDeleted: 0 }),
+      api.notes.getNotes({ search, searchNameOnly: 1, isDeleted: 0 }),
+      api.httpRequests.getHttpRequests({ search, searchNameOnly: 1 }),
     ])
 
   if (runId !== searchRunId || search !== query.value.trim()) {

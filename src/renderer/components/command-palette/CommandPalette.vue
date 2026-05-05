@@ -24,25 +24,82 @@ const {
 const isOpeningResult = ref(false)
 const activeIndex = ref(0)
 
+const normalizedQuery = computed(() => query.value.trim().toLowerCase())
+
+function matchesQuery(result: CommandPaletteResult) {
+  if (!normalizedQuery.value) {
+    return true
+  }
+
+  return getSearchValues(result).some(value =>
+    value.toLowerCase().includes(normalizedQuery.value),
+  )
+}
+
+function isLocalResult(result: CommandPaletteResult | undefined) {
+  return result?.type === 'command' || result?.type === 'space'
+}
+
+function getSearchValues(result: CommandPaletteResult) {
+  const values = [result.title]
+
+  if (result.type === 'command') {
+    values.push(result.command.id)
+  }
+
+  if (result.type === 'space') {
+    values.push(result.spaceId)
+  }
+
+  return values
+}
+
+function isStrongLocalMatch(result: CommandPaletteResult) {
+  if (!normalizedQuery.value) {
+    return false
+  }
+
+  return getSearchValues(result)
+    .flatMap(value => value.toLowerCase().split(/[^a-z0-9]+/))
+    .some(token => token.startsWith(normalizedQuery.value))
+}
+
+const matchedCommandResults = computed<CommandPaletteResult[]>(() =>
+  commandResults.value.filter(matchesQuery),
+)
+
+const matchedSpaceResults = computed<CommandPaletteResult[]>(() =>
+  spaceResults.value.filter(matchesQuery),
+)
+
+const primaryCommandResults = computed<CommandPaletteResult[]>(() =>
+  matchedCommandResults.value.filter(isStrongLocalMatch),
+)
+
+const primarySpaceResults = computed<CommandPaletteResult[]>(() =>
+  matchedSpaceResults.value.filter(isStrongLocalMatch),
+)
+
+const secondaryCommandResults = computed<CommandPaletteResult[]>(() =>
+  matchedCommandResults.value.filter(result => !isStrongLocalMatch(result)),
+)
+
+const secondarySpaceResults = computed<CommandPaletteResult[]>(() =>
+  matchedSpaceResults.value.filter(result => !isStrongLocalMatch(result)),
+)
+
 const isEmpty = computed(
   () =>
     hasQuery.value
     && !isSearching.value
+    && matchedCommandResults.value.length === 0
+    && matchedSpaceResults.value.length === 0
     && snippetResults.value.length === 0
     && noteResults.value.length === 0
     && httpRequestResults.value.length === 0,
 )
 
-const hasSearchResults = computed(
-  () =>
-    snippetResults.value.length > 0
-    || noteResults.value.length > 0
-    || httpRequestResults.value.length > 0,
-)
-
-const showSpaceResults = computed(
-  () => !hasQuery.value || (isSearching.value && !hasSearchResults.value),
-)
+const showRootResults = computed(() => !hasQuery.value)
 
 const rootResults = computed<CommandPaletteResult[]>(() => [
   ...recentResults.value,
@@ -51,14 +108,18 @@ const rootResults = computed<CommandPaletteResult[]>(() => [
 ])
 
 const visibleResults = computed<CommandPaletteResult[]>(() => {
-  if (showSpaceResults.value) {
+  if (showRootResults.value) {
     return rootResults.value
   }
 
   return [
+    ...primaryCommandResults.value,
+    ...primarySpaceResults.value,
     ...snippetResults.value,
     ...noteResults.value,
     ...httpRequestResults.value,
+    ...secondaryCommandResults.value,
+    ...secondarySpaceResults.value,
   ]
 })
 
@@ -81,7 +142,7 @@ function setActiveResult(result: CommandPaletteResult) {
 async function selectResult(result: CommandPaletteResult) {
   if (
     isOpeningResult.value
-    || isSearching.value
+    || (isSearching.value && !isLocalResult(result))
     || !visibleResults.value.some(item => item.id === result.id)
   ) {
     return
@@ -142,13 +203,13 @@ function onInputKeydown(event: KeyboardEvent) {
   event.preventDefault()
   event.stopPropagation()
 
-  if (isSearching.value) {
-    return
-  }
-
   const result = visibleResults.value[activeIndex.value]
 
   if (!result) {
+    return
+  }
+
+  if (isSearching.value && !isLocalResult(result)) {
     return
   }
 
@@ -209,7 +270,7 @@ watch(activeResultId, () => {
       </div>
 
       <Command.CommandGroup
-        v-if="showSpaceResults && recentResults.length"
+        v-if="showRootResults && recentResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.recent')"
       >
@@ -224,7 +285,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showSpaceResults && commandResults.length"
+        v-if="showRootResults && commandResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -239,12 +300,42 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showSpaceResults"
+        v-if="showRootResults"
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >
         <CommandPaletteItem
           v-for="result in spaceResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="hasQuery && primaryCommandResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in primaryCommandResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="hasQuery && primarySpaceResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.spaces')"
+      >
+        <CommandPaletteItem
+          v-for="result in primarySpaceResults"
           :key="result.id"
           :result="result"
           :active="activeResultId === result.id"
@@ -290,6 +381,36 @@ watch(activeResultId, () => {
       >
         <CommandPaletteItem
           v-for="result in httpRequestResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="hasQuery && secondaryCommandResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in secondaryCommandResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="hasQuery && secondarySpaceResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.spaces')"
+      >
+        <CommandPaletteItem
+          v-for="result in secondarySpaceResults"
           :key="result.id"
           :result="result"
           :active="activeResultId === result.id"

@@ -139,6 +139,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         return all
       }
 
+      if (query?.searchNameOnly) {
+        return all.filter(request =>
+          request.name.toLowerCase().includes(search),
+        )
+      }
+
       return all.filter(
         request =>
           request.name.toLowerCase().includes(search)

@@ -75,6 +75,11 @@ export interface SnippetsQuery {
   search?: string;
   sort?: string;
   order?: "ASC" | "DESC";
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
   folderId?: number;
   tagId?: number;
   /**
@@ -284,6 +289,11 @@ export interface NotesQuery {
   search?: string;
   sort?: string;
   order?: "ASC" | "DESC";
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
   folderId?: number;
   tagId?: number;
   /**
@@ -463,6 +473,11 @@ export interface HttpRequestsAdd {
 
 export interface HttpRequestsQuery {
   search?: string;
+  /**
+   * @min 0
+   * @max 1
+   */
+  searchNameOnly?: number;
 }
 
 export type HttpRequestsResponse = {
@@ -886,7 +901,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.2.0
+ * @version 5.3.0
  *
  * Development documentation
  */
@@ -906,6 +921,11 @@ export class Api<
         search?: string;
         sort?: string;
         order?: "ASC" | "DESC";
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
         folderId?: number;
         tagId?: number;
         /**
@@ -1346,6 +1366,11 @@ export class Api<
         search?: string;
         sort?: string;
         order?: "ASC" | "DESC";
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
         folderId?: number;
         tagId?: number;
         /**
@@ -1787,6 +1812,11 @@ export class Api<
     getHttpRequests: (
       query?: {
         search?: string;
+        /**
+         * @min 0
+         * @max 1
+         */
+        searchNameOnly?: number;
       },
       params: RequestParams = {},
     ) =>

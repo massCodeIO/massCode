@@ -72,6 +72,7 @@ export const snippetsDTO = new Elysia().model({
   snippetsCountsResponse,
   snippetsQuery: t.Object({
     ...commonQuery.properties,
+    searchNameOnly: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
     folderId: t.Optional(t.Number()),
     tagId: t.Optional(t.Number()),
     isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),

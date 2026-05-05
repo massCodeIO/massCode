@@ -131,6 +131,27 @@ describe('code snippets storage validations', () => {
     expect(storage.getSnippetById(99999)).toBeNull()
   })
 
+  it('can limit search to snippet names', () => {
+    const storage = createSnippetsStorage()
+    const named = storage.createSnippet({ name: 'Compose Helper' })
+    const contentOnly = storage.createSnippet({ name: 'API Helper' })
+
+    storage.createSnippetContent(contentOnly.id, {
+      label: 'Example',
+      language: 'typescript',
+      value: 'docker compose up',
+    })
+
+    expect(
+      storage.getSnippets({ search: 'compose' }).map(snippet => snippet.id),
+    ).toContain(contentOnly.id)
+    expect(
+      storage
+        .getSnippets({ search: 'compose', searchNameOnly: 1 })
+        .map(snippet => snippet.id),
+    ).toEqual([named.id])
+  })
+
   it('createSnippet throws NAME_CONFLICT for duplicate name in same folder', () => {
     const storage = createSnippetsStorage()
     storage.createSnippet({ name: 'Duplicate' })

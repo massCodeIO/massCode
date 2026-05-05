@@ -84,12 +84,18 @@ export function createNotesNotesStorage(): NotesStorage {
   return {
     getNotes(query: NotesQueryInput): NoteRecord[] {
       const { state, notes } = getCache()
-      const matchedIds = query.search
-        ? getNoteIdsBySearchQuery(notes, query.search)
-        : null
+      const search = query.search?.trim().toLowerCase()
+      const matchedIds
+        = search && !query.searchNameOnly
+          ? getNoteIdsBySearchQuery(notes, search)
+          : null
       const filtered = filterAndSortByQuery({
         entities: notes,
         filters: [
+          note =>
+            !search
+            || !query.searchNameOnly
+            || note.name.toLowerCase().includes(search),
           note => !matchedIds || matchedIds.has(note.id),
           (note, query) =>
             query.isDeleted !== undefined

@@ -53,6 +53,16 @@ const bodyViewerLanguage = computed(() => {
   return lastResponse.value?.bodyKind === 'json' ? 'json' : 'plain'
 })
 
+const responseError = computed(() => {
+  if (lastError.value)
+    return lastError.value
+  if (lastResponse.value?.error)
+    return lastResponse.value.error
+  if (lastResponse.value?.status === null)
+    return i18n.t('spaces.http.editor.response.noResponse')
+  return null
+})
+
 function copyActiveTab() {
   if (copyValue.value) {
     copy(copyValue.value)
@@ -71,6 +81,15 @@ function copyActiveTab() {
       {{ i18n.t("spaces.http.editor.response.executing") }}
     </div>
     <div
+      v-else-if="responseError"
+      class="flex flex-1 items-center justify-center px-4"
+    >
+      <UiText class="text-destructive text-center text-sm">
+        {{ i18n.t("spaces.http.editor.response.error") }}:
+        {{ responseError }}
+      </UiText>
+    </div>
+    <div
       v-else-if="!lastResponse"
       class="flex flex-1 items-center justify-center"
     >
@@ -83,10 +102,11 @@ function copyActiveTab() {
       class="flex min-h-0 flex-1 flex-col"
     >
       <div
-        v-if="lastError"
+        v-if="responseError"
         class="border-border bg-destructive/10 text-destructive border-b px-3 py-1.5 text-xs"
       >
-        {{ i18n.t("spaces.http.editor.response.error") }}: {{ lastError }}
+        {{ i18n.t("spaces.http.editor.response.error") }}:
+        {{ responseError }}
       </div>
 
       <Tabs.Tabs

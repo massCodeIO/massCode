@@ -49,6 +49,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
 
   isExecuting.value = true
   lastError.value = null
+  lastResponse.value = null
 
   try {
     markPersistedStorageMutation()

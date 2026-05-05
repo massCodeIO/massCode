@@ -3,7 +3,7 @@ import type { ListboxFilterProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
 import { reactiveOmit } from '@vueuse/core'
-import { LoaderCircle, Search } from 'lucide-vue-next'
+import { LoaderCircle, Search, X } from 'lucide-vue-next'
 import { ListboxFilter, useForwardProps } from 'reka-ui'
 import { useCommand } from '.'
 
@@ -15,14 +15,24 @@ const props = defineProps<
   ListboxFilterProps & {
     class?: HTMLAttributes['class']
     isLoading?: boolean
+    scopeClearLabel?: string
+    scopeLabel?: string
   }
 >()
 const emit = defineEmits<{
+  'clearScope': []
   'update:modelValue': [value: string]
   'searchChange': [value: string]
 }>()
 
-const delegatedProps = reactiveOmit(props, 'class', 'isLoading', 'modelValue')
+const delegatedProps = reactiveOmit(
+  props,
+  'class',
+  'isLoading',
+  'modelValue',
+  'scopeClearLabel',
+  'scopeLabel',
+)
 
 const forwardedProps = useForwardProps(delegatedProps)
 
@@ -53,6 +63,16 @@ function updateSearch(value: string) {
     class="flex h-9 items-center gap-2 border-b px-3"
   >
     <Search class="size-4 shrink-0 opacity-50" />
+    <button
+      v-if="scopeLabel"
+      type="button"
+      class="bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-6 max-w-36 shrink-0 items-center gap-1 rounded-sm px-2 text-xs"
+      :aria-label="scopeClearLabel"
+      @click="emit('clearScope')"
+    >
+      <span class="truncate">{{ scopeLabel }}</span>
+      <X class="size-3 shrink-0" />
+    </button>
     <ListboxFilter
       v-bind="{ ...forwardedProps, ...$attrs }"
       :model-value="filterState.search"

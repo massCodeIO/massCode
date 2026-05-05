@@ -13,6 +13,8 @@
     "title": "Command Palette",
     "description": "Search spaces, snippets, notes, and HTTP requests.",
     "placeholder": "Search or jump to...",
+    "scopedPlaceholder": "Search in {{space}}...",
+    "clearScope": "Clear scope",
     "searching": "Searching...",
     "empty": "No results found",
     "groups": {

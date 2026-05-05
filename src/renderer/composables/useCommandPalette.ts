@@ -119,6 +119,7 @@ export type CommandPaletteResult =
 
 const isOpen = ref(false)
 const query = ref('')
+const searchScopeSpaceId = ref<SpaceId>()
 const isSearching = ref(false)
 const settledSearchQuery = ref('')
 const snippets = shallowRef<SnippetResult[]>([])
@@ -141,6 +142,8 @@ const noteSearch = useNoteSearch()
 const httpApp = useHttpApp()
 const httpData = useHttpRequests()
 const httpSearch = useHttpSearch()
+
+const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
 
 function getResultTitle(value: string | undefined, fallback: string) {
   return value?.trim() || fallback
@@ -308,6 +311,16 @@ const spaceResults = computed<CommandPaletteResult[]>(() =>
   })),
 )
 
+const scopeSpaceResults = computed<CommandPaletteResult[]>(() =>
+  spaceResults.value.filter(result =>
+    SEARCHABLE_SPACE_IDS.has(result.spaceId),
+  ),
+)
+
+const searchScope = computed(() =>
+  getSpaceDefinitions().find(space => space.id === searchScopeSpaceId.value),
+)
+
 const commandResults = computed<CommandPaletteResult[]>(() => {
   const activeSpaceId = getActiveSpaceId()
   const commands = getCommandDefinitions()
@@ -396,7 +409,12 @@ const contentResults = computed<CommandPaletteResult[]>(() =>
 )
 
 const hasQuery = computed(() => query.value.trim().length > 0)
-const isCommandMode = computed(() => query.value.startsWith('>'))
+const isCommandMode = computed(
+  () => !searchScopeSpaceId.value && query.value.startsWith('>'),
+)
+const isSpaceMode = computed(
+  () => !searchScopeSpaceId.value && query.value.startsWith('@'),
+)
 
 function resetSearchResults() {
   settledSearchQuery.value = ''
@@ -407,6 +425,7 @@ function resetSearchResults() {
 
 async function runSearch(value: string) {
   const search = value.trim()
+  const scopeSpaceId = searchScopeSpaceId.value
 
   if (search !== query.value.trim()) {
     return
@@ -422,14 +441,27 @@ async function runSearch(value: string) {
 
   isSearching.value = true
 
+  const shouldSearchSnippets = !scopeSpaceId || scopeSpaceId === 'code'
+  const shouldSearchNotes = !scopeSpaceId || scopeSpaceId === 'notes'
+  const shouldSearchHttpRequests = !scopeSpaceId || scopeSpaceId === 'http'
   const [snippetsResult, notesResult, httpRequestsResult]
     = await Promise.allSettled([
-      api.snippets.getSnippets({ search, searchNameOnly: 1, isDeleted: 0 }),
-      api.notes.getNotes({ search, searchNameOnly: 1, isDeleted: 0 }),
-      api.httpRequests.getHttpRequests({ search, searchNameOnly: 1 }),
+      shouldSearchSnippets
+        ? api.snippets.getSnippets({ search, searchNameOnly: 1, isDeleted: 0 })
+        : Promise.resolve({ data: [] as SnippetResult[] }),
+      shouldSearchNotes
+        ? api.notes.getNotes({ search, searchNameOnly: 1, isDeleted: 0 })
+        : Promise.resolve({ data: [] as NoteResult[] }),
+      shouldSearchHttpRequests
+        ? api.httpRequests.getHttpRequests({ search, searchNameOnly: 1 })
+        : Promise.resolve({ data: [] as HttpRequestResult[] }),
     ])
 
-  if (runId !== searchRunId || search !== query.value.trim()) {
+  if (
+    runId !== searchRunId
+    || search !== query.value.trim()
+    || scopeSpaceId !== searchScopeSpaceId.value
+  ) {
     return
   }
 
@@ -453,7 +485,7 @@ function setQuery(value: string) {
   searchRunId += 1
   query.value = value
 
-  if (!search || isCommandMode.value) {
+  if (!search || isCommandMode.value || isSpaceMode.value) {
     resetSearchResults()
     isSearching.value = false
     return
@@ -482,6 +514,27 @@ function togglePalette() {
 
 function clearPalette() {
   searchRunId += 1
+  query.value = ''
+  searchScopeSpaceId.value = undefined
+  resetSearchResults()
+  isSearching.value = false
+}
+
+function selectSearchScope(spaceId: SpaceId) {
+  if (!SEARCHABLE_SPACE_IDS.has(spaceId)) {
+    return
+  }
+
+  searchRunId += 1
+  searchScopeSpaceId.value = spaceId
+  query.value = ''
+  resetSearchResults()
+  isSearching.value = false
+}
+
+function clearSearchScope() {
+  searchRunId += 1
+  searchScopeSpaceId.value = undefined
   query.value = ''
   resetSearchResults()
   isSearching.value = false
@@ -841,12 +894,18 @@ export function useCommandPalette() {
     httpRequestResults,
     isOpen,
     isSearching,
+    isSpaceMode,
     noteResults,
     openCommandMode,
     openPalette,
     openResult,
     query,
     recentResults,
+    scopeSpaceResults,
+    searchScope,
+    searchScopeSpaceId,
+    selectSearchScope,
+    clearSearchScope,
     setQuery,
     snippetResults,
     spaceResults,

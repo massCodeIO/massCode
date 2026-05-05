@@ -11,14 +11,19 @@ import {
 import { i18n } from '@/electron'
 
 const {
+  clearSearchScope,
   commandResults,
   contentResults,
   hasQuery,
   isOpen,
   isSearching,
+  isSpaceMode,
   openResult,
   query,
   recentResults,
+  scopeSpaceResults,
+  searchScope,
+  selectSearchScope,
   setQuery,
   spaceResults,
   usageById,
@@ -29,11 +34,24 @@ const activeIndex = ref(0)
 let commandModeCaretFrame: number | undefined
 
 const normalizedQuery = computed(() => query.value.trim().toLowerCase())
-const isCommandMode = computed(() => query.value.startsWith('>'))
+const isScopedSearch = computed(() => Boolean(searchScope.value))
+const isCommandMode = computed(
+  () => !isScopedSearch.value && query.value.startsWith('>'),
+)
 const normalizedSearchQuery = computed(() =>
   isCommandMode.value
     ? query.value.slice(1).trim().toLowerCase()
-    : normalizedQuery.value,
+    : isSpaceMode.value
+      ? query.value.slice(1).trim().toLowerCase()
+      : normalizedQuery.value,
+)
+const searchScopeLabel = computed(() => searchScope.value?.label)
+const inputPlaceholder = computed(() =>
+  searchScope.value
+    ? i18n.t('commandPalette.scopedPlaceholder', {
+        space: searchScope.value.label,
+      })
+    : i18n.t('commandPalette.placeholder'),
 )
 
 function matchesQuery(result: CommandPaletteResult) {
@@ -118,7 +136,11 @@ const matchedCommandResults = computed<CommandPaletteResult[]>(() =>
 )
 
 const matchedSpaceResults = computed<CommandPaletteResult[]>(() =>
-  rankLocalResults(spaceResults.value.filter(matchesQuery)),
+  rankLocalResults(
+    (isSpaceMode.value ? scopeSpaceResults.value : spaceResults.value).filter(
+      matchesQuery,
+    ),
+  ),
 )
 
 const primaryCommandResults = computed<CommandPaletteResult[]>(() =>
@@ -137,17 +159,34 @@ const secondarySpaceResults = computed<CommandPaletteResult[]>(() =>
   matchedSpaceResults.value.filter(result => !isStrongLocalMatch(result)),
 )
 
-const isEmpty = computed(
-  () =>
-    hasQuery.value
-    && !isSearching.value
-    && matchedCommandResults.value.length === 0
+const isEmpty = computed(() => {
+  if (!hasQuery.value || isSearching.value) {
+    return false
+  }
+
+  if (isScopedSearch.value) {
+    return contentResults.value.length === 0
+  }
+
+  if (isSpaceMode.value) {
+    return matchedSpaceResults.value.length === 0
+  }
+
+  return (
+    matchedCommandResults.value.length === 0
     && (isCommandMode.value
       || (matchedSpaceResults.value.length === 0
-        && contentResults.value.length === 0)),
-)
+        && contentResults.value.length === 0))
+  )
+})
 
-const showRootResults = computed(() => !hasQuery.value && !isCommandMode.value)
+const showRootResults = computed(
+  () =>
+    !hasQuery.value
+    && !isCommandMode.value
+    && !isSpaceMode.value
+    && !isScopedSearch.value,
+)
 
 const rootResults = computed<CommandPaletteResult[]>(() => [
   ...recentResults.value,
@@ -162,6 +201,14 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
 
   if (isCommandMode.value) {
     return matchedCommandResults.value
+  }
+
+  if (isSpaceMode.value) {
+    return matchedSpaceResults.value
+  }
+
+  if (isScopedSearch.value) {
+    return contentResults.value
   }
 
   return [
@@ -190,6 +237,12 @@ function setActiveResult(result: CommandPaletteResult) {
 }
 
 async function selectResult(result: CommandPaletteResult) {
+  if (isSpaceMode.value && result.type === 'space') {
+    selectSearchScope(result.spaceId)
+    activeIndex.value = 0
+    return
+  }
+
   if (
     isOpeningResult.value
     || (isSearching.value && !isLocalResult(result))
@@ -259,11 +312,27 @@ function onInputKeydown(event: KeyboardEvent) {
     return
   }
 
-  if (event.key === 'Escape' && isCommandMode.value) {
+  if (event.key === 'Escape' && isScopedSearch.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    activeIndex.value = 0
+    clearSearchScope()
+    return
+  }
+
+  if (event.key === 'Escape' && (isCommandMode.value || isSpaceMode.value)) {
     event.preventDefault()
     event.stopPropagation()
     activeIndex.value = 0
     setQuery('')
+    return
+  }
+
+  if (event.key === 'Backspace' && isScopedSearch.value && !query.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    activeIndex.value = 0
+    clearSearchScope()
     return
   }
 
@@ -348,7 +417,10 @@ watch(activeResultId, () => {
     <Command.CommandInput
       :model-value="query"
       :is-loading="isSearching"
-      :placeholder="i18n.t('commandPalette.placeholder')"
+      :placeholder="inputPlaceholder"
+      :scope-label="searchScopeLabel"
+      :scope-clear-label="i18n.t('commandPalette.clearScope')"
+      @clear-scope="clearSearchScope"
       @update:model-value="onQueryChange"
       @keydown.capture="onInputKeydown"
     />
@@ -406,6 +478,21 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
+        v-if="isSpaceMode && matchedSpaceResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.spaces')"
+      >
+        <CommandPaletteItem
+          v-for="result in matchedSpaceResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
         v-if="isCommandMode && matchedCommandResults.length"
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
@@ -421,7 +508,13 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="!isCommandMode && hasQuery && primaryCommandResults.length"
+        v-if="
+          !isCommandMode
+            && !isSpaceMode
+            && !isScopedSearch
+            && hasQuery
+            && primaryCommandResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -436,7 +529,13 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="!isCommandMode && hasQuery && primarySpaceResults.length"
+        v-if="
+          !isCommandMode
+            && !isSpaceMode
+            && !isScopedSearch
+            && hasQuery
+            && primarySpaceResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >
@@ -451,7 +550,9 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="!isCommandMode && hasQuery && contentResults.length"
+        v-if="
+          !isCommandMode && !isSpaceMode && hasQuery && contentResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.results')"
       >
@@ -466,7 +567,13 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="!isCommandMode && hasQuery && secondaryCommandResults.length"
+        v-if="
+          !isCommandMode
+            && !isSpaceMode
+            && !isScopedSearch
+            && hasQuery
+            && secondaryCommandResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -481,7 +588,13 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="!isCommandMode && hasQuery && secondarySpaceResults.length"
+        v-if="
+          !isCommandMode
+            && !isSpaceMode
+            && !isScopedSearch
+            && hasQuery
+            && secondarySpaceResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >

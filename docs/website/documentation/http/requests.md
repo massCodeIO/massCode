@@ -7,6 +7,10 @@ description: "Create, edit, preview, send, duplicate, and inspect HTTP requests 
 
 Requests are the main items in the HTTP space. Each request stores the method, URL, params, headers, body, auth settings, and a markdown description.
 
+::: warning
+HTTP requests are stored in your Markdown Vault as plain text. Do not save real passwords, API tokens, private keys, or other secrets in request auth, headers, params, or bodies if your vault is synced, shared, or committed to Git.
+:::
+
 ## Creating Requests
 
 Create a request from the request list header or from a folder context menu. New requests are created in the selected folder.

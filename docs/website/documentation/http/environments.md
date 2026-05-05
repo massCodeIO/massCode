@@ -5,7 +5,11 @@ description: "Use HTTP environments in massCode to manage reusable variables for
 
 # Environments
 
-Environments store reusable variables for requests. Use them for values that change between local, staging, and production APIs, such as base URLs, user IDs, organization IDs, and tokens.
+Environments store reusable variables for requests. Use them for values that change between local, staging, and production APIs, such as base URLs, user IDs, and organization IDs.
+
+::: warning
+Environment variables are stored as plain text in your Markdown Vault. Do not store real passwords, API tokens, private keys, or other secrets in HTTP environments if your vault is synced, shared, or committed to Git.
+:::
 
 <img :src="withBase('/http-envs.png')">
 

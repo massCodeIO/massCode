@@ -261,7 +261,7 @@ watch(activeResultId, () => {
       @update:model-value="onQueryChange"
       @keydown.capture="onInputKeydown"
     />
-    <Command.CommandList class="max-h-[420px] min-h-[236px]">
+    <Command.CommandList class="h-[420px] max-h-none">
       <div
         v-if="isEmpty"
         class="text-muted-foreground py-6 text-center text-sm"

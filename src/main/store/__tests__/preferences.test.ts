@@ -353,6 +353,50 @@ describe('app store sanitization', () => {
     ])
   })
 
+  it('keeps valid command palette usage entries and prunes invalid values', async () => {
+    persistedStateByName.app = {
+      commandPalette: {
+        usage: [
+          {
+            id: 'snippet:10',
+            target: 'snippet',
+            targetId: '10',
+            openedAt: 1_700_000_000_000,
+            openCount: 3,
+            lastQuery: 'fetch',
+          },
+          {
+            id: 'bad-count',
+            target: 'note',
+            targetId: '11',
+            openedAt: 1_700_000_000_000,
+            openCount: 0,
+          },
+          {
+            id: 'bad-target',
+            target: 'bad',
+            targetId: '12',
+            openedAt: 1_700_000_000_000,
+            openCount: 1,
+          },
+        ],
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('commandPalette.usage' as any)).toEqual([
+      {
+        id: 'snippet:10',
+        target: 'snippet',
+        targetId: '10',
+        openedAt: 1_700_000_000_000,
+        openCount: 3,
+        lastQuery: 'fetch',
+      },
+    ])
+  })
+
   it('keeps persisted http layout values', async () => {
     persistedStateByName.app = {
       http: {

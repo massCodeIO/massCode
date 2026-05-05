@@ -27,12 +27,14 @@ import {
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import { Settings } from 'lucide-vue-next'
+import { rankCommandPaletteResults } from './command-palette/ranking'
 import { LibraryFilter } from './types'
 
 type SnippetResult = SnippetsResponse[number]
 type NoteResult = NotesResponse[number]
 type HttpRequestResult = HttpRequestsResponse[number]
 type CommandPaletteRecentTarget = 'space' | 'snippet' | 'note' | 'http-request'
+type CommandPaletteUsageTarget = CommandPaletteRecentTarget | 'command'
 
 interface CommandPaletteRecentEntry {
   id: string
@@ -42,6 +44,15 @@ interface CommandPaletteRecentEntry {
   subtitle: string
   spaceId: SpaceId
   openedAt: number
+}
+
+interface CommandPaletteUsageEntry {
+  id: string
+  target: CommandPaletteUsageTarget
+  targetId: string
+  openedAt: number
+  openCount: number
+  lastQuery?: string
 }
 
 interface CommandPaletteCommand {
@@ -108,15 +119,20 @@ export type CommandPaletteResult =
 const isOpen = ref(false)
 const query = ref('')
 const isSearching = ref(false)
+const settledSearchQuery = ref('')
 const snippets = shallowRef<SnippetResult[]>([])
 const notes = shallowRef<NoteResult[]>([])
 const httpRequests = shallowRef<HttpRequestResult[]>([])
 const recentEntries = shallowRef<CommandPaletteRecentEntry[]>(
   store.app.get<CommandPaletteRecentEntry[]>('commandPalette.recent') || [],
 )
+const usageEntries = shallowRef<CommandPaletteUsageEntry[]>(
+  store.app.get<CommandPaletteUsageEntry[]>('commandPalette.usage') || [],
+)
 let searchRunId = 0
 const RECENT_LIMIT = 30
 const ROOT_RECENT_LIMIT = 3
+const USAGE_LIMIT = 100
 
 const notesApp = useNotesApp()
 const notesData = useNotes()
@@ -136,6 +152,64 @@ function getSpaceIcon(spaceId: SpaceId) {
 function saveRecentEntries(entries: CommandPaletteRecentEntry[]) {
   recentEntries.value = entries
   store.app.set('commandPalette.recent', JSON.parse(JSON.stringify(entries)))
+}
+
+function saveUsageEntries(entries: CommandPaletteUsageEntry[]) {
+  usageEntries.value = entries
+  store.app.set('commandPalette.usage', JSON.parse(JSON.stringify(entries)))
+}
+
+function getUsageEntryFromResult(
+  result: CommandPaletteResult,
+): Omit<CommandPaletteUsageEntry, 'openCount' | 'openedAt'> | null {
+  if (result.type === 'recent') {
+    return {
+      id: result.recent.id,
+      target: result.recent.target,
+      targetId: result.recent.targetId,
+    }
+  }
+
+  if (result.type === 'command') {
+    return {
+      id: `command:${result.command.id}`,
+      target: 'command',
+      targetId: result.command.id,
+    }
+  }
+
+  const recentEntry = getRecentEntryFromResult(result)
+
+  return recentEntry
+    ? {
+        id: recentEntry.id,
+        target: recentEntry.target,
+        targetId: recentEntry.targetId,
+      }
+    : null
+}
+
+function recordUsageResult(result: CommandPaletteResult, lastQuery: string) {
+  const entry = getUsageEntryFromResult(result)
+
+  if (!entry) {
+    return
+  }
+
+  const previousEntry = usageEntries.value.find(item => item.id === entry.id)
+  const nextEntry: CommandPaletteUsageEntry = {
+    ...entry,
+    openedAt: Date.now(),
+    openCount: (previousEntry?.openCount || 0) + 1,
+    ...(lastQuery ? { lastQuery } : {}),
+  }
+
+  saveUsageEntries(
+    [
+      nextEntry,
+      ...usageEntries.value.filter(item => item.id !== nextEntry.id),
+    ].slice(0, USAGE_LIMIT),
+  )
 }
 
 function getRecentEntryFromResult(
@@ -269,6 +343,10 @@ const recentResults = computed<CommandPaletteResult[]>(() =>
   })),
 )
 
+const usageById = computed(
+  () => new Map(usageEntries.value.map(entry => [entry.id, entry])),
+)
+
 const snippetResults = computed<CommandPaletteResult[]>(() =>
   snippets.value.map(snippet => ({
     id: `snippet:${snippet.id}`,
@@ -302,9 +380,24 @@ const httpRequestResults = computed<CommandPaletteResult[]>(() =>
   })),
 )
 
+const contentResults = computed<CommandPaletteResult[]>(() =>
+  rankCommandPaletteResults(
+    [
+      ...snippetResults.value,
+      ...noteResults.value,
+      ...httpRequestResults.value,
+    ],
+    {
+      query: isSearching.value ? settledSearchQuery.value : query.value,
+      usageById: usageById.value,
+    },
+  ),
+)
+
 const hasQuery = computed(() => query.value.trim().length > 0)
 
 function resetSearchResults() {
+  settledSearchQuery.value = ''
   snippets.value = []
   notes.value = []
   httpRequests.value = []
@@ -346,6 +439,7 @@ async function runSearch(value: string) {
     = httpRequestsResult.status === 'fulfilled'
       ? httpRequestsResult.value.data
       : []
+  settledSearchQuery.value = search
   isSearching.value = false
 }
 
@@ -602,6 +696,8 @@ async function openRecent(entry: CommandPaletteRecentEntry) {
 }
 
 async function openResult(result: CommandPaletteResult) {
+  const lastQuery = query.value.trim()
+
   closePalette()
   clearPalette()
 
@@ -619,6 +715,7 @@ async function openResult(result: CommandPaletteResult) {
   }
   else if (result.type === 'command') {
     await result.command.run()
+    recordUsageResult(result, lastQuery)
     return
   }
   else {
@@ -626,6 +723,7 @@ async function openResult(result: CommandPaletteResult) {
   }
 
   recordRecentResult(result)
+  recordUsageResult(result, lastQuery)
 }
 
 useEventListener(window, 'keydown', (event) => {
@@ -644,6 +742,7 @@ watch(isOpen, (open) => {
 export function useCommandPalette() {
   return {
     commandResults,
+    contentResults,
     hasQuery,
     httpRequestResults,
     isOpen,
@@ -656,5 +755,6 @@ export function useCommandPalette() {
     setQuery,
     snippetResults,
     spaceResults,
+    usageById,
   }
 }

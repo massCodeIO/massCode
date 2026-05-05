@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import * as Command from '@/components/ui/shadcn/command'
 import {
+  type CommandPaletteUsageScoreEntry,
+  getCommandPaletteResultScore,
+} from '@/composables/command-palette/ranking'
+import {
   type CommandPaletteResult,
   useCommandPalette,
 } from '@/composables/useCommandPalette'
@@ -8,17 +12,16 @@ import { i18n } from '@/electron'
 
 const {
   commandResults,
+  contentResults,
   hasQuery,
-  httpRequestResults,
   isOpen,
   isSearching,
-  noteResults,
   openResult,
   query,
   recentResults,
   setQuery,
-  snippetResults,
   spaceResults,
+  usageById,
 } = useCommandPalette()
 
 const isOpeningResult = ref(false)
@@ -41,17 +44,51 @@ function isLocalResult(result: CommandPaletteResult | undefined) {
 }
 
 function getSearchValues(result: CommandPaletteResult) {
-  const values = [result.title]
+  return [result.title, ...getSearchKeywords(result)]
+}
+
+function getSearchKeywords(result: CommandPaletteResult) {
+  const keywords: string[] = []
 
   if (result.type === 'command') {
-    values.push(result.command.id)
+    keywords.push(result.command.id)
   }
 
   if (result.type === 'space') {
-    values.push(result.spaceId)
+    keywords.push(result.spaceId)
   }
 
-  return values
+  return keywords
+}
+
+function rankLocalResults(results: CommandPaletteResult[]) {
+  return results
+    .map((result, index) => ({
+      index,
+      result,
+      score: getCommandPaletteResultScore(
+        {
+          id: result.id,
+          title: result.title,
+          keywords: getSearchKeywords(result),
+        },
+        {
+          query: normalizedQuery.value,
+          usageById: usageById.value as Map<
+            string,
+            CommandPaletteUsageScoreEntry
+          >,
+        },
+      ),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score
+      }
+
+      return a.index - b.index
+    })
+    .map(item => item.result)
 }
 
 function isStrongLocalMatch(result: CommandPaletteResult) {
@@ -65,11 +102,11 @@ function isStrongLocalMatch(result: CommandPaletteResult) {
 }
 
 const matchedCommandResults = computed<CommandPaletteResult[]>(() =>
-  commandResults.value.filter(matchesQuery),
+  rankLocalResults(commandResults.value.filter(matchesQuery)),
 )
 
 const matchedSpaceResults = computed<CommandPaletteResult[]>(() =>
-  spaceResults.value.filter(matchesQuery),
+  rankLocalResults(spaceResults.value.filter(matchesQuery)),
 )
 
 const primaryCommandResults = computed<CommandPaletteResult[]>(() =>
@@ -94,9 +131,7 @@ const isEmpty = computed(
     && !isSearching.value
     && matchedCommandResults.value.length === 0
     && matchedSpaceResults.value.length === 0
-    && snippetResults.value.length === 0
-    && noteResults.value.length === 0
-    && httpRequestResults.value.length === 0,
+    && contentResults.value.length === 0,
 )
 
 const showRootResults = computed(() => !hasQuery.value)
@@ -115,9 +150,7 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
   return [
     ...primaryCommandResults.value,
     ...primarySpaceResults.value,
-    ...snippetResults.value,
-    ...noteResults.value,
-    ...httpRequestResults.value,
+    ...contentResults.value,
     ...secondaryCommandResults.value,
     ...secondarySpaceResults.value,
   ]
@@ -345,42 +378,12 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="hasQuery && snippetResults.length"
+        v-if="hasQuery && contentResults.length"
         force-visible
-        :heading="i18n.t('commandPalette.groups.snippets')"
+        :heading="i18n.t('commandPalette.groups.results')"
       >
         <CommandPaletteItem
-          v-for="result in snippetResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
-
-      <Command.CommandGroup
-        v-if="hasQuery && noteResults.length"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.notes')"
-      >
-        <CommandPaletteItem
-          v-for="result in noteResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
-
-      <Command.CommandGroup
-        v-if="hasQuery && httpRequestResults.length"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.httpRequests')"
-      >
-        <CommandPaletteItem
-          v-for="result in httpRequestResults"
+          v-for="result in contentResults"
           :key="result.id"
           :result="result"
           :active="activeResultId === result.id"

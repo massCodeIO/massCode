@@ -40,6 +40,7 @@ export type CommandPaletteRecentTarget =
   | 'snippet'
   | 'note'
   | 'http-request'
+export type CommandPaletteUsageTarget = CommandPaletteRecentTarget | 'command'
 
 export interface CommandPaletteRecentEntry {
   id: string
@@ -49,6 +50,15 @@ export interface CommandPaletteRecentEntry {
   subtitle: string
   spaceId: SpaceId
   openedAt: number
+}
+
+export interface CommandPaletteUsageEntry {
+  id: string
+  target: CommandPaletteUsageTarget
+  targetId: string
+  openedAt: number
+  openCount: number
+  lastQuery?: string
 }
 
 export interface DonationsState {
@@ -135,6 +145,7 @@ export interface AppStore {
   }
   commandPalette: {
     recent: CommandPaletteRecentEntry[]
+    usage: CommandPaletteUsageEntry[]
   }
   donations: DonationsState
   activeSpaceId: SpaceId

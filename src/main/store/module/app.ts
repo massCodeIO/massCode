@@ -3,6 +3,8 @@ import type {
   CodeState,
   CommandPaletteRecentEntry,
   CommandPaletteRecentTarget,
+  CommandPaletteUsageEntry,
+  CommandPaletteUsageTarget,
   DonationsState,
   HttpState,
   NotesEditorMode,
@@ -68,6 +70,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   commandPalette: {
     recent: [],
+    usage: [],
   },
   donations: {
     lastActiveDay: '',
@@ -336,6 +339,62 @@ function sanitizeCommandPaletteRecent(
   return entries.slice(0, 30)
 }
 
+function sanitizeCommandPaletteUsage(
+  value: unknown,
+): CommandPaletteUsageEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const allowedTargets = [
+    'space',
+    'snippet',
+    'note',
+    'http-request',
+    'command',
+  ] satisfies CommandPaletteUsageTarget[]
+  const entries: CommandPaletteUsageEntry[] = []
+  const seen = new Set<string>()
+
+  for (const rawEntry of value) {
+    const entry = asRecord(rawEntry)
+    const id = entry.id
+    const target = entry.target
+    const targetId = entry.targetId
+    const openedAt = entry.openedAt
+    const openCount = entry.openCount
+    const lastQuery = entry.lastQuery
+
+    if (
+      typeof id !== 'string'
+      || seen.has(id)
+      || typeof target !== 'string'
+      || !allowedTargets.includes(target as CommandPaletteUsageTarget)
+      || typeof targetId !== 'string'
+      || typeof openedAt !== 'number'
+      || !Number.isFinite(openedAt)
+      || typeof openCount !== 'number'
+      || !Number.isFinite(openCount)
+      || openCount < 1
+      || (lastQuery !== undefined && typeof lastQuery !== 'string')
+    ) {
+      continue
+    }
+
+    seen.add(id)
+    entries.push({
+      id,
+      target: target as CommandPaletteUsageTarget,
+      targetId,
+      openedAt,
+      openCount,
+      ...(lastQuery ? { lastQuery } : {}),
+    })
+  }
+
+  return entries.slice(0, 100)
+}
+
 function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
@@ -533,6 +592,7 @@ function sanitizeAppStore(value: unknown): AppStore {
     },
     commandPalette: {
       recent: sanitizeCommandPaletteRecent(commandPaletteSource.recent),
+      usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),
     },
     donations: sanitizeDonations(source.donations),
     activeSpaceId: readEnum(

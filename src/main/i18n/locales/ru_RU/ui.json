@@ -9,6 +9,19 @@
     "library": "Библиотека",
     "fragment": "Фрагмент"
   },
+  "commandPalette": {
+    "title": "Палитра команд",
+    "description": "Поиск пространств, сниппетов, заметок и HTTP-запросов.",
+    "placeholder": "Найти или перейти...",
+    "searching": "Поиск...",
+    "empty": "Ничего не найдено",
+    "groups": {
+      "spaces": "Пространства",
+      "snippets": "Сниппеты",
+      "notes": "Заметки",
+      "httpRequests": "HTTP-запросы"
+    }
+  },
   "spaces": {
     "label": "Пространства",
     "code": {

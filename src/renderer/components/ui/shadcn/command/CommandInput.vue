@@ -3,7 +3,7 @@ import type { ListboxFilterProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/utils'
 import { reactiveOmit } from '@vueuse/core'
-import { Search } from 'lucide-vue-next'
+import { LoaderCircle, Search } from 'lucide-vue-next'
 import { ListboxFilter, useForwardProps } from 'reka-ui'
 import { useCommand } from '.'
 
@@ -14,14 +14,37 @@ defineOptions({
 const props = defineProps<
   ListboxFilterProps & {
     class?: HTMLAttributes['class']
+    isLoading?: boolean
   }
 >()
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  'searchChange': [value: string]
+}>()
 
-const delegatedProps = reactiveOmit(props, 'class')
+const delegatedProps = reactiveOmit(props, 'class', 'isLoading', 'modelValue')
 
 const forwardedProps = useForwardProps(delegatedProps)
 
 const { filterState } = useCommand()
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    const search = value ?? ''
+
+    if (filterState.search !== search) {
+      filterState.search = search
+    }
+  },
+  { immediate: true },
+)
+
+function updateSearch(value: string) {
+  filterState.search = value
+  emit('update:modelValue', value)
+  emit('searchChange', value)
+}
 </script>
 
 <template>
@@ -32,7 +55,7 @@ const { filterState } = useCommand()
     <Search class="size-4 shrink-0 opacity-50" />
     <ListboxFilter
       v-bind="{ ...forwardedProps, ...$attrs }"
-      v-model="filterState.search"
+      :model-value="filterState.search"
       data-slot="command-input"
       auto-focus
       :class="
@@ -41,6 +64,11 @@ const { filterState } = useCommand()
           props.class,
         )
       "
+      @update:model-value="updateSearch"
+    />
+    <LoaderCircle
+      v-if="isLoading"
+      class="text-muted-foreground size-4 shrink-0 animate-spin"
     />
   </div>
 </template>

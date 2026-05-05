@@ -131,9 +131,6 @@ watch(
       return
     }
 
-    if (selectedFolderIds.value.includes(folderId))
-      return
-
     selectedFolderIds.value = [folderId]
     lastSelectedFolderId.value = folderId
   },

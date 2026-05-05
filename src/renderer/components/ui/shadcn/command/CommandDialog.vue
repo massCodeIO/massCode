@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/shadcn/dialog'
+import { reactiveOmit } from '@vueuse/core'
 import { useForwardPropsEmits } from 'reka-ui'
 import Command from './Command.vue'
 
@@ -15,16 +16,25 @@ const props = withDefaults(
     DialogRootProps & {
       title?: string
       description?: string
+      showCloseButton?: boolean
     }
   >(),
   {
     title: 'Command Palette',
     description: 'Search for a command to run...',
+    showCloseButton: false,
   },
 )
 const emits = defineEmits<DialogRootEmits>()
 
-const forwarded = useForwardPropsEmits(props, emits)
+const delegatedProps = reactiveOmit(
+  props,
+  'description',
+  'showCloseButton',
+  'title',
+)
+
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>
@@ -32,7 +42,10 @@ const forwarded = useForwardPropsEmits(props, emits)
     v-slot="slotProps"
     v-bind="forwarded"
   >
-    <DialogContent class="overflow-hidden p-0">
+    <DialogContent
+      class="overflow-hidden p-0"
+      :show-close-button="showCloseButton"
+    >
       <DialogHeader class="sr-only">
         <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>{{ description }}</DialogDescription>

@@ -9,6 +9,19 @@
     "library": "Library",
     "fragment": "Fragment"
   },
+  "commandPalette": {
+    "title": "Command Palette",
+    "description": "Search spaces, snippets, notes, and HTTP requests.",
+    "placeholder": "Search or jump to...",
+    "searching": "Searching...",
+    "empty": "No results found",
+    "groups": {
+      "spaces": "Spaces",
+      "snippets": "Snippets",
+      "notes": "Notes",
+      "httpRequests": "HTTP Requests"
+    }
+  },
   "spaces": {
     "label": "Spaces",
     "code": {

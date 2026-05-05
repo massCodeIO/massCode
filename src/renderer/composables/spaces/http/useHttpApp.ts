@@ -31,6 +31,7 @@ const highlightedFolderIds = ref<Set<number>>(new Set())
 const highlightedRequestIds = ref<Set<number>>(new Set())
 const focusedFolderId = ref<number | undefined>()
 const focusedRequestId = ref<number | undefined>()
+const isFocusedRequestName = ref(false)
 
 const httpLayoutMode = ref<LayoutMode>(
   (store.app.get('http.layout.mode') as LayoutMode) || 'all-panels',
@@ -78,6 +79,12 @@ function toggleHttpSidebar() {
   )
 }
 
+async function focusRequestNameInput() {
+  isFocusedRequestName.value = false
+  await nextTick()
+  isFocusedRequestName.value = true
+}
+
 watch(
   httpState,
   () => {
@@ -95,6 +102,7 @@ export function useHttpApp() {
     httpState,
     isHttpSpaceInitialized,
     isFocusedSearch,
+    isFocusedRequestName,
     highlightedFolderIds,
     highlightedRequestIds,
     focusedFolderId,
@@ -105,6 +113,7 @@ export function useHttpApp() {
     restoreHttpStateSnapshot,
     saveHttpStateSnapshot,
     setHttpLayoutMode,
+    focusRequestNameInput,
     toggleHttpSidebar,
   }
 }

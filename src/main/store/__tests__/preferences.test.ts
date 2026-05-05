@@ -230,7 +230,6 @@ describe('app store sanitization', () => {
         legacyNotesStateFlag: true,
       },
       notesEditorMode: 'preview',
-      nextDonateNotification: 1_700_000_000_000,
       lastNotifiedUpdateVersion: '4.7.1',
       legacyRootFlag: true,
     }
@@ -259,9 +258,6 @@ describe('app store sanitization', () => {
     expect(app.get('notes.layout.threePanel' as any)).toEqual([10, 25, 65])
     expect(app.get('notes.layout.twoPanel' as any)).toBeUndefined()
     expect(app.get('notes.layout.tagsListHeight' as any)).toBe(200)
-    expect(app.get('notifications.nextDonateAt' as any)).toBe(
-      1_700_000_000_000,
-    )
     expect(app.get('notifications.lastNotifiedUpdateVersion' as any)).toBe(
       '4.7.1',
     )
@@ -272,7 +268,6 @@ describe('app store sanitization', () => {
     expect(app.get('sizes' as any)).toBeUndefined()
     expect(app.get('notesState' as any)).toBeUndefined()
     expect(app.get('notesEditorMode' as any)).toBeUndefined()
-    expect(app.get('nextDonateNotification' as any)).toBeUndefined()
     expect(app.get('lastNotifiedUpdateVersion' as any)).toBeUndefined()
     expect(app.get('legacyRootFlag' as any)).toBeUndefined()
     expect(app.get('code.layout.legacySizeFlag' as any)).toBeUndefined()
@@ -306,6 +301,56 @@ describe('app store sanitization', () => {
       topLinked: true,
     })
     expect(app.get('notes.dashboard.widgets.garbage' as any)).toBeUndefined()
+  })
+
+  it('keeps valid command palette recent entries and prunes invalid values', async () => {
+    persistedStateByName.app = {
+      commandPalette: {
+        recent: [
+          {
+            id: 'snippet:10',
+            target: 'snippet',
+            targetId: '10',
+            title: 'Fetch user',
+            subtitle: 'TypeScript',
+            spaceId: 'code',
+            openedAt: 1_700_000_000_000,
+          },
+          {
+            id: 'bad-target',
+            target: 'bad',
+            targetId: '10',
+            title: 'Bad',
+            subtitle: 'Bad',
+            spaceId: 'code',
+            openedAt: 1,
+          },
+          {
+            id: 'bad-space',
+            target: 'note',
+            targetId: '11',
+            title: 'Bad',
+            subtitle: 'Bad',
+            spaceId: 'bad',
+            openedAt: 1,
+          },
+        ],
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('commandPalette.recent' as any)).toEqual([
+      {
+        id: 'snippet:10',
+        target: 'snippet',
+        targetId: '10',
+        title: 'Fetch user',
+        subtitle: 'TypeScript',
+        spaceId: 'code',
+        openedAt: 1_700_000_000_000,
+      },
+    ])
   })
 
   it('keeps persisted http layout values', async () => {

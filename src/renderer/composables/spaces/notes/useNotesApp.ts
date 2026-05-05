@@ -149,6 +149,12 @@ function showNotesPresentation() {
   isNotesMindmapShown.value = false
 }
 
+async function focusNoteNameInput() {
+  isFocusedNoteName.value = false
+  await nextTick()
+  isFocusedNoteName.value = true
+}
+
 watch(
   notesState,
   () => {
@@ -165,6 +171,7 @@ export function useNotesApp() {
   return {
     focusedFolderId,
     focusedNoteId,
+    focusNoteNameInput,
     highlightedFolderIds,
     highlightedNoteIds,
     highlightedTagId,

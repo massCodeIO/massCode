@@ -16,10 +16,22 @@
     "searching": "Поиск...",
     "empty": "Ничего не найдено",
     "groups": {
+      "recent": "Недавние",
+      "actions": "Действия",
       "spaces": "Пространства",
       "snippets": "Сниппеты",
       "notes": "Заметки",
       "httpRequests": "HTTP-запросы"
+    },
+    "actions": {
+      "newSnippet": "Новый сниппет",
+      "newSnippetSubtitle": "Создать сниппет кода",
+      "newNote": "Новая заметка",
+      "newNoteSubtitle": "Создать заметку",
+      "newHttpRequest": "Новый HTTP-запрос",
+      "newHttpRequestSubtitle": "Создать HTTP-запрос",
+      "openPreferences": "Открыть настройки",
+      "openPreferencesSubtitle": "Изменить настройки massCode"
     }
   },
   "spaces": {

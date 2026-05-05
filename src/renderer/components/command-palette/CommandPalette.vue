@@ -7,6 +7,7 @@ import {
 import { i18n } from '@/electron'
 
 const {
+  commandResults,
   hasQuery,
   httpRequestResults,
   isOpen,
@@ -14,6 +15,7 @@ const {
   noteResults,
   openResult,
   query,
+  recentResults,
   setQuery,
   snippetResults,
   spaceResults,
@@ -42,9 +44,15 @@ const showSpaceResults = computed(
   () => !hasQuery.value || (isSearching.value && !hasSearchResults.value),
 )
 
+const rootResults = computed<CommandPaletteResult[]>(() => [
+  ...recentResults.value,
+  ...commandResults.value,
+  ...spaceResults.value,
+])
+
 const visibleResults = computed<CommandPaletteResult[]>(() => {
   if (showSpaceResults.value) {
-    return spaceResults.value
+    return rootResults.value
   }
 
   return [
@@ -199,6 +207,36 @@ watch(activeResultId, () => {
       >
         {{ i18n.t("commandPalette.empty") }}
       </div>
+
+      <Command.CommandGroup
+        v-if="showSpaceResults && recentResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.recent')"
+      >
+        <CommandPaletteItem
+          v-for="result in recentResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="showSpaceResults && commandResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in commandResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
 
       <Command.CommandGroup
         v-if="showSpaceResults"

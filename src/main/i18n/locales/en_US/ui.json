@@ -16,10 +16,22 @@
     "searching": "Searching...",
     "empty": "No results found",
     "groups": {
+      "recent": "Recent",
+      "actions": "Actions",
       "spaces": "Spaces",
       "snippets": "Snippets",
       "notes": "Notes",
       "httpRequests": "HTTP Requests"
+    },
+    "actions": {
+      "newSnippet": "New snippet",
+      "newSnippetSubtitle": "Create a code snippet",
+      "newNote": "New note",
+      "newNoteSubtitle": "Create a note",
+      "newHttpRequest": "New HTTP request",
+      "newHttpRequestSubtitle": "Create an HTTP request",
+      "openPreferences": "Open preferences",
+      "openPreferencesSubtitle": "Change massCode settings"
     }
   },
   "spaces": {

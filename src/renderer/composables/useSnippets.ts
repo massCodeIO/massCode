@@ -13,8 +13,12 @@ import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
 import { scrollToSnippetIndex } from './useSnippetScroller'
 
-const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
-  = useApp()
+const {
+  state,
+  saveStateSnapshot,
+  restoreStateSnapshot,
+  focusSnippetNameInput,
+} = useApp()
 const { folders, getFolderByIdFromTree } = useFolders()
 
 const selectedSnippetIds = ref<number[]>(
@@ -199,7 +203,7 @@ async function createSnippet() {
 async function createSnippetAndSelect() {
   await createSnippet()
   selectFirstSnippet()
-  isFocusedSnippetName.value = true
+  await focusSnippetNameInput()
 }
 
 async function duplicateSnippet(snippetId: number) {

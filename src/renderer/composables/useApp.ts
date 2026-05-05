@@ -47,6 +47,12 @@ const isShowCodePreview = ref(false)
 const isShowCodeImage = ref(false)
 const isShowJsonVisualizer = ref(false)
 
+async function focusSnippetNameInput() {
+  isFocusedSnippetName.value = false
+  await nextTick()
+  isFocusedSnippetName.value = true
+}
+
 function saveStateSnapshot(action: StateAction): void {
   stateSnapshots[action] = {
     snippetId: state.snippetId,
@@ -124,6 +130,7 @@ export function useApp() {
     highlightedTagId,
     isCompactListMode,
     isFocusedSnippetName,
+    focusSnippetNameInput,
     isFocusedSearch,
     isShowCodeImage,
     isShowCodePreview,

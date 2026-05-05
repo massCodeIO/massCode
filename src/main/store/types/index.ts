@@ -35,6 +35,21 @@ export interface NotesDashboardWidgets {
 }
 
 export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http'
+export type CommandPaletteRecentTarget =
+  | 'space'
+  | 'snippet'
+  | 'note'
+  | 'http-request'
+
+export interface CommandPaletteRecentEntry {
+  id: string
+  target: CommandPaletteRecentTarget
+  targetId: string
+  title: string
+  subtitle: string
+  spaceId: SpaceId
+  openedAt: number
+}
 
 export interface DonationsState {
   lastActiveDay: string
@@ -117,6 +132,9 @@ export interface AppStore {
   }
   notifications: {
     lastNotifiedUpdateVersion: string
+  }
+  commandPalette: {
+    recent: CommandPaletteRecentEntry[]
   }
   donations: DonationsState
   activeSpaceId: SpaceId

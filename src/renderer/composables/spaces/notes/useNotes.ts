@@ -9,7 +9,7 @@ import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
 import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
-const { notesState, isFocusedNoteName } = useNotesApp()
+const { notesState, focusNoteNameInput } = useNotesApp()
 
 // --- Types ---
 // These mirror the generated API types that will exist after api:generate.
@@ -273,7 +273,7 @@ async function createNote() {
 async function createNoteAndSelect() {
   await createNote()
   selectFirstNote()
-  isFocusedNoteName.value = true
+  await focusNoteNameInput()
 }
 
 async function updateNote(noteId: number, data: NotesUpdate) {

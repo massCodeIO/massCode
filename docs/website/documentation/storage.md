@@ -17,6 +17,10 @@ massCode stores your data locally on your computer. Snippets and notes live in a
 - **Cloud-sync friendly.** iCloud, Dropbox, Google Drive, or Syncthing all work because the vault is just a folder on disk.
 - **Live updates.** massCode watches the vault in real time, so external file changes appear in the app automatically.
 
+::: warning
+Vault files are stored as plain text. Do not store passwords, API tokens, private keys, or other secrets in snippets, notes, HTTP requests, or HTTP environments if your vault is synced, shared, or committed to Git. Use an external secret manager for real credentials.
+:::
+
 ### How it works
 
 The vault mirrors your folder structure. Each folder becomes a directory on disk, and each snippet or note becomes a `.md` file inside it. Metadata such as language, tags, and ordering is stored in frontmatter, while `.state.json` stores UI state like expanded folders and sort order.

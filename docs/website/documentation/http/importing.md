@@ -53,6 +53,10 @@ Each imported collection becomes a new top-level folder in the HTTP space. Neste
 
 Imported environments are added to the **Environments** panel. Environment variables are stored as plain text in your vault, the same as variables created manually in HTTP.
 
+::: warning
+Review imported requests and environments before committing or sharing your vault. Imported auth values, headers, params, bodies, and environment variables may contain credentials from the source collection.
+:::
+
 ## Warnings
 
 Some external client features do not have an equivalent in the current HTTP space model. When that happens, import keeps the request data it can represent and shows a warning.

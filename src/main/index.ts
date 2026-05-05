@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain, Menu, protocol } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
@@ -12,14 +12,17 @@ import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spa
 import { store } from './store'
 import { checkForUpdates } from './updates'
 import { isSqliteFile, log } from './utils'
+import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
 const lazyRequire = createRequire(__filename)
+const WINDOW_BOUNDS_SAVE_DELAY = 250
 
 let mainWindow: BrowserWindow
+let saveWindowBoundsTimer: ReturnType<typeof setTimeout> | null = null
 let isQuitting = false
 let migrationResult: {
   folders: number
@@ -27,6 +30,34 @@ let migrationResult: {
   tags: number
 } | null = null
 let migrationError: string | null = null
+
+function saveWindowBounds() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  store.app.set('window.bounds', mainWindow.getBounds())
+}
+
+function scheduleWindowBoundsSave() {
+  if (saveWindowBoundsTimer) {
+    clearTimeout(saveWindowBoundsTimer)
+  }
+
+  saveWindowBoundsTimer = setTimeout(() => {
+    saveWindowBoundsTimer = null
+    saveWindowBounds()
+  }, WINDOW_BOUNDS_SAVE_DELAY)
+}
+
+function flushWindowBoundsSave() {
+  if (saveWindowBoundsTimer) {
+    clearTimeout(saveWindowBoundsTimer)
+    saveWindowBoundsTimer = null
+  }
+
+  saveWindowBounds()
+}
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -40,11 +71,13 @@ else {
 }
 
 function createWindow() {
-  const bounds = store.app.get('window.bounds') as Record<string, unknown>
+  const bounds = normalizeWindowBounds(
+    store.app.get('window.bounds'),
+    screen.getAllDisplays(),
+  )
 
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    ...DEFAULT_WINDOW_BOUNDS,
     ...bounds,
     titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
     webPreferences: {
@@ -77,8 +110,11 @@ function createWindow() {
     }
   })
 
+  mainWindow.on('move', scheduleWindowBoundsSave)
+  mainWindow.on('resize', scheduleWindowBoundsSave)
+
   mainWindow.on('close', (event) => {
-    store.app.set('window.bounds', mainWindow.getBounds())
+    flushWindowBoundsSave()
 
     if (process.platform === 'darwin' && !isQuitting) {
       event.preventDefault()
@@ -224,6 +260,7 @@ else {
 
   app.on('before-quit', () => {
     isQuitting = true
+    flushWindowBoundsSave()
     stopThemeWatcher()
     stopMarkdownWatcher()
   })

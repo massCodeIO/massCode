@@ -20,7 +20,6 @@ import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
 import { getSpaceDefinitions, type SpaceId } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
-import { FileText, Globe2 } from 'lucide-vue-next'
 import { LibraryFilter } from './types'
 
 type SnippetResult = SnippetsResponse[number]
@@ -80,6 +79,10 @@ function getResultTitle(value: string | undefined, fallback: string) {
   return value?.trim() || fallback
 }
 
+function getSpaceIcon(spaceId: SpaceId) {
+  return getSpaceDefinitions().find(space => space.id === spaceId)!.icon
+}
+
 const spaceResults = computed<CommandPaletteResult[]>(() =>
   getSpaceDefinitions().map(space => ({
     id: `space:${space.id}`,
@@ -97,7 +100,7 @@ const snippetResults = computed<CommandPaletteResult[]>(() =>
     type: 'snippet',
     title: getResultTitle(snippet.name, i18n.t('snippet.untitled')),
     subtitle: snippet.folder?.name || i18n.t('common.library'),
-    icon: FileText,
+    icon: getSpaceIcon('code'),
     item: snippet,
   })),
 )
@@ -108,7 +111,7 @@ const noteResults = computed<CommandPaletteResult[]>(() =>
     type: 'note',
     title: getResultTitle(note.name, i18n.t('notes.untitled')),
     subtitle: note.folder?.name || i18n.t('common.library'),
-    icon: FileText,
+    icon: getSpaceIcon('notes'),
     item: note,
   })),
 )
@@ -119,7 +122,7 @@ const httpRequestResults = computed<CommandPaletteResult[]>(() =>
     type: 'http-request',
     title: getResultTitle(request.name, i18n.t('spaces.http.untitledRequest')),
     subtitle: request.url || i18n.t('spaces.http.noUrl'),
-    icon: Globe2,
+    icon: getSpaceIcon('http'),
     item: request,
   })),
 )

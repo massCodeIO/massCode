@@ -100,6 +100,14 @@ function moveActiveIndex(step: number) {
       % visibleResults.value.length
 }
 
+async function scrollActiveResultIntoView() {
+  await nextTick()
+
+  document
+    .querySelector('[data-command-palette-active="true"]')
+    ?.scrollIntoView({ block: 'nearest' })
+}
+
 function onInputKeydown(event: KeyboardEvent) {
   if (event.isComposing) {
     return
@@ -161,6 +169,12 @@ watch(
 
 watch(isOpen, () => {
   activeIndex.value = 0
+})
+
+watch(activeResultId, () => {
+  if (isOpen.value) {
+    scrollActiveResultIntoView()
+  }
 })
 </script>
 

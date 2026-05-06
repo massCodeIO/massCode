@@ -52,6 +52,7 @@ const isOpeningResult = ref(false)
 const isActionPanelOpen = ref(false)
 const activeIndex = ref(0)
 const activeActionIndex = ref(0)
+const activeNavigationDirection = ref<0 | 1 | -1>(0)
 let commandModeCaretFrame: number | undefined
 const copyToClipboard = useCopyToClipboard()
 
@@ -409,6 +410,7 @@ function getActionPanelActions(result: CommandPaletteResult) {
 function onQueryChange(value: string) {
   closeActionPanel()
   activeIndex.value = 0
+  activeNavigationDirection.value = 0
   setQuery(value)
 }
 
@@ -427,6 +429,7 @@ function openActionPanel() {
 function closeActionPanel() {
   isActionPanelOpen.value = false
   activeActionIndex.value = 0
+  activeNavigationDirection.value = 0
   actionPanelTarget.value = undefined
 }
 
@@ -436,6 +439,7 @@ function setActiveAction(action: CommandPaletteAction) {
   )
 
   if (index >= 0) {
+    activeNavigationDirection.value = 0
     activeActionIndex.value = index
   }
 }
@@ -443,9 +447,11 @@ function setActiveAction(action: CommandPaletteAction) {
 function moveActiveActionIndex(step: number) {
   if (!actionPanelActions.value.length) {
     activeActionIndex.value = 0
+    activeNavigationDirection.value = 0
     return
   }
 
+  activeNavigationDirection.value = step > 0 ? 1 : -1
   activeActionIndex.value
     = (activeActionIndex.value + step + actionPanelActions.value.length)
       % actionPanelActions.value.length
@@ -466,6 +472,7 @@ async function runAction(action: CommandPaletteAction) {
 function setActiveResult(result: CommandPaletteResult) {
   const index = visibleResults.value.findIndex(item => item.id === result.id)
   if (index >= 0) {
+    activeNavigationDirection.value = 0
     activeIndex.value = index
   }
 }
@@ -474,6 +481,7 @@ async function selectResult(result: CommandPaletteResult) {
   if (isSpaceMode.value && result.type === 'space') {
     selectSearchScope(result.spaceId)
     activeIndex.value = 0
+    activeNavigationDirection.value = 0
     return
   }
 
@@ -498,9 +506,11 @@ async function selectResult(result: CommandPaletteResult) {
 function moveActiveIndex(step: number) {
   if (!visibleResults.value.length) {
     activeIndex.value = 0
+    activeNavigationDirection.value = 0
     return
   }
 
+  activeNavigationDirection.value = step > 0 ? 1 : -1
   activeIndex.value
     = (activeIndex.value + step + visibleResults.value.length)
       % visibleResults.value.length
@@ -509,9 +519,42 @@ function moveActiveIndex(step: number) {
 async function scrollActiveResultIntoView() {
   await nextTick()
 
-  document
-    .querySelector('[data-command-palette-active="true"]')
-    ?.scrollIntoView({ block: 'nearest' })
+  const activeElement = document.querySelector<HTMLElement>(
+    '[data-command-palette-active="true"]',
+  )
+  const listElement = document.querySelector<HTMLElement>(
+    '[data-slot="command-list"]',
+  )
+
+  if (!activeElement || !listElement) {
+    return
+  }
+
+  const activeRect = activeElement.getBoundingClientRect()
+  const listRect = listElement.getBoundingClientRect()
+  const activeTop = activeRect.top - listRect.top + listElement.scrollTop
+  const activeBottom = activeTop + activeRect.height
+  const visibleTop = listElement.scrollTop
+  const visibleBottom = visibleTop + listElement.clientHeight
+
+  if (activeNavigationDirection.value > 0 && activeBottom > visibleBottom) {
+    listElement.scrollTop = activeBottom - listElement.clientHeight
+    return
+  }
+
+  if (activeNavigationDirection.value < 0 && activeTop < visibleTop) {
+    listElement.scrollTop = activeTop
+    return
+  }
+
+  if (activeTop < visibleTop) {
+    listElement.scrollTop = activeTop
+    return
+  }
+
+  if (activeBottom > visibleBottom) {
+    listElement.scrollTop = activeBottom - listElement.clientHeight
+  }
 }
 
 async function moveCommandModeCaretToEnd() {
@@ -599,6 +642,7 @@ function onInputKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
     activeIndex.value = 0
+    activeNavigationDirection.value = 0
     clearSearchScope()
     return
   }
@@ -607,6 +651,7 @@ function onInputKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
     activeIndex.value = 0
+    activeNavigationDirection.value = 0
     setQuery('')
     return
   }
@@ -615,6 +660,7 @@ function onInputKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
     activeIndex.value = 0
+    activeNavigationDirection.value = 0
     clearSearchScope()
     return
   }
@@ -673,16 +719,19 @@ watch(
   (results) => {
     if (isSearching.value) {
       activeIndex.value = 0
+      activeNavigationDirection.value = 0
       return
     }
 
     if (!results.length) {
       activeIndex.value = 0
+      activeNavigationDirection.value = 0
       return
     }
 
     if (activeIndex.value >= results.length) {
       activeIndex.value = 0
+      activeNavigationDirection.value = 0
     }
   },
   { immediate: true },
@@ -690,6 +739,7 @@ watch(
 
 watch(isOpen, () => {
   activeIndex.value = 0
+  activeNavigationDirection.value = 0
   closeActionPanel()
 })
 
@@ -701,6 +751,7 @@ watch(actionPanelActions, (actions) => {
 
   if (activeActionIndex.value >= actions.length) {
     activeActionIndex.value = 0
+    activeNavigationDirection.value = 0
   }
 })
 

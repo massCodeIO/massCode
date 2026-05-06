@@ -96,6 +96,7 @@ export interface SnippetRecord {
 
 export interface SnippetsQueryInput {
   search?: string
+  searchNameOnly?: number
   order?: 'ASC' | 'DESC'
   folderId?: number
   tagId?: number
@@ -225,6 +226,7 @@ export interface NoteFolderInfo {
 
 export interface NotesQueryInput {
   search?: string
+  searchNameOnly?: number
   order?: 'ASC' | 'DESC'
   folderId?: number
   tagId?: number
@@ -350,6 +352,7 @@ export interface HttpFolderUpdateResult {
 
 export interface HttpRequestsQueryInput {
   search?: string
+  searchNameOnly?: number
 }
 
 export interface HttpRequestCreateInput {

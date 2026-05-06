@@ -3,6 +3,7 @@ import type { HttpMethod } from '~/main/types/http'
 import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
+  useHttpApp,
   useHttpExecute,
   useHttpRequests,
   useNavigationHistory,
@@ -32,6 +33,7 @@ const {
   hasSiblingRequestNameConflict,
   saveCurrentRequest,
 } = useHttpRequests()
+const { isFocusedRequestName } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
@@ -109,6 +111,7 @@ function onNameBlur() {
     currentDraft.value.name = currentRequest.value.name
   }
   isNameFocused.value = false
+  isFocusedRequestName.value = false
 }
 
 async function onSend() {
@@ -161,6 +164,7 @@ async function onSend() {
               variant="ghost"
               class="w-full truncate px-0"
               :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
+              :select="isFocusedRequestName"
               @focus="onNameFocus"
               @blur="onNameBlur"
             />

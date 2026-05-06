@@ -48,7 +48,7 @@ export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
 
-const { httpState } = useHttpApp()
+const { httpState, focusRequestNameInput } = useHttpApp()
 const { incrementCreated } = useDonations()
 
 const selectedRequestIds = ref<number[]>(
@@ -187,6 +187,7 @@ async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
   const id = await createHttpRequest(payload)
   if (id) {
     selectHttpRequest(id)
+    await focusRequestNameInput()
   }
 }
 

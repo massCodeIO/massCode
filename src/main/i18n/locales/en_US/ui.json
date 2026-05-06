@@ -9,6 +9,65 @@
     "library": "Library",
     "fragment": "Fragment"
   },
+  "commandPalette": {
+    "title": "Command Palette",
+    "description": "Search spaces, snippets, notes, and HTTP requests.",
+    "placeholder": "Search or run command...",
+    "commandPlaceholder": "Run command...",
+    "scopedPlaceholder": "Search in {{space}}...",
+    "clearScope": "Clear scope",
+    "searching": "Searching...",
+    "empty": "No results found",
+    "groups": {
+      "recent": "Recent",
+      "actions": "Actions",
+      "spaces": "Spaces",
+      "results": "Results",
+      "snippets": "Snippets",
+      "notes": "Notes",
+      "httpRequests": "HTTP Requests"
+    },
+    "actions": {
+      "newSnippet": "New snippet",
+      "newSnippetSubtitle": "Create a code snippet",
+      "newNote": "New note",
+      "newNoteSubtitle": "Create a note",
+      "newHttpRequest": "New HTTP request",
+      "newHttpRequestSubtitle": "Create an HTTP request",
+      "newCodeFolder": "New code folder",
+      "newCodeFolderSubtitle": "Create a folder in Code",
+      "newNotesFolder": "New notes folder",
+      "newNotesFolderSubtitle": "Create a folder in Notes",
+      "newHttpFolder": "New HTTP folder",
+      "newHttpFolderSubtitle": "Create a folder in HTTP",
+      "openPreferences": "Open preferences",
+      "openPreferencesSubtitle": "Change massCode settings"
+    },
+    "fallbacks": {
+      "createSnippet": "Create snippet \"{{query}}\"",
+      "createSnippetSubtitle": "Create in Code Inbox",
+      "createNote": "Create note \"{{query}}\"",
+      "createNoteSubtitle": "Create in Notes Inbox",
+      "createHttpRequest": "Create HTTP request \"{{query}}\"",
+      "createHttpRequestFromUrl": "Create HTTP request from URL",
+      "createHttpRequestSubtitle": "Create in HTTP"
+    },
+    "actionPanel": {
+      "heading": "Actions",
+      "open": "Open",
+      "run": "Run",
+      "copyTitle": "Copy title",
+      "copySnippetContent": "Copy snippet content",
+      "copyHttpUrl": "Copy URL"
+    },
+    "footer": {
+      "open": "Open",
+      "jump": "Jump",
+      "actions": "Actions",
+      "run": "Run",
+      "back": "Back"
+    }
+  },
   "spaces": {
     "label": "Spaces",
     "code": {

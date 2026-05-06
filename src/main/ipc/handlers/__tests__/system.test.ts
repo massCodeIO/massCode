@@ -13,6 +13,9 @@ const showItemInFolder = vi.fn()
 const getDirectoryState = vi.fn()
 const moveVault = vi.fn()
 const getVaultPath = vi.fn(() => '/current-vault')
+const getPaths = vi.fn((vaultPath: string) => ({ vaultPath }))
+const getRuntimeCache = vi.fn(() => ({ snippets: [] }))
+const findSnippetById = vi.fn()
 const preferencesSet = vi.fn()
 
 vi.mock('electron', () => ({
@@ -45,6 +48,12 @@ vi.mock('../../../storage/providers/markdown/notes/runtime', () => ({
 vi.mock('../../../storage/providers/markdown/runtime/moveVault', () => ({
   getDirectoryState,
   moveVault,
+}))
+
+vi.mock('../../../storage/providers/markdown/runtime', () => ({
+  findSnippetById,
+  getPaths,
+  getRuntimeCache,
 }))
 
 vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
@@ -134,5 +143,43 @@ describe('registerSystemHandlers', () => {
       }),
     ).toThrow('move failed')
     expect(preferencesSet).not.toHaveBeenCalled()
+  })
+
+  it('reveals a snippet file in the file manager', async () => {
+    const snippet = { filePath: '.masscode/inbox/demo.md', id: 10 }
+
+    findSnippetById.mockReturnValue(snippet)
+    getRuntimeCache.mockReturnValue({ snippets: [snippet] })
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+
+    const result = registeredHandlers.get(
+      'system:show-snippet-in-file-manager',
+    )?.(undefined, 10)
+
+    expect(getPaths).toHaveBeenCalledWith('/current-vault')
+    expect(getRuntimeCache).toHaveBeenCalledWith({
+      vaultPath: '/current-vault',
+    })
+    expect(findSnippetById).toHaveBeenCalledWith([snippet], 10)
+    expect(showItemInFolder).toHaveBeenCalledWith(
+      '/current-vault/.masscode/inbox/demo.md',
+    )
+    expect(result).toBe(true)
+  })
+
+  it('does not reveal a missing snippet file', async () => {
+    findSnippetById.mockReturnValue(undefined)
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+
+    const result = registeredHandlers.get(
+      'system:show-snippet-in-file-manager',
+    )?.(undefined, 404)
+
+    expect(showItemInFolder).not.toHaveBeenCalled()
+    expect(result).toBe(false)
   })
 })

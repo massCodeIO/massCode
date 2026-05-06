@@ -94,6 +94,7 @@ const httpRequestsResponse = t.Array(httpRequestItem)
 
 const httpRequestsQuery = t.Object({
   search: t.Optional(t.String()),
+  searchNameOnly: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
 })
 
 export const httpRequestsDTO = new Elysia().model({

@@ -1,6 +1,10 @@
 import type {
   AppStore,
   CodeState,
+  CommandPaletteRecentEntry,
+  CommandPaletteRecentTarget,
+  CommandPaletteUsageEntry,
+  CommandPaletteUsageTarget,
   DonationsState,
   HttpState,
   NotesEditorMode,
@@ -63,6 +67,10 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   notifications: {
     lastNotifiedUpdateVersion: '',
+  },
+  commandPalette: {
+    recent: [],
+    usage: [],
   },
   donations: {
     lastActiveDay: '',
@@ -267,6 +275,126 @@ function sanitizeDonations(value: unknown): DonationsState {
   }
 }
 
+function sanitizeCommandPaletteRecent(
+  value: unknown,
+): CommandPaletteRecentEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const allowedTargets = [
+    'space',
+    'snippet',
+    'note',
+    'http-request',
+  ] satisfies CommandPaletteRecentTarget[]
+  const allowedSpaces = [
+    'code',
+    'tools',
+    'math',
+    'notes',
+    'http',
+  ] satisfies SpaceId[]
+  const entries: CommandPaletteRecentEntry[] = []
+  const seen = new Set<string>()
+
+  for (const rawEntry of value) {
+    const entry = asRecord(rawEntry)
+    const id = entry.id
+    const target = entry.target
+    const targetId = entry.targetId
+    const title = entry.title
+    const subtitle = entry.subtitle
+    const spaceId = entry.spaceId
+    const openedAt = entry.openedAt
+
+    if (
+      typeof id !== 'string'
+      || seen.has(id)
+      || typeof target !== 'string'
+      || !allowedTargets.includes(target as CommandPaletteRecentTarget)
+      || typeof targetId !== 'string'
+      || typeof title !== 'string'
+      || typeof subtitle !== 'string'
+      || typeof spaceId !== 'string'
+      || !allowedSpaces.includes(spaceId as SpaceId)
+      || typeof openedAt !== 'number'
+      || !Number.isFinite(openedAt)
+    ) {
+      continue
+    }
+
+    seen.add(id)
+    entries.push({
+      id,
+      target: target as CommandPaletteRecentTarget,
+      targetId,
+      title,
+      subtitle,
+      spaceId: spaceId as SpaceId,
+      openedAt,
+    })
+  }
+
+  return entries.slice(0, 30)
+}
+
+function sanitizeCommandPaletteUsage(
+  value: unknown,
+): CommandPaletteUsageEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const allowedTargets = [
+    'space',
+    'snippet',
+    'note',
+    'http-request',
+    'command',
+  ] satisfies CommandPaletteUsageTarget[]
+  const entries: CommandPaletteUsageEntry[] = []
+  const seen = new Set<string>()
+
+  for (const rawEntry of value) {
+    const entry = asRecord(rawEntry)
+    const id = entry.id
+    const target = entry.target
+    const targetId = entry.targetId
+    const openedAt = entry.openedAt
+    const openCount = entry.openCount
+    const lastQuery = entry.lastQuery
+
+    if (
+      typeof id !== 'string'
+      || seen.has(id)
+      || typeof target !== 'string'
+      || !allowedTargets.includes(target as CommandPaletteUsageTarget)
+      || typeof targetId !== 'string'
+      || typeof openedAt !== 'number'
+      || !Number.isFinite(openedAt)
+      || typeof openCount !== 'number'
+      || !Number.isFinite(openCount)
+      || openCount < 1
+      || (lastQuery !== undefined && typeof lastQuery !== 'string')
+    ) {
+      continue
+    }
+
+    seen.add(id)
+    entries.push({
+      id,
+      target: target as CommandPaletteUsageTarget,
+      targetId,
+      openedAt,
+      openCount,
+      ...(lastQuery ? { lastQuery } : {}),
+    })
+  }
+
+  return entries.slice(0, 100)
+}
+
 function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
@@ -274,6 +402,7 @@ function sanitizeAppStore(value: unknown): AppStore {
   const httpSource = asRecord(source.http)
   const notesSource = asRecord(source.notes)
   const notificationsSource = asRecord(source.notifications)
+  const commandPaletteSource = asRecord(source.commandPalette)
   const legacySizes = asRecord(source.sizes)
   const codeLayoutSource = asRecord(codeSource.layout)
   const httpLayoutSource = asRecord(httpSource.layout)
@@ -460,6 +589,10 @@ function sanitizeAppStore(value: unknown): AppStore {
           : typeof source.lastNotifiedUpdateVersion === 'string'
             ? source.lastNotifiedUpdateVersion
             : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
+    },
+    commandPalette: {
+      recent: sanitizeCommandPaletteRecent(commandPaletteSource.recent),
+      usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),
     },
     donations: sanitizeDonations(source.donations),
     activeSpaceId: readEnum(

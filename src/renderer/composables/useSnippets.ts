@@ -13,8 +13,16 @@ import { useApp, useDialog, useFolders } from '.'
 import { LibraryFilter } from './types'
 import { scrollToSnippetIndex } from './useSnippetScroller'
 
-const { state, saveStateSnapshot, restoreStateSnapshot, isFocusedSnippetName }
-  = useApp()
+interface CreateSnippetPayload {
+  name?: string
+}
+
+const {
+  state,
+  saveStateSnapshot,
+  restoreStateSnapshot,
+  focusSnippetNameInput,
+} = useApp()
 const { folders, getFolderByIdFromTree } = useFolders()
 
 const selectedSnippetIds = ref<number[]>(
@@ -158,15 +166,22 @@ async function getSnippets(query?: SnippetsQuery) {
   }
 }
 
-async function createSnippet() {
+async function createSnippet(payload?: CreateSnippetPayload) {
   try {
     const targetFolderId = state.folderId || null
     const folder = getFolderByIdFromTree(folders.value, targetFolderId)
     const existingNames = await getSnippetNamesForCreate(targetFolderId)
-    const nextSnippetName = getNextIndexedName(
-      i18n.t('snippet.untitled'),
-      existingNames,
+    const requestedName = payload?.name?.trim()
+    const hasRequestedName = existingNames.some(
+      name => name.trim().toLowerCase() === requestedName?.toLowerCase(),
     )
+    const nextSnippetName
+      = requestedName && !hasRequestedName
+        ? requestedName
+        : getNextIndexedName(
+            requestedName || i18n.t('snippet.untitled'),
+            existingNames,
+          )
 
     markPersistedStorageMutation()
     const { data } = await api.snippets.postSnippets({
@@ -190,16 +205,25 @@ async function createSnippet() {
     }
 
     await getSnippets(queryByLibraryOrFolderOrSearch.value)
+
+    return Number(data.id)
   }
   catch (error) {
     console.error(error)
   }
 }
 
-async function createSnippetAndSelect() {
-  await createSnippet()
-  selectFirstSnippet()
-  isFocusedSnippetName.value = true
+async function createSnippetAndSelect(payload?: CreateSnippetPayload) {
+  const id = await createSnippet(payload)
+
+  if (id) {
+    selectSnippet(id)
+  }
+  else {
+    selectFirstSnippet()
+  }
+
+  await focusSnippetNameInput()
 }
 
 async function duplicateSnippet(snippetId: number) {

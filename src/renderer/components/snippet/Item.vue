@@ -9,7 +9,8 @@ import {
   useSnippets,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { isMac } from '@/utils'
 import { onClickOutside, useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
 
@@ -69,6 +70,12 @@ const isFavoritesLibrarySelected = computed(
 
 const isTrashLibrarySelectd = computed(
   () => state.libraryFilter === LibraryFilter.Trash,
+)
+
+const revealInFileManagerLabel = computed(() =>
+  isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager'),
 )
 
 const folderName = computed(() => {
@@ -198,6 +205,10 @@ async function onDuplicate() {
   isFocusedSnippetName.value = true
 }
 
+function onRevealInFileManager() {
+  void ipc.invoke('system:show-snippet-in-file-manager', props.snippet.id)
+}
+
 function onCopySnippetLink() {
   copy(`masscode://goto?snippetId=${props.snippet.id}`)
 }
@@ -312,6 +323,9 @@ onClickOutside(snippetRef, () => {
             }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
+            {{ revealInFileManagerLabel }}
+          </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuItem @click="onCopySnippetContent">
             {{ i18n.t("action.copy.snippet") }}
           </ContextMenu.ContextMenuItem>

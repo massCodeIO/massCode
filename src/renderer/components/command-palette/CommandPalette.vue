@@ -761,6 +761,12 @@ watch([isOpen, query], () => {
   }
 })
 
+watch(isActionPanelOpen, () => {
+  if (isOpen.value) {
+    scrollActiveResultIntoView()
+  }
+})
+
 watch(activeResultId, () => {
   if (isOpen.value) {
     scrollActiveResultIntoView()

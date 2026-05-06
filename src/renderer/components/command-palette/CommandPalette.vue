@@ -238,6 +238,25 @@ const showRootResults = computed(
     && !isScopedSearch.value,
 )
 const showScopedHome = computed(() => isScopedSearch.value && !hasQuery.value)
+const isPendingContentSearch = computed(
+  () =>
+    isSearching.value
+    && hasQuery.value
+    && !isCommandMode.value
+    && !isSpaceMode.value,
+)
+const showPendingRootResults = computed(
+  () =>
+    isPendingContentSearch.value
+    && !isScopedSearch.value
+    && contentResults.value.length === 0,
+)
+const showPendingScopedHome = computed(
+  () =>
+    isPendingContentSearch.value
+    && isScopedSearch.value
+    && contentResults.value.length === 0,
+)
 
 const rootResults = computed<CommandPaletteResult[]>(() => [
   ...recentResults.value,
@@ -250,6 +269,10 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
     return rootResults.value
   }
 
+  if (showPendingRootResults.value) {
+    return rootResults.value
+  }
+
   if (isCommandMode.value) {
     return matchedCommandResults.value
   }
@@ -258,8 +281,12 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
     return matchedSpaceResults.value
   }
 
-  if (showScopedHome.value) {
+  if (showScopedHome.value || showPendingScopedHome.value) {
     return [...scopedRecentResults.value, ...scopedCommandResults.value]
+  }
+
+  if (isPendingContentSearch.value) {
+    return contentResults.value
   }
 
   if (showCreateFallbacks.value) {
@@ -522,7 +549,9 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showRootResults && recentResults.length"
+        v-if="
+          (showRootResults || showPendingRootResults) && recentResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.recent')"
       >
@@ -537,7 +566,9 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showRootResults && commandResults.length"
+        v-if="
+          (showRootResults || showPendingRootResults) && commandResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -552,7 +583,7 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showRootResults"
+        v-if="showRootResults || showPendingRootResults"
         force-visible
         :heading="i18n.t('commandPalette.groups.spaces')"
       >
@@ -567,7 +598,10 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showScopedHome && scopedRecentResults.length"
+        v-if="
+          (showScopedHome || showPendingScopedHome)
+            && scopedRecentResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.recent')"
       >
@@ -582,7 +616,10 @@ watch(activeResultId, () => {
       </Command.CommandGroup>
 
       <Command.CommandGroup
-        v-if="showScopedHome && scopedCommandResults.length"
+        v-if="
+          (showScopedHome || showPendingScopedHome)
+            && scopedCommandResults.length
+        "
         force-visible
         :heading="i18n.t('commandPalette.groups.actions')"
       >
@@ -632,6 +669,7 @@ watch(activeResultId, () => {
             && !isSpaceMode
             && !isScopedSearch
             && hasQuery
+            && !isSearching
             && primaryCommandResults.length
         "
         force-visible
@@ -653,6 +691,7 @@ watch(activeResultId, () => {
             && !isSpaceMode
             && !isScopedSearch
             && hasQuery
+            && !isSearching
             && primarySpaceResults.length
         "
         force-visible
@@ -691,6 +730,7 @@ watch(activeResultId, () => {
             && !isSpaceMode
             && !isScopedSearch
             && hasQuery
+            && !isSearching
             && secondaryCommandResults.length
         "
         force-visible
@@ -712,6 +752,7 @@ watch(activeResultId, () => {
             && !isSpaceMode
             && !isScopedSearch
             && hasQuery
+            && !isSearching
             && secondarySpaceResults.length
         "
         force-visible

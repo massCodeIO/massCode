@@ -12,6 +12,7 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
@@ -130,22 +131,44 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
   return {
     getRequests(query?: HttpRequestsQueryInput) {
       const { requestById } = getCache()
-      const all = [...requestById.values()].sort(
+      let result = [...requestById.values()].sort(
         (a, b) => b.createdAt - a.createdAt,
       )
 
+      result = result.filter(request =>
+        query?.isDeleted !== undefined
+          ? request.isDeleted === normalizeFlag(query.isDeleted)
+          : request.isDeleted === 0,
+      )
+
+      if (query?.folderId !== undefined) {
+        result = result.filter(
+          request => request.folderId === query.folderId,
+        )
+      }
+
+      if (query?.isInbox) {
+        result = result.filter(
+          request => request.folderId === null && request.isDeleted === 0,
+        )
+      }
+
+      if (query?.isFavorites) {
+        result = result.filter(request => request.isFavorites === 1)
+      }
+
       const search = query?.search?.trim().toLowerCase()
       if (!search) {
-        return all
+        return result
       }
 
       if (query?.searchNameOnly) {
-        return all.filter(request =>
+        return result.filter(request =>
           request.name.toLowerCase().includes(search),
         )
       }
 
-      return all.filter(
+      return result.filter(
         request =>
           request.name.toLowerCase().includes(search)
           || request.url.toLowerCase().includes(search),
@@ -192,6 +215,8 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         formData: [],
         headers: [],
         id,
+        isDeleted: 0,
+        isFavorites: 0,
         method: input.method ?? 'GET',
         name,
         query: [],
@@ -224,6 +249,8 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       const updatableFields = [
         input.name,
         input.folderId,
+        input.isDeleted,
+        input.isFavorites,
         input.method,
         input.url,
         input.headers,
@@ -278,6 +305,10 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
       record.name = nextName
       record.folderId = nextFolderId
+      if (input.isDeleted !== undefined)
+        record.isDeleted = normalizeFlag(input.isDeleted)
+      if (input.isFavorites !== undefined)
+        record.isFavorites = normalizeFlag(input.isFavorites)
       if (input.method !== undefined)
         record.method = input.method
       if (input.url !== undefined)
@@ -332,6 +363,32 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       saveHttpState(paths, state)
 
       return { invalidInput: false, notFound: false }
+    },
+
+    emptyTrash() {
+      const paths = resolvePaths()
+      const cache = getHttpRuntimeCache(paths)
+      const { state } = cache
+      const trashRecords = [...cache.requestById.values()].filter(
+        request => request.isDeleted === 1,
+      )
+
+      if (!trashRecords.length) {
+        return { deletedCount: 0 }
+      }
+
+      for (const record of trashRecords) {
+        removeRequestFile(paths.httpRoot, record.filePath)
+        cache.requestById.delete(record.id)
+      }
+
+      const deletedIds = new Set(trashRecords.map(record => record.id))
+      state.requests = state.requests.filter(
+        entry => !deletedIds.has(entry.id),
+      )
+
+      saveHttpState(paths, state)
+      return { deletedCount: trashRecords.length }
     },
 
     deleteRequest(id: number) {

@@ -154,6 +154,26 @@ app
     },
   )
   .delete(
+    '/trash',
+    ({ status }) => {
+      const storage = useHttpStorage()
+      const { deletedCount } = storage.requests.emptyTrash()
+
+      if (!deletedCount) {
+        return status(404, { message: 'No HTTP requests in trash' })
+      }
+
+      return {
+        message: `Successfully emptied trash: ${deletedCount} request(s) deleted`,
+      }
+    },
+    {
+      detail: {
+        tags: ['HTTP Requests'],
+      },
+    },
+  )
+  .delete(
     '/:id',
     ({ params, status }) => {
       const storage = useHttpStorage()

@@ -11,6 +11,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { normalizeFlag } from '../../runtime/normalizers'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 const HTTP_METHODS: HttpMethod[] = [
@@ -153,6 +154,8 @@ export interface ParsedRequestFile {
     body: string | null
     formData: HttpFormDataEntry[]
     auth: HttpAuth
+    isDeleted: number
+    isFavorites: number
   }
 }
 
@@ -174,6 +177,8 @@ export function parseRequestFile(source: string): ParsedRequestFile {
       body: typeof fm.body === 'string' ? fm.body : null,
       formData: normalizeFormData(fm.formData),
       auth: normalizeAuth(fm.auth),
+      isDeleted: normalizeFlag(fm.isDeleted),
+      isFavorites: normalizeFlag(fm.isFavorites),
     },
   }
 }
@@ -191,6 +196,8 @@ export function serializeRequestFile(record: HttpRequestRecord): string {
     body: record.body,
     formData: record.formData,
     auth: record.auth,
+    isFavorites: record.isFavorites,
+    isDeleted: record.isDeleted,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   }

@@ -353,6 +353,10 @@ export interface HttpFolderUpdateResult {
 export interface HttpRequestsQueryInput {
   search?: string
   searchNameOnly?: number
+  folderId?: number
+  isFavorites?: number
+  isDeleted?: number
+  isInbox?: number
 }
 
 export interface HttpRequestCreateInput {
@@ -365,6 +369,8 @@ export interface HttpRequestCreateInput {
 export interface HttpRequestUpdateInput {
   name?: string
   folderId?: number | null
+  isDeleted?: number
+  isFavorites?: number
   method?: HttpMethod
   url?: string
   headers?: HttpHeaderEntry[]
@@ -421,6 +427,7 @@ export interface HttpFoldersStorage {
 export interface HttpRequestsStorage {
   createRequest: (input: HttpRequestCreateInput) => { id: number }
   deleteRequest: (id: number) => { deleted: boolean }
+  emptyTrash: () => { deletedCount: number }
   getRequestById: (id: number) => HttpRequestRecord | null
   getRequests: (query?: HttpRequestsQueryInput) => HttpRequestRecord[]
   updateRequest: (

@@ -239,7 +239,7 @@ async function onImported() {
   >
     <SidebarHeader
       :title="i18n.t('spaces.http.title')"
-      :section-title="i18n.t('common.folders')"
+      :section-title="i18n.t('common.library')"
     >
       <template #actions>
         <UiActionButton
@@ -249,20 +249,23 @@ async function onImported() {
           <Upload class="h-4 w-4" />
         </UiActionButton>
       </template>
-      <template #action>
-        <UiActionButton
-          :tooltip="i18n.t('action.new.folder')"
-          @click="createHttpFolderAndSelect()"
-        >
-          <Plus class="h-4 w-4" />
-        </UiActionButton>
-      </template>
     </SidebarHeader>
     <HttpImportDialog
       v-model:open="isImportDialogOpen"
       @imported="onImported"
     />
+    <HttpSidebarLibrary />
     <div class="flex min-h-0 flex-1 flex-col">
+      <SidebarSectionHeader :title="i18n.t('common.folders')">
+        <template #action>
+          <UiActionButton
+            :tooltip="i18n.t('action.new.folder')"
+            @click="createHttpFolderAndSelect()"
+          >
+            <Plus class="h-4 w-4" />
+          </UiActionButton>
+        </template>
+      </SidebarSectionHeader>
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
         <ContextMenu.ContextMenu>
           <ContextMenu.ContextMenuTrigger as-child>

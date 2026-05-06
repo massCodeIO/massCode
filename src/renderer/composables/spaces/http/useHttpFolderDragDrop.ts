@@ -106,11 +106,11 @@ export function useHttpFolderDragDrop() {
     if (!matched.length)
       return
 
-    if (matched.every(r => r.folderId === folderId))
+    if (matched.every(r => r.folderId === folderId && !r.isDeleted))
       return
 
     for (const request of matched) {
-      await updateHttpRequest(request.id, { folderId })
+      await updateHttpRequest(request.id, { folderId, isDeleted: 0 })
     }
 
     await getHttpRequests()

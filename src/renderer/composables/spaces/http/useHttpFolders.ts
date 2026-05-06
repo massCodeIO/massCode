@@ -90,6 +90,12 @@ function sortFolderIdsByTreeOrder(ids: number[]) {
 }
 
 function syncSelectedFoldersWithTree() {
+  if (httpState.libraryFilter) {
+    selectedFolderIds.value = []
+    lastSelectedFolderId.value = undefined
+    return
+  }
+
   const orderedIds = flatFolderList.value.map(folder => folder.id)
 
   if (!orderedIds.length) {
@@ -163,6 +169,7 @@ function applySingleFolderSelection(folderId: number) {
   isApplyingFolderSelection = true
   selectedFolderIds.value = [folderId]
   httpState.folderId = folderId
+  httpState.libraryFilter = undefined
   lastSelectedFolderId.value = folderId
   isApplyingFolderSelection = false
 }
@@ -185,6 +192,7 @@ function applyRangeFolderSelection(folderId: number) {
 
   isApplyingFolderSelection = true
   selectedFolderIds.value = rangeSelection
+  httpState.libraryFilter = undefined
   lastSelectedFolderId.value = folderId
   isApplyingFolderSelection = false
 }
@@ -199,6 +207,7 @@ function applyToggleFolderSelection(folderId: number) {
       id => id !== folderId,
     )
     httpState.folderId = selectedFolderIds.value[0]
+    httpState.libraryFilter = undefined
     lastSelectedFolderId.value
       = selectedFolderIds.value[selectedFolderIds.value.length - 1]
     isApplyingFolderSelection = false
@@ -211,6 +220,7 @@ function applyToggleFolderSelection(folderId: number) {
     folderId,
   ])
   httpState.folderId = folderId
+  httpState.libraryFilter = undefined
   lastSelectedFolderId.value = folderId
   isApplyingFolderSelection = false
 }

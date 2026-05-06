@@ -1,3 +1,4 @@
+import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
 import {
   getNextLayoutModeForSidebarToggle,
@@ -6,6 +7,7 @@ import {
 
 export interface HttpSpaceState {
   folderId?: number
+  libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
   requestId?: number
 }
 
@@ -13,6 +15,7 @@ export type HttpStateAction = 'beforeSearch'
 
 export interface HttpSavedState {
   folderId?: number
+  libraryFilter?: (typeof LibraryFilter)[keyof typeof LibraryFilter]
   requestId?: number
 }
 
@@ -54,6 +57,7 @@ const isHttpListHidden = computed({
 function saveHttpStateSnapshot(action: HttpStateAction): void {
   stateSnapshots[action] = {
     folderId: httpState.folderId,
+    libraryFilter: httpState.libraryFilter,
     requestId: httpState.requestId,
   }
 }
@@ -65,6 +69,8 @@ function restoreHttpStateSnapshot(action: HttpStateAction): void {
 
   if (snapshot.folderId !== undefined)
     httpState.folderId = snapshot.folderId
+  if (snapshot.libraryFilter !== undefined)
+    httpState.libraryFilter = snapshot.libraryFilter
   if (snapshot.requestId !== undefined)
     httpState.requestId = snapshot.requestId
 }

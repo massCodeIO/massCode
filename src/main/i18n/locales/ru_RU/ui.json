@@ -95,6 +95,7 @@
       "label": "HTTP",
       "tooltip": "HTTP-клиент",
       "title": "HTTP-клиент",
+      "allRequests": "Все запросы",
       "untitledRequest": "Безымянный запрос",
       "empty": "Пока нет запросов",
       "noUrl": "Нет URL",

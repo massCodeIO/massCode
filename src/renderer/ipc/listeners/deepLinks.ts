@@ -46,6 +46,7 @@ const {
   focusedRequestId,
   highlightedFolderIds: highlightedHttpFolderIds,
   highlightedRequestIds,
+  httpState,
   isHttpSpaceInitialized,
 } = useHttpApp()
 
@@ -215,14 +216,23 @@ export async function openHttpRequestDeepLink(
       String(requestId),
     )
 
-    await getHttpRequests()
-
     if (request.folderId !== null) {
       await getHttpFolders()
       await selectHttpFolder(request.folderId)
+      httpState.libraryFilter = undefined
+      await getHttpRequests({
+        folderId: request.folderId,
+        isDeleted: request.isDeleted,
+      })
     }
     else {
       clearHttpFolderSelection()
+      httpState.libraryFilter = request.isDeleted
+        ? LibraryFilter.Trash
+        : LibraryFilter.Inbox
+      await getHttpRequests(
+        request.isDeleted ? { isDeleted: 1 } : { isInbox: 1 },
+      )
     }
 
     selectHttpRequest(requestId)

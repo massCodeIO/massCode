@@ -460,6 +460,8 @@ export interface HttpRequestItemResponse {
   };
   description: string;
   filePath: string;
+  isFavorites: number;
+  isDeleted: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -478,6 +480,22 @@ export interface HttpRequestsQuery {
    * @max 1
    */
   searchNameOnly?: number;
+  folderId?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isInbox?: number;
 }
 
 export type HttpRequestsResponse = {
@@ -513,6 +531,8 @@ export type HttpRequestsResponse = {
   };
   description: string;
   filePath: string;
+  isFavorites: number;
+  isDeleted: number;
   createdAt: number;
   updatedAt: number;
 }[];
@@ -520,6 +540,16 @@ export type HttpRequestsResponse = {
 export interface HttpRequestsUpdate {
   name?: string;
   folderId?: number | null;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isDeleted?: number;
+  /**
+   * @min 0
+   * @max 1
+   */
+  isFavorites?: number;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url?: string;
   headers?: {
@@ -1817,6 +1847,22 @@ export class Api<
          * @max 1
          */
         searchNameOnly?: number;
+        folderId?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isFavorites?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isDeleted?: number;
+        /**
+         * @min 0
+         * @max 1
+         */
+        isInbox?: number;
       },
       params: RequestParams = {},
     ) =>
@@ -1900,6 +1946,20 @@ export class Api<
     deleteHttpRequestsById: (id: string, params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/http-requests/${id}`,
+        method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name DeleteHttpRequestsTrash
+     * @request DELETE:/http-requests/trash
+     */
+    deleteHttpRequestsTrash: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/http-requests/trash`,
         method: "DELETE",
         ...params,
       }),

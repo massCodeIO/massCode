@@ -203,6 +203,8 @@ function reconcileRequests(
       auth: parsed.normalized.auth,
       description: parsed.description,
       filePath: relativePath,
+      isDeleted: parsed.normalized.isDeleted,
+      isFavorites: parsed.normalized.isFavorites,
       createdAt: typeof fmCreatedAt === 'number' ? fmCreatedAt : now,
       updatedAt: typeof fmUpdatedAt === 'number' ? fmUpdatedAt : now,
     }

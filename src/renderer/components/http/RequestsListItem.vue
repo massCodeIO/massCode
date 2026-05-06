@@ -8,6 +8,7 @@ import {
   useHttpEnvironments,
   useHttpRequests,
 } from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { onClickOutside, useClipboard } from '@vueuse/core'
@@ -28,10 +29,14 @@ const {
 } = useHttpApp()
 const {
   deleteHttpRequest,
+  deleteHttpRequests,
   duplicateHttpRequest,
   selectFirstRequest,
   selectHttpRequest,
   selectedRequestIds,
+  selectedRequests,
+  updateHttpRequest,
+  updateHttpRequests,
 } = useHttpRequests()
 const { activeEnvironment } = useHttpEnvironments()
 const { copy } = useClipboard()
@@ -49,6 +54,22 @@ const isHighlighted = computed(() =>
 )
 const isFocused = computed(() => focusedRequestId.value === props.request.id)
 const isDuplicateDisabled = computed(() => selectedRequestIds.value.length > 1)
+const isFavoritesLibrarySelected = computed(
+  () => httpState.libraryFilter === LibraryFilter.Favorites,
+)
+const isTrashLibrarySelected = computed(
+  () => httpState.libraryFilter === LibraryFilter.Trash,
+)
+const isRemoveFavoritesAction = computed(() => {
+  if (isFavoritesLibrarySelected.value)
+    return true
+
+  if (selectedRequestIds.value.includes(props.request.id)) {
+    return selectedRequests.value.every(request => request.isFavorites)
+  }
+
+  return Boolean(props.request.isFavorites)
+})
 const revealInFileManagerLabel = computed(() =>
   isMac
     ? i18n.t('action.reveal.inFinder')
@@ -58,6 +79,34 @@ const revealInFileManagerLabel = computed(() =>
 const previewVariables = computed<Record<string, string>>(() => {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
 })
+
+function getActionTargetIds() {
+  const highlightedIds = [...highlightedRequestIds.value]
+
+  if (
+    highlightedRequestIds.value.has(props.request.id)
+    && highlightedIds.length > 1
+  ) {
+    return highlightedIds
+  }
+
+  if (selectedRequestIds.value.includes(props.request.id)) {
+    return [...selectedRequestIds.value]
+  }
+
+  return [props.request.id]
+}
+
+function getActionTargetRequests(targetIds: number[]) {
+  const requestsById = new Map(
+    selectedRequests.value.map(request => [request.id, request]),
+  )
+  requestsById.set(props.request.id, props.request)
+
+  return targetIds
+    .map(id => requestsById.get(id))
+    .filter((request): request is HttpRequestListItem => Boolean(request))
+}
 
 function onClick(event: MouseEvent) {
   selectHttpRequest(props.request.id, event.shiftKey)
@@ -78,31 +127,106 @@ function onClickContextMenu() {
 
 async function onDelete() {
   const { confirm } = useDialog()
-  const targetIds = selectedRequestIds.value.includes(props.request.id)
-    ? [...selectedRequestIds.value]
-    : [props.request.id]
+  const targetIds = getActionTargetIds()
+  const targetRequests = getActionTargetRequests(targetIds)
+
+  if (targetIds.length > 1) {
+    const isAllSoftDeleted = targetRequests.every(
+      request => request.isDeleted,
+    )
+
+    if (isAllSoftDeleted) {
+      const isConfirmed = await confirm({
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
+          count: targetIds.length,
+        }),
+        content: i18n.t('messages:warning.noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteHttpRequests(targetIds)
+      }
+    }
+    else {
+      const requestsData = targetIds.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+      await updateHttpRequests(targetIds, requestsData)
+    }
+
+    selectFirstRequest()
+    return
+  }
+
+  if (!props.request.isDeleted) {
+    await updateHttpRequest(props.request.id, {
+      folderId: null,
+      isDeleted: 1,
+    })
+    if (httpState.requestId === props.request.id) {
+      selectFirstRequest()
+    }
+    return
+  }
 
   const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
-            count: targetIds.length,
-          })
-        : i18n.t('messages:confirm.delete', { name: props.request.name }),
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: props.request.name,
+    }),
     content: i18n.t('messages:warning.noUndo'),
   })
 
   if (!isConfirmed)
     return
 
-  const wasCurrentSelected = targetIds.includes(httpState.requestId ?? -1)
-
-  for (const id of targetIds) {
-    await deleteHttpRequest(id)
-  }
+  const wasCurrentSelected = httpState.requestId === props.request.id
+  await deleteHttpRequest(props.request.id)
 
   if (wasCurrentSelected) {
     selectFirstRequest()
+  }
+}
+
+async function onAddFavorites() {
+  const isFavorites = isRemoveFavoritesAction.value ? 0 : 1
+  const targetIds = getActionTargetIds()
+
+  if (targetIds.length > 1) {
+    const requestsData = targetIds.map(() => ({ isFavorites }))
+    await updateHttpRequests(targetIds, requestsData)
+  }
+  else {
+    await updateHttpRequest(props.request.id, { isFavorites })
+  }
+
+  if (
+    isFavoritesLibrarySelected.value
+    && (targetIds.length > 1 || httpState.requestId === props.request.id)
+  ) {
+    selectFirstRequest()
+  }
+}
+
+async function onRestore() {
+  const targetIds = getActionTargetIds()
+
+  if (targetIds.length > 1) {
+    const requestsData = targetIds.map(() => ({
+      folderId: null,
+      isDeleted: 0,
+    }))
+    await updateHttpRequests(targetIds, requestsData)
+    selectFirstRequest()
+  }
+  else {
+    await updateHttpRequest(props.request.id, {
+      folderId: null,
+      isDeleted: 0,
+    })
+    if (httpState.requestId === props.request.id) {
+      selectFirstRequest()
+    }
   }
 }
 
@@ -217,6 +341,16 @@ onClickOutside(itemRef, () => {
         </div>
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
+        <template v-if="!isTrashLibrarySelected">
+          <ContextMenu.ContextMenuItem @click="onAddFavorites">
+            {{
+              isRemoveFavoritesAction
+                ? i18n.t("action.remove.fromFavorites")
+                : i18n.t("action.add.toFavorites")
+            }}
+          </ContextMenu.ContextMenuItem>
+          <ContextMenu.ContextMenuSeparator />
+        </template>
         <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
           {{ revealInFileManagerLabel }}
         </ContextMenu.ContextMenuItem>
@@ -235,7 +369,17 @@ onClickOutside(itemRef, () => {
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
         <ContextMenu.ContextMenuItem @click="onDelete">
-          {{ i18n.t("action.delete.common") }}
+          {{
+            isTrashLibrarySelected
+              ? i18n.t("action.delete.common")
+              : i18n.t("action.move.toTrash")
+          }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem
+          v-if="isTrashLibrarySelected"
+          @click="onRestore"
+        >
+          {{ i18n.t("action.restore") }}
         </ContextMenu.ContextMenuItem>
       </ContextMenu.ContextMenuContent>
     </ContextMenu.ContextMenu>

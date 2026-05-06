@@ -19,6 +19,7 @@ export interface NotesState {
 export interface HttpState {
   requestId?: number
   folderId?: number
+  libraryFilter?: string
 }
 
 export type NotesRouteName =

@@ -761,6 +761,7 @@ async function createHttpRequestFromPalette(
   httpRequestsApi.isRestoreStateBlocked.value = true
   httpSearch.clearSearch(false)
   httpFolders.clearFolderSelection()
+  httpApp.httpState.libraryFilter = LibraryFilter.Inbox
   httpApp.focusedFolderId.value = undefined
   httpApp.highlightedFolderIds.value.clear()
 
@@ -974,12 +975,22 @@ async function openHttpRequest(request: HttpRequestResult) {
     await httpFolders.selectHttpFolder(request.folderId, {
       ensureVisibility: true,
     })
+    httpApp.httpState.libraryFilter = undefined
   }
   else {
     httpFolders.clearFolderSelection()
+    httpApp.httpState.libraryFilter = request.isDeleted
+      ? LibraryFilter.Trash
+      : LibraryFilter.Inbox
   }
 
-  await httpData.getHttpRequests()
+  await httpData.getHttpRequests(
+    request.folderId
+      ? { folderId: request.folderId, isDeleted: request.isDeleted }
+      : request.isDeleted
+        ? { isDeleted: 1 }
+        : { isInbox: 1 },
+  )
   httpData.selectHttpRequest(request.id)
   await router.push({ name: RouterName.httpSpace })
 }

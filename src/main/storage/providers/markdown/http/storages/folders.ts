@@ -8,8 +8,10 @@ import type {
   HttpFolderRecord,
   HttpRequestIndexItem,
   HttpRequestRecord,
+  HttpState,
 } from '../runtime/types'
 import path from 'node:path'
+import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
@@ -37,6 +39,7 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
+import { writeRequestFile } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
@@ -61,6 +64,70 @@ function syncRequestFolderId(
       = dirPath && dirPath !== '.' ? (pathToFolderId.get(dirPath) ?? null) : null
     record.folderId = nextFolderId
   }
+}
+
+function getUniqueRootRequestPath(
+  httpRoot: string,
+  state: HttpState,
+  name: string,
+  currentFilePath: string,
+): string {
+  const targetPath = `${name}.md`
+  const targetAbsolutePath = path.join(httpRoot, targetPath)
+  const currentAbsolutePath = path.join(httpRoot, currentFilePath)
+
+  if (
+    !fs.pathExistsSync(targetAbsolutePath)
+    || targetAbsolutePath.toLowerCase() === currentAbsolutePath.toLowerCase()
+  ) {
+    return targetPath
+  }
+
+  for (let suffix = 1; suffix <= 10_000; suffix += 1) {
+    const candidatePath = `${name} ${suffix}.md`
+    const candidateAbsolutePath = path.join(httpRoot, candidatePath)
+
+    if (!fs.pathExistsSync(candidateAbsolutePath)) {
+      return candidatePath
+    }
+  }
+
+  return `${Date.now()}-${state.counters.requestId}.md`
+}
+
+function moveRequestToTrash(
+  httpRoot: string,
+  state: HttpState,
+  record: HttpRequestRecord,
+): void {
+  const previousFilePath = record.filePath
+  const nextFilePath = getUniqueRootRequestPath(
+    httpRoot,
+    state,
+    record.name,
+    previousFilePath,
+  )
+  const previousAbsolutePath = path.join(httpRoot, previousFilePath)
+  const nextAbsolutePath = path.join(httpRoot, nextFilePath)
+
+  record.folderId = null
+  record.isDeleted = 1
+  record.updatedAt = Date.now()
+
+  if (nextFilePath !== previousFilePath) {
+    fs.ensureDirSync(path.dirname(nextAbsolutePath))
+    if (fs.pathExistsSync(previousAbsolutePath)) {
+      fs.moveSync(previousAbsolutePath, nextAbsolutePath, { overwrite: false })
+    }
+    record.filePath = nextFilePath
+
+    const indexEntry = state.requests.find(entry => entry.id === record.id)
+    if (indexEntry) {
+      indexEntry.filePath = nextFilePath
+    }
+  }
+
+  writeRequestFile(httpRoot, record)
 }
 
 export function createHttpFoldersStorage(): HttpFoldersStorage {
@@ -268,25 +335,15 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         descendantIds,
       )
 
+      for (const record of cache.requestById.values()) {
+        if (record.folderId !== null && descendantIds.has(record.folderId)) {
+          moveRequestToTrash(paths.httpRoot, state, record)
+        }
+      }
+
       removeFolderPathsFromDisk(paths.httpRoot, folderPathsToDelete, {
         ignoreErrors: true,
       })
-
-      const removedRequestIds = new Set<number>()
-      for (const record of cache.requestById.values()) {
-        if (record.folderId !== null && descendantIds.has(record.folderId)) {
-          removedRequestIds.add(record.id)
-        }
-      }
-
-      if (removedRequestIds.size > 0) {
-        for (const removedId of removedRequestIds) {
-          cache.requestById.delete(removedId)
-        }
-        state.requests = state.requests.filter(
-          entry => !removedRequestIds.has(entry.id),
-        )
-      }
 
       state.folders = state.folders.filter(f => !descendantIds.has(f.id))
 

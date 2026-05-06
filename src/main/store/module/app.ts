@@ -138,6 +138,8 @@ function sanitizeHttpState(value: unknown): HttpState {
     state.requestId = source.requestId
   if (typeof source.folderId === 'number')
     state.folderId = source.folderId
+  if (typeof source.libraryFilter === 'string')
+    state.libraryFilter = source.libraryFilter
   return state
 }
 

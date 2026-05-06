@@ -61,6 +61,8 @@ const httpRequestsAdd = t.Object({
 const httpRequestsUpdate = t.Object({
   name: t.Optional(t.String()),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
   method: t.Optional(httpMethod),
   url: t.Optional(t.String()),
   headers: t.Optional(t.Array(httpHeaderEntry)),
@@ -86,6 +88,8 @@ const httpRequestItem = t.Object({
   auth: httpAuth,
   description: t.String(),
   filePath: t.String(),
+  isFavorites: t.Number(),
+  isDeleted: t.Number(),
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })
@@ -95,6 +99,10 @@ const httpRequestsResponse = t.Array(httpRequestItem)
 const httpRequestsQuery = t.Object({
   search: t.Optional(t.String()),
   searchNameOnly: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  folderId: t.Optional(t.Number()),
+  isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  isInbox: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
 })
 
 export const httpRequestsDTO = new Elysia().model({

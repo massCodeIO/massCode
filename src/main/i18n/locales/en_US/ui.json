@@ -95,6 +95,7 @@
       "label": "HTTP",
       "tooltip": "HTTP client",
       "title": "HTTP Client",
+      "allRequests": "All Requests",
       "untitledRequest": "Untitled request",
       "empty": "No requests yet",
       "noUrl": "No URL",

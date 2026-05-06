@@ -29,6 +29,8 @@ export interface HttpRequestFrontmatter {
   body?: string | null
   formData?: HttpFormDataEntry[]
   auth?: HttpAuth
+  isDeleted?: number
+  isFavorites?: number
   createdAt?: number
   updatedAt?: number
 }
@@ -67,6 +69,8 @@ export interface HttpRequestRecord {
   auth: HttpAuth
   description: string
   filePath: string
+  isFavorites: number
+  isDeleted: number
   createdAt: number
   updatedAt: number
 }

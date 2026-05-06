@@ -22,6 +22,7 @@ const {
   query,
   recentResults,
   scopeSpaceResults,
+  scopedRecentResults,
   searchScope,
   selectSearchScope,
   setQuery,
@@ -159,6 +160,14 @@ const secondarySpaceResults = computed<CommandPaletteResult[]>(() =>
   matchedSpaceResults.value.filter(result => !isStrongLocalMatch(result)),
 )
 
+const scopedCommandResults = computed<CommandPaletteResult[]>(() =>
+  commandResults.value.filter(
+    result =>
+      result.type === 'command'
+      && result.command.spaceId === searchScope.value?.id,
+  ),
+)
+
 const isEmpty = computed(() => {
   if (!hasQuery.value || isSearching.value) {
     return false
@@ -187,6 +196,7 @@ const showRootResults = computed(
     && !isSpaceMode.value
     && !isScopedSearch.value,
 )
+const showScopedHome = computed(() => isScopedSearch.value && !hasQuery.value)
 
 const rootResults = computed<CommandPaletteResult[]>(() => [
   ...recentResults.value,
@@ -205,6 +215,10 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
 
   if (isSpaceMode.value) {
     return matchedSpaceResults.value
+  }
+
+  if (showScopedHome.value) {
+    return [...scopedRecentResults.value, ...scopedCommandResults.value]
   }
 
   if (isScopedSearch.value) {
@@ -469,6 +483,36 @@ watch(activeResultId, () => {
       >
         <CommandPaletteItem
           v-for="result in spaceResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="showScopedHome && scopedRecentResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.recent')"
+      >
+        <CommandPaletteItem
+          v-for="result in scopedRecentResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
+
+      <Command.CommandGroup
+        v-if="showScopedHome && scopedCommandResults.length"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in scopedCommandResults"
           :key="result.id"
           :result="result"
           :active="activeResultId === result.id"

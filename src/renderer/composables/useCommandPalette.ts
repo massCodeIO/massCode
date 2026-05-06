@@ -134,6 +134,7 @@ const usageEntries = shallowRef<CommandPaletteUsageEntry[]>(
 let searchRunId = 0
 const RECENT_LIMIT = 30
 const ROOT_RECENT_LIMIT = 3
+const SCOPED_RECENT_LIMIT = 5
 const USAGE_LIMIT = 100
 
 const notesApp = useNotesApp()
@@ -346,15 +347,26 @@ const commandResults = computed<CommandPaletteResult[]>(() => {
   }))
 })
 
-const recentResults = computed<CommandPaletteResult[]>(() =>
-  recentEntries.value.slice(0, ROOT_RECENT_LIMIT).map(entry => ({
+function getRecentResult(entry: CommandPaletteRecentEntry) {
+  return {
     id: `recent:${entry.id}`,
     type: 'recent',
     title: entry.title,
     subtitle: entry.subtitle,
     icon: getSpaceIcon(entry.spaceId),
     recent: entry,
-  })),
+  } satisfies CommandPaletteResult
+}
+
+const recentResults = computed<CommandPaletteResult[]>(() =>
+  recentEntries.value.slice(0, ROOT_RECENT_LIMIT).map(getRecentResult),
+)
+
+const scopedRecentResults = computed<CommandPaletteResult[]>(() =>
+  recentEntries.value
+    .filter(entry => entry.spaceId === searchScopeSpaceId.value)
+    .slice(0, SCOPED_RECENT_LIMIT)
+    .map(getRecentResult),
 )
 
 const usageById = computed(
@@ -902,6 +914,7 @@ export function useCommandPalette() {
     query,
     recentResults,
     scopeSpaceResults,
+    scopedRecentResults,
     searchScope,
     searchScopeSpaceId,
     selectSearchScope,

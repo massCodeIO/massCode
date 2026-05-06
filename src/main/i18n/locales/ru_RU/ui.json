@@ -59,6 +59,12 @@
       "copyTitle": "Скопировать название",
       "copySnippetContent": "Скопировать содержимое сниппета",
       "copyHttpUrl": "Скопировать URL"
+    },
+    "footer": {
+      "open": "Открыть",
+      "actions": "Действия",
+      "run": "Выполнить",
+      "back": "Назад"
     }
   },
   "spaces": {

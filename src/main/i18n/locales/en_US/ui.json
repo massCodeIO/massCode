@@ -59,6 +59,12 @@
       "copyTitle": "Copy title",
       "copySnippetContent": "Copy snippet content",
       "copyHttpUrl": "Copy URL"
+    },
+    "footer": {
+      "open": "Open",
+      "actions": "Actions",
+      "run": "Run",
+      "back": "Back"
     }
   },
   "spaces": {

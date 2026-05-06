@@ -22,6 +22,11 @@ interface CommandPaletteAction {
   closeOnRun?: boolean
 }
 
+interface CommandPaletteFooterHint {
+  label: string
+  keys: string[]
+}
+
 const {
   clearSearchScope,
   commandResults,
@@ -322,6 +327,32 @@ const actionPanelActions = computed<CommandPaletteAction[]>(() =>
 )
 const activeActionId = computed(
   () => actionPanelActions.value[activeActionIndex.value]?.id,
+)
+const modifierKeyLabel = computed(() =>
+  navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl',
+)
+const footerHints = computed<CommandPaletteFooterHint[]>(() =>
+  isActionPanelOpen.value
+    ? [
+        {
+          label: i18n.t('commandPalette.footer.run'),
+          keys: ['↵'],
+        },
+        {
+          label: i18n.t('commandPalette.footer.back'),
+          keys: ['←'],
+        },
+      ]
+    : [
+        {
+          label: i18n.t('commandPalette.footer.open'),
+          keys: ['↵'],
+        },
+        {
+          label: i18n.t('commandPalette.footer.actions'),
+          keys: [`${modifierKeyLabel.value}K`],
+        },
+      ],
 )
 
 function getActionPanelActions(result: CommandPaletteResult) {
@@ -709,7 +740,7 @@ watch(activeActionId, () => {
       @update:model-value="onQueryChange"
       @keydown.capture="onInputKeydown"
     />
-    <Command.CommandList class="h-[420px] max-h-none">
+    <Command.CommandList class="h-[392px] max-h-none">
       <template v-if="isActionPanelOpen">
         <Command.CommandGroup
           force-visible
@@ -991,5 +1022,25 @@ watch(activeActionId, () => {
         </Command.CommandGroup>
       </template>
     </Command.CommandList>
+    <div
+      class="border-border text-muted-foreground flex h-7 items-center justify-end gap-3 border-t px-3 text-xs"
+    >
+      <div
+        v-for="hint in footerHints"
+        :key="hint.label"
+        class="flex items-center gap-1.5"
+      >
+        <span>{{ hint.label }}</span>
+        <span class="flex items-center gap-0.5">
+          <kbd
+            v-for="key in hint.keys"
+            :key="key"
+            class="bg-muted text-muted-foreground min-w-5 rounded-sm px-1.5 py-0.5 text-center font-sans text-[11px] leading-none"
+          >
+            {{ key }}
+          </kbd>
+        </span>
+      </div>
+    </div>
   </Command.CommandDialog>
 </template>

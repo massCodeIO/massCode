@@ -80,6 +80,34 @@ const previewVariables = computed<Record<string, string>>(() => {
   return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
 })
 
+function getActionTargetIds() {
+  const highlightedIds = [...highlightedRequestIds.value]
+
+  if (
+    highlightedRequestIds.value.has(props.request.id)
+    && highlightedIds.length > 1
+  ) {
+    return highlightedIds
+  }
+
+  if (selectedRequestIds.value.includes(props.request.id)) {
+    return [...selectedRequestIds.value]
+  }
+
+  return [props.request.id]
+}
+
+function getActionTargetRequests(targetIds: number[]) {
+  const requestsById = new Map(
+    selectedRequests.value.map(request => [request.id, request]),
+  )
+  requestsById.set(props.request.id, props.request)
+
+  return targetIds
+    .map(id => requestsById.get(id))
+    .filter((request): request is HttpRequestListItem => Boolean(request))
+}
+
 function onClick(event: MouseEvent) {
   selectHttpRequest(props.request.id, event.shiftKey)
   focusedRequestId.value = props.request.id
@@ -99,12 +127,8 @@ function onClickContextMenu() {
 
 async function onDelete() {
   const { confirm } = useDialog()
-  const targetIds = selectedRequestIds.value.includes(props.request.id)
-    ? [...selectedRequestIds.value]
-    : [props.request.id]
-  const targetRequests = selectedRequestIds.value.includes(props.request.id)
-    ? selectedRequests.value
-    : [props.request]
+  const targetIds = getActionTargetIds()
+  const targetRequests = getActionTargetRequests(targetIds)
 
   if (targetIds.length > 1) {
     const isAllSoftDeleted = targetRequests.every(
@@ -166,10 +190,11 @@ async function onDelete() {
 
 async function onAddFavorites() {
   const isFavorites = isRemoveFavoritesAction.value ? 0 : 1
+  const targetIds = getActionTargetIds()
 
-  if (selectedRequestIds.value.length > 1) {
-    const requestsData = selectedRequestIds.value.map(() => ({ isFavorites }))
-    await updateHttpRequests(selectedRequestIds.value, requestsData)
+  if (targetIds.length > 1) {
+    const requestsData = targetIds.map(() => ({ isFavorites }))
+    await updateHttpRequests(targetIds, requestsData)
   }
   else {
     await updateHttpRequest(props.request.id, { isFavorites })
@@ -177,20 +202,21 @@ async function onAddFavorites() {
 
   if (
     isFavoritesLibrarySelected.value
-    && (selectedRequestIds.value.length > 1
-      || httpState.requestId === props.request.id)
+    && (targetIds.length > 1 || httpState.requestId === props.request.id)
   ) {
     selectFirstRequest()
   }
 }
 
 async function onRestore() {
-  if (selectedRequestIds.value.length > 1) {
-    const requestsData = selectedRequestIds.value.map(() => ({
+  const targetIds = getActionTargetIds()
+
+  if (targetIds.length > 1) {
+    const requestsData = targetIds.map(() => ({
       folderId: null,
       isDeleted: 0,
     }))
-    await updateHttpRequests(selectedRequestIds.value, requestsData)
+    await updateHttpRequests(targetIds, requestsData)
     selectFirstRequest()
   }
   else {

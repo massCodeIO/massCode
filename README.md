@@ -131,6 +131,15 @@ Built-in utilities for the small tasks that usually send you to a browser tab:
 - **Encoders:** URL, Base64, JSON to TOML/XML/YAML, Color Converter
 - **Generators:** JSON Generator, Lorem Ipsum
 
+### Command Palette
+
+Jump to spaces, snippets, notes, HTTP requests, and common actions from anywhere with a keyboard-first command palette.
+
+- Open with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux
+- Search across snippets, notes, HTTP requests, spaces, and commands
+- Run create actions for snippets, notes, HTTP requests, and folders
+- Scope search to a space with `@` or open command mode with `>`
+
 ## Markdown Vault
 
 Your snippets, notes, and HTTP requests live as plain `.md` files on disk with frontmatter metadata, so the data stays readable and portable.

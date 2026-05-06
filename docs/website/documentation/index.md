@@ -7,7 +7,7 @@ description: "Explore the massCode documentation for code snippets, markdown not
 
 massCode is a free and open source developer workspace for code snippets, markdown notes, HTTP requests, calculations, and quick developer utilities. Instead of scattering everyday work across an editor, a notes app, an HTTP client, a calculator, and a handful of websites, you keep it in focused Spaces inside one local-first desktop app.
 
-Switch between Spaces using the rail on the left side of the app.
+Switch between Spaces using the rail on the left side of the app, or use the [Command Palette](/documentation/command-palette) to jump to spaces, content, and actions from the keyboard.
 
 <img :src="withBase('/preview.png')">
 

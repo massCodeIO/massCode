@@ -99,6 +99,7 @@ export default defineConfig({
           text: 'General',
           items: [
             { text: 'Overview', link: '/documentation/' },
+            { text: 'Command Palette', link: '/documentation/command-palette' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Themes', link: '/documentation/themes' },

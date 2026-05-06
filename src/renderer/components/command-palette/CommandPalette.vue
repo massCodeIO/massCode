@@ -11,9 +11,10 @@ import {
   useCommandPalette,
 } from '@/composables/useCommandPalette'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
-import { Copy } from 'lucide-vue-next'
+import { isMac } from '@/utils'
+import { Copy, FolderOpen } from 'lucide-vue-next'
 
 interface CommandPaletteAction {
   id: string
@@ -32,6 +33,11 @@ interface CommandPaletteFooterHint {
 type SnippetContentSource =
   | Extract<CommandPaletteResult, { type: 'snippet' }>['item']
   | SnippetItemResponse
+type RecentTarget = Extract<
+  CommandPaletteResult,
+  { type: 'recent' }
+>['recent']['target']
+type RevealableResultType = 'snippet' | 'note' | 'http-request'
 
 const {
   clearSearchScope,
@@ -395,6 +401,17 @@ function getActionPanelActions(result: CommandPaletteResult) {
     })
   }
 
+  if (hasRevealInFileManagerAction(result)) {
+    actions.push({
+      id: 'reveal-in-file-manager',
+      title: getRevealInFileManagerLabel(),
+      subtitle: result.title,
+      icon: FolderOpen,
+      run: () => revealInFileManager(result),
+      closeOnRun: true,
+    })
+  }
+
   if (result.type === 'http-request' && result.item.url) {
     actions.push({
       id: 'copy-http-url',
@@ -407,6 +424,12 @@ function getActionPanelActions(result: CommandPaletteResult) {
   }
 
   return actions
+}
+
+function getRevealInFileManagerLabel() {
+  return isMac
+    ? i18n.t('action.reveal.inFinder')
+    : i18n.t('action.reveal.inFileManager')
 }
 
 function hasSnippetContentAction(result: CommandPaletteResult) {
@@ -441,6 +464,71 @@ async function copySnippetContent(result: CommandPaletteResult) {
 
   if (content) {
     copyToClipboard(content)
+  }
+}
+
+function hasRevealInFileManagerAction(result: CommandPaletteResult) {
+  if (
+    result.type === 'snippet'
+    || result.type === 'note'
+    || result.type === 'http-request'
+  ) {
+    return true
+  }
+
+  return (
+    result.type === 'recent' && isRevealableRecentTarget(result.recent.target)
+  )
+}
+
+function isRevealableRecentTarget(
+  target: RecentTarget,
+): target is RevealableResultType {
+  return target === 'snippet' || target === 'note' || target === 'http-request'
+}
+
+function getRevealInFileManagerPayload(result: CommandPaletteResult) {
+  if (
+    result.type === 'snippet'
+    || result.type === 'note'
+    || result.type === 'http-request'
+  ) {
+    return {
+      target: result.type,
+      targetId: String(result.item.id),
+    }
+  }
+
+  if (
+    result.type === 'recent'
+    && isRevealableRecentTarget(result.recent.target)
+  ) {
+    return {
+      target: result.recent.target,
+      targetId: result.recent.targetId,
+    }
+  }
+
+  return null
+}
+
+function revealInFileManager(result: CommandPaletteResult) {
+  const payload = getRevealInFileManagerPayload(result)
+
+  if (!payload) {
+    return
+  }
+
+  const targetId = Number(payload.targetId)
+
+  if (payload.target === 'snippet') {
+    void ipc.invoke('system:show-snippet-in-file-manager', targetId)
+  }
+  else if (payload.target === 'note') {
+    void ipc.invoke('system:show-note-in-file-manager', targetId)
+  }
+  else {
+    void ipc.invoke('system:show-http-request-in-file-manager', targetId)
   }
 }
 

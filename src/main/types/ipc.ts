@@ -47,6 +47,7 @@ type SystemAction =
   | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'
   | 'show-note-in-file-manager'
+  | 'show-snippet-in-file-manager'
   | 'deep-link'
   | 'update-available'
   | 'renderer-ready'

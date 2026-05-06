@@ -27,7 +27,7 @@ const emit = defineEmits<{
   >
     <component
       :is="result.icon"
-      class="mt-0.5 h-4 w-4"
+      class="mt-[2px] h-4 w-4"
     />
     <div class="min-w-0 flex-1">
       <UiText

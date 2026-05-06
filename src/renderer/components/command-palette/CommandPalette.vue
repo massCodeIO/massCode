@@ -6,6 +6,7 @@ import {
   type CommandPaletteUsageScoreEntry,
   getCommandPaletteResultScore,
 } from '@/composables/command-palette/ranking'
+import { useHttpEnvironments } from '@/composables/spaces/http'
 import {
   type CommandPaletteResult,
   useCommandPalette,
@@ -15,6 +16,7 @@ import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
 import { isMac } from '@/utils'
 import { Copy, FolderOpen } from 'lucide-vue-next'
+import { buildHttpPreview } from '../http/requestPreview'
 
 interface CommandPaletteAction {
   id: string
@@ -37,7 +39,7 @@ type RecentTarget = Extract<
   CommandPaletteResult,
   { type: 'recent' }
 >['recent']['target']
-type RevealableResultType = 'snippet' | 'note' | 'http-request'
+type ItemResultType = 'snippet' | 'note' | 'http-request'
 
 const {
   clearSearchScope,
@@ -60,6 +62,7 @@ const {
   usageById,
 } = useCommandPalette()
 
+const { activeEnvironment } = useHttpEnvironments()
 const isOpeningResult = ref(false)
 const isActionPanelOpen = ref(false)
 const activeIndex = ref(0)
@@ -401,6 +404,43 @@ function getActionPanelActions(result: CommandPaletteResult) {
     })
   }
 
+  if (hasNoteContentAction(result)) {
+    actions.push({
+      id: 'copy-note-content',
+      title: i18n.t('action.copy.note'),
+      subtitle: result.title,
+      icon: Copy,
+      run: () => copyNoteContent(result),
+      closeOnRun: true,
+    })
+  }
+
+  if (hasHttpRequestCopyAction(result)) {
+    actions.push({
+      id: 'copy-http-request',
+      title: i18n.t('action.copy.request'),
+      subtitle: result.title,
+      icon: Copy,
+      run: () => copyHttpRequest(result),
+      closeOnRun: true,
+    })
+  }
+
+  if (hasItemLinkAction(result)) {
+    const payload = getItemPayload(result)
+
+    if (payload) {
+      actions.push({
+        id: 'copy-item-link',
+        title: getCopyLinkActionTitle(payload.target),
+        subtitle: result.title,
+        icon: Copy,
+        run: () => copyItemLink(result),
+        closeOnRun: true,
+      })
+    }
+  }
+
   if (hasRevealInFileManagerAction(result)) {
     actions.push({
       id: 'reveal-in-file-manager',
@@ -440,6 +480,24 @@ function hasSnippetContentAction(result: CommandPaletteResult) {
   return result.type === 'recent' && result.recent.target === 'snippet'
 }
 
+function hasNoteContentAction(result: CommandPaletteResult) {
+  return result.type === 'note' || isRecentTarget(result, 'note')
+}
+
+function hasHttpRequestCopyAction(result: CommandPaletteResult) {
+  return (
+    result.type === 'http-request' || isRecentTarget(result, 'http-request')
+  )
+}
+
+function hasItemLinkAction(result: CommandPaletteResult) {
+  return Boolean(getItemPayload(result))
+}
+
+function isRecentTarget(result: CommandPaletteResult, target: ItemResultType) {
+  return result.type === 'recent' && result.recent.target === target
+}
+
 function getSnippetContentValue(snippet: SnippetContentSource) {
   return snippet.contents.find(content => content.value?.trim())?.value
 }
@@ -467,27 +525,62 @@ async function copySnippetContent(result: CommandPaletteResult) {
   }
 }
 
-function hasRevealInFileManagerAction(result: CommandPaletteResult) {
-  if (
-    result.type === 'snippet'
-    || result.type === 'note'
-    || result.type === 'http-request'
-  ) {
-    return true
+async function copyNoteContent(result: CommandPaletteResult) {
+  if (result.type === 'note') {
+    copyToClipboard(result.item.content)
+    return
   }
 
-  return (
-    result.type === 'recent' && isRevealableRecentTarget(result.recent.target)
+  if (!isRecentTarget(result, 'note')) {
+    return
+  }
+
+  const { data } = await api.notes.getNotesById(result.recent.targetId)
+  copyToClipboard(data.content)
+}
+
+async function copyHttpRequest(result: CommandPaletteResult) {
+  const request = await getHttpRequest(result)
+
+  if (!request) {
+    return
+  }
+
+  copyToClipboard(
+    buildHttpPreview(request, {
+      variables:
+        (activeEnvironment.value?.variables as Record<string, string>) ?? {},
+    }),
   )
+}
+
+async function getHttpRequest(result: CommandPaletteResult) {
+  if (result.type === 'http-request') {
+    return result.item
+  }
+
+  if (!isRecentTarget(result, 'http-request')) {
+    return null
+  }
+
+  const { data } = await api.httpRequests.getHttpRequestsById(
+    result.recent.targetId,
+  )
+
+  return data
+}
+
+function hasRevealInFileManagerAction(result: CommandPaletteResult) {
+  return Boolean(getItemPayload(result))
 }
 
 function isRevealableRecentTarget(
   target: RecentTarget,
-): target is RevealableResultType {
+): target is ItemResultType {
   return target === 'snippet' || target === 'note' || target === 'http-request'
 }
 
-function getRevealInFileManagerPayload(result: CommandPaletteResult) {
+function getItemPayload(result: CommandPaletteResult) {
   if (
     result.type === 'snippet'
     || result.type === 'note'
@@ -512,8 +605,38 @@ function getRevealInFileManagerPayload(result: CommandPaletteResult) {
   return null
 }
 
+function getCopyLinkActionTitle(target: ItemResultType) {
+  if (target === 'snippet') {
+    return i18n.t('action.copy.snippetLink')
+  }
+
+  if (target === 'note') {
+    return i18n.t('action.copy.noteLink')
+  }
+
+  return i18n.t('action.copy.requestLink')
+}
+
+function copyItemLink(result: CommandPaletteResult) {
+  const payload = getItemPayload(result)
+
+  if (!payload) {
+    return
+  }
+
+  if (payload.target === 'snippet') {
+    copyToClipboard(`masscode://goto?snippetId=${payload.targetId}`)
+  }
+  else if (payload.target === 'note') {
+    copyToClipboard(`masscode://goto?noteId=${payload.targetId}`)
+  }
+  else {
+    copyToClipboard(`masscode://goto?httpRequestId=${payload.targetId}`)
+  }
+}
+
 function revealInFileManager(result: CommandPaletteResult) {
-  const payload = getRevealInFileManagerPayload(result)
+  const payload = getItemPayload(result)
 
   if (!payload) {
     return

@@ -353,9 +353,6 @@ const actionPanelActions = computed<CommandPaletteAction[]>(() =>
 const activeActionId = computed(
   () => actionPanelActions.value[activeActionIndex.value]?.id,
 )
-const modifierKeyLabel = computed(() =>
-  navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl',
-)
 const enterFooterLabel = computed(() => {
   if (isActionPanelOpen.value) {
     return i18n.t('commandPalette.footer.run')
@@ -386,7 +383,7 @@ const footerHints = computed<CommandPaletteFooterHint[]>(() =>
         },
         {
           label: i18n.t('commandPalette.footer.actions'),
-          keys: [`${modifierKeyLabel.value}K`],
+          keys: ['→'],
         },
       ],
 )

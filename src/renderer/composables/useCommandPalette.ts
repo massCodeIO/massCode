@@ -491,7 +491,60 @@ async function runSearch(value: string) {
 
 const debouncedRunSearch = useDebounceFn(runSearch, 180)
 
+function getSpaceScopeShortcut(value: string) {
+  if (searchScopeSpaceId.value) {
+    return null
+  }
+
+  if (!value.startsWith('@')) {
+    return null
+  }
+
+  const shortcut = value.slice(1)
+  const separatorIndex = [...shortcut].findIndex(
+    character => character.trim() === '',
+  )
+
+  if (separatorIndex < 0) {
+    return null
+  }
+
+  const scopeQuery = shortcut.slice(0, separatorIndex).trim().toLowerCase()
+  const space = scopeSpaceResults.value.find(
+    result =>
+      result.spaceId === scopeQuery
+      || result.title.trim().toLowerCase() === scopeQuery,
+  )
+
+  if (!space) {
+    return null
+  }
+
+  return {
+    query: shortcut.slice(separatorIndex + 1).trimStart(),
+    spaceId: space.spaceId,
+  }
+}
+
 function setQuery(value: string) {
+  const scopeShortcut = getSpaceScopeShortcut(value)
+
+  if (scopeShortcut) {
+    searchRunId += 1
+    query.value = scopeShortcut.query
+    searchScopeSpaceId.value = scopeShortcut.spaceId
+    resetSearchResults()
+
+    if (!scopeShortcut.query.trim()) {
+      isSearching.value = false
+      return
+    }
+
+    isSearching.value = true
+    debouncedRunSearch(scopeShortcut.query)
+    return
+  }
+
   const search = value.trim()
 
   searchRunId += 1

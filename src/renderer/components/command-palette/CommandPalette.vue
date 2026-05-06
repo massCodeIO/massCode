@@ -47,13 +47,19 @@ const normalizedSearchQuery = computed(() =>
       : normalizedQuery.value,
 )
 const searchScopeLabel = computed(() => searchScope.value?.label)
-const inputPlaceholder = computed(() =>
-  searchScope.value
-    ? i18n.t('commandPalette.scopedPlaceholder', {
-        space: searchScope.value.label,
-      })
-    : i18n.t('commandPalette.placeholder'),
-)
+const inputPlaceholder = computed(() => {
+  if (searchScope.value) {
+    return i18n.t('commandPalette.scopedPlaceholder', {
+      space: searchScope.value.label,
+    })
+  }
+
+  if (isCommandMode.value) {
+    return i18n.t('commandPalette.commandPlaceholder')
+  }
+
+  return i18n.t('commandPalette.placeholder')
+})
 
 function matchesQuery(result: CommandPaletteResult) {
   if (!normalizedSearchQuery.value) {

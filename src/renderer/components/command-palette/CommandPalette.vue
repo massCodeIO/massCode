@@ -16,7 +16,7 @@ import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
 import { isMac } from '@/utils'
-import { Copy, CopyPlus, FolderOpen } from 'lucide-vue-next'
+import { Copy, CopyPlus, FolderOpen, Star, Trash2 } from 'lucide-vue-next'
 import { buildHttpPreview } from '../http/requestPreview'
 
 interface CommandPaletteAction {
@@ -453,6 +453,17 @@ function getActionPanelActions(result: CommandPaletteResult) {
     })
   }
 
+  if (hasFavoriteAction(result)) {
+    actions.push({
+      id: 'toggle-favorite',
+      title: getFavoriteActionTitle(result),
+      subtitle: result.title,
+      icon: Star,
+      run: () => toggleFavorite(result),
+      closeOnRun: true,
+    })
+  }
+
   if (hasRevealInFileManagerAction(result)) {
     actions.push({
       id: 'reveal-in-file-manager',
@@ -460,6 +471,17 @@ function getActionPanelActions(result: CommandPaletteResult) {
       subtitle: result.title,
       icon: FolderOpen,
       run: () => revealInFileManager(result),
+      closeOnRun: true,
+    })
+  }
+
+  if (hasMoveToTrashAction(result)) {
+    actions.push({
+      id: 'move-to-trash',
+      title: i18n.t('action.move.toTrash'),
+      subtitle: result.title,
+      icon: Trash2,
+      run: () => moveToTrash(result),
       closeOnRun: true,
     })
   }
@@ -512,6 +534,19 @@ function hasDuplicateAction(result: CommandPaletteResult) {
     || result.type === 'http-request'
     || isRecentTarget(result, 'snippet')
     || isRecentTarget(result, 'http-request')
+  )
+}
+
+function hasFavoriteAction(result: CommandPaletteResult) {
+  return result.type === 'snippet' || result.type === 'note'
+}
+
+function hasMoveToTrashAction(result: CommandPaletteResult) {
+  return (
+    result.type === 'snippet'
+    || result.type === 'note'
+    || isRecentTarget(result, 'snippet')
+    || isRecentTarget(result, 'note')
   )
 }
 
@@ -583,6 +618,20 @@ async function copyNoteContent(result: CommandPaletteResult) {
 
   const { data } = await api.notes.getNotesById(result.recent.targetId)
   copyToClipboard(data.content)
+}
+
+async function getNote(result: CommandPaletteResult) {
+  if (result.type === 'note') {
+    return result.item
+  }
+
+  if (!isRecentTarget(result, 'note')) {
+    return null
+  }
+
+  const { data } = await api.notes.getNotesById(result.recent.targetId)
+
+  return data
 }
 
 async function copyHttpRequest(result: CommandPaletteResult) {
@@ -701,6 +750,62 @@ async function duplicateHttpRequest(result: CommandPaletteResult) {
     headers: request.headers.map(entry => ({ ...entry })),
     query: request.query.map(entry => ({ ...entry })),
   })
+}
+
+function getFavoriteActionTitle(result: CommandPaletteResult) {
+  if (result.type === 'snippet' && result.item.isFavorites) {
+    return i18n.t('action.remove.fromFavorites')
+  }
+
+  if (result.type === 'note' && result.item.isFavorites) {
+    return i18n.t('action.remove.fromFavorites')
+  }
+
+  return i18n.t('action.add.toFavorites')
+}
+
+async function toggleFavorite(result: CommandPaletteResult) {
+  if (result.type === 'snippet') {
+    markPersistedStorageMutation()
+    await api.snippets.patchSnippetsById(String(result.item.id), {
+      isFavorites: result.item.isFavorites ? 0 : 1,
+    })
+  }
+  else if (result.type === 'note') {
+    markPersistedStorageMutation()
+    await api.notes.patchNotesById(String(result.item.id), {
+      isFavorites: result.item.isFavorites ? 0 : 1,
+    })
+  }
+}
+
+async function moveToTrash(result: CommandPaletteResult) {
+  if (result.type === 'snippet' || isRecentTarget(result, 'snippet')) {
+    const snippet = await getSnippet(result)
+
+    if (!snippet) {
+      return
+    }
+
+    markPersistedStorageMutation()
+    await api.snippets.patchSnippetsById(String(snippet.id), {
+      folderId: null,
+      isDeleted: 1,
+    })
+  }
+  else if (result.type === 'note' || isRecentTarget(result, 'note')) {
+    const note = await getNote(result)
+
+    if (!note) {
+      return
+    }
+
+    markPersistedStorageMutation()
+    await api.notes.patchNotesById(String(note.id), {
+      folderId: null,
+      isDeleted: 1,
+    })
+  }
 }
 
 function hasRevealInFileManagerAction(result: CommandPaletteResult) {

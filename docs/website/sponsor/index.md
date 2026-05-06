@@ -3,6 +3,31 @@ title: Sponsor massCode
 description: "Sponsor massCode and be recognized across the project website, GitHub repository, release notes, and community updates."
 ---
 
+<script setup>
+import githubStats from '../.vitepress/_data/github-stats.json'
+
+function formatMetric(value) {
+  const number = Number(value)
+
+  if (!Number.isFinite(number) || number <= 0)
+    return '—'
+
+  if (number < 1000)
+    return `${Math.floor(number).toLocaleString('en-US')}+`
+
+  const precision = number >= 100000 ? 1000 : 100
+  const rounded = Math.floor(number / precision) * precision
+  const shortValue = rounded / 1000
+  const formatted = Number.isInteger(shortValue) ? shortValue.toString() : shortValue.toFixed(1)
+
+  return `${formatted}k`
+}
+
+const githubStars = formatMetric(githubStats.stars)
+const releaseDownloads = formatMetric(githubStats.releaseDownloads)
+const activeDevelopmentYears = `${githubStats.activeDevelopmentYears}+`
+</script>
+
 # Sponsor massCode
 
 **Support massCode and be recognized across the project website, GitHub repository, release notes, and community updates.**
@@ -32,9 +57,9 @@ Unlike cloud-based alternatives, massCode stores user content locally as plain M
 
 | Metric | Value |
 | --- | --- |
-| GitHub stars | **6,700+** |
-| GitHub release downloads | **201,000+** |
-| Years in active development | **6+**, since 2019 |
+| GitHub stars | <strong>{{ githubStars }}</strong> |
+| GitHub release downloads | <strong>{{ releaseDownloads }}</strong> |
+| Years in active development | <strong>{{ activeDevelopmentYears }}</strong>, since 2019 |
 | Platforms | macOS, Windows, Linux |
 | Companion ecosystem | VS Code extension, Raycast extension, CLI tools |
 | Telemetry / tracking | **None, by design** |

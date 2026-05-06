@@ -20,14 +20,14 @@ const emit = defineEmits<{
     role="option"
     :aria-selected="active"
     :data-command-palette-active="active ? 'true' : undefined"
-    class="[&_svg:not([class*='text-'])]:text-muted-foreground relative flex min-h-11 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+    class="[&_svg:not([class*='text-'])]:text-muted-foreground relative flex min-h-11 w-full cursor-default items-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
     :class="active ? 'bg-accent text-accent-foreground' : ''"
     @click="emit('select', result)"
     @pointerenter="emit('activate', result)"
   >
     <component
       :is="result.icon"
-      class="h-4 w-4"
+      class="mt-0.5 h-4 w-4"
     />
     <div class="min-w-0 flex-1">
       <UiText

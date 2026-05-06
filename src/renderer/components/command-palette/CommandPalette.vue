@@ -12,10 +12,11 @@ import {
   useCommandPalette,
 } from '@/composables/useCommandPalette'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
 import { isMac } from '@/utils'
-import { Copy, FolderOpen } from 'lucide-vue-next'
+import { Copy, CopyPlus, FolderOpen } from 'lucide-vue-next'
 import { buildHttpPreview } from '../http/requestPreview'
 
 interface CommandPaletteAction {
@@ -441,6 +442,17 @@ function getActionPanelActions(result: CommandPaletteResult) {
     }
   }
 
+  if (hasDuplicateAction(result)) {
+    actions.push({
+      id: 'duplicate',
+      title: i18n.t('action.duplicate'),
+      subtitle: result.title,
+      icon: CopyPlus,
+      run: () => duplicateItem(result),
+      closeOnRun: true,
+    })
+  }
+
   if (hasRevealInFileManagerAction(result)) {
     actions.push({
       id: 'reveal-in-file-manager',
@@ -494,31 +506,65 @@ function hasItemLinkAction(result: CommandPaletteResult) {
   return Boolean(getItemPayload(result))
 }
 
+function hasDuplicateAction(result: CommandPaletteResult) {
+  return (
+    result.type === 'snippet'
+    || result.type === 'http-request'
+    || isRecentTarget(result, 'snippet')
+    || isRecentTarget(result, 'http-request')
+  )
+}
+
 function isRecentTarget(result: CommandPaletteResult, target: ItemResultType) {
   return result.type === 'recent' && result.recent.target === target
+}
+
+function getNextIndexedName(baseName: string, existingNames: string[]) {
+  const normalizedExisting = new Set(
+    existingNames.map(name => name.trim().toLowerCase()),
+  )
+
+  if (!normalizedExisting.has(baseName.trim().toLowerCase())) {
+    return baseName
+  }
+
+  let index = 2
+  let candidate = `${baseName} ${index}`
+
+  while (normalizedExisting.has(candidate.trim().toLowerCase())) {
+    index += 1
+    candidate = `${baseName} ${index}`
+  }
+
+  return candidate
 }
 
 function getSnippetContentValue(snippet: SnippetContentSource) {
   return snippet.contents.find(content => content.value?.trim())?.value
 }
 
-async function copySnippetContent(result: CommandPaletteResult) {
+async function getSnippet(result: CommandPaletteResult) {
   if (result.type === 'snippet') {
-    const content = getSnippetContentValue(result.item)
-
-    if (content) {
-      copyToClipboard(content)
-    }
-
-    return
+    return result.item
   }
 
-  if (result.type !== 'recent' || result.recent.target !== 'snippet') {
-    return
+  if (!isRecentTarget(result, 'snippet')) {
+    return null
   }
 
   const { data } = await api.snippets.getSnippetsById(result.recent.targetId)
-  const content = getSnippetContentValue(data)
+
+  return data
+}
+
+async function copySnippetContent(result: CommandPaletteResult) {
+  const snippet = await getSnippet(result)
+
+  if (!snippet) {
+    return
+  }
+
+  const content = getSnippetContentValue(snippet)
 
   if (content) {
     copyToClipboard(content)
@@ -568,6 +614,93 @@ async function getHttpRequest(result: CommandPaletteResult) {
   )
 
   return data
+}
+
+async function duplicateItem(result: CommandPaletteResult) {
+  if (result.type === 'snippet' || isRecentTarget(result, 'snippet')) {
+    await duplicateSnippet(result)
+  }
+  else if (
+    result.type === 'http-request'
+    || isRecentTarget(result, 'http-request')
+  ) {
+    await duplicateHttpRequest(result)
+  }
+}
+
+async function duplicateSnippet(result: CommandPaletteResult) {
+  const snippet = await getSnippet(result)
+
+  if (!snippet) {
+    return
+  }
+
+  const folderId = snippet.folder?.id ?? null
+  const siblingsResult = await api.snippets.getSnippets({
+    isDeleted: 0,
+    ...(folderId ? { folderId } : { isInbox: 1 }),
+  })
+  const copyBaseName = `${snippet.name} - copy`
+  const name = getNextIndexedName(
+    copyBaseName,
+    siblingsResult.data.map(item => item.name),
+  )
+
+  markPersistedStorageMutation()
+  const { data } = await api.snippets.postSnippets({
+    folderId,
+    name,
+  })
+
+  for (const content of snippet.contents) {
+    await api.snippets.postSnippetsByIdContents(String(data.id), {
+      label: content.label,
+      language: content.language,
+      value: content.value,
+    })
+  }
+
+  for (const tag of snippet.tags) {
+    await api.snippets.postSnippetsByIdTagsByTagId(
+      String(data.id),
+      String(tag.id),
+    )
+  }
+}
+
+async function duplicateHttpRequest(result: CommandPaletteResult) {
+  const request = await getHttpRequest(result)
+
+  if (!request) {
+    return
+  }
+
+  const siblingsResult = await api.httpRequests.getHttpRequests()
+  const copyBaseName = `${request.name} - copy`
+  const name = getNextIndexedName(
+    copyBaseName,
+    siblingsResult.data
+      .filter(item => (item.folderId ?? null) === (request.folderId ?? null))
+      .map(item => item.name),
+  )
+
+  markPersistedStorageMutation()
+  const { data } = await api.httpRequests.postHttpRequests({
+    folderId: request.folderId,
+    method: request.method,
+    name,
+    url: request.url,
+  })
+
+  await api.httpRequests.patchHttpRequestsById(String(data.id), {
+    auth: { ...request.auth },
+    body: request.body,
+    bodyType: request.bodyType,
+    description: request.description,
+    formData: request.formData.map(entry => ({ ...entry })),
+    headers: request.headers.map(entry => ({ ...entry })),
+    query: request.query.map(entry => ({ ...entry })),
+  })
 }
 
 function hasRevealInFileManagerAction(result: CommandPaletteResult) {

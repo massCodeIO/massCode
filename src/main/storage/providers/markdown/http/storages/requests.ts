@@ -195,6 +195,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       const existingEntries = [...cache.requestById.values()].map(record => ({
         folderId: record.folderId,
         id: record.id,
+        isDeleted: record.isDeleted,
         name: record.name,
       }))
       assertUniqueSiblingEntryName(existingEntries, folderId, name, 'request')
@@ -202,7 +203,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       state.counters.requestId += 1
       const id = state.counters.requestId
       const now = Date.now()
-      const filePath = buildRequestFilePath(state, folderId, name)
+      const targetFilePath = buildRequestFilePath(state, folderId, name)
+      const filePath = getUniqueRequestFilePath(
+        paths.httpRoot,
+        targetFilePath,
+        null,
+      )
 
       const record: HttpRequestRecord = {
         auth: { type: 'none' },
@@ -218,7 +224,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         isDeleted: 0,
         isFavorites: 0,
         method: input.method ?? 'GET',
-        name,
+        name: path.posix.basename(filePath, '.md'),
         query: [],
         updatedAt: now,
         url: input.url ?? '',
@@ -294,7 +300,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       if (!isFolderChanging && isNameChanging) {
         const siblingEntries = [...cache.requestById.values()]
           .filter(r => r.id !== id)
-          .map(r => ({ folderId: r.folderId, id: r.id, name: r.name }))
+          .map(r => ({
+            folderId: r.folderId,
+            id: r.id,
+            isDeleted: r.isDeleted,
+            name: r.name,
+          }))
         assertUniqueSiblingEntryName(
           siblingEntries,
           nextFolderId,

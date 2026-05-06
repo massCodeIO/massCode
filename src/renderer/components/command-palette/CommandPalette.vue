@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { SnippetItemResponse } from '@/services/api/generated'
 import type { Component } from 'vue'
 import * as Command from '@/components/ui/shadcn/command'
 import {
@@ -11,6 +12,7 @@ import {
 } from '@/composables/useCommandPalette'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { i18n } from '@/electron'
+import { api } from '@/services/api'
 import { Copy } from 'lucide-vue-next'
 
 interface CommandPaletteAction {
@@ -26,6 +28,10 @@ interface CommandPaletteFooterHint {
   label: string
   keys: string[]
 }
+
+type SnippetContentSource =
+  | Extract<CommandPaletteResult, { type: 'snippet' }>['item']
+  | SnippetItemResponse
 
 const {
   clearSearchScope,
@@ -378,19 +384,15 @@ function getActionPanelActions(result: CommandPaletteResult) {
     },
   ]
 
-  if (result.type === 'snippet') {
-    const content = result.item.contents[0]?.value
-
-    if (content) {
-      actions.push({
-        id: 'copy-snippet-content',
-        title: i18n.t('commandPalette.actionPanel.copySnippetContent'),
-        subtitle: result.title,
-        icon: Copy,
-        run: () => copyToClipboard(content),
-        closeOnRun: true,
-      })
-    }
+  if (hasSnippetContentAction(result)) {
+    actions.push({
+      id: 'copy-snippet-content',
+      title: i18n.t('commandPalette.actionPanel.copySnippetContent'),
+      subtitle: result.title,
+      icon: Copy,
+      run: () => copySnippetContent(result),
+      closeOnRun: true,
+    })
   }
 
   if (result.type === 'http-request' && result.item.url) {
@@ -405,6 +407,41 @@ function getActionPanelActions(result: CommandPaletteResult) {
   }
 
   return actions
+}
+
+function hasSnippetContentAction(result: CommandPaletteResult) {
+  if (result.type === 'snippet') {
+    return Boolean(getSnippetContentValue(result.item))
+  }
+
+  return result.type === 'recent' && result.recent.target === 'snippet'
+}
+
+function getSnippetContentValue(snippet: SnippetContentSource) {
+  return snippet.contents.find(content => content.value?.trim())?.value
+}
+
+async function copySnippetContent(result: CommandPaletteResult) {
+  if (result.type === 'snippet') {
+    const content = getSnippetContentValue(result.item)
+
+    if (content) {
+      copyToClipboard(content)
+    }
+
+    return
+  }
+
+  if (result.type !== 'recent' || result.recent.target !== 'snippet') {
+    return
+  }
+
+  const { data } = await api.snippets.getSnippetsById(result.recent.targetId)
+  const content = getSnippetContentValue(data)
+
+  if (content) {
+    copyToClipboard(content)
+  }
 }
 
 function onQueryChange(value: string) {

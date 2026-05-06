@@ -348,11 +348,22 @@ const activeActionId = computed(
 const modifierKeyLabel = computed(() =>
   navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl',
 )
+const enterFooterLabel = computed(() => {
+  if (isActionPanelOpen.value) {
+    return i18n.t('commandPalette.footer.run')
+  }
+
+  const result = visibleResults.value[activeIndex.value]
+
+  return result?.type === 'command'
+    ? i18n.t('commandPalette.footer.run')
+    : i18n.t('commandPalette.footer.jump')
+})
 const footerHints = computed<CommandPaletteFooterHint[]>(() =>
   isActionPanelOpen.value
     ? [
         {
-          label: i18n.t('commandPalette.footer.run'),
+          label: enterFooterLabel.value,
           keys: ['↵'],
         },
         {
@@ -362,7 +373,7 @@ const footerHints = computed<CommandPaletteFooterHint[]>(() =>
       ]
     : [
         {
-          label: i18n.t('commandPalette.footer.open'),
+          label: enterFooterLabel.value,
           keys: ['↵'],
         },
         {

@@ -62,6 +62,7 @@
     },
     "footer": {
       "open": "Open",
+      "jump": "Jump",
       "actions": "Actions",
       "run": "Run",
       "back": "Back"

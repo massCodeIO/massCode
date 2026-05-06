@@ -6,12 +6,17 @@ import {
   type CommandPaletteUsageScoreEntry,
   getCommandPaletteResultScore,
 } from '@/composables/command-palette/ranking'
-import { useHttpEnvironments } from '@/composables/spaces/http'
+import {
+  useHttpEnvironments,
+  useHttpRequests,
+} from '@/composables/spaces/http'
+import { useNotes } from '@/composables/spaces/notes'
 import {
   type CommandPaletteResult,
   useCommandPalette,
 } from '@/composables/useCommandPalette'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { useSnippets } from '@/composables/useSnippets'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
@@ -64,6 +69,9 @@ const {
 } = useCommandPalette()
 
 const { activeEnvironment } = useHttpEnvironments()
+const codeSnippets = useSnippets()
+const notesData = useNotes()
+const httpRequestsData = useHttpRequests()
 const isOpeningResult = ref(false)
 const isActionPanelOpen = ref(false)
 const activeIndex = ref(0)
@@ -726,6 +734,8 @@ async function duplicateSnippet(result: CommandPaletteResult) {
       String(tag.id),
     )
   }
+
+  await codeSnippets.getSnippets()
 }
 
 async function duplicateHttpRequest(result: CommandPaletteResult) {
@@ -761,6 +771,8 @@ async function duplicateHttpRequest(result: CommandPaletteResult) {
     headers: request.headers.map(entry => ({ ...entry })),
     query: request.query.map(entry => ({ ...entry })),
   })
+
+  await httpRequestsData.getHttpRequests()
 }
 
 function getFavoriteActionTitle(result: CommandPaletteResult) {
@@ -781,12 +793,14 @@ async function toggleFavorite(result: CommandPaletteResult) {
     await api.snippets.patchSnippetsById(String(result.item.id), {
       isFavorites: result.item.isFavorites ? 0 : 1,
     })
+    await codeSnippets.getSnippets()
   }
   else if (result.type === 'note') {
     markPersistedStorageMutation()
     await api.notes.patchNotesById(String(result.item.id), {
       isFavorites: result.item.isFavorites ? 0 : 1,
     })
+    await notesData.getNotes()
   }
 }
 
@@ -803,6 +817,11 @@ async function moveToTrash(result: CommandPaletteResult) {
       folderId: null,
       isDeleted: 1,
     })
+    await codeSnippets.getSnippets()
+
+    if (codeSnippets.selectedSnippetIds.value.includes(snippet.id)) {
+      codeSnippets.selectFirstSnippet()
+    }
   }
   else if (result.type === 'note' || isRecentTarget(result, 'note')) {
     const note = await getNote(result)
@@ -816,6 +835,11 @@ async function moveToTrash(result: CommandPaletteResult) {
       folderId: null,
       isDeleted: 1,
     })
+    await notesData.getNotes()
+
+    if (notesData.selectedNoteIds.value.includes(note.id)) {
+      notesData.selectFirstNote()
+    }
   }
 }
 

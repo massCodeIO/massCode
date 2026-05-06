@@ -11,6 +11,8 @@ The Command Palette gives you a keyboard-first way to move around massCode witho
 
 Open it with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux.
 
+<img :src="withBase('/command-palette.png')">
+
 ## What You Can Find
 
 The palette searches by title across searchable content:
@@ -80,3 +82,7 @@ Open the actions panel for the selected result with <kbd>Right Arrow</kbd> or <k
 Actions depend on the selected result. For example, you can copy a title, copy snippet content, copy an HTTP request URL, or run the selected command.
 
 Use <kbd>Left Arrow</kbd> or <kbd>Esc</kbd> to close the actions panel.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

@@ -167,14 +167,6 @@ const secondarySpaceResults = computed<CommandPaletteResult[]>(() =>
   matchedSpaceResults.value.filter(result => !isStrongLocalMatch(result)),
 )
 
-const scopedCommandResults = computed<CommandPaletteResult[]>(() =>
-  commandResults.value.filter(
-    result =>
-      result.type === 'command'
-      && result.command.spaceId === searchScope.value?.id,
-  ),
-)
-
 const hasSearchResults = computed(() => {
   if (isScopedSearch.value) {
     return contentResults.value.length > 0
@@ -282,7 +274,7 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
   }
 
   if (showScopedHome.value || showPendingScopedHome.value) {
-    return [...scopedRecentResults.value, ...scopedCommandResults.value]
+    return scopedRecentResults.value
   }
 
   if (isPendingContentSearch.value) {
@@ -607,24 +599,6 @@ watch(activeResultId, () => {
       >
         <CommandPaletteItem
           v-for="result in scopedRecentResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
-
-      <Command.CommandGroup
-        v-if="
-          (showScopedHome || showPendingScopedHome)
-            && scopedCommandResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in scopedCommandResults"
           :key="result.id"
           :result="result"
           :active="activeResultId === result.id"

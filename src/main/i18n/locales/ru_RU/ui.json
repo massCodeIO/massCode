@@ -14,7 +14,7 @@
     "description": "Поиск пространств, сниппетов, заметок и HTTP-запросов.",
     "placeholder": "Найти или выполнить команду...",
     "commandPlaceholder": "Выполнить команду...",
-    "scopedPlaceholder": "Найти или выполнить в {{space}}...",
+    "scopedPlaceholder": "Искать в {{space}}...",
     "clearScope": "Сбросить область",
     "searching": "Поиск...",
     "empty": "Ничего не найдено",

@@ -14,7 +14,7 @@
     "description": "Search spaces, snippets, notes, and HTTP requests.",
     "placeholder": "Search or run command...",
     "commandPlaceholder": "Run command...",
-    "scopedPlaceholder": "Search in {{space}}...",
+    "scopedPlaceholder": "Search or run in {{space}}...",
     "clearScope": "Clear scope",
     "searching": "Searching...",
     "empty": "No results found",

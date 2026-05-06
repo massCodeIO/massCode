@@ -32,6 +32,8 @@ massCode — это приложение на Electron + Vue 3 + TypeScript с T
   Используй при изменениях, связанных с `code` / `notes` / `math` / `tools`, markdown-space state, sync behavior или `spaces:*` IPC.
 - `.agents/skills/i18n/SKILL.md`
   Используй для правил локализации, размещения locale keys, `i18n.t(...)` и требования не хардкодить строки.
+- `.agents/skills/documentation-workflow/SKILL.md`
+  Используй для добавления или обновления документации, страниц `docs/website/documentation`, sidebar, assets и README-упоминаний фич.
 - `.agents/skills/development-workflow/SKILL.md`
   Используй для repo-specific workflow rules: scoped lint/test команды и обязательные follow-up шаги после изменений source-of-truth файлов.
 - `.agents/skills/github-workflow/SKILL.md`
@@ -45,6 +47,7 @@ massCode — это приложение на Electron + Vue 3 + TypeScript с T
 - Generated types / renderer typing задача: `architecture-standards` → `api-and-typing`.
 - Spaces задача: `architecture-standards` → `spaces-architecture`.
 - Задача про текст и локализацию: `i18n`.
+- Задача про документацию или README: `documentation-workflow`.
 - Workflow-чувствительная задача: `development-workflow`.
 - Задача про git / branch / commit / PR: `github-workflow`.
 

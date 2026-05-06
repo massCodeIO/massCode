@@ -61,6 +61,8 @@ description: Use when working in massCode and you need repo-wide architecture ru
   `spaces-architecture`
 - i18n, locale keys, `i18n.t(...)`:
   `i18n`
+- docs website, docs sidebar, скриншоты, README-упоминания фич:
+  `documentation-workflow`
 - scoped lint/test и follow-up commands:
   `development-workflow`
 

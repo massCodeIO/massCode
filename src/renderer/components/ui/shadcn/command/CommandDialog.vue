@@ -45,6 +45,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <DialogContent
       class="overflow-hidden p-0"
       :show-close-button="showCloseButton"
+      @close-auto-focus.prevent
     >
       <DialogHeader class="sr-only">
         <DialogTitle>{{ title }}</DialogTitle>

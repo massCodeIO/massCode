@@ -79,17 +79,6 @@ Originally a snippet manager, massCode now brings together snippets, notes, HTTP
 
 ## Features
 
-### Command Palette
-
-Available in massCode 5.4.
-
-Jump to spaces, snippets, notes, HTTP requests, and common actions from anywhere with a keyboard-first command palette.
-
-- Open with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux
-- Search across snippets, notes, HTTP requests, spaces, and commands
-- Run create actions for snippets, notes, HTTP requests, and folders
-- Scope search to a space with `@` or open command mode with `>`
-
 ### Code Snippets
 
 Use massCode as a focused snippet workspace with multi-level folders, tags, and fragments for organizing reusable code across projects and languages.
@@ -141,6 +130,15 @@ Built-in utilities for the small tasks that usually send you to a browser tab:
 - **Crypto:** Hash/HMAC Generator, Password Generator, UUID
 - **Encoders:** URL, Base64, JSON to TOML/XML/YAML, Color Converter
 - **Generators:** JSON Generator, Lorem Ipsum
+
+### Command Palette
+
+Jump to spaces, snippets, notes, HTTP requests, and common actions from anywhere with a keyboard-first command palette.
+
+- Open with <kbd>Cmd+P</kbd> on macOS or <kbd>Ctrl+P</kbd> on Windows and Linux
+- Search across snippets, notes, HTTP requests, spaces, and commands
+- Run create actions for snippets, notes, HTTP requests, and folders
+- Scope search to a space with `@` or open command mode with `>`
 
 ## Markdown Vault
 

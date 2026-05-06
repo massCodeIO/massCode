@@ -51,6 +51,14 @@
       "createHttpRequest": "Create HTTP request \"{{query}}\"",
       "createHttpRequestFromUrl": "Create HTTP request from URL",
       "createHttpRequestSubtitle": "Create in HTTP"
+    },
+    "actionPanel": {
+      "heading": "Actions",
+      "open": "Open",
+      "run": "Run",
+      "copyTitle": "Copy title",
+      "copySnippetContent": "Copy snippet content",
+      "copyHttpUrl": "Copy URL"
     }
   },
   "spaces": {

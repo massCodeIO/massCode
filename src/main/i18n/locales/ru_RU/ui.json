@@ -51,6 +51,14 @@
       "createHttpRequest": "Создать HTTP-запрос \"{{query}}\"",
       "createHttpRequestFromUrl": "Создать HTTP-запрос из URL",
       "createHttpRequestSubtitle": "Создать в HTTP"
+    },
+    "actionPanel": {
+      "heading": "Действия",
+      "open": "Открыть",
+      "run": "Выполнить",
+      "copyTitle": "Скопировать название",
+      "copySnippetContent": "Скопировать содержимое сниппета",
+      "copyHttpUrl": "Скопировать URL"
     }
   },
   "spaces": {

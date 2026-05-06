@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import * as Command from '@/components/ui/shadcn/command'
 import {
   type CommandPaletteUsageScoreEntry,
@@ -8,7 +9,18 @@ import {
   type CommandPaletteResult,
   useCommandPalette,
 } from '@/composables/useCommandPalette'
+import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { i18n } from '@/electron'
+import { Copy } from 'lucide-vue-next'
+
+interface CommandPaletteAction {
+  id: string
+  title: string
+  subtitle: string
+  icon: Component
+  run: () => Promise<void> | void
+  closeOnRun?: boolean
+}
 
 const {
   clearSearchScope,
@@ -32,8 +44,11 @@ const {
 } = useCommandPalette()
 
 const isOpeningResult = ref(false)
+const isActionPanelOpen = ref(false)
 const activeIndex = ref(0)
+const activeActionIndex = ref(0)
 let commandModeCaretFrame: number | undefined
+const copyToClipboard = useCopyToClipboard()
 
 const normalizedQuery = computed(() => query.value.trim().toLowerCase())
 const isScopedSearch = computed(() => Boolean(searchScope.value))
@@ -301,10 +316,120 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
 const activeResultId = computed(
   () => visibleResults.value[activeIndex.value]?.id,
 )
+const actionPanelTarget = ref<CommandPaletteResult>()
+const actionPanelActions = computed<CommandPaletteAction[]>(() =>
+  actionPanelTarget.value ? getActionPanelActions(actionPanelTarget.value) : [],
+)
+const activeActionId = computed(
+  () => actionPanelActions.value[activeActionIndex.value]?.id,
+)
+
+function getActionPanelActions(result: CommandPaletteResult) {
+  const actions: CommandPaletteAction[] = [
+    {
+      id: 'open',
+      title:
+        result.type === 'command'
+          ? i18n.t('commandPalette.actionPanel.run')
+          : i18n.t('commandPalette.actionPanel.open'),
+      subtitle: result.title,
+      icon: result.icon,
+      run: () => selectResult(result),
+    },
+    {
+      id: 'copy-title',
+      title: i18n.t('commandPalette.actionPanel.copyTitle'),
+      subtitle: result.title,
+      icon: Copy,
+      run: () => copyToClipboard(result.title),
+      closeOnRun: true,
+    },
+  ]
+
+  if (result.type === 'snippet') {
+    const content = result.item.contents[0]?.value
+
+    if (content) {
+      actions.push({
+        id: 'copy-snippet-content',
+        title: i18n.t('commandPalette.actionPanel.copySnippetContent'),
+        subtitle: result.title,
+        icon: Copy,
+        run: () => copyToClipboard(content),
+        closeOnRun: true,
+      })
+    }
+  }
+
+  if (result.type === 'http-request' && result.item.url) {
+    actions.push({
+      id: 'copy-http-url',
+      title: i18n.t('commandPalette.actionPanel.copyHttpUrl'),
+      subtitle: result.item.url,
+      icon: Copy,
+      run: () => copyToClipboard(result.item.url),
+      closeOnRun: true,
+    })
+  }
+
+  return actions
+}
 
 function onQueryChange(value: string) {
+  closeActionPanel()
   activeIndex.value = 0
   setQuery(value)
+}
+
+function openActionPanel() {
+  const result = visibleResults.value[activeIndex.value]
+
+  if (!result || isSearching.value) {
+    return
+  }
+
+  actionPanelTarget.value = result
+  isActionPanelOpen.value = true
+  activeActionIndex.value = 0
+}
+
+function closeActionPanel() {
+  isActionPanelOpen.value = false
+  activeActionIndex.value = 0
+  actionPanelTarget.value = undefined
+}
+
+function setActiveAction(action: CommandPaletteAction) {
+  const index = actionPanelActions.value.findIndex(
+    item => item.id === action.id,
+  )
+
+  if (index >= 0) {
+    activeActionIndex.value = index
+  }
+}
+
+function moveActiveActionIndex(step: number) {
+  if (!actionPanelActions.value.length) {
+    activeActionIndex.value = 0
+    return
+  }
+
+  activeActionIndex.value
+    = (activeActionIndex.value + step + actionPanelActions.value.length)
+      % actionPanelActions.value.length
+}
+
+async function runAction(action: CommandPaletteAction) {
+  if (isOpeningResult.value) {
+    return
+  }
+
+  await action.run()
+
+  if (action.closeOnRun) {
+    isOpen.value = false
+  }
 }
 
 function setActiveResult(result: CommandPaletteResult) {
@@ -390,6 +515,55 @@ function onInputKeydown(event: KeyboardEvent) {
     return
   }
 
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!isActionPanelOpen.value) {
+      openActionPanel()
+    }
+
+    return
+  }
+
+  if (isActionPanelOpen.value) {
+    if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+      event.preventDefault()
+      event.stopPropagation()
+      closeActionPanel()
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      event.stopPropagation()
+      moveActiveActionIndex(1)
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      event.stopPropagation()
+      moveActiveActionIndex(-1)
+      return
+    }
+
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const action = actionPanelActions.value[activeActionIndex.value]
+
+    if (action) {
+      runAction(action)
+    }
+
+    return
+  }
+
   if (event.key === 'Escape' && isScopedSearch.value) {
     event.preventDefault()
     event.stopPropagation()
@@ -425,6 +599,13 @@ function onInputKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
     moveActiveIndex(-1)
+    return
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    event.stopPropagation()
+    openActionPanel()
     return
   }
 
@@ -478,6 +659,18 @@ watch(
 
 watch(isOpen, () => {
   activeIndex.value = 0
+  closeActionPanel()
+})
+
+watch(actionPanelActions, (actions) => {
+  if (!actions.length) {
+    closeActionPanel()
+    return
+  }
+
+  if (activeActionIndex.value >= actions.length) {
+    activeActionIndex.value = 0
+  }
 })
 
 watch([isOpen, query], () => {
@@ -488,6 +681,12 @@ watch([isOpen, query], () => {
 
 watch(activeResultId, () => {
   if (isOpen.value) {
+    scrollActiveResultIntoView()
+  }
+})
+
+watch(activeActionId, () => {
+  if (isOpen.value && isActionPanelOpen.value) {
     scrollActiveResultIntoView()
   }
 })
@@ -511,236 +710,286 @@ watch(activeResultId, () => {
       @keydown.capture="onInputKeydown"
     />
     <Command.CommandList class="h-[420px] max-h-none">
-      <div
-        v-if="isEmpty"
-        class="text-muted-foreground py-6 text-center text-sm"
-      >
-        {{ i18n.t("commandPalette.empty") }}
-      </div>
+      <template v-if="isActionPanelOpen">
+        <Command.CommandGroup
+          force-visible
+          :heading="i18n.t('commandPalette.actionPanel.heading')"
+        >
+          <button
+            v-for="action in actionPanelActions"
+            :key="action.id"
+            type="button"
+            role="option"
+            :aria-selected="activeActionId === action.id"
+            :data-command-palette-active="
+              activeActionId === action.id ? 'true' : undefined
+            "
+            class="[&_svg:not([class*='text-'])]:text-muted-foreground relative flex min-h-11 w-full cursor-default items-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            :class="
+              activeActionId === action.id
+                ? 'bg-accent text-accent-foreground'
+                : ''
+            "
+            @click="runAction(action)"
+            @pointerenter="setActiveAction(action)"
+          >
+            <component
+              :is="action.icon"
+              class="mt-[2px] h-4 w-4"
+            />
+            <div class="min-w-0 flex-1">
+              <UiText
+                as="div"
+                variant="sm"
+                weight="medium"
+                class="truncate"
+              >
+                {{ action.title }}
+              </UiText>
+              <UiText
+                as="div"
+                variant="caption"
+                class="text-muted-foreground truncate"
+              >
+                {{ action.subtitle }}
+              </UiText>
+            </div>
+          </button>
+        </Command.CommandGroup>
+      </template>
 
-      <div
-        v-if="showCreateFallbacks"
-        class="text-muted-foreground px-3 pt-6 pb-2 text-center text-sm"
-      >
-        {{ i18n.t("commandPalette.empty") }}
-      </div>
+      <template v-else>
+        <div
+          v-if="isEmpty"
+          class="text-muted-foreground py-6 text-center text-sm"
+        >
+          {{ i18n.t("commandPalette.empty") }}
+        </div>
 
-      <Command.CommandGroup
-        v-if="showCreateFallbacks"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in createFallbackResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <div
+          v-if="showCreateFallbacks"
+          class="text-muted-foreground px-3 pt-6 pb-2 text-center text-sm"
+        >
+          {{ i18n.t("commandPalette.empty") }}
+        </div>
 
-      <Command.CommandGroup
-        v-if="
-          (showRootResults || showPendingRootResults) && recentResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.recent')"
-      >
-        <CommandPaletteItem
-          v-for="result in recentResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="showCreateFallbacks"
+          force-visible
+          :heading="i18n.t('commandPalette.groups.actions')"
+        >
+          <CommandPaletteItem
+            v-for="result in createFallbackResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          (showRootResults || showPendingRootResults) && commandResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in commandResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            (showRootResults || showPendingRootResults) && recentResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.recent')"
+        >
+          <CommandPaletteItem
+            v-for="result in recentResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="showRootResults || showPendingRootResults"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.spaces')"
-      >
-        <CommandPaletteItem
-          v-for="result in spaceResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            (showRootResults || showPendingRootResults) && commandResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.actions')"
+        >
+          <CommandPaletteItem
+            v-for="result in commandResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          (showScopedHome || showPendingScopedHome)
-            && scopedRecentResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.recent')"
-      >
-        <CommandPaletteItem
-          v-for="result in scopedRecentResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="showRootResults || showPendingRootResults"
+          force-visible
+          :heading="i18n.t('commandPalette.groups.spaces')"
+        >
+          <CommandPaletteItem
+            v-for="result in spaceResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="isSpaceMode && matchedSpaceResults.length"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.spaces')"
-      >
-        <CommandPaletteItem
-          v-for="result in matchedSpaceResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            (showScopedHome || showPendingScopedHome)
+              && scopedRecentResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.recent')"
+        >
+          <CommandPaletteItem
+            v-for="result in scopedRecentResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="isCommandMode && matchedCommandResults.length"
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in matchedCommandResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="isSpaceMode && matchedSpaceResults.length"
+          force-visible
+          :heading="i18n.t('commandPalette.groups.spaces')"
+        >
+          <CommandPaletteItem
+            v-for="result in matchedSpaceResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          !isCommandMode
-            && !isSpaceMode
-            && !isScopedSearch
-            && hasQuery
-            && !isSearching
-            && primaryCommandResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in primaryCommandResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="isCommandMode && matchedCommandResults.length"
+          force-visible
+          :heading="i18n.t('commandPalette.groups.actions')"
+        >
+          <CommandPaletteItem
+            v-for="result in matchedCommandResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          !isCommandMode
-            && !isSpaceMode
-            && !isScopedSearch
-            && hasQuery
-            && !isSearching
-            && primarySpaceResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.spaces')"
-      >
-        <CommandPaletteItem
-          v-for="result in primarySpaceResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            !isCommandMode
+              && !isSpaceMode
+              && !isScopedSearch
+              && hasQuery
+              && !isSearching
+              && primaryCommandResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.actions')"
+        >
+          <CommandPaletteItem
+            v-for="result in primaryCommandResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          !isCommandMode && !isSpaceMode && hasQuery && contentResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.results')"
-      >
-        <CommandPaletteItem
-          v-for="result in contentResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            !isCommandMode
+              && !isSpaceMode
+              && !isScopedSearch
+              && hasQuery
+              && !isSearching
+              && primarySpaceResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.spaces')"
+        >
+          <CommandPaletteItem
+            v-for="result in primarySpaceResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          !isCommandMode
-            && !isSpaceMode
-            && !isScopedSearch
-            && hasQuery
-            && !isSearching
-            && secondaryCommandResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.actions')"
-      >
-        <CommandPaletteItem
-          v-for="result in secondaryCommandResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            !isCommandMode && !isSpaceMode && hasQuery && contentResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.results')"
+        >
+          <CommandPaletteItem
+            v-for="result in contentResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
 
-      <Command.CommandGroup
-        v-if="
-          !isCommandMode
-            && !isSpaceMode
-            && !isScopedSearch
-            && hasQuery
-            && !isSearching
-            && secondarySpaceResults.length
-        "
-        force-visible
-        :heading="i18n.t('commandPalette.groups.spaces')"
-      >
-        <CommandPaletteItem
-          v-for="result in secondarySpaceResults"
-          :key="result.id"
-          :result="result"
-          :active="activeResultId === result.id"
-          @activate="setActiveResult"
-          @select="selectResult"
-        />
-      </Command.CommandGroup>
+        <Command.CommandGroup
+          v-if="
+            !isCommandMode
+              && !isSpaceMode
+              && !isScopedSearch
+              && hasQuery
+              && !isSearching
+              && secondaryCommandResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.actions')"
+        >
+          <CommandPaletteItem
+            v-for="result in secondaryCommandResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
+
+        <Command.CommandGroup
+          v-if="
+            !isCommandMode
+              && !isSpaceMode
+              && !isScopedSearch
+              && hasQuery
+              && !isSearching
+              && secondarySpaceResults.length
+          "
+          force-visible
+          :heading="i18n.t('commandPalette.groups.spaces')"
+        >
+          <CommandPaletteItem
+            v-for="result in secondarySpaceResults"
+            :key="result.id"
+            :result="result"
+            :active="activeResultId === result.id"
+            @activate="setActiveResult"
+            @select="selectResult"
+          />
+        </Command.CommandGroup>
+      </template>
     </Command.CommandList>
   </Command.CommandDialog>
 </template>

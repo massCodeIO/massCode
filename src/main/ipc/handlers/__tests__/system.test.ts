@@ -14,7 +14,14 @@ const getDirectoryState = vi.fn()
 const moveVault = vi.fn()
 const getVaultPath = vi.fn(() => '/current-vault')
 const getPaths = vi.fn((vaultPath: string) => ({ vaultPath }))
-const getRuntimeCache = vi.fn(() => ({ snippets: [] }))
+interface SnippetFileLookup {
+  filePath: string
+  id: number
+}
+
+const getRuntimeCache = vi.fn((): { snippets: SnippetFileLookup[] } => ({
+  snippets: [],
+}))
 const findSnippetById = vi.fn()
 const preferencesSet = vi.fn()
 

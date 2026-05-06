@@ -14,6 +14,7 @@ const {
   clearSearchScope,
   commandResults,
   contentResults,
+  createFallbackResults,
   hasQuery,
   isOpen,
   isSearching,
@@ -174,8 +175,42 @@ const scopedCommandResults = computed<CommandPaletteResult[]>(() =>
   ),
 )
 
+const hasSearchResults = computed(() => {
+  if (isScopedSearch.value) {
+    return contentResults.value.length > 0
+  }
+
+  if (isSpaceMode.value) {
+    return matchedSpaceResults.value.length > 0
+  }
+
+  if (isCommandMode.value) {
+    return matchedCommandResults.value.length > 0
+  }
+
+  return (
+    matchedCommandResults.value.length > 0
+    || matchedSpaceResults.value.length > 0
+    || contentResults.value.length > 0
+  )
+})
+
+const showCreateFallbacks = computed(
+  () =>
+    hasQuery.value
+    && !isSearching.value
+    && !isCommandMode.value
+    && !isSpaceMode.value
+    && !hasSearchResults.value
+    && createFallbackResults.value.length > 0,
+)
+
 const isEmpty = computed(() => {
   if (!hasQuery.value || isSearching.value) {
+    return false
+  }
+
+  if (showCreateFallbacks.value) {
     return false
   }
 
@@ -225,6 +260,10 @@ const visibleResults = computed<CommandPaletteResult[]>(() => {
 
   if (showScopedHome.value) {
     return [...scopedRecentResults.value, ...scopedCommandResults.value]
+  }
+
+  if (showCreateFallbacks.value) {
+    return createFallbackResults.value
   }
 
   if (isScopedSearch.value) {
@@ -377,6 +416,14 @@ function onInputKeydown(event: KeyboardEvent) {
   event.preventDefault()
   event.stopPropagation()
 
+  if (event.shiftKey && showCreateFallbacks.value) {
+    const fallbackResult = createFallbackResults.value[0]
+    if (fallbackResult) {
+      selectResult(fallbackResult)
+    }
+    return
+  }
+
   const result = visibleResults.value[activeIndex.value]
 
   if (!result) {
@@ -451,6 +498,28 @@ watch(activeResultId, () => {
       >
         {{ i18n.t("commandPalette.empty") }}
       </div>
+
+      <div
+        v-if="showCreateFallbacks"
+        class="text-muted-foreground px-3 pt-6 pb-2 text-center text-sm"
+      >
+        {{ i18n.t("commandPalette.empty") }}
+      </div>
+
+      <Command.CommandGroup
+        v-if="showCreateFallbacks"
+        force-visible
+        :heading="i18n.t('commandPalette.groups.actions')"
+      >
+        <CommandPaletteItem
+          v-for="result in createFallbackResults"
+          :key="result.id"
+          :result="result"
+          :active="activeResultId === result.id"
+          @activate="setActiveResult"
+          @select="selectResult"
+        />
+      </Command.CommandGroup>
 
       <Command.CommandGroup
         v-if="showRootResults && recentResults.length"

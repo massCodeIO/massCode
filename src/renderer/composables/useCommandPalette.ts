@@ -35,6 +35,7 @@ type NoteResult = NotesResponse[number]
 type HttpRequestResult = HttpRequestsResponse[number]
 type CommandPaletteRecentTarget = 'space' | 'snippet' | 'note' | 'http-request'
 type CommandPaletteUsageTarget = CommandPaletteRecentTarget | 'command'
+type CommandPaletteCreateTarget = 'snippet' | 'note' | 'http-request'
 
 interface CommandPaletteRecentEntry {
   id: string
@@ -65,6 +66,20 @@ interface CommandPaletteCommand {
   run: () => Promise<void>
 }
 
+interface CommandPaletteCreatePayload {
+  name?: string
+  url?: string
+}
+
+interface CommandPaletteSpaceResult {
+  id: string
+  type: 'space'
+  title: string
+  subtitle: string
+  icon: Component
+  spaceId: SpaceId
+}
+
 interface CommandPaletteRecentResult {
   id: string
   type: 'recent'
@@ -75,14 +90,7 @@ interface CommandPaletteRecentResult {
 }
 
 export type CommandPaletteResult =
-  | {
-    id: string
-    type: 'space'
-    title: string
-    subtitle: string
-    icon: Component
-    spaceId: SpaceId
-  }
+  | CommandPaletteSpaceResult
   | {
     id: string
     type: 'snippet'
@@ -301,7 +309,7 @@ function recordRecentResult(result: CommandPaletteResult) {
   )
 }
 
-const spaceResults = computed<CommandPaletteResult[]>(() =>
+const spaceResults = computed<CommandPaletteSpaceResult[]>(() =>
   getSpaceDefinitions().map(space => ({
     id: `space:${space.id}`,
     type: 'space',
@@ -312,7 +320,7 @@ const spaceResults = computed<CommandPaletteResult[]>(() =>
   })),
 )
 
-const scopeSpaceResults = computed<CommandPaletteResult[]>(() =>
+const scopeSpaceResults = computed<CommandPaletteSpaceResult[]>(() =>
   spaceResults.value.filter(result =>
     SEARCHABLE_SPACE_IDS.has(result.spaceId),
   ),
@@ -427,6 +435,18 @@ const isCommandMode = computed(
 const isSpaceMode = computed(
   () => !searchScopeSpaceId.value && query.value.startsWith('@'),
 )
+
+const createFallbackResults = computed<CommandPaletteResult[]>(() => {
+  const search = query.value.trim()
+
+  if (!search || isCommandMode.value || isSpaceMode.value) {
+    return []
+  }
+
+  return getCreateFallbackTargets(searchScopeSpaceId.value, search).map(
+    target => getCreateFallbackResult(target, search),
+  )
+})
 
 function resetSearchResults() {
   settledSearchQuery.value = ''
@@ -612,7 +632,81 @@ async function openSpace(spaceId: SpaceId) {
   }
 }
 
-async function createSnippetFromPalette() {
+function isHttpUrl(value: string) {
+  return /^https?:\/\//i.test(value.trim())
+}
+
+function getCreateFallbackTargets(
+  spaceId: SpaceId | undefined,
+  search: string,
+): CommandPaletteCreateTarget[] {
+  if (spaceId === 'code') {
+    return ['snippet']
+  }
+
+  if (spaceId === 'notes') {
+    return ['note']
+  }
+
+  if (spaceId === 'http') {
+    return ['http-request']
+  }
+
+  return isHttpUrl(search)
+    ? ['http-request', 'snippet', 'note']
+    : ['snippet', 'note', 'http-request']
+}
+
+function getCreateFallbackResult(
+  target: CommandPaletteCreateTarget,
+  search: string,
+) {
+  const isUrl = target === 'http-request' && isHttpUrl(search)
+  const command: CommandPaletteCommand = {
+    id: `create-${target}-fallback:${search}`,
+    title:
+      target === 'snippet'
+        ? i18n.t('commandPalette.fallbacks.createSnippet', { query: search })
+        : target === 'note'
+          ? i18n.t('commandPalette.fallbacks.createNote', { query: search })
+          : isUrl
+            ? i18n.t('commandPalette.fallbacks.createHttpRequestFromUrl')
+            : i18n.t('commandPalette.fallbacks.createHttpRequest', {
+                query: search,
+              }),
+    subtitle:
+      target === 'snippet'
+        ? i18n.t('commandPalette.fallbacks.createSnippetSubtitle')
+        : target === 'note'
+          ? i18n.t('commandPalette.fallbacks.createNoteSubtitle')
+          : i18n.t('commandPalette.fallbacks.createHttpRequestSubtitle'),
+    icon: getSpaceIcon(
+      target === 'snippet' ? 'code' : target === 'note' ? 'notes' : 'http',
+    ),
+    keywords: ['create', search],
+    spaceId:
+      target === 'snippet' ? 'code' : target === 'note' ? 'notes' : 'http',
+    run: () =>
+      target === 'snippet'
+        ? createSnippetFromPalette({ name: search })
+        : target === 'note'
+          ? createNoteFromPalette({ name: search })
+          : createHttpRequestFromPalette(
+              isUrl ? { url: search } : { name: search },
+            ),
+  }
+
+  return {
+    id: `command:${command.id}`,
+    type: 'command',
+    title: command.title,
+    subtitle: command.subtitle,
+    icon: command.icon,
+    command,
+  } satisfies CommandPaletteResult
+}
+
+async function createSnippetFromPalette(payload?: CommandPaletteCreatePayload) {
   const [{ useApp }, { useFolders }, { useSnippets }] = await Promise.all([
     import('@/composables/useApp'),
     import('@/composables/useFolders'),
@@ -632,10 +726,12 @@ async function createSnippetFromPalette() {
   codeApp.highlightedTagId.value = undefined
 
   await router.push({ name: RouterName.main })
-  await codeSnippets.createSnippetAndSelect()
+  await codeSnippets.createSnippetAndSelect(
+    payload?.name ? { name: payload.name } : undefined,
+  )
 }
 
-async function createNoteFromPalette() {
+async function createNoteFromPalette(payload?: CommandPaletteCreatePayload) {
   const { useNoteFolders } = await import('@/composables/spaces/notes')
   const noteFolders = useNoteFolders()
   const notesApi = useNotes()
@@ -651,10 +747,14 @@ async function createNoteFromPalette() {
   notesApp.highlightedTagId.value = undefined
 
   await router.push({ name: RouterName.notesSpace })
-  await notesApi.createNoteAndSelect()
+  await notesApi.createNoteAndSelect(
+    payload?.name ? { name: payload.name } : undefined,
+  )
 }
 
-async function createHttpRequestFromPalette() {
+async function createHttpRequestFromPalette(
+  payload?: CommandPaletteCreatePayload,
+) {
   const httpFolders = useHttpFolders()
   const httpRequestsApi = useHttpRequests()
 
@@ -665,7 +765,11 @@ async function createHttpRequestFromPalette() {
   httpApp.highlightedFolderIds.value.clear()
 
   await router.push({ name: RouterName.httpSpace })
-  await httpRequestsApi.createHttpRequestAndSelect({ folderId: null })
+  await httpRequestsApi.createHttpRequestAndSelect({
+    folderId: null,
+    ...(payload?.name && { name: payload.name }),
+    ...(payload?.url !== undefined && { url: payload.url }),
+  })
 }
 
 async function createCodeFolderFromPalette() {
@@ -955,6 +1059,7 @@ export function useCommandPalette() {
   return {
     commandResults,
     contentResults,
+    createFallbackResults,
     hasQuery,
     httpRequestResults,
     isOpen,

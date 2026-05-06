@@ -58,6 +58,10 @@ interface NotesUpdate {
   isFavorites?: number
 }
 
+interface CreateNotePayload {
+  name?: string
+}
+
 // --- Module-level state ---
 
 export const selectedNoteIds = ref<number[]>(
@@ -239,17 +243,24 @@ async function withNotesLoading<T>(loader: () => Promise<T>): Promise<T> {
   }
 }
 
-async function createNote() {
+async function createNote(payload?: CreateNotePayload) {
   try {
     const targetFolderId = notesState.folderId || null
     const existingNames = await getNoteNamesForCreate(targetFolderId)
-    const nextNoteName = getNextIndexedName(
-      i18n.t('notes.untitled'),
-      existingNames,
+    const requestedName = payload?.name?.trim()
+    const hasRequestedName = existingNames.some(
+      name => name.trim().toLowerCase() === requestedName?.toLowerCase(),
     )
+    const nextNoteName
+      = requestedName && !hasRequestedName
+        ? requestedName
+        : getNextIndexedName(
+            requestedName || i18n.t('notes.untitled'),
+            existingNames,
+          )
 
     markPersistedStorageMutation()
-    await api.notes.postNotes({
+    const { data } = await api.notes.postNotes({
       name: nextNoteName,
       folderId: targetFolderId,
     })
@@ -264,15 +275,24 @@ async function createNote() {
     }
 
     await getNotes(queryByLibraryOrFolderOrSearch.value)
+
+    return Number(data.id)
   }
   catch (error) {
     console.error(error)
   }
 }
 
-async function createNoteAndSelect() {
-  await createNote()
-  selectFirstNote()
+async function createNoteAndSelect(payload?: CreateNotePayload) {
+  const id = await createNote(payload)
+
+  if (id) {
+    selectNote(id)
+  }
+  else {
+    selectFirstNote()
+  }
+
   await focusNoteNameInput()
 }
 

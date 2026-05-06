@@ -42,6 +42,15 @@
       "newHttpFolderSubtitle": "Create a folder in HTTP",
       "openPreferences": "Open preferences",
       "openPreferencesSubtitle": "Change massCode settings"
+    },
+    "fallbacks": {
+      "createSnippet": "Create snippet \"{{query}}\"",
+      "createSnippetSubtitle": "Create in Code Inbox",
+      "createNote": "Create note \"{{query}}\"",
+      "createNoteSubtitle": "Create in Notes Inbox",
+      "createHttpRequest": "Create HTTP request \"{{query}}\"",
+      "createHttpRequestFromUrl": "Create HTTP request from URL",
+      "createHttpRequestSubtitle": "Create in HTTP"
     }
   },
   "spaces": {

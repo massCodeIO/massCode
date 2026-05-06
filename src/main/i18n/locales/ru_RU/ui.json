@@ -42,6 +42,15 @@
       "newHttpFolderSubtitle": "Создать папку в HTTP",
       "openPreferences": "Открыть настройки",
       "openPreferencesSubtitle": "Изменить настройки massCode"
+    },
+    "fallbacks": {
+      "createSnippet": "Создать сниппет \"{{query}}\"",
+      "createSnippetSubtitle": "Создать во входящих раздела Код",
+      "createNote": "Создать заметку \"{{query}}\"",
+      "createNoteSubtitle": "Создать во входящих раздела Заметки",
+      "createHttpRequest": "Создать HTTP-запрос \"{{query}}\"",
+      "createHttpRequestFromUrl": "Создать HTTP-запрос из URL",
+      "createHttpRequestSubtitle": "Создать в HTTP"
     }
   },
   "spaces": {

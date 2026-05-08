@@ -21,6 +21,18 @@ import assets from '../../_data/assets.json'
 
   <p>macOS 10.13+</p>
 
+  <h3>Opening unsigned macOS builds</h3>
+
+  <p>
+    The macOS app is not code-signed. If macOS says that massCode is damaged or
+    cannot be opened, allow it in <strong>System Settings</strong> >
+    <strong>Privacy & Security</strong>, or remove the quarantine attribute:
+  </p>
+
+  <div class="language-bash">
+    <pre><code>sudo xattr -r -d com.apple.quarantine /Applications/massCode.app</code></pre>
+  </div>
+
   <h2>Windows</h2>
 
   <div style="display: flex; gap: 12px">

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { parseObsidianMarkdownFiles } from '../../notes/obsidian'
 import { parseGitHubGistResponse } from '../githubGists'
 import { parseRaycastSnippetFiles } from '../raycast'
 import { parseVSCodeSnippetFiles } from '../vscode'
@@ -137,6 +138,43 @@ describe('parseGitHubGistResponse', () => {
         sourceId: '1234567890abcdef1234',
         sourceUrl: 'https://gist.github.com/user/1234567890abcdef1234',
         tags: ['gist'],
+      },
+    ])
+  })
+})
+
+describe('parseObsidianMarkdownFiles', () => {
+  it('parses markdown files with folder paths and tags', () => {
+    const content = `---
+tags:
+  - vue
+  - snippets
+---
+# Component
+
+Use #frontend patterns.`
+
+    const result = parseObsidianMarkdownFiles([
+      {
+        content,
+        name: 'Component.md',
+        relativePath: 'Knowledge/Vue/Component.md',
+      },
+      {
+        content: 'ignored',
+        name: 'image.png',
+        relativePath: 'Assets/image.png',
+      },
+    ])
+
+    expect(result.warnings).toEqual([])
+    expect(result.notes).toEqual([
+      {
+        content,
+        folderPath: ['Knowledge', 'Vue'],
+        name: 'Component',
+        sourceId: 'Knowledge/Vue/Component.md',
+        tags: ['vue', 'snippets', 'frontend'],
       },
     ])
   })

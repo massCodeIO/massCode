@@ -2,6 +2,7 @@ import Elysia, { t } from 'elysia'
 
 const importSource = t.Union([
   t.Literal('github-gists'),
+  t.Literal('obsidian'),
   t.Literal('raycast-snippets'),
   t.Literal('vscode-snippets'),
 ])
@@ -43,6 +44,7 @@ const importPreviewResponse = t.Object({
       snippets: t.Number(),
     }),
   ),
+  notes: t.Number(),
   snippets: t.Number(),
   source: importSource,
   tags: t.Array(t.String()),
@@ -53,6 +55,7 @@ const importApplyResponse = t.Object({
   createdRootFolderName: t.String(),
   createdSnippetNames: t.Array(t.String()),
   folders: t.Number(),
+  notes: t.Number(),
   snippets: t.Number(),
   source: importSource,
   tags: t.Number(),

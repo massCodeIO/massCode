@@ -1,5 +1,6 @@
 export type ImportSource =
   | 'github-gists'
+  | 'obsidian'
   | 'raycast-snippets'
   | 'vscode-snippets'
 
@@ -50,6 +51,7 @@ export interface ImportPreview {
     name: string
     snippets: number
   }>
+  notes: number
   snippets: number
   source: ImportSource
   tags: string[]
@@ -60,8 +62,22 @@ export interface ImportApplySummary {
   createdRootFolderName: string
   createdSnippetNames: string[]
   folders: number
+  notes: number
   snippets: number
   source: ImportSource
   tags: number
+  warnings: ImportWarning[]
+}
+
+export interface NoteImportCandidate {
+  content: string
+  folderPath?: string[]
+  name: string
+  sourceId?: string
+  tags?: string[]
+}
+
+export interface NoteImportParseResult {
+  notes: NoteImportCandidate[]
   warnings: ImportWarning[]
 }

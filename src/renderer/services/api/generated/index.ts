@@ -692,7 +692,7 @@ export interface ImportApplyInput {
     name: string;
     relativePath?: string;
   }[];
-  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
   url?: string;
 }
 
@@ -700,8 +700,9 @@ export interface ImportApplyResponse {
   createdRootFolderName: string;
   createdSnippetNames: string[];
   folders: number;
+  notes: number;
   snippets: number;
-  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
   tags: number;
   warnings: {
     message: string;
@@ -716,7 +717,7 @@ export interface ImportPreviewInput {
     name: string;
     relativePath?: string;
   }[];
-  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
   url?: string;
 }
 
@@ -729,8 +730,9 @@ export interface ImportPreviewResponse {
     name: string;
     snippets: number;
   }[];
+  notes: number;
   snippets: number;
-  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
   tags: string[];
   warnings: {
     message: string;

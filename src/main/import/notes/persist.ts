@@ -1,15 +1,18 @@
 import type {
   ImportApplySummary,
-  ImportSource,
-  SnippetImportCandidate,
-  SnippetImportParseResult,
+  NoteImportCandidate,
+  NoteImportParseResult,
 } from '../common/types'
-import { useStorage } from '../../storage'
-import { normalizeImportEntryName, normalizeImportTag } from './normalizers'
-import { getSnippetImportSourceName } from './source'
+import { useNotesStorage } from '../../storage'
+import {
+  normalizeImportEntryName,
+  normalizeImportTag,
+} from '../snippets/normalizers'
 
 function findFolderId(
-  folders: ReturnType<ReturnType<typeof useStorage>['folders']['getFolders']>,
+  folders: ReturnType<
+    ReturnType<typeof useNotesStorage>['folders']['getFolders']
+  >,
   parentId: number | null,
   name: string,
 ): number | null {
@@ -23,7 +26,9 @@ function findFolderId(
 }
 
 function getUniqueFolderName(
-  folders: ReturnType<ReturnType<typeof useStorage>['folders']['getFolders']>,
+  folders: ReturnType<
+    ReturnType<typeof useNotesStorage>['folders']['getFolders']
+  >,
   parentId: number | null,
   name: string,
 ): string {
@@ -47,13 +52,11 @@ function getUniqueFolderName(
   return `${name} ${Date.now()}`
 }
 
-function getUniqueSnippetName(
-  snippets: ReturnType<
-    ReturnType<typeof useStorage>['snippets']['getSnippets']
-  >,
+function getUniqueNoteName(
+  notes: ReturnType<ReturnType<typeof useNotesStorage>['notes']['getNotes']>,
   name: string,
 ): string {
-  const names = new Set(snippets.map(snippet => snippet.name.toLowerCase()))
+  const names = new Set(notes.map(note => note.name.toLowerCase()))
 
   if (!names.has(name.toLowerCase())) {
     return name
@@ -70,7 +73,7 @@ function getUniqueSnippetName(
 }
 
 function ensureImportedRootFolder(): { created: boolean, id: number } {
-  const storage = useStorage()
+  const storage = useNotesStorage()
   const rootName = 'Imported'
   const existingId = findFolderId(storage.folders.getFolders(), null, rootName)
 
@@ -84,17 +87,10 @@ function ensureImportedRootFolder(): { created: boolean, id: number } {
   }
 }
 
-function createImportRunFolder(
-  parentId: number,
-  source: ImportSource,
-): { id: number, name: string } {
-  const storage = useStorage()
+function createImportRunFolder(parentId: number): { id: number, name: string } {
+  const storage = useNotesStorage()
   const folders = storage.folders.getFolders()
-  const name = getUniqueFolderName(
-    folders,
-    parentId,
-    getSnippetImportSourceName(source),
-  )
+  const name = getUniqueFolderName(folders, parentId, 'Obsidian')
 
   return {
     id: storage.folders.createFolder({ name, parentId }).id,
@@ -106,7 +102,7 @@ function ensureFolderPath(
   rootFolderId: number,
   folderPath: string[] | undefined,
 ): { created: number, folderId: number } {
-  const storage = useStorage()
+  const storage = useNotesStorage()
   let created = 0
   let parentId = rootFolderId
 
@@ -131,7 +127,7 @@ function getOrCreateTagIds(tags: string[] | undefined): {
   created: number
   tagIds: number[]
 } {
-  const storage = useStorage()
+  const storage = useNotesStorage()
   const tagIds: number[] = []
   let created = 0
 
@@ -158,67 +154,54 @@ function getOrCreateTagIds(tags: string[] | undefined): {
   return { created, tagIds }
 }
 
-function createSnippet(
-  candidate: SnippetImportCandidate,
+function createNote(
+  candidate: NoteImportCandidate,
   folderId: number,
 ): { name: string, tagCount: number } {
-  const storage = useStorage()
-  const name = getUniqueSnippetName(
-    storage.snippets.getSnippets({ folderId, isDeleted: 0 }),
-    normalizeImportEntryName(candidate.name, 'Untitled snippet'),
+  const storage = useNotesStorage()
+  const name = getUniqueNoteName(
+    storage.notes.getNotes({ folderId, isDeleted: 0 }),
+    normalizeImportEntryName(candidate.name, 'Untitled note'),
   )
-  const { id } = storage.snippets.createSnippet({ folderId, name })
+  const { id } = storage.notes.createNote({ folderId, name })
 
-  if (candidate.description !== undefined) {
-    storage.snippets.updateSnippet(id, {
-      description: candidate.description ?? null,
-    })
-  }
-
-  candidate.contents.forEach((content) => {
-    storage.snippets.createSnippetContent(id, {
-      label: normalizeImportEntryName(content.label, 'Fragment'),
-      language: content.language || 'plain_text',
-      value: content.value,
-    })
-  })
+  storage.notes.updateNoteContent(id, candidate.content)
 
   const { created, tagIds } = getOrCreateTagIds(candidate.tags)
   tagIds.forEach((tagId) => {
-    storage.snippets.addTagToSnippet(id, tagId)
+    storage.notes.addTagToNote(id, tagId)
   })
 
   return { name, tagCount: created }
 }
 
-export function applySnippetImportResult(
-  source: ImportSource,
-  result: SnippetImportParseResult,
+export function applyNotesImportResult(
+  result: NoteImportParseResult,
 ): ImportApplySummary {
   const importedRoot = ensureImportedRootFolder()
-  const runFolder = createImportRunFolder(importedRoot.id, source)
-  const createdSnippetNames: string[] = []
+  const runFolder = createImportRunFolder(importedRoot.id)
+  const createdNoteNames: string[] = []
   let folders = importedRoot.created ? 1 : 0
   let tags = 0
 
   folders += 1
 
-  result.snippets.forEach((candidate) => {
+  result.notes.forEach((candidate) => {
     const targetFolder = ensureFolderPath(runFolder.id, candidate.folderPath)
     folders += targetFolder.created
 
-    const snippet = createSnippet(candidate, targetFolder.folderId)
-    createdSnippetNames.push(snippet.name)
-    tags += snippet.tagCount
+    const note = createNote(candidate, targetFolder.folderId)
+    createdNoteNames.push(note.name)
+    tags += note.tagCount
   })
 
   return {
     createdRootFolderName: runFolder.name,
-    createdSnippetNames,
+    createdSnippetNames: [],
     folders,
-    notes: 0,
-    snippets: createdSnippetNames.length,
-    source,
+    notes: createdNoteNames.length,
+    snippets: 0,
+    source: 'obsidian',
     tags,
     warnings: result.warnings,
   }

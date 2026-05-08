@@ -70,6 +70,7 @@ export async function previewSnippetImport(
         snippets: result.snippets.length,
       },
     ],
+    notes: 0,
     snippets: result.snippets.length,
     source,
     tags: [...tags.values()].sort((a, b) => a.localeCompare(b)),

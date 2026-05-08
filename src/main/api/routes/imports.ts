@@ -3,10 +3,7 @@ import type {
   ImportPreviewResponse,
 } from '../dto/imports'
 import { Elysia } from 'elysia'
-import {
-  applySnippetImport,
-  previewSnippetImport,
-} from '../../import/snippets'
+import { applyImport, previewImport } from '../../import'
 import { commonMessageResponse } from '../dto/common/response'
 import { importsDTO } from '../dto/imports'
 
@@ -31,7 +28,7 @@ app
     '/preview',
     async ({ body, status }) => {
       try {
-        return (await previewSnippetImport(body.source, {
+        return (await previewImport(body.source, {
           files: body.files,
           url: body.url,
         })) as ImportPreviewResponse
@@ -55,7 +52,7 @@ app
     '/apply',
     async ({ body, status }) => {
       try {
-        return (await applySnippetImport(body.source, {
+        return (await applyImport(body.source, {
           files: body.files,
           url: body.url,
         })) as ImportApplyResponse

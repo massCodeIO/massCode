@@ -29,12 +29,12 @@ app
   .use(importsDTO)
   .post(
     '/preview',
-    ({ body, status }) => {
+    async ({ body, status }) => {
       try {
-        return previewSnippetImport(
-          body.source,
-          body.files,
-        ) as ImportPreviewResponse
+        return (await previewSnippetImport(body.source, {
+          files: body.files,
+          url: body.url,
+        })) as ImportPreviewResponse
       }
       catch (error) {
         return mapImportError(status, error)
@@ -53,12 +53,12 @@ app
   )
   .post(
     '/apply',
-    ({ body, status }) => {
+    async ({ body, status }) => {
       try {
-        return applySnippetImport(
-          body.source,
-          body.files,
-        ) as ImportApplyResponse
+        return (await applySnippetImport(body.source, {
+          files: body.files,
+          url: body.url,
+        })) as ImportApplyResponse
       }
       catch (error) {
         return mapImportError(status, error)

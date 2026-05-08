@@ -1,19 +1,26 @@
 import type {
   ImportApplySummary,
-  ImportFile,
+  ImportPayload,
   ImportPreview,
   ImportSource,
   SnippetImportParseResult,
 } from '../common/types'
+import { fetchGitHubGistImport } from './githubGists'
 import { applySnippetImportResult } from './persist'
 import { parseRaycastSnippetFiles } from './raycast'
 import { getSnippetImportSourceName } from './source'
 import { parseVSCodeSnippetFiles } from './vscode'
 
-function parseSnippetImportFiles(
+async function parseSnippetImportPayload(
   source: ImportSource,
-  files: ImportFile[] = [],
-): SnippetImportParseResult {
+  payload: ImportPayload = {},
+): Promise<SnippetImportParseResult> {
+  if (source === 'github-gists') {
+    return fetchGitHubGistImport(payload.url)
+  }
+
+  const files = payload.files || []
+
   if (source === 'vscode-snippets') {
     return parseVSCodeSnippetFiles(files)
   }
@@ -33,11 +40,11 @@ function parseSnippetImportFiles(
   }
 }
 
-export function previewSnippetImport(
+export async function previewSnippetImport(
   source: ImportSource,
-  files: ImportFile[] = [],
-): ImportPreview {
-  const result = parseSnippetImportFiles(source, files)
+  payload: ImportPayload = {},
+): Promise<ImportPreview> {
+  const result = await parseSnippetImportPayload(source, payload)
   const folders = new Map<string, number>()
   const tags = new Map<string, string>()
 
@@ -72,17 +79,17 @@ export function previewSnippetImport(
 
 export function applySnippetImport(
   source: ImportSource,
-  files: ImportFile[] = [],
-): ImportApplySummary {
-  return applySnippetImportResult(
-    source,
-    parseSnippetImportFiles(source, files),
+  payload: ImportPayload = {},
+): Promise<ImportApplySummary> {
+  return parseSnippetImportPayload(source, payload).then(result =>
+    applySnippetImportResult(source, result),
   )
 }
 
 export type {
   ImportApplySummary,
   ImportFile,
+  ImportPayload,
   ImportPreview,
   ImportSource,
 } from '../common/types'

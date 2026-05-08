@@ -1,4 +1,7 @@
-export type ImportSource = 'raycast-snippets' | 'vscode-snippets'
+export type ImportSource =
+  | 'github-gists'
+  | 'raycast-snippets'
+  | 'vscode-snippets'
 
 export interface ImportWarning {
   message: string
@@ -10,6 +13,11 @@ export interface ImportFile {
   encoding?: 'text' | 'base64'
   name: string
   relativePath?: string
+}
+
+export interface ImportPayload {
+  files?: ImportFile[]
+  url?: string
 }
 
 export interface SnippetImportContent {

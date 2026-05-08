@@ -685,8 +685,6 @@ export interface HttpImportPreviewResponse {
   }[];
 }
 
-export type ImportSource = "raycast-snippets" | "vscode-snippets";
-
 export interface ImportApplyInput {
   files?: {
     content: string;
@@ -694,7 +692,8 @@ export interface ImportApplyInput {
     name: string;
     relativePath?: string;
   }[];
-  source: ImportSource;
+  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  url?: string;
 }
 
 export interface ImportApplyResponse {
@@ -702,7 +701,7 @@ export interface ImportApplyResponse {
   createdSnippetNames: string[];
   folders: number;
   snippets: number;
-  source: ImportSource;
+  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
   tags: number;
   warnings: {
     message: string;
@@ -717,7 +716,8 @@ export interface ImportPreviewInput {
     name: string;
     relativePath?: string;
   }[];
-  source: ImportSource;
+  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
+  url?: string;
 }
 
 export interface ImportPreviewResponse {
@@ -730,7 +730,7 @@ export interface ImportPreviewResponse {
     snippets: number;
   }[];
   snippets: number;
-  source: ImportSource;
+  source: "github-gists" | "raycast-snippets" | "vscode-snippets";
   tags: string[];
   warnings: {
     message: string;

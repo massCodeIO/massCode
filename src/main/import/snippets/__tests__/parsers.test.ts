@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { parseGitHubGistResponse } from '../githubGists'
 import { parseRaycastSnippetFiles } from '../raycast'
 import { parseVSCodeSnippetFiles } from '../vscode'
 
@@ -88,6 +89,54 @@ describe('parseRaycastSnippetFiles', () => {
         name: 'Commit',
         sourceId: 'raycast.json:1',
         tags: ['gc'],
+      },
+    ])
+  })
+})
+
+describe('parseGitHubGistResponse', () => {
+  it('maps a multi-file Gist to one multi-content snippet', () => {
+    const result = parseGitHubGistResponse(
+      {
+        description: 'Useful helpers',
+        files: {
+          'copy.ts': {
+            content: 'export function copy() {}',
+            filename: 'copy.ts',
+            language: 'TypeScript',
+          },
+          'readme.md': {
+            content: '# Usage',
+            filename: 'readme.md',
+            language: 'Markdown',
+          },
+        },
+        html_url: 'https://gist.github.com/user/1234567890abcdef1234',
+        id: '1234567890abcdef1234',
+      },
+      'https://gist.github.com/user/1234567890abcdef1234',
+    )
+
+    expect(result.warnings).toEqual([])
+    expect(result.snippets).toEqual([
+      {
+        contents: [
+          {
+            label: 'copy.ts',
+            language: 'typescript',
+            value: 'export function copy() {}',
+          },
+          {
+            label: 'readme.md',
+            language: 'markdown',
+            value: '# Usage',
+          },
+        ],
+        description: 'https://gist.github.com/user/1234567890abcdef1234',
+        name: 'Useful helpers',
+        sourceId: '1234567890abcdef1234',
+        sourceUrl: 'https://gist.github.com/user/1234567890abcdef1234',
+        tags: ['gist'],
       },
     ])
   })

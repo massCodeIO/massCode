@@ -1,6 +1,7 @@
 import Elysia, { t } from 'elysia'
 
 const importSource = t.Union([
+  t.Literal('github-gists'),
   t.Literal('raycast-snippets'),
   t.Literal('vscode-snippets'),
 ])
@@ -20,11 +21,13 @@ const importWarning = t.Object({
 const importPreviewInput = t.Object({
   files: t.Optional(t.Array(importFile)),
   source: importSource,
+  url: t.Optional(t.String()),
 })
 
 const importApplyInput = t.Object({
   files: t.Optional(t.Array(importFile)),
   source: importSource,
+  url: t.Optional(t.String()),
 })
 
 const importPreviewResponse = t.Object({

@@ -82,6 +82,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Documentation', link: '/documentation/' },
+      { text: 'Compare', link: '/compare/' },
       { text: 'Sponsor', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
@@ -94,6 +95,20 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/compare/': [
+        {
+          text: 'Compare',
+          items: [
+            { text: 'Overview', link: '/compare/' },
+            { text: 'massCode vs Pieces', link: '/compare/pieces' },
+            { text: 'massCode vs Cacher', link: '/compare/cacher' },
+            { text: 'massCode vs SnippetsLab', link: '/compare/snippetslab' },
+            { text: 'massCode vs Raycast Snippets', link: '/compare/raycast' },
+            { text: 'Best Open-Source Snippet Manager', link: '/compare/best-open-source' },
+            { text: 'Local-First Alternative to Pieces / Cacher', link: '/compare/local-first' },
+          ],
+        },
+      ],
       '/documentation/': [
         {
           text: 'General',

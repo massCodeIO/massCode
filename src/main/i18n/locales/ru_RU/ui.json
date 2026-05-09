@@ -28,6 +28,14 @@
       "httpRequests": "HTTP-запросы"
     },
     "actions": {
+      "importVSCodeSnippets": "Импорт из VS Code",
+      "importVSCodeSnippetsSubtitle": "Импортировать JSON сниппетов VS Code",
+      "importRaycastSnippets": "Импорт из Raycast",
+      "importRaycastSnippetsSubtitle": "Импортировать JSON сниппетов Raycast",
+      "importGitHubGists": "Импорт GitHub Gists",
+      "importGitHubGistsSubtitle": "Импортировать публичный GitHub Gist URL",
+      "importObsidianNotes": "Импорт из Obsidian",
+      "importObsidianNotesSubtitle": "Импортировать markdown-папку в Заметки",
       "newSnippet": "Новый сниппет",
       "newSnippetSubtitle": "Создать сниппет кода",
       "newNote": "Новая заметка",
@@ -67,6 +75,41 @@
       "run": "Выполнить",
       "back": "Назад"
     }
+  },
+  "imports": {
+    "title": "Импорт",
+    "description": "Перенесите сниппеты и заметки из текущих инструментов в massCode.",
+    "action": {
+      "code": "Импорт сниппетов",
+      "notes": "Импорт заметок"
+    },
+    "sources": {
+      "vscode-snippets": "VS Code",
+      "raycast-snippets": "Raycast",
+      "github-gists": "GitHub Gists",
+      "obsidian": "Obsidian"
+    },
+    "gistUrl": "URL Gist",
+    "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "fileHint": "Перетащите файлы сюда или выберите их, чтобы увидеть предпросмотр импорта.",
+    "folderHint": "Выберите markdown-папку Obsidian, чтобы увидеть предпросмотр импорта.",
+    "chooseFiles": "Выбрать файлы",
+    "chooseFolder": "Выбрать папку",
+    "preview": "Предпросмотр",
+    "previewing": "Чтение импорта",
+    "fileReadWarning": "Не удалось прочитать файл. Убедитесь, что он загружен локально и доступен massCode.",
+    "noReadableFiles": "Не найдено читаемых файлов. Загрузите папку локально или проверьте права доступа, затем повторите импорт.",
+    "noImportableFiles": "Не найдено markdown-файлов для импорта.",
+    "snippets": "Сниппеты",
+    "notes": "Заметки",
+    "tags": "Теги",
+    "folderMeta": "{{count}} элементов",
+    "warnings": "Предупреждения",
+    "import": "Импортировать",
+    "importing": "Импорт",
+    "imported": "Импортировано сниппетов: {{snippets}}, заметок: {{notes}}.",
+    "createdFolder": "Создано: {{name}}",
+    "error": "Не удалось импортировать"
   },
   "spaces": {
     "label": "Пространства",

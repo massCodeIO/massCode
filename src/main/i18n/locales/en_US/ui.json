@@ -28,6 +28,14 @@
       "httpRequests": "HTTP Requests"
     },
     "actions": {
+      "importVSCodeSnippets": "Import from VS Code",
+      "importVSCodeSnippetsSubtitle": "Import VS Code snippets JSON",
+      "importRaycastSnippets": "Import from Raycast",
+      "importRaycastSnippetsSubtitle": "Import Raycast snippets JSON",
+      "importGitHubGists": "Import GitHub Gists",
+      "importGitHubGistsSubtitle": "Import a public GitHub Gist URL",
+      "importObsidianNotes": "Import from Obsidian",
+      "importObsidianNotesSubtitle": "Import a markdown folder into Notes",
       "newSnippet": "New snippet",
       "newSnippetSubtitle": "Create a code snippet",
       "newNote": "New note",
@@ -67,6 +75,41 @@
       "run": "Run",
       "back": "Back"
     }
+  },
+  "imports": {
+    "title": "Import",
+    "description": "Bring snippets and notes from your existing tools into massCode.",
+    "action": {
+      "code": "Import snippets",
+      "notes": "Import notes"
+    },
+    "sources": {
+      "vscode-snippets": "VS Code",
+      "raycast-snippets": "Raycast",
+      "github-gists": "GitHub Gists",
+      "obsidian": "Obsidian"
+    },
+    "gistUrl": "Gist URL",
+    "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "fileHint": "Drag files here, or choose files to preview the import.",
+    "folderHint": "Choose an Obsidian markdown folder to preview the import.",
+    "chooseFiles": "Choose files",
+    "chooseFolder": "Choose folder",
+    "preview": "Preview",
+    "previewing": "Reading import",
+    "fileReadWarning": "File could not be read. Make sure it is downloaded locally and available to massCode.",
+    "noReadableFiles": "No readable files found. Download the folder locally or check file permissions, then try again.",
+    "noImportableFiles": "No importable markdown files found.",
+    "snippets": "Snippets",
+    "notes": "Notes",
+    "tags": "Tags",
+    "folderMeta": "{{count}} items",
+    "warnings": "Warnings",
+    "import": "Import",
+    "importing": "Importing",
+    "imported": "Imported {{snippets}} snippets and {{notes}} notes.",
+    "createdFolder": "Created: {{name}}",
+    "error": "Import failed"
   },
   "spaces": {
     "label": "Spaces",

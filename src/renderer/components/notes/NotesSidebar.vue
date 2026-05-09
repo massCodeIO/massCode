@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { useNavigationHistory, useNotesApp } from '@/composables'
+import {
+  useImportDialog,
+  useNavigationHistory,
+  useNotesApp,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { scrollToElement } from '@/utils'
-import { LayoutGrid } from 'lucide-vue-next'
+import { LayoutGrid, Upload } from 'lucide-vue-next'
 
 const { notesState } = useNotesApp()
 const { isNavigatingHistory, recordNavigation } = useNavigationHistory()
+const { openImportDialog } = useImportDialog()
 
 function scrollToCurrentFolder() {
   if (!notesState.folderId) {
@@ -49,6 +54,12 @@ async function openDashboard() {
       :section-title="i18n.t('common.library')"
     >
       <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('imports.action.notes')"
+          @click="openImportDialog('obsidian', 'notes')"
+        >
+          <Upload class="h-4 w-4" />
+        </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('notes.dashboard.label')"
           @click="openDashboard"

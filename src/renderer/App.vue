@@ -115,6 +115,7 @@ init()
         v-else
       />
     </RouterView>
+    <ImportsImportDialog />
     <CommandPalette />
     <div
       v-if="isLoaderVisible"

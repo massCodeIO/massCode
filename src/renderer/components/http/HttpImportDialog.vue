@@ -181,7 +181,7 @@ async function applyImport() {
 <template>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
-      class="grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden sm:max-w-xl"
+      class="max-h-[calc(100vh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden sm:max-w-xl"
       @open-auto-focus="(e) => e.preventDefault()"
       @close-auto-focus="(e) => e.preventDefault()"
     >
@@ -194,7 +194,7 @@ async function applyImport() {
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
 
-      <div class="min-h-0 space-y-3 overflow-y-auto">
+      <div class="scrollbar min-h-0 space-y-3 overflow-y-auto">
         <input
           ref="fileInputRef"
           type="file"

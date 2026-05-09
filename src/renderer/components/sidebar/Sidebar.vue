@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { useImportDialog } from '@/composables'
 import { i18n } from '@/electron'
+import { Upload } from 'lucide-vue-next'
+
+const { openImportDialog } = useImportDialog()
 </script>
 
 <template>
@@ -13,7 +17,16 @@ import { i18n } from '@/electron'
     <SidebarHeader
       :title="i18n.t('spaces.code.title')"
       :section-title="i18n.t('common.library')"
-    />
+    >
+      <template #actions>
+        <UiActionButton
+          :tooltip="i18n.t('imports.action.code')"
+          @click="openImportDialog('vscode-snippets', 'code')"
+        >
+          <Upload class="h-4 w-4" />
+        </UiActionButton>
+      </template>
+    </SidebarHeader>
     <SidebarLibrary />
   </div>
 </template>

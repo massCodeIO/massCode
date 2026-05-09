@@ -57,6 +57,21 @@ describe('parseVSCodeSnippetFiles', () => {
       },
     ])
   })
+
+  it('normalizes names that are invalid for markdown storage', () => {
+    const result = parseVSCodeSnippetFiles([
+      {
+        content: JSON.stringify({
+          '# Debug [helper]': {
+            body: 'console.log($1)',
+          },
+        }),
+        name: 'javascript.json',
+      },
+    ])
+
+    expect(result.snippets[0].name).toBe('- Debug -helper-')
+  })
 })
 
 describe('parseRaycastSnippetFiles', () => {
@@ -89,7 +104,7 @@ describe('parseRaycastSnippetFiles', () => {
         folderPath: ['Git', 'Commit'],
         name: 'Commit',
         sourceId: 'raycast.json:1',
-        tags: ['gc'],
+        tags: [],
       },
     ])
   })
@@ -144,13 +159,16 @@ describe('parseGitHubGistResponse', () => {
 })
 
 describe('parseObsidianMarkdownFiles', () => {
-  it('parses markdown files with folder paths and tags', () => {
+  it('parses markdown files with folder paths and frontmatter tags', () => {
     const content = `---
 tags:
   - vue
   - snippets
 ---
 # Component
+
+Use #frontend patterns.`
+    const body = `# Component
 
 Use #frontend patterns.`
 
@@ -170,11 +188,11 @@ Use #frontend patterns.`
     expect(result.warnings).toEqual([])
     expect(result.notes).toEqual([
       {
-        content,
+        content: body,
         folderPath: ['Knowledge', 'Vue'],
         name: 'Component',
         sourceId: 'Knowledge/Vue/Component.md',
-        tags: ['vue', 'snippets', 'frontend'],
+        tags: ['vue', 'snippets'],
       },
     ])
   })

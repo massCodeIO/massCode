@@ -7,6 +7,10 @@ const INVALID_ENTRY_CHARS = new Set([
   '"',
   '<',
   '>',
+  '#',
+  '[',
+  ']',
+  '^',
   '|',
 ])
 const WINDOWS_RESERVED_NAME_RE

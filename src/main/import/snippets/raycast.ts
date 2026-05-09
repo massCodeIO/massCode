@@ -69,11 +69,6 @@ function getFolderPath(record: RaycastRecord): string[] {
 
 function getTags(record: RaycastRecord): string[] {
   const tags: string[] = []
-  const keyword = normalizeImportTag(record.keyword)
-  if (keyword) {
-    tags.push(keyword)
-  }
-
   const rawTags = record.tags
   if (Array.isArray(rawTags)) {
     tags.push(

@@ -14,6 +14,13 @@ function getImportPath(file: ImportFile): string {
   return (file.relativePath || file.name).replace(/\\/g, '/')
 }
 
+function isSupportedMarkdownFile(filePath: string): boolean {
+  return (
+    filePath.toLowerCase().endsWith('.md')
+    && !filePath.toLowerCase().endsWith('.excalidraw.md')
+  )
+}
+
 function getFolderPath(filePath: string): string[] {
   const directory = path.posix.dirname(filePath)
 
@@ -35,49 +42,45 @@ function getNoteName(filePath: string): string {
   )
 }
 
-function parseFrontmatterTags(content: string): string[] {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+function parseFrontmatter(content: string): {
+  content: string
+  tags: string[]
+} {
+  const match = content.match(
+    /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/,
+  )
   if (!match) {
-    return []
+    return { content, tags: [] }
   }
 
   const parsed = yaml.load(match[1])
   if (!parsed || typeof parsed !== 'object') {
-    return []
+    return { content: match[2] ?? '', tags: [] }
   }
 
   const tags = (parsed as { tags?: unknown }).tags
   if (typeof tags === 'string') {
-    return tags
-      .split(/[,\s]+/)
-      .map(normalizeImportTag)
-      .filter((tag): tag is string => !!tag)
+    return {
+      content: match[2] ?? '',
+      tags: tags
+        .split(/[,\s]+/)
+        .map(normalizeImportTag)
+        .filter((tag): tag is string => !!tag),
+    }
   }
 
   if (Array.isArray(tags)) {
-    return tags.map(normalizeImportTag).filter((tag): tag is string => !!tag)
+    return {
+      content: match[2] ?? '',
+      tags: tags.map(normalizeImportTag).filter((tag): tag is string => !!tag),
+    }
   }
 
-  return []
+  return { content: match[2] ?? '', tags: [] }
 }
 
-function parseInlineTags(content: string): string[] {
-  const tags: string[] = []
-  const tagPattern = /(?:^|\s)#([\w/-]+)/g
-
-  while (true) {
-    const match = tagPattern.exec(content)
-    if (!match) {
-      break
-    }
-
-    const tag = normalizeImportTag(match[1])
-    if (tag) {
-      tags.push(tag)
-    }
-  }
-
-  return tags
+function isImportableTag(tag: string): boolean {
+  return /[\p{L}_]/u.test(tag) && !/^\d+$/u.test(tag)
 }
 
 function uniqueTags(tags: string[]): string[] {
@@ -85,6 +88,10 @@ function uniqueTags(tags: string[]): string[] {
   const seen = new Set<string>()
 
   tags.forEach((tag) => {
+    if (!isImportableTag(tag)) {
+      return
+    }
+
     const key = tag.toLowerCase()
     if (seen.has(key)) {
       return
@@ -105,11 +112,19 @@ export function parseObsidianMarkdownFiles(
 
   files.forEach((file) => {
     const filePath = getImportPath(file)
-    if (!filePath.toLowerCase().endsWith('.md')) {
+    if (!isSupportedMarkdownFile(filePath)) {
+      if (filePath.toLowerCase().endsWith('.excalidraw.md')) {
+        warnings.push({
+          message: 'Excalidraw markdown file was skipped',
+          source: filePath,
+        })
+      }
       return
     }
 
-    if (!file.content.trim()) {
+    const parsed = parseFrontmatter(file.content)
+
+    if (!parsed.content.trim()) {
       warnings.push({
         message: 'Markdown file is empty',
         source: filePath,
@@ -118,14 +133,11 @@ export function parseObsidianMarkdownFiles(
     }
 
     notes.push({
-      content: file.content,
+      content: parsed.content,
       folderPath: getFolderPath(filePath),
       name: getNoteName(filePath),
       sourceId: filePath,
-      tags: uniqueTags([
-        ...parseFrontmatterTags(file.content),
-        ...parseInlineTags(file.content),
-      ]),
+      tags: uniqueTags(parsed.tags),
     })
   })
 

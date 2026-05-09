@@ -72,22 +72,10 @@ function getUniqueNoteName(
   return `${name} ${Date.now()}`
 }
 
-function ensureImportedRootFolder(): { created: boolean, id: number } {
-  const storage = useNotesStorage()
-  const rootName = 'Imported'
-  const existingId = findFolderId(storage.folders.getFolders(), null, rootName)
-
-  if (existingId !== null) {
-    return { created: false, id: existingId }
-  }
-
-  return {
-    created: true,
-    id: storage.folders.createFolder({ name: rootName, parentId: null }).id,
-  }
-}
-
-function createImportRunFolder(parentId: number): { id: number, name: string } {
+function createImportRunFolder(parentId: number | null): {
+  id: number
+  name: string
+} {
   const storage = useNotesStorage()
   const folders = storage.folders.getFolders()
   const name = getUniqueFolderName(folders, parentId, 'Obsidian')
@@ -178,13 +166,10 @@ function createNote(
 export function applyNotesImportResult(
   result: NoteImportParseResult,
 ): ImportApplySummary {
-  const importedRoot = ensureImportedRootFolder()
-  const runFolder = createImportRunFolder(importedRoot.id)
+  const runFolder = createImportRunFolder(null)
   const createdNoteNames: string[] = []
-  let folders = importedRoot.created ? 1 : 0
+  let folders = 1
   let tags = 0
-
-  folders += 1
 
   result.notes.forEach((candidate) => {
     const targetFolder = ensureFolderPath(runFolder.id, candidate.folderPath)

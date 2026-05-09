@@ -69,23 +69,8 @@ function getUniqueSnippetName(
   return `${name} ${Date.now()}`
 }
 
-function ensureImportedRootFolder(): { created: boolean, id: number } {
-  const storage = useStorage()
-  const rootName = 'Imported'
-  const existingId = findFolderId(storage.folders.getFolders(), null, rootName)
-
-  if (existingId !== null) {
-    return { created: false, id: existingId }
-  }
-
-  return {
-    created: true,
-    id: storage.folders.createFolder({ name: rootName, parentId: null }).id,
-  }
-}
-
 function createImportRunFolder(
-  parentId: number,
+  parentId: number | null,
   source: ImportSource,
 ): { id: number, name: string } {
   const storage = useStorage()
@@ -195,13 +180,10 @@ export function applySnippetImportResult(
   source: ImportSource,
   result: SnippetImportParseResult,
 ): ImportApplySummary {
-  const importedRoot = ensureImportedRootFolder()
-  const runFolder = createImportRunFolder(importedRoot.id, source)
+  const runFolder = createImportRunFolder(null, source)
   const createdSnippetNames: string[] = []
-  let folders = importedRoot.created ? 1 : 0
+  let folders = 1
   let tags = 0
-
-  folders += 1
 
   result.snippets.forEach((candidate) => {
     const targetFolder = ensureFolderPath(runFolder.id, candidate.folderPath)

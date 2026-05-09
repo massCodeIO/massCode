@@ -44,24 +44,28 @@ function getNoteName(filePath: string): string {
 
 function parseFrontmatter(content: string): {
   content: string
+  ignoredKeys: string[]
   tags: string[]
 } {
   const match = content.match(
     /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/,
   )
   if (!match) {
-    return { content, tags: [] }
+    return { content, ignoredKeys: [], tags: [] }
   }
 
   const parsed = yaml.load(match[1])
   if (!parsed || typeof parsed !== 'object') {
-    return { content: match[2] ?? '', tags: [] }
+    return { content: match[2] ?? '', ignoredKeys: [], tags: [] }
   }
 
-  const tags = (parsed as { tags?: unknown }).tags
+  const frontmatter = parsed as Record<string, unknown>
+  const ignoredKeys = Object.keys(frontmatter).filter(key => key !== 'tags')
+  const tags = frontmatter.tags
   if (typeof tags === 'string') {
     return {
       content: match[2] ?? '',
+      ignoredKeys,
       tags: tags
         .split(/[,\s]+/)
         .map(normalizeImportTag)
@@ -72,11 +76,12 @@ function parseFrontmatter(content: string): {
   if (Array.isArray(tags)) {
     return {
       content: match[2] ?? '',
+      ignoredKeys,
       tags: tags.map(normalizeImportTag).filter((tag): tag is string => !!tag),
     }
   }
 
-  return { content: match[2] ?? '', tags: [] }
+  return { content: match[2] ?? '', ignoredKeys, tags: [] }
 }
 
 function isImportableTag(tag: string): boolean {
@@ -102,6 +107,17 @@ function uniqueTags(tags: string[]): string[] {
   })
 
   return result
+}
+
+function hasWikiLinks(content: string): boolean {
+  return /(?:^|[^!])\[\[[^\]]+\]\]/.test(content)
+}
+
+function hasAttachmentReferences(content: string): boolean {
+  return (
+    /!\[\[[^\]]+\]\]/.test(content)
+    || /!\[[^\]]*\]\((?!https?:\/\/|data:|#)[^)]+\)/i.test(content)
+  )
 }
 
 export function parseObsidianMarkdownFiles(
@@ -130,6 +146,29 @@ export function parseObsidianMarkdownFiles(
         source: filePath,
       })
       return
+    }
+
+    if (parsed.ignoredKeys.length) {
+      warnings.push({
+        message: `Frontmatter fields ignored: ${parsed.ignoredKeys.join(', ')}`,
+        source: filePath,
+      })
+    }
+
+    if (hasAttachmentReferences(parsed.content)) {
+      warnings.push({
+        message:
+          'Attachment references are kept as text; attachment files are not imported',
+        source: filePath,
+      })
+    }
+
+    if (hasWikiLinks(parsed.content)) {
+      warnings.push({
+        message:
+          'Obsidian wiki links are imported as text and are not rewritten',
+        source: filePath,
+      })
     }
 
     notes.push({

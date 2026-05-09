@@ -78,6 +78,18 @@ function getGistFiles(gist: GitHubGistResponse): GitHubGistFile[] {
   )
 }
 
+function getGistRequestErrorMessage(status: number): string {
+  if (status === 401 || status === 403) {
+    return 'GitHub Gist import supports public Gists only; private or rate-limited Gists require authentication'
+  }
+
+  if (status === 404) {
+    return 'GitHub Gist was not found or is not public'
+  }
+
+  return `GitHub Gist request failed with status ${status}`
+}
+
 export function parseGitHubGistResponse(
   gist: GitHubGistResponse,
   source: string,
@@ -174,9 +186,7 @@ export async function fetchGitHubGistImport(
   })
 
   if (!response.ok) {
-    throw new Error(
-      `GitHub Gist request failed with status ${response.status}`,
-    )
+    throw new Error(getGistRequestErrorMessage(response.status))
   }
 
   return parseGitHubGistResponse(

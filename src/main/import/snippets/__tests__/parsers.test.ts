@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseObsidianMarkdownFiles } from '../../notes/obsidian'
-import { parseGitHubGistResponse } from '../githubGists'
+import { fetchGitHubGistImport, parseGitHubGistResponse } from '../githubGists'
 import { parseRaycastSnippetFiles } from '../raycast'
 import { parseVSCodeSnippetFiles } from '../vscode'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('parseVSCodeSnippetFiles', () => {
   it('parses VS Code snippet JSON files', () => {
@@ -156,6 +160,17 @@ describe('parseGitHubGistResponse', () => {
       },
     ])
   })
+
+  it('reports private or missing Gists clearly', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 404,
+    } as Response)
+
+    await expect(fetchGitHubGistImport('1234567890abcdef1234')).rejects.toThrow(
+      'GitHub Gist was not found or is not public',
+    )
+  })
 })
 
 describe('parseObsidianMarkdownFiles', () => {
@@ -195,5 +210,41 @@ Use #frontend patterns.`
         tags: ['vue', 'snippets'],
       },
     ])
+  })
+
+  it('warns about Obsidian metadata and link limitations', () => {
+    const result = parseObsidianMarkdownFiles([
+      {
+        content: `---
+tags:
+  - docs
+source: https://example.com
+---
+See [[Project Plan]].
+
+![[diagram.png]]
+![local](attachments/local.png)`,
+        name: 'Links.md',
+        relativePath: 'Links.md',
+      },
+    ])
+
+    expect(result.warnings).toEqual([
+      {
+        message: 'Frontmatter fields ignored: source',
+        source: 'Links.md',
+      },
+      {
+        message:
+          'Attachment references are kept as text; attachment files are not imported',
+        source: 'Links.md',
+      },
+      {
+        message:
+          'Obsidian wiki links are imported as text and are not rewritten',
+        source: 'Links.md',
+      },
+    ])
+    expect(result.notes[0].tags).toEqual(['docs'])
   })
 })

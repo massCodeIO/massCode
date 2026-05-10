@@ -832,8 +832,9 @@ async function openPreferencesFromPalette() {
 
 async function openImportFromPalette(
   source: Parameters<typeof importDialog.openImportDialog>[0],
+  space?: Parameters<typeof importDialog.openImportDialog>[1],
 ) {
-  importDialog.openImportDialog(source)
+  importDialog.openImportDialog(source, space)
 }
 
 function getCommandDefinitions(): CommandPaletteCommand[] {
@@ -857,6 +858,24 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       run: createCodeFolderFromPalette,
     },
     {
+      id: 'import-snippets',
+      title: i18n.t('commandPalette.actions.importSnippets'),
+      subtitle: i18n.t('commandPalette.actions.importSnippetsSubtitle'),
+      icon: Upload,
+      keywords: [
+        'import',
+        'vscode',
+        'raycast',
+        'github',
+        'gist',
+        'gists',
+        'snippet',
+        'snippets',
+      ],
+      spaceId: 'code',
+      run: () => openImportFromPalette('vscode-snippets', 'code'),
+    },
+    {
       id: 'new-note',
       title: i18n.t('commandPalette.actions.newNote'),
       subtitle: i18n.t('commandPalette.actions.newNoteSubtitle'),
@@ -875,6 +894,15 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       run: createNotesFolderFromPalette,
     },
     {
+      id: 'import-notes',
+      title: i18n.t('commandPalette.actions.importNotes'),
+      subtitle: i18n.t('commandPalette.actions.importNotesSubtitle'),
+      icon: Upload,
+      keywords: ['import', 'obsidian', 'markdown', 'notes'],
+      spaceId: 'notes',
+      run: () => openImportFromPalette('obsidian', 'notes'),
+    },
+    {
       id: 'new-http-request',
       title: i18n.t('commandPalette.actions.newHttpRequest'),
       subtitle: i18n.t('commandPalette.actions.newHttpRequestSubtitle'),
@@ -891,42 +919,6 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       keywords: ['create', 'http', 'request', 'folder'],
       spaceId: 'http',
       run: createHttpFolderFromPalette,
-    },
-    {
-      id: 'import-vscode-snippets',
-      title: i18n.t('commandPalette.actions.importVSCodeSnippets'),
-      subtitle: i18n.t('commandPalette.actions.importVSCodeSnippetsSubtitle'),
-      icon: Upload,
-      keywords: ['import', 'vscode', 'snippet', 'snippets'],
-      spaceId: 'code',
-      run: () => openImportFromPalette('vscode-snippets'),
-    },
-    {
-      id: 'import-raycast-snippets',
-      title: i18n.t('commandPalette.actions.importRaycastSnippets'),
-      subtitle: i18n.t('commandPalette.actions.importRaycastSnippetsSubtitle'),
-      icon: Upload,
-      keywords: ['import', 'raycast', 'snippet', 'snippets'],
-      spaceId: 'code',
-      run: () => openImportFromPalette('raycast-snippets'),
-    },
-    {
-      id: 'import-github-gists',
-      title: i18n.t('commandPalette.actions.importGitHubGists'),
-      subtitle: i18n.t('commandPalette.actions.importGitHubGistsSubtitle'),
-      icon: Upload,
-      keywords: ['import', 'github', 'gist', 'gists', 'snippet'],
-      spaceId: 'code',
-      run: () => openImportFromPalette('github-gists'),
-    },
-    {
-      id: 'import-obsidian-notes',
-      title: i18n.t('commandPalette.actions.importObsidianNotes'),
-      subtitle: i18n.t('commandPalette.actions.importObsidianNotesSubtitle'),
-      icon: Upload,
-      keywords: ['import', 'obsidian', 'markdown', 'notes'],
-      spaceId: 'notes',
-      run: () => openImportFromPalette('obsidian'),
     },
     {
       id: 'open-preferences',

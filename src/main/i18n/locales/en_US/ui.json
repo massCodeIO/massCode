@@ -28,14 +28,10 @@
       "httpRequests": "HTTP Requests"
     },
     "actions": {
-      "importVSCodeSnippets": "Import from VS Code",
-      "importVSCodeSnippetsSubtitle": "Import VS Code snippets JSON",
-      "importRaycastSnippets": "Import from Raycast",
-      "importRaycastSnippetsSubtitle": "Import Raycast snippets JSON",
-      "importGitHubGists": "Import GitHub Gists",
-      "importGitHubGistsSubtitle": "Import a public GitHub Gist URL",
-      "importObsidianNotes": "Import from Obsidian",
-      "importObsidianNotesSubtitle": "Import a markdown folder into Notes",
+      "importSnippets": "Import snippets",
+      "importSnippetsSubtitle": "Import VS Code snippets JSON, Raycast snippets JSON, or public GitHub Gist URLs",
+      "importNotes": "Import notes",
+      "importNotesSubtitle": "Import Obsidian markdown folders",
       "newSnippet": "New snippet",
       "newSnippetSubtitle": "Create a code snippet",
       "newNote": "New note",

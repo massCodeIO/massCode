@@ -28,14 +28,10 @@
       "httpRequests": "HTTP-запросы"
     },
     "actions": {
-      "importVSCodeSnippets": "Импорт из VS Code",
-      "importVSCodeSnippetsSubtitle": "Импортировать JSON сниппетов VS Code",
-      "importRaycastSnippets": "Импорт из Raycast",
-      "importRaycastSnippetsSubtitle": "Импортировать JSON сниппетов Raycast",
-      "importGitHubGists": "Импорт GitHub Gists",
-      "importGitHubGistsSubtitle": "Импортировать публичный GitHub Gist URL",
-      "importObsidianNotes": "Импорт из Obsidian",
-      "importObsidianNotesSubtitle": "Импортировать markdown-папку в Заметки",
+      "importSnippets": "Импорт сниппетов",
+      "importSnippetsSubtitle": "Импортировать VS Code snippets JSON, Raycast snippets JSON или публичные GitHub Gist URL",
+      "importNotes": "Импорт заметок",
+      "importNotesSubtitle": "Импортировать markdown-папки Obsidian",
       "newSnippet": "Новый сниппет",
       "newSnippetSubtitle": "Создать сниппет кода",
       "newNote": "Новая заметка",

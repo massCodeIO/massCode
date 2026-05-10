@@ -335,7 +335,7 @@ async function applyImport() {
 <template>
   <Dialog.Dialog v-model:open="isImportDialogOpen">
     <Dialog.DialogContent
-      class="max-h-[calc(100vh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden sm:max-w-xl"
+      class="grid max-h-[calc(100dvh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-hidden sm:max-w-xl"
       @open-auto-focus="(e) => e.preventDefault()"
       @close-auto-focus="(e) => e.preventDefault()"
     >
@@ -348,7 +348,9 @@ async function applyImport() {
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
 
-      <div class="flex min-h-0 flex-col gap-3 overflow-hidden">
+      <div
+        class="scrollbar -mr-2 flex min-h-0 flex-col gap-3 overflow-x-hidden overflow-y-auto pr-2"
+      >
         <template v-if="!isNotesImport">
           <input
             ref="fileInputRef"
@@ -489,27 +491,27 @@ async function applyImport() {
 
         <div
           v-if="preview"
-          class="flex min-h-0 flex-1 flex-col gap-3"
+          class="space-y-3"
         >
-          <div class="border-border rounded-md border px-3 py-2">
-            <UiText
-              as="div"
-              variant="xs"
-              muted
-              weight="medium"
-            >
-              {{ i18n.t("imports.detectedSource") }}
-            </UiText>
-            <UiText
-              as="div"
-              variant="sm"
-              weight="medium"
-            >
-              {{ detectedSourceLabel }}
-            </UiText>
-          </div>
-
-          <div class="grid shrink-0 grid-cols-3 gap-2">
+          <div class="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4">
+            <div class="border-border rounded-md border px-3 py-2">
+              <UiText
+                as="div"
+                variant="xs"
+                muted
+                weight="medium"
+              >
+                {{ i18n.t("imports.detectedSource") }}
+              </UiText>
+              <UiText
+                as="div"
+                variant="sm"
+                weight="semibold"
+                class="truncate"
+              >
+                {{ detectedSourceLabel }}
+              </UiText>
+            </div>
             <div class="border-border rounded-md border px-3 py-2">
               <UiText
                 as="div"
@@ -565,7 +567,7 @@ async function applyImport() {
 
           <div
             v-if="preview.folders.length"
-            class="flex min-h-0 flex-1 flex-col gap-1"
+            class="space-y-1"
           >
             <UiText
               as="div"
@@ -576,16 +578,16 @@ async function applyImport() {
               {{ i18n.t("common.folders") }}
             </UiText>
             <div
-              class="border-border divide-border scrollbar min-h-0 flex-1 overflow-y-auto rounded-md border"
+              class="border-border divide-border scrollbar max-h-28 overflow-y-auto rounded-md border"
             >
               <div
                 v-for="folder in preview.folders"
                 :key="folder.path"
-                class="flex items-center justify-between px-3 py-2"
+                class="flex min-h-6 items-center justify-between gap-3 px-3 py-0.5"
               >
                 <UiText
                   as="div"
-                  variant="sm"
+                  variant="xs"
                   weight="medium"
                   class="truncate"
                 >
@@ -595,7 +597,7 @@ async function applyImport() {
                   as="div"
                   variant="xs"
                   muted
-                  class="ml-3 shrink-0"
+                  class="shrink-0"
                 >
                   {{
                     i18n.t("imports.folderMeta", {
@@ -616,7 +618,7 @@ async function applyImport() {
               {{ i18n.t("imports.warnings") }}
             </Alert.AlertTitle>
             <Alert.AlertDescription class="text-foreground/80">
-              <ul class="max-h-28 space-y-1 overflow-y-auto">
+              <ul class="scrollbar max-h-28 space-y-1 overflow-y-auto">
                 <li
                   v-for="(warning, index) in previewWarnings"
                   :key="`${warning.source}-${index}`"
@@ -649,7 +651,7 @@ async function applyImport() {
         </div>
       </div>
 
-      <Dialog.DialogFooter class="gap-2">
+      <Dialog.DialogFooter class="border-border shrink-0 gap-2 border-t pt-4">
         <Button
           variant="outline"
           :disabled="isApplying"

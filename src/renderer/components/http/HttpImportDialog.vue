@@ -181,7 +181,7 @@ async function applyImport() {
 <template>
   <Dialog.Dialog v-model:open="open">
     <Dialog.DialogContent
-      class="max-h-[calc(100vh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden sm:max-w-xl"
+      class="grid max-h-[calc(100dvh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-hidden sm:max-w-xl"
       @open-auto-focus="(e) => e.preventDefault()"
       @close-auto-focus="(e) => e.preventDefault()"
     >
@@ -194,7 +194,9 @@ async function applyImport() {
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
 
-      <div class="scrollbar min-h-0 space-y-3 overflow-y-auto">
+      <div
+        class="scrollbar -mr-2 min-h-0 space-y-3 overflow-x-hidden overflow-y-auto pr-2"
+      >
         <input
           ref="fileInputRef"
           type="file"
@@ -321,15 +323,17 @@ async function applyImport() {
             >
               {{ i18n.t("spaces.http.import.collections") }}
             </UiText>
-            <div class="border-border divide-border rounded-md border">
+            <div
+              class="border-border divide-border scrollbar max-h-28 overflow-y-auto rounded-md border"
+            >
               <div
                 v-for="collection in preview.collections"
                 :key="collection.index"
-                class="flex items-center justify-between px-3 py-2"
+                class="flex min-h-6 items-center justify-between gap-3 px-3 py-0.5"
               >
                 <UiText
                   as="div"
-                  variant="sm"
+                  variant="xs"
                   weight="medium"
                   class="truncate"
                 >
@@ -339,7 +343,7 @@ async function applyImport() {
                   as="div"
                   variant="xs"
                   muted
-                  class="ml-3 shrink-0"
+                  class="shrink-0"
                 >
                   {{
                     i18n.t("spaces.http.import.collectionMeta", {
@@ -364,15 +368,17 @@ async function applyImport() {
             >
               {{ i18n.t("spaces.http.import.environments") }}
             </UiText>
-            <div class="border-border divide-border rounded-md border">
+            <div
+              class="border-border divide-border scrollbar max-h-28 overflow-y-auto rounded-md border"
+            >
               <div
                 v-for="environment in preview.environments"
                 :key="environment.index"
-                class="flex items-center justify-between px-3 py-2"
+                class="flex min-h-6 items-center justify-between gap-3 px-3 py-0.5"
               >
                 <UiText
                   as="div"
-                  variant="sm"
+                  variant="xs"
                   weight="medium"
                   class="truncate"
                 >
@@ -382,7 +388,7 @@ async function applyImport() {
                   as="div"
                   variant="xs"
                   muted
-                  class="ml-3 shrink-0"
+                  class="shrink-0"
                 >
                   {{
                     i18n.t("spaces.http.import.variablesMeta", {
@@ -410,7 +416,7 @@ async function applyImport() {
               {{ i18n.t("spaces.http.import.warnings") }}
             </Alert.AlertTitle>
             <Alert.AlertDescription class="text-foreground/80">
-              <ul class="max-h-28 space-y-1 overflow-y-auto">
+              <ul class="scrollbar max-h-28 space-y-1 overflow-y-auto">
                 <li
                   v-for="(warning, index) in preview.warnings"
                   :key="`${warning.source}-${index}`"
@@ -443,7 +449,7 @@ async function applyImport() {
         </div>
       </div>
 
-      <Dialog.DialogFooter class="gap-2">
+      <Dialog.DialogFooter class="border-border shrink-0 gap-2 border-t pt-4">
         <Button
           variant="outline"
           :disabled="isApplying"

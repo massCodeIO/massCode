@@ -2,11 +2,11 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useStorage } from '../../../storage'
-import { getPaths } from '../../../storage/providers/markdown/runtime/paths'
-import { ensureStateFile } from '../../../storage/providers/markdown/runtime/state'
-import { resetRuntimeCache } from '../../../storage/providers/markdown/runtime/sync'
-import { applySnippetImportResult } from '../persist'
+import { useNotesStorage } from '../../../storage'
+import { getNotesPaths } from '../../../storage/providers/markdown/notes/runtime/constants'
+import { ensureNotesStateFile } from '../../../storage/providers/markdown/notes/runtime/state'
+import { resetNotesRuntimeCache } from '../../../storage/providers/markdown/notes/runtime/sync'
+import { applyNotesImportResult } from '../persist'
 
 let tempVaultPath = ''
 
@@ -74,36 +74,30 @@ vi.mock('../../../store', () => ({
   },
 }))
 
-describe('applySnippetImportResult', () => {
+describe('applyNotesImportResult', () => {
   beforeEach(() => {
-    tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'snippet-import-'))
-    resetRuntimeCache()
-    ensureStateFile(getPaths(tempVaultPath))
+    tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'note-import-'))
+    resetNotesRuntimeCache()
+    ensureNotesStateFile(getNotesPaths(tempVaultPath))
   })
 
   afterEach(() => {
-    resetRuntimeCache()
+    resetNotesRuntimeCache()
 
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
     }
   })
 
-  it('renames the source root folder when the user already has one', () => {
-    const storage = useStorage()
-    storage.folders.createFolder({ name: 'Raycast', parentId: null })
+  it('renames the Obsidian root folder when the user already has one', () => {
+    const storage = useNotesStorage()
+    storage.folders.createFolder({ name: 'Obsidian', parentId: null })
 
-    const summary = applySnippetImportResult('raycast-snippets', {
-      snippets: [
+    const summary = applyNotesImportResult({
+      notes: [
         {
-          contents: [
-            {
-              label: 'Fragment 1',
-              language: 'plain_text',
-              value: 'Hello',
-            },
-          ],
-          name: 'Greeting',
+          content: '# Hello',
+          name: 'Hello',
         },
       ],
       warnings: [],
@@ -114,17 +108,17 @@ describe('applySnippetImportResult', () => {
       .filter(folder => folder.parentId === null)
       .map(folder => folder.name)
 
-    expect(summary.createdRootFolderName).toBe('Raycast 1')
+    expect(summary.createdRootFolderName).toBe('Obsidian 1')
     expect(rootFolders).toEqual(
-      expect.arrayContaining(['Raycast', 'Raycast 1']),
+      expect.arrayContaining(['Obsidian', 'Obsidian 1']),
     )
   })
 
-  it('does not create a root folder when there are no snippets', () => {
-    const storage = useStorage()
+  it('does not create a root folder when there are no notes', () => {
+    const storage = useNotesStorage()
 
-    const summary = applySnippetImportResult('vscode-snippets', {
-      snippets: [],
+    const summary = applyNotesImportResult({
+      notes: [],
       warnings: [],
     })
 

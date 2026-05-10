@@ -98,7 +98,8 @@ export interface ImportMarkdownFolderFile {
 }
 
 export interface ImportMarkdownFolderWarning {
-  message: string
+  code: string
+  details?: Record<string, string>
   source: string
 }
 

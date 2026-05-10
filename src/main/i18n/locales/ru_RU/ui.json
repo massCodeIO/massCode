@@ -103,18 +103,69 @@
     "chooseFolder": "Выбрать папку",
     "preview": "Предпросмотр",
     "previewing": "Чтение импорта",
-    "fileReadWarning": "Не удалось прочитать файл. Убедитесь, что он загружен локально и доступен massCode.",
     "noReadableFiles": "Не найдено читаемых файлов. Загрузите папку локально или проверьте права доступа, затем повторите импорт.",
     "noImportableFiles": "Не найдено markdown-файлов для импорта.",
     "snippets": "Сниппеты",
     "notes": "Заметки",
     "tags": "Теги",
     "detectedSource": "Распознанный источник",
-    "folderMeta": "{{count}} элементов",
-    "warnings": "Предупреждения",
+    "folderMeta_one": "{{count}} элемент",
+    "folderMeta_few": "{{count}} элемента",
+    "folderMeta_many": "{{count}} элементов",
+    "folderMeta_other": "{{count}} элемента",
+    "warningTitle": "Предупреждения",
+    "warningMessages": {
+      "file": {
+        "readFailed": "Не удалось прочитать файл. Убедитесь, что он загружен локально и доступен massCode."
+      },
+      "fs": {
+        "folderReadFailed": "Не удалось прочитать папку. Проверьте права доступа и статус загрузки iCloud.",
+        "fileReadFailed": "Не удалось прочитать файл. Проверьте права доступа и статус загрузки iCloud."
+      },
+      "source": {
+        "unsupported": "Источник импорта не поддерживается."
+      },
+      "vscode": {
+        "invalidJson": "Файл не является корректным JSON-объектом сниппетов VS Code.",
+        "entryNotObject": "Запись сниппета не является объектом.",
+        "invalidBody": "Тело сниппета должно быть строкой или массивом строк."
+      },
+      "raycast": {
+        "invalidExport": "Файл не является корректным экспортом сниппетов Raycast.",
+        "emptyText": "Текст сниппета пустой или отсутствует."
+      },
+      "snippetslab": {
+        "invalidExport": "Файл не является корректным экспортом SnippetsLab.",
+        "smartGroupsSkipped": "Смарт-группы SnippetsLab не импортируются.",
+        "attachmentsSkipped": "Вложения фрагментов SnippetsLab не импортируются.",
+        "emptySnippet": "В сниппете SnippetsLab нет фрагментов для импорта."
+      },
+      "gist": {
+        "noFiles": "В GitHub Gist нет файлов.",
+        "truncatedSkipped": "Обрезанные файлы Gist пропускаются в этой версии импорта.",
+        "contentMissing": "Содержимое файла Gist отсутствует."
+      },
+      "obsidian": {
+        "excalidrawSkipped": "Markdown-файл Excalidraw пропущен.",
+        "emptyMarkdown": "Markdown-файл пустой.",
+        "frontmatterIgnored": "Поля frontmatter проигнорированы: {{fields}}.",
+        "attachmentsKept": "Ссылки на вложения сохранены как текст; файлы вложений не импортируются.",
+        "wikiLinksKept": "Wiki-ссылки Obsidian импортированы как текст и не переписаны.",
+        "noMarkdownFiles": "Markdown-файлы для импорта Obsidian не найдены.",
+        "invalidFrontmatter": "Frontmatter не удалось разобрать, он импортирован как содержимое заметки."
+      },
+      "unknown": "Предупреждение импорта."
+    },
     "import": "Импортировать",
     "importing": "Импорт",
-    "imported": "Импортировано сниппетов: {{snippets}}, заметок: {{notes}}.",
+    "importedSnippets_one": "Импортирован {{snippets}} сниппет.",
+    "importedSnippets_few": "Импортировано {{snippets}} сниппета.",
+    "importedSnippets_many": "Импортировано {{snippets}} сниппетов.",
+    "importedSnippets_other": "Импортировано {{snippets}} сниппета.",
+    "importedNotes_one": "Импортирована {{notes}} заметка.",
+    "importedNotes_few": "Импортировано {{notes}} заметки.",
+    "importedNotes_many": "Импортировано {{notes}} заметок.",
+    "importedNotes_other": "Импортировано {{notes}} заметки.",
     "createdFolder": "Создано: {{name}}",
     "error": "Не удалось импортировать"
   },

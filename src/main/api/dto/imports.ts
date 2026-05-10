@@ -18,23 +18,20 @@ const importFile = t.Object({
 })
 
 const importWarning = t.Object({
-  message: t.String(),
+  code: t.String(),
+  details: t.Optional(t.Record(t.String(), t.String())),
   source: t.String(),
 })
 
-const importPreviewInput = t.Object({
+const importInput = t.Object({
   files: t.Optional(t.Array(importFile)),
   source: t.Optional(importSource),
   space: t.Optional(importSpace),
   url: t.Optional(t.String()),
 })
 
-const importApplyInput = t.Object({
-  files: t.Optional(t.Array(importFile)),
-  source: t.Optional(importSource),
-  space: t.Optional(importSpace),
-  url: t.Optional(t.String()),
-})
+const importPreviewInput = importInput
+const importApplyInput = importInput
 
 const importPreviewResponse = t.Object({
   folders: t.Array(

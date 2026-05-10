@@ -38,7 +38,7 @@ async function parseSnippetImportPayload(
     snippets: [],
     warnings: [
       {
-        message: 'Unsupported import source',
+        code: 'source.unsupported',
         source,
       },
     ],

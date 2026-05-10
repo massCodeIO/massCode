@@ -45,18 +45,31 @@ function getNoteName(filePath: string): string {
 function parseFrontmatter(content: string): {
   content: string
   ignoredKeys: string[]
+  invalid: boolean
   tags: string[]
 } {
   const match = content.match(
     /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/,
   )
   if (!match) {
-    return { content, ignoredKeys: [], tags: [] }
+    return { content, ignoredKeys: [], invalid: false, tags: [] }
   }
 
-  const parsed = yaml.load(match[1])
+  let parsed: unknown
+  try {
+    parsed = yaml.load(match[1])
+  }
+  catch {
+    return { content, ignoredKeys: [], invalid: true, tags: [] }
+  }
+
   if (!parsed || typeof parsed !== 'object') {
-    return { content: match[2] ?? '', ignoredKeys: [], tags: [] }
+    return {
+      content: match[2] ?? '',
+      ignoredKeys: [],
+      invalid: false,
+      tags: [],
+    }
   }
 
   const frontmatter = parsed as Record<string, unknown>
@@ -66,6 +79,7 @@ function parseFrontmatter(content: string): {
     return {
       content: match[2] ?? '',
       ignoredKeys,
+      invalid: false,
       tags: tags
         .split(/[,\s]+/)
         .map(normalizeImportTag)
@@ -77,11 +91,12 @@ function parseFrontmatter(content: string): {
     return {
       content: match[2] ?? '',
       ignoredKeys,
+      invalid: false,
       tags: tags.map(normalizeImportTag).filter((tag): tag is string => !!tag),
     }
   }
 
-  return { content: match[2] ?? '', ignoredKeys, tags: [] }
+  return { content: match[2] ?? '', ignoredKeys, invalid: false, tags: [] }
 }
 
 function isImportableTag(tag: string): boolean {
@@ -131,7 +146,7 @@ export function parseObsidianMarkdownFiles(
     if (!isSupportedMarkdownFile(filePath)) {
       if (filePath.toLowerCase().endsWith('.excalidraw.md')) {
         warnings.push({
-          message: 'Excalidraw markdown file was skipped',
+          code: 'obsidian.excalidrawSkipped',
           source: filePath,
         })
       }
@@ -140,9 +155,16 @@ export function parseObsidianMarkdownFiles(
 
     const parsed = parseFrontmatter(file.content)
 
+    if (parsed.invalid) {
+      warnings.push({
+        code: 'obsidian.invalidFrontmatter',
+        source: filePath,
+      })
+    }
+
     if (!parsed.content.trim()) {
       warnings.push({
-        message: 'Markdown file is empty',
+        code: 'obsidian.emptyMarkdown',
         source: filePath,
       })
       return
@@ -150,23 +172,24 @@ export function parseObsidianMarkdownFiles(
 
     if (parsed.ignoredKeys.length) {
       warnings.push({
-        message: `Frontmatter fields ignored: ${parsed.ignoredKeys.join(', ')}`,
+        code: 'obsidian.frontmatterIgnored',
+        details: {
+          fields: parsed.ignoredKeys.join(', '),
+        },
         source: filePath,
       })
     }
 
     if (hasAttachmentReferences(parsed.content)) {
       warnings.push({
-        message:
-          'Attachment references are kept as text; attachment files are not imported',
+        code: 'obsidian.attachmentsKept',
         source: filePath,
       })
     }
 
     if (hasWikiLinks(parsed.content)) {
       warnings.push({
-        message:
-          'Obsidian wiki links are imported as text and are not rewritten',
+        code: 'obsidian.wikiLinksKept',
         source: filePath,
       })
     }
@@ -182,7 +205,7 @@ export function parseObsidianMarkdownFiles(
 
   if (!notes.length && !warnings.length) {
     warnings.push({
-      message: 'No markdown files found in Obsidian import',
+      code: 'obsidian.noMarkdownFiles',
       source: 'obsidian',
     })
   }

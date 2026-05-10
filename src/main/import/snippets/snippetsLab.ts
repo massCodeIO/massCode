@@ -170,7 +170,7 @@ export function parseSnippetsLabFiles(
 
     if (!contents) {
       warnings.push({
-        message: 'File is not a valid SnippetsLab export',
+        code: 'snippetslab.invalidExport',
         source: file.name,
       })
       continue
@@ -184,7 +184,7 @@ export function parseSnippetsLabFiles(
 
     if (smartGroups.length) {
       warnings.push({
-        message: 'SnippetsLab smart groups are not imported',
+        code: 'snippetslab.smartGroupsSkipped',
         source: file.name,
       })
     }
@@ -203,7 +203,7 @@ export function parseSnippetsLabFiles(
           const attachments = fragment.attachments
           if (Array.isArray(attachments) && attachments.length) {
             warnings.push({
-              message: 'SnippetsLab fragment attachments are not imported',
+              code: 'snippetslab.attachmentsSkipped',
               source: `${file.name}/${sourceId}`,
             })
           }
@@ -224,7 +224,7 @@ export function parseSnippetsLabFiles(
 
       if (!contents.length) {
         warnings.push({
-          message: 'SnippetsLab snippet has no importable fragments',
+          code: 'snippetslab.emptySnippet',
           source: `${file.name}/${sourceId}`,
         })
         return

@@ -716,7 +716,8 @@ export interface ImportApplyResponse {
     | "vscode-snippets";
   tags: number;
   warnings: {
-    message: string;
+    code: string;
+    details?: object;
     source: string;
   }[];
 }
@@ -757,7 +758,8 @@ export interface ImportPreviewResponse {
     | "vscode-snippets";
   tags: string[];
   warnings: {
-    message: string;
+    code: string;
+    details?: object;
     source: string;
   }[];
 }

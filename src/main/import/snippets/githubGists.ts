@@ -78,7 +78,13 @@ function getGistFiles(gist: GitHubGistResponse): GitHubGistFile[] {
   )
 }
 
-function getGistRequestErrorMessage(status: number): string {
+const GIST_FETCH_TIMEOUT_MS = 15_000
+
+function getGistRequestErrorMessage(status: number, headers: Headers): string {
+  if (status === 403 && headers.get('x-ratelimit-remaining') === '0') {
+    return 'GitHub Gist rate limit reached. Try again later.'
+  }
+
   if (status === 401 || status === 403) {
     return 'GitHub Gist import supports public Gists only; private or rate-limited Gists require authentication'
   }
@@ -102,7 +108,7 @@ export function parseGitHubGistResponse(
       snippets: [],
       warnings: [
         {
-          message: 'GitHub Gist has no files',
+          code: 'gist.noFiles',
           source,
         },
       ],
@@ -119,7 +125,7 @@ export function parseGitHubGistResponse(
 
     if (file.truncated) {
       warnings.push({
-        message: 'Truncated Gist files are skipped in this import version',
+        code: 'gist.truncatedSkipped',
         source: `${source}/${filename}`,
       })
       return
@@ -127,7 +133,7 @@ export function parseGitHubGistResponse(
 
     if (typeof file.content !== 'string') {
       warnings.push({
-        message: 'Gist file content is missing',
+        code: 'gist.contentMissing',
         source: `${source}/${filename}`,
       })
       return
@@ -178,15 +184,28 @@ export async function fetchGitHubGistImport(
     throw new Error('Invalid GitHub Gist URL')
   }
 
-  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: {
-      'Accept': 'application/vnd.github+json',
-      'User-Agent': 'massCode',
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'massCode',
+      },
+      signal: AbortSignal.timeout(GIST_FETCH_TIMEOUT_MS),
+    })
+  }
+  catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error('GitHub Gist request timed out')
+    }
+
+    throw error
+  }
 
   if (!response.ok) {
-    throw new Error(getGistRequestErrorMessage(response.status))
+    throw new Error(
+      getGistRequestErrorMessage(response.status, response.headers),
+    )
   }
 
   return parseGitHubGistResponse(

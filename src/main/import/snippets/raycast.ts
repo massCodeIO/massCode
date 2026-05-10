@@ -91,7 +91,7 @@ export function parseRaycastSnippetFiles(
 
     if (!records) {
       warnings.push({
-        message: 'File is not a valid Raycast snippets export',
+        code: 'raycast.invalidExport',
         source: file.name,
       })
       continue
@@ -101,7 +101,7 @@ export function parseRaycastSnippetFiles(
       const content = readString(record, ['text', 'content', 'snippet'])
       if (!content) {
         warnings.push({
-          message: 'Snippet text is empty or missing',
+          code: 'raycast.emptyText',
           source: `${file.name}/${index + 1}`,
         })
         return

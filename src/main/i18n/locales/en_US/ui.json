@@ -103,18 +103,63 @@
     "chooseFolder": "Choose folder",
     "preview": "Preview",
     "previewing": "Reading import",
-    "fileReadWarning": "File could not be read. Make sure it is downloaded locally and available to massCode.",
     "noReadableFiles": "No readable files found. Download the folder locally or check file permissions, then try again.",
     "noImportableFiles": "No importable markdown files found.",
     "snippets": "Snippets",
     "notes": "Notes",
     "tags": "Tags",
     "detectedSource": "Detected source",
-    "folderMeta": "{{count}} items",
-    "warnings": "Warnings",
+    "folderMeta_one": "{{count}} item",
+    "folderMeta_other": "{{count}} items",
+    "warningTitle": "Warnings",
+    "warningMessages": {
+      "file": {
+        "readFailed": "File could not be read. Make sure it is downloaded locally and available to massCode."
+      },
+      "fs": {
+        "folderReadFailed": "Folder could not be read. Check file permissions and iCloud download status.",
+        "fileReadFailed": "File could not be read. Check file permissions and iCloud download status."
+      },
+      "source": {
+        "unsupported": "Unsupported import source."
+      },
+      "vscode": {
+        "invalidJson": "File is not a valid VS Code snippets JSON object.",
+        "entryNotObject": "Snippet entry is not an object.",
+        "invalidBody": "Snippet body must be a string or string array."
+      },
+      "raycast": {
+        "invalidExport": "File is not a valid Raycast snippets export.",
+        "emptyText": "Snippet text is empty or missing."
+      },
+      "snippetslab": {
+        "invalidExport": "File is not a valid SnippetsLab export.",
+        "smartGroupsSkipped": "SnippetsLab smart groups are not imported.",
+        "attachmentsSkipped": "SnippetsLab fragment attachments are not imported.",
+        "emptySnippet": "SnippetsLab snippet has no importable fragments."
+      },
+      "gist": {
+        "noFiles": "GitHub Gist has no files.",
+        "truncatedSkipped": "Truncated Gist files are skipped in this import version.",
+        "contentMissing": "Gist file content is missing."
+      },
+      "obsidian": {
+        "excalidrawSkipped": "Excalidraw markdown file was skipped.",
+        "emptyMarkdown": "Markdown file is empty.",
+        "frontmatterIgnored": "Frontmatter fields ignored: {{fields}}.",
+        "attachmentsKept": "Attachment references are kept as text; attachment files are not imported.",
+        "wikiLinksKept": "Obsidian wiki links are imported as text and are not rewritten.",
+        "noMarkdownFiles": "No markdown files found in Obsidian import.",
+        "invalidFrontmatter": "Frontmatter could not be parsed and was imported as note content."
+      },
+      "unknown": "Import warning."
+    },
     "import": "Import",
     "importing": "Importing",
-    "imported": "Imported {{snippets}} snippets and {{notes}} notes.",
+    "importedSnippets_one": "Imported {{snippets}} snippet.",
+    "importedSnippets_other": "Imported {{snippets}} snippets.",
+    "importedNotes_one": "Imported {{notes}} note.",
+    "importedNotes_other": "Imported {{notes}} notes.",
     "createdFolder": "Created: {{name}}",
     "error": "Import failed"
   },

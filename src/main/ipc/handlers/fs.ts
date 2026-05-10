@@ -4,9 +4,10 @@ import { extname, join, parse, relative } from 'node:path'
 import { BrowserWindow, dialog, ipcMain } from 'electron'
 import {
   ensureDirSync,
-  readdirSync,
-  readFileSync,
-  statSync,
+  lstat,
+  readdir,
+  readFile,
+  realpath,
   writeFileSync,
 } from 'fs-extra'
 import { nanoid } from 'nanoid'
@@ -16,58 +17,72 @@ import { store } from '../../store'
 
 const ASSETS_DIR = 'assets'
 
-function readMarkdownFolder(rootPath: string): ImportMarkdownFolderResponse {
+async function readMarkdownFolder(
+  rootPath: string,
+): Promise<ImportMarkdownFolderResponse> {
   const files: ImportMarkdownFolderResponse['files'] = []
   const warnings: ImportMarkdownFolderResponse['warnings'] = []
+  const visitedDirectories = new Set<string>()
 
-  function visit(dirPath: string) {
+  async function visit(dirPath: string) {
+    let resolvedDirPath = ''
     let entries: string[] = []
 
     try {
-      entries = readdirSync(dirPath)
+      resolvedDirPath = await realpath(dirPath)
+      if (visitedDirectories.has(resolvedDirPath)) {
+        return
+      }
+
+      visitedDirectories.add(resolvedDirPath)
+      entries = await readdir(dirPath)
     }
     catch {
       warnings.push({
-        message:
-          'Folder could not be read. Check file permissions and iCloud download status.',
+        code: 'fs.folderReadFailed',
         source: slash(relative(rootPath, dirPath)) || '.',
       })
       return
     }
 
-    entries.forEach((entry) => {
-      const absolutePath = join(dirPath, entry)
-      const relativePath = slash(relative(rootPath, absolutePath))
+    await Promise.all(
+      entries.map(async (entry) => {
+        const absolutePath = join(dirPath, entry)
+        const relativePath = slash(relative(rootPath, absolutePath))
 
-      try {
-        const stat = statSync(absolutePath)
+        try {
+          const stat = await lstat(absolutePath)
 
-        if (stat.isDirectory()) {
-          visit(absolutePath)
-          return
+          if (stat.isSymbolicLink()) {
+            return
+          }
+
+          if (stat.isDirectory()) {
+            await visit(absolutePath)
+            return
+          }
+
+          if (!stat.isFile() || extname(entry).toLowerCase() !== '.md') {
+            return
+          }
+
+          files.push({
+            content: await readFile(absolutePath, 'utf8'),
+            name: entry,
+            relativePath,
+          })
         }
-
-        if (!stat.isFile() || extname(entry).toLowerCase() !== '.md') {
-          return
+        catch {
+          warnings.push({
+            code: 'fs.fileReadFailed',
+            source: relativePath,
+          })
         }
-
-        files.push({
-          content: readFileSync(absolutePath, 'utf8'),
-          name: entry,
-          relativePath,
-        })
-      }
-      catch {
-        warnings.push({
-          message:
-            'File could not be read. Check file permissions and iCloud download status.',
-          source: relativePath,
-        })
-      }
-    })
+      }),
+    )
   }
 
-  visit(rootPath)
+  await visit(rootPath)
 
   return { canceled: false, files, warnings }
 }
@@ -121,14 +136,17 @@ export function registerFsHandlers() {
     })
   })
 
-  ipcMain.handle('fs:import-markdown-folder', () => {
+  ipcMain.handle('fs:import-markdown-folder', async () => {
     return new Promise<ImportMarkdownFolderResponse>((resolve) => {
-      const result = dialog.showOpenDialogSync(
-        BrowserWindow.getFocusedWindow()!,
-        {
-          properties: ['openDirectory'],
-        },
-      )
+      const window = BrowserWindow.getFocusedWindow()
+      if (!window) {
+        resolve({ canceled: true, files: [], warnings: [] })
+        return
+      }
+
+      const result = dialog.showOpenDialogSync(window, {
+        properties: ['openDirectory'],
+      })
 
       if (!result?.[0]) {
         resolve({ canceled: true, files: [], warnings: [] })

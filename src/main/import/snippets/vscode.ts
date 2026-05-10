@@ -17,6 +17,37 @@ interface VSCodeSnippetValue {
   scope?: unknown
 }
 
+const LANGUAGE_FILE_NAMES = new Set([
+  'bash',
+  'c',
+  'cpp',
+  'csharp',
+  'css',
+  'dart',
+  'dockerfile',
+  'go',
+  'html',
+  'java',
+  'javascript',
+  'json',
+  'kotlin',
+  'less',
+  'markdown',
+  'php',
+  'python',
+  'ruby',
+  'rust',
+  'scss',
+  'sh',
+  'shellscript',
+  'sql',
+  'swift',
+  'typescript',
+  'vue',
+  'xml',
+  'yaml',
+])
+
 function parseJsonFile(file: ImportFile): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(file.content)
@@ -52,7 +83,8 @@ function inferLanguage(fileName: string, snippet: VSCodeSnippetValue): string {
   }
 
   if (baseName.endsWith('.json')) {
-    return path.basename(baseName, '.json') || 'plain_text'
+    const language = path.basename(baseName, '.json')
+    return LANGUAGE_FILE_NAMES.has(language) ? language : 'plain_text'
   }
 
   return 'plain_text'
@@ -83,7 +115,7 @@ export function parseVSCodeSnippetFiles(
     const parsed = parseJsonFile(file)
     if (!parsed) {
       warnings.push({
-        message: 'File is not a valid VS Code snippets JSON object',
+        code: 'vscode.invalidJson',
         source: file.name,
       })
       continue
@@ -92,7 +124,7 @@ export function parseVSCodeSnippetFiles(
     Object.entries(parsed).forEach(([key, value]) => {
       if (!value || typeof value !== 'object' || Array.isArray(value)) {
         warnings.push({
-          message: 'Snippet entry is not an object',
+          code: 'vscode.entryNotObject',
           source: `${file.name}/${key}`,
         })
         return
@@ -102,7 +134,7 @@ export function parseVSCodeSnippetFiles(
       const body = getSnippetBody(snippet.body)
       if (body === null) {
         warnings.push({
-          message: 'Snippet body must be a string or string array',
+          code: 'vscode.invalidBody',
           source: `${file.name}/${key}`,
         })
         return

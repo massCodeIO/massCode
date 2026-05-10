@@ -166,6 +166,19 @@ function createNote(
 export function applyNotesImportResult(
   result: NoteImportParseResult,
 ): ImportApplySummary {
+  if (!result.notes.length) {
+    return {
+      createdRootFolderName: '',
+      createdSnippetNames: [],
+      folders: 0,
+      notes: 0,
+      snippets: 0,
+      source: 'obsidian',
+      tags: 0,
+      warnings: result.warnings,
+    }
+  }
+
   const runFolder = createImportRunFolder(null)
   const createdNoteNames: string[] = []
   let folders = 1

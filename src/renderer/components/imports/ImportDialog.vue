@@ -129,7 +129,7 @@ function toFileReadWarning(
   file: File,
 ): ImportPreviewResponse['warnings'][number] {
   return {
-    message: i18n.t('imports.fileReadWarning'),
+    code: 'file.readFailed',
     source: getImportFileName(file),
   }
 }
@@ -164,6 +164,42 @@ async function getImportErrorMessage(error: unknown): Promise<string> {
   }
 
   return error instanceof Error ? error.message : i18n.t('imports.error')
+}
+
+function getImportWarningMessage(
+  warning: ImportPreviewResponse['warnings'][number],
+): string {
+  const key = `imports.warningMessages.${warning.code}`
+  const details
+    = warning.details && typeof warning.details === 'object'
+      ? Object.fromEntries(
+          Object.entries(toRaw(warning.details)).map(([name, value]) => [
+            name,
+            String(value),
+          ]),
+        )
+      : {}
+  const message = i18n.t(key, details)
+
+  if (message !== key) {
+    return message
+  }
+
+  return i18n.t('imports.warningMessages.unknown')
+}
+
+function getImportSuccessMessage(summary: ImportApplyResponse): string {
+  if (summary.source === 'obsidian') {
+    return i18n.t('imports.importedNotes', {
+      count: summary.notes,
+      notes: summary.notes,
+    })
+  }
+
+  return i18n.t('imports.importedSnippets', {
+    count: summary.snippets,
+    snippets: summary.snippets,
+  })
 }
 
 function getImportPayload(source?: ImportSource): ImportPreviewInput {
@@ -315,10 +351,7 @@ async function applyImport() {
     lastSummary.value = data
     await refreshImportedSpace(data)
     sonner({
-      message: i18n.t('imports.imported', {
-        notes: data.notes,
-        snippets: data.snippets,
-      }),
+      message: getImportSuccessMessage(data),
       type: 'success',
     })
     isImportDialogOpen.value = false
@@ -615,7 +648,7 @@ async function applyImport() {
           >
             <AlertTriangle class="text-warning" />
             <Alert.AlertTitle>
-              {{ i18n.t("imports.warnings") }}
+              {{ i18n.t("imports.warningTitle") }}
             </Alert.AlertTitle>
             <Alert.AlertDescription class="text-foreground/80">
               <ul class="scrollbar max-h-28 space-y-1 overflow-y-auto">
@@ -625,7 +658,7 @@ async function applyImport() {
                   class="text-xs leading-5"
                 >
                   <span class="font-medium">{{ warning.source }}</span>:
-                  {{ warning.message }}
+                  {{ getImportWarningMessage(warning) }}
                 </li>
               </ul>
             </Alert.AlertDescription>

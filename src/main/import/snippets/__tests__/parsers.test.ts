@@ -58,10 +58,25 @@ describe('parseVSCodeSnippetFiles', () => {
     expect(result.snippets).toEqual([])
     expect(result.warnings).toEqual([
       {
-        message: 'Snippet body must be a string or string array',
+        code: 'vscode.invalidBody',
         source: 'broken.code-snippets/Broken',
       },
     ])
+  })
+
+  it('uses plain text for unknown VS Code snippet file names', () => {
+    const result = parseVSCodeSnippetFiles([
+      {
+        content: JSON.stringify({
+          Log: {
+            body: 'console.log($1)',
+          },
+        }),
+        name: 'my-snippets.json',
+      },
+    ])
+
+    expect(result.snippets[0].contents[0].language).toBe('plain_text')
   })
 
   it('normalizes names that are invalid for markdown storage', () => {
@@ -180,7 +195,7 @@ describe('parseSnippetsLabFiles', () => {
 
     expect(result.warnings).toEqual([
       {
-        message: 'SnippetsLab smart groups are not imported',
+        code: 'snippetslab.smartGroupsSkipped',
         source: 'snippetslab.json',
       },
     ])
@@ -238,7 +253,7 @@ describe('parseSnippetsLabFiles', () => {
     expect(result.snippets).toEqual([])
     expect(result.warnings).toEqual([
       {
-        message: 'SnippetsLab snippet has no importable fragments',
+        code: 'snippetslab.emptySnippet',
         source: 'snippetslab.json/empty-snippet',
       },
     ])
@@ -302,6 +317,30 @@ describe('parseGitHubGistResponse', () => {
       'GitHub Gist was not found or is not public',
     )
   })
+
+  it('reports GitHub Gist rate limits clearly', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      headers: new Headers({
+        'x-ratelimit-remaining': '0',
+      }),
+      ok: false,
+      status: 403,
+    } as Response)
+
+    await expect(fetchGitHubGistImport('1234567890abcdef1234')).rejects.toThrow(
+      'GitHub Gist rate limit reached. Try again later.',
+    )
+  })
+
+  it('reports GitHub Gist request timeouts clearly', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      Object.assign(new Error('timeout'), { name: 'TimeoutError' }),
+    )
+
+    await expect(fetchGitHubGistImport('1234567890abcdef1234')).rejects.toThrow(
+      'GitHub Gist request timed out',
+    )
+  })
 })
 
 describe('parseObsidianMarkdownFiles', () => {
@@ -362,21 +401,57 @@ See [[Project Plan]].
 
     expect(result.warnings).toEqual([
       {
-        message: 'Frontmatter fields ignored: source',
+        code: 'obsidian.frontmatterIgnored',
+        details: {
+          fields: 'source',
+        },
         source: 'Links.md',
       },
       {
-        message:
-          'Attachment references are kept as text; attachment files are not imported',
+        code: 'obsidian.attachmentsKept',
         source: 'Links.md',
       },
       {
-        message:
-          'Obsidian wiki links are imported as text and are not rewritten',
+        code: 'obsidian.wikiLinksKept',
         source: 'Links.md',
       },
     ])
     expect(result.notes[0].tags).toEqual(['docs'])
+  })
+
+  it('keeps files with malformed frontmatter importable', () => {
+    const result = parseObsidianMarkdownFiles([
+      {
+        content: `---
+tags: [docs
+---
+# Still imported`,
+        name: 'Broken.md',
+      },
+    ])
+
+    expect(result.warnings).toEqual([
+      {
+        code: 'obsidian.invalidFrontmatter',
+        source: 'Broken.md',
+      },
+    ])
+    expect(result.notes).toHaveLength(1)
+    expect(result.notes[0].content).toContain('# Still imported')
+  })
+
+  it('normalizes Obsidian hierarchical tags to flat tags', () => {
+    const result = parseObsidianMarkdownFiles([
+      {
+        content: `---
+tags: vue/component
+---
+# Component`,
+        name: 'Component.md',
+      },
+    ])
+
+    expect(result.notes[0].tags).toEqual(['vue-component'])
   })
 })
 
@@ -463,5 +538,32 @@ describe('detectImportSource', () => {
     })
 
     expect(result).toBe('obsidian')
+  })
+
+  it('keeps the current Raycast tie-break for ambiguous snippet imports', () => {
+    const result = detectImportSource(undefined, {
+      files: [
+        {
+          content: JSON.stringify([
+            {
+              name: 'Raycast',
+              text: 'console.log($1)',
+            },
+          ]),
+          name: 'raycast.json',
+        },
+        {
+          content: JSON.stringify({
+            VSCode: {
+              body: 'console.log($1)',
+            },
+          }),
+          name: 'javascript.json',
+        },
+      ],
+      space: 'code',
+    })
+
+    expect(result).toBe('raycast-snippets')
   })
 })

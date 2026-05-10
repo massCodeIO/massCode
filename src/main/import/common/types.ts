@@ -8,7 +8,8 @@ export type ImportSource =
 export type ImportSpace = 'code' | 'notes'
 
 export interface ImportWarning {
-  message: string
+  code: string
+  details?: Record<string, string>
   source: string
 }
 

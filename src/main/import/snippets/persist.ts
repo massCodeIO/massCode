@@ -180,6 +180,19 @@ export function applySnippetImportResult(
   source: ImportSource,
   result: SnippetImportParseResult,
 ): ImportApplySummary {
+  if (!result.snippets.length) {
+    return {
+      createdRootFolderName: '',
+      createdSnippetNames: [],
+      folders: 0,
+      notes: 0,
+      snippets: 0,
+      source,
+      tags: 0,
+      warnings: result.warnings,
+    }
+  }
+
   const runFolder = createImportRunFolder(null, source)
   const createdSnippetNames: string[] = []
   let folders = 1

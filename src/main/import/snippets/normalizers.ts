@@ -56,7 +56,11 @@ export function normalizeImportTag(value: unknown): string | null {
     return null
   }
 
-  const normalized = value.trim().replace(/^#+/, '').trim()
+  const normalized = value
+    .trim()
+    .replace(/^#+/, '')
+    .replace(/[\\/]+/g, '-')
+    .trim()
   return normalized || null
 }
 

@@ -443,8 +443,8 @@ async function applyImport() {
             >
               {{ i18n.t("imports.gistUrl") }}
             </UiText>
-            <div class="flex gap-2">
-              <div class="min-w-0 flex-1 p-0.5">
+            <div class="flex items-center gap-2">
+              <div class="min-w-0 flex-1">
                 <Input
                   v-model="gistUrl"
                   :placeholder="i18n.t('imports.gistUrlPlaceholder')"

@@ -117,6 +117,7 @@ export default defineConfig({
             { text: 'Command Palette', link: '/documentation/command-palette' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
+            { text: 'Imports', link: '/documentation/imports' },
             { text: 'Themes', link: '/documentation/themes' },
           ],
         },

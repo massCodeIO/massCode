@@ -3,7 +3,7 @@ import FeaturesItem from './FeaturesItem.vue'
 </script>
 
 <template>
-  <div class="spaces">
+  <div class="features">
     <FeaturesItem title="Code Snippets">
       Build a reusable code library across projects and languages. Organize
       snippets with folders, tags, and fragments, then edit them with
@@ -41,8 +41,11 @@ import FeaturesItem from './FeaturesItem.vue'
       Convert, encode, hash, and generate data right inside massCode with tools
       for JSON, Base64, URLs, colors, passwords, UUIDs, and more.
     </FeaturesItem>
-  </div>
-  <div class="extras">
+    <FeaturesItem title="Imports">
+      Bring existing libraries into your local vault. Import snippets from VS
+      Code, Raycast, SnippetsLab, and public GitHub Gists, or import Obsidian
+      markdown folders into Notes with a preview before writing.
+    </FeaturesItem>
     <FeaturesItem title="Integrations">
       Bring your snippet library into the tools you already use.
       <AppLink
@@ -70,45 +73,47 @@ import FeaturesItem from './FeaturesItem.vue'
 </template>
 
 <style scoped>
-.spaces {
+.features {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-  padding: 24px 0 8px;
-}
-
-.extras {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  padding: 8px 0 24px;
+  padding: 24px 0;
 }
 
 @media (min-width: 768px) {
-  .spaces {
+  .features {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 24px;
-    padding: 24px 0 12px;
   }
 
-  .extras {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-    padding: 12px 0 24px;
-  }
-
-  .spaces > :nth-child(-n + 2) {
+  .features > :nth-child(-n + 2) {
     grid-column: span 3;
   }
 
-  .spaces > :nth-child(n + 3) {
+  .features > :nth-child(n + 3):nth-child(-n + 5) {
     grid-column: span 2;
+  }
+
+  .features > :nth-child(n + 6) {
+    grid-column: span 3;
   }
 }
 
 @media (min-width: 1024px) {
-  .extras {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .features {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .features > :nth-child(-n + 2) {
+    grid-column: span 6;
+  }
+
+  .features > :nth-child(n + 3):nth-child(-n + 5) {
+    grid-column: span 4;
+  }
+
+  .features > :nth-child(n + 6) {
+    grid-column: span 3;
   }
 }
 </style>

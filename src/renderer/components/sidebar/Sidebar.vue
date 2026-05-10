@@ -20,7 +20,7 @@ const { openImportDialog } = useImportDialog()
     >
       <template #actions>
         <UiActionButton
-          :tooltip="i18n.t('imports.action.code')"
+          :tooltip="i18n.t('imports.action.import')"
           @click="openImportDialog('vscode-snippets', 'code')"
         >
           <Upload class="h-4 w-4" />

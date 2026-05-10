@@ -78,10 +78,12 @@
   },
   "imports": {
     "title": "Import",
-    "description": "Bring snippets and notes from your existing tools into massCode.",
+    "description": {
+      "code": "Bring snippets from your existing code tools into massCode.",
+      "notes": "Bring markdown notes from your existing notes tools into massCode."
+    },
     "action": {
-      "code": "Import snippets",
-      "notes": "Import notes"
+      "import": "Import"
     },
     "sources": {
       "vscode-snippets": "VS Code",

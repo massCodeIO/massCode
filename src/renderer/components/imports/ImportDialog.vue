@@ -102,6 +102,10 @@ const sourceLabel = computed(() =>
   i18n.t(`imports.sources.${importDialogSource.value}`),
 )
 
+const importDescription = computed(() =>
+  i18n.t(`imports.description.${importDialogSpace.value}`),
+)
+
 watch(isImportDialogOpen, (isOpen) => {
   if (isOpen)
     return
@@ -375,7 +379,7 @@ async function applyImport() {
           {{ i18n.t("imports.title") }}
         </Dialog.DialogTitle>
         <Dialog.DialogDescription class="max-w-[46rem] text-xs leading-5">
-          {{ i18n.t("imports.description") }}
+          {{ importDescription }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
 

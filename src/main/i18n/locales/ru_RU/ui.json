@@ -78,10 +78,12 @@
   },
   "imports": {
     "title": "Импорт",
-    "description": "Перенесите сниппеты и заметки из текущих инструментов в massCode.",
+    "description": {
+      "code": "Перенесите сниппеты из текущих инструментов для кода в massCode.",
+      "notes": "Перенесите markdown-заметки из текущих инструментов для заметок в massCode."
+    },
     "action": {
-      "code": "Импорт сниппетов",
-      "notes": "Импорт заметок"
+      "import": "Импорт"
     },
     "sources": {
       "vscode-snippets": "VS Code",

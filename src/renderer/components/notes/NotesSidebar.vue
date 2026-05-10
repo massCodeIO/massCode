@@ -55,7 +55,7 @@ async function openDashboard() {
     >
       <template #actions>
         <UiActionButton
-          :tooltip="i18n.t('imports.action.notes')"
+          :tooltip="i18n.t('imports.action.import')"
           @click="openImportDialog('obsidian', 'notes')"
         >
           <Upload class="h-4 w-4" />

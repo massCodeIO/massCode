@@ -29,7 +29,7 @@
     },
     "actions": {
       "importSnippets": "Импорт сниппетов",
-      "importSnippetsSubtitle": "Импортировать VS Code snippets JSON, Raycast snippets JSON или публичные GitHub Gist URL",
+      "importSnippetsSubtitle": "Импортировать VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON или публичные GitHub Gist URL",
       "importNotes": "Импорт заметок",
       "importNotesSubtitle": "Импортировать markdown-папки Obsidian",
       "newSnippet": "Новый сниппет",
@@ -80,7 +80,7 @@
       "notes": "Импорт заметок"
     },
     "description": {
-      "code": "Импортируйте VS Code snippets JSON, Raycast snippets JSON и публичные GitHub Gist URL.",
+      "code": "Импортируйте VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON и публичные GitHub Gist URL.",
       "notes": "Импортируйте markdown-папки Obsidian."
     },
     "action": {
@@ -89,6 +89,7 @@
     "sources": {
       "vscode-snippets": "VS Code",
       "raycast-snippets": "Raycast",
+      "snippetslab": "SnippetsLab",
       "github-gists": "GitHub Gists",
       "obsidian": "Obsidian"
     },

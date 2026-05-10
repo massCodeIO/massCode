@@ -692,7 +692,12 @@ export interface ImportApplyInput {
     name: string;
     relativePath?: string;
   }[];
-  source?: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
   space?: "code" | "notes";
   url?: string;
 }
@@ -703,7 +708,12 @@ export interface ImportApplyResponse {
   folders: number;
   notes: number;
   snippets: number;
-  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
   tags: number;
   warnings: {
     message: string;
@@ -718,7 +728,12 @@ export interface ImportPreviewInput {
     name: string;
     relativePath?: string;
   }[];
-  source?: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
   space?: "code" | "notes";
   url?: string;
 }
@@ -734,7 +749,12 @@ export interface ImportPreviewResponse {
   }[];
   notes: number;
   snippets: number;
-  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
   tags: string[];
   warnings: {
     message: string;

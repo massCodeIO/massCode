@@ -3,6 +3,7 @@ import { detectImportSource } from '../../detect'
 import { parseObsidianMarkdownFiles } from '../../notes/obsidian'
 import { fetchGitHubGistImport, parseGitHubGistResponse } from '../githubGists'
 import { parseRaycastSnippetFiles } from '../raycast'
+import { parseSnippetsLabFiles } from '../snippetsLab'
 import { parseVSCodeSnippetFiles } from '../vscode'
 
 afterEach(() => {
@@ -110,6 +111,135 @@ describe('parseRaycastSnippetFiles', () => {
         name: 'Commit',
         sourceId: 'raycast.json:1',
         tags: [],
+      },
+    ])
+  })
+})
+
+describe('parseSnippetsLabFiles', () => {
+  it('parses SnippetsLab JSON exports with folders, tags, and fragments', () => {
+    const result = parseSnippetsLabFiles([
+      {
+        content: JSON.stringify({
+          app: '2.6.4',
+          contents: {
+            folders: [
+              {
+                children: [
+                  {
+                    title: 'Vue',
+                    uuid: 'folder-vue',
+                  },
+                ],
+                title: 'Frontend',
+                uuid: 'folder-frontend',
+              },
+            ],
+            smartGroups: [
+              {
+                title: 'Vue snippets',
+                uuid: 'smart-vue',
+              },
+            ],
+            snippets: [
+              {
+                folder: 'folder-vue',
+                fragments: [
+                  {
+                    content: 'export default {}',
+                    language: 'JavascriptLexer',
+                    title: 'index.js',
+                    uuid: 'fragment-js',
+                  },
+                  {
+                    content: '# Notes',
+                    language: 'MarkdownLexer',
+                    note: 'Keep as markdown',
+                    title: 'readme.md',
+                    uuid: 'fragment-md',
+                  },
+                ],
+                githubHTMLURL: 'https://gist.github.com/user/abc',
+                tags: ['tag-vue'],
+                title: 'Vue helper',
+                uuid: 'snippet-vue',
+              },
+            ],
+            tags: [
+              {
+                title: 'vue',
+                uuid: 'tag-vue',
+              },
+            ],
+          },
+          schema: '2.6',
+        }),
+        name: 'snippetslab.json',
+      },
+    ])
+
+    expect(result.warnings).toEqual([
+      {
+        message: 'SnippetsLab smart groups are not imported',
+        source: 'snippetslab.json',
+      },
+    ])
+    expect(result.snippets).toEqual([
+      {
+        contents: [
+          {
+            label: 'index.js',
+            language: 'javascript',
+            value: 'export default {}',
+          },
+          {
+            label: 'readme.md',
+            language: 'markdown',
+            value: '# Notes',
+          },
+        ],
+        description:
+          'https://gist.github.com/user/abc\n\nreadme.md:\nKeep as markdown',
+        folderPath: ['Frontend', 'Vue'],
+        name: 'Vue helper',
+        sourceId: 'snippet-vue',
+        sourceUrl: 'https://gist.github.com/user/abc',
+        tags: ['vue'],
+      },
+    ])
+  })
+
+  it('skips SnippetsLab snippets without importable fragments', () => {
+    const result = parseSnippetsLabFiles([
+      {
+        content: JSON.stringify({
+          app: '2.6.4',
+          contents: {
+            snippets: [
+              {
+                fragments: [
+                  {
+                    content: '',
+                    language: 'TextLexer',
+                    title: 'Fragment',
+                  },
+                ],
+                title: 'Empty',
+                uuid: 'empty-snippet',
+              },
+            ],
+          },
+          schema: '2.6',
+        }),
+        name: 'snippetslab.json',
+      },
+    ])
+
+    expect(result.snippets).toEqual([])
+    expect(result.warnings).toEqual([
+      {
+        message: 'SnippetsLab snippet has no importable fragments',
+        source: 'snippetslab.json/empty-snippet',
       },
     ])
   })
@@ -286,6 +416,38 @@ describe('detectImportSource', () => {
     })
 
     expect(result).toBe('vscode-snippets')
+  })
+
+  it('detects SnippetsLab exports in Code imports', () => {
+    const result = detectImportSource(undefined, {
+      files: [
+        {
+          content: JSON.stringify({
+            app: '2.6.4',
+            contents: {
+              snippets: [
+                {
+                  fragments: [
+                    {
+                      content: 'console.log(1)',
+                      language: 'JavascriptLexer',
+                      title: 'Fragment',
+                    },
+                  ],
+                  title: 'Log',
+                  uuid: 'snippet-log',
+                },
+              ],
+            },
+            schema: '2.6',
+          }),
+          name: 'snippetslab.json',
+        },
+      ],
+      space: 'code',
+    })
+
+    expect(result).toBe('snippetslab')
   })
 
   it('detects Obsidian markdown folders in Notes imports', () => {

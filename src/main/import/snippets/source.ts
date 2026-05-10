@@ -13,5 +13,9 @@ export function getSnippetImportSourceName(source: ImportSource): string {
     return 'Raycast'
   }
 
+  if (source === 'snippetslab') {
+    return 'SnippetsLab'
+  }
+
   return 'Imported'
 }

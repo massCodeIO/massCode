@@ -876,6 +876,7 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
         'github',
         'gist',
         'gists',
+        'snippetslab',
         'snippet',
         'snippets',
       ],

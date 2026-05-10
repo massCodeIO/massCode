@@ -4,6 +4,7 @@ const importSource = t.Union([
   t.Literal('github-gists'),
   t.Literal('obsidian'),
   t.Literal('raycast-snippets'),
+  t.Literal('snippetslab'),
   t.Literal('vscode-snippets'),
 ])
 

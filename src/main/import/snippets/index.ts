@@ -8,6 +8,7 @@ import type {
 import { fetchGitHubGistImport } from './githubGists'
 import { applySnippetImportResult } from './persist'
 import { parseRaycastSnippetFiles } from './raycast'
+import { parseSnippetsLabFiles } from './snippetsLab'
 import { getSnippetImportSourceName } from './source'
 import { parseVSCodeSnippetFiles } from './vscode'
 
@@ -27,6 +28,10 @@ async function parseSnippetImportPayload(
 
   if (source === 'raycast-snippets') {
     return parseRaycastSnippetFiles(files)
+  }
+
+  if (source === 'snippetslab') {
+    return parseSnippetsLabFiles(files)
   }
 
   return {

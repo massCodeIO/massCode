@@ -2,6 +2,7 @@ export type ImportSource =
   | 'github-gists'
   | 'obsidian'
   | 'raycast-snippets'
+  | 'snippetslab'
   | 'vscode-snippets'
 
 export type ImportSpace = 'code' | 'notes'

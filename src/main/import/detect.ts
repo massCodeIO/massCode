@@ -1,5 +1,6 @@
 import type { ImportPayload, ImportSource } from './common/types'
 import { parseRaycastSnippetFiles } from './snippets/raycast'
+import { parseSnippetsLabFiles } from './snippets/snippetsLab'
 import { parseVSCodeSnippetFiles } from './snippets/vscode'
 
 function hasMarkdownFiles(payload: ImportPayload): boolean {
@@ -12,6 +13,11 @@ function hasMarkdownFiles(payload: ImportPayload): boolean {
 function detectSnippetSource(payload: ImportPayload): ImportSource {
   if (payload.url?.trim()) {
     return 'github-gists'
+  }
+
+  const snippetsLab = parseSnippetsLabFiles(payload.files || [])
+  if (snippetsLab.snippets.length > 0) {
+    return 'snippetslab'
   }
 
   const raycast = parseRaycastSnippetFiles(payload.files || [])

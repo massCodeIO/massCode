@@ -17,6 +17,7 @@ import {
   useNotesApp,
   useNoteSearch,
 } from '@/composables/spaces/notes'
+import { useHttpImportDialog } from '@/composables/useHttpImportDialog'
 import { useImportDialog } from '@/composables/useImportDialog'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -153,6 +154,7 @@ const httpApp = useHttpApp()
 const httpData = useHttpRequests()
 const httpSearch = useHttpSearch()
 const importDialog = useImportDialog()
+const httpImportDialog = useHttpImportDialog()
 
 const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
 
@@ -837,6 +839,11 @@ async function openImportFromPalette(
   importDialog.openImportDialog(source, space)
 }
 
+async function openHttpImportFromPalette() {
+  await router.push({ name: RouterName.httpSpace })
+  httpImportDialog.openHttpImportDialog()
+}
+
 function getCommandDefinitions(): CommandPaletteCommand[] {
   return [
     {
@@ -919,6 +926,23 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       keywords: ['create', 'http', 'request', 'folder'],
       spaceId: 'http',
       run: createHttpFolderFromPalette,
+    },
+    {
+      id: 'import-http-collection',
+      title: i18n.t('commandPalette.actions.importHttpCollection'),
+      subtitle: i18n.t('commandPalette.actions.importHttpCollectionSubtitle'),
+      icon: Upload,
+      keywords: [
+        'import',
+        'http',
+        'openapi',
+        'postman',
+        'bruno',
+        'collection',
+        'environment',
+      ],
+      spaceId: 'http',
+      run: openHttpImportFromPalette,
     },
     {
       id: 'open-preferences',

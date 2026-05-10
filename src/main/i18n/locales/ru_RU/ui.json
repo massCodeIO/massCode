@@ -44,6 +44,8 @@
       "newNotesFolderSubtitle": "Создать папку в Заметках",
       "newHttpFolder": "Новая HTTP-папка",
       "newHttpFolderSubtitle": "Создать папку в HTTP",
+      "importHttpCollection": "Импорт HTTP-коллекции",
+      "importHttpCollectionSubtitle": "Импортировать файлы OpenAPI, Postman или Bruno",
       "openPreferences": "Открыть настройки",
       "openPreferencesSubtitle": "Изменить настройки massCode"
     },

@@ -44,6 +44,8 @@
       "newNotesFolderSubtitle": "Create a folder in Notes",
       "newHttpFolder": "New HTTP folder",
       "newHttpFolderSubtitle": "Create a folder in HTTP",
+      "importHttpCollection": "Import HTTP collection",
+      "importHttpCollectionSubtitle": "Import OpenAPI, Postman, or Bruno collection files",
       "openPreferences": "Open preferences",
       "openPreferencesSubtitle": "Change massCode settings"
     },

@@ -18,6 +18,7 @@ Both tools are free. The real question is whether you live entirely on macOS and
 | Platforms | macOS, Windows, Linux | macOS only (13.5+) |
 | Data location | Local Markdown Vault on your disk | Local library, with iCloud Sync between Macs |
 | Snippets | Yes, with folders, tags, and fragments | Yes, with nesting folders, tags, smart groups, shortcuts |
+| Imports | SnippetsLab JSON, VS Code snippets JSON, Raycast snippets JSON, public GitHub Gist URLs, Obsidian markdown folders | SnippetsLab library import/export |
 | Syntax languages | 160+ grammars (600+ via `.tmLanguage`) | 600+ languages and text formats |
 | Language detection | Manual selection from a dropdown (default "Plain text") | Automatic detection for 50 most popular languages via Core ML |
 | Markdown notes | Yes, dedicated notes space | Markdown support inside snippets, with Mermaid and LaTeX |
@@ -46,6 +47,7 @@ massCode is a strong choice when you cross platforms or need more than snippets.
 - **You work on Windows or Linux too.** massCode runs on macOS, Windows, and Linux. Your snippets travel with you across all three.
 - **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). SnippetsLab focuses on snippets.
 - **You want plain Markdown files on disk.** massCode's [Markdown Vault](/documentation/storage) keeps everything as `.md` files with frontmatter — readable in any editor, easy to back up, trivial to put in Git.
+- **You want a direct import path from SnippetsLab.** Export SnippetsLab JSON, preview it in massCode, then import snippets, folders, tags, descriptions, and fragments into Code.
 - **You want sync that is not tied to iCloud.** massCode lets you point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at the vault. That matters if you mix macOS with Windows or Linux machines.
 - **You want full transparency.** massCode is open source on [GitHub](https://github.com/massCodeIO/massCode) under AGPL v3.
 
@@ -64,9 +66,9 @@ massCode is a strong choice when you cross platforms or need more than snippets.
 
 To move from SnippetsLab to massCode:
 
-1. In SnippetsLab, export your library or copy out individual snippets.
-2. In massCode, recreate your folder structure under [Code](/documentation/code/library).
-3. Paste each snippet into a new entry, then pick the language from the editor footer dropdown. The content is saved as a Markdown file in your vault.
+1. In SnippetsLab, export your library as JSON.
+2. In massCode, open [Code](/documentation/code/library), choose import, and select the SnippetsLab export file.
+3. Review the preview and warnings, then import the snippets into your Markdown Vault.
 4. Move longer documentation into [Notes](/documentation/notes/) and link between notes and snippets.
 
 [Download massCode](/download/) and run it alongside SnippetsLab while you migrate.

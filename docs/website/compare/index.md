@@ -35,5 +35,6 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - Local-first [Markdown Vault](/documentation/storage) — your data stays as plain `.md` files on disk
 - Cross-platform: macOS, Windows, Linux
 - More than snippets: [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Tools](/documentation/tools/)
+- Built-in imports for VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - Sync via any service you already trust — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 - No account, no telemetry-required login, no vendor lock-in

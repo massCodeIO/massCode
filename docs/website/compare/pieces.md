@@ -18,6 +18,7 @@ If you want an AI copilot that remembers your work and answers questions about i
 | Data location | Local Markdown Vault on your disk | Local-first storage with optional cloud features |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, plus IDE and browser integrations |
 | Snippets | Yes, with folders, tags, and fragments | Yes, with enrichment and sharing |
+| Imports | VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | Snippet capture and sharing through Pieces workflows |
 | Notes | Yes, dedicated notes space | Not the focus |
 | HTTP client | Yes, built in | No |
 | Math notebook | Yes, built in | No |
@@ -43,6 +44,7 @@ massCode is a strong choice when your priority is owning your data, staying on y
 
 - **You want plain Markdown files on disk.** massCode stores everything in a [Markdown Vault](/documentation/storage). Each snippet and note is a `.md` file with frontmatter — readable in any editor, easy to back up.
 - **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). Pieces focuses on AI-augmented snippets and memory.
+- **You want a migration path into plain files.** massCode can import VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders into your local vault.
 - **You want full transparency.** The source is on [GitHub](https://github.com/massCodeIO/massCode) under AGPL v3 — read, audit, and self-build it.
 - **You want sync without a vendor.** Point [iCloud, Dropbox, Google Drive, Syncthing, or a Git repo](/documentation/sync) at your vault directory. There is no required account.
 
@@ -64,9 +66,9 @@ You do not have to choose all-or-nothing. Many developers run both: Pieces for A
 
 If you want to consolidate into massCode:
 
-1. Export your Pieces snippets — for example, share them as Gists or copy them out.
-2. Create folders in massCode under [Code](/documentation/code/library) that mirror your structure.
-3. Paste each snippet into a new entry, then pick the language from the editor footer dropdown. The content is saved as a Markdown file in your vault.
+1. Export your Pieces snippets into a format massCode can read when possible — for example, public GitHub Gist URLs.
+2. Open [Code](/documentation/code/library), choose import, preview the detected snippets, then import them into your vault.
+3. For snippets that cannot be exported as Gists, recreate folders under Code and paste them manually.
 4. Move longer pieces of context into [Notes](/documentation/notes/) and link between them.
 
 [Download massCode](/download/) and try it on a copy of your data.

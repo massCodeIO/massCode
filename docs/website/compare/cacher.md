@@ -18,6 +18,7 @@ If you need a managed cloud with shared team libraries and GitHub Gist sync, Cac
 | Data location | Local Markdown Vault on your disk | Cloud-hosted account |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, web app |
 | Snippets | Yes, with folders, tags, and fragments | Yes, with color-coded labels |
+| Imports | VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | GitHub Gist sync and app import/export workflows |
 | GitHub Gist sync | No | Yes, first-party |
 | Notes | Yes, dedicated notes space | Markdown editing inside snippets |
 | HTTP client | Yes, built in | No |
@@ -44,6 +45,7 @@ massCode is a strong choice when you value local control, a single combined work
 
 - **You want plain files, not a database in the cloud.** Every snippet and note in massCode is a Markdown file in your [Markdown Vault](/documentation/storage). You can read, edit, and back it up with any tool.
 - **You want one app for snippets, notes, HTTP, and math.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). Cacher focuses on snippets.
+- **You want to bring existing snippets into local storage.** massCode imports public GitHub Gist URLs, VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, and Obsidian markdown folders.
 - **You want sync on your terms.** Point [iCloud, Dropbox, Google Drive, Syncthing, or a Git repo](/documentation/sync) at your vault. No account, no second bill.
 - **You want to keep working when the network is gone.** massCode is local-first by design.
 - **You want to read or audit the source.** massCode is open source under AGPL v3 on [GitHub](https://github.com/massCodeIO/massCode). Cacher's CLI is open source, but the rest of the platform is proprietary.
@@ -64,9 +66,9 @@ massCode is a strong choice when you value local control, a single combined work
 
 To move from Cacher to massCode at the file level:
 
-1. Export your Cacher snippets — for example, by syncing them through GitHub Gists, then cloning the relevant Gists locally, or by copying snippets manually.
-2. In massCode, recreate your top-level folders under [Code](/documentation/code/library) to match your Cacher labels.
-3. Paste each snippet into a new entry and pick the language from the editor footer dropdown.
+1. Export your Cacher snippets through GitHub Gists when possible.
+2. In massCode, open [Code](/documentation/code/library), choose import, and paste a public Gist URL to preview the snippets.
+3. Import the previewed snippets, then adjust folders, tags, and languages inside Code.
 4. If you previously relied on Cacher for team sharing, point your massCode vault at a shared Git repository so teammates can pull and push changes.
 
 [Download massCode](/download/) and try it on a copy of your snippets first.

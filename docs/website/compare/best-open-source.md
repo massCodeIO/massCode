@@ -14,6 +14,7 @@ Not every "free" snippet manager is open source, and not every open-source licen
 - **OSI-approved license.** AGPL, GPL, MIT, Apache 2.0, BSD. A "source available" repo with a custom non-commercial license is not the same thing.
 - **Public source on GitHub or GitLab.** You can read, fork, and build it yourself.
 - **Local-first storage.** Your snippets live on disk in a documented format you can read without the app.
+- **Practical imports.** A snippet manager is easier to adopt if it can bring in existing libraries from common formats such as VS Code snippets JSON, GitHub Gists, or other snippet apps.
 - **No mandatory account.** The app should work fully without registering.
 - **Cross-platform.** macOS, Windows, and Linux at a minimum, unless you live entirely on one platform.
 - **Active development.** Recent commits, releases, and issue activity matter more than star count.
@@ -32,6 +33,7 @@ A pure snippet manager is enough for many people. But the day-to-day workflow of
 - **Account required:** None
 - **Platforms:** macOS, Windows, Linux
 - **Scope:** [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/) in one app
+- **Imports:** VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - **Sync:** Bring your own — [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync)
 - **Active development:** Continuously released on [GitHub Releases](https://github.com/massCodeIO/massCode/releases)
 
@@ -70,6 +72,7 @@ If you read carefully, "open-source snippet manager" really splits into three bu
 Before installing anything, answer these questions:
 
 - Will my snippets be code, text, or both?
+- Can I import my existing snippets, or will migration be manual?
 - Do I need it on Windows or Linux, or just macOS?
 - Do I want local files or a hosted database?
 - Do I need other workspaces (notes, HTTP, math), or only snippets?

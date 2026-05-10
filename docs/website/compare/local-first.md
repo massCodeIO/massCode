@@ -28,6 +28,7 @@ Common reasons people consider switching:
 - **Vendor durability.** Snippet managers come and go. Plain Markdown files survive any vendor.
 - **Cost.** Cacher's paid plans start at $9.99/month for Expert and $29.99/month for the Teams base ([cacher.io/pricing](https://www.cacher.io/pricing)). Pieces' Teams plan is contact-for-pricing. massCode is free.
 - **Sync control.** You may already pay for iCloud, Dropbox, or self-host Syncthing — adding another sync vendor on top is duplication.
+- **Migration.** Built-in imports reduce the amount of manual copy-paste needed when you move existing snippets or markdown notes into local storage.
 - **Open source.** Some teams prefer or require code they can audit and self-build.
 - **Workspace consolidation.** Pieces and Cacher are snippet-focused. Notes, HTTP requests, and math live in other apps. Consolidating into one local-first workspace simplifies the toolchain.
 
@@ -67,6 +68,12 @@ massCode is more than a snippet manager. In the same app you get:
 - [Tools](/documentation/tools/) — JSON Diff, encoders, hashes, generators, text utilities
 
 All of it stored locally. All of it free.
+
+### Imports into the local vault
+
+Moving to a local-first workspace should not mean rebuilding every library by hand. massCode can import snippets from VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, and public GitHub Gist URLs. It can also import Obsidian markdown folders into Notes.
+
+Each import is previewed before anything is written to your vault, including detected source, item counts, tags, folders, and warnings for unsupported source features.
 
 ### Open source
 

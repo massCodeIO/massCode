@@ -22,6 +22,7 @@ Many developers use both: Raycast for quick text expansion, massCode for the lon
 | Data location | Local Markdown Vault on your disk | Raycast database; cloud sync available on Pro |
 | Folders | Yes, multi-level | Yes |
 | Search | Full-text search across snippets, notes, HTTP requests | Search snippets by title in the launcher |
+| Imports | Raycast snippets JSON, VS Code snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | Raycast snippets import/export |
 | Snippet expansion by keyword | No | Yes, system-wide |
 | Snippet fragments | Yes, multiple tabs per snippet | No |
 | Code editor with syntax highlighting | Yes, full editor | Limited, designed for short text |
@@ -50,6 +51,7 @@ massCode is a strong choice when your snippets are real code, not text shortcuts
 
 - **Your library is real code.** massCode is a code workspace with a full editor, syntax highlighting for 160+ grammars, multiple fragments per snippet, descriptions, and tags. It scales to thousands of snippets in folders.
 - **You want plain Markdown files on disk.** Snippets and notes live as `.md` files in a [Markdown Vault](/documentation/storage). Your library is portable, scriptable, and not locked behind another vendor's data store.
+- **You want to promote Raycast snippets into a larger library.** Export Raycast snippets JSON, preview it in massCode, then import it into Code for folders, tags, fragments, and long-term storage.
 - **You work on Windows or Linux.** massCode is a first-class app on macOS, Windows, and Linux. Raycast Snippets is macOS and iOS.
 - **You want one workspace beyond snippets.** massCode adds [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/) in the same app.
 - **You want sync without paying for it.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. Cloud sync in Raycast is a Pro feature.
@@ -71,7 +73,8 @@ massCode is a strong choice when your snippets are real code, not text shortcuts
 A common pairing:
 
 1. Keep your full code library in massCode under [Code](/documentation/code/library).
-2. Move only the small, frequently-typed strings into Raycast Snippets — signatures, common imports, boilerplate headers.
-3. Use the [massCode Raycast extension](https://www.raycast.com/antonreshetov/masscode) to surface code snippets directly from Raycast when you need them.
+2. Import existing Raycast snippets JSON into massCode if some shortcuts have grown into reusable code snippets.
+3. Move only the small, frequently-typed strings into Raycast Snippets — signatures, common imports, boilerplate headers.
+4. Use the [massCode Raycast extension](https://www.raycast.com/antonreshetov/masscode) to surface code snippets directly from Raycast when you need them.
 
 [Download massCode](/download/) — it sits well next to a launcher rather than competing with one.

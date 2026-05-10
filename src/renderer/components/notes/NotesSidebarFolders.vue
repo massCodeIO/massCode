@@ -258,8 +258,8 @@ function onCancelEdit() {
     </template>
   </SidebarSectionHeader>
   <div class="flex min-h-0 flex-1 flex-col">
-    <div class="min-h-0 flex-1">
-      <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-hidden">
+      <div class="h-full min-h-0">
         <ContextMenu.ContextMenu>
           <ContextMenu.ContextMenuTrigger as-child>
             <UiTree

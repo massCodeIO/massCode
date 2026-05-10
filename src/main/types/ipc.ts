@@ -56,7 +56,7 @@ type SystemAction =
   | 'migration-error'
   | 'error'
 type PrettierAction = 'format'
-type FsAction = 'assets' | 'notes-asset'
+type FsAction = 'assets' | 'import-markdown-folder' | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction = 'math:read' | 'math:write' | 'http:execute'
 
@@ -89,4 +89,22 @@ export interface PrettierOptions {
 
 export interface FsAssetsOptions {
   path: string
+}
+
+export interface ImportMarkdownFolderFile {
+  content: string
+  name: string
+  relativePath: string
+}
+
+export interface ImportMarkdownFolderWarning {
+  code: string
+  details?: Record<string, string>
+  source: string
+}
+
+export interface ImportMarkdownFolderResponse {
+  canceled: boolean
+  files: ImportMarkdownFolderFile[]
+  warnings: ImportMarkdownFolderWarning[]
 }

@@ -685,6 +685,85 @@ export interface HttpImportPreviewResponse {
   }[];
 }
 
+export interface ImportApplyInput {
+  files?: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+    relativePath?: string;
+  }[];
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  space?: "code" | "notes";
+  url?: string;
+}
+
+export interface ImportApplyResponse {
+  createdRootFolderName: string;
+  createdSnippetNames: string[];
+  folders: number;
+  notes: number;
+  snippets: number;
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  tags: number;
+  warnings: {
+    code: string;
+    details?: object;
+    source: string;
+  }[];
+}
+
+export interface ImportPreviewInput {
+  files?: {
+    content: string;
+    encoding?: "text" | "base64";
+    name: string;
+    relativePath?: string;
+  }[];
+  source?:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  space?: "code" | "notes";
+  url?: string;
+}
+
+export interface ImportPreviewResponse {
+  folders: {
+    path: string;
+    snippets: number;
+  }[];
+  groups: {
+    name: string;
+    snippets: number;
+  }[];
+  notes: number;
+  snippets: number;
+  source:
+    | "github-gists"
+    | "obsidian"
+    | "raycast-snippets"
+    | "snippetslab"
+    | "vscode-snippets";
+  tags: string[];
+  warnings: {
+    code: string;
+    details?: object;
+    source: string;
+  }[];
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -931,7 +1010,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.3.0
+ * @version 5.4.0
  *
  * Development documentation
  */
@@ -2132,6 +2211,54 @@ export class Api<
         }
       >({
         path: `/http-import/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  imports = {
+    /**
+     * No description
+     *
+     * @tags Imports
+     * @name PostImportsPreview
+     * @request POST:/imports/preview
+     */
+    postImportsPreview: (
+      data: ImportPreviewInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ImportPreviewResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/imports/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Imports
+     * @name PostImportsApply
+     * @request POST:/imports/apply
+     */
+    postImportsApply: (data: ImportApplyInput, params: RequestParams = {}) =>
+      this.request<
+        ImportApplyResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/imports/apply`,
         method: "POST",
         body: data,
         type: ContentType.Json,

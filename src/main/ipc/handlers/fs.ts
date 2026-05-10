@@ -1,13 +1,91 @@
+import type { ImportMarkdownFolderResponse } from '../../types/ipc'
 import { Buffer } from 'node:buffer'
-import { join, parse } from 'node:path'
-import { ipcMain } from 'electron'
-import { ensureDirSync, writeFileSync } from 'fs-extra'
+import { extname, join, parse, relative } from 'node:path'
+import { BrowserWindow, dialog, ipcMain } from 'electron'
+import {
+  ensureDirSync,
+  lstat,
+  readdir,
+  readFile,
+  realpath,
+  writeFileSync,
+} from 'fs-extra'
 import { nanoid } from 'nanoid'
 import slash from 'slash'
 import { ensureFlatSpacesLayout } from '../../storage/providers/markdown/runtime/spaces'
 import { store } from '../../store'
 
 const ASSETS_DIR = 'assets'
+
+async function readMarkdownFolder(
+  rootPath: string,
+): Promise<ImportMarkdownFolderResponse> {
+  const files: ImportMarkdownFolderResponse['files'] = []
+  const warnings: ImportMarkdownFolderResponse['warnings'] = []
+  const visitedDirectories = new Set<string>()
+
+  async function visit(dirPath: string) {
+    let resolvedDirPath = ''
+    let entries: string[] = []
+
+    try {
+      resolvedDirPath = await realpath(dirPath)
+      if (visitedDirectories.has(resolvedDirPath)) {
+        return
+      }
+
+      visitedDirectories.add(resolvedDirPath)
+      entries = await readdir(dirPath)
+    }
+    catch {
+      warnings.push({
+        code: 'fs.folderReadFailed',
+        source: slash(relative(rootPath, dirPath)) || '.',
+      })
+      return
+    }
+
+    await Promise.all(
+      entries.map(async (entry) => {
+        const absolutePath = join(dirPath, entry)
+        const relativePath = slash(relative(rootPath, absolutePath))
+
+        try {
+          const stat = await lstat(absolutePath)
+
+          if (stat.isSymbolicLink()) {
+            return
+          }
+
+          if (stat.isDirectory()) {
+            await visit(absolutePath)
+            return
+          }
+
+          if (!stat.isFile() || extname(entry).toLowerCase() !== '.md') {
+            return
+          }
+
+          files.push({
+            content: await readFile(absolutePath, 'utf8'),
+            name: entry,
+            relativePath,
+          })
+        }
+        catch {
+          warnings.push({
+            code: 'fs.fileReadFailed',
+            source: relativePath,
+          })
+        }
+      }),
+    )
+  }
+
+  await visit(rootPath)
+
+  return { canceled: false, files, warnings }
+}
 
 export function registerFsHandlers() {
   ipcMain.handle('fs:assets', (event, { buffer, fileName }) => {
@@ -55,6 +133,27 @@ export function registerFsHandlers() {
       catch (error) {
         reject(error)
       }
+    })
+  })
+
+  ipcMain.handle('fs:import-markdown-folder', async () => {
+    return new Promise<ImportMarkdownFolderResponse>((resolve) => {
+      const window = BrowserWindow.getFocusedWindow()
+      if (!window) {
+        resolve({ canceled: true, files: [], warnings: [] })
+        return
+      }
+
+      const result = dialog.showOpenDialogSync(window, {
+        properties: ['openDirectory'],
+      })
+
+      if (!result?.[0]) {
+        resolve({ canceled: true, files: [], warnings: [] })
+        return
+      }
+
+      resolve(readMarkdownFolder(result[0]))
     })
   })
 }

@@ -7,6 +7,7 @@ import {
   useHttpEnvironments,
   useHttpFolderDragDrop,
   useHttpFolders,
+  useHttpImportDialog,
   useHttpRequests,
   useHttpSearch,
   useResizeHandle,
@@ -42,9 +43,9 @@ const { getHttpRequests, isRestoreStateBlocked, selectFirstRequest }
 const { getHttpEnvironments } = useHttpEnvironments()
 const { clearSearch } = useHttpSearch()
 const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
+const { isHttpImportDialogOpen, openHttpImportDialog } = useHttpImportDialog()
 
 const environmentsHandleRef = ref<HTMLElement>()
-const isImportDialogOpen = ref(false)
 
 function normalizeEnvironmentsHeight(value: number | undefined) {
   if (
@@ -244,14 +245,14 @@ async function onImported() {
       <template #actions>
         <UiActionButton
           :tooltip="i18n.t('spaces.http.action.import')"
-          @click="isImportDialogOpen = true"
+          @click="openHttpImportDialog"
         >
           <Upload class="h-4 w-4" />
         </UiActionButton>
       </template>
     </SidebarHeader>
     <HttpImportDialog
-      v-model:open="isImportDialogOpen"
+      v-model:open="isHttpImportDialogOpen"
       @imported="onImported"
     />
     <HttpSidebarLibrary />

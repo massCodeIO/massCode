@@ -28,6 +28,10 @@
       "httpRequests": "HTTP Requests"
     },
     "actions": {
+      "importSnippets": "Import snippets",
+      "importSnippetsSubtitle": "Import VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, or public GitHub Gist URLs",
+      "importNotes": "Import notes",
+      "importNotesSubtitle": "Import Obsidian markdown folders",
       "newSnippet": "New snippet",
       "newSnippetSubtitle": "Create a code snippet",
       "newNote": "New note",
@@ -40,6 +44,8 @@
       "newNotesFolderSubtitle": "Create a folder in Notes",
       "newHttpFolder": "New HTTP folder",
       "newHttpFolderSubtitle": "Create a folder in HTTP",
+      "importHttpCollection": "Import HTTP collection",
+      "importHttpCollectionSubtitle": "Import OpenAPI, Postman, or Bruno collection files",
       "openPreferences": "Open preferences",
       "openPreferencesSubtitle": "Change massCode settings"
     },
@@ -67,6 +73,95 @@
       "run": "Run",
       "back": "Back"
     }
+  },
+  "imports": {
+    "title": {
+      "code": "Import snippets",
+      "notes": "Import notes"
+    },
+    "description": {
+      "code": "Import VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, and public GitHub Gist URLs.",
+      "notes": "Import Obsidian markdown folders."
+    },
+    "action": {
+      "import": "Import"
+    },
+    "sources": {
+      "vscode-snippets": "VS Code",
+      "raycast-snippets": "Raycast",
+      "snippetslab": "SnippetsLab",
+      "github-gists": "GitHub Gists",
+      "obsidian": "Obsidian"
+    },
+    "gistUrl": "Gist URL",
+    "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "filesTitle": "Select import files",
+    "folderTitle": "Select import folder",
+    "fileHint": "Drag files here, or choose files to preview the import.",
+    "folderHint": "Choose an Obsidian markdown folder to preview the import.",
+    "chooseFiles": "Choose files",
+    "chooseFolder": "Choose folder",
+    "preview": "Preview",
+    "previewing": "Reading import",
+    "noReadableFiles": "No readable files found. Download the folder locally or check file permissions, then try again.",
+    "noImportableFiles": "No importable markdown files found.",
+    "snippets": "Snippets",
+    "notes": "Notes",
+    "tags": "Tags",
+    "detectedSource": "Detected source",
+    "folderMeta_one": "{{count}} item",
+    "folderMeta_other": "{{count}} items",
+    "warningTitle": "Warnings",
+    "warningMessages": {
+      "file": {
+        "readFailed": "File could not be read. Make sure it is downloaded locally and available to massCode."
+      },
+      "fs": {
+        "folderReadFailed": "Folder could not be read. Check file permissions and iCloud download status.",
+        "fileReadFailed": "File could not be read. Check file permissions and iCloud download status."
+      },
+      "source": {
+        "unsupported": "Unsupported import source."
+      },
+      "vscode": {
+        "invalidJson": "File is not a valid VS Code snippets JSON object.",
+        "entryNotObject": "Snippet entry is not an object.",
+        "invalidBody": "Snippet body must be a string or string array."
+      },
+      "raycast": {
+        "invalidExport": "File is not a valid Raycast snippets export.",
+        "emptyText": "Snippet text is empty or missing."
+      },
+      "snippetslab": {
+        "invalidExport": "File is not a valid SnippetsLab export.",
+        "smartGroupsSkipped": "SnippetsLab smart groups are not imported.",
+        "attachmentsSkipped": "SnippetsLab fragment attachments are not imported.",
+        "emptySnippet": "SnippetsLab snippet has no importable fragments."
+      },
+      "gist": {
+        "noFiles": "GitHub Gist has no files.",
+        "truncatedSkipped": "Truncated Gist files are skipped in this import version.",
+        "contentMissing": "Gist file content is missing."
+      },
+      "obsidian": {
+        "excalidrawSkipped": "Excalidraw markdown file was skipped.",
+        "emptyMarkdown": "Markdown file is empty.",
+        "frontmatterIgnored": "Frontmatter fields ignored: {{fields}}.",
+        "attachmentsKept": "Attachment references are kept as text; attachment files are not imported.",
+        "wikiLinksKept": "Obsidian wiki links are imported as text and are not rewritten.",
+        "noMarkdownFiles": "No markdown files found in Obsidian import.",
+        "invalidFrontmatter": "Frontmatter could not be parsed and was imported as note content."
+      },
+      "unknown": "Import warning."
+    },
+    "import": "Import",
+    "importing": "Importing",
+    "importedSnippets_one": "Imported {{snippets}} snippet.",
+    "importedSnippets_other": "Imported {{snippets}} snippets.",
+    "importedNotes_one": "Imported {{notes}} note.",
+    "importedNotes_other": "Imported {{notes}} notes.",
+    "createdFolder": "Created: {{name}}",
+    "error": "Import failed"
   },
   "spaces": {
     "label": "Spaces",

@@ -17,6 +17,8 @@ import {
   useNotesApp,
   useNoteSearch,
 } from '@/composables/spaces/notes'
+import { useHttpImportDialog } from '@/composables/useHttpImportDialog'
+import { useImportDialog } from '@/composables/useImportDialog'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
@@ -26,7 +28,7 @@ import {
   type SpaceId,
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
-import { Settings } from 'lucide-vue-next'
+import { Settings, Upload } from 'lucide-vue-next'
 import { rankCommandPaletteResults } from './command-palette/ranking'
 import { LibraryFilter } from './types'
 
@@ -151,6 +153,8 @@ const noteSearch = useNoteSearch()
 const httpApp = useHttpApp()
 const httpData = useHttpRequests()
 const httpSearch = useHttpSearch()
+const importDialog = useImportDialog()
+const httpImportDialog = useHttpImportDialog()
 
 const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
 
@@ -828,6 +832,18 @@ async function openPreferencesFromPalette() {
   await router.push({ name: RouterName.preferences })
 }
 
+async function openImportFromPalette(
+  source: Parameters<typeof importDialog.openImportDialog>[0],
+  space?: Parameters<typeof importDialog.openImportDialog>[1],
+) {
+  importDialog.openImportDialog(source, space)
+}
+
+async function openHttpImportFromPalette() {
+  await router.push({ name: RouterName.httpSpace })
+  httpImportDialog.openHttpImportDialog()
+}
+
 function getCommandDefinitions(): CommandPaletteCommand[] {
   return [
     {
@@ -849,6 +865,25 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       run: createCodeFolderFromPalette,
     },
     {
+      id: 'import-snippets',
+      title: i18n.t('commandPalette.actions.importSnippets'),
+      subtitle: i18n.t('commandPalette.actions.importSnippetsSubtitle'),
+      icon: Upload,
+      keywords: [
+        'import',
+        'vscode',
+        'raycast',
+        'github',
+        'gist',
+        'gists',
+        'snippetslab',
+        'snippet',
+        'snippets',
+      ],
+      spaceId: 'code',
+      run: () => openImportFromPalette('vscode-snippets', 'code'),
+    },
+    {
       id: 'new-note',
       title: i18n.t('commandPalette.actions.newNote'),
       subtitle: i18n.t('commandPalette.actions.newNoteSubtitle'),
@@ -867,6 +902,15 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       run: createNotesFolderFromPalette,
     },
     {
+      id: 'import-notes',
+      title: i18n.t('commandPalette.actions.importNotes'),
+      subtitle: i18n.t('commandPalette.actions.importNotesSubtitle'),
+      icon: Upload,
+      keywords: ['import', 'obsidian', 'markdown', 'notes'],
+      spaceId: 'notes',
+      run: () => openImportFromPalette('obsidian', 'notes'),
+    },
+    {
       id: 'new-http-request',
       title: i18n.t('commandPalette.actions.newHttpRequest'),
       subtitle: i18n.t('commandPalette.actions.newHttpRequestSubtitle'),
@@ -883,6 +927,23 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       keywords: ['create', 'http', 'request', 'folder'],
       spaceId: 'http',
       run: createHttpFolderFromPalette,
+    },
+    {
+      id: 'import-http-collection',
+      title: i18n.t('commandPalette.actions.importHttpCollection'),
+      subtitle: i18n.t('commandPalette.actions.importHttpCollectionSubtitle'),
+      icon: Upload,
+      keywords: [
+        'import',
+        'http',
+        'openapi',
+        'postman',
+        'bruno',
+        'collection',
+        'environment',
+      ],
+      spaceId: 'http',
+      run: openHttpImportFromPalette,
     },
     {
       id: 'open-preferences',

@@ -692,7 +692,8 @@ export interface ImportApplyInput {
     name: string;
     relativePath?: string;
   }[];
-  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source?: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  space?: "code" | "notes";
   url?: string;
 }
 
@@ -717,7 +718,8 @@ export interface ImportPreviewInput {
     name: string;
     relativePath?: string;
   }[];
-  source: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  source?: "github-gists" | "obsidian" | "raycast-snippets" | "vscode-snippets";
+  space?: "code" | "notes";
   url?: string;
 }
 

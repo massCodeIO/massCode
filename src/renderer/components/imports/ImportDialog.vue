@@ -25,42 +25,11 @@ import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
 import { AlertTriangle } from 'lucide-vue-next'
 
-type ImportSource = ImportPreviewInput['source']
+type ImportSource = ImportPreviewResponse['source']
 type ImportFile = NonNullable<ImportPreviewInput['files']>[number]
+type ImportSpace = NonNullable<ImportPreviewInput['space']>
 
-interface ImportSourceOption {
-  accept: string
-  id: ImportSource
-  isDirectory?: boolean
-  space: 'code' | 'notes'
-}
-
-const sourceOptions: ImportSourceOption[] = [
-  {
-    accept: '.json,.code-snippets,application/json',
-    id: 'vscode-snippets',
-    space: 'code',
-  },
-  {
-    accept: '.json,application/json',
-    id: 'raycast-snippets',
-    space: 'code',
-  },
-  {
-    accept: '',
-    id: 'github-gists',
-    space: 'code',
-  },
-  {
-    accept: '.md,text/markdown,text/plain',
-    id: 'obsidian',
-    isDirectory: true,
-    space: 'notes',
-  },
-]
-
-const { importDialogSource, importDialogSpace, isImportDialogOpen }
-  = useImportDialog()
+const { importDialogSpace, isImportDialogOpen } = useImportDialog()
 const { sonner } = useSonner()
 
 const fileInputRef = ref<HTMLInputElement>()
@@ -74,20 +43,6 @@ const isPreviewing = ref(false)
 const isApplying = ref(false)
 const isDraggingOver = ref(false)
 
-const availableSourceOptions = computed(() =>
-  sourceOptions.filter(option => option.space === importDialogSpace.value),
-)
-
-const currentSource = computed(() => {
-  const fallback = availableSourceOptions.value[0] ?? sourceOptions[0]
-
-  return (
-    availableSourceOptions.value.find(
-      option => option.id === importDialogSource.value,
-    ) ?? fallback
-  )
-})
-
 const hasImportableItems = computed(
   () =>
     !!preview.value && (preview.value.snippets > 0 || preview.value.notes > 0),
@@ -98,8 +53,20 @@ const previewWarnings = computed(() => [
   ...(preview.value?.warnings ?? []),
 ])
 
-const sourceLabel = computed(() =>
-  i18n.t(`imports.sources.${importDialogSource.value}`),
+const isNotesImport = computed(() => importDialogSpace.value === 'notes')
+
+const fileAccept = computed(() =>
+  isNotesImport.value
+    ? '.md,text/markdown,text/plain'
+    : '.json,.code-snippets,application/json',
+)
+
+const detectedSourceLabel = computed(() =>
+  preview.value ? i18n.t(`imports.sources.${preview.value.source}`) : '',
+)
+
+const importTitle = computed(() =>
+  i18n.t(`imports.title.${importDialogSpace.value}`),
 )
 
 const importDescription = computed(() =>
@@ -113,20 +80,7 @@ watch(isImportDialogOpen, (isOpen) => {
   resetDialog()
 })
 
-watch(importDialogSource, () => {
-  resetDialog()
-})
-
 watch(importDialogSpace, () => {
-  if (
-    !availableSourceOptions.value.some(
-      option => option.id === importDialogSource.value,
-    )
-  ) {
-    importDialogSource.value = currentSource.value.id
-    return
-  }
-
   resetDialog()
 })
 
@@ -143,16 +97,12 @@ function resetDialog() {
   }
 }
 
-function selectSource(source: ImportSource) {
-  importDialogSource.value = source
-}
-
 function openFilePicker(event?: Event) {
   if (event?.currentTarget instanceof HTMLElement) {
     event.currentTarget.blur()
   }
 
-  if (currentSource.value.isDirectory) {
+  if (isNotesImport.value) {
     void openMarkdownFolderPicker()
     return
   }
@@ -216,26 +166,33 @@ async function getImportErrorMessage(error: unknown): Promise<string> {
   return error instanceof Error ? error.message : i18n.t('imports.error')
 }
 
-function getImportPayload(): ImportPreviewInput {
-  if (importDialogSource.value === 'github-gists') {
+function getImportPayload(source?: ImportSource): ImportPreviewInput {
+  const basePayload: Pick<ImportPreviewInput, 'source' | 'space'> = {
+    ...(source ? { source } : {}),
+    space: importDialogSpace.value as ImportSpace,
+  }
+
+  if (!isNotesImport.value && gistUrl.value.trim()) {
     return {
-      source: importDialogSource.value,
+      ...basePayload,
       url: gistUrl.value.trim(),
     }
   }
 
   return {
+    ...basePayload,
     files: files.value,
-    source: importDialogSource.value,
   }
 }
 
-async function previewImport() {
+async function previewImport(source?: ImportSource) {
   errorMessage.value = ''
   lastSummary.value = null
   isPreviewing.value = true
   try {
-    const { data } = await api.imports.postImportsPreview(getImportPayload())
+    const { data } = await api.imports.postImportsPreview(
+      getImportPayload(source),
+    )
     preview.value = data
   }
   catch (error) {
@@ -245,6 +202,12 @@ async function previewImport() {
   finally {
     isPreviewing.value = false
   }
+}
+
+async function previewGistImport() {
+  files.value = []
+  fileReadWarnings.value = []
+  await previewImport()
 }
 
 async function previewFiles(selectedFiles: File[]) {
@@ -265,6 +228,7 @@ async function previewFiles(selectedFiles: File[]) {
     warnings.push(toFileReadWarning(selectedFiles[index]))
   })
 
+  gistUrl.value = ''
   files.value = readableFiles
   fileReadWarnings.value = warnings
 
@@ -279,6 +243,7 @@ async function previewFiles(selectedFiles: File[]) {
 
 async function openMarkdownFolderPicker() {
   errorMessage.value = ''
+  gistUrl.value = ''
   const result = await ipc.invoke<null, ImportMarkdownFolderResponse>(
     'fs:import-markdown-folder',
     null,
@@ -309,8 +274,6 @@ async function onFilesSelected(event: Event) {
 
 async function onDrop(event: DragEvent) {
   isDraggingOver.value = false
-  if (importDialogSource.value === 'github-gists')
-    return
 
   await previewFiles(Array.from(event.dataTransfer?.files ?? []))
 }
@@ -346,7 +309,9 @@ async function applyImport() {
   isApplying.value = true
   try {
     markPersistedStorageMutation()
-    const { data } = await api.imports.postImportsApply(getImportPayload())
+    const { data } = await api.imports.postImportsApply(
+      getImportPayload(preview.value.source),
+    )
     lastSummary.value = data
     await refreshImportedSpace(data)
     sonner({
@@ -376,7 +341,7 @@ async function applyImport() {
     >
       <Dialog.DialogHeader class="space-y-1.5 pr-8">
         <Dialog.DialogTitle class="text-base leading-6">
-          {{ i18n.t("imports.title") }}
+          {{ importTitle }}
         </Dialog.DialogTitle>
         <Dialog.DialogDescription class="max-w-[46rem] text-xs leading-5">
           {{ importDescription }}
@@ -384,59 +349,11 @@ async function applyImport() {
       </Dialog.DialogHeader>
 
       <div class="flex min-h-0 flex-col gap-3 overflow-hidden">
-        <div
-          v-if="availableSourceOptions.length > 1"
-          class="grid gap-2"
-          :class="
-            availableSourceOptions.length > 2 ? 'grid-cols-3' : 'grid-cols-2'
-          "
-        >
-          <Button
-            v-for="option in availableSourceOptions"
-            :key="option.id"
-            type="button"
-            :variant="option.id === importDialogSource ? 'default' : 'outline'"
-            class="justify-start"
-            @click="selectSource(option.id)"
-          >
-            {{ i18n.t(`imports.sources.${option.id}`) }}
-          </Button>
-        </div>
-
-        <template v-if="importDialogSource === 'github-gists'">
-          <div class="space-y-2">
-            <UiText
-              as="div"
-              variant="xs"
-              muted
-              weight="medium"
-            >
-              {{ i18n.t("imports.gistUrl") }}
-            </UiText>
-            <div class="flex gap-2">
-              <Input
-                v-model="gistUrl"
-                :placeholder="i18n.t('imports.gistUrlPlaceholder')"
-                :disabled="isPreviewing || isApplying"
-                @keydown.enter.prevent="previewImport"
-              />
-              <Button
-                variant="outline"
-                :disabled="!gistUrl.trim() || isPreviewing || isApplying"
-                @click="previewImport"
-              >
-                {{ i18n.t("imports.preview") }}
-              </Button>
-            </div>
-          </div>
-        </template>
-
-        <template v-else>
+        <template v-if="!isNotesImport">
           <input
             ref="fileInputRef"
             type="file"
-            :accept="currentSource.accept"
-            :webkitdirectory="currentSource.isDirectory ? '' : undefined"
+            :accept="fileAccept"
             multiple
             class="hidden"
             @change="onFilesSelected"
@@ -444,7 +361,7 @@ async function applyImport() {
 
           <button
             type="button"
-            class="border-border bg-muted/20 hover:bg-muted/30 focus:ring-ring w-full rounded-md border border-dashed p-3 text-left transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+            class="border-border bg-muted/20 hover:bg-muted/30 focus-visible:ring-ring w-full rounded-md border border-dashed p-3 text-left transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
             :class="isDraggingOver ? 'border-primary bg-muted/40' : ''"
             :disabled="isPreviewing || isApplying"
             @click="openFilePicker"
@@ -460,7 +377,7 @@ async function applyImport() {
                   variant="sm"
                   weight="medium"
                 >
-                  {{ sourceLabel }}
+                  {{ i18n.t("imports.filesTitle") }}
                 </UiText>
                 <UiText
                   as="p"
@@ -468,11 +385,7 @@ async function applyImport() {
                   muted
                   class="max-w-[32rem]"
                 >
-                  {{
-                    currentSource.isDirectory
-                      ? i18n.t("imports.folderHint")
-                      : i18n.t("imports.fileHint")
-                  }}
+                  {{ i18n.t("imports.fileHint") }}
                 </UiText>
               </div>
               <Button
@@ -481,11 +394,87 @@ async function applyImport() {
                 :disabled="isPreviewing || isApplying"
                 @click.stop="openFilePicker"
               >
-                {{
-                  currentSource.isDirectory
-                    ? i18n.t("imports.chooseFolder")
-                    : i18n.t("imports.chooseFiles")
-                }}
+                {{ i18n.t("imports.chooseFiles") }}
+              </Button>
+            </div>
+          </button>
+
+          <div class="space-y-2">
+            <UiText
+              as="div"
+              variant="xs"
+              muted
+              weight="medium"
+            >
+              {{ i18n.t("imports.gistUrl") }}
+            </UiText>
+            <div class="flex gap-2">
+              <div class="min-w-0 flex-1 p-0.5">
+                <Input
+                  v-model="gistUrl"
+                  :placeholder="i18n.t('imports.gistUrlPlaceholder')"
+                  :disabled="isPreviewing || isApplying"
+                  @keydown.enter.prevent="previewGistImport"
+                />
+              </div>
+              <Button
+                variant="outline"
+                :disabled="!gistUrl.trim() || isPreviewing || isApplying"
+                @click="previewGistImport"
+              >
+                {{ i18n.t("imports.preview") }}
+              </Button>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <input
+            ref="fileInputRef"
+            type="file"
+            :accept="fileAccept"
+            webkitdirectory
+            multiple
+            class="hidden"
+            @change="onFilesSelected"
+          >
+
+          <button
+            type="button"
+            class="border-border bg-muted/20 hover:bg-muted/30 focus-visible:ring-ring w-full rounded-md border border-dashed p-3 text-left transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
+            :class="isDraggingOver ? 'border-primary bg-muted/40' : ''"
+            :disabled="isPreviewing || isApplying"
+            @click="openFilePicker"
+            @dragenter.prevent="isDraggingOver = true"
+            @dragover.prevent="isDraggingOver = true"
+            @dragleave.prevent="isDraggingOver = false"
+            @drop.prevent="onDrop"
+          >
+            <div class="flex items-center justify-between gap-4">
+              <div class="min-w-0 space-y-1">
+                <UiText
+                  as="div"
+                  variant="sm"
+                  weight="medium"
+                >
+                  {{ i18n.t("imports.folderTitle") }}
+                </UiText>
+                <UiText
+                  as="p"
+                  variant="xs"
+                  muted
+                  class="max-w-[32rem]"
+                >
+                  {{ i18n.t("imports.folderHint") }}
+                </UiText>
+              </div>
+              <Button
+                variant="outline"
+                class="shrink-0"
+                :disabled="isPreviewing || isApplying"
+                @click.stop="openFilePicker"
+              >
+                {{ i18n.t("imports.chooseFolder") }}
               </Button>
             </div>
           </button>
@@ -502,6 +491,24 @@ async function applyImport() {
           v-if="preview"
           class="flex min-h-0 flex-1 flex-col gap-3"
         >
+          <div class="border-border rounded-md border px-3 py-2">
+            <UiText
+              as="div"
+              variant="xs"
+              muted
+              weight="medium"
+            >
+              {{ i18n.t("imports.detectedSource") }}
+            </UiText>
+            <UiText
+              as="div"
+              variant="sm"
+              weight="medium"
+            >
+              {{ detectedSourceLabel }}
+            </UiText>
+          </div>
+
           <div class="grid shrink-0 grid-cols-3 gap-2">
             <div class="border-border rounded-md border px-3 py-2">
               <UiText

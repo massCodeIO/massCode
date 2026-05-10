@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { detectImportSource } from '../../detect'
 import { parseObsidianMarkdownFiles } from '../../notes/obsidian'
 import { fetchGitHubGistImport, parseGitHubGistResponse } from '../githubGists'
 import { parseRaycastSnippetFiles } from '../raycast'
@@ -246,5 +247,59 @@ See [[Project Plan]].
       },
     ])
     expect(result.notes[0].tags).toEqual(['docs'])
+  })
+})
+
+describe('detectImportSource', () => {
+  it('detects Raycast snippets in Code imports', () => {
+    const result = detectImportSource(undefined, {
+      files: [
+        {
+          content: JSON.stringify([
+            {
+              name: 'Reply',
+              text: 'Thanks!',
+            },
+          ]),
+          name: 'raycast.json',
+        },
+      ],
+      space: 'code',
+    })
+
+    expect(result).toBe('raycast-snippets')
+  })
+
+  it('detects VS Code snippets in Code imports', () => {
+    const result = detectImportSource(undefined, {
+      files: [
+        {
+          content: JSON.stringify({
+            Log: {
+              body: 'console.log($1)',
+            },
+          }),
+          name: 'javascript.json',
+        },
+      ],
+      space: 'code',
+    })
+
+    expect(result).toBe('vscode-snippets')
+  })
+
+  it('detects Obsidian markdown folders in Notes imports', () => {
+    const result = detectImportSource(undefined, {
+      files: [
+        {
+          content: '# Note',
+          name: 'Note.md',
+          relativePath: 'Vault/Note.md',
+        },
+      ],
+      space: 'notes',
+    })
+
+    expect(result).toBe('obsidian')
   })
 })

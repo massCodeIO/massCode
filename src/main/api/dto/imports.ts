@@ -7,6 +7,8 @@ const importSource = t.Union([
   t.Literal('vscode-snippets'),
 ])
 
+const importSpace = t.Union([t.Literal('code'), t.Literal('notes')])
+
 const importFile = t.Object({
   content: t.String(),
   encoding: t.Optional(t.Union([t.Literal('text'), t.Literal('base64')])),
@@ -21,13 +23,15 @@ const importWarning = t.Object({
 
 const importPreviewInput = t.Object({
   files: t.Optional(t.Array(importFile)),
-  source: importSource,
+  source: t.Optional(importSource),
+  space: t.Optional(importSpace),
   url: t.Optional(t.String()),
 })
 
 const importApplyInput = t.Object({
   files: t.Optional(t.Array(importFile)),
-  source: importSource,
+  source: t.Optional(importSource),
+  space: t.Optional(importSpace),
   url: t.Optional(t.String()),
 })
 

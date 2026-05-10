@@ -4,6 +4,8 @@ export type ImportSource =
   | 'raycast-snippets'
   | 'vscode-snippets'
 
+export type ImportSpace = 'code' | 'notes'
+
 export interface ImportWarning {
   message: string
   source: string
@@ -18,6 +20,7 @@ export interface ImportFile {
 
 export interface ImportPayload {
   files?: ImportFile[]
+  space?: ImportSpace
   url?: string
 }
 

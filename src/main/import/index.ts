@@ -4,27 +4,32 @@ import type {
   ImportPreview,
   ImportSource,
 } from './common/types'
+import { detectImportSource } from './detect'
 import { applyObsidianImport, previewObsidianImport } from './notes'
 import { applySnippetImport, previewSnippetImport } from './snippets'
 
-export function previewImport(
-  source: ImportSource,
+export async function previewImport(
+  source: ImportSource | undefined,
   payload: ImportPayload = {},
-): Promise<ImportPreview> | ImportPreview {
-  if (source === 'obsidian') {
+): Promise<ImportPreview> {
+  const resolvedSource = detectImportSource(source, payload)
+
+  if (resolvedSource === 'obsidian') {
     return previewObsidianImport(payload)
   }
 
-  return previewSnippetImport(source, payload)
+  return previewSnippetImport(resolvedSource, payload)
 }
 
-export function applyImport(
-  source: ImportSource,
+export async function applyImport(
+  source: ImportSource | undefined,
   payload: ImportPayload = {},
-): Promise<ImportApplySummary> | ImportApplySummary {
-  if (source === 'obsidian') {
+): Promise<ImportApplySummary> {
+  const resolvedSource = detectImportSource(source, payload)
+
+  if (resolvedSource === 'obsidian') {
     return applyObsidianImport(payload)
   }
 
-  return applySnippetImport(source, payload)
+  return applySnippetImport(resolvedSource, payload)
 }

@@ -206,7 +206,7 @@ async function applyImport() {
 
         <button
           type="button"
-          class="border-border bg-muted/20 hover:bg-muted/30 focus:ring-ring w-full rounded-md border border-dashed p-3 text-left transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          class="border-border bg-muted/20 hover:bg-muted/30 focus-visible:ring-ring w-full rounded-md border border-dashed p-3 text-left transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
           :class="isDraggingOver ? 'border-primary bg-muted/40' : ''"
           :disabled="isPreviewing || isApplying"
           @click="openFilePicker"

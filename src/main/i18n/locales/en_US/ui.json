@@ -77,10 +77,13 @@
     }
   },
   "imports": {
-    "title": "Import",
+    "title": {
+      "code": "Import snippets",
+      "notes": "Import notes"
+    },
     "description": {
-      "code": "Bring snippets from your existing code tools into massCode.",
-      "notes": "Bring markdown notes from your existing notes tools into massCode."
+      "code": "Import VS Code snippets JSON, Raycast snippets JSON, and public GitHub Gist URLs.",
+      "notes": "Import Obsidian markdown folders."
     },
     "action": {
       "import": "Import"
@@ -93,6 +96,8 @@
     },
     "gistUrl": "Gist URL",
     "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "filesTitle": "Select import files",
+    "folderTitle": "Select import folder",
     "fileHint": "Drag files here, or choose files to preview the import.",
     "folderHint": "Choose an Obsidian markdown folder to preview the import.",
     "chooseFiles": "Choose files",
@@ -105,6 +110,7 @@
     "snippets": "Snippets",
     "notes": "Notes",
     "tags": "Tags",
+    "detectedSource": "Detected source",
     "folderMeta": "{{count}} items",
     "warnings": "Warnings",
     "import": "Import",

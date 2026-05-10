@@ -1,6 +1,6 @@
-import type { ImportPreviewInput } from '@/services/api/generated'
+import type { ImportPreviewResponse } from '@/services/api/generated'
 
-export type ImportDialogSource = ImportPreviewInput['source']
+export type ImportDialogSource = ImportPreviewResponse['source']
 export type ImportDialogSpace = 'code' | 'notes'
 
 const isImportDialogOpen = ref(false)

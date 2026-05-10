@@ -30,6 +30,7 @@ app
       try {
         return (await previewImport(body.source, {
           files: body.files,
+          space: body.space,
           url: body.url,
         })) as ImportPreviewResponse
       }
@@ -54,6 +55,7 @@ app
       try {
         return (await applyImport(body.source, {
           files: body.files,
+          space: body.space,
           url: body.url,
         })) as ImportApplyResponse
       }

@@ -77,10 +77,13 @@
     }
   },
   "imports": {
-    "title": "Импорт",
+    "title": {
+      "code": "Импорт сниппетов",
+      "notes": "Импорт заметок"
+    },
     "description": {
-      "code": "Перенесите сниппеты из текущих инструментов для кода в massCode.",
-      "notes": "Перенесите markdown-заметки из текущих инструментов для заметок в massCode."
+      "code": "Импортируйте VS Code snippets JSON, Raycast snippets JSON и публичные GitHub Gist URL.",
+      "notes": "Импортируйте markdown-папки Obsidian."
     },
     "action": {
       "import": "Импорт"
@@ -93,6 +96,8 @@
     },
     "gistUrl": "URL Gist",
     "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "filesTitle": "Выбрать файлы импорта",
+    "folderTitle": "Выбрать папку импорта",
     "fileHint": "Перетащите файлы сюда или выберите их, чтобы увидеть предпросмотр импорта.",
     "folderHint": "Выберите markdown-папку Obsidian, чтобы увидеть предпросмотр импорта.",
     "chooseFiles": "Выбрать файлы",
@@ -105,6 +110,7 @@
     "snippets": "Сниппеты",
     "notes": "Заметки",
     "tags": "Теги",
+    "detectedSource": "Распознанный источник",
     "folderMeta": "{{count}} элементов",
     "warnings": "Предупреждения",
     "import": "Импортировать",

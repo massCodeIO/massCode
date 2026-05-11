@@ -131,7 +131,7 @@ function findFirstUrl(text: string): string | undefined {
   return text.match(/https?:\/\/\S+/)?.[0]
 }
 
-function getCodeLanguage(payload: PageCapturePayload): string {
+export function getCodeLanguage(payload: PageCapturePayload): string {
   const sourceName
     = trimToValue(payload.contextLabel)
       ?? trimToValue(payload.sourceTitle)

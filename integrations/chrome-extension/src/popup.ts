@@ -6,6 +6,7 @@ import type {
 import {
   buildCaptureRequest,
   getCaptureNameSuggestion,
+  getCodeLanguage,
   getSettings,
   isCaptureTarget,
   postCapture,
@@ -274,6 +275,12 @@ function getPreviewFormat(): string {
     return 'url'
   }
 
+  if (activeTarget === 'code' && currentPayload) {
+    const language = getCodeLanguage(currentPayload)
+
+    return language === 'plain_text' ? 'text' : language
+  }
+
   if (
     activeTarget === 'notes'
     && (currentPayload?.selectedMarkdown || currentPayload?.pageMarkdown)
@@ -281,7 +288,7 @@ function getPreviewFormat(): string {
     return 'markdown'
   }
 
-  return activeTarget === 'code' ? 'plain text' : 'text'
+  return 'text'
 }
 
 function getSourceParts(payload: PageCapturePayload): {

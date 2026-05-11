@@ -225,7 +225,16 @@ function resolveCapturedAt(body: CaptureRequest): string {
       ? new Date(capturedAt)
       : new Date()
 
-  return date.toISOString()
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    month: 'short',
+    second: '2-digit',
+    timeZoneName: 'short',
+    year: 'numeric',
+  }).format(date)
 }
 
 function createSourceDescription(body: CaptureRequest): string {
@@ -253,6 +262,53 @@ function createSourceDescription(body: CaptureRequest): string {
   return lines.join('\n')
 }
 
+function getCodeFence(text: string): string {
+  const matches = text.match(/`{3,}/g)
+  if (!matches) {
+    return '```'
+  }
+
+  const length = Math.max(...matches.map(match => match.length)) + 1
+
+  return '`'.repeat(length)
+}
+
+function getMarkdownFenceLanguage(body: CaptureRequest): string | undefined {
+  const sourceName
+    = trimToValue(body.contextLabel)
+      ?? trimToValue(body.sourceTitle)
+      ?? trimToValue(body.source?.title)
+      ?? trimToValue(body.pageTitle)
+
+  if (!sourceName) {
+    return undefined
+  }
+
+  const extension = sourceName.match(/\.([a-z0-9]+)(?:$|[\s?#])/i)?.[1]
+  if (!extension) {
+    return undefined
+  }
+
+  const languages: Record<string, string> = {
+    cjs: 'js',
+    css: 'css',
+    html: 'html',
+    js: 'js',
+    json: 'json',
+    jsx: 'jsx',
+    md: 'md',
+    mjs: 'js',
+    sh: 'sh',
+    ts: 'ts',
+    tsx: 'tsx',
+    vue: 'vue',
+    yaml: 'yaml',
+    yml: 'yaml',
+  }
+
+  return languages[extension.toLowerCase()]
+}
+
 function createNoteContent(body: CaptureRequest): string {
   const text = trimToValue(body.text)
   const title
@@ -264,24 +320,38 @@ function createNoteContent(body: CaptureRequest): string {
       ?? trimToValue(body.source?.url)
       ?? trimToValue(body.url)
   const lines: string[] = []
+  const sourceLines: string[] = []
 
   if (text) {
-    lines.push(
-      ...text.split('\n').map(line => (line ? `> ${line}` : '>')),
-      '',
-    )
+    const language = getMarkdownFenceLanguage(body)
+
+    if (language) {
+      const fence = getCodeFence(text)
+
+      lines.push(`${fence}${language}`, text, fence, '')
+    }
+    else {
+      lines.push(text, '')
+    }
   }
 
   if (url) {
-    lines.push(`Source: ${title ? `[${title}](${url})` : url}`)
+    if (title) {
+      sourceLines.push(`Source: ${title}`)
+      sourceLines.push(`URL: ${url}`)
+    }
+    else {
+      sourceLines.push(`Source: ${url}`)
+    }
   }
 
   const contextLabel = trimToValue(body.contextLabel)
   if (contextLabel) {
-    lines.push(`Context: ${contextLabel}`)
+    sourceLines.push(`Context: ${contextLabel}`)
   }
 
-  lines.push(`Captured: ${resolveCapturedAt(body)}`)
+  sourceLines.push(`Captured: ${resolveCapturedAt(body)}`)
+  lines.push(...sourceLines.map(line => `> ${line}`))
 
   return lines.join('\n')
 }

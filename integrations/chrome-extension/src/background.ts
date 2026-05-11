@@ -53,7 +53,7 @@ async function captureFromTab(
     const payload = await getPageCapture(tabId)
     const request = buildCaptureRequest(target, {
       ...payload,
-      selectedText: context.selectionText?.trim() || payload.selectedText,
+      selectedText: payload.selectedText || context.selectionText?.trim() || '',
       url: context.linkUrl || payload.url,
     })
 

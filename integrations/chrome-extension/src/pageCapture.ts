@@ -273,6 +273,27 @@ export function getPageCaptureFromPage(): PageCapturePayload {
     )
   }
 
+  function getPageContentRoot(): Element {
+    return (
+      document.querySelector('.vp-doc, article, main, [role="main"]')
+      ?? document.body
+    )
+  }
+
+  function getPageText(): string | undefined {
+    return getPageContentRoot().textContent?.trim() || undefined
+  }
+
+  function getPageMarkdown(hasCodeContext: boolean): string | undefined {
+    if (hasCodeContext) {
+      return undefined
+    }
+
+    return (
+      normalizeMarkdown(getElementMarkdown(getPageContentRoot())) || undefined
+    )
+  }
+
   function getSelectedBlockMarkdown(): string | undefined {
     const range = getSelectionRange()
     if (!range) {
@@ -332,11 +353,14 @@ export function getPageCaptureFromPage(): PageCapturePayload {
 
   const contextLabel = getContextLabel()
   const pageTitle = document.title
+  const hasCodeContext = Boolean(contextLabel)
 
   return {
     contextLabel,
+    pageMarkdown: getPageMarkdown(hasCodeContext),
     pageTitle,
-    selectedMarkdown: getSelectedMarkdown(Boolean(contextLabel)),
+    pageText: getPageText(),
+    selectedMarkdown: getSelectedMarkdown(hasCodeContext),
     selectedText: getSelectedText(),
     sourceTitle: pageTitle,
     sourceUrl: window.location.href,

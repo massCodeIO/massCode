@@ -54,6 +54,7 @@ declare namespace chrome {
 
   namespace tabs {
     interface Tab {
+      favIconUrl?: string
       id?: number
     }
 

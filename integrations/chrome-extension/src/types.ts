@@ -8,7 +8,10 @@ export interface ExtensionSettings {
 
 export interface PageCapturePayload {
   contextLabel?: string
+  faviconUrl?: string
+  pageMarkdown?: string
   pageTitle: string
+  pageText?: string
   selectedMarkdown?: string
   selectedText: string
   sourceTitle: string

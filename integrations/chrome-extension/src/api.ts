@@ -37,6 +37,8 @@ export function buildCaptureRequest(
   explicitName?: string,
 ): CaptureRequest {
   const selectedText = payload.selectedText.trim()
+  const noteMarkdown = payload.selectedMarkdown ?? payload.pageMarkdown
+  const noteText = selectedText || payload.pageText || payload.pageTitle
   const name = trimToValue(explicitName)
 
   if (target === 'http') {
@@ -63,7 +65,7 @@ export function buildCaptureRequest(
   return {
     contextLabel: payload.contextLabel,
     language: target === 'code' ? 'plain_text' : undefined,
-    markdown: target === 'notes' ? payload.selectedMarkdown : undefined,
+    markdown: target === 'notes' ? noteMarkdown : undefined,
     name,
     pageTitle: payload.pageTitle,
     sourceTitle: payload.sourceTitle,
@@ -75,7 +77,7 @@ export function buildCaptureRequest(
     },
     suggestedName: payload.suggestedName ?? payload.contextLabel,
     target,
-    text: selectedText,
+    text: target === 'notes' ? noteText : selectedText,
     url: payload.url,
   }
 }

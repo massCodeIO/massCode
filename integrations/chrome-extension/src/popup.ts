@@ -19,10 +19,18 @@ const apiTokenInput = document.querySelector<HTMLInputElement>('#apiToken')
 const captureNameInput
   = document.querySelector<HTMLInputElement>('#captureName')
 const previewInput = document.querySelector<HTMLTextAreaElement>('#preview')
+const previewLabel = document.querySelector<HTMLSpanElement>('#previewLabel')
 const saveSettingsButton
   = document.querySelector<HTMLButtonElement>('#saveSettings')
 const captureButton = document.querySelector<HTMLButtonElement>('#capture')
+const captureLabel = document.querySelector<HTMLSpanElement>('#captureLabel')
+const settingsPanel = document.querySelector<HTMLElement>('#settingsPanel')
+const sourceMark = document.querySelector<HTMLDivElement>('.source-mark')
+const sourceTitle = document.querySelector<HTMLSpanElement>('#sourceTitle')
+const sourcePath = document.querySelector<HTMLSpanElement>('#sourcePath')
 const statusText = document.querySelector<HTMLParagraphElement>('#status')
+const toggleSettingsButton
+  = document.querySelector<HTMLButtonElement>('#toggleSettings')
 const targetButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>('[data-target]'),
 )
@@ -48,10 +56,12 @@ async function init(): Promise<void> {
 
   bindEvents()
   updateTargetButtons()
+  updateSettingsPanel(!settings.apiToken.trim())
 
   try {
     currentPayload = await getActiveTabCapture()
     updateCaptureName(true)
+    updateSourceRow()
     updatePreview()
   }
   catch (error) {
@@ -79,12 +89,28 @@ function bindEvents(): void {
     isCaptureNameEdited = true
   })
 
+  toggleSettingsButton?.addEventListener('click', () => {
+    updateSettingsPanel(settingsPanel?.hidden ?? true)
+  })
+
   saveSettingsButton?.addEventListener('click', () => {
     void persistSettings()
   })
 
   captureButton?.addEventListener('click', () => {
     void captureCurrentPayload()
+  })
+
+  document.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault()
+      void captureCurrentPayload()
+      return
+    }
+
+    if (event.key === 'Escape') {
+      window.close()
+    }
   })
 }
 
@@ -138,7 +164,10 @@ async function getActiveTabCapture(): Promise<PageCapturePayload> {
     throw new Error('Could not read the active page.')
   }
 
-  return response.result
+  return {
+    ...response.result,
+    faviconUrl: tab.favIconUrl,
+  }
 }
 
 function readSettingsFromForm(): ExtensionSettings {
@@ -154,6 +183,10 @@ function updateTargetButtons(): void {
     button.dataset.active
       = button.dataset.target === activeTarget ? 'true' : 'false'
   })
+
+  if (captureLabel) {
+    captureLabel.textContent = getCaptureButtonLabel(activeTarget)
+  }
 }
 
 function updateCaptureName(force = false): void {
@@ -179,10 +212,120 @@ function updatePreview(): void {
 
   if (activeTarget === 'http') {
     previewInput.value = currentPayload.url
+    updatePreviewLabel()
+    return
+  }
+
+  if (activeTarget === 'notes') {
+    previewInput.value
+      = currentPayload.selectedMarkdown
+        || currentPayload.selectedText
+        || currentPayload.pageMarkdown
+        || currentPayload.pageText
+        || currentPayload.pageTitle
+    updatePreviewLabel()
     return
   }
 
   previewInput.value = currentPayload.selectedText || currentPayload.pageTitle
+  updatePreviewLabel()
+}
+
+function updateSettingsPanel(isOpen: boolean): void {
+  if (!settingsPanel || !toggleSettingsButton) {
+    return
+  }
+
+  settingsPanel.hidden = !isOpen
+  toggleSettingsButton.dataset.active = isOpen ? 'true' : 'false'
+}
+
+function updateSourceRow(): void {
+  if (!currentPayload) {
+    return
+  }
+
+  const source = getSourceParts(currentPayload)
+
+  if (sourceTitle) {
+    sourceTitle.textContent = source.title
+  }
+
+  if (sourcePath) {
+    sourcePath.textContent = source.path
+  }
+
+  updateSourceIcon(currentPayload.faviconUrl)
+}
+
+function updatePreviewLabel(): void {
+  if (!previewLabel || !previewInput) {
+    return
+  }
+
+  const lines = previewInput.value ? previewInput.value.split('\n').length : 0
+  const format = getPreviewFormat()
+
+  previewLabel.textContent = `Preview · ${format} · ${lines} ${lines === 1 ? 'line' : 'lines'}`
+}
+
+function getPreviewFormat(): string {
+  if (activeTarget === 'http') {
+    return 'url'
+  }
+
+  if (
+    activeTarget === 'notes'
+    && (currentPayload?.selectedMarkdown || currentPayload?.pageMarkdown)
+  ) {
+    return 'markdown'
+  }
+
+  return activeTarget === 'code' ? 'plain text' : 'text'
+}
+
+function getSourceParts(payload: PageCapturePayload): {
+  path: string
+  title: string
+} {
+  try {
+    const url = new URL(payload.sourceUrl)
+
+    return {
+      path: payload.contextLabel ?? (url.pathname || '/'),
+      title: url.hostname.replace(/^www\./, ''),
+    }
+  }
+  catch {
+    return {
+      path: payload.contextLabel ?? payload.sourceUrl,
+      title: payload.sourceTitle || 'Current page',
+    }
+  }
+}
+
+function updateSourceIcon(faviconUrl?: string): void {
+  if (!sourceMark) {
+    return
+  }
+
+  sourceMark.textContent = ''
+
+  if (!faviconUrl) {
+    sourceMark.textContent = 'M'
+    sourceMark.style.backgroundImage = ''
+    return
+  }
+
+  sourceMark.style.backgroundImage = `url("${faviconUrl}")`
+}
+
+function getCaptureButtonLabel(target: CaptureTarget): string {
+  return target === 'code'
+    ? 'Save snippet'
+    : target === 'notes'
+      ? 'Save note'
+      : 'Save request'
 }
 
 function setStatus(message: string, isError = false): void {

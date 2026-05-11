@@ -64,7 +64,7 @@ export function buildCaptureRequest(
 
   return {
     contextLabel: payload.contextLabel,
-    language: target === 'code' ? 'plain_text' : undefined,
+    language: target === 'code' ? getCodeLanguage(payload) : undefined,
     markdown: target === 'notes' ? noteMarkdown : undefined,
     name,
     pageTitle: payload.pageTitle,
@@ -129,6 +129,49 @@ export function isCaptureTarget(value: unknown): value is CaptureTarget {
 
 function findFirstUrl(text: string): string | undefined {
   return text.match(/https?:\/\/\S+/)?.[0]
+}
+
+function getCodeLanguage(payload: PageCapturePayload): string {
+  const sourceName
+    = trimToValue(payload.contextLabel)
+      ?? trimToValue(payload.sourceTitle)
+      ?? trimToValue(payload.url)
+  const extension = sourceName?.match(/\.([a-z0-9]+)(?:$|[\s?#])/i)?.[1]
+
+  if (!extension) {
+    return 'plain_text'
+  }
+
+  const languages: Record<string, string> = {
+    c: 'c_cpp',
+    cc: 'c_cpp',
+    cpp: 'c_cpp',
+    cs: 'csharp',
+    cjs: 'javascript',
+    css: 'css',
+    go: 'golang',
+    h: 'c_cpp',
+    hpp: 'c_cpp',
+    html: 'html',
+    java: 'java',
+    js: 'javascript',
+    json: 'json',
+    jsx: 'jsx',
+    md: 'markdown',
+    mjs: 'javascript',
+    php: 'php',
+    py: 'python',
+    rs: 'rust',
+    scss: 'scss',
+    sh: 'sh',
+    ts: 'typescript',
+    tsx: 'tsx',
+    vue: 'vue',
+    yaml: 'yaml',
+    yml: 'yaml',
+  }
+
+  return languages[extension.toLowerCase()] ?? 'plain_text'
 }
 
 function trimToValue(value?: string): string | undefined {

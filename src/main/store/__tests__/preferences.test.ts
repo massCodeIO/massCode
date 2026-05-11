@@ -140,6 +140,9 @@ describe('preferences store sanitization', () => {
 
     expect(preferences.get('storage.rootPath' as any)).toBe('/custom-storage')
     expect(preferences.get('api.port' as any)).toBe(9876)
+    expect(preferences.get('api.integrations.enabled' as any)).toBe(false)
+    expect(preferences.get('api.integrations.tokenHash' as any)).toBeNull()
+    expect(preferences.get('api.integrations.tokenPreview' as any)).toBeNull()
     expect(preferences.get('localization.locale' as any)).toBe('ru_RU')
     expect(preferences.get('appearance.theme' as any)).toBe('dark')
     expect(preferences.get('editor.code.fontSize' as any)).toBe(18)
@@ -199,6 +202,28 @@ describe('preferences store sanitization', () => {
     expect(preferences.get('http.wrapLines' as any)).toBe(true)
     expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('http')
     expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(true)
+  })
+
+  it('keeps sanitized API integration settings', async () => {
+    persistedStateByName.preferences = {
+      api: {
+        integrations: {
+          enabled: true,
+          tokenHash: 'hash',
+          tokenPreview: 'mc_...abcd',
+          stale: true,
+        },
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('api.integrations.enabled' as any)).toBe(true)
+    expect(preferences.get('api.integrations.tokenHash' as any)).toBe('hash')
+    expect(preferences.get('api.integrations.tokenPreview' as any)).toBe(
+      'mc_...abcd',
+    )
+    expect(preferences.get('api.integrations.stale' as any)).toBeUndefined()
   })
 })
 

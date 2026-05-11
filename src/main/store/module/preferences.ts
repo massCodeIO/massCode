@@ -34,6 +34,12 @@ const HTTP_DEFAULTS: HttpSettings = {
   autoSwitchToResponse: true,
 }
 
+const API_INTEGRATIONS_DEFAULTS: PreferencesStore['api']['integrations'] = {
+  enabled: false,
+  tokenHash: null,
+  tokenPreview: null,
+}
+
 const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
     theme: 'auto',
@@ -43,6 +49,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   },
   api: {
     port: 4321,
+    integrations: API_INTEGRATIONS_DEFAULTS,
   },
   storage: {
     rootPath: storagePath,
@@ -57,6 +64,29 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   },
   math: MATH_DEFAULTS,
   http: HTTP_DEFAULTS,
+}
+
+function sanitizeApiIntegrationsSettings(
+  value: unknown,
+): PreferencesStore['api']['integrations'] {
+  const source = asRecord(value)
+
+  return {
+    enabled:
+      typeof source.enabled === 'boolean'
+        ? source.enabled
+        : API_INTEGRATIONS_DEFAULTS.enabled,
+    tokenHash: readNullableString(
+      source,
+      'tokenHash',
+      API_INTEGRATIONS_DEFAULTS.tokenHash,
+    ),
+    tokenPreview: readNullableString(
+      source,
+      'tokenPreview',
+      API_INTEGRATIONS_DEFAULTS.tokenPreview,
+    ),
+  }
 }
 
 function sanitizeCodeEditorSettings(value: unknown): EditorSettings {
@@ -246,6 +276,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'port',
         readNumber(source, 'apiPort', PREFERENCES_DEFAULTS.api.port),
       ),
+      integrations: sanitizeApiIntegrationsSettings(apiSource.integrations),
     },
     storage: {
       rootPath: readString(

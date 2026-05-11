@@ -203,6 +203,11 @@ export interface PreferencesStore {
   }
   api: {
     port: number
+    integrations: {
+      enabled: boolean
+      tokenHash: string | null
+      tokenPreview: string | null
+    }
   }
   storage: StorageSettings & {
     rootPath: string

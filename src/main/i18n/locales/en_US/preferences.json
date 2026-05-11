@@ -170,6 +170,20 @@
     "port": {
       "label": "API Port",
       "description": "Port number for the API server (requires app restart to take effect). Valid range: 1024-65535."
+    },
+    "integrations": {
+      "label": "Integrations",
+      "enabled": {
+        "label": "Enable API integrations",
+        "description": "Allow external local clients to use protected integration endpoints."
+      },
+      "token": {
+        "label": "API token",
+        "description": "Use this token in external clients. The full token is shown only after generation.",
+        "empty": "No token generated",
+        "generate": "Generate token",
+        "revoke": "Revoke token"
+      }
     }
   }
 }

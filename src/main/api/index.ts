@@ -4,6 +4,7 @@ import { app as electronApp } from 'electron'
 import { Elysia } from 'elysia'
 import { store } from '../store'
 import { importEsm } from '../utils'
+import captures from './routes/captures'
 import folders from './routes/folders'
 import httpEnvironments from './routes/http-environments'
 import httpFolders from './routes/http-folders'
@@ -40,6 +41,7 @@ export async function initApi() {
         },
       }),
     )
+    .use(captures)
     .use(snippets)
     .use(folders)
     .use(system)

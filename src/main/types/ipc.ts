@@ -37,6 +37,8 @@ type MainMenuAction =
 type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
+  | 'api-token-generate'
+  | 'api-token-revoke'
   | 'currency-rates'
   | 'currency-rates-refresh'
   | 'crypto-rates-refresh'

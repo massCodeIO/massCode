@@ -34,8 +34,10 @@ export async function saveSettings(settings: ExtensionSettings): Promise<void> {
 export function buildCaptureRequest(
   target: CaptureTarget,
   payload: PageCapturePayload,
+  explicitName?: string,
 ): CaptureRequest {
   const selectedText = payload.selectedText.trim()
+  const name = trimToValue(explicitName)
 
   if (target === 'http') {
     const url = findFirstUrl(selectedText) ?? payload.url
@@ -43,6 +45,7 @@ export function buildCaptureRequest(
     return {
       contextLabel: payload.contextLabel,
       method: 'GET',
+      name,
       pageTitle: payload.pageTitle,
       sourceTitle: payload.sourceTitle,
       sourceUrl: payload.sourceUrl,
@@ -60,6 +63,7 @@ export function buildCaptureRequest(
   return {
     contextLabel: payload.contextLabel,
     language: target === 'code' ? 'plain_text' : undefined,
+    name,
     pageTitle: payload.pageTitle,
     sourceTitle: payload.sourceTitle,
     sourceUrl: payload.sourceUrl,
@@ -73,6 +77,24 @@ export function buildCaptureRequest(
     text: selectedText,
     url: payload.url,
   }
+}
+
+export function getCaptureNameSuggestion(
+  target: CaptureTarget,
+  payload: PageCapturePayload,
+): string {
+  if (target === 'http') {
+    const url = findFirstUrl(payload.selectedText.trim()) ?? payload.url
+
+    return getHttpSuggestedName(url)
+  }
+
+  return (
+    payload.suggestedName
+    ?? payload.contextLabel
+    ?? payload.sourceTitle
+    ?? payload.pageTitle
+  )
 }
 
 export async function postCapture(
@@ -104,6 +126,12 @@ export function isCaptureTarget(value: unknown): value is CaptureTarget {
 
 function findFirstUrl(text: string): string | undefined {
   return text.match(/https?:\/\/\S+/)?.[0]
+}
+
+function trimToValue(value?: string): string | undefined {
+  const trimmed = value?.trim()
+
+  return trimmed || undefined
 }
 
 function getHttpSuggestedName(url: string): string {

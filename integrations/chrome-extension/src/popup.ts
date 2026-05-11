@@ -5,6 +5,7 @@ import type {
 } from './types'
 import {
   buildCaptureRequest,
+  getCaptureNameSuggestion,
   getSettings,
   isCaptureTarget,
   postCapture,
@@ -15,6 +16,8 @@ import './styles.css'
 
 const apiPortInput = document.querySelector<HTMLInputElement>('#apiPort')
 const apiTokenInput = document.querySelector<HTMLInputElement>('#apiToken')
+const captureNameInput
+  = document.querySelector<HTMLInputElement>('#captureName')
 const previewInput = document.querySelector<HTMLTextAreaElement>('#preview')
 const saveSettingsButton
   = document.querySelector<HTMLButtonElement>('#saveSettings')
@@ -27,6 +30,7 @@ const targetButtons = Array.from(
 let settings: ExtensionSettings
 let activeTarget: CaptureTarget = 'notes'
 let currentPayload: PageCapturePayload | null = null
+let isCaptureNameEdited = false
 
 void init()
 
@@ -47,6 +51,7 @@ async function init(): Promise<void> {
 
   try {
     currentPayload = await getActiveTabCapture()
+    updateCaptureName(true)
     updatePreview()
   }
   catch (error) {
@@ -65,8 +70,13 @@ function bindEvents(): void {
       activeTarget = target
       settings.defaultTarget = target
       updateTargetButtons()
+      updateCaptureName()
       updatePreview()
     })
+  })
+
+  captureNameInput?.addEventListener('input', () => {
+    isCaptureNameEdited = true
   })
 
   saveSettingsButton?.addEventListener('click', () => {
@@ -99,7 +109,11 @@ async function captureCurrentPayload(): Promise<void> {
   }
 
   try {
-    const request = buildCaptureRequest(activeTarget, currentPayload)
+    const request = buildCaptureRequest(
+      activeTarget,
+      currentPayload,
+      captureNameInput?.value,
+    )
     const result = await postCapture(settings, request)
     setStatus(`Saved ${result.target} item #${result.id}.`)
   }
@@ -140,6 +154,22 @@ function updateTargetButtons(): void {
     button.dataset.active
       = button.dataset.target === activeTarget ? 'true' : 'false'
   })
+}
+
+function updateCaptureName(force = false): void {
+  if (!captureNameInput || !currentPayload) {
+    return
+  }
+
+  if (isCaptureNameEdited && !force) {
+    return
+  }
+
+  captureNameInput.value = getCaptureNameSuggestion(
+    activeTarget,
+    currentPayload,
+  )
+  isCaptureNameEdited = false
 }
 
 function updatePreview(): void {

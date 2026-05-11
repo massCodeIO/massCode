@@ -124,7 +124,7 @@ async function copyGeneratedToken() {
           </Button>
           <Button
             v-if="tokenPreview || generatedToken"
-            variant="outline"
+            variant="destructive"
             @click="revokeApiToken"
           >
             {{ i18n.t("preferences:api.integrations.token.revoke") }}

@@ -311,6 +311,7 @@ function getMarkdownFenceLanguage(body: CaptureRequest): string | undefined {
 
 function createNoteContent(body: CaptureRequest): string {
   const text = trimToValue(body.text)
+  const markdown = trimToValue(body.markdown)
   const title
     = trimToValue(body.sourceTitle)
       ?? trimToValue(body.source?.title)
@@ -329,6 +330,9 @@ function createNoteContent(body: CaptureRequest): string {
       const fence = getCodeFence(text)
 
       lines.push(`${fence}${language}`, text, fence, '')
+    }
+    else if (markdown) {
+      lines.push(markdown, '')
     }
     else {
       lines.push(text, '')

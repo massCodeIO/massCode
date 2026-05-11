@@ -25,6 +25,7 @@ const captureRequest = t.Object({
   name: t.Optional(t.String()),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
   text: t.Optional(t.String()),
+  markdown: t.Optional(t.String()),
   url: t.Optional(t.String()),
   pageTitle: t.Optional(t.String()),
   suggestedName: t.Optional(t.String()),

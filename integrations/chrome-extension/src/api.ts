@@ -63,6 +63,7 @@ export function buildCaptureRequest(
   return {
     contextLabel: payload.contextLabel,
     language: target === 'code' ? 'plain_text' : undefined,
+    markdown: target === 'notes' ? payload.selectedMarkdown : undefined,
     name,
     pageTitle: payload.pageTitle,
     sourceTitle: payload.sourceTitle,

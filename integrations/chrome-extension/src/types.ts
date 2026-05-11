@@ -9,6 +9,7 @@ export interface ExtensionSettings {
 export interface PageCapturePayload {
   contextLabel?: string
   pageTitle: string
+  selectedMarkdown?: string
   selectedText: string
   sourceTitle: string
   sourceUrl: string
@@ -19,6 +20,7 @@ export interface PageCapturePayload {
 export interface CaptureRequest {
   target: CaptureTarget
   contextLabel?: string
+  markdown?: string
   name?: string
   text?: string
   url?: string

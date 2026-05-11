@@ -14,6 +14,7 @@ export interface CaptureRequest {
   name?: string;
   folderId?: number | null;
   text?: string;
+  markdown?: string;
   url?: string;
   pageTitle?: string;
   suggestedName?: string;

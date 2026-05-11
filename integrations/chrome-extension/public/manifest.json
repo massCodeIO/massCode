@@ -22,5 +22,11 @@
     "128": "logo128.png"
   },
   "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
-  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"]
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "web_accessible_resources": [
+    {
+      "resources": ["pageExtractor.js", "assets/*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

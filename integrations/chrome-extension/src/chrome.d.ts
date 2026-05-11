@@ -29,6 +29,8 @@ declare namespace chrome {
   }
 
   namespace runtime {
+    const getURL: (path: string) => string
+
     const onInstalled: {
       addListener: (callback: () => void) => void
     }
@@ -40,7 +42,7 @@ declare namespace chrome {
     }
 
     const executeScript: <T>(options: {
-      func: () => T
+      func: () => Promise<T> | T
       target: { tabId: number }
     }) => Promise<Array<InjectionResult<T>>>
   }

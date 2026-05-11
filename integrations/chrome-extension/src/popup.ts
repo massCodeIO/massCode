@@ -61,6 +61,7 @@ async function init(): Promise<void> {
 
   try {
     currentPayload = await getActiveTabCapture()
+    updateTargetButtons()
     updateCaptureName(true)
     updateSourceRow()
     updatePreview()
@@ -79,7 +80,7 @@ function bindEvents(): void {
       }
 
       activeTarget = target
-      settings.defaultTarget = target
+      settings.defaultTarget = activeTarget
       updateTargetButtons()
       updateCaptureName()
       updatePreview()
@@ -145,6 +146,11 @@ async function captureCurrentPayload(): Promise<void> {
     return
   }
 
+  if (!canCaptureCurrentTarget()) {
+    setStatus('Select text on the page to save a snippet.', true)
+    return
+  }
+
   try {
     const request = buildCaptureRequest(
       activeTarget,
@@ -198,6 +204,10 @@ function updateTargetButtons(): void {
   if (captureLabel) {
     captureLabel.textContent = getCaptureButtonLabel(activeTarget)
   }
+
+  if (captureButton) {
+    captureButton.disabled = !canCaptureCurrentTarget()
+  }
 }
 
 function updateCaptureName(force = false): void {
@@ -238,8 +248,21 @@ function updatePreview(): void {
     return
   }
 
-  previewInput.value = currentPayload.selectedText || currentPayload.pageTitle
+  previewInput.value
+    = currentPayload.selectedText || 'Select text on the page to save a snippet.'
   updatePreviewLabel()
+}
+
+function canCaptureCurrentTarget(): boolean {
+  if (!currentPayload) {
+    return false
+  }
+
+  if (activeTarget === 'code') {
+    return Boolean(currentPayload.selectedText.trim())
+  }
+
+  return true
 }
 
 function updateSettingsPanel(isOpen: boolean): void {

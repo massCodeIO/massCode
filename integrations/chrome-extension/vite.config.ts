@@ -10,6 +10,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(root, 'src/background.ts'),
+        pageExtractor: resolve(root, 'src/pageExtractor.ts'),
         popup: resolve(root, 'popup.html'),
       },
       output: {

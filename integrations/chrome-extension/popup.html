@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>massCode Capture</title>
+    <script
+      type="module"
+      src="/src/popup.ts"
+    ></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <h1>massCode</h1>
+        <p>Save selected text or the current page.</p>
+      </header>
+
+      <section class="field-grid">
+        <label>
+          API port
+          <input
+            id="apiPort"
+            min="1024"
+            max="65535"
+            type="number"
+          />
+        </label>
+        <label>
+          API token
+          <input
+            id="apiToken"
+            autocomplete="off"
+            spellcheck="false"
+            type="password"
+          />
+        </label>
+      </section>
+
+      <section>
+        <div
+          aria-label="Capture target"
+          class="segments"
+          role="group"
+        >
+          <button
+            data-target="code"
+            type="button"
+          >
+            Code
+          </button>
+          <button
+            data-target="notes"
+            type="button"
+          >
+            Notes
+          </button>
+          <button
+            data-target="http"
+            type="button"
+          >
+            HTTP
+          </button>
+        </div>
+      </section>
+
+      <label>
+        Preview
+        <textarea
+          id="preview"
+          readonly
+        ></textarea>
+      </label>
+
+      <footer>
+        <button
+          id="saveSettings"
+          class="secondary"
+          type="button"
+        >
+          Save settings
+        </button>
+        <button
+          id="capture"
+          type="button"
+        >
+          Save
+        </button>
+      </footer>
+
+      <p
+        id="status"
+        class="status"
+        role="status"
+      ></p>
+    </main>
+  </body>
+</html>

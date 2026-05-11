@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "massCode Capture",
+  "description": "Save selected text and URLs to massCode.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Save to massCode",
+    "default_icon": {
+      "16": "logo16.png",
+      "32": "logo32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "logo16.png",
+    "32": "logo32.png",
+    "48": "logo48.png",
+    "128": "logo128.png"
+  },
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"]
+}

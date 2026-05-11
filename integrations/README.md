@@ -4,7 +4,7 @@ External clients that connect massCode to other tools live here.
 
 Examples:
 
-- `chrome-extension/`
+- `clipper/`
 - `raycast/`
 - `cli/`
 - `vscode/`

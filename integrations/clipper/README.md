@@ -1,6 +1,6 @@
-# massCode Chrome Extension
+# massCode Clipper
 
-Chrome Manifest V3 client for saving browser content into massCode.
+Browser extension client for saving web content into massCode.
 
 ## Setup
 
@@ -10,12 +10,12 @@ Chrome Manifest V3 client for saving browser content into massCode.
 4. Build the extension:
 
 ```bash
-pnpm integrations:chrome:build
+pnpm integrations:clipper:build
 ```
 
 5. Open `chrome://extensions`.
 6. Enable Developer mode.
-7. Load `integrations/chrome-extension/dist` as an unpacked extension.
+7. Load `integrations/clipper/dist` as an unpacked extension.
 8. Paste the API token into the extension popup.
 
 ## Scope
@@ -27,4 +27,5 @@ Supported MVP captures:
 
 - selected text to Code;
 - selected text to Notes;
+- current page to Notes;
 - current page or selected link to HTTP as `GET`.

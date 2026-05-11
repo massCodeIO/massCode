@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "massCode Capture",
-  "description": "Save selected text and URLs to massCode.",
+  "name": "massCode Clipper",
+  "description": "Save browser content to massCode.",
   "version": "0.1.0",
   "action": {
     "default_popup": "popup.html",

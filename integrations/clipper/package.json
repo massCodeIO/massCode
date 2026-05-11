@@ -1,5 +1,5 @@
 {
-  "name": "@masscode/chrome-extension",
+  "name": "@masscode/clipper",
   "type": "module",
   "private": true,
   "scripts": {

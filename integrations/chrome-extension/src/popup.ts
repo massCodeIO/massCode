@@ -83,6 +83,7 @@ function bindEvents(): void {
       updateTargetButtons()
       updateCaptureName()
       updatePreview()
+      void persistDefaultTarget()
     })
   })
 
@@ -119,6 +120,15 @@ async function persistSettings(): Promise<void> {
   settings = readSettingsFromForm()
   await saveSettings(settings)
   setStatus('Settings saved.')
+}
+
+async function persistDefaultTarget(): Promise<void> {
+  try {
+    await saveSettings(settings)
+  }
+  catch (error) {
+    setStatus(getErrorMessage(error), true)
+  }
 }
 
 async function captureCurrentPayload(): Promise<void> {

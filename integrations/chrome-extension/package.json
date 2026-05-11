@@ -1,9 +1,5 @@
 {
   "name": "@masscode/chrome-extension",
   "type": "module",
-  "private": true,
-  "scripts": {
-    "build": "node ../../node_modules/vite/bin/vite.js build --config vite.config.ts",
-    "typecheck": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json --noEmit"
-  }
+  "private": true
 }

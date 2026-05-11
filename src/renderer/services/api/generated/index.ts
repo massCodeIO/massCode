@@ -16,6 +16,10 @@ export interface CaptureRequest {
   text?: string;
   url?: string;
   pageTitle?: string;
+  suggestedName?: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
+  contextLabel?: string;
   language?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   source?: {

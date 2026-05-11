@@ -10,6 +10,7 @@ import {
   postCapture,
   saveSettings,
 } from './api'
+import { getPageCaptureFromPage } from './pageCapture'
 import './styles.css'
 
 const apiPortInput = document.querySelector<HTMLInputElement>('#apiPort')
@@ -115,11 +116,7 @@ async function getActiveTabCapture(): Promise<PageCapturePayload> {
   }
 
   const [response] = await chrome.scripting.executeScript<PageCapturePayload>({
-    func: () => ({
-      pageTitle: document.title,
-      selectedText: window.getSelection()?.toString().trim() ?? '',
-      url: window.location.href,
-    }),
+    func: getPageCaptureFromPage,
     target: { tabId: tab.id },
   })
 

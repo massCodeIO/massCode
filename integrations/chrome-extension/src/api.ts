@@ -38,29 +38,37 @@ export function buildCaptureRequest(
   const selectedText = payload.selectedText.trim()
 
   if (target === 'http') {
+    const url = findFirstUrl(selectedText) ?? payload.url
+
     return {
+      contextLabel: payload.contextLabel,
       method: 'GET',
-      name: payload.pageTitle || payload.url,
       pageTitle: payload.pageTitle,
+      sourceTitle: payload.sourceTitle,
+      sourceUrl: payload.sourceUrl,
       source: {
         capturedAt: Date.now(),
-        title: payload.pageTitle,
-        url: payload.url,
+        title: payload.sourceTitle,
+        url: payload.sourceUrl,
       },
+      suggestedName: getHttpSuggestedName(url),
       target,
-      url: findFirstUrl(selectedText) ?? payload.url,
+      url,
     }
   }
 
   return {
+    contextLabel: payload.contextLabel,
     language: target === 'code' ? 'plain_text' : undefined,
-    name: payload.pageTitle || 'Captured text',
     pageTitle: payload.pageTitle,
+    sourceTitle: payload.sourceTitle,
+    sourceUrl: payload.sourceUrl,
     source: {
       capturedAt: Date.now(),
-      title: payload.pageTitle,
-      url: payload.url,
+      title: payload.sourceTitle,
+      url: payload.sourceUrl,
     },
+    suggestedName: payload.suggestedName ?? payload.contextLabel,
     target,
     text: selectedText,
     url: payload.url,
@@ -96,6 +104,19 @@ export function isCaptureTarget(value: unknown): value is CaptureTarget {
 
 function findFirstUrl(text: string): string | undefined {
   return text.match(/https?:\/\/\S+/)?.[0]
+}
+
+function getHttpSuggestedName(url: string): string {
+  try {
+    const parsedUrl = new URL(url)
+    const path
+      = parsedUrl.pathname === '/' ? parsedUrl.hostname : parsedUrl.pathname
+
+    return `GET ${path}`
+  }
+  catch {
+    return 'GET request'
+  }
 }
 
 async function getErrorMessage(response: Response): Promise<string> {

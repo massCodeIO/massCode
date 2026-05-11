@@ -91,6 +91,23 @@ function getUrlHost(url?: string): string | undefined {
   }
 }
 
+function getHttpNameFromUrl(url?: string, method = 'GET'): string | undefined {
+  if (!url) {
+    return undefined
+  }
+
+  try {
+    const parsedUrl = new URL(url)
+    const path
+      = parsedUrl.pathname === '/' ? parsedUrl.hostname : parsedUrl.pathname
+
+    return `${method} ${path}`
+  }
+  catch {
+    return undefined
+  }
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -156,12 +173,47 @@ function sanitizeCaptureName(name: string, fallback: string): string {
 }
 
 function resolveCaptureName(body: CaptureRequest, fallback: string): string {
+  const sourceTitle
+    = trimToValue(body.sourceTitle)
+      ?? trimToValue(body.source?.title)
+      ?? trimToValue(body.pageTitle)
+  const sourceUrl
+    = trimToValue(body.sourceUrl)
+      ?? trimToValue(body.source?.url)
+      ?? trimToValue(body.url)
+  const explicitName = trimToValue(body.name)
+
+  if (explicitName) {
+    return explicitName
+  }
+
+  if (body.target === 'http') {
+    const requestUrl = trimToValue(body.url) ?? sourceUrl
+
+    return (
+      trimToValue(body.suggestedName)
+      ?? getHttpNameFromUrl(requestUrl, body.method ?? 'GET')
+      ?? trimToValue(body.contextLabel)
+      ?? getUrlHost(requestUrl)
+      ?? fallback
+    )
+  }
+
+  if (body.target === 'code') {
+    return (
+      trimToValue(body.suggestedName)
+      ?? trimToValue(body.contextLabel)
+      ?? sourceTitle
+      ?? getUrlHost(sourceUrl)
+      ?? fallback
+    )
+  }
+
   return (
-    trimToValue(body.name)
-    ?? trimToValue(body.pageTitle)
-    ?? trimToValue(body.source?.title)
-    ?? getUrlHost(body.url)
-    ?? getUrlHost(body.source?.url)
+    trimToValue(body.suggestedName)
+    ?? sourceTitle
+    ?? trimToValue(body.contextLabel)
+    ?? getUrlHost(sourceUrl)
     ?? fallback
   )
 }
@@ -177,12 +229,23 @@ function resolveCapturedAt(body: CaptureRequest): string {
 }
 
 function createSourceDescription(body: CaptureRequest): string {
-  const title = trimToValue(body.source?.title) ?? trimToValue(body.pageTitle)
-  const url = trimToValue(body.source?.url) ?? trimToValue(body.url)
+  const title
+    = trimToValue(body.sourceTitle)
+      ?? trimToValue(body.source?.title)
+      ?? trimToValue(body.pageTitle)
+  const url
+    = trimToValue(body.sourceUrl)
+      ?? trimToValue(body.source?.url)
+      ?? trimToValue(body.url)
   const lines: string[] = []
 
   if (url) {
     lines.push(`Captured from: ${title ? `${title} (${url})` : url}`)
+  }
+
+  const contextLabel = trimToValue(body.contextLabel)
+  if (contextLabel) {
+    lines.push(`Context: ${contextLabel}`)
   }
 
   lines.push(`Captured at: ${resolveCapturedAt(body)}`)
@@ -192,8 +255,14 @@ function createSourceDescription(body: CaptureRequest): string {
 
 function createNoteContent(body: CaptureRequest): string {
   const text = trimToValue(body.text)
-  const title = trimToValue(body.source?.title) ?? trimToValue(body.pageTitle)
-  const url = trimToValue(body.source?.url) ?? trimToValue(body.url)
+  const title
+    = trimToValue(body.sourceTitle)
+      ?? trimToValue(body.source?.title)
+      ?? trimToValue(body.pageTitle)
+  const url
+    = trimToValue(body.sourceUrl)
+      ?? trimToValue(body.source?.url)
+      ?? trimToValue(body.url)
   const lines: string[] = []
 
   if (text) {
@@ -205,6 +274,11 @@ function createNoteContent(body: CaptureRequest): string {
 
   if (url) {
     lines.push(`Source: ${title ? `[${title}](${url})` : url}`)
+  }
+
+  const contextLabel = trimToValue(body.contextLabel)
+  if (contextLabel) {
+    lines.push(`Context: ${contextLabel}`)
   }
 
   lines.push(`Captured: ${resolveCapturedAt(body)}`)

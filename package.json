@@ -40,6 +40,8 @@
     "docs:generate-assets": "node docs/website/scripts/generate-assets.mjs",
     "docs:build": "pnpm docs:generate-assets && pnpm --dir docs/website build",
     "docs:preview": "pnpm --dir docs/website preview",
+    "integrations:chrome:build": "vite build --config integrations/chrome-extension/vite.config.ts",
+    "integrations:chrome:typecheck": "tsc -p integrations/chrome-extension/tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "release": "bumpp -c 'build: release v' -t",

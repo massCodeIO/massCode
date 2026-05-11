@@ -7,17 +7,25 @@ export interface ExtensionSettings {
 }
 
 export interface PageCapturePayload {
+  contextLabel?: string
   pageTitle: string
   selectedText: string
+  sourceTitle: string
+  sourceUrl: string
+  suggestedName?: string
   url: string
 }
 
 export interface CaptureRequest {
   target: CaptureTarget
+  contextLabel?: string
   name?: string
   text?: string
   url?: string
   pageTitle?: string
+  suggestedName?: string
+  sourceTitle?: string
+  sourceUrl?: string
   language?: string
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   source?: {

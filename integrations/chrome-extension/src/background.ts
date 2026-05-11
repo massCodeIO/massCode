@@ -1,5 +1,6 @@
 import type { CaptureTarget, PageCapturePayload } from './types'
 import { buildCaptureRequest, getSettings, postCapture } from './api'
+import { getPageCaptureFromPage } from './pageCapture'
 
 const MENU_ROOT_ID = 'masscode-capture'
 const MENU_TARGETS: Array<{ id: CaptureTarget, title: string }> = [
@@ -69,11 +70,7 @@ async function captureFromTab(
 
 async function getPageCapture(tabId: number): Promise<PageCapturePayload> {
   const [response] = await chrome.scripting.executeScript<PageCapturePayload>({
-    func: () => ({
-      pageTitle: document.title,
-      selectedText: window.getSelection()?.toString().trim() ?? '',
-      url: window.location.href,
-    }),
+    func: getPageCaptureFromPage,
     target: { tabId },
   })
 

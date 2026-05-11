@@ -10,7 +10,7 @@ Chrome Manifest V3 client for saving browser content into massCode.
 4. Build the extension:
 
 ```bash
-pnpm --dir integrations/chrome-extension build
+pnpm integrations:chrome:build
 ```
 
 5. Open `chrome://extensions`.

@@ -3,7 +3,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "vite build --config vite.config.ts",
+    "build": "pnpm build:chrome && pnpm build:firefox && pnpm build:safari",
+    "build:chrome": "vite build --config vite.config.ts --mode chrome",
+    "build:firefox": "vite build --config vite.config.ts --mode firefox",
+    "build:safari": "vite build --config vite.config.ts --mode safari",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

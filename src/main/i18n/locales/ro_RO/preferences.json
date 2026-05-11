@@ -116,7 +116,7 @@
     "codeRenderer": "Renderer Bloc de Cod"
   },
   "api": {
-    "label": "Port API",
+    "label": "API",
     "port": {
       "label": "Port API",
       "description": "Numărul portului pentru serverul API (necesită repornirea aplicației). Interval valid: 1024-65535."

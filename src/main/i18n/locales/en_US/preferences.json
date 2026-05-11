@@ -166,7 +166,7 @@
     }
   },
   "api": {
-    "label": "API Port",
+    "label": "API",
     "port": {
       "label": "API Port",
       "description": "Port number for the API server (requires app restart to take effect). Valid range: 1024-65535."

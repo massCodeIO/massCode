@@ -1,12 +1,28 @@
 import type { CaptureRequest, CaptureResponse } from '../dto/captures'
 import { BrowserWindow } from 'electron'
 import { Elysia } from 'elysia'
+import { getEntryNameValidationIssue } from '../../../shared/entryNameValidation'
 import { useHttpStorage, useNotesStorage, useStorage } from '../../storage'
 import { capturesDTO } from '../dto/captures'
 import { commonMessageResponse } from '../dto/common/response'
 import { isIntegrationTokenAuthorized } from '../integrations/auth'
 
 const app = new Elysia({ prefix: '/captures' })
+const INVALID_CAPTURE_NAME_CHARS = new Set([
+  '#',
+  '[',
+  ']',
+  '<',
+  '>',
+  ':',
+  '"',
+  '/',
+  '\\',
+  '^',
+  '|',
+  '?',
+  '*',
+])
 
 function parseStorageError(
   error: unknown,
@@ -103,7 +119,7 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
 }
 
 function getUniqueName(baseName: string, existingNames: string[]): string {
-  const normalizedBase = baseName.trim()
+  const normalizedBase = sanitizeCaptureName(baseName, 'Captured item')
   const hasConflict = existingNames.some(
     name => name.trim().toLowerCase() === normalizedBase.toLowerCase(),
   )
@@ -111,6 +127,32 @@ function getUniqueName(baseName: string, existingNames: string[]): string {
   return hasConflict
     ? getNextIndexedName(normalizedBase, existingNames)
     : normalizedBase
+}
+
+function sanitizeCaptureName(name: string, fallback: string): string {
+  let sanitized = Array.from(name)
+    .map(char =>
+      INVALID_CAPTURE_NAME_CHARS.has(char) || char.charCodeAt(0) <= 0x1F
+        ? ' '
+        : char,
+    )
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  sanitized = sanitized.replace(/^\.+/, '').replace(/\.+$/, '').trim()
+
+  if (!sanitized) {
+    sanitized = fallback
+  }
+
+  const issue = getEntryNameValidationIssue(sanitized)
+
+  if (issue?.code === 'windowsReserved') {
+    return `${sanitized} capture`
+  }
+
+  return issue ? fallback : sanitized
 }
 
 function resolveCaptureName(body: CaptureRequest, fallback: string): string {

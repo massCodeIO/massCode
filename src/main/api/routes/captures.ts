@@ -323,16 +323,16 @@ function createNoteContent(body: CaptureRequest): string {
   const lines: string[] = []
   const sourceLines: string[] = []
 
-  if (text) {
+  if (markdown) {
+    lines.push(markdown, '')
+  }
+  else if (text) {
     const language = getMarkdownFenceLanguage(body)
 
     if (language) {
       const fence = getCodeFence(text)
 
       lines.push(`${fence}${language}`, text, fence, '')
-    }
-    else if (markdown) {
-      lines.push(markdown, '')
     }
     else {
       lines.push(text, '')
@@ -358,6 +358,22 @@ function createNoteContent(body: CaptureRequest): string {
   lines.push(...sourceLines.map(line => `> ${line}`))
 
   return lines.join('\n')
+}
+
+function getCaptureValidationMessage(body: CaptureRequest): string | null {
+  if (body.target === 'code' && !trimToValue(body.text)) {
+    return 'Code capture requires selected text'
+  }
+
+  if (
+    body.target === 'notes'
+    && !trimToValue(body.text)
+    && !trimToValue(body.markdown)
+  ) {
+    return 'Notes capture requires text or markdown content'
+  }
+
+  return null
 }
 
 function notifyStorageSynced(): void {
@@ -443,6 +459,11 @@ app.use(capturesDTO).post(
   ({ body, headers, status }) => {
     if (!isIntegrationTokenAuthorized(headers.authorization)) {
       return status(401, { message: 'Unauthorized integration request' })
+    }
+
+    const validationMessage = getCaptureValidationMessage(body)
+    if (validationMessage) {
+      return status(400, { message: validationMessage })
     }
 
     try {

@@ -309,6 +309,10 @@ function getPreviewFormat(): string {
   }
 
   if (activeTarget === 'code' && currentPayload) {
+    if (!currentPayload.selectedText.trim()) {
+      return 'text'
+    }
+
     const language = getCodeLanguage(currentPayload)
 
     return language === 'plain_text' ? 'text' : language

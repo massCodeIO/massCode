@@ -3,10 +3,18 @@ import { buildCaptureRequest, getSettings, postCapture } from './api'
 import { getPageCaptureFromPage } from './pageCapture'
 
 const MENU_ROOT_ID = 'masscode-capture'
-const MENU_TARGETS: Array<{ id: CaptureTarget, title: string }> = [
-  { id: 'code', title: 'Code' },
-  { id: 'notes', title: 'Note' },
-  { id: 'http', title: 'HTTP Request' },
+const MENU_TARGETS: Array<{
+  contexts: chrome.contextMenus.ContextType[]
+  id: CaptureTarget
+  title: string
+}> = [
+  { contexts: ['selection'], id: 'code', title: 'Code' },
+  { contexts: ['selection', 'page'], id: 'notes', title: 'Note' },
+  {
+    contexts: ['selection', 'page', 'link'],
+    id: 'http',
+    title: 'HTTP Request',
+  },
 ]
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -19,7 +27,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
     MENU_TARGETS.forEach((target) => {
       chrome.contextMenus.create({
-        contexts: ['selection', 'page', 'link'],
+        contexts: target.contexts,
         id: target.id,
         parentId: MENU_ROOT_ID,
         title: target.title,

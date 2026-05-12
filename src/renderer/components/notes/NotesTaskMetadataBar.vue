@@ -183,7 +183,7 @@ async function clearDueAndClose(close: () => void) {
         :model-value="status"
         @update:model-value="updateStatus"
       >
-        <Select.SelectTrigger class="h-7 w-[128px]">
+        <Select.SelectTrigger>
           <CircleCheck class="size-3.5" />
           <Select.SelectValue />
         </Select.SelectTrigger>
@@ -202,7 +202,7 @@ async function clearDueAndClose(close: () => void) {
         :model-value="priority"
         @update:model-value="updatePriority"
       >
-        <Select.SelectTrigger class="h-7 w-[116px]">
+        <Select.SelectTrigger>
           <Flag class="size-3.5" />
           <Select.SelectValue
             :placeholder="i18n.t('notes.tasks.priority.label')"
@@ -226,7 +226,7 @@ async function clearDueAndClose(close: () => void) {
             size="iconText"
             :class="
               cn(
-                'h-7 w-[164px] justify-start px-2 text-left font-normal',
+                'justify-start text-left font-normal',
                 !due && 'text-muted-foreground',
               )
             "

@@ -1,0 +1,24 @@
+{
+  "name": "@masscode/clipper",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "pnpm build:chrome && pnpm build:firefox && pnpm build:safari",
+    "build:chrome": "vite build --config vite.config.ts --mode chrome",
+    "build:firefox": "vite build --config vite.config.ts --mode firefox",
+    "build:safari": "vite build --config vite.config.ts --mode safari",
+    "package": "pnpm build && node scripts/package.mjs",
+    "package:chrome": "pnpm build:chrome && node scripts/package.mjs chrome",
+    "package:firefox": "pnpm build:firefox && node scripts/package.mjs firefox",
+    "package:safari": "pnpm build:safari && node scripts/package.mjs safari",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "defuddle": "0.18.1"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "vite": "6.1.1"
+  }
+}

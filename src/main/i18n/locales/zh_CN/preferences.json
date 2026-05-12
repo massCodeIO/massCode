@@ -116,7 +116,7 @@
     "codeRenderer": "代码块渲染器"
   },
   "api": {
-    "label": "API 端口",
+    "label": "API",
     "port": {
       "label": "API 端口",
       "description": "API 服务器的端口号（需要重启应用程序才能生效）。有效范围：1024-65535。"

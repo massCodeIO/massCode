@@ -1,0 +1,204 @@
+import type {
+  CaptureRequest,
+  CaptureResponse,
+  CaptureTarget,
+  ExtensionSettings,
+  PageCapturePayload,
+} from './types'
+
+const DEFAULT_SETTINGS: ExtensionSettings = {
+  apiPort: 4321,
+  apiToken: '',
+  defaultTarget: 'notes',
+}
+
+export async function getSettings(): Promise<ExtensionSettings> {
+  const stored = await chrome.storage.local.get(DEFAULT_SETTINGS)
+
+  return {
+    apiPort: Number(stored.apiPort) || DEFAULT_SETTINGS.apiPort,
+    apiToken:
+      typeof stored.apiToken === 'string'
+        ? stored.apiToken
+        : DEFAULT_SETTINGS.apiToken,
+    defaultTarget: isCaptureTarget(stored.defaultTarget)
+      ? stored.defaultTarget
+      : DEFAULT_SETTINGS.defaultTarget,
+  }
+}
+
+export async function saveSettings(settings: ExtensionSettings): Promise<void> {
+  await chrome.storage.local.set(settings)
+}
+
+export function buildCaptureRequest(
+  target: CaptureTarget,
+  payload: PageCapturePayload,
+  explicitName?: string,
+): CaptureRequest {
+  const selectedText = payload.selectedText.trim()
+  const noteMarkdown = payload.selectedMarkdown ?? payload.pageMarkdown
+  const noteText = selectedText || payload.pageText || payload.pageTitle
+  const name = trimToValue(explicitName)
+
+  if (target === 'http') {
+    const url = findFirstUrl(selectedText) ?? payload.url
+
+    return {
+      contextLabel: payload.contextLabel,
+      method: 'GET',
+      name,
+      pageTitle: payload.pageTitle,
+      sourceTitle: payload.sourceTitle,
+      sourceUrl: payload.sourceUrl,
+      source: {
+        capturedAt: Date.now(),
+        title: payload.sourceTitle,
+        url: payload.sourceUrl,
+      },
+      suggestedName: getHttpSuggestedName(url),
+      target,
+      url,
+    }
+  }
+
+  return {
+    contextLabel: payload.contextLabel,
+    language: target === 'code' ? getCodeLanguage(payload) : undefined,
+    markdown: target === 'notes' ? noteMarkdown : undefined,
+    name,
+    pageTitle: payload.pageTitle,
+    sourceTitle: payload.sourceTitle,
+    sourceUrl: payload.sourceUrl,
+    source: {
+      capturedAt: Date.now(),
+      title: payload.sourceTitle,
+      url: payload.sourceUrl,
+    },
+    suggestedName: payload.suggestedName ?? payload.contextLabel,
+    target,
+    text: target === 'notes' ? noteText : selectedText,
+    url: payload.url,
+  }
+}
+
+export function getCaptureNameSuggestion(
+  target: CaptureTarget,
+  payload: PageCapturePayload,
+): string {
+  if (target === 'http') {
+    const url = findFirstUrl(payload.selectedText.trim()) ?? payload.url
+
+    return getHttpSuggestedName(url)
+  }
+
+  return (
+    payload.suggestedName
+    ?? payload.contextLabel
+    ?? payload.sourceTitle
+    ?? payload.pageTitle
+  )
+}
+
+export async function postCapture(
+  settings: ExtensionSettings,
+  request: CaptureRequest,
+): Promise<CaptureResponse> {
+  const response = await fetch(
+    `http://localhost:${settings.apiPort}/captures/`,
+    {
+      body: JSON.stringify(request),
+      headers: {
+        'Authorization': `Bearer ${settings.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response))
+  }
+
+  return (await response.json()) as CaptureResponse
+}
+
+export function isCaptureTarget(value: unknown): value is CaptureTarget {
+  return value === 'code' || value === 'notes' || value === 'http'
+}
+
+function findFirstUrl(text: string): string | undefined {
+  return text.match(/https?:\/\/\S+/)?.[0]
+}
+
+export function getCodeLanguage(payload: PageCapturePayload): string {
+  const sourceName
+    = trimToValue(payload.contextLabel)
+      ?? trimToValue(payload.sourceTitle)
+      ?? trimToValue(payload.url)
+  const extension = sourceName?.match(/\.([a-z0-9]+)(?:$|[\s?#])/i)?.[1]
+
+  if (!extension) {
+    return 'plain_text'
+  }
+
+  const languages: Record<string, string> = {
+    c: 'c_cpp',
+    cc: 'c_cpp',
+    cpp: 'c_cpp',
+    cs: 'csharp',
+    cjs: 'javascript',
+    css: 'css',
+    go: 'golang',
+    h: 'c_cpp',
+    hpp: 'c_cpp',
+    html: 'html',
+    java: 'java',
+    js: 'javascript',
+    json: 'json',
+    jsx: 'jsx',
+    md: 'markdown',
+    mjs: 'javascript',
+    php: 'php',
+    py: 'python',
+    rs: 'rust',
+    scss: 'scss',
+    sh: 'sh',
+    ts: 'typescript',
+    tsx: 'tsx',
+    vue: 'vue',
+    yaml: 'yaml',
+    yml: 'yaml',
+  }
+
+  return languages[extension.toLowerCase()] ?? 'plain_text'
+}
+
+function trimToValue(value?: string): string | undefined {
+  const trimmed = value?.trim()
+
+  return trimmed || undefined
+}
+
+function getHttpSuggestedName(url: string): string {
+  try {
+    const parsedUrl = new URL(url)
+    const path
+      = parsedUrl.pathname === '/' ? parsedUrl.hostname : parsedUrl.pathname
+
+    return `GET ${path}`
+  }
+  catch {
+    return 'GET request'
+  }
+}
+
+async function getErrorMessage(response: Response): Promise<string> {
+  try {
+    const data = (await response.json()) as { message?: string }
+    return data.message ?? `massCode API error: ${response.status}`
+  }
+  catch {
+    return `massCode API error: ${response.status}`
+  }
+}

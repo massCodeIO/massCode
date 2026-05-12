@@ -1,6 +1,10 @@
 import path from 'node:path'
 import { app, ipcMain, shell } from 'electron'
 import {
+  generateIntegrationToken,
+  revokeIntegrationToken,
+} from '../../api/integrations/auth'
+import {
   getCurrencyRates,
   refreshCryptoRatesForced,
   refreshFiatRatesForced,
@@ -28,6 +32,15 @@ import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { store } from '../../store'
 
 export function registerSystemHandlers() {
+  ipcMain.handle('system:api-token-generate', () => {
+    return generateIntegrationToken()
+  })
+
+  ipcMain.handle('system:api-token-revoke', () => {
+    revokeIntegrationToken()
+    return true
+  })
+
   ipcMain.handle('system:currency-rates', () => {
     return getCurrencyRates()
   })

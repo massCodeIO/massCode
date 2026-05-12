@@ -9,6 +9,32 @@
  * ---------------------------------------------------------------
  */
 
+export interface CaptureRequest {
+  target: "code" | "notes" | "http";
+  name?: string;
+  folderId?: number | null;
+  text?: string;
+  markdown?: string;
+  url?: string;
+  pageTitle?: string;
+  suggestedName?: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
+  contextLabel?: string;
+  language?: string;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  source?: {
+    title?: string;
+    url?: string;
+    capturedAt?: number;
+  };
+}
+
+export interface CaptureResponse {
+  target: "code" | "notes" | "http";
+  id: number;
+}
+
 export interface SnippetContentsAdd {
   label: string;
   value: string | null;
@@ -1017,6 +1043,29 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
+  captures = {
+    /**
+     * No description
+     *
+     * @tags Captures
+     * @name PostCaptures
+     * @request POST:/captures/
+     */
+    postCaptures: (data: CaptureRequest, params: RequestParams = {}) =>
+      this.request<
+        CaptureResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/captures/`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
   snippets = {
     /**
      * No description

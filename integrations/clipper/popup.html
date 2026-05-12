@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Save to massCode</title>
+    <script
+      type="module"
+      src="/src/popup.ts"
+    ></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <h1>Save to massCode</h1>
+          <p>Save selected text or the current page.</p>
+        </div>
+        <button
+          id="toggleSettings"
+          aria-label="API settings"
+          class="icon-button"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="icon"
+            viewBox="0 0 24 24"
+          >
+            <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+            <circle
+              cx="12"
+              cy="12"
+              r="3"
+            />
+          </svg>
+        </button>
+      </header>
+
+      <section
+        id="settingsPanel"
+        class="settings-panel"
+        hidden
+      >
+        <label>
+          API port
+          <input
+            id="apiPort"
+            min="1024"
+            max="65535"
+            type="number"
+          />
+        </label>
+        <label>
+          API token
+          <input
+            id="apiToken"
+            autocomplete="off"
+            spellcheck="false"
+            type="password"
+          />
+        </label>
+        <button
+          id="saveSettings"
+          class="secondary-button"
+          type="button"
+        >
+          Save settings
+        </button>
+      </section>
+
+      <section class="source-row">
+        <div
+          class="source-mark"
+          aria-hidden="true"
+        >
+          M
+        </div>
+        <div class="source-text">
+          <span id="sourceTitle">Current page</span>
+          <span id="sourcePath">Waiting for selection</span>
+        </div>
+      </section>
+
+      <section class="content">
+        <div
+          aria-label="Capture target"
+          class="segments"
+          role="group"
+        >
+          <button
+            data-target="code"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="icon"
+              viewBox="0 0 24 24"
+            >
+              <path d="m18 16 4-4-4-4" />
+              <path d="m6 8-4 4 4 4" />
+              <path d="m14.5 4-5 16" />
+            </svg>
+            Code
+          </button>
+          <button
+            data-target="notes"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="icon"
+              viewBox="0 0 24 24"
+            >
+              <path d="M2 6h4" />
+              <path d="M2 10h4" />
+              <path d="M2 14h4" />
+              <path d="M2 18h4" />
+              <rect
+                width="16"
+                height="20"
+                x="4"
+                y="2"
+                rx="2"
+              />
+              <path d="M16 2v20" />
+            </svg>
+            Notes
+          </button>
+          <button
+            data-target="http"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="icon"
+              viewBox="0 0 24 24"
+            >
+              <path d="m22 2-7 20-4-9-9-4Z" />
+              <path d="M22 2 11 13" />
+            </svg>
+            HTTP
+          </button>
+        </div>
+
+        <label>
+          Name
+          <input
+            id="captureName"
+            autocomplete="off"
+            spellcheck="false"
+            type="text"
+          />
+        </label>
+
+        <label>
+          <span id="previewLabel">Preview</span>
+          <textarea
+            id="preview"
+            readonly
+          ></textarea>
+        </label>
+      </section>
+
+      <footer class="footer">
+        <div class="shortcuts">
+          <span>⌘</span>
+          <span>↵</span>
+          <span>Save</span>
+          <span>Esc</span>
+          <span>Close</span>
+        </div>
+        <button
+          id="capture"
+          class="primary-button"
+          type="button"
+        >
+          <span id="captureLabel">Save note</span>
+        </button>
+      </footer>
+
+      <p
+        id="status"
+        class="status"
+        role="status"
+      ></p>
+    </main>
+  </body>
+</html>

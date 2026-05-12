@@ -116,7 +116,7 @@
     "codeRenderer": "Renderizador de Bloques de Código"
   },
   "api": {
-    "label": "Puerto API",
+    "label": "API",
     "port": {
       "label": "Puerto API",
       "description": "Número de puerto para el servidor API (requiere reiniciar la aplicación). Rango válido: 1024-65535."

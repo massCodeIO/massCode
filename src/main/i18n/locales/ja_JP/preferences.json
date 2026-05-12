@@ -116,7 +116,7 @@
     "codeRenderer": "コードブロックレンダラー"
   },
   "api": {
-    "label": "APIポート",
+    "label": "API",
     "port": {
       "label": "APIポート",
       "description": "APIサーバーのポート番号（アプリの再起動が必要です）。有効範囲：1024-65535。"

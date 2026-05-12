@@ -7,6 +7,10 @@ description: "Set up massCode Clipper locally to save selected text, pages, and 
 
 massCode Clipper saves web content from your browser into the local massCode app. Use it to send selected code to Code, selected text or readable page content to Notes, and pages or links to HTTP as `GET` requests.
 
+<p align="center">
+<img :src="withBase('/clipper.png')" width='399'  alt="massCode Clipper popup">
+</p>
+
 The browser store version is not available yet. Until distribution is published, install the Clipper from a local build.
 
 ## Enable The Local API
@@ -104,3 +108,7 @@ You can also right-click the page, selected text, or a link and choose **Save to
 If the popup says it cannot read the active page, try a regular website tab. Browsers block extensions from reading internal pages such as browser settings, extension pages, and some store pages.
 
 If saving fails, check that massCode is running, **API integrations** are enabled, the extension API port matches Preferences, and the token in the popup is the latest generated token.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

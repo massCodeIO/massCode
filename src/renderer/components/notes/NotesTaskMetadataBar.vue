@@ -82,6 +82,11 @@ const statusItems = [
 
 const priorityItems = [
   {
+    value: 'none',
+    label: i18n.t('notes.tasks.priority.none'),
+    flagClass: getTaskPriorityFlagClass(''),
+  },
+  {
     value: NoteTaskPriority.Low,
     label: i18n.t('notes.tasks.priority.low'),
     flagClass: getTaskPriorityFlagClass(NoteTaskPriority.Low),
@@ -113,6 +118,13 @@ async function updateStatus(value: unknown) {
 
 async function updatePriority(value: unknown) {
   if (typeof value !== 'string') {
+    return
+  }
+
+  if (value === 'none') {
+    await updateNoteProperties(props.note.id, {
+      unset: ['priority'],
+    })
     return
   }
 
@@ -172,7 +184,9 @@ async function clearDueAndClose(close: () => void) {
         :model-value="status"
         @update:model-value="updateStatus"
       >
-        <Select.SelectTrigger>
+        <Select.SelectTrigger
+          class="focus-visible:border-input focus-visible:ring-0"
+        >
           <CircleCheck class="size-3.5" />
           <Select.SelectValue />
         </Select.SelectTrigger>
@@ -191,7 +205,9 @@ async function clearDueAndClose(close: () => void) {
         :model-value="priority"
         @update:model-value="updatePriority"
       >
-        <Select.SelectTrigger>
+        <Select.SelectTrigger
+          class="focus-visible:border-input focus-visible:ring-0"
+        >
           <Flag
             class="size-3.5 fill-current stroke-current"
             :class="priorityFlagClass"
@@ -222,7 +238,7 @@ async function clearDueAndClose(close: () => void) {
             size="iconText"
             :class="
               cn(
-                'justify-start text-left font-normal',
+                'focus-visible:border-input justify-start text-left font-normal focus-visible:ring-0',
                 !due && 'text-muted-foreground',
               )
             "

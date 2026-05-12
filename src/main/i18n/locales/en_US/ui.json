@@ -351,6 +351,7 @@
       },
       "priority": {
         "label": "Priority",
+        "none": "No priority",
         "low": "Low",
         "medium": "Medium",
         "high": "High"

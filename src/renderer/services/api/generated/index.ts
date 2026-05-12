@@ -341,6 +341,15 @@ export interface NotesQuery {
    * @max 1
    */
   isInbox?: number;
+  propertyDue?: "today" | "upcoming";
+  propertyStatus?: string;
+  propertyStatusNot?: string;
+  propertyType?: string;
+}
+
+export interface NotePropertiesUpdate {
+  properties?: object;
+  unset?: string[];
 }
 
 export interface NotesUpdate {
@@ -1666,6 +1675,26 @@ export class Api<
     ) =>
       this.request<void, any>({
         path: `/notes/${id}/content`,
+        method: "PATCH",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PatchNotesByIdProperties
+     * @request PATCH:/notes/{id}/properties
+     */
+    patchNotesByIdProperties: (
+      id: string,
+      data: NotePropertiesUpdate,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/notes/${id}/properties`,
         method: "PATCH",
         body: data,
         type: ContentType.Json,

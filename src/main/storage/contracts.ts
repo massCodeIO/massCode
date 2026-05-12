@@ -234,6 +234,10 @@ export interface NotesQueryInput {
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  propertyDue?: 'today' | 'upcoming'
+  propertyStatus?: string
+  propertyStatusNot?: string
+  propertyType?: string
 }
 
 export interface NoteCreateInput {
@@ -252,6 +256,11 @@ export interface NoteUpdateInput {
 export interface NoteUpdateResult {
   invalidInput: boolean
   notFound: boolean
+}
+
+export interface NotePropertiesUpdateInput {
+  properties?: Record<string, unknown>
+  unset?: string[]
 }
 
 export interface NoteTagRelationResult {
@@ -321,6 +330,10 @@ export interface NotesStorage {
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
   updateNoteContent: (id: number, content: string) => NoteUpdateResult
+  updateNoteProperties: (
+    id: number,
+    input: NotePropertiesUpdateInput,
+  ) => NoteUpdateResult
 }
 
 export interface NoteTagsStorage {

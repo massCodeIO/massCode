@@ -31,7 +31,7 @@ import {
 } from './constants'
 import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
 
-const NOTE_SYSTEM_FRONTMATTER_KEYS = new Set([
+export const NOTE_SYSTEM_FRONTMATTER_KEYS = new Set([
   'createdAt',
   'description',
   'folderId',
@@ -42,6 +42,10 @@ const NOTE_SYSTEM_FRONTMATTER_KEYS = new Set([
   'tags',
   'updatedAt',
 ])
+
+export function isNoteSystemFrontmatterKey(key: string): boolean {
+  return NOTE_SYSTEM_FRONTMATTER_KEYS.has(key)
+}
 
 function extractNoteProperties(frontmatter: NotesFrontmatter): NoteProperties {
   return Object.fromEntries(

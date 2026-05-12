@@ -1,11 +1,11 @@
 ---
 title: Notes Library
-description: "Navigate the Notes Library in massCode with Dashboard, Inbox, Favorites, All Notes, and Trash for fast note access."
+description: "Navigate the Notes Library in massCode with Dashboard, Inbox, Favorites, All Notes, Tasks, and Trash for fast note access."
 ---
 
 # Library
 
-The Library is the first column in the Notes space. It helps you move quickly between the Notes Dashboard, system folders, and the parts of your note collection you use most often.
+The Library is the first column in the Notes space. It helps you move quickly between the Notes Dashboard, system folders, task views, and the parts of your note collection you use most often.
 
 ## Dashboard
 
@@ -32,6 +32,16 @@ Favorites is for notes you want to keep close at hand.
 ## All Notes
 
 All Notes shows your entire note collection in one place.
+
+## Tasks
+
+Tasks shows all task notes. Nested task views help you focus the list:
+
+- **Today** - incomplete tasks due today.
+- **Upcoming** - incomplete tasks due after today.
+- **Completed** - tasks with Done status.
+
+See [Tasks](/documentation/notes/tasks) for creating tasks, converting notes, and editing task properties.
 
 ## Trash
 

@@ -3,6 +3,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   isTaskNote,
   NoteTaskStatus,
+  useDialog,
   useDonations,
   useNotes,
   useNotesApp,
@@ -54,6 +55,7 @@ const {
 } = useNotes()
 
 const { copy } = useClipboard()
+const { confirm } = useDialog()
 
 const isFavoritesLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Favorites,
@@ -129,6 +131,23 @@ async function onConvertToTask() {
     },
   })
 }
+
+async function onConvertToNote() {
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.convertTaskToNote', {
+      name: props.note.name,
+    }),
+    content: i18n.t('messages:warning.taskPropertiesRemoved'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await updateNoteProperties(props.note.id, {
+    unset: ['type', 'status', 'priority', 'due'],
+  })
+}
 </script>
 
 <template>
@@ -146,6 +165,12 @@ async function onConvertToTask() {
         @click="onConvertToTask"
       >
         {{ i18n.t("notes.tasks.convertToTask") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-else
+        @click="onConvertToNote"
+      >
+        {{ i18n.t("notes.tasks.convertToNote") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
     </template>

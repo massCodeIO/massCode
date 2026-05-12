@@ -346,6 +346,7 @@
       "completed": "Завершённые",
       "complete": "Завершить",
       "convertToTask": "Преобразовать в задачу",
+      "convertToNote": "Преобразовать в заметку",
       "duePlaceholder": "Срок",
       "status": {
         "todo": "К выполнению",

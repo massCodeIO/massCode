@@ -340,6 +340,7 @@
       "completed": "Completed",
       "complete": "Complete",
       "convertToTask": "Convert to task",
+      "convertToNote": "Convert to note",
       "duePlaceholder": "Due",
       "status": {
         "todo": "Todo",

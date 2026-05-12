@@ -30,6 +30,7 @@ const defaultMainMenuContext: MainMenuContext = {
     primaryAction: null,
     secondaryAction: null,
     canCreateFragment: false,
+    canCreateTask: false,
   },
   view: {
     layoutMode: null,
@@ -337,6 +338,14 @@ function createFileMenuItems(context: MainMenuContext): MenuConfig[] {
       label: i18n.t('action.new.fragment'),
       accelerator: 'CommandOrControl+T',
       click: () => send('main-menu:new-fragment'),
+    })
+  }
+
+  if (context.file.canCreateTask) {
+    items.push({
+      label: i18n.t('action.new.task'),
+      accelerator: 'CommandOrControl+T',
+      click: () => send('main-menu:new-task'),
     })
   }
 

@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
+  createTaskCompletionPatch,
+  getTaskDue,
+  getTaskPriority,
+  getTaskStatus,
+  isTaskNote,
+  NoteTaskStatus,
   useApp,
   useNavigationHistory,
   useNotes,
@@ -8,7 +15,9 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
-import { format } from 'date-fns'
+import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
+import { CalendarClock, Flag } from 'lucide-vue-next'
+import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
 interface NoteTagInfo {
   id: number
@@ -25,6 +34,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -44,7 +54,7 @@ const { clearHistory } = useNavigationHistory()
 const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
-const { selectNote, selectedNoteIds } = useNotes()
+const { selectNote, selectedNoteIds, updateNoteProperties } = useNotes()
 
 const noteRef = ref<HTMLDivElement>()
 
@@ -73,6 +83,52 @@ const folderName = computed(() => {
   return i18n.t('common.inbox')
 })
 
+const isTask = computed(() => isTaskNote(props.note))
+const taskStatus = computed(() => getTaskStatus(props.note))
+const isTaskDone = computed(() => taskStatus.value === NoteTaskStatus.Done)
+const taskPriority = computed(() => getTaskPriority(props.note))
+const taskPriorityFlagClass = computed(() =>
+  getTaskPriorityFlagClass(taskPriority.value),
+)
+const taskDue = computed(() => getTaskDue(props.note))
+const taskDueLabel = computed(() => {
+  if (!taskDue.value) {
+    return i18n.t('notes.tasks.noDue')
+  }
+
+  const due = parseISO(taskDue.value)
+  if (!isValid(due)) {
+    return taskDue.value
+  }
+
+  if (isToday(due)) {
+    return i18n.t('notes.tasks.today')
+  }
+
+  return format(due, 'dd.MM.yyyy')
+})
+const isTaskOverdue = computed(() => {
+  if (!taskDue.value || isTaskDone.value) {
+    return false
+  }
+
+  const due = parseISO(taskDue.value)
+  return isValid(due) && isPast(due) && !isToday(due)
+})
+const showOverdueColor = computed(
+  () =>
+    isTaskOverdue.value
+    && !isSelected.value
+    && !isFocused.value
+    && !isInMultiSelection.value,
+)
+const trailingMeta = computed(() => {
+  if (isTask.value) {
+    return taskDueLabel.value
+  }
+
+  return format(new Date(props.note.updatedAt), 'dd.MM.yyyy')
+})
 function onNoteClick(id: number, event: MouseEvent) {
   clearHistory()
   selectNote(id, event.shiftKey)
@@ -87,6 +143,17 @@ function onClickContextMenu() {
   if (selectedNoteIds.value.length > 1) {
     selectedNoteIds.value.forEach(id => highlightedNoteIds.value.add(id))
   }
+}
+
+async function onTaskDoneChange() {
+  if (!isTask.value) {
+    return
+  }
+
+  await updateNoteProperties(
+    props.note.id,
+    createTaskCompletionPatch(props.note),
+  )
 }
 
 function onDragStart(event: DragEvent) {
@@ -152,19 +219,41 @@ onClickOutside(noteRef, () => {
           "
         >
           <div
-            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="flex min-w-0 items-center gap-2 overflow-hidden"
             :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
-            {{ note.name || i18n.t("notes.untitled") }}
+            <Checkbox
+              v-if="isTask"
+              :model-value="isTaskDone"
+              class="task-checkbox mt-px"
+              @click.stop
+              @update:model-value="onTaskDoneChange"
+            />
+            <span
+              class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+              :class="{ 'text-muted-foreground line-through': isTaskDone }"
+            >
+              {{ note.name || i18n.t("notes.untitled") }}
+            </span>
+            <Flag
+              v-if="taskPriority"
+              class="size-3.5 shrink-0 fill-current stroke-current"
+              :class="taskPriorityFlagClass"
+            />
           </div>
           <UiText
             v-if="isCompactListMode"
             as="div"
             variant="xs"
             muted
-            class="meta shrink-0"
+            class="meta flex shrink-0 items-center gap-1"
+            :class="{ 'text-destructive!': showOverdueColor }"
           >
-            {{ format(new Date(note.updatedAt), "dd.MM.yyyy") }}
+            <CalendarClock
+              v-if="isTask"
+              class="size-3.5"
+            />
+            {{ trailingMeta }}
           </UiText>
           <UiText
             v-else
@@ -176,8 +265,15 @@ onClickOutside(noteRef, () => {
             <div>
               {{ folderName }}
             </div>
-            <div>
-              {{ format(new Date(note.updatedAt), "dd.MM.yyyy") }}
+            <div
+              class="flex items-center gap-1"
+              :class="{ 'text-destructive!': showOverdueColor }"
+            >
+              <CalendarClock
+                v-if="isTask"
+                class="size-3.5"
+              />
+              {{ trailingMeta }}
             </div>
           </UiText>
         </div>
@@ -198,17 +294,29 @@ onClickOutside(noteRef, () => {
     .meta {
       @apply text-accent-foreground;
     }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-foreground/20 bg-background/70 shadow-xs;
+    }
   }
   &.is-multi-selected {
     @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
     .meta {
       @apply text-accent-foreground;
     }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-foreground/20 bg-background/70 shadow-xs;
+    }
   }
   &.is-focused:not(.is-multi-selected) {
     @apply bg-primary text-primary-foreground z-10 rounded-md border-transparent;
     .meta {
       @apply text-primary-foreground;
+    }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-primary-foreground/30 bg-background/85 shadow-xs;
+    }
+    .task-checkbox[data-state="checked"] {
+      @apply border-primary-foreground bg-primary-foreground text-primary shadow-xs;
     }
   }
   &.is-highlighted {

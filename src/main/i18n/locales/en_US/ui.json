@@ -333,6 +333,30 @@
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
     "noSelected": "No Note Selected",
+    "tasks": {
+      "title": "Tasks",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "convertToTask": "Convert to task",
+      "convertToNote": "Convert to note",
+      "duePlaceholder": "Due",
+      "clearDue": "Clear due date",
+      "noDue": "No due",
+      "status": {
+        "todo": "Todo",
+        "inProgress": "In progress",
+        "done": "Done",
+        "blocked": "Blocked"
+      },
+      "priority": {
+        "label": "Priority",
+        "none": "No priority",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
+    },
     "dashboard": {
       "label": "Dashboard",
       "title": "Notes Dashboard",
@@ -448,8 +472,10 @@
       "folder": "New Folder",
       "snippet": "New Snippet",
       "fragment": "New Fragment",
-      "note": "New Note"
+      "note": "New Note",
+      "task": "New Task"
     },
+    "createOptions": "Create options",
     "add": {
       "description": "Add Description",
       "tag": "Add Tag",

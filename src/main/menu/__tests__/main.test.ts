@@ -54,6 +54,7 @@ describe('createMainMenu', () => {
         primaryAction: 'new-snippet',
         secondaryAction: 'new-folder',
         canCreateFragment: true,
+        canCreateTask: false,
       },
       view: {
         layoutMode: 'all-panels',
@@ -117,6 +118,7 @@ describe('createMainMenu', () => {
         primaryAction: null,
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: null,
@@ -155,6 +157,59 @@ describe('createMainMenu', () => {
     expect(compactModeItem).toBeUndefined()
   })
 
+  it('adds a notes task creation shortcut in notes space', async () => {
+    const { createMainMenu } = await import('../main')
+
+    const context: MainMenuContext = {
+      file: {
+        primaryAction: 'new-note',
+        secondaryAction: 'new-folder',
+        canCreateFragment: false,
+        canCreateTask: true,
+      },
+      view: {
+        layoutMode: 'all-panels',
+        layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        canToggleCompactMode: true,
+        canToggleMindmap: false,
+        isCompactMode: false,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: 'notes',
+        noteMode: 'livePreview',
+        canSendRequest: false,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: true,
+      },
+    }
+
+    createMainMenu(context)
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, accelerator?: string }>
+    }>
+    const fileMenu = template.find(item => item.label === 'menu:file.label')
+
+    expect(fileMenu?.submenu?.map(item => item.label)).toEqual([
+      'action.new.note',
+      'action.new.task',
+      'action.new.folder',
+    ])
+    expect(
+      fileMenu?.submenu?.find(item => item.label === 'action.new.task'),
+    ).toMatchObject({
+      accelerator: 'CommandOrControl+T',
+    })
+  })
+
   it('marks compact mode as checked when enabled', async () => {
     const { createMainMenu } = await import('../main')
 
@@ -163,6 +218,7 @@ describe('createMainMenu', () => {
         primaryAction: 'new-sheet',
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: null,
@@ -229,6 +285,7 @@ describe('createMainMenu', () => {
         primaryAction: null,
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: 'all-panels',

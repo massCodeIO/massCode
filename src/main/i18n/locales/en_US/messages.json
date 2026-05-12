@@ -6,6 +6,7 @@
     "deletePermanently": "Are you sure you want to permanently delete \"{{name}}\"?",
     "deleteConfirmMultipleSnippets": "Are you sure you want to permanently delete {{count}} selected snippets?",
     "emptyTrash": "Are you sure you want to permanently delete all snippets in Trash?",
+    "convertTaskToNote": "Convert \"{{name}}\" back to a note?",
     "moveVaultOverwrite": [
       "Overwrite selected directory?",
       "The selected directory is not empty. Its contents will be overwritten by the current vault."
@@ -24,6 +25,7 @@
   "warning": {
     "noUndo": "You cannot undo this action.",
     "allSnippetsMoveToTrash": "All snippets in this folder will be moved to trash.",
+    "taskPropertiesRemoved": "Task status, priority, and due date will be removed.",
     "deleteTag": "This will also cause all snippets to have that tag removed.",
     "createDb": "Please select another folder",
     "htmlCssPreview": "Add HTML fragment to see the result. Add CSS for styling and JavaScript for interactivity.",

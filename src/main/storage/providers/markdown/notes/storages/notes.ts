@@ -1,5 +1,6 @@
 import type {
   NoteCreateInput,
+  NotePropertiesUpdateInput,
   NoteRecord,
   NotesCount,
   NotesQueryInput,
@@ -10,6 +11,7 @@ import type {
   NoteUpdateResult,
 } from '../../../../contracts'
 import type { MarkdownNote, NotesState } from '../runtime/types'
+import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
@@ -33,7 +35,12 @@ import {
   rewriteBacklinksAfterNoteUpdate,
 } from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
-import { findNoteById, persistNote, writeNoteToFile } from '../runtime/notes'
+import {
+  findNoteById,
+  isNoteSystemFrontmatterKey,
+  persistNote,
+  writeNoteToFile,
+} from '../runtime/notes'
 import { findNotesFolderById } from '../runtime/paths'
 import {
   getNoteIdsBySearchQuery,
@@ -67,9 +74,128 @@ function createNoteRecord(note: MarkdownNote, state: NotesState): NoteRecord {
     isDeleted: note.isDeleted,
     isFavorites: note.isFavorites,
     name: note.name,
+    properties: note.properties,
     tags,
     updatedAt: note.updatedAt,
   }
+}
+
+function normalizePropertyText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+function normalizePropertyDate(value: unknown): Date | undefined {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    if (!normalized) {
+      return undefined
+    }
+
+    const date = parseISO(normalized)
+    if (!Number.isNaN(date.getTime())) {
+      return date
+    }
+
+    const fallbackDate = new Date(normalized)
+    return Number.isNaN(fallbackDate.getTime()) ? undefined : fallbackDate
+  }
+
+  if (typeof value !== 'number') {
+    return undefined
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date
+}
+
+function applyNotePropertyFilters(
+  note: MarkdownNote,
+  query: NotesQueryInput,
+): boolean {
+  if (
+    query.propertyType !== undefined
+    && normalizePropertyText(note.properties.type) !== query.propertyType
+  ) {
+    return false
+  }
+
+  if (
+    query.propertyStatus !== undefined
+    && normalizePropertyText(note.properties.status) !== query.propertyStatus
+  ) {
+    return false
+  }
+
+  if (
+    query.propertyStatusNot !== undefined
+    && normalizePropertyText(note.properties.status) === query.propertyStatusNot
+  ) {
+    return false
+  }
+
+  if (query.propertyDue !== undefined) {
+    const due = normalizePropertyDate(note.properties.due)
+    if (!due) {
+      return false
+    }
+
+    if (query.propertyDue === 'today') {
+      return isToday(due)
+    }
+
+    if (query.propertyDue === 'upcoming') {
+      return isAfter(due, startOfToday()) && !isToday(due)
+    }
+  }
+
+  return true
+}
+
+function applyNotePropertiesUpdate(
+  note: MarkdownNote,
+  input: NotePropertiesUpdateInput,
+): boolean {
+  let hasAnyField = false
+
+  for (const [key, value] of Object.entries(input.properties || {})) {
+    if (isNoteSystemFrontmatterKey(key)) {
+      continue
+    }
+
+    note.properties[key] = value
+    hasAnyField = true
+  }
+
+  for (const key of input.unset || []) {
+    if (isNoteSystemFrontmatterKey(key)) {
+      continue
+    }
+
+    if (Object.hasOwn(note.properties, key)) {
+      delete note.properties[key]
+      hasAnyField = true
+    }
+  }
+
+  return hasAnyField
+}
+
+function createNoteProperties(
+  inputProperties: Record<string, unknown> | undefined,
+) {
+  if (!inputProperties) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(inputProperties).filter(
+      ([key]) => !isNoteSystemFrontmatterKey(key),
+    ),
+  )
 }
 
 export function createNotesNotesStorage(): NotesStorage {
@@ -111,6 +237,7 @@ export function createNotesNotesStorage(): NotesStorage {
             || note.isFavorites === 1,
           (note, query) =>
             query.tagId === undefined || note.tags.includes(query.tagId),
+          (note, query) => applyNotePropertyFilters(note, query),
         ],
         getSortValue: note => note.createdAt,
         query,
@@ -148,6 +275,7 @@ export function createNotesNotesStorage(): NotesStorage {
           isDeleted: 0,
           isFavorites: 0,
           name,
+          properties: createNoteProperties(input.properties),
           tags: [],
           updatedAt: now,
         }),
@@ -263,6 +391,30 @@ export function createNotesNotesStorage(): NotesStorage {
       })
 
       return { invalidInput: false, notFound: result.notFound }
+    },
+
+    updateNoteProperties(
+      id: number,
+      input: NotePropertiesUpdateInput,
+    ): NoteUpdateResult {
+      const paths = resolvePaths()
+      const { notes } = getNotesRuntimeCache(paths)
+      const note = findNoteById(notes, id)
+
+      if (!note) {
+        return { invalidInput: false, notFound: true }
+      }
+
+      const hasAnyField = applyNotePropertiesUpdate(note, input)
+
+      if (!hasAnyField) {
+        return { invalidInput: true, notFound: false }
+      }
+
+      note.updatedAt = Date.now()
+      writeNoteToFile(paths, note)
+
+      return { invalidInput: false, notFound: false }
     },
 
     deleteNote(id: number) {

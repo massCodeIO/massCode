@@ -206,6 +206,7 @@ export interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagRecord[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -233,11 +234,16 @@ export interface NotesQueryInput {
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  propertyDue?: 'today' | 'upcoming'
+  propertyStatus?: string
+  propertyStatusNot?: string
+  propertyType?: string
 }
 
 export interface NoteCreateInput {
   name: string
   folderId?: number | null
+  properties?: Record<string, unknown>
 }
 
 export interface NoteUpdateInput {
@@ -251,6 +257,11 @@ export interface NoteUpdateInput {
 export interface NoteUpdateResult {
   invalidInput: boolean
   notFound: boolean
+}
+
+export interface NotePropertiesUpdateInput {
+  properties?: Record<string, unknown>
+  unset?: string[]
 }
 
 export interface NoteTagRelationResult {
@@ -320,6 +331,10 @@ export interface NotesStorage {
   getNotesCounts: () => NotesCount
   updateNote: (id: number, input: NoteUpdateInput) => NoteUpdateResult
   updateNoteContent: (id: number, content: string) => NoteUpdateResult
+  updateNoteProperties: (
+    id: number,
+    input: NotePropertiesUpdateInput,
+  ) => NoteUpdateResult
 }
 
 export interface NoteTagsStorage {

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDonations, useNotes, useNotesApp } from '@/composables'
+import {
+  isTaskNote,
+  NoteTaskStatus,
+  useDialog,
+  useDonations,
+  useNotes,
+  useNotesApp,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
@@ -21,6 +28,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -41,11 +49,13 @@ const {
   selectFirstNote,
   selectedNoteIds,
   updateNote,
+  updateNoteProperties,
   updateNotes,
   deleteSelectedNotes,
 } = useNotes()
 
 const { copy } = useClipboard()
+const { confirm } = useDialog()
 
 const isFavoritesLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Favorites,
@@ -54,6 +64,7 @@ const isFavoritesLibrarySelected = computed(
 const isTrashLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Trash,
 )
+const isTask = computed(() => isTaskNote(props.note))
 
 const revealInFileManagerLabel = computed(() =>
   isMac
@@ -111,6 +122,32 @@ function onCopyNoteContent() {
   copy(props.note.content)
   useDonations().incrementCopy('notes')
 }
+
+async function onConvertToTask() {
+  await updateNoteProperties(props.note.id, {
+    properties: {
+      status: NoteTaskStatus.Todo,
+      type: 'task',
+    },
+  })
+}
+
+async function onConvertToNote() {
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.convertTaskToNote', {
+      name: props.note.name,
+    }),
+    content: i18n.t('messages:warning.taskPropertiesRemoved'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await updateNoteProperties(props.note.id, {
+    unset: ['type', 'status', 'priority', 'due'],
+  })
+}
 </script>
 
 <template>
@@ -122,6 +159,18 @@ function onCopyNoteContent() {
             ? i18n.t("action.remove.fromFavorites")
             : i18n.t("action.add.toFavorites")
         }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-if="!isTask"
+        @click="onConvertToTask"
+      >
+        {{ i18n.t("notes.tasks.convertToTask") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-else
+        @click="onConvertToNote"
+      >
+        {{ i18n.t("notes.tasks.convertToNote") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
     </template>

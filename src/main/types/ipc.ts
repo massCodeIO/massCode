@@ -15,6 +15,7 @@ type MainMenuAction =
   | 'goto-devtools'
   | 'new-note'
   | 'new-note-folder'
+  | 'new-task'
   | 'new-folder'
   | 'new-fragment'
   | 'new-sheet'

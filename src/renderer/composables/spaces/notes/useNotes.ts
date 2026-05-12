@@ -5,11 +5,12 @@ import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from '../../types'
+import { NoteTaskStatus } from './taskProperties'
 import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
 import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
-const { notesState, focusNoteNameInput } = useNotesApp()
+const { notesState, focusNoteNameInput, notesCreateKind } = useNotesApp()
 
 // --- Types ---
 // These mirror the generated API types that will exist after api:generate.
@@ -29,6 +30,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -48,6 +50,10 @@ interface NotesQuery {
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  propertyDue?: 'today' | 'upcoming'
+  propertyStatus?: string
+  propertyStatusNot?: string
+  propertyType?: string
 }
 
 interface NotesUpdate {
@@ -58,8 +64,14 @@ interface NotesUpdate {
   isFavorites?: number
 }
 
+interface NotePropertiesUpdate {
+  properties?: Record<string, unknown>
+  unset?: string[]
+}
+
 interface CreateNotePayload {
   name?: string
+  properties?: Record<string, unknown>
 }
 
 // --- Module-level state ---
@@ -152,6 +164,23 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
   else if (notesState.libraryFilter === LibraryFilter.Inbox) {
     query.isInbox = 1
   }
+  else if (notesState.libraryFilter === LibraryFilter.Tasks) {
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Today) {
+    query.propertyDue = 'today'
+    query.propertyStatusNot = 'done'
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Upcoming) {
+    query.propertyDue = 'upcoming'
+    query.propertyStatusNot = 'done'
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Completed) {
+    query.propertyStatus = 'done'
+    query.propertyType = 'task'
+  }
 
   return query
 })
@@ -230,6 +259,53 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
   return `${normalizedBase} ${maxIndex + 1}`
 }
 
+function hasDisplayedNote(noteId: number): boolean {
+  const source = isSearch.value ? notesBySearch.value : notes.value
+  return source?.some(note => note.id === noteId) ?? false
+}
+
+function selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId?: number) {
+  if (
+    previousNoteId !== undefined
+    && notesState.noteId === previousNoteId
+    && !hasDisplayedNote(previousNoteId)
+  ) {
+    selectFirstNote()
+  }
+}
+
+function isTaskCreatePayload(payload?: CreateNotePayload): boolean {
+  return payload?.properties?.type === 'task'
+}
+
+function ensureCreateResultCanBeListed(payload?: CreateNotePayload) {
+  const isTask = isTaskCreatePayload(payload)
+
+  if (
+    isTask
+    && (notesState.libraryFilter === LibraryFilter.Favorites
+      || notesState.libraryFilter === LibraryFilter.Trash
+      || notesState.libraryFilter === LibraryFilter.Today
+      || notesState.libraryFilter === LibraryFilter.Upcoming
+      || notesState.libraryFilter === LibraryFilter.Completed)
+  ) {
+    notesState.libraryFilter = LibraryFilter.Tasks
+    return
+  }
+
+  if (
+    !isTask
+    && (notesState.libraryFilter === LibraryFilter.Trash
+      || notesState.libraryFilter === LibraryFilter.Favorites
+      || notesState.libraryFilter === LibraryFilter.Tasks
+      || notesState.libraryFilter === LibraryFilter.Today
+      || notesState.libraryFilter === LibraryFilter.Upcoming
+      || notesState.libraryFilter === LibraryFilter.Completed)
+  ) {
+    notesState.libraryFilter = LibraryFilter.All
+  }
+}
+
 async function getNoteNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
@@ -240,20 +316,22 @@ async function getNoteNamesForCreate(
   else {
     query.isInbox = 1
   }
-  const { data } = await api.notes.getNotes(query)
+  const { data: responseData } = await api.notes.getNotes(query)
+  const data = responseData as NotesResponse
 
   return data
-    .filter((note: NoteRecord) => (note.folder?.id ?? null) === folderId)
-    .map((note: NoteRecord) => note.name)
+    .filter(note => (note.folder?.id ?? null) === folderId)
+    .map(note => note.name)
 }
 
 // --- CRUD ---
 
 export async function getNotes(query?: NotesQuery) {
   return withNotesLoading(async () => {
-    const { data } = await api.notes.getNotes(
+    const { data: responseData } = await api.notes.getNotes(
       query || queryByLibraryOrFolderOrSearch.value,
     )
+    const data = responseData as NotesResponse
 
     if (isSearch.value) {
       notesBySearch.value = data
@@ -295,16 +373,12 @@ async function createNote(payload?: CreateNotePayload) {
     const { data } = await api.notes.postNotes({
       name: nextNoteName,
       folderId: targetFolderId,
+      ...(payload?.properties ? { properties: payload.properties } : {}),
     })
 
     useDonations().incrementCreated('notes')
 
-    if (
-      notesState.libraryFilter === LibraryFilter.Trash
-      || notesState.libraryFilter === LibraryFilter.Favorites
-    ) {
-      notesState.libraryFilter = LibraryFilter.All
-    }
+    ensureCreateResultCanBeListed(payload)
 
     await getNotes(queryByLibraryOrFolderOrSearch.value)
 
@@ -316,6 +390,32 @@ async function createNote(payload?: CreateNotePayload) {
 }
 
 async function createNoteAndSelect(payload?: CreateNotePayload) {
+  notesCreateKind.value = 'note'
+  await createNoteWithPayloadAndSelect(payload)
+}
+
+async function createTaskAndSelect(payload?: CreateNotePayload) {
+  notesCreateKind.value = 'task'
+  await createNoteWithPayloadAndSelect({
+    ...payload,
+    properties: {
+      ...payload?.properties,
+      status: NoteTaskStatus.Todo,
+      type: 'task',
+    },
+  })
+}
+
+async function createNoteBySelectedKindAndSelect() {
+  if (notesCreateKind.value === 'task') {
+    await createTaskAndSelect()
+    return
+  }
+
+  await createNoteAndSelect()
+}
+
+async function createNoteWithPayloadAndSelect(payload?: CreateNotePayload) {
   const id = await createNote(payload)
 
   if (id) {
@@ -342,6 +442,18 @@ async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
   }
 
   await getNotes(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function updateNoteProperties(
+  noteId: number,
+  data: NotePropertiesUpdate,
+) {
+  const previousNoteId = notesState.noteId
+
+  markPersistedStorageMutation()
+  await api.notes.patchNotesByIdProperties(String(noteId), data)
+  await getNotes(queryByLibraryOrFolderOrSearch.value)
+  selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId)
 }
 
 async function deleteNote(noteId: number) {
@@ -547,6 +659,8 @@ export function useNotes() {
     clearNotesState,
     createNote,
     createNoteAndSelect,
+    createNoteBySelectedKindAndSelect,
+    createTaskAndSelect,
     deleteNote,
     deleteNotes,
     deleteSelectedNotes,
@@ -567,6 +681,7 @@ export function useNotes() {
     selectFirstNote,
     selectNote,
     updateNote,
+    updateNoteProperties,
     updateNotes,
     updateNoteContent,
     withNotesLoading,

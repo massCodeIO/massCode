@@ -50,6 +50,9 @@ importers:
       '@faker-js/faker':
         specifier: ^10.1.0
         version: 10.1.0
+      '@internationalized/date':
+        specifier: 3.7.0
+        version: 3.7.0
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3

@@ -123,6 +123,7 @@ describe('readNoteFromFile', () => {
       isDeleted: 0,
       isFavorites: 0,
       name: 'Roundtrip',
+      properties: {},
       tags: [],
       updatedAt: now,
     }
@@ -211,5 +212,71 @@ describe('readNoteFromFile', () => {
     finally {
       vi.useRealTimers()
     }
+  })
+
+  it('preserves unknown frontmatter properties after read and serialize', () => {
+    const paths = createNotesPaths()
+    const relativePath = 'properties.md'
+    const absolutePath = path.join(paths.notesRoot, relativePath)
+    const source
+      = '---\n'
+        + 'id: 12\n'
+        + 'name: Properties\n'
+        + 'type: task\n'
+        + 'status: todo\n'
+        + 'priority: high\n'
+        + 'rating: 5\n'
+        + 'source: book\n'
+        + '---\n'
+        + 'body'
+
+    fs.writeFileSync(absolutePath, source, 'utf8')
+
+    const note = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: 12 },
+      new Map(),
+    )
+
+    expect(note).not.toBeNull()
+    expect(note?.properties).toEqual({
+      priority: 'high',
+      rating: 5,
+      source: 'book',
+      status: 'todo',
+      type: 'task',
+    })
+
+    fs.writeFileSync(absolutePath, serializeNote(note!), 'utf8')
+
+    const roundTrip = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: 12 },
+      new Map(),
+    )
+
+    expect(roundTrip?.properties).toEqual(note?.properties)
+  })
+
+  it('does not add task fields to plain markdown after normalization', () => {
+    const paths = createNotesPaths()
+    const relativePath = 'plain-no-task.md'
+    const absolutePath = path.join(paths.notesRoot, relativePath)
+    fs.writeFileSync(absolutePath, 'plain body', 'utf8')
+
+    const note = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: 13 },
+      new Map(),
+    )
+
+    expect(note).not.toBeNull()
+    expect(note?.properties).toEqual({})
+
+    const normalizedSource = fs.readFileSync(absolutePath, 'utf8')
+    expect(normalizedSource).not.toContain('type: task')
+    expect(normalizedSource).not.toContain('status:')
+    expect(normalizedSource).not.toContain('priority:')
+    expect(normalizedSource).not.toContain('due:')
   })
 })

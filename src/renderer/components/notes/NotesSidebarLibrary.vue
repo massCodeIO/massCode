@@ -10,7 +10,16 @@ import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
 import { onClickOutside } from '@vueuse/core'
-import { Archive, Inbox, Star, Trash } from 'lucide-vue-next'
+import {
+  Archive,
+  CalendarCheck,
+  CalendarClock,
+  CheckCircle2,
+  Inbox,
+  ListTodo,
+  Star,
+  Trash,
+} from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 const { notesState } = useNotesApp()
@@ -36,6 +45,29 @@ const libraryItems = [
     id: LibraryFilter.All,
     name: i18n.t('spaces.notes.allNotes'),
     icon: Archive,
+  },
+  {
+    id: LibraryFilter.Tasks,
+    name: i18n.t('notes.tasks.title'),
+    icon: ListTodo,
+  },
+  {
+    id: LibraryFilter.Today,
+    name: i18n.t('notes.tasks.today'),
+    icon: CalendarCheck,
+    isNested: true,
+  },
+  {
+    id: LibraryFilter.Upcoming,
+    name: i18n.t('notes.tasks.upcoming'),
+    icon: CalendarClock,
+    isNested: true,
+  },
+  {
+    id: LibraryFilter.Completed,
+    name: i18n.t('notes.tasks.completed'),
+    icon: CheckCircle2,
+    isNested: true,
   },
   { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
@@ -77,6 +109,29 @@ async function onItemClick(item: (typeof libraryItems)[number]) {
     else if (id === LibraryFilter.Inbox) {
       await getNotes({ isInbox: 1 })
     }
+    else if (id === LibraryFilter.Tasks) {
+      await getNotes({ propertyType: 'task' })
+    }
+    else if (id === LibraryFilter.Today) {
+      await getNotes({
+        propertyDue: 'today',
+        propertyStatusNot: 'done',
+        propertyType: 'task',
+      })
+    }
+    else if (id === LibraryFilter.Upcoming) {
+      await getNotes({
+        propertyDue: 'upcoming',
+        propertyStatusNot: 'done',
+        propertyType: 'task',
+      })
+    }
+    else if (id === LibraryFilter.Completed) {
+      await getNotes({
+        propertyStatus: 'done',
+        propertyType: 'task',
+      })
+    }
 
     selectFirstNote()
   })
@@ -109,7 +164,10 @@ onClickOutside(itemRef, () => {
             }"
             @click="onItemClick(item)"
           >
-            <div class="ml-5.5 flex items-center">
+            <div
+              class="flex items-center"
+              :class="item.isNested ? 'ml-9' : 'ml-5.5'"
+            >
               <component
                 :is="item.icon"
                 class="mr-0.5 h-4 w-4"

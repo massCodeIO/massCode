@@ -32,13 +32,25 @@ const focusedFolderId = ref<number | undefined>()
 const focusedNoteId = ref<number | undefined>()
 
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+export type NotesCreateKind = 'note' | 'task'
+
+function normalizeNotesCreateKind(value: unknown): NotesCreateKind {
+  return value === 'task' ? 'task' : 'note'
+}
 
 const notesEditorMode = ref<NotesEditorMode>(
   (store.app.get('notes.editorMode') as NotesEditorMode) || 'livePreview',
 )
+const notesCreateKind = ref<NotesCreateKind>(
+  normalizeNotesCreateKind(store.app.get('notes.create.kind')),
+)
 
 watch(notesEditorMode, (mode) => {
   store.app.set('notes.editorMode', mode)
+})
+
+watch(notesCreateKind, (kind) => {
+  store.app.set('notes.create.kind', kind)
 })
 
 const isNotesSpaceInitialized = ref(false)
@@ -182,6 +194,7 @@ export function useNotesApp() {
     notesLayoutMode,
     isNotesPresentationShown,
     notesEditorMode,
+    notesCreateKind,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
     pendingNotesNavigation,

@@ -4,6 +4,7 @@ import { commonQuery } from './common/query'
 const notesAdd = t.Object({
   name: t.String(),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  properties: t.Optional(t.Record(t.String(), t.Any())),
 })
 
 const notesUpdate = t.Object({
@@ -18,11 +19,19 @@ const notesContentUpdate = t.Object({
   content: t.String(),
 })
 
+const noteProperties = t.Record(t.String(), t.Any())
+
+const notePropertiesUpdate = t.Object({
+  properties: t.Optional(noteProperties),
+  unset: t.Optional(t.Array(t.String())),
+})
+
 const noteItem = t.Object({
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
   content: t.String(),
+  properties: noteProperties,
   tags: t.Array(
     t.Object({
       id: t.Number(),
@@ -53,6 +62,7 @@ export const notesDTO = new Elysia().model({
   notesContentUpdate,
   notesCountsResponse,
   noteItemResponse: noteItem,
+  noteProperties,
   notesResponse,
   notesQuery: t.Object({
     ...commonQuery.properties,
@@ -62,7 +72,14 @@ export const notesDTO = new Elysia().model({
     isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
     isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
     isInbox: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+    propertyDue: t.Optional(
+      t.Union([t.Literal('today'), t.Literal('upcoming')]),
+    ),
+    propertyStatus: t.Optional(t.String()),
+    propertyStatusNot: t.Optional(t.String()),
+    propertyType: t.Optional(t.String()),
   }),
+  notePropertiesUpdate,
   notesUpdate,
 })
 

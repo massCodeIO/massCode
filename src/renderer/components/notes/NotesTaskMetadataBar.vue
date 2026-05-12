@@ -1,0 +1,279 @@
+<script setup lang="ts">
+import type { DateValue } from '@internationalized/date'
+import { Button } from '@/components/ui/shadcn/button'
+import { Calendar } from '@/components/ui/shadcn/calendar'
+import * as Popover from '@/components/ui/shadcn/popover'
+import * as Select from '@/components/ui/shadcn/select'
+import {
+  getTaskDue,
+  getTaskPriority,
+  getTaskStatus,
+  isTaskNote,
+  NoteTaskPriority,
+  NoteTaskStatus,
+  useNotes,
+} from '@/composables'
+import { i18n } from '@/electron'
+import { cn } from '@/utils'
+import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
+import { format, isValid, parseISO } from 'date-fns'
+import { CalendarIcon, CircleCheck, Flag, X } from 'lucide-vue-next'
+import { getTaskPriorityFlagClass } from './taskPriorityStyle'
+
+interface NoteRecord {
+  id: number
+  properties: Record<string, unknown>
+}
+
+interface Props {
+  note: NoteRecord
+}
+
+const props = defineProps<Props>()
+
+const { updateNoteProperties } = useNotes()
+
+const defaultDuePlaceholder = today(getLocalTimeZone())
+const isTask = computed(() => isTaskNote(props.note))
+const status = computed(() => getTaskStatus(props.note))
+const priority = computed(() => getTaskPriority(props.note) || '')
+const priorityFlagClass = computed(() =>
+  getTaskPriorityFlagClass(priority.value),
+)
+const due = computed(() => getTaskDue(props.note))
+const selectedDueDate = computed<DateValue | undefined>(() => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due.value)) {
+    return undefined
+  }
+
+  try {
+    return parseDate(due.value)
+  }
+  catch {
+    return undefined
+  }
+})
+const dueLabel = computed(() => {
+  if (!due.value) {
+    return i18n.t('notes.tasks.duePlaceholder')
+  }
+
+  const parsedDue = parseISO(due.value)
+
+  if (!isValid(parsedDue)) {
+    return due.value
+  }
+
+  return format(parsedDue, 'dd.MM.yyyy')
+})
+
+const statusItems = [
+  { value: NoteTaskStatus.Todo, label: i18n.t('notes.tasks.status.todo') },
+  {
+    value: NoteTaskStatus.InProgress,
+    label: i18n.t('notes.tasks.status.inProgress'),
+  },
+  { value: NoteTaskStatus.Done, label: i18n.t('notes.tasks.status.done') },
+  {
+    value: NoteTaskStatus.Blocked,
+    label: i18n.t('notes.tasks.status.blocked'),
+  },
+]
+
+const priorityItems = [
+  {
+    value: 'none',
+    label: i18n.t('notes.tasks.priority.none'),
+    flagClass: getTaskPriorityFlagClass(''),
+  },
+  {
+    value: NoteTaskPriority.Low,
+    label: i18n.t('notes.tasks.priority.low'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.Low),
+  },
+  {
+    value: NoteTaskPriority.Medium,
+    label: i18n.t('notes.tasks.priority.medium'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.Medium),
+  },
+  {
+    value: NoteTaskPriority.High,
+    label: i18n.t('notes.tasks.priority.high'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.High),
+  },
+]
+
+async function updateStatus(value: unknown) {
+  if (typeof value !== 'string') {
+    return
+  }
+
+  await updateNoteProperties(props.note.id, {
+    properties: {
+      status: value,
+      type: 'task',
+    },
+  })
+}
+
+async function updatePriority(value: unknown) {
+  if (typeof value !== 'string') {
+    return
+  }
+
+  if (value === 'none') {
+    await updateNoteProperties(props.note.id, {
+      unset: ['priority'],
+    })
+    return
+  }
+
+  await updateNoteProperties(props.note.id, {
+    properties: {
+      priority: value,
+      type: 'task',
+    },
+  })
+}
+
+async function saveDue(nextDue?: string) {
+  await updateNoteProperties(
+    props.note.id,
+    nextDue
+      ? {
+          properties: {
+            due: nextDue,
+            type: 'task',
+          },
+        }
+      : {
+          unset: ['due'],
+        },
+  )
+}
+
+async function updateDue(value: DateValue | undefined) {
+  await saveDue(value?.toString())
+}
+
+async function clearDue() {
+  await saveDue()
+}
+
+async function updateDueAndClose(
+  value: DateValue | undefined,
+  close: () => void,
+) {
+  await updateDue(value)
+  close()
+}
+
+async function clearDueAndClose(close: () => void) {
+  await clearDue()
+  close()
+}
+</script>
+
+<template>
+  <div
+    v-if="isTask"
+    class="border-border border-b px-2 py-1"
+  >
+    <div class="flex flex-wrap items-center gap-2">
+      <Select.Select
+        :model-value="status"
+        @update:model-value="updateStatus"
+      >
+        <Select.SelectTrigger
+          class="focus-visible:border-input focus-visible:ring-0"
+        >
+          <CircleCheck class="size-3.5" />
+          <Select.SelectValue />
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem
+            v-for="item in statusItems"
+            :key="item.value"
+            :value="item.value"
+          >
+            {{ item.label }}
+          </Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
+
+      <Select.Select
+        :model-value="priority"
+        @update:model-value="updatePriority"
+      >
+        <Select.SelectTrigger
+          class="focus-visible:border-input focus-visible:ring-0"
+        >
+          <Flag
+            class="size-3.5 fill-current stroke-current"
+            :class="priorityFlagClass"
+          />
+          <Select.SelectValue
+            :placeholder="i18n.t('notes.tasks.priority.label')"
+          />
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem
+            v-for="item in priorityItems"
+            :key="item.value"
+            :value="item.value"
+          >
+            <Flag
+              class="size-3.5 fill-current stroke-current"
+              :class="item.flagClass"
+            />
+            {{ item.label }}
+          </Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
+
+      <Popover.Popover v-slot="{ close }">
+        <Popover.PopoverTrigger as-child>
+          <Button
+            variant="outline"
+            size="iconText"
+            :class="
+              cn(
+                'focus-visible:border-input justify-start text-left font-normal focus-visible:ring-0',
+                !due && 'text-muted-foreground',
+              )
+            "
+          >
+            <CalendarIcon class="size-3.5" />
+            <span class="truncate">{{ dueLabel }}</span>
+          </Button>
+        </Popover.PopoverTrigger>
+        <Popover.PopoverContent
+          align="start"
+          class="w-auto p-0"
+        >
+          <Calendar
+            :model-value="selectedDueDate"
+            :default-placeholder="defaultDuePlaceholder"
+            layout="month-and-year"
+            initial-focus
+            @update:model-value="(value) => updateDueAndClose(value, close)"
+          />
+          <div
+            v-if="due"
+            class="border-border border-t p-2"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              class="w-full justify-start"
+              @click="clearDueAndClose(close)"
+            >
+              <X class="size-3.5" />
+              {{ i18n.t("notes.tasks.clearDue") }}
+            </Button>
+          </div>
+        </Popover.PopoverContent>
+      </Popover.Popover>
+    </div>
+  </div>
+</template>

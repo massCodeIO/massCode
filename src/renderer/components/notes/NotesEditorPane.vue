@@ -326,6 +326,7 @@ ipc.on('main-menu:copy-note', () => {
         v-if="!isNotesMindmapShown && !isNotesPresentationShown"
         class="pt-1"
       >
+        <NotesTaskMetadataBar :note="selectedNote" />
         <NotesEditorTags />
       </div>
     </div>

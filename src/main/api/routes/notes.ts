@@ -188,6 +188,32 @@ app
       },
     },
   )
+  .patch(
+    '/:id/properties',
+    ({ params, body, status }) => {
+      const storage = useNotesStorage()
+      const { invalidInput, notFound } = storage.notes.updateNoteProperties(
+        Number(params.id),
+        body,
+      )
+
+      if (invalidInput) {
+        return status(400, { message: 'Need at least one field to update' })
+      }
+
+      if (notFound) {
+        return status(404, { message: 'Note not found' })
+      }
+
+      return { message: 'Note properties updated' }
+    },
+    {
+      body: 'notePropertiesUpdate',
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
   .post(
     '/:id/tags/:tagId',
     ({ params, status }) => {

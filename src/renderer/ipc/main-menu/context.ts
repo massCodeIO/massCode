@@ -47,6 +47,7 @@ export function createMainMenuContext(
         primaryAction: 'new-snippet',
         secondaryAction: 'new-folder',
         canCreateFragment: true,
+        canCreateTask: false,
       },
       view: {
         layoutMode: options.code.layoutMode,
@@ -78,6 +79,7 @@ export function createMainMenuContext(
         primaryAction: 'new-note',
         secondaryAction: 'new-folder',
         canCreateFragment: false,
+        canCreateTask: true,
       },
       view: {
         layoutMode: options.notes.layoutMode,
@@ -109,6 +111,7 @@ export function createMainMenuContext(
         primaryAction: null,
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: options.http.layoutMode,
@@ -140,6 +143,7 @@ export function createMainMenuContext(
         primaryAction: 'new-sheet',
         secondaryAction: null,
         canCreateFragment: false,
+        canCreateTask: false,
       },
       view: {
         layoutMode: null,
@@ -170,6 +174,7 @@ export function createMainMenuContext(
       primaryAction: null,
       secondaryAction: null,
       canCreateFragment: false,
+      canCreateTask: false,
     },
     view: {
       layoutMode: null,

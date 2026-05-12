@@ -117,6 +117,26 @@ describe('notes storage validations', () => {
     expect(result.id).toBeGreaterThan(0)
   })
 
+  it('createNote persists custom properties without allowing system frontmatter fields', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({
+      name: 'Task Note',
+      properties: {
+        name: 'Ignored Name',
+        status: 'todo',
+        type: 'task',
+      },
+    })
+
+    expect(storage.getNoteById(id)).toMatchObject({
+      name: 'Task Note',
+      properties: {
+        status: 'todo',
+        type: 'task',
+      },
+    })
+  })
+
   it('getNoteById returns the stored note', () => {
     const storage = createNotesNotesStorage()
     const { id } = storage.createNote({ name: 'Lookup Note' })
@@ -131,6 +151,162 @@ describe('notes storage validations', () => {
     const storage = createNotesNotesStorage()
 
     expect(storage.getNoteById(99999)).toBeNull()
+  })
+
+  it('updates note properties without allowing system frontmatter fields', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Property Note' })
+
+    const result = storage.updateNoteProperties(id, {
+      properties: {
+        name: 'Ignored Name',
+        priority: 'high',
+        status: 'todo',
+        type: 'task',
+      },
+    })
+
+    expect(result).toEqual({ invalidInput: false, notFound: false })
+    expect(storage.getNoteById(id)).toMatchObject({
+      name: 'Property Note',
+      properties: {
+        priority: 'high',
+        status: 'todo',
+        type: 'task',
+      },
+    })
+  })
+
+  it('unsets note properties', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Unset Property Note' })
+
+    storage.updateNoteProperties(id, {
+      properties: {
+        status: 'todo',
+        type: 'task',
+      },
+    })
+
+    const result = storage.updateNoteProperties(id, {
+      unset: ['status'],
+    })
+
+    expect(result).toEqual({ invalidInput: false, notFound: false })
+    expect(storage.getNoteById(id)?.properties).toEqual({
+      type: 'task',
+    })
+  })
+
+  it('filters notes by task properties', () => {
+    vi.useFakeTimers()
+
+    try {
+      vi.setSystemTime(new Date('2026-05-12T10:00:00.000Z'))
+
+      const storage = createNotesNotesStorage()
+      const today = storage.createNote({ name: 'Today Task' })
+      const upcoming = storage.createNote({ name: 'Upcoming Task' })
+      const done = storage.createNote({ name: 'Done Task' })
+      const regular = storage.createNote({ name: 'Regular Note' })
+
+      storage.updateNoteProperties(today.id, {
+        properties: {
+          due: '2026-05-12',
+          status: 'todo',
+          type: 'task',
+        },
+      })
+      storage.updateNoteProperties(upcoming.id, {
+        properties: {
+          due: '2026-05-20',
+          status: 'todo',
+          type: 'task',
+        },
+      })
+      storage.updateNoteProperties(done.id, {
+        properties: {
+          due: '2026-05-12',
+          status: 'done',
+          type: 'task',
+        },
+      })
+
+      expect(
+        storage.getNotes({ propertyType: 'task' }).map(note => note.id),
+      ).toEqual(expect.arrayContaining([today.id, upcoming.id, done.id]))
+      expect(
+        storage
+          .getNotes({
+            propertyDue: 'today',
+            propertyStatusNot: 'done',
+            propertyType: 'task',
+          })
+          .map(note => note.id),
+      ).toEqual([today.id])
+      expect(
+        storage
+          .getNotes({
+            propertyDue: 'upcoming',
+            propertyStatusNot: 'done',
+            propertyType: 'task',
+          })
+          .map(note => note.id),
+      ).toEqual([upcoming.id])
+      expect(
+        storage
+          .getNotes({
+            propertyStatus: 'done',
+            propertyType: 'task',
+          })
+          .map(note => note.id),
+      ).toEqual([done.id])
+      expect(storage.getNotes({}).map(note => note.id)).toContain(regular.id)
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('filters date-only due dates by the local day', () => {
+    const previousTimeZone = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    vi.useFakeTimers()
+
+    try {
+      vi.setSystemTime(new Date(2026, 4, 12, 12))
+
+      const storage = createNotesNotesStorage()
+      const today = storage.createNote({ name: 'Local Today Task' })
+
+      storage.updateNoteProperties(today.id, {
+        properties: {
+          due: '2026-05-12',
+          status: 'todo',
+          type: 'task',
+        },
+      })
+
+      expect(
+        storage
+          .getNotes({
+            propertyDue: 'today',
+            propertyStatusNot: 'done',
+            propertyType: 'task',
+          })
+          .map(note => note.id),
+      ).toEqual([today.id])
+    }
+    finally {
+      vi.useRealTimers()
+
+      if (previousTimeZone === undefined) {
+        delete process.env.TZ
+      }
+      else {
+        process.env.TZ = previousTimeZone
+      }
+    }
   })
 
   it('can limit search to note names', () => {

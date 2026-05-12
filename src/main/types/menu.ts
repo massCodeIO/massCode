@@ -13,6 +13,7 @@ export interface MainMenuFileContext {
   primaryAction: MainMenuPrimaryAction
   secondaryAction: MainMenuSecondaryAction
   canCreateFragment: boolean
+  canCreateTask: boolean
 }
 
 export interface MainMenuViewContext {

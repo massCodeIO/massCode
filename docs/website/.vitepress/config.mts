@@ -140,6 +140,7 @@ export default defineConfig({
             { text: 'Notes', link: '/documentation/notes/' },
             { text: 'Dashboard', link: '/documentation/notes/dashboard' },
             { text: 'Library', link: '/documentation/notes/library' },
+            { text: 'Tasks', link: '/documentation/notes/tasks' },
             { text: 'Folders', link: '/documentation/notes/folders' },
             { text: 'Tags', link: '/documentation/notes/tags' },
             { text: 'Internal Links', link: '/documentation/notes/internal-links' },

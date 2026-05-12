@@ -17,7 +17,7 @@ Use Code to build a reusable snippet library across projects and languages. The 
 
 ## Notes
 
-Use Notes for longer markdown documents that do not fit well into snippets: project notes, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview, a notes graph, mindmaps, and fullscreen presentation mode.
+Use Notes for longer markdown documents that do not fit well into snippets: project notes, task notes with status, priority, and due dates, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview, a notes graph, mindmaps, and fullscreen presentation mode.
 
 ## HTTP
 

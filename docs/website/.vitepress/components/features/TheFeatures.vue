@@ -18,10 +18,10 @@ import FeaturesItem from './FeaturesItem.vue'
       polished screenshots when you need to share code.
     </FeaturesItem>
     <FeaturesItem title="Notes">
-      Keep technical notes, docs, and drafts next to your snippets. Write in
-      Markdown with live preview, folders, tags, Mermaid diagrams, mindmaps
-      generated from headings, and fullscreen presentation mode for sharing your
-      work.
+      Keep technical notes, task notes, docs, and drafts next to your snippets.
+      Write in Markdown with live preview, add status, priority, and due dates
+      to task notes, organize with folders and tags, and use Mermaid diagrams,
+      mindmaps, or fullscreen presentation mode when you need more structure.
     </FeaturesItem>
     <FeaturesItem title="HTTP Client">
       Save and send API requests without leaving your workspace. Organize

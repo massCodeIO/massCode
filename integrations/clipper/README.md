@@ -34,6 +34,57 @@ Production outputs are written to:
 - `dist/firefox`
 - `dist/safari`
 
+Store packages are written to `builds/`:
+
+```bash
+pnpm integrations:clipper:package
+pnpm integrations:clipper:package:chrome
+pnpm integrations:clipper:package:firefox
+pnpm integrations:clipper:package:safari
+```
+
+`package.json` is the version source of truth. Browser manifests are copied
+from `manifests/` during build, and the output `manifest.json` receives the
+package version automatically.
+
+## Local Firefox loading
+
+Firefox does not load an unpacked extension by selecting the `dist` folder.
+
+1. Build the Firefox target:
+
+```bash
+pnpm integrations:clipper:build:firefox
+```
+
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Click `Load Temporary Add-on`.
+4. Select `integrations/clipper/dist/firefox/manifest.json`.
+
+The extension stays installed until Firefox restarts. Use `Reload` on
+`about:debugging` after rebuilding.
+
+## Local Safari loading
+
+1. Build the Safari target:
+
+```bash
+pnpm integrations:clipper:build:safari
+```
+
+2. Open Safari settings and enable developer features.
+3. In Safari developer settings, enable unsigned extensions.
+4. Use `Add Temporary Extension...`.
+5. Select `integrations/clipper/dist/safari`.
+
+Safari temporary extensions are removed after Safari exits or after the browser
+temporary extension timeout expires. Store distribution requires a Safari Web
+Extension app package through Xcode and App Store Connect.
+
+## Privacy
+
+See `PRIVACY.md` for the Clipper privacy note used for store review.
+
 ## Scope
 
 The extension talks to the local massCode integration API and does not read or

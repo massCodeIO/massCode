@@ -472,8 +472,10 @@
       "folder": "New Folder",
       "snippet": "New Snippet",
       "fragment": "New Fragment",
-      "note": "New Note"
+      "note": "New Note",
+      "task": "New Task"
     },
+    "createOptions": "Create options",
     "add": {
       "description": "Add Description",
       "tag": "Add Tag",

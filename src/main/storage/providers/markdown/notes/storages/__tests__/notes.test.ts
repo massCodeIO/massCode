@@ -117,6 +117,26 @@ describe('notes storage validations', () => {
     expect(result.id).toBeGreaterThan(0)
   })
 
+  it('createNote persists custom properties without allowing system frontmatter fields', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({
+      name: 'Task Note',
+      properties: {
+        name: 'Ignored Name',
+        status: 'todo',
+        type: 'task',
+      },
+    })
+
+    expect(storage.getNoteById(id)).toMatchObject({
+      name: 'Task Note',
+      properties: {
+        status: 'todo',
+        type: 'task',
+      },
+    })
+  })
+
   it('getNoteById returns the stored note', () => {
     const storage = createNotesNotesStorage()
     const { id } = storage.createNote({ name: 'Lookup Note' })

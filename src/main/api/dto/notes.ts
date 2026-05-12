@@ -4,6 +4,7 @@ import { commonQuery } from './common/query'
 const notesAdd = t.Object({
   name: t.String(),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  properties: t.Optional(t.Record(t.String(), t.Any())),
 })
 
 const notesUpdate = t.Object({

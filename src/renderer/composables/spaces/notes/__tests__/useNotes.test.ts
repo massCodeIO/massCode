@@ -8,7 +8,12 @@ globalThis.shallowRef = shallowRef
 globalThis.watch = watch
 
 interface SetupOptions {
-  nextNotes?: Array<{ id: number }>
+  libraryFilter?: string
+  nextNotes?: Array<{
+    id: number
+    folder?: { id: number } | null
+    name?: string
+  }>
   noteId?: number
 }
 
@@ -19,12 +24,14 @@ async function setup(options: SetupOptions = {}) {
     libraryFilter?: string
     noteId?: number
   }>({
-    libraryFilter: 'today',
+    libraryFilter: options.libraryFilter ?? 'today',
     noteId: options.noteId ?? 1,
   })
+  const notesCreateKind = ref<'note' | 'task'>('note')
   const nextNotes = options.nextNotes ?? [{ id: 2 }]
   const patchNotesByIdProperties = vi.fn(async () => undefined)
   const getNotes = vi.fn(async () => ({ data: nextNotes }))
+  const postNotes = vi.fn(async () => ({ data: { id: 7 } }))
 
   vi.doMock('@/composables/useDialog', () => ({
     useDialog: () => ({
@@ -63,7 +70,7 @@ async function setup(options: SetupOptions = {}) {
         patchNotesById: vi.fn(),
         patchNotesByIdContent: vi.fn(),
         patchNotesByIdProperties,
-        postNotes: vi.fn(),
+        postNotes,
         postNotesByIdTagsByTagId: vi.fn(),
       },
     },
@@ -79,6 +86,7 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('../useNotesApp', () => ({
     useNotesApp: () => ({
       focusNoteNameInput: vi.fn(),
+      notesCreateKind,
       notesState,
     }),
   }))
@@ -95,6 +103,7 @@ async function setup(options: SetupOptions = {}) {
     getNotes,
     notesState,
     patchNotesByIdProperties,
+    postNotes,
     selectedNoteIds,
     useNotes,
   }
@@ -139,5 +148,42 @@ describe('useNotes', () => {
 
     expect(context.notesState.noteId).toBe(1)
     expect(context.selectedNoteIds.value).toEqual([1])
+  })
+
+  it('creates a task and switches task-only filters to the task list', async () => {
+    const context = await setup({
+      libraryFilter: 'today',
+      nextNotes: [{ id: 7, folder: null, name: 'Created Task' }],
+    })
+
+    await context.useNotes().createTaskAndSelect()
+
+    expect(context.postNotes).toHaveBeenCalledWith({
+      folderId: null,
+      name: 'notes.untitled 1',
+      properties: {
+        status: 'todo',
+        type: 'task',
+      },
+    })
+    expect(context.notesState.libraryFilter).toBe('tasks')
+    expect(context.notesState.noteId).toBe(7)
+    expect(context.selectedNoteIds.value).toEqual([7])
+  })
+
+  it('creates a note and switches task filters to all notes', async () => {
+    const context = await setup({
+      libraryFilter: 'tasks',
+      nextNotes: [{ id: 7, folder: null, name: 'Created Note' }],
+    })
+
+    await context.useNotes().createNoteAndSelect()
+
+    expect(context.postNotes).toHaveBeenCalledWith({
+      folderId: null,
+      name: 'notes.untitled 1',
+    })
+    expect(context.notesState.libraryFilter).toBe('all')
+    expect(context.notesState.noteId).toBe(7)
   })
 })

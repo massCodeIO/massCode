@@ -28,6 +28,7 @@ describe('createMainMenuContext', () => {
 
     expect(context.file).toEqual({
       canCreateFragment: true,
+      canCreateTask: false,
       primaryAction: 'new-snippet',
       secondaryAction: 'new-folder',
     })
@@ -80,6 +81,7 @@ describe('createMainMenuContext', () => {
 
     expect(context.file).toEqual({
       canCreateFragment: false,
+      canCreateTask: true,
       primaryAction: 'new-note',
       secondaryAction: 'new-folder',
     })
@@ -132,6 +134,7 @@ describe('createMainMenuContext', () => {
 
     expect(context.file).toEqual({
       canCreateFragment: false,
+      canCreateTask: false,
       primaryAction: 'new-sheet',
       secondaryAction: null,
     })
@@ -184,6 +187,7 @@ describe('createMainMenuContext', () => {
 
     expect(context.file).toEqual({
       canCreateFragment: false,
+      canCreateTask: false,
       primaryAction: null,
       secondaryAction: null,
     })

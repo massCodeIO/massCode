@@ -23,7 +23,7 @@ import { registerMainMenuContextSync } from '../main-menu/sync'
 
 const { createSnippetAndSelect, addFragment } = useSnippets()
 const { createFolderAndSelect } = useFolders()
-const { createNoteAndSelect, selectedNote } = useNotes()
+const { createNoteAndSelect, createTaskAndSelect, selectedNote } = useNotes()
 const { createNoteFolderAndSelect } = useNoteFolders()
 const { createSheet } = useMathNotebook()
 const { settings: editorSettings } = useEditor()
@@ -82,6 +82,10 @@ export function registerMainMenuListeners() {
 
   ipc.on('main-menu:new-note', () => {
     createNoteAndSelect()
+  })
+
+  ipc.on('main-menu:new-task', () => {
+    createTaskAndSelect()
   })
 
   ipc.on('main-menu:new-note-folder', () => {

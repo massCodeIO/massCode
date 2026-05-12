@@ -184,6 +184,20 @@ function applyNotePropertiesUpdate(
   return hasAnyField
 }
 
+function createNoteProperties(
+  inputProperties: Record<string, unknown> | undefined,
+) {
+  if (!inputProperties) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(inputProperties).filter(
+      ([key]) => !isNoteSystemFrontmatterKey(key),
+    ),
+  )
+}
+
 export function createNotesNotesStorage(): NotesStorage {
   function resolvePaths() {
     return getNotesPaths(getVaultPath())
@@ -261,7 +275,7 @@ export function createNotesNotesStorage(): NotesStorage {
           isDeleted: 0,
           isFavorites: 0,
           name,
-          properties: {},
+          properties: createNoteProperties(input.properties),
           tags: [],
           updatedAt: now,
         }),

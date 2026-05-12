@@ -1,10 +1,23 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
+import * as Popover from '@/components/ui/shadcn/popover'
 import { useNotes, useNotesApp, useNoteSearch } from '@/composables'
 import { i18n } from '@/electron'
-import { Plus, Search, X } from 'lucide-vue-next'
+import {
+  Check,
+  FileText,
+  ListTodo,
+  MoreHorizontal,
+  Search,
+  X,
+} from 'lucide-vue-next'
 
-const { isSearch, createNoteAndSelect } = useNotes()
+const {
+  isSearch,
+  createNoteAndSelect,
+  createNoteBySelectedKindAndSelect,
+  createTaskAndSelect,
+} = useNotes()
 const {
   searchQuery,
   clearSearch,
@@ -13,7 +26,24 @@ const {
   selectSearchNote,
   displayedNotes,
 } = useNoteSearch()
-const { isFocusedSearch } = useNotesApp()
+const { isFocusedSearch, notesCreateKind } = useNotesApp()
+const isCreateMenuOpen = ref(false)
+
+const createActionTooltip = computed(() =>
+  notesCreateKind.value === 'task'
+    ? i18n.t('action.new.task')
+    : i18n.t('action.new.note'),
+)
+
+async function onCreateNote() {
+  isCreateMenuOpen.value = false
+  await createNoteAndSelect()
+}
+
+async function onCreateTask() {
+  isCreateMenuOpen.value = false
+  await createTaskAndSelect()
+}
 
 watch(searchQuery, (v) => {
   if (v) {
@@ -68,11 +98,59 @@ function onKeydown(event: KeyboardEvent) {
       </Button>
       <UiActionButton
         v-if="!isSearch"
-        :tooltip="i18n.t('action.new.note')"
-        @click="createNoteAndSelect"
+        :tooltip="createActionTooltip"
+        @click="createNoteBySelectedKindAndSelect"
       >
-        <Plus class="h-4 w-4" />
+        <ListTodo
+          v-if="notesCreateKind === 'task'"
+          class="h-4 w-4"
+        />
+        <FileText
+          v-else
+          class="h-4 w-4"
+        />
       </UiActionButton>
+      <Popover.Popover
+        v-if="!isSearch"
+        v-model:open="isCreateMenuOpen"
+      >
+        <Popover.PopoverTrigger as-child>
+          <UiActionButton :aria-label="i18n.t('action.createOptions')">
+            <MoreHorizontal class="h-4 w-4" />
+          </UiActionButton>
+        </Popover.PopoverTrigger>
+        <Popover.PopoverContent
+          align="end"
+          class="w-36 p-1"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            class="w-full justify-start"
+            @click="onCreateNote"
+          >
+            <FileText class="h-4 w-4" />
+            {{ i18n.t("action.new.note") }}
+            <Check
+              v-if="notesCreateKind === 'note'"
+              class="ml-auto h-4 w-4"
+            />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="w-full justify-start"
+            @click="onCreateTask"
+          >
+            <ListTodo class="h-4 w-4" />
+            {{ i18n.t("action.new.task") }}
+            <Check
+              v-if="notesCreateKind === 'task'"
+              class="ml-auto h-4 w-4"
+            />
+          </Button>
+        </Popover.PopoverContent>
+      </Popover.Popover>
     </div>
   </div>
 </template>

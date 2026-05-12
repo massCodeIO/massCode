@@ -11,6 +11,8 @@ async function setup() {
   const navigateForward = vi.fn(async () => undefined)
   const executeCurrentRequest = vi.fn(async () => undefined)
   const saveCurrentRequest = vi.fn(async () => undefined)
+  const createNoteAndSelect = vi.fn()
+  const createTaskAndSelect = vi.fn()
   const currentDraft = ref({ url: 'https://example.com' })
   const isExecuting = ref(false)
   const getActiveSpaceId = vi.fn(() => 'code')
@@ -38,7 +40,8 @@ async function setup() {
       createNoteFolderAndSelect: vi.fn(),
     }),
     useNotes: () => ({
-      createNoteAndSelect: vi.fn(),
+      createNoteAndSelect,
+      createTaskAndSelect,
       selectedNote: ref(undefined),
     }),
     useNotesApp: () => ({
@@ -115,6 +118,8 @@ async function setup() {
   return {
     ipcHandlers,
     currentDraft,
+    createNoteAndSelect,
+    createTaskAndSelect,
     executeCurrentRequest,
     getActiveSpaceId,
     isExecuting,
@@ -137,6 +142,16 @@ describe('registerMainMenuListeners', () => {
 
     expect(context.navigateBack).toHaveBeenCalledTimes(1)
     expect(context.navigateForward).toHaveBeenCalledTimes(1)
+  })
+
+  it('handles note and task creation actions', async () => {
+    const context = await setup()
+
+    context.ipcHandlers.get('main-menu:new-note')?.()
+    context.ipcHandlers.get('main-menu:new-task')?.()
+
+    expect(context.createNoteAndSelect).toHaveBeenCalledTimes(1)
+    expect(context.createTaskAndSelect).toHaveBeenCalledTimes(1)
   })
 
   it('saves and sends the current http request from the menu shortcut', async () => {

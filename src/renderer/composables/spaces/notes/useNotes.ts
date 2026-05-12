@@ -5,11 +5,12 @@ import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { LibraryFilter } from '../../types'
+import { NoteTaskStatus } from './taskProperties'
 import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
 import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
-const { notesState, focusNoteNameInput } = useNotesApp()
+const { notesState, focusNoteNameInput, notesCreateKind } = useNotesApp()
 
 // --- Types ---
 // These mirror the generated API types that will exist after api:generate.
@@ -70,6 +71,7 @@ interface NotePropertiesUpdate {
 
 interface CreateNotePayload {
   name?: string
+  properties?: Record<string, unknown>
 }
 
 // --- Module-level state ---
@@ -272,6 +274,38 @@ function selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId?: number) {
   }
 }
 
+function isTaskCreatePayload(payload?: CreateNotePayload): boolean {
+  return payload?.properties?.type === 'task'
+}
+
+function ensureCreateResultCanBeListed(payload?: CreateNotePayload) {
+  const isTask = isTaskCreatePayload(payload)
+
+  if (
+    isTask
+    && (notesState.libraryFilter === LibraryFilter.Favorites
+      || notesState.libraryFilter === LibraryFilter.Trash
+      || notesState.libraryFilter === LibraryFilter.Today
+      || notesState.libraryFilter === LibraryFilter.Upcoming
+      || notesState.libraryFilter === LibraryFilter.Completed)
+  ) {
+    notesState.libraryFilter = LibraryFilter.Tasks
+    return
+  }
+
+  if (
+    !isTask
+    && (notesState.libraryFilter === LibraryFilter.Trash
+      || notesState.libraryFilter === LibraryFilter.Favorites
+      || notesState.libraryFilter === LibraryFilter.Tasks
+      || notesState.libraryFilter === LibraryFilter.Today
+      || notesState.libraryFilter === LibraryFilter.Upcoming
+      || notesState.libraryFilter === LibraryFilter.Completed)
+  ) {
+    notesState.libraryFilter = LibraryFilter.All
+  }
+}
+
 async function getNoteNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
@@ -282,20 +316,22 @@ async function getNoteNamesForCreate(
   else {
     query.isInbox = 1
   }
-  const { data } = await api.notes.getNotes(query)
+  const { data: responseData } = await api.notes.getNotes(query)
+  const data = responseData as NotesResponse
 
   return data
-    .filter((note: NoteRecord) => (note.folder?.id ?? null) === folderId)
-    .map((note: NoteRecord) => note.name)
+    .filter(note => (note.folder?.id ?? null) === folderId)
+    .map(note => note.name)
 }
 
 // --- CRUD ---
 
 export async function getNotes(query?: NotesQuery) {
   return withNotesLoading(async () => {
-    const { data } = await api.notes.getNotes(
+    const { data: responseData } = await api.notes.getNotes(
       query || queryByLibraryOrFolderOrSearch.value,
     )
+    const data = responseData as NotesResponse
 
     if (isSearch.value) {
       notesBySearch.value = data
@@ -337,16 +373,12 @@ async function createNote(payload?: CreateNotePayload) {
     const { data } = await api.notes.postNotes({
       name: nextNoteName,
       folderId: targetFolderId,
+      ...(payload?.properties ? { properties: payload.properties } : {}),
     })
 
     useDonations().incrementCreated('notes')
 
-    if (
-      notesState.libraryFilter === LibraryFilter.Trash
-      || notesState.libraryFilter === LibraryFilter.Favorites
-    ) {
-      notesState.libraryFilter = LibraryFilter.All
-    }
+    ensureCreateResultCanBeListed(payload)
 
     await getNotes(queryByLibraryOrFolderOrSearch.value)
 
@@ -358,6 +390,32 @@ async function createNote(payload?: CreateNotePayload) {
 }
 
 async function createNoteAndSelect(payload?: CreateNotePayload) {
+  notesCreateKind.value = 'note'
+  await createNoteWithPayloadAndSelect(payload)
+}
+
+async function createTaskAndSelect(payload?: CreateNotePayload) {
+  notesCreateKind.value = 'task'
+  await createNoteWithPayloadAndSelect({
+    ...payload,
+    properties: {
+      ...payload?.properties,
+      status: NoteTaskStatus.Todo,
+      type: 'task',
+    },
+  })
+}
+
+async function createNoteBySelectedKindAndSelect() {
+  if (notesCreateKind.value === 'task') {
+    await createTaskAndSelect()
+    return
+  }
+
+  await createNoteAndSelect()
+}
+
+async function createNoteWithPayloadAndSelect(payload?: CreateNotePayload) {
   const id = await createNote(payload)
 
   if (id) {
@@ -601,6 +659,8 @@ export function useNotes() {
     clearNotesState,
     createNote,
     createNoteAndSelect,
+    createNoteBySelectedKindAndSelect,
+    createTaskAndSelect,
     deleteNote,
     deleteNotes,
     deleteSelectedNotes,

@@ -243,6 +243,7 @@ export interface NotesQueryInput {
 export interface NoteCreateInput {
   name: string
   folderId?: number | null
+  properties?: Record<string, unknown>
 }
 
 export interface NoteUpdateInput {

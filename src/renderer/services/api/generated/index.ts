@@ -262,6 +262,7 @@ export interface NotesGraphResponse {
 export interface NotesAdd {
   name: string;
   folderId?: number | null;
+  properties?: object;
 }
 
 export interface NotesContentUpdate {
@@ -278,7 +279,7 @@ export interface NoteItemResponse {
   name: string;
   description: string | null;
   content: string;
-  properties: Record<string, unknown>;
+  properties: object;
   tags: {
     id: number;
     name: string;
@@ -293,14 +294,14 @@ export interface NoteItemResponse {
   updatedAt: number;
 }
 
-export type NoteProperties = Record<string, unknown>;
+export type NoteProperties = object;
 
 export type NotesResponse = {
   id: number;
   name: string;
   description: string | null;
   content: string;
-  properties: Record<string, unknown>;
+  properties: object;
   tags: {
     id: number;
     name: string;
@@ -348,7 +349,7 @@ export interface NotesQuery {
 }
 
 export interface NotePropertiesUpdate {
-  properties?: Record<string, unknown>;
+  properties?: object;
   unset?: string[];
 }
 
@@ -1559,6 +1560,10 @@ export class Api<
          * @max 1
          */
         isInbox?: number;
+        propertyDue?: "today" | "upcoming";
+        propertyStatus?: string;
+        propertyStatusNot?: string;
+        propertyType?: string;
       },
       params: RequestParams = {},
     ) =>

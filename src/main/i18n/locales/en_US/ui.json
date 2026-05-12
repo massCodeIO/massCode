@@ -342,6 +342,7 @@
       "convertToTask": "Convert to task",
       "convertToNote": "Convert to note",
       "duePlaceholder": "Due",
+      "clearDue": "Clear due date",
       "status": {
         "todo": "Todo",
         "inProgress": "In progress",

@@ -109,6 +109,13 @@ const isTaskOverdue = computed(() => {
   const due = parseISO(taskDue.value)
   return isValid(due) && isPast(due) && !isToday(due)
 })
+const showOverdueColor = computed(
+  () =>
+    isTaskOverdue.value
+    && !isSelected.value
+    && !isFocused.value
+    && !isInMultiSelection.value,
+)
 const trailingMeta = computed(() => {
   if (isTask.value) {
     return taskDueLabel.value
@@ -229,7 +236,7 @@ onClickOutside(noteRef, () => {
             variant="xs"
             muted
             class="meta flex shrink-0 items-center gap-1"
-            :class="{ 'text-destructive!': isTaskOverdue }"
+            :class="{ 'text-destructive!': showOverdueColor }"
           >
             <CalendarClock
               v-if="isTask"
@@ -249,7 +256,7 @@ onClickOutside(noteRef, () => {
             </div>
             <div
               class="flex items-center gap-1"
-              :class="{ 'text-destructive!': isTaskOverdue }"
+              :class="{ 'text-destructive!': showOverdueColor }"
             >
               <CalendarClock
                 v-if="isTask"

@@ -206,6 +206,7 @@ export interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagRecord[]
   folder: NoteFolderInfo | null
   isFavorites: number

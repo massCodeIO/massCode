@@ -18,11 +18,14 @@ const notesContentUpdate = t.Object({
   content: t.String(),
 })
 
+const noteProperties = t.Record(t.String(), t.Any())
+
 const noteItem = t.Object({
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
   content: t.String(),
+  properties: noteProperties,
   tags: t.Array(
     t.Object({
       id: t.Number(),
@@ -53,6 +56,7 @@ export const notesDTO = new Elysia().model({
   notesContentUpdate,
   notesCountsResponse,
   noteItemResponse: noteItem,
+  noteProperties,
   notesResponse,
   notesQuery: t.Object({
     ...commonQuery.properties,

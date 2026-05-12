@@ -67,6 +67,7 @@ function createNoteRecord(note: MarkdownNote, state: NotesState): NoteRecord {
     isDeleted: note.isDeleted,
     isFavorites: note.isFavorites,
     name: note.name,
+    properties: note.properties,
     tags,
     updatedAt: note.updatedAt,
   }
@@ -148,6 +149,7 @@ export function createNotesNotesStorage(): NotesStorage {
           isDeleted: 0,
           isFavorites: 0,
           name,
+          properties: {},
           tags: [],
           updatedAt: now,
         }),

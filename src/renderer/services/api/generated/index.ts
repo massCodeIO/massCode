@@ -278,6 +278,7 @@ export interface NoteItemResponse {
   name: string;
   description: string | null;
   content: string;
+  properties: object;
   tags: {
     id: number;
     name: string;
@@ -292,11 +293,14 @@ export interface NoteItemResponse {
   updatedAt: number;
 }
 
+export type NoteProperties = object;
+
 export type NotesResponse = {
   id: number;
   name: string;
   description: string | null;
   content: string;
+  properties: object;
   tags: {
     id: number;
     name: string;

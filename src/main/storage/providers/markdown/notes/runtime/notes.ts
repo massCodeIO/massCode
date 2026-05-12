@@ -1,5 +1,6 @@
 import type {
   MarkdownNote,
+  NoteProperties,
   NotesFrontmatter,
   NotesIndexItem,
   NotesPaths,
@@ -30,6 +31,26 @@ import {
 } from './constants'
 import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
 
+const NOTE_SYSTEM_FRONTMATTER_KEYS = new Set([
+  'createdAt',
+  'description',
+  'folderId',
+  'id',
+  'isDeleted',
+  'isFavorites',
+  'name',
+  'tags',
+  'updatedAt',
+])
+
+function extractNoteProperties(frontmatter: NotesFrontmatter): NoteProperties {
+  return Object.fromEntries(
+    Object.entries(frontmatter).filter(
+      ([key]) => !NOTE_SYSTEM_FRONTMATTER_KEYS.has(key),
+    ),
+  )
+}
+
 export function toNoteFileName(name: string): string {
   const normalized = validateEntryName(name, 'note')
 
@@ -41,7 +62,7 @@ export function toNoteFileName(name: string): string {
 }
 
 export function serializeNote(note: MarkdownNote): string {
-  const frontmatter: NotesFrontmatter = {
+  const frontmatter: NotesFrontmatter & NoteProperties = {
     createdAt: note.createdAt,
     description: note.description,
     folderId: note.folderId,
@@ -51,6 +72,7 @@ export function serializeNote(note: MarkdownNote): string {
     name: note.name,
     tags: note.tags,
     updatedAt: note.updatedAt,
+    ...note.properties,
   }
 
   const frontmatterText = yaml
@@ -104,6 +126,7 @@ export function readNoteFromFile(
     isDeleted: normalizeFlag(fm.isDeleted),
     isFavorites: normalizeFlag(fm.isFavorites),
     name: fm.name || path.basename(entry.filePath, '.md'),
+    properties: extractNoteProperties(fm),
     tags: Array.isArray(fm.tags)
       ? fm.tags.filter(t => typeof t === 'number')
       : [],

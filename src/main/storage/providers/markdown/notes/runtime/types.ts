@@ -91,6 +91,8 @@ export interface NotesFrontmatter {
   updatedAt?: number
 }
 
+export type NoteProperties = Record<string, unknown>
+
 export interface MarkdownNote {
   content: string
   createdAt: number
@@ -101,6 +103,7 @@ export interface MarkdownNote {
   isDeleted: number
   isFavorites: number
   name: string
+  properties: NoteProperties
   tags: number[]
   updatedAt: number
 }

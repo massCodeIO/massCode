@@ -212,7 +212,7 @@ onClickOutside(noteRef, () => {
             <Checkbox
               v-if="isTask"
               :model-value="isTaskDone"
-              class="mt-px"
+              class="task-checkbox mt-px"
               @click.stop
               @update:model-value="onTaskDoneChange"
             />
@@ -265,17 +265,29 @@ onClickOutside(noteRef, () => {
     .meta {
       @apply text-accent-foreground;
     }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-foreground/20 bg-background/70 shadow-xs;
+    }
   }
   &.is-multi-selected {
     @apply bg-accent text-accent-foreground z-10 rounded-md border-transparent;
     .meta {
       @apply text-accent-foreground;
     }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-foreground/20 bg-background/70 shadow-xs;
+    }
   }
   &.is-focused:not(.is-multi-selected) {
     @apply bg-primary text-primary-foreground z-10 rounded-md border-transparent;
     .meta {
       @apply text-primary-foreground;
+    }
+    .task-checkbox:not([data-state="checked"]) {
+      @apply border-primary-foreground/30 bg-background/85 shadow-xs;
+    }
+    .task-checkbox[data-state="checked"] {
+      @apply border-primary-foreground bg-primary-foreground text-primary shadow-xs;
     }
   }
   &.is-highlighted {

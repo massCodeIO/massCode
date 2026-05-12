@@ -11,6 +11,8 @@ Tasks are notes with structured task properties. They stay in the Notes space, u
 
 Use tasks when a note needs a clear next action, due date, or completion state without moving it into a separate task manager.
 
+<img :src="withBase('/task.png')">
+
 ## Creating a Task
 
 - Press <kbd>Cmd+T</kbd> on macOS or <kbd>Ctrl+T</kbd> on Windows or Linux.
@@ -57,3 +59,7 @@ The Notes Library includes a **Tasks** section with task-focused views:
 - **Completed** - tasks with Done status.
 
 Tasks can still appear in **Inbox**, **Favorites**, **All Notes**, folders, tags, and search results because they are still notes.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

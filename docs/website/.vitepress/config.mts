@@ -125,12 +125,13 @@ export default defineConfig({
         {
           text: 'Code',
           items: [
-            { text: 'Library', link: '/documentation/code/library' },
-            { text: 'Folders', link: '/documentation/code/folders' },
-            { text: 'Tags', link: '/documentation/code/tags' },
+            { text: 'Code', link: '/documentation/code/' },
             { text: 'Snippets', link: '/documentation/code/snippets' },
             { text: 'Fragments', link: '/documentation/code/fragments' },
             { text: 'Description', link: '/documentation/code/description' },
+            { text: 'Library', link: '/documentation/code/library' },
+            { text: 'Folders', link: '/documentation/code/folders' },
+            { text: 'Tags', link: '/documentation/code/tags' },
             { text: 'Search', link: '/documentation/code/search' },
           ],
         },

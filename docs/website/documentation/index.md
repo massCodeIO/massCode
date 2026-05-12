@@ -13,7 +13,7 @@ Switch between Spaces using the rail on the left side of the app, or use the [Co
 
 ## Code
 
-Use Code to build a reusable snippet library across projects and languages. The three-column layout keeps organization, search, and editing in one place: Library on the left, snippet list in the middle, editor on the right.
+Use [Code](/documentation/code/) to build a reusable snippet library across projects and languages. The three-column layout keeps organization, search, and editing in one place: Library on the left, snippet list in the middle, editor on the right.
 
 ## Notes
 
@@ -21,15 +21,15 @@ Use [Notes](/documentation/notes/) for longer markdown documents that do not fit
 
 ## HTTP
 
-Use HTTP as a lightweight API client inside massCode. Store requests in folders, import collections from OpenAPI, Postman, or Bruno, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
+Use [HTTP](/documentation/http/) as a lightweight API client inside massCode. Store requests in folders, import collections from OpenAPI, Postman, or Bruno, switch environments, preview the outgoing request as raw HTTP or cURL, send it from the editor, and inspect the response body and headers without leaving your workspace.
 
 ## Math
 
-Math is a calculator-style notebook for quick development math without leaving massCode. Use it for currency conversion, unit conversion, date math, finance, and natural-language calculations with instant results on every line.
+[Math](/documentation/math/) is a calculator-style notebook for quick development math without leaving massCode. Use it for currency conversion, unit conversion, date math, finance, and natural-language calculations with instant results on every line.
 
 ## Tools
 
-Tools covers the small one-off tasks that usually send you to a browser tab: JSON comparison, encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
+[Tools](/documentation/tools/) covers the small one-off tasks that usually send you to a browser tab: JSON comparison, encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
 
 ## Clipper
 

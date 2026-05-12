@@ -2,11 +2,9 @@
 import type { DateValue } from '@internationalized/date'
 import { Button } from '@/components/ui/shadcn/button'
 import { Calendar } from '@/components/ui/shadcn/calendar'
-import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Popover from '@/components/ui/shadcn/popover'
 import * as Select from '@/components/ui/shadcn/select'
 import {
-  createTaskCompletionPatch,
   getTaskDue,
   getTaskPriority,
   getTaskStatus,
@@ -39,7 +37,6 @@ const isTask = computed(() => isTaskNote(props.note))
 const status = computed(() => getTaskStatus(props.note))
 const priority = computed(() => getTaskPriority(props.note) || '')
 const due = computed(() => getTaskDue(props.note))
-const isDone = computed(() => status.value === NoteTaskStatus.Done)
 const selectedDueDate = computed<DateValue | undefined>(() => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(due.value)) {
     return undefined
@@ -87,13 +84,6 @@ const priorityItems = [
   },
   { value: NoteTaskPriority.High, label: i18n.t('notes.tasks.priority.high') },
 ]
-
-async function toggleDone() {
-  await updateNoteProperties(
-    props.note.id,
-    createTaskCompletionPatch(props.note),
-  )
-}
 
 async function updateStatus(value: unknown) {
   if (typeof value !== 'string') {
@@ -165,20 +155,6 @@ async function clearDueAndClose(close: () => void) {
     class="border-border border-b px-2 py-1"
   >
     <div class="flex flex-wrap items-center gap-2">
-      <label class="flex h-7 items-center gap-2">
-        <Checkbox
-          :model-value="isDone"
-          @update:model-value="toggleDone"
-        />
-        <UiText
-          as="span"
-          variant="xs"
-          muted
-        >
-          {{ i18n.t("notes.tasks.complete") }}
-        </UiText>
-      </label>
-
       <Select.Select
         :model-value="status"
         @update:model-value="updateStatus"

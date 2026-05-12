@@ -3,7 +3,6 @@ import type { SnippetsResponse } from '@/services/api/generated'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useApp,
-  useDialog,
   useDonations,
   useNavigationHistory,
   useSnippets,
@@ -36,13 +35,10 @@ const {
   selectedSnippetIds,
   updateSnippet,
   updateSnippets,
-  deleteSnippet,
-  deleteSnippets,
-  displayedSnippets,
+  deleteSelectedSnippets,
 } = useSnippets()
 const { clearHistory } = useNavigationHistory()
 
-const { confirm } = useDialog()
 const { copy } = useClipboard()
 
 const snippetRef = ref<HTMLDivElement>()
@@ -129,57 +125,7 @@ async function onAddFavorites() {
 }
 
 async function onDelete() {
-  if (selectedSnippetIds.value.length > 1) {
-    const isAllSoftDeleted = displayedSnippets.value?.every(s => s.isDeleted)
-
-    if (isAllSoftDeleted) {
-      const isConfirmed = await confirm({
-        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
-          count: selectedSnippetIds.value.length,
-        }),
-        content: i18n.t('messages:warning.noUndo'),
-      })
-
-      if (isConfirmed) {
-        await deleteSnippets(selectedSnippetIds.value)
-      }
-    }
-    else {
-      // Мягкое удаление
-      const snippetsData = selectedSnippetIds.value?.map(() => ({
-        folderId: null,
-        isDeleted: 1,
-      }))
-
-      await updateSnippets(selectedSnippetIds.value, snippetsData)
-    }
-  }
-  else if (props.snippet.isDeleted) {
-    const isConfirmed = await confirm({
-      title: i18n.t('messages:confirm.deletePermanently', {
-        name: props.snippet.name,
-      }),
-      content: i18n.t('messages:warning.noUndo'),
-    })
-
-    if (isConfirmed) {
-      await deleteSnippet(props.snippet.id)
-    }
-  }
-  else {
-    // Мягкое удаление
-    await updateSnippet(props.snippet.id, {
-      folderId: null,
-      isDeleted: 1,
-    })
-  }
-
-  if (
-    selectedSnippetIds.value.length > 1
-    || state.snippetId === props.snippet.id
-  ) {
-    selectFirstSnippet()
-  }
+  await deleteSelectedSnippets(props.snippet)
 }
 
 async function onRestore() {

@@ -4,12 +4,17 @@ import type { Node, Position } from './types'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
-import { useApp, useDialog, useFolders, useSnippets } from '@/composables'
+import {
+  useApp,
+  useDeleteShortcut,
+  useDialog,
+  useFolders,
+  useSnippets,
+} from '@/composables'
 import { i18n } from '@/electron'
 import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
-  scrollToElement,
 } from '@/utils'
 import { Folder } from 'lucide-vue-next'
 import CustomIcons from './custom-icons/CustomIcons.vue'
@@ -34,14 +39,12 @@ const emit = defineEmits<Emits>()
 
 const {
   createFolderAndSelect,
-  deleteFolder,
+  deleteSelectedFolders,
   folders,
   updateFolder,
   getFolderByIdFromTree,
   getFolders,
   selectedFolderIds,
-  clearFolderSelection,
-  selectFolder,
 } = useFolders()
 const {
   state,
@@ -50,12 +53,7 @@ const {
   highlightedTagId,
   focusedFolderId,
 } = useApp()
-const {
-  clearSnippetsState,
-  displayedSnippets,
-  updateSnippets,
-  selectFirstSnippet,
-} = useSnippets()
+const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 
 // --- Data mapping ---
 
@@ -275,44 +273,7 @@ async function onDeleteFolder() {
   if (!contextNode.value)
     return
 
-  const { confirm } = useDialog()
-  const activeBeforeDelete = state.folderId
-  const targetIds = selectedFolderIds.value.includes(contextNode.value.id)
-    ? [...selectedFolderIds.value]
-    : [contextNode.value.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    contextNode.value.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('common.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-    description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteFolder(id, false)))
-  await getFolders(false)
-
-  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
-    clearSnippetsState()
-    const fallbackId = selectedFolderIds.value[0]
-
-    if (fallbackId) {
-      await selectFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
-    }
-    else {
-      clearFolderSelection()
-    }
-  }
+  await deleteSelectedFolders(contextNode.value.id)
 }
 
 function onRenameFolder() {
@@ -361,10 +322,19 @@ async function onRemoveCustomIcon() {
   updateFolder(contextNode.value.id, { icon: null })
   await getFolders()
 }
+
+useDeleteShortcut({
+  rootSelector: '[data-code-folders-tree]',
+  isEnabled: () => focusedFolderId.value !== undefined,
+  onDelete: () => deleteSelectedFolders(focusedFolderId.value),
+})
 </script>
 
 <template>
-  <div class="h-full min-h-0">
+  <div
+    data-code-folders-tree
+    class="h-full min-h-0"
+  >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>
         <UiTree

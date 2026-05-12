@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import {
-  useDialog,
-  useNoteFolders,
-  useNotes,
-  useNotesApp,
-} from '@/composables'
+import { useDialog, useNoteFolders } from '@/composables'
 import { i18n, ipc } from '@/electron'
-import { isMac, scrollToElement } from '@/utils'
+import { isMac } from '@/utils'
 
 const props = defineProps<{
   contextNode: any
@@ -21,18 +16,11 @@ const emit = defineEmits<{
 
 const {
   createNoteFolderAndSelect,
-  deleteNoteFolder,
-  folders,
-  getFolderByIdFromTree,
+  deleteSelectedNoteFolders,
   getNoteFolders,
   updateNoteFolder,
   selectedFolderIds,
-  clearFolderSelection,
-  selectNoteFolder,
 } = useNoteFolders()
-
-const { notesState } = useNotesApp()
-const { clearNotesState } = useNotes()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -52,43 +40,7 @@ async function onDeleteFolder() {
   if (!props.contextNode)
     return
 
-  const { confirm } = useDialog()
-  const activeBeforeDelete = notesState.folderId
-  const targetIds = selectedFolderIds.value.includes(props.contextNode.id)
-    ? [...selectedFolderIds.value]
-    : [props.contextNode.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    props.contextNode.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('common.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteNoteFolder(id, false)))
-  await getNoteFolders(false)
-
-  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
-    clearNotesState()
-    const fallbackId = selectedFolderIds.value[0]
-
-    if (fallbackId) {
-      await selectNoteFolder(fallbackId)
-      scrollToElement(`[id="${fallbackId}"]`)
-    }
-    else {
-      clearFolderSelection()
-    }
-  }
+  await deleteSelectedNoteFolders(props.contextNode.id)
 }
 
 function onRenameFolder() {

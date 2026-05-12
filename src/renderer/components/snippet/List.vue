@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useDeleteShortcut, useSnippets } from '@/composables'
 import { setSnippetScrollerRef } from '@/composables/useSnippetScroller'
 import { i18n } from '@/electron'
 
@@ -10,8 +10,8 @@ const SNIPPET_ITEM_SIZE = 61
 const SNIPPET_ITEM_COMPACT_SIZE = 37
 const isInitialSnippetPositionRestored = ref(false)
 
-const { isCompactListMode, state } = useApp()
-const { displayedSnippets } = useSnippets()
+const { focusedSnippetId, isCompactListMode, state } = useApp()
+const { deleteSelectedSnippets, displayedSnippets } = useSnippets()
 
 const snippetItemSize = computed(() =>
   isCompactListMode.value ? SNIPPET_ITEM_COMPACT_SIZE : SNIPPET_ITEM_SIZE,
@@ -23,6 +23,12 @@ function setScrollerRef(
   snippetScrollerLocalRef.value = value
   setSnippetScrollerRef(value)
 }
+
+useDeleteShortcut({
+  rootSelector: '[data-snippets-list]',
+  isEnabled: () => focusedSnippetId.value !== undefined,
+  onDelete: deleteSelectedSnippets,
+})
 
 watch(
   [displayedSnippets, () => state.snippetId, snippetScrollerLocalRef],

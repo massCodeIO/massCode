@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useMathNotebook } from '@/composables'
+import { useApp, useDeleteShortcut, useMathNotebook } from '@/composables'
 import { i18n } from '@/electron'
+import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
 import { FileText } from 'lucide-vue-next'
 
@@ -17,6 +18,8 @@ const {
 
 const editingId = ref<string | null>(null)
 const editingName = ref('')
+const sheetListRef = ref<HTMLElement>()
+const isSheetListFocused = ref(false)
 
 function handleCreateSheet() {
   const id = createSheet()
@@ -50,13 +53,58 @@ function cancelRename() {
   editingId.value = null
 }
 
+function focusSheetListItem(event: MouseEvent) {
+  const target = event.currentTarget
+
+  if (!(target instanceof HTMLElement)) {
+    return
+  }
+
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      target.focus()
+    })
+  })
+}
+
+function selectSheetFromList(id: string, event: MouseEvent) {
+  selectSheet(id)
+  isSheetListFocused.value = true
+  focusSheetListItem(event)
+}
+
+function deleteActiveSheet() {
+  if (!activeSheetId.value) {
+    return
+  }
+
+  deleteSheet(activeSheetId.value)
+}
+
+useDeleteShortcut({
+  rootSelector: '[data-math-sheets-list]',
+  isEnabled: () =>
+    isSheetListFocused.value
+    && activeSheetId.value !== null
+    && editingId.value === null,
+  onDelete: deleteActiveSheet,
+})
+
+onClickOutside(sheetListRef, () => {
+  isSheetListFocused.value = false
+})
+
 defineExpose({
   handleCreateSheet,
 })
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden">
+  <div
+    ref="sheetListRef"
+    data-math-sheets-list
+    class="flex h-full flex-col overflow-hidden"
+  >
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-2">
       <ContextMenu.ContextMenu
         v-for="sheet in sheets"
@@ -67,7 +115,8 @@ defineExpose({
             class="group mb-0.5 cursor-default transition-colors duration-75"
             :class="activeSheetId === sheet.id ? 'text-accent-foreground' : ''"
             :selected="activeSheetId === sheet.id"
-            @click="selectSheet(sheet.id)"
+            tabindex="-1"
+            @click="(event) => selectSheetFromList(sheet.id, event)"
             @dblclick="startRename(sheet.id, sheet.name)"
           >
             <div class="flex items-center gap-2 px-2 py-0.5">

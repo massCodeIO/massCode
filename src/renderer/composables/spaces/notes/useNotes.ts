@@ -92,6 +92,38 @@ const selectedNotes = computed(() => {
   return source?.filter(n => selectedNoteIds.value.includes(n.id)) || []
 })
 
+function getActionTargetIds(fallbackNoteId?: number) {
+  if (fallbackNoteId !== undefined && selectedNoteIds.value.length > 1) {
+    return [...selectedNoteIds.value]
+  }
+
+  if (fallbackNoteId !== undefined) {
+    return [fallbackNoteId]
+  }
+
+  if (selectedNoteIds.value.length) {
+    return [...selectedNoteIds.value]
+  }
+
+  return notesState.noteId !== undefined ? [notesState.noteId] : []
+}
+
+function getActionTargetNotes(targetIds: number[], fallbackNote?: NoteRecord) {
+  const source = isSearch.value ? notesBySearch.value : notes.value
+  const targetNotes
+    = source?.filter(note => targetIds.includes(note.id)) || []
+
+  if (
+    fallbackNote
+    && targetIds.includes(fallbackNote.id)
+    && !targetNotes.some(note => note.id === fallbackNote.id)
+  ) {
+    targetNotes.push(fallbackNote)
+  }
+
+  return targetNotes
+}
+
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: NotesQuery = {}
 
@@ -327,6 +359,83 @@ async function deleteNotes(noteIds: number[]) {
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
+async function deleteSelectedNotes(fallbackNote?: NoteRecord) {
+  const { confirm } = useDialog()
+  const targetIds = getActionTargetIds(fallbackNote?.id)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const targetNotes = getActionTargetNotes(targetIds, fallbackNote)
+
+  if (targetIds.length > 1) {
+    const isAllSoftDeleted
+      = targetNotes.length === targetIds.length
+        && targetNotes.every(note => note.isDeleted)
+
+    if (isAllSoftDeleted) {
+      const isConfirmed = await confirm({
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
+          count: targetIds.length,
+        }),
+        content: i18n.t('messages:warning.noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteNotes(targetIds)
+        selectFirstNote()
+      }
+    }
+    else {
+      const notesData = targetIds.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+
+      await updateNotes(targetIds, notesData)
+      selectFirstNote()
+    }
+
+    return
+  }
+
+  const targetNote = targetNotes[0]
+
+  if (!targetNote) {
+    return
+  }
+
+  if (!targetNote.isDeleted) {
+    await updateNote(targetNote.id, { folderId: null, isDeleted: 1 })
+
+    if (notesState.noteId === targetNote.id) {
+      selectFirstNote()
+    }
+
+    return
+  }
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: targetNote.name,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  const wasSelected = notesState.noteId === targetNote.id
+
+  await deleteNote(targetNote.id)
+
+  if (wasSelected) {
+    selectFirstNote()
+  }
+}
+
 async function emptyTrash() {
   const { confirm } = useDialog()
 
@@ -440,6 +549,7 @@ export function useNotes() {
     createNoteAndSelect,
     deleteNote,
     deleteNotes,
+    deleteSelectedNotes,
     deleteTagFromNote,
     emptyTrash,
     getNotes,

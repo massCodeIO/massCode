@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import {
-  useDialog,
-  useDonations,
-  useNotes,
-  useNotesApp,
-  useNoteSearch,
-} from '@/composables'
+import { useDonations, useNotes, useNotesApp } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
@@ -48,12 +42,9 @@ const {
   selectedNoteIds,
   updateNote,
   updateNotes,
-  deleteNote,
-  deleteNotes,
+  deleteSelectedNotes,
 } = useNotes()
-const { displayedNotes } = useNoteSearch()
 
-const { confirm } = useDialog()
 const { copy } = useClipboard()
 
 const isFavoritesLibrarySelected = computed(
@@ -92,48 +83,7 @@ async function onAddFavorites() {
 }
 
 async function onDelete() {
-  if (selectedNoteIds.value.length > 1) {
-    const isAllSoftDeleted = displayedNotes.value?.every(n => n.isDeleted)
-
-    if (isAllSoftDeleted) {
-      const isConfirmed = await confirm({
-        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
-          count: selectedNoteIds.value.length,
-        }),
-        content: i18n.t('messages:warning.noUndo'),
-      })
-
-      if (isConfirmed) {
-        await deleteNotes(selectedNoteIds.value)
-      }
-    }
-    else {
-      const notesData = selectedNoteIds.value.map(() => ({
-        folderId: null,
-        isDeleted: 1,
-      }))
-      await updateNotes(selectedNoteIds.value, notesData)
-    }
-  }
-  else if (props.note.isDeleted) {
-    const isConfirmed = await confirm({
-      title: i18n.t('messages:confirm.deletePermanently', {
-        name: props.note.name,
-      }),
-      content: i18n.t('messages:warning.noUndo'),
-    })
-
-    if (isConfirmed) {
-      await deleteNote(props.note.id)
-    }
-  }
-  else {
-    await updateNote(props.note.id, { folderId: null, isDeleted: 1 })
-  }
-
-  if (selectedNoteIds.value.length > 1 || notesState.noteId === props.note.id) {
-    selectFirstNote()
-  }
+  await deleteSelectedNotes(props.note)
 }
 
 async function onRestore() {

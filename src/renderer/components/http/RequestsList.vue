@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { useHttpApp, useHttpSearch } from '@/composables'
+import {
+  useDeleteShortcut,
+  useHttpApp,
+  useHttpRequests,
+  useHttpSearch,
+} from '@/composables'
 import { i18n } from '@/electron'
 
-const { httpState } = useHttpApp()
+const { focusedRequestId, httpState } = useHttpApp()
+const { deleteSelectedHttpRequests } = useHttpRequests()
 const { displayedRequests, isSearch } = useHttpSearch()
 
 const filteredRequests = computed(() => {
@@ -14,10 +20,19 @@ const filteredRequests = computed(() => {
 
   return list.filter(r => r.folderId === httpState.folderId)
 })
+
+useDeleteShortcut({
+  rootSelector: '[data-http-requests-list]',
+  isEnabled: () => focusedRequestId.value !== undefined,
+  onDelete: deleteSelectedHttpRequests,
+})
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div
+    data-http-requests-list
+    class="flex h-full flex-col"
+  >
     <HttpRequestsListHeader />
     <div
       v-if="filteredRequests.length === 0"

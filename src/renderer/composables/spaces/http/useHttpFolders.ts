@@ -3,10 +3,11 @@ import type {
   HttpFoldersUpdate,
 } from '@/services/api/generated'
 import type { HttpFoldersTreeResponse } from './useHttpFolderTree'
+import { useDialog } from '@/composables/useDialog'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { getContiguousSelection } from '@/utils'
+import { getContiguousSelection, scrollToElement } from '@/utils'
 import { useHttpApp } from './useHttpApp'
 import {
   findParentFolderIds,
@@ -347,6 +348,60 @@ async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
   }
 }
 
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { confirm } = useDialog()
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
+  await getHttpFolders(false)
+
+  const fallbackId = selectedFolderIds.value[0]
+  if (fallbackId) {
+    await selectHttpFolder(fallbackId)
+    scrollToElement(`[id="${fallbackId}"]`)
+  }
+  else {
+    clearFolderSelection()
+  }
+}
+
 interface SelectFolderOptions {
   mode?: 'single' | 'range' | 'toggle'
   ensureVisibility?: boolean
@@ -387,6 +442,7 @@ export function useHttpFolders() {
     createHttpFolder,
     createHttpFolderAndSelect,
     deleteHttpFolder,
+    deleteSelectedHttpFolders,
     folders,
     getFolderByIdFromTree,
     getHttpFolders,

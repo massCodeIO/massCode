@@ -2,7 +2,7 @@ import type {
   FoldersTreeResponse,
   FoldersUpdate,
 } from '@/services/api/generated'
-import { useApp, useSnippets } from '@/composables'
+import { useApp, useDialog, useSnippets } from '@/composables'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
@@ -402,6 +402,67 @@ async function deleteFolder(folderId: number, shouldRefresh = true) {
   }
 }
 
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedFolders(fallbackFolderId?: number) {
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { clearSnippetsState } = useSnippets()
+  const { confirm } = useDialog()
+  const activeBeforeDelete = state.folderId
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+    description: i18n.t('messages:warning:allSnippetsMoveToTrash'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteFolder(id, false)))
+  await getFolders(false)
+
+  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
+    clearSnippetsState()
+    const fallbackId = selectedFolderIds.value[0]
+
+    if (fallbackId) {
+      await selectFolder(fallbackId)
+      scrollToElement(`[id="${fallbackId}"]`)
+    }
+    else {
+      clearFolderSelection()
+    }
+  }
+}
+
 interface SelectFolderOptions {
   mode?: 'single' | 'range' | 'toggle'
   ensureVisibility?: boolean
@@ -438,6 +499,7 @@ export function useFolders() {
     createFolderAndSelect,
     clearFolderSelection,
     deleteFolder,
+    deleteSelectedFolders,
     folders,
     getFolderByIdFromTree,
     getFolders,

@@ -108,6 +108,42 @@ const selectedSnippets = computed(() => {
   return source?.filter(s => selectedSnippetIds.value.includes(s.id)) || []
 })
 
+function getActionTargetIds(fallbackSnippetId?: number) {
+  if (fallbackSnippetId !== undefined && selectedSnippetIds.value.length > 1) {
+    return [...selectedSnippetIds.value]
+  }
+
+  if (fallbackSnippetId !== undefined) {
+    return [fallbackSnippetId]
+  }
+
+  if (selectedSnippetIds.value.length) {
+    return [...selectedSnippetIds.value]
+  }
+
+  return state.snippetId !== undefined ? [state.snippetId] : []
+}
+
+function getActionTargetSnippets(
+  targetIds: number[],
+  fallbackSnippet?: SnippetsResponse[0],
+) {
+  const source = displayedSnippets.value || []
+  const targetSnippets = source.filter(snippet =>
+    targetIds.includes(snippet.id),
+  )
+
+  if (
+    fallbackSnippet
+    && targetIds.includes(fallbackSnippet.id)
+    && !targetSnippets.some(snippet => snippet.id === fallbackSnippet.id)
+  ) {
+    targetSnippets.push(fallbackSnippet)
+  }
+
+  return targetSnippets
+}
+
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: SnippetsQuery = {}
 
@@ -303,6 +339,7 @@ async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
 }
 
 async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
+  markPersistedStorageMutation()
   for (const [index, snippetId] of snippetIds.entries()) {
     await api.snippets.patchSnippetsById(String(snippetId), data[index])
   }
@@ -330,10 +367,91 @@ async function deleteSnippet(snippetId: number) {
 }
 
 async function deleteSnippets(snippetIds: number[]) {
+  markPersistedStorageMutation()
   for (const snippetId of snippetIds) {
     await api.snippets.deleteSnippetsById(String(snippetId))
   }
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function deleteSelectedSnippets(fallbackSnippet?: SnippetsResponse[0]) {
+  const { confirm } = useDialog()
+  const targetIds = getActionTargetIds(fallbackSnippet?.id)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const targetSnippets = getActionTargetSnippets(targetIds, fallbackSnippet)
+
+  if (targetIds.length > 1) {
+    const isAllSoftDeleted
+      = targetSnippets.length === targetIds.length
+        && targetSnippets.every(snippet => snippet.isDeleted)
+
+    if (isAllSoftDeleted) {
+      const isConfirmed = await confirm({
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
+          count: targetIds.length,
+        }),
+        content: i18n.t('messages:warning.noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteSnippets(targetIds)
+        selectFirstSnippet()
+      }
+    }
+    else {
+      const snippetsData = targetIds.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+
+      await updateSnippets(targetIds, snippetsData)
+      selectFirstSnippet()
+    }
+
+    return
+  }
+
+  const targetSnippet = targetSnippets[0]
+
+  if (!targetSnippet) {
+    return
+  }
+
+  if (!targetSnippet.isDeleted) {
+    await updateSnippet(targetSnippet.id, {
+      folderId: null,
+      isDeleted: 1,
+    })
+
+    if (state.snippetId === targetSnippet.id) {
+      selectFirstSnippet()
+    }
+
+    return
+  }
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: targetSnippet.name,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  const wasSelected = state.snippetId === targetSnippet.id
+
+  await deleteSnippet(targetSnippet.id)
+
+  if (wasSelected) {
+    selectFirstSnippet()
+  }
 }
 
 async function deleteSnippetContent(snippetId: number, contentId: number) {
@@ -514,6 +632,7 @@ export function useSnippets() {
     deleteSnippet,
     deleteSnippetContent,
     deleteSnippets,
+    deleteSelectedSnippets,
     deleteTagFromSnippet,
     displayedSnippets,
     duplicateSnippet,

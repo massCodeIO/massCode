@@ -51,7 +51,8 @@ export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
 
-const { httpState, focusRequestNameInput } = useHttpApp()
+const { highlightedRequestIds, httpState, focusRequestNameInput }
+  = useHttpApp()
 const { incrementCreated } = useDonations()
 
 const selectedRequestIds = ref<number[]>(
@@ -95,6 +96,54 @@ const selectedRequests = computed(() => {
     ) || []
   )
 })
+
+function getActionTargetIds(fallbackRequestId?: number) {
+  const highlightedIds = [...highlightedRequestIds.value]
+
+  if (
+    fallbackRequestId !== undefined
+    && highlightedRequestIds.value.has(fallbackRequestId)
+    && highlightedIds.length > 1
+  ) {
+    return highlightedIds
+  }
+
+  if (
+    fallbackRequestId !== undefined
+    && selectedRequestIds.value.includes(fallbackRequestId)
+  ) {
+    return [...selectedRequestIds.value]
+  }
+
+  if (fallbackRequestId !== undefined) {
+    return [fallbackRequestId]
+  }
+
+  if (selectedRequestIds.value.length) {
+    return [...selectedRequestIds.value]
+  }
+
+  return httpState.requestId !== undefined ? [httpState.requestId] : []
+}
+
+function getActionTargetRequests(
+  targetIds: number[],
+  fallbackRequest?: HttpRequestListItem,
+) {
+  const source = isSearch.value ? requestsBySearch.value : requests.value
+  const targetRequests
+    = source?.filter(request => targetIds.includes(request.id)) || []
+
+  if (
+    fallbackRequest
+    && targetIds.includes(fallbackRequest.id)
+    && !targetRequests.some(request => request.id === fallbackRequest.id)
+  ) {
+    targetRequests.push(fallbackRequest)
+  }
+
+  return targetRequests
+}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -366,6 +415,88 @@ async function deleteHttpRequests(requestIds: number[]) {
   }
 }
 
+async function deleteSelectedHttpRequests(
+  fallbackRequest?: HttpRequestListItem,
+) {
+  const { confirm } = useDialog()
+  const targetIds = getActionTargetIds(fallbackRequest?.id)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const targetRequests = getActionTargetRequests(targetIds, fallbackRequest)
+
+  if (targetIds.length > 1) {
+    const isAllSoftDeleted
+      = targetRequests.length === targetIds.length
+        && targetRequests.every(request => request.isDeleted)
+
+    if (isAllSoftDeleted) {
+      const isConfirmed = await confirm({
+        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
+          count: targetIds.length,
+        }),
+        content: i18n.t('messages:warning.noUndo'),
+      })
+
+      if (isConfirmed) {
+        await deleteHttpRequests(targetIds)
+        selectFirstRequest()
+      }
+    }
+    else {
+      const requestsData = targetIds.map(() => ({
+        folderId: null,
+        isDeleted: 1,
+      }))
+
+      await updateHttpRequests(targetIds, requestsData)
+      selectFirstRequest()
+    }
+
+    return
+  }
+
+  const targetRequest = targetRequests[0]
+
+  if (!targetRequest) {
+    return
+  }
+
+  if (!targetRequest.isDeleted) {
+    await updateHttpRequest(targetRequest.id, {
+      folderId: null,
+      isDeleted: 1,
+    })
+
+    if (httpState.requestId === targetRequest.id) {
+      selectFirstRequest()
+    }
+
+    return
+  }
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: targetRequest.name,
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  const wasSelected = httpState.requestId === targetRequest.id
+
+  await deleteHttpRequest(targetRequest.id)
+
+  if (wasSelected) {
+    selectFirstRequest()
+  }
+}
+
 async function emptyTrash() {
   const { confirm } = useDialog()
 
@@ -572,6 +703,7 @@ export function useHttpRequests() {
     currentRequest,
     deleteHttpRequest,
     deleteHttpRequests,
+    deleteSelectedHttpRequests,
     duplicateHttpRequest,
     discardCurrentRequestChanges,
     getHttpRequests,

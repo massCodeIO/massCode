@@ -2,7 +2,6 @@
 import type { HttpRequestListItem } from '@/composables/spaces/http/useHttpRequests'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
-  useDialog,
   useDonations,
   useHttpApp,
   useHttpEnvironments,
@@ -28,8 +27,7 @@ const {
   httpState,
 } = useHttpApp()
 const {
-  deleteHttpRequest,
-  deleteHttpRequests,
+  deleteSelectedHttpRequests,
   duplicateHttpRequest,
   selectFirstRequest,
   selectHttpRequest,
@@ -97,17 +95,6 @@ function getActionTargetIds() {
   return [props.request.id]
 }
 
-function getActionTargetRequests(targetIds: number[]) {
-  const requestsById = new Map(
-    selectedRequests.value.map(request => [request.id, request]),
-  )
-  requestsById.set(props.request.id, props.request)
-
-  return targetIds
-    .map(id => requestsById.get(id))
-    .filter((request): request is HttpRequestListItem => Boolean(request))
-}
-
 function onClick(event: MouseEvent) {
   selectHttpRequest(props.request.id, event.shiftKey)
   focusedRequestId.value = props.request.id
@@ -126,66 +113,7 @@ function onClickContextMenu() {
 }
 
 async function onDelete() {
-  const { confirm } = useDialog()
-  const targetIds = getActionTargetIds()
-  const targetRequests = getActionTargetRequests(targetIds)
-
-  if (targetIds.length > 1) {
-    const isAllSoftDeleted = targetRequests.every(
-      request => request.isDeleted,
-    )
-
-    if (isAllSoftDeleted) {
-      const isConfirmed = await confirm({
-        title: i18n.t('messages:confirm.deleteConfirmMultipleSnippets', {
-          count: targetIds.length,
-        }),
-        content: i18n.t('messages:warning.noUndo'),
-      })
-
-      if (isConfirmed) {
-        await deleteHttpRequests(targetIds)
-      }
-    }
-    else {
-      const requestsData = targetIds.map(() => ({
-        folderId: null,
-        isDeleted: 1,
-      }))
-      await updateHttpRequests(targetIds, requestsData)
-    }
-
-    selectFirstRequest()
-    return
-  }
-
-  if (!props.request.isDeleted) {
-    await updateHttpRequest(props.request.id, {
-      folderId: null,
-      isDeleted: 1,
-    })
-    if (httpState.requestId === props.request.id) {
-      selectFirstRequest()
-    }
-    return
-  }
-
-  const isConfirmed = await confirm({
-    title: i18n.t('messages:confirm.deletePermanently', {
-      name: props.request.name,
-    }),
-    content: i18n.t('messages:warning.noUndo'),
-  })
-
-  if (!isConfirmed)
-    return
-
-  const wasCurrentSelected = httpState.requestId === props.request.id
-  await deleteHttpRequest(props.request.id)
-
-  if (wasCurrentSelected) {
-    selectFirstRequest()
-  }
+  await deleteSelectedHttpRequests(props.request)
 }
 
 async function onAddFavorites() {

@@ -3,7 +3,6 @@ import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.v
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useDialog, useHttpFolders, useHttpRequests } from '@/composables'
 import { i18n } from '@/electron'
-import { scrollToElement } from '@/utils'
 
 const props = defineProps<{
   contextNode: any
@@ -16,14 +15,10 @@ const emit = defineEmits<{
 
 const {
   createHttpFolderAndSelect,
-  deleteHttpFolder,
-  folders,
-  getFolderByIdFromTree,
+  deleteSelectedHttpFolders,
   getHttpFolders,
   updateHttpFolder,
   selectedFolderIds,
-  clearFolderSelection,
-  selectHttpFolder,
 } = useHttpFolders()
 const { createHttpRequestAndSelect } = useHttpRequests()
 
@@ -45,38 +40,7 @@ async function onDeleteFolder() {
   if (!props.contextNode)
     return
 
-  const { confirm } = useDialog()
-  const targetIds = selectedFolderIds.value.includes(props.contextNode.id)
-    ? [...selectedFolderIds.value]
-    : [props.contextNode.id]
-  const folderName = getFolderByIdFromTree(
-    folders.value,
-    props.contextNode.id,
-  )?.name
-
-  const isConfirmed = await confirm({
-    title:
-      targetIds.length > 1
-        ? i18n.t('messages:confirm.delete', {
-            name: i18n.t('common.folders'),
-          })
-        : i18n.t('messages:confirm.delete', { name: folderName }),
-  })
-
-  if (!isConfirmed)
-    return
-
-  await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
-  await getHttpFolders(false)
-
-  const fallbackId = selectedFolderIds.value[0]
-  if (fallbackId) {
-    await selectHttpFolder(fallbackId)
-    scrollToElement(`[id="${fallbackId}"]`)
-  }
-  else {
-    clearFolderSelection()
-  }
+  await deleteSelectedHttpFolders(props.contextNode.id)
 }
 
 function onRenameFolder() {

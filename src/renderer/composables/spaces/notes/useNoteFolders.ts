@@ -1,4 +1,5 @@
 import type { NoteFoldersTreeResponse } from './useNoteFolderTree'
+import { useDialog } from '@/composables/useDialog'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
@@ -385,6 +386,66 @@ async function deleteNoteFolder(folderId: number, shouldRefresh = true) {
   }
 }
 
+function getDeleteTargetFolderIds(fallbackFolderId?: number) {
+  if (
+    fallbackFolderId !== undefined
+    && selectedFolderIds.value.includes(fallbackFolderId)
+  ) {
+    return [...selectedFolderIds.value]
+  }
+
+  if (fallbackFolderId !== undefined) {
+    return [fallbackFolderId]
+  }
+
+  return [...selectedFolderIds.value]
+}
+
+async function deleteSelectedNoteFolders(fallbackFolderId?: number) {
+  const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
+
+  if (!targetIds.length) {
+    return
+  }
+
+  const { clearNotesState } = useNotes()
+  const { confirm } = useDialog()
+  const activeBeforeDelete = notesState.folderId
+  const folderName
+    = fallbackFolderId !== undefined
+      ? getFolderByIdFromTree(folders.value, fallbackFolderId)?.name
+      : undefined
+
+  const isConfirmed = await confirm({
+    title:
+      targetIds.length > 1
+        ? i18n.t('messages:confirm.delete', {
+            name: i18n.t('common.folders'),
+          })
+        : i18n.t('messages:confirm.delete', { name: folderName }),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await Promise.all(targetIds.map(id => deleteNoteFolder(id, false)))
+  await getNoteFolders(false)
+
+  if (activeBeforeDelete && targetIds.includes(activeBeforeDelete)) {
+    clearNotesState()
+    const fallbackId = selectedFolderIds.value[0]
+
+    if (fallbackId) {
+      await selectNoteFolder(fallbackId)
+      scrollToElement(`[id="${fallbackId}"]`)
+    }
+    else {
+      clearFolderSelection()
+    }
+  }
+}
+
 // --- Selection ---
 
 interface SelectFolderOptions {
@@ -423,6 +484,7 @@ export function useNoteFolders() {
     createNoteFolder,
     createNoteFolderAndSelect,
     deleteNoteFolder,
+    deleteSelectedNoteFolders,
     folders,
     getFolderByIdFromTree,
     getNoteFolders,

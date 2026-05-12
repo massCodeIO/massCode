@@ -29,6 +29,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -48,6 +49,10 @@ interface NotesQuery {
   isFavorites?: number
   isDeleted?: number
   isInbox?: number
+  propertyDue?: 'today' | 'upcoming'
+  propertyStatus?: string
+  propertyStatusNot?: string
+  propertyType?: string
 }
 
 interface NotesUpdate {
@@ -56,6 +61,11 @@ interface NotesUpdate {
   description?: string | null
   isDeleted?: number
   isFavorites?: number
+}
+
+interface NotePropertiesUpdate {
+  properties?: Record<string, unknown>
+  unset?: string[]
 }
 
 interface CreateNotePayload {
@@ -151,6 +161,23 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
   }
   else if (notesState.libraryFilter === LibraryFilter.Inbox) {
     query.isInbox = 1
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Tasks) {
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Today) {
+    query.propertyDue = 'today'
+    query.propertyStatusNot = 'done'
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Upcoming) {
+    query.propertyDue = 'upcoming'
+    query.propertyStatusNot = 'done'
+    query.propertyType = 'task'
+  }
+  else if (notesState.libraryFilter === LibraryFilter.Completed) {
+    query.propertyStatus = 'done'
+    query.propertyType = 'task'
   }
 
   return query
@@ -341,6 +368,15 @@ async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
     await api.notes.patchNotesById(String(noteId), data[index])
   }
 
+  await getNotes(queryByLibraryOrFolderOrSearch.value)
+}
+
+async function updateNoteProperties(
+  noteId: number,
+  data: NotePropertiesUpdate,
+) {
+  markPersistedStorageMutation()
+  await api.notes.patchNotesByIdProperties(String(noteId), data)
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
@@ -567,6 +603,7 @@ export function useNotes() {
     selectFirstNote,
     selectNote,
     updateNote,
+    updateNoteProperties,
     updateNotes,
     updateNoteContent,
     withNotesLoading,

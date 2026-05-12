@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDonations, useNotes, useNotesApp } from '@/composables'
+import {
+  isTaskNote,
+  NoteTaskStatus,
+  useDonations,
+  useNotes,
+  useNotesApp,
+} from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
@@ -21,6 +27,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -41,6 +48,7 @@ const {
   selectFirstNote,
   selectedNoteIds,
   updateNote,
+  updateNoteProperties,
   updateNotes,
   deleteSelectedNotes,
 } = useNotes()
@@ -54,6 +62,7 @@ const isFavoritesLibrarySelected = computed(
 const isTrashLibrarySelected = computed(
   () => notesState.libraryFilter === LibraryFilter.Trash,
 )
+const isTask = computed(() => isTaskNote(props.note))
 
 const revealInFileManagerLabel = computed(() =>
   isMac
@@ -111,6 +120,15 @@ function onCopyNoteContent() {
   copy(props.note.content)
   useDonations().incrementCopy('notes')
 }
+
+async function onConvertToTask() {
+  await updateNoteProperties(props.note.id, {
+    properties: {
+      status: NoteTaskStatus.Todo,
+      type: 'task',
+    },
+  })
+}
 </script>
 
 <template>
@@ -122,6 +140,12 @@ function onCopyNoteContent() {
             ? i18n.t("action.remove.fromFavorites")
             : i18n.t("action.add.toFavorites")
         }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem
+        v-if="!isTask"
+        @click="onConvertToTask"
+      >
+        {{ i18n.t("notes.tasks.convertToTask") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
     </template>

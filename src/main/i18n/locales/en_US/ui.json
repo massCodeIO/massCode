@@ -333,6 +333,27 @@
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
     "noSelected": "No Note Selected",
+    "tasks": {
+      "title": "Tasks",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "complete": "Complete",
+      "convertToTask": "Convert to task",
+      "duePlaceholder": "Due",
+      "status": {
+        "todo": "Todo",
+        "inProgress": "In progress",
+        "done": "Done",
+        "blocked": "Blocked"
+      },
+      "priority": {
+        "label": "Priority",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
+    },
     "dashboard": {
       "label": "Dashboard",
       "title": "Notes Dashboard",

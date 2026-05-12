@@ -278,7 +278,7 @@ export interface NoteItemResponse {
   name: string;
   description: string | null;
   content: string;
-  properties: object;
+  properties: Record<string, unknown>;
   tags: {
     id: number;
     name: string;
@@ -293,14 +293,14 @@ export interface NoteItemResponse {
   updatedAt: number;
 }
 
-export type NoteProperties = object;
+export type NoteProperties = Record<string, unknown>;
 
 export type NotesResponse = {
   id: number;
   name: string;
   description: string | null;
   content: string;
-  properties: object;
+  properties: Record<string, unknown>;
   tags: {
     id: number;
     name: string;
@@ -348,7 +348,7 @@ export interface NotesQuery {
 }
 
 export interface NotePropertiesUpdate {
-  properties?: object;
+  properties?: Record<string, unknown>;
   unset?: string[];
 }
 

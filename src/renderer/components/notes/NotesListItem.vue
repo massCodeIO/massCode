@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
+  createTaskCompletionPatch,
+  getTaskDue,
+  getTaskStatus,
+  isTaskNote,
+  NoteTaskStatus,
   useApp,
   useNavigationHistory,
   useNotes,
@@ -8,7 +14,7 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
-import { format } from 'date-fns'
+import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
 
 interface NoteTagInfo {
   id: number
@@ -25,6 +31,7 @@ interface NoteRecord {
   name: string
   description: string | null
   content: string
+  properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
   isFavorites: number
@@ -44,7 +51,7 @@ const { clearHistory } = useNavigationHistory()
 const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
-const { selectNote, selectedNoteIds } = useNotes()
+const { selectNote, selectedNoteIds, updateNoteProperties } = useNotes()
 
 const noteRef = ref<HTMLDivElement>()
 
@@ -73,6 +80,42 @@ const folderName = computed(() => {
   return i18n.t('common.inbox')
 })
 
+const isTask = computed(() => isTaskNote(props.note))
+const taskStatus = computed(() => getTaskStatus(props.note))
+const isTaskDone = computed(() => taskStatus.value === NoteTaskStatus.Done)
+const taskDue = computed(() => getTaskDue(props.note))
+const taskDueLabel = computed(() => {
+  if (!taskDue.value) {
+    return ''
+  }
+
+  const due = parseISO(taskDue.value)
+  if (!isValid(due)) {
+    return taskDue.value
+  }
+
+  if (isToday(due)) {
+    return i18n.t('notes.tasks.today')
+  }
+
+  return format(due, 'dd.MM.yyyy')
+})
+const isTaskOverdue = computed(() => {
+  if (!taskDue.value || isTaskDone.value) {
+    return false
+  }
+
+  const due = parseISO(taskDue.value)
+  return isValid(due) && isPast(due) && !isToday(due)
+})
+const trailingMeta = computed(() => {
+  if (isTask.value && taskDueLabel.value) {
+    return taskDueLabel.value
+  }
+
+  return format(new Date(props.note.updatedAt), 'dd.MM.yyyy')
+})
+
 function onNoteClick(id: number, event: MouseEvent) {
   clearHistory()
   selectNote(id, event.shiftKey)
@@ -87,6 +130,17 @@ function onClickContextMenu() {
   if (selectedNoteIds.value.length > 1) {
     selectedNoteIds.value.forEach(id => highlightedNoteIds.value.add(id))
   }
+}
+
+async function onTaskDoneChange() {
+  if (!isTask.value) {
+    return
+  }
+
+  await updateNoteProperties(
+    props.note.id,
+    createTaskCompletionPatch(props.note),
+  )
 }
 
 function onDragStart(event: DragEvent) {
@@ -152,10 +206,22 @@ onClickOutside(noteRef, () => {
           "
         >
           <div
-            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="flex min-w-0 items-center gap-2 overflow-hidden"
             :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
-            {{ note.name || i18n.t("notes.untitled") }}
+            <Checkbox
+              v-if="isTask"
+              :model-value="isTaskDone"
+              class="mt-px"
+              @click.stop
+              @update:model-value="onTaskDoneChange"
+            />
+            <span
+              class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+              :class="{ 'text-muted-foreground line-through': isTaskDone }"
+            >
+              {{ note.name || i18n.t("notes.untitled") }}
+            </span>
           </div>
           <UiText
             v-if="isCompactListMode"
@@ -163,8 +229,9 @@ onClickOutside(noteRef, () => {
             variant="xs"
             muted
             class="meta shrink-0"
+            :class="{ 'text-destructive!': isTaskOverdue }"
           >
-            {{ format(new Date(note.updatedAt), "dd.MM.yyyy") }}
+            {{ trailingMeta }}
           </UiText>
           <UiText
             v-else
@@ -176,8 +243,8 @@ onClickOutside(noteRef, () => {
             <div>
               {{ folderName }}
             </div>
-            <div>
-              {{ format(new Date(note.updatedAt), "dd.MM.yyyy") }}
+            <div :class="{ 'text-destructive!': isTaskOverdue }">
+              {{ trailingMeta }}
             </div>
           </UiText>
         </div>

@@ -1,3 +1,4 @@
+export * from './taskProperties'
 export { useNoteContent } from './useNoteContent'
 export { useNoteFolderDragDrop } from './useNoteFolderDragDrop'
 export { useNoteFolders } from './useNoteFolders'

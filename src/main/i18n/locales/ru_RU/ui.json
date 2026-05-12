@@ -339,6 +339,27 @@
     "symbols": "Символы",
     "selectedMultiple": "Выбрано заметок: {{count}}",
     "noSelected": "Нет выбранных заметок",
+    "tasks": {
+      "title": "Задачи",
+      "today": "Сегодня",
+      "upcoming": "Предстоящие",
+      "completed": "Завершённые",
+      "complete": "Завершить",
+      "convertToTask": "Преобразовать в задачу",
+      "duePlaceholder": "Срок",
+      "status": {
+        "todo": "К выполнению",
+        "inProgress": "В работе",
+        "done": "Готово",
+        "blocked": "Заблокировано"
+      },
+      "priority": {
+        "label": "Приоритет",
+        "low": "Низкий",
+        "medium": "Средний",
+        "high": "Высокий"
+      }
+    },
     "dashboard": {
       "label": "Дашборд",
       "title": "Дашборд заметок",

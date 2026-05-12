@@ -31,6 +31,10 @@ Math is a calculator-style notebook for quick development math without leaving m
 
 Tools covers the small one-off tasks that usually send you to a browser tab: JSON comparison, encoders, decoders, generators, hash utilities, and text converters. Categories are listed on the left, and the active tool opens on the right.
 
+## Clipper
+
+Use [Clipper](/documentation/clipper) to save selected text, readable page content, and links from your browser into Code, Notes, or HTTP. Until browser store distribution is available, install it from a local build.
+
 ## General Settings
 
 ### Sidebar Toggle

@@ -118,6 +118,7 @@ export default defineConfig({
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Imports', link: '/documentation/imports' },
+            { text: 'Clipper', link: '/documentation/clipper' },
             { text: 'Themes', link: '/documentation/themes' },
           ],
         },

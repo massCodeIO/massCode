@@ -8,6 +8,7 @@ import {
   FileText,
   ListTodo,
   MoreHorizontal,
+  Plus,
   Search,
   X,
 } from 'lucide-vue-next'
@@ -101,14 +102,7 @@ function onKeydown(event: KeyboardEvent) {
         :tooltip="createActionTooltip"
         @click="createNoteBySelectedKindAndSelect"
       >
-        <ListTodo
-          v-if="notesCreateKind === 'task'"
-          class="h-4 w-4"
-        />
-        <FileText
-          v-else
-          class="h-4 w-4"
-        />
+        <Plus class="h-4 w-4" />
       </UiActionButton>
       <Popover.Popover
         v-if="!isSearch"

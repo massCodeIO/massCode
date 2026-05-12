@@ -8,10 +8,10 @@ description: "Set up massCode Clipper locally to save selected text, pages, and 
 massCode Clipper saves web content from your browser into the local massCode app. Use it to send selected code to Code, selected text or readable page content to Notes, and pages or links to HTTP as `GET` requests.
 
 <p align="center">
-<img :src="withBase('/clipper.png')" width='399'  alt="massCode Clipper popup">
+<img :src="withBase('/clipper.png')" width="399" alt="massCode Clipper popup">
 </p>
 
-The browser store version is not available yet. Until distribution is published, install the Clipper from a local build.
+The browser store version is not available yet. Until distribution is published, download a build from this page or install the Clipper from a local repository build.
 
 ## Enable The Local API
 
@@ -27,7 +27,17 @@ The Clipper talks to massCode through the local Integration API.
 
 If you change the API port, reload the app before using the new port from the browser extension.
 
-## Build The Clipper
+## Download The Clipper
+
+Download the archive for your browser:
+
+- [Chrome build](/clipper/downloads/clipper-chrome.zip)
+- [Firefox build](/clipper/downloads/clipper-firefox.zip)
+- [Safari build](/clipper/downloads/clipper-safari.zip)
+
+Unzip the archive before loading it into the browser. Browsers do not load these local development builds directly from the ZIP file.
+
+## Build The Clipper Locally
 
 Run the build from the repository root:
 
@@ -45,7 +55,9 @@ After installing the extension in a browser, open the Clipper popup, set the API
 
 ## Chrome
 
-1. Build the Chrome target:
+If you downloaded the archive, unzip `clipper-chrome.zip` first.
+
+If you are building from the repository, build the Chrome target:
 
 ```bash
 pnpm integrations:clipper:build:chrome
@@ -54,7 +66,7 @@ pnpm integrations:clipper:build:chrome
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
-5. Select `integrations/clipper/dist/chrome`.
+5. Select the unzipped Chrome build folder, or `integrations/clipper/dist/chrome` when building locally.
 
 After rebuilding, return to `chrome://extensions` and reload the unpacked extension.
 
@@ -62,34 +74,42 @@ After rebuilding, return to `chrome://extensions` and reload the unpacked extens
 
 Firefox does not load an unpacked extension by selecting the `dist` folder.
 
-1. Build the Firefox target:
+If you downloaded the archive, unzip `clipper-firefox.zip` first.
+
+If you are building from the repository, build the Firefox target:
 
 ```bash
 pnpm integrations:clipper:build:firefox
 ```
 
-2. Open `about:debugging#/runtime/this-firefox`.
-3. Click **Load Temporary Add-on**.
-4. Select `integrations/clipper/dist/firefox/manifest.json`.
+Then:
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on**.
+3. Select `manifest.json` inside the unzipped Firefox build folder, or `integrations/clipper/dist/firefox/manifest.json` when building locally.
 
 The temporary extension stays installed until Firefox restarts. Use **Reload** on `about:debugging` after rebuilding.
 
 ## Safari
 
-1. Build the Safari target:
+If you downloaded the archive, unzip `clipper-safari.zip` first.
+
+If you are building from the repository, build the Safari target:
 
 ```bash
 pnpm integrations:clipper:build:safari
 ```
 
-2. Open Safari.
-3. Choose **Safari** > **Settings**.
-4. Open **Advanced** and enable **Show features for web developers** or **Show Develop menu in menu bar**.
-5. Open the **Developer** tab.
-6. Enable **Allow unsigned extensions**.
-7. Click **Add Temporary Extension...**.
-8. Select `integrations/clipper/dist/safari`.
-9. Enable the extension in Safari's **Extensions** settings if Safari does not enable it automatically.
+Then:
+
+1. Open Safari.
+2. Choose **Safari** > **Settings**.
+3. Open **Advanced** and enable **Show features for web developers** or **Show Develop menu in menu bar**.
+4. Open the **Developer** tab.
+5. Enable **Allow unsigned extensions**.
+6. Click **Add Temporary Extension...**.
+7. Select the unzipped Safari build folder, or `integrations/clipper/dist/safari` when building locally.
+8. Enable the extension in Safari's **Extensions** settings if Safari does not enable it automatically.
 
 Safari removes temporary extensions after 24 hours or when you quit Safari. Safari also resets **Allow unsigned extensions** when you quit the browser, so enable it again before the next local test session.
 

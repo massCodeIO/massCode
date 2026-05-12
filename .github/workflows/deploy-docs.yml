@@ -22,10 +22,22 @@ jobs:
         with:
           node-version: 24.14.1
           cache: pnpm
-          cache-dependency-path: docs/website/pnpm-lock.yaml
+          cache-dependency-path: |
+            docs/website/pnpm-lock.yaml
+            integrations/clipper/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm --dir docs/website install
+        run: |
+          pnpm --dir docs/website install
+          pnpm --dir integrations/clipper install
+
+      - name: Build clipper downloads
+        run: |
+          pnpm --dir integrations/clipper package
+          mkdir -p docs/website/public/clipper/downloads
+          cp integrations/clipper/builds/*-chrome.zip docs/website/public/clipper/downloads/clipper-chrome.zip
+          cp integrations/clipper/builds/*-firefox.zip docs/website/public/clipper/downloads/clipper-firefox.zip
+          cp integrations/clipper/builds/*-safari.zip docs/website/public/clipper/downloads/clipper-safari.zip
 
       - name: Build docs
         run: pnpm docs:build

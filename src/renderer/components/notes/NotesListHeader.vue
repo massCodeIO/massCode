@@ -13,12 +13,7 @@ import {
   X,
 } from 'lucide-vue-next'
 
-const {
-  isSearch,
-  createNoteAndSelect,
-  createNoteBySelectedKindAndSelect,
-  createTaskAndSelect,
-} = useNotes()
+const { isSearch, createNoteBySelectedKindAndSelect } = useNotes()
 const {
   searchQuery,
   clearSearch,
@@ -36,14 +31,9 @@ const createActionTooltip = computed(() =>
     : i18n.t('action.new.note'),
 )
 
-async function onCreateNote() {
+function selectCreateKind(kind: 'note' | 'task') {
+  notesCreateKind.value = kind
   isCreateMenuOpen.value = false
-  await createNoteAndSelect()
-}
-
-async function onCreateTask() {
-  isCreateMenuOpen.value = false
-  await createTaskAndSelect()
 }
 
 watch(searchQuery, (v) => {
@@ -121,7 +111,7 @@ function onKeydown(event: KeyboardEvent) {
             variant="ghost"
             size="sm"
             class="w-full justify-start"
-            @click="onCreateNote"
+            @click="selectCreateKind('note')"
           >
             <FileText class="h-4 w-4" />
             {{ i18n.t("action.new.note") }}
@@ -134,7 +124,7 @@ function onKeydown(event: KeyboardEvent) {
             variant="ghost"
             size="sm"
             class="w-full justify-start"
-            @click="onCreateTask"
+            @click="selectCreateKind('task')"
           >
             <ListTodo class="h-4 w-4" />
             {{ i18n.t("action.new.task") }}

@@ -4,6 +4,7 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   createTaskCompletionPatch,
   getTaskDue,
+  getTaskPriority,
   getTaskStatus,
   isTaskNote,
   NoteTaskStatus,
@@ -15,7 +16,8 @@ import {
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
-import { CalendarClock } from 'lucide-vue-next'
+import { CalendarClock, Flag } from 'lucide-vue-next'
+import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
 interface NoteTagInfo {
   id: number
@@ -84,6 +86,10 @@ const folderName = computed(() => {
 const isTask = computed(() => isTaskNote(props.note))
 const taskStatus = computed(() => getTaskStatus(props.note))
 const isTaskDone = computed(() => taskStatus.value === NoteTaskStatus.Done)
+const taskPriority = computed(() => getTaskPriority(props.note))
+const taskPriorityFlagClass = computed(() =>
+  getTaskPriorityFlagClass(taskPriority.value),
+)
 const taskDue = computed(() => getTaskDue(props.note))
 const taskDueLabel = computed(() => {
   if (!taskDue.value) {
@@ -224,11 +230,16 @@ onClickOutside(noteRef, () => {
               @update:model-value="onTaskDoneChange"
             />
             <span
-              class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+              class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               :class="{ 'text-muted-foreground line-through': isTaskDone }"
             >
               {{ note.name || i18n.t("notes.untitled") }}
             </span>
+            <Flag
+              v-if="taskPriority"
+              class="size-3.5 shrink-0 fill-current stroke-current"
+              :class="taskPriorityFlagClass"
+            />
           </div>
           <UiText
             v-if="isCompactListMode"

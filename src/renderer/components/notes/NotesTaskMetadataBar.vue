@@ -18,6 +18,7 @@ import { cn } from '@/utils'
 import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
 import { format, isValid, parseISO } from 'date-fns'
 import { CalendarIcon, CircleCheck, Flag, X } from 'lucide-vue-next'
+import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
 interface NoteRecord {
   id: number
@@ -36,6 +37,9 @@ const defaultDuePlaceholder = today(getLocalTimeZone())
 const isTask = computed(() => isTaskNote(props.note))
 const status = computed(() => getTaskStatus(props.note))
 const priority = computed(() => getTaskPriority(props.note) || '')
+const priorityFlagClass = computed(() =>
+  getTaskPriorityFlagClass(priority.value),
+)
 const due = computed(() => getTaskDue(props.note))
 const selectedDueDate = computed<DateValue | undefined>(() => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(due.value)) {
@@ -77,12 +81,21 @@ const statusItems = [
 ]
 
 const priorityItems = [
-  { value: NoteTaskPriority.Low, label: i18n.t('notes.tasks.priority.low') },
+  {
+    value: NoteTaskPriority.Low,
+    label: i18n.t('notes.tasks.priority.low'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.Low),
+  },
   {
     value: NoteTaskPriority.Medium,
     label: i18n.t('notes.tasks.priority.medium'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.Medium),
   },
-  { value: NoteTaskPriority.High, label: i18n.t('notes.tasks.priority.high') },
+  {
+    value: NoteTaskPriority.High,
+    label: i18n.t('notes.tasks.priority.high'),
+    flagClass: getTaskPriorityFlagClass(NoteTaskPriority.High),
+  },
 ]
 
 async function updateStatus(value: unknown) {
@@ -179,7 +192,10 @@ async function clearDueAndClose(close: () => void) {
         @update:model-value="updatePriority"
       >
         <Select.SelectTrigger>
-          <Flag class="size-3.5" />
+          <Flag
+            class="size-3.5 fill-current stroke-current"
+            :class="priorityFlagClass"
+          />
           <Select.SelectValue
             :placeholder="i18n.t('notes.tasks.priority.label')"
           />
@@ -190,6 +206,10 @@ async function clearDueAndClose(close: () => void) {
             :key="item.value"
             :value="item.value"
           >
+            <Flag
+              class="size-3.5 fill-current stroke-current"
+              :class="item.flagClass"
+            />
             {{ item.label }}
           </Select.SelectItem>
         </Select.SelectContent>

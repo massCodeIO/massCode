@@ -248,6 +248,47 @@ describe('notes storage validations', () => {
     }
   })
 
+  it('filters date-only due dates by the local day', () => {
+    const previousTimeZone = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    vi.useFakeTimers()
+
+    try {
+      vi.setSystemTime(new Date(2026, 4, 12, 12))
+
+      const storage = createNotesNotesStorage()
+      const today = storage.createNote({ name: 'Local Today Task' })
+
+      storage.updateNoteProperties(today.id, {
+        properties: {
+          due: '2026-05-12',
+          status: 'todo',
+          type: 'task',
+        },
+      })
+
+      expect(
+        storage
+          .getNotes({
+            propertyDue: 'today',
+            propertyStatusNot: 'done',
+            propertyType: 'task',
+          })
+          .map(note => note.id),
+      ).toEqual([today.id])
+    }
+    finally {
+      vi.useRealTimers()
+
+      if (previousTimeZone === undefined) {
+        delete process.env.TZ
+      }
+      else {
+        process.env.TZ = previousTimeZone
+      }
+    }
+  })
+
   it('can limit search to note names', () => {
     const storage = createNotesNotesStorage()
     const named = storage.createNote({ name: 'Compose Notes' })

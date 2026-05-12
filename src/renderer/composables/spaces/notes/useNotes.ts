@@ -257,6 +257,21 @@ function getNextIndexedName(baseName: string, existingNames: string[]): string {
   return `${normalizedBase} ${maxIndex + 1}`
 }
 
+function hasDisplayedNote(noteId: number): boolean {
+  const source = isSearch.value ? notesBySearch.value : notes.value
+  return source?.some(note => note.id === noteId) ?? false
+}
+
+function selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId?: number) {
+  if (
+    previousNoteId !== undefined
+    && notesState.noteId === previousNoteId
+    && !hasDisplayedNote(previousNoteId)
+  ) {
+    selectFirstNote()
+  }
+}
+
 async function getNoteNamesForCreate(
   folderId: number | null,
 ): Promise<string[]> {
@@ -375,9 +390,12 @@ async function updateNoteProperties(
   noteId: number,
   data: NotePropertiesUpdate,
 ) {
+  const previousNoteId = notesState.noteId
+
   markPersistedStorageMutation()
   await api.notes.patchNotesByIdProperties(String(noteId), data)
   await getNotes(queryByLibraryOrFolderOrSearch.value)
+  selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId)
 }
 
 async function deleteNote(noteId: number) {

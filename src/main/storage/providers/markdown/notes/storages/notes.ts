@@ -11,7 +11,7 @@ import type {
   NoteUpdateResult,
 } from '../../../../contracts'
 import type { MarkdownNote, NotesState } from '../runtime/types'
-import { isAfter, isToday, startOfToday } from 'date-fns'
+import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
@@ -89,7 +89,22 @@ function normalizePropertyDate(value: unknown): Date | undefined {
     return value
   }
 
-  if (typeof value !== 'string' && typeof value !== 'number') {
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    if (!normalized) {
+      return undefined
+    }
+
+    const date = parseISO(normalized)
+    if (!Number.isNaN(date.getTime())) {
+      return date
+    }
+
+    const fallbackDate = new Date(normalized)
+    return Number.isNaN(fallbackDate.getTime()) ? undefined : fallbackDate
+  }
+
+  if (typeof value !== 'number') {
     return undefined
   }
 

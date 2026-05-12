@@ -15,6 +15,7 @@ import {
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
+import { CalendarClock } from 'lucide-vue-next'
 
 interface NoteTagInfo {
   id: number
@@ -86,7 +87,7 @@ const isTaskDone = computed(() => taskStatus.value === NoteTaskStatus.Done)
 const taskDue = computed(() => getTaskDue(props.note))
 const taskDueLabel = computed(() => {
   if (!taskDue.value) {
-    return ''
+    return i18n.t('notes.tasks.noDue')
   }
 
   const due = parseISO(taskDue.value)
@@ -109,13 +110,12 @@ const isTaskOverdue = computed(() => {
   return isValid(due) && isPast(due) && !isToday(due)
 })
 const trailingMeta = computed(() => {
-  if (isTask.value && taskDueLabel.value) {
+  if (isTask.value) {
     return taskDueLabel.value
   }
 
   return format(new Date(props.note.updatedAt), 'dd.MM.yyyy')
 })
-
 function onNoteClick(id: number, event: MouseEvent) {
   clearHistory()
   selectNote(id, event.shiftKey)
@@ -228,9 +228,13 @@ onClickOutside(noteRef, () => {
             as="div"
             variant="xs"
             muted
-            class="meta shrink-0"
+            class="meta flex shrink-0 items-center gap-1"
             :class="{ 'text-destructive!': isTaskOverdue }"
           >
+            <CalendarClock
+              v-if="isTask"
+              class="size-3.5"
+            />
             {{ trailingMeta }}
           </UiText>
           <UiText
@@ -243,7 +247,14 @@ onClickOutside(noteRef, () => {
             <div>
               {{ folderName }}
             </div>
-            <div :class="{ 'text-destructive!': isTaskOverdue }">
+            <div
+              class="flex items-center gap-1"
+              :class="{ 'text-destructive!': isTaskOverdue }"
+            >
+              <CalendarClock
+                v-if="isTask"
+                class="size-3.5"
+              />
               {{ trailingMeta }}
             </div>
           </UiText>

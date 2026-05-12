@@ -348,6 +348,7 @@
       "convertToNote": "Преобразовать в заметку",
       "duePlaceholder": "Срок",
       "clearDue": "Очистить срок",
+      "noDue": "Нет срока",
       "status": {
         "todo": "К выполнению",
         "inProgress": "В работе",

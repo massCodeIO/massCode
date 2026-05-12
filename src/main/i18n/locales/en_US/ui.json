@@ -342,6 +342,7 @@
       "convertToNote": "Convert to note",
       "duePlaceholder": "Due",
       "clearDue": "Clear due date",
+      "noDue": "No due",
       "status": {
         "todo": "Todo",
         "inProgress": "In progress",

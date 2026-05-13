@@ -244,7 +244,7 @@ const tokenSuggestionResults = computed<CommandPaletteTokenSuggestion[]>(() => {
       .slice(0, TOKEN_SUGGESTION_LIMIT)
       .map(option => ({
         id: `token-suggestion:tag:${option.spaceId}:${option.id}`,
-        type: 'token-suggestion',
+        type: 'token-suggestion' as const,
         title: `#${option.name}`,
         subtitle: i18n.t('commandPalette.suggestions.tagSubtitle', {
           space: getSpaceLabel(option.spaceId),
@@ -265,7 +265,7 @@ const tokenSuggestionResults = computed<CommandPaletteTokenSuggestion[]>(() => {
     .slice(0, TOKEN_SUGGESTION_LIMIT)
     .map(option => ({
       id: `token-suggestion:folder:${option.spaceId}:${option.id}`,
-      type: 'token-suggestion',
+      type: 'token-suggestion' as const,
       title: `/${option.path}`,
       subtitle: i18n.t('commandPalette.suggestions.folderSubtitle', {
         space: getSpaceLabel(option.spaceId),
@@ -274,6 +274,44 @@ const tokenSuggestionResults = computed<CommandPaletteTokenSuggestion[]>(() => {
       run: () => applyFolderSuggestion(option),
     }))
 })
+
+const scopedHomeFilterResults = computed<CommandPaletteTokenSuggestion[]>(
+  () => {
+    const scopeSpaceId = searchScopeSpaceId.value
+    if (!scopeSpaceId) {
+      return []
+    }
+
+    return [
+      ...searchFolderOptions.value
+        .filter(option => option.spaceId === scopeSpaceId)
+        .slice(0, TOKEN_SUGGESTION_LIMIT)
+        .map(option => ({
+          id: `token-suggestion:folder:${option.spaceId}:${option.id}`,
+          type: 'token-suggestion' as const,
+          title: `/${option.path}`,
+          subtitle: i18n.t('commandPalette.suggestions.folderSubtitle', {
+            space: getSpaceLabel(option.spaceId),
+          }),
+          icon: Folder,
+          run: () => applyFolderSuggestion(option),
+        })),
+      ...searchTagOptions.value
+        .filter(option => option.spaceId === scopeSpaceId)
+        .slice(0, TOKEN_SUGGESTION_LIMIT)
+        .map(option => ({
+          id: `token-suggestion:tag:${option.spaceId}:${option.id}`,
+          type: 'token-suggestion' as const,
+          title: `#${option.name}`,
+          subtitle: i18n.t('commandPalette.suggestions.tagSubtitle', {
+            space: getSpaceLabel(option.spaceId),
+          }),
+          icon: Hash,
+          run: () => applyTagSuggestion(option),
+        })),
+    ].slice(0, TOKEN_SUGGESTION_LIMIT)
+  },
+)
 
 async function loadCommandPaletteFilterOptions() {
   const [
@@ -1484,6 +1522,7 @@ export function useCommandPalette() {
     recentResults,
     scopeSpaceResults,
     scopedRecentResults,
+    scopedHomeFilterResults,
     searchScope,
     searchScopeSpaceId,
     searchFilterTokens,

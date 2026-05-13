@@ -16,6 +16,7 @@
     "commandPlaceholder": "Выполнить команду...",
     "scopedPlaceholder": "Искать в {{space}}...",
     "clearScope": "Сбросить область",
+    "clearFilter": "Сбросить фильтр: {{filter}}",
     "searching": "Поиск...",
     "empty": "Ничего не найдено",
     "groups": {
@@ -50,11 +51,11 @@
       "openPreferencesSubtitle": "Изменить настройки massCode"
     },
     "fallbacks": {
-      "createSnippet": "Создать сниппет \"{{query}}\"",
+      "createSnippet": "Создать сниппет \"{{- query}}\"",
       "createSnippetSubtitle": "Создать во входящих раздела Код",
-      "createNote": "Создать заметку \"{{query}}\"",
+      "createNote": "Создать заметку \"{{- query}}\"",
       "createNoteSubtitle": "Создать во входящих раздела Заметки",
-      "createHttpRequest": "Создать HTTP-запрос \"{{query}}\"",
+      "createHttpRequest": "Создать HTTP-запрос \"{{- query}}\"",
       "createHttpRequestFromUrl": "Создать HTTP-запрос из URL",
       "createHttpRequestSubtitle": "Создать в HTTP"
     },

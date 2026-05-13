@@ -62,7 +62,9 @@ const {
   scopeSpaceResults,
   scopedRecentResults,
   searchScope,
+  searchFilterTokens,
   selectSearchScope,
+  clearSearchFilterToken,
   setQuery,
   spaceResults,
   usageById,
@@ -566,7 +568,12 @@ function hasMoveToTrashAction(result: CommandPaletteResult) {
   )
 }
 
-function isRecentTarget(result: CommandPaletteResult, target: ItemResultType) {
+function isRecentTarget(
+  result: CommandPaletteResult,
+  target: ItemResultType,
+): result is Extract<CommandPaletteResult, { type: 'recent' }> & {
+  recent: { target: ItemResultType }
+} {
   return result.type === 'recent' && result.recent.target === target
 }
 
@@ -1174,11 +1181,24 @@ function onInputKeydown(event: KeyboardEvent) {
     return
   }
 
-  if (event.key === 'Backspace' && isScopedSearch.value && !query.value) {
+  if (
+    event.key === 'Backspace'
+    && !query.value
+    && (searchFilterTokens.value.length || isScopedSearch.value)
+  ) {
     event.preventDefault()
     event.stopPropagation()
     activeIndex.value = 0
     activeNavigationDirection.value = 0
+
+    const lastFilterToken
+      = searchFilterTokens.value[searchFilterTokens.value.length - 1]
+
+    if (lastFilterToken) {
+      clearSearchFilterToken(lastFilterToken.id)
+      return
+    }
+
     clearSearchScope()
     return
   }
@@ -1311,6 +1331,8 @@ watch(activeActionId, () => {
       :placeholder="inputPlaceholder"
       :scope-label="searchScopeLabel"
       :scope-clear-label="i18n.t('commandPalette.clearScope')"
+      :filter-tokens="searchFilterTokens"
+      @clear-filter-token="clearSearchFilterToken"
       @clear-scope="clearSearchScope"
       @update:model-value="onQueryChange"
       @keydown.capture="onInputKeydown"

@@ -29,6 +29,13 @@ import {
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import { Settings, Upload } from 'lucide-vue-next'
+import {
+  type CommandPaletteFolderFilter,
+  type CommandPaletteFolderOption,
+  type CommandPaletteTagFilter,
+  type CommandPaletteTagOption,
+  parseCommandPaletteQuery,
+} from './command-palette/queryParser'
 import { rankCommandPaletteResults } from './command-palette/ranking'
 import { LibraryFilter } from './types'
 
@@ -130,6 +137,8 @@ export type CommandPaletteResult =
 const isOpen = ref(false)
 const query = ref('')
 const searchScopeSpaceId = ref<SpaceId>()
+const searchTagFilter = ref<CommandPaletteTagFilter>()
+const searchFolderFilter = ref<CommandPaletteFolderFilter>()
 const isSearching = ref(false)
 const settledSearchQuery = ref('')
 const snippets = shallowRef<SnippetResult[]>([])
@@ -141,6 +150,11 @@ const recentEntries = shallowRef<CommandPaletteRecentEntry[]>(
 const usageEntries = shallowRef<CommandPaletteUsageEntry[]>(
   store.app.get<CommandPaletteUsageEntry[]>('commandPalette.usage') || [],
 )
+const codeTagOptions = shallowRef<CommandPaletteTagOption[]>([])
+const noteTagOptions = shallowRef<CommandPaletteTagOption[]>([])
+const codeFolderOptions = shallowRef<CommandPaletteFolderOption[]>([])
+const noteFolderOptions = shallowRef<CommandPaletteFolderOption[]>([])
+const httpFolderOptions = shallowRef<CommandPaletteFolderOption[]>([])
 let searchRunId = 0
 const RECENT_LIMIT = 30
 const ROOT_RECENT_LIMIT = 3
@@ -157,6 +171,122 @@ const importDialog = useImportDialog()
 const httpImportDialog = useHttpImportDialog()
 
 const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
+
+const searchTagOptions = computed<CommandPaletteTagOption[]>(() => [
+  ...codeTagOptions.value,
+  ...noteTagOptions.value,
+])
+
+const searchFolderOptions = computed<CommandPaletteFolderOption[]>(() => [
+  ...codeFolderOptions.value,
+  ...noteFolderOptions.value,
+  ...httpFolderOptions.value,
+])
+
+const searchFilterTokens = computed(() => {
+  const tokens: { clearLabel: string, id: string, label: string }[] = []
+
+  if (searchFolderFilter.value) {
+    const label = `/${searchFolderFilter.value.path}`
+    tokens.push({
+      clearLabel: i18n.t('commandPalette.clearFilter', { filter: label }),
+      id: 'folder',
+      label,
+    })
+  }
+
+  if (searchTagFilter.value) {
+    const label = `#${searchTagFilter.value.name}`
+    tokens.push({
+      clearLabel: i18n.t('commandPalette.clearFilter', { filter: label }),
+      id: 'tag',
+      label,
+    })
+  }
+
+  return tokens
+})
+
+async function loadCommandPaletteFilterOptions() {
+  const [
+    codeTagsResult,
+    noteTagsResult,
+    codeFoldersResult,
+    noteFoldersResult,
+    httpFoldersResult,
+  ] = await Promise.allSettled([
+    api.tags.getTags(),
+    api.noteTags.getNoteTags(),
+    api.folders.getFoldersTree(),
+    api.noteFolders.getNoteFoldersTree(),
+    api.httpFolders.getHttpFoldersTree(),
+  ])
+
+  if (codeTagsResult.status === 'fulfilled') {
+    codeTagOptions.value = codeTagsResult.value.data.map(tag => ({
+      id: tag.id,
+      name: tag.name,
+      spaceId: 'code',
+    }))
+  }
+
+  if (noteTagsResult.status === 'fulfilled') {
+    noteTagOptions.value = noteTagsResult.value.data.map(tag => ({
+      id: tag.id,
+      name: tag.name,
+      spaceId: 'notes',
+    }))
+  }
+
+  if (codeFoldersResult.status === 'fulfilled') {
+    codeFolderOptions.value = getCommandPaletteFolderOptions(
+      codeFoldersResult.value.data,
+      'code',
+    )
+  }
+
+  if (noteFoldersResult.status === 'fulfilled') {
+    noteFolderOptions.value = getCommandPaletteFolderOptions(
+      noteFoldersResult.value.data,
+      'notes',
+    )
+  }
+
+  if (httpFoldersResult.status === 'fulfilled') {
+    httpFolderOptions.value = getCommandPaletteFolderOptions(
+      httpFoldersResult.value.data,
+      'http',
+    )
+  }
+
+  applyLoadedSearchFilterOptions()
+}
+
+interface CommandPaletteFolderTreeItem {
+  id: number
+  name: string
+  children?: CommandPaletteFolderTreeItem[]
+}
+
+function getCommandPaletteFolderOptions(
+  folders: CommandPaletteFolderTreeItem[],
+  spaceId: CommandPaletteFolderOption['spaceId'],
+  parentPath = '',
+): CommandPaletteFolderOption[] {
+  return folders.flatMap((folder) => {
+    const path = parentPath ? `${parentPath}/${folder.name}` : folder.name
+
+    return [
+      {
+        id: folder.id,
+        name: folder.name,
+        path,
+        spaceId,
+      },
+      ...getCommandPaletteFolderOptions(folder.children ?? [], spaceId, path),
+    ]
+  })
+}
 
 function getResultTitle(value: string | undefined, fallback: string) {
   return value?.trim() || fallback
@@ -462,6 +592,8 @@ function resetSearchResults() {
 async function runSearch(value: string) {
   const search = value.trim()
   const scopeSpaceId = searchScopeSpaceId.value
+  const tagFilter = searchTagFilter.value
+  const folderFilter = searchFolderFilter.value
 
   if (search !== query.value.trim()) {
     return
@@ -480,16 +612,40 @@ async function runSearch(value: string) {
   const shouldSearchSnippets = !scopeSpaceId || scopeSpaceId === 'code'
   const shouldSearchNotes = !scopeSpaceId || scopeSpaceId === 'notes'
   const shouldSearchHttpRequests = !scopeSpaceId || scopeSpaceId === 'http'
+  const snippetTagId = tagFilter?.spaceId === 'code' ? tagFilter.id : undefined
+  const noteTagId = tagFilter?.spaceId === 'notes' ? tagFilter.id : undefined
+  const snippetFolderId
+    = folderFilter?.spaceId === 'code' ? folderFilter.id : undefined
+  const noteFolderId
+    = folderFilter?.spaceId === 'notes' ? folderFilter.id : undefined
+  const httpFolderId
+    = folderFilter?.spaceId === 'http' ? folderFilter.id : undefined
   const [snippetsResult, notesResult, httpRequestsResult]
     = await Promise.allSettled([
       shouldSearchSnippets
-        ? api.snippets.getSnippets({ search, searchNameOnly: 1, isDeleted: 0 })
+        ? api.snippets.getSnippets({
+            search,
+            searchNameOnly: 1,
+            folderId: snippetFolderId,
+            isDeleted: 0,
+            tagId: snippetTagId,
+          })
         : Promise.resolve({ data: [] as SnippetResult[] }),
       shouldSearchNotes
-        ? api.notes.getNotes({ search, searchNameOnly: 1, isDeleted: 0 })
+        ? api.notes.getNotes({
+            search,
+            searchNameOnly: 1,
+            folderId: noteFolderId,
+            isDeleted: 0,
+            tagId: noteTagId,
+          })
         : Promise.resolve({ data: [] as NoteResult[] }),
       shouldSearchHttpRequests
-        ? api.httpRequests.getHttpRequests({ search, searchNameOnly: 1 })
+        ? api.httpRequests.getHttpRequests({
+            search,
+            searchNameOnly: 1,
+            folderId: httpFolderId,
+          })
         : Promise.resolve({ data: [] as HttpRequestResult[] }),
     ])
 
@@ -497,6 +653,8 @@ async function runSearch(value: string) {
     runId !== searchRunId
     || search !== query.value.trim()
     || scopeSpaceId !== searchScopeSpaceId.value
+    || tagFilter?.id !== searchTagFilter.value?.id
+    || folderFilter?.id !== searchFolderFilter.value?.id
   ) {
     return
   }
@@ -515,57 +673,73 @@ async function runSearch(value: string) {
 
 const debouncedRunSearch = useDebounceFn(runSearch, 180)
 
-function getSpaceScopeShortcut(value: string) {
-  if (searchScopeSpaceId.value) {
+function hasSearchFilterToken(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .some(
+      word =>
+        (word.startsWith('#') || word.startsWith('/')) && word.length > 1,
+    )
+}
+
+function applyLoadedSearchFilterOptions() {
+  if (!isOpen.value || !hasSearchFilterToken(query.value)) {
+    return
+  }
+
+  setQuery(query.value)
+}
+
+function getParsedSpaceScopeQuery(value: string) {
+  if (!searchScopeSpaceId.value && value.trimStart().startsWith('>')) {
     return null
   }
 
-  if (!value.startsWith('@')) {
-    return null
+  const parsedQuery = parseCommandPaletteQuery(value, scopeSpaceResults.value, {
+    activeScopeSpaceId: searchScopeSpaceId.value,
+    folderOptions: searchFolderOptions.value,
+    tagOptions: searchTagOptions.value,
+  })
+  if (!parsedQuery.scopeSpaceId) {
+    return parsedQuery.tagFilter || parsedQuery.folderFilter
+      ? parsedQuery
+      : null
   }
 
-  const shortcut = value.slice(1)
-  const separatorIndex = [...shortcut].findIndex(
-    character => character.trim() === '',
-  )
-
-  if (separatorIndex < 0) {
-    return null
-  }
-
-  const scopeQuery = shortcut.slice(0, separatorIndex).trim().toLowerCase()
-  const space = scopeSpaceResults.value.find(
-    result =>
-      result.spaceId === scopeQuery
-      || result.title.trim().toLowerCase() === scopeQuery,
-  )
-
-  if (!space) {
-    return null
-  }
-
-  return {
-    query: shortcut.slice(separatorIndex + 1).trimStart(),
-    spaceId: space.spaceId,
-  }
+  return parsedQuery
 }
 
 function setQuery(value: string) {
-  const scopeShortcut = getSpaceScopeShortcut(value)
+  const parsedScopeQuery = getParsedSpaceScopeQuery(value)
 
-  if (scopeShortcut) {
+  if (
+    parsedScopeQuery?.scopeSpaceId
+    || parsedScopeQuery?.tagFilter
+    || parsedScopeQuery?.folderFilter
+  ) {
     searchRunId += 1
-    query.value = scopeShortcut.query
-    searchScopeSpaceId.value = scopeShortcut.spaceId
+    query.value = parsedScopeQuery.query
+    if (parsedScopeQuery.scopeSpaceId) {
+      searchScopeSpaceId.value = parsedScopeQuery.scopeSpaceId
+      searchTagFilter.value = undefined
+      searchFolderFilter.value = undefined
+    }
+    if (parsedScopeQuery.tagFilter) {
+      searchTagFilter.value = parsedScopeQuery.tagFilter
+    }
+    if (parsedScopeQuery.folderFilter) {
+      searchFolderFilter.value = parsedScopeQuery.folderFilter
+    }
     resetSearchResults()
 
-    if (!scopeShortcut.query.trim()) {
+    if (!parsedScopeQuery.query.trim()) {
       isSearching.value = false
       return
     }
 
     isSearching.value = true
-    debouncedRunSearch(scopeShortcut.query)
+    debouncedRunSearch(parsedScopeQuery.query)
     return
   }
 
@@ -586,6 +760,7 @@ function setQuery(value: string) {
 
 function openPalette() {
   isOpen.value = true
+  void loadCommandPaletteFilterOptions()
 }
 
 function openCommandMode() {
@@ -599,12 +774,17 @@ function closePalette() {
 
 function togglePalette() {
   isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    void loadCommandPaletteFilterOptions()
+  }
 }
 
 function clearPalette() {
   searchRunId += 1
   query.value = ''
   searchScopeSpaceId.value = undefined
+  searchTagFilter.value = undefined
+  searchFolderFilter.value = undefined
   resetSearchResults()
   isSearching.value = false
 }
@@ -616,6 +796,8 @@ function selectSearchScope(spaceId: SpaceId) {
 
   searchRunId += 1
   searchScopeSpaceId.value = spaceId
+  searchTagFilter.value = undefined
+  searchFolderFilter.value = undefined
   query.value = ''
   resetSearchResults()
   isSearching.value = false
@@ -624,9 +806,35 @@ function selectSearchScope(spaceId: SpaceId) {
 function clearSearchScope() {
   searchRunId += 1
   searchScopeSpaceId.value = undefined
+  searchTagFilter.value = undefined
+  searchFolderFilter.value = undefined
   query.value = ''
   resetSearchResults()
   isSearching.value = false
+}
+
+function clearSearchFilterToken(id: string) {
+  if (id !== 'tag' && id !== 'folder') {
+    return
+  }
+
+  searchRunId += 1
+  if (id === 'tag') {
+    searchTagFilter.value = undefined
+  }
+  else {
+    searchFolderFilter.value = undefined
+  }
+  resetSearchResults()
+
+  const search = query.value.trim()
+  if (!search) {
+    isSearching.value = false
+    return
+  }
+
+  isSearching.value = true
+  debouncedRunSearch(query.value)
 }
 
 async function openSpace(spaceId: SpaceId) {
@@ -1147,7 +1355,9 @@ export function useCommandPalette() {
     scopedRecentResults,
     searchScope,
     searchScopeSpaceId,
+    searchFilterTokens,
     selectSearchScope,
+    clearSearchFilterToken,
     clearSearchScope,
     setQuery,
     snippetResults,

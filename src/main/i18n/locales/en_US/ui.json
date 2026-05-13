@@ -16,6 +16,7 @@
     "commandPlaceholder": "Run command...",
     "scopedPlaceholder": "Search in {{space}}...",
     "clearScope": "Clear scope",
+    "clearFilter": "Clear filter: {{filter}}",
     "searching": "Searching...",
     "empty": "No results found",
     "groups": {
@@ -50,11 +51,11 @@
       "openPreferencesSubtitle": "Change massCode settings"
     },
     "fallbacks": {
-      "createSnippet": "Create snippet \"{{query}}\"",
+      "createSnippet": "Create snippet \"{{- query}}\"",
       "createSnippetSubtitle": "Create in Code Inbox",
-      "createNote": "Create note \"{{query}}\"",
+      "createNote": "Create note \"{{- query}}\"",
       "createNoteSubtitle": "Create in Notes Inbox",
-      "createHttpRequest": "Create HTTP request \"{{query}}\"",
+      "createHttpRequest": "Create HTTP request \"{{- query}}\"",
       "createHttpRequestFromUrl": "Create HTTP request from URL",
       "createHttpRequestSubtitle": "Create in HTTP"
     },

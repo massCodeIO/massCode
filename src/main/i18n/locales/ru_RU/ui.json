@@ -74,9 +74,6 @@
       "back": "Назад"
     }
   },
-  "search": {
-    "removeContextFilter": "Снять фильтр: {{filter}}"
-  },
   "imports": {
     "title": {
       "code": "Импорт сниппетов",
@@ -558,6 +555,7 @@
     "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
+    "searchIn": "Поиск в {{- context}}",
     "addTag": "Добавить тег",
     "selectLanguage": "Выбрать язык"
   }

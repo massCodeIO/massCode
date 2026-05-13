@@ -74,9 +74,6 @@
       "back": "Back"
     }
   },
-  "search": {
-    "removeContextFilter": "Remove filter: {{filter}}"
-  },
   "imports": {
     "title": {
       "code": "Import snippets",
@@ -552,6 +549,7 @@
     "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
     "search": "Search",
+    "searchIn": "Search in {{- context}}",
     "addTag": "Add Tag",
     "selectLanguage": "Select Language"
   }

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Popover from '@/components/ui/shadcn/popover'
-import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import {
   useNoteFolders,
   useNotes,
@@ -21,14 +20,7 @@ import {
   X,
 } from 'lucide-vue-next'
 
-const {
-  isSearch,
-  createNoteBySelectedKindAndSelect,
-  getNotes,
-  isRestoreStateBlocked,
-  selectFirstNote,
-  withNotesLoading,
-} = useNotes()
+const { isSearch, createNoteBySelectedKindAndSelect } = useNotes()
 const {
   searchQuery,
   clearSearch,
@@ -38,8 +30,7 @@ const {
   displayedNotes,
 } = useNoteSearch()
 const { isFocusedSearch, notesCreateKind, notesState } = useNotesApp()
-const { clearFolderSelection, folders, getFolderByIdFromTree }
-  = useNoteFolders()
+const { folders, getFolderByIdFromTree } = useNoteFolders()
 const { tags } = useNoteTags()
 const isCreateMenuOpen = ref(false)
 
@@ -75,10 +66,10 @@ const searchContextLabel = computed(() => {
     : undefined
 })
 
-const removeSearchContextLabel = computed(() =>
-  i18n.t('search.removeContextFilter', {
-    filter: searchContextLabel.value || '',
-  }),
+const searchPlaceholder = computed(() =>
+  searchContextLabel.value
+    ? i18n.t('placeholder.searchIn', { context: searchContextLabel.value })
+    : i18n.t('placeholder.searchNotes'),
 )
 
 function selectCreateKind(kind: 'note' | 'task') {
@@ -114,56 +105,16 @@ function onKeydown(event: KeyboardEvent) {
     clearSearch(true)
   }
 }
-
-async function clearSearchContext() {
-  await withNotesLoading(async () => {
-    if (notesState.tagId) {
-      notesState.tagId = undefined
-    }
-    else if (notesState.folderId) {
-      clearFolderSelection()
-    }
-    else if (notesState.libraryFilter) {
-      notesState.libraryFilter = undefined
-    }
-
-    isRestoreStateBlocked.value = true
-    await getNotes()
-    selectFirstNote()
-  })
-}
 </script>
 
 <template>
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
       <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
-      <div
-        v-if="searchContextLabel"
-        class="bg-muted text-muted-foreground ml-2 flex max-w-32 shrink-0 items-center rounded-full px-2 py-0.5 text-xs"
-      >
-        <span class="truncate">{{ searchContextLabel }}</span>
-        <Tooltip.Tooltip>
-          <Tooltip.TooltipTrigger as-child>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="ml-1 size-4 rounded-full p-0"
-              :aria-label="removeSearchContextLabel"
-              @click="clearSearchContext"
-            >
-              <X class="size-3" />
-            </Button>
-          </Tooltip.TooltipTrigger>
-          <Tooltip.TooltipContent>
-            {{ removeSearchContextLabel }}
-          </Tooltip.TooltipContent>
-        </Tooltip.Tooltip>
-      </div>
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"
-          :placeholder="i18n.t('placeholder.searchNotes')"
+          :placeholder="searchPlaceholder"
           variant="ghost"
           :focus="isFocusedSearch"
           @blur="isFocusedSearch = false"

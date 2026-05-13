@@ -93,6 +93,7 @@ Use massCode as a focused snippet workspace with multi-level folders, tags, and 
 
 Write longer markdown documents right next to your snippets: project docs, drafts, research notes, and personal knowledge bases.
 
+- Task notes with status, priority, due dates, and Today / Upcoming / Completed views
 - Dashboard with activity overview, recent notes, top linked notes, and a notes graph preview
 - Editor, Live Preview, and Preview modes
 - Fullscreen notes graph for exploring internal links between notes
@@ -139,6 +140,24 @@ Jump to spaces, snippets, notes, HTTP requests, and common actions from anywhere
 - Search across snippets, notes, HTTP requests, spaces, and commands
 - Run create actions for snippets, notes, HTTP requests, and folders
 - Scope search to a space with `@` or open command mode with `>`
+
+### Imports
+
+Bring existing work into your vault with preview-first imports for snippets, notes, and API collections.
+
+- Import snippets from VS Code, Raycast, SnippetsLab, and public GitHub Gists
+- Import markdown notes from Obsidian folders
+- Import HTTP collections from OpenAPI, Postman, and Bruno
+- Review detected items, folders, tags, environments, and warnings before writing anything
+
+### Browser Clipper
+
+Save web content from Chrome, Firefox, or Safari into the local massCode app.
+
+- Save selected code as snippets
+- Save selected text or readable page content as notes
+- Save pages or links as HTTP `GET` requests
+- Connect through the local Integration API with an API token
 
 ## Markdown Vault
 

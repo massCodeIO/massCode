@@ -1,8 +1,15 @@
-import type { MarkdownNote } from './types'
 import {
   findInternalLinks,
   resolveInternalLinkTargetByTitle,
 } from '../../../../../../shared/notes/internalLinks'
+
+export interface NotesGraphNoteLookup {
+  id: number
+  name: string
+  content: string
+  folderId: number | null
+  tags: number[]
+}
 
 export interface NotesGraphSnippetLookup {
   id: number
@@ -28,7 +35,7 @@ export interface NotesGraphData {
 }
 
 interface BuildNotesGraphInput {
-  notes: MarkdownNote[]
+  notes: NotesGraphNoteLookup[]
   snippets: NotesGraphSnippetLookup[]
 }
 

@@ -1,4 +1,4 @@
-import type { MarkdownNote } from '../types'
+import type { NotesGraphNoteLookup } from '../graph'
 import { describe, expect, it } from 'vitest'
 import { buildNotesGraph } from '../graph'
 
@@ -11,20 +11,14 @@ function createNote(
   id: number,
   name: string,
   content: string,
-  overrides: Partial<MarkdownNote> = {},
-): MarkdownNote {
+  overrides: Partial<NotesGraphNoteLookup> = {},
+): NotesGraphNoteLookup {
   return {
     content,
-    createdAt: 1,
-    description: null,
-    filePath: `${name}.md`,
     folderId: null,
     id,
-    isDeleted: 0,
-    isFavorites: 0,
     name,
     tags: [],
-    updatedAt: 1,
     ...overrides,
   }
 }

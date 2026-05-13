@@ -36,6 +36,7 @@ function createNote(id: number, name: string): MarkdownNote {
     isDeleted: 0,
     isFavorites: 0,
     name,
+    properties: {},
     tags: [],
     updatedAt: now,
   }

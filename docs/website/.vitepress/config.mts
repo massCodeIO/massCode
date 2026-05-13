@@ -125,7 +125,7 @@ export default defineConfig({
         {
           text: 'Code',
           items: [
-            { text: 'Code', link: '/documentation/code/' },
+            { text: 'Overview', link: '/documentation/code/' },
             { text: 'Snippets', link: '/documentation/code/snippets' },
             { text: 'Fragments', link: '/documentation/code/fragments' },
             { text: 'Description', link: '/documentation/code/description' },
@@ -138,7 +138,7 @@ export default defineConfig({
         {
           text: 'Notes',
           items: [
-            { text: 'Notes', link: '/documentation/notes/' },
+            { text: 'Overview', link: '/documentation/notes/' },
             { text: 'Dashboard', link: '/documentation/notes/dashboard' },
             { text: 'Library', link: '/documentation/notes/library' },
             { text: 'Tasks', link: '/documentation/notes/tasks' },
@@ -156,7 +156,7 @@ export default defineConfig({
         {
           text: 'HTTP',
           items: [
-            { text: 'HTTP Client', link: '/documentation/http/' },
+            { text: 'Overview', link: '/documentation/http/' },
             { text: 'Requests', link: '/documentation/http/requests' },
             { text: 'Environments', link: '/documentation/http/environments' },
             { text: 'Importing Collections', link: '/documentation/http/importing' },
@@ -165,7 +165,7 @@ export default defineConfig({
         {
           text: 'Math',
           items: [
-            { text: 'Math Notebook', link: '/documentation/math/' },
+            { text: 'Overview', link: '/documentation/math/' },
           ],
         },
         {

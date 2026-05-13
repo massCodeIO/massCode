@@ -173,8 +173,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@parcel/watcher",
       "better-sqlite3",
-      "electron"
+      "electron",
+      "esbuild",
+      "simple-git-hooks",
+      "vue-demi"
     ]
   },
   "simple-git-hooks": {

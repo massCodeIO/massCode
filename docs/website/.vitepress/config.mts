@@ -121,6 +121,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/documentation/' },
             { text: 'Command Palette', link: '/documentation/command-palette' },
+            { text: 'Search', link: '/documentation/search' },
             { text: 'Storage', link: '/documentation/storage' },
             { text: 'Sync', link: '/documentation/sync' },
             { text: 'Imports', link: '/documentation/imports' },
@@ -138,7 +139,6 @@ export default defineConfig({
             { text: 'Library', link: '/documentation/code/library' },
             { text: 'Folders', link: '/documentation/code/folders' },
             { text: 'Tags', link: '/documentation/code/tags' },
-            { text: 'Search', link: '/documentation/code/search' },
           ],
         },
         {
@@ -156,7 +156,6 @@ export default defineConfig({
             { text: 'Mermaid', link: '/documentation/notes/mermaid' },
             { text: 'Mindmap', link: '/documentation/notes/mindmap' },
             { text: 'Presentation', link: '/documentation/notes/presentation' },
-            { text: 'Search', link: '/documentation/notes/search' },
           ],
         },
         {

@@ -9,6 +9,8 @@ massCode is a free and open source developer workspace for code snippets, markdo
 
 Switch between Spaces using the rail on the left side of the app, or use the [Command Palette](/documentation/command-palette) to jump to spaces, content, and actions from the keyboard.
 
+Use [Search](/documentation/search) to narrow the current list in Code, Notes, or HTTP, or to build filtered searches from the Command Palette.
+
 <img :src="withBase('/preview.png')">
 
 ## Code

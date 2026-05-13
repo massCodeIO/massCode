@@ -58,7 +58,7 @@ Folders can have a default language, so new snippets inside that folder start wi
 
 ### Search
 
-[Search](/documentation/code/search) finds snippets by title or content across your library when you remember part of the code but not where you saved it.
+[Search](/documentation/search) finds snippets by title or content and narrows the current folder, tag, or library view when one is selected.
 
 ## Editor Tools
 

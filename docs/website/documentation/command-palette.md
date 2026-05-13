@@ -26,6 +26,8 @@ The palette searches by title across searchable content:
 
 Search results are ranked with your recent usage, so items you open often move higher over time.
 
+Palette search also supports space scopes. In massCode 5.6 and later, it can also use tag and folder filters. See [Search](/documentation/search#search-from-the-command-palette) for the full search workflow.
+
 ## Run Commands
 
 Commands create new content or open app-level actions without switching spaces first.
@@ -50,19 +52,6 @@ Use command mode when you want to run an action instead of opening existing cont
 4. Press <kbd>Enter</kbd> to run the selected command.
 
 Press <kbd>Esc</kbd> to leave command mode and return to the full palette.
-
-## Search In A Space
-
-Use space mode when you want to search only one part of massCode.
-
-1. Open the palette.
-2. Type `@`.
-3. Select a space, such as **Code**, **Notes**, or **HTTP**.
-4. Type your search query.
-
-You can also type the scope directly, for example `@code auth` or `@notes release`.
-
-Press <kbd>Esc</kbd> to leave the active scope and return to the full palette.
 
 ## Create From Search
 

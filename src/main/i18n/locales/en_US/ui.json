@@ -455,6 +455,7 @@
   },
   "action": {
     "close": "Close",
+    "clearSearch": "Clear Search",
     "defaultLanguage": "Default Language",
     "duplicate": "Duplicate",
     "rename": "Rename",

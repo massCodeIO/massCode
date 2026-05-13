@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/shadcn/button'
 import { useApp, useFolders, useSnippets, useTags } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
@@ -85,25 +84,26 @@ function onKeydown(event: KeyboardEvent) {
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
       <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
-      <div class="flex-grow">
+      <div class="min-w-0 flex-grow">
         <UiInput
           v-model="searchQuery"
           :placeholder="searchPlaceholder"
           variant="ghost"
+          class="truncate"
           :focus="isFocusedSearch"
           @blur="isFocusedSearch = false"
           @keydown="onKeydown"
         />
       </div>
-      <Button
+      <UiActionButton
         v-if="searchQuery"
-        variant="ghost"
+        :tooltip="i18n.t('action.clearSearch')"
         @click="clearSearch(true)"
       >
         <X class="h-4 w-4" />
-      </Button>
+      </UiActionButton>
       <UiActionButton
-        v-if="!isSearch"
+        v-else-if="!isSearch"
         :tooltip="i18n.t('action.new.snippet')"
         @click="createSnippetAndSelect"
       >

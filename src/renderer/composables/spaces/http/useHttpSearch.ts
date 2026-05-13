@@ -39,7 +39,7 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getHttpRequests({ search: searchQuery.value })
+    await getHttpRequests()
     selectFirstRequest()
     searchSelectedIndex.value = 0
   }

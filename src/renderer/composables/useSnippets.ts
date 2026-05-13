@@ -147,9 +147,8 @@ function getActionTargetSnippets(
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: SnippetsQuery = {}
 
-  if (isSearch.value) {
+  if (isSearch.value && searchQuery.value) {
     query.search = searchQuery.value
-    return query
   }
 
   if (state.tagId) {
@@ -586,7 +585,7 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getSnippets({ search: searchQuery.value })
+    await getSnippets()
     selectFirstSnippet()
     searchSelectedIndex.value = 0
     nextTick(() => scrollToSnippetIndex(0))

@@ -64,9 +64,8 @@ const selectedRequestsForCreate = ref<HttpRequestsResponse>([])
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: HttpRequestsQuery = {}
 
-  if (isSearch.value) {
+  if (isSearch.value && searchQuery.value) {
     query.search = searchQuery.value
-    return query
   }
 
   if (httpState.folderId) {

@@ -37,7 +37,7 @@ async function search() {
     isSearch.value = true
     isRestoreStateBlocked.value = false
 
-    await getNotes({ search: searchQuery.value })
+    await getNotes()
     selectFirstNote()
     searchSelectedIndex.value = 0
   }

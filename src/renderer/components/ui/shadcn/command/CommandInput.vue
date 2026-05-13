@@ -7,6 +7,12 @@ import { LoaderCircle, Search, X } from 'lucide-vue-next'
 import { ListboxFilter, useForwardProps } from 'reka-ui'
 import { useCommand } from '.'
 
+interface CommandInputFilterToken {
+  clearLabel: string
+  id: string
+  label: string
+}
+
 defineOptions({
   inheritAttrs: false,
 })
@@ -15,12 +21,14 @@ const props = defineProps<
   ListboxFilterProps & {
     class?: HTMLAttributes['class']
     isLoading?: boolean
+    filterTokens?: CommandInputFilterToken[]
     scopeClearLabel?: string
     scopeLabel?: string
   }
 >()
 const emit = defineEmits<{
   'clearScope': []
+  'clearFilterToken': [id: string]
   'update:modelValue': [value: string]
   'searchChange': [value: string]
 }>()
@@ -29,6 +37,7 @@ const delegatedProps = reactiveOmit(
   props,
   'class',
   'isLoading',
+  'filterTokens',
   'modelValue',
   'scopeClearLabel',
   'scopeLabel',
@@ -71,6 +80,17 @@ function updateSearch(value: string) {
       @click="emit('clearScope')"
     >
       <span class="truncate">{{ scopeLabel }}</span>
+      <X class="size-3 shrink-0" />
+    </button>
+    <button
+      v-for="token in filterTokens"
+      :key="token.id"
+      type="button"
+      class="bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-6 max-w-36 shrink-0 items-center gap-1 rounded-sm px-2 text-xs"
+      :aria-label="token.clearLabel"
+      @click="emit('clearFilterToken', token.id)"
+    >
+      <span class="truncate">{{ token.label }}</span>
       <X class="size-3 shrink-0" />
     </button>
     <ListboxFilter

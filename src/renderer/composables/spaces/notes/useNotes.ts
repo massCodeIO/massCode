@@ -139,9 +139,8 @@ function getActionTargetNotes(targetIds: number[], fallbackNote?: NoteRecord) {
 const queryByLibraryOrFolderOrSearch = computed(() => {
   const query: NotesQuery = {}
 
-  if (isSearch.value) {
+  if (isSearch.value && searchQuery.value) {
     query.search = searchQuery.value
-    return query
   }
 
   if (notesState.tagId) {

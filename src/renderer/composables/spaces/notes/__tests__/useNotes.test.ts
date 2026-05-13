@@ -8,6 +8,8 @@ globalThis.shallowRef = shallowRef
 globalThis.watch = watch
 
 interface SetupOptions {
+  folderId?: number
+  isSearch?: boolean
   libraryFilter?: string
   nextNotes?: Array<{
     id: number
@@ -15,19 +17,27 @@ interface SetupOptions {
     name?: string
   }>
   noteId?: number
+  searchQuery?: string
+  tagId?: number
 }
 
 async function setup(options: SetupOptions = {}) {
   vi.resetModules()
 
   const notesState = reactive<{
+    folderId?: number
     libraryFilter?: string
     noteId?: number
+    tagId?: number
   }>({
+    folderId: options.folderId,
     libraryFilter: options.libraryFilter ?? 'today',
     noteId: options.noteId ?? 1,
+    tagId: options.tagId,
   })
   const notesCreateKind = ref<'note' | 'task'>('note')
+  const isSearch = ref(options.isSearch ?? false)
+  const searchQuery = ref(options.searchQuery ?? '')
   const nextNotes = options.nextNotes ?? [{ id: 2 }]
   const patchNotesByIdProperties = vi.fn(async () => undefined)
   const getNotes = vi.fn(async () => ({ data: nextNotes }))
@@ -92,9 +102,9 @@ async function setup(options: SetupOptions = {}) {
   }))
 
   vi.doMock('../useNoteSearch', () => ({
-    isSearch: ref(false),
+    isSearch,
     notesBySearch: ref(),
-    searchQuery: ref(''),
+    searchQuery,
   }))
 
   const { selectedNoteIds, useNotes } = await import('../useNotes')
@@ -104,6 +114,7 @@ async function setup(options: SetupOptions = {}) {
     notesState,
     patchNotesByIdProperties,
     postNotes,
+    searchQuery,
     selectedNoteIds,
     useNotes,
   }
@@ -185,5 +196,37 @@ describe('useNotes', () => {
     })
     expect(context.notesState.libraryFilter).toBe('all')
     expect(context.notesState.noteId).toBe(7)
+  })
+
+  it('combines search with the selected tag context', async () => {
+    const context = await setup({
+      isSearch: true,
+      searchQuery: 'migration',
+      tagId: 12,
+    })
+
+    await context.useNotes().getNotes()
+
+    expect(context.getNotes).toHaveBeenCalledWith({
+      search: 'migration',
+      tagId: 12,
+    })
+  })
+
+  it('combines search with task library filters', async () => {
+    const context = await setup({
+      isSearch: true,
+      libraryFilter: 'today',
+      searchQuery: 'release',
+    })
+
+    await context.useNotes().getNotes()
+
+    expect(context.getNotes).toHaveBeenCalledWith({
+      propertyDue: 'today',
+      propertyStatusNot: 'done',
+      propertyType: 'task',
+      search: 'release',
+    })
   })
 })

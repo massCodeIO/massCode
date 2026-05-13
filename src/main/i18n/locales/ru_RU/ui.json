@@ -16,12 +16,14 @@
     "commandPlaceholder": "Выполнить команду...",
     "scopedPlaceholder": "Искать в {{space}}...",
     "clearScope": "Сбросить область",
+    "clearFilter": "Сбросить фильтр: {{filter}}",
     "searching": "Поиск...",
     "empty": "Ничего не найдено",
     "groups": {
       "recent": "Недавние",
       "actions": "Действия",
       "spaces": "Пространства",
+      "filters": "Фильтры",
       "results": "Результаты",
       "snippets": "Сниппеты",
       "notes": "Заметки",
@@ -50,13 +52,17 @@
       "openPreferencesSubtitle": "Изменить настройки massCode"
     },
     "fallbacks": {
-      "createSnippet": "Создать сниппет \"{{query}}\"",
+      "createSnippet": "Создать сниппет \"{{- query}}\"",
       "createSnippetSubtitle": "Создать во входящих раздела Код",
-      "createNote": "Создать заметку \"{{query}}\"",
+      "createNote": "Создать заметку \"{{- query}}\"",
       "createNoteSubtitle": "Создать во входящих раздела Заметки",
-      "createHttpRequest": "Создать HTTP-запрос \"{{query}}\"",
+      "createHttpRequest": "Создать HTTP-запрос \"{{- query}}\"",
       "createHttpRequestFromUrl": "Создать HTTP-запрос из URL",
       "createHttpRequestSubtitle": "Создать в HTTP"
+    },
+    "suggestions": {
+      "tagSubtitle": "Фильтровать {{space}} по тегу",
+      "folderSubtitle": "Фильтровать {{space}} по папке"
     },
     "actionPanel": {
       "heading": "Действия",
@@ -70,6 +76,7 @@
       "open": "Открыть",
       "jump": "Перейти",
       "actions": "Действия",
+      "apply": "Применить",
       "run": "Выполнить",
       "back": "Назад"
     }
@@ -461,6 +468,7 @@
   },
   "action": {
     "close": "Закрыть",
+    "clearSearch": "Очистить поиск",
     "defaultLanguage": "Язык по умолчанию",
     "duplicate": "Дублировать",
     "rename": "Переименовать",
@@ -555,6 +563,7 @@
     "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
     "search": "Поиск",
+    "searchIn": "Поиск в {{- context}}",
     "addTag": "Добавить тег",
     "selectLanguage": "Выбрать язык"
   }

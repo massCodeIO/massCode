@@ -16,12 +16,14 @@
     "commandPlaceholder": "Run command...",
     "scopedPlaceholder": "Search in {{space}}...",
     "clearScope": "Clear scope",
+    "clearFilter": "Clear filter: {{filter}}",
     "searching": "Searching...",
     "empty": "No results found",
     "groups": {
       "recent": "Recent",
       "actions": "Actions",
       "spaces": "Spaces",
+      "filters": "Filters",
       "results": "Results",
       "snippets": "Snippets",
       "notes": "Notes",
@@ -50,13 +52,17 @@
       "openPreferencesSubtitle": "Change massCode settings"
     },
     "fallbacks": {
-      "createSnippet": "Create snippet \"{{query}}\"",
+      "createSnippet": "Create snippet \"{{- query}}\"",
       "createSnippetSubtitle": "Create in Code Inbox",
-      "createNote": "Create note \"{{query}}\"",
+      "createNote": "Create note \"{{- query}}\"",
       "createNoteSubtitle": "Create in Notes Inbox",
-      "createHttpRequest": "Create HTTP request \"{{query}}\"",
+      "createHttpRequest": "Create HTTP request \"{{- query}}\"",
       "createHttpRequestFromUrl": "Create HTTP request from URL",
       "createHttpRequestSubtitle": "Create in HTTP"
+    },
+    "suggestions": {
+      "tagSubtitle": "Filter {{space}} by tag",
+      "folderSubtitle": "Filter {{space}} by folder"
     },
     "actionPanel": {
       "heading": "Actions",
@@ -70,6 +76,7 @@
       "open": "Open",
       "jump": "Jump",
       "actions": "Actions",
+      "apply": "Apply",
       "run": "Run",
       "back": "Back"
     }
@@ -455,6 +462,7 @@
   },
   "action": {
     "close": "Close",
+    "clearSearch": "Clear Search",
     "defaultLanguage": "Default Language",
     "duplicate": "Duplicate",
     "rename": "Rename",
@@ -549,6 +557,7 @@
     "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
     "search": "Search",
+    "searchIn": "Search in {{- context}}",
     "addTag": "Add Tag",
     "selectLanguage": "Select Language"
   }

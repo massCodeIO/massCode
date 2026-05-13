@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/shadcn/button'
-import { useHttpApp, useHttpRequests, useHttpSearch } from '@/composables'
+import {
+  useHttpApp,
+  useHttpFolders,
+  useHttpRequests,
+  useHttpSearch,
+} from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
 const { httpState, isFocusedSearch } = useHttpApp()
 const { createHttpRequestAndSelect } = useHttpRequests()
+const { folders, getFolderByIdFromTree } = useHttpFolders()
 const {
   searchQuery,
   clearSearch,
@@ -15,6 +21,29 @@ const {
   displayedRequests,
   isSearch,
 } = useHttpSearch()
+
+const libraryFilterLabels = computed<Record<string, string>>(() => ({
+  [LibraryFilter.Inbox]: i18n.t('common.inbox'),
+  [LibraryFilter.Favorites]: i18n.t('common.favorites'),
+  [LibraryFilter.All]: i18n.t('spaces.http.allRequests'),
+  [LibraryFilter.Trash]: i18n.t('common.trash'),
+}))
+
+const searchContextLabel = computed(() => {
+  if (httpState.folderId) {
+    return getFolderByIdFromTree(folders.value, httpState.folderId)?.name
+  }
+
+  return httpState.libraryFilter
+    ? libraryFilterLabels.value[httpState.libraryFilter]
+    : undefined
+})
+
+const searchPlaceholder = computed(() =>
+  searchContextLabel.value
+    ? i18n.t('placeholder.searchIn', { context: searchContextLabel.value })
+    : i18n.t('placeholder.search'),
+)
 
 watch(searchQuery, (v) => {
   if (v) {
@@ -55,26 +84,27 @@ function onKeydown(event: KeyboardEvent) {
 <template>
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
-      <Search class="text-muted-foreground ml-1 h-4 w-4" />
-      <div class="flex-grow">
+      <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
+      <div class="min-w-0 flex-grow">
         <UiInput
           v-model="searchQuery"
-          :placeholder="i18n.t('placeholder.search')"
+          :placeholder="searchPlaceholder"
           variant="ghost"
+          class="truncate"
           :focus="isFocusedSearch"
           @blur="isFocusedSearch = false"
           @keydown="onKeydown"
         />
       </div>
-      <Button
+      <UiActionButton
         v-if="searchQuery"
-        variant="ghost"
+        :tooltip="i18n.t('action.clearSearch')"
         @click="clearSearch(true)"
       >
         <X class="h-4 w-4" />
-      </Button>
+      </UiActionButton>
       <UiActionButton
-        v-if="!isSearch"
+        v-else-if="!isSearch"
         :tooltip="i18n.t('spaces.http.action.newRequest')"
         @click="onCreateRequest"
       >

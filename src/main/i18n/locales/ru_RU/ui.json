@@ -74,6 +74,9 @@
       "back": "Назад"
     }
   },
+  "search": {
+    "removeContextFilter": "Снять фильтр: {{filter}}"
+  },
   "imports": {
     "title": {
       "code": "Импорт сниппетов",

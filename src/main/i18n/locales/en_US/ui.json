@@ -74,6 +74,9 @@
       "back": "Back"
     }
   },
+  "search": {
+    "removeContextFilter": "Remove filter: {{filter}}"
+  },
   "imports": {
     "title": {
       "code": "Import snippets",

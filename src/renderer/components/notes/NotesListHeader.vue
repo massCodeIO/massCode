@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Popover from '@/components/ui/shadcn/popover'
+import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import {
   useNoteFolders,
   useNotes,
@@ -74,6 +75,12 @@ const searchContextLabel = computed(() => {
     : undefined
 })
 
+const removeSearchContextLabel = computed(() =>
+  i18n.t('search.removeContextFilter', {
+    filter: searchContextLabel.value || '',
+  }),
+)
+
 function selectCreateKind(kind: 'note' | 'task') {
   notesCreateKind.value = kind
   isCreateMenuOpen.value = false
@@ -130,21 +137,28 @@ async function clearSearchContext() {
 <template>
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
-      <Search class="text-muted-foreground ml-1 h-4 w-4" />
+      <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
       <div
         v-if="searchContextLabel"
         class="bg-muted text-muted-foreground ml-2 flex max-w-32 shrink-0 items-center rounded-full px-2 py-0.5 text-xs"
       >
         <span class="truncate">{{ searchContextLabel }}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="ml-1 size-4 rounded-full p-0"
-          :aria-label="i18n.t('action.close')"
-          @click="clearSearchContext"
-        >
-          <X class="size-3" />
-        </Button>
+        <Tooltip.Tooltip>
+          <Tooltip.TooltipTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="ml-1 size-4 rounded-full p-0"
+              :aria-label="removeSearchContextLabel"
+              @click="clearSearchContext"
+            >
+              <X class="size-3" />
+            </Button>
+          </Tooltip.TooltipTrigger>
+          <Tooltip.TooltipContent>
+            {{ removeSearchContextLabel }}
+          </Tooltip.TooltipContent>
+        </Tooltip.Tooltip>
       </div>
       <div class="flex-grow">
         <UiInput

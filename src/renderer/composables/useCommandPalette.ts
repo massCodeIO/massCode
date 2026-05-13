@@ -28,12 +28,13 @@ import {
   type SpaceId,
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
-import { Settings, Upload } from 'lucide-vue-next'
+import { Folder, Hash, Settings, Upload } from 'lucide-vue-next'
 import {
   type CommandPaletteFolderFilter,
   type CommandPaletteFolderOption,
   type CommandPaletteTagFilter,
   type CommandPaletteTagOption,
+  getActiveCommandPaletteFilterToken,
   parseCommandPaletteQuery,
 } from './command-palette/queryParser'
 import { rankCommandPaletteResults } from './command-palette/ranking'
@@ -73,6 +74,15 @@ interface CommandPaletteCommand {
   keywords: string[]
   spaceId?: SpaceId
   run: () => Promise<void>
+}
+
+interface CommandPaletteTokenSuggestion {
+  id: string
+  type: 'token-suggestion'
+  title: string
+  subtitle: string
+  icon: Component
+  run: () => void
 }
 
 interface CommandPaletteCreatePayload {
@@ -132,6 +142,7 @@ export type CommandPaletteResult =
     icon: Component
     command: CommandPaletteCommand
   }
+  | CommandPaletteTokenSuggestion
   | CommandPaletteRecentResult
 
 const isOpen = ref(false)
@@ -159,6 +170,7 @@ let searchRunId = 0
 const RECENT_LIMIT = 30
 const ROOT_RECENT_LIMIT = 3
 const SCOPED_RECENT_LIMIT = 5
+const TOKEN_SUGGESTION_LIMIT = 8
 const USAGE_LIMIT = 100
 
 const notesApp = useNotesApp()
@@ -205,6 +217,62 @@ const searchFilterTokens = computed(() => {
   }
 
   return tokens
+})
+
+const activeFilterToken = computed(() =>
+  getActiveCommandPaletteFilterToken(query.value),
+)
+const isTokenSuggestionMode = computed(() => Boolean(activeFilterToken.value))
+
+const tokenSuggestionResults = computed<CommandPaletteTokenSuggestion[]>(() => {
+  const activeToken = activeFilterToken.value
+  if (!activeToken) {
+    return []
+  }
+
+  const normalizedPrefix = normalizeSearchToken(activeToken.prefix)
+  const effectiveSpaceId = searchScopeSpaceId.value
+
+  if (activeToken.kind === 'tag') {
+    return searchTagOptions.value
+      .filter(
+        option =>
+          isTokenOptionVisible(option.spaceId, effectiveSpaceId)
+          && normalizeSearchToken(option.name).startsWith(normalizedPrefix)
+          && option.id !== searchTagFilter.value?.id,
+      )
+      .slice(0, TOKEN_SUGGESTION_LIMIT)
+      .map(option => ({
+        id: `token-suggestion:tag:${option.spaceId}:${option.id}`,
+        type: 'token-suggestion',
+        title: `#${option.name}`,
+        subtitle: i18n.t('commandPalette.suggestions.tagSubtitle', {
+          space: getSpaceLabel(option.spaceId),
+        }),
+        icon: Hash,
+        run: () => applyTagSuggestion(option),
+      }))
+  }
+
+  return searchFolderOptions.value
+    .filter(
+      option =>
+        isTokenOptionVisible(option.spaceId, effectiveSpaceId)
+        && (normalizeSearchToken(option.path).startsWith(normalizedPrefix)
+          || normalizeSearchToken(option.name).startsWith(normalizedPrefix))
+        && option.id !== searchFolderFilter.value?.id,
+    )
+    .slice(0, TOKEN_SUGGESTION_LIMIT)
+    .map(option => ({
+      id: `token-suggestion:folder:${option.spaceId}:${option.id}`,
+      type: 'token-suggestion',
+      title: `/${option.path}`,
+      subtitle: i18n.t('commandPalette.suggestions.folderSubtitle', {
+        space: getSpaceLabel(option.spaceId),
+      }),
+      icon: Folder,
+      run: () => applyFolderSuggestion(option),
+    }))
 })
 
 async function loadCommandPaletteFilterOptions() {
@@ -294,6 +362,25 @@ function getResultTitle(value: string | undefined, fallback: string) {
 
 function getSpaceIcon(spaceId: SpaceId) {
   return getSpaceDefinitions().find(space => space.id === spaceId)!.icon
+}
+
+function getSpaceLabel(spaceId: SpaceId) {
+  return getSpaceDefinitions().find(space => space.id === spaceId)!.label
+}
+
+function normalizeSearchToken(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function isTokenOptionVisible(
+  spaceId: SpaceId,
+  effectiveSpaceId: SpaceId | undefined,
+) {
+  return !effectiveSpaceId || effectiveSpaceId === spaceId
+}
+
+function getQueryWithoutActiveFilterToken() {
+  return query.value.replace(/(?:^|\s)[#/]\S*$/, '').trim()
 }
 
 function saveRecentEntries(entries: CommandPaletteRecentEntry[]) {
@@ -672,6 +759,44 @@ async function runSearch(value: string) {
 }
 
 const debouncedRunSearch = useDebounceFn(runSearch, 180)
+
+function finishFilterSuggestion(search: string) {
+  searchRunId += 1
+  query.value = search
+  resetSearchResults()
+
+  if (!search) {
+    isSearching.value = false
+    return
+  }
+
+  isSearching.value = true
+  debouncedRunSearch(search)
+}
+
+function applyTagSuggestion(option: CommandPaletteTagOption) {
+  const search = getQueryWithoutActiveFilterToken()
+
+  if (searchScopeSpaceId.value !== option.spaceId) {
+    searchFolderFilter.value = undefined
+  }
+
+  searchScopeSpaceId.value = option.spaceId
+  searchTagFilter.value = option
+  finishFilterSuggestion(search)
+}
+
+function applyFolderSuggestion(option: CommandPaletteFolderOption) {
+  const search = getQueryWithoutActiveFilterToken()
+
+  if (searchScopeSpaceId.value !== option.spaceId) {
+    searchTagFilter.value = undefined
+  }
+
+  searchScopeSpaceId.value = option.spaceId
+  searchFolderFilter.value = option
+  finishFilterSuggestion(search)
+}
 
 function hasSearchFilterToken(value: string) {
   return value
@@ -1289,6 +1414,11 @@ async function openRecent(entry: CommandPaletteRecentEntry) {
 async function openResult(result: CommandPaletteResult) {
   const lastQuery = query.value.trim()
 
+  if (result.type === 'token-suggestion') {
+    result.run()
+    return
+  }
+
   closePalette()
   clearPalette()
 
@@ -1345,6 +1475,7 @@ export function useCommandPalette() {
     isOpen,
     isSearching,
     isSpaceMode,
+    isTokenSuggestionMode,
     noteResults,
     openCommandMode,
     openPalette,
@@ -1362,6 +1493,7 @@ export function useCommandPalette() {
     setQuery,
     snippetResults,
     spaceResults,
+    tokenSuggestionResults,
     usageById,
   }
 }

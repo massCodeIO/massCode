@@ -23,6 +23,7 @@
       "recent": "Recent",
       "actions": "Actions",
       "spaces": "Spaces",
+      "filters": "Filters",
       "results": "Results",
       "snippets": "Snippets",
       "notes": "Notes",
@@ -59,6 +60,10 @@
       "createHttpRequestFromUrl": "Create HTTP request from URL",
       "createHttpRequestSubtitle": "Create in HTTP"
     },
+    "suggestions": {
+      "tagSubtitle": "Filter {{space}} by tag",
+      "folderSubtitle": "Filter {{space}} by folder"
+    },
     "actionPanel": {
       "heading": "Actions",
       "open": "Open",
@@ -71,6 +76,7 @@
       "open": "Open",
       "jump": "Jump",
       "actions": "Actions",
+      "apply": "Apply",
       "run": "Run",
       "back": "Back"
     }

@@ -23,6 +23,7 @@
       "recent": "Недавние",
       "actions": "Действия",
       "spaces": "Пространства",
+      "filters": "Фильтры",
       "results": "Результаты",
       "snippets": "Сниппеты",
       "notes": "Заметки",
@@ -59,6 +60,10 @@
       "createHttpRequestFromUrl": "Создать HTTP-запрос из URL",
       "createHttpRequestSubtitle": "Создать в HTTP"
     },
+    "suggestions": {
+      "tagSubtitle": "Фильтровать {{space}} по тегу",
+      "folderSubtitle": "Фильтровать {{space}} по папке"
+    },
     "actionPanel": {
       "heading": "Действия",
       "open": "Открыть",
@@ -71,6 +76,7 @@
       "open": "Открыть",
       "jump": "Перейти",
       "actions": "Действия",
+      "apply": "Применить",
       "run": "Выполнить",
       "back": "Назад"
     }

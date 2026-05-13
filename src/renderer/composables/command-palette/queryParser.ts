@@ -44,6 +44,12 @@ export interface CommandPaletteQueryParserOptions {
   tagOptions?: readonly CommandPaletteTagOption[]
 }
 
+export interface CommandPaletteActiveFilterToken {
+  kind: 'folder' | 'tag'
+  prefix: string
+  token: string
+}
+
 function normalizeScopeToken(value: string) {
   return value.trim().toLowerCase()
 }
@@ -201,5 +207,30 @@ export function parseCommandPaletteQuery(
   return {
     ...filterResult,
     scopeSpaceId,
+  }
+}
+
+export function getActiveCommandPaletteFilterToken(
+  value: string,
+): CommandPaletteActiveFilterToken | undefined {
+  const match = value.match(/(?:^|\s)([#/]\S*)$/)
+  const token = match?.[1]
+
+  if (!token || token.length < 1) {
+    return undefined
+  }
+
+  if (token.startsWith('#')) {
+    return {
+      kind: 'tag',
+      prefix: token.slice(1),
+      token,
+    }
+  }
+
+  return {
+    kind: 'folder',
+    prefix: token.slice(1),
+    token,
   }
 }

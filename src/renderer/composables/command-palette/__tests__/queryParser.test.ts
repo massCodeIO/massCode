@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { parseCommandPaletteQuery } from '../queryParser'
+import {
+  getActiveCommandPaletteFilterToken,
+  parseCommandPaletteQuery,
+} from '../queryParser'
 
 const scopeOptions = [
   { spaceId: 'code', title: 'Code' },
@@ -132,5 +135,27 @@ describe('parseCommandPaletteQuery', () => {
       scopeSpaceId: 'code',
       tagFilter: { id: 1, name: 'react', spaceId: 'code' },
     })
+  })
+})
+
+describe('getActiveCommandPaletteFilterToken', () => {
+  it('returns a trailing tag token', () => {
+    expect(getActiveCommandPaletteFilterToken('hooks #re')).toEqual({
+      kind: 'tag',
+      prefix: 're',
+      token: '#re',
+    })
+  })
+
+  it('returns a trailing folder token', () => {
+    expect(getActiveCommandPaletteFilterToken('hooks /work/ap')).toEqual({
+      kind: 'folder',
+      prefix: 'work/ap',
+      token: '/work/ap',
+    })
+  })
+
+  it('ignores tokens outside the active trailing position', () => {
+    expect(getActiveCommandPaletteFilterToken('#react hooks')).toBeUndefined()
   })
 })

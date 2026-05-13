@@ -1,11 +1,24 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import { useHttpApp, useHttpRequests, useHttpSearch } from '@/composables'
+import {
+  useHttpApp,
+  useHttpFolders,
+  useHttpRequests,
+  useHttpSearch,
+} from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { Plus, Search, X } from 'lucide-vue-next'
 
 const { httpState, isFocusedSearch } = useHttpApp()
-const { createHttpRequestAndSelect } = useHttpRequests()
+const {
+  createHttpRequestAndSelect,
+  getHttpRequests,
+  isRestoreStateBlocked,
+  selectFirstRequest,
+} = useHttpRequests()
+const { clearFolderSelection, folders, getFolderByIdFromTree }
+  = useHttpFolders()
 const {
   searchQuery,
   clearSearch,
@@ -15,6 +28,23 @@ const {
   displayedRequests,
   isSearch,
 } = useHttpSearch()
+
+const libraryFilterLabels = computed<Record<string, string>>(() => ({
+  [LibraryFilter.Inbox]: i18n.t('common.inbox'),
+  [LibraryFilter.Favorites]: i18n.t('common.favorites'),
+  [LibraryFilter.All]: i18n.t('spaces.http.allRequests'),
+  [LibraryFilter.Trash]: i18n.t('common.trash'),
+}))
+
+const searchContextLabel = computed(() => {
+  if (httpState.folderId) {
+    return getFolderByIdFromTree(folders.value, httpState.folderId)?.name
+  }
+
+  return httpState.libraryFilter
+    ? libraryFilterLabels.value[httpState.libraryFilter]
+    : undefined
+})
 
 watch(searchQuery, (v) => {
   if (v) {
@@ -29,6 +59,19 @@ async function onCreateRequest() {
   await createHttpRequestAndSelect({
     folderId: httpState.folderId ?? null,
   })
+}
+
+async function clearSearchContext() {
+  if (httpState.folderId) {
+    clearFolderSelection()
+  }
+  else if (httpState.libraryFilter) {
+    httpState.libraryFilter = undefined
+  }
+
+  isRestoreStateBlocked.value = true
+  await getHttpRequests()
+  selectFirstRequest()
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -56,6 +99,21 @@ function onKeydown(event: KeyboardEvent) {
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
       <Search class="text-muted-foreground ml-1 h-4 w-4" />
+      <div
+        v-if="searchContextLabel"
+        class="bg-muted text-muted-foreground ml-2 flex max-w-32 shrink-0 items-center rounded-full px-2 py-0.5 text-xs"
+      >
+        <span class="truncate">{{ searchContextLabel }}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="ml-1 size-4 rounded-full p-0"
+          :aria-label="i18n.t('action.close')"
+          @click="clearSearchContext"
+        >
+          <X class="size-3" />
+        </Button>
+      </div>
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"

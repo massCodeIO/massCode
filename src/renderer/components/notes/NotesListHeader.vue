@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Popover from '@/components/ui/shadcn/popover'
-import { useNotes, useNotesApp, useNoteSearch } from '@/composables'
+import {
+  useNoteFolders,
+  useNotes,
+  useNotesApp,
+  useNoteSearch,
+  useNoteTags,
+} from '@/composables'
+import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import {
   Check,
@@ -13,7 +20,14 @@ import {
   X,
 } from 'lucide-vue-next'
 
-const { isSearch, createNoteBySelectedKindAndSelect } = useNotes()
+const {
+  isSearch,
+  createNoteBySelectedKindAndSelect,
+  getNotes,
+  isRestoreStateBlocked,
+  selectFirstNote,
+  withNotesLoading,
+} = useNotes()
 const {
   searchQuery,
   clearSearch,
@@ -22,14 +36,43 @@ const {
   selectSearchNote,
   displayedNotes,
 } = useNoteSearch()
-const { isFocusedSearch, notesCreateKind } = useNotesApp()
+const { isFocusedSearch, notesCreateKind, notesState } = useNotesApp()
+const { clearFolderSelection, folders, getFolderByIdFromTree }
+  = useNoteFolders()
+const { tags } = useNoteTags()
 const isCreateMenuOpen = ref(false)
+
+const libraryFilterLabels = computed<Record<string, string>>(() => ({
+  [LibraryFilter.Inbox]: i18n.t('common.inbox'),
+  [LibraryFilter.Favorites]: i18n.t('common.favorites'),
+  [LibraryFilter.All]: i18n.t('spaces.notes.allNotes'),
+  [LibraryFilter.Tasks]: i18n.t('notes.tasks.title'),
+  [LibraryFilter.Today]: i18n.t('notes.tasks.today'),
+  [LibraryFilter.Upcoming]: i18n.t('notes.tasks.upcoming'),
+  [LibraryFilter.Completed]: i18n.t('notes.tasks.completed'),
+  [LibraryFilter.Trash]: i18n.t('common.trash'),
+}))
 
 const createActionTooltip = computed(() =>
   notesCreateKind.value === 'task'
     ? i18n.t('action.new.task')
     : i18n.t('action.new.note'),
 )
+
+const searchContextLabel = computed(() => {
+  if (notesState.tagId) {
+    const tag = tags.value.find(item => item.id === notesState.tagId)
+    return tag ? `#${tag.name}` : undefined
+  }
+
+  if (notesState.folderId) {
+    return getFolderByIdFromTree(folders.value, notesState.folderId)?.name
+  }
+
+  return notesState.libraryFilter
+    ? libraryFilterLabels.value[notesState.libraryFilter]
+    : undefined
+})
 
 function selectCreateKind(kind: 'note' | 'task') {
   notesCreateKind.value = kind
@@ -64,12 +107,45 @@ function onKeydown(event: KeyboardEvent) {
     clearSearch(true)
   }
 }
+
+async function clearSearchContext() {
+  await withNotesLoading(async () => {
+    if (notesState.tagId) {
+      notesState.tagId = undefined
+    }
+    else if (notesState.folderId) {
+      clearFolderSelection()
+    }
+    else if (notesState.libraryFilter) {
+      notesState.libraryFilter = undefined
+    }
+
+    isRestoreStateBlocked.value = true
+    await getNotes()
+    selectFirstNote()
+  })
+}
 </script>
 
 <template>
   <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
     <div class="flex items-center px-1">
       <Search class="text-muted-foreground ml-1 h-4 w-4" />
+      <div
+        v-if="searchContextLabel"
+        class="bg-muted text-muted-foreground ml-2 flex max-w-32 shrink-0 items-center rounded-full px-2 py-0.5 text-xs"
+      >
+        <span class="truncate">{{ searchContextLabel }}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="ml-1 size-4 rounded-full p-0"
+          :aria-label="i18n.t('action.close')"
+          @click="clearSearchContext"
+        >
+          <X class="size-3" />
+        </Button>
+      </div>
       <div class="flex-grow">
         <UiInput
           v-model="searchQuery"

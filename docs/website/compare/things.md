@@ -24,7 +24,7 @@ If you live entirely on Apple devices and want a beautifully designed dedicated 
 | Due dates | Yes, calendar picker | Yes, plus deadlines |
 | Reminders | No | Yes |
 | Recurring tasks | No | Yes |
-| Subtasks | Markdown checklist inside the note body | Checklists inside a to-do |
+| Subtasks | Markdown checklist inside the note body | Checklist items inside a to-do; structure for grouping via Projects |
 | Notes inside a task | Full markdown editor with code, mermaid, mindmap, internal links | Markdown notes field |
 | Mobile app | No | Yes |
 | Account required | No | A free Things Cloud account is needed for sync |
@@ -57,7 +57,7 @@ massCode is a strong choice when Things' Apple-only constraint is a problem, or 
 - **No reminders or notifications in massCode.** Due dates are surfaced in the list and the **Today** / **Upcoming** views, but the app does not push reminders.
 - **No recurring tasks in massCode.** A task has a single `due` date.
 - **No first-class subtasks in massCode.** You can write a markdown checklist inside the task body, but those checklist items are not separate task entities.
-- **No equivalent of Areas / This Evening / Upcoming structure.** massCode's task views are simpler: **Tasks**, **Today**, **Upcoming**, **Completed**.
+- **No equivalent of Areas / This Evening / Anytime / Someday.** massCode's task views are simpler: **Tasks**, **Today**, **Upcoming**, **Completed**.
 - **No award-winning native polish.** Things wins design awards for a reason; massCode is a developer-utility app, not a productivity flagship.
 
 ## Who should pick which

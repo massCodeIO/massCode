@@ -62,7 +62,7 @@ massCode is a strong choice when "task" means "a piece of in-flight engineering 
 - **No first-class subtasks.** A markdown checklist inside the task body is just markdown — those items are not separate task entities.
 - **No mobile.** Obsidian runs on iOS and Android; massCode is desktop-only.
 - **No customizable status set.** massCode has a fixed `Todo / In Progress / Done / Blocked`; Obsidian Tasks lets you define your own.
-- **No knowledge-graph features.** Obsidian's broader ecosystem (graph view, Dataview, Canvas, etc.) does not exist in massCode.
+- **Smaller plugin ecosystem.** massCode ships a [Notes Graph](/documentation/notes/dashboard), [internal links](/documentation/notes/internal-links), [mindmap](/documentation/notes/mindmap), [mermaid](/documentation/notes/mermaid), and a [presentation mode](/documentation/notes/presentation) out of the box, but it does not have Obsidian's community plugin ecosystem (Dataview, Canvas, and the rest).
 
 ## Who should pick which
 

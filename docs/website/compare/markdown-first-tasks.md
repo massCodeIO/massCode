@@ -62,6 +62,7 @@ Neither is "better" — they fit different workflows.
 - Dedicated views: **Tasks**, **Today**, **Upcoming**, **Completed**
 - Same markdown editor as regular notes — checklists, code blocks, mermaid, mindmap, internal links
 - Folders, tags, favorites, and search apply to tasks like any other note
+- A [Notes Graph](/documentation/notes/dashboard) visualizes how notes (including tasks) connect through internal links
 - Lives in the same app as [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/)
 - Free and open source under [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE)
 - Cross-platform: macOS, Windows, Linux

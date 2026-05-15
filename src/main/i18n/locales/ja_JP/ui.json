@@ -10,31 +10,31 @@
     "fragment": "フラグメント"
   },
   "spaces": {
-    "label": "Spaces",
+    "label": "スペース",
     "code": {
-      "label": "Code",
-      "tooltip": "Code snippets",
-      "title": "Code Snippets",
+      "label": "コード",
+      "tooltip": "コードスニペット",
+      "title": "コードスニペット",
       "allSnippets": "すべてのスニペット"
     },
     "notes": {
-      "label": "Notes",
-      "tooltip": "Notes",
-      "title": "Notes",
-      "allNotes": "All Notes"
+      "label": "ノート",
+      "tooltip": "ノート",
+      "title": "ノート",
+      "allNotes": "すべてのノート"
     },
     "math": {
-      "label": "Math",
-      "tooltip": "Math notebook",
-      "title": "Math Notebook",
-      "sheetList": "Sheet List",
-      "newSheet": "New Sheet",
-      "untitled": "Untitled",
-      "currencyUnavailable": "Currency rates service unavailable"
+      "label": "数学",
+      "tooltip": "数学ノートブック",
+      "title": "数学ノートブック",
+      "sheetList": "シート一覧",
+      "newSheet": "新しいシート",
+      "untitled": "無題",
+      "currencyUnavailable": "通貨レートサービスは利用できません"
     },
     "tools": {
-      "label": "Tools",
-      "tooltip": "Developer tools"
+      "label": "ツール",
+      "tooltip": "開発者ツール"
     }
   },
   "snippet": {
@@ -43,12 +43,12 @@
     "noSelected": "スニペットが選択されていません"
   },
   "notes": {
-    "untitled": "Untitled note",
-    "plural": "Notes",
-    "words": "Words",
-    "symbols": "Symbols",
-    "selectedMultiple": "{{count}} Notes Selected",
-    "noSelected": "No Note Selected"
+    "untitled": "無題のノート",
+    "plural": "ノート",
+    "words": "単語",
+    "symbols": "記号",
+    "selectedMultiple": "{{count}}個のノートを選択",
+    "noSelected": "ノートが選択されていません"
   },
   "folder": {
     "untitled": "無題のフォルダ"
@@ -89,14 +89,14 @@
     "hide": "非表示",
     "showSidebar": "サイドバーを表示",
     "hideSidebar": "サイドバーを非表示",
-    "showSidebarAndList": "Show Sidebar and List",
-    "hideSidebarAndList": "Hide Sidebar and List",
+    "showSidebarAndList": "サイドバーとリストを表示",
+    "hideSidebarAndList": "サイドバーとリストを非表示",
     "new": {
       "storage": "新規ストレージ",
       "folder": "新規フォルダ",
       "snippet": "新規スニペット",
       "fragment": "新規フラグメント",
-      "note": "New Note"
+      "note": "新規ノート"
     },
     "add": {
       "description": "説明を追加",
@@ -114,12 +114,12 @@
       "fromFavorites": "お気に入りから削除"
     },
     "reveal": {
-      "inFinder": "Reveal in Finder",
-      "inFileManager": "Show in File Manager"
+      "inFinder": "Finderで表示",
+      "inFileManager": "ファイルマネージャーで表示"
     },
     "reload": {
       "storage": "ストレージを再読み込み",
-      "app": "Reload massCode"
+      "app": "massCodeを再読み込み"
     },
     "delete": {
       "common": "削除",
@@ -138,17 +138,17 @@
       "snippetLink": "スニペットリンクをコピー"
     },
     "select": {
-      "directory": "Select Directory"
+      "directory": "ディレクトリを選択"
     }
   },
   "placeholder": {
     "emptyTagList": "タグを追加するとここに表示されます",
-    "emptyNotesTagList": "Add tags to notes to see them here",
-    "emptyFoldersList": "フォルダーなし",
-    "emptySnippetsList": "スニペットなし",
-    "emptyNotesList": "No Notes",
-    "searchNotes": "Search notes...",
-    "emptySheetList": "No Sheets",
+    "emptyNotesTagList": "ノートにタグを追加するとここに表示されます",
+    "emptyFoldersList": "フォルダーはありません",
+    "emptySnippetsList": "スニペットはありません",
+    "emptyNotesList": "ノートはありません",
+    "searchNotes": "ノートを検索...",
+    "emptySheetList": "シートはありません",
     "search": "検索",
     "addTag": "タグを追加"
   }

@@ -3,6 +3,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getRuntimeCache, writeSnippetToFile } from '../../runtime'
 import { getPaths } from '../../runtime/paths'
 import { ensureStateFile } from '../../runtime/state'
 import { resetRuntimeCache } from '../../runtime/sync'
@@ -216,5 +217,82 @@ describe('code snippets storage validations', () => {
     expect(moved?.folder?.id).toBe(target.id)
     expect(moved?.name.toLowerCase()).not.toBe('shared')
     expect(moved?.name.toLowerCase()).toContain('shared')
+  })
+
+  it('updates content scoped to the requested snippet when content ids are duplicated', () => {
+    const storage = createSnippetsStorage()
+    const first = storage.createSnippet({ name: 'First' })
+    const second = storage.createSnippet({ name: 'Second' })
+    const firstContent = storage.createSnippetContent(first.id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'first value',
+    })
+
+    storage.createSnippetContent(second.id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'second value',
+    })
+
+    const paths = getPaths(tempVaultPath)
+    const cache = getRuntimeCache(paths)
+    const secondSnippet = cache.snippets.find(
+      snippet => snippet.id === second.id,
+    )
+
+    expect(secondSnippet).toBeDefined()
+    secondSnippet!.contents[0]!.id = firstContent.id
+    writeSnippetToFile(paths, secondSnippet!)
+
+    const result = storage.updateSnippetContent(second.id, firstContent.id, {
+      value: 'second updated',
+    })
+
+    expect(result).toEqual({
+      invalidInput: false,
+      notFound: false,
+      parentNotFound: false,
+    })
+    expect(storage.getSnippetById(first.id)?.contents[0]?.value).toBe(
+      'first value',
+    )
+    expect(storage.getSnippetById(second.id)?.contents[0]).toMatchObject({
+      id: firstContent.id,
+      value: 'second updated',
+    })
+  })
+
+  it('deletes content scoped to the requested snippet when content ids are duplicated', () => {
+    const storage = createSnippetsStorage()
+    const first = storage.createSnippet({ name: 'First' })
+    const second = storage.createSnippet({ name: 'Second' })
+    const firstContent = storage.createSnippetContent(first.id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'first value',
+    })
+
+    storage.createSnippetContent(second.id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'second value',
+    })
+
+    const paths = getPaths(tempVaultPath)
+    const cache = getRuntimeCache(paths)
+    const secondSnippet = cache.snippets.find(
+      snippet => snippet.id === second.id,
+    )
+
+    expect(secondSnippet).toBeDefined()
+    secondSnippet!.contents[0]!.id = firstContent.id
+    writeSnippetToFile(paths, secondSnippet!)
+
+    expect(storage.deleteSnippetContent(second.id, firstContent.id)).toEqual({
+      deleted: true,
+    })
+    expect(storage.getSnippetById(first.id)?.contents).toHaveLength(1)
+    expect(storage.getSnippetById(second.id)?.contents).toHaveLength(0)
   })
 })

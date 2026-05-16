@@ -13,7 +13,6 @@ import {
   assertUniqueSiblingEntryName,
   createSnippetRecord,
   findFolderById,
-  findSnippetByContentId,
   findSnippetById,
   getPaths,
   getRuntimeCache,
@@ -28,11 +27,7 @@ import {
   validateEntryName,
   writeSnippetToFile,
 } from '../runtime'
-import {
-  createNestedContent,
-  deleteNestedContent,
-  updateNestedContent,
-} from '../runtime/shared/entityContent'
+import { createNestedContent } from '../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../runtime/shared/entityQuery'
 import {
   addTagToEntity,
@@ -43,6 +38,13 @@ import {
   emptyEntityTrashFromStateAndDisk,
   getEntityDeleteCounts,
 } from '../runtime/shared/entityStorage'
+
+function findContentIndexById(
+  snippet: MarkdownSnippet,
+  contentId: number,
+): number {
+  return snippet.contents.findIndex(content => content.id === contentId)
+}
 
 export function createSnippetsStorage(): SnippetsStorage {
   return {
@@ -229,39 +231,56 @@ export function createSnippetsStorage(): SnippetsStorage {
     ): SnippetContentUpdateResult => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
-      const ownedContent = findSnippetByContentId(snippets, contentId)
-      const result = updateNestedContent({
-        applyPatch: (content, patch) => {
-          if ('label' in patch) {
-            content.label = patch.label || content.label
-          }
 
-          if ('value' in patch) {
-            content.value = patch.value ?? null
-          }
-
-          if ('language' in patch) {
-            content.language = patch.language || content.language
-          }
-        },
-        findTargetOwnerById: id => findSnippetById(snippets, id),
-        hasAnyField: patch =>
-          'label' in patch || 'value' in patch || 'language' in patch,
-        ownerId: snippetId,
-        ownedContent: ownedContent
-          ? {
-              contentIndex: ownedContent.contentIndex,
-              owner: ownedContent.snippet,
-            }
-          : undefined,
-        patch: input,
-        persistOwner: snippet => writeSnippetToFile(paths, snippet),
-      })
-      if (!result.invalidInput && !result.notFound) {
-        saveState(paths, state)
+      if (!('label' in input || 'value' in input || 'language' in input)) {
+        return {
+          invalidInput: true,
+          notFound: false,
+          parentNotFound: false,
+        }
       }
 
-      return result
+      const snippet = findSnippetById(snippets, snippetId)
+      if (!snippet) {
+        return {
+          invalidInput: false,
+          notFound: false,
+          parentNotFound: true,
+        }
+      }
+
+      const contentIndex = findContentIndexById(snippet, contentId)
+      if (contentIndex === -1) {
+        return {
+          invalidInput: false,
+          notFound: true,
+          parentNotFound: false,
+        }
+      }
+
+      const content = snippet.contents[contentIndex]
+
+      if ('label' in input) {
+        content.label = input.label || content.label
+      }
+
+      if ('value' in input) {
+        content.value = input.value ?? null
+      }
+
+      if ('language' in input) {
+        content.language = input.language || content.language
+      }
+
+      snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, snippet)
+      saveState(paths, state)
+
+      return {
+        invalidInput: false,
+        notFound: false,
+        parentNotFound: false,
+      }
     },
     addTagToSnippet: (snippetId, tagId): SnippetTagRelationResult => {
       const paths = getPaths(getVaultPath())
@@ -345,26 +364,26 @@ export function createSnippetsStorage(): SnippetsStorage {
 
       return result
     },
-    deleteSnippetContent: (contentId) => {
+    deleteSnippetContent: (snippetId, contentId) => {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
-      const ownedContent = findSnippetByContentId(snippets, contentId)
-      const result = deleteNestedContent({
-        ownedContent: ownedContent
-          ? {
-              contentIndex: ownedContent.contentIndex,
-              owner: ownedContent.snippet,
-            }
-          : undefined,
-        persistOwner: snippet => writeSnippetToFile(paths, snippet),
-      })
-      if (!result.deleted) {
-        return result
+      const snippet = findSnippetById(snippets, snippetId)
+
+      if (!snippet) {
+        return { deleted: false }
       }
 
+      const contentIndex = findContentIndexById(snippet, contentId)
+      if (contentIndex === -1) {
+        return { deleted: false }
+      }
+
+      snippet.contents.splice(contentIndex, 1)
+      snippet.updatedAt = Date.now()
+      writeSnippetToFile(paths, snippet)
       saveState(paths, state)
 
-      return result
+      return { deleted: true }
     },
   }
 }

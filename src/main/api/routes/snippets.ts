@@ -337,6 +337,7 @@ app
     ({ params, status }) => {
       const storage = useStorage()
       const { deleted } = storage.snippets.deleteSnippetContent(
+        Number(params.id),
         Number(params.contentId),
       )
 

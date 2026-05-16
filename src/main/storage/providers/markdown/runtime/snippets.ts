@@ -532,6 +532,10 @@ export function findSnippetById(
   return snippet
 }
 
+/**
+ * Global content lookup is only safe for non-mutating fallback flows.
+ * Mutation paths with a known owner must scope lookup by snippet id first.
+ */
 export function findSnippetByContentId(
   snippets: MarkdownSnippet[],
   contentId: number,

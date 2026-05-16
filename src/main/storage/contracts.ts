@@ -170,7 +170,10 @@ export interface SnippetsStorage {
     input: SnippetContentCreateInput,
   ) => { id: number }
   deleteSnippet: (id: number) => { deleted: boolean }
-  deleteSnippetContent: (contentId: number) => { deleted: boolean }
+  deleteSnippetContent: (
+    snippetId: number,
+    contentId: number,
+  ) => { deleted: boolean }
   deleteTagFromSnippet: (
     snippetId: number,
     tagId: number,

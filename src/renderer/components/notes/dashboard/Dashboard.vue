@@ -62,7 +62,7 @@ onUnmounted(() => {
 <template>
   <div
     ref="dashboardScrollRef"
-    class="scrollbar h-full overflow-y-auto"
+    class="scrollbar h-full overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]"
   >
     <div class="mx-auto flex min-h-full max-w-7xl flex-col gap-4 p-5">
       <NotesDashboardHeader />

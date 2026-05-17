@@ -333,18 +333,7 @@ export function syncSnippetFileWithDisk(
     snippets[snippetIndexInRuntime] = syncedSnippet
   }
 
-  const maxSnippetContentId = syncedSnippet.contents.reduce(
-    (maxId, content) => Math.max(maxId, content.id),
-    0,
-  )
-  state.counters.snippetId = Math.max(
-    state.counters.snippetId,
-    syncedSnippet.id,
-  )
-  state.counters.contentId = Math.max(
-    state.counters.contentId,
-    maxSnippetContentId,
-  )
+  syncCounters(state, snippets)
 
   saveState(paths, state)
 

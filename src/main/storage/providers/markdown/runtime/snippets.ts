@@ -21,7 +21,7 @@ import {
 } from './constants'
 import { normalizeNullableNumber, normalizeNumber } from './normalizers'
 import {
-  parseBodyFragments,
+  parseBodyFragmentsWithMetadata,
   serializeSnippet,
   splitFrontmatter,
 } from './parser'
@@ -83,6 +83,20 @@ export function readSnippetFromFile(
   entry: MarkdownSnippetIndexItem,
   pathToFolderIdMap: ReadonlyMap<string, number>,
 ): MarkdownSnippet | null {
+  return (
+    readSnippetFromFileWithMetadata(paths, entry, pathToFolderIdMap)?.snippet
+    ?? null
+  )
+}
+
+export function readSnippetFromFileWithMetadata(
+  paths: Paths,
+  entry: MarkdownSnippetIndexItem,
+  pathToFolderIdMap: ReadonlyMap<string, number>,
+): {
+  legacyRecovery: 'ambiguous' | 'none' | 'recovered'
+  snippet: MarkdownSnippet
+} | null {
   const snippetPath = path.join(paths.vaultPath, entry.filePath)
 
   if (!fs.pathExistsSync(snippetPath)) {
@@ -93,10 +107,13 @@ export function readSnippetFromFile(
   const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const now = Date.now()
   const timestampFallbacks = getFileTimestampFallbacks(snippetPath, now)
-  const fragments = parseBodyFragments(body)
   const metaContents = Array.isArray(frontmatter.contents)
     ? frontmatter.contents
     : []
+  const { fragments, legacyRecovery } = parseBodyFragmentsWithMetadata(
+    body,
+    metaContents,
+  )
 
   const contents = fragments.length
     ? fragments.map((fragment, index) => {
@@ -172,17 +189,33 @@ export function readSnippetFromFile(
     writeSnippetToFile(paths, snippet)
   }
 
-  return snippet
+  return { legacyRecovery, snippet }
 }
 
 export function loadSnippets(
   paths: Paths,
   state: MarkdownState,
+  options?: { rewriteRecoveredLegacyFences?: boolean },
 ): MarkdownSnippet[] {
   const pathToFolderIdMap = buildPathToFolderIdMap(state)
 
   return state.snippets
-    .map(item => readSnippetFromFile(paths, item, pathToFolderIdMap))
+    .map((item) => {
+      const result = readSnippetFromFileWithMetadata(
+        paths,
+        item,
+        pathToFolderIdMap,
+      )
+
+      if (
+        options?.rewriteRecoveredLegacyFences
+        && result?.legacyRecovery === 'recovered'
+      ) {
+        writeSnippetToFile(paths, result.snippet)
+      }
+
+      return result?.snippet ?? null
+    })
     .filter((snippet): snippet is MarkdownSnippet => !!snippet)
 }
 

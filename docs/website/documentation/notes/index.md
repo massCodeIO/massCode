@@ -46,7 +46,7 @@ See [Dashboard](/documentation/notes/dashboard) for the full walkthrough.
 
 ## Editor Modes
 
-Switch between three editor modes using the controls at the top of the editor.
+Switch between three editor modes using the mode selector in the bottom-left of the editor. You can also use **Editor** > **Mode** from the menu bar when a note is focused.
 
 - **Editor** - raw markdown editing.
 - **Live Preview** - split view with source and rendered preview side by side.

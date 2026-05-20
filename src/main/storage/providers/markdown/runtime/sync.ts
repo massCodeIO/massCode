@@ -212,7 +212,9 @@ export function resetRuntimeCache(): void {
 
 export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
   const state = syncStateWithDisk(paths)
-  const snippets = loadSnippets(paths, state)
+  const snippets = loadSnippets(paths, state, {
+    rewriteRecoveredLegacyFences: true,
+  })
 
   return setRuntimeCache(paths, state, snippets)
 }

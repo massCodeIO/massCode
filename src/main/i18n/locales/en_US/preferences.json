@@ -163,6 +163,10 @@
     "autoSwitchToResponse": {
       "label": "Show Response After Send",
       "description": "Switch the bottom panel to Response when a request starts or finishes."
+    },
+    "sslCertificateVerification": {
+      "label": "SSL Certificate Verification",
+      "description": "Verify SSL certificates when sending HTTPS requests. Turn off to allow invalid or self-signed certificates."
     }
   },
   "api": {

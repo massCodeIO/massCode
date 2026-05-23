@@ -8,6 +8,7 @@ import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { ipc } from '@/electron'
 import { useHttpEnvironments } from './useHttpEnvironments'
 import { useHttpRequests } from './useHttpRequests'
+import { useHttpSettings } from './useHttpSettings'
 
 export type HttpResponse = HttpExecuteResult
 
@@ -18,6 +19,7 @@ const lastError = ref<string | null>(null)
 const { currentDraft, currentRequest } = useHttpRequests()
 const { activeEnvironmentId } = useHttpEnvironments()
 const { incrementSent } = useDonations()
+const { settings } = useHttpSettings()
 
 function buildExecuteRequest(): HttpExecuteRequest | null {
   const draft = currentDraft.value
@@ -45,6 +47,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     request,
     requestId: currentRequest.value?.id ?? null,
     environmentId: activeEnvironmentId.value,
+    skipCertificateVerification: settings.skipCertificateVerification,
   }
 
   isExecuting.value = true

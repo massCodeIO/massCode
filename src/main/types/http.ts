@@ -58,6 +58,7 @@ export interface HttpExecutePayload {
   request: HttpExecuteRequest
   requestId: number | null
   environmentId: number | null
+  skipCertificateVerification?: boolean
   timeoutMs?: number
 }
 

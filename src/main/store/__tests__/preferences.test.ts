@@ -176,6 +176,7 @@ describe('preferences store sanitization', () => {
         wrapLines: false,
         defaultPreviewFormat: 'curl',
         autoSwitchToResponse: false,
+        skipCertificateVerification: true,
         garbage: 'bad',
       },
     }
@@ -185,6 +186,9 @@ describe('preferences store sanitization', () => {
     expect(preferences.get('http.wrapLines' as any)).toBe(false)
     expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('curl')
     expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(false)
+    expect(preferences.get('http.skipCertificateVerification' as any)).toBe(
+      true,
+    )
     expect(preferences.get('http.garbage' as any)).toBeUndefined()
   })
 
@@ -194,6 +198,7 @@ describe('preferences store sanitization', () => {
         wrapLines: 'bad',
         defaultPreviewFormat: 'bad',
         autoSwitchToResponse: 'bad',
+        skipCertificateVerification: 'bad',
       },
     }
 
@@ -202,6 +207,9 @@ describe('preferences store sanitization', () => {
     expect(preferences.get('http.wrapLines' as any)).toBe(true)
     expect(preferences.get('http.defaultPreviewFormat' as any)).toBe('http')
     expect(preferences.get('http.autoSwitchToResponse' as any)).toBe(true)
+    expect(preferences.get('http.skipCertificateVerification' as any)).toBe(
+      false,
+    )
   })
 
   it('keeps sanitized API integration settings', async () => {

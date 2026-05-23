@@ -192,6 +192,7 @@ export interface HttpSettings {
   wrapLines: boolean
   defaultPreviewFormat: 'http' | 'curl'
   autoSwitchToResponse: boolean
+  skipCertificateVerification: boolean
 }
 
 export interface PreferencesStore {

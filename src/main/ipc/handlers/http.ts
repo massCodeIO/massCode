@@ -16,12 +16,17 @@ import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
-import { request as undiciRequest } from 'undici'
+import { Agent, request as undiciRequest } from 'undici'
 import { interpolateHttpVariables } from '../../../shared/httpVariables'
 import { useHttpStorage } from '../../storage'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
+const insecureCertificateDispatcher = new Agent({
+  connect: {
+    rejectUnauthorized: false,
+  },
+})
 
 export function interpolate(
   template: string,
@@ -426,6 +431,9 @@ async function executeHttpRequest(
       body: built.body as Dispatcher.DispatchOptions['body'],
       signal: controller.signal,
       maxRedirections: 5,
+      ...(payload.skipCertificateVerification
+        ? { dispatcher: insecureCertificateDispatcher }
+        : {}),
     })
 
     const { buffer, sizeBytes, truncated } = await readBodyCapped(

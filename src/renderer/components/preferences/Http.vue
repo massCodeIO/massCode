@@ -52,6 +52,20 @@ const { settings } = useHttpSettings()
           {{ i18n.t("preferences:http.autoSwitchToResponse.description") }}
         </template>
       </UiMenuFormItem>
+
+      <UiMenuFormItem
+        :label="i18n.t('preferences:http.sslCertificateVerification.label')"
+      >
+        <Switch
+          :checked="!settings.skipCertificateVerification"
+          @update:checked="settings.skipCertificateVerification = !$event"
+        />
+        <template #description>
+          {{
+            i18n.t("preferences:http.sslCertificateVerification.description")
+          }}
+        </template>
+      </UiMenuFormItem>
     </UiMenuFormSection>
   </div>
 </template>

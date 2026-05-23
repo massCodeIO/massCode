@@ -308,6 +308,9 @@ function setValue(value: string, programmatic = true, preserveViewport = true) {
 
   isProgrammaticChange.value = programmatic
   editor.setValue(value)
+  if (programmatic) {
+    editor.clearHistory()
+  }
   isProgrammaticChange.value = false
 
   if (preserveViewport) {

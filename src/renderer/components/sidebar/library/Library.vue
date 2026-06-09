@@ -4,28 +4,23 @@ import Tree from '@/components/sidebar/folders/Tree.vue'
 import LibraryItem from '@/components/sidebar/library/Item.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
-  initCodeSpace,
   useApp,
   useFolders,
   useResizeHandle,
   useSnippets,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
-import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { i18n, store } from '@/electron'
-import { scrollToElement } from '@/utils'
 import { Archive, Inbox, Plus, Star, Trash } from 'lucide-vue-next'
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
-const { state, isAppLoading, isCodeSpaceInitialized, pendingCodeNavigation }
-  = useApp()
+const { state } = useApp()
 const {
   getSnippets,
   selectFirstSnippet,
   emptyTrash,
   isRestoreStateBlocked,
   clearSearch,
-  displayedSnippets,
 } = useSnippets()
 const {
   folders,
@@ -77,34 +72,6 @@ const libraryItems = [
   },
   { id: LibraryFilter.Trash, name: i18n.t('common.trash'), icon: Trash },
 ]
-
-async function initApp() {
-  if (pendingCodeNavigation.value) {
-    return
-  }
-
-  if (isCodeSpaceInitialized.value) {
-    isAppLoading.value = false
-    return
-  }
-
-  isAppLoading.value = true
-  await initCodeSpace()
-
-  nextTick(() => {
-    scrollToElement(`[id="${state.folderId}"]`)
-
-    const index
-      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
-    if (index >= 0) {
-      scrollToSnippetIndex(index)
-    }
-  })
-
-  isAppLoading.value = false
-}
-
-void initApp()
 
 async function onFolderClick({
   id,

@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { useApp } from '@/composables'
+import { initCodeSpace, useApp, useSnippets } from '@/composables'
 import { getCodePanels } from '@/composables/layoutModes'
+import { scrollToSnippetIndex } from '@/composables/useSnippetScroller'
 import { store } from '@/electron'
+import { scrollToElement } from '@/utils'
 
-const { codeLayoutMode } = useApp()
+const {
+  codeLayoutMode,
+  isAppLoading,
+  isCodeSpaceInitialized,
+  pendingCodeNavigation,
+  state,
+} = useApp()
+const { displayedSnippets } = useSnippets()
 
 const panels = computed(() => getCodePanels(codeLayoutMode.value))
 
@@ -27,6 +36,34 @@ function onResizeEnd(sw: number, lw: number) {
 function onTwoPanelResize(lw: number) {
   store.app.set('code.layout.twoPanel', lw)
 }
+
+async function initApp() {
+  if (pendingCodeNavigation.value) {
+    return
+  }
+
+  if (isCodeSpaceInitialized.value) {
+    isAppLoading.value = false
+    return
+  }
+
+  isAppLoading.value = true
+  await initCodeSpace()
+
+  nextTick(() => {
+    scrollToElement(`[id="${state.folderId}"]`)
+
+    const index
+      = displayedSnippets.value?.findIndex(s => s.id === state.snippetId) ?? -1
+    if (index >= 0) {
+      scrollToSnippetIndex(index)
+    }
+  })
+
+  isAppLoading.value = false
+}
+
+void initApp()
 </script>
 
 <template>

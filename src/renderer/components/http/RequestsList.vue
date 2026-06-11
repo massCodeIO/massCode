@@ -11,10 +11,6 @@ const { focusedRequestId } = useHttpApp()
 const { deleteSelectedHttpRequests } = useHttpRequests()
 const { displayedRequests } = useHttpSearch()
 
-// Список уже отфильтрован сервером по текущей папке/фильтру. Клиентский
-// фильтр по httpState.folderId опустошал список синхронно при смене папки
-// (folderId меняется раньше, чем приходит новый список) — список «мигал»
-// пустым placeholder на время загрузки.
 const filteredRequests = computed(() => displayedRequests.value || [])
 
 useDeleteShortcut({

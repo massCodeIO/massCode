@@ -1,6 +1,7 @@
 import type { ChokidarOptions, FSWatcher } from 'chokidar'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
+import { wasRecentAppDrawingChange } from './drawings'
 import {
   getHttpPaths,
   peekHttpRuntimeCache,
@@ -26,6 +27,7 @@ import {
 import {
   getWatchPathSpaceId,
   isCodeWatchPath,
+  isDrawingsWatchPath,
   isHttpWatchPath,
   isMathWatchPath,
   isNotesWatchPath,
@@ -42,6 +44,7 @@ let hasPendingFullSync = false
 let hasPendingMathSync = false
 let hasPendingNotesSync = false
 let hasPendingHttpSync = false
+let hasPendingDrawingsSync = false
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
 
@@ -94,6 +97,7 @@ function scheduleStateSync(
   const changedCodePath = isCodeWatchPath(changedPath)
   const changedMathPath = isMathWatchPath(changedPath)
   const changedHttpPath = isHttpWatchPath(changedPath)
+  const changedDrawingsPath = isDrawingsWatchPath(changedPath)
   const changedCodeRelativePath
     = changedPath && changedCodePath ? toCodeRelativePath(changedPath) : null
 
@@ -109,6 +113,15 @@ function scheduleStateSync(
     hasPendingHttpSync = true
   }
 
+  if (
+    changedDrawingsPath
+    && !(changedPath && wasRecentAppDrawingChange(vaultRootPath, changedPath))
+  ) {
+    // Echoes of the app's own drawing writes are skipped entirely:
+    // re-syncing them would only re-read data the renderer already has.
+    hasPendingDrawingsSync = true
+  }
+
   if (changedNotesPath) {
     // Notes space has separate runtime cache sync path.
   }
@@ -118,12 +131,16 @@ function scheduleStateSync(
   else if (changedHttpPath) {
     // HTTP space has separate runtime cache sync path.
   }
+  else if (changedDrawingsPath) {
+    // Drawings space has no main-process cache to sync; broadcast only.
+  }
   else if (forceFullSync || !changedPath) {
     hasPendingFullSync = true
 
     if (forceFullSync && !changedPath) {
       hasPendingNotesSync = true
       hasPendingHttpSync = true
+      hasPendingDrawingsSync = true
     }
   }
   else if (changedCodeRelativePath) {
@@ -151,6 +168,7 @@ function scheduleStateSync(
       const previousHttpCache = peekHttpRuntimeCache()
       const changedFilePath = hasPendingFullSync ? null : pendingFilePath
       const shouldNotifyMath = hasPendingMathSync
+      const shouldNotifyDrawings = hasPendingDrawingsSync
       const shouldSyncCode = hasPendingFullSync || changedFilePath !== null
       const shouldSyncNotes = hasPendingNotesSync
       const shouldSyncHttp = hasPendingHttpSync
@@ -159,6 +177,7 @@ function scheduleStateSync(
       hasPendingMathSync = false
       hasPendingNotesSync = false
       hasPendingHttpSync = false
+      hasPendingDrawingsSync = false
       pendingFilePath = null
 
       let nextCache = previousCache
@@ -187,6 +206,7 @@ function scheduleStateSync(
         = shouldSyncNotes
           && (!previousNotesCache || nextNotesCache !== previousNotesCache)
       const hasMathChanges = shouldNotifyMath
+      const hasDrawingsChanges = shouldNotifyDrawings
       const hasHttpChanges
         = shouldSyncHttp
           && (!previousHttpCache || nextHttpCache !== previousHttpCache)
@@ -196,6 +216,7 @@ function scheduleStateSync(
         || hasNotesChanges
         || hasMathChanges
         || hasHttpChanges
+        || hasDrawingsChanges
       ) {
         BrowserWindow.getAllWindows().forEach((window) => {
           window.webContents.send('system:storage-synced')
@@ -227,6 +248,7 @@ export function stopMarkdownWatcher(): void {
   hasPendingMathSync = false
   hasPendingNotesSync = false
   hasPendingHttpSync = false
+  hasPendingDrawingsSync = false
   resetRuntimeCache()
   resetNotesRuntimeCache()
   resetHttpRuntimeCache()

@@ -199,6 +199,18 @@
       "untitled": "Без названия",
       "currencyUnavailable": "Сервис курсов валют недоступен"
     },
+    "drawings": {
+      "label": "Рисунки",
+      "tooltip": "Рисунки Excalidraw",
+      "title": "Рисунки",
+      "drawingList": "Список рисунков",
+      "newDrawing": "Новый рисунок",
+      "exportImage": "Экспорт изображения…",
+      "copyLinkForNote": "Копировать ссылку для заметки",
+      "openInSpace": "Открыть в Рисунках",
+      "notFound": "Рисунок не найден",
+      "noSelected": "Рисунок не выбран"
+    },
     "http": {
       "label": "HTTP",
       "tooltip": "HTTP-клиент",
@@ -562,6 +574,7 @@
     "emptyNotesList": "Нет заметок",
     "searchNotes": "Поиск заметок...",
     "emptySheetList": "Нет листов",
+    "emptyDrawingsList": "Нет рисунков",
     "search": "Поиск",
     "searchIn": "Поиск в {{- context}}",
     "addTag": "Добавить тег",

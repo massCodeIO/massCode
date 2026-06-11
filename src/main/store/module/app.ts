@@ -6,6 +6,7 @@ import type {
   CommandPaletteUsageEntry,
   CommandPaletteUsageTarget,
   DonationsState,
+  DrawingViewportState,
   HttpState,
   NotesEditorMode,
   NotesRouteName,
@@ -81,12 +82,14 @@ const APP_STORE_DEFAULTS: AppStore = {
       notes: 0,
       math: 0,
       tools: 0,
+      drawings: 0,
     },
     created: {
       code: 0,
       http: 0,
       notes: 0,
       math: 0,
+      drawings: 0,
     },
     sent: {
       http: 0,
@@ -97,18 +100,24 @@ const APP_STORE_DEFAULTS: AppStore = {
       notes: 0,
       math: 0,
       tools: 0,
+      drawings: 0,
     },
     lastShownCreatedMilestones: {
       code: 0,
       http: 0,
       notes: 0,
       math: 0,
+      drawings: 0,
     },
     lastShownSentMilestones: {
       http: 0,
     },
     shownStreakMilestones: [],
     lastGreetingDay: '',
+  },
+  drawings: {
+    activeDrawingId: null,
+    viewport: {},
   },
   activeSpaceId: 'code',
 }
@@ -202,12 +211,18 @@ function sanitizeDonations(value: unknown): DonationsState {
       notes: readNumber(copiesSource, 'notes', defaults.copies.notes),
       math: readNumber(copiesSource, 'math', defaults.copies.math),
       tools: readNumber(copiesSource, 'tools', defaults.copies.tools),
+      drawings: readNumber(copiesSource, 'drawings', defaults.copies.drawings),
     },
     created: {
       code: readNumber(createdSource, 'code', defaults.created.code),
       http: readNumber(createdSource, 'http', defaults.created.http),
       notes: readNumber(createdSource, 'notes', defaults.created.notes),
       math: readNumber(createdSource, 'math', defaults.created.math),
+      drawings: readNumber(
+        createdSource,
+        'drawings',
+        defaults.created.drawings,
+      ),
     },
     sent: {
       http: readNumber(sentSource, 'http', defaults.sent.http),
@@ -238,6 +253,11 @@ function sanitizeDonations(value: unknown): DonationsState {
         'tools',
         defaults.lastShownCopyMilestones.tools,
       ),
+      drawings: readNumber(
+        copyMilestonesSource,
+        'drawings',
+        defaults.lastShownCopyMilestones.drawings,
+      ),
     },
     lastShownCreatedMilestones: {
       code: readNumber(
@@ -259,6 +279,11 @@ function sanitizeDonations(value: unknown): DonationsState {
         createdMilestonesSource,
         'math',
         defaults.lastShownCreatedMilestones.math,
+      ),
+      drawings: readNumber(
+        createdMilestonesSource,
+        'drawings',
+        defaults.lastShownCreatedMilestones.drawings,
       ),
     },
     lastShownSentMilestones: {
@@ -296,6 +321,7 @@ function sanitizeCommandPaletteRecent(
     'math',
     'notes',
     'http',
+    'drawings',
   ] satisfies SpaceId[]
   const entries: CommandPaletteRecentEntry[] = []
   const seen = new Set<string>()
@@ -395,6 +421,32 @@ function sanitizeCommandPaletteUsage(
   }
 
   return entries.slice(0, 100)
+}
+
+function sanitizeDrawingViewports(
+  value: unknown,
+): Record<string, DrawingViewportState> {
+  const source = asRecord(value)
+  const result: Record<string, DrawingViewportState> = {}
+
+  for (const [drawingId, rawViewport] of Object.entries(source)) {
+    const viewport = asRecord(rawViewport)
+
+    if (
+      typeof viewport.scrollX === 'number'
+      && typeof viewport.scrollY === 'number'
+      && typeof viewport.zoom === 'number'
+      && viewport.zoom > 0
+    ) {
+      result[drawingId] = {
+        scrollX: viewport.scrollX,
+        scrollY: viewport.scrollY,
+        zoom: viewport.zoom,
+      }
+    }
+  }
+
+  return result
 }
 
 function sanitizeAppStore(value: unknown): AppStore {
@@ -597,10 +649,17 @@ function sanitizeAppStore(value: unknown): AppStore {
       usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),
     },
     donations: sanitizeDonations(source.donations),
+    drawings: {
+      activeDrawingId:
+        typeof asRecord(source.drawings).activeDrawingId === 'string'
+          ? String(asRecord(source.drawings).activeDrawingId)
+          : APP_STORE_DEFAULTS.drawings.activeDrawingId,
+      viewport: sanitizeDrawingViewports(asRecord(source.drawings).viewport),
+    },
     activeSpaceId: readEnum(
       source,
       'activeSpaceId',
-      ['code', 'tools', 'math', 'notes', 'http'] as const,
+      ['code', 'tools', 'math', 'notes', 'http', 'drawings'] as const,
       APP_STORE_DEFAULTS.activeSpaceId,
     ) as SpaceId,
   }

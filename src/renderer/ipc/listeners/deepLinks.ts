@@ -3,6 +3,7 @@ import {
   initCodeSpace,
   queueNavigationUIStateRestore,
   useApp,
+  useDrawings,
   useFolders,
   useHttpApp,
   useHttpFolders,
@@ -244,6 +245,22 @@ export async function openHttpRequestDeepLink(
   }
 }
 
+export async function openDrawingDeepLink(drawingId: string): Promise<void> {
+  const { openDrawing } = useDrawings()
+  await openDrawing(drawingId)
+}
+
+export async function openDrawingTarget(drawingId: string): Promise<void> {
+  if (isNavigatingHistory.value) {
+    await openDrawingDeepLink(drawingId)
+    return
+  }
+
+  await recordNavigation(async () => {
+    await openDrawingDeepLink(drawingId)
+  })
+}
+
 export async function openInternalTarget(
   target: InternalTarget,
 ): Promise<void> {
@@ -300,6 +317,11 @@ async function restoreNavigationTarget(
       return
     }
 
+    if (target.type === 'drawing') {
+      await openDrawingDeepLink(target.id)
+      return
+    }
+
     await openNoteDeepLink(target.id)
   }
   finally {
@@ -329,6 +351,19 @@ export async function navigateForward(): Promise<void> {
 
 export async function handleDeepLink(url: string): Promise<void> {
   const parsed = new URL(url)
+
+  if (parsed.hostname === 'drawing') {
+    const drawingId = decodeURIComponent(
+      parsed.pathname.replace(/^\/+/, ''),
+    ).trim()
+
+    if (drawingId) {
+      await openDrawingTarget(drawingId)
+    }
+
+    return
+  }
+
   const snippetId = parsed.searchParams.get('snippetId')
   const noteId = parsed.searchParams.get('noteId')
   const httpRequestId = parsed.searchParams.get('httpRequestId')

@@ -61,13 +61,15 @@
         "http": "{{count}} HTTP items copied 🚀",
         "notes": "{{count}} notes copied 🚀",
         "math": "{{count}} math results copied 🚀",
-        "tools": "{{count}} tool outputs copied 🚀"
+        "tools": "{{count}} tool outputs copied 🚀",
+        "drawings": "{{count}} drawing items copied 🚀"
       },
       "created": {
         "code": "{{count}} snippets created 🎉",
         "http": "{{count}} HTTP requests created 🎉",
         "notes": "{{count}} notes created 🎉",
-        "math": "{{count}} sheets created 🎉"
+        "math": "{{count}} sheets created 🎉",
+        "drawings": "{{count}} drawings created 🎉"
       },
       "sent": {
         "http": "{{count}} HTTP requests sent 🚀"

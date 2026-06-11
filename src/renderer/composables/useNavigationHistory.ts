@@ -1,4 +1,5 @@
 import { router, RouterName } from '@/router'
+import { useDrawings } from './spaces/drawings/useDrawings'
 import { useHttpRequests } from './spaces/http/useHttpRequests'
 import { useNotes } from './spaces/notes/useNotes'
 import {
@@ -20,9 +21,17 @@ export interface NavigationHistoryEntityEntry {
   uiState?: NavigationHistoryUIState
 }
 
+export interface NavigationHistoryDrawingEntry {
+  id: string
+  name: string
+  type: 'drawing'
+  uiState?: NavigationHistoryUIState
+}
+
 export type NavigationHistoryEntry =
   | NavigationHistoryRouteEntry
   | NavigationHistoryEntityEntry
+  | NavigationHistoryDrawingEntry
 
 export const MAX_HISTORY_SIZE = 50
 
@@ -33,6 +42,7 @@ const isNavigatingHistory = ref(false)
 const { selectedNote } = useNotes()
 const { selectedSnippet } = useSnippets()
 const { currentRequest } = useHttpRequests()
+const { activeDrawing } = useDrawings()
 
 const canGoBack = computed(() => cursor.value > 0)
 const canGoForward = computed(
@@ -97,6 +107,13 @@ function captureCurrentLocation(): NavigationHistoryEntry | undefined {
       id: currentRequest.value.id,
       name: currentRequest.value.name,
       type: 'http-request',
+    }
+  }
+  else if (routeName === RouterName.drawingsSpace && activeDrawing.value) {
+    entry = {
+      id: activeDrawing.value.id,
+      name: activeDrawing.value.name,
+      type: 'drawing',
     }
   }
 

@@ -61,7 +61,17 @@ type SystemAction =
 type PrettierAction = 'format'
 type FsAction = 'assets' | 'import-markdown-folder' | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
-type SpacesAction = 'math:read' | 'math:write' | 'http:execute'
+type SpacesAction =
+  | 'math:read'
+  | 'math:write'
+  | 'http:execute'
+  | 'drawings:list'
+  | 'drawings:read'
+  | 'drawings:write'
+  | 'drawings:create'
+  | 'drawings:rename'
+  | 'drawings:duplicate'
+  | 'drawings:delete'
 
 export type MainMenuChannel = CombineWith<MainMenuAction, 'main-menu'>
 export type DBChannel = CombineWith<DBAction, 'db'>

@@ -2,6 +2,7 @@ import {
   normalizeCodeSelectionState,
   normalizeNotesSelectionState,
   useApp,
+  useDrawings,
   useFolders,
   useHttpApp,
   useHttpSpaceInit,
@@ -32,6 +33,11 @@ const { selectFirstSnippet, displayedSnippets } = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
+const {
+  reloadFromDisk: reloadDrawingsFromDisk,
+  hasBusyDrawingUpdates,
+  markDrawingsStale,
+} = useDrawings()
 const { refreshHttpSpaceFromDisk } = useHttpSpaceInit()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
@@ -67,10 +73,14 @@ async function refreshAfterStorageSync() {
   isCodeSpaceInitialized.value = false
   isNotesSpaceInitialized.value = false
   isHttpSpaceInitialized.value = false
+  markDrawingsStale()
 
   switch (activeSpace) {
     case 'math':
       await reloadMathFromDisk()
+      break
+    case 'drawings':
+      await reloadDrawingsFromDisk()
       break
     case 'notes':
       await getNoteFolders()
@@ -108,6 +118,7 @@ function scheduleStorageSyncRefresh() {
       shouldSkipStorageSyncRefresh()
       || hasBusyContentUpdates()
       || hasBusyNoteContentUpdates()
+      || hasBusyDrawingUpdates()
     ) {
       scheduleStorageSyncRefresh()
       return

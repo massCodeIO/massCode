@@ -215,6 +215,44 @@ describe('syncNoteFileWithDisk', () => {
     expect(nextCache!.state.notes).toHaveLength(2)
   })
 
+  it('keeps note id when external move processes add before unlink', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const sourcePath = path.join(paths.inboxDirPath, 'source.md')
+    fs.writeFileSync(
+      sourcePath,
+      '---\nid: 7\nname: source\n---\nBody\n',
+      'utf8',
+    )
+
+    syncNotesRuntimeWithDisk(paths)
+
+    // Внешний mv source.md → target.md: add нового пути приходит раньше
+    // unlink старого.
+    const targetPath = path.join(paths.inboxDirPath, 'target.md')
+    fs.moveSync(sourcePath, targetPath)
+
+    const afterAdd = syncNoteFileWithDisk(paths, '.masscode/inbox/target.md')
+
+    expect(afterAdd).not.toBeNull()
+    expect(afterAdd!.notes).toHaveLength(1)
+    expect(afterAdd!.noteById.get(7)?.name).toBe('source')
+    expect(afterAdd!.state.notes).toHaveLength(1)
+    expect(afterAdd!.state.notes[0]).toMatchObject({
+      filePath: '.masscode/inbox/target.md',
+      id: 7,
+    })
+
+    const afterUnlink = syncNoteFileWithDisk(
+      paths,
+      '.masscode/inbox/source.md',
+    )
+
+    expect(afterUnlink).not.toBeNull()
+    expect(afterUnlink!.notes).toHaveLength(1)
+    expect(afterUnlink!.noteById.get(7)?.name).toBe('source')
+  })
+
   it('updates an existing note in the runtime cache incrementally', () => {
     const paths = createNotesPaths()
     fs.ensureDirSync(paths.inboxDirPath)

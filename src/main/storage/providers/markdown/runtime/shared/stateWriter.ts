@@ -39,8 +39,8 @@ function flushPath(statePath: string): void {
   const persistedContent = getPersistedContent(statePath)
   if (persistedContent !== pendingContent) {
     fs.ensureDirSync(path.dirname(statePath))
-    rememberAppFileChange(statePath)
     fs.writeFileSync(statePath, pendingContent, 'utf8')
+    rememberAppFileChange(statePath)
   }
 
   stateContentCacheByPath.set(statePath, pendingContent)

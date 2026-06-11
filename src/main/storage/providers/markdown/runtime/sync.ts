@@ -363,21 +363,40 @@ export function syncSnippetFileWithDisk(
     = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
 
   if (!snippetIndexItem) {
-    const existingSnippetIds = new Set<number>(
-      state.snippets.map(item => item.id),
-    )
     let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
 
-    if (!snippetId || existingSnippetIds.has(snippetId)) {
-      snippetId = state.counters.snippetId + 1
-      state.counters.snippetId = snippetId
+    // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
+    // раньше unlink старого: если frontmatter-id принадлежит записи, файла
+    // которой уже нет на диске, это тот же сниппет — перенацеливаем запись,
+    // сохраняя id, вместо аллокации нового.
+    if (snippetId) {
+      const ownerEntry = state.snippets.find(item => item.id === snippetId)
+
+      if (
+        ownerEntry
+        && !fs.pathExistsSync(path.join(paths.vaultPath, ownerEntry.filePath))
+      ) {
+        ownerEntry.filePath = normalizedFilePath
+        snippetIndexItem = ownerEntry
+      }
     }
 
-    snippetIndexItem = {
-      filePath: normalizedFilePath,
-      id: snippetId,
+    if (!snippetIndexItem) {
+      const existingSnippetIds = new Set<number>(
+        state.snippets.map(item => item.id),
+      )
+
+      if (!snippetId || existingSnippetIds.has(snippetId)) {
+        snippetId = state.counters.snippetId + 1
+        state.counters.snippetId = snippetId
+      }
+
+      snippetIndexItem = {
+        filePath: normalizedFilePath,
+        id: snippetId,
+      }
+      state.snippets.push(snippetIndexItem)
     }
-    state.snippets.push(snippetIndexItem)
   }
   else {
     snippetIndexItem.filePath = normalizedFilePath

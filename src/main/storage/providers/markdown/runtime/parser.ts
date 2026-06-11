@@ -46,10 +46,10 @@ export function readFolderMetadata(
   }
 
   try {
-    rememberAppFileChange(metaPath)
-    rememberAppFileChange(legacyPath)
     writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
     fs.removeSync(legacyPath)
+    rememberAppFileChange(metaPath)
+    rememberAppFileChange(legacyPath)
   }
   catch {
     // Migration failed — non-critical, we still have the data
@@ -114,15 +114,15 @@ export function writeFolderMetadataFile(
   }
 
   fs.ensureDirSync(folderAbsPath)
-  rememberAppFileChange(metaPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  rememberAppFileChange(metaPath)
 
   // Clean up legacy file if it exists
   const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
   if (fs.pathExistsSync(legacyPath)) {
     try {
-      rememberAppFileChange(legacyPath)
       fs.removeSync(legacyPath)
+      rememberAppFileChange(legacyPath)
     }
     catch {
       // Non-critical

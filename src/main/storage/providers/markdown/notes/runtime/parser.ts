@@ -65,6 +65,6 @@ export function writeNotesFolderMetadataFile(
   }
 
   fs.ensureDirSync(folderAbsPath)
-  rememberAppFileChange(metaPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  rememberAppFileChange(metaPath)
 }

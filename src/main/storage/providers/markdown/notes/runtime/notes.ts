@@ -162,8 +162,8 @@ export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
-  rememberAppFileChange(absolutePath)
   fs.writeFileSync(absolutePath, nextContent, 'utf8')
+  rememberAppFileChange(absolutePath)
 }
 
 export function loadNotes(
@@ -298,11 +298,11 @@ export function persistNote(
     const currentAbsolutePath = path.join(paths.notesRoot, currentFilePath)
     if (fs.pathExistsSync(currentAbsolutePath)) {
       fs.ensureDirSync(path.dirname(resolvedAbsolutePath))
-      rememberAppFileChange(currentAbsolutePath)
-      rememberAppFileChange(resolvedAbsolutePath)
       fs.moveSync(currentAbsolutePath, resolvedAbsolutePath, {
         overwrite: false,
       })
+      rememberAppFileChange(currentAbsolutePath)
+      rememberAppFileChange(resolvedAbsolutePath)
       removeDirectoryEntryFromCache(
         path.dirname(currentAbsolutePath),
         path.basename(currentAbsolutePath),

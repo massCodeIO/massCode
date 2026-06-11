@@ -200,8 +200,8 @@ interface EntityDeleteInput<
 function removeFileIfExists(rootPath: string, filePath: string): void {
   const absolutePath = path.join(rootPath, filePath)
   if (fs.pathExistsSync(absolutePath)) {
-    rememberAppFileChange(absolutePath)
     fs.removeSync(absolutePath)
+    rememberAppFileChange(absolutePath)
   }
 }
 

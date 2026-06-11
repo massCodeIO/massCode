@@ -241,8 +241,8 @@ export function writeSnippetToFile(
     }
   }
 
-  rememberAppFileChange(snippetPath)
   fs.writeFileSync(snippetPath, nextContent, 'utf8')
+  rememberAppFileChange(snippetPath)
 }
 
 function upsertSnippetIndex(
@@ -422,9 +422,9 @@ export function persistSnippet(
     && fs.pathExistsSync(sourceAbsolutePath)
   ) {
     fs.ensureDirSync(path.dirname(targetAbsolutePath))
+    fs.moveSync(sourceAbsolutePath, targetAbsolutePath, { overwrite: false })
     rememberAppFileChange(sourceAbsolutePath)
     rememberAppFileChange(targetAbsolutePath)
-    fs.moveSync(sourceAbsolutePath, targetAbsolutePath, { overwrite: false })
 
     removeDirectoryEntryFromCache(
       path.dirname(sourceAbsolutePath),

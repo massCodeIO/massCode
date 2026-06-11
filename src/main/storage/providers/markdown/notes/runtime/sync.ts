@@ -277,18 +277,37 @@ export function syncNoteFileWithDisk(
     = noteIndexInState !== -1 ? state.notes[noteIndexInState] : null
 
   if (!noteIndexItem) {
-    const existingNoteIds = new Set<number>(
-      state.notes.map(entry => entry.id),
-    )
     let noteId = readNoteIdFromFrontmatter(noteAbsolutePath)
 
-    if (!noteId || existingNoteIds.has(noteId)) {
-      state.counters.noteId += 1
-      noteId = state.counters.noteId
+    // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
+    // раньше unlink старого: если frontmatter-id принадлежит записи, файла
+    // которой уже нет на диске, это та же заметка — перенацеливаем запись,
+    // сохраняя id, вместо аллокации нового.
+    if (noteId) {
+      const ownerEntry = state.notes.find(entry => entry.id === noteId)
+
+      if (
+        ownerEntry
+        && !fs.pathExistsSync(path.join(paths.notesRoot, ownerEntry.filePath))
+      ) {
+        ownerEntry.filePath = normalizedFilePath
+        noteIndexItem = ownerEntry
+      }
     }
 
-    noteIndexItem = { filePath: normalizedFilePath, id: noteId }
-    state.notes.push(noteIndexItem)
+    if (!noteIndexItem) {
+      const existingNoteIds = new Set<number>(
+        state.notes.map(entry => entry.id),
+      )
+
+      if (!noteId || existingNoteIds.has(noteId)) {
+        state.counters.noteId += 1
+        noteId = state.counters.noteId
+      }
+
+      noteIndexItem = { filePath: normalizedFilePath, id: noteId }
+      state.notes.push(noteIndexItem)
+    }
   }
   else {
     noteIndexItem.filePath = normalizedFilePath

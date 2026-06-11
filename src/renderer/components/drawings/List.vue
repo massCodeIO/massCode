@@ -10,7 +10,7 @@ import {
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
-import { Shapes } from 'lucide-vue-next'
+import { Search, Shapes } from 'lucide-vue-next'
 
 const { isCompactListMode } = useApp()
 const {
@@ -44,12 +44,69 @@ const {
 
 const drawingListRef = ref<HTMLElement>()
 const isDrawingListFocused = ref(false)
+const searchQuery = ref('')
+
+const filteredDrawings = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  if (!query) {
+    return drawings.value
+  }
+
+  return drawings.value.filter(drawing =>
+    drawing.name.toLowerCase().includes(query),
+  )
+})
 
 async function handleCreateDrawing() {
+  searchQuery.value = ''
   const record = await createDrawing()
 
   if (record) {
     startRename(record.id, record.name)
+  }
+}
+
+function scrollActiveDrawingIntoView() {
+  nextTick(() => {
+    drawingListRef.value
+      ?.querySelector(`[data-drawing-id="${activeDrawingId.value}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+function moveSearchSelection(delta: number) {
+  const items = filteredDrawings.value
+
+  if (items.length === 0) {
+    return
+  }
+
+  const currentIndex = items.findIndex(
+    item => item.id === activeDrawingId.value,
+  )
+  const nextIndex
+    = currentIndex === -1
+      ? delta > 0
+        ? 0
+        : items.length - 1
+      : Math.min(Math.max(currentIndex + delta, 0), items.length - 1)
+
+  void selectDrawing(items[nextIndex].id)
+  scrollActiveDrawingIntoView()
+}
+
+function onSearchKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    moveSearchSelection(1)
+  }
+  else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveSearchSelection(-1)
+  }
+  else if (event.key === 'Escape') {
+    searchQuery.value = ''
   }
 }
 
@@ -110,9 +167,21 @@ defineExpose({
     data-drawings-list
     class="flex h-full flex-col overflow-hidden"
   >
+    <div class="mb-1 flex items-center px-2">
+      <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
+      <div class="min-w-0 flex-grow">
+        <UiInput
+          v-model="searchQuery"
+          :placeholder="i18n.t('spaces.drawings.searchPlaceholder')"
+          variant="ghost"
+          class="truncate"
+          @keydown="onSearchKeydown"
+        />
+      </div>
+    </div>
     <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-2">
       <ContextMenu.ContextMenu
-        v-for="drawing in drawings"
+        v-for="drawing in filteredDrawings"
         :key="drawing.id"
       >
         <ContextMenu.ContextMenuTrigger as-child>
@@ -122,6 +191,7 @@ defineExpose({
               activeDrawingId === drawing.id ? 'text-accent-foreground' : ''
             "
             :selected="activeDrawingId === drawing.id"
+            :data-drawing-id="drawing.id"
             tabindex="-1"
             @click="selectDrawingFromList(drawing.id, $event)"
             @dblclick="startRename(drawing.id, drawing.name)"
@@ -200,10 +270,14 @@ defineExpose({
       </ContextMenu.ContextMenu>
 
       <div
-        v-if="drawings.length === 0"
+        v-if="filteredDrawings.length === 0"
         class="text-muted-foreground mt-8 text-center text-[12px]"
       >
-        {{ i18n.t("placeholder.emptyDrawingsList") }}
+        {{
+          searchQuery.trim()
+            ? i18n.t("spaces.drawings.noResults")
+            : i18n.t("placeholder.emptyDrawingsList")
+        }}
       </div>
     </div>
   </div>

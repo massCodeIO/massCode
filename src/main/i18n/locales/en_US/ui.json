@@ -199,6 +199,8 @@
       "title": "Drawings",
       "drawingList": "Drawing List",
       "newDrawing": "New Drawing",
+      "searchPlaceholder": "Search drawings…",
+      "noResults": "No drawings found",
       "exportImage": "Export image…",
       "copyLinkForNote": "Copy Link for Note",
       "openInSpace": "Open in Drawings",

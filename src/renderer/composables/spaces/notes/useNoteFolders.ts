@@ -167,7 +167,10 @@ function clearFolderSelection() {
   isApplyingFolderSelection = true
   selectedFolderIds.value = []
   notesState.folderId = undefined
-  notesState.noteId = undefined
+  // noteId намеренно не сбрасывается: иначе заголовок и редактор мигают
+  // пустым состоянием при переходах Library/Tags, пока загружается список.
+  // Вызывающие реселектят через selectFirstNote/selectNote либо чистят
+  // выбор через clearNotesState.
   lastSelectedFolderId.value = undefined
   isApplyingFolderSelection = false
 }
@@ -470,7 +473,10 @@ async function selectNoteFolder(
     applySingleFolderSelection(folderId)
     notesState.libraryFilter = undefined
     notesState.tagId = undefined
-    notesState.noteId = undefined
+    // noteId намеренно не сбрасывается: иначе заголовок и редактор мигают
+    // пустым состоянием, пока загружается список новой папки. Все вызывающие
+    // либо делают selectFirstNote/selectNote после загрузки списка, либо
+    // чистят выбор через clearNotesState.
   }
 
   if (folders.value?.length && shouldEnsureVisibility) {

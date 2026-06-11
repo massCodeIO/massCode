@@ -164,7 +164,10 @@ function clearFolderSelection() {
   isApplyingFolderSelection = true
   selectedFolderIds.value = []
   state.folderId = undefined
-  state.snippetId = undefined
+  // snippetId намеренно не сбрасывается: иначе заголовок и редактор мигают
+  // пустым состоянием при переходах Library/Tags, пока загружается список.
+  // Вызывающие реселектят через selectFirstSnippet/selectSnippet либо чистят
+  // выбор через clearSnippetsState.
   lastSelectedFolderId.value = undefined
   isApplyingFolderSelection = false
 }
@@ -485,7 +488,10 @@ async function selectFolder(
     applySingleFolderSelection(folderId)
     state.libraryFilter = undefined
     state.tagId = undefined
-    state.snippetId = undefined
+    // snippetId намеренно не сбрасывается: иначе заголовок и редактор
+    // мигают пустым состоянием, пока загружается список новой папки.
+    // Все вызывающие либо делают selectFirstSnippet/selectSnippet после
+    // загрузки списка, либо чистят выбор через clearSnippetsState.
   }
 
   if (folders.value?.length && shouldEnsureVisibility) {

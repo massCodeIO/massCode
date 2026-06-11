@@ -12,6 +12,7 @@ import httpHistory from './routes/http-history'
 import httpImport from './routes/http-import'
 import httpRequests from './routes/http-requests'
 import imports from './routes/imports'
+import internalLinks from './routes/internal-links'
 import noteFolders from './routes/note-folders'
 import noteTags from './routes/note-tags'
 import notes from './routes/notes'
@@ -51,6 +52,7 @@ export async function initApi() {
     .use(notes)
     .use(noteFolders)
     .use(noteTags)
+    .use(internalLinks)
     .use(httpFolders)
     .use(httpRequests)
     .use(httpEnvironments)

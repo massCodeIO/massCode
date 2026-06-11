@@ -424,6 +424,35 @@ export interface NoteTagsUpdate {
   name: string;
 }
 
+export interface InternalLinksResolveBody {
+  /** @maxItems 500 */
+  titles: string[];
+}
+
+export type InternalLinksResolveResponse = {
+  title: string;
+  resolved: {
+    type: "snippet" | "note" | "http-request";
+    id: number;
+    name: string;
+    folder: {
+      id: number;
+      name: string;
+    } | null;
+    isDeleted: number;
+    firstContent?: {
+      language: string;
+      value: string | null;
+    } | null;
+    contentExcerpt?: string;
+    request?: {
+      method: string;
+      url: string;
+      description: string;
+    };
+  } | null;
+}[];
+
 export interface HttpFoldersAdd {
   name: string;
   icon?: string | null;
@@ -1905,6 +1934,27 @@ export class Api<
       this.request<void, any>({
         path: `/note-tags/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+  };
+  internalLinks = {
+    /**
+     * No description
+     *
+     * @tags InternalLinks
+     * @name PostInternalLinksResolve
+     * @request POST:/internal-links/resolve
+     */
+    postInternalLinksResolve: (
+      data: InternalLinksResolveBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<InternalLinksResolveResponse, any>({
+        path: `/internal-links/resolve`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

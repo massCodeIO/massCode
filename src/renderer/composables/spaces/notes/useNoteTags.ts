@@ -14,21 +14,35 @@ type NoteTagsResponse = NoteTagRecord[]
 
 const tags = shallowRef<NoteTagsResponse>([])
 const isLoading = ref(false)
+const isNoteTagsLoaded = ref(false)
+let inFlightRequest: Promise<void> | null = null
 
 // --- CRUD ---
 
-async function getNoteTags() {
-  try {
-    isLoading.value = true
-    const { data } = await api.noteTags.getNoteTags()
-    tags.value = data
+// Параллельные вызовы (init спейса + маунт компонентов) деду­плицируются
+// в один запрос.
+function getNoteTags(): Promise<void> {
+  if (inFlightRequest) {
+    return inFlightRequest
   }
-  catch (error) {
-    console.error(error)
-  }
-  finally {
-    isLoading.value = false
-  }
+
+  inFlightRequest = (async () => {
+    try {
+      isLoading.value = true
+      const { data } = await api.noteTags.getNoteTags()
+      tags.value = data
+      isNoteTagsLoaded.value = true
+    }
+    catch (error) {
+      console.error(error)
+    }
+    finally {
+      isLoading.value = false
+      inFlightRequest = null
+    }
+  })()
+
+  return inFlightRequest
 }
 
 async function addNoteTag(tagName: string) {
@@ -61,6 +75,7 @@ async function deleteNoteTag(tagId: number) {
 
 function resetNoteTags() {
   tags.value = []
+  isNoteTagsLoaded.value = false
 }
 
 export function useNoteTags() {
@@ -69,6 +84,7 @@ export function useNoteTags() {
     deleteNoteTag,
     getNoteTags,
     isLoading,
+    isNoteTagsLoaded,
     resetNoteTags,
     tags,
     updateNoteTag,

@@ -1,22 +1,12 @@
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import type { CachedEntity } from './cache'
-import type {
-  InternalLinkLookupItem,
-  InternalLinkMatch,
-  InternalLinkType,
-} from './parser'
+import type { InternalLinkMatch, InternalLinkType } from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
 import { entityCache } from './cache'
-import { buildNoteFolderPathMap } from './folderPath'
-import {
-  findInternalLinks,
-  normalizeInternalLinkLookupKey,
-  resolveInternalLinkTargetByTitle,
-  splitInternalLinkTarget,
-} from './parser'
+import { findInternalLinks, normalizeInternalLinkLookupKey } from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
 
@@ -246,107 +236,106 @@ export async function fetchInternalLinkEntity(
   }
 }
 
-async function resolveInternalLinkByTitle(
-  title: string,
-): Promise<CachedEntity> {
-  try {
-    const { basename } = splitInternalLinkTarget(title)
-    if (!basename) {
-      return { exists: false }
+// Резолв по title собирается в один batch-запрос на все ссылки документа:
+// все запросы одного тика (build-проход по видимым ссылкам) уходят одним
+// POST /internal-links/resolve вместо пакета из 5 запросов на ссылку.
+interface PendingTitleResolution {
+  title: string
+  resolvers: ((entity: CachedEntity) => void)[]
+}
+
+const pendingTitleResolutions = new Map<string, PendingTitleResolution>()
+let isTitleResolutionFlushScheduled = false
+
+function toCachedEntity(
+  resolved:
+    | {
+      type: InternalLinkType
+      id: number
+      name: string
+      folder: { id: number, name: string } | null
+      isDeleted: number
+      firstContent?: { language: string, value: string | null } | null
+      contentExcerpt?: string
+      request?: { method: string, url: string, description: string }
     }
-
-    const [
-      { data: snippets },
-      { data: notes },
-      { data: noteFolders },
-      { data: httpRequests },
-      { data: httpFolders },
-    ] = await Promise.all([
-      api.snippets.getSnippets({ search: basename, isDeleted: 0 }),
-      api.notes.getNotes({ search: basename, isDeleted: 0 }),
-      api.noteFolders.getNoteFolders(),
-      api.httpRequests.getHttpRequests({ search: basename }),
-      api.httpFolders.getHttpFolders(),
-    ])
-
-    const folderPathById = buildNoteFolderPathMap(noteFolders)
-    const httpFolderPathById = buildNoteFolderPathMap(httpFolders)
-
-    const resolvedTarget = resolveInternalLinkTargetByTitle(title, [
-      ...snippets.map<InternalLinkLookupItem>(snippet => ({
-        id: snippet.id,
-        name: snippet.name,
-        type: 'snippet',
-      })),
-      ...notes.map<InternalLinkLookupItem>(note => ({
-        folderPath: note.folder
-          ? folderPathById.get(note.folder.id)
-          : undefined,
-        id: note.id,
-        name: note.name,
-        type: 'note',
-      })),
-      ...httpRequests.map<InternalLinkLookupItem>(request => ({
-        folderPath:
-          request.folderId === null
-            ? ''
-            : (httpFolderPathById.get(request.folderId) ?? ''),
-        id: request.id,
-        name: request.name,
-        type: 'http-request',
-      })),
-    ])
-
-    if (!resolvedTarget) {
-      return { exists: false }
-    }
-
-    if (resolvedTarget.type === 'snippet') {
-      const snippet = snippets.find(item => item.id === resolvedTarget.id)
-      if (!snippet) {
-        return { exists: false }
-      }
-
-      // Список не содержит тел фрагментов — превью загружается по id.
-      return fetchInternalLinkEntity('snippet', snippet.id)
-    }
-
-    if (resolvedTarget.type === 'http-request') {
-      const request = httpRequests.find(
-        item => item.id === resolvedTarget.id,
-      )
-      if (!request) {
-        return { exists: false }
-      }
-
-      return {
-        exists: true,
-        data: {
-          folder: null,
-          id: request.id,
-          isDeleted: 0,
-          name: request.name,
-          request: {
-            description: request.description,
-            method: request.method,
-            url: request.url,
-          },
-          type: 'http-request',
-        },
-      }
-    }
-
-    const note = notes.find(item => item.id === resolvedTarget.id)
-    if (!note) {
-      return { exists: false }
-    }
-
-    // Список не содержит контента заметок — превью загружается по id.
-    return fetchInternalLinkEntity('note', note.id)
-  }
-  catch {
+    | null
+    | undefined,
+): CachedEntity {
+  if (!resolved || resolved.isDeleted) {
     return { exists: false }
   }
+
+  return {
+    exists: true,
+    data: {
+      contentExcerpt: resolved.contentExcerpt,
+      firstContent: resolved.firstContent ?? null,
+      folder: resolved.folder,
+      id: resolved.id,
+      isDeleted: resolved.isDeleted,
+      name: resolved.name,
+      request: resolved.request,
+      type: resolved.type,
+    },
+  }
+}
+
+async function flushTitleResolutions() {
+  isTitleResolutionFlushScheduled = false
+
+  const batch = [...pendingTitleResolutions.values()]
+  pendingTitleResolutions.clear()
+
+  if (!batch.length) {
+    return
+  }
+
+  try {
+    const { data } = await api.internalLinks.postInternalLinksResolve({
+      titles: batch.map(entry => entry.title),
+    })
+    const resolvedByTitle = new Map(data.map(item => [item.title, item]))
+
+    for (const entry of batch) {
+      const entity = toCachedEntity(
+        resolvedByTitle.get(entry.title)?.resolved as Parameters<
+          typeof toCachedEntity
+        >[0],
+      )
+      entry.resolvers.forEach(resolve => resolve(entity))
+    }
+  }
+  catch {
+    for (const entry of batch) {
+      entry.resolvers.forEach(resolve => resolve({ exists: false }))
+    }
+  }
+}
+
+function resolveInternalLinkByTitle(title: string): Promise<CachedEntity> {
+  return new Promise((resolve) => {
+    const normalizedTitle = title.trim()
+
+    if (!normalizedTitle) {
+      resolve({ exists: false })
+      return
+    }
+
+    const entry = pendingTitleResolutions.get(normalizedTitle) ?? {
+      resolvers: [],
+      title: normalizedTitle,
+    }
+    entry.resolvers.push(resolve)
+    pendingTitleResolutions.set(normalizedTitle, entry)
+
+    if (!isTitleResolutionFlushScheduled) {
+      isTitleResolutionFlushScheduled = true
+      queueMicrotask(() => {
+        void flushTitleResolutions()
+      })
+    }
+  })
 }
 
 function getInternalLinkCacheKey(link: InternalLinkMatch): string {

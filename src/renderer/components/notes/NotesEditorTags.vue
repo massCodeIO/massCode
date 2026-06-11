@@ -3,9 +3,12 @@ import type { TagItem } from '@/components/ui/input-tags/types'
 import { useNotes, useNoteTags } from '@/composables'
 
 const { selectedNote, addTagToNote, deleteTagFromNote } = useNotes()
-const { tags, addNoteTag, getNoteTags } = useNoteTags()
+const { tags, addNoteTag, getNoteTags, isNoteTagsLoaded } = useNoteTags()
 
-void getNoteTags()
+// Инициализация спейса уже загружает теги — не дублируем запрос на маунт.
+if (!isNoteTagsLoaded.value) {
+  void getNoteTags()
+}
 
 const noteTags = computed(() => selectedNote.value?.tags || [])
 

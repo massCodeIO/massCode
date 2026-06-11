@@ -18,7 +18,7 @@
     "entitlements": "build/entitlements.mac.inherit.plist",
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
-    "identity": null
+    "notarize": true
   },
   "win": {
     "target": ["nsis", "portable"],

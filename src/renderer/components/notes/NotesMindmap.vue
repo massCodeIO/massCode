@@ -16,6 +16,12 @@ const transformer = new Transformer()
 let mm: Markmap | null = null
 
 async function update() {
+  // Контент выбранной заметки ещё загружается — оставляем предыдущую карту,
+  // без мигания через "# Empty".
+  if (selectedNote.value && selectedNote.value.content === undefined) {
+    return
+  }
+
   const value = selectedNote.value?.content || '# Empty'
 
   const { root } = transformer.transform(value)
@@ -86,8 +92,10 @@ onUnmounted(() => {
   mm = null
 })
 
+// Контент приходит позже id (полная запись загружается отдельно),
+// поэтому отслеживаются оба: карта обновится, когда контент будет готов.
 watch(
-  () => selectedNote.value?.id,
+  () => [selectedNote.value?.id, selectedNote.value?.content],
   () => {
     void update()
   },

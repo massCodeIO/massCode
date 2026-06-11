@@ -240,7 +240,10 @@ const content = computed({
   set: (value: string) => {
     editorContent.value = value
 
-    if (selectedNote.value) {
+    // Сохраняем только если редактор отображает выбранную заметку:
+    // в момент переключения ввод не должен уйти в новую заметку
+    // с текстом старой.
+    if (selectedNote.value && selectedNote.value.id === editorNoteId.value) {
       updateNoteContent(selectedNote.value.id, value)
     }
   },

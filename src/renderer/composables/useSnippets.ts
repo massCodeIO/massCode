@@ -122,14 +122,11 @@ const selectedSnippet = computed<SnippetView | undefined>(() => {
   return source?.find(s => s.id === state.snippetId)
 })
 
-const selectedSnippetContent = computed(() => {
-  const record = selectedSnippetRecord.value
-
-  if (!record || record.id !== state.snippetId) {
-    return undefined
-  }
-
-  return record.contents[state.snippetContentIndex || 0]
+const selectedSnippetContent = computed<SnippetContentView | undefined>(() => {
+  // Метаданные фрагмента (label, language) доступны сразу из списка, чтобы
+  // топбар и селектор языка не мигали; value появляется, когда загрузится
+  // полная запись.
+  return selectedSnippet.value?.contents[state.snippetContentIndex || 0]
 })
 
 const selectedSnippets = computed(() => {

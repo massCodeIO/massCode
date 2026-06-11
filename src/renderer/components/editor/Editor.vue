@@ -48,6 +48,9 @@ const {
 
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
+// id фрагмента, чьё тело сейчас отображается в редакторе: пока полная запись
+// сниппета загружается, selectedSnippetContent содержит только метаданные.
+let lastAppliedContentId: number | undefined
 
 const previewHandleRef = ref<HTMLElement>()
 const previewHeight = ref(300)
@@ -137,13 +140,25 @@ async function init() {
     scrollbarStyle: 'null',
   })
 
+  if (selectedSnippetContent.value?.value !== undefined) {
+    lastAppliedContentId = selectedSnippetContent.value.id
+  }
+
   editor.on('change', (e) => {
     if (isProgrammaticChange.value || !selectedSnippet.value?.id)
       return
 
     const content = selectedSnippetContent.value
-    if (!content)
+    // Сохраняем только когда тело загружено и редактор отображает именно
+    // этот фрагмент — иначе в момент переключения можно перезаписать
+    // сниппет чужим текстом.
+    if (
+      !content
+      || content.value === undefined
+      || content.id !== lastAppliedContentId
+    ) {
       return
+    }
 
     const updatedValue = e.getValue()
 
@@ -201,16 +216,19 @@ async function init() {
 
   ipc.on('main-menu:copy-snippet', onCopySnippetMenu)
 
-  watch(selectedSnippetContent, (v, oldV) => {
+  watch(selectedSnippetContent, (v) => {
     nextTick(() => {
-      // Полная запись выбранного сниппета ещё загружается —
-      // не очищаем редактор промежуточным undefined.
-      if (!v && selectedSnippet.value) {
+      // Полная запись выбранного сниппета ещё загружается — не очищаем
+      // редактор промежуточным состоянием (метаданные без value).
+      if (selectedSnippet.value && (!v || v.value === undefined)) {
         return
       }
 
-      const isNewValue = v?.id !== oldV?.id
-      const isSameContent = v?.id === oldV?.id
+      // Сравниваем с последним реально отображённым фрагментом, а не с
+      // предыдущим значением computed: между сниппетами проскакивает
+      // metadata-only состояние с тем же id.
+      const isNewValue = v?.id !== lastAppliedContentId
+      const isSameContent = v?.id === lastAppliedContentId
       const snippetId = selectedSnippet.value?.id
       const contentId = v?.id
       let nextValue = v?.value || ''
@@ -233,6 +251,7 @@ async function init() {
 
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
       setValue(nextValue, true, !isNewValue)
+      lastAppliedContentId = contentId
       nextTick(() => {
         if (searchQuery.value) {
           updateSearchOverlay()

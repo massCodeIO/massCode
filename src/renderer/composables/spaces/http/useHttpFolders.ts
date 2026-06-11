@@ -147,7 +147,10 @@ function clearFolderSelection() {
   isApplyingFolderSelection = true
   selectedFolderIds.value = []
   httpState.folderId = undefined
-  httpState.requestId = undefined
+  // requestId намеренно не сбрасывается: иначе список и редактор запроса
+  // мигают пустым состоянием при переходах Library, пока загружается список.
+  // Вызывающие реселектят через selectFirstRequest/selectHttpRequest либо
+  // чистят выбор явно (resetHttpRequestsState, deleteSelectedHttpFolders).
   lastSelectedFolderId.value = undefined
   isApplyingFolderSelection = false
 }
@@ -392,6 +395,10 @@ async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
   await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
   await getHttpFolders(false)
 
+  // Выбранный запрос мог принадлежать удалённой папке: выбор чистится явно,
+  // т.к. selectHttpFolder/clearFolderSelection его больше не сбрасывают.
+  httpState.requestId = undefined
+
   const fallbackId = selectedFolderIds.value[0]
   if (fallbackId) {
     await selectHttpFolder(fallbackId)
@@ -422,7 +429,9 @@ async function selectHttpFolder(
   }
   else {
     applySingleFolderSelection(folderId)
-    httpState.requestId = undefined
+    // requestId намеренно не сбрасывается: иначе список и редактор запроса
+    // мигают пустым состоянием, пока загружается список новой папки.
+    // Вызывающие реселектят после загрузки списка.
   }
 
   if (folders.value.length && shouldEnsureVisibility) {

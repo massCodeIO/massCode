@@ -2,8 +2,10 @@ import type { ComponentProps } from 'react'
 import type { Root } from 'react-dom/client'
 import type { DrawingViewportState } from '~/main/store/types'
 import {
+  Button,
   CaptureUpdateAction,
   Excalidraw,
+  Footer,
   getSceneVersion,
   restore,
   serializeAsJSON,
@@ -39,6 +41,7 @@ export interface ExcalidrawHostOptions {
   initialViewport: DrawingViewportState | null
   theme: 'light' | 'dark'
   langCode: string
+  fitToContentLabel: string
   onChange: (kind: ExcalidrawChangeKind) => void
 }
 
@@ -214,66 +217,121 @@ export function mountExcalidraw(
     setTimeout(flushPendingScene, 0)
   }
 
+  function scrollToContent() {
+    if (!api) {
+      return
+    }
+
+    // Center and zoom the viewport so every element fits, regardless of how
+    // far the user has panned away.
+    api.scrollToContent(latestElements ?? undefined, {
+      fitToContent: true,
+      animate: true,
+      duration: 400,
+    })
+  }
+
+  function renderFitToContentFooter() {
+    return createElement(
+      Footer,
+      null,
+      createElement(
+        Button,
+        {
+          'type': 'button',
+          'onSelect': scrollToContent,
+          'className': 'fit-to-content-button',
+          'title': options.fitToContentLabel,
+          'aria-label': options.fitToContentLabel,
+        },
+        createElement(
+          'svg',
+          {
+            'width': 16,
+            'height': 16,
+            'viewBox': '0 0 24 24',
+            'fill': 'none',
+            'stroke': 'currentColor',
+            'strokeWidth': 2,
+            'strokeLinecap': 'round',
+            'strokeLinejoin': 'round',
+            'aria-hidden': true,
+          },
+          [
+            createElement('path', { key: 'a', d: 'M8 3H5a2 2 0 0 0-2 2v3' }),
+            createElement('path', { key: 'b', d: 'M21 8V5a2 2 0 0 0-2-2h-3' }),
+            createElement('path', { key: 'c', d: 'M3 16v3a2 2 0 0 0 2 2h3' }),
+            createElement('path', { key: 'd', d: 'M16 21h3a2 2 0 0 0 2-2v-3' }),
+          ],
+        ),
+      ),
+    )
+  }
+
   function render() {
     root?.render(
-      createElement(Excalidraw, {
-        excalidrawAPI: (value) => {
-          api = value
-          setTimeout(flushPendingScene, 0)
-        },
-        initialData: {
-          appState: {
-            name: options.initialName,
-            viewBackgroundColor: 'transparent',
+      createElement(
+        Excalidraw,
+        {
+          excalidrawAPI: (value) => {
+            api = value
+            setTimeout(flushPendingScene, 0)
           },
-        } as unknown as ExcalidrawProps['initialData'],
-        langCode: options.langCode,
-        onChange: (elements, appState, files) => {
-          latestElements = elements
-          latestAppState = appState
-          latestFiles = files
+          initialData: {
+            appState: {
+              name: options.initialName,
+              viewBackgroundColor: 'transparent',
+            },
+          } as unknown as ExcalidrawProps['initialData'],
+          langCode: options.langCode,
+          onChange: (elements, appState, files) => {
+            latestElements = elements
+            latestAppState = appState
+            latestFiles = files
 
-          // Until the real scene is applied the canvas shows a bootstrap
-          // empty scene: never report it as user changes.
-          if (!hasAppliedScene) {
-            return
-          }
-
-          if (isExportDialogOpen) {
-            // Restore the transparent canvas once the dialog is closed and
-            // skip change notifications while it is open: the temporary
-            // white background must not be persisted.
-            if (!appState.openDialog) {
-              isExportDialogOpen = false
-              api?.updateScene({
-                appState: { viewBackgroundColor: 'transparent' },
-                captureUpdate: CaptureUpdateAction.NEVER,
-              })
+            // Until the real scene is applied the canvas shows a bootstrap
+            // empty scene: never report it as user changes.
+            if (!hasAppliedScene) {
+              return
             }
-            return
-          }
 
-          // Pure pan/zoom/selection changes do not touch elements or
-          // files: report them as viewport-only so the full scene is not
-          // serialized and written to disk.
-          const sceneVersion = getSceneVersion(elements)
-          const filesCount = files ? Object.keys(files).length : 0
+            if (isExportDialogOpen) {
+              // Restore the transparent canvas once the dialog is closed and
+              // skip change notifications while it is open: the temporary
+              // white background must not be persisted.
+              if (!appState.openDialog) {
+                isExportDialogOpen = false
+                api?.updateScene({
+                  appState: { viewBackgroundColor: 'transparent' },
+                  captureUpdate: CaptureUpdateAction.NEVER,
+                })
+              }
+              return
+            }
 
-          if (
-            sceneVersion !== lastSceneVersion
-            || filesCount !== lastFilesCount
-          ) {
-            lastSceneVersion = sceneVersion
-            lastFilesCount = filesCount
-            options.onChange('scene')
-          }
-          else {
-            options.onChange('viewport')
-          }
+            // Pure pan/zoom/selection changes do not touch elements or
+            // files: report them as viewport-only so the full scene is not
+            // serialized and written to disk.
+            const sceneVersion = getSceneVersion(elements)
+            const filesCount = files ? Object.keys(files).length : 0
+
+            if (
+              sceneVersion !== lastSceneVersion
+              || filesCount !== lastFilesCount
+            ) {
+              lastSceneVersion = sceneVersion
+              lastFilesCount = filesCount
+              options.onChange('scene')
+            }
+            else {
+              options.onChange('viewport')
+            }
+          },
+          theme,
+          UIOptions: UI_OPTIONS,
         },
-        theme,
-        UIOptions: UI_OPTIONS,
-      }),
+        renderFitToContentFooter(),
+      ),
     )
   }
 

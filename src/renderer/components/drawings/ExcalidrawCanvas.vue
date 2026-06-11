@@ -2,7 +2,7 @@
 import type { ExcalidrawChangeKind, ExcalidrawHost } from './excalidrawHost'
 import type { DrawingViewportState } from '~/main/store/types'
 import { useTheme } from '@/composables'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 import { useEventListener } from '@vueuse/core'
 import { mountExcalidraw } from './excalidrawHost'
 
@@ -139,6 +139,7 @@ onMounted(() => {
     initialViewport: props.viewport,
     theme: isDark.value ? 'dark' : 'light',
     langCode: getLangCode(),
+    fitToContentLabel: i18n.t('spaces.drawings.fitToContent'),
     onChange: onHostChange,
   })
 })
@@ -177,6 +178,17 @@ defineExpose({
 .canvas-host :deep(.excalidraw .default-sidebar-trigger),
 .canvas-host :deep(.excalidraw .help-icon) {
   display: none;
+}
+
+/* The fit-to-content button lives in Excalidraw's footer next to the
+   zoom/undo islands: match their height, gap and vertical centering.
+   Size is set directly (not via --button-width) so the icon inside keeps
+   its default size. */
+.canvas-host :deep(.excalidraw .fit-to-content-button) {
+  width: var(--lg-button-size);
+  height: var(--lg-button-size);
+  margin-block: auto;
+  margin-inline-start: 0.6rem;
 }
 
 /* Map Excalidraw theming variables to the app design tokens so its

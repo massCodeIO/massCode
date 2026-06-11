@@ -7,19 +7,15 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 
-const { focusedRequestId, httpState } = useHttpApp()
+const { focusedRequestId } = useHttpApp()
 const { deleteSelectedHttpRequests } = useHttpRequests()
-const { displayedRequests, isSearch } = useHttpSearch()
+const { displayedRequests } = useHttpSearch()
 
-const filteredRequests = computed(() => {
-  const list = displayedRequests.value || []
-
-  if (isSearch.value || httpState.folderId === undefined) {
-    return list
-  }
-
-  return list.filter(r => r.folderId === httpState.folderId)
-})
+// Список уже отфильтрован сервером по текущей папке/фильтру. Клиентский
+// фильтр по httpState.folderId опустошал список синхронно при смене папки
+// (folderId меняется раньше, чем приходит новый список) — список «мигал»
+// пустым placeholder на время загрузки.
+const filteredRequests = computed(() => displayedRequests.value || [])
 
 useDeleteShortcut({
   rootSelector: '[data-http-requests-list]',

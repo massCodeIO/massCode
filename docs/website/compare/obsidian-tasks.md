@@ -49,7 +49,7 @@ Obsidian Tasks is a strong choice when your notes are already in Obsidian and yo
 massCode is a strong choice when "task" means "a piece of in-flight engineering work" more than "a checklist line in my zettelkasten."
 
 - **A task is a whole note.** You can give it a title, a markdown body with code snippets, mermaid diagrams, mindmaps, internal links, and one structured status / priority / due. See [Notes Tasks](/documentation/notes/tasks).
-- **One app for snippets, notes, HTTP, math, and tools.** Tasks share the app with [Code](/documentation/code/library), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). You do not need to assemble a plugin stack.
+- **One app for snippets, notes, HTTP, math, and tools.** Tasks share the app with [Code](/documentation/code/library), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/). You do not need to assemble a plugin stack.
 - **Structured frontmatter, not emoji shorthand.** Status, priority, and due are stored as fields in the note's frontmatter, not as inline emojis in the body.
 - **Dedicated task views.** **Tasks**, **Today**, **Upcoming**, and **Completed** are first-class navigation, not query blocks you have to write.
 - **No host application to install.** massCode is standalone — it does not require Obsidian.

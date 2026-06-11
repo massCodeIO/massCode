@@ -8,7 +8,7 @@ A free, open-source developer workspace.
 </p>
 
 <p align="center">
-  <strong>Snippets, notes, HTTP requests, calculations, and dev tools in one local-first app.</strong>
+  <strong>Snippets, notes, HTTP requests, calculations, drawings, and dev tools in one local-first app.</strong>
   <br>
   Your data stays on your machine as plain Markdown files.
 </p>
@@ -75,7 +75,7 @@ massCode is free and open source. But building and maintaining a quality tool ta
 
 ## About
 
-Originally a snippet manager, massCode now brings together snippets, notes, HTTP requests, calculations, and developer tools in one desktop app, so everyday work stays in one place.
+Originally a snippet manager, massCode now brings together snippets, notes, HTTP requests, calculations, drawings, and developer tools in one desktop app, so everyday work stays in one place.
 
 ## Features
 
@@ -121,6 +121,15 @@ A calculator-style notebook for natural-language calculations, conversions, and 
 - 166+ fiat currencies, 21 cryptocurrencies with live exchange rates
 - Variables, functions, and aggregates for quick iterative calculations
 - Finance calculations (compound interest, ROI, loan repayment)
+
+### Drawings
+
+Sketch diagrams, wireframes, and whiteboard ideas on an [Excalidraw](https://excalidraw.com)-powered canvas next to your snippets and notes.
+
+- Searchable list of drawings with keyboard navigation
+- Pan and zoom remembered per drawing, with fit-to-content to recenter
+- Export drawings as images
+- Embed drawings directly in your markdown notes
 
 ### Developer Tools
 

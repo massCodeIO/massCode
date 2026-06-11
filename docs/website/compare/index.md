@@ -5,7 +5,7 @@ description: "Honest comparisons between massCode and other snippet managers, no
 
 # Compare massCode
 
-massCode is a free, open-source, local-first developer workspace. Snippets, markdown notes, tasks, HTTP requests, calculations, and dev tools live in one app, with your data stored as plain Markdown files on disk.
+massCode is a free, open-source, local-first developer workspace. Snippets, markdown notes, tasks, HTTP requests, calculations, drawings, and dev tools live in one app, with your data stored as plain Markdown files on disk.
 
 This section helps you decide whether massCode fits your workflow, or whether another tool is a better match. The comparisons are written to be honest, not aggressive: every tool here has cases where it is the right answer.
 
@@ -40,14 +40,14 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - If you want a **premium Apple-only task manager** with a polished native UI, look at Things 3.
 - If you only need a **free Apple-built-in task app**, Apple Reminders is already on your devices.
 - If your notes already live in **Obsidian** and you want tasks scattered through that vault, look at the Obsidian Tasks plugin.
-- If you need a **free, open-source, cross-platform, local-first workspace** that goes beyond snippets — snippets, notes, tasks, HTTP requests, math, and dev tools in one app — that is where massCode fits.
+- If you need a **free, open-source, cross-platform, local-first workspace** that goes beyond snippets — snippets, notes, tasks, HTTP requests, math, drawings, and dev tools in one app — that is where massCode fits.
 
 ## What you get with massCode
 
 - Free and open source under [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE)
 - Local-first [Markdown Vault](/documentation/storage) — your data stays as plain `.md` files on disk
 - Cross-platform: macOS, Windows, Linux
-- More than snippets: [Code](/documentation/code/library), [Notes](/documentation/notes/), [Tasks](/documentation/notes/tasks), [HTTP](/documentation/http/), [Math](/documentation/math/), [Tools](/documentation/tools/)
+- More than snippets: [Code](/documentation/code/library), [Notes](/documentation/notes/), [Tasks](/documentation/notes/tasks), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), [Tools](/documentation/tools/)
 - Built-in imports for VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - Sync via any service you already trust — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 - No account, no telemetry-required login, no vendor lock-in

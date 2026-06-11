@@ -32,7 +32,7 @@ A pure snippet manager is enough for many people. But the day-to-day workflow of
 - **Storage:** Local [Markdown Vault](/documentation/storage) — every snippet and note is a plain `.md` file with frontmatter, watched in real time
 - **Account required:** None
 - **Platforms:** macOS, Windows, Linux
-- **Scope:** [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/) in one app
+- **Scope:** [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/) in one app
 - **Imports:** VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - **Sync:** Bring your own — [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync)
 - **Active development:** Continuously released on [GitHub Releases](https://github.com/massCodeIO/massCode/releases)

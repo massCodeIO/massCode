@@ -45,7 +45,7 @@ SnippetsLab is a strong choice if you stay on macOS and want a single-purpose Ma
 massCode is a strong choice when you cross platforms or need more than snippets.
 
 - **You work on Windows or Linux too.** massCode runs on macOS, Windows, and Linux. Your snippets travel with you across all three.
-- **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). SnippetsLab focuses on snippets.
+- **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/). SnippetsLab focuses on snippets.
 - **You want plain Markdown files on disk.** massCode's [Markdown Vault](/documentation/storage) keeps everything as `.md` files with frontmatter — readable in any editor, easy to back up, trivial to put in Git.
 - **You want a direct import path from SnippetsLab.** Export SnippetsLab JSON, preview it in massCode, then import snippets, folders, tags, descriptions, and fragments into Code.
 - **You want sync that is not tied to iCloud.** massCode lets you point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at the vault. That matters if you mix macOS with Windows or Linux machines.

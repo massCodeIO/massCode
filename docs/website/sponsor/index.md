@@ -32,7 +32,7 @@ const activeDevelopmentYears = `${githubStats.activeDevelopmentYears}+`
 
 **Support massCode and be recognized across the project website, GitHub repository, release notes, and community updates.**
 
-massCode is a free, cross-platform developer workspace for code snippets, markdown notes, HTTP requests, calculations, and built-in developer tools. It runs natively on macOS, Windows, and Linux, and is built for developers who want practical tools without accounts, cloud lock-in, or surveillance.
+massCode is a free, cross-platform developer workspace for code snippets, markdown notes, HTTP requests, calculations, drawings, and built-in developer tools. It runs natively on macOS, Windows, and Linux, and is built for developers who want practical tools without accounts, cloud lock-in, or surveillance.
 
 <VPButton
   href="https://opencollective.com/masscode"

@@ -3,7 +3,7 @@ import { version } from './_data/assets.json'
 
 const siteUrl = 'https://masscode.io'
 const siteTitle = 'massCode'
-const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, and built-in dev tools.'
+const description = 'Free, open-source developer workspace with code snippets, markdown notes, math notebook, drawings, and built-in dev tools.'
 const ogImage = `${siteUrl}/og-image.png`
 const gsv = 'h-rU1tSutO83wOyvi4syrk_XTvgennlUPkL6fMmq5cI'
 
@@ -171,6 +171,12 @@ export default defineConfig({
           text: 'Math',
           items: [
             { text: 'Overview', link: '/documentation/math/' },
+          ],
+        },
+        {
+          text: 'Drawings',
+          items: [
+            { text: 'Overview', link: '/documentation/drawings/' },
           ],
         },
         {

@@ -47,7 +47,7 @@ massCode is a strong choice when Things' Apple-only constraint is a problem, or 
 
 - **You work across operating systems.** massCode runs on macOS, Windows, and Linux from the same vault.
 - **You want plain Markdown files on disk.** Every task is a `.md` file with frontmatter in your [Markdown Vault](/documentation/storage) — not stored in a proprietary database.
-- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/).
+- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/).
 - **You want sync your way.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. No required account, no required cloud.
 - **You want free and open source.** AGPL v3 source on [GitHub](https://github.com/massCodeIO/massCode).
 

@@ -36,6 +36,15 @@ import FeaturesItem from './FeaturesItem.vue'
       <code>$500 invested $1,500 returned</code> for currencies, time zones,
       unit conversion, finance, and date math.
     </FeaturesItem>
+    <FeaturesItem title="Drawings">
+      Sketch diagrams, wireframes, and whiteboard ideas on an
+      <AppLink href="https://excalidraw.com">
+        Excalidraw
+      </AppLink>
+      -powered canvas. Keep a searchable list of drawings beside your snippets
+      and notes, recenter with fit-to-content, export them as images, and embed
+      drawings directly in your Markdown notes.
+    </FeaturesItem>
     <FeaturesItem title="Developer Tools">
       Handle the small developer tasks that usually send you to a browser tab.
       Convert, encode, hash, and generate data right inside massCode with tools
@@ -90,11 +99,7 @@ import FeaturesItem from './FeaturesItem.vue'
     grid-column: span 3;
   }
 
-  .features > :nth-child(n + 3):nth-child(-n + 5) {
-    grid-column: span 2;
-  }
-
-  .features > :nth-child(n + 6) {
+  .features > :nth-child(n + 3) {
     grid-column: span 3;
   }
 }
@@ -104,15 +109,11 @@ import FeaturesItem from './FeaturesItem.vue'
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-  .features > :nth-child(-n + 2) {
+  .features > :nth-child(-n + 6) {
     grid-column: span 6;
   }
 
-  .features > :nth-child(n + 3):nth-child(-n + 5) {
-    grid-column: span 4;
-  }
-
-  .features > :nth-child(n + 6) {
+  .features > :nth-child(n + 7) {
     grid-column: span 3;
   }
 }

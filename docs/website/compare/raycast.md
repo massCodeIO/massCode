@@ -53,7 +53,7 @@ massCode is a strong choice when your snippets are real code, not text shortcuts
 - **You want plain Markdown files on disk.** Snippets and notes live as `.md` files in a [Markdown Vault](/documentation/storage). Your library is portable, scriptable, and not locked behind another vendor's data store.
 - **You want to promote Raycast snippets into a larger library.** Export Raycast snippets JSON, preview it in massCode, then import it into Code for folders, tags, fragments, and long-term storage.
 - **You work on Windows or Linux.** massCode is a first-class app on macOS, Windows, and Linux. Raycast Snippets is macOS and iOS.
-- **You want one workspace beyond snippets.** massCode adds [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/) in the same app.
+- **You want one workspace beyond snippets.** massCode adds [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/) in the same app.
 - **You want sync without paying for it.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. Cloud sync in Raycast is a Pro feature.
 
 ## Honest trade-offs

@@ -44,7 +44,7 @@ Cacher is a strong choice when team sharing or GitHub Gist round-trip are non-ne
 massCode is a strong choice when you value local control, a single combined workspace, and zero cost.
 
 - **You want plain files, not a database in the cloud.** Every snippet and note in massCode is a Markdown file in your [Markdown Vault](/documentation/storage). You can read, edit, and back it up with any tool.
-- **You want one app for snippets, notes, HTTP, and math.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). Cacher focuses on snippets.
+- **You want one app for snippets, notes, HTTP, and math.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/). Cacher focuses on snippets.
 - **You want to bring existing snippets into local storage.** massCode imports public GitHub Gist URLs, VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, and Obsidian markdown folders.
 - **You want sync on your terms.** Point [iCloud, Dropbox, Google Drive, Syncthing, or a Git repo](/documentation/sync) at your vault. No account, no second bill.
 - **You want to keep working when the network is gone.** massCode is local-first by design.

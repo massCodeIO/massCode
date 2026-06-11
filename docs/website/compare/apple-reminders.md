@@ -51,7 +51,7 @@ massCode is a strong choice when Reminders' Apple-only constraint is a problem, 
 
 - **You work across operating systems.** massCode runs natively on macOS, Windows, and Linux from the same vault. Reminders has no native Windows or Linux app — only view-only web access through iCloud.com.
 - **You want plain Markdown files on disk.** Every task is a `.md` file with frontmatter in your [Markdown Vault](/documentation/storage). Reminders data lives in Apple's database and is accessed through Apple's apps.
-- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/).
+- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/).
 - **You want sync without Apple.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. iCloud is one option among many, not the only one.
 - **You want a richer note body per task.** A massCode task is a full markdown note with code blocks, mermaid, mindmap, internal links — not just a notes field.
 - **You want In Progress and Blocked statuses.** Reminders is binary (open / completed); massCode has Todo, In Progress, Done, Blocked.

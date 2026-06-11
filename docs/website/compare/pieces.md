@@ -43,7 +43,7 @@ Pieces is a strong choice when AI is the point, not a side feature.
 massCode is a strong choice when your priority is owning your data, staying on your own machine, and consolidating several developer tools into one workspace.
 
 - **You want plain Markdown files on disk.** massCode stores everything in a [Markdown Vault](/documentation/storage). Each snippet and note is a `.md` file with frontmatter — readable in any editor, easy to back up.
-- **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/). Pieces focuses on AI-augmented snippets and memory.
+- **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/). Pieces focuses on AI-augmented snippets and memory.
 - **You want a migration path into plain files.** massCode can import VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders into your local vault.
 - **You want full transparency.** The source is on [GitHub](https://github.com/massCodeIO/massCode) under AGPL v3 — read, audit, and self-build it.
 - **You want sync without a vendor.** Point [iCloud, Dropbox, Google Drive, Syncthing, or a Git repo](/documentation/sync) at your vault directory. There is no required account.

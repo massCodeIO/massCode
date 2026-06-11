@@ -50,7 +50,7 @@ massCode tasks are a strong choice when the task is closer to a working note tha
 
 - **You want tasks to live with the work.** A massCode task is a note. The same markdown editor holds checklists, code snippets, links, meeting notes, mermaid diagrams, and internal links to other notes. See [Notes Tasks](/documentation/notes/tasks).
 - **You want plain Markdown files on disk.** Every task is a `.md` file with frontmatter in your [Markdown Vault](/documentation/storage) — readable in any editor, diffable in Git, easy to back up.
-- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Tools](/documentation/tools/).
+- **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/).
 - **You want sync without a vendor.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. No required account.
 - **You want full transparency.** The source is on [GitHub](https://github.com/massCodeIO/massCode) under AGPL v3.
 

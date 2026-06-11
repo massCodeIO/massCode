@@ -14,6 +14,11 @@ describe('useNavigationHistory', () => {
         currentRequest: ref(),
       }),
     }))
+    vi.doMock('../spaces/drawings/useDrawings', () => ({
+      useDrawings: () => ({
+        activeDrawing: ref(),
+      }),
+    }))
   })
 
   it('records internal target navigation and restores backward and forward', async () => {

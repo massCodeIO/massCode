@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useDeleteShortcut, useDrawings } from '@/composables'
+import {
+  useApp,
+  useCopyToClipboard,
+  useDeleteShortcut,
+  useDrawings,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -17,6 +22,11 @@ const {
   renameDrawing,
   selectDrawing,
 } = useDrawings()
+const copyToClipboard = useCopyToClipboard()
+
+function copyLinkForNote(name: string) {
+  copyToClipboard(`![${name}](masscode://drawing/${encodeURIComponent(name)})`)
+}
 
 const editingId = ref<string | null>(null)
 const editingName = ref('')
@@ -186,6 +196,9 @@ defineExpose({
             {{ i18n.t("action.duplicate") }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
+          <ContextMenu.ContextMenuItem @click="copyLinkForNote(drawing.id)">
+            {{ i18n.t("spaces.drawings.copyLinkForNote") }}
+          </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuItem @click="exportDrawingImage(drawing.id)">
             {{ i18n.t("spaces.drawings.exportImage") }}
           </ContextMenu.ContextMenuItem>

@@ -206,6 +206,9 @@
       "drawingList": "Список рисунков",
       "newDrawing": "Новый рисунок",
       "exportImage": "Экспорт изображения…",
+      "copyLinkForNote": "Копировать ссылку для заметки",
+      "openInSpace": "Открыть в Рисунках",
+      "notFound": "Рисунок не найден",
       "noSelected": "Рисунок не выбран"
     },
     "http": {

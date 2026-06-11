@@ -218,6 +218,7 @@ function createEditorState(doc: string): EditorState {
       }),
       createImageBlocks({
         enabled: true,
+        isDark: isDark.value,
         showSourceWhenSelectionInside: editable,
       }),
       createMarkdownDecorations({

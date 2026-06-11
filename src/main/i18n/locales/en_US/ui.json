@@ -200,6 +200,9 @@
       "drawingList": "Drawing List",
       "newDrawing": "New Drawing",
       "exportImage": "Export image…",
+      "copyLinkForNote": "Copy Link for Note",
+      "openInSpace": "Open in Drawings",
+      "notFound": "Drawing not found",
       "noSelected": "No drawing selected"
     },
     "http": {

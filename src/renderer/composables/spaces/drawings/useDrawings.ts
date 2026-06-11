@@ -4,6 +4,7 @@ import {
   markUserEdit,
 } from '@/composables/useStorageMutation'
 import { ipc, store } from '@/electron'
+import { router, RouterName } from '@/router'
 
 export interface DrawingItem {
   id: string
@@ -161,6 +162,22 @@ export function useDrawings() {
     imageExportRequest.value += 1
   }
 
+  async function openDrawing(id: string) {
+    if (initialized) {
+      if (drawings.value.some(item => item.id === id)) {
+        await selectDrawing(id)
+      }
+    }
+    else {
+      // Initialize right away so the navigation history can capture the
+      // opened drawing as soon as the route changes.
+      store.app.set('drawings.activeDrawingId', id)
+      await init()
+    }
+
+    await router.push({ name: RouterName.drawingsSpace })
+  }
+
   async function createDrawing() {
     markPersistedStorageMutation()
     const record = await ipc.invoke('spaces:drawings:create', null)
@@ -270,6 +287,7 @@ export function useDrawings() {
     init,
     reloadFromDisk,
     selectDrawing,
+    openDrawing,
     exportDrawingImage,
     createDrawing,
     renameDrawing,

@@ -6,6 +6,7 @@ import {
   getGraphSceneEdgeEndpoints,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
+  getGraphSceneSeedTicks,
   getGraphSceneViewportFocusPoint,
   getGraphSceneViewportTransform,
   shouldAutoResetGraphSceneViewport,
@@ -14,6 +15,15 @@ import {
 } from '../scene'
 
 describe('notesGraphScene', () => {
+  it('scales seed ticks down as the graph grows', () => {
+    expect(getGraphSceneSeedTicks(0)).toBe(0)
+    expect(getGraphSceneSeedTicks(20)).toBe(20)
+    expect(getGraphSceneSeedTicks(100)).toBe(20)
+    expect(getGraphSceneSeedTicks(400)).toBe(5)
+    expect(getGraphSceneSeedTicks(1000)).toBe(2)
+    expect(getGraphSceneSeedTicks(5000)).toBe(0)
+  })
+
   it('builds active neighborhood from the active node and its neighbors', () => {
     const neighborsById = new Map<number, Set<number>>([
       [1, new Set([2, 3])],

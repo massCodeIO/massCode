@@ -268,6 +268,9 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
       const descendantIds = collectDescendantIds(state.folders, id)
       descendantIds.add(id)
 
+      const folderPathMap = buildNotesFolderPathMap(state)
+      const directoryEntriesCache = new Map<string, string[]>()
+
       for (const note of notes) {
         if (note.folderId !== null && descendantIds.has(note.folderId)) {
           const previousFilePath = note.filePath
@@ -276,11 +279,12 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
           note.updatedAt = Date.now()
           persistNote(paths, state, note, previousFilePath, {
             allowRenameOnConflict: true,
+            directoryEntriesCache,
+            folderPathMap,
           })
         }
       }
 
-      const folderPathMap = buildNotesFolderPathMap(state)
       const folderPathsToDelete = getFolderPathsByDepth(
         folderPathMap,
         descendantIds,

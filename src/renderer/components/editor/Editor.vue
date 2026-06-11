@@ -141,19 +141,18 @@ async function init() {
     if (isProgrammaticChange.value || !selectedSnippet.value?.id)
       return
 
-    const initValue = JSON.stringify(selectedSnippetContent.value?.value)
-    const updatedValue = JSON.stringify(e.getValue())
+    const content = selectedSnippetContent.value
+    if (!content)
+      return
 
-    if (initValue !== updatedValue) {
-      addToUpdateContentQueue(
-        selectedSnippet.value.id,
-        selectedSnippetContent.value!.id,
-        {
-          label: selectedSnippetContent.value!.label,
-          value: e.getValue(),
-          language: selectedSnippetContent.value!.language,
-        },
-      )
+    const updatedValue = e.getValue()
+
+    if (content.value !== updatedValue) {
+      addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
+        label: content.label,
+        value: updatedValue,
+        language: content.language,
+      })
     }
   })
 
@@ -200,14 +199,16 @@ async function init() {
     },
   })
 
-  ipc.on('main-menu:copy-snippet', () => {
-    const { copy } = useClipboard({ source: editor?.getValue() || '' })
-    copy()
-    useDonations().incrementCopy('code')
-  })
+  ipc.on('main-menu:copy-snippet', onCopySnippetMenu)
 
   watch(selectedSnippetContent, (v, oldV) => {
     nextTick(() => {
+      // Полная запись выбранного сниппета ещё загружается —
+      // не очищаем редактор промежуточным undefined.
+      if (!v && selectedSnippet.value) {
+        return
+      }
+
       const isNewValue = v?.id !== oldV?.id
       const isSameContent = v?.id === oldV?.id
       const snippetId = selectedSnippet.value?.id
@@ -391,7 +392,23 @@ async function format() {
   }
 }
 
+function onCopySnippetMenu() {
+  const { copy } = useClipboard({ source: editor?.getValue() || '' })
+  copy()
+  useDonations().incrementCopy('code')
+}
+
 ipc.on('main-menu:format', format)
+
+// Спейсы пересоздаются при переключении: без снятия listeners каждый цикл
+// добавляет обработчик и удерживает мёртвый инстанс CodeMirror от GC.
+// removeListeners по каналу, т.к. contextBridge оборачивает функцию в новый
+// прокси и removeListener по ссылке не срабатывает; владелец каналов — только
+// этот компонент.
+onBeforeUnmount(() => {
+  ipc.removeListeners('main-menu:format')
+  ipc.removeListeners('main-menu:copy-snippet')
+})
 
 function createSearchOverlay(query: string) {
   if (!query)

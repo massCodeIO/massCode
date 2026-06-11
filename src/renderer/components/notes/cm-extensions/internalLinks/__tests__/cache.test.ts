@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EntityCache } from '../cache'
 
+vi.mock('@/electron', () => ({
+  i18n: {
+    t: vi.fn((key: string) => key),
+  },
+  ipc: {
+    on: vi.fn(),
+  },
+  store: {},
+}))
+
 describe('entityCache', () => {
   let cache: EntityCache
 

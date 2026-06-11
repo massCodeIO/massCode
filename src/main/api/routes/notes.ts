@@ -69,7 +69,11 @@ app
       const storage = useNotesStorage()
       const result = storage.notes.getNotes(query)
 
-      return result as NotesResponse
+      // Контент заметок не сериализуется в список: контент выбранной
+      // заметки загружается через GET /notes/:id.
+      return result.map(
+        ({ content: _content, ...note }) => note,
+      ) as NotesResponse
     },
     {
       query: 'notesQuery',

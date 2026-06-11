@@ -65,6 +65,7 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
         this.ruler.style.cssText
           = 'position:absolute;left:-9999px;top:-9999px;white-space:pre;pointer-events:none;'
         document.body.appendChild(this.ruler)
+        this.syncFont(view)
         this.decorations = this.build(view)
       }
 
@@ -87,8 +88,6 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
       }
 
       private build(view: EditorView) {
-        this.syncFont(view)
-
         const decorations: Range<Decoration>[] = []
         const processedLines = new Set<number>()
         const measure = this.measure.bind(this)
@@ -201,15 +200,20 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
       }
 
       update(update: ViewUpdate) {
+        // getComputedStyle is expensive, so refresh the ruler font only
+        // when the editor geometry (and thus the font) may have changed.
+        if (update.geometryChanged) {
+          this.widthCache.clear()
+          this.syncFont(update.view)
+        }
+
         if (
           update.docChanged
           || update.viewportChanged
           || update.selectionSet
           || update.focusChanged
+          || update.geometryChanged
         ) {
-          if (update.geometryChanged) {
-            this.widthCache.clear()
-          }
           this.decorations = this.build(update.view)
         }
       }

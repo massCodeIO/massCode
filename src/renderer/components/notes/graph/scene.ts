@@ -112,6 +112,14 @@ function getGraphSceneLabelHeight(
   return label.fontSize + (label.lines.length - 1) * label.lineHeight
 }
 
+export function getGraphSceneSeedTicks(nodeCount: number) {
+  if (nodeCount <= 0) {
+    return 0
+  }
+
+  return Math.min(20, Math.floor(2000 / nodeCount))
+}
+
 export function getGraphSceneNeighborhoodIds(
   activeId: number | null,
   neighborsById: Map<number, Set<number>>,

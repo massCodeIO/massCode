@@ -123,3 +123,18 @@ export function toCodeRelativePath(relativePath: string): string | null {
 
   return relativePath.slice(codePrefix.length)
 }
+
+export function toNotesRelativePath(relativePath: string): string | null {
+  const normalizedRelativePath = relativePath.toLowerCase()
+
+  if (normalizedRelativePath === NOTES_SPACE_WATCH_PREFIX) {
+    return null
+  }
+
+  const notesPrefix = `${NOTES_SPACE_WATCH_PREFIX}/`
+  if (!normalizedRelativePath.startsWith(notesPrefix)) {
+    return null
+  }
+
+  return relativePath.slice(notesPrefix.length)
+}

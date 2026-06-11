@@ -1,7 +1,5 @@
-import {
-  findInternalLinks,
-  resolveInternalLinkTargetByTitle,
-} from '../../../../../../shared/notes/internalLinks'
+import { findInternalLinks } from '../../../../../../shared/notes/internalLinks'
+import { createInternalLinkResolver } from './internalLinkResolver'
 
 export interface NotesGraphNoteLookup {
   id: number
@@ -44,7 +42,7 @@ export function buildNotesGraph(input: BuildNotesGraphInput): NotesGraphData {
   const incomingCounts = new Map<number, number>()
   const edgeKeys = new Set<string>()
   const edges: NotesGraphEdge[] = []
-  const linkLookup = [
+  const linkResolver = createInternalLinkResolver([
     ...input.snippets.map(snippet => ({
       id: snippet.id,
       name: snippet.name,
@@ -55,7 +53,7 @@ export function buildNotesGraph(input: BuildNotesGraphInput): NotesGraphData {
       name: note.name,
       type: 'note' as const,
     })),
-  ]
+  ])
 
   for (const note of input.notes) {
     const links = findInternalLinks(note.content)
@@ -73,10 +71,7 @@ export function buildNotesGraph(input: BuildNotesGraphInput): NotesGraphData {
           : null
       }
       else {
-        const resolvedTarget = resolveInternalLinkTargetByTitle(
-          link.target,
-          linkLookup,
-        )
+        const resolvedTarget = linkResolver.resolve(link.target)
 
         if (!resolvedTarget || resolvedTarget.type !== 'note') {
           continue

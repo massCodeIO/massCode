@@ -29,7 +29,6 @@ interface NoteRecord {
   id: number
   name: string
   description: string | null
-  content: string
   properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
@@ -38,6 +37,15 @@ interface NoteRecord {
   createdAt: number
   updatedAt: number
 }
+
+// Полная запись заметки (GET /notes/:id): список контент не содержит.
+export interface NoteFullRecord extends NoteRecord {
+  content: string
+}
+
+// Выбранная заметка: пока полная запись загружается, метаданные берутся из
+// списка и content временно отсутствует.
+export type SelectedNoteView = NoteRecord & { content?: string }
 
 type NotesResponse = NoteRecord[]
 
@@ -83,6 +91,12 @@ const lastSelectedNoteId = ref<number | undefined>()
 
 export const notes = shallowRef<NotesResponse>()
 
+// Список отдаёт только метаданные, поэтому полная запись выбранной заметки
+// (с контентом) загружается отдельно по id.
+export const selectedNoteRecord = shallowRef<NoteFullRecord | undefined>()
+let selectedNoteRequestToken = 0
+let notesRequestToken = 0
+
 export const isRestoreStateBlocked = ref(false)
 const notesLoadingCounter = ref(0)
 const isNotesLoadingVisible = ref(false)
@@ -91,18 +105,57 @@ let notesLoadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
 
 // --- Computed ---
 
-const selectedNote = computed(() => {
-  if (isSearch.value) {
-    return notesBySearch.value?.find(n => n.id === notesState.noteId)
+const selectedNote = computed<SelectedNoteView | undefined>(() => {
+  if (selectedNoteRecord.value?.id === notesState.noteId) {
+    return selectedNoteRecord.value
   }
 
-  return notes.value?.find(n => n.id === notesState.noteId)
+  // Пока полная запись загружается, метаданные берутся из списка,
+  // чтобы заголовок и layout не мигали.
+  const source = isSearch.value ? notesBySearch.value : notes.value
+  return source?.find(n => n.id === notesState.noteId)
 })
 
 const selectedNotes = computed(() => {
   const source = isSearch.value ? notesBySearch.value : notes.value
-  return source?.filter(n => selectedNoteIds.value.includes(n.id)) || []
+  if (!source?.length || !selectedNoteIds.value.length) {
+    return []
+  }
+
+  const targetIds = new Set(selectedNoteIds.value)
+  return source.filter(n => targetIds.has(n.id))
 })
+
+export async function refreshSelectedNote() {
+  const noteId = notesState.noteId
+  const requestToken = ++selectedNoteRequestToken
+
+  if (noteId === undefined) {
+    selectedNoteRecord.value = undefined
+    return
+  }
+
+  try {
+    const { data } = await api.notes.getNotesById(String(noteId))
+
+    if (requestToken === selectedNoteRequestToken) {
+      selectedNoteRecord.value = data as NoteFullRecord
+    }
+  }
+  catch (error) {
+    if (requestToken === selectedNoteRequestToken) {
+      selectedNoteRecord.value = undefined
+    }
+    console.error(error)
+  }
+}
+
+watch(
+  () => notesState.noteId,
+  () => {
+    void refreshSelectedNote()
+  },
+)
 
 function getActionTargetIds(fallbackNoteId?: number) {
   if (fallbackNoteId !== undefined && selectedNoteIds.value.length > 1) {
@@ -122,8 +175,8 @@ function getActionTargetIds(fallbackNoteId?: number) {
 
 function getActionTargetNotes(targetIds: number[], fallbackNote?: NoteRecord) {
   const source = isSearch.value ? notesBySearch.value : notes.value
-  const targetNotes
-    = source?.filter(note => targetIds.includes(note.id)) || []
+  const targetIdSet = new Set(targetIds)
+  const targetNotes = source?.filter(note => targetIdSet.has(note.id)) || []
 
   if (
     fallbackNote
@@ -327,12 +380,21 @@ async function getNoteNamesForCreate(
 
 export async function getNotes(query?: NotesQuery) {
   return withNotesLoading(async () => {
+    // Защита от гонки ответов: применяется только самый свежий запрос.
+    const requestToken = ++notesRequestToken
+    const forSearch = isSearch.value
+
     const { data: responseData } = await api.notes.getNotes(
       query || queryByLibraryOrFolderOrSearch.value,
     )
+
+    if (requestToken !== notesRequestToken) {
+      return
+    }
+
     const data = responseData as NotesResponse
 
-    if (isSearch.value) {
+    if (forSearch) {
       notesBySearch.value = data
     }
     else {
@@ -427,20 +489,81 @@ async function createNoteWithPayloadAndSelect(payload?: CreateNotePayload) {
   await focusNoteNameInput()
 }
 
+// Поля, влияющие на состав текущего списка: после их изменения нужен refetch.
+function isNoteListMembershipAffecting(data: NotesUpdate) {
+  return (
+    data.folderId !== undefined
+    || data.isDeleted !== undefined
+    || data.isFavorites !== undefined
+  )
+}
+
+function patchNoteInCollections(noteId: number, data: NotesUpdate) {
+  const now = Date.now()
+
+  function apply(collection?: NotesResponse) {
+    if (!collection) {
+      return collection
+    }
+
+    const index = collection.findIndex(n => n.id === noteId)
+    if (index === -1) {
+      return collection
+    }
+
+    const next = [...collection]
+    next[index] = {
+      ...next[index],
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.description !== undefined
+        ? { description: data.description }
+        : {}),
+      updatedAt: now,
+    }
+    return next
+  }
+
+  notes.value = apply(notes.value)
+  notesBySearch.value = apply(notesBySearch.value)
+
+  const record = selectedNoteRecord.value
+  if (record?.id === noteId) {
+    selectedNoteRecord.value = {
+      ...record,
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.description !== undefined
+        ? { description: data.description }
+        : {}),
+      updatedAt: now,
+    }
+  }
+}
+
 async function updateNote(noteId: number, data: NotesUpdate) {
   markPersistedStorageMutation()
   await api.notes.patchNotesById(String(noteId), data)
-  await getNotes(queryByLibraryOrFolderOrSearch.value)
+
+  if (isNoteListMembershipAffecting(data)) {
+    await getNotes(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedNote()
+    return
+  }
+
+  // Переименование/описание не меняют состав списка — обновляем точечно.
+  patchNoteInCollections(noteId, data)
 }
 
 async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
   markPersistedStorageMutation()
 
-  for (const [index, noteId] of noteIds.entries()) {
-    await api.notes.patchNotesById(String(noteId), data[index])
-  }
+  await Promise.all(
+    noteIds.map((noteId, index) =>
+      api.notes.patchNotesById(String(noteId), data[index]),
+    ),
+  )
 
   await getNotes(queryByLibraryOrFolderOrSearch.value)
+  await refreshSelectedNote()
 }
 
 async function updateNoteProperties(
@@ -452,6 +575,7 @@ async function updateNoteProperties(
   markPersistedStorageMutation()
   await api.notes.patchNotesByIdProperties(String(noteId), data)
   await getNotes(queryByLibraryOrFolderOrSearch.value)
+  await refreshSelectedNote()
   selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId)
 }
 
@@ -464,9 +588,10 @@ async function deleteNote(noteId: number) {
 async function deleteNotes(noteIds: number[]) {
   markPersistedStorageMutation()
 
-  for (const noteId of noteIds) {
-    await api.notes.deleteNotesById(String(noteId))
-  }
+  await Promise.all(
+    noteIds.map(noteId => api.notes.deleteNotesById(String(noteId))),
+  )
+
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }
 
@@ -567,6 +692,7 @@ async function addTagToNote(tagId: number, noteId: number) {
   try {
     await api.notes.postNotesByIdTagsByTagId(String(noteId), String(tagId))
     await getNotes(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedNote()
   }
   catch (error) {
     console.error(error)
@@ -577,6 +703,7 @@ async function deleteTagFromNote(tagId: number, noteId: number) {
   try {
     await api.notes.deleteNotesByIdTagsByTagId(String(noteId), String(tagId))
     await getNotes(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedNote()
   }
   catch (error) {
     console.error(error)
@@ -646,6 +773,7 @@ function clearNotes() {
 function clearNotesState() {
   clearNotes()
   selectedNoteIds.value = []
+  selectedNoteRecord.value = undefined
   notesState.noteId = undefined
 }
 
@@ -674,6 +802,7 @@ export function useNotes() {
     isSearch,
     lastSelectedNoteId,
     notes,
+    refreshSelectedNote,
     selectedNote,
     selectedNoteIds,
     selectedNotes,

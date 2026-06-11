@@ -307,22 +307,8 @@ async function resolveInternalLinkByTitle(
         return { exists: false }
       }
 
-      return {
-        exists: true,
-        data: {
-          firstContent: snippet.contents[0]
-            ? {
-                language: snippet.contents[0].language,
-                value: snippet.contents[0].value,
-              }
-            : null,
-          folder: snippet.folder,
-          id: snippet.id,
-          isDeleted: snippet.isDeleted,
-          name: snippet.name,
-          type: 'snippet',
-        },
-      }
+      // Список не содержит тел фрагментов — превью загружается по id.
+      return fetchInternalLinkEntity('snippet', snippet.id)
     }
 
     if (resolvedTarget.type === 'http-request') {
@@ -355,17 +341,8 @@ async function resolveInternalLinkByTitle(
       return { exists: false }
     }
 
-    return {
-      exists: true,
-      data: {
-        contentExcerpt: note.content.slice(0, 400).trim(),
-        folder: note.folder,
-        id: note.id,
-        isDeleted: note.isDeleted,
-        name: note.name,
-        type: 'note',
-      },
-    }
+    // Список не содержит контента заметок — превью загружается по id.
+    return fetchInternalLinkEntity('note', note.id)
   }
   catch {
     return { exists: false }
@@ -408,6 +385,8 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
         this.decorations = this.build()
       }
 
+      private linkRanges: { from: number, to: number }[] = []
+
       update(update: ViewUpdate) {
         const hasRefreshEffect = update.transactions.some(transaction =>
           transaction.effects.some(
@@ -422,55 +401,112 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
 
         if (
           update.docChanged
-          || update.selectionSet
+          || update.viewportChanged
           || update.focusChanged
           || hasRefreshEffect
         ) {
           this.decorations = this.build()
+          return
         }
+
+        // Widgets only depend on whether the selection intersects a link
+        // range, so a pure selection move outside every link cannot change
+        // the decorations.
+        if (update.selectionSet && this.selectionTouchesLinks(update)) {
+          this.decorations = this.build()
+        }
+      }
+
+      private selectionTouchesLinks(update: ViewUpdate): boolean {
+        if (this.linkRanges.length === 0) {
+          return false
+        }
+
+        const selections = [
+          ...update.startState.selection.ranges,
+          ...update.state.selection.ranges,
+        ]
+
+        return this.linkRanges.some(link =>
+          selections.some((range) => {
+            if (range.empty) {
+              return range.from >= link.from && range.from < link.to
+            }
+
+            return range.from < link.to && range.to > link.from
+          }),
+        )
       }
 
       private build() {
         const decorations = []
+        const linkRanges: { from: number, to: number }[] = []
+        const doc = this.view.state.doc
         const selections = this.view.state.selection.ranges.map(range => ({
           empty: range.empty,
           from: range.from,
           to: range.to,
         }))
 
-        for (const link of findInternalLinks(this.view.state.doc.toString())) {
-          if (
-            !shouldShowInternalLinkWidget(
-              mode,
-              this.view.hasFocus,
-              selections,
-              link.from,
-              link.to,
-            )
-          ) {
+        let scannedTo = 0
+
+        for (const visibleRange of this.view.visibleRanges) {
+          // Internal links never span multiple lines, so extending the
+          // visible range to full line boundaries is enough to avoid
+          // cutting a link at the viewport edge.
+          const from = Math.max(doc.lineAt(visibleRange.from).from, scannedTo)
+          const to = doc.lineAt(visibleRange.to).to
+
+          if (to <= from) {
             continue
           }
 
-          const key = getInternalLinkCacheKey(link)
-          const entity = entityCache.get(key)
-          const status = getInternalLinkEntityStatus(entity)
+          scannedTo = to
 
-          if (status === 'pending') {
-            requestEntityRefresh(this.view, link)
+          for (const match of findInternalLinks(doc.sliceString(from, to))) {
+            const link: InternalLinkMatch = {
+              ...match,
+              from: from + match.from,
+              to: from + match.to,
+            }
+
+            linkRanges.push({ from: link.from, to: link.to })
+
+            if (
+              !shouldShowInternalLinkWidget(
+                mode,
+                this.view.hasFocus,
+                selections,
+                link.from,
+                link.to,
+              )
+            ) {
+              continue
+            }
+
+            const key = getInternalLinkCacheKey(link)
+            const entity = entityCache.get(key)
+            const status = getInternalLinkEntityStatus(entity)
+
+            if (status === 'pending') {
+              requestEntityRefresh(this.view, link)
+            }
+
+            decorations.push(
+              Decoration.replace({
+                widget: new InternalLinkWidget(
+                  link,
+                  status,
+                  entity?.exists
+                    ? { id: entity.data.id, type: entity.data.type }
+                    : link.legacyTarget,
+                ),
+              }).range(link.from, link.to),
+            )
           }
-
-          decorations.push(
-            Decoration.replace({
-              widget: new InternalLinkWidget(
-                link,
-                status,
-                entity?.exists
-                  ? { id: entity.data.id, type: entity.data.type }
-                  : link.legacyTarget,
-              ),
-            }).range(link.from, link.to),
-          )
         }
+
+        this.linkRanges = linkRanges
 
         return Decoration.set(decorations, true)
       }

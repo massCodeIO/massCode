@@ -7,6 +7,7 @@ import {
   stateFlushTimerByPath,
 } from '../cache'
 import { STATE_WRITE_DEBOUNCE_MS } from '../constants'
+import { rememberAppFileChange } from './appChanges'
 
 let hooksRegistered = false
 
@@ -38,6 +39,7 @@ function flushPath(statePath: string): void {
   const persistedContent = getPersistedContent(statePath)
   if (persistedContent !== pendingContent) {
     fs.ensureDirSync(path.dirname(statePath))
+    rememberAppFileChange(statePath)
     fs.writeFileSync(statePath, pendingContent, 'utf8')
   }
 

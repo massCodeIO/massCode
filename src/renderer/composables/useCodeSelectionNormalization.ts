@@ -10,7 +10,12 @@ interface FolderNode {
 
 const { state } = useApp()
 const { folders } = useFolders()
-const { displayedSnippets, getSnippets, selectFirstSnippet } = useSnippets()
+const {
+  displayedSnippets,
+  getSnippets,
+  refreshSelectedSnippet,
+  selectFirstSnippet,
+} = useSnippets()
 const { tags } = useTags()
 
 function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
@@ -51,4 +56,8 @@ export async function normalizeCodeSelectionState() {
   ) {
     selectFirstSnippet()
   }
+
+  // Список содержит только метаданные: полная запись выбранного сниппета
+  // загружается отдельно (boot и refresh после внешнего sync).
+  await refreshSelectedSnippet()
 }

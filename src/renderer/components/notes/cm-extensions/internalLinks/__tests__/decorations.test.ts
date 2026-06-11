@@ -8,7 +8,9 @@ vi.mock('@/electron', () => ({
   i18n: {
     t: vi.fn((key: string) => key),
   },
-  ipc: {},
+  ipc: {
+    on: vi.fn(),
+  },
   store: {
     preferences: {
       get: vi.fn(() => 4321),

@@ -31,6 +31,12 @@ import {
   getFolderPathById,
   normalizeDirectoryPath,
 } from './paths'
+import { rememberAppFileChange } from './shared/appChanges'
+import {
+  getCachedDirectoryEntries,
+  removeDirectoryEntryFromCache,
+  upsertDirectoryEntryInCache,
+} from './shared/directoryEntries'
 import { listMarkdownFiles as listMarkdownFilesShared } from './shared/path'
 import {
   getFileTimestampFallbacks,
@@ -235,6 +241,7 @@ export function writeSnippetToFile(
     }
   }
 
+  rememberAppFileChange(snippetPath)
   fs.writeFileSync(snippetPath, nextContent, 'utf8')
 }
 
@@ -279,66 +286,6 @@ export function buildSnippetTargetPath(
   const fileName = toSnippetFileName(snippet.name)
 
   return directory ? path.posix.join(directory, fileName) : fileName
-}
-
-function getCachedDirectoryEntries(
-  directoryPath: string,
-  directoryEntriesCache?: DirectoryEntriesCache,
-): string[] {
-  if (!directoryEntriesCache) {
-    return fs.readdirSync(directoryPath)
-  }
-
-  const cachedEntries = directoryEntriesCache.get(directoryPath)
-  if (cachedEntries) {
-    return cachedEntries
-  }
-
-  const entries = fs.readdirSync(directoryPath)
-  directoryEntriesCache.set(directoryPath, [...entries])
-  return entries
-}
-
-function removeDirectoryEntryFromCache(
-  directoryPath: string,
-  fileName: string,
-  directoryEntriesCache?: DirectoryEntriesCache,
-): void {
-  if (!directoryEntriesCache) {
-    return
-  }
-
-  const entries = directoryEntriesCache.get(directoryPath)
-  if (!entries) {
-    return
-  }
-
-  const normalizedFileName = fileName.toLowerCase()
-  const nextEntries = entries.filter(
-    entry => entry.toLowerCase() !== normalizedFileName,
-  )
-
-  directoryEntriesCache.set(directoryPath, nextEntries)
-}
-
-function upsertDirectoryEntryInCache(
-  directoryPath: string,
-  fileName: string,
-  directoryEntriesCache?: DirectoryEntriesCache,
-): void {
-  if (!directoryEntriesCache) {
-    return
-  }
-
-  const entries
-    = directoryEntriesCache.get(directoryPath) || fs.readdirSync(directoryPath)
-  const normalizedFileName = fileName.toLowerCase()
-  const nextEntries = entries.filter(
-    entry => entry.toLowerCase() !== normalizedFileName,
-  )
-
-  nextEntries.push(fileName)
-  directoryEntriesCache.set(directoryPath, nextEntries)
 }
 
 function assertSnippetPathAvailable(
@@ -475,6 +422,8 @@ export function persistSnippet(
     && fs.pathExistsSync(sourceAbsolutePath)
   ) {
     fs.ensureDirSync(path.dirname(targetAbsolutePath))
+    rememberAppFileChange(sourceAbsolutePath)
+    rememberAppFileChange(targetAbsolutePath)
     fs.moveSync(sourceAbsolutePath, targetAbsolutePath, { overwrite: false })
 
     removeDirectoryEntryFromCache(

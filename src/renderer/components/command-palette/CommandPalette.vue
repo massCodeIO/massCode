@@ -38,9 +38,7 @@ interface CommandPaletteFooterHint {
   keys: string[]
 }
 
-type SnippetContentSource =
-  | Extract<CommandPaletteResult, { type: 'snippet' }>['item']
-  | SnippetItemResponse
+type SnippetContentSource = SnippetItemResponse
 type RecentTarget = Extract<
   CommandPaletteResult,
   { type: 'recent' }
@@ -561,11 +559,12 @@ function getRevealInFileManagerLabel() {
 }
 
 function hasSnippetContentAction(result: CommandPaletteResult) {
-  if (result.type === 'snippet') {
-    return Boolean(getSnippetContentValue(result.item))
-  }
-
-  return result.type === 'recent' && result.recent.target === 'snippet'
+  // Список не содержит тел фрагментов: непустоту контента без запроса
+  // не определить, действие доступно для любого сниппета.
+  return (
+    result.type === 'snippet'
+    || (result.type === 'recent' && result.recent.target === 'snippet')
+  )
 }
 
 function hasNoteContentAction(result: CommandPaletteResult) {
@@ -638,8 +637,11 @@ function getSnippetContentValue(snippet: SnippetContentSource) {
 }
 
 async function getSnippet(result: CommandPaletteResult) {
+  // Список не содержит тел фрагментов — полная запись загружается по id.
   if (result.type === 'snippet') {
-    return result.item
+    const { data } = await api.snippets.getSnippetsById(String(result.item.id))
+
+    return data
   }
 
   if (!isRecentTarget(result, 'snippet')) {
@@ -666,8 +668,10 @@ async function copySnippetContent(result: CommandPaletteResult) {
 }
 
 async function copyNoteContent(result: CommandPaletteResult) {
+  // Список не содержит контента заметок — он загружается по id.
   if (result.type === 'note') {
-    copyToClipboard(result.item.content)
+    const { data } = await api.notes.getNotesById(String(result.item.id))
+    copyToClipboard(data.content)
     return
   }
 

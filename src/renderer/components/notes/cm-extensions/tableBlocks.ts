@@ -97,6 +97,7 @@ function isSelectionInsideRange(
 class TableWidget extends WidgetType {
   constructor(
     readonly table: ParsedMarkdownTable,
+    readonly source: string,
     readonly activateSourceOnClick: boolean,
   ) {
     super()
@@ -104,7 +105,7 @@ class TableWidget extends WidgetType {
 
   eq(other: TableWidget): boolean {
     return (
-      JSON.stringify(this.table) === JSON.stringify(other.table)
+      this.source === other.source
       && this.activateSourceOnClick === other.activateSourceOnClick
     )
   }
@@ -235,20 +236,33 @@ class TableWidget extends WidgetType {
   }
 }
 
+interface TableBlocksFieldValue {
+  decorations: DecorationSet
+  blocks: { from: number, to: number }[]
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
   showSourceWhenSelectionInside: boolean,
-) {
+): TableBlocksFieldValue {
   if (!enabled)
-    return Decoration.none
+    return { blocks: [], decorations: Decoration.none }
 
   const builder = new RangeSetBuilder<Decoration>()
+  const blocks: { from: number, to: number }[] = []
 
   syntaxTree(state).iterate({
     enter(node) {
       if (node.name !== 'Table')
         return
+
+      const source = state.sliceDoc(node.from, node.to)
+      const parsed = parseMarkdownTable(source)
+      if (!parsed)
+        return
+
+      blocks.push({ from: node.from, to: node.to })
 
       if (
         showSourceWhenSelectionInside
@@ -257,40 +271,41 @@ function buildDecorations(
         return
       }
 
-      const parsed = parseMarkdownTable(state.sliceDoc(node.from, node.to))
-      if (!parsed)
-        return
-
       builder.add(
         node.from,
         node.to,
         Decoration.replace({
           block: true,
-          widget: new TableWidget(parsed, showSourceWhenSelectionInside),
+          widget: new TableWidget(
+            parsed,
+            source,
+            showSourceWhenSelectionInside,
+          ),
         }),
       )
     },
   })
 
-  return builder.finish()
+  return { blocks, decorations: builder.finish() }
 }
 
 export function createTableBlocks(options: TableBlocksOptions = {}) {
   const { enabled = true, showSourceWhenSelectionInside = false } = options
 
-  return StateField.define<DecorationSet>({
+  return StateField.define<TableBlocksFieldValue>({
     create(state) {
       return buildDecorations(state, enabled, showSourceWhenSelectionInside)
     },
-    update(decorations, transaction) {
-      const selectionChanged = !transaction.startState.selection.eq(
-        transaction.state.selection,
-      )
+    update(value, transaction) {
       const focusChanged = transaction.effects.some(e =>
         e.is(setEditorFocusEffect),
       )
+      // The syntax tree can advance asynchronously (without a document
+      // change), so compare tree identity to pick up late-parsed blocks.
+      const treeChanged
+        = syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
 
-      if (transaction.docChanged || selectionChanged || focusChanged) {
+      if (transaction.docChanged || focusChanged || treeChanged) {
         return buildDecorations(
           transaction.state,
           enabled,
@@ -298,9 +313,32 @@ export function createTableBlocks(options: TableBlocksOptions = {}) {
         )
       }
 
-      return decorations.map(transaction.changes)
+      // A pure selection change only matters when the cursor enters or
+      // leaves one of the current blocks.
+      if (
+        showSourceWhenSelectionInside
+        && !transaction.startState.selection.eq(transaction.state.selection)
+        && value.blocks.some(
+          block =>
+            isSelectionInsideRange(
+              transaction.startState,
+              block.from,
+              block.to,
+            )
+            !== isSelectionInsideRange(transaction.state, block.from, block.to),
+        )
+      ) {
+        return buildDecorations(
+          transaction.state,
+          enabled,
+          showSourceWhenSelectionInside,
+        )
+      }
+
+      return value
     },
-    provide: field => EditorView.decorations.from(field),
+    provide: field =>
+      EditorView.decorations.from(field, value => value.decorations),
   })
 }
 

@@ -81,6 +81,11 @@ onMounted(() => {
   init()
 })
 
+onUnmounted(() => {
+  mm?.destroy()
+  mm = null
+})
+
 watch(
   () => selectedNote.value?.id,
   () => {

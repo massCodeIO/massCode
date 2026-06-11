@@ -116,6 +116,10 @@ function isStoredInternalLinkPayload(payload: string): boolean {
   return /^(?:snippet|note|http-request):\d+\|.*$/.test(payload)
 }
 
+/**
+ * `text` may be the full document or a single line: positions in the
+ * returned match are relative to `text`.
+ */
 export function getInternalLinkTokenState(
   text: string,
   head: number,
@@ -477,11 +481,22 @@ export function createInternalLinksTrigger(
           return
         }
 
+        // The token state only depends on the current line, so avoid
+        // materializing the whole document on every update.
+        const line = update.view.state.doc.lineAt(selection.head)
         const tokenState = getInternalLinkTokenState(
-          update.view.state.doc.toString(),
-          selection.head,
+          line.text,
+          selection.head - line.from,
         )
-        const match = tokenState.kind === 'search' ? tokenState.match : null
+        const match
+          = tokenState.kind === 'search'
+            ? {
+                anchor: tokenState.match.anchor + line.from,
+                from: tokenState.match.from + line.from,
+                query: tokenState.match.query,
+                to: tokenState.match.to + line.from,
+              }
+            : null
 
         if (
           isInternalLinksPickerOwner(this.view)

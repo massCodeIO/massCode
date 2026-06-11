@@ -13,6 +13,11 @@ import {
 import { buildFencedCodeLineStyle } from './fencedCodeStyles'
 
 class HorizontalRuleWidget extends WidgetType {
+  eq(): boolean {
+    // The widget is stateless, so any two instances are interchangeable.
+    return true
+  }
+
   toDOM(): HTMLElement {
     const hr = document.createElement('hr')
     hr.style.borderTop = '1px solid var(--border)'
@@ -27,7 +32,6 @@ class HorizontalRuleWidget extends WidgetType {
 class CheckboxWidget extends WidgetType {
   constructor(
     readonly checked: boolean,
-    readonly pos: number,
     readonly interactive: boolean,
   ) {
     super()
@@ -35,9 +39,7 @@ class CheckboxWidget extends WidgetType {
 
   eq(other: CheckboxWidget): boolean {
     return (
-      this.checked === other.checked
-      && this.pos === other.pos
-      && this.interactive === other.interactive
+      this.checked === other.checked && this.interactive === other.interactive
     )
   }
 
@@ -73,8 +75,11 @@ class CheckboxWidget extends WidgetType {
       checkbox.addEventListener('mousedown', (e) => {
         e.preventDefault()
         const replacement = this.checked ? '[ ]' : '[x]'
+        // The marker position is resolved at click time, so the widget does
+        // not depend on (and get recreated for) a document position.
+        const pos = view.posAtDOM(checkbox)
         view.dispatch({
-          changes: { from: this.pos, to: this.pos + 3, insert: replacement },
+          changes: { from: pos, to: pos + 3, insert: replacement },
         })
       })
     }
@@ -598,11 +603,7 @@ function buildDecorations(
           ) {
             decorations.push(
               Decoration.replace({
-                widget: new CheckboxWidget(
-                  checked,
-                  node.from,
-                  interactiveTaskMarkers,
-                ),
+                widget: new CheckboxWidget(checked, interactiveTaskMarkers),
               }).range(node.from, node.to),
             )
           }

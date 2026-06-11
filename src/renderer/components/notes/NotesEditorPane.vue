@@ -12,7 +12,7 @@ import { i18n, ipc } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import { getEntryNameConflictMessage } from '@/utils'
-import { useClipboard } from '@vueuse/core'
+import { refDebounced, useClipboard } from '@vueuse/core'
 import {
   BookOpen,
   ChevronLeft,
@@ -209,15 +209,28 @@ function onNameBlur() {
 }
 
 const editorContent = ref('')
+// id заметки, контент которой сейчас находится в редакторе: меняется только
+// вместе с editorContent, когда полная запись уже загружена.
+const editorNoteId = ref<number | undefined>()
 
 watch(
   selectedNote,
   (nextNote, previousNote) => {
-    if (!shouldSyncSelectedNoteContent(previousNote, nextNote)) {
+    // Контент выбранной заметки ещё загружается — редактор обновится,
+    // когда придёт полная запись.
+    if (nextNote && nextNote.content === undefined) {
       return
     }
 
-    editorContent.value = selectedNote.value?.content ?? ''
+    if (
+      editorNoteId.value === nextNote?.id
+      && !shouldSyncSelectedNoteContent(previousNote, nextNote)
+    ) {
+      return
+    }
+
+    editorContent.value = nextNote?.content ?? ''
+    editorNoteId.value = nextNote?.id
   },
   { immediate: true },
 )
@@ -233,15 +246,27 @@ const content = computed({
   },
 })
 
-const textStats = computed(() => getTextStats(content.value))
+// Статистика по всему документу не должна пересчитываться на каждый
+// keystroke большого документа.
+const debouncedContent = refDebounced(editorContent, 300)
+const textStats = computed(() => getTextStats(debouncedContent.value))
 
 const { copy } = useClipboard()
 
-ipc.on('main-menu:copy-note', () => {
-  if (!selectedNote.value)
+function onCopyNoteMenu() {
+  const noteContent = selectedNote.value?.content
+  if (noteContent === undefined)
     return
-  copy(selectedNote.value.content)
+  copy(noteContent)
   useDonations().incrementCopy('notes')
+}
+
+ipc.on('main-menu:copy-note', onCopyNoteMenu)
+
+// Компонент пересоздаётся при переходах dashboard/graph → workspace:
+// без снятия listener каждый переход добавляет обработчик.
+onBeforeUnmount(() => {
+  ipc.removeListeners('main-menu:copy-note')
 })
 </script>
 
@@ -338,10 +363,9 @@ ipc.on('main-menu:copy-note', () => {
       >
         <div class="min-h-0">
           <NotesEditor
-            :key="selectedNote.id"
             v-model:content="content"
             :mode="notesEditorMode"
-            :note-id="selectedNote.id"
+            :note-id="editorNoteId"
           />
         </div>
         <div

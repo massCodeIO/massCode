@@ -1,6 +1,7 @@
 interface SyncableSelectedNote {
   id: number
-  content: string
+  // content отсутствует, пока полная запись выбранной заметки загружается
+  content?: string
 }
 
 export function shouldSyncSelectedNoteContent(

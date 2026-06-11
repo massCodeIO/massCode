@@ -1,5 +1,6 @@
 import type { LibraryFilter } from '../../types'
 import { store } from '@/electron'
+import { watchDebounced } from '@vueuse/core'
 import {
   getLayoutModeFromNotesPanels,
   getNextLayoutModeForSidebarToggle,
@@ -167,13 +168,20 @@ async function focusNoteNameInput() {
   isFocusedNoteName.value = true
 }
 
-watch(
-  notesState,
-  () => {
-    store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
-  },
-  { deep: true },
-)
+function persistNotesSelectionState() {
+  store.app.set('notes.selection', JSON.parse(JSON.stringify(notesState)))
+}
+
+// store.app.set — синхронная запись файла на диск: без debounce каждая смена
+// выбранной заметки/папки блокирует main thread renderer.
+watchDebounced(notesState, persistNotesSelectionState, {
+  debounce: 300,
+  deep: true,
+})
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', persistNotesSelectionState)
+}
 
 watch(notesLayoutMode, (mode) => {
   store.app.set('notes.layout.mode', mode)

@@ -59,16 +59,16 @@ export interface SnippetItemResponse {
     id: number;
     name: string;
   } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
   contents: {
     id: number;
     label: string;
     value: string | null;
     language: string;
   }[];
-  isFavorites: number;
-  isDeleted: number;
-  createdAt: number;
-  updatedAt: number;
 }
 
 export interface SnippetsAdd {
@@ -137,16 +137,15 @@ export type SnippetsResponse = {
     id: number;
     name: string;
   } | null;
-  contents: {
-    id: number;
-    label: string;
-    value: string | null;
-    language: string;
-  }[];
   isFavorites: number;
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  contents: {
+    id: number;
+    label: string;
+    language: string;
+  }[];
 }[];
 
 export interface FoldersAdd {
@@ -278,7 +277,6 @@ export interface NoteItemResponse {
   id: number;
   name: string;
   description: string | null;
-  content: string;
   properties: object;
   tags: {
     id: number;
@@ -292,6 +290,7 @@ export interface NoteItemResponse {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  content: string;
 }
 
 export type NoteProperties = object;
@@ -300,7 +299,6 @@ export type NotesResponse = {
   id: number;
   name: string;
   description: string | null;
-  content: string;
   properties: object;
   tags: {
     id: number;

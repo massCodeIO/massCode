@@ -5,6 +5,7 @@ import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createDefaultNotesState, saveNotesState } from '../state'
 import {
+  syncNoteFileWithDisk,
   syncNotesFoldersWithDisk,
   syncNotesRuntimeWithDisk,
   syncNotesWithDisk,
@@ -183,6 +184,102 @@ describe('syncNotesWithDisk', () => {
     const state = createDefaultNotesState()
     syncNotesWithDisk(paths, state)
     expect(state.notes).toHaveLength(0)
+  })
+})
+
+describe('syncNoteFileWithDisk', () => {
+  it('adds a new note to the runtime cache incrementally', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'first.md'),
+      '---\nid: 1\nname: first\n---\nFirst body\n',
+      'utf8',
+    )
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    expect(cache.notes).toHaveLength(1)
+
+    fs.writeFileSync(
+      path.join(paths.inboxDirPath, 'second.md'),
+      '---\nid: 2\nname: second\n---\nSecond body\n',
+      'utf8',
+    )
+
+    const nextCache = syncNoteFileWithDisk(paths, '.masscode/inbox/second.md')
+
+    expect(nextCache).not.toBeNull()
+    expect(nextCache).not.toBe(cache)
+    expect(nextCache!.notes).toHaveLength(2)
+    expect(nextCache!.noteById.get(2)?.name).toBe('second')
+    expect(nextCache!.state.notes).toHaveLength(2)
+  })
+
+  it('updates an existing note in the runtime cache incrementally', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const notePath = path.join(paths.inboxDirPath, 'note.md')
+    fs.writeFileSync(
+      notePath,
+      '---\nid: 1\nname: note\n---\nOriginal body\n',
+      'utf8',
+    )
+
+    syncNotesRuntimeWithDisk(paths)
+
+    fs.writeFileSync(
+      notePath,
+      '---\nid: 1\nname: note\n---\nUpdated body\n',
+      'utf8',
+    )
+
+    const nextCache = syncNoteFileWithDisk(paths, '.masscode/inbox/note.md')
+
+    expect(nextCache).not.toBeNull()
+    expect(nextCache!.notes).toHaveLength(1)
+    expect(nextCache!.noteById.get(1)?.content).toContain('Updated body')
+  })
+
+  it('removes a deleted note from the runtime cache incrementally', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    const notePath = path.join(paths.inboxDirPath, 'note.md')
+    fs.writeFileSync(notePath, '---\nid: 1\nname: note\n---\nBody\n', 'utf8')
+
+    const cache = syncNotesRuntimeWithDisk(paths)
+    expect(cache.notes).toHaveLength(1)
+
+    fs.removeSync(notePath)
+
+    const nextCache = syncNoteFileWithDisk(paths, '.masscode/inbox/note.md')
+
+    expect(nextCache).not.toBeNull()
+    expect(nextCache!.notes).toHaveLength(0)
+    expect(nextCache!.noteById.has(1)).toBe(false)
+    expect(nextCache!.state.notes).toHaveLength(0)
+  })
+
+  it('returns null for files in unknown directories to force a full sync', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    syncNotesRuntimeWithDisk(paths)
+
+    fs.ensureDirSync(path.join(paths.notesRoot, 'Unknown'))
+    fs.writeFileSync(
+      path.join(paths.notesRoot, 'Unknown', 'note.md'),
+      '---\nid: 3\nname: note\n---\nBody\n',
+      'utf8',
+    )
+
+    expect(syncNoteFileWithDisk(paths, 'Unknown/note.md')).toBeNull()
+  })
+
+  it('returns null for non-markdown files', () => {
+    const paths = createNotesPaths()
+    fs.ensureDirSync(paths.inboxDirPath)
+    syncNotesRuntimeWithDisk(paths)
+
+    expect(syncNoteFileWithDisk(paths, '.masscode/state.json')).toBeNull()
   })
 })
 

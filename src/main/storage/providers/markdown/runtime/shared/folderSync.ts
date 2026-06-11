@@ -169,7 +169,7 @@ export function syncFoldersStateFromDiskAtRoot<
     relativePath: string
   }) => boolean
   state: FolderSyncState<TFolder>
-}): void {
+}): FolderDiskEntry<TMetadata>[] {
   const diskFolders = listUserFoldersFromDisk({
     readMetadata: input.readMetadata,
     rootPath: input.rootPath,
@@ -177,6 +177,8 @@ export function syncFoldersStateFromDiskAtRoot<
   })
 
   syncFoldersStateFromDisk(input.state, diskFolders, input.buildFolder)
+
+  return diskFolders
 }
 
 export function syncFolderMetadataFilesByPathMap<

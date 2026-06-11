@@ -45,6 +45,7 @@ async function setup(options: SetupOptions = {}) {
   )
 
   const getNotes = vi.fn(async () => undefined)
+  const refreshSelectedNote = vi.fn(async () => undefined)
   const selectFirstNote = vi.fn(() => {
     notesState.noteId = displayedNotes.value[0]?.id
   })
@@ -70,6 +71,7 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('../useNotes', () => ({
     useNotes: () => ({
       getNotes,
+      refreshSelectedNote,
       selectFirstNote,
     }),
   }))

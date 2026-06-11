@@ -6,6 +6,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { rememberAppFileChange } from '../../runtime/shared/appChanges'
 import { readYamlObjectFile } from '../../runtime/shared/yaml'
 import { META_FILE_NAME } from './constants'
 
@@ -64,5 +65,6 @@ export function writeNotesFolderMetadataFile(
   }
 
   fs.ensureDirSync(folderAbsPath)
+  rememberAppFileChange(metaPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
 }

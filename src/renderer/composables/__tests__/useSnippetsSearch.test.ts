@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, nextTick, reactive, ref, shallowRef } from 'vue'
+import { computed, nextTick, reactive, ref, shallowRef, watch } from 'vue'
 
 globalThis.computed = computed
 globalThis.nextTick = nextTick
 globalThis.reactive = reactive
 globalThis.ref = ref
 globalThis.shallowRef = shallowRef
+globalThis.watch = watch
 
 interface SetupOptions {
   folderId?: number

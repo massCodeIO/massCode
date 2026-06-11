@@ -35,6 +35,7 @@ export {
   getVaultPath,
   hasMarkdownVaultData,
   normalizeDirectoryPath,
+  resetPathsCache,
 } from './paths'
 
 // Search

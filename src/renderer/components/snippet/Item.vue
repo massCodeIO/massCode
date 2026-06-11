@@ -10,8 +10,9 @@ import {
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
-import { onClickOutside, useClipboard } from '@vueuse/core'
+import { useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
+import { api } from '~/renderer/services/api'
 
 interface Props {
   snippet: SnippetsResponse[0]
@@ -40,8 +41,6 @@ const {
 const { clearHistory } = useNavigationHistory()
 
 const { copy } = useClipboard()
-
-const snippetRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => state.snippetId === props.snippet.id)
 
@@ -85,6 +84,10 @@ const folderName = computed(() => {
 
   return i18n.t('common.inbox')
 })
+
+const createdAtFormatted = computed(() =>
+  format(new Date(props.snippet.createdAt), 'dd.MM.yyyy'),
+)
 
 function onSnippetClick(id: number, event: MouseEvent) {
   clearHistory()
@@ -159,9 +162,18 @@ function onCopySnippetLink() {
   copy(`masscode://goto?snippetId=${props.snippet.id}`)
 }
 
-function onCopySnippetContent() {
-  copy(props.snippet.contents[0]?.value || '')
-  useDonations().incrementCopy('code')
+async function onCopySnippetContent() {
+  try {
+    // Список не содержит тел фрагментов — контент загружается по id.
+    const { data } = await api.snippets.getSnippetsById(
+      String(props.snippet.id),
+    )
+    copy(data.contents[0]?.value || '')
+    useDonations().incrementCopy('code')
+  }
+  catch (error) {
+    console.error(error)
+  }
 }
 
 function onDragStart(event: DragEvent) {
@@ -195,16 +207,10 @@ function onDragStart(event: DragEvent) {
 
   setTimeout(() => el.remove(), 0)
 }
-
-onClickOutside(snippetRef, () => {
-  focusedSnippetId.value = undefined
-  highlightedSnippetIds.value.clear()
-})
 </script>
 
 <template>
   <div
-    ref="snippetRef"
     data-snippet-item
     class="border-border relative border-b px-1 focus-visible:outline-none"
     :class="{
@@ -241,7 +247,7 @@ onClickOutside(snippetRef, () => {
             muted
             class="meta shrink-0"
           >
-            {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+            {{ createdAtFormatted }}
           </UiText>
           <UiText
             v-else
@@ -254,7 +260,7 @@ onClickOutside(snippetRef, () => {
               {{ folderName }}
             </div>
             <div>
-              {{ format(new Date(snippet.createdAt), "dd.MM.yyyy") }}
+              {{ createdAtFormatted }}
             </div>
           </UiText>
         </div>

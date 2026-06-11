@@ -14,7 +14,6 @@ import {
   useNotesApp,
 } from '@/composables'
 import { i18n } from '@/electron'
-import { onClickOutside } from '@vueuse/core'
 import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
 import { CalendarClock, Flag } from 'lucide-vue-next'
 import { getTaskPriorityFlagClass } from './taskPriorityStyle'
@@ -33,7 +32,6 @@ interface NoteRecord {
   id: number
   name: string
   description: string | null
-  content: string
   properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
@@ -55,8 +53,6 @@ const { highlightedNoteIds, highlightedFolderIds, focusedNoteId, notesState }
   = useNotesApp()
 
 const { selectNote, selectedNoteIds, updateNoteProperties } = useNotes()
-
-const noteRef = ref<HTMLDivElement>()
 
 const isSelected = computed(() => notesState.noteId === props.note.id)
 
@@ -185,16 +181,10 @@ function onDragStart(event: DragEvent) {
 
   setTimeout(() => el.remove(), 0)
 }
-
-onClickOutside(noteRef, () => {
-  focusedNoteId.value = undefined
-  highlightedNoteIds.value.clear()
-})
 </script>
 
 <template>
   <div
-    ref="noteRef"
     data-note-item
     class="border-border relative border-b px-1 focus-visible:outline-none"
     :class="{

@@ -7,16 +7,29 @@ import {
   useNoteSearch,
 } from '@/composables'
 import { i18n } from '@/electron'
+import { onClickOutside } from '@vueuse/core'
 import { LoaderCircle } from 'lucide-vue-next'
 
 const NOTE_ITEM_SIZE = 61
 const NOTE_ITEM_COMPACT_SIZE = 37
 
 const { isCompactListMode } = useApp()
-const { focusedNoteId, notesState } = useNotesApp()
+const { focusedNoteId, highlightedNoteIds, notesState } = useNotesApp()
 const { deleteSelectedNotes, isNotesLoading, isNotesLoadingVisible }
   = useNotes()
 const { displayedNotes } = useNoteSearch()
+
+// Single handler instead of per-item onClickOutside: clicks outside the list
+// clear focus/highlight, while the capture click inside the list clears state
+// before item click handlers set focus again (same net behavior as before).
+function clearNoteInteractionState() {
+  focusedNoteId.value = undefined
+  highlightedNoteIds.value.clear()
+}
+
+const listRef = ref<HTMLDivElement>()
+
+onClickOutside(listRef, clearNoteInteractionState)
 
 const noteScrollerRef = ref<{
   scrollToItem: (index: number) => void
@@ -63,8 +76,10 @@ watch(
 
 <template>
   <div
+    ref="listRef"
     data-notes-list
     class="flex h-full flex-col"
+    @click.capture="clearNoteInteractionState"
   >
     <div>
       <NotesListHeader />

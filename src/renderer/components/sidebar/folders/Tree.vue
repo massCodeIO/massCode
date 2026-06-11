@@ -68,6 +68,14 @@ function mapToTreeNode(folder: Node): TreeNodeType {
 
 const treeData = computed(() => props.modelValue.map(mapToTreeNode))
 
+const foldersById = computed(() => {
+  const map = new Map<number, Node>()
+  for (const folder of flattenFolders((folders.value ?? []) as Node[])) {
+    map.set(folder.id, folder)
+  }
+  return map
+})
+
 const selectedIds = computed({
   get: () => selectedFolderIds.value as (string | number)[],
   set: (val) => {
@@ -360,8 +368,8 @@ useDeleteShortcut({
           <template #icon="{ node }">
             <div class="mr-1.5 flex flex-shrink-0 items-center">
               <UiFolderIcon
-                v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                :name="getFolderByIdFromTree(folders, Number(node.id))!.icon!"
+                v-if="foldersById.get(Number(node.id))?.icon"
+                :name="foldersById.get(Number(node.id))!.icon!"
               />
               <Folder
                 v-else

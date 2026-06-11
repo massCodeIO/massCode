@@ -12,6 +12,12 @@ import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
+import { rememberAppFileChange } from '../../runtime/shared/appChanges'
+import {
+  getCachedDirectoryEntries,
+  removeDirectoryEntryFromCache,
+  upsertDirectoryEntryInCache,
+} from '../../runtime/shared/directoryEntries'
 import {
   listMarkdownFiles as listMarkdownFilesShared,
   toPosixPath,
@@ -156,6 +162,7 @@ export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
+  rememberAppFileChange(absolutePath)
   fs.writeFileSync(absolutePath, nextContent, 'utf8')
 }
 
@@ -176,7 +183,11 @@ export function loadNotes(
   return notes
 }
 
-function getNoteTargetDirectory(state: NotesState, note: MarkdownNote): string {
+function getNoteTargetDirectory(
+  state: NotesState,
+  note: MarkdownNote,
+  folderPathMap?: Map<number, string>,
+): string {
   if (note.isDeleted) {
     return NOTES_TRASH_RELATIVE_PATH
   }
@@ -185,8 +196,8 @@ function getNoteTargetDirectory(state: NotesState, note: MarkdownNote): string {
     return NOTES_INBOX_RELATIVE_PATH
   }
 
-  const folderPathMap = buildNotesFolderPathMap(state)
-  const folderPath = folderPathMap.get(note.folderId)
+  const resolvedFolderPathMap = folderPathMap ?? buildNotesFolderPathMap(state)
+  const folderPath = resolvedFolderPathMap.get(note.folderId)
 
   return folderPath || NOTES_INBOX_RELATIVE_PATH
 }
@@ -194,31 +205,48 @@ function getNoteTargetDirectory(state: NotesState, note: MarkdownNote): string {
 export function buildNoteTargetPath(
   state: NotesState,
   note: MarkdownNote,
+  folderPathMap?: Map<number, string>,
 ): string {
-  const directory = getNoteTargetDirectory(state, note)
+  const directory = getNoteTargetDirectory(state, note, folderPathMap)
   const fileName = toNoteFileName(note.name)
   return path.posix.join(directory, fileName)
 }
 
 function getUniqueNotePath(
   paths: NotesPaths,
-  state: NotesState,
   targetPath: string,
   currentFilePath: string | null,
+  directoryEntriesCache?: Map<string, string[]>,
 ): string {
   const targetAbsolutePath = path.join(paths.notesRoot, targetPath)
+  const targetDirectory = path.dirname(targetAbsolutePath)
+  const targetFileName = path.basename(targetAbsolutePath)
+  const currentAbsolutePath = currentFilePath
+    ? path.join(paths.notesRoot, currentFilePath)
+    : null
 
-  if (!fs.pathExistsSync(targetAbsolutePath)) {
+  fs.ensureDirSync(targetDirectory)
+
+  const entries = getCachedDirectoryEntries(
+    targetDirectory,
+    directoryEntriesCache,
+  )
+  const hasCaseInsensitiveConflict = (candidateFileName: string): boolean =>
+    entries.some((entry) => {
+      const entryAbsolutePath = path.join(targetDirectory, entry)
+
+      if (
+        currentAbsolutePath
+        && entryAbsolutePath.toLowerCase() === currentAbsolutePath.toLowerCase()
+      ) {
+        return false
+      }
+
+      return entry.toLowerCase() === candidateFileName.toLowerCase()
+    })
+
+  if (!hasCaseInsensitiveConflict(targetFileName)) {
     return targetPath
-  }
-
-  if (currentFilePath) {
-    const currentAbsolutePath = path.join(paths.notesRoot, currentFilePath)
-    if (
-      targetAbsolutePath.toLowerCase() === currentAbsolutePath.toLowerCase()
-    ) {
-      return targetPath
-    }
   }
 
   const dir = path.posix.dirname(targetPath)
@@ -226,11 +254,10 @@ function getUniqueNotePath(
   const baseName = path.posix.basename(targetPath, ext)
 
   for (let suffix = 1; suffix <= 10_000; suffix += 1) {
-    const candidatePath = path.posix.join(dir, `${baseName} ${suffix}${ext}`)
-    const candidateAbsolutePath = path.join(paths.notesRoot, candidatePath)
+    const candidateFileName = `${baseName} ${suffix}${ext}`
 
-    if (!fs.pathExistsSync(candidateAbsolutePath)) {
-      return candidatePath
+    if (!hasCaseInsensitiveConflict(candidateFileName)) {
+      return path.posix.join(dir, candidateFileName)
     }
   }
 
@@ -244,12 +271,18 @@ export function persistNote(
   previousFilePath?: string,
   options?: PersistNoteOptions,
 ): void {
-  const targetPath = buildNoteTargetPath(state, note)
+  const targetPath = buildNoteTargetPath(state, note, options?.folderPathMap)
   const currentFilePath = previousFilePath || note.filePath
+  const directoryEntriesCache = options?.directoryEntriesCache
 
   let resolvedPath: string
   if (options?.allowRenameOnConflict) {
-    resolvedPath = getUniqueNotePath(paths, state, targetPath, currentFilePath)
+    resolvedPath = getUniqueNotePath(
+      paths,
+      targetPath,
+      currentFilePath,
+      directoryEntriesCache,
+    )
     if (resolvedPath !== targetPath) {
       note.name = path.posix.basename(resolvedPath, '.md')
     }
@@ -258,15 +291,23 @@ export function persistNote(
     resolvedPath = targetPath
   }
 
+  const resolvedAbsolutePath = path.join(paths.notesRoot, resolvedPath)
+
   // Move file if path changed
   if (currentFilePath && currentFilePath !== resolvedPath) {
     const currentAbsolutePath = path.join(paths.notesRoot, currentFilePath)
     if (fs.pathExistsSync(currentAbsolutePath)) {
-      const targetAbsolutePath = path.join(paths.notesRoot, resolvedPath)
-      fs.ensureDirSync(path.dirname(targetAbsolutePath))
-      fs.moveSync(currentAbsolutePath, targetAbsolutePath, {
+      fs.ensureDirSync(path.dirname(resolvedAbsolutePath))
+      rememberAppFileChange(currentAbsolutePath)
+      rememberAppFileChange(resolvedAbsolutePath)
+      fs.moveSync(currentAbsolutePath, resolvedAbsolutePath, {
         overwrite: false,
       })
+      removeDirectoryEntryFromCache(
+        path.dirname(currentAbsolutePath),
+        path.basename(currentAbsolutePath),
+        directoryEntriesCache,
+      )
     }
   }
 
@@ -283,6 +324,11 @@ export function persistNote(
 
   // Write content
   writeNoteToFile(paths, note)
+  upsertDirectoryEntryInCache(
+    path.dirname(resolvedAbsolutePath),
+    path.basename(resolvedAbsolutePath),
+    directoryEntriesCache,
+  )
 }
 
 export function findNoteById(

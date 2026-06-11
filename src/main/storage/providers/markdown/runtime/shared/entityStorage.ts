@@ -1,5 +1,6 @@
 import path from 'node:path'
 import fs from 'fs-extra'
+import { rememberAppFileChange } from './appChanges'
 
 interface EntityIndexLike {
   filePath: string
@@ -199,6 +200,7 @@ interface EntityDeleteInput<
 function removeFileIfExists(rootPath: string, filePath: string): void {
   const absolutePath = path.join(rootPath, filePath)
   if (fs.pathExistsSync(absolutePath)) {
+    rememberAppFileChange(absolutePath)
     fs.removeSync(absolutePath)
   }
 }

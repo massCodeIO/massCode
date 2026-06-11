@@ -6,7 +6,6 @@ import {
 } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
-import { nanoid } from 'nanoid'
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -85,7 +84,7 @@ export function useMathNotebook() {
       sheets.value.map(sheet => sheet.name),
     )
     const sheet: MathSheet = {
-      id: nanoid(),
+      id: crypto.randomUUID(),
       name: nextSheetName,
       content: '',
       createdAt: Date.now(),

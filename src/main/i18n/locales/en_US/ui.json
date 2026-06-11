@@ -190,6 +190,8 @@
       "title": "Math Notebook",
       "sheetList": "Sheet List",
       "newSheet": "New Sheet",
+      "searchPlaceholder": "Search sheets…",
+      "noResults": "No sheets found",
       "untitled": "Untitled",
       "currencyUnavailable": "Currency rates service unavailable"
     },

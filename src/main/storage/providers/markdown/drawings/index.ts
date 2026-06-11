@@ -11,11 +11,42 @@ export const DRAWING_FILE_EXTENSION = '.excalidraw'
 
 const DEFAULT_DRAWING_NAME = 'Untitled'
 
+// Own mutations are remembered briefly so the vault watcher can skip
+// broadcasting echoes of the app's own writes back to the renderer.
+const RECENT_APP_CHANGE_TTL_MS = 2500
+const recentAppChanges = new Map<string, number>()
+
 export interface DrawingRecord {
   id: string
   name: string
   createdAt: number
   updatedAt: number
+}
+
+function rememberAppChange(filePath: string): void {
+  const now = Date.now()
+
+  for (const [knownPath, timestamp] of recentAppChanges) {
+    if (now - timestamp > RECENT_APP_CHANGE_TTL_MS) {
+      recentAppChanges.delete(knownPath)
+    }
+  }
+
+  recentAppChanges.set(path.resolve(filePath), now)
+}
+
+export function wasRecentAppDrawingChange(
+  vaultPath: string,
+  relativePath: string,
+): boolean {
+  const absolutePath = path.resolve(path.join(vaultPath, relativePath))
+  const timestamp = recentAppChanges.get(absolutePath)
+
+  if (timestamp === undefined) {
+    return false
+  }
+
+  return Date.now() - timestamp <= RECENT_APP_CHANGE_TTL_MS
 }
 
 export function createEmptyDrawingContent(): string {
@@ -74,9 +105,11 @@ function getDrawingFilePath(vaultPath: string, id: string): string {
   return filePath
 }
 
-function toDrawingRecord(filePath: string): DrawingRecord | null {
+async function toDrawingRecord(
+  filePath: string,
+): Promise<DrawingRecord | null> {
   try {
-    const stat = fs.statSync(filePath)
+    const stat = await fs.stat(filePath)
     const name = path.basename(filePath, DRAWING_FILE_EXTENSION)
 
     return {
@@ -91,17 +124,21 @@ function toDrawingRecord(filePath: string): DrawingRecord | null {
   }
 }
 
-function getUniqueDrawingName(
+async function getUniqueDrawingName(
   vaultPath: string,
   baseName: string,
   excludeId?: string,
-): string {
+): Promise<string> {
+  const normalizedExcludeId = excludeId?.toLowerCase()
   let candidate = baseName
   let index = 2
 
+  // The comparison with excludeId is case-insensitive: on macOS and
+  // Windows the filesystem is, and a case-only rename must not collide
+  // with the file itself.
   while (
-    candidate !== excludeId
-    && fs.pathExistsSync(getDrawingFilePath(vaultPath, candidate))
+    candidate.toLowerCase() !== normalizedExcludeId
+    && (await fs.pathExists(getDrawingFilePath(vaultPath, candidate)))
   ) {
     candidate = `${baseName} ${index}`
     index += 1
@@ -110,107 +147,133 @@ function getUniqueDrawingName(
   return candidate
 }
 
-export function listDrawings(vaultPath: string): DrawingRecord[] {
+export async function listDrawings(
+  vaultPath: string,
+): Promise<DrawingRecord[]> {
   const dirPath = ensureSpaceDirectory(vaultPath, DRAWINGS_SPACE_ID)
+  const entries = await fs.readdir(dirPath, { withFileTypes: true })
 
-  return fs
-    .readdirSync(dirPath)
-    .filter(fileName => fileName.endsWith(DRAWING_FILE_EXTENSION))
-    .filter(fileName => !fileName.startsWith('.'))
-    .map(fileName => toDrawingRecord(path.join(dirPath, fileName)))
+  const records = await Promise.all(
+    entries
+      .filter(entry => entry.isFile())
+      .filter(entry => entry.name.endsWith(DRAWING_FILE_EXTENSION))
+      .filter(entry => !entry.name.startsWith('.'))
+      .map(entry => toDrawingRecord(path.join(dirPath, entry.name))),
+  )
+
+  return records
     .filter((record): record is DrawingRecord => record !== null)
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-export function readDrawing(vaultPath: string, id: string): string | null {
+export async function readDrawing(
+  vaultPath: string,
+  id: string,
+): Promise<string | null> {
   const filePath = getDrawingFilePath(vaultPath, id)
 
-  if (!fs.pathExistsSync(filePath)) {
+  try {
+    return await fs.readFile(filePath, 'utf8')
+  }
+  catch {
     return null
   }
-
-  return fs.readFileSync(filePath, 'utf8')
 }
 
-export function writeDrawing(
+export async function writeDrawing(
   vaultPath: string,
   id: string,
   content: string,
-): DrawingRecord | null {
+): Promise<{ updatedAt: number }> {
   ensureSpaceDirectory(vaultPath, DRAWINGS_SPACE_ID)
   const filePath = getDrawingFilePath(vaultPath, id)
-  fs.writeFileSync(filePath, content, 'utf8')
 
-  return toDrawingRecord(filePath)
+  rememberAppChange(filePath)
+  await fs.writeFile(filePath, content, 'utf8')
+
+  return { updatedAt: Date.now() }
 }
 
-export function createDrawing(
+export async function createDrawing(
   vaultPath: string,
   name?: string | null,
-): DrawingRecord {
+): Promise<DrawingRecord> {
   ensureSpaceDirectory(vaultPath, DRAWINGS_SPACE_ID)
 
   const baseName = sanitizeDrawingName(name ?? DEFAULT_DRAWING_NAME)
-  const uniqueName = getUniqueDrawingName(vaultPath, baseName)
+  const uniqueName = await getUniqueDrawingName(vaultPath, baseName)
   const filePath = getDrawingFilePath(vaultPath, uniqueName)
 
-  fs.writeFileSync(filePath, createEmptyDrawingContent(), 'utf8')
+  rememberAppChange(filePath)
+  await fs.writeFile(filePath, createEmptyDrawingContent(), 'utf8')
 
-  return toDrawingRecord(filePath)!
+  return (await toDrawingRecord(filePath))!
 }
 
-export function renameDrawing(
+export async function renameDrawing(
   vaultPath: string,
   id: string,
   name: string,
-): DrawingRecord | null {
+): Promise<DrawingRecord | null> {
   const sourcePath = getDrawingFilePath(vaultPath, id)
 
-  if (!fs.pathExistsSync(sourcePath)) {
+  if (!(await fs.pathExists(sourcePath))) {
     return null
   }
 
   const baseName = sanitizeDrawingName(name)
-  const uniqueName = getUniqueDrawingName(vaultPath, baseName, id)
+  const uniqueName = await getUniqueDrawingName(vaultPath, baseName, id)
 
   if (uniqueName === id) {
     return toDrawingRecord(sourcePath)
   }
 
   const targetPath = getDrawingFilePath(vaultPath, uniqueName)
-  fs.moveSync(sourcePath, targetPath)
+  rememberAppChange(sourcePath)
+  rememberAppChange(targetPath)
+
+  if (uniqueName.toLowerCase() === id.toLowerCase()) {
+    // Case-only rename: on case-insensitive filesystems fs.move treats
+    // the target as an existing file, while a plain rename succeeds.
+    await fs.rename(sourcePath, targetPath)
+  }
+  else {
+    await fs.move(sourcePath, targetPath)
+  }
 
   return toDrawingRecord(targetPath)
 }
 
-export function duplicateDrawing(
+export async function duplicateDrawing(
   vaultPath: string,
   id: string,
-): DrawingRecord | null {
+): Promise<DrawingRecord | null> {
   const sourcePath = getDrawingFilePath(vaultPath, id)
 
-  if (!fs.pathExistsSync(sourcePath)) {
+  if (!(await fs.pathExists(sourcePath))) {
     return null
   }
 
-  const uniqueName = getUniqueDrawingName(vaultPath, id)
+  const uniqueName = await getUniqueDrawingName(vaultPath, id)
   const targetPath = getDrawingFilePath(vaultPath, uniqueName)
-  fs.copySync(sourcePath, targetPath)
+  rememberAppChange(targetPath)
+  await fs.copy(sourcePath, targetPath)
 
   return toDrawingRecord(targetPath)
 }
 
-export function deleteDrawing(
+export async function deleteDrawing(
   vaultPath: string,
   id: string,
-): { deleted: boolean } {
+): Promise<{ deleted: boolean }> {
   const filePath = getDrawingFilePath(vaultPath, id)
 
-  if (!fs.pathExistsSync(filePath)) {
+  if (!(await fs.pathExists(filePath))) {
     return { deleted: false }
   }
 
-  fs.removeSync(filePath)
+  rememberAppChange(filePath)
+  await fs.remove(filePath)
 
   return { deleted: true }
 }

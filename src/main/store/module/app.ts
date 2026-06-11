@@ -6,6 +6,7 @@ import type {
   CommandPaletteUsageEntry,
   CommandPaletteUsageTarget,
   DonationsState,
+  DrawingViewportState,
   HttpState,
   NotesEditorMode,
   NotesRouteName,
@@ -116,6 +117,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   drawings: {
     activeDrawingId: null,
+    viewport: {},
   },
   activeSpaceId: 'code',
 }
@@ -421,6 +423,32 @@ function sanitizeCommandPaletteUsage(
   return entries.slice(0, 100)
 }
 
+function sanitizeDrawingViewports(
+  value: unknown,
+): Record<string, DrawingViewportState> {
+  const source = asRecord(value)
+  const result: Record<string, DrawingViewportState> = {}
+
+  for (const [drawingId, rawViewport] of Object.entries(source)) {
+    const viewport = asRecord(rawViewport)
+
+    if (
+      typeof viewport.scrollX === 'number'
+      && typeof viewport.scrollY === 'number'
+      && typeof viewport.zoom === 'number'
+      && viewport.zoom > 0
+    ) {
+      result[drawingId] = {
+        scrollX: viewport.scrollX,
+        scrollY: viewport.scrollY,
+        zoom: viewport.zoom,
+      }
+    }
+  }
+
+  return result
+}
+
 function sanitizeAppStore(value: unknown): AppStore {
   const source = asRecord(value)
   const windowSource = asRecord(source.window)
@@ -626,6 +654,7 @@ function sanitizeAppStore(value: unknown): AppStore {
         typeof asRecord(source.drawings).activeDrawingId === 'string'
           ? String(asRecord(source.drawings).activeDrawingId)
           : APP_STORE_DEFAULTS.drawings.activeDrawingId,
+      viewport: sanitizeDrawingViewports(asRecord(source.drawings).viewport),
     },
     activeSpaceId: readEnum(
       source,

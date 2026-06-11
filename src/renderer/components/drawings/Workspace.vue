@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { DrawingViewportState } from '~/main/store/types'
 import { useDrawings, useNavigationHistory } from '@/composables'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -7,9 +8,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 const {
   activeDrawing,
   activeDrawingContent,
+  activeDrawingViewport,
   sceneRevision,
   imageExportRequest,
   saveDrawingContent,
+  saveDrawingViewport,
 } = useDrawings()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
@@ -22,6 +25,13 @@ watch(imageExportRequest, () => {
 
 function onCanvasChange(drawingId: string, content: string) {
   void saveDrawingContent(drawingId, content)
+}
+
+function onCanvasViewportChange(
+  drawingId: string,
+  viewport: DrawingViewportState,
+) {
+  saveDrawingViewport(drawingId, viewport)
 }
 
 function onBackClick() {
@@ -40,8 +50,10 @@ function onForwardClick() {
       ref="canvasRef"
       :drawing-id="activeDrawing.id"
       :content="activeDrawingContent"
+      :viewport="activeDrawingViewport"
       :revision="sceneRevision"
       @change="onCanvasChange"
+      @viewport-change="onCanvasViewportChange"
     />
     <div
       v-else

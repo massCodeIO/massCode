@@ -99,19 +99,6 @@ class ImageWidget extends WidgetType {
       if (!this.activateSourceOnClick) {
         root.style.cursor = 'pointer'
       }
-
-      // Like internal links: Cmd/Ctrl+Click opens the drawing in the
-      // Drawings space; in preview mode a plain click works too.
-      root.addEventListener('mousedown', (event) => {
-        const isNavigationClick = isMac ? event.metaKey : event.ctrlKey
-
-        if (isNavigationClick || !this.activateSourceOnClick) {
-          event.preventDefault()
-          // Also blocks the activate-source handler on the same element.
-          event.stopImmediatePropagation()
-          openDrawingInSpace(drawingId)
-        }
-      })
     }
     else {
       const img = document.createElement('img')
@@ -125,18 +112,36 @@ class ImageWidget extends WidgetType {
       root.append(img)
     }
 
-    if (this.activateSourceOnClick) {
-      root.addEventListener('mousedown', (event) => {
-        event.preventDefault()
-        const blockFrom = view.posAtDOM(root, 0)
-        view.dispatch({
-          selection: { anchor: blockFrom },
-          effects: setEditorFocusEffect.of(true),
-          scrollIntoView: true,
-        })
-        view.focus()
+    root.addEventListener('mousedown', (event) => {
+      if (event.button !== 0) {
+        return
+      }
+
+      // Like internal links: Cmd/Ctrl+Click opens the drawing in the
+      // Drawings space; in preview mode a plain click works too.
+      if (drawingId) {
+        const isNavigationClick = isMac ? event.metaKey : event.ctrlKey
+
+        if (isNavigationClick || !this.activateSourceOnClick) {
+          event.preventDefault()
+          openDrawingInSpace(drawingId)
+          return
+        }
+      }
+
+      if (!this.activateSourceOnClick) {
+        return
+      }
+
+      event.preventDefault()
+      const blockFrom = view.posAtDOM(root, 0)
+      view.dispatch({
+        selection: { anchor: blockFrom },
+        effects: setEditorFocusEffect.of(true),
+        scrollIntoView: true,
       })
-    }
+      view.focus()
+    })
 
     return root
   }

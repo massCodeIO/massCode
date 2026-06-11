@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { ExcalidrawHost } from './excalidrawHost'
+import type { ExcalidrawChangeKind, ExcalidrawHost } from './excalidrawHost'
+import type { DrawingViewportState } from '~/main/store/types'
 import { useTheme } from '@/composables'
 import { store } from '@/electron'
 import { useEventListener } from '@vueuse/core'
@@ -8,11 +9,13 @@ import { mountExcalidraw } from './excalidrawHost'
 const props = defineProps<{
   drawingId: string
   content: string | null
+  viewport: DrawingViewportState | null
   revision: number
 }>()
 
 const emit = defineEmits<{
   change: [drawingId: string, content: string]
+  viewportChange: [drawingId: string, viewport: DrawingViewportState]
 }>()
 
 const SAVE_DEBOUNCE_MS = 500
@@ -21,6 +24,7 @@ const { isDark } = useTheme()
 const containerRef = ref<HTMLElement | null>(null)
 let host: ExcalidrawHost | null = null
 let saveTimer: ReturnType<typeof setTimeout> | null = null
+let viewportTimer: ReturnType<typeof setTimeout> | null = null
 let currentDrawingId = props.drawingId
 
 function getLangCode() {
@@ -45,6 +49,19 @@ function flushSave() {
   }
 }
 
+function flushViewportSave() {
+  if (viewportTimer) {
+    clearTimeout(viewportTimer)
+    viewportTimer = null
+  }
+
+  const viewport = host?.getViewport()
+
+  if (viewport) {
+    emit('viewportChange', currentDrawingId, viewport)
+  }
+}
+
 function scheduleSave() {
   if (saveTimer) {
     clearTimeout(saveTimer)
@@ -56,28 +73,58 @@ function scheduleSave() {
   }, SAVE_DEBOUNCE_MS)
 }
 
+function scheduleViewportSave() {
+  if (viewportTimer) {
+    clearTimeout(viewportTimer)
+  }
+
+  viewportTimer = setTimeout(() => {
+    viewportTimer = null
+    flushViewportSave()
+  }, SAVE_DEBOUNCE_MS)
+}
+
+function onHostChange(kind: ExcalidrawChangeKind) {
+  if (kind === 'scene') {
+    scheduleSave()
+  }
+
+  scheduleViewportSave()
+}
+
 watch(isDark, (value) => {
   host?.setTheme(value ? 'dark' : 'light')
 })
 
 watch(
-  () => props.revision,
-  () => {
+  () => [props.revision, props.drawingId] as const,
+  ([revision, drawingId], [previousRevision]) => {
     if (!host) {
       return
     }
 
-    if (props.drawingId !== currentDrawingId) {
+    if (revision === previousRevision) {
+      // The active drawing was renamed in place: same scene, new
+      // identity. Re-target pending saves so edits are not dropped.
+      cancelScheduledSave()
+      currentDrawingId = drawingId
+      scheduleSave()
+      scheduleViewportSave()
+      return
+    }
+
+    if (drawingId !== currentDrawingId) {
       // Switching to another drawing: persist pending edits first.
       flushSave()
-      currentDrawingId = props.drawingId
+      flushViewportSave()
+      currentDrawingId = drawingId
     }
     else {
       // Same drawing reloaded from disk: discard stale pending edits.
       cancelScheduledSave()
     }
 
-    host.loadScene(props.content, props.drawingId)
+    host.loadScene(props.content, drawingId, props.viewport)
   },
 )
 
@@ -89,20 +136,25 @@ onMounted(() => {
   host = mountExcalidraw(containerRef.value, {
     initialContent: props.content,
     initialName: props.drawingId,
+    initialViewport: props.viewport,
     theme: isDark.value ? 'dark' : 'light',
     langCode: getLangCode(),
-    onChange: scheduleSave,
+    onChange: onHostChange,
   })
 })
 
 onBeforeUnmount(() => {
   flushSave()
+  flushViewportSave()
   host?.destroy()
   host = null
 })
 
-// Persist pending edits when the window reloads (e.g. Cmd+R in dev).
-useEventListener(window, 'beforeunload', flushSave)
+// Persist pending edits when the window reloads or the app quits.
+useEventListener(window, 'beforeunload', () => {
+  flushSave()
+  flushViewportSave()
+})
 
 defineExpose({
   openImageExport() {

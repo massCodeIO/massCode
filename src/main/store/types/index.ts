@@ -155,8 +155,15 @@ export interface AppStore {
   donations: DonationsState
   drawings: {
     activeDrawingId: string | null
+    viewport: Record<string, DrawingViewportState>
   }
   activeSpaceId: SpaceId
+}
+
+export interface DrawingViewportState {
+  scrollX: number
+  scrollY: number
+  zoom: number
 }
 
 export interface EditorSettings {

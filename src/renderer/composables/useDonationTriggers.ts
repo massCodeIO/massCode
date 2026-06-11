@@ -11,8 +11,21 @@ type SentSpace = Extract<SpaceId, 'http'>
 const COPY_INTERVAL = 25
 const CREATED_INTERVAL = 25
 const SENT_INTERVAL = 25
-const COPY_SPACES: CopySpace[] = ['code', 'http', 'notes', 'math', 'tools']
-const CREATED_SPACES: CreatedSpace[] = ['code', 'http', 'notes', 'math']
+const COPY_SPACES: CopySpace[] = [
+  'code',
+  'http',
+  'notes',
+  'math',
+  'tools',
+  'drawings',
+]
+const CREATED_SPACES: CreatedSpace[] = [
+  'code',
+  'http',
+  'notes',
+  'math',
+  'drawings',
+]
 const SENT_SPACES: SentSpace[] = ['http']
 const STREAK_MILESTONES = [7, 30, 100] as const
 

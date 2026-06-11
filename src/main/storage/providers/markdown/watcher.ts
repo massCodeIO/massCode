@@ -1,6 +1,7 @@
 import type { ChokidarOptions, FSWatcher } from 'chokidar'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
+import { wasRecentAppDrawingChange } from './drawings'
 import {
   getHttpPaths,
   peekHttpRuntimeCache,
@@ -112,7 +113,12 @@ function scheduleStateSync(
     hasPendingHttpSync = true
   }
 
-  if (changedDrawingsPath) {
+  if (
+    changedDrawingsPath
+    && !(changedPath && wasRecentAppDrawingChange(vaultRootPath, changedPath))
+  ) {
+    // Echoes of the app's own drawing writes are skipped entirely:
+    // re-syncing them would only re-read data the renderer already has.
     hasPendingDrawingsSync = true
   }
 
@@ -134,6 +140,7 @@ function scheduleStateSync(
     if (forceFullSync && !changedPath) {
       hasPendingNotesSync = true
       hasPendingHttpSync = true
+      hasPendingDrawingsSync = true
     }
   }
   else if (changedCodeRelativePath) {

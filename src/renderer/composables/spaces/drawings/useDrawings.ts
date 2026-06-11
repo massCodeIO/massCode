@@ -1,3 +1,4 @@
+import type { DrawingViewportState } from '~/main/store/types'
 import { useDonations } from '@/composables/useDonations'
 import {
   markPersistedStorageMutation,
@@ -13,10 +14,12 @@ export interface DrawingItem {
   updatedAt: number
 }
 
+export const DRAWINGS_CHANGED_EVENT = 'masscode:drawings-changed'
+
 const drawings = ref<DrawingItem[]>([])
 const activeDrawingId = ref<string | null>(null)
 const activeDrawingContent = ref<string | null>(null)
-const isDrawingContentLoading = ref(false)
+const drawingViewports = ref<Record<string, DrawingViewportState>>({})
 const sceneRevision = ref(0)
 const imageExportRequest = ref(0)
 let initialized = false
@@ -28,6 +31,18 @@ const activeDrawing = computed(() => {
   return drawings.value.find(item => item.id === activeDrawingId.value)
 })
 
+const activeDrawingViewport = computed(() => {
+  return activeDrawingId.value
+    ? (drawingViewports.value[activeDrawingId.value] ?? null)
+    : null
+})
+
+function notifyDrawingsChanged(id?: string) {
+  window.dispatchEvent(
+    new CustomEvent(DRAWINGS_CHANGED_EVENT, { detail: { id } }),
+  )
+}
+
 function sortDrawings() {
   drawings.value = [...drawings.value].sort((a, b) =>
     a.name.localeCompare(b.name),
@@ -36,6 +51,15 @@ function sortDrawings() {
 
 function persistSelection() {
   store.app.set('drawings.activeDrawingId', activeDrawingId.value)
+}
+
+function persistViewports() {
+  // Strip Vue reactivity proxies: contextBridge structured-clones the
+  // payload and cannot serialize a Proxy.
+  store.app.set(
+    'drawings.viewport',
+    JSON.parse(JSON.stringify(drawingViewports.value)),
+  )
 }
 
 async function loadDrawingsList() {
@@ -53,24 +77,15 @@ async function loadActiveDrawingContent() {
   }
 
   const token = ++loadContentToken
-  isDrawingContentLoading.value = true
+  const content = await ipc.invoke('spaces:drawings:read', { id })
 
-  try {
-    const content = await ipc.invoke('spaces:drawings:read', { id })
-
-    if (token !== loadContentToken) {
-      return
-    }
-
-    activeDrawingContent.value = typeof content === 'string' ? content : null
-    lastSavedContent = activeDrawingContent.value
-    sceneRevision.value += 1
+  if (token !== loadContentToken) {
+    return
   }
-  finally {
-    if (token === loadContentToken) {
-      isDrawingContentLoading.value = false
-    }
-  }
+
+  activeDrawingContent.value = typeof content === 'string' ? content : null
+  lastSavedContent = activeDrawingContent.value
+  sceneRevision.value += 1
 }
 
 function normalizeSelection() {
@@ -90,6 +105,17 @@ function normalizeSelection() {
   }
 
   return false
+}
+
+function pruneViewports() {
+  const knownIds = new Set(drawings.value.map(item => item.id))
+  const entries = Object.entries(drawingViewports.value)
+  const pruned = entries.filter(([id]) => knownIds.has(id))
+
+  if (pruned.length !== entries.length) {
+    drawingViewports.value = Object.fromEntries(pruned)
+    persistViewports()
+  }
 }
 
 function applyDrawingRecord(record: DrawingItem) {
@@ -114,16 +140,26 @@ export function useDrawings() {
 
     activeDrawingId.value
       = store.app.get<string | null>('drawings.activeDrawingId') ?? null
+    drawingViewports.value
+      = store.app.get<Record<string, DrawingViewportState>>(
+        'drawings.viewport',
+      ) ?? {}
 
     await loadDrawingsList()
     normalizeSelection()
+    pruneViewports()
     await loadActiveDrawingContent()
+  }
+
+  function markDrawingsStale() {
+    initialized = false
   }
 
   async function reloadFromDisk() {
     const previousId = activeDrawingId.value
 
     await loadDrawingsList()
+    initialized = true
     const selectionChanged = normalizeSelection()
 
     if (selectionChanged || activeDrawingId.value !== previousId) {
@@ -207,10 +243,20 @@ export function useDrawings() {
     drawings.value = drawings.value.filter(item => item.id !== id)
     applyDrawingRecord(record)
 
+    const viewport = drawingViewports.value[id]
+
+    if (viewport && record.id !== id) {
+      const { [id]: _removed, ...rest } = drawingViewports.value
+      drawingViewports.value = { ...rest, [record.id]: viewport }
+      persistViewports()
+    }
+
     if (activeDrawingId.value === id) {
       activeDrawingId.value = record.id
       persistSelection()
     }
+
+    notifyDrawingsChanged(id)
   }
 
   async function duplicateDrawing(id: string) {
@@ -222,6 +268,17 @@ export function useDrawings() {
     }
 
     applyDrawingRecord(record)
+
+    const viewport = drawingViewports.value[id]
+
+    if (viewport) {
+      drawingViewports.value = {
+        ...drawingViewports.value,
+        [record.id]: viewport,
+      }
+      persistViewports()
+    }
+
     activeDrawingId.value = record.id
     persistSelection()
     await loadActiveDrawingContent()
@@ -232,6 +289,14 @@ export function useDrawings() {
     await ipc.invoke('spaces:drawings:delete', { id })
 
     drawings.value = drawings.value.filter(item => item.id !== id)
+
+    if (drawingViewports.value[id]) {
+      const { [id]: _removed, ...rest } = drawingViewports.value
+      drawingViewports.value = rest
+      persistViewports()
+    }
+
+    notifyDrawingsChanged(id)
 
     if (activeDrawingId.value === id) {
       activeDrawingId.value = drawings.value[0]?.id ?? null
@@ -260,9 +325,17 @@ export function useDrawings() {
         lastSavedContent = content
       }
 
+      // The name and therefore the sort order never change on write:
+      // patch the timestamp in place instead of re-sorting the list.
       if (record) {
-        applyDrawingRecord(record)
+        const item = drawings.value.find(entry => entry.id === id)
+
+        if (item) {
+          item.updatedAt = record.updatedAt
+        }
       }
+
+      notifyDrawingsChanged(id)
     }
     catch (error) {
       console.error(error)
@@ -270,6 +343,15 @@ export function useDrawings() {
     finally {
       inFlightSaves -= 1
     }
+  }
+
+  function saveDrawingViewport(id: string, viewport: DrawingViewportState) {
+    if (!drawings.value.some(item => item.id === id)) {
+      return
+    }
+
+    drawingViewports.value = { ...drawingViewports.value, [id]: viewport }
+    persistViewports()
   }
 
   function hasBusyDrawingUpdates() {
@@ -281,10 +363,11 @@ export function useDrawings() {
     activeDrawing,
     activeDrawingId,
     activeDrawingContent,
-    isDrawingContentLoading,
+    activeDrawingViewport,
     sceneRevision,
     imageExportRequest,
     init,
+    markDrawingsStale,
     reloadFromDisk,
     selectDrawing,
     openDrawing,
@@ -294,6 +377,7 @@ export function useDrawings() {
     duplicateDrawing,
     deleteDrawing,
     saveDrawingContent,
+    saveDrawingViewport,
     hasBusyDrawingUpdates,
   }
 }

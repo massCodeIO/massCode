@@ -351,6 +351,19 @@ export async function navigateForward(): Promise<void> {
 
 export async function handleDeepLink(url: string): Promise<void> {
   const parsed = new URL(url)
+
+  if (parsed.hostname === 'drawing') {
+    const drawingId = decodeURIComponent(
+      parsed.pathname.replace(/^\/+/, ''),
+    ).trim()
+
+    if (drawingId) {
+      await openDrawingTarget(drawingId)
+    }
+
+    return
+  }
+
   const snippetId = parsed.searchParams.get('snippetId')
   const noteId = parsed.searchParams.get('noteId')
   const httpRequestId = parsed.searchParams.get('httpRequestId')

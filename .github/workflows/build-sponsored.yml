@@ -7,6 +7,8 @@ jobs:
   build-sponsored:
     name: Build Sponsored for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     strategy:
       matrix:
         include:

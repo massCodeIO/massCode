@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useApp, useDeleteShortcut, useMathNotebook } from '@/composables'
+import {
+  useApp,
+  useDeleteShortcut,
+  useInlineRename,
+  useMathNotebook,
+} from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -16,8 +21,19 @@ const {
   renameSheet,
 } = useMathNotebook()
 
-const editingId = ref<string | null>(null)
-const editingName = ref('')
+const {
+  editingId,
+  editingName,
+  startRename,
+  requestRenameFromMenu,
+  handleMenuCloseAutoFocus,
+  finishRename,
+  cancelRename,
+} = useInlineRename({
+  inputSelector: '.sheet-rename-input',
+  onRename: (id, name) => renameSheet(id, name),
+})
+
 const sheetListRef = ref<HTMLElement>()
 const isSheetListFocused = ref(false)
 
@@ -30,29 +46,6 @@ function handleCreateSheet() {
   }
 }
 
-function startRename(id: string, currentName: string) {
-  editingId.value = id
-  editingName.value = currentName
-  nextTick(() => {
-    const input = document.querySelector(
-      '.sheet-rename-input',
-    ) as HTMLInputElement
-    input?.focus()
-    input?.select()
-  })
-}
-
-function finishRename(id: string) {
-  if (editingName.value.trim()) {
-    renameSheet(id, editingName.value.trim())
-  }
-  editingId.value = null
-}
-
-function cancelRename() {
-  editingId.value = null
-}
-
 function focusSheetListItem(event: MouseEvent) {
   const target = event.currentTarget
 
@@ -62,6 +55,11 @@ function focusSheetListItem(event: MouseEvent) {
 
   nextTick(() => {
     requestAnimationFrame(() => {
+      // A double-click both selects and starts renaming; don't pull focus
+      // away from the rename input back to the list item.
+      if (editingId.value !== null) {
+        return
+      }
       target.focus()
     })
   })
@@ -130,46 +128,48 @@ defineExpose({
                 :stroke-width="1.5"
               />
               <div class="min-w-0 flex-1">
-                <input
-                  v-if="editingId === sheet.id"
-                  v-model="editingName"
-                  class="sheet-rename-input w-full bg-transparent text-[13px] outline-none"
-                  @blur="finishRename(sheet.id)"
-                  @keydown.enter="finishRename(sheet.id)"
-                  @keydown.escape="cancelRename"
-                  @click.stop
+                <div
+                  :class="isCompactListMode ? 'flex items-center gap-2' : ''"
                 >
-                <template v-else>
-                  <div
-                    :class="isCompactListMode ? 'flex items-center gap-2' : ''"
+                  <input
+                    v-if="editingId === sheet.id"
+                    v-model="editingName"
+                    class="sheet-rename-input outline-primary bg-background m-0 min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
+                    :class="isCompactListMode ? 'flex-1' : 'w-full'"
+                    @blur="finishRename(sheet.id)"
+                    @keydown.enter="finishRename(sheet.id)"
+                    @keydown.escape="cancelRename"
+                    @click.stop
                   >
-                    <UiText
-                      as="div"
-                      variant="sm"
-                      class="truncate leading-tight"
-                      :class="isCompactListMode ? 'flex-1' : ''"
-                    >
-                      {{ sheet.name }}
-                    </UiText>
-                    <UiText
-                      as="div"
-                      variant="caption"
-                      class="leading-tight transition-colors"
-                      :class="isCompactListMode ? 'shrink-0' : ''"
-                      muted
-                    >
-                      {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
-                    </UiText>
-                  </div>
-                </template>
+                  <UiText
+                    v-else
+                    as="div"
+                    variant="sm"
+                    class="truncate leading-tight"
+                    :class="isCompactListMode ? 'flex-1' : ''"
+                  >
+                    {{ sheet.name }}
+                  </UiText>
+                  <UiText
+                    as="div"
+                    variant="caption"
+                    class="leading-tight transition-colors"
+                    :class="isCompactListMode ? 'shrink-0' : ''"
+                    muted
+                  >
+                    {{ format(new Date(sheet.updatedAt), "dd.MM.yyyy") }}
+                  </UiText>
+                </div>
               </div>
             </div>
           </SidebarItem>
         </ContextMenu.ContextMenuTrigger>
 
-        <ContextMenu.ContextMenuContent>
+        <ContextMenu.ContextMenuContent
+          @close-auto-focus="handleMenuCloseAutoFocus"
+        >
           <ContextMenu.ContextMenuItem
-            @click="startRename(sheet.id, sheet.name)"
+            @click="requestRenameFromMenu(sheet.id, sheet.name)"
           >
             {{ i18n.t("action.rename") }}
           </ContextMenu.ContextMenuItem>

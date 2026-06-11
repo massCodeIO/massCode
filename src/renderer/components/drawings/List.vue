@@ -5,6 +5,7 @@ import {
   useCopyToClipboard,
   useDeleteShortcut,
   useDrawings,
+  useInlineRename,
 } from '@/composables'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
@@ -28,8 +29,19 @@ function copyLinkForNote(name: string) {
   copyToClipboard(`![${name}](masscode://drawing/${encodeURIComponent(name)})`)
 }
 
-const editingId = ref<string | null>(null)
-const editingName = ref('')
+const {
+  editingId,
+  editingName,
+  startRename,
+  requestRenameFromMenu,
+  handleMenuCloseAutoFocus,
+  finishRename,
+  cancelRename,
+} = useInlineRename({
+  inputSelector: '.drawing-rename-input',
+  onRename: (id, name) => void renameDrawing(id, name),
+})
+
 const drawingListRef = ref<HTMLElement>()
 const isDrawingListFocused = ref(false)
 
@@ -41,35 +53,6 @@ async function handleCreateDrawing() {
   }
 }
 
-function startRename(id: string, currentName: string) {
-  editingId.value = id
-  editingName.value = currentName
-  nextTick(() => {
-    const input = document.querySelector(
-      '.drawing-rename-input',
-    ) as HTMLInputElement
-    input?.focus()
-    input?.select()
-  })
-}
-
-function finishRename(id: string) {
-  if (editingId.value !== id) {
-    return
-  }
-
-  const name = editingName.value.trim()
-  editingId.value = null
-
-  if (name) {
-    void renameDrawing(id, name)
-  }
-}
-
-function cancelRename() {
-  editingId.value = null
-}
-
 function focusDrawingListItem(event: MouseEvent) {
   const target = event.currentTarget
 
@@ -79,6 +62,11 @@ function focusDrawingListItem(event: MouseEvent) {
 
   nextTick(() => {
     requestAnimationFrame(() => {
+      // A double-click both selects and starts renaming; don't pull focus
+      // away from the rename input back to the list item.
+      if (editingId.value !== null) {
+        return
+      }
       target.focus()
     })
   })
@@ -149,46 +137,48 @@ defineExpose({
                 :stroke-width="1.5"
               />
               <div class="min-w-0 flex-1">
-                <input
-                  v-if="editingId === drawing.id"
-                  v-model="editingName"
-                  class="drawing-rename-input w-full bg-transparent text-[13px] outline-none"
-                  @blur="finishRename(drawing.id)"
-                  @keydown.enter="finishRename(drawing.id)"
-                  @keydown.escape="cancelRename"
-                  @click.stop
+                <div
+                  :class="isCompactListMode ? 'flex items-center gap-2' : ''"
                 >
-                <template v-else>
-                  <div
-                    :class="isCompactListMode ? 'flex items-center gap-2' : ''"
+                  <input
+                    v-if="editingId === drawing.id"
+                    v-model="editingName"
+                    class="drawing-rename-input outline-primary bg-background m-0 min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
+                    :class="isCompactListMode ? 'flex-1' : 'w-full'"
+                    @blur="finishRename(drawing.id)"
+                    @keydown.enter="finishRename(drawing.id)"
+                    @keydown.escape="cancelRename"
+                    @click.stop
                   >
-                    <UiText
-                      as="div"
-                      variant="sm"
-                      class="truncate leading-tight"
-                      :class="isCompactListMode ? 'flex-1' : ''"
-                    >
-                      {{ drawing.name }}
-                    </UiText>
-                    <UiText
-                      as="div"
-                      variant="caption"
-                      class="leading-tight transition-colors"
-                      :class="isCompactListMode ? 'shrink-0' : ''"
-                      muted
-                    >
-                      {{ format(new Date(drawing.updatedAt), "dd.MM.yyyy") }}
-                    </UiText>
-                  </div>
-                </template>
+                  <UiText
+                    v-else
+                    as="div"
+                    variant="sm"
+                    class="truncate leading-tight"
+                    :class="isCompactListMode ? 'flex-1' : ''"
+                  >
+                    {{ drawing.name }}
+                  </UiText>
+                  <UiText
+                    as="div"
+                    variant="caption"
+                    class="leading-tight transition-colors"
+                    :class="isCompactListMode ? 'shrink-0' : ''"
+                    muted
+                  >
+                    {{ format(new Date(drawing.updatedAt), "dd.MM.yyyy") }}
+                  </UiText>
+                </div>
               </div>
             </div>
           </SidebarItem>
         </ContextMenu.ContextMenuTrigger>
 
-        <ContextMenu.ContextMenuContent>
+        <ContextMenu.ContextMenuContent
+          @close-auto-focus="handleMenuCloseAutoFocus"
+        >
           <ContextMenu.ContextMenuItem
-            @click="startRename(drawing.id, drawing.name)"
+            @click="requestRenameFromMenu(drawing.id, drawing.name)"
           >
             {{ i18n.t("action.rename") }}
           </ContextMenu.ContextMenuItem>

@@ -1,6 +1,7 @@
 import path from 'node:path'
 import {
   CODE_SPACE_ID,
+  DRAWINGS_SPACE_ID,
   HTTP_SPACE_ID,
   INBOX_DIR_NAME,
   MATH_SPACE_ID,
@@ -102,6 +103,10 @@ export function isMathWatchPath(relativePath: string | null): boolean {
 
 export function isHttpWatchPath(relativePath: string | null): boolean {
   return getWatchPathSpaceId(relativePath) === HTTP_SPACE_ID
+}
+
+export function isDrawingsWatchPath(relativePath: string | null): boolean {
+  return getWatchPathSpaceId(relativePath) === DRAWINGS_SPACE_ID
 }
 
 export function toCodeRelativePath(relativePath: string): string | null {

@@ -35,7 +35,7 @@ export interface NotesDashboardWidgets {
   topLinked: boolean
 }
 
-export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http'
+export type SpaceId = 'code' | 'tools' | 'math' | 'notes' | 'http' | 'drawings'
 export type CommandPaletteRecentTarget =
   | 'space'
   | 'snippet'
@@ -71,12 +71,14 @@ export interface DonationsState {
     notes: number
     math: number
     tools: number
+    drawings: number
   }
   created: {
     code: number
     http: number
     notes: number
     math: number
+    drawings: number
   }
   sent: {
     http: number
@@ -87,12 +89,14 @@ export interface DonationsState {
     notes: number
     math: number
     tools: number
+    drawings: number
   }
   lastShownCreatedMilestones: {
     code: number
     http: number
     notes: number
     math: number
+    drawings: number
   }
   lastShownSentMilestones: {
     http: number
@@ -149,6 +153,9 @@ export interface AppStore {
     usage: CommandPaletteUsageEntry[]
   }
   donations: DonationsState
+  drawings: {
+    activeDrawingId: string | null
+  }
   activeSpaceId: SpaceId
 }
 

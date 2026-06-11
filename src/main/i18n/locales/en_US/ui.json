@@ -193,6 +193,15 @@
       "untitled": "Untitled",
       "currencyUnavailable": "Currency rates service unavailable"
     },
+    "drawings": {
+      "label": "Drawings",
+      "tooltip": "Excalidraw drawings",
+      "title": "Drawings",
+      "drawingList": "Drawing List",
+      "newDrawing": "New Drawing",
+      "exportImage": "Export image…",
+      "noSelected": "No drawing selected"
+    },
     "http": {
       "label": "HTTP",
       "tooltip": "HTTP client",
@@ -556,6 +565,7 @@
     "emptyNotesList": "No Notes",
     "searchNotes": "Search notes...",
     "emptySheetList": "No Sheets",
+    "emptyDrawingsList": "No Drawings",
     "search": "Search",
     "searchIn": "Search in {{- context}}",
     "addTag": "Add Tag",

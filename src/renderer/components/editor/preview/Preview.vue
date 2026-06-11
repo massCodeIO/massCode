@@ -73,7 +73,31 @@ function generateHtmlPreview(save = false) {
   `
 }
 
-const htmlPreview = computed(() => generateHtmlPreview())
+// Превью замораживается на время загрузки тел фрагментов (value === undefined
+// в metadata-состоянии), чтобы iframe не мигал дефолтной заглушкой.
+const isContentLoading = computed(() =>
+  Boolean(
+    selectedSnippet.value
+    && selectedSnippet.value.contents.some(
+      content => content.value === undefined,
+    ),
+  ),
+)
+
+const htmlPreview = ref('')
+
+watch(
+  [html, css, js, isDarkPreview],
+  () => {
+    if (isContentLoading.value) {
+      return
+    }
+
+    htmlPreview.value = generateHtmlPreview()
+    previewKey.value++
+  },
+  { immediate: true },
+)
 
 async function onSaveHtml() {
   let html = generateHtmlPreview(true)
@@ -96,13 +120,6 @@ async function onSaveHtml() {
   a.download = `${selectedSnippet.value?.name}.html`
   a.click()
 }
-watch([html, css, js], () => {
-  previewKey.value++
-})
-
-watch(isDarkPreview, () => {
-  previewKey.value++
-})
 </script>
 
 <template>

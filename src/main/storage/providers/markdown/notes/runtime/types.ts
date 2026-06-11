@@ -120,4 +120,5 @@ export interface NotesRuntimeCache {
 export interface PersistNoteOptions {
   allowRenameOnConflict?: boolean
   directoryEntriesCache?: Map<string, string[]>
+  folderPathMap?: Map<number, string>
 }

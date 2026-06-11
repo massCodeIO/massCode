@@ -42,6 +42,14 @@ const vueFlowRef = useTemplateRef('vueFlowRef')
 const { layout } = useLayout()
 
 function updateGraph() {
+  // Тело фрагмента ещё загружается — оставляем предыдущий граф без мигания.
+  if (
+    selectedSnippetContent.value
+    && selectedSnippetContent.value.value === undefined
+  ) {
+    return
+  }
+
   const graph = parseJsonToGraph(
     JSON.parse(selectedSnippetContent.value?.value || '{}'),
   )

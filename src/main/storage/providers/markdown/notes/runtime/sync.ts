@@ -13,13 +13,18 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from '../../runtime/shared/folderSync'
-import { notesRuntimeRef } from './constants'
-import { listNoteMarkdownFiles, loadNotes } from './notes'
+import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
+import {
+  NOTES_INBOX_RELATIVE_PATH,
+  NOTES_TRASH_RELATIVE_PATH,
+  notesRuntimeRef,
+} from './constants'
+import { listNoteMarkdownFiles, loadNotes, readNoteFromFile } from './notes'
 import {
   readNotesFolderMetadata,
   writeNotesFolderMetadataFile,
 } from './parser'
-import { buildNotesFolderPathMap } from './paths'
+import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
 import { buildNoteSearchText, buildSearchIndex } from './search'
 import {
   flushPendingNotesStateWrite,
@@ -49,6 +54,22 @@ export function syncNotesFoldersWithDisk(
   })
 }
 
+function readNoteIdFromFrontmatter(absolutePath: string): number | null {
+  try {
+    const source = fs.readFileSync(absolutePath, 'utf8')
+    const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+    if (!match) {
+      return null
+    }
+
+    const fm = yaml.load(match[1]) as { id?: unknown } | null
+    return fm && typeof fm.id === 'number' && fm.id ? fm.id : null
+  }
+  catch {
+    return null
+  }
+}
+
 export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
   const mdFiles = listNoteMarkdownFiles(paths.notesRoot)
 
@@ -64,19 +85,11 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
 
     if (!noteId || usedIds.has(noteId)) {
       // Try reading frontmatter for id
-      const absolutePath = path.join(paths.notesRoot, filePath)
-      try {
-        const source = fs.readFileSync(absolutePath, 'utf8')
-        const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)
-        if (match) {
-          const fm = yaml.load(match[1]) as any
-          if (fm?.id && typeof fm.id === 'number' && !usedIds.has(fm.id)) {
-            noteId = fm.id
-          }
-        }
-      }
-      catch {
-        // ignore
+      const frontmatterId = readNoteIdFromFrontmatter(
+        path.join(paths.notesRoot, filePath),
+      )
+      if (frontmatterId && !usedIds.has(frontmatterId)) {
+        noteId = frontmatterId
       }
     }
 
@@ -183,4 +196,145 @@ export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
 
 export function resetNotesRuntimeCache(): void {
   notesRuntimeRef.cache = null
+}
+
+function commitNotesRuntimeCache(cache: NotesRuntimeCache): NotesRuntimeCache {
+  // A new object identity signals watcher consumers that data changed,
+  // while built maps and the lazily rebuilt search index are reused.
+  notesRuntimeRef.cache = { ...cache }
+  return notesRuntimeRef.cache
+}
+
+function isTechnicalNotesDirectory(directoryPath: string): boolean {
+  return (
+    directoryPath === NOTES_INBOX_RELATIVE_PATH
+    || directoryPath.startsWith(`${NOTES_INBOX_RELATIVE_PATH}/`)
+    || directoryPath === NOTES_TRASH_RELATIVE_PATH
+    || directoryPath.startsWith(`${NOTES_TRASH_RELATIVE_PATH}/`)
+  )
+}
+
+export function syncNoteFileWithDisk(
+  paths: NotesPaths,
+  changedFilePath: string,
+): NotesRuntimeCache | null {
+  const cache = notesRuntimeRef.cache
+  if (!cache || cache.paths.notesRoot !== paths.notesRoot) {
+    return null
+  }
+
+  const normalizedFilePath = toPosixPath(changedFilePath).trim()
+  if (
+    !normalizedFilePath
+    || path.posix.extname(normalizedFilePath).toLowerCase() !== '.md'
+  ) {
+    return null
+  }
+
+  const state = cache.state
+  const notes = cache.notes
+  const noteAbsolutePath = path.join(paths.notesRoot, normalizedFilePath)
+  const normalizedDirectory = normalizeDirectoryPath(
+    path.posix.dirname(normalizedFilePath),
+  )
+  const pathToFolderIdMap = buildPathToNotesFolderIdMap(state)
+
+  if (
+    normalizedDirectory
+    && !isTechnicalNotesDirectory(normalizedDirectory)
+    && !pathToFolderIdMap.has(normalizedDirectory)
+  ) {
+    return null
+  }
+
+  const normalizedFilePathKey = normalizedFilePath.toLowerCase()
+  const noteIndexInState = state.notes.findIndex(
+    entry => entry.filePath.toLowerCase() === normalizedFilePathKey,
+  )
+  const noteExistsOnDisk = fs.pathExistsSync(noteAbsolutePath)
+
+  if (!noteExistsOnDisk) {
+    if (noteIndexInState === -1) {
+      return cache
+    }
+
+    const removedNoteId = state.notes[noteIndexInState].id
+    state.notes.splice(noteIndexInState, 1)
+
+    const noteIndexInRuntime = notes.findIndex(
+      note => note.id === removedNoteId,
+    )
+    if (noteIndexInRuntime !== -1) {
+      notes.splice(noteIndexInRuntime, 1)
+    }
+    cache.noteById.delete(removedNoteId)
+
+    saveNotesState(paths, state)
+    return commitNotesRuntimeCache(cache)
+  }
+
+  let noteIndexItem
+    = noteIndexInState !== -1 ? state.notes[noteIndexInState] : null
+
+  if (!noteIndexItem) {
+    let noteId = readNoteIdFromFrontmatter(noteAbsolutePath)
+
+    // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
+    // раньше unlink старого: если frontmatter-id принадлежит записи, файла
+    // которой уже нет на диске, это та же заметка — перенацеливаем запись,
+    // сохраняя id, вместо аллокации нового.
+    if (noteId) {
+      const ownerEntry = state.notes.find(entry => entry.id === noteId)
+
+      if (
+        ownerEntry
+        && !fs.pathExistsSync(path.join(paths.notesRoot, ownerEntry.filePath))
+      ) {
+        ownerEntry.filePath = normalizedFilePath
+        noteIndexItem = ownerEntry
+      }
+    }
+
+    if (!noteIndexItem) {
+      const existingNoteIds = new Set<number>(
+        state.notes.map(entry => entry.id),
+      )
+
+      if (!noteId || existingNoteIds.has(noteId)) {
+        state.counters.noteId += 1
+        noteId = state.counters.noteId
+      }
+
+      noteIndexItem = { filePath: normalizedFilePath, id: noteId }
+      state.notes.push(noteIndexItem)
+    }
+  }
+  else {
+    noteIndexItem.filePath = normalizedFilePath
+  }
+
+  const syncedNote = readNoteFromFile(paths, noteIndexItem, pathToFolderIdMap)
+  if (!syncedNote) {
+    return null
+  }
+
+  const noteIndexInRuntime = notes.findIndex(
+    note => note.id === syncedNote.id,
+  )
+  if (noteIndexInRuntime === -1) {
+    notes.push(syncedNote)
+  }
+  else {
+    notes[noteIndexInRuntime] = syncedNote
+  }
+  cache.noteById.set(syncedNote.id, syncedNote)
+
+  if (syncedNote.id > state.counters.noteId) {
+    state.counters.noteId = syncedNote.id
+  }
+
+  // saveNotesState marks the notes search index dirty, so it is rebuilt
+  // lazily on the next search instead of eagerly on every file change.
+  saveNotesState(paths, state)
+  return commitNotesRuntimeCache(cache)
 }

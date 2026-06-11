@@ -226,17 +226,34 @@ function resolveCodeVaultPath(vaultPath: string): string {
   return codeRootPath
 }
 
+// Legacy layout checks in resolveCodeVaultPath are expensive (fs scans and
+// JSON parsing), so resolved paths are memoized per vault path. The cache is
+// reset on vault re-watch (stopMarkdownWatcher) and via resetPathsCache().
+const pathsCacheByVaultPath = new Map<string, Paths>()
+
 export function getPaths(vaultPath: string): Paths {
+  const cachedPaths = pathsCacheByVaultPath.get(vaultPath)
+  if (cachedPaths) {
+    return cachedPaths
+  }
+
   const codeVaultPath = resolveCodeVaultPath(vaultPath)
   const metaDirPath = path.join(codeVaultPath, META_DIR_NAME)
 
-  return {
+  const paths: Paths = {
     inboxDirPath: path.join(metaDirPath, INBOX_DIR_NAME),
     metaDirPath,
     statePath: path.join(metaDirPath, 'state.json'),
     trashDirPath: path.join(metaDirPath, TRASH_DIR_NAME),
     vaultPath: codeVaultPath,
   }
+
+  pathsCacheByVaultPath.set(vaultPath, paths)
+  return paths
+}
+
+export function resetPathsCache(): void {
+  pathsCacheByVaultPath.clear()
 }
 
 export function hasMarkdownVaultData(vaultPath: string): boolean {

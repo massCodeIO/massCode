@@ -10,7 +10,11 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { runtimeRef } from './cache'
 import { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME } from './constants'
-import { readFolderMetadata, writeFolderMetadataFile } from './parser'
+import {
+  isFolderMetadataInSync,
+  readFolderMetadata,
+  writeFolderMetadataFile,
+} from './parser'
 import {
   buildFolderPathMap,
   buildPathToFolderIdMap,
@@ -46,8 +50,14 @@ function isTechnicalRootFolder(name: string): boolean {
   )
 }
 
-function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
-  syncFoldersStateFromDiskAtRoot<FolderRecord, MarkdownFolderMetadataFile>({
+function syncFoldersWithDisk(
+  paths: Paths,
+  state: MarkdownState,
+): Map<string, MarkdownFolderMetadataFile> {
+  const diskFolders = syncFoldersStateFromDiskAtRoot<
+    FolderRecord,
+    MarkdownFolderMetadataFile
+  >({
     buildFolder: ({ base, metadata, previousFolder }) => {
       const defaultLanguage
         = typeof metadata.defaultLanguage === 'string'
@@ -74,11 +84,14 @@ function syncFoldersWithDisk(paths: Paths, state: MarkdownState): void {
     state,
   })
   syncFolderUiWithFolders(state)
+
+  return new Map(diskFolders.map(entry => [entry.path, entry.metadata]))
 }
 
 export function syncFolderMetadataFiles(
   paths: Paths,
   state: MarkdownState,
+  scannedMetadataByPath?: ReadonlyMap<string, MarkdownFolderMetadataFile>,
 ): void {
   const folderPathMap = buildFolderPathMap(state)
   syncFolderMetadataFilesByPathMap(
@@ -86,9 +99,19 @@ export function syncFolderMetadataFiles(
     folderPathMap,
     (folderPath, folder) => {
       const syncedFolder = findFolderById(state, folder.id)
-      if (syncedFolder) {
-        writeFolderMetadataFile(paths, folderPath, syncedFolder)
+      if (!syncedFolder) {
+        return
       }
+
+      const scannedMetadata = scannedMetadataByPath?.get(folderPath)
+      if (
+        scannedMetadata
+        && isFolderMetadataInSync(scannedMetadata, syncedFolder)
+      ) {
+        return
+      }
+
+      writeFolderMetadataFile(paths, folderPath, syncedFolder)
     },
   )
 }
@@ -124,11 +147,14 @@ export function syncCounters(
   state.counters.contentId = Math.max(state.counters.contentId, maxContentId)
 }
 
-export function syncStateWithDisk(paths: Paths): MarkdownState {
+function syncStateAndSnippetsWithDisk(
+  paths: Paths,
+  options?: { rewriteRecoveredLegacyFences?: boolean },
+): { snippets: MarkdownSnippet[], state: MarkdownState } {
   flushPendingStateWrite(paths)
 
   const state = loadState(paths)
-  syncFoldersWithDisk(paths, state)
+  const scannedFolderMetadataByPath = syncFoldersWithDisk(paths, state)
 
   const relativeSnippetFiles = listMarkdownFiles(paths.vaultPath)
   const fileSet = new Set(relativeSnippetFiles)
@@ -136,11 +162,12 @@ export function syncStateWithDisk(paths: Paths): MarkdownState {
 
   state.snippets = state.snippets.filter(item => fileSet.has(item.filePath))
 
+  const knownSnippetFilePaths = new Set(
+    state.snippets.map(item => item.filePath),
+  )
+
   relativeSnippetFiles.forEach((filePath) => {
-    const knownSnippet = state.snippets.find(
-      item => item.filePath === filePath,
-    )
-    if (knownSnippet) {
+    if (knownSnippetFilePaths.has(filePath)) {
       return
     }
 
@@ -156,12 +183,16 @@ export function syncStateWithDisk(paths: Paths): MarkdownState {
     state.snippets.push({ filePath, id: snippetId })
   })
 
-  const snippets = loadSnippets(paths, state)
+  const snippets = loadSnippets(paths, state, options)
   syncCounters(state, snippets)
-  syncFolderMetadataFiles(paths, state)
+  syncFolderMetadataFiles(paths, state, scannedFolderMetadataByPath)
   saveState(paths, state, { immediate: true })
 
-  return state
+  return { snippets, state }
+}
+
+export function syncStateWithDisk(paths: Paths): MarkdownState {
+  return syncStateAndSnippetsWithDisk(paths).state
 }
 
 export function setRuntimeCache(
@@ -211,8 +242,7 @@ export function resetRuntimeCache(): void {
 }
 
 export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
-  const state = syncStateWithDisk(paths)
-  const snippets = loadSnippets(paths, state, {
+  const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
     rewriteRecoveredLegacyFences: true,
   })
 
@@ -230,14 +260,51 @@ export function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {
   return runtimeRef.cache
 }
 
+function removeSnippetFromRuntimeMaps(
+  cache: MarkdownRuntimeCache,
+  snippet: MarkdownSnippet,
+): void {
+  cache.snippetById.delete(snippet.id)
+
+  snippet.contents.forEach((content) => {
+    const owner = cache.contentOwnerByContentId.get(content.id)
+    if (owner && owner.snippet === snippet) {
+      cache.contentOwnerByContentId.delete(content.id)
+    }
+  })
+}
+
+function upsertSnippetInRuntimeMaps(
+  cache: MarkdownRuntimeCache,
+  previousSnippet: MarkdownSnippet | null,
+  snippet: MarkdownSnippet,
+): void {
+  if (previousSnippet) {
+    removeSnippetFromRuntimeMaps(cache, previousSnippet)
+  }
+
+  cache.snippetById.set(snippet.id, snippet)
+  snippet.contents.forEach((content, contentIndex) => {
+    cache.contentOwnerByContentId.set(content.id, {
+      contentIndex,
+      snippet,
+    })
+  })
+}
+
+function commitRuntimeCache(cache: MarkdownRuntimeCache): MarkdownRuntimeCache {
+  // A new object identity signals watcher consumers that data changed,
+  // while built maps and the lazily rebuilt search index are reused.
+  runtimeRef.cache = { ...cache }
+  return runtimeRef.cache
+}
+
 export function syncSnippetFileWithDisk(
   paths: Paths,
   changedFilePath: string,
 ): MarkdownRuntimeCache | null {
-  if (
-    !runtimeRef.cache
-    || runtimeRef.cache.paths.vaultPath !== paths.vaultPath
-  ) {
+  const cache = runtimeRef.cache
+  if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
     return null
   }
 
@@ -249,8 +316,8 @@ export function syncSnippetFileWithDisk(
     return null
   }
 
-  const state = runtimeRef.cache.state
-  const snippets = runtimeRef.cache.snippets
+  const state = cache.state
+  const snippets = cache.snippets
   const snippetAbsolutePath = path.join(paths.vaultPath, normalizedFilePath)
   const normalizedFileDirectory = normalizeDirectoryPath(
     path.posix.dirname(normalizedFilePath),
@@ -274,7 +341,7 @@ export function syncSnippetFileWithDisk(
 
   if (!snippetExistsOnDisk) {
     if (snippetIndexInState === -1) {
-      return runtimeRef.cache
+      return cache
     }
 
     const removedSnippetId = state.snippets[snippetIndexInState].id
@@ -284,32 +351,52 @@ export function syncSnippetFileWithDisk(
       snippet => snippet.id === removedSnippetId,
     )
     if (snippetIndexInRuntime !== -1) {
-      snippets.splice(snippetIndexInRuntime, 1)
+      const [removedSnippet] = snippets.splice(snippetIndexInRuntime, 1)
+      removeSnippetFromRuntimeMaps(cache, removedSnippet)
     }
 
     saveState(paths, state)
-    return setRuntimeCache(paths, state, snippets)
+    return commitRuntimeCache(cache)
   }
 
   let snippetIndexItem
     = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
 
   if (!snippetIndexItem) {
-    const existingSnippetIds = new Set<number>(
-      state.snippets.map(item => item.id),
-    )
     let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
 
-    if (!snippetId || existingSnippetIds.has(snippetId)) {
-      snippetId = state.counters.snippetId + 1
-      state.counters.snippetId = snippetId
+    // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
+    // раньше unlink старого: если frontmatter-id принадлежит записи, файла
+    // которой уже нет на диске, это тот же сниппет — перенацеливаем запись,
+    // сохраняя id, вместо аллокации нового.
+    if (snippetId) {
+      const ownerEntry = state.snippets.find(item => item.id === snippetId)
+
+      if (
+        ownerEntry
+        && !fs.pathExistsSync(path.join(paths.vaultPath, ownerEntry.filePath))
+      ) {
+        ownerEntry.filePath = normalizedFilePath
+        snippetIndexItem = ownerEntry
+      }
     }
 
-    snippetIndexItem = {
-      filePath: normalizedFilePath,
-      id: snippetId,
+    if (!snippetIndexItem) {
+      const existingSnippetIds = new Set<number>(
+        state.snippets.map(item => item.id),
+      )
+
+      if (!snippetId || existingSnippetIds.has(snippetId)) {
+        snippetId = state.counters.snippetId + 1
+        state.counters.snippetId = snippetId
+      }
+
+      snippetIndexItem = {
+        filePath: normalizedFilePath,
+        id: snippetId,
+      }
+      state.snippets.push(snippetIndexItem)
     }
-    state.snippets.push(snippetIndexItem)
   }
   else {
     snippetIndexItem.filePath = normalizedFilePath
@@ -328,16 +415,21 @@ export function syncSnippetFileWithDisk(
   const snippetIndexInRuntime = snippets.findIndex(
     snippet => snippet.id === syncedSnippet.id,
   )
+  let previousSnippet: MarkdownSnippet | null = null
   if (snippetIndexInRuntime === -1) {
     snippets.push(syncedSnippet)
   }
   else {
+    previousSnippet = snippets[snippetIndexInRuntime]
     snippets[snippetIndexInRuntime] = syncedSnippet
   }
 
+  upsertSnippetInRuntimeMaps(cache, previousSnippet, syncedSnippet)
   syncCounters(state, snippets)
 
+  // saveState marks the runtime search index dirty, so it is rebuilt
+  // lazily on the next search instead of eagerly on every file change.
   saveState(paths, state)
 
-  return setRuntimeCache(paths, state, snippets)
+  return commitRuntimeCache(cache)
 }

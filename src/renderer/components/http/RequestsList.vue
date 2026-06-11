@@ -7,19 +7,11 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 
-const { focusedRequestId, httpState } = useHttpApp()
+const { focusedRequestId } = useHttpApp()
 const { deleteSelectedHttpRequests } = useHttpRequests()
-const { displayedRequests, isSearch } = useHttpSearch()
+const { displayedRequests } = useHttpSearch()
 
-const filteredRequests = computed(() => {
-  const list = displayedRequests.value || []
-
-  if (isSearch.value || httpState.folderId === undefined) {
-    return list
-  }
-
-  return list.filter(r => r.folderId === httpState.folderId)
-})
+const filteredRequests = computed(() => displayedRequests.value || [])
 
 useDeleteShortcut({
   rootSelector: '[data-http-requests-list]',

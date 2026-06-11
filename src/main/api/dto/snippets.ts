@@ -26,7 +26,7 @@ const snippetContentsUpdate = t.Object({
   language: t.Optional(t.String()), // TODO: enum
 })
 
-const snippetItem = t.Object({
+const snippetItemBase = {
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
@@ -42,6 +42,14 @@ const snippetItem = t.Object({
       name: t.String(),
     }),
   ),
+  isFavorites: t.Number(),
+  isDeleted: t.Number(),
+  createdAt: t.Number(),
+  updatedAt: t.Number(),
+}
+
+const snippetItem = t.Object({
+  ...snippetItemBase,
   contents: t.Array(
     t.Object({
       id: t.Number(),
@@ -50,13 +58,22 @@ const snippetItem = t.Object({
       language: t.String(),
     }),
   ),
-  isFavorites: t.Number(),
-  isDeleted: t.Number(),
-  createdAt: t.Number(),
-  updatedAt: t.Number(),
 })
 
-const snippetsResponse = t.Array(snippetItem)
+// Список не содержит тел фрагментов: контент выбранного сниппета
+// загружается отдельным GET /snippets/:id.
+const snippetListItem = t.Object({
+  ...snippetItemBase,
+  contents: t.Array(
+    t.Object({
+      id: t.Number(),
+      label: t.String(),
+      language: t.String(),
+    }),
+  ),
+})
+
+const snippetsResponse = t.Array(snippetListItem)
 
 const snippetsCountsResponse = t.Object({
   total: t.Number(),
@@ -84,5 +101,6 @@ export const snippetsDTO = new Elysia().model({
 
 export type SnippetsAdd = typeof snippetsAdd.static
 export type SnippetsResponse = typeof snippetsResponse.static
+export type SnippetListItemResponse = typeof snippetListItem.static
 export type SnippetsCountsResponse = typeof snippetsCountsResponse.static
 export type SnippetItemResponse = typeof snippetItem.static

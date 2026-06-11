@@ -1,42 +1,15 @@
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { api } from '~/renderer/services/api'
-import { notes } from './useNotes'
+import { notes, selectedNoteRecord } from './useNotes'
 import { notesBySearch } from './useNoteSearch'
-
-// --- Types ---
-
-interface NoteTagInfo {
-  id: number
-  name: string
-}
-
-interface NoteFolderInfo {
-  id: number
-  name: string
-}
-
-interface NoteRecord {
-  id: number
-  name: string
-  description: string | null
-  content: string
-  tags: NoteTagInfo[]
-  folder: NoteFolderInfo | null
-  isFavorites: number
-  isDeleted: number
-  createdAt: number
-  updatedAt: number
-}
-
-type NotesResponse = NoteRecord[]
 
 // --- Module-level state ---
 
-const contentUpdateQueue = ref<Map<number, string>>(new Map())
-const contentUpdateTimers = ref<Map<number, ReturnType<typeof setTimeout>>>(
-  new Map(),
-)
-const inFlightContentUpdateIds = ref<Set<number>>(new Set())
+// Очереди не нужны в реактивности: на них никто не подписан, а операции
+// выполняются на каждый keystroke.
+const contentUpdateQueue = new Map<number, string>()
+const contentUpdateTimers = new Map<number, ReturnType<typeof setTimeout>>()
+const inFlightContentUpdateIds = new Set<number>()
 
 const CONTENT_UPDATE_DEBOUNCE_MS = 500
 
@@ -45,40 +18,48 @@ const CONTENT_UPDATE_DEBOUNCE_MS = 500
 function updateLocalNoteContent(noteId: number, content: string) {
   const now = Date.now()
 
-  function updateCollection(collection?: NotesResponse) {
+  // Контент хранится только в полной записи выбранной заметки.
+  // Мутация без замены объекта: редактор уже содержит этот текст,
+  // реактивный каскад на каждый keystroke не нужен.
+  const record = selectedNoteRecord.value
+  if (record?.id === noteId) {
+    record.content = content
+    record.updatedAt = now
+  }
+
+  function touchCollection(collection?: { id: number, updatedAt: number }[]) {
     const note = collection?.find(item => item.id === noteId)
     if (note) {
-      note.content = content
       note.updatedAt = now
     }
   }
 
-  updateCollection(notes.value)
-  updateCollection(notesBySearch.value)
+  touchCollection(notes.value)
+  touchCollection(notesBySearch.value)
 }
 
 function scheduleContentUpdate(noteId: number) {
-  const currentTimer = contentUpdateTimers.value.get(noteId)
+  const currentTimer = contentUpdateTimers.get(noteId)
   if (currentTimer) {
     clearTimeout(currentTimer)
   }
 
   const timer = setTimeout(() => {
-    contentUpdateTimers.value.delete(noteId)
+    contentUpdateTimers.delete(noteId)
     void flushContentUpdate(noteId)
   }, CONTENT_UPDATE_DEBOUNCE_MS)
 
-  contentUpdateTimers.value.set(noteId, timer)
+  contentUpdateTimers.set(noteId, timer)
 }
 
 async function flushContentUpdate(noteId: number) {
-  const content = contentUpdateQueue.value.get(noteId)
+  const content = contentUpdateQueue.get(noteId)
   if (content === undefined) {
     return
   }
 
-  contentUpdateQueue.value.delete(noteId)
-  inFlightContentUpdateIds.value.add(noteId)
+  contentUpdateQueue.delete(noteId)
+  inFlightContentUpdateIds.add(noteId)
 
   try {
     markPersistedStorageMutation()
@@ -88,25 +69,23 @@ async function flushContentUpdate(noteId: number) {
     console.error(error)
   }
   finally {
-    inFlightContentUpdateIds.value.delete(noteId)
+    inFlightContentUpdateIds.delete(noteId)
 
-    if (contentUpdateQueue.value.has(noteId)) {
+    if (contentUpdateQueue.has(noteId)) {
       scheduleContentUpdate(noteId)
     }
   }
 }
 
 function hasBusyNoteContentUpdates() {
-  return (
-    contentUpdateQueue.value.size > 0 || inFlightContentUpdateIds.value.size > 0
-  )
+  return contentUpdateQueue.size > 0 || inFlightContentUpdateIds.size > 0
 }
 
 function updateNoteContent(noteId: number, content: string) {
   updateLocalNoteContent(noteId, content)
-  contentUpdateQueue.value.set(noteId, content)
+  contentUpdateQueue.set(noteId, content)
 
-  if (inFlightContentUpdateIds.value.has(noteId)) {
+  if (inFlightContentUpdateIds.has(noteId)) {
     return
   }
 

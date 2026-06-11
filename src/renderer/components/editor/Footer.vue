@@ -16,15 +16,20 @@ const languageListRef = ref<HTMLElement>()
 
 function onSelect(value: string) {
   isOpen.value = false
-  updateSnippetContent(
-    selectedSnippet.value!.id,
-    selectedSnippetContent.value!.id,
-    {
-      label: selectedSnippetContent.value!.label,
-      value: selectedSnippetContent.value!.value,
-      language: value,
-    },
-  )
+
+  const content = selectedSnippetContent.value
+
+  // value === undefined: тело фрагмента ещё не загружено, смена языка
+  // отправила бы пустой контент.
+  if (!selectedSnippet.value || !content || content.value === undefined) {
+    return
+  }
+
+  updateSnippetContent(selectedSnippet.value.id, content.id, {
+    label: content.label,
+    value: content.value,
+    language: value,
+  })
 }
 
 const selectedLanguageName = computed(() => {

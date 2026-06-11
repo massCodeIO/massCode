@@ -1,22 +1,12 @@
 import type { DecorationSet, EditorView, ViewUpdate } from '@codemirror/view'
 import type { CachedEntity } from './cache'
-import type {
-  InternalLinkLookupItem,
-  InternalLinkMatch,
-  InternalLinkType,
-} from './parser'
+import type { InternalLinkMatch, InternalLinkType } from './parser'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
 import { entityCache } from './cache'
-import { buildNoteFolderPathMap } from './folderPath'
-import {
-  findInternalLinks,
-  normalizeInternalLinkLookupKey,
-  resolveInternalLinkTargetByTitle,
-  splitInternalLinkTarget,
-} from './parser'
+import { findInternalLinks, normalizeInternalLinkLookupKey } from './parser'
 
 type InternalLinksMode = 'raw' | 'livePreview' | 'preview'
 
@@ -246,130 +236,106 @@ export async function fetchInternalLinkEntity(
   }
 }
 
-async function resolveInternalLinkByTitle(
-  title: string,
-): Promise<CachedEntity> {
+// Резолв по title собирается в один batch-запрос на все ссылки документа:
+// все запросы одного тика (build-проход по видимым ссылкам) уходят одним
+// POST /internal-links/resolve вместо пакета из 5 запросов на ссылку.
+interface PendingTitleResolution {
+  title: string
+  resolvers: ((entity: CachedEntity) => void)[]
+}
+
+const pendingTitleResolutions = new Map<string, PendingTitleResolution>()
+let isTitleResolutionFlushScheduled = false
+
+function toCachedEntity(
+  resolved:
+    | {
+      type: InternalLinkType
+      id: number
+      name: string
+      folder: { id: number, name: string } | null
+      isDeleted: number
+      firstContent?: { language: string, value: string | null } | null
+      contentExcerpt?: string
+      request?: { method: string, url: string, description: string }
+    }
+    | null
+    | undefined,
+): CachedEntity {
+  if (!resolved || resolved.isDeleted) {
+    return { exists: false }
+  }
+
+  return {
+    exists: true,
+    data: {
+      contentExcerpt: resolved.contentExcerpt,
+      firstContent: resolved.firstContent ?? null,
+      folder: resolved.folder,
+      id: resolved.id,
+      isDeleted: resolved.isDeleted,
+      name: resolved.name,
+      request: resolved.request,
+      type: resolved.type,
+    },
+  }
+}
+
+async function flushTitleResolutions() {
+  isTitleResolutionFlushScheduled = false
+
+  const batch = [...pendingTitleResolutions.values()]
+  pendingTitleResolutions.clear()
+
+  if (!batch.length) {
+    return
+  }
+
   try {
-    const { basename } = splitInternalLinkTarget(title)
-    if (!basename) {
-      return { exists: false }
-    }
+    const { data } = await api.internalLinks.postInternalLinksResolve({
+      titles: batch.map(entry => entry.title),
+    })
+    const resolvedByTitle = new Map(data.map(item => [item.title, item]))
 
-    const [
-      { data: snippets },
-      { data: notes },
-      { data: noteFolders },
-      { data: httpRequests },
-      { data: httpFolders },
-    ] = await Promise.all([
-      api.snippets.getSnippets({ search: basename, isDeleted: 0 }),
-      api.notes.getNotes({ search: basename, isDeleted: 0 }),
-      api.noteFolders.getNoteFolders(),
-      api.httpRequests.getHttpRequests({ search: basename }),
-      api.httpFolders.getHttpFolders(),
-    ])
-
-    const folderPathById = buildNoteFolderPathMap(noteFolders)
-    const httpFolderPathById = buildNoteFolderPathMap(httpFolders)
-
-    const resolvedTarget = resolveInternalLinkTargetByTitle(title, [
-      ...snippets.map<InternalLinkLookupItem>(snippet => ({
-        id: snippet.id,
-        name: snippet.name,
-        type: 'snippet',
-      })),
-      ...notes.map<InternalLinkLookupItem>(note => ({
-        folderPath: note.folder
-          ? folderPathById.get(note.folder.id)
-          : undefined,
-        id: note.id,
-        name: note.name,
-        type: 'note',
-      })),
-      ...httpRequests.map<InternalLinkLookupItem>(request => ({
-        folderPath:
-          request.folderId === null
-            ? ''
-            : (httpFolderPathById.get(request.folderId) ?? ''),
-        id: request.id,
-        name: request.name,
-        type: 'http-request',
-      })),
-    ])
-
-    if (!resolvedTarget) {
-      return { exists: false }
-    }
-
-    if (resolvedTarget.type === 'snippet') {
-      const snippet = snippets.find(item => item.id === resolvedTarget.id)
-      if (!snippet) {
-        return { exists: false }
-      }
-
-      return {
-        exists: true,
-        data: {
-          firstContent: snippet.contents[0]
-            ? {
-                language: snippet.contents[0].language,
-                value: snippet.contents[0].value,
-              }
-            : null,
-          folder: snippet.folder,
-          id: snippet.id,
-          isDeleted: snippet.isDeleted,
-          name: snippet.name,
-          type: 'snippet',
-        },
-      }
-    }
-
-    if (resolvedTarget.type === 'http-request') {
-      const request = httpRequests.find(
-        item => item.id === resolvedTarget.id,
+    for (const entry of batch) {
+      const entity = toCachedEntity(
+        resolvedByTitle.get(entry.title)?.resolved as Parameters<
+          typeof toCachedEntity
+        >[0],
       )
-      if (!request) {
-        return { exists: false }
-      }
-
-      return {
-        exists: true,
-        data: {
-          folder: null,
-          id: request.id,
-          isDeleted: 0,
-          name: request.name,
-          request: {
-            description: request.description,
-            method: request.method,
-            url: request.url,
-          },
-          type: 'http-request',
-        },
-      }
-    }
-
-    const note = notes.find(item => item.id === resolvedTarget.id)
-    if (!note) {
-      return { exists: false }
-    }
-
-    return {
-      exists: true,
-      data: {
-        contentExcerpt: note.content.slice(0, 400).trim(),
-        folder: note.folder,
-        id: note.id,
-        isDeleted: note.isDeleted,
-        name: note.name,
-        type: 'note',
-      },
+      entry.resolvers.forEach(resolve => resolve(entity))
     }
   }
   catch {
-    return { exists: false }
+    for (const entry of batch) {
+      entry.resolvers.forEach(resolve => resolve({ exists: false }))
+    }
   }
+}
+
+function resolveInternalLinkByTitle(title: string): Promise<CachedEntity> {
+  return new Promise((resolve) => {
+    const normalizedTitle = title.trim()
+
+    if (!normalizedTitle) {
+      resolve({ exists: false })
+      return
+    }
+
+    const entry = pendingTitleResolutions.get(normalizedTitle) ?? {
+      resolvers: [],
+      title: normalizedTitle,
+    }
+    entry.resolvers.push(resolve)
+    pendingTitleResolutions.set(normalizedTitle, entry)
+
+    if (!isTitleResolutionFlushScheduled) {
+      isTitleResolutionFlushScheduled = true
+      queueMicrotask(() => {
+        void flushTitleResolutions()
+      })
+    }
+  })
 }
 
 function getInternalLinkCacheKey(link: InternalLinkMatch): string {
@@ -408,6 +374,8 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
         this.decorations = this.build()
       }
 
+      private linkRanges: { from: number, to: number }[] = []
+
       update(update: ViewUpdate) {
         const hasRefreshEffect = update.transactions.some(transaction =>
           transaction.effects.some(
@@ -422,55 +390,112 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
 
         if (
           update.docChanged
-          || update.selectionSet
+          || update.viewportChanged
           || update.focusChanged
           || hasRefreshEffect
         ) {
           this.decorations = this.build()
+          return
         }
+
+        // Widgets only depend on whether the selection intersects a link
+        // range, so a pure selection move outside every link cannot change
+        // the decorations.
+        if (update.selectionSet && this.selectionTouchesLinks(update)) {
+          this.decorations = this.build()
+        }
+      }
+
+      private selectionTouchesLinks(update: ViewUpdate): boolean {
+        if (this.linkRanges.length === 0) {
+          return false
+        }
+
+        const selections = [
+          ...update.startState.selection.ranges,
+          ...update.state.selection.ranges,
+        ]
+
+        return this.linkRanges.some(link =>
+          selections.some((range) => {
+            if (range.empty) {
+              return range.from >= link.from && range.from < link.to
+            }
+
+            return range.from < link.to && range.to > link.from
+          }),
+        )
       }
 
       private build() {
         const decorations = []
+        const linkRanges: { from: number, to: number }[] = []
+        const doc = this.view.state.doc
         const selections = this.view.state.selection.ranges.map(range => ({
           empty: range.empty,
           from: range.from,
           to: range.to,
         }))
 
-        for (const link of findInternalLinks(this.view.state.doc.toString())) {
-          if (
-            !shouldShowInternalLinkWidget(
-              mode,
-              this.view.hasFocus,
-              selections,
-              link.from,
-              link.to,
-            )
-          ) {
+        let scannedTo = 0
+
+        for (const visibleRange of this.view.visibleRanges) {
+          // Internal links never span multiple lines, so extending the
+          // visible range to full line boundaries is enough to avoid
+          // cutting a link at the viewport edge.
+          const from = Math.max(doc.lineAt(visibleRange.from).from, scannedTo)
+          const to = doc.lineAt(visibleRange.to).to
+
+          if (to <= from) {
             continue
           }
 
-          const key = getInternalLinkCacheKey(link)
-          const entity = entityCache.get(key)
-          const status = getInternalLinkEntityStatus(entity)
+          scannedTo = to
 
-          if (status === 'pending') {
-            requestEntityRefresh(this.view, link)
+          for (const match of findInternalLinks(doc.sliceString(from, to))) {
+            const link: InternalLinkMatch = {
+              ...match,
+              from: from + match.from,
+              to: from + match.to,
+            }
+
+            linkRanges.push({ from: link.from, to: link.to })
+
+            if (
+              !shouldShowInternalLinkWidget(
+                mode,
+                this.view.hasFocus,
+                selections,
+                link.from,
+                link.to,
+              )
+            ) {
+              continue
+            }
+
+            const key = getInternalLinkCacheKey(link)
+            const entity = entityCache.get(key)
+            const status = getInternalLinkEntityStatus(entity)
+
+            if (status === 'pending') {
+              requestEntityRefresh(this.view, link)
+            }
+
+            decorations.push(
+              Decoration.replace({
+                widget: new InternalLinkWidget(
+                  link,
+                  status,
+                  entity?.exists
+                    ? { id: entity.data.id, type: entity.data.type }
+                    : link.legacyTarget,
+                ),
+              }).range(link.from, link.to),
+            )
           }
-
-          decorations.push(
-            Decoration.replace({
-              widget: new InternalLinkWidget(
-                link,
-                status,
-                entity?.exists
-                  ? { id: entity.data.id, type: entity.data.type }
-                  : link.legacyTarget,
-              ),
-            }).range(link.from, link.to),
-          )
         }
+
+        this.linkRanges = linkRanges
 
         return Decoration.set(decorations, true)
       }

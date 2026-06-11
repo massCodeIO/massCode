@@ -2,6 +2,7 @@
 import { useApp, useFolders, useSnippets, useTags } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
+import { useDebounceFn } from '@vueuse/core'
 import { Plus, Search, X } from 'lucide-vue-next'
 
 const {
@@ -50,9 +51,21 @@ ipc.on('main-menu:find', () => {
   isFocusedSearch.value = true
 })
 
+onBeforeUnmount(() => {
+  ipc.removeListeners('main-menu:find')
+})
+
+// Без debounce каждый символ порождает full-text запрос, смену выбранного
+// сниппета и перезагрузку документа в редакторе.
+const searchDebounced = useDebounceFn(() => {
+  if (searchQuery.value) {
+    search()
+  }
+}, 200)
+
 watch(searchQuery, (v) => {
   if (v) {
-    search()
+    searchDebounced()
   }
   else {
     clearSearch(true)

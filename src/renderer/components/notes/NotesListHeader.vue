@@ -10,6 +10,7 @@ import {
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
+import { useDebounceFn } from '@vueuse/core'
 import {
   Check,
   FileText,
@@ -77,9 +78,17 @@ function selectCreateKind(kind: 'note' | 'task') {
   isCreateMenuOpen.value = false
 }
 
+// Без debounce каждый символ порождает full-text запрос, смену выбранной
+// заметки и перезагрузку документа в редакторе.
+const searchDebounced = useDebounceFn(() => {
+  if (searchQuery.value) {
+    search()
+  }
+}, 200)
+
 watch(searchQuery, (v) => {
   if (v) {
-    search()
+    searchDebounced()
   }
   else {
     clearSearch(true)

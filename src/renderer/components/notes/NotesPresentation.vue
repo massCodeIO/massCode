@@ -42,6 +42,24 @@ const noteIds = computed(
   () => displayedNotes.value?.map(note => note.id) ?? [],
 )
 
+// id и контент слайда обновляются атомарно, когда контент заметки загружен:
+// иначе при листании слайд мигает пустым состоянием.
+const presentationNoteId = ref<number | undefined>()
+const presentationContent = ref('')
+
+watch(
+  () => [selectedNote.value?.id, selectedNote.value?.content] as const,
+  ([id, content]) => {
+    if (selectedNote.value && content === undefined) {
+      return
+    }
+
+    presentationNoteId.value = id
+    presentationContent.value = content ?? ''
+  },
+  { immediate: true },
+)
+
 const currentIndex = computed(() => {
   const id = selectedNote.value?.id
   if (id === undefined)
@@ -141,8 +159,8 @@ onUnmounted(() => {
     </UiActionButton>
     <div class="h-full min-h-0 p-5">
       <NotesEditor
-        :note-id="selectedNote?.id"
-        :content="selectedNote?.content ?? ''"
+        :note-id="presentationNoteId"
+        :content="presentationContent"
         mode="preview"
         presentation
       />

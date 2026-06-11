@@ -59,16 +59,16 @@ export interface SnippetItemResponse {
     id: number;
     name: string;
   } | null;
+  isFavorites: number;
+  isDeleted: number;
+  createdAt: number;
+  updatedAt: number;
   contents: {
     id: number;
     label: string;
     value: string | null;
     language: string;
   }[];
-  isFavorites: number;
-  isDeleted: number;
-  createdAt: number;
-  updatedAt: number;
 }
 
 export interface SnippetsAdd {
@@ -137,16 +137,15 @@ export type SnippetsResponse = {
     id: number;
     name: string;
   } | null;
-  contents: {
-    id: number;
-    label: string;
-    value: string | null;
-    language: string;
-  }[];
   isFavorites: number;
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  contents: {
+    id: number;
+    label: string;
+    language: string;
+  }[];
 }[];
 
 export interface FoldersAdd {
@@ -278,7 +277,6 @@ export interface NoteItemResponse {
   id: number;
   name: string;
   description: string | null;
-  content: string;
   properties: object;
   tags: {
     id: number;
@@ -292,6 +290,7 @@ export interface NoteItemResponse {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  content: string;
 }
 
 export type NoteProperties = object;
@@ -300,7 +299,6 @@ export type NotesResponse = {
   id: number;
   name: string;
   description: string | null;
-  content: string;
   properties: object;
   tags: {
     id: number;
@@ -425,6 +423,35 @@ export type NoteTagsResponse = {
 export interface NoteTagsUpdate {
   name: string;
 }
+
+export interface InternalLinksResolveBody {
+  /** @maxItems 500 */
+  titles: string[];
+}
+
+export type InternalLinksResolveResponse = {
+  title: string;
+  resolved: {
+    type: "snippet" | "note" | "http-request";
+    id: number;
+    name: string;
+    folder: {
+      id: number;
+      name: string;
+    } | null;
+    isDeleted: number;
+    firstContent?: {
+      language: string;
+      value: string | null;
+    } | null;
+    contentExcerpt?: string;
+    request?: {
+      method: string;
+      url: string;
+      description: string;
+    };
+  } | null;
+}[];
 
 export interface HttpFoldersAdd {
   name: string;
@@ -1907,6 +1934,27 @@ export class Api<
       this.request<void, any>({
         path: `/note-tags/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+  };
+  internalLinks = {
+    /**
+     * No description
+     *
+     * @tags InternalLinks
+     * @name PostInternalLinksResolve
+     * @request POST:/internal-links/resolve
+     */
+    postInternalLinksResolve: (
+      data: InternalLinksResolveBody,
+      params: RequestParams = {},
+    ) =>
+      this.request<InternalLinksResolveResponse, any>({
+        path: `/internal-links/resolve`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

@@ -21,7 +21,10 @@ interface GraphEdgeInput {
 
 interface GraphLayoutOptions {
   compact?: boolean
+  ticks?: number
 }
+
+const DEFAULT_LAYOUT_TICKS = 260
 
 interface ForceGraphNode extends GraphLayoutNode {
   index?: number
@@ -164,41 +167,45 @@ export function buildNotesGraphLayout(
     }
   })
 
-  const layoutLinks: ForceGraphLink[] = edges.map(edge => ({
-    source: edge.source,
-    target: edge.target,
-  }))
+  const ticks = Math.max(0, Math.round(options.ticks ?? DEFAULT_LAYOUT_TICKS))
 
-  const simulation = forceSimulation(layoutNodes)
-    .force(
-      'charge',
-      forceManyBody<ForceGraphNode>().strength(
-        node => (compact ? -26 : -42) - node.radius * 2,
-      ),
-    )
-    .force('center', forceCenter(estimatedWidth / 2, estimatedHeight / 2))
-    .force('x', forceX(estimatedWidth / 2).strength(compact ? 0.03 : 0.02))
-    .force('y', forceY(estimatedHeight / 2).strength(compact ? 0.03 : 0.02))
-    .force(
-      'collision',
-      forceCollide<ForceGraphNode>()
-        .radius(node => node.radius + (compact ? 3 : 5))
-        .strength(0.95),
-    )
-    .force(
-      'link',
-      forceLink<ForceGraphNode, ForceGraphLink>(layoutLinks)
-        .id(node => node.id)
-        .distance(() => (compact ? 28 : 46))
-        .strength(compact ? 0.2 : 0.14),
-    )
-    .stop()
+  if (ticks > 0) {
+    const layoutLinks: ForceGraphLink[] = edges.map(edge => ({
+      source: edge.source,
+      target: edge.target,
+    }))
 
-  for (let tick = 0; tick < 260; tick++) {
-    simulation.tick()
+    const simulation = forceSimulation(layoutNodes)
+      .force(
+        'charge',
+        forceManyBody<ForceGraphNode>().strength(
+          node => (compact ? -26 : -42) - node.radius * 2,
+        ),
+      )
+      .force('center', forceCenter(estimatedWidth / 2, estimatedHeight / 2))
+      .force('x', forceX(estimatedWidth / 2).strength(compact ? 0.03 : 0.02))
+      .force('y', forceY(estimatedHeight / 2).strength(compact ? 0.03 : 0.02))
+      .force(
+        'collision',
+        forceCollide<ForceGraphNode>()
+          .radius(node => node.radius + (compact ? 3 : 5))
+          .strength(0.95),
+      )
+      .force(
+        'link',
+        forceLink<ForceGraphNode, ForceGraphLink>(layoutLinks)
+          .id(node => node.id)
+          .distance(() => (compact ? 28 : 46))
+          .strength(compact ? 0.2 : 0.14),
+      )
+      .stop()
+
+    for (let tick = 0; tick < ticks; tick++) {
+      simulation.tick()
+    }
+
+    simulation.stop()
   }
-
-  simulation.stop()
 
   const padding = compact ? 14 : 24
   const bounds = getNotesGraphBounds(layoutNodes, padding)

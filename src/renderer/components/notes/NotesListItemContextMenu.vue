@@ -12,6 +12,7 @@ import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
+import { api } from '~/renderer/services/api'
 
 interface NoteTagInfo {
   id: number
@@ -27,7 +28,6 @@ interface NoteRecord {
   id: number
   name: string
   description: string | null
-  content: string
   properties: Record<string, unknown>
   tags: NoteTagInfo[]
   folder: NoteFolderInfo | null
@@ -118,9 +118,16 @@ function onCopyNoteLink() {
   copy(`masscode://goto?noteId=${props.note.id}`)
 }
 
-function onCopyNoteContent() {
-  copy(props.note.content)
-  useDonations().incrementCopy('notes')
+async function onCopyNoteContent() {
+  try {
+    // Список не содержит контента — он загружается по id.
+    const { data } = await api.notes.getNotesById(String(props.note.id))
+    copy(data.content)
+    useDonations().incrementCopy('notes')
+  }
+  catch (error) {
+    console.error(error)
+  }
 }
 
 async function onConvertToTask() {

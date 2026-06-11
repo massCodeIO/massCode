@@ -3,19 +3,33 @@ import { api } from '@/services/api'
 
 const tags = shallowRef<TagsResponse>([])
 const isLoading = ref(false)
+const isTagsLoaded = ref(false)
+let inFlightRequest: Promise<void> | null = null
 
-async function getTags() {
-  try {
-    isLoading.value = true
-    const { data } = await api.tags.getTags()
-    tags.value = data
+// Параллельные вызовы (init спейса + маунт компонентов) дедуплицируются
+// в один запрос.
+function getTags(): Promise<void> {
+  if (inFlightRequest) {
+    return inFlightRequest
   }
-  catch (error) {
-    console.error(error)
-  }
-  finally {
-    isLoading.value = false
-  }
+
+  inFlightRequest = (async () => {
+    try {
+      isLoading.value = true
+      const { data } = await api.tags.getTags()
+      tags.value = data
+      isTagsLoaded.value = true
+    }
+    catch (error) {
+      console.error(error)
+    }
+    finally {
+      isLoading.value = false
+      inFlightRequest = null
+    }
+  })()
+
+  return inFlightRequest
 }
 
 async function addTag(tagName: string) {
@@ -40,6 +54,7 @@ export function useTags() {
     deleteTag,
     getTags,
     isLoading,
+    isTagsLoaded,
     tags,
   }
 }

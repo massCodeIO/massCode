@@ -4,9 +4,12 @@ import { useSnippets, useTags } from '@/composables'
 
 const { selectedSnippet, deleteTagFromSnippet, addTagToSnippet }
   = useSnippets()
-const { tags, addTag, getTags } = useTags()
+const { tags, addTag, getTags, isTagsLoaded } = useTags()
 
-getTags()
+// Инициализация спейса уже загружает теги — не дублируем запрос на маунт.
+if (!isTagsLoaded.value) {
+  void getTags()
+}
 
 const snippetTags = computed(() => selectedSnippet.value?.tags || [])
 

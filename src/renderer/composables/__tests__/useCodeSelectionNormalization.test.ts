@@ -45,6 +45,7 @@ async function setup(options: SetupOptions = {}) {
   )
 
   const getSnippets = vi.fn(async () => undefined)
+  const refreshSelectedSnippet = vi.fn(async () => undefined)
   const selectFirstSnippet = vi.fn(() => {
     state.snippetId = displayedSnippets.value[0]?.id
   })
@@ -71,6 +72,7 @@ async function setup(options: SetupOptions = {}) {
     useSnippets: () => ({
       displayedSnippets,
       getSnippets,
+      refreshSelectedSnippet,
       selectFirstSnippet,
     }),
   }))

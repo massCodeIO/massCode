@@ -24,15 +24,19 @@ const name = computed({
     return props.name
   },
   set(v: string) {
-    addToUpdateContentQueue(
-      selectedSnippet.value!.id,
-      selectedSnippetContent.value!.id,
-      {
-        label: v,
-        language: selectedSnippetContent.value!.language,
-        value: selectedSnippetContent.value!.value,
-      },
-    )
+    const content = selectedSnippetContent.value
+
+    // value === undefined: тело фрагмента ещё не загружено, переименование
+    // отправило бы пустой контент.
+    if (!selectedSnippet.value || !content || content.value === undefined) {
+      return
+    }
+
+    addToUpdateContentQueue(selectedSnippet.value.id, content.id, {
+      label: v,
+      language: content.language,
+      value: content.value,
+    })
   },
 })
 

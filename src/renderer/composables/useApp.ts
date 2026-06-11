@@ -1,5 +1,6 @@
 import type { SavedState, StateAction } from './types'
 import { store } from '@/electron'
+import { watchDebounced } from '@vueuse/core'
 import {
   getCodeLayoutModeFromLegacyState,
   getNextLayoutModeForSidebarToggle,
@@ -87,13 +88,17 @@ function restoreStateSnapshot(action: StateAction): void {
   }
 }
 
-watch(
-  state,
-  () => {
-    store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
-  },
-  { deep: true },
-)
+function persistCodeSelectionState() {
+  store.app.set('code.selection', JSON.parse(JSON.stringify(state)))
+}
+
+// store.app.set — синхронная запись файла на диск: без debounce каждая смена
+// выбранного сниппета/папки блокирует main thread renderer.
+watchDebounced(state, persistCodeSelectionState, { debounce: 300, deep: true })
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', persistCodeSelectionState)
+}
 
 watch(codeLayoutMode, (value) => {
   store.app.set('code.layout.mode', value)

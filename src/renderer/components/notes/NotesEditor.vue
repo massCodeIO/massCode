@@ -61,6 +61,10 @@ const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
 let isApplyingExternalContent = false
 let unregisterNavigationNoteUIState: (() => void) | undefined
+// Последняя строка, отправленная редактором в модель: позволяет пропускать
+// echo-обновления без материализации всего документа на каждый keystroke.
+let lastEmittedContent: string | null = null
+let lastAppliedNoteId: number | undefined
 
 function moveSelectionToAdjacentImageSource(
   view: EditorView,
@@ -269,7 +273,8 @@ function createEditorState(doc: string): EditorState {
   extensions.push(
     EditorView.updateListener.of((update) => {
       if (update.docChanged && !isApplyingExternalContent) {
-        content.value = update.state.doc.toString()
+        lastEmittedContent = update.state.doc.toString()
+        content.value = lastEmittedContent
       }
     }),
   )
@@ -280,47 +285,60 @@ function createEditorState(doc: string): EditorState {
   })
 }
 
-watch(content, (val) => {
+function applyExternalState(doc: string) {
   if (!view)
+    return
+
+  isApplyingExternalContent = true
+  view.setState(createEditorState(doc))
+  isApplyingExternalContent = false
+}
+
+// noteId и content меняются согласованно (NotesEditorPane обновляет их
+// вместе, когда контент заметки загружен), поэтому один watcher.
+watch([() => props.noteId, content], ([noteId, val]) => {
+  if (!view)
+    return
+
+  // Смена заметки: пересоздание EditorState сбрасывает undo-историю,
+  // но переиспользует EditorView и DOM (раньше компонент пересоздавался
+  // целиком через :key).
+  if (noteId !== lastAppliedNoteId) {
+    lastAppliedNoteId = noteId
+    applyExternalState(val)
+    return
+  }
+
+  // Echo собственного ввода: материализовать документ не нужно.
+  if (val === lastEmittedContent)
     return
 
   const currentValue = view.state.doc.toString()
   if (currentValue === val)
     return
 
+  // Внешнее обновление той же заметки: dispatch вместо пересоздания
+  // состояния — сохраняет undo-историю, selection и расширения.
   isApplyingExternalContent = true
-  view.setState(createEditorState(val))
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: val },
+  })
   isApplyingExternalContent = false
 })
 
 watch(
   () => props.mode,
   () => {
-    if (!view)
-      return
-
-    isApplyingExternalContent = true
-    view.setState(createEditorState(content.value))
-    isApplyingExternalContent = false
+    applyExternalState(content.value)
   },
 )
 
 watch(notesSettings, () => {
-  if (!view)
-    return
-
-  isApplyingExternalContent = true
-  view.setState(createEditorState(content.value))
-  isApplyingExternalContent = false
+  applyExternalState(content.value)
 })
 
 watch(isDark, () => {
-  if (!view)
-    return
-
-  isApplyingExternalContent = true
-  view.setState(createEditorState(content.value))
-  isApplyingExternalContent = false
+  applyExternalState(content.value)
 })
 
 async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
@@ -355,6 +373,7 @@ onMounted(() => {
     state: createEditorState(content.value),
     parent: editorContainer.value,
   })
+  lastAppliedNoteId = props.noteId
 
   void syncNavigationNoteUIStateRegistration()
 })

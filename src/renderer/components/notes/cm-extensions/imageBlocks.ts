@@ -147,21 +147,33 @@ class ImageWidget extends WidgetType {
   }
 }
 
+interface ImageBlocksFieldValue {
+  decorations: DecorationSet
+  blocks: { from: number, to: number }[]
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
   isDark: boolean,
   showSourceWhenSelectionInside: boolean,
-) {
+): ImageBlocksFieldValue {
   if (!enabled)
-    return Decoration.none
+    return { blocks: [], decorations: Decoration.none }
 
   const builder = new RangeSetBuilder<Decoration>()
+  const blocks: { from: number, to: number }[] = []
 
   syntaxTree(state).iterate({
     enter(node) {
       if (node.name !== 'Image')
         return
+
+      const url = extractImageUrl(state, node.from, node.to)
+      if (!url)
+        return
+
+      blocks.push({ from: node.from, to: node.to })
 
       if (
         showSourceWhenSelectionInside
@@ -169,10 +181,6 @@ function buildDecorations(
       ) {
         return
       }
-
-      const url = extractImageUrl(state, node.from, node.to)
-      if (!url)
-        return
 
       builder.add(
         node.from,
@@ -185,7 +193,7 @@ function buildDecorations(
     },
   })
 
-  return builder.finish()
+  return { blocks, decorations: builder.finish() }
 }
 
 export function getImageBlockRanges(
@@ -214,7 +222,7 @@ export function createImageBlocks(options: ImageBlocksOptions = {}) {
     showSourceWhenSelectionInside = false,
   } = options
 
-  return StateField.define<DecorationSet>({
+  return StateField.define<ImageBlocksFieldValue>({
     create(state) {
       return buildDecorations(
         state,
@@ -223,15 +231,16 @@ export function createImageBlocks(options: ImageBlocksOptions = {}) {
         showSourceWhenSelectionInside,
       )
     },
-    update(decorations, transaction) {
-      const selectionChanged = !transaction.startState.selection.eq(
-        transaction.state.selection,
-      )
+    update(value, transaction) {
       const focusChanged = transaction.effects.some(e =>
         e.is(setEditorFocusEffect),
       )
+      // The syntax tree can advance asynchronously (without a document
+      // change), so compare tree identity to pick up late-parsed blocks.
+      const treeChanged
+        = syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
 
-      if (transaction.docChanged || selectionChanged || focusChanged) {
+      if (transaction.docChanged || focusChanged || treeChanged) {
         return buildDecorations(
           transaction.state,
           enabled,
@@ -240,8 +249,32 @@ export function createImageBlocks(options: ImageBlocksOptions = {}) {
         )
       }
 
-      return decorations.map(transaction.changes)
+      // A pure selection change only matters when the cursor enters or
+      // leaves one of the current blocks.
+      if (
+        showSourceWhenSelectionInside
+        && !transaction.startState.selection.eq(transaction.state.selection)
+        && value.blocks.some(
+          block =>
+            isSelectionInsideRange(
+              transaction.startState,
+              block.from,
+              block.to,
+            )
+            !== isSelectionInsideRange(transaction.state, block.from, block.to),
+        )
+      ) {
+        return buildDecorations(
+          transaction.state,
+          enabled,
+          isDark,
+          showSourceWhenSelectionInside,
+        )
+      }
+
+      return value
     },
-    provide: field => EditorView.decorations.from(field),
+    provide: field =>
+      EditorView.decorations.from(field, value => value.decorations),
   })
 }

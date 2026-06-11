@@ -1,15 +1,12 @@
-import type {
-  InternalLinkLookupItem,
-  InternalLinkType,
-} from '../../../../../../shared/notes/internalLinks'
+import type { InternalLinkLookupItem } from '../../../../../../shared/notes/internalLinks'
 import type { MarkdownNote, NotesPaths, NotesState } from './types'
 import {
   normalizeInternalLinkLookupKey,
-  resolveInternalLinkTargetByTitle,
   rewriteInternalLinks,
 } from '../../../../../../shared/notes/internalLinks'
 import { getPaths, getVaultPath } from '../../runtime/paths'
 import { getRuntimeCache } from '../../runtime/sync'
+import { createInternalLinkResolver } from './internalLinkResolver'
 import { writeNoteToFile } from './notes'
 import { buildNotesFolderPathMap } from './paths'
 import { invalidateNotesSearchIndex } from './search'
@@ -42,29 +39,36 @@ interface RewriteBacklinksAfterFolderUpdateInput {
   newFolderPathMap: Map<number, string>
 }
 
-interface ShortestUniqueLookupItem {
-  id: number
-  type: InternalLinkType
-  name: string
-  folderPath: string
-}
+function buildLookupKeyCounts(
+  items: InternalLinkLookupItem[],
+): Map<string, number> {
+  const counts = new Map<string, number>()
 
-function pickShortestUniqueLinkTarget(
-  selected: ShortestUniqueLookupItem,
-  candidates: ShortestUniqueLookupItem[],
-): string {
-  const selectedKey = normalizeInternalLinkLookupKey(selected.name)
-  const hasCollision = candidates.some(
-    candidate =>
-      !(candidate.id === selected.id && candidate.type === selected.type)
-      && normalizeInternalLinkLookupKey(candidate.name) === selectedKey,
-  )
-
-  if (!hasCollision || !selected.folderPath) {
-    return selected.name
+  for (const item of items) {
+    const key = normalizeInternalLinkLookupKey(item.name)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
   }
 
-  return `${selected.folderPath}/${selected.name}`
+  return counts
+}
+
+/**
+ * The selected item is expected to be present in the lookup the counts were
+ * built from, so a collision exists when its key occurs more than once.
+ */
+function pickShortestUniqueLinkTarget(
+  name: string,
+  folderPath: string,
+  lookupKeyCounts: Map<string, number>,
+): string {
+  const hasCollision
+    = (lookupKeyCounts.get(normalizeInternalLinkLookupKey(name)) ?? 0) > 1
+
+  if (!hasCollision || !folderPath) {
+    return name
+  }
+
+  return `${folderPath}/${name}`
 }
 
 function buildNoteLookupFromState(
@@ -165,23 +169,13 @@ export function rewriteBacklinksAfterNoteUpdate(
 
   const preLookup = [...snippetLookup, ...buildNoteLookup('previous')]
   const postLookup = [...snippetLookup, ...buildNoteLookup('next')]
+  const preResolver = createInternalLinkResolver(preLookup)
+  const postLookupKeyCounts = buildLookupKeyCounts(postLookup)
 
-  const shortestUniqueCandidates: ShortestUniqueLookupItem[] = postLookup.map(
-    item => ({
-      folderPath: item.folderPath ?? '',
-      id: item.id,
-      name: item.name,
-      type: item.type,
-    }),
-  )
   const updatedTarget = pickShortestUniqueLinkTarget(
-    {
-      folderPath: nextFolderPath,
-      id: updatedNoteId,
-      name: nextName,
-      type: 'note',
-    },
-    shortestUniqueCandidates,
+    nextName,
+    nextFolderPath,
+    postLookupKeyCounts,
   )
 
   let rewrittenCount = 0
@@ -200,11 +194,7 @@ export function rewriteBacklinksAfterNoteUpdate(
         return null
       }
 
-      const resolved = resolveInternalLinkTargetByTitle(
-        match.target,
-        preLookup,
-        { linkerFolderPath },
-      )
+      const resolved = preResolver.resolve(match.target, { linkerFolderPath })
       if (
         resolved === null
         || resolved.type !== 'note'
@@ -269,24 +259,27 @@ export function promoteBareBacklinksOnConflict(
   const noteFolderPath = (note: MarkdownNote): string =>
     note.folderId === null ? '' : (folderPathMap.get(note.folderId) ?? '')
 
+  const preResolver = createInternalLinkResolver(preLookup)
+  const postLookupKeyCounts = buildLookupKeyCounts(postLookup)
+  const postNoteItemById = new Map<number, InternalLinkLookupItem>()
+  for (const item of postLookup) {
+    if (item.type === 'note' && !postNoteItemById.has(item.id)) {
+      postNoteItemById.set(item.id, item)
+    }
+  }
+
   let total = 0
   const now = Date.now()
   const rewrittenLinkers = new Set<number>()
 
   for (const noteId of conflictNoteIds) {
-    const targetItem = postLookup.find(
-      item => item.type === 'note' && item.id === noteId,
-    )
+    const targetItem = postNoteItemById.get(noteId)
     if (!targetItem || !targetItem.folderPath) {
       continue
     }
 
     const targetKey = normalizeInternalLinkLookupKey(targetItem.name)
-    const hasCollision = postLookup.some(
-      item =>
-        !(item.id === noteId && item.type === 'note')
-        && normalizeInternalLinkLookupKey(item.name) === targetKey,
-    )
+    const hasCollision = (postLookupKeyCounts.get(targetKey) ?? 0) > 1
     if (!hasCollision) {
       continue
     }
@@ -310,11 +303,9 @@ export function promoteBareBacklinksOnConflict(
           return null
         }
 
-        const resolved = resolveInternalLinkTargetByTitle(
-          match.target,
-          preLookup,
-          { linkerFolderPath },
-        )
+        const resolved = preResolver.resolve(match.target, {
+          linkerFolderPath,
+        })
         if (
           resolved === null
           || resolved.type !== 'note'
@@ -399,15 +390,14 @@ export function rewriteBacklinksAfterFolderUpdate(
 
   const preLookup = buildLookup(oldFolderPathMap)
   const postLookup = buildLookup(newFolderPathMap)
-
-  const shortestUniqueCandidates: ShortestUniqueLookupItem[] = postLookup.map(
-    item => ({
-      folderPath: item.folderPath ?? '',
-      id: item.id,
-      name: item.name,
-      type: item.type,
-    }),
-  )
+  const preResolver = createInternalLinkResolver(preLookup)
+  const postLookupKeyCounts = buildLookupKeyCounts(postLookup)
+  const postNoteItemById = new Map<number, InternalLinkLookupItem>()
+  for (const item of postLookup) {
+    if (item.type === 'note' && !postNoteItemById.has(item.id)) {
+      postNoteItemById.set(item.id, item)
+    }
+  }
 
   let rewrittenCount = 0
   const now = Date.now()
@@ -430,11 +420,9 @@ export function rewriteBacklinksAfterFolderUpdate(
         return null
       }
 
-      const resolved = resolveInternalLinkTargetByTitle(
-        match.target,
-        preLookup,
-        { linkerFolderPath: oldLinkerFolderPath },
-      )
+      const resolved = preResolver.resolve(match.target, {
+        linkerFolderPath: oldLinkerFolderPath,
+      })
       if (
         resolved === null
         || resolved.type !== 'note'
@@ -443,21 +431,15 @@ export function rewriteBacklinksAfterFolderUpdate(
         return null
       }
 
-      const targetItem = postLookup.find(
-        item => item.type === 'note' && item.id === resolved.id,
-      )
+      const targetItem = postNoteItemById.get(resolved.id)
       if (!targetItem) {
         return null
       }
 
       const newTarget = pickShortestUniqueLinkTarget(
-        {
-          folderPath: targetItem.folderPath ?? '',
-          id: targetItem.id,
-          name: targetItem.name,
-          type: 'note',
-        },
-        shortestUniqueCandidates,
+        targetItem.name,
+        targetItem.folderPath ?? '',
+        postLookupKeyCounts,
       )
 
       if (newTarget === match.target) {

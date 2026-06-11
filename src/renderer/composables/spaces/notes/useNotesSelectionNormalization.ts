@@ -10,7 +10,7 @@ interface FolderNode {
 }
 
 const { folders } = useNoteFolders()
-const { getNotes, selectFirstNote } = useNotes()
+const { getNotes, refreshSelectedNote, selectFirstNote } = useNotes()
 const { notesState } = useNotesApp()
 const { displayedNotes } = useNoteSearch()
 const { tags } = useNoteTags()
@@ -56,4 +56,8 @@ export async function normalizeNotesSelectionState() {
   ) {
     selectFirstNote()
   }
+
+  // Список содержит только метаданные: полная запись выбранной заметки
+  // загружается отдельно (boot и refresh после внешнего sync).
+  await refreshSelectedNote()
 }

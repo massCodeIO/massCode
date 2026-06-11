@@ -60,6 +60,11 @@ function init() {
 
   watch(selectedSnippetContent, (v) => {
     nextTick(() => {
+      // Тело фрагмента ещё загружается — не мигаем пустым изображением.
+      if (v && v.value === undefined) {
+        return
+      }
+
       setValue(v?.value || '')
     })
   })

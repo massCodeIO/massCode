@@ -26,11 +26,10 @@ const notePropertiesUpdate = t.Object({
   unset: t.Optional(t.Array(t.String())),
 })
 
-const noteItem = t.Object({
+const noteItemBase = {
   id: t.Number(),
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
-  content: t.String(),
   properties: noteProperties,
   tags: t.Array(
     t.Object({
@@ -48,9 +47,18 @@ const noteItem = t.Object({
   isDeleted: t.Number(),
   createdAt: t.Number(),
   updatedAt: t.Number(),
+}
+
+const noteItem = t.Object({
+  ...noteItemBase,
+  content: t.String(),
 })
 
-const notesResponse = t.Array(noteItem)
+// Список не содержит контента заметок: контент выбранной заметки
+// загружается отдельным GET /notes/:id.
+const noteListItem = t.Object(noteItemBase)
+
+const notesResponse = t.Array(noteListItem)
 
 const notesCountsResponse = t.Object({
   total: t.Number(),
@@ -85,5 +93,6 @@ export const notesDTO = new Elysia().model({
 
 export type NotesAdd = typeof notesAdd.static
 export type NotesResponse = typeof notesResponse.static
+export type NoteListItemResponse = typeof noteListItem.static
 export type NotesCountsResponse = typeof notesCountsResponse.static
 export type NoteItemResponse = typeof noteItem.static

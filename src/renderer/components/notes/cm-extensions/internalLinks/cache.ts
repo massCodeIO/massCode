@@ -1,4 +1,5 @@
 import type { InternalLinkType } from './parser'
+import { ipc } from '@/electron'
 
 export interface CachedEntityData {
   id: number
@@ -24,7 +25,7 @@ export class EntityCache {
   private readonly entries = new Map<string, CacheEntry>()
   private readonly pending = new Set<string>()
 
-  constructor(private readonly ttlMs = 30_000) {}
+  constructor(private readonly ttlMs = 300_000) {}
 
   get(key: string): CachedEntity | undefined {
     const entry = this.entries.get(key)
@@ -64,3 +65,9 @@ export class EntityCache {
 }
 
 export const entityCache = new EntityCache()
+
+// The TTL is long, so drop cached resolutions as soon as the vault is
+// synced externally (same pattern as drawingEmbed.ts).
+ipc.on('system:storage-synced', () => {
+  entityCache.clear()
+})

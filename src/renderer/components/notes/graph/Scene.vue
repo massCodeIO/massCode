@@ -24,6 +24,7 @@ import {
   getGraphSceneEdgeEndpoints,
   getGraphSceneNeighborhoodIds,
   getGraphSceneResetViewportTransform,
+  getGraphSceneSeedTicks,
   shouldAutoResetGraphSceneViewport,
   shouldClearGraphSceneActiveNode,
   shouldOpenGraphSceneNodeOnPointerUp,
@@ -152,6 +153,43 @@ const activeNode = computed(() =>
   activeNodeId.value ? (nodeMap.value.get(activeNodeId.value) ?? null) : null,
 )
 const graphPalette = computed(() => getNotesGraphPalette(isDark.value))
+
+interface SceneEdgeView {
+  key: string
+  stroke: string
+  strokeWidth: number
+  x1: number
+  x2: number
+  y1: number
+  y2: number
+}
+
+const sceneEdges = computed<SceneEdgeView[]>(() => {
+  const edges: SceneEdgeView[] = []
+
+  props.edges.forEach((edge) => {
+    const coordinates = getEdgeCoordinates(edge.source, edge.target)
+
+    if (!coordinates) {
+      return
+    }
+
+    edges.push({
+      key: `${edge.source}-${edge.target}`,
+      stroke: getEdgeStroke(edge.source, edge.target),
+      strokeWidth: isEdgeHighlighted(edge.source, edge.target)
+        ? props.compact
+          ? 0.95
+          : 1.3
+        : props.compact
+          ? 0.5
+          : 0.55,
+      ...coordinates,
+    })
+  })
+
+  return edges
+})
 
 function getDisplayedNodeRadius(node: SceneNode) {
   return getGraphSceneDisplayedNodeRadius(
@@ -557,6 +595,9 @@ function initializeSimulation() {
 
   const seededLayout = buildNotesGraphLayout(props.nodes, props.edges, {
     compact: props.compact,
+    ticks: props.compact
+      ? undefined
+      : getGraphSceneSeedTicks(props.nodes.length),
   })
   const nodes = seededLayout.nodes.map(node => ({
     ...node,
@@ -703,22 +744,14 @@ watch(
       <g :transform="`translate(${pan.x}, ${pan.y}) scale(${zoom})`">
         <g>
           <line
-            v-for="edge in edges"
-            :key="`${edge.source}-${edge.target}`"
-            :x1="getEdgeCoordinates(edge.source, edge.target)?.x1"
-            :y1="getEdgeCoordinates(edge.source, edge.target)?.y1"
-            :x2="getEdgeCoordinates(edge.source, edge.target)?.x2"
-            :y2="getEdgeCoordinates(edge.source, edge.target)?.y2"
-            :stroke="getEdgeStroke(edge.source, edge.target)"
-            :stroke-width="
-              isEdgeHighlighted(edge.source, edge.target)
-                ? compact
-                  ? 0.95
-                  : 1.3
-                : compact
-                  ? 0.5
-                  : 0.55
-            "
+            v-for="edge in sceneEdges"
+            :key="edge.key"
+            :x1="edge.x1"
+            :y1="edge.y1"
+            :x2="edge.x2"
+            :y2="edge.y2"
+            :stroke="edge.stroke"
+            :stroke-width="edge.strokeWidth"
           />
         </g>
 

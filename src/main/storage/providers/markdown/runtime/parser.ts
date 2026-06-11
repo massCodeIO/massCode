@@ -15,6 +15,7 @@ import {
   META_FILE_NAME,
   NEW_LINE_SPLIT_RE,
 } from './constants'
+import { rememberAppFileChange } from './shared/appChanges'
 import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 export function readFolderMetadata(
@@ -47,6 +48,8 @@ export function readFolderMetadata(
   try {
     writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
     fs.removeSync(legacyPath)
+    rememberAppFileChange(metaPath)
+    rememberAppFileChange(legacyPath)
   }
   catch {
     // Migration failed — non-critical, we still have the data
@@ -67,6 +70,21 @@ export function serializeFolderMetadata(
     orderIndex: folder.orderIndex,
     updatedAt: folder.updatedAt,
   }
+}
+
+export function isFolderMetadataInSync(
+  metadata: MarkdownFolderMetadataFile,
+  folder: FolderRecord,
+): boolean {
+  const payload = serializeFolderMetadata(folder)
+  const payloadKeys = Object.keys(payload)
+  const metadataRecord = metadata as Record<string, unknown>
+
+  if (Object.keys(metadataRecord).length !== payloadKeys.length) {
+    return false
+  }
+
+  return payloadKeys.every(key => metadataRecord[key] === payload[key])
 }
 
 export function writeFolderMetadataFile(
@@ -97,12 +115,14 @@ export function writeFolderMetadataFile(
 
   fs.ensureDirSync(folderAbsPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  rememberAppFileChange(metaPath)
 
   // Clean up legacy file if it exists
   const legacyPath = path.join(folderAbsPath, LEGACY_FOLDER_META_FILE_NAME)
   if (fs.pathExistsSync(legacyPath)) {
     try {
       fs.removeSync(legacyPath)
+      rememberAppFileChange(legacyPath)
     }
     catch {
       // Non-critical

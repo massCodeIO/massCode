@@ -9,7 +9,7 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 
-const { tags, getTags, deleteTag } = useTags()
+const { tags, getTags, deleteTag, isTagsLoaded } = useTags()
 const { highlightedTagId, state } = useApp()
 const {
   getSnippets,
@@ -20,7 +20,10 @@ const {
 } = useSnippets()
 const { clearFolderSelection } = useFolders()
 
-getTags()
+// Инициализация спейса уже загружает теги — не дублируем запрос на маунт.
+if (!isTagsLoaded.value) {
+  void getTags()
+}
 
 const idToDelete = ref(0)
 

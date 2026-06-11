@@ -88,6 +88,14 @@ function mapToTreeNode(folder: any): TreeNodeType {
 
 const treeData = computed(() => folders.value?.map(mapToTreeNode) || [])
 
+const foldersById = computed(() => {
+  const map = new Map<number, any>()
+  for (const folder of flattenFolders(folders.value || [])) {
+    map.set(folder.id, folder)
+  }
+  return map
+})
+
 const selectedIds = computed({
   get: () =>
     getVisibleSelectedFolderIds(
@@ -298,10 +306,8 @@ useDeleteShortcut({
               <template #icon="{ node }">
                 <div class="mr-1.5 flex flex-shrink-0 items-center">
                   <UiFolderIcon
-                    v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                    :name="
-                      getFolderByIdFromTree(folders, Number(node.id))!.icon!
-                    "
+                    v-if="foldersById.get(Number(node.id))?.icon"
+                    :name="foldersById.get(Number(node.id))!.icon!"
                   />
                   <Folder
                     v-else

@@ -1,5 +1,6 @@
 import type { ImportMarkdownFolderResponse } from '../../types/ipc'
 import { Buffer } from 'node:buffer'
+import { randomBytes } from 'node:crypto'
 import { extname, join, parse, relative } from 'node:path'
 import { BrowserWindow, dialog, ipcMain } from 'electron'
 import {
@@ -10,12 +11,19 @@ import {
   realpath,
   writeFileSync,
 } from 'fs-extra'
-import { nanoid } from 'nanoid'
 import slash from 'slash'
 import { ensureFlatSpacesLayout } from '../../storage/providers/markdown/runtime/spaces'
 import { store } from '../../store'
 
 const ASSETS_DIR = 'assets'
+
+// A short, URL- and filesystem-safe id for asset filenames. Uses the
+// built-in crypto module so the main process keeps no dependency on the
+// ESM-only nanoid, which cannot be `require`d from the compiled CommonJS
+// build.
+function generateAssetId() {
+  return randomBytes(12).toString('base64url')
+}
 
 async function readMarkdownFolder(
   rootPath: string,
@@ -96,7 +104,7 @@ export function registerFsHandlers() {
         const assetsPath = join(storagePath, ASSETS_DIR)
 
         const { ext } = parse(fileName)
-        const name = `${nanoid()}${ext}`
+        const name = `${generateAssetId()}${ext}`
         const dest = join(assetsPath, name)
 
         ensureDirSync(assetsPath)
@@ -122,7 +130,7 @@ export function registerFsHandlers() {
       try {
         ensureFlatSpacesLayout(vaultPath)
         const assetsPath = join(vaultPath, 'notes', 'assets')
-        const name = `${nanoid()}${ext}`
+        const name = `${generateAssetId()}${ext}`
         const dest = join(assetsPath, name)
 
         ensureDirSync(assetsPath)

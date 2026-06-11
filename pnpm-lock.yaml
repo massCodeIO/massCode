@@ -173,9 +173,6 @@ importers:
       mermaid:
         specifier: ^11.6.0
         version: 11.6.0
-      nanoid:
-        specifier: ^3.3.8
-        version: 3.3.8
       nearest-color:
         specifier: ^0.4.4
         version: 0.4.4

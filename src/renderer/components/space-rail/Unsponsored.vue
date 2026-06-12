@@ -95,7 +95,7 @@ function openDonatePage() {
 }
 
 onMounted(() => {
-  if (isSponsored || !labelRef.value) {
+  if (isSponsored.value || !labelRef.value) {
     return
   }
 

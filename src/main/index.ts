@@ -6,6 +6,7 @@ import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
+import { validateStoredLicense } from './license'
 import { createMainMenu } from './menu/main'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
@@ -223,6 +224,13 @@ else {
     }
     catch (error) {
       log('Error registering IPC', error)
+    }
+
+    try {
+      validateStoredLicense()
+    }
+    catch (error) {
+      log('Error validating stored license', error)
     }
 
     try {

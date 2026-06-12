@@ -38,6 +38,7 @@ type MainMenuAction =
 type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
+  | 'activate-license'
   | 'api-token-generate'
   | 'api-token-revoke'
   | 'currency-rates'

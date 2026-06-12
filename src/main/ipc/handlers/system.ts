@@ -9,6 +9,7 @@ import {
   refreshCryptoRatesForced,
   refreshFiatRatesForced,
 } from '../../currencyRates'
+import { activateLicense } from '../../license'
 import {
   getHttpPaths,
   getHttpRuntimeCache,
@@ -32,6 +33,10 @@ import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { store } from '../../store'
 
 export function registerSystemHandlers() {
+  ipcMain.handle('system:activate-license', (_, payload: { key: string }) => {
+    return activateLicense(payload.key)
+  })
+
   ipcMain.handle('system:api-token-generate', () => {
     return generateIntegrationToken()
   })

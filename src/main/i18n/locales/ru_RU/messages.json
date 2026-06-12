@@ -99,9 +99,7 @@
     "goToGitHub": "Открыть GitHub",
     "downloaded": "Обновление v{{version}} готово. Перезапустите massCode, чтобы применить его.",
     "restart": "Перезапустить",
-    "whatsNewAction": "Открыть настройки",
-    "whatsNewTitle": "Что нового в massCode",
-    "whatsNewBody": "Приложение теперь подписано и нотаризовано Apple, а обновления устанавливаются автоматически.\nСаппортерам: напоминания о донатах отключаются лицензионным ключом.",
-    "whatsNewDismiss": "Закрыть"
+    "whatsNewToast": "Узнайте, что нового в massCode v{{version}}",
+    "releaseNotes": "Release notes"
   }
 }

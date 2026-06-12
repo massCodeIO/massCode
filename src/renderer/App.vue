@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
-import WhatsNew from '@/components/ui/sonner/templates/WhatsNew.vue'
 import {
   useActivityTracker,
   useApp,
   useCopyTracker,
   useDonationTriggers,
+  useSonner,
   useTheme,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
@@ -16,7 +16,8 @@ import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
-import { toast, Toaster } from 'vue-sonner'
+import { Toaster } from 'vue-sonner'
+import { repository, version } from '../../package.json'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
@@ -71,20 +72,28 @@ watch(
 
 useTheme()
 
-// Одноразовое уведомление о подписи Apple, автообновлении и supporter-ключах.
-const WHATS_NEW_VERSION = '5.6.0'
-
+// Одноразовый тост после смены версии приложения; контент живёт в release notes.
 function showWhatsNewOnce() {
-  if (
-    store.app.get('notifications.lastWhatsNewVersion') === WHATS_NEW_VERSION
-  ) {
+  if (store.app.get('notifications.lastWhatsNewVersion') === version) {
     return
   }
 
-  store.app.set('notifications.lastWhatsNewVersion', WHATS_NEW_VERSION)
+  store.app.set('notifications.lastWhatsNewVersion', version)
 
-  toast.custom(markRaw(WhatsNew), {
-    duration: Infinity,
+  const { sonner } = useSonner()
+
+  sonner({
+    message: i18n.t('messages:update.whatsNewToast', { version }),
+    type: 'success',
+    action: {
+      label: i18n.t('messages:update.releaseNotes'),
+      onClick: () => {
+        ipc.invoke(
+          'system:open-external',
+          `${repository}/releases/tag/v${version}`,
+        )
+      },
+    },
   })
 }
 

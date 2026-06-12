@@ -93,6 +93,13 @@
   "release": {},
   "update": {
     "available": "Версия {{newVersion}} доступна для загрузки.\nВаша версия {{oldVersion}}.",
-    "noAvailable": "В настоящее время обновления недоступны."
+    "noAvailable": "В настоящее время обновления недоступны.",
+    "downloading": "Обновление v{{version}} скачивается в фоне. Когда оно будет готово, появится предложение перезапустить приложение.",
+    "availableToast": "Доступно обновление",
+    "goToGitHub": "Открыть GitHub",
+    "downloaded": "Обновление v{{version}} готово. Перезапустите massCode, чтобы применить его.",
+    "restart": "Перезапустить",
+    "whatsNewToast": "Узнайте, что нового в massCode v{{version}}",
+    "releaseNotes": "Release notes"
   }
 }

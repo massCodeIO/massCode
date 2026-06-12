@@ -14,10 +14,9 @@ import {
   type MenuItemConstructorOptions,
   shell,
 } from 'electron'
-import { repository } from '../../../package.json'
 import i18n from '../i18n'
 import { send } from '../ipc'
-import { fetchUpdates } from '../updates'
+import { checkForUpdatesFromMenu } from '../updates'
 import { createMenu, createPlatformMenuItems } from './utils'
 
 const year = new Date().getFullYear()
@@ -84,33 +83,7 @@ const appMenuItems: MenuConfig[] = [
   {
     id: 'update',
     label: i18n.t('menu:app.update'),
-    click: async () => {
-      const latestVersion = await fetchUpdates()
-
-      if (latestVersion) {
-        const buttonId = dialog.showMessageBoxSync(
-          BrowserWindow.getFocusedWindow()!,
-          {
-            message: i18n.t('messages:update.available', {
-              newVersion: latestVersion,
-              oldVersion: version,
-            }),
-            buttons: [i18n.t('button.update.0'), i18n.t('button.update.1')],
-            defaultId: 0,
-            cancelId: 1,
-          },
-        )
-
-        if (buttonId === 0) {
-          shell.openExternal(`${repository}/releases`)
-        }
-      }
-      else {
-        dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow()!, {
-          message: i18n.t('messages:update.noAvailable'),
-        })
-      }
-    },
+    click: () => checkForUpdatesFromMenu(),
   },
   {
     type: 'separator',

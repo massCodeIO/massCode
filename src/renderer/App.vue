@@ -5,6 +5,7 @@ import {
   useApp,
   useCopyTracker,
   useDonationTriggers,
+  useSonner,
   useTheme,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
@@ -16,6 +17,7 @@ import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
+import { repository, version } from '../../package.json'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
@@ -70,6 +72,31 @@ watch(
 
 useTheme()
 
+// Одноразовый тост после смены версии приложения; контент живёт в release notes.
+function showWhatsNewOnce() {
+  if (store.app.get('notifications.lastWhatsNewVersion') === version) {
+    return
+  }
+
+  store.app.set('notifications.lastWhatsNewVersion', version)
+
+  const { sonner } = useSonner()
+
+  sonner({
+    message: i18n.t('messages:update.whatsNewToast', { version }),
+    type: 'success',
+    action: {
+      label: i18n.t('messages:update.releaseNotes'),
+      onClick: () => {
+        ipc.invoke(
+          'system:open-external',
+          `${repository}/releases/tag/v${version}`,
+        )
+      },
+    },
+  })
+}
+
 function restoreSavedSpace() {
   const savedSpaceId = store.app.get<string>('activeSpaceId')
   if (savedSpaceId && savedSpaceId !== 'code') {
@@ -91,6 +118,7 @@ async function init() {
   if (!isSponsored.value) {
     useDonationTriggers()
   }
+  showWhatsNewOnce()
 }
 
 init()

@@ -11,6 +11,7 @@ export const RouterName = {
   preferencesMath: 'preferences/math',
   preferencesHttp: 'preferences/http',
   preferencesAPI: 'preferences/api',
+  preferencesUpdates: 'preferences/updates',
   preferencesSupporter: 'preferences/supporter',
   devtools: 'devtools',
   devtoolsCaseConverter: 'devtools/case-converter',
@@ -94,6 +95,11 @@ const routes = [
         path: 'api',
         name: RouterName.preferencesAPI,
         component: () => import('@/components/preferences/API.vue'),
+      },
+      {
+        path: 'updates',
+        name: RouterName.preferencesUpdates,
+        component: () => import('@/components/preferences/Updates.vue'),
       },
       {
         path: 'supporter',

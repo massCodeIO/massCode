@@ -209,5 +209,15 @@
       "action": "Request a key",
       "description": "If you have ever donated to massCode through any channel, send any proof of donation by email and you will receive a key."
     }
+  },
+  "updates": {
+    "label": "Updates",
+    "autoUpdate": {
+      "label": "Automatic updates",
+      "description": "Download updates in the background and install them on restart. When disabled, massCode only notifies you about new versions. Major versions are never installed automatically."
+    },
+    "version": {
+      "label": "Current version"
+    }
   }
 }

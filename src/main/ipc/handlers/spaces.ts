@@ -9,6 +9,7 @@ import {
   renameDrawing,
   writeDrawing,
 } from '../../storage/providers/markdown/drawings'
+import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import {
   ensureSpaceDirectory,
   getSpaceStatePath,
@@ -18,10 +19,6 @@ import {
   writeSpaceState,
 } from '../../storage/providers/markdown/runtime/spaceState'
 import { store } from '../../store'
-
-function getVaultPath(): string | null {
-  return store.preferences.get('storage.vaultPath') as string | null
-}
 
 export function registerSpacesHandlers() {
   ipcMain.handle('spaces:math:read', () => {

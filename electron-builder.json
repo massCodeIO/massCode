@@ -11,8 +11,13 @@
     "build/shared/**/*",
     "!build/**/*.map"
   ],
+  "publish": {
+    "provider": "github",
+    "owner": "massCodeIO",
+    "repo": "massCode"
+  },
   "mac": {
-    "target": "dmg",
+    "target": ["dmg", "zip"],
     "icon": "build/icons/icon.icns",
     "entitlements": "build/entitlements.mac.inherit.plist",
     "category": "public.app-category.productivity",

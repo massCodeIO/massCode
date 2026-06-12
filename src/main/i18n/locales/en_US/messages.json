@@ -98,6 +98,13 @@
   "release": {},
   "update": {
     "available": "Version {{newVersion}} is now available for download.\nYour version is {{oldVersion}}.",
-    "noAvailable": "There are currently no updates available."
+    "noAvailable": "There are currently no updates available.",
+    "downloading": "Update v{{version}} is downloading in the background. You will be prompted to restart when it is ready.",
+    "availableToast": "Update available",
+    "goToGitHub": "Go to GitHub",
+    "downloaded": "Update v{{version}} is ready. Restart massCode to apply it.",
+    "restart": "Restart",
+    "whatsNew": "massCode is now signed and notarized by Apple and updates automatically. Supporters: donation prompts can be turned off with a license key in Preferences.",
+    "whatsNewAction": "Open Preferences"
   }
 }

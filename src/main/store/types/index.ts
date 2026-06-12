@@ -147,6 +147,7 @@ export interface AppStore {
   }
   notifications: {
     lastNotifiedUpdateVersion: string
+    lastWhatsNewVersion: string
   }
   license: {
     key: string | null
@@ -214,10 +215,15 @@ export interface HttpSettings {
   skipCertificateVerification: boolean
 }
 
+export interface UpdatesSettings {
+  autoUpdate: boolean
+}
+
 export interface PreferencesStore {
   appearance: {
     theme: string
   }
+  updates: UpdatesSettings
   localization: {
     locale: string
   }

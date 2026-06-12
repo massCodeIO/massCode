@@ -5,6 +5,7 @@ import {
   useApp,
   useCopyTracker,
   useDonationTriggers,
+  useSonner,
   useTheme,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
@@ -70,6 +71,32 @@ watch(
 
 useTheme()
 
+// Одноразовое уведомление о подписи Apple, автообновлении и supporter-ключах.
+const WHATS_NEW_VERSION = '5.6.0'
+
+function showWhatsNewOnce() {
+  if (
+    store.app.get('notifications.lastWhatsNewVersion') === WHATS_NEW_VERSION
+  ) {
+    return
+  }
+
+  store.app.set('notifications.lastWhatsNewVersion', WHATS_NEW_VERSION)
+
+  const { sonner } = useSonner()
+
+  sonner({
+    message: i18n.t('messages:update.whatsNew'),
+    type: 'success',
+    action: {
+      label: i18n.t('messages:update.whatsNewAction'),
+      onClick: () => {
+        router.push({ name: RouterName.preferencesSupporter })
+      },
+    },
+  })
+}
+
 function restoreSavedSpace() {
   const savedSpaceId = store.app.get<string>('activeSpaceId')
   if (savedSpaceId && savedSpaceId !== 'code') {
@@ -91,6 +118,7 @@ async function init() {
   if (!isSponsored.value) {
     useDonationTriggers()
   }
+  showWhatsNewOnce()
 }
 
 init()

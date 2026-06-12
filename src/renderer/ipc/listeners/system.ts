@@ -142,12 +142,27 @@ export function registerSystemListeners() {
 
   ipc.on('system:update-available', () => {
     sonner({
-      message: 'Update available',
+      message: i18n.t('messages:update.availableToast'),
       type: 'success',
       action: {
-        label: 'Go to GitHub',
+        label: i18n.t('messages:update.goToGitHub'),
         onClick: () => {
           ipc.invoke('system:open-external', `${repository}/releases`)
+        },
+      },
+    })
+  })
+
+  ipc.on('system:update-downloaded', (_, payload: { version: string }) => {
+    sonner({
+      message: i18n.t('messages:update.downloaded', {
+        version: payload.version,
+      }),
+      type: 'success',
+      action: {
+        label: i18n.t('messages:update.restart'),
+        onClick: () => {
+          ipc.invoke('system:install-update', null)
         },
       },
     })

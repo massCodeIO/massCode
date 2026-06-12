@@ -68,6 +68,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   },
   notifications: {
     lastNotifiedUpdateVersion: '',
+    lastWhatsNewVersion: '',
   },
   license: {
     key: null,
@@ -648,6 +649,10 @@ function sanitizeAppStore(value: unknown): AppStore {
           : typeof source.lastNotifiedUpdateVersion === 'string'
             ? source.lastNotifiedUpdateVersion
             : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
+      lastWhatsNewVersion:
+        typeof notificationsSource.lastWhatsNewVersion === 'string'
+          ? notificationsSource.lastWhatsNewVersion
+          : APP_STORE_DEFAULTS.notifications.lastWhatsNewVersion,
     },
     license: (() => {
       const licenseSource = asRecord(source.license)

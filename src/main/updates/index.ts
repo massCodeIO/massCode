@@ -1,113 +1,25 @@
-/* eslint-disable node/prefer-global/process */
+import { app, dialog, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { repository, version } from '../../../package.json'
+import i18n from '../i18n'
 import { send } from '../ipc'
 import { store } from '../store'
-
-interface GitHubRelease {
-  tag_name: string
-}
+import { log } from '../utils'
 
 const INTERVAL = 1000 * 60 * 60 * 3 // 3 часа
-const isDev = process.env.NODE_ENV === 'development'
-const currentVersionParts = parseVersion(version)!
-const currentMajorVersion = currentVersionParts[0]
+const currentMajorVersion = Number.parseInt(version.split('.')[0], 10)
 
-function parseVersion(rawVersion: string): [number, number, number] | null {
-  const normalizedVersion = rawVersion.trim().replace(/^v/, '')
-  const match = normalizedVersion.match(/^(\d+)\.(\d+)\.(\d+)$/)
-
-  if (!match) {
-    return null
-  }
-
-  return [
-    Number.parseInt(match[1], 10),
-    Number.parseInt(match[2], 10),
-    Number.parseInt(match[3], 10),
-  ]
+function getMajorVersion(rawVersion: string) {
+  return Number.parseInt(rawVersion.replace(/^v/, '').split('.')[0], 10)
 }
 
-function compareVersions(
-  left: [number, number, number],
-  right: [number, number, number],
-): 1 | -1 | 0 {
-  for (let i = 0; i < 3; i += 1) {
-    if (left[i] === right[i]) {
-      continue
-    }
-
-    return left[i] > right[i] ? 1 : -1
-  }
-
-  return 0
-}
-
-function getLatestReleaseVersion(releases: GitHubRelease[]) {
-  let latestParsedVersion: [number, number, number] | null = null
-
-  for (const release of releases) {
-    const parsedVersion = parseVersion(release.tag_name)
-    if (!parsedVersion || parsedVersion[0] !== currentMajorVersion) {
-      continue
-    }
-
-    if (
-      !latestParsedVersion
-      || compareVersions(parsedVersion, latestParsedVersion) > 0
-    ) {
-      latestParsedVersion = parsedVersion
-    }
-  }
-
-  return latestParsedVersion?.join('.')
-}
-
-function isNewerVersion(versionToCompare: string) {
-  const parsedVersion = parseVersion(versionToCompare)
-  if (!parsedVersion) {
-    return false
-  }
-
-  return compareVersions(parsedVersion, currentVersionParts) > 0
-}
-
-export async function fetchUpdates() {
-  if (isDev) {
-    return
-  }
-
-  try {
-    const url = `${repository.replace('github.com', 'api.github.com/repos')}/releases`
-
-    const response = await fetch(url)
-    if (!response.ok) {
-      return
-    }
-
-    const data = (await response.json()) as GitHubRelease[]
-    if (!Array.isArray(data) || data.length === 0) {
-      return
-    }
-
-    const latestVersion = getLatestReleaseVersion(data)
-    if (latestVersion && isNewerVersion(latestVersion)) {
-      return latestVersion
-    }
-  }
-  catch (err) {
-    console.error('Error checking for updates:', err)
-  }
-}
-
-async function notifyAboutUpdate() {
-  const latestVersion = await fetchUpdates()
-  if (!latestVersion) {
-    return
-  }
-
+// Уведомление без установки: для выключенного автообновления и нового мажора,
+// который требует осознанного перехода (миграция vault).
+function notifyAboutUpdate(latestVersion: string) {
   const lastNotifiedVersion = store.app.get(
     'notifications.lastNotifiedUpdateVersion',
   )
+
   if (lastNotifiedVersion === latestVersion) {
     return
   }
@@ -116,10 +28,108 @@ async function notifyAboutUpdate() {
   store.app.set('notifications.lastNotifiedUpdateVersion', latestVersion)
 }
 
+async function runUpdateCheck() {
+  try {
+    await autoUpdater.checkForUpdates()
+  }
+  catch (error) {
+    log('Error checking for updates', error)
+  }
+}
+
+export function installDownloadedUpdate() {
+  autoUpdater.quitAndInstall()
+}
+
+// Ручная проверка из меню. Скачивание при необходимости запустит глобальный
+// обработчик 'update-available', здесь только диалоги.
+export async function checkForUpdatesFromMenu() {
+  function showNoUpdatesDialog() {
+    dialog.showMessageBoxSync({
+      message: i18n.t('messages:update.noAvailable'),
+    })
+  }
+
+  if (!app.isPackaged) {
+    showNoUpdatesDialog()
+    return
+  }
+
+  try {
+    const result = await autoUpdater.checkForUpdates()
+
+    if (!result?.isUpdateAvailable) {
+      showNoUpdatesDialog()
+      return
+    }
+
+    const latestVersion = result.updateInfo.version
+    const isAutoUpdateEnabled = store.preferences.get('updates.autoUpdate')
+    const isSameMajor = getMajorVersion(latestVersion) === currentMajorVersion
+
+    if (isAutoUpdateEnabled && isSameMajor) {
+      dialog.showMessageBoxSync({
+        message: i18n.t('messages:update.downloading', {
+          version: latestVersion,
+        }),
+      })
+      return
+    }
+
+    const buttonId = dialog.showMessageBoxSync({
+      message: i18n.t('messages:update.available', {
+        newVersion: latestVersion,
+        oldVersion: version,
+      }),
+      buttons: [i18n.t('button.update.0'), i18n.t('button.update.1')],
+      defaultId: 0,
+      cancelId: 1,
+    })
+
+    if (buttonId === 0) {
+      void shell.openExternal(`${repository}/releases`)
+    }
+  }
+  catch (error) {
+    log('Error checking for updates', error)
+    showNoUpdatesDialog()
+  }
+}
+
 export function checkForUpdates() {
-  void notifyAboutUpdate()
+  if (!app.isPackaged) {
+    return
+  }
+
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = true
+  autoUpdater.logger = null
+
+  autoUpdater.on('update-available', (info) => {
+    const isAutoUpdateEnabled = store.preferences.get('updates.autoUpdate')
+    const isSameMajor = getMajorVersion(info.version) === currentMajorVersion
+
+    if (!isAutoUpdateEnabled || !isSameMajor) {
+      notifyAboutUpdate(info.version)
+      return
+    }
+
+    autoUpdater.downloadUpdate().catch((error) => {
+      log('Error downloading update', error)
+    })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    send('system:update-downloaded', { version: info.version })
+  })
+
+  autoUpdater.on('error', (error) => {
+    log('Auto-update error', error)
+  })
+
+  void runUpdateCheck()
 
   setInterval(() => {
-    void notifyAboutUpdate()
+    void runUpdateCheck()
   }, INTERVAL)
 }

@@ -45,6 +45,9 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
     theme: 'auto',
   },
+  updates: {
+    autoUpdate: true,
+  },
   localization: {
     locale: 'en_US',
   },
@@ -263,6 +266,12 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'theme',
         readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
       ),
+    },
+    updates: {
+      autoUpdate:
+        typeof asRecord(source.updates).autoUpdate === 'boolean'
+          ? Boolean(asRecord(source.updates).autoUpdate)
+          : PREFERENCES_DEFAULTS.updates.autoUpdate,
     },
     localization: {
       locale: readString(

@@ -223,24 +223,6 @@ pnpm dev
 
 </details>
 
-## Troubleshooting
-
-<details>
-<summary>macOS: "massCode is damaged and can't be opened"</summary>
-
-This is caused by macOS security settings. Fix it with:
-
-**Option 1: System Settings (macOS 13+)**
-1. Open **System Settings** -> **Privacy & Security**
-2. Find "massCode" and click **Allow Anyway**
-
-**Option 2: Terminal**
-```bash
-sudo xattr -r -d com.apple.quarantine /Applications/massCode.app
-```
-
-</details>
-
 ## Follow
 
 - News and updates on [X](https://x.com/anton_reshetov)

@@ -104,7 +104,9 @@
     "goToGitHub": "Go to GitHub",
     "downloaded": "Update v{{version}} is ready. Restart massCode to apply it.",
     "restart": "Restart",
-    "whatsNew": "massCode is now signed and notarized by Apple and updates automatically. Supporters: donation prompts can be turned off with a license key in Preferences.",
-    "whatsNewAction": "Open Preferences"
+    "whatsNewAction": "Open Preferences",
+    "whatsNewTitle": "What's new in massCode",
+    "whatsNewBody": "The app is now signed and notarized by Apple, and updates install automatically.\nSupporters: donation prompts can be turned off with a license key.",
+    "whatsNewDismiss": "Dismiss"
   }
 }

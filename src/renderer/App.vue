@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import * as Tooltip from '@/components/ui/shadcn/tooltip'
+import WhatsNew from '@/components/ui/sonner/templates/WhatsNew.vue'
 import {
   useActivityTracker,
   useApp,
   useCopyTracker,
   useDonationTriggers,
-  useSonner,
   useTheme,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
@@ -16,7 +16,7 @@ import { LoaderCircle } from 'lucide-vue-next'
 import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
-import { Toaster } from 'vue-sonner'
+import { toast, Toaster } from 'vue-sonner'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
 
@@ -83,17 +83,8 @@ function showWhatsNewOnce() {
 
   store.app.set('notifications.lastWhatsNewVersion', WHATS_NEW_VERSION)
 
-  const { sonner } = useSonner()
-
-  sonner({
-    message: i18n.t('messages:update.whatsNew'),
-    type: 'success',
-    action: {
-      label: i18n.t('messages:update.whatsNewAction'),
-      onClick: () => {
-        router.push({ name: RouterName.preferencesSupporter })
-      },
-    },
+  toast.custom(markRaw(WhatsNew), {
+    duration: Infinity,
   })
 }
 

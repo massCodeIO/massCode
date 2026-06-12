@@ -5,8 +5,10 @@ description: "Support massCode development through Open Collective, Gumroad, or 
 
 # Support massCode development
 
-::: info
-Everyone who donated will get a special version without the "Unsponsored" label in the lower-left corner of the space rail, as well as a pop-up notification of the donation.
+::: info Supporter license
+After donating, email [reshetov.art@gmail.com](mailto:reshetov.art@gmail.com) with proof of your donation and I will send you a supporter license key. Enter it in **Preferences > Supporter** to unlock supporter status and remove the "Unsponsored" label from the lower-left corner of the space rail. Your email is the license identifier.
+
+This applies to past donations too. If you have donated before, email me with proof and I will issue your key.
 :::
 
 massCode is free and open source. But building and maintaining a quality tool takes time. Your support helps keep development going and new features coming.

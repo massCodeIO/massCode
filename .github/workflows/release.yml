@@ -46,6 +46,14 @@ jobs:
           node-version: 24.14.1
           cache: pnpm
 
+      # node-gyp внутри electron-builder требует Python с distutils (< 3.12)
+      # для кросс-архитектурной пересборки нативных модулей.
+      - name: Setup Python for node-gyp (macOS)
+        if: matrix.platform == 'mac'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install dependencies
         run: pnpm install
 

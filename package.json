@@ -17,7 +17,7 @@
     "dev:main": "nodemon",
     "dev:start": "wait-on tcp:5177 build/main/index.js && cross-env NODE_ENV=development DEV_PORT=5177 electronmon .",
     "build": "vite build && npm run build:main && electron-builder",
-    "build:mac": "vite build && npm run build:main && npm run build:mac:x64 && npm run build:mac:arm64",
+    "build:mac": "vite build && npm run build:main && electron-builder --mac --x64 --arm64",
     "build:mac:x64": "vite build && npm run build:main && electron-builder --mac --x64",
     "build:mac:arm64": "vite build && npm run build:main && electron-builder --mac --arm64",
     "build:win": "vite build && npm run build:main && electron-builder --win --x64",

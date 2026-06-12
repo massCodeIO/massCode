@@ -20,12 +20,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-15-intel
-            platform: mac
-            arch: x64
+          # Обе архитектуры macOS собираются одной джобой: раздельные джобы
+          # затирали latest-mac.yml друг друга, ломая автообновление.
           - os: macos-15
             platform: mac
-            arch: arm64
           - os: windows-latest
             platform: win
           - os: ubuntu-latest
@@ -51,17 +49,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Rebuild native dependencies (macOS)
-        if: matrix.platform == 'mac'
-        run: pnpm run rebuild --arch ${{ matrix.arch }}
-
-      - name: Rebuild native dependencies (other platforms)
-        if: matrix.platform != 'mac'
+      - name: Rebuild native dependencies
         run: pnpm run rebuild
 
       - name: Build application (macOS)
         if: matrix.platform == 'mac'
-        run: pnpm run build:${{ matrix.platform }}:${{ matrix.arch }}
+        run: pnpm run build:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -79,15 +72,15 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: masscode-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name || inputs.tag }}
+          name: masscode-${{ matrix.platform }}-${{ github.ref_name || inputs.tag }}
           path: |
             dist/*.dmg
+            dist/*.zip
             dist/*.pkg
             dist/*.exe
             dist/*.msi
             dist/*.AppImage
             dist/*.snap
-            !dist/*-sponsored.*
             !dist/*.yml
             !dist/*.blockmap
           if-no-files-found: warn

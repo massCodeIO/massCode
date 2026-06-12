@@ -5,13 +5,13 @@
  * не должен попадать в репозиторий. Публичный ключ выводится в stdout —
  * его нужно вшить в src/main/license/index.ts (LICENSE_PUBLIC_KEY).
  *
- * Запуск: node scripts/license/keygen.js
+ * Запуск: bun scripts/license/keygen.ts
  */
-const { generateKeyPairSync } = require('node:crypto')
-const fs = require('node:fs')
-const os = require('node:os')
-const path = require('node:path')
-const process = require('node:process')
+import { generateKeyPairSync } from 'node:crypto'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
 
 const privateKeyDir = path.join(os.homedir(), '.masscode')
 const privateKeyPath = path.join(privateKeyDir, 'license-private.pem')

@@ -3,18 +3,18 @@
  *
  * Запуск: pnpm license:issue --name "John Doe" [--email john@example.com]
  */
-const { Buffer } = require('node:buffer')
-const { createPrivateKey, sign } = require('node:crypto')
-const fs = require('node:fs')
-const os = require('node:os')
-const path = require('node:path')
-const process = require('node:process')
+import { Buffer } from 'node:buffer'
+import { createPrivateKey, sign } from 'node:crypto'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
 
 const privateKeyPath
   = process.env.MASSCODE_LICENSE_PRIVATE_KEY
     || path.join(os.homedir(), '.masscode', 'license-private.pem')
 
-function getArg(name) {
+function getArg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`)
   if (index === -1 || index === process.argv.length - 1) {
     return undefined
@@ -34,7 +34,7 @@ if (!name) {
 
 if (!fs.existsSync(privateKeyPath)) {
   console.error(`Private key not found: ${privateKeyPath}`)
-  console.error('Run "node scripts/license/keygen.js" first.')
+  console.error('Run "bun scripts/license/keygen.ts" first.')
   process.exit(1)
 }
 

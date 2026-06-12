@@ -26,7 +26,7 @@
     "build:main": "npm run i18n:copy && tsc -p tsconfig.main.json",
     "api:generate": "node scripts/api-generate.js",
     "i18n:copy": "node scripts/i18n/copy-locales.js",
-    "license:issue": "node scripts/license/issue.js",
+    "license:issue": "bun scripts/license/issue.ts",
     "i18n:check": "node scripts/i18n/check-locale-parity.mjs",
     "bench:load-test": "node scripts/bench-load-test.js",
     "bench:seed": "node scripts/bench-seed.js",

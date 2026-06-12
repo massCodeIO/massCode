@@ -1,7 +1,7 @@
 /**
  * Выпуск supporter-лицензии, подписанной приватным ключом Ed25519.
  *
- * Запуск: pnpm license:issue --name "John Doe" [--email john@example.com]
+ * Запуск: pnpm license:issue --email john@example.com [--name "John Doe"]
  */
 const { Buffer } = require('node:buffer')
 const { createPrivateKey, sign } = require('node:crypto')
@@ -25,9 +25,9 @@ function getArg(name) {
 const name = getArg('name')
 const email = getArg('email')
 
-if (!name) {
+if (!email) {
   console.error(
-    'Usage: pnpm license:issue --name "John Doe" [--email john@example.com]',
+    'Usage: pnpm license:issue --email john@example.com [--name "John Doe"]',
   )
   process.exit(1)
 }
@@ -41,8 +41,8 @@ if (!fs.existsSync(privateKeyPath)) {
 const privateKey = createPrivateKey(fs.readFileSync(privateKeyPath))
 
 const payload = {
-  name,
-  ...(email ? { email } : {}),
+  email,
+  ...(name ? { name } : {}),
   issuedAt: new Date().toISOString().slice(0, 10),
 }
 

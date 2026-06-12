@@ -151,6 +151,7 @@ export interface AppStore {
   license: {
     key: string | null
     name: string | null
+    email: string | null
   }
   commandPalette: {
     recent: CommandPaletteRecentEntry[]

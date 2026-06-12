@@ -14,14 +14,15 @@ const publicKey = createPublicKey({
 })
 
 export interface LicensePayload {
-  name: string
-  email?: string
+  email: string
+  name?: string
   issuedAt?: string
 }
 
 export interface LicenseStatus {
   active: boolean
   name: string | null
+  email: string | null
 }
 
 export function verifyLicenseKey(key: string): LicensePayload | null {
@@ -47,7 +48,7 @@ export function verifyLicenseKey(key: string): LicensePayload | null {
       Buffer.from(payloadBase64, 'base64url').toString('utf8'),
     )
 
-    if (typeof payload?.name !== 'string') {
+    if (typeof payload?.email !== 'string') {
       return null
     }
 
@@ -62,12 +63,18 @@ export function activateLicense(key: string): LicenseStatus {
   const payload = verifyLicenseKey(key)
 
   if (!payload) {
-    return { active: false, name: null }
+    return { active: false, name: null, email: null }
   }
 
-  store.app.set('license', { key: key.trim(), name: payload.name })
+  const name = payload.name ?? null
 
-  return { active: true, name: payload.name }
+  store.app.set('license', {
+    key: key.trim(),
+    name,
+    email: payload.email,
+  })
+
+  return { active: true, name, email: payload.email }
 }
 
 // Страховка от ручной правки store-файла: невалидный ключ сбрасывается.
@@ -75,6 +82,6 @@ export function validateStoredLicense() {
   const key = store.app.get('license.key')
 
   if (typeof key === 'string' && key && !verifyLicenseKey(key)) {
-    store.app.set('license', { key: null, name: null })
+    store.app.set('license', { key: null, name: null, email: null })
   }
 }

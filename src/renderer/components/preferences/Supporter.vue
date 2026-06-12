@@ -6,6 +6,7 @@ import { i18n, ipc, store } from '@/electron'
 interface ActivateLicenseResult {
   active: boolean
   name: string | null
+  email: string | null
 }
 
 const SUPPORT_EMAIL = 'reshetov.art@gmail.com'
@@ -17,6 +18,17 @@ const licenseKey = ref('')
 const supporterName = ref<string | null>(
   store.app.get('license.name') as string | null,
 )
+const supporterEmail = ref<string | null>(
+  store.app.get('license.email') as string | null,
+)
+
+const supporterLabel = computed(() => {
+  if (supporterName.value && supporterEmail.value) {
+    return `${supporterName.value} (${supporterEmail.value})`
+  }
+
+  return supporterName.value || supporterEmail.value
+})
 
 async function activateLicense() {
   const key = licenseKey.value.trim()
@@ -39,6 +51,7 @@ async function activateLicense() {
 
   isSponsored.value = true
   supporterName.value = result.name
+  supporterEmail.value = result.email
   licenseKey.value = ''
 
   sonner({
@@ -68,9 +81,9 @@ function requestKeyByEmail() {
           variant="base"
         >
           {{
-            supporterName
+            supporterLabel
               ? i18n.t("preferences:supporter.status.activeFor", {
-                name: supporterName,
+                name: supporterLabel,
               })
               : i18n.t("preferences:supporter.status.active")
           }}

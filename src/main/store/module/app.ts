@@ -72,6 +72,7 @@ const APP_STORE_DEFAULTS: AppStore = {
   license: {
     key: null,
     name: null,
+    email: null,
   },
   commandPalette: {
     recent: [],
@@ -659,6 +660,10 @@ function sanitizeAppStore(value: unknown): AppStore {
         name:
           typeof licenseSource.name === 'string' && licenseSource.name
             ? licenseSource.name
+            : null,
+        email:
+          typeof licenseSource.email === 'string' && licenseSource.email
+            ? licenseSource.email
             : null,
       }
     })(),

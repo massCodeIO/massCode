@@ -125,7 +125,7 @@
     },
     "decimalPlaces": {
       "label": "Decimal Places",
-      "description": "Maximum decimal places in results (0\u201314)."
+      "description": "Maximum decimal places in results (0–14)."
     },
     "dateFormat": {
       "label": "Date Format",
@@ -188,6 +188,26 @@
         "generate": "Generate token",
         "revoke": "Revoke token"
       }
+    }
+  },
+  "supporter": {
+    "label": "Supporter",
+    "status": {
+      "label": "Status",
+      "active": "Supporter license is active.",
+      "activeFor": "Supporter license is active for {name}.",
+      "description": "Thank you for supporting massCode! Donation prompts are turned off."
+    },
+    "key": {
+      "label": "License key",
+      "placeholder": "Paste your supporter key",
+      "activate": "Activate",
+      "description": "Paste the key you received after donating. Activation works offline and removes donation prompts."
+    },
+    "request": {
+      "label": "No key yet?",
+      "action": "Request a key",
+      "description": "If you have ever donated to massCode through any channel, send any proof of donation by email and you will receive a key."
     }
   }
 }

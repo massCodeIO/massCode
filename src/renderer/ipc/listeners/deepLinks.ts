@@ -15,8 +15,10 @@ import {
   useNotesApp,
   useNotesSpaceInitialization,
   useSnippets,
+  useSonner,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
+import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { api } from '@/services/api'
 
@@ -349,8 +351,43 @@ export async function navigateForward(): Promise<void> {
   await restoreNavigationTarget(target)
 }
 
+async function activateLicenseFromDeepLink(key: string): Promise<void> {
+  const { sonner } = useSonner()
+  const { isSponsored } = useApp()
+
+  const result = (await ipc.invoke('system:activate-license', { key })) as {
+    active: boolean
+    name: string | null
+  }
+
+  if (!result.active) {
+    sonner({
+      message: i18n.t('messages:error.licenseInvalid'),
+      type: 'error',
+    })
+    return
+  }
+
+  isSponsored.value = true
+
+  sonner({
+    message: i18n.t('messages:success.licenseActivated'),
+    type: 'success',
+  })
+}
+
 export async function handleDeepLink(url: string): Promise<void> {
   const parsed = new URL(url)
+
+  if (parsed.hostname === 'activate') {
+    const key = parsed.searchParams.get('key')
+
+    if (key) {
+      await activateLicenseFromDeepLink(key)
+    }
+
+    return
+  }
 
   if (parsed.hostname === 'drawing') {
     const drawingId = decodeURIComponent(

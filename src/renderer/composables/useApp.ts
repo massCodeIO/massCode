@@ -7,7 +7,7 @@ import {
   type LayoutMode,
 } from './layoutModes'
 
-const isSponsored = import.meta.env.VITE_SPONSORED === 'true'
+const isSponsored = ref(Boolean(store.app.get('license.key')))
 
 const stateSnapshots = reactive<Record<StateAction, SavedState>>({
   beforeSearch: {},

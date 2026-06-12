@@ -148,6 +148,10 @@ export interface AppStore {
   notifications: {
     lastNotifiedUpdateVersion: string
   }
+  license: {
+    key: string | null
+    name: string | null
+  }
   commandPalette: {
     recent: CommandPaletteRecentEntry[]
     usage: CommandPaletteUsageEntry[]

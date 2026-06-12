@@ -1,5 +1,6 @@
 import type { SpaceId } from '~/main/store/types'
 import Donate from '@/components/ui/sonner/templates/Donate.vue'
+import { useApp } from '@/composables/useApp'
 import { useDonations } from '@/composables/useDonations'
 import { i18n } from '@/electron'
 import { toast } from 'vue-sonner'
@@ -60,7 +61,9 @@ export function useDonationTriggers() {
   } = useDonations()
 
   function showToast(title: string) {
-    if (isToastVisible.value) {
+    const { isSponsored } = useApp()
+
+    if (isSponsored.value || isToastVisible.value) {
       return
     }
     isToastVisible.value = true

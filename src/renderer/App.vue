@@ -88,7 +88,7 @@ async function init() {
   await loadGrammars()
   useActivityTracker()
   useCopyTracker()
-  if (!isSponsored) {
+  if (!isSponsored.value) {
     useDonationTriggers()
   }
 }

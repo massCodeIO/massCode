@@ -69,6 +69,10 @@ const APP_STORE_DEFAULTS: AppStore = {
   notifications: {
     lastNotifiedUpdateVersion: '',
   },
+  license: {
+    key: null,
+    name: null,
+  },
   commandPalette: {
     recent: [],
     usage: [],
@@ -644,6 +648,20 @@ function sanitizeAppStore(value: unknown): AppStore {
             ? source.lastNotifiedUpdateVersion
             : APP_STORE_DEFAULTS.notifications.lastNotifiedUpdateVersion,
     },
+    license: (() => {
+      const licenseSource = asRecord(source.license)
+
+      return {
+        key:
+          typeof licenseSource.key === 'string' && licenseSource.key
+            ? licenseSource.key
+            : null,
+        name:
+          typeof licenseSource.name === 'string' && licenseSource.name
+            ? licenseSource.name
+            : null,
+      }
+    })(),
     commandPalette: {
       recent: sanitizeCommandPaletteRecent(commandPaletteSource.recent),
       usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),

@@ -14,5 +14,6 @@ auto-imports.d.ts
 .env.*
 electron-builder.env
 docs/superpowers
+docs/releases
 docs/website/.vitepress/cache
 docs/website/.vitepress/dist

@@ -195,7 +195,7 @@
     "status": {
       "label": "Status",
       "active": "Supporter license is active.",
-      "activeFor": "Supporter license is active for {name}.",
+      "activeFor": "Supporter license is active for {{name}}.",
       "description": "Thank you for supporting massCode! Donation prompts are turned off."
     },
     "key": {

@@ -170,6 +170,30 @@ describe('preferences store sanitization', () => {
     ).toBeUndefined()
   })
 
+  it('keeps persisted sqliteMigrated flag and defaults it to false', async () => {
+    persistedStateByName.preferences = {
+      storage: {
+        sqliteMigrated: true,
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('storage.sqliteMigrated' as any)).toBe(true)
+  })
+
+  it('defaults sqliteMigrated to false for invalid or missing value', async () => {
+    persistedStateByName.preferences = {
+      storage: {
+        sqliteMigrated: 'bad',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('storage.sqliteMigrated' as any)).toBe(false)
+  })
+
   it('keeps persisted http settings and prunes stale values', async () => {
     persistedStateByName.preferences = {
       http: {

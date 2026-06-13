@@ -58,6 +58,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   storage: {
     rootPath: storagePath,
     vaultPath: null,
+    sqliteMigrated: false,
   },
   editor: {
     code: EDITOR_DEFAULTS,
@@ -307,6 +308,10 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         'vaultPath',
         PREFERENCES_DEFAULTS.storage.vaultPath,
       ),
+      sqliteMigrated:
+        typeof storageSource.sqliteMigrated === 'boolean'
+          ? storageSource.sqliteMigrated
+          : PREFERENCES_DEFAULTS.storage.sqliteMigrated,
     },
     editor: {
       code: sanitizeCodeEditorSettings(codeEditorSource),

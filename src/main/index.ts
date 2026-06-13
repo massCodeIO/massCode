@@ -8,6 +8,7 @@ import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
 import { createMainMenu } from './menu/main'
+import { isQuitting, setQuitting } from './quitState'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
@@ -24,7 +25,6 @@ const WINDOW_BOUNDS_SAVE_DELAY = 250
 
 let mainWindow: BrowserWindow
 let saveWindowBoundsTimer: ReturnType<typeof setTimeout> | null = null
-let isQuitting = false
 let migrationResult: {
   folders: number
   snippets: number
@@ -117,7 +117,7 @@ function createWindow() {
   mainWindow.on('close', (event) => {
     flushWindowBoundsSave()
 
-    if (process.platform === 'darwin' && !isQuitting) {
+    if (process.platform === 'darwin' && !isQuitting()) {
       event.preventDefault()
       mainWindow.hide()
       return
@@ -267,7 +267,7 @@ else {
   })
 
   app.on('before-quit', () => {
-    isQuitting = true
+    setQuitting(true)
     flushWindowBoundsSave()
     stopThemeWatcher()
     stopMarkdownWatcher()

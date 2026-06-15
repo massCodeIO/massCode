@@ -68,6 +68,20 @@ async function loadDrawingsList() {
   drawings.value = Array.isArray(items) ? items : []
 }
 
+// Полный сброс состояния space при смене vault: очищаем список, активный
+// рисунок и кеши, иначе после переключения остаётся список старого vault,
+// так как init() выходит рано из-за уже взведённого initialized.
+function resetDrawings() {
+  drawings.value = []
+  activeDrawingId.value = null
+  activeDrawingContent.value = null
+  drawingViewports.value = {}
+  initialized = false
+  lastSavedContent = null
+  loadContentToken += 1
+  pendingContentByDrawingId.clear()
+}
+
 async function loadActiveDrawingContent() {
   const id = activeDrawingId.value
 
@@ -392,6 +406,7 @@ export function useDrawings() {
     imageExportRequest,
     init,
     markDrawingsStale,
+    resetDrawings,
     reloadFromDisk,
     selectDrawing,
     openDrawing,

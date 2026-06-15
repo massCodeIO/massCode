@@ -9,6 +9,7 @@ import {
   resetHttpSpaceState,
   resetNotesSpaceInitialization,
   useDialog,
+  useDrawings,
   useFolders,
   useHttpEnvironments,
   useHttpFolders,
@@ -45,6 +46,7 @@ const { getHttpRequests } = useHttpRequests()
 const { getHttpEnvironments } = useHttpEnvironments()
 const { getHttpHistory } = useHttpHistory()
 const { reset: resetMathNotebook } = useMathNotebook()
+const { resetDrawings } = useDrawings()
 const { resetNoteFoldersState } = useNoteFolders()
 const { clearNotesState, getNotes } = useNotes()
 const { resetNoteTags } = useNoteTags()
@@ -184,6 +186,7 @@ getSnippetsCounts()
 
 async function resetAndReloadVaultData() {
   resetMathNotebook()
+  resetDrawings()
   clearNotesState()
   resetNoteFoldersState()
   resetNoteTags()

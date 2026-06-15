@@ -542,6 +542,8 @@ export interface HttpRequestsAdd {
 
 export interface HttpRequestsQuery {
   search?: string;
+  sort?: string;
+  order?: "ASC" | "DESC";
   /**
    * @min 0
    * @max 1
@@ -1077,7 +1079,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.5.0
+ * @version 5.6.1
  *
  * Development documentation
  */
@@ -2056,6 +2058,8 @@ export class Api<
     getHttpRequests: (
       query?: {
         search?: string;
+        sort?: string;
+        order?: "ASC" | "DESC";
         /**
          * @min 0
          * @max 1

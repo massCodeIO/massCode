@@ -415,6 +415,35 @@ describe('notes storage validations', () => {
     }
   })
 
+  it('sorts notes by name and updated date', () => {
+    vi.useFakeTimers()
+
+    try {
+      const storage = createNotesNotesStorage()
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+      const bravo = storage.createNote({ name: 'Bravo' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.000Z'))
+      const alpha = storage.createNote({ name: 'Alpha' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:02.000Z'))
+      storage.updateNote(bravo.id, { description: 'Updated' })
+
+      expect(
+        storage.getNotes({ sort: 'name', order: 'ASC' }).map(note => note.id),
+      ).toEqual([alpha.id, bravo.id])
+      expect(
+        storage
+          .getNotes({ sort: 'updatedAt', order: 'DESC' })
+          .map(note => note.id),
+      ).toEqual([bravo.id, alpha.id])
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('rewrites internal links in backlinking notes when a note is renamed', () => {
     const storage = createNotesNotesStorage()
 

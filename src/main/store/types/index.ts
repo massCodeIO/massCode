@@ -1,5 +1,12 @@
 export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
+export type ContentSortField = 'createdAt' | 'updatedAt' | 'name'
+export type ContentSortOrder = 'ASC' | 'DESC'
+
+export interface ContentSortState {
+  sort: ContentSortField
+  order: ContentSortOrder
+}
 
 export interface CodeState {
   snippetId?: number
@@ -114,6 +121,7 @@ export interface AppStore {
   }
   code: {
     selection: CodeState
+    contentSort: ContentSortState
     layout: {
       mode: SpaceLayoutMode
       tagsListHeight: number
@@ -123,6 +131,7 @@ export interface AppStore {
   }
   notes: {
     selection: NotesState
+    contentSort: ContentSortState
     route: NotesRouteName
     editorMode: NotesEditorMode
     dashboard: {
@@ -137,6 +146,7 @@ export interface AppStore {
   }
   http: {
     selection: HttpState
+    contentSort: ContentSortState
     layout: {
       mode: SpaceLayoutMode
       environmentsListHeight: number

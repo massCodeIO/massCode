@@ -1,4 +1,5 @@
 import Elysia, { t } from 'elysia'
+import { commonQuery } from './common/query'
 
 const httpMethod = t.Union([
   t.Literal('GET'),
@@ -97,7 +98,7 @@ const httpRequestItem = t.Object({
 const httpRequestsResponse = t.Array(httpRequestItem)
 
 const httpRequestsQuery = t.Object({
-  search: t.Optional(t.String()),
+  ...commonQuery.properties,
   searchNameOnly: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
   folderId: t.Optional(t.Number()),
   isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),

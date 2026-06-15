@@ -47,10 +47,15 @@
       "editorOnly": "Editor Only"
     },
     "sortBy": {
-      "label": "Sort Snippets By",
+      "label": "Sort By",
       "dateModified": "Date Modified",
       "dateCreated": "Date Created",
       "name": "Name"
+    },
+    "sortOrder": {
+      "label": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending"
     },
     "compactMode": "Compact List"
   },

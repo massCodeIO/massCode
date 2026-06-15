@@ -1,5 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 import type {
+  MainMenuContentSortField,
+  MainMenuContentSortOrder,
   MainMenuContext,
   MainMenuLayoutMode,
   MainMenuPrimaryAction,
@@ -34,6 +36,8 @@ const defaultMainMenuContext: MainMenuContext = {
   view: {
     layoutMode: null,
     layoutModes: [],
+    contentSortField: null,
+    contentSortOrder: null,
     canToggleCompactMode: false,
     canToggleMindmap: false,
     isCompactMode: false,
@@ -376,8 +380,64 @@ function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
   }))
 }
 
+function createSortMenuItems(context: MainMenuContext): MenuConfig[] {
+  if (!context.view.contentSortField || !context.view.contentSortOrder) {
+    return []
+  }
+
+  const sortLabels: Record<MainMenuContentSortField, string> = {
+    updatedAt: i18n.t('menu:view.sortBy.dateModified'),
+    createdAt: i18n.t('menu:view.sortBy.dateCreated'),
+    name: i18n.t('menu:view.sortBy.name'),
+  }
+  const orderLabels: Record<MainMenuContentSortOrder, string> = {
+    ASC: i18n.t('menu:view.sortOrder.ascending'),
+    DESC: i18n.t('menu:view.sortOrder.descending'),
+  }
+
+  const sortItems = (Object.keys(sortLabels) as MainMenuContentSortField[]).map(
+    sortField => ({
+      label: sortLabels[sortField],
+      type: 'radio' as const,
+      checked: context.view.contentSortField === sortField,
+      click: () => send('main-menu:set-content-sort-field', sortField),
+    }),
+  )
+  const orderItems = (
+    Object.keys(orderLabels) as MainMenuContentSortOrder[]
+  ).map(sortOrder => ({
+    label: orderLabels[sortOrder],
+    type: 'radio' as const,
+    checked: context.view.contentSortOrder === sortOrder,
+    click: () => send('main-menu:set-content-sort-order', sortOrder),
+  }))
+
+  return [
+    {
+      label: i18n.t('menu:view.sortBy.label'),
+      enabled: false,
+    },
+    ...sortItems,
+    { type: 'separator' as const },
+    {
+      label: i18n.t('menu:view.sortOrder.label'),
+      enabled: false,
+    },
+    ...orderItems,
+  ]
+}
+
 function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
   const items = createLayoutMenuItems(context)
+  const sortItems = createSortMenuItems(context)
+
+  if (sortItems.length) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push(...sortItems)
+  }
 
   if (context.view.canToggleCompactMode) {
     if (items.length) {

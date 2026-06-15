@@ -153,6 +153,37 @@ describe('code snippets storage validations', () => {
     ).toEqual([named.id])
   })
 
+  it('sorts snippets by name and updated date', () => {
+    vi.useFakeTimers()
+
+    try {
+      const storage = createSnippetsStorage()
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+      const bravo = storage.createSnippet({ name: 'Bravo' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.000Z'))
+      const alpha = storage.createSnippet({ name: 'Alpha' })
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:02.000Z'))
+      storage.updateSnippet(bravo.id, { description: 'Updated' })
+
+      expect(
+        storage
+          .getSnippets({ sort: 'name', order: 'ASC' })
+          .map(snippet => snippet.id),
+      ).toEqual([alpha.id, bravo.id])
+      expect(
+        storage
+          .getSnippets({ sort: 'updatedAt', order: 'DESC' })
+          .map(snippet => snippet.id),
+      ).toEqual([bravo.id, alpha.id])
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('createSnippet throws NAME_CONFLICT for duplicate name in same folder', () => {
     const storage = createSnippetsStorage()
     storage.createSnippet({ name: 'Duplicate' })

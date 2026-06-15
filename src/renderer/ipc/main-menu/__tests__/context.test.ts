@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { createMainMenuContext } from '../context'
 
+const contentSort = {
+  code: { sort: 'updatedAt', order: 'DESC' },
+  notes: { sort: 'name', order: 'ASC' },
+  http: { sort: 'createdAt', order: 'DESC' },
+} as const
+
 describe('createMainMenuContext', () => {
   it('builds code-space menu context from layout and editor state', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'code',
       compactListMode: true,
+      contentSort,
       code: {
         canPreviewCode: true,
         canPreviewJson: true,
@@ -36,6 +43,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: true,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      contentSortField: 'updatedAt',
+      contentSortOrder: 'DESC',
       isCompactMode: true,
       isMindmapShown: false,
       isPresentationShown: false,
@@ -59,6 +68,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'notes',
       compactListMode: false,
+      contentSort,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -89,6 +99,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: true,
       canToggleMindmap: true,
       canTogglePresentation: true,
+      contentSortField: 'name',
+      contentSortOrder: 'ASC',
       isCompactMode: false,
       isMindmapShown: true,
       isPresentationShown: false,
@@ -112,6 +124,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'math',
       compactListMode: true,
+      contentSort,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -142,6 +155,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: true,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      contentSortField: null,
+      contentSortOrder: null,
       isCompactMode: true,
       isMindmapShown: false,
       isPresentationShown: false,
@@ -165,6 +180,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'http',
       compactListMode: false,
+      contentSort,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -195,6 +211,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      contentSortField: 'createdAt',
+      contentSortOrder: 'DESC',
       isCompactMode: false,
       isMindmapShown: false,
       isPresentationShown: false,
@@ -218,6 +236,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'tools',
       compactListMode: true,
+      contentSort,
       code: {
         canPreviewCode: false,
         canPreviewJson: false,
@@ -242,6 +261,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
+      contentSortField: null,
+      contentSortOrder: null,
       isCompactMode: false,
       isMindmapShown: false,
       isPresentationShown: false,

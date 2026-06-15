@@ -5,6 +5,7 @@ import type {
   SnippetsResponse,
   SnippetsUpdate,
 } from '~/renderer/services/api/generated'
+import { useContentSort } from '@/composables/useContentSort'
 import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
@@ -38,6 +39,7 @@ const {
   focusSnippetNameInput,
 } = useApp()
 const { folders, getFolderByIdFromTree } = useFolders()
+const { getContentSortQuery } = useContentSort()
 
 const selectedSnippetIds = ref<number[]>(
   state.snippetId ? [state.snippetId] : [],
@@ -255,10 +257,12 @@ async function getSnippets(query?: SnippetsQuery) {
   // Защита от гонки ответов: применяется только самый свежий запрос.
   const requestToken = ++snippetsRequestToken
   const forSearch = isSearch.value
+  const resolvedQuery = {
+    ...(query || queryByLibraryOrFolderOrSearch.value),
+    ...getContentSortQuery('code'),
+  }
 
-  const { data } = await api.snippets.getSnippets(
-    query || queryByLibraryOrFolderOrSearch.value,
-  )
+  const { data } = await api.snippets.getSnippets(resolvedQuery)
 
   if (requestToken !== snippetsRequestToken) {
     return

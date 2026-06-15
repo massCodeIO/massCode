@@ -5,6 +5,8 @@ const contentSort = {
   code: { sort: 'updatedAt', order: 'DESC' },
   notes: { sort: 'name', order: 'ASC' },
   http: { sort: 'createdAt', order: 'DESC' },
+  math: { sort: 'updatedAt', order: 'ASC' },
+  drawings: { sort: 'name', order: 'DESC' },
 } as const
 
 describe('createMainMenuContext', () => {
@@ -155,8 +157,8 @@ describe('createMainMenuContext', () => {
       canToggleCompactMode: true,
       canToggleMindmap: false,
       canTogglePresentation: false,
-      contentSortField: null,
-      contentSortOrder: null,
+      contentSortField: 'updatedAt',
+      contentSortOrder: 'ASC',
       isCompactMode: true,
       isMindmapShown: false,
       isPresentationShown: false,
@@ -173,6 +175,45 @@ describe('createMainMenuContext', () => {
       isJsonPreviewShown: false,
       kind: null,
       noteMode: null,
+    })
+  })
+
+  it('builds drawings-space menu context with sort actions', () => {
+    const context = createMainMenuContext({
+      activeSpaceId: 'drawings',
+      compactListMode: false,
+      contentSort,
+      code: {
+        canPreviewCode: false,
+        canPreviewJson: false,
+        isCodePreviewShown: false,
+        isJsonPreviewShown: false,
+        layoutMode: 'all-panels',
+      },
+      notes: {
+        hasSelectedNote: false,
+        isMindmapShown: false,
+        isPresentationShown: false,
+        layoutMode: 'all-panels',
+        mode: 'livePreview',
+      },
+      http: {
+        layoutMode: 'all-panels',
+        canSendRequest: false,
+      },
+    })
+
+    expect(context.view).toEqual({
+      canToggleCompactMode: false,
+      canToggleMindmap: false,
+      canTogglePresentation: false,
+      contentSortField: 'name',
+      contentSortOrder: 'DESC',
+      isCompactMode: false,
+      isMindmapShown: false,
+      isPresentationShown: false,
+      layoutMode: null,
+      layoutModes: [],
     })
   })
 

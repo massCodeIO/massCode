@@ -79,6 +79,12 @@ const APP_STORE_DEFAULTS: AppStore = {
       tagsListHeight: LAYOUT_DEFAULTS.tags.height,
     },
   },
+  math: {
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
+  },
   notifications: {
     lastNotifiedUpdateVersion: '',
     lastWhatsNewVersion: '',
@@ -135,6 +141,10 @@ const APP_STORE_DEFAULTS: AppStore = {
     lastGreetingDay: '',
   },
   drawings: {
+    contentSort: {
+      sort: 'createdAt',
+      order: 'DESC',
+    },
     activeDrawingId: null,
     viewport: {},
   },
@@ -707,7 +717,11 @@ function sanitizeAppStore(value: unknown): AppStore {
       usage: sanitizeCommandPaletteUsage(commandPaletteSource.usage),
     },
     donations: sanitizeDonations(source.donations),
+    math: {
+      contentSort: sanitizeContentSort(asRecord(source.math).contentSort),
+    },
     drawings: {
+      contentSort: sanitizeContentSort(asRecord(source.drawings).contentSort),
       activeDrawingId:
         typeof asRecord(source.drawings).activeDrawingId === 'string'
           ? String(asRecord(source.drawings).activeDrawingId)

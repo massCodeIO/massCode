@@ -35,6 +35,8 @@ interface CreateMainMenuContextOptions {
     code: { sort: ContentSortField, order: ContentSortOrder }
     notes: { sort: ContentSortField, order: ContentSortOrder }
     http: { sort: ContentSortField, order: ContentSortOrder }
+    math: { sort: ContentSortField, order: ContentSortOrder }
+    drawings: { sort: ContentSortField, order: ContentSortOrder }
   }
   code: CodeMenuState
   notes: NotesMenuState
@@ -163,11 +165,45 @@ export function createMainMenuContext(
       view: {
         layoutMode: null,
         layoutModes: [],
-        contentSortField: null,
-        contentSortOrder: null,
+        contentSortField: options.contentSort.math.sort,
+        contentSortOrder: options.contentSort.math.order,
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: options.compactListMode,
+        isMindmapShown: false,
+        canTogglePresentation: false,
+        isPresentationShown: false,
+      },
+      editor: {
+        kind: null,
+        noteMode: null,
+        canSendRequest: false,
+        canFormat: false,
+        canPreviewCode: false,
+        isCodePreviewShown: false,
+        canPreviewJson: false,
+        isJsonPreviewShown: false,
+        canAdjustFontSize: false,
+      },
+    }
+  }
+
+  if (options.activeSpaceId === 'drawings') {
+    return {
+      file: {
+        primaryAction: null,
+        secondaryAction: null,
+        canCreateFragment: false,
+        canCreateTask: false,
+      },
+      view: {
+        layoutMode: null,
+        layoutModes: [],
+        contentSortField: options.contentSort.drawings.sort,
+        contentSortOrder: options.contentSort.drawings.order,
+        canToggleCompactMode: false,
+        canToggleMindmap: false,
+        isCompactMode: false,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,

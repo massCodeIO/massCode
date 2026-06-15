@@ -2,6 +2,7 @@
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useApp,
+  useContentSort,
   useDeleteShortcut,
   useInlineRename,
   useMathNotebook,
@@ -20,6 +21,7 @@ const {
   selectSheet,
   renameSheet,
 } = useMathNotebook()
+const { contentSortState } = useContentSort()
 
 const {
   editingId,
@@ -38,14 +40,30 @@ const sheetListRef = ref<HTMLElement>()
 const isSheetListFocused = ref(false)
 const searchQuery = ref('')
 
+function compareSheetNames(a: string, b: string) {
+  return a.localeCompare(b, undefined, { sensitivity: 'base' })
+}
+
+const sortedSheets = computed(() => {
+  const { sort, order } = contentSortState.math
+  const direction = order === 'ASC' ? 1 : -1
+
+  return [...sheets.value].sort((a, b) => {
+    const result
+      = sort === 'name' ? compareSheetNames(a.name, b.name) : a[sort] - b[sort]
+
+    return result * direction
+  })
+})
+
 const filteredSheets = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
   if (!query) {
-    return sheets.value
+    return sortedSheets.value
   }
 
-  return sheets.value.filter(sheet =>
+  return sortedSheets.value.filter(sheet =>
     sheet.name.toLowerCase().includes(query),
   )
 })
@@ -184,7 +202,7 @@ defineExpose({
             :selected="activeSheetId === sheet.id"
             :data-sheet-id="sheet.id"
             tabindex="-1"
-            @click="(event) => selectSheetFromList(sheet.id, event)"
+            @click="selectSheetFromList(sheet.id, $event)"
             @dblclick="startRename(sheet.id, sheet.name)"
           >
             <div class="flex items-center gap-2 px-2 py-0.5">

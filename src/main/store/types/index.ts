@@ -155,6 +155,9 @@ export interface AppStore {
       responsePanelHeight?: number
     }
   }
+  math: {
+    contentSort: ContentSortState
+  }
   notifications: {
     lastNotifiedUpdateVersion: string
     lastWhatsNewVersion: string
@@ -170,6 +173,7 @@ export interface AppStore {
   }
   donations: DonationsState
   drawings: {
+    contentSort: ContentSortState
     activeDrawingId: string | null
     viewport: Record<string, DrawingViewportState>
   }

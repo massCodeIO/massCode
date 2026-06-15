@@ -3,6 +3,10 @@ import { api } from '~/renderer/services/api'
 
 type ConflictGroup = VaultDoctorResponse['conflictGroups'][number]
 
+// Стабильный id sonner-уведомления о конфликтах: позволяет убрать висящее
+// уведомление о прежнем vault при смене на другой.
+export const VAULT_DOCTOR_NOTICE_ID = 'vault-doctor-conflicts'
+
 // Эвристика конфликтных копий cloud-sync: Dropbox "(conflicted copy)",
 // Яндекс.Диск / macOS "— копия", generic "copy". Используется только для
 // визуальной подсказки и предвыбора canonical, не влияет на backend.

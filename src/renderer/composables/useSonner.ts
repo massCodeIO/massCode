@@ -4,14 +4,20 @@ import { toast } from 'vue-sonner'
 
 export function useSonner() {
   const sonner = (config: Props) => {
-    toast.custom(markRaw(Sonner), {
+    return toast.custom(markRaw(Sonner), {
+      id: config.id,
       componentProps: config,
       duration: config.action ? Infinity : config.duration || 5000,
       onDismiss: config.onClose,
     })
   }
 
+  const dismiss = (id?: string | number) => {
+    toast.dismiss(id)
+  }
+
   return {
     sonner,
+    dismiss,
   }
 }

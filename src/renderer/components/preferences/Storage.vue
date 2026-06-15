@@ -84,8 +84,10 @@ const counts = reactive<SnippetsCountsResponse>({
 const isLoadingCounts = ref(false)
 const isMovingVault = ref(false)
 const isVaultDoctorScanLoaderVisible = ref(false)
+const isVaultDoctorApplyLoaderVisible = ref(false)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 let vaultDoctorScanLoaderTimer: ReturnType<typeof setTimeout> | null = null
+let vaultDoctorApplyLoaderTimer: ReturnType<typeof setTimeout> | null = null
 
 const {
   report: vaultDoctorReport,
@@ -141,6 +143,22 @@ function hideVaultDoctorScanLoader() {
   }
 
   isVaultDoctorScanLoaderVisible.value = false
+}
+
+// Тот же отложенный лоадер для apply, чтобы быстрый apply не мигал спиннером.
+function showVaultDoctorApplyLoader() {
+  vaultDoctorApplyLoaderTimer = setTimeout(() => {
+    isVaultDoctorApplyLoaderVisible.value = true
+  }, 300)
+}
+
+function hideVaultDoctorApplyLoader() {
+  if (vaultDoctorApplyLoaderTimer) {
+    clearTimeout(vaultDoctorApplyLoaderTimer)
+    vaultDoctorApplyLoaderTimer = null
+  }
+
+  isVaultDoctorApplyLoaderVisible.value = false
 }
 
 async function getSnippetsCounts() {
@@ -365,6 +383,8 @@ async function applyVaultDoctorSafeFixes() {
     return
   }
 
+  showVaultDoctorApplyLoader()
+
   try {
     const data = await applyVault()
     const appliedCount = data.items.filter(
@@ -383,6 +403,9 @@ async function applyVaultDoctorSafeFixes() {
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+  }
+  finally {
+    hideVaultDoctorApplyLoader()
   }
 }
 
@@ -527,11 +550,11 @@ onMounted(() => {
             @click="applyVaultDoctorSafeFixes"
           >
             <LoaderCircle
-              v-if="isVaultDoctorApplying"
+              v-if="isVaultDoctorApplyLoaderVisible"
               class="mr-2 h-4 w-4 animate-spin"
             />
             {{
-              isVaultDoctorApplying
+              isVaultDoctorApplyLoaderVisible
                 ? i18n.t("preferences:storage.vaultDoctor.apply.applying")
                 : i18n.t("preferences:storage.vaultDoctor.apply.action")
             }}

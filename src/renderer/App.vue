@@ -87,6 +87,7 @@ function showWhatsNewOnce() {
   sonner({
     message: i18n.t('messages:update.whatsNewToast', { version }),
     type: 'success',
+    closeButton: true,
     action: {
       label: i18n.t('messages:update.releaseNotes'),
       onClick: () => {

@@ -500,43 +500,67 @@ async function applyVaultDoctorSafeFixes() {
               class="space-y-2"
             >
               <div class="grid gap-2 sm:grid-cols-4">
-                <div class="border-border rounded-md border p-2">
-                  <UiText variant="caption">
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
                     {{ i18n.t("preferences:storage.vaultDoctor.summary.safe") }}
                   </UiText>
-                  <UiText variant="sm">
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
                     {{ vaultDoctorSafeFixesCount }}
                   </UiText>
                 </div>
-                <div class="border-border rounded-md border p-2">
-                  <UiText variant="caption">
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
                     {{
                       i18n.t(
                         "preferences:storage.vaultDoctor.summary.conflicts",
                       )
                     }}
                   </UiText>
-                  <UiText variant="sm">
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
                     {{ vaultDoctorConflictCount }}
                   </UiText>
                 </div>
-                <div class="border-border rounded-md border p-2">
-                  <UiText variant="caption">
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
                     {{
                       i18n.t("preferences:storage.vaultDoctor.summary.blocked")
                     }}
                   </UiText>
-                  <UiText variant="sm">
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
                     {{ vaultDoctorBlockedCount }}
                   </UiText>
                 </div>
-                <div class="border-border rounded-md border p-2">
-                  <UiText variant="caption">
+                <div class="border-border space-y-1 rounded-md border p-2">
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
                     {{
                       i18n.t("preferences:storage.vaultDoctor.summary.warnings")
                     }}
                   </UiText>
-                  <UiText variant="sm">
+                  <UiText
+                    variant="sm"
+                    class="block"
+                  >
                     {{ vaultDoctorReport.summary.warnings }}
                   </UiText>
                 </div>

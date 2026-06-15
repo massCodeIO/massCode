@@ -10,7 +10,44 @@
     "moveVault": "Move Vault",
     "movingVault": "Moving vault...",
     "count": "Count",
-    "vaultPath": "Vault Path"
+    "vaultPath": "Vault Path",
+    "vaultDoctor": {
+      "label": "Vault Doctor",
+      "description": "Scan the vault for metadata issues, sync conflicts, and safe repairs.",
+      "scan": {
+        "label": "Check vault",
+        "action": "Scan vault",
+        "scanning": "Scanning..."
+      },
+      "apply": {
+        "action": "Apply fixes",
+        "applying": "Applying..."
+      },
+      "summary": {
+        "safe": "Safe fixes",
+        "conflicts": "Conflicts",
+        "blocked": "Blocked",
+        "warnings": "Warnings"
+      },
+      "conflicts": "Needs decision",
+      "decisions": {
+        "duplicateId": "Duplicate id: {{id}}",
+        "files": "Files: {{count}}",
+        "progress": "{{selected}}/{{total}} resolved",
+        "choose": "Choose one file to keep this id. The other {{count}} will get new unique ids.",
+        "original": "Original",
+        "copy": "Copy",
+        "keepsId": "keeps id {{id}}",
+        "newId": "new id"
+      },
+      "reason": {
+        "merge-markers": "Merge markers",
+        "invalid-frontmatter": "Invalid frontmatter",
+        "conflicted-copy": "Conflicted copy"
+      },
+      "moreWarnings": "+{{count}} more warnings",
+      "warnings": "Warnings"
+    }
   },
   "editor": {
     "label": "Code Editor",

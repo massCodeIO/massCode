@@ -14,6 +14,10 @@
     "migrateToMarkdown": [
       "Migrate to Markdown Vault?",
       "The selected vault will be overwritten with the current SQLite library."
+    ],
+    "vaultDoctorApply": [
+      "Apply vault fixes?",
+      "massCode will update safe metadata fixes and selected duplicate-id decisions. Unselected conflicts will be skipped."
     ]
   },
   "success": {
@@ -21,7 +25,9 @@
     "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultMoved": "Vault successfully moved.",
     "vaultLoaded": "Vault successfully loaded.",
-    "licenseActivated": "License activated. Thank you for supporting massCode!"
+    "licenseActivated": "License activated. Thank you for supporting massCode!",
+    "vaultDoctorApplied": "Vault Doctor applied {{count}} fixes.",
+    "vaultDoctorClean": "Vault Doctor found no issues."
   },
   "warning": {
     "noUndo": "You cannot undo this action.",
@@ -33,7 +39,9 @@
     "codeBlockRenderer": [
       "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
       "languages"
-    ]
+    ],
+    "vaultDoctorConflicts": "Vault: {{count}} sync conflict(s) need attention",
+    "vaultDoctorReview": "Review"
   },
   "error": {
     "migration": "Auto-migration from SQLite failed: {{error}}",

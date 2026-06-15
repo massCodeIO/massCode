@@ -8,7 +8,44 @@
     "label": "Хранилище",
     "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",
-    "vaultPath": "Путь к vault"
+    "vaultPath": "Путь к vault",
+    "vaultDoctor": {
+      "label": "Vault Doctor",
+      "description": "Проверяет vault на проблемы metadata, конфликты синхронизации и безопасные исправления.",
+      "scan": {
+        "label": "Проверка vault",
+        "action": "Сканировать vault",
+        "scanning": "Сканирование..."
+      },
+      "apply": {
+        "action": "Применить исправления",
+        "applying": "Применение..."
+      },
+      "summary": {
+        "safe": "Безопасные исправления",
+        "conflicts": "Конфликты",
+        "blocked": "Заблокировано",
+        "warnings": "Предупреждения"
+      },
+      "conflicts": "Требует решения",
+      "decisions": {
+        "duplicateId": "Одинаковый id: {{id}}",
+        "files": "Файлов: {{count}}",
+        "progress": "Решено {{selected}}/{{total}}",
+        "choose": "Выберите один файл, который сохранит этот id. Остальные {{count}} получат новые уникальные id.",
+        "original": "Оригинал",
+        "copy": "Копия",
+        "keepsId": "сохранит id {{id}}",
+        "newId": "новый id"
+      },
+      "reason": {
+        "merge-markers": "Merge-маркеры",
+        "invalid-frontmatter": "Битый frontmatter",
+        "conflicted-copy": "Конфликтная копия"
+      },
+      "moreWarnings": "+{{count}} предупреждений",
+      "warnings": "Предупреждения"
+    }
   },
   "editor": {
     "label": "Редактор",

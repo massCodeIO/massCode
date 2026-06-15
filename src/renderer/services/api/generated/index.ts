@@ -191,6 +191,100 @@ export type FoldersTreeResponse = {
   children: any[];
 }[];
 
+export interface VaultDoctorInput {
+  decisions?: {
+    groupId: string;
+    keepPath: string;
+  }[];
+  spaces?: ("code" | "notes" | "http" | "math")[];
+}
+
+export interface VaultDoctorResponse {
+  conflictGroups: {
+    id: string;
+    items: {
+      action:
+        | "create-folder-metadata"
+        | "detect-conflict"
+        | "write-frontmatter"
+        | "register-file"
+        | "reassign-id"
+        | "repair-environment-state"
+        | "repair-math-state"
+        | "sync-state"
+        | "skip";
+      fingerprint: {
+        mtimeMs: number;
+        path: string;
+        size: number;
+      };
+      kind:
+        | "conflict"
+        | "environment"
+        | "file"
+        | "folder"
+        | "math-sheet"
+        | "note"
+        | "snippet";
+      path: string;
+      space: "code" | "notes" | "http" | "math";
+      status: "applied" | "blocked" | "needs-decision" | "pending" | "skipped";
+    }[];
+    reason:
+      | "conflicted-copy"
+      | "duplicate-id"
+      | "invalid-frontmatter"
+      | "merge-markers";
+  }[];
+  items: {
+    action:
+      | "create-folder-metadata"
+      | "detect-conflict"
+      | "write-frontmatter"
+      | "register-file"
+      | "reassign-id"
+      | "repair-environment-state"
+      | "repair-math-state"
+      | "sync-state"
+      | "skip";
+    fingerprint: {
+      mtimeMs: number;
+      path: string;
+      size: number;
+    };
+    kind:
+      | "conflict"
+      | "environment"
+      | "file"
+      | "folder"
+      | "math-sheet"
+      | "note"
+      | "snippet";
+    path: string;
+    space: "code" | "notes" | "http" | "math";
+    status: "applied" | "blocked" | "needs-decision" | "pending" | "skipped";
+  }[];
+  summary: {
+    affectedFiles: number;
+    blocked: number;
+    conflicts: number;
+    folders: number;
+    httpEnvironments: number;
+    httpRequests: number;
+    mathSheets: number;
+    notes: number;
+    skipped: number;
+    snippets: number;
+    warnings: number;
+  };
+  warnings: {
+    code: string;
+    details?: object;
+    path: string;
+    space: "code" | "notes" | "http" | "math";
+  }[];
+}
+
 export interface TagsAdd {
   name: string;
 }
@@ -1474,6 +1568,46 @@ export class Api<
       this.request<void, any>({
         path: `/system/storage-cache/reset`,
         method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name PostSystemVaultDoctorPreview
+     * @request POST:/system/vault-doctor/preview
+     */
+    postSystemVaultDoctorPreview: (
+      data: VaultDoctorInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<VaultDoctorResponse, any>({
+        path: `/system/vault-doctor/preview`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags System
+     * @name PostSystemVaultDoctorApply
+     * @request POST:/system/vault-doctor/apply
+     */
+    postSystemVaultDoctorApply: (
+      data: VaultDoctorInput,
+      params: RequestParams = {},
+    ) =>
+      this.request<VaultDoctorResponse, any>({
+        path: `/system/vault-doctor/apply`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };

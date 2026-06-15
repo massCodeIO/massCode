@@ -7,6 +7,7 @@ import {
   useDonationTriggers,
   useSonner,
   useTheme,
+  useVaultDoctor,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -97,6 +98,50 @@ function showWhatsNewOnce() {
   })
 }
 
+// Неблокирующая проверка vault после загрузки приложения. Doctor живёт в
+// Storage settings, куда пользователь почти не заходит, поэтому о конфликтах
+// синхронизации (дубли id, merge-маркеры, битый frontmatter) сообщаем
+// проактивно. Safe fixes сюда не входят — их watcher применяет молча.
+function checkVaultHealth() {
+  const { sonner } = useSonner()
+  const { scan } = useVaultDoctor()
+
+  const run = async () => {
+    try {
+      const data = await scan()
+      if (!data || data.summary.conflicts === 0) {
+        return
+      }
+
+      sonner({
+        message: i18n.t('messages:warning.vaultDoctorConflicts', {
+          count: data.summary.conflicts,
+        }),
+        type: 'warning',
+        action: {
+          label: i18n.t('messages:warning.vaultDoctorReview'),
+          onClick: () => {
+            router.push({
+              name: RouterName.preferencesStorage,
+              query: { doctor: 'scan' },
+            })
+          },
+        },
+      })
+    }
+    catch {
+      // Health check не критичен: при ошибке тихо пропускаем.
+    }
+  }
+
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => run(), { timeout: 5000 })
+  }
+  else {
+    setTimeout(run, 2000)
+  }
+}
+
 function restoreSavedSpace() {
   const savedSpaceId = store.app.get<string>('activeSpaceId')
   if (savedSpaceId && savedSpaceId !== 'code') {
@@ -119,6 +164,7 @@ async function init() {
     useDonationTriggers()
   }
   showWhatsNewOnce()
+  checkVaultHealth()
 }
 
 init()

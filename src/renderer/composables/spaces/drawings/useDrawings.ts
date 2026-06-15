@@ -26,6 +26,7 @@ let initialized = false
 let lastSavedContent: string | null = null
 let inFlightSaves = 0
 let loadContentToken = 0
+const pendingContentByDrawingId = new Map<string, string>()
 
 const activeDrawing = computed(() => {
   return drawings.value.find(item => item.id === activeDrawingId.value)
@@ -83,8 +84,11 @@ async function loadActiveDrawingContent() {
     return
   }
 
-  activeDrawingContent.value = typeof content === 'string' ? content : null
-  lastSavedContent = activeDrawingContent.value
+  const savedContent = typeof content === 'string' ? content : null
+
+  activeDrawingContent.value
+    = pendingContentByDrawingId.get(id) ?? savedContent
+  lastSavedContent = savedContent
   sceneRevision.value += 1
 }
 
@@ -251,6 +255,13 @@ export function useDrawings() {
       persistViewports()
     }
 
+    const pendingContent = pendingContentByDrawingId.get(id)
+
+    if (pendingContent && record.id !== id) {
+      pendingContentByDrawingId.delete(id)
+      pendingContentByDrawingId.set(record.id, pendingContent)
+    }
+
     if (activeDrawingId.value === id) {
       activeDrawingId.value = record.id
       persistSelection()
@@ -296,6 +307,7 @@ export function useDrawings() {
       persistViewports()
     }
 
+    pendingContentByDrawingId.delete(id)
     notifyDrawingsChanged(id)
 
     if (activeDrawingId.value === id) {
@@ -310,18 +322,30 @@ export function useDrawings() {
       return
     }
 
-    if (id === activeDrawingId.value && content === lastSavedContent) {
-      return
+    const isActiveDrawing = id === activeDrawingId.value
+
+    if (isActiveDrawing) {
+      activeDrawingContent.value = content
+
+      if (content === lastSavedContent) {
+        return
+      }
     }
 
+    pendingContentByDrawingId.set(id, content)
     markUserEdit()
     markPersistedStorageMutation()
     inFlightSaves += 1
 
     try {
       const record = await ipc.invoke('spaces:drawings:write', { id, content })
+      const pendingContent = pendingContentByDrawingId.get(id)
 
-      if (id === activeDrawingId.value) {
+      if (pendingContent === content) {
+        pendingContentByDrawingId.delete(id)
+      }
+
+      if (id === activeDrawingId.value && pendingContent === content) {
         lastSavedContent = content
       }
 

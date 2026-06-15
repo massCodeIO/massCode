@@ -7,6 +7,7 @@ import {
   useDonationTriggers,
   useSonner,
   useTheme,
+  useVaultDoctor,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -17,7 +18,6 @@ import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
-import { api } from '~/renderer/services/api'
 import { repository, version } from '../../package.json'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
@@ -104,11 +104,12 @@ function showWhatsNewOnce() {
 // проактивно. Safe fixes сюда не входят — их watcher применяет молча.
 function checkVaultHealth() {
   const { sonner } = useSonner()
+  const { scan } = useVaultDoctor()
 
   const run = async () => {
     try {
-      const { data } = await api.system.postSystemVaultDoctorPreview({})
-      if (data.summary.conflicts === 0) {
+      const data = await scan()
+      if (!data || data.summary.conflicts === 0) {
         return
       }
 

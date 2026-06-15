@@ -1,9 +1,7 @@
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import type { DialogOptions } from '~/main/types/ipc'
-import type {
-  SnippetsCountsResponse,
-  VaultDoctorResponse,
-} from '~/renderer/services/api/generated'
+import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
 import { Badge } from '@/components/ui/shadcn/badge'
 import { Button } from '@/components/ui/shadcn/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/shadcn/radio-group'
@@ -22,6 +20,7 @@ import {
   useNoteTags,
   useSnippets,
   useSonner,
+  useVaultDoctor,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
@@ -51,6 +50,8 @@ const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
 const route = useRoute()
 const router = useRouter()
+const vaultDoctorSection
+  = useTemplateRef<ComponentPublicInstance>('vaultDoctorSection')
 
 function getDefaultVaultPath(baseStoragePath: string): string {
   const separator = baseStoragePath.includes('\\') ? '\\' : '/'
@@ -82,132 +83,31 @@ const counts = reactive<SnippetsCountsResponse>({
 })
 const isLoadingCounts = ref(false)
 const isMovingVault = ref(false)
-const isVaultDoctorApplying = ref(false)
-const isVaultDoctorScanning = ref(false)
-const vaultDoctorReport = shallowRef<VaultDoctorResponse | null>(null)
-const vaultDoctorDecisionByGroupId = reactive<Record<string, string>>({})
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 
-const vaultDoctorSafeFixesCount = computed(() => {
-  return (
-    vaultDoctorReport.value?.items.filter(item => item.status === 'pending')
-      .length ?? 0
-  )
-})
-
-const vaultDoctorBlockedCount = computed(() => {
-  return vaultDoctorReport.value?.summary.blocked ?? 0
-})
-
-const vaultDoctorConflictCount = computed(() => {
-  return vaultDoctorReport.value?.summary.conflicts ?? 0
-})
-
-const vaultDoctorHasReport = computed(() => !!vaultDoctorReport.value)
-
-const vaultDoctorDuplicateGroups = computed(() => {
-  return (
-    vaultDoctorReport.value?.conflictGroups.filter(
-      group => group.reason === 'duplicate-id',
-    ) ?? []
-  )
-})
-
-const vaultDoctorSelectedDecisionCount = computed(() => {
-  return vaultDoctorDuplicateGroups.value.filter(
-    group => !!vaultDoctorDecisionByGroupId[group.id],
-  ).length
-})
-
-const vaultDoctorWarningPreview = computed(() => {
-  return vaultDoctorReport.value?.warnings.slice(0, 5) ?? []
-})
-
-const vaultDoctorHiddenWarningCount = computed(() => {
-  const warningsCount = vaultDoctorReport.value?.warnings.length ?? 0
-  return Math.max(0, warningsCount - vaultDoctorWarningPreview.value.length)
-})
-
-const vaultDoctorCanApply = computed(() => {
-  return (
-    vaultDoctorSafeFixesCount.value > 0
-    || vaultDoctorSelectedDecisionCount.value > 0
-  )
-})
-
-function resetVaultDoctorDecisions() {
-  Object.keys(vaultDoctorDecisionByGroupId).forEach((groupId) => {
-    delete vaultDoctorDecisionByGroupId[groupId]
-  })
-}
-
-// Эвристика конфликтных копий cloud-sync: Dropbox "(conflicted copy)",
-// Яндекс.Диск / macOS "— копия", generic "copy". Используется только для
-// визуальной подсказки и предвыбора canonical, не влияет на backend.
-const VAULT_DOCTOR_COPY_RE = /(?:—|-)\s*копия|\bкопия\b|\bcopy\b|conflict/i
-
-function selectVaultDoctorDecision(groupId: string, keepPath: string) {
-  vaultDoctorDecisionByGroupId[groupId] = keepPath
-}
-
-function isVaultDoctorDecisionSelected(groupId: string, path: string): boolean {
-  return vaultDoctorDecisionByGroupId[groupId] === path
-}
-
-function splitVaultDoctorPath(value: string): { dir: string, name: string } {
-  const index = value.lastIndexOf('/')
-  if (index === -1) {
-    return { dir: '', name: value }
-  }
-
-  return { dir: value.slice(0, index + 1), name: value.slice(index + 1) }
-}
-
-function isVaultDoctorCopyPath(path: string): boolean {
-  return VAULT_DOCTOR_COPY_RE.test(splitVaultDoctorPath(path).name)
-}
-
-// Рекомендуемый canonical: первый файл без признаков копии, иначе самый
-// короткий по имени (вероятный оригинал), иначе первый в группе.
-function getVaultDoctorCanonicalPath(
-  group: VaultDoctorResponse['conflictGroups'][number],
-): string {
-  const original = group.items.find(
-    item => !isVaultDoctorCopyPath(item.path),
-  )
-  if (original) {
-    return original.path
-  }
-
-  return (
-    [...group.items].sort(
-      (a, b) =>
-        splitVaultDoctorPath(a.path).name.length
-        - splitVaultDoctorPath(b.path).name.length,
-    )[0]?.path ?? group.items[0]?.path
-  )
-}
-
-function preselectVaultDoctorDecisions(report: VaultDoctorResponse) {
-  report.conflictGroups
-    .filter(group => group.reason === 'duplicate-id')
-    .forEach((group) => {
-      vaultDoctorDecisionByGroupId[group.id]
-        = getVaultDoctorCanonicalPath(group)
-    })
-}
-
-function getVaultDoctorDecisionReassignCount(
-  group: VaultDoctorResponse['conflictGroups'][number],
-): number {
-  return vaultDoctorDecisionByGroupId[group.id] ? group.items.length - 1 : 0
-}
-
-function getVaultDoctorConflictId(
-  group: VaultDoctorResponse['conflictGroups'][number],
-): string {
-  return group.id.split(':').at(-1) ?? group.id
-}
+const {
+  report: vaultDoctorReport,
+  decisionByGroupId: vaultDoctorDecisionByGroupId,
+  isScanning: isVaultDoctorScanning,
+  isApplying: isVaultDoctorApplying,
+  hasReport: vaultDoctorHasReport,
+  safeFixesCount: vaultDoctorSafeFixesCount,
+  blockedCount: vaultDoctorBlockedCount,
+  conflictCount: vaultDoctorConflictCount,
+  duplicateGroups: vaultDoctorDuplicateGroups,
+  selectedDecisionCount: vaultDoctorSelectedDecisionCount,
+  warningPreview: vaultDoctorWarningPreview,
+  hiddenWarningCount: vaultDoctorHiddenWarningCount,
+  canApply: vaultDoctorCanApply,
+  splitPath: splitVaultDoctorPath,
+  isCopyPath: isVaultDoctorCopyPath,
+  getConflictId: getVaultDoctorConflictId,
+  getDecisionReassignCount: getVaultDoctorDecisionReassignCount,
+  selectDecision: selectVaultDoctorDecision,
+  isDecisionSelected: isVaultDoctorDecisionSelected,
+  scan: scanVault,
+  apply: applyVault,
+} = useVaultDoctor()
 
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
@@ -402,20 +302,12 @@ async function migrateSqliteToMarkdown() {
 }
 
 async function scanVaultDoctor() {
-  if (isVaultDoctorScanning.value || isVaultDoctorApplying.value) {
-    return
-  }
-
-  isVaultDoctorScanning.value = true
-
   try {
-    const { data } = await api.system.postSystemVaultDoctorPreview({})
-    resetVaultDoctorDecisions()
-    preselectVaultDoctorDecisions(data)
-    vaultDoctorReport.value = data
+    const data = await scanVault()
 
     if (
-      data.summary.affectedFiles === 0
+      data
+      && data.summary.affectedFiles === 0
       && data.summary.conflicts === 0
       && data.summary.warnings === 0
     ) {
@@ -428,9 +320,6 @@ async function scanVaultDoctor() {
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
-  }
-  finally {
-    isVaultDoctorScanning.value = false
   }
 }
 
@@ -452,21 +341,12 @@ async function applyVaultDoctorSafeFixes() {
     return
   }
 
-  isVaultDoctorApplying.value = true
-
   try {
-    const decisions = Object.entries(vaultDoctorDecisionByGroupId).map(
-      ([groupId, keepPath]) => ({ groupId, keepPath }),
-    )
-    const { data } = await api.system.postSystemVaultDoctorApply({
-      decisions,
-    })
+    const data = await applyVault()
     const appliedCount = data.items.filter(
       item => item.status === 'applied',
     ).length
 
-    resetVaultDoctorDecisions()
-    vaultDoctorReport.value = data
     await resetAndReloadVaultData()
 
     sonner({
@@ -480,19 +360,29 @@ async function applyVaultDoctorSafeFixes() {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
   }
-  finally {
-    isVaultDoctorApplying.value = false
-  }
 }
 
-// Переход из startup-уведомления о конфликтах: сразу запускаем скан, чтобы
-// пользователь не видел пустую секцию и не жал Scan вручную. Query чистим,
-// чтобы ручной повторный заход не пересканировал.
+// Переход из startup-уведомления о конфликтах: переиспользуем отчёт
+// startup-проверки (если он есть), иначе сканируем, и скроллим к секции,
+// чтобы пользователь не искал её вручную. Query чистим, чтобы повторный
+// заход не триггерил автоповедение.
 onMounted(() => {
-  if (route.query.doctor === 'scan') {
-    router.replace({ query: {} })
+  if (route.query.doctor !== 'scan') {
+    return
+  }
+
+  router.replace({ query: {} })
+
+  if (!vaultDoctorReport.value) {
     scanVaultDoctor()
   }
+
+  nextTick(() => {
+    vaultDoctorSection.value?.$el?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
 })
 </script>
 
@@ -578,7 +468,10 @@ onMounted(() => {
       </UiMenuFormItem>
     </UiMenuFormSection>
 
-    <UiMenuFormSection :label="i18n.t('preferences:storage.vaultDoctor.label')">
+    <UiMenuFormSection
+      ref="vaultDoctorSection"
+      :label="i18n.t('preferences:storage.vaultDoctor.label')"
+    >
       <UiMenuFormItem
         :label="i18n.t('preferences:storage.vaultDoctor.scan.label')"
       >

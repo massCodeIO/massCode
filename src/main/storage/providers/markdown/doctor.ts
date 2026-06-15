@@ -12,7 +12,6 @@ import yaml from 'js-yaml'
 import {
   getHttpPaths,
   loadHttpState,
-  saveHttpState,
   syncHttpRuntimeWithDisk,
 } from './http/runtime'
 import {
@@ -24,6 +23,7 @@ import {
   getPaths,
   getSpaceStatePath,
   getVaultPath,
+  INBOX_DIR_NAME,
   loadState,
   META_DIR_NAME,
   META_FILE_NAME,
@@ -57,10 +57,12 @@ interface EntityScanRecord {
 
 const DEFAULT_SPACES: VaultDoctorSpace[] = ['code', 'notes', 'http', 'math']
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
-const MERGE_MARKER_RE = /^(?:<<<<<<<|=======|>>>>>>>) /m
+const MERGE_MARKER_RE = /^(?:<<<<<<<(?: .*)?|=======|>>>>>>>(?: .*)?)$/m
 const CONFLICTED_NAME_RE
   = /\b(?:conflict|conflicted|conflicted copy|copy conflict)\b|\([^)]+(?:macbook|machine|conflict|conflicted)[^)]*\)/i
 const FRONTMATTER_ID_RE = /^id:.*$/m
+const INBOX_RELATIVE_PATH = `${META_DIR_NAME}/${INBOX_DIR_NAME}`
+const TRASH_RELATIVE_PATH = `${META_DIR_NAME}/${TRASH_DIR_NAME}`
 
 function normalizeSpaces(input?: VaultDoctorInput): VaultDoctorSpace[] {
   const requestedSpaces = input?.spaces?.length ? input.spaces : DEFAULT_SPACES
@@ -87,6 +89,26 @@ function getFingerprint(absolutePath: string): Fingerprint {
       size: 0,
     }
   }
+}
+
+function isInsideRelativePath(value: string, parentPath: string): boolean {
+  return value === parentPath || value.startsWith(`${parentPath}/`)
+}
+
+function shouldSkipMarkdownDirectory(relativePath: string): boolean {
+  if (isInsideRelativePath(relativePath, TRASH_RELATIVE_PATH)) {
+    return true
+  }
+
+  if (
+    relativePath.startsWith(`${META_DIR_NAME}/`)
+    && !isInsideRelativePath(relativePath, INBOX_RELATIVE_PATH)
+  ) {
+    return true
+  }
+
+  const name = path.posix.basename(relativePath)
+  return name.startsWith('.') && name !== META_DIR_NAME
 }
 
 function addItem(context: ScanContext, item: VaultDoctorItem): void {
@@ -132,6 +154,10 @@ function listMarkdownFiles(rootPath: string): string[] {
       const relativePath = toPosixPath(path.relative(rootPath, absolutePath))
 
       if (entry.isDirectory()) {
+        if (shouldSkipMarkdownDirectory(relativePath)) {
+          continue
+        }
+
         walk(absolutePath)
         continue
       }
@@ -499,20 +525,18 @@ function scanCode(context: ScanContext): void {
     }
   })
 
-  listMarkdownFiles(paths.vaultPath)
-    .filter(filePath => !filePath.startsWith(`${META_DIR_NAME}/`))
-    .forEach((filePath) => {
-      const record = inspectMarkdownEntity({
-        context,
-        filePath,
-        kind: 'snippet',
-        rootPath: paths.vaultPath,
-        space: 'code',
-      })
-      if (record) {
-        records.push(record)
-      }
+  listMarkdownFiles(paths.vaultPath).forEach((filePath) => {
+    const record = inspectMarkdownEntity({
+      context,
+      filePath,
+      kind: 'snippet',
+      rootPath: paths.vaultPath,
+      space: 'code',
     })
+    if (record) {
+      records.push(record)
+    }
+  })
 
   collectDuplicateIds(context, records)
 }
@@ -563,15 +587,12 @@ function scanHttp(context: ScanContext): void {
     const record = inspectMarkdownEntity({
       context,
       filePath,
-      kind: 'note',
+      kind: 'snippet',
       rootPath: paths.httpRoot,
       space: 'http',
     })
     if (record) {
-      records.push({
-        ...record,
-        kind: 'snippet',
-      })
+      records.push(record)
     }
   })
 
@@ -816,12 +837,26 @@ function repairHttpEnvironmentState(): void {
     state.activeEnvironmentId = null
   }
   state.counters.environmentId = Math.max(nextId, state.counters.environmentId)
-  saveHttpState(paths, state)
+  writeSpaceStateImmediate(paths.statePath, state)
 }
 
 function repairMathState(): void {
   const { state } = readNormalizedMathState()
   writeSpaceStateImmediate(getMathStatePath(), state)
+}
+
+function isAppliedBySpaceSync(
+  item: VaultDoctorItem,
+  conflictedSpaces: Set<VaultDoctorSpace>,
+): boolean {
+  if (
+    item.action === 'repair-environment-state'
+    || item.action === 'repair-math-state'
+  ) {
+    return true
+  }
+
+  return !conflictedSpaces.has(item.space)
 }
 
 export function applyVaultDoctor(
@@ -842,18 +877,22 @@ export function applyVaultDoctor(
   if (spaces.includes('notes') && !conflictedSpaces.has('notes')) {
     syncNotesRuntimeWithDisk(getNotesPaths(getVaultPath()))
   }
-  if (spaces.includes('http') && !conflictedSpaces.has('http')) {
-    syncHttpRuntimeWithDisk(getHttpPaths(getVaultPath()))
+  if (spaces.includes('http')) {
+    if (!conflictedSpaces.has('http')) {
+      syncHttpRuntimeWithDisk(getHttpPaths(getVaultPath()))
+    }
     repairHttpEnvironmentState()
   }
-  if (spaces.includes('math') && !conflictedSpaces.has('math')) {
+  if (spaces.includes('math')) {
     repairMathState()
   }
 
   const after = previewVaultDoctor(input)
   const appliedItems = before.items
     .filter(
-      item => item.status === 'pending' && !conflictedSpaces.has(item.space),
+      item =>
+        item.status === 'pending'
+        && isAppliedBySpaceSync(item, conflictedSpaces),
     )
     .map(item => ({
       ...item,

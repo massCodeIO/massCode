@@ -84,6 +84,18 @@ function snippetSource(id: number, name: string): string {
   return ['---', `id: ${id}`, `name: ${name}`, '---', '', 'body'].join('\n')
 }
 
+function httpRequestSource(id: number, name: string): string {
+  return [
+    '---',
+    `id: ${id}`,
+    `name: ${name}`,
+    'method: GET',
+    'url: https://example.com',
+    '---',
+    '',
+  ].join('\n')
+}
+
 beforeEach(() => {
   tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'vault-doctor-'))
 })
@@ -151,6 +163,27 @@ describe('vault doctor', () => {
     expect(after.conflictGroups).toHaveLength(0)
   })
 
+  it('includes code inbox files in duplicate id detection', () => {
+    writeFile('code/Live.md', snippetSource(10, 'Live'))
+    writeFile('code/.masscode/inbox/Inbox.md', snippetSource(10, 'Inbox'))
+
+    const result = previewVaultDoctor({ spaces: ['code'] })
+
+    expect(result.conflictGroups).toHaveLength(1)
+    expect(
+      result.conflictGroups[0].items.map(item => item.path).sort(),
+    ).toEqual(['.masscode/inbox/Inbox.md', 'Live.md'])
+  })
+
+  it('ignores notes trash files in duplicate id detection', () => {
+    writeFile('notes/Live.md', snippetSource(10, 'Live'))
+    writeFile('notes/.masscode/trash/Deleted.md', snippetSource(10, 'Deleted'))
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+
+    expect(result.conflictGroups).toHaveLength(0)
+  })
+
   it('blocks files with merge markers instead of parsing them as entities', () => {
     writeFile(
       'notes/Conflict.md',
@@ -168,6 +201,66 @@ describe('vault doctor', () => {
     expect(result.conflictGroups).toHaveLength(1)
     expect(result.conflictGroups[0].reason).toBe('merge-markers')
     expect(result.conflictGroups[0].items[0].status).toBe('blocked')
+  })
+
+  it('blocks standalone git separator markers', () => {
+    writeFile(
+      'notes/Conflict.md',
+      ['---', 'id: 1', '---', '======='].join('\n'),
+    )
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+
+    expect(result.conflictGroups).toHaveLength(1)
+    expect(result.conflictGroups[0].reason).toBe('merge-markers')
+  })
+
+  it('repairs http environment state while request conflicts remain unresolved', () => {
+    writeFile('http/One.md', httpRequestSource(10, 'One'))
+    writeFile('http/Two.md', httpRequestSource(10, 'Two'))
+    writeFile(
+      'http/.state.yaml',
+      yaml.dump({
+        activeEnvironmentId: 99,
+        counters: {
+          environmentId: 99,
+          folderId: 0,
+          historyId: 0,
+          requestId: 10,
+        },
+        environments: [
+          {
+            id: 1,
+            name: 'Broken',
+          },
+        ],
+        folders: [],
+        history: [],
+        requests: [],
+        version: 1,
+      }),
+    )
+
+    const result = applyVaultDoctor({ spaces: ['http'] })
+    const repaired = yaml.load(
+      fs.readFileSync(path.join(tempVaultPath, 'http/.state.yaml'), 'utf8'),
+    ) as {
+      activeEnvironmentId: number | null
+      environments: Array<{ variables: Record<string, unknown> }>
+    }
+
+    expect(result.conflictGroups).toHaveLength(1)
+    expect(result.conflictGroups[0].reason).toBe('duplicate-id')
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'repair-environment-state',
+          status: 'applied',
+        }),
+      ]),
+    )
+    expect(repaired.activeEnvironmentId).toBeNull()
+    expect(repaired.environments[0].variables).toEqual({})
   })
 
   it('repairs duplicate math sheet ids as a safe state-level fix', () => {

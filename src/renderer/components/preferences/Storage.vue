@@ -713,7 +713,10 @@ onMounted(() => {
                               : 'border-border'
                           "
                         >
-                          <RadioGroupItem :value="item.path" />
+                          <RadioGroupItem
+                            :value="item.path"
+                            class="border-muted-foreground/50"
+                          />
 
                           <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">

@@ -133,6 +133,13 @@ export function useVaultDoctor() {
     }
   }
 
+  // Сбрасывает отчёт и решения. Нужно при смене vault: старый отчёт относится
+  // к прежнему пути и к новому vault неприменим.
+  function reset() {
+    report.value = null
+    resetDecisions()
+  }
+
   async function apply(): Promise<VaultDoctorResponse> {
     isApplying.value = true
 
@@ -174,5 +181,6 @@ export function useVaultDoctor() {
     isDecisionSelected,
     scan,
     apply,
+    reset,
   }
 }

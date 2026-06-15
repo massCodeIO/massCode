@@ -32,8 +32,11 @@
       "conflicts": "Needs decision",
       "decisions": {
         "description": "Choose the file that keeps the current id.",
+        "files": "Files: {{count}}",
+        "progress": "{{selected}}/{{total}} selected",
         "keepId": "Keep id"
       },
+      "moreWarnings": "+{{count}} more warnings",
       "warnings": "Warnings"
     }
   },

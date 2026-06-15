@@ -114,6 +114,15 @@ const vaultDoctorSelectedDecisionCount = computed(() => {
   ).length
 })
 
+const vaultDoctorWarningPreview = computed(() => {
+  return vaultDoctorReport.value?.warnings.slice(0, 5) ?? []
+})
+
+const vaultDoctorHiddenWarningCount = computed(() => {
+  const warningsCount = vaultDoctorReport.value?.warnings.length ?? 0
+  return Math.max(0, warningsCount - vaultDoctorWarningPreview.value.length)
+})
+
 const vaultDoctorCanApply = computed(() => {
   return (
     vaultDoctorSafeFixesCount.value > 0
@@ -611,68 +620,113 @@ async function applyVaultDoctorSafeFixes() {
 
               <div
                 v-if="vaultDoctorReport.conflictGroups.length"
-                class="border-border space-y-3 rounded-md border p-2"
+                class="border-border rounded-md border"
               >
-                <div class="flex items-center gap-2">
-                  <AlertTriangle class="text-muted-foreground h-4 w-4" />
-                  <UiText variant="sm">
-                    {{ i18n.t("preferences:storage.vaultDoctor.conflicts") }}
+                <div
+                  class="border-border bg-background flex flex-wrap items-center justify-between gap-2 border-b p-2"
+                >
+                  <div class="flex min-w-0 items-center gap-2">
+                    <AlertTriangle class="text-muted-foreground h-4 w-4" />
+                    <UiText variant="sm">
+                      {{ i18n.t("preferences:storage.vaultDoctor.conflicts") }}
+                    </UiText>
+                  </div>
+
+                  <UiText
+                    v-if="vaultDoctorDuplicateGroups.length"
+                    variant="caption"
+                    class="text-muted-foreground"
+                  >
+                    {{
+                      i18n.t(
+                        "preferences:storage.vaultDoctor.decisions.progress",
+                        {
+                          selected: vaultDoctorSelectedDecisionCount,
+                          total: vaultDoctorDuplicateGroups.length,
+                        },
+                      )
+                    }}
                   </UiText>
                 </div>
 
-                <div
-                  v-for="group in vaultDoctorReport.conflictGroups"
-                  :key="group.id"
-                  class="space-y-2"
-                >
-                  <UiText
-                    variant="caption"
-                    class="block font-mono break-all"
-                  >
-                    {{ group.reason }} ·
-                    {{ group.items.map((item) => item.path).join(", ") }}
-                  </UiText>
-
+                <div class="max-h-80 space-y-2 overflow-y-auto p-2 pr-1">
                   <div
-                    v-if="group.reason === 'duplicate-id'"
-                    class="space-y-1"
+                    v-for="group in vaultDoctorReport.conflictGroups"
+                    :key="group.id"
+                    class="border-border bg-muted/20 space-y-2 rounded-md border p-2"
                   >
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <UiText
+                        variant="caption"
+                        class="font-mono"
+                      >
+                        {{ group.reason }}
+                      </UiText>
+                      <UiText
+                        variant="caption"
+                        class="text-muted-foreground"
+                      >
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.files",
+                            {
+                              count: group.items.length,
+                            },
+                          )
+                        }}
+                      </UiText>
+                    </div>
+
                     <UiText
                       variant="caption"
-                      class="text-muted-foreground block"
+                      class="block font-mono break-all"
                     >
-                      {{
-                        i18n.t(
-                          "preferences:storage.vaultDoctor.decisions.description",
-                        )
-                      }}
+                      {{ group.items.map((item) => item.path).join(", ") }}
                     </UiText>
 
-                    <div class="grid gap-1">
-                      <Button
-                        v-for="item in group.items"
-                        :key="item.path"
-                        size="sm"
-                        :variant="
-                          vaultDoctorDecisionByGroupId[group.id] === item.path
-                            ? 'default'
-                            : 'outline'
-                        "
-                        class="h-auto min-w-0 justify-start gap-2 px-2 py-1.5 text-left"
-                        :title="item.path"
-                        @click="selectVaultDoctorDecision(group.id, item.path)"
+                    <div
+                      v-if="group.reason === 'duplicate-id'"
+                      class="space-y-1"
+                    >
+                      <UiText
+                        variant="caption"
+                        class="text-muted-foreground block"
                       >
-                        <span class="shrink-0">
-                          {{
-                            i18n.t(
-                              "preferences:storage.vaultDoctor.decisions.keepId",
-                            )
-                          }}
-                        </span>
-                        <span class="min-w-0 truncate font-mono">
-                          {{ item.path }}
-                        </span>
-                      </Button>
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.description",
+                          )
+                        }}
+                      </UiText>
+
+                      <div class="grid max-h-32 gap-1 overflow-y-auto pr-1">
+                        <Button
+                          v-for="item in group.items"
+                          :key="item.path"
+                          size="sm"
+                          :variant="
+                            vaultDoctorDecisionByGroupId[group.id] === item.path
+                              ? 'default'
+                              : 'outline'
+                          "
+                          class="h-auto min-w-0 justify-start gap-2 px-2 py-1.5 text-left"
+                          :title="item.path"
+                          @click="
+                            selectVaultDoctorDecision(group.id, item.path)
+                          "
+                        >
+                          <span class="shrink-0">
+                            {{
+                              i18n.t(
+                                "preferences:storage.vaultDoctor.decisions.keepId",
+                              )
+                            }}
+                          </span>
+                          <span class="min-w-0 truncate font-mono">
+                            {{ item.path }}
+                          </span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -686,12 +740,23 @@ async function applyVaultDoctorSafeFixes() {
                   {{ i18n.t("preferences:storage.vaultDoctor.warnings") }}
                 </UiText>
                 <UiText
-                  v-for="warning in vaultDoctorReport.warnings.slice(0, 3)"
+                  v-for="warning in vaultDoctorWarningPreview"
                   :key="`${warning.space}:${warning.path}:${warning.code}`"
                   variant="caption"
-                  class="block font-mono"
+                  class="block font-mono break-all"
                 >
                   {{ warning.code }} · {{ warning.path }}
+                </UiText>
+                <UiText
+                  v-if="vaultDoctorHiddenWarningCount > 0"
+                  variant="caption"
+                  class="text-muted-foreground block"
+                >
+                  {{
+                    i18n.t("preferences:storage.vaultDoctor.moreWarnings", {
+                      count: vaultDoctorHiddenWarningCount,
+                    })
+                  }}
                 </UiText>
               </div>
             </div>

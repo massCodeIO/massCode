@@ -30,8 +30,11 @@
       "conflicts": "Требует решения",
       "decisions": {
         "description": "Выберите файл, который сохранит текущий id.",
+        "files": "Файлов: {{count}}",
+        "progress": "Выбрано {{selected}}/{{total}}",
         "keepId": "Оставить id"
       },
+      "moreWarnings": "+{{count}} предупреждений",
       "warnings": "Предупреждения"
     }
   },

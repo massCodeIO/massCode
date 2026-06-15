@@ -8,6 +8,7 @@ import {
   useSonner,
   useTheme,
   useVaultDoctor,
+  VAULT_DOCTOR_NOTICE_ID,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -114,10 +115,12 @@ function checkVaultHealth() {
       }
 
       sonner({
+        id: VAULT_DOCTOR_NOTICE_ID,
         message: i18n.t('messages:warning.vaultDoctorConflicts', {
           count: data.summary.conflicts,
         }),
         type: 'warning',
+        closeButton: true,
         action: {
           label: i18n.t('messages:warning.vaultDoctorReview'),
           onClick: () => {

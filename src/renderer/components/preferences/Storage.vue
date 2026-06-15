@@ -21,6 +21,7 @@ import {
   useSnippets,
   useSonner,
   useVaultDoctor,
+  VAULT_DOCTOR_NOTICE_ID,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
@@ -36,7 +37,7 @@ interface MoveVaultResponse {
   vaultPath: string
 }
 
-const { sonner } = useSonner()
+const { sonner, dismiss } = useSonner()
 const { confirm } = useDialog()
 const { getFolders } = useFolders()
 const { getHttpFolders } = useHttpFolders()
@@ -111,6 +112,7 @@ const {
   isDecisionSelected: isVaultDoctorDecisionSelected,
   scan: scanVault,
   apply: applyVault,
+  reset: resetVaultDoctor,
 } = useVaultDoctor()
 
 function showLoadingCounts() {
@@ -226,6 +228,8 @@ async function openVaultStorage() {
     message: i18n.t('messages:success.vaultLoaded'),
     type: 'success',
   })
+
+  await refreshVaultDoctorAfterVaultChange()
 }
 
 async function moveVaultStorage() {
@@ -272,6 +276,10 @@ async function moveVaultStorage() {
 
     vaultPath.value = result.vaultPath
     await resetAndReloadVaultData()
+
+    // Контент тот же, но путь сменился — прежний отчёт по старым путям неактуален.
+    dismiss(VAULT_DOCTOR_NOTICE_ID)
+    resetVaultDoctor()
 
     sonner({
       message: i18n.t('messages:success.vaultMoved'),
@@ -409,6 +417,39 @@ async function applyVaultDoctorSafeFixes() {
   }
 }
 
+function scrollToVaultDoctorSection() {
+  nextTick(() => {
+    vaultDoctorSection.value?.$el?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
+}
+
+// Смена vault делает прежний отчёт неактуальным (он про другой путь). Сбрасываем
+// и пере-сканируем новый vault. Сканируем тихо (без sonner): мы уже в Storage,
+// секция сама покажет результат, а при конфликтах подсвечиваем её скроллом.
+async function refreshVaultDoctorAfterVaultChange() {
+  // Убираем уведомление о конфликтах прежнего vault — оно больше не актуально.
+  dismiss(VAULT_DOCTOR_NOTICE_ID)
+  resetVaultDoctor()
+  showVaultDoctorScanLoader()
+
+  try {
+    await scanVault()
+
+    if (vaultDoctorConflictCount.value > 0) {
+      scrollToVaultDoctorSection()
+    }
+  }
+  catch {
+    // Vault уже загружен; провал health-чека не критичен и не требует sonner.
+  }
+  finally {
+    hideVaultDoctorScanLoader()
+  }
+}
+
 // Переход из startup-уведомления о конфликтах: переиспользуем отчёт
 // startup-проверки (если он есть), иначе сканируем, и скроллим к секции,
 // чтобы пользователь не искал её вручную. Query чистим, чтобы повторный
@@ -424,12 +465,7 @@ onMounted(() => {
     scanVaultDoctor()
   }
 
-  nextTick(() => {
-    vaultDoctorSection.value?.$el?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
-  })
+  scrollToVaultDoctorSection()
 })
 </script>
 

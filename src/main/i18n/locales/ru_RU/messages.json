@@ -12,8 +12,8 @@
       "Выбранный vault будет перезаписан текущей библиотекой SQLite."
     ],
     "vaultDoctorApply": [
-      "Применить безопасные исправления vault?",
-      "massCode обновит только metadata и state без конфликтов. Конфликты, требующие решения, будут пропущены."
+      "Применить исправления vault?",
+      "massCode обновит безопасные metadata-исправления и выбранные решения по duplicate-id. Невыбранные конфликты будут пропущены."
     ]
   },
   "success": {
@@ -21,7 +21,7 @@
     "migrateToMarkdown": "Выполнена миграция в Markdown Vault. Папок: {{folders}}, сниппетов: {{snippets}}, тегов: {{tags}}.",
     "vaultLoaded": "Хранилище успешно загружено.",
     "licenseActivated": "Лицензия активирована. Спасибо за поддержку massCode!",
-    "vaultDoctorApplied": "Vault Doctor применил {{count}} безопасных исправлений.",
+    "vaultDoctorApplied": "Vault Doctor применил {{count}} исправлений.",
     "vaultDoctorClean": "Vault Doctor не нашёл проблем."
   },
   "warning": {

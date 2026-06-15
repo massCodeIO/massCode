@@ -20,7 +20,7 @@
         "scanning": "Scanning..."
       },
       "apply": {
-        "action": "Apply safe fixes",
+        "action": "Apply fixes",
         "applying": "Applying..."
       },
       "summary": {
@@ -30,6 +30,10 @@
         "warnings": "Warnings"
       },
       "conflicts": "Needs decision",
+      "decisions": {
+        "description": "Choose the file that keeps the current id.",
+        "keepId": "Keep id"
+      },
       "warnings": "Warnings"
     }
   },

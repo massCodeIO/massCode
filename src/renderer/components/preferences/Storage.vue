@@ -80,6 +80,7 @@ const isMovingVault = ref(false)
 const isVaultDoctorApplying = ref(false)
 const isVaultDoctorScanning = ref(false)
 const vaultDoctorReport = shallowRef<VaultDoctorResponse | null>(null)
+const vaultDoctorDecisionByGroupId = reactive<Record<string, string>>({})
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
 
 const vaultDoctorSafeFixesCount = computed(() => {
@@ -98,6 +99,37 @@ const vaultDoctorConflictCount = computed(() => {
 })
 
 const vaultDoctorHasReport = computed(() => !!vaultDoctorReport.value)
+
+const vaultDoctorDuplicateGroups = computed(() => {
+  return (
+    vaultDoctorReport.value?.conflictGroups.filter(
+      group => group.reason === 'duplicate-id',
+    ) ?? []
+  )
+})
+
+const vaultDoctorSelectedDecisionCount = computed(() => {
+  return vaultDoctorDuplicateGroups.value.filter(
+    group => !!vaultDoctorDecisionByGroupId[group.id],
+  ).length
+})
+
+const vaultDoctorCanApply = computed(() => {
+  return (
+    vaultDoctorSafeFixesCount.value > 0
+    || vaultDoctorSelectedDecisionCount.value > 0
+  )
+})
+
+function resetVaultDoctorDecisions() {
+  Object.keys(vaultDoctorDecisionByGroupId).forEach((groupId) => {
+    delete vaultDoctorDecisionByGroupId[groupId]
+  })
+}
+
+function selectVaultDoctorDecision(groupId: string, keepPath: string) {
+  vaultDoctorDecisionByGroupId[groupId] = keepPath
+}
 
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
@@ -300,6 +332,7 @@ async function scanVaultDoctor() {
 
   try {
     const { data } = await api.system.postSystemVaultDoctorPreview({})
+    resetVaultDoctorDecisions()
     vaultDoctorReport.value = data
 
     if (
@@ -326,7 +359,7 @@ async function applyVaultDoctorSafeFixes() {
   if (
     isVaultDoctorApplying.value
     || isVaultDoctorScanning.value
-    || vaultDoctorSafeFixesCount.value === 0
+    || !vaultDoctorCanApply.value
   ) {
     return
   }
@@ -343,13 +376,23 @@ async function applyVaultDoctorSafeFixes() {
   isVaultDoctorApplying.value = true
 
   try {
-    const { data } = await api.system.postSystemVaultDoctorApply({})
+    const decisions = Object.entries(vaultDoctorDecisionByGroupId).map(
+      ([groupId, keepPath]) => ({ groupId, keepPath }),
+    )
+    const { data } = await api.system.postSystemVaultDoctorApply({
+      decisions,
+    })
+    const appliedCount = data.items.filter(
+      item => item.status === 'applied',
+    ).length
+
+    resetVaultDoctorDecisions()
     vaultDoctorReport.value = data
     await resetAndReloadVaultData()
 
     sonner({
       message: i18n.t('messages:success.vaultDoctorApplied', {
-        count: vaultDoctorSafeFixesCount.value,
+        count: appliedCount,
       }),
       type: 'success',
     })
@@ -473,7 +516,7 @@ async function applyVaultDoctorSafeFixes() {
             :disabled="
               isVaultDoctorScanning
                 || isVaultDoctorApplying
-                || vaultDoctorSafeFixesCount === 0
+                || !vaultDoctorCanApply
             "
             @click="applyVaultDoctorSafeFixes"
           >
@@ -568,7 +611,7 @@ async function applyVaultDoctorSafeFixes() {
 
               <div
                 v-if="vaultDoctorReport.conflictGroups.length"
-                class="border-border space-y-1 rounded-md border p-2"
+                class="border-border space-y-3 rounded-md border p-2"
               >
                 <div class="flex items-center gap-2">
                   <AlertTriangle class="text-muted-foreground h-4 w-4" />
@@ -577,15 +620,62 @@ async function applyVaultDoctorSafeFixes() {
                   </UiText>
                 </div>
 
-                <UiText
-                  v-for="group in vaultDoctorReport.conflictGroups.slice(0, 3)"
+                <div
+                  v-for="group in vaultDoctorReport.conflictGroups"
                   :key="group.id"
-                  variant="caption"
-                  class="block font-mono"
+                  class="space-y-2"
                 >
-                  {{ group.reason }} ·
-                  {{ group.items.map((item) => item.path).join(", ") }}
-                </UiText>
+                  <UiText
+                    variant="caption"
+                    class="block font-mono break-all"
+                  >
+                    {{ group.reason }} ·
+                    {{ group.items.map((item) => item.path).join(", ") }}
+                  </UiText>
+
+                  <div
+                    v-if="group.reason === 'duplicate-id'"
+                    class="space-y-1"
+                  >
+                    <UiText
+                      variant="caption"
+                      class="text-muted-foreground block"
+                    >
+                      {{
+                        i18n.t(
+                          "preferences:storage.vaultDoctor.decisions.description",
+                        )
+                      }}
+                    </UiText>
+
+                    <div class="grid gap-1">
+                      <Button
+                        v-for="item in group.items"
+                        :key="item.path"
+                        size="sm"
+                        :variant="
+                          vaultDoctorDecisionByGroupId[group.id] === item.path
+                            ? 'default'
+                            : 'outline'
+                        "
+                        class="h-auto min-w-0 justify-start gap-2 px-2 py-1.5 text-left"
+                        :title="item.path"
+                        @click="selectVaultDoctorDecision(group.id, item.path)"
+                      >
+                        <span class="shrink-0">
+                          {{
+                            i18n.t(
+                              "preferences:storage.vaultDoctor.decisions.keepId",
+                            )
+                          }}
+                        </span>
+                        <span class="min-w-0 truncate font-mono">
+                          {{ item.path }}
+                        </span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div

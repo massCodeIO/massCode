@@ -120,7 +120,10 @@ function checkVaultHealth() {
         action: {
           label: i18n.t('messages:warning.vaultDoctorReview'),
           onClick: () => {
-            router.push({ name: RouterName.preferencesStorage })
+            router.push({
+              name: RouterName.preferencesStorage,
+              query: { doctor: 'scan' },
+            })
           },
         },
       })

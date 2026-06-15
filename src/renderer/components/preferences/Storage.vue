@@ -25,6 +25,7 @@ import {
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '~/renderer/services/api'
 
 interface DirectoryStateResponse {
@@ -48,6 +49,8 @@ const { resetNoteFoldersState } = useNoteFolders()
 const { clearNotesState, getNotes } = useNotes()
 const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
+const route = useRoute()
+const router = useRouter()
 
 function getDefaultVaultPath(baseStoragePath: string): string {
   const separator = baseStoragePath.includes('\\') ? '\\' : '/'
@@ -481,6 +484,16 @@ async function applyVaultDoctorSafeFixes() {
     isVaultDoctorApplying.value = false
   }
 }
+
+// Переход из startup-уведомления о конфликтах: сразу запускаем скан, чтобы
+// пользователь не видел пустую секцию и не жал Scan вручную. Query чистим,
+// чтобы ручной повторный заход не пересканировал.
+onMounted(() => {
+  if (route.query.doctor === 'scan') {
+    router.replace({ query: {} })
+    scanVaultDoctor()
+  }
+})
 </script>
 
 <template>

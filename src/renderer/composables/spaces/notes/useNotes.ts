@@ -1,3 +1,4 @@
+import { useContentSort } from '@/composables/useContentSort'
 import { useDialog } from '@/composables/useDialog'
 import { useDonations } from '@/composables/useDonations'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
@@ -11,6 +12,7 @@ import { useNotesApp } from './useNotesApp'
 import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
 const { notesState, focusNoteNameInput, notesCreateKind } = useNotesApp()
+const { getContentSortQuery } = useContentSort()
 
 // --- Types ---
 // These mirror the generated API types that will exist after api:generate.
@@ -383,10 +385,12 @@ export async function getNotes(query?: NotesQuery) {
     // Защита от гонки ответов: применяется только самый свежий запрос.
     const requestToken = ++notesRequestToken
     const forSearch = isSearch.value
+    const resolvedQuery = {
+      ...(query || queryByLibraryOrFolderOrSearch.value),
+      ...getContentSortQuery('notes'),
+    }
 
-    const { data: responseData } = await api.notes.getNotes(
-      query || queryByLibraryOrFolderOrSearch.value,
-    )
+    const { data: responseData } = await api.notes.getNotes(resolvedQuery)
 
     if (requestToken !== notesRequestToken) {
       return

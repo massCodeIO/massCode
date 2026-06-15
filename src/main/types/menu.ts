@@ -1,4 +1,6 @@
 export type MainMenuLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
+export type MainMenuContentSortField = 'createdAt' | 'updatedAt' | 'name'
+export type MainMenuContentSortOrder = 'ASC' | 'DESC'
 
 export type MainMenuPrimaryAction =
   | 'new-snippet'
@@ -19,6 +21,8 @@ export interface MainMenuFileContext {
 export interface MainMenuViewContext {
   layoutMode: MainMenuLayoutMode | null
   layoutModes: MainMenuLayoutMode[]
+  contentSortField: MainMenuContentSortField | null
+  contentSortOrder: MainMenuContentSortOrder | null
   canToggleCompactMode: boolean
   isCompactMode: boolean
   canToggleMindmap: boolean

@@ -1,5 +1,6 @@
 import {
   useApp,
+  useContentSort,
   useHttpApp,
   useHttpExecute,
   useHttpRequests,
@@ -28,6 +29,7 @@ const { httpLayoutMode } = useHttpApp()
 const { isExecuting } = useHttpExecute()
 const { currentDraft } = useHttpRequests()
 const { isAvailableToCodePreview, selectedSnippetContent } = useSnippets()
+const { contentSortState } = useContentSort()
 
 export function registerMainMenuContextSync() {
   watch(
@@ -46,6 +48,12 @@ export function registerMainMenuContextSync() {
         notesLayoutMode.value,
         notesEditorMode.value,
         httpLayoutMode.value,
+        contentSortState.code.sort,
+        contentSortState.code.order,
+        contentSortState.notes.sort,
+        contentSortState.notes.order,
+        contentSortState.http.sort,
+        contentSortState.http.order,
         currentDraft.value?.url,
         isExecuting.value,
       ] as const,
@@ -55,6 +63,11 @@ export function registerMainMenuContextSync() {
         createMainMenuContext({
           activeSpaceId: getActiveSpaceId(),
           compactListMode: isCompactListMode.value,
+          contentSort: {
+            code: { ...contentSortState.code },
+            notes: { ...contentSortState.notes },
+            http: { ...contentSortState.http },
+          },
           code: {
             canPreviewCode: isAvailableToCodePreview.value,
             canPreviewJson: selectedSnippetContent.value?.language === 'json',

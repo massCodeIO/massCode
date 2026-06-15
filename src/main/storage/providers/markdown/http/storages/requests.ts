@@ -14,6 +14,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
   assertUniqueSiblingEntryName,
@@ -131,48 +132,52 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
   return {
     getRequests(query?: HttpRequestsQueryInput) {
       const { requestById } = getCache()
-      let result = [...requestById.values()].sort(
-        (a, b) => b.createdAt - a.createdAt,
-      )
+      const resolvedQuery = query ?? {}
 
-      result = result.filter(request =>
-        query?.isDeleted !== undefined
-          ? request.isDeleted === normalizeFlag(query.isDeleted)
-          : request.isDeleted === 0,
-      )
+      const search = resolvedQuery.search?.trim().toLowerCase()
 
-      if (query?.folderId !== undefined) {
-        result = result.filter(
-          request => request.folderId === query.folderId,
-        )
-      }
+      return filterAndSortByQuery({
+        entities: [...requestById.values()],
+        filters: [
+          request =>
+            resolvedQuery.isDeleted !== undefined
+              ? request.isDeleted === normalizeFlag(resolvedQuery.isDeleted)
+              : request.isDeleted === 0,
+          request =>
+            resolvedQuery.folderId === undefined
+            || request.folderId === resolvedQuery.folderId,
+          request =>
+            !resolvedQuery.isInbox
+            || (request.folderId === null && request.isDeleted === 0),
+          request => !resolvedQuery.isFavorites || request.isFavorites === 1,
+          (request) => {
+            if (!search) {
+              return true
+            }
 
-      if (query?.isInbox) {
-        result = result.filter(
-          request => request.folderId === null && request.isDeleted === 0,
-        )
-      }
+            if (request.name.toLowerCase().includes(search)) {
+              return true
+            }
 
-      if (query?.isFavorites) {
-        result = result.filter(request => request.isFavorites === 1)
-      }
+            return (
+              !resolvedQuery.searchNameOnly
+              && request.url.toLowerCase().includes(search)
+            )
+          },
+        ],
+        getSortValue: (request, sort) => {
+          if (sort === 'name') {
+            return request.name.toLowerCase()
+          }
 
-      const search = query?.search?.trim().toLowerCase()
-      if (!search) {
-        return result
-      }
+          if (sort === 'updatedAt') {
+            return request.updatedAt
+          }
 
-      if (query?.searchNameOnly) {
-        return result.filter(request =>
-          request.name.toLowerCase().includes(search),
-        )
-      }
-
-      return result.filter(
-        request =>
-          request.name.toLowerCase().includes(search)
-          || request.url.toLowerCase().includes(search),
-      )
+          return request.createdAt
+        },
+        query: resolvedQuery,
+      })
     },
 
     getRequestById(id: number) {

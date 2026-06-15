@@ -74,7 +74,17 @@ export function createSnippetsStorage(): SnippetsStorage {
           (snippet, query) =>
             query.isDeleted ? snippet.isDeleted === 1 : snippet.isDeleted === 0,
         ],
-        getSortValue: snippet => snippet.createdAt,
+        getSortValue: (snippet, sort) => {
+          if (sort === 'name') {
+            return snippet.name.toLowerCase()
+          }
+
+          if (sort === 'updatedAt') {
+            return snippet.updatedAt
+          }
+
+          return snippet.createdAt
+        },
         query,
       }).map(snippet => createSnippetRecord(snippet, state))
 

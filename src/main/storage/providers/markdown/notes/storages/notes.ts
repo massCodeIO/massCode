@@ -239,7 +239,17 @@ export function createNotesNotesStorage(): NotesStorage {
             query.tagId === undefined || note.tags.includes(query.tagId),
           (note, query) => applyNotePropertyFilters(note, query),
         ],
-        getSortValue: note => note.createdAt,
+        getSortValue: (note, sort) => {
+          if (sort === 'name') {
+            return note.name.toLowerCase()
+          }
+
+          if (sort === 'updatedAt') {
+            return note.updatedAt
+          }
+
+          return note.createdAt
+        },
         query,
       })
 

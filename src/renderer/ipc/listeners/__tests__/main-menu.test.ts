@@ -13,6 +13,11 @@ async function setup() {
   const saveCurrentRequest = vi.fn(async () => undefined)
   const createNoteAndSelect = vi.fn()
   const createTaskAndSelect = vi.fn()
+  const getHttpRequests = vi.fn(async () => undefined)
+  const getNotes = vi.fn(async () => undefined)
+  const getSnippets = vi.fn(async () => undefined)
+  const setContentSortField = vi.fn()
+  const setContentSortOrder = vi.fn()
   const currentDraft = ref({ url: 'https://example.com' })
   const isExecuting = ref(false)
   const getActiveSpaceId = vi.fn(() => 'code')
@@ -30,6 +35,15 @@ async function setup() {
     useEditor: () => ({
       settings: { fontSize: 14 },
     }),
+    isContentSortField: (value: unknown) =>
+      value === 'createdAt' || value === 'updatedAt' || value === 'name',
+    isContentSortOrder: (value: unknown) => value === 'ASC' || value === 'DESC',
+    isSortableContentSpaceId: (value: unknown) =>
+      value === 'code' || value === 'notes' || value === 'http',
+    useContentSort: () => ({
+      setContentSortField,
+      setContentSortOrder,
+    }),
     useFolders: () => ({
       createFolderAndSelect: vi.fn(),
     }),
@@ -42,6 +56,7 @@ async function setup() {
     useNotes: () => ({
       createNoteAndSelect,
       createTaskAndSelect,
+      getNotes,
       selectedNote: ref(undefined),
     }),
     useNotesApp: () => ({
@@ -64,6 +79,7 @@ async function setup() {
     }),
     useHttpRequests: () => ({
       currentDraft,
+      getHttpRequests,
       saveCurrentRequest,
     }),
     useNotesEditor: () => ({
@@ -72,6 +88,7 @@ async function setup() {
     useSnippets: () => ({
       createSnippetAndSelect: vi.fn(),
       addFragment: vi.fn(),
+      getSnippets,
       isAvailableToCodePreview: ref(false),
       selectedSnippetContent: ref(undefined),
     }),
@@ -122,10 +139,15 @@ async function setup() {
     createTaskAndSelect,
     executeCurrentRequest,
     getActiveSpaceId,
+    getHttpRequests,
+    getNotes,
+    getSnippets,
     isExecuting,
     navigateBack,
     navigateForward,
     saveCurrentRequest,
+    setContentSortField,
+    setContentSortOrder,
   }
 }
 
@@ -171,5 +193,38 @@ describe('registerMainMenuListeners', () => {
 
     expect(context.saveCurrentRequest).not.toHaveBeenCalled()
     expect(context.executeCurrentRequest).not.toHaveBeenCalled()
+  })
+
+  it('updates active code sort from the menu', async () => {
+    const context = await setup()
+    const setSortField = context.ipcHandlers.get(
+      'main-menu:set-content-sort-field',
+    )
+    const setSortOrder = context.ipcHandlers.get(
+      'main-menu:set-content-sort-order',
+    )
+
+    await setSortField?.(undefined, 'updatedAt')
+    await setSortOrder?.(undefined, 'ASC')
+
+    expect(context.setContentSortField).toHaveBeenCalledWith(
+      'code',
+      'updatedAt',
+    )
+    expect(context.setContentSortOrder).toHaveBeenCalledWith('code', 'ASC')
+    expect(context.getSnippets).toHaveBeenCalledTimes(2)
+  })
+
+  it('updates active http sort from the menu', async () => {
+    const context = await setup()
+    context.getActiveSpaceId.mockReturnValue('http')
+    const setSortField = context.ipcHandlers.get(
+      'main-menu:set-content-sort-field',
+    )
+
+    await setSortField?.(undefined, 'name')
+
+    expect(context.setContentSortField).toHaveBeenCalledWith('http', 'name')
+    expect(context.getHttpRequests).toHaveBeenCalledTimes(1)
   })
 })

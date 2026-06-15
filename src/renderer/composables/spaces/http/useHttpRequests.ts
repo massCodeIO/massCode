@@ -5,6 +5,7 @@ import type {
   HttpRequestsResponse,
   HttpRequestsUpdate,
 } from '@/services/api/generated'
+import { useContentSort } from '@/composables/useContentSort'
 import { useDialog } from '@/composables/useDialog'
 import { useDonations } from '@/composables/useDonations'
 import {
@@ -54,6 +55,7 @@ const currentDraft = ref<HttpRequestDraft | null>(null)
 const { highlightedRequestIds, httpState, focusRequestNameInput }
   = useHttpApp()
 const { incrementCreated } = useDonations()
+const { getContentSortQuery } = useContentSort()
 
 const selectedRequestIds = ref<number[]>(
   httpState.requestId ? [httpState.requestId] : [],
@@ -231,7 +233,10 @@ const isCurrentRequestDirty = computed(() => {
 
 export async function getHttpRequests(query?: HttpRequestsQuery) {
   try {
-    const resolvedQuery = query || queryByLibraryOrFolderOrSearch.value
+    const resolvedQuery = {
+      ...(query || queryByLibraryOrFolderOrSearch.value),
+      ...getContentSortQuery('http'),
+    }
     const { data } = await api.httpRequests.getHttpRequests(resolvedQuery)
     if (resolvedQuery.search) {
       requestsBySearch.value = data

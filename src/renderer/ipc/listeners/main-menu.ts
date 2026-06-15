@@ -1,7 +1,11 @@
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
 import type { MainMenuLayoutMode } from '~/main/types/menu'
 import {
+  isContentSortField,
+  isContentSortOrder,
+  isSortableContentSpaceId,
   useApp,
+  useContentSort,
   useEditor,
   useFolders,
   useHttpApp,
@@ -21,9 +25,10 @@ import { getActiveSpaceId } from '@/spaceDefinitions'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '~/main/store/constants'
 import { registerMainMenuContextSync } from '../main-menu/sync'
 
-const { createSnippetAndSelect, addFragment } = useSnippets()
+const { createSnippetAndSelect, addFragment, getSnippets } = useSnippets()
 const { createFolderAndSelect } = useFolders()
-const { createNoteAndSelect, createTaskAndSelect, selectedNote } = useNotes()
+const { createNoteAndSelect, createTaskAndSelect, getNotes, selectedNote }
+  = useNotes()
 const { createNoteFolderAndSelect } = useNoteFolders()
 const { createSheet } = useMathNotebook()
 const { settings: editorSettings } = useEditor()
@@ -47,7 +52,26 @@ const {
 } = useNotesApp()
 const { setHttpLayoutMode, toggleHttpSidebar } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
-const { currentDraft, saveCurrentRequest } = useHttpRequests()
+const { currentDraft, getHttpRequests, saveCurrentRequest } = useHttpRequests()
+const { setContentSortField, setContentSortOrder } = useContentSort()
+
+async function refreshActiveSortableList() {
+  const activeSpaceId = getActiveSpaceId()
+
+  if (activeSpaceId === 'code') {
+    await getSnippets()
+    return
+  }
+
+  if (activeSpaceId === 'notes') {
+    await getNotes()
+    return
+  }
+
+  if (activeSpaceId === 'http') {
+    await getHttpRequests()
+  }
+}
 
 export function registerMainMenuListeners() {
   registerMainMenuContextSync()
@@ -186,6 +210,31 @@ export function registerMainMenuListeners() {
     if (activeSpaceId === 'http') {
       setHttpLayoutMode(layoutMode)
     }
+  })
+
+  ipc.on('main-menu:set-content-sort-field', async (_, sort?: unknown) => {
+    const activeSpaceId = getActiveSpaceId()
+
+    if (!isSortableContentSpaceId(activeSpaceId) || !isContentSortField(sort)) {
+      return
+    }
+
+    setContentSortField(activeSpaceId, sort)
+    await refreshActiveSortableList()
+  })
+
+  ipc.on('main-menu:set-content-sort-order', async (_, order?: unknown) => {
+    const activeSpaceId = getActiveSpaceId()
+
+    if (
+      !isSortableContentSpaceId(activeSpaceId)
+      || !isContentSortOrder(order)
+    ) {
+      return
+    }
+
+    setContentSortOrder(activeSpaceId, order)
+    await refreshActiveSortableList()
   })
 
   ipc.on('main-menu:set-notes-editor-mode', (_, mode?: NotesEditorMode) => {

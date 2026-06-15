@@ -1,5 +1,9 @@
 import type { LayoutMode } from '@/composables/layoutModes'
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type {
+  ContentSortField,
+  ContentSortOrder,
+} from '@/composables/useContentSort'
 import type { SpaceId } from '@/spaceDefinitions'
 import type { MainMenuContext, MainMenuLayoutMode } from '~/main/types/menu'
 
@@ -27,6 +31,11 @@ interface HttpMenuState {
 interface CreateMainMenuContextOptions {
   activeSpaceId: SpaceId | null
   compactListMode: boolean
+  contentSort: {
+    code: { sort: ContentSortField, order: ContentSortOrder }
+    notes: { sort: ContentSortField, order: ContentSortOrder }
+    http: { sort: ContentSortField, order: ContentSortOrder }
+  }
   code: CodeMenuState
   notes: NotesMenuState
   http: HttpMenuState
@@ -52,6 +61,8 @@ export function createMainMenuContext(
       view: {
         layoutMode: options.code.layoutMode,
         layoutModes: sharedLayoutModes,
+        contentSortField: options.contentSort.code.sort,
+        contentSortOrder: options.contentSort.code.order,
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: options.compactListMode,
@@ -84,6 +95,8 @@ export function createMainMenuContext(
       view: {
         layoutMode: options.notes.layoutMode,
         layoutModes: sharedLayoutModes,
+        contentSortField: options.contentSort.notes.sort,
+        contentSortOrder: options.contentSort.notes.order,
         canToggleCompactMode: true,
         canToggleMindmap: options.notes.hasSelectedNote,
         isCompactMode: options.compactListMode,
@@ -116,6 +129,8 @@ export function createMainMenuContext(
       view: {
         layoutMode: options.http.layoutMode,
         layoutModes: sharedLayoutModes,
+        contentSortField: options.contentSort.http.sort,
+        contentSortOrder: options.contentSort.http.order,
         canToggleCompactMode: false,
         canToggleMindmap: false,
         isCompactMode: false,
@@ -148,6 +163,8 @@ export function createMainMenuContext(
       view: {
         layoutMode: null,
         layoutModes: [],
+        contentSortField: null,
+        contentSortOrder: null,
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: options.compactListMode,
@@ -179,6 +196,8 @@ export function createMainMenuContext(
     view: {
       layoutMode: null,
       layoutModes: [],
+      contentSortField: null,
+      contentSortOrder: null,
       canToggleCompactMode: false,
       canToggleMindmap: false,
       isCompactMode: false,

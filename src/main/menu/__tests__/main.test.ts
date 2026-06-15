@@ -59,6 +59,8 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: 'all-panels',
         layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'updatedAt',
+        contentSortOrder: 'DESC',
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: true,
@@ -103,6 +105,15 @@ describe('createMainMenu', () => {
       'menu:view.layout.listEditor',
       'menu:view.layout.editorOnly',
       undefined,
+      'menu:view.sortBy.label',
+      'menu:view.sortBy.dateModified',
+      'menu:view.sortBy.dateCreated',
+      'menu:view.sortBy.name',
+      undefined,
+      'menu:view.sortOrder.label',
+      'menu:view.sortOrder.ascending',
+      'menu:view.sortOrder.descending',
+      undefined,
       'menu:view.compactMode',
     ])
     expect(viewMenu?.submenu?.some(item => Array.isArray(item.submenu))).toBe(
@@ -123,6 +134,8 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: null,
         layoutModes: [],
+        contentSortField: null,
+        contentSortOrder: null,
         canToggleCompactMode: false,
         canToggleMindmap: false,
         isCompactMode: false,
@@ -170,6 +183,8 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: 'all-panels',
         layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'createdAt',
+        contentSortOrder: 'DESC',
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: false,
@@ -223,6 +238,8 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: null,
         layoutModes: [],
+        contentSortField: null,
+        contentSortOrder: null,
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: true,
@@ -290,6 +307,8 @@ describe('createMainMenu', () => {
       view: {
         layoutMode: 'all-panels',
         layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+        contentSortField: 'createdAt',
+        contentSortOrder: 'ASC',
         canToggleCompactMode: false,
         canToggleMindmap: false,
         isCompactMode: false,

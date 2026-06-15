@@ -27,6 +27,8 @@ type MainMenuAction =
   | 'preview-code'
   | 'preview-json'
   | 'presentation-mode'
+  | 'set-content-sort-field'
+  | 'set-content-sort-order'
   | 'set-layout-mode'
   | 'set-notes-editor-mode'
   | 'send-http-request'

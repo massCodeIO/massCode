@@ -140,6 +140,37 @@ function selectVaultDoctorDecision(groupId: string, keepPath: string) {
   vaultDoctorDecisionByGroupId[groupId] = keepPath
 }
 
+function isVaultDoctorDecisionSelected(groupId: string, path: string): boolean {
+  return vaultDoctorDecisionByGroupId[groupId] === path
+}
+
+function getVaultDoctorDecisionButtonLabel(
+  groupId: string,
+  path: string,
+): string {
+  return isVaultDoctorDecisionSelected(groupId, path)
+    ? i18n.t('preferences:storage.vaultDoctor.decisions.keepsId')
+    : i18n.t('preferences:storage.vaultDoctor.decisions.keepIdHere')
+}
+
+function getVaultDoctorDecisionReassignCount(
+  group: VaultDoctorResponse['conflictGroups'][number],
+): number {
+  return vaultDoctorDecisionByGroupId[group.id] ? group.items.length - 1 : 0
+}
+
+function getVaultDoctorConflictLabel(
+  group: VaultDoctorResponse['conflictGroups'][number],
+): string {
+  if (group.reason !== 'duplicate-id') {
+    return group.reason
+  }
+
+  return i18n.t('preferences:storage.vaultDoctor.decisions.duplicateId', {
+    id: group.id.split(':').at(-1) ?? group.id,
+  })
+}
+
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
     isLoadingCounts.value = true
@@ -660,7 +691,7 @@ async function applyVaultDoctorSafeFixes() {
                         variant="caption"
                         class="font-mono"
                       >
-                        {{ group.reason }}
+                        {{ getVaultDoctorConflictLabel(group) }}
                       </UiText>
                       <UiText
                         variant="caption"
@@ -699,17 +730,36 @@ async function applyVaultDoctorSafeFixes() {
                         }}
                       </UiText>
 
+                      <UiText
+                        v-if="vaultDoctorDecisionByGroupId[group.id]"
+                        variant="caption"
+                        class="block"
+                      >
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.outcome",
+                            {
+                              count: getVaultDoctorDecisionReassignCount(group),
+                            },
+                          )
+                        }}
+                      </UiText>
+
                       <div class="grid max-h-32 gap-1 overflow-y-auto pr-1">
                         <Button
                           v-for="item in group.items"
                           :key="item.path"
                           size="sm"
-                          :variant="
-                            vaultDoctorDecisionByGroupId[group.id] === item.path
-                              ? 'default'
-                              : 'outline'
+                          variant="outline"
+                          :aria-pressed="
+                            isVaultDoctorDecisionSelected(group.id, item.path)
                           "
                           class="h-auto min-w-0 justify-start gap-2 px-2 py-1.5 text-left"
+                          :class="[
+                            isVaultDoctorDecisionSelected(group.id, item.path)
+                              ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+                              : '',
+                          ]"
                           :title="item.path"
                           @click="
                             selectVaultDoctorDecision(group.id, item.path)
@@ -717,8 +767,9 @@ async function applyVaultDoctorSafeFixes() {
                         >
                           <span class="shrink-0">
                             {{
-                              i18n.t(
-                                "preferences:storage.vaultDoctor.decisions.keepId",
+                              getVaultDoctorDecisionButtonLabel(
+                                group.id,
+                                item.path,
                               )
                             }}
                           </span>

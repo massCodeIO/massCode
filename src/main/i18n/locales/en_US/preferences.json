@@ -31,10 +31,13 @@
       },
       "conflicts": "Needs decision",
       "decisions": {
-        "description": "Choose the file that keeps the current id.",
+        "description": "Duplicate id means these files currently share the same id. Choose exactly one file to keep that id.",
+        "duplicateId": "Duplicate id: {{id}}",
         "files": "Files: {{count}}",
         "progress": "{{selected}}/{{total}} selected",
-        "keepId": "Keep id"
+        "outcome": "After Apply fixes: the selected file keeps this id. Files that will receive new unique ids: {{count}}.",
+        "keepIdHere": "Keep id here",
+        "keepsId": "Keeps current id"
       },
       "moreWarnings": "+{{count}} more warnings",
       "warnings": "Warnings"

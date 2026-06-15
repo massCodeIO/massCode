@@ -73,6 +73,14 @@ const vaultDoctorConflictGroup = t.Object({
 })
 
 const vaultDoctorInput = t.Object({
+  decisions: t.Optional(
+    t.Array(
+      t.Object({
+        groupId: t.String(),
+        keepPath: t.String(),
+      }),
+    ),
+  ),
   spaces: t.Optional(t.Array(vaultDoctorSpace)),
 })
 

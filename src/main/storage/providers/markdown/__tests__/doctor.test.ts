@@ -111,6 +111,46 @@ describe('vault doctor', () => {
     ])
   })
 
+  it('reassigns duplicate code snippet ids after a keep-id decision', () => {
+    writeFile('code/One.md', snippetSource(10, 'One'))
+    writeFile('code/Two.md', snippetSource(10, 'Two'))
+
+    const preview = previewVaultDoctor({ spaces: ['code'] })
+    const result = applyVaultDoctor({
+      decisions: [
+        {
+          groupId: preview.conflictGroups[0].id,
+          keepPath: 'One.md',
+        },
+      ],
+      spaces: ['code'],
+    })
+
+    const one = fs.readFileSync(
+      path.join(tempVaultPath, 'code/One.md'),
+      'utf8',
+    )
+    const two = fs.readFileSync(
+      path.join(tempVaultPath, 'code/Two.md'),
+      'utf8',
+    )
+    const after = previewVaultDoctor({ spaces: ['code'] })
+
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'reassign-id',
+          path: 'Two.md',
+          status: 'applied',
+        }),
+      ]),
+    )
+    expect(one).toContain('id: 10')
+    expect(two).toContain('id: 11')
+    expect(two).toContain('body')
+    expect(after.conflictGroups).toHaveLength(0)
+  })
+
   it('blocks files with merge markers instead of parsing them as entities', () => {
     writeFile(
       'notes/Conflict.md',

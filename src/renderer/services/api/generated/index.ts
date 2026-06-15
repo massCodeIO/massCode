@@ -192,6 +192,10 @@ export type FoldersTreeResponse = {
 }[];
 
 export interface VaultDoctorInput {
+  decisions?: {
+    groupId: string;
+    keepPath: string;
+  }[];
   spaces?: ("code" | "notes" | "http" | "math")[];
 }
 

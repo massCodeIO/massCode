@@ -15,11 +15,16 @@ import {
   saveHttpState,
   syncHttpRuntimeWithDisk,
 } from './http/runtime'
-import { getNotesPaths, syncNotesRuntimeWithDisk } from './notes/runtime'
+import {
+  getNotesPaths,
+  loadNotesState,
+  syncNotesRuntimeWithDisk,
+} from './notes/runtime'
 import {
   getPaths,
   getSpaceStatePath,
   getVaultPath,
+  loadState,
   META_DIR_NAME,
   META_FILE_NAME,
   readSpaceState,
@@ -55,6 +60,7 @@ const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 const MERGE_MARKER_RE = /^(?:<<<<<<<|=======|>>>>>>>) /m
 const CONFLICTED_NAME_RE
   = /\b(?:conflict|conflicted|conflicted copy|copy conflict)\b|\([^)]+(?:macbook|machine|conflict|conflicted)[^)]*\)/i
+const FRONTMATTER_ID_RE = /^id:.*$/m
 
 function normalizeSpaces(input?: VaultDoctorInput): VaultDoctorSpace[] {
   const requestedSpaces = input?.spaces?.length ? input.spaces : DEFAULT_SPACES
@@ -328,6 +334,147 @@ function collectDuplicateIds(
       reason: 'duplicate-id',
     })
   })
+}
+
+function getSpaceRoot(
+  space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>,
+): string {
+  const vaultPath = getVaultPath()
+
+  if (space === 'code') {
+    return getPaths(vaultPath).vaultPath
+  }
+
+  if (space === 'notes') {
+    return getNotesPaths(vaultPath).notesRoot
+  }
+
+  return getHttpPaths(vaultPath).httpRoot
+}
+
+function getStateIds(
+  space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>,
+): number[] {
+  const vaultPath = getVaultPath()
+
+  if (space === 'code') {
+    return loadState(getPaths(vaultPath)).snippets.map(item => item.id)
+  }
+
+  if (space === 'notes') {
+    return loadNotesState(getNotesPaths(vaultPath)).notes.map(
+      item => item.id,
+    )
+  }
+
+  return loadHttpState(getHttpPaths(vaultPath)).requests.map(item => item.id)
+}
+
+function getNextEntityId(
+  space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>,
+): () => number {
+  const rootPath = getSpaceRoot(space)
+  const ids = new Set<number>(getStateIds(space))
+
+  listMarkdownFiles(rootPath).forEach((filePath) => {
+    try {
+      const source = fs.readFileSync(path.join(rootPath, filePath), 'utf8')
+      const parsed = readFrontmatter(source)
+      const id = normalizeId(parsed.frontmatter.id)
+      if (id) {
+        ids.add(id)
+      }
+    }
+    catch {
+      // Ignore unreadable files; preview will report them separately.
+    }
+  })
+
+  let nextId = Math.max(0, ...ids) + 1
+  return () => {
+    const id = nextId
+    nextId += 1
+    return id
+  }
+}
+
+function isFingerprintCurrent(item: VaultDoctorItem): boolean {
+  const current = getFingerprint(item.fingerprint.path)
+  return (
+    current.mtimeMs === item.fingerprint.mtimeMs
+    && current.size === item.fingerprint.size
+  )
+}
+
+function replaceFrontmatterId(source: string, id: number): string {
+  const match = source.match(FRONTMATTER_RE)
+  if (!match) {
+    return source
+  }
+
+  const frontmatter = FRONTMATTER_ID_RE.test(match[1])
+    ? match[1].replace(FRONTMATTER_ID_RE, `id: ${id}`)
+    : `id: ${id}\n${match[1]}`
+
+  return `---\n${frontmatter}\n---\n${match[2] || ''}`
+}
+
+function applyDuplicateIdDecisions(
+  preview: VaultDoctorResponse,
+  decisions: VaultDoctorInput['decisions'] = [],
+): VaultDoctorItem[] {
+  const appliedItems: VaultDoctorItem[] = []
+  const decisionsByGroupId = new Map(
+    decisions.map(decision => [decision.groupId, decision]),
+  )
+
+  preview.conflictGroups.forEach((group) => {
+    if (group.reason !== 'duplicate-id') {
+      return
+    }
+
+    const decision = decisionsByGroupId.get(group.id)
+    if (!decision) {
+      return
+    }
+
+    const keepItem = group.items.find(
+      item => item.path === decision.keepPath,
+    )
+    if (!keepItem) {
+      return
+    }
+
+    if (group.items.some(item => !isFingerprintCurrent(item))) {
+      return
+    }
+
+    const space = keepItem.space as Extract<
+      VaultDoctorSpace,
+      'code' | 'http' | 'notes'
+    >
+    const nextId = getNextEntityId(space)
+
+    group.items.forEach((item) => {
+      if (item.path === decision.keepPath || item.status !== 'needs-decision') {
+        return
+      }
+
+      const absolutePath = item.fingerprint.path
+      const source = fs.readFileSync(absolutePath, 'utf8')
+      fs.writeFileSync(
+        absolutePath,
+        replaceFrontmatterId(source, nextId()),
+        'utf8',
+      )
+      appliedItems.push({
+        ...item,
+        status: 'applied',
+      })
+    })
+  })
+
+  return appliedItems
 }
 
 function scanCode(context: ScanContext): void {
@@ -681,7 +828,12 @@ export function applyVaultDoctor(
   input?: VaultDoctorInput,
 ): VaultDoctorResponse {
   const before = previewVaultDoctor(input)
-  const conflictedSpaces = spacesWithConflicts(before)
+  const appliedDecisionItems = applyDuplicateIdDecisions(
+    before,
+    input?.decisions,
+  )
+  const afterDecisions = previewVaultDoctor(input)
+  const conflictedSpaces = spacesWithConflicts(afterDecisions)
   const spaces = normalizeSpaces(input)
 
   if (spaces.includes('code') && !conflictedSpaces.has('code')) {
@@ -710,10 +862,10 @@ export function applyVaultDoctor(
 
   return {
     conflictGroups: after.conflictGroups,
-    items: [...appliedItems, ...after.items],
+    items: [...appliedDecisionItems, ...appliedItems, ...after.items],
     summary: buildSummary({
       conflictGroups: after.conflictGroups,
-      items: [...appliedItems, ...after.items],
+      items: [...appliedDecisionItems, ...appliedItems, ...after.items],
       warnings: after.warnings,
     }),
     warnings: after.warnings,

@@ -83,7 +83,9 @@ const counts = reactive<SnippetsCountsResponse>({
 })
 const isLoadingCounts = ref(false)
 const isMovingVault = ref(false)
+const isVaultDoctorScanLoaderVisible = ref(false)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
+let vaultDoctorScanLoaderTimer: ReturnType<typeof setTimeout> | null = null
 
 const {
   report: vaultDoctorReport,
@@ -122,6 +124,23 @@ function hideLoadingCounts() {
   }
 
   isLoadingCounts.value = false
+}
+
+// Отложенный лоадер скана: показываем спиннер только если скан длится дольше
+// порога, иначе быстрый скан вызвал бы мелькание лоадера на долю секунды.
+function showVaultDoctorScanLoader() {
+  vaultDoctorScanLoaderTimer = setTimeout(() => {
+    isVaultDoctorScanLoaderVisible.value = true
+  }, 300)
+}
+
+function hideVaultDoctorScanLoader() {
+  if (vaultDoctorScanLoaderTimer) {
+    clearTimeout(vaultDoctorScanLoaderTimer)
+    vaultDoctorScanLoaderTimer = null
+  }
+
+  isVaultDoctorScanLoaderVisible.value = false
 }
 
 async function getSnippetsCounts() {
@@ -302,6 +321,8 @@ async function migrateSqliteToMarkdown() {
 }
 
 async function scanVaultDoctor() {
+  showVaultDoctorScanLoader()
+
   try {
     const data = await scanVault()
 
@@ -320,6 +341,9 @@ async function scanVaultDoctor() {
   catch (err) {
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
+  }
+  finally {
+    hideVaultDoctorScanLoader()
   }
 }
 
@@ -482,11 +506,11 @@ onMounted(() => {
             @click="scanVaultDoctor"
           >
             <LoaderCircle
-              v-if="isVaultDoctorScanning"
+              v-if="isVaultDoctorScanLoaderVisible"
               class="mr-2 h-4 w-4 animate-spin"
             />
             {{
-              isVaultDoctorScanning
+              isVaultDoctorScanLoaderVisible
                 ? i18n.t("preferences:storage.vaultDoctor.scan.scanning")
                 : i18n.t("preferences:storage.vaultDoctor.scan.action")
             }}

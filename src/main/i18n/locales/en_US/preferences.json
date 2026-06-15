@@ -10,7 +10,28 @@
     "moveVault": "Move Vault",
     "movingVault": "Moving vault...",
     "count": "Count",
-    "vaultPath": "Vault Path"
+    "vaultPath": "Vault Path",
+    "vaultDoctor": {
+      "label": "Vault Doctor",
+      "description": "Scan the vault for metadata issues, sync conflicts, and safe repairs.",
+      "scan": {
+        "label": "Check vault",
+        "action": "Scan vault",
+        "scanning": "Scanning..."
+      },
+      "apply": {
+        "action": "Apply safe fixes",
+        "applying": "Applying..."
+      },
+      "summary": {
+        "safe": "Safe fixes",
+        "conflicts": "Conflicts",
+        "blocked": "Blocked",
+        "warnings": "Warnings"
+      },
+      "conflicts": "Needs decision",
+      "warnings": "Warnings"
+    }
   },
   "editor": {
     "label": "Code Editor",

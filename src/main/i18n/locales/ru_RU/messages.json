@@ -10,13 +10,19 @@
     "migrateToMarkdown": [
       "Мигрировать в Markdown Vault?",
       "Выбранный vault будет перезаписан текущей библиотекой SQLite."
+    ],
+    "vaultDoctorApply": [
+      "Применить безопасные исправления vault?",
+      "massCode обновит только metadata и state без конфликтов. Конфликты, требующие решения, будут пропущены."
     ]
   },
   "success": {
     "copied": "Скопировано в буфер обмена",
     "migrateToMarkdown": "Выполнена миграция в Markdown Vault. Папок: {{folders}}, сниппетов: {{snippets}}, тегов: {{tags}}.",
     "vaultLoaded": "Хранилище успешно загружено.",
-    "licenseActivated": "Лицензия активирована. Спасибо за поддержку massCode!"
+    "licenseActivated": "Лицензия активирована. Спасибо за поддержку massCode!",
+    "vaultDoctorApplied": "Vault Doctor применил {{count}} безопасных исправлений.",
+    "vaultDoctorClean": "Vault Doctor не нашёл проблем."
   },
   "warning": {
     "noUndo": "Это действие нельзя отменить.",

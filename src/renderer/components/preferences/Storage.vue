@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { DialogOptions } from '~/main/types/ipc'
-import type { SnippetsCountsResponse } from '~/renderer/services/api/generated'
+import type {
+  SnippetsCountsResponse,
+  VaultDoctorResponse,
+} from '~/renderer/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import {
   resetHttpSpaceState,
@@ -19,7 +22,7 @@ import {
   useSonner,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
-import { LoaderCircle } from 'lucide-vue-next'
+import { AlertTriangle, LoaderCircle } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
 interface DirectoryStateResponse {
@@ -40,7 +43,7 @@ const { getHttpEnvironments } = useHttpEnvironments()
 const { getHttpHistory } = useHttpHistory()
 const { reset: resetMathNotebook } = useMathNotebook()
 const { resetNoteFoldersState } = useNoteFolders()
-const { clearNotesState } = useNotes()
+const { clearNotesState, getNotes } = useNotes()
 const { resetNoteTags } = useNoteTags()
 const { getSnippets } = useSnippets()
 
@@ -74,7 +77,27 @@ const counts = reactive<SnippetsCountsResponse>({
 })
 const isLoadingCounts = ref(false)
 const isMovingVault = ref(false)
+const isVaultDoctorApplying = ref(false)
+const isVaultDoctorScanning = ref(false)
+const vaultDoctorReport = shallowRef<VaultDoctorResponse | null>(null)
 let loadingCountsTimer: ReturnType<typeof setTimeout> | null = null
+
+const vaultDoctorSafeFixesCount = computed(() => {
+  return (
+    vaultDoctorReport.value?.items.filter(item => item.status === 'pending')
+      .length ?? 0
+  )
+})
+
+const vaultDoctorBlockedCount = computed(() => {
+  return vaultDoctorReport.value?.summary.blocked ?? 0
+})
+
+const vaultDoctorConflictCount = computed(() => {
+  return vaultDoctorReport.value?.summary.conflicts ?? 0
+})
+
+const vaultDoctorHasReport = computed(() => !!vaultDoctorReport.value)
 
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
@@ -123,6 +146,7 @@ async function resetAndReloadVaultData() {
   await Promise.allSettled([
     getFolders(false),
     getSnippets(),
+    getNotes(),
     getHttpFolders(false),
     getHttpRequests(),
     getHttpEnvironments(),
@@ -266,6 +290,78 @@ async function migrateSqliteToMarkdown() {
     sonner({ message: error.message, type: 'error' })
   }
 }
+
+async function scanVaultDoctor() {
+  if (isVaultDoctorScanning.value || isVaultDoctorApplying.value) {
+    return
+  }
+
+  isVaultDoctorScanning.value = true
+
+  try {
+    const { data } = await api.system.postSystemVaultDoctorPreview({})
+    vaultDoctorReport.value = data
+
+    if (
+      data.summary.affectedFiles === 0
+      && data.summary.conflicts === 0
+      && data.summary.warnings === 0
+    ) {
+      sonner({
+        message: i18n.t('messages:success.vaultDoctorClean'),
+        type: 'success',
+      })
+    }
+  }
+  catch (err) {
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+  }
+  finally {
+    isVaultDoctorScanning.value = false
+  }
+}
+
+async function applyVaultDoctorSafeFixes() {
+  if (
+    isVaultDoctorApplying.value
+    || isVaultDoctorScanning.value
+    || vaultDoctorSafeFixesCount.value === 0
+  ) {
+    return
+  }
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.vaultDoctorApply.0'),
+    content: i18n.t('messages:confirm.vaultDoctorApply.1'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  isVaultDoctorApplying.value = true
+
+  try {
+    const { data } = await api.system.postSystemVaultDoctorApply({})
+    vaultDoctorReport.value = data
+    await resetAndReloadVaultData()
+
+    sonner({
+      message: i18n.t('messages:success.vaultDoctorApplied', {
+        count: vaultDoctorSafeFixesCount.value,
+      }),
+      type: 'success',
+    })
+  }
+  catch (err) {
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+  }
+  finally {
+    isVaultDoctorApplying.value = false
+  }
+}
 </script>
 
 <template>
@@ -346,6 +442,146 @@ async function migrateSqliteToMarkdown() {
 
         <template #description>
           {{ i18n.t("messages:description.migrateSqliteUtility") }}
+        </template>
+      </UiMenuFormItem>
+    </UiMenuFormSection>
+
+    <UiMenuFormSection :label="i18n.t('preferences:storage.vaultDoctor.label')">
+      <UiMenuFormItem
+        :label="i18n.t('preferences:storage.vaultDoctor.scan.label')"
+      >
+        <div class="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            :disabled="isVaultDoctorScanning || isVaultDoctorApplying"
+            @click="scanVaultDoctor"
+          >
+            <LoaderCircle
+              v-if="isVaultDoctorScanning"
+              class="mr-2 h-4 w-4 animate-spin"
+            />
+            {{
+              isVaultDoctorScanning
+                ? i18n.t("preferences:storage.vaultDoctor.scan.scanning")
+                : i18n.t("preferences:storage.vaultDoctor.scan.action")
+            }}
+          </Button>
+
+          <Button
+            v-if="vaultDoctorHasReport"
+            variant="outline"
+            :disabled="
+              isVaultDoctorScanning
+                || isVaultDoctorApplying
+                || vaultDoctorSafeFixesCount === 0
+            "
+            @click="applyVaultDoctorSafeFixes"
+          >
+            <LoaderCircle
+              v-if="isVaultDoctorApplying"
+              class="mr-2 h-4 w-4 animate-spin"
+            />
+            {{
+              isVaultDoctorApplying
+                ? i18n.t("preferences:storage.vaultDoctor.apply.applying")
+                : i18n.t("preferences:storage.vaultDoctor.apply.action")
+            }}
+          </Button>
+        </div>
+
+        <template #description>
+          <div class="space-y-3">
+            <div>
+              {{ i18n.t("preferences:storage.vaultDoctor.description") }}
+            </div>
+
+            <div
+              v-if="vaultDoctorReport"
+              class="space-y-2"
+            >
+              <div class="grid gap-2 sm:grid-cols-4">
+                <div class="border-border rounded-md border p-2">
+                  <UiText variant="caption">
+                    {{ i18n.t("preferences:storage.vaultDoctor.summary.safe") }}
+                  </UiText>
+                  <UiText variant="sm">
+                    {{ vaultDoctorSafeFixesCount }}
+                  </UiText>
+                </div>
+                <div class="border-border rounded-md border p-2">
+                  <UiText variant="caption">
+                    {{
+                      i18n.t(
+                        "preferences:storage.vaultDoctor.summary.conflicts",
+                      )
+                    }}
+                  </UiText>
+                  <UiText variant="sm">
+                    {{ vaultDoctorConflictCount }}
+                  </UiText>
+                </div>
+                <div class="border-border rounded-md border p-2">
+                  <UiText variant="caption">
+                    {{
+                      i18n.t("preferences:storage.vaultDoctor.summary.blocked")
+                    }}
+                  </UiText>
+                  <UiText variant="sm">
+                    {{ vaultDoctorBlockedCount }}
+                  </UiText>
+                </div>
+                <div class="border-border rounded-md border p-2">
+                  <UiText variant="caption">
+                    {{
+                      i18n.t("preferences:storage.vaultDoctor.summary.warnings")
+                    }}
+                  </UiText>
+                  <UiText variant="sm">
+                    {{ vaultDoctorReport.summary.warnings }}
+                  </UiText>
+                </div>
+              </div>
+
+              <div
+                v-if="vaultDoctorReport.conflictGroups.length"
+                class="border-border space-y-1 rounded-md border p-2"
+              >
+                <div class="flex items-center gap-2">
+                  <AlertTriangle class="text-muted-foreground h-4 w-4" />
+                  <UiText variant="sm">
+                    {{ i18n.t("preferences:storage.vaultDoctor.conflicts") }}
+                  </UiText>
+                </div>
+
+                <UiText
+                  v-for="group in vaultDoctorReport.conflictGroups.slice(0, 3)"
+                  :key="group.id"
+                  variant="caption"
+                  class="block font-mono"
+                >
+                  {{ group.reason }} ·
+                  {{ group.items.map((item) => item.path).join(", ") }}
+                </UiText>
+              </div>
+
+              <div
+                v-if="vaultDoctorReport.warnings.length"
+                class="border-border space-y-1 rounded-md border p-2"
+              >
+                <UiText variant="sm">
+                  {{ i18n.t("preferences:storage.vaultDoctor.warnings") }}
+                </UiText>
+                <UiText
+                  v-for="warning in vaultDoctorReport.warnings.slice(0, 3)"
+                  :key="`${warning.space}:${warning.path}:${warning.code}`"
+                  variant="caption"
+                  class="block font-mono"
+                >
+                  {{ warning.code }} · {{ warning.path }}
+                </UiText>
+              </div>
+            </div>
+          </div>
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

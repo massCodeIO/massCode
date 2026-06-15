@@ -14,6 +14,10 @@
     "migrateToMarkdown": [
       "Migrate to Markdown Vault?",
       "The selected vault will be overwritten with the current SQLite library."
+    ],
+    "vaultDoctorApply": [
+      "Apply safe vault fixes?",
+      "massCode will update only non-conflicting metadata and state issues. Conflicts that need a decision will be skipped."
     ]
   },
   "success": {
@@ -21,7 +25,9 @@
     "migrateToMarkdown": "Migrated to Markdown Vault. Folders: {{folders}}, snippets: {{snippets}}, tags: {{tags}}.",
     "vaultMoved": "Vault successfully moved.",
     "vaultLoaded": "Vault successfully loaded.",
-    "licenseActivated": "License activated. Thank you for supporting massCode!"
+    "licenseActivated": "License activated. Thank you for supporting massCode!",
+    "vaultDoctorApplied": "Vault Doctor applied {{count}} safe fixes.",
+    "vaultDoctorClean": "Vault Doctor found no issues."
   },
   "warning": {
     "noUndo": "You cannot undo this action.",

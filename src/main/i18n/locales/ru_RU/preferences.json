@@ -8,7 +8,28 @@
     "label": "Хранилище",
     "migrateSqliteToMarkdown": "Мигрировать в Markdown Vault",
     "count": "Количество",
-    "vaultPath": "Путь к vault"
+    "vaultPath": "Путь к vault",
+    "vaultDoctor": {
+      "label": "Vault Doctor",
+      "description": "Проверяет vault на проблемы metadata, конфликты синхронизации и безопасные исправления.",
+      "scan": {
+        "label": "Проверка vault",
+        "action": "Сканировать vault",
+        "scanning": "Сканирование..."
+      },
+      "apply": {
+        "action": "Применить безопасные исправления",
+        "applying": "Применение..."
+      },
+      "summary": {
+        "safe": "Безопасные исправления",
+        "conflicts": "Конфликты",
+        "blocked": "Заблокировано",
+        "warnings": "Предупреждения"
+      },
+      "conflicts": "Требует решения",
+      "warnings": "Предупреждения"
+    }
   },
   "editor": {
     "label": "Редактор",

@@ -651,7 +651,7 @@ async function applyVaultDoctorSafeFixes() {
 
               <div
                 v-if="vaultDoctorReport.conflictGroups.length"
-                class="border-border rounded-md border"
+                class="border-border overflow-hidden rounded-md border"
               >
                 <div
                   class="border-border bg-background flex flex-wrap items-center justify-between gap-2 border-b p-2"

@@ -118,6 +118,7 @@ function checkVaultHealth() {
           count: data.summary.conflicts,
         }),
         type: 'warning',
+        closeButton: true,
         action: {
           label: i18n.t('messages:warning.vaultDoctorReview'),
           onClick: () => {

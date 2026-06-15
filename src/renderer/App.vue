@@ -17,6 +17,7 @@ import { loadWASM } from 'onigasm'
 import onigasmFile from 'onigasm/lib/onigasm.wasm?url'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
+import { api } from '~/renderer/services/api'
 import { repository, version } from '../../package.json'
 import { loadGrammars } from './components/editor/grammars'
 import { registerIPCListeners } from './ipc'
@@ -97,6 +98,46 @@ function showWhatsNewOnce() {
   })
 }
 
+// Неблокирующая проверка vault после загрузки приложения. Doctor живёт в
+// Storage settings, куда пользователь почти не заходит, поэтому о конфликтах
+// синхронизации (дубли id, merge-маркеры, битый frontmatter) сообщаем
+// проактивно. Safe fixes сюда не входят — их watcher применяет молча.
+function checkVaultHealth() {
+  const { sonner } = useSonner()
+
+  const run = async () => {
+    try {
+      const { data } = await api.system.postSystemVaultDoctorPreview({})
+      if (data.summary.conflicts === 0) {
+        return
+      }
+
+      sonner({
+        message: i18n.t('messages:warning.vaultDoctorConflicts', {
+          count: data.summary.conflicts,
+        }),
+        type: 'warning',
+        action: {
+          label: i18n.t('messages:warning.vaultDoctorReview'),
+          onClick: () => {
+            router.push({ name: RouterName.preferencesStorage })
+          },
+        },
+      })
+    }
+    catch {
+      // Health check не критичен: при ошибке тихо пропускаем.
+    }
+  }
+
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => run(), { timeout: 5000 })
+  }
+  else {
+    setTimeout(run, 2000)
+  }
+}
+
 function restoreSavedSpace() {
   const savedSpaceId = store.app.get<string>('activeSpaceId')
   if (savedSpaceId && savedSpaceId !== 'code') {
@@ -119,6 +160,7 @@ async function init() {
     useDonationTriggers()
   }
   showWhatsNewOnce()
+  checkVaultHealth()
 }
 
 init()

@@ -39,7 +39,9 @@
     "codeBlockRenderer": [
       "When using Codemirror, the language to be set for the code block must correspond to one of the values of the",
       "languages"
-    ]
+    ],
+    "vaultDoctorConflicts": "Vault: {{count}} sync conflict(s) need attention",
+    "vaultDoctorReview": "Review"
   },
   "error": {
     "migration": "Auto-migration from SQLite failed: {{error}}",

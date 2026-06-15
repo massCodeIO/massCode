@@ -34,7 +34,9 @@
     "codeBlockRenderer": [
       "При использовании Codemirror язык, который будет установлен для блока кода, должен соответствовать одному из значений",
       "languages"
-    ]
+    ],
+    "vaultDoctorConflicts": "Vault: {{count}} конфликтов требуют внимания",
+    "vaultDoctorReview": "Разобрать"
   },
   "error": {
     "migration": "Автомиграция из SQLite завершилась ошибкой: {{error}}",

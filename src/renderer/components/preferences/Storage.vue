@@ -593,7 +593,7 @@ onMounted(() => {
 
               <div
                 v-if="vaultDoctorReport.conflictGroups.length"
-                class="border-border overflow-hidden rounded-md border"
+                class="border-border bg-background overflow-hidden rounded-md border"
               >
                 <div
                   class="border-border bg-background flex flex-wrap items-center justify-between gap-2 border-b p-2"
@@ -713,10 +713,7 @@ onMounted(() => {
                               : 'border-border'
                           "
                         >
-                          <RadioGroupItem
-                            :value="item.path"
-                            class="border-muted-foreground/50"
-                          />
+                          <RadioGroupItem :value="item.path" />
 
                           <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
@@ -759,11 +756,11 @@ onMounted(() => {
                           </div>
 
                           <UiText
-                            variant="caption"
+                            variant="sm"
                             class="shrink-0"
                             :class="
                               isVaultDoctorDecisionSelected(group.id, item.path)
-                                ? 'text-primary'
+                                ? 'text-foreground'
                                 : 'text-muted-foreground'
                             "
                           >
@@ -771,7 +768,9 @@ onMounted(() => {
                               isVaultDoctorDecisionSelected(group.id, item.path)
                                 ? i18n.t(
                                   "preferences:storage.vaultDoctor.decisions.keepsId",
-                                  { id: getVaultDoctorConflictId(group) },
+                                  {
+                                    id: `:${getVaultDoctorConflictId(group)}`,
+                                  },
                                 )
                                 : i18n.t(
                                   "preferences:storage.vaultDoctor.decisions.newId",

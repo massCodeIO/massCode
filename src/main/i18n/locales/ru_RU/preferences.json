@@ -29,13 +29,19 @@
       },
       "conflicts": "Требует решения",
       "decisions": {
-        "description": "Одинаковый id означает, что эти файлы сейчас используют один и тот же id. Выберите ровно один файл, который сохранит этот id.",
         "duplicateId": "Одинаковый id: {{id}}",
         "files": "Файлов: {{count}}",
-        "progress": "Выбрано {{selected}}/{{total}}",
-        "outcome": "После «Применить исправления»: выбранный файл сохранит этот id. Файлов, которым будут назначены новые уникальные id: {{count}}.",
-        "keepIdHere": "Оставить id здесь",
-        "keepsId": "Сохраняет текущий id"
+        "progress": "Решено {{selected}}/{{total}}",
+        "choose": "Выберите один файл, который сохранит этот id. Остальные {{count}} получат новые уникальные id.",
+        "original": "Оригинал",
+        "copy": "Копия",
+        "keepsId": "сохранит id {{id}}",
+        "newId": "новый id"
+      },
+      "reason": {
+        "merge-markers": "Merge-маркеры",
+        "invalid-frontmatter": "Битый frontmatter",
+        "conflicted-copy": "Конфликтная копия"
       },
       "moreWarnings": "+{{count}} предупреждений",
       "warnings": "Предупреждения"

@@ -4,7 +4,9 @@ import type {
   SnippetsCountsResponse,
   VaultDoctorResponse,
 } from '~/renderer/services/api/generated'
+import { Badge } from '@/components/ui/shadcn/badge'
 import { Button } from '@/components/ui/shadcn/button'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/shadcn/radio-group'
 import {
   resetHttpSpaceState,
   resetNotesSpaceInitialization,
@@ -22,7 +24,7 @@ import {
   useSonner,
 } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
-import { AlertTriangle, LoaderCircle } from 'lucide-vue-next'
+import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
 interface DirectoryStateResponse {
@@ -136,6 +138,11 @@ function resetVaultDoctorDecisions() {
   })
 }
 
+// Эвристика конфликтных копий cloud-sync: Dropbox "(conflicted copy)",
+// Яндекс.Диск / macOS "— копия", generic "copy". Используется только для
+// визуальной подсказки и предвыбора canonical, не влияет на backend.
+const VAULT_DOCTOR_COPY_RE = /(?:—|-)\s*копия|\bкопия\b|\bcopy\b|conflict/i
+
 function selectVaultDoctorDecision(groupId: string, keepPath: string) {
   vaultDoctorDecisionByGroupId[groupId] = keepPath
 }
@@ -144,13 +151,47 @@ function isVaultDoctorDecisionSelected(groupId: string, path: string): boolean {
   return vaultDoctorDecisionByGroupId[groupId] === path
 }
 
-function getVaultDoctorDecisionButtonLabel(
-  groupId: string,
-  path: string,
+function splitVaultDoctorPath(value: string): { dir: string, name: string } {
+  const index = value.lastIndexOf('/')
+  if (index === -1) {
+    return { dir: '', name: value }
+  }
+
+  return { dir: value.slice(0, index + 1), name: value.slice(index + 1) }
+}
+
+function isVaultDoctorCopyPath(path: string): boolean {
+  return VAULT_DOCTOR_COPY_RE.test(splitVaultDoctorPath(path).name)
+}
+
+// Рекомендуемый canonical: первый файл без признаков копии, иначе самый
+// короткий по имени (вероятный оригинал), иначе первый в группе.
+function getVaultDoctorCanonicalPath(
+  group: VaultDoctorResponse['conflictGroups'][number],
 ): string {
-  return isVaultDoctorDecisionSelected(groupId, path)
-    ? i18n.t('preferences:storage.vaultDoctor.decisions.keepsId')
-    : i18n.t('preferences:storage.vaultDoctor.decisions.keepIdHere')
+  const original = group.items.find(
+    item => !isVaultDoctorCopyPath(item.path),
+  )
+  if (original) {
+    return original.path
+  }
+
+  return (
+    [...group.items].sort(
+      (a, b) =>
+        splitVaultDoctorPath(a.path).name.length
+        - splitVaultDoctorPath(b.path).name.length,
+    )[0]?.path ?? group.items[0]?.path
+  )
+}
+
+function preselectVaultDoctorDecisions(report: VaultDoctorResponse) {
+  report.conflictGroups
+    .filter(group => group.reason === 'duplicate-id')
+    .forEach((group) => {
+      vaultDoctorDecisionByGroupId[group.id]
+        = getVaultDoctorCanonicalPath(group)
+    })
 }
 
 function getVaultDoctorDecisionReassignCount(
@@ -159,16 +200,10 @@ function getVaultDoctorDecisionReassignCount(
   return vaultDoctorDecisionByGroupId[group.id] ? group.items.length - 1 : 0
 }
 
-function getVaultDoctorConflictLabel(
+function getVaultDoctorConflictId(
   group: VaultDoctorResponse['conflictGroups'][number],
 ): string {
-  if (group.reason !== 'duplicate-id') {
-    return group.reason
-  }
-
-  return i18n.t('preferences:storage.vaultDoctor.decisions.duplicateId', {
-    id: group.id.split(':').at(-1) ?? group.id,
-  })
+  return group.id.split(':').at(-1) ?? group.id
 }
 
 function showLoadingCounts() {
@@ -373,6 +408,7 @@ async function scanVaultDoctor() {
   try {
     const { data } = await api.system.postSystemVaultDoctorPreview({})
     resetVaultDoctorDecisions()
+    preselectVaultDoctorDecisions(data)
     vaultDoctorReport.value = data
 
     if (
@@ -687,12 +723,40 @@ async function applyVaultDoctorSafeFixes() {
                     class="border-border bg-muted/20 space-y-2 rounded-md border p-2"
                   >
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <Check
+                        v-if="
+                          group.reason === 'duplicate-id'
+                            && vaultDoctorDecisionByGroupId[group.id]
+                        "
+                        class="h-4 w-4 shrink-0 text-emerald-500"
+                      />
+                      <AlertTriangle
+                        v-else
+                        class="text-muted-foreground h-4 w-4 shrink-0"
+                      />
+
                       <UiText
+                        v-if="group.reason === 'duplicate-id'"
                         variant="caption"
-                        class="font-mono"
                       >
-                        {{ getVaultDoctorConflictLabel(group) }}
+                        {{
+                          i18n.t(
+                            "preferences:storage.vaultDoctor.decisions.duplicateId",
+                            { id: getVaultDoctorConflictId(group) },
+                          )
+                        }}
                       </UiText>
+                      <UiText
+                        v-else
+                        variant="caption"
+                      >
+                        {{
+                          i18n.t(
+                            `preferences:storage.vaultDoctor.reason.${group.reason}`,
+                          )
+                        }}
+                      </UiText>
+
                       <UiText
                         variant="caption"
                         class="text-muted-foreground"
@@ -700,24 +764,16 @@ async function applyVaultDoctorSafeFixes() {
                         {{
                           i18n.t(
                             "preferences:storage.vaultDoctor.decisions.files",
-                            {
-                              count: group.items.length,
-                            },
+                            { count: group.items.length },
                           )
                         }}
                       </UiText>
                     </div>
 
-                    <UiText
-                      variant="caption"
-                      class="block font-mono break-all"
-                    >
-                      {{ group.items.map((item) => item.path).join(", ") }}
-                    </UiText>
-
+                    <!-- Дубли id: выбор canonical через radio-group -->
                     <div
                       v-if="group.reason === 'duplicate-id'"
-                      class="space-y-1"
+                      class="space-y-2"
                     >
                       <UiText
                         variant="caption"
@@ -725,19 +781,7 @@ async function applyVaultDoctorSafeFixes() {
                       >
                         {{
                           i18n.t(
-                            "preferences:storage.vaultDoctor.decisions.description",
-                          )
-                        }}
-                      </UiText>
-
-                      <UiText
-                        v-if="vaultDoctorDecisionByGroupId[group.id]"
-                        variant="caption"
-                        class="block"
-                      >
-                        {{
-                          i18n.t(
-                            "preferences:storage.vaultDoctor.decisions.outcome",
+                            "preferences:storage.vaultDoctor.decisions.choose",
                             {
                               count: getVaultDoctorDecisionReassignCount(group),
                             },
@@ -745,40 +789,98 @@ async function applyVaultDoctorSafeFixes() {
                         }}
                       </UiText>
 
-                      <div class="grid max-h-32 gap-1 overflow-y-auto pr-1">
-                        <Button
+                      <RadioGroup
+                        :model-value="vaultDoctorDecisionByGroupId[group.id]"
+                        class="max-h-48 gap-1.5 overflow-y-auto pr-1"
+                        @update:model-value="
+                          (value) =>
+                            selectVaultDoctorDecision(group.id, String(value))
+                        "
+                      >
+                        <label
                           v-for="item in group.items"
                           :key="item.path"
-                          size="sm"
-                          variant="outline"
-                          :aria-pressed="
+                          class="hover:bg-accent/50 flex cursor-pointer items-center gap-3 rounded-md border p-2 transition-colors"
+                          :class="
                             isVaultDoctorDecisionSelected(group.id, item.path)
-                          "
-                          class="h-auto min-w-0 justify-start gap-2 px-2 py-1.5 text-left"
-                          :class="[
-                            isVaultDoctorDecisionSelected(group.id, item.path)
-                              ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
-                              : '',
-                          ]"
-                          :title="item.path"
-                          @click="
-                            selectVaultDoctorDecision(group.id, item.path)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border'
                           "
                         >
-                          <span class="shrink-0">
+                          <RadioGroupItem :value="item.path" />
+
+                          <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                              <UiText
+                                variant="sm"
+                                class="truncate"
+                                :title="item.path"
+                              >
+                                {{ splitVaultDoctorPath(item.path).name }}
+                              </UiText>
+                              <Badge
+                                v-if="!isVaultDoctorCopyPath(item.path)"
+                                variant="secondary"
+                              >
+                                {{
+                                  i18n.t(
+                                    "preferences:storage.vaultDoctor.decisions.original",
+                                  )
+                                }}
+                              </Badge>
+                              <Badge
+                                v-else
+                                variant="outline"
+                              >
+                                {{
+                                  i18n.t(
+                                    "preferences:storage.vaultDoctor.decisions.copy",
+                                  )
+                                }}
+                              </Badge>
+                            </div>
+                            <UiText
+                              v-if="splitVaultDoctorPath(item.path).dir"
+                              variant="caption"
+                              class="text-muted-foreground block truncate"
+                              :title="item.path"
+                            >
+                              {{ splitVaultDoctorPath(item.path).dir }}
+                            </UiText>
+                          </div>
+
+                          <UiText
+                            variant="caption"
+                            class="shrink-0"
+                            :class="
+                              isVaultDoctorDecisionSelected(group.id, item.path)
+                                ? 'text-primary'
+                                : 'text-muted-foreground'
+                            "
+                          >
                             {{
-                              getVaultDoctorDecisionButtonLabel(
-                                group.id,
-                                item.path,
-                              )
+                              isVaultDoctorDecisionSelected(group.id, item.path)
+                                ? i18n.t(
+                                  "preferences:storage.vaultDoctor.decisions.keepsId",
+                                  { id: getVaultDoctorConflictId(group) },
+                                )
+                                : i18n.t(
+                                  "preferences:storage.vaultDoctor.decisions.newId",
+                                )
                             }}
-                          </span>
-                          <span class="min-w-0 truncate font-mono">
-                            {{ item.path }}
-                          </span>
-                        </Button>
-                      </div>
+                          </UiText>
+                        </label>
+                      </RadioGroup>
                     </div>
+
+                    <!-- Заблокированные файлы (merge markers / битый frontmatter) -->
+                    <UiText
+                      v-else
+                      variant="caption"
+                      class="text-muted-foreground block font-mono break-all"
+                    >
+                      {{ group.items.map((item) => item.path).join(", ") }}
+                    </UiText>
                   </div>
                 </div>
               </div>

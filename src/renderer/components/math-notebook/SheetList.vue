@@ -4,6 +4,7 @@ import {
   useApp,
   useContentSort,
   useDeleteShortcut,
+  useDialog,
   useInlineRename,
   useMathNotebook,
 } from '@/composables'
@@ -22,6 +23,7 @@ const {
   renameSheet,
 } = useMathNotebook()
 const { contentSortState } = useContentSort()
+const { confirm } = useDialog()
 
 const {
   editingId,
@@ -146,12 +148,29 @@ function selectSheetFromList(id: string, event: MouseEvent) {
   focusSheetListItem(event)
 }
 
+async function confirmDeleteSheet(id: string) {
+  const sheet = sheets.value.find(item => item.id === id)
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: sheet?.name ?? '',
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  deleteSheet(id)
+}
+
 function deleteActiveSheet() {
   if (!activeSheetId.value) {
     return
   }
 
-  deleteSheet(activeSheetId.value)
+  void confirmDeleteSheet(activeSheetId.value)
 }
 
 useDeleteShortcut({
@@ -262,7 +281,7 @@ defineExpose({
             {{ i18n.t("action.rename") }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
-          <ContextMenu.ContextMenuItem @click="deleteSheet(sheet.id)">
+          <ContextMenu.ContextMenuItem @click="confirmDeleteSheet(sheet.id)">
             {{ i18n.t("action.delete.common") }}
           </ContextMenu.ContextMenuItem>
         </ContextMenu.ContextMenuContent>

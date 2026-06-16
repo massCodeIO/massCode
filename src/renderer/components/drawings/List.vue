@@ -5,6 +5,7 @@ import {
   useContentSort,
   useCopyToClipboard,
   useDeleteShortcut,
+  useDialog,
   useDrawings,
   useInlineRename,
 } from '@/composables'
@@ -26,6 +27,7 @@ const {
 } = useDrawings()
 const copyToClipboard = useCopyToClipboard()
 const { contentSortState } = useContentSort()
+const { confirm } = useDialog()
 
 function copyLinkForNote(name: string) {
   copyToClipboard(`![${name}](masscode://drawing/${encodeURIComponent(name)})`)
@@ -153,12 +155,29 @@ function selectDrawingFromList(id: string, event: MouseEvent) {
   focusDrawingListItem(event)
 }
 
+async function confirmDeleteDrawing(id: string) {
+  const drawing = drawings.value.find(item => item.id === id)
+
+  const isConfirmed = await confirm({
+    title: i18n.t('messages:confirm.deletePermanently', {
+      name: drawing?.name ?? '',
+    }),
+    content: i18n.t('messages:warning.noUndo'),
+  })
+
+  if (!isConfirmed) {
+    return
+  }
+
+  await deleteDrawing(id)
+}
+
 function deleteActiveDrawing() {
   if (!activeDrawingId.value) {
     return
   }
 
-  void deleteDrawing(activeDrawingId.value)
+  void confirmDeleteDrawing(activeDrawingId.value)
 }
 
 useDeleteShortcut({
@@ -281,7 +300,9 @@ defineExpose({
             {{ i18n.t("spaces.drawings.exportImage") }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
-          <ContextMenu.ContextMenuItem @click="deleteDrawing(drawing.id)">
+          <ContextMenu.ContextMenuItem
+            @click="confirmDeleteDrawing(drawing.id)"
+          >
             {{ i18n.t("action.delete.common") }}
           </ContextMenu.ContextMenuItem>
         </ContextMenu.ContextMenuContent>

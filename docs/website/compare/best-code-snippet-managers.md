@@ -26,7 +26,7 @@ Star count and marketing aside, a snippet manager is worth adopting when it hand
 
 | Tool | License | Platforms | Storage | Account | Scope |
 | --- | --- | --- | --- | --- | --- |
-| [massCode](#masscode) | Open source (AGPL v3) | macOS, Windows, Linux | Local Markdown files | No | Snippets + notes, HTTP, math, tools |
+| [massCode](#masscode) | Open source (AGPL v3) | macOS, Windows, Linux | Local Markdown files | No | Snippets + notes, HTTP, math, drawings, tools |
 | [SnippetsLab](#snippetslab) | Proprietary | macOS only | Local library | No | Snippets |
 | [Pieces](#pieces) | Proprietary | macOS, Windows, Linux + IDE/browser | On-device / local | Optional | Snippets + AI companion |
 | [Cacher](#cacher) | Proprietary | macOS, Windows, Linux | Cloud | Yes | Snippets, team libraries |
@@ -41,7 +41,7 @@ Details and trade-offs for each are below.
 
 ### massCode
 
-[massCode](https://github.com/massCodeIO/massCode) is a free, open-source, local-first developer workspace. Snippets sit alongside notes, HTTP requests, math sheets, and dev tools, and everything is stored as plain Markdown files in a [Markdown Vault](/documentation/storage) on your own disk.
+[massCode](https://github.com/massCodeIO/massCode) is a free, open-source, local-first developer workspace. Snippets sit alongside notes, HTTP requests, math sheets, drawings, and dev tools, and everything is stored as plain Markdown files in a [Markdown Vault](/documentation/storage) on your own disk.
 
 - **License:** [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), source on [GitHub](https://github.com/massCodeIO/massCode)
 - **Platforms:** macOS, Windows, Linux
@@ -51,7 +51,7 @@ Details and trade-offs for each are below.
 - **Imports:** VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - **Sync:** Bring your own — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 
-**Best for:** developers who want their snippets to stay as plain files they own, on every platform, for free, and who appreciate having notes, HTTP requests, and math in the same window. [Download massCode](/download/) to try it.
+**Best for:** developers who want their snippets to stay as plain files they own, on every platform, for free, and who appreciate having notes, HTTP requests, math, and drawings in the same window. [Download massCode](/download/) to try it.
 
 ### SnippetsLab
 
@@ -145,7 +145,7 @@ Work through these questions before installing anything:
 
 ## Recommendations by use case
 
-- **You want plain files you own, on every platform, for free** — and notes plus HTTP and math in the same app: choose **massCode**.
+- **You want plain files you own, on every platform, for free** — and notes, HTTP, math, and drawings in the same app: choose **massCode**.
 - **You are macOS-only and want a polished native app:** choose **SnippetsLab**.
 - **You want an AI copilot over your snippets:** choose **Pieces**.
 - **Your team needs a shared, hosted snippet library:** choose **Cacher**.

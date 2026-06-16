@@ -28,6 +28,8 @@ This section helps you decide whether massCode fits your workflow, or whether an
 ## Category and positioning pages
 
 - [Best code snippet managers](/compare/best-code-snippet-managers) — the leading snippet managers compared on storage, license, platforms, price, and scope
+- [Code snippet manager for Mac](/compare/code-snippet-manager-for-mac) — what to look for on macOS, and how massCode fits
+- [Code snippet manager for Windows](/compare/code-snippet-manager-for-windows) — the best local-first options on Windows
 - [Best open-source snippet manager](/compare/best-open-source) — what to look for, and how the open-source options stack up
 - [Local-first alternative to Pieces and Cacher](/compare/local-first) — keeping snippets and notes on your own disk
 - [Markdown-first task manager for developers](/compare/markdown-first-tasks) — why tasks belong as plain `.md` files next to your notes and snippets

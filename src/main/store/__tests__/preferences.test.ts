@@ -512,6 +512,38 @@ describe('app store sanitization', () => {
     expect(app.get('http.layout.garbage' as any)).toBeUndefined()
   })
 
+  it('keeps persisted local-space sort values', async () => {
+    persistedStateByName.app = {
+      math: {
+        contentSort: {
+          sort: 'updatedAt',
+          order: 'ASC',
+          garbage: 'bad',
+        },
+      },
+      drawings: {
+        contentSort: {
+          sort: 'name',
+          order: 'DESC',
+          garbage: 'bad',
+        },
+      },
+    }
+
+    const { default: app } = await import('../module/app')
+
+    expect(app.get('math.contentSort' as any)).toEqual({
+      sort: 'updatedAt',
+      order: 'ASC',
+    })
+    expect(app.get('math.contentSort.garbage' as any)).toBeUndefined()
+    expect(app.get('drawings.contentSort' as any)).toEqual({
+      sort: 'name',
+      order: 'DESC',
+    })
+    expect(app.get('drawings.contentSort.garbage' as any)).toBeUndefined()
+  })
+
   it('keeps persisted http donation counters', async () => {
     persistedStateByName.app = {
       donations: {

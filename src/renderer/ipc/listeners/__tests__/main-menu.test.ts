@@ -39,7 +39,11 @@ async function setup() {
       value === 'createdAt' || value === 'updatedAt' || value === 'name',
     isContentSortOrder: (value: unknown) => value === 'ASC' || value === 'DESC',
     isSortableContentSpaceId: (value: unknown) =>
-      value === 'code' || value === 'notes' || value === 'http',
+      value === 'code'
+      || value === 'notes'
+      || value === 'http'
+      || value === 'math'
+      || value === 'drawings',
     useContentSort: () => ({
       setContentSortField,
       setContentSortOrder,
@@ -226,5 +230,38 @@ describe('registerMainMenuListeners', () => {
 
     expect(context.setContentSortField).toHaveBeenCalledWith('http', 'name')
     expect(context.getHttpRequests).toHaveBeenCalledTimes(1)
+  })
+
+  it('updates active math sort from the menu', async () => {
+    const context = await setup()
+    context.getActiveSpaceId.mockReturnValue('math')
+    const setSortField = context.ipcHandlers.get(
+      'main-menu:set-content-sort-field',
+    )
+
+    await setSortField?.(undefined, 'updatedAt')
+
+    expect(context.setContentSortField).toHaveBeenCalledWith(
+      'math',
+      'updatedAt',
+    )
+    expect(context.getSnippets).not.toHaveBeenCalled()
+    expect(context.getNotes).not.toHaveBeenCalled()
+    expect(context.getHttpRequests).not.toHaveBeenCalled()
+  })
+
+  it('updates active drawings sort from the menu', async () => {
+    const context = await setup()
+    context.getActiveSpaceId.mockReturnValue('drawings')
+    const setSortOrder = context.ipcHandlers.get(
+      'main-menu:set-content-sort-order',
+    )
+
+    await setSortOrder?.(undefined, 'ASC')
+
+    expect(context.setContentSortOrder).toHaveBeenCalledWith('drawings', 'ASC')
+    expect(context.getSnippets).not.toHaveBeenCalled()
+    expect(context.getNotes).not.toHaveBeenCalled()
+    expect(context.getHttpRequests).not.toHaveBeenCalled()
   })
 })

@@ -2,7 +2,12 @@ import { store } from '@/electron'
 
 export type ContentSortField = 'createdAt' | 'updatedAt' | 'name'
 export type ContentSortOrder = 'ASC' | 'DESC'
-export type SortableContentSpaceId = 'code' | 'notes' | 'http'
+export type SortableContentSpaceId =
+  | 'code'
+  | 'notes'
+  | 'http'
+  | 'math'
+  | 'drawings'
 
 export interface ContentSortState {
   sort: ContentSortField
@@ -14,7 +19,13 @@ const DEFAULT_CONTENT_SORT: ContentSortState = {
   order: 'DESC',
 }
 
-const sortableSpaceIds: SortableContentSpaceId[] = ['code', 'notes', 'http']
+const sortableSpaceIds: SortableContentSpaceId[] = [
+  'code',
+  'notes',
+  'http',
+  'math',
+  'drawings',
+]
 
 export function isContentSortField(value: unknown): value is ContentSortField {
   return value === 'createdAt' || value === 'updatedAt' || value === 'name'
@@ -47,6 +58,8 @@ const contentSortState = reactive<
   code: normalizeContentSort(store.app.get('code.contentSort')),
   notes: normalizeContentSort(store.app.get('notes.contentSort')),
   http: normalizeContentSort(store.app.get('http.contentSort')),
+  math: normalizeContentSort(store.app.get('math.contentSort')),
+  drawings: normalizeContentSort(store.app.get('drawings.contentSort')),
 })
 
 for (const spaceId of sortableSpaceIds) {
@@ -60,7 +73,7 @@ for (const spaceId of sortableSpaceIds) {
 export function isSortableContentSpaceId(
   value: unknown,
 ): value is SortableContentSpaceId {
-  return value === 'code' || value === 'notes' || value === 'http'
+  return sortableSpaceIds.includes(value as SortableContentSpaceId)
 }
 
 export function useContentSort() {

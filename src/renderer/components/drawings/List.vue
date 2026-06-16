@@ -2,6 +2,7 @@
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   useApp,
+  useContentSort,
   useCopyToClipboard,
   useDeleteShortcut,
   useDrawings,
@@ -24,6 +25,7 @@ const {
   selectDrawing,
 } = useDrawings()
 const copyToClipboard = useCopyToClipboard()
+const { contentSortState } = useContentSort()
 
 function copyLinkForNote(name: string) {
   copyToClipboard(`![${name}](masscode://drawing/${encodeURIComponent(name)})`)
@@ -46,14 +48,30 @@ const drawingListRef = ref<HTMLElement>()
 const isDrawingListFocused = ref(false)
 const searchQuery = ref('')
 
+function compareDrawingNames(a: string, b: string) {
+  return a.localeCompare(b, undefined, { sensitivity: 'base' })
+}
+
+const sortedDrawings = computed(() => {
+  const { sort, order } = contentSortState.drawings
+  const direction = order === 'ASC' ? 1 : -1
+
+  return [...drawings.value].sort((a, b) => {
+    const result
+      = sort === 'name' ? compareDrawingNames(a.name, b.name) : a[sort] - b[sort]
+
+    return result * direction
+  })
+})
+
 const filteredDrawings = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
   if (!query) {
-    return drawings.value
+    return sortedDrawings.value
   }
 
-  return drawings.value.filter(drawing =>
+  return sortedDrawings.value.filter(drawing =>
     drawing.name.toLowerCase().includes(query),
   )
 })

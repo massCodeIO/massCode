@@ -95,7 +95,7 @@
     "dom-to-image": "^2.6.0",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.9",
-    "elysia": "^1.4.16",
+    "elysia": "~1.4.28",
     "fs-extra": "^11.3.0",
     "i18next": "^24.2.2",
     "i18next-fs-backend": "^2.6.0",

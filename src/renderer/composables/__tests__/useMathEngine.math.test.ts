@@ -27,6 +27,11 @@ describe('arithmetic', () => {
   it('exponent', () => expectValue('2 ^ 10', '1,024'))
   it('negative numbers', () => expectValue('-5 + 3', '-2'))
   it('decimal', () => expectValue('0.1 + 0.2', '0.3'))
+  it('decimal comma for comma-decimal locales', () => {
+    setFormatSettings('es-ES', 6, 'numeric')
+
+    expectValue('2,50 + 1,25', '3,75')
+  })
   it('complex expression', () => expectValue('2 + 3 * 4 - 1', '13'))
   it('implicit multiplication', () => expectValue('6 (3)', '18'))
   it('grouped thousands', () => expectValue('5 300', '5,300'))

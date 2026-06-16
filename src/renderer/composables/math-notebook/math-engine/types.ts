@@ -91,6 +91,7 @@ export interface RewriteContext {
   raw: string
   view: AnalysisView
   line: string
+  locale: string
   classification: LineClassification
 }
 

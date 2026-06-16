@@ -3,10 +3,10 @@ import { analysisNormalize } from '../pipeline/analysisNormalize'
 import { classify } from '../pipeline/classify'
 import { rewrite } from '../pipeline/rewrite'
 
-function rewriteRaw(raw: string): string {
+function rewriteRaw(raw: string, locale?: string): string {
   const view = analysisNormalize(raw)
   const classification = classify(view)
-  return rewrite(view, classification)
+  return rewrite(view, classification, locale)
 }
 
 describe('rewrite canonical output', () => {
@@ -66,4 +66,9 @@ describe('rewrite canonical output', () => {
       expect(rewriteRaw(input)).toBe(expected)
     })
   }
+
+  it('normalizes decimal comma numbers for comma-decimal locales', () => {
+    expect(rewriteRaw('2,50 + 1,25', 'es-ES')).toBe('2.50 + 1.25')
+    expect(rewriteRaw('1.234,56 + 1', 'es-ES')).toBe('1234.56 + 1')
+  })
 })

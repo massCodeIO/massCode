@@ -21,7 +21,7 @@ If you need an end-to-end API platform for a team, Postman is the more capable t
 | Works offline | Yes, fully | Lightweight client works offline; synced workspaces need the cloud |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, web, CLI |
 | Request features | Method, URL, params, headers, body, auth, markdown description | Full request editor with extensive auth and protocol support |
-| Environments | Yes, `{{variables}}` | Yes, with broader scoping |
+| Environments | Yes, <code v-pre>{{variables}}</code> | Yes, with broader scoping |
 | Protocols | HTTP | HTTP, WebSocket, gRPC, GraphQL, and more |
 | Mock servers / monitors / collection runner | No | Yes |
 | Automated tests / scripting | No | Yes (JavaScript test scripts, Newman/CLI) |
@@ -50,7 +50,7 @@ massCode is not trying to be a platform. It is trying to be the fast, local plac
 - **No account.** Open the app and send a request — nothing to sign into.
 - **Free and open source.** [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no per-seat pricing or free-tier caps.
 - **Next to everything else.** Requests sit beside your [snippets](/documentation/code/library), [notes](/documentation/notes/), and [math](/documentation/math/), so API work stays in the same window as the rest of your day.
-- **The essentials, done simply.** Method, URL, params, headers, body, auth, a markdown description per request, [environments](/documentation/http/environments) with `{{variables}}`, response preview, and copy as raw HTTP or cURL.
+- **The essentials, done simply.** Method, URL, params, headers, body, auth, a markdown description per request, [environments](/documentation/http/environments) with <code v-pre>{{variables}}</code>, response preview, and copy as raw HTTP or cURL.
 - **Almost nothing to relearn.** Postman has grown into a large platform, and developers who just want to send a request — especially when they come back to it after months away — often have to re-find their way around the interface. massCode's HTTP space is a short, flat set of panels. There is no platform to navigate, so picking it back up after a break takes seconds, not a tour.
 
 If you mainly save requests by project and fire them during development, this is less to manage than a full platform.

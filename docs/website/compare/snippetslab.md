@@ -72,3 +72,21 @@ To move from SnippetsLab to massCode:
 4. Move longer documentation into [Notes](/documentation/notes/) and link between notes and snippets.
 
 [Download massCode](/download/) and run it alongside SnippetsLab while you migrate.
+
+## Frequently asked questions
+
+### Is massCode a good SnippetsLab alternative?
+
+Yes, especially if you are not macOS-only. SnippetsLab is a polished, native, macOS-only app. massCode is a free, open-source, local-first workspace that runs on macOS, Windows, and Linux and stores snippets as plain Markdown files you own.
+
+### Can I import my SnippetsLab snippets into massCode?
+
+Yes. Export your library from SnippetsLab as JSON, then import it in massCode's [Code](/documentation/code/library) space. The import brings over snippets, folders, tags, descriptions, and fragments, with a preview before anything is written to your vault.
+
+### Is SnippetsLab or massCode better on Mac?
+
+If you only ever use a Mac and want the most native feel with automatic language detection and iCloud sync, SnippetsLab is excellent. If you want the same library on Windows or Linux too, or a single workspace that also covers notes, HTTP, and math, choose massCode. See also [Code snippet manager for Mac](/compare/code-snippet-manager-for-mac).
+
+### Is massCode free like SnippetsLab?
+
+Both are free. massCode is additionally open source under AGPL v3, and keeps your data as plain files rather than inside the app.

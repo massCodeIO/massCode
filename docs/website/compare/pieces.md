@@ -72,3 +72,21 @@ If you want to consolidate into massCode:
 4. Move longer pieces of context into [Notes](/documentation/notes/) and link between them.
 
 [Download massCode](/download/) and try it on a copy of your data.
+
+## Frequently asked questions
+
+### Is massCode a good Pieces alternative?
+
+Yes, if you want a focused, local-first workspace rather than an AI copilot. Pieces is built around AI and long-term memory of your work. massCode is a free, open-source app that stores snippets, notes, HTTP requests, and math as plain Markdown files on your disk, with no AI layer in the way.
+
+### Does massCode have AI features?
+
+No. massCode has no built-in AI. It is a deliberately focused workspace for keeping and finding your own snippets and notes. If an AI copilot over your snippets is what you want, Pieces is the better fit.
+
+### Can I import my Pieces snippets into massCode?
+
+There is no direct Pieces importer. The practical path is to export snippets into a format massCode reads — for example, public GitHub Gist URLs — and import those, or recreate the rest manually under [Code](/documentation/code/library). massCode also imports VS Code, Raycast, and SnippetsLab snippets.
+
+### Is my data local with massCode?
+
+Yes. Every snippet and note is a plain `.md` file in a local [Markdown Vault](/documentation/storage), with no account required. You choose whether and how to sync it.

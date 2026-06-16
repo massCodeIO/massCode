@@ -30,7 +30,7 @@ The single highest-impact decision is to keep all snippets in **one place**. One
 
 Structure your library around **how you will look for things**, not around the syntax. Two mechanisms cover almost everything:
 
-- **A few broad folders** by area of work — for example `frontend`, `backend`, `devops`, `db`, `shell`, `scratch`. Keep the list short. If you have thirty folders, you have a second search problem.
+- **A few broad folders** by area of work — for example `frontend`, `backend`, `devops`, `db`, and `shell`. Keep the list short. If you have thirty folders, you have a second search problem. Nested folders help here: in massCode, selecting a folder also shows snippets from its subfolders, so a shallow `db/` can still hold `db/migrations` without hiding anything.
 - **Tags for the cross-cutting stuff** — `regex`, `auth`, `docker`, `pagination`, `snippet-i-always-forget`. Tags are how you find the same idea across folders.
 
 Folders answer "what kind of work," tags answer "what is this about." Language can be a tag too, but it is rarely the thing you actually search by.
@@ -42,21 +42,21 @@ The title is your main search hit. Write it as what the snippet *does*, in the w
 - Bad: `regex2`, `Untitled`, `test`
 - Good: `Validate email (RFC-ish) regex`, `Debounce a function`, `Postgres: kill idle connections`
 
-If you can imagine searching for it, name it that. Only add the language to the title when you deliberately keep the same idea in several languages and need to tell them apart (`Debounce — TS` vs `Debounce — Python`); otherwise leave it for a tag.
+If you can imagine searching for it, name it that. Don't stuff the language into the title — that is what folders and tags are for. And if you keep the same idea in several languages, you don't need separate entries at all: tools with multi-tab snippets (in massCode, [fragments](/documentation/code/fragments)) let you hold the JS, TS, and Python versions as tabs under one `Debounce` entry.
 
 ### 4. Add just enough context
 
 You do not need documentation. You need one line so the snippet is not a mystery later:
 
-- A short description of what it does or when to use it.
+- What it does or when to use it.
 - Where it came from, if it matters (a Stack Overflow link, the project, the gotcha it solves).
-- A quick note on anything non-obvious ("only works on Node 18+").
+- Anything non-obvious ("only works on Node 18+").
 
-Thirty seconds now saves ten minutes later.
+A good snippet manager gives this its own home instead of forcing it into the code as a comment. In massCode it is a dedicated [description](/documentation/code/description) field beside the snippet, and that text is indexed by search too — so a note like "retry with backoff" makes the snippet findable even when the code itself never says it. Thirty seconds now saves ten minutes later.
 
 ### 5. Keep it close to where you work
 
-A library you have to context-switch into is a library you stop using. The best setup is one you can reach in a keystroke — a global shortcut, a launcher, an editor integration. The less friction between "I need that snippet" and "it's pasted," the more the system survives contact with a busy day.
+A library you have to context-switch into is a library you stop using. The best setup is one you can reach in a keystroke. In massCode that is the [Command Palette](/documentation/command-palette) (<kbd>Cmd/Ctrl+P</kbd>): jump to any snippet by title, or narrow the search with `@code`, a `#tag`, or a `/folder`. The less friction between "I need that snippet" and "it's pasted," the more the system survives a busy day.
 
 ### 6. Own your data
 
@@ -70,12 +70,11 @@ backend/       # handlers, middleware, auth
 db/            # queries, migrations, schema bits
 devops/        # docker, CI, deploy
 shell/         # one-liners, git, system
-scratch/       # unsorted, triage weekly
 ```
 
 Tags layered on top: `regex`, `auth`, `docker`, `git`, `performance`, `gotcha`.
 
-Add a `scratch` folder on purpose. The fastest way to keep a library clean is to let yourself dump first and file later — then sweep `scratch` once a week into the right place. Friction at save time is what makes people stop saving.
+Leave room for triage. The fastest way to keep a library clean is to let yourself dump first and file later, then sweep the unsorted pile into the right folder once a week. Some tools give you this for free: massCode drops every new snippet into an [Inbox](/documentation/code/library) until you move it into a folder — the dump-now-file-later workflow, without a holding folder you have to invent and remember to empty.
 
 ## What to use
 
@@ -85,7 +84,7 @@ You can run this system in almost anything, with trade-offs:
 - **GitHub Gist** — great for sharing, but a flat list with weak private search. See [massCode vs GitHub Gist](/compare/github-gist).
 - **A dedicated snippet manager** — folders, tags, full-text search, and editor integration built in.
 
-If you want a dedicated tool, the things that make this system stick are: one searchable home, real folders and tags, fast access, and your data as files you own. [massCode](/download/) is a free, open-source, local-first option built around exactly that — snippets live as plain Markdown files on your disk, with folders, tags, full-text search, and imports from VS Code, Gist, SnippetsLab, and more. For a broader look at the options, see [Best code snippet managers](/compare/best-code-snippet-managers).
+If you want a dedicated tool, the things that make this system stick are: one searchable home, real folders and tags, fast access, and your data as files you own. [massCode](/download/) is a free, open-source, local-first option built around exactly that. Snippets live as plain Markdown files on your disk; you get nested folders, multiple tags per snippet, an Inbox for triage, a dedicated description field, and [fragments](/documentation/code/fragments) for keeping language variants together. Its list search is full-text — it looks inside snippet names, descriptions, and the contents of every fragment, not just titles — and you can import existing libraries from VS Code, Raycast, SnippetsLab, and public GitHub Gists. For a broader look at the options, see [Best code snippet managers](/compare/best-code-snippet-managers).
 
 ## Frequently asked questions
 
@@ -103,7 +102,7 @@ Somewhere with full-text search and, ideally, local files you own. Plain-text or
 
 ### How do I stop my snippet library from becoming a mess?
 
-Add a `scratch` folder for quick, unsorted saves and triage it once a week. Letting yourself dump first removes the friction that makes people stop saving; the weekly sweep keeps the rest organized.
+Give yourself a triage zone — an inbox or "unsorted" area — and dump snippets there fast, then file them into folders once a week. Removing the friction at save time is what keeps people saving; the weekly sweep keeps the rest organized. In massCode, new snippets land in the Inbox by default, so the dump-now-file-later habit is built in.
 
 ## Takeaway
 

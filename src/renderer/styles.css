@@ -211,6 +211,31 @@ body {
   opacity: 1;
 }
 
+/*
+ * vue-virtual-scroller задаёт item-wrapper высоту ровно N×item-size с
+ * overflow: hidden, из-за чего у последнего элемента списка обрезается нижняя
+ * часть highlight-обводки (outline с -outline-offset при открытии контекстного
+ * меню). Полностью отключать клиппинг нельзя: scroller паркует осиротевшие
+ * item-view из пула за пределами контента, и без клиппинга они наслаиваются на
+ * видимый список при быстром переключении папок. overflow: clip сохраняет
+ * клиппинг, а небольшой clip-margin даёт запас, чтобы обводка отрисовалась
+ * целиком.
+ */
+.vue-recycle-scroller__item-wrapper {
+  overflow: clip;
+  overflow-clip-margin: 4px;
+}
+
+/*
+ * item-view создаёт собственный stacking context (will-change: transform),
+ * поэтому z-index внутреннего элемента не влияет на наложение между соседними
+ * элементами списка. Поднимаем сам item-view, когда внутри активна
+ * highlight-обводка, чтобы соседний selected/focused элемент её не перекрывал.
+ */
+.vue-recycle-scroller__item-view:has(.is-highlighted) {
+  z-index: 1;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

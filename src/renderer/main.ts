@@ -2,8 +2,8 @@ import { createApp } from 'vue'
 import VueVirtualScroller from 'vue-virtual-scroller'
 import App from './App.vue'
 import { router } from './router'
-import './styles.css'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import './styles.css'
 
 declare global {
   interface Window {

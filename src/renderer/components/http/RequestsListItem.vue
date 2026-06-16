@@ -411,7 +411,7 @@ onClickOutside(itemRef, () => {
     }
   }
   &.is-highlighted {
-    @apply outline-primary rounded-md outline-2 -outline-offset-2;
+    @apply outline-primary z-20 rounded-md outline-2 -outline-offset-2;
     &.is-focused,
     &.is-selected,
     &.is-multi-selected {

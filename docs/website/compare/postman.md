@@ -51,6 +51,7 @@ massCode is not trying to be a platform. It is trying to be the fast, local plac
 - **Free and open source.** [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no per-seat pricing or free-tier caps.
 - **Next to everything else.** Requests sit beside your [snippets](/documentation/code/library), [notes](/documentation/notes/), and [math](/documentation/math/), so API work stays in the same window as the rest of your day.
 - **The essentials, done simply.** Method, URL, params, headers, body, auth, a markdown description per request, [environments](/documentation/http/environments) with `{{variables}}`, response preview, and copy as raw HTTP or cURL.
+- **Almost nothing to relearn.** Postman has grown into a large platform, and developers who just want to send a request — especially when they come back to it after months away — often have to re-find their way around the interface. massCode's HTTP space is a short, flat set of panels. There is no platform to navigate, so picking it back up after a break takes seconds, not a tour.
 
 If you mainly save requests by project and fire them during development, this is less to manage than a full platform.
 
@@ -83,6 +84,10 @@ See [Importing HTTP Collections](/documentation/http/importing) for the full wor
 ### Is massCode a good Postman alternative?
 
 For lightweight, local API work, yes. massCode is a free, open-source, local-first client that saves requests as plain files with no account. It is not a replacement for Postman's platform features — automated testing, mock servers, multiple protocols, and team governance — so it suits individual development more than large-scale API testing.
+
+### Is Postman too complicated for simple API testing?
+
+Postman is a full API platform, so its interface carries a lot of surface area — workspaces, collections, environments, mocks, monitors, runners, and more. If you only need to save and send a few requests, that breadth can feel like a lot to navigate, and returning users often have to reorient themselves. massCode's HTTP client is deliberately minimal, which makes it quicker for that narrower job. For heavy testing and automation, Postman's depth is the point.
 
 ### Does massCode need an account like Postman?
 

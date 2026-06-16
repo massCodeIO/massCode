@@ -22,7 +22,7 @@ The two solve overlapping problems from opposite directions. Gist is a cloud ser
 | Account required | No | Yes (GitHub account) |
 | Works offline | Yes | No (needs github.com) |
 | Organization | Folders, tags, fragments | None (a flat list of gists) |
-| Search | Full-text across snippets, notes, HTTP requests | Public gists only; secret gists searchable only by you when signed in |
+| Search | Full-text across snippets and notes (HTTP by name and URL) | Public gists only; secret gists searchable only by you when signed in |
 | Privacy | Files stay on your machine | Public, or "secret" (unlisted, not private) |
 | Version history | File-level (via your own Git/sync if you want it) | Built in — every gist is a Git repository |
 | Sharing | File-level (Git, shared folder) | A core strength — share or embed any gist by URL |
@@ -57,8 +57,8 @@ The trouble starts when you try to use Gist as the place you *keep and organize*
 massCode is built to be the library, not the publishing channel:
 
 - **Local-first.** Every snippet and note is a plain `.md` file in a [Markdown Vault](/documentation/storage) on your disk. You can read, edit, and back it up without the app, and it works fully offline.
-- **Real organization.** [Folders](/documentation/code/folders), tags, and multi-tab [fragments](/documentation/fragments) for snippets that belong together.
-- **Full-text search** across snippets, notes, and HTTP requests, instantly and locally.
+- **Real organization.** [Folders](/documentation/code/folders), tags, and multi-tab [fragments](/documentation/code/fragments) for snippets that belong together.
+- **Full-text search** across snippets and notes (HTTP requests are searched by name and URL), instantly and locally.
 - **Private by default.** Nothing leaves your machine unless you choose a sync service.
 - **More than snippets.** [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/) in one app.
 - **No account.** It works without registering for anything.

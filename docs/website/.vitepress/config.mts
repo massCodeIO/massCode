@@ -109,6 +109,7 @@ export default defineConfig({
             { text: 'massCode vs Things 3', link: '/compare/things' },
             { text: 'massCode vs Apple Reminders', link: '/compare/apple-reminders' },
             { text: 'massCode vs Obsidian Tasks', link: '/compare/obsidian-tasks' },
+            { text: 'Best Code Snippet Managers', link: '/compare/best-code-snippet-managers' },
             { text: 'Best Open-Source Snippet Manager', link: '/compare/best-open-source' },
             { text: 'Local-First Alternative to Pieces / Cacher', link: '/compare/local-first' },
             { text: 'Markdown-First Task Manager', link: '/compare/markdown-first-tasks' },

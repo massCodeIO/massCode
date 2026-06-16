@@ -104,6 +104,7 @@ export default defineConfig({
             { text: 'massCode vs Cacher', link: '/compare/cacher' },
             { text: 'massCode vs SnippetsLab', link: '/compare/snippetslab' },
             { text: 'massCode vs Raycast Snippets', link: '/compare/raycast' },
+            { text: 'massCode vs GitHub Gist', link: '/compare/github-gist' },
             { text: 'massCode vs Todoist', link: '/compare/todoist' },
             { text: 'massCode vs TickTick', link: '/compare/ticktick' },
             { text: 'massCode vs Things 3', link: '/compare/things' },

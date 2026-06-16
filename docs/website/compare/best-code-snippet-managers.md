@@ -108,7 +108,7 @@ Details and trade-offs for each are below.
 - **Storage:** Cloud (your GitHub account)
 - **Scope:** Snippets as Gists
 
-**Best for:** quick, shareable, public or secret snippets you already manage on GitHub. As a primary library it lacks folders, rich organization, and offline-first storage. If you outgrow it, massCode can [import your Gists](/documentation/code/library) by URL.
+**Best for:** quick, shareable, public or secret snippets you already manage on GitHub. As a primary library it lacks folders, rich organization, and offline-first storage. If you outgrow it, massCode can [import your Gists](/documentation/code/library) by URL — see [massCode vs GitHub Gist](/compare/github-gist).
 
 ### Raycast Snippets
 

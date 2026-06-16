@@ -72,3 +72,21 @@ To move from Cacher to massCode at the file level:
 4. If you previously relied on Cacher for team sharing, point your massCode vault at a shared Git repository so teammates can pull and push changes.
 
 [Download massCode](/download/) and try it on a copy of your snippets first.
+
+## Frequently asked questions
+
+### Is massCode a good Cacher alternative?
+
+Yes, if you prefer local-first over cloud. Cacher is a hosted, account-based service with team libraries. massCode is a free, open-source app that keeps your snippets as plain Markdown files on your own disk, working fully offline with no account.
+
+### Can I use massCode in a team like Cacher?
+
+Sharing in massCode happens at the file level: point your [Markdown Vault](/documentation/storage) at a shared Git repository or cloud folder so teammates can pull and push. That suits small teams, but it is not a managed, role-based team workspace like Cacher's.
+
+### Can I import my Cacher snippets into massCode?
+
+There is no direct Cacher importer. The practical path is to export snippets through GitHub Gists and import the public Gist URLs in [Code](/documentation/code/library), then adjust folders, tags, and languages.
+
+### Is massCode free?
+
+Yes, massCode is free and open source under AGPL v3. Cacher is a commercial cloud service, so the cost and hosting model are the main differences to weigh.

@@ -83,6 +83,7 @@ export default defineConfig({
     nav: [
       { text: 'Documentation', link: '/documentation/' },
       { text: 'Compare', link: '/compare/' },
+      { text: 'Blog', link: '/blog/' },
       { text: 'Sponsor', link: '/sponsor/' },
       { text: 'Donate', link: '/donate/' },
       {
@@ -95,6 +96,15 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/blog/': [
+        {
+          text: 'Blog',
+          items: [
+            { text: 'Overview', link: '/blog/' },
+            { text: 'How to Organize Code Snippets', link: '/blog/how-to-organize-code-snippets' },
+          ],
+        },
+      ],
       '/compare/': [
         {
           text: 'Compare',

@@ -40,9 +40,9 @@ Folders answer "what kind of work," tags answer "what is this about." Language c
 The title is your main search hit. Write it as what the snippet *does*, in the words you would type when looking for it:
 
 - Bad: `regex2`, `Untitled`, `test`
-- Good: `Validate email (RFC-ish) regex`, `Debounce function (TS)`, `Postgres: kill idle connections`
+- Good: `Validate email (RFC-ish) regex`, `Debounce a function`, `Postgres: kill idle connections`
 
-If you can imagine searching for it, name it that.
+If you can imagine searching for it, name it that. Only add the language to the title when you deliberately keep the same idea in several languages and need to tell them apart (`Debounce — TS` vs `Debounce — Python`); otherwise leave it for a tag.
 
 ### 4. Add just enough context
 

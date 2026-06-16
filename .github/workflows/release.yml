@@ -24,7 +24,11 @@ jobs:
           # затирали latest-mac.yml друг друга, ломая автообновление.
           - os: macos-15
             platform: mac
-          - os: windows-latest
+          # Закреплено на windows-2022 (VS 2022): на windows-latest приехал
+          # VS 2026 (v18), который приколоченный форк @electron/node-gyp не
+          # распознаёт ("version undefined") и падает при rebuild нативных
+          # модулей. Снять после апдейта electron-rebuild/node-gyp.
+          - os: windows-2022
             platform: win
           - os: ubuntu-latest
             platform: linux

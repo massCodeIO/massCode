@@ -16,6 +16,7 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - [massCode vs SnippetsLab](/compare/snippetslab) — cross-platform vs macOS-only
 - [massCode vs Raycast Snippets](/compare/raycast) — full snippet workspace vs launcher text expansion
 - [massCode vs GitHub Gist](/compare/github-gist) — local-first organized library vs cloud Git-backed gists
+- [massCode vs Postman](/compare/postman) — lightweight local-first API client vs full cloud API platform
 
 ## Task managers
 

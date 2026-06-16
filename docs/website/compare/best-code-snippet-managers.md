@@ -47,7 +47,7 @@ Details and trade-offs for each are below.
 - **Platforms:** macOS, Windows, Linux
 - **Storage:** Local `.md` files you can read, edit, and back up without the app
 - **Account:** None required, no telemetry login
-- **Search:** Full-text across snippets, notes, and HTTP requests
+- **Search:** Full-text across snippets and notes (HTTP requests by name and URL)
 - **Imports:** VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - **Sync:** Bring your own — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 

@@ -1,6 +1,15 @@
 import type { RewriteRule } from '../types'
 import { knownUnitTokens, TIME_UNIT_TOKEN_MAP } from '../constants'
 
+function getDecimalSeparator(locale: string): string {
+  return (
+    new Intl.NumberFormat(locale)
+      .formatToParts(1.1)
+      .find(part => part.type === 'decimal')
+      ?.value || '.'
+  )
+}
+
 export const groupedNumbers: RewriteRule = {
   id: 'grouped-numbers',
   category: 'normalize',
@@ -12,6 +21,29 @@ export const groupedNumbers: RewriteRule = {
     )
     line = line.replace(/\b\d+(?:\s+\d+)+\b/g, match =>
       match.replace(/\s+/g, ''))
+    if (line === ctx.line)
+      return null
+    return { line, changed: true }
+  },
+}
+
+export const decimalCommaNumbers: RewriteRule = {
+  id: 'decimal-comma-numbers',
+  category: 'normalize',
+  priority: 110,
+  apply: (ctx) => {
+    if (getDecimalSeparator(ctx.locale) !== ',') {
+      return null
+    }
+
+    const line = ctx.line
+      .replace(
+        /\b(\d{1,3}(?:\.\d{3})+),(\d+)(?=\b|[a-z%])/gi,
+        (_, integer: string, fraction: string) =>
+          `${integer.replace(/\./g, '')}.${fraction}`,
+      )
+      .replace(/(?<![\w.])(\d+),(\d+)(?=\b|[a-z%])/gi, '$1.$2')
+
     if (line === ctx.line)
       return null
     return { line, changed: true }
@@ -201,6 +233,7 @@ export const normalizeRules: RewriteRule[] = [
   shorthandTimespan,
   laptimeInput,
   groupedNumbers,
+  decimalCommaNumbers,
   degreeSigns,
   reverseConversion,
   shorthandConversion,

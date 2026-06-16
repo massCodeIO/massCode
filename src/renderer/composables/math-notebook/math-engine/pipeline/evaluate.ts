@@ -124,7 +124,7 @@ export function evaluateClassifiedLine(
   }
 
   if (hasAnyModifier(classification)) {
-    let processed = rewrite(effectiveView, classification)
+    let processed = rewrite(effectiveView, classification, activeLocale)
     if (processed.toLowerCase().endsWith('to multiplier')) {
       processed = processed
         .slice(0, processed.length - 'to multiplier'.length)
@@ -178,7 +178,7 @@ export function evaluateClassifiedLine(
     ...view,
     expression: stripModifierSuffix(view.expression, classification),
   }
-  const processed = rewrite(strippedView, classification)
+  const processed = rewrite(strippedView, classification, activeLocale)
 
   const routedResult = evaluatePrimaryIntent(
     classification,

@@ -37,11 +37,13 @@ for (const phase of PHASE_ORDER) {
 export function rewrite(
   view: AnalysisView,
   classification: LineClassification,
+  locale = 'en-US',
 ): string {
   const ctx: RewriteContext = {
     raw: view.raw,
     view,
     line: view.expression,
+    locale,
     classification,
   }
 

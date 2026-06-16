@@ -231,7 +231,7 @@ defineExpose({
                   <input
                     v-if="editingId === drawing.id"
                     v-model="editingName"
-                    class="drawing-rename-input outline-primary bg-background m-0 min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
+                    class="drawing-rename-input outline-primary bg-background m-0 block min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
                     :class="isCompactListMode ? 'flex-1' : 'w-full'"
                     @blur="finishRename(drawing.id)"
                     @keydown.enter="finishRename(drawing.id)"

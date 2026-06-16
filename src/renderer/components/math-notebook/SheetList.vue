@@ -222,7 +222,7 @@ defineExpose({
                   <input
                     v-if="editingId === sheet.id"
                     v-model="editingName"
-                    class="sheet-rename-input outline-primary bg-background m-0 min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
+                    class="sheet-rename-input outline-primary bg-background m-0 block min-w-0 rounded-sm border-0 p-0 text-[13px] leading-tight outline outline-1"
                     :class="isCompactListMode ? 'flex-1' : 'w-full'"
                     @blur="finishRename(sheet.id)"
                     @keydown.enter="finishRename(sheet.id)"

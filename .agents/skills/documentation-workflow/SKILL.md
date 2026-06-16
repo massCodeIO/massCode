@@ -31,6 +31,14 @@ description: Use when adding or updating massCode documentation, documenting a n
 - Пиши короткими task-oriented секциями. Предпочитай пользовательские флоу, а не детали реализации.
 - Shortcuts документируй через `<kbd>...</kbd>` и указывай macOS плюс Windows/Linux варианты, если они отличаются.
 
+## VitePress Markdown Gotchas
+
+- VitePress компилирует markdown как Vue-компонент, поэтому `{{ ... }}` трактуется как Vue-интерполяция и **исчезает** из вывода.
+- Fenced-блоки (` ``` `) защищены автоматически — внутри них `{{var}}` рендерится буквально.
+- **Инлайн-код в backticks НЕ защищён**: `` `{{variables}}` `` отрендерится пустым. Чтобы вывести литеральные двойные фигурные скобки в тексте или таблице, оборачивай в `v-pre`:
+  `<code v-pre>{{variables}}</code>`
+- Это же касается любых других Vue-конструкций (`{{ }}`, директивы) в произвольном тексте страницы.
+
 ## Images And Assets Rules
 
 - Картинки для docs клади в `docs/website/public`.
@@ -61,3 +69,4 @@ description: Use when adding or updating massCode documentation, documenting a n
 - Добавлять version availability в README.
 - Документировать shortcuts или поведение без проверки реализации.
 - Запускать широкие formatters, которые переписывают существующий стиль docs config.
+- Писать литеральные `{{ ... }}` в инлайн-коде без `v-pre` — VitePress съест их как Vue-интерполяцию.

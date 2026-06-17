@@ -3,7 +3,7 @@ import {
   isTableDelimiterCell,
   parseMarkdownTable,
   parseTableRow,
-} from '../tableBlocks'
+} from '../tableParser'
 
 describe('tableBlocks parser', () => {
   it('parses markdown table into header and rows', () => {

@@ -239,7 +239,7 @@ function createEditorState(doc: string): EditorState {
       }),
       createTableBlocks({
         enabled: true,
-        showSourceWhenSelectionInside: editable,
+        editable,
       }),
       createImageBlocks({
         enabled: true,

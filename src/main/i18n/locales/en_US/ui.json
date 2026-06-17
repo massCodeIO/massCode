@@ -384,6 +384,10 @@
           "horizontalRule": "Horizontal rule",
           "codeBlock": "Code block"
         }
+      },
+      "table": {
+        "addColumn": "Add column to the right",
+        "addRow": "Add row below"
       }
     },
     "tasks": {

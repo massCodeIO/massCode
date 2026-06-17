@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
+import type { EditorMenuCommand } from './NotesEditorContextMenu'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
+import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   applyPendingNavigationUIStateForNote,
   registerNavigationNoteUIState,
@@ -21,6 +23,25 @@ import {
   placeholder,
 } from '@codemirror/view'
 import { GFM, type MarkdownConfig } from '@lezer/markdown'
+import {
+  clearInlineFormatting,
+  getHeadingLevel,
+  insertCallout,
+  insertCodeBlock,
+  insertHorizontalRule,
+  insertTable,
+  setBody,
+  setHeading,
+  toggleBold,
+  toggleBulletList,
+  toggleHighlight,
+  toggleInlineCode,
+  toggleItalic,
+  toggleOrderedList,
+  toggleQuote,
+  toggleStrikethrough,
+  toggleTaskList,
+} from './cm-extensions/editorCommands'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
@@ -365,6 +386,76 @@ watch(
   noteId => syncNavigationNoteUIStateRegistration(noteId),
 )
 
+// Контекст контекстного меню форматирования, снимается на правый клик.
+const menuHasSelection = ref(false)
+const menuHeadingLevel = ref(0)
+
+function onEditorContextMenu() {
+  if (!view)
+    return
+
+  menuHasSelection.value = !view.state.selection.main.empty
+  menuHeadingLevel.value = getHeadingLevel(view)
+}
+
+function onMenuCommand(command: EditorMenuCommand) {
+  if (!view)
+    return
+
+  if (command.startsWith('heading-')) {
+    setHeading(view, Number(command.slice('heading-'.length)))
+    return
+  }
+
+  switch (command) {
+    case 'bold':
+      toggleBold(view)
+      break
+    case 'italic':
+      toggleItalic(view)
+      break
+    case 'strikethrough':
+      toggleStrikethrough(view)
+      break
+    case 'highlight':
+      toggleHighlight(view)
+      break
+    case 'code':
+      toggleInlineCode(view)
+      break
+    case 'clear-formatting':
+      clearInlineFormatting(view)
+      break
+    case 'bullet-list':
+      toggleBulletList(view)
+      break
+    case 'numbered-list':
+      toggleOrderedList(view)
+      break
+    case 'task-list':
+      toggleTaskList(view)
+      break
+    case 'body':
+      setBody(view)
+      break
+    case 'quote':
+      toggleQuote(view)
+      break
+    case 'table':
+      insertTable(view)
+      break
+    case 'callout':
+      insertCallout(view)
+      break
+    case 'horizontal-rule':
+      insertHorizontalRule(view)
+      break
+    case 'code-block':
+      insertCodeBlock(view)
+      break
+  }
+}
+
 onMounted(() => {
   if (!editorContainer.value)
     return
@@ -391,10 +482,23 @@ onUnmounted(() => {
 
 <template>
   <div class="h-full overflow-hidden">
-    <div
-      ref="editorContainer"
-      class="h-full overflow-hidden"
-    />
+    <ContextMenu.ContextMenu>
+      <ContextMenu.ContextMenuTrigger
+        as-child
+        :disabled="isPreviewMode"
+      >
+        <div
+          ref="editorContainer"
+          class="h-full overflow-hidden"
+          @contextmenu="onEditorContextMenu"
+        />
+      </ContextMenu.ContextMenuTrigger>
+      <NotesEditorContextMenu
+        :has-selection="menuHasSelection"
+        :heading-level="menuHeadingLevel"
+        @command="onMenuCommand"
+      />
+    </ContextMenu.ContextMenu>
     <NotesInternalLinksOverlay />
   </div>
 </template>

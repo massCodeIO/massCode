@@ -110,7 +110,7 @@ export function toggleInlineMarkdown(
   }
 }
 
-function createInlineMarkdownCommand(marker: string) {
+export function createInlineMarkdownCommand(marker: string) {
   return (view: Parameters<NonNullable<KeyBinding['run']>>[0]) => {
     const docText = view.state.doc.toString()
     const change = view.state.changeByRange((range) => {

@@ -357,6 +357,35 @@
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
     "noSelected": "No Note Selected",
+    "editor": {
+      "menu": {
+        "format": {
+          "title": "Format",
+          "bold": "Bold",
+          "italic": "Italic",
+          "strikethrough": "Strikethrough",
+          "highlight": "Highlight",
+          "code": "Code",
+          "clearFormatting": "Clear formatting"
+        },
+        "paragraph": {
+          "title": "Paragraph",
+          "bulletList": "Bullet list",
+          "numberedList": "Numbered list",
+          "taskList": "Task list",
+          "heading": "Heading {{level}}",
+          "body": "Body",
+          "quote": "Quote"
+        },
+        "insert": {
+          "title": "Insert",
+          "table": "Table",
+          "callout": "Callout",
+          "horizontalRule": "Horizontal rule",
+          "codeBlock": "Code block"
+        }
+      }
+    },
     "tasks": {
       "title": "Tasks",
       "today": "Today",

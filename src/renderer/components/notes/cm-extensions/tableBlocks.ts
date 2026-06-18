@@ -48,6 +48,8 @@ const GUTTER = 16
 const STRIP = 6
 
 const DRAG_HANDLE_SIZE = 20
+const DRAG_COLUMN_HANDLE_WIDTH = 60
+const DRAG_COLUMN_HANDLE_INSET = 8
 
 type TableDragKind = 'column' | 'row'
 
@@ -394,20 +396,6 @@ function getTablePartRect(
   return row?.getBoundingClientRect() ?? null
 }
 
-function getDragHandleCell(
-  root: HTMLElement,
-  kind: TableDragKind,
-  index: number,
-): HTMLTableCellElement | null {
-  if (kind === 'column')
-    return root.querySelectorAll<HTMLTableCellElement>('th').item(index)
-
-  const row = root
-    .querySelectorAll<HTMLTableRowElement>('tbody tr')
-    .item(index)
-  return row?.cells.item(0) ?? null
-}
-
 function getCurrentDragHandle(root: HTMLElement): HTMLElement | null {
   return root.querySelector<HTMLElement>('[data-table-drag-handle]')
 }
@@ -547,6 +535,21 @@ function getDropSlot(from: number, hovered: number): number | null {
 
 function getMovedIndex(from: number, toSlot: number): number {
   return toSlot > from ? toSlot - 1 : toSlot
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function clampColumnHandleCenter(tableRect: DOMRect, centerX: number): number {
+  const half = DRAG_COLUMN_HANDLE_WIDTH / 2
+  const min = tableRect.left + half + DRAG_COLUMN_HANDLE_INSET
+  const max = tableRect.right - half - DRAG_COLUMN_HANDLE_INSET
+
+  if (max < min)
+    return tableRect.left + tableRect.width / 2
+
+  return clamp(centerX, min, max)
 }
 
 function getColumnHoverTarget(
@@ -803,18 +806,16 @@ class TableWidget extends WidgetType {
     let targetSlot: number | null = null
     markDragSelection(root, kind, from)
 
-    const moveHandleTo = (index: number) => {
-      const handle = getCurrentDragHandle(root)
-      const cell = getDragHandleCell(root, kind, index)
-      if (handle && cell)
-        this.positionDragHandle(root, cell, handle, kind)
-    }
-
     const move = (moveEvent: PointerEvent) => {
       const next
         = kind === 'column'
           ? getColumnIndexAt(root, moveEvent.clientX)
           : getBodyRowIndexAt(root, moveEvent.clientY)
+
+      const handle = getCurrentDragHandle(root)
+      if (handle) {
+        this.positionDragHandleAtPointer(root, handle, kind, moveEvent)
+      }
 
       if (next === null)
         return
@@ -826,13 +827,11 @@ class TableWidget extends WidgetType {
       if (nextSlot === null) {
         targetSlot = null
         clearDragPreviewPart(root, 'target')
-        moveHandleTo(from)
         return
       }
 
       targetSlot = nextSlot
       markDropTarget(root, kind, targetSlot)
-      moveHandleTo(next)
     }
 
     const stop = () => {
@@ -874,7 +873,10 @@ class TableWidget extends WidgetType {
     handle.style.display = 'flex'
     handle.style.alignItems = 'center'
     handle.style.justifyContent = 'center'
-    handle.style.width = kind === 'column' ? '60px' : `${DRAG_HANDLE_SIZE}px`
+    handle.style.width
+      = kind === 'column'
+        ? `${DRAG_COLUMN_HANDLE_WIDTH}px`
+        : `${DRAG_HANDLE_SIZE}px`
     handle.style.height = `${DRAG_HANDLE_SIZE}px`
     handle.style.borderRadius = kind === 'column' ? '5px 5px 0 0' : '5px'
     handle.style.background = 'var(--primary)'
@@ -901,13 +903,45 @@ class TableWidget extends WidgetType {
     const cellRect = cell.getBoundingClientRect()
 
     if (kind === 'column') {
-      handle.style.left = `${cellRect.left - rootRect.left + cellRect.width / 2 - 30}px`
+      const tableRect = cell.closest('table')?.getBoundingClientRect()
+      const centerX = cellRect.left + cellRect.width / 2
+      const clampedCenterX = tableRect
+        ? clampColumnHandleCenter(tableRect, centerX)
+        : centerX
+      handle.style.left = `${clampedCenterX - rootRect.left - DRAG_COLUMN_HANDLE_WIDTH / 2}px`
       handle.style.top = `${cellRect.top - rootRect.top - DRAG_HANDLE_SIZE}px`
       return
     }
 
     handle.style.left = `${cellRect.left - rootRect.left - DRAG_HANDLE_SIZE / 2}px`
     handle.style.top = `${cellRect.top - rootRect.top + cellRect.height / 2 - DRAG_HANDLE_SIZE / 2}px`
+  }
+
+  private positionDragHandleAtPointer(
+    root: HTMLElement,
+    handle: HTMLElement,
+    kind: TableDragKind,
+    event: PointerEvent,
+  ) {
+    const table = root.querySelector('table')
+    if (!table)
+      return
+
+    const rootRect = root.getBoundingClientRect()
+    const tableRect = table.getBoundingClientRect()
+
+    if (kind === 'column') {
+      const centerX = clampColumnHandleCenter(tableRect, event.clientX)
+      handle.style.left = `${centerX - rootRect.left - DRAG_COLUMN_HANDLE_WIDTH / 2}px`
+      handle.style.top = `${tableRect.top - rootRect.top - DRAG_HANDLE_SIZE}px`
+      return
+    }
+
+    const body = table.tBodies[0]
+    const bodyRect = body?.getBoundingClientRect() ?? tableRect
+    const centerY = clamp(event.clientY, bodyRect.top, bodyRect.bottom)
+    handle.style.left = `${tableRect.left - rootRect.left - DRAG_HANDLE_SIZE / 2}px`
+    handle.style.top = `${centerY - rootRect.top - DRAG_HANDLE_SIZE / 2}px`
   }
 
   private showDragHandle(

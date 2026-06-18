@@ -315,11 +315,22 @@ function getTableCellAt(
 
 // После добавления столбца/строки DOM пересобирается из новой модели, поэтому
 // фокус в нужную ячейку ставим в микрозадаче — уже по обновлённому DOM.
-function focusAfterStructureChange(root: HTMLElement, selector: string) {
+function focusAfterStructureChange(
+  root: HTMLElement,
+  selector: string,
+  mode: 'end' | 'select' = 'end',
+) {
   queueMicrotask(() => {
     const cell = root.querySelector<HTMLElement>(selector)
-    if (cell)
-      focusCellEnd(cell)
+    if (!cell)
+      return
+
+    if (mode === 'select') {
+      selectCellContents(cell)
+      return
+    }
+
+    focusCellEnd(cell)
   })
 }
 
@@ -665,8 +676,12 @@ class TableWidget extends WidgetType {
         commitFromDom(view, root)
         selectCellContents(next)
       }
+      else if (!event.shiftKey) {
+        this.addRow(view, root, 'select')
+      }
       else {
-        cell.blur()
+        commitFromDom(view, root)
+        this.placeCursorAdjacent(view, root, true)
       }
     }
   }
@@ -1119,7 +1134,11 @@ class TableWidget extends WidgetType {
     focusAfterStructureChange(root, 'thead th:last-child')
   }
 
-  private addRow(view: EditorView, root: HTMLElement) {
+  private addRow(
+    view: EditorView,
+    root: HTMLElement,
+    focusMode: 'end' | 'select' = 'end',
+  ) {
     const model = readDomModel(root)
     if (!model)
       return
@@ -1127,7 +1146,11 @@ class TableWidget extends WidgetType {
     model.rows.push(Array.from({ length: model.header.length }, () => ''))
 
     commitModel(view, root, model)
-    focusAfterStructureChange(root, 'tbody tr:last-child td:first-child')
+    focusAfterStructureChange(
+      root,
+      'tbody tr:last-child td:first-child',
+      focusMode,
+    )
   }
 
   // Ставит каретку на строку до/после таблицы. Если такой строки нет (таблица в

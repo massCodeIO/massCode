@@ -18,6 +18,8 @@ import {
   WidgetType,
 } from '@codemirror/view'
 import {
+  moveTableColumn,
+  moveTableRow,
   parseDelimiters,
   parseMarkdownTable,
   serializeTable,
@@ -45,6 +47,26 @@ const GUTTER = 16
 // строку до/после таблицы (иначе блок-виджет не оставляет места для клика).
 const STRIP = 6
 
+const DRAG_HANDLE_SIZE = 20
+
+type TableDragKind = 'column' | 'row'
+
+function getCellText(cell: Element): string {
+  const clone = cell.cloneNode(true) as Element
+  clone
+    .querySelectorAll('[data-table-drag-handle]')
+    .forEach(node => node.remove())
+  return clone.textContent ?? ''
+}
+
+function setCellText(cell: HTMLTableCellElement, text: string) {
+  const handles = Array.from(
+    cell.querySelectorAll<HTMLElement>('[data-table-drag-handle]'),
+  )
+  cell.textContent = text
+  cell.append(...handles)
+}
+
 function readDelimiters(root: HTMLElement, columns: number): string[] {
   let delimiters: string[] = []
   try {
@@ -69,11 +91,9 @@ function readDomModel(root: HTMLElement): TableModel | null {
   if (!table || !head || !body)
     return null
 
-  const header = Array.from(head.rows[0]?.cells ?? []).map(
-    cell => cell.textContent ?? '',
-  )
+  const header = Array.from(head.rows[0]?.cells ?? []).map(getCellText)
   const rows = Array.from(body.rows).map(tr =>
-    Array.from(tr.cells).map(cell => cell.textContent ?? ''),
+    Array.from(tr.cells).map(getCellText),
   )
   const delimiters = readDelimiters(root, header.length)
 
@@ -306,6 +326,294 @@ function createPlusIcon(): SVGSVGElement {
   return svg
 }
 
+function createGripIcon(): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.setAttribute('width', '14')
+  svg.setAttribute('height', '14')
+  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('fill', 'currentColor')
+  svg.innerHTML = [
+    '<circle cx="9" cy="7" r="1.5"/>',
+    '<circle cx="15" cy="7" r="1.5"/>',
+    '<circle cx="9" cy="12" r="1.5"/>',
+    '<circle cx="15" cy="12" r="1.5"/>',
+    '<circle cx="9" cy="17" r="1.5"/>',
+    '<circle cx="15" cy="17" r="1.5"/>',
+  ].join('')
+  return svg
+}
+
+function clearDragPreview(root: HTMLElement) {
+  root
+    .querySelectorAll<HTMLElement>('[data-table-drag-preview]')
+    .forEach(preview => preview.remove())
+}
+
+function clearDragPreviewPart(root: HTMLElement, part: 'selection' | 'target') {
+  root
+    .querySelectorAll<HTMLElement>(`[data-table-drag-preview="${part}"]`)
+    .forEach(preview => preview.remove())
+}
+
+function clearFloatingDragHandles(root: HTMLElement) {
+  root
+    .querySelectorAll<HTMLElement>('[data-table-drag-handle]')
+    .forEach(handle => handle.remove())
+}
+
+function getTablePartRect(
+  root: HTMLElement,
+  kind: TableDragKind,
+  index: number,
+): DOMRect | null {
+  if (kind === 'column') {
+    const cells = Array.from(
+      root.querySelectorAll<HTMLTableCellElement>(
+        `tr > :nth-child(${index + 1})`,
+      ),
+    )
+    const first = cells.at(0)
+    const last = cells.at(-1)
+    if (first && last) {
+      const firstRect = first.getBoundingClientRect()
+      const lastRect = last.getBoundingClientRect()
+      return new DOMRect(
+        firstRect.left,
+        firstRect.top,
+        firstRect.width,
+        lastRect.bottom - firstRect.top,
+      )
+    }
+
+    return null
+  }
+
+  const row = root
+    .querySelectorAll<HTMLTableRowElement>('tbody tr')
+    .item(index)
+  return row?.getBoundingClientRect() ?? null
+}
+
+function getDragHandleCell(
+  root: HTMLElement,
+  kind: TableDragKind,
+  index: number,
+): HTMLTableCellElement | null {
+  if (kind === 'column')
+    return root.querySelectorAll<HTMLTableCellElement>('th').item(index)
+
+  const row = root
+    .querySelectorAll<HTMLTableRowElement>('tbody tr')
+    .item(index)
+  return row?.cells.item(0) ?? null
+}
+
+function getCurrentDragHandle(root: HTMLElement): HTMLElement | null {
+  return root.querySelector<HTMLElement>('[data-table-drag-handle]')
+}
+
+function markDragSelection(
+  root: HTMLElement,
+  kind: TableDragKind,
+  index: number,
+) {
+  clearDragPreviewPart(root, 'selection')
+
+  const rootRect = root.getBoundingClientRect()
+  const rect = getTablePartRect(root, kind, index)
+
+  if (!rect)
+    return
+
+  const preview = document.createElement('div')
+  preview.dataset.tableDragPreview = 'selection'
+  preview.style.position = 'absolute'
+  preview.style.left = `${rect.left - rootRect.left}px`
+  preview.style.top = `${rect.top - rootRect.top}px`
+  preview.style.width = `${rect.width}px`
+  preview.style.height = `${rect.height}px`
+  preview.style.border = '2px solid var(--primary)'
+  preview.style.borderRadius = '4px'
+  preview.style.background
+    = 'color-mix(in oklch, var(--primary) 16%, transparent)'
+  preview.style.pointerEvents = 'none'
+  preview.style.zIndex = '2'
+  root.append(preview)
+}
+
+function markDropTarget(root: HTMLElement, kind: TableDragKind, slot: number) {
+  clearDragPreviewPart(root, 'target')
+
+  const table = root.querySelector('table')
+  if (!table)
+    return
+
+  const rootRect = root.getBoundingClientRect()
+  const tableRect = table.getBoundingClientRect()
+  let position: number | null = null
+
+  if (kind === 'column') {
+    const headers = Array.from(
+      root.querySelectorAll<HTMLTableCellElement>('th'),
+    )
+    if (slot < 0 || slot > headers.length)
+      return
+
+    if (slot === headers.length) {
+      position = tableRect.right
+    }
+    else {
+      position = headers[slot]?.getBoundingClientRect().left ?? null
+    }
+  }
+  else {
+    const rows = Array.from(
+      root.querySelectorAll<HTMLTableRowElement>('tbody tr'),
+    )
+    if (slot < 0 || slot > rows.length)
+      return
+
+    if (slot === rows.length) {
+      position = rows.at(-1)?.getBoundingClientRect().bottom ?? null
+    }
+    else {
+      position = rows[slot]?.getBoundingClientRect().top ?? null
+    }
+  }
+
+  if (position === null)
+    return
+
+  const preview = document.createElement('div')
+  preview.dataset.tableDragPreview = 'target'
+  preview.style.position = 'absolute'
+  preview.style.background = 'var(--primary)'
+  preview.style.borderRadius = '999px'
+  preview.style.pointerEvents = 'none'
+  preview.style.zIndex = '3'
+
+  if (kind === 'column') {
+    preview.style.left = `${position - rootRect.left - 1}px`
+    preview.style.top = `${tableRect.top - rootRect.top}px`
+    preview.style.width = '3px'
+    preview.style.height = `${tableRect.height}px`
+  }
+  else {
+    preview.style.left = `${tableRect.left - rootRect.left}px`
+    preview.style.top = `${position - rootRect.top - 1}px`
+    preview.style.width = `${tableRect.width}px`
+    preview.style.height = '3px'
+  }
+
+  root.append(preview)
+}
+
+function getColumnIndexAt(root: HTMLElement, clientX: number): number | null {
+  const headers = Array.from(root.querySelectorAll<HTMLTableCellElement>('th'))
+  if (headers.length === 0)
+    return null
+
+  for (const [index, cell] of headers.entries()) {
+    const rect = cell.getBoundingClientRect()
+    if (clientX >= rect.left && clientX <= rect.right)
+      return index
+  }
+
+  return null
+}
+
+function getBodyRowIndexAt(root: HTMLElement, clientY: number): number | null {
+  const rows = Array.from(
+    root.querySelectorAll<HTMLTableRowElement>('tbody tr'),
+  )
+  if (rows.length === 0)
+    return null
+
+  for (const [index, row] of rows.entries()) {
+    const rect = row.getBoundingClientRect()
+    if (clientY >= rect.top && clientY <= rect.bottom)
+      return index
+  }
+
+  return null
+}
+
+function getDropSlot(from: number, hovered: number): number | null {
+  if (hovered === from)
+    return null
+
+  return hovered > from ? hovered + 1 : hovered
+}
+
+function getHandleIndexForSlot(
+  root: HTMLElement,
+  kind: TableDragKind,
+  slot: number,
+): number {
+  const count
+    = kind === 'column'
+      ? root.querySelectorAll('th').length
+      : root.querySelectorAll('tbody tr').length
+
+  return Math.max(0, Math.min(slot, count - 1))
+}
+
+function getMovedIndex(from: number, toSlot: number): number {
+  return toSlot > from ? toSlot - 1 : toSlot
+}
+
+function getColumnHoverTarget(
+  root: HTMLElement,
+  clientX: number,
+  clientY: number,
+): { cell: HTMLTableCellElement, index: number } | null {
+  const table = root.querySelector('table')
+  if (!table)
+    return null
+
+  const tableRect = table.getBoundingClientRect()
+  if (clientY < tableRect.top - DRAG_HANDLE_SIZE || clientY > tableRect.top) {
+    return null
+  }
+
+  const headers = Array.from(root.querySelectorAll<HTMLTableCellElement>('th'))
+  for (const [index, cell] of headers.entries()) {
+    const rect = cell.getBoundingClientRect()
+    if (clientX >= rect.left && clientX <= rect.right)
+      return { cell, index }
+  }
+
+  return null
+}
+
+function getRowHoverTarget(
+  root: HTMLElement,
+  clientX: number,
+  clientY: number,
+): { cell: HTMLTableCellElement, index: number } | null {
+  const table = root.querySelector('table')
+  if (!table)
+    return null
+
+  const tableRect = table.getBoundingClientRect()
+  if (clientX < tableRect.left - DRAG_HANDLE_SIZE || clientX > tableRect.left) {
+    return null
+  }
+
+  const rows = Array.from(
+    root.querySelectorAll<HTMLTableRowElement>('tbody tr'),
+  )
+  for (const [index, row] of rows.entries()) {
+    const rect = row.getBoundingClientRect()
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      const cell = row.cells.item(0)
+      return cell ? { cell, index } : null
+    }
+  }
+
+  return null
+}
+
 // Блочный виджет, заменяющий исходный markdown таблицы её отрисовкой. В
 // редактируемом режиме ячейки — contenteditable, а правки коммитятся в документ
 // по blur/Enter/Tab (а не на каждое нажатие), чтобы CodeMirror не перетягивал
@@ -445,6 +753,253 @@ class TableWidget extends WidgetType {
     document.execCommand('insertText', false, text)
   }
 
+  private moveColumn(
+    view: EditorView,
+    root: HTMLElement,
+    from: number,
+    to: number,
+  ) {
+    const model = readDomModel(root)
+    if (!model)
+      return
+
+    const active = document.activeElement
+    if (active instanceof HTMLElement && root.contains(active))
+      active.blur()
+
+    commitModel(view, root, moveTableColumn(model, from, to))
+    focusAfterStructureChange(
+      root,
+      `thead th:nth-child(${getMovedIndex(from, to) + 1})`,
+    )
+  }
+
+  private moveRow(
+    view: EditorView,
+    root: HTMLElement,
+    from: number,
+    to: number,
+  ) {
+    const model = readDomModel(root)
+    if (!model)
+      return
+
+    const active = document.activeElement
+    if (active instanceof HTMLElement && root.contains(active))
+      active.blur()
+
+    commitModel(view, root, moveTableRow(model, from, to))
+    focusAfterStructureChange(
+      root,
+      `tbody tr:nth-child(${getMovedIndex(from, to) + 1}) td:first-child`,
+    )
+  }
+
+  private startDrag(
+    event: PointerEvent,
+    view: EditorView,
+    root: HTMLElement,
+    kind: TableDragKind,
+    from: number,
+  ) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    root.dataset.tableDragging = '1'
+    let targetSlot: number | null = null
+    markDragSelection(root, kind, from)
+
+    const moveHandleTo = (index: number) => {
+      const handle = getCurrentDragHandle(root)
+      const cell = getDragHandleCell(root, kind, index)
+      if (handle && cell)
+        this.positionDragHandle(root, cell, handle, kind)
+    }
+
+    const move = (moveEvent: PointerEvent) => {
+      const next
+        = kind === 'column'
+          ? getColumnIndexAt(root, moveEvent.clientX)
+          : getBodyRowIndexAt(root, moveEvent.clientY)
+
+      if (next === null)
+        return
+
+      const nextSlot = getDropSlot(from, next)
+      if (nextSlot === targetSlot)
+        return
+
+      if (nextSlot === null) {
+        targetSlot = null
+        clearDragPreviewPart(root, 'target')
+        moveHandleTo(from)
+        return
+      }
+
+      targetSlot = nextSlot
+      markDropTarget(root, kind, targetSlot)
+      moveHandleTo(getHandleIndexForSlot(root, kind, targetSlot))
+    }
+
+    const stop = () => {
+      document.removeEventListener('pointermove', move)
+      document.removeEventListener('pointerup', stop)
+      document.removeEventListener('pointercancel', stop)
+      delete root.dataset.tableDragging
+      clearDragPreview(root)
+      clearFloatingDragHandles(root)
+
+      if (targetSlot === null)
+        return
+
+      if (kind === 'column') {
+        this.moveColumn(view, root, from, targetSlot)
+      }
+      else {
+        this.moveRow(view, root, from, targetSlot)
+      }
+    }
+
+    document.addEventListener('pointermove', move)
+    document.addEventListener('pointerup', stop)
+    document.addEventListener('pointercancel', stop)
+  }
+
+  private createDragHandle(
+    view: EditorView,
+    root: HTMLElement,
+    kind: TableDragKind,
+    index: number,
+  ): HTMLElement {
+    const handle = document.createElement('span')
+    handle.dataset.tableDragHandle = kind
+    handle.contentEditable = 'false'
+    handle.draggable = false
+    handle.style.position = 'absolute'
+    handle.style.zIndex = '3'
+    handle.style.display = 'flex'
+    handle.style.alignItems = 'center'
+    handle.style.justifyContent = 'center'
+    handle.style.width = kind === 'column' ? '60px' : `${DRAG_HANDLE_SIZE}px`
+    handle.style.height = `${DRAG_HANDLE_SIZE}px`
+    handle.style.borderRadius = '5px'
+    handle.style.background = 'var(--primary)'
+    handle.style.color = 'var(--primary-foreground)'
+    handle.style.cursor = kind === 'column' ? 'grab' : 'ns-resize'
+    handle.style.opacity = '0.96'
+    handle.style.userSelect = 'none'
+
+    handle.append(createGripIcon())
+    handle.addEventListener('pointerdown', (event) => {
+      this.startDrag(event, view, root, kind, index)
+    })
+
+    return handle
+  }
+
+  private positionDragHandle(
+    root: HTMLElement,
+    cell: HTMLTableCellElement,
+    handle: HTMLElement,
+    kind: TableDragKind,
+  ) {
+    const rootRect = root.getBoundingClientRect()
+    const cellRect = cell.getBoundingClientRect()
+
+    if (kind === 'column') {
+      handle.style.left = `${cellRect.left - rootRect.left + cellRect.width / 2 - 30}px`
+      handle.style.top = `${cellRect.top - rootRect.top - DRAG_HANDLE_SIZE}px`
+      return
+    }
+
+    handle.style.left = `${cellRect.left - rootRect.left - DRAG_HANDLE_SIZE - 2}px`
+    handle.style.top = `${cellRect.top - rootRect.top + cellRect.height / 2 - DRAG_HANDLE_SIZE / 2}px`
+  }
+
+  private showDragHandle(
+    root: HTMLElement,
+    view: EditorView,
+    kind: TableDragKind,
+    index: number,
+    cell: HTMLTableCellElement,
+  ) {
+    if (
+      root.dataset.tableDragKind === kind
+      && root.dataset.tableDragIndex === String(index)
+    ) {
+      return
+    }
+
+    clearFloatingDragHandles(root)
+    root.dataset.tableDragKind = kind
+    root.dataset.tableDragIndex = String(index)
+
+    const handle = this.createDragHandle(view, root, kind, index)
+    this.positionDragHandle(root, cell, handle, kind)
+    root.append(handle)
+    markDragSelection(root, kind, index)
+  }
+
+  private clearHoverDragState(root: HTMLElement) {
+    delete root.dataset.tableDragKind
+    delete root.dataset.tableDragIndex
+    clearFloatingDragHandles(root)
+    clearDragPreview(root)
+  }
+
+  private onRootPointerMove(
+    event: PointerEvent,
+    view: EditorView,
+    root: HTMLElement,
+  ) {
+    if (root.dataset.tableDragging === '1')
+      return
+
+    const column = getColumnHoverTarget(root, event.clientX, event.clientY)
+    if (column) {
+      this.showDragHandle(root, view, 'column', column.index, column.cell)
+      return
+    }
+
+    const row = getRowHoverTarget(root, event.clientX, event.clientY)
+    if (row) {
+      this.showDragHandle(root, view, 'row', row.index, row.cell)
+      return
+    }
+
+    const target = event.target
+    if (
+      target instanceof HTMLElement
+      && target.closest('[data-table-drag-handle]')
+    ) {
+      return
+    }
+
+    this.clearHoverDragState(root)
+  }
+
+  private onRootPointerLeave(root: HTMLElement, event: PointerEvent) {
+    if (root.dataset.tableDragging === '1')
+      return
+
+    const related = event.relatedTarget
+    if (
+      related instanceof HTMLElement
+      && related.closest('[data-table-drag-handle]')
+    ) {
+      return
+    }
+
+    this.clearHoverDragState(root)
+  }
+
+  private attachDragHover(view: EditorView, root: HTMLElement) {
+    root.addEventListener('pointermove', event =>
+      this.onRootPointerMove(event, view, root))
+    root.addEventListener('pointerleave', event =>
+      this.onRootPointerLeave(root, event))
+  }
+
   private createCell(
     tag: 'th' | 'td',
     text: string,
@@ -453,6 +1008,7 @@ class TableWidget extends WidgetType {
   ): HTMLTableCellElement {
     const cell = document.createElement(tag)
     cell.textContent = unescapeCell(text)
+    cell.style.position = 'relative'
     cell.style.textAlign = 'left'
     cell.style.color = 'var(--foreground)'
     cell.style.padding = tag === 'th' ? '8px 10px' : '7px 10px'
@@ -574,7 +1130,7 @@ class TableWidget extends WidgetType {
     gutter.style.borderRadius = '6px'
 
     if (orientation === 'column') {
-      gutter.style.top = `${STRIP}px`
+      gutter.style.top = `${DRAG_HANDLE_SIZE}px`
       gutter.style.right = '0'
       gutter.style.width = `${GUTTER}px`
       gutter.style.bottom = `${GUTTER + STRIP}px`
@@ -654,7 +1210,8 @@ class TableWidget extends WidgetType {
     scroll.style.background = 'var(--background)'
 
     if (this.interactive) {
-      root.style.paddingTop = `${STRIP}px`
+      root.style.paddingTop = `${DRAG_HANDLE_SIZE}px`
+      root.style.paddingLeft = `${DRAG_HANDLE_SIZE + 4}px`
       root.style.paddingRight = `${GUTTER}px`
       root.style.paddingBottom = `${GUTTER + STRIP}px`
     }
@@ -668,14 +1225,20 @@ class TableWidget extends WidgetType {
       // блок-виджетом, который иначе занимает всю строку.
       root.addEventListener('mousedown', (event) => {
         const target = event.target as HTMLElement
-        if (target.closest('th, td') || target.closest('[data-table-gutter]'))
+        if (
+          target.closest('th, td')
+          || target.closest('[data-table-gutter]')
+          || target.closest('[data-table-drag-handle]')
+        ) {
           return
+        }
 
         event.preventDefault()
         const rect = scroll.getBoundingClientRect()
         const before = event.clientY < rect.top + rect.height / 2
         this.placeCursorAdjacent(view, root, before)
       })
+      this.attachDragHover(view, root)
 
       root.append(
         this.createGutter(
@@ -739,8 +1302,8 @@ class TableWidget extends WidgetType {
       if (!cell || cell === active)
         return
       const display = unescapeCell(text)
-      if (cell.textContent !== display)
-        cell.textContent = display
+      if (getCellText(cell) !== display)
+        setCellText(cell, display)
     }
 
     this.model.header.forEach((text, col) =>

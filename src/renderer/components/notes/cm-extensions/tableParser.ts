@@ -93,3 +93,63 @@ export function serializeTable(model: TableModel): string {
     ...model.rows.map(row),
   ].join('\n')
 }
+
+export function moveTableColumn(
+  model: TableModel,
+  from: number,
+  toSlot: number,
+): TableModel {
+  const columns = model.header.length
+  if (
+    from < 0
+    || toSlot < 0
+    || from >= columns
+    || toSlot > columns
+    || toSlot === from
+    || toSlot === from + 1
+  ) {
+    return model
+  }
+
+  const move = <T>(items: T[]): T[] => {
+    const next = [...items]
+    const [item] = next.splice(from, 1)
+    const to = toSlot > from ? toSlot - 1 : toSlot
+    next.splice(to, 0, item as T)
+    return next
+  }
+
+  return {
+    header: move(model.header),
+    delimiters: move(model.delimiters),
+    rows: model.rows.map(row => move(row)),
+  }
+}
+
+export function moveTableRow(
+  model: TableModel,
+  from: number,
+  toSlot: number,
+): TableModel {
+  const rowCount = model.rows.length
+  if (
+    from < 0
+    || toSlot < 0
+    || from >= rowCount
+    || toSlot > rowCount
+    || toSlot === from
+    || toSlot === from + 1
+  ) {
+    return model
+  }
+
+  const rows = [...model.rows]
+  const [row] = rows.splice(from, 1)
+  const to = toSlot > from ? toSlot - 1 : toSlot
+  rows.splice(to, 0, row as string[])
+
+  return {
+    ...model,
+    rows,
+  }
+}

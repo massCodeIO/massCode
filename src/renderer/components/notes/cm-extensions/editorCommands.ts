@@ -324,6 +324,11 @@ export function toggleQuote(view: EditorView) {
 
 // --- Вставка блоков --------------------------------------------------------
 
+interface InsertBlockResult {
+  from: number
+  insert: string
+}
+
 // Вставляет блок на отдельных строках в позиции выделения, добавляя
 // переносы строк только когда их ещё нет. cursorOffset задаёт позицию
 // курсора внутри сниппета (по умолчанию — конец блока).
@@ -353,12 +358,18 @@ function insertBlock(view: EditorView, snippet: string, cursorOffset?: number) {
   )
 
   view.focus()
+
+  return {
+    from: main.from,
+    insert,
+  } satisfies InsertBlockResult
 }
 
 export function insertTable(view: EditorView) {
   const snippet
-    = '| Column | Column |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |'
-  insertBlock(view, snippet)
+    = '\n| Column | Column |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |'
+  const { from, insert } = insertBlock(view, snippet)
+  return from + insert.indexOf('|')
 }
 
 export function insertCallout(view: EditorView) {

@@ -1,6 +1,7 @@
 import type { EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
+import { parseMarkdownTable } from './tableParser'
 
 export interface TableBlockRange {
   from: number
@@ -15,11 +16,32 @@ function getTableBlockRanges(state: EditorState): TableBlockRange[] {
       if (node.name !== 'Table')
         return
 
-      ranges.push({ from: node.from, to: node.to })
+      const to = clampTableEnd(state, node.from, node.to)
+      const source = state.sliceDoc(node.from, to)
+      if (!parseMarkdownTable(source))
+        return
+
+      ranges.push({ from: node.from, to })
     },
   })
 
   return ranges
+}
+
+function clampTableEnd(state: EditorState, from: number, to: number): number {
+  const text = state.sliceDoc(from, to)
+  let offset = 0
+  let end = from
+
+  for (const line of text.split('\n')) {
+    if (line.includes('|'))
+      end = from + offset + line.length
+    else break
+
+    offset += line.length + 1
+  }
+
+  return end
 }
 
 export function findTableNavigationTarget(
@@ -96,6 +118,28 @@ function getTableEntryCell(
   )
 }
 
+function getTableWidgetAtPosition(
+  view: EditorView,
+  tableStart: number,
+  fallbackIndex: number,
+): HTMLElement | null {
+  const widgets = Array.from(
+    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
+  )
+
+  for (const widget of widgets) {
+    try {
+      if (view.posAtDOM(widget, 0) === tableStart)
+        return widget
+    }
+    catch {
+      // CodeMirror мог пересоздать виджет между keydown и поиском DOM-узла.
+    }
+  }
+
+  return widgets[fallbackIndex] ?? null
+}
+
 export function moveSelectionToAdjacentTableCell(
   view: EditorView,
   direction: 'up' | 'down',
@@ -113,9 +157,7 @@ export function moveSelectionToAdjacentTableCell(
   if (!target)
     return false
 
-  const widget = view.dom
-    .querySelectorAll<HTMLElement>('[data-table-widget="1"]')
-    .item(target.index)
+  const widget = getTableWidgetAtPosition(view, target.pos, target.index)
   const cell = widget ? getTableEntryCell(widget, direction) : null
 
   if (!cell)

@@ -389,6 +389,7 @@ watch(
 // Контекст контекстного меню форматирования, снимается на правый клик.
 const menuHasSelection = ref(false)
 const menuHeadingLevel = ref(0)
+let pendingInsertedTableStart: number | null = null
 
 function onEditorContextMenu() {
   if (!view)
@@ -396,6 +397,81 @@ function onEditorContextMenu() {
 
   menuHasSelection.value = !view.state.selection.main.empty
   menuHeadingLevel.value = getHeadingLevel(view)
+}
+
+function focusCellStart(cell: HTMLElement) {
+  cell.focus()
+  const range = document.createRange()
+  range.selectNodeContents(cell)
+  range.collapse(true)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
+function findTableWidgetAtOrAfter(tableStart: number): HTMLElement | null {
+  if (!view)
+    return null
+
+  for (const widget of Array.from(
+    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
+  )) {
+    try {
+      if (view.posAtDOM(widget, 0) >= tableStart)
+        return widget
+    }
+    catch {
+      // Виджет мог быть пересоздан CodeMirror между кадрами.
+    }
+  }
+
+  return null
+}
+
+function focusInsertedTableCell(tableStart: number) {
+  const widget = findTableWidgetAtOrAfter(tableStart)
+  const cell = widget?.querySelector<HTMLElement>('thead th:first-child')
+  if (!cell)
+    return false
+
+  focusCellStart(cell)
+  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  return true
+}
+
+function scheduleInsertedTableFocus(tableStart: number) {
+  let attempts = 0
+
+  function focus() {
+    attempts += 1
+
+    if (focusInsertedTableCell(tableStart))
+      return
+
+    if (attempts < 4)
+      schedule()
+  }
+
+  function schedule() {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(focus)
+      return
+    }
+
+    queueMicrotask(focus)
+  }
+
+  schedule()
+}
+
+function onContextMenuCloseAutoFocus(event: Event) {
+  if (pendingInsertedTableStart === null)
+    return
+
+  event.preventDefault()
+  const tableStart = pendingInsertedTableStart
+  pendingInsertedTableStart = null
+  scheduleInsertedTableFocus(tableStart)
 }
 
 function onMenuCommand(command: EditorMenuCommand) {
@@ -442,7 +518,7 @@ function onMenuCommand(command: EditorMenuCommand) {
       toggleQuote(view)
       break
     case 'table':
-      insertTable(view)
+      pendingInsertedTableStart = insertTable(view)
       break
     case 'callout':
       insertCallout(view)
@@ -496,6 +572,7 @@ onUnmounted(() => {
       <NotesEditorContextMenu
         :has-selection="menuHasSelection"
         :heading-level="menuHeadingLevel"
+        @close-auto-focus="onContextMenuCloseAutoFocus"
         @command="onMenuCommand"
       />
     </ContextMenu.ContextMenu>

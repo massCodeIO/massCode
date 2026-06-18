@@ -2,11 +2,12 @@ import type { EditorState, Extension } from '@codemirror/state'
 import type { TableModel } from './tableParser'
 import { i18n } from '@/electron'
 import { syntaxTree } from '@codemirror/language'
-import { RangeSetBuilder, StateField } from '@codemirror/state'
+import { Prec, RangeSetBuilder, StateField } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
   EditorView,
+  keymap,
   WidgetType,
 } from '@codemirror/view'
 import {
@@ -116,7 +117,7 @@ function placeCursorAfterTableRange(view: EditorView, range: TableRange) {
   const endLine = doc.lineAt(range.to)
   const next = endLine.number < doc.lines ? doc.line(endLine.number + 1) : null
 
-  if (next && next.text.trim() === '') {
+  if (next) {
     view.dispatch({
       selection: { anchor: next.from },
       scrollIntoView: true,
@@ -139,9 +140,9 @@ function placeCursorBeforeTableRange(view: EditorView, range: TableRange) {
   const startLine = doc.lineAt(range.from)
   const prev = startLine.number > 1 ? doc.line(startLine.number - 1) : null
 
-  if (prev && prev.text.trim() === '') {
+  if (prev) {
     view.dispatch({
-      selection: { anchor: prev.from },
+      selection: { anchor: prev.to },
       scrollIntoView: true,
     })
   }
@@ -808,6 +809,91 @@ function maybePlaceCursorAfterTableClick(
   return true
 }
 
+function findTableRangeStartingAt(
+  state: EditorState,
+  pos: number,
+): TableRange | null {
+  let result: TableRange | null = null
+
+  syntaxTree(state).iterate({
+    enter(node) {
+      if (node.name !== 'Table' || node.from !== pos)
+        return
+
+      result = {
+        from: node.from,
+        to: clampTableEnd(state, node.from, node.to),
+      }
+    },
+  })
+
+  return result
+}
+
+export function isProtectedTableBoundaryLine(state: EditorState): boolean {
+  if (!state.selection.main.empty)
+    return false
+
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
+
+  return isProtectedTableBoundary(state, line.number)
+}
+
+function isProtectedTableBoundary(
+  state: EditorState,
+  lineNumber: number,
+): boolean {
+  if (lineNumber < 1 || lineNumber >= state.doc.lines)
+    return false
+
+  const line = state.doc.line(lineNumber)
+  if (line.text.trim() !== '')
+    return false
+
+  const nextLine = state.doc.line(lineNumber + 1)
+  return findTableRangeStartingAt(state, nextLine.from) !== null
+}
+
+export function isProtectedTableBoundaryDeletePosition(
+  state: EditorState,
+): boolean {
+  if (!state.selection.main.empty)
+    return false
+
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
+
+  if (isProtectedTableBoundary(state, line.number))
+    return true
+
+  if (head !== line.to || line.number >= state.doc.lines)
+    return false
+
+  return isProtectedTableBoundary(state, line.number + 1)
+}
+
+function moveBeforeProtectedTableBoundary(view: EditorView): boolean {
+  if (!isProtectedTableBoundaryLine(view.state))
+    return false
+
+  const line = view.state.doc.lineAt(view.state.selection.main.head)
+  if (line.number > 1) {
+    const prev = view.state.doc.line(line.number - 1)
+    view.dispatch({
+      selection: { anchor: prev.to },
+      scrollIntoView: true,
+    })
+  }
+
+  view.focus()
+  return true
+}
+
+function preventProtectedTableBoundaryDelete(view: EditorView): boolean {
+  return isProtectedTableBoundaryDeletePosition(view.state)
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
@@ -875,6 +961,18 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
 
   return [
     decorations,
+    Prec.highest(
+      keymap.of([
+        {
+          key: 'Backspace',
+          run: moveBeforeProtectedTableBoundary,
+        },
+        {
+          key: 'Delete',
+          run: preventProtectedTableBoundaryDelete,
+        },
+      ]),
+    ),
     EditorView.domEventHandlers({
       mousedown(event, view) {
         return maybePlaceCursorAfterTableClick(view, event)

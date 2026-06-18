@@ -56,6 +56,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
+  closeAutoFocus: [event: Event]
   command: [command: EditorMenuCommand]
 }>()
 
@@ -78,7 +79,10 @@ function run(command: EditorMenuCommand) {
 </script>
 
 <template>
-  <ContextMenu.ContextMenuContent class="w-52">
+  <ContextMenu.ContextMenuContent
+    class="w-52"
+    @close-auto-focus="emit('closeAutoFocus', $event)"
+  >
     <!-- Format -->
     <ContextMenu.ContextMenuSub>
       <ContextMenu.ContextMenuSubTrigger>
@@ -90,36 +94,28 @@ function run(command: EditorMenuCommand) {
           <Bold />
           {{ i18n.t("notes.editor.menu.format.bold") }}
           <ContextMenu.ContextMenuShortcut>
-            {{
-              `${mod}B`
-            }}
+            {{ `${mod}B` }}
           </ContextMenu.ContextMenuShortcut>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem @select="run('italic')">
           <Italic />
           {{ i18n.t("notes.editor.menu.format.italic") }}
           <ContextMenu.ContextMenuShortcut>
-            {{
-              `${mod}I`
-            }}
+            {{ `${mod}I` }}
           </ContextMenu.ContextMenuShortcut>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem @select="run('strikethrough')">
           <Strikethrough />
           {{ i18n.t("notes.editor.menu.format.strikethrough") }}
           <ContextMenu.ContextMenuShortcut>
-            {{
-              `${mod}${shift}S`
-            }}
+            {{ `${mod}${shift}S` }}
           </ContextMenu.ContextMenuShortcut>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem @select="run('highlight')">
           <Highlighter />
           {{ i18n.t("notes.editor.menu.format.highlight") }}
           <ContextMenu.ContextMenuShortcut>
-            {{
-              `${mod}${shift}H`
-            }}
+            {{ `${mod}${shift}H` }}
           </ContextMenu.ContextMenuShortcut>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem @select="run('code')">

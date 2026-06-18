@@ -3,6 +3,7 @@ import type { EditorView } from '@codemirror/view'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
 import {
+  insertTable,
   toggleBulletList,
   toggleOrderedList,
   toggleTaskList,
@@ -63,5 +64,16 @@ describe('editorCommands lists', () => {
     )
 
     expect(result.doc).toBe(['- first', '', '- second'].join('\n'))
+  })
+})
+
+describe('editorCommands table', () => {
+  it('adds an empty boundary line before an inserted table', () => {
+    const result = runCommand('', insertTable)
+
+    expect(result.doc.split('\n').slice(0, 2)).toEqual([
+      '',
+      '| Column | Column |',
+    ])
   })
 })

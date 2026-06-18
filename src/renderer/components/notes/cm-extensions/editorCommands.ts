@@ -1,4 +1,4 @@
-import type { ChangeSpec } from '@codemirror/state'
+import type { ChangeSpec, TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { EditorSelection } from '@codemirror/state'
 import { createInlineMarkdownCommand } from './markdownShortcuts'
@@ -91,15 +91,23 @@ function getSelectedLines(view: EditorView): DocLine[] {
   return lines
 }
 
-function dispatchLineChanges(view: EditorView, changes: ChangeSpec[]) {
+function dispatchLineChanges(
+  view: EditorView,
+  changes: ChangeSpec[],
+  selection?: TransactionSpec['selection'],
+) {
   if (changes.length) {
-    view.dispatch(
-      view.state.update({
-        changes,
-        scrollIntoView: true,
-        userEvent: 'input',
-      }),
-    )
+    const spec: TransactionSpec = {
+      changes,
+      scrollIntoView: true,
+      userEvent: 'input',
+    }
+
+    if (selection) {
+      spec.selection = selection
+    }
+
+    view.dispatch(view.state.update(spec))
   }
 
   view.focus()
@@ -130,15 +138,21 @@ function targetLines(lines: DocLine[]): DocLine[] {
   return nonBlank.length ? nonBlank : lines
 }
 
+function shouldFormatBlankLine(view: EditorView, lines: DocLine[]): boolean {
+  return lines.length === 1 && view.state.selection.main.empty
+}
+
 export function toggleBulletList(view: EditorView) {
   const lines = getSelectedLines(view)
+  const formatBlankLine = shouldFormatBlankLine(view, lines)
   const allMatch = targetLines(lines).every(line =>
     BULLET_RE.test(line.text),
   )
   const changes: ChangeSpec[] = []
+  let selection: TransactionSpec['selection']
 
   for (const line of lines) {
-    if (isBlank(line.text) && !allMatch)
+    if (isBlank(line.text) && !allMatch && !formatBlankLine)
       continue
 
     let next: string
@@ -150,22 +164,28 @@ export function toggleBulletList(view: EditorView) {
         line.text.replace(ANY_LIST_PREFIX, '$1'),
       )
       next = `${indent}- ${rest}`
+
+      if (formatBlankLine && isBlank(line.text)) {
+        selection = EditorSelection.cursor(line.from + next.length)
+      }
     }
 
     if (next !== line.text)
       changes.push({ from: line.from, to: line.to, insert: next })
   }
 
-  dispatchLineChanges(view, changes)
+  dispatchLineChanges(view, changes, selection)
 }
 
 export function toggleTaskList(view: EditorView) {
   const lines = getSelectedLines(view)
+  const formatBlankLine = shouldFormatBlankLine(view, lines)
   const allMatch = targetLines(lines).every(line => TASK_RE.test(line.text))
   const changes: ChangeSpec[] = []
+  let selection: TransactionSpec['selection']
 
   for (const line of lines) {
-    if (isBlank(line.text) && !allMatch)
+    if (isBlank(line.text) && !allMatch && !formatBlankLine)
       continue
 
     let next: string
@@ -177,25 +197,31 @@ export function toggleTaskList(view: EditorView) {
         line.text.replace(ANY_LIST_PREFIX, '$1'),
       )
       next = `${indent}- [ ] ${rest}`
+
+      if (formatBlankLine && isBlank(line.text)) {
+        selection = EditorSelection.cursor(line.from + next.length)
+      }
     }
 
     if (next !== line.text)
       changes.push({ from: line.from, to: line.to, insert: next })
   }
 
-  dispatchLineChanges(view, changes)
+  dispatchLineChanges(view, changes, selection)
 }
 
 export function toggleOrderedList(view: EditorView) {
   const lines = getSelectedLines(view)
+  const formatBlankLine = shouldFormatBlankLine(view, lines)
   const allMatch = targetLines(lines).every(line =>
     ORDERED_RE.test(line.text),
   )
   const changes: ChangeSpec[] = []
+  let selection: TransactionSpec['selection']
   let index = 1
 
   for (const line of lines) {
-    if (isBlank(line.text) && !allMatch)
+    if (isBlank(line.text) && !allMatch && !formatBlankLine)
       continue
 
     let next: string
@@ -207,6 +233,11 @@ export function toggleOrderedList(view: EditorView) {
         line.text.replace(ANY_LIST_PREFIX, '$1'),
       )
       next = `${indent}${index}. ${rest}`
+
+      if (formatBlankLine && isBlank(line.text)) {
+        selection = EditorSelection.cursor(line.from + next.length)
+      }
+
       index += 1
     }
 
@@ -214,7 +245,7 @@ export function toggleOrderedList(view: EditorView) {
       changes.push({ from: line.from, to: line.to, insert: next })
   }
 
-  dispatchLineChanges(view, changes)
+  dispatchLineChanges(view, changes, selection)
 }
 
 // --- Заголовки и абзацы ----------------------------------------------------

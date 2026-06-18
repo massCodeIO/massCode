@@ -399,11 +399,10 @@ function onEditorContextMenu() {
   menuHeadingLevel.value = getHeadingLevel(view)
 }
 
-function focusCellStart(cell: HTMLElement) {
+function selectCellContents(cell: HTMLElement) {
   cell.focus()
   const range = document.createRange()
   range.selectNodeContents(cell)
-  range.collapse(true)
   const selection = window.getSelection()
   selection?.removeAllRanges()
   selection?.addRange(range)
@@ -434,7 +433,7 @@ function focusInsertedTableCell(tableStart: number) {
   if (!cell)
     return false
 
-  focusCellStart(cell)
+  selectCellContents(cell)
   cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   return true
 }

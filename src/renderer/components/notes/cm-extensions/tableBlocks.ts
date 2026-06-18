@@ -241,6 +241,15 @@ function focusCellAt(cell: HTMLElement, offset: number) {
   selection?.addRange(range)
 }
 
+function selectCellContents(cell: HTMLElement) {
+  cell.focus()
+  const range = document.createRange()
+  range.selectNodeContents(cell)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
 function getCellCaretOffset(cell: HTMLElement): number | null {
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0 || !selection.isCollapsed)
@@ -654,7 +663,7 @@ class TableWidget extends WidgetType {
       const next = cells[index + (event.shiftKey ? -1 : 1)]
       if (next) {
         commitFromDom(view, root)
-        focusCellEnd(next)
+        selectCellContents(next)
       }
       else {
         cell.blur()

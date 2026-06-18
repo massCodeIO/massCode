@@ -48,8 +48,9 @@ const GUTTER = 16
 const STRIP = 6
 
 const DRAG_HANDLE_SIZE = 20
-const DRAG_COLUMN_HANDLE_WIDTH = 60
+const DRAG_COLUMN_HANDLE_WIDTH = 48
 const DRAG_COLUMN_HANDLE_INSET = 8
+const TABLE_CELL_MIN_WIDTH = 64
 
 type TableDragKind = 'column' | 'row'
 
@@ -1046,6 +1047,7 @@ class TableWidget extends WidgetType {
     const cell = document.createElement(tag)
     cell.textContent = unescapeCell(text)
     cell.style.position = 'relative'
+    cell.style.minWidth = `${TABLE_CELL_MIN_WIDTH}px`
     cell.style.textAlign = 'left'
     cell.style.color = 'var(--foreground)'
     cell.style.padding = tag === 'th' ? '8px 10px' : '7px 10px'
@@ -1072,7 +1074,8 @@ class TableWidget extends WidgetType {
 
   private buildTable(view: EditorView, root: HTMLElement): HTMLTableElement {
     const table = document.createElement('table')
-    table.style.width = '100%'
+    table.style.width = 'max-content'
+    table.style.minWidth = 'max-content'
     table.style.borderCollapse = 'collapse'
     table.style.fontFamily = 'var(--font-sans)'
     table.style.fontSize = '0.98em'
@@ -1254,8 +1257,13 @@ class TableWidget extends WidgetType {
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
+    root.style.width = 'fit-content'
+    root.style.maxWidth = '100%'
 
     const scroll = document.createElement('div')
+    scroll.style.display = 'inline-block'
+    scroll.style.maxWidth = '100%'
+    scroll.style.verticalAlign = 'top'
     scroll.style.overflowX = 'auto'
     scroll.style.border = '1px solid var(--border)'
     scroll.style.borderRadius = '8px'

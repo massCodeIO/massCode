@@ -59,7 +59,7 @@ import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
 import { createTableBlocks } from './cm-extensions/tableBlocks'
-import { moveSelectionToAdjacentTableSource } from './cm-extensions/tableNavigation'
+import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
 import { createNotesEditTheme } from './theme'
 
 interface Props {
@@ -144,14 +144,14 @@ const navigationKeymap: KeyBinding[] = [
     key: 'ArrowDown',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'down')
-      || moveSelectionToAdjacentTableSource(view, 'down')
+      || moveSelectionToAdjacentTableCell(view, 'down')
       || moveSelectionToAdjacentImageSource(view, 'down'),
   },
   {
     key: 'ArrowUp',
     run: view =>
       moveSelectionToAdjacentMermaidSource(view, 'up')
-      || moveSelectionToAdjacentTableSource(view, 'up')
+      || moveSelectionToAdjacentTableCell(view, 'up')
       || moveSelectionToAdjacentImageSource(view, 'up'),
   },
 ]

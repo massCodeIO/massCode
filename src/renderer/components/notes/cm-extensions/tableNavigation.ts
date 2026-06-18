@@ -27,11 +27,20 @@ export function findTableNavigationTarget(
   head: number,
   direction: 'up' | 'down',
 ): number | null {
+  const target = findTableNavigationTargetWithIndex(state, head, direction)
+  return target?.pos ?? null
+}
+
+function findTableNavigationTargetWithIndex(
+  state: EditorState,
+  head: number,
+  direction: 'up' | 'down',
+): { index: number, pos: number } | null {
   const currentLineNumber = state.doc.lineAt(head).number
   const blocks = getTableBlockRanges(state)
 
   if (direction === 'down') {
-    for (const block of blocks) {
+    for (const [index, block] of blocks.entries()) {
       const blockStartLineNumber = state.doc.lineAt(block.from).number
       if (blockStartLineNumber <= currentLineNumber)
         continue
@@ -39,7 +48,7 @@ export function findTableNavigationTarget(
       if (blockStartLineNumber !== currentLineNumber + 1)
         return null
 
-      return block.from
+      return { index, pos: block.from }
     }
 
     return null
@@ -58,13 +67,36 @@ export function findTableNavigationTarget(
       return null
 
     const targetLine = state.doc.lineAt(Math.max(block.to - 1, block.from))
-    return targetLine.from
+    return { index: i, pos: targetLine.from }
   }
 
   return null
 }
 
-export function moveSelectionToAdjacentTableSource(
+function focusCellStart(cell: HTMLElement) {
+  cell.focus()
+  const range = document.createRange()
+  range.selectNodeContents(cell)
+  range.collapse(true)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
+function getTableEntryCell(
+  widget: HTMLElement,
+  direction: 'up' | 'down',
+): HTMLElement | null {
+  if (direction === 'down')
+    return widget.querySelector('thead th:first-child')
+
+  return (
+    widget.querySelector('tbody tr:last-child td:first-child')
+    ?? widget.querySelector('thead th:first-child')
+  )
+}
+
+export function moveSelectionToAdjacentTableCell(
   view: EditorView,
   direction: 'up' | 'down',
 ): boolean {
@@ -72,20 +104,25 @@ export function moveSelectionToAdjacentTableSource(
     return false
 
   const head = view.state.selection.main.head
-  const target = findTableNavigationTarget(view.state, head, direction)
+  const target = findTableNavigationTargetWithIndex(
+    view.state,
+    head,
+    direction,
+  )
 
-  if (target === null)
+  if (!target)
     return false
 
-  const currentLine = view.state.doc.lineAt(head)
-  const currentCol = head - currentLine.from
-  const targetLine = view.state.doc.lineAt(target)
-  const clampedCol = Math.min(currentCol, targetLine.length)
+  const widget = view.dom
+    .querySelectorAll<HTMLElement>('[data-table-widget="1"]')
+    .item(target.index)
+  const cell = widget ? getTableEntryCell(widget, direction) : null
 
-  view.dispatch({
-    selection: { anchor: targetLine.from + clampedCol },
-    scrollIntoView: true,
-  })
+  if (!cell)
+    return false
+
+  focusCellStart(cell)
+  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 
   return true
 }

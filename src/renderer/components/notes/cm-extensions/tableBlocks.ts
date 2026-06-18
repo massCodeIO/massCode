@@ -134,6 +134,29 @@ function placeCursorAfterTableRange(view: EditorView, range: TableRange) {
   view.focus()
 }
 
+function placeCursorBeforeTableRange(view: EditorView, range: TableRange) {
+  const { doc } = view.state
+  const startLine = doc.lineAt(range.from)
+  const prev = startLine.number > 1 ? doc.line(startLine.number - 1) : null
+
+  if (prev && prev.text.trim() === '') {
+    view.dispatch({
+      selection: { anchor: prev.from },
+      scrollIntoView: true,
+    })
+  }
+  else {
+    view.dispatch({
+      changes: { from: range.from, insert: '\n' },
+      selection: { anchor: range.from },
+      scrollIntoView: true,
+      userEvent: 'input',
+    })
+  }
+
+  view.focus()
+}
+
 function commitModel(view: EditorView, root: HTMLElement, model: TableModel) {
   const source = serializeTable(model)
   const pos = view.posAtDOM(root, 0)
@@ -166,13 +189,42 @@ function commitFromDom(view: EditorView, root: HTMLElement) {
 }
 
 function focusCellEnd(cell: HTMLElement) {
+  focusCellAt(cell, cell.textContent?.length ?? 0)
+}
+
+function focusCellAt(cell: HTMLElement, offset: number) {
   cell.focus()
   const range = document.createRange()
-  range.selectNodeContents(cell)
-  range.collapse(false)
+  const text = cell.firstChild
+
+  if (text?.nodeType === Node.TEXT_NODE) {
+    range.setStart(text, Math.min(offset, text.textContent?.length ?? 0))
+  }
+  else {
+    range.selectNodeContents(cell)
+    range.collapse(offset <= 0)
+  }
+
+  range.collapse(true)
   const selection = window.getSelection()
   selection?.removeAllRanges()
   selection?.addRange(range)
+}
+
+function getCellCaretOffset(cell: HTMLElement): number | null {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0 || !selection.isCollapsed)
+    return null
+
+  const range = selection.getRangeAt(0)
+  if (!cell.contains(range.startContainer))
+    return null
+
+  const before = range.cloneRange()
+  before.selectNodeContents(cell)
+  before.setEnd(range.startContainer, range.startOffset)
+
+  return before.toString().length
 }
 
 function getEditableCells(root: HTMLElement): HTMLElement[] {
@@ -181,6 +233,45 @@ function getEditableCells(root: HTMLElement): HTMLElement[] {
       'th[contenteditable], td[contenteditable]',
     ),
   )
+}
+
+function getCellPosition(
+  cell: HTMLElement,
+): { row: number, column: number } | null {
+  if (!(cell instanceof HTMLTableCellElement))
+    return null
+
+  const row = cell.parentElement
+  const section = row?.parentElement
+  if (!(row instanceof HTMLTableRowElement) || !section)
+    return null
+
+  const rowIndex = section.tagName === 'THEAD' ? 0 : row.sectionRowIndex + 1
+
+  return {
+    row: rowIndex,
+    column: cell.cellIndex,
+  }
+}
+
+function getLastTableRowIndex(root: HTMLElement): number {
+  const bodyRows = root.querySelectorAll('tbody tr').length
+  return Math.max(0, bodyRows)
+}
+
+function getTableCellAt(
+  root: HTMLElement,
+  row: number,
+  column: number,
+): HTMLElement | null {
+  if (row === 0)
+    return root.querySelectorAll<HTMLElement>('thead th').item(column) || null
+
+  const bodyRow = root
+    .querySelectorAll<HTMLTableRowElement>('tbody tr')
+    .item(row - 1)
+
+  return bodyRow?.cells.item(column) as HTMLElement | null
 }
 
 // После добавления столбца/строки DOM пересобирается из новой модели, поэтому
@@ -236,6 +327,9 @@ class TableWidget extends WidgetType {
   ) {
     const cell = event.currentTarget as HTMLElement
 
+    if (this.onCellArrowKeydown(event, view, root, cell))
+      return
+
     if (event.key === 'Enter' || event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -257,6 +351,80 @@ class TableWidget extends WidgetType {
         cell.blur()
       }
     }
+  }
+
+  private onCellArrowKeydown(
+    event: KeyboardEvent,
+    view: EditorView,
+    root: HTMLElement,
+    cell: HTMLElement,
+  ): boolean {
+    if (
+      event.key !== 'ArrowUp'
+      && event.key !== 'ArrowDown'
+      && event.key !== 'ArrowLeft'
+      && event.key !== 'ArrowRight'
+    ) {
+      return false
+    }
+
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return false
+
+    const position = getCellPosition(cell)
+    const offset = getCellCaretOffset(cell)
+    if (!position || offset === null)
+      return false
+
+    let target: HTMLElement | null = null
+    let targetOffset = offset
+
+    if (event.key === 'ArrowUp') {
+      if (position.row === 0) {
+        event.preventDefault()
+        event.stopPropagation()
+        commitFromDom(view, root)
+        this.placeCursorAdjacent(view, root, true)
+        return true
+      }
+
+      target = getTableCellAt(root, position.row - 1, position.column)
+    }
+    else if (event.key === 'ArrowDown') {
+      if (position.row >= getLastTableRowIndex(root)) {
+        event.preventDefault()
+        event.stopPropagation()
+        commitFromDom(view, root)
+        this.placeCursorAdjacent(view, root, false)
+        return true
+      }
+
+      target = getTableCellAt(root, position.row + 1, position.column)
+    }
+    else if (event.key === 'ArrowLeft') {
+      if (offset > 0)
+        return false
+
+      target = getTableCellAt(root, position.row, position.column - 1)
+      targetOffset = target?.textContent?.length ?? 0
+    }
+    else {
+      if (offset < (cell.textContent?.length ?? 0))
+        return false
+
+      target = getTableCellAt(root, position.row, position.column + 1)
+      targetOffset = 0
+    }
+
+    if (!target)
+      return false
+
+    event.preventDefault()
+    event.stopPropagation()
+    commitFromDom(view, root)
+    focusCellAt(target, targetOffset)
+
+    return true
   }
 
   // Только простой текст без переносов — иначе ячейка ломает markdown-таблицу.
@@ -372,24 +540,8 @@ class TableWidget extends WidgetType {
     if (!range)
       return
 
-    const { doc } = view.state
-
     if (before) {
-      const startLine = doc.lineAt(range.from)
-      const prev = startLine.number > 1 ? doc.line(startLine.number - 1) : null
-      if (prev && prev.text.trim() === '') {
-        view.dispatch({
-          selection: { anchor: prev.from },
-          scrollIntoView: true,
-        })
-      }
-      else {
-        view.dispatch({
-          changes: { from: range.from, insert: '\n' },
-          selection: { anchor: range.from },
-          scrollIntoView: true,
-        })
-      }
+      placeCursorBeforeTableRange(view, range)
     }
     else {
       placeCursorAfterTableRange(view, range)

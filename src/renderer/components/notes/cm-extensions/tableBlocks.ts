@@ -1,8 +1,15 @@
-import type { EditorState, Extension } from '@codemirror/state'
+import type { Extension } from '@codemirror/state'
 import type { TableModel } from './tableParser'
 import { i18n } from '@/electron'
 import { syntaxTree } from '@codemirror/language'
-import { Prec, RangeSetBuilder, StateField } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  Prec,
+  RangeSetBuilder,
+  StateField,
+  Transaction,
+} from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -894,6 +901,48 @@ function preventProtectedTableBoundaryDelete(view: EditorView): boolean {
   return isProtectedTableBoundaryDeletePosition(view.state)
 }
 
+function preserveTableBoundaryOnInput(transaction: Transaction) {
+  if (!transaction.docChanged || !transaction.isUserEvent('input.type'))
+    return transaction
+
+  let input: {
+    from: number
+    text: string
+  } | null = null
+
+  transaction.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+    if (input || fromA !== toA)
+      return
+
+    const text = inserted.toString()
+    if (!text || text.includes('\n'))
+      return
+
+    input = { from: fromA, text }
+  })
+
+  if (!input)
+    return transaction
+
+  const line = transaction.startState.doc.lineAt(input.from)
+  if (
+    input.from !== line.from
+    || !isProtectedTableBoundary(transaction.startState, line.number)
+  ) {
+    return transaction
+  }
+
+  return {
+    changes: {
+      from: line.from,
+      insert: `${input.text}\n`,
+    },
+    selection: EditorSelection.cursor(line.from + input.text.length),
+    scrollIntoView: transaction.scrollIntoView,
+    userEvent: transaction.annotation(Transaction.userEvent) ?? 'input.type',
+  }
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
@@ -961,6 +1010,7 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
 
   return [
     decorations,
+    EditorState.transactionFilter.of(preserveTableBoundaryOnInput),
     Prec.highest(
       keymap.of([
         {

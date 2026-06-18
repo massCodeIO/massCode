@@ -4,6 +4,7 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { GFM } from '@lezer/markdown'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  createTableBlocks,
   isProtectedTableBoundaryDeletePosition,
   isProtectedTableBoundaryLine,
 } from '../tableBlocks'
@@ -37,6 +38,23 @@ function createState(doc: string, lineNumber: number, column = 0) {
         codeLanguages: languages,
         extensions: GFM,
       }),
+    ],
+  })
+}
+
+function createEditableTableState(doc: string, lineNumber: number, column = 0) {
+  const baseState = createState(doc, lineNumber, column)
+
+  return EditorState.create({
+    doc,
+    selection: baseState.selection,
+    extensions: [
+      markdown({
+        base: markdownLanguage,
+        codeLanguages: languages,
+        extensions: GFM,
+      }),
+      createTableBlocks({ editable: true }),
     ],
   })
 }
@@ -75,5 +93,24 @@ describe('tableBlocks', () => {
 
     expect(isProtectedTableBoundaryLine(state)).toBe(false)
     expect(isProtectedTableBoundaryDeletePosition(state)).toBe(true)
+  })
+
+  it('keeps an empty boundary line when typing before a table', () => {
+    const doc = ['before', '', '| A | B |', '| --- | --- |', '| 1 | 2 |'].join(
+      '\n',
+    )
+    const state = createEditableTableState(doc, 2)
+
+    const next = state.update({
+      changes: { from: state.selection.main.head, insert: 'text' },
+      userEvent: 'input.type',
+    }).state
+
+    expect(next.doc.toString()).toBe(
+      ['before', 'text', '', '| A | B |', '| --- | --- |', '| 1 | 2 |'].join(
+        '\n',
+      ),
+    )
+    expect(next.selection.main.head).toBe('before\ntext'.length)
   })
 })

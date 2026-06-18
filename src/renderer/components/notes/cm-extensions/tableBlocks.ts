@@ -1,6 +1,5 @@
 import type { Extension } from '@codemirror/state'
 import type { TableModel } from './tableParser'
-import { i18n } from '@/electron'
 import { syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
@@ -1154,7 +1153,6 @@ class TableWidget extends WidgetType {
 
   private createGutter(
     orientation: 'column' | 'row',
-    label: string,
     onActivate: () => void,
   ): HTMLElement {
     const gutter = document.createElement('div')
@@ -1184,45 +1182,16 @@ class TableWidget extends WidgetType {
 
     gutter.append(createPlusIcon())
 
-    const tooltip = document.createElement('div')
-    tooltip.textContent = label
-    tooltip.style.position = 'absolute'
-    tooltip.style.padding = '4px 8px'
-    tooltip.style.background = 'var(--popover)'
-    tooltip.style.color = 'var(--popover-foreground)'
-    tooltip.style.border = '1px solid var(--border)'
-    tooltip.style.borderRadius = '6px'
-    tooltip.style.fontFamily = 'var(--font-sans)'
-    tooltip.style.fontSize = '12px'
-    tooltip.style.lineHeight = '1.2'
-    tooltip.style.whiteSpace = 'nowrap'
-    tooltip.style.pointerEvents = 'none'
-    tooltip.style.boxShadow = '0 2px 8px rgb(0 0 0 / 0.18)'
-    tooltip.style.zIndex = '20'
-    tooltip.style.opacity = '0'
-    tooltip.style.transition = 'opacity 0.12s ease'
-    tooltip.style.top = 'calc(100% + 6px)'
-    if (orientation === 'column') {
-      tooltip.style.right = '0'
-    }
-    else {
-      tooltip.style.left = '50%'
-      tooltip.style.transform = 'translateX(-50%)'
-    }
-    gutter.append(tooltip)
-
     gutter.addEventListener('mouseenter', () => {
       gutter.style.opacity = '1'
       gutter.style.background
         = 'color-mix(in oklch, var(--accent) 60%, transparent)'
       gutter.style.color = 'var(--foreground)'
-      tooltip.style.opacity = '1'
     })
     gutter.addEventListener('mouseleave', () => {
       gutter.style.opacity = '0'
       gutter.style.background = 'transparent'
       gutter.style.color = 'var(--muted-foreground)'
-      tooltip.style.opacity = '0'
     })
     gutter.addEventListener('mousedown', (event) => {
       // preventDefault сохраняет фокус в текущей ячейке — несохранённая правка
@@ -1302,13 +1271,8 @@ class TableWidget extends WidgetType {
 
       root.append(
         this.createRowDragHoverZone(),
-        this.createGutter(
-          'column',
-          i18n.t('notes.editor.table.addColumn'),
-          () => this.addColumn(view, root),
-        ),
-        this.createGutter('row', i18n.t('notes.editor.table.addRow'), () =>
-          this.addRow(view, root)),
+        this.createGutter('column', () => this.addColumn(view, root)),
+        this.createGutter('row', () => this.addRow(view, root)),
       )
     }
 

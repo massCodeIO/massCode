@@ -545,19 +545,6 @@ function getDropSlot(from: number, hovered: number): number | null {
   return hovered > from ? hovered + 1 : hovered
 }
 
-function getHandleIndexForSlot(
-  root: HTMLElement,
-  kind: TableDragKind,
-  slot: number,
-): number {
-  const count
-    = kind === 'column'
-      ? root.querySelectorAll('th').length
-      : root.querySelectorAll('tbody tr').length
-
-  return Math.max(0, Math.min(slot, count - 1))
-}
-
 function getMovedIndex(from: number, toSlot: number): number {
   return toSlot > from ? toSlot - 1 : toSlot
 }
@@ -596,7 +583,10 @@ function getRowHoverTarget(
     return null
 
   const tableRect = table.getBoundingClientRect()
-  if (clientX < tableRect.left - DRAG_HANDLE_SIZE || clientX > tableRect.left) {
+  if (
+    clientX < tableRect.left - DRAG_HANDLE_SIZE
+    || clientX > tableRect.left + GUTTER
+  ) {
     return null
   }
 
@@ -805,6 +795,10 @@ class TableWidget extends WidgetType {
     event.preventDefault()
     event.stopPropagation()
 
+    const handle = event.currentTarget
+    if (handle instanceof HTMLElement)
+      handle.style.cursor = 'grabbing'
+
     root.dataset.tableDragging = '1'
     let targetSlot: number | null = null
     markDragSelection(root, kind, from)
@@ -838,7 +832,7 @@ class TableWidget extends WidgetType {
 
       targetSlot = nextSlot
       markDropTarget(root, kind, targetSlot)
-      moveHandleTo(getHandleIndexForSlot(root, kind, targetSlot))
+      moveHandleTo(next)
     }
 
     const stop = () => {
@@ -882,10 +876,10 @@ class TableWidget extends WidgetType {
     handle.style.justifyContent = 'center'
     handle.style.width = kind === 'column' ? '60px' : `${DRAG_HANDLE_SIZE}px`
     handle.style.height = `${DRAG_HANDLE_SIZE}px`
-    handle.style.borderRadius = '5px'
+    handle.style.borderRadius = kind === 'column' ? '5px 5px 0 0' : '5px'
     handle.style.background = 'var(--primary)'
     handle.style.color = 'var(--primary-foreground)'
-    handle.style.cursor = kind === 'column' ? 'grab' : 'ns-resize'
+    handle.style.cursor = 'grab'
     handle.style.opacity = '0.96'
     handle.style.userSelect = 'none'
 
@@ -912,7 +906,7 @@ class TableWidget extends WidgetType {
       return
     }
 
-    handle.style.left = `${cellRect.left - rootRect.left - DRAG_HANDLE_SIZE - 2}px`
+    handle.style.left = `${cellRect.left - rootRect.left - DRAG_HANDLE_SIZE / 2}px`
     handle.style.top = `${cellRect.top - rootRect.top + cellRect.height / 2 - DRAG_HANDLE_SIZE / 2}px`
   }
 
@@ -1195,6 +1189,21 @@ class TableWidget extends WidgetType {
     return gutter
   }
 
+  private createRowDragHoverZone(): HTMLElement {
+    const zone = document.createElement('div')
+    zone.dataset.tableDragZone = 'row'
+    zone.style.position = 'absolute'
+    zone.style.left = `-${DRAG_HANDLE_SIZE}px`
+    zone.style.top = `${DRAG_HANDLE_SIZE}px`
+    zone.style.bottom = `${GUTTER + STRIP}px`
+    zone.style.width = `${DRAG_HANDLE_SIZE}px`
+    zone.style.pointerEvents = 'auto'
+    zone.style.background = 'transparent'
+    zone.style.zIndex = '1'
+
+    return zone
+  }
+
   toDOM(view: EditorView): HTMLElement {
     const root = document.createElement('div')
     root.dataset.tableWidget = '1'
@@ -1211,7 +1220,6 @@ class TableWidget extends WidgetType {
 
     if (this.interactive) {
       root.style.paddingTop = `${DRAG_HANDLE_SIZE}px`
-      root.style.paddingLeft = `${DRAG_HANDLE_SIZE + 4}px`
       root.style.paddingRight = `${GUTTER}px`
       root.style.paddingBottom = `${GUTTER + STRIP}px`
     }
@@ -1229,6 +1237,7 @@ class TableWidget extends WidgetType {
           target.closest('th, td')
           || target.closest('[data-table-gutter]')
           || target.closest('[data-table-drag-handle]')
+          || target.closest('[data-table-drag-zone]')
         ) {
           return
         }
@@ -1241,6 +1250,7 @@ class TableWidget extends WidgetType {
       this.attachDragHover(view, root)
 
       root.append(
+        this.createRowDragHoverZone(),
         this.createGutter(
           'column',
           i18n.t('notes.editor.table.addColumn'),

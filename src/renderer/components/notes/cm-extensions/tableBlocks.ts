@@ -1,4 +1,4 @@
-import type { EditorState } from '@codemirror/state'
+import type { EditorState, Extension } from '@codemirror/state'
 import type { TableModel } from './tableParser'
 import { i18n } from '@/electron'
 import { syntaxTree } from '@codemirror/language'
@@ -22,6 +22,11 @@ interface TableBlocksOptions {
   // правятся прямо в таблице, а боковые зоны позволяют добавлять столбцы/строки.
   // false (режим просмотра) — таблица отрисовывается как блок только для чтения.
   editable?: boolean
+}
+
+interface TableRange {
+  from: number
+  to: number
 }
 
 // Ширина зарезервированной зоны у правого/нижнего края, в которой при наведении
@@ -86,11 +91,8 @@ function clampTableEnd(state: EditorState, from: number, to: number): number {
   return end
 }
 
-function getTableRangeAt(
-  state: EditorState,
-  pos: number,
-): { from: number, to: number } | null {
-  let result: { from: number, to: number } | null = null
+function getTableRangeAt(state: EditorState, pos: number): TableRange | null {
+  let result: TableRange | null = null
 
   syntaxTree(state).iterate({
     enter(node) {
@@ -107,6 +109,29 @@ function getTableRangeAt(
   })
 
   return result
+}
+
+function placeCursorAfterTableRange(view: EditorView, range: TableRange) {
+  const { doc } = view.state
+  const endLine = doc.lineAt(range.to)
+  const next = endLine.number < doc.lines ? doc.line(endLine.number + 1) : null
+
+  if (next && next.text.trim() === '') {
+    view.dispatch({
+      selection: { anchor: next.from },
+      scrollIntoView: true,
+    })
+  }
+  else {
+    view.dispatch({
+      changes: { from: range.to, insert: '\n' },
+      selection: { anchor: range.to + 1 },
+      scrollIntoView: true,
+      userEvent: 'input',
+    })
+  }
+
+  view.focus()
 }
 
 function commitModel(view: EditorView, root: HTMLElement, model: TableModel) {
@@ -367,25 +392,8 @@ class TableWidget extends WidgetType {
       }
     }
     else {
-      const endLine = doc.lineAt(range.to)
-      const next
-        = endLine.number < doc.lines ? doc.line(endLine.number + 1) : null
-      if (next && next.text.trim() === '') {
-        view.dispatch({
-          selection: { anchor: next.from },
-          scrollIntoView: true,
-        })
-      }
-      else {
-        view.dispatch({
-          changes: { from: range.to, insert: '\n' },
-          selection: { anchor: range.to + 1 },
-          scrollIntoView: true,
-        })
-      }
+      placeCursorAfterTableRange(view, range)
     }
-
-    view.focus()
   }
 
   private createGutter(
@@ -588,6 +596,66 @@ class TableWidget extends WidgetType {
   }
 }
 
+function getNearestTableWidgetAbove(
+  view: EditorView,
+  clientY: number,
+): HTMLElement | null {
+  let result: HTMLElement | null = null
+  let resultBottom = -Infinity
+
+  for (const widget of Array.from(
+    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
+  )) {
+    const rect = widget.getBoundingClientRect()
+    if (clientY < rect.bottom || rect.bottom <= resultBottom)
+      continue
+
+    result = widget
+    resultBottom = rect.bottom
+  }
+
+  return result
+}
+
+function maybePlaceCursorAfterTableClick(
+  view: EditorView,
+  event: MouseEvent,
+): boolean {
+  if (event.button !== 0)
+    return false
+
+  const target = event.target
+  if (!(target instanceof HTMLElement))
+    return false
+  if (target.closest('[data-table-widget="1"]'))
+    return false
+
+  const widget = getNearestTableWidgetAbove(view, event.clientY)
+  if (!widget)
+    return false
+
+  const tablePos = view.posAtDOM(widget, 0)
+  const range = getTableRangeAt(view.state, tablePos)
+  if (!range)
+    return false
+
+  const clickPos
+    = view.posAtCoords({ x: event.clientX, y: event.clientY }, false)
+      ?? view.state.doc.length
+
+  if (clickPos < range.to)
+    return false
+
+  if (view.state.sliceDoc(range.to, clickPos).trim() !== '')
+    return false
+
+  event.preventDefault()
+  event.stopPropagation()
+  placeCursorAfterTableRange(view, range)
+
+  return true
+}
+
 function buildDecorations(
   state: EditorState,
   enabled: boolean,
@@ -629,10 +697,10 @@ function buildDecorations(
   return builder.finish()
 }
 
-export function createTableBlocks(options: TableBlocksOptions = {}) {
+export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
   const { enabled = true, editable = false } = options
 
-  return StateField.define<DecorationSet>({
+  const decorations = StateField.define<DecorationSet>({
     create(state) {
       return buildDecorations(state, enabled, editable)
     },
@@ -649,6 +717,18 @@ export function createTableBlocks(options: TableBlocksOptions = {}) {
     },
     provide: field => EditorView.decorations.from(field),
   })
+
+  if (!editable)
+    return decorations
+
+  return [
+    decorations,
+    EditorView.domEventHandlers({
+      mousedown(event, view) {
+        return maybePlaceCursorAfterTableClick(view, event)
+      },
+    }),
+  ]
 }
 
 export const tableBlocks = createTableBlocks()

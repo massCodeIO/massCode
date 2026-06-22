@@ -38,74 +38,74 @@
     "highlightGutter": "Surligner la gouttière",
     "matchBrackets": {
       "label": "Correspondance des parenthèses",
-      "description": "Matching bracket highlighting near the cursor."
+      "description": "Correspondance de la parenthèse correspondante près du curseur."
     },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "Virgule finale",
-        "description": "Trailing commas in multi-line structures when formatting.",
+        "description": "Les virgules de fin dans les structures sur plusieurs lignes lors de la mise en forme.",
         "none": "Aucune",
         "all": "Toutes",
         "es5": "ES5"
       },
       "semi": {
         "label": "Point-virgule",
-        "description": "Semicolons at the end of every statement."
+        "description": "Des points-virgules à la fin de chaque instruction."
       },
       "singleQuote": {
         "label": "Guillemet simple",
-        "description": "Single quotes instead of double quotes."
+        "description": "Des guillemets simples au lieu de guillemets doubles."
       }
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "Editeur de notes",
     "fontSize": {
-      "label": "Font Size",
-      "description": "Base font size in pixels for the notes editor."
+      "label": "Taille des polices",
+      "description": "Taille de police par défaut en pixels pour l'éditeur de notes."
     },
     "fontFamily": {
-      "label": "Text Font",
-      "description": "CSS font-family value. Use commas to specify fallbacks."
+      "label": "Police de texte",
+      "description": "Valeur de la propriété font-family en CSS. Utilisez des virgules pour indiquer les polices de secours."
     },
     "codeFontFamily": {
-      "label": "Monospace Font",
-      "description": "Font for inline code and fenced code blocks."
+      "label": "Police Monospace",
+      "description": "Police pour le code en ligne et les blocs de code encadrés."
     },
     "lineHeight": {
-      "label": "Line Height",
-      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
+      "label": "Hauteur de ligne",
+      "description": "Espace entre les lignes. Relax est plus facile à lire, compact contient plus de contenu.",
       "compact": "Compact (1.4)",
-      "default": "Default (1.54)",
-      "relaxed": "Relaxed (1.7)"
+      "default": "Défault (1.54)",
+      "relaxed": "Relax (1.7)"
     },
     "indentSize": {
-      "label": "Indent Size",
-      "description": "Number of spaces per indent level for lists and nested content."
+      "label": "Taille indentation",
+      "description": "Nombre d'espaces par niveau de retrait pour les listes et le contenu imbriqué."
     },
     "limitWidth": {
-      "label": "Limit Width",
-      "description": "Constrain content to a comfortable reading width (700px)."
+      "label": "Limite de largeur",
+      "description": "Limiter la largeur du contenu à une largeur de lecture confortable (700px)."
     },
     "lineNumbers": {
-      "label": "Line Numbers",
-      "description": "Show line numbers in the gutter. Only available in Raw mode."
+      "label": "Numéro de ligne",
+      "description": "Afficher les numéros de ligne dans la marge intérieure. Disponible uniquement en mode Raw."
     }
   },
   "appearance": {
     "label": "Apparence",
     "theme": {
       "label": "Thème",
-      "builtIn": "Built-in",
-      "custom": "Custom",
-      "themesDir": "Themes Directory",
-      "openDir": "Open Themes Directory",
-      "createTemplate": "Create Theme Template",
-      "dirDescription": "Place your JSON theme files in this folder.",
+      "builtIn": "Intégré",
+      "custom": "Personnalisé",
+      "themesDir": "Répertoire des thèmes",
+      "openDir": "Ouvrir le répertoire des thèmes",
+      "createTemplate": "Créer modèle de Thème",
+      "dirDescription": "Placez vos fichiers de thème JSON dans ce dossier.",
       "light": "Clair",
       "dark": "Sombre",
-      "system": "System"
+      "system": "Système"
     }
   },
   "language": {

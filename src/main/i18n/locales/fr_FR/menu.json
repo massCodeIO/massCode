@@ -7,7 +7,7 @@
     "quit": "Quitter massCode",
     "about": "À propos de massCode",
     "hide": "Masquer massCode",
-    "mathNotebook": "Math Notebook"
+    "mathNotebook": "Cahier de maths"
   },
   "help": {
     "label": "Aide",
@@ -30,24 +30,24 @@
     "twitter": "X",
     "devTools": "Basculer les outils de développement",
     "links": {
-      "snippets": "Collection de snippets"
+      "snippets": "Collection d'extraits"
     }
   },
   "view": {
     "label": "Affichage",
     "showSidebar": "Afficher/masquer la barre latérale",
     "sortBy": {
-      "label": "Trier les snippets par",
+      "label": "Trier les extraits par",
       "dateModified": "Date de modification",
       "dateCreated": "Date de création",
       "name": "Nom"
     },
     "compactMode": "Mode compact",
     "layout": {
-      "label": "Layout",
-      "allPanels": "All Panels",
-      "listEditor": "List + Editor",
-      "editorOnly": "Editor Only"
+      "label": "Mise en page",
+      "allPanels": "Tous les panneaux",
+      "listEditor": "liste + Editeur",
+      "editorOnly": "Editeur seulement"
     }
   },
   "edit": {
@@ -56,7 +56,7 @@
   },
   "editor": {
     "label": "Éditeur",
-    "copy": "Copier le snippet dans le presse-papiers",
+    "copy": "Copier les extraits dans le presse-papiers",
     "format": "Formater",
     "previewCode": "Aperçu du code",
     "previewScreenshot": "Aperçu de la capture d'écran",
@@ -65,9 +65,9 @@
     "fontSizeDecrease": "Diminuer la taille de la police",
     "fontSizeReset": "Réinitialiser la taille de la police",
     "mode": "Mode",
-    "modeRaw": "Raw",
-    "modeLivePreview": "Live Preview",
-    "modePreview": "Preview"
+    "modeRaw": "Brut",
+    "modeLivePreview": "Avant première en direct",
+    "modePreview": "Avant première"
   },
   "markdown": {
     "label": "Markdown",
@@ -85,11 +85,11 @@
     "label": "Outils de développement"
   },
   "window": {
-    "label": "Window",
-    "minimize": "Minimize"
+    "label": "Fenêtre",
+    "minimize": "Minimiser"
   },
   "file": {
-    "label": "File",
-    "new": "New"
+    "label": "Fichier",
+    "new": "Nouveau"
   }
 }

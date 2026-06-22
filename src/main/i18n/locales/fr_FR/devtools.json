@@ -87,10 +87,10 @@
       "label": "Convertisseur de casse",
       "description": "Transformer le texte en différentes casses",
       "caseType": {
-        "uppercase": "Uppercase",
-        "lowercase": "Lowercase",
+        "uppercase": "Majuscule",
+        "lowercase": "Minuscule",
         "camelcase": "Camelcase",
-        "capitalize": "Capitalize",
+        "capitalize": "Capitalisation",
         "constantcase": "Constantcase",
         "snakecase": "Snakecase",
         "kebabcase": "Kebabcase",
@@ -182,7 +182,7 @@
       "description": "Encoder ou décoder une URL",
       "modes": {
         "urlEncode": "URL Encode",
-        "urlDecode": "URL Decode"
+        "urlDecode": "URL Décode"
       }
     },
     "slugify": {

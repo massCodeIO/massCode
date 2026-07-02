@@ -74,6 +74,21 @@ export function parseDelimiters(source: string, columns: number): string[] {
   return Array.from({ length: columns }, () => '---')
 }
 
+export type TableColumnAlignment = 'left' | 'center' | 'right'
+
+export function delimiterAlignment(delimiter: string): TableColumnAlignment {
+  const trimmed = delimiter.trim()
+  const left = trimmed.startsWith(':')
+  const right = trimmed.endsWith(':')
+
+  if (left && right)
+    return 'center'
+  if (right)
+    return 'right'
+
+  return 'left'
+}
+
 export function escapeCell(value: string): string {
   return value
     .replace(/[\r\n]+/g, ' ')

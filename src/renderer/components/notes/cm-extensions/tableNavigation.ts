@@ -1,6 +1,7 @@
 import type { EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
+import { activateTableCell } from './tableBlocks'
 import { parseMarkdownTable } from './tableParser'
 
 export interface TableBlockRange {
@@ -95,27 +96,36 @@ function findTableNavigationTargetWithIndex(
   return null
 }
 
-function focusCellStart(cell: HTMLElement) {
-  cell.focus()
-  const range = document.createRange()
-  range.selectNodeContents(cell)
-  range.collapse(true)
-  const selection = window.getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
-
+// Ячейка входа: строка выбирается по направлению (заголовок при входе сверху,
+// последняя строка при входе снизу), колонка — по X-координате курсора.
 function getTableEntryCell(
   widget: HTMLElement,
   direction: 'up' | 'down',
+  x: number | null,
 ): HTMLElement | null {
-  if (direction === 'down')
-    return widget.querySelector('thead th:first-child')
+  const row
+    = direction === 'down'
+      ? widget.querySelector<HTMLTableRowElement>('thead tr')
+      : (widget.querySelector<HTMLTableRowElement>('tbody tr:last-child')
+        ?? widget.querySelector<HTMLTableRowElement>('thead tr'))
 
-  return (
-    widget.querySelector('tbody tr:last-child td:first-child')
-    ?? widget.querySelector('thead th:first-child')
-  )
+  if (!row)
+    return null
+
+  const cells = Array.from(row.querySelectorAll<HTMLElement>('th, td'))
+  const first = cells[0] ?? null
+  if (x === null || !first)
+    return first
+
+  for (const cell of cells) {
+    const rect = cell.getBoundingClientRect()
+    if (x >= rect.left && x <= rect.right)
+      return cell
+  }
+
+  return x < first.getBoundingClientRect().left
+    ? first
+    : (cells[cells.length - 1] ?? null)
 }
 
 function getTableWidgetAtPosition(
@@ -157,14 +167,20 @@ export function moveSelectionToAdjacentTableCell(
   if (!target)
     return false
 
+  const coords = view.coordsAtPos(head)
+  const x = coords?.left ?? null
+
   const widget = getTableWidgetAtPosition(view, target.pos, target.index)
-  const cell = widget ? getTableEntryCell(widget, direction) : null
+  const cell = widget ? getTableEntryCell(widget, direction, x) : null
 
   if (!cell)
     return false
 
-  focusCellStart(cell)
-  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  activateTableCell(
+    view,
+    cell,
+    x === null ? 'start' : { x, edge: direction === 'down' ? 'top' : 'bottom' },
+  )
 
   return true
 }

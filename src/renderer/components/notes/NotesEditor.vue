@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NotesEditorMode } from '@/composables/spaces/notes/useNotesApp'
-import type { EditorMenuCommand } from './NotesEditorContextMenu'
+import type { EditorMenuCommand } from './NotesEditorContextMenu.vue'
 import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
@@ -29,6 +29,7 @@ import {
   insertCallout,
   insertCodeBlock,
   insertHorizontalRule,
+  insertLink,
   insertTable,
   setBody,
   setHeading,
@@ -58,7 +59,11 @@ import { Highlight } from './cm-extensions/markdownHighlight'
 import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
-import { createTableBlocks } from './cm-extensions/tableBlocks'
+import {
+  createTableBlocks,
+  getActiveTableCellEditor,
+  requestTableCellFocus,
+} from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
 import { createNotesEditTheme } from './theme'
 
@@ -240,6 +245,7 @@ function createEditorState(doc: string): EditorState {
       createTableBlocks({
         enabled: true,
         editable,
+        isDark: isDark.value,
       }),
       createImageBlocks({
         enabled: true,
@@ -395,86 +401,55 @@ function onEditorContextMenu() {
   if (!view)
     return
 
-  menuHasSelection.value = !view.state.selection.main.empty
-  menuHeadingLevel.value = getHeadingLevel(view)
-}
+  // Правый клик в ячейке таблицы: меню работает с вложенным редактором.
+  const cellEditor = getActiveTableCellEditor()
+  const target = cellEditor ?? view
 
-function selectCellContents(cell: HTMLElement) {
-  cell.focus()
-  const range = document.createRange()
-  range.selectNodeContents(cell)
-  const selection = window.getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
-
-function findTableWidgetAtOrAfter(tableStart: number): HTMLElement | null {
-  if (!view)
-    return null
-
-  for (const widget of Array.from(
-    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
-  )) {
-    try {
-      if (view.posAtDOM(widget, 0) >= tableStart)
-        return widget
-    }
-    catch {
-      // Виджет мог быть пересоздан CodeMirror между кадрами.
-    }
-  }
-
-  return null
-}
-
-function focusInsertedTableCell(tableStart: number) {
-  const widget = findTableWidgetAtOrAfter(tableStart)
-  const cell = widget?.querySelector<HTMLElement>('thead th:first-child')
-  if (!cell)
-    return false
-
-  selectCellContents(cell)
-  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  return true
-}
-
-function scheduleInsertedTableFocus(tableStart: number) {
-  let attempts = 0
-
-  function focus() {
-    attempts += 1
-
-    if (focusInsertedTableCell(tableStart))
-      return
-
-    if (attempts < 4)
-      schedule()
-  }
-
-  function schedule() {
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(focus)
-      return
-    }
-
-    queueMicrotask(focus)
-  }
-
-  schedule()
+  menuHasSelection.value = !target.state.selection.main.empty
+  menuHeadingLevel.value = cellEditor ? 0 : getHeadingLevel(view)
 }
 
 function onContextMenuCloseAutoFocus(event: Event) {
-  if (pendingInsertedTableStart === null)
+  // Фокус должен вернуться во вложенный редактор ячейки (а не на контейнер):
+  // после команды он уже там, а при закрытии меню без команды возвращаем сами.
+  const cellEditor = getActiveTableCellEditor()
+  if (cellEditor) {
+    event.preventDefault()
+    cellEditor.focus()
+    return
+  }
+
+  if (pendingInsertedTableStart === null || !view)
     return
 
   event.preventDefault()
-  const tableStart = pendingInsertedTableStart
+  requestTableCellFocus(view, {
+    tableFrom: pendingInsertedTableStart,
+    selector: 'thead th:first-child',
+    mode: 'select',
+  })
   pendingInsertedTableStart = null
-  scheduleInsertedTableFocus(tableStart)
 }
 
 function onMenuCommand(command: EditorMenuCommand) {
   if (!view)
+    return
+
+  // Внутри ячейки таблицы inline-команды идут во вложенный редактор, а
+  // блочные (заголовки, списки, вставка) не имеют смысла — игнорируем.
+  const cellEditor = getActiveTableCellEditor()
+  const inlineTarget = cellEditor ?? view
+  const isInlineCommand = [
+    'bold',
+    'italic',
+    'strikethrough',
+    'highlight',
+    'code',
+    'link',
+    'clear-formatting',
+  ].includes(command)
+
+  if (cellEditor && !isInlineCommand)
     return
 
   if (command.startsWith('heading-')) {
@@ -484,22 +459,25 @@ function onMenuCommand(command: EditorMenuCommand) {
 
   switch (command) {
     case 'bold':
-      toggleBold(view)
+      toggleBold(inlineTarget)
       break
     case 'italic':
-      toggleItalic(view)
+      toggleItalic(inlineTarget)
       break
     case 'strikethrough':
-      toggleStrikethrough(view)
+      toggleStrikethrough(inlineTarget)
       break
     case 'highlight':
-      toggleHighlight(view)
+      toggleHighlight(inlineTarget)
       break
     case 'code':
-      toggleInlineCode(view)
+      toggleInlineCode(inlineTarget)
+      break
+    case 'link':
+      insertLink(inlineTarget)
       break
     case 'clear-formatting':
-      clearInlineFormatting(view)
+      clearInlineFormatting(inlineTarget)
       break
     case 'bullet-list':
       toggleBulletList(view)

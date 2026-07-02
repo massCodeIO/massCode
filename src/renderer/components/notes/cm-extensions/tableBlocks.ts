@@ -1,5 +1,6 @@
 import type { Extension } from '@codemirror/state'
 import type { TableModel } from './tableParser'
+import { redo, undo } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
@@ -17,6 +18,13 @@ import {
   WidgetType,
 } from '@codemirror/view'
 import {
+  type CellSelectionTarget,
+  createTableCellEditor,
+} from './tableCellEditor'
+import { renderCellMarkdown } from './tableCellMarkdown'
+import {
+  delimiterAlignment,
+  escapeCell,
   moveTableColumn,
   moveTableRow,
   parseDelimiters,
@@ -31,6 +39,8 @@ interface TableBlocksOptions {
   // правятся прямо в таблице, а боковые зоны позволяют добавлять столбцы/строки.
   // false (режим просмотра) — таблица отрисовывается как блок только для чтения.
   editable?: boolean
+  // Тема подсветки кода для вложенных редакторов ячеек.
+  isDark?: boolean
 }
 
 interface TableRange {
@@ -53,20 +63,51 @@ const TABLE_CELL_MIN_WIDTH = 64
 
 type TableDragKind = 'column' | 'row'
 
+// Активный вложенный редактор ячейки. Он всегда один на всё приложение
+// (фокус один), поэтому храним единственную запись, а не карту по виджетам.
+// Привязка к DOM, а не к инстансу TableWidget: инстансы пересоздаются при
+// каждом коммите, а DOM переживает их.
+interface ActiveCellEditor {
+  view: EditorView
+  root: HTMLElement
+  cell: HTMLTableCellElement
+  editor: EditorView
+}
+
+let activeCell: ActiveCellEditor | null = null
+
+// Редактор активной ячейки — для маршрутизации команд контекстного меню.
+export function getActiveTableCellEditor(): EditorView | null {
+  return activeCell?.editor ?? null
+}
+
+function getActiveCellFor(root: HTMLElement): ActiveCellEditor | null {
+  return activeCell?.root === root ? activeCell : null
+}
+
+// Сырой markdown ячейки: активная ячейка — из её редактора, остальные — из
+// dataset.raw (в DOM у них отрисованный текст со скрытыми маркерами).
 function getCellText(cell: Element): string {
-  const clone = cell.cloneNode(true) as Element
-  clone
-    .querySelectorAll('[data-table-drag-handle]')
-    .forEach(node => node.remove())
-  return clone.textContent ?? ''
+  if (activeCell?.cell === cell)
+    return activeCell.editor.state.doc.toString()
+
+  const element = cell as HTMLElement
+  return element.dataset?.raw ?? element.textContent ?? ''
+}
+
+// Отрисовывает ячейку из сырого markdown (спокойное состояние).
+function renderCell(cell: HTMLTableCellElement, raw: string) {
+  cell.replaceChildren(renderCellMarkdown(raw))
+
+  // Пустой ячейке нужен строчный бокс, иначе строка схлопнется по высоте.
+  if (raw.trim() === '')
+    cell.append(document.createElement('br'))
+
+  cell.dataset.raw = raw
 }
 
 function setCellText(cell: HTMLTableCellElement, text: string) {
-  const handles = Array.from(
-    cell.querySelectorAll<HTMLElement>('[data-table-drag-handle]'),
-  )
-  cell.textContent = text
-  cell.append(...handles)
+  renderCell(cell, text)
 }
 
 function readDelimiters(root: HTMLElement, columns: number): string[] {
@@ -187,91 +228,322 @@ function placeCursorBeforeTableRange(view: EditorView, range: TableRange) {
   view.focus()
 }
 
-function commitModel(view: EditorView, root: HTMLElement, model: TableModel) {
+// Коммит уже идёт: dispatch внутри dispatch запрещён, а попутные события
+// (например, blur при переносе фокуса) не должны запускать вложенный коммит.
+let committing = false
+
+// Записывает модель таблицы в документ минимальным diff'ом (общие префикс и
+// суффикс не трогаются): так история CodeMirror склеивает посимвольный набор
+// в обычные undo-шаги, как при печати в тексте. Возвращает диапазон таблицы
+// после записи или null, если таблицу не удалось найти.
+function commitModel(
+  view: EditorView,
+  root: HTMLElement,
+  model: TableModel,
+  userEvent = 'input',
+): TableRange | null {
   const source = serializeTable(model)
-  const pos = view.posAtDOM(root, 0)
+  let pos: number
+  try {
+    pos = view.posAtDOM(root, 0)
+  }
+  catch {
+    // Виджет мог быть отсоединён от документа между событием и коммитом.
+    return null
+  }
+
   const range = getTableRangeAt(view.state, pos)
   if (!range)
-    return
+    return null
 
-  if (view.state.sliceDoc(range.from, range.to) === source)
-    return
+  const current = view.state.sliceDoc(range.from, range.to)
+  if (current === source)
+    return range
 
-  view.dispatch({
-    changes: { from: range.from, to: range.to, insert: source },
-    userEvent: 'input',
-  })
+  let start = 0
+  while (
+    start < current.length
+    && start < source.length
+    && current[start] === source[start]
+  ) {
+    start += 1
+  }
+
+  let currentEnd = current.length
+  let sourceEnd = source.length
+  while (
+    currentEnd > start
+    && sourceEnd > start
+    && current[currentEnd - 1] === source[sourceEnd - 1]
+  ) {
+    currentEnd -= 1
+    sourceEnd -= 1
+  }
+
+  committing = true
+  try {
+    view.dispatch({
+      changes: {
+        from: range.from + start,
+        to: range.from + currentEnd,
+        insert: source.slice(start, sourceEnd),
+      },
+      userEvent,
+    })
+  }
+  finally {
+    committing = false
+  }
+
+  return { from: range.from, to: range.from + source.length }
 }
 
-// updateDOM выполняется внутри цикла обновления CM. Структурная пересборка
-// таблицы удаляет сфокусированную ячейку → синхронный blur → commit → dispatch
-// во время обновления (запрещено). Флаг гасит такой commit: модель в этот
-// момент и так авторитетна, ячейку обратно записывать не нужно.
-let reconciling = false
-
-function commitFromDom(view: EditorView, root: HTMLElement) {
-  if (reconciling)
+function commitFromDom(
+  view: EditorView,
+  root: HTMLElement,
+  userEvent?: string,
+) {
+  if (committing)
     return
 
   const model = readDomModel(root)
   if (model)
-    commitModel(view, root, model)
+    commitModel(view, root, model, userEvent)
 }
 
-function focusCellEnd(cell: HTMLElement) {
-  focusCellAt(cell, cell.textContent?.length ?? 0)
+// ---- Вложенный редактор активной ячейки ------------------------------------
+
+function resolveCellSelection(
+  editor: EditorView,
+  target: CellSelectionTarget,
+): EditorSelection {
+  const length = editor.state.doc.length
+
+  if (target === 'start')
+    return EditorSelection.single(0)
+  if (target === 'end')
+    return EditorSelection.single(length)
+  if (target === 'all')
+    return EditorSelection.single(0, length)
+  if ('offset' in target)
+    return EditorSelection.single(Math.min(target.offset, length))
+
+  // Неточный режим posAtCoords: всегда возвращает ближайшую позицию, даже
+  // если геометрия ещё не измерена после монтирования.
+  if ('coords' in target)
+    return EditorSelection.single(editor.posAtCoords(target.coords, false))
+
+  const rect = editor.contentDOM.getBoundingClientRect()
+  const y = target.edge === 'top' ? rect.top + 1 : rect.bottom - 1
+  return EditorSelection.single(editor.posAtCoords({ x: target.x, y }, false))
 }
 
-function focusCellAt(cell: HTMLElement, offset: number) {
-  cell.focus()
-  const range = document.createRange()
-  const text = cell.firstChild
+// Демонтирует активный редактор и возвращает ячейке отрисованный вид.
+function deactivateCellEditor(view: EditorView, root: HTMLElement) {
+  const active = getActiveCellFor(root)
+  if (!active)
+    return
 
-  if (text?.nodeType === Node.TEXT_NODE) {
-    range.setStart(text, Math.min(offset, text.textContent?.length ?? 0))
+  const text = active.editor.state.doc.toString()
+  activeCell = null
+  active.editor.destroy()
+  renderCell(active.cell, text)
+  // Текст уже закоммичен по onChange; это страховка от пропущенных событий.
+  commitFromDom(view, root)
+}
+
+// Демонтирует редактор без коммита и рендера — для случаев, когда DOM ячейки
+// сейчас будет уничтожен (структурная пересборка, destroy виджета).
+function disposeCellEditor(root: HTMLElement) {
+  const active = getActiveCellFor(root)
+  if (!active)
+    return
+
+  activeCell = null
+  active.editor.destroy()
+}
+
+function activateCellEditor(
+  view: EditorView,
+  root: HTMLElement,
+  cell: HTMLTableCellElement,
+  target: CellSelectionTarget,
+) {
+  if (activeCell?.cell === cell) {
+    activeCell.editor.focus()
+    activeCell.editor.dispatch({
+      selection: resolveCellSelection(activeCell.editor, target),
+    })
+    return
   }
-  else {
-    range.selectNodeContents(cell)
-    range.collapse(offset <= 0)
+
+  if (activeCell)
+    deactivateCellEditor(activeCell.view, activeCell.root)
+
+  const text = cell.dataset.raw ?? ''
+  cell.replaceChildren()
+
+  const editor = createTableCellEditor({
+    parent: cell,
+    text,
+    isDark: root.dataset.dark === '1',
+    callbacks: createCellEditorCallbacks(view, root, cell),
+  })
+
+  activeCell = { view, root, cell, editor }
+  editor.focus()
+  editor.dispatch({ selection: resolveCellSelection(editor, target) })
+  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  watchCellEditorBlur(view, root, cell, editor)
+}
+
+// Активирует редактирование ячейки извне виджета (навигация стрелками из
+// текста, фокус после вставки таблицы).
+export function activateTableCell(
+  view: EditorView,
+  cell: HTMLElement,
+  select: CellSelectionTarget = 'start',
+) {
+  const root = cell.closest<HTMLElement>('[data-table-widget="1"]')
+  if (!root || root.dataset.editable !== '1')
+    return
+
+  activateCellEditor(view, root, cell as HTMLTableCellElement, select)
+}
+
+// Демонтирует редактор, когда фокус ушёл наружу. Уход в контекстное меню —
+// не повод: команды меню должны примениться к активной ячейке.
+function watchCellEditorBlur(
+  view: EditorView,
+  root: HTMLElement,
+  cell: HTMLTableCellElement,
+  editor: EditorView,
+) {
+  editor.contentDOM.addEventListener('blur', () => {
+    queueMicrotask(() => {
+      if (activeCell?.editor !== editor || editor.hasFocus)
+        return
+
+      const focused = document.activeElement
+      if (
+        focused instanceof HTMLElement
+        && (cell.contains(focused) || focused.closest('[role="menu"]'))
+      ) {
+        return
+      }
+
+      deactivateCellEditor(view, root)
+    })
+  })
+}
+
+function getNavigableCells(root: HTMLElement): HTMLTableCellElement[] {
+  return Array.from(root.querySelectorAll<HTMLTableCellElement>('th, td'))
+}
+
+function navigateFromCell(
+  view: EditorView,
+  root: HTMLElement,
+  cell: HTMLTableCellElement,
+  direction: 'up' | 'down' | 'prev' | 'next',
+  select: CellSelectionTarget,
+  options: { createRow?: boolean } = {},
+) {
+  if (direction === 'prev' || direction === 'next') {
+    const cells = getNavigableCells(root)
+    const index = cells.indexOf(cell)
+    const target = cells[index + (direction === 'next' ? 1 : -1)]
+
+    if (target) {
+      activateCellEditor(view, root, target, select)
+    }
+    else if (direction === 'next' && options.createRow) {
+      addRow(view, root, 0)
+    }
+    else {
+      // За крайней ячейкой — выход из таблицы в соответствующую сторону.
+      deactivateCellEditor(view, root)
+      placeCursorAdjacent(view, root, direction === 'prev')
+    }
+
+    return
   }
 
-  range.collapse(true)
-  const selection = window.getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
+  const position = getCellPosition(cell)
+  if (!position)
+    return
 
-function selectCellContents(cell: HTMLElement) {
-  cell.focus()
-  const range = document.createRange()
-  range.selectNodeContents(cell)
-  const selection = window.getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
+  if (direction === 'up' && position.row === 0) {
+    deactivateCellEditor(view, root)
+    placeCursorAdjacent(view, root, true)
+    return
+  }
 
-function getCellCaretOffset(cell: HTMLElement): number | null {
-  const selection = window.getSelection()
-  if (!selection || selection.rangeCount === 0 || !selection.isCollapsed)
-    return null
+  if (direction === 'down' && position.row >= getLastTableRowIndex(root)) {
+    deactivateCellEditor(view, root)
+    placeCursorAdjacent(view, root, false)
+    return
+  }
 
-  const range = selection.getRangeAt(0)
-  if (!cell.contains(range.startContainer))
-    return null
-
-  const before = range.cloneRange()
-  before.selectNodeContents(cell)
-  before.setEnd(range.startContainer, range.startOffset)
-
-  return before.toString().length
-}
-
-function getEditableCells(root: HTMLElement): HTMLElement[] {
-  return Array.from(
-    root.querySelectorAll<HTMLElement>(
-      'th[contenteditable], td[contenteditable]',
-    ),
+  const target = getTableCellAt(
+    root,
+    position.row + (direction === 'down' ? 1 : -1),
+    position.column,
   )
+
+  if (target)
+    activateCellEditor(view, root, target as HTMLTableCellElement, select)
+}
+
+function createCellEditorCallbacks(
+  view: EditorView,
+  root: HTMLElement,
+  cell: HTMLTableCellElement,
+) {
+  // Навигация и undo выполняются в микрозадаче: они могут уничтожить сам
+  // вложенный редактор (демонтаж, структурная пересборка), а делать это
+  // синхронно изнутри его же обработчика клавиш небезопасно.
+  const defer = (action: () => void) => queueMicrotask(action)
+
+  return {
+    onChange: (text: string) => {
+      cell.dataset.raw = text
+      commitFromDom(view, root, 'input.type')
+    },
+    onNavigate: (
+      direction: 'up' | 'down' | 'prev' | 'next',
+      select: CellSelectionTarget,
+      options?: { createRow?: boolean },
+    ) => {
+      defer(() =>
+        navigateFromCell(view, root, cell, direction, select, options),
+      )
+    },
+    // Enter — к ячейке той же колонки строкой ниже; на последней строке
+    // добавляет новую (как в Obsidian).
+    onEnter: () => {
+      defer(() => {
+        const position = getCellPosition(cell)
+        if (!position)
+          return
+
+        if (position.row >= getLastTableRowIndex(root)) {
+          addRow(view, root, position.column)
+          return
+        }
+
+        navigateFromCell(view, root, cell, 'down', 'end')
+      })
+    },
+    onEscape: () => {
+      defer(() => {
+        deactivateCellEditor(view, root)
+        placeCursorAdjacent(view, root, false)
+      })
+    },
+    onUndo: () => defer(() => undo(view)),
+    onRedo: () => defer(() => redo(view)),
+  }
 }
 
 function getCellPosition(
@@ -313,26 +585,94 @@ function getTableCellAt(
   return bodyRow?.cells.item(column) as HTMLElement | null
 }
 
-// После добавления столбца/строки DOM пересобирается из новой модели, поэтому
-// фокус в нужную ячейку ставим в микрозадаче — уже по обновлённому DOM.
-function focusAfterStructureChange(
-  root: HTMLElement,
-  selector: string,
-  mode: 'end' | 'select' = 'end',
-) {
-  queueMicrotask(() => {
-    const cell = root.querySelector<HTMLElement>(selector)
-    if (!cell)
-      return
-
-    if (mode === 'select') {
-      selectCellContents(cell)
-      return
-    }
-
-    focusCellEnd(cell)
-  })
+interface TableCellFocusRequest {
+  view: EditorView
+  tableFrom: number
+  selector: string
+  mode: 'end' | 'select'
+  // Сколько обновлений редактора ждём появления виджета, прежде чем сдаться.
+  attempts: number
 }
+
+let pendingCellFocus: TableCellFocusRequest | null = null
+
+function findTableWidgetAtOrAfter(
+  view: EditorView,
+  tableFrom: number,
+): HTMLElement | null {
+  for (const widget of Array.from(
+    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
+  )) {
+    try {
+      if (view.posAtDOM(widget, 0) >= tableFrom)
+        return widget
+    }
+    catch {
+      // Виджет мог быть пересоздан между обновлениями.
+    }
+  }
+
+  return null
+}
+
+function fulfillCellFocus(request: TableCellFocusRequest): boolean {
+  const widget = findTableWidgetAtOrAfter(request.view, request.tableFrom)
+  const cell = widget?.querySelector<HTMLElement>(request.selector)
+  if (!cell)
+    return false
+
+  // Активация — вне цикла обновления CodeMirror.
+  queueMicrotask(() => {
+    if (!cell.isConnected)
+      return
+
+    activateTableCell(
+      request.view,
+      cell,
+      request.mode === 'select' ? 'all' : 'end',
+    )
+  })
+
+  return true
+}
+
+// Просит сфокусировать ячейку таблицы, начинающейся в tableFrom, как только
+// её виджет появится в DOM. Сразу после dispatch виджета может ещё не быть:
+// декорации строятся по дереву разбора, а оно достраивается асинхронно —
+// в этом случае запрос дожидается ближайшего обновления с готовым виджетом.
+export function requestTableCellFocus(
+  view: EditorView,
+  target: { tableFrom: number, selector: string, mode?: 'end' | 'select' },
+) {
+  const request: TableCellFocusRequest = {
+    view,
+    tableFrom: target.tableFrom,
+    selector: target.selector,
+    mode: target.mode ?? 'end',
+    attempts: 10,
+  }
+
+  pendingCellFocus = fulfillCellFocus(request) ? null : request
+}
+
+const cellFocusListener = EditorView.updateListener.of((update) => {
+  // Основной редактор получил фокус — вложенный редактор ячейки демонтируем.
+  if (
+    update.focusChanged
+    && update.view.hasFocus
+    && activeCell?.view === update.view
+  ) {
+    deactivateCellEditor(activeCell.view, activeCell.root)
+  }
+
+  const request = pendingCellFocus
+  if (!request || request.view !== update.view)
+    return
+
+  request.attempts -= 1
+  if (fulfillCellFocus(request) || request.attempts <= 0)
+    pendingCellFocus = null
+})
 
 function createPlusIcon(): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -546,6 +886,110 @@ function getBodyRowIndexAt(root: HTMLElement, clientY: number): number | null {
   return null
 }
 
+// ---- Структурные операции над таблицей -------------------------------------
+
+function placeCursorAdjacent(
+  view: EditorView,
+  root: HTMLElement,
+  before: boolean,
+) {
+  let pos: number
+  try {
+    pos = view.posAtDOM(root, 0)
+  }
+  catch {
+    return
+  }
+
+  const range = getTableRangeAt(view.state, pos)
+  if (!range)
+    return
+
+  if (before) {
+    placeCursorBeforeTableRange(view, range)
+  }
+  else {
+    placeCursorAfterTableRange(view, range)
+  }
+}
+
+function addColumn(view: EditorView, root: HTMLElement) {
+  const model = readDomModel(root)
+  if (!model)
+    return
+
+  model.header.push('')
+  model.delimiters.push('---')
+  for (const row of model.rows) row.push('')
+
+  const range = commitModel(view, root, model)
+  if (range) {
+    requestTableCellFocus(view, {
+      tableFrom: range.from,
+      selector: 'thead th:last-child',
+    })
+  }
+}
+
+function addRow(view: EditorView, root: HTMLElement, focusColumn = 0) {
+  const model = readDomModel(root)
+  if (!model)
+    return
+
+  model.rows.push(Array.from({ length: model.header.length }, () => ''))
+  const column = Math.min(focusColumn, model.header.length - 1)
+
+  const range = commitModel(view, root, model)
+  if (range) {
+    requestTableCellFocus(view, {
+      tableFrom: range.from,
+      selector: `tbody tr:last-child td:nth-child(${column + 1})`,
+    })
+  }
+}
+
+function moveColumn(
+  view: EditorView,
+  root: HTMLElement,
+  from: number,
+  to: number,
+) {
+  const model = readDomModel(root)
+  if (!model)
+    return
+
+  deactivateCellEditor(view, root)
+
+  const range = commitModel(view, root, moveTableColumn(model, from, to))
+  if (range) {
+    requestTableCellFocus(view, {
+      tableFrom: range.from,
+      selector: `thead th:nth-child(${getMovedIndex(from, to) + 1})`,
+    })
+  }
+}
+
+function moveRow(
+  view: EditorView,
+  root: HTMLElement,
+  from: number,
+  to: number,
+) {
+  const model = readDomModel(root)
+  if (!model)
+    return
+
+  deactivateCellEditor(view, root)
+
+  const range = commitModel(view, root, moveTableRow(model, from, to))
+  if (range) {
+    requestTableCellFocus(view, {
+      tableFrom: range.from,
+      selector: `tbody tr:nth-child(${getMovedIndex(from, to) + 1}) td:first-child`,
+    })
+  }
+}
+
 function getDropSlot(from: number, hovered: number): number | null {
   if (hovered === from)
     return null
@@ -627,16 +1071,18 @@ function getRowHoverTarget(
   return null
 }
 
-// Блочный виджет, заменяющий исходный markdown таблицы её отрисовкой. В
-// редактируемом режиме ячейки — contenteditable, а правки коммитятся в документ
-// по blur/Enter/Tab (а не на каждое нажатие), чтобы CodeMirror не перетягивал
-// каретку из ячейки при пересборке декораций.
+// Блочный виджет, заменяющий исходный markdown таблицы её отрисовкой. Ячейки
+// отрисовываются статично (inline markdown со скрытыми маркерами); при входе в
+// ячейку в неё монтируется вложенный мини-CodeMirror (см. tableCellEditor), а
+// каждая его правка сразу коммитится в документ. reconcile обновляет DOM
+// точечно, не пересоздавая таблицу под активным редактором.
 class TableWidget extends WidgetType {
   constructor(
     readonly model: TableModel,
     readonly source: string,
     // Имя `editable` занято геттером WidgetType, поэтому `interactive`.
     readonly interactive: boolean,
+    readonly dark: boolean,
   ) {
     super()
   }
@@ -644,171 +1090,6 @@ class TableWidget extends WidgetType {
   eq(other: TableWidget): boolean {
     return (
       this.source === other.source && this.interactive === other.interactive
-    )
-  }
-
-  // Перехватываем, чтобы клавиши не уходили в keymap редактора (отступ по Tab,
-  // перенос строки по Enter и т.п.).
-  private onCellKeydown(
-    event: KeyboardEvent,
-    view: EditorView,
-    root: HTMLElement,
-  ) {
-    const cell = event.currentTarget as HTMLElement
-
-    if (this.onCellArrowKeydown(event, view, root, cell))
-      return
-
-    if (event.key === 'Enter' || event.key === 'Escape') {
-      event.preventDefault()
-      event.stopPropagation()
-      cell.blur()
-      return
-    }
-
-    if (event.key === 'Tab') {
-      event.preventDefault()
-      event.stopPropagation()
-      const cells = getEditableCells(root)
-      const index = cells.indexOf(cell)
-      const next = cells[index + (event.shiftKey ? -1 : 1)]
-      if (next) {
-        commitFromDom(view, root)
-        selectCellContents(next)
-      }
-      else if (!event.shiftKey) {
-        this.addRow(view, root, 'select')
-      }
-      else {
-        commitFromDom(view, root)
-        this.placeCursorAdjacent(view, root, true)
-      }
-    }
-  }
-
-  private onCellArrowKeydown(
-    event: KeyboardEvent,
-    view: EditorView,
-    root: HTMLElement,
-    cell: HTMLElement,
-  ): boolean {
-    if (
-      event.key !== 'ArrowUp'
-      && event.key !== 'ArrowDown'
-      && event.key !== 'ArrowLeft'
-      && event.key !== 'ArrowRight'
-    ) {
-      return false
-    }
-
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
-      return false
-
-    const position = getCellPosition(cell)
-    const offset = getCellCaretOffset(cell)
-    if (!position || offset === null)
-      return false
-
-    let target: HTMLElement | null = null
-    let targetOffset = offset
-
-    if (event.key === 'ArrowUp') {
-      if (position.row === 0) {
-        event.preventDefault()
-        event.stopPropagation()
-        commitFromDom(view, root)
-        this.placeCursorAdjacent(view, root, true)
-        return true
-      }
-
-      target = getTableCellAt(root, position.row - 1, position.column)
-    }
-    else if (event.key === 'ArrowDown') {
-      if (position.row >= getLastTableRowIndex(root)) {
-        event.preventDefault()
-        event.stopPropagation()
-        commitFromDom(view, root)
-        this.placeCursorAdjacent(view, root, false)
-        return true
-      }
-
-      target = getTableCellAt(root, position.row + 1, position.column)
-    }
-    else if (event.key === 'ArrowLeft') {
-      if (offset > 0)
-        return false
-
-      target = getTableCellAt(root, position.row, position.column - 1)
-      targetOffset = target?.textContent?.length ?? 0
-    }
-    else {
-      if (offset < (cell.textContent?.length ?? 0))
-        return false
-
-      target = getTableCellAt(root, position.row, position.column + 1)
-      targetOffset = 0
-    }
-
-    if (!target)
-      return false
-
-    event.preventDefault()
-    event.stopPropagation()
-    commitFromDom(view, root)
-    focusCellAt(target, targetOffset)
-
-    return true
-  }
-
-  // Только простой текст без переносов — иначе ячейка ломает markdown-таблицу.
-  private onCellPaste(event: ClipboardEvent) {
-    event.preventDefault()
-    const text = (event.clipboardData?.getData('text/plain') ?? '').replace(
-      /[\r\n]+/g,
-      ' ',
-    )
-    document.execCommand('insertText', false, text)
-  }
-
-  private moveColumn(
-    view: EditorView,
-    root: HTMLElement,
-    from: number,
-    to: number,
-  ) {
-    const model = readDomModel(root)
-    if (!model)
-      return
-
-    const active = document.activeElement
-    if (active instanceof HTMLElement && root.contains(active))
-      active.blur()
-
-    commitModel(view, root, moveTableColumn(model, from, to))
-    focusAfterStructureChange(
-      root,
-      `thead th:nth-child(${getMovedIndex(from, to) + 1})`,
-    )
-  }
-
-  private moveRow(
-    view: EditorView,
-    root: HTMLElement,
-    from: number,
-    to: number,
-  ) {
-    const model = readDomModel(root)
-    if (!model)
-      return
-
-    const active = document.activeElement
-    if (active instanceof HTMLElement && root.contains(active))
-      active.blur()
-
-    commitModel(view, root, moveTableRow(model, from, to))
-    focusAfterStructureChange(
-      root,
-      `tbody tr:nth-child(${getMovedIndex(from, to) + 1}) td:first-child`,
     )
   }
 
@@ -870,10 +1151,10 @@ class TableWidget extends WidgetType {
         return
 
       if (kind === 'column') {
-        this.moveColumn(view, root, from, targetSlot)
+        moveColumn(view, root, from, targetSlot)
       }
       else {
-        this.moveRow(view, root, from, targetSlot)
+        moveRow(view, root, from, targetSlot)
       }
     }
 
@@ -1055,14 +1336,15 @@ class TableWidget extends WidgetType {
   private createCell(
     tag: 'th' | 'td',
     text: string,
-    view: EditorView,
-    root: HTMLElement,
+    column: number,
   ): HTMLTableCellElement {
     const cell = document.createElement(tag)
-    cell.textContent = unescapeCell(text)
+    renderCell(cell, unescapeCell(text))
     cell.style.position = 'relative'
     cell.style.minWidth = `${TABLE_CELL_MIN_WIDTH}px`
-    cell.style.textAlign = 'left'
+    cell.style.textAlign = delimiterAlignment(
+      this.model.delimiters[column] ?? '---',
+    )
     cell.style.color = 'var(--foreground)'
     cell.style.padding = tag === 'th' ? '8px 10px' : '7px 10px'
     cell.style.borderBottom = '1px solid var(--border)'
@@ -1073,31 +1355,22 @@ class TableWidget extends WidgetType {
         = 'color-mix(in oklch, var(--muted) 72%, var(--background))'
     }
 
-    if (this.interactive) {
-      cell.contentEditable = 'true'
-      cell.spellcheck = false
-      cell.style.outline = 'none'
-      cell.addEventListener('keydown', e =>
-        this.onCellKeydown(e, view, root))
-      cell.addEventListener('paste', e => this.onCellPaste(e))
-      cell.addEventListener('blur', () => commitFromDom(view, root))
-    }
+    if (this.interactive)
+      cell.style.cursor = 'text'
 
     return cell
   }
 
-  private buildTable(view: EditorView, root: HTMLElement): HTMLTableElement {
+  private buildTable(): HTMLTableElement {
     const table = document.createElement('table')
     table.style.width = 'max-content'
     table.style.minWidth = 'max-content'
     table.style.borderCollapse = 'collapse'
-    table.style.fontFamily = 'var(--font-sans)'
-    table.style.fontSize = '0.98em'
 
     const thead = document.createElement('thead')
     const headerRow = document.createElement('tr')
-    for (const text of this.model.header)
-      headerRow.append(this.createCell('th', text, view, root))
+    for (const [column, text] of this.model.header.entries())
+      headerRow.append(this.createCell('th', text, column))
 
     thead.append(headerRow)
     table.append(thead)
@@ -1105,8 +1378,8 @@ class TableWidget extends WidgetType {
     const tbody = document.createElement('tbody')
     for (const row of this.model.rows) {
       const tr = document.createElement('tr')
-      for (const text of row)
-        tr.append(this.createCell('td', text, view, root))
+      for (const [column, text] of row.entries())
+        tr.append(this.createCell('td', text, column))
 
       tbody.append(tr)
     }
@@ -1119,59 +1392,6 @@ class TableWidget extends WidgetType {
     }
 
     return table
-  }
-
-  private addColumn(view: EditorView, root: HTMLElement) {
-    const model = readDomModel(root)
-    if (!model)
-      return
-
-    model.header.push('')
-    model.delimiters.push('---')
-    for (const row of model.rows) row.push('')
-
-    commitModel(view, root, model)
-    focusAfterStructureChange(root, 'thead th:last-child')
-  }
-
-  private addRow(
-    view: EditorView,
-    root: HTMLElement,
-    focusMode: 'end' | 'select' = 'end',
-  ) {
-    const model = readDomModel(root)
-    if (!model)
-      return
-
-    model.rows.push(Array.from({ length: model.header.length }, () => ''))
-
-    commitModel(view, root, model)
-    focusAfterStructureChange(
-      root,
-      'tbody tr:last-child td:first-child',
-      focusMode,
-    )
-  }
-
-  // Ставит каретку на строку до/после таблицы. Если такой строки нет (таблица в
-  // начале/конце документа), вставляет пустую — чтобы было куда печатать, не
-  // ломая markdown таблицы.
-  private placeCursorAdjacent(
-    view: EditorView,
-    root: HTMLElement,
-    before: boolean,
-  ) {
-    const pos = view.posAtDOM(root, 0)
-    const range = getTableRangeAt(view.state, pos)
-    if (!range)
-      return
-
-    if (before) {
-      placeCursorBeforeTableRange(view, range)
-    }
-    else {
-      placeCursorAfterTableRange(view, range)
-    }
   }
 
   private createGutter(
@@ -1246,6 +1466,7 @@ class TableWidget extends WidgetType {
     const root = document.createElement('div')
     root.dataset.tableWidget = '1'
     root.dataset.editable = this.interactive ? '1' : '0'
+    root.dataset.dark = this.dark ? '1' : '0'
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
@@ -1267,7 +1488,7 @@ class TableWidget extends WidgetType {
       root.style.paddingBottom = `${GUTTER + STRIP}px`
     }
 
-    scroll.append(this.buildTable(view, root))
+    scroll.append(this.buildTable())
     root.append(scroll)
 
     if (this.interactive) {
@@ -1276,26 +1497,44 @@ class TableWidget extends WidgetType {
       // блок-виджетом, который иначе занимает всю строку.
       root.addEventListener('mousedown', (event) => {
         const target = event.target as HTMLElement
+
+        // Клик по ячейке (включая правый — для контекстного меню) монтирует
+        // в неё вложенный редактор с кареткой в точке клика. Клики внутри
+        // уже активной ячейки обрабатывает сам вложенный редактор.
+        const cell = target.closest<HTMLTableCellElement>('th, td')
+        if (cell) {
+          if (activeCell?.cell === cell)
+            return
+
+          event.preventDefault()
+          activateCellEditor(view, root, cell, {
+            coords: { x: event.clientX, y: event.clientY },
+          })
+          return
+        }
+
         if (
-          target.closest('th, td')
-          || target.closest('[data-table-gutter]')
+          target.closest('[data-table-gutter]')
           || target.closest('[data-table-drag-handle]')
           || target.closest('[data-table-drag-zone]')
         ) {
           return
         }
 
+        if (event.button !== 0)
+          return
+
         event.preventDefault()
         const rect = scroll.getBoundingClientRect()
         const before = event.clientY < rect.top + rect.height / 2
-        this.placeCursorAdjacent(view, root, before)
+        placeCursorAdjacent(view, root, before)
       })
       this.attachDragHover(view, root)
 
       root.append(
         this.createRowDragHoverZone(),
-        this.createGutter('column', () => this.addColumn(view, root)),
-        this.createGutter('row', () => this.addRow(view, root)),
+        this.createGutter('column', () => addColumn(view, root)),
+        this.createGutter('row', () => addRow(view, root)),
       )
     }
 
@@ -1318,12 +1557,17 @@ class TableWidget extends WidgetType {
 
     dom.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
 
-    reconciling = true
+    // Реконсиляция может дописывать во вложенный редактор (undo/redo), а его
+    // onChange коммитит во внешний view — во время цикла обновления это
+    // запрещено, поэтому глушим коммиты флагом (с восстановлением: updateDOM
+    // может выполняться и внутри уже идущего коммита).
+    const wasCommitting = committing
+    committing = true
     try {
       this.reconcile(view, dom, table, head, body)
     }
     finally {
-      reconciling = false
+      committing = wasCommitting
     }
 
     return true
@@ -1341,25 +1585,104 @@ class TableWidget extends WidgetType {
         && body.rows.length === this.model.rows.length
 
     if (!sameShape) {
-      table.replaceWith(this.buildTable(view, dom))
+      // Пересборка уничтожает ячейку вместе со смонтированным редактором
+      // (например, при undo структурной правки) — переактивируем ближайшую
+      // ячейку новой таблицы с прежней позицией каретки.
+      const active = getActiveCellFor(dom)
+      let restore: { row: number, column: number, offset: number } | null
+        = null
+
+      if (active && dom.contains(active.cell)) {
+        const position = getCellPosition(active.cell)
+        if (position) {
+          restore = {
+            ...position,
+            offset: active.editor.state.selection.main.head,
+          }
+        }
+      }
+
+      if (active)
+        disposeCellEditor(dom)
+
+      table.replaceWith(this.buildTable())
+
+      if (restore) {
+        const row = Math.min(restore.row, this.model.rows.length)
+        const column = Math.min(restore.column, this.model.header.length - 1)
+        const offset = restore.offset
+        queueMicrotask(() => {
+          const cell = getTableCellAt(dom, row, column)
+          if (cell?.isConnected) {
+            activateCellEditor(view, dom, cell as HTMLTableCellElement, {
+              offset,
+            })
+          }
+        })
+      }
+
       return
     }
 
-    const active = document.activeElement
-    const apply = (cell: HTMLTableCellElement | undefined, text: string) => {
-      if (!cell || cell === active)
+    const active = getActiveCellFor(dom)
+    const apply = (
+      cell: HTMLTableCellElement | undefined,
+      text: string,
+      column: number,
+    ) => {
+      if (!cell)
         return
+
+      // Выравнивание может поменяться и без изменения текста ячейки.
+      cell.style.textAlign = delimiterAlignment(
+        this.model.delimiters[column] ?? '---',
+      )
+
       const display = unescapeCell(text)
+
+      if (active && cell === active.cell) {
+        const editorText = active.editor.state.doc.toString()
+        if (editorText === display)
+          return
+
+        // Расхождение только из-за нормализации сериализацией (trim) —
+        // редактор авторитетен: перезапись стирала бы, например, хвостовой
+        // пробел прямо во время набора.
+        if (escapeCell(editorText) === text)
+          return
+
+        // Реальное внешнее изменение (undo/redo, замена контента) — обновляем
+        // документ вложенного редактора, сохраняя позицию каретки.
+        const head = Math.min(
+          active.editor.state.selection.main.head,
+          display.length,
+        )
+        active.editor.dispatch({
+          changes: {
+            from: 0,
+            to: active.editor.state.doc.length,
+            insert: display,
+          },
+          selection: { anchor: head },
+        })
+        cell.dataset.raw = display
+        return
+      }
+
       if (getCellText(cell) !== display)
         setCellText(cell, display)
     }
 
     this.model.header.forEach((text, col) =>
-      apply(head.rows[0]?.cells[col], text),
+      apply(head.rows[0]?.cells[col], text, col),
     )
     this.model.rows.forEach((row, ri) =>
-      row.forEach((text, col) => apply(body.rows[ri]?.cells[col], text)),
+      row.forEach((text, col) => apply(body.rows[ri]?.cells[col], text, col)),
     )
+  }
+
+  destroy(dom: HTMLElement) {
+    disposeCellEditor(dom)
   }
 
   ignoreEvent(): boolean {
@@ -1491,6 +1814,59 @@ export function isProtectedTableBoundaryDeletePosition(
   return isProtectedTableBoundary(state, line.number + 1)
 }
 
+// Backspace в начале строки сразу после таблицы: атомарный блок иначе
+// удалился бы целиком одним нажатием — вместо этого входим в последнюю ячейку.
+function enterTableOnBackspaceAfter(view: EditorView): boolean {
+  const { state } = view
+  const selection = state.selection.main
+  if (!selection.empty || selection.head === 0)
+    return false
+
+  const line = state.doc.lineAt(selection.head)
+  if (selection.head !== line.from || line.number <= 1)
+    return false
+
+  const prevLine = state.doc.line(line.number - 1)
+  const range = getTableRangeAt(state, prevLine.to)
+  if (!range || range.to !== prevLine.to)
+    return false
+
+  const widget = findTableWidgetAtOrAfter(view, range.from)
+  const cell
+    = widget?.querySelector<HTMLElement>('tbody tr:last-child td:last-child')
+      ?? widget?.querySelector<HTMLElement>('thead th:last-child')
+  if (!cell)
+    return false
+
+  activateTableCell(view, cell, 'end')
+  return true
+}
+
+// Delete в конце строки прямо перед таблицей: вход в первую ячейку вместо
+// удаления всего атомарного блока.
+function enterTableOnDeleteBefore(view: EditorView): boolean {
+  const { state } = view
+  const selection = state.selection.main
+  if (!selection.empty)
+    return false
+
+  const line = state.doc.lineAt(selection.head)
+  if (selection.head !== line.to || line.number >= state.doc.lines)
+    return false
+
+  const next = state.doc.line(line.number + 1)
+  if (!findTableRangeStartingAt(state, next.from))
+    return false
+
+  const widget = findTableWidgetAtOrAfter(view, next.from)
+  const cell = widget?.querySelector<HTMLElement>('thead th:first-child')
+  if (!cell)
+    return false
+
+  activateTableCell(view, cell, 'start')
+  return true
+}
+
 function moveBeforeProtectedTableBoundary(view: EditorView): boolean {
   if (!isProtectedTableBoundaryLine(view.state))
     return false
@@ -1516,22 +1892,20 @@ function preserveTableBoundaryOnInput(transaction: Transaction) {
   if (!transaction.docChanged || !transaction.isUserEvent('input.type'))
     return transaction
 
-  let input: {
-    from: number
-    text: string
-  } | null = null
+  const inputs: { from: number, text: string }[] = []
 
   transaction.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
-    if (input || fromA !== toA)
+    if (inputs.length || fromA !== toA)
       return
 
     const text = inserted.toString()
     if (!text || text.includes('\n'))
       return
 
-    input = { from: fromA, text }
+    inputs.push({ from: fromA, text })
   })
 
+  const input = inputs[0]
   if (!input)
     return transaction
 
@@ -1558,6 +1932,7 @@ function buildDecorations(
   state: EditorState,
   enabled: boolean,
   editable: boolean,
+  isDark: boolean,
 ): DecorationSet {
   if (!enabled)
     return Decoration.none
@@ -1586,7 +1961,7 @@ function buildDecorations(
         to,
         Decoration.replace({
           block: true,
-          widget: new TableWidget(model, source, editable),
+          widget: new TableWidget(model, source, editable, isDark),
         }),
       )
     },
@@ -1596,11 +1971,11 @@ function buildDecorations(
 }
 
 export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
-  const { enabled = true, editable = false } = options
+  const { enabled = true, editable = false, isDark = false } = options
 
   const decorations = StateField.define<DecorationSet>({
     create(state) {
-      return buildDecorations(state, enabled, editable)
+      return buildDecorations(state, enabled, editable, isDark)
     },
     update(value, transaction) {
       // Дерево разбора может достроиться асинхронно (без изменения документа),
@@ -1609,18 +1984,26 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
         = syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
 
       if (transaction.docChanged || treeChanged)
-        return buildDecorations(transaction.state, enabled, editable)
+        return buildDecorations(transaction.state, enabled, editable, isDark)
 
       return value
     },
     provide: field => EditorView.decorations.from(field),
   })
 
+  // Таблица для навигации во внешнем редакторе — один атомарный блок:
+  // стрелки и удаление не ходят посимвольно по скрытому markdown.
+  const atomicBlocks = EditorView.atomicRanges.of(view =>
+    view.state.field(decorations),
+  )
+
   if (!editable)
-    return decorations
+    return [decorations, atomicBlocks]
 
   return [
     decorations,
+    atomicBlocks,
+    cellFocusListener,
     EditorState.transactionFilter.of(preserveTableBoundaryOnInput),
     Prec.highest(
       keymap.of([
@@ -1629,8 +2012,16 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
           run: moveBeforeProtectedTableBoundary,
         },
         {
+          key: 'Backspace',
+          run: enterTableOnBackspaceAfter,
+        },
+        {
           key: 'Delete',
           run: preventProtectedTableBoundaryDelete,
+        },
+        {
+          key: 'Delete',
+          run: enterTableOnDeleteBefore,
         },
       ]),
     ),

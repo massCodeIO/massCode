@@ -384,6 +384,18 @@
           "callout": "Callout",
           "horizontalRule": "Horizontal rule",
           "codeBlock": "Code block"
+        },
+        "table": {
+          "title": "Table",
+          "insertRowAbove": "Insert row above",
+          "insertRowBelow": "Insert row below",
+          "deleteRow": "Delete row",
+          "insertColumnLeft": "Insert column left",
+          "insertColumnRight": "Insert column right",
+          "deleteColumn": "Delete column",
+          "alignLeft": "Align left",
+          "alignCenter": "Align center",
+          "alignRight": "Align right"
         }
       },
       "table": {

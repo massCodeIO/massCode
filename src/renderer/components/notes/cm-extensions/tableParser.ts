@@ -37,7 +37,8 @@ export function parseMarkdownTable(source: string): ParsedMarkdownTable | null {
 
   const header = parseTableRow(lines[0] ?? '')
   const delimiter = parseTableRow(lines[1] ?? '')
-  if (header.length < 2 || header.length !== delimiter.length)
+  // Одна колонка — валидная GFM-таблица (нужна и для удаления столбцов).
+  if (header.length < 1 || header.length !== delimiter.length)
     return null
 
   if (!delimiter.every(isTableDelimiterCell))
@@ -107,6 +108,78 @@ export function serializeTable(model: TableModel): string {
     `| ${model.delimiters.join(' | ')} |`,
     ...model.rows.map(row),
   ].join('\n')
+}
+
+export function insertTableRow(model: TableModel, index: number): TableModel {
+  const rows = [...model.rows]
+  const clamped = Math.max(0, Math.min(index, rows.length))
+  rows.splice(
+    clamped,
+    0,
+    Array.from({ length: model.header.length }, () => ''),
+  )
+
+  return { ...model, rows }
+}
+
+export function removeTableRow(model: TableModel, index: number): TableModel {
+  if (index < 0 || index >= model.rows.length)
+    return model
+
+  const rows = [...model.rows]
+  rows.splice(index, 1)
+
+  return { ...model, rows }
+}
+
+export function insertTableColumn(
+  model: TableModel,
+  index: number,
+): TableModel {
+  const clamped = Math.max(0, Math.min(index, model.header.length))
+  const insertAt = <T>(items: T[], value: T): T[] => {
+    const next = [...items]
+    next.splice(clamped, 0, value)
+    return next
+  }
+
+  return {
+    header: insertAt(model.header, ''),
+    delimiters: insertAt(model.delimiters, '---'),
+    rows: model.rows.map(row => insertAt(row, '')),
+  }
+}
+
+export function removeTableColumn(
+  model: TableModel,
+  index: number,
+): TableModel {
+  if (model.header.length <= 1 || index < 0 || index >= model.header.length)
+    return model
+
+  const removeAt = <T>(items: T[]): T[] =>
+    items.filter((_, position) => position !== index)
+
+  return {
+    header: removeAt(model.header),
+    delimiters: removeAt(model.delimiters),
+    rows: model.rows.map(row => removeAt(row)),
+  }
+}
+
+export function setTableColumnAlignment(
+  model: TableModel,
+  index: number,
+  alignment: TableColumnAlignment,
+): TableModel {
+  if (index < 0 || index >= model.delimiters.length)
+    return model
+
+  const delimiters = [...model.delimiters]
+  delimiters[index]
+    = alignment === 'center' ? ':---:' : alignment === 'right' ? '---:' : '---'
+
+  return { ...model, delimiters }
 }
 
 export function moveTableColumn(

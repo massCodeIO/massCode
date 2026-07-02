@@ -61,8 +61,12 @@ import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
 import {
   createTableBlocks,
+  getActiveTableCellContext,
   getActiveTableCellEditor,
   requestTableCellFocus,
+  runActiveTableCellCommand,
+  type TableCellMenuCommand,
+  type TableCellMenuContext,
 } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
 import { createNotesEditTheme } from './theme'
@@ -395,6 +399,7 @@ watch(
 // Контекст контекстного меню форматирования, снимается на правый клик.
 const menuHasSelection = ref(false)
 const menuHeadingLevel = ref(0)
+const menuTable = shallowRef<TableCellMenuContext | null>(null)
 let pendingInsertedTableStart: number | null = null
 
 function onEditorContextMenu() {
@@ -407,6 +412,7 @@ function onEditorContextMenu() {
 
   menuHasSelection.value = !target.state.selection.main.empty
   menuHeadingLevel.value = cellEditor ? 0 : getHeadingLevel(view)
+  menuTable.value = getActiveTableCellContext()
 }
 
 function onContextMenuCloseAutoFocus(event: Event) {
@@ -434,6 +440,11 @@ function onContextMenuCloseAutoFocus(event: Event) {
 function onMenuCommand(command: EditorMenuCommand) {
   if (!view)
     return
+
+  if (command.startsWith('table-')) {
+    runActiveTableCellCommand(command as TableCellMenuCommand)
+    return
+  }
 
   // Внутри ячейки таблицы inline-команды идут во вложенный редактор, а
   // блочные (заголовки, списки, вставка) не имеют смысла — игнорируем.
@@ -549,6 +560,7 @@ onUnmounted(() => {
       <NotesEditorContextMenu
         :has-selection="menuHasSelection"
         :heading-level="menuHeadingLevel"
+        :table="menuTable"
         @close-auto-focus="onContextMenuCloseAutoFocus"
         @command="onMenuCommand"
       />

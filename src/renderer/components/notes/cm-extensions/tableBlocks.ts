@@ -1,5 +1,5 @@
 import type { Extension } from '@codemirror/state'
-import type { TableModel } from './tableParser'
+import type { TableColumnAlignment, TableModel } from './tableParser'
 import { redo, undo } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import {
@@ -25,11 +25,16 @@ import { renderCellMarkdown } from './tableCellMarkdown'
 import {
   delimiterAlignment,
   escapeCell,
+  insertTableColumn,
+  insertTableRow,
   moveTableColumn,
   moveTableRow,
   parseDelimiters,
   parseMarkdownTable,
+  removeTableColumn,
+  removeTableRow,
   serializeTable,
+  setTableColumnAlignment,
   unescapeCell,
 } from './tableParser'
 
@@ -541,9 +546,192 @@ function createCellEditorCallbacks(
         placeCursorAdjacent(view, root, false)
       })
     },
+    onPasteTabular: (values: string[][]) => {
+      defer(() => pasteTabularIntoCell(view, root, cell, values))
+    },
     onUndo: () => defer(() => undo(view)),
     onRedo: () => defer(() => redo(view)),
   }
+}
+
+// Раскладывает вставленный табличный блок (TSV из Excel, многострочный текст)
+// по ячейкам начиная с текущей, расширяя таблицу вправо и вниз по мере нужды.
+function pasteTabularIntoCell(
+  view: EditorView,
+  root: HTMLElement,
+  cell: HTMLTableCellElement,
+  values: string[][],
+) {
+  const position = getCellPosition(cell)
+  const model = readDomModel(root)
+  if (!position || !model || values.length === 0)
+    return
+
+  const next: TableModel = {
+    header: [...model.header],
+    delimiters: [...model.delimiters],
+    rows: model.rows.map(row => [...row]),
+  }
+
+  const neededColumns
+    = position.column + Math.max(...values.map(row => row.length))
+  while (next.header.length < neededColumns) {
+    next.header.push('')
+    next.delimiters.push('---')
+    for (const row of next.rows) row.push('')
+  }
+
+  // Абсолютные индексы строк: 0 — заголовок, дальше — model.rows[i - 1].
+  const lastRow = position.row + values.length - 1
+  while (next.rows.length < lastRow)
+    next.rows.push(Array.from({ length: next.header.length }, () => ''))
+
+  values.forEach((rowValues, rowOffset) => {
+    const absoluteRow = position.row + rowOffset
+    rowValues.forEach((value, columnOffset) => {
+      const column = position.column + columnOffset
+      const text = value.trim()
+
+      if (absoluteRow === 0)
+        next.header[column] = text
+      else next.rows[absoluteRow - 1][column] = text
+    })
+  })
+
+  const range = commitModel(view, root, next, 'input.paste')
+  if (range) {
+    const lastValues = values[values.length - 1]
+    requestTableCellFocus(view, {
+      tableFrom: range.from,
+      selector: cellSelector(
+        lastRow,
+        position.column + (lastValues?.length ?? 1) - 1,
+      ),
+    })
+  }
+}
+
+// ---- Команды таблицы для контекстного меню активной ячейки -----------------
+
+export type TableCellMenuCommand =
+  | 'table-insert-row-above'
+  | 'table-insert-row-below'
+  | 'table-insert-column-left'
+  | 'table-insert-column-right'
+  | 'table-delete-row'
+  | 'table-delete-column'
+  | 'table-align-left'
+  | 'table-align-center'
+  | 'table-align-right'
+
+export interface TableCellMenuContext {
+  isHeader: boolean
+  alignment: TableColumnAlignment
+  canDeleteColumn: boolean
+}
+
+// Контекст активной ячейки для секции таблицы в контекстном меню.
+export function getActiveTableCellContext(): TableCellMenuContext | null {
+  if (!activeCell)
+    return null
+
+  const position = getCellPosition(activeCell.cell)
+  const model = readDomModel(activeCell.root)
+  if (!position || !model)
+    return null
+
+  return {
+    isHeader: position.row === 0,
+    alignment: delimiterAlignment(model.delimiters[position.column] ?? '---'),
+    canDeleteColumn: model.header.length > 1,
+  }
+}
+
+function cellSelector(row: number, column: number): string {
+  return row === 0
+    ? `thead th:nth-child(${column + 1})`
+    : `tbody tr:nth-child(${row}) td:nth-child(${column + 1})`
+}
+
+export function runActiveTableCellCommand(command: TableCellMenuCommand) {
+  const active = activeCell
+  if (!active)
+    return
+
+  const { view, root, cell } = active
+  const position = getCellPosition(cell)
+  const model = readDomModel(root)
+  if (!position || !model)
+    return
+
+  const { row, column } = position
+  // Индекс в model.rows: строка 0 — заголовок.
+  const bodyIndex = row - 1
+  let next = model
+  // Куда вернуть каретку после операции.
+  let focusRow = row
+  let focusColumn = column
+
+  switch (command) {
+    case 'table-insert-row-above':
+      if (row === 0)
+        return
+      next = insertTableRow(model, bodyIndex)
+      focusRow = row
+      break
+    case 'table-insert-row-below':
+      next = insertTableRow(model, row === 0 ? 0 : bodyIndex + 1)
+      focusRow = row + 1
+      break
+    case 'table-insert-column-left':
+      next = insertTableColumn(model, column)
+      break
+    case 'table-insert-column-right':
+      next = insertTableColumn(model, column + 1)
+      focusColumn = column + 1
+      break
+    case 'table-delete-row':
+      if (row === 0)
+        return
+      next = removeTableRow(model, bodyIndex)
+      focusRow = Math.min(row, next.rows.length)
+      break
+    case 'table-delete-column':
+      next = removeTableColumn(model, column)
+      focusColumn = Math.min(column, next.header.length - 1)
+      break
+    case 'table-align-left':
+      next = setTableColumnAlignment(model, column, 'left')
+      break
+    case 'table-align-center':
+      next = setTableColumnAlignment(model, column, 'center')
+      break
+    case 'table-align-right':
+      next = setTableColumnAlignment(model, column, 'right')
+      break
+  }
+
+  if (next === model) {
+    // Модель не изменилась (операция невалидна) — просто вернуть фокус.
+    active.editor.focus()
+    return
+  }
+
+  const range = commitModel(view, root, next)
+  if (!range)
+    return
+
+  // Выравнивание не меняет форму таблицы: редактор ячейки переживает коммит,
+  // каретку не трогаем — только возвращаем фокус после закрытия меню.
+  if (command.startsWith('table-align-')) {
+    activeCell?.editor.focus()
+    return
+  }
+
+  requestTableCellFocus(view, {
+    tableFrom: range.from,
+    selector: cellSelector(focusRow, focusColumn),
+  })
 }
 
 function getCellPosition(
@@ -1682,7 +1870,18 @@ class TableWidget extends WidgetType {
   }
 
   destroy(dom: HTMLElement) {
+    const active = getActiveCellFor(dom)
     disposeCellEditor(dom)
+
+    // Виджет уничтожен вместе с активным редактором (например, undo убрал
+    // таблицу целиком) — возвращаем фокус в основной редактор.
+    if (active) {
+      const outer = active.view
+      queueMicrotask(() => {
+        if (!activeCell && !outer.hasFocus)
+          outer.focus()
+      })
+    }
   }
 
   ignoreEvent(): boolean {

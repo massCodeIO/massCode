@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import type { TableCellMenuContext } from './cm-extensions/tableBlocks'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { i18n } from '@/electron'
 import { isMac } from '@/utils'
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowDownToLine,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  ArrowUpToLine,
   Bold,
   Code,
   Heading1,
@@ -24,6 +32,7 @@ import {
   Strikethrough,
   Table,
   TextQuote,
+  Trash2,
 } from 'lucide-vue-next'
 
 export type EditorMenuCommand =
@@ -49,10 +58,22 @@ export type EditorMenuCommand =
   | 'callout'
   | 'horizontal-rule'
   | 'code-block'
+  | 'table-insert-row-above'
+  | 'table-insert-row-below'
+  | 'table-insert-column-left'
+  | 'table-insert-column-right'
+  | 'table-delete-row'
+  | 'table-delete-column'
+  | 'table-align-left'
+  | 'table-align-center'
+  | 'table-align-right'
 
 interface Props {
   hasSelection: boolean
   headingLevel: number
+  // Контекст активной ячейки таблицы: включает секцию табличных команд и
+  // прячет блочные (абзац/вставка), неприменимые внутри ячейки.
+  table?: TableCellMenuContext | null
 }
 
 const props = defineProps<Props>()
@@ -145,8 +166,76 @@ function run(command: EditorMenuCommand) {
       </ContextMenu.ContextMenuSubContent>
     </ContextMenu.ContextMenuSub>
 
+    <!-- Table: только при активной ячейке таблицы -->
+    <ContextMenu.ContextMenuSub v-if="props.table">
+      <ContextMenu.ContextMenuSubTrigger>
+        <Table />
+        {{ i18n.t("notes.editor.menu.table.title") }}
+      </ContextMenu.ContextMenuSubTrigger>
+      <ContextMenu.ContextMenuSubContent class="w-56">
+        <ContextMenu.ContextMenuItem
+          :disabled="props.table.isHeader"
+          @select="run('table-insert-row-above')"
+        >
+          <ArrowUpToLine />
+          {{ i18n.t("notes.editor.menu.table.insertRowAbove") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @select="run('table-insert-row-below')">
+          <ArrowDownToLine />
+          {{ i18n.t("notes.editor.menu.table.insertRowBelow") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem
+          :disabled="props.table.isHeader"
+          @select="run('table-delete-row')"
+        >
+          <Trash2 />
+          {{ i18n.t("notes.editor.menu.table.deleteRow") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuItem @select="run('table-insert-column-left')">
+          <ArrowLeftToLine />
+          {{ i18n.t("notes.editor.menu.table.insertColumnLeft") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @select="run('table-insert-column-right')">
+          <ArrowRightToLine />
+          {{ i18n.t("notes.editor.menu.table.insertColumnRight") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem
+          :disabled="!props.table.canDeleteColumn"
+          @select="run('table-delete-column')"
+        >
+          <Trash2 />
+          {{ i18n.t("notes.editor.menu.table.deleteColumn") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
+        <ContextMenu.ContextMenuCheckboxItem
+          :checked="props.table.alignment === 'left'"
+          @select="run('table-align-left')"
+        >
+          <AlignLeft />
+          {{ i18n.t("notes.editor.menu.table.alignLeft") }}
+        </ContextMenu.ContextMenuCheckboxItem>
+        <ContextMenu.ContextMenuCheckboxItem
+          :checked="props.table.alignment === 'center'"
+          @select="run('table-align-center')"
+        >
+          <AlignCenter />
+          {{ i18n.t("notes.editor.menu.table.alignCenter") }}
+        </ContextMenu.ContextMenuCheckboxItem>
+        <ContextMenu.ContextMenuCheckboxItem
+          :checked="props.table.alignment === 'right'"
+          @select="run('table-align-right')"
+        >
+          <AlignRight />
+          {{ i18n.t("notes.editor.menu.table.alignRight") }}
+        </ContextMenu.ContextMenuCheckboxItem>
+      </ContextMenu.ContextMenuSubContent>
+    </ContextMenu.ContextMenuSub>
+
+    <ContextMenu.ContextMenuSeparator v-if="props.table" />
+
     <!-- Paragraph -->
-    <ContextMenu.ContextMenuSub>
+    <ContextMenu.ContextMenuSub v-if="!props.table">
       <ContextMenu.ContextMenuSubTrigger>
         <Pilcrow />
         {{ i18n.t("notes.editor.menu.paragraph.title") }}
@@ -188,10 +277,10 @@ function run(command: EditorMenuCommand) {
       </ContextMenu.ContextMenuSubContent>
     </ContextMenu.ContextMenuSub>
 
-    <ContextMenu.ContextMenuSeparator />
+    <ContextMenu.ContextMenuSeparator v-if="!props.table" />
 
     <!-- Insert -->
-    <ContextMenu.ContextMenuSub>
+    <ContextMenu.ContextMenuSub v-if="!props.table">
       <ContextMenu.ContextMenuSubTrigger>
         <Table />
         {{ i18n.t("notes.editor.menu.insert.title") }}

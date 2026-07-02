@@ -385,6 +385,18 @@
           "callout": "Выноска",
           "horizontalRule": "Горизонтальная линия",
           "codeBlock": "Блок кода"
+        },
+        "table": {
+          "title": "Таблица",
+          "insertRowAbove": "Вставить строку выше",
+          "insertRowBelow": "Вставить строку ниже",
+          "deleteRow": "Удалить строку",
+          "insertColumnLeft": "Вставить столбец слева",
+          "insertColumnRight": "Вставить столбец справа",
+          "deleteColumn": "Удалить столбец",
+          "alignLeft": "По левому краю",
+          "alignCenter": "По центру",
+          "alignRight": "По правому краю"
         }
       },
       "table": {

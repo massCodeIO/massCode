@@ -41,6 +41,9 @@ export interface TableCellEditorCallbacks {
   onEnter: () => void
   // Escape: выход из ячейки в основной редактор.
   onEscape: () => void
+  // Вставка табличных данных (TSV/многострочный текст): раскладывается по
+  // ячейкам начиная с текущей.
+  onPasteTabular: (values: string[][]) => void
   onUndo: () => void
   onRedo: () => void
 }
@@ -252,6 +255,27 @@ export function createTableCellEditor(
       createCodeHighlight(isDark),
       createMarkdownDecorations({ interactiveTaskMarkers: false }),
       createHideMarkup(),
+      // TSV/многострочная вставка уходит в таблицу целиком, а не в одну
+      // ячейку (переносы иначе схлопнулись бы в пробелы).
+      EditorView.domEventHandlers({
+        paste(event) {
+          const text = event.clipboardData?.getData('text/plain') ?? ''
+          const lines = text
+            .replace(/\r/g, '')
+            .split('\n')
+            .filter(line => line !== '')
+
+          const values = lines.map(line => line.split('\t'))
+          const isTabular = values.length > 1 || (values[0]?.length ?? 0) > 1
+
+          if (!isTabular)
+            return false
+
+          event.preventDefault()
+          callbacks.onPasteTabular(values)
+          return true
+        },
+      }),
       EditorView.updateListener.of((update) => {
         if (update.docChanged)
           callbacks.onChange(update.state.doc.toString())

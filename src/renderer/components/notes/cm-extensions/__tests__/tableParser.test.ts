@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  insertTableColumn,
+  insertTableRow,
   isTableDelimiterCell,
   moveTableColumn,
   moveTableRow,
   parseMarkdownTable,
   parseTableRow,
+  removeTableColumn,
+  removeTableRow,
+  setTableColumnAlignment,
 } from '../tableParser'
 
 describe('tableBlocks parser', () => {
@@ -116,5 +121,71 @@ describe('tableBlocks parser', () => {
         ['5', '6'],
       ],
     })
+  })
+})
+
+describe('table model operations', () => {
+  const model = {
+    header: ['A', 'B'],
+    delimiters: ['---', ':---:'],
+    rows: [
+      ['1', '2'],
+      ['3', '4'],
+    ],
+  }
+
+  it('parses a single column table', () => {
+    expect(parseMarkdownTable('| a |\n| --- |\n| b |')).toEqual({
+      header: ['a'],
+      rows: [['b']],
+    })
+  })
+
+  it('inserts a row at the given index', () => {
+    expect(insertTableRow(model, 1).rows).toEqual([
+      ['1', '2'],
+      ['', ''],
+      ['3', '4'],
+    ])
+  })
+
+  it('removes a row and keeps the rest', () => {
+    expect(removeTableRow(model, 0).rows).toEqual([['3', '4']])
+  })
+
+  it('inserts a column with a default delimiter', () => {
+    expect(insertTableColumn(model, 1)).toEqual({
+      header: ['A', '', 'B'],
+      delimiters: ['---', '---', ':---:'],
+      rows: [
+        ['1', '', '2'],
+        ['3', '', '4'],
+      ],
+    })
+  })
+
+  it('removes a column together with its delimiter', () => {
+    expect(removeTableColumn(model, 0)).toEqual({
+      header: ['B'],
+      delimiters: [':---:'],
+      rows: [['2'], ['4']],
+    })
+  })
+
+  it('refuses to remove the last column', () => {
+    const single = { header: ['A'], delimiters: ['---'], rows: [['1']] }
+
+    expect(removeTableColumn(single, 0)).toBe(single)
+  })
+
+  it('sets column alignment through the delimiter', () => {
+    expect(setTableColumnAlignment(model, 0, 'right').delimiters).toEqual([
+      '---:',
+      ':---:',
+    ])
+    expect(setTableColumnAlignment(model, 1, 'left').delimiters).toEqual([
+      '---',
+      '---',
+    ])
   })
 })

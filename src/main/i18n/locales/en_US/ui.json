@@ -366,6 +366,7 @@
           "strikethrough": "Strikethrough",
           "highlight": "Highlight",
           "code": "Code",
+          "link": "Link",
           "clearFormatting": "Clear formatting"
         },
         "paragraph": {

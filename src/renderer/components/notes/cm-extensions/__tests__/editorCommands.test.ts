@@ -1,20 +1,27 @@
-import type { TransactionSpec } from '@codemirror/state'
+import type { Extension, TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
+import { GFM } from '@lezer/markdown'
 import { describe, expect, it } from 'vitest'
 import {
+  clearInlineFormatting,
   insertTable,
   toggleBulletList,
   toggleOrderedList,
   toggleTaskList,
 } from '../editorCommands'
+import { Highlight } from '../markdownHighlight'
 
 function runCommand(
   doc: string,
   command: (view: EditorView) => void,
-  selection = EditorSelection.single(0),
+  selection:
+    | EditorSelection
+    | { anchor: number, head?: number } = EditorSelection.single(0),
+  extensions: Extension = [],
 ) {
-  let state = EditorState.create({ doc, selection })
+  let state = EditorState.create({ doc, selection, extensions })
   const view = {
     get state() {
       return state
@@ -64,6 +71,48 @@ describe('editorCommands lists', () => {
     )
 
     expect(result.doc).toBe(['- first', '', '- second'].join('\n'))
+  })
+})
+
+const markdownExtension = markdown({
+  base: markdownLanguage,
+  extensions: [GFM, Highlight],
+})
+
+function runClearFormatting(doc: string, from: number, to: number) {
+  return runCommand(
+    doc,
+    clearInlineFormatting,
+    EditorSelection.range(from, to),
+    markdownExtension,
+  ).doc
+}
+
+describe('editorCommands clearInlineFormatting', () => {
+  it('removes inline formatting marks in the selection', () => {
+    const doc = '**bold** and *italic* and ~~gone~~ and ==mark== and `code`'
+
+    expect(runClearFormatting(doc, 0, doc.length)).toBe(
+      'bold and italic and gone and mark and code',
+    )
+  })
+
+  it('keeps legitimate characters that only look like markers', () => {
+    const doc = 'snake_case and a * b and file_name.txt'
+
+    expect(runClearFormatting(doc, 0, doc.length)).toBe(doc)
+  })
+
+  it('keeps fenced code block fences', () => {
+    const doc = '```\nconst a = 1\n```'
+
+    expect(runClearFormatting(doc, 0, doc.length)).toBe(doc)
+  })
+
+  it('only removes marks fully inside the selection', () => {
+    const doc = '**bold** text'
+
+    expect(runClearFormatting(doc, 2, doc.length)).toBe('**bold text')
   })
 })
 

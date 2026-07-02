@@ -367,6 +367,7 @@
           "strikethrough": "Зачёркнутый",
           "highlight": "Выделение",
           "code": "Код",
+          "link": "Ссылка",
           "clearFormatting": "Очистить форматирование"
         },
         "paragraph": {

@@ -13,6 +13,7 @@ import {
   Heading6,
   Highlighter,
   Italic,
+  Link,
   List,
   ListChecks,
   ListOrdered,
@@ -31,6 +32,7 @@ export type EditorMenuCommand =
   | 'strikethrough'
   | 'highlight'
   | 'code'
+  | 'link'
   | 'clear-formatting'
   | 'bullet-list'
   | 'numbered-list'
@@ -121,6 +123,16 @@ function run(command: EditorMenuCommand) {
         <ContextMenu.ContextMenuItem @select="run('code')">
           <Code />
           {{ i18n.t("notes.editor.menu.format.code") }}
+          <ContextMenu.ContextMenuShortcut>
+            {{ `${mod}E` }}
+          </ContextMenu.ContextMenuShortcut>
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuItem @select="run('link')">
+          <Link />
+          {{ i18n.t("notes.editor.menu.format.link") }}
+          <ContextMenu.ContextMenuShortcut>
+            {{ `${mod}K` }}
+          </ContextMenu.ContextMenuShortcut>
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
         <ContextMenu.ContextMenuItem

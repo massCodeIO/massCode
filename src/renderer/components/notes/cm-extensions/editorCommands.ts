@@ -1,7 +1,11 @@
 import type { ChangeSpec, TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { syntaxTree } from '@codemirror/language'
 import { EditorSelection } from '@codemirror/state'
-import { createInlineMarkdownCommand } from './markdownShortcuts'
+import {
+  createInlineMarkdownCommand,
+  insertMarkdownLink,
+} from './markdownShortcuts'
 
 // Команды редактора заметок, общие для контекстного меню и (в перспективе)
 // хоткеев/тулбара. Каждая функция принимает EditorView, мутирует документ
@@ -37,6 +41,19 @@ export function toggleInlineCode(view: EditorView) {
   toggleInline(view, '`')
 }
 
+export function insertLink(view: EditorView) {
+  insertMarkdownLink(view)
+  view.focus()
+}
+
+// Mark-узлы inline-форматирования, которые снимает clear formatting.
+const INLINE_MARK_NAMES = new Set([
+  'EmphasisMark',
+  'StrikethroughMark',
+  'HighlightMark',
+  'CodeMark',
+])
+
 export function clearInlineFormatting(view: EditorView) {
   const { state } = view
   const main = state.selection.main
@@ -46,21 +63,38 @@ export function clearInlineFormatting(view: EditorView) {
     return
   }
 
-  const text = state.doc.sliceString(main.from, main.to)
-  const cleaned = text
-    .replace(/\*\*/g, '')
-    .replace(/__/g, '')
-    .replace(/~~/g, '')
-    .replace(/==/g, '')
-    .replace(/[*_`]/g, '')
+  // Удаляем только реальные mark-узлы из дерева разбора: легитимные символы
+  // в тексте (snake_case, `a * b`) не трогаем. CodeMark берём только у
+  // inline-кода, чтобы не разрушить ограждения fenced-блоков.
+  const marks: { from: number, to: number }[] = []
 
-  if (cleaned !== text) {
+  syntaxTree(state).iterate({
+    from: main.from,
+    to: main.to,
+    enter(node) {
+      if (!INLINE_MARK_NAMES.has(node.name))
+        return
+
+      if (node.from < main.from || node.to > main.to)
+        return
+
+      if (node.name === 'CodeMark' && node.node.parent?.name !== 'InlineCode')
+        return
+
+      marks.push({ from: node.from, to: node.to })
+    },
+  })
+
+  if (marks.length) {
     view.dispatch(
       state.update({
-        changes: { from: main.from, to: main.to, insert: cleaned },
-        selection: EditorSelection.range(main.from, main.from + cleaned.length),
+        changes: marks.map(mark => ({
+          from: mark.from,
+          to: mark.to,
+          insert: '',
+        })),
         scrollIntoView: true,
-        userEvent: 'input',
+        userEvent: 'delete',
       }),
     )
   }

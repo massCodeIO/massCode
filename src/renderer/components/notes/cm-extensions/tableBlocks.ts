@@ -398,8 +398,31 @@ function activateCellEditor(
   activeCell = { view, root, cell, editor }
   editor.focus()
   editor.dispatch({ selection: resolveCellSelection(editor, target) })
-  cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  revealCellHorizontally(root, cell)
   watchCellEditorBlur(view, root, cell, editor)
+}
+
+// Доводит ячейку до видимой области, прокручивая ТОЛЬКО внутренний скролл
+// таблицы. element.scrollIntoView здесь недопустим: он прокручивает все
+// прокручиваемые предки, включая overflow-hidden контейнеры вокруг редактора,
+// у которых нет скроллбаров — вернуть их назад пользователь не сможет.
+function revealCellHorizontally(root: HTMLElement, cell: HTMLElement) {
+  const scroll = root.querySelector<HTMLElement>('[data-table-scroll="1"]')
+  if (!scroll)
+    return
+
+  const scrollRect = scroll.getBoundingClientRect()
+  const cellRect = cell.getBoundingClientRect()
+
+  if (cellRect.left < scrollRect.left) {
+    scroll.scrollLeft += cellRect.left - scrollRect.left
+  }
+  else if (cellRect.right > scrollRect.right) {
+    scroll.scrollLeft += Math.min(
+      cellRect.right - scrollRect.right,
+      cellRect.left - scrollRect.left,
+    )
+  }
 }
 
 // Активирует редактирование ячейки извне виджета (навигация стрелками из
@@ -1285,6 +1308,7 @@ class TableWidget extends WidgetType {
     event: PointerEvent,
     view: EditorView,
     root: HTMLElement,
+    overlay: HTMLElement,
     kind: TableDragKind,
     from: number,
   ) {
@@ -1297,17 +1321,24 @@ class TableWidget extends WidgetType {
 
     root.dataset.tableDragging = '1'
     let targetSlot: number | null = null
-    markDragSelection(root, kind, from)
+    let pointer = { x: event.clientX, y: event.clientY }
+    markDragSelection(overlay, kind, from)
 
-    const move = (moveEvent: PointerEvent) => {
+    const update = (clientX: number, clientY: number) => {
       const next
         = kind === 'column'
-          ? getColumnIndexAt(root, moveEvent.clientX)
-          : getBodyRowIndexAt(root, moveEvent.clientY)
+          ? getColumnIndexAt(root, clientX)
+          : getBodyRowIndexAt(root, clientY)
 
       const handle = getCurrentDragHandle(root)
       if (handle) {
-        this.positionDragHandleAtPointer(root, handle, kind, moveEvent)
+        this.positionDragHandleAtPointer(
+          kind === 'column' ? overlay : root,
+          handle,
+          kind,
+          clientX,
+          clientY,
+        )
       }
 
       if (next === null)
@@ -1324,13 +1355,43 @@ class TableWidget extends WidgetType {
       }
 
       targetSlot = nextSlot
-      markDropTarget(root, kind, targetSlot)
+      markDropTarget(overlay, kind, targetSlot)
     }
+
+    const move = (moveEvent: PointerEvent) => {
+      pointer = { x: moveEvent.clientX, y: moveEvent.clientY }
+      update(pointer.x, pointer.y)
+    }
+
+    // Автоскролл при перетаскивании колонки к обрезанной скроллом области:
+    // указатель у края видимой области таблицы прокручивает её.
+    const scroll = root.querySelector<HTMLElement>('[data-table-scroll="1"]')
+    let autoScrollFrame = 0
+    const autoScroll = () => {
+      if (kind === 'column' && scroll) {
+        const rect = scroll.getBoundingClientRect()
+        const zone = 40
+        const previous = scroll.scrollLeft
+
+        if (pointer.x > rect.right - zone)
+          scroll.scrollLeft += 10
+        else if (pointer.x < rect.left + zone)
+          scroll.scrollLeft -= 10
+
+        // Контент уехал под указателем — пересчитать цель без pointermove.
+        if (scroll.scrollLeft !== previous)
+          update(pointer.x, pointer.y)
+      }
+
+      autoScrollFrame = requestAnimationFrame(autoScroll)
+    }
+    autoScrollFrame = requestAnimationFrame(autoScroll)
 
     const stop = () => {
       document.removeEventListener('pointermove', move)
       document.removeEventListener('pointerup', stop)
       document.removeEventListener('pointercancel', stop)
+      cancelAnimationFrame(autoScrollFrame)
       delete root.dataset.tableDragging
       clearDragPreview(root)
       clearFloatingDragHandles(root)
@@ -1354,6 +1415,7 @@ class TableWidget extends WidgetType {
   private createDragHandle(
     view: EditorView,
     root: HTMLElement,
+    overlay: HTMLElement,
     kind: TableDragKind,
     index: number,
   ): HTMLElement {
@@ -1380,19 +1442,21 @@ class TableWidget extends WidgetType {
 
     handle.append(createGripIcon())
     handle.addEventListener('pointerdown', (event) => {
-      this.startDrag(event, view, root, kind, index)
+      this.startDrag(event, view, root, overlay, kind, index)
     })
 
     return handle
   }
 
+  // host — позиционированный контейнер, в который добавлен handle: оверлей
+  // для колонок (скроллится с таблицей), root для строк (пришпилен слева).
   private positionDragHandle(
-    root: HTMLElement,
+    host: HTMLElement,
     cell: HTMLTableCellElement,
     handle: HTMLElement,
     kind: TableDragKind,
   ) {
-    const rootRect = root.getBoundingClientRect()
+    const rootRect = host.getBoundingClientRect()
     const cellRect = cell.getBoundingClientRect()
 
     if (kind === 'column') {
@@ -1411,20 +1475,23 @@ class TableWidget extends WidgetType {
   }
 
   private positionDragHandleAtPointer(
-    root: HTMLElement,
+    host: HTMLElement,
     handle: HTMLElement,
     kind: TableDragKind,
-    event: PointerEvent,
+    clientX: number,
+    clientY: number,
   ) {
-    const table = root.querySelector('table')
+    const table
+      = host.closest('[data-table-widget]')?.querySelector('table')
+        ?? host.querySelector('table')
     if (!table)
       return
 
-    const rootRect = root.getBoundingClientRect()
+    const rootRect = host.getBoundingClientRect()
     const tableRect = table.getBoundingClientRect()
 
     if (kind === 'column') {
-      const centerX = clampColumnHandleCenter(tableRect, event.clientX)
+      const centerX = clampColumnHandleCenter(tableRect, clientX)
       handle.style.left = `${centerX - rootRect.left - DRAG_COLUMN_HANDLE_WIDTH / 2}px`
       handle.style.top = `${tableRect.top - rootRect.top - DRAG_HANDLE_SIZE}px`
       return
@@ -1432,13 +1499,14 @@ class TableWidget extends WidgetType {
 
     const body = table.tBodies[0]
     const bodyRect = body?.getBoundingClientRect() ?? tableRect
-    const centerY = clamp(event.clientY, bodyRect.top, bodyRect.bottom)
+    const centerY = clamp(clientY, bodyRect.top, bodyRect.bottom)
     handle.style.left = `${tableRect.left - rootRect.left - DRAG_HANDLE_SIZE / 2}px`
     handle.style.top = `${centerY - rootRect.top - DRAG_HANDLE_SIZE / 2}px`
   }
 
   private showDragHandle(
     root: HTMLElement,
+    overlay: HTMLElement,
     view: EditorView,
     kind: TableDragKind,
     index: number,
@@ -1455,10 +1523,13 @@ class TableWidget extends WidgetType {
     root.dataset.tableDragKind = kind
     root.dataset.tableDragIndex = String(index)
 
-    const handle = this.createDragHandle(view, root, kind, index)
-    this.positionDragHandle(root, cell, handle, kind)
-    root.append(handle)
-    markDragSelection(root, kind, index)
+    // Колоночный handle скроллится вместе с колонкой (живёт в оверлее),
+    // строчный — пришпилен к видимому левому краю (живёт на root).
+    const host = kind === 'column' ? overlay : root
+    const handle = this.createDragHandle(view, root, overlay, kind, index)
+    this.positionDragHandle(host, cell, handle, kind)
+    host.append(handle)
+    markDragSelection(overlay, kind, index)
   }
 
   private clearHoverDragState(root: HTMLElement) {
@@ -1472,19 +1543,27 @@ class TableWidget extends WidgetType {
     event: PointerEvent,
     view: EditorView,
     root: HTMLElement,
+    overlay: HTMLElement,
   ) {
     if (root.dataset.tableDragging === '1')
       return
 
     const column = getColumnHoverTarget(root, event.clientX, event.clientY)
     if (column) {
-      this.showDragHandle(root, view, 'column', column.index, column.cell)
+      this.showDragHandle(
+        root,
+        overlay,
+        view,
+        'column',
+        column.index,
+        column.cell,
+      )
       return
     }
 
     const row = getRowHoverTarget(root, event.clientX, event.clientY)
     if (row) {
-      this.showDragHandle(root, view, 'row', row.index, row.cell)
+      this.showDragHandle(root, overlay, view, 'row', row.index, row.cell)
       return
     }
 
@@ -1514,9 +1593,13 @@ class TableWidget extends WidgetType {
     this.clearHoverDragState(root)
   }
 
-  private attachDragHover(view: EditorView, root: HTMLElement) {
+  private attachDragHover(
+    view: EditorView,
+    root: HTMLElement,
+    overlay: HTMLElement,
+  ) {
     root.addEventListener('pointermove', event =>
-      this.onRootPointerMove(event, view, root))
+      this.onRootPointerMove(event, view, root, overlay))
     root.addEventListener('pointerleave', event =>
       this.onRootPointerLeave(root, event))
   }
@@ -1658,25 +1741,39 @@ class TableWidget extends WidgetType {
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
-    root.style.width = 'fit-content'
-    root.style.maxWidth = '100%'
 
+    // root и scroll — обычные блоки на всю ширину: fit-content + max-width в
+    // процентах внутри shrink-to-fit контейнера разрешаются хрупко и могут
+    // дать переполнение контента редактора широкой таблицей.
     const scroll = document.createElement('div')
-    scroll.style.display = 'inline-block'
-    scroll.style.maxWidth = '100%'
-    scroll.style.verticalAlign = 'top'
+    scroll.dataset.tableScroll = '1'
     scroll.style.overflowX = 'auto'
-    scroll.style.border = '1px solid var(--border)'
-    scroll.style.borderRadius = '8px'
-    scroll.style.background = 'var(--background)'
+
+    // Позиционированный слой ВНУТРИ скролла: кнопки добавления, колоночные
+    // drag-handle и превью перетаскивания привязаны к реальному краю таблицы
+    // и уезжают вместе с ней при горизонтальном скролле (как в Obsidian), а
+    // не прижимаются к видимой области.
+    const overlay = document.createElement('div')
+    overlay.dataset.tableOverlay = '1'
+    overlay.style.position = 'relative'
+    overlay.style.width = 'max-content'
+
+    const frame = document.createElement('div')
+    frame.style.width = 'max-content'
+    frame.style.border = '1px solid var(--border)'
+    frame.style.borderRadius = '8px'
+    frame.style.background = 'var(--background)'
+    frame.style.overflow = 'hidden'
 
     if (this.interactive) {
-      root.style.paddingTop = `${DRAG_HANDLE_SIZE}px`
-      root.style.paddingRight = `${GUTTER}px`
-      root.style.paddingBottom = `${GUTTER + STRIP}px`
+      overlay.style.paddingTop = `${DRAG_HANDLE_SIZE}px`
+      overlay.style.paddingRight = `${GUTTER}px`
+      overlay.style.paddingBottom = `${GUTTER + STRIP}px`
     }
 
-    scroll.append(this.buildTable())
+    frame.append(this.buildTable())
+    overlay.append(frame)
+    scroll.append(overlay)
     root.append(scroll)
 
     if (this.interactive) {
@@ -1717,10 +1814,13 @@ class TableWidget extends WidgetType {
         const before = event.clientY < rect.top + rect.height / 2
         placeCursorAdjacent(view, root, before)
       })
-      this.attachDragHover(view, root)
+      this.attachDragHover(view, root, overlay)
 
-      root.append(
-        this.createRowDragHoverZone(),
+      // Зона наведения строк пришпилена к видимому левому краю (строки не
+      // двигаются при горизонтальном скролле), кнопки добавления — в
+      // скроллящемся оверлее у настоящих краёв таблицы.
+      root.append(this.createRowDragHoverZone())
+      overlay.append(
         this.createGutter('column', () => addColumn(view, root)),
         this.createGutter('row', () => addRow(view, root)),
       )

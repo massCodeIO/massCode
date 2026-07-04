@@ -1949,6 +1949,83 @@ function maybePlaceCursorAfterTableClick(
   return true
 }
 
+// Вставка TSV (скопированные ячейки Excel/Numbers) в текст заметки создаёт
+// markdown-таблицу: первая строка — заголовок. Эвристики против ложных
+// срабатываний на код с табуляцией: одинаковое число колонок (>= 2) во всех
+// строках и хотя бы одна непустая первая колонка.
+function maybePasteTsvAsTable(
+  view: EditorView,
+  event: ClipboardEvent,
+): boolean {
+  const text = event.clipboardData?.getData('text/plain') ?? ''
+  if (!text.includes('\t'))
+    return false
+
+  // Внутри код-блоков табуляция легитимна.
+  const head = view.state.selection.main.head
+  const tree = syntaxTree(view.state)
+  let node: ReturnType<typeof tree.resolveInner> | null = tree.resolveInner(
+    head,
+    -1,
+  )
+  while (node) {
+    if (
+      node.name === 'FencedCode'
+      || node.name === 'CodeBlock'
+      || node.name === 'InlineCode'
+    ) {
+      return false
+    }
+    node = node.parent
+  }
+
+  const lines = text
+    .replace(/\r/g, '')
+    .split('\n')
+    .filter(line => line.trim() !== '')
+  if (lines.length === 0)
+    return false
+
+  const values = lines.map(line =>
+    line.split('\t').map(cell => cell.trim()),
+  )
+  const columns = values[0].length
+  if (columns < 2 || values.some(row => row.length !== columns))
+    return false
+  if (values.every(row => row[0] === ''))
+    return false
+
+  event.preventDefault()
+
+  const source = serializeTable({
+    header: values[0],
+    delimiters: Array.from({ length: columns }, () => '---'),
+    rows: values.slice(1),
+  })
+
+  const main = view.state.selection.main
+  const { doc } = view.state
+  const before
+    = main.from > 0 ? doc.sliceString(main.from - 1, main.from) : '\n'
+  const after
+    = main.to < doc.length ? doc.sliceString(main.to, main.to + 1) : '\n'
+  const lead = before === '\n' ? '' : '\n'
+  const trail = after === '\n' ? '' : '\n'
+
+  view.dispatch({
+    changes: {
+      from: main.from,
+      to: main.to,
+      insert: `${lead}${source}${trail}`,
+    },
+    selection: EditorSelection.cursor(main.from + lead.length + source.length),
+    scrollIntoView: true,
+    userEvent: 'input.paste',
+  })
+
+  return true
+}
+
 function findTableRangeStartingAt(
   state: EditorState,
   pos: number,
@@ -2227,6 +2304,9 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
     EditorView.domEventHandlers({
       mousedown(event, view) {
         return maybePlaceCursorAfterTableClick(view, event)
+      },
+      paste(event, view) {
+        return maybePasteTsvAsTable(view, event)
       },
     }),
   ]

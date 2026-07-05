@@ -377,6 +377,16 @@ watch(isDark, () => {
   applyExternalState(content.value)
 })
 
+function focusEditor() {
+  nextTick(() => {
+    view?.focus()
+  })
+}
+
+defineExpose({
+  focusEditor,
+})
+
 async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
   unregisterNavigationNoteUIState?.()
   unregisterNavigationNoteUIState = undefined

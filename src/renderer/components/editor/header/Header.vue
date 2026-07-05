@@ -25,6 +25,10 @@ import {
   getEntryNameValidationIssue,
 } from '~/shared/entryNameValidation'
 
+const emit = defineEmits<{
+  focusEditor: []
+}>()
+
 const {
   displayedSnippets,
   selectedSnippet,
@@ -157,6 +161,20 @@ function onNameBlur() {
   isFocusedSnippetName.value = false
 }
 
+function onNameKeydown(event: KeyboardEvent) {
+  if (
+    (event.key !== 'Enter' && event.key !== 'Tab')
+    || event.shiftKey
+    || nameValidationIssue.value
+    || hasNameConflict.value
+  ) {
+    return
+  }
+
+  event.preventDefault()
+  emit('focusEditor')
+}
+
 const isShowJsonVisualizerAction = computed(
   () => selectedSnippetContent.value?.language === 'json',
 )
@@ -235,6 +253,7 @@ function onJsonVisualizerToggle() {
               :select="isFocusedSnippetName"
               @focus="onSnippetNameFocus"
               @blur="onNameBlur"
+              @keydown="onNameKeydown"
             />
           </UiInputValidationTooltip>
         </div>

@@ -348,6 +348,17 @@ function setLanguage(language: Language) {
   editor?.setOption('mode', language)
 }
 
+function focusEditor() {
+  isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
+
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      editor?.focus()
+    })
+  })
+}
+
 async function format() {
   const availableLang: Language[] = [
     'css',
@@ -497,7 +508,10 @@ onMounted(() => {
     data-editor
     class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
-    <EditorHeader v-if="isShowHeader" />
+    <EditorHeader
+      v-if="isShowHeader"
+      @focus-editor="focusEditor"
+    />
     <div
       v-show="isShowEditor"
       class="flex min-h-0 flex-1 flex-col overflow-auto"

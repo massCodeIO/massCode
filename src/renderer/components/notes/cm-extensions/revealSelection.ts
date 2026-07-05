@@ -36,13 +36,15 @@ export function getRevealSelection(state: EditorState): EditorSelection {
 
 // Заморозка/разморозка приходит транзакцией без docChanged/selectionSet,
 // поэтому плагинам нужен отдельный признак, что пора перестроить декорации.
+// Сравниваем эффективный selection по содержимому: в момент заморозки он
+// совпадает с текущим, и ребилд не нужен — иначе каждый клик мышью дважды
+// пересобирал бы декорации всех reveal-плагинов без визуальных изменений.
 export function revealSelectionChanged(update: {
   startState: EditorState
   state: EditorState
 }): boolean {
-  return (
-    update.startState.field(revealSelectionField, false)
-    !== update.state.field(revealSelectionField, false)
+  return !getRevealSelection(update.startState).eq(
+    getRevealSelection(update.state),
   )
 }
 

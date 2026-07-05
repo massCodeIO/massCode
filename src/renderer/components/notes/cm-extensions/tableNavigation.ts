@@ -44,6 +44,17 @@ function findTableNavigationTargetWithIndex(
   direction: 'up' | 'down',
 ): { index: number, pos: number } | null {
   const currentLineNumber = state.doc.lineAt(head).number
+
+  // Переход возможен только когда таблица примыкает вплотную, а её крайняя
+  // строка всегда содержит `|`. Дешёвая проверка соседней строки отсекает
+  // обход дерева и репарс таблиц на каждое нажатие стрелки.
+  const adjacentLineNumber
+    = direction === 'down' ? currentLineNumber + 1 : currentLineNumber - 1
+  if (adjacentLineNumber < 1 || adjacentLineNumber > state.doc.lines)
+    return null
+  if (!state.doc.line(adjacentLineNumber).text.includes('|'))
+    return null
+
   const blocks = getTableBlockRanges(state)
 
   if (direction === 'down') {

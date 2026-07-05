@@ -1088,34 +1088,46 @@ function markDropTarget(root: HTMLElement, kind: TableDragKind, slot: number) {
   root.append(preview)
 }
 
-function getColumnIndexAt(root: HTMLElement, clientX: number): number | null {
+// Единые hit-test'ы: колонка ищется по X среди заголовков, строка тела — по Y.
+// Hover-варианты ниже добавляют к ним только перпендикулярную полосу захвата.
+function findColumnAt(
+  root: HTMLElement,
+  clientX: number,
+): { cell: HTMLTableCellElement, index: number } | null {
   const headers = Array.from(root.querySelectorAll<HTMLTableCellElement>('th'))
-  if (headers.length === 0)
-    return null
 
   for (const [index, cell] of headers.entries()) {
     const rect = cell.getBoundingClientRect()
     if (clientX >= rect.left && clientX <= rect.right)
-      return index
+      return { cell, index }
   }
 
   return null
 }
 
-function getBodyRowIndexAt(root: HTMLElement, clientY: number): number | null {
+function findBodyRowAt(
+  root: HTMLElement,
+  clientY: number,
+): { row: HTMLTableRowElement, index: number } | null {
   const rows = Array.from(
     root.querySelectorAll<HTMLTableRowElement>('tbody tr'),
   )
-  if (rows.length === 0)
-    return null
 
   for (const [index, row] of rows.entries()) {
     const rect = row.getBoundingClientRect()
     if (clientY >= rect.top && clientY <= rect.bottom)
-      return index
+      return { row, index }
   }
 
   return null
+}
+
+function getColumnIndexAt(root: HTMLElement, clientX: number): number | null {
+  return findColumnAt(root, clientX)?.index ?? null
+}
+
+function getBodyRowIndexAt(root: HTMLElement, clientY: number): number | null {
+  return findBodyRowAt(root, clientY)?.index ?? null
 }
 
 // ---- Структурные операции над таблицей -------------------------------------
@@ -1317,14 +1329,7 @@ function getColumnHoverTarget(
     return null
   }
 
-  const headers = Array.from(root.querySelectorAll<HTMLTableCellElement>('th'))
-  for (const [index, cell] of headers.entries()) {
-    const rect = cell.getBoundingClientRect()
-    if (clientX >= rect.left && clientX <= rect.right)
-      return { cell, index }
-  }
-
-  return null
+  return findColumnAt(root, clientX)
 }
 
 function getRowHoverTarget(
@@ -1344,18 +1349,12 @@ function getRowHoverTarget(
     return null
   }
 
-  const rows = Array.from(
-    root.querySelectorAll<HTMLTableRowElement>('tbody tr'),
-  )
-  for (const [index, row] of rows.entries()) {
-    const rect = row.getBoundingClientRect()
-    if (clientY >= rect.top && clientY <= rect.bottom) {
-      const cell = row.cells.item(0)
-      return cell ? { cell, index } : null
-    }
-  }
+  const target = findBodyRowAt(root, clientY)
+  if (!target)
+    return null
 
-  return null
+  const cell = target.row.cells.item(0)
+  return cell ? { cell, index: target.index } : null
 }
 
 // Блочный виджет, заменяющий исходный markdown таблицы её отрисовкой. Ячейки

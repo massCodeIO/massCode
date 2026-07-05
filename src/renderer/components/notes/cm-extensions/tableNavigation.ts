@@ -1,7 +1,7 @@
 import type { EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
-import { activateTableCell } from './tableBlocks'
+import { activateTableCell, clampTableEnd } from './tableBlocks'
 import { parseMarkdownTable } from './tableParser'
 
 export interface TableBlockRange {
@@ -27,22 +27,6 @@ function getTableBlockRanges(state: EditorState): TableBlockRange[] {
   })
 
   return ranges
-}
-
-function clampTableEnd(state: EditorState, from: number, to: number): number {
-  const text = state.sliceDoc(from, to)
-  let offset = 0
-  let end = from
-
-  for (const line of text.split('\n')) {
-    if (line.includes('|'))
-      end = from + offset + line.length
-    else break
-
-    offset += line.length + 1
-  }
-
-  return end
 }
 
 export function findTableNavigationTarget(
@@ -173,8 +157,12 @@ export function moveSelectionToAdjacentTableCell(
   const widget = getTableWidgetAtPosition(view, target.pos, target.index)
   const cell = widget ? getTableEntryCell(widget, direction, x) : null
 
-  if (!cell)
-    return false
+  if (!cell) {
+    // Виджет мог пересоздаться между keydown и поиском DOM-узла. Ставим
+    // каретку в исходник таблицы, чтобы стрелка не перепрыгнула её целиком.
+    view.dispatch({ selection: { anchor: target.pos }, scrollIntoView: true })
+    return true
+  }
 
   activateTableCell(
     view,

@@ -9,17 +9,43 @@ export interface TableModel {
   rows: string[][]
 }
 
+// Ячейки возвращаются в экранированной форме (как в исходнике): `\|` из
+// escapeCell — содержимое ячейки, а не разделитель колонок.
 export function parseTableRow(line: string): string[] {
   const trimmed = line.trim()
   if (!trimmed.includes('|'))
     return []
 
-  const withoutStartPipe = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed
-  const withoutEdgePipes = withoutStartPipe.endsWith('|')
-    ? withoutStartPipe.slice(0, -1)
-    : withoutStartPipe
+  const cells: string[] = []
+  let current = ''
+  let closedByPipe = false
 
-  return withoutEdgePipes.split('|').map(cell => cell.trim())
+  for (let i = trimmed.startsWith('|') ? 1 : 0; i < trimmed.length; i++) {
+    const char = trimmed[i]
+
+    if (char === '\\' && trimmed[i + 1] === '|') {
+      current += '\\|'
+      i += 1
+      closedByPipe = false
+      continue
+    }
+
+    if (char === '|') {
+      cells.push(current.trim())
+      current = ''
+      closedByPipe = true
+      continue
+    }
+
+    current += char
+    closedByPipe = false
+  }
+
+  // Хвост после последнего `|` — ячейка строки без закрывающего пайпа.
+  if (!closedByPipe)
+    cells.push(current.trim())
+
+  return cells
 }
 
 export function isTableDelimiterCell(cell: string): boolean {

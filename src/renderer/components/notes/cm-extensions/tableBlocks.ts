@@ -152,7 +152,11 @@ function readDomModel(root: HTMLElement): TableModel | null {
 // Узел Table из lezer может захватывать завершающие строки без `|` (парсер
 // таблицы их пропускает, но блок-декорация перекрыла бы их и спрятала текст, а
 // commit — затёр). Поэтому зажимаем конец по последней реальной строке таблицы.
-function clampTableEnd(state: EditorState, from: number, to: number): number {
+export function clampTableEnd(
+  state: EditorState,
+  from: number,
+  to: number,
+): number {
   const text = state.sliceDoc(from, to)
   let offset = 0
   let end = from

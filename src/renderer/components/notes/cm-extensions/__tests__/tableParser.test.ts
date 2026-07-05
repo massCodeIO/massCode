@@ -9,7 +9,9 @@ import {
   parseTableRow,
   removeTableColumn,
   removeTableRow,
+  serializeTable,
   setTableColumnAlignment,
+  unescapeCell,
 } from '../tableParser'
 
 describe('tableBlocks parser', () => {
@@ -45,6 +47,35 @@ describe('tableBlocks parser', () => {
     expect(parseTableRow('| a | b |')).toEqual(['a', 'b'])
     expect(parseTableRow('a | b')).toEqual(['a', 'b'])
     expect(parseTableRow('   | a | b |   ')).toEqual(['a', 'b'])
+  })
+
+  it('keeps escaped pipes inside a single cell', () => {
+    expect(parseTableRow('| a\\|b | c |')).toEqual(['a\\|b', 'c'])
+    expect(parseTableRow('a\\|b | c')).toEqual(['a\\|b', 'c'])
+
+    const parsed = parseMarkdownTable(
+      ['| a\\|b | c |', '| --- | --- |', '| d | e\\|f |'].join('\n'),
+    )
+
+    expect(parsed).toEqual({
+      header: ['a\\|b', 'c'],
+      rows: [['d', 'e\\|f']],
+    })
+  })
+
+  it('round-trips a cell with a pipe through serialize and parse', () => {
+    const source = serializeTable({
+      header: ['a|b', 'c'],
+      delimiters: ['---', '---'],
+      rows: [['d', 'e|f']],
+    })
+
+    const parsed = parseMarkdownTable(source)
+
+    expect(parsed?.header.map(unescapeCell)).toEqual(['a|b', 'c'])
+    expect(parsed?.rows.map(row => row.map(unescapeCell))).toEqual([
+      ['d', 'e|f'],
+    ])
   })
 
   it('returns null for invalid table source', () => {

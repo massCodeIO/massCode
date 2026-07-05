@@ -19,6 +19,12 @@ const revealSelectionField = StateField.define<EditorSelection | null>({
       }
     }
 
+    // Документ может измениться прямо во время drag (например, асинхронная
+    // замена placeholder'а картинки): без маппинга замороженные позиции
+    // указали бы за конец документа и уронили билдеры декораций.
+    if (value && transaction.docChanged)
+      return value.map(transaction.changes)
+
     return value
   },
 })

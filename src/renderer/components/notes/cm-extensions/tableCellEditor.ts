@@ -106,11 +106,20 @@ const singleLineFilter = EditorState.transactionFilter.of((transaction) => {
     })
   })
 
+  // Каретка — после последней вставки в координатах нового документа:
+  // `last.from` задан в старых координатах, сдвиги от предыдущих изменений
+  // транзакции учитываем вручную.
   const last = changes[changes.length - 1]
+  const shift = changes
+    .slice(0, -1)
+    .reduce(
+      (sum, change) => sum + change.insert.length - (change.to - change.from),
+      0,
+    )
 
   return {
     changes,
-    selection: { anchor: last.from + last.insert.length },
+    selection: { anchor: last.from + shift + last.insert.length },
     scrollIntoView: transaction.scrollIntoView,
     userEvent: 'input.paste',
   }

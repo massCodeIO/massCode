@@ -178,6 +178,9 @@ const presentationTheme = EditorView.theme({
     lineHeight: '1.58',
     maxWidth: '980px',
     margin: '0 auto',
+    // Широкий блок-виджет не должен распирать контент и давать редактору
+    // горизонтальную прокрутку (см. minWidth в createNotesEditThemeStyles).
+    minWidth: '0',
   },
   '.cm-gutters': {
     display: 'none',

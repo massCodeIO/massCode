@@ -30,6 +30,12 @@ export function createNotesEditThemeStyles(
       padding: raw ? RAW_CONTENT_PADDING : CONTENT_PADDING,
       lineHeight: String(notesSettings.lineHeight),
       caretColor: 'var(--foreground)',
+      // cm-content — flex-элемент scroller'а с min-width:auto: широкий
+      // блок-виджет (таблица) не даёт ему сжаться, редактор получает
+      // горизонтальную прокрутку, и reveal каретки сдвигает весь контент
+      // влево. min-width:0 заставляет контент всегда вписываться в scroller,
+      // а широкие таблицы скроллятся внутри своего виджета.
+      minWidth: '0',
       ...(notesSettings.limitWidth
         ? { maxWidth: '700px', margin: '0 auto' }
         : {}),

@@ -1741,6 +1741,12 @@ class TableWidget extends WidgetType {
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
+    // Обнуляет intrinsic-ширину виджета: без этого широкая таблица
+    // протаскивает свою min-content-ширину через cm-content и overflow-hidden
+    // предков до grid-панели редактора — у них появляется скрытое
+    // горизонтальное переполнение, и браузер при reveal каретки прокручивает
+    // их влево (визуально «пропадает» левый отступ до пересоздания DOM).
+    root.style.contain = 'inline-size'
 
     // root и scroll — обычные блоки на всю ширину: fit-content + max-width в
     // процентах внутри shrink-to-fit контейнера разрешаются хрупко и могут
@@ -2105,20 +2111,45 @@ function maybePasteTsvAsTable(
 
   const main = view.state.selection.main
   const { doc } = view.state
-  const before
-    = main.from > 0 ? doc.sliceString(main.from - 1, main.from) : '\n'
-  const after
-    = main.to < doc.length ? doc.sliceString(main.to, main.to + 1) : '\n'
-  const lead = before === '\n' ? '' : '\n'
-  const trail = after === '\n' ? '' : '\n'
 
+  // Таблица — блочный элемент: между ней и соседним контентом должна быть
+  // пустая строка (как в Obsidian). Без неё смежные markdown-таблицы
+  // склеиваются в один Table-узел при парсинге.
+  const b1 = main.from > 0 ? doc.sliceString(main.from - 1, main.from) : ''
+  const b2 = main.from > 1 ? doc.sliceString(main.from - 2, main.from - 1) : ''
+  let lead = ''
+  if (main.from > 0) {
+    if (b1 !== '\n')
+      lead = '\n\n'
+    else if (main.from > 1 && b2 !== '\n')
+      lead = '\n'
+  }
+
+  const a1 = main.to < doc.length ? doc.sliceString(main.to, main.to + 1) : ''
+  const a2
+    = main.to + 1 < doc.length ? doc.sliceString(main.to + 1, main.to + 2) : ''
+  let trail = '\n'
+  if (main.to < doc.length) {
+    if (a1 !== '\n')
+      trail = '\n\n'
+    else if (main.to + 1 < doc.length && a2 !== '\n')
+      trail = '\n'
+    else trail = ''
+  }
+
+  // Курсор — на пустую строку ПОСЛЕ таблицы, не на границу блок-виджета:
+  // каретка вплотную к contentEditable=false виджету заставляет браузер
+  // «доводить» её по правому краю широкой таблицы и прокручивать
+  // overflow-hidden предков редактора (см. revealCellHorizontally).
   view.dispatch({
     changes: {
       from: main.from,
       to: main.to,
       insert: `${lead}${source}${trail}`,
     },
-    selection: EditorSelection.cursor(main.from + lead.length + source.length),
+    selection: EditorSelection.cursor(
+      main.from + lead.length + source.length + 1,
+    ),
     scrollIntoView: true,
     userEvent: 'input.paste',
   })
@@ -2166,6 +2197,11 @@ function isProtectedTableBoundary(
 
   const line = state.doc.line(lineNumber)
   if (line.text.trim() !== '')
+    return false
+
+  // Защищаем только последнюю пустую строку-разделитель перед таблицей:
+  // если выше есть ещё пустые, они лишние и удаляются как обычный текст.
+  if (lineNumber > 1 && state.doc.line(lineNumber - 1).text.trim() === '')
     return false
 
   const nextLine = state.doc.line(lineNumber + 1)
@@ -2383,13 +2419,18 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
     EditorState.transactionFilter.of(preserveTableBoundaryOnInput),
     Prec.highest(
       keymap.of([
-        {
-          key: 'Backspace',
-          run: moveBeforeProtectedTableBoundary,
-        },
+        // Вход в таблицу выше — раньше ухода на защищённую границу: на
+        // пустой строке между двумя таблицами Backspace должен вести в
+        // последнюю ячейку верхней таблицы, а не парковать курсор на её
+        // атомарной границе, где следующий Backspace удалил бы таблицу
+        // целиком.
         {
           key: 'Backspace',
           run: enterTableOnBackspaceAfter,
+        },
+        {
+          key: 'Backspace',
+          run: moveBeforeProtectedTableBoundary,
         },
         {
           key: 'Delete',

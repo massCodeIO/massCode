@@ -59,6 +59,7 @@ import { Highlight } from './cm-extensions/markdownHighlight'
 import { markdownShortcuts } from './cm-extensions/markdownShortcuts'
 import { createMermaidBlocks } from './cm-extensions/mermaidBlocks'
 import { moveSelectionToAdjacentMermaidSource } from './cm-extensions/mermaidNavigation'
+import { revealSelectionFreeze } from './cm-extensions/revealSelection'
 import {
   createTableBlocks,
   getActiveTableCellContext,
@@ -244,6 +245,7 @@ function createEditorState(doc: string): EditorState {
 
   if (!raw) {
     extensions.push(
+      revealSelectionFreeze,
       createMermaidBlocks({
         enabled: true,
         isDark: isDark.value,

@@ -17,6 +17,7 @@ import {
   keymap,
   WidgetType,
 } from '@codemirror/view'
+import { freezeRevealSelectionUntilMouseup } from './revealSelection'
 import {
   type CellSelectionTarget,
   createTableCellEditor,
@@ -1871,6 +1872,9 @@ class TableWidget extends WidgetType {
           return
 
         event.preventDefault()
+        // mousedown внутри виджета не доходит до domEventHandlers
+        // (ignoreEvent), поэтому замораживаем reveal-selection явно.
+        freezeRevealSelectionUntilMouseup(view)
         const rect = scroll.getBoundingClientRect()
         const before = event.clientY < rect.top + rect.height / 2
         trackTableAreaSelection(view, event, () =>

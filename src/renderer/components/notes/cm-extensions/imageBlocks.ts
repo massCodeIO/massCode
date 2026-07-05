@@ -15,6 +15,7 @@ import {
   renderDrawingEmbed,
 } from './drawingEmbed'
 import { editorFocusField, setEditorFocusEffect } from './editorFocus'
+import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 import { isSelectionInsideRangeWithFocus } from './selectionRange'
 
 interface ImageBlocksOptions {
@@ -40,7 +41,7 @@ function isSelectionInsideRange(
 ): boolean {
   const hasFocus = state.field(editorFocusField, false) ?? false
 
-  for (const range of state.selection.ranges) {
+  for (const range of getRevealSelection(state).ranges) {
     if (
       isSelectionInsideRangeWithFocus(
         hasFocus,
@@ -250,10 +251,12 @@ export function createImageBlocks(options: ImageBlocksOptions = {}) {
       }
 
       // A pure selection change only matters when the cursor enters or
-      // leaves one of the current blocks.
+      // leaves one of the current blocks. Unfreezing the reveal selection
+      // (mouseup after a drag) changes the effective selection too.
       if (
         showSourceWhenSelectionInside
-        && !transaction.startState.selection.eq(transaction.state.selection)
+        && (revealSelectionChanged(transaction)
+          || !transaction.startState.selection.eq(transaction.state.selection))
         && value.blocks.some(
           block =>
             isSelectionInsideRange(

@@ -73,6 +73,28 @@ describe('findTableNavigationTarget', () => {
     expect(target).toBe(state.doc.line(2).from)
   })
 
+  it('skips table-shaped blocks that are not rendered as widgets', () => {
+    const state = createState(
+      [
+        '| Broken | Table |',
+        '| --- |',
+        '',
+        'before',
+        '| A | B |',
+        '| --- | --- |',
+        '| 1 | 2 |',
+        'after',
+        '',
+      ].join('\n'),
+    )
+    const head = state.doc.line(4).from + 3
+
+    const target = findTableNavigationTarget(state, head, 'down')
+
+    expect(target).not.toBeNull()
+    expect(target).toBe(state.doc.line(5).from)
+  })
+
   it('moves up into table block when cursor is on non-blank line directly below table', () => {
     const state = createState(
       [

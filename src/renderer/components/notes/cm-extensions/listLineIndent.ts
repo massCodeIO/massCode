@@ -3,6 +3,7 @@ import type { EditorView, ViewUpdate } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin } from '@codemirror/view'
 import { shouldReplaceTaskMarker } from './markdownDecorations'
+import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 
 const BASE_INDENT_PX = 14
 const CHECKBOX_WIDGET_PX = 24
@@ -38,7 +39,7 @@ export function getListContinuationLineNumbers(
 }
 
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
-  for (const range of view.state.selection.ranges) {
+  for (const range of getRevealSelection(view.state).ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
     const endLine = view.state.doc.lineAt(range.to).number
     if (lineNumber >= startLine && lineNumber <= endLine)
@@ -213,6 +214,7 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
           || update.selectionSet
           || update.focusChanged
           || update.geometryChanged
+          || revealSelectionChanged(update)
         ) {
           this.decorations = this.build(update.view)
         }

@@ -11,6 +11,7 @@ import {
   shouldReplaceCalloutMarker,
 } from './callouts'
 import { buildFencedCodeLineStyle } from './fencedCodeStyles'
+import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 
 class HorizontalRuleWidget extends WidgetType {
   eq(): boolean {
@@ -318,7 +319,7 @@ export function shouldReplaceTaskMarker(
 }
 
 function isCursorOnLine(view: EditorView, lineNumber: number): boolean {
-  for (const range of view.state.selection.ranges) {
+  for (const range of getRevealSelection(view.state).ranges) {
     const startLine = view.state.doc.lineAt(range.from).number
     const endLine = view.state.doc.lineAt(range.to).number
     if (lineNumber >= startLine && lineNumber <= endLine)
@@ -659,9 +660,14 @@ export function createMarkdownDecorations(
         selectionSet: boolean
         viewportChanged: boolean
         focusChanged: boolean
+        startState: EditorState
+        state: EditorState
         view: EditorView
       }) {
-        if (shouldRebuildMarkdownDecorations(update)) {
+        if (
+          shouldRebuildMarkdownDecorations(update)
+          || revealSelectionChanged(update)
+        ) {
           this.decorations = buildDecorations(
             update.view,
             interactiveTaskMarkers,

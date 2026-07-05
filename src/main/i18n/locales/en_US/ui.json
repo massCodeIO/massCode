@@ -357,6 +357,52 @@
     "symbols": "Symbols",
     "selectedMultiple": "{{count}} Notes Selected",
     "noSelected": "No Note Selected",
+    "editor": {
+      "menu": {
+        "format": {
+          "title": "Format",
+          "bold": "Bold",
+          "italic": "Italic",
+          "strikethrough": "Strikethrough",
+          "highlight": "Highlight",
+          "code": "Code",
+          "link": "Link",
+          "clearFormatting": "Clear formatting"
+        },
+        "paragraph": {
+          "title": "Paragraph",
+          "bulletList": "Bullet list",
+          "numberedList": "Numbered list",
+          "taskList": "Task list",
+          "heading": "Heading {{level}}",
+          "body": "Body",
+          "quote": "Quote"
+        },
+        "insert": {
+          "title": "Insert",
+          "table": "Table",
+          "callout": "Callout",
+          "horizontalRule": "Horizontal rule",
+          "codeBlock": "Code block"
+        },
+        "table": {
+          "title": "Table",
+          "insertRowAbove": "Insert row above",
+          "insertRowBelow": "Insert row below",
+          "deleteRow": "Delete row",
+          "insertColumnLeft": "Insert column left",
+          "insertColumnRight": "Insert column right",
+          "deleteColumn": "Delete column",
+          "alignLeft": "Align left",
+          "alignCenter": "Align center",
+          "alignRight": "Align right"
+        }
+      },
+      "table": {
+        "addColumn": "Add column to the right",
+        "addRow": "Add row below"
+      }
+    },
     "tasks": {
       "title": "Tasks",
       "today": "Today",

@@ -5,6 +5,7 @@ import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { StateEffect } from '@codemirror/state'
 import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view'
+import { getRevealSelection, revealSelectionChanged } from '../revealSelection'
 import { entityCache } from './cache'
 import { findInternalLinks, normalizeInternalLinkLookupKey } from './parser'
 
@@ -400,8 +401,12 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
 
         // Widgets only depend on whether the selection intersects a link
         // range, so a pure selection move outside every link cannot change
-        // the decorations.
-        if (update.selectionSet && this.selectionTouchesLinks(update)) {
+        // the decorations. Unfreezing the reveal selection (mouseup after a
+        // drag) changes the effective selection too.
+        if (
+          (update.selectionSet && this.selectionTouchesLinks(update))
+          || revealSelectionChanged(update)
+        ) {
           this.decorations = this.build()
         }
       }
@@ -431,11 +436,13 @@ export function createInternalLinksDecorations(mode: InternalLinksMode) {
         const decorations = []
         const linkRanges: { from: number, to: number }[] = []
         const doc = this.view.state.doc
-        const selections = this.view.state.selection.ranges.map(range => ({
-          empty: range.empty,
-          from: range.from,
-          to: range.to,
-        }))
+        const selections = getRevealSelection(this.view.state).ranges.map(
+          range => ({
+            empty: range.empty,
+            from: range.from,
+            to: range.to,
+          }),
+        )
 
         let scannedTo = 0
 

@@ -60,6 +60,11 @@ export function createImageInsert() {
       if (!file)
         return false
 
+      // В буфере есть и текст — текстовая вставка приоритетнее: Excel кладёт
+      // рядом с TSV ещё и картинку-рендер скопированных ячеек.
+      if (event.clipboardData?.getData('text/plain'))
+        return false
+
       event.preventDefault()
       const pos = view.state.selection.main.head
       void insertImage(view, file, pos)

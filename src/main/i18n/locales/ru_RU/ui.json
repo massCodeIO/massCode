@@ -358,6 +358,52 @@
     "symbols": "Символы",
     "selectedMultiple": "Выбрано заметок: {{count}}",
     "noSelected": "Нет выбранных заметок",
+    "editor": {
+      "menu": {
+        "format": {
+          "title": "Форматирование",
+          "bold": "Полужирный",
+          "italic": "Курсив",
+          "strikethrough": "Зачёркнутый",
+          "highlight": "Выделение",
+          "code": "Код",
+          "link": "Ссылка",
+          "clearFormatting": "Очистить форматирование"
+        },
+        "paragraph": {
+          "title": "Абзац",
+          "bulletList": "Маркированный список",
+          "numberedList": "Нумерованный список",
+          "taskList": "Список задач",
+          "heading": "Заголовок {{level}}",
+          "body": "Обычный текст",
+          "quote": "Цитата"
+        },
+        "insert": {
+          "title": "Вставить",
+          "table": "Таблица",
+          "callout": "Выноска",
+          "horizontalRule": "Горизонтальная линия",
+          "codeBlock": "Блок кода"
+        },
+        "table": {
+          "title": "Таблица",
+          "insertRowAbove": "Вставить строку выше",
+          "insertRowBelow": "Вставить строку ниже",
+          "deleteRow": "Удалить строку",
+          "insertColumnLeft": "Вставить столбец слева",
+          "insertColumnRight": "Вставить столбец справа",
+          "deleteColumn": "Удалить столбец",
+          "alignLeft": "По левому краю",
+          "alignCenter": "По центру",
+          "alignRight": "По правому краю"
+        }
+      },
+      "table": {
+        "addColumn": "Добавить столбец справа",
+        "addRow": "Добавить строку снизу"
+      }
+    },
     "tasks": {
       "title": "Задачи",
       "today": "Сегодня",

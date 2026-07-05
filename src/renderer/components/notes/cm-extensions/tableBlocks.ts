@@ -1099,6 +1099,61 @@ function getBodyRowIndexAt(root: HTMLElement, clientY: number): number | null {
 
 // ---- Структурные операции над таблицей -------------------------------------
 
+// mousedown по contentEditable=false виджету (и по перехваченной зоне под
+// последней таблицей) не запускает встроенное drag-выделение CodeMirror,
+// поэтому протяжку отслеживаем вручную: клик без движения ведёт себя как
+// раньше (onClick ставит каретку), а движение с зажатой левой кнопкой
+// выделяет текст от точки нажатия, как на обычном контенте.
+const DRAG_SELECT_THRESHOLD = 4
+
+function trackTableAreaSelection(
+  view: EditorView,
+  event: MouseEvent,
+  onClick: () => void,
+) {
+  const anchor = view.posAtCoords(
+    { x: event.clientX, y: event.clientY },
+    false,
+  )
+  let dragging = false
+
+  const move = (moveEvent: MouseEvent) => {
+    if (!dragging) {
+      if (
+        Math.abs(moveEvent.clientX - event.clientX) < DRAG_SELECT_THRESHOLD
+        && Math.abs(moveEvent.clientY - event.clientY) < DRAG_SELECT_THRESHOLD
+      ) {
+        return
+      }
+
+      dragging = true
+      view.focus()
+    }
+
+    const head = view.posAtCoords(
+      { x: moveEvent.clientX, y: moveEvent.clientY },
+      false,
+    )
+    view.dispatch({
+      selection: EditorSelection.single(anchor, head),
+      scrollIntoView: true,
+    })
+  }
+
+  const stop = () => {
+    document.removeEventListener('mousemove', move)
+    document.removeEventListener('mouseup', stop)
+
+    // Обычный клик или схлопнувшаяся протяжка — ставим каретку штатным
+    // способом, а не паркуем её на атомарной границе таблицы.
+    if (!dragging || view.state.selection.main.empty)
+      onClick()
+  }
+
+  document.addEventListener('mousemove', move)
+  document.addEventListener('mouseup', stop)
+}
+
 function placeCursorAdjacent(
   view: EditorView,
   root: HTMLElement,
@@ -1818,7 +1873,8 @@ class TableWidget extends WidgetType {
         event.preventDefault()
         const rect = scroll.getBoundingClientRect()
         const before = event.clientY < rect.top + rect.height / 2
-        placeCursorAdjacent(view, root, before)
+        trackTableAreaSelection(view, event, () =>
+          placeCursorAdjacent(view, root, before))
       })
       this.attachDragHover(view, root, overlay)
 
@@ -2050,7 +2106,8 @@ function maybePlaceCursorAfterTableClick(
 
   event.preventDefault()
   event.stopPropagation()
-  placeCursorAfterTableRange(view, range)
+  trackTableAreaSelection(view, event, () =>
+    placeCursorAfterTableRange(view, range))
 
   return true
 }

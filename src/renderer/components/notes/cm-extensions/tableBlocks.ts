@@ -407,10 +407,26 @@ function activateCellEditor(
 // таблицы. element.scrollIntoView здесь недопустим: он прокручивает все
 // прокручиваемые предки, включая overflow-hidden контейнеры вокруг редактора,
 // у которых нет скроллбаров — вернуть их назад пользователь не сможет.
-function revealCellHorizontally(root: HTMLElement, cell: HTMLElement) {
+function revealCellHorizontally(root: HTMLElement, cell: HTMLTableCellElement) {
   const scroll = root.querySelector<HTMLElement>('[data-table-scroll="1"]')
   if (!scroll)
     return
+
+  // Крайние ячейки строки доводят скролл до упора: выравнивание по краю
+  // самой ячейки оставило бы рамку таблицы и зоны добавления строк/колонок
+  // (отступы оверлея) за краем — таблица выглядела бы обрезанной.
+  const row = cell.closest('tr')
+  if (row) {
+    if (cell.cellIndex === 0) {
+      scroll.scrollLeft = 0
+      return
+    }
+
+    if (cell.cellIndex === row.cells.length - 1) {
+      scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth
+      return
+    }
+  }
 
   const scrollRect = scroll.getBoundingClientRect()
   const cellRect = cell.getBoundingClientRect()

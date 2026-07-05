@@ -1,6 +1,7 @@
 import type { NoteItemResponse, NotesResponse } from '../dto/notes'
 import Elysia from 'elysia'
 import { useNotesStorage } from '../../storage'
+import { runTasksCleanupNow } from '../../tasks'
 import {
   commonAddResponse,
   commonMessageResponse,
@@ -308,6 +309,19 @@ app
       }
     },
     {
+      detail: {
+        tags: ['Notes'],
+      },
+    },
+  )
+  .post(
+    '/tasks/cleanup',
+    () => {
+      const count = runTasksCleanupNow()
+      return { count }
+    },
+    {
+      response: 'notesTasksCleanupResponse',
       detail: {
         tags: ['Notes'],
       },

@@ -137,6 +137,14 @@ function applyNotePropertyFilters(
     return false
   }
 
+  if (
+    query.hideCompletedTasks
+    && normalizePropertyText(note.properties.type) === 'task'
+    && normalizePropertyText(note.properties.status) === 'done'
+  ) {
+    return false
+  }
+
   if (query.propertyDue !== undefined) {
     const due = normalizePropertyDate(note.properties.due)
     if (!due) {

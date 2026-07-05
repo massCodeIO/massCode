@@ -134,6 +134,8 @@ export interface AppStore {
     contentSort: ContentSortState
     route: NotesRouteName
     editorMode: NotesEditorMode
+    hideCompletedTasksInFolders: boolean
+    lastTasksCleanupAt: number
     dashboard: {
       widgets: NotesDashboardWidgets
     }
@@ -234,6 +236,12 @@ export interface UpdatesSettings {
   autoUpdate: boolean
 }
 
+export type TasksAutoCleanupInterval = 'never' | '1d' | '7d' | '30d'
+
+export interface TasksSettings {
+  autoCleanupCompleted: TasksAutoCleanupInterval
+}
+
 export interface PreferencesStore {
   appearance: {
     theme: string
@@ -260,6 +268,7 @@ export interface PreferencesStore {
   }
   math: MathSettings
   http: HttpSettings
+  tasks: TasksSettings
 }
 
 export interface MathSheet {

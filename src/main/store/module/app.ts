@@ -65,6 +65,8 @@ const APP_STORE_DEFAULTS: AppStore = {
     },
     route: 'notes-space',
     editorMode: 'livePreview',
+    hideCompletedTasksInFolders: false,
+    lastTasksCleanupAt: 0,
     dashboard: {
       widgets: {
         stats: true,
@@ -624,6 +626,15 @@ function sanitizeAppStore(value: unknown): AppStore {
           ['raw', 'livePreview', 'preview'] as const,
           APP_STORE_DEFAULTS.notes.editorMode,
         ) as NotesEditorMode,
+      ),
+      hideCompletedTasksInFolders:
+        typeof notesSource.hideCompletedTasksInFolders === 'boolean'
+          ? notesSource.hideCompletedTasksInFolders
+          : APP_STORE_DEFAULTS.notes.hideCompletedTasksInFolders,
+      lastTasksCleanupAt: readNumber(
+        notesSource,
+        'lastTasksCleanupAt',
+        APP_STORE_DEFAULTS.notes.lastTasksCleanupAt,
       ),
       dashboard: {
         widgets: (() => {

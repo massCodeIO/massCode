@@ -38,10 +38,23 @@ async function setup(options: SetupOptions = {}) {
   const notesCreateKind = ref<'note' | 'task'>('note')
   const isSearch = ref(options.isSearch ?? false)
   const searchQuery = ref(options.searchQuery ?? '')
+  const hideCompletedTasksInFolders = ref(false)
   const nextNotes = options.nextNotes ?? [{ id: 2 }]
+  const markPersistedStorageMutation = vi.fn()
   const patchNotesByIdProperties = vi.fn(async () => undefined)
+  const postNotesTasksCleanup = vi.fn(async () => ({ data: { count: 1 } }))
   const getNotes = vi.fn(async () => ({ data: nextNotes }))
+  const getNotesById = vi.fn(async (id: string) => ({
+    data: { id: Number(id) },
+  }))
   const postNotes = vi.fn(async () => ({ data: { id: 7 } }))
+  const sonner = vi.fn()
+
+  vi.doMock('@/composables/useContentSort', () => ({
+    useContentSort: () => ({
+      getContentSortQuery: vi.fn(() => ({})),
+    }),
+  }))
 
   vi.doMock('@/composables/useDialog', () => ({
     useDialog: () => ({
@@ -57,7 +70,13 @@ async function setup(options: SetupOptions = {}) {
   }))
 
   vi.doMock('@/composables/useStorageMutation', () => ({
-    markPersistedStorageMutation: vi.fn(),
+    markPersistedStorageMutation,
+  }))
+
+  vi.doMock('@/composables/useSonner', () => ({
+    useSonner: () => ({
+      sonner,
+    }),
   }))
 
   vi.doMock('@/electron', () => ({
@@ -77,11 +96,13 @@ async function setup(options: SetupOptions = {}) {
         deleteNotesTrash: vi.fn(),
         deleteNotesByIdTagsByTagId: vi.fn(),
         getNotes,
+        getNotesById,
         patchNotesById: vi.fn(),
         patchNotesByIdContent: vi.fn(),
         patchNotesByIdProperties,
         postNotes,
         postNotesByIdTagsByTagId: vi.fn(),
+        postNotesTasksCleanup,
       },
     },
   }))
@@ -96,6 +117,7 @@ async function setup(options: SetupOptions = {}) {
   vi.doMock('../useNotesApp', () => ({
     useNotesApp: () => ({
       focusNoteNameInput: vi.fn(),
+      hideCompletedTasksInFolders,
       notesCreateKind,
       notesState,
     }),
@@ -111,11 +133,14 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     getNotes,
+    markPersistedStorageMutation,
     notesState,
     patchNotesByIdProperties,
     postNotes,
+    postNotesTasksCleanup,
     searchQuery,
     selectedNoteIds,
+    sonner,
     useNotes,
   }
 }
@@ -227,6 +252,29 @@ describe('useNotes', () => {
       propertyStatusNot: 'done',
       propertyType: 'task',
       search: 'release',
+    })
+  })
+
+  it('marks cleanup as persisted and selects the first note when cleanup removes the current note from the active list', async () => {
+    const context = await setup({
+      libraryFilter: 'completed',
+      nextNotes: [{ id: 2 }],
+      noteId: 1,
+    })
+
+    await context.useNotes().cleanupCompletedTasks({ skipConfirm: true })
+
+    expect(context.markPersistedStorageMutation).toHaveBeenCalledOnce()
+    expect(context.postNotesTasksCleanup).toHaveBeenCalledOnce()
+    expect(context.getNotes).toHaveBeenCalledWith({
+      propertyStatus: 'done',
+      propertyType: 'task',
+    })
+    expect(context.notesState.noteId).toBe(2)
+    expect(context.selectedNoteIds.value).toEqual([2])
+    expect(context.sonner).toHaveBeenCalledWith({
+      message: 'notes.tasks.cleanupDone',
+      type: 'success',
     })
   })
 })

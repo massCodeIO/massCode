@@ -25,6 +25,8 @@ export interface MainMenuViewContext {
   contentSortOrder: MainMenuContentSortOrder | null
   canToggleCompactMode: boolean
   isCompactMode: boolean
+  canToggleHideCompletedTasks: boolean
+  isHideCompletedTasksInFolders: boolean
   canToggleMindmap: boolean
   isMindmapShown: boolean
   canTogglePresentation: boolean

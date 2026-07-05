@@ -243,6 +243,7 @@ export interface NotesQueryInput {
   propertyStatus?: string
   propertyStatusNot?: string
   propertyType?: string
+  hideCompletedTasks?: number
 }
 
 export interface NoteCreateInput {

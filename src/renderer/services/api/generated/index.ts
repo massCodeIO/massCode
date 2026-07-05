@@ -367,6 +367,10 @@ export interface NotesCountsResponse {
   trash: number;
 }
 
+export interface NotesTasksCleanupResponse {
+  count: number;
+}
+
 export interface NoteItemResponse {
   id: number;
   name: string;
@@ -438,6 +442,11 @@ export interface NotesQuery {
   propertyStatus?: string;
   propertyStatusNot?: string;
   propertyType?: string;
+  /**
+   * @min 0
+   * @max 1
+   */
+  hideCompletedTasks?: number;
 }
 
 export interface NotePropertiesUpdate {
@@ -1173,7 +1182,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.6.1
+ * @version 5.7.0
  *
  * Development documentation
  */
@@ -1727,6 +1736,11 @@ export class Api<
         propertyStatus?: string;
         propertyStatusNot?: string;
         propertyType?: string;
+        /**
+         * @min 0
+         * @max 1
+         */
+        hideCompletedTasks?: number;
       },
       params: RequestParams = {},
     ) =>
@@ -1916,6 +1930,21 @@ export class Api<
       this.request<void, any>({
         path: `/notes/trash`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Notes
+     * @name PostNotesTasksCleanup
+     * @request POST:/notes/tasks/cleanup
+     */
+    postNotesTasksCleanup: (params: RequestParams = {}) =>
+      this.request<NotesTasksCleanupResponse, any>({
+        path: `/notes/tasks/cleanup`,
+        method: "POST",
+        format: "json",
         ...params,
       }),
   };

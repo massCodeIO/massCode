@@ -46,12 +46,21 @@ const notesCreateKind = ref<NotesCreateKind>(
   normalizeNotesCreateKind(store.app.get('notes.create.kind')),
 )
 
+const hideCompletedTasksInFolders = ref<boolean>(
+  (store.app.get('notes.hideCompletedTasksInFolders') as boolean | undefined)
+  ?? false,
+)
+
 watch(notesEditorMode, (mode) => {
   store.app.set('notes.editorMode', mode)
 })
 
 watch(notesCreateKind, (kind) => {
   store.app.set('notes.create.kind', kind)
+})
+
+watch(hideCompletedTasksInFolders, (value) => {
+  store.app.set('notes.hideCompletedTasksInFolders', value)
 })
 
 const isNotesSpaceInitialized = ref(false)
@@ -203,6 +212,7 @@ export function useNotesApp() {
     isNotesPresentationShown,
     notesEditorMode,
     notesCreateKind,
+    hideCompletedTasksInFolders,
     isNotesSidebarHidden,
     isNotesSpaceInitialized,
     pendingNotesNavigation,

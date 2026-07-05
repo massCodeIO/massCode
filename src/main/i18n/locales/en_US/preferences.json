@@ -99,7 +99,7 @@
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "Notes",
     "fontSize": {
       "label": "Font Size",
       "description": "Base font size in pixels for the notes editor."
@@ -183,6 +183,22 @@
       "refreshing": "Refreshing...",
       "refreshed": "Crypto rates updated",
       "rateLimited": "Rate limit exceeded. Try again later."
+    }
+  },
+  "tasks": {
+    "label": "Tasks",
+    "autoCleanup": {
+      "label": "Auto-clean completed",
+      "description": "Move completed tasks to trash on a schedule. They stay in trash until you empty it.",
+      "never": "Never",
+      "1d": "Every day",
+      "7d": "Every 7 days",
+      "30d": "Every 30 days"
+    },
+    "cleanupNow": {
+      "label": "Clean up now",
+      "button": "Move completed to trash",
+      "description": "Move all completed tasks to trash right now."
     }
   },
   "http": {

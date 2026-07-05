@@ -5,6 +5,7 @@ import type {
   MathSettings,
   NotesEditorSettings,
   PreferencesStore,
+  TasksSettings,
 } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
@@ -33,6 +34,10 @@ const HTTP_DEFAULTS: HttpSettings = {
   defaultPreviewFormat: 'http',
   autoSwitchToResponse: true,
   skipCertificateVerification: false,
+}
+
+const TASKS_DEFAULTS: TasksSettings = {
+  autoCleanupCompleted: 'never',
 }
 
 const API_INTEGRATIONS_DEFAULTS: PreferencesStore['api']['integrations'] = {
@@ -69,6 +74,7 @@ const PREFERENCES_DEFAULTS: PreferencesStore = {
   },
   math: MATH_DEFAULTS,
   http: HTTP_DEFAULTS,
+  tasks: TASKS_DEFAULTS,
 }
 
 function sanitizeApiIntegrationsSettings(
@@ -238,6 +244,19 @@ function sanitizeHttpSettings(value: unknown): HttpSettings {
   }
 }
 
+function sanitizeTasksSettings(value: unknown): TasksSettings {
+  const source = asRecord(value)
+
+  return {
+    autoCleanupCompleted: readEnum(
+      source,
+      'autoCleanupCompleted',
+      ['never', '1d', '7d', '30d'] as const,
+      TASKS_DEFAULTS.autoCleanupCompleted,
+    ),
+  }
+}
+
 function sanitizePreferences(value: unknown): PreferencesStore {
   const source = asRecord(value)
   const appearanceSource = asRecord(source.appearance)
@@ -259,6 +278,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
       : asRecord(source.markdown)
   const mathSource = asRecord(source.math)
   const httpSource = asRecord(source.http)
+  const tasksSource = asRecord(source.tasks)
 
   return {
     appearance: {
@@ -320,6 +340,7 @@ function sanitizePreferences(value: unknown): PreferencesStore {
     },
     math: sanitizeMathSettings(mathSource),
     http: sanitizeHttpSettings(httpSource),
+    tasks: sanitizeTasksSettings(tasksSource),
   }
 }
 

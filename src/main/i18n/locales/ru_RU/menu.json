@@ -57,7 +57,8 @@
       "ascending": "По возрастанию",
       "descending": "По убыванию"
     },
-    "compactMode": "Компактный список"
+    "compactMode": "Компактный список",
+    "hideCompletedTasks": "Скрывать завершённые задачи"
   },
   "edit": {
     "label": "Правка",

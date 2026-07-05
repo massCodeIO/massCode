@@ -34,6 +34,7 @@ type MainMenuAction =
   | 'send-http-request'
   | 'toggle-sidebar'
   | 'toggle-compact-mode'
+  | 'toggle-hide-completed-tasks'
   | 'update-context'
   | 'goto-math-notebook'
 

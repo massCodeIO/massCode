@@ -413,6 +413,12 @@
       "duePlaceholder": "Due",
       "clearDue": "Clear due date",
       "noDue": "No due",
+      "cleanupCompleted": "Clean up completed tasks",
+      "cleanupConfirmTitle": "Clean up completed tasks?",
+      "cleanupConfirmMessage": "All completed tasks will be moved to trash. You can restore them until you empty the trash.",
+      "cleanupDone": "Moved {{count}} completed task(s) to trash",
+      "cleanupEmpty": "No completed tasks to clean up",
+      "cleanupError": "Failed to clean up completed tasks",
       "status": {
         "todo": "Todo",
         "inProgress": "In progress",

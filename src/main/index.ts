@@ -12,6 +12,7 @@ import { isQuitting, setQuitting } from './quitState'
 import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
+import { startTasksCleanupScheduler, stopTasksCleanupScheduler } from './tasks'
 import { checkForUpdates } from './updates'
 import { isSqliteFile, log } from './utils'
 import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
@@ -235,6 +236,13 @@ else {
     }
 
     try {
+      startTasksCleanupScheduler()
+    }
+    catch (error) {
+      log('Error starting tasks cleanup scheduler', error)
+    }
+
+    try {
       registerIPC()
     }
     catch (error) {
@@ -286,6 +294,7 @@ else {
     flushWindowBoundsSave()
     stopThemeWatcher()
     stopMarkdownWatcher()
+    stopTasksCleanupScheduler()
   })
 
   app.on('window-all-closed', () => {

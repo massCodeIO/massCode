@@ -232,8 +232,6 @@ function run(command: EditorMenuCommand) {
       </ContextMenu.ContextMenuSubContent>
     </ContextMenu.ContextMenuSub>
 
-    <ContextMenu.ContextMenuSeparator v-if="props.table" />
-
     <!-- Paragraph -->
     <ContextMenu.ContextMenuSub v-if="!props.table">
       <ContextMenu.ContextMenuSubTrigger>

@@ -14,6 +14,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'code',
       compactListMode: true,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: true,
@@ -43,6 +44,8 @@ describe('createMainMenuContext', () => {
     })
     expect(context.view).toEqual({
       canToggleCompactMode: true,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
       contentSortField: 'updatedAt',
@@ -70,6 +73,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'notes',
       compactListMode: false,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: false,
@@ -99,6 +103,8 @@ describe('createMainMenuContext', () => {
     })
     expect(context.view).toEqual({
       canToggleCompactMode: true,
+      canToggleHideCompletedTasks: true,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: true,
       canTogglePresentation: true,
       contentSortField: 'name',
@@ -126,6 +132,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'math',
       compactListMode: true,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: false,
@@ -155,6 +162,8 @@ describe('createMainMenuContext', () => {
     })
     expect(context.view).toEqual({
       canToggleCompactMode: true,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
       contentSortField: 'updatedAt',
@@ -182,6 +191,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'drawings',
       compactListMode: false,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: false,
@@ -205,6 +215,8 @@ describe('createMainMenuContext', () => {
 
     expect(context.view).toEqual({
       canToggleCompactMode: false,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
       contentSortField: 'name',
@@ -221,6 +233,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'http',
       compactListMode: false,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: false,
@@ -250,6 +263,8 @@ describe('createMainMenuContext', () => {
     })
     expect(context.view).toEqual({
       canToggleCompactMode: false,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
       contentSortField: 'createdAt',
@@ -277,6 +292,7 @@ describe('createMainMenuContext', () => {
     const context = createMainMenuContext({
       activeSpaceId: 'tools',
       compactListMode: true,
+      hideCompletedTasksInFolders: false,
       contentSort,
       code: {
         canPreviewCode: false,
@@ -300,6 +316,8 @@ describe('createMainMenuContext', () => {
 
     expect(context.view).toEqual({
       canToggleCompactMode: false,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       canTogglePresentation: false,
       contentSortField: null,

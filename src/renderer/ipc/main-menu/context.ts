@@ -31,6 +31,7 @@ interface HttpMenuState {
 interface CreateMainMenuContextOptions {
   activeSpaceId: SpaceId | null
   compactListMode: boolean
+  hideCompletedTasksInFolders: boolean
   contentSort: {
     code: { sort: ContentSortField, order: ContentSortOrder }
     notes: { sort: ContentSortField, order: ContentSortOrder }
@@ -68,6 +69,8 @@ export function createMainMenuContext(
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: options.compactListMode,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -102,6 +105,8 @@ export function createMainMenuContext(
         canToggleCompactMode: true,
         canToggleMindmap: options.notes.hasSelectedNote,
         isCompactMode: options.compactListMode,
+        canToggleHideCompletedTasks: true,
+        isHideCompletedTasksInFolders: options.hideCompletedTasksInFolders,
         isMindmapShown: options.notes.isMindmapShown,
         canTogglePresentation: options.notes.hasSelectedNote,
         isPresentationShown: options.notes.isPresentationShown,
@@ -136,6 +141,8 @@ export function createMainMenuContext(
         canToggleCompactMode: false,
         canToggleMindmap: false,
         isCompactMode: false,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -170,6 +177,8 @@ export function createMainMenuContext(
         canToggleCompactMode: true,
         canToggleMindmap: false,
         isCompactMode: options.compactListMode,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -204,6 +213,8 @@ export function createMainMenuContext(
         canToggleCompactMode: false,
         canToggleMindmap: false,
         isCompactMode: false,
+        canToggleHideCompletedTasks: false,
+        isHideCompletedTasksInFolders: false,
         isMindmapShown: false,
         canTogglePresentation: false,
         isPresentationShown: false,
@@ -235,6 +246,8 @@ export function createMainMenuContext(
       contentSortField: null,
       contentSortOrder: null,
       canToggleCompactMode: false,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
       canToggleMindmap: false,
       isCompactMode: false,
       isMindmapShown: false,

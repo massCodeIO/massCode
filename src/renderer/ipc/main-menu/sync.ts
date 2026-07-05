@@ -24,6 +24,7 @@ const {
   isNotesPresentationShown,
   notesEditorMode,
   notesLayoutMode,
+  hideCompletedTasksInFolders,
 } = useNotesApp()
 const { httpLayoutMode } = useHttpApp()
 const { isExecuting } = useHttpExecute()
@@ -47,6 +48,7 @@ export function registerMainMenuContextSync() {
         isNotesPresentationShown.value,
         notesLayoutMode.value,
         notesEditorMode.value,
+        hideCompletedTasksInFolders.value,
         httpLayoutMode.value,
         contentSortState.code.sort,
         contentSortState.code.order,
@@ -67,6 +69,7 @@ export function registerMainMenuContextSync() {
         createMainMenuContext({
           activeSpaceId: getActiveSpaceId(),
           compactListMode: isCompactListMode.value,
+          hideCompletedTasksInFolders: hideCompletedTasksInFolders.value,
           contentSort: {
             code: { ...contentSortState.code },
             notes: { ...contentSortState.notes },

@@ -1,6 +1,7 @@
 import { useContentSort } from '@/composables/useContentSort'
 import { useDialog } from '@/composables/useDialog'
 import { useDonations } from '@/composables/useDonations'
+import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { getContiguousSelection } from '@/utils'
@@ -11,7 +12,12 @@ import { useNoteContent } from './useNoteContent'
 import { useNotesApp } from './useNotesApp'
 import { isSearch, notesBySearch, searchQuery } from './useNoteSearch'
 
-const { notesState, focusNoteNameInput, notesCreateKind } = useNotesApp()
+const {
+  notesState,
+  focusNoteNameInput,
+  notesCreateKind,
+  hideCompletedTasksInFolders,
+} = useNotesApp()
 const { getContentSortQuery } = useContentSort()
 
 // --- Types ---
@@ -64,6 +70,7 @@ interface NotesQuery {
   propertyStatus?: string
   propertyStatusNot?: string
   propertyType?: string
+  hideCompletedTasks?: number
 }
 
 interface NotesUpdate {
@@ -390,6 +397,13 @@ export async function getNotes(query?: NotesQuery) {
       ...getContentSortQuery('notes'),
     }
 
+    if (
+      resolvedQuery.folderId !== undefined
+      && hideCompletedTasksInFolders.value
+    ) {
+      resolvedQuery.hideCompletedTasks = 1
+    }
+
     const { data: responseData } = await api.notes.getNotes(resolvedQuery)
 
     if (requestToken !== notesRequestToken) {
@@ -690,6 +704,45 @@ async function emptyTrash() {
   }
 }
 
+async function cleanupCompletedTasks(options?: { skipConfirm?: boolean }) {
+  const { confirm } = useDialog()
+  const { sonner } = useSonner()
+  const previousNoteId = notesState.noteId
+
+  if (!options?.skipConfirm) {
+    const isConfirmed = await confirm({
+      title: i18n.t('notes.tasks.cleanupConfirmTitle'),
+      content: i18n.t('notes.tasks.cleanupConfirmMessage'),
+    })
+
+    if (!isConfirmed) {
+      return
+    }
+  }
+
+  try {
+    markPersistedStorageMutation()
+    const { data } = await api.notes.postNotesTasksCleanup()
+    const count = data.count
+
+    await getNotes(queryByLibraryOrFolderOrSearch.value)
+    await refreshSelectedNote()
+    selectFirstNoteIfCurrentSelectionIsMissing(previousNoteId)
+
+    sonner({
+      message:
+        count > 0
+          ? i18n.t('notes.tasks.cleanupDone', { count })
+          : i18n.t('notes.tasks.cleanupEmpty'),
+      type: 'success',
+    })
+  }
+  catch (error) {
+    console.error(error)
+    sonner({ message: i18n.t('notes.tasks.cleanupError'), type: 'error' })
+  }
+}
+
 // --- Tag operations ---
 
 async function addTagToNote(tagId: number, noteId: number) {
@@ -786,6 +839,7 @@ export function useNotes() {
 
   return {
     addTagToNote,
+    cleanupCompletedTasks,
     clearNotes,
     clearNotesState,
     createNote,

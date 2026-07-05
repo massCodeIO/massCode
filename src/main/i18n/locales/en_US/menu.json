@@ -57,7 +57,8 @@
       "ascending": "Ascending",
       "descending": "Descending"
     },
-    "compactMode": "Compact List"
+    "compactMode": "Compact List",
+    "hideCompletedTasks": "Hide Completed Tasks"
   },
   "edit": {
     "label": "Edit",

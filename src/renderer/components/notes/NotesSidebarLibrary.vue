@@ -30,6 +30,7 @@ const {
   withNotesLoading,
   isRestoreStateBlocked,
   emptyTrash,
+  cleanupCompletedTasks,
 } = useNotes()
 const { clearSearch } = useNoteSearch()
 const route = useRoute()
@@ -180,6 +181,10 @@ onClickOutside(itemRef, () => {
         </div>
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
+        <ContextMenu.ContextMenuItem @click="cleanupCompletedTasks()">
+          {{ i18n.t("notes.tasks.cleanupCompleted") }}
+        </ContextMenu.ContextMenuItem>
+        <ContextMenu.ContextMenuSeparator />
         <ContextMenu.ContextMenuItem @click="emptyTrash">
           {{ i18n.t("action.delete.trash") }}
         </ContextMenu.ContextMenuItem>

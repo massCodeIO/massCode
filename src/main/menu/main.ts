@@ -39,6 +39,8 @@ const defaultMainMenuContext: MainMenuContext = {
     contentSortField: null,
     contentSortOrder: null,
     canToggleCompactMode: false,
+    canToggleHideCompletedTasks: false,
+    isHideCompletedTasksInFolders: false,
     canToggleMindmap: false,
     isCompactMode: false,
     isMindmapShown: false,
@@ -449,6 +451,19 @@ function createViewMenuItems(context: MainMenuContext): MenuConfig[] {
       type: 'checkbox',
       checked: context.view.isCompactMode,
       click: () => send('main-menu:toggle-compact-mode'),
+    })
+  }
+
+  if (context.view.canToggleHideCompletedTasks) {
+    if (items.length) {
+      items.push({ type: 'separator' })
+    }
+
+    items.push({
+      label: i18n.t('menu:view.hideCompletedTasks'),
+      type: 'checkbox',
+      checked: context.view.isHideCompletedTasksInFolders,
+      click: () => send('main-menu:toggle-hide-completed-tasks'),
     })
   }
 

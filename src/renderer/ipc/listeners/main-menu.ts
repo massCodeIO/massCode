@@ -49,6 +49,7 @@ const {
   showNotesMindmap,
   showNotesPresentation,
   toggleNotesSidebar,
+  hideCompletedTasksInFolders,
 } = useNotesApp()
 const { setHttpLayoutMode, toggleHttpSidebar } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
@@ -184,6 +185,15 @@ export function registerMainMenuListeners() {
     ) {
       toggleCompactListMode()
     }
+  })
+
+  ipc.on('main-menu:toggle-hide-completed-tasks', async () => {
+    if (getActiveSpaceId() !== 'notes') {
+      return
+    }
+
+    hideCompletedTasksInFolders.value = !hideCompletedTasksInFolders.value
+    await getNotes()
   })
 
   ipc.on('main-menu:goto-math-notebook', () => {

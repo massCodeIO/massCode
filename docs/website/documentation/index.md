@@ -19,7 +19,7 @@ Use [Code](/documentation/code/) to build a reusable snippet library across proj
 
 ## Notes
 
-Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, and due dates, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview, a notes graph, mindmaps, and fullscreen presentation mode.
+Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, due dates, cleanup controls, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview with editable tables, a notes graph, mindmaps, and fullscreen presentation mode.
 
 ## HTTP
 

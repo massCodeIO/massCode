@@ -59,13 +59,42 @@ The editor is built on CodeMirror 6 and includes:
 - Syntax highlighting for fenced code blocks
 - Smart list indentation with automatic ordered list renumbering
 - Tab / Shift-Tab indentation
+- Right-click formatting menu in editable modes
 - Inline markdown formatting shortcuts in editable modes
-- Table navigation between cells
+- Editable markdown tables in Live Preview
 - [Internal links](/documentation/notes/internal-links) to notes and snippets
 - [Task notes](/documentation/notes/tasks) with status, priority, due dates, and smart views
 - [Mermaid diagram](/documentation/notes/mermaid) support
 - [Image embedding](/documentation/notes/images)
 - [Callout blocks](/documentation/notes/callouts)
+
+## Editor Context Menu
+
+<AppVersion text=">=5.8" />
+
+Right-click in **Live Preview** to apply markdown formatting or insert a table, callout, horizontal rule, or code block. The context menu is disabled in **Preview** mode because the rendered note is read-only.
+
+<img :src="withBase('/notes-context-menu.png')" alt="Notes editor context menu">
+
+- **Format** adds bold, italic, strikethrough, highlight, inline code, links, or removes formatting from the current selection.
+- **Paragraph** switches the current line between body text, headings, bullet lists, numbered lists, task lists, and quotes.
+- **Insert** adds tables, callouts, horizontal rules, and fenced code blocks.
+
+## Editable Tables
+
+<AppVersion text=">=5.8" />
+
+In **Live Preview**, markdown tables render as interactive table blocks while the note still stays plain Markdown in the vault.
+
+<img :src="withBase('/notes-table.png')" alt="Editable markdown table in Notes">
+
+- Click a table cell to edit it in place.
+- Press <kbd>Tab</kbd> and <kbd>Shift+Tab</kbd> to move between cells.
+- Press <kbd>Enter</kbd> to move to the cell below. When the cursor is in the last body row, massCode adds a new row.
+- Hover the table edge to add a column to the right or a row below.
+- Right-click an active table cell and use the **Table** submenu in the context menu to insert or delete rows and columns, or set column alignment.
+- Drag row and column handles to reorder the table.
+- Paste tabular data from a spreadsheet or TSV source to create or fill table cells.
 
 ## Formatting Shortcuts
 

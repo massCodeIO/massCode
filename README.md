@@ -163,6 +163,7 @@ Bring existing work into your vault with preview-first imports for snippets, not
 
 Save web content from Chrome, Firefox, or Safari into the local massCode app.
 
+- Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii)
 - Save selected code as snippets
 - Save selected text or readable page content as notes
 - Save pages or links as HTTP `GET` requests

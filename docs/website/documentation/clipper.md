@@ -11,7 +11,7 @@ massCode Clipper saves web content from your browser into the local massCode app
 <img :src="withBase('/clipper.png')" width="399" alt="massCode Clipper popup">
 </p>
 
-The browser store version is not available yet. Until distribution is published, download a build from this page or install the Clipper from a local repository build.
+Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii). For Firefox, Safari, or local testing, download a build from this page or install the Clipper from a local repository build.
 
 ## Enable The Local API
 
@@ -29,7 +29,7 @@ If you change the API port, reload the app before using the new port from the br
 
 ## Download The Clipper
 
-Download the archive for your browser:
+Download the archive for your browser when you want to install the Clipper locally:
 
 - [Chrome build](/clipper/downloads/clipper-chrome.zip)
 - [Firefox build](/clipper/downloads/clipper-firefox.zip)
@@ -54,6 +54,8 @@ This creates browser-specific builds:
 After installing the extension in a browser, open the Clipper popup, set the API port, paste the API token, and click **Save settings**.
 
 ## Chrome
+
+Install the published Chrome extension from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii).
 
 If you downloaded the archive, unzip `clipper-chrome.zip` first.
 

@@ -145,6 +145,8 @@ class CalloutTitleWidget extends WidgetType {
     root.style.verticalAlign = 'baseline'
     root.style.height = '0'
     root.style.overflow = 'visible'
+    root.style.position = 'relative'
+    root.style.top = '2px'
 
     root.append(createCalloutIcon(this.type, this.accent))
     root.append(this.title)

@@ -41,6 +41,8 @@ Tasks shows all task notes. Nested task views help you focus the list:
 - **Upcoming** - incomplete tasks due after today.
 - **Completed** - tasks with Done status.
 
+Right-click the Notes Library and choose **"Clean up completed tasks"** to move completed tasks to Trash. <AppVersion text=">=5.8" />
+
 See [Tasks](/documentation/notes/tasks) for creating tasks, converting notes, and editing task properties.
 
 ## Trash

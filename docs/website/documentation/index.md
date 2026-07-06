@@ -19,7 +19,7 @@ Use [Code](/documentation/code/) to build a reusable snippet library across proj
 
 ## Notes
 
-Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, and due dates, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview, a notes graph, mindmaps, and fullscreen presentation mode.
+Use [Notes](/documentation/notes/) for longer markdown documents that do not fit well into snippets: project notes, [task notes](/documentation/notes/tasks) with status, priority, due dates, cleanup controls, drafts, technical docs, meeting notes, and personal knowledge bases. It uses the same three-column layout as Code and adds a Notes Dashboard, live preview with editable tables, a notes graph, mindmaps, and fullscreen presentation mode.
 
 ## HTTP
 
@@ -39,7 +39,7 @@ Use [Drawings](/documentation/drawings/) for diagrams, sketches, and whiteboard-
 
 ## Clipper
 
-Use [Clipper](/documentation/clipper) to save selected text, readable page content, and links from your browser into Code, Notes, or HTTP. Until browser store distribution is available, install it from a local build.
+Use [Clipper](/documentation/clipper) to save selected text, readable page content, and links from your browser into Code, Notes, or HTTP. Install the Chrome version from the [Chrome Web Store](https://chromewebstore.google.com/detail/masscode-clipper/fkaaogdifollkhjbfoabbiocecehaaii), or use a local build for other browsers.
 
 ## General Settings
 

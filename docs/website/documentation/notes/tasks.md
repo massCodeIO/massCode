@@ -60,6 +60,27 @@ The Notes Library includes a **Tasks** section with task-focused views:
 
 Tasks can still appear in **Inbox**, **Favorites**, **All Notes**, folders, tags, and search results because they are still notes.
 
+## Hiding Completed Tasks
+
+<AppVersion text=">=5.8" />
+
+When you are reviewing folders, select **View** > **Hide Completed Tasks** to hide tasks with Done status from folder lists. This does not delete or change the tasks; it only keeps completed items out of folder views while the option is enabled.
+
+## Cleaning Up Completed Tasks
+
+<AppVersion text=">=5.8" />
+
+Use cleanup when completed tasks should leave active task views but remain recoverable.
+
+- Right-click the Notes Library and choose **"Clean up completed tasks"**.
+- Confirm the dialog to move all completed tasks to **Trash**.
+- Restore moved tasks from Trash if needed, or empty Trash to remove them permanently.
+
+You can also open **Preferences** > **Notes Editor** and use the **Tasks** section:
+
+- **Auto-clean completed** - move completed tasks to Trash every day, every 7 days, every 30 days, or never.
+- **Clean up now** - start the same cleanup flow from Preferences.
+
 <script setup>
 import { withBase } from 'vitepress'
 </script>

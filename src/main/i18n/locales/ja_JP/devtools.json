@@ -87,16 +87,16 @@
       "label": "ケースコンバーター",
       "description": "テキストを異なるケースに変換",
       "caseType": {
-        "uppercase": "Uppercase",
-        "lowercase": "Lowercase",
-        "camelcase": "Camelcase",
-        "capitalize": "Capitalize",
-        "constantcase": "Constantcase",
-        "snakecase": "Snakecase",
-        "kebabcase": "Kebabcase",
-        "pascalcase": "Pascalcase",
-        "dotcase": "Dotcase",
-        "pathcase": "Pathcase"
+        "uppercase": "大文字",
+        "lowercase": "小文字",
+        "camelcase": "キャメルケース",
+        "capitalize": "先頭大文字",
+        "constantcase": "定数ケース",
+        "snakecase": "スネークケース",
+        "kebabcase": "ケバブケース",
+        "pascalcase": "パスカルケース",
+        "dotcase": "ドットケース",
+        "pathcase": "パスケース"
       }
     },
     "textToUnicode": {
@@ -178,16 +178,16 @@
       "description": "URLをコンポーネントに解析"
     },
     "urlEncoder": {
-      "label": "URL Encoder / Decoder",
+      "label": "URL エンコード / デコード",
       "description": "URLをエンコード、またはデコード",
       "modes": {
-        "urlEncode": "URL Encode",
-        "urlDecode": "URL Decode"
+        "urlEncode": "URL エンコード",
+        "urlDecode": "URL デコード"
       }
     },
     "slugify": {
-      "label": "Slugify",
-      "description": "テキストをURL対応のslugに変換"
+      "label": "スラッグ化",
+      "description": "テキストをURL対応のスラッグに変換"
     }
   },
   "form": {
@@ -198,7 +198,7 @@
     "inputUrl": "入力URL",
     "outputUrl": "出力URL",
     "parsedUrl": "解析されたURL",
-    "splitQueryString": "Query Stringを分割",
+    "splitQueryString": "クエリ文字列を分割",
     "key": "キー",
     "value": "値",
     "component": "コンポーネント",

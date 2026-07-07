@@ -55,7 +55,16 @@ const { getNotesGraph } = useNotesGraph()
 const { sonner } = useSonner()
 const { refreshCloudDownloadStatus, setCloudDownloadStatus }
   = useCloudDownloads()
+// Верхняя граница дебаунса refresh: облачная докачка большого vault даёт
+// поток storage-synced событий, который иначе бесконечно сбрасывал бы
+// debounce и откладывал обновление списка (облачные иконки висели бы до
+// перезапуска). Даже под непрерывным потоком refresh выполняется не позже
+// этой паузы после первого необработанного события.
+const STORAGE_SYNC_MAX_WAIT_MS = 1500
+const STORAGE_SYNC_DEBOUNCE_MS = 300
+
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let firstPendingRefreshAt: number | null = null
 
 async function refreshCodeSpace() {
   const selectedSnippetId = state.snippetId
@@ -126,26 +135,39 @@ async function refreshAfterStorageSync() {
 }
 
 function scheduleStorageSyncRefresh() {
+  const now = Date.now()
+  if (firstPendingRefreshAt === null) {
+    firstPendingRefreshAt = now
+  }
+
   if (storageSyncDebounceTimer) {
     clearTimeout(storageSyncDebounceTimer)
     storageSyncDebounceTimer = null
   }
 
+  const waitedTooLong = now - firstPendingRefreshAt >= STORAGE_SYNC_MAX_WAIT_MS
+  const delay = waitedTooLong ? 0 : STORAGE_SYNC_DEBOUNCE_MS
+
   storageSyncDebounceTimer = setTimeout(() => {
+    storageSyncDebounceTimer = null
+
     if (
       shouldSkipStorageSyncRefresh()
       || hasBusyContentUpdates()
       || hasBusyNoteContentUpdates()
       || hasBusyDrawingUpdates()
     ) {
+      // Busy-состояние временное (несохранённые правки): ждём его конца, но
+      // firstPendingRefreshAt не сбрасываем, чтобы max-wait продолжал идти.
       scheduleStorageSyncRefresh()
       return
     }
 
+    firstPendingRefreshAt = null
     refreshAfterStorageSync().catch((error) => {
       console.error('Failed to refresh after storage sync:', error)
     })
-  }, 300)
+  }, delay)
 }
 
 export function registerSystemListeners() {

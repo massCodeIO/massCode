@@ -54,6 +54,17 @@ export interface VaultReconciler {
   isReconciled: (rootPath: string) => boolean
 }
 
+// Пауза перед повтором сверки, когда её заблокировал недокачанный
+// служебный файл (state.json / .state.yaml сам может быть плейсхолдером).
+const RECONCILE_RETRY_MS = 3_000
+
+function isCloudFileNotDownloadedError(error: unknown): boolean {
+  return (
+    error instanceof Error
+    && error.message.startsWith('CLOUD_FILE_NOT_DOWNLOADED')
+  )
+}
+
 export function createVaultReconciler(label: string): VaultReconciler {
   const reconciledRoots = new Set<string>()
   const pendingRoots = new Set<string>()
@@ -74,20 +85,35 @@ export function createVaultReconciler(label: string): VaultReconciler {
 
       pendingRoots.add(rootPath)
 
-      void (async () => {
+      const attempt = async (): Promise<void> => {
         try {
           await materializeDirectoryListings(rootPath)
-          reconciledRoots.add(rootPath)
           runSync()
+
+          // Успех фиксируется только после того, как настоящая сверка
+          // прошла: до этого isReconciled остаётся false, и обращения к
+          // vault продолжают получать provisional-кэш.
+          reconciledRoots.add(rootPath)
+          pendingRoots.delete(rootPath)
           broadcastStorageSynced()
         }
         catch (error) {
+          // Служебный файл (state) ещё не докачан из облака: сверка
+          // невозможна, но файл уже поставлен в приоритетную докачку —
+          // повторяем попытку, пока он не станет доступен.
+          if (isCloudFileNotDownloadedError(error)) {
+            setTimeout(() => {
+              void attempt()
+            }, RECONCILE_RETRY_MS)
+            return
+          }
+
           log(`storage:${label}:reconcile`, error)
-        }
-        finally {
           pendingRoots.delete(rootPath)
         }
-      })()
+      }
+
+      void attempt()
     },
   }
 }

@@ -29,6 +29,7 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
+import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import { createVaultReconciler } from './shared/vaultReconcile'
 import {
@@ -42,6 +43,7 @@ import {
   readSnippetFromFile,
 } from './snippets'
 import {
+  createDefaultState,
   flushPendingStateWrite,
   flushPendingStateWrites,
   loadState,
@@ -284,7 +286,21 @@ function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
     return runtimeRef.cache
   }
 
-  const state = loadState(paths)
+  // state.json сам может быть облачным плейсхолдером: тогда loadState
+  // ставит его в приоритетную докачку и бросает. Provisional-кэш при этом
+  // пустой (пространство откроется после докачки state и повторной сверки),
+  // но приложение не фризит и не падает.
+  let state: MarkdownState
+  try {
+    state = loadState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+    state = createDefaultState()
+  }
+
   const pathToFolderIdMap = buildPathToFolderIdMap(state)
   const now = Date.now()
   const snippets = state.snippets.map(entry =>
@@ -297,10 +313,22 @@ function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
   return setRuntimeCache(paths, state, snippets)
 }
 
+// Настоящая сверка с диском: читает state и файлы. Может бросить, если
+// state.json сам недокачан из облака (reconciler ретраит по этой ошибке).
+function performFullRuntimeSync(paths: Paths): MarkdownRuntimeCache {
+  const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
+    rewriteRecoveredLegacyFences: true,
+  })
+
+  return setRuntimeCache(paths, state, snippets)
+}
+
 export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
   // Первый доступ к vault: обход диска опасен синхронно (листинги
   // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
-  // provisional-кэш, а настоящая сверка выполняется в фоне.
+  // provisional-кэш, а настоящая сверка выполняется в фоне. Настоящая
+  // сверка вызывается напрямую (не через syncRuntimeWithDisk), иначе до
+  // пометки reconciled она снова ушла бы в provisional-ветку.
   if (!vaultReconciler.isReconciled(paths.vaultPath)) {
     const provisionalCache = buildProvisionalRuntimeCache(paths)
 
@@ -312,17 +340,13 @@ export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
         return
       }
 
-      syncRuntimeWithDisk(paths)
+      performFullRuntimeSync(paths)
     })
 
     return provisionalCache
   }
 
-  const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
-    rewriteRecoveredLegacyFences: true,
-  })
-
-  return setRuntimeCache(paths, state, snippets)
+  return performFullRuntimeSync(paths)
 }
 
 // Перепроверка недокачанных записей независимо от fs-событий: облачный

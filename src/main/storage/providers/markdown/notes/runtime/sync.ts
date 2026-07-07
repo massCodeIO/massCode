@@ -18,6 +18,7 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from '../../runtime/shared/folderSync'
+import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import {
@@ -38,6 +39,7 @@ import {
 import { buildNotesFolderPathMap, buildPathToNotesFolderIdMap } from './paths'
 import { buildNoteSearchText, buildSearchIndex } from './search'
 import {
+  createDefaultNotesState,
   flushPendingNotesStateWrite,
   loadNotesState,
   saveNotesState,
@@ -220,7 +222,20 @@ function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
     return notesRuntimeRef.cache
   }
 
-  const state = loadNotesState(paths)
+  // .state.yaml сам может быть облачным плейсхолдером: тогда loadNotesState
+  // ставит его в приоритетную докачку и бросает. Provisional-кэш при этом
+  // пустой, пространство откроется после докачки state и повторной сверки.
+  let state: NotesState
+  try {
+    state = loadNotesState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+    state = createDefaultNotesState()
+  }
+
   const pathToFolderIdMap = buildPathToNotesFolderIdMap(state)
   const now = Date.now()
   const notes = state.notes.map(entry =>
@@ -229,6 +244,24 @@ function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
       updatedAt: now,
     }),
   )
+
+  return setNotesRuntimeCache(paths, state, notes)
+}
+
+// Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан
+// из облака (reconciler ретраит по этой ошибке).
+function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
+  flushPendingNotesStateWrite(paths)
+  const state = loadNotesState(paths)
+
+  syncNotesFoldersWithDisk(paths, state)
+  syncNotesWithDisk(paths, state)
+  syncNotesCounters(state)
+
+  saveNotesState(paths, state, { immediate: true })
+  syncNotesFolderMetadataFiles(paths, state)
+
+  const notes = loadNotes(paths, state)
 
   return setNotesRuntimeCache(paths, state, notes)
 }
@@ -248,25 +281,13 @@ export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
         return
       }
 
-      syncNotesRuntimeWithDisk(paths)
+      performFullNotesSync(paths)
     })
 
     return provisionalCache
   }
 
-  flushPendingNotesStateWrite(paths)
-  const state = loadNotesState(paths)
-
-  syncNotesFoldersWithDisk(paths, state)
-  syncNotesWithDisk(paths, state)
-  syncNotesCounters(state)
-
-  saveNotesState(paths, state, { immediate: true })
-  syncNotesFolderMetadataFiles(paths, state)
-
-  const notes = loadNotes(paths, state)
-
-  return setNotesRuntimeCache(paths, state, notes)
+  return performFullNotesSync(paths)
 }
 
 // Перепроверка недокачанных заметок независимо от fs-событий: см.

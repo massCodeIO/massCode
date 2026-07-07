@@ -13,6 +13,7 @@ import {
   getFileAvailability,
   primeDatalessChecks,
 } from '../../runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
@@ -21,7 +22,12 @@ import {
   serializeRequestFile,
   writeRequestFile,
 } from './parser'
-import { ensureHttpStateFile, loadHttpState, saveHttpState } from './state'
+import {
+  createDefaultHttpState,
+  ensureHttpStateFile,
+  loadHttpState,
+  saveHttpState,
+} from './state'
 
 const SKIP_FILES = new Set([HTTP_STATE_FILE_NAME])
 
@@ -302,8 +308,44 @@ function buildProvisionalHttpCache(paths: HttpPaths): HttpRuntimeCache {
   }
 
   ensureHttpStateFile(paths)
-  const state = loadHttpState(paths)
+
+  // .state.yaml сам может быть облачным плейсхолдером: тогда loadHttpState
+  // бросает. Provisional-кэш при этом пустой, пространство наполнится после
+  // докачки state и повторной сверки.
+  let state: HttpState
+  try {
+    state = loadHttpState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+    state = createDefaultHttpState()
+  }
+
   const cache = buildRuntimeCache(paths, state, [])
+  httpRuntimeRef.cache = cache
+  return cache
+}
+
+// Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан
+// из облака (reconciler ретраит по этой ошибке).
+function performFullHttpSync(paths: HttpPaths): HttpRuntimeCache {
+  ensureHttpStateFile(paths)
+  const state = loadHttpState(paths)
+
+  const walk = walkHttpDir(paths.httpRoot)
+  const folderIdByPath = reconcileFolders(state, walk.folderRelativePaths)
+  const records = reconcileRequests(
+    paths,
+    state,
+    walk.requestRelativePaths,
+    folderIdByPath,
+  )
+
+  saveHttpState(paths, state)
+
+  const cache = buildRuntimeCache(paths, state, records)
   httpRuntimeRef.cache = cache
   return cache
 }
@@ -323,29 +365,13 @@ export function syncHttpRuntimeWithDisk(paths: HttpPaths): HttpRuntimeCache {
         return
       }
 
-      syncHttpRuntimeWithDisk(paths)
+      performFullHttpSync(paths)
     })
 
     return provisionalCache
   }
 
-  ensureHttpStateFile(paths)
-  const state = loadHttpState(paths)
-
-  const walk = walkHttpDir(paths.httpRoot)
-  const folderIdByPath = reconcileFolders(state, walk.folderRelativePaths)
-  const records = reconcileRequests(
-    paths,
-    state,
-    walk.requestRelativePaths,
-    folderIdByPath,
-  )
-
-  saveHttpState(paths, state)
-
-  const cache = buildRuntimeCache(paths, state, records)
-  httpRuntimeRef.cache = cache
-  return cache
+  return performFullHttpSync(paths)
 }
 
 export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {

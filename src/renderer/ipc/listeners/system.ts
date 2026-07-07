@@ -1,7 +1,9 @@
 import {
+  type CloudDownloadStatus,
   normalizeCodeSelectionState,
   normalizeNotesSelectionState,
   useApp,
+  useCloudDownloads,
   useDrawings,
   useFolders,
   useHttpApp,
@@ -46,6 +48,8 @@ const { getNoteTags } = useNoteTags()
 const { getNotesDashboard } = useNotesDashboard()
 const { getNotesGraph } = useNotesGraph()
 const { sonner } = useSonner()
+const { refreshCloudDownloadStatus, setCloudDownloadStatus }
+  = useCloudDownloads()
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 async function refreshCodeSpace() {
@@ -193,6 +197,19 @@ export function registerSystemListeners() {
 
   ipc.on('system:storage-synced', () => {
     scheduleStorageSyncRefresh()
+  })
+
+  ipc.on(
+    'system:cloud-download-progress',
+    (_, payload: CloudDownloadStatus) => {
+      setCloudDownloadStatus(payload)
+    },
+  )
+
+  // Начальное состояние очереди докачки: события прогресса, отправленные
+  // до загрузки renderer, могли быть пропущены.
+  refreshCloudDownloadStatus().catch((error) => {
+    console.error('Failed to get cloud download status:', error)
   })
 
   ipc.on('system:error', (_, payload) => {

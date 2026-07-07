@@ -15,7 +15,7 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
-import { CalendarClock, Flag } from 'lucide-vue-next'
+import { CalendarClock, CloudDownload, Flag } from 'lucide-vue-next'
 import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
 interface NoteTagInfo {
@@ -39,6 +39,7 @@ interface NoteRecord {
   isDeleted: number
   createdAt: number
   updatedAt: number
+  pendingCloudDownload?: boolean
 }
 
 interface Props {
@@ -225,6 +226,11 @@ function onDragStart(event: DragEvent) {
             >
               {{ note.name || i18n.t("notes.untitled") }}
             </span>
+            <CloudDownload
+              v-if="note.pendingCloudDownload"
+              class="text-muted-foreground size-3.5 shrink-0"
+              :aria-label="i18n.t('cloudDownloads.label')"
+            />
             <Flag
               v-if="taskPriority"
               class="size-3.5 shrink-0 fill-current stroke-current"

@@ -63,6 +63,7 @@ export interface SnippetItemResponse {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
   contents: {
     id: number;
     label: string;
@@ -141,6 +142,7 @@ export type SnippetsResponse = {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
   contents: {
     id: number;
     label: string;
@@ -388,6 +390,7 @@ export interface NoteItemResponse {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
   content: string;
 }
 
@@ -410,6 +413,7 @@ export type NotesResponse = {
   isDeleted: number;
   createdAt: number;
   updatedAt: number;
+  pendingCloudDownload?: boolean;
 }[];
 
 export interface NotesQuery {

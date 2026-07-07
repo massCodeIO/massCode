@@ -46,6 +46,8 @@ const snippetItemBase = {
   isDeleted: t.Number(),
   createdAt: t.Number(),
   updatedAt: t.Number(),
+  // Файл сниппета — облачный плейсхолдер, содержимое докачивается в фоне.
+  pendingCloudDownload: t.Optional(t.Boolean()),
 }
 
 const snippetItem = t.Object({

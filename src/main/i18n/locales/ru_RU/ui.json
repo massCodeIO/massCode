@@ -632,5 +632,10 @@
     "searchIn": "Поиск в {{- context}}",
     "addTag": "Добавить тег",
     "selectLanguage": "Выбрать язык"
+  },
+  "cloudDownloads": {
+    "downloading": "Докачивание файлов из облака: осталось {{count}}",
+    "failed": "Не удалось скачать файлов из облака: {{count}}",
+    "label": "Загрузка из облака"
   }
 }

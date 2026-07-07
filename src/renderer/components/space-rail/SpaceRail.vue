@@ -75,6 +75,7 @@ watch(
     <div
       class="mt-auto flex min-h-0 flex-1 flex-col items-center justify-end gap-2 overflow-hidden pb-2"
     >
+      <SpaceRailCloudDownloads />
       <SpaceRailUnsponsored />
       <RouterLink
         v-slot="{ navigate }"

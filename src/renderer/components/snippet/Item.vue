@@ -12,6 +12,7 @@ import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
+import { CloudDownload } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
 interface Props {
@@ -235,10 +236,19 @@ function onDragStart(event: DragEvent) {
           "
         >
           <div
-            class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            class="flex min-w-0 items-center gap-1.5"
             :class="isCompactListMode ? 'flex-1' : 'mb-2'"
           >
-            {{ snippet.name || i18n.t("snippet.untitled") }}
+            <span
+              class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+            >
+              {{ snippet.name || i18n.t("snippet.untitled") }}
+            </span>
+            <CloudDownload
+              v-if="snippet.pendingCloudDownload"
+              class="text-muted-foreground h-3.5 w-3.5 shrink-0"
+              :aria-label="i18n.t('cloudDownloads.label')"
+            />
           </div>
           <UiText
             v-if="isCompactListMode"

@@ -229,13 +229,6 @@ else {
     }
 
     try {
-      startMarkdownWatcher()
-    }
-    catch (error) {
-      log('Error starting markdown watcher', error)
-    }
-
-    try {
       startTasksCleanupScheduler()
     }
     catch (error) {
@@ -262,6 +255,19 @@ else {
     catch (error) {
       log('Error creating window', error)
     }
+
+    // Первичный скан vault уходит из критического пути старта: окно
+    // появляется сразу, а скан (уже без блокирующих чтений облачных
+    // плейсхолдеров) выполняется следом. Ранние API/IPC-запросы renderer
+    // безопасны: они лениво триггерят тот же скан через getRuntimeCache.
+    setImmediate(() => {
+      try {
+        startMarkdownWatcher()
+      }
+      catch (error) {
+        log('Error starting markdown watcher', error)
+      }
+    })
 
     try {
       startThemeWatcher()

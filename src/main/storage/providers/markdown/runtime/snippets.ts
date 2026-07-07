@@ -73,15 +73,21 @@ export function listMarkdownFiles(rootPath: string): string[] {
   )
 }
 
+// 'unreadable' означает, что файл существует, но его содержимое сейчас
+// недоступно (облачный плейсхолдер или сбой чтения). Каллеры обязаны
+// пропустить такой файл до фоновой докачки: null здесь означал бы «id нет»
+// и привёл бы к чеканке нового id, расходящегося с frontmatter-id файла.
 export function readFrontmatterIdFromSnippetFile(
   snippetPath: string,
-): number | null {
+): number | null | 'unreadable' {
   const availability = getFileAvailability(snippetPath)
 
-  // Плейсхолдер читать нельзя: чтение заблокирует main process до докачки
-  // файла облачным провайдером.
-  if (!availability.exists || availability.isCloudPlaceholder) {
+  if (!availability.exists) {
     return null
+  }
+
+  if (availability.isCloudPlaceholder) {
+    return 'unreadable'
   }
 
   try {
@@ -92,7 +98,7 @@ export function readFrontmatterIdFromSnippetFile(
     return id > 0 ? id : null
   }
   catch {
-    return null
+    return 'unreadable'
   }
 }
 
@@ -159,30 +165,23 @@ export function readSnippetFromFileWithMetadata(
     availability.stats,
   )
 
-  // Плейсхолдер не читается синхронно: сниппет сразу показывается в списке
-  // по данным индекса и имени файла, содержимое докачивается в фоне.
-  if (availability.isCloudPlaceholder) {
-    enqueueCloudDownload(snippetPath)
+  let source: string | null = null
 
-    return {
-      legacyRecovery: 'none',
-      snippet: buildPlaceholderSnippet(
-        entry,
-        pathToFolderIdMap,
-        timestampFallbacks,
-      ),
+  if (!availability.isCloudPlaceholder) {
+    try {
+      source = fs.readFileSync(snippetPath, 'utf8')
+    }
+    catch (error) {
+      // Сорвавшееся чтение (обрыв облачного провайдера, EIO и т.п.) не
+      // валит весь скан: запись обрабатывается как недокачанная.
+      log('storage:markdown:read-snippet', error)
     }
   }
 
-  let source: string
-  try {
-    source = fs.readFileSync(snippetPath, 'utf8')
-  }
-  catch (error) {
-    // Сорвавшееся чтение (обрыв облачного провайдера, EIO и т.п.) не валит
-    // весь скан: запись остаётся в списке как недокачанная и уходит в
-    // очередь фоновой докачки.
-    log('storage:markdown:read-snippet', error)
+  // Плейсхолдер (или файл со сбоем чтения) не читается синхронно: сниппет
+  // сразу показывается в списке по данным индекса и имени файла,
+  // содержимое докачивается в фоне.
+  if (source === null) {
     enqueueCloudDownload(snippetPath)
 
     return {

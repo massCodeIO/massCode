@@ -24,7 +24,6 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
-import { getFileAvailability } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -174,17 +173,18 @@ function syncStateAndSnippetsWithDisk(
     }
 
     const snippetAbsolutePath = path.join(paths.vaultPath, filePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
 
-    // Неизвестный файл-плейсхолдер (создан на другом устройстве, содержимое
-    // ещё в облаке): его frontmatter-id недоступен без блокирующего чтения,
-    // а угадывание id привело бы к дублям. Файл появится в индексе после
-    // фоновой докачки через инкрементальный sync.
-    if (getFileAvailability(snippetAbsolutePath).isCloudPlaceholder) {
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): его frontmatter-id неизвестен, а
+    // чеканка нового id дала бы расходящиеся id после докачки. Файл
+    // появится в индексе после фоновой докачки через инкрементальный sync.
+    if (frontmatterId === 'unreadable') {
       enqueueCloudDownload(snippetAbsolutePath)
       return
     }
 
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    let snippetId = frontmatterId
 
     if (!snippetId || existingIdSet.has(snippetId)) {
       snippetId = state.counters.snippetId + 1
@@ -351,17 +351,6 @@ export function syncSnippetFileWithDisk(
   )
   const snippetExistsOnDisk = fs.pathExistsSync(snippetAbsolutePath)
 
-  // Плейсхолдер, которого ещё нет в индексе, нельзя регистрировать до
-  // докачки: без frontmatter пришлось бы угадывать id (риск дублей).
-  if (
-    snippetExistsOnDisk
-    && snippetIndexInState === -1
-    && getFileAvailability(snippetAbsolutePath).isCloudPlaceholder
-  ) {
-    enqueueCloudDownload(snippetAbsolutePath)
-    return cache
-  }
-
   if (!snippetExistsOnDisk) {
     if (snippetIndexInState === -1) {
       return cache
@@ -386,7 +375,18 @@ export function syncSnippetFileWithDisk(
     = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
 
   if (!snippetIndexItem) {
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): регистрировать его нельзя, иначе id
+    // был бы отчеканен вслепую и разошёлся бы с frontmatter-id после
+    // докачки. Файл появится в индексе после фоновой докачки.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return cache
+    }
+
+    let snippetId = frontmatterId
 
     // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
     // раньше unlink старого: если frontmatter-id принадлежит записи, файла

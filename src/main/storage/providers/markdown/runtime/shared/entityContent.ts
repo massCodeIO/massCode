@@ -1,10 +1,14 @@
+import { assertEntityContentAvailable } from './cloudGuards'
+
 interface EntityWithBodyContent {
   content: string
+  pendingCloudDownload?: boolean
   updatedAt: number
 }
 
 interface OwnerWithNestedContent<TContent> {
   contents: TContent[]
+  pendingCloudDownload?: boolean
   updatedAt: number
 }
 
@@ -28,6 +32,8 @@ export function updateEntityBodyContent<
     return { notFound: true }
   }
 
+  assertEntityContentAvailable(input.entity)
+
   input.entity.content = input.content
   input.entity.updatedAt = Date.now()
   input.persistEntity(input.entity)
@@ -48,6 +54,8 @@ export function createNestedContent<
   if (!input.owner) {
     input.onOwnerNotFound()
   }
+
+  assertEntityContentAvailable(input.owner)
 
   const contentId = input.nextContentId()
   input.owner.contents.push(input.createContent(contentId))
@@ -95,6 +103,9 @@ export function updateNestedContent<
   }
 
   const { contentIndex, owner } = input.ownedContent
+
+  assertEntityContentAvailable(owner)
+
   const content = owner.contents[contentIndex] as NestedContentOf<TOwner>
   input.applyPatch(content, input.patch)
 

@@ -152,26 +152,23 @@ export function readNoteFromFile(
     availability.stats,
   )
 
-  // Плейсхолдер не читается синхронно: заметка сразу видна в списке по
-  // данным индекса и имени файла, содержимое докачивается в фоне.
-  if (availability.isCloudPlaceholder) {
-    enqueueCloudDownload(absolutePath)
+  let source: string | null = null
 
-    return buildPlaceholderNote(
-      entry,
-      pathToFolderIdMap,
-      placeholderTimestamps,
-    )
+  if (!availability.isCloudPlaceholder) {
+    try {
+      source = fs.readFileSync(absolutePath, 'utf8')
+    }
+    catch (error) {
+      // Сорвавшееся чтение не валит весь скан: заметка обрабатывается как
+      // недокачанная.
+      log('storage:notes:read-note', error)
+    }
   }
 
-  let source: string
-  try {
-    source = fs.readFileSync(absolutePath, 'utf8')
-  }
-  catch (error) {
-    // Сорвавшееся чтение не валит весь скан: заметка остаётся в списке как
-    // недокачанная и уходит в очередь фоновой докачки.
-    log('storage:notes:read-note', error)
+  // Плейсхолдер (или файл со сбоем чтения) не читается синхронно: заметка
+  // сразу видна в списке по данным индекса и имени файла, содержимое
+  // докачивается в фоне.
+  if (source === null) {
     enqueueCloudDownload(absolutePath)
 
     return buildPlaceholderNote(

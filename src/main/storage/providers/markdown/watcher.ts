@@ -48,9 +48,13 @@ import {
 // Above this number of buffered file changes an incremental per-file sync
 // is unlikely to beat one full re-read, so the watcher escalates instead.
 const MAX_PENDING_SYNC_FILE_PATHS = 25
+// Верхняя граница дебаунса: даже под непрерывным потоком событий буфер
+// изменений сбрасывается не реже, чем раз в эту паузу.
+const MAX_PENDING_SYNC_AGE_MS = 1_000
 
 let markdownWatcher: FSWatcher | null = null
 let markdownWatchTimer: NodeJS.Timeout | null = null
+let pendingSyncSince: number | null = null
 let watchedVaultPath: string | null = null
 const pendingCodeFilePaths = new Set<string>()
 const pendingNoteFilePaths = new Set<string>()
@@ -226,7 +230,14 @@ function scheduleStateSync(
     markdownWatchTimer = null
   }
 
-  markdownWatchTimer = setTimeout(() => {
+  if (pendingSyncSince === null) {
+    pendingSyncSince = Date.now()
+  }
+
+  const runScheduledSync = (): void => {
+    markdownWatchTimer = null
+    pendingSyncSince = null
+
     try {
       const previousCache = peekRuntimeCache()
       const previousNotesCache = peekNotesRuntimeCache()
@@ -302,7 +313,17 @@ function scheduleStateSync(
     catch (error) {
       log('storage:markdown:watcher-sync', error)
     }
-  }, 250)
+  }
+
+  // Дебаунс с верхней границей: при непрерывном потоке событий (например,
+  // массовая фоновая докачка из облака даёт завершения чаще, чем раз в
+  // 250 мс) чистый дебаунс откладывал бы синк и обновление UI бесконечно.
+  if (Date.now() - pendingSyncSince >= MAX_PENDING_SYNC_AGE_MS) {
+    runScheduledSync()
+    return
+  }
+
+  markdownWatchTimer = setTimeout(runScheduledSync, 250)
 }
 
 export function stopMarkdownWatcher(): void {
@@ -312,6 +333,8 @@ export function stopMarkdownWatcher(): void {
     clearTimeout(markdownWatchTimer)
     markdownWatchTimer = null
   }
+
+  pendingSyncSince = null
 
   if (markdownWatcher) {
     void markdownWatcher.close()
@@ -385,9 +408,23 @@ export function startMarkdownWatcher(): void {
   })
 
   ensureStateFile(paths)
-  syncRuntimeWithDisk(paths)
-  syncNotesRuntimeWithDisk(notesPaths)
-  syncHttpRuntimeWithDisk(httpPaths)
+
+  // Первичный скан каждого пространства падает независимо: недокачанный
+  // служебный файл (state, метаданные) прерывает только свой скан, а
+  // watcher всё равно запускается. Кэш заполнится после фоновой докачки
+  // или первого успешного обращения через API.
+  const syncSafely = (label: string, sync: () => unknown): void => {
+    try {
+      sync()
+    }
+    catch (error) {
+      log(`storage:markdown:initial-sync:${label}`, error)
+    }
+  }
+
+  syncSafely('code', () => syncRuntimeWithDisk(paths))
+  syncSafely('notes', () => syncNotesRuntimeWithDisk(notesPaths))
+  syncSafely('http', () => syncHttpRuntimeWithDisk(httpPaths))
 
   const startToken = ++watcherStartToken
 

@@ -10,12 +10,14 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import {
   LEGACY_FOLDER_META_FILE_NAME,
   META_FILE_NAME,
   NEW_LINE_SPLIT_RE,
 } from './constants'
 import { rememberAppFileChange } from './shared/appChanges'
+import { getFileAvailability } from './shared/cloudFiles'
 import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 
 export function readFolderMetadata(
@@ -105,8 +107,16 @@ export function writeFolderMetadataFile(
     .trim()
 
   const nextContent = `${body}\n`
+  const availability = getFileAvailability(metaPath)
 
-  if (fs.pathExistsSync(metaPath)) {
+  // Запись в недокачанный .meta.yaml затёрла бы облачные метаданные папки
+  // (включая её id): файл сначала докачивается в фоне.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(metaPath)
+    return
+  }
+
+  if (availability.exists) {
     const currentContent = fs.readFileSync(metaPath, 'utf8')
     if (currentContent === nextContent) {
       return

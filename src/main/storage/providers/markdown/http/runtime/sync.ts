@@ -159,13 +159,29 @@ function reconcileRequests(
   const indexEntries: HttpState['requests'] = []
   const now = Date.now()
 
+  // Файл, содержимое которого сейчас недоступно (облачный плейсхолдер или
+  // сбой чтения), не читается синхронно: он уходит в фоновую докачку,
+  // которая триггерит повторный sync http-пространства. Уже известный
+  // запрос при этом сохраняет свою запись в индексе, иначе он «исчез» бы
+  // из state и после докачки получил бы новый id.
+  const keepUnavailableRequest = (
+    absolutePath: string,
+    relativePath: string,
+  ) => {
+    enqueueCloudDownload(absolutePath)
+
+    const knownId = existingByPath.get(relativePath)
+    if (knownId && !usedIds.has(knownId)) {
+      usedIds.add(knownId)
+      indexEntries.push({ filePath: relativePath, id: knownId })
+    }
+  }
+
   for (const relativePath of requestRelativePaths) {
     const absolutePath = path.join(paths.httpRoot, relativePath)
 
-    // Плейсхолдер не читается синхронно: запрос появится после фоновой
-    // докачки, которая триггерит повторный sync http-пространства.
     if (getFileAvailability(absolutePath).isCloudPlaceholder) {
-      enqueueCloudDownload(absolutePath)
+      keepUnavailableRequest(absolutePath, relativePath)
       continue
     }
 
@@ -174,10 +190,8 @@ function reconcileRequests(
       source = fs.readFileSync(absolutePath, 'utf8')
     }
     catch (error) {
-      // Сорвавшееся чтение не валит весь sync: файл уходит в очередь
-      // фоновой докачки и появится после повторного sync.
       log('storage:http:read-request', error)
-      enqueueCloudDownload(absolutePath)
+      keepUnavailableRequest(absolutePath, relativePath)
       continue
     }
 

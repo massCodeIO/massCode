@@ -16,6 +16,7 @@ import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { assertEntityContentAvailable } from '../../runtime/shared/cloudGuards'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import {
@@ -433,6 +434,8 @@ export function createNotesNotesStorage(): NotesStorage {
       if (!note) {
         return { invalidInput: false, notFound: true }
       }
+
+      assertEntityContentAvailable(note)
 
       const hasAnyField = applyNotePropertiesUpdate(note, input)
 

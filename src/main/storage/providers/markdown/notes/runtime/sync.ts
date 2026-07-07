@@ -56,11 +56,14 @@ export function syncNotesFoldersWithDisk(
   })
 }
 
-function readNoteIdFromFrontmatter(absolutePath: string): number | null {
-  // Плейсхолдер читать нельзя: чтение заблокирует main process до докачки
-  // файла облачным провайдером.
+// 'unreadable' означает, что содержимое файла сейчас недоступно (облачный
+// плейсхолдер или сбой чтения): каллеры обязаны пропустить такой файл до
+// фоновой докачки, а не чеканить для него новый id.
+function readNoteIdFromFrontmatter(
+  absolutePath: string,
+): number | null | 'unreadable' {
   if (getFileAvailability(absolutePath).isCloudPlaceholder) {
-    return null
+    return 'unreadable'
   }
 
   try {
@@ -74,7 +77,7 @@ function readNoteIdFromFrontmatter(absolutePath: string): number | null {
     return fm && typeof fm.id === 'number' && fm.id ? fm.id : null
   }
   catch {
-    return null
+    return 'unreadable'
   }
 }
 
@@ -93,18 +96,17 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
 
     if (!noteId || usedIds.has(noteId)) {
       const absolutePath = path.join(paths.notesRoot, filePath)
+      const frontmatterId = readNoteIdFromFrontmatter(absolutePath)
 
-      // Неизвестный файл-плейсхолдер (создан на другом устройстве,
-      // содержимое ещё в облаке): его frontmatter-id недоступен без
-      // блокирующего чтения, а угадывание id привело бы к дублям. Файл
+      // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+      // плейсхолдер или сбой чтения): его frontmatter-id неизвестен, а
+      // чеканка нового id дала бы расходящиеся id после докачки. Файл
       // появится в индексе после фоновой докачки.
-      if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      if (frontmatterId === 'unreadable') {
         enqueueCloudDownload(absolutePath)
         continue
       }
 
-      // Try reading frontmatter for id
-      const frontmatterId = readNoteIdFromFrontmatter(absolutePath)
       if (frontmatterId && !usedIds.has(frontmatterId)) {
         noteId = frontmatterId
       }
@@ -270,17 +272,6 @@ export function syncNoteFileWithDisk(
   )
   const noteExistsOnDisk = fs.pathExistsSync(noteAbsolutePath)
 
-  // Плейсхолдер, которого ещё нет в индексе, нельзя регистрировать до
-  // докачки: без frontmatter пришлось бы угадывать id (риск дублей).
-  if (
-    noteExistsOnDisk
-    && noteIndexInState === -1
-    && getFileAvailability(noteAbsolutePath).isCloudPlaceholder
-  ) {
-    enqueueCloudDownload(noteAbsolutePath)
-    return cache
-  }
-
   if (!noteExistsOnDisk) {
     if (noteIndexInState === -1) {
       return cache
@@ -305,7 +296,18 @@ export function syncNoteFileWithDisk(
     = noteIndexInState !== -1 ? state.notes[noteIndexInState] : null
 
   if (!noteIndexItem) {
-    let noteId = readNoteIdFromFrontmatter(noteAbsolutePath)
+    const frontmatterId = readNoteIdFromFrontmatter(noteAbsolutePath)
+
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): регистрировать его нельзя, иначе id
+    // был бы отчеканен вслепую и разошёлся бы с frontmatter-id после
+    // докачки. Файл появится в индексе после фоновой докачки.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(noteAbsolutePath)
+      return cache
+    }
+
+    let noteId = frontmatterId
 
     // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
     // раньше unlink старого: если frontmatter-id принадлежит записи, файла

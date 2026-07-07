@@ -2,7 +2,9 @@ import type { Paths } from '../types'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { setDatalessProbeForTests } from '../shared/cloudFiles'
 import { writeSnippetToFile } from '../snippets'
 import { resetRuntimeCache, syncRuntimeWithDisk } from '../sync'
 
@@ -27,8 +29,6 @@ vi.mock('../../cloudDownloads', () => ({
   enqueueCloudDownload: vi.fn(),
   prioritizeCloudDownload: vi.fn(),
 }))
-
-const { enqueueCloudDownload } = await import('../../cloudDownloads')
 
 const tempDirs: string[] = []
 
@@ -94,7 +94,15 @@ function hasPlaceholderSignature(absolutePath: string): boolean {
   return stats.size > 0 && stats.blocks === 0
 }
 
+beforeEach(() => {
+  // Sparse-файлы имитируют плейсхолдеры по сигнатуре (size > 0, blocks 0),
+  // но не имеют флага SF_DATALESS: точная проверка подменяется, чтобы
+  // симуляция работала как настоящий облачный плейсхолдер.
+  setDatalessProbeForTests(() => true)
+})
+
 afterEach(() => {
+  setDatalessProbeForTests(null)
   resetRuntimeCache()
   vi.mocked(enqueueCloudDownload).mockClear()
 

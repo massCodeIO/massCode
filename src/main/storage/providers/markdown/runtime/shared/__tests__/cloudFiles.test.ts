@@ -2,7 +2,13 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it } from 'vitest'
-import { getFileAvailability, isCloudPlaceholderStats } from '../cloudFiles'
+import {
+  getFileAvailability,
+  isCloudPlaceholderStats,
+  markFileReadableDespiteZeroBlocks,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../cloudFiles'
 
 const tempDirs: string[] = []
 
@@ -12,7 +18,20 @@ function createTempDir(): string {
   return dirPath
 }
 
+function createSparseFile(dirPath: string, size = 4096): string {
+  // Sparse-файл воспроизводит сигнатуру облачного плейсхолдера:
+  // ненулевой size при нулевых blocks.
+  const filePath = path.join(dirPath, 'sparse.md')
+  const fd = fs.openSync(filePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+  return filePath
+}
+
 afterEach(() => {
+  setDatalessProbeForTests(null)
+  resetCloudFileExemptions()
+
   for (const dirPath of tempDirs.splice(0)) {
     fs.removeSync(dirPath)
   }
@@ -50,18 +69,12 @@ describe('getFileAvailability', () => {
     expect(availability.isCloudPlaceholder).toBe(false)
   })
 
-  it('flags a file with size but no allocated blocks as placeholder', () => {
-    // Sparse-файл воспроизводит сигнатуру облачного плейсхолдера:
-    // ненулевой size при нулевых blocks.
-    const filePath = path.join(createTempDir(), 'sparse.md')
-    const fd = fs.openSync(filePath, 'w')
-    fs.ftruncateSync(fd, 4096)
-    fs.closeSync(fd)
-
+  it('flags a file with placeholder signature when the probe confirms it', () => {
+    const filePath = createSparseFile(createTempDir())
     const stats = fs.statSync(filePath)
-    // На некоторых ФС sparse-файлы всё же получают блоки: тогда проверяем
-    // только сам предикат на синтетическом Stats.
+
     if (stats.blocks === 0) {
+      setDatalessProbeForTests(() => true)
       expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(true)
     }
 
@@ -73,5 +86,36 @@ describe('getFileAvailability', () => {
         size: 4096,
       }),
     ).toBe(true)
+  })
+
+  it('refutes a local sparse file via the dataless probe', () => {
+    const filePath = createSparseFile(createTempDir())
+    const stats = fs.statSync(filePath)
+
+    if (stats.blocks !== 0) {
+      return
+    }
+
+    // Локальный файл с сигнатурой плейсхолдера (inline/resident/sparse) не
+    // должен навсегда застревать в состоянии «недокачан».
+    setDatalessProbeForTests(() => false)
+    expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(false)
+  })
+
+  it('treats a verified readable zero-block file as available', () => {
+    const filePath = createSparseFile(createTempDir())
+    const stats = fs.statSync(filePath)
+
+    if (stats.blocks !== 0) {
+      return
+    }
+
+    setDatalessProbeForTests(() => true)
+    expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(true)
+
+    // Ридер успешно прочитал файл: с этого момента он считается локальным,
+    // пока не изменится (size + mtime).
+    markFileReadableDespiteZeroBlocks(filePath, stats)
+    expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(false)
   })
 })

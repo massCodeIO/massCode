@@ -9,6 +9,8 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { log } from '../../../../utils'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import { runtimeRef } from './cache'
 import {
   INBOX_DIR_NAME,
@@ -32,6 +34,7 @@ import {
   normalizeDirectoryPath,
 } from './paths'
 import { rememberAppFileChange } from './shared/appChanges'
+import { getFileAvailability } from './shared/cloudFiles'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
@@ -73,15 +76,24 @@ export function listMarkdownFiles(rootPath: string): string[] {
 export function readFrontmatterIdFromSnippetFile(
   snippetPath: string,
 ): number | null {
-  if (!fs.pathExistsSync(snippetPath)) {
+  const availability = getFileAvailability(snippetPath)
+
+  // Плейсхолдер читать нельзя: чтение заблокирует main process до докачки
+  // файла облачным провайдером.
+  if (!availability.exists || availability.isCloudPlaceholder) {
     return null
   }
 
-  const source = fs.readFileSync(snippetPath, 'utf8')
-  const { frontmatter } = splitFrontmatter(source)
-  const id = normalizeNumber(frontmatter.id)
+  try {
+    const source = fs.readFileSync(snippetPath, 'utf8')
+    const { frontmatter } = splitFrontmatter(source)
+    const id = normalizeNumber(frontmatter.id)
 
-  return id > 0 ? id : null
+    return id > 0 ? id : null
+  }
+  catch {
+    return null
+  }
 }
 
 export function readSnippetFromFile(
@@ -95,6 +107,36 @@ export function readSnippetFromFile(
   )
 }
 
+function buildPlaceholderSnippet(
+  entry: MarkdownSnippetIndexItem,
+  pathToFolderIdMap: ReadonlyMap<string, number>,
+  timestampFallbacks: { createdAt: number, updatedAt: number },
+): MarkdownSnippet {
+  const normalizedFileDirectory = normalizeDirectoryPath(
+    path.posix.dirname(entry.filePath),
+  )
+  const isTrashed = isTrashSnippetDirectory(normalizedFileDirectory)
+  const folderId
+    = isTrashed || isInboxSnippetDirectory(normalizedFileDirectory)
+      ? null
+      : (pathToFolderIdMap.get(normalizedFileDirectory) ?? null)
+
+  return {
+    contents: [],
+    createdAt: timestampFallbacks.createdAt,
+    description: null,
+    filePath: entry.filePath,
+    folderId,
+    id: entry.id,
+    isDeleted: isTrashed ? 1 : 0,
+    isFavorites: 0,
+    name: path.posix.basename(entry.filePath, '.md'),
+    pendingCloudDownload: true,
+    tags: [],
+    updatedAt: timestampFallbacks.updatedAt,
+  }
+}
+
 export function readSnippetFromFileWithMetadata(
   paths: Paths,
   entry: MarkdownSnippetIndexItem,
@@ -104,15 +146,56 @@ export function readSnippetFromFileWithMetadata(
   snippet: MarkdownSnippet
 } | null {
   const snippetPath = path.join(paths.vaultPath, entry.filePath)
+  const availability = getFileAvailability(snippetPath)
 
-  if (!fs.pathExistsSync(snippetPath)) {
+  if (!availability.exists) {
     return null
   }
 
-  const source = fs.readFileSync(snippetPath, 'utf8')
-  const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const now = Date.now()
-  const timestampFallbacks = getFileTimestampFallbacks(snippetPath, now)
+  const timestampFallbacks = getFileTimestampFallbacks(
+    snippetPath,
+    now,
+    availability.stats,
+  )
+
+  // Плейсхолдер не читается синхронно: сниппет сразу показывается в списке
+  // по данным индекса и имени файла, содержимое докачивается в фоне.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(snippetPath)
+
+    return {
+      legacyRecovery: 'none',
+      snippet: buildPlaceholderSnippet(
+        entry,
+        pathToFolderIdMap,
+        timestampFallbacks,
+      ),
+    }
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(snippetPath, 'utf8')
+  }
+  catch (error) {
+    // Сорвавшееся чтение (обрыв облачного провайдера, EIO и т.п.) не валит
+    // весь скан: запись остаётся в списке как недокачанная и уходит в
+    // очередь фоновой докачки.
+    log('storage:markdown:read-snippet', error)
+    enqueueCloudDownload(snippetPath)
+
+    return {
+      legacyRecovery: 'none',
+      snippet: buildPlaceholderSnippet(
+        entry,
+        pathToFolderIdMap,
+        timestampFallbacks,
+      ),
+    }
+  }
+
+  const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const metaContents = Array.isArray(frontmatter.contents)
     ? frontmatter.contents
     : []
@@ -230,11 +313,20 @@ export function writeSnippetToFile(
   snippet: MarkdownSnippet,
 ): void {
   const snippetPath = path.join(paths.vaultPath, snippet.filePath)
+
+  // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
+  // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
+  const availability = getFileAvailability(snippetPath)
+  if (snippet.pendingCloudDownload || availability.isCloudPlaceholder) {
+    enqueueCloudDownload(snippetPath)
+    return
+  }
+
   const nextContent = serializeSnippet(snippet)
 
   fs.ensureDirSync(path.dirname(snippetPath))
 
-  if (fs.pathExistsSync(snippetPath)) {
+  if (availability.exists) {
     const currentContent = fs.readFileSync(snippetPath, 'utf8')
     if (currentContent === nextContent) {
       return
@@ -481,6 +573,7 @@ export function createSnippetRecord(
     isDeleted: snippet.isDeleted,
     isFavorites: snippet.isFavorites,
     name: snippet.name,
+    pendingCloudDownload: snippet.pendingCloudDownload === true,
     tags,
     updatedAt: snippet.updatedAt,
   }

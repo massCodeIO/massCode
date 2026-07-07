@@ -7,6 +7,9 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { log } from '../../../../../utils'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import { toPosixPath } from '../../runtime/shared/path'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
@@ -158,7 +161,26 @@ function reconcileRequests(
 
   for (const relativePath of requestRelativePaths) {
     const absolutePath = path.join(paths.httpRoot, relativePath)
-    const source = fs.readFileSync(absolutePath, 'utf8')
+
+    // Плейсхолдер не читается синхронно: запрос появится после фоновой
+    // докачки, которая триггерит повторный sync http-пространства.
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      enqueueCloudDownload(absolutePath)
+      continue
+    }
+
+    let source: string
+    try {
+      source = fs.readFileSync(absolutePath, 'utf8')
+    }
+    catch (error) {
+      // Сорвавшееся чтение не валит весь sync: файл уходит в очередь
+      // фоновой докачки и появится после повторного sync.
+      log('storage:http:read-request', error)
+      enqueueCloudDownload(absolutePath)
+      continue
+    }
+
     const parsed = parseRequestFile(source)
     const fmId = parsed.frontmatter.id
 

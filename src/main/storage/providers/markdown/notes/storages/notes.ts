@@ -11,7 +11,9 @@ import type {
   NoteUpdateResult,
 } from '../../../../contracts'
 import type { MarkdownNote, NotesState } from '../runtime/types'
+import path from 'node:path'
 import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
+import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
@@ -74,6 +76,7 @@ function createNoteRecord(note: MarkdownNote, state: NotesState): NoteRecord {
     isDeleted: note.isDeleted,
     isFavorites: note.isFavorites,
     name: note.name,
+    pendingCloudDownload: note.pendingCloudDownload === true,
     properties: note.properties,
     tags,
     updatedAt: note.updatedAt,
@@ -266,6 +269,14 @@ export function createNotesNotesStorage(): NotesStorage {
     getNoteById(id: number): NoteRecord | null {
       const { state, notes } = getCache()
       const note = findNoteById(notes, id)
+
+      // Пользователь открыл ещё не докачанную заметку: её файл поднимается
+      // в начало очереди фоновой докачки, ответ при этом не блокируется.
+      if (note?.pendingCloudDownload) {
+        prioritizeCloudDownload(
+          path.join(resolvePaths().notesRoot, note.filePath),
+        )
+      }
 
       return note ? createNoteRecord(note, state) : null
     },

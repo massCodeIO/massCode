@@ -9,6 +9,8 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -55,6 +57,12 @@ export function syncNotesFoldersWithDisk(
 }
 
 function readNoteIdFromFrontmatter(absolutePath: string): number | null {
+  // Плейсхолдер читать нельзя: чтение заблокирует main process до докачки
+  // файла облачным провайдером.
+  if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+    return null
+  }
+
   try {
     const source = fs.readFileSync(absolutePath, 'utf8')
     const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)
@@ -84,10 +92,19 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
     let noteId = existingByPath.get(filePath)
 
     if (!noteId || usedIds.has(noteId)) {
+      const absolutePath = path.join(paths.notesRoot, filePath)
+
+      // Неизвестный файл-плейсхолдер (создан на другом устройстве,
+      // содержимое ещё в облаке): его frontmatter-id недоступен без
+      // блокирующего чтения, а угадывание id привело бы к дублям. Файл
+      // появится в индексе после фоновой докачки.
+      if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+        enqueueCloudDownload(absolutePath)
+        continue
+      }
+
       // Try reading frontmatter for id
-      const frontmatterId = readNoteIdFromFrontmatter(
-        path.join(paths.notesRoot, filePath),
-      )
+      const frontmatterId = readNoteIdFromFrontmatter(absolutePath)
       if (frontmatterId && !usedIds.has(frontmatterId)) {
         noteId = frontmatterId
       }
@@ -252,6 +269,17 @@ export function syncNoteFileWithDisk(
     entry => entry.filePath.toLowerCase() === normalizedFilePathKey,
   )
   const noteExistsOnDisk = fs.pathExistsSync(noteAbsolutePath)
+
+  // Плейсхолдер, которого ещё нет в индексе, нельзя регистрировать до
+  // докачки: без frontmatter пришлось бы угадывать id (риск дублей).
+  if (
+    noteExistsOnDisk
+    && noteIndexInState === -1
+    && getFileAvailability(noteAbsolutePath).isCloudPlaceholder
+  ) {
+    enqueueCloudDownload(noteAbsolutePath)
+    return cache
+  }
 
   if (!noteExistsOnDisk) {
     if (noteIndexInState === -1) {

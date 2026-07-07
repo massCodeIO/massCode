@@ -8,6 +8,7 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import { runtimeRef } from './cache'
 import { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME } from './constants'
 import {
@@ -23,6 +24,7 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { getFileAvailability } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -172,6 +174,16 @@ function syncStateAndSnippetsWithDisk(
     }
 
     const snippetAbsolutePath = path.join(paths.vaultPath, filePath)
+
+    // Неизвестный файл-плейсхолдер (создан на другом устройстве, содержимое
+    // ещё в облаке): его frontmatter-id недоступен без блокирующего чтения,
+    // а угадывание id привело бы к дублям. Файл появится в индексе после
+    // фоновой докачки через инкрементальный sync.
+    if (getFileAvailability(snippetAbsolutePath).isCloudPlaceholder) {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return
+    }
+
     let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
 
     if (!snippetId || existingIdSet.has(snippetId)) {
@@ -338,6 +350,17 @@ export function syncSnippetFileWithDisk(
     normalizedFilePath,
   )
   const snippetExistsOnDisk = fs.pathExistsSync(snippetAbsolutePath)
+
+  // Плейсхолдер, которого ещё нет в индексе, нельзя регистрировать до
+  // докачки: без frontmatter пришлось бы угадывать id (риск дублей).
+  if (
+    snippetExistsOnDisk
+    && snippetIndexInState === -1
+    && getFileAvailability(snippetAbsolutePath).isCloudPlaceholder
+  ) {
+    enqueueCloudDownload(snippetAbsolutePath)
+    return cache
+  }
 
   if (!snippetExistsOnDisk) {
     if (snippetIndexInState === -1) {

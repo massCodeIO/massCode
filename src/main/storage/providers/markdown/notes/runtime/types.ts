@@ -103,6 +103,11 @@ export interface MarkdownNote {
   isDeleted: number
   isFavorites: number
   name: string
+  /**
+   * Файл заметки — облачный плейсхолдер: содержимое ещё не скачано
+   * провайдером, запись показывается в списке и докачивается в фоне.
+   */
+  pendingCloudDownload?: boolean
   properties: NoteProperties
   tags: number[]
   updatedAt: number

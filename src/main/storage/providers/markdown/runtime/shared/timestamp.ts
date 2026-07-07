@@ -1,3 +1,4 @@
+import type { Stats } from 'node:fs'
 import fs from 'fs-extra'
 
 function isFinitePositiveTimestamp(value: unknown): value is number {
@@ -30,9 +31,10 @@ export function normalizeTimestamp(value: unknown, fallback: number): number {
 export function getFileTimestampFallbacks(
   absolutePath: string,
   now: number,
+  knownStats?: Stats | null,
 ): { createdAt: number, updatedAt: number } {
   try {
-    const stats = fs.statSync(absolutePath)
+    const stats = knownStats ?? fs.statSync(absolutePath)
     const updatedAt = isFinitePositiveTimestamp(stats.mtimeMs)
       ? stats.mtimeMs
       : now

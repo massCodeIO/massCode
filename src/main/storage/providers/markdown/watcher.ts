@@ -3,6 +3,7 @@ import type { NotesPaths, NotesRuntimeCache } from './notes/runtime'
 import path from 'node:path'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
+import { configureCloudDownloads, resetCloudDownloads } from './cloudDownloads'
 import { wasRecentAppDrawingChange } from './drawings'
 import {
   getHttpPaths,
@@ -325,6 +326,7 @@ export function stopMarkdownWatcher(): void {
   hasPendingNotesSync = false
   hasPendingHttpSync = false
   hasPendingDrawingsSync = false
+  resetCloudDownloads()
   resetRuntimeCache()
   resetNotesRuntimeCache()
   resetHttpRuntimeCache()
@@ -365,6 +367,23 @@ export function startMarkdownWatcher(): void {
   }
 
   stopMarkdownWatcher()
+
+  // Обработчик регистрируется до первых сканов: они уже могут ставить
+  // облачные плейсхолдеры в очередь докачки. Докачанный файл проходит через
+  // общий инкрементальный sync-конвейер watcher, как внешнее изменение.
+  configureCloudDownloads((absolutePath) => {
+    const relativeWatchPath = normalizeRelativeWatchPath(
+      vaultRootPath,
+      absolutePath,
+    )
+
+    if (!relativeWatchPath) {
+      return
+    }
+
+    scheduleStateSync(vaultRootPath, paths, relativeWatchPath)
+  })
+
   ensureStateFile(paths)
   syncRuntimeWithDisk(paths)
   syncNotesRuntimeWithDisk(notesPaths)

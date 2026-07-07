@@ -18,7 +18,6 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from '../../runtime/shared/folderSync'
-import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import {
@@ -26,12 +25,7 @@ import {
   NOTES_TRASH_RELATIVE_PATH,
   notesRuntimeRef,
 } from './constants'
-import {
-  buildPlaceholderNote,
-  listNoteMarkdownFiles,
-  loadNotes,
-  readNoteFromFile,
-} from './notes'
+import { listNoteMarkdownFiles, loadNotes, readNoteFromFile } from './notes'
 import {
   readNotesFolderMetadata,
   writeNotesFolderMetadataFile,
@@ -211,9 +205,9 @@ export function isNotesVaultDiskReady(paths: NotesPaths): boolean {
   return notesVaultReconciler.isReconciled(paths.notesRoot)
 }
 
-// Мгновенный кэш из state-индекса без единого обращения к файлам заметок:
-// все записи помечены недокачанными, содержимое и уточнение статусов
-// приходят после фоновой сверки с диском.
+// Пустой временный кэш на период фоновой сверки: см. комментарий у
+// buildProvisionalRuntimeCache. Список из state-индекса тут не строится,
+// чтобы клик по ещё не подтянутой из облака записи не давал 404.
 function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
   if (
     notesRuntimeRef.cache
@@ -222,30 +216,7 @@ function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
     return notesRuntimeRef.cache
   }
 
-  // .state.yaml сам может быть облачным плейсхолдером: тогда loadNotesState
-  // ставит его в приоритетную докачку и бросает. Provisional-кэш при этом
-  // пустой, пространство откроется после докачки state и повторной сверки.
-  let state: NotesState
-  try {
-    state = loadNotesState(paths)
-  }
-  catch (error) {
-    if (!isCloudFileNotDownloadedError(error)) {
-      throw error
-    }
-    state = createDefaultNotesState()
-  }
-
-  const pathToFolderIdMap = buildPathToNotesFolderIdMap(state)
-  const now = Date.now()
-  const notes = state.notes.map(entry =>
-    buildPlaceholderNote(entry, pathToFolderIdMap, {
-      createdAt: now,
-      updatedAt: now,
-    }),
-  )
-
-  return setNotesRuntimeCache(paths, state, notes)
+  return setNotesRuntimeCache(paths, createDefaultNotesState(), [])
 }
 
 // Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан

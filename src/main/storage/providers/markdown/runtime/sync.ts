@@ -29,11 +29,9 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
-import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import { createVaultReconciler } from './shared/vaultReconcile'
 import {
-  buildPlaceholderSnippet,
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
   isTrashSnippetDirectory,
@@ -275,9 +273,12 @@ export function isCodeVaultDiskReady(paths: Paths): boolean {
   return vaultReconciler.isReconciled(paths.vaultPath)
 }
 
-// Мгновенный кэш из state-индекса без единого обращения к файлам vault:
-// все записи помечены недокачанными, содержимое и уточнение статусов
-// приходят после фоновой сверки с диском.
+// Пустой временный кэш на период фоновой сверки: обход диска опасен
+// синхронно (листинги dataless-каталогов материализуются сетью), поэтому
+// первый доступ отдаёт пустой список, а настоящий — согласованный с диском
+// и с getById — приходит после реконсиляции. Список из state-индекса тут
+// не строится намеренно: он бы содержал записи, чьи файлы ещё не подтянуты
+// из облака, и клик по такой записи давал бы 404.
 function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
   if (
     runtimeRef.cache
@@ -286,31 +287,7 @@ function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
     return runtimeRef.cache
   }
 
-  // state.json сам может быть облачным плейсхолдером: тогда loadState
-  // ставит его в приоритетную докачку и бросает. Provisional-кэш при этом
-  // пустой (пространство откроется после докачки state и повторной сверки),
-  // но приложение не фризит и не падает.
-  let state: MarkdownState
-  try {
-    state = loadState(paths)
-  }
-  catch (error) {
-    if (!isCloudFileNotDownloadedError(error)) {
-      throw error
-    }
-    state = createDefaultState()
-  }
-
-  const pathToFolderIdMap = buildPathToFolderIdMap(state)
-  const now = Date.now()
-  const snippets = state.snippets.map(entry =>
-    buildPlaceholderSnippet(entry, pathToFolderIdMap, {
-      createdAt: now,
-      updatedAt: now,
-    }),
-  )
-
-  return setRuntimeCache(paths, state, snippets)
+  return setRuntimeCache(paths, createDefaultState(), [])
 }
 
 // Настоящая сверка с диском: читает state и файлы. Может бросить, если

@@ -3,10 +3,15 @@ import type { NotesPaths, NotesRuntimeCache } from './notes/runtime'
 import path from 'node:path'
 import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
-import { configureCloudDownloads, resetCloudDownloads } from './cloudDownloads'
+import {
+  configureCloudDownloads,
+  getPendingCloudPaths,
+  resetCloudDownloads,
+} from './cloudDownloads'
 import { wasRecentAppDrawingChange } from './drawings'
 import {
   getHttpPaths,
+  type HttpPaths,
   peekHttpRuntimeCache,
   resetHttpRuntimeCache,
   syncHttpRuntimeWithDisk,
@@ -14,6 +19,7 @@ import {
 import {
   getNotesPaths,
   peekNotesRuntimeCache,
+  refreshPendingNoteFiles,
   resetNotesPathsCache,
   resetNotesRuntimeCache,
   syncNoteFileWithDisk,
@@ -26,12 +32,14 @@ import {
   type MarkdownRuntimeCache,
   type Paths,
   peekRuntimeCache,
+  refreshPendingSnippetFiles,
   resetPathsCache,
   resetRuntimeCache,
   syncRuntimeWithDisk,
   syncSnippetFileWithDisk,
 } from './runtime'
 import { wasRecentAppFileChange } from './runtime/shared/appChanges'
+import { getFileAvailability } from './runtime/shared/cloudFiles'
 import {
   getWatchPathSpaceId,
   isCodeWatchPath,
@@ -53,9 +61,14 @@ const MAX_PENDING_SYNC_FILE_PATHS = 25
 // отзывчивость UI и стоимость sync-циклов во время шторма фоновых докачек.
 const MAX_PENDING_SYNC_AGE_MS = 2_000
 
+// Пауза между проходами self-heal: перепроверка недокачанных записей после
+// того, как облако (особенно iCloud) материализовало файлы без fs-событий.
+const CLOUD_REFRESH_INTERVAL_MS = 3_000
+
 let markdownWatcher: FSWatcher | null = null
 let markdownWatchTimer: NodeJS.Timeout | null = null
 let pendingSyncSince: number | null = null
+let cloudRefreshTimer: NodeJS.Timeout | null = null
 let watchedVaultPath: string | null = null
 const pendingCodeFilePaths = new Set<string>()
 const pendingNoteFilePaths = new Set<string>()
@@ -327,12 +340,81 @@ function scheduleStateSync(
   markdownWatchTimer = setTimeout(runScheduledSync, 250)
 }
 
+// Самоисцеляющийся цикл: пока есть недокачанные файлы, раз в интервал
+// перечитывает те записи, чьи файлы уже стали доступны (облако могло
+// материализовать их без fs-события). Останавливается, когда pending нет.
+function scheduleCloudRefresh(
+  vaultRootPath: string,
+  paths: Paths,
+  notesPaths: NotesPaths,
+  httpPaths: HttpPaths,
+): void {
+  if (cloudRefreshTimer) {
+    return
+  }
+
+  cloudRefreshTimer = setTimeout(() => {
+    cloudRefreshTimer = null
+
+    let changed = false
+    let remaining = 0
+
+    try {
+      const codeResult = refreshPendingSnippetFiles(paths)
+      const notesResult = refreshPendingNoteFiles(notesPaths)
+      changed = codeResult.changed || notesResult.changed
+      remaining = codeResult.remaining + notesResult.remaining
+
+      // HTTP не хранит pending-флаг на записях (пропущенный файл просто
+      // отсутствует в state): если среди недокачанных путей есть ставший
+      // доступным http-файл, пересобираем http-пространство целиком.
+      const pendingHttpPaths = getPendingCloudPaths().filter(candidatePath =>
+        candidatePath.startsWith(`${httpPaths.httpRoot}/`),
+      )
+      let hasReadyHttpFile = false
+      let remainingHttp = 0
+      for (const candidatePath of pendingHttpPaths) {
+        if (getFileAvailability(candidatePath).isCloudPlaceholder) {
+          remainingHttp += 1
+        }
+        else {
+          hasReadyHttpFile = true
+        }
+      }
+
+      if (hasReadyHttpFile) {
+        syncHttpRuntimeWithDisk(httpPaths)
+        changed = true
+      }
+      remaining += remainingHttp
+    }
+    catch (error) {
+      log('storage:markdown:cloud-refresh', error)
+    }
+
+    if (changed) {
+      BrowserWindow.getAllWindows().forEach((window) => {
+        window.webContents.send('system:storage-synced')
+      })
+    }
+
+    if (remaining > 0) {
+      scheduleCloudRefresh(vaultRootPath, paths, notesPaths, httpPaths)
+    }
+  }, CLOUD_REFRESH_INTERVAL_MS)
+}
+
 export function stopMarkdownWatcher(): void {
   watcherStartToken += 1
 
   if (markdownWatchTimer) {
     clearTimeout(markdownWatchTimer)
     markdownWatchTimer = null
+  }
+
+  if (cloudRefreshTimer) {
+    clearTimeout(cloudRefreshTimer)
+    cloudRefreshTimer = null
   }
 
   pendingSyncSince = null
@@ -395,17 +477,25 @@ export function startMarkdownWatcher(): void {
   // Обработчик регистрируется до первых сканов: они уже могут ставить
   // облачные плейсхолдеры в очередь докачки. Докачанный файл проходит через
   // общий инкрементальный sync-конвейер watcher, как внешнее изменение.
-  configureCloudDownloads((absolutePath) => {
-    const relativeWatchPath = normalizeRelativeWatchPath(
-      vaultRootPath,
-      absolutePath,
-    )
+  // onQueueActivity взводит self-heal: он перепроверяет недокачанные записи
+  // напрямую (stat), не полагаясь на fs-события, которых материализация
+  // iCloud не порождает (mtime/size не меняются при докачке контента).
+  configureCloudDownloads({
+    onDownloaded: (absolutePath) => {
+      const relativeWatchPath = normalizeRelativeWatchPath(
+        vaultRootPath,
+        absolutePath,
+      )
 
-    if (!relativeWatchPath) {
-      return
-    }
+      if (!relativeWatchPath) {
+        return
+      }
 
-    scheduleStateSync(vaultRootPath, paths, relativeWatchPath)
+      scheduleStateSync(vaultRootPath, paths, relativeWatchPath)
+    },
+    onQueueActivity: () => {
+      scheduleCloudRefresh(vaultRootPath, paths, notesPaths, httpPaths)
+    },
   })
 
   ensureStateFile(paths)

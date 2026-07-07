@@ -91,6 +91,7 @@ export {
 export {
   getRuntimeCache,
   isCodeVaultDiskReady,
+  refreshPendingSnippetFiles,
   resetRuntimeCache,
   setRuntimeCache,
   syncCounters,

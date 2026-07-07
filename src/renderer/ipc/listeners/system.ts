@@ -31,7 +31,12 @@ const { state, isCodeSpaceInitialized } = useApp()
 const { isHttpSpaceInitialized } = useHttpApp()
 const { getFolders } = useFolders()
 const { getTags } = useTags()
-const { selectFirstSnippet, displayedSnippets } = useSnippets()
+const {
+  selectFirstSnippet,
+  displayedSnippets,
+  getSnippets,
+  refreshSelectedSnippet,
+} = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
@@ -43,7 +48,7 @@ const {
 const { refreshHttpSpaceFromDisk } = useHttpSpaceInit()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
-const { hasBusyNoteContentUpdates } = useNotes()
+const { hasBusyNoteContentUpdates, getNotes, refreshSelectedNote } = useNotes()
 const { getNoteTags } = useNoteTags()
 const { getNotesDashboard } = useNotesDashboard()
 const { getNotesGraph } = useNotesGraph()
@@ -57,6 +62,11 @@ async function refreshCodeSpace() {
 
   await getFolders(false)
   await getTags()
+  // Список перезапрашивается явно: облачная докачка снимает
+  // pendingCloudDownload и наполняет контент уже показанных записей,
+  // но их id не меняются, поэтому реактивность сама не сработает.
+  await getSnippets()
+  await refreshSelectedSnippet()
   await normalizeCodeSelectionState()
 
   if (!selectedSnippetId) {
@@ -89,6 +99,10 @@ async function refreshAfterStorageSync() {
     case 'notes':
       await getNoteFolders()
       await getNoteTags()
+      // См. комментарий в refreshCodeSpace: список и контент открытой
+      // заметки перезапрашиваются явно после облачной докачки.
+      await getNotes()
+      await refreshSelectedNote()
       await normalizeNotesSelectionState()
 
       if (router.currentRoute.value.name === RouterName.notesDashboard) {

@@ -24,7 +24,7 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
-import { primeDatalessChecks } from './shared/cloudFiles'
+import { getFileAvailability, primeDatalessChecks } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -323,6 +323,42 @@ export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
   })
 
   return setRuntimeCache(paths, state, snippets)
+}
+
+// Перепроверка недокачанных записей независимо от fs-событий: облачный
+// провайдер (особенно iCloud) материализует файл, НЕ меняя mtime/size,
+// поэтому chokidar не присылает `change` и флаг pendingCloudDownload иначе
+// висел бы вечно. Возвращает, сколько записей всё ещё недокачано.
+export function refreshPendingSnippetFiles(paths: Paths): {
+  changed: boolean
+  remaining: number
+} {
+  const cache = runtimeRef.cache
+  if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
+    return { changed: false, remaining: 0 }
+  }
+
+  const pendingFilePaths = cache.snippets
+    .filter(snippet => snippet.pendingCloudDownload)
+    .map(snippet => snippet.filePath)
+
+  let changed = false
+  for (const filePath of pendingFilePaths) {
+    const absolutePath = path.join(paths.vaultPath, filePath)
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      continue
+    }
+
+    if (syncSnippetFileWithDisk(paths, filePath)) {
+      changed = true
+    }
+  }
+
+  const remaining
+    = runtimeRef.cache?.snippets.filter(snippet => snippet.pendingCloudDownload)
+      .length ?? 0
+
+  return { changed, remaining }
 }
 
 export function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {

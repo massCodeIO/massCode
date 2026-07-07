@@ -73,6 +73,7 @@ interface ActiveDownload {
 type CloudFileDownloadedHandler = (absolutePath: string) => void
 
 let onFileDownloaded: CloudFileDownloadedHandler | null = null
+let onQueueActivity: (() => void) | null = null
 let queue: { absolutePath: string, attempts: number }[] = []
 const queuedPaths = new Set<string>()
 const activeDownloads = new Map<string, ActiveDownload>()
@@ -98,10 +99,19 @@ function broadcastStatus(): void {
   })
 }
 
-export function configureCloudDownloads(
-  handler: CloudFileDownloadedHandler,
-): void {
-  onFileDownloaded = handler
+export function configureCloudDownloads(options: {
+  onDownloaded: CloudFileDownloadedHandler
+  onQueueActivity: () => void
+}): void {
+  onFileDownloaded = options.onDownloaded
+  onQueueActivity = options.onQueueActivity
+}
+
+// Все пути, докачка которых ещё не завершена (в очереди, активные или
+// отложенные после неудачи). Self-heal перепроверяет их напрямую, не
+// полагаясь на fs-события, которых материализация iCloud не порождает.
+export function getPendingCloudPaths(): string[] {
+  return [...queuedPaths, ...activeDownloads.keys(), ...failedAtByPath.keys()]
 }
 
 export function resetCloudDownloads(): void {
@@ -121,6 +131,7 @@ export function resetCloudDownloads(): void {
   immediateCompletionsByPath.clear()
   downloadedCount = 0
   onFileDownloaded = null
+  onQueueActivity = null
   resetCloudFileExemptions()
 }
 
@@ -141,6 +152,7 @@ export function enqueueCloudDownload(absolutePath: string): void {
 
   queuedPaths.add(absolutePath)
   queue.push({ absolutePath, attempts: 0 })
+  onQueueActivity?.()
   broadcastStatus()
   processQueue()
 }

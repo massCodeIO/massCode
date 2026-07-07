@@ -269,6 +269,40 @@ export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
   return setNotesRuntimeCache(paths, state, notes)
 }
 
+// Перепроверка недокачанных заметок независимо от fs-событий: см.
+// комментарий у refreshPendingSnippetFiles.
+export function refreshPendingNoteFiles(paths: NotesPaths): {
+  changed: boolean
+  remaining: number
+} {
+  const cache = notesRuntimeRef.cache
+  if (!cache || cache.paths.notesRoot !== paths.notesRoot) {
+    return { changed: false, remaining: 0 }
+  }
+
+  const pendingFilePaths = cache.notes
+    .filter(note => note.pendingCloudDownload)
+    .map(note => note.filePath)
+
+  let changed = false
+  for (const filePath of pendingFilePaths) {
+    const absolutePath = path.join(paths.notesRoot, filePath)
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      continue
+    }
+
+    if (syncNoteFileWithDisk(paths, filePath)) {
+      changed = true
+    }
+  }
+
+  const remaining
+    = notesRuntimeRef.cache?.notes.filter(note => note.pendingCloudDownload)
+      .length ?? 0
+
+  return { changed, remaining }
+}
+
 export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
   if (
     notesRuntimeRef.cache

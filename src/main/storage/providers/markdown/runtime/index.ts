@@ -90,6 +90,7 @@ export {
 // Sync & Cache
 export {
   getRuntimeCache,
+  isCodeVaultDiskReady,
   resetRuntimeCache,
   setRuntimeCache,
   syncCounters,

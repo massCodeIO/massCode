@@ -1,21 +1,27 @@
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import {
-  isCloudFileNotDownloadedError,
-  readVaultTextFileSync,
-} from './guardedRead'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { getFileAvailability } from './cloudFiles'
 
 export function readYamlObjectFile<T>(filePath: string): T | null {
-  if (!fs.pathExistsSync(filePath)) {
+  const availability = getFileAvailability(filePath)
+
+  if (!availability.exists) {
+    return null
+  }
+
+  // Недокачанный метаданные-файл не прерывает скан: он уходит в фоновую
+  // докачку, а до неё папка живёт на данных из state (id сохраняется по
+  // пути). Перезапись дефолтами исключена: writeFolderMetadataFile не пишет
+  // в плейсхолдеры.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(filePath)
     return null
   }
 
   try {
-    // Guarded-чтение: недокачанный файл прерывает скан ошибкой, потому что
-    // null здесь означал бы «метаданных нет» и привёл бы к их перезаписи
-    // дефолтами поверх ещё не скачанной облачной версии.
-    const source = readVaultTextFileSync(filePath)
+    const source = fs.readFileSync(filePath, 'utf8')
     const parsed = yaml.load(source)
 
     if (!parsed || typeof parsed !== 'object') {
@@ -24,11 +30,7 @@ export function readYamlObjectFile<T>(filePath: string): T | null {
 
     return parsed as T
   }
-  catch (error) {
-    if (isCloudFileNotDownloadedError(error)) {
-      throw error
-    }
-
+  catch {
     return null
   }
 }

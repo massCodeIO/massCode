@@ -14,6 +14,7 @@ import {
   primeDatalessChecks,
 } from '../../runtime/shared/cloudFiles'
 import { toPosixPath } from '../../runtime/shared/path'
+import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
   parseRequestFile,
@@ -282,7 +283,52 @@ function buildRuntimeCache(
   }
 }
 
+const httpVaultReconciler = createVaultReconciler('http')
+
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isHttpVaultDiskReady(paths: HttpPaths): boolean {
+  return httpVaultReconciler.isReconciled(paths.httpRoot)
+}
+
+// Мгновенный кэш из state без обхода диска: запросы появятся после фоновой
+// сверки, их записи в state сохраняются (id стабильны).
+function buildProvisionalHttpCache(paths: HttpPaths): HttpRuntimeCache {
+  if (
+    httpRuntimeRef.cache
+    && httpRuntimeRef.cache.paths.httpRoot === paths.httpRoot
+  ) {
+    return httpRuntimeRef.cache
+  }
+
+  ensureHttpStateFile(paths)
+  const state = loadHttpState(paths)
+  const cache = buildRuntimeCache(paths, state, [])
+  httpRuntimeRef.cache = cache
+  return cache
+}
+
 export function syncHttpRuntimeWithDisk(paths: HttpPaths): HttpRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне.
+  if (!httpVaultReconciler.isReconciled(paths.httpRoot)) {
+    const provisionalCache = buildProvisionalHttpCache(paths)
+
+    httpVaultReconciler.begin(paths.httpRoot, () => {
+      if (
+        httpRuntimeRef.cache
+        && httpRuntimeRef.cache.paths.httpRoot !== paths.httpRoot
+      ) {
+        return
+      }
+
+      syncHttpRuntimeWithDisk(paths)
+    })
+
+    return provisionalCache
+  }
+
   ensureHttpStateFile(paths)
   const state = loadHttpState(paths)
 

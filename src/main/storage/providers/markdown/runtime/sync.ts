@@ -30,7 +30,9 @@ import {
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
+import { createVaultReconciler } from './shared/vaultReconcile'
 import {
+  buildPlaceholderSnippet,
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
   isTrashSnippetDirectory,
@@ -263,7 +265,59 @@ export function resetRuntimeCache(): void {
   runtimeRef.cache = null
 }
 
+const vaultReconciler = createVaultReconciler('markdown')
+
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isCodeVaultDiskReady(paths: Paths): boolean {
+  return vaultReconciler.isReconciled(paths.vaultPath)
+}
+
+// Мгновенный кэш из state-индекса без единого обращения к файлам vault:
+// все записи помечены недокачанными, содержимое и уточнение статусов
+// приходят после фоновой сверки с диском.
+function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
+  if (
+    runtimeRef.cache
+    && runtimeRef.cache.paths.vaultPath === paths.vaultPath
+  ) {
+    return runtimeRef.cache
+  }
+
+  const state = loadState(paths)
+  const pathToFolderIdMap = buildPathToFolderIdMap(state)
+  const now = Date.now()
+  const snippets = state.snippets.map(entry =>
+    buildPlaceholderSnippet(entry, pathToFolderIdMap, {
+      createdAt: now,
+      updatedAt: now,
+    }),
+  )
+
+  return setRuntimeCache(paths, state, snippets)
+}
+
 export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне.
+  if (!vaultReconciler.isReconciled(paths.vaultPath)) {
+    const provisionalCache = buildProvisionalRuntimeCache(paths)
+
+    vaultReconciler.begin(paths.vaultPath, () => {
+      if (
+        runtimeRef.cache
+        && runtimeRef.cache.paths.vaultPath !== paths.vaultPath
+      ) {
+        return
+      }
+
+      syncRuntimeWithDisk(paths)
+    })
+
+    return provisionalCache
+  }
+
   const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
     rewriteRecoveredLegacyFences: true,
   })

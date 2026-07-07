@@ -12,11 +12,13 @@ import yaml from 'js-yaml'
 import { enqueueCloudDownload } from './cloudDownloads'
 import {
   getHttpPaths,
+  isHttpVaultDiskReady,
   loadHttpState,
   syncHttpRuntimeWithDisk,
 } from './http/runtime'
 import {
   getNotesPaths,
+  isNotesVaultDiskReady,
   loadNotesState,
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
@@ -25,6 +27,7 @@ import {
   getSpaceStatePath,
   getVaultPath,
   INBOX_DIR_NAME,
+  isCodeVaultDiskReady,
   loadState,
   META_DIR_NAME,
   META_FILE_NAME,
@@ -822,6 +825,23 @@ export function previewVaultDoctor(
 ): VaultDoctorResponse {
   const context = createContext()
   const spaces = normalizeSpaces(input)
+
+  // Пока vault не сверен с диском после открытия (каталоги могут быть
+  // недокачаны из облака), полный аудит невозможен без блокирующего
+  // обхода: возвращается пустой результат, Doctor запускается позже.
+  const vaultRootPath = getVaultPath()
+  if (
+    !isCodeVaultDiskReady(getPaths(vaultRootPath))
+    || !isNotesVaultDiskReady(getNotesPaths(vaultRootPath))
+    || !isHttpVaultDiskReady(getHttpPaths(vaultRootPath))
+  ) {
+    return {
+      conflictGroups: [],
+      items: [],
+      summary: buildSummary(context),
+      warnings: [],
+    }
+  }
 
   if (spaces.includes('code')) {
     scanCode(context)

@@ -19,12 +19,18 @@ import {
   syncFoldersStateFromDiskAtRoot,
 } from '../../runtime/shared/folderSync'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
+import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import {
   NOTES_INBOX_RELATIVE_PATH,
   NOTES_TRASH_RELATIVE_PATH,
   notesRuntimeRef,
 } from './constants'
-import { listNoteMarkdownFiles, loadNotes, readNoteFromFile } from './notes'
+import {
+  buildPlaceholderNote,
+  listNoteMarkdownFiles,
+  loadNotes,
+  readNoteFromFile,
+} from './notes'
 import {
   readNotesFolderMetadata,
   writeNotesFolderMetadataFile,
@@ -195,7 +201,59 @@ function setNotesRuntimeCache(
   return cache
 }
 
+const notesVaultReconciler = createVaultReconciler('notes')
+
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isNotesVaultDiskReady(paths: NotesPaths): boolean {
+  return notesVaultReconciler.isReconciled(paths.notesRoot)
+}
+
+// Мгновенный кэш из state-индекса без единого обращения к файлам заметок:
+// все записи помечены недокачанными, содержимое и уточнение статусов
+// приходят после фоновой сверки с диском.
+function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
+  if (
+    notesRuntimeRef.cache
+    && notesRuntimeRef.cache.paths.notesRoot === paths.notesRoot
+  ) {
+    return notesRuntimeRef.cache
+  }
+
+  const state = loadNotesState(paths)
+  const pathToFolderIdMap = buildPathToNotesFolderIdMap(state)
+  const now = Date.now()
+  const notes = state.notes.map(entry =>
+    buildPlaceholderNote(entry, pathToFolderIdMap, {
+      createdAt: now,
+      updatedAt: now,
+    }),
+  )
+
+  return setNotesRuntimeCache(paths, state, notes)
+}
+
 export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне.
+  if (!notesVaultReconciler.isReconciled(paths.notesRoot)) {
+    const provisionalCache = buildProvisionalNotesCache(paths)
+
+    notesVaultReconciler.begin(paths.notesRoot, () => {
+      if (
+        notesRuntimeRef.cache
+        && notesRuntimeRef.cache.paths.notesRoot !== paths.notesRoot
+      ) {
+        return
+      }
+
+      syncNotesRuntimeWithDisk(paths)
+    })
+
+    return provisionalCache
+  }
+
   flushPendingNotesStateWrite(paths)
   const state = loadNotesState(paths)
 

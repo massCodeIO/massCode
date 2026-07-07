@@ -49,8 +49,9 @@ import {
 // is unlikely to beat one full re-read, so the watcher escalates instead.
 const MAX_PENDING_SYNC_FILE_PATHS = 25
 // Верхняя граница дебаунса: даже под непрерывным потоком событий буфер
-// изменений сбрасывается не реже, чем раз в эту паузу.
-const MAX_PENDING_SYNC_AGE_MS = 1_000
+// изменений сбрасывается не реже, чем раз в эту паузу. Значение балансирует
+// отзывчивость UI и стоимость sync-циклов во время шторма фоновых докачек.
+const MAX_PENDING_SYNC_AGE_MS = 2_000
 
 let markdownWatcher: FSWatcher | null = null
 let markdownWatchTimer: NodeJS.Timeout | null = null

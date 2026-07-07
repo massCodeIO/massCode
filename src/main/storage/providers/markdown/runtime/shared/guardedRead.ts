@@ -1,5 +1,5 @@
 import fs from 'fs-extra'
-import { enqueueCloudDownload } from '../../cloudDownloads'
+import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { getFileAvailability } from './cloudFiles'
 
 // Синхронное чтение служебного файла vault (state, метаданные папок) с
@@ -17,8 +17,10 @@ export function isCloudFileNotDownloadedError(error: unknown): boolean {
 export function readVaultTextFileSync(absolutePath: string): string {
   const availability = getFileAvailability(absolutePath)
 
+  // State-файл — критический путь открытия vault: он поднимается в начало
+  // очереди докачки, чтобы пространство открылось как можно раньше.
   if (availability.isCloudPlaceholder) {
-    enqueueCloudDownload(absolutePath)
+    prioritizeCloudDownload(absolutePath)
     throw new Error(
       `CLOUD_FILE_NOT_DOWNLOADED:Vault file is not downloaded from cloud storage yet: ${absolutePath}`,
     )

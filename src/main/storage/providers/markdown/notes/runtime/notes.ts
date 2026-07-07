@@ -103,7 +103,7 @@ export function serializeNote(note: MarkdownNote): string {
   return `---\n${frontmatterText}\n---\n${note.content}`
 }
 
-function buildPlaceholderNote(
+export function buildPlaceholderNote(
   entry: NotesIndexItem,
   pathToFolderIdMap: Map<string, number>,
   timestampFallbacks: { createdAt: number, updatedAt: number },

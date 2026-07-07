@@ -113,7 +113,7 @@ export function readSnippetFromFile(
   )
 }
 
-function buildPlaceholderSnippet(
+export function buildPlaceholderSnippet(
   entry: MarkdownSnippetIndexItem,
   pathToFolderIdMap: ReadonlyMap<string, number>,
   timestampFallbacks: { createdAt: number, updatedAt: number },

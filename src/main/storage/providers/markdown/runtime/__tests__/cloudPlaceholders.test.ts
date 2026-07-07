@@ -4,9 +4,14 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
+import { runtimeRef } from '../cache'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
 import { writeSnippetToFile } from '../snippets'
-import { resetRuntimeCache, syncRuntimeWithDisk } from '../sync'
+import {
+  refreshPendingSnippetFiles,
+  resetRuntimeCache,
+  syncRuntimeWithDisk,
+} from '../sync'
 
 vi.mock('electron', () => ({
   app: {
@@ -216,5 +221,44 @@ describe('cloud placeholder handling in code runtime', () => {
     expect(vi.mocked(enqueueCloudDownload)).toHaveBeenCalledWith(
       placeholderPath,
     )
+  })
+
+  it('clears the pending flag and fills content once the file is hydrated', () => {
+    const paths = createPaths()
+    const filePath = writeSnippetFixture(
+      paths,
+      '.masscode/inbox/remote.md',
+      7,
+      'Remote',
+    )
+
+    // Файл сперва зарегистрирован в state обычным сканом.
+    syncRuntimeWithDisk(paths)
+
+    // Затем провайдер выгрузил его: повторный скан отдаёт placeholder-запись.
+    makeSparsePlaceholder(filePath)
+    if (!hasPlaceholderSignature(filePath)) {
+      return
+    }
+
+    resetRuntimeCache()
+    const cache = syncRuntimeWithDisk(paths)
+    const pending = cache.snippets.find(snippet => snippet.id === 7)
+    expect(pending?.pendingCloudDownload).toBe(true)
+    expect(pending?.contents).toEqual([])
+
+    // Облако материализовало файл (в реальности — без смены mtime, поэтому
+    // watcher-событие не приходит и снятие флага делает self-heal).
+    writeSnippetFixture(paths, '.masscode/inbox/remote.md', 7, 'Remote')
+    expect(hasPlaceholderSignature(filePath)).toBe(false)
+
+    const result = refreshPendingSnippetFiles(paths)
+    expect(result.remaining).toBe(0)
+
+    const refreshed = runtimeRef.cache?.snippets.find(
+      snippet => snippet.id === 7,
+    )
+    expect(refreshed?.pendingCloudDownload).toBeFalsy()
+    expect(refreshed?.contents[0]?.value).toBe('body')
   })
 })

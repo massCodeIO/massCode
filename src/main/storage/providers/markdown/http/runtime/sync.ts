@@ -9,7 +9,10 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
-import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  primeDatalessChecks,
+} from '../../runtime/shared/cloudFiles'
 import { toPosixPath } from '../../runtime/shared/path'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
@@ -154,6 +157,15 @@ function reconcileRequests(
   const existingByPath = new Map(
     state.requests.map(item => [item.filePath, item.id]),
   )
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    requestRelativePaths.map(relativePath =>
+      path.join(paths.httpRoot, relativePath),
+    ),
+  )
+
   const usedIds = new Set<number>()
   const records: HttpRequestRecord[] = []
   const indexEntries: HttpState['requests'] = []

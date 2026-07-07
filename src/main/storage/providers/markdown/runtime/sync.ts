@@ -24,6 +24,7 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { primeDatalessChecks } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -158,6 +159,15 @@ function syncStateAndSnippetsWithDisk(
   const scannedFolderMetadataByPath = syncFoldersWithDisk(paths, state)
 
   const relativeSnippetFiles = listMarkdownFiles(paths.vaultPath)
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    relativeSnippetFiles.map(filePath =>
+      path.join(paths.vaultPath, filePath),
+    ),
+  )
+
   const fileSet = new Set(relativeSnippetFiles)
   const existingIdSet = new Set<number>(state.snippets.map(item => item.id))
 

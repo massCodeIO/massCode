@@ -1,10 +1,15 @@
 import path from 'node:path'
 import fs from 'fs-extra'
 import {
+  enqueueCloudDownload,
+  prioritizeCloudDownload,
+} from '../cloudDownloads'
+import {
   DRAWINGS_SPACE_ID,
   INVALID_NAME_CHARS_RE,
   WINDOWS_RESERVED_NAME_RE,
 } from '../runtime/constants'
+import { getFileAvailability } from '../runtime/shared/cloudFiles'
 import { ensureSpaceDirectory, getSpaceDirPath } from '../runtime/spaces'
 
 export const DRAWING_FILE_EXTENSION = '.excalidraw'
@@ -172,6 +177,14 @@ export async function readDrawing(
 ): Promise<string | null> {
   const filePath = getDrawingFilePath(vaultPath, id)
 
+  // Недокачанный рисунок не читается: чтение зависло бы в UV threadpool до
+  // докачки. Файл поднимается в приоритет очереди, после докачки renderer
+  // получит событие sync и перечитает рисунок.
+  if (getFileAvailability(filePath).isCloudPlaceholder) {
+    prioritizeCloudDownload(filePath)
+    return null
+  }
+
   try {
     return await fs.readFile(filePath, 'utf8')
   }
@@ -187,6 +200,14 @@ export async function writeDrawing(
 ): Promise<{ updatedAt: number }> {
   ensureSpaceDirectory(vaultPath, DRAWINGS_SPACE_ID)
   const filePath = getDrawingFilePath(vaultPath, id)
+
+  // Запись в недокачанный рисунок затёрла бы облачное содержимое.
+  if (getFileAvailability(filePath).isCloudPlaceholder) {
+    enqueueCloudDownload(filePath)
+    throw new Error(
+      'CLOUD_FILE_NOT_DOWNLOADED:This drawing is still downloading from cloud storage. Try again once the download completes.',
+    )
+  }
 
   rememberAppChange(filePath)
   await fs.writeFile(filePath, content, 'utf8')

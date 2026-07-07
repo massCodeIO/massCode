@@ -11,7 +11,9 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 const HTTP_METHODS: HttpMethod[] = [
@@ -218,7 +220,16 @@ export function readRequestFile(
   filePath: string,
 ): ParsedRequestFile | null {
   const absolutePath = path.join(httpRoot, filePath)
-  if (!fs.pathExistsSync(absolutePath)) {
+  const availability = getFileAvailability(absolutePath)
+
+  if (!availability.exists) {
+    return null
+  }
+
+  // Недокачанный файл не читается синхронно: он уходит в фоновую докачку,
+  // после которой запрос появится через повторный sync.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
     return null
   }
 
@@ -231,9 +242,18 @@ export function writeRequestFile(
   record: HttpRequestRecord,
 ): void {
   const absolutePath = path.join(httpRoot, record.filePath)
+  const availability = getFileAvailability(absolutePath)
+
+  // Запись в недокачанный файл затёрла бы облачное содержимое: файл сначала
+  // докачивается в фоне.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return
+  }
+
   const next = serializeRequestFile(record)
 
-  if (fs.pathExistsSync(absolutePath)) {
+  if (availability.exists) {
     const current = fs.readFileSync(absolutePath, 'utf8')
     if (current === next) {
       return

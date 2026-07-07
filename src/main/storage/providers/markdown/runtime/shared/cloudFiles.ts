@@ -101,6 +101,82 @@ function isDatalessOnMacos(absolutePath: string, stats: Stats): boolean {
   return isDataless
 }
 
+const PRIME_CHUNK_SIZE = 400
+
+// Batch-прайминг точной проверки для полного скана: один spawn системного
+// stat на сотни подозрительных файлов вместо отдельного spawn на каждый.
+// Вывод `stat -f %Xf` даёт одну строку на файл в порядке аргументов, поэтому
+// маппинг делается по индексу; при любом сбое чанк просто не праймится и
+// файлы проверяются лениво по одному.
+export function primeDatalessChecks(absolutePaths: string[]): void {
+  if (process.platform !== 'darwin' || datalessProbeOverride) {
+    return
+  }
+
+  const suspicious: { path: string, stats: Stats }[] = []
+
+  for (const absolutePath of absolutePaths) {
+    try {
+      const stats = fs.statSync(absolutePath)
+
+      if (!hasPlaceholderSignature(stats)) {
+        continue
+      }
+
+      const cached = datalessCheckCache.get(absolutePath)
+      if (
+        cached
+        && cached.mtimeMs === stats.mtimeMs
+        && cached.size === stats.size
+      ) {
+        continue
+      }
+
+      suspicious.push({ path: absolutePath, stats })
+    }
+    catch {
+      // Файл исчез между листингом и stat: лениво обработается позже.
+    }
+  }
+
+  for (let start = 0; start < suspicious.length; start += PRIME_CHUNK_SIZE) {
+    const chunk = suspicious.slice(start, start + PRIME_CHUNK_SIZE)
+
+    try {
+      const result = spawnSync(
+        '/usr/bin/stat',
+        ['-f', '%Xf', ...chunk.map(entry => entry.path)],
+        { encoding: 'utf8', timeout: 10_000 },
+      )
+
+      if (result.status !== 0) {
+        continue
+      }
+
+      const lines = result.stdout.trim().split('\n')
+      if (lines.length !== chunk.length) {
+        continue
+      }
+
+      chunk.forEach((entry, index) => {
+        const flags = Number.parseInt(lines[index].trim(), 16)
+        if (!Number.isFinite(flags)) {
+          return
+        }
+
+        datalessCheckCache.set(entry.path, {
+          isDataless: (flags & SF_DATALESS) !== 0,
+          mtimeMs: entry.stats.mtimeMs,
+          size: entry.stats.size,
+        })
+      })
+    }
+    catch {
+      // Чанк не праймится: файлы проверятся лениво по одному.
+    }
+  }
+}
+
 // Плейсхолдер облачного провайдера сообщает через stat полный размер файла,
 // но не занимает блоков на диске: на macOS у dataless-файла нет extents,
 // на Windows у Cloud Filter placeholder нулевой AllocationSize. Сам stat

@@ -10,7 +10,10 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
 import { enqueueCloudDownload } from '../../cloudDownloads'
-import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  primeDatalessChecks,
+} from '../../runtime/shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
@@ -83,6 +86,12 @@ function readNoteIdFromFrontmatter(
 
 export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
   const mdFiles = listNoteMarkdownFiles(paths.notesRoot)
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    mdFiles.map(filePath => path.join(paths.notesRoot, filePath)),
+  )
 
   // Build existing path -> id map from state
   const existingByPath = new Map<string, number>()

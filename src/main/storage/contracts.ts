@@ -248,6 +248,10 @@ export interface NotesQueryInput {
   propertyStatusNot?: string
   propertyType?: string
   hideCompletedTasks?: number
+  // Server-only флаг (не HTTP-параметр): дочитать тела заметок перед
+  // построением records — для потоков, которым нужен content (graph,
+  // dashboard). Список работает без тел.
+  withContent?: boolean
 }
 
 export interface NoteCreateInput {

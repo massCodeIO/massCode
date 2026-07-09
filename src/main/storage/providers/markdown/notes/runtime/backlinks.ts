@@ -7,7 +7,7 @@ import {
 import { getPaths, getVaultPath } from '../../runtime/paths'
 import { getRuntimeCache } from '../../runtime/sync'
 import { createInternalLinkResolver } from './internalLinkResolver'
-import { writeNoteToFile } from './notes'
+import { ensureAllNoteContentsLoaded, writeNoteToFile } from './notes'
 import { buildNotesFolderPathMap } from './paths'
 import { invalidateNotesSearchIndex } from './search'
 
@@ -128,6 +128,10 @@ export function rewriteBacklinksAfterNoteUpdate(
   if (!nameChanged && !folderChanged) {
     return 0
   }
+
+  // Переписывание [[ссылок]] сканирует тела всех заметок: ленивые записи
+  // сначала дочитываются, иначе их ссылки молча остались бы битыми.
+  ensureAllNoteContentsLoaded(paths, notes)
 
   const snippetLookup = loadSnippetLookup()
   const folderPathMap = buildNotesFolderPathMap(state)
@@ -255,6 +259,10 @@ export function promoteBareBacklinksOnConflict(
     return 0
   }
 
+  // Переписывание [[ссылок]] сканирует тела всех заметок: ленивые записи
+  // сначала дочитываются, иначе их ссылки молча остались бы битыми.
+  ensureAllNoteContentsLoaded(paths, notes)
+
   const folderPathMap = buildNotesFolderPathMap(state)
   const noteFolderPath = (note: MarkdownNote): string =>
     note.folderId === null ? '' : (folderPathMap.get(note.folderId) ?? '')
@@ -353,6 +361,10 @@ export function rewriteBacklinksAfterFolderUpdate(
   if (affectedFolderIds.size === 0) {
     return 0
   }
+
+  // Переписывание [[ссылок]] сканирует тела всех заметок: ленивые записи
+  // сначала дочитываются, иначе их ссылки молча остались бы битыми.
+  ensureAllNoteContentsLoaded(paths, notes)
 
   const affectedNoteIds = new Set<number>()
   for (const note of notes) {

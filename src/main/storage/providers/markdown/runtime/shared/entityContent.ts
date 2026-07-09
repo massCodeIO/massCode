@@ -1,7 +1,8 @@
 import { assertEntityContentAvailable } from './cloudGuards'
 
 interface EntityWithBodyContent {
-  content: string
+  // null — ленивое тело, ещё не дочитанное из индекса метаданных.
+  content: string | null
   pendingCloudDownload?: boolean
   updatedAt: number
 }

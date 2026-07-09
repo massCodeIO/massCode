@@ -40,6 +40,7 @@ import {
 } from '../runtime/backlinks'
 import { getNotesPaths } from '../runtime/constants'
 import {
+  ensureNoteContentLoaded,
   findNoteById,
   isNoteSystemFrontmatterKey,
   persistNote,
@@ -70,7 +71,10 @@ function createNoteRecord(note: MarkdownNote, state: NotesState): NoteRecord {
     .filter((t): t is { id: number, name: string } => t !== null)
 
   return {
-    content: note.content,
+    // Ленивые записи отдают пустой контент: список его не сериализует, а
+    // потокам с телом (getNoteById, поиск, graph) контент дочитывается до
+    // построения record.
+    content: note.content ?? '',
     createdAt: note.createdAt,
     description: note.description,
     folder,
@@ -266,6 +270,14 @@ export function createNotesNotesStorage(): NotesStorage {
         query,
       })
 
+      // Контент дочитывается до построения records: снимок content в record
+      // не обновился бы от более поздней материализации.
+      if (query.withContent) {
+        filtered.forEach((note) => {
+          ensureNoteContentLoaded(resolvePaths(), note)
+        })
+      }
+
       return filtered.map(n => createNoteRecord(n, state))
     },
     getNoteById(id: number): NoteRecord | null {
@@ -278,6 +290,11 @@ export function createNotesNotesStorage(): NotesStorage {
         prioritizeCloudDownload(
           path.join(resolvePaths().notesRoot, note.filePath),
         )
+      }
+
+      // Запись из индекса без тела: контент дочитывается по первому запросу.
+      if (note) {
+        ensureNoteContentLoaded(resolvePaths(), note)
       }
 
       return note ? createNoteRecord(note, state) : null

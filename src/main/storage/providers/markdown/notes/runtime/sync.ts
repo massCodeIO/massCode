@@ -2,6 +2,7 @@ import type {
   MarkdownNote,
   NotesFolderMetadataFile,
   NotesFolderRecord,
+  NotesIndexItem,
   NotesPaths,
   NotesRuntimeCache,
   NotesState,
@@ -26,7 +27,12 @@ import {
   NOTES_TRASH_RELATIVE_PATH,
   notesRuntimeRef,
 } from './constants'
-import { listNoteMarkdownFiles, loadNotes, readNoteFromFile } from './notes'
+import {
+  buildNoteIndexMetadata,
+  listNoteMarkdownFiles,
+  loadNotes,
+  readNoteFromFile,
+} from './notes'
 import {
   readNotesFolderMetadata,
   writeNotesFolderMetadataFile,
@@ -96,15 +102,16 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
     mdFiles.map(filePath => path.join(paths.notesRoot, filePath)),
   )
 
-  // Build existing path -> id map from state
-  const existingByPath = new Map<string, number>()
-  state.notes.forEach(entry => existingByPath.set(entry.filePath, entry.id))
+  // Build existing path -> entry map from state
+  const existingByPath = new Map<string, NotesIndexItem>()
+  state.notes.forEach(entry => existingByPath.set(entry.filePath, entry))
 
-  const nextNotes: { id: number, filePath: string }[] = []
+  const nextNotes: NotesIndexItem[] = []
   const usedIds = new Set<number>()
 
   for (const filePath of mdFiles) {
-    let noteId = existingByPath.get(filePath)
+    const existingEntry = existingByPath.get(filePath)
+    let noteId = existingEntry?.id
 
     if (!noteId || usedIds.has(noteId)) {
       const absolutePath = path.join(paths.notesRoot, filePath)
@@ -130,7 +137,19 @@ export function syncNotesWithDisk(paths: NotesPaths, state: NotesState): void {
     }
 
     usedIds.add(noteId)
-    nextNotes.push({ id: noteId, filePath })
+
+    // Метаданные индекса переносятся только если запись осталась той же
+    // (тот же путь и id): stat-сверка в loadNotes решит, актуальны ли они.
+    const carriedMeta
+      = existingEntry && existingEntry.id === noteId
+        ? existingEntry.meta
+        : undefined
+
+    nextNotes.push({
+      filePath,
+      id: noteId,
+      ...(carriedMeta ? { meta: carriedMeta } : {}),
+    })
   }
 
   state.notes = nextNotes
@@ -247,11 +266,12 @@ function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
   syncNotesFoldersWithDisk(paths, state)
   syncNotesWithDisk(paths, state)
   syncNotesCounters(state)
-
-  saveNotesState(paths, state, { immediate: true })
   syncNotesFolderMetadataFiles(paths, state)
 
+  // State сохраняется после loadNotes: чтение файлов дозаполняет индекс
+  // метаданных, и он должен доехать до диска в этом же сохранении.
   const notes = loadNotes(paths, state)
+  saveNotesState(paths, state, { immediate: true })
 
   return setNotesRuntimeCache(paths, state, notes)
 }
@@ -462,9 +482,19 @@ export function syncNoteFileWithDisk(
     noteIndexItem.filePath = normalizedFilePath
   }
 
+  const changedFileAvailability = getFileAvailability(noteAbsolutePath)
   const syncedNote = readNoteFromFile(paths, noteIndexItem, pathToFolderIdMap)
   if (!syncedNote) {
     return null
+  }
+
+  // Индекс метаданных обновляется по реально прочитанному файлу, чтобы
+  // следующий холодный старт собрал запись без чтения.
+  if (!syncedNote.pendingCloudDownload && changedFileAvailability.stats) {
+    noteIndexItem.meta = buildNoteIndexMetadata(
+      syncedNote,
+      changedFileAvailability.stats,
+    )
   }
 
   const noteIndexInRuntime = notes.findIndex(

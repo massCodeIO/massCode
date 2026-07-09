@@ -57,7 +57,12 @@ app.use(notesDashboardDTO).get(
   () => {
     const notesStorage = useNotesStorage()
     const storage = useStorage()
-    const notes = notesStorage.notes.getNotes({ isDeleted: 0 })
+    // Дашборд считает слова и строит граф по телам: ленивые записи
+    // дочитываются.
+    const notes = notesStorage.notes.getNotes({
+      isDeleted: 0,
+      withContent: true,
+    })
     const folders = notesStorage.folders.getFolders()
     const tags = notesStorage.tags.getTags()
     const snippets = storage.snippets.getSnippets({ isDeleted: 0 })

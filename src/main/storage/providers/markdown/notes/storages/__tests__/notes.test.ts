@@ -3,8 +3,12 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getNotesPaths } from '../../runtime/constants'
 import { ensureNotesStateFile } from '../../runtime/state'
-import { resetNotesRuntimeCache } from '../../runtime/sync'
+import {
+  getNotesRuntimeCache,
+  resetNotesRuntimeCache,
+} from '../../runtime/sync'
 import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
 
@@ -102,6 +106,63 @@ describe('notes storage validations', () => {
     const { id } = storage.createNote({ name: 'Test Note' })
     const result = storage.updateNote(id, {})
     expect(result).toEqual({ invalidInput: true, notFound: false })
+  })
+
+  // Два ресинка: первый скан дозаполняет индекс метаданных, второй строит
+  // ленивые записи из индекса без чтения тел.
+  function resyncTwiceForLazyNotes() {
+    resetNotesRuntimeCache()
+    getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+    resetNotesRuntimeCache()
+    return getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+  }
+
+  it('materializes lazy note content on getNoteById', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Lazy Read' })
+    storage.updateNoteContent(id, 'lazy note body')
+
+    const cache = resyncTwiceForLazyNotes()
+    const lazyNote = cache.notes.find(note => note.id === id)
+    expect(lazyNote?.content).toBeNull()
+
+    const record = storage.getNoteById(id)
+    expect(record?.content).toBe('lazy note body')
+  })
+
+  it('finds lazy notes by body via search', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Search Target' })
+    storage.updateNoteContent(id, 'needle-note-body')
+
+    resyncTwiceForLazyNotes()
+
+    const results = storage.getNotes({ search: 'needle-note-body' })
+    expect(results.some(note => note.id === id)).toBe(true)
+  })
+
+  it('keeps note body intact when renaming a lazy note', () => {
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Lazy Rename' })
+    storage.updateNoteContent(id, 'keep me')
+
+    resyncTwiceForLazyNotes()
+
+    // Переименование сериализует заметку целиком: незагруженное тело должно
+    // дочитаться, а не затереться пустым.
+    storage.updateNote(id, { name: 'Lazy Renamed' })
+
+    const record = storage.getNoteById(id)
+    expect(record?.content).toBe('keep me')
+
+    const notesRootPath = getNotesPaths(tempVaultPath).notesRoot
+    const cache = getNotesRuntimeCache(getNotesPaths(tempVaultPath))
+    const renamed = cache.notes.find(note => note.id === id)
+    const rawSource = fs.readFileSync(
+      path.join(notesRootPath, renamed!.filePath),
+      'utf8',
+    )
+    expect(rawSource).toContain('keep me')
   })
 
   it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {

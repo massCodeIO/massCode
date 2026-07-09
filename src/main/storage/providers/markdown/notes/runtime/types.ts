@@ -15,9 +15,28 @@ export interface NotesTagState {
   updatedAt: number
 }
 
+// Денормализованные метаданные списка в state.json (слой 4 плана
+// icloud-lazy-vault-load): позволяют строить список и placeholder-записи без
+// чтения файлов. mtimeMs/size — freshness-сигнатура последнего чтения: пока
+// stat совпадает, файл не перечитывается.
+export interface NotesIndexMetadata {
+  createdAt: number
+  description: string | null
+  folderId: number | null
+  isDeleted: number
+  isFavorites: number
+  mtimeMs: number
+  name: string
+  properties: NoteProperties
+  size: number
+  tags: number[]
+  updatedAt: number
+}
+
 export interface NotesIndexItem {
   filePath: string
   id: number
+  meta?: NotesIndexMetadata
 }
 
 export interface NotesFolderRecord {
@@ -97,7 +116,9 @@ export interface NotesFrontmatter {
 export type NoteProperties = Record<string, unknown>
 
 export interface MarkdownNote {
-  content: string
+  // null — тело ещё не дочитано с диска (запись построена из индекса
+  // метаданных); дочитывается через ensureNoteContentLoaded.
+  content: string | null
   createdAt: number
   description: string | null
   filePath: string

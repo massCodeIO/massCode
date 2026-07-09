@@ -12,6 +12,7 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
@@ -191,6 +192,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       const paths = resolvePaths()
       const { requestById } = getCache()
       const request = requestById.get(id) ?? null
+
+      // Пользователь открыл ещё не докачанный запрос: его файл поднимается
+      // в начало очереди фоновой докачки, ответ при этом не блокируется.
+      if (request?.pendingCloudDownload) {
+        prioritizeCloudDownload(path.join(paths.httpRoot, request.filePath))
+      }
 
       // Запись из индекса без тела: body и description дочитываются по
       // первому запросу.

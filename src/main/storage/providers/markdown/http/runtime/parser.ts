@@ -247,6 +247,10 @@ export function ensureRequestDetailsLoaded(
   httpRoot: string,
   record: HttpRequestRecord,
 ): boolean {
+  if (record.pendingCloudDownload) {
+    return false
+  }
+
   if (!record.detailsPending) {
     return true
   }
@@ -290,7 +294,7 @@ export function writeRequestFile(
 
   // Запись в недокачанный файл затёрла бы облачное содержимое: файл сначала
   // докачивается в фоне.
-  if (availability.isCloudPlaceholder) {
+  if (record.pendingCloudDownload || availability.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
     return
   }

@@ -12,6 +12,7 @@ import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { onClickOutside, useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
+import { CloudDownload } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 import { buildHttpPreview } from './requestPreview'
 
@@ -73,6 +74,12 @@ const revealInFileManagerLabel = computed(() =>
   isMac
     ? i18n.t('action.reveal.inFinder')
     : i18n.t('action.reveal.inFileManager'),
+)
+
+// Содержимое ещё в облаке: мутации (запись файла) и копирование превью
+// недоступны до докачки; чтение метаданных и ссылки работают.
+const isCloudPending = computed(
+  () => props.request.pendingCloudDownload === true,
 )
 
 const previewVariables = computed<Record<string, string>>(() => {
@@ -237,7 +244,7 @@ onClickOutside(itemRef, () => {
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
-    draggable="true"
+    :draggable="!isCloudPending"
     @click="onClick"
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"
@@ -254,6 +261,11 @@ onClickOutside(itemRef, () => {
             <UiText class="title flex-1 truncate text-sm">
               {{ props.request.name }}
             </UiText>
+            <CloudDownload
+              v-if="isCloudPending"
+              class="text-muted-foreground h-3.5 w-3.5 shrink-0 self-center"
+              :aria-label="i18n.t('cloudDownloads.label')"
+            />
           </div>
           <UiText
             as="div"
@@ -280,7 +292,10 @@ onClickOutside(itemRef, () => {
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
         <template v-if="!isTrashLibrarySelected">
-          <ContextMenu.ContextMenuItem @click="onAddFavorites">
+          <ContextMenu.ContextMenuItem
+            :disabled="isCloudPending"
+            @click="onAddFavorites"
+          >
             {{
               isRemoveFavoritesAction
                 ? i18n.t("action.remove.fromFavorites")
@@ -292,7 +307,10 @@ onClickOutside(itemRef, () => {
         <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
           {{ revealInFileManagerLabel }}
         </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuItem @click="onCopyRequest">
+        <ContextMenu.ContextMenuItem
+          :disabled="isCloudPending"
+          @click="onCopyRequest"
+        >
           {{ i18n.t("action.copy.request") }}
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem @click="onCopyRequestLink">
@@ -300,13 +318,16 @@ onClickOutside(itemRef, () => {
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
         <ContextMenu.ContextMenuItem
-          :disabled="isDuplicateDisabled"
+          :disabled="isDuplicateDisabled || isCloudPending"
           @click="onDuplicate"
         >
           {{ i18n.t("action.duplicate") }}
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuSeparator />
-        <ContextMenu.ContextMenuItem @click="onDelete">
+        <ContextMenu.ContextMenuItem
+          :disabled="isCloudPending"
+          @click="onDelete"
+        >
           {{
             isTrashLibrarySelected
               ? i18n.t("action.delete.common")
@@ -315,6 +336,7 @@ onClickOutside(itemRef, () => {
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem
           v-if="isTrashLibrarySelected"
+          :disabled="isCloudPending"
           @click="onRestore"
         >
           {{ i18n.t("action.restore") }}

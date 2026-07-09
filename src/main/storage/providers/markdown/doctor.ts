@@ -59,6 +59,9 @@ interface ScanContext {
 interface EntityScanRecord {
   filePath: string
   fingerprint: Fingerprint
+  // folderId из frontmatter: у заметок он приоритетнее пути и может
+  // указывать на несуществующую папку (dangling).
+  folderId: number | null
   id: number
   kind: 'note' | 'snippet'
   space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>
@@ -343,6 +346,7 @@ function inspectMarkdownEntity(input: {
     ? {
         filePath: input.filePath,
         fingerprint,
+        folderId: normalizeId(parsed.frontmatter.folderId),
         id,
         kind: input.kind,
         space: input.space,
@@ -419,6 +423,49 @@ function getStateIds(
   }
 
   return loadHttpState(getHttpPaths(vaultPath)).requests.map(item => item.id)
+}
+
+function getStateIndexedFilePaths(
+  space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>,
+): Set<string> {
+  const vaultPath = getVaultPath()
+
+  const filePaths
+    = space === 'code'
+      ? loadState(getPaths(vaultPath)).snippets.map(item => item.filePath)
+      : space === 'notes'
+        ? loadNotesState(getNotesPaths(vaultPath)).notes.map(
+            item => item.filePath,
+          )
+        : loadHttpState(getHttpPaths(vaultPath)).requests.map(
+            item => item.filePath,
+          )
+
+  return new Set(filePaths.map(filePath => filePath.toLowerCase()))
+}
+
+// Файл с валидным frontmatter-id, которого нет в state-индексе, приложение
+// не отображает до полного пересканирования: Doctor предлагает регистрацию
+// (apply выполняет пересинк пространства, который заберёт файл в индекс).
+function collectUnindexedFiles(
+  context: ScanContext,
+  space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>,
+  records: EntityScanRecord[],
+): void {
+  const indexedFilePaths = getStateIndexedFilePaths(space)
+
+  for (const record of records) {
+    if (!indexedFilePaths.has(record.filePath.toLowerCase())) {
+      addItem(context, {
+        action: 'register-file',
+        fingerprint: record.fingerprint,
+        kind: record.kind,
+        path: record.filePath,
+        space,
+        status: 'pending',
+      })
+    }
+  }
 }
 
 function getNextEntityId(
@@ -586,15 +633,40 @@ function scanCode(context: ScanContext): void {
   })
 
   collectDuplicateIds(context, records)
+  collectUnindexedFiles(context, 'code', records)
+}
+
+function readNotesFolderIdFromMetadata(metaPath: string): number | null {
+  // Недокачанный .meta.yaml не читается синхронно: id папки в этот прогон
+  // не получить, заметки этой папки не считаются dangling.
+  if (getFileAvailability(metaPath).isCloudPlaceholder) {
+    enqueueCloudDownload(metaPath)
+    return null
+  }
+
+  try {
+    const parsed = yaml.load(fs.readFileSync(metaPath, 'utf8')) as {
+      id?: unknown
+    } | null
+    return normalizeId(parsed?.id)
+  }
+  catch {
+    return null
+  }
 }
 
 function scanNotes(context: ScanContext): void {
   const paths = getNotesPaths(getVaultPath())
   const records: EntityScanRecord[] = []
+  const diskFolderIds = new Set<number>()
+  let hasUnreadableFolderMetadata = false
 
   listFolders(paths.notesRoot).forEach((folderPath) => {
     const metaPath = path.join(paths.notesRoot, folderPath, META_FILE_NAME)
     if (!fs.pathExistsSync(metaPath)) {
+      // Папка без метаданных получит id при следующем синке: судить о
+      // dangling-ссылках в этот прогон нельзя.
+      hasUnreadableFolderMetadata = true
       addItem(
         context,
         createFileItem({
@@ -606,6 +678,15 @@ function scanNotes(context: ScanContext): void {
           status: 'pending',
         }),
       )
+      return
+    }
+
+    const folderId = readNotesFolderIdFromMetadata(metaPath)
+    if (folderId) {
+      diskFolderIds.add(folderId)
+    }
+    else {
+      hasUnreadableFolderMetadata = true
     }
   })
 
@@ -628,6 +709,21 @@ function scanNotes(context: ScanContext): void {
   })
 
   collectDuplicateIds(context, records)
+  collectUnindexedFiles(context, 'notes', records)
+
+  // folderId во frontmatter приоритетнее пути (см. readNoteFromFile):
+  // ссылка на несуществующую папку делает заметку невидимой в дереве папок.
+  if (!hasUnreadableFolderMetadata) {
+    for (const record of records) {
+      if (record.folderId && !diskFolderIds.has(record.folderId)) {
+        addWarning(context, {
+          code: 'DANGLING_FOLDER_ID',
+          path: record.filePath,
+          space: 'notes',
+        })
+      }
+    }
+  }
 }
 
 function scanHttp(context: ScanContext): void {
@@ -688,6 +784,7 @@ function scanHttp(context: ScanContext): void {
   }
 
   collectDuplicateIds(context, records)
+  collectUnindexedFiles(context, 'http', records)
 }
 
 function normalizeMathSheet(

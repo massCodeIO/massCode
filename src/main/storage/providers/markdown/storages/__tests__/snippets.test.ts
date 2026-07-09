@@ -116,6 +116,77 @@ describe('code snippets storage validations', () => {
     expect(result.id).toBeGreaterThan(0)
   })
 
+  // Два ресинка: первый скан дозаполняет индекс метаданных, второй строит
+  // ленивые записи из индекса без чтения тел.
+  function resyncTwiceForLazySnippets() {
+    resetRuntimeCache()
+    getRuntimeCache(getPaths(tempVaultPath))
+    resetRuntimeCache()
+    return getRuntimeCache(getPaths(tempVaultPath))
+  }
+
+  it('materializes lazy fragment bodies on getSnippetById', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Lazy Read' })
+    storage.createSnippetContent(id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'lazy body',
+    })
+
+    const cache = resyncTwiceForLazySnippets()
+    const lazySnippet = cache.snippets.find(snippet => snippet.id === id)
+    expect(lazySnippet?.contents[0]?.value).toBeNull()
+
+    const record = storage.getSnippetById(id)
+    expect(record?.contents[0]?.value).toBe('lazy body')
+  })
+
+  it('finds lazy snippets by fragment body via search', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Search Target' })
+    storage.createSnippetContent(id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'needle-body-text',
+    })
+
+    resyncTwiceForLazySnippets()
+
+    const results = storage.getSnippets({ search: 'needle-body-text' })
+    expect(results.some(snippet => snippet.id === id)).toBe(true)
+  })
+
+  it('keeps fragment bodies intact when renaming a lazy snippet', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Lazy Rename' })
+    storage.createSnippetContent(id, {
+      label: 'Fragment 1',
+      language: 'plain_text',
+      value: 'keep me',
+    })
+
+    const lazyCache = resyncTwiceForLazySnippets()
+    const lazySnippet = lazyCache.snippets.find(snippet => snippet.id === id)
+    expect(lazySnippet?.contents[0]?.value).toBeNull()
+
+    // Переименование сериализует сниппет целиком: незагруженные тела
+    // должны дочитаться, а не затереться пустыми строками.
+    storage.updateSnippet(id, { name: 'Lazy Renamed' })
+
+    const record = storage.getSnippetById(id)
+    expect(record?.contents[0]?.value).toBe('keep me')
+
+    const codeRootPath = getPaths(tempVaultPath).vaultPath
+    const cache = getRuntimeCache(getPaths(tempVaultPath))
+    const renamed = cache.snippets.find(snippet => snippet.id === id)
+    const rawSource = fs.readFileSync(
+      path.join(codeRootPath, renamed!.filePath),
+      'utf8',
+    )
+    expect(rawSource).toContain('keep me')
+  })
+
   it('createSnippet during vault hydration throws VAULT_HYDRATING', () => {
     const storage = createSnippetsStorage()
     const cache = getRuntimeCache(getPaths(tempVaultPath))

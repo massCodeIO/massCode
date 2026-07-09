@@ -56,6 +56,7 @@ export { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
 export {
   buildSnippetTargetPath,
   createSnippetRecord,
+  ensureSnippetContentLoaded,
   findSnippetByContentId,
   findSnippetById,
   getSnippetTargetDirectory,

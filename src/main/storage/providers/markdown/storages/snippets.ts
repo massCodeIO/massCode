@@ -14,6 +14,7 @@ import {
   assertUniqueSiblingEntryName,
   assertVaultNotHydrating,
   createSnippetRecord,
+  ensureSnippetContentLoaded,
   findFolderById,
   findSnippetById,
   getPaths,
@@ -101,6 +102,11 @@ export function createSnippetsStorage(): SnippetsStorage {
       // в начало очереди фоновой докачки, ответ при этом не блокируется.
       if (snippet?.pendingCloudDownload) {
         prioritizeCloudDownload(path.join(paths.vaultPath, snippet.filePath))
+      }
+
+      // Запись из индекса без тел: контент дочитывается по первому запросу.
+      if (snippet) {
+        ensureSnippetContentLoaded(paths, snippet)
       }
 
       return snippet ? createSnippetRecord(snippet, state) : null

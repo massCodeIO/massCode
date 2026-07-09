@@ -3,6 +3,7 @@ import type {
   DirectoryEntriesCache,
   MarkdownSnippet,
   MarkdownSnippetIndexItem,
+  MarkdownSnippetIndexMetadata,
   MarkdownState,
   Paths,
   PersistSnippetOptions,
@@ -280,6 +281,163 @@ export function readSnippetFromFileWithMetadata(
   return { legacyRecovery, snippet }
 }
 
+// Метаданные индекса собираются только по реально прочитанному файлу, а
+// stat-сигнатура — по stat до чтения. Записи приложения не обновляют meta:
+// изменённый mtime просто заставит перечитать файл на следующем старте.
+export function buildSnippetIndexMetadata(
+  snippet: MarkdownSnippet,
+  stats: { mtimeMs: number, size: number },
+): MarkdownSnippetIndexMetadata {
+  return {
+    contents: snippet.contents.map(({ id, label, language }) => ({
+      id,
+      label,
+      language,
+    })),
+    createdAt: snippet.createdAt,
+    description: snippet.description,
+    isDeleted: snippet.isDeleted,
+    isFavorites: snippet.isFavorites,
+    mtimeMs: stats.mtimeMs,
+    name: snippet.name,
+    size: stats.size,
+    tags: [...snippet.tags],
+    updatedAt: snippet.updatedAt,
+  }
+}
+
+// state.json синхронизируется между устройствами и правится извне, поэтому
+// метаданные индекса перед использованием проверяются по форме: битая запись
+// не роняет скан, файл просто перечитывается.
+function isValidSnippetIndexMetadata(
+  meta: MarkdownSnippetIndexMetadata | undefined,
+): meta is MarkdownSnippetIndexMetadata {
+  return (
+    !!meta
+    && typeof meta === 'object'
+    && Array.isArray(meta.contents)
+    && meta.contents.every(
+      content =>
+        content
+        && typeof content === 'object'
+        && typeof content.id === 'number'
+        && typeof content.label === 'string'
+        && typeof content.language === 'string',
+    )
+    && Array.isArray(meta.tags)
+    && typeof meta.name === 'string'
+    && typeof meta.mtimeMs === 'number'
+    && Number.isFinite(meta.mtimeMs)
+    && typeof meta.size === 'number'
+    && Number.isFinite(meta.size)
+    && typeof meta.createdAt === 'number'
+    && typeof meta.updatedAt === 'number'
+  )
+}
+
+export function hasFreshSnippetIndexMetadata(
+  entry: MarkdownSnippetIndexItem,
+  stats: { mtimeMs: number, size: number } | null,
+): boolean {
+  return (
+    !!stats
+    && isValidSnippetIndexMetadata(entry.meta)
+    && entry.meta.mtimeMs === stats.mtimeMs
+    && entry.meta.size === stats.size
+  )
+}
+
+// Запись списка из метаданных индекса, без чтения файла: тела фрагментов
+// остаются value: null и дочитываются лениво (ensureSnippetContentLoaded).
+export function buildSnippetFromIndexMetadata(
+  entry: MarkdownSnippetIndexItem,
+  meta: MarkdownSnippetIndexMetadata,
+  pathToFolderIdMap: ReadonlyMap<string, number>,
+  options?: { pendingCloudDownload?: boolean },
+): MarkdownSnippet {
+  const normalizedFileDirectory = normalizeDirectoryPath(
+    path.posix.dirname(entry.filePath),
+  )
+  const isTrashed = isTrashSnippetDirectory(normalizedFileDirectory)
+  const folderId
+    = isTrashed || isInboxSnippetDirectory(normalizedFileDirectory)
+      ? null
+      : (pathToFolderIdMap.get(normalizedFileDirectory) ?? null)
+
+  return {
+    contents: meta.contents.map(content => ({
+      id: content.id,
+      label: content.label,
+      language: content.language,
+      value: null,
+    })),
+    createdAt: meta.createdAt,
+    description: meta.description ?? null,
+    filePath: entry.filePath,
+    folderId,
+    id: entry.id,
+    isDeleted: isTrashed ? 1 : normalizeNumber(meta.isDeleted),
+    isFavorites: normalizeNumber(meta.isFavorites),
+    name: meta.name,
+    ...(options?.pendingCloudDownload ? { pendingCloudDownload: true } : {}),
+    tags: meta.tags.filter(tagId => typeof tagId === 'number' && tagId > 0),
+    updatedAt: meta.updatedAt,
+  }
+}
+
+// Дочитывает тела фрагментов записи, построенной из индекса. Заполняются
+// только value === null: метаданные runtime-объекта авторитетны и могут
+// содержать ещё не сохранённые правки. Возвращает false, если содержимое
+// сейчас недоступно (плейсхолдер, сбой чтения).
+export function ensureSnippetContentLoaded(
+  paths: Paths,
+  snippet: MarkdownSnippet,
+): boolean {
+  if (snippet.pendingCloudDownload) {
+    return false
+  }
+
+  if (!snippet.contents.some(content => content.value === null)) {
+    return true
+  }
+
+  const snippetPath = path.join(paths.vaultPath, snippet.filePath)
+  const availability = getFileAvailability(snippetPath)
+
+  if (!availability.exists) {
+    return false
+  }
+
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(snippetPath)
+    return false
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(snippetPath, 'utf8')
+  }
+  catch (error) {
+    log('storage:markdown:load-snippet-content', error)
+    enqueueCloudDownload(snippetPath)
+    return false
+  }
+
+  const { body, frontmatter } = splitFrontmatter(source)
+  const metaContents = Array.isArray(frontmatter.contents)
+    ? frontmatter.contents
+    : []
+  const { fragments } = parseBodyFragmentsWithMetadata(body, metaContents)
+
+  snippet.contents.forEach((content, index) => {
+    if (content.value === null) {
+      content.value = fragments[index]?.value ?? ''
+    }
+  })
+
+  return true
+}
+
 export function loadSnippets(
   paths: Paths,
   state: MarkdownState,
@@ -289,6 +447,43 @@ export function loadSnippets(
 
   return state.snippets
     .map((item) => {
+      const snippetPath = path.join(paths.vaultPath, item.filePath)
+      const availability = getFileAvailability(snippetPath)
+
+      if (!availability.exists) {
+        return null
+      }
+
+      // Свежая stat-сигнатура: запись строится из индекса без чтения файла,
+      // тело дочитывается лениво по первому обращению.
+      if (
+        !availability.isCloudPlaceholder
+        && hasFreshSnippetIndexMetadata(item, availability.stats)
+      ) {
+        return buildSnippetFromIndexMetadata(
+          item,
+          item.meta!,
+          pathToFolderIdMap,
+        )
+      }
+
+      // Плейсхолдер с известными метаданными: полноценная запись списка без
+      // чтения (и без сетевой материализации), контент докачивается в фоне.
+      if (
+        availability.isCloudPlaceholder
+        && isValidSnippetIndexMetadata(item.meta)
+      ) {
+        enqueueCloudDownload(snippetPath)
+        return buildSnippetFromIndexMetadata(
+          item,
+          item.meta,
+          pathToFolderIdMap,
+          {
+            pendingCloudDownload: true,
+          },
+        )
+      }
+
       const result = readSnippetFromFileWithMetadata(
         paths,
         item,
@@ -300,6 +495,17 @@ export function loadSnippets(
         && result?.legacyRecovery === 'recovered'
       ) {
         writeSnippetToFile(paths, result.snippet)
+      }
+
+      if (
+        result
+        && !result.snippet.pendingCloudDownload
+        && availability.stats
+      ) {
+        item.meta = buildSnippetIndexMetadata(
+          result.snippet,
+          availability.stats,
+        )
       }
 
       return result?.snippet ?? null
@@ -318,6 +524,13 @@ export function writeSnippetToFile(
   const availability = getFileAvailability(snippetPath)
   if (snippet.pendingCloudDownload || availability.isCloudPlaceholder) {
     enqueueCloudDownload(snippetPath)
+    return
+  }
+
+  // Ленивая запись (тела ещё не дочитаны из индекса): недостающие value
+  // дочитываются с диска перед сериализацией, иначе запись затёрла бы
+  // тела пустыми строками.
+  if (!ensureSnippetContentLoaded(paths, snippet)) {
     return
   }
 

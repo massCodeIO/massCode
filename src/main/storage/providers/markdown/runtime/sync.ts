@@ -33,6 +33,7 @@ import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import { createVaultReconciler } from './shared/vaultReconcile'
 import {
+  buildSnippetIndexMetadata,
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
   isTrashSnippetDirectory,
@@ -552,6 +553,7 @@ export function syncSnippetFileWithDisk(
     snippetIndexItem.filePath = normalizedFilePath
   }
 
+  const changedFileAvailability = getFileAvailability(snippetAbsolutePath)
   const syncedSnippet = readSnippetFromFile(
     paths,
     snippetIndexItem,
@@ -560,6 +562,15 @@ export function syncSnippetFileWithDisk(
 
   if (!syncedSnippet) {
     return null
+  }
+
+  // Индекс метаданных обновляется по реально прочитанному файлу, чтобы
+  // следующий холодный старт собрал запись без чтения.
+  if (!syncedSnippet.pendingCloudDownload && changedFileAvailability.stats) {
+    snippetIndexItem.meta = buildSnippetIndexMetadata(
+      syncedSnippet,
+      changedFileAvailability.stats,
+    )
   }
 
   const snippetIndexInRuntime = snippets.findIndex(

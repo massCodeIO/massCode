@@ -1,6 +1,7 @@
 import type {
   HttpFolderRecord,
   HttpPaths,
+  HttpRequestIndexMetadata,
   HttpRequestRecord,
   HttpRuntimeCache,
   HttpState,
@@ -155,6 +156,87 @@ function reconcileFolders(
   return folderIdByPath
 }
 
+// Метаданные индекса собираются только по реально прочитанному файлу, а
+// stat-сигнатура — по stat до чтения. Записи приложения не обновляют meta:
+// изменённый mtime просто заставит перечитать файл на следующем старте.
+function buildHttpRequestIndexMetadata(
+  record: HttpRequestRecord,
+  stats: { mtimeMs: number, size: number },
+): HttpRequestIndexMetadata {
+  return {
+    auth: record.auth,
+    bodyType: record.bodyType,
+    createdAt: record.createdAt,
+    formData: record.formData,
+    headers: record.headers,
+    isDeleted: record.isDeleted,
+    isFavorites: record.isFavorites,
+    method: record.method,
+    mtimeMs: stats.mtimeMs,
+    name: record.name,
+    query: record.query,
+    size: stats.size,
+    updatedAt: record.updatedAt,
+    url: record.url,
+  }
+}
+
+// .state.yaml синхронизируется между устройствами и правится извне, поэтому
+// метаданные индекса перед использованием проверяются по форме: битая
+// запись не роняет скан, файл просто перечитывается.
+function isValidHttpRequestIndexMetadata(
+  meta: HttpRequestIndexMetadata | undefined,
+): meta is HttpRequestIndexMetadata {
+  return (
+    !!meta
+    && typeof meta === 'object'
+    && typeof meta.name === 'string'
+    && typeof meta.method === 'string'
+    && typeof meta.url === 'string'
+    && Array.isArray(meta.headers)
+    && Array.isArray(meta.query)
+    && Array.isArray(meta.formData)
+    && !!meta.auth
+    && typeof meta.auth === 'object'
+    && typeof meta.mtimeMs === 'number'
+    && Number.isFinite(meta.mtimeMs)
+    && typeof meta.size === 'number'
+    && Number.isFinite(meta.size)
+    && typeof meta.createdAt === 'number'
+    && typeof meta.updatedAt === 'number'
+  )
+}
+
+// Запись из метаданных индекса, без чтения файла: body и description
+// дочитываются лениво (ensureRequestDetailsLoaded).
+function buildRequestFromIndexMetadata(
+  entryId: number,
+  relativePath: string,
+  meta: HttpRequestIndexMetadata,
+  folderId: number | null,
+): HttpRequestRecord {
+  return {
+    id: entryId,
+    name: meta.name,
+    folderId,
+    method: meta.method,
+    url: meta.url,
+    headers: meta.headers,
+    query: meta.query,
+    bodyType: meta.bodyType,
+    body: null,
+    formData: meta.formData,
+    auth: meta.auth,
+    description: '',
+    filePath: relativePath,
+    isFavorites: meta.isFavorites,
+    isDeleted: meta.isDeleted,
+    createdAt: meta.createdAt,
+    updatedAt: meta.updatedAt,
+    detailsPending: true,
+  }
+}
+
 function reconcileRequests(
   paths: HttpPaths,
   state: HttpState,
@@ -162,7 +244,7 @@ function reconcileRequests(
   folderIdByPath: Map<string, number>,
 ): HttpRequestRecord[] {
   const existingByPath = new Map(
-    state.requests.map(item => [item.filePath, item.id]),
+    state.requests.map(item => [item.filePath, item]),
   )
 
   // Один batch-вызов точной проверки dataless на весь список вместо
@@ -181,26 +263,70 @@ function reconcileRequests(
   // Файл, содержимое которого сейчас недоступно (облачный плейсхолдер или
   // сбой чтения), не читается синхронно: он уходит в фоновую докачку,
   // которая триггерит повторный sync http-пространства. Уже известный
-  // запрос при этом сохраняет свою запись в индексе, иначе он «исчез» бы
-  // из state и после докачки получил бы новый id.
+  // запрос при этом сохраняет свою запись в индексе (вместе с метаданными),
+  // иначе он «исчез» бы из state и после докачки получил бы новый id.
   const keepUnavailableRequest = (
     absolutePath: string,
     relativePath: string,
   ) => {
     enqueueCloudDownload(absolutePath)
 
-    const knownId = existingByPath.get(relativePath)
-    if (knownId && !usedIds.has(knownId)) {
-      usedIds.add(knownId)
-      indexEntries.push({ filePath: relativePath, id: knownId })
+    const knownEntry = existingByPath.get(relativePath)
+    if (knownEntry && !usedIds.has(knownEntry.id)) {
+      usedIds.add(knownEntry.id)
+      indexEntries.push({
+        filePath: relativePath,
+        id: knownEntry.id,
+        ...(knownEntry.meta ? { meta: knownEntry.meta } : {}),
+      })
     }
+  }
+
+  const resolveFolderId = (relativePath: string): number | null => {
+    const dirPath = path.posix.dirname(relativePath)
+    return dirPath && dirPath !== '.'
+      ? (folderIdByPath.get(dirPath) ?? null)
+      : null
   }
 
   for (const relativePath of requestRelativePaths) {
     const absolutePath = path.join(paths.httpRoot, relativePath)
+    const availability = getFileAvailability(absolutePath)
 
-    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+    if (availability.isCloudPlaceholder) {
       keepUnavailableRequest(absolutePath, relativePath)
+      continue
+    }
+
+    // Свежая stat-сигнатура: запись строится из индекса без чтения файла,
+    // body и description дочитываются лениво по первому обращению.
+    const existingEntry = existingByPath.get(relativePath)
+    if (
+      existingEntry
+      && !usedIds.has(existingEntry.id)
+      && availability.stats
+      && isValidHttpRequestIndexMetadata(existingEntry.meta)
+      && existingEntry.meta.mtimeMs === availability.stats.mtimeMs
+      && existingEntry.meta.size === availability.stats.size
+    ) {
+      usedIds.add(existingEntry.id)
+      if (existingEntry.id > state.counters.requestId) {
+        state.counters.requestId = existingEntry.id
+      }
+
+      records.push(
+        buildRequestFromIndexMetadata(
+          existingEntry.id,
+          relativePath,
+          existingEntry.meta,
+          resolveFolderId(relativePath),
+        ),
+      )
+      indexEntries.push({
+        filePath: relativePath,
+        id: existingEntry.id,
+        meta: existingEntry.meta,
+      })
       continue
     }
 
@@ -217,7 +343,7 @@ function reconcileRequests(
     const parsed = parseRequestFile(source)
     const fmId = parsed.frontmatter.id
 
-    let id = existingByPath.get(relativePath)
+    let id = existingEntry?.id
     let needsRewrite = !parsed.hasFrontmatter
 
     if (!id) {
@@ -236,9 +362,7 @@ function reconcileRequests(
     }
     usedIds.add(id)
 
-    const dirPath = path.posix.dirname(relativePath)
-    const folderId
-      = dirPath && dirPath !== '.' ? (folderIdByPath.get(dirPath) ?? null) : null
+    const folderId = resolveFolderId(relativePath)
 
     const fileName = path.posix.basename(relativePath, '.md')
     const fmCreatedAt = parsed.frontmatter.createdAt
@@ -269,7 +393,16 @@ function reconcileRequests(
     }
 
     records.push(record)
-    indexEntries.push({ id, filePath: relativePath })
+    // Индекс обновляется по реально прочитанному файлу: следующий холодный
+    // старт соберёт запись без чтения. Write-back выше сдвигает mtime после
+    // снятой сигнатуры — такой файл будет перечитан один раз и заживёт.
+    indexEntries.push({
+      id,
+      filePath: relativePath,
+      meta: availability.stats
+        ? buildHttpRequestIndexMetadata(record, availability.stats)
+        : undefined,
+    })
   }
 
   state.requests = indexEntries

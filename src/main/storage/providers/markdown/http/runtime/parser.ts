@@ -11,6 +11,7 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
@@ -237,6 +238,48 @@ export function readRequestFile(
   return parseRequestFile(source)
 }
 
+// Дочитывает body и description записи, построенной из индекса. Остальные
+// поля runtime-записи авторитетны и могут содержать ещё не сохранённые
+// правки. Возвращает false, если содержимое сейчас недоступно
+// (плейсхолдер, сбой чтения).
+export function ensureRequestDetailsLoaded(
+  httpRoot: string,
+  record: HttpRequestRecord,
+): boolean {
+  if (!record.detailsPending) {
+    return true
+  }
+
+  const absolutePath = path.join(httpRoot, record.filePath)
+  const availability = getFileAvailability(absolutePath)
+
+  if (!availability.exists) {
+    return false
+  }
+
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(absolutePath, 'utf8')
+  }
+  catch (error) {
+    log('storage:http:load-request-details', error)
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  const parsed = parseRequestFile(source)
+  record.body = parsed.normalized.body
+  record.description = parsed.description
+  delete record.detailsPending
+
+  return true
+}
+
 export function writeRequestFile(
   httpRoot: string,
   record: HttpRequestRecord,
@@ -248,6 +291,12 @@ export function writeRequestFile(
   // докачивается в фоне.
   if (availability.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
+    return
+  }
+
+  // Ленивая запись (body/description ещё не дочитаны из индекса): они
+  // дочитываются перед сериализацией, иначе запись затёрла бы их пустыми.
+  if (!ensureRequestDetailsLoaded(httpRoot, record)) {
     return
   }
 

@@ -50,9 +50,31 @@ export interface HttpFolderTreeRecord extends HttpFolderRecord {
   children: HttpFolderTreeRecord[]
 }
 
+// Денормализованные метаданные списка в .state.yaml (слой 4 плана
+// icloud-lazy-vault-load): всё, кроме body и description, чтобы строить
+// записи без чтения файлов. mtimeMs/size — freshness-сигнатура последнего
+// чтения: пока stat совпадает, файл не перечитывается.
+export interface HttpRequestIndexMetadata {
+  auth: HttpAuth
+  bodyType: HttpBodyType
+  createdAt: number
+  formData: HttpFormDataEntry[]
+  headers: HttpHeaderEntry[]
+  isDeleted: number
+  isFavorites: number
+  method: HttpMethod
+  mtimeMs: number
+  name: string
+  query: HttpQueryEntry[]
+  size: number
+  updatedAt: number
+  url: string
+}
+
 export interface HttpRequestIndexItem {
   id: number
   filePath: string
+  meta?: HttpRequestIndexMetadata
 }
 
 export interface HttpRequestRecord {
@@ -73,6 +95,12 @@ export interface HttpRequestRecord {
   isDeleted: number
   createdAt: number
   updatedAt: number
+  /**
+   * Runtime-only: body и description ещё не дочитаны из файла (запись
+   * построена из индекса метаданных). Снимается ensureRequestDetailsLoaded;
+   * наружу через API не отдаётся — все выдающие потоки материализуют.
+   */
+  detailsPending?: boolean
 }
 
 export interface HttpEnvironmentRecord {

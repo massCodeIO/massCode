@@ -40,6 +40,7 @@ import {
   getFileAvailability,
   primeDatalessChecks,
 } from './runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
 
 type VaultDoctorSpace = NonNullable<VaultDoctorInput['spaces']>[number]
 
@@ -778,7 +779,21 @@ function readNormalizedMathState(): {
 
 function scanMath(context: ScanContext): void {
   const statePath = getMathStatePath()
-  const { changed } = readNormalizedMathState()
+
+  // math/.state.yaml может быть ещё не докачан из облака: аудит без
+  // содержимого невозможен, пространство проверится после докачки.
+  let changed: boolean
+  try {
+    changed = readNormalizedMathState().changed
+  }
+  catch (error) {
+    if (isCloudFileNotDownloadedError(error)) {
+      return
+    }
+
+    throw error
+  }
+
   if (!changed) {
     return
   }
@@ -914,7 +929,20 @@ function repairHttpEnvironmentState(): void {
 }
 
 function repairMathState(): void {
-  const { state } = readNormalizedMathState()
+  // math/.state.yaml может быть ещё не докачан из облака: запись поверх
+  // плейсхолдера уничтожила бы облачную версию.
+  let state: MathNotebookStore
+  try {
+    state = readNormalizedMathState().state
+  }
+  catch (error) {
+    if (isCloudFileNotDownloadedError(error)) {
+      return
+    }
+
+    throw error
+  }
+
   writeSpaceStateImmediate(getMathStatePath(), state)
 }
 

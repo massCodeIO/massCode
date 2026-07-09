@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useHttpRequests, useResizeHandle } from '@/composables'
-import { store } from '@/electron'
+import { i18n, store } from '@/electron'
 
 const { currentRequest, isCurrentRequestLoadingVisible } = useHttpRequests()
 
@@ -77,7 +77,11 @@ useResizeHandle(responseHandleRef, {
     ref="rootRef"
     class="relative flex h-full flex-col overflow-hidden pt-[var(--content-top-offset)]"
   >
-    <UiLoadingOverlay v-if="isCurrentRequestLoadingVisible" />
+    <UiLoadingOverlay
+      v-if="currentRequest?.pendingCloudDownload"
+      :label="i18n.t('cloudDownloads.itemPending')"
+    />
+    <UiLoadingOverlay v-else-if="isCurrentRequestLoadingVisible" />
     <div
       class="min-h-0 flex-1"
       :class="{

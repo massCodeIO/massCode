@@ -109,6 +109,53 @@ afterEach(() => {
 })
 
 describe('vault doctor', () => {
+  it('reports files missing from the state index as pending registrations', () => {
+    // Файл с валидным frontmatter-id, но не зарегистрированный в state:
+    // приложение его не отображает, doctor обязан это показать.
+    writeFile('code/Orphan.md', snippetSource(5, 'Orphan'))
+
+    const result = previewVaultDoctor({ spaces: ['code'] })
+
+    const item = result.items.find(
+      candidate =>
+        candidate.action === 'register-file' && candidate.path === 'Orphan.md',
+    )
+    expect(item?.status).toBe('pending')
+  })
+
+  it('registers unindexed files on apply', () => {
+    writeFile('code/Orphan.md', snippetSource(5, 'Orphan'))
+
+    applyVaultDoctor({ spaces: ['code'] })
+
+    const preview = previewVaultDoctor({ spaces: ['code'] })
+    expect(
+      preview.items.filter(item => item.action === 'register-file'),
+    ).toHaveLength(0)
+  })
+
+  it('warns about notes with folderId pointing to a missing folder', () => {
+    writeFile('notes/Projects/.meta.yaml', 'id: 3\nname: Projects\n')
+    writeFile(
+      'notes/Dangling.md',
+      ['---', 'id: 1', 'name: Dangling', 'folderId: 99', '---', 'body'].join(
+        '\n',
+      ),
+    )
+    writeFile(
+      'notes/Linked.md',
+      ['---', 'id: 2', 'name: Linked', 'folderId: 3', '---', 'body'].join('\n'),
+    )
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+
+    const danglingWarnings = result.warnings.filter(
+      warning => warning.code === 'DANGLING_FOLDER_ID',
+    )
+    expect(danglingWarnings).toHaveLength(1)
+    expect(danglingWarnings[0].path).toBe('Dangling.md')
+  })
+
   it('reports duplicate code snippet ids as conflicts that need a decision', () => {
     writeFile('code/One.md', snippetSource(10, 'One'))
     writeFile('code/Two.md', snippetSource(10, 'Two'))

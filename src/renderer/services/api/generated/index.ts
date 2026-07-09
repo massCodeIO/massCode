@@ -636,6 +636,7 @@ export interface HttpRequestItemResponse {
   filePath: string;
   isFavorites: number;
   isDeleted: number;
+  pendingCloudDownload?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -707,6 +708,7 @@ export type HttpRequestsResponse = {
   filePath: string;
   isFavorites: number;
   isDeleted: number;
+  pendingCloudDownload?: boolean;
   createdAt: number;
   updatedAt: number;
 }[];

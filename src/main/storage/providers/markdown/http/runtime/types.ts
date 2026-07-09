@@ -101,6 +101,11 @@ export interface HttpRequestRecord {
    * наружу через API не отдаётся — все выдающие потоки материализуют.
    */
   detailsPending?: boolean
+  /**
+   * Файл запроса — облачный плейсхолдер: содержимое ещё не скачано
+   * провайдером, запись показывается в списке и докачивается в фоне.
+   */
+  pendingCloudDownload?: boolean
 }
 
 export interface HttpEnvironmentRecord {

@@ -218,6 +218,7 @@ function buildRequestFromIndexMetadata(
   relativePath: string,
   meta: HttpRequestIndexMetadata,
   folderId: number | null,
+  options?: { pendingCloudDownload?: boolean },
 ): HttpRequestRecord {
   // Enum-поля нормализуются: .state.yaml мог быть правлен извне, а мусорное
   // значение уронило бы валидацию DTO целого списка.
@@ -240,6 +241,7 @@ function buildRequestFromIndexMetadata(
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
     detailsPending: true,
+    ...(options?.pendingCloudDownload ? { pendingCloudDownload: true } : {}),
   }
 }
 
@@ -266,11 +268,20 @@ function reconcileRequests(
   const indexEntries: HttpState['requests'] = []
   const now = Date.now()
 
+  const resolveFolderId = (relativePath: string): number | null => {
+    const dirPath = path.posix.dirname(relativePath)
+    return dirPath && dirPath !== '.'
+      ? (folderIdByPath.get(dirPath) ?? null)
+      : null
+  }
+
   // Файл, содержимое которого сейчас недоступно (облачный плейсхолдер или
   // сбой чтения), не читается синхронно: он уходит в фоновую докачку,
   // которая триггерит повторный sync http-пространства. Уже известный
   // запрос при этом сохраняет свою запись в индексе (вместе с метаданными),
   // иначе он «исчез» бы из state и после докачки получил бы новый id.
+  // Если метаданные известны, запрос сразу виден в списке placeholder-
+  // записью — как сниппеты и заметки.
   const keepUnavailableRequest = (
     absolutePath: string,
     relativePath: string,
@@ -285,14 +296,19 @@ function reconcileRequests(
         id: knownEntry.id,
         ...(knownEntry.meta ? { meta: knownEntry.meta } : {}),
       })
-    }
-  }
 
-  const resolveFolderId = (relativePath: string): number | null => {
-    const dirPath = path.posix.dirname(relativePath)
-    return dirPath && dirPath !== '.'
-      ? (folderIdByPath.get(dirPath) ?? null)
-      : null
+      if (isValidHttpRequestIndexMetadata(knownEntry.meta)) {
+        records.push(
+          buildRequestFromIndexMetadata(
+            knownEntry.id,
+            relativePath,
+            knownEntry.meta,
+            resolveFolderId(relativePath),
+            { pendingCloudDownload: true },
+          ),
+        )
+      }
+    }
   }
 
   for (const relativePath of requestRelativePaths) {

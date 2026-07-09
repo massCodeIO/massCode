@@ -5,6 +5,7 @@ import yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stateContentCacheByPath } from '../../../runtime/cache'
+import { setDatalessProbeForTests } from '../../../runtime/shared/cloudFiles'
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
 import { getHttpPaths } from '../../runtime/paths'
 import { ensureHttpStateFile } from '../../runtime/state'
@@ -63,6 +64,11 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../cloudDownloads', () => ({
+  enqueueCloudDownload: vi.fn(),
+  prioritizeCloudDownload: vi.fn(),
+}))
+
 vi.mock('../../../../../../store', () => ({
   store: {
     preferences: {
@@ -87,6 +93,7 @@ describe('http requests storage', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
     resetHttpRuntimeCache()
     fs.removeSync(tempVaultPath)
     tempVaultPath = ''
@@ -175,6 +182,40 @@ describe('http requests storage', () => {
 
     expect(record?.name).toBe('Frozen')
     expect(record?.detailsPending).toBe(true)
+  })
+
+  it('lists cloud placeholder requests from index metadata', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Offloaded' })
+    storage.updateRequest(id, { url: 'https://example.com' })
+
+    resyncTwiceForLazyRequests()
+
+    // Провайдер «выгрузил» файл: содержимое заменяется sparse-плейсхолдером
+    // (size > 0, blocks 0), точная проверка dataless подменяется.
+    const paths = getHttpPaths(tempVaultPath)
+    const filePath = getHttpRuntimeCache(paths).requestById.get(id)!.filePath
+    const absolutePath = path.join(paths.httpRoot, filePath)
+    fs.removeSync(absolutePath)
+    const fd = fs.openSync(absolutePath, 'w')
+    fs.ftruncateSync(fd, 4096)
+    fs.closeSync(fd)
+
+    const stats = fs.statSync(absolutePath)
+    if (stats.size === 0 || stats.blocks !== 0) {
+      // На ФС без поддержки sparse-файлов сценарий невоспроизводим.
+      return
+    }
+    setDatalessProbeForTests(() => true)
+
+    resetHttpRuntimeCache()
+    const listed = createHttpRequestsStorage().getRequests()
+    const record = listed.find(request => request.id === id)
+
+    // Недокачанный запрос виден в списке по метаданным индекса.
+    expect(record?.pendingCloudDownload).toBe(true)
+    expect(record?.name).toBe('Offloaded')
+    expect(record?.url).toBe('https://example.com')
   })
 
   it('re-reads the file when index metadata misses bodyType', () => {

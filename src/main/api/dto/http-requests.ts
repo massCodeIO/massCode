@@ -91,6 +91,7 @@ const httpRequestItem = t.Object({
   filePath: t.String(),
   isFavorites: t.Number(),
   isDeleted: t.Number(),
+  pendingCloudDownload: t.Optional(t.Boolean()),
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })
@@ -112,6 +113,7 @@ const httpRequestListItem = t.Object({
   filePath: t.String(),
   isFavorites: t.Number(),
   isDeleted: t.Number(),
+  pendingCloudDownload: t.Optional(t.Boolean()),
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })

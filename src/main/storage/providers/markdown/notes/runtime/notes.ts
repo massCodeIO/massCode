@@ -1,3 +1,4 @@
+import type { FileAvailability } from '../../runtime/shared/cloudFiles'
 import type {
   MarkdownNote,
   NoteProperties,
@@ -17,6 +18,7 @@ import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
@@ -285,9 +287,11 @@ export function readNoteFromFile(
   paths: NotesPaths,
   entry: NotesIndexItem,
   pathToFolderIdMap: Map<string, number>,
+  knownAvailability?: FileAvailability,
 ): MarkdownNote | null {
   const absolutePath = path.join(paths.notesRoot, entry.filePath)
-  const availability = getFileAvailability(absolutePath)
+  // Горячий путь скана уже статил файл: повторный stat не нужен.
+  const availability = knownAvailability ?? getFileAvailability(absolutePath)
 
   if (!availability.exists) {
     return null
@@ -381,8 +385,11 @@ export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
 
   // Ленивая запись (тело ещё не дочитано из индекса): content дочитывается
   // с диска перед сериализацией, иначе запись затёрла бы тело пустым.
+  // Тихий пропуск записи потерял бы правку метаданных при следующем скане,
+  // поэтому сбой поднимается наверх. В scan-путях (write-back после чтения)
+  // заметка уже прочитана и ветка недостижима.
   if (!ensureNoteContentLoaded(paths, note)) {
-    return
+    throwCloudContentUnavailable()
   }
 
   const nextContent = serializeNote(note)
@@ -439,7 +446,12 @@ export function loadNotes(
       continue
     }
 
-    const note = readNoteFromFile(paths, entry, pathToFolderIdMap)
+    const note = readNoteFromFile(
+      paths,
+      entry,
+      pathToFolderIdMap,
+      availability,
+    )
     if (!note) {
       continue
     }

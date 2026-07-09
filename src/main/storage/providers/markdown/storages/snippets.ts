@@ -30,6 +30,7 @@ import {
   validateEntryName,
   writeSnippetToFile,
 } from '../runtime'
+import { throwCloudContentUnavailable } from '../runtime/shared/cloudGuards'
 import { createNestedContent } from '../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../runtime/shared/entityQuery'
 import {
@@ -283,6 +284,12 @@ export function createSnippetsStorage(): SnippetsStorage {
         }
       }
 
+      // Тела дочитываются до мутации: иначе патч частично применился бы
+      // в памяти, а запись на диск отклонилась.
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
+      }
+
       const content = snippet.contents[contentIndex]
 
       if ('label' in input) {
@@ -401,6 +408,13 @@ export function createSnippetsStorage(): SnippetsStorage {
       const contentIndex = findContentIndexById(snippet, contentId)
       if (contentIndex === -1) {
         return { deleted: false }
+      }
+
+      // Тела дочитываются ДО удаления: доливка null-value в guard'e записи
+      // идёт по позициям против ещё полного файла, и после splice каждый
+      // следующий фрагмент получил бы тело соседа.
+      if (!ensureSnippetContentLoaded(paths, snippet)) {
+        throwCloudContentUnavailable()
       }
 
       snippet.contents.splice(contentIndex, 1)

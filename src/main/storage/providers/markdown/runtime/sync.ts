@@ -558,6 +558,7 @@ export function syncSnippetFileWithDisk(
     paths,
     snippetIndexItem,
     pathToFolderIdMap,
+    changedFileAvailability,
   )
 
   if (!syncedSnippet) {

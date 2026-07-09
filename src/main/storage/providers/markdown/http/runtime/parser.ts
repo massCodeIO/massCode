@@ -15,6 +15,7 @@ import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 const HTTP_METHODS: HttpMethod[] = [
@@ -56,7 +57,7 @@ function splitFrontmatter(source: string): {
   }
 }
 
-function normalizeMethod(value: unknown): HttpMethod {
+export function normalizeMethod(value: unknown): HttpMethod {
   if (typeof value !== 'string') {
     return 'GET'
   }
@@ -65,7 +66,7 @@ function normalizeMethod(value: unknown): HttpMethod {
   return HTTP_METHODS.includes(upper) ? upper : 'GET'
 }
 
-function normalizeBodyType(value: unknown): HttpBodyType {
+export function normalizeBodyType(value: unknown): HttpBodyType {
   if (typeof value !== 'string') {
     return 'none'
   }
@@ -296,8 +297,11 @@ export function writeRequestFile(
 
   // Ленивая запись (body/description ещё не дочитаны из индекса): они
   // дочитываются перед сериализацией, иначе запись затёрла бы их пустыми.
+  // Тихий пропуск записи потерял бы правку метаданных при следующем скане,
+  // поэтому сбой поднимается наверх. В scan-путях (write-back после чтения)
+  // запись уже прочитана и ветка недостижима.
   if (!ensureRequestDetailsLoaded(httpRoot, record)) {
-    return
+    throwCloudContentUnavailable()
   }
 
   const next = serializeRequestFile(record)

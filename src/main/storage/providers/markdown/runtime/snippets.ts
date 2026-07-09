@@ -1,4 +1,5 @@
 import type { SnippetRecord } from '../../../contracts'
+import type { FileAvailability } from './shared/cloudFiles'
 import type {
   DirectoryEntriesCache,
   MarkdownSnippet,
@@ -36,6 +37,7 @@ import {
 } from './paths'
 import { rememberAppFileChange } from './shared/appChanges'
 import { getFileAvailability } from './shared/cloudFiles'
+import { throwCloudContentUnavailable } from './shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
@@ -107,10 +109,15 @@ export function readSnippetFromFile(
   paths: Paths,
   entry: MarkdownSnippetIndexItem,
   pathToFolderIdMap: ReadonlyMap<string, number>,
+  knownAvailability?: FileAvailability,
 ): MarkdownSnippet | null {
   return (
-    readSnippetFromFileWithMetadata(paths, entry, pathToFolderIdMap)?.snippet
-    ?? null
+    readSnippetFromFileWithMetadata(
+      paths,
+      entry,
+      pathToFolderIdMap,
+      knownAvailability,
+    )?.snippet ?? null
   )
 }
 
@@ -148,12 +155,14 @@ export function readSnippetFromFileWithMetadata(
   paths: Paths,
   entry: MarkdownSnippetIndexItem,
   pathToFolderIdMap: ReadonlyMap<string, number>,
+  knownAvailability?: FileAvailability,
 ): {
   legacyRecovery: 'ambiguous' | 'none' | 'recovered'
   snippet: MarkdownSnippet
 } | null {
   const snippetPath = path.join(paths.vaultPath, entry.filePath)
-  const availability = getFileAvailability(snippetPath)
+  // Горячий путь скана уже статил файл: повторный stat не нужен.
+  const availability = knownAvailability ?? getFileAvailability(snippetPath)
 
   if (!availability.exists) {
     return null
@@ -488,6 +497,7 @@ export function loadSnippets(
         paths,
         item,
         pathToFolderIdMap,
+        availability,
       )
 
       if (
@@ -528,10 +538,12 @@ export function writeSnippetToFile(
   }
 
   // Ленивая запись (тела ещё не дочитаны из индекса): недостающие value
-  // дочитываются с диска перед сериализацией, иначе запись затёрла бы
-  // тела пустыми строками.
+  // дочитываются с диска перед сериализацией, иначе запись затёрла бы тела
+  // пустыми строками. Тихий пропуск записи потерял бы правку метаданных
+  // при следующем скане, поэтому сбой поднимается наверх. В scan-путях
+  // (write-back после чтения) сниппет уже прочитан и ветка недостижима.
   if (!ensureSnippetContentLoaded(paths, snippet)) {
-    return
+    throwCloudContentUnavailable()
   }
 
   const nextContent = serializeSnippet(snippet)

@@ -187,6 +187,45 @@ describe('code snippets storage validations', () => {
     expect(rawSource).toContain('keep me')
   })
 
+  it('keeps sibling fragment bodies when deleting a fragment of a lazy snippet', () => {
+    const storage = createSnippetsStorage()
+    const { id } = storage.createSnippet({ name: 'Lazy Delete' })
+    const first = storage.createSnippetContent(id, {
+      label: 'First',
+      language: 'plain_text',
+      value: 'first body',
+    })
+    storage.createSnippetContent(id, {
+      label: 'Second',
+      language: 'plain_text',
+      value: 'second body',
+    })
+
+    const cache = resyncTwiceForLazySnippets()
+    const lazySnippet = cache.snippets.find(snippet => snippet.id === id)
+    expect(lazySnippet?.contents[0]?.value).toBeNull()
+
+    // Удаление НЕ последнего фрагмента у ленивого сниппета: тела должны
+    // дочитаться до splice, иначе оставшийся фрагмент получит тело соседа.
+    storage.deleteSnippetContent(id, first.id)
+
+    const record = storage.getSnippetById(id)
+    expect(record?.contents).toHaveLength(1)
+    expect(record?.contents[0]?.label).toBe('Second')
+    expect(record?.contents[0]?.value).toBe('second body')
+
+    const codeRootPath = getPaths(tempVaultPath).vaultPath
+    const runtimeSnippet = getRuntimeCache(
+      getPaths(tempVaultPath),
+    ).snippets.find(snippet => snippet.id === id)
+    const rawSource = fs.readFileSync(
+      path.join(codeRootPath, runtimeSnippet!.filePath),
+      'utf8',
+    )
+    expect(rawSource).toContain('second body')
+    expect(rawSource).not.toContain('first body')
+  })
+
   it('createSnippet during vault hydration throws VAULT_HYDRATING', () => {
     const storage = createSnippetsStorage()
     const cache = getRuntimeCache(getPaths(tempVaultPath))

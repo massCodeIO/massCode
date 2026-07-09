@@ -255,9 +255,12 @@ async function refreshHttpRequests() {
 }
 
 // Список отдаёт только метаданные (без body/description), поэтому полная
-// запись выбранного запроса загружается отдельно по id. Токен защищает от
-// гонки ответов при быстром переключении.
-let currentRequestToken = 0
+// запись выбранного запроса загружается отдельно по id. Токены защищают от
+// гонки ответов; у выбора и post-save-обновления они раздельные: иначе
+// автосейв предыдущего запроса инвалидировал бы загрузку только что
+// выбранного, и редактор показывал бы не тот запрос, что подсвечен в списке.
+let selectionRequestToken = 0
+let refreshRequestToken = 0
 
 async function fetchHttpRequestById(
   requestId: number,
@@ -275,14 +278,20 @@ async function fetchHttpRequestById(
 }
 
 async function loadCurrentRequest(requestId: number) {
-  const requestToken = ++currentRequestToken
+  const requestToken = ++selectionRequestToken
   const record = await fetchHttpRequestById(requestId)
 
-  if (requestToken !== currentRequestToken) {
+  if (requestToken !== selectionRequestToken) {
     return
   }
 
   if (httpState.requestId !== requestId) {
+    return
+  }
+
+  // Транзиентный сбой загрузки не должен очищать форму всё ещё выбранного
+  // запроса: редактор остаётся на прежних данных, повторный клик ретраит.
+  if (!record) {
     return
   }
 
@@ -292,12 +301,12 @@ async function loadCurrentRequest(requestId: number) {
 // Обновляет только currentRequest (без переустановки draft): вызывающие
 // потоки сохраняют набранные в редакторе, но ещё не сохранённые правки.
 async function refreshCurrentRequestRecord(requestId: number) {
-  const requestToken = ++currentRequestToken
+  const requestToken = ++refreshRequestToken
   const record = await fetchHttpRequestById(requestId)
 
   if (
     !record
-    || requestToken !== currentRequestToken
+    || requestToken !== refreshRequestToken
     || currentRequest.value?.id !== requestId
   ) {
     return

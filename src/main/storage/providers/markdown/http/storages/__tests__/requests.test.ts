@@ -177,6 +177,31 @@ describe('http requests storage', () => {
     expect(record?.detailsPending).toBe(true)
   })
 
+  it('re-reads the file when index metadata misses bodyType', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'No BodyType' })
+    storage.updateRequest(id, { body: '{"x":1}', bodyType: 'json' })
+
+    resyncTwiceForLazyRequests()
+
+    // Внешне правленный .state.yaml потерял bodyType: битая meta не должна
+    // ронять список — валидатор бракует запись, файл перечитывается.
+    flushPendingStateWrites()
+    const paths = getHttpPaths(tempVaultPath)
+    const persisted = yaml.load(fs.readFileSync(paths.statePath, 'utf8')) as {
+      requests: { meta?: { bodyType?: string } }[]
+    }
+    delete persisted.requests[0].meta!.bodyType
+    fs.writeFileSync(paths.statePath, yaml.dump(persisted), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+
+    resetHttpRuntimeCache()
+    const listed = createHttpRequestsStorage().getRequests()
+    const record = listed.find(request => request.id === id)
+
+    expect(record?.bodyType).toBe('json')
+  })
+
   it('rejects updates when lazy details are unavailable', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Vanishing' })

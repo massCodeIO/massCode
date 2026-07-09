@@ -10,6 +10,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
+import { normalizeFlag } from '../../runtime/normalizers'
 import {
   getFileAvailability,
   primeDatalessChecks,
@@ -19,6 +20,8 @@ import { toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
+  normalizeBodyType,
+  normalizeMethod,
   parseRequestFile,
   serializeRequestFile,
   writeRequestFile,
@@ -192,6 +195,7 @@ function isValidHttpRequestIndexMetadata(
     && typeof meta === 'object'
     && typeof meta.name === 'string'
     && typeof meta.method === 'string'
+    && typeof meta.bodyType === 'string'
     && typeof meta.url === 'string'
     && Array.isArray(meta.headers)
     && Array.isArray(meta.query)
@@ -215,22 +219,24 @@ function buildRequestFromIndexMetadata(
   meta: HttpRequestIndexMetadata,
   folderId: number | null,
 ): HttpRequestRecord {
+  // Enum-поля нормализуются: .state.yaml мог быть правлен извне, а мусорное
+  // значение уронило бы валидацию DTO целого списка.
   return {
     id: entryId,
     name: meta.name,
     folderId,
-    method: meta.method,
+    method: normalizeMethod(meta.method),
     url: meta.url,
     headers: meta.headers,
     query: meta.query,
-    bodyType: meta.bodyType,
+    bodyType: normalizeBodyType(meta.bodyType),
     body: null,
     formData: meta.formData,
     auth: meta.auth,
     description: '',
     filePath: relativePath,
-    isFavorites: meta.isFavorites,
-    isDeleted: meta.isDeleted,
+    isFavorites: normalizeFlag(meta.isFavorites),
+    isDeleted: normalizeFlag(meta.isDeleted),
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
     detailsPending: true,

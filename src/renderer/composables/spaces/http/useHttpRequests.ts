@@ -262,6 +262,38 @@ async function refreshHttpRequests() {
 let selectionRequestToken = 0
 let refreshRequestToken = 0
 
+// Пока полная запись едет по id, редактор блокируется оверлеем: ввод в
+// этот момент был бы перетёрт пришедшими данными. Видимость с задержкой,
+// чтобы на локальном vault ничего не мигало.
+const isCurrentRequestLoading = ref(false)
+const isCurrentRequestLoadingVisible = ref(false)
+const CURRENT_REQUEST_LOADING_VISIBILITY_DELAY_MS = 300
+let loadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(isCurrentRequestLoading, (loading) => {
+  if (loading) {
+    if (isCurrentRequestLoadingVisible.value || loadingVisibilityTimer) {
+      return
+    }
+
+    loadingVisibilityTimer = setTimeout(() => {
+      loadingVisibilityTimer = undefined
+
+      if (isCurrentRequestLoading.value) {
+        isCurrentRequestLoadingVisible.value = true
+      }
+    }, CURRENT_REQUEST_LOADING_VISIBILITY_DELAY_MS)
+
+    return
+  }
+
+  if (loadingVisibilityTimer) {
+    clearTimeout(loadingVisibilityTimer)
+    loadingVisibilityTimer = undefined
+  }
+  isCurrentRequestLoadingVisible.value = false
+})
+
 async function fetchHttpRequestById(
   requestId: number,
 ): Promise<HttpRequest | null> {
@@ -279,23 +311,32 @@ async function fetchHttpRequestById(
 
 async function loadCurrentRequest(requestId: number) {
   const requestToken = ++selectionRequestToken
-  const record = await fetchHttpRequestById(requestId)
+  isCurrentRequestLoading.value = true
 
-  if (requestToken !== selectionRequestToken) {
-    return
+  try {
+    const record = await fetchHttpRequestById(requestId)
+
+    if (requestToken !== selectionRequestToken) {
+      return
+    }
+
+    if (httpState.requestId !== requestId) {
+      return
+    }
+
+    // Транзиентный сбой загрузки не должен очищать форму всё ещё выбранного
+    // запроса: редактор остаётся на прежних данных, повторный клик ретраит.
+    if (!record) {
+      return
+    }
+
+    assignDraft(record)
   }
-
-  if (httpState.requestId !== requestId) {
-    return
+  finally {
+    if (requestToken === selectionRequestToken) {
+      isCurrentRequestLoading.value = false
+    }
   }
-
-  // Транзиентный сбой загрузки не должен очищать форму всё ещё выбранного
-  // запроса: редактор остаётся на прежних данных, повторный клик ретраит.
-  if (!record) {
-    return
-  }
-
-  assignDraft(record)
 }
 
 // Обновляет только currentRequest (без переустановки draft): вызывающие
@@ -757,6 +798,7 @@ export function useHttpRequests() {
     createHttpRequestAndSelect,
     currentDraft,
     currentRequest,
+    isCurrentRequestLoadingVisible,
     deleteHttpRequest,
     deleteHttpRequests,
     deleteSelectedHttpRequests,

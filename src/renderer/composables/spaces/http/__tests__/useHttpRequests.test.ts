@@ -29,7 +29,7 @@ async function setup(options: SetupOptions = {}) {
   const isSearch = ref(options.isSearch ?? false)
   const searchQuery = ref(options.searchQuery ?? '')
   const getHttpRequests = vi.fn(async () => ({ data: [] }))
-  const getHttpRequestsById = vi.fn(async () => ({ data: null }))
+  const getHttpRequestsById = vi.fn(async () => ({ data: null as unknown }))
 
   // useContentSort читает store.app при импорте модуля: мокается целиком,
   // чтобы не тянуть electron store в тест.

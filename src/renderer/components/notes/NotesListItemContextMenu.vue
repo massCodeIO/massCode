@@ -33,6 +33,7 @@ interface NoteRecord {
   folder: NoteFolderInfo | null
   isFavorites: number
   isDeleted: number
+  pendingCloudDownload?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -71,6 +72,10 @@ const revealInFileManagerLabel = computed(() =>
     ? i18n.t('action.reveal.inFinder')
     : i18n.t('action.reveal.inFileManager'),
 )
+
+// Содержимое ещё в облаке: мутации (запись файла) и копирование тела
+// недоступны до докачки; чтение метаданных и ссылки работают.
+const isCloudPending = computed(() => props.note.pendingCloudDownload === true)
 
 async function onAddFavorites() {
   const isFavorites = isFavoritesLibrarySelected.value ? 0 : 1
@@ -160,7 +165,10 @@ async function onConvertToNote() {
 <template>
   <ContextMenu.ContextMenuContent>
     <template v-if="!isTrashLibrarySelected">
-      <ContextMenu.ContextMenuItem @click="onAddFavorites">
+      <ContextMenu.ContextMenuItem
+        :disabled="isCloudPending"
+        @click="onAddFavorites"
+      >
         {{
           isFavoritesLibrarySelected
             ? i18n.t("action.remove.fromFavorites")
@@ -169,12 +177,14 @@ async function onConvertToNote() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem
         v-if="!isTask"
+        :disabled="isCloudPending"
         @click="onConvertToTask"
       >
         {{ i18n.t("notes.tasks.convertToTask") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem
         v-else
+        :disabled="isCloudPending"
         @click="onConvertToNote"
       >
         {{ i18n.t("notes.tasks.convertToNote") }}
@@ -184,14 +194,20 @@ async function onConvertToNote() {
     <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
       {{ revealInFileManagerLabel }}
     </ContextMenu.ContextMenuItem>
-    <ContextMenu.ContextMenuItem @click="onCopyNoteContent">
+    <ContextMenu.ContextMenuItem
+      :disabled="isCloudPending"
+      @click="onCopyNoteContent"
+    >
       {{ i18n.t("action.copy.note") }}
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuItem @click="onCopyNoteLink">
       {{ i18n.t("action.copy.noteLink") }}
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuSeparator />
-    <ContextMenu.ContextMenuItem @click="onDelete">
+    <ContextMenu.ContextMenuItem
+      :disabled="isCloudPending"
+      @click="onDelete"
+    >
       {{
         notesState.libraryFilter === LibraryFilter.Trash
           ? i18n.t("action.delete.common")
@@ -200,6 +216,7 @@ async function onConvertToNote() {
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuItem
       v-if="isTrashLibrarySelected"
+      :disabled="isCloudPending"
       @click="onRestore"
     >
       {{ i18n.t("action.restore") }}

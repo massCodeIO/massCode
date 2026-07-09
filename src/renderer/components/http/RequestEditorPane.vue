@@ -2,7 +2,7 @@
 import { useHttpRequests, useResizeHandle } from '@/composables'
 import { store } from '@/electron'
 
-const { currentRequest } = useHttpRequests()
+const { currentRequest, isCurrentRequestLoadingVisible } = useHttpRequests()
 
 const RESPONSE_PANEL_DEFAULT_HEIGHT = 300
 const RESPONSE_PANEL_MIN_HEIGHT = 120
@@ -75,8 +75,9 @@ useResizeHandle(responseHandleRef, {
 <template>
   <div
     ref="rootRef"
-    class="flex h-full flex-col overflow-hidden pt-[var(--content-top-offset)]"
+    class="relative flex h-full flex-col overflow-hidden pt-[var(--content-top-offset)]"
   >
+    <UiLoadingOverlay v-if="isCurrentRequestLoadingVisible" />
     <div
       class="min-h-0 flex-1"
       :class="{

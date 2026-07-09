@@ -194,7 +194,7 @@ function onDragStart(event: DragEvent) {
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
-    draggable="true"
+    :draggable="!note.pendingCloudDownload"
     @click="(event) => onNoteClick(note.id, event)"
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"

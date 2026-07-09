@@ -57,7 +57,10 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(409, { message: parsedError.message })
   }
 
-  if (parsedError.code === 'VAULT_HYDRATING') {
+  if (
+    parsedError.code === 'VAULT_HYDRATING'
+    || parsedError.code === 'CLOUD_FILE_NOT_DOWNLOADED'
+  ) {
     return setStatus(503, { message: parsedError.message })
   }
 

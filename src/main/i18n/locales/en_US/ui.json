@@ -636,6 +636,7 @@
   "cloudDownloads": {
     "downloading": "Downloading files from cloud storage: {{count}} left",
     "failed": "Failed to download files from cloud storage: {{count}}",
+    "itemPending": "Downloading from cloud storage…",
     "label": "Cloud downloads"
   }
 }

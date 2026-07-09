@@ -224,7 +224,7 @@ describe('http requests storage', () => {
   it('keeps body intact when renaming a lazy request', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Lazy Rename' })
-    storage.updateRequest(id, { body: 'keep me', bodyType: 'raw' })
+    storage.updateRequest(id, { body: 'keep me', bodyType: 'text' })
 
     resyncTwiceForLazyRequests()
 

@@ -506,8 +506,12 @@ onMounted(() => {
 <template>
   <div
     data-editor
-    class="grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
+    class="relative grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
+    <UiLoadingOverlay
+      v-if="selectedSnippet?.pendingCloudDownload"
+      :label="i18n.t('cloudDownloads.itemPending')"
+    />
     <EditorHeader
       v-if="isShowHeader"
       @focus-editor="focusEditor"

@@ -43,7 +43,10 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(409, { message: parsedError.message })
   }
 
-  if (parsedError.code === 'VAULT_HYDRATING') {
+  if (
+    parsedError.code === 'VAULT_HYDRATING'
+    || parsedError.code === 'CLOUD_FILE_NOT_DOWNLOADED'
+  ) {
     return setStatus(503, { message: parsedError.message })
   }
 
@@ -179,16 +182,21 @@ app
     '/:id/content',
     ({ params, body, status }) => {
       const storage = useNotesStorage()
-      const { notFound } = storage.notes.updateNoteContent(
-        Number(params.id),
-        body.content,
-      )
+      try {
+        const { notFound } = storage.notes.updateNoteContent(
+          Number(params.id),
+          body.content,
+        )
 
-      if (notFound) {
-        return status(404, { message: 'Note not found' })
+        if (notFound) {
+          return status(404, { message: 'Note not found' })
+        }
+
+        return { message: 'Note content updated' }
       }
-
-      return { message: 'Note content updated' }
+      catch (error) {
+        return mapStorageError(status, error)
+      }
     },
     {
       body: 'notesContentUpdate',
@@ -201,20 +209,25 @@ app
     '/:id/properties',
     ({ params, body, status }) => {
       const storage = useNotesStorage()
-      const { invalidInput, notFound } = storage.notes.updateNoteProperties(
-        Number(params.id),
-        body,
-      )
+      try {
+        const { invalidInput, notFound } = storage.notes.updateNoteProperties(
+          Number(params.id),
+          body,
+        )
 
-      if (invalidInput) {
-        return status(400, { message: 'Need at least one field to update' })
+        if (invalidInput) {
+          return status(400, { message: 'Need at least one field to update' })
+        }
+
+        if (notFound) {
+          return status(404, { message: 'Note not found' })
+        }
+
+        return { message: 'Note properties updated' }
       }
-
-      if (notFound) {
-        return status(404, { message: 'Note not found' })
+      catch (error) {
+        return mapStorageError(status, error)
       }
-
-      return { message: 'Note properties updated' }
     },
     {
       body: 'notePropertiesUpdate',

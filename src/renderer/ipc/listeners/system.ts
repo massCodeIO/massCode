@@ -134,7 +134,7 @@ async function refreshAfterStorageSync() {
   }
 }
 
-function scheduleStorageSyncRefresh() {
+function scheduleStorageSyncRefresh(delayOverride?: number) {
   const now = Date.now()
   if (firstPendingRefreshAt === null) {
     firstPendingRefreshAt = now
@@ -146,7 +146,7 @@ function scheduleStorageSyncRefresh() {
   }
 
   const waitedTooLong = now - firstPendingRefreshAt >= STORAGE_SYNC_MAX_WAIT_MS
-  const delay = waitedTooLong ? 0 : STORAGE_SYNC_DEBOUNCE_MS
+  const delay = delayOverride ?? (waitedTooLong ? 0 : STORAGE_SYNC_DEBOUNCE_MS)
 
   storageSyncDebounceTimer = setTimeout(() => {
     storageSyncDebounceTimer = null
@@ -159,7 +159,9 @@ function scheduleStorageSyncRefresh() {
     ) {
       // Busy-состояние временное (несохранённые правки): ждём его конца, но
       // firstPendingRefreshAt не сбрасываем, чтобы max-wait продолжал идти.
-      scheduleStorageSyncRefresh()
+      // Ретрай всегда с ненулевой паузой: после max-wait нулевая задержка
+      // раскрутила бы setTimeout(0)-петлю на всё время редактирования.
+      scheduleStorageSyncRefresh(STORAGE_SYNC_DEBOUNCE_MS)
       return
     }
 

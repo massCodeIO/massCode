@@ -177,6 +177,25 @@ describe('http requests storage', () => {
     expect(record?.detailsPending).toBe(true)
   })
 
+  it('rejects updates when lazy details are unavailable', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Vanishing' })
+    storage.updateRequest(id, { body: 'data', bodyType: 'json' })
+
+    resyncTwiceForLazyRequests()
+
+    // Файл недоступен: «принятая» правка молча потерялась бы при следующем
+    // ресинке, поэтому мутация отклоняется до изменения кэша.
+    const paths = getHttpPaths(tempVaultPath)
+    const record = getHttpRuntimeCache(paths).requestById.get(id)!
+    fs.removeSync(path.join(paths.httpRoot, record.filePath))
+
+    expect(() => storage.updateRequest(id, { name: 'Renamed' })).toThrow(
+      'CLOUD_FILE_NOT_DOWNLOADED',
+    )
+    expect(record.name).toBe('Vanishing')
+  })
+
   it('keeps body intact when renaming a lazy request', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Lazy Rename' })

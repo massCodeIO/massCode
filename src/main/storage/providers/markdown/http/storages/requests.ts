@@ -14,6 +14,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
@@ -274,8 +275,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       // Патч мутирует запись и сериализует её целиком: недостающие body и
-      // description дочитываются до применения полей.
-      ensureRequestDetailsLoaded(paths.httpRoot, record)
+      // description дочитываются до применения полей. Если содержимое
+      // сейчас недоступно, «принятая» правка молча потерялась бы при
+      // следующем ресинке — мутация отклоняется до изменения кэша.
+      if (!ensureRequestDetailsLoaded(paths.httpRoot, record)) {
+        throwCloudContentUnavailable()
+      }
 
       const updatableFields = [
         input.name,

@@ -8,6 +8,7 @@ import { ensureNotesStateFile } from '../../runtime/state'
 import {
   getNotesRuntimeCache,
   resetNotesRuntimeCache,
+  syncNoteFileWithDisk,
 } from '../../runtime/sync'
 import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
@@ -163,6 +164,41 @@ describe('notes storage validations', () => {
       'utf8',
     )
     expect(rawSource).toContain('keep me')
+  })
+
+  it('applies deferred backlink rewrites after a pending note hydrates', () => {
+    const storage = createNotesNotesStorage()
+    const { id: targetId } = storage.createNote({ name: 'Target' })
+    const { id: linkerId } = storage.createNote({ name: 'Linker' })
+    storage.updateNoteContent(linkerId, 'see [[Target]]')
+
+    const paths = getNotesPaths(tempVaultPath)
+    const cache = getNotesRuntimeCache(paths)
+    const linker = cache.notes.find(note => note.id === linkerId)!
+    const linkerFilePath = linker.filePath
+
+    // Имитация недокачанной заметки: тело в облаке на момент rename.
+    linker.pendingCloudDownload = true
+
+    storage.updateNote(targetId, { name: 'Renamed Target' })
+
+    // Пока заметка pending, её файл не переписывается.
+    const rawBefore = fs.readFileSync(
+      path.join(paths.notesRoot, linkerFilePath),
+      'utf8',
+    )
+    expect(rawBefore).toContain('[[Target]]')
+
+    // Гидрация: watcher-путь перечитывает файл и применяет отложенный
+    // rewrite.
+    syncNoteFileWithDisk(paths, linkerFilePath)
+
+    const rawAfter = fs.readFileSync(
+      path.join(paths.notesRoot, linkerFilePath),
+      'utf8',
+    )
+    expect(rawAfter).toContain('[[Renamed Target]]')
+    expect(rawAfter).not.toContain('[[Target]]')
   })
 
   it('createNote with bad folderId throws FOLDER_NOT_FOUND', () => {

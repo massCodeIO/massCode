@@ -7,6 +7,20 @@ import { ensureNoteContentLoaded } from '../notes'
 import { loadNotesState } from '../state'
 import { resetNotesRuntimeCache, syncNotesRuntimeWithDisk } from '../sync'
 
+// backlinks-хуки в notes sync тянут runtime paths, который читает store:
+// вне Electron его нужно замокать.
+vi.mock('electron-store', () => {
+  class MockStore {
+    get(): unknown {
+      return undefined
+    }
+
+    set(): void {}
+  }
+
+  return { default: MockStore }
+})
+
 vi.mock('electron', () => ({
   app: {
     getPath: () => os.tmpdir(),

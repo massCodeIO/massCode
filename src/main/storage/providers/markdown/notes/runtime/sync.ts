@@ -23,6 +23,10 @@ import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import {
+  applyDeferredBacklinkRewrites,
+  clearDeferredBacklinkRewrites,
+} from './backlinks'
+import {
   NOTES_INBOX_RELATIVE_PATH,
   NOTES_TRASH_RELATIVE_PATH,
   notesRuntimeRef,
@@ -271,6 +275,13 @@ function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
   // State сохраняется после loadNotes: чтение файлов дозаполняет индекс
   // метаданных, и он должен доехать до диска в этом же сохранении.
   const notes = loadNotes(paths, state)
+
+  // Заметки, гидрированные этим сканом, получают rewrite'ы ссылок,
+  // отложенные на время докачки.
+  for (const note of notes) {
+    applyDeferredBacklinkRewrites(paths, state, note)
+  }
+
   saveNotesState(paths, state, { immediate: true })
 
   return setNotesRuntimeCache(paths, state, notes)
@@ -347,6 +358,9 @@ export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
 
 export function resetNotesRuntimeCache(): void {
   notesRuntimeRef.cache = null
+  // Отложенные backlink-rewrite'ы адресуются id заметок текущего vault:
+  // при сбросе кэша (смена vault) они теряют смысл.
+  clearDeferredBacklinkRewrites()
 }
 
 function commitNotesRuntimeCache(cache: NotesRuntimeCache): NotesRuntimeCache {
@@ -482,19 +496,23 @@ export function syncNoteFileWithDisk(
     noteIndexItem.filePath = normalizedFilePath
   }
 
-  const changedFileAvailability = getFileAvailability(noteAbsolutePath)
   const syncedNote = readNoteFromFile(paths, noteIndexItem, pathToFolderIdMap)
   if (!syncedNote) {
     return null
   }
 
-  // Индекс метаданных обновляется по реально прочитанному файлу, чтобы
-  // следующий холодный старт собрал запись без чтения.
-  if (!syncedNote.pendingCloudDownload && changedFileAvailability.stats) {
-    noteIndexItem.meta = buildNoteIndexMetadata(
-      syncedNote,
-      changedFileAvailability.stats,
-    )
+  if (!syncedNote.pendingCloudDownload) {
+    // Заметка гидрирована: применяются rewrite'ы ссылок, отложенные на
+    // время докачки (rename/move, случившиеся, пока тело было в облаке).
+    applyDeferredBacklinkRewrites(paths, state, syncedNote)
+
+    // Индекс метаданных обновляется по реально прочитанному файлу (stat
+    // берётся после возможной записи отложенного rewrite), чтобы следующий
+    // холодный старт собрал запись без чтения.
+    const syncedStats = getFileAvailability(noteAbsolutePath).stats
+    if (syncedStats) {
+      noteIndexItem.meta = buildNoteIndexMetadata(syncedNote, syncedStats)
+    }
   }
 
   const noteIndexInRuntime = notes.findIndex(

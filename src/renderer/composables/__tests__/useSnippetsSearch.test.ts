@@ -34,6 +34,14 @@ async function setup(options: SetupOptions = {}) {
     data: [{ contents: [], id: 1, name: 'Search result', tags: [] }],
   }))
 
+  // useContentSort читает store.app при импорте модуля: мокается целиком,
+  // чтобы не тянуть electron store в тест.
+  vi.doMock('@/composables/useContentSort', () => ({
+    useContentSort: () => ({
+      getContentSortQuery: () => ({}),
+    }),
+  }))
+
   vi.doMock('@/composables/useDonations', () => ({
     useDonations: () => ({
       incrementCopy: vi.fn(),

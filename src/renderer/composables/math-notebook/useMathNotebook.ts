@@ -44,6 +44,10 @@ let initialized = false
 let hasAuthoritativeState = false
 let cloudRetryTimer: ReturnType<typeof setTimeout> | null = null
 
+// UI-состояние докачки math state из облака: пока true, пространство
+// показывает индикатор синхронизации и не даёт создавать листы.
+const isCloudSyncing = ref(false)
+
 // Синхронизировано с ретраем реконсиляции vault в main process.
 const CLOUD_RETRY_MS = 3000
 
@@ -78,6 +82,7 @@ async function loadFromDisk() {
   // .state.yaml ещё не докачан из облака: ретраим чтение, пока main не
   // отдаст настоящий state (докачка уже поставлена в очередь).
   if (data?.pending) {
+    isCloudSyncing.value = true
     clearCloudRetryTimer()
     cloudRetryTimer = setTimeout(() => {
       cloudRetryTimer = null
@@ -88,6 +93,7 @@ async function loadFromDisk() {
 
   clearCloudRetryTimer()
   hasAuthoritativeState = true
+  isCloudSyncing.value = false
   sheets.value = Array.isArray(data?.sheets) ? data.sheets : []
   activeSheetId.value = data?.activeSheetId ?? null
 }
@@ -98,6 +104,7 @@ function resetMathNotebook() {
   activeSheetId.value = null
   initialized = false
   hasAuthoritativeState = false
+  isCloudSyncing.value = false
 }
 
 export function useMathNotebook() {
@@ -116,6 +123,13 @@ export function useMathNotebook() {
   }
 
   function createSheet() {
+    // Во время докачки state из облака созданный лист нельзя ни сохранить,
+    // ни пережить приход настоящего state: создание блокируется, UI
+    // показывает состояние синхронизации.
+    if (isCloudSyncing.value) {
+      return
+    }
+
     const nextSheetName = getNextIndexedName(
       i18n.t('spaces.math.untitled'),
       sheets.value.map(sheet => sheet.name),
@@ -180,6 +194,7 @@ export function useMathNotebook() {
     sheets,
     activeSheetId,
     activeSheet,
+    isCloudSyncing,
     init,
     reloadFromDisk,
     reset: resetMathNotebook,

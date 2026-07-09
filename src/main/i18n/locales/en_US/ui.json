@@ -193,7 +193,8 @@
       "searchPlaceholder": "Search sheets…",
       "noResults": "No sheets found",
       "untitled": "Untitled",
-      "currencyUnavailable": "Currency rates service unavailable"
+      "currencyUnavailable": "Currency rates service unavailable",
+      "cloudSyncing": "Syncing from cloud storage…"
     },
     "drawings": {
       "label": "Drawings",

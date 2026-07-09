@@ -92,7 +92,8 @@ describe('useMathNotebook', () => {
     await notebook.init()
 
     const sheetId = notebook.createSheet()
-    notebook.updateSheet(sheetId, '1 + 1')
+    expect(sheetId).toBeDefined()
+    notebook.updateSheet(sheetId!, '1 + 1')
 
     expect(markUserEdit).toHaveBeenCalledTimes(1)
   })
@@ -115,9 +116,14 @@ describe('useMathNotebook', () => {
 
       await notebook.init()
 
-      // До первого успешного чтения persist запрещён: запись затёрла бы
-      // облачную версию state.
-      notebook.createSheet()
+      // Пока state не докачан, UI показывает состояние синхронизации,
+      // создание листов заблокировано, а persist запрещён: запись затёрла
+      // бы облачную версию state.
+      expect(notebook.isCloudSyncing.value).toBe(true)
+      expect(notebook.createSheet()).toBeUndefined()
+      expect(notebook.sheets.value).toEqual([])
+
+      notebook.selectSheet('any-sheet')
       expect(invoke).not.toHaveBeenCalledWith(
         'spaces:math:write',
         expect.anything(),
@@ -138,6 +144,7 @@ describe('useMathNotebook', () => {
       await vi.advanceTimersByTimeAsync(3000)
 
       expect(notebook.sheets.value).toEqual([remoteSheet])
+      expect(notebook.isCloudSyncing.value).toBe(false)
 
       // Persist снова разрешён.
       notebook.selectSheet('remote-sheet')

@@ -9,13 +9,16 @@ import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from './cloudDownloads'
 import {
   getHttpPaths,
+  isHttpVaultDiskReady,
   loadHttpState,
   syncHttpRuntimeWithDisk,
 } from './http/runtime'
 import {
   getNotesPaths,
+  isNotesVaultDiskReady,
   loadNotesState,
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
@@ -24,6 +27,7 @@ import {
   getSpaceStatePath,
   getVaultPath,
   INBOX_DIR_NAME,
+  isCodeVaultDiskReady,
   loadState,
   META_DIR_NAME,
   META_FILE_NAME,
@@ -32,6 +36,11 @@ import {
   TRASH_DIR_NAME,
   writeSpaceStateImmediate,
 } from './runtime'
+import {
+  getFileAvailability,
+  primeDatalessChecks,
+} from './runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
 
 type VaultDoctorSpace = NonNullable<VaultDoctorInput['spaces']>[number]
 
@@ -255,7 +264,23 @@ function inspectMarkdownEntity(input: {
   space: EntityScanRecord['space']
 }): EntityScanRecord | null {
   const absolutePath = path.join(input.rootPath, input.filePath)
-  const source = fs.readFileSync(absolutePath, 'utf8')
+
+  // Недокачанный облачный файл нельзя аудировать без блокирующего чтения:
+  // он уходит в фоновую докачку и пропускается в этом прогоне Doctor.
+  if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return null
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(absolutePath, 'utf8')
+  }
+  catch {
+    enqueueCloudDownload(absolutePath)
+    return null
+  }
+
   const fileName = path.basename(input.filePath)
   const fingerprint = getFingerprint(absolutePath)
 
@@ -404,7 +429,15 @@ function getNextEntityId(
 
   listMarkdownFiles(rootPath).forEach((filePath) => {
     try {
-      const source = fs.readFileSync(path.join(rootPath, filePath), 'utf8')
+      const absolutePath = path.join(rootPath, filePath)
+
+      // Недокачанный файл пропускается: его чтение заблокировало бы main
+      // process, а id из него в этот прогон всё равно не получить.
+      if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+        return
+      }
+
+      const source = fs.readFileSync(absolutePath, 'utf8')
       const parsed = readFrontmatter(source)
       const id = normalizeId(parsed.frontmatter.id)
       if (id) {
@@ -487,6 +520,15 @@ function applyDuplicateIdDecisions(
       }
 
       const absolutePath = item.fingerprint.path
+
+      // Недокачанный файл не переписывается: чтение заблокировало бы main
+      // process, а запись затёрла бы облачное содержимое. Элемент остаётся
+      // неприменённым, пользователь повторит после докачки.
+      if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+        enqueueCloudDownload(absolutePath)
+        return
+      }
+
       const source = fs.readFileSync(absolutePath, 'utf8')
       fs.writeFileSync(
         absolutePath,
@@ -525,7 +567,12 @@ function scanCode(context: ScanContext): void {
     }
   })
 
-  listMarkdownFiles(paths.vaultPath).forEach((filePath) => {
+  const snippetFiles = listMarkdownFiles(paths.vaultPath)
+  primeDatalessChecks(
+    snippetFiles.map(filePath => path.join(paths.vaultPath, filePath)),
+  )
+
+  snippetFiles.forEach((filePath) => {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -562,7 +609,12 @@ function scanNotes(context: ScanContext): void {
     }
   })
 
-  listMarkdownFiles(paths.notesRoot).forEach((filePath) => {
+  const noteFiles = listMarkdownFiles(paths.notesRoot)
+  primeDatalessChecks(
+    noteFiles.map(filePath => path.join(paths.notesRoot, filePath)),
+  )
+
+  noteFiles.forEach((filePath) => {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -583,7 +635,12 @@ function scanHttp(context: ScanContext): void {
   const records: EntityScanRecord[] = []
   const state = loadHttpState(paths)
 
-  listMarkdownFiles(paths.httpRoot).forEach((filePath) => {
+  const httpFiles = listMarkdownFiles(paths.httpRoot)
+  primeDatalessChecks(
+    httpFiles.map(filePath => path.join(paths.httpRoot, filePath)),
+  )
+
+  httpFiles.forEach((filePath) => {
     const record = inspectMarkdownEntity({
       context,
       filePath,
@@ -722,7 +779,21 @@ function readNormalizedMathState(): {
 
 function scanMath(context: ScanContext): void {
   const statePath = getMathStatePath()
-  const { changed } = readNormalizedMathState()
+
+  // math/.state.yaml может быть ещё не докачан из облака: аудит без
+  // содержимого невозможен, пространство проверится после докачки.
+  let changed: boolean
+  try {
+    changed = readNormalizedMathState().changed
+  }
+  catch (error) {
+    if (isCloudFileNotDownloadedError(error)) {
+      return
+    }
+
+    throw error
+  }
+
   if (!changed) {
     return
   }
@@ -769,6 +840,23 @@ export function previewVaultDoctor(
 ): VaultDoctorResponse {
   const context = createContext()
   const spaces = normalizeSpaces(input)
+
+  // Пока vault не сверен с диском после открытия (каталоги могут быть
+  // недокачаны из облака), полный аудит невозможен без блокирующего
+  // обхода: возвращается пустой результат, Doctor запускается позже.
+  const vaultRootPath = getVaultPath()
+  if (
+    !isCodeVaultDiskReady(getPaths(vaultRootPath))
+    || !isNotesVaultDiskReady(getNotesPaths(vaultRootPath))
+    || !isHttpVaultDiskReady(getHttpPaths(vaultRootPath))
+  ) {
+    return {
+      conflictGroups: [],
+      items: [],
+      summary: buildSummary(context),
+      warnings: [],
+    }
+  }
 
   if (spaces.includes('code')) {
     scanCode(context)
@@ -841,7 +929,20 @@ function repairHttpEnvironmentState(): void {
 }
 
 function repairMathState(): void {
-  const { state } = readNormalizedMathState()
+  // math/.state.yaml может быть ещё не докачан из облака: запись поверх
+  // плейсхолдера уничтожила бы облачную версию.
+  let state: MathNotebookStore
+  try {
+    state = readNormalizedMathState().state
+  }
+  catch (error) {
+    if (isCloudFileNotDownloadedError(error)) {
+      return
+    }
+
+    throw error
+  }
+
   writeSpaceStateImmediate(getMathStatePath(), state)
 }
 

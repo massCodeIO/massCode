@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fs from 'fs-extra'
 import { rememberAppFileChange } from './appChanges'
+import { assertEntityContentAvailable } from './cloudGuards'
 
 interface EntityIndexLike {
   filePath: string
@@ -28,6 +29,7 @@ interface UpdatableEntityLike {
   isDeleted: number
   isFavorites: number
   name: string
+  pendingCloudDownload?: boolean
 }
 
 interface UpdatableEntityInput {
@@ -128,6 +130,8 @@ export function applyEntityUpdateFields<
       previousIsDeleted: input.entity.isDeleted,
     }
   }
+
+  assertEntityContentAvailable(input.entity)
 
   const previousIsDeleted = input.entity.isDeleted
   let pathMayChange = false
@@ -283,6 +287,7 @@ export function emptyEntityTrashFromStateAndDisk<
 }
 
 interface EntityWithTags {
+  pendingCloudDownload?: boolean
   tags: number[]
   updatedAt: number
 }
@@ -306,6 +311,7 @@ export function addTagToEntity<TEntity extends EntityWithTags>(
   }
 
   if (!input.entity.tags.includes(input.tagId)) {
+    assertEntityContentAvailable(input.entity)
     input.entity.tags.push(input.tagId)
     input.entity.updatedAt = Date.now()
     input.onUpdated(input.entity)
@@ -359,6 +365,7 @@ export function deleteTagFromEntity<TEntity extends EntityWithTags>(
     }
   }
 
+  assertEntityContentAvailable(input.entity)
   input.entity.tags.splice(tagIndex, 1)
   input.entity.updatedAt = Date.now()
   input.onUpdated(input.entity)

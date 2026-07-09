@@ -1,6 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import {
   pendingStateWriteByPath,
   stateContentCacheByPath,
@@ -8,6 +9,9 @@ import {
 } from '../cache'
 import { STATE_WRITE_DEBOUNCE_MS } from '../constants'
 import { rememberAppFileChange } from './appChanges'
+import { getFileAvailability } from './cloudFiles'
+
+const CLOUD_STATE_FLUSH_RETRY_MS = 5_000
 
 let hooksRegistered = false
 
@@ -17,9 +21,15 @@ function getPersistedContent(statePath: string): string {
     return cached
   }
 
-  const content = fs.pathExistsSync(statePath)
-    ? fs.readFileSync(statePath, 'utf8')
-    : ''
+  const availability = getFileAvailability(statePath)
+
+  // Плейсхолдер не читается и не кэшируется: сравнение с пустой строкой
+  // оставит запись в pending, а flushPath не станет писать до докачки.
+  if (availability.isCloudPlaceholder) {
+    return ''
+  }
+
+  const content = availability.exists ? fs.readFileSync(statePath, 'utf8') : ''
 
   stateContentCacheByPath.set(statePath, content)
   return content
@@ -34,6 +44,18 @@ function flushPath(statePath: string): void {
   if (flushTimer) {
     clearTimeout(flushTimer)
     stateFlushTimerByPath.delete(statePath)
+  }
+
+  // State-файл вытеснен в облако: запись затёрла бы недокачанную версию.
+  // Запись остаётся в pending и повторяется после докачки.
+  if (getFileAvailability(statePath).isCloudPlaceholder) {
+    enqueueCloudDownload(statePath)
+    const retryTimer = setTimeout(
+      () => flushPath(statePath),
+      CLOUD_STATE_FLUSH_RETRY_MS,
+    )
+    stateFlushTimerByPath.set(statePath, retryTimer)
+    return
   }
 
   const persistedContent = getPersistedContent(statePath)

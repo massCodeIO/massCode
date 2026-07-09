@@ -17,6 +17,7 @@ const { isCompactListMode } = useApp()
 const {
   sheets,
   activeSheetId,
+  isCloudSyncing,
   createSheet,
   deleteSheet,
   selectSheet,
@@ -68,6 +69,18 @@ const filteredSheets = computed(() => {
   return sortedSheets.value.filter(sheet =>
     sheet.name.toLowerCase().includes(query),
   )
+})
+
+const emptyListText = computed(() => {
+  if (searchQuery.value.trim()) {
+    return i18n.t('spaces.math.noResults')
+  }
+
+  if (isCloudSyncing.value) {
+    return i18n.t('spaces.math.cloudSyncing')
+  }
+
+  return i18n.t('placeholder.emptySheetList')
 })
 
 function handleCreateSheet() {
@@ -291,11 +304,7 @@ defineExpose({
         v-if="filteredSheets.length === 0"
         class="text-muted-foreground mt-8 text-center text-[12px]"
       >
-        {{
-          searchQuery.trim()
-            ? i18n.t("spaces.math.noResults")
-            : i18n.t("placeholder.emptySheetList")
-        }}
+        {{ emptyListText }}
       </div>
     </div>
   </div>

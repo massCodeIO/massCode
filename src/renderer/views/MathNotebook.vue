@@ -4,7 +4,7 @@ import { i18n } from '@/electron'
 import { Plus } from 'lucide-vue-next'
 
 const { isAppLoading } = useApp()
-const { init } = useMathNotebook()
+const { init, isCloudSyncing } = useMathNotebook()
 const sheetListRef = ref<{ handleCreateSheet: () => void } | null>(null)
 
 onMounted(async () => {
@@ -27,6 +27,7 @@ onMounted(async () => {
           <template #action>
             <UiActionButton
               :tooltip="i18n.t('spaces.math.newSheet')"
+              :disabled="isCloudSyncing"
               @click="sheetListRef?.handleCreateSheet()"
             >
               <Plus class="h-4 w-4" />

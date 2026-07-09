@@ -61,6 +61,8 @@ type SystemAction =
   | 'update-downloaded'
   | 'renderer-ready'
   | 'storage-synced'
+  | 'cloud-download-status'
+  | 'cloud-download-progress'
   | 'migration-complete'
   | 'migration-error'
   | 'error'

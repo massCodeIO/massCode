@@ -1,9 +1,22 @@
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { getFileAvailability } from './cloudFiles'
 
 export function readYamlObjectFile<T>(filePath: string): T | null {
-  if (!fs.pathExistsSync(filePath)) {
+  const availability = getFileAvailability(filePath)
+
+  if (!availability.exists) {
+    return null
+  }
+
+  // Недокачанный метаданные-файл не прерывает скан: он уходит в фоновую
+  // докачку, а до неё папка живёт на данных из state (id сохраняется по
+  // пути). Перезапись дефолтами исключена: writeFolderMetadataFile не пишет
+  // в плейсхолдеры.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(filePath)
     return null
   }
 

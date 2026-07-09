@@ -6,7 +6,11 @@ import type {
 } from '../../../../contracts'
 import type { HttpEnvironmentRecord } from '../runtime/types'
 import { getVaultPath } from '../../runtime/paths'
-import { throwStorageError, validateEntryName } from '../../runtime/validation'
+import {
+  assertVaultNotHydrating,
+  throwStorageError,
+  validateEntryName,
+} from '../../runtime/validation'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
@@ -68,6 +72,7 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
       const paths = resolvePaths()
       const { state } = getHttpRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'folder')
       const conflict = state.environments.some(
         env => env.name.toLowerCase() === name.toLowerCase(),

@@ -39,6 +39,10 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(409, { message: parsedError.message })
   }
 
+  if (parsedError.code === 'VAULT_HYDRATING') {
+    return setStatus(503, { message: parsedError.message })
+  }
+
   if (
     parsedError.code === 'INVALID_NAME'
     || parsedError.code === 'RESERVED_NAME'

@@ -10,6 +10,8 @@ import {
   writeDrawing,
 } from '../../storage/providers/markdown/drawings'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { getFileAvailability } from '../../storage/providers/markdown/runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from '../../storage/providers/markdown/runtime/shared/guardedRead'
 import {
   ensureSpaceDirectory,
   getSpaceStatePath,
@@ -19,6 +21,12 @@ import {
   writeSpaceState,
 } from '../../storage/providers/markdown/runtime/spaceState'
 import { store } from '../../store'
+
+// Ответ math:read c облачным плейсхолдером вместо state: renderer получает
+// пустой store с флагом pending и ретраит чтение после докачки.
+interface MathNotebookReadResult extends MathNotebookStore {
+  pending?: boolean
+}
 
 export function registerSpacesHandlers() {
   ipcMain.handle('spaces:math:read', () => {
@@ -32,7 +40,24 @@ export function registerSpacesHandlers() {
 
     ensureSpaceDirectory(vaultPath, 'math')
     const statePath = getSpaceStatePath(vaultPath, 'math')
-    const state = readSpaceState<MathNotebookStore>(statePath)
+
+    let state: MathNotebookStore | null
+    try {
+      state = readSpaceState<MathNotebookStore>(statePath)
+    }
+    catch (error) {
+      if (!isCloudFileNotDownloadedError(error)) {
+        throw error
+      }
+
+      // .state.yaml ещё не докачан из облака: guarded-чтение уже поставило
+      // его в приоритетную докачку, renderer ретраит по флагу pending.
+      return {
+        sheets: [],
+        activeSheetId: null,
+        pending: true,
+      } satisfies MathNotebookReadResult
+    }
 
     if (state) {
       return {
@@ -61,6 +86,14 @@ export function registerSpacesHandlers() {
 
     ensureSpaceDirectory(vaultPath, 'math')
     const statePath = getSpaceStatePath(vaultPath, 'math')
+
+    // Запись поверх недокачанного .state.yaml уничтожила бы облачную
+    // версию: до докачки писать некуда, renderer и так блокирует persist
+    // до первого успешного чтения.
+    if (getFileAvailability(statePath).isCloudPlaceholder) {
+      return
+    }
+
     writeSpaceState(statePath, data)
   })
 

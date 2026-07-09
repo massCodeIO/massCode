@@ -11,9 +11,12 @@ import type {
   NoteUpdateResult,
 } from '../../../../contracts'
 import type { MarkdownNote, NotesState } from '../runtime/types'
+import path from 'node:path'
 import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
+import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { assertEntityContentAvailable } from '../../runtime/shared/cloudGuards'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import {
@@ -27,6 +30,7 @@ import {
 } from '../../runtime/shared/entityStorage'
 import {
   assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
@@ -74,6 +78,7 @@ function createNoteRecord(note: MarkdownNote, state: NotesState): NoteRecord {
     isDeleted: note.isDeleted,
     isFavorites: note.isFavorites,
     name: note.name,
+    pendingCloudDownload: note.pendingCloudDownload === true,
     properties: note.properties,
     tags,
     updatedAt: note.updatedAt,
@@ -267,6 +272,14 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getCache()
       const note = findNoteById(notes, id)
 
+      // Пользователь открыл ещё не докачанную заметку: её файл поднимается
+      // в начало очереди фоновой докачки, ответ при этом не блокируется.
+      if (note?.pendingCloudDownload) {
+        prioritizeCloudDownload(
+          path.join(resolvePaths().notesRoot, note.filePath),
+        )
+      }
+
       return note ? createNoteRecord(note, state) : null
     },
 
@@ -279,6 +292,7 @@ export function createNotesNotesStorage(): NotesStorage {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'note')
       const folderId = input.folderId ?? null
       assertUniqueSiblingEntryName(notes, folderId, name, 'note')
@@ -422,6 +436,8 @@ export function createNotesNotesStorage(): NotesStorage {
       if (!note) {
         return { invalidInput: false, notFound: true }
       }
+
+      assertEntityContentAvailable(note)
 
       const hasAnyField = applyNotePropertiesUpdate(note, input)
 

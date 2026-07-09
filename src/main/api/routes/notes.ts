@@ -43,6 +43,10 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(409, { message: parsedError.message })
   }
 
+  if (parsedError.code === 'VAULT_HYDRATING') {
+    return setStatus(503, { message: parsedError.message })
+  }
+
   if (
     parsedError.code === 'FOLDER_NOT_FOUND'
     || parsedError.code === 'NOTE_NOT_FOUND'

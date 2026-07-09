@@ -3,14 +3,14 @@ import type { LineResult } from '@/composables/math-notebook'
 import type { MathSettings } from '~/main/store/types'
 import { useMathEngine, useMathNotebook } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
-import { Calculator } from 'lucide-vue-next'
+import { Calculator, LoaderCircle } from 'lucide-vue-next'
 
 interface CurrencyRatesPayload {
   rates: Record<string, number>
   source: 'live' | 'cache' | 'unavailable'
 }
 
-const { activeSheet, updateSheet } = useMathNotebook()
+const { activeSheet, updateSheet, isCloudSyncing } = useMathNotebook()
 const {
   evaluateDocument,
   setCurrencyServiceState,
@@ -127,6 +127,20 @@ function handleActiveLine(line: number) {
       :locale="mathSettings.locale"
       :decimal-places="mathSettings.decimalPlaces"
     />
+  </div>
+
+  <div
+    v-else-if="isCloudSyncing"
+    class="text-muted-foreground flex h-full flex-col items-center justify-center gap-3"
+  >
+    <LoaderCircle class="h-5 w-5 animate-spin" />
+    <UiText
+      as="p"
+      variant="sm"
+      muted
+    >
+      {{ i18n.t("spaces.math.cloudSyncing") }}
+    </UiText>
   </div>
 
   <div

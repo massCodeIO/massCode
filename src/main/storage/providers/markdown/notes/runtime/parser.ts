@@ -6,7 +6,9 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import { readYamlObjectFile } from '../../runtime/shared/yaml'
 import { META_FILE_NAME } from './constants'
 
@@ -56,8 +58,16 @@ export function writeNotesFolderMetadataFile(
     .trim()
 
   const nextContent = `${body}\n`
+  const availability = getFileAvailability(metaPath)
 
-  if (fs.pathExistsSync(metaPath)) {
+  // Запись в недокачанный .meta.yaml затёрла бы облачные метаданные папки
+  // (включая её id): файл сначала докачивается в фоне.
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(metaPath)
+    return
+  }
+
+  if (availability.exists) {
     const currentContent = fs.readFileSync(metaPath, 'utf8')
     if (currentContent === nextContent) {
       return

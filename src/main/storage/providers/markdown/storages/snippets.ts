@@ -9,8 +9,10 @@ import type {
   SnippetUpdateResult,
 } from '../../../contracts'
 import path from 'node:path'
+import { prioritizeCloudDownload } from '../cloudDownloads'
 import {
   assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   createSnippetRecord,
   findFolderById,
   findSnippetById,
@@ -95,6 +97,12 @@ export function createSnippetsStorage(): SnippetsStorage {
       const { state, snippets } = getRuntimeCache(paths)
       const snippet = findSnippetById(snippets, id)
 
+      // Пользователь открыл ещё не докачанный сниппет: его файл поднимается
+      // в начало очереди фоновой докачки, ответ при этом не блокируется.
+      if (snippet?.pendingCloudDownload) {
+        prioritizeCloudDownload(path.join(paths.vaultPath, snippet.filePath))
+      }
+
       return snippet ? createSnippetRecord(snippet, state) : null
     },
     getSnippetsCounts: (): SnippetsCount => {
@@ -107,6 +115,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
       assertUniqueSiblingEntryName(snippets, folderId, name, 'snippet')

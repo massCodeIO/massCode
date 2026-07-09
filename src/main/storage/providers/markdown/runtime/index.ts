@@ -90,6 +90,8 @@ export {
 // Sync & Cache
 export {
   getRuntimeCache,
+  isCodeVaultDiskReady,
+  refreshPendingSnippetFiles,
   resetRuntimeCache,
   setRuntimeCache,
   syncCounters,
@@ -129,6 +131,7 @@ export {
   assertNotReservedRootFolderName,
   assertUniqueSiblingEntryName,
   assertUniqueSiblingFolderName,
+  assertVaultNotHydrating,
   getMarkdownStorageErrorMessage,
   resolveUniqueSiblingFolderName,
   throwStorageError,

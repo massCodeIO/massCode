@@ -92,6 +92,8 @@ export interface SnippetRecord {
   isDeleted: number
   createdAt: number
   updatedAt: number
+  /** Содержимое файла ещё не скачано облачным провайдером. */
+  pendingCloudDownload?: boolean
 }
 
 export interface SnippetsQueryInput {
@@ -217,6 +219,8 @@ export interface NoteRecord {
   isDeleted: number
   createdAt: number
   updatedAt: number
+  /** Содержимое файла ещё не скачано облачным провайдером. */
+  pendingCloudDownload?: boolean
 }
 
 export interface NoteTagRecord {

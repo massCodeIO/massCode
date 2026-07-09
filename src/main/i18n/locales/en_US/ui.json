@@ -193,7 +193,8 @@
       "searchPlaceholder": "Search sheets…",
       "noResults": "No sheets found",
       "untitled": "Untitled",
-      "currencyUnavailable": "Currency rates service unavailable"
+      "currencyUnavailable": "Currency rates service unavailable",
+      "cloudSyncing": "Syncing from cloud storage…"
     },
     "drawings": {
       "label": "Drawings",
@@ -631,5 +632,10 @@
     "searchIn": "Search in {{- context}}",
     "addTag": "Add Tag",
     "selectLanguage": "Select Language"
+  },
+  "cloudDownloads": {
+    "downloading": "Downloading files from cloud storage: {{count}} left",
+    "failed": "Failed to download files from cloud storage: {{count}}",
+    "label": "Cloud downloads"
   }
 }

@@ -7,14 +7,27 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { log } from '../../../../../utils'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import {
+  getFileAvailability,
+  primeDatalessChecks,
+} from '../../runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { toPosixPath } from '../../runtime/shared/path'
+import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
   parseRequestFile,
   serializeRequestFile,
   writeRequestFile,
 } from './parser'
-import { ensureHttpStateFile, loadHttpState, saveHttpState } from './state'
+import {
+  createDefaultHttpState,
+  ensureHttpStateFile,
+  loadHttpState,
+  saveHttpState,
+} from './state'
 
 const SKIP_FILES = new Set([HTTP_STATE_FILE_NAME])
 
@@ -151,14 +164,56 @@ function reconcileRequests(
   const existingByPath = new Map(
     state.requests.map(item => [item.filePath, item.id]),
   )
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    requestRelativePaths.map(relativePath =>
+      path.join(paths.httpRoot, relativePath),
+    ),
+  )
+
   const usedIds = new Set<number>()
   const records: HttpRequestRecord[] = []
   const indexEntries: HttpState['requests'] = []
   const now = Date.now()
 
+  // Файл, содержимое которого сейчас недоступно (облачный плейсхолдер или
+  // сбой чтения), не читается синхронно: он уходит в фоновую докачку,
+  // которая триггерит повторный sync http-пространства. Уже известный
+  // запрос при этом сохраняет свою запись в индексе, иначе он «исчез» бы
+  // из state и после докачки получил бы новый id.
+  const keepUnavailableRequest = (
+    absolutePath: string,
+    relativePath: string,
+  ) => {
+    enqueueCloudDownload(absolutePath)
+
+    const knownId = existingByPath.get(relativePath)
+    if (knownId && !usedIds.has(knownId)) {
+      usedIds.add(knownId)
+      indexEntries.push({ filePath: relativePath, id: knownId })
+    }
+  }
+
   for (const relativePath of requestRelativePaths) {
     const absolutePath = path.join(paths.httpRoot, relativePath)
-    const source = fs.readFileSync(absolutePath, 'utf8')
+
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      keepUnavailableRequest(absolutePath, relativePath)
+      continue
+    }
+
+    let source: string
+    try {
+      source = fs.readFileSync(absolutePath, 'utf8')
+    }
+    catch (error) {
+      log('storage:http:read-request', error)
+      keepUnavailableRequest(absolutePath, relativePath)
+      continue
+    }
+
     const parsed = parseRequestFile(source)
     const fmId = parsed.frontmatter.id
 
@@ -234,7 +289,50 @@ function buildRuntimeCache(
   }
 }
 
-export function syncHttpRuntimeWithDisk(paths: HttpPaths): HttpRuntimeCache {
+const httpVaultReconciler = createVaultReconciler('http')
+
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isHttpVaultDiskReady(paths: HttpPaths): boolean {
+  return httpVaultReconciler.isReconciled(paths.httpRoot)
+}
+
+// Мгновенный кэш из state без обхода диска: запросы появятся после фоновой
+// сверки, их записи в state сохраняются (id стабильны).
+function buildProvisionalHttpCache(paths: HttpPaths): HttpRuntimeCache {
+  if (
+    httpRuntimeRef.cache
+    && httpRuntimeRef.cache.paths.httpRoot === paths.httpRoot
+  ) {
+    return httpRuntimeRef.cache
+  }
+
+  ensureHttpStateFile(paths)
+
+  // .state.yaml сам может быть облачным плейсхолдером: тогда loadHttpState
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки). Пространство
+  // наполнится после докачки state и повторной сверки.
+  let state: HttpState
+  try {
+    state = loadHttpState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+    state = createDefaultHttpState()
+    state.provisional = true
+  }
+
+  const cache = buildRuntimeCache(paths, state, [])
+  httpRuntimeRef.cache = cache
+  return cache
+}
+
+// Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан
+// из облака (reconciler ретраит по этой ошибке).
+function performFullHttpSync(paths: HttpPaths): HttpRuntimeCache {
   ensureHttpStateFile(paths)
   const state = loadHttpState(paths)
 
@@ -252,6 +350,30 @@ export function syncHttpRuntimeWithDisk(paths: HttpPaths): HttpRuntimeCache {
   const cache = buildRuntimeCache(paths, state, records)
   httpRuntimeRef.cache = cache
   return cache
+}
+
+export function syncHttpRuntimeWithDisk(paths: HttpPaths): HttpRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне.
+  if (!httpVaultReconciler.isReconciled(paths.httpRoot)) {
+    const provisionalCache = buildProvisionalHttpCache(paths)
+
+    httpVaultReconciler.begin(paths.httpRoot, () => {
+      if (
+        httpRuntimeRef.cache
+        && httpRuntimeRef.cache.paths.httpRoot !== paths.httpRoot
+      ) {
+        return
+      }
+
+      performFullHttpSync(paths)
+    })
+
+    return provisionalCache
+  }
+
+  return performFullHttpSync(paths)
 }
 
 export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {

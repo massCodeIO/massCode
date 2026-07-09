@@ -10,9 +10,12 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { log } from '../../../../../utils'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
@@ -100,22 +103,89 @@ export function serializeNote(note: MarkdownNote): string {
   return `---\n${frontmatterText}\n---\n${note.content}`
 }
 
+export function buildPlaceholderNote(
+  entry: NotesIndexItem,
+  pathToFolderIdMap: Map<string, number>,
+  timestampFallbacks: { createdAt: number, updatedAt: number },
+): MarkdownNote {
+  const dirPath = toPosixPath(path.posix.dirname(entry.filePath))
+  const folderId
+    = dirPath && dirPath !== '.' && !dirPath.startsWith('.masscode')
+      ? (pathToFolderIdMap.get(dirPath) ?? null)
+      : null
+
+  return {
+    content: '',
+    createdAt: timestampFallbacks.createdAt,
+    description: null,
+    filePath: entry.filePath,
+    folderId,
+    id: entry.id,
+    isDeleted: entry.filePath.startsWith(`${NOTES_TRASH_RELATIVE_PATH}/`)
+      ? 1
+      : 0,
+    isFavorites: 0,
+    name: path.basename(entry.filePath, '.md'),
+    pendingCloudDownload: true,
+    properties: {},
+    tags: [],
+    updatedAt: timestampFallbacks.updatedAt,
+  }
+}
+
 export function readNoteFromFile(
   paths: NotesPaths,
   entry: NotesIndexItem,
   pathToFolderIdMap: Map<string, number>,
 ): MarkdownNote | null {
   const absolutePath = path.join(paths.notesRoot, entry.filePath)
+  const availability = getFileAvailability(absolutePath)
 
-  if (!fs.pathExistsSync(absolutePath)) {
+  if (!availability.exists) {
     return null
   }
 
-  const source = fs.readFileSync(absolutePath, 'utf8')
+  const readNow = Date.now()
+  const placeholderTimestamps = getFileTimestampFallbacks(
+    absolutePath,
+    readNow,
+    availability.stats,
+  )
+
+  let source: string | null = null
+
+  if (!availability.isCloudPlaceholder) {
+    try {
+      source = fs.readFileSync(absolutePath, 'utf8')
+    }
+    catch (error) {
+      // Сорвавшееся чтение не валит весь скан: заметка обрабатывается как
+      // недокачанная.
+      log('storage:notes:read-note', error)
+    }
+  }
+
+  // Плейсхолдер (или файл со сбоем чтения) не читается синхронно: заметка
+  // сразу видна в списке по данным индекса и имени файла, содержимое
+  // докачивается в фоне.
+  if (source === null) {
+    enqueueCloudDownload(absolutePath)
+
+    return buildPlaceholderNote(
+      entry,
+      pathToFolderIdMap,
+      placeholderTimestamps,
+    )
+  }
+
   const { body, frontmatter, hasFrontmatter } = splitFrontmatter(source)
   const fm = frontmatter as NotesFrontmatter
   const now = Date.now()
-  const timestampFallbacks = getFileTimestampFallbacks(absolutePath, now)
+  const timestampFallbacks = getFileTimestampFallbacks(
+    absolutePath,
+    now,
+    availability.stats,
+  )
 
   // Infer folderId from file path if not in frontmatter
   let folderId: number | null = fm.folderId ?? null
@@ -152,9 +222,18 @@ export function readNoteFromFile(
 
 export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
   const absolutePath = path.join(paths.notesRoot, note.filePath)
+
+  // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
+  // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
+  const availability = getFileAvailability(absolutePath)
+  if (note.pendingCloudDownload || availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return
+  }
+
   const nextContent = serializeNote(note)
 
-  if (fs.pathExistsSync(absolutePath)) {
+  if (availability.exists) {
     const currentContent = fs.readFileSync(absolutePath, 'utf8')
     if (currentContent === nextContent) {
       return

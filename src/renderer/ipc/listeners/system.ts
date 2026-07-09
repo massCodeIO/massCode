@@ -1,7 +1,9 @@
 import {
+  type CloudDownloadStatus,
   normalizeCodeSelectionState,
   normalizeNotesSelectionState,
   useApp,
+  useCloudDownloads,
   useDrawings,
   useFolders,
   useHttpApp,
@@ -29,7 +31,12 @@ const { state, isCodeSpaceInitialized } = useApp()
 const { isHttpSpaceInitialized } = useHttpApp()
 const { getFolders } = useFolders()
 const { getTags } = useTags()
-const { selectFirstSnippet, displayedSnippets } = useSnippets()
+const {
+  selectFirstSnippet,
+  displayedSnippets,
+  getSnippets,
+  refreshSelectedSnippet,
+} = useSnippets()
 const { hasBusyContentUpdates } = useSnippetUpdate()
 const { shouldSkipStorageSyncRefresh } = useStorageMutation()
 const { reloadFromDisk: reloadMathFromDisk } = useMathNotebook()
@@ -41,18 +48,34 @@ const {
 const { refreshHttpSpaceFromDisk } = useHttpSpaceInit()
 const { isNotesSpaceInitialized } = useNotesApp()
 const { getNoteFolders } = useNoteFolders()
-const { hasBusyNoteContentUpdates } = useNotes()
+const { hasBusyNoteContentUpdates, getNotes, refreshSelectedNote } = useNotes()
 const { getNoteTags } = useNoteTags()
 const { getNotesDashboard } = useNotesDashboard()
 const { getNotesGraph } = useNotesGraph()
 const { sonner } = useSonner()
+const { refreshCloudDownloadStatus, setCloudDownloadStatus }
+  = useCloudDownloads()
+// Верхняя граница дебаунса refresh: облачная докачка большого vault даёт
+// поток storage-synced событий, который иначе бесконечно сбрасывал бы
+// debounce и откладывал обновление списка (облачные иконки висели бы до
+// перезапуска). Даже под непрерывным потоком refresh выполняется не позже
+// этой паузы после первого необработанного события.
+const STORAGE_SYNC_MAX_WAIT_MS = 1500
+const STORAGE_SYNC_DEBOUNCE_MS = 300
+
 let storageSyncDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let firstPendingRefreshAt: number | null = null
 
 async function refreshCodeSpace() {
   const selectedSnippetId = state.snippetId
 
   await getFolders(false)
   await getTags()
+  // Список перезапрашивается явно: облачная докачка снимает
+  // pendingCloudDownload и наполняет контент уже показанных записей,
+  // но их id не меняются, поэтому реактивность сама не сработает.
+  await getSnippets()
+  await refreshSelectedSnippet()
   await normalizeCodeSelectionState()
 
   if (!selectedSnippetId) {
@@ -85,6 +108,10 @@ async function refreshAfterStorageSync() {
     case 'notes':
       await getNoteFolders()
       await getNoteTags()
+      // См. комментарий в refreshCodeSpace: список и контент открытой
+      // заметки перезапрашиваются явно после облачной докачки.
+      await getNotes()
+      await refreshSelectedNote()
       await normalizeNotesSelectionState()
 
       if (router.currentRoute.value.name === RouterName.notesDashboard) {
@@ -108,26 +135,39 @@ async function refreshAfterStorageSync() {
 }
 
 function scheduleStorageSyncRefresh() {
+  const now = Date.now()
+  if (firstPendingRefreshAt === null) {
+    firstPendingRefreshAt = now
+  }
+
   if (storageSyncDebounceTimer) {
     clearTimeout(storageSyncDebounceTimer)
     storageSyncDebounceTimer = null
   }
 
+  const waitedTooLong = now - firstPendingRefreshAt >= STORAGE_SYNC_MAX_WAIT_MS
+  const delay = waitedTooLong ? 0 : STORAGE_SYNC_DEBOUNCE_MS
+
   storageSyncDebounceTimer = setTimeout(() => {
+    storageSyncDebounceTimer = null
+
     if (
       shouldSkipStorageSyncRefresh()
       || hasBusyContentUpdates()
       || hasBusyNoteContentUpdates()
       || hasBusyDrawingUpdates()
     ) {
+      // Busy-состояние временное (несохранённые правки): ждём его конца, но
+      // firstPendingRefreshAt не сбрасываем, чтобы max-wait продолжал идти.
       scheduleStorageSyncRefresh()
       return
     }
 
+    firstPendingRefreshAt = null
     refreshAfterStorageSync().catch((error) => {
       console.error('Failed to refresh after storage sync:', error)
     })
-  }, 300)
+  }, delay)
 }
 
 export function registerSystemListeners() {
@@ -193,6 +233,19 @@ export function registerSystemListeners() {
 
   ipc.on('system:storage-synced', () => {
     scheduleStorageSyncRefresh()
+  })
+
+  ipc.on(
+    'system:cloud-download-progress',
+    (_, payload: CloudDownloadStatus) => {
+      setCloudDownloadStatus(payload)
+    },
+  )
+
+  // Начальное состояние очереди докачки: события прогресса, отправленные
+  // до загрузки renderer, могли быть пропущены.
+  refreshCloudDownloadStatus().catch((error) => {
+    console.error('Failed to get cloud download status:', error)
   })
 
   ipc.on('system:error', (_, payload) => {

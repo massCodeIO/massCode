@@ -75,6 +75,9 @@ export interface NotesState {
   folderUi: Record<string, NotesFolderUIState>
   folders: NotesFolderRecord[]
   notes: NotesIndexItem[]
+  // Дефолтный state на период, пока state.json не докачан из облака:
+  // такой state нельзя ни персистить, ни использовать для выдачи id.
+  provisional?: boolean
   tags: NotesTagState[]
   version: number
 }
@@ -103,6 +106,11 @@ export interface MarkdownNote {
   isDeleted: number
   isFavorites: number
   name: string
+  /**
+   * Файл заметки — облачный плейсхолдер: содержимое ещё не скачано
+   * провайдером, запись показывается в списке и докачивается в фоне.
+   */
+  pendingCloudDownload?: boolean
   properties: NoteProperties
   tags: number[]
   updatedAt: number

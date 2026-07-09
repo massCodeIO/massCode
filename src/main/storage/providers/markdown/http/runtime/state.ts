@@ -96,6 +96,13 @@ export function loadHttpState(paths: HttpPaths): HttpState {
 }
 
 export function saveHttpState(paths: HttpPaths, state: HttpState): void {
+  // Provisional state существует только пока .state.yaml не докачан из
+  // облака: записать его — значит затереть настоящий индекс и environments
+  // почти пустым состоянием.
+  if (state.provisional) {
+    return
+  }
+
   state.version = Math.max(state.version, STATE_VERSION)
 
   if (state.history.length > HTTP_HISTORY_CAP) {

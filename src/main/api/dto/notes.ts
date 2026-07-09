@@ -47,6 +47,8 @@ const noteItemBase = {
   isDeleted: t.Number(),
   createdAt: t.Number(),
   updatedAt: t.Number(),
+  // Файл заметки — облачный плейсхолдер, содержимое докачивается в фоне.
+  pendingCloudDownload: t.Optional(t.Boolean()),
 }
 
 const noteItem = t.Object({

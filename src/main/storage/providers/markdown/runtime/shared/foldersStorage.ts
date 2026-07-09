@@ -1,6 +1,6 @@
 import path from 'node:path'
 import fs from 'fs-extra'
-import { throwStorageError } from '../validation'
+import { assertVaultNotHydrating, throwStorageError } from '../validation'
 import {
   buildFolderTree,
   collectDescendantIds,
@@ -41,6 +41,7 @@ export interface CreateFolderStateBase<TFolder = unknown> {
     folderId: number
   }
   folders: TFolder[]
+  provisional?: boolean
 }
 
 export interface CreateFolderContext {
@@ -66,6 +67,8 @@ export function createFolderInStateAndDisk<
     folderRelativePath: string
     id: number
   } {
+  assertVaultNotHydrating(input.state)
+
   const folderPathMap = input.buildFolderPathMap(input.state)
   const folderRelativePath = resolveFolderRelativePath(
     folderPathMap,

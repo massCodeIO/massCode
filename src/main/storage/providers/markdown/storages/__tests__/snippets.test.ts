@@ -116,6 +116,18 @@ describe('code snippets storage validations', () => {
     expect(result.id).toBeGreaterThan(0)
   })
 
+  it('createSnippet during vault hydration throws VAULT_HYDRATING', () => {
+    const storage = createSnippetsStorage()
+    const cache = getRuntimeCache(getPaths(tempVaultPath))
+    // state.json «ещё не докачан» из облака: создание работало бы на
+    // дефолтных счётчиках и чеканило id поверх существующего индекса.
+    cache.state.provisional = true
+
+    expect(() => storage.createSnippet({ name: 'Blocked Snippet' })).toThrow(
+      'VAULT_HYDRATING',
+    )
+  })
+
   it('getSnippetById returns the stored snippet', () => {
     const storage = createSnippetsStorage()
     const { id } = storage.createSnippet({ name: 'Lookup Snippet' })

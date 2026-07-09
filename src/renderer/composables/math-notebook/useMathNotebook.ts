@@ -39,11 +39,34 @@ const sheets = ref<MathSheet[]>([])
 const activeSheetId = ref<string | null>(null)
 let initialized = false
 
+// До первого успешного чтения state с диска persist запрещён: запись
+// затёрла бы ещё не докачанный из облака .state.yaml.
+let hasAuthoritativeState = false
+let cloudRetryTimer: ReturnType<typeof setTimeout> | null = null
+
+// UI-состояние докачки math state из облака: пока true, пространство
+// показывает индикатор синхронизации и не даёт создавать листы.
+const isCloudSyncing = ref(false)
+
+// Синхронизировано с ретраем реконсиляции vault в main process.
+const CLOUD_RETRY_MS = 3000
+
 const activeSheet = computed(() => {
   return sheets.value.find(s => s.id === activeSheetId.value)
 })
 
+function clearCloudRetryTimer() {
+  if (cloudRetryTimer) {
+    clearTimeout(cloudRetryTimer)
+    cloudRetryTimer = null
+  }
+}
+
 function persist() {
+  if (!hasAuthoritativeState) {
+    return
+  }
+
   markPersistedStorageMutation()
   ipc.invoke('spaces:math:write', {
     sheets: JSON.parse(JSON.stringify(sheets.value)),
@@ -55,14 +78,33 @@ const debouncedPersist = useDebounceFn(persist, 500)
 
 async function loadFromDisk() {
   const data = await ipc.invoke('spaces:math:read', null)
+
+  // .state.yaml ещё не докачан из облака: ретраим чтение, пока main не
+  // отдаст настоящий state (докачка уже поставлена в очередь).
+  if (data?.pending) {
+    isCloudSyncing.value = true
+    clearCloudRetryTimer()
+    cloudRetryTimer = setTimeout(() => {
+      cloudRetryTimer = null
+      void loadFromDisk()
+    }, CLOUD_RETRY_MS)
+    return
+  }
+
+  clearCloudRetryTimer()
+  hasAuthoritativeState = true
+  isCloudSyncing.value = false
   sheets.value = Array.isArray(data?.sheets) ? data.sheets : []
   activeSheetId.value = data?.activeSheetId ?? null
 }
 
 function resetMathNotebook() {
+  clearCloudRetryTimer()
   sheets.value = []
   activeSheetId.value = null
   initialized = false
+  hasAuthoritativeState = false
+  isCloudSyncing.value = false
 }
 
 export function useMathNotebook() {
@@ -70,8 +112,10 @@ export function useMathNotebook() {
     if (initialized) {
       return
     }
-    initialized = true
     await loadFromDisk()
+    // Флаг ставится после успешного чтения: reject оставляет init
+    // непройденным, и следующая активация space повторит загрузку.
+    initialized = true
   }
 
   async function reloadFromDisk() {
@@ -79,6 +123,13 @@ export function useMathNotebook() {
   }
 
   function createSheet() {
+    // Во время докачки state из облака созданный лист нельзя ни сохранить,
+    // ни пережить приход настоящего state: создание блокируется, UI
+    // показывает состояние синхронизации.
+    if (isCloudSyncing.value) {
+      return
+    }
+
     const nextSheetName = getNextIndexedName(
       i18n.t('spaces.math.untitled'),
       sheets.value.map(sheet => sheet.name),
@@ -143,6 +194,7 @@ export function useMathNotebook() {
     sheets,
     activeSheetId,
     activeSheet,
+    isCloudSyncing,
     init,
     reloadFromDisk,
     reset: resetMathNotebook,

@@ -10,6 +10,7 @@ import {
   refreshFiatRatesForced,
 } from '../../currencyRates'
 import { activateLicense } from '../../license'
+import { getCloudDownloadStatus } from '../../storage/providers/markdown/cloudDownloads'
 import {
   getHttpPaths,
   getHttpRuntimeCache,
@@ -36,6 +37,13 @@ import { installDownloadedUpdate } from '../../updates'
 export function registerSystemHandlers() {
   ipcMain.handle('system:activate-license', (_, payload: { key: string }) => {
     return activateLicense(payload.key)
+  })
+
+  // Текущий статус фоновой докачки облачных плейсхолдеров: renderer
+  // запрашивает его при старте, дальше обновления приходят событием
+  // system:cloud-download-progress.
+  ipcMain.handle('system:cloud-download-status', () => {
+    return getCloudDownloadStatus()
   })
 
   ipcMain.handle('system:install-update', () => {

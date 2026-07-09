@@ -8,6 +8,7 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../cloudDownloads'
 import { runtimeRef } from './cache'
 import { INBOX_DIR_NAME, META_DIR_NAME, TRASH_DIR_NAME } from './constants'
 import {
@@ -23,11 +24,14 @@ import {
   toPosixPath,
 } from './paths'
 import { buildSearchIndex, getSnippetSearchText } from './search'
+import { getFileAvailability, primeDatalessChecks } from './shared/cloudFiles'
 import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
+import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
+import { createVaultReconciler } from './shared/vaultReconcile'
 import {
   getStateSnippetIndexByFilePath,
   isInboxSnippetDirectory,
@@ -38,6 +42,7 @@ import {
   readSnippetFromFile,
 } from './snippets'
 import {
+  createDefaultState,
   flushPendingStateWrite,
   flushPendingStateWrites,
   loadState,
@@ -157,6 +162,15 @@ function syncStateAndSnippetsWithDisk(
   const scannedFolderMetadataByPath = syncFoldersWithDisk(paths, state)
 
   const relativeSnippetFiles = listMarkdownFiles(paths.vaultPath)
+
+  // Один batch-вызов точной проверки dataless на весь список вместо
+  // отдельного системного вызова на каждый подозрительный файл.
+  primeDatalessChecks(
+    relativeSnippetFiles.map(filePath =>
+      path.join(paths.vaultPath, filePath),
+    ),
+  )
+
   const fileSet = new Set(relativeSnippetFiles)
   const existingIdSet = new Set<number>(state.snippets.map(item => item.id))
 
@@ -172,7 +186,18 @@ function syncStateAndSnippetsWithDisk(
     }
 
     const snippetAbsolutePath = path.join(paths.vaultPath, filePath)
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): его frontmatter-id неизвестен, а
+    // чеканка нового id дала бы расходящиеся id после докачки. Файл
+    // появится в индексе после фоновой докачки через инкрементальный sync.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return
+    }
+
+    let snippetId = frontmatterId
 
     if (!snippetId || existingIdSet.has(snippetId)) {
       snippetId = state.counters.snippetId + 1
@@ -241,12 +266,119 @@ export function resetRuntimeCache(): void {
   runtimeRef.cache = null
 }
 
-export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
+const vaultReconciler = createVaultReconciler('markdown')
+
+// Полные обходы диска (например, Vault Doctor) допустимы только после
+// фоновой сверки: до неё листинги каталогов могут блокироваться сетью.
+export function isCodeVaultDiskReady(paths: Paths): boolean {
+  return vaultReconciler.isReconciled(paths.vaultPath)
+}
+
+// Пустой временный кэш на период фоновой сверки: обход диска опасен
+// синхронно (листинги dataless-каталогов материализуются сетью), поэтому
+// первый доступ отдаёт пустой список, а настоящий — согласованный с диском
+// и с getById — приходит после реконсиляции. Список из state-индекса тут
+// не строится намеренно: он бы содержал записи, чьи файлы ещё не подтянуты
+// из облака, и клик по такой записи давал бы 404. Сам state при этом
+// читается с диска: мутации в этот период работают с настоящими счётчиками
+// и тегами, а не чеканят id заново поверх существующего индекса.
+function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
+  if (
+    runtimeRef.cache
+    && runtimeRef.cache.paths.vaultPath === paths.vaultPath
+  ) {
+    return runtimeRef.cache
+  }
+
+  // state.json сам может быть облачным плейсхолдером: тогда loadState
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки).
+  let state: MarkdownState
+  try {
+    state = loadState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
+    state = createDefaultState()
+    state.provisional = true
+  }
+
+  return setRuntimeCache(paths, state, [])
+}
+
+// Настоящая сверка с диском: читает state и файлы. Может бросить, если
+// state.json сам недокачан из облака (reconciler ретраит по этой ошибке).
+function performFullRuntimeSync(paths: Paths): MarkdownRuntimeCache {
   const { snippets, state } = syncStateAndSnippetsWithDisk(paths, {
     rewriteRecoveredLegacyFences: true,
   })
 
   return setRuntimeCache(paths, state, snippets)
+}
+
+export function syncRuntimeWithDisk(paths: Paths): MarkdownRuntimeCache {
+  // Первый доступ к vault: обход диска опасен синхронно (листинги
+  // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
+  // provisional-кэш, а настоящая сверка выполняется в фоне. Настоящая
+  // сверка вызывается напрямую (не через syncRuntimeWithDisk), иначе до
+  // пометки reconciled она снова ушла бы в provisional-ветку.
+  if (!vaultReconciler.isReconciled(paths.vaultPath)) {
+    const provisionalCache = buildProvisionalRuntimeCache(paths)
+
+    vaultReconciler.begin(paths.vaultPath, () => {
+      if (
+        runtimeRef.cache
+        && runtimeRef.cache.paths.vaultPath !== paths.vaultPath
+      ) {
+        return
+      }
+
+      performFullRuntimeSync(paths)
+    })
+
+    return provisionalCache
+  }
+
+  return performFullRuntimeSync(paths)
+}
+
+// Перепроверка недокачанных записей независимо от fs-событий: облачный
+// провайдер (особенно iCloud) материализует файл, НЕ меняя mtime/size,
+// поэтому chokidar не присылает `change` и флаг pendingCloudDownload иначе
+// висел бы вечно. Возвращает, сколько записей всё ещё недокачано.
+export function refreshPendingSnippetFiles(paths: Paths): {
+  changed: boolean
+  remaining: number
+} {
+  const cache = runtimeRef.cache
+  if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
+    return { changed: false, remaining: 0 }
+  }
+
+  const pendingFilePaths = cache.snippets
+    .filter(snippet => snippet.pendingCloudDownload)
+    .map(snippet => snippet.filePath)
+
+  let changed = false
+  for (const filePath of pendingFilePaths) {
+    const absolutePath = path.join(paths.vaultPath, filePath)
+    if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+      continue
+    }
+
+    if (syncSnippetFileWithDisk(paths, filePath)) {
+      changed = true
+    }
+  }
+
+  const remaining
+    = runtimeRef.cache?.snippets.filter(snippet => snippet.pendingCloudDownload)
+      .length ?? 0
+
+  return { changed, remaining }
 }
 
 export function getRuntimeCache(paths: Paths): MarkdownRuntimeCache {
@@ -308,6 +440,13 @@ export function syncSnippetFileWithDisk(
     return null
   }
 
+  // Provisional state (state.json ещё не докачан из облака) не может
+  // регистрировать файлы: id выдавались бы с дефолтных счётчиков. Событие
+  // не теряется — файл подберёт полная сверка после докачки.
+  if (cache.state.provisional) {
+    return cache
+  }
+
   const normalizedFilePath = toPosixPath(changedFilePath).trim()
   if (
     !normalizedFilePath
@@ -363,7 +502,18 @@ export function syncSnippetFileWithDisk(
     = snippetIndexInState !== -1 ? state.snippets[snippetIndexInState] : null
 
   if (!snippetIndexItem) {
-    let snippetId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+    const frontmatterId = readFrontmatterIdFromSnippetFile(snippetAbsolutePath)
+
+    // Неизвестный файл, содержимое которого сейчас недоступно (облачный
+    // плейсхолдер или сбой чтения): регистрировать его нельзя, иначе id
+    // был бы отчеканен вслепую и разошёлся бы с frontmatter-id после
+    // докачки. Файл появится в индексе после фоновой докачки.
+    if (frontmatterId === 'unreadable') {
+      enqueueCloudDownload(snippetAbsolutePath)
+      return cache
+    }
+
+    let snippetId = frontmatterId
 
     // Внешнее перемещение (mv A.md → B.md) может прислать add нового пути
     // раньше unlink старого: если frontmatter-id принадлежит записи, файла

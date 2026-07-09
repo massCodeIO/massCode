@@ -59,6 +59,15 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     useMathNotebook: () => ({
       reloadFromDisk: reloadMathFromDisk,
     }),
+    useDrawings: () => ({
+      reloadFromDisk: vi.fn(async () => undefined),
+      hasBusyDrawingUpdates: vi.fn(() => false),
+      markDrawingsStale: vi.fn(),
+    }),
+    useCloudDownloads: () => ({
+      refreshCloudDownloadStatus: vi.fn(async () => undefined),
+      setCloudDownloadStatus: vi.fn(),
+    }),
     useHttpSpaceInit: () => ({
       refreshHttpSpaceFromDisk,
     }),
@@ -70,6 +79,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     }),
     useNotes: () => ({
       getNotes,
+      refreshSelectedNote: vi.fn(async () => undefined),
       hasBusyNoteContentUpdates: vi.fn(() => false),
     }),
     useNotesApp: () => ({
@@ -91,6 +101,7 @@ async function setup(activeSpace: 'code' | 'notes' | 'http' | 'tools' | null) {
     useSnippets: () => ({
       selectSnippet: vi.fn(),
       getSnippets,
+      refreshSelectedSnippet: vi.fn(async () => undefined),
       selectFirstSnippet: vi.fn(),
       displayedSnippets,
     }),
@@ -198,7 +209,7 @@ describe('registerSystemListeners', () => {
     expect(context.getFolders).toHaveBeenCalledTimes(1)
     expect(context.getTags).toHaveBeenCalledTimes(1)
     expect(context.normalizeCodeSelectionState).toHaveBeenCalledTimes(1)
-    expect(context.getSnippets).not.toHaveBeenCalled()
+    expect(context.getSnippets).toHaveBeenCalledTimes(1)
   })
 
   it('refreshes notes space through tags and normalized selection state', async () => {
@@ -210,7 +221,7 @@ describe('registerSystemListeners', () => {
     expect(context.getNoteFolders).toHaveBeenCalledTimes(1)
     expect(context.getNoteTags).toHaveBeenCalledTimes(1)
     expect(context.normalizeNotesSelectionState).toHaveBeenCalledTimes(1)
-    expect(context.getNotes).not.toHaveBeenCalled()
+    expect(context.getNotes).toHaveBeenCalledTimes(1)
   })
 
   it('refreshes http space from disk', async () => {

@@ -73,7 +73,11 @@ app
       const storage = useHttpStorage()
       const result = storage.requests.getRequests(query)
 
-      return result as HttpRequestsResponse
+      // body и description не сериализуются в список: полная запись
+      // выбранного запроса загружается через GET /http-requests/:id.
+      return result.map(
+        ({ body: _body, description: _description, ...request }) => request,
+      ) as HttpRequestsResponse
     },
     {
       query: 'httpRequestsQuery',

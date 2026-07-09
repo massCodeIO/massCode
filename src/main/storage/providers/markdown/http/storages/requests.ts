@@ -135,7 +135,6 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
   return {
     getRequests(query?: HttpRequestsQueryInput) {
-      const paths = resolvePaths()
       const { requestById } = getCache()
       const resolvedQuery = query ?? {}
 
@@ -182,13 +181,6 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
           return request.createdAt
         },
         query: resolvedQuery,
-      })
-
-      // Список HTTP пока сериализует body: ленивые записи дочитываются перед
-      // выдачей. Холодный старт приложения файлы не читает, стоимость
-      // переносится на первое открытие http-пространства.
-      filtered.forEach((request) => {
-        ensureRequestDetailsLoaded(paths.httpRoot, request)
       })
 
       return filtered

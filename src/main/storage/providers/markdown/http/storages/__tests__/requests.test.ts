@@ -123,17 +123,19 @@ describe('http requests storage', () => {
     expect(record?.detailsPending).toBeUndefined()
   })
 
-  it('materializes bodies for the list response', () => {
+  it('keeps request details lazy in list results', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'List Read' })
-    storage.updateRequest(id, { body: 'list-body', bodyType: 'raw' })
+    storage.updateRequest(id, { body: 'list-body', bodyType: 'json' })
 
     resyncTwiceForLazyRequests()
 
+    // Список не требует body/description: записи остаются ленивыми, роут
+    // срезает эти поля из ответа.
     const listed = storage.getRequests()
     const record = listed.find(request => request.id === id)
-    expect(record?.body).toBe('list-body')
-    expect(record?.detailsPending).toBeUndefined()
+    expect(record?.detailsPending).toBe(true)
+    expect(record?.body).toBeNull()
   })
 
   it('builds untouched requests from the index without reading files', () => {

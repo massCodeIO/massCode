@@ -101,7 +101,10 @@ app.use(internalLinksDTO).post(
       }
 
       if (target.type === 'http-request') {
-        const request = requestById.get(target.id)
+        // getRequestById дочитывает ленивые детали: превью нужен description.
+        const request = requestById.has(target.id)
+          ? httpStorage.requests.getRequestById(target.id)
+          : null
 
         if (!request) {
           return { title, resolved: null }

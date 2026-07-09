@@ -30,6 +30,14 @@ async function setup(options: SetupOptions = {}) {
   const searchQuery = ref(options.searchQuery ?? '')
   const getHttpRequests = vi.fn(async () => ({ data: [] }))
 
+  // useContentSort читает store.app при импорте модуля: мокается целиком,
+  // чтобы не тянуть electron store в тест.
+  vi.doMock('@/composables/useContentSort', () => ({
+    useContentSort: () => ({
+      getContentSortQuery: () => ({}),
+    }),
+  }))
+
   vi.doMock('@/composables/useDialog', () => ({
     useDialog: () => ({
       confirm: vi.fn(async () => true),

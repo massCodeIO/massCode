@@ -254,12 +254,56 @@ async function refreshHttpRequests() {
   await getHttpRequests(queryByLibraryOrFolderOrSearch.value)
 }
 
-function findHttpRequestById(requestId: number): HttpRequest | null {
-  return (
-    requestsBySearch.value?.find(r => r.id === requestId)
-    ?? requests.value.find(r => r.id === requestId)
-    ?? null
-  )
+// Список отдаёт только метаданные (без body/description), поэтому полная
+// запись выбранного запроса загружается отдельно по id. Токен защищает от
+// гонки ответов при быстром переключении.
+let currentRequestToken = 0
+
+async function fetchHttpRequestById(
+  requestId: number,
+): Promise<HttpRequest | null> {
+  try {
+    const { data } = await api.httpRequests.getHttpRequestsById(
+      String(requestId),
+    )
+    return data as HttpRequest
+  }
+  catch (error) {
+    console.error(error)
+    return null
+  }
+}
+
+async function loadCurrentRequest(requestId: number) {
+  const requestToken = ++currentRequestToken
+  const record = await fetchHttpRequestById(requestId)
+
+  if (requestToken !== currentRequestToken) {
+    return
+  }
+
+  if (httpState.requestId !== requestId) {
+    return
+  }
+
+  assignDraft(record)
+}
+
+// Обновляет только currentRequest (без переустановки draft): вызывающие
+// потоки сохраняют набранные в редакторе, но ещё не сохранённые правки.
+async function refreshCurrentRequestRecord(requestId: number) {
+  const requestToken = ++currentRequestToken
+  const record = await fetchHttpRequestById(requestId)
+
+  if (
+    !record
+    || requestToken !== currentRequestToken
+    || currentRequest.value?.id !== requestId
+  ) {
+    return
+  }
+
+  currentRequest.value = record
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -303,7 +347,8 @@ async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
 }
 
 async function duplicateHttpRequest(requestId: number) {
-  const source = findHttpRequestById(requestId)
+  // Полная запись по id: в списке нет body и description.
+  const source = await fetchHttpRequestById(requestId)
   if (!source) {
     return
   }
@@ -354,9 +399,7 @@ async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
     await api.httpRequests.patchHttpRequestsById(String(requestId), data)
     await refreshHttpRequests()
     if (currentRequest.value?.id === requestId) {
-      const fresh = findHttpRequestById(requestId)
-      if (fresh)
-        currentRequest.value = fresh
+      await refreshCurrentRequestRecord(requestId)
     }
   }
   catch (error) {
@@ -574,7 +617,7 @@ export function selectHttpRequest(
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  assignDraft(findHttpRequestById(requestId))
+  void loadCurrentRequest(requestId)
 }
 
 function hasSiblingRequestNameConflict(

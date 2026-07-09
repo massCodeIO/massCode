@@ -29,6 +29,15 @@ async function setup(options: SetupOptions = {}) {
   const isSearch = ref(options.isSearch ?? false)
   const searchQuery = ref(options.searchQuery ?? '')
   const getHttpRequests = vi.fn(async () => ({ data: [] }))
+  const getHttpRequestsById = vi.fn(async () => ({ data: null as unknown }))
+
+  // useContentSort читает store.app при импорте модуля: мокается целиком,
+  // чтобы не тянуть electron store в тест.
+  vi.doMock('@/composables/useContentSort', () => ({
+    useContentSort: () => ({
+      getContentSortQuery: () => ({}),
+    }),
+  }))
 
   vi.doMock('@/composables/useDialog', () => ({
     useDialog: () => ({
@@ -60,7 +69,7 @@ async function setup(options: SetupOptions = {}) {
         deleteHttpRequestsById: vi.fn(),
         deleteHttpRequestsTrash: vi.fn(),
         getHttpRequests,
-        getHttpRequestsById: vi.fn(),
+        getHttpRequestsById,
         patchHttpRequestsById: vi.fn(),
         postHttpRequests: vi.fn(),
       },
@@ -93,7 +102,30 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     getHttpRequests,
+    getHttpRequestsById,
     useHttpRequests,
+  }
+}
+
+function buildFullRequest(id: number, name: string) {
+  return {
+    id,
+    name,
+    folderId: null,
+    method: 'GET',
+    url: '',
+    headers: [],
+    query: [],
+    bodyType: 'none',
+    body: null,
+    formData: [],
+    auth: { type: 'none' },
+    description: '',
+    filePath: `${name}.md`,
+    isFavorites: 0,
+    isDeleted: 0,
+    createdAt: 1,
+    updatedAt: 1,
   }
 }
 
@@ -130,5 +162,62 @@ describe('useHttpRequests', () => {
       isFavorites: 1,
       search: 'token',
     })
+  })
+
+  it('keeps the editor draft when reloading the selected request fails', async () => {
+    const context = await setup()
+    const { selectHttpRequest, currentDraft } = context.useHttpRequests()
+
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: buildFullRequest(1, 'Alpha'),
+    })
+    selectHttpRequest(1)
+    await vi.waitFor(() => expect(currentDraft.value?.name).toBe('Alpha'))
+
+    // Транзиентный сбой загрузки не должен очищать форму всё ещё
+    // выбранного запроса.
+    context.getHttpRequestsById.mockRejectedValueOnce(new Error('transient'))
+    selectHttpRequest(1)
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(currentDraft.value?.name).toBe('Alpha')
+  })
+
+  it('keeps the newly selected request when a save of the previous one races', async () => {
+    const context = await setup()
+    const {
+      selectHttpRequest,
+      updateHttpRequest,
+      currentDraft,
+      currentRequest,
+    } = context.useHttpRequests()
+
+    // Загружен запрос A.
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: buildFullRequest(1, 'Alpha'),
+    })
+    selectHttpRequest(1)
+    await vi.waitFor(() => expect(currentRequest.value?.id).toBe(1))
+
+    // Выбор B: его загрузка зависает до конца сценария.
+    let resolveSelection!: (value: { data: unknown }) => void
+    context.getHttpRequestsById.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSelection = resolve
+        }) as never,
+    )
+    selectHttpRequest(2)
+
+    // Автосейв A завершается, пока B грузится: post-save-обновление не
+    // должно инвалидировать загрузку только что выбранного B.
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: buildFullRequest(1, 'Alpha Saved'),
+    })
+    await updateHttpRequest(1, { name: 'Alpha Saved' })
+
+    resolveSelection({ data: buildFullRequest(2, 'Bravo') })
+    await vi.waitFor(() => expect(currentDraft.value?.name).toBe('Bravo'))
+    expect(currentRequest.value?.id).toBe(2)
   })
 })

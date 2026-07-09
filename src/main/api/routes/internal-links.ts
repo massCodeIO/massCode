@@ -73,7 +73,10 @@ app.use(internalLinksDTO).post(
       }
 
       if (target.type === 'snippet') {
-        const snippet = snippetById.get(target.id)
+        // getSnippetById дочитывает ленивое тело: превью нужен фрагмент.
+        const snippet = snippetById.has(target.id)
+          ? storage.snippets.getSnippetById(target.id)
+          : null
 
         if (!snippet) {
           return { title, resolved: null }
@@ -98,7 +101,10 @@ app.use(internalLinksDTO).post(
       }
 
       if (target.type === 'http-request') {
-        const request = requestById.get(target.id)
+        // getRequestById дочитывает ленивые детали: превью нужен description.
+        const request = requestById.has(target.id)
+          ? httpStorage.requests.getRequestById(target.id)
+          : null
 
         if (!request) {
           return { title, resolved: null }
@@ -121,7 +127,10 @@ app.use(internalLinksDTO).post(
         }
       }
 
-      const note = noteById.get(target.id)
+      // getNoteById дочитывает ленивое тело: превью нужен excerpt.
+      const note = noteById.has(target.id)
+        ? notesStorage.notes.getNoteById(target.id)
+        : null
 
       if (!note) {
         return { title, resolved: null }

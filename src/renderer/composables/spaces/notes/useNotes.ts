@@ -42,6 +42,7 @@ interface NoteRecord {
   folder: NoteFolderInfo | null
   isFavorites: number
   isDeleted: number
+  pendingCloudDownload?: boolean
   createdAt: number
   updatedAt: number
 }

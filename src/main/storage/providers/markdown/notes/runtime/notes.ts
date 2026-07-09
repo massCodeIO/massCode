@@ -1,8 +1,10 @@
+import type { FileAvailability } from '../../runtime/shared/cloudFiles'
 import type {
   MarkdownNote,
   NoteProperties,
   NotesFrontmatter,
   NotesIndexItem,
+  NotesIndexMetadata,
   NotesPaths,
   NotesState,
   PersistNoteOptions,
@@ -16,6 +18,7 @@ import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
   removeDirectoryEntryFromCache,
@@ -103,6 +106,153 @@ export function serializeNote(note: MarkdownNote): string {
   return `---\n${frontmatterText}\n---\n${note.content}`
 }
 
+// Метаданные индекса собираются только по реально прочитанному файлу, а
+// stat-сигнатура — по stat до чтения. Записи приложения не обновляют meta:
+// изменённый mtime просто заставит перечитать файл на следующем старте.
+export function buildNoteIndexMetadata(
+  note: MarkdownNote,
+  stats: { mtimeMs: number, size: number },
+): NotesIndexMetadata {
+  return {
+    createdAt: note.createdAt,
+    description: note.description,
+    folderId: note.folderId,
+    isDeleted: note.isDeleted,
+    isFavorites: note.isFavorites,
+    mtimeMs: stats.mtimeMs,
+    name: note.name,
+    properties: { ...note.properties },
+    size: stats.size,
+    tags: [...note.tags],
+    updatedAt: note.updatedAt,
+  }
+}
+
+// state.json синхронизируется между устройствами и правится извне, поэтому
+// метаданные индекса перед использованием проверяются по форме: битая запись
+// не роняет скан, файл просто перечитывается.
+function isValidNoteIndexMetadata(
+  meta: NotesIndexMetadata | undefined,
+): meta is NotesIndexMetadata {
+  return (
+    !!meta
+    && typeof meta === 'object'
+    && typeof meta.name === 'string'
+    && Array.isArray(meta.tags)
+    && !!meta.properties
+    && typeof meta.properties === 'object'
+    && typeof meta.mtimeMs === 'number'
+    && Number.isFinite(meta.mtimeMs)
+    && typeof meta.size === 'number'
+    && Number.isFinite(meta.size)
+    && typeof meta.createdAt === 'number'
+    && typeof meta.updatedAt === 'number'
+  )
+}
+
+export function hasFreshNoteIndexMetadata(
+  entry: NotesIndexItem,
+  stats: { mtimeMs: number, size: number } | null,
+): boolean {
+  return (
+    !!stats
+    && isValidNoteIndexMetadata(entry.meta)
+    && entry.meta.mtimeMs === stats.mtimeMs
+    && entry.meta.size === stats.size
+  )
+}
+
+// Запись списка из метаданных индекса, без чтения файла: тело остаётся
+// content: null и дочитывается лениво (ensureNoteContentLoaded).
+export function buildNoteFromIndexMetadata(
+  entry: NotesIndexItem,
+  meta: NotesIndexMetadata,
+  options?: { pendingCloudDownload?: boolean },
+): MarkdownNote {
+  const isTrashed = entry.filePath.startsWith(`${NOTES_TRASH_RELATIVE_PATH}/`)
+
+  return {
+    content: null,
+    createdAt: meta.createdAt,
+    description: meta.description ?? null,
+    filePath: entry.filePath,
+    // folderId в meta — как его разрешило последнее чтение (frontmatter
+    // приоритетнее пути, см. readNoteFromFile).
+    folderId: meta.folderId ?? null,
+    id: entry.id,
+    isDeleted: isTrashed ? 1 : normalizeFlag(meta.isDeleted),
+    isFavorites: normalizeFlag(meta.isFavorites),
+    name: meta.name,
+    ...(options?.pendingCloudDownload ? { pendingCloudDownload: true } : {}),
+    properties: { ...meta.properties },
+    tags: meta.tags.filter(tagId => typeof tagId === 'number' && tagId > 0),
+    updatedAt: meta.updatedAt,
+  }
+}
+
+// Дочитывает тело заметки, построенной из индекса. Заполняется только
+// content === null: метаданные runtime-объекта авторитетны и могут содержать
+// ещё не сохранённые правки. Возвращает false, если содержимое сейчас
+// недоступно (плейсхолдер, сбой чтения).
+export function ensureNoteContentLoaded(
+  paths: NotesPaths,
+  note: MarkdownNote,
+): boolean {
+  if (note.pendingCloudDownload) {
+    return false
+  }
+
+  if (note.content !== null) {
+    return true
+  }
+
+  const absolutePath = path.join(paths.notesRoot, note.filePath)
+  const availability = getFileAvailability(absolutePath)
+
+  if (!availability.exists) {
+    return false
+  }
+
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(absolutePath, 'utf8')
+  }
+  catch (error) {
+    log('storage:notes:load-note-content', error)
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  note.content = splitFrontmatter(source).body
+  return true
+}
+
+// Дочитывает тела всех ленивых заметок: нужно потокам, которые читают
+// content поперёк всего пространства (поиск, graph, dashboard, backlinks).
+export function ensureAllNoteContentsLoaded(
+  paths: NotesPaths,
+  notes: MarkdownNote[],
+): boolean {
+  let hasLoadedContent = false
+
+  for (const note of notes) {
+    if (
+      !note.pendingCloudDownload
+      && note.content === null
+      && ensureNoteContentLoaded(paths, note)
+    ) {
+      hasLoadedContent = true
+    }
+  }
+
+  return hasLoadedContent
+}
+
 export function buildPlaceholderNote(
   entry: NotesIndexItem,
   pathToFolderIdMap: Map<string, number>,
@@ -137,9 +287,11 @@ export function readNoteFromFile(
   paths: NotesPaths,
   entry: NotesIndexItem,
   pathToFolderIdMap: Map<string, number>,
+  knownAvailability?: FileAvailability,
 ): MarkdownNote | null {
   const absolutePath = path.join(paths.notesRoot, entry.filePath)
-  const availability = getFileAvailability(absolutePath)
+  // Горячий путь скана уже статил файл: повторный stat не нужен.
+  const availability = knownAvailability ?? getFileAvailability(absolutePath)
 
   if (!availability.exists) {
     return null
@@ -231,6 +383,15 @@ export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
     return
   }
 
+  // Ленивая запись (тело ещё не дочитано из индекса): content дочитывается
+  // с диска перед сериализацией, иначе запись затёрла бы тело пустым.
+  // Тихий пропуск записи потерял бы правку метаданных при следующем скане,
+  // поэтому сбой поднимается наверх. В scan-путях (write-back после чтения)
+  // заметка уже прочитана и ветка недостижима.
+  if (!ensureNoteContentLoaded(paths, note)) {
+    throwCloudContentUnavailable()
+  }
+
   const nextContent = serializeNote(note)
 
   if (availability.exists) {
@@ -253,10 +414,54 @@ export function loadNotes(
   const notes: MarkdownNote[] = []
 
   for (const entry of state.notes) {
-    const note = readNoteFromFile(paths, entry, pathToFolderIdMap)
-    if (note) {
-      notes.push(note)
+    const absolutePath = path.join(paths.notesRoot, entry.filePath)
+    const availability = getFileAvailability(absolutePath)
+
+    if (!availability.exists) {
+      continue
     }
+
+    // Свежая stat-сигнатура: запись строится из индекса без чтения файла,
+    // тело дочитывается лениво по первому обращению.
+    if (
+      !availability.isCloudPlaceholder
+      && hasFreshNoteIndexMetadata(entry, availability.stats)
+    ) {
+      notes.push(buildNoteFromIndexMetadata(entry, entry.meta!))
+      continue
+    }
+
+    // Плейсхолдер с известными метаданными: полноценная запись списка без
+    // чтения (и без сетевой материализации), контент докачивается в фоне.
+    if (
+      availability.isCloudPlaceholder
+      && isValidNoteIndexMetadata(entry.meta)
+    ) {
+      enqueueCloudDownload(absolutePath)
+      notes.push(
+        buildNoteFromIndexMetadata(entry, entry.meta, {
+          pendingCloudDownload: true,
+        }),
+      )
+      continue
+    }
+
+    const note = readNoteFromFile(
+      paths,
+      entry,
+      pathToFolderIdMap,
+      availability,
+    )
+    if (!note) {
+      continue
+    }
+
+    // Индекс обновляется только по реально прочитанному файлу.
+    if (!note.pendingCloudDownload && availability.stats) {
+      entry.meta = buildNoteIndexMetadata(note, availability.stats)
+    }
+
+    notes.push(note)
   }
 
   return notes

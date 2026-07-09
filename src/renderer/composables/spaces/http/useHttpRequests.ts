@@ -254,12 +254,106 @@ async function refreshHttpRequests() {
   await getHttpRequests(queryByLibraryOrFolderOrSearch.value)
 }
 
-function findHttpRequestById(requestId: number): HttpRequest | null {
-  return (
-    requestsBySearch.value?.find(r => r.id === requestId)
-    ?? requests.value.find(r => r.id === requestId)
-    ?? null
-  )
+// Список отдаёт только метаданные (без body/description), поэтому полная
+// запись выбранного запроса загружается отдельно по id. Токены защищают от
+// гонки ответов; у выбора и post-save-обновления они раздельные: иначе
+// автосейв предыдущего запроса инвалидировал бы загрузку только что
+// выбранного, и редактор показывал бы не тот запрос, что подсвечен в списке.
+let selectionRequestToken = 0
+let refreshRequestToken = 0
+
+// Пока полная запись едет по id, редактор блокируется оверлеем: ввод в
+// этот момент был бы перетёрт пришедшими данными. Видимость с задержкой,
+// чтобы на локальном vault ничего не мигало.
+const isCurrentRequestLoading = ref(false)
+const isCurrentRequestLoadingVisible = ref(false)
+const CURRENT_REQUEST_LOADING_VISIBILITY_DELAY_MS = 300
+let loadingVisibilityTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(isCurrentRequestLoading, (loading) => {
+  if (loading) {
+    if (isCurrentRequestLoadingVisible.value || loadingVisibilityTimer) {
+      return
+    }
+
+    loadingVisibilityTimer = setTimeout(() => {
+      loadingVisibilityTimer = undefined
+
+      if (isCurrentRequestLoading.value) {
+        isCurrentRequestLoadingVisible.value = true
+      }
+    }, CURRENT_REQUEST_LOADING_VISIBILITY_DELAY_MS)
+
+    return
+  }
+
+  if (loadingVisibilityTimer) {
+    clearTimeout(loadingVisibilityTimer)
+    loadingVisibilityTimer = undefined
+  }
+  isCurrentRequestLoadingVisible.value = false
+})
+
+async function fetchHttpRequestById(
+  requestId: number,
+): Promise<HttpRequest | null> {
+  try {
+    const { data } = await api.httpRequests.getHttpRequestsById(
+      String(requestId),
+    )
+    return data as HttpRequest
+  }
+  catch (error) {
+    console.error(error)
+    return null
+  }
+}
+
+async function loadCurrentRequest(requestId: number) {
+  const requestToken = ++selectionRequestToken
+  isCurrentRequestLoading.value = true
+
+  try {
+    const record = await fetchHttpRequestById(requestId)
+
+    if (requestToken !== selectionRequestToken) {
+      return
+    }
+
+    if (httpState.requestId !== requestId) {
+      return
+    }
+
+    // Транзиентный сбой загрузки не должен очищать форму всё ещё выбранного
+    // запроса: редактор остаётся на прежних данных, повторный клик ретраит.
+    if (!record) {
+      return
+    }
+
+    assignDraft(record)
+  }
+  finally {
+    if (requestToken === selectionRequestToken) {
+      isCurrentRequestLoading.value = false
+    }
+  }
+}
+
+// Обновляет только currentRequest (без переустановки draft): вызывающие
+// потоки сохраняют набранные в редакторе, но ещё не сохранённые правки.
+async function refreshCurrentRequestRecord(requestId: number) {
+  const requestToken = ++refreshRequestToken
+  const record = await fetchHttpRequestById(requestId)
+
+  if (
+    !record
+    || requestToken !== refreshRequestToken
+    || currentRequest.value?.id !== requestId
+  ) {
+    return
+  }
+
+  currentRequest.value = record
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -303,7 +397,8 @@ async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
 }
 
 async function duplicateHttpRequest(requestId: number) {
-  const source = findHttpRequestById(requestId)
+  // Полная запись по id: в списке нет body и description.
+  const source = await fetchHttpRequestById(requestId)
   if (!source) {
     return
   }
@@ -354,9 +449,7 @@ async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
     await api.httpRequests.patchHttpRequestsById(String(requestId), data)
     await refreshHttpRequests()
     if (currentRequest.value?.id === requestId) {
-      const fresh = findHttpRequestById(requestId)
-      if (fresh)
-        currentRequest.value = fresh
+      await refreshCurrentRequestRecord(requestId)
     }
   }
   catch (error) {
@@ -574,7 +667,7 @@ export function selectHttpRequest(
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  assignDraft(findHttpRequestById(requestId))
+  void loadCurrentRequest(requestId)
 }
 
 function hasSiblingRequestNameConflict(
@@ -705,6 +798,7 @@ export function useHttpRequests() {
     createHttpRequestAndSelect,
     currentDraft,
     currentRequest,
+    isCurrentRequestLoadingVisible,
     deleteHttpRequest,
     deleteHttpRequests,
     deleteSelectedHttpRequests,

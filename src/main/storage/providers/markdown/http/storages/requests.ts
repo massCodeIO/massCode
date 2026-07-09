@@ -14,6 +14,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
@@ -22,7 +23,10 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
-import { writeRequestFile } from '../runtime/parser'
+import {
+  ensureRequestDetailsLoaded,
+  writeRequestFile,
+} from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
@@ -137,7 +141,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
       const search = resolvedQuery.search?.trim().toLowerCase()
 
-      return filterAndSortByQuery({
+      const filtered = filterAndSortByQuery({
         entities: [...requestById.values()],
         filters: [
           request =>
@@ -179,11 +183,22 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         },
         query: resolvedQuery,
       })
+
+      return filtered
     },
 
     getRequestById(id: number) {
+      const paths = resolvePaths()
       const { requestById } = getCache()
-      return requestById.get(id) ?? null
+      const request = requestById.get(id) ?? null
+
+      // Запись из индекса без тела: body и description дочитываются по
+      // первому запросу.
+      if (request) {
+        ensureRequestDetailsLoaded(paths.httpRoot, request)
+      }
+
+      return request
     },
 
     createRequest(input: HttpRequestCreateInput) {
@@ -257,6 +272,14 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
       if (!record) {
         return { invalidInput: false, notFound: true }
+      }
+
+      // Патч мутирует запись и сериализует её целиком: недостающие body и
+      // description дочитываются до применения полей. Если содержимое
+      // сейчас недоступно, «принятая» правка молча потерялась бы при
+      // следующем ресинке — мутация отклоняется до изменения кэша.
+      if (!ensureRequestDetailsLoaded(paths.httpRoot, record)) {
+        throwCloudContentUnavailable()
       }
 
       const updatableFields = [

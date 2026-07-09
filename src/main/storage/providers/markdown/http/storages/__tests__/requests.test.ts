@@ -1,11 +1,14 @@
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
+import yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { stateContentCacheByPath } from '../../../runtime/cache'
+import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
 import { getHttpPaths } from '../../runtime/paths'
 import { ensureHttpStateFile } from '../../runtime/state'
-import { resetHttpRuntimeCache } from '../../runtime/sync'
+import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpRequestsStorage } from '../requests'
 
 let tempVaultPath = ''
@@ -88,6 +91,156 @@ describe('http requests storage', () => {
     fs.removeSync(tempVaultPath)
     tempVaultPath = ''
     vi.useRealTimers()
+  })
+
+  // Два ресинка: первый скан дозаполняет индекс метаданных, второй строит
+  // ленивые записи из индекса без чтения body/description.
+  function resyncTwiceForLazyRequests() {
+    resetHttpRuntimeCache()
+    getHttpRuntimeCache(getHttpPaths(tempVaultPath))
+    resetHttpRuntimeCache()
+    return getHttpRuntimeCache(getHttpPaths(tempVaultPath))
+  }
+
+  it('materializes lazy body and description on getRequestById', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Lazy Read' })
+    storage.updateRequest(id, {
+      body: '{"payload":true}',
+      bodyType: 'json',
+      description: 'request docs',
+    })
+
+    const cache = resyncTwiceForLazyRequests()
+    const lazyRecord = cache.requestById.get(id)
+    expect(lazyRecord?.detailsPending).toBe(true)
+    expect(lazyRecord?.body).toBeNull()
+    expect(lazyRecord?.bodyType).toBe('json')
+
+    const record = storage.getRequestById(id)
+    expect(record?.body).toBe('{"payload":true}')
+    expect(record?.description).toBe('request docs')
+    expect(record?.detailsPending).toBeUndefined()
+  })
+
+  it('keeps request details lazy in list results', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'List Read' })
+    storage.updateRequest(id, { body: 'list-body', bodyType: 'json' })
+
+    resyncTwiceForLazyRequests()
+
+    // Список не требует body/description: записи остаются ленивыми, роут
+    // срезает эти поля из ответа.
+    const listed = storage.getRequests()
+    const record = listed.find(request => request.id === id)
+    expect(record?.detailsPending).toBe(true)
+    expect(record?.body).toBeNull()
+  })
+
+  it('builds untouched requests from the index without reading files', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Frozen' })
+    storage.updateRequest(id, { url: 'https://example.com' })
+
+    resyncTwiceForLazyRequests()
+
+    // Имя в файле меняется, но сигнатура индекса совпадает со stat: если
+    // повторный скан отдаёт старое имя, файл действительно не читался.
+    // Правка state.yaml имитирует внешнее изменение при выключенном
+    // приложении: pending-запись сбрасывается, кэш содержимого чистится.
+    const paths = getHttpPaths(tempVaultPath)
+    const cacheBefore = getHttpRuntimeCache(paths)
+    const filePath = cacheBefore.requestById.get(id)!.filePath
+    const absolutePath = path.join(paths.httpRoot, filePath)
+    fs.writeFileSync(
+      absolutePath,
+      fs.readFileSync(absolutePath, 'utf8').replace('Frozen', 'Hacked'),
+      'utf8',
+    )
+
+    flushPendingStateWrites()
+    const stats = fs.statSync(absolutePath)
+    const persisted = yaml.load(fs.readFileSync(paths.statePath, 'utf8')) as {
+      requests: { meta?: { mtimeMs: number, size: number } }[]
+    }
+    persisted.requests[0].meta!.mtimeMs = stats.mtimeMs
+    persisted.requests[0].meta!.size = stats.size
+    fs.writeFileSync(paths.statePath, yaml.dump(persisted), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+
+    resetHttpRuntimeCache()
+    const cache = getHttpRuntimeCache(paths)
+    const record = cache.requestById.get(id)
+
+    expect(record?.name).toBe('Frozen')
+    expect(record?.detailsPending).toBe(true)
+  })
+
+  it('re-reads the file when index metadata misses bodyType', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'No BodyType' })
+    storage.updateRequest(id, { body: '{"x":1}', bodyType: 'json' })
+
+    resyncTwiceForLazyRequests()
+
+    // Внешне правленный .state.yaml потерял bodyType: битая meta не должна
+    // ронять список — валидатор бракует запись, файл перечитывается.
+    flushPendingStateWrites()
+    const paths = getHttpPaths(tempVaultPath)
+    const persisted = yaml.load(fs.readFileSync(paths.statePath, 'utf8')) as {
+      requests: { meta?: { bodyType?: string } }[]
+    }
+    delete persisted.requests[0].meta!.bodyType
+    fs.writeFileSync(paths.statePath, yaml.dump(persisted), 'utf8')
+    stateContentCacheByPath.delete(paths.statePath)
+
+    resetHttpRuntimeCache()
+    const listed = createHttpRequestsStorage().getRequests()
+    const record = listed.find(request => request.id === id)
+
+    expect(record?.bodyType).toBe('json')
+  })
+
+  it('rejects updates when lazy details are unavailable', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Vanishing' })
+    storage.updateRequest(id, { body: 'data', bodyType: 'json' })
+
+    resyncTwiceForLazyRequests()
+
+    // Файл недоступен: «принятая» правка молча потерялась бы при следующем
+    // ресинке, поэтому мутация отклоняется до изменения кэша.
+    const paths = getHttpPaths(tempVaultPath)
+    const record = getHttpRuntimeCache(paths).requestById.get(id)!
+    fs.removeSync(path.join(paths.httpRoot, record.filePath))
+
+    expect(() => storage.updateRequest(id, { name: 'Renamed' })).toThrow(
+      'CLOUD_FILE_NOT_DOWNLOADED',
+    )
+    expect(record.name).toBe('Vanishing')
+  })
+
+  it('keeps body intact when renaming a lazy request', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Lazy Rename' })
+    storage.updateRequest(id, { body: 'keep me', bodyType: 'text' })
+
+    resyncTwiceForLazyRequests()
+
+    // Переименование сериализует запрос целиком: незагруженные body и
+    // description должны дочитаться, а не затереться пустыми.
+    storage.updateRequest(id, { name: 'Lazy Renamed' })
+
+    const record = storage.getRequestById(id)
+    expect(record?.body).toBe('keep me')
+
+    const paths = getHttpPaths(tempVaultPath)
+    const rawSource = fs.readFileSync(
+      path.join(paths.httpRoot, record!.filePath),
+      'utf8',
+    )
+    expect(rawSource).toContain('keep me')
   })
 
   it('sorts requests by name and updated date', () => {

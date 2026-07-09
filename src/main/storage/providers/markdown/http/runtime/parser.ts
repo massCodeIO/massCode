@@ -11,9 +11,11 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 const HTTP_METHODS: HttpMethod[] = [
@@ -55,7 +57,7 @@ function splitFrontmatter(source: string): {
   }
 }
 
-function normalizeMethod(value: unknown): HttpMethod {
+export function normalizeMethod(value: unknown): HttpMethod {
   if (typeof value !== 'string') {
     return 'GET'
   }
@@ -64,7 +66,7 @@ function normalizeMethod(value: unknown): HttpMethod {
   return HTTP_METHODS.includes(upper) ? upper : 'GET'
 }
 
-function normalizeBodyType(value: unknown): HttpBodyType {
+export function normalizeBodyType(value: unknown): HttpBodyType {
   if (typeof value !== 'string') {
     return 'none'
   }
@@ -237,6 +239,48 @@ export function readRequestFile(
   return parseRequestFile(source)
 }
 
+// Дочитывает body и description записи, построенной из индекса. Остальные
+// поля runtime-записи авторитетны и могут содержать ещё не сохранённые
+// правки. Возвращает false, если содержимое сейчас недоступно
+// (плейсхолдер, сбой чтения).
+export function ensureRequestDetailsLoaded(
+  httpRoot: string,
+  record: HttpRequestRecord,
+): boolean {
+  if (!record.detailsPending) {
+    return true
+  }
+
+  const absolutePath = path.join(httpRoot, record.filePath)
+  const availability = getFileAvailability(absolutePath)
+
+  if (!availability.exists) {
+    return false
+  }
+
+  if (availability.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  let source: string
+  try {
+    source = fs.readFileSync(absolutePath, 'utf8')
+  }
+  catch (error) {
+    log('storage:http:load-request-details', error)
+    enqueueCloudDownload(absolutePath)
+    return false
+  }
+
+  const parsed = parseRequestFile(source)
+  record.body = parsed.normalized.body
+  record.description = parsed.description
+  delete record.detailsPending
+
+  return true
+}
+
 export function writeRequestFile(
   httpRoot: string,
   record: HttpRequestRecord,
@@ -249,6 +293,15 @@ export function writeRequestFile(
   if (availability.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
     return
+  }
+
+  // Ленивая запись (body/description ещё не дочитаны из индекса): они
+  // дочитываются перед сериализацией, иначе запись затёрла бы их пустыми.
+  // Тихий пропуск записи потерял бы правку метаданных при следующем скане,
+  // поэтому сбой поднимается наверх. В scan-путях (write-back после чтения)
+  // запись уже прочитана и ветка недостижима.
+  if (!ensureRequestDetailsLoaded(httpRoot, record)) {
+    throwCloudContentUnavailable()
   }
 
   const next = serializeRequestFile(record)

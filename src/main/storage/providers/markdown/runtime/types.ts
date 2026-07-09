@@ -6,9 +6,33 @@ export interface MarkdownTagState extends TagRecord {
   updatedAt: number
 }
 
+export interface MarkdownSnippetIndexContentMetadata {
+  id: number
+  label: string
+  language: string
+}
+
+// Денормализованные метаданные списка в state.json (слой 4 плана
+// icloud-lazy-vault-load): позволяют строить список и placeholder-записи без
+// чтения файлов. mtimeMs/size — freshness-сигнатура последнего чтения: пока
+// stat совпадает, файл не перечитывается.
+export interface MarkdownSnippetIndexMetadata {
+  contents: MarkdownSnippetIndexContentMetadata[]
+  createdAt: number
+  description: string | null
+  isDeleted: number
+  isFavorites: number
+  mtimeMs: number
+  name: string
+  size: number
+  tags: number[]
+  updatedAt: number
+}
+
 export interface MarkdownSnippetIndexItem {
   filePath: string
   id: number
+  meta?: MarkdownSnippetIndexMetadata
 }
 
 export interface MarkdownFolderMetadataFile {

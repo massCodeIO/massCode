@@ -296,8 +296,12 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="selectedNote"
-    class="flex h-full flex-col pt-[var(--content-top-offset)]"
+    class="relative flex h-full flex-col pt-[var(--content-top-offset)]"
   >
+    <UiLoadingOverlay
+      v-if="selectedNote.pendingCloudDownload"
+      :label="i18n.t('cloudDownloads.itemPending')"
+    />
     <div data-notes-editor-header>
       <div
         class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"

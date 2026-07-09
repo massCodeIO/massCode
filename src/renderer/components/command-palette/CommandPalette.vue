@@ -713,8 +713,14 @@ async function copyHttpRequest(result: CommandPaletteResult) {
 }
 
 async function getHttpRequest(result: CommandPaletteResult) {
+  // Результаты палитры несут только метаданные списка (без body и
+  // description): полная запись загружается по id.
   if (result.type === 'http-request') {
-    return result.item
+    const { data } = await api.httpRequests.getHttpRequestsById(
+      String(result.item.id),
+    )
+
+    return data
   }
 
   if (!isRecentTarget(result, 'http-request')) {

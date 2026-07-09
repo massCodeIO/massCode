@@ -41,7 +41,8 @@
       "languages"
     ],
     "vaultDoctorConflicts": "Vault: {{count}} sync conflict(s) need attention",
-    "vaultDoctorReview": "Review"
+    "vaultDoctorReview": "Review",
+    "cloudFileNotReady": "This item is still syncing from cloud storage. Try again in a moment."
   },
   "error": {
     "migration": "Auto-migration from SQLite failed: {{error}}",

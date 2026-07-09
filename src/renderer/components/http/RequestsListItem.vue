@@ -12,6 +12,7 @@ import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { onClickOutside, useClipboard } from '@vueuse/core'
 import { format } from 'date-fns'
+import { api } from '~/renderer/services/api'
 import { buildHttpPreview } from './requestPreview'
 
 interface Props {
@@ -170,9 +171,18 @@ function onRevealInFileManager() {
   void ipc.invoke('system:show-http-request-in-file-manager', props.request.id)
 }
 
-function onCopyRequest() {
-  copy(buildHttpPreview(props.request, { variables: previewVariables.value }))
-  useDonations().incrementCopy('http')
+async function onCopyRequest() {
+  try {
+    // Список не содержит body/description: полная запись загружается по id.
+    const { data } = await api.httpRequests.getHttpRequestsById(
+      String(props.request.id),
+    )
+    copy(buildHttpPreview(data, { variables: previewVariables.value }))
+    useDonations().incrementCopy('http')
+  }
+  catch (error) {
+    console.error(error)
+  }
 }
 
 function onCopyRequestLink() {

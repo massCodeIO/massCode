@@ -45,7 +45,10 @@ function mapStorageError(status: unknown, error: unknown): never {
     return setStatus(409, { message: parsedError.message })
   }
 
-  if (parsedError.code === 'VAULT_HYDRATING') {
+  if (
+    parsedError.code === 'VAULT_HYDRATING'
+    || parsedError.code === 'CLOUD_FILE_NOT_DOWNLOADED'
+  ) {
     return setStatus(503, { message: parsedError.message })
   }
 
@@ -73,7 +76,11 @@ app
       const storage = useHttpStorage()
       const result = storage.requests.getRequests(query)
 
-      return result as HttpRequestsResponse
+      // body и description не сериализуются в список: полная запись
+      // выбранного запроса загружается через GET /http-requests/:id.
+      return result.map(
+        ({ body: _body, description: _description, ...request }) => request,
+      ) as HttpRequestsResponse
     },
     {
       query: 'httpRequestsQuery',

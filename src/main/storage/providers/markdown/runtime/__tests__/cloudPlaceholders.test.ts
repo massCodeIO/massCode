@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { runtimeRef } from '../cache'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
-import { writeSnippetToFile } from '../snippets'
+import { ensureSnippetContentLoaded, writeSnippetToFile } from '../snippets'
 import { saveState } from '../state'
 import {
   refreshPendingSnippetFiles,
@@ -151,12 +151,26 @@ describe('cloud placeholder handling in code runtime', () => {
     const remote = cache.snippets.find(snippet => snippet.id === 2)
 
     expect(local?.pendingCloudDownload).toBeUndefined()
+
+    // Нетронутый файл строится из индекса метаданных без чтения: тело
+    // остаётся ленивым и дочитывается по требованию.
+    expect(local?.contents[0]?.value).toBeNull()
+    expect(ensureSnippetContentLoaded(paths, local!)).toBe(true)
     expect(local?.contents[0]?.value).toBe('body')
 
+    // Плейсхолдер с известными метаданными — полноценная запись списка:
+    // имя и структура фрагментов из индекса, тела ждут докачки.
     expect(remote).toBeDefined()
     expect(remote?.pendingCloudDownload).toBe(true)
-    expect(remote?.name).toBe('remote')
-    expect(remote?.contents).toEqual([])
+    expect(remote?.name).toBe('Remote')
+    expect(remote?.contents).toEqual([
+      {
+        id: 1,
+        label: 'Fragment 1',
+        language: 'plain_text',
+        value: null,
+      },
+    ])
 
     expect(vi.mocked(enqueueCloudDownload)).toHaveBeenCalledWith(
       placeholderPath,
@@ -247,7 +261,7 @@ describe('cloud placeholder handling in code runtime', () => {
     const cache = syncRuntimeWithDisk(paths)
     const pending = cache.snippets.find(snippet => snippet.id === 7)
     expect(pending?.pendingCloudDownload).toBe(true)
-    expect(pending?.contents).toEqual([])
+    expect(pending?.contents[0]?.value).toBeNull()
 
     // Облако материализовало файл (в реальности — без смены mtime, поэтому
     // watcher-событие не приходит и снятие флага делает self-heal).

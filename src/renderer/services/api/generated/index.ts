@@ -693,7 +693,6 @@ export type HttpRequestsResponse = {
     enabled?: boolean;
   }[];
   bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
-  body: string | null;
   formData: {
     key: string;
     type: "text" | "file";
@@ -705,7 +704,6 @@ export type HttpRequestsResponse = {
     username?: string;
     password?: string;
   };
-  description: string;
   filePath: string;
   isFavorites: number;
   isDeleted: number;

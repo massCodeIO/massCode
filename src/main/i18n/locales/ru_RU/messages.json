@@ -36,7 +36,8 @@
       "languages"
     ],
     "vaultDoctorConflicts": "Vault: {{count}} конфликтов требуют внимания",
-    "vaultDoctorReview": "Разобрать"
+    "vaultDoctorReview": "Разобрать",
+    "cloudFileNotReady": "Элемент ещё синхронизируется с облачным хранилищем. Попробуйте чуть позже."
   },
   "error": {
     "migration": "Автомиграция из SQLite завершилась ошибкой: {{error}}",

@@ -95,7 +95,28 @@ const httpRequestItem = t.Object({
   updatedAt: t.Number(),
 })
 
-const httpRequestsResponse = t.Array(httpRequestItem)
+// Список не сериализует body и description: полная запись выбранного
+// запроса загружается через GET /http-requests/:id, а тела остаются
+// ленивыми на диске до первого обращения.
+const httpRequestListItem = t.Object({
+  id: t.Number(),
+  name: t.String(),
+  folderId: t.Union([t.Number(), t.Null()]),
+  method: httpMethod,
+  url: t.String(),
+  headers: t.Array(httpHeaderEntry),
+  query: t.Array(httpQueryEntry),
+  bodyType: httpBodyType,
+  formData: t.Array(httpFormDataEntry),
+  auth: httpAuth,
+  filePath: t.String(),
+  isFavorites: t.Number(),
+  isDeleted: t.Number(),
+  createdAt: t.Number(),
+  updatedAt: t.Number(),
+})
+
+const httpRequestsResponse = t.Array(httpRequestListItem)
 
 const httpRequestsQuery = t.Object({
   ...commonQuery.properties,

@@ -74,6 +74,12 @@ const revealInFileManagerLabel = computed(() =>
     : i18n.t('action.reveal.inFileManager'),
 )
 
+// Содержимое ещё в облаке: мутации (запись файла) и копирование тела
+// недоступны до докачки; чтение метаданных и ссылки работают.
+const isCloudPending = computed(
+  () => props.snippet.pendingCloudDownload === true,
+)
+
 const folderName = computed(() => {
   if (props.snippet.folder) {
     return props.snippet.folder.name
@@ -220,7 +226,7 @@ function onDragStart(event: DragEvent) {
       'is-focused': isFocused,
       'is-highlighted': isHighlighted,
     }"
-    draggable="true"
+    :draggable="!isCloudPending"
     @click="(event) => onSnippetClick(snippet.id, event)"
     @contextmenu="onClickContextMenu"
     @dragstart.stop="onDragStart"
@@ -277,7 +283,10 @@ function onDragStart(event: DragEvent) {
       </ContextMenu.ContextMenuTrigger>
       <ContextMenu.ContextMenuContent>
         <template v-if="!isTrashLibrarySelectd">
-          <ContextMenu.ContextMenuItem @click="onAddFavorites">
+          <ContextMenu.ContextMenuItem
+            :disabled="isCloudPending"
+            @click="onAddFavorites"
+          >
             {{
               isFavoritesLibrarySelected
                 ? i18n.t("action.remove.fromFavorites")
@@ -288,7 +297,10 @@ function onDragStart(event: DragEvent) {
           <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
             {{ revealInFileManagerLabel }}
           </ContextMenu.ContextMenuItem>
-          <ContextMenu.ContextMenuItem @click="onCopySnippetContent">
+          <ContextMenu.ContextMenuItem
+            :disabled="isCloudPending"
+            @click="onCopySnippetContent"
+          >
             {{ i18n.t("action.copy.snippet") }}
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuItem @click="onCopySnippetLink">
@@ -296,13 +308,16 @@ function onDragStart(event: DragEvent) {
           </ContextMenu.ContextMenuItem>
           <ContextMenu.ContextMenuSeparator />
           <ContextMenu.ContextMenuItem
-            :disabled="isDuplicateDisabled"
+            :disabled="isDuplicateDisabled || isCloudPending"
             @click="onDuplicate"
           >
             {{ i18n.t("action.duplicate") }}
           </ContextMenu.ContextMenuItem>
         </template>
-        <ContextMenu.ContextMenuItem @click="onDelete">
+        <ContextMenu.ContextMenuItem
+          :disabled="isCloudPending"
+          @click="onDelete"
+        >
           {{
             state.libraryFilter === LibraryFilter.Trash
               ? i18n.t("action.delete.common")
@@ -311,6 +326,7 @@ function onDragStart(event: DragEvent) {
         </ContextMenu.ContextMenuItem>
         <ContextMenu.ContextMenuItem
           v-if="isTrashLibrarySelectd"
+          :disabled="isCloudPending"
           @click="onRestore"
         >
           {{ i18n.t("action.restore") }}

@@ -5,6 +5,7 @@ import {
   querySearchIndex,
 } from '../../runtime/shared/searchEngine'
 import { notesRuntimeRef } from './constants'
+import { ensureAllNoteContentsLoaded } from './notes'
 
 export function buildNoteSearchText(note: MarkdownNote): string {
   const parts: string[] = [note.name]
@@ -23,6 +24,13 @@ export function getNoteIdsBySearchQuery(
 ): Set<number> {
   const cache = notesRuntimeRef.cache
   const runtimeCache = cache?.notes === notes ? cache : null
+
+  // Полнотекстовый поиск требует тел: ленивые записи (построенные из
+  // индекса без чтения файлов) дочитываются перед построением поискового
+  // индекса. Стоимость — одно чтение файла на запись при первом поиске.
+  if (runtimeCache && ensureAllNoteContentsLoaded(runtimeCache.paths, notes)) {
+    invalidateSearchIndex(runtimeCache.searchIndex)
+  }
 
   if (runtimeCache && runtimeCache.searchIndex.dirty) {
     runtimeCache.searchIndex = buildSearchIndex(notes, buildNoteSearchText)

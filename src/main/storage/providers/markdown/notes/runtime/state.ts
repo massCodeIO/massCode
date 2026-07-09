@@ -3,6 +3,9 @@ import { createStateAdapter } from '../../runtime/shared/stateAdapter'
 import { syncFolderUiWithFolders } from '../../runtime/shared/stateUtils'
 import { invalidateNotesSearchIndex } from './search'
 
+// Версия 2: записи notes несут денормализованные метаданные списка и
+// stat-сигнатуру (`meta`). Записи без meta (v1) дозаполняются организно:
+// файл читается один раз при первом скане и метаданные попадают в индекс.
 export function createDefaultNotesState(): NotesState {
   return {
     counters: {
@@ -14,13 +17,13 @@ export function createDefaultNotesState(): NotesState {
     folders: [],
     notes: [],
     tags: [],
-    version: 1,
+    version: 2,
   }
 }
 
 const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
   createDefaultState: createDefaultNotesState,
-  minVersion: 1,
+  minVersion: 2,
   getDirs: paths => [
     paths.notesRoot,
     paths.metaDirPath,
@@ -30,7 +33,14 @@ const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
   toPersistedState: state => ({
     counters: state.counters,
     folderUi: state.folderUi,
-    notes: state.notes,
+    // Записи индекса нормализуются до известной схемы: state.json
+    // синхронизируется между устройствами и не должен накапливать
+    // посторонние поля.
+    notes: state.notes.map(({ filePath, id, meta }) => ({
+      filePath,
+      id,
+      ...(meta ? { meta } : {}),
+    })),
     tags: state.tags,
     version: state.version,
   }),

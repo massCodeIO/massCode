@@ -6,6 +6,9 @@ import { flushPendingStateWrites } from './shared/stateWriter'
 
 export { flushPendingStateWrites, syncFolderUiWithFolders }
 
+// Версия 3: записи snippets несут денормализованные метаданные списка и
+// stat-сигнатуру (`meta`). Записи без meta (v2) дозаполняются организно:
+// файл читается один раз при первом скане и метаданные попадают в индекс.
 export function createDefaultState(): MarkdownState {
   return {
     counters: {
@@ -18,13 +21,13 @@ export function createDefaultState(): MarkdownState {
     folders: [],
     snippets: [],
     tags: [],
-    version: 2,
+    version: 3,
   }
 }
 
 const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
   createDefaultState,
-  minVersion: 2,
+  minVersion: 3,
   getDirs: paths => [
     paths.vaultPath,
     paths.metaDirPath,
@@ -34,7 +37,14 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
   toPersistedState: state => ({
     counters: state.counters,
     folderUi: state.folderUi,
-    snippets: state.snippets,
+    // Записи индекса нормализуются до известной схемы: state.json
+    // синхронизируется между устройствами и не должен накапливать
+    // посторонние поля.
+    snippets: state.snippets.map(({ filePath, id, meta }) => ({
+      filePath,
+      id,
+      ...(meta ? { meta } : {}),
+    })),
     tags: state.tags,
     version: state.version,
   }),

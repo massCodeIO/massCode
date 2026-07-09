@@ -29,6 +29,19 @@ vi.mock('electron', () => ({
   app: {
     relaunch,
     quit,
+    // Транзитивный импорт main-меню читает версию при инициализации модуля.
+    getVersion: vi.fn(() => '0.0.0-test'),
+  },
+  BrowserWindow: {
+    getAllWindows: vi.fn(() => []),
+    getFocusedWindow: vi.fn(() => null),
+  },
+  Menu: {
+    buildFromTemplate: vi.fn(() => ({})),
+    setApplicationMenu: vi.fn(),
+  },
+  dialog: {
+    showMessageBox: vi.fn(),
   },
   ipcMain: {
     handle,
@@ -70,6 +83,8 @@ vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
 vi.mock('../../../store', () => ({
   store: {
     preferences: {
+      // Транзитивный импорт i18n читает локаль при инициализации модуля.
+      get: vi.fn(),
       set: preferencesSet,
     },
   },

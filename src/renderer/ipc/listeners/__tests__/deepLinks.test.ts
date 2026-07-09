@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 interface SetupOptions {
   httpRequestResponse?: any
@@ -138,6 +138,11 @@ async function setup(options: SetupOptions = {}) {
       focusedRequestId: ref<number | undefined>(),
       highlightedFolderIds: ref(new Set<number>()),
       highlightedRequestIds: ref(new Set<number>()),
+      httpState: reactive<{
+        folderId?: number
+        libraryFilter?: string
+        requestId?: number
+      }>({}),
       isHttpSpaceInitialized,
     }),
     useHttpFolders: () => ({
@@ -200,6 +205,28 @@ async function setup(options: SetupOptions = {}) {
       }),
       selectSnippet,
     }),
+  }))
+
+  // deepLinks импортирует '@/electron' напрямую: без мока модуль падает на
+  // window.electron в node-окружении.
+  vi.doMock('@/electron', () => ({
+    i18n: {
+      t: (key: string) => key,
+    },
+    ipc: {
+      invoke: vi.fn(),
+      on: vi.fn(),
+    },
+    store: {
+      app: {
+        get: vi.fn(),
+        set: vi.fn(),
+      },
+      preferences: {
+        get: vi.fn(),
+        set: vi.fn(),
+      },
+    },
   }))
 
   vi.doMock('@/services/api', () => ({

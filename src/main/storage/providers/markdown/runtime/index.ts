@@ -131,6 +131,7 @@ export {
   assertNotReservedRootFolderName,
   assertUniqueSiblingEntryName,
   assertUniqueSiblingFolderName,
+  assertVaultNotHydrating,
   getMarkdownStorageErrorMessage,
   resolveUniqueSiblingFolderName,
   throwStorageError,

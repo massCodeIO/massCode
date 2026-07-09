@@ -18,6 +18,7 @@ import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
   assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
@@ -190,6 +191,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       const cache = getHttpRuntimeCache(paths)
       const { state } = cache
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'request')
       const folderId = input.folderId ?? null
 

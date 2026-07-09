@@ -55,6 +55,9 @@ export interface MarkdownState {
   }
   folderUi: Record<string, MarkdownFolderUIState>
   folders: FolderRecord[]
+  // Дефолтный state на период, пока state.json не докачан из облака:
+  // такой state нельзя ни персистить, ни использовать для выдачи id.
+  provisional?: boolean
   snippets: MarkdownSnippetIndexItem[]
   tags: MarkdownTagState[]
   version: number
@@ -167,6 +170,7 @@ export type MarkdownErrorCode =
   | 'NAME_CONFLICT'
   | 'RESERVED_NAME'
   | 'SNIPPET_NOT_FOUND'
+  | 'VAULT_HYDRATING'
 
 export type DirectoryEntriesCache = Map<string, string[]>
 

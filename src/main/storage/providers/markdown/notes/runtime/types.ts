@@ -75,6 +75,9 @@ export interface NotesState {
   folderUi: Record<string, NotesFolderUIState>
   folders: NotesFolderRecord[]
   notes: NotesIndexItem[]
+  // Дефолтный state на период, пока state.json не докачан из облака:
+  // такой state нельзя ни персистить, ни использовать для выдачи id.
+  provisional?: boolean
   tags: NotesTagState[]
   version: number
 }

@@ -30,6 +30,7 @@ import {
 } from '../../runtime/shared/entityStorage'
 import {
   assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
@@ -291,6 +292,7 @@ export function createNotesNotesStorage(): NotesStorage {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'note')
       const folderId = input.folderId ?? null
       assertUniqueSiblingEntryName(notes, folderId, name, 'note')

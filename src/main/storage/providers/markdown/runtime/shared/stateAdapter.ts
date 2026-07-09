@@ -11,6 +11,7 @@ import {
 interface StateWithFolderUi {
   folders: { id: number, isOpen: number }[]
   folderUi: Record<string, { isOpen: number }>
+  provisional?: boolean
   version: number
 }
 
@@ -92,6 +93,13 @@ export function createStateAdapter<
     state: TState,
     options?: { immediate?: boolean },
   ): void {
+    // Provisional state существует только пока state-файл не докачан из
+    // облака: записать его — значит затереть настоящий индекс и счётчики
+    // почти пустым состоянием.
+    if (state.provisional) {
+      return
+    }
+
     config.onBeforeSave?.(state)
 
     const nextVersion = Math.max(state.version, config.minVersion)

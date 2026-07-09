@@ -21,6 +21,20 @@ export function getMarkdownStorageErrorMessage(error: unknown): string {
   return normalizeErrorMessage(error)
 }
 
+// Пока state-файл пространства не докачан из облака, создание записей
+// работало бы на дефолтных счётчиках и чеканило id поверх существующего
+// индекса. Такие мутации отклоняются до окончания докачки.
+export function assertVaultNotHydrating(state: {
+  provisional?: boolean
+}): void {
+  if (state.provisional) {
+    throwStorageError(
+      'VAULT_HYDRATING',
+      'Vault state is not downloaded from cloud storage yet',
+    )
+  }
+}
+
 function normalizeName(name: string): string {
   return name.trim()
 }

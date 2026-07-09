@@ -29,6 +29,7 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from './shared/folderSync'
+import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
 import { createVaultReconciler } from './shared/vaultReconcile'
 import {
@@ -278,7 +279,9 @@ export function isCodeVaultDiskReady(paths: Paths): boolean {
 // первый доступ отдаёт пустой список, а настоящий — согласованный с диском
 // и с getById — приходит после реконсиляции. Список из state-индекса тут
 // не строится намеренно: он бы содержал записи, чьи файлы ещё не подтянуты
-// из облака, и клик по такой записи давал бы 404.
+// из облака, и клик по такой записи давал бы 404. Сам state при этом
+// читается с диска: мутации в этот период работают с настоящими счётчиками
+// и тегами, а не чеканят id заново поверх существующего индекса.
 function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
   if (
     runtimeRef.cache
@@ -287,7 +290,23 @@ function buildProvisionalRuntimeCache(paths: Paths): MarkdownRuntimeCache {
     return runtimeRef.cache
   }
 
-  return setRuntimeCache(paths, createDefaultState(), [])
+  // state.json сам может быть облачным плейсхолдером: тогда loadState
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки).
+  let state: MarkdownState
+  try {
+    state = loadState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
+    state = createDefaultState()
+    state.provisional = true
+  }
+
+  return setRuntimeCache(paths, state, [])
 }
 
 // Настоящая сверка с диском: читает state и файлы. Может бросить, если
@@ -419,6 +438,13 @@ export function syncSnippetFileWithDisk(
   const cache = runtimeRef.cache
   if (!cache || cache.paths.vaultPath !== paths.vaultPath) {
     return null
+  }
+
+  // Provisional state (state.json ещё не докачан из облака) не может
+  // регистрировать файлы: id выдавались бы с дефолтных счётчиков. Событие
+  // не теряется — файл подберёт полная сверка после докачки.
+  if (cache.state.provisional) {
+    return cache
   }
 
   const normalizedFilePath = toPosixPath(changedFilePath).trim()

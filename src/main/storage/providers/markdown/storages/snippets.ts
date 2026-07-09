@@ -12,6 +12,7 @@ import path from 'node:path'
 import { prioritizeCloudDownload } from '../cloudDownloads'
 import {
   assertUniqueSiblingEntryName,
+  assertVaultNotHydrating,
   createSnippetRecord,
   findFolderById,
   findSnippetById,
@@ -114,6 +115,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       const paths = getPaths(getVaultPath())
       const { state, snippets } = getRuntimeCache(paths)
 
+      assertVaultNotHydrating(state)
       const name = validateEntryName(input.name, 'snippet')
       const folderId = input.folderId ?? null
       assertUniqueSiblingEntryName(snippets, folderId, name, 'snippet')

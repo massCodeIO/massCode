@@ -120,6 +120,9 @@ export interface HttpState {
   environments: HttpEnvironmentRecord[]
   activeEnvironmentId: number | null
   history: HttpHistoryRecord[]
+  // Дефолтный state на период, пока .state.yaml не докачан из облака:
+  // такой state нельзя ни персистить, ни использовать для выдачи id.
+  provisional?: boolean
 }
 
 export interface HttpPaths {

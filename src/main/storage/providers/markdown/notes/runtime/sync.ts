@@ -18,6 +18,7 @@ import {
   syncFolderMetadataFilesByPathMap,
   syncFoldersStateFromDiskAtRoot,
 } from '../../runtime/shared/folderSync'
+import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import {
@@ -207,7 +208,9 @@ export function isNotesVaultDiskReady(paths: NotesPaths): boolean {
 
 // Пустой временный кэш на период фоновой сверки: см. комментарий у
 // buildProvisionalRuntimeCache. Список из state-индекса тут не строится,
-// чтобы клик по ещё не подтянутой из облака записи не давал 404.
+// чтобы клик по ещё не подтянутой из облака записи не давал 404. Сам state
+// при этом читается с диска: мутации в этот период работают с настоящими
+// счётчиками и тегами, а не чеканят id заново поверх существующего индекса.
 function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
   if (
     notesRuntimeRef.cache
@@ -216,7 +219,23 @@ function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
     return notesRuntimeRef.cache
   }
 
-  return setNotesRuntimeCache(paths, createDefaultNotesState(), [])
+  // state.json сам может быть облачным плейсхолдером: тогда loadNotesState
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки).
+  let state: NotesState
+  try {
+    state = loadNotesState(paths)
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
+    state = createDefaultNotesState()
+    state.provisional = true
+  }
+
+  return setNotesRuntimeCache(paths, state, [])
 }
 
 // Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан
@@ -333,6 +352,13 @@ export function syncNoteFileWithDisk(
   const cache = notesRuntimeRef.cache
   if (!cache || cache.paths.notesRoot !== paths.notesRoot) {
     return null
+  }
+
+  // Provisional state (state.json ещё не докачан из облака) не может
+  // регистрировать файлы: id выдавались бы с дефолтных счётчиков. Событие
+  // не теряется — файл подберёт полная сверка после докачки.
+  if (cache.state.provisional) {
+    return cache
   }
 
   const normalizedFilePath = toPosixPath(changedFilePath).trim()

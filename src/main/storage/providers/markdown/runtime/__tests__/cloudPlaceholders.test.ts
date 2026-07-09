@@ -7,10 +7,12 @@ import { enqueueCloudDownload } from '../../cloudDownloads'
 import { runtimeRef } from '../cache'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
 import { writeSnippetToFile } from '../snippets'
+import { saveState } from '../state'
 import {
   refreshPendingSnippetFiles,
   resetRuntimeCache,
   syncRuntimeWithDisk,
+  syncSnippetFileWithDisk,
 } from '../sync'
 
 vi.mock('electron', () => ({
@@ -260,5 +262,39 @@ describe('cloud placeholder handling in code runtime', () => {
     )
     expect(refreshed?.pendingCloudDownload).toBeFalsy()
     expect(refreshed?.contents[0]?.value).toBe('body')
+  })
+})
+
+describe('provisional state during cloud hydration', () => {
+  it('never persists provisional state over the real index', () => {
+    const paths = createPaths()
+    writeSnippetFixture(paths, '.masscode/inbox/local.md', 1, 'Local')
+    const cache = syncRuntimeWithDisk(paths)
+    const persistedContent = fs.readFileSync(paths.statePath, 'utf8')
+
+    // Состояние помечено как provisional (state.json «ещё не докачан»):
+    // даже изменённый индекс не должен доехать до диска.
+    cache.state.provisional = true
+    cache.state.snippets.push({ filePath: 'phantom.md', id: 99 })
+    saveState(paths, cache.state, { immediate: true })
+
+    expect(fs.readFileSync(paths.statePath, 'utf8')).toBe(persistedContent)
+  })
+
+  it('skips watcher registration of files while state is provisional', () => {
+    const paths = createPaths()
+    writeSnippetFixture(paths, '.masscode/inbox/known.md', 1, 'Known')
+    const cache = syncRuntimeWithDisk(paths)
+    cache.state.provisional = true
+
+    writeSnippetFixture(paths, '.masscode/inbox/fresh.md', 2, 'Fresh')
+    const result = syncSnippetFileWithDisk(paths, '.masscode/inbox/fresh.md')
+
+    // Событие не эскалирует в полный ресинк и не регистрирует файл:
+    // его подберёт сверка после докачки state.
+    expect(result).toBe(cache)
+    expect(
+      cache.state.snippets.some(entry => entry.filePath.endsWith('fresh.md')),
+    ).toBe(false)
   })
 })

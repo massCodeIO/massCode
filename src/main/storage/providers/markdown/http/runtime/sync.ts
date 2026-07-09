@@ -310,8 +310,9 @@ function buildProvisionalHttpCache(paths: HttpPaths): HttpRuntimeCache {
   ensureHttpStateFile(paths)
 
   // .state.yaml сам может быть облачным плейсхолдером: тогда loadHttpState
-  // бросает. Provisional-кэш при этом пустой, пространство наполнится после
-  // докачки state и повторной сверки.
+  // бросает, а кэш строится на неперсистируемом дефолтном state (флаг
+  // provisional блокирует запись и мутации до докачки). Пространство
+  // наполнится после докачки state и повторной сверки.
   let state: HttpState
   try {
     state = loadHttpState(paths)
@@ -321,6 +322,7 @@ function buildProvisionalHttpCache(paths: HttpPaths): HttpRuntimeCache {
       throw error
     }
     state = createDefaultHttpState()
+    state.provisional = true
   }
 
   const cache = buildRuntimeCache(paths, state, [])

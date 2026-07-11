@@ -329,11 +329,15 @@ async function loadCurrentRequest(requestId: number) {
     // фактически осталась в редакторе, иначе подсвеченный элемент и
     // редактируемая запись разошлись бы, и autosave писал бы правки не в
     // тот запрос. Повторный клик по нужному элементу ретраит загрузку.
+    // До первой загрузки (currentRequest ещё null) откатывать некуда:
+    // персистентный выбор сохраняется, его доselect'ит refresh после sync.
     if (!record) {
-      const previousId = currentRequest.value?.id
-      httpState.requestId = previousId
-      selectedRequestIds.value = previousId !== undefined ? [previousId] : []
-      lastSelectedRequestId.value = previousId
+      if (currentRequest.value) {
+        const previousId = currentRequest.value.id
+        httpState.requestId = previousId
+        selectedRequestIds.value = [previousId]
+        lastSelectedRequestId.value = previousId
+      }
       return
     }
 
@@ -462,8 +466,19 @@ async function duplicateHttpRequest(requestId: number) {
   }
 }
 
-// Возвращает false при неудачном PATCH: вызывающие потоки (переключение
-// выбора) не должны считать несохранённую правку сохранённой.
+// Временный сбой (503 на pending-записи, сеть) — правка сохранится позже,
+// и вызывающий поток должен подождать. Окончательный отказ (404 удалённой
+// на другом устройстве записи, 400) ждать бессмысленно: блокировка
+// переключения на нём заморозила бы навигацию до перезапуска.
+function isRetriableSaveError(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } })?.response?.status
+  return status === undefined || status === 503
+}
+
+// Возвращает false при временно неудачном PATCH: вызывающие потоки
+// (переключение выбора) не должны считать несохранённую правку сохранённой.
+// Окончательный отказ возвращает true — сохранять больше некуда, и держать
+// пользователя на записи нет смысла.
 async function updateHttpRequest(
   requestId: number,
   data: HttpRequestsUpdate,
@@ -474,7 +489,7 @@ async function updateHttpRequest(
   }
   catch (error) {
     console.error(error)
-    return false
+    return !isRetriableSaveError(error)
   }
 
   try {

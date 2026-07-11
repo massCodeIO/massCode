@@ -35,7 +35,14 @@ function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
 }
 
 export async function normalizeCodeSelectionState() {
-  if (state.tagId && !tags.value.some(tag => tag.id === state.tagId)) {
+  // Пустые списки — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки (state.json сам может быть offloaded):
+  // сохранённый выбор не сбрасывается, пока данные не приедут.
+  if (
+    state.tagId
+    && tags.value.length
+    && !tags.value.some(tag => tag.id === state.tagId)
+  ) {
     state.tagId = undefined
   }
 
@@ -43,6 +50,7 @@ export async function normalizeCodeSelectionState() {
 
   if (
     state.folderId
+    && orderedFolders.length
     && !orderedFolders.some(folder => folder.id === state.folderId)
   ) {
     state.folderId = orderedFolders[0]?.id
@@ -50,9 +58,13 @@ export async function normalizeCodeSelectionState() {
 
   await getSnippets()
 
+  // Пустой список — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
+  // затёрся бы в store.app и после reconcile не восстановился).
   if (
     state.snippetId !== undefined
-    && !displayedSnippets.value?.some(snippet => snippet.id === state.snippetId)
+    && displayedSnippets.value?.length
+    && !displayedSnippets.value.some(snippet => snippet.id === state.snippetId)
   ) {
     selectFirstSnippet()
   }

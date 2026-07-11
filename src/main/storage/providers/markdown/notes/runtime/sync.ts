@@ -354,6 +354,12 @@ export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
 }
 
 export function resetNotesRuntimeCache(): void {
+  // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
+  // продолжили бы попытки по неактивному пути и слали storage-synced.
+  const previousNotesRoot = notesRuntimeRef.cache?.paths.notesRoot
+  if (previousNotesRoot) {
+    notesVaultReconciler.abandon(previousNotesRoot)
+  }
   // Отложенные backlink-rewrite'ы хранятся в notes state конкретного vault
   // и потому переживают и сброс кэша, и перезапуск приложения.
   notesRuntimeRef.cache = null

@@ -33,6 +33,7 @@ import {
 import {
   assertEntityFileWritable,
   markEntityPendingIfEvicted,
+  markEntityPendingIfFileExists,
   throwCloudContentUnavailable,
 } from '../runtime/shared/cloudGuards'
 import { createNestedContent } from '../runtime/shared/entityContent'
@@ -117,7 +118,10 @@ export function createSnippetsStorage(): SnippetsStorage {
       // ловится свежим stat. Флаг снимет ресинк после докачки.
       if (snippet) {
         if (!ensureSnippetContentLoaded(paths, snippet)) {
-          snippet.pendingCloudDownload = true
+          markEntityPendingIfFileExists(
+            path.join(paths.vaultPath, snippet.filePath),
+            snippet,
+          )
         }
         else {
           markEntityPendingIfEvicted(

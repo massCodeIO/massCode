@@ -187,7 +187,11 @@ function buildHttpRequestIndexMetadata(
 // .state.yaml синхронизируется между устройствами и правится извне, поэтому
 // метаданные индекса перед использованием проверяются по форме: битая
 // запись не роняет скан, файл просто перечитывается.
-function isValidHttpRequestIndexMetadata(
+// Мягкая форма для placeholder-ветки: description может отсутствовать
+// (ранний dev-формат меты) — остальные поля всё равно ценнее минимального
+// placeholder'а, который «воскресил» бы трэшнутые запросы (isDeleted: 0)
+// и потерял бы избранное до докачки.
+function isUsableHttpRequestIndexMetadata(
   meta: HttpRequestIndexMetadata | undefined,
 ): meta is HttpRequestIndexMetadata {
   return (
@@ -197,9 +201,6 @@ function isValidHttpRequestIndexMetadata(
     && typeof meta.method === 'string'
     && typeof meta.bodyType === 'string'
     && typeof meta.url === 'string'
-    // meta без description (ранний dev-формат) бракуется: файл будет
-    // перечитан один раз, и индекс дозаполнится.
-    && typeof meta.description === 'string'
     && Array.isArray(meta.headers)
     && Array.isArray(meta.query)
     && Array.isArray(meta.formData)
@@ -211,6 +212,17 @@ function isValidHttpRequestIndexMetadata(
     && Number.isFinite(meta.size)
     && typeof meta.createdAt === 'number'
     && typeof meta.updatedAt === 'number'
+  )
+}
+
+function isValidHttpRequestIndexMetadata(
+  meta: HttpRequestIndexMetadata | undefined,
+): meta is HttpRequestIndexMetadata {
+  return (
+    isUsableHttpRequestIndexMetadata(meta)
+    // meta без description (ранний dev-формат) бракуется в fresh-ветке:
+    // файл будет перечитан один раз, и индекс дозаполнится.
+    && typeof meta.description === 'string'
   )
 }
 
@@ -237,7 +249,7 @@ function buildRequestFromIndexMetadata(
     body: null,
     formData: meta.formData,
     auth: meta.auth,
-    description: meta.description,
+    description: meta.description ?? '',
     filePath: relativePath,
     isFavorites: normalizeFlag(meta.isFavorites),
     isDeleted: normalizeFlag(meta.isDeleted),
@@ -335,7 +347,7 @@ function reconcileRequests(
         ...(knownEntry.meta ? { meta: knownEntry.meta } : {}),
       })
 
-      if (isValidHttpRequestIndexMetadata(knownEntry.meta)) {
+      if (isUsableHttpRequestIndexMetadata(knownEntry.meta)) {
         records.push(
           buildRequestFromIndexMetadata(
             knownEntry.id,
@@ -591,5 +603,11 @@ export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {
 }
 
 export function resetHttpRuntimeCache(): void {
+  // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
+  // продолжили бы попытки по неактивному пути и слали storage-synced.
+  const previousHttpRoot = httpRuntimeRef.cache?.paths.httpRoot
+  if (previousHttpRoot) {
+    httpVaultReconciler.abandon(previousHttpRoot)
+  }
   httpRuntimeRef.cache = null
 }

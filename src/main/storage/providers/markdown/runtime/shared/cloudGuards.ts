@@ -47,6 +47,25 @@ export function markEntityPendingIfEvicted(
   return true
 }
 
+// Для ветки «содержимое не дочиталось» в getById: флаг ставится только если
+// файл физически существует (placeholder или сбой чтения — докачка уже
+// поставлена вызывавшимся ensure*). Отсутствующий файл (внешнее удаление с
+// пропущенным unlink-событием) флаг не получает: запись уберёт ближайший
+// синк, а залипший pending рисовал бы вечный оверлей и блокировал сохранения
+// до перезапуска.
+export function markEntityPendingIfFileExists(
+  absolutePath: string,
+  entity: CloudAwareEntity | null | undefined,
+): void {
+  if (!entity || entity.pendingCloudDownload) {
+    return
+  }
+
+  if (getFileAvailability(absolutePath).exists) {
+    entity.pendingCloudDownload = true
+  }
+}
+
 // То же, но со свежим stat диска: флаг pendingCloudDownload устаревает, если
 // провайдер выгрузил файл после гидрации (iCloud «Optimize Storage»).
 // Вызывается до изменения runtime-кэша, чтобы мутация не «повисала» в памяти

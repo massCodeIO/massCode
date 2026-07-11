@@ -19,6 +19,7 @@ import { getVaultPath } from '../../runtime/paths'
 import {
   assertEntityFileWritable,
   markEntityPendingIfEvicted,
+  markEntityPendingIfFileExists,
 } from '../../runtime/shared/cloudGuards'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
@@ -303,7 +304,10 @@ export function createNotesNotesStorage(): NotesStorage {
       // ловится свежим stat. Флаг снимет ресинк после докачки.
       if (note) {
         if (!ensureNoteContentLoaded(resolvePaths(), note)) {
-          note.pendingCloudDownload = true
+          markEntityPendingIfFileExists(
+            path.join(resolvePaths().notesRoot, note.filePath),
+            note,
+          )
         }
         else {
           markEntityPendingIfEvicted(

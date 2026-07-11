@@ -85,6 +85,31 @@ export function syncFoldersStateFromDisk<
     ...state.folders.map(folder => folder.id),
   )
 
+  // Все id из метаданных на диске резервируются заранее: счётчик в state
+  // может отставать от них (папка пришла по синку с другого устройства), и
+  // слепая чеканка выдала бы id, который занят или будет занят папкой ниже
+  // по списку — две папки с одним id смешали бы записи, а удаление одной
+  // унесло бы файлы обеих.
+  const reservedMetadataIds = new Set<number>()
+  for (const diskFolder of orderedDiskFolders) {
+    const metadataId = normalizePositiveInteger(
+      diskFolder.metadata.id ?? diskFolder.metadata.masscode_id,
+    )
+    if (metadataId) {
+      reservedMetadataIds.add(metadataId)
+    }
+  }
+
+  const mintFolderId = (): number => {
+    do {
+      nextFolderId += 1
+    } while (
+      usedFolderIds.has(nextFolderId)
+      || reservedMetadataIds.has(nextFolderId)
+    )
+    return nextFolderId
+  }
+
   for (const diskFolder of orderedDiskFolders) {
     const { metadata } = diskFolder
     const folderPath = diskFolder.path
@@ -113,8 +138,7 @@ export function syncFoldersStateFromDisk<
       // докачается, её id победит на следующей сверке и всё сойдётся.
       // Блокировать всё пространство до докачки нельзя: одна застрявшая
       // докачка оставила бы его пустым навсегда.
-      nextFolderId += 1
-      folderId = nextFolderId
+      folderId = mintFolderId()
     }
 
     usedFolderIds.add(folderId)

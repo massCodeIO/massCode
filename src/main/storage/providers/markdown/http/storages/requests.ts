@@ -18,6 +18,7 @@ import { getVaultPath } from '../../runtime/paths'
 import {
   assertEntityFileWritable,
   markEntityPendingIfEvicted,
+  markEntityPendingIfFileExists,
   throwCloudContentUnavailable,
 } from '../../runtime/shared/cloudGuards'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
@@ -211,7 +212,10 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       // ловится свежим stat. Флаг снимет ресинк после докачки.
       if (request) {
         if (!ensureRequestDetailsLoaded(paths.httpRoot, request)) {
-          request.pendingCloudDownload = true
+          markEntityPendingIfFileExists(
+            path.join(paths.httpRoot, request.filePath),
+            request,
+          )
         }
         else {
           markEntityPendingIfEvicted(

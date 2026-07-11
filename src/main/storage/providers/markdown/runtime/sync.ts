@@ -262,12 +262,18 @@ export function setRuntimeCache(
   return runtimeRef.cache
 }
 
+const vaultReconciler = createVaultReconciler('markdown')
+
 export function resetRuntimeCache(): void {
   flushPendingStateWrites()
+  // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
+  // продолжили бы попытки по неактивному пути и слали storage-synced.
+  const previousVaultPath = runtimeRef.cache?.paths.vaultPath
+  if (previousVaultPath) {
+    vaultReconciler.abandon(previousVaultPath)
+  }
   runtimeRef.cache = null
 }
-
-const vaultReconciler = createVaultReconciler('markdown')
 
 // Полные обходы диска (например, Vault Doctor) допустимы только после
 // фоновой сверки: до неё листинги каталогов могут блокироваться сетью.

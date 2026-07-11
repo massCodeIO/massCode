@@ -85,6 +85,30 @@ describe('syncFoldersStateFromDisk', () => {
     expect(secondStart.folderIdByPath).toEqual({ Go: 6 })
   })
 
+  it('never mints an id that collides with metadata ids on disk', () => {
+    // Счётчик устройства отстаёт от метаданных, пришедших по синку
+    // (counter = 5, а на диске папка с id 6): чеканка для placeholder-папки
+    // не должна выдать занятый id — две папки с одним id смешали бы записи,
+    // а удаление одной унесло бы файлы обеих.
+    const state = createState({ counters: { folderId: 5 } })
+
+    syncFoldersStateFromDisk(
+      state,
+      [
+        // Папка с недокачанной метой обрабатывается ПЕРВОЙ (id чеканится),
+        // папка с meta id 6 — после: оба направления коллизии закрыты.
+        diskFolder('Pending', { unavailable: true }),
+        diskFolder('Synced', { id: 6 }),
+      ],
+      ({ base }) => base,
+    )
+
+    const ids = state.folders.map(folder => folder.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(state.folders.find(f => f.name === 'Synced')?.id).toBe(6)
+    expect(state.folders.find(f => f.name === 'Pending')?.id).toBe(7)
+  })
+
   it('keeps the known id even when metadata is unavailable', () => {
     const state = createState({ folderIdByPath: { Go: 6 } })
 

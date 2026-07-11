@@ -54,6 +54,9 @@ async function materializeDirectoryListings(rootPath: string): Promise<void> {
 }
 
 export interface VaultReconciler {
+  // Останавливает ретраи сверки брошенного корня (смена vault): без отмены
+  // цикл продолжал бы попытки по неактивному пути и слал storage-synced.
+  abandon: (rootPath: string) => void
   begin: (rootPath: string, runSync: () => void) => void
   isReconciled: (rootPath: string) => boolean
 }
@@ -77,12 +80,20 @@ function isCloudFileNotDownloadedError(error: unknown): boolean {
 export function createVaultReconciler(label: string): VaultReconciler {
   const reconciledRoots = new Set<string>()
   const pendingRoots = new Set<string>()
+  const abandonedRoots = new Set<string>()
 
   // В тестах vault всегда локальный, а существующие тесты ожидают
   // синхронное поведение sync-функций.
   const bypass = process.env.VITEST !== undefined
 
   return {
+    abandon(rootPath: string): void {
+      if (pendingRoots.has(rootPath)) {
+        abandonedRoots.add(rootPath)
+        pendingRoots.delete(rootPath)
+      }
+    },
+
     isReconciled(rootPath: string): boolean {
       return bypass || reconciledRoots.has(rootPath)
     },
@@ -93,12 +104,24 @@ export function createVaultReconciler(label: string): VaultReconciler {
       }
 
       pendingRoots.add(rootPath)
+      abandonedRoots.delete(rootPath)
 
       let backoffMs = RECONCILE_RETRY_MS
 
       const attempt = async (): Promise<void> => {
+        if (abandonedRoots.has(rootPath)) {
+          abandonedRoots.delete(rootPath)
+          return
+        }
+
         try {
           await materializeDirectoryListings(rootPath)
+
+          if (abandonedRoots.has(rootPath)) {
+            abandonedRoots.delete(rootPath)
+            return
+          }
+
           runSync()
 
           // Успех фиксируется только после того, как настоящая сверка

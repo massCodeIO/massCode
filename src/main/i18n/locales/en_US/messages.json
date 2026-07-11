@@ -42,6 +42,7 @@
     ],
     "vaultDoctorConflicts": "Vault: {{count}} sync conflict(s) need attention",
     "vaultDoctorReview": "Review",
+    "vaultDoctorNotReady": "Vault is still syncing with cloud storage. Try scanning again in a moment.",
     "cloudFileNotReady": "This item is still syncing from cloud storage. Try again in a moment."
   },
   "error": {

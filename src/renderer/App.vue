@@ -109,34 +109,20 @@ function checkVaultHealth() {
   const { scan } = useVaultDoctor()
 
   // Startup-скан почти всегда стартует раньше конца фоновой сверки vault:
-  // на notReady проверка перепланируется на событие синхронизации, иначе
+  // на notReady проверка повторяется по событию синхронизации, иначе
   // проблемный vault выглядел бы чистым до ручного скана. Fallback-таймер
   // страхует от потерянного события: storage-synced может прийти, пока
   // предыдущий scan ещё выполняется, и его перезапуск ничего не даст.
+  //
+  // Подписка на storage-synced ставится ОДИН раз и не снимается:
+  // contextBridge оборачивает функцию в новый прокси при каждой передаче,
+  // и ipc.removeListener по ссылке не срабатывает — динамическая
+  // add/remove-подписка накапливала бы обработчики на каждый event
+  // (см. комментарий у Editor.vue про removeListeners).
   const VAULT_HEALTH_RETRY_FALLBACK_MS = 15_000
-  let retryOnSynced: (() => void) | null = null
   let retryFallbackTimer: ReturnType<typeof setTimeout> | undefined
-
-  const scheduleRetryOnSynced = () => {
-    if (retryOnSynced) {
-      return
-    }
-
-    retryOnSynced = () => {
-      unscheduleRetryOnSynced()
-      run()
-    }
-    ipc.on('system:storage-synced', retryOnSynced)
-  }
-
-  function unscheduleRetryOnSynced() {
-    if (!retryOnSynced) {
-      return
-    }
-
-    ipc.removeListener('system:storage-synced', retryOnSynced)
-    retryOnSynced = null
-  }
+  let isResolved = false
+  let isRunning = false
 
   const scheduleRetryFallback = () => {
     if (retryFallbackTimer) {
@@ -145,7 +131,7 @@ function checkVaultHealth() {
 
     retryFallbackTimer = setTimeout(() => {
       retryFallbackTimer = undefined
-      run()
+      void run()
     }, VAULT_HEALTH_RETRY_FALLBACK_MS)
   }
 
@@ -156,21 +142,25 @@ function checkVaultHealth() {
     }
   }
 
-  async function run() {
-    try {
-      // Подписка ДО скана: иначе единственное storage-synced могло бы
-      // проскочить между ответом notReady и регистрацией listener'а.
-      scheduleRetryOnSynced()
+  ipc.on('system:storage-synced', () => {
+    void run()
+  })
 
+  async function run() {
+    if (isResolved || isRunning) {
+      return
+    }
+
+    isRunning = true
+    try {
       const data = await scan()
       if (!data || data.notReady) {
-        // Listener остаётся, fallback-таймер гарантирует повтор, даже если
-        // событие уже прошло.
+        // Постоянный listener и fallback-таймер гарантируют повтор.
         scheduleRetryFallback()
         return
       }
 
-      unscheduleRetryOnSynced()
+      isResolved = true
       clearRetryFallback()
 
       if (data.summary.conflicts === 0) {
@@ -197,6 +187,9 @@ function checkVaultHealth() {
     }
     catch {
       // Health check не критичен: при ошибке тихо пропускаем.
+    }
+    finally {
+      isRunning = false
     }
   }
 

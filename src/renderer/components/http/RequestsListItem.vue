@@ -6,6 +6,7 @@ import {
   useHttpApp,
   useHttpEnvironments,
   useHttpRequests,
+  useSonner,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
@@ -169,7 +170,7 @@ async function onRestore() {
 async function onDuplicate() {
   const id = await duplicateHttpRequest(props.request.id)
   if (id) {
-    selectHttpRequest(id)
+    await selectHttpRequest(id)
     focusedRequestId.value = id
   }
 }
@@ -184,6 +185,18 @@ async function onCopyRequest() {
     const { data } = await api.httpRequests.getHttpRequestsById(
       String(props.request.id),
     )
+
+    // Свежий флаг из ответа: файл мог выгрузиться после скана, и preview
+    // скопировался бы без body.
+    if (data.pendingCloudDownload) {
+      useSonner().sonner({
+        id: 'cloud-file-not-ready',
+        message: i18n.t('messages:warning.cloudFileNotReady'),
+        type: 'warning',
+      })
+      return
+    }
+
     copy(buildHttpPreview(data, { variables: previewVariables.value }))
     useDonations().incrementCopy('http')
   }

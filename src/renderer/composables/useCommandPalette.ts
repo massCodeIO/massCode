@@ -1423,7 +1423,9 @@ async function openHttpRequest(request: HttpRequestResult) {
         ? { isDeleted: 1 }
         : { isInbox: 1 },
   )
-  httpData.selectHttpRequest(request.id)
+  // Ожидание фактической смены выбора: история/навигация ниже читают уже
+  // применённое состояние, а не предыдущий запрос.
+  await httpData.selectHttpRequest(request.id)
   await router.push({ name: RouterName.httpSpace })
 }
 

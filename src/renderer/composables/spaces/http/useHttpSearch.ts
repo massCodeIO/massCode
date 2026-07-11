@@ -4,6 +4,7 @@ import {
   getHttpRequests,
   isRestoreStateBlocked,
   requests,
+  saveCurrentRequest,
   selectFirstRequest,
   selectHttpRequest,
 } from './useHttpRequests'
@@ -65,17 +66,27 @@ function selectSearchRequest(index: number) {
 function clearSearch(restoreState = false) {
   const shouldRestore = restoreState && !isRestoreStateBlocked.value
 
-  if (shouldRestore) {
-    restoreHttpStateSnapshot('beforeSearch')
-  }
-
   searchQuery.value = ''
   isSearch.value = false
   searchSelectedIndex.value = -1
 
-  if (shouldRestore) {
-    selectHttpRequest(httpState.requestId)
+  if (!shouldRestore) {
+    return
   }
+
+  // Сначала сохраняется dirty draft открытого (найденного) запроса, и только
+  // потом восстанавливается snapshot: restore меняет httpState.requestId, и
+  // ID-guard сохранения увидел бы расхождение — правки молча погибли бы при
+  // загрузке восстановленного выбора. При неудачном сохранении выбор
+  // остаётся на найденном запросе с правками в редакторе.
+  void (async () => {
+    if (!(await saveCurrentRequest())) {
+      return
+    }
+
+    restoreHttpStateSnapshot('beforeSearch')
+    await selectHttpRequest(httpState.requestId)
+  })()
 }
 
 function resetHttpSearchState() {

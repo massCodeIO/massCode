@@ -8,6 +8,7 @@ import type {
 import { useContentSort } from '@/composables/useContentSort'
 import { useDialog } from '@/composables/useDialog'
 import { useDonations } from '@/composables/useDonations'
+import { useSonner } from '@/composables/useSonner'
 import {
   markPersistedStorageMutation,
   markUserEdit,
@@ -324,9 +325,15 @@ async function loadCurrentRequest(requestId: number) {
       return
     }
 
-    // Транзиентный сбой загрузки не должен очищать форму всё ещё выбранного
-    // запроса: редактор остаётся на прежних данных, повторный клик ретраит.
+    // Транзиентный сбой загрузки: выбор откатывается на запись, которая
+    // фактически осталась в редакторе, иначе подсвеченный элемент и
+    // редактируемая запись разошлись бы, и autosave писал бы правки не в
+    // тот запрос. Повторный клик по нужному элементу ретраит загрузку.
     if (!record) {
+      const previousId = currentRequest.value?.id
+      httpState.requestId = previousId
+      selectedRequestIds.value = previousId !== undefined ? [previousId] : []
+      lastSelectedRequestId.value = previousId
       return
     }
 
@@ -391,7 +398,8 @@ async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
 async function createHttpRequestAndSelect(payload?: Partial<HttpRequestsAdd>) {
   const id = await createHttpRequest(payload)
   if (id) {
-    selectHttpRequest(id)
+    // Фокус ставится после фактической смены выбора, а не параллельно ей.
+    await selectHttpRequest(id)
     await focusRequestNameInput()
   }
 }
@@ -400,6 +408,17 @@ async function duplicateHttpRequest(requestId: number) {
   // Полная запись по id: в списке нет body и description.
   const source = await fetchHttpRequestById(requestId)
   if (!source) {
+    return
+  }
+
+  // Тело pending-запроса ещё не докачано (body: null): копия получилась бы
+  // без body и молча разошлась с оригиналом.
+  if (source.pendingCloudDownload) {
+    useSonner().sonner({
+      id: 'cloud-file-not-ready',
+      message: i18n.t('messages:warning.cloudFileNotReady'),
+      type: 'warning',
+    })
     return
   }
 
@@ -443,18 +462,33 @@ async function duplicateHttpRequest(requestId: number) {
   }
 }
 
-async function updateHttpRequest(requestId: number, data: HttpRequestsUpdate) {
+// Возвращает false при неудачном PATCH: вызывающие потоки (переключение
+// выбора) не должны считать несохранённую правку сохранённой.
+async function updateHttpRequest(
+  requestId: number,
+  data: HttpRequestsUpdate,
+): Promise<boolean> {
   try {
     markPersistedStorageMutation()
     await api.httpRequests.patchHttpRequestsById(String(requestId), data)
+  }
+  catch (error) {
+    console.error(error)
+    return false
+  }
+
+  try {
     await refreshHttpRequests()
     if (currentRequest.value?.id === requestId) {
       await refreshCurrentRequestRecord(requestId)
     }
   }
   catch (error) {
+    // Сама правка уже сохранена: сбой refresh не делает сохранение неудачным.
     console.error(error)
   }
+
+  return true
 }
 
 async function updateHttpRequests(
@@ -464,11 +498,19 @@ async function updateHttpRequests(
   try {
     markPersistedStorageMutation()
 
+    // Ошибка одного элемента (например 503 на pending-записи) не прерывает
+    // batch: остальные элементы обрабатываются, список обновляется в любом
+    // случае, о пропуске сообщает общий 503-тост API-клиента.
     for (const [index, requestId] of requestIds.entries()) {
-      await api.httpRequests.patchHttpRequestsById(
-        String(requestId),
-        data[index],
-      )
+      try {
+        await api.httpRequests.patchHttpRequestsById(
+          String(requestId),
+          data[index],
+        )
+      }
+      catch (error) {
+        console.error(error)
+      }
     }
 
     await refreshHttpRequests()
@@ -497,8 +539,18 @@ async function deleteHttpRequests(requestIds: number[]) {
   try {
     markPersistedStorageMutation()
 
+    // Ошибка одного элемента (например 503 на pending-записи) не прерывает
+    // batch: остальные элементы обрабатываются, список обновляется в любом
+    // случае, о пропуске сообщает общий 503-тост API-клиента.
     for (const requestId of requestIds) {
-      await api.httpRequests.deleteHttpRequestsById(String(requestId))
+      try {
+        await api.httpRequests.deleteHttpRequestsById(String(requestId))
+      }
+      catch (error) {
+        console.error(error)
+        continue
+      }
+
       if (httpState.requestId === requestId) {
         httpState.requestId = undefined
         assignDraft(null)
@@ -629,26 +681,28 @@ export function selectFirstRequest(options?: { folderId?: number | null }) {
     selectHttpRequest(first.id)
   }
   else {
-    httpState.requestId = undefined
-    selectedRequestIds.value = []
-    lastSelectedRequestId.value = undefined
-    assignDraft(null)
+    // Сброс идёт через общий поток выбора: правки draft'а сохраняются до
+    // assignDraft(null), а при неудачном PATCH сброс отменяется (запись
+    // могла просто уйти из текущего фильтра списка).
+    selectHttpRequest(undefined)
   }
 }
 
+// Возвращает Promise завершения перехода: вызывающие потоки (deep links,
+// navigation history, create-and-select, init) могут дождаться фактической
+// смены выбора вместо чтения ещё не обновлённого состояния.
 export function selectHttpRequest(
   requestId: number | undefined,
   withShift = false,
-) {
-  if (requestId === undefined) {
-    httpState.requestId = undefined
-    selectedRequestIds.value = []
-    lastSelectedRequestId.value = undefined
-    assignDraft(null)
-    return
-  }
-
-  if (withShift && httpState.requestId !== undefined && requests.value.length) {
+): Promise<void> {
+  // Расширение выделения shift'ом не меняет открытый draft — выполняется
+  // синхронно и без сохранения.
+  if (
+    withShift
+    && requestId !== undefined
+    && httpState.requestId !== undefined
+    && requests.value.length
+  ) {
     const orderedIds = requests.value.map(r => r.id)
     const rangeSelection = getContiguousSelection(
       orderedIds,
@@ -659,15 +713,48 @@ export function selectHttpRequest(
     if (rangeSelection.length) {
       selectedRequestIds.value = rangeSelection
       lastSelectedRequestId.value = requestId
-      return
+      return Promise.resolve()
     }
+  }
+
+  return applyHttpRequestSelection(requestId)
+}
+
+// Токен перехода взводится ДО первого await: при быстрых кликах A → B → C
+// применяется последний клик, а не последний завершившийся PATCH — устаревший
+// переход после ожидания сохранения обнаруживает новый токен и отменяется.
+let selectionTransitionToken = 0
+
+async function applyHttpRequestSelection(requestId: number | undefined) {
+  const transitionToken = ++selectionTransitionToken
+
+  // Незасейвленные правки текущего draft'а сохраняются ДО смены выбора,
+  // с ожиданием результата: при неудачном PATCH (503 на pending, сеть)
+  // переключение отменяется и правки остаются в редакторе — иначе загрузка
+  // новой записи уничтожила бы несохранённый draft. Заодно исключается
+  // параллельный бег PATCH и GET при повторном клике по той же записи.
+  // О причине отказа сообщает общий 503-тост API-клиента.
+  if (!(await saveCurrentRequest())) {
+    return
+  }
+
+  if (transitionToken !== selectionTransitionToken) {
+    return
+  }
+
+  if (requestId === undefined) {
+    httpState.requestId = undefined
+    selectedRequestIds.value = []
+    lastSelectedRequestId.value = undefined
+    assignDraft(null)
+    return
   }
 
   selectedRequestIds.value = [requestId]
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  void loadCurrentRequest(requestId)
+  await loadCurrentRequest(requestId)
 }
 
 function hasSiblingRequestNameConflict(
@@ -686,15 +773,36 @@ function hasSiblingRequestNameConflict(
   )
 }
 
-async function saveCurrentRequest() {
+// Сохранения сериализуются одной цепочкой: forced save (переключение выбора)
+// и debounced autosave не должны выполняться параллельно — поздний PATCH со
+// старым payload перезаписал бы более свежий. Каждое звено перечитывает
+// dirty-состояние в момент своего выполнения, поэтому дубли схлопываются в
+// no-op.
+let saveChain: Promise<boolean> = Promise.resolve(true)
+
+export function saveCurrentRequest(): Promise<boolean> {
+  const next = saveChain.then(() => performSaveCurrentRequest())
+  saveChain = next.catch(() => false)
+  return next
+}
+
+// false — только когда PATCH реально выполнялся и не удался: правка НЕ
+// сохранена, и уничтожать draft нельзя. Пропуски (чистый draft, невалидное
+// имя, несоответствие выбора) возвращают true — там сохранять нечего.
+async function performSaveCurrentRequest(): Promise<boolean> {
   if (!currentRequest.value || !currentDraft.value)
-    return
+    return true
+  // Autosave пишет только в запись, соответствующую текущему выбору:
+  // при расхождении (сбойное переключение, гонка загрузки) сохранение
+  // ушло бы не в тот запрос.
+  if (httpState.requestId !== currentRequest.value.id)
+    return true
   if (!isCurrentRequestDirty.value)
-    return
+    return true
 
   const draft = currentDraft.value
   if (getEntryNameValidationIssue(draft.name))
-    return
+    return true
   if (
     hasSiblingRequestNameConflict(
       draft.name,
@@ -702,7 +810,7 @@ async function saveCurrentRequest() {
       draft.folderId,
     )
   ) {
-    return
+    return true
   }
 
   const update: HttpRequestsUpdate = {
@@ -719,7 +827,7 @@ async function saveCurrentRequest() {
     description: draft.description,
   }
 
-  await updateHttpRequest(currentRequest.value.id, update)
+  return updateHttpRequest(currentRequest.value.id, update)
 }
 
 function discardCurrentRequestChanges() {
@@ -798,6 +906,7 @@ export function useHttpRequests() {
     createHttpRequestAndSelect,
     currentDraft,
     currentRequest,
+    isCurrentRequestLoading,
     isCurrentRequestLoadingVisible,
     deleteHttpRequest,
     deleteHttpRequests,

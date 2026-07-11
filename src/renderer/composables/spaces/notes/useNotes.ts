@@ -575,11 +575,19 @@ async function updateNote(noteId: number, data: NotesUpdate) {
 async function updateNotes(noteIds: number[], data: NotesUpdate[]) {
   markPersistedStorageMutation()
 
-  await Promise.all(
+  // Ошибка одного элемента (например 503 на pending-записи) не прерывает
+  // batch: остальные применяются, список обновляется в любом случае, о
+  // пропуске сообщает общий 503-тост API-клиента.
+  const results = await Promise.allSettled(
     noteIds.map((noteId, index) =>
       api.notes.patchNotesById(String(noteId), data[index]),
     ),
   )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
 
   await getNotes(queryByLibraryOrFolderOrSearch.value)
   await refreshSelectedNote()
@@ -607,9 +615,16 @@ async function deleteNote(noteId: number) {
 async function deleteNotes(noteIds: number[]) {
   markPersistedStorageMutation()
 
-  await Promise.all(
+  // Ошибка одного элемента не прерывает batch: остальные применяются,
+  // список обновляется в любом случае.
+  const results = await Promise.allSettled(
     noteIds.map(noteId => api.notes.deleteNotesById(String(noteId))),
   )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
 
   await getNotes(queryByLibraryOrFolderOrSearch.value)
 }

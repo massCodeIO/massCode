@@ -32,8 +32,12 @@ function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
 }
 
 export async function normalizeNotesSelectionState() {
+  // Пустые списки — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки (state-файл сам может быть offloaded):
+  // сохранённый выбор не сбрасывается, пока данные не приедут.
   if (
     notesState.tagId
+    && tags.value.length
     && !tags.value.some(tag => tag.id === notesState.tagId)
   ) {
     notesState.tagId = undefined
@@ -43,6 +47,7 @@ export async function normalizeNotesSelectionState() {
 
   if (
     notesState.folderId
+    && orderedFolders.length
     && !orderedFolders.some(folder => folder.id === notesState.folderId)
   ) {
     notesState.folderId = orderedFolders[0]?.id
@@ -50,9 +55,13 @@ export async function normalizeNotesSelectionState() {
 
   await getNotes()
 
+  // Пустой список — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
+  // затёрся бы в store.app и после reconcile не восстановился).
   if (
     notesState.noteId !== undefined
-    && !displayedNotes.value?.some(note => note.id === notesState.noteId)
+    && displayedNotes.value?.length
+    && !displayedNotes.value.some(note => note.id === notesState.noteId)
   ) {
     selectFirstNote()
   }

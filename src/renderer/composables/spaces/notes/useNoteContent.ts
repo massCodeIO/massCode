@@ -12,6 +12,15 @@ const contentUpdateTimers = new Map<number, ReturnType<typeof setTimeout>>()
 const inFlightContentUpdateIds = new Set<number>()
 
 const CONTENT_UPDATE_DEBOUNCE_MS = 500
+const CONTENT_UPDATE_RETRY_MS = 2000
+
+// Ретраится только временный сбой: 503 (файл ещё качается из облака) и
+// сетевые ошибки без ответа. Окончательные отказы (404 удалённой заметки,
+// 400) не зацикливают очередь.
+function isRetriableSaveError(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } })?.response?.status
+  return status === undefined || status === 503
+}
 
 // --- Functions ---
 
@@ -38,7 +47,10 @@ function updateLocalNoteContent(noteId: number, content: string) {
   touchCollection(notesBySearch.value)
 }
 
-function scheduleContentUpdate(noteId: number) {
+function scheduleContentUpdate(
+  noteId: number,
+  delayMs = CONTENT_UPDATE_DEBOUNCE_MS,
+) {
   const currentTimer = contentUpdateTimers.get(noteId)
   if (currentTimer) {
     clearTimeout(currentTimer)
@@ -47,7 +59,7 @@ function scheduleContentUpdate(noteId: number) {
   const timer = setTimeout(() => {
     contentUpdateTimers.delete(noteId)
     void flushContentUpdate(noteId)
-  }, CONTENT_UPDATE_DEBOUNCE_MS)
+  }, delayMs)
 
   contentUpdateTimers.set(noteId, timer)
 }
@@ -61,18 +73,31 @@ async function flushContentUpdate(noteId: number) {
   contentUpdateQueue.delete(noteId)
   inFlightContentUpdateIds.add(noteId)
 
+  let shouldRetry = false
   try {
     markPersistedStorageMutation()
     await api.notes.patchNotesByIdContent(String(noteId), { content })
   }
   catch (error) {
     console.error(error)
+    shouldRetry = isRetriableSaveError(error)
   }
   finally {
     inFlightContentUpdateIds.delete(noteId)
 
+    // Временный сбой (503 на evicted-файле, сеть) возвращает payload в
+    // очередь: набранный текст ретраится до успеха и не гибнет при
+    // hydration refresh. Более свежий ввод, попавший в очередь во время
+    // полёта, приоритетнее возвращаемого.
+    if (shouldRetry && !contentUpdateQueue.has(noteId)) {
+      contentUpdateQueue.set(noteId, content)
+    }
+
     if (contentUpdateQueue.has(noteId)) {
-      scheduleContentUpdate(noteId)
+      scheduleContentUpdate(
+        noteId,
+        shouldRetry ? CONTENT_UPDATE_RETRY_MS : undefined,
+      )
     }
   }
 }

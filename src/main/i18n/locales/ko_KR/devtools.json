@@ -1,0 +1,243 @@
+{
+  "label": "개발자 도구",
+  "generators": {
+    "label": "생성기",
+    "lorem": {
+      "label": "로렘 입숨 생성기",
+      "description": "자리 표시용 텍스트를 생성합니다",
+      "selectType": "유형 선택",
+      "maxCount": "최대 {{count}}",
+      "types": {
+        "words": "단어",
+        "sentences": "문장",
+        "paragraphs": "문단"
+      }
+    },
+    "json": {
+      "label": "JSON 생성기",
+      "description": "다양한 필드 유형으로 무작위 JSON 데이터를 생성합니다",
+      "fields": "필드",
+      "fieldName": "필드 이름",
+      "selectType": "유형 선택",
+      "addField": "필드 추가",
+      "rowCount": "행 수",
+      "maxRows": "최대 1000",
+      "categories": {
+        "general": "일반",
+        "person": "사람",
+        "internet": "인터넷",
+        "location": "위치",
+        "finance": "금융",
+        "commerce": "커머스",
+        "company": "회사",
+        "lorem": "로렘",
+        "date": "날짜",
+        "number": "숫자",
+        "phone": "전화",
+        "image": "이미지"
+      },
+      "types": {
+        "rowNumber": "행 번호",
+        "firstName": "이름",
+        "lastName": "성",
+        "fullName": "전체 이름",
+        "gender": "성별",
+        "jobTitle": "직함",
+        "email": "이메일 주소",
+        "username": "사용자 이름",
+        "password": "비밀번호",
+        "url": "URL",
+        "ipv4": "IP 주소 v4",
+        "ipv6": "IP 주소 v6",
+        "userAgent": "사용자 에이전트",
+        "city": "도시",
+        "country": "국가",
+        "streetAddress": "도로명 주소",
+        "zipCode": "우편번호",
+        "latitude": "위도",
+        "longitude": "경도",
+        "amount": "금액",
+        "currencyCode": "통화 코드",
+        "creditCardNumber": "신용카드 번호",
+        "productName": "제품명",
+        "price": "가격",
+        "department": "부서",
+        "companyName": "회사명",
+        "catchPhrase": "캐치프레이즈",
+        "word": "단어",
+        "sentence": "문장",
+        "paragraph": "문단",
+        "past": "과거 날짜",
+        "future": "미래 날짜",
+        "recent": "최근 날짜",
+        "birthdate": "생년월일",
+        "int": "정수",
+        "float": "부동소수점",
+        "boolean": "불리언",
+        "phoneNumber": "전화번호",
+        "imei": "IMEI",
+        "avatar": "아바타 URL",
+        "imageUrl": "이미지 URL"
+      }
+    }
+  },
+  "converters": {
+    "label": "변환기",
+    "caseConverter": {
+      "label": "케이스 변환기",
+      "description": "텍스트를 다른 케이스로 변환합니다",
+      "caseType": {
+        "uppercase": "대문자",
+        "lowercase": "소문자",
+        "camelcase": "카멜 케이스",
+        "capitalize": "첫 글자 대문자",
+        "constantcase": "상수 케이스",
+        "snakecase": "스네이크 케이스",
+        "kebabcase": "케밥 케이스",
+        "pascalcase": "파스칼 케이스",
+        "dotcase": "닷 케이스",
+        "pathcase": "패스 케이스"
+      }
+    },
+    "textToUnicode": {
+      "label": "텍스트 ↔ 유니코드",
+      "description": "텍스트를 유니코드로, 또는 그 반대로 변환합니다",
+      "modes": {
+        "textToUnicode": "텍스트 → 유니코드",
+        "unicodeToText": "유니코드 → 텍스트"
+      }
+    },
+    "textToAscii": {
+      "label": "텍스트 ↔ ASCII 이진수",
+      "description": "텍스트를 ASCII 이진수로, 또는 그 반대로 변환합니다",
+      "modes": {
+        "textToAscii": "텍스트 → ASCII",
+        "asciiToText": "ASCII → 텍스트"
+      }
+    },
+    "base64": {
+      "label": "Base64 인코더 / 디코더",
+      "description": "텍스트를 Base64로 인코딩하거나 디코딩합니다",
+      "modes": {
+        "textToBase64": "텍스트 → Base64",
+        "base64ToText": "Base64 → 텍스트"
+      }
+    },
+    "jsonToYaml": {
+      "label": "JSON ↔ YAML",
+      "description": "JSON을 YAML로, 또는 그 반대로 변환합니다",
+      "modes": {
+        "jsonToYaml": "JSON → YAML",
+        "yamlToJson": "YAML → JSON"
+      }
+    },
+    "jsonToToml": {
+      "label": "JSON ↔ TOML",
+      "description": "JSON을 TOML로, 또는 그 반대로 변환합니다",
+      "modes": {
+        "jsonToToml": "JSON → TOML",
+        "tomlToJson": "TOML → JSON"
+      }
+    },
+    "jsonToXml": {
+      "label": "JSON ↔ XML",
+      "description": "JSON을 XML로, 또는 그 반대로 변환합니다",
+      "modes": {
+        "jsonToXml": "JSON → XML",
+        "xmlToJson": "XML → JSON"
+      }
+    },
+    "colorConverter": {
+      "label": "색상 변환기",
+      "description": "색상을 다른 형식으로 변환합니다"
+    }
+  },
+  "crypto": {
+    "label": "암호화 / 보안",
+    "hash": {
+      "label": "해시 생성기",
+      "description": "텍스트로부터 해시를 생성합니다"
+    },
+    "hmac": {
+      "label": "HMAC 생성기",
+      "description": "키와 메시지로 구성된 해시 기반 메시지 인증 코드(HMAC)를 생성합니다"
+    },
+    "password": {
+      "label": "비밀번호 생성기",
+      "description": "안전한 비밀번호를 생성합니다"
+    },
+    "uuid": {
+      "label": "UUID 생성기",
+      "description": "범용 고유 식별자(UUID)를 생성합니다"
+    }
+  },
+  "web": {
+    "label": "웹",
+    "urlParser": {
+      "label": "URL 파서",
+      "description": "URL을 구성 요소로 분석합니다"
+    },
+    "urlEncoder": {
+      "label": "URL 인코더 / 디코더",
+      "description": "URL을 인코딩하거나 디코딩합니다",
+      "modes": {
+        "urlEncode": "URL 인코딩",
+        "urlDecode": "URL 디코딩"
+      }
+    },
+    "slugify": {
+      "label": "슬러그화",
+      "description": "텍스트를 URL에 적합한 슬러그로 변환합니다"
+    }
+  },
+  "compare": {
+    "label": "비교",
+    "jsonDiff": {
+      "label": "JSON Diff",
+      "description": "두 JSON 문서 간의 차이를 비교하고 시각화합니다",
+      "original": "원본",
+      "modified": "수정됨",
+      "filters": {
+        "added": "추가됨",
+        "removed": "삭제됨",
+        "modified": "수정됨"
+      },
+      "empty": "두 필드에 JSON을 붙여넣으면 diff가 표시됩니다",
+      "errors": {
+        "invalidJson": "유효하지 않은 JSON",
+        "diffFailed": "diff 계산에 실패했습니다"
+      }
+    }
+  },
+  "form": {
+    "input": "입력",
+    "output": "출력",
+    "inputString": "입력 문자열",
+    "outputString": "출력 문자열",
+    "inputUrl": "입력 URL",
+    "outputUrl": "출력 URL",
+    "parsedUrl": "분석된 URL",
+    "splitQueryString": "쿼리 문자열 분리",
+    "key": "키",
+    "value": "값",
+    "component": "구성 요소",
+    "result": "결과",
+    "secretKey": "비밀 키",
+    "algorithm": "알고리즘",
+    "version": "버전",
+    "amount": "금액",
+    "type": "유형",
+    "length": "길이",
+    "options": "옵션",
+    "numbers": "숫자",
+    "symbols": "기호",
+    "lowercase": "소문자",
+    "uppercase": "대문자",
+    "placeholder": {
+      "text": "텍스트 입력",
+      "value": "값 입력",
+      "secretKey": "비밀 키 입력",
+      "url": "URL 입력"
+    }
+  }
+}

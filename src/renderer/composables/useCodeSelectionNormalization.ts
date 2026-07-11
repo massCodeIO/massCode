@@ -35,22 +35,27 @@ function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
 }
 
 export async function normalizeCodeSelectionState() {
-  // Пустые списки — это либо реально пустой vault, либо provisional-кэш
-  // периода фоновой сверки (state.json сам может быть offloaded):
-  // сохранённый выбор не сбрасывается, пока данные не приедут.
+  const orderedFolders = flattenFolderTree(folders.value)
+
+  // Папки и теги приходят из state.json даже в provisional-кэше: оба списка
+  // пусты одновременно только пока сам state ещё offloaded — в этом окне
+  // сохранённый выбор не трогаем. Если хоть один список непуст, данные
+  // реально загружены, и мёртвые ссылки (тег/папка удалены на другом
+  // устройстве) сбрасываются — иначе фильтр по ним навсегда прятал бы
+  // записи.
+  const hasLoadedTaxonomy = tags.value.length > 0 || orderedFolders.length > 0
+
   if (
     state.tagId
-    && tags.value.length
+    && hasLoadedTaxonomy
     && !tags.value.some(tag => tag.id === state.tagId)
   ) {
     state.tagId = undefined
   }
 
-  const orderedFolders = flattenFolderTree(folders.value)
-
   if (
     state.folderId
-    && orderedFolders.length
+    && hasLoadedTaxonomy
     && !orderedFolders.some(folder => folder.id === state.folderId)
   ) {
     state.folderId = orderedFolders[0]?.id

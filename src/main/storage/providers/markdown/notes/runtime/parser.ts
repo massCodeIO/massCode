@@ -6,7 +6,10 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { enqueueCloudDownload } from '../../cloudDownloads'
+import {
+  enqueueCloudDownload,
+  prioritizeCloudDownload,
+} from '../../cloudDownloads'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import {
@@ -28,8 +31,10 @@ export function readNotesFolderMetadata(
   }
 
   // Недокачанный .meta.yaml — не «метаданных нет»: id папки существует, но
-  // сейчас неизвестен. Явный маркер запрещает вызывающему чеканить новый id.
+  // сейчас неизвестен. Сам файл (крошечный и критичный для стабильности id)
+  // поднимается в начало очереди докачки.
   if (isYamlFileCloudUnavailable(metaPath)) {
+    prioritizeCloudDownload(metaPath)
     return { unavailable: true }
   }
 

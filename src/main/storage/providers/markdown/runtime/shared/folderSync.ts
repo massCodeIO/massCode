@@ -5,7 +5,6 @@ import {
   normalizeNumber,
   normalizePositiveInteger,
 } from '../normalizers'
-import { throwCloudContentUnavailable } from './cloudGuards'
 import { buildFolderPathMap, normalizeFolderOrderIndices } from './folderIndex'
 import { listUserFoldersFromDisk } from './folderScan'
 import { depthOfRelativePath, normalizeDirectoryPath } from './path'
@@ -107,15 +106,13 @@ export function syncFoldersStateFromDisk<
     }
 
     if (!folderId) {
-      // Метаданные папки существуют, но недокачаны из облака (первый запуск
-      // после обновления: в state ещё нет folderIdByPath): чеканка нового id
-      // осиротила бы все записи со старым folderId, а после докачки id
-      // сменился бы ещё раз. Сверка прерывается cloud-ошибкой — reconciler
-      // ретраит её до доступности метаданных (файл уже в очереди докачки).
-      if (metadata.unavailable) {
-        throwCloudContentUnavailable()
-      }
-
+      // Метаданные папки недокачаны (первый запуск после обновления: в state
+      // ещё нет folderIdByPath) — id чеканится, но остаётся стабильным между
+      // перезапусками через персистируемый folderIdByPath. Дочерние записи
+      // получают folderId из пути, поэтому вид согласован; когда meta
+      // докачается, её id победит на следующей сверке и всё сойдётся.
+      // Блокировать всё пространство до докачки нельзя: одна застрявшая
+      // докачка оставила бы его пустым навсегда.
       nextFolderId += 1
       folderId = nextFolderId
     }

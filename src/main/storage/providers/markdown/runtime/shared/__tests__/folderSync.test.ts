@@ -47,31 +47,42 @@ describe('syncFoldersStateFromDisk', () => {
     expect(state.folders[0].id).toBe(3)
   })
 
-  it('refuses to mint a new id when metadata is unavailable and no fallback exists', () => {
+  it('mints a stable id for unavailable metadata and converges to the real one', () => {
     // Первый запуск после обновления со старого state (15f86fd): ни
     // state.folders, ни folderIdByPath ещё нет, а .meta.yaml недокачан.
-    // Чеканка нового id (6 → 7) осиротила бы записи со старым folderId —
-    // сверка обязана прерваться cloud-ошибкой и повториться после докачки.
+    // Id чеканится (блокировать всё пространство до докачки нельзя), но
+    // фиксируется в folderIdByPath и не растёт между перезапусками.
     const state = createState()
-
-    expect(() =>
-      syncFoldersStateFromDisk(
-        state,
-        [diskFolder('Go', { unavailable: true })],
-        ({ base }) => base,
-      ),
-    ).toThrow(/CLOUD_FILE_NOT_DOWNLOADED/)
-    expect(state.counters.folderId).toBe(6)
-
-    // Отсутствующий .meta.yaml (файла реально нет) — легитимно новая папка:
-    // id чеканится как раньше.
-    const freshState = createState()
     syncFoldersStateFromDisk(
-      freshState,
-      [diskFolder('New')],
+      state,
+      [diskFolder('Go', { unavailable: true })],
       ({ base }) => base,
     )
-    expect(freshState.folders[0].id).toBe(7)
+    expect(state.folders[0].id).toBe(7)
+    expect(state.folderIdByPath).toEqual({ Go: 7 })
+
+    // Второй холодный старт (folders снова пусты, meta всё ещё недокачана):
+    // id стабилен, счётчик не растёт.
+    const secondStart = createState({
+      counters: { folderId: state.counters.folderId },
+      folderIdByPath: { ...state.folderIdByPath },
+    })
+    syncFoldersStateFromDisk(
+      secondStart,
+      [diskFolder('Go', { unavailable: true })],
+      ({ base }) => base,
+    )
+    expect(secondStart.folders[0].id).toBe(7)
+    expect(secondStart.counters.folderId).toBe(7)
+
+    // Meta докачалась: её id побеждает, и всё сходится к настоящему.
+    syncFoldersStateFromDisk(
+      secondStart,
+      [diskFolder('Go', { id: 6 })],
+      ({ base }) => base,
+    )
+    expect(secondStart.folders[0].id).toBe(6)
+    expect(secondStart.folderIdByPath).toEqual({ Go: 6 })
   })
 
   it('keeps the known id even when metadata is unavailable', () => {

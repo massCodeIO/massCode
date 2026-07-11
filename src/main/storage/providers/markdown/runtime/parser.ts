@@ -10,7 +10,10 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { enqueueCloudDownload } from '../cloudDownloads'
+import {
+  enqueueCloudDownload,
+  prioritizeCloudDownload,
+} from '../cloudDownloads'
 import {
   LEGACY_FOLDER_META_FILE_NAME,
   META_FILE_NAME,
@@ -39,9 +42,11 @@ export function readFolderMetadata(
   }
 
   // Недокачанный .meta.yaml — не «метаданных нет»: id папки существует, но
-  // сейчас неизвестен. Явный маркер запрещает вызывающему чеканить новый id
-  // (и legacy-миграции — писать поверх плейсхолдера).
+  // сейчас неизвестен. Маркер запрещает legacy-миграции писать поверх
+  // плейсхолдера, а сам файл (крошечный и критичный для стабильности id)
+  // поднимается в начало очереди докачки.
   if (isYamlFileCloudUnavailable(metaPath)) {
+    prioritizeCloudDownload(metaPath)
     return { unavailable: true }
   }
 
@@ -49,6 +54,7 @@ export function readFolderMetadata(
   const legacyData = readYamlObjectFile<MarkdownFolderMetadataFile>(legacyPath)
   if (!legacyData) {
     if (isYamlFileCloudUnavailable(legacyPath)) {
+      prioritizeCloudDownload(legacyPath)
       return { unavailable: true }
     }
     return {}

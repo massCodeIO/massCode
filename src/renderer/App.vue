@@ -108,10 +108,72 @@ function checkVaultHealth() {
   const { sonner } = useSonner()
   const { scan } = useVaultDoctor()
 
-  const run = async () => {
+  // Startup-скан почти всегда стартует раньше конца фоновой сверки vault:
+  // на notReady проверка перепланируется на событие синхронизации, иначе
+  // проблемный vault выглядел бы чистым до ручного скана. Fallback-таймер
+  // страхует от потерянного события: storage-synced может прийти, пока
+  // предыдущий scan ещё выполняется, и его перезапуск ничего не даст.
+  const VAULT_HEALTH_RETRY_FALLBACK_MS = 15_000
+  let retryOnSynced: (() => void) | null = null
+  let retryFallbackTimer: ReturnType<typeof setTimeout> | undefined
+
+  const scheduleRetryOnSynced = () => {
+    if (retryOnSynced) {
+      return
+    }
+
+    retryOnSynced = () => {
+      unscheduleRetryOnSynced()
+      run()
+    }
+    ipc.on('system:storage-synced', retryOnSynced)
+  }
+
+  function unscheduleRetryOnSynced() {
+    if (!retryOnSynced) {
+      return
+    }
+
+    ipc.removeListener('system:storage-synced', retryOnSynced)
+    retryOnSynced = null
+  }
+
+  const scheduleRetryFallback = () => {
+    if (retryFallbackTimer) {
+      clearTimeout(retryFallbackTimer)
+    }
+
+    retryFallbackTimer = setTimeout(() => {
+      retryFallbackTimer = undefined
+      run()
+    }, VAULT_HEALTH_RETRY_FALLBACK_MS)
+  }
+
+  const clearRetryFallback = () => {
+    if (retryFallbackTimer) {
+      clearTimeout(retryFallbackTimer)
+      retryFallbackTimer = undefined
+    }
+  }
+
+  async function run() {
     try {
+      // Подписка ДО скана: иначе единственное storage-synced могло бы
+      // проскочить между ответом notReady и регистрацией listener'а.
+      scheduleRetryOnSynced()
+
       const data = await scan()
-      if (!data || data.summary.conflicts === 0) {
+      if (!data || data.notReady) {
+        // Listener остаётся, fallback-таймер гарантирует повтор, даже если
+        // событие уже прошло.
+        scheduleRetryFallback()
+        return
+      }
+
+      unscheduleRetryOnSynced()
+      clearRetryFallback()
+
+      if (data.summary.conflicts === 0) {
         return
       }
 

@@ -355,6 +355,16 @@ async function scanVaultDoctor() {
   try {
     const data = await scanVault()
 
+    // Vault ещё сверяется с диском: аудит не выполнялся, «чистый» тост был
+    // бы ложным.
+    if (data?.notReady) {
+      sonner({
+        message: i18n.t('messages:warning.vaultDoctorNotReady'),
+        type: 'warning',
+      })
+      return
+    }
+
     if (
       data
       && data.summary.affectedFiles === 0

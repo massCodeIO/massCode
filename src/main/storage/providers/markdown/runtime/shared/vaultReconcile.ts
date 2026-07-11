@@ -80,7 +80,12 @@ function isCloudFileNotDownloadedError(error: unknown): boolean {
 export function createVaultReconciler(label: string): VaultReconciler {
   const reconciledRoots = new Set<string>()
   const pendingRoots = new Set<string>()
-  const abandonedRoots = new Set<string>()
+  // Поколение цикла на корень: abandon() и каждый новый begin() его
+  // инкрементируют, и застрявший в await старый attempt после пробуждения
+  // видит чужое поколение и выходит. Флаг-набор здесь не годится: быстрый
+  // возврат на тот же vault снимал бы отметку до пробуждения старого цикла,
+  // и тот выполнял бы дублирующий runSync с повторным broadcast.
+  const generationByRoot = new Map<string, number>()
 
   // В тестах vault всегда локальный, а существующие тесты ожидают
   // синхронное поведение sync-функций.
@@ -89,7 +94,10 @@ export function createVaultReconciler(label: string): VaultReconciler {
   return {
     abandon(rootPath: string): void {
       if (pendingRoots.has(rootPath)) {
-        abandonedRoots.add(rootPath)
+        generationByRoot.set(
+          rootPath,
+          (generationByRoot.get(rootPath) ?? 0) + 1,
+        )
         pendingRoots.delete(rootPath)
       }
     },
@@ -104,21 +112,23 @@ export function createVaultReconciler(label: string): VaultReconciler {
       }
 
       pendingRoots.add(rootPath)
-      abandonedRoots.delete(rootPath)
+
+      const generation = (generationByRoot.get(rootPath) ?? 0) + 1
+      generationByRoot.set(rootPath, generation)
+      const isStale = (): boolean =>
+        generationByRoot.get(rootPath) !== generation
 
       let backoffMs = RECONCILE_RETRY_MS
 
       const attempt = async (): Promise<void> => {
-        if (abandonedRoots.has(rootPath)) {
-          abandonedRoots.delete(rootPath)
+        if (isStale()) {
           return
         }
 
         try {
           await materializeDirectoryListings(rootPath)
 
-          if (abandonedRoots.has(rootPath)) {
-            abandonedRoots.delete(rootPath)
+          if (isStale()) {
             return
           }
 

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { runtimeRef } from '../cache'
 import { setDatalessProbeForTests } from '../shared/cloudFiles'
+import { assertNoUnknownDomainFiles } from '../shared/foldersStorage'
 import { ensureSnippetContentLoaded, writeSnippetToFile } from '../snippets'
 import { saveState } from '../state'
 import {
@@ -217,22 +218,25 @@ describe('cloud placeholder handling in code runtime', () => {
       return
     }
 
-    writeSnippetToFile(paths, {
-      contents: [],
-      createdAt: 1700000000000,
-      description: null,
-      filePath: '.masscode/inbox/pending.md',
-      folderId: null,
-      id: 3,
-      isDeleted: 0,
-      isFavorites: 0,
-      name: 'pending',
-      pendingCloudDownload: true,
-      tags: [],
-      updatedAt: 1700000000000,
-    })
+    // Содержимое в облаке ещё не скачано: запись уничтожила бы его, а тихий
+    // пропуск дал бы ложный success — правка молча потерялась бы при докачке.
+    expect(() =>
+      writeSnippetToFile(paths, {
+        contents: [],
+        createdAt: 1700000000000,
+        description: null,
+        filePath: '.masscode/inbox/pending.md',
+        folderId: null,
+        id: 3,
+        isDeleted: 0,
+        isFavorites: 0,
+        name: 'pending',
+        pendingCloudDownload: true,
+        tags: [],
+        updatedAt: 1700000000000,
+      }),
+    ).toThrow(/CLOUD_FILE_NOT_DOWNLOADED/)
 
-    // Содержимое в облаке ещё не скачано: запись уничтожила бы его.
     expect(hasPlaceholderSignature(placeholderPath)).toBe(true)
     expect(vi.mocked(enqueueCloudDownload)).toHaveBeenCalledWith(
       placeholderPath,
@@ -276,6 +280,61 @@ describe('cloud placeholder handling in code runtime', () => {
     )
     expect(refreshed?.pendingCloudDownload).toBeFalsy()
     expect(refreshed?.contents[0]?.value).toBe('body')
+  })
+})
+
+describe('assertNoUnknownDomainFiles', () => {
+  it('rejects folder deletion when an unindexed placeholder is inside', () => {
+    const paths = createPaths()
+    const folderRelativePath = 'Folder'
+    const knownPath = writeSnippetFixture(paths, 'Folder/known.md', 1, 'Known')
+
+    // Файл с другого устройства: есть в каталоге, содержимое в облаке,
+    // записи в state нет. Рекурсивное удаление каталога уничтожило бы его.
+    const unknownPath = path.join(paths.vaultPath, 'Folder/unknown.md')
+    makeSparsePlaceholder(unknownPath)
+    if (!hasPlaceholderSignature(unknownPath)) {
+      return
+    }
+
+    expect(() =>
+      assertNoUnknownDomainFiles(
+        paths.vaultPath,
+        [folderRelativePath],
+        new Set(['Folder/known.md']),
+      ),
+    ).toThrow(/CLOUD_FILE_NOT_DOWNLOADED/)
+    expect(vi.mocked(enqueueCloudDownload)).toHaveBeenCalledWith(unknownPath)
+
+    // Известные записи (в том числе pending) не блокируют удаление: их
+    // переносят в trash отдельные preflight'ы вызывающих.
+    makeSparsePlaceholder(knownPath)
+    expect(() =>
+      assertNoUnknownDomainFiles(
+        paths.vaultPath,
+        [folderRelativePath],
+        new Set(['Folder/known.md', 'Folder/unknown.md']),
+      ),
+    ).not.toThrow()
+  })
+
+  it('rejects any unknown markdown file, not only cloud placeholders', () => {
+    const paths = createPaths()
+
+    // Обычный локальный .md без записи в runtime (сбой чтения при скане или
+    // файл создан между сканом и удалением) тоже не должен уничтожаться.
+    writeSnippetFixture(paths, 'Folder/orphan.md', 9, 'Orphan')
+
+    expect(() =>
+      assertNoUnknownDomainFiles(paths.vaultPath, ['Folder'], new Set()),
+    ).toThrow(/CLOUD_FILE_NOT_DOWNLOADED/)
+
+    // Не-доменные файлы (ассеты, служебные) удаление не блокируют.
+    fs.removeSync(path.join(paths.vaultPath, 'Folder/orphan.md'))
+    fs.writeFileSync(path.join(paths.vaultPath, 'Folder/asset.png'), 'bin')
+    expect(() =>
+      assertNoUnknownDomainFiles(paths.vaultPath, ['Folder'], new Set()),
+    ).not.toThrow()
   })
 })
 

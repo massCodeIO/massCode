@@ -14,7 +14,7 @@ import {
   flattenFolderTree,
   getFolderByIdFromTree,
 } from './useHttpFolderTree'
-import { useHttpRequests } from './useHttpRequests'
+import { selectHttpRequest, useHttpRequests } from './useHttpRequests'
 
 export type HttpFolderItem = HttpFoldersResponse[number]
 
@@ -322,8 +322,7 @@ async function updateHttpFolder(folderId: number, data: HttpFoldersUpdate) {
 
 async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
   try {
-    const { currentRequest, getHttpRequests, requests, selectHttpRequest }
-      = useHttpRequests()
+    const { currentRequest, getHttpRequests, requests } = useHttpRequests()
     const selectedRequestId = currentRequest.value?.id
 
     markPersistedStorageMutation()
@@ -339,7 +338,7 @@ async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
       selectedRequestId !== undefined
       && !requests.value.some(request => request.id === selectedRequestId)
     ) {
-      selectHttpRequest(undefined)
+      await selectHttpRequest(undefined)
     }
 
     if (shouldRefresh) {
@@ -395,9 +394,11 @@ async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
   await Promise.all(targetIds.map(id => deleteHttpFolder(id, false)))
   await getHttpFolders(false)
 
-  // Выбранный запрос мог принадлежать удалённой папке: выбор чистится явно,
-  // т.к. selectHttpFolder/clearFolderSelection его больше не сбрасывают.
-  httpState.requestId = undefined
+  // Выбранный запрос мог принадлежать удалённой папке: выбор чистится через
+  // общий selection-поток — он сначала сохраняет dirty draft (запись уехала
+  // в trash, правка сохранится в ней), а прямое обнуление httpState.requestId
+  // рассинхронизировало бы его с currentRequest и молча глушило autosave.
+  await selectHttpRequest(undefined)
 
   const fallbackId = selectedFolderIds.value[0]
   if (fallbackId) {

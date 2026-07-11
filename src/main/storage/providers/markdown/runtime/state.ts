@@ -1,7 +1,10 @@
 import type { MarkdownState, MarkdownStateFile, Paths } from './types'
 import { invalidateRuntimeSearchIndex } from './search'
 import { createStateAdapter } from './shared/stateAdapter'
-import { syncFolderUiWithFolders } from './shared/stateUtils'
+import {
+  syncFolderIdByPathWithFolders,
+  syncFolderUiWithFolders,
+} from './shared/stateUtils'
 import { flushPendingStateWrites } from './shared/stateWriter'
 
 export { flushPendingStateWrites, syncFolderUiWithFolders }
@@ -36,6 +39,9 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
   ],
   toPersistedState: state => ({
     counters: state.counters,
+    // Fallback path → folder id для холодного старта с недокачанными
+    // .meta.yaml (см. syncFolderIdByPathWithFolders).
+    ...(state.folderIdByPath ? { folderIdByPath: state.folderIdByPath } : {}),
     folderUi: state.folderUi,
     // Записи индекса нормализуются до известной схемы: state.json
     // синхронизируется между устройствами и не должен накапливать
@@ -53,6 +59,9 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
 
     return {
       counters: { ...defaults.counters, ...raw.counters },
+      ...(raw.folderIdByPath && typeof raw.folderIdByPath === 'object'
+        ? { folderIdByPath: raw.folderIdByPath }
+        : {}),
       folderUi: (raw.folderUi ?? {}) as MarkdownState['folderUi'],
       folders: legacyFolders,
       snippets: Array.isArray(raw.snippets) ? raw.snippets : [],
@@ -62,6 +71,7 @@ const adapter = createStateAdapter<MarkdownState, MarkdownStateFile, Paths>({
   },
   onBeforeSave: (state) => {
     syncFolderUiWithFolders(state)
+    syncFolderIdByPathWithFolders(state)
     invalidateRuntimeSearchIndex(state)
   },
 })

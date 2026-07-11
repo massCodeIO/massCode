@@ -1,7 +1,6 @@
 import type { FolderDiskEntry, FolderMetadataSyncSource } from './folderTypes'
 import path from 'node:path'
-import fs from 'fs-extra'
-import { toPosixPath } from './path'
+import { readDirEntriesFailClosed, toPosixPath } from './path'
 
 export interface ListUserFoldersOptions<
   TMetadata extends FolderMetadataSyncSource,
@@ -21,11 +20,7 @@ export function listUserFoldersFromDisk<
   const folders: FolderDiskEntry<TMetadata>[] = []
 
   function walk(currentPath: string): void {
-    if (!fs.pathExistsSync(currentPath)) {
-      return
-    }
-
-    const entries = fs.readdirSync(currentPath, { withFileTypes: true })
+    const entries = readDirEntriesFailClosed(currentPath)
 
     for (const entry of entries) {
       if (!entry.isDirectory()) {

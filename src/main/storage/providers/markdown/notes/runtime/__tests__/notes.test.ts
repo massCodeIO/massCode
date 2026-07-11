@@ -3,7 +3,12 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { readNoteFromFile, serializeNote } from '../notes'
+import {
+  buildNoteFromIndexMetadata,
+  buildNoteIndexMetadata,
+  readNoteFromFile,
+  serializeNote,
+} from '../notes'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -256,6 +261,70 @@ describe('readNoteFromFile', () => {
     )
 
     expect(roundTrip?.properties).toEqual(note?.properties)
+  })
+
+  it('keeps exotic YAML properties lossless and index-safe', () => {
+    const paths = createNotesPaths()
+    const relativePath = 'exotic-properties.md'
+    const absolutePath = path.join(paths.notesRoot, relativePath)
+
+    // Валидный YAML: рекурсивный alias даёт циклический объект, timestamp —
+    // Date, .nan — NaN, !!binary — Uint8Array. Цикл без разрыва валил бы
+    // JSON-персист metadata-индекса, а остальные значения должны пережить
+    // и запись обратно во frontmatter, и JSON round-trip индекса без порчи.
+    const source
+      = '---\n'
+        + 'id: 21\n'
+        + 'name: Exotic\n'
+        + 'loop: &a\n'
+        + '  self: *a\n'
+        + 'date: 2024-01-15\n'
+        + 'score: .nan\n'
+        + 'blob: !!binary aGVsbG8=\n'
+        + '---\n'
+        + 'body'
+
+    fs.writeFileSync(absolutePath, source, 'utf8')
+
+    const note = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: 21 },
+      new Map(),
+    )
+
+    expect(note).not.toBeNull()
+    // Цикл разорван, остальные значения сохранены как есть.
+    expect(note?.properties.loop).toEqual({ self: null })
+    expect(note?.properties.date).toBeInstanceOf(Date)
+    expect(Number.isNaN(note?.properties.score)).toBe(true)
+    expect(note?.properties.blob).toBeInstanceOf(Uint8Array)
+
+    // Запись обратно во frontmatter сохраняет семантику значений.
+    fs.writeFileSync(absolutePath, serializeNote(note!), 'utf8')
+    const reread = readNoteFromFile(
+      paths,
+      { filePath: relativePath, id: 21 },
+      new Map(),
+    )
+    expect((reread?.properties.date as Date).getTime()).toBe(
+      (note?.properties.date as Date).getTime(),
+    )
+    expect(Number.isNaN(reread?.properties.score)).toBe(true)
+    expect(reread?.properties.blob).toEqual(note?.properties.blob)
+
+    // JSON round-trip metadata-индекса обратим и не падает.
+    const meta = buildNoteIndexMetadata(note!, { mtimeMs: 1, size: 1 })
+    const persisted = JSON.parse(JSON.stringify(meta))
+    const restored = buildNoteFromIndexMetadata(
+      { filePath: relativePath, id: 21 },
+      persisted,
+    )
+    expect(restored.properties.date).toBeInstanceOf(Date)
+    expect((restored.properties.date as Date).getTime()).toBe(
+      (note?.properties.date as Date).getTime(),
+    )
+    expect(Number.isNaN(restored.properties.score)).toBe(true)
+    expect(restored.properties.blob).toEqual(note?.properties.blob)
   })
 
   it('does not add task fields to plain markdown after normalization', () => {

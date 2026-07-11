@@ -71,6 +71,9 @@ async function setup(options: SetupOptions = {}) {
         deleteSnippetsByIdTagsByTagId: vi.fn(),
         deleteSnippetsTrash: vi.fn(),
         getSnippets,
+        // refreshSelectedSnippet дёргает загрузку полной записи по id:
+        // отсутствие метода давало «зелёные» тесты с TypeError в stderr.
+        getSnippetsById: vi.fn(async () => ({ data: undefined })),
         patchSnippetsById: vi.fn(),
         patchSnippetsByIdContentsByContentId: vi.fn(),
         postSnippets: vi.fn(),

@@ -238,7 +238,7 @@ export async function openHttpRequestDeepLink(
       )
     }
 
-    selectHttpRequest(requestId)
+    await selectHttpRequest(requestId)
     isHttpSpaceInitialized.value = true
   }
   catch (error) {

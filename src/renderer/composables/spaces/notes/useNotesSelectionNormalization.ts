@@ -32,17 +32,27 @@ function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
 }
 
 export async function normalizeNotesSelectionState() {
+  const orderedFolders = flattenFolderTree(folders.value)
+
+  // Папки и теги приходят из state даже в provisional-кэше: оба списка
+  // пусты одновременно только пока сам state ещё offloaded — в этом окне
+  // сохранённый выбор не трогаем. Если хоть один список непуст, данные
+  // реально загружены, и мёртвые ссылки (тег/папка удалены на другом
+  // устройстве) сбрасываются — иначе фильтр по ним навсегда прятал бы
+  // записи.
+  const hasLoadedTaxonomy = tags.value.length > 0 || orderedFolders.length > 0
+
   if (
     notesState.tagId
+    && hasLoadedTaxonomy
     && !tags.value.some(tag => tag.id === notesState.tagId)
   ) {
     notesState.tagId = undefined
   }
 
-  const orderedFolders = flattenFolderTree(folders.value)
-
   if (
     notesState.folderId
+    && hasLoadedTaxonomy
     && !orderedFolders.some(folder => folder.id === notesState.folderId)
   ) {
     notesState.folderId = orderedFolders[0]?.id
@@ -50,9 +60,13 @@ export async function normalizeNotesSelectionState() {
 
   await getNotes()
 
+  // Пустой список — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
+  // затёрся бы в store.app и после reconcile не восстановился).
   if (
     notesState.noteId !== undefined
-    && !displayedNotes.value?.some(note => note.id === notesState.noteId)
+    && displayedNotes.value?.length
+    && !displayedNotes.value.some(note => note.id === notesState.noteId)
   ) {
     selectFirstNote()
   }

@@ -127,6 +127,14 @@ export function useVaultDoctor() {
 
     try {
       const { data } = await api.system.postSystemVaultDoctorPreview({})
+
+      // Пространства ещё сверяются с диском: аудит не выполнялся, пустой
+      // ответ не кэшируется — иначе секция Doctor показала бы ложно-чистый
+      // vault до ручного повторного скана.
+      if (data.notReady) {
+        return data
+      }
+
       resetDecisions()
       preselectDecisions(data)
       report.value = data

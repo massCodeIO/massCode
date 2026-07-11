@@ -45,7 +45,9 @@ export function createTagsStorage(): TagsStorage {
         snippets,
         id,
         (snippet: MarkdownSnippet) => {
-          writeSnippetToFile(paths, snippet)
+          // Bulk-очистка тега: недокачанный файл пропускается, устаревший id
+          // в frontmatter безвреден (state — источник истины по тегам).
+          writeSnippetToFile(paths, snippet, { skipIfUnavailable: true })
         },
       )
       if (!result.deleted) {

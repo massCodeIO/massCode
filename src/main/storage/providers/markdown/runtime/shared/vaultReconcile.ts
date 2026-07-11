@@ -37,7 +37,11 @@ async function materializeDirectoryListings(rootPath: string): Promise<void> {
     try {
       entries = await fsp.readdir(currentPath, { withFileTypes: true })
     }
-    catch {
+    catch (error) {
+      // Пропущенный каталог не валит прогрев: настоящий скан в runSync
+      // прочитает его сам (или упадёт, и attempt ретрайнет). Но след в
+      // логе нужен — молча неполный обход маскировал бы проблемы диска.
+      log('storage:reconcile:readdir', error)
       continue
     }
 
@@ -50,6 +54,9 @@ async function materializeDirectoryListings(rootPath: string): Promise<void> {
 }
 
 export interface VaultReconciler {
+  // Останавливает ретраи сверки брошенного корня (смена vault): без отмены
+  // цикл продолжал бы попытки по неактивному пути и слал storage-synced.
+  abandon: (rootPath: string) => void
   begin: (rootPath: string, runSync: () => void) => void
   isReconciled: (rootPath: string) => boolean
 }
@@ -57,6 +64,11 @@ export interface VaultReconciler {
 // Пауза перед повтором сверки, когда её заблокировал недокачанный
 // служебный файл (state.json / .state.yaml сам может быть плейсхолдером).
 const RECONCILE_RETRY_MS = 3_000
+
+// Прочие ошибки (EIO, битый state и т.п.) ретраятся с экспоненциальным
+// backoff: transient-сбой не должен навсегда оставлять пространство на
+// пустом provisional-кэше (повторного begin() при живом кэше уже не будет).
+const RECONCILE_MAX_RETRY_MS = 60_000
 
 function isCloudFileNotDownloadedError(error: unknown): boolean {
   return (
@@ -68,12 +80,28 @@ function isCloudFileNotDownloadedError(error: unknown): boolean {
 export function createVaultReconciler(label: string): VaultReconciler {
   const reconciledRoots = new Set<string>()
   const pendingRoots = new Set<string>()
+  // Поколение цикла на корень: abandon() и каждый новый begin() его
+  // инкрементируют, и застрявший в await старый attempt после пробуждения
+  // видит чужое поколение и выходит. Флаг-набор здесь не годится: быстрый
+  // возврат на тот же vault снимал бы отметку до пробуждения старого цикла,
+  // и тот выполнял бы дублирующий runSync с повторным broadcast.
+  const generationByRoot = new Map<string, number>()
 
   // В тестах vault всегда локальный, а существующие тесты ожидают
   // синхронное поведение sync-функций.
   const bypass = process.env.VITEST !== undefined
 
   return {
+    abandon(rootPath: string): void {
+      if (pendingRoots.has(rootPath)) {
+        generationByRoot.set(
+          rootPath,
+          (generationByRoot.get(rootPath) ?? 0) + 1,
+        )
+        pendingRoots.delete(rootPath)
+      }
+    },
+
     isReconciled(rootPath: string): boolean {
       return bypass || reconciledRoots.has(rootPath)
     },
@@ -85,9 +113,25 @@ export function createVaultReconciler(label: string): VaultReconciler {
 
       pendingRoots.add(rootPath)
 
+      const generation = (generationByRoot.get(rootPath) ?? 0) + 1
+      generationByRoot.set(rootPath, generation)
+      const isStale = (): boolean =>
+        generationByRoot.get(rootPath) !== generation
+
+      let backoffMs = RECONCILE_RETRY_MS
+
       const attempt = async (): Promise<void> => {
+        if (isStale()) {
+          return
+        }
+
         try {
           await materializeDirectoryListings(rootPath)
+
+          if (isStale()) {
+            return
+          }
+
           runSync()
 
           // Успех фиксируется только после того, как настоящая сверка
@@ -108,8 +152,14 @@ export function createVaultReconciler(label: string): VaultReconciler {
             return
           }
 
+          // Любая другая ошибка тоже ретраится (с backoff): отказ здесь
+          // означал бы пустое пространство до перезапуска приложения, так
+          // как повторного begin() при существующем кэше не происходит.
           log(`storage:${label}:reconcile`, error)
-          pendingRoots.delete(rootPath)
+          setTimeout(() => {
+            void attempt()
+          }, backoffMs)
+          backoffMs = Math.min(backoffMs * 2, RECONCILE_MAX_RETRY_MS)
         }
       }
 

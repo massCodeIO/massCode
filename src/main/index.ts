@@ -19,6 +19,14 @@ import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
+// Отладка renderer через Chrome DevTools Protocol (только по явному env).
+if (process.env.MASSCODE_REMOTE_DEBUG_PORT) {
+  app.commandLine.appendSwitch(
+    'remote-debugging-port',
+    process.env.MASSCODE_REMOTE_DEBUG_PORT,
+  )
+}
+
 const isDev = process.env.NODE_ENV === 'development'
 const gotTheLock = app.requestSingleInstanceLock()
 const lazyRequire = createRequire(__filename)

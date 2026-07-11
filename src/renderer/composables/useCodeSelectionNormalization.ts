@@ -35,14 +35,27 @@ function flattenFolderTree(nodes?: FolderNode[], acc: FolderNode[] = []) {
 }
 
 export async function normalizeCodeSelectionState() {
-  if (state.tagId && !tags.value.some(tag => tag.id === state.tagId)) {
+  const orderedFolders = flattenFolderTree(folders.value)
+
+  // Папки и теги приходят из state.json даже в provisional-кэше: оба списка
+  // пусты одновременно только пока сам state ещё offloaded — в этом окне
+  // сохранённый выбор не трогаем. Если хоть один список непуст, данные
+  // реально загружены, и мёртвые ссылки (тег/папка удалены на другом
+  // устройстве) сбрасываются — иначе фильтр по ним навсегда прятал бы
+  // записи.
+  const hasLoadedTaxonomy = tags.value.length > 0 || orderedFolders.length > 0
+
+  if (
+    state.tagId
+    && hasLoadedTaxonomy
+    && !tags.value.some(tag => tag.id === state.tagId)
+  ) {
     state.tagId = undefined
   }
 
-  const orderedFolders = flattenFolderTree(folders.value)
-
   if (
     state.folderId
+    && hasLoadedTaxonomy
     && !orderedFolders.some(folder => folder.id === state.folderId)
   ) {
     state.folderId = orderedFolders[0]?.id
@@ -50,9 +63,13 @@ export async function normalizeCodeSelectionState() {
 
   await getSnippets()
 
+  // Пустой список — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
+  // затёрся бы в store.app и после reconcile не восстановился).
   if (
     state.snippetId !== undefined
-    && !displayedSnippets.value?.some(snippet => snippet.id === state.snippetId)
+    && displayedSnippets.value?.length
+    && !displayedSnippets.value.some(snippet => snippet.id === state.snippetId)
   ) {
     selectFirstSnippet()
   }

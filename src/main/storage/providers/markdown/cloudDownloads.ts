@@ -317,7 +317,13 @@ function isSameProbe(a: StableProbe | null, b: StableProbe): boolean {
 function startDownload(absolutePath: string, attempts: number): void {
   let readerChild: ChildProcess | null = null
 
-  if (isICloudPath(absolutePath)) {
+  // В режиме симуляции (MASSCODE_SIMULATE_CLOUD_PLACEHOLDERS) «докачку»
+  // выполняет внешний скрипт удалением сайдкара: приложение только поллит
+  // готовность, не запуская brctl/reader.
+  if (process.env.MASSCODE_SIMULATE_CLOUD_PLACEHOLDERS === '1') {
+    // Поллинг ниже определит готовность.
+  }
+  else if (isICloudPath(absolutePath)) {
     spawnBrctlDownload(absolutePath)
   }
   else {

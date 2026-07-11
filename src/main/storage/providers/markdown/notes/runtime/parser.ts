@@ -6,10 +6,16 @@ import type {
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
-import { enqueueCloudDownload } from '../../cloudDownloads'
+import {
+  enqueueCloudDownload,
+  prioritizeCloudDownload,
+} from '../../cloudDownloads'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
-import { readYamlObjectFile } from '../../runtime/shared/yaml'
+import {
+  isYamlFileCloudUnavailable,
+  readYamlObjectFile,
+} from '../../runtime/shared/yaml'
 import { META_FILE_NAME } from './constants'
 
 export function readNotesFolderMetadata(
@@ -22,6 +28,14 @@ export function readNotesFolderMetadata(
   const metaData = readYamlObjectFile<NotesFolderMetadataFile>(metaPath)
   if (metaData) {
     return metaData
+  }
+
+  // Недокачанный .meta.yaml — не «метаданных нет»: id папки существует, но
+  // сейчас неизвестен. Сам файл (крошечный и критичный для стабильности id)
+  // поднимается в начало очереди докачки.
+  if (isYamlFileCloudUnavailable(metaPath)) {
+    prioritizeCloudDownload(metaPath)
+    return { unavailable: true }
   }
 
   return {}

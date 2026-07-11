@@ -15,6 +15,10 @@ import fs from 'fs-extra'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
+  assertEntityFileWritable,
+  throwCloudContentUnavailable,
+} from '../../runtime/shared/cloudGuards'
+import {
   buildFolderPathMap,
   collectDescendantIds,
   getNextFolderOrder,
@@ -22,6 +26,7 @@ import {
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
+  assertNoUnknownDomainFiles,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
@@ -39,10 +44,13 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../../runtime/validation'
-import { writeRequestFile } from '../runtime/parser'
+import {
+  ensureRequestDetailsLoaded,
+  writeRequestFile,
+} from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
-import { getHttpRuntimeCache } from '../runtime/sync'
+import { getHttpRuntimeCache, isHttpVaultDiskReady } from '../runtime/sync'
 
 function findHttpFolderById(
   folders: HttpFolderRecord[],
@@ -195,6 +203,20 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
       input: HttpFolderUpdateInput,
     ): HttpFolderUpdateResult {
       const paths = resolvePaths()
+
+      // Rename/move каталога до завершения фоновой сверки работал бы по
+      // пустому provisional-списку запросов: файлы переместились бы на
+      // диске, а index paths остались бы старыми.
+      if (
+        (input.name !== undefined || input.parentId !== undefined)
+        && !isHttpVaultDiskReady(paths)
+      ) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder rename or move is not available yet',
+        )
+      }
+
       const cache = getHttpRuntimeCache(paths)
       const { state } = cache
       const folder = findHttpFolderById(state.folders, id)
@@ -318,6 +340,17 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
 
     deleteFolder(id: number) {
       const paths = resolvePaths()
+
+      // До завершения фоновой сверки runtime-кэш provisional: список
+      // запросов пуст, перенос содержимого папки в trash ничего бы не нашёл,
+      // а removeFolderPathsFromDisk физически уничтожил бы файлы на диске.
+      if (!isHttpVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder deletion is not available yet',
+        )
+      }
+
       const cache = getHttpRuntimeCache(paths)
       const { state } = cache
       const folder = findHttpFolderById(state.folders, id)
@@ -329,11 +362,46 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
       const descendantIds = collectDescendantIds(state.folders, id)
       descendantIds.add(id)
 
+      // Trash-маркер запроса — frontmatter isDeleted, а не путь: перенос
+      // недокачанного файла без перезаписи frontmatter «воскресил» бы запрос
+      // после докачки. Preflight выполняется до первой мутации в две фазы:
+      // сначала eager-дочитка body/description всех записей, затем свежий
+      // stat всех файлов (флаг pendingCloudDownload мог устареть после
+      // eviction) — так окно между проверкой и мутацией не растягивается на
+      // гидрацию соседей.
+      const affectedRecords = [...cache.requestById.values()].filter(
+        record =>
+          record.folderId !== null && descendantIds.has(record.folderId),
+      )
+      for (const record of affectedRecords) {
+        if (!ensureRequestDetailsLoaded(paths.httpRoot, record)) {
+          throwCloudContentUnavailable()
+        }
+      }
+
       const folderPathMap = buildFolderPathMap(state.folders)
       const folderPathsToDelete = getFolderPathsByDepth(
         folderPathMap,
         descendantIds,
       )
+
+      // Доменный .md без записи в runtime (плейсхолдер с другого устройства,
+      // сбой чтения при скане) физически уничтожился бы вместе с каталогом:
+      // удаление отклоняется целиком. Обход стартует с корня удаляемой папки
+      // и идёт до финальной stat-фазы, чтобы не расширять окно до мутации.
+      const topFolderPath = folderPathMap.get(id)
+      assertNoUnknownDomainFiles(
+        paths.httpRoot,
+        topFolderPath ? [topFolderPath] : [],
+        new Set(affectedRecords.map(record => record.filePath)),
+      )
+
+      for (const record of affectedRecords) {
+        assertEntityFileWritable(
+          path.join(paths.httpRoot, record.filePath),
+          record,
+        )
+      }
 
       for (const record of cache.requestById.values()) {
         if (record.folderId !== null && descendantIds.has(record.folderId)) {

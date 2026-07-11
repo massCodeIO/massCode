@@ -1,5 +1,6 @@
 import type { Stats } from 'node:fs'
 import { spawnSync } from 'node:child_process'
+import path from 'node:path'
 import process from 'node:process'
 import fs from 'fs-extra'
 
@@ -24,6 +25,22 @@ let datalessProbeOverride: DatalessProbe | null = null
 
 export function setDatalessProbeForTests(probe: DatalessProbe | null): void {
   datalessProbeOverride = probe
+}
+
+// Ручная симуляция облачного vault без iCloud (только для отладки
+// cloud-потоков): файл считается плейсхолдером, пока рядом лежит скрытый
+// сайдкар `.<имя>.cloudstub`. «Докачка» симулируется удалением сайдкара —
+// содержимое файла при этом настоящее, и гидрация работает end-to-end.
+const simulateCloudPlaceholders
+  = process.env.MASSCODE_SIMULATE_CLOUD_PLACEHOLDERS === '1'
+
+function hasSimulatedCloudStub(absolutePath: string): boolean {
+  return fs.existsSync(
+    path.join(
+      path.dirname(absolutePath),
+      `.${path.basename(absolutePath)}.cloudstub`,
+    ),
+  )
 }
 
 // Файлы, у которых сигнатура плейсхолдера (size > 0, blocks === 0) оказалась
@@ -109,7 +126,11 @@ const PRIME_CHUNK_SIZE = 400
 // маппинг делается по индексу; при любом сбое чанк просто не праймится и
 // файлы проверяются лениво по одному.
 export function primeDatalessChecks(absolutePaths: string[]): void {
-  if (process.platform !== 'darwin' || datalessProbeOverride) {
+  if (
+    process.platform !== 'darwin'
+    || datalessProbeOverride
+    || simulateCloudPlaceholders
+  ) {
     return
   }
 
@@ -190,6 +211,16 @@ export function isCloudPlaceholderStats(stats: Stats): boolean {
 export function getFileAvailability(absolutePath: string): FileAvailability {
   try {
     const stats = fs.statSync(absolutePath)
+
+    if (simulateCloudPlaceholders) {
+      return {
+        exists: stats.isFile() || stats.isDirectory(),
+        isCloudPlaceholder:
+          stats.isFile() && hasSimulatedCloudStub(absolutePath),
+        stats,
+      }
+    }
+
     let isCloudPlaceholder = hasPlaceholderSignature(stats)
 
     if (isCloudPlaceholder) {

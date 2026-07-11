@@ -87,6 +87,9 @@ const vaultDoctorInput = t.Object({
 const vaultDoctorResponse = t.Object({
   conflictGroups: t.Array(vaultDoctorConflictGroup),
   items: t.Array(vaultDoctorItem),
+  // Запрошенные пространства ещё сверяются с диском после открытия vault:
+  // аудит не выполнялся, пустой результат нельзя трактовать как чистый.
+  notReady: t.Optional(t.Boolean()),
   summary: t.Object({
     affectedFiles: t.Number(),
     blocked: t.Number(),

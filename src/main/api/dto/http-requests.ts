@@ -96,9 +96,10 @@ const httpRequestItem = t.Object({
   updatedAt: t.Number(),
 })
 
-// Список не сериализует body и description: полная запись выбранного
-// запроса загружается через GET /http-requests/:id, а тела остаются
-// ленивыми на диске до первого обращения.
+// Список не сериализует body: полная запись выбранного запроса загружается
+// через GET /http-requests/:id, а тела остаются ленивыми на диске до
+// первого обращения. description лежит в metadata-индексе и отдаётся
+// списком (совместимость с клиентами v5.8).
 const httpRequestListItem = t.Object({
   id: t.Number(),
   name: t.String(),
@@ -110,6 +111,7 @@ const httpRequestListItem = t.Object({
   bodyType: httpBodyType,
   formData: t.Array(httpFormDataEntry),
   auth: httpAuth,
+  description: t.String(),
   filePath: t.String(),
   isFavorites: t.Number(),
   isDeleted: t.Number(),

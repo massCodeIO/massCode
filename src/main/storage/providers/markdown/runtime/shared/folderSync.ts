@@ -25,6 +25,10 @@ export interface FolderSyncState<TFolder extends SyncFolderBase> {
   counters: {
     folderId: number
   }
+  // Персистируемый fallback path → id (см. syncFolderIdByPathWithFolders):
+  // после холодного старта state.folders пуст, и без него недокачанный
+  // .meta.yaml приводил бы к чеканке нового id для существующей папки.
+  folderIdByPath?: Record<string, number>
   folderUi: Record<string, { isOpen?: unknown }>
   folders: TFolder[]
 }
@@ -50,8 +54,14 @@ export function syncFoldersStateFromDisk<
   const oldFoldersById = new Map<number, TFolder>(
     state.folders.map(folder => [folder.id, folder]),
   )
+
+  // Путь → id: живые folders приоритетнее персистированного fallback'а
+  // (он нужен после холодного старта, когда state.folders ещё пуст, а
+  // .meta.yaml каталога может быть недокачан).
+  const oldFolderIdByPath = new Map<string, number>(
+    Object.entries(state.folderIdByPath ?? {}),
+  )
   const oldFolderPathMap = buildFolderPathMap(state.folders)
-  const oldFolderIdByPath = new Map<string, number>()
   oldFolderPathMap.forEach((folderPath, folderId) => {
     oldFolderIdByPath.set(folderPath, folderId)
   })
@@ -75,6 +85,31 @@ export function syncFoldersStateFromDisk<
     ...state.folders.map(folder => folder.id),
   )
 
+  // Все id из метаданных на диске резервируются заранее: счётчик в state
+  // может отставать от них (папка пришла по синку с другого устройства), и
+  // слепая чеканка выдала бы id, который занят или будет занят папкой ниже
+  // по списку — две папки с одним id смешали бы записи, а удаление одной
+  // унесло бы файлы обеих.
+  const reservedMetadataIds = new Set<number>()
+  for (const diskFolder of orderedDiskFolders) {
+    const metadataId = normalizePositiveInteger(
+      diskFolder.metadata.id ?? diskFolder.metadata.masscode_id,
+    )
+    if (metadataId) {
+      reservedMetadataIds.add(metadataId)
+    }
+  }
+
+  const mintFolderId = (): number => {
+    do {
+      nextFolderId += 1
+    } while (
+      usedFolderIds.has(nextFolderId)
+      || reservedMetadataIds.has(nextFolderId)
+    )
+    return nextFolderId
+  }
+
   for (const diskFolder of orderedDiskFolders) {
     const { metadata } = diskFolder
     const folderPath = diskFolder.path
@@ -96,8 +131,14 @@ export function syncFoldersStateFromDisk<
     }
 
     if (!folderId) {
-      nextFolderId += 1
-      folderId = nextFolderId
+      // Метаданные папки недокачаны (первый запуск после обновления: в state
+      // ещё нет folderIdByPath) — id чеканится, но остаётся стабильным между
+      // перезапусками через персистируемый folderIdByPath. Дочерние записи
+      // получают folderId из пути, поэтому вид согласован; когда meta
+      // докачается, её id победит на следующей сверке и всё сойдётся.
+      // Блокировать всё пространство до докачки нельзя: одна застрявшая
+      // докачка оставила бы его пустым навсегда.
+      folderId = mintFolderId()
     }
 
     usedFolderIds.add(folderId)
@@ -154,6 +195,14 @@ export function syncFoldersStateFromDisk<
   normalizeFolderOrderIndices(nextFolders)
   state.folders = nextFolders
   state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
+
+  // Свежая карта path → id уходит в state как fallback для следующего
+  // холодного старта.
+  const nextFolderIdByPath: Record<string, number> = {}
+  pathToFolderId.forEach((folderId, folderPath) => {
+    nextFolderIdByPath[folderPath] = folderId
+  })
+  state.folderIdByPath = nextFolderIdByPath
 }
 
 export function syncFoldersStateFromDiskAtRoot<

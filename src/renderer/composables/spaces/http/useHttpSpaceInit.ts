@@ -61,12 +61,15 @@ async function refreshHttpSpaceFromDisk() {
     persistedRequestId !== undefined
     && requests.value.some(r => r.id === persistedRequestId)
   ) {
-    selectHttpRequest(persistedRequestId)
+    await selectHttpRequest(persistedRequestId)
     return
   }
 
-  if (persistedRequestId !== undefined) {
-    selectHttpRequest(undefined)
+  // Пустой список — это либо реально пустой vault, либо provisional-кэш
+  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
+  // затёрся бы в store.app и после reconcile не восстановился).
+  if (persistedRequestId !== undefined && requests.value.length) {
+    await selectHttpRequest(undefined)
   }
 }
 

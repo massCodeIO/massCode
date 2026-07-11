@@ -1,6 +1,9 @@
 import path from 'node:path'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { assertVaultNotHydrating, throwStorageError } from '../validation'
+import { getFileAvailability } from './cloudFiles'
+import { throwCloudContentUnavailable } from './cloudGuards'
 import {
   buildFolderTree,
   collectDescendantIds,
@@ -10,7 +13,7 @@ import {
   sortFoldersForTree,
   type WithChildren,
 } from './folderIndex'
-import { depthOfRelativePath } from './path'
+import { depthOfRelativePath, toPosixPath } from './path'
 
 export function getFoldersSortedByCreatedAt<
   T extends {
@@ -106,6 +109,74 @@ export function getFolderPathsByDepth(
     .map(folderId => folderPathMap.get(folderId))
     .filter((folderPath): folderPath is string => !!folderPath)
     .sort((a, b) => depthOfRelativePath(b) - depthOfRelativePath(a))
+}
+
+// Каталог удаляемой папки может содержать доменные .md-файлы, которых нет в
+// runtime: облачный плейсхолдер с другого устройства, файл со сбоем чтения
+// при скане или созданный между сканом и удалением. Рекурсивное удаление
+// физически уничтожило бы содержимое, которое пользователь даже не видел, —
+// такое удаление отклоняется целиком (fail closed: ошибка обхода тоже
+// блокирует, безопасно игнорируется только подтверждённый ENOENT). Известные
+// дочерние записи проверяются отдельными preflight'ами вызывающих;
+// не-доменные файлы (ассеты, служебные .meta.yaml) сканом не индексируются
+// и удаление не блокируют — как и раньше.
+export function assertNoUnknownDomainFiles(
+  rootPath: string,
+  folderPaths: string[],
+  knownRelativeFilePaths: ReadonlySet<string>,
+): void {
+  const queue = folderPaths.map(folderPath =>
+    path.join(rootPath, folderPath),
+  )
+
+  while (queue.length > 0) {
+    const currentPath = queue.pop()!
+
+    let entries
+    try {
+      entries = fs.readdirSync(currentPath, { withFileTypes: true })
+    }
+    catch (error) {
+      // Каталог мог исчезнуть между построением списка и обходом; любая
+      // другая ошибка (EIO, EACCES) означает, что содержимое неизвестно —
+      // удалять его вслепую нельзя.
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        continue
+      }
+      throw error
+    }
+
+    for (const entry of entries) {
+      const absolutePath = path.join(currentPath, entry.name)
+
+      // Семантика доменного файла зеркалит scanner (listMarkdownFiles):
+      // скрытые каталоги и файлы, как и не-lowercase `.md`, сканом не
+      // индексируются — считать их доменными значило бы навсегда блокировать
+      // удаление папки файлом, который никогда не появится в приложении.
+      if (entry.name.startsWith('.')) {
+        continue
+      }
+
+      if (entry.isDirectory()) {
+        queue.push(absolutePath)
+        continue
+      }
+
+      if (!entry.isFile() || !entry.name.endsWith('.md')) {
+        continue
+      }
+
+      const relativePath = toPosixPath(path.relative(rootPath, absolutePath))
+      if (knownRelativeFilePaths.has(relativePath)) {
+        continue
+      }
+
+      if (getFileAvailability(absolutePath).isCloudPlaceholder) {
+        enqueueCloudDownload(absolutePath)
+      }
+      throwCloudContentUnavailable()
+    }
+  }
 }
 
 export function removeFolderPathsFromDisk(

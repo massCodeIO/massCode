@@ -14,6 +14,7 @@ import {
   getPaths,
   getRuntimeCache,
   getVaultPath,
+  isCodeVaultDiskReady,
   normalizeDirectoryPath,
   normalizeFlag,
   persistSnippet,
@@ -26,6 +27,7 @@ import {
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
+  assertNoUnknownDomainFiles,
   createFolderInStateAndDisk,
   getFolderPathsByDepth,
   getFoldersSortedByCreatedAt,
@@ -96,6 +98,20 @@ export function createFoldersStorage(): FoldersStorage {
     },
     updateFolder: (id, input): FolderUpdateResult => {
       const paths = getPaths(getVaultPath())
+
+      // Rename/move каталога до завершения фоновой сверки работал бы по
+      // пустому provisional-списку записей: файлы переместились бы на диске,
+      // а index paths и связи остались бы старыми.
+      if (
+        ('name' in input || 'parentId' in input)
+        && !isCodeVaultDiskReady(paths)
+      ) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder rename or move is not available yet',
+        )
+      }
+
       const { state, snippets } = getRuntimeCache(paths)
 
       const folder = findFolderById(state, id)
@@ -242,6 +258,17 @@ export function createFoldersStorage(): FoldersStorage {
     },
     deleteFolder: (id) => {
       const paths = getPaths(getVaultPath())
+
+      // До завершения фоновой сверки runtime-кэш provisional: список записей
+      // пуст, перенос содержимого папки в trash ничего бы не нашёл, а
+      // removeFolderPathsFromDisk физически уничтожил бы файлы на диске.
+      if (!isCodeVaultDiskReady(paths)) {
+        throwStorageError(
+          'VAULT_HYDRATING',
+          'Vault is still syncing, folder deletion is not available yet',
+        )
+      }
+
       const { state, snippets } = getRuntimeCache(paths)
 
       const folder = findFolderById(state, id)
@@ -253,6 +280,32 @@ export function createFoldersStorage(): FoldersStorage {
       const removedFolderIds = collectDescendantIds(state.folders, id)
       removedFolderIds.add(id)
       const directoryEntriesCache = new Map<string, string[]>()
+
+      const removedFolderPaths = getFolderPathsByDepth(
+        oldFolderPathMap,
+        removedFolderIds,
+      )
+
+      // Доменный .md без записи в runtime (плейсхолдер с другого устройства,
+      // сбой чтения при скане) физически уничтожился бы вместе с каталогом:
+      // удаление отклоняется целиком. Обход стартует с корня удаляемой папки
+      // (вложенные каталоги покрываются рекурсией). Известные записи
+      // переносятся в trash штатно, включая pending (их trash-маркер — путь).
+      const topFolderPath = oldFolderPathMap.get(id)
+      const knownFilePaths = new Set(
+        snippets
+          .filter(
+            snippet =>
+              snippet.folderId !== null
+              && removedFolderIds.has(snippet.folderId),
+          )
+          .map(snippet => snippet.filePath),
+      )
+      assertNoUnknownDomainFiles(
+        paths.vaultPath,
+        topFolderPath ? [topFolderPath] : [],
+        knownFilePaths,
+      )
 
       snippets.forEach((snippet) => {
         if (
@@ -266,14 +319,10 @@ export function createFoldersStorage(): FoldersStorage {
           persistSnippet(paths, state, snippet, previousPath, {
             allowRenameOnConflict: true,
             directoryEntriesCache,
+            skipWriteIfUnavailable: true,
           })
         }
       })
-
-      const removedFolderPaths = getFolderPathsByDepth(
-        oldFolderPathMap,
-        removedFolderIds,
-      )
 
       state.folders = state.folders.filter(
         folder => !removedFolderIds.has(folder.id),

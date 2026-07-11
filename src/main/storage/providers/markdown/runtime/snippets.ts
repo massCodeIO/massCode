@@ -44,6 +44,7 @@ import {
   upsertDirectoryEntryInCache,
 } from './shared/directoryEntries'
 import { listMarkdownFiles as listMarkdownFilesShared } from './shared/path'
+import { invalidateSearchIndex } from './shared/searchEngine'
 import {
   getFileTimestampFallbacks,
   normalizeTimestamp,
@@ -284,7 +285,7 @@ export function readSnippetFromFileWithMetadata(
   }
 
   if (!hasFrontmatter) {
-    writeSnippetToFile(paths, snippet)
+    writeSnippetToFile(paths, snippet, { skipIfUnavailable: true })
   }
 
   return { legacyRecovery, snippet }
@@ -444,6 +445,14 @@ export function ensureSnippetContentLoaded(
     }
   })
 
+  // Тело догружено после построения поискового индекса: индекс мог быть
+  // собран без тел, и body-запросы не находили запись. Любая гидрация
+  // (открытие записи, preview, поиск) помечает индекс dirty.
+  const cache = runtimeRef.cache
+  if (cache?.snippetById.get(snippet.id) === snippet) {
+    invalidateSearchIndex(cache.searchIndex)
+  }
+
   return true
 }
 
@@ -504,7 +513,7 @@ export function loadSnippets(
         options?.rewriteRecoveredLegacyFences
         && result?.legacyRecovery === 'recovered'
       ) {
-        writeSnippetToFile(paths, result.snippet)
+        writeSnippetToFile(paths, result.snippet, { skipIfUnavailable: true })
       }
 
       if (
@@ -526,15 +535,23 @@ export function loadSnippets(
 export function writeSnippetToFile(
   paths: Paths,
   snippet: MarkdownSnippet,
+  options?: { skipIfUnavailable?: boolean },
 ): void {
   const snippetPath = path.join(paths.vaultPath, snippet.filePath)
 
   // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
   // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
+  // По умолчанию сбой поднимается наверх: тихий пропуск означал бы «принятую»
+  // правку, которую докачка затем молча перезапишет облачным содержимым.
+  // Пропуск допустим только там, где запись — необязательный write-back
+  // (scan, move, bulk-очистка тегов), а не сохранение пользовательской правки.
   const availability = getFileAvailability(snippetPath)
   if (snippet.pendingCloudDownload || availability.isCloudPlaceholder) {
     enqueueCloudDownload(snippetPath)
-    return
+    if (options?.skipIfUnavailable) {
+      return
+    }
+    throwCloudContentUnavailable()
   }
 
   // Ленивая запись (тела ещё не дочитаны из индекса): недостающие value
@@ -750,7 +767,9 @@ export function persistSnippet(
   }
 
   snippet.filePath = targetPath
-  writeSnippetToFile(paths, snippet)
+  writeSnippetToFile(paths, snippet, {
+    skipIfUnavailable: options?.skipWriteIfUnavailable,
+  })
   upsertDirectoryEntryInCache(
     path.dirname(targetAbsolutePath),
     path.basename(targetAbsolutePath),

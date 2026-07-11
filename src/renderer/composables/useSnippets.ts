@@ -472,11 +472,19 @@ async function updateSnippet(snippetId: number, data: SnippetsUpdate) {
 
 async function updateSnippets(snippetIds: number[], data: SnippetsUpdate[]) {
   markPersistedStorageMutation()
-  await Promise.all(
+  // Ошибка одного элемента (например 503 на pending-записи) не прерывает
+  // batch: остальные применяются, список обновляется в любом случае, о
+  // пропуске сообщает общий 503-тост API-клиента.
+  const results = await Promise.allSettled(
     snippetIds.map((snippetId, index) =>
       api.snippets.patchSnippetsById(String(snippetId), data[index]),
     ),
   )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
   await refreshSelectedSnippet()
 }
@@ -515,11 +523,18 @@ async function deleteSnippet(snippetId: number) {
 
 async function deleteSnippets(snippetIds: number[]) {
   markPersistedStorageMutation()
-  await Promise.all(
+  // Ошибка одного элемента не прерывает batch: остальные применяются,
+  // список обновляется в любом случае.
+  const results = await Promise.allSettled(
     snippetIds.map(snippetId =>
       api.snippets.deleteSnippetsById(String(snippetId)),
     ),
   )
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error(result.reason)
+    }
+  })
   await getSnippets(queryByLibraryOrFolderOrSearch.value)
 }
 

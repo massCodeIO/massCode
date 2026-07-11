@@ -16,7 +16,10 @@ import {
   primeDatalessChecks,
 } from '../../runtime/shared/cloudFiles'
 import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
-import { toPosixPath } from '../../runtime/shared/path'
+import {
+  readDirEntriesFailClosed,
+  toPosixPath,
+} from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
 import { HTTP_STATE_FILE_NAME, httpRuntimeRef } from './constants'
 import {
@@ -46,11 +49,7 @@ function walkHttpDir(rootPath: string, currentPath = rootPath): DiskWalkResult {
     requestRelativePaths: [],
   }
 
-  if (!fs.pathExistsSync(currentPath)) {
-    return result
-  }
-
-  const entries = fs.readdirSync(currentPath, { withFileTypes: true })
+  const entries = readDirEntriesFailClosed(currentPath)
 
   for (const entry of entries) {
     if (entry.name.startsWith('.')) {
@@ -170,6 +169,7 @@ function buildHttpRequestIndexMetadata(
     auth: record.auth,
     bodyType: record.bodyType,
     createdAt: record.createdAt,
+    description: record.description,
     formData: record.formData,
     headers: record.headers,
     isDeleted: record.isDeleted,
@@ -187,7 +187,11 @@ function buildHttpRequestIndexMetadata(
 // .state.yaml синхронизируется между устройствами и правится извне, поэтому
 // метаданные индекса перед использованием проверяются по форме: битая
 // запись не роняет скан, файл просто перечитывается.
-function isValidHttpRequestIndexMetadata(
+// Мягкая форма для placeholder-ветки: description может отсутствовать
+// (ранний dev-формат меты) — остальные поля всё равно ценнее минимального
+// placeholder'а, который «воскресил» бы трэшнутые запросы (isDeleted: 0)
+// и потерял бы избранное до докачки.
+function isUsableHttpRequestIndexMetadata(
   meta: HttpRequestIndexMetadata | undefined,
 ): meta is HttpRequestIndexMetadata {
   return (
@@ -211,8 +215,19 @@ function isValidHttpRequestIndexMetadata(
   )
 }
 
-// Запись из метаданных индекса, без чтения файла: body и description
-// дочитываются лениво (ensureRequestDetailsLoaded).
+function isValidHttpRequestIndexMetadata(
+  meta: HttpRequestIndexMetadata | undefined,
+): meta is HttpRequestIndexMetadata {
+  return (
+    isUsableHttpRequestIndexMetadata(meta)
+    // meta без description (ранний dev-формат) бракуется в fresh-ветке:
+    // файл будет перечитан один раз, и индекс дозаполнится.
+    && typeof meta.description === 'string'
+  )
+}
+
+// Запись из метаданных индекса, без чтения файла: body дочитывается лениво
+// (ensureRequestDetailsLoaded), description уже есть в метаданных.
 function buildRequestFromIndexMetadata(
   entryId: number,
   relativePath: string,
@@ -234,7 +249,7 @@ function buildRequestFromIndexMetadata(
     body: null,
     formData: meta.formData,
     auth: meta.auth,
-    description: '',
+    description: meta.description ?? '',
     filePath: relativePath,
     isFavorites: normalizeFlag(meta.isFavorites),
     isDeleted: normalizeFlag(meta.isDeleted),
@@ -242,6 +257,40 @@ function buildRequestFromIndexMetadata(
     updatedAt: meta.updatedAt,
     detailsPending: true,
     ...(options?.pendingCloudDownload ? { pendingCloudDownload: true } : {}),
+  }
+}
+
+// Минимальная placeholder-запись для недоступного файла без метаданных
+// индекса: entries из v5.8-state имеют только {id, filePath}, и без такой
+// записи весь старый offloaded vault выглядел бы пустым до докачки
+// (offline — бессрочно). Имя берётся из имени файла, детали дочитаются
+// после докачки, мутации и отправка заблокированы pendingCloudDownload.
+function buildPlaceholderRequest(
+  entryId: number,
+  relativePath: string,
+  folderId: number | null,
+  now: number,
+): HttpRequestRecord {
+  return {
+    auth: { type: 'none' },
+    body: null,
+    bodyType: 'none',
+    createdAt: now,
+    description: '',
+    detailsPending: true,
+    filePath: relativePath,
+    folderId,
+    formData: [],
+    headers: [],
+    id: entryId,
+    isDeleted: 0,
+    isFavorites: 0,
+    method: 'GET',
+    name: path.posix.basename(relativePath, '.md'),
+    pendingCloudDownload: true,
+    query: [],
+    updatedAt: now,
+    url: '',
   }
 }
 
@@ -280,8 +329,9 @@ function reconcileRequests(
   // которая триггерит повторный sync http-пространства. Уже известный
   // запрос при этом сохраняет свою запись в индексе (вместе с метаданными),
   // иначе он «исчез» бы из state и после докачки получил бы новый id.
-  // Если метаданные известны, запрос сразу виден в списке placeholder-
-  // записью — как сниппеты и заметки.
+  // Запрос сразу виден в списке placeholder-записью — как сниппеты и
+  // заметки: полной при известных метаданных, минимальной (имя из файла)
+  // для v5.8-entries без meta.
   const keepUnavailableRequest = (
     absolutePath: string,
     relativePath: string,
@@ -297,7 +347,7 @@ function reconcileRequests(
         ...(knownEntry.meta ? { meta: knownEntry.meta } : {}),
       })
 
-      if (isValidHttpRequestIndexMetadata(knownEntry.meta)) {
+      if (isUsableHttpRequestIndexMetadata(knownEntry.meta)) {
         records.push(
           buildRequestFromIndexMetadata(
             knownEntry.id,
@@ -305,6 +355,16 @@ function reconcileRequests(
             knownEntry.meta,
             resolveFolderId(relativePath),
             { pendingCloudDownload: true },
+          ),
+        )
+      }
+      else {
+        records.push(
+          buildPlaceholderRequest(
+            knownEntry.id,
+            relativePath,
+            resolveFolderId(relativePath),
+            now,
           ),
         )
       }
@@ -411,7 +471,7 @@ function reconcileRequests(
     }
 
     if (needsRewrite || serializeRequestFile(record) !== source) {
-      writeRequestFile(paths.httpRoot, record)
+      writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
     }
 
     records.push(record)
@@ -543,5 +603,11 @@ export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {
 }
 
 export function resetHttpRuntimeCache(): void {
+  // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
+  // продолжили бы попытки по неактивному пути и слали storage-synced.
+  const previousHttpRoot = httpRuntimeRef.cache?.paths.httpRoot
+  if (previousHttpRoot) {
+    httpVaultReconciler.abandon(previousHttpRoot)
+  }
   httpRuntimeRef.cache = null
 }

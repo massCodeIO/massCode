@@ -108,10 +108,62 @@ function checkVaultHealth() {
   const { sonner } = useSonner()
   const { scan } = useVaultDoctor()
 
-  const run = async () => {
+  // Startup-скан почти всегда стартует раньше конца фоновой сверки vault:
+  // на notReady проверка повторяется по событию синхронизации, иначе
+  // проблемный vault выглядел бы чистым до ручного скана. Fallback-таймер
+  // страхует от потерянного события: storage-synced может прийти, пока
+  // предыдущий scan ещё выполняется, и его перезапуск ничего не даст.
+  //
+  // Подписка на storage-synced ставится ОДИН раз и не снимается:
+  // contextBridge оборачивает функцию в новый прокси при каждой передаче,
+  // и ipc.removeListener по ссылке не срабатывает — динамическая
+  // add/remove-подписка накапливала бы обработчики на каждый event
+  // (см. комментарий у Editor.vue про removeListeners).
+  const VAULT_HEALTH_RETRY_FALLBACK_MS = 15_000
+  let retryFallbackTimer: ReturnType<typeof setTimeout> | undefined
+  let isResolved = false
+  let isRunning = false
+
+  const scheduleRetryFallback = () => {
+    if (retryFallbackTimer) {
+      clearTimeout(retryFallbackTimer)
+    }
+
+    retryFallbackTimer = setTimeout(() => {
+      retryFallbackTimer = undefined
+      void run()
+    }, VAULT_HEALTH_RETRY_FALLBACK_MS)
+  }
+
+  const clearRetryFallback = () => {
+    if (retryFallbackTimer) {
+      clearTimeout(retryFallbackTimer)
+      retryFallbackTimer = undefined
+    }
+  }
+
+  ipc.on('system:storage-synced', () => {
+    void run()
+  })
+
+  async function run() {
+    if (isResolved || isRunning) {
+      return
+    }
+
+    isRunning = true
     try {
       const data = await scan()
-      if (!data || data.summary.conflicts === 0) {
+      if (!data || data.notReady) {
+        // Постоянный listener и fallback-таймер гарантируют повтор.
+        scheduleRetryFallback()
+        return
+      }
+
+      isResolved = true
+      clearRetryFallback()
+
+      if (data.summary.conflicts === 0) {
         return
       }
 
@@ -134,7 +186,12 @@ function checkVaultHealth() {
       })
     }
     catch {
-      // Health check не критичен: при ошибке тихо пропускаем.
+      // Health check не критичен: транзиентная ошибка не показывается, но
+      // повтор перепланируется — события storage-synced могли уже отгреметь.
+      scheduleRetryFallback()
+    }
+    finally {
+      isRunning = false
     }
   }
 

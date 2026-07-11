@@ -61,7 +61,9 @@ export function createNoteTagsStorage(): NoteTagsStorage {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
       const result = deleteTagFromStateAndEntities(state, notes, id, (note) => {
-        writeNoteToFile(paths, note)
+        // Bulk-очистка тега: недокачанный файл пропускается, устаревший id
+        // в frontmatter безвреден (state — источник истины по тегам).
+        writeNoteToFile(paths, note, { skipIfUnavailable: true })
       })
       if (!result.deleted) {
         return result

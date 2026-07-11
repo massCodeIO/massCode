@@ -17,6 +17,7 @@ import {
 } from '@/composables/useCommandPalette'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { useSnippets } from '@/composables/useSnippets'
+import { useSonner } from '@/composables/useSonner'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n, ipc } from '@/electron'
 import { api } from '@/services/api'
@@ -712,6 +713,23 @@ async function copyHttpRequest(result: CommandPaletteResult) {
   )
 }
 
+// Тело pending-запроса ещё не докачано (body: null): copy/duplicate дали бы
+// результат без body и молча разошлись с оригиналом.
+function rejectPendingHttpRequest<T extends { pendingCloudDownload?: boolean }>(
+  request: T,
+): T | null {
+  if (request.pendingCloudDownload) {
+    useSonner().sonner({
+      id: 'cloud-file-not-ready',
+      message: i18n.t('messages:warning.cloudFileNotReady'),
+      type: 'warning',
+    })
+    return null
+  }
+
+  return request
+}
+
 async function getHttpRequest(result: CommandPaletteResult) {
   // Результаты палитры несут только метаданные списка (без body и
   // description): полная запись загружается по id.
@@ -720,7 +738,7 @@ async function getHttpRequest(result: CommandPaletteResult) {
       String(result.item.id),
     )
 
-    return data
+    return rejectPendingHttpRequest(data)
   }
 
   if (!isRecentTarget(result, 'http-request')) {
@@ -731,7 +749,7 @@ async function getHttpRequest(result: CommandPaletteResult) {
     result.recent.targetId,
   )
 
-  return data
+  return rejectPendingHttpRequest(data)
 }
 
 async function duplicateItem(result: CommandPaletteResult) {

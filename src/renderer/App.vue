@@ -186,7 +186,9 @@ function checkVaultHealth() {
       })
     }
     catch {
-      // Health check не критичен: при ошибке тихо пропускаем.
+      // Health check не критичен: транзиентная ошибка не показывается, но
+      // повтор перепланируется — события storage-synced могли уже отгреметь.
+      scheduleRetryFallback()
     }
     finally {
       isRunning = false

@@ -266,6 +266,7 @@ export interface VaultDoctorResponse {
     space: "code" | "notes" | "http" | "math";
     status: "applied" | "blocked" | "needs-decision" | "pending" | "skipped";
   }[];
+  notReady?: boolean;
   summary: {
     affectedFiles: number;
     blocked: number;
@@ -705,6 +706,7 @@ export type HttpRequestsResponse = {
     username?: string;
     password?: string;
   };
+  description: string;
   filePath: string;
   isFavorites: number;
   isDeleted: number;
@@ -1186,7 +1188,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.7.0
+ * @version 5.8.0
  *
  * Development documentation
  */

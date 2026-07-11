@@ -2,6 +2,7 @@ import type {
   SnippetContentsAdd,
   SnippetsUpdate,
 } from '../services/api/generated'
+import { isRetriableSaveError } from '@/utils'
 import { useSnippets } from './useSnippets'
 import { markUserEdit } from './useStorageMutation'
 
@@ -34,14 +35,6 @@ const contentUpdateTimers = ref<Map<string, ReturnType<typeof setTimeout>>>(
 )
 const inFlightContentKeys = ref<Set<string>>(new Set())
 const retryAttemptsByKey = ref<Map<string, number>>(new Map())
-
-// Ретраится только временный сбой: 503 (файл ещё качается из облака) и
-// сетевые ошибки без ответа. Окончательные отказы (404 удалённого сниппета,
-// 400) не зацикливают очередь.
-function isRetriableSaveError(error: unknown): boolean {
-  const status = (error as { response?: { status?: number } })?.response?.status
-  return status === undefined || status === 503
-}
 
 function nextRetryDelay(key: string): number {
   const attempts = (retryAttemptsByKey.value.get(key) ?? 0) + 1

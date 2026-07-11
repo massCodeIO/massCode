@@ -15,7 +15,7 @@ import {
 } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { getContiguousSelection } from '@/utils'
+import { getContiguousSelection, isRetriableSaveError } from '@/utils'
 import { useDebounceFn } from '@vueuse/core'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 import { LibraryFilter } from '../../types'
@@ -464,15 +464,6 @@ async function duplicateHttpRequest(requestId: number) {
   catch (error) {
     console.error(error)
   }
-}
-
-// Временный сбой (503 на pending-записи, сеть) — правка сохранится позже,
-// и вызывающий поток должен подождать. Окончательный отказ (404 удалённой
-// на другом устройстве записи, 400) ждать бессмысленно: блокировка
-// переключения на нём заморозила бы навигацию до перезапуска.
-function isRetriableSaveError(error: unknown): boolean {
-  const status = (error as { response?: { status?: number } })?.response?.status
-  return status === undefined || status === 503
 }
 
 // Возвращает false при временно неудачном PATCH: вызывающие потоки

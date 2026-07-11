@@ -1,4 +1,5 @@
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
+import { isRetriableSaveError } from '@/utils'
 import { api } from '~/renderer/services/api'
 import { notes, selectedNoteRecord } from './useNotes'
 import { notesBySearch } from './useNoteSearch'
@@ -26,14 +27,6 @@ function nextRetryDelay(noteId: number): number {
     CONTENT_UPDATE_RETRY_MS * 2 ** (attempts - 1),
     CONTENT_UPDATE_RETRY_MAX_MS,
   )
-}
-
-// Ретраится только временный сбой: 503 (файл ещё качается из облака) и
-// сетевые ошибки без ответа. Окончательные отказы (404 удалённой заметки,
-// 400) не зацикливают очередь.
-function isRetriableSaveError(error: unknown): boolean {
-  const status = (error as { response?: { status?: number } })?.response?.status
-  return status === undefined || status === 503
 }
 
 // --- Functions ---

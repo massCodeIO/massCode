@@ -368,8 +368,9 @@ function scheduleCloudRefresh(
       // HTTP не хранит pending-флаг на записях (пропущенный файл просто
       // отсутствует в state): если среди недокачанных путей есть ставший
       // доступным http-файл, пересобираем http-пространство целиком.
+      // path.sep, а не '/': на Windows абсолютные пути используют '\'.
       const pendingHttpPaths = getPendingCloudPaths().filter(candidatePath =>
-        candidatePath.startsWith(`${httpPaths.httpRoot}/`),
+        candidatePath.startsWith(`${httpPaths.httpRoot}${path.sep}`),
       )
       let hasReadyHttpFile = false
       let remainingHttp = 0

@@ -9,6 +9,7 @@ import type {
   NotesState,
   PersistNoteOptions,
 } from './types'
+import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
@@ -28,6 +29,7 @@ import {
   listMarkdownFiles as listMarkdownFilesShared,
   toPosixPath,
 } from '../../runtime/shared/path'
+import { invalidateSearchIndex } from '../../runtime/shared/searchEngine'
 import {
   getFileTimestampFallbacks,
   normalizeTimestamp,
@@ -59,12 +61,191 @@ export function isNoteSystemFrontmatterKey(key: string): boolean {
   return NOTE_SYSTEM_FRONTMATTER_KEYS.has(key)
 }
 
+// Обычное присваивание target[key] для ключа '__proto__' не создаёт
+// собственное свойство (а с объектным значением мутирует прототип), и такой
+// YAML-ключ молча терялся бы: значение задаётся через defineProperty.
+function setOwnProperty(
+  target: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void {
+  Object.defineProperty(target, key, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  })
+}
+
+// js-yaml нативно round-trip'ит Date, NaN, Infinity и !!binary через
+// serializeNote, поэтому runtime хранит значения frontmatter как есть.
+// Единственное исключение — рекурсивные YAML alias'ы: циклический объект
+// валит и yaml.dump (noRefs), и JSON-персист metadata-индекса (а с ним весь
+// reconcile — Notes остаётся пустым), поэтому циклические ссылки
+// разрываются (заменяются на null) прямо при чтении.
+function breakPropertyCycles(
+  value: unknown,
+  ancestors: WeakSet<object>,
+): unknown {
+  if (value === null || typeof value !== 'object') {
+    return value
+  }
+
+  if (value instanceof Date || ArrayBuffer.isView(value)) {
+    return value
+  }
+
+  if (ancestors.has(value)) {
+    return null
+  }
+
+  ancestors.add(value)
+
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      value[index] = breakPropertyCycles(value[index], ancestors)
+    }
+  }
+  else {
+    const record = value as Record<string, unknown>
+    for (const key of Object.keys(record)) {
+      record[key] = breakPropertyCycles(record[key], ancestors)
+    }
+  }
+
+  ancestors.delete(value)
+
+  return value
+}
+
 function extractNoteProperties(frontmatter: NotesFrontmatter): NoteProperties {
-  return Object.fromEntries(
-    Object.entries(frontmatter).filter(
-      ([key]) => !NOTE_SYSTEM_FRONTMATTER_KEYS.has(key),
-    ),
-  )
+  const properties: NoteProperties = {}
+  const ancestors = new WeakSet<object>()
+
+  for (const [key, value] of Object.entries(frontmatter)) {
+    if (NOTE_SYSTEM_FRONTMATTER_KEYS.has(key)) {
+      continue
+    }
+
+    setOwnProperty(properties, key, breakPropertyCycles(value, ancestors))
+  }
+
+  return properties
+}
+
+// Метаданные индекса персистятся JSON'ом, который теряет YAML-типы: Date
+// стал бы строкой, NaN — null, Uint8Array — объектом с числовыми ключами,
+// и при записи lazy-заметки эти искажения попали бы обратно во frontmatter.
+// Поэтому properties кодируются обратимыми тегами при записи в индекс и
+// декодируются при восстановлении записи из него.
+const INDEX_TYPE_TAG = '$mcType'
+
+function encodeIndexPropertyValue(value: unknown): unknown {
+  if (value instanceof Date) {
+    return { [INDEX_TYPE_TAG]: 'date', value: value.toISOString() }
+  }
+
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return { [INDEX_TYPE_TAG]: 'number', value: String(value) }
+  }
+
+  if (ArrayBuffer.isView(value)) {
+    return {
+      [INDEX_TYPE_TAG]: 'binary',
+      value: Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+      ).toString('base64'),
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(encodeIndexPropertyValue)
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    const encoded: Record<string, unknown> = {}
+    for (const [key, item] of Object.entries(record)) {
+      setOwnProperty(encoded, key, encodeIndexPropertyValue(item))
+    }
+
+    // Пользовательский объект с собственным ключом $mcType не должен
+    // распаковаться при декодировании как служебный тег.
+    return INDEX_TYPE_TAG in record
+      ? { [INDEX_TYPE_TAG]: 'literal', value: encoded }
+      : encoded
+  }
+
+  return value
+}
+
+function decodeIndexPropertyValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(decodeIndexPropertyValue)
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    const tag = record[INDEX_TYPE_TAG]
+
+    if (tag === 'date' && typeof record.value === 'string') {
+      return new Date(record.value)
+    }
+
+    if (tag === 'number' && typeof record.value === 'string') {
+      return Number(record.value)
+    }
+
+    if (tag === 'binary' && typeof record.value === 'string') {
+      return new Uint8Array(Buffer.from(record.value, 'base64'))
+    }
+
+    if (
+      tag === 'literal'
+      && record.value
+      && typeof record.value === 'object'
+      && !Array.isArray(record.value)
+    ) {
+      // Дети декодируются, но собственный тег объекта не интерпретируется:
+      // это пользовательский $mcType, а не служебный.
+      const inner = record.value as Record<string, unknown>
+      const decoded: Record<string, unknown> = {}
+      for (const [key, item] of Object.entries(inner)) {
+        setOwnProperty(decoded, key, decodeIndexPropertyValue(item))
+      }
+      return decoded
+    }
+
+    const decoded: Record<string, unknown> = {}
+    for (const [key, item] of Object.entries(record)) {
+      setOwnProperty(decoded, key, decodeIndexPropertyValue(item))
+    }
+    return decoded
+  }
+
+  return value
+}
+
+export function encodeIndexProperties(
+  properties: NoteProperties,
+): NoteProperties {
+  const encoded: NoteProperties = {}
+  for (const [key, value] of Object.entries(properties)) {
+    setOwnProperty(encoded, key, encodeIndexPropertyValue(value))
+  }
+  return encoded
+}
+
+export function decodeIndexProperties(
+  properties: NoteProperties,
+): NoteProperties {
+  const decoded: NoteProperties = {}
+  for (const [key, value] of Object.entries(properties)) {
+    setOwnProperty(decoded, key, decodeIndexPropertyValue(value))
+  }
+  return decoded
 }
 
 export function toNoteFileName(name: string): string {
@@ -121,7 +302,7 @@ export function buildNoteIndexMetadata(
     isFavorites: note.isFavorites,
     mtimeMs: stats.mtimeMs,
     name: note.name,
-    properties: { ...note.properties },
+    properties: encodeIndexProperties(note.properties),
     size: stats.size,
     tags: [...note.tags],
     updatedAt: note.updatedAt,
@@ -184,7 +365,7 @@ export function buildNoteFromIndexMetadata(
     isFavorites: normalizeFlag(meta.isFavorites),
     name: meta.name,
     ...(options?.pendingCloudDownload ? { pendingCloudDownload: true } : {}),
-    properties: { ...meta.properties },
+    properties: decodeIndexProperties(meta.properties),
     tags: meta.tags.filter(tagId => typeof tagId === 'number' && tagId > 0),
     updatedAt: meta.updatedAt,
   }
@@ -229,6 +410,15 @@ export function ensureNoteContentLoaded(
   }
 
   note.content = splitFrontmatter(source).body
+
+  // Тело догружено после построения поискового индекса: индекс мог быть
+  // собран без тел, и body-запросы не находили заметку. Любая гидрация
+  // (открытие заметки, dashboard, graph, поиск) помечает индекс dirty.
+  const cache = notesRuntimeRef.cache
+  if (cache?.noteById.get(note.id) === note) {
+    invalidateSearchIndex(cache.searchIndex)
+  }
+
   return true
 }
 
@@ -366,21 +556,35 @@ export function readNoteFromFile(
   }
 
   if (!hasFrontmatter) {
-    writeNoteToFile(paths, note)
+    writeNoteToFile(paths, note, { skipIfUnavailable: true })
   }
 
   return note
 }
 
-export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
+// Возвращает false, только если запись пропущена из-за недокачанного файла
+// (возможно лишь при skipIfUnavailable): вызывающий может переотложить
+// операцию вместо потери правки.
+export function writeNoteToFile(
+  paths: NotesPaths,
+  note: MarkdownNote,
+  options?: { skipIfUnavailable?: boolean },
+): boolean {
   const absolutePath = path.join(paths.notesRoot, note.filePath)
 
   // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
   // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
+  // По умолчанию сбой поднимается наверх: тихий пропуск означал бы «принятую»
+  // правку, которую докачка затем молча перезапишет облачным содержимым.
+  // Пропуск допустим только там, где запись — необязательный write-back
+  // (scan, move, bulk-очистка тегов) или переоткладываемый rewrite ссылок.
   const availability = getFileAvailability(absolutePath)
   if (note.pendingCloudDownload || availability.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
-    return
+    if (options?.skipIfUnavailable) {
+      return false
+    }
+    throwCloudContentUnavailable()
   }
 
   // Ленивая запись (тело ещё не дочитано из индекса): content дочитывается
@@ -397,13 +601,15 @@ export function writeNoteToFile(paths: NotesPaths, note: MarkdownNote): void {
   if (availability.exists) {
     const currentContent = fs.readFileSync(absolutePath, 'utf8')
     if (currentContent === nextContent) {
-      return
+      return true
     }
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
   fs.writeFileSync(absolutePath, nextContent, 'utf8')
   rememberAppFileChange(absolutePath)
+
+  return true
 }
 
 export function loadNotes(
@@ -607,7 +813,9 @@ export function persistNote(
   }
 
   // Write content
-  writeNoteToFile(paths, note)
+  writeNoteToFile(paths, note, {
+    skipIfUnavailable: options?.skipWriteIfUnavailable,
+  })
   upsertDirectoryEntryInCache(
     path.dirname(resolvedAbsolutePath),
     path.basename(resolvedAbsolutePath),

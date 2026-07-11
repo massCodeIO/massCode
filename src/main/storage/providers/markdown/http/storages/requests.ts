@@ -15,7 +15,11 @@ import fs from 'fs-extra'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
-import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
+import {
+  assertEntityFileWritable,
+  markEntityPendingIfEvicted,
+  throwCloudContentUnavailable,
+} from '../../runtime/shared/cloudGuards'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import { buildFolderPathMap } from '../../runtime/shared/folderIndex'
 import {
@@ -200,9 +204,21 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       // Запись из индекса без тела: body и description дочитываются по
-      // первому запросу.
+      // первому запросу. Сбой дочитки (файл выгружен после скана, флаг ещё
+      // не обновился) помечает запись pending: успешный ответ с body: null
+      // без флага обошёл бы guards отправки/дублирования, и запрос ушёл бы
+      // на сервер с пустым телом. Для уже гидрированной записи eviction
+      // ловится свежим stat. Флаг снимет ресинк после докачки.
       if (request) {
-        ensureRequestDetailsLoaded(paths.httpRoot, request)
+        if (!ensureRequestDetailsLoaded(paths.httpRoot, request)) {
+          request.pendingCloudDownload = true
+        }
+        else {
+          markEntityPendingIfEvicted(
+            path.join(paths.httpRoot, request.filePath),
+            request,
+          )
+        }
       }
 
       return request
@@ -284,7 +300,12 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       // Патч мутирует запись и сериализует её целиком: недостающие body и
       // description дочитываются до применения полей. Если содержимое
       // сейчас недоступно, «принятая» правка молча потерялась бы при
-      // следующем ресинке — мутация отклоняется до изменения кэша.
+      // следующем ресинке — мутация отклоняется до изменения кэша (со
+      // свежим stat: флаг pendingCloudDownload мог устареть после eviction).
+      assertEntityFileWritable(
+        path.join(paths.httpRoot, record.filePath),
+        record,
+      )
       if (!ensureRequestDetailsLoaded(paths.httpRoot, record)) {
         throwCloudContentUnavailable()
       }

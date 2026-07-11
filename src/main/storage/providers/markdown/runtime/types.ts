@@ -44,6 +44,8 @@ export interface MarkdownFolderMetadataFile {
   masscode_id?: number
   name?: string
   orderIndex?: number
+  // Файл метаданных недокачан из облака: содержимое (и id) неизвестно.
+  unavailable?: boolean
   updatedAt?: number
 }
 
@@ -63,6 +65,7 @@ export interface MarkdownStateFile {
     snippetId?: number
     tagId?: number
   }
+  folderIdByPath?: Record<string, number>
   folderUi?: Record<string, { isOpen?: number }>
   folders?: FolderRecord[]
   snippets?: MarkdownSnippetIndexItem[]
@@ -77,6 +80,9 @@ export interface MarkdownState {
     snippetId: number
     tagId: number
   }
+  // Персистируемый fallback path → folder id: без него недокачанный
+  // .meta.yaml чеканил бы папке новый id на каждом холодном старте.
+  folderIdByPath?: Record<string, number>
   folderUi: Record<string, MarkdownFolderUIState>
   folders: FolderRecord[]
   // Дефолтный state на период, пока state.json не докачан из облака:
@@ -201,4 +207,8 @@ export type DirectoryEntriesCache = Map<string, string[]>
 export interface PersistSnippetOptions {
   allowRenameOnConflict?: boolean
   directoryEntriesCache?: Map<string, string[]>
+  // Move-пути (перенос в trash при удалении папки): файл-плейсхолдер уже
+  // перемещён, а перезапись frontmatter не обязательна и не должна валить
+  // всю операцию.
+  skipWriteIfUnavailable?: boolean
 }

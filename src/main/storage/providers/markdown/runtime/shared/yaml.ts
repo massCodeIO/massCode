@@ -4,6 +4,15 @@ import yaml from 'js-yaml'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { getFileAvailability } from './cloudFiles'
 
+// Файл существует, но недокачан из облака: содержимое сейчас не прочитать.
+// Отличать от отсутствующего файла обязаны вызывающие, для которых «нет
+// файла» и «файл есть, но неизвестен» имеют разные последствия (например,
+// чеканка нового folder id).
+export function isYamlFileCloudUnavailable(filePath: string): boolean {
+  const availability = getFileAvailability(filePath)
+  return availability.exists && availability.isCloudPlaceholder
+}
+
 export function readYamlObjectFile<T>(filePath: string): T | null {
   const availability = getFileAvailability(filePath)
 

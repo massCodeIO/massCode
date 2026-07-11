@@ -41,6 +41,7 @@ import {
   primeDatalessChecks,
 } from './runtime/shared/cloudFiles'
 import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
+import { readDirEntriesFailClosed } from './runtime/shared/path'
 
 type VaultDoctorSpace = NonNullable<VaultDoctorInput['spaces']>[number]
 
@@ -153,11 +154,9 @@ function listMarkdownFiles(rootPath: string): string[] {
   const files: string[] = []
 
   function walk(currentPath: string): void {
-    if (!fs.pathExistsSync(currentPath)) {
-      return
-    }
-
-    for (const entry of fs.readdirSync(currentPath, { withFileTypes: true })) {
+    // Fail closed: stat-ошибка (EIO) не должна превращаться в пустой
+    // listing — аудит показал бы ложно-чистый vault.
+    for (const entry of readDirEntriesFailClosed(currentPath)) {
       if (entry.name.startsWith('.') && entry.name !== META_DIR_NAME) {
         continue
       }
@@ -191,12 +190,10 @@ function listFolders(
   const folders: string[] = []
 
   function walk(currentPath: string): void {
-    if (!fs.pathExistsSync(currentPath)) {
-      return
-    }
-
     const isRoot = currentPath === rootPath
-    for (const entry of fs.readdirSync(currentPath, { withFileTypes: true })) {
+    // Fail closed: stat-ошибка (EIO) не должна превращаться в пустой
+    // listing — аудит показал бы ложно-чистый vault.
+    for (const entry of readDirEntriesFailClosed(currentPath)) {
       if (!entry.isDirectory()) {
         continue
       }
@@ -599,7 +596,7 @@ function scanCode(context: ScanContext): void {
 
   listFolders(paths.vaultPath, skipRootNames).forEach((folderPath) => {
     const metaPath = path.join(paths.vaultPath, folderPath, META_FILE_NAME)
-    if (!fs.pathExistsSync(metaPath)) {
+    if (!metaFileExists(metaPath)) {
       addItem(
         context,
         createFileItem({
@@ -636,6 +633,18 @@ function scanCode(context: ScanContext): void {
   collectUnindexedFiles(context, 'code', records)
 }
 
+// Fail closed: stat-ошибка (EIO) не считается отсутствием файла — иначе
+// аудит предложил бы пересоздать существующие метаданные папки.
+function metaFileExists(metaPath: string): boolean {
+  try {
+    fs.statSync(metaPath)
+    return true
+  }
+  catch (error) {
+    return (error as NodeJS.ErrnoException).code !== 'ENOENT'
+  }
+}
+
 function readNotesFolderIdFromMetadata(metaPath: string): number | null {
   // Недокачанный .meta.yaml не читается синхронно: id папки в этот прогон
   // не получить, заметки этой папки не считаются dangling.
@@ -663,7 +672,7 @@ function scanNotes(context: ScanContext): void {
 
   listFolders(paths.notesRoot).forEach((folderPath) => {
     const metaPath = path.join(paths.notesRoot, folderPath, META_FILE_NAME)
-    if (!fs.pathExistsSync(metaPath)) {
+    if (!metaFileExists(metaPath)) {
       // Папка без метаданных получит id при следующем синке: судить о
       // dangling-ссылках в этот прогон нельзя.
       hasUnreadableFolderMetadata = true
@@ -938,18 +947,25 @@ export function previewVaultDoctor(
   const context = createContext()
   const spaces = normalizeSpaces(input)
 
-  // Пока vault не сверен с диском после открытия (каталоги могут быть
-  // недокачаны из облака), полный аудит невозможен без блокирующего
-  // обхода: возвращается пустой результат, Doctor запускается позже.
+  // Пока запрошенное пространство не сверено с диском после открытия
+  // (каталоги могут быть недокачаны из облака), полный аудит невозможен без
+  // блокирующего обхода: возвращается явный notReady, чтобы пустой результат
+  // не выглядел как чистый vault. Готовность проверяется только для
+  // запрошенных пространств (аудит math не должен ждать http).
   const vaultRootPath = getVaultPath()
-  if (
-    !isCodeVaultDiskReady(getPaths(vaultRootPath))
-    || !isNotesVaultDiskReady(getNotesPaths(vaultRootPath))
-    || !isHttpVaultDiskReady(getHttpPaths(vaultRootPath))
-  ) {
+  const isRequestedSpaceNotReady
+    = (spaces.includes('code')
+      && !isCodeVaultDiskReady(getPaths(vaultRootPath)))
+    || (spaces.includes('notes')
+      && !isNotesVaultDiskReady(getNotesPaths(vaultRootPath)))
+    || (spaces.includes('http')
+      && !isHttpVaultDiskReady(getHttpPaths(vaultRootPath)))
+
+  if (isRequestedSpaceNotReady) {
     return {
       conflictGroups: [],
       items: [],
+      notReady: true,
       summary: buildSummary(context),
       warnings: [],
     }
@@ -1061,6 +1077,13 @@ export function applyVaultDoctor(
   input?: VaultDoctorInput,
 ): VaultDoctorResponse {
   const before = previewVaultDoctor(input)
+
+  // Аудит не выполнялся (пространства ещё сверяются с диском): применять
+  // «ремонт» по пустому результату нельзя.
+  if (before.notReady) {
+    return before
+  }
+
   const appliedDecisionItems = applyDuplicateIdDecisions(
     before,
     input?.decisions,

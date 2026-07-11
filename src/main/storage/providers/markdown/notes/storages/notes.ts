@@ -16,7 +16,10 @@ import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
-import { assertEntityContentAvailable } from '../../runtime/shared/cloudGuards'
+import {
+  assertEntityFileWritable,
+  markEntityPendingIfEvicted,
+} from '../../runtime/shared/cloudGuards'
 import { updateEntityBodyContent } from '../../runtime/shared/entityContent'
 import { filterAndSortByQuery } from '../../runtime/shared/entityQuery'
 import {
@@ -293,8 +296,21 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       // Запись из индекса без тела: контент дочитывается по первому запросу.
+      // Сбой дочитки (файл выгружен после скана, флаг ещё не обновился)
+      // помечает запись pending: успешный ответ с пустым content без флага
+      // открыл бы редактируемый пустой редактор, и набранный текст потерялся
+      // бы на 503 при сохранении. Для уже гидрированной записи eviction
+      // ловится свежим stat. Флаг снимет ресинк после докачки.
       if (note) {
-        ensureNoteContentLoaded(resolvePaths(), note)
+        if (!ensureNoteContentLoaded(resolvePaths(), note)) {
+          note.pendingCloudDownload = true
+        }
+        else {
+          markEntityPendingIfEvicted(
+            path.join(resolvePaths().notesRoot, note.filePath),
+            note,
+          )
+        }
       }
 
       return note ? createNoteRecord(note, state) : null
@@ -365,6 +381,10 @@ export function createNotesNotesStorage(): NotesStorage {
         return { invalidInput: false, notFound: true }
       }
 
+      // Проверка до мутации: иначе rename/move уже переместил бы файл и
+      // изменил runtime/state, а запись frontmatter отклонилась.
+      assertEntityFileWritable(path.join(paths.notesRoot, note.filePath), note)
+
       const previousFilePath = note.filePath
       const previousName = note.name
       const previousFolderId = note.folderId
@@ -432,6 +452,16 @@ export function createNotesNotesStorage(): NotesStorage {
       const paths = resolvePaths()
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, id)
+
+      // Проверка до мутации: updateEntityBodyContent меняет runtime до
+      // записи файла.
+      if (note) {
+        assertEntityFileWritable(
+          path.join(paths.notesRoot, note.filePath),
+          note,
+        )
+      }
+
       const result = updateEntityBodyContent({
         content,
         entity: note,
@@ -454,7 +484,9 @@ export function createNotesNotesStorage(): NotesStorage {
         return { invalidInput: false, notFound: true }
       }
 
-      assertEntityContentAvailable(note)
+      // Проверка со свежим stat до мутации: флаг pendingCloudDownload мог
+      // устареть после eviction.
+      assertEntityFileWritable(path.join(paths.notesRoot, note.filePath), note)
 
       const hasAnyField = applyNotePropertiesUpdate(note, input)
 
@@ -507,6 +539,15 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, noteId)
       const tag = state.tags.find(t => t.id === tagId)
+
+      // Проверка до мутации: addTagToEntity меняет runtime до записи файла.
+      if (note && tag) {
+        assertEntityFileWritable(
+          path.join(paths.notesRoot, note.filePath),
+          note,
+        )
+      }
+
       const result = addTagToEntity({
         entity: note,
         onUpdated: note => writeNoteToFile(paths, note),
@@ -529,6 +570,16 @@ export function createNotesNotesStorage(): NotesStorage {
       const { state, notes } = getNotesRuntimeCache(paths)
       const note = findNoteById(notes, noteId)
       const tag = state.tags.find(t => t.id === tagId)
+
+      // Проверка до мутации: deleteTagFromEntity меняет runtime до записи
+      // файла.
+      if (note && tag) {
+        assertEntityFileWritable(
+          path.join(paths.notesRoot, note.filePath),
+          note,
+        )
+      }
+
       const result = deleteTagFromEntity({
         entity: note,
         missingRelationFound: false,

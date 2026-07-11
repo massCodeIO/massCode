@@ -22,10 +22,7 @@ import {
 import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
-import {
-  applyDeferredBacklinkRewrites,
-  clearDeferredBacklinkRewrites,
-} from './backlinks'
+import { applyDeferredBacklinkRewrites } from './backlinks'
 import {
   NOTES_INBOX_RELATIVE_PATH,
   NOTES_TRASH_RELATIVE_PATH,
@@ -357,10 +354,9 @@ export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
 }
 
 export function resetNotesRuntimeCache(): void {
+  // Отложенные backlink-rewrite'ы хранятся в notes state конкретного vault
+  // и потому переживают и сброс кэша, и перезапуск приложения.
   notesRuntimeRef.cache = null
-  // Отложенные backlink-rewrite'ы адресуются id заметок текущего vault:
-  // при сбросе кэша (смена vault) они теряют смысл.
-  clearDeferredBacklinkRewrites()
 }
 
 function commitNotesRuntimeCache(cache: NotesRuntimeCache): NotesRuntimeCache {

@@ -288,15 +288,22 @@ export function ensureRequestDetailsLoaded(
 export function writeRequestFile(
   httpRoot: string,
   record: HttpRequestRecord,
+  options?: { skipIfUnavailable?: boolean },
 ): void {
   const absolutePath = path.join(httpRoot, record.filePath)
   const availability = getFileAvailability(absolutePath)
 
   // Запись в недокачанный файл затёрла бы облачное содержимое: файл сначала
-  // докачивается в фоне.
+  // докачивается в фоне. По умолчанию сбой поднимается наверх: тихий пропуск
+  // означал бы «принятую» правку, которую докачка затем молча перезапишет
+  // облачным содержимым. Пропуск допустим только в необязательном write-back
+  // scan-пути.
   if (record.pendingCloudDownload || availability.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
-    return
+    if (options?.skipIfUnavailable) {
+      return
+    }
+    throwCloudContentUnavailable()
   }
 
   // Ленивая запись (body/description ещё не дочитаны из индекса): они

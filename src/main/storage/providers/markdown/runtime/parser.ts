@@ -18,7 +18,11 @@ import {
 } from './constants'
 import { rememberAppFileChange } from './shared/appChanges'
 import { getFileAvailability } from './shared/cloudFiles'
-import { readYamlObjectFile, writeYamlObjectFile } from './shared/yaml'
+import {
+  isYamlFileCloudUnavailable,
+  readYamlObjectFile,
+  writeYamlObjectFile,
+} from './shared/yaml'
 
 export function readFolderMetadata(
   paths: Paths,
@@ -34,9 +38,19 @@ export function readFolderMetadata(
     return metaData
   }
 
+  // Недокачанный .meta.yaml — не «метаданных нет»: id папки существует, но
+  // сейчас неизвестен. Явный маркер запрещает вызывающему чеканить новый id
+  // (и legacy-миграции — писать поверх плейсхолдера).
+  if (isYamlFileCloudUnavailable(metaPath)) {
+    return { unavailable: true }
+  }
+
   // Step 2: Try legacy .masscode-folder.yml
   const legacyData = readYamlObjectFile<MarkdownFolderMetadataFile>(legacyPath)
   if (!legacyData) {
+    if (isYamlFileCloudUnavailable(legacyPath)) {
+      return { unavailable: true }
+    }
     return {}
   }
 

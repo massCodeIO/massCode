@@ -5,6 +5,7 @@ import {
   normalizeNumber,
   normalizePositiveInteger,
 } from '../normalizers'
+import { throwCloudContentUnavailable } from './cloudGuards'
 import { buildFolderPathMap, normalizeFolderOrderIndices } from './folderIndex'
 import { listUserFoldersFromDisk } from './folderScan'
 import { depthOfRelativePath, normalizeDirectoryPath } from './path'
@@ -25,6 +26,10 @@ export interface FolderSyncState<TFolder extends SyncFolderBase> {
   counters: {
     folderId: number
   }
+  // Персистируемый fallback path → id (см. syncFolderIdByPathWithFolders):
+  // после холодного старта state.folders пуст, и без него недокачанный
+  // .meta.yaml приводил бы к чеканке нового id для существующей папки.
+  folderIdByPath?: Record<string, number>
   folderUi: Record<string, { isOpen?: unknown }>
   folders: TFolder[]
 }
@@ -50,8 +55,14 @@ export function syncFoldersStateFromDisk<
   const oldFoldersById = new Map<number, TFolder>(
     state.folders.map(folder => [folder.id, folder]),
   )
+
+  // Путь → id: живые folders приоритетнее персистированного fallback'а
+  // (он нужен после холодного старта, когда state.folders ещё пуст, а
+  // .meta.yaml каталога может быть недокачан).
+  const oldFolderIdByPath = new Map<string, number>(
+    Object.entries(state.folderIdByPath ?? {}),
+  )
   const oldFolderPathMap = buildFolderPathMap(state.folders)
-  const oldFolderIdByPath = new Map<string, number>()
   oldFolderPathMap.forEach((folderPath, folderId) => {
     oldFolderIdByPath.set(folderPath, folderId)
   })
@@ -96,6 +107,15 @@ export function syncFoldersStateFromDisk<
     }
 
     if (!folderId) {
+      // Метаданные папки существуют, но недокачаны из облака (первый запуск
+      // после обновления: в state ещё нет folderIdByPath): чеканка нового id
+      // осиротила бы все записи со старым folderId, а после докачки id
+      // сменился бы ещё раз. Сверка прерывается cloud-ошибкой — reconciler
+      // ретраит её до доступности метаданных (файл уже в очереди докачки).
+      if (metadata.unavailable) {
+        throwCloudContentUnavailable()
+      }
+
       nextFolderId += 1
       folderId = nextFolderId
     }
@@ -154,6 +174,14 @@ export function syncFoldersStateFromDisk<
   normalizeFolderOrderIndices(nextFolders)
   state.folders = nextFolders
   state.counters.folderId = Math.max(state.counters.folderId, nextFolderId)
+
+  // Свежая карта path → id уходит в state как fallback для следующего
+  // холодного старта.
+  const nextFolderIdByPath: Record<string, number> = {}
+  pathToFolderId.forEach((folderId, folderPath) => {
+    nextFolderIdByPath[folderPath] = folderId
+  })
+  state.folderIdByPath = nextFolderIdByPath
 }
 
 export function syncFoldersStateFromDiskAtRoot<

@@ -37,7 +37,11 @@ async function materializeDirectoryListings(rootPath: string): Promise<void> {
     try {
       entries = await fsp.readdir(currentPath, { withFileTypes: true })
     }
-    catch {
+    catch (error) {
+      // Пропущенный каталог не валит прогрев: настоящий скан в runSync
+      // прочитает его сам (или упадёт, и attempt ретрайнет). Но след в
+      // логе нужен — молча неполный обход маскировал бы проблемы диска.
+      log('storage:reconcile:readdir', error)
       continue
     }
 
@@ -57,6 +61,11 @@ export interface VaultReconciler {
 // Пауза перед повтором сверки, когда её заблокировал недокачанный
 // служебный файл (state.json / .state.yaml сам может быть плейсхолдером).
 const RECONCILE_RETRY_MS = 3_000
+
+// Прочие ошибки (EIO, битый state и т.п.) ретраятся с экспоненциальным
+// backoff: transient-сбой не должен навсегда оставлять пространство на
+// пустом provisional-кэше (повторного begin() при живом кэше уже не будет).
+const RECONCILE_MAX_RETRY_MS = 60_000
 
 function isCloudFileNotDownloadedError(error: unknown): boolean {
   return (
@@ -85,6 +94,8 @@ export function createVaultReconciler(label: string): VaultReconciler {
 
       pendingRoots.add(rootPath)
 
+      let backoffMs = RECONCILE_RETRY_MS
+
       const attempt = async (): Promise<void> => {
         try {
           await materializeDirectoryListings(rootPath)
@@ -108,8 +119,14 @@ export function createVaultReconciler(label: string): VaultReconciler {
             return
           }
 
+          // Любая другая ошибка тоже ретраится (с backoff): отказ здесь
+          // означал бы пустое пространство до перезапуска приложения, так
+          // как повторного begin() при существующем кэше не происходит.
           log(`storage:${label}:reconcile`, error)
-          pendingRoots.delete(rootPath)
+          setTimeout(() => {
+            void attempt()
+          }, backoffMs)
+          backoffMs = Math.min(backoffMs * 2, RECONCILE_MAX_RETRY_MS)
         }
       }
 

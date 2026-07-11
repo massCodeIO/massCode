@@ -1,6 +1,9 @@
 import type { NotesPaths, NotesState, NotesStateFile } from './types'
 import { createStateAdapter } from '../../runtime/shared/stateAdapter'
-import { syncFolderUiWithFolders } from '../../runtime/shared/stateUtils'
+import {
+  syncFolderIdByPathWithFolders,
+  syncFolderUiWithFolders,
+} from '../../runtime/shared/stateUtils'
 import { invalidateNotesSearchIndex } from './search'
 
 // Версия 2: записи notes несут денормализованные метаданные списка и
@@ -32,6 +35,15 @@ const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
   ],
   toPersistedState: state => ({
     counters: state.counters,
+    // Очередь отложенных rewrite'ов [[ссылок]] переживает перезапуск:
+    // без персиста переименование цели оставило бы в ещё не докачанных
+    // линкерах старую ссылку навсегда.
+    ...(state.deferredBacklinkRewrites?.length
+      ? { deferredBacklinkRewrites: state.deferredBacklinkRewrites }
+      : {}),
+    // Fallback path → folder id для холодного старта с недокачанными
+    // .meta.yaml (см. syncFolderIdByPathWithFolders).
+    ...(state.folderIdByPath ? { folderIdByPath: state.folderIdByPath } : {}),
     folderUi: state.folderUi,
     // Записи индекса нормализуются до известной схемы: state.json
     // синхронизируется между устройствами и не должен накапливать
@@ -49,6 +61,12 @@ const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
 
     return {
       counters: { ...defaults.counters, ...raw.counters },
+      ...(Array.isArray(raw.deferredBacklinkRewrites)
+        ? { deferredBacklinkRewrites: raw.deferredBacklinkRewrites }
+        : {}),
+      ...(raw.folderIdByPath && typeof raw.folderIdByPath === 'object'
+        ? { folderIdByPath: raw.folderIdByPath }
+        : {}),
       folderUi: (raw.folderUi ?? {}) as NotesState['folderUi'],
       folders: legacyFolders,
       notes: Array.isArray(raw.notes) ? raw.notes : [],
@@ -58,6 +76,7 @@ const adapter = createStateAdapter<NotesState, NotesStateFile, NotesPaths>({
   },
   onBeforeSave: (state) => {
     syncFolderUiWithFolders(state)
+    syncFolderIdByPathWithFolders(state)
     invalidateNotesSearchIndex(state)
   },
 })

@@ -1,7 +1,6 @@
 import type { ChokidarOptions, FSWatcher } from 'chokidar'
 import type { NotesPaths, NotesRuntimeCache } from './notes/runtime'
 import path from 'node:path'
-import { BrowserWindow } from 'electron'
 import { importEsm, log } from '../../../utils'
 import {
   configureCloudDownloads,
@@ -40,6 +39,8 @@ import {
 } from './runtime'
 import { wasRecentAppFileChange } from './runtime/shared/appChanges'
 import { getFileAvailability } from './runtime/shared/cloudFiles'
+import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
+import { broadcastStorageSynced } from './runtime/shared/vaultReconcile'
 import {
   getWatchPathSpaceId,
   isCodeWatchPath,
@@ -319,9 +320,7 @@ function scheduleStateSync(
         || hasHttpChanges
         || hasDrawingsChanges
       ) {
-        BrowserWindow.getAllWindows().forEach((window) => {
-          window.webContents.send('system:storage-synced')
-        })
+        broadcastStorageSynced()
       }
     }
     catch (error) {
@@ -394,9 +393,7 @@ function scheduleCloudRefresh(
     }
 
     if (changed) {
-      BrowserWindow.getAllWindows().forEach((window) => {
-        window.webContents.send('system:storage-synced')
-      })
+      broadcastStorageSynced()
     }
 
     if (remaining > 0) {
@@ -441,8 +438,7 @@ export function stopMarkdownWatcher(): void {
   resetNotesPathsCache()
 }
 
-export function startMarkdownWatcher(): void {
-  const vaultRootPath = getVaultPath()
+function initializeMarkdownWatcher(vaultRootPath: string): void {
   const paths = getPaths(vaultRootPath)
   const runtimeCache = peekRuntimeCache()
   const notesPaths = getNotesPaths(vaultRootPath)
@@ -594,4 +590,70 @@ export function startMarkdownWatcher(): void {
 
       log('storage:markdown:watcher-start', error)
     })
+}
+
+function configureCloudBootstrapRecovery(vaultRootPath: string): void {
+  const expectedStartToken = watcherStartToken
+  let isRetryScheduled = false
+
+  const scheduleRetry = (): void => {
+    if (isRetryScheduled) {
+      return
+    }
+
+    isRetryScheduled = true
+    setImmediate(() => {
+      isRetryScheduled = false
+
+      if (
+        watcherStartToken !== expectedStartToken
+        || getVaultPath() !== vaultRootPath
+      ) {
+        return
+      }
+
+      try {
+        if (tryStartMarkdownWatcher(vaultRootPath)) {
+          broadcastStorageSynced()
+        }
+      }
+      catch (error) {
+        log('storage:markdown:watcher-hydration-retry', error)
+      }
+    })
+  }
+
+  configureCloudDownloads({
+    onDownloaded: scheduleRetry,
+    onQueueActivity: () => {},
+  })
+
+  // Файл мог материализоваться между первым stat и постановкой callback.
+  // Если очередь уже пуста, один отложенный retry закрывает это окно без
+  // polling-loop во время обычной активной загрузки.
+  if (getPendingCloudPaths().length === 0) {
+    scheduleRetry()
+  }
+}
+
+function tryStartMarkdownWatcher(vaultRootPath: string): boolean {
+  try {
+    initializeMarkdownWatcher(vaultRootPath)
+    return true
+  }
+  catch (error) {
+    if (!isCloudFileNotDownloadedError(error)) {
+      throw error
+    }
+
+    // Разрешение legacy-layout может найти offloaded state до регистрации
+    // обычных watcher callbacks. Сохраняем загрузку и повторяем startup,
+    // когда облачный провайдер материализует файл.
+    configureCloudBootstrapRecovery(vaultRootPath)
+    return false
+  }
+}
+
+export function startMarkdownWatcher(): void {
+  tryStartMarkdownWatcher(getVaultPath())
 }

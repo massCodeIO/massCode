@@ -133,6 +133,7 @@ export function resetCloudDownloads(): void {
   onFileDownloaded = null
   onQueueActivity = null
   resetCloudFileExemptions()
+  broadcastStatus()
 }
 
 export function enqueueCloudDownload(absolutePath: string): void {

@@ -50,6 +50,7 @@ type SystemAction =
   | 'get-directory-state'
   | 'reload'
   | 'move-vault'
+  | 'set-vault-path'
   | 'open-external'
   | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'

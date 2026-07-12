@@ -56,6 +56,7 @@
     "entryNameSnippetConflict": "A snippet with this name already exists in this folder.",
     "entryNameRequestConflict": "A request with this name already exists in this folder.",
     "entryNameFolderConflict": "A folder with this name already exists at this level.",
+    "vaultPathRequired": "Vault path is required.",
     "licenseInvalid": "Invalid license key"
   },
   "description": {

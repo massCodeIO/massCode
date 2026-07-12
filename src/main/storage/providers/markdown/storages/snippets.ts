@@ -9,6 +9,7 @@ import type {
   SnippetUpdateResult,
 } from '../../../contracts'
 import path from 'node:path'
+import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
 import { prioritizeCloudDownload } from '../cloudDownloads'
 import {
   assertUniqueSiblingEntryName,
@@ -175,6 +176,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       })
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },
@@ -286,6 +288,7 @@ export function createSnippetsStorage(): SnippetsStorage {
         skipWriteIfUnavailable: movedToTrash,
       })
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return {
         invalidInput: false,
@@ -441,6 +444,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },
@@ -458,6 +462,7 @@ export function createSnippetsStorage(): SnippetsStorage {
       }
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },

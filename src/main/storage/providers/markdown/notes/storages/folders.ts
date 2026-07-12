@@ -5,6 +5,7 @@ import type {
   NotesFoldersStorage,
 } from '../../../../contracts'
 import path from 'node:path'
+import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
@@ -360,6 +361,7 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
 
       state.folders = state.folders.filter(f => !descendantIds.has(f.id))
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return { deleted: true }
     },

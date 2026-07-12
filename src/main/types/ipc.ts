@@ -52,6 +52,7 @@ type SystemAction =
   | 'move-vault'
   | 'set-vault-path'
   | 'open-external'
+  | 'refresh-dock-badge'
   | 'show-http-request-in-file-manager'
   | 'show-notes-folder-in-file-manager'
   | 'show-note-in-file-manager'

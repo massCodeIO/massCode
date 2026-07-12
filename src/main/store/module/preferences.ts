@@ -49,6 +49,7 @@ const API_INTEGRATIONS_DEFAULTS: PreferencesStore['api']['integrations'] = {
 const PREFERENCES_DEFAULTS: PreferencesStore = {
   appearance: {
     theme: 'auto',
+    dockBadgeSource: 'none',
   },
   updates: {
     autoUpdate: true,
@@ -286,6 +287,12 @@ function sanitizePreferences(value: unknown): PreferencesStore {
         appearanceSource,
         'theme',
         readString(source, 'theme', PREFERENCES_DEFAULTS.appearance.theme),
+      ),
+      dockBadgeSource: readEnum(
+        appearanceSource,
+        'dockBadgeSource',
+        ['none', 'codeInbox', 'notesInbox', 'tasksDue'] as const,
+        PREFERENCES_DEFAULTS.appearance.dockBadgeSource,
       ),
     },
     updates: {

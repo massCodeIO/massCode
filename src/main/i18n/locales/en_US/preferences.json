@@ -134,6 +134,13 @@
   },
   "appearance": {
     "label": "Appearance",
+    "dockBadge": {
+      "label": "Dock Icon Counter",
+      "none": "Don't Show",
+      "codeInbox": "Code Inbox",
+      "notesInbox": "Notes Inbox",
+      "tasksDue": "Tasks Due Today"
+    },
     "theme": {
       "label": "Theme",
       "builtIn": "Built-in",

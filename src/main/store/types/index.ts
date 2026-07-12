@@ -237,6 +237,7 @@ export interface UpdatesSettings {
 }
 
 export type TasksAutoCleanupInterval = 'never' | '1d' | '7d' | '30d'
+export type DockBadgeSource = 'none' | 'codeInbox' | 'notesInbox' | 'tasksDue'
 
 export interface TasksSettings {
   autoCleanupCompleted: TasksAutoCleanupInterval
@@ -245,6 +246,7 @@ export interface TasksSettings {
 export interface PreferencesStore {
   appearance: {
     theme: string
+    dockBadgeSource: DockBadgeSource
   }
   updates: UpdatesSettings
   localization: {

@@ -132,6 +132,13 @@
   },
   "appearance": {
     "label": "Внешний вид",
+    "dockBadge": {
+      "label": "Счётчик на иконке в Dock",
+      "none": "Не показывать",
+      "codeInbox": "Code Inbox",
+      "notesInbox": "Notes Inbox",
+      "tasksDue": "Задачи на сегодня"
+    },
     "theme": {
       "label": "Тема",
       "builtIn": "Встроенные",

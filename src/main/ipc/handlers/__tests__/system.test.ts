@@ -29,6 +29,8 @@ const i18nT = vi.fn()
 const log = vi.fn()
 const preferencesGet = vi.fn()
 const preferencesSet = vi.fn()
+const refreshDockBadge = vi.fn(() => 3)
+const scheduleDockBadgeRefresh = vi.fn()
 
 vi.mock('electron', () => ({
   app: {
@@ -61,6 +63,11 @@ vi.mock('../../../currencyRates', () => ({
   getCurrencyRates: vi.fn(),
   refreshCryptoRatesForced: vi.fn(),
   refreshFiatRatesForced: vi.fn(),
+}))
+
+vi.mock('../../../dockBadge', () => ({
+  refreshDockBadge,
+  scheduleDockBadgeRefresh,
 }))
 
 vi.mock('../../../i18n', () => ({
@@ -162,6 +169,21 @@ describe('registerSystemHandlers', () => {
       'system:set-vault-path',
       expect.any(Function),
     )
+  })
+
+  it('registers and delegates the Dock badge refresh handler', async () => {
+    const { registerSystemHandlers } = await import('../system')
+
+    registerSystemHandlers()
+
+    expect(handle).toHaveBeenCalledWith(
+      'system:refresh-dock-badge',
+      expect.any(Function),
+    )
+    expect(
+      registeredHandlers.get('system:refresh-dock-badge')?.(undefined),
+    ).toBe(3)
+    expect(refreshDockBadge).toHaveBeenCalledTimes(1)
   })
 
   it('delegates directory state lookup to the runtime helper', async () => {

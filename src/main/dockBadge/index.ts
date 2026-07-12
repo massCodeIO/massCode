@@ -26,8 +26,13 @@ interface DockBadgeControllerDependencies {
 
 export interface DockBadgeController {
   cleanup: () => void
-  refresh: () => number
+  refresh: () => DockBadgeRefreshResult
   scheduleRefresh: () => void
+}
+
+export interface DockBadgeRefreshResult {
+  applied: boolean
+  count: number
 }
 
 export function createDockBadgeController(
@@ -65,11 +70,11 @@ export function createDockBadgeController(
     }, nextMidnight.getTime() - now.getTime())
   }
 
-  function refresh(): number {
+  function refresh(): DockBadgeRefreshResult {
     clearRefreshTimer()
     if (dependencies.platform !== 'darwin' || !dependencies.app.isReady()) {
       clearMidnightTimer()
-      return 0
+      return { applied: false, count: 0 }
     }
 
     const source = dependencies.getSource()
@@ -87,10 +92,10 @@ export function createDockBadgeController(
       getLocalDateOnly(dependencies.now()),
     )
 
-    dependencies.app.setBadgeCount(count)
+    const applied = dependencies.app.setBadgeCount(count)
     scheduleMidnightRefresh(source)
 
-    return count
+    return { applied, count }
   }
 
   function scheduleRefresh(): void {

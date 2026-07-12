@@ -29,7 +29,7 @@ const i18nT = vi.fn()
 const log = vi.fn()
 const preferencesGet = vi.fn()
 const preferencesSet = vi.fn()
-const refreshDockBadge = vi.fn(() => 3)
+const refreshDockBadge = vi.fn(() => ({ applied: true, count: 3 }))
 const scheduleDockBadgeRefresh = vi.fn()
 
 vi.mock('electron', () => ({
@@ -182,7 +182,7 @@ describe('registerSystemHandlers', () => {
     )
     expect(
       registeredHandlers.get('system:refresh-dock-badge')?.(undefined),
-    ).toBe(3)
+    ).toEqual({ applied: true, count: 3 })
     expect(refreshDockBadge).toHaveBeenCalledTimes(1)
   })
 

@@ -139,7 +139,8 @@
       "none": "Don't Show",
       "codeInbox": "Code Inbox",
       "notesInbox": "Notes Inbox",
-      "tasksDue": "Tasks Due Today"
+      "tasksDue": "Tasks Due Today",
+      "permissionDenied": "macOS blocked the Dock counter. Allow notifications and badges for massCode in System Settings. Unsigned development builds may not support Dock badges."
     },
     "theme": {
       "label": "Theme",

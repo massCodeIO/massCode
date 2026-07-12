@@ -30,7 +30,7 @@ afterEach(() => {
 })
 
 function createContext(source: DockBadgeSource = 'none') {
-  const setBadgeCount = vi.fn()
+  const setBadgeCount = vi.fn(() => true)
   const peekNotesCache = vi.fn(() => null)
   const peekSnippetsCache = vi.fn(() => null)
   let currentSource = source
@@ -64,10 +64,20 @@ describe('dock badge controller', () => {
       snippets: [{ folderId: null, isDeleted: 0 }],
     } as any)
 
-    expect(context.controller.refresh()).toBe(1)
+    expect(context.controller.refresh()).toEqual({ applied: true, count: 1 })
     expect(context.setBadgeCount).toHaveBeenCalledWith(1)
     expect(context.peekSnippetsCache).toHaveBeenCalledTimes(1)
     expect(context.peekNotesCache).not.toHaveBeenCalled()
+  })
+
+  it('reports when macOS rejects the badge update', () => {
+    const context = createContext('notesInbox')
+    context.setBadgeCount.mockReturnValue(false)
+
+    expect(context.controller.refresh()).toEqual({
+      applied: false,
+      count: 0,
+    })
   })
 
   it('does not touch Electron before readiness or outside macOS', () => {
@@ -84,10 +94,10 @@ describe('dock badge controller', () => {
 
     expect(
       createDockBadgeController({ ...base, platform: 'darwin' }).refresh(),
-    ).toBe(0)
+    ).toEqual({ applied: false, count: 0 })
     expect(
       createDockBadgeController({ ...base, platform: 'linux' }).refresh(),
-    ).toBe(0)
+    ).toEqual({ applied: false, count: 0 })
     expect(setBadgeCount).not.toHaveBeenCalled()
   })
 

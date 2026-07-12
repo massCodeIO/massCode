@@ -3,11 +3,17 @@ import type { AcceptableValue } from 'reka-ui'
 import type { DockBadgeSource } from '~/main/store/types'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Select from '@/components/ui/shadcn/select'
-import { useTheme } from '@/composables'
+import { useSonner, useTheme } from '@/composables'
 import { i18n, ipc, store } from '@/electron'
 import { isMac } from '@/utils'
 
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
+const { sonner } = useSonner()
+
+interface DockBadgeRefreshResult {
+  applied: boolean
+  count: number
+}
 
 const dockBadgeSource = ref<DockBadgeSource>(
   store.preferences.get<DockBadgeSource>('appearance.dockBadgeSource')
@@ -76,7 +82,17 @@ async function onDockBadgeSourceChange(value: AcceptableValue) {
   const source = value as DockBadgeSource
   dockBadgeSource.value = source
   store.preferences.set('appearance.dockBadgeSource', source)
-  await ipc.invoke('system:refresh-dock-badge', null)
+  const result = (await ipc.invoke(
+    'system:refresh-dock-badge',
+    null,
+  )) as DockBadgeRefreshResult
+
+  if (source !== 'none' && !result.applied) {
+    sonner({
+      message: i18n.t('preferences:appearance.dockBadge.permissionDenied'),
+      type: 'warning',
+    })
+  }
 }
 
 async function openThemesDir() {

@@ -49,13 +49,16 @@ async function setup() {
     normalizeCodeSelectionState,
   }))
 
-  const { initCodeSpace } = await import('../useCodeSpaceInit')
+  const { initCodeSpace, resetCodeSpaceInitialization } = await import(
+    '../useCodeSpaceInit'
+  )
 
   return {
     callOrder,
     initCodeSpace,
     isCodeSpaceInitialized,
     normalizeCodeSelectionState,
+    resetCodeSpaceInitialization,
   }
 }
 
@@ -64,6 +67,24 @@ beforeEach(() => {
 })
 
 describe('initCodeSpace', () => {
+  it('invalidates initialization before loading another vault', async () => {
+    const context = await setup()
+    context.isCodeSpaceInitialized.value = true
+
+    context.resetCodeSpaceInitialization()
+
+    expect(context.isCodeSpaceInitialized.value).toBe(false)
+
+    await context.initCodeSpace()
+
+    expect(context.callOrder).toEqual([
+      'getFolders',
+      'getTags',
+      'normalizeCodeSelectionState',
+    ])
+    expect(context.isCodeSpaceInitialized.value).toBe(true)
+  })
+
   it('loads folders and tags before normalizing selection state', async () => {
     const context = await setup()
 

@@ -51,6 +51,7 @@
     "entryNameSnippetConflict": "В этой папке уже есть сниппет с таким именем.",
     "entryNameRequestConflict": "В этой папке уже есть запрос с таким именем.",
     "entryNameFolderConflict": "Папка с таким именем уже существует на этом уровне.",
+    "vaultPathRequired": "Укажите путь к хранилищу.",
     "licenseInvalid": "Недействительный лицензионный ключ"
   },
   "description": {

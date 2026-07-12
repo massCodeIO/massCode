@@ -2,7 +2,9 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getPaths, hasMarkdownVaultData } from '../paths'
+import { enqueueCloudDownload } from '../../cloudDownloads'
+import { getPaths, hasMarkdownVaultData, resetPathsCache } from '../paths'
+import { setDatalessProbeForTests } from '../shared/cloudFiles'
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -62,6 +64,10 @@ vi.mock('../../../../../store', () => ({
   },
 }))
 
+vi.mock('../../cloudDownloads', () => ({
+  enqueueCloudDownload: vi.fn(),
+}))
+
 const tempDirs: string[] = []
 
 function createTempDir(): string {
@@ -70,7 +76,23 @@ function createTempDir(): string {
   return tempDir
 }
 
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function hasPlaceholderSignature(absolutePath: string): boolean {
+  const stats = fs.statSync(absolutePath)
+  return stats.size > 0 && stats.blocks === 0
+}
+
 afterEach(() => {
+  setDatalessProbeForTests(null)
+  resetPathsCache()
+  vi.mocked(enqueueCloudDownload).mockClear()
+
   while (tempDirs.length > 0) {
     const tempDir = tempDirs.pop()
     if (tempDir) {
@@ -80,6 +102,59 @@ afterEach(() => {
 })
 
 describe('getPaths', () => {
+  it('retries legacy layout migration after cloud state hydration', () => {
+    const vaultPath = createTempDir()
+    const legacyStatePath = path.join(vaultPath, '.masscode', 'state.json')
+    const legacyState = {
+      counters: {
+        contentId: 0,
+        folderId: 1,
+        snippetId: 1,
+        tagId: 0,
+      },
+      folders: [
+        {
+          id: 1,
+          name: 'Cloud',
+          orderIndex: 0,
+          parentId: null,
+        },
+      ],
+      snippets: [
+        {
+          filePath: 'Cloud/demo.md',
+          id: 1,
+        },
+      ],
+      tags: [],
+      version: 2,
+    }
+
+    fs.ensureDirSync(path.dirname(legacyStatePath))
+    fs.writeJSONSync(legacyStatePath, legacyState)
+    fs.ensureDirSync(path.join(vaultPath, 'Cloud'))
+    fs.writeFileSync(path.join(vaultPath, 'Cloud', 'demo.md'), '# Cloud')
+    makeSparsePlaceholder(legacyStatePath)
+    if (!hasPlaceholderSignature(legacyStatePath)) {
+      return
+    }
+    setDatalessProbeForTests(() => true)
+
+    expect(() => getPaths(vaultPath)).toThrow(/CLOUD_FILE_NOT_DOWNLOADED/)
+    expect(enqueueCloudDownload).toHaveBeenCalledWith(legacyStatePath)
+    expect(fs.pathExistsSync(path.join(vaultPath, 'code'))).toBe(false)
+
+    fs.writeJSONSync(legacyStatePath, legacyState)
+
+    const paths = getPaths(vaultPath)
+
+    expect(paths.vaultPath).toBe(path.join(vaultPath, 'code'))
+    expect(
+      fs.pathExistsSync(path.join(paths.vaultPath, 'Cloud', 'demo.md')),
+    ).toBe(true)
+    expect(fs.pathExistsSync(path.join(vaultPath, '.masscode'))).toBe(false)
+  })
+
   it('detects existing data in legacy root vault layout', () => {
     const vaultPath = createTempDir()
 

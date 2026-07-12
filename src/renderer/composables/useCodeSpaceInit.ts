@@ -7,6 +7,10 @@ const { isCodeSpaceInitialized } = useApp()
 const { getFolders } = useFolders()
 const { getTags } = useTags()
 
+export function resetCodeSpaceInitialization(): void {
+  isCodeSpaceInitialized.value = false
+}
+
 export async function initCodeSpace(): Promise<void> {
   const results = await Promise.allSettled([getFolders(), getTags()])
 

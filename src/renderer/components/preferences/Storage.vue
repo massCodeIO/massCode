@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/shadcn/badge'
 import { Button } from '@/components/ui/shadcn/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/shadcn/radio-group'
 import {
+  resetCodeSpaceInitialization,
   resetHttpSpaceState,
   resetNotesSpaceInitialization,
   useDialog,
@@ -34,7 +35,7 @@ interface DirectoryStateResponse {
   isEmpty: boolean
 }
 
-interface MoveVaultResponse {
+interface VaultPathResponse {
   vaultPath: string
 }
 
@@ -185,6 +186,7 @@ async function getSnippetsCounts() {
 getSnippetsCounts()
 
 async function resetAndReloadVaultData() {
+  resetCodeSpaceInitialization()
   resetMathNotebook()
   resetDrawings()
   clearNotesState()
@@ -207,32 +209,56 @@ async function resetAndReloadVaultData() {
   await getSnippetsCounts()
 }
 
+async function syncVaultPathAfterFailedChange() {
+  // Main process мог сохранить новый путь до ошибки следующего шага
+  // (например, запуска watcher после физического переноса). UI должен
+  // отражать фактически активный vault, а не уже несуществующий старый.
+  const configuredVaultPath = store.preferences.get<string | null>(
+    'storage.vaultPath',
+  )
+  if (configuredVaultPath !== vaultPath.value) {
+    vaultPath.value = configuredVaultPath
+    await resetAndReloadVaultData()
+  }
+}
+
 async function openVaultStorage() {
   if (isMovingVault.value) {
     return
   }
 
-  const result = await ipc.invoke<DialogOptions, string>(
+  const selectedPath = await ipc.invoke<DialogOptions, string>(
     'main-menu:open-dialog',
     {
       properties: ['openDirectory', 'createDirectory'],
     },
   )
 
-  if (!result) {
+  if (!selectedPath) {
     return
   }
 
-  vaultPath.value = result
-  store.preferences.set('storage.vaultPath', result)
-  await resetAndReloadVaultData()
+  try {
+    const result = await ipc.invoke<{ vaultPath: string }, VaultPathResponse>(
+      'system:set-vault-path',
+      { vaultPath: selectedPath },
+    )
 
-  sonner({
-    message: i18n.t('messages:success.vaultLoaded'),
-    type: 'success',
-  })
+    vaultPath.value = result.vaultPath
+    await resetAndReloadVaultData()
 
-  await refreshVaultDoctorAfterVaultChange()
+    sonner({
+      message: i18n.t('messages:success.vaultLoaded'),
+      type: 'success',
+    })
+
+    await refreshVaultDoctorAfterVaultChange()
+  }
+  catch (err) {
+    await syncVaultPathAfterFailedChange()
+    const error = err as Error
+    sonner({ message: error.message, type: 'error' })
+  }
 }
 
 async function moveVaultStorage() {
@@ -272,7 +298,7 @@ async function moveVaultStorage() {
   isMovingVault.value = true
 
   try {
-    const result = await ipc.invoke<{ targetPath: string }, MoveVaultResponse>(
+    const result = await ipc.invoke<{ targetPath: string }, VaultPathResponse>(
       'system:move-vault',
       { targetPath },
     )
@@ -290,6 +316,7 @@ async function moveVaultStorage() {
     })
   }
   catch (err) {
+    await syncVaultPathAfterFailedChange()
     const error = err as Error
     sonner({ message: error.message, type: 'error' })
   }

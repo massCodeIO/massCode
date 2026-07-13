@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
+import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
@@ -271,6 +272,7 @@ else {
     setImmediate(() => {
       try {
         startMarkdownWatcher()
+        refreshDockBadge()
       }
       catch (error) {
         log('Error starting markdown watcher', error)
@@ -309,6 +311,7 @@ else {
     stopThemeWatcher()
     stopMarkdownWatcher()
     stopTasksCleanupScheduler()
+    cleanupDockBadge()
   })
 
   app.on('window-all-closed', () => {

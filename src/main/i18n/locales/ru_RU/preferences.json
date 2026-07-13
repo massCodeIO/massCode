@@ -132,6 +132,14 @@
   },
   "appearance": {
     "label": "Внешний вид",
+    "dockBadge": {
+      "label": "Счётчик на иконке в Dock",
+      "none": "Не показывать",
+      "codeInbox": "Code Inbox",
+      "notesInbox": "Notes Inbox",
+      "tasksDue": "Задачи на сегодня",
+      "permissionDenied": "macOS заблокировала счётчик Dock. Разрешите уведомления и значки для massCode в системных настройках. Неподписанные dev-сборки могут не поддерживать значки Dock."
+    },
     "theme": {
       "label": "Тема",
       "builtIn": "Встроенные",

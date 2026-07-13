@@ -9,6 +9,7 @@ import {
   refreshCryptoRatesForced,
   refreshFiatRatesForced,
 } from '../../currencyRates'
+import { refreshDockBadge, scheduleDockBadgeRefresh } from '../../dockBadge'
 import i18n from '../../i18n'
 import { activateLicense } from '../../license'
 import { getCloudDownloadStatus } from '../../storage/providers/markdown/cloudDownloads'
@@ -53,6 +54,7 @@ function setVaultPathAndRestartWatcher(vaultPath: string): void {
   try {
     store.preferences.set('storage.vaultPath', vaultPath)
     startMarkdownWatcher()
+    scheduleDockBadgeRefresh()
   }
   catch (error) {
     // Не оставляем приложение на частично запущенном watcher нового vault:
@@ -97,6 +99,7 @@ function moveVaultAndRestartWatcher(
 
   try {
     startMarkdownWatcher()
+    scheduleDockBadgeRefresh()
   }
   catch (error) {
     // Файлы уже перенесены, поэтому откат пути небезопасен. Чистый повтор
@@ -104,6 +107,7 @@ function moveVaultAndRestartWatcher(
     try {
       stopMarkdownWatcher()
       startMarkdownWatcher()
+      scheduleDockBadgeRefresh()
       return
     }
     catch (recoveryError) {
@@ -150,6 +154,10 @@ export function registerSystemHandlers() {
 
   ipcMain.handle('system:crypto-rates-refresh', () => {
     return refreshCryptoRatesForced()
+  })
+
+  ipcMain.handle('system:refresh-dock-badge', () => {
+    return refreshDockBadge()
   })
 
   ipcMain.handle(

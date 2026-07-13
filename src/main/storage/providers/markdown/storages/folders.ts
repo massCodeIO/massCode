@@ -1,6 +1,7 @@
 import type { FoldersStorage, FolderUpdateResult } from '../../../contracts'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { scheduleDockBadgeRefresh } from '../../../../dockBadge'
 import {
   assertDirectoryNameAvailable,
   assertNotReservedRootFolderName,
@@ -331,6 +332,7 @@ export function createFoldersStorage(): FoldersStorage {
       removeFolderPathsFromDisk(paths.vaultPath, removedFolderPaths)
 
       saveState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return { deleted: true }
     },

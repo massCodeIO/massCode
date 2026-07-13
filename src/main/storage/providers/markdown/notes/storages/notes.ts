@@ -13,6 +13,7 @@ import type {
 import type { MarkdownNote, NotesState } from '../runtime/types'
 import path from 'node:path'
 import { isAfter, isToday, parseISO, startOfToday } from 'date-fns'
+import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
@@ -372,6 +373,7 @@ export function createNotesNotesStorage(): NotesStorage {
       })
 
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
 
       return result
     },
@@ -449,6 +451,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
       return { invalidInput: false, notFound: false }
     },
 
@@ -500,6 +503,7 @@ export function createNotesNotesStorage(): NotesStorage {
 
       note.updatedAt = Date.now()
       writeNoteToFile(paths, note)
+      scheduleDockBadgeRefresh()
 
       return { invalidInput: false, notFound: false }
     },
@@ -518,6 +522,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
       return result
     },
 
@@ -535,6 +540,7 @@ export function createNotesNotesStorage(): NotesStorage {
       }
 
       saveNotesState(paths, state)
+      scheduleDockBadgeRefresh()
       return result
     },
 

@@ -111,6 +111,41 @@ afterEach(() => {
 })
 
 describe('preferences store sanitization', () => {
+  it('defaults missing dock badge source to none', async () => {
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe('none')
+  })
+
+  it('keeps a valid dock badge source and prunes stale appearance values', async () => {
+    persistedStateByName.preferences = {
+      appearance: {
+        theme: 'dark',
+        dockBadgeSource: 'notesInbox',
+        stale: true,
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe(
+      'notesInbox',
+    )
+    expect(preferences.get('appearance.stale' as any)).toBeUndefined()
+  })
+
+  it('defaults an invalid dock badge source to none', async () => {
+    persistedStateByName.preferences = {
+      appearance: {
+        dockBadgeSource: 'invalid',
+      },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('appearance.dockBadgeSource' as any)).toBe('none')
+  })
+
   it('migrates legacy keys into grouped preferences schema and prunes stale values', async () => {
     persistedStateByName.preferences = {
       storagePath: '/custom-storage',

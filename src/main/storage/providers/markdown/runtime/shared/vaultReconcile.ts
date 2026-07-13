@@ -2,6 +2,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { BrowserWindow } from 'electron'
+import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
 import { log } from '../../../../../utils'
 
 // Первый обход только что открытого vault опасен синхронно: листинг
@@ -17,6 +18,8 @@ import { log } from '../../../../../utils'
 const SKIP_WALK_DIR_NAMES = new Set(['.git', 'node_modules'])
 
 export function broadcastStorageSynced(): void {
+  scheduleDockBadgeRefresh()
+
   try {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('system:storage-synced')

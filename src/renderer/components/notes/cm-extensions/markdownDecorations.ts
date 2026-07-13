@@ -10,7 +10,10 @@ import {
   parseBlockquoteCallout,
   shouldReplaceCalloutMarker,
 } from './callouts'
-import { buildFencedCodeLineStyle } from './fencedCodeStyles'
+import {
+  buildFencedCodeLineStyle,
+  isStandaloneFencedCode,
+} from './fencedCodeStyles'
 import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 
 class HorizontalRuleWidget extends WidgetType {
@@ -478,6 +481,9 @@ function buildDecorations(
 
         // Fenced code blocks
         if (type === 'FencedCode') {
+          if (isStandaloneFencedCode(node.node))
+            return
+
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
 

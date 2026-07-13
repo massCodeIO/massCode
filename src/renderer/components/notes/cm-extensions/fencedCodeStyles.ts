@@ -1,3 +1,5 @@
+import type { SyntaxNode } from '@lezer/common'
+
 const fencedCodeBaseStyle = [
   'background:var(--card)',
   'border-left:1px solid var(--border)',
@@ -10,6 +12,14 @@ const fencedCodeBaseStyle = [
   'padding-left:16px',
   'padding-right:16px',
 ].join(';')
+
+export function isStandaloneFencedCode(node: SyntaxNode): boolean {
+  return (
+    node.name === 'FencedCode'
+    && node.getChildren('CodeMark').length === 1
+    && node.getChild('CodeText') === null
+  )
+}
 
 export function buildFencedCodeLineStyle(
   lineNumber: number,

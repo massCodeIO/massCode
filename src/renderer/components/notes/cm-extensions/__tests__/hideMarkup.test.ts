@@ -1,5 +1,74 @@
+import type { SyntaxNode } from '@lezer/common'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
+import { languages } from '@codemirror/language-data'
+import { EditorState } from '@codemirror/state'
+import { GFM } from '@lezer/markdown'
 import { describe, expect, it } from 'vitest'
-import { canShowMarkup, shouldHideUrlNodeInMarkup } from '../hideMarkup'
+import {
+  canShowMarkup,
+  shouldHideUrlNodeInMarkup,
+  shouldKeepStandaloneFencedCodeMarkup,
+} from '../hideMarkup'
+
+function getFencedMarkupNodes(doc: string) {
+  const state = EditorState.create({
+    doc,
+    extensions: [
+      markdown({
+        base: markdownLanguage,
+        codeLanguages: languages,
+        extensions: GFM,
+      }),
+    ],
+  })
+  const nodes: Array<{ name: string, parent: SyntaxNode }> = []
+
+  syntaxTree(state).iterate({
+    enter(node) {
+      const parent = node.node.parent
+      if (
+        (node.name === 'CodeMark' || node.name === 'CodeInfo')
+        && parent?.name === 'FencedCode'
+      ) {
+        nodes.push({ name: node.name, parent })
+      }
+    },
+  })
+
+  return nodes
+}
+
+describe('standalone fenced code markup visibility', () => {
+  it('keeps CodeMark and CodeInfo for a standalone fence', () => {
+    const nodes = getFencedMarkupNodes('```bash\n')
+
+    expect(
+      nodes.map(node => [
+        node.name,
+        shouldKeepStandaloneFencedCodeMarkup(node.name, node.parent),
+      ]),
+    ).toEqual([
+      ['CodeMark', true],
+      ['CodeInfo', true],
+    ])
+  })
+
+  it('does not keep CodeMark or CodeInfo for a regular fenced block', () => {
+    const nodes = getFencedMarkupNodes(['```bash', 'code', '```'].join('\n'))
+
+    expect(nodes.map(node => node.name)).toEqual([
+      'CodeMark',
+      'CodeInfo',
+      'CodeMark',
+    ])
+    expect(
+      nodes.map(node =>
+        shouldKeepStandaloneFencedCodeMarkup(node.name, node.parent),
+      ),
+    ).toEqual([false, false, false])
+  })
+})
 
 describe('hideMarkup url visibility', () => {
   it('hides URL node inside markdown link', () => {

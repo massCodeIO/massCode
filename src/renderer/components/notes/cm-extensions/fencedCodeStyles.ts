@@ -1,3 +1,5 @@
+import type { EditorState } from '@codemirror/state'
+
 const fencedCodeBaseStyle = [
   'background:var(--card)',
   'border-left:1px solid var(--border)',
@@ -10,6 +12,16 @@ const fencedCodeBaseStyle = [
   'padding-left:16px',
   'padding-right:16px',
 ].join(';')
+
+export function isStandaloneFencedCode(
+  state: EditorState,
+  node: { name: string, from: number, to: number },
+): boolean {
+  return (
+    node.name === 'FencedCode'
+    && state.doc.lineAt(node.from).number === state.doc.lineAt(node.to).number
+  )
+}
 
 export function buildFencedCodeLineStyle(
   lineNumber: number,

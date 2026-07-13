@@ -2,6 +2,7 @@ import type { EditorState, Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin } from '@codemirror/view'
+import { isStandaloneFencedCode } from './fencedCodeStyles'
 import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 
 const HIDEABLE_MARKS = new Set([
@@ -126,6 +127,15 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
 
         if (isInternalLinkBracket(view, node))
           return
+
+        const parent = node.node.parent
+        if (
+          node.name === 'CodeMark'
+          && parent
+          && isStandaloneFencedCode(view.state, parent)
+        ) {
+          return
+        }
 
         if (shouldShowMark(view, node, alwaysHide))
           return

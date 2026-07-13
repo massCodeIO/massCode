@@ -45,6 +45,7 @@ import {
 } from './cm-extensions/editorCommands'
 import { editorFocusExtension } from './cm-extensions/editorFocus'
 import { createExternalLinksNavigation } from './cm-extensions/externalLinks'
+import { fencedCodePairInput } from './cm-extensions/fencedCodeInput'
 import { createHideMarkup } from './cm-extensions/hideMarkup'
 import {
   createImageBlocks,
@@ -241,6 +242,10 @@ function createEditorState(doc: string): EditorState {
 
   if (notesSettings.lineNumbers && raw) {
     extensions.push(lineNumbersExtension())
+  }
+
+  if (editable && !raw) {
+    extensions.push(fencedCodePairInput)
   }
 
   if (!raw) {

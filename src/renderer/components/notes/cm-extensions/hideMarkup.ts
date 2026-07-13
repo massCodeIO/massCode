@@ -1,5 +1,6 @@
 import type { EditorState, Range } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
 import { syntaxTree } from '@codemirror/language'
 import { Decoration, ViewPlugin } from '@codemirror/view'
 import { isStandaloneFencedCode } from './fencedCodeStyles'
@@ -35,6 +36,17 @@ export function shouldHideUrlNodeInMarkup(
   }
 
   return parentName === 'Link' || parentName === 'Image'
+}
+
+export function shouldKeepStandaloneFencedCodeMarkup(
+  nodeName: string,
+  parent: SyntaxNode | null,
+): boolean {
+  return (
+    (nodeName === 'CodeMark' || nodeName === 'CodeInfo')
+    && parent !== null
+    && isStandaloneFencedCode(parent)
+  )
 }
 
 function isInternalLinkBracket(
@@ -128,12 +140,7 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
         if (isInternalLinkBracket(view, node))
           return
 
-        const parent = node.node.parent
-        if (
-          node.name === 'CodeMark'
-          && parent
-          && isStandaloneFencedCode(view.state, parent)
-        ) {
+        if (shouldKeepStandaloneFencedCodeMarkup(node.name, node.node.parent)) {
           return
         }
 

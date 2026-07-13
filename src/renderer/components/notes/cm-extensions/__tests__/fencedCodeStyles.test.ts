@@ -1,3 +1,4 @@
+import type { SyntaxNode } from '@lezer/common'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { syntaxTree } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
@@ -20,46 +21,57 @@ function getFencedCodeNodes(doc: string) {
       }),
     ],
   })
-  const nodes: Array<{ name: string, from: number, to: number }> = []
+  const nodes: SyntaxNode[] = []
 
   syntaxTree(state).iterate({
     enter(node) {
       if (node.name === 'FencedCode')
-        nodes.push({ name: node.name, from: node.from, to: node.to })
+        nodes.push(node.node)
     },
   })
 
-  return { state, nodes }
+  return nodes
 }
 
 describe('isStandaloneFencedCode', () => {
-  it('detects the trailing standalone fence from a damaged opening marker', () => {
-    const { state, nodes } = getFencedCodeNodes(
+  it.each(['```', '```\n', '```bash', '```bash\n'])(
+    'detects a standalone fence in %j',
+    (doc) => {
+      const nodes = getFencedCodeNodes(doc)
+
+      expect(nodes).toHaveLength(1)
+      expect(isStandaloneFencedCode(nodes[0])).toBe(true)
+    },
+  )
+
+  it.each([
+    ['multiline unclosed fence', ['```', 'code'].join('\n')],
+    ['multiline unclosed fence with info', ['```bash', 'code'].join('\n')],
+    ['empty multiline unclosed fence', ['```', '', ''].join('\n')],
+    ['valid empty fenced block', ['```', '```'].join('\n')],
+  ])('keeps a %s', (_, doc) => {
+    const nodes = getFencedCodeNodes(doc)
+
+    expect(nodes).toHaveLength(1)
+    expect(isStandaloneFencedCode(nodes[0])).toBe(false)
+  })
+
+  it('distinguishes a valid block from a trailing fence with a final LF', () => {
+    const nodes = getFencedCodeNodes(
       [
-        '``',
+        '```',
+        'adasd',
+        'adasdasdas',
+        '',
+        '```',
         'grep -h \'"event":"observability_evidence"\' /root/.pm2/logs/Api-out*.log | tail -n 1',
         '```',
+        '',
       ].join('\n'),
     )
 
-    expect(nodes).toHaveLength(1)
-    expect(isStandaloneFencedCode(state, nodes[0])).toBe(true)
-  })
-
-  it('keeps a valid fenced block', () => {
-    const { state, nodes } = getFencedCodeNodes(
-      ['```', 'command', '```'].join('\n'),
-    )
-
-    expect(nodes).toHaveLength(1)
-    expect(isStandaloneFencedCode(state, nodes[0])).toBe(false)
-  })
-
-  it('keeps a multiline unclosed fenced block', () => {
-    const { state, nodes } = getFencedCodeNodes(['```', 'command'].join('\n'))
-
-    expect(nodes).toHaveLength(1)
-    expect(isStandaloneFencedCode(state, nodes[0])).toBe(false)
+    expect(nodes).toHaveLength(2)
+    expect(nodes.map(isStandaloneFencedCode)).toEqual([false, true])
   })
 })
 

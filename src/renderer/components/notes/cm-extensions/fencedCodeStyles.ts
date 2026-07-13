@@ -1,4 +1,4 @@
-import type { EditorState } from '@codemirror/state'
+import type { SyntaxNode } from '@lezer/common'
 
 const fencedCodeBaseStyle = [
   'background:var(--card)',
@@ -13,13 +13,11 @@ const fencedCodeBaseStyle = [
   'padding-right:16px',
 ].join(';')
 
-export function isStandaloneFencedCode(
-  state: EditorState,
-  node: { name: string, from: number, to: number },
-): boolean {
+export function isStandaloneFencedCode(node: SyntaxNode): boolean {
   return (
     node.name === 'FencedCode'
-    && state.doc.lineAt(node.from).number === state.doc.lineAt(node.to).number
+    && node.getChildren('CodeMark').length === 1
+    && node.getChild('CodeText') === null
   )
 }
 

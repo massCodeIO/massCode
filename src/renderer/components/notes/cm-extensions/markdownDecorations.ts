@@ -481,7 +481,7 @@ function buildDecorations(
 
         // Fenced code blocks
         if (type === 'FencedCode') {
-          if (isStandaloneFencedCode(view.state, node))
+          if (isStandaloneFencedCode(node.node))
             return
 
           const startLine = view.state.doc.lineAt(node.from)

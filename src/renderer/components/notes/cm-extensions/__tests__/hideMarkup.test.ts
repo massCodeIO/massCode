@@ -3,10 +3,12 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { syntaxTree } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
 import { EditorState } from '@codemirror/state'
+import { Decoration } from '@codemirror/view'
 import { GFM } from '@lezer/markdown'
 import { describe, expect, it } from 'vitest'
 import {
   canShowMarkup,
+  createMarkupHidingDecoration,
   shouldHideUrlNodeInMarkup,
   shouldKeepStandaloneFencedCodeMarkup,
 } from '../hideMarkup'
@@ -67,6 +69,29 @@ describe('standalone fenced code markup visibility', () => {
         shouldKeepStandaloneFencedCodeMarkup(node.name, node.parent),
       ),
     ).toEqual([false, false, false])
+  })
+})
+
+describe('fenced code markup hiding decoration', () => {
+  it.each(['CodeMark', 'CodeInfo'])(
+    'hides %s without inserting a replacement widget buffer',
+    (nodeName) => {
+      const decoration = createMarkupHidingDecoration(nodeName, 'FencedCode')
+
+      expect(
+        decoration.eq(
+          Decoration.mark({
+            attributes: { style: 'visibility:hidden' },
+          }),
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it('keeps replacement decorations for markup outside fenced code', () => {
+    const decoration = createMarkupHidingDecoration('EmphasisMark', 'Emphasis')
+
+    expect(decoration.eq(Decoration.replace({}))).toBe(true)
   })
 })
 

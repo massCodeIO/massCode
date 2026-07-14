@@ -49,6 +49,22 @@ export function shouldKeepStandaloneFencedCodeMarkup(
   )
 }
 
+export function createMarkupHidingDecoration(
+  nodeName: string,
+  parentName: string | null | undefined,
+): Decoration {
+  if (
+    (nodeName === 'CodeMark' || nodeName === 'CodeInfo')
+    && parentName === 'FencedCode'
+  ) {
+    return Decoration.mark({
+      attributes: { style: 'visibility:hidden' },
+    })
+  }
+
+  return Decoration.replace({})
+}
+
 function isInternalLinkBracket(
   view: EditorView,
   node: { name: string, from: number, to: number },
@@ -154,7 +170,12 @@ function buildHideDecorations(view: EditorView, alwaysHide: boolean) {
             end = node.to + 1
         }
 
-        decorations.push(Decoration.replace({}).range(node.from, end))
+        decorations.push(
+          createMarkupHidingDecoration(node.name, node.node.parent?.name).range(
+            node.from,
+            end,
+          ),
+        )
       },
     })
   }

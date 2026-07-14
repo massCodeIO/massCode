@@ -31,6 +31,10 @@ const convertersNav = [
     name: RouterName.devtoolsTextToAscii,
   },
   {
+    label: i18n.t('devtools:converters.lineBreakNormalizer.label'),
+    name: RouterName.devtoolsLineBreakNormalizer,
+  },
+  {
     label: i18n.t('devtools:converters.base64.label'),
     name: RouterName.devtoolsBase64Converter,
   },

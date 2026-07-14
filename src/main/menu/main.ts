@@ -555,6 +555,11 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
       click: () => send('main-menu:format'),
     })
     items.push({
+      label: i18n.t('menu:editor.normalizeTerminalOutput'),
+      enabled: true,
+      click: () => send('main-menu:normalize-code-line-breaks'),
+    })
+    items.push({
       label: i18n.t('menu:editor.previewCode'),
       type: 'checkbox',
       enabled: context.editor.canPreviewCode,
@@ -577,6 +582,16 @@ function createEditorMenuItems(context: MainMenuContext): MenuConfig[] {
       label: i18n.t('menu:editor.copyNote'),
       click: () => send('main-menu:copy-note'),
       accelerator: 'CommandOrControl+Shift+C',
+    })
+    items.push({
+      label: i18n.t('menu:editor.normalizeTerminalOutput'),
+      enabled:
+        context.editor.noteMode !== null
+        && context.editor.noteMode !== 'preview'
+        && context.view.canToggleMindmap
+        && !context.view.isMindmapShown
+        && !context.view.isPresentationShown,
+      click: () => send('main-menu:normalize-note-line-breaks'),
     })
   }
 

@@ -10,6 +10,10 @@ import {
   useTheme,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import {
+  mapNormalizedCursorIndex,
+  normalizeTerminalText,
+} from '@/utils/normalizeTerminalText'
 import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
@@ -428,7 +432,35 @@ function onCopySnippetMenu() {
   useDonations().incrementCopy('code')
 }
 
+function normalizeTerminalOutput() {
+  if (!editor)
+    return
+
+  if (editor.somethingSelected()) {
+    const selections = editor.getSelections()
+    const normalized = selections.map(normalizeTerminalText)
+
+    if (normalized.some((value, index) => value !== selections[index]))
+      editor.replaceSelections(normalized, 'around')
+
+    return
+  }
+
+  const value = editor.getValue()
+  const normalized = normalizeTerminalText(value)
+
+  if (normalized === value)
+    return
+
+  const cursorIndex = editor.indexFromPos(editor.getCursor())
+  const mappedIndex = mapNormalizedCursorIndex(value, cursorIndex, normalized)
+
+  setValue(normalized, false)
+  editor.setCursor(editor.posFromIndex(mappedIndex))
+}
+
 ipc.on('main-menu:format', format)
+ipc.on('main-menu:normalize-code-line-breaks', normalizeTerminalOutput)
 
 // Спейсы пересоздаются при переключении: без снятия listeners каждый цикл
 // добавляет обработчик и удерживает мёртвый инстанс CodeMirror от GC.
@@ -437,6 +469,7 @@ ipc.on('main-menu:format', format)
 // этот компонент.
 onBeforeUnmount(() => {
   ipc.removeListeners('main-menu:format')
+  ipc.removeListeners('main-menu:normalize-code-line-breaks')
   ipc.removeListeners('main-menu:copy-snippet')
 })
 

@@ -10,6 +10,7 @@ import {
   useNotesEditor,
   useTheme,
 } from '@/composables'
+import { ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentUnit } from '@codemirror/language'
@@ -31,6 +32,7 @@ import {
   insertHorizontalRule,
   insertLink,
   insertTable,
+  normalizeLineBreaks,
   setBody,
   setHeading,
   toggleBold,
@@ -540,6 +542,15 @@ function onMenuCommand(command: EditorMenuCommand) {
   }
 }
 
+function onNormalizeLineBreaks() {
+  if (!view || isPreviewMode.value)
+    return
+
+  normalizeLineBreaks(view)
+}
+
+ipc.on('main-menu:normalize-note-line-breaks', onNormalizeLineBreaks)
+
 onMounted(() => {
   if (!editorContainer.value)
     return
@@ -556,6 +567,7 @@ onMounted(() => {
 onUnmounted(() => {
   unregisterNavigationNoteUIState?.()
   unregisterNavigationNoteUIState = undefined
+  ipc.removeListeners('main-menu:normalize-note-line-breaks')
 
   if (view) {
     view.destroy()

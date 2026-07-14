@@ -115,6 +115,10 @@
         "asciiToText": "ASCII → Text"
       }
     },
+    "lineBreakNormalizer": {
+      "label": "Line Break Normalizer",
+      "description": "Remove hard line wraps and normalize pasted terminal text"
+    },
     "base64": {
       "label": "Base64 Encoder / Decoder",
       "description": "Encode or decode text to Base64",

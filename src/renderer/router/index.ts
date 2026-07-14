@@ -17,6 +17,7 @@ export const RouterName = {
   devtoolsCaseConverter: 'devtools/case-converter',
   devtoolsTextToUnicode: 'devtools/text-to-unicode',
   devtoolsTextToAscii: 'devtools/text-to-ascii',
+  devtoolsLineBreakNormalizer: 'devtools/line-break-normalizer',
   devtoolsBase64Converter: 'devtools/base64-converter',
   devtoolsJsonToYaml: 'devtools/json-to-yaml',
   devtoolsJsonToToml: 'devtools/json-to-toml',
@@ -134,6 +135,12 @@ const routes = [
         name: RouterName.devtoolsTextToAscii,
         component: () =>
           import('@/components/devtools/converters/TextToAsciiBinary.vue'),
+      },
+      {
+        path: 'text/line-break-normalizer',
+        name: RouterName.devtoolsLineBreakNormalizer,
+        component: () =>
+          import('@/components/devtools/converters/LineBreakNormalizer.vue'),
       },
       {
         path: 'base64-converter',

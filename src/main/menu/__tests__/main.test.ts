@@ -2,6 +2,7 @@ import type { MainMenuContext } from '../../types/menu'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const buildFromTemplate = vi.fn((template: unknown) => template)
+const send = vi.fn()
 
 vi.mock('electron', () => ({
   app: {
@@ -30,7 +31,7 @@ vi.mock('../../i18n', () => ({
 }))
 
 vi.mock('../../ipc', () => ({
-  send: vi.fn(),
+  send,
 }))
 
 vi.mock('../../updates', () => ({
@@ -41,9 +42,53 @@ vi.mock('../../../../package.json', () => ({
   repository: 'https://example.com/repo',
 }))
 
+function createNotesContext(
+  options: {
+    canToggleMindmap?: boolean
+    isMindmapShown?: boolean
+    isPresentationShown?: boolean
+    noteMode?: MainMenuContext['editor']['noteMode']
+  } = {},
+): MainMenuContext {
+  return {
+    file: {
+      primaryAction: 'new-note',
+      secondaryAction: 'new-folder',
+      canCreateFragment: false,
+      canCreateTask: true,
+    },
+    view: {
+      layoutMode: 'all-panels',
+      layoutModes: ['all-panels', 'list-editor', 'editor-only'],
+      contentSortField: 'updatedAt',
+      contentSortOrder: 'DESC',
+      canToggleCompactMode: true,
+      canToggleHideCompletedTasks: false,
+      isHideCompletedTasksInFolders: false,
+      canToggleMindmap: options.canToggleMindmap ?? true,
+      isCompactMode: false,
+      isMindmapShown: options.isMindmapShown ?? false,
+      canTogglePresentation: true,
+      isPresentationShown: options.isPresentationShown ?? false,
+    },
+    editor: {
+      kind: 'notes',
+      noteMode: options.noteMode ?? 'livePreview',
+      canSendRequest: false,
+      canFormat: false,
+      canPreviewCode: false,
+      isCodePreviewShown: false,
+      canPreviewJson: false,
+      isJsonPreviewShown: false,
+      canAdjustFontSize: true,
+    },
+  }
+}
+
 describe('createMainMenu', () => {
   beforeEach(() => {
     buildFromTemplate.mockClear()
+    send.mockClear()
   })
 
   it('renders file and view actions on the first submenu level', async () => {
@@ -87,11 +132,18 @@ describe('createMainMenu', () => {
 
     const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
       label?: string
-      submenu?: Array<{ label?: string, submenu?: unknown[] }>
+      submenu?: Array<{
+        label?: string
+        submenu?: unknown[]
+        click?: () => void
+      }>
     }>
 
     const fileMenu = template.find(item => item.label === 'menu:file.label')
     const viewMenu = template.find(item => item.label === 'menu:view.label')
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
 
     expect(fileMenu?.submenu?.map(item => item.label)).toEqual([
       'action.new.snippet',
@@ -121,6 +173,75 @@ describe('createMainMenu', () => {
     expect(viewMenu?.submenu?.some(item => Array.isArray(item.submenu))).toBe(
       false,
     )
+
+    const editorLabels = editorMenu?.submenu?.map(item => item.label) ?? []
+    const formatIndex = editorLabels.indexOf('menu:editor.format')
+
+    expect(editorLabels[formatIndex + 1]).toBe(
+      'menu:editor.normalizeTerminalOutput',
+    )
+
+    editorMenu?.submenu
+      ?.find(item => item.label === 'menu:editor.normalizeTerminalOutput')
+      ?.click?.()
+
+    expect(send).toHaveBeenCalledWith('main-menu:normalize-code-line-breaks')
+    expect(
+      editorMenu?.submenu?.find(
+        item => item.label === 'menu:editor.normalizeTerminalOutput',
+      ),
+    ).toMatchObject({ enabled: true })
+  })
+
+  it('enables line break normalization for an editable selected note', async () => {
+    const { createMainMenu } = await import('../main')
+
+    createMainMenu(createNotesContext())
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{
+        label?: string
+        enabled?: boolean
+        click?: () => void
+      }>
+    }>
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+
+    const normalizeItem = editorMenu?.submenu?.find(
+      item => item.label === 'menu:editor.normalizeTerminalOutput',
+    )
+
+    expect(normalizeItem).toMatchObject({ enabled: true })
+    normalizeItem?.click?.()
+    expect(send).toHaveBeenCalledWith('main-menu:normalize-note-line-breaks')
+  })
+
+  it.each([
+    ['preview mode', { noteMode: 'preview' as const }],
+    ['no selected note', { canToggleMindmap: false }],
+    ['mindmap mode', { isMindmapShown: true }],
+    ['presentation mode', { isPresentationShown: true }],
+  ])('disables line break normalization in %s', async (_label, options) => {
+    const { createMainMenu } = await import('../main')
+
+    createMainMenu(createNotesContext(options))
+
+    const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
+      label?: string
+      submenu?: Array<{ label?: string, enabled?: boolean }>
+    }>
+    const editorMenu = template.find(
+      item => item.label === 'menu:editor.label',
+    )
+
+    expect(
+      editorMenu?.submenu?.find(
+        item => item.label === 'menu:editor.normalizeTerminalOutput',
+      ),
+    ).toMatchObject({ enabled: false })
   })
 
   it('omits compact mode when the current space has no list', async () => {

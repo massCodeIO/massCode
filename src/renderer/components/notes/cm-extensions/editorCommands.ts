@@ -1,5 +1,9 @@
 import type { ChangeSpec, TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import {
+  mapNormalizedCursorIndex,
+  normalizeTerminalText,
+} from '@/utils/normalizeTerminalText'
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection } from '@codemirror/state'
 import {
@@ -10,6 +14,47 @@ import {
 // Команды редактора заметок, общие для контекстного меню и (в перспективе)
 // хоткеев/тулбара. Каждая функция принимает EditorView, мутирует документ
 // через dispatch и возвращает фокус в редактор.
+
+export function normalizeLineBreaks(view: EditorView) {
+  const { state } = view
+  const main = state.selection.main
+  const from = main.empty ? 0 : main.from
+  const to = main.empty ? state.doc.length : main.to
+  const source = state.doc.sliceString(from, to)
+  const normalized = normalizeTerminalText(source)
+
+  if (normalized === source) {
+    view.focus()
+    return
+  }
+
+  let selection: EditorSelection
+
+  if (main.empty) {
+    const mappedCursor = mapNormalizedCursorIndex(
+      source,
+      main.head,
+      normalized,
+    )
+    selection = EditorSelection.cursor(mappedCursor)
+  }
+  else {
+    const replacementEnd = from + normalized.length
+    const anchor = main.anchor === from ? from : replacementEnd
+    const head = main.head === from ? from : replacementEnd
+    selection = EditorSelection.range(anchor, head)
+  }
+
+  view.dispatch(
+    state.update({
+      changes: { from, to, insert: normalized },
+      selection,
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  view.focus()
+}
 
 // --- Inline-форматирование -------------------------------------------------
 

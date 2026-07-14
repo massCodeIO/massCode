@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import {
   clearInlineFormatting,
   insertTable,
+  normalizeLineBreaks,
   toggleBulletList,
   toggleOrderedList,
   toggleTaskList,
@@ -71,6 +72,97 @@ describe('editorCommands lists', () => {
     )
 
     expect(result.doc).toBe(['- first', '', '- second'].join('\n'))
+  })
+})
+
+function runNormalizeLineBreaks(
+  doc: string,
+  selection: EditorSelection | { anchor: number, head?: number },
+) {
+  let state = EditorState.create({ doc, selection })
+  let dispatchCount = 0
+  let focusCount = 0
+  const view = {
+    get state() {
+      return state
+    },
+    dispatch(...specs: TransactionSpec[]) {
+      dispatchCount += 1
+      state = state.update(...specs).state
+    },
+    focus() {
+      focusCount += 1
+    },
+  } as EditorView
+
+  normalizeLineBreaks(view)
+
+  return {
+    anchor: state.selection.main.anchor,
+    dispatchCount,
+    doc: state.doc.toString(),
+    focusCount,
+    head: state.selection.main.head,
+  }
+}
+
+describe('editorCommands normalizeLineBreaks', () => {
+  it('normalizes only the selected text and keeps the outside untouched', () => {
+    const doc = 'before\n  wrapped\n  text\nafter'
+    const from = doc.indexOf('  wrapped')
+    const to = doc.indexOf('\nafter')
+
+    expect(
+      runNormalizeLineBreaks(doc, EditorSelection.range(from, to)),
+    ).toEqual({
+      anchor: from,
+      dispatchCount: 1,
+      doc: 'before\nwrapped text\nafter',
+      focusCount: 1,
+      head: from + 'wrapped text'.length,
+    })
+  })
+
+  it('preserves a backward selection direction', () => {
+    const doc = 'before\n  wrapped\n  text\nafter'
+    const from = doc.indexOf('  wrapped')
+    const to = doc.indexOf('\nafter')
+    const replacementEnd = from + 'wrapped text'.length
+
+    expect(
+      runNormalizeLineBreaks(doc, EditorSelection.range(to, from)),
+    ).toEqual({
+      anchor: replacementEnd,
+      dispatchCount: 1,
+      doc: 'before\nwrapped text\nafter',
+      focusCount: 1,
+      head: from,
+    })
+  })
+
+  it('normalizes the whole document and maps the cursor at a line boundary', () => {
+    expect(runNormalizeLineBreaks('first\nsecond', { anchor: 6 })).toEqual({
+      anchor: 6,
+      dispatchCount: 1,
+      doc: 'first second',
+      focusCount: 1,
+      head: 6,
+    })
+  })
+
+  it('only focuses and preserves selection when text is unchanged', () => {
+    expect(
+      runNormalizeLineBreaks(
+        'already normalized',
+        EditorSelection.range(0, 'already normalized'.length),
+      ),
+    ).toEqual({
+      anchor: 0,
+      dispatchCount: 0,
+      doc: 'already normalized',
+      focusCount: 1,
+      head: 'already normalized'.length,
+    })
   })
 })
 

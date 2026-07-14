@@ -69,6 +69,7 @@
     "copySnippet": "Copy Snippet",
     "copyNote": "Copy Note",
     "format": "Format",
+    "normalizeTerminalOutput": "Normalize Line Breaks",
     "mode": "Mode",
     "modeRaw": "Raw",
     "modeLivePreview": "Live Preview",

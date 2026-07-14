@@ -11,6 +11,8 @@ type MainMenuAction =
   | 'font-size-increase'
   | 'font-size-reset'
   | 'format'
+  | 'normalize-code-line-breaks'
+  | 'normalize-note-line-breaks'
   | 'goto-preferences'
   | 'goto-devtools'
   | 'new-note'

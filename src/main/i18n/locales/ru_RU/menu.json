@@ -69,6 +69,7 @@
     "copySnippet": "Копировать сниппет",
     "copyNote": "Копировать заметку",
     "format": "Форматировать",
+    "normalizeTerminalOutput": "Нормализовать переносы строк",
     "mode": "Режим",
     "modeRaw": "Исходный",
     "modeLivePreview": "Живой предпросмотр",

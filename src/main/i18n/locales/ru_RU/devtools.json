@@ -115,6 +115,10 @@
         "asciiToText": "ASCII → Текст"
       }
     },
+    "lineBreakNormalizer": {
+      "label": "Нормализатор переносов строк",
+      "description": "Удаление жёстких переносов строк и нормализация текста из терминала"
+    },
     "base64": {
       "label": "Base64 Encoder / Decoder",
       "description": "Кодирование или декодирование текста в Base64",

@@ -7,10 +7,11 @@ import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   applyPendingNavigationUIStateForNote,
   registerNavigationNoteUIState,
+  useCopyToClipboard,
   useNotesEditor,
   useTheme,
 } from '@/composables'
-import { ipc } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentUnit } from '@codemirror/language'
@@ -88,6 +89,7 @@ const props = withDefaults(defineProps<Props>(), {
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
 const { settings: notesSettings } = useNotesEditor()
+const copyToClipboard = useCopyToClipboard()
 const isRawMode = computed(() => props.mode === 'raw')
 const isPreviewMode = computed(() => props.mode === 'preview')
 
@@ -271,6 +273,10 @@ function createEditorState(doc: string): EditorState {
       createMarkdownDecorations({
         interactiveTaskMarkers: editable,
         calloutTitleMode: preview ? 'replace' : 'smart',
+        codeBlockCopy: {
+          label: i18n.t('button.copy'),
+          copy: copyToClipboard,
+        },
       }),
       createHideMarkup({ alwaysHide: preview }),
       createListLineIndent({ interactiveTaskMarkers: editable }),

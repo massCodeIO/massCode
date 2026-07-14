@@ -30,7 +30,7 @@ export function buildFencedCodeLineStyle(
 
   if (lineNumber === startLineNumber) {
     style
-      += ';border-top:1px solid var(--border);border-top-left-radius:8px;border-top-right-radius:8px;padding-top:10px'
+      += ';position:relative;border-top:1px solid var(--border);border-top-left-radius:8px;border-top-right-radius:8px;padding-top:10px'
   }
 
   if (lineNumber === endLineNumber) {

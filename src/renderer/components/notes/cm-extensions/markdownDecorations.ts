@@ -11,6 +11,11 @@ import {
   shouldReplaceCalloutMarker,
 } from './callouts'
 import {
+  type CodeBlockCopyOptions,
+  CodeBlockCopyWidget,
+  getFencedCodeContent,
+} from './codeBlockCopy'
+import {
   buildFencedCodeLineStyle,
   isStandaloneFencedCode,
 } from './fencedCodeStyles'
@@ -281,6 +286,7 @@ function getCalloutBlockquoteStyle(type: CalloutType) {
 interface MarkdownDecorationsOptions {
   interactiveTaskMarkers?: boolean
   calloutTitleMode?: CalloutTitleMode
+  codeBlockCopy?: CodeBlockCopyOptions
 }
 
 interface MarkdownDecorationsUpdateFlags {
@@ -400,6 +406,7 @@ function buildDecorations(
   view: EditorView,
   interactiveTaskMarkers: boolean,
   calloutTitleMode: CalloutTitleMode,
+  codeBlockCopy?: CodeBlockCopyOptions,
 ) {
   const decorations: Range<Decoration>[] = []
 
@@ -486,6 +493,18 @@ function buildDecorations(
 
           const startLine = view.state.doc.lineAt(node.from)
           const endLine = view.state.doc.lineAt(node.to)
+
+          if (codeBlockCopy) {
+            decorations.push(
+              Decoration.widget({
+                widget: new CodeBlockCopyWidget(
+                  getFencedCodeContent(view.state, node.node),
+                  codeBlockCopy,
+                ),
+                side: 1,
+              }).range(startLine.to),
+            )
+          }
 
           for (let i = startLine.number; i <= endLine.number; i++) {
             const line = view.state.doc.line(i)
@@ -649,7 +668,11 @@ function buildDecorations(
 export function createMarkdownDecorations(
   options: MarkdownDecorationsOptions = {},
 ) {
-  const { interactiveTaskMarkers = true, calloutTitleMode = 'smart' } = options
+  const {
+    interactiveTaskMarkers = true,
+    calloutTitleMode = 'smart',
+    codeBlockCopy,
+  } = options
 
   return ViewPlugin.fromClass(
     class {
@@ -660,6 +683,7 @@ export function createMarkdownDecorations(
           view,
           interactiveTaskMarkers,
           calloutTitleMode,
+          codeBlockCopy,
         )
       }
 
@@ -680,6 +704,7 @@ export function createMarkdownDecorations(
             update.view,
             interactiveTaskMarkers,
             calloutTitleMode,
+            codeBlockCopy,
           )
         }
       }

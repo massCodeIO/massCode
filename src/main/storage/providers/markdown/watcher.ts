@@ -23,6 +23,7 @@ import {
   refreshPendingNoteFiles,
   resetNotesPathsCache,
   resetNotesRuntimeCache,
+  scheduleNotesAssetsMigration,
   syncNoteFileWithDisk,
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
@@ -518,6 +519,10 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
       )
       if (assetName) {
         broadcastNotesAssetReady(assetName)
+        const notesCache = peekNotesRuntimeCache()
+        if (notesCache?.paths.notesRoot === notesPaths.notesRoot) {
+          scheduleNotesAssetsMigration(notesCache)
+        }
         return
       }
 
@@ -530,7 +535,12 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
         return
       }
 
-      scheduleStateSync(vaultRootPath, paths, relativeWatchPath)
+      scheduleStateSync(
+        vaultRootPath,
+        paths,
+        relativeWatchPath,
+        isNotesWatchPath(relativeWatchPath),
+      )
     },
     onQueueActivity: () => {
       scheduleCloudRefresh(vaultRootPath, paths, notesPaths, httpPaths)

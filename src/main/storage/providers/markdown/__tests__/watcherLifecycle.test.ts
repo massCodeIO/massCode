@@ -43,6 +43,10 @@ async function setup() {
   const ensureStateFile = vi.fn()
   const syncRuntimeWithDisk = vi.fn()
   const syncNotesRuntimeWithDisk = vi.fn()
+  const scheduleNotesAssetsMigration = vi.fn()
+  const peekNotesRuntimeCache = vi.fn(
+    (): { paths: typeof notesPaths } | null => null,
+  )
   const syncHttpRuntimeWithDisk = vi.fn()
   const resetCloudDownloads = vi.fn()
   const getPendingCloudPaths = vi.fn(() => ['/vault/.masscode/state.json'])
@@ -106,10 +110,11 @@ async function setup() {
     ),
     getNotesPaths: vi.fn(() => notesPaths),
     parseNotesAssetName: vi.fn((fileName: string) => ({ fileName })),
-    peekNotesRuntimeCache: vi.fn(() => null),
+    peekNotesRuntimeCache,
     refreshPendingNoteFiles: vi.fn(() => ({ changed: false, remaining: 0 })),
     resetNotesPathsCache: vi.fn(),
     resetNotesRuntimeCache: vi.fn(),
+    scheduleNotesAssetsMigration,
     syncNoteFileWithDisk: vi.fn(),
     syncNotesRuntimeWithDisk,
   }))
@@ -163,9 +168,12 @@ async function setup() {
     getPendingCloudPaths,
     importEsm,
     log,
+    notesPaths,
     paths,
+    peekNotesRuntimeCache,
     prepareMarkdownWatcher,
     resetCloudDownloads,
+    scheduleNotesAssetsMigration,
     send,
     startMarkdownWatcher,
     stopMarkdownWatcher,
@@ -235,6 +243,9 @@ describe('markdown watcher cloud bootstrap', () => {
     context.startMarkdownWatcher()
     await flushImmediate()
     expect(context.syncNotesRuntimeWithDisk).toHaveBeenCalledTimes(1)
+    context.peekNotesRuntimeCache.mockReturnValue({
+      paths: context.notesPaths,
+    })
 
     context.watcherHandlers.get('change')?.(
       '/vault/notes/.masscode/assets/abcdefghijklmnop.png',
@@ -252,6 +263,7 @@ describe('markdown watcher cloud bootstrap', () => {
       'ponmlkjihgfedcba.png',
     )
     expect(context.syncNotesRuntimeWithDisk).toHaveBeenCalledTimes(1)
+    expect(context.scheduleNotesAssetsMigration).toHaveBeenCalledTimes(1)
   })
 
   it('retries startup after a legacy cloud state file is hydrated', async () => {

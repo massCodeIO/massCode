@@ -43,6 +43,24 @@
         "invalid-frontmatter": "Битый frontmatter",
         "conflicted-copy": "Конфликтная копия"
       },
+      "assetWarnings": {
+        "NOTES_LEGACY_ASSET": {
+          "message": "{{assetName}} всё ещё хранится в старой папке изображений Notes.",
+          "recommendation": "Синхронизируйте vault целиком и повторите проверку после завершения миграции."
+        },
+        "NOTES_ASSET_MIGRATION_PENDING": {
+          "message": "{{assetName}} недоступен локально для проверки миграции.",
+          "recommendation": "Сделайте файл доступным локально и повторно проверьте vault."
+        },
+        "NOTES_ASSET_DESTINATION_CONFLICT": {
+          "message": "{{assetName}} отличается в старой и текущей папках изображений Notes.",
+          "recommendation": "Сравните оба файла и сохраните правильную копию, прежде чем удалять любой из них."
+        },
+        "NOTES_ASSET_MISSING": {
+          "message": "{{assetName}} отсутствует в обеих папках изображений Notes.",
+          "recommendation": "Восстановите файл в vault или удалите ссылку на него из заметки."
+        }
+      },
       "moreWarnings": "+{{count}} предупреждений",
       "warnings": "Предупреждения"
     }

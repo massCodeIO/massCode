@@ -29,6 +29,10 @@ import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '~/renderer/services/api'
+import {
+  formatVaultDoctorWarning,
+  getVaultDoctorWarningKey,
+} from './vaultDoctorWarnings'
 
 interface DirectoryStateResponse {
   exists: boolean
@@ -117,6 +121,15 @@ const {
   apply: applyVault,
   reset: resetVaultDoctor,
 } = useVaultDoctor()
+
+const formattedVaultDoctorWarnings = computed(() =>
+  vaultDoctorWarningPreview.value.map(warning => ({
+    ...formatVaultDoctorWarning(warning, (key, options) =>
+      i18n.t(key, options)),
+    key: getVaultDoctorWarningKey(warning),
+    warning,
+  })),
+)
 
 function showLoadingCounts() {
   loadingCountsTimer = setTimeout(() => {
@@ -923,14 +936,31 @@ onMounted(() => {
                 <UiText variant="sm">
                   {{ i18n.t("preferences:storage.vaultDoctor.warnings") }}
                 </UiText>
-                <UiText
-                  v-for="warning in vaultDoctorWarningPreview"
-                  :key="`${warning.space}:${warning.path}:${warning.code}`"
-                  variant="caption"
-                  class="block font-mono break-all"
+                <div
+                  v-for="item in formattedVaultDoctorWarnings"
+                  :key="item.key"
+                  class="space-y-0.5"
                 >
-                  {{ warning.code }} · {{ warning.path }}
-                </UiText>
+                  <UiText
+                    variant="caption"
+                    class="block"
+                  >
+                    {{ item.message }}
+                  </UiText>
+                  <UiText
+                    variant="caption"
+                    class="text-muted-foreground block font-mono break-all"
+                  >
+                    {{ item.warning.path }}
+                  </UiText>
+                  <UiText
+                    v-if="item.recommendation"
+                    variant="caption"
+                    class="text-muted-foreground block"
+                  >
+                    {{ item.recommendation }}
+                  </UiText>
+                </div>
                 <UiText
                   v-if="vaultDoctorHiddenWarningCount > 0"
                   variant="caption"

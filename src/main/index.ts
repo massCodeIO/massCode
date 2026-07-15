@@ -9,7 +9,11 @@ import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
 import { createMainMenu } from './menu/main'
 import { isQuitting, setQuitting } from './quitState'
-import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
+import {
+  prepareMarkdownWatcher,
+  startMarkdownWatcher,
+  stopMarkdownWatcher,
+} from './storage'
 import {
   getNotesPaths,
   resolveNotesAsset,
@@ -224,6 +228,13 @@ else {
     }
     catch (error) {
       log('Error registering IPC', error)
+    }
+
+    try {
+      prepareMarkdownWatcher()
+    }
+    catch (error) {
+      log('Error preparing markdown watcher', error)
     }
 
     try {

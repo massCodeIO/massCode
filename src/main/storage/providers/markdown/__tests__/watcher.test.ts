@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getManagedNotesAssetName,
   getWatchPathSpaceId,
   isCodeWatchPath,
   isHttpWatchPath,
+  isManagedNotesAssetsPath,
   isMathWatchPath,
   isNotesWatchPath,
   normalizeRelativeWatchPath,
@@ -54,6 +56,25 @@ describe('watcher routing', () => {
     expect(shouldIgnoreWatchPath(vaultRoot, '/vault/notes/.obsidian')).toBe(
       false,
     )
+  })
+
+  it('routes managed Notes assets without hiding legacy assets', () => {
+    expect(
+      getManagedNotesAssetName('notes/.masscode/assets/abcdefghijklmnop.png'),
+    ).toBe('abcdefghijklmnop.png')
+    expect(
+      getManagedNotesAssetName('notes/assets/abcdefghijklmnop.png'),
+    ).toBeNull()
+    expect(isManagedNotesAssetsPath('notes/.masscode/assets')).toBe(true)
+    expect(
+      isManagedNotesAssetsPath('notes/.masscode/assets/nested/file.png'),
+    ).toBe(true)
+    expect(
+      shouldIgnoreWatchPath(
+        vaultRoot,
+        '/vault/notes/assets/abcdefghijklmnop.png',
+      ),
+    ).toBe(false)
   })
 
   it('ignores hidden non-space paths', () => {

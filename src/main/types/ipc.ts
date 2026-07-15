@@ -69,6 +69,7 @@ type SystemAction =
   | 'cloud-download-progress'
   | 'migration-complete'
   | 'migration-error'
+  | 'notes-asset-ready'
   | 'error'
 type PrettierAction = 'format'
 type FsAction = 'assets' | 'import-markdown-folder' | 'notes-asset'

@@ -22,7 +22,9 @@ async function setup() {
     vaultPath: '/vault/code',
   }
   const notesPaths = {
+    assetsPath: '/vault/notes/.masscode/assets',
     inboxDirPath: '/vault/notes/.masscode/inbox',
+    legacyAssetsPath: '/vault/notes/assets',
     metaDirPath: '/vault/notes/.masscode',
     notesRoot: '/vault/notes',
     statePath: '/vault/notes/.masscode/state.json',
@@ -35,6 +37,7 @@ async function setup() {
   const cloudConfigurations: CloudDownloadConfiguration[] = []
   const send = vi.fn()
   const log = vi.fn()
+  const broadcastNotesAssetReady = vi.fn()
   const getPaths = vi.fn(() => paths)
   const getVaultPath = vi.fn(() => vaultRootPath)
   const ensureStateFile = vi.fn()
@@ -48,11 +51,14 @@ async function setup() {
       cloudConfigurations.push(configuration)
     },
   )
+  const watcherHandlers = new Map<string, (changedPath: string) => void>()
   const watcher = {
     close: vi.fn(),
-    on: vi.fn(),
+    on: vi.fn((event: string, handler: (changedPath: string) => void) => {
+      watcherHandlers.set(event, handler)
+      return watcher
+    }),
   }
-  watcher.on.mockReturnValue(watcher)
   const watch = vi.fn(() => watcher)
   const importEsm = vi.fn(async () => ({ watch }))
 
@@ -65,6 +71,10 @@ async function setup() {
   vi.doMock('../../../../utils', () => ({
     importEsm,
     log,
+  }))
+
+  vi.doMock('../../../../dockBadge', () => ({
+    scheduleDockBadgeRefresh: vi.fn(),
   }))
 
   vi.doMock('../cloudDownloads', () => ({
@@ -85,13 +95,27 @@ async function setup() {
   }))
 
   vi.doMock('../notes/runtime', () => ({
+    getNotesAssetNameFromAbsolutePath: vi.fn(
+      (_paths: typeof notesPaths, absolutePath: string) => {
+        const parentPath = absolutePath.slice(0, absolutePath.lastIndexOf('/'))
+        return parentPath === notesPaths.assetsPath
+          || parentPath === notesPaths.legacyAssetsPath
+          ? absolutePath.slice(absolutePath.lastIndexOf('/') + 1)
+          : null
+      },
+    ),
     getNotesPaths: vi.fn(() => notesPaths),
+    parseNotesAssetName: vi.fn((fileName: string) => ({ fileName })),
     peekNotesRuntimeCache: vi.fn(() => null),
     refreshPendingNoteFiles: vi.fn(() => ({ changed: false, remaining: 0 })),
     resetNotesPathsCache: vi.fn(),
     resetNotesRuntimeCache: vi.fn(),
     syncNoteFileWithDisk: vi.fn(),
     syncNotesRuntimeWithDisk,
+  }))
+
+  vi.doMock('../notesAssetEvents', () => ({
+    broadcastNotesAssetReady,
   }))
 
   vi.doMock('../runtime', () => ({
@@ -127,12 +151,12 @@ async function setup() {
       && error.message.startsWith('CLOUD_FILE_NOT_DOWNLOADED'),
   }))
 
-  const { startMarkdownWatcher, stopMarkdownWatcher } = await import(
-    '../watcher'
-  )
+  const { prepareMarkdownWatcher, startMarkdownWatcher, stopMarkdownWatcher }
+    = await import('../watcher')
 
   return {
     cloudConfigurations,
+    broadcastNotesAssetReady,
     configureCloudDownloads,
     ensureStateFile,
     getPaths,
@@ -140,6 +164,8 @@ async function setup() {
     importEsm,
     log,
     paths,
+    prepareMarkdownWatcher,
+    resetCloudDownloads,
     send,
     startMarkdownWatcher,
     stopMarkdownWatcher,
@@ -147,6 +173,7 @@ async function setup() {
     syncNotesRuntimeWithDisk,
     syncRuntimeWithDisk,
     watch,
+    watcherHandlers,
   }
 }
 
@@ -155,6 +182,78 @@ beforeEach(() => {
 })
 
 describe('markdown watcher cloud bootstrap', () => {
+  it('broadcasts an asset hydrated before the watcher starts', async () => {
+    const context = await setup()
+
+    context.prepareMarkdownWatcher()
+    context.cloudConfigurations[0].onDownloaded(
+      '/vault/notes/.masscode/assets/abcdefghijklmnop.png',
+    )
+
+    expect(context.broadcastNotesAssetReady).toHaveBeenCalledWith(
+      'abcdefghijklmnop.png',
+    )
+  })
+
+  it('preserves the prepared cloud queue on the initial start', async () => {
+    const context = await setup()
+
+    context.prepareMarkdownWatcher()
+    context.startMarkdownWatcher()
+    await flushImmediate()
+
+    expect(context.resetCloudDownloads).not.toHaveBeenCalled()
+    expect(context.configureCloudDownloads).toHaveBeenCalledTimes(2)
+  })
+
+  it('resets cloud downloads on a later stop and restart', async () => {
+    const context = await setup()
+
+    context.prepareMarkdownWatcher()
+    context.startMarkdownWatcher()
+    await flushImmediate()
+    context.stopMarkdownWatcher()
+    context.startMarkdownWatcher()
+
+    expect(context.resetCloudDownloads).toHaveBeenCalledTimes(2)
+  })
+
+  it('cancels a pending initial start when start is called again', async () => {
+    const context = await setup()
+
+    context.prepareMarkdownWatcher()
+    context.startMarkdownWatcher()
+    context.startMarkdownWatcher()
+    await flushImmediate()
+
+    expect(context.resetCloudDownloads).toHaveBeenCalledTimes(1)
+    expect(context.watch).toHaveBeenCalledTimes(1)
+  })
+
+  it('routes managed watch and asset hydration events without Notes sync', async () => {
+    const context = await setup()
+    context.startMarkdownWatcher()
+    await flushImmediate()
+    expect(context.syncNotesRuntimeWithDisk).toHaveBeenCalledTimes(1)
+
+    context.watcherHandlers.get('change')?.(
+      '/vault/notes/.masscode/assets/abcdefghijklmnop.png',
+    )
+    context.cloudConfigurations[0].onDownloaded(
+      '/vault/notes/assets/ponmlkjihgfedcba.png',
+    )
+
+    expect(context.broadcastNotesAssetReady).toHaveBeenNthCalledWith(
+      1,
+      'abcdefghijklmnop.png',
+    )
+    expect(context.broadcastNotesAssetReady).toHaveBeenNthCalledWith(
+      2,
+      'ponmlkjihgfedcba.png',
+    )
+    expect(context.syncNotesRuntimeWithDisk).toHaveBeenCalledTimes(1)
+  })
+
   it('retries startup after a legacy cloud state file is hydrated', async () => {
     const context = await setup()
     context.getPaths

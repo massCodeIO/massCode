@@ -42,4 +42,5 @@ export function getContiguousSelection(
 }
 
 export * from './entryNameValidationMessage'
+export * from './notesAssetHydration'
 export * from './saveErrors'

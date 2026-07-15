@@ -47,6 +47,8 @@ interface TableBlocksOptions {
   editable?: boolean
   // Тема подсветки кода для вложенных редакторов ячеек.
   isDark?: boolean
+  // Переносит содержимое ячеек широких таблиц в пределах редактора.
+  wrapCells?: boolean
 }
 
 interface TableRange {
@@ -67,6 +69,54 @@ const DRAG_COLUMN_HANDLE_WIDTH = 48
 const DRAG_COLUMN_HANDLE_INSET = 8
 const TABLE_CELL_MIN_WIDTH = 64
 const CARET_REVEAL_INSET = 8
+
+export function getTableLayoutStyles(wrapCells: boolean) {
+  if (!wrapCells) {
+    return {
+      scroll: { overflowX: 'auto' },
+      overlay: { width: 'max-content' },
+      frame: { width: 'max-content', overflow: 'hidden' },
+      table: { width: 'max-content', minWidth: 'max-content' },
+      cell: {},
+    }
+  }
+
+  return {
+    scroll: {
+      overflowX: 'auto',
+      width: 'fit-content',
+      maxWidth: '100%',
+    },
+    overlay: {
+      width: 'fit-content',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+    },
+    frame: {
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+      overflow: 'hidden',
+    },
+    table: {
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+    },
+    cell: {
+      overflowWrap: 'normal',
+      wordBreak: 'normal',
+      whiteSpace: 'normal',
+    },
+  }
+}
+
+export function canReuseTableWidgetDom(
+  datasetWrap: string | undefined,
+  wrapCells: boolean,
+): boolean {
+  return datasetWrap !== undefined && (datasetWrap === '1') === wrapCells
+}
 
 type TableDragKind = 'column' | 'row'
 
@@ -1376,13 +1426,16 @@ class TableWidget extends WidgetType {
     // Имя `editable` занято геттером WidgetType, поэтому `interactive`.
     readonly interactive: boolean,
     readonly dark: boolean,
+    readonly wrapCells: boolean,
   ) {
     super()
   }
 
   eq(other: TableWidget): boolean {
     return (
-      this.source === other.source && this.interactive === other.interactive
+      this.source === other.source
+      && this.interactive === other.interactive
+      && this.wrapCells === other.wrapCells
     )
   }
 
@@ -1693,6 +1746,7 @@ class TableWidget extends WidgetType {
   ): HTMLTableCellElement {
     const cell = document.createElement(tag)
     renderCell(cell, unescapeCell(text))
+    Object.assign(cell.style, getTableLayoutStyles(this.wrapCells).cell)
     cell.style.position = 'relative'
     cell.style.minWidth = `${TABLE_CELL_MIN_WIDTH}px`
     cell.style.textAlign = delimiterAlignment(
@@ -1716,8 +1770,7 @@ class TableWidget extends WidgetType {
 
   private buildTable(): HTMLTableElement {
     const table = document.createElement('table')
-    table.style.width = 'max-content'
-    table.style.minWidth = 'max-content'
+    Object.assign(table.style, getTableLayoutStyles(this.wrapCells).table)
     table.style.borderCollapse = 'collapse'
 
     const thead = document.createElement('thead')
@@ -1820,6 +1873,7 @@ class TableWidget extends WidgetType {
     root.dataset.tableWidget = '1'
     root.dataset.editable = this.interactive ? '1' : '0'
     root.dataset.dark = this.dark ? '1' : '0'
+    root.dataset.tableWrap = this.wrapCells ? '1' : '0'
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
@@ -1835,7 +1889,8 @@ class TableWidget extends WidgetType {
     // дать переполнение контента редактора широкой таблицей.
     const scroll = document.createElement('div')
     scroll.dataset.tableScroll = '1'
-    scroll.style.overflowX = 'auto'
+    const layoutStyles = getTableLayoutStyles(this.wrapCells)
+    Object.assign(scroll.style, layoutStyles.scroll)
 
     // Позиционированный слой ВНУТРИ скролла: кнопки добавления, колоночные
     // drag-handle и превью перетаскивания привязаны к реальному краю таблицы
@@ -1844,14 +1899,13 @@ class TableWidget extends WidgetType {
     const overlay = document.createElement('div')
     overlay.dataset.tableOverlay = '1'
     overlay.style.position = 'relative'
-    overlay.style.width = 'max-content'
+    Object.assign(overlay.style, layoutStyles.overlay)
 
     const frame = document.createElement('div')
-    frame.style.width = 'max-content'
+    Object.assign(frame.style, layoutStyles.frame)
     frame.style.border = '1px solid var(--border)'
     frame.style.borderRadius = '8px'
     frame.style.background = 'var(--background)'
-    frame.style.overflow = 'hidden'
 
     if (this.interactive) {
       overlay.style.paddingTop = `${DRAG_HANDLE_SIZE}px`
@@ -1933,6 +1987,8 @@ class TableWidget extends WidgetType {
     if (dom.dataset.tableWidget !== '1')
       return false
     if ((dom.dataset.editable === '1') !== this.interactive)
+      return false
+    if (!canReuseTableWidgetDom(dom.dataset.tableWrap, this.wrapCells))
       return false
 
     const table = dom.querySelector('table')
@@ -2438,6 +2494,7 @@ function buildDecorations(
   enabled: boolean,
   editable: boolean,
   isDark: boolean,
+  wrapCells: boolean,
 ): DecorationSet {
   if (!enabled)
     return Decoration.none
@@ -2466,7 +2523,7 @@ function buildDecorations(
         to,
         Decoration.replace({
           block: true,
-          widget: new TableWidget(model, source, editable, isDark),
+          widget: new TableWidget(model, source, editable, isDark, wrapCells),
         }),
       )
     },
@@ -2476,11 +2533,16 @@ function buildDecorations(
 }
 
 export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
-  const { enabled = true, editable = false, isDark = false } = options
+  const {
+    enabled = true,
+    editable = false,
+    isDark = false,
+    wrapCells = false,
+  } = options
 
   const decorations = StateField.define<DecorationSet>({
     create(state) {
-      return buildDecorations(state, enabled, editable, isDark)
+      return buildDecorations(state, enabled, editable, isDark, wrapCells)
     },
     update(value, transaction) {
       // Дерево разбора может достроиться асинхронно (без изменения документа),
@@ -2488,8 +2550,15 @@ export function createTableBlocks(options: TableBlocksOptions = {}): Extension {
       const treeChanged
         = syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
 
-      if (transaction.docChanged || treeChanged)
-        return buildDecorations(transaction.state, enabled, editable, isDark)
+      if (transaction.docChanged || treeChanged) {
+        return buildDecorations(
+          transaction.state,
+          enabled,
+          editable,
+          isDark,
+          wrapCells,
+        )
+      }
 
       return value
     },

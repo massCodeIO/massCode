@@ -29,6 +29,7 @@ export const NOTES_EDITOR_DEFAULTS: NotesEditorSettings = {
   codeFontFamily: 'SF Mono, Consolas, Menlo, Ubuntu Mono, monospace',
   lineHeight: 1.54,
   limitWidth: true,
+  wrapTables: false,
   lineNumbers: false,
   indentSize: 2,
 }

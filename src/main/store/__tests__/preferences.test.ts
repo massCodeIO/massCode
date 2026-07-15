@@ -111,6 +111,33 @@ afterEach(() => {
 })
 
 describe('preferences store sanitization', () => {
+  it('defaults table wrapping to false', async () => {
+    const { default: preferences } = await import('../module/preferences')
+
+    expect(preferences.get('editor.notes.wrapTables' as any)).toBe(false)
+  })
+
+  it('keeps valid table wrapping and rejects invalid values', async () => {
+    persistedStateByName.preferences = {
+      editor: { notes: { wrapTables: true } },
+    }
+
+    const { default: preferences } = await import('../module/preferences')
+    expect(preferences.get('editor.notes.wrapTables' as any)).toBe(true)
+
+    vi.resetModules()
+    persistedStateByName.preferences = {
+      editor: { notes: { wrapTables: 'yes' } },
+    }
+
+    const { default: invalidPreferences } = await import(
+      '../module/preferences'
+    )
+    expect(invalidPreferences.get('editor.notes.wrapTables' as any)).toBe(
+      false,
+    )
+  })
+
   it('defaults missing dock badge source to none', async () => {
     const { default: preferences } = await import('../module/preferences')
 

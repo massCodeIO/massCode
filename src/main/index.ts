@@ -1,5 +1,4 @@
 /* eslint-disable node/prefer-global/process */
-import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
@@ -10,7 +9,16 @@ import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
 import { createMainMenu } from './menu/main'
 import { isQuitting, setQuitting } from './quitState'
-import { startMarkdownWatcher, stopMarkdownWatcher } from './storage'
+import {
+  prepareMarkdownWatcher,
+  startMarkdownWatcher,
+  stopMarkdownWatcher,
+} from './storage'
+import {
+  getNotesPaths,
+  resolveNotesAsset,
+} from './storage/providers/markdown/notes/runtime'
+import { getVaultPath } from './storage/providers/markdown/runtime/paths'
 import { ensureFlatSpacesLayout } from './storage/providers/markdown/runtime/spaces'
 import { store } from './store'
 import { startTasksCleanupScheduler, stopTasksCleanupScheduler } from './tasks'
@@ -146,37 +154,8 @@ else {
       const url = new URL(request.url)
 
       if (url.hostname === 'notes-asset') {
-        const fileName = url.pathname.replace(/^\//, '')
-        const vaultPath
-          = (store.preferences.get('storage.vaultPath') as string | null)
-            || path.join(
-              store.preferences.get('storage.rootPath') as string,
-              'markdown-vault',
-            )
-        ensureFlatSpacesLayout(vaultPath)
-        const filePath = path.join(vaultPath, 'notes', 'assets', fileName)
-
-        try {
-          const data = await readFile(filePath)
-          const ext = path.extname(fileName).toLowerCase()
-          const mimeTypes: Record<string, string> = {
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp',
-            '.svg': 'image/svg+xml',
-            '.bmp': 'image/bmp',
-          }
-          return new Response(data, {
-            headers: {
-              'Content-Type': mimeTypes[ext] || 'application/octet-stream',
-            },
-          })
-        }
-        catch {
-          return new Response('Not found', { status: 404 })
-        }
+        const paths = getNotesPaths(getVaultPath())
+        return resolveNotesAsset(url.pathname.replace(/^\//, ''), paths)
       }
 
       return new Response('Not found', { status: 404 })
@@ -249,6 +228,13 @@ else {
     }
     catch (error) {
       log('Error registering IPC', error)
+    }
+
+    try {
+      prepareMarkdownWatcher()
+    }
+    catch (error) {
+      log('Error preparing markdown watcher', error)
     }
 
     try {

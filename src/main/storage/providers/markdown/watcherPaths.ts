@@ -14,6 +14,8 @@ import { toPosixPath } from './runtime/shared/path'
 
 export const NOTES_SPACE_WATCH_PREFIX = NOTES_SPACE_ID.toLowerCase()
 export const CODE_SPACE_WATCH_PREFIX = CODE_SPACE_ID.toLowerCase()
+const MANAGED_NOTES_ASSETS_WATCH_ROOT
+  = `${NOTES_SPACE_WATCH_PREFIX}/${META_DIR_NAME}/assets`.toLowerCase()
 
 export function normalizeRelativeWatchPath(
   watchRootPath: string,
@@ -91,6 +93,31 @@ export function shouldIgnoreWatchPath(
 
 export function isNotesWatchPath(relativePath: string | null): boolean {
   return getWatchPathSpaceId(relativePath) === NOTES_SPACE_ID
+}
+
+export function isManagedNotesAssetsPath(relativePath: string | null): boolean {
+  if (!relativePath) {
+    return false
+  }
+
+  const normalizedRelativePath = relativePath.toLowerCase()
+  return (
+    normalizedRelativePath === MANAGED_NOTES_ASSETS_WATCH_ROOT
+    || normalizedRelativePath.startsWith(`${MANAGED_NOTES_ASSETS_WATCH_ROOT}/`)
+  )
+}
+
+export function getManagedNotesAssetName(
+  relativePath: string | null,
+): string | null {
+  if (!isManagedNotesAssetsPath(relativePath) || !relativePath) {
+    return null
+  }
+
+  const fileName = relativePath.slice(
+    MANAGED_NOTES_ASSETS_WATCH_ROOT.length + 1,
+  )
+  return fileName && !fileName.includes('/') ? fileName : null
 }
 
 export function isCodeWatchPath(relativePath: string | null): boolean {

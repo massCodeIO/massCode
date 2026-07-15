@@ -16,14 +16,18 @@ import {
   syncHttpRuntimeWithDisk,
 } from './http'
 import {
+  getNotesAssetNameFromAbsolutePath,
   getNotesPaths,
+  parseNotesAssetName,
   peekNotesRuntimeCache,
   refreshPendingNoteFiles,
   resetNotesPathsCache,
   resetNotesRuntimeCache,
+  scheduleNotesAssetsMigration,
   syncNoteFileWithDisk,
   syncNotesRuntimeWithDisk,
 } from './notes/runtime'
+import { broadcastNotesAssetReady } from './notesAssetEvents'
 import {
   ensureStateFile,
   getPaths,
@@ -42,10 +46,12 @@ import { getFileAvailability } from './runtime/shared/cloudFiles'
 import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
 import { broadcastStorageSynced } from './runtime/shared/vaultReconcile'
 import {
+  getManagedNotesAssetName,
   getWatchPathSpaceId,
   isCodeWatchPath,
   isDrawingsWatchPath,
   isHttpWatchPath,
+  isManagedNotesAssetsPath,
   isMathWatchPath,
   isNotesWatchPath,
   normalizeRelativeWatchPath,
@@ -80,6 +86,8 @@ let hasPendingHttpSync = false
 let hasPendingDrawingsSync = false
 let watcherStartToken = 0
 let chokidarWatchLoader: Promise<ChokidarWatch> | null = null
+let preparedCloudVaultPath: string | null = null
+let preparedWatcherStartToken: number | null = null
 
 type ChokidarWatch = (
   path: string | readonly string[],
@@ -153,6 +161,17 @@ function scheduleStateSync(
   changedPath: string | null,
   forceFullSync = false,
 ): void {
+  if (isManagedNotesAssetsPath(changedPath)) {
+    const managedAssetName = getManagedNotesAssetName(changedPath)
+    const parsedAsset = managedAssetName
+      ? parseNotesAssetName(managedAssetName)
+      : null
+    if (parsedAsset) {
+      broadcastNotesAssetReady(parsedAsset.fileName)
+    }
+    return
+  }
+
   const changedSpaceId = getWatchPathSpaceId(changedPath)
   if (changedPath && !changedSpaceId) {
     return
@@ -404,6 +423,8 @@ function scheduleCloudRefresh(
 
 export function stopMarkdownWatcher(): void {
   watcherStartToken += 1
+  preparedCloudVaultPath = null
+  preparedWatcherStartToken = null
 
   if (markdownWatchTimer) {
     clearTimeout(markdownWatchTimer)
@@ -439,6 +460,17 @@ export function stopMarkdownWatcher(): void {
 }
 
 function initializeMarkdownWatcher(vaultRootPath: string): void {
+  const canReusePreparedCloudQueue
+    = preparedCloudVaultPath === vaultRootPath
+      && preparedWatcherStartToken === watcherStartToken
+      && markdownWatcher === null
+      && watchedVaultPath === null
+
+  // Право сохранить раннюю очередь одноразовое: повторный start, даже пока
+  // первый ещё ждёт chokidar или cloud bootstrap, снова проходит stop/reset.
+  preparedCloudVaultPath = null
+  preparedWatcherStartToken = null
+
   const paths = getPaths(vaultRootPath)
   const runtimeCache = peekRuntimeCache()
   const notesPaths = getNotesPaths(vaultRootPath)
@@ -469,7 +501,9 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
     return
   }
 
-  stopMarkdownWatcher()
+  if (!canReusePreparedCloudQueue) {
+    stopMarkdownWatcher()
+  }
 
   // Обработчик регистрируется до первых сканов: они уже могут ставить
   // облачные плейсхолдеры в очередь докачки. Докачанный файл проходит через
@@ -479,6 +513,19 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
   // iCloud не порождает (mtime/size не меняются при докачке контента).
   configureCloudDownloads({
     onDownloaded: (absolutePath) => {
+      const assetName = getNotesAssetNameFromAbsolutePath(
+        notesPaths,
+        absolutePath,
+      )
+      if (assetName) {
+        broadcastNotesAssetReady(assetName)
+        const notesCache = peekNotesRuntimeCache()
+        if (notesCache?.paths.notesRoot === notesPaths.notesRoot) {
+          scheduleNotesAssetsMigration(notesCache)
+        }
+        return
+      }
+
       const relativeWatchPath = normalizeRelativeWatchPath(
         vaultRootPath,
         absolutePath,
@@ -488,7 +535,12 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
         return
       }
 
-      scheduleStateSync(vaultRootPath, paths, relativeWatchPath)
+      scheduleStateSync(
+        vaultRootPath,
+        paths,
+        relativeWatchPath,
+        isNotesWatchPath(relativeWatchPath),
+      )
     },
     onQueueActivity: () => {
       scheduleCloudRefresh(vaultRootPath, paths, notesPaths, httpPaths)
@@ -549,11 +601,14 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
           )
         })
         .on('unlink', (changedPath: string) => {
-          scheduleStateSync(
+          const relativePath = normalizeRelativeWatchPath(
             vaultRootPath,
-            paths,
-            normalizeRelativeWatchPath(vaultRootPath, changedPath),
+            changedPath,
           )
+          if (isManagedNotesAssetsPath(relativePath)) {
+            return
+          }
+          scheduleStateSync(vaultRootPath, paths, relativePath)
         })
         .on('addDir', (changedPath: string) => {
           scheduleStateSync(
@@ -564,12 +619,14 @@ function initializeMarkdownWatcher(vaultRootPath: string): void {
           )
         })
         .on('unlinkDir', (changedPath: string) => {
-          scheduleStateSync(
+          const relativePath = normalizeRelativeWatchPath(
             vaultRootPath,
-            paths,
-            normalizeRelativeWatchPath(vaultRootPath, changedPath),
-            true,
+            changedPath,
           )
+          if (isManagedNotesAssetsPath(relativePath)) {
+            return
+          }
+          scheduleStateSync(vaultRootPath, paths, relativePath, true)
         })
         .on('error', (error: unknown) => {
           log('storage:markdown:watcher-error', error)
@@ -656,4 +713,34 @@ function tryStartMarkdownWatcher(vaultRootPath: string): boolean {
 
 export function startMarkdownWatcher(): void {
   tryStartMarkdownWatcher(getVaultPath())
+}
+
+export function prepareMarkdownWatcher(): void {
+  if (
+    markdownWatcher
+    || watchedVaultPath
+    || preparedCloudVaultPath
+    || watcherStartToken !== 0
+  ) {
+    return
+  }
+
+  const vaultRootPath = getVaultPath()
+  const notesPaths = getNotesPaths(vaultRootPath)
+
+  configureCloudDownloads({
+    onDownloaded: (absolutePath) => {
+      const assetName = getNotesAssetNameFromAbsolutePath(
+        notesPaths,
+        absolutePath,
+      )
+      if (assetName) {
+        broadcastNotesAssetReady(assetName)
+      }
+    },
+    onQueueActivity: () => {},
+  })
+
+  preparedCloudVaultPath = vaultRootPath
+  preparedWatcherStartToken = watcherStartToken
 }

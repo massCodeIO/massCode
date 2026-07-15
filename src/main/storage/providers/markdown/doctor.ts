@@ -5,7 +5,7 @@ import type {
   VaultDoctorWarning,
 } from '../../../api/dto/vault-doctor'
 import type { MathNotebookStore, MathSheet } from '../../../store/types'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
@@ -17,6 +17,7 @@ import {
   syncHttpRuntimeWithDisk,
 } from './http/runtime'
 import {
+  extractNotesAssetNames,
   getNotesPaths,
   isNotesVaultDiskReady,
   loadNotesState,
@@ -66,6 +67,12 @@ interface EntityScanRecord {
   id: number
   kind: 'note' | 'snippet'
   space: Extract<VaultDoctorSpace, 'code' | 'http' | 'notes'>
+}
+
+interface InspectedNotesAssetPath {
+  exists: boolean
+  invalidReason: string | null
+  isCloudPlaceholder: boolean
 }
 
 const DEFAULT_SPACES: VaultDoctorSpace[] = ['code', 'notes', 'http', 'math']
@@ -130,6 +137,168 @@ function addItem(context: ScanContext, item: VaultDoctorItem): void {
 
 function addWarning(context: ScanContext, warning: VaultDoctorWarning): void {
   context.warnings.push(warning)
+}
+
+function hashLocalFile(absolutePath: string): string {
+  return createHash('sha256')
+    .update(fs.readFileSync(absolutePath))
+    .digest('hex')
+}
+
+function inspectNotesAssetPath(
+  absolutePath: string,
+  location: 'destination' | 'source',
+): InspectedNotesAssetPath {
+  try {
+    const stats = fs.lstatSync(absolutePath)
+    if (stats.isSymbolicLink()) {
+      return {
+        exists: true,
+        invalidReason: `${location}-symlink`,
+        isCloudPlaceholder: false,
+      }
+    }
+    if (!stats.isFile()) {
+      return {
+        exists: true,
+        invalidReason: `${location}-not-regular`,
+        isCloudPlaceholder: false,
+      }
+    }
+  }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return {
+        exists: false,
+        invalidReason: null,
+        isCloudPlaceholder: false,
+      }
+    }
+    return {
+      exists: true,
+      invalidReason: `${location}-inspection-unavailable`,
+      isCloudPlaceholder: false,
+    }
+  }
+
+  const availability = getFileAvailability(absolutePath)
+  if (!availability.exists) {
+    return {
+      exists: true,
+      invalidReason: `${location}-inspection-unavailable`,
+      isCloudPlaceholder: false,
+    }
+  }
+
+  return {
+    exists: true,
+    invalidReason: null,
+    isCloudPlaceholder: availability.isCloudPlaceholder,
+  }
+}
+
+function inspectNotesAssets(input: {
+  context: ScanContext
+  notePath: string
+  notesRoot: string
+  source: string
+}): void {
+  const paths = getNotesPaths(getVaultPath())
+
+  for (const assetName of extractNotesAssetNames(input.source)) {
+    const sourcePath = path.join(paths.legacyAssetsPath, assetName)
+    const destinationPath = path.join(paths.assetsPath, assetName)
+    const sourceAvailability = inspectNotesAssetPath(sourcePath, 'source')
+    const destinationAvailability = inspectNotesAssetPath(
+      destinationPath,
+      'destination',
+    )
+    const details = {
+      assetName,
+      destination: toPosixPath(path.relative(input.notesRoot, destinationPath)),
+      source: toPosixPath(path.relative(input.notesRoot, sourcePath)),
+    }
+
+    const invalidReason
+      = sourceAvailability.invalidReason ?? destinationAvailability.invalidReason
+    if (invalidReason) {
+      addWarning(input.context, {
+        code: 'NOTES_ASSET_MIGRATION_PENDING',
+        details: { ...details, reason: invalidReason },
+        path: input.notePath,
+        space: 'notes',
+      })
+      continue
+    }
+
+    if (
+      sourceAvailability.isCloudPlaceholder
+      || destinationAvailability.isCloudPlaceholder
+    ) {
+      addWarning(input.context, {
+        code: 'NOTES_ASSET_MIGRATION_PENDING',
+        details: {
+          ...details,
+          reason:
+            sourceAvailability.isCloudPlaceholder
+            && destinationAvailability.isCloudPlaceholder
+              ? 'source-and-destination-placeholder'
+              : sourceAvailability.isCloudPlaceholder
+                ? 'source-placeholder'
+                : 'destination-placeholder',
+        },
+        path: input.notePath,
+        space: 'notes',
+      })
+      continue
+    }
+
+    if (sourceAvailability.exists && destinationAvailability.exists) {
+      try {
+        const isEqual
+          = hashLocalFile(sourcePath) === hashLocalFile(destinationPath)
+        addWarning(input.context, {
+          code: isEqual
+            ? 'NOTES_LEGACY_ASSET'
+            : 'NOTES_ASSET_DESTINATION_CONFLICT',
+          details: {
+            ...details,
+            reason: isEqual ? 'legacy-copy-remains' : 'content-mismatch',
+          },
+          path: input.notePath,
+          space: 'notes',
+        })
+      }
+      catch {
+        addWarning(input.context, {
+          code: 'NOTES_ASSET_MIGRATION_PENDING',
+          details: { ...details, reason: 'inspection-unavailable' },
+          path: input.notePath,
+          space: 'notes',
+        })
+      }
+      continue
+    }
+
+    if (sourceAvailability.exists) {
+      addWarning(input.context, {
+        code: 'NOTES_LEGACY_ASSET',
+        details: { ...details, reason: 'destination-missing' },
+        path: input.notePath,
+        space: 'notes',
+      })
+      continue
+    }
+
+    if (!destinationAvailability.exists) {
+      addWarning(input.context, {
+        code: 'NOTES_ASSET_MISSING',
+        details: { ...details, reason: 'source-and-destination-missing' },
+        path: input.notePath,
+        space: 'notes',
+      })
+    }
+  }
 }
 
 function createFileItem(input: {
@@ -279,6 +448,15 @@ function inspectMarkdownEntity(input: {
   catch {
     enqueueCloudDownload(absolutePath)
     return null
+  }
+
+  if (input.space === 'notes') {
+    inspectNotesAssets({
+      context: input.context,
+      notePath: input.filePath,
+      notesRoot: input.rootPath,
+      source,
+    })
   }
 
   const fileName = path.basename(input.filePath)
@@ -1096,7 +1274,9 @@ export function applyVaultDoctor(
     syncRuntimeWithDisk(getPaths(getVaultPath()))
   }
   if (spaces.includes('notes') && !conflictedSpaces.has('notes')) {
-    syncNotesRuntimeWithDisk(getNotesPaths(getVaultPath()))
+    syncNotesRuntimeWithDisk(getNotesPaths(getVaultPath()), {
+      scheduleAssetsMigration: false,
+    })
   }
   if (spaces.includes('http')) {
     if (!conflictedSpaces.has('http')) {

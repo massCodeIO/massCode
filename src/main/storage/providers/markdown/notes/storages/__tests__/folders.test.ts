@@ -83,7 +83,9 @@ describe('folders storage validations', () => {
     const metaDirPath = path.join(notesRoot, '.masscode')
 
     ensureNotesStateFile({
+      assetsPath: path.join(metaDirPath, 'assets'),
       inboxDirPath: path.join(metaDirPath, 'inbox'),
+      legacyAssetsPath: path.join(notesRoot, 'assets'),
       metaDirPath,
       notesRoot,
       statePath: path.join(metaDirPath, 'state.json'),

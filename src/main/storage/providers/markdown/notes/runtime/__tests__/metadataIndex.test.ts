@@ -45,7 +45,9 @@ function createNotesPaths(): NotesPaths {
   const metaDirPath = path.join(notesRoot, '.masscode')
 
   return {
+    assetsPath: path.join(metaDirPath, 'assets'),
     inboxDirPath: path.join(metaDirPath, 'inbox'),
+    legacyAssetsPath: path.join(notesRoot, 'assets'),
     metaDirPath,
     notesRoot,
     statePath: path.join(metaDirPath, 'state.json'),

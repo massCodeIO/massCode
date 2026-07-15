@@ -45,6 +45,24 @@
         "invalid-frontmatter": "Invalid frontmatter",
         "conflicted-copy": "Conflicted copy"
       },
+      "assetWarnings": {
+        "NOTES_LEGACY_ASSET": {
+          "message": "{{assetName}} is still stored in the legacy Notes assets folder.",
+          "recommendation": "Keep the whole vault synchronized and scan again after migration completes."
+        },
+        "NOTES_ASSET_MIGRATION_PENDING": {
+          "message": "{{assetName}} is not available locally for migration inspection.",
+          "recommendation": "Make the asset available locally, then scan the vault again."
+        },
+        "NOTES_ASSET_DESTINATION_CONFLICT": {
+          "message": "{{assetName}} differs between the legacy and current Notes assets folders.",
+          "recommendation": "Compare both files and keep the correct copy before removing either one."
+        },
+        "NOTES_ASSET_MISSING": {
+          "message": "{{assetName}} is missing from both Notes assets folders.",
+          "recommendation": "Restore the asset to the vault or remove its reference from the note."
+        }
+      },
       "moreWarnings": "+{{count}} more warnings",
       "warnings": "Warnings"
     }

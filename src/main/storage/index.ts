@@ -5,6 +5,7 @@ import type {
 } from './contracts'
 import {
   createMarkdownStorageProvider,
+  prepareMarkdownWatcher,
   startMarkdownWatcher,
   stopMarkdownWatcher,
 } from './providers/markdown'
@@ -27,4 +28,4 @@ export function useHttpStorage(): HttpStorageProvider {
   return httpStorageProvider
 }
 
-export { startMarkdownWatcher, stopMarkdownWatcher }
+export { prepareMarkdownWatcher, startMarkdownWatcher, stopMarkdownWatcher }

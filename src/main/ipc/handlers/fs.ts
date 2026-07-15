@@ -12,6 +12,11 @@ import {
   writeFileSync,
 } from 'fs-extra'
 import slash from 'slash'
+import {
+  getNotesPaths,
+  parseNotesAssetWritePayload,
+  writeNotesAsset,
+} from '../../storage/providers/markdown/notes/runtime'
 import { ensureFlatSpacesLayout } from '../../storage/providers/markdown/runtime/spaces'
 import { store } from '../../store'
 
@@ -118,7 +123,12 @@ export function registerFsHandlers() {
     })
   })
 
-  ipcMain.handle('fs:notes-asset', (event, { buffer, ext }) => {
+  ipcMain.handle('fs:notes-asset', async (event, payload: unknown) => {
+    const parsedPayload = parseNotesAssetWritePayload(payload)
+    if (!parsedPayload) {
+      throw new TypeError('Invalid Notes asset payload')
+    }
+
     const vaultPath
       = (store.preferences.get('storage.vaultPath') as string | null)
         || join(
@@ -126,22 +136,12 @@ export function registerFsHandlers() {
           'markdown-vault',
         )
 
-    return new Promise((resolve, reject) => {
-      try {
-        ensureFlatSpacesLayout(vaultPath)
-        const assetsPath = join(vaultPath, 'notes', 'assets')
-        const name = `${generateAssetId()}${ext}`
-        const dest = join(assetsPath, name)
-
-        ensureDirSync(assetsPath)
-        writeFileSync(dest, Buffer.from(buffer))
-
-        resolve(`masscode://notes-asset/${name}`)
-      }
-      catch (error) {
-        reject(error)
-      }
-    })
+    ensureFlatSpacesLayout(vaultPath)
+    return writeNotesAsset(
+      getNotesPaths(vaultPath),
+      parsedPayload.buffer,
+      parsedPayload.ext,
+    )
   })
 
   ipcMain.handle('fs:import-markdown-folder', async () => {

@@ -16,6 +16,9 @@ export { INBOX_DIR_NAME, META_DIR_NAME, META_FILE_NAME, TRASH_DIR_NAME }
 
 export const NOTES_INBOX_RELATIVE_PATH = `${META_DIR_NAME}/${INBOX_DIR_NAME}`
 export const NOTES_TRASH_RELATIVE_PATH = `${META_DIR_NAME}/${TRASH_DIR_NAME}`
+export const NOTES_ASSETS_DIR_NAME = 'assets'
+export const NOTES_ASSETS_RELATIVE_PATH = `${META_DIR_NAME}/${NOTES_ASSETS_DIR_NAME}`
+export const NOTES_LEGACY_ASSETS_RELATIVE_PATH = NOTES_ASSETS_DIR_NAME
 
 export const NOTES_RESERVED_ROOT_NAMES = new Set([
   INBOX_DIR_NAME,
@@ -74,7 +77,9 @@ export function getNotesPaths(vaultPath: string): NotesPaths {
   const metaDirPath = path.join(notesRoot, META_DIR_NAME)
 
   const notesPaths: NotesPaths = {
+    assetsPath: path.join(metaDirPath, NOTES_ASSETS_DIR_NAME),
     inboxDirPath: path.join(metaDirPath, INBOX_DIR_NAME),
+    legacyAssetsPath: path.join(notesRoot, NOTES_ASSETS_DIR_NAME),
     metaDirPath,
     notesRoot,
     statePath: path.join(metaDirPath, 'state.json'),

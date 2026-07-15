@@ -24,6 +24,7 @@ import {
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
 import { getActiveSpaceId } from '@/spaceDefinitions'
+import { retryNotesAssetImages } from '@/utils/notesAssetHydration'
 import { repository } from '../../../../package.json'
 import { handleDeepLink } from './deepLinks'
 
@@ -235,6 +236,12 @@ export function registerSystemListeners() {
 
   ipc.on('system:storage-synced', () => {
     scheduleStorageSyncRefresh()
+  })
+
+  ipc.on('system:notes-asset-ready', (_, fileName: unknown) => {
+    if (typeof fileName === 'string') {
+      retryNotesAssetImages(document, fileName)
+    }
   })
 
   ipc.on(

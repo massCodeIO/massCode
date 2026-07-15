@@ -1,20 +1,19 @@
 import { ipc } from '@/electron'
 import { EditorView } from '@codemirror/view'
 
-function getImageExtension(file: File): string {
-  const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : ''
-  if (ext)
+function getImageExtension(file: File): string | null {
+  const ext = file.name.includes('.')
+    ? `.${file.name.split('.').pop()?.toLowerCase()}`
+    : ''
+  if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
     return ext
+  }
 
   const mimeToExt: Record<string, string> = {
     'image/png': '.png',
     'image/jpeg': '.jpg',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-    'image/svg+xml': '.svg',
-    'image/bmp': '.bmp',
   }
-  return mimeToExt[file.type] || '.png'
+  return mimeToExt[file.type] ?? null
 }
 
 async function insertImage(view: EditorView, file: File, pos: number) {
@@ -25,9 +24,14 @@ async function insertImage(view: EditorView, file: File, pos: number) {
 
   try {
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Array.from(new Uint8Array(arrayBuffer))
     const ext = getImageExtension(file)
-    const url: string = await ipc.invoke('fs:notes-asset', { buffer, ext })
+    if (!ext) {
+      throw new TypeError('Unsupported Notes image type')
+    }
+    const url: string = await ipc.invoke('fs:notes-asset', {
+      buffer: arrayBuffer,
+      ext,
+    })
     const alt = file.name.replace(/\.[^.]+$/, '') || 'image'
     const markdown = `![${alt}](${url})`
 
@@ -47,7 +51,7 @@ function getImageFile(dataTransfer: DataTransfer | null): File | null {
   if (!dataTransfer)
     return null
   for (const file of Array.from(dataTransfer.files)) {
-    if (file.type.startsWith('image/'))
+    if (getImageExtension(file))
       return file
   }
   return null

@@ -1,3 +1,4 @@
+export * from './assets'
 export * from './constants'
 export * from './notes'
 export * from './parser'

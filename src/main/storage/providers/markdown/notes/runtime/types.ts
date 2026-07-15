@@ -2,7 +2,9 @@ import type { InternalLinkLookupItem } from '../../../../../../shared/notes/inte
 import type { SearchIndex } from '../../runtime/shared/searchEngine'
 
 export interface NotesPaths {
+  assetsPath: string
   inboxDirPath: string
+  legacyAssetsPath: string
   metaDirPath: string
   notesRoot: string
   statePath: string

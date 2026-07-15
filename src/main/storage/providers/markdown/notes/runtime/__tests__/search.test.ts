@@ -50,7 +50,9 @@ function createRuntimeCache(notes: MarkdownNote[]): NotesRuntimeCache {
     noteById: new Map(notes.map(note => [note.id, note])),
     notes,
     paths: {
+      assetsPath: '/tmp/meta/assets',
       inboxDirPath: '/tmp/inbox',
+      legacyAssetsPath: '/tmp/notes/assets',
       metaDirPath: '/tmp/meta',
       notesRoot: '/tmp/notes',
       statePath: '/tmp/state.json',

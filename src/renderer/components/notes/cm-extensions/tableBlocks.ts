@@ -66,6 +66,7 @@ const DRAG_HANDLE_SIZE = 20
 const DRAG_COLUMN_HANDLE_WIDTH = 48
 const DRAG_COLUMN_HANDLE_INSET = 8
 const TABLE_CELL_MIN_WIDTH = 64
+const CARET_REVEAL_INSET = 8
 
 type TableDragKind = 'column' | 'row'
 
@@ -348,6 +349,42 @@ function resolveCellSelection(
   return EditorSelection.single(editor.posAtCoords({ x: target.x, y }, false))
 }
 
+// Минимально прокручивает внутренний viewport таблицы только когда целевая
+// позиция каретки оказалась за его горизонтальной границей.
+function revealCellCaretHorizontally(
+  root: HTMLElement,
+  editor: EditorView,
+  position: number,
+) {
+  const scroll = root.querySelector<HTMLElement>('[data-table-scroll="1"]')
+  if (!scroll)
+    return
+
+  editor.requestMeasure({
+    read(view) {
+      if (activeCell?.editor !== editor || !scroll.isConnected)
+        return null
+
+      const coords = view.coordsAtPos(position)
+      if (!coords)
+        return null
+
+      const viewport = scroll.getBoundingClientRect()
+
+      if (coords.left < viewport.left)
+        return coords.left - viewport.left - CARET_REVEAL_INSET
+      if (coords.left > viewport.right)
+        return coords.left - viewport.right + CARET_REVEAL_INSET
+
+      return 0
+    },
+    write(delta) {
+      if (delta && activeCell?.editor === editor)
+        scroll.scrollLeft += delta
+    },
+  })
+}
+
 // Демонтирует активный редактор и возвращает ячейке отрисованный вид.
 function deactivateCellEditor(view: EditorView, root: HTMLElement) {
   const active = getActiveCellFor(root)
@@ -378,12 +415,18 @@ function activateCellEditor(
   root: HTMLElement,
   cell: HTMLTableCellElement,
   target: CellSelectionTarget,
+  options: { revealCaretHorizontally?: boolean } = {},
 ) {
   if (activeCell?.cell === cell) {
     activeCell.editor.focus()
     activeCell.editor.dispatch({
       selection: resolveCellSelection(activeCell.editor, target),
     })
+    if (options.revealCaretHorizontally !== false) {
+      const position
+        = target === 'all' ? 0 : activeCell.editor.state.selection.main.head
+      revealCellCaretHorizontally(root, activeCell.editor, position)
+    }
     return
   }
 
@@ -403,47 +446,11 @@ function activateCellEditor(
   activeCell = { view, root, cell, editor }
   editor.focus()
   editor.dispatch({ selection: resolveCellSelection(editor, target) })
-  revealCellHorizontally(root, cell)
+  if (options.revealCaretHorizontally !== false) {
+    const position = target === 'all' ? 0 : editor.state.selection.main.head
+    revealCellCaretHorizontally(root, editor, position)
+  }
   watchCellEditorBlur(view, root, cell, editor)
-}
-
-// Доводит ячейку до видимой области, прокручивая ТОЛЬКО внутренний скролл
-// таблицы. element.scrollIntoView здесь недопустим: он прокручивает все
-// прокручиваемые предки, включая overflow-hidden контейнеры вокруг редактора,
-// у которых нет скроллбаров — вернуть их назад пользователь не сможет.
-function revealCellHorizontally(root: HTMLElement, cell: HTMLTableCellElement) {
-  const scroll = root.querySelector<HTMLElement>('[data-table-scroll="1"]')
-  if (!scroll)
-    return
-
-  // Крайние ячейки строки доводят скролл до упора: выравнивание по краю
-  // самой ячейки оставило бы рамку таблицы и зоны добавления строк/колонок
-  // (отступы оверлея) за краем — таблица выглядела бы обрезанной.
-  const row = cell.closest('tr')
-  if (row) {
-    if (cell.cellIndex === 0) {
-      scroll.scrollLeft = 0
-      return
-    }
-
-    if (cell.cellIndex === row.cells.length - 1) {
-      scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth
-      return
-    }
-  }
-
-  const scrollRect = scroll.getBoundingClientRect()
-  const cellRect = cell.getBoundingClientRect()
-
-  if (cellRect.left < scrollRect.left) {
-    scroll.scrollLeft += cellRect.left - scrollRect.left
-  }
-  else if (cellRect.right > scrollRect.right) {
-    scroll.scrollLeft += Math.min(
-      cellRect.right - scrollRect.right,
-      cellRect.left - scrollRect.left,
-    )
-  }
 }
 
 // Активирует редактирование ячейки извне виджета (навигация стрелками из
@@ -1873,9 +1880,15 @@ class TableWidget extends WidgetType {
             return
 
           event.preventDefault()
-          activateCellEditor(view, root, cell, {
-            coords: { x: event.clientX, y: event.clientY },
-          })
+          activateCellEditor(
+            view,
+            root,
+            cell,
+            {
+              coords: { x: event.clientX, y: event.clientY },
+            },
+            { revealCaretHorizontally: false },
+          )
           return
         }
 
@@ -2220,7 +2233,7 @@ function maybePasteTsvAsTable(
   // Курсор — на пустую строку ПОСЛЕ таблицы, не на границу блок-виджета:
   // каретка вплотную к contentEditable=false виджету заставляет браузер
   // «доводить» её по правому краю широкой таблицы и прокручивать
-  // overflow-hidden предков редактора (см. revealCellHorizontally).
+  // overflow-hidden предков редактора.
   view.dispatch({
     changes: {
       from: main.from,

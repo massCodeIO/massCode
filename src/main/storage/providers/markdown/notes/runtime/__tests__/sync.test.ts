@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { waitForNotesAssetsMigrationForTests } from '../assetsMigration'
 import { createDefaultNotesState, saveNotesState } from '../state'
 import {
   resetNotesRuntimeCache,
@@ -82,6 +83,7 @@ function createNotesPaths(): NotesPaths {
 }
 
 afterEach(() => {
+  resetNotesRuntimeCache()
   for (const dirPath of tempDirs.splice(0)) {
     fs.removeSync(dirPath)
   }
@@ -341,6 +343,49 @@ describe('syncNotesRuntimeWithDisk', () => {
 
     expect(cache.state.tags).toHaveLength(1)
     expect(cache.state.tags[0].name).toBe('pending-tag')
+  })
+
+  it('schedules referenced asset migration after a full sync', async () => {
+    const paths = createNotesPaths()
+    const fileName = 'abcdefghijklmnop.png'
+    fs.ensureDirSync(paths.legacyAssetsPath)
+    fs.writeFileSync(path.join(paths.legacyAssetsPath, fileName), 'asset')
+    fs.writeFileSync(
+      path.join(paths.notesRoot, 'Note.md'),
+      `---\nid: 1\nname: Note\n---\n![asset](masscode://notes-asset/${fileName})\n`,
+      'utf8',
+    )
+
+    syncNotesRuntimeWithDisk(paths)
+    await waitForNotesAssetsMigrationForTests()
+
+    expect(fs.pathExistsSync(path.join(paths.assetsPath, fileName))).toBe(true)
+    expect(fs.pathExistsSync(path.join(paths.legacyAssetsPath, fileName))).toBe(
+      false,
+    )
+  })
+
+  it('discovers a late reference after successful incremental note sync', async () => {
+    const paths = createNotesPaths()
+    const fileName = 'abcdefghijklmnop.png'
+    fs.ensureDirSync(paths.legacyAssetsPath)
+    fs.writeFileSync(path.join(paths.legacyAssetsPath, fileName), 'asset')
+
+    syncNotesRuntimeWithDisk(paths)
+    await waitForNotesAssetsMigrationForTests()
+
+    fs.writeFileSync(
+      path.join(paths.notesRoot, 'Late.md'),
+      `---\nid: 2\nname: Late\n---\n![asset](masscode://notes-asset/${fileName})\n`,
+      'utf8',
+    )
+    expect(syncNoteFileWithDisk(paths, 'Late.md')).not.toBeNull()
+    await waitForNotesAssetsMigrationForTests()
+
+    expect(fs.pathExistsSync(path.join(paths.assetsPath, fileName))).toBe(true)
+    expect(fs.pathExistsSync(path.join(paths.legacyAssetsPath, fileName))).toBe(
+      false,
+    )
   })
 })
 

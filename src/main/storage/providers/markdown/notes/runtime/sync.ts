@@ -22,6 +22,10 @@ import {
 import { isCloudFileNotDownloadedError } from '../../runtime/shared/guardedRead'
 import { normalizeDirectoryPath, toPosixPath } from '../../runtime/shared/path'
 import { createVaultReconciler } from '../../runtime/shared/vaultReconcile'
+import {
+  cancelNotesAssetsMigration,
+  scheduleNotesAssetsMigration,
+} from './assetsMigration'
 import { applyDeferredBacklinkRewrites } from './backlinks'
 import {
   NOTES_INBOX_RELATIVE_PATH,
@@ -281,7 +285,9 @@ function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
 
   saveNotesState(paths, state, { immediate: true })
 
-  return setNotesRuntimeCache(paths, state, notes)
+  const cache = setNotesRuntimeCache(paths, state, notes)
+  scheduleNotesAssetsMigration(cache)
+  return cache
 }
 
 export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
@@ -354,6 +360,7 @@ export function getNotesRuntimeCache(paths: NotesPaths): NotesRuntimeCache {
 }
 
 export function resetNotesRuntimeCache(): void {
+  cancelNotesAssetsMigration()
   // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
   // продолжили бы попытки по неактивному пути и слали storage-synced.
   const previousNotesRoot = notesRuntimeRef.cache?.paths.notesRoot
@@ -369,6 +376,7 @@ function commitNotesRuntimeCache(cache: NotesRuntimeCache): NotesRuntimeCache {
   // A new object identity signals watcher consumers that data changed,
   // while built maps and the lazily rebuilt search index are reused.
   notesRuntimeRef.cache = { ...cache }
+  scheduleNotesAssetsMigration(notesRuntimeRef.cache)
   return notesRuntimeRef.cache
 }
 

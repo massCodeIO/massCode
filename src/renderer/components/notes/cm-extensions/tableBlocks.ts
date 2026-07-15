@@ -89,6 +89,7 @@ export function getTableLayoutStyles(wrapCells: boolean) {
     },
     overlay: {
       width: 'fit-content',
+      minWidth: 'min-content',
       maxWidth: '100%',
       boxSizing: 'border-box',
     },

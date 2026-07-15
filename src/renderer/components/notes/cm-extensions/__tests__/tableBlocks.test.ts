@@ -98,6 +98,12 @@ describe('tableBlocks', () => {
       width: 'fit-content',
       maxWidth: '100%',
     })
+    expect(styles.overlay).toEqual({
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+    })
     expect(styles.frame).toMatchObject({
       width: 'fit-content',
       minWidth: 'min-content',

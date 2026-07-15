@@ -58,6 +58,7 @@ export interface TableCellEditorOptions {
 export const tableCellLineWrappingStyles = {
   overflowWrap: 'normal',
   wordBreak: 'normal',
+  whiteSpace: 'pre-wrap',
 } as const
 
 // Редактор не должен менять геометрию ячейки: никаких собственных отступов,

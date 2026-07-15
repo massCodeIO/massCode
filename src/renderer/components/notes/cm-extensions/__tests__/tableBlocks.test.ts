@@ -76,6 +76,7 @@ describe('tableBlocks', () => {
     expect(tableCellLineWrappingStyles).toEqual({
       overflowWrap: 'normal',
       wordBreak: 'normal',
+      whiteSpace: 'pre-wrap',
     })
   })
 

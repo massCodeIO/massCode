@@ -136,6 +136,17 @@ async function onCleanupNow() {
         </template>
       </UiMenuFormItem>
       <UiMenuFormItem
+        :label="i18n.t('preferences:notesEditor.wrapTables.label')"
+      >
+        <Switch
+          :checked="settings.wrapTables"
+          @update:checked="settings.wrapTables = $event"
+        />
+        <template #description>
+          {{ i18n.t("preferences:notesEditor.wrapTables.description") }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem
         :label="i18n.t('preferences:notesEditor.lineNumbers.label')"
       >
         <Switch

@@ -264,6 +264,7 @@ function createEditorState(doc: string): EditorState {
         enabled: true,
         editable,
         isDark: isDark.value,
+        wrapCells: notesSettings.wrapTables,
       }),
       createImageBlocks({
         enabled: true,

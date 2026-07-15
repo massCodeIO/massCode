@@ -177,6 +177,10 @@ function sanitizeNotesEditorSettings(value: unknown): NotesEditorSettings {
       typeof source.limitWidth === 'boolean'
         ? source.limitWidth
         : PREFERENCES_DEFAULTS.editor.notes.limitWidth,
+    wrapTables:
+      typeof source.wrapTables === 'boolean'
+        ? source.wrapTables
+        : PREFERENCES_DEFAULTS.editor.notes.wrapTables,
     lineNumbers:
       typeof source.lineNumbers === 'boolean'
         ? source.lineNumbers

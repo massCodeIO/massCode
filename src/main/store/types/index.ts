@@ -215,6 +215,7 @@ export interface NotesEditorSettings {
   codeFontFamily: string
   lineHeight: number
   limitWidth: boolean
+  wrapTables: boolean
   lineNumbers: boolean
   indentSize: number
 }

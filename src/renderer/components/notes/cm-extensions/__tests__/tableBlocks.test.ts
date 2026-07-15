@@ -4,10 +4,13 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { GFM } from '@lezer/markdown'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  canReuseTableWidgetDom,
   createTableBlocks,
+  getTableLayoutStyles,
   isProtectedTableBoundaryDeletePosition,
   isProtectedTableBoundaryLine,
 } from '../tableBlocks'
+import { tableCellLineWrappingStyles } from '../tableCellEditor'
 
 vi.mock('@/electron', () => ({
   i18n: {
@@ -60,6 +63,65 @@ function createEditableTableState(doc: string, lineNumber: number, column = 0) {
 }
 
 describe('tableBlocks', () => {
+  it('reuses table widget DOM only when wrapping mode is unchanged', () => {
+    expect(canReuseTableWidgetDom('1', true)).toBe(true)
+    expect(canReuseTableWidgetDom('0', false)).toBe(true)
+    expect(canReuseTableWidgetDom('1', false)).toBe(false)
+    expect(canReuseTableWidgetDom('0', true)).toBe(false)
+    expect(canReuseTableWidgetDom(undefined, true)).toBe(false)
+    expect(canReuseTableWidgetDom(undefined, false)).toBe(false)
+  })
+
+  it('wraps active cell editor content only at normal word boundaries', () => {
+    expect(tableCellLineWrappingStyles).toEqual({
+      overflowWrap: 'normal',
+      wordBreak: 'normal',
+      whiteSpace: 'pre-wrap',
+    })
+  })
+
+  it('keeps max-content layout when table wrapping is disabled', () => {
+    const styles = getTableLayoutStyles(false)
+
+    expect(styles.scroll).toEqual({ overflowX: 'auto' })
+    expect(styles.table).toEqual({
+      width: 'max-content',
+      minWidth: 'max-content',
+    })
+    expect(styles.cell).toEqual({})
+  })
+
+  it('uses natural capped width and wraps cell content when enabled', () => {
+    const styles = getTableLayoutStyles(true)
+
+    expect(styles.scroll).toMatchObject({
+      overflowX: 'auto',
+      width: 'fit-content',
+      maxWidth: '100%',
+    })
+    expect(styles.overlay).toEqual({
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+    })
+    expect(styles.frame).toMatchObject({
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+    })
+    expect(styles.table).toEqual({
+      width: 'fit-content',
+      minWidth: 'min-content',
+      maxWidth: '100%',
+    })
+    expect(styles.cell).toEqual({
+      overflowWrap: 'normal',
+      wordBreak: 'normal',
+      whiteSpace: 'normal',
+    })
+  })
+
   it('protects an empty line directly before a table', () => {
     const state = createState(
       ['', '| A | B |', '| --- | --- |', '| 1 | 2 |'].join('\n'),

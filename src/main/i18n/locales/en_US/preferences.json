@@ -127,6 +127,10 @@
       "label": "Limit Width",
       "description": "Maximum content width for comfortable reading (700px)."
     },
+    "wrapTables": {
+      "label": "Wrap Table Cells",
+      "description": "Wrap text in table cells to keep wide tables within the editor. Narrow tables keep their natural width."
+    },
     "lineNumbers": {
       "label": "Line Numbers",
       "description": "Line numbers in the gutter. Only available in Raw mode."

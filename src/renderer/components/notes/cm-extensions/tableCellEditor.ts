@@ -55,6 +55,12 @@ export interface TableCellEditorOptions {
   callbacks: TableCellEditorCallbacks
 }
 
+export const tableCellLineWrappingStyles = {
+  overflowWrap: 'normal',
+  wordBreak: 'normal',
+  whiteSpace: 'pre-wrap',
+} as const
+
 // Редактор не должен менять геометрию ячейки: никаких собственных отступов,
 // шрифт и межстрочный интервал — из ячейки.
 const cellTheme = EditorView.theme({
@@ -77,6 +83,7 @@ const cellTheme = EditorView.theme({
     padding: '0',
     caretColor: 'var(--foreground)',
   },
+  '.cm-content.cm-lineWrapping': tableCellLineWrappingStyles,
   '.cm-line': {
     padding: '0',
   },

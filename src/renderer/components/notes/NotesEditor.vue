@@ -417,7 +417,20 @@ async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
   })
 
   await nextTick()
-  applyPendingNavigationUIStateForNote(noteId)
+
+  // Пока ожидали обновление DOM, пользователь мог выбрать другую заметку.
+  if (!view || props.noteId !== noteId) {
+    return
+  }
+
+  // Back/Forward восстанавливает сохранённую позицию. При обычном выборе
+  // новая заметка открывается сверху. Эффект CodeMirror также пересчитывает
+  // viewport, чтобы preview-декорации сразу построились для начала документа.
+  if (!applyPendingNavigationUIStateForNote(noteId)) {
+    view.dispatch({
+      effects: EditorView.scrollIntoView(0, { y: 'start', yMargin: 0 }),
+    })
+  }
 }
 
 watch(

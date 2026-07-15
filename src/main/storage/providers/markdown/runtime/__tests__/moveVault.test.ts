@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
@@ -60,6 +61,18 @@ describe('moveVault', () => {
     fs.writeFileSync(path.join(sourcePath, 'code', 'snippet.md'), '# Snippet')
     fs.ensureDirSync(path.join(sourcePath, 'notes'))
     fs.writeFileSync(path.join(sourcePath, 'notes', 'note.md'), '# Note')
+    const assetBytes = Buffer.from([0x00, 0xFF, 0x41, 0x80])
+    fs.ensureDirSync(path.join(sourcePath, 'notes', '.masscode', 'assets'))
+    fs.writeFileSync(
+      path.join(
+        sourcePath,
+        'notes',
+        '.masscode',
+        'assets',
+        'abcdefghijklmnop.png',
+      ),
+      assetBytes,
+    )
 
     moveVault(sourcePath, targetPath)
 
@@ -69,6 +82,17 @@ describe('moveVault', () => {
     expect(fs.pathExistsSync(path.join(targetPath, 'notes', 'note.md'))).toBe(
       true,
     )
+    expect(
+      fs.readFileSync(
+        path.join(
+          targetPath,
+          'notes',
+          '.masscode',
+          'assets',
+          'abcdefghijklmnop.png',
+        ),
+      ),
+    ).toEqual(assetBytes)
     expect(fs.pathExistsSync(sourcePath)).toBe(false)
   })
 

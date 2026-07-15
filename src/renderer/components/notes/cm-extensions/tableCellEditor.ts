@@ -72,6 +72,8 @@ const cellTheme = EditorView.theme({
     overflow: 'visible',
   },
   '.cm-content': {
+    margin: '0',
+    maxWidth: 'none',
     padding: '0',
     caretColor: 'var(--foreground)',
   },
@@ -293,8 +295,11 @@ export function createTableCellEditor(
   })
 
   const view = new EditorView({ state, parent })
-  // Инлайном — как гарантия поверх базовой темы CodeMirror (padding 4px 0 у
-  // .cm-content раздувал бы ячейку по вертикали).
+  // Инлайном — как гарантия поверх тем внешнего редактора: их padding
+  // раздувал ячейку по вертикали, а max-width + margin:auto центрировали
+  // вложенный контент и создавали большой отступ слева.
+  view.contentDOM.style.margin = '0'
+  view.contentDOM.style.maxWidth = 'none'
   view.contentDOM.style.padding = '0'
 
   return view

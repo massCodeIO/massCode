@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
@@ -6,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { applyVaultDoctor, previewVaultDoctor } from '../doctor'
 import { resetHttpRuntimeCache } from '../http/runtime'
 import { resetNotesRuntimeCache } from '../notes/runtime'
+import { waitForNotesAssetsMigrationForTests } from '../notes/runtime/assetsMigration'
 import { resetRuntimeCache } from '../runtime'
+import { setDatalessProbeForTests } from '../runtime/shared/cloudFiles'
 
 let tempVaultPath = ''
 
@@ -58,6 +61,9 @@ vi.mock('electron', () => ({
   app: {
     getPath: () => os.tmpdir(),
   },
+  BrowserWindow: {
+    getAllWindows: () => [],
+  },
 }))
 
 vi.mock('../../../../store', () => ({
@@ -78,6 +84,15 @@ function writeFile(relativePath: string, content: string): void {
   const absolutePath = path.join(tempVaultPath, relativePath)
   fs.ensureDirSync(path.dirname(absolutePath))
   fs.writeFileSync(absolutePath, content, 'utf8')
+}
+
+function writeSparseFile(relativePath: string): string {
+  const absolutePath = path.join(tempVaultPath, relativePath)
+  fs.ensureDirSync(path.dirname(absolutePath))
+  const descriptor = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(descriptor, 4096)
+  fs.closeSync(descriptor)
+  return absolutePath
 }
 
 function snippetSource(id: number, name: string): string {
@@ -101,6 +116,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  setDatalessProbeForTests(null)
   resetRuntimeCache()
   resetNotesRuntimeCache()
   resetHttpRuntimeCache()
@@ -154,6 +170,212 @@ describe('vault doctor', () => {
     )
     expect(danglingWarnings).toHaveLength(1)
     expect(danglingWarnings[0].path).toBe('Dangling.md')
+  })
+
+  it('audits only referenced notes assets without changing their bytes', () => {
+    const legacyName = 'abcdefghijklmnop.png'
+    const equalName = 'ponmlkjihgfedcba.jpg'
+    const conflictName = 'abcdefghijklmnopqrstu.jpeg'
+    const missingName = 'ponmlkjihgfedcbazyxwv.png'
+    const healthyName = 'qrstuvwxyzabcdef.jpg'
+    const unknownName = 'zyxwvutsrqponmlk.png'
+
+    writeFile(`notes/assets/${legacyName}`, 'legacy')
+    writeFile(`notes/assets/${equalName}`, 'equal')
+    writeFile(`notes/.masscode/assets/${equalName}`, 'equal')
+    writeFile(`notes/assets/${conflictName}`, 'source')
+    writeFile(`notes/.masscode/assets/${conflictName}`, 'destination')
+    writeFile(`notes/.masscode/assets/${healthyName}`, 'healthy')
+    writeFile(`notes/assets/${unknownName}`, 'unreferenced')
+    writeFile(
+      'notes/Assets.md',
+      [legacyName, equalName, conflictName, missingName, healthyName]
+        .map(name => `![](masscode://notes-asset/${name})`)
+        .join('\n'),
+    )
+
+    const trackedPaths = [
+      `notes/assets/${legacyName}`,
+      `notes/assets/${equalName}`,
+      `notes/.masscode/assets/${equalName}`,
+      `notes/assets/${conflictName}`,
+      `notes/.masscode/assets/${conflictName}`,
+      `notes/.masscode/assets/${healthyName}`,
+      `notes/assets/${unknownName}`,
+    ]
+    const before = trackedPaths.map(relativePath =>
+      fs.readFileSync(path.join(tempVaultPath, relativePath)),
+    )
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+    const assetWarnings = result.warnings.filter(warning =>
+      warning.code.startsWith('NOTES_'),
+    )
+
+    expect(
+      assetWarnings.map(warning => [
+        warning.code,
+        warning.details?.assetName,
+        warning.path,
+      ]),
+    ).toEqual([
+      ['NOTES_LEGACY_ASSET', legacyName, 'Assets.md'],
+      ['NOTES_LEGACY_ASSET', equalName, 'Assets.md'],
+      ['NOTES_ASSET_DESTINATION_CONFLICT', conflictName, 'Assets.md'],
+      ['NOTES_ASSET_MISSING', missingName, 'Assets.md'],
+    ])
+    expect(
+      assetWarnings.every(
+        warning =>
+          Object.keys(warning.details ?? {})
+            .sort()
+            .join(',') === 'assetName,destination,reason,source',
+      ),
+    ).toBe(true)
+    trackedPaths.forEach((relativePath, index) => {
+      expect(fs.readFileSync(path.join(tempVaultPath, relativePath))).toEqual(
+        before[index],
+      )
+    })
+  })
+
+  it('reports placeholders as pending and one missing warning per note', () => {
+    const pendingName = 'abcdefghijklmnop.png'
+    const missingName = 'ponmlkjihgfedcba.jpg'
+    const unreadableName = 'qrstuvwxyzabcdef.png'
+    const pendingPath = writeSparseFile(`notes/assets/${pendingName}`)
+    const unreadableNotePath = path.join(tempVaultPath, 'notes/Unreadable.md')
+    writeFile(
+      'notes/One.md',
+      `![](masscode://notes-asset/${pendingName})\n![](masscode://notes-asset/${missingName})`,
+    )
+    writeFile('notes/Two.md', `![](masscode://notes-asset/${missingName})`)
+    writeFile(
+      'notes/Unreadable.md',
+      `![](masscode://notes-asset/${unreadableName})`,
+    )
+    fs.chmodSync(unreadableNotePath, 0o000)
+    setDatalessProbeForTests(absolutePath => absolutePath === pendingPath)
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'NOTES_ASSET_MIGRATION_PENDING',
+          details: expect.objectContaining({
+            assetName: pendingName,
+            reason: 'source-placeholder',
+          }),
+          path: 'One.md',
+        }),
+      ]),
+    )
+    expect(
+      result.warnings
+        .filter(
+          warning =>
+            warning.code === 'NOTES_ASSET_MISSING'
+            && warning.details?.assetName === missingName,
+        )
+        .map(warning => warning.path)
+        .sort(),
+    ).toEqual(['One.md', 'Two.md'])
+    expect(
+      result.warnings.some(
+        warning => warning.details?.assetName === unreadableName,
+      ),
+    ).toBe(false)
+  })
+
+  it('treats non-regular asset paths as pending without reading them', () => {
+    const sourceDirectoryName = 'abcdefghijklmnop.png'
+    const destinationDirectoryName = 'ponmlkjihgfedcba.jpg'
+    fs.ensureDirSync(
+      path.join(tempVaultPath, 'notes/assets', sourceDirectoryName),
+    )
+    fs.ensureDirSync(
+      path.join(
+        tempVaultPath,
+        'notes/.masscode/assets',
+        destinationDirectoryName,
+      ),
+    )
+    writeFile(
+      'notes/Directories.md',
+      [sourceDirectoryName, destinationDirectoryName]
+        .map(name => `![](masscode://notes-asset/${name})`)
+        .join('\n'),
+    )
+
+    const result = previewVaultDoctor({ spaces: ['notes'] })
+
+    expect(
+      result.warnings
+        .filter(warning => warning.path === 'Directories.md')
+        .map(warning => warning.details?.reason),
+    ).toEqual(['source-not-regular', 'destination-not-regular'])
+  })
+
+  it.skipIf(process.platform === 'win32')(
+    'treats source and destination symlinks as pending without touching targets',
+    () => {
+      const sourceSymlinkName = 'qrstuvwxyzabcdef.png'
+      const destinationSymlinkName = 'fedcbazyxwvutsrq.jpg'
+      const externalPath = path.join(tempVaultPath, 'external.bin')
+      const externalBytes = Buffer.from([0x10, 0x20, 0x30, 0x40])
+      fs.writeFileSync(externalPath, externalBytes)
+      fs.ensureDirSync(path.join(tempVaultPath, 'notes/assets'))
+      fs.ensureDirSync(path.join(tempVaultPath, 'notes/.masscode/assets'))
+      fs.symlinkSync(
+        externalPath,
+        path.join(tempVaultPath, 'notes/assets', sourceSymlinkName),
+      )
+      fs.symlinkSync(
+        externalPath,
+        path.join(
+          tempVaultPath,
+          'notes/.masscode/assets',
+          destinationSymlinkName,
+        ),
+      )
+      writeFile(
+        'notes/Symlinks.md',
+        [sourceSymlinkName, destinationSymlinkName]
+          .map(name => `![](masscode://notes-asset/${name})`)
+          .join('\n'),
+      )
+
+      const result = previewVaultDoctor({ spaces: ['notes'] })
+
+      expect(
+        result.warnings
+          .filter(warning => warning.path === 'Symlinks.md')
+          .map(warning => warning.details?.reason),
+      ).toEqual(['source-symlink', 'destination-symlink'])
+      expect(fs.readFileSync(externalPath)).toEqual(externalBytes)
+    },
+  )
+
+  it('does not migrate referenced legacy assets while applying Notes repairs', async () => {
+    const assetName = 'abcdefghijklmnop.png'
+    const sourcePath = path.join(tempVaultPath, 'notes/assets', assetName)
+    const destinationPath = path.join(
+      tempVaultPath,
+      'notes/.masscode/assets',
+      assetName,
+    )
+    const assetBytes = Buffer.from([0x01, 0x02, 0xFE, 0xFF])
+    fs.ensureDirSync(path.dirname(sourcePath))
+    fs.writeFileSync(sourcePath, assetBytes)
+    writeFile('notes/Repair.md', `![](masscode://notes-asset/${assetName})`)
+
+    applyVaultDoctor({ spaces: ['notes'] })
+    await waitForNotesAssetsMigrationForTests()
+    await Promise.resolve()
+
+    expect(fs.readFileSync(sourcePath)).toEqual(assetBytes)
+    expect(fs.pathExistsSync(destinationPath)).toBe(false)
   })
 
   it('reports duplicate code snippet ids as conflicts that need a decision', () => {

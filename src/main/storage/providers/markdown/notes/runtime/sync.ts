@@ -264,7 +264,14 @@ function buildProvisionalNotesCache(paths: NotesPaths): NotesRuntimeCache {
 
 // Настоящая сверка с диском: может бросить, если .state.yaml сам недокачан
 // из облака (reconciler ретраит по этой ошибке).
-function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
+export interface SyncNotesRuntimeOptions {
+  scheduleAssetsMigration?: boolean
+}
+
+function performFullNotesSync(
+  paths: NotesPaths,
+  options: SyncNotesRuntimeOptions,
+): NotesRuntimeCache {
   flushPendingNotesStateWrite(paths)
   const state = loadNotesState(paths)
 
@@ -286,11 +293,16 @@ function performFullNotesSync(paths: NotesPaths): NotesRuntimeCache {
   saveNotesState(paths, state, { immediate: true })
 
   const cache = setNotesRuntimeCache(paths, state, notes)
-  scheduleNotesAssetsMigration(cache)
+  if (options.scheduleAssetsMigration !== false) {
+    scheduleNotesAssetsMigration(cache)
+  }
   return cache
 }
 
-export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
+export function syncNotesRuntimeWithDisk(
+  paths: NotesPaths,
+  options: SyncNotesRuntimeOptions = {},
+): NotesRuntimeCache {
   // Первый доступ к vault: обход диска опасен синхронно (листинги
   // dataless-каталогов материализуются сетью), поэтому мгновенно отдаётся
   // provisional-кэш, а настоящая сверка выполняется в фоне.
@@ -305,13 +317,13 @@ export function syncNotesRuntimeWithDisk(paths: NotesPaths): NotesRuntimeCache {
         return
       }
 
-      performFullNotesSync(paths)
+      performFullNotesSync(paths, options)
     })
 
     return provisionalCache
   }
 
-  return performFullNotesSync(paths)
+  return performFullNotesSync(paths, options)
 }
 
 // Перепроверка недокачанных заметок независимо от fs-событий: см.

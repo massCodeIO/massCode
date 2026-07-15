@@ -1,4 +1,5 @@
 export * from './assets'
+export * from './assetsInspection'
 export {
   cancelNotesAssetsMigration,
   discoverNotesAssetReferences,

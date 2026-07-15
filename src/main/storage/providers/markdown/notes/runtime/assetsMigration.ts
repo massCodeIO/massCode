@@ -19,10 +19,8 @@ import {
   prioritizeCloudDownload,
 } from '../../cloudDownloads'
 import { getFileAvailability } from '../../runtime/shared/cloudFiles'
-import { parseNotesAssetName } from './assets'
+import { extractNotesAssetNames } from './assetsInspection'
 import { ensureNoteContentLoaded } from './notes'
-
-const NOTES_ASSET_URL_PATTERN = /masscode:\/\/notes-asset\/([^\s)<>'"]+)/g
 
 export interface NotesAssetsMigrationSummary {
   conflicts: number
@@ -226,11 +224,8 @@ export function discoverNotesAssetReferences(
       continue
     }
 
-    for (const match of note.content.matchAll(NOTES_ASSET_URL_PATTERN)) {
-      const parsedName = parseNotesAssetName(match[1])
-      if (parsedName) {
-        fileNames.add(parsedName.fileName)
-      }
+    for (const fileName of extractNotesAssetNames(note.content)) {
+      fileNames.add(fileName)
     }
   }
 

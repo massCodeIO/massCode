@@ -4,6 +4,7 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setDatalessProbeForTests } from '../../../runtime/shared/cloudFiles'
+import { extractNotesAssetNames } from '../assetsInspection'
 import {
   cancelNotesAssetsMigration,
   discoverNotesAssetReferences,
@@ -114,6 +115,21 @@ afterEach(() => {
 })
 
 describe('notes assets migration discovery', () => {
+  it('extracts unique valid notes asset names from markdown source', () => {
+    const validName = 'abcdefghijklmnop.png'
+
+    expect([
+      ...extractNotesAssetNames(
+        [
+          assetUrl(validName),
+          assetUrl(validName),
+          'masscode://notes-asset/../invalid.png',
+          'masscode://notes-asset/not-an-asset.txt',
+        ].join(' '),
+      ),
+    ]).toEqual([validName])
+  })
+
   it('collects only valid references from available note content', () => {
     const paths = createPaths()
     const availableName = 'abcdefghijklmnop.png'

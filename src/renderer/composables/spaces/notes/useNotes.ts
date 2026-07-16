@@ -508,6 +508,63 @@ async function createNoteWithPayloadAndSelect(payload?: CreateNotePayload) {
   await focusNoteNameInput()
 }
 
+async function duplicateNote(noteId: number) {
+  try {
+    // Список не содержит контент заметки — источник копии загружается по id.
+    const { data: sourceData } = await api.notes.getNotesById(String(noteId))
+    const source = sourceData as NoteFullRecord
+
+    if (source.pendingCloudDownload) {
+      useSonner().sonner({
+        id: 'cloud-file-not-ready',
+        message: i18n.t('messages:warning.cloudFileNotReady'),
+        type: 'warning',
+      })
+      return
+    }
+
+    if (source.isDeleted) {
+      return
+    }
+
+    const folderId = source.folder?.id ?? null
+    const siblingNames = await getNoteNamesForCreate(folderId)
+    const copyBaseName = `${source.name} - copy`
+    const name = siblingNames.some(
+      sibling => sibling.trim().toLowerCase() === copyBaseName.toLowerCase(),
+    )
+      ? getNextIndexedName(copyBaseName, siblingNames)
+      : copyBaseName
+
+    markPersistedStorageMutation()
+    const { data } = await api.notes.postNotes({
+      folderId,
+      name,
+      properties: source.properties,
+    })
+    const id = Number(data.id)
+
+    await api.notes.patchNotesById(String(id), {
+      description: source.description,
+    })
+    await api.notes.patchNotesByIdContent(String(id), {
+      content: source.content,
+    })
+
+    for (const tag of source.tags) {
+      await api.notes.postNotesByIdTagsByTagId(String(id), String(tag.id))
+    }
+
+    ensureCreateResultCanBeListed({ properties: source.properties })
+    await getNotes(queryByLibraryOrFolderOrSearch.value)
+
+    return id
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
 // Поля, влияющие на состав текущего списка: после их изменения нужен refetch.
 function isNoteListMembershipAffecting(data: NotesUpdate) {
   return (
@@ -866,6 +923,7 @@ export function useNotes() {
     deleteNotes,
     deleteSelectedNotes,
     deleteTagFromNote,
+    duplicateNote,
     emptyTrash,
     getNotes,
     hasBusyNoteContentUpdates,

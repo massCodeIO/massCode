@@ -44,7 +44,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { notesState } = useNotesApp()
+const { focusNoteNameInput, notesState } = useNotesApp()
 
 const {
   selectFirstNote,
@@ -53,6 +53,8 @@ const {
   updateNoteProperties,
   updateNotes,
   deleteSelectedNotes,
+  duplicateNote,
+  selectNote,
 } = useNotes()
 
 const { copy } = useClipboard()
@@ -100,6 +102,15 @@ async function onAddFavorites() {
 
 async function onDelete() {
   await deleteSelectedNotes(props.note)
+}
+
+async function onDuplicate() {
+  const id = await duplicateNote(props.note.id)
+
+  if (id) {
+    selectNote(id)
+    await focusNoteNameInput()
+  }
 }
 
 async function onRestore() {
@@ -204,6 +215,13 @@ async function onConvertToNote() {
       {{ i18n.t("action.copy.noteLink") }}
     </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuSeparator />
+    <ContextMenu.ContextMenuItem
+      v-if="!isTrashLibrarySelected"
+      :disabled="isCloudPending || selectedNoteIds.length > 1"
+      @click="onDuplicate"
+    >
+      {{ i18n.t("action.duplicate") }}
+    </ContextMenu.ContextMenuItem>
     <ContextMenu.ContextMenuItem
       :disabled="isCloudPending"
       @click="onDelete"

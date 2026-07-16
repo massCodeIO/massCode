@@ -585,8 +585,10 @@ function hasItemLinkAction(result: CommandPaletteResult) {
 function hasDuplicateAction(result: CommandPaletteResult) {
   return (
     result.type === 'snippet'
+    || result.type === 'note'
     || result.type === 'http-request'
     || isRecentTarget(result, 'snippet')
+    || isRecentTarget(result, 'note')
     || isRecentTarget(result, 'http-request')
   )
 }
@@ -755,6 +757,13 @@ async function getHttpRequest(result: CommandPaletteResult) {
 async function duplicateItem(result: CommandPaletteResult) {
   if (result.type === 'snippet' || isRecentTarget(result, 'snippet')) {
     await duplicateSnippet(result)
+  }
+  else if (result.type === 'note' || isRecentTarget(result, 'note')) {
+    const payload = getItemPayload(result)
+
+    if (payload) {
+      await notesData.duplicateNote(Number(payload.targetId))
+    }
   }
   else if (
     result.type === 'http-request'

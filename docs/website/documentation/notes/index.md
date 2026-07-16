@@ -30,6 +30,8 @@ Use Notes when you want to keep markdown documents close to your snippets and da
 
 See [Tasks](/documentation/notes/tasks) to create task notes with structured status, priority, and due date properties.
 
+To duplicate an existing note, right-click it in the Notes list and choose **Duplicate**. The copy stays in the same folder and its title is selected for renaming. <AppVersion text=">=5.9" />
+
 ## Dashboard
 
 <AppVersion text=">=5.1" />
@@ -62,6 +64,8 @@ The editor is built on CodeMirror 6 and includes:
 - Right-click formatting menu in editable modes
 - Inline markdown formatting shortcuts in editable modes
 - Editable markdown tables in Live Preview
+- One-click copying for fenced code blocks in Live Preview and Preview <AppVersion text=">=5.9" />
+- Line break normalization for hard-wrapped terminal text from **Editor** > **Normalize Line Breaks** <AppVersion text=">=5.9" />
 - [Internal links](/documentation/notes/internal-links) to notes and snippets
 - [Task notes](/documentation/notes/tasks) with status, priority, due dates, and smart views
 - [Mermaid diagram](/documentation/notes/mermaid) support
@@ -117,6 +121,7 @@ Customize the editor appearance and behavior in preferences:
 - **Indent size**
 - **Limit width** - toggle to constrain the editor width
 - **Line numbers** - toggle to show or hide line numbers
+- **Wrap table cells** - wrap long cell content so wide tables stay within the editor <AppVersion text=">=5.9" />
 
 <script setup>
 import { withBase } from 'vitepress'

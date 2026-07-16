@@ -25,11 +25,13 @@ massCode watches the vault directory in real time, so changes made outside the a
 
 ## Offloaded (online-only) files
 
+<AppVersion text=">=5.9" />
+
 Cloud services can free up disk space by keeping only file placeholders on your device: the file is visible on disk, but its content stays in the cloud until it is read. This happens with iCloud Drive (Optimize Mac Storage), OneDrive (Files On-Demand), Google Drive (online-only), and Dropbox (online-only).
 
 massCode handles offloaded vault files without freezing:
 
-- Snippets and notes whose files are offloaded still appear in lists right away, marked with a cloud icon.
+- Snippets, notes, and HTTP requests whose files are offloaded still appear in lists right away, marked with a cloud icon.
 - Their content is downloaded in the background. Overall progress is shown at the bottom of the space rail.
 - Opening an offloaded item moves it to the front of the download queue; the content appears as soon as it is fetched.
 - The app never overwrites a file whose content has not been downloaded yet, so no data is lost.

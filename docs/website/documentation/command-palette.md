@@ -68,7 +68,9 @@ When create fallbacks are shown, press <kbd>Shift+Enter</kbd> to run the first c
 
 Open the actions panel for the selected result with <kbd>Right Arrow</kbd> or <kbd>Cmd+K</kbd> on macOS and <kbd>Ctrl+K</kbd> on Windows and Linux.
 
-Actions depend on the selected result. For example, you can copy a title, copy snippet content, copy an HTTP request URL, or run the selected command.
+Actions depend on the selected result. For example, you can copy a title, copy snippet content, duplicate a snippet or HTTP request, copy an HTTP request URL, or run the selected command.
+
+You can also duplicate a note while preserving its content, description, properties, and tags. <AppVersion text=">=5.9" />
 
 Use <kbd>Left Arrow</kbd> or <kbd>Esc</kbd> to close the actions panel.
 

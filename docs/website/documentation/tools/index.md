@@ -31,6 +31,12 @@ Turn free-form text into a URL-friendly slug.
 
 Split a URL into its protocol, host, path, query, and hash parts.
 
+### Line Break Normalizer
+
+<AppVersion text=">=5.9" />
+
+Remove hard wraps from copied terminal output while preserving Markdown lists, tables, quotes, commands, and code blocks. The same normalization is available from the **Editor** menu in Code and Notes.
+
 ## Cryptography & Security
 
 ### Hash Generators

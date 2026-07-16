@@ -7,7 +7,7 @@ description: "Embed images in massCode Notes with standard markdown syntax, past
 
 Use images when a screenshot, diagram, or visual reference belongs next to the note text.
 
-Images are rendered directly inside your note from standard markdown image syntax. For local images, paste an image from the clipboard or drag an image file into the editor. massCode saves new files to `notes/.masscode/assets` in your vault and inserts the markdown for you.
+Images are rendered directly inside your note from standard markdown image syntax. For local images, paste an image from the clipboard or drag an image file into the editor. massCode stores the file in the vault and inserts the markdown for you.
 
 ```md
 ![image-name](masscode://notes-asset/generated-file-name.png)
@@ -19,9 +19,21 @@ You can also use a remote image URL:
 ![Remote screenshot](https://example.com/screenshot.png)
 ```
 
-The `masscode://notes-asset/` URL is resolved by massCode. Other Markdown apps may not display these local images directly. When you copy or synchronize Notes between devices, include the whole vault, including the hidden `notes/.masscode` directory. Copying only Markdown files leaves their local images behind.
+The `masscode://notes-asset/` URL is resolved by massCode. Other Markdown apps may not display these local images directly.
 
+## Managed Storage
+
+<AppVersion text=">=5.9" />
+
+Starting with massCode 5.9, newly pasted or dropped images are saved to `notes/.masscode/assets`. When you copy or synchronize Notes between devices, include the whole vault, including the hidden `notes/.masscode` directory. Copying only Markdown files leaves their local images behind.
+
+::: warning Compatibility
 Vaults with images in the managed `notes/.masscode/assets` path require a massCode version that supports this layout. Older versions may not display these images.
+:::
+
+::: info Automatic migration
+When a note references an image from the legacy `notes/assets` directory, massCode migrates that referenced file to managed storage and updates the note automatically. Unreferenced files are left in place.
+:::
 
 - Paste or drag images in **Editor** and **Live Preview** modes.
 - View images in **Live Preview** or **Preview** mode.

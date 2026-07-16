@@ -42,9 +42,13 @@ Importing creates HTTP folders, requests, and environments from external collect
 
 HTTP requests are organized in folders. Selecting a folder shows its requests and selects the first request in that folder. Folders support nesting, drag and drop ordering, inline rename, and custom folder icons.
 
+Right-click a folder and choose **Set Icon** to select a built-in Material or Lucide icon. Choose **Remove Icon** to restore the default folder icon.
+
+### Emoji and Uploaded Images
+
 <AppVersion text=">=5.9" />
 
-Right-click a folder and choose **Set Icon** to select a platform-native emoji, a built-in Material or Lucide icon, or an uploaded JPG or PNG image. Uploaded images can be previewed before applying and are cropped from the center and resized to 128×128. Choose **Remove Icon** to restore the default folder icon.
+The icon picker also supports platform-native emoji and uploaded JPG or PNG images. Uploaded images can be previewed before applying and are cropped from the center and resized to 128×128.
 
 ## Storage
 

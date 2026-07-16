@@ -190,7 +190,7 @@ function scheduleStateSync(
   const isAppEcho
     = changedPath !== null
       && !forceFullSync
-      && (changedNotesPath || changedCodePath)
+      && (changedNotesPath || changedCodePath || changedHttpPath)
       && wasRecentAppFileChange(path.join(vaultRootPath, changedPath))
 
   if (changedNotesPath && !isAppEcho) {
@@ -212,7 +212,7 @@ function scheduleStateSync(
     hasPendingMathSync = true
   }
 
-  if (changedHttpPath) {
+  if (changedHttpPath && !isAppEcho) {
     hasPendingHttpSync = true
   }
 

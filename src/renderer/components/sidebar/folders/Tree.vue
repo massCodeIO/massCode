@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
 import type { Node, Position } from './types'
+import type { FolderIconSetPayload } from '~/main/types/ipc'
 import { languages } from '@/components/editor/grammars/languages'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { Tree as UiTree } from '@/components/ui/tree'
 import {
+  markPersistedStorageMutation,
   useApp,
   useDeleteShortcut,
   useDialog,
   useFolders,
   useSnippets,
+  useSonner,
 } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
@@ -53,6 +56,7 @@ const {
   highlightedTagId,
   focusedFolderId,
 } = useApp()
+const { sonner } = useSonner()
 const { displayedSnippets, updateSnippets, selectFirstSnippet } = useSnippets()
 
 // --- Data mapping ---
@@ -319,6 +323,7 @@ function onSetCustomIcon() {
     title: i18n.t('action.setCustomIcon'),
     content: h(CustomIcons, {
       nodeId: contextNode.value.id,
+      spaceId: 'code',
     }),
   })
 }
@@ -327,8 +332,21 @@ async function onRemoveCustomIcon() {
   if (!contextNode.value)
     return
 
-  updateFolder(contextNode.value.id, { icon: null })
-  await getFolders()
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: contextNode.value.id,
+      icon: null,
+      spaceId: 'code',
+    })
+    markPersistedStorageMutation()
+    await getFolders()
+  }
+  catch {
+    sonner({
+      message: i18n.t('folder.iconPicker.errors.updateFailed'),
+      type: 'error',
+    })
+  }
 }
 
 useDeleteShortcut({
@@ -369,7 +387,9 @@ useDeleteShortcut({
             <div class="mr-1.5 flex flex-shrink-0 items-center">
               <UiFolderIcon
                 v-if="foldersById.get(Number(node.id))?.icon"
+                :folder-id="Number(node.id)"
                 :name="foldersById.get(Number(node.id))!.icon!"
+                space-id="code"
               />
               <Folder
                 v-else

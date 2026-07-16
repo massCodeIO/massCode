@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createFolderEmojiValue,
   createFolderIconValue,
   getFilteredFolderIcons,
   groupFolderIcons,
@@ -27,6 +28,17 @@ describe('parseFolderIconValue', () => {
       name: 'folder-open',
       source: 'lucide',
     })
+    expect(parseFolderIconValue('custom:0123456789abcdef')).toEqual({
+      name: '0123456789abcdef',
+      source: 'custom',
+    })
+  })
+
+  it('keeps a compound emoji grapheme intact', () => {
+    expect(parseFolderIconValue('emoji:👨‍💻')).toEqual({
+      name: '👨‍💻',
+      source: 'emoji',
+    })
   })
 
   it('returns null for unsupported values', () => {
@@ -47,6 +59,10 @@ describe('createFolderIconValue', () => {
     expect(createFolderIconValue('lucide', 'folder-open')).toBe(
       'lucide:folder-open',
     )
+  })
+
+  it('serializes emoji without splitting compound graphemes', () => {
+    expect(createFolderEmojiValue('👩🏽‍🚀')).toBe('emoji:👩🏽‍🚀')
   })
 })
 

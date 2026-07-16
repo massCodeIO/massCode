@@ -215,6 +215,9 @@ importers:
       undici:
         specifier: ^6.21.2
         version: 6.21.2
+      unicode-emoji:
+        specifier: 2.8.0
+        version: 2.8.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -285,6 +288,9 @@ importers:
       '@vitejs/plugin-vue':
         specifier: ^5.2.1
         version: 5.2.1(vite@6.1.1(@types/node@22.13.1)(jiti@2.4.2)(lightningcss@1.29.1)(sass@1.85.1)(yaml@2.7.0))(vue@3.5.13(typescript@5.7.3))
+      '@vue/server-renderer':
+        specifier: 3.5.13
+        version: 3.5.13(vue@3.5.13(typescript@5.7.3))
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)
@@ -5899,6 +5905,9 @@ packages:
   undici@6.21.2:
     resolution: {integrity: sha512-uROZWze0R0itiAKVPsYhFov9LxrPMHLMEQFszeI2gCN6bnIIZ8twzBCJcN2LJrBBLfrP0t1FW0g+JmKVl8Vk1g==}
     engines: {node: '>=18.17'}
+
+  unicode-emoji@2.8.0:
+    resolution: {integrity: sha512-Mi4klQ1mrbUzNROyB/cu2MqaHIJTTrQwcYF0G1aW66snWaKHosn9lEHfyI8mw/SUSRr5yQ5dExqTD3+FFIh6tw==}
 
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
@@ -12584,6 +12593,8 @@ snapshots:
   undici-types@6.20.0: {}
 
   undici@6.21.2: {}
+
+  unicode-emoji@2.8.0: {}
 
   unicorn-magic@0.1.0: {}
 

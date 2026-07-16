@@ -9,10 +9,11 @@ const files = import.meta.glob('@/assets/svg/icons/**.svg', {
 const re = /\/([^/]+)\.svg$/
 type FolderIconSource = 'material' | 'lucide'
 type FolderIconFilter = 'all' | FolderIconSource
+type FolderIconValueSource = FolderIconSource | 'custom' | 'emoji'
 
 interface ParsedFolderIconValue {
   name: string
-  source: FolderIconSource
+  source: FolderIconValueSource
 }
 
 interface FolderIconOption {
@@ -41,6 +42,10 @@ function toKebabCase(value: string) {
 
 function createFolderIconValue(source: FolderIconSource, name: string) {
   return `${source}:${name}`
+}
+
+function createFolderEmojiValue(emoji: string) {
+  return `emoji:${emoji}`
 }
 
 function escapeRegExp(value: string) {
@@ -148,8 +153,14 @@ function parseFolderIconValue(
   if (!name)
     return null
 
-  if (rawSource !== 'material' && rawSource !== 'lucide')
+  if (
+    rawSource !== 'material'
+    && rawSource !== 'lucide'
+    && rawSource !== 'custom'
+    && rawSource !== 'emoji'
+  ) {
     return null
+  }
 
   return {
     name,
@@ -161,6 +172,9 @@ function resolveFolderIcon(value?: string | null): FolderIconOption | null {
   const parsedValue = parseFolderIconValue(value)
 
   if (!parsedValue)
+    return null
+
+  if (parsedValue.source === 'custom' || parsedValue.source === 'emoji')
     return null
 
   if (parsedValue.source === 'material') {
@@ -222,6 +236,7 @@ function groupFolderIcons(icons: FolderIconOption[]): FolderIconGroup[] {
 export {
   allFolderIcons,
   allLucideIcons,
+  createFolderEmojiValue,
   createFolderIconValue,
   getFilteredFolderIcons,
   groupFolderIcons,
@@ -238,4 +253,5 @@ export type {
   FolderIconGroup,
   FolderIconOption,
   FolderIconSource,
+  FolderIconValueSource,
 }

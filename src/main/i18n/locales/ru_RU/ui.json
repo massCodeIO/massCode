@@ -501,7 +501,37 @@
     "untitled": "Папка без названия",
     "iconPicker": {
       "searchPlaceholder": "Поиск иконок...",
+      "emojiSearchPlaceholder": "Поиск эмодзи...",
+      "iconSearchPlaceholder": "Поиск иконок...",
       "emptyResults": "Иконки не найдены",
+      "emptyEmojiResults": "Эмодзи не найдены",
+      "uploadImage": "Загрузить JPG или PNG",
+      "replaceImage": "Выбрать другое",
+      "applyImage": "Использовать",
+      "uploading": "Обработка изображения...",
+      "uploadTitle": "Добавить своё изображение",
+      "uploadHint": "Перетащите сюда JPG или PNG либо выберите файл. Максимальный размер — 10 МБ.",
+      "tabs": {
+        "emoji": "Эмодзи",
+        "icons": "Иконки",
+        "upload": "Загрузка"
+      },
+      "emojiCategories": {
+        "people": "Люди",
+        "nature": "Природа",
+        "food": "Еда и напитки",
+        "activities": "Занятия",
+        "travel": "Путешествия и места",
+        "objects": "Предметы",
+        "symbols": "Символы",
+        "flags": "Флаги"
+      },
+      "errors": {
+        "unsupportedFormat": "Выберите изображение JPG или PNG.",
+        "fileTooLarge": "Размер изображения не должен превышать 10 МБ.",
+        "processingFailed": "Не удалось обработать изображение.",
+        "updateFailed": "Не удалось обновить иконку папки."
+      },
       "filters": {
         "all": "Все",
         "material": "Material",

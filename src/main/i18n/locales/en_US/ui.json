@@ -498,9 +498,31 @@
     "untitled": "Untitled folder",
     "iconPicker": {
       "searchPlaceholder": "Search icons...",
+      "emojiSearchPlaceholder": "Search emoji...",
+      "iconSearchPlaceholder": "Search icons...",
       "emptyResults": "No icons found",
+      "emptyEmojiResults": "No emoji found",
       "uploadImage": "Upload JPG or PNG",
+      "replaceImage": "Choose another",
+      "applyImage": "Use image",
       "uploading": "Processing image...",
+      "uploadTitle": "Add a custom image",
+      "uploadHint": "Drop a JPG or PNG here, or choose a file. Maximum size: 10 MB.",
+      "tabs": {
+        "emoji": "Emoji",
+        "icons": "Icons",
+        "upload": "Upload"
+      },
+      "emojiCategories": {
+        "people": "People",
+        "nature": "Nature",
+        "food": "Food & Drink",
+        "activities": "Activities",
+        "travel": "Travel & Places",
+        "objects": "Objects",
+        "symbols": "Symbols",
+        "flags": "Flags"
+      },
       "errors": {
         "unsupportedFormat": "Choose a JPG or PNG image.",
         "fileTooLarge": "The image must be 10 MB or smaller.",

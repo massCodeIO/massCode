@@ -48,6 +48,9 @@ async function setup(options: SetupOptions = {}) {
     data: { id: Number(id) },
   }))
   const postNotes = vi.fn(async () => ({ data: { id: 7 } }))
+  const patchNotesById = vi.fn(async () => undefined)
+  const patchNotesByIdContent = vi.fn(async () => undefined)
+  const postNotesByIdTagsByTagId = vi.fn(async () => undefined)
   const sonner = vi.fn()
 
   vi.doMock('@/composables/useContentSort', () => ({
@@ -97,11 +100,11 @@ async function setup(options: SetupOptions = {}) {
         deleteNotesByIdTagsByTagId: vi.fn(),
         getNotes,
         getNotesById,
-        patchNotesById: vi.fn(),
-        patchNotesByIdContent: vi.fn(),
+        patchNotesById,
+        patchNotesByIdContent,
         patchNotesByIdProperties,
         postNotes,
-        postNotesByIdTagsByTagId: vi.fn(),
+        postNotesByIdTagsByTagId,
         postNotesTasksCleanup,
       },
     },
@@ -135,8 +138,11 @@ async function setup(options: SetupOptions = {}) {
     getNotes,
     markPersistedStorageMutation,
     notesState,
+    patchNotesById,
+    patchNotesByIdContent,
     patchNotesByIdProperties,
     postNotes,
+    postNotesByIdTagsByTagId,
     postNotesTasksCleanup,
     searchQuery,
     selectedNoteIds,
@@ -221,6 +227,108 @@ describe('useNotes', () => {
     })
     expect(context.notesState.libraryFilter).toBe('all')
     expect(context.notesState.noteId).toBe(7)
+  })
+
+  it('duplicates note fields, content and tags with a unique sibling name', async () => {
+    const context = await setup({
+      folderId: 4,
+      libraryFilter: 'all',
+      nextNotes: [
+        { id: 1, folder: { id: 4 }, name: 'Plan' },
+        { id: 2, folder: { id: 4 }, name: 'Plan - copy' },
+        { id: 3, folder: { id: 4 }, name: 'Plan - copy 2' },
+      ],
+    })
+    const apiModule = await import('~/renderer/services/api')
+    vi.mocked(apiModule.api.notes.getNotesById).mockResolvedValueOnce({
+      data: {
+        content: '# Plan',
+        description: 'Release plan',
+        folder: { id: 4, name: 'Projects' },
+        id: 1,
+        name: 'Plan',
+        properties: { priority: 'high', type: 'task' },
+        tags: [
+          { id: 8, name: 'work' },
+          { id: 9, name: 'release' },
+        ],
+      },
+    } as never)
+
+    const id = await context.useNotes().duplicateNote(1)
+
+    expect(id).toBe(7)
+    expect(context.postNotes).toHaveBeenCalledWith({
+      folderId: 4,
+      name: 'Plan - copy 3',
+      properties: { priority: 'high', type: 'task' },
+    })
+    expect(context.patchNotesById).toHaveBeenCalledWith('7', {
+      description: 'Release plan',
+    })
+    expect(context.patchNotesByIdContent).toHaveBeenCalledWith('7', {
+      content: '# Plan',
+    })
+    expect(context.postNotesByIdTagsByTagId.mock.calls).toEqual([
+      ['7', '8'],
+      ['7', '9'],
+    ])
+    expect(context.markPersistedStorageMutation).toHaveBeenCalledOnce()
+    expect(context.getNotes).toHaveBeenCalledTimes(2)
+    expect(context.getNotes).toHaveBeenLastCalledWith({ folderId: 4 })
+  })
+
+  it.each([
+    ['cloud-pending', { pendingCloudDownload: true }, true],
+    ['deleted', { isDeleted: 1 }, false],
+  ])('does not duplicate a %s note', async (_, sourceState, expectsWarning) => {
+    const context = await setup({ libraryFilter: 'all' })
+    const apiModule = await import('~/renderer/services/api')
+    vi.mocked(apiModule.api.notes.getNotesById).mockResolvedValueOnce({
+      data: {
+        content: '# Plan',
+        description: null,
+        folder: null,
+        id: 1,
+        isDeleted: 0,
+        name: 'Plan',
+        properties: {},
+        tags: [],
+        ...sourceState,
+      },
+    } as never)
+
+    const id = await context.useNotes().duplicateNote(1)
+
+    expect(id).toBeUndefined()
+    expect(context.postNotes).not.toHaveBeenCalled()
+    expect(context.markPersistedStorageMutation).not.toHaveBeenCalled()
+    expect(context.sonner).toHaveBeenCalledTimes(expectsWarning ? 1 : 0)
+  })
+
+  it('switches Favorites to All before refreshing a duplicated note', async () => {
+    const context = await setup({
+      libraryFilter: 'favorites',
+      nextNotes: [{ id: 1, folder: null, name: 'Plan' }],
+    })
+    const apiModule = await import('~/renderer/services/api')
+    vi.mocked(apiModule.api.notes.getNotesById).mockResolvedValueOnce({
+      data: {
+        content: '',
+        description: null,
+        folder: null,
+        id: 1,
+        isDeleted: 0,
+        name: 'Plan',
+        properties: {},
+        tags: [],
+      },
+    } as never)
+
+    await context.useNotes().duplicateNote(1)
+
+    expect(context.notesState.libraryFilter).toBe('all')
+    expect(context.getNotes).toHaveBeenLastCalledWith({ isDeleted: 0 })
   })
 
   it('combines search with the selected tag context', async () => {

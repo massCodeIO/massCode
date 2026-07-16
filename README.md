@@ -138,7 +138,7 @@ Sketch diagrams, wireframes, and whiteboard ideas on an [Excalidraw](https://exc
 Built-in utilities for the small tasks that usually send you to a browser tab:
 
 - **Compare:** JSON Diff
-- **Text:** Case Converter, Slug Generator, URL Parser
+- **Text:** Case Converter, Slug Generator, URL Parser, Line Break Normalizer
 - **Crypto:** Hash/HMAC Generator, Password Generator, UUID
 - **Encoders:** URL, Base64, JSON to TOML/XML/YAML, Color Converter
 - **Generators:** JSON Generator, Lorem Ipsum

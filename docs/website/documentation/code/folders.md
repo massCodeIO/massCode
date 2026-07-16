@@ -33,14 +33,16 @@ Set a default language when most snippets in a folder use the same syntax.
 
 Right-click the folder and choose **"Default Language"**.
 
-## Setting a Custom Icon
+## Setting a Folder Icon
 
-<AppVersion text=">=3.7" />
+<AppVersion text=">=5.9" />
 
-Custom icons help large libraries stay easier to scan.
+Folder icons help large libraries stay easier to scan. Right-click a folder and choose **Set Icon**, then select one of these tabs:
 
-Right-click the folder and choose **"Set Custom Icon"**.
+- **Emoji** - search the Unicode emoji catalog. Emoji appearance follows your operating system.
+- **Icons** - search the built-in Material and Lucide icon collections.
+- **Upload** - choose or drop a JPG or PNG image up to 10 MB, review the preview, then click **Use image**.
 
-::: info
-To set the default icon, click the **Reset** button in the icon selection dialog window.
-:::
+Uploaded images are cropped from the center, resized to 128×128, and saved as PNG. To restore the default folder icon, right-click the folder and choose **Remove Icon**.
+
+Uploaded icons are stored as a hidden `.icon.png` file inside the folder, so they stay with the folder when you back up or sync your Markdown Vault.

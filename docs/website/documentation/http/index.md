@@ -42,6 +42,10 @@ Importing creates HTTP folders, requests, and environments from external collect
 
 HTTP requests are organized in folders. Selecting a folder shows its requests and selects the first request in that folder. Folders support nesting, drag and drop ordering, inline rename, and custom folder icons.
 
+<AppVersion text=">=5.9" />
+
+Right-click a folder and choose **Set Icon** to select a platform-native emoji, a built-in Material or Lucide icon, or an uploaded JPG or PNG image. Uploaded images can be previewed before applying and are cropped from the center and resized to 128×128. Choose **Remove Icon** to restore the default folder icon.
+
 ## Storage
 
 HTTP data is stored in your vault under the `http` folder. Requests are markdown files with YAML frontmatter, so they can be backed up and synced together with the rest of your massCode data.

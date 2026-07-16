@@ -145,13 +145,10 @@ watch(selectedIndex, () => {
             >
               <span
                 aria-hidden="true"
-                class="leading-none"
-                style="
-                  font-family:
-                    &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;,
-                    &quot;Noto Color Emoji&quot;, sans-serif;
-                "
-              >{{ item.emoji }}</span>
+                class="font-emoji leading-none"
+              >{{
+                item.emoji
+              }}</span>
             </Button>
           </div>
         </template>

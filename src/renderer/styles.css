@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility font-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+    sans-serif;
+}
+
 :root {
   --content-top-offset: 8px;
   --editor-tool-header-height: 36px;

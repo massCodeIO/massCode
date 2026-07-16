@@ -80,16 +80,11 @@ onBeforeUnmount(clearRetryTimer)
     :class="
       cn(
         iconClass,
-        'inline-flex items-center justify-center leading-none',
+        'font-emoji inline-flex items-center justify-center leading-none',
         size === 'md' ? 'text-2xl' : 'text-sm',
       )
     "
     :data-icon-name="name"
-    style="
-      font-family:
-        &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;,
-        &quot;Noto Color Emoji&quot;, sans-serif;
-    "
   >{{ emoji }}</span>
   <component
     :is="resolvedIcon.component"

@@ -499,6 +499,14 @@
     "iconPicker": {
       "searchPlaceholder": "Search icons...",
       "emptyResults": "No icons found",
+      "uploadImage": "Upload JPG or PNG",
+      "uploading": "Processing image...",
+      "errors": {
+        "unsupportedFormat": "Choose a JPG or PNG image.",
+        "fileTooLarge": "The image must be 10 MB or smaller.",
+        "processingFailed": "The image could not be processed.",
+        "updateFailed": "The folder icon could not be updated."
+      },
       "filters": {
         "all": "All",
         "material": "Material",

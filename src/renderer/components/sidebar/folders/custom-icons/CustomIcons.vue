@@ -1,21 +1,33 @@
 <script setup lang="ts">
+import type {
+  FolderIconSetPayload,
+  FolderIconSpaceId,
+  FolderIconWritePayload,
+} from '~/main/types/ipc'
 import {
   type FolderIconFilter,
   type FolderIconSource,
   getFilteredFolderIcons,
   groupFolderIcons,
 } from '@/components/ui/folder-icon/icons'
-import { i18n } from '@/electron'
-import { useFolders } from '~/renderer/composables'
+import { Button } from '@/components/ui/shadcn/button'
+import { i18n, ipc } from '@/electron'
+import {
+  markPersistedStorageMutation,
+  useFolders,
+  useSonner,
+} from '~/renderer/composables'
 
 interface Props {
   nodeId: number
-  onSetIcon?: (nodeId: number, iconName: string) => Promise<void>
+  spaceId: FolderIconSpaceId
+  onIconChanged?: () => Promise<void>
 }
 
 const props = defineProps<Props>()
 
-const { updateFolder, getFolders } = useFolders()
+const { getFolders } = useFolders()
+const { sonner } = useSonner()
 
 const search = ref('')
 const filter = ref<FolderIconFilter>('material')
@@ -37,6 +49,8 @@ const visibleIcons = computed(() =>
 const iconSections = computed(() => groupFolderIcons(visibleIcons.value))
 
 const selectedIndex = ref(-1)
+const fileInputRef = ref<HTMLInputElement>()
+const isUploading = ref(false)
 
 function onKeydown(e: KeyboardEvent) {
   const len = visibleIcons.value.length
@@ -68,21 +82,73 @@ function getSectionTitle(source: FolderIconSource) {
   return i18n.t(`folder.iconPicker.filters.${source}`)
 }
 
-async function onSet(value: string) {
-  if (!props.nodeId)
-    return
+async function refreshAndClose() {
+  markPersistedStorageMutation()
 
-  if (props.onSetIcon) {
-    await props.onSetIcon(props.nodeId, value)
-  }
-  else {
-    await updateFolder(props.nodeId, { icon: value })
-    await getFolders()
-  }
+  if (props.onIconChanged)
+    await props.onIconChanged()
+  else await getFolders()
 
   containerRef.value?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
   )
+}
+
+async function onSet(value: string) {
+  if (!props.nodeId)
+    return
+
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: props.nodeId,
+      icon: value,
+      spaceId: props.spaceId,
+    })
+    await refreshAndClose()
+  }
+  catch {
+    showUploadError('folder.iconPicker.errors.updateFailed')
+  }
+}
+
+function showUploadError(key: string) {
+  sonner({ message: i18n.t(key), type: 'error' })
+}
+
+async function onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+
+  if (!file)
+    return
+
+  if (!/\.(?:jpe?g|png)$/i.test(file.name)) {
+    showUploadError('folder.iconPicker.errors.unsupportedFormat')
+    return
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    showUploadError('folder.iconPicker.errors.fileTooLarge')
+    return
+  }
+
+  isUploading.value = true
+
+  try {
+    await ipc.invoke<FolderIconWritePayload, string>('fs:folder-icon:write', {
+      buffer: await file.arrayBuffer(),
+      folderId: props.nodeId,
+      spaceId: props.spaceId,
+    })
+    await refreshAndClose()
+  }
+  catch {
+    showUploadError('folder.iconPicker.errors.processingFailed')
+  }
+  finally {
+    isUploading.value = false
+  }
 }
 
 watch(search, () => {
@@ -122,6 +188,28 @@ watch(selectedIndex, () => {
     ref="containerRef"
     class="space-y-5"
   >
+    <input
+      ref="fileInputRef"
+      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+      class="hidden"
+      type="file"
+      @change="onFileSelected"
+    >
+    <Button
+      class="w-full"
+      :disabled="isUploading"
+      type="button"
+      variant="outline"
+      @click="fileInputRef?.click()"
+    >
+      {{
+        i18n.t(
+          isUploading
+            ? "folder.iconPicker.uploading"
+            : "folder.iconPicker.uploadImage",
+        )
+      }}
+    </Button>
     <div class="space-y-3">
       <UiInput
         v-model="search"

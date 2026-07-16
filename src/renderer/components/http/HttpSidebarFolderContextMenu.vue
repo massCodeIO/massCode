@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import type { FolderIconSetPayload } from '~/main/types/ipc'
 import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDialog, useHttpFolders, useHttpRequests } from '@/composables'
-import { i18n } from '@/electron'
+import {
+  markPersistedStorageMutation,
+  useDialog,
+  useHttpFolders,
+  useHttpRequests,
+  useSonner,
+} from '@/composables'
+import { i18n, ipc } from '@/electron'
 
 const props = defineProps<{
   contextNode: any
@@ -17,10 +24,10 @@ const {
   createHttpFolderAndSelect,
   deleteSelectedHttpFolders,
   getHttpFolders,
-  updateHttpFolder,
   selectedFolderIds,
 } = useHttpFolders()
 const { createHttpRequestAndSelect } = useHttpRequests()
+const { sonner } = useSonner()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -60,10 +67,8 @@ function onSetCustomIcon() {
     title: i18n.t('action.setCustomIcon'),
     content: h(CustomIcons, {
       nodeId: props.contextNode.id,
-      onSetIcon: async (nodeId: number, iconName: string) => {
-        await updateHttpFolder(nodeId, { icon: iconName })
-        await getHttpFolders(false)
-      },
+      onIconChanged: () => getHttpFolders(false),
+      spaceId: 'http',
     }),
   })
 }
@@ -72,8 +77,21 @@ async function onRemoveCustomIcon() {
   if (!props.contextNode)
     return
 
-  await updateHttpFolder(props.contextNode.id, { icon: null })
-  await getHttpFolders(false)
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: Number(props.contextNode.id),
+      icon: null,
+      spaceId: 'http',
+    })
+    markPersistedStorageMutation()
+    await getHttpFolders(false)
+  }
+  catch {
+    sonner({
+      message: i18n.t('folder.iconPicker.errors.updateFailed'),
+      type: 'error',
+    })
+  }
 }
 </script>
 

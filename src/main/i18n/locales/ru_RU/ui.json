@@ -502,6 +502,14 @@
     "iconPicker": {
       "searchPlaceholder": "Поиск иконок...",
       "emptyResults": "Иконки не найдены",
+      "uploadImage": "Загрузить JPG или PNG",
+      "uploading": "Обработка изображения...",
+      "errors": {
+        "unsupportedFormat": "Выберите изображение JPG или PNG.",
+        "fileTooLarge": "Размер изображения не должен превышать 10 МБ.",
+        "processingFailed": "Не удалось обработать изображение.",
+        "updateFailed": "Не удалось обновить иконку папки."
+      },
       "filters": {
         "all": "Все",
         "material": "Material",

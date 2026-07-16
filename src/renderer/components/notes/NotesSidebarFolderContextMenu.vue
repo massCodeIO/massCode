@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import type { FolderIconSetPayload } from '~/main/types/ipc'
 import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { useDialog, useNoteFolders } from '@/composables'
+import {
+  markPersistedStorageMutation,
+  useDialog,
+  useNoteFolders,
+  useSonner,
+} from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 
@@ -18,9 +24,9 @@ const {
   createNoteFolderAndSelect,
   deleteSelectedNoteFolders,
   getNoteFolders,
-  updateNoteFolder,
   selectedFolderIds,
 } = useNoteFolders()
+const { sonner } = useSonner()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -61,10 +67,8 @@ function onSetCustomIcon() {
     title: i18n.t('action.setCustomIcon'),
     content: h(CustomIcons, {
       nodeId: props.contextNode.id,
-      onSetIcon: async (nodeId: number, iconName: string) => {
-        await updateNoteFolder(nodeId, { icon: iconName })
-        await getNoteFolders(false)
-      },
+      onIconChanged: () => getNoteFolders(false),
+      spaceId: 'notes',
     }),
   })
 }
@@ -73,8 +77,21 @@ async function onRemoveCustomIcon() {
   if (!props.contextNode)
     return
 
-  await updateNoteFolder(props.contextNode.id, { icon: null })
-  await getNoteFolders(false)
+  try {
+    await ipc.invoke<FolderIconSetPayload, void>('fs:folder-icon:set', {
+      folderId: Number(props.contextNode.id),
+      icon: null,
+      spaceId: 'notes',
+    })
+    markPersistedStorageMutation()
+    await getNoteFolders(false)
+  }
+  catch {
+    sonner({
+      message: i18n.t('folder.iconPicker.errors.updateFailed'),
+      type: 'error',
+    })
+  }
 }
 
 function onRevealInFileManager() {

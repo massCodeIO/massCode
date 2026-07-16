@@ -307,7 +307,9 @@ useDeleteShortcut({
                 <div class="mr-1.5 flex flex-shrink-0 items-center">
                   <UiFolderIcon
                     v-if="foldersById.get(Number(node.id))?.icon"
+                    :folder-id="Number(node.id)"
                     :name="foldersById.get(Number(node.id))!.icon!"
+                    space-id="notes"
                   />
                   <Folder
                     v-else

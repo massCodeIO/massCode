@@ -95,7 +95,7 @@ onBeforeUnmount(clearRetryTimer)
   <img
     v-else-if="customIconUrl"
     alt=""
-    :class="cn(iconClass, 'rounded-sm object-cover')"
+    :class="cn(iconClass, 'rounded-[4px] object-cover')"
     :data-icon-name="name"
     :src="customIconUrl"
     @error="onCustomIconError"

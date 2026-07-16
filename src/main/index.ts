@@ -4,6 +4,7 @@ import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
+import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
@@ -156,6 +157,12 @@ else {
       if (url.hostname === 'notes-asset') {
         const paths = getNotesPaths(getVaultPath())
         return resolveNotesAsset(url.pathname.replace(/^\//, ''), paths)
+      }
+
+      if (url.hostname === 'folder-icon') {
+        const [, spaceId, folderId, ...rest] = url.pathname.split('/')
+        if (rest.length === 0)
+          return resolveFolderIconResponse(spaceId, folderId)
       }
 
       return new Response('Not found', { status: 404 })

@@ -72,7 +72,12 @@ type SystemAction =
   | 'notes-asset-ready'
   | 'error'
 type PrettierAction = 'format'
-type FsAction = 'assets' | 'import-markdown-folder' | 'notes-asset'
+type FsAction =
+  | 'assets'
+  | 'folder-icon:set'
+  | 'folder-icon:write'
+  | 'import-markdown-folder'
+  | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction =
   | 'math:read'
@@ -115,6 +120,21 @@ export interface PrettierOptions {
 
 export interface FsAssetsOptions {
   path: string
+}
+
+export type FolderIconSpaceId = 'code' | 'notes' | 'http'
+
+export interface FolderIconTarget {
+  folderId: number
+  spaceId: FolderIconSpaceId
+}
+
+export interface FolderIconWritePayload extends FolderIconTarget {
+  buffer: ArrayBuffer
+}
+
+export interface FolderIconSetPayload extends FolderIconTarget {
+  icon: string | null
 }
 
 export interface ImportMarkdownFolderFile {

@@ -13,6 +13,12 @@ import {
 } from 'fs-extra'
 import slash from 'slash'
 import {
+  parseFolderIconSetPayload,
+  parseFolderIconWritePayload,
+  setFolderIcon,
+  writeFolderIcon,
+} from '../../folderIcons'
+import {
   getNotesPaths,
   parseNotesAssetWritePayload,
   writeNotesAsset,
@@ -101,6 +107,22 @@ async function readMarkdownFolder(
 }
 
 export function registerFsHandlers() {
+  ipcMain.handle('fs:folder-icon:write', async (_, payload: unknown) => {
+    const parsedPayload = parseFolderIconWritePayload(payload)
+    if (!parsedPayload)
+      throw new TypeError('Invalid folder icon payload')
+
+    return writeFolderIcon(parsedPayload)
+  })
+
+  ipcMain.handle('fs:folder-icon:set', async (_, payload: unknown) => {
+    const parsedPayload = parseFolderIconSetPayload(payload)
+    if (!parsedPayload)
+      throw new TypeError('Invalid folder icon payload')
+
+    await setFolderIcon(parsedPayload)
+  })
+
   ipcMain.handle('fs:assets', (event, { buffer, fileName }) => {
     const storagePath = store.preferences.get('storage.rootPath') as string
 

@@ -135,6 +135,34 @@ describe('folder icon payload validation', () => {
     expect(
       parseFolderIconSetPayload({
         folderId: 1,
+        icon: 'emoji:👩🏽‍🚀',
+        spaceId: 'code',
+      }),
+    ).toEqual({ folderId: 1, icon: 'emoji:👩🏽‍🚀', spaceId: 'code' })
+    expect(
+      parseFolderIconSetPayload({
+        folderId: 1,
+        icon: 'emoji:🇩🇪',
+        spaceId: 'code',
+      }),
+    ).toEqual({ folderId: 1, icon: 'emoji:🇩🇪', spaceId: 'code' })
+    expect(
+      parseFolderIconSetPayload({
+        folderId: 1,
+        icon: 'emoji:not-an-emoji',
+        spaceId: 'code',
+      }),
+    ).toBeNull()
+    expect(
+      parseFolderIconSetPayload({
+        folderId: 1,
+        icon: 'emoji:😀😀',
+        spaceId: 'code',
+      }),
+    ).toBeNull()
+    expect(
+      parseFolderIconSetPayload({
+        folderId: 1,
         icon: 'lucide:folder-open',
         spaceId: 'code',
       }),

@@ -17,6 +17,10 @@ interface Props {
 const props = defineProps<Props>()
 
 const resolvedIcon = computed(() => resolveFolderIcon(props.name))
+const emoji = computed(() => {
+  const parsed = parseFolderIconValue(props.name)
+  return parsed?.source === 'emoji' ? parsed.name : null
+})
 const customIconBaseUrl = computed(() => {
   const parsed = parseFolderIconValue(props.name)
   if (parsed?.source !== 'custom' || !props.spaceId || !props.folderId) {
@@ -70,9 +74,26 @@ onBeforeUnmount(clearRetryTimer)
 </script>
 
 <template>
+  <span
+    v-if="emoji"
+    aria-hidden="true"
+    :class="
+      cn(
+        iconClass,
+        'inline-flex items-center justify-center leading-none',
+        size === 'md' ? 'text-2xl' : 'text-sm',
+      )
+    "
+    :data-icon-name="name"
+    style="
+      font-family:
+        &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;,
+        &quot;Noto Color Emoji&quot;, sans-serif;
+    "
+  >{{ emoji }}</span>
   <component
     :is="resolvedIcon.component"
-    v-if="resolvedIcon?.component"
+    v-else-if="resolvedIcon?.component"
     :class="iconClass"
     :data-icon-name="resolvedIcon.name"
   />

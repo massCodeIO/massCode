@@ -29,6 +29,24 @@ const FOLDER_ICON_SPACES = new Set<FolderIconSpaceId>([
   'http',
 ])
 const pendingFolderIconMutations = new Map<string, Promise<unknown>>()
+const emojiSegmenter = new Intl.Segmenter(undefined, {
+  granularity: 'grapheme',
+})
+
+function isSingleEmojiGrapheme(value: string): boolean {
+  if (value.length === 0 || value.length > 32)
+    return false
+
+  const segments = [...emojiSegmenter.segment(value)]
+  if (segments.length !== 1 || segments[0]?.segment !== value)
+    return false
+
+  return (
+    /\p{Extended_Pictographic}/u.test(value)
+    || /^\p{Regional_Indicator}{2}$/u.test(value)
+    || /^[#*0-9]\uFE0F?\u20E3$/u.test(value)
+  )
+}
 
 function isSupportedImageSignature(buffer: Buffer): boolean {
   const isPng
@@ -107,6 +125,9 @@ export function parseFolderIconSetPayload(
   ) {
     return null
   }
+
+  if (icon.startsWith('emoji:') && !isSingleEmojiGrapheme(icon.slice(6)))
+    return null
 
   return { ...target, icon }
 }

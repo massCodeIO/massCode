@@ -9,10 +9,11 @@ const files = import.meta.glob('@/assets/svg/icons/**.svg', {
 const re = /\/([^/]+)\.svg$/
 type FolderIconSource = 'material' | 'lucide'
 type FolderIconFilter = 'all' | FolderIconSource
+type FolderIconValueSource = FolderIconSource | 'custom'
 
 interface ParsedFolderIconValue {
   name: string
-  source: FolderIconSource
+  source: FolderIconValueSource
 }
 
 interface FolderIconOption {
@@ -148,8 +149,13 @@ function parseFolderIconValue(
   if (!name)
     return null
 
-  if (rawSource !== 'material' && rawSource !== 'lucide')
+  if (
+    rawSource !== 'material'
+    && rawSource !== 'lucide'
+    && rawSource !== 'custom'
+  ) {
     return null
+  }
 
   return {
     name,
@@ -161,6 +167,9 @@ function resolveFolderIcon(value?: string | null): FolderIconOption | null {
   const parsedValue = parseFolderIconValue(value)
 
   if (!parsedValue)
+    return null
+
+  if (parsedValue.source === 'custom')
     return null
 
   if (parsedValue.source === 'material') {
@@ -238,4 +247,5 @@ export type {
   FolderIconGroup,
   FolderIconOption,
   FolderIconSource,
+  FolderIconValueSource,
 }

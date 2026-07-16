@@ -27,6 +27,10 @@ describe('parseFolderIconValue', () => {
       name: 'folder-open',
       source: 'lucide',
     })
+    expect(parseFolderIconValue('custom:0123456789abcdef')).toEqual({
+      name: '0123456789abcdef',
+      source: 'custom',
+    })
   })
 
   it('returns null for unsupported values', () => {

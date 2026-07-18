@@ -4,8 +4,14 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { enqueueCloudDownload } from '../../cloudDownloads'
+import { createFoldersStorage } from '../../storages/folders'
+import { createSnippetsStorage } from '../../storages/snippets'
 import { runtimeRef } from '../cache'
-import { setDatalessProbeForTests } from '../shared/cloudFiles'
+import { getPaths } from '../paths'
+import {
+  getFileAvailability,
+  setDatalessProbeForTests,
+} from '../shared/cloudFiles'
 import { assertNoUnknownDomainFiles } from '../shared/foldersStorage'
 import { ensureSnippetContentLoaded, writeSnippetToFile } from '../snippets'
 import { saveState } from '../state'
@@ -25,10 +31,13 @@ vi.mock('electron', () => ({
   },
 }))
 
+const storageMock = vi.hoisted(() => ({ vaultPath: '' }))
+
 vi.mock('../../../../../store', () => ({
   store: {
     preferences: {
-      get: () => undefined,
+      get: (key: string) =>
+        key === 'storage.vaultPath' ? storageMock.vaultPath : undefined,
     },
   },
 }))
@@ -54,6 +63,16 @@ function createPaths(): Paths {
     trashDirPath: path.join(metaDirPath, 'trash'),
     vaultPath,
   }
+}
+
+function createStoragePaths(): Paths {
+  const vaultPath = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'cloud-placeholder-storage-'),
+  )
+  tempDirs.push(vaultPath)
+  storageMock.vaultPath = vaultPath
+
+  return getPaths(vaultPath)
 }
 
 function writeSnippetFixture(
@@ -110,6 +129,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  storageMock.vaultPath = ''
   setDatalessProbeForTests(null)
   resetRuntimeCache()
   vi.mocked(enqueueCloudDownload).mockClear()
@@ -120,6 +140,176 @@ afterEach(() => {
 })
 
 describe('cloud placeholder handling in code runtime', () => {
+  it('allows immediate content write and rename of an app-written file', () => {
+    const paths = createStoragePaths()
+    const targetPath = path.join(paths.vaultPath, '.masscode/inbox/Renamed.md')
+    const statSync = fs.statSync.bind(fs)
+    const statSpy = vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+      const stats = statSync(filePath)
+
+      if (
+        typeof filePath === 'string'
+        && filePath.endsWith('.md')
+        && stats.size > 0
+      ) {
+        return Object.assign(stats, { blocks: 0 })
+      }
+
+      return stats
+    })
+
+    try {
+      const storage = createSnippetsStorage()
+      const { id } = storage.createSnippet({ name: 'Resident' })
+      expect(() =>
+        storage.createSnippetContent(id, {
+          label: 'Fragment 1',
+          language: 'plain_text',
+          value: 'body',
+        }),
+      ).not.toThrow()
+
+      resetRuntimeCache()
+      syncRuntimeWithDisk(paths)
+      resetRuntimeCache()
+      const lazyCache = syncRuntimeWithDisk(paths)
+      const lazySnippet = lazyCache.snippets.find(
+        snippet => snippet.id === id,
+      )
+      expect(lazySnippet?.contents[0]?.value).toBeNull()
+
+      expect(() =>
+        storage.updateSnippet(id, { name: 'Renamed' }),
+      ).not.toThrow()
+
+      expect(fs.readFileSync(targetPath, 'utf8')).toContain('body')
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('keeps local folder contents available without rewriting placeholders', () => {
+    const paths = createStoragePaths()
+    const statSync = fs.statSync.bind(fs)
+    const statSpy = vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+      const stats = statSync(filePath)
+
+      if (
+        typeof filePath === 'string'
+        && filePath.endsWith('.md')
+        && stats.size > 0
+      ) {
+        return Object.assign(stats, { blocks: 0 })
+      }
+
+      return stats
+    })
+    const foldersStorage = createFoldersStorage()
+    const storage = createSnippetsStorage()
+    const folder = foldersStorage.createFolder({ name: 'Folder' })
+    let localId = 0
+    let placeholderId = 0
+    let placeholderSourcePath = ''
+
+    try {
+      localId = storage.createSnippet({
+        folderId: folder.id,
+        name: 'Resident',
+      }).id
+      storage.createSnippetContent(localId, {
+        label: 'Fragment 1',
+        language: 'plain_text',
+        value: 'local body',
+      })
+
+      placeholderId = storage.createSnippet({
+        folderId: folder.id,
+        name: 'Pending',
+      }).id
+      storage.createSnippetContent(placeholderId, {
+        label: 'Fragment 1',
+        language: 'plain_text',
+        value: 'remote body',
+      })
+      const placeholder = runtimeRef.cache!.snippets.find(
+        item => item.id === placeholderId,
+      )!
+      placeholderSourcePath = path.join(paths.vaultPath, placeholder.filePath)
+
+      makeSparsePlaceholder(placeholderSourcePath)
+      if (!hasPlaceholderSignature(placeholderSourcePath)) {
+        return
+      }
+
+      expect(foldersStorage.deleteFolder(folder.id).deleted).toBe(true)
+
+      const local = runtimeRef.cache!.snippets.find(
+        item => item.id === localId,
+      )!
+      const pending = runtimeRef.cache!.snippets.find(
+        item => item.id === placeholderId,
+      )!
+      const localTargetPath = path.join(paths.vaultPath, local.filePath)
+      const placeholderTargetPath = path.join(
+        paths.vaultPath,
+        pending.filePath,
+      )
+
+      expect(getFileAvailability(localTargetPath).isCloudPlaceholder).toBe(
+        false,
+      )
+      expect(hasPlaceholderSignature(placeholderTargetPath)).toBe(true)
+      expect(fs.statSync(placeholderTargetPath).size).toBe(4096)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('keeps a committed write successful when its follow-up stat fails', () => {
+    const paths = createPaths()
+    const snippetPath = path.join(paths.vaultPath, '.masscode/inbox/saved.md')
+    const statSync = fs.statSync.bind(fs)
+    const statSpy = vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+      if (filePath === snippetPath && fs.existsSync(snippetPath)) {
+        throw new Error('post-write stat failed')
+      }
+
+      return statSync(filePath)
+    })
+
+    try {
+      expect(() =>
+        writeSnippetToFile(paths, {
+          contents: [
+            {
+              id: 1,
+              label: 'Fragment 1',
+              language: 'plain_text',
+              value: 'saved body',
+            },
+          ],
+          createdAt: 1700000000000,
+          description: null,
+          filePath: '.masscode/inbox/saved.md',
+          folderId: null,
+          id: 2,
+          isDeleted: 0,
+          isFavorites: 0,
+          name: 'Saved',
+          tags: [],
+          updatedAt: 1700000000000,
+        }),
+      ).not.toThrow()
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+
+    expect(fs.readFileSync(snippetPath, 'utf8')).toContain('saved body')
+  })
+
   it('keeps known placeholder snippets in the list without reading them', () => {
     const paths = createPaths()
     const localPath = writeSnippetFixture(

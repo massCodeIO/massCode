@@ -221,7 +221,17 @@ async function init() {
   ipc.on('main-menu:copy-snippet', onCopySnippetMenu)
 
   watch(selectedSnippetContent, (v) => {
+    const scheduledSnippetId = selectedSnippet.value?.id
+    const scheduledContentId = v?.id
+
     nextTick(() => {
+      if (
+        selectedSnippet.value?.id !== scheduledSnippetId
+        || selectedSnippetContent.value?.id !== scheduledContentId
+      ) {
+        return
+      }
+
       // Полная запись выбранного сниппета ещё загружается — не очищаем
       // редактор промежуточным состоянием (метаданные без value).
       if (selectedSnippet.value && (!v || v.value === undefined)) {
@@ -265,9 +275,17 @@ async function init() {
   })
 
   watch(selectedSnippetContent, (v) => {
+    const scheduledSnippetId = selectedSnippet.value?.id
+    const scheduledContentId = v?.id
+
     nextTick(() => {
-      if (!v)
+      if (
+        !v
+        || selectedSnippet.value?.id !== scheduledSnippetId
+        || selectedSnippetContent.value?.id !== scheduledContentId
+      ) {
         return
+      }
       setLanguage(v.language as Language)
     })
   })

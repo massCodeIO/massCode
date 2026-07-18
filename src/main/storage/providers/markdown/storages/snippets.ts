@@ -282,6 +282,8 @@ export function createSnippetsStorage(): SnippetsStorage {
       snippet.updatedAt = Date.now()
       persistSnippet(paths, state, snippet, previousPath, {
         allowRenameOnConflict: movedToTrash || movedBetweenDirectories,
+        // assertEntityFileWritable выше уже проверил source до mutation.
+        sourceFileVerifiedLocal: true,
         // Перенос в trash не требует перезаписи frontmatter (isDeleted
         // выводится из trash-каталога), поэтому недокачанный файл не должен
         // блокировать удаление.

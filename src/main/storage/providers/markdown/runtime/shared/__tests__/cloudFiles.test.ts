@@ -1,7 +1,7 @@
 import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getFileAvailability,
   isCloudPlaceholderStats,
@@ -114,8 +114,19 @@ describe('getFileAvailability', () => {
     expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(true)
 
     // Ридер успешно прочитал файл: с этого момента он считается локальным,
-    // пока не изменится (size + mtime).
+    // пока не изменится (size + mtime + ctime).
     markFileReadableDespiteZeroBlocks(filePath, stats)
     expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(false)
+
+    const statSpy = vi
+      .spyOn(fs, 'statSync')
+      .mockReturnValue(Object.assign(stats, { ctimeMs: stats.ctimeMs + 1 }))
+
+    try {
+      expect(getFileAvailability(filePath).isCloudPlaceholder).toBe(true)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
   })
 })

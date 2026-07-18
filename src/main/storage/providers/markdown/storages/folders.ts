@@ -25,6 +25,7 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../runtime'
+import { getFileAvailability } from '../runtime/shared/cloudFiles'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
@@ -314,6 +315,14 @@ export function createFoldersStorage(): FoldersStorage {
           && removedFolderIds.has(snippet.folderId)
         ) {
           const previousPath = snippet.filePath
+          const sourceAvailability = getFileAvailability(
+            path.join(paths.vaultPath, previousPath),
+          )
+          const sourceFileVerifiedLocal
+            = !snippet.pendingCloudDownload
+              && sourceAvailability.exists
+              && !sourceAvailability.isCloudPlaceholder
+
           snippet.folderId = null
           snippet.isDeleted = 1
           snippet.updatedAt = Date.now()
@@ -321,6 +330,7 @@ export function createFoldersStorage(): FoldersStorage {
             allowRenameOnConflict: true,
             directoryEntriesCache,
             skipWriteIfUnavailable: true,
+            sourceFileVerifiedLocal,
           })
         }
       })

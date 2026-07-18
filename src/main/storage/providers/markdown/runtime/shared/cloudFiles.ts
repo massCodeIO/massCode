@@ -46,10 +46,10 @@ function hasSimulatedCloudStub(absolutePath: string): boolean {
 // Файлы, у которых сигнатура плейсхолдера (size > 0, blocks === 0) оказалась
 // ложной: их содержимое успешно прочитано (inline-файлы btrfs, resident-файлы
 // NTFS, сетевые шары с нулевым AllocationSize). Ключ — путь, значение —
-// size и mtime на момент проверки: изменение файла сбрасывает исключение.
+// size, mtime и ctime на момент проверки: изменение файла сбрасывает исключение.
 const readableZeroBlockFiles = new Map<
   string,
-  { mtimeMs: number, size: number }
+  { ctimeMs: number, mtimeMs: number, size: number }
 >()
 
 // Кэш точной проверки SF_DATALESS на macOS: spawn стоит миллисекунды, но
@@ -64,9 +64,24 @@ export function markFileReadableDespiteZeroBlocks(
   stats: Stats,
 ): void {
   readableZeroBlockFiles.set(absolutePath, {
+    ctimeMs: stats.ctimeMs,
     mtimeMs: stats.mtimeMs,
     size: stats.size,
   })
+}
+
+export function markAppWrittenFileAsLocal(absolutePath: string): void {
+  try {
+    const stats = fs.statSync(absolutePath)
+
+    if (hasPlaceholderSignature(stats)) {
+      markFileReadableDespiteZeroBlocks(absolutePath, stats)
+    }
+  }
+  catch {
+    // Запись уже завершена: сбой best-effort stat не должен превращать её
+    // в ошибку. Файл просто останется без исключения до успешного чтения.
+  }
 }
 
 export function resetCloudFileExemptions(): void {
@@ -228,6 +243,7 @@ export function getFileAvailability(absolutePath: string): FileAvailability {
 
       if (
         exemption
+        && exemption.ctimeMs === stats.ctimeMs
         && exemption.mtimeMs === stats.mtimeMs
         && exemption.size === stats.size
       ) {

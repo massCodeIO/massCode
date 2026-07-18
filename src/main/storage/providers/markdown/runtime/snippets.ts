@@ -36,7 +36,10 @@ import {
   normalizeDirectoryPath,
 } from './paths'
 import { rememberAppFileChange } from './shared/appChanges'
-import { getFileAvailability } from './shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from './shared/cloudFiles'
 import { throwCloudContentUnavailable } from './shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
@@ -532,12 +535,18 @@ export function loadSnippets(
     .filter((snippet): snippet is MarkdownSnippet => !!snippet)
 }
 
+const trustedMovedLocalWrite = Symbol('trusted-moved-local-write')
+
 export function writeSnippetToFile(
   paths: Paths,
   snippet: MarkdownSnippet,
-  options?: { skipIfUnavailable?: boolean },
+  options?: {
+    skipIfUnavailable?: boolean
+    [trustedMovedLocalWrite]?: true
+  },
 ): void {
   const snippetPath = path.join(paths.vaultPath, snippet.filePath)
+  const canWriteMovedLocalFile = options?.[trustedMovedLocalWrite] === true
 
   // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
   // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
@@ -545,13 +554,28 @@ export function writeSnippetToFile(
   // правку, которую докачка затем молча перезапишет облачным содержимым.
   // Пропуск допустим только там, где запись — необязательный write-back
   // (scan, move, bulk-очистка тегов), а не сохранение пользовательской правки.
-  const availability = getFileAvailability(snippetPath)
-  if (snippet.pendingCloudDownload || availability.isCloudPlaceholder) {
+  if (snippet.pendingCloudDownload) {
     enqueueCloudDownload(snippetPath)
     if (options?.skipIfUnavailable) {
       return
     }
     throwCloudContentUnavailable()
+  }
+
+  const availability = canWriteMovedLocalFile
+    ? null
+    : getFileAvailability(snippetPath)
+
+  if (availability?.isCloudPlaceholder) {
+    enqueueCloudDownload(snippetPath)
+    if (options?.skipIfUnavailable) {
+      return
+    }
+    throwCloudContentUnavailable()
+  }
+
+  if (canWriteMovedLocalFile) {
+    markAppWrittenFileAsLocal(snippetPath)
   }
 
   // Ленивая запись (тела ещё не дочитаны из индекса): недостающие value
@@ -567,15 +591,19 @@ export function writeSnippetToFile(
 
   fs.ensureDirSync(path.dirname(snippetPath))
 
-  if (availability.exists) {
+  if (canWriteMovedLocalFile || availability?.exists) {
     const currentContent = fs.readFileSync(snippetPath, 'utf8')
     if (currentContent === nextContent) {
+      if (canWriteMovedLocalFile) {
+        markAppWrittenFileAsLocal(snippetPath)
+      }
       return
     }
   }
 
   fs.writeFileSync(snippetPath, nextContent, 'utf8')
   rememberAppFileChange(snippetPath)
+  markAppWrittenFileAsLocal(snippetPath)
 }
 
 function upsertSnippetIndex(
@@ -747,6 +775,7 @@ export function persistSnippet(
     ? path.join(paths.vaultPath, sourcePath)
     : null
   const targetAbsolutePath = path.join(paths.vaultPath, targetPath)
+  let moved = false
 
   if (
     sourceAbsolutePath
@@ -756,6 +785,7 @@ export function persistSnippet(
   ) {
     fs.ensureDirSync(path.dirname(targetAbsolutePath))
     fs.moveSync(sourceAbsolutePath, targetAbsolutePath, { overwrite: false })
+    moved = true
     rememberAppFileChange(sourceAbsolutePath)
     rememberAppFileChange(targetAbsolutePath)
 
@@ -769,7 +799,11 @@ export function persistSnippet(
   snippet.filePath = targetPath
   writeSnippetToFile(paths, snippet, {
     skipIfUnavailable: options?.skipWriteIfUnavailable,
+    ...(moved && options?.sourceFileVerifiedLocal
+      ? { [trustedMovedLocalWrite]: true as const }
+      : {}),
   })
+
   upsertDirectoryEntryInCache(
     path.dirname(targetAbsolutePath),
     path.basename(targetAbsolutePath),

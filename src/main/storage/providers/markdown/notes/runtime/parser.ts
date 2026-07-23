@@ -11,7 +11,10 @@ import {
   prioritizeCloudDownload,
 } from '../../cloudDownloads'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
-import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
 import {
   isYamlFileCloudUnavailable,
   readYamlObjectFile,
@@ -90,5 +93,6 @@ export function writeNotesFolderMetadataFile(
 
   fs.ensureDirSync(folderAbsPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  markAppWrittenFileAsLocal(metaPath)
   rememberAppFileChange(metaPath)
 }

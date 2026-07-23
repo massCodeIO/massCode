@@ -14,7 +14,10 @@ import yaml from 'js-yaml'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
-import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
 import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
@@ -285,20 +288,28 @@ export function ensureRequestDetailsLoaded(
   return true
 }
 
+const trustedMovedLocalWrite = Symbol('trusted-moved-local-write')
+
 export function writeRequestFile(
   httpRoot: string,
   record: HttpRequestRecord,
-  options?: { skipIfUnavailable?: boolean },
+  options?: {
+    skipIfUnavailable?: boolean
+    [trustedMovedLocalWrite]?: true
+  },
 ): void {
   const absolutePath = path.join(httpRoot, record.filePath)
-  const availability = getFileAvailability(absolutePath)
+  const canWriteMovedLocalFile = options?.[trustedMovedLocalWrite] === true
+  const availability = canWriteMovedLocalFile
+    ? null
+    : getFileAvailability(absolutePath)
 
   // Запись в недокачанный файл затёрла бы облачное содержимое: файл сначала
   // докачивается в фоне. По умолчанию сбой поднимается наверх: тихий пропуск
   // означал бы «принятую» правку, которую докачка затем молча перезапишет
   // облачным содержимым. Пропуск допустим только в необязательном write-back
   // scan-пути.
-  if (record.pendingCloudDownload || availability.isCloudPlaceholder) {
+  if (record.pendingCloudDownload || availability?.isCloudPlaceholder) {
     enqueueCloudDownload(absolutePath)
     if (options?.skipIfUnavailable) {
       return
@@ -317,13 +328,31 @@ export function writeRequestFile(
 
   const next = serializeRequestFile(record)
 
-  if (availability.exists) {
+  // Trusted move bypasses only the second availability classification. The
+  // destination is still read by pathname before any mark/write: read failure
+  // aborts without granting a zero-block exemption. This intentionally follows
+  // the same provider trust boundary as Code/Notes; Node cannot atomically
+  // guard against a same-inode dehydrate/replace between move and pathname I/O.
+  if (canWriteMovedLocalFile || availability?.exists) {
     const current = fs.readFileSync(absolutePath, 'utf8')
     if (current === next) {
+      if (canWriteMovedLocalFile) {
+        markAppWrittenFileAsLocal(absolutePath)
+      }
       return
     }
   }
 
   fs.ensureDirSync(path.dirname(absolutePath))
   fs.writeFileSync(absolutePath, next, 'utf8')
+  markAppWrittenFileAsLocal(absolutePath)
+}
+
+export function writeVerifiedMovedLocalRequestFile(
+  httpRoot: string,
+  record: HttpRequestRecord,
+): void {
+  writeRequestFile(httpRoot, record, {
+    [trustedMovedLocalWrite]: true,
+  })
 }

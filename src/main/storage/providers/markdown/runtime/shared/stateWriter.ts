@@ -1,6 +1,6 @@
 import path from 'node:path'
-import process from 'node:process'
 import fs from 'fs-extra'
+import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import {
   pendingStateWriteByPath,
@@ -13,7 +13,38 @@ import { getFileAvailability, markAppWrittenFileAsLocal } from './cloudFiles'
 
 const CLOUD_STATE_FLUSH_RETRY_MS = 5_000
 
-let hooksRegistered = false
+export interface StateFlushResult {
+  errors: { error: unknown, statePath: string }[]
+  unresolvedPaths: string[]
+}
+
+function clearStateFlushTimer(statePath: string): void {
+  const timer = stateFlushTimerByPath.get(statePath)
+  if (!timer) {
+    return
+  }
+
+  clearTimeout(timer)
+  stateFlushTimerByPath.delete(statePath)
+}
+
+function replaceStateFlushTimer(statePath: string, delay: number): void {
+  clearStateFlushTimer(statePath)
+
+  const timer = setTimeout(() => {
+    if (stateFlushTimerByPath.get(statePath) === timer) {
+      stateFlushTimerByPath.delete(statePath)
+    }
+
+    try {
+      flushPath(statePath)
+    }
+    catch {
+      // flushPath logs the error, preserves pending and schedules the retry.
+    }
+  }, delay)
+  stateFlushTimerByPath.set(statePath, timer)
+}
 
 function getPersistedContent(statePath: string): string {
   const cached = stateContentCacheByPath.get(statePath)
@@ -40,32 +71,30 @@ function flushPath(statePath: string): void {
   if (pendingContent === undefined)
     return
 
-  const flushTimer = stateFlushTimerByPath.get(statePath)
-  if (flushTimer) {
-    clearTimeout(flushTimer)
-    stateFlushTimerByPath.delete(statePath)
-  }
-
   // State-файл вытеснен в облако: запись затёрла бы недокачанную версию.
   // Запись остаётся в pending и повторяется после докачки.
   if (getFileAvailability(statePath).isCloudPlaceholder) {
     enqueueCloudDownload(statePath)
-    const retryTimer = setTimeout(
-      () => flushPath(statePath),
-      CLOUD_STATE_FLUSH_RETRY_MS,
-    )
-    stateFlushTimerByPath.set(statePath, retryTimer)
+    replaceStateFlushTimer(statePath, CLOUD_STATE_FLUSH_RETRY_MS)
     return
   }
 
-  const persistedContent = getPersistedContent(statePath)
-  if (persistedContent !== pendingContent) {
-    fs.ensureDirSync(path.dirname(statePath))
-    fs.writeFileSync(statePath, pendingContent, 'utf8')
-    rememberAppFileChange(statePath)
-    markAppWrittenFileAsLocal(statePath)
+  try {
+    const persistedContent = getPersistedContent(statePath)
+    if (persistedContent !== pendingContent) {
+      fs.ensureDirSync(path.dirname(statePath))
+      fs.writeFileSync(statePath, pendingContent, 'utf8')
+      rememberAppFileChange(statePath)
+      markAppWrittenFileAsLocal(statePath)
+    }
+  }
+  catch (error) {
+    replaceStateFlushTimer(statePath, CLOUD_STATE_FLUSH_RETRY_MS)
+    log(`storage:markdown:state-flush:${statePath}`, error)
+    throw error
   }
 
+  clearStateFlushTimer(statePath)
   stateContentCacheByPath.set(statePath, pendingContent)
   pendingStateWriteByPath.delete(statePath)
 }
@@ -90,27 +119,64 @@ export function scheduleStateFlush(
     return
   }
 
-  const existing = stateFlushTimerByPath.get(statePath)
-  if (existing)
-    clearTimeout(existing)
-
-  const timer = setTimeout(() => flushPath(statePath), STATE_WRITE_DEBOUNCE_MS)
-  stateFlushTimerByPath.set(statePath, timer)
+  replaceStateFlushTimer(statePath, STATE_WRITE_DEBOUNCE_MS)
 }
 
 export function flushPendingStateWriteByPath(statePath: string): void {
   flushPath(statePath)
 }
 
-export function flushPendingStateWrites(): void {
+export function flushPendingStateWrites(): StateFlushResult {
   const paths = [...pendingStateWriteByPath.keys()]
-  paths.forEach(statePath => flushPath(statePath))
+  const errors: StateFlushResult['errors'] = []
+
+  for (const statePath of paths) {
+    try {
+      flushPath(statePath)
+    }
+    catch (error) {
+      errors.push({ error, statePath })
+    }
+  }
+
+  return {
+    errors,
+    unresolvedPaths: paths.filter(statePath =>
+      pendingStateWriteByPath.has(statePath),
+    ),
+  }
 }
 
-export function registerStateWriteHooks(): void {
-  if (hooksRegistered)
+export function flushPendingStateWritesOrThrow(): void {
+  const result = flushPendingStateWrites()
+  if (!result.errors.length && !result.unresolvedPaths.length) {
     return
-  hooksRegistered = true
-  process.once('beforeExit', flushPendingStateWrites)
-  process.once('exit', flushPendingStateWrites)
+  }
+
+  const affectedPaths = [
+    ...new Set([
+      ...result.unresolvedPaths,
+      ...result.errors.map(entry => entry.statePath),
+    ]),
+  ]
+  const error = new Error(
+    `Pending state writes remain for: ${affectedPaths.join(', ')}`,
+  )
+  if (result.errors.length) {
+    error.cause = new AggregateError(
+      result.errors.map(entry => entry.error),
+      'Failed to flush pending state writes',
+    )
+  }
+  throw error
+}
+
+export function resetStateWriter(): void {
+  for (const timer of stateFlushTimerByPath.values()) {
+    clearTimeout(timer)
+  }
+
+  pendingStateWriteByPath.clear()
+  stateContentCacheByPath.clear()
+  stateFlushTimerByPath.clear()
 }

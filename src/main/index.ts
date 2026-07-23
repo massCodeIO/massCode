@@ -1,4 +1,5 @@
 /* eslint-disable node/prefer-global/process */
+import type { Event as ElectronEvent } from 'electron'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
@@ -79,6 +80,45 @@ function flushWindowBoundsSave() {
   saveWindowBounds()
 }
 
+export function handleMainWindowClose(
+  event: ElectronEvent,
+  window = mainWindow,
+): void {
+  if (!isQuitting()) {
+    event.preventDefault()
+
+    if (process.platform === 'darwin') {
+      flushWindowBoundsSave()
+      window.hide()
+    }
+    else {
+      app.quit()
+    }
+    return
+  }
+
+  flushWindowBoundsSave()
+  window.destroy()
+}
+
+export function handleBeforeQuit(event: ElectronEvent): void {
+  try {
+    stopMarkdownWatcher()
+  }
+  catch (error) {
+    event.preventDefault()
+    setQuitting(false)
+    log('Error stopping markdown watcher before quit', error)
+    return
+  }
+
+  setQuitting(true)
+  flushWindowBoundsSave()
+  stopThemeWatcher()
+  stopTasksCleanupScheduler()
+  cleanupDockBadge()
+}
+
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('masscode', process.execPath, [
@@ -133,17 +173,7 @@ function createWindow() {
   mainWindow.on('move', scheduleWindowBoundsSave)
   mainWindow.on('resize', scheduleWindowBoundsSave)
 
-  mainWindow.on('close', (event) => {
-    flushWindowBoundsSave()
-
-    if (process.platform === 'darwin' && !isQuitting()) {
-      event.preventDefault()
-      mainWindow.hide()
-      return
-    }
-
-    mainWindow.destroy()
-  })
+  mainWindow.on('close', handleMainWindowClose)
 }
 
 if (!gotTheLock) {
@@ -298,14 +328,7 @@ else {
     mainWindow.show()
   })
 
-  app.on('before-quit', () => {
-    setQuitting(true)
-    flushWindowBoundsSave()
-    stopThemeWatcher()
-    stopMarkdownWatcher()
-    stopTasksCleanupScheduler()
-    cleanupDockBadge()
-  })
+  app.on('before-quit', handleBeforeQuit)
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin')

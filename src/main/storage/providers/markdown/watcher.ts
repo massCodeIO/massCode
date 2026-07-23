@@ -44,6 +44,10 @@ import {
 import { wasRecentAppFileChange } from './runtime/shared/appChanges'
 import { getFileAvailability } from './runtime/shared/cloudFiles'
 import { isCloudFileNotDownloadedError } from './runtime/shared/guardedRead'
+import {
+  flushPendingStateWritesOrThrow,
+  resetStateWriter,
+} from './runtime/shared/stateWriter'
 import { broadcastStorageSynced } from './runtime/shared/vaultReconcile'
 import {
   getManagedNotesAssetName,
@@ -422,6 +426,10 @@ function scheduleCloudRefresh(
 }
 
 export function stopMarkdownWatcher(): void {
+  // Flush while cloud exemptions still identify app-written files as local.
+  // Any unresolved write leaves the watcher and all retry state untouched.
+  flushPendingStateWritesOrThrow()
+
   watcherStartToken += 1
   preparedCloudVaultPath = null
   preparedWatcherStartToken = null
@@ -451,12 +459,13 @@ export function stopMarkdownWatcher(): void {
   hasPendingNotesSync = false
   hasPendingHttpSync = false
   hasPendingDrawingsSync = false
-  resetCloudDownloads()
   resetRuntimeCache()
   resetNotesRuntimeCache()
   resetHttpRuntimeCache()
   resetPathsCache()
   resetNotesPathsCache()
+  resetStateWriter()
+  resetCloudDownloads()
 }
 
 function initializeMarkdownWatcher(vaultRootPath: string): void {

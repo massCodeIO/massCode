@@ -49,6 +49,13 @@ async function setup() {
   )
   const syncHttpRuntimeWithDisk = vi.fn()
   const resetCloudDownloads = vi.fn()
+  const flushPendingStateWritesOrThrow = vi.fn()
+  const resetStateWriter = vi.fn()
+  const resetRuntimeCache = vi.fn()
+  const resetNotesRuntimeCache = vi.fn()
+  const resetHttpRuntimeCache = vi.fn()
+  const resetPathsCache = vi.fn()
+  const resetNotesPathsCache = vi.fn()
   const getPendingCloudPaths = vi.fn(() => ['/vault/.masscode/state.json'])
   const configureCloudDownloads = vi.fn(
     (configuration: CloudDownloadConfiguration) => {
@@ -94,7 +101,7 @@ async function setup() {
   vi.doMock('../http', () => ({
     getHttpPaths: vi.fn(() => httpPaths),
     peekHttpRuntimeCache: vi.fn(() => null),
-    resetHttpRuntimeCache: vi.fn(),
+    resetHttpRuntimeCache,
     syncHttpRuntimeWithDisk,
   }))
 
@@ -112,8 +119,8 @@ async function setup() {
     parseNotesAssetName: vi.fn((fileName: string) => ({ fileName })),
     peekNotesRuntimeCache,
     refreshPendingNoteFiles: vi.fn(() => ({ changed: false, remaining: 0 })),
-    resetNotesPathsCache: vi.fn(),
-    resetNotesRuntimeCache: vi.fn(),
+    resetNotesPathsCache,
+    resetNotesRuntimeCache,
     scheduleNotesAssetsMigration,
     syncNoteFileWithDisk: vi.fn(),
     syncNotesRuntimeWithDisk,
@@ -132,8 +139,8 @@ async function setup() {
       changed: false,
       remaining: 0,
     })),
-    resetPathsCache: vi.fn(),
-    resetRuntimeCache: vi.fn(),
+    resetPathsCache,
+    resetRuntimeCache,
     syncRuntimeWithDisk,
     syncSnippetFileWithDisk: vi.fn(),
   }))
@@ -156,6 +163,11 @@ async function setup() {
       && error.message.startsWith('CLOUD_FILE_NOT_DOWNLOADED'),
   }))
 
+  vi.doMock('../runtime/shared/stateWriter', () => ({
+    flushPendingStateWritesOrThrow,
+    resetStateWriter,
+  }))
+
   const { prepareMarkdownWatcher, startMarkdownWatcher, stopMarkdownWatcher }
     = await import('../watcher')
 
@@ -164,6 +176,7 @@ async function setup() {
     broadcastNotesAssetReady,
     configureCloudDownloads,
     ensureStateFile,
+    flushPendingStateWritesOrThrow,
     getPaths,
     getPendingCloudPaths,
     importEsm,
@@ -173,6 +186,12 @@ async function setup() {
     peekNotesRuntimeCache,
     prepareMarkdownWatcher,
     resetCloudDownloads,
+    resetHttpRuntimeCache,
+    resetNotesPathsCache,
+    resetNotesRuntimeCache,
+    resetPathsCache,
+    resetRuntimeCache,
+    resetStateWriter,
     scheduleNotesAssetsMigration,
     send,
     startMarkdownWatcher,
@@ -181,6 +200,7 @@ async function setup() {
     syncNotesRuntimeWithDisk,
     syncRuntimeWithDisk,
     watch,
+    watcher,
     watcherHandlers,
   }
 }
@@ -224,6 +244,62 @@ describe('markdown watcher cloud bootstrap', () => {
     context.startMarkdownWatcher()
 
     expect(context.resetCloudDownloads).toHaveBeenCalledTimes(2)
+  })
+
+  it('flushes and cleans state writes before resetting cloud downloads', async () => {
+    const context = await setup()
+    const lifecycleOrder: string[] = []
+    context.flushPendingStateWritesOrThrow.mockImplementation(() => {
+      lifecycleOrder.push('flush')
+    })
+    context.resetStateWriter.mockImplementation(() => {
+      lifecycleOrder.push('cleanup')
+    })
+    context.resetRuntimeCache.mockImplementation(() => {
+      lifecycleOrder.push('runtime-reset')
+    })
+    context.resetCloudDownloads.mockImplementation(() => {
+      lifecycleOrder.push('cloud-reset')
+    })
+
+    context.stopMarkdownWatcher()
+
+    expect(lifecycleOrder).toEqual([
+      'flush',
+      'runtime-reset',
+      'cleanup',
+      'cloud-reset',
+    ])
+    expect(context.flushPendingStateWritesOrThrow).toHaveBeenCalledTimes(1)
+    expect(context.resetStateWriter).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the watcher running when state writes remain', async () => {
+    const context = await setup()
+    context.prepareMarkdownWatcher()
+    context.startMarkdownWatcher()
+    await flushImmediate()
+    vi.clearAllMocks()
+    context.flushPendingStateWritesOrThrow.mockImplementationOnce(() => {
+      throw new Error('Pending state writes remain for: state.json')
+    })
+
+    expect(() => context.stopMarkdownWatcher()).toThrow(
+      'Pending state writes remain',
+    )
+    expect(context.watcher.close).not.toHaveBeenCalled()
+    expect(context.resetStateWriter).not.toHaveBeenCalled()
+    expect(context.resetCloudDownloads).not.toHaveBeenCalled()
+    expect(context.resetRuntimeCache).not.toHaveBeenCalled()
+    expect(context.resetNotesRuntimeCache).not.toHaveBeenCalled()
+    expect(context.resetHttpRuntimeCache).not.toHaveBeenCalled()
+    expect(context.resetPathsCache).not.toHaveBeenCalled()
+    expect(context.resetNotesPathsCache).not.toHaveBeenCalled()
+
+    expect(() => context.stopMarkdownWatcher()).not.toThrow()
+    expect(context.watcher.close).toHaveBeenCalledTimes(1)
+    expect(context.resetStateWriter).toHaveBeenCalledTimes(1)
+    expect(context.resetCloudDownloads).toHaveBeenCalledTimes(1)
   })
 
   it('cancels a pending initial start when start is called again', async () => {

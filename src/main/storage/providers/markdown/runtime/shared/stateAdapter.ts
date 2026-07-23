@@ -5,7 +5,6 @@ import { markAppWrittenFileAsLocal } from './cloudFiles'
 import { readVaultTextFileSync } from './guardedRead'
 import {
   flushPendingStateWriteByPath,
-  registerStateWriteHooks,
   scheduleStateFlush,
 } from './stateWriter'
 
@@ -48,8 +47,6 @@ export function createStateAdapter<
   config: StateAdapterConfig<TState, TStateFile, TPaths>,
 ): StateAdapter<TState, TPaths> {
   function ensureStateFile(paths: TPaths): void {
-    registerStateWriteHooks()
-
     for (const dir of config.getDirs(paths)) {
       fs.ensureDirSync(dir)
     }

@@ -31,6 +31,7 @@ import {
 } from './shared/folderSync'
 import { isCloudFileNotDownloadedError } from './shared/guardedRead'
 import { syncFolderUiWithFolders } from './shared/stateUtils'
+import { flushPendingStateWritesOrThrow } from './shared/stateWriter'
 import { createVaultReconciler } from './shared/vaultReconcile'
 import {
   buildSnippetIndexMetadata,
@@ -45,7 +46,6 @@ import {
 import {
   createDefaultState,
   flushPendingStateWrite,
-  flushPendingStateWrites,
   loadState,
   saveState,
 } from './state'
@@ -265,7 +265,7 @@ export function setRuntimeCache(
 const vaultReconciler = createVaultReconciler('markdown')
 
 export function resetRuntimeCache(): void {
-  flushPendingStateWrites()
+  flushPendingStateWritesOrThrow()
   // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
   // продолжили бы попытки по неактивному пути и слали storage-synced.
   const previousVaultPath = runtimeRef.cache?.paths.vaultPath

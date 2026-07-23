@@ -1,7 +1,7 @@
-import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import fs from 'fs-extra'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createDrawing,
   deleteDrawing,
@@ -13,7 +13,37 @@ import {
   wasRecentAppDrawingChange,
   writeDrawing,
 } from '../drawings'
+import {
+  getFileAvailability,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../runtime/shared/cloudFiles'
 import { isDrawingsWatchPath, shouldIgnoreWatchPath } from '../watcherPaths'
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockDrawingFilesAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.excalidraw')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 describe('drawings storage', () => {
   let vaultPath: string
@@ -23,7 +53,10 @@ describe('drawings storage', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
     fs.rmSync(vaultPath, { force: true, recursive: true })
+    vi.restoreAllMocks()
   })
 
   it('creates drawings with unique indexed names', async () => {
@@ -59,6 +92,56 @@ describe('drawings storage', () => {
     expect(await readDrawing(vaultPath, record.id)).toBe(content)
   })
 
+  it('keeps app-written zero-block drawings local through mutations', async () => {
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockDrawingFilesAsZeroBlocks()
+
+    try {
+      const created = await createDrawing(vaultPath, 'Resident')
+      const sourcePath = path.join(
+        vaultPath,
+        'drawings',
+        'Resident.excalidraw',
+      )
+
+      expect(getFileAvailability(sourcePath).isCloudPlaceholder).toBe(false)
+      expect(await readDrawing(vaultPath, created.id)).not.toBeNull()
+
+      await writeDrawing(vaultPath, created.id, '{"resident":true}')
+      expect(getFileAvailability(sourcePath).isCloudPlaceholder).toBe(false)
+      expect(await readDrawing(vaultPath, created.id)).toBe(
+        '{"resident":true}',
+      )
+
+      const renamed = await renameDrawing(vaultPath, created.id, 'Renamed')
+      const renamedPath = path.join(
+        vaultPath,
+        'drawings',
+        'Renamed.excalidraw',
+      )
+      expect(renamed?.name).toBe('Renamed')
+      expect(getFileAvailability(renamedPath).isCloudPlaceholder).toBe(false)
+      expect(await readDrawing(vaultPath, renamed!.id)).toBe(
+        '{"resident":true}',
+      )
+
+      const duplicate = await duplicateDrawing(vaultPath, renamed!.id)
+      const duplicatePath = path.join(
+        vaultPath,
+        'drawings',
+        'Renamed 2.excalidraw',
+      )
+      expect(duplicate?.name).toBe('Renamed 2')
+      expect(getFileAvailability(duplicatePath).isCloudPlaceholder).toBe(false)
+      expect(await readDrawing(vaultPath, duplicate!.id)).toBe(
+        '{"resident":true}',
+      )
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
   it('renames a drawing and resolves name conflicts', async () => {
     await createDrawing(vaultPath, 'Taken')
     const record = await createDrawing(vaultPath, 'Source')
@@ -70,6 +153,13 @@ describe('drawings storage', () => {
     expect(await readDrawing(vaultPath, 'Taken 2')).not.toBeNull()
   })
 
+  it('keeps missing-source rename and duplicate contracts', async () => {
+    await expect(
+      renameDrawing(vaultPath, 'Missing', 'Renamed'),
+    ).resolves.toBeNull()
+    await expect(duplicateDrawing(vaultPath, 'Missing')).resolves.toBeNull()
+  })
+
   it('keeps the name on a case-only rename instead of suffixing it', async () => {
     const record = await createDrawing(vaultPath, 'scene')
 
@@ -77,6 +167,81 @@ describe('drawings storage', () => {
 
     expect(renamed?.name).toBe('Scene')
     expect(await listDrawings(vaultPath)).toHaveLength(1)
+  })
+
+  it('does not mark targets moved or copied from genuine placeholders', async () => {
+    const record = await createDrawing(vaultPath, 'Cloud')
+    const sourcePath = path.join(vaultPath, 'drawings', 'Cloud.excalidraw')
+    makeSparsePlaceholder(sourcePath)
+    resetCloudFileExemptions()
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockDrawingFilesAsZeroBlocks()
+    const cloudFiles = await import('../runtime/shared/cloudFiles')
+    const markSpy = vi.spyOn(cloudFiles, 'markAppWrittenFileAsLocal')
+
+    try {
+      const renamed = await renameDrawing(vaultPath, record.id, 'Cloud Moved')
+      const renamedPath = path.join(
+        vaultPath,
+        'drawings',
+        'Cloud Moved.excalidraw',
+      )
+
+      expect(renamed?.name).toBe('Cloud Moved')
+      expect(markSpy).not.toHaveBeenCalled()
+      expect(getFileAvailability(renamedPath).isCloudPlaceholder).toBe(true)
+
+      const duplicate = await duplicateDrawing(vaultPath, renamed!.id)
+      const duplicatePath = path.join(
+        vaultPath,
+        'drawings',
+        'Cloud Moved 2.excalidraw',
+      )
+
+      expect(duplicate?.name).toBe('Cloud Moved 2')
+      expect(markSpy).not.toHaveBeenCalled()
+      expect(getFileAvailability(duplicatePath).isCloudPlaceholder).toBe(true)
+    }
+    finally {
+      markSpy.mockRestore()
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not mark files after failed write, move, or copy', async () => {
+    const record = await createDrawing(vaultPath, 'Failure')
+    const cloudFiles = await import('../runtime/shared/cloudFiles')
+    const markSpy = vi.spyOn(cloudFiles, 'markAppWrittenFileAsLocal')
+    const writeSpy = vi
+      .spyOn(fs, 'writeFile')
+      .mockRejectedValueOnce(new Error('write failed'))
+
+    await expect(createDrawing(vaultPath, 'Create Failure')).rejects.toThrow(
+      'write failed',
+    )
+    expect(markSpy).not.toHaveBeenCalled()
+
+    writeSpy.mockRejectedValueOnce(new Error('write failed'))
+    await expect(writeDrawing(vaultPath, record.id, '{}')).rejects.toThrow(
+      'write failed',
+    )
+    expect(markSpy).not.toHaveBeenCalled()
+    writeSpy.mockRestore()
+
+    const moveSpy = vi
+      .spyOn(fs, 'move')
+      .mockRejectedValueOnce(new Error('move failed'))
+    await expect(renameDrawing(vaultPath, record.id, 'Moved')).rejects.toThrow(
+      'move failed',
+    )
+    expect(markSpy).not.toHaveBeenCalled()
+    moveSpy.mockRestore()
+
+    vi.spyOn(fs, 'copy').mockRejectedValueOnce(new Error('copy failed'))
+    await expect(duplicateDrawing(vaultPath, record.id)).rejects.toThrow(
+      'copy failed',
+    )
+    expect(markSpy).not.toHaveBeenCalled()
   })
 
   it('duplicates and deletes drawings', async () => {

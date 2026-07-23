@@ -1,11 +1,25 @@
 import type { MarkdownSnippet } from '../types'
-import { describe, expect, it } from 'vitest'
+import os from 'node:os'
+import path from 'node:path'
+import fs from 'fs-extra'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   parseBodyFragments,
   parseBodyFragmentsWithMetadata,
+  readFolderMetadata,
   serializeSnippet,
   splitFrontmatter,
 } from '../parser'
+import {
+  getFileAvailability,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../shared/cloudFiles'
+
+afterEach(() => {
+  setDatalessProbeForTests(null)
+  resetCloudFileExemptions()
+})
 
 function createSnippet(value: string): MarkdownSnippet {
   return {
@@ -116,5 +130,49 @@ describe('legacy snippet fence recovery', () => {
       ].join('\n'),
     )
     expect(result.fragments[1].value).toBe('console.log("second")')
+  })
+})
+
+describe('legacy folder metadata migration', () => {
+  it('marks a zero-block migrated metadata file as local', () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'parser-legacy-'))
+    const folderPath = path.join(vaultPath, 'Legacy')
+    const legacyPath = path.join(folderPath, '.masscode-folder.yml')
+    const metaPath = path.join(folderPath, '.meta.yaml')
+    fs.ensureDirSync(folderPath)
+    fs.writeFileSync(legacyPath, 'masscode_id: 7\nname: Legacy\n', 'utf8')
+
+    const statSync = fs.statSync.bind(fs)
+    const statSpy = vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+      const stats = statSync(filePath)
+
+      if (filePath === metaPath && stats.size > 0) {
+        return Object.assign(stats, { blocks: 0 })
+      }
+
+      return stats
+    })
+    setDatalessProbeForTests(() => true)
+
+    try {
+      expect(
+        readFolderMetadata(
+          {
+            inboxDirPath: path.join(vaultPath, '.masscode', 'inbox'),
+            metaDirPath: path.join(vaultPath, '.masscode'),
+            statePath: path.join(vaultPath, '.masscode', 'state.json'),
+            trashDirPath: path.join(vaultPath, '.masscode', 'trash'),
+            vaultPath,
+          },
+          'Legacy',
+        ),
+      ).toMatchObject({ id: 7, name: 'Legacy' })
+      expect(fs.pathExistsSync(legacyPath)).toBe(false)
+      expect(getFileAvailability(metaPath).isCloudPlaceholder).toBe(false)
+    }
+    finally {
+      statSpy.mockRestore()
+      fs.removeSync(vaultPath)
+    }
   })
 })

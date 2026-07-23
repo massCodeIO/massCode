@@ -3,12 +3,44 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { enqueueCloudDownload } from '../../../cloudDownloads'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../../../runtime/shared/cloudFiles'
 import { ensureNotesStateFile } from '../../runtime/state'
 import { resetNotesRuntimeCache } from '../../runtime/sync'
 import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
 
 let tempVaultPath = ''
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockFolderMetadataAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.meta.yaml')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -60,6 +92,11 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../cloudDownloads', () => ({
+  enqueueCloudDownload: vi.fn(),
+  prioritizeCloudDownload: vi.fn(),
+}))
+
 vi.mock('../../../../../../store', () => ({
   store: {
     preferences: {
@@ -94,6 +131,10 @@ describe('folders storage validations', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
+    resetNotesRuntimeCache()
+
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
     }
@@ -214,5 +255,102 @@ describe('folders storage validations', () => {
     folders.updateFolder(folderA.id, { name: 'Renamed' })
 
     expect(notes.getNoteById(linker.id)?.content).toBe('See [[Foo]] here')
+  })
+
+  it('keeps resident zero-block subtree metadata local after parent move', () => {
+    const notesRoot = path.join(tempVaultPath, 'notes')
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createNotesFoldersStorage()
+      const destination = storage.createFolder({ name: 'Destination' })
+      const parent = storage.createFolder({ name: 'Parent' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+      const beforeMetadata = fs.readFileSync(
+        path.join(notesRoot, 'Parent', '.meta.yaml'),
+        'utf8',
+      )
+      const previousUpdatedAt = storage
+        .getFolders()
+        .find(folder => folder.id === parent.id)!.updatedAt
+      const nowSpy = vi
+        .spyOn(Date, 'now')
+        .mockReturnValue(previousUpdatedAt + 1)
+
+      try {
+        storage.updateFolder(parent.id, { parentId: destination.id })
+      }
+      finally {
+        nowSpy.mockRestore()
+      }
+
+      const parentMetaPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        '.meta.yaml',
+      )
+      const childMetaPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+
+      expect(getFileAvailability(parentMetaPath).isCloudPlaceholder).toBe(
+        false,
+      )
+      expect(getFileAvailability(childMetaPath).isCloudPlaceholder).toBe(false)
+      expect(fs.readFileSync(parentMetaPath, 'utf8')).not.toBe(beforeMetadata)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not exempt or overwrite descendant metadata placeholder after parent move', () => {
+    const notesRoot = path.join(tempVaultPath, 'notes')
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockFolderMetadataAsZeroBlocks()
+
+    try {
+      const storage = createNotesFoldersStorage()
+      const destination = storage.createFolder({ name: 'Destination' })
+      const parent = storage.createFolder({ name: 'Parent' })
+      storage.createFolder({ name: 'Child', parentId: parent.id })
+      const parentMetaPath = path.join(notesRoot, 'Parent', '.meta.yaml')
+      const childSourcePath = path.join(
+        notesRoot,
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+
+      makeSparsePlaceholder(childSourcePath)
+      resetCloudFileExemptions()
+      markAppWrittenFileAsLocal(parentMetaPath)
+      const placeholderBefore = fs.readFileSync(childSourcePath)
+      const childTargetPath = path.join(
+        notesRoot,
+        'Destination',
+        'Parent',
+        'Child',
+        '.meta.yaml',
+      )
+      vi.mocked(enqueueCloudDownload).mockClear()
+
+      storage.updateFolder(parent.id, { parentId: destination.id })
+
+      expect(fs.readFileSync(childTargetPath)).toEqual(placeholderBefore)
+      expect(getFileAvailability(childTargetPath).isCloudPlaceholder).toBe(
+        true,
+      )
+      expect(enqueueCloudDownload).toHaveBeenCalledWith(childTargetPath)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
   })
 })

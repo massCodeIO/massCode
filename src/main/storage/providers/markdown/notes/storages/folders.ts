@@ -9,6 +9,10 @@ import { scheduleDockBadgeRefresh } from '../../../../../dockBadge'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
 import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
+import {
   assertEntityFileWritable,
   throwCloudContentUnavailable,
 } from '../../runtime/shared/cloudGuards'
@@ -38,6 +42,7 @@ import { rewriteBacklinksAfterFolderUpdate } from '../runtime/backlinks'
 import {
   getNotesPaths,
   META_DIR_NAME,
+  META_FILE_NAME,
   NOTES_RESERVED_ROOT_NAMES,
 } from '../runtime/constants'
 import { ensureNoteContentLoaded, persistNote } from '../runtime/notes'
@@ -248,7 +253,40 @@ export function createNotesFoldersStorage(): NotesFoldersStorage {
             oldPath,
           )
 
+          const affectedFolderIds = collectDescendantIds(state.folders, id)
+          affectedFolderIds.add(id)
+          const localMetadataTargetPaths: string[] = []
+
+          for (const folderId of affectedFolderIds) {
+            const oldFolderPath = oldFolderPathMap.get(folderId)
+            const newFolderPath = newFolderPathMap.get(folderId)
+            if (
+              !oldFolderPath
+              || !newFolderPath
+              || oldFolderPath === newFolderPath
+            ) {
+              continue
+            }
+
+            const sourceMetadataPath = path.join(
+              paths.notesRoot,
+              oldFolderPath,
+              META_FILE_NAME,
+            )
+            const sourceAvailability = getFileAvailability(sourceMetadataPath)
+            if (
+              sourceAvailability.exists
+              && !sourceAvailability.isCloudPlaceholder
+            ) {
+              localMetadataTargetPaths.push(
+                path.join(paths.notesRoot, newFolderPath, META_FILE_NAME),
+              )
+            }
+          }
+
           moveFolderDirectoryOnDisk(paths.notesRoot, oldPath, newPath)
+
+          localMetadataTargetPaths.forEach(markAppWrittenFileAsLocal)
 
           updateChildEntityPaths({
             entries: notes,

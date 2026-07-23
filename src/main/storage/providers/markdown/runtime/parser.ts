@@ -20,7 +20,10 @@ import {
   NEW_LINE_SPLIT_RE,
 } from './constants'
 import { rememberAppFileChange } from './shared/appChanges'
-import { getFileAvailability } from './shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from './shared/cloudFiles'
 import {
   isYamlFileCloudUnavailable,
   readYamlObjectFile,
@@ -69,6 +72,7 @@ export function readFolderMetadata(
 
   try {
     writeYamlObjectFile(metaPath, migrated as Record<string, unknown>)
+    markAppWrittenFileAsLocal(metaPath)
     fs.removeSync(legacyPath)
     rememberAppFileChange(metaPath)
     rememberAppFileChange(legacyPath)
@@ -145,6 +149,7 @@ export function writeFolderMetadataFile(
 
   fs.ensureDirSync(folderAbsPath)
   fs.writeFileSync(metaPath, nextContent, 'utf8')
+  markAppWrittenFileAsLocal(metaPath)
   rememberAppFileChange(metaPath)
 
   // Clean up legacy file if it exists

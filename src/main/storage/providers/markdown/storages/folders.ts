@@ -16,6 +16,7 @@ import {
   getRuntimeCache,
   getVaultPath,
   isCodeVaultDiskReady,
+  META_FILE_NAME,
   normalizeDirectoryPath,
   normalizeFlag,
   persistSnippet,
@@ -25,7 +26,10 @@ import {
   throwStorageError,
   validateEntryName,
 } from '../runtime'
-import { getFileAvailability } from '../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../runtime/shared/cloudFiles'
 import {
   applyFolderParentAndOrder,
   assertFolderMoveTargetValid,
@@ -211,14 +215,40 @@ export function createFoldersStorage(): FoldersStorage {
           oldFolderPath,
         )
 
+        const affectedFolderIds = collectDescendantIds(state.folders, id)
+        affectedFolderIds.add(id)
+        const localMetadataTargetPaths: string[] = []
+
+        for (const folderId of affectedFolderIds) {
+          const oldPath = oldFolderPathMap.get(folderId)
+          const newPath = newFolderPathMap.get(folderId)
+          if (!oldPath || !newPath || oldPath === newPath) {
+            continue
+          }
+
+          const sourceMetadataPath = path.join(
+            paths.vaultPath,
+            oldPath,
+            META_FILE_NAME,
+          )
+          const sourceAvailability = getFileAvailability(sourceMetadataPath)
+          if (
+            sourceAvailability.exists
+            && !sourceAvailability.isCloudPlaceholder
+          ) {
+            localMetadataTargetPaths.push(
+              path.join(paths.vaultPath, newPath, META_FILE_NAME),
+            )
+          }
+        }
+
         moveFolderDirectoryOnDisk(
           paths.vaultPath,
           oldFolderPath,
           newFolderPath,
         )
 
-        const affectedFolderIds = collectDescendantIds(state.folders, id)
-        affectedFolderIds.add(id)
+        localMetadataTargetPaths.forEach(markAppWrittenFileAsLocal)
 
         updateChildEntityPaths({
           entries: snippets,

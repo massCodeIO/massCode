@@ -12,8 +12,13 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
 import {
   assertEntityFileWritable,
   throwCloudContentUnavailable,
@@ -47,6 +52,7 @@ import {
 import {
   ensureRequestDetailsLoaded,
   writeRequestFile,
+  writeVerifiedMovedLocalRequestFile,
 } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
@@ -79,13 +85,15 @@ function getUniqueRootRequestPath(
   state: HttpState,
   name: string,
   currentFilePath: string,
+  reservedPaths?: Set<string>,
 ): string {
   const targetPath = `${name}.md`
   const targetAbsolutePath = path.join(httpRoot, targetPath)
   const currentAbsolutePath = path.join(httpRoot, currentFilePath)
 
   if (
-    !fs.pathExistsSync(targetAbsolutePath)
+    (!fs.pathExistsSync(targetAbsolutePath)
+      && !reservedPaths?.has(targetPath.toLowerCase()))
     || targetAbsolutePath.toLowerCase() === currentAbsolutePath.toLowerCase()
   ) {
     return targetPath
@@ -95,7 +103,10 @@ function getUniqueRootRequestPath(
     const candidatePath = `${name} ${suffix}.md`
     const candidateAbsolutePath = path.join(httpRoot, candidatePath)
 
-    if (!fs.pathExistsSync(candidateAbsolutePath)) {
+    if (
+      !fs.pathExistsSync(candidateAbsolutePath)
+      && !reservedPaths?.has(candidatePath.toLowerCase())
+    ) {
       return candidatePath
     }
   }
@@ -107,35 +118,45 @@ function moveRequestToTrash(
   httpRoot: string,
   state: HttpState,
   record: HttpRequestRecord,
+  nextFilePath: string,
+  sourceFileVerifiedLocal: boolean,
 ): void {
   const previousFilePath = record.filePath
-  const nextFilePath = getUniqueRootRequestPath(
-    httpRoot,
-    state,
-    record.name,
-    previousFilePath,
-  )
   const previousAbsolutePath = path.join(httpRoot, previousFilePath)
   const nextAbsolutePath = path.join(httpRoot, nextFilePath)
+
+  if (nextFilePath === previousFilePath) {
+    throw new Error('REQUEST_FILE_MOVE_FAILED:trash path did not change')
+  }
+
+  if (sourceFileVerifiedLocal) {
+    fs.moveSync(previousAbsolutePath, nextAbsolutePath, { overwrite: false })
+  }
+  else if (
+    fs.pathExistsSync(previousAbsolutePath)
+    || fs.pathExistsSync(nextAbsolutePath)
+  ) {
+    throw new Error(
+      'REQUEST_FILE_MOVE_FAILED:path appeared after missing-source preflight',
+    )
+  }
 
   record.folderId = null
   record.isDeleted = 1
   record.updatedAt = Date.now()
+  record.filePath = nextFilePath
 
-  if (nextFilePath !== previousFilePath) {
-    fs.ensureDirSync(path.dirname(nextAbsolutePath))
-    if (fs.pathExistsSync(previousAbsolutePath)) {
-      fs.moveSync(previousAbsolutePath, nextAbsolutePath, { overwrite: false })
-    }
-    record.filePath = nextFilePath
-
-    const indexEntry = state.requests.find(entry => entry.id === record.id)
-    if (indexEntry) {
-      indexEntry.filePath = nextFilePath
-    }
+  const indexEntry = state.requests.find(entry => entry.id === record.id)
+  if (indexEntry) {
+    indexEntry.filePath = nextFilePath
   }
 
-  writeRequestFile(httpRoot, record)
+  if (sourceFileVerifiedLocal) {
+    writeVerifiedMovedLocalRequestFile(httpRoot, record)
+  }
+  else {
+    writeRequestFile(httpRoot, record)
+  }
 }
 
 export function createHttpFoldersStorage(): HttpFoldersStorage {
@@ -308,6 +329,32 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
             oldPath,
           )
 
+          const verifiedLocalRequestIds = new Set<number>()
+          for (const record of cache.requestById.values()) {
+            const nextRequestPath = replaceSubtreePathPrefix(
+              record.filePath,
+              oldPath,
+              newPath,
+            )
+            if (nextRequestPath === record.filePath) {
+              continue
+            }
+
+            const absolutePath = path.join(paths.httpRoot, record.filePath)
+            const availability = getFileAvailability(absolutePath)
+            if (
+              record.pendingCloudDownload
+              || availability.isCloudPlaceholder
+            ) {
+              record.pendingCloudDownload = true
+              continue
+            }
+
+            if (availability.exists) {
+              verifiedLocalRequestIds.add(record.id)
+            }
+          }
+
           moveFolderDirectoryOnDisk(paths.httpRoot, oldPath, newPath)
 
           updateChildEntityPaths({
@@ -318,6 +365,13 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
               const indexEntry = state.requests.find(r => r.id === record.id)
               if (indexEntry) {
                 indexEntry.filePath = nextPath
+              }
+              const nextAbsolutePath = path.join(paths.httpRoot, nextPath)
+              if (verifiedLocalRequestIds.has(record.id)) {
+                markAppWrittenFileAsLocal(nextAbsolutePath)
+              }
+              else if (record.pendingCloudDownload) {
+                enqueueCloudDownload(nextAbsolutePath)
               }
             },
           })
@@ -365,10 +419,10 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
       // Trash-маркер запроса — frontmatter isDeleted, а не путь: перенос
       // недокачанного файла без перезаписи frontmatter «воскресил» бы запрос
       // после докачки. Preflight выполняется до первой мутации в две фазы:
-      // сначала eager-дочитка body/description всех записей, затем свежий
-      // stat всех файлов (флаг pendingCloudDownload мог устареть после
-      // eviction) — так окно между проверкой и мутацией не растягивается на
-      // гидрацию соседей.
+      // сначала eager-дочитка body/description всех записей, затем свежая
+      // availability-проверка всех файлов (флаг pendingCloudDownload мог
+      // устареть после eviction) — так окно между проверкой и мутацией не
+      // растягивается на гидрацию соседей.
       const affectedRecords = [...cache.requestById.values()].filter(
         record =>
           record.folderId !== null && descendantIds.has(record.folderId),
@@ -396,17 +450,49 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         new Set(affectedRecords.map(record => record.filePath)),
       )
 
+      const reservedTargetPaths = new Set<string>()
+      const trashPlans: {
+        nextFilePath: string
+        record: HttpRequestRecord
+        sourceFileVerifiedLocal: boolean
+      }[] = []
       for (const record of affectedRecords) {
-        assertEntityFileWritable(
-          path.join(paths.httpRoot, record.filePath),
-          record,
+        const absolutePath = path.join(paths.httpRoot, record.filePath)
+        assertEntityFileWritable(absolutePath, record)
+        const availability = getFileAvailability(absolutePath)
+        if (
+          availability.exists
+          && (!availability.stats || !availability.stats.isFile())
+        ) {
+          throw new Error(
+            'REQUEST_FILE_MOVE_FAILED:source is not a regular file',
+          )
+        }
+
+        const nextFilePath = getUniqueRootRequestPath(
+          paths.httpRoot,
+          state,
+          record.name,
+          record.filePath,
+          reservedTargetPaths,
         )
+        reservedTargetPaths.add(nextFilePath.toLowerCase())
+        trashPlans.push({
+          nextFilePath,
+          record,
+          sourceFileVerifiedLocal:
+            availability.exists && !availability.isCloudPlaceholder,
+        })
       }
 
-      for (const record of cache.requestById.values()) {
-        if (record.folderId !== null && descendantIds.has(record.folderId)) {
-          moveRequestToTrash(paths.httpRoot, state, record)
-        }
+      for (const plan of trashPlans) {
+        moveRequestToTrash(
+          paths.httpRoot,
+          state,
+          plan.record,
+          plan.nextFilePath,
+          plan.sourceFileVerifiedLocal,
+        )
       }
 
       removeFolderPathsFromDisk(paths.httpRoot, folderPathsToDelete, {

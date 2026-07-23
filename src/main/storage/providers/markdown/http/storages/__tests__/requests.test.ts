@@ -5,14 +5,44 @@ import yaml from 'js-yaml'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stateContentCacheByPath } from '../../../runtime/cache'
-import { setDatalessProbeForTests } from '../../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../../../runtime/shared/cloudFiles'
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
 import { getHttpPaths } from '../../runtime/paths'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
+import { createHttpFoldersStorage } from '../folders'
 import { createHttpRequestsStorage } from '../requests'
 
 let tempVaultPath = ''
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockMarkdownFilesAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.md')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -94,10 +124,263 @@ describe('http requests storage', () => {
 
   afterEach(() => {
     setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
     resetHttpRuntimeCache()
     fs.removeSync(tempVaultPath)
     tempVaultPath = ''
     vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  it('updates and renames an app-written resident zero-block request', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    setDatalessProbeForTests((_absolutePath, stats) => stats.size === 4096)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+
+    try {
+      const storage = createHttpRequestsStorage()
+      const { id } = storage.createRequest({ name: 'Resident' })
+      const sourcePath = path.join(paths.httpRoot, 'Resident.md')
+
+      expect(() =>
+        storage.updateRequest(id, {
+          body: 'resident body',
+          bodyType: 'text',
+        }),
+      ).not.toThrow()
+      const sourceIdentity = fs.lstatSync(sourcePath, { bigint: true })
+      expect(() =>
+        storage.updateRequest(id, { name: 'Resident Renamed' }),
+      ).not.toThrow()
+
+      const targetPath = path.join(paths.httpRoot, 'Resident Renamed.md')
+      const targetIdentity = fs.lstatSync(targetPath, { bigint: true })
+      expect(targetIdentity.dev).toBe(sourceIdentity.dev)
+      expect(targetIdentity.ino).toBe(sourceIdentity.ino)
+      expect(fs.readFileSync(targetPath, 'utf8')).toContain('resident body')
+      expect(getFileAvailability(targetPath).isCloudPlaceholder).toBe(false)
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not mark a trusted move when destination read fails', async () => {
+    const paths = getHttpPaths(tempVaultPath)
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Read Source' })
+    const targetPath = path.join(paths.httpRoot, 'Read Target.md')
+    const cloudFiles = await import('../../../runtime/shared/cloudFiles')
+    const markSpy = vi.spyOn(cloudFiles, 'markAppWrittenFileAsLocal')
+    const readFileSync = fs.readFileSync.bind(fs)
+    const readSpy = vi
+      .spyOn(fs, 'readFileSync')
+      .mockImplementation(
+        (filePath, options?: Parameters<typeof fs.readFileSync>[1]) => {
+          if (filePath === targetPath) {
+            throw new Error('trusted destination read failed')
+          }
+          return readFileSync(filePath, options as never) as never
+        },
+      )
+
+    try {
+      expect(() => storage.updateRequest(id, { name: 'Read Target' })).toThrow(
+        'trusted destination read failed',
+      )
+      expect(markSpy).not.toHaveBeenCalled()
+      expect(fs.pathExistsSync(targetPath)).toBe(true)
+    }
+    finally {
+      readSpy.mockRestore()
+      markSpy.mockRestore()
+      statSpy.mockRestore()
+    }
+  })
+
+  it('does not mark a trusted move when destination write fails', async () => {
+    const paths = getHttpPaths(tempVaultPath)
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Write Source' })
+    const targetPath = path.join(paths.httpRoot, 'Write Target.md')
+    const cloudFiles = await import('../../../runtime/shared/cloudFiles')
+    const markSpy = vi.spyOn(cloudFiles, 'markAppWrittenFileAsLocal')
+    const writeFileSync = fs.writeFileSync.bind(fs)
+    const writeSpy = vi
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation((filePath, data, options?) => {
+        if (filePath === targetPath) {
+          throw new Error('trusted destination write failed')
+        }
+        return writeFileSync(filePath, data, options as never)
+      })
+
+    try {
+      expect(() => storage.updateRequest(id, { name: 'Write Target' })).toThrow(
+        'trusted destination write failed',
+      )
+      expect(markSpy).not.toHaveBeenCalled()
+      expect(fs.pathExistsSync(targetPath)).toBe(true)
+    }
+    finally {
+      writeSpy.mockRestore()
+      markSpy.mockRestore()
+      statSpy.mockRestore()
+    }
+  })
+
+  it('keeps a genuine placeholder unchanged when update or rename is attempted', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Cloud Placeholder' })
+    const record = getHttpRuntimeCache(paths).requestById.get(id)!
+    const sourcePath = path.join(paths.httpRoot, record.filePath)
+    const targetPath = path.join(paths.httpRoot, 'Renamed Placeholder.md')
+
+    makeSparsePlaceholder(sourcePath)
+    resetCloudFileExemptions()
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+    const sourceBefore = fs.readFileSync(sourcePath)
+
+    try {
+      expect(() =>
+        storage.updateRequest(id, { description: 'must not be written' }),
+      ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+      expect(() =>
+        storage.updateRequest(id, { name: 'Renamed Placeholder' }),
+      ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+
+      expect(fs.readFileSync(sourcePath)).toEqual(sourceBefore)
+      expect(fs.pathExistsSync(targetPath)).toBe(false)
+      expect(storage.getRequests().find(item => item.id === id)?.name).toBe(
+        'Cloud Placeholder',
+      )
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('creates the resolved target when a rename source is missing', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    const folders = createHttpFoldersStorage()
+    const storage = createHttpRequestsStorage()
+    const folder = folders.createFolder({ name: 'Target Folder' })
+    const { id } = storage.createRequest({ name: 'Missing Source' })
+    const record = getHttpRuntimeCache(paths).requestById.get(id)!
+    const sourcePath = path.join(paths.httpRoot, record.filePath)
+    const expectedFilePath = 'Target Folder/Missing Renamed.md'
+    const targetPath = path.join(paths.httpRoot, expectedFilePath)
+
+    fs.removeSync(sourcePath)
+
+    expect(() =>
+      storage.updateRequest(id, {
+        folderId: folder.id,
+        name: 'Missing Renamed',
+      }),
+    ).not.toThrow()
+
+    const cache = getHttpRuntimeCache(paths)
+    const updated = cache.requestById.get(id)!
+    const indexEntry = cache.state.requests.find(item => item.id === id)
+    expect(fs.pathExistsSync(sourcePath)).toBe(false)
+    expect(fs.pathExistsSync(targetPath)).toBe(true)
+    expect(updated.name).toBe('Missing Renamed')
+    expect(updated.folderId).toBe(folder.id)
+    expect(updated.filePath).toBe(expectedFilePath)
+    expect(indexEntry?.filePath).toBe(expectedFilePath)
+  })
+
+  it('does not move a source that appears after missing-source preflight', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Late Source' })
+    const cache = getHttpRuntimeCache(paths)
+    const record = cache.requestById.get(id)!
+    const indexEntry = cache.state.requests.find(item => item.id === id)!
+    const sourcePath = path.join(paths.httpRoot, record.filePath)
+    const targetPath = path.join(paths.httpRoot, 'Must Not Move.md')
+    const originalPath = record.filePath
+    const recordBefore = { ...record }
+    const pathExistsSync = fs.pathExistsSync.bind(fs)
+    let injected = false
+
+    fs.removeSync(sourcePath)
+    const existsSpy = vi
+      .spyOn(fs, 'pathExistsSync')
+      .mockImplementation((filePath) => {
+        if (!injected && filePath === sourcePath) {
+          injected = true
+          fs.writeFileSync(sourcePath, 'late source', 'utf8')
+          return true
+        }
+        return pathExistsSync(filePath)
+      })
+
+    try {
+      expect(() =>
+        storage.updateRequest(id, { name: 'Must Not Move' }),
+      ).toThrow(
+        'REQUEST_FILE_MOVE_FAILED:source appeared after missing-source preflight',
+      )
+
+      expect(fs.readFileSync(sourcePath, 'utf8')).toBe('late source')
+      expect(fs.pathExistsSync(targetPath)).toBe(false)
+      expect(record).toEqual(recordBefore)
+      expect(indexEntry.filePath).toBe(originalPath)
+    }
+    finally {
+      existsSpy.mockRestore()
+    }
+  })
+
+  it('keeps record and index unchanged when a missing-source target appears', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Late Target Source' })
+    const cache = getHttpRuntimeCache(paths)
+    const record = cache.requestById.get(id)!
+    const indexEntry = cache.state.requests.find(item => item.id === id)!
+    const sourcePath = path.join(paths.httpRoot, record.filePath)
+    const targetPath = path.join(paths.httpRoot, 'Late Target.md')
+    const originalPath = record.filePath
+    const recordBefore = { ...record }
+    const pathExistsSync = fs.pathExistsSync.bind(fs)
+    let targetChecks = 0
+
+    fs.removeSync(sourcePath)
+    const existsSpy = vi
+      .spyOn(fs, 'pathExistsSync')
+      .mockImplementation((filePath) => {
+        if (filePath === targetPath) {
+          targetChecks += 1
+          if (targetChecks === 2) {
+            fs.writeFileSync(targetPath, 'late target', 'utf8')
+            return true
+          }
+        }
+        return pathExistsSync(filePath)
+      })
+
+    try {
+      expect(() => storage.updateRequest(id, { name: 'Late Target' })).toThrow(
+        'REQUEST_FILE_MOVE_FAILED:target appeared after missing-source preflight',
+      )
+
+      expect(fs.pathExistsSync(sourcePath)).toBe(false)
+      expect(fs.readFileSync(targetPath, 'utf8')).toBe('late target')
+      expect(record).toEqual(recordBefore)
+      expect(indexEntry.filePath).toBe(originalPath)
+    }
+    finally {
+      existsSpy.mockRestore()
+    }
   })
 
   // Два ресинка: первый скан дозаполняет индекс метаданных, второй строит

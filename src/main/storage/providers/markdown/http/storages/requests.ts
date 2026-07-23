@@ -15,6 +15,7 @@ import fs from 'fs-extra'
 import { prioritizeCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
+import { getFileAvailability } from '../../runtime/shared/cloudFiles'
 import {
   assertEntityFileWritable,
   markEntityPendingIfEvicted,
@@ -32,6 +33,7 @@ import {
 import {
   ensureRequestDetailsLoaded,
   writeRequestFile,
+  writeVerifiedMovedLocalRequestFile,
 } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
 import { saveHttpState } from '../runtime/state'
@@ -77,19 +79,20 @@ function moveRequestFile(
   httpRoot: string,
   oldFilePath: string,
   newFilePath: string,
-): void {
+): boolean {
   if (oldFilePath === newFilePath) {
-    return
+    return false
   }
 
   const oldAbsolutePath = path.join(httpRoot, oldFilePath)
   if (!fs.pathExistsSync(oldAbsolutePath)) {
-    return
+    return false
   }
 
   const newAbsolutePath = path.join(httpRoot, newFilePath)
   fs.ensureDirSync(path.dirname(newAbsolutePath))
   fs.moveSync(oldAbsolutePath, newAbsolutePath, { overwrite: false })
+  return true
 }
 
 function getUniqueRequestFilePath(
@@ -337,6 +340,9 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       const previousFilePath = record.filePath
       const previousName = record.name
       const previousFolderId = record.folderId
+      let moved = false
+      let resolvedPath = previousFilePath
+      let sourceFileVerifiedLocal = false
 
       const nextFolderId
         = input.folderId !== undefined
@@ -376,8 +382,60 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         )
       }
 
+      if (previousName !== nextName || previousFolderId !== nextFolderId) {
+        const targetPath = buildRequestFilePath(state, nextFolderId, nextName)
+        resolvedPath = getUniqueRequestFilePath(
+          paths.httpRoot,
+          targetPath,
+          previousFilePath,
+        )
+      }
+
+      if (resolvedPath !== previousFilePath) {
+        const previousAbsolutePath = path.join(
+          paths.httpRoot,
+          previousFilePath,
+        )
+        assertEntityFileWritable(previousAbsolutePath, record)
+        const sourceAvailability = getFileAvailability(previousAbsolutePath)
+        sourceFileVerifiedLocal
+          = sourceAvailability.exists && !sourceAvailability.isCloudPlaceholder
+
+        if (sourceFileVerifiedLocal) {
+          moved = moveRequestFile(
+            paths.httpRoot,
+            previousFilePath,
+            resolvedPath,
+          )
+          if (!moved) {
+            throw new Error(
+              'REQUEST_FILE_MOVE_FAILED:verified source disappeared before move',
+            )
+          }
+        }
+        else {
+          const resolvedAbsolutePath = path.join(paths.httpRoot, resolvedPath)
+          if (fs.pathExistsSync(previousAbsolutePath)) {
+            throw new Error(
+              'REQUEST_FILE_MOVE_FAILED:source appeared after missing-source preflight',
+            )
+          }
+          if (fs.pathExistsSync(resolvedAbsolutePath)) {
+            throw new Error(
+              'REQUEST_FILE_MOVE_FAILED:target appeared after missing-source preflight',
+            )
+          }
+        }
+      }
+
       record.name = nextName
       record.folderId = nextFolderId
+      if (
+        resolvedPath !== previousFilePath
+        && path.posix.basename(resolvedPath, '.md') !== record.name
+      ) {
+        record.name = path.posix.basename(resolvedPath, '.md')
+      }
       if (input.isDeleted !== undefined)
         record.isDeleted = normalizeFlag(input.isDeleted)
       if (input.isFavorites !== undefined)
@@ -403,36 +461,21 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
 
       record.updatedAt = Date.now()
 
-      if (
-        previousName !== record.name
-        || previousFolderId !== record.folderId
-      ) {
-        const targetPath = buildRequestFilePath(
-          state,
-          record.folderId,
-          record.name,
-        )
-        const resolvedPath = getUniqueRequestFilePath(
-          paths.httpRoot,
-          targetPath,
-          previousFilePath,
-        )
-        if (resolvedPath !== targetPath) {
-          record.name = path.posix.basename(resolvedPath, '.md')
-        }
+      if (resolvedPath !== previousFilePath) {
+        record.filePath = resolvedPath
 
-        if (resolvedPath !== previousFilePath) {
-          moveRequestFile(paths.httpRoot, previousFilePath, resolvedPath)
-          record.filePath = resolvedPath
-
-          const indexEntry = state.requests.find(entry => entry.id === id)
-          if (indexEntry) {
-            indexEntry.filePath = resolvedPath
-          }
+        const indexEntry = state.requests.find(entry => entry.id === id)
+        if (indexEntry) {
+          indexEntry.filePath = resolvedPath
         }
       }
 
-      writeRequestFile(paths.httpRoot, record)
+      if (moved && sourceFileVerifiedLocal) {
+        writeVerifiedMovedLocalRequestFile(paths.httpRoot, record)
+      }
+      else {
+        writeRequestFile(paths.httpRoot, record)
+      }
       saveHttpState(paths, state)
 
       return { invalidInput: false, notFound: false }

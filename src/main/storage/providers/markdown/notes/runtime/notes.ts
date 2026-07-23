@@ -18,7 +18,10 @@ import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
 import { splitFrontmatter } from '../../runtime/parser'
 import { rememberAppFileChange } from '../../runtime/shared/appChanges'
-import { getFileAvailability } from '../../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../../runtime/shared/cloudFiles'
 import { throwCloudContentUnavailable } from '../../runtime/shared/cloudGuards'
 import {
   getCachedDirectoryEntries,
@@ -565,12 +568,18 @@ export function readNoteFromFile(
 // Возвращает false, только если запись пропущена из-за недокачанного файла
 // (возможно лишь при skipIfUnavailable): вызывающий может переотложить
 // операцию вместо потери правки.
+const trustedMovedLocalWrite = Symbol('trusted-moved-local-write')
+
 export function writeNoteToFile(
   paths: NotesPaths,
   note: MarkdownNote,
-  options?: { skipIfUnavailable?: boolean },
+  options?: {
+    skipIfUnavailable?: boolean
+    [trustedMovedLocalWrite]?: true
+  },
 ): boolean {
   const absolutePath = path.join(paths.notesRoot, note.filePath)
+  const canWriteMovedLocalFile = options?.[trustedMovedLocalWrite] === true
 
   // Запись в плейсхолдер уничтожила бы ещё не скачанное облачное
   // содержимое, поэтому она запрещена: файл сначала докачивается в фоне.
@@ -578,13 +587,28 @@ export function writeNoteToFile(
   // правку, которую докачка затем молча перезапишет облачным содержимым.
   // Пропуск допустим только там, где запись — необязательный write-back
   // (scan, move, bulk-очистка тегов) или переоткладываемый rewrite ссылок.
-  const availability = getFileAvailability(absolutePath)
-  if (note.pendingCloudDownload || availability.isCloudPlaceholder) {
+  if (note.pendingCloudDownload) {
     enqueueCloudDownload(absolutePath)
     if (options?.skipIfUnavailable) {
       return false
     }
     throwCloudContentUnavailable()
+  }
+
+  const availability = canWriteMovedLocalFile
+    ? null
+    : getFileAvailability(absolutePath)
+
+  if (availability?.isCloudPlaceholder) {
+    enqueueCloudDownload(absolutePath)
+    if (options?.skipIfUnavailable) {
+      return false
+    }
+    throwCloudContentUnavailable()
+  }
+
+  if (canWriteMovedLocalFile) {
+    markAppWrittenFileAsLocal(absolutePath)
   }
 
   // Ленивая запись (тело ещё не дочитано из индекса): content дочитывается
@@ -598,9 +622,12 @@ export function writeNoteToFile(
 
   const nextContent = serializeNote(note)
 
-  if (availability.exists) {
+  if (canWriteMovedLocalFile || availability?.exists) {
     const currentContent = fs.readFileSync(absolutePath, 'utf8')
     if (currentContent === nextContent) {
+      if (canWriteMovedLocalFile) {
+        markAppWrittenFileAsLocal(absolutePath)
+      }
       return true
     }
   }
@@ -608,6 +635,7 @@ export function writeNoteToFile(
   fs.ensureDirSync(path.dirname(absolutePath))
   fs.writeFileSync(absolutePath, nextContent, 'utf8')
   rememberAppFileChange(absolutePath)
+  markAppWrittenFileAsLocal(absolutePath)
 
   return true
 }
@@ -782,6 +810,7 @@ export function persistNote(
   }
 
   const resolvedAbsolutePath = path.join(paths.notesRoot, resolvedPath)
+  let moved = false
 
   // Move file if path changed
   if (currentFilePath && currentFilePath !== resolvedPath) {
@@ -791,6 +820,7 @@ export function persistNote(
       fs.moveSync(currentAbsolutePath, resolvedAbsolutePath, {
         overwrite: false,
       })
+      moved = true
       rememberAppFileChange(currentAbsolutePath)
       rememberAppFileChange(resolvedAbsolutePath)
       removeDirectoryEntryFromCache(
@@ -815,6 +845,9 @@ export function persistNote(
   // Write content
   writeNoteToFile(paths, note, {
     skipIfUnavailable: options?.skipWriteIfUnavailable,
+    ...(moved && options?.sourceFileVerifiedLocal
+      ? { [trustedMovedLocalWrite]: true as const }
+      : {}),
   })
   upsertDirectoryEntryInCache(
     path.dirname(resolvedAbsolutePath),

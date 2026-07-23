@@ -175,6 +175,9 @@ export interface PersistNoteOptions {
   allowRenameOnConflict?: boolean
   directoryEntriesCache?: Map<string, string[]>
   folderPathMap?: Map<number, string>
+  // Каллер проверил source до мутации и move: после переноса runtime может
+  // безопасно выполнить одну запись resident/zero-block файла по новому пути.
+  sourceFileVerifiedLocal?: boolean
   // Move-пути (перенос в trash при удалении папки): файл-плейсхолдер уже
   // перемещён, а перезапись frontmatter не обязательна и не должна валить
   // всю операцию.

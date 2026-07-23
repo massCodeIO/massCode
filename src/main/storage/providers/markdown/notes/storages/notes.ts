@@ -431,6 +431,8 @@ export function createNotesNotesStorage(): NotesStorage {
       if (updateResult.pathMayChange) {
         persistNote(paths, state, note, previousFilePath, {
           allowRenameOnConflict: true,
+          // assertEntityFileWritable выше уже проверил source до mutation.
+          sourceFileVerifiedLocal: true,
         })
       }
       else {

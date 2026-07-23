@@ -3,6 +3,10 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+  resetCloudFileExemptions,
+  setDatalessProbeForTests,
+} from '../../../runtime/shared/cloudFiles'
 import { getNotesPaths } from '../../runtime/constants'
 import { ensureNotesStateFile } from '../../runtime/state'
 import {
@@ -14,6 +18,31 @@ import { createNotesFoldersStorage } from '../folders'
 import { createNotesNotesStorage } from '../notes'
 
 let tempVaultPath = ''
+
+function makeSparsePlaceholder(absolutePath: string, size = 4096): void {
+  fs.removeSync(absolutePath)
+  const fd = fs.openSync(absolutePath, 'w')
+  fs.ftruncateSync(fd, size)
+  fs.closeSync(fd)
+}
+
+function mockMarkdownFilesAsZeroBlocks() {
+  const statSync = fs.statSync.bind(fs)
+
+  return vi.spyOn(fs, 'statSync').mockImplementation((filePath) => {
+    const stats = statSync(filePath)
+
+    if (
+      typeof filePath === 'string'
+      && filePath.endsWith('.md')
+      && stats.size > 0
+    ) {
+      return Object.assign(stats, { blocks: 0 })
+    }
+
+    return stats
+  })
+}
 
 vi.mock('electron-store', () => {
   class MockStore {
@@ -63,6 +92,9 @@ vi.mock('electron', () => ({
   app: {
     getPath: () => os.tmpdir(),
   },
+  BrowserWindow: {
+    getAllWindows: () => [],
+  },
 }))
 
 vi.mock('../../../../../../store', () => ({
@@ -99,6 +131,9 @@ describe('notes storage validations', () => {
   })
 
   afterEach(() => {
+    setDatalessProbeForTests(null)
+    resetCloudFileExemptions()
+
     if (tempVaultPath) {
       fs.removeSync(tempVaultPath)
     }
@@ -109,6 +144,62 @@ describe('notes storage validations', () => {
     const { id } = storage.createNote({ name: 'Test Note' })
     const result = storage.updateNote(id, {})
     expect(result).toEqual({ invalidInput: true, notFound: false })
+  })
+
+  it('allows immediate content write and rename of an app-written resident file', () => {
+    const paths = getNotesPaths(tempVaultPath)
+    const targetPath = path.join(paths.notesRoot, '.masscode/inbox/Renamed.md')
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+
+    try {
+      const storage = createNotesNotesStorage()
+      const { id } = storage.createNote({ name: 'Resident' })
+
+      expect(() => storage.updateNoteContent(id, 'body')).not.toThrow()
+      expect(() => storage.updateNote(id, { name: 'Renamed' })).not.toThrow()
+
+      expect(fs.readFileSync(targetPath, 'utf8')).toContain('body')
+    }
+    finally {
+      statSpy.mockRestore()
+    }
+  })
+
+  it('keeps a cloud placeholder unchanged when content update or rename is attempted', () => {
+    const paths = getNotesPaths(tempVaultPath)
+    const storage = createNotesNotesStorage()
+    const { id } = storage.createNote({ name: 'Cloud Placeholder' })
+    const note = getNotesRuntimeCache(paths).notes.find(
+      note => note.id === id,
+    )!
+    const sourcePath = path.join(paths.notesRoot, note.filePath)
+    const targetPath = path.join(
+      paths.notesRoot,
+      '.masscode/inbox/Renamed Placeholder.md',
+    )
+
+    makeSparsePlaceholder(sourcePath)
+    resetCloudFileExemptions()
+    setDatalessProbeForTests(() => true)
+    const statSpy = mockMarkdownFilesAsZeroBlocks()
+    const sourceBefore = fs.readFileSync(sourcePath)
+
+    try {
+      expect(() =>
+        storage.updateNoteContent(id, 'must not be written'),
+      ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+      expect(() =>
+        storage.updateNote(id, { name: 'Renamed Placeholder' }),
+      ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+
+      expect(fs.readFileSync(sourcePath)).toEqual(sourceBefore)
+      expect(fs.pathExistsSync(targetPath)).toBe(false)
+      expect(storage.getNoteById(id)?.name).toBe('Cloud Placeholder')
+    }
+    finally {
+      statSpy.mockRestore()
+    }
   })
 
   // Два ресинка: первый скан дозаполняет индекс метаданных, второй строит

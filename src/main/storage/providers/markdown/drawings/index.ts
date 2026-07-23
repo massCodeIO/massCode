@@ -9,7 +9,10 @@ import {
   INVALID_NAME_CHARS_RE,
   WINDOWS_RESERVED_NAME_RE,
 } from '../runtime/constants'
-import { getFileAvailability } from '../runtime/shared/cloudFiles'
+import {
+  getFileAvailability,
+  markAppWrittenFileAsLocal,
+} from '../runtime/shared/cloudFiles'
 import { ensureSpaceDirectory, getSpaceDirPath } from '../runtime/spaces'
 
 export const DRAWING_FILE_EXTENSION = '.excalidraw'
@@ -211,6 +214,7 @@ export async function writeDrawing(
 
   rememberAppChange(filePath)
   await fs.writeFile(filePath, content, 'utf8')
+  markAppWrittenFileAsLocal(filePath)
 
   return { updatedAt: Date.now() }
 }
@@ -227,6 +231,7 @@ export async function createDrawing(
 
   rememberAppChange(filePath)
   await fs.writeFile(filePath, createEmptyDrawingContent(), 'utf8')
+  markAppWrittenFileAsLocal(filePath)
 
   return (await toDrawingRecord(filePath))!
 }
@@ -252,6 +257,7 @@ export async function renameDrawing(
   const targetPath = getDrawingFilePath(vaultPath, uniqueName)
   rememberAppChange(sourcePath)
   rememberAppChange(targetPath)
+  const sourceAvailability = getFileAvailability(sourcePath)
 
   if (uniqueName.toLowerCase() === id.toLowerCase()) {
     // Case-only rename: on case-insensitive filesystems fs.move treats
@@ -260,6 +266,10 @@ export async function renameDrawing(
   }
   else {
     await fs.move(sourcePath, targetPath)
+  }
+
+  if (sourceAvailability.exists && !sourceAvailability.isCloudPlaceholder) {
+    markAppWrittenFileAsLocal(targetPath)
   }
 
   return toDrawingRecord(targetPath)
@@ -278,7 +288,12 @@ export async function duplicateDrawing(
   const uniqueName = await getUniqueDrawingName(vaultPath, id)
   const targetPath = getDrawingFilePath(vaultPath, uniqueName)
   rememberAppChange(targetPath)
+  const sourceAvailability = getFileAvailability(sourcePath)
   await fs.copy(sourcePath, targetPath)
+
+  if (sourceAvailability.exists && !sourceAvailability.isCloudPlaceholder) {
+    markAppWrittenFileAsLocal(targetPath)
+  }
 
   return toDrawingRecord(targetPath)
 }

@@ -9,7 +9,7 @@ import {
 } from '../cache'
 import { STATE_WRITE_DEBOUNCE_MS } from '../constants'
 import { rememberAppFileChange } from './appChanges'
-import { getFileAvailability } from './cloudFiles'
+import { getFileAvailability, markAppWrittenFileAsLocal } from './cloudFiles'
 
 const CLOUD_STATE_FLUSH_RETRY_MS = 5_000
 
@@ -63,6 +63,7 @@ function flushPath(statePath: string): void {
     fs.ensureDirSync(path.dirname(statePath))
     fs.writeFileSync(statePath, pendingContent, 'utf8')
     rememberAppFileChange(statePath)
+    markAppWrittenFileAsLocal(statePath)
   }
 
   stateContentCacheByPath.set(statePath, pendingContent)

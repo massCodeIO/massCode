@@ -27,6 +27,7 @@
     "vaultLoaded": "Vault successfully loaded.",
     "licenseActivated": "License activated. Thank you for supporting massCode!",
     "noteExported": "Note exported successfully.",
+    "noteFolderSiteExported": "Notes folder exported as an HTML site.",
     "vaultDoctorApplied": "Vault Doctor applied {{count}} fixes.",
     "vaultDoctorClean": "Vault Doctor found no issues."
   },
@@ -59,7 +60,8 @@
     "entryNameFolderConflict": "A folder with this name already exists at this level.",
     "vaultPathRequired": "Vault path is required.",
     "licenseInvalid": "Invalid license key",
-    "noteExportFailed": "Failed to export note."
+    "noteExportFailed": "Failed to export note.",
+    "noteFolderSiteExportFailed": "Failed to export notes folder."
   },
   "description": {
     "storageVault": "Choose the vault directory. To sync between devices, select a folder in iCloud Drive, Google Drive or Dropbox.",

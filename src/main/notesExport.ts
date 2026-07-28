@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { BrowserWindow, dialog } from 'electron'
 import MarkdownIt from 'markdown-it'
+import { findInternalLinks } from '../shared/notes/internalLinks'
 import {
   getNotesPaths,
   resolveNotesAsset,
@@ -22,14 +23,66 @@ import {
 } from './storage/providers/markdown/runtime'
 
 type NotesAssetResolver = (fileName: string) => Promise<Response>
+type NoteAssetSourceBuilder = (
+  fileName: string,
+  response: Response,
+) => Promise<string | null>
 
-class NotesAssetTemporarilyUnavailableError extends Error {}
+export interface NoteHtmlBodyOptions {
+  drawingPreviews?: NoteExportDrawingPreview[]
+  drawingSource?: (id: string, svg: string) => string | null
+  internalLinkHref?: (target: string) => string | null
+  resolveAsset?: NotesAssetResolver
+  assetSource?: NoteAssetSourceBuilder
+  strictAssets?: boolean
+}
+
+export class NotesAssetTemporarilyUnavailableError extends Error {}
 
 const markdown = new MarkdownIt({
   html: false,
   linkify: true,
   typographer: false,
 })
+
+markdown.inline.ruler.before(
+  'emphasis',
+  'masscode-internal-link',
+  (state, silent) => {
+    const match = findInternalLinks(state.src.slice(state.pos))[0]
+    if (!match || match.from !== 0) {
+      return false
+    }
+
+    if (!silent) {
+      const token = state.push('masscode_internal_link', '', 0)
+      token.content = match.raw
+      token.meta = {
+        label: match.label,
+        target: match.target,
+      }
+    }
+    state.pos += match.to
+    return true
+  },
+)
+
+markdown.renderer.rules.masscode_internal_link = (tokens, index, _, env) => {
+  const token = tokens[index]
+  const meta = token.meta as { label: string, target: string }
+  const resolveHref = (
+    env as { internalLinkHref?: (target: string) => string | null }
+  ).internalLinkHref
+
+  if (!resolveHref) {
+    return escapeHtml(token.content)
+  }
+
+  const href = resolveHref(meta.target)
+  return href
+    ? `<a href="${escapeHtml(href)}">${escapeHtml(meta.label)}</a>`
+    : escapeHtml(meta.label)
+}
 
 const LEADING_FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 
@@ -38,7 +91,7 @@ const MAX_DRAWING_PREVIEWS = 50
 const MAX_DRAWING_PREVIEW_BYTES = 5 * 1024 * 1024
 const MAX_DRAWING_PREVIEWS_TOTAL_BYTES = 20 * 1024 * 1024
 
-const DOCUMENT_STYLES = `
+export const NOTE_DOCUMENT_STYLES = `
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
   body {
@@ -110,10 +163,14 @@ function escapeHtml(value: string): string {
   )
 }
 
-function renderMarkdownContent(content: string): string {
+function renderMarkdownContent(
+  content: string,
+  internalLinkHref?: (target: string) => string | null,
+): string {
+  const env = { internalLinkHref }
   const frontmatterMatch = content.match(LEADING_FRONTMATTER_RE)
   if (!frontmatterMatch) {
-    return markdown.render(content)
+    return markdown.render(content, env)
   }
 
   const [, frontmatter, body] = frontmatterMatch
@@ -121,7 +178,7 @@ function renderMarkdownContent(content: string): string {
 
   return [
     `<pre class="frontmatter"><code class="language-yaml">${escapeHtml(frontmatterSource)}</code></pre>`,
-    markdown.render(body),
+    markdown.render(body, env),
   ].join('\n')
 }
 
@@ -227,12 +284,32 @@ async function defaultAssetResolver(fileName: string): Promise<Response> {
   return resolveNotesAsset(fileName, getNotesPaths(getVaultPath()))
 }
 
+async function defaultAssetSource(
+  _fileName: string,
+  response: Response,
+): Promise<string | null> {
+  const mimeType = response.headers.get('content-type')
+  if (!mimeType?.startsWith('image/')) {
+    return null
+  }
+
+  return `data:${mimeType};base64,${Buffer.from(
+    await response.arrayBuffer(),
+  ).toString('base64')}`
+}
+
 async function embedManagedAssets(
   html: string,
   resolveAsset: NotesAssetResolver,
+  buildSource: NoteAssetSourceBuilder,
+  strict: boolean,
 ): Promise<string> {
   const sourcePattern = /\bsrc="masscode:\/\/notes-asset\/([^"]+)"/g
-  const matches = [...html.matchAll(sourcePattern)]
+  const matches = [
+    ...new Map(
+      [...html.matchAll(sourcePattern)].map(match => [match[0], match]),
+    ).values(),
+  ]
 
   await Promise.all(
     matches.map(async (match) => {
@@ -245,21 +322,29 @@ async function embedManagedAssets(
           )
         }
         if (!response.ok) {
+          if (strict) {
+            throw new Error(`Notes asset is unavailable: ${fileName}`)
+          }
           return
         }
 
-        const mimeType = response.headers.get('content-type')
-        if (!mimeType?.startsWith('image/')) {
+        const source = await buildSource(fileName, response)
+        if (!source) {
+          if (strict) {
+            throw new Error(
+              `Notes asset is not a supported image: ${fileName}`,
+            )
+          }
           return
         }
 
-        const dataUri = `data:${mimeType};base64,${Buffer.from(
-          await response.arrayBuffer(),
-        ).toString('base64')}`
-        html = html.replace(attribute, `src="${dataUri}"`)
+        html = html.replaceAll(attribute, `src="${escapeHtml(source)}"`)
       }
       catch (error) {
         if (error instanceof NotesAssetTemporarilyUnavailableError) {
+          throw error
+        }
+        if (strict) {
           throw error
         }
         // A missing or unavailable asset must not prevent exporting the note.
@@ -270,7 +355,7 @@ async function embedManagedAssets(
   return html
 }
 
-function isSafeDrawingSvg(svg: string): boolean {
+export function isSafeDrawingSvg(svg: string): boolean {
   if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg\b/i.test(svg)) {
     return false
   }
@@ -287,6 +372,7 @@ function isSafeDrawingSvg(svg: string): boolean {
 function embedDrawingPreviews(
   html: string,
   drawingPreviews: NoteExportDrawingPreview[],
+  buildSource: (id: string, svg: string) => string | null,
 ): string {
   const previewsById = new Map(
     drawingPreviews
@@ -310,11 +396,33 @@ function embedDrawingPreviews(
         return image
       }
 
-      const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString(
-        'base64',
-      )}`
-      return `<img src="${dataUri}" class="drawing-preview"${after}>`
+      const source = buildSource(drawingId, svg)
+      if (!source) {
+        return image
+      }
+
+      return `<img src="${escapeHtml(source)}" class="drawing-preview"${after}>`
     },
+  )
+}
+
+export async function renderNoteHtmlBody(
+  content: string,
+  options: NoteHtmlBodyOptions = {},
+): Promise<string> {
+  const bodyWithAssets = await embedManagedAssets(
+    renderMarkdownContent(content, options.internalLinkHref),
+    options.resolveAsset ?? defaultAssetResolver,
+    options.assetSource ?? defaultAssetSource,
+    options.strictAssets === true,
+  )
+
+  return embedDrawingPreviews(
+    bodyWithAssets,
+    options.drawingPreviews ?? [],
+    options.drawingSource
+    ?? ((_id, svg) =>
+      `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`),
   )
 }
 
@@ -324,11 +432,10 @@ export async function renderNoteHtml(
   resolveAsset: NotesAssetResolver = defaultAssetResolver,
   drawingPreviews: NoteExportDrawingPreview[] = [],
 ): Promise<string> {
-  const bodyWithAssets = await embedManagedAssets(
-    renderMarkdownContent(content),
+  const body = await renderNoteHtmlBody(content, {
+    drawingPreviews,
     resolveAsset,
-  )
-  const body = embedDrawingPreviews(bodyWithAssets, drawingPreviews)
+  })
   const title = escapeHtml(name)
 
   return `<!doctype html>
@@ -338,7 +445,7 @@ export async function renderNoteHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'">
   <title>${title}</title>
-  <style>${DOCUMENT_STYLES}</style>
+  <style>${NOTE_DOCUMENT_STYLES}</style>
 </head>
 <body>
 ${body}</body>

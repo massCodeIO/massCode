@@ -619,6 +619,7 @@
       "fromV3": "From massCode v3"
     },
     "export": {
+      "folderToHtmlSite": "Export folder as HTML site",
       "toHtml": "Export to HTML",
       "toPdf": "Export to PDF"
     },

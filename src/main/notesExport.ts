@@ -55,7 +55,10 @@ const DOCUMENT_STYLES = `
   }
   pre {
     padding: 16px;
-    overflow: auto;
+    overflow: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     background: #f6f8fa;
     border-radius: 6px;
   }

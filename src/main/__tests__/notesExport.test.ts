@@ -75,6 +75,20 @@ describe('note export helpers', () => {
     expect(html).not.toContain('<script>alert')
   })
 
+  it('wraps long fenced code lines in HTML and PDF', async () => {
+    const html = await renderNoteHtml(
+      'Code',
+      `\`\`\`text\n${'a'.repeat(500)}\n\`\`\``,
+      vi.fn(),
+    )
+
+    expect(html).toContain('overflow: visible;')
+    expect(html).toContain('white-space: pre-wrap;')
+    expect(html).toContain('overflow-wrap: anywhere;')
+    expect(html).toContain('word-break: break-word;')
+    expect(html).not.toContain('overflow: auto;')
+  })
+
   it('embeds managed assets returned by the injected resolver', async () => {
     const resolveAsset = vi.fn(
       async () =>

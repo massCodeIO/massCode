@@ -158,8 +158,14 @@ export interface ImportMarkdownFolderResponse {
 
 export type NoteExportFormat = 'html' | 'pdf'
 
+export interface NoteExportDrawingPreview {
+  id: string
+  svg: string
+}
+
 export interface NoteExportPayload {
   content: string
+  drawingPreviews?: NoteExportDrawingPreview[]
   format: NoteExportFormat
   name: string
 }

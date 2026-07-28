@@ -1,4 +1,5 @@
 import type {
+  NoteExportDrawingPreview,
   NoteExportFormat,
   NoteExportPayload,
   NoteExportResponse,
@@ -33,6 +34,9 @@ const markdown = new MarkdownIt({
 const LEADING_FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 
 const MAX_EXPORT_FILE_NAME_BYTES = 240
+const MAX_DRAWING_PREVIEWS = 50
+const MAX_DRAWING_PREVIEW_BYTES = 5 * 1024 * 1024
+const MAX_DRAWING_PREVIEWS_TOTAL_BYTES = 20 * 1024 * 1024
 
 const DOCUMENT_STYLES = `
   :root { color-scheme: light; }
@@ -54,6 +58,10 @@ const DOCUMENT_STYLES = `
     height: auto;
     border: 1px solid #d1d9e0;
     border-radius: 8px;
+  }
+  img.drawing-preview {
+    padding: 16px;
+    border-radius: 6px;
   }
   blockquote {
     margin-left: 0;
@@ -169,8 +177,47 @@ export function parseNoteExportPayload(
     return null
   }
 
+  let drawingPreviews: NoteExportDrawingPreview[] | undefined
+  if (candidate.drawingPreviews !== undefined) {
+    if (
+      !Array.isArray(candidate.drawingPreviews)
+      || candidate.drawingPreviews.length > MAX_DRAWING_PREVIEWS
+    ) {
+      return null
+    }
+
+    let totalBytes = 0
+    drawingPreviews = []
+    for (const preview of candidate.drawingPreviews) {
+      if (
+        !preview
+        || typeof preview !== 'object'
+        || typeof preview.id !== 'string'
+        || typeof preview.svg !== 'string'
+      ) {
+        return null
+      }
+
+      const previewBytes
+        = Buffer.byteLength(preview.id) + Buffer.byteLength(preview.svg)
+      totalBytes += previewBytes
+      if (
+        previewBytes > MAX_DRAWING_PREVIEW_BYTES
+        || totalBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+      ) {
+        return null
+      }
+
+      drawingPreviews.push({
+        id: preview.id,
+        svg: preview.svg,
+      })
+    }
+  }
+
   return {
     content: candidate.content,
+    ...(drawingPreviews === undefined ? {} : { drawingPreviews }),
     format: candidate.format,
     name: candidate.name,
   }
@@ -223,15 +270,65 @@ async function embedManagedAssets(
   return html
 }
 
+function isSafeDrawingSvg(svg: string): boolean {
+  if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg\b/i.test(svg)) {
+    return false
+  }
+
+  return !(
+    /<(?:script|foreignObject)\b/i.test(svg)
+    || /\bon[a-z]+\s*=/i.test(svg)
+    || /javascript\s*:/i.test(svg)
+    || /\b(?:href|src)\s*=\s*["']\s*https?:/i.test(svg)
+    || /url\([^)]*https?:/i.test(svg)
+  )
+}
+
+function embedDrawingPreviews(
+  html: string,
+  drawingPreviews: NoteExportDrawingPreview[],
+): string {
+  const previewsById = new Map(
+    drawingPreviews
+      .filter(preview => isSafeDrawingSvg(preview.svg))
+      .map(preview => [preview.id, preview.svg]),
+  )
+
+  return html.replace(
+    /<img src="masscode:\/\/drawing\/([^"]+)"([^>]*)>/g,
+    (image, rawId: string, after: string) => {
+      let drawingId = rawId
+      try {
+        drawingId = decodeURIComponent(rawId)
+      }
+      catch {
+        // Match renderer URL decoding: malformed escapes fall back to raw id.
+      }
+
+      const svg = previewsById.get(drawingId)
+      if (svg === undefined) {
+        return image
+      }
+
+      const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString(
+        'base64',
+      )}`
+      return `<img src="${dataUri}" class="drawing-preview"${after}>`
+    },
+  )
+}
+
 export async function renderNoteHtml(
   name: string,
   content: string,
   resolveAsset: NotesAssetResolver = defaultAssetResolver,
+  drawingPreviews: NoteExportDrawingPreview[] = [],
 ): Promise<string> {
-  const body = await embedManagedAssets(
+  const bodyWithAssets = await embedManagedAssets(
     renderMarkdownContent(content),
     resolveAsset,
   )
+  const body = embedDrawingPreviews(bodyWithAssets, drawingPreviews)
   const title = escapeHtml(name)
 
   return `<!doctype html>
@@ -338,7 +435,12 @@ export async function exportNote(
     return { canceled: true }
   }
 
-  const html = await renderNoteHtml(payload.name, payload.content)
+  const html = await renderNoteHtml(
+    payload.name,
+    payload.content,
+    defaultAssetResolver,
+    payload.drawingPreviews,
+  )
   if (payload.format === 'html') {
     await writeFileAtomically(destinationPath, html)
   }

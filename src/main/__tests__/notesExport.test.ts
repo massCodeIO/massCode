@@ -152,6 +152,56 @@ describe('note export helpers', () => {
     expect(html).toContain('src="masscode://notes-asset/abcdefghijklmnop.png"')
   })
 
+  it('embeds a drawing preview as a base64 image', async () => {
+    const svg
+      = '<svg xmlns="http://www.w3.org/2000/svg"><text>Plan</text></svg>'
+    const html = await renderNoteHtml(
+      'Drawing',
+      '![diagram](masscode://drawing/%D1%87%D0%B5%D1%80%D1%82%D1%91%D0%B6%201)',
+      vi.fn(),
+      [{ id: 'чертёж 1', svg }],
+    )
+
+    expect(html).toContain(
+      `src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}"`,
+    )
+    expect(html).toContain('class="drawing-preview"')
+    expect(html).not.toContain('<svg')
+    expect(html).toContain('img.drawing-preview {')
+    expect(html).toContain('padding: 16px;')
+    expect(html).toContain('border-radius: 6px;')
+  })
+
+  it('keeps a drawing URL unchanged when its preview is missing', async () => {
+    const html = await renderNoteHtml(
+      'Drawing',
+      '![diagram](masscode://drawing/missing)',
+      vi.fn(),
+      [],
+    )
+
+    expect(html).toContain(
+      '<img src="masscode://drawing/missing" alt="diagram">',
+    )
+  })
+
+  it('skips drawing previews containing active SVG content', async () => {
+    const html = await renderNoteHtml(
+      'Drawing',
+      '![diagram](masscode://drawing/unsafe)',
+      vi.fn(),
+      [
+        {
+          id: 'unsafe',
+          svg: '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+        },
+      ],
+    )
+
+    expect(html).toContain('src="masscode://drawing/unsafe"')
+    expect(html).not.toContain('data:image/svg+xml;base64,')
+  })
+
   it('rejects export while a managed asset is temporarily unavailable', async () => {
     await expect(
       renderNoteHtml(
@@ -203,7 +253,28 @@ describe('note export helpers', () => {
     expect(
       parseNoteExportPayload({
         content: '# Note',
+        drawingPreviews: [{ extra: true, id: 'drawing', svg: '<svg></svg>' }],
+        format: 'html',
+        name: 'Note',
+      }),
+    ).toEqual({
+      content: '# Note',
+      drawingPreviews: [{ id: 'drawing', svg: '<svg></svg>' }],
+      format: 'html',
+      name: 'Note',
+    })
+    expect(
+      parseNoteExportPayload({
+        content: '# Note',
         format: 'docx',
+        name: 'Note',
+      }),
+    ).toBeNull()
+    expect(
+      parseNoteExportPayload({
+        content: '# Note',
+        drawingPreviews: [{ id: 1, svg: '<svg></svg>' }],
+        format: 'html',
         name: 'Note',
       }),
     ).toBeNull()

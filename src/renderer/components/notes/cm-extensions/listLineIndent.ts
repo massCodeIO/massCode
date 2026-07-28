@@ -8,7 +8,7 @@ import { getRevealSelection, revealSelectionChanged } from './revealSelection'
 const BASE_INDENT_PX = 14
 const CHECKBOX_WIDGET_PX = 24
 
-const LIST_PREFIX_RE = /^(\s*(?:[-*+]|\d+\.)\s)(?:(\[[ x]\])\s)?/i
+const LIST_PREFIX_RE = /^(\s*(?:[-*+]|\d+[.)])\s)(?:(\[[ x]\])\s)?/i
 
 export function parseListPrefix(text: string) {
   return text.match(LIST_PREFIX_RE)

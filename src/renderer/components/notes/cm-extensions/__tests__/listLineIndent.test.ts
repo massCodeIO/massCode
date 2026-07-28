@@ -56,10 +56,15 @@ describe('parseListPrefix', () => {
     expect(parseListPrefix('1. item')?.[1]).toBe('1. ')
     expect(parseListPrefix('10. item')?.[1]).toBe('10. ')
     expect(parseListPrefix('123. item')?.[1]).toBe('123. ')
+    expect(parseListPrefix('1) item')?.[1]).toBe('1) ')
+    expect(parseListPrefix('10) item')?.[1]).toBe('10) ')
+    expect(parseListPrefix('123) item')?.[1]).toBe('123) ')
   })
 
   it('matches nested ordered list markers', () => {
     expect(parseListPrefix('  1. item')?.[1]).toBe('  1. ')
+    expect(parseListPrefix('  1) item')?.[1]).toBe('  1) ')
+    expect(parseListPrefix('    10) item')?.[1]).toBe('    10) ')
   })
 
   it('matches task markers', () => {
@@ -108,6 +113,16 @@ describe('getListContinuationLineNumbers', () => {
 
   it('keeps direct indented continuation lines in the list item', () => {
     const doc = ['- item', '  continuation'].join('\n')
+    const view = createViewLike(doc)
+    const range = getFirstListItemRange(view)
+
+    expect(getListContinuationLineNumbers(view, range.from, range.to)).toEqual([
+      2,
+    ])
+  })
+
+  it('keeps continuation lines for ordered list markers with a parenthesis', () => {
+    const doc = ['1) item', '   continuation'].join('\n')
     const view = createViewLike(doc)
     const range = getFirstListItemRange(view)
 

@@ -9,7 +9,13 @@ export const DRAWING_EMBED_URL_PREFIX = 'masscode://drawing/'
 // time the selection enters/leaves an embed range, so cache aggressively
 // and invalidate on drawing changes.
 const svgCache = new Map<string, string>()
-const inFlightRenders = new Map<string, Promise<string | null>>()
+interface InFlightRender {
+  generation: number
+  promise: Promise<string | null>
+}
+
+const inFlightRenders = new Map<string, InFlightRender>()
+let cacheGeneration = 0
 
 let excalidrawModule: Promise<typeof import('@excalidraw/excalidraw')> | null
   = null
@@ -20,6 +26,8 @@ function loadExcalidraw() {
 }
 
 function invalidateDrawingEmbedCache(drawingId?: string) {
+  cacheGeneration += 1
+
   if (!drawingId) {
     svgCache.clear()
     return
@@ -67,7 +75,7 @@ function renderEmbedFallback(container: HTMLElement, drawingId: string) {
   container.append(message)
 }
 
-async function renderDrawingSvg(
+async function createDrawingSvg(
   drawingId: string,
   isDark: boolean,
 ): Promise<string | null> {
@@ -95,38 +103,56 @@ async function renderDrawingSvg(
   return svg.outerHTML
 }
 
+export async function renderDrawingSvg(
+  drawingId: string,
+  isDark: boolean,
+): Promise<string | null> {
+  const cacheKey = `${drawingId}|${isDark ? 'dark' : 'light'}`
+  const cached = svgCache.get(cacheKey)
+
+  if (cached !== undefined) {
+    return cached
+  }
+
+  let render = inFlightRenders.get(cacheKey)
+  const generation = cacheGeneration
+
+  if (!render || render.generation !== generation) {
+    const promise = createDrawingSvg(drawingId, isDark).finally(() => {
+      if (inFlightRenders.get(cacheKey)?.promise === promise) {
+        inFlightRenders.delete(cacheKey)
+      }
+    })
+    render = { generation, promise }
+    inFlightRenders.set(cacheKey, render)
+  }
+
+  const markup = await render.promise
+
+  if (cacheGeneration !== generation) {
+    return renderDrawingSvg(drawingId, isDark)
+  }
+
+  if (markup !== null) {
+    svgCache.set(cacheKey, markup)
+  }
+
+  return markup
+}
+
 export async function renderDrawingEmbed(
   container: HTMLElement,
   drawingId: string,
   isDark: boolean,
 ) {
-  const cacheKey = `${drawingId}|${isDark ? 'dark' : 'light'}`
-
   try {
-    const cached = svgCache.get(cacheKey)
-
-    if (cached !== undefined) {
-      container.innerHTML = cached
-      return
-    }
-
-    let render = inFlightRenders.get(cacheKey)
-
-    if (!render) {
-      render = renderDrawingSvg(drawingId, isDark).finally(() => {
-        inFlightRenders.delete(cacheKey)
-      })
-      inFlightRenders.set(cacheKey, render)
-    }
-
-    const markup = await render
+    const markup = await renderDrawingSvg(drawingId, isDark)
 
     if (markup === null) {
       renderEmbedFallback(container, drawingId)
       return
     }
 
-    svgCache.set(cacheKey, markup)
     container.innerHTML = markup
   }
   catch (error) {

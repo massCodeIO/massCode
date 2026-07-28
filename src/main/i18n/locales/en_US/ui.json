@@ -619,7 +619,8 @@
       "fromV3": "From massCode v3"
     },
     "export": {
-      "toHtml": "Export to HTML"
+      "toHtml": "Export to HTML",
+      "toPdf": "Export to PDF"
     },
     "copy": {
       "snippet": "Copy Snippet",

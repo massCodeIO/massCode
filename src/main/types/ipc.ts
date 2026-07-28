@@ -74,6 +74,7 @@ type SystemAction =
 type PrettierAction = 'format'
 type FsAction =
   | 'assets'
+  | 'export-note'
   | 'folder-icon:set'
   | 'folder-icon:write'
   | 'import-markdown-folder'
@@ -153,4 +154,23 @@ export interface ImportMarkdownFolderResponse {
   canceled: boolean
   files: ImportMarkdownFolderFile[]
   warnings: ImportMarkdownFolderWarning[]
+}
+
+export type NoteExportFormat = 'html' | 'pdf'
+
+export interface NoteExportDrawingPreview {
+  id: string
+  svg: string
+}
+
+export interface NoteExportPayload {
+  content: string
+  drawingPreviews?: NoteExportDrawingPreview[]
+  format: NoteExportFormat
+  name: string
+}
+
+export interface NoteExportResponse {
+  canceled: boolean
+  filePath?: string
 }

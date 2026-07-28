@@ -46,7 +46,13 @@ const DOCUMENT_STYLES = `
   }
   h1, h2, h3, h4, h5, h6 { line-height: 1.25; }
   a { color: #0969da; }
-  img { max-width: 100%; height: auto; }
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #d1d9e0;
+    border-radius: 8px;
+  }
   blockquote {
     margin-left: 0;
     padding-left: 1em;

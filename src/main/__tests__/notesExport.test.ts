@@ -89,6 +89,18 @@ describe('note export helpers', () => {
     expect(html).not.toContain('overflow: auto;')
   })
 
+  it('frames images like the Notes renderer', async () => {
+    const html = await renderNoteHtml(
+      'Image',
+      '![diagram](https://example.com/diagram.png)',
+      vi.fn(),
+    )
+
+    expect(html).toContain('display: block;')
+    expect(html).toContain('border: 1px solid #d1d9e0;')
+    expect(html).toContain('border-radius: 8px;')
+  })
+
   it('embeds managed assets returned by the injected resolver', async () => {
     const resolveAsset = vi.fn(
       async () =>

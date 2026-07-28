@@ -1,4 +1,7 @@
-import type { ImportMarkdownFolderResponse } from '../../types/ipc'
+import type {
+  ImportMarkdownFolderResponse,
+  NoteExportResponse,
+} from '../../types/ipc'
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
 import { extname, join, parse, relative } from 'node:path'
@@ -18,6 +21,7 @@ import {
   setFolderIcon,
   writeFolderIcon,
 } from '../../folderIcons'
+import { exportNote, parseNoteExportPayload } from '../../notesExport'
 import {
   getNotesPaths,
   parseNotesAssetWritePayload,
@@ -107,6 +111,15 @@ async function readMarkdownFolder(
 }
 
 export function registerFsHandlers() {
+  ipcMain.handle('fs:export-note', async (_, payload: unknown) => {
+    const parsedPayload = parseNoteExportPayload(payload)
+    if (!parsedPayload) {
+      throw new TypeError('Invalid note export payload')
+    }
+
+    return exportNote(parsedPayload) satisfies Promise<NoteExportResponse>
+  })
+
   ipcMain.handle('fs:folder-icon:write', async (_, payload: unknown) => {
     const parsedPayload = parseFolderIconWritePayload(payload)
     if (!parsedPayload)

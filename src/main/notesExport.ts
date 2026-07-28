@@ -30,6 +30,8 @@ const markdown = new MarkdownIt({
   typographer: false,
 })
 
+const LEADING_FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
+
 const MAX_EXPORT_FILE_NAME_BYTES = 240
 
 const DOCUMENT_STYLES = `
@@ -98,6 +100,21 @@ function escapeHtml(value: string): string {
         '\'': '&#39;',
       })[character]!,
   )
+}
+
+function renderMarkdownContent(content: string): string {
+  const frontmatterMatch = content.match(LEADING_FRONTMATTER_RE)
+  if (!frontmatterMatch) {
+    return markdown.render(content)
+  }
+
+  const [, frontmatter, body] = frontmatterMatch
+  const frontmatterSource = `---\n${frontmatter}\n---`
+
+  return [
+    `<pre class="frontmatter"><code class="language-yaml">${escapeHtml(frontmatterSource)}</code></pre>`,
+    markdown.render(body),
+  ].join('\n')
 }
 
 export function sanitizeNoteExportFileName(
@@ -211,7 +228,10 @@ export async function renderNoteHtml(
   content: string,
   resolveAsset: NotesAssetResolver = defaultAssetResolver,
 ): Promise<string> {
-  const body = await embedManagedAssets(markdown.render(content), resolveAsset)
+  const body = await embedManagedAssets(
+    renderMarkdownContent(content),
+    resolveAsset,
+  )
   const title = escapeHtml(name)
 
   return `<!doctype html>

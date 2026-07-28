@@ -89,6 +89,30 @@ describe('note export helpers', () => {
     expect(html).not.toContain('overflow: auto;')
   })
 
+  it('renders leading frontmatter as a YAML code block', async () => {
+    const html = await renderNoteHtml(
+      'Agent',
+      [
+        '---',
+        'name: researcher',
+        'tools: WebSearch, Read',
+        '---',
+        '# Instructions',
+      ].join('\n'),
+      vi.fn(),
+    )
+
+    expect(html).toContain(
+      '<pre class="frontmatter"><code class="language-yaml">---\n'
+      + 'name: researcher\n'
+      + 'tools: WebSearch, Read\n'
+      + '---</code></pre>',
+    )
+    expect(html).toContain('<h1>Instructions</h1>')
+    expect(html).not.toContain('<hr>')
+    expect(html).not.toContain('<h2>name: researcher')
+  })
+
   it('frames images like the Notes renderer', async () => {
     const html = await renderNoteHtml(
       'Image',

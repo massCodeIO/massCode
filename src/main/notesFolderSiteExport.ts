@@ -322,21 +322,210 @@ async function getAvailableDestination(
 
 const SITE_STYLES = `
 ${NOTE_DOCUMENT_STYLES}
-body { max-width: none; margin: 0; padding: 0; }
-.site-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100vh; }
-.site-sidebar { padding: 24px 20px; border-right: 1px solid #d1d9e0; background: #f6f8fa; }
-.site-title { margin: 0 0 20px; font-size: 18px; }
-.site-nav, .site-nav ul { margin: 0; padding-left: 18px; list-style: none; }
-.site-nav { padding-left: 0; }
-.site-folder { margin: 12px 0 5px; font-weight: 600; }
-.site-note { display: block; padding: 3px 0; font-weight: 400; }
-.site-main { width: min(900px, 100%); padding: 40px 48px; }
-.breadcrumbs { margin-bottom: 28px; color: #59636e; font-size: 14px; }
-.breadcrumbs a { color: inherit; }
-@media (max-width: 720px) {
+:root {
+  --site-accent: #3159c9;
+  --site-border: #e7e7ea;
+  --site-muted: #73737a;
+  --site-sidebar: #f8f8f9;
+  --site-text: #29292e;
+}
+html {
+  min-width: 320px;
+  background: #fff;
+  scroll-behavior: smooth;
+}
+body {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--site-text);
+  background: #fff;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+::selection { color: var(--site-text); background: #dce5ff; }
+a { color: var(--site-accent); text-underline-offset: 0.18em; }
+a:hover { color: #2447a7; }
+.site-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.site-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--site-sidebar);
+  border-right: 1px solid var(--site-border);
+}
+.site-title {
+  display: block;
+  padding: 28px 28px 20px;
+  overflow: hidden;
+  color: var(--site-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-title:hover { color: var(--site-accent); text-decoration: none; }
+.site-nav {
+  flex: 1;
+  padding: 4px 20px 48px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.site-nav ul {
+  margin: 0;
+  padding-left: 14px;
+  list-style: none;
+  border-left: 1px solid #dddddf;
+}
+.site-nav > ul {
+  padding-left: 0;
+  border-left: 0;
+}
+.site-nav li { margin: 0; }
+.site-folder {
+  margin: 18px 8px 5px;
+  color: #595960;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.site-note {
+  display: block;
+  margin: 1px 0;
+  padding: 6px 9px;
+  overflow: hidden;
+  color: #5f5f66;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 6px;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.site-note:hover {
+  color: var(--site-text);
+  text-decoration: none;
+  background: #eeeeef;
+}
+.site-note.is-active {
+  color: var(--site-text);
+  font-weight: 500;
+  background: #eeeeef;
+}
+.site-main-shell { min-width: 0; }
+.site-main {
+  width: min(700px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 54px 0 96px;
+}
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  margin: 0 0 24px;
+  color: var(--site-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+.breadcrumbs a { color: var(--site-muted); text-decoration: none; }
+.breadcrumbs a:hover { color: var(--site-accent); }
+.breadcrumb-separator { color: #a8a8ae; }
+.site-article { color: var(--site-text); }
+.site-article-title {
+  margin: 0 0 30px;
+  color: var(--site-text);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.site-index h1 {
+  margin: 0 0 36px;
+  color: var(--site-text);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 44px;
+  letter-spacing: -0.025em;
+}
+.site-index-list {
+  border-top: 1px solid var(--site-border);
+}
+.site-index-group {
+  margin-left: 18px;
+}
+.site-index-group.is-root {
+  margin-left: 0;
+}
+.site-index-group:not(.is-root) {
+  margin-top: 38px;
+}
+.site-index-folder {
+  margin: 0 4px 14px;
+  color: var(--site-text);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -0.015em;
+}
+.site-index-note {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 10px 4px;
+  color: var(--site-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--site-border);
+  transition: color 120ms ease, padding 120ms ease;
+}
+.site-index-note:hover {
+  padding-right: 0;
+  padding-left: 8px;
+  color: var(--site-accent);
+  text-decoration: none;
+}
+.site-index-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.site-index-arrow {
+  flex: 0 0 auto;
+  color: #a0a0a6;
+  font-size: 18px;
+}
+.site-index-note:hover .site-index-arrow { color: var(--site-accent); }
+@media (max-width: 800px) {
   .site-layout { display: block; }
-  .site-sidebar { border-right: 0; border-bottom: 1px solid #d1d9e0; }
-  .site-main { padding: 28px 22px; }
+  .site-sidebar {
+    position: static;
+    height: auto;
+    max-height: 48vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--site-border);
+  }
+  .site-title { padding: 20px 20px 14px; }
+  .site-nav { padding: 0 20px 24px; }
+  .site-main { width: calc(100% - 28px); padding: 24px 0 48px; }
+  .site-index h1 { margin-bottom: 24px; font-size: 30px; line-height: 38px; }
+}
+@media print {
+  .site-layout { display: block; }
+  .site-sidebar, .breadcrumbs { display: none; }
+  .site-main { width: 100%; padding: 0; }
 }
 `
 
@@ -344,22 +533,57 @@ function renderFolderNavigation(
   folder: NotesFolderTreeRecord,
   notesByFolder: Map<number, NoteRecord[]>,
   hrefForNote: (note: NoteRecord) => string,
+  activeNoteId?: number,
+  isRoot = true,
 ): string {
   const notes = notesByFolder.get(folder.id) ?? []
   const noteItems = notes
-    .map(
-      note =>
-        `<li><a class="site-note" href="${escapeHtml(hrefForNote(note))}">${escapeHtml(note.name)}</a></li>`,
-    )
+    .map((note) => {
+      const isActive = note.id === activeNoteId
+      return `<li><a class="site-note${isActive ? ' is-active' : ''}" href="${escapeHtml(hrefForNote(note))}"${isActive ? ' aria-current="page"' : ''}>${escapeHtml(note.name)}</a></li>`
+    })
     .join('')
   const childItems = folder.children
     .map(
       child =>
-        `<li>${renderFolderNavigation(child, notesByFolder, hrefForNote)}</li>`,
+        `<li>${renderFolderNavigation(
+          child,
+          notesByFolder,
+          hrefForNote,
+          activeNoteId,
+          false,
+        )}</li>`,
     )
     .join('')
 
-  return `<div class="site-folder">${escapeHtml(folder.name)}</div><ul>${noteItems}${childItems}</ul>`
+  const folderTitle = isRoot
+    ? ''
+    : `<div class="site-folder">${escapeHtml(folder.name)}</div>`
+  return `${folderTitle}<ul>${noteItems}${childItems}</ul>`
+}
+
+function renderIndexNavigation(
+  folder: NotesFolderTreeRecord,
+  notesByFolder: Map<number, NoteRecord[]>,
+  hrefForNote: (note: NoteRecord) => string,
+  isRoot = true,
+): string {
+  const folderTitle = isRoot
+    ? ''
+    : `<div class="site-index-folder">${escapeHtml(folder.name)}</div>`
+  const noteItems = (notesByFolder.get(folder.id) ?? [])
+    .map(
+      note =>
+        `<a class="site-index-note" href="${escapeHtml(hrefForNote(note))}"><span class="site-index-name">${escapeHtml(note.name)}</span><span class="site-index-arrow" aria-hidden="true">→</span></a>`,
+    )
+    .join('')
+  const childItems = folder.children
+    .map(child =>
+      renderIndexNavigation(child, notesByFolder, hrefForNote, false),
+    )
+    .join('')
+
+  return `<div class="site-index-group${isRoot ? ' is-root' : ''}">${folderTitle}${noteItems}${childItems}</div>`
 }
 
 function encodePageHref(fileName: string): string {
@@ -369,7 +593,9 @@ function encodePageHref(fileName: string): string {
 function renderSitePage(options: {
   body: string
   breadcrumbs: string
+  homeHref: string
   navigation: string
+  siteName: string
   title: string
 }): string {
   return `<!doctype html>
@@ -383,11 +609,16 @@ function renderSitePage(options: {
 </head>
 <body>
   <div class="site-layout">
-    <aside class="site-sidebar"><nav class="site-nav">${options.navigation}</nav></aside>
-    <main class="site-main">
-      <div class="breadcrumbs">${options.breadcrumbs}</div>
-      ${options.body}
-    </main>
+    <aside class="site-sidebar">
+      <a class="site-title" href="${escapeHtml(options.homeHref)}">${escapeHtml(options.siteName)}</a>
+      <nav class="site-nav">${options.navigation}</nav>
+    </aside>
+    <div class="site-main-shell">
+      <main class="site-main">
+        ${options.breadcrumbs ? `<div class="breadcrumbs">${options.breadcrumbs}</div>` : ''}
+        ${options.body}
+      </main>
+    </div>
   </div>
 </body>
 </html>
@@ -411,13 +642,21 @@ function renderBreadcrumbs(
       = current.parentId === null ? undefined : folderById.get(current.parentId)
   }
 
-  return [
+  const segments = [
     `<a href="../index.html">${escapeHtml(rootName)}</a>`,
     ...chain
       .filter(folder => folder.id !== rootId)
       .map(folder => escapeHtml(folder.name)),
-    escapeHtml(note.name),
-  ].join(' / ')
+    `<span aria-current="page">${escapeHtml(note.name)}</span>`,
+  ]
+
+  return segments
+    .map((segment, index) =>
+      index === 0
+        ? segment
+        : `<span class="breadcrumb-separator" aria-hidden="true">/</span>${segment}`,
+    )
+    .join('')
 }
 
 async function writeSite(
@@ -452,11 +691,6 @@ async function writeSite(
     scope.folder,
     notesByFolder,
     note => `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
-  )
-  const navigationFromNote = renderFolderNavigation(
-    scope.folder,
-    notesByFolder,
-    note => encodePageHref(pageByNoteId.get(note.id)!),
   )
 
   const drawingIdSet = new Set(getScopeDrawingIds(scope))
@@ -522,6 +756,12 @@ async function writeSite(
     scope.folders.map(folder => [folder.id, folder]),
   )
   for (const note of scope.notes) {
+    const navigationFromNote = renderFolderNavigation(
+      scope.folder,
+      notesByFolder,
+      sibling => encodePageHref(pageByNoteId.get(sibling.id)!),
+      note.id,
+    )
     const linkerFolderPath = note.folder
       ? folderPathById.get(note.folder.id)
       : undefined
@@ -578,31 +818,35 @@ async function writeSite(
       throw new Error(`Unresolved portable asset in note ${note.id}`)
     }
     const html = renderSitePage({
-      body: `<article><h1>${escapeHtml(note.name)}</h1>${body}</article>`,
+      body: `<article class="site-article"><h1 class="site-article-title">${escapeHtml(note.name)}</h1>${body}</article>`,
       breadcrumbs: renderBreadcrumbs(
         note,
         folderById,
         scope.folder.id,
         scope.folder.name,
       ),
+      homeHref: '../index.html',
       navigation: navigationFromNote,
+      siteName: scope.folder.name,
       title: `${note.name} — ${scope.folder.name}`,
     })
     await writeFile(join(notesPath, pageByNoteId.get(note.id)!), html, 'utf8')
   }
 
-  const firstNote = scope.notes[0]
-  const indexBody = firstNote
-    ? `<h1>${escapeHtml(scope.folder.name)}</h1><p><a href="notes/${escapeHtml(
-      encodePageHref(pageByNoteId.get(firstNote.id)!),
-    )}">${escapeHtml(firstNote.name)}</a></p>`
-    : `<h1>${escapeHtml(scope.folder.name)}</h1>`
+  const indexItems = renderIndexNavigation(
+    scope.folder,
+    notesByFolder,
+    note => `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
+  )
+  const indexBody = `<section class="site-index"><h1>${escapeHtml(scope.folder.name)}</h1><div class="site-index-list">${indexItems}</div></section>`
   await writeFile(
     join(stagingPath, 'index.html'),
     renderSitePage({
       body: indexBody,
-      breadcrumbs: escapeHtml(scope.folder.name),
+      breadcrumbs: '',
+      homeHref: 'index.html',
       navigation: navigationFromIndex,
+      siteName: scope.folder.name,
       title: scope.folder.name,
     }),
     'utf8',

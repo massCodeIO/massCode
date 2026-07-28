@@ -45,6 +45,17 @@ vi.mock('../storage', () => {
           parentId: 1,
           updatedAt: 2,
         },
+        {
+          children: [],
+          createdAt: 3,
+          icon: null,
+          id: 4,
+          isOpen: 0,
+          name: 'Empty',
+          orderIndex: 1,
+          parentId: 1,
+          updatedAt: 3,
+        },
       ],
       createdAt: 1,
       icon: null,
@@ -119,6 +130,19 @@ vi.mock('../storage', () => {
       properties: {},
       tags: [],
       updatedAt: 3,
+    },
+    {
+      content: '# Third',
+      createdAt: 4,
+      description: null,
+      folder: { id: 1, name: 'Root' },
+      id: 5,
+      isDeleted: 0,
+      isFavorites: 0,
+      name: 'Third',
+      properties: {},
+      tags: [],
+      updatedAt: 4,
     },
   ]
 
@@ -238,8 +262,29 @@ describe('notes folder HTML site export', () => {
     )
     expect(index).toContain('Root')
     expect(index).toContain('Child')
+    expect(index).toContain('class="site-index-folder">Empty')
+    expect(index).toContain('class="site-index"')
+    expect(index).not.toContain('massCode')
+    expect(index).toContain('href="index.html"')
+    expect(index.match(/\.site-index-folder\s*\{/g)).toHaveLength(1)
+    expect(index).toContain('font-size: 22px')
     expect(index).toContain('notes/1-First.html')
     expect(index).toContain('2-Second%252FPart.html')
+    const indexContent = index.slice(
+      index.indexOf('<section class="site-index">'),
+    )
+    expect(indexContent.indexOf('First')).toBeLessThan(
+      indexContent.indexOf('Third'),
+    )
+    expect(indexContent.indexOf('Third')).toBeLessThan(
+      indexContent.indexOf('class="site-index-folder">Child'),
+    )
+    expect(first).toContain('class="site-article"')
+    expect(first).toContain('href="../index.html"')
+    expect(first).toContain('aria-current="page"')
+    expect(first).not.toMatch(
+      /\.site-article h2\s*\{[^}]*\b(?:border-top|padding-top)\b/,
+    )
     expect(first).toContain(
       'See <a href="2-Second%252FPart.html">Root/Child/Second%2FPart</a> and Outside. Bare Second%2FPart.',
     )

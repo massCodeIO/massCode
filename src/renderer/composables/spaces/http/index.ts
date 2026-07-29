@@ -1,4 +1,6 @@
 export { useHttpApp } from './useHttpApp'
+export type { HttpEnvironmentVariableEntry } from './useHttpEnvironmentEditor'
+export { useHttpEnvironmentEditor } from './useHttpEnvironmentEditor'
 export type { HttpEnvironment } from './useHttpEnvironments'
 export { useHttpEnvironments } from './useHttpEnvironments'
 export { useHttpEnvironmentSecrets } from './useHttpEnvironmentSecrets'

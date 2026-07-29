@@ -33,6 +33,8 @@ Variables can be used in:
 
 ## Secret Variables
 
+<AppVersion text=">=5.10" />
+
 Secret variables keep sensitive values out of the vault. The value is encrypted with your operating system keychain and stored locally, outside the Markdown Vault.
 
 To create one, open **Manage**, click **Add secret**, then enter a name and a value. The value is saved when you leave the value field.

@@ -11,13 +11,27 @@ import type {
   HttpMethod,
   HttpQueryEntry,
   HttpResponseBodyKind,
+  HttpSecretMutationResult,
+  HttpSecretPayload,
+  HttpSecretSetPayload,
 } from '../../types/http'
 import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
 import { Agent, request as undiciRequest } from 'undici'
-import { interpolateHttpVariables } from '../../../shared/httpVariables'
+import {
+  HTTP_SECRET_MASK,
+  interpolateHttpVariables,
+  maskHttpSecretVariables,
+} from '../../../shared/httpVariables'
+import {
+  deleteEnvironmentSecret,
+  getEnvironmentSecrets,
+  isSecretsEncryptionAvailable,
+  revealEnvironmentSecret,
+  setEnvironmentSecret,
+} from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
@@ -367,23 +381,97 @@ async function readBodyCapped(
   }
 }
 
-function resolveEnvironmentVariables(
+interface ResolvedEnvironment {
+  variables: Record<string, string>
+  /**
+   * Те же переменные, но со значениями секретов, замененными на маску. История
+   * запросов живёт в .state.yaml внутри vault, поэтому URL для неё строится
+   * из этой карты, а не маскируется постфактум: `buildUrl` percent-кодирует
+   * значения, и поиск исходной подстроки в готовом URL находил бы не всё.
+   */
+  maskedVariables: Record<string, string>
+  /**
+   * Фактические непустые значения секретов. Нужны там, где маскировать через
+   * карту переменных нельзя: текст ошибки приходит из сети (например
+   * `getaddrinfo ENOTFOUND <хост>`) и может содержать значение секрета.
+   */
+  secretValues: string[]
+}
+
+/**
+ * Убирает значения секретов из текста, который будет записан в vault.
+ * Значения сортируются по убыванию длины, чтобы более короткий секрет,
+ * являющийся подстрокой более длинного, не ломал замену.
+ */
+function maskSecretValues(text: string, secretValues: string[]): string {
+  let result = text
+  for (const value of [...secretValues].sort((a, b) => b.length - a.length)) {
+    result = result.split(value).join(HTTP_SECRET_MASK)
+    const encoded = encodeURIComponent(value)
+    // `URLSearchParams` кодирует пробел как `+`, а не `%20`, поэтому в query
+    // значение может выглядеть иначе, чем после `encodeURIComponent`.
+    for (const candidate of [encoded, encoded.replace(/%20/g, '+')]) {
+      if (candidate !== value) {
+        result = result.split(candidate).join(HTTP_SECRET_MASK)
+      }
+    }
+  }
+  return result
+}
+
+export function resolveEnvironment(
   environmentId: number | null,
-): Record<string, string> {
+): ResolvedEnvironment {
   if (environmentId === null)
-    return {}
+    return { maskedVariables: {}, secretValues: [], variables: {} }
+
   const storage = useHttpStorage()
   const env = storage.environments
     .getEnvironments()
     .find(e => e.id === environmentId)
-  return env?.variables ?? {}
+
+  if (!env)
+    return { maskedVariables: {}, secretValues: [], variables: {} }
+
+  const secretKeys = env.secretKeys ?? []
+  const secrets = getEnvironmentSecrets(environmentId)
+  const variables: Record<string, string> = { ...env.variables }
+
+  // Секрет, объявленный в vault, но не заданный на этом устройстве, должен
+  // подставиться пустой строкой, а не остаться литералом `{{KEY}}` в запросе.
+  for (const key of secretKeys) {
+    variables[key] = secrets[key] ?? ''
+  }
+
+  return {
+    maskedVariables: maskHttpSecretVariables(variables, secretKeys),
+    secretValues: secretKeys
+      .map(key => variables[key])
+      .filter(value => Boolean(value)),
+    variables,
+  }
 }
 
 async function executeHttpRequest(
   payload: HttpExecutePayload,
 ): Promise<HttpExecuteResult> {
-  const variables = resolveEnvironmentVariables(payload.environmentId)
+  const { maskedVariables, secretValues, variables } = resolveEnvironment(
+    payload.environmentId,
+  )
   const interpolated = interpolateRequest(payload.request, variables)
+
+  // URL для истории строится по той же схеме, но из маскированных значений:
+  // в vault не должно попасть ни сырое, ни percent-encoded значение секрета.
+  function buildHistoryUrl(): string {
+    try {
+      const masked = interpolateRequest(payload.request, maskedVariables)
+      return buildUrl(masked.url, masked.query)
+    }
+    catch {
+      // Не подставляем сюда собранный URL: он содержит значения секретов.
+      return payload.request.url
+    }
+  }
 
   const headersWithAuth = applyAuth(interpolated.auth, interpolated.headers)
   const headersObj = toHeadersObject(headersWithAuth)
@@ -460,7 +548,7 @@ async function executeHttpRequest(
 
     appendHistory(
       payload,
-      finalUrl,
+      buildHistoryUrl(),
       interpolated.method,
       response.statusCode,
       durationMs,
@@ -475,15 +563,26 @@ async function executeHttpRequest(
     const message = formatHttpRequestError(error)
     const isAbort = error instanceof Error && error.name === 'AbortError'
 
+    const historyUrl = buildHistoryUrl()
+    // Маскируем только копию для истории: она уходит в vault, который
+    // синхронизируется через облако. `error` в ответе остаётся сырым, потому
+    // что renderer показывает его локально и пользователю нужен точный текст.
+    // Сообщение undici может содержать собранный URL целиком, а также голое
+    // значение секрета (например `getaddrinfo ENOTFOUND <секретный-хост>`).
+    const historyError = maskSecretValues(
+      message.split(finalUrl).join(historyUrl),
+      secretValues,
+    )
+
     appendHistory(
       payload,
-      finalUrl,
+      historyUrl,
       interpolated.method,
       null,
       durationMs,
       0,
       startedAt,
-      isAbort ? `Timeout after ${timeoutMs}ms` : message,
+      isAbort ? `Timeout after ${timeoutMs}ms` : historyError,
     )
 
     return {
@@ -531,9 +630,91 @@ function appendHistory(
   }
 }
 
+/**
+ * Значения секретов ходят только через IPC: локальный HTTP API слушает все
+ * интерфейсы с открытым CORS, и отдавать через него расшифрованные секреты
+ * означало бы обойти защиту OS keychain.
+ */
+function setEnvironmentSecretHandler(
+  payload: HttpSecretSetPayload,
+): HttpSecretMutationResult {
+  const key = payload.key.trim()
+  if (!key) {
+    return { error: 'invalidKey', ok: false }
+  }
+
+  if (!isSecretsEncryptionAvailable()) {
+    return { error: 'unavailable', ok: false }
+  }
+
+  const storage = useHttpStorage()
+  try {
+    // Сначала сохраняем зашифрованное значение локально и только потом удаляем
+    // plain-значение из vault (`addSecretKey` делает и то, и другое). Обратный
+    // порядок терял бы значение полностью при сбое шифрования.
+    setEnvironmentSecret(payload.environmentId, key, payload.value)
+
+    const { notFound } = storage.environments.addSecretKey(
+      payload.environmentId,
+      key,
+    )
+    if (notFound) {
+      // Окружение исчезло между вызовами: локальный секрет теперь ничей.
+      deleteEnvironmentSecret(payload.environmentId, key)
+      return { error: 'notFound', ok: false }
+    }
+
+    return { ok: true }
+  }
+  catch {
+    // `addSecretKey` мог упасть (например vault в состоянии гидрации) уже после
+    // успешного шифрования: без компенсации локальное значение осталось бы без
+    // ключа в `secretKeys` — невидимым и неудаляемым. Удаление безопасно, это
+    // значение записал сам этот вызов.
+    deleteEnvironmentSecret(payload.environmentId, key)
+    return { error: 'unknown', ok: false }
+  }
+}
+
+function deleteEnvironmentSecretHandler(
+  payload: HttpSecretPayload,
+): HttpSecretMutationResult {
+  const key = payload.key.trim()
+  const storage = useHttpStorage()
+
+  try {
+    const { notFound } = storage.environments.removeSecretKey(
+      payload.environmentId,
+      key,
+    )
+    if (notFound) {
+      return { error: 'notFound', ok: false }
+    }
+
+    deleteEnvironmentSecret(payload.environmentId, key)
+    return { ok: true }
+  }
+  catch {
+    return { error: 'unknown', ok: false }
+  }
+}
+
 export function registerHttpHandlers(): void {
   ipcMain.handle(
     'spaces:http:execute',
     async (_, payload: HttpExecutePayload) => executeHttpRequest(payload),
   )
+
+  ipcMain.handle('spaces:http:secrets-status', () => ({
+    available: isSecretsEncryptionAvailable(),
+  }))
+
+  ipcMain.handle('spaces:http:set-secret', (_, payload: HttpSecretSetPayload) =>
+    setEnvironmentSecretHandler(payload))
+
+  ipcMain.handle('spaces:http:delete-secret', (_, payload: HttpSecretPayload) =>
+    deleteEnvironmentSecretHandler(payload))
+
+  ipcMain.handle('spaces:http:reveal-secret', (_, payload: HttpSecretPayload) =>
+    revealEnvironmentSecret(payload.environmentId, payload.key.trim()))
 }

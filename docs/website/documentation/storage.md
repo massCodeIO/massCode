@@ -18,7 +18,9 @@ massCode stores your data locally on your computer. Snippets and notes live in a
 - **Live updates.** massCode watches the vault in real time, so external file changes appear in the app automatically.
 
 ::: warning
-Vault files are stored as plain text. Do not store passwords, API tokens, private keys, or other secrets in snippets, notes, HTTP requests, or HTTP environments if your vault is synced, shared, or committed to Git. Use an external secret manager for real credentials.
+Vault files are stored as plain text. Do not store passwords, API tokens, private keys, or other secrets in snippets, notes, or HTTP requests if your vault is synced, shared, or committed to Git. Use an external secret manager for real credentials.
+
+In HTTP environments, use [secret variables](/documentation/http/environments#secret-variables) for such values: their names stay in the vault, but the values are kept outside it, encrypted on the device where you entered them.
 :::
 
 ### How it works

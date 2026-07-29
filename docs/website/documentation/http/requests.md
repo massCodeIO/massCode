@@ -30,7 +30,7 @@ The request editor is split into focused tabs:
 - **Params** - query parameters sent with the URL
 - **Headers** - request headers
 - **Body** - JSON, text, form URL encoded, or multipart form data
-- **Auth** - none, bearer token, or basic auth
+- **Auth** - none, bearer token, or basic auth. Auth values are stored in the vault as plain text, so keep tokens and passwords in [secret variables](/documentation/http/environments#secret-variables) and reference them here.
 - **Description** - markdown notes for the request
 
 Changes are saved automatically while you edit.

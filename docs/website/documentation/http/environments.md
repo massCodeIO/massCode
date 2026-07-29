@@ -57,6 +57,20 @@ Only the secret name is stored in the vault. The value never leaves the device w
 On Linux, encryption depends on an available system keyring. Without one, secret storage can be unavailable or provide weaker protection, and **Add secret** is disabled.
 :::
 
+### How Secrets Are Stored
+
+Values live in massCode application data, in an `http-secrets.json` file next to the other app settings, and are encrypted by the operating system: Keychain on macOS, DPAPI on Windows, and the system keyring on Linux.
+
+Each value is bound to a pair of a vault, identified by its path on disk, and an environment. This has a few practical consequences:
+
+- Moving the vault in **Settings → Storage** carries secret values along with it.
+- Switching to a different existing vault does not pick up values entered for the previous one, because it is another vault.
+- Deleting an environment also deletes its local secret values.
+
+Values are decrypted only in the main process, at the moment a request runs. The interface never receives them, except when you click the eye icon to reveal a single value. The request preview, the cURL command you copy from it, and the request history (both the URL and the error text) show a mask. The real value goes only into the outgoing network request.
+
+If a value cannot be decrypted, for example because the file was written by a different operating system user or the keychain has changed, the secret is treated as not set: it shows **Not set on this device** and resolves to an empty value. The request still runs.
+
 ## Active Environment
 
 Use the **Environments** panel below folders to choose the active environment.

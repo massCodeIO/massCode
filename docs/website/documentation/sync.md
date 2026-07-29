@@ -23,6 +23,8 @@ This approach works well if you want:
 
 massCode watches the vault directory in real time, so changes made outside the app are picked up automatically.
 
+Values of HTTP [secret variables](/documentation/http/environments#secret-variables) are the one exception: they are stored outside the vault, so they are not synced and have to be entered on each device separately.
+
 ## Offloaded (online-only) files
 
 <AppVersion text=">=5.9" />

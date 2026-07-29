@@ -20,7 +20,7 @@ const props = defineProps<Props>()
 
 const model = defineModel<string>({ default: '' })
 
-const { activeEnvironment } = useHttpEnvironments()
+const { activeEnvironmentVariables } = useHttpEnvironments()
 
 const editorContainer = ref<HTMLElement>()
 let view: EditorView | null = null
@@ -29,7 +29,7 @@ const URL_INPUT_FONT_FAMILY
   = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
 function getVariables(): Record<string, string> {
-  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
+  return activeEnvironmentVariables.value
 }
 
 function createTheme() {
@@ -122,7 +122,7 @@ watch(model, (value) => {
 })
 
 watch(
-  () => activeEnvironment.value?.variables,
+  activeEnvironmentVariables,
   () => {
     if (view)
       refreshVariables(view)

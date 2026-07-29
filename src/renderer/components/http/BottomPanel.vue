@@ -17,7 +17,7 @@ import { buildRequestPreview } from './requestPreview'
 type BottomPanelTab = 'preview' | 'response'
 
 const { currentDraft } = useHttpRequests()
-const { activeEnvironment } = useHttpEnvironments()
+const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const { settings } = useHttpSettings()
 const copy = useCopyToClipboard()
@@ -31,15 +31,11 @@ const previewFormat = computed<HttpRequestPreviewFormat>({
   },
 })
 
-const previewVariables = computed<Record<string, string>>(() => {
-  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
-})
-
 const previewContent = computed(() => {
   if (!currentDraft.value)
     return ''
   return buildRequestPreview(currentDraft.value, previewFormat.value, {
-    variables: previewVariables.value,
+    variables: activeEnvironmentVariables.value,
   })
 })
 

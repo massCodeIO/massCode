@@ -5,6 +5,7 @@ import type {
 } from '@/services/api/generated'
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { api } from '@/services/api'
+import { maskHttpSecretVariables } from '~/shared/httpVariables'
 
 export type HttpEnvironment = HttpEnvironmentsResponse['items'][number]
 
@@ -17,6 +18,22 @@ const activeEnvironment = computed(() => {
   return (
     environments.value.find(env => env.id === activeEnvironmentId.value)
     ?? null
+  )
+})
+
+/**
+ * Переменные активного окружения для превью и подсветки. Значения секретов
+ * в renderer не попадают вовсе: подставляется маска, а реальное значение
+ * известно только main-процессу в момент выполнения запроса.
+ */
+const activeEnvironmentVariables = computed<Record<string, string>>(() => {
+  const env = activeEnvironment.value
+  if (!env)
+    return {}
+
+  return maskHttpSecretVariables(
+    env.variables as Record<string, string>,
+    env.secretKeys,
   )
 })
 
@@ -95,6 +112,7 @@ export function useHttpEnvironments() {
   return {
     activeEnvironment,
     activeEnvironmentId,
+    activeEnvironmentVariables,
     createHttpEnvironment,
     deleteHttpEnvironment,
     environments,

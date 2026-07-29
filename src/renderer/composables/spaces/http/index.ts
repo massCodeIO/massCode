@@ -1,6 +1,7 @@
 export { useHttpApp } from './useHttpApp'
 export type { HttpEnvironment } from './useHttpEnvironments'
 export { useHttpEnvironments } from './useHttpEnvironments'
+export { useHttpEnvironmentSecrets } from './useHttpEnvironmentSecrets'
 export { useHttpExecute } from './useHttpExecute'
 export { useHttpFolderDragDrop } from './useHttpFolderDragDrop'
 export { useHttpFolders } from './useHttpFolders'

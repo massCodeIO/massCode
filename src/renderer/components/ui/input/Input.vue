@@ -9,7 +9,7 @@ interface Props {
   class?: string
   placeholder?: string
   clearable?: boolean
-  type?: 'text' | 'textarea' | 'number'
+  type?: 'text' | 'textarea' | 'number' | 'password'
   focus?: boolean
   select?: boolean
   disabled?: boolean

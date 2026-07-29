@@ -39,7 +39,7 @@ const {
   updateHttpRequest,
   updateHttpRequests,
 } = useHttpRequests()
-const { activeEnvironment } = useHttpEnvironments()
+const { activeEnvironmentVariables } = useHttpEnvironments()
 const { copy } = useClipboard()
 
 const itemRef = ref<HTMLDivElement>()
@@ -83,9 +83,7 @@ const isCloudPending = computed(
   () => props.request.pendingCloudDownload === true,
 )
 
-const previewVariables = computed<Record<string, string>>(() => {
-  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
-})
+const previewVariables = activeEnvironmentVariables
 
 function getActionTargetIds() {
   const highlightedIds = [...highlightedRequestIds.value]

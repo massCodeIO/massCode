@@ -1,17 +1,9 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends Entry = Entry">
+import type { Entry } from './keyValueTable'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { i18n } from '@/electron'
 import { Copy, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next'
-
-interface Entry {
-  key: string
-  value: string
-  description?: string
-  enabled?: boolean
-  type?: string
-  [key: string]: any
-}
 
 interface Column {
   key: string
@@ -31,8 +23,8 @@ const props = withDefaults(
     emptyText?: string
     addLabel?: string
     gridTemplateColumns?: string
-    createEntry?: () => Entry
-    beforeRemove?: (entry: Entry, index: number) => boolean | Promise<boolean>
+    createEntry?: () => T
+    beforeRemove?: (entry: T, index: number) => boolean | Promise<boolean>
   }>(),
   {
     columns: () => [
@@ -58,17 +50,12 @@ const props = withDefaults(
     emptyText: '',
     addLabel: () => i18n.t('spaces.http.editor.keyValue.addRow'),
     gridTemplateColumns: '',
-    createEntry: () => ({
-      key: '',
-      value: '',
-      description: '',
-      enabled: true,
-    }),
+    createEntry: undefined,
     beforeRemove: undefined,
   },
 )
 
-const model = defineModel<Entry[]>({ required: true })
+const model = defineModel<T[]>({ required: true })
 
 const resolvedGridTemplateColumns = computed(() => {
   if (props.gridTemplateColumns)
@@ -83,7 +70,7 @@ const resolvedGridTemplateColumns = computed(() => {
   return parts.join(' ')
 })
 
-function isEnabled(entry: Entry): boolean {
+function isEnabled(entry: T): boolean {
   return entry.enabled !== false
 }
 
@@ -95,7 +82,16 @@ function setEnabled(index: number, value: boolean) {
 }
 
 function addRow() {
-  model.value.push(props.createEntry())
+  const entry
+    = props.createEntry?.()
+      ?? ({
+        description: '',
+        enabled: true,
+        key: '',
+        value: '',
+      } as T)
+
+  model.value.push(entry)
 }
 
 async function removeRow(index: number) {
@@ -109,7 +105,13 @@ async function removeRow(index: number) {
       return
   }
 
-  model.value.splice(index, 1)
+  // За время диалога подтверждения список мог быть пересобран: индекс уже
+  // может указывать на другую строку, а самой строки может не быть.
+  const currentIndex = model.value.indexOf(entry)
+  if (currentIndex === -1)
+    return
+
+  model.value.splice(currentIndex, 1)
 }
 
 function duplicateRow(index: number) {

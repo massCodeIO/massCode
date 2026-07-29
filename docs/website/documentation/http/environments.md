@@ -7,8 +7,8 @@ description: "Use HTTP environments in massCode to manage reusable variables for
 
 Environments store reusable variables for requests. Use them for values that change between local, staging, and production APIs, such as base URLs, user IDs, and organization IDs.
 
-::: warning
-Environment variables are stored as plain text in your Markdown Vault. Do not store real passwords, API tokens, private keys, or other secrets in HTTP environments if your vault is synced, shared, or committed to Git.
+::: warning Plain text variables
+Regular environment variables are stored as plain text in your Markdown Vault, so they travel with it when the vault is synced, shared, or committed to Git. For passwords, API tokens, private keys, and similar values use [secret variables](#secret-variables) instead.
 :::
 
 <img :src="withBase('/http-envs.png')">
@@ -30,6 +30,32 @@ Variables can be used in:
 - headers
 - body
 - auth fields
+
+## Secret Variables
+
+Secret variables keep sensitive values out of the vault. The value is encrypted with your operating system keychain and stored locally, outside the Markdown Vault.
+
+To create one, open **Manage**, click **Add secret**, then enter a name and a value. The value is saved when you leave the value field.
+
+You can also protect a variable that already exists: select the **Secret** checkbox next to it. massCode encrypts the current value and removes it from the vault.
+
+::: warning Rotate values you protect later
+By the time you select the checkbox, the plain text value has almost certainly been written to `.state.yaml` by autosave, so it may already have reached a synced cloud folder or your Git history. Removing it from the vault does not undo that. Treat such values as exposed and rotate them.
+:::
+
+Secrets are used like any other variable, with the same <code v-pre>{{name}}</code> syntax. When a request runs, massCode substitutes the real value, but the request history stores only a mask.
+
+Working with existing secrets:
+
+- Click the eye icon to show the stored value.
+- Clear the **Secret** checkbox to stop protecting a variable. Its value is moved back into the environment as a regular plain text variable.
+- To rename a secret, delete it and add it again.
+
+::: warning Secrets are not synced
+Only the secret name is stored in the vault. The value never leaves the device where you entered it, so on other devices the same secret shows **Not set on this device** and resolves to an empty value until you enter it there.
+
+On Linux, encryption depends on an available system keyring. Without one, secret storage can be unavailable or provide weaker protection, and **Add secret** is disabled.
+:::
 
 ## Active Environment
 

@@ -75,6 +75,8 @@ type PrettierAction = 'format'
 type FsAction =
   | 'assets'
   | 'export-note'
+  | 'export-note-folder-site'
+  | 'prepare-note-folder-site-export'
   | 'folder-icon:set'
   | 'folder-icon:write'
   | 'import-markdown-folder'
@@ -174,3 +176,41 @@ export interface NoteExportResponse {
   canceled: boolean
   filePath?: string
 }
+
+export type NoteFolderSiteExportSort = 'createdAt' | 'updatedAt' | 'name'
+export type NoteFolderSiteExportOrder = 'ASC' | 'DESC'
+
+export interface NoteFolderSiteExportPreparePayload {
+  folderId: number
+}
+
+export type NoteFolderSiteExportPrepareResponse =
+  | {
+    drawingIds: string[]
+    status: 'ready'
+  }
+  | {
+    status: 'cloud-unavailable'
+  }
+
+export interface NoteFolderSiteExportPayload {
+  drawingPreviews: NoteExportDrawingPreview[]
+  folderId: number
+  order: NoteFolderSiteExportOrder
+  sort: NoteFolderSiteExportSort
+}
+
+export type NoteFolderSiteExportResponse =
+  | {
+    canceled: false
+    directoryPath: string
+    status: 'exported'
+  }
+  | {
+    canceled: true
+    status: 'canceled'
+  }
+  | {
+    canceled: false
+    status: 'cloud-unavailable'
+  }

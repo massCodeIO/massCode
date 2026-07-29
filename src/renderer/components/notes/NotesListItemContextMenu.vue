@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type {
-  NoteExportDrawingPreview,
   NoteExportFormat,
   NoteExportPayload,
   NoteExportResponse,
@@ -20,7 +19,7 @@ import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
 import { api } from '~/renderer/services/api'
-import { getDrawingUrlsFromMarkdown } from './drawingExport'
+import { renderDrawingPreviewsFromMarkdown } from './drawingExport'
 
 interface NoteTagInfo {
   id: number
@@ -163,47 +162,6 @@ function showCloudFileNotReadyWarning() {
   })
 }
 
-async function renderDrawingPreviews(
-  content: string,
-): Promise<NoteExportDrawingPreview[]> {
-  const drawingUrls = getDrawingUrlsFromMarkdown(content)
-
-  if (drawingUrls.length === 0) {
-    return []
-  }
-
-  try {
-    const { getDrawingIdFromUrl, renderDrawingSvg } = await import(
-      './cm-extensions/drawingEmbed'
-    )
-    const drawingIds = new Set(
-      drawingUrls
-        .map(url => getDrawingIdFromUrl(url))
-        .filter((id): id is string => Boolean(id)),
-    )
-    const previews = await Promise.all(
-      [...drawingIds].map(async (id) => {
-        try {
-          const svg = await renderDrawingSvg(id, false)
-          return svg === null ? null : { id, svg }
-        }
-        catch (error) {
-          console.error('[notes] Failed to render drawing for export', error)
-          return null
-        }
-      }),
-    )
-
-    return previews.filter(
-      (preview): preview is NoteExportDrawingPreview => preview !== null,
-    )
-  }
-  catch (error) {
-    console.error('[notes] Failed to load drawing export renderer', error)
-    return []
-  }
-}
-
 async function onExport(format: NoteExportFormat) {
   try {
     let content: string
@@ -234,7 +192,7 @@ async function onExport(format: NoteExportFormat) {
       content = data.content
     }
 
-    const drawingPreviews = await renderDrawingPreviews(content)
+    const drawingPreviews = await renderDrawingPreviewsFromMarkdown(content)
     const result = await ipc.invoke<NoteExportPayload, NoteExportResponse>(
       'fs:export-note',
       {

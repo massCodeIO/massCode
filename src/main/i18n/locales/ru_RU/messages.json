@@ -22,6 +22,7 @@
     "vaultLoaded": "Хранилище успешно загружено.",
     "licenseActivated": "Лицензия активирована. Спасибо за поддержку massCode!",
     "noteExported": "Заметка успешно экспортирована.",
+    "noteFolderSiteExported": "Папка заметок экспортирована как HTML-сайт.",
     "vaultDoctorApplied": "Vault Doctor применил {{count}} исправлений.",
     "vaultDoctorClean": "Vault Doctor не нашёл проблем."
   },
@@ -54,7 +55,8 @@
     "entryNameFolderConflict": "Папка с таким именем уже существует на этом уровне.",
     "vaultPathRequired": "Укажите путь к хранилищу.",
     "licenseInvalid": "Недействительный лицензионный ключ",
-    "noteExportFailed": "Не удалось экспортировать заметку."
+    "noteExportFailed": "Не удалось экспортировать заметку.",
+    "noteFolderSiteExportFailed": "Не удалось экспортировать папку заметок."
   },
   "description": {
     "storageVault": "Выберите директорию для хранилища. Для синхронизации между устройствами выберите папку в iCloud Drive, Google Drive или Dropbox.",

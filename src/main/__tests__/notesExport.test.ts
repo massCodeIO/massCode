@@ -55,6 +55,14 @@ describe('note export helpers', () => {
     expect(html).toContain('<blockquote>')
     expect(html).toContain('<table>')
     expect(html).toContain('<code class="language-ts">')
+    expect(html).toContain('max-width: 700px;')
+    expect(html).toContain(
+      'font: 14px/1.54 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;',
+    )
+    expect(html).toContain(
+      'h2 { margin: 1.2em 0 0.5em; font-size: 1.65em; font-weight: 700;',
+    )
+    expect(html).toContain('table { display: table; overflow: visible; }')
     expect(html).toContain('img-src data:')
     expect(html).not.toMatch(/img-src[^"]*https?:/)
   })
@@ -121,7 +129,7 @@ describe('note export helpers', () => {
     )
 
     expect(html).toContain('display: block;')
-    expect(html).toContain('border: 1px solid #d1d9e0;')
+    expect(html).toContain('border: 1px solid #e7e7ea;')
     expect(html).toContain('border-radius: 8px;')
   })
 

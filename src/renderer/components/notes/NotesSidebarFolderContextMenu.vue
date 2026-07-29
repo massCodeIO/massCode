@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import type { FolderIconSetPayload } from '~/main/types/ipc'
+import type {
+  FolderIconSetPayload,
+  NoteFolderSiteExportPayload,
+  NoteFolderSiteExportPreparePayload,
+  NoteFolderSiteExportPrepareResponse,
+  NoteFolderSiteExportResponse,
+} from '~/main/types/ipc'
 import CustomIcons from '@/components/sidebar/folders/custom-icons/CustomIcons.vue'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import {
   markPersistedStorageMutation,
+  useContentSort,
   useDialog,
   useNoteFolders,
   useSonner,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
+import { renderDrawingPreviews } from './drawingExport'
 
 const props = defineProps<{
   contextNode: any
@@ -27,6 +35,7 @@ const {
   selectedFolderIds,
 } = useNoteFolders()
 const { sonner } = useSonner()
+const { getContentSortQuery } = useContentSort()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -104,6 +113,57 @@ function onRevealInFileManager() {
     Number(props.contextNode.id),
   )
 }
+
+function showCloudFileNotReadyWarning() {
+  sonner({
+    message: i18n.t('messages:warning.cloudFileNotReady'),
+    type: 'warning',
+  })
+}
+
+async function onExportSite() {
+  if (!props.contextNode) {
+    return
+  }
+
+  try {
+    const folderId = Number(props.contextNode.id)
+    const preparation = await ipc.invoke<
+      NoteFolderSiteExportPreparePayload,
+      NoteFolderSiteExportPrepareResponse
+    >('fs:prepare-note-folder-site-export', { folderId })
+    if (preparation.status === 'cloud-unavailable') {
+      showCloudFileNotReadyWarning()
+      return
+    }
+
+    const drawingPreviews = await renderDrawingPreviews(preparation.drawingIds)
+    const result = await ipc.invoke<
+      NoteFolderSiteExportPayload,
+      NoteFolderSiteExportResponse
+    >('fs:export-note-folder-site', {
+      drawingPreviews,
+      folderId,
+      ...getContentSortQuery('notes'),
+    })
+    if (result.status === 'cloud-unavailable') {
+      showCloudFileNotReadyWarning()
+    }
+    else if (result.status === 'exported') {
+      sonner({
+        message: i18n.t('messages:success.noteFolderSiteExported'),
+        type: 'success',
+      })
+    }
+  }
+  catch (error) {
+    console.error(error)
+    sonner({
+      message: i18n.t('messages:error.noteFolderSiteExportFailed'),
+      type: 'error',
+    })
+  }
+}
 </script>
 
 <template>
@@ -125,6 +185,9 @@ function onRevealInFileManager() {
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuItem @click="onRevealInFileManager">
         {{ revealInFileManagerLabel }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuItem @click="onExportSite">
+        {{ i18n.t("action.export.folderToHtmlSite") }}
       </ContextMenu.ContextMenuItem>
       <ContextMenu.ContextMenuSeparator />
       <ContextMenu.ContextMenuItem @click="onDeleteFolder">

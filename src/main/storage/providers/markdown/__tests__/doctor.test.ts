@@ -13,6 +13,15 @@ import { setDatalessProbeForTests } from '../runtime/shared/cloudFiles'
 
 let tempVaultPath = ''
 
+const { remapEnvironmentSecretsMock } = vi.hoisted(() => ({
+  remapEnvironmentSecretsMock: vi.fn(),
+}))
+
+vi.mock('../../../../http/secrets', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../../http/secrets')>()),
+  remapEnvironmentSecrets: remapEnvironmentSecretsMock,
+}))
+
 vi.mock('electron-store', () => {
   class MockStore {
     private state: Record<string, unknown>
@@ -113,6 +122,7 @@ function httpRequestSource(id: number, name: string): string {
 
 beforeEach(() => {
   tempVaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'vault-doctor-'))
+  remapEnvironmentSecretsMock.mockClear()
 })
 
 afterEach(() => {
@@ -530,6 +540,59 @@ describe('vault doctor', () => {
     )
     expect(repaired.activeEnvironmentId).toBeNull()
     expect(repaired.environments[0].variables).toEqual({})
+  })
+
+  it('keeps secrets with the environment that keeps the duplicate id', () => {
+    writeFile(
+      'http/.state.yaml',
+      yaml.dump({
+        activeEnvironmentId: null,
+        counters: {
+          environmentId: 1,
+          folderId: 0,
+          historyId: 0,
+          requestId: 0,
+        },
+        environments: [
+          { id: 1, name: 'Original', variables: {} },
+          { id: 1, name: 'Merged copy', variables: {} },
+        ],
+        folders: [],
+        history: [],
+        requests: [],
+        version: 1,
+      }),
+    )
+
+    applyVaultDoctor({ spaces: ['http'] })
+
+    // Дубликат получает новый id, но секреты остаются у окружения, которое
+    // сохранило исходный id: перенос отобрал бы у него значения.
+    expect(remapEnvironmentSecretsMock).not.toHaveBeenCalled()
+  })
+
+  it('remaps secrets when an environment id is invalid', () => {
+    writeFile(
+      'http/.state.yaml',
+      yaml.dump({
+        activeEnvironmentId: null,
+        counters: {
+          environmentId: 5,
+          folderId: 0,
+          historyId: 0,
+          requestId: 0,
+        },
+        environments: [{ id: -3, name: 'Broken', variables: {} }],
+        folders: [],
+        history: [],
+        requests: [],
+        version: 1,
+      }),
+    )
+
+    applyVaultDoctor({ spaces: ['http'] })
+
+    expect(remapEnvironmentSecretsMock).toHaveBeenCalledWith(-3, 6)
   })
 
   it('repairs duplicate math sheet ids as a safe state-level fix', () => {

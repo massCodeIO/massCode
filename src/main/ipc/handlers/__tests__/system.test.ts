@@ -27,6 +27,7 @@ const getRuntimeCache = vi.fn((): { snippets: SnippetFileLookup[] } => ({
 const findSnippetById = vi.fn()
 const i18nT = vi.fn()
 const log = vi.fn()
+const moveSecretsVault = vi.fn()
 const preferencesGet = vi.fn()
 const preferencesSet = vi.fn()
 const refreshDockBadge = vi.fn(() => ({ applied: true, count: 3 }))
@@ -114,6 +115,10 @@ vi.mock('../../../storage/providers/markdown/watcher', () => ({
 
 vi.mock('../../../store', () => ({
   store: {
+    // Значения секретов HTTP-окружений переносятся следом за vault.
+    httpSecrets: {
+      moveVault: moveSecretsVault,
+    },
     preferences: {
       // Транзитивный импорт i18n читает локаль при инициализации модуля.
       get: preferencesGet,
@@ -226,6 +231,11 @@ describe('registerSystemHandlers', () => {
     )
     expect(preferencesSet.mock.invocationCallOrder[0]).toBeLessThan(
       startMarkdownWatcher.mock.invocationCallOrder[0],
+    )
+    // Секреты привязаны к пути vault и должны переехать вместе с ним.
+    expect(moveSecretsVault).toHaveBeenCalledWith(
+      '/current-vault',
+      '/next-vault',
     )
     expect(result).toEqual({ vaultPath: '/next-vault' })
   })

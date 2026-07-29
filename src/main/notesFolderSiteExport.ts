@@ -13,8 +13,11 @@ import { createHash, randomBytes } from 'node:crypto'
 import { mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { BrowserWindow, dialog } from 'electron'
+import MarkdownIt from 'markdown-it'
 import { getDrawingUrlsFromMarkdown } from '../shared/notes/drawingExport'
 import { buildNoteFolderPathMap } from '../shared/notes/folderPath'
+import { findInternalLinks } from '../shared/notes/internalLinks'
+import i18n from './i18n'
 import {
   isSafeDrawingSvg,
   NOTE_DOCUMENT_STYLES,
@@ -37,6 +40,188 @@ import { getSpaceDirPath } from './storage/providers/markdown/runtime/spaces'
 const MAX_DRAWING_PREVIEWS = 500
 const MAX_DRAWING_PREVIEW_BYTES = 5 * 1024 * 1024
 const MAX_DRAWING_PREVIEWS_TOTAL_BYTES = 100 * 1024 * 1024
+const MAX_SEARCH_RESULTS = 50
+const SEARCH_EXCERPT_LENGTH = 160
+const searchMarkdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: false,
+})
+searchMarkdown.inline.ruler.before(
+  'emphasis',
+  'masscode-internal-link',
+  (state, silent) => {
+    const match = findInternalLinks(state.src.slice(state.pos))[0]
+    if (!match || match.from !== 0) {
+      return false
+    }
+
+    if (!silent) {
+      const token = state.push('masscode_internal_link', '', 0)
+      token.content = match.label
+    }
+    state.pos += match.to
+    return true
+  },
+)
+
+interface SiteSearchEntry {
+  content: string
+  folder: string
+  href: string
+  title: string
+}
+
+const SITE_SEARCH_RUNTIME = `(() => {
+  const input = document.querySelector('[data-site-search]')
+  const navigation = document.querySelector('.site-nav')
+  const results = document.querySelector('[data-site-search-results]')
+  const empty = document.querySelector('[data-site-search-empty]')
+  const prefix = document.currentScript?.dataset.searchPrefix || ''
+  if (!(input instanceof HTMLInputElement) || !navigation || !results || !empty) return
+
+  const normalize = value => value.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase()
+  const entries = SEARCH_INDEX.map((entry, order) => ({
+    ...entry,
+    normalizedContent: normalize(entry.content),
+    normalizedFolder: normalize(entry.folder),
+    normalizedTitle: normalize(entry.title),
+    order,
+  }))
+  const excerpt = (content, tokens) => {
+    const value = content.trim()
+    if (!value) return ''
+    const normalized = normalize(value)
+    const positions = tokens
+      .map(token => normalized.indexOf(token))
+      .filter(position => position >= 0)
+    const match = positions.length ? Math.min(...positions) : 0
+    const start = Math.max(0, match - 45)
+    const end = Math.min(value.length, start + ${SEARCH_EXCERPT_LENGTH})
+    return \`\${start > 0 ? '…' : ''}\${value.slice(start, end).trim()}\${end < value.length ? '…' : ''}\`
+  }
+  const appendResult = (entry, tokens, query) => {
+    const link = document.createElement('a')
+    link.className = 'site-search-result'
+    link.href = prefix + entry.href + '?q=' + encodeURIComponent(query)
+
+    const title = document.createElement('span')
+    title.className = 'site-search-result-title'
+    title.textContent = entry.title
+    link.append(title)
+
+    if (entry.folder) {
+      const folder = document.createElement('span')
+      folder.className = 'site-search-result-folder'
+      folder.textContent = entry.folder
+      link.append(folder)
+    }
+
+    const summary = excerpt(entry.content, tokens)
+    if (summary) {
+      const content = document.createElement('span')
+      content.className = 'site-search-result-excerpt'
+      content.textContent = summary
+      link.append(content)
+    }
+    results.append(link)
+  }
+  const update = () => {
+    const query = input.value.trim()
+    const tokens = normalize(query).split(/\\s+/).filter(Boolean)
+    results.replaceChildren()
+    if (!tokens.length) {
+      navigation.hidden = false
+      results.hidden = true
+      empty.hidden = true
+      return
+    }
+
+    const matches = entries
+      .map((entry) => {
+        let score = 0
+        for (const token of tokens) {
+          if (entry.normalizedTitle.includes(token)) score += 100
+          else if (entry.normalizedFolder.includes(token)) score += 10
+          else if (entry.normalizedContent.includes(token)) score += 1
+          else return null
+        }
+        return { entry, score }
+      })
+      .filter(Boolean)
+      .sort((left, right) => right.score - left.score || left.entry.order - right.entry.order)
+      .slice(0, ${MAX_SEARCH_RESULTS})
+
+    navigation.hidden = true
+    results.hidden = false
+    empty.hidden = matches.length > 0
+    matches.forEach(match => appendResult(match.entry, tokens, query))
+  }
+
+  input.addEventListener('input', update)
+  input.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return
+    input.value = ''
+    update()
+  })
+  const initialQuery = new URLSearchParams(window.location.search).get('q')?.trim()
+  if (initialQuery) {
+    input.value = initialQuery
+    update()
+  }
+})()`
+
+function extractSearchText(content: string): string {
+  const parts: string[] = []
+
+  for (const token of searchMarkdown.parse(content, {})) {
+    if (token.type === 'fence' || token.type === 'code_block') {
+      parts.push(token.content)
+      continue
+    }
+    if (token.type !== 'inline') {
+      continue
+    }
+
+    for (const child of token.children ?? []) {
+      if (
+        child.type === 'text'
+        || child.type === 'code_inline'
+        || child.type === 'image'
+        || child.type === 'masscode_internal_link'
+      ) {
+        parts.push(child.content)
+      }
+      else if (child.type === 'softbreak' || child.type === 'hardbreak') {
+        parts.push(' ')
+      }
+    }
+  }
+
+  return parts
+    .join(' ')
+    .replace(/\bmasscode:\/\/[^\s)]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function serializeSearchIndex(entries: SiteSearchEntry[]): string {
+  return JSON.stringify(entries).replace(
+    /[<>&\u2028\u2029]/g,
+    character =>
+      ({
+        '<': '\\u003c',
+        '>': '\\u003e',
+        '&': '\\u0026',
+        '\u2028': '\\u2028',
+        '\u2029': '\\u2029',
+      })[character]!,
+  )
+}
+
+function renderSearchAsset(entries: SiteSearchEntry[]): string {
+  return `const SEARCH_INDEX=${serializeSearchIndex(entries)};\n${SITE_SEARCH_RUNTIME}\n`
+}
 
 interface FolderSiteScope {
   folder: NotesFolderTreeRecord
@@ -81,6 +266,23 @@ function pageFileName(note: Pick<NoteRecord, 'id' | 'name'>): string {
 
 function flattenScope(folder: NotesFolderTreeRecord): NotesFolderTreeRecord[] {
   return [folder, ...folder.children.flatMap(child => flattenScope(child))]
+}
+
+function getRelativeSearchFolderPath(
+  folderId: number,
+  rootId: number,
+  folderById: Map<number, NotesFolderTreeRecord>,
+): string {
+  const segments: string[] = []
+  let current = folderById.get(folderId)
+
+  while (current && current.id !== rootId) {
+    segments.unshift(current.name)
+    current
+      = current.parentId === null ? undefined : folderById.get(current.parentId)
+  }
+
+  return current?.id === rootId ? segments.join('/') : ''
 }
 
 function findFolder(
@@ -323,7 +525,7 @@ async function getAvailableDestination(
 const SITE_STYLES = `
 ${NOTE_DOCUMENT_STYLES}
 :root {
-  --site-accent: #3159c9;
+  --site-accent: #52525b;
   --site-border: #e7e7ea;
   --site-muted: #73737a;
   --site-sidebar: #f8f8f9;
@@ -342,9 +544,10 @@ body {
   background: #fff;
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-::selection { color: var(--site-text); background: #dce5ff; }
+::selection { color: var(--site-text); background: #e4e4e7; }
 a { color: var(--site-accent); text-underline-offset: 0.18em; }
-a:hover { color: #2447a7; }
+a:hover { color: #3f3f46; }
+blockquote { border-left-color: var(--site-accent); }
 .site-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -362,7 +565,7 @@ a:hover { color: #2447a7; }
 }
 .site-title {
   display: block;
-  padding: 28px 28px 20px;
+  padding: 28px 28px 12px;
   overflow: hidden;
   color: var(--site-text);
   font-size: 15px;
@@ -373,6 +576,85 @@ a:hover { color: #2447a7; }
   white-space: nowrap;
 }
 .site-title:hover { color: var(--site-accent); text-decoration: none; }
+.site-search {
+  padding: 0 20px 14px;
+}
+.site-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  color: var(--site-text);
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.site-search-input::placeholder { color: #8b8b92; }
+.site-search-input:hover { border-color: #b7b7bd; }
+.site-search-input:focus {
+  border-color: #8f8f96;
+  box-shadow: 0 0 0 2px rgb(113 113 122 / 14%);
+}
+.site-search-results {
+  flex: 1;
+  padding: 0 20px 48px;
+  overflow: auto;
+}
+.site-search-results[hidden] { display: none; }
+.site-search-result {
+  display: block;
+  margin: 1px 0;
+  padding: 9px;
+  color: var(--site-text);
+  text-decoration: none;
+  border-radius: 6px;
+}
+.site-search-result:hover {
+  color: var(--site-text);
+  text-decoration: none;
+  background: #eeeeef;
+}
+.site-search-result-title,
+.site-search-result-folder,
+.site-search-result-excerpt {
+  display: block;
+}
+.site-search-result-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-search-result-folder {
+  overflow: hidden;
+  color: #77777e;
+  font-size: 11px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-search-result-excerpt {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #696970;
+  font-size: 12px;
+  line-height: 17px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.site-search-empty {
+  padding: 8px 28px;
+  color: var(--site-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+.site-search-empty[hidden] { display: none; }
 .site-nav {
   flex: 1;
   padding: 4px 20px 48px;
@@ -517,7 +799,9 @@ a:hover { color: #2447a7; }
     border-right: 0;
     border-bottom: 1px solid var(--site-border);
   }
-  .site-title { padding: 20px 20px 14px; }
+  .site-title { padding: 20px 20px 10px; }
+  .site-search { padding: 0 20px 12px; }
+  .site-search-results { padding: 0 20px 24px; }
   .site-nav { padding: 0 20px 24px; }
   .site-main { width: calc(100% - 28px); padding: 24px 0 48px; }
   .site-index h1 { margin-bottom: 24px; font-size: 30px; line-height: 38px; }
@@ -595,15 +879,20 @@ function renderSitePage(options: {
   breadcrumbs: string
   homeHref: string
   navigation: string
+  searchAssetHref: string
+  searchPrefix: string
   siteName: string
   title: string
 }): string {
+  const searchPlaceholder = escapeHtml(i18n.t('placeholder.searchNotes'))
+  const searchEmpty = escapeHtml(i18n.t('commandPalette.empty'))
+
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self'">
   <title>${escapeHtml(options.title)}</title>
   <style>${SITE_STYLES}</style>
 </head>
@@ -611,6 +900,11 @@ function renderSitePage(options: {
   <div class="site-layout">
     <aside class="site-sidebar">
       <a class="site-title" href="${escapeHtml(options.homeHref)}">${escapeHtml(options.siteName)}</a>
+      <div class="site-search">
+        <input class="site-search-input" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}" autocomplete="off" data-site-search>
+      </div>
+      <div class="site-search-results" data-site-search-results hidden></div>
+      <div class="site-search-empty" role="status" aria-live="polite" data-site-search-empty hidden>${searchEmpty}</div>
       <nav class="site-nav">${options.navigation}</nav>
     </aside>
     <div class="site-main-shell">
@@ -620,6 +914,7 @@ function renderSitePage(options: {
       </main>
     </div>
   </div>
+  <script src="${escapeHtml(options.searchAssetHref)}" data-search-prefix="${escapeHtml(options.searchPrefix)}"></script>
 </body>
 </html>
 `
@@ -665,9 +960,10 @@ async function writeSite(
   allActiveNotes: NoteRecord[],
   previews: NoteExportDrawingPreview[],
 ): Promise<void> {
+  const assetsPath = join(stagingPath, 'assets')
   const notesPath = join(stagingPath, 'notes')
-  const imagesPath = join(stagingPath, 'assets', 'images')
-  const drawingsPath = join(stagingPath, 'assets', 'drawings')
+  const imagesPath = join(assetsPath, 'images')
+  const drawingsPath = join(assetsPath, 'drawings')
   await Promise.all([
     mkdir(notesPath, { recursive: true }),
     mkdir(imagesPath, { recursive: true }),
@@ -725,6 +1021,22 @@ async function writeSite(
   const httpFolders = httpStorage.folders.getFolders()
   const folderPathById = buildNoteFolderPathMap(allFolders)
   const httpFolderPathById = buildNoteFolderPathMap(httpFolders)
+  const folderById = new Map(
+    scope.folders.map(folder => [folder.id, folder]),
+  )
+  const searchEntries = scope.notes.map<SiteSearchEntry>(note => ({
+    content: extractSearchText(note.content),
+    folder: note.folder
+      ? getRelativeSearchFolderPath(note.folder.id, scope.folder.id, folderById)
+      : '',
+    href: `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
+    title: note.name,
+  }))
+  await writeFile(
+    join(assetsPath, 'search.js'),
+    renderSearchAsset(searchEntries),
+    'utf8',
+  )
   const resolver = createInternalLinkResolver([
     ...snippetsStorage.snippets
       .getSnippets({ isDeleted: 0 })
@@ -752,9 +1064,6 @@ async function writeSite(
   const assetSourceByName = new Map<string, string>()
   const paths = getNotesPaths(getVaultPath())
 
-  const folderById = new Map(
-    scope.folders.map(folder => [folder.id, folder]),
-  )
   for (const note of scope.notes) {
     const navigationFromNote = renderFolderNavigation(
       scope.folder,
@@ -827,6 +1136,8 @@ async function writeSite(
       ),
       homeHref: '../index.html',
       navigation: navigationFromNote,
+      searchAssetHref: '../assets/search.js',
+      searchPrefix: '../',
       siteName: scope.folder.name,
       title: `${note.name} — ${scope.folder.name}`,
     })
@@ -846,6 +1157,8 @@ async function writeSite(
       breadcrumbs: '',
       homeHref: 'index.html',
       navigation: navigationFromIndex,
+      searchAssetHref: 'assets/search.js',
+      searchPrefix: '',
       siteName: scope.folder.name,
       title: scope.folder.name,
     }),

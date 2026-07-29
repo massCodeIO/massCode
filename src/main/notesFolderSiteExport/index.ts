@@ -1,0 +1,1049 @@
+import type { OpenDialogOptions } from 'electron'
+import type { NoteRecord } from '../storage/contracts'
+import type { NotesFolderTreeRecord } from '../storage/providers/markdown/notes/runtime/types'
+import type {
+  NoteExportDrawingPreview,
+  NoteFolderSiteExportPayload,
+  NoteFolderSiteExportPreparePayload,
+  NoteFolderSiteExportPrepareResponse,
+  NoteFolderSiteExportResponse,
+} from '../types/ipc'
+import { Buffer } from 'node:buffer'
+import { createHash, randomBytes } from 'node:crypto'
+import { mkdir, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { extname, join } from 'node:path'
+import { BrowserWindow, dialog } from 'electron'
+import { getDrawingUrlsFromMarkdown } from '../../shared/notes/drawingExport'
+import { buildNoteFolderPathMap } from '../../shared/notes/folderPath'
+import i18n from '../i18n'
+import {
+  isSafeDrawingSvg,
+  NOTE_DOCUMENT_STYLES,
+  NotesAssetTemporarilyUnavailableError,
+  renderNoteHtmlBody,
+  sanitizeNoteExportFileName,
+} from '../notesExport'
+import { useHttpStorage, useNotesStorage, useStorage } from '../storage'
+import {
+  getNotesPaths,
+  getNotesRuntimeCache,
+  resolveNotesAsset,
+} from '../storage/providers/markdown/notes/runtime'
+import { createInternalLinkResolver } from '../storage/providers/markdown/notes/runtime/internalLinkResolver'
+import { getVaultPath } from '../storage/providers/markdown/runtime'
+import { DRAWINGS_SPACE_ID } from '../storage/providers/markdown/runtime/constants'
+import { getFileAvailability } from '../storage/providers/markdown/runtime/shared/cloudFiles'
+import { getSpaceDirPath } from '../storage/providers/markdown/runtime/spaces'
+import { renderNoteFolderSiteSearchAsset } from './search'
+
+const MAX_DRAWING_PREVIEWS = 500
+const MAX_DRAWING_PREVIEW_BYTES = 5 * 1024 * 1024
+const MAX_DRAWING_PREVIEWS_TOTAL_BYTES = 100 * 1024 * 1024
+
+interface FolderSiteScope {
+  folder: NotesFolderTreeRecord
+  folders: NotesFolderTreeRecord[]
+  notes: NoteRecord[]
+}
+
+type ScopeContentAvailability = 'available' | 'cloud-unavailable'
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    character =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        '\'': '&#39;',
+      })[character]!,
+  )
+}
+
+function sanitizeDirectoryName(name: string): string {
+  const normalized = name
+    .replace(/[<>:"/\\|?*]/g, '-')
+    .split('')
+    .map(character => (character.charCodeAt(0) <= 0x1F ? '-' : character))
+    .join('')
+    .trim()
+    .replace(/^[.\s]+|[.\s]+$/g, '')
+
+  return normalized || 'notes-site'
+}
+
+function pageFileName(note: Pick<NoteRecord, 'id' | 'name'>): string {
+  return sanitizeNoteExportFileName(
+    `${note.id}-${note.name.replace(/\s+/g, '-')}`,
+    'html',
+  )
+}
+
+function flattenScope(folder: NotesFolderTreeRecord): NotesFolderTreeRecord[] {
+  return [folder, ...folder.children.flatMap(child => flattenScope(child))]
+}
+
+function getRelativeSearchFolderPath(
+  folderId: number,
+  rootId: number,
+  folderById: Map<number, NotesFolderTreeRecord>,
+): string {
+  const segments: string[] = []
+  let current = folderById.get(folderId)
+
+  while (current && current.id !== rootId) {
+    segments.unshift(current.name)
+    current
+      = current.parentId === null ? undefined : folderById.get(current.parentId)
+  }
+
+  return current?.id === rootId ? segments.join('/') : ''
+}
+
+function findFolder(
+  folders: NotesFolderTreeRecord[],
+  folderId: number,
+): NotesFolderTreeRecord | null {
+  for (const folder of folders) {
+    if (folder.id === folderId) {
+      return folder
+    }
+    const child = findFolder(folder.children, folderId)
+    if (child) {
+      return child
+    }
+  }
+  return null
+}
+
+function loadScope(
+  folderId: number,
+  sort: NoteFolderSiteExportPayload['sort'] = 'createdAt',
+  order: NoteFolderSiteExportPayload['order'] = 'DESC',
+): FolderSiteScope | null {
+  const storage = useNotesStorage()
+  const tree = storage.folders.getFoldersTree()
+  const folder = findFolder(tree, folderId)
+  if (!folder) {
+    return null
+  }
+
+  const folders = flattenScope(folder)
+  const folderIds = new Set(folders.map(item => item.id))
+  const notes = storage.notes
+    .getNotes({ isDeleted: 0, order, sort, withContent: true })
+    .filter(note => note.folder && folderIds.has(note.folder.id))
+
+  return { folder, folders, notes }
+}
+
+function hasUnavailableNotes(scope: FolderSiteScope): boolean {
+  return scope.notes.some(note => note.pendingCloudDownload)
+}
+
+function getScopeContentAvailability(
+  scope: FolderSiteScope,
+): ScopeContentAvailability {
+  const paths = getNotesPaths(getVaultPath())
+  const cache = getNotesRuntimeCache(paths)
+
+  for (const record of scope.notes) {
+    const note = cache.noteById.get(record.id)
+    if (!note) {
+      throw new Error(`Note content is unavailable: ${record.id}`)
+    }
+    if (note.pendingCloudDownload) {
+      return 'cloud-unavailable'
+    }
+    if (note.content !== null) {
+      continue
+    }
+
+    const availability = getFileAvailability(
+      join(paths.notesRoot, note.filePath),
+    )
+    if (availability.isCloudPlaceholder) {
+      return 'cloud-unavailable'
+    }
+
+    throw new Error(`Note content could not be read: ${record.id}`)
+  }
+
+  return 'available'
+}
+
+function getDrawingId(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'masscode:' || parsed.hostname !== 'drawing') {
+      return null
+    }
+    return decodeURIComponent(parsed.pathname.replace(/^\/+/, '')) || null
+  }
+  catch {
+    return null
+  }
+}
+
+function getScopeDrawingIds(scope: FolderSiteScope): string[] {
+  const ids = new Set<string>()
+  scope.notes.forEach((note) => {
+    getDrawingUrlsFromMarkdown(note.content).forEach((url) => {
+      const id = getDrawingId(url)
+      if (id && !/[\\/]/.test(id)) {
+        ids.add(id)
+      }
+    })
+  })
+  return [...ids]
+}
+
+function hasUnavailableDrawings(drawingIds: string[]): boolean {
+  const drawingsPath = getSpaceDirPath(getVaultPath(), DRAWINGS_SPACE_ID)
+  return drawingIds.some(
+    id =>
+      getFileAvailability(join(drawingsPath, `${id}.excalidraw`))
+        .isCloudPlaceholder,
+  )
+}
+
+export function parseNoteFolderSiteExportPreparePayload(
+  payload: unknown,
+): NoteFolderSiteExportPreparePayload | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+  const folderId = (payload as Partial<NoteFolderSiteExportPreparePayload>)
+    .folderId
+  return Number.isSafeInteger(folderId) && Number(folderId) > 0
+    ? { folderId: Number(folderId) }
+    : null
+}
+
+export function parseNoteFolderSiteExportPayload(
+  payload: unknown,
+): NoteFolderSiteExportPayload | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const candidate = payload as Partial<NoteFolderSiteExportPayload>
+  if (
+    !Number.isSafeInteger(candidate.folderId)
+    || Number(candidate.folderId) <= 0
+    || !['createdAt', 'updatedAt', 'name'].includes(candidate.sort ?? '')
+    || !['ASC', 'DESC'].includes(candidate.order ?? '')
+    || !Array.isArray(candidate.drawingPreviews)
+    || candidate.drawingPreviews.length > MAX_DRAWING_PREVIEWS
+  ) {
+    return null
+  }
+
+  let totalBytes = 0
+  const drawingPreviews: NoteExportDrawingPreview[] = []
+  for (const preview of candidate.drawingPreviews) {
+    if (
+      !preview
+      || typeof preview !== 'object'
+      || typeof preview.id !== 'string'
+      || typeof preview.svg !== 'string'
+    ) {
+      return null
+    }
+
+    const bytes
+      = Buffer.byteLength(preview.id) + Buffer.byteLength(preview.svg)
+    totalBytes += bytes
+    if (
+      bytes > MAX_DRAWING_PREVIEW_BYTES
+      || totalBytes > MAX_DRAWING_PREVIEWS_TOTAL_BYTES
+    ) {
+      return null
+    }
+    drawingPreviews.push({ id: preview.id, svg: preview.svg })
+  }
+
+  return {
+    drawingPreviews,
+    folderId: Number(candidate.folderId),
+    order: candidate.order!,
+    sort: candidate.sort!,
+  }
+}
+
+export function prepareNoteFolderSiteExport(
+  payload: NoteFolderSiteExportPreparePayload,
+): NoteFolderSiteExportPrepareResponse {
+  const scope = loadScope(payload.folderId)
+  if (!scope) {
+    throw new Error('Notes folder not found')
+  }
+  if (
+    hasUnavailableNotes(scope)
+    || getScopeContentAvailability(scope) === 'cloud-unavailable'
+  ) {
+    return { status: 'cloud-unavailable' }
+  }
+  const drawingIds = getScopeDrawingIds(scope)
+  if (drawingIds.length > MAX_DRAWING_PREVIEWS) {
+    throw new Error(
+      `Notes folder site export supports up to ${MAX_DRAWING_PREVIEWS} drawings`,
+    )
+  }
+  if (hasUnavailableDrawings(drawingIds)) {
+    return { status: 'cloud-unavailable' }
+  }
+  return {
+    drawingIds,
+    status: 'ready',
+  }
+}
+
+async function chooseParentDirectory(
+  folderName: string,
+): Promise<string | null> {
+  const options: OpenDialogOptions = {
+    defaultPath: sanitizeDirectoryName(`${folderName} site`),
+    properties: ['openDirectory', 'createDirectory'],
+  }
+  const parentWindow = BrowserWindow.getFocusedWindow()
+  const result = parentWindow
+    ? await dialog.showOpenDialog(parentWindow, options)
+    : await dialog.showOpenDialog(options)
+  return result.canceled ? null : (result.filePaths[0] ?? null)
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path)
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+async function getAvailableDestination(
+  parentPath: string,
+  folderName: string,
+): Promise<string> {
+  const baseName = sanitizeDirectoryName(`${folderName} site`)
+  let index = 1
+  let destination = join(parentPath, baseName)
+  while (await pathExists(destination)) {
+    index += 1
+    destination = join(parentPath, `${baseName} ${index}`)
+  }
+  return destination
+}
+
+const SITE_STYLES = `
+${NOTE_DOCUMENT_STYLES}
+:root {
+  --site-accent: #52525b;
+  --site-border: #e7e7ea;
+  --site-muted: #73737a;
+  --site-sidebar: #f8f8f9;
+  --site-text: #29292e;
+}
+html {
+  min-width: 320px;
+  background: #fff;
+  scroll-behavior: smooth;
+}
+body {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--site-text);
+  background: #fff;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+::selection { color: var(--site-text); background: #e4e4e7; }
+a { color: var(--site-accent); text-underline-offset: 0.18em; }
+a:hover { color: #3f3f46; }
+blockquote { border-left-color: var(--site-accent); }
+.site-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.site-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--site-sidebar);
+  border-right: 1px solid var(--site-border);
+}
+.site-title {
+  display: block;
+  padding: 28px 28px 12px;
+  overflow: hidden;
+  color: var(--site-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-title:hover { color: var(--site-accent); text-decoration: none; }
+.site-search {
+  padding: 0 20px 14px;
+}
+.site-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  color: var(--site-text);
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.site-search-input::placeholder { color: #8b8b92; }
+.site-search-input:hover { border-color: #b7b7bd; }
+.site-search-input:focus {
+  border-color: #8f8f96;
+  box-shadow: 0 0 0 2px rgb(113 113 122 / 14%);
+}
+.site-search-results {
+  flex: 1;
+  padding: 0 20px 48px;
+  overflow: auto;
+}
+.site-search-results[hidden] { display: none; }
+.site-search-result {
+  display: block;
+  margin: 1px 0;
+  padding: 9px;
+  color: var(--site-text);
+  text-decoration: none;
+  border-radius: 6px;
+}
+.site-search-result:hover {
+  color: var(--site-text);
+  text-decoration: none;
+  background: #eeeeef;
+}
+.site-search-result-title,
+.site-search-result-folder,
+.site-search-result-excerpt {
+  display: block;
+}
+.site-search-result-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-search-result-folder {
+  overflow: hidden;
+  color: #77777e;
+  font-size: 11px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-search-result-excerpt {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #696970;
+  font-size: 12px;
+  line-height: 17px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.site-search-empty {
+  padding: 8px 28px;
+  color: var(--site-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+.site-search-empty[hidden] { display: none; }
+.site-nav {
+  flex: 1;
+  padding: 4px 20px 48px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.site-nav ul {
+  margin: 0;
+  padding-left: 14px;
+  list-style: none;
+  border-left: 1px solid #dddddf;
+}
+.site-nav > ul {
+  padding-left: 0;
+  border-left: 0;
+}
+.site-nav li { margin: 0; }
+.site-folder {
+  margin: 18px 8px 5px;
+  color: #595960;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.site-note {
+  display: block;
+  margin: 1px 0;
+  padding: 6px 9px;
+  overflow: hidden;
+  color: #5f5f66;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 6px;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.site-note:hover {
+  color: var(--site-text);
+  text-decoration: none;
+  background: #eeeeef;
+}
+.site-note.is-active {
+  color: var(--site-text);
+  font-weight: 500;
+  background: #eeeeef;
+}
+.site-main-shell { min-width: 0; }
+.site-main {
+  width: min(700px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 54px 0 96px;
+}
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  margin: 0 0 24px;
+  color: var(--site-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+.breadcrumbs a { color: var(--site-muted); text-decoration: none; }
+.breadcrumbs a:hover { color: var(--site-accent); }
+.breadcrumb-separator { color: #a8a8ae; }
+.site-article { color: var(--site-text); }
+.site-article-title {
+  margin: 0 0 30px;
+  color: var(--site-text);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.site-index h1 {
+  margin: 0 0 36px;
+  color: var(--site-text);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 44px;
+  letter-spacing: -0.025em;
+}
+.site-index-list {
+  border-top: 1px solid var(--site-border);
+}
+.site-index-group {
+  margin-left: 18px;
+}
+.site-index-group.is-root {
+  margin-left: 0;
+}
+.site-index-group:not(.is-root) {
+  margin-top: 38px;
+}
+.site-index-folder {
+  margin: 0 4px 14px;
+  color: var(--site-text);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -0.015em;
+}
+.site-index-note {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 10px 4px;
+  color: var(--site-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--site-border);
+  transition: color 120ms ease, padding 120ms ease;
+}
+.site-index-note:hover {
+  padding-right: 0;
+  padding-left: 8px;
+  color: var(--site-accent);
+  text-decoration: none;
+}
+.site-index-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.site-index-arrow {
+  flex: 0 0 auto;
+  color: #a0a0a6;
+  font-size: 18px;
+}
+.site-index-note:hover .site-index-arrow { color: var(--site-accent); }
+@media (max-width: 800px) {
+  .site-layout { display: block; }
+  .site-sidebar {
+    position: static;
+    height: auto;
+    max-height: 48vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--site-border);
+  }
+  .site-title { padding: 20px 20px 10px; }
+  .site-search { padding: 0 20px 12px; }
+  .site-search-results { padding: 0 20px 24px; }
+  .site-nav { padding: 0 20px 24px; }
+  .site-main { width: calc(100% - 28px); padding: 24px 0 48px; }
+  .site-index h1 { margin-bottom: 24px; font-size: 30px; line-height: 38px; }
+}
+@media print {
+  .site-layout { display: block; }
+  .site-sidebar, .breadcrumbs { display: none; }
+  .site-main { width: 100%; padding: 0; }
+}
+`
+
+function renderFolderNavigation(
+  folder: NotesFolderTreeRecord,
+  notesByFolder: Map<number, NoteRecord[]>,
+  hrefForNote: (note: NoteRecord) => string,
+  activeNoteId?: number,
+  isRoot = true,
+): string {
+  const notes = notesByFolder.get(folder.id) ?? []
+  const noteItems = notes
+    .map((note) => {
+      const isActive = note.id === activeNoteId
+      return `<li><a class="site-note${isActive ? ' is-active' : ''}" href="${escapeHtml(hrefForNote(note))}"${isActive ? ' aria-current="page"' : ''}>${escapeHtml(note.name)}</a></li>`
+    })
+    .join('')
+  const childItems = folder.children
+    .map(
+      child =>
+        `<li>${renderFolderNavigation(
+          child,
+          notesByFolder,
+          hrefForNote,
+          activeNoteId,
+          false,
+        )}</li>`,
+    )
+    .join('')
+
+  const folderTitle = isRoot
+    ? ''
+    : `<div class="site-folder">${escapeHtml(folder.name)}</div>`
+  return `${folderTitle}<ul>${noteItems}${childItems}</ul>`
+}
+
+function renderIndexNavigation(
+  folder: NotesFolderTreeRecord,
+  notesByFolder: Map<number, NoteRecord[]>,
+  hrefForNote: (note: NoteRecord) => string,
+  isRoot = true,
+): string {
+  const folderTitle = isRoot
+    ? ''
+    : `<div class="site-index-folder">${escapeHtml(folder.name)}</div>`
+  const noteItems = (notesByFolder.get(folder.id) ?? [])
+    .map(
+      note =>
+        `<a class="site-index-note" href="${escapeHtml(hrefForNote(note))}"><span class="site-index-name">${escapeHtml(note.name)}</span><span class="site-index-arrow" aria-hidden="true">→</span></a>`,
+    )
+    .join('')
+  const childItems = folder.children
+    .map(child =>
+      renderIndexNavigation(child, notesByFolder, hrefForNote, false),
+    )
+    .join('')
+
+  return `<div class="site-index-group${isRoot ? ' is-root' : ''}">${folderTitle}${noteItems}${childItems}</div>`
+}
+
+function encodePageHref(fileName: string): string {
+  return encodeURIComponent(fileName)
+}
+
+function renderSitePage(options: {
+  body: string
+  breadcrumbs: string
+  homeHref: string
+  navigation: string
+  searchAssetHref: string
+  searchPrefix: string
+  siteName: string
+  title: string
+}): string {
+  const searchPlaceholder = escapeHtml(i18n.t('placeholder.searchNotes'))
+  const searchEmpty = escapeHtml(i18n.t('commandPalette.empty'))
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'self'">
+  <title>${escapeHtml(options.title)}</title>
+  <style>${SITE_STYLES}</style>
+</head>
+<body>
+  <div class="site-layout">
+    <aside class="site-sidebar">
+      <a class="site-title" href="${escapeHtml(options.homeHref)}">${escapeHtml(options.siteName)}</a>
+      <div class="site-search">
+        <input class="site-search-input" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}" autocomplete="off" data-site-search>
+      </div>
+      <div class="site-search-results" data-site-search-results hidden></div>
+      <div class="site-search-empty" role="status" aria-live="polite" data-site-search-empty hidden>${searchEmpty}</div>
+      <nav class="site-nav">${options.navigation}</nav>
+    </aside>
+    <div class="site-main-shell">
+      <main class="site-main">
+        ${options.breadcrumbs ? `<div class="breadcrumbs">${options.breadcrumbs}</div>` : ''}
+        ${options.body}
+      </main>
+    </div>
+  </div>
+  <script src="${escapeHtml(options.searchAssetHref)}" data-search-prefix="${escapeHtml(options.searchPrefix)}"></script>
+</body>
+</html>
+`
+}
+
+function renderBreadcrumbs(
+  note: NoteRecord,
+  folderById: Map<number, NotesFolderTreeRecord>,
+  rootId: number,
+  rootName: string,
+): string {
+  const chain: NotesFolderTreeRecord[] = []
+  let current = note.folder ? folderById.get(note.folder.id) : undefined
+  while (current) {
+    chain.unshift(current)
+    if (current.id === rootId) {
+      break
+    }
+    current
+      = current.parentId === null ? undefined : folderById.get(current.parentId)
+  }
+
+  const segments = [
+    `<a href="../index.html">${escapeHtml(rootName)}</a>`,
+    ...chain
+      .filter(folder => folder.id !== rootId)
+      .map(folder => escapeHtml(folder.name)),
+    `<span aria-current="page">${escapeHtml(note.name)}</span>`,
+  ]
+
+  return segments
+    .map((segment, index) =>
+      index === 0
+        ? segment
+        : `<span class="breadcrumb-separator" aria-hidden="true">/</span>${segment}`,
+    )
+    .join('')
+}
+
+async function writeSite(
+  stagingPath: string,
+  scope: FolderSiteScope,
+  allActiveNotes: NoteRecord[],
+  previews: NoteExportDrawingPreview[],
+): Promise<void> {
+  const assetsPath = join(stagingPath, 'assets')
+  const notesPath = join(stagingPath, 'notes')
+  const imagesPath = join(assetsPath, 'images')
+  const drawingsPath = join(assetsPath, 'drawings')
+  await Promise.all([
+    mkdir(notesPath, { recursive: true }),
+    mkdir(imagesPath, { recursive: true }),
+    mkdir(drawingsPath, { recursive: true }),
+  ])
+
+  const pageByNoteId = new Map(
+    scope.notes.map(note => [note.id, pageFileName(note)]),
+  )
+  const notesByFolder = new Map<number, NoteRecord[]>()
+  scope.notes.forEach((note) => {
+    if (!note.folder) {
+      return
+    }
+    const siblings = notesByFolder.get(note.folder.id) ?? []
+    siblings.push(note)
+    notesByFolder.set(note.folder.id, siblings)
+  })
+
+  const navigationFromIndex = renderFolderNavigation(
+    scope.folder,
+    notesByFolder,
+    note => `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
+  )
+
+  const drawingIdSet = new Set(getScopeDrawingIds(scope))
+  const previewById = new Map(
+    previews
+      .filter(preview => isSafeDrawingSvg(preview.svg))
+      .map(preview => [preview.id, preview]),
+  )
+  for (const drawingId of drawingIdSet) {
+    if (!previewById.has(drawingId)) {
+      throw new Error(`Drawing preview is unavailable: ${drawingId}`)
+    }
+  }
+
+  const drawingSourceById = new Map<string, string>()
+  await Promise.all(
+    [...drawingIdSet].map(async (drawingId) => {
+      const preview = previewById.get(drawingId)!
+      const fileName = `${createHash('sha256')
+        .update(drawingId)
+        .digest('hex')
+        .slice(0, 20)}.svg`
+      await writeFile(join(drawingsPath, fileName), preview.svg, 'utf8')
+      drawingSourceById.set(drawingId, `../assets/drawings/${fileName}`)
+    }),
+  )
+
+  const notesStorage = useNotesStorage()
+  const snippetsStorage = useStorage()
+  const httpStorage = useHttpStorage()
+  const allFolders = notesStorage.folders.getFolders()
+  const httpFolders = httpStorage.folders.getFolders()
+  const folderPathById = buildNoteFolderPathMap(allFolders)
+  const httpFolderPathById = buildNoteFolderPathMap(httpFolders)
+  const folderById = new Map(
+    scope.folders.map(folder => [folder.id, folder]),
+  )
+  const searchEntries = scope.notes.map(note => ({
+    content: note.content,
+    folder: note.folder
+      ? getRelativeSearchFolderPath(note.folder.id, scope.folder.id, folderById)
+      : '',
+    href: `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
+    title: note.name,
+  }))
+  await writeFile(
+    join(assetsPath, 'search.js'),
+    renderNoteFolderSiteSearchAsset(searchEntries),
+    'utf8',
+  )
+  const resolver = createInternalLinkResolver([
+    ...snippetsStorage.snippets
+      .getSnippets({ isDeleted: 0 })
+      .map(snippet => ({
+        id: snippet.id,
+        name: snippet.name,
+        type: 'snippet' as const,
+      })),
+    ...allActiveNotes.map(note => ({
+      folderPath: note.folder ? folderPathById.get(note.folder.id) : undefined,
+      id: note.id,
+      name: note.name,
+      type: 'note' as const,
+    })),
+    ...httpStorage.requests.getRequests().map(request => ({
+      folderPath:
+        request.folderId === null
+          ? ''
+          : (httpFolderPathById.get(request.folderId) ?? ''),
+      id: request.id,
+      name: request.name,
+      type: 'http-request' as const,
+    })),
+  ])
+  const assetSourceByName = new Map<string, string>()
+  const paths = getNotesPaths(getVaultPath())
+
+  for (const note of scope.notes) {
+    const navigationFromNote = renderFolderNavigation(
+      scope.folder,
+      notesByFolder,
+      sibling => encodePageHref(pageByNoteId.get(sibling.id)!),
+      note.id,
+    )
+    const linkerFolderPath = note.folder
+      ? folderPathById.get(note.folder.id)
+      : undefined
+    const body = await renderNoteHtmlBody(note.content, {
+      assetSource: async (fileName, response) => {
+        const existing = assetSourceByName.get(fileName)
+        if (existing) {
+          return existing
+        }
+        if (response.status === 503) {
+          throw new NotesAssetTemporarilyUnavailableError()
+        }
+        const mimeType = response.headers.get('content-type')
+        if (!response.ok || !mimeType?.startsWith('image/')) {
+          return null
+        }
+        const data = Buffer.from(await response.arrayBuffer())
+        if (mimeType === 'image/svg+xml') {
+          if (!isSafeDrawingSvg(data.toString('utf8'))) {
+            return null
+          }
+          const source = `data:image/svg+xml;base64,${data.toString('base64')}`
+          assetSourceByName.set(fileName, source)
+          return source
+        }
+
+        const extension = extname(fileName).replace(/[^.a-z0-9]/gi, '')
+        const outputName = `${createHash('sha256')
+          .update(fileName)
+          .digest('hex')
+          .slice(0, 20)}${extension}`
+        await writeFile(join(imagesPath, outputName), data)
+        const source = `../assets/images/${outputName}`
+        assetSourceByName.set(fileName, source)
+        return source
+      },
+      drawingPreviews: previews,
+      drawingSource: id => drawingSourceById.get(id) ?? null,
+      internalLinkHref: (target) => {
+        const legacyMatch = target.match(/^note:(\d+)$/)
+        const resolved = legacyMatch
+          ? { id: Number(legacyMatch[1]), type: 'note' as const }
+          : resolver.resolve(target, { linkerFolderPath })
+        if (!resolved || resolved.type !== 'note') {
+          return null
+        }
+        const fileName = pageByNoteId.get(resolved.id)
+        return fileName ? encodePageHref(fileName) : null
+      },
+      resolveAsset: fileName => resolveNotesAsset(fileName, paths),
+      strictAssets: true,
+    })
+    if (/\bsrc="masscode:\/\/(?:notes-asset|drawing)\//.test(body)) {
+      throw new Error(`Unresolved portable asset in note ${note.id}`)
+    }
+    const html = renderSitePage({
+      body: `<article class="site-article"><h1 class="site-article-title">${escapeHtml(note.name)}</h1>${body}</article>`,
+      breadcrumbs: renderBreadcrumbs(
+        note,
+        folderById,
+        scope.folder.id,
+        scope.folder.name,
+      ),
+      homeHref: '../index.html',
+      navigation: navigationFromNote,
+      searchAssetHref: '../assets/search.js',
+      searchPrefix: '../',
+      siteName: scope.folder.name,
+      title: `${note.name} — ${scope.folder.name}`,
+    })
+    await writeFile(join(notesPath, pageByNoteId.get(note.id)!), html, 'utf8')
+  }
+
+  const indexItems = renderIndexNavigation(
+    scope.folder,
+    notesByFolder,
+    note => `notes/${encodePageHref(pageByNoteId.get(note.id)!)}`,
+  )
+  const indexBody = `<section class="site-index"><h1>${escapeHtml(scope.folder.name)}</h1><div class="site-index-list">${indexItems}</div></section>`
+  await writeFile(
+    join(stagingPath, 'index.html'),
+    renderSitePage({
+      body: indexBody,
+      breadcrumbs: '',
+      homeHref: 'index.html',
+      navigation: navigationFromIndex,
+      searchAssetHref: 'assets/search.js',
+      searchPrefix: '',
+      siteName: scope.folder.name,
+      title: scope.folder.name,
+    }),
+    'utf8',
+  )
+}
+
+export async function exportNoteFolderSite(
+  payload: NoteFolderSiteExportPayload,
+): Promise<NoteFolderSiteExportResponse> {
+  const scope = loadScope(payload.folderId, payload.sort, payload.order)
+  if (!scope) {
+    throw new Error('Notes folder not found')
+  }
+  const drawingIds = getScopeDrawingIds(scope)
+  if (drawingIds.length > MAX_DRAWING_PREVIEWS) {
+    throw new Error(
+      `Notes folder site export supports up to ${MAX_DRAWING_PREVIEWS} drawings`,
+    )
+  }
+  if (
+    hasUnavailableNotes(scope)
+    || getScopeContentAvailability(scope) === 'cloud-unavailable'
+    || hasUnavailableDrawings(drawingIds)
+  ) {
+    return { canceled: false, status: 'cloud-unavailable' }
+  }
+
+  const allActiveNotes = useNotesStorage().notes.getNotes({
+    isDeleted: 0,
+    withContent: false,
+  })
+  const parentPath = await chooseParentDirectory(scope.folder.name)
+  if (!parentPath) {
+    return { canceled: true, status: 'canceled' }
+  }
+
+  const destinationPath = await getAvailableDestination(
+    parentPath,
+    scope.folder.name,
+  )
+  const stagingPath = join(
+    parentPath,
+    `.masscode-site-${randomBytes(8).toString('hex')}`,
+  )
+
+  try {
+    await mkdir(stagingPath)
+    await writeSite(
+      stagingPath,
+      scope,
+      allActiveNotes,
+      payload.drawingPreviews,
+    )
+    await rename(stagingPath, destinationPath)
+    return {
+      canceled: false,
+      directoryPath: destinationPath,
+      status: 'exported',
+    }
+  }
+  catch (error) {
+    if (error instanceof NotesAssetTemporarilyUnavailableError) {
+      return { canceled: false, status: 'cloud-unavailable' }
+    }
+    throw error
+  }
+  finally {
+    await rm(stagingPath, { force: true, recursive: true })
+  }
+}

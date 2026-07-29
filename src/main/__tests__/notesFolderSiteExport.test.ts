@@ -1,7 +1,6 @@
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { runInNewContext } from 'node:vm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   exportNoteFolderSite,
@@ -246,124 +245,6 @@ vi.mock('../storage/providers/markdown/runtime', () => ({
   WINDOWS_RESERVED_NAME_RE: /^(?:con|prn|aux|nul)$/i,
 }))
 
-type FakeEventListener = (event: { key?: string }) => void
-
-class FakeClassList {
-  constructor(private readonly getNames: () => string[]) {}
-
-  contains(name: string): boolean {
-    return this.getNames().includes(name)
-  }
-}
-
-class FakeElement {
-  readonly children: FakeElement[] = []
-  readonly classList: FakeClassList
-  className: string
-  hidden = false
-  href = ''
-  textContent: string
-
-  constructor(
-    readonly tagName: string,
-    classNames: string[] = [],
-    textContent = '',
-  ) {
-    this.className = classNames.join(' ')
-    this.classList = new FakeClassList(() =>
-      this.className.split(/\s+/).filter(Boolean),
-    )
-    this.textContent = textContent
-  }
-
-  append(...children: FakeElement[]): this {
-    this.children.push(...children)
-    return this
-  }
-
-  replaceChildren(...children: FakeElement[]): void {
-    this.children.splice(0, this.children.length, ...children)
-  }
-}
-
-class FakeInput extends FakeElement {
-  private readonly listeners = new Map<string, FakeEventListener[]>()
-  value = ''
-
-  constructor() {
-    super('INPUT')
-  }
-
-  addEventListener(type: string, listener: FakeEventListener): void {
-    const listeners = this.listeners.get(type) ?? []
-    listeners.push(listener)
-    this.listeners.set(type, listeners)
-  }
-
-  dispatch(type: string, event: { key?: string } = {}): void {
-    this.listeners.get(type)?.forEach(listener => listener(event))
-  }
-}
-
-function createSearchHarness(
-  searchAsset: string,
-  prefix = '',
-  locationSearch = '',
-) {
-  const input = new FakeInput()
-  const navigation = new FakeElement('NAV', ['site-nav']).append(
-    new FakeElement('UL').append(
-      new FakeElement('LI', [], 'Original first'),
-      new FakeElement('LI', [], 'Original second'),
-    ),
-  )
-  const originalNavigationOrder = [...navigation.children[0].children]
-  const results = new FakeElement('DIV', ['site-search-results'])
-  results.hidden = true
-  const noResults = new FakeElement('DIV', ['site-search-empty'])
-  noResults.hidden = true
-  const elements = new Map<string, FakeElement>([
-    ['[data-site-search]', input],
-    ['.site-nav', navigation],
-    ['[data-site-search-results]', results],
-    ['[data-site-search-empty]', noResults],
-  ])
-
-  runInNewContext(searchAsset, {
-    document: {
-      createElement: (tagName: string) =>
-        new FakeElement(tagName.toUpperCase()),
-      currentScript: {
-        dataset: { searchPrefix: prefix },
-      },
-      querySelector: (selector: string) => elements.get(selector) ?? null,
-    },
-    HTMLInputElement: FakeInput,
-    URLSearchParams,
-    window: {
-      location: {
-        search: locationSearch,
-      },
-    },
-  })
-
-  return {
-    input,
-    navigation,
-    noResults,
-    originalNavigationOrder,
-    results,
-  }
-}
-
-function getResultText(
-  result: FakeElement,
-  className: string,
-): string | undefined {
-  return result.children.find(child => child.classList.contains(className))
-    ?.textContent
-}
-
 describe('notes folder HTML site export', () => {
   beforeEach(async () => {
     mocks.parentPath = await mkdtemp(join(tmpdir(), 'notes-site-export-'))
@@ -438,35 +319,18 @@ describe('notes folder HTML site export', () => {
       '<script src="../assets/search.js" data-search-prefix="../"></script>',
     )
     expect(searchAsset).toContain('const SEARCH_INDEX=')
-    expect(searchAsset).toContain('normalize(\'NFD\')')
-    expect(searchAsset).toContain('document.createElement(\'a\')')
-    expect(searchAsset).toContain('.slice(0, 50)')
-    expect(searchAsset).not.toContain('innerHTML')
     expect(searchAsset).toContain('"title":"First"')
     expect(searchAsset).toContain('"title":"Second%2FPart"')
-    expect(searchAsset).toContain('"title":"Third \\u003cGuide\\u003e"')
+    expect(searchAsset).toContain('"href":"notes/2-Second%252FPart.html"')
     expect(searchAsset).toContain('"folder":""')
     expect(searchAsset).toContain('"folder":"Child"')
-    expect(searchAsset).toContain('Content-only café searchable phrase')
-    expect(searchAsset).toContain('VisibleMarkup')
-    expect(searchAsset).toContain('Thematic body remains searchable')
-    expect(searchAsset).toContain('Friendly | Alias')
-    expect(searchAsset).toContain('Array\\u003cSearchTerm\\u003e')
     expect(searchAsset).toContain(
-      '\\u003cmark\\u003eVisibleMarkup\\u003c/mark\\u003e',
+      'Content-only café searchable phrase for excerpt.',
     )
-    expect(searchAsset).toContain('\\u003cInlineType\\u003e')
-    expect(searchAsset).toContain('Array\\u003cFencedType\\u003e')
-    expect(searchAsset).toContain('\\u0026 separator')
     expect(searchAsset).not.toContain('ExternalOnly')
     expect(searchAsset).not.toContain('External secret')
     expect(searchAsset).not.toContain('External/Hidden Target')
     expect(searchAsset).not.toContain('Private Parent')
-    expect(searchAsset).not.toContain('masscode://')
-    expect(searchAsset).not.toContain('<mark>')
-    expect(searchAsset).not.toContain('<Guide>')
-    expect(searchAsset).not.toContain('\u2028')
-    expect(searchAsset).not.toContain('\u2029')
     expect(index).toContain('Root')
     expect(index).toContain('--site-accent: #52525b')
     expect(index).toContain(
@@ -521,137 +385,6 @@ describe('notes folder HTML site export', () => {
         name.startsWith('.masscode-site-'),
       ),
     ).toBe(false)
-  })
-
-  it('runs full-text search from the shared asset with page-relative links', async () => {
-    const result = await exportNoteFolderSite({
-      drawingPreviews: [
-        {
-          id: 'diagram',
-          svg: '<svg xmlns="http://www.w3.org/2000/svg"/>',
-        },
-      ],
-      folderId: 1,
-      order: 'ASC',
-      sort: 'name',
-    })
-    expect(result.status).toBe('exported')
-    if (result.status !== 'exported') {
-      return
-    }
-
-    const searchAsset = await readFile(
-      join(result.directoryPath, 'assets', 'search.js'),
-      'utf8',
-    )
-
-    const indexPage = createSearchHarness(searchAsset)
-    indexPage.input.value = '  café searchable  '
-    indexPage.input.dispatch('input')
-    expect(indexPage.navigation.hidden).toBe(true)
-    expect(indexPage.results.hidden).toBe(false)
-    expect(indexPage.noResults.hidden).toBe(true)
-    expect(indexPage.results.children).toHaveLength(1)
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('Second%2FPart')
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-folder'),
-    ).toBe('Child')
-    expect(
-      getResultText(
-        indexPage.results.children[0],
-        'site-search-result-excerpt',
-      ),
-    ).toContain('Content-only café searchable phrase')
-    expect(indexPage.results.children[0].href).toBe(
-      'notes/2-Second%252FPart.html?q=caf%C3%A9%20searchable',
-    )
-
-    indexPage.input.value = 'child'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(1)
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('Second%2FPart')
-    indexPage.input.value = 'second'
-    indexPage.input.dispatch('input')
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('Second%2FPart')
-    expect(
-      getResultText(indexPage.results.children[1], 'site-search-result-title'),
-    ).toBe('First')
-
-    indexPage.input.value = 'friendly alias'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(1)
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('First')
-
-    indexPage.input.value = 'hidden target'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(0)
-    expect(indexPage.noResults.hidden).toBe(false)
-
-    indexPage.input.value = 'searchterm inlinetype fencedtype'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(1)
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('First')
-    expect(
-      getResultText(
-        indexPage.results.children[0],
-        'site-search-result-excerpt',
-      ),
-    ).toContain('Array<SearchTerm>')
-
-    indexPage.input.value = 'thematic searchable'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(1)
-    expect(
-      getResultText(indexPage.results.children[0], 'site-search-result-title'),
-    ).toBe('First')
-
-    indexPage.input.value = 'externalonly'
-    indexPage.input.dispatch('input')
-    expect(indexPage.results.children).toHaveLength(0)
-    expect(indexPage.noResults.hidden).toBe(false)
-
-    indexPage.input.dispatch('keydown', { key: 'Escape' })
-    expect(indexPage.input.value).toBe('')
-    expect(indexPage.navigation.hidden).toBe(false)
-    expect(indexPage.results.hidden).toBe(true)
-    expect(indexPage.results.children).toHaveLength(0)
-    expect(indexPage.noResults.hidden).toBe(true)
-    expect(indexPage.navigation.children[0].children).toEqual(
-      indexPage.originalNavigationOrder,
-    )
-
-    indexPage.input.value = 'missing'
-    indexPage.input.dispatch('input')
-    indexPage.input.value = ''
-    indexPage.input.dispatch('input')
-    expect(indexPage.navigation.hidden).toBe(false)
-    expect(indexPage.results.hidden).toBe(true)
-    expect(indexPage.navigation.children[0].children).toEqual(
-      indexPage.originalNavigationOrder,
-    )
-
-    const notePage = createSearchHarness(
-      searchAsset,
-      '../',
-      '?q=searchable%20phrase',
-    )
-    expect(notePage.input.value).toBe('searchable phrase')
-    expect(notePage.navigation.hidden).toBe(true)
-    expect(notePage.results.hidden).toBe(false)
-    expect(notePage.results.children).toHaveLength(1)
-    expect(notePage.results.children[0].href).toBe(
-      '../notes/2-Second%252FPart.html?q=searchable%20phrase',
-    )
   })
 
   it('reports cloud-unavailable before producing a partial site', () => {

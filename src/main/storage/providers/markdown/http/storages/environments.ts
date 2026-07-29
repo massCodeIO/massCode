@@ -17,14 +17,21 @@ import { getHttpRuntimeCache } from '../runtime/sync'
 
 function normalizeVariables(
   raw: Record<string, string> | undefined,
+  secretKeys: string[] = [],
 ): Record<string, string> {
   if (!raw || typeof raw !== 'object') {
     return {}
   }
 
+  const secrets = new Set(secretKeys)
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(raw)) {
     if (typeof key !== 'string' || !key.trim()) {
+      continue
+    }
+    // Значение secret-переменной не должно попасть в .state.yaml даже если
+    // клиент прислал его в обычных variables: файл уезжает в облачную папку.
+    if (secrets.has(key)) {
       continue
     }
     result[key] = typeof value === 'string' ? value : ''
@@ -133,12 +140,56 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
       }
 
       if (input.variables !== undefined) {
-        env.variables = normalizeVariables(input.variables)
+        env.variables = normalizeVariables(input.variables, env.secretKeys)
       }
 
       env.updatedAt = Date.now()
       saveHttpState(paths, state)
       return { invalidInput: false, notFound: false }
+    },
+
+    addSecretKey(id: number, key: string) {
+      const paths = resolvePaths()
+      const { state } = getHttpRuntimeCache(paths)
+
+      assertVaultNotHydrating(state)
+      const env = state.environments.find(item => item.id === id)
+      if (!env) {
+        return { notFound: true }
+      }
+
+      const secretKeys = new Set(env.secretKeys ?? [])
+      secretKeys.add(key)
+      env.secretKeys = [...secretKeys]
+      // Переменная перестала быть обычной: её plain-значение уходит из vault.
+      delete env.variables[key]
+      env.updatedAt = Date.now()
+
+      saveHttpState(paths, state)
+      return { notFound: false }
+    },
+
+    removeSecretKey(id: number, key: string) {
+      const paths = resolvePaths()
+      const { state } = getHttpRuntimeCache(paths)
+
+      assertVaultNotHydrating(state)
+      const env = state.environments.find(item => item.id === id)
+      if (!env) {
+        return { notFound: true }
+      }
+
+      const secretKeys = (env.secretKeys ?? []).filter(item => item !== key)
+      if (secretKeys.length > 0) {
+        env.secretKeys = secretKeys
+      }
+      else {
+        delete env.secretKeys
+      }
+      env.updatedAt = Date.now()
+
+      saveHttpState(paths, state)
+      return { notFound: false }
     },
 
     deleteEnvironment(id: number) {

@@ -114,6 +114,12 @@ export interface HttpEnvironmentRecord {
   id: number
   name: string
   variables: Record<string, string>
+  /**
+   * Имена secret-переменных. Сами значения намеренно не попадают в vault:
+   * они лежат локально в зашифрованном хранилище (`store.httpSecrets`),
+   * потому что .state.yaml синхронизируется через облачную папку.
+   */
+  secretKeys?: string[]
   createdAt: number
   updatedAt: number
 }

@@ -1,5 +1,6 @@
 import type {
   HttpCounters,
+  HttpEnvironmentRecord,
   HttpFolderRecord,
   HttpPaths,
   HttpState,
@@ -65,6 +66,30 @@ function normalizeFolders(raw: HttpStateFile['folders']): HttpFolderRecord[] {
   }))
 }
 
+function normalizeEnvironments(
+  raw: HttpStateFile['environments'],
+): HttpEnvironmentRecord[] {
+  if (!Array.isArray(raw))
+    return []
+
+  return raw.map((env) => {
+    const secretKeys = Array.isArray(env.secretKeys)
+      ? [
+          ...new Set(
+            env.secretKeys.filter(
+              (key): key is string => typeof key === 'string' && !!key.trim(),
+            ),
+          ),
+        ]
+      : []
+
+    return {
+      ...env,
+      ...(secretKeys.length > 0 ? { secretKeys } : {}),
+    }
+  })
+}
+
 export function ensureHttpStateFile(paths: HttpPaths): void {
   fs.ensureDirSync(paths.httpRoot)
 
@@ -95,7 +120,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
     counters: normalizeCounters(raw.counters),
     folders: normalizeFolders(raw.folders),
     requests: Array.isArray(raw.requests) ? raw.requests : [],
-    environments: Array.isArray(raw.environments) ? raw.environments : [],
+    environments: normalizeEnvironments(raw.environments),
     activeEnvironmentId:
       typeof raw.activeEnvironmentId === 'number'
         ? raw.activeEnvironmentId

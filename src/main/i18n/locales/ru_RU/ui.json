@@ -317,7 +317,8 @@
           "username": "Логин",
           "usernamePlaceholder": "Введите логин",
           "password": "Пароль",
-          "passwordPlaceholder": "Введите пароль"
+          "passwordPlaceholder": "Введите пароль",
+          "plainTextHint": "Значения авторизации хранятся в vault открытым текстом. Для чувствительных данных создайте secret-переменную окружения и ссылайтесь на неё как {{API_KEY}}."
         },
         "description": {
           "placeholder": "Добавьте описание для этого запроса"

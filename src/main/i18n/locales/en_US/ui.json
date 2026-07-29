@@ -314,7 +314,8 @@
           "username": "Username",
           "usernamePlaceholder": "Enter username",
           "password": "Password",
-          "passwordPlaceholder": "Enter password"
+          "passwordPlaceholder": "Enter password",
+          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}."
         },
         "description": {
           "placeholder": "Add a description for this request"

@@ -40,6 +40,13 @@ const authType = computed({
       </Select.Select>
     </div>
 
+    <UiText
+      v-if="authType !== 'none'"
+      class="text-muted-foreground text-xs"
+    >
+      {{ i18n.t("spaces.http.editor.auth.plainTextHint") }}
+    </UiText>
+
     <div
       v-if="authType === 'bearer'"
       class="flex flex-col gap-1"

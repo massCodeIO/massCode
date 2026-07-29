@@ -20,6 +20,12 @@ const httpEnvironmentItem = t.Object({
   id: t.Number(),
   name: t.String(),
   variables: httpEnvironmentVariables,
+  // Имена secret-переменных. Значения намеренно не отдаются списком: их
+  // можно получить только точечно, через reveal.
+  secretKeys: t.Array(t.String()),
+  // Секреты, объявленные в vault, но не заданные на этом устройстве:
+  // значения не синхронизируются вместе с vault.
+  missingSecretKeys: t.Array(t.String()),
   createdAt: t.Number(),
   updatedAt: t.Number(),
 })

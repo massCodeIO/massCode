@@ -1,5 +1,9 @@
 import type { HttpEnvironmentsResponse } from '../dto/http-environments'
 import { Elysia } from 'elysia'
+import {
+  deleteEnvironmentSecrets,
+  getUsableSecretKeys,
+} from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
 import { commonAddResponse } from '../dto/common/response'
 import { httpEnvironmentsDTO } from '../dto/http-environments'
@@ -64,7 +68,16 @@ app
     '/',
     () => {
       const storage = useHttpStorage()
-      const items = storage.environments.getEnvironments()
+      const items = storage.environments.getEnvironments().map((env) => {
+        const secretKeys = env.secretKeys ?? []
+        const storedKeys = new Set(getUsableSecretKeys(env.id))
+
+        return {
+          ...env,
+          secretKeys,
+          missingSecretKeys: secretKeys.filter(key => !storedKeys.has(key)),
+        }
+      })
       const activeId = storage.environments.getActiveEnvironmentId()
 
       return { activeId, items } as HttpEnvironmentsResponse
@@ -130,13 +143,14 @@ app
     '/:id',
     ({ params, status }) => {
       const storage = useHttpStorage()
-      const { deleted } = storage.environments.deleteEnvironment(
-        Number(params.id),
-      )
+      const id = Number(params.id)
+      const { deleted } = storage.environments.deleteEnvironment(id)
 
       if (!deleted) {
         return status(404, { message: 'Environment not found' })
       }
+
+      deleteEnvironmentSecrets(id)
 
       return { message: 'Environment deleted' }
     },

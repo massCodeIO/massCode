@@ -298,7 +298,7 @@ export interface CurrencyRatesStore {
 
 /**
  * Значения secret-переменных HTTP-окружений: зашифрованные строки в разрезе
- * vault (хэш пути) → id окружения → имя переменной. Хранится вне vault,
+ * vault (хэш пути) → storage scope окружения → имя переменной. Хранится вне vault,
  * потому что vault синхронизируется через облачную папку.
  */
 export interface HttpSecretsStore {

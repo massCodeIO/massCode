@@ -43,6 +43,7 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
     refreshSecretsStatus,
     revealSecret,
     setSecret,
+    unprotectSecret,
   } = useHttpEnvironmentSecrets()
   const { confirm } = useDialog()
 
@@ -349,7 +350,8 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
     delete revealedSecrets.value[variable.uid]
 
     if (variable.secret && !variable.isNew && env) {
-      await deleteSecret(env.id, variable.key)
+      if (!(await deleteSecret(env.id, variable.key)))
+        return false
     }
 
     return true
@@ -421,29 +423,15 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
     // Незаписанные правки соседних переменных сохраняются до пересинхронизации.
     await flushPendingUpdate()
 
-    // Значение переносится в обычную переменную: пользователь осознанно
-    // отказался от защиты, а молча терять то, что больше негде взять, хуже.
-    const revealedValue = await revealSecret(env.id, key)
-    // `null` означает и ошибку IPC, и невозможность расшифровать. Переносить
-    // нечего, поэтому секрет не удаляем: иначе значение пропало бы целиком.
-    // Об ошибке пользователю уже сообщил сам revealSecret.
-    if (revealedValue === null)
-      return
-
-    if (!(await deleteSecret(env.id, key)))
+    if (!(await unprotectSecret(env.id, key)))
       return
 
     await getHttpEnvironments()
     // Операция асинхронная, за это время пользователь мог начать заполнять
     // новый секрет: пересборка без `keepPendingNew` потеряла бы его ввод.
-    syncLocalFromEnv(selectedEnv.value, { keepPendingNew: true })
-    localVariables.value.push({
-      key,
-      secret: false,
-      uid: nextUid(),
-      value: revealedValue,
-    })
-    await flushUpdate()
+    if (selectedEnvId.value === env.id) {
+      syncLocalFromEnv(selectedEnv.value, { keepPendingNew: true })
+    }
   }
 
   async function onSecretValueBlur(entry: HttpEnvironmentVariableEntry) {

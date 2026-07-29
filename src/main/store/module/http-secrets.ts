@@ -2,8 +2,10 @@ import type { HttpSecretsStore } from '../types'
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
+import process from 'node:process'
 import { safeStorage } from 'electron'
 import Store from 'electron-store'
+import { isSafeStorageUsable } from './httpSecretsAvailability'
 
 const secretsStore = new Store<HttpSecretsStore>({
   name: 'http-secrets',
@@ -33,7 +35,7 @@ function readVaults(): HttpSecretsStore['vaults'] {
 
 function writeEnvironmentSecrets(
   vaultPath: string,
-  environmentId: number,
+  scopeId: string,
   secrets: Record<string, string> | null,
 ): void {
   const vaults = readVaults()
@@ -41,10 +43,10 @@ function writeEnvironmentSecrets(
   const vault = { ...(vaults[vaultKey] ?? {}) }
 
   if (secrets && Object.keys(secrets).length > 0) {
-    vault[String(environmentId)] = secrets
+    vault[scopeId] = secrets
   }
   else {
-    delete vault[String(environmentId)]
+    delete vault[scopeId]
   }
 
   // Ключи пишутся целым объектом: имя переменной может содержать точку, а
@@ -54,12 +56,30 @@ function writeEnvironmentSecrets(
 
 function readEnvironmentSecrets(
   vaultPath: string,
-  environmentId: number,
+  scopeId: string,
 ): Record<string, string> {
   const vault = readVaults()[getVaultKey(vaultPath)]
-  const secrets = vault?.[String(environmentId)]
+  const secrets = vault?.[scopeId]
 
   return secrets && typeof secrets === 'object' ? secrets : {}
+}
+
+function isEncryptionUsable(): boolean {
+  try {
+    let backend: string | undefined
+    if (process.platform === 'linux') {
+      backend = safeStorage.getSelectedStorageBackend()
+    }
+
+    return isSafeStorageUsable({
+      backend,
+      encryptionAvailable: safeStorage.isEncryptionAvailable(),
+      platform: process.platform,
+    })
+  }
+  catch {
+    return false
+  }
 }
 
 function decrypt(encrypted: string): string | null {
@@ -74,21 +94,21 @@ function decrypt(encrypted: string): string | null {
 
 export default {
   isEncryptionAvailable(): boolean {
-    return safeStorage.isEncryptionAvailable()
+    return isEncryptionUsable()
   },
 
   /**
    * Расшифрованные значения окружения для подстановки в запрос. Значения,
    * которые не удалось расшифровать, не попадают в результат.
    */
-  getSecrets(vaultPath: string, environmentId: number): Record<string, string> {
-    if (!safeStorage.isEncryptionAvailable()) {
+  getSecrets(vaultPath: string, scopeId: string): Record<string, string> {
+    if (!isEncryptionUsable()) {
       return {}
     }
 
     const result: Record<string, string> = {}
     for (const [key, encrypted] of Object.entries(
-      readEnvironmentSecrets(vaultPath, environmentId),
+      readEnvironmentSecrets(vaultPath, scopeId),
     )) {
       const value = typeof encrypted === 'string' ? decrypt(encrypted) : null
       if (value !== null) {
@@ -104,12 +124,12 @@ export default {
    * OS-пользователь), не считается заданной: иначе UI показывал бы секрет
    * заполненным, а запрос уходил бы с пустым значением.
    */
-  getUsableKeys(vaultPath: string, environmentId: number): string[] {
-    if (!safeStorage.isEncryptionAvailable()) {
+  getUsableKeys(vaultPath: string, scopeId: string): string[] {
+    if (!isEncryptionUsable()) {
       return []
     }
 
-    return Object.entries(readEnvironmentSecrets(vaultPath, environmentId))
+    return Object.entries(readEnvironmentSecrets(vaultPath, scopeId))
       .filter(
         ([, encrypted]) =>
           typeof encrypted === 'string' && decrypt(encrypted) !== null,
@@ -117,46 +137,42 @@ export default {
       .map(([key]) => key)
   },
 
-  getSecret(
-    vaultPath: string,
-    environmentId: number,
-    key: string,
-  ): string | null {
-    if (!safeStorage.isEncryptionAvailable()) {
+  getSecret(vaultPath: string, scopeId: string, key: string): string | null {
+    if (!isEncryptionUsable()) {
       return null
     }
 
-    const encrypted = readEnvironmentSecrets(vaultPath, environmentId)[key]
+    const encrypted = readEnvironmentSecrets(vaultPath, scopeId)[key]
     return typeof encrypted === 'string' ? decrypt(encrypted) : null
   },
 
   setSecret(
     vaultPath: string,
-    environmentId: number,
+    scopeId: string,
     key: string,
     value: string,
   ): void {
-    if (!safeStorage.isEncryptionAvailable()) {
+    if (!isEncryptionUsable()) {
       throw new Error('ENCRYPTION_UNAVAILABLE: OS encryption is not available')
     }
 
-    const secrets = { ...readEnvironmentSecrets(vaultPath, environmentId) }
+    const secrets = { ...readEnvironmentSecrets(vaultPath, scopeId) }
     secrets[key] = safeStorage.encryptString(value).toString('base64')
-    writeEnvironmentSecrets(vaultPath, environmentId, secrets)
+    writeEnvironmentSecrets(vaultPath, scopeId, secrets)
   },
 
-  deleteSecret(vaultPath: string, environmentId: number, key: string): void {
-    const secrets = { ...readEnvironmentSecrets(vaultPath, environmentId) }
+  deleteSecret(vaultPath: string, scopeId: string, key: string): void {
+    const secrets = { ...readEnvironmentSecrets(vaultPath, scopeId) }
     if (!(key in secrets)) {
       return
     }
 
     delete secrets[key]
-    writeEnvironmentSecrets(vaultPath, environmentId, secrets)
+    writeEnvironmentSecrets(vaultPath, scopeId, secrets)
   },
 
-  deleteEnvironmentSecrets(vaultPath: string, environmentId: number): void {
-    writeEnvironmentSecrets(vaultPath, environmentId, null)
+  deleteEnvironmentSecrets(vaultPath: string, scopeId: string): void {
+    writeEnvironmentSecrets(vaultPath, scopeId, null)
   },
 
   /**
@@ -182,7 +198,7 @@ export default {
   },
 
   /** Перепривязка значений, когда окружение получило новый id. */
-  renameEnvironment(vaultPath: string, fromId: number, toId: number): void {
+  renameEnvironment(vaultPath: string, fromId: string, toId: string): void {
     if (fromId === toId) {
       return
     }

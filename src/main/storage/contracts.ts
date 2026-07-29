@@ -470,10 +470,18 @@ export interface HttpRequestsStorage {
 export interface HttpEnvironmentsStorage {
   addSecretKey: (id: number, key: string) => { notFound: boolean }
   createEnvironment: (input: HttpEnvironmentCreateInput) => { id: number }
-  deleteEnvironment: (id: number) => { deleted: boolean }
+  deleteEnvironment: (id: number) => {
+    deleted: boolean
+    secretScopeId?: string
+  }
   getActiveEnvironmentId: () => number | null
   getEnvironments: () => HttpEnvironmentRecord[]
   removeSecretKey: (id: number, key: string) => { notFound: boolean }
+  unprotectSecret: (
+    id: number,
+    key: string,
+    value: string,
+  ) => { notFound: boolean }
   setActiveEnvironment: (id: number | null) => { notFound: boolean }
   updateEnvironment: (
     id: number,

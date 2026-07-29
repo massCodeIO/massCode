@@ -10,40 +10,35 @@ export function isSecretsEncryptionAvailable(): boolean {
   return store.httpSecrets.isEncryptionAvailable()
 }
 
-export function getEnvironmentSecrets(
-  environmentId: number,
-): Record<string, string> {
-  return store.httpSecrets.getSecrets(getVaultPath(), environmentId)
+export function getEnvironmentSecrets(scopeId: string): Record<string, string> {
+  return store.httpSecrets.getSecrets(getVaultPath(), scopeId)
 }
 
-export function getUsableSecretKeys(environmentId: number): string[] {
-  return store.httpSecrets.getUsableKeys(getVaultPath(), environmentId)
+export function getUsableSecretKeys(scopeId: string): string[] {
+  return store.httpSecrets.getUsableKeys(getVaultPath(), scopeId)
 }
 
 export function revealEnvironmentSecret(
-  environmentId: number,
+  scopeId: string,
   key: string,
 ): string | null {
-  return store.httpSecrets.getSecret(getVaultPath(), environmentId, key)
+  return store.httpSecrets.getSecret(getVaultPath(), scopeId, key)
 }
 
 export function setEnvironmentSecret(
-  environmentId: number,
+  scopeId: string,
   key: string,
   value: string,
 ): void {
-  store.httpSecrets.setSecret(getVaultPath(), environmentId, key, value)
+  store.httpSecrets.setSecret(getVaultPath(), scopeId, key, value)
 }
 
-export function deleteEnvironmentSecret(
-  environmentId: number,
-  key: string,
-): void {
-  store.httpSecrets.deleteSecret(getVaultPath(), environmentId, key)
+export function deleteEnvironmentSecret(scopeId: string, key: string): void {
+  store.httpSecrets.deleteSecret(getVaultPath(), scopeId, key)
 }
 
-export function deleteEnvironmentSecrets(environmentId: number): void {
-  store.httpSecrets.deleteEnvironmentSecrets(getVaultPath(), environmentId)
+export function deleteEnvironmentSecrets(scopeId: string): void {
+  store.httpSecrets.deleteEnvironmentSecrets(getVaultPath(), scopeId)
 }
 
 export function moveSecretsToVault(
@@ -54,5 +49,9 @@ export function moveSecretsToVault(
 }
 
 export function remapEnvironmentSecrets(fromId: number, toId: number): void {
-  store.httpSecrets.renameEnvironment(getVaultPath(), fromId, toId)
+  store.httpSecrets.renameEnvironment(
+    getVaultPath(),
+    String(fromId),
+    String(toId),
+  )
 }

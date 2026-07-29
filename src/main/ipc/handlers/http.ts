@@ -33,6 +33,7 @@ import {
   setEnvironmentSecret,
 } from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
+import { log } from '../../utils'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
@@ -434,7 +435,8 @@ export function resolveEnvironment(
     return { maskedVariables: {}, secretValues: [], variables: {} }
 
   const secretKeys = env.secretKeys ?? []
-  const secrets = getEnvironmentSecrets(environmentId)
+  const scopeId = env.secretStorageId ?? String(env.id)
+  const secrets = getEnvironmentSecrets(scopeId)
   const variables: Record<string, string> = { ...env.variables }
 
   // Секрет, объявленный в vault, но не заданный на этом устройстве, должен
@@ -582,7 +584,11 @@ async function executeHttpRequest(
       durationMs,
       0,
       startedAt,
-      isAbort ? `Timeout after ${timeoutMs}ms` : historyError,
+      isAbort
+        ? `Timeout after ${timeoutMs}ms`
+        : secretValues.length > 0
+          ? HTTP_SECRET_MASK
+          : historyError,
     )
 
     return {
@@ -648,11 +654,26 @@ function setEnvironmentSecretHandler(
   }
 
   const storage = useHttpStorage()
+  const env = storage.environments
+    .getEnvironments()
+    .find(item => item.id === payload.environmentId)
+  if (!env) {
+    return { error: 'notFound', ok: false }
+  }
+  const scopeId = env.secretStorageId ?? String(env.id)
+  const wasProtected = (env.secretKeys ?? []).includes(key)
+  const previousValue = revealEnvironmentSecret(scopeId, key)
   try {
     // Сначала сохраняем зашифрованное значение локально и только потом удаляем
     // plain-значение из vault (`addSecretKey` делает и то, и другое). Обратный
     // порядок терял бы значение полностью при сбое шифрования.
-    setEnvironmentSecret(payload.environmentId, key, payload.value)
+    setEnvironmentSecret(scopeId, key, payload.value)
+
+    // Обновление уже защищённого значения не меняет vault metadata и поэтому
+    // не зависит от доступности синхронизируемого state-файла.
+    if (wasProtected) {
+      return { ok: true }
+    }
 
     const { notFound } = storage.environments.addSecretKey(
       payload.environmentId,
@@ -660,7 +681,12 @@ function setEnvironmentSecretHandler(
     )
     if (notFound) {
       // Окружение исчезло между вызовами: локальный секрет теперь ничей.
-      deleteEnvironmentSecret(payload.environmentId, key)
+      if (previousValue === null) {
+        deleteEnvironmentSecret(scopeId, key)
+      }
+      else {
+        setEnvironmentSecret(scopeId, key, previousValue)
+      }
       return { error: 'notFound', ok: false }
     }
 
@@ -671,7 +697,12 @@ function setEnvironmentSecretHandler(
     // успешного шифрования: без компенсации локальное значение осталось бы без
     // ключа в `secretKeys` — невидимым и неудаляемым. Удаление безопасно, это
     // значение записал сам этот вызов.
-    deleteEnvironmentSecret(payload.environmentId, key)
+    if (previousValue === null) {
+      deleteEnvironmentSecret(scopeId, key)
+    }
+    else {
+      setEnvironmentSecret(scopeId, key, previousValue)
+    }
     return { error: 'unknown', ok: false }
   }
 }
@@ -681,6 +712,13 @@ function deleteEnvironmentSecretHandler(
 ): HttpSecretMutationResult {
   const key = payload.key.trim()
   const storage = useHttpStorage()
+  const env = storage.environments
+    .getEnvironments()
+    .find(item => item.id === payload.environmentId)
+  if (!env) {
+    return { error: 'notFound', ok: false }
+  }
+  const scopeId = env.secretStorageId ?? String(env.id)
 
   try {
     const { notFound } = storage.environments.removeSecretKey(
@@ -690,13 +728,59 @@ function deleteEnvironmentSecretHandler(
     if (notFound) {
       return { error: 'notFound', ok: false }
     }
-
-    deleteEnvironmentSecret(payload.environmentId, key)
-    return { ok: true }
   }
   catch {
     return { error: 'unknown', ok: false }
   }
+
+  try {
+    deleteEnvironmentSecret(scopeId, key)
+  }
+  catch (error) {
+    log('http:delete-secret-cleanup', error)
+  }
+  return { ok: true }
+}
+
+function unprotectEnvironmentSecretHandler(
+  payload: HttpSecretPayload,
+): HttpSecretMutationResult {
+  const key = payload.key.trim()
+  const storage = useHttpStorage()
+  const env = storage.environments
+    .getEnvironments()
+    .find(item => item.id === payload.environmentId)
+  if (!env) {
+    return { error: 'notFound', ok: false }
+  }
+
+  const scopeId = env.secretStorageId ?? String(env.id)
+  const value = revealEnvironmentSecret(scopeId, key)
+  if (value === null) {
+    return { error: 'unknown', ok: false }
+  }
+
+  try {
+    const { notFound } = storage.environments.unprotectSecret(
+      payload.environmentId,
+      key,
+      value,
+    )
+    if (notFound) {
+      return { error: 'notFound', ok: false }
+    }
+  }
+  catch {
+    return { error: 'unknown', ok: false }
+  }
+
+  try {
+    deleteEnvironmentSecret(scopeId, key)
+  }
+  catch (error) {
+    log('http:unprotect-secret-cleanup', error)
+  }
+  return { ok: true }
 }
 
 export function registerHttpHandlers(): void {
@@ -715,6 +799,25 @@ export function registerHttpHandlers(): void {
   ipcMain.handle('spaces:http:delete-secret', (_, payload: HttpSecretPayload) =>
     deleteEnvironmentSecretHandler(payload))
 
-  ipcMain.handle('spaces:http:reveal-secret', (_, payload: HttpSecretPayload) =>
-    revealEnvironmentSecret(payload.environmentId, payload.key.trim()))
+  ipcMain.handle(
+    'spaces:http:unprotect-secret',
+    (_, payload: HttpSecretPayload) =>
+      unprotectEnvironmentSecretHandler(payload),
+  )
+
+  ipcMain.handle(
+    'spaces:http:reveal-secret',
+    (_, payload: HttpSecretPayload) => {
+      const env = useHttpStorage()
+        .environments
+        .getEnvironments()
+        .find(item => item.id === payload.environmentId)
+      return env
+        ? revealEnvironmentSecret(
+            env.secretStorageId ?? String(env.id),
+            payload.key.trim(),
+          )
+        : null
+    },
+  )
 }

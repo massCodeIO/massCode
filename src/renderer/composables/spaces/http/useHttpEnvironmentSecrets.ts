@@ -101,6 +101,26 @@ async function revealSecret(environmentId: number, key: string) {
   }
 }
 
+async function unprotectSecret(environmentId: number, key: string) {
+  try {
+    markPersistedStorageMutation()
+    const result = (await ipc.invoke('spaces:http:unprotect-secret', {
+      environmentId,
+      key,
+    })) as HttpSecretMutationResult
+
+    if (!result.ok) {
+      notifySecretError(result.error ?? 'unknown')
+    }
+    return result.ok
+  }
+  catch (error) {
+    console.error(error)
+    notifySecretError('unknown')
+    return false
+  }
+}
+
 export function useHttpEnvironmentSecrets() {
   return {
     deleteSecret,
@@ -108,5 +128,6 @@ export function useHttpEnvironmentSecrets() {
     refreshSecretsStatus,
     revealSecret,
     setSecret,
+    unprotectSecret,
   }
 }

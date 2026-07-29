@@ -595,6 +595,37 @@ describe('vault doctor', () => {
     expect(remapEnvironmentSecretsMock).toHaveBeenCalledWith(-3, 6)
   })
 
+  it('does not remap UUID-scoped secrets when an environment id is repaired', () => {
+    writeFile(
+      'http/.state.yaml',
+      yaml.dump({
+        activeEnvironmentId: null,
+        counters: {
+          environmentId: 5,
+          folderId: 0,
+          historyId: 0,
+          requestId: 0,
+        },
+        environments: [
+          {
+            id: -3,
+            name: 'Broken',
+            secretStorageId: '63b62460-c990-4ba4-85c7-4808f0580fd0',
+            variables: {},
+          },
+        ],
+        folders: [],
+        history: [],
+        requests: [],
+        version: 1,
+      }),
+    )
+
+    applyVaultDoctor({ spaces: ['http'] })
+
+    expect(remapEnvironmentSecretsMock).not.toHaveBeenCalled()
+  })
+
   it('repairs duplicate math sheet ids as a safe state-level fix', () => {
     writeFile(
       'math/.state.yaml',

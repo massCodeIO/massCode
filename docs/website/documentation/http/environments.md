@@ -56,7 +56,7 @@ Working with existing secrets:
 ::: warning Secrets are not synced
 Only the secret name is stored in the vault. The value never leaves the device where you entered it, so on other devices the same secret shows **Not set on this device** and resolves to an empty value until you enter it there.
 
-On Linux, encryption depends on an available system keyring. Without one, secret storage can be unavailable or provide weaker protection, and **Add secret** is disabled.
+On Linux, encryption depends on a supported system keyring. If one is not available, secret storage is disabled and **Add secret** cannot be used.
 :::
 
 ### How Secrets Are Stored
@@ -69,7 +69,7 @@ Each value is bound to a pair of a vault, identified by its path on disk, and an
 - Switching to a different existing vault does not pick up values entered for the previous one, because it is another vault.
 - Deleting an environment also deletes its local secret values.
 
-Values are decrypted only in the main process, at the moment a request runs. The interface never receives them, except when you click the eye icon to reveal a single value. The request preview, the cURL command you copy from it, and the request history (both the URL and the error text) show a mask. The real value goes only into the outgoing network request.
+Values are decrypted only in the main process, when a request runs or when you click the eye icon to reveal a single value. The interface receives a value only for that explicit reveal action. The request preview, the cURL command you copy from it, and the request history (both the URL and the error text) show a mask. During normal execution, the real value goes only into the outgoing network request.
 
 If a value cannot be decrypted, for example because the file was written by a different operating system user or the keychain has changed, the secret is treated as not set: it shows **Not set on this device** and resolves to an empty value. The request still runs.
 

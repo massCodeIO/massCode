@@ -20,6 +20,7 @@ interface SetupOptions {
   isConfirmed?: boolean
   revealValue?: string | null
   setSecretResult?: boolean
+  unprotectSecretResult?: boolean
 }
 
 function createEnv(patch: Partial<EnvFixture> = {}): EnvFixture {
@@ -66,6 +67,9 @@ async function setup(options: SetupOptions = {}) {
   const revealSecret = vi.fn(async () =>
     options.revealValue === undefined ? 'revealed' : options.revealValue,
   )
+  const unprotectSecret = vi.fn(
+    async () => options.unprotectSecretResult ?? true,
+  )
   const confirm = vi.fn(async () => options.isConfirmed ?? true)
 
   vi.doMock('../useHttpEnvironments', () => ({
@@ -86,6 +90,7 @@ async function setup(options: SetupOptions = {}) {
       refreshSecretsStatus: vi.fn(async () => undefined),
       revealSecret,
       setSecret,
+      unprotectSecret,
     }),
   }))
 
@@ -126,6 +131,7 @@ async function setup(options: SetupOptions = {}) {
     open,
     revealSecret,
     setSecret,
+    unprotectSecret,
     updateHttpEnvironment,
   }
 }
@@ -210,18 +216,21 @@ describe('useHttpEnvironmentEditor', () => {
     })
   })
 
-  it('does not delete the secret when reveal returns null', async () => {
-    const { deleteSecret, editor, revealSecret } = await setup({
-      envs: [createEnv({ secretKeys: ['S'] })],
-      revealValue: null,
-    })
+  it('keeps the secret row when the main-side unprotect fails', async () => {
+    const { deleteSecret, editor, revealSecret, unprotectSecret } = await setup(
+      {
+        envs: [createEnv({ secretKeys: ['S'] })],
+        unprotectSecretResult: false,
+      },
+    )
 
     const index = editor.localVariables.value.findIndex(
       entry => entry.secret,
     )
     await editor.onToggleSecret(index)
 
-    expect(revealSecret).toHaveBeenCalledWith(1, 'S')
+    expect(unprotectSecret).toHaveBeenCalledWith(1, 'S')
+    expect(revealSecret).not.toHaveBeenCalled()
     expect(deleteSecret).not.toHaveBeenCalled()
     expect(editor.localVariables.value[index]?.secret).toBe(true)
   })

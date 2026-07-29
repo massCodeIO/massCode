@@ -9,20 +9,28 @@ const {
   addSecretKeyMock,
   appendEntryMock,
   deleteSecretMock,
+  environmentSecretKeysMock,
   handleMock,
+  logMock,
   removeSecretKeyMock,
+  revealSecretMock,
   requestMock,
   secretsMock,
   setSecretMock,
+  unprotectSecretMock,
 } = vi.hoisted(() => ({
   addSecretKeyMock: vi.fn(),
   appendEntryMock: vi.fn(),
   deleteSecretMock: vi.fn(),
+  environmentSecretKeysMock: vi.fn(),
   handleMock: vi.fn(),
+  logMock: vi.fn(),
   removeSecretKeyMock: vi.fn(),
+  revealSecretMock: vi.fn(),
   requestMock: vi.fn(),
   secretsMock: vi.fn(),
   setSecretMock: vi.fn(),
+  unprotectSecretMock: vi.fn(),
 }))
 
 vi.mock('electron', () => ({
@@ -36,11 +44,15 @@ vi.mock('undici', () => ({
   request: requestMock,
 }))
 
+vi.mock('../../../utils', () => ({
+  log: logMock,
+}))
+
 vi.mock('../../../http/secrets', () => ({
   deleteEnvironmentSecret: deleteSecretMock,
   getEnvironmentSecrets: () => secretsMock(),
   isSecretsEncryptionAvailable: () => true,
-  revealEnvironmentSecret: vi.fn(),
+  revealEnvironmentSecret: revealSecretMock,
   setEnvironmentSecret: setSecretMock,
 }))
 
@@ -53,7 +65,7 @@ vi.mock('../../../storage', () => ({
           createdAt: 0,
           id: 1,
           name: 'Local',
-          secretKeys: ['API_KEY', 'ABSENT_KEY'],
+          secretKeys: environmentSecretKeysMock(),
           updatedAt: 0,
           variables: {
             API_KEY: 'stale-plain',
@@ -62,6 +74,7 @@ vi.mock('../../../storage', () => ({
         },
       ],
       removeSecretKey: removeSecretKeyMock,
+      unprotectSecret: unprotectSecretMock,
     },
     history: {
       appendEntry: appendEntryMock,
@@ -99,7 +112,9 @@ describe('http secrets in request execution', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     secretsMock.mockReturnValue({ API_KEY: SECRET_VALUE })
+    environmentSecretKeysMock.mockReturnValue(['API_KEY', 'ABSENT_KEY'])
     addSecretKeyMock.mockReturnValue({ notFound: false })
+    revealSecretMock.mockReturnValue(null)
   })
 
   it('resolves the stored secret over a same-named plain variable', () => {
@@ -162,6 +177,7 @@ describe('http secrets in request execution', () => {
     expect(historyEntry.url).not.toContain('ab%2Bcd')
     expect(historyEntry.error).not.toContain(SECRET_VALUE)
     expect(historyEntry.error).not.toContain('ab%2Bcd')
+    expect(historyEntry.error).toBe('••••••')
   })
 
   it('masks a secret used as the host in the history error', async () => {
@@ -183,13 +199,31 @@ describe('http secrets in request execution', () => {
     // Ответ в renderer остаётся неизменным: инвариант касается только vault.
     expect(result.error).toContain(SECRET_HOST)
   })
+
+  it('uses a generic history error when DNS normalizes secret casing', async () => {
+    secretsMock.mockReturnValue({ API_KEY: 'XN--BCHER-KVA.EXAMPLE' })
+    requestMock.mockRejectedValueOnce(
+      new Error('getaddrinfo ENOTFOUND xn--bcher-kva.example'),
+    )
+
+    const result = await getExecuteHandler()(
+      null,
+      buildPayload('https://{{API_KEY}}/items', []),
+    )
+
+    const [historyEntry] = appendEntryMock.mock.calls[0]
+    expect(historyEntry.error).toBe('••••••')
+    expect(result.error).toContain('xn--bcher-kva.example')
+  })
 })
 
 describe('set-secret ordering', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     secretsMock.mockReturnValue({})
+    environmentSecretKeysMock.mockReturnValue([])
     addSecretKeyMock.mockReturnValue({ notFound: false })
+    revealSecretMock.mockReturnValue(null)
   })
 
   it('keeps the plain value in the vault when encryption fails', async () => {
@@ -219,7 +253,7 @@ describe('set-secret ordering', () => {
     })
 
     expect(result).toEqual({ error: 'notFound', ok: false })
-    expect(deleteSecretMock).toHaveBeenCalledWith(1, 'API_KEY')
+    expect(deleteSecretMock).toHaveBeenCalledWith('1', 'API_KEY')
   })
 
   it('encrypts the value before dropping the plain one from the vault', async () => {
@@ -237,6 +271,43 @@ describe('set-secret ordering', () => {
     )
   })
 
+  it('updates an existing secret without rewriting vault metadata', async () => {
+    environmentSecretKeysMock.mockReturnValue(['API_KEY'])
+    revealSecretMock.mockReturnValue('old-value')
+
+    const result = await getHandler('spaces:http:set-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+      value: 'new-value',
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(setSecretMock).toHaveBeenCalledWith('1', 'API_KEY', 'new-value')
+    expect(addSecretKeyMock).not.toHaveBeenCalled()
+  })
+
+  it('restores the prior local value when protecting metadata fails', async () => {
+    revealSecretMock.mockReturnValue('old-value')
+    addSecretKeyMock.mockImplementationOnce(() => {
+      throw new Error('flush failed')
+    })
+
+    const result = await getHandler('spaces:http:set-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+      value: 'new-value',
+    })
+
+    expect(result).toEqual({ error: 'unknown', ok: false })
+    expect(setSecretMock).toHaveBeenNthCalledWith(
+      2,
+      '1',
+      'API_KEY',
+      'old-value',
+    )
+    expect(deleteSecretMock).not.toHaveBeenCalled()
+  })
+
   it('rolls the local secret back when adding the key throws', async () => {
     addSecretKeyMock.mockImplementationOnce(() => {
       throw new Error('vault is hydrating')
@@ -251,7 +322,7 @@ describe('set-secret ordering', () => {
 
     expect(result).toEqual({ error: 'unknown', ok: false })
     // Иначе локальное значение осталось бы без ключа в `secretKeys`.
-    expect(deleteSecretMock).toHaveBeenCalledWith(1, 'API_KEY')
+    expect(deleteSecretMock).toHaveBeenCalledWith('1', 'API_KEY')
   })
 })
 
@@ -259,6 +330,7 @@ describe('delete-secret', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     secretsMock.mockReturnValue({})
+    environmentSecretKeysMock.mockReturnValue(['API_KEY'])
     removeSecretKeyMock.mockReturnValue({ notFound: false })
   })
 
@@ -268,7 +340,7 @@ describe('delete-secret', () => {
 
     expect(result).toEqual({ ok: true })
     expect(removeSecretKeyMock).toHaveBeenCalledWith(1, 'API_KEY')
-    expect(deleteSecretMock).toHaveBeenCalledWith(1, 'API_KEY')
+    expect(deleteSecretMock).toHaveBeenCalledWith('1', 'API_KEY')
   })
 
   it('keeps the local value when the environment is gone', async () => {
@@ -279,5 +351,80 @@ describe('delete-secret', () => {
 
     expect(result).toEqual({ error: 'notFound', ok: false })
     expect(deleteSecretMock).not.toHaveBeenCalled()
+  })
+
+  it('succeeds when ciphertext cleanup fails after metadata commit', async () => {
+    deleteSecretMock.mockImplementationOnce(() => {
+      throw new Error('local store failed')
+    })
+
+    const result = await getHandler('spaces:http:delete-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(logMock).toHaveBeenCalledWith(
+      'http:delete-secret-cleanup',
+      expect.any(Error),
+    )
+  })
+})
+
+describe('unprotect-secret', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    revealSecretMock.mockReturnValue('plain-value')
+    environmentSecretKeysMock.mockReturnValue(['API_KEY'])
+    unprotectSecretMock.mockReturnValue({ notFound: false })
+  })
+
+  it('persists plaintext metadata before deleting ciphertext', async () => {
+    const result = await getHandler('spaces:http:unprotect-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(unprotectSecretMock).toHaveBeenCalledWith(
+      1,
+      'API_KEY',
+      'plain-value',
+    )
+    expect(deleteSecretMock).toHaveBeenCalledWith('1', 'API_KEY')
+    expect(unprotectSecretMock.mock.invocationCallOrder[0]).toBeLessThan(
+      deleteSecretMock.mock.invocationCallOrder[0],
+    )
+  })
+
+  it('keeps ciphertext when the durable transition fails', async () => {
+    unprotectSecretMock.mockImplementationOnce(() => {
+      throw new Error('flush failed')
+    })
+
+    const result = await getHandler('spaces:http:unprotect-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+    })
+
+    expect(result).toEqual({ error: 'unknown', ok: false })
+    expect(deleteSecretMock).not.toHaveBeenCalled()
+  })
+
+  it('succeeds when ciphertext cleanup fails after unprotect commit', async () => {
+    deleteSecretMock.mockImplementationOnce(() => {
+      throw new Error('local store failed')
+    })
+
+    const result = await getHandler('spaces:http:unprotect-secret')(null, {
+      environmentId: 1,
+      key: 'API_KEY',
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(logMock).toHaveBeenCalledWith(
+      'http:unprotect-secret-cleanup',
+      expect.any(Error),
+    )
   })
 })

@@ -5,6 +5,7 @@ import {
   getUsableSecretKeys,
 } from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
+import { log } from '../../utils'
 import { commonAddResponse } from '../dto/common/response'
 import { httpEnvironmentsDTO } from '../dto/http-environments'
 
@@ -70,12 +71,23 @@ app
       const storage = useHttpStorage()
       const items = storage.environments.getEnvironments().map((env) => {
         const secretKeys = env.secretKeys ?? []
-        const storedKeys = new Set(getUsableSecretKeys(env.id))
+        const storedKeys = new Set(
+          getUsableSecretKeys(env.secretStorageId ?? String(env.id)),
+        )
+        const variables = Object.fromEntries(
+          Object.entries(env.variables).filter(
+            ([key]) => !secretKeys.includes(key),
+          ),
+        )
 
         return {
-          ...env,
+          id: env.id,
+          name: env.name,
+          variables,
           secretKeys,
           missingSecretKeys: secretKeys.filter(key => !storedKeys.has(key)),
+          createdAt: env.createdAt,
+          updatedAt: env.updatedAt,
         }
       })
       const activeId = storage.environments.getActiveEnvironmentId()
@@ -144,13 +156,19 @@ app
     ({ params, status }) => {
       const storage = useHttpStorage()
       const id = Number(params.id)
-      const { deleted } = storage.environments.deleteEnvironment(id)
+      const { deleted, secretScopeId }
+        = storage.environments.deleteEnvironment(id)
 
       if (!deleted) {
         return status(404, { message: 'Environment not found' })
       }
 
-      deleteEnvironmentSecrets(id)
+      try {
+        deleteEnvironmentSecrets(secretScopeId!)
+      }
+      catch (error) {
+        log('http:delete-environment-secrets-cleanup', error)
+      }
 
       return { message: 'Environment deleted' }
     },

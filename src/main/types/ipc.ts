@@ -90,6 +90,7 @@ type SpacesAction =
   | 'http:set-secret'
   | 'http:delete-secret'
   | 'http:reveal-secret'
+  | 'http:unprotect-secret'
   | 'drawings:list'
   | 'drawings:read'
   | 'drawings:write'

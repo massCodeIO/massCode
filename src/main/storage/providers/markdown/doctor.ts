@@ -1209,7 +1209,11 @@ function repairHttpEnvironmentState(): void {
       // окружение, и после merge-конфликта нельзя определить, кому из них
       // принадлежат секреты. Не переносить консервативнее, чем отобрать
       // значения у чужого окружения.
-      if (Number.isInteger(previousId) && !usedIds.has(previousId)) {
+      if (
+        !environment.secretStorageId
+        && Number.isInteger(previousId)
+        && !usedIds.has(previousId)
+      ) {
         remapEnvironmentSecrets(previousId, environment.id)
       }
     }

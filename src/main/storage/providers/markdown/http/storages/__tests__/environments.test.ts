@@ -87,6 +87,9 @@ describe('http environments storage secrets', () => {
     })
 
     const env = environments.getEnvironments().find(item => item.id === id)!
+    expect(env.secretStorageId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
     expect(env.secretKeys).toEqual(['API_KEY'])
     expect(env.variables).toEqual({ BASE_URL: 'http://localhost' })
   })
@@ -119,6 +122,20 @@ describe('http environments storage secrets', () => {
     const env = environments.getEnvironments().find(item => item.id === id)!
     expect(env.secretKeys).toBeUndefined()
     expect(env.variables).toEqual({})
+  })
+
+  it('moves the decrypted value to plain variables when unprotected', () => {
+    const environments = createHttpEnvironmentsStorage()
+    const { id } = environments.createEnvironment({ name: 'Local' })
+    environments.addSecretKey(id, 'API_KEY')
+
+    expect(environments.unprotectSecret(id, 'API_KEY', 'plain-token')).toEqual({
+      notFound: false,
+    })
+
+    const env = environments.getEnvironments().find(item => item.id === id)!
+    expect(env.secretKeys).toBeUndefined()
+    expect(env.variables).toEqual({ API_KEY: 'plain-token' })
   })
 
   it('reports notFound for an unknown environment', () => {

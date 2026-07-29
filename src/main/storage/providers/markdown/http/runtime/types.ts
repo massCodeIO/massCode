@@ -112,6 +112,8 @@ export interface HttpRequestRecord {
 
 export interface HttpEnvironmentRecord {
   id: number
+  /** Локальный scope секретов; legacy-записи без него используют String(id). */
+  secretStorageId?: string
   name: string
   variables: Record<string, string>
   /**

@@ -239,6 +239,14 @@
         "noVariables": "No variables yet",
         "varKey": "Variable",
         "varValue": "Value",
+        "varSecret": "Secret",
+        "secretHint": "Keep the value encrypted on this device only, outside the vault",
+        "secretUnavailable": "This system has no OS encryption available for secrets",
+        "secretNotSet": "Not set on this device",
+        "secretKeyLocked": "To rename a secret, delete it and add it again",
+        "revealSecret": "Show value",
+        "hideSecret": "Hide value",
+        "addSecret": "Add secret",
         "addVariable": "Add variable",
         "noEnvironmentSelected": "Select an environment to edit its variables"
       },
@@ -306,7 +314,8 @@
           "username": "Username",
           "usernamePlaceholder": "Enter username",
           "password": "Password",
-          "passwordPlaceholder": "Enter password"
+          "passwordPlaceholder": "Enter password",
+          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}."
         },
         "description": {
           "placeholder": "Add a description for this request"

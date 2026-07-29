@@ -42,7 +42,7 @@ const { '.cm-scroller': editorScrollerTheme, ...editorScrollbarRestTheme }
 const model = defineModel<string>({ default: '' })
 const editorContainer = ref<HTMLElement>()
 
-const { activeEnvironment } = useHttpEnvironments()
+const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isDark } = useTheme()
 
 let view: EditorView | null = null
@@ -53,7 +53,7 @@ const themeCompartment = new Compartment()
 const wrapCompartment = new Compartment()
 
 function getVariables(): Record<string, string> {
-  return (activeEnvironment.value?.variables as Record<string, string>) ?? {}
+  return activeEnvironmentVariables.value
 }
 
 const isJsonInvalid = ref(false)
@@ -237,7 +237,7 @@ watch(
 )
 
 watch(
-  () => activeEnvironment.value?.variables,
+  activeEnvironmentVariables,
   () => {
     if (view)
       refreshVariables(view)

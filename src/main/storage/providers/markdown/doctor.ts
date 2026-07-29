@@ -9,6 +9,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import path from 'node:path'
 import fs from 'fs-extra'
 import yaml from 'js-yaml'
+import { remapEnvironmentSecrets } from '../../../http/secrets'
 import { enqueueCloudDownload } from './cloudDownloads'
 import {
   getHttpPaths,
@@ -1199,8 +1200,22 @@ function repairHttpEnvironmentState(): void {
       || environment.id <= 0
       || usedIds.has(environment.id)
     ) {
+      const previousId = environment.id
       nextId += 1
       environment.id = nextId
+      // Значения секретов хранятся вне vault и привязаны к id окружения:
+      // без перепривязки они превратились бы в «не задано на устройстве».
+      // Дубликат id пропускаем: этим id уже владеет обработанное ранее
+      // окружение, и после merge-конфликта нельзя определить, кому из них
+      // принадлежат секреты. Не переносить консервативнее, чем отобрать
+      // значения у чужого окружения.
+      if (
+        !environment.secretStorageId
+        && Number.isInteger(previousId)
+        && !usedIds.has(previousId)
+      ) {
+        remapEnvironmentSecrets(previousId, environment.id)
+      }
     }
     usedIds.add(environment.id)
 

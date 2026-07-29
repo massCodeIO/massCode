@@ -10,6 +10,7 @@ import {
   refreshFiatRatesForced,
 } from '../../currencyRates'
 import { refreshDockBadge, scheduleDockBadgeRefresh } from '../../dockBadge'
+import { moveSecretsToVault } from '../../http/secrets'
 import i18n from '../../i18n'
 import { activateLicense } from '../../license'
 import { getCloudDownloadStatus } from '../../storage/providers/markdown/cloudDownloads'
@@ -96,6 +97,16 @@ function moveVaultAndRestartWatcher(
   }
 
   store.preferences.set('storage.vaultPath', targetPath)
+  // Значения секретов HTTP-окружений лежат вне vault и привязаны к его пути:
+  // переносим их следом, иначе после переезда они станут «не заданы».
+  // Best-effort: потерянные секреты пользователь может ввести заново, а вот
+  // приложение без watcher из-за сбоя записи в store чинится только рестартом.
+  try {
+    moveSecretsToVault(sourcePath, targetPath)
+  }
+  catch (error) {
+    log('storage:markdown:vault-move-secrets', error)
+  }
 
   try {
     startMarkdownWatcher()

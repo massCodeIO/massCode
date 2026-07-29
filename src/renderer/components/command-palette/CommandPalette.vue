@@ -72,7 +72,7 @@ const {
   usageById,
 } = useCommandPalette()
 
-const { activeEnvironment } = useHttpEnvironments()
+const { activeEnvironmentVariables } = useHttpEnvironments()
 const codeSnippets = useSnippets()
 const notesData = useNotes()
 const httpRequestsData = useHttpRequests()
@@ -708,10 +708,7 @@ async function copyHttpRequest(result: CommandPaletteResult) {
   }
 
   copyToClipboard(
-    buildHttpPreview(request, {
-      variables:
-        (activeEnvironment.value?.variables as Record<string, string>) ?? {},
-    }),
+    buildHttpPreview(request, { variables: activeEnvironmentVariables.value }),
   )
 }
 

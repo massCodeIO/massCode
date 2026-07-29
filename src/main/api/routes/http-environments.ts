@@ -1,6 +1,11 @@
 import type { HttpEnvironmentsResponse } from '../dto/http-environments'
 import { Elysia } from 'elysia'
+import {
+  deleteEnvironmentSecrets,
+  getUsableSecretKeys,
+} from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
+import { log } from '../../utils'
 import { commonAddResponse } from '../dto/common/response'
 import { httpEnvironmentsDTO } from '../dto/http-environments'
 
@@ -64,7 +69,27 @@ app
     '/',
     () => {
       const storage = useHttpStorage()
-      const items = storage.environments.getEnvironments()
+      const items = storage.environments.getEnvironments().map((env) => {
+        const secretKeys = env.secretKeys ?? []
+        const storedKeys = new Set(
+          getUsableSecretKeys(env.secretStorageId ?? String(env.id)),
+        )
+        const variables = Object.fromEntries(
+          Object.entries(env.variables).filter(
+            ([key]) => !secretKeys.includes(key),
+          ),
+        )
+
+        return {
+          id: env.id,
+          name: env.name,
+          variables,
+          secretKeys,
+          missingSecretKeys: secretKeys.filter(key => !storedKeys.has(key)),
+          createdAt: env.createdAt,
+          updatedAt: env.updatedAt,
+        }
+      })
       const activeId = storage.environments.getActiveEnvironmentId()
 
       return { activeId, items } as HttpEnvironmentsResponse
@@ -130,12 +155,19 @@ app
     '/:id',
     ({ params, status }) => {
       const storage = useHttpStorage()
-      const { deleted } = storage.environments.deleteEnvironment(
-        Number(params.id),
-      )
+      const id = Number(params.id)
+      const { deleted, secretScopeId }
+        = storage.environments.deleteEnvironment(id)
 
       if (!deleted) {
         return status(404, { message: 'Environment not found' })
+      }
+
+      try {
+        deleteEnvironmentSecrets(secretScopeId!)
+      }
+      catch (error) {
+        log('http:delete-environment-secrets-cleanup', error)
       }
 
       return { message: 'Environment deleted' }

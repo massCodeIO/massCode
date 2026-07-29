@@ -62,6 +62,26 @@ export interface HttpExecutePayload {
   timeoutMs?: number
 }
 
+export interface HttpSecretPayload {
+  environmentId: number
+  key: string
+}
+
+export interface HttpSecretSetPayload extends HttpSecretPayload {
+  value: string
+}
+
+export type HttpSecretMutationError =
+  | 'invalidKey'
+  | 'notFound'
+  | 'unavailable'
+  | 'unknown'
+
+export interface HttpSecretMutationResult {
+  ok: boolean
+  error?: HttpSecretMutationError
+}
+
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {

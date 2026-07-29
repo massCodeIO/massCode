@@ -5,6 +5,7 @@ import type {
   HttpEnvironmentUpdateResult,
 } from '../../../../contracts'
 import type { HttpEnvironmentRecord } from '../runtime/types'
+import { randomUUID } from 'node:crypto'
 import { getVaultPath } from '../../runtime/paths'
 import {
   assertVaultNotHydrating,
@@ -12,19 +13,26 @@ import {
   validateEntryName,
 } from '../../runtime/validation'
 import { getHttpPaths } from '../runtime/paths'
-import { saveHttpState } from '../runtime/state'
+import { saveHttpState, saveHttpStateImmediate } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
 
 function normalizeVariables(
   raw: Record<string, string> | undefined,
+  secretKeys: string[] = [],
 ): Record<string, string> {
   if (!raw || typeof raw !== 'object') {
     return {}
   }
 
+  const secrets = new Set(secretKeys)
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(raw)) {
     if (typeof key !== 'string' || !key.trim()) {
+      continue
+    }
+    // Значение secret-переменной не должно попасть в .state.yaml даже если
+    // клиент прислал его в обычных variables: файл уезжает в облачную папку.
+    if (secrets.has(key)) {
       continue
     }
     result[key] = typeof value === 'string' ? value : ''
@@ -91,6 +99,7 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
         createdAt: now,
         id,
         name,
+        secretStorageId: randomUUID(),
         updatedAt: now,
         variables: normalizeVariables(input.variables),
       }
@@ -133,12 +142,117 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
       }
 
       if (input.variables !== undefined) {
-        env.variables = normalizeVariables(input.variables)
+        env.variables = normalizeVariables(input.variables, env.secretKeys)
       }
 
       env.updatedAt = Date.now()
       saveHttpState(paths, state)
       return { invalidInput: false, notFound: false }
+    },
+
+    addSecretKey(id: number, key: string) {
+      const paths = resolvePaths()
+      const { state } = getHttpRuntimeCache(paths)
+
+      assertVaultNotHydrating(state)
+      const env = state.environments.find(item => item.id === id)
+      if (!env) {
+        return { notFound: true }
+      }
+
+      const previousVariables = env.variables
+      const previousSecretKeys = env.secretKeys
+      const previousUpdatedAt = env.updatedAt
+      const secretKeys = new Set(previousSecretKeys ?? [])
+      secretKeys.add(key)
+      env.secretKeys = [...secretKeys]
+      // Переменная перестала быть обычной: её plain-значение уходит из vault.
+      env.variables = { ...env.variables }
+      delete env.variables[key]
+      env.updatedAt = Date.now()
+
+      try {
+        saveHttpStateImmediate(paths, state)
+      }
+      catch (error) {
+        env.variables = previousVariables
+        env.secretKeys = previousSecretKeys
+        env.updatedAt = previousUpdatedAt
+        saveHttpState(paths, state)
+        throw error
+      }
+      return { notFound: false }
+    },
+
+    removeSecretKey(id: number, key: string) {
+      const paths = resolvePaths()
+      const { state } = getHttpRuntimeCache(paths)
+
+      assertVaultNotHydrating(state)
+      const env = state.environments.find(item => item.id === id)
+      if (!env) {
+        return { notFound: true }
+      }
+
+      const previousSecretKeys = env.secretKeys
+      const previousUpdatedAt = env.updatedAt
+      const secretKeys = (previousSecretKeys ?? []).filter(
+        item => item !== key,
+      )
+      if (secretKeys.length > 0) {
+        env.secretKeys = secretKeys
+      }
+      else {
+        delete env.secretKeys
+      }
+      env.updatedAt = Date.now()
+
+      try {
+        saveHttpStateImmediate(paths, state)
+      }
+      catch (error) {
+        env.secretKeys = previousSecretKeys
+        env.updatedAt = previousUpdatedAt
+        saveHttpState(paths, state)
+        throw error
+      }
+      return { notFound: false }
+    },
+
+    unprotectSecret(id: number, key: string, value: string) {
+      const paths = resolvePaths()
+      const { state } = getHttpRuntimeCache(paths)
+
+      assertVaultNotHydrating(state)
+      const env = state.environments.find(item => item.id === id)
+      if (!env) {
+        return { notFound: true }
+      }
+
+      const previousVariables = env.variables
+      const previousSecretKeys = env.secretKeys
+      const previousUpdatedAt = env.updatedAt
+      env.variables = { ...env.variables, [key]: value }
+      const secretKeys = (env.secretKeys ?? []).filter(item => item !== key)
+      if (secretKeys.length > 0) {
+        env.secretKeys = secretKeys
+      }
+      else {
+        delete env.secretKeys
+      }
+      env.updatedAt = Date.now()
+
+      try {
+        saveHttpStateImmediate(paths, state)
+      }
+      catch (error) {
+        env.variables = previousVariables
+        env.secretKeys = previousSecretKeys
+        env.updatedAt = previousUpdatedAt
+        saveHttpState(paths, state)
+        throw error
+      }
+      return { notFound: false }
     },
 
     deleteEnvironment(id: number) {
@@ -150,13 +264,25 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
         return { deleted: false }
       }
 
-      state.environments.splice(index, 1)
+      const [removed] = state.environments.splice(index, 1)
+      const previousActiveEnvironmentId = state.activeEnvironmentId
       if (state.activeEnvironmentId === id) {
         state.activeEnvironmentId = null
       }
 
-      saveHttpState(paths, state)
-      return { deleted: true }
+      try {
+        saveHttpStateImmediate(paths, state)
+      }
+      catch (error) {
+        state.environments.splice(index, 0, removed!)
+        state.activeEnvironmentId = previousActiveEnvironmentId
+        saveHttpState(paths, state)
+        throw error
+      }
+      return {
+        deleted: true,
+        secretScopeId: removed!.secretStorageId ?? String(removed!.id),
+      }
     },
   }
 }

@@ -25,6 +25,10 @@ vi.mock('undici', () => ({
   request: requestMock,
 }))
 
+vi.mock('../../../http/secrets', () => ({
+  getEnvironmentSecrets: () => ({}),
+}))
+
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
     environments: {

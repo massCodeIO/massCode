@@ -762,6 +762,8 @@ export interface HttpEnvironmentItemResponse {
   id: number;
   name: string;
   variables: object;
+  secretKeys: string[];
+  missingSecretKeys: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -777,6 +779,8 @@ export interface HttpEnvironmentsResponse {
     id: number;
     name: string;
     variables: object;
+    secretKeys: string[];
+    missingSecretKeys: string[];
     createdAt: number;
     updatedAt: number;
   }[];
@@ -1188,7 +1192,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.8.0
+ * @version 5.9.1
  *
  * Development documentation
  */

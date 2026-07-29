@@ -1,5 +1,6 @@
 import type {
   HttpCounters,
+  HttpEnvironmentRecord,
   HttpFolderRecord,
   HttpPaths,
   HttpState,
@@ -7,7 +8,11 @@ import type {
 } from './types'
 import fs from 'fs-extra'
 import { pendingStateWriteByPath } from '../../runtime/cache'
-import { readSpaceState, writeSpaceState } from '../../runtime/spaceState'
+import {
+  readSpaceState,
+  writeSpaceState,
+  writeSpaceStateImmediate,
+} from '../../runtime/spaceState'
 import { HTTP_HISTORY_CAP } from './constants'
 
 // Версия 2: записи requests несут денормализованные метаданные списка и
@@ -65,6 +70,38 @@ function normalizeFolders(raw: HttpStateFile['folders']): HttpFolderRecord[] {
   }))
 }
 
+function normalizeEnvironments(
+  raw: HttpStateFile['environments'],
+): HttpEnvironmentRecord[] {
+  if (!Array.isArray(raw))
+    return []
+
+  return raw.map((env) => {
+    const secretKeys = Array.isArray(env.secretKeys)
+      ? [
+          ...new Set(
+            env.secretKeys.filter(
+              (key): key is string => typeof key === 'string' && !!key.trim(),
+            ),
+          ),
+        ]
+      : []
+
+    return {
+      ...env,
+      ...(typeof env.secretStorageId === 'string' && env.secretStorageId.trim()
+        ? { secretStorageId: env.secretStorageId }
+        : { secretStorageId: undefined }),
+      variables: Object.fromEntries(
+        Object.entries(env.variables ?? {}).filter(
+          ([key]) => !secretKeys.includes(key),
+        ),
+      ),
+      ...(secretKeys.length > 0 ? { secretKeys } : {}),
+    }
+  })
+}
+
 export function ensureHttpStateFile(paths: HttpPaths): void {
   fs.ensureDirSync(paths.httpRoot)
 
@@ -95,7 +132,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
     counters: normalizeCounters(raw.counters),
     folders: normalizeFolders(raw.folders),
     requests: Array.isArray(raw.requests) ? raw.requests : [],
-    environments: Array.isArray(raw.environments) ? raw.environments : [],
+    environments: normalizeEnvironments(raw.environments),
     activeEnvironmentId:
       typeof raw.activeEnvironmentId === 'number'
         ? raw.activeEnvironmentId
@@ -106,7 +143,7 @@ export function loadHttpState(paths: HttpPaths): HttpState {
   }
 }
 
-export function saveHttpState(paths: HttpPaths, state: HttpState): void {
+function serializeHttpState(state: HttpState) {
   // Provisional state существует только пока .state.yaml не докачан из
   // облака: записать его — значит затереть настоящий индекс и environments
   // почти пустым состоянием.
@@ -122,7 +159,7 @@ export function saveHttpState(paths: HttpPaths, state: HttpState): void {
 
   // Персистится явная схема: .state.yaml синхронизируется между
   // устройствами и не должен накапливать посторонние и runtime-поля.
-  writeSpaceState(paths.statePath, {
+  return {
     version: state.version,
     counters: state.counters,
     folders: state.folders,
@@ -134,5 +171,27 @@ export function saveHttpState(paths: HttpPaths, state: HttpState): void {
     environments: state.environments,
     activeEnvironmentId: state.activeEnvironmentId,
     history: state.history,
-  })
+  }
+}
+
+export function saveHttpState(paths: HttpPaths, state: HttpState): void {
+  if (state.provisional) {
+    return
+  }
+
+  writeSpaceState(paths.statePath, serializeHttpState(state))
+}
+
+export function saveHttpStateImmediate(
+  paths: HttpPaths,
+  state: HttpState,
+): void {
+  if (state.provisional) {
+    throw new Error('VAULT_HYDRATING: HTTP state is not available yet')
+  }
+
+  writeSpaceStateImmediate(paths.statePath, serializeHttpState(state))
+  if (pendingStateWriteByPath.has(paths.statePath)) {
+    throw new Error(`HTTP_STATE_FLUSH_UNRESOLVED: ${paths.statePath}`)
+  }
 }

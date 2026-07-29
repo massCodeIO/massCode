@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import type { HttpEnvironment } from '@/composables'
+import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
-import { useDialog, useHttpEnvironments } from '@/composables'
+import { useHttpEnvironmentEditor } from '@/composables'
 import { i18n } from '@/electron'
-import { useDebounceFn } from '@vueuse/core'
-import { Plus, Trash2 } from 'lucide-vue-next'
-
-interface VariableEntry {
-  key: string
-  value: string
-}
-
-const AUTO_SAVE_DEBOUNCE_MS = 500
+import { Eye, EyeOff, KeyRound, Plus, Trash2 } from 'lucide-vue-next'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -26,214 +18,33 @@ const VARIABLE_COLUMNS = [
     label: i18n.t('spaces.http.environments.varValue'),
     placeholder: i18n.t('spaces.http.environments.varValue'),
   },
+  {
+    key: 'secret',
+    label: i18n.t('spaces.http.environments.varSecret'),
+  },
 ]
 
 const {
+  addSecretVariable,
+  confirmRemoveVariable,
+  createVariable,
   environments,
-  activeEnvironmentId,
-  createHttpEnvironment,
-  deleteHttpEnvironment,
-  getHttpEnvironments,
-  updateHttpEnvironment,
-} = useHttpEnvironments()
-const { confirm } = useDialog()
-
-const selectedEnvId = ref<number | null>(null)
-const localName = ref('')
-const localVariables = ref<VariableEntry[]>([])
-let isSyncing = false
-
-const selectedEnv = computed<HttpEnvironment | null>(
-  () =>
-    environments.value.find(env => env.id === selectedEnvId.value) ?? null,
-)
-
-const variablesRecord = computed<Record<string, string>>(() => {
-  const record: Record<string, string> = {}
-  for (const entry of localVariables.value) {
-    if (entry.key) {
-      record[entry.key] = entry.value
-    }
-  }
-  return record
-})
-
-const isDirty = computed(() => {
-  const env = selectedEnv.value
-  if (!env)
-    return false
-  if (env.name !== localName.value)
-    return true
-  if (JSON.stringify(env.variables) !== JSON.stringify(variablesRecord.value)) {
-    return true
-  }
-  return false
-})
-
-function syncLocalFromEnv(env: HttpEnvironment | null) {
-  isSyncing = true
-  if (!env) {
-    localName.value = ''
-    localVariables.value = []
-  }
-  else {
-    localName.value = env.name
-    localVariables.value = Object.entries(env.variables).map(
-      ([key, value]) => ({ key, value }),
-    )
-  }
-  nextTick(() => {
-    isSyncing = false
-  })
-}
-
-watch(selectedEnvId, () => {
-  syncLocalFromEnv(selectedEnv.value)
-})
-
-watch(open, async (isOpen) => {
-  if (!isOpen) {
-    await flushPendingUpdate()
-    return
-  }
-  await getHttpEnvironments()
-  const stillExists
-    = selectedEnvId.value !== null
-      && environments.value.some(env => env.id === selectedEnvId.value)
-  if (stillExists) {
-    syncLocalFromEnv(selectedEnv.value)
-    return
-  }
-  const nextId = activeEnvironmentId.value ?? environments.value[0]?.id ?? null
-  if (selectedEnvId.value === nextId) {
-    syncLocalFromEnv(selectedEnv.value)
-  }
-  else {
-    selectedEnvId.value = nextId
-  }
-})
-
-async function flushUpdate() {
-  const env = selectedEnv.value
-  if (!env || !isDirty.value)
-    return
-  const payload: { name?: string, variables?: Record<string, string> } = {}
-  const trimmedName = localName.value.trim()
-  if (trimmedName && trimmedName !== env.name)
-    payload.name = trimmedName
-  if (JSON.stringify(env.variables) !== JSON.stringify(variablesRecord.value)) {
-    payload.variables = variablesRecord.value
-  }
-  if (!payload.name && !payload.variables)
-    return
-  await updateHttpEnvironment(env.id, payload)
-}
-
-const debouncedUpdate = useDebounceFn(flushUpdate, AUTO_SAVE_DEBOUNCE_MS)
-
-async function flushPendingUpdate() {
-  if (selectedEnv.value && isDirty.value) {
-    await flushUpdate()
-  }
-}
-
-watch(
-  [localName, () => variablesRecord.value],
-  () => {
-    if (isSyncing)
-      return
-    if (!isDirty.value)
-      return
-    void debouncedUpdate()
-  },
-  { deep: true },
-)
-
-function getNextUntitledName(): string {
-  const base = i18n.t('spaces.http.environments.untitled')
-  const existing = new Set(
-    environments.value.map(env => env.name.trim().toLowerCase()),
-  )
-  if (!existing.has(base.toLowerCase()))
-    return base
-  let index = 2
-  while (existing.has(`${base} ${index}`.toLowerCase())) index += 1
-  return `${base} ${index}`
-}
-
-function hasVariableContent(variable: VariableEntry): boolean {
-  return Boolean(variable.key.trim() || variable.value.trim())
-}
-
-function isUntitledEnvironmentName(name: string): boolean {
-  const base = i18n.t('spaces.http.environments.untitled')
-  return name === base || name.startsWith(`${base} `)
-}
-
-function isEnvironmentEmpty(): boolean {
-  const name = localName.value.trim()
-  return (
-    (!name || isUntitledEnvironmentName(name))
-    && !localVariables.value.some(hasVariableContent)
-  )
-}
-
-async function onAddEnvironment() {
-  await flushPendingUpdate()
-  const name = getNextUntitledName()
-  const id = await createHttpEnvironment({ name })
-  if (id)
-    selectedEnvId.value = id
-}
-
-async function onDeleteEnvironment() {
-  const env = selectedEnv.value
-  if (!env)
-    return
-
-  if (!isEnvironmentEmpty()) {
-    const isConfirmed = await confirm({
-      title: i18n.t('messages:confirm.delete', {
-        name: localName.value.trim() || env.name,
-      }),
-      content: i18n.t('messages:warning.noUndo'),
-    })
-
-    if (!isConfirmed)
-      return
-  }
-
-  await deleteHttpEnvironment(env.id)
-  selectedEnvId.value = environments.value[0]?.id ?? null
-}
-
-function createVariable(): VariableEntry {
-  return { key: '', value: '' }
-}
-
-async function confirmRemoveVariable(variable: VariableEntry) {
-  if (hasVariableContent(variable)) {
-    const key = variable.key.trim()
-    const isConfirmed = await confirm({
-      title: key
-        ? i18n.t('messages:confirm.deleteVariable', { name: key })
-        : i18n.t('messages:confirm.deleteUnnamedVariable'),
-      content: i18n.t('messages:warning.noUndo'),
-    })
-
-    if (!isConfirmed)
-      return false
-  }
-
-  return true
-}
-
-async function onSelectEnvironment(id: number) {
-  if (selectedEnvId.value === id)
-    return
-  await flushPendingUpdate()
-  selectedEnvId.value = id
-}
+  getSecretPlaceholder,
+  getSecretValue,
+  isSecretsEncryptionAvailable,
+  localName,
+  localVariables,
+  onAddEnvironment,
+  onDeleteEnvironment,
+  onSecretValueBlur,
+  onSelectEnvironment,
+  onToggleReveal,
+  onToggleSecret,
+  revealedSecrets,
+  selectedEnv,
+  selectedEnvId,
+  setSecretValue,
+} = useHttpEnvironmentEditor(open)
 </script>
 
 <template>
@@ -310,14 +121,111 @@ async function onSelectEnvironment(id: number) {
               :columns="VARIABLE_COLUMNS"
               :show-enabled="false"
               actions="delete"
-              grid-template-columns="1fr 1fr 24px"
+              grid-template-columns="1fr 1fr 56px 24px"
               :create-entry="createVariable"
               :before-remove="confirmRemoveVariable"
               :empty-text="i18n.t('spaces.http.environments.noVariables')"
               :add-label="i18n.t('spaces.http.environments.addVariable')"
-            />
+            >
+              <template #cell-key="{ entry }">
+                <UiInput
+                  v-model="entry.key"
+                  class="!h-6"
+                  variant="ghost"
+                  :disabled="entry.secret && !entry.isNew"
+                  :title="
+                    entry.secret && !entry.isNew
+                      ? i18n.t('spaces.http.environments.secretKeyLocked')
+                      : undefined
+                  "
+                  :placeholder="i18n.t('spaces.http.environments.varKey')"
+                />
+              </template>
+
+              <template #cell-value="{ entry }">
+                <UiInput
+                  v-if="!entry.secret"
+                  v-model="entry.value"
+                  class="!h-6"
+                  variant="ghost"
+                  :placeholder="i18n.t('spaces.http.environments.varValue')"
+                />
+                <div
+                  v-else
+                  class="flex min-w-0 items-center gap-1"
+                >
+                  <UiInput
+                    :model-value="getSecretValue(entry)"
+                    class="!h-6"
+                    variant="ghost"
+                    :type="
+                      revealedSecrets[entry.uid] !== undefined
+                        ? 'text'
+                        : 'password'
+                    "
+                    :placeholder="getSecretPlaceholder(entry)"
+                    @update:model-value="
+                      (value) => setSecretValue(entry, String(value))
+                    "
+                    @blur="onSecretValueBlur(entry)"
+                  />
+                  <UiActionButton
+                    v-if="!entry.isNew"
+                    :tooltip="
+                      revealedSecrets[entry.uid] !== undefined
+                        ? i18n.t('spaces.http.environments.hideSecret')
+                        : i18n.t('spaces.http.environments.revealSecret')
+                    "
+                    @click="onToggleReveal(entry)"
+                  >
+                    <EyeOff
+                      v-if="revealedSecrets[entry.uid] !== undefined"
+                      class="size-3.5"
+                    />
+                    <Eye
+                      v-else
+                      class="size-3.5"
+                    />
+                  </UiActionButton>
+                </div>
+              </template>
+
+              <template #cell-secret="{ entry, index }">
+                <div
+                  class="flex items-center justify-center"
+                  :title="
+                    isSecretsEncryptionAvailable
+                      ? i18n.t('spaces.http.environments.secretHint')
+                      : i18n.t('spaces.http.environments.secretUnavailable')
+                  "
+                >
+                  <Checkbox
+                    :model-value="Boolean(entry.secret)"
+                    :disabled="
+                      !entry.key.trim()
+                        || (!entry.secret && !isSecretsEncryptionAvailable)
+                    "
+                    @update:model-value="() => onToggleSecret(index)"
+                  />
+                </div>
+              </template>
+            </HttpKeyValueTable>
           </div>
-          <div class="flex justify-end">
+          <div class="flex items-center justify-between">
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground inline-flex h-7 items-center gap-1 rounded px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="!isSecretsEncryptionAvailable"
+              :title="
+                isSecretsEncryptionAvailable
+                  ? i18n.t('spaces.http.environments.secretHint')
+                  : i18n.t('spaces.http.environments.secretUnavailable')
+              "
+              @click="addSecretVariable"
+            >
+              <KeyRound class="size-3.5" />
+              {{ i18n.t("spaces.http.environments.addSecret") }}
+            </button>
             <button
               type="button"
               class="text-destructive hover:bg-destructive/10 inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs"

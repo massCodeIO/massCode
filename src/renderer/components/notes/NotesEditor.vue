@@ -12,6 +12,7 @@ import {
   useTheme,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { isWindows } from '@/utils'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentUnit } from '@codemirror/language'
@@ -25,6 +26,7 @@ import {
   placeholder,
 } from '@codemirror/view'
 import { GFM, type MarkdownConfig } from '@lezer/markdown'
+import { createClipboardOutput } from './cm-extensions/clipboardOutput'
 import {
   clearInlineFormatting,
   getHeadingLevel,
@@ -224,6 +226,7 @@ function createEditorState(doc: string): EditorState {
       ? presentationTheme
       : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
+    createClipboardOutput(isWindows),
     history(),
     Prec.highest(
       keymap.of(editable ? createListIndent({ indent: notesIndentUnit }) : []),

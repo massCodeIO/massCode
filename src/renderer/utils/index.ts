@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 export const isMac = navigator.userAgent.toLowerCase().includes('mac')
+export const isWindows = navigator.userAgent.toLowerCase().includes('windows')
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

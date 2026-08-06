@@ -1,5 +1,6 @@
 import type { Event as ElectronEvent } from 'electron'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { handleBeforeQuit, handleMainWindowClose } from '../index'
 
 const context = vi.hoisted(() => {
   const appHandlers = new Map<string, (...args: unknown[]) => void>()
@@ -103,8 +104,6 @@ vi.mock('../windowBounds', () => ({
   DEFAULT_WINDOW_BOUNDS: {},
   normalizeWindowBounds: vi.fn(),
 }))
-
-const { handleBeforeQuit, handleMainWindowClose } = await import('../index')
 
 function createEvent(): ElectronEvent {
   return {

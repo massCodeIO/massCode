@@ -136,6 +136,7 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     getNotes,
+    getNotesById,
     markPersistedStorageMutation,
     notesState,
     patchNotesById,
@@ -156,6 +157,64 @@ beforeEach(() => {
 })
 
 describe('useNotes', () => {
+  it('keeps selected note aligned while loading and after an error', async () => {
+    const context = await setup({ noteId: 5 })
+    const notes = context.useNotes()
+    await notes.refreshSelectedNote()
+    await notes.getNotes()
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    let rejectRequest!: (reason: Error) => void
+    context.getNotesById.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectRequest = reject)),
+    )
+
+    context.notesState.noteId = 2
+
+    expect(notes.selectedNoteRecordStatus.value).toBe('loading')
+    expect(notes.selectedNote.value?.id).toBe(2)
+    expect(notes.displayedNoteRecord.value?.id).toBe(5)
+
+    rejectRequest(new Error('network'))
+    await vi.waitFor(() => {
+      expect(notes.selectedNoteRecordStatus.value).toBe('error')
+      expect(notes.selectedNote.value?.id).toBe(2)
+      expect(notes.displayedNoteRecord.value?.id).toBe(5)
+    })
+
+    await notes.retrySelectedNote()
+    expect(notes.selectedNote.value?.id).toBe(2)
+    expect(notes.displayedNoteRecord.value?.id).toBe(2)
+
+    context.notesState.noteId = undefined
+    expect(notes.displayedNoteRecord.value).toBeUndefined()
+    consoleError.mockRestore()
+  })
+
+  it('exposes loading, error and ready states for the selected full record', async () => {
+    const context = await setup({ noteId: 5 })
+    const notes = context.useNotes()
+    const error = new Error('network')
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    context.getNotesById.mockRejectedValueOnce(error)
+
+    const request = notes.refreshSelectedNote()
+
+    expect(notes.selectedNoteRecordStatus.value).toBe('loading')
+    await request
+    expect(notes.selectedNoteRecordStatus.value).toBe('error')
+
+    await notes.retrySelectedNote()
+
+    expect(context.getNotesById).toHaveBeenCalledTimes(2)
+    expect(notes.selectedNoteRecordStatus.value).toBe('ready')
+    consoleError.mockRestore()
+  })
+
   it('selects the first note after property updates remove the current note from the active list', async () => {
     const context = await setup({
       nextNotes: [{ id: 2 }],

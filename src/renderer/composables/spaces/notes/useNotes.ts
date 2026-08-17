@@ -56,6 +56,8 @@ export interface NoteFullRecord extends NoteRecord {
 // списка и content временно отсутствует.
 export type SelectedNoteView = NoteRecord & { content?: string }
 
+export type SelectedNoteRecordStatus = 'idle' | 'loading' | 'ready' | 'error'
+
 type NotesResponse = NoteRecord[]
 
 interface NotesQuery {
@@ -104,6 +106,8 @@ export const notes = shallowRef<NotesResponse>()
 // Список отдаёт только метаданные, поэтому полная запись выбранной заметки
 // (с контентом) загружается отдельно по id.
 export const selectedNoteRecord = shallowRef<NoteFullRecord | undefined>()
+export const displayedNoteRecord = shallowRef<NoteFullRecord | undefined>()
+export const selectedNoteRecordStatus = ref<SelectedNoteRecordStatus>('idle')
 let selectedNoteRequestToken = 0
 let notesRequestToken = 0
 
@@ -142,22 +146,37 @@ export async function refreshSelectedNote() {
 
   if (noteId === undefined) {
     selectedNoteRecord.value = undefined
+    displayedNoteRecord.value = undefined
+    selectedNoteRecordStatus.value = 'idle'
     return
   }
+
+  selectedNoteRecordStatus.value = 'loading'
 
   try {
     const { data } = await api.notes.getNotesById(String(noteId))
 
-    if (requestToken === selectedNoteRequestToken) {
-      selectedNoteRecord.value = data as NoteFullRecord
+    if (
+      requestToken === selectedNoteRequestToken
+      && notesState.noteId === noteId
+      && data.id === noteId
+    ) {
+      const record = data as NoteFullRecord
+      selectedNoteRecord.value = record
+      displayedNoteRecord.value = record
+      selectedNoteRecordStatus.value = 'ready'
     }
   }
   catch (error) {
     if (requestToken === selectedNoteRequestToken) {
-      selectedNoteRecord.value = undefined
+      selectedNoteRecordStatus.value = 'error'
     }
     console.error(error)
   }
+}
+
+export function retrySelectedNote() {
+  return refreshSelectedNote()
 }
 
 watch(
@@ -165,6 +184,7 @@ watch(
   () => {
     void refreshSelectedNote()
   },
+  { flush: 'sync' },
 )
 
 function getActionTargetIds(fallbackNoteId?: number) {
@@ -604,7 +624,7 @@ function patchNoteInCollections(noteId: number, data: NotesUpdate) {
 
   const record = selectedNoteRecord.value
   if (record?.id === noteId) {
-    selectedNoteRecord.value = {
+    const updatedRecord = {
       ...record,
       ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.description !== undefined
@@ -612,6 +632,9 @@ function patchNoteInCollections(noteId: number, data: NotesUpdate) {
         : {}),
       updatedAt: now,
     }
+    selectedNoteRecord.value = updatedRecord
+    if (displayedNoteRecord.value?.id === noteId)
+      displayedNoteRecord.value = updatedRecord
   }
 }
 
@@ -904,6 +927,8 @@ function clearNotesState() {
   clearNotes()
   selectedNoteIds.value = []
   selectedNoteRecord.value = undefined
+  displayedNoteRecord.value = undefined
+  selectedNoteRecordStatus.value = 'idle'
   notesState.noteId = undefined
 }
 
@@ -924,6 +949,7 @@ export function useNotes() {
     deleteSelectedNotes,
     deleteTagFromNote,
     duplicateNote,
+    displayedNoteRecord,
     emptyTrash,
     getNotes,
     hasBusyNoteContentUpdates,
@@ -935,6 +961,8 @@ export function useNotes() {
     lastSelectedNoteId,
     notes,
     refreshSelectedNote,
+    retrySelectedNote,
+    selectedNoteRecordStatus,
     selectedNote,
     selectedNoteIds,
     selectedNotes,

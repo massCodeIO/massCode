@@ -12,7 +12,7 @@ import { i18n, ipc } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import { router, RouterName } from '@/router'
 import { getEntryNameConflictMessage } from '@/utils'
-import { refDebounced, useClipboard } from '@vueuse/core'
+import { useClipboard, useDebounceFn, useEventListener } from '@vueuse/core'
 import {
   BookOpen,
   ChevronLeft,
@@ -30,24 +30,28 @@ import {
   getEntryNameValidationIssue,
 } from '~/shared/entryNameValidation'
 import { shouldSyncSelectedNoteContent } from './editorSync'
-import { getTextStats } from './textStats'
+import { getTextStats, shouldApplyTextStatsUpdate } from './textStats'
 
 const {
   notes,
+  displayedNoteRecord,
   selectedNote,
+  selectedNoteRecordStatus,
+  retrySelectedNote,
   updateNoteContent,
   isNotesLoading,
   isNotesLoadingVisible,
 } = useNotes()
+const displayedNote = computed(() => displayedNoteRecord.value)
 const { canGoBack, canGoForward } = useNavigationHistory()
 const { addToUpdateQueue } = useNoteUpdate()
 
 function hasSiblingNoteNameConflict(value: string, excludeId: number) {
   const normalized = value.trim().toLowerCase()
-  if (!normalized || !selectedNote.value) {
+  if (!normalized || !displayedNote.value) {
     return false
   }
-  const folderId = selectedNote.value.folder?.id ?? null
+  const folderId = displayedNote.value.folder?.id ?? null
   return (notes.value ?? []).some(
     note =>
       note.id !== excludeId
@@ -56,10 +60,12 @@ function hasSiblingNoteNameConflict(value: string, excludeId: number) {
   )
 }
 const {
+  isFocusedSearch,
   isFocusedNoteName,
   isNotesMindmapShown,
   isNotesPresentationShown,
   isNotesSidebarHidden,
+  notesState,
   notesEditorMode,
   hideNotesViewModes,
   showNotesMindmap,
@@ -84,6 +90,12 @@ const presentationActionTooltip = computed(() =>
 )
 const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
 const isNameFocused = ref(false)
+const isSelectedNoteContentReady = computed(
+  () =>
+    selectedNoteRecordStatus.value === 'ready'
+    && selectedNote.value?.id === notesState.noteId
+    && selectedNote.value.content !== undefined,
+)
 
 function onSidebarToggle() {
   toggleNotesSidebar()
@@ -123,13 +135,17 @@ const {
   onBlur,
   reset: resetName,
 } = useEditableField(
-  () => selectedNote.value?.name,
+  () => displayedNote.value?.name,
   (v) => {
     if (getEntryNameValidationIssue(v)) {
       return
     }
 
-    if (!selectedNote.value) {
+    if (
+      !isSelectedNoteContentReady.value
+      || !selectedNote.value
+      || selectedNote.value.id !== displayedNote.value?.id
+    ) {
       return
     }
 
@@ -145,17 +161,17 @@ const nameValidationIssue = computed(() =>
   getEntryNameValidationIssue(name.value),
 )
 const hasNameConflict = computed(() => {
-  if (nameValidationIssue.value || !selectedNote.value) {
+  if (nameValidationIssue.value || !displayedNote.value) {
     return false
   }
 
   if (
-    name.value.trim().toLowerCase() === selectedNote.value.name.toLowerCase()
+    name.value.trim().toLowerCase() === displayedNote.value.name.toLowerCase()
   ) {
     return false
   }
 
-  return hasSiblingNoteNameConflict(name.value, selectedNote.value.id)
+  return hasSiblingNoteNameConflict(name.value, displayedNote.value.id)
 })
 const nameValidationMessage = computed(() => {
   const issue = nameValidationIssue.value
@@ -228,14 +244,88 @@ function onNameKeydown(event: KeyboardEvent) {
   })
 }
 
+let searchShortcutRevision = 0
+let pendingContentSearchNoteId: number | undefined
+
+function openSelectedNoteContentSearch() {
+  const noteId = notesState.noteId
+  if (noteId === undefined)
+    return
+
+  hideNotesViewModes()
+  const revision = ++searchShortcutRevision
+  const shouldFocus = isSelectedNoteContentReady.value
+  pendingContentSearchNoteId = shouldFocus ? undefined : noteId
+  nextTick(() => {
+    if (
+      revision === searchShortcutRevision
+      && selectedNote.value?.id === noteId
+    ) {
+      notesEditorRef.value?.openContentSearch(shouldFocus)
+    }
+  })
+}
+
+function onSearchShortcut(event: KeyboardEvent) {
+  if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'f')
+    return
+
+  if (!event.shiftKey && notesState.noteId === undefined) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+
+  if (event.shiftKey) {
+    searchShortcutRevision += 1
+    pendingContentSearchNoteId = undefined
+    notesEditorRef.value?.closeContentSearch(false)
+    isFocusedSearch.value = true
+    return
+  }
+
+  openSelectedNoteContentSearch()
+}
+
+useEventListener(window, 'keydown', onSearchShortcut, { capture: true })
+watch(
+  () => notesState.noteId,
+  () => {
+    searchShortcutRevision += 1
+    if (pendingContentSearchNoteId !== notesState.noteId)
+      pendingContentSearchNoteId = undefined
+  },
+)
+
 const editorContent = ref('')
 // id заметки, контент которой сейчас находится в редакторе: меняется только
 // вместе с editorContent, когда полная запись уже загружена.
 const editorNoteId = ref<number | undefined>()
+const statsContent = ref('')
+let statsRevision = 0
+const updateStatsContent = useDebounceFn(
+  (noteId: number | undefined, value: string, revision: number) => {
+    if (
+      shouldApplyTextStatsUpdate(
+        editorNoteId.value,
+        statsRevision,
+        noteId,
+        revision,
+      )
+    ) {
+      statsContent.value = value
+    }
+  },
+  300,
+)
 
 watch(
-  selectedNote,
+  displayedNote,
   (nextNote, previousNote) => {
+    if (nextNote?.id !== previousNote?.id)
+      statsRevision += 1
+
     // Контент выбранной заметки ещё загружается — редактор обновится,
     // когда придёт полная запись.
     if (nextNote && nextNote.content === undefined) {
@@ -249,8 +339,24 @@ watch(
       return
     }
 
-    editorContent.value = nextNote?.content ?? ''
+    const nextContent = nextNote?.content ?? ''
+    statsRevision += 1
+    editorContent.value = nextContent
     editorNoteId.value = nextNote?.id
+    statsContent.value = nextContent
+
+    if (nextNote?.id === pendingContentSearchNoteId) {
+      const revision = ++searchShortcutRevision
+      pendingContentSearchNoteId = undefined
+      nextTick(() => {
+        if (
+          revision === searchShortcutRevision
+          && selectedNote.value?.id === nextNote.id
+        ) {
+          notesEditorRef.value?.openContentSearch()
+        }
+      })
+    }
   },
   { immediate: true },
 )
@@ -258,25 +364,51 @@ watch(
 const content = computed({
   get: () => editorContent.value,
   set: (value: string) => {
+    statsRevision += 1
     editorContent.value = value
+    updateStatsContent(editorNoteId.value, value, statsRevision)
 
     // Сохраняем только если редактор отображает выбранную заметку:
     // в момент переключения ввод не должен уйти в новую заметку
     // с текстом старой.
-    if (selectedNote.value && selectedNote.value.id === editorNoteId.value) {
+    if (
+      isSelectedNoteContentReady.value
+      && selectedNote.value?.id === editorNoteId.value
+    ) {
       updateNoteContent(selectedNote.value.id, value)
     }
   },
 })
 
-// Статистика по всему документу не должна пересчитываться на каждый
-// keystroke большого документа.
-const debouncedContent = refDebounced(editorContent, 300)
-const textStats = computed(() => getTextStats(debouncedContent.value))
+// При переключении заметки статистика обновляется сразу вместе с контентом,
+// а во время набора остаётся debounced для больших документов.
+const textStats = computed(() => getTextStats(statsContent.value))
+const isSelectedNoteLoadingVisible = ref(false)
+let selectedNoteLoadingTimer: ReturnType<typeof setTimeout> | undefined
 
+watch(
+  selectedNoteRecordStatus,
+  (status) => {
+    if (selectedNoteLoadingTimer)
+      clearTimeout(selectedNoteLoadingTimer)
+    selectedNoteLoadingTimer = undefined
+    isSelectedNoteLoadingVisible.value = false
+
+    if (status === 'loading') {
+      selectedNoteLoadingTimer = setTimeout(() => {
+        if (selectedNoteRecordStatus.value === 'loading')
+          isSelectedNoteLoadingVisible.value = true
+      }, 300)
+    }
+  },
+  { immediate: true },
+)
 const { copy } = useClipboard()
 
 function onCopyNoteMenu() {
+  if (!isSelectedNoteContentReady.value)
+    return
+
   const noteContent = selectedNote.value?.content
   if (noteContent === undefined)
     return
@@ -285,24 +417,42 @@ function onCopyNoteMenu() {
 }
 
 ipc.on('main-menu:copy-note', onCopyNoteMenu)
+ipc.on('main-menu:find', openSelectedNoteContentSearch)
 
 // Компонент пересоздаётся при переходах dashboard/graph → workspace:
 // без снятия listener каждый переход добавляет обработчик.
 onBeforeUnmount(() => {
+  if (selectedNoteLoadingTimer)
+    clearTimeout(selectedNoteLoadingTimer)
   ipc.removeListeners('main-menu:copy-note')
+  ipc.removeListeners('main-menu:find')
 })
 </script>
 
 <template>
   <div
-    v-if="selectedNote"
+    v-if="displayedNote"
     class="relative flex h-full flex-col pt-[var(--content-top-offset)]"
   >
     <UiLoadingOverlay
-      v-if="selectedNote.pendingCloudDownload"
+      v-if="selectedNoteRecordStatus === 'loading'"
+      :silent="!isSelectedNoteLoadingVisible"
+    />
+    <UiLoadingOverlay
+      v-else-if="selectedNoteRecordStatus === 'error'"
+      error
+      :label="i18n.t('contentLoad.failed')"
+      :action-label="i18n.t('contentLoad.retry')"
+      @retry="retrySelectedNote"
+    />
+    <UiLoadingOverlay
+      v-else-if="displayedNote.pendingCloudDownload"
       :label="i18n.t('cloudDownloads.itemPending')"
     />
-    <div data-notes-editor-header>
+    <div
+      data-notes-editor-header
+      :inert="!isSelectedNoteContentReady"
+    >
       <div
         class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
       >
@@ -379,11 +529,17 @@ onBeforeUnmount(() => {
         v-if="!isNotesMindmapShown && !isNotesPresentationShown"
         class="pt-1"
       >
-        <NotesTaskMetadataBar :note="selectedNote" />
-        <NotesEditorTags />
+        <NotesTaskMetadataBar :note="displayedNote" />
+        <NotesEditorTags
+          :note="displayedNote"
+          :disabled="!isSelectedNoteContentReady"
+        />
       </div>
     </div>
-    <div class="min-h-0 flex-1">
+    <div
+      class="min-h-0 flex-1"
+      :inert="!isSelectedNoteContentReady"
+    >
       <NotesMindmap v-if="isNotesMindmapShown" />
       <div
         v-else
@@ -393,6 +549,7 @@ onBeforeUnmount(() => {
           <NotesEditor
             ref="notesEditorRef"
             v-model:content="content"
+            :disabled="!isSelectedNoteContentReady"
             :mode="notesEditorMode"
             :note-id="editorNoteId"
           />
@@ -440,6 +597,22 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+  </div>
+  <div
+    v-else-if="notesState.noteId !== undefined"
+    class="relative h-full"
+  >
+    <UiLoadingOverlay
+      v-if="selectedNoteRecordStatus === 'loading'"
+      :silent="!isSelectedNoteLoadingVisible"
+    />
+    <UiLoadingOverlay
+      v-else-if="selectedNoteRecordStatus === 'error'"
+      error
+      :label="i18n.t('contentLoad.failed')"
+      :action-label="i18n.t('contentLoad.retry')"
+      @retry="retrySelectedNote"
+    />
   </div>
   <div
     v-else-if="isNotesLoadingVisible"

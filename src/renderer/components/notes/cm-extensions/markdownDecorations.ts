@@ -518,7 +518,10 @@ function buildDecorations(
 
             decorations.push(
               Decoration.line({
-                attributes: { style },
+                attributes: {
+                  class: 'cm-fenced-code-line',
+                  style,
+                },
               }).range(line.from),
             )
           }

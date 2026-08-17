@@ -48,13 +48,25 @@ const contentSearchTheme = EditorView.theme({
     color: 'black !important',
   },
   '.cm-content-search-current': {
-    boxShadow: 'inset 0 0 0 1px var(--primary)',
+    outline: '1px solid var(--foreground)',
+    outlineOffset: '1px',
+  },
+  '.cm-fenced-code-line .cm-content-search-match': {
+    padding: '1px 0',
+    boxDecorationBreak: 'clone',
+    position: 'relative',
+    zIndex: '1',
+  },
+  '.cm-fenced-code-line:has(.cm-content-search-current)': {
+    position: 'relative',
+    zIndex: '1',
+    overflow: 'visible',
   },
   '.cm-content-search-current-cell': {
-    boxShadow: 'inset 0 0 0 1px var(--primary)',
+    boxShadow: 'inset 0 0 0 1px var(--foreground)',
   },
   '.cm-content-search-current-table': {
-    boxShadow: 'inset 0 0 0 1px var(--primary)',
+    boxShadow: 'inset 0 0 0 1px var(--foreground)',
     borderRadius: '4px',
   },
 })

@@ -924,6 +924,7 @@ onMounted(() => {
 }
 
 .CodeMirror .cm-content-search-current {
-  box-shadow: inset 0 0 0 1px var(--primary);
+  outline: 1px solid var(--foreground);
+  outline-offset: 1px;
 }
 </style>

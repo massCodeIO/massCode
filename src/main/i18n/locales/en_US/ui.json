@@ -9,6 +9,11 @@
     "library": "Library",
     "fragment": "Fragment"
   },
+  "contentSearch": {
+    "placeholder": "Find in content",
+    "previous": "Previous match",
+    "next": "Next match"
+  },
   "commandPalette": {
     "title": "Command Palette",
     "description": "Search spaces, snippets, notes, and HTTP requests.",
@@ -679,5 +684,9 @@
     "failed": "Failed to download files from cloud storage: {{count}}",
     "itemPending": "Downloading from cloud storage…",
     "label": "Cloud downloads"
+  },
+  "contentLoad": {
+    "failed": "Failed to load content.",
+    "retry": "Try again"
   }
 }

@@ -132,14 +132,17 @@ describe('createMainMenu', () => {
 
     const template = buildFromTemplate.mock.calls[0]?.[0] as Array<{
       label?: string
+      role?: string
       submenu?: Array<{
         label?: string
+        accelerator?: string
         submenu?: unknown[]
         click?: () => void
       }>
     }>
 
     const fileMenu = template.find(item => item.label === 'menu:file.label')
+    const editMenu = template.find(item => item.role === 'editMenu')
     const viewMenu = template.find(item => item.label === 'menu:view.label')
     const editorMenu = template.find(
       item => item.label === 'menu:editor.label',
@@ -176,6 +179,15 @@ describe('createMainMenu', () => {
 
     const editorLabels = editorMenu?.submenu?.map(item => item.label) ?? []
     const formatIndex = editorLabels.indexOf('menu:editor.format')
+    const formatItem = editorMenu?.submenu?.[formatIndex]
+    const findItem = editMenu?.submenu?.find(
+      item => item.label === 'menu:edit.find',
+    )
+
+    expect(findItem).toMatchObject({ accelerator: 'CommandOrControl+F' })
+    findItem?.click?.()
+    expect(send).toHaveBeenCalledWith('main-menu:find')
+    expect(formatItem).toMatchObject({ accelerator: 'Shift+Alt+F' })
 
     expect(editorLabels[formatIndex + 1]).toBe(
       'menu:editor.normalizeTerminalOutput',

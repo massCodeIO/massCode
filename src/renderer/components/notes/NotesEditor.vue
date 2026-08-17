@@ -8,6 +8,7 @@ import {
   applyPendingNavigationUIStateForNote,
   registerNavigationNoteUIState,
   useCopyToClipboard,
+  useNoteSearch,
   useNotesEditor,
   useTheme,
 } from '@/composables'
@@ -101,6 +102,7 @@ const props = withDefaults(defineProps<Props>(), {
 const content = defineModel<string>('content', { default: '' })
 const { isDark } = useTheme()
 const { settings: notesSettings } = useNotesEditor()
+const { searchQuery: spaceSearchQuery } = useNoteSearch()
 const copyToClipboard = useCopyToClipboard()
 const isRawMode = computed(() => props.mode === 'raw')
 const isPreviewMode = computed(() => props.mode === 'preview')
@@ -357,7 +359,7 @@ function createEditorState(doc: string): EditorState {
       if (
         update.docChanged
         && !isApplyingExternalContent
-        && contentSearchQuery.value
+        && getVisibleSearchQuery()
       ) {
         const revision = ++contentSearchRevision
         const expectedState = update.state
@@ -367,13 +369,13 @@ function createEditorState(doc: string): EditorState {
             revision === contentSearchRevision
             && view?.state === expectedState
           ) {
-            refreshContentSearch(false)
+            refreshVisibleSearch(false)
           }
         })
       }
 
       if (
-        contentSearchQuery.value
+        getVisibleSearchQuery()
         && (update.viewportChanged
           || update.focusChanged
           || syntaxTree(update.startState) !== syntaxTree(update.state))
@@ -398,7 +400,40 @@ function applyExternalState(doc: string, selectFirstMatch = false) {
   isApplyingExternalContent = true
   view.setState(createEditorState(doc))
   isApplyingExternalContent = false
-  refreshContentSearch(selectFirstMatch)
+  refreshVisibleSearch(selectFirstMatch)
+}
+
+function getVisibleSearchQuery() {
+  return isContentSearchOpen.value
+    ? contentSearchQuery.value
+    : spaceSearchQuery.value
+}
+
+function refreshVisibleSearch(selectFirst = true) {
+  if (isContentSearchOpen.value) {
+    refreshContentSearch(selectFirst)
+    return
+  }
+
+  refreshSpaceSearchHighlights()
+}
+
+function refreshSpaceSearchHighlights() {
+  if (!view || isContentSearchOpen.value)
+    return
+
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  const query = spaceSearchQuery.value
+  const matches = getContentSearchMatches(view.state.doc.toString(), query)
+
+  view.dispatch({
+    effects: setContentSearchMatches.of({
+      matches,
+      currentIndex: -1,
+    }),
+  })
+  updateTableSearchHighlights(view, query)
 }
 
 function refreshContentSearch(selectFirst = true) {
@@ -491,22 +526,20 @@ function scheduleTableSearchHighlights(expectedState: EditorState) {
   const revision = contentSearchRevision
   tableSearchFrame = requestAnimationFrame(() => {
     tableSearchFrame = undefined
+    const query = getVisibleSearchQuery()
     if (
       !view
       || view.state !== expectedState
       || revision !== contentSearchRevision
-      || !contentSearchQuery.value
+      || !query
     ) {
       return
     }
 
-    const matchFrom
-      = contentSearchMatches.value[contentSearchIndex.value]?.from
-    const tableMarker = updateTableSearchHighlights(
-      view,
-      contentSearchQuery.value,
-      matchFrom,
-    )
+    const matchFrom = isContentSearchOpen.value
+      ? contentSearchMatches.value[contentSearchIndex.value]?.from
+      : undefined
+    const tableMarker = updateTableSearchHighlights(view, query, matchFrom)
     if (
       tableMarker
       && pendingTableSearchReveal?.revision === revision
@@ -520,6 +553,7 @@ function scheduleTableSearchHighlights(expectedState: EditorState) {
 
 function openContentSearch(focus = true) {
   isContentSearchOpen.value = true
+  refreshContentSearch()
   if (!focus)
     return
 
@@ -537,6 +571,7 @@ function closeContentSearch(focus = true) {
   pendingTableSearchReveal = undefined
   isContentSearchOpen.value = false
   contentSearchQuery.value = ''
+  refreshSpaceSearchHighlights()
   if (focus)
     focusEditor()
 }
@@ -555,7 +590,14 @@ function onContentSearchPanelFocus() {
   })
 }
 
-watch(contentSearchQuery, () => refreshContentSearch())
+watch(contentSearchQuery, () => {
+  if (isContentSearchOpen.value)
+    refreshContentSearch()
+})
+watch(spaceSearchQuery, () => {
+  if (!isContentSearchOpen.value)
+    refreshSpaceSearchHighlights()
+})
 
 // noteId и content меняются согласованно (NotesEditorPane обновляет их
 // вместе, когда контент заметки загружен), поэтому один watcher.
@@ -589,8 +631,8 @@ watch([() => props.noteId, content], ([noteId, val]) => {
     changes: { from: 0, to: view.state.doc.length, insert: val },
   })
   isApplyingExternalContent = false
-  if (contentSearchQuery.value)
-    refreshContentSearch(false)
+  if (getVisibleSearchQuery())
+    refreshVisibleSearch(false)
 })
 
 watch(
@@ -799,6 +841,7 @@ onMounted(() => {
     parent: editorContainer.value,
   })
   lastAppliedNoteId = props.noteId
+  refreshVisibleSearch(false)
 
   void syncNavigationNoteUIStateRegistration()
 })

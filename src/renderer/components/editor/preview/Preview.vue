@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { useSnippets } from '@/composables'
+import { useApp, useSnippets } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { useDark } from '@vueuse/core'
 import { FileDown, Moon, RefreshCcw, Sun } from 'lucide-vue-next'
 
-const { selectedSnippet } = useSnippets()
+const { displayedSnippet, selectedSnippet, selectedSnippetRecordStatus }
+  = useSnippets()
+const { state } = useApp()
 
 const previewKey = ref(0)
 
@@ -20,7 +22,7 @@ const defaultHtml = computed(() => {
 
 const html = computed(() => {
   return (
-    selectedSnippet.value?.contents.find(
+    displayedSnippet.value?.contents.find(
       content => content.language === 'html',
     )?.value || defaultHtml.value
   )
@@ -28,7 +30,7 @@ const html = computed(() => {
 
 const css = computed(() => {
   return (
-    selectedSnippet.value?.contents.find(
+    displayedSnippet.value?.contents.find(
       content => content.language === 'css',
     )?.value || ''
   )
@@ -36,7 +38,7 @@ const css = computed(() => {
 
 const js = computed(() => {
   return (
-    selectedSnippet.value?.contents.find(
+    displayedSnippet.value?.contents.find(
       content => content.language === 'javascript',
     )?.value || ''
   )
@@ -73,26 +75,11 @@ function generateHtmlPreview(save = false) {
   `
 }
 
-// Превью замораживается на время загрузки тел фрагментов (value === undefined
-// в metadata-состоянии), чтобы iframe не мигал дефолтной заглушкой.
-const isContentLoading = computed(() =>
-  Boolean(
-    selectedSnippet.value
-    && selectedSnippet.value.contents.some(
-      content => content.value === undefined,
-    ),
-  ),
-)
-
 const htmlPreview = ref('')
 
 watch(
   [html, css, js, isDarkPreview],
   () => {
-    if (isContentLoading.value) {
-      return
-    }
-
     htmlPreview.value = generateHtmlPreview()
     previewKey.value++
   },
@@ -100,6 +87,15 @@ watch(
 )
 
 async function onSaveHtml() {
+  const snippetId = state.snippetId
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== snippetId
+    || displayedSnippet.value?.id !== snippetId
+  ) {
+    return
+  }
+
   let html = generateHtmlPreview(true)
 
   try {
@@ -112,12 +108,21 @@ async function onSaveHtml() {
     console.error(error)
   }
 
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || state.snippetId !== snippetId
+    || selectedSnippet.value?.id !== snippetId
+    || displayedSnippet.value?.id !== snippetId
+  ) {
+    return
+  }
+
   const blob = new Blob([html], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
 
   a.href = url
-  a.download = `${selectedSnippet.value?.name}.html`
+  a.download = `${displayedSnippet.value?.name}.html`
   a.click()
 }
 </script>

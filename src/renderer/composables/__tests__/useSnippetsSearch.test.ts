@@ -11,6 +11,7 @@ globalThis.watch = watch
 interface SetupOptions {
   folderId?: number
   libraryFilter?: string
+  snippetId?: number
   tagId?: number
 }
 
@@ -27,12 +28,29 @@ async function setup(options: SetupOptions = {}) {
     folderId: options.folderId,
     libraryFilter: options.libraryFilter,
     snippetContentIndex: 0,
+    snippetId: options.snippetId,
     tagId: options.tagId,
   })
 
   const getSnippets = vi.fn(async () => ({
     data: [{ contents: [], id: 1, name: 'Search result', tags: [] }],
   }))
+  const getSnippetsById = vi.fn(async (id: string) => ({
+    data: {
+      contents: [
+        {
+          id: Number(id) * 10,
+          label: 'Fragment 1',
+          language: 'text',
+          value: `Content ${id}`,
+        },
+      ],
+      id: Number(id),
+      name: 'Selected snippet',
+      tags: [],
+    },
+  }))
+  const postSnippetsByIdContents = vi.fn()
 
   // useContentSort читает store.app при импорте модуля: мокается целиком,
   // чтобы не тянуть electron store в тест.
@@ -73,11 +91,11 @@ async function setup(options: SetupOptions = {}) {
         getSnippets,
         // refreshSelectedSnippet дёргает загрузку полной записи по id:
         // отсутствие метода давало «зелёные» тесты с TypeError в stderr.
-        getSnippetsById: vi.fn(async () => ({ data: undefined })),
+        getSnippetsById,
         patchSnippetsById: vi.fn(),
         patchSnippetsByIdContentsByContentId: vi.fn(),
         postSnippets: vi.fn(),
-        postSnippetsByIdContents: vi.fn(),
+        postSnippetsByIdContents,
         postSnippetsByIdTagsByTagId: vi.fn(),
       },
     },
@@ -109,6 +127,8 @@ async function setup(options: SetupOptions = {}) {
 
   return {
     getSnippets,
+    getSnippetsById,
+    postSnippetsByIdContents,
     snippets,
     state,
   }
@@ -153,5 +173,179 @@ describe('useSnippets search', () => {
       isFavorites: 1,
       search: 'token',
     })
+  })
+})
+
+describe('selected snippet full record', () => {
+  it('normalizes a stale fragment index when the selected snippet is ready', async () => {
+    const context = await setup({ snippetId: 5 })
+    context.getSnippetsById.mockResolvedValueOnce({
+      data: {
+        contents: [
+          {
+            id: 50,
+            label: 'Fragment 1',
+            language: 'text',
+            value: 'First',
+          },
+          {
+            id: 51,
+            label: 'Fragment 2',
+            language: 'text',
+            value: 'Second',
+          },
+        ],
+        id: 5,
+        name: 'Selected snippet',
+        tags: [],
+      },
+    })
+    context.state.snippetContentIndex = 1
+    await context.snippets.refreshSelectedSnippet()
+
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(51)
+
+    context.state.snippetId = 1
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    })
+
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(10)
+  })
+
+  it('does not select a newly added fragment after switching snippets', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+
+    let resolveCreate!: () => void
+    context.postSnippetsByIdContents.mockImplementationOnce(
+      () => new Promise<void>(resolve => (resolveCreate = resolve)),
+    )
+
+    const addRequest = context.snippets.addFragment()
+    context.state.snippetId = 1
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+      expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    })
+
+    resolveCreate()
+    await addRequest
+
+    expect(context.state.snippetId).toBe(1)
+    expect(context.state.snippetContentIndex).toBe(0)
+    expect(context.snippets.displayedSnippetContent.value?.id).toBe(10)
+  })
+
+  it('clears both domain and display records when selection is cleared', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+
+    context.state.snippetId = undefined
+    await nextTick()
+
+    expect(context.snippets.selectedSnippet.value).toBeUndefined()
+    expect(context.snippets.displayedSnippet.value).toBeUndefined()
+    expect(context.snippets.displayedSnippetContent.value).toBeUndefined()
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('idle')
+  })
+
+  it('keeps the previous display record until the current snippet is ready', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+    await context.snippets.getSnippets()
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    expect(context.snippets.selectedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    let rejectRequest!: (reason: Error) => void
+    context.getSnippetsById.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectRequest = reject)),
+    )
+
+    context.state.snippetId = 1
+    await nextTick()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    rejectRequest(new Error('network'))
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+    })
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(5)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 5',
+    )
+
+    await context.snippets.retrySelectedSnippet()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippet.value?.id).toBe(1)
+    expect(context.snippets.displayedSnippetContent.value?.value).toBe(
+      'Content 1',
+    )
+    consoleError.mockRestore()
+  })
+
+  it('keeps selected snippet aligned while loading and after an error', async () => {
+    const context = await setup({ snippetId: 5 })
+    await context.snippets.refreshSelectedSnippet()
+    await context.snippets.getSnippets()
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    let rejectRequest!: (reason: Error) => void
+    context.getSnippetsById.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectRequest = reject)),
+    )
+
+    context.state.snippetId = 1
+    await nextTick()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+
+    rejectRequest(new Error('network'))
+    await vi.waitFor(() => {
+      expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+      expect(context.snippets.selectedSnippet.value?.id).toBe(1)
+    })
+    consoleError.mockRestore()
+  })
+
+  it('exposes loading, error and ready states with retry', async () => {
+    const context = await setup({ snippetId: 5 })
+    const error = new Error('network')
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    context.getSnippetsById.mockRejectedValueOnce(error)
+
+    const request = context.snippets.refreshSelectedSnippet()
+
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('loading')
+    await request
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('error')
+
+    await context.snippets.retrySelectedSnippet()
+
+    expect(context.getSnippetsById).toHaveBeenCalledTimes(2)
+    expect(context.snippets.selectedSnippetRecordStatus.value).toBe('ready')
+    consoleError.mockRestore()
   })
 })

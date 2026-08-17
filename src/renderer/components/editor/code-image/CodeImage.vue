@@ -9,7 +9,7 @@ import domToImage from 'dom-to-image'
 import interact from 'interactjs'
 import { FileDown } from 'lucide-vue-next'
 
-const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { displayedSnippet, displayedSnippetContent } = useSnippets()
 
 const MIN_WIDTH = 520
 const MAX_WIDTH = 920
@@ -42,8 +42,8 @@ let editor: CodeMirror.Editor | null = null
 
 function init() {
   editor = CodeMirror(editorRef.value!, {
-    value: selectedSnippetContent.value?.value || ' ',
-    mode: selectedSnippetContent.value?.language || 'plain_text',
+    value: displayedSnippetContent.value?.value || ' ',
+    mode: displayedSnippetContent.value?.language || 'plain_text',
     theme: 'oceanic-next',
     lineWrapping: settings.wrap,
     lineNumbers: true,
@@ -58,7 +58,7 @@ function init() {
     e.preventDefault()
   })
 
-  watch(selectedSnippetContent, (v) => {
+  watch(displayedSnippetContent, (v) => {
     nextTick(() => {
       // Тело фрагмента ещё загружается — не мигаем пустым изображением.
       if (v && v.value === undefined) {
@@ -69,7 +69,7 @@ function init() {
     })
   })
 
-  watch(selectedSnippetContent, (v) => {
+  watch(displayedSnippetContent, (v) => {
     nextTick(() => {
       if (!v)
         return
@@ -180,7 +180,7 @@ async function onSave(format: 'png' | 'svg') {
   const a = document.createElement('a')
 
   a.href = data
-  a.download = `${selectedSnippet.value?.name}.${format}`
+  a.download = `${displayedSnippet.value?.name}.${format}`
   a.click()
 }
 

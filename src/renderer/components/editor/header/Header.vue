@@ -30,9 +30,11 @@ const emit = defineEmits<{
 }>()
 
 const {
+  displayedSnippet,
+  displayedSnippetContent,
   displayedSnippets,
   selectedSnippet,
-  selectedSnippetContent,
+  selectedSnippetRecordStatus,
   addFragment,
   isAvailableToCodePreview,
 } = useSnippets()
@@ -49,10 +51,10 @@ const { addToUpdateQueue } = useSnippetUpdate()
 
 function hasSiblingSnippetNameConflict(value: string, excludeId: number) {
   const normalized = value.trim().toLowerCase()
-  if (!normalized || !selectedSnippet.value) {
+  if (!normalized || !displayedSnippet.value) {
     return false
   }
-  const folderId = selectedSnippet.value.folder?.id ?? null
+  const folderId = displayedSnippet.value.folder?.id ?? null
   return (displayedSnippets.value ?? []).some(
     snippet =>
       snippet.id !== excludeId
@@ -70,13 +72,17 @@ const {
   onBlur,
   reset: resetName,
 } = useEditableField(
-  () => selectedSnippet?.value?.name,
+  () => displayedSnippet.value?.name,
   (v) => {
     if (getEntryNameValidationIssue(v)) {
       return
     }
 
-    if (!selectedSnippet.value) {
+    if (
+      selectedSnippetRecordStatus.value !== 'ready'
+      || !selectedSnippet.value
+      || selectedSnippet.value.id !== displayedSnippet.value?.id
+    ) {
       return
     }
 
@@ -98,17 +104,18 @@ const nameValidationIssue = computed(() =>
   getEntryNameValidationIssue(name.value),
 )
 const hasNameConflict = computed(() => {
-  if (nameValidationIssue.value || !selectedSnippet.value) {
+  if (nameValidationIssue.value || !displayedSnippet.value) {
     return false
   }
 
   if (
-    name.value.trim().toLowerCase() === selectedSnippet.value.name.toLowerCase()
+    name.value.trim().toLowerCase()
+    === displayedSnippet.value.name.toLowerCase()
   ) {
     return false
   }
 
-  return hasSiblingSnippetNameConflict(name.value, selectedSnippet.value.id)
+  return hasSiblingSnippetNameConflict(name.value, displayedSnippet.value.id)
 })
 const nameValidationMessage = computed(() => {
   const issue = nameValidationIssue.value
@@ -176,7 +183,7 @@ function onNameKeydown(event: KeyboardEvent) {
 }
 
 const isShowJsonVisualizerAction = computed(
-  () => selectedSnippetContent.value?.language === 'json',
+  () => displayedSnippetContent.value?.language === 'json',
 )
 
 const isShowTags = computed(() => {
@@ -213,6 +220,17 @@ function onJsonVisualizerToggle() {
   isShowJsonVisualizer.value = !isShowJsonVisualizer.value
   isShowCodePreview.value = false
   isShowCodeImage.value = false
+}
+
+function onAddFragment() {
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== displayedSnippet.value?.id
+  ) {
+    return
+  }
+
+  void addFragment()
 }
 </script>
 
@@ -312,25 +330,25 @@ function onJsonVisualizerToggle() {
         </UiActionButton>
         <UiActionButton
           :tooltip="i18n.t('action.new.fragment')"
-          @click="addFragment"
+          @click="onAddFragment"
         >
           <Plus class="h-4 w-4" />
         </UiActionButton>
       </div>
     </div>
     <div
-      v-if="selectedSnippet?.contents && selectedSnippet.contents.length > 1"
+      v-if="displayedSnippet?.contents && displayedSnippet.contents.length > 1"
       class="border-border grid auto-cols-fr grid-flow-col border-b"
     >
       <EditorTab
-        v-for="(i, index) in selectedSnippet?.contents"
+        v-for="(i, index) in displayedSnippet?.contents"
         :id="i.id"
         :key="i.id"
         :index="index"
         :name="i.label"
         :class="{
           'bg-accent text-accent-foreground':
-            state.snippetContentIndex === index,
+            displayedSnippetContent?.id === i.id,
         }"
         @click="onClickTab(index)"
       />

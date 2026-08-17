@@ -2,14 +2,20 @@
 import { Button } from '@/components/ui/shadcn/button'
 import * as Command from '@/components/ui/shadcn/command'
 import * as Popover from '@/components/ui/shadcn/popover'
-import { useEditor, useSnippets } from '@/composables'
+import { useApp, useEditor, useSnippets } from '@/composables'
 import { i18n } from '@/electron'
 import { Check } from 'lucide-vue-next'
 import { languages } from './grammars/languages'
 
 const { cursorPosition } = useEditor()
-const { selectedSnippetContent, selectedSnippet, updateSnippetContent }
-  = useSnippets()
+const {
+  displayedSnippetContent,
+  selectedSnippetContent,
+  selectedSnippet,
+  selectedSnippetRecordStatus,
+  updateSnippetContent,
+} = useSnippets()
+const { state } = useApp()
 
 const isOpen = ref(false)
 const languageListRef = ref<HTMLElement>()
@@ -21,7 +27,12 @@ function onSelect(value: string) {
 
   // value === undefined: тело фрагмента ещё не загружено, смена языка
   // отправила бы пустой контент.
-  if (!selectedSnippet.value || !content || content.value === undefined) {
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== state.snippetId
+    || !content
+    || content.value === undefined
+  ) {
     return
   }
 
@@ -34,7 +45,7 @@ function onSelect(value: string) {
 
 const selectedLanguageName = computed(() => {
   return languages.find(
-    language => language.value === selectedSnippetContent.value?.language,
+    language => language.value === displayedSnippetContent.value?.language,
   )?.name
 })
 
@@ -56,7 +67,7 @@ function fuzzySearch(list: string[], searchTerm: string) {
 }
 
 function scrollToSelectedLanguage() {
-  const selectedLanguage = selectedSnippetContent.value?.language
+  const selectedLanguage = displayedSnippetContent.value?.language
 
   if (!languageListRef.value || !selectedLanguage)
     return
@@ -96,7 +107,7 @@ watch(isOpen, async (open) => {
         <Popover.PopoverContent class="w-auto px-1 py-0">
           <Command.Command
             :filter-function="fuzzySearch as any"
-            :model-value="selectedSnippetContent?.language"
+            :model-value="displayedSnippetContent?.language"
           >
             <Command.CommandInput
               class="h-9"
@@ -121,7 +132,7 @@ watch(isOpen, async (open) => {
                     <Check
                       class="ml-auto h-4 w-4"
                       :class="
-                        selectedSnippetContent?.language === language.value
+                        displayedSnippetContent?.language === language.value
                           ? 'opacity-100'
                           : 'opacity-0'
                       "

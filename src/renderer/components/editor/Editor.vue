@@ -10,16 +10,20 @@ import {
   useTheme,
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
+import { getContentSearchMatches } from '@/utils/contentSearch'
 import {
   mapNormalizedCursorIndex,
   normalizeTerminalText,
 } from '@/utils/normalizeTerminalText'
-import { useClipboard, useCssVar, useDebounceFn } from '@vueuse/core'
+import {
+  useClipboard,
+  useCssVar,
+  useDebounceFn,
+  useEventListener,
+} from '@vueuse/core'
 import CodeMirror from 'codemirror'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/matchbrackets'
-import 'codemirror/addon/search/search'
-import 'codemirror/addon/search/searchcursor'
 import 'codemirror/addon/selection/active-line'
 import 'codemirror/addon/scroll/simplescrollbars'
 import 'codemirror/addon/scroll/simplescrollbars.css'
@@ -29,18 +33,23 @@ import 'codemirror/theme/oceanic-next.css'
 
 const { settings, cursorPosition } = useEditor()
 const {
+  displayedSnippet,
+  displayedSnippetContent,
   selectedSnippetContent,
   selectedSnippet,
   isEmpty,
   selectedSnippetIds,
+  selectedSnippetRecordStatus,
   isAvailableToCodePreview,
-  searchQuery,
+  retrySelectedSnippet,
+  searchQuery: spaceSearchQuery,
 } = useSnippets()
 const {
   isShowCodePreview,
   isShowCodeImage,
   isFocusedSearch,
   isShowJsonVisualizer,
+  state,
 } = useApp()
 const { editorThemeName } = useTheme()
 
@@ -52,11 +61,22 @@ const {
 
 let editor: CodeMirror.Editor | null = null
 let currentSearchOverlay: any = null
+let currentSearchMarker: CodeMirror.TextMarker | null = null
 // id фрагмента, чьё тело сейчас отображается в редакторе: пока полная запись
 // сниппета загружается, selectedSnippetContent содержит только метаданные.
 let lastAppliedContentId: number | undefined
+let contentApplyRevision = 0
+let contentSearchRevision = 0
+let contentSearchScrollFrame: number | undefined
+let contentSearchFocusRevision = 0
+let isContentSearchFocusPending = false
 
 const previewHandleRef = ref<HTMLElement>()
+const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
+const isContentSearchOpen = ref(false)
+const contentSearchQuery = ref('')
+const contentSearchMatches = ref<{ from: number, to: number }[]>([])
+const contentSearchIndex = ref(-1)
 const previewHeight = ref(300)
 
 useResizeHandle(previewHandleRef, {
@@ -100,9 +120,46 @@ const isShowEditor = computed(() => {
     && selectedSnippet.value !== undefined
   )
 })
+const isSelectedSnippetContentLoading = computed(
+  () => selectedSnippetRecordStatus.value === 'loading',
+)
+const isSelectedSnippetContentReady = computed(
+  () =>
+    selectedSnippetRecordStatus.value === 'ready'
+    && selectedSnippet.value?.id === state.snippetId
+    && selectedSnippetContent.value?.value !== undefined,
+)
+const isSelectedSnippetLoadingVisible = ref(false)
+let selectedSnippetLoadingTimer: ReturnType<typeof setTimeout> | undefined
 
-watch(selectedSnippetContent, () => {
-  if (selectedSnippetContent.value?.language !== 'json') {
+watch(
+  selectedSnippetRecordStatus,
+  (status) => {
+    if (selectedSnippetLoadingTimer)
+      clearTimeout(selectedSnippetLoadingTimer)
+    selectedSnippetLoadingTimer = undefined
+    isSelectedSnippetLoadingVisible.value = false
+
+    if (status === 'loading') {
+      selectedSnippetLoadingTimer = setTimeout(() => {
+        if (selectedSnippetRecordStatus.value === 'loading')
+          isSelectedSnippetLoadingVisible.value = true
+      }, 300)
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => state.snippetId,
+  () => {
+    contentSearchFocusRevision += 1
+    isContentSearchFocusPending = false
+  },
+)
+
+watch(displayedSnippetContent, () => {
+  if (displayedSnippetContent.value?.language !== 'json') {
     isShowJsonVisualizer.value = false
   }
 
@@ -130,8 +187,8 @@ async function init() {
     return
 
   editor = CodeMirror(el, {
-    value: selectedSnippetContent.value?.value || ' ',
-    mode: selectedSnippetContent.value?.language || 'plain_text',
+    value: displayedSnippetContent.value?.value || ' ',
+    mode: displayedSnippetContent.value?.language || 'plain_text',
     theme: editorThemeName.value,
     lineWrapping: settings.wrap,
     lineNumbers: true,
@@ -144,13 +201,18 @@ async function init() {
     scrollbarStyle: 'null',
   })
 
-  if (selectedSnippetContent.value?.value !== undefined) {
-    lastAppliedContentId = selectedSnippetContent.value.id
+  if (displayedSnippetContent.value?.value !== undefined) {
+    lastAppliedContentId = displayedSnippetContent.value.id
   }
 
   editor.on('change', (e) => {
-    if (isProgrammaticChange.value || !selectedSnippet.value?.id)
+    if (
+      isProgrammaticChange.value
+      || !selectedSnippet.value?.id
+      || !isSelectedSnippetContentReady.value
+    ) {
       return
+    }
 
     const content = selectedSnippetContent.value
     // Сохраняем только когда тело загружено и редактор отображает именно
@@ -173,6 +235,8 @@ async function init() {
         language: content.language,
       })
     }
+
+    refreshContentSearch(false)
   })
 
   editor.on('cursorActivity', getCursorPosition)
@@ -185,7 +249,10 @@ async function init() {
   editor.on('scroll', hideScrollbar)
 
   editor.on('drop', async (cm, e) => {
-    if (selectedSnippetContent.value?.language === 'markdown') {
+    if (
+      isSelectedSnippetContentReady.value
+      && displayedSnippetContent.value?.language === 'markdown'
+    ) {
       const file = e.dataTransfer?.files[0]
 
       if (!file)
@@ -212,29 +279,26 @@ async function init() {
     }
   })
 
-  editor.setOption('extraKeys', {
-    'Cmd-F': () => {
-      isFocusedSearch.value = true
-    },
-  })
-
   ipc.on('main-menu:copy-snippet', onCopySnippetMenu)
+  ipc.on('main-menu:find', onFindMenu)
 
-  watch(selectedSnippetContent, (v) => {
-    const scheduledSnippetId = selectedSnippet.value?.id
+  watch(displayedSnippetContent, (v) => {
+    const revision = ++contentApplyRevision
+    const scheduledSnippetId = displayedSnippet.value?.id
     const scheduledContentId = v?.id
 
     nextTick(() => {
       if (
-        selectedSnippet.value?.id !== scheduledSnippetId
-        || selectedSnippetContent.value?.id !== scheduledContentId
+        revision !== contentApplyRevision
+        || displayedSnippet.value?.id !== scheduledSnippetId
+        || displayedSnippetContent.value?.id !== scheduledContentId
       ) {
         return
       }
 
       // Полная запись выбранного сниппета ещё загружается — не очищаем
       // редактор промежуточным состоянием (метаданные без value).
-      if (selectedSnippet.value && (!v || v.value === undefined)) {
+      if (displayedSnippet.value && (!v || v.value === undefined)) {
         return
       }
 
@@ -243,7 +307,7 @@ async function init() {
       // metadata-only состояние с тем же id.
       const isNewValue = v?.id !== lastAppliedContentId
       const isSameContent = v?.id === lastAppliedContentId
-      const snippetId = selectedSnippet.value?.id
+      const snippetId = displayedSnippet.value?.id
       const contentId = v?.id
       let nextValue = v?.value || ''
 
@@ -266,28 +330,15 @@ async function init() {
       // Не сохраняем вьюпорт при смене фрагмента/сниппета
       setValue(nextValue, true, !isNewValue)
       lastAppliedContentId = contentId
-      nextTick(() => {
-        if (searchQuery.value) {
-          updateSearchOverlay()
-        }
-      })
+      if (contentSearchQuery.value)
+        refreshContentSearch()
+      focusPendingContentSearch()
     })
   })
 
-  watch(selectedSnippetContent, (v) => {
-    const scheduledSnippetId = selectedSnippet.value?.id
-    const scheduledContentId = v?.id
-
-    nextTick(() => {
-      if (
-        !v
-        || selectedSnippet.value?.id !== scheduledSnippetId
-        || selectedSnippetContent.value?.id !== scheduledContentId
-      ) {
-        return
-      }
+  watch(displayedSnippetContent, (v) => {
+    if (v)
       setLanguage(v.language as Language)
-    })
   })
 
   watch(editorThemeName, (themeName) => {
@@ -327,12 +378,6 @@ async function init() {
     },
     { flush: 'post' },
   )
-
-  watch(searchQuery, () => {
-    nextTick(() => {
-      updateSearchOverlay()
-    })
-  })
 }
 
 function setValue(value: string, programmatic = true, preserveViewport = true) {
@@ -363,6 +408,7 @@ function setValue(value: string, programmatic = true, preserveViewport = true) {
   else {
     editor.setCursor({ line: 0, ch: 0 })
     editor.scrollTo(0, 0)
+    editor.refresh()
   }
 }
 
@@ -381,7 +427,161 @@ function focusEditor() {
   })
 }
 
+function refreshContentSearch(selectFirst = true) {
+  if (!editor)
+    return
+
+  contentSearchRevision += 1
+  contentSearchMatches.value = getContentSearchMatches(
+    editor.getValue(),
+    contentSearchQuery.value,
+  )
+
+  if (!contentSearchMatches.value.length) {
+    contentSearchIndex.value = -1
+  }
+  else if (selectFirst || contentSearchIndex.value < 0) {
+    contentSearchIndex.value = 0
+  }
+  else {
+    contentSearchIndex.value = Math.min(
+      contentSearchIndex.value,
+      contentSearchMatches.value.length - 1,
+    )
+  }
+
+  updateSearchOverlay()
+
+  if (selectFirst && contentSearchIndex.value >= 0)
+    selectContentSearchMatch(contentSearchIndex.value)
+}
+
+function selectContentSearchMatch(index: number) {
+  if (!editor || !contentSearchMatches.value.length)
+    return
+
+  const normalizedIndex
+    = (index + contentSearchMatches.value.length)
+      % contentSearchMatches.value.length
+  const match = contentSearchMatches.value[normalizedIndex]
+  const targetEditor = editor
+  const revision = ++contentSearchRevision
+  const from = targetEditor.posFromIndex(match.from)
+  const to = targetEditor.posFromIndex(match.to)
+
+  contentSearchIndex.value = normalizedIndex
+  currentSearchMarker?.clear()
+  currentSearchMarker = editor.markText(from, to, {
+    className: 'cm-content-search-current',
+  })
+  targetEditor.setSelection(from, to)
+  if (contentSearchScrollFrame !== undefined)
+    cancelAnimationFrame(contentSearchScrollFrame)
+  contentSearchScrollFrame = requestAnimationFrame(() => {
+    contentSearchScrollFrame = undefined
+    if (
+      editor === targetEditor
+      && revision === contentSearchRevision
+      && match.to <= targetEditor.getValue().length
+    ) {
+      targetEditor.scrollIntoView({ from, to }, 50)
+    }
+  })
+}
+
+function openContentSearch() {
+  isShowCodeImage.value = false
+  isShowJsonVisualizer.value = false
+  isContentSearchOpen.value = true
+  isContentSearchFocusPending = true
+  updateSearchOverlay()
+  contentSearchFocusRevision += 1
+  focusPendingContentSearch()
+}
+
+function focusPendingContentSearch() {
+  if (!isContentSearchFocusPending || isSelectedSnippetContentLoading.value)
+    return
+
+  const revision = contentSearchFocusRevision
+  nextTick(() => {
+    if (
+      !isContentSearchOpen.value
+      || revision !== contentSearchFocusRevision
+      || isSelectedSnippetContentLoading.value
+    ) {
+      return
+    }
+    isContentSearchFocusPending = false
+    editor?.refresh()
+    contentSearchPanelRef.value?.focusInput()
+  })
+}
+
+function closeContentSearch(focus = true) {
+  contentSearchRevision += 1
+  contentSearchFocusRevision += 1
+  isContentSearchFocusPending = false
+  isContentSearchOpen.value = false
+  contentSearchQuery.value = ''
+  updateSearchOverlay()
+  if (focus)
+    focusEditor()
+}
+
+function onContentSearchKeydown(event: KeyboardEvent) {
+  if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'f')
+    return
+
+  if (
+    !event.shiftKey
+    && (isEmpty.value
+      || !selectedSnippet.value
+      || selectedSnippetIds.value.length > 1)
+  ) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+
+  if (event.shiftKey) {
+    closeContentSearch(false)
+    isFocusedSearch.value = true
+    return
+  }
+
+  openContentSearch()
+}
+
+function onFindMenu() {
+  if (
+    isEmpty.value
+    || !selectedSnippet.value
+    || selectedSnippetIds.value.length > 1
+  ) {
+    return
+  }
+
+  openContentSearch()
+}
+
+useEventListener(window, 'keydown', onContentSearchKeydown, { capture: true })
+
+watch(contentSearchQuery, () => refreshContentSearch())
+watch(spaceSearchQuery, () => {
+  if (!isContentSearchOpen.value) {
+    nextTick(() => {
+      if (!isContentSearchOpen.value)
+        updateSearchOverlay()
+    })
+  }
+})
+
 async function format() {
+  if (!isSelectedSnippetContentReady.value)
+    return
+
   const availableLang: Language[] = [
     'css',
     'dockerfile',
@@ -421,6 +621,8 @@ async function format() {
 
   const lang = selectedSnippetContent.value?.language as Language
   const value = selectedSnippetContent.value?.value
+  const snippetId = state.snippetId
+  const contentId = selectedSnippetContent.value?.id
   let parser = lang as string
 
   const shellLike = ['dockerfile', 'gitignore', 'properties', 'ini']
@@ -437,6 +639,13 @@ async function format() {
       text: value,
       parser,
     })
+    if (
+      !isSelectedSnippetContentReady.value
+      || state.snippetId !== snippetId
+      || selectedSnippetContent.value?.id !== contentId
+    ) {
+      return
+    }
     setValue(formatted, false)
   }
   catch (err) {
@@ -445,13 +654,16 @@ async function format() {
 }
 
 function onCopySnippetMenu() {
+  if (!isSelectedSnippetContentReady.value)
+    return
+
   const { copy } = useClipboard({ source: editor?.getValue() || '' })
   copy()
   useDonations().incrementCopy('code')
 }
 
 function normalizeTerminalOutput() {
-  if (!editor)
+  if (!editor || !isSelectedSnippetContentReady.value)
     return
 
   if (editor.somethingSelected()) {
@@ -486,9 +698,15 @@ ipc.on('main-menu:normalize-code-line-breaks', normalizeTerminalOutput)
 // прокси и removeListener по ссылке не срабатывает; владелец каналов — только
 // этот компонент.
 onBeforeUnmount(() => {
+  contentSearchRevision += 1
+  if (contentSearchScrollFrame !== undefined)
+    cancelAnimationFrame(contentSearchScrollFrame)
+  if (selectedSnippetLoadingTimer)
+    clearTimeout(selectedSnippetLoadingTimer)
   ipc.removeListeners('main-menu:format')
   ipc.removeListeners('main-menu:normalize-code-line-breaks')
   ipc.removeListeners('main-menu:copy-snippet')
+  ipc.removeListeners('main-menu:find')
 })
 
 function createSearchOverlay(query: string) {
@@ -531,21 +749,31 @@ function updateSearchOverlay() {
     currentSearchOverlay = null
   }
 
-  if (searchQuery.value) {
-    currentSearchOverlay = createSearchOverlay(searchQuery.value)
+  currentSearchMarker?.clear()
+  currentSearchMarker = null
+
+  const query = isContentSearchOpen.value
+    ? contentSearchQuery.value
+    : spaceSearchQuery.value
+
+  if (query) {
+    currentSearchOverlay = createSearchOverlay(query)
     if (currentSearchOverlay) {
       editor.addOverlay(currentSearchOverlay)
-
-      // Scroll to the first match
-      const cursor = editor.getSearchCursor(
-        searchQuery.value,
-        { line: 0, ch: 0 },
-        true,
-      )
-      if (cursor.findNext()) {
-        editor.scrollIntoView(cursor.from(), 50)
-      }
     }
+  }
+
+  if (
+    isContentSearchOpen.value
+    && contentSearchIndex.value >= 0
+    && contentSearchMatches.value.length
+  ) {
+    const match = contentSearchMatches.value[contentSearchIndex.value]
+    currentSearchMarker = editor.markText(
+      editor.posFromIndex(match.from),
+      editor.posFromIndex(match.to),
+      { className: 'cm-content-search-current' },
+    )
   }
 }
 
@@ -560,22 +788,47 @@ onMounted(() => {
     class="relative grid h-full grid-rows-[auto_1fr_auto] overflow-hidden pt-[var(--content-top-offset)]"
   >
     <UiLoadingOverlay
-      v-if="selectedSnippet?.pendingCloudDownload"
+      v-if="isSelectedSnippetContentLoading"
+      :silent="!isSelectedSnippetLoadingVisible"
+    />
+    <UiLoadingOverlay
+      v-else-if="selectedSnippetRecordStatus === 'error'"
+      error
+      :label="i18n.t('contentLoad.failed')"
+      :action-label="i18n.t('contentLoad.retry')"
+      @retry="retrySelectedSnippet"
+    />
+    <UiLoadingOverlay
+      v-else-if="selectedSnippet?.pendingCloudDownload"
       :label="i18n.t('cloudDownloads.itemPending')"
     />
     <EditorHeader
       v-if="isShowHeader"
+      :inert="!isSelectedSnippetContentReady"
       @focus-editor="focusEditor"
     />
     <div
       v-show="isShowEditor"
+      :inert="!isSelectedSnippetContentReady"
       class="flex min-h-0 flex-1 flex-col overflow-auto"
     >
-      <div
-        id="editor"
-        data-editor-mount
-        class="min-h-0 flex-1"
-      />
+      <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <ContentSearchPanel
+          v-if="isContentSearchOpen"
+          ref="contentSearchPanelRef"
+          v-model="contentSearchQuery"
+          :count="contentSearchMatches.length"
+          :current-index="contentSearchIndex"
+          @close="closeContentSearch"
+          @next="selectContentSearchMatch(contentSearchIndex + 1)"
+          @previous="selectContentSearchMatch(contentSearchIndex - 1)"
+        />
+        <div
+          id="editor"
+          data-editor-mount
+          class="min-h-0 flex-1"
+        />
+      </div>
       <template v-if="isShowCodePreview">
         <div
           ref="previewHandleRef"
@@ -589,7 +842,10 @@ onMounted(() => {
         </div>
       </template>
     </div>
-    <EditorFooter v-if="isShowEditor" />
+    <EditorFooter
+      v-if="isShowEditor"
+      :inert="!isSelectedSnippetContentReady"
+    />
     <EditorCodeImage v-if="isShowCodeImage" />
     <EditorJsonVisualizer v-if="isShowJsonVisualizer" />
     <div
@@ -665,5 +921,9 @@ onMounted(() => {
   background-color: var(--text-highlight);
   color: black !important;
   border-radius: 2px;
+}
+
+.CodeMirror .cm-content-search-current {
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 </style>

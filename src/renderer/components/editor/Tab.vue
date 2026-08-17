@@ -11,8 +11,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { selectedSnippetContent, selectedSnippet, deleteSnippetContent }
-  = useSnippets()
+const {
+  selectedSnippetContent,
+  selectedSnippet,
+  selectedSnippetRecordStatus,
+  deleteSnippetContent,
+} = useSnippets()
 const { addToUpdateContentQueue } = useSnippetUpdate()
 const { highlightedSnippetIds, highlightedFolderIds, state } = useApp()
 
@@ -28,7 +32,12 @@ const name = computed({
 
     // value === undefined: тело фрагмента ещё не загружено, переименование
     // отправило бы пустой контент.
-    if (!selectedSnippet.value || !content || content.value === undefined) {
+    if (
+      selectedSnippetRecordStatus.value !== 'ready'
+      || selectedSnippet.value?.id !== state.snippetId
+      || !content
+      || content.value === undefined
+    ) {
       return
     }
 
@@ -46,6 +55,13 @@ function onClickContextMenu() {
 }
 
 async function onDelete() {
+  if (
+    selectedSnippetRecordStatus.value !== 'ready'
+    || selectedSnippet.value?.id !== state.snippetId
+  ) {
+    return
+  }
+
   await deleteSnippetContent(selectedSnippet.value!.id, props.id)
 
   if (state.snippetContentIndex === props.index) {

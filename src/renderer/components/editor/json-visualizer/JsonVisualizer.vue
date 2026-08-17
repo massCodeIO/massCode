@@ -23,7 +23,7 @@ import { parseJsonToGraph } from './utils'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 
-const { selectedSnippetContent, selectedSnippet } = useSnippets()
+const { displayedSnippet, displayedSnippetContent } = useSnippets()
 const isDark = useDark()
 const {
   zoomIn,
@@ -44,14 +44,14 @@ const { layout } = useLayout()
 function updateGraph() {
   // Тело фрагмента ещё загружается — оставляем предыдущий граф без мигания.
   if (
-    selectedSnippetContent.value
-    && selectedSnippetContent.value.value === undefined
+    displayedSnippetContent.value
+    && displayedSnippetContent.value.value === undefined
   ) {
     return
   }
 
   const graph = parseJsonToGraph(
-    JSON.parse(selectedSnippetContent.value?.value || '{}'),
+    JSON.parse(displayedSnippetContent.value?.value || '{}'),
   )
   nodes.value = graph.nodes
   edges.value = graph.edges
@@ -68,7 +68,7 @@ function onNodesInitialized() {
 }
 
 watch(
-  selectedSnippetContent,
+  displayedSnippetContent,
   () => {
     updateGraph()
   },
@@ -145,7 +145,7 @@ async function onSave(format: 'png' | 'svg') {
   const a = document.createElement('a')
 
   a.href = data
-  a.download = `${selectedSnippet.value?.name}.${format}`
+  a.download = `${displayedSnippet.value?.name}.${format}`
   a.click()
 }
 

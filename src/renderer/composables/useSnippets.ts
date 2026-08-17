@@ -32,6 +32,12 @@ type SnippetView = Omit<SnippetItemResponse, 'contents'> & {
   contents: SnippetContentView[]
 }
 
+export type SelectedSnippetRecordStatus =
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'error'
+
 const {
   state,
   saveStateSnapshot,
@@ -52,6 +58,9 @@ const snippetsBySearch = shallowRef<SnippetsResponse>()
 // Список отдаёт только метаданные, поэтому полная запись выбранного
 // сниппета (с телами фрагментов) загружается отдельно по id.
 const selectedSnippetRecord = shallowRef<SnippetItemResponse | undefined>()
+const displayedSnippetRecord = shallowRef<SnippetItemResponse | undefined>()
+const displayedSnippetContent = shallowRef<SnippetContentView | undefined>()
+const selectedSnippetRecordStatus = ref<SelectedSnippetRecordStatus>('idle')
 let selectedSnippetRequestToken = 0
 let snippetsRequestToken = 0
 
@@ -131,6 +140,10 @@ const selectedSnippetContent = computed<SnippetContentView | undefined>(() => {
   return selectedSnippet.value?.contents[state.snippetContentIndex || 0]
 })
 
+const displayedSnippet = computed<SnippetView | undefined>(
+  () => displayedSnippetRecord.value,
+)
+
 const selectedSnippets = computed(() => {
   const source = isSearch.value ? snippetsBySearch.value : snippets.value
   if (!source?.length || !selectedSnippetIds.value.length) {
@@ -147,22 +160,47 @@ async function refreshSelectedSnippet() {
 
   if (snippetId === undefined) {
     selectedSnippetRecord.value = undefined
+    displayedSnippetRecord.value = undefined
+    displayedSnippetContent.value = undefined
+    selectedSnippetRecordStatus.value = 'idle'
     return
   }
+
+  selectedSnippetRecordStatus.value = 'loading'
 
   try {
     const { data } = await api.snippets.getSnippetsById(String(snippetId))
 
-    if (requestToken === selectedSnippetRequestToken) {
+    if (
+      requestToken === selectedSnippetRequestToken
+      && state.snippetId === snippetId
+      && data.id === snippetId
+    ) {
+      const maxContentIndex = Math.max(0, data.contents.length - 1)
+      const contentIndex = Math.min(
+        Math.max(0, state.snippetContentIndex || 0),
+        maxContentIndex,
+      )
+      state.snippetContentIndex = contentIndex
       selectedSnippetRecord.value = data
+      displayedSnippetRecord.value = data
+      displayedSnippetContent.value = data.contents[contentIndex]
+      selectedSnippetRecordStatus.value = 'ready'
     }
   }
   catch (error) {
-    if (requestToken === selectedSnippetRequestToken) {
-      selectedSnippetRecord.value = undefined
+    if (
+      requestToken === selectedSnippetRequestToken
+      && state.snippetId === snippetId
+    ) {
+      selectedSnippetRecordStatus.value = 'error'
     }
     console.error(error)
   }
+}
+
+function retrySelectedSnippet() {
+  return refreshSelectedSnippet()
 }
 
 watch(
@@ -170,6 +208,21 @@ watch(
   () => {
     void refreshSelectedSnippet()
   },
+  { flush: 'sync' },
+)
+
+watch(
+  () => state.snippetContentIndex,
+  (index) => {
+    if (
+      selectedSnippetRecordStatus.value === 'ready'
+      && displayedSnippetRecord.value?.id === state.snippetId
+    ) {
+      displayedSnippetContent.value
+        = displayedSnippetRecord.value.contents[index || 0]
+    }
+  },
+  { flush: 'sync' },
 )
 
 function getActionTargetIds(fallbackSnippetId?: number) {
@@ -250,7 +303,7 @@ const isEmpty = computed(() => {
 
 const isAvailableToCodePreview = computed(() => {
   const langAvailable = ['html', 'css', 'javascript']
-  return langAvailable.includes(selectedSnippetContent.value?.language || '')
+  return langAvailable.includes(displayedSnippetContent.value?.language || '')
 })
 
 async function getSnippets(query?: SnippetsQuery) {
@@ -399,9 +452,15 @@ async function addFragment() {
     return
   }
 
-  const index = await createSnippetContent(selectedSnippet.value.id)
+  const snippetId = selectedSnippet.value.id
+  const index = await createSnippetContent(snippetId)
 
-  if (index) {
+  if (
+    index !== undefined
+    && selectedSnippetRecordStatus.value === 'ready'
+    && state.snippetId === snippetId
+    && selectedSnippet.value?.id === snippetId
+  ) {
     state.snippetContentIndex = index
   }
 }
@@ -445,13 +504,19 @@ function patchSnippetInCollections(snippetId: number, data: SnippetsUpdate) {
 
   const record = selectedSnippetRecord.value
   if (record?.id === snippetId) {
-    selectedSnippetRecord.value = {
+    const updatedRecord = {
       ...record,
       ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.description !== undefined
         ? { description: data.description }
         : {}),
       updatedAt: now,
+    }
+    selectedSnippetRecord.value = updatedRecord
+    if (displayedSnippetRecord.value?.id === snippetId) {
+      displayedSnippetRecord.value = updatedRecord
+      displayedSnippetContent.value
+        = updatedRecord.contents[state.snippetContentIndex || 0]
     }
   }
 }
@@ -505,12 +570,18 @@ async function updateSnippetContent(
   // без перезагрузки списка на каждое сохранение при наборе текста.
   const record = selectedSnippetRecord.value
   if (record?.id === snippetId) {
-    selectedSnippetRecord.value = {
+    const updatedRecord = {
       ...record,
       contents: record.contents.map(content =>
         content.id === contentId ? { ...content, ...data } : content,
       ),
       updatedAt: Date.now(),
+    }
+    selectedSnippetRecord.value = updatedRecord
+    if (displayedSnippetRecord.value?.id === snippetId) {
+      displayedSnippetRecord.value = updatedRecord
+      displayedSnippetContent.value
+        = updatedRecord.contents[state.snippetContentIndex || 0]
     }
   }
 }
@@ -740,6 +811,9 @@ function clearSnippetsState() {
   clearSnippets()
   selectedSnippetIds.value = []
   selectedSnippetRecord.value = undefined
+  displayedSnippetRecord.value = undefined
+  displayedSnippetContent.value = undefined
+  selectedSnippetRecordStatus.value = 'idle'
   state.snippetId = undefined
   state.snippetContentIndex = 0
 }
@@ -802,6 +876,9 @@ export function useSnippets() {
     deleteSnippets,
     deleteSelectedSnippets,
     deleteTagFromSnippet,
+    displayedSnippet,
+    displayedSnippetContent,
+    displayedSnippetRecord,
     displayedSnippets,
     duplicateSnippet,
     emptyTrash,
@@ -813,12 +890,14 @@ export function useSnippets() {
     addFragment,
     createSnippetAndSelect,
     refreshSelectedSnippet,
+    retrySelectedSnippet,
     search,
     searchQuery,
     searchSelectedIndex,
     selectedSnippet,
     selectedSnippetContent,
     selectedSnippetIds,
+    selectedSnippetRecordStatus,
     selectedSnippets,
     selectFirstSnippet,
     selectSearchSnippet,

@@ -9,6 +9,67 @@ export interface TableModel {
   rows: string[][]
 }
 
+export interface TableCellSourceRange {
+  from: number
+  to: number
+}
+
+function isEscapedPipe(line: string, index: number): boolean {
+  let slashes = 0
+  for (let i = index - 1; i >= 0 && line[i] === '\\'; i--) slashes += 1
+
+  return slashes % 2 === 1
+}
+
+export function parseTableRowSourceRanges(
+  line: string,
+  lineOffset = 0,
+): TableCellSourceRange[] {
+  const ranges: TableCellSourceRange[] = []
+  const firstContent = line.search(/\S/)
+  if (firstContent === -1)
+    return ranges
+
+  let cellFrom = line[firstContent] === '|' ? firstContent + 1 : firstContent
+
+  const addRange = (from: number, to: number) => {
+    while (from < to && /\s/.test(line[from] ?? '')) from += 1
+    while (to > from && /\s/.test(line[to - 1] ?? '')) to -= 1
+
+    ranges.push({ from: lineOffset + from, to: lineOffset + to })
+  }
+
+  for (let i = cellFrom; i < line.length; i++) {
+    if (line[i] !== '|' || isEscapedPipe(line, i))
+      continue
+
+    addRange(cellFrom, i)
+    cellFrom = i + 1
+  }
+
+  if (cellFrom < line.length && line.slice(cellFrom).trim() !== '')
+    addRange(cellFrom, line.length)
+
+  return ranges
+}
+
+export function getTableCellSourceRanges(
+  source: string,
+): TableCellSourceRange[][] {
+  const lines = source.split('\n')
+  const ranges: TableCellSourceRange[][] = []
+  let offset = 0
+
+  lines.forEach((line, index) => {
+    if (index !== 1)
+      ranges.push(parseTableRowSourceRanges(line, offset))
+
+    offset += line.length + 1
+  })
+
+  return ranges
+}
+
 // Ячейки возвращаются в экранированной форме (как в исходнике): `\|` из
 // escapeCell — содержимое ячейки, а не разделитель колонок.
 export function parseTableRow(line: string): string[] {

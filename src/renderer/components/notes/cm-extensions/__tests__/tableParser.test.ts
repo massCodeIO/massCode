@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getTableCellSourceRanges,
   insertTableColumn,
   insertTableRow,
   isTableDelimiterCell,
@@ -7,6 +8,7 @@ import {
   moveTableRow,
   parseMarkdownTable,
   parseTableRow,
+  parseTableRowSourceRanges,
   removeTableColumn,
   removeTableRow,
   serializeTable,
@@ -61,6 +63,32 @@ describe('tableBlocks parser', () => {
       header: ['a\\|b', 'c'],
       rows: [['d', 'e\\|f']],
     })
+  })
+
+  it('maps visible cells to their source ranges', () => {
+    const source = [
+      '  | Service | Address |',
+      '| --- | --- |',
+      '| Lampa | http://localhost |',
+    ].join('\n')
+
+    expect(getTableCellSourceRanges(source)).toEqual([
+      [
+        { from: 4, to: 11 },
+        { from: 14, to: 21 },
+      ],
+      [
+        { from: 40, to: 45 },
+        { from: 48, to: 64 },
+      ],
+    ])
+  })
+
+  it('keeps escaped pipes inside a source range', () => {
+    expect(parseTableRowSourceRanges('| a\\|b | c |')).toEqual([
+      { from: 2, to: 6 },
+      { from: 9, to: 10 },
+    ])
   })
 
   it('round-trips a cell with a pipe through serialize and parse', () => {

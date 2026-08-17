@@ -13,9 +13,10 @@ import {
 } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { isWindows } from '@/utils'
+import { getContentSearchMatches } from '@/utils/contentSearch'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { indentUnit } from '@codemirror/language'
+import { indentUnit, syntaxTree } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
 import { EditorState, type Extension, Prec } from '@codemirror/state'
 import {
@@ -27,6 +28,10 @@ import {
 } from '@codemirror/view'
 import { GFM, type MarkdownConfig } from '@lezer/markdown'
 import { createClipboardOutput } from './cm-extensions/clipboardOutput'
+import {
+  createContentSearch,
+  setContentSearchMatches,
+} from './cm-extensions/contentSearch'
 import {
   clearInlineFormatting,
   getHeadingLevel,
@@ -71,20 +76,25 @@ import {
   getActiveTableCellContext,
   getActiveTableCellEditor,
   requestTableCellFocus,
+  revealTableSearchHighlight,
   runActiveTableCellCommand,
   type TableCellMenuCommand,
   type TableCellMenuContext,
+  updateTableSearchHighlights,
 } from './cm-extensions/tableBlocks'
 import { moveSelectionToAdjacentTableCell } from './cm-extensions/tableNavigation'
+import { isOwnNoteContentEcho } from './editorSync'
 import { createNotesEditTheme } from './theme'
 
 interface Props {
+  disabled?: boolean
   mode?: NotesEditorMode
   noteId?: number
   presentation?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
   mode: 'livePreview',
   presentation: false,
 })
@@ -96,12 +106,24 @@ const isRawMode = computed(() => props.mode === 'raw')
 const isPreviewMode = computed(() => props.mode === 'preview')
 
 const editorContainer = ref<HTMLElement>()
+const contentSearchPanelRef = useTemplateRef('contentSearchPanelRef')
+const isContentSearchOpen = ref(false)
+const contentSearchQuery = ref('')
+const contentSearchMatches = ref<{ from: number, to: number }[]>([])
+const contentSearchIndex = ref(-1)
 let view: EditorView | null = null
 let isApplyingExternalContent = false
 let unregisterNavigationNoteUIState: (() => void) | undefined
+let contentSearchRevision = 0
+let tableSearchFrame: number | undefined
+let pendingTableSearchReveal:
+  | { revision: number, matchFrom: number }
+  | undefined
 // Последняя строка, отправленная редактором в модель: позволяет пропускать
 // echo-обновления без материализации всего документа на каждый keystroke.
-let lastEmittedContent: string | null = null
+let lastEmittedContent:
+  | { noteId: number | undefined, value: string }
+  | undefined
 let lastAppliedNoteId: number | undefined
 
 function moveSelectionToAdjacentImageSource(
@@ -227,6 +249,7 @@ function createEditorState(doc: string): EditorState {
       : createNotesEditTheme(raw, notesSettings),
     EditorView.lineWrapping,
     createClipboardOutput(isWindows),
+    createContentSearch(),
     history(),
     Prec.highest(
       keymap.of(editable ? createListIndent({ indent: notesIndentUnit }) : []),
@@ -326,8 +349,36 @@ function createEditorState(doc: string): EditorState {
   extensions.push(
     EditorView.updateListener.of((update) => {
       if (update.docChanged && !isApplyingExternalContent) {
-        lastEmittedContent = update.state.doc.toString()
-        content.value = lastEmittedContent
+        const value = update.state.doc.toString()
+        lastEmittedContent = { noteId: props.noteId, value }
+        content.value = value
+      }
+
+      if (
+        update.docChanged
+        && !isApplyingExternalContent
+        && contentSearchQuery.value
+      ) {
+        const revision = ++contentSearchRevision
+        const expectedState = update.state
+        pendingTableSearchReveal = undefined
+        nextTick(() => {
+          if (
+            revision === contentSearchRevision
+            && view?.state === expectedState
+          ) {
+            refreshContentSearch(false)
+          }
+        })
+      }
+
+      if (
+        contentSearchQuery.value
+        && (update.viewportChanged
+          || update.focusChanged
+          || syntaxTree(update.startState) !== syntaxTree(update.state))
+      ) {
+        scheduleTableSearchHighlights(update.state)
       }
     }),
   )
@@ -338,14 +389,173 @@ function createEditorState(doc: string): EditorState {
   })
 }
 
-function applyExternalState(doc: string) {
+function applyExternalState(doc: string, selectFirstMatch = false) {
   if (!view)
     return
 
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
   isApplyingExternalContent = true
   view.setState(createEditorState(doc))
   isApplyingExternalContent = false
+  refreshContentSearch(selectFirstMatch)
 }
+
+function refreshContentSearch(selectFirst = true) {
+  if (!view)
+    return
+
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  contentSearchMatches.value = getContentSearchMatches(
+    view.state.doc.toString(),
+    contentSearchQuery.value,
+  )
+
+  if (!contentSearchMatches.value.length) {
+    contentSearchIndex.value = -1
+  }
+  else if (selectFirst || contentSearchIndex.value < 0) {
+    contentSearchIndex.value = 0
+  }
+  else {
+    contentSearchIndex.value = Math.min(
+      contentSearchIndex.value,
+      contentSearchMatches.value.length - 1,
+    )
+  }
+
+  if (selectFirst && contentSearchIndex.value >= 0) {
+    selectContentSearchMatch(contentSearchIndex.value, false)
+    return
+  }
+
+  view.dispatch({
+    effects: setContentSearchMatches.of({
+      matches: contentSearchMatches.value,
+      currentIndex: contentSearchIndex.value,
+    }),
+  })
+  updateTableSearchHighlights(
+    view,
+    contentSearchQuery.value,
+    contentSearchMatches.value[contentSearchIndex.value]?.from,
+  )
+}
+
+function selectContentSearchMatch(index: number, explicitNavigation = true) {
+  if (!view || !contentSearchMatches.value.length)
+    return
+
+  const normalizedIndex
+    = (index + contentSearchMatches.value.length)
+      % contentSearchMatches.value.length
+  const match = contentSearchMatches.value[normalizedIndex]
+  if (match.to > view.state.doc.length)
+    return
+
+  const revision = ++contentSearchRevision
+  const targetView = view
+  contentSearchIndex.value = normalizedIndex
+  pendingTableSearchReveal = explicitNavigation
+    ? { revision, matchFrom: match.from }
+    : undefined
+  targetView.dispatch({
+    selection: { anchor: match.from, head: match.to },
+    effects: setContentSearchMatches.of({
+      matches: contentSearchMatches.value,
+      currentIndex: normalizedIndex,
+    }),
+  })
+  const tableMarker = updateTableSearchHighlights(
+    targetView,
+    contentSearchQuery.value,
+    match.from,
+  )
+  if (tableMarker) {
+    pendingTableSearchReveal = undefined
+    revealTableSearchHighlight(targetView, tableMarker)
+  }
+  else {
+    targetView.dispatch({
+      effects: EditorView.scrollIntoView(match.from, { y: 'center' }),
+    })
+  }
+  scheduleTableSearchHighlights(targetView.state)
+}
+
+function scheduleTableSearchHighlights(expectedState: EditorState) {
+  if (tableSearchFrame !== undefined)
+    cancelAnimationFrame(tableSearchFrame)
+
+  const revision = contentSearchRevision
+  tableSearchFrame = requestAnimationFrame(() => {
+    tableSearchFrame = undefined
+    if (
+      !view
+      || view.state !== expectedState
+      || revision !== contentSearchRevision
+      || !contentSearchQuery.value
+    ) {
+      return
+    }
+
+    const matchFrom
+      = contentSearchMatches.value[contentSearchIndex.value]?.from
+    const tableMarker = updateTableSearchHighlights(
+      view,
+      contentSearchQuery.value,
+      matchFrom,
+    )
+    if (
+      tableMarker
+      && pendingTableSearchReveal?.revision === revision
+      && pendingTableSearchReveal.matchFrom === matchFrom
+    ) {
+      pendingTableSearchReveal = undefined
+      revealTableSearchHighlight(view, tableMarker)
+    }
+  })
+}
+
+function openContentSearch(focus = true) {
+  isContentSearchOpen.value = true
+  if (!focus)
+    return
+
+  const revision = ++contentSearchRevision
+  nextTick(() => {
+    if (!isContentSearchOpen.value || revision !== contentSearchRevision)
+      return
+    view?.requestMeasure()
+    contentSearchPanelRef.value?.focusInput()
+  })
+}
+
+function closeContentSearch(focus = true) {
+  contentSearchRevision += 1
+  pendingTableSearchReveal = undefined
+  isContentSearchOpen.value = false
+  contentSearchQuery.value = ''
+  if (focus)
+    focusEditor()
+}
+
+function onContentSearchPanelFocus() {
+  const revision = contentSearchRevision
+  const expectedState = view?.state
+  queueMicrotask(() => {
+    if (
+      expectedState
+      && revision === contentSearchRevision
+      && view?.state === expectedState
+    ) {
+      scheduleTableSearchHighlights(expectedState)
+    }
+  })
+}
+
+watch(contentSearchQuery, () => refreshContentSearch())
 
 // noteId и content меняются согласованно (NotesEditorPane обновляет их
 // вместе, когда контент заметки загружен), поэтому один watcher.
@@ -357,14 +567,16 @@ watch([() => props.noteId, content], ([noteId, val]) => {
   // но переиспользует EditorView и DOM (раньше компонент пересоздавался
   // целиком через :key).
   if (noteId !== lastAppliedNoteId) {
+    lastEmittedContent = undefined
     lastAppliedNoteId = noteId
-    applyExternalState(val)
+    applyExternalState(val, true)
     return
   }
 
   // Echo собственного ввода: материализовать документ не нужно.
-  if (val === lastEmittedContent)
+  if (isOwnNoteContentEcho(lastEmittedContent, noteId, val)) {
     return
+  }
 
   const currentValue = view.state.doc.toString()
   if (currentValue === val)
@@ -377,6 +589,8 @@ watch([() => props.noteId, content], ([noteId, val]) => {
     changes: { from: 0, to: view.state.doc.length, insert: val },
   })
   isApplyingExternalContent = false
+  if (contentSearchQuery.value)
+    refreshContentSearch(false)
 })
 
 watch(
@@ -401,7 +615,9 @@ function focusEditor() {
 }
 
 defineExpose({
+  closeContentSearch,
   focusEditor,
+  openContentSearch,
 })
 
 async function syncNavigationNoteUIStateRegistration(noteId = props.noteId) {
@@ -566,7 +782,7 @@ function onMenuCommand(command: EditorMenuCommand) {
 }
 
 function onNormalizeLineBreaks() {
-  if (!view || isPreviewMode.value)
+  if (!view || props.disabled || isPreviewMode.value)
     return
 
   normalizeLineBreaks(view)
@@ -588,6 +804,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  contentSearchRevision += 1
+  if (tableSearchFrame !== undefined)
+    cancelAnimationFrame(tableSearchFrame)
   unregisterNavigationNoteUIState?.()
   unregisterNavigationNoteUIState = undefined
   ipc.removeListeners('main-menu:normalize-note-line-breaks')
@@ -600,7 +819,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-full overflow-hidden">
+  <div class="grid h-full grid-rows-[auto_1fr] overflow-hidden">
+    <ContentSearchPanel
+      v-if="isContentSearchOpen"
+      ref="contentSearchPanelRef"
+      v-model="contentSearchQuery"
+      :count="contentSearchMatches.length"
+      :current-index="contentSearchIndex"
+      @close="closeContentSearch"
+      @focusin="onContentSearchPanelFocus"
+      @next="selectContentSearchMatch(contentSearchIndex + 1)"
+      @previous="selectContentSearchMatch(contentSearchIndex - 1)"
+    />
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger
         as-child
@@ -608,7 +838,7 @@ onUnmounted(() => {
       >
         <div
           ref="editorContainer"
-          class="h-full overflow-hidden"
+          class="h-full min-h-0 overflow-hidden"
           @contextmenu="onEditorContextMenu"
         />
       </ContextMenu.ContextMenuTrigger>

@@ -9,6 +9,9 @@ import {
   getTableLayoutStyles,
   isProtectedTableBoundaryDeletePosition,
   isProtectedTableBoundaryLine,
+  isTableSearchMatchWithinSource,
+  resolveRenderedTableSearchHighlightIndex,
+  setTableSourceLengthDataset,
 } from '../tableBlocks'
 import { tableCellLineWrappingStyles } from '../tableCellEditor'
 
@@ -63,6 +66,27 @@ function createEditableTableState(doc: string, lineNumber: number, column = 0) {
 }
 
 describe('tableBlocks', () => {
+  it('falls back to the cell when a raw source match is not rendered', () => {
+    expect(resolveRenderedTableSearchHighlightIndex(0, 1)).toBe(0)
+    expect(resolveRenderedTableSearchHighlightIndex(1, 1)).toBeUndefined()
+    expect(resolveRenderedTableSearchHighlightIndex(-1, 1)).toBeUndefined()
+  })
+
+  it('falls back to the whole table for structural source matches', () => {
+    expect(isTableSearchMatchWithinSource(10, 20, 10)).toBe(true)
+    expect(isTableSearchMatchWithinSource(10, 20, 29)).toBe(true)
+    expect(isTableSearchMatchWithinSource(10, 20, 30)).toBe(false)
+    expect(isTableSearchMatchWithinSource(10, 20)).toBe(false)
+  })
+
+  it('refreshes the source length dataset when table DOM is reused', () => {
+    const dom = { dataset: { tableSourceLength: '3' } }
+
+    setTableSourceLengthDataset(dom, '| longer | table |')
+
+    expect(dom.dataset.tableSourceLength).toBe('18')
+  })
+
   it('reuses table widget DOM only when wrapping mode is unchanged', () => {
     expect(canReuseTableWidgetDom('1', true)).toBe(true)
     expect(canReuseTableWidgetDom('0', false)).toBe(true)

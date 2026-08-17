@@ -214,6 +214,7 @@ export function createListLineIndent(options: ListLineIndentOptions = {}) {
           || update.selectionSet
           || update.focusChanged
           || update.geometryChanged
+          || syntaxTree(update.startState) !== syntaxTree(update.state)
           || revealSelectionChanged(update)
         ) {
           this.decorations = this.build(update.view)

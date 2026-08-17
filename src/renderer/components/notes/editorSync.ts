@@ -4,6 +4,19 @@ interface SyncableSelectedNote {
   content?: string
 }
 
+export interface EmittedNoteContent {
+  noteId: number | undefined
+  value: string
+}
+
+export function isOwnNoteContentEcho(
+  emitted: EmittedNoteContent | undefined,
+  noteId: number | undefined,
+  value: string,
+): boolean {
+  return emitted?.noteId === noteId && emitted.value === value
+}
+
 export function shouldSyncSelectedNoteContent(
   previousNote: SyncableSelectedNote | null | undefined,
   nextNote: SyncableSelectedNote | null | undefined,

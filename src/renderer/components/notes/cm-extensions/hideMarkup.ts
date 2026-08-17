@@ -208,6 +208,7 @@ export function createHideMarkup(options: HideMarkupOptions = {}) {
           || update.selectionSet
           || update.viewportChanged
           || update.focusChanged
+          || syntaxTree(update.startState) !== syntaxTree(update.state)
           || revealSelectionChanged(update)
         ) {
           this.decorations = buildHideDecorations(update.view, alwaysHide)

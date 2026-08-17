@@ -45,6 +45,20 @@ describe('shouldRebuildMarkdownDecorations', () => {
       }),
     ).toBe(false)
   })
+
+  it('rebuilds when the syntax tree advances asynchronously', () => {
+    expect(
+      shouldRebuildMarkdownDecorations(
+        {
+          docChanged: false,
+          selectionSet: false,
+          viewportChanged: false,
+          focusChanged: false,
+        },
+        true,
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('shouldReplaceHorizontalRule', () => {

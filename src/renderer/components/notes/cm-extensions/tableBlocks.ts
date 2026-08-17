@@ -1,5 +1,6 @@
 import type { Extension } from '@codemirror/state'
 import type { TableColumnAlignment, TableModel } from './tableParser'
+import { getContentSearchMatches } from '@/utils/contentSearch'
 import { redo, undo } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import {
@@ -26,6 +27,7 @@ import { renderCellMarkdown } from './tableCellMarkdown'
 import {
   delimiterAlignment,
   escapeCell,
+  getTableCellSourceRanges,
   insertTableColumn,
   insertTableRow,
   moveTableColumn,
@@ -166,6 +168,186 @@ function renderCell(cell: HTMLTableCellElement, raw: string) {
 
 function setCellText(cell: HTMLTableCellElement, text: string) {
   renderCell(cell, text)
+}
+
+function highlightRenderedCell(
+  cell: HTMLTableCellElement,
+  query: string,
+): HTMLElement[] {
+  const textNodes: Text[] = []
+  const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT)
+  let node = walker.nextNode()
+  while (node) {
+    textNodes.push(node as Text)
+    node = walker.nextNode()
+  }
+
+  const highlights: HTMLElement[] = []
+  for (const textNode of textNodes) {
+    const text = textNode.data
+    const matches = getContentSearchMatches(text, query)
+    if (!matches.length)
+      continue
+
+    const fragment = document.createDocumentFragment()
+    let from = 0
+    for (const match of matches) {
+      fragment.append(text.slice(from, match.from))
+      const marker = document.createElement('span')
+      marker.className = 'cm-content-search-match'
+      marker.textContent = text.slice(match.from, match.to)
+      fragment.append(marker)
+      highlights.push(marker)
+      from = match.to
+    }
+    fragment.append(text.slice(from))
+    textNode.replaceWith(fragment)
+  }
+
+  cell.dataset.searchHighlighted = '1'
+  return highlights
+}
+
+export function resolveRenderedTableSearchHighlightIndex(
+  sourceMatchIndex: number,
+  renderedMatchCount: number,
+): number | undefined {
+  return sourceMatchIndex >= 0 && sourceMatchIndex < renderedMatchCount
+    ? sourceMatchIndex
+    : undefined
+}
+
+export function isTableSearchMatchWithinSource(
+  tableFrom: number,
+  sourceLength: number,
+  activeMatchFrom?: number,
+): boolean {
+  return (
+    activeMatchFrom !== undefined
+    && activeMatchFrom >= tableFrom
+    && activeMatchFrom < tableFrom + sourceLength
+  )
+}
+
+export function setTableSourceLengthDataset(
+  dom: Pick<HTMLElement, 'dataset'>,
+  source: string,
+) {
+  dom.dataset.tableSourceLength = String(source.length)
+}
+
+export function updateTableSearchHighlights(
+  view: EditorView,
+  query: string,
+  activeMatchFrom?: number,
+): HTMLElement | undefined {
+  let activeMarker: HTMLElement | undefined
+
+  for (const root of Array.from(
+    view.dom.querySelectorAll<HTMLElement>('[data-table-widget="1"]'),
+  )) {
+    root.classList.remove('cm-content-search-current-table')
+    let tableFrom: number
+    try {
+      tableFrom = view.posAtDOM(root, 0)
+    }
+    catch {
+      continue
+    }
+    const sourceLength = Number(root.dataset.tableSourceLength)
+    const activeMatchIsWithinTable
+      = Number.isFinite(sourceLength)
+        && isTableSearchMatchWithinSource(tableFrom, sourceLength, activeMatchFrom)
+    let rootHasActiveMarker = false
+
+    for (const cell of Array.from(
+      root.querySelectorAll<HTMLTableCellElement>('th, td'),
+    )) {
+      cell.classList.remove('cm-content-search-current-cell')
+      if (activeCell?.cell === cell)
+        continue
+
+      const raw = cell.dataset.raw ?? ''
+      if (cell.dataset.searchHighlighted === '1') {
+        renderCell(cell, raw)
+        delete cell.dataset.searchHighlighted
+      }
+
+      if (!query)
+        continue
+
+      const highlights = highlightRenderedCell(cell, query)
+      const relativeFrom = Number(cell.dataset.tableSourceFrom)
+      const relativeTo = Number(cell.dataset.tableSourceTo)
+      if (
+        activeMatchFrom === undefined
+        || !Number.isFinite(relativeFrom)
+        || !Number.isFinite(relativeTo)
+        || activeMatchFrom < tableFrom + relativeFrom
+        || activeMatchFrom >= tableFrom + relativeTo
+      ) {
+        continue
+      }
+
+      const source = view.state.sliceDoc(
+        tableFrom + relativeFrom,
+        tableFrom + relativeTo,
+      )
+      const sourceMatches = getContentSearchMatches(source, query)
+      const activeIndex = sourceMatches.findIndex(
+        match => tableFrom + relativeFrom + match.from === activeMatchFrom,
+      )
+      const renderedIndex = resolveRenderedTableSearchHighlightIndex(
+        activeIndex,
+        highlights.length,
+      )
+      const marker
+        = renderedIndex === undefined ? undefined : highlights[renderedIndex]
+      if (marker) {
+        marker.classList.add('cm-content-search-current')
+        activeMarker = marker
+        rootHasActiveMarker = true
+      }
+      else {
+        cell.classList.add('cm-content-search-current-cell')
+        activeMarker = cell
+        rootHasActiveMarker = true
+      }
+    }
+
+    if (activeMatchIsWithinTable && !rootHasActiveMarker) {
+      root.classList.add('cm-content-search-current-table')
+      activeMarker = root
+    }
+  }
+
+  return activeMarker
+}
+
+export function revealTableSearchHighlight(
+  view: EditorView,
+  marker: HTMLElement,
+) {
+  const markerBounds = marker.getBoundingClientRect()
+  const viewportBounds = view.scrollDOM.getBoundingClientRect()
+  const markerCenter = (markerBounds.top + markerBounds.bottom) / 2
+  const viewportCenter = (viewportBounds.top + viewportBounds.bottom) / 2
+
+  view.scrollDOM.scrollTo({
+    top: Math.max(0, view.scrollDOM.scrollTop + markerCenter - viewportCenter),
+  })
+
+  const tableScroll = marker.closest<HTMLElement>('[data-table-scroll="1"]')
+  if (!tableScroll)
+    return
+
+  const scrollBounds = tableScroll.getBoundingClientRect()
+  if (markerBounds.left < scrollBounds.left) {
+    tableScroll.scrollLeft += markerBounds.left - scrollBounds.left - 12
+  }
+  else if (markerBounds.right > scrollBounds.right) {
+    tableScroll.scrollLeft += markerBounds.right - scrollBounds.right + 12
+  }
 }
 
 function readDelimiters(root: HTMLElement, columns: number): string[] {
@@ -1744,6 +1926,7 @@ class TableWidget extends WidgetType {
     tag: 'th' | 'td',
     text: string,
     column: number,
+    sourceRange?: { from: number, to: number },
   ): HTMLTableCellElement {
     const cell = document.createElement(tag)
     renderCell(cell, unescapeCell(text))
@@ -1756,6 +1939,11 @@ class TableWidget extends WidgetType {
     cell.style.color = 'var(--foreground)'
     cell.style.padding = tag === 'th' ? '8px 10px' : '7px 10px'
     cell.style.borderBottom = '1px solid var(--border)'
+
+    if (sourceRange) {
+      cell.dataset.tableSourceFrom = String(sourceRange.from)
+      cell.dataset.tableSourceTo = String(sourceRange.to)
+    }
 
     if (tag === 'th') {
       cell.style.fontWeight = '600'
@@ -1776,17 +1964,29 @@ class TableWidget extends WidgetType {
 
     const thead = document.createElement('thead')
     const headerRow = document.createElement('tr')
-    for (const [column, text] of this.model.header.entries())
-      headerRow.append(this.createCell('th', text, column))
+    const sourceRanges = getTableCellSourceRanges(this.source)
+    for (const [column, text] of this.model.header.entries()) {
+      headerRow.append(
+        this.createCell('th', text, column, sourceRanges[0]?.[column]),
+      )
+    }
 
     thead.append(headerRow)
     table.append(thead)
 
     const tbody = document.createElement('tbody')
-    for (const row of this.model.rows) {
+    for (const [rowIndex, row] of this.model.rows.entries()) {
       const tr = document.createElement('tr')
-      for (const [column, text] of row.entries())
-        tr.append(this.createCell('td', text, column))
+      for (const [column, text] of row.entries()) {
+        tr.append(
+          this.createCell(
+            'td',
+            text,
+            column,
+            sourceRanges[rowIndex + 1]?.[column],
+          ),
+        )
+      }
 
       tbody.append(tr)
     }
@@ -1875,6 +2075,7 @@ class TableWidget extends WidgetType {
     root.dataset.editable = this.interactive ? '1' : '0'
     root.dataset.dark = this.dark ? '1' : '0'
     root.dataset.tableWrap = this.wrapCells ? '1' : '0'
+    setTableSourceLengthDataset(root, this.source)
     root.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
     root.contentEditable = 'false'
     root.style.position = 'relative'
@@ -1999,6 +2200,7 @@ class TableWidget extends WidgetType {
       return false
 
     dom.dataset.tableDelimiters = JSON.stringify(this.model.delimiters)
+    setTableSourceLengthDataset(dom, this.source)
 
     // Реконсиляция может дописывать во вложенный редактор (undo/redo), а его
     // onChange коммитит во внешний view — во время цикла обновления это
@@ -2068,10 +2270,12 @@ class TableWidget extends WidgetType {
     }
 
     const active = getActiveCellFor(dom)
+    const sourceRanges = getTableCellSourceRanges(this.source)
     const apply = (
       cell: HTMLTableCellElement | undefined,
       text: string,
       column: number,
+      sourceRange?: { from: number, to: number },
     ) => {
       if (!cell)
         return
@@ -2080,6 +2284,10 @@ class TableWidget extends WidgetType {
       cell.style.textAlign = delimiterAlignment(
         this.model.delimiters[column] ?? '---',
       )
+      if (sourceRange) {
+        cell.dataset.tableSourceFrom = String(sourceRange.from)
+        cell.dataset.tableSourceTo = String(sourceRange.to)
+      }
 
       const display = unescapeCell(text)
 
@@ -2117,10 +2325,17 @@ class TableWidget extends WidgetType {
     }
 
     this.model.header.forEach((text, col) =>
-      apply(head.rows[0]?.cells[col], text, col),
+      apply(head.rows[0]?.cells[col], text, col, sourceRanges[0]?.[col]),
     )
     this.model.rows.forEach((row, ri) =>
-      row.forEach((text, col) => apply(body.rows[ri]?.cells[col], text, col)),
+      row.forEach((text, col) =>
+        apply(
+          body.rows[ri]?.cells[col],
+          text,
+          col,
+          sourceRanges[ri + 1]?.[col],
+        ),
+      ),
     )
   }
 

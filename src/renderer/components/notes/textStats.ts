@@ -1,5 +1,14 @@
 const WORD_RE = /[\p{L}\p{N}_]+/gu
 
+export function shouldApplyTextStatsUpdate(
+  currentNoteId: number | undefined,
+  currentRevision: number,
+  updateNoteId: number | undefined,
+  updateRevision: number,
+): boolean {
+  return currentNoteId === updateNoteId && currentRevision === updateRevision
+}
+
 export function getTextStats(text: string): {
   symbols: number
   words: number

@@ -298,12 +298,14 @@ interface MarkdownDecorationsUpdateFlags {
 
 export function shouldRebuildMarkdownDecorations(
   update: MarkdownDecorationsUpdateFlags,
+  treeChanged = false,
 ): boolean {
   return (
     update.docChanged
     || update.viewportChanged
     || update.selectionSet
     || update.focusChanged
+    || treeChanged
   )
 }
 
@@ -697,7 +699,10 @@ export function createMarkdownDecorations(
         view: EditorView
       }) {
         if (
-          shouldRebuildMarkdownDecorations(update)
+          shouldRebuildMarkdownDecorations(
+            update,
+            syntaxTree(update.startState) !== syntaxTree(update.state),
+          )
           || revealSelectionChanged(update)
         ) {
           this.decorations = buildDecorations(

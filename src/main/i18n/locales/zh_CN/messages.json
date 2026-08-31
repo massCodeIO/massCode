@@ -24,7 +24,7 @@
   "success": {
     "copied": "已复制到剪贴板",
     "migrateToMarkdown": "已迁移至 Markdown 仓库。文件夹：{{folders}}，代码片段：{{snippets}}，标签：{{tags}}。",
-    "vaultMoved": "仓库已成功移除。",
+    "vaultMoved": "仓库已成功移动。",
     "vaultLoaded": "仓库已成功加载。",
     "licenseActivated": "许可证已激活。感谢您对 massCode 的支持!",
     "noteExported": "笔记已成功导出。",
@@ -109,7 +109,7 @@
       }
     },
     "body": {
-      "full": "Hi，我是 Anton 👋\nInmassCode 是由我独自一人开发并维护的。如果它对你的工作有所帮助，请支持一下这个项目，让它能够继续成长。",
+      "full": "Hi，我是 Anton 👋\nmassCode 是由我独自一人开发并维护的。如果它对你的工作有所帮助，请支持一下这个项目，让它能够继续成长。",
       "short": "喜欢 massCode 吗？支持一下这个项目吧，让它能够继续成长。"
     },
     "actions": {

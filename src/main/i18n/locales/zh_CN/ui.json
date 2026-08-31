@@ -20,7 +20,7 @@
     "placeholder": "搜索或运行命令...",
     "commandPlaceholder": "运行命令...",
     "scopedPlaceholder": "在 {{space}} 空间搜索...",
-    "clearScope": "清除搜搜索范围",
+    "clearScope": "清除搜索范围",
     "clearFilter": "清除筛选器：{{filter}}",
     "searching": "正在搜索...",
     "empty": "未找到结果",
@@ -146,9 +146,9 @@
       },
       "snippetslab": {
         "invalidExport": "文件不是有效的 SnippetsLab 导出。",
-        "smartGroupsSkipped": "SnippetsLab 的 Smart Groups 将被忽略。",
+        "smartGroupsSkipped": "SnippetsLab 的智能分组将被忽略。",
         "attachmentsSkipped": "SnippetsLab 的片段附件将被忽略。",
-        "emptySnippet": "此 SnippetsLab Snippet 没有可导入的片段。"
+        "emptySnippet": "此 SnippetsLab 代码片段没有可导入的片段。"
       },
       "gist": {
         "noFiles": "GitHub Gist 中没有文件。",

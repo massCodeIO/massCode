@@ -2,110 +2,110 @@
   "label": "環境設定",
   "storage": {
     "section": {
-      "main": "Main",
-      "migration": "Migration"
+      "main": "メイン",
+      "migration": "マイグレーション"
     },
     "label": "ストレージ",
-    "migrateSqliteToMarkdown": "Migrate to Markdown Vault",
+    "migrateSqliteToMarkdown": "Markdown Vaultに移行",
     "count": "カウント",
-    "vaultPath": "Vault Path"
+    "vaultPath": "Vaultのパス"
   },
   "editor": {
     "label": "エディタ",
     "fontSize": {
       "label": "フォントサイズ",
-      "description": "Base font size in pixels for the code editor."
+      "description": "コードエディタの基本フォントサイズ（ピクセル単位）。"
     },
     "fontFamily": {
       "label": "フォントファミリー",
-      "description": "Monospace font for the code editor. Use commas for fallbacks."
+      "description": "コードエディタ用の等幅フォント。代替フォントを指定するにはコンマを使用してください。"
     },
     "wrap": {
       "label": "折り返し",
-      "description": "Line wrapping to fit the editor width or allow horizontal scrolling.",
+      "description": "エディタの幅に合わせて行を折り返すか、水平スクロールするかを設定します。",
       "wordWrap": "ワードラップ",
       "off": "オフ"
     },
     "tabSize": {
       "label": "タブサイズ",
-      "description": "Number of spaces per tab character for indentation."
+      "description": "インデント用のタブ文字あたりのスペース数。"
     },
     "showInvisibles": "不可視文字を表示",
     "highlightLine": {
       "label": "現在行をハイライト",
-      "description": "Visual highlight on the line where the cursor is positioned."
+      "description": "カーソルが位置している行を視覚的にハイライトします。"
     },
     "highlightGutter": "ガッターをハイライト",
     "matchBrackets": {
       "label": "括弧の対応を表示",
-      "description": "Matching bracket highlighting near the cursor."
+      "description": "カーソル位置の対応する括弧をハイライトします。"
     },
     "prettier": {
       "label": "Prettier",
       "trailingComma": {
         "label": "末尾のカンマ",
-        "description": "Trailing commas in multi-line structures when formatting.",
+        "description": "書式設定を行う際、複数行にわたる構造における末尾のコンマの扱い。",
         "none": "なし",
         "all": "すべて",
         "es5": "ES5"
       },
       "semi": {
         "label": "セミコロン",
-        "description": "Semicolons at the end of every statement."
+        "description": "各ステートメントの末尾にセミコロンを付けるかどうか。"
       },
       "singleQuote": {
         "label": "シングルクォート",
-        "description": "Single quotes instead of double quotes."
+        "description": "ダブルクォートの代わりにシングルクォートを使用するかどうか。"
       }
     }
   },
   "notesEditor": {
-    "label": "Note Editor",
+    "label": "ノートエディタ",
     "fontSize": {
-      "label": "Font Size",
-      "description": "Base font size in pixels for the notes editor."
+      "label": "フォントサイズ",
+      "description": "ノートエディタの基本フォントサイズ（ピクセル単位）。"
     },
     "fontFamily": {
-      "label": "Text Font",
-      "description": "CSS font-family value. Use commas to specify fallbacks."
+      "label": "テキストフォント",
+      "description": "CSSのfont-familyプロパティの値。代替フォントを指定するにはコンマを使用します。"
     },
     "codeFontFamily": {
-      "label": "Monospace Font",
-      "description": "Font for inline code and fenced code blocks."
+      "label": "等幅フォント",
+      "description": "インラインコードおよびフェンスコードブロック用のフォント。"
     },
     "lineHeight": {
-      "label": "Line Height",
-      "description": "Spacing between lines. Relaxed is easier to read, compact fits more content.",
-      "compact": "Compact (1.4)",
-      "default": "Default (1.54)",
-      "relaxed": "Relaxed (1.7)"
+      "label": "行の高さ",
+      "description": "行間のスペース。リラックスは読みやすく、コンパクトはより多くのコンテンツを表示します。",
+      "compact": "コンパクト (1.4)",
+      "default": "デフォルト (1.54)",
+      "relaxed": "余白あり (1.7)"
     },
     "indentSize": {
-      "label": "Indent Size",
-      "description": "Number of spaces per indent level for lists and nested content."
+      "label": "インデントサイズ",
+      "description": "リストやネストされたコンテンツのインデントレベルごとのスペース数。"
     },
     "limitWidth": {
-      "label": "Limit Width",
-      "description": "Constrain content to a comfortable reading width (700px)."
+      "label": "幅の制限",
+      "description": "コンテンツを快適な読み取り幅（700px）に制限します。"
     },
     "lineNumbers": {
-      "label": "Line Numbers",
-      "description": "Show line numbers in the gutter. Only available in Raw mode."
+      "label": "行番号",
+      "description": "ガターに行番号を表示します。RAWモードでのみ利用可能です。"
     }
   },
   "appearance": {
     "label": "外観",
     "theme": {
       "label": "テーマ",
-      "builtIn": "Built-in",
-      "custom": "Custom",
-      "themesDir": "Themes Directory",
-      "openDir": "Open Themes Directory",
-      "createTemplate": "Create Theme Template",
-      "dirDescription": "Place your JSON theme files in this folder.",
+      "builtIn": "組み込み",
+      "custom": "カスタム",
+      "themesDir": "テーマディレクトリ",
+      "openDir": "テーマディレクトリを開く",
+      "createTemplate": "テーマテンプレートを作成",
+      "dirDescription": "このフォルダーにJSON形式のテーマファイルを配置してください。",
       "light": "ライト",
       "dark": "ダーク",
-      "system": "System"
+      "system": "システム"
     }
   },
   "language": {

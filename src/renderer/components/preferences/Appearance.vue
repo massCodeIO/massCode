@@ -9,6 +9,7 @@ import { isMac } from '@/utils'
 
 const { currentThemeId, customThemes, loadCustomThemes, setTheme } = useTheme()
 const { sonner } = useSonner()
+const isCreatingThemeTemplate = ref(false)
 
 interface DockBadgeRefreshResult {
   applied: boolean
@@ -100,8 +101,29 @@ async function openThemesDir() {
 }
 
 async function createThemeTemplate() {
-  await ipc.invoke('theme:create-template', null)
-  await loadCustomThemes()
+  if (isCreatingThemeTemplate.value) {
+    return
+  }
+
+  isCreatingThemeTemplate.value = true
+
+  try {
+    await ipc.invoke('theme:create-template', null)
+    await loadCustomThemes()
+    sonner({
+      message: i18n.t('preferences:appearance.theme.templateCreated'),
+      type: 'success',
+    })
+  }
+  catch {
+    sonner({
+      message: i18n.t('preferences:appearance.theme.templateCreateError'),
+      type: 'error',
+    })
+  }
+  finally {
+    isCreatingThemeTemplate.value = false
+  }
 }
 
 void loadCustomThemes()
@@ -204,8 +226,15 @@ void loadCustomThemes()
             >
               {{ i18n.t("preferences:appearance.theme.openDir") }}
             </Button>
-            <Button @click="createThemeTemplate">
-              {{ i18n.t("preferences:appearance.theme.createTemplate") }}
+            <Button
+              :disabled="isCreatingThemeTemplate"
+              @click="createThemeTemplate"
+            >
+              {{
+                isCreatingThemeTemplate
+                  ? i18n.t("preferences:appearance.theme.creatingTemplate")
+                  : i18n.t("preferences:appearance.theme.createTemplate")
+              }}
             </Button>
           </div>
         </template>

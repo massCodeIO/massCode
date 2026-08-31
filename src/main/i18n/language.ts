@@ -7,6 +7,7 @@ export const language = {
   fa_IR: 'فارسی',
   fr_FR: 'French',
   ja_JP: '日本語',
+  ko_KR: '한국어',
   pl_PL: 'Polski',
   pt_BR: 'Português (Brasil)',
   ro_RO: 'Română',

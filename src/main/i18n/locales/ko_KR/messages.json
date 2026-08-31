@@ -1,0 +1,119 @@
+{
+  "confirm": {
+    "delete": "\"{{name}}\"을(를) 삭제하시겠습니까?",
+    "deleteVariable": "\"{{name}}\" 변수를 삭제하시겠습니까?",
+    "deleteUnnamedVariable": "이 변수를 삭제하시겠습니까?",
+    "deletePermanently": "\"{{name}}\"을(를) 영구적으로 삭제하시겠습니까?",
+    "deleteConfirmMultipleSnippets": "선택한 스니펫 {{count}}개를 영구적으로 삭제하시겠습니까?",
+    "emptyTrash": "휴지통에 있는 모든 스니펫을 영구적으로 삭제하시겠습니까?",
+    "convertTaskToNote": "\"{{name}}\"을(를) 다시 노트로 변환할까요?",
+    "moveVaultOverwrite": [
+      "선택한 디렉터리를 덮어쓸까요?",
+      "선택한 디렉터리가 비어 있지 않습니다. 현재 볼트로 내용이 덮어써집니다."
+    ],
+    "migrateToMarkdown": [
+      "마크다운 볼트로 마이그레이션할까요?",
+      "선택한 볼트가 현재 SQLite 라이브러리로 덮어써집니다."
+    ],
+    "vaultDoctorApply": [
+      "볼트 수정 사항을 적용할까요?",
+      "massCode가 안전한 메타데이터 수정과 선택한 중복 ID 결정을 적용합니다. 선택하지 않은 충돌은 건너뜁니다."
+    ]
+  },
+  "success": {
+    "copied": "클립보드에 복사됨",
+    "migrateToMarkdown": "마크다운 볼트로 마이그레이션했습니다. 폴더 {{folders}}개, 스니펫 {{snippets}}개, 태그 {{tags}}개.",
+    "vaultMoved": "볼트를 성공적으로 이동했습니다.",
+    "vaultLoaded": "볼트를 성공적으로 불러왔습니다.",
+    "licenseActivated": "라이선스가 활성화되었습니다. massCode를 후원해 주셔서 감사합니다!",
+    "vaultDoctorApplied": "Vault Doctor가 {{count}}개의 수정 사항을 적용했습니다.",
+    "vaultDoctorClean": "Vault Doctor에서 문제를 찾지 못했습니다."
+  },
+  "warning": {
+    "noUndo": "이 작업은 취소할 수 없습니다.",
+    "allSnippetsMoveToTrash": "이 폴더의 모든 스니펫이 휴지통으로 이동합니다.",
+    "taskPropertiesRemoved": "할 일 상태, 우선순위, 마감일이 제거됩니다.",
+    "deleteTag": "이 작업으로 모든 스니펫에서 해당 태그도 제거됩니다.",
+    "createDb": "다른 폴더를 선택하세요",
+    "htmlCssPreview": "HTML 프래그먼트를 추가해 결과를 확인하세요. 스타일링은 CSS, 상호작용은 JavaScript를 추가하세요.",
+    "codeBlockRenderer": [
+      "Codemirror를 사용할 때 코드 블록에 설정할 언어는 다음 값 중 하나와 일치해야 합니다",
+      "languages"
+    ],
+    "vaultDoctorConflicts": "볼트: 동기화 충돌 {{count}}건에 확인이 필요합니다",
+    "vaultDoctorReview": "검토",
+    "cloudFileNotReady": "이 항목은 아직 클라우드 스토리지에서 동기화되는 중입니다. 잠시 후 다시 시도하세요."
+  },
+  "error": {
+    "migration": "SQLite에서 자동 마이그레이션 실패: {{error}}",
+    "entryNameEmpty": "이름을 비워둘 수 없습니다.",
+    "entryNameLeadingDot": "이름은 마침표로 시작할 수 없습니다.",
+    "entryNameInvalidChars": "이름에 다음 문자를 포함할 수 없습니다: {{- chars}}",
+    "entryNameTrailingDot": "이름은 마침표로 끝날 수 없습니다.",
+    "entryNameWindowsReserved": "이 이름은 Windows에서 예약되어 있습니다.",
+    "entryNameNoteConflict": "이 폴더에 같은 이름의 노트가 이미 있습니다.",
+    "entryNameSnippetConflict": "이 폴더에 같은 이름의 스니펫이 이미 있습니다.",
+    "entryNameRequestConflict": "이 폴더에 같은 이름의 요청이 이미 있습니다.",
+    "entryNameFolderConflict": "이 위치에 같은 이름의 폴더가 이미 있습니다.",
+    "licenseInvalid": "유효하지 않은 라이선스 키입니다"
+  },
+  "description": {
+    "storageVault": "볼트 디렉터리를 선택하세요. 기기 간 동기화를 하려면 iCloud Drive, Google Drive 또는 Dropbox의 폴더를 선택하세요.",
+    "language": "언어 변경을 적용하려면 앱을 다시 시작해야 합니다.",
+    "migrateSqliteUtility": "이전 버전의 massCode.db 파일이 있다면 이 유틸리티로 현재 마크다운 볼트로 데이터를 가져올 수 있습니다."
+  },
+  "special": {
+    "unsponsored": "후원되지 않음"
+  },
+  "donations": {
+    "trigger": {
+      "copy": {
+        "code": "스니펫 {{count}}개 복사됨 🚀",
+        "http": "HTTP 항목 {{count}}개 복사됨 🚀",
+        "notes": "노트 {{count}}개 복사됨 🚀",
+        "math": "수학 결과 {{count}}개 복사됨 🚀",
+        "tools": "도구 출력 {{count}}개 복사됨 🚀",
+        "drawings": "드로잉 항목 {{count}}개 복사됨 🚀"
+      },
+      "created": {
+        "code": "스니펫 {{count}}개 생성됨 🎉",
+        "http": "HTTP 요청 {{count}}개 생성됨 🎉",
+        "notes": "노트 {{count}}개 생성됨 🎉",
+        "math": "시트 {{count}}개 생성됨 🎉",
+        "drawings": "드로잉 {{count}}개 생성됨 🎉"
+      },
+      "sent": {
+        "http": "HTTP 요청 {{count}}개 전송됨 🚀"
+      },
+      "streak_7": {
+        "title": "7일 연속 🔥"
+      },
+      "streak_30": {
+        "title": "massCode와 함께한 한 달 🎊"
+      },
+      "streak_100": {
+        "title": "massCode와 함께한 100일 🏆"
+      }
+    },
+    "body": {
+      "full": "안녕하세요, Anton입니다 👋\n저는 massCode를 혼자 만들고 유지하고 있습니다. 업무에 도움이 되었다면 프로젝트가 계속 성장할 수 있도록 후원해 주세요.",
+      "short": "massCode를 잘 사용하고 계신가요? 프로젝트가 계속 성장할 수 있도록 후원해 주세요."
+    },
+    "actions": {
+      "support": "후원하기",
+      "dismiss": "나중에"
+    }
+  },
+  "release": {},
+  "update": {
+    "available": "새 버전 {{newVersion}}을(를) 다운로드할 수 있습니다.\n현재 버전은 {{oldVersion}}입니다.",
+    "noAvailable": "현재 사용 가능한 업데이트가 없습니다.",
+    "downloading": "업데이트 v{{version}}을(를) 백그라운드에서 다운로드하는 중입니다. 준비되면 다시 시작하라는 메시지가 표시됩니다.",
+    "availableToast": "업데이트 사용 가능",
+    "goToGitHub": "GitHub로 이동",
+    "downloaded": "업데이트 v{{version}}이(가) 준비되었습니다. massCode를 다시 시작해 적용하세요.",
+    "restart": "다시 시작",
+    "whatsNewToast": "massCode v{{version}}의 새로운 기능 보기",
+    "releaseNotes": "릴리스 노트"
+  }
+}

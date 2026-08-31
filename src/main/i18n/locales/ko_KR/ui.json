@@ -1,0 +1,642 @@
+{
+  "common": {
+    "total": "전체",
+    "inbox": "인박스",
+    "favorites": "즐겨찾기",
+    "trash": "휴지통",
+    "folders": "폴더",
+    "tags": "태그",
+    "library": "라이브러리",
+    "fragment": "프래그먼트"
+  },
+  "commandPalette": {
+    "title": "명령어 팔레트",
+    "description": "스페이스, 스니펫, 노트, HTTP 요청을 검색합니다.",
+    "placeholder": "검색 또는 명령 실행...",
+    "commandPlaceholder": "명령 실행...",
+    "scopedPlaceholder": "{{space}}에서 검색...",
+    "clearScope": "범위 지우기",
+    "clearFilter": "필터 지우기: {{filter}}",
+    "searching": "검색 중...",
+    "empty": "결과가 없습니다",
+    "groups": {
+      "recent": "최근",
+      "actions": "작업",
+      "spaces": "스페이스",
+      "filters": "필터",
+      "results": "결과",
+      "snippets": "스니펫",
+      "notes": "노트",
+      "httpRequests": "HTTP 요청"
+    },
+    "actions": {
+      "importSnippets": "스니펫 가져오기",
+      "importSnippetsSubtitle": "VS Code 스니펫 JSON, Raycast 스니펫 JSON, SnippetsLab JSON 또는 공개 GitHub Gist URL을 가져옵니다",
+      "importNotes": "노트 가져오기",
+      "importNotesSubtitle": "Obsidian 마크다운 폴더를 가져옵니다",
+      "newSnippet": "새 스니펫",
+      "newSnippetSubtitle": "코드 스니펫 만들기",
+      "newNote": "새 노트",
+      "newNoteSubtitle": "노트 만들기",
+      "newHttpRequest": "새 HTTP 요청",
+      "newHttpRequestSubtitle": "HTTP 요청 만들기",
+      "newCodeFolder": "새 코드 폴더",
+      "newCodeFolderSubtitle": "코드에 폴더 만들기",
+      "newNotesFolder": "새 노트 폴더",
+      "newNotesFolderSubtitle": "노트에 폴더 만들기",
+      "newHttpFolder": "새 HTTP 폴더",
+      "newHttpFolderSubtitle": "HTTP에 폴더 만들기",
+      "importHttpCollection": "HTTP 컬렉션 가져오기",
+      "importHttpCollectionSubtitle": "OpenAPI, Postman 또는 Bruno 컬렉션 파일을 가져옵니다",
+      "openPreferences": "환경설정 열기",
+      "openPreferencesSubtitle": "massCode 설정 변경"
+    },
+    "fallbacks": {
+      "createSnippet": "\"{{- query}}\" 스니펫 만들기",
+      "createSnippetSubtitle": "코드 인박스에 만들기",
+      "createNote": "\"{{- query}}\" 노트 만들기",
+      "createNoteSubtitle": "노트 인박스에 만들기",
+      "createHttpRequest": "\"{{- query}}\" HTTP 요청 만들기",
+      "createHttpRequestFromUrl": "URL로 HTTP 요청 만들기",
+      "createHttpRequestSubtitle": "HTTP에 만들기"
+    },
+    "suggestions": {
+      "tagSubtitle": "{{space}}을(를) 태그로 필터링",
+      "folderSubtitle": "{{space}}을(를) 폴더로 필터링"
+    },
+    "actionPanel": {
+      "heading": "작업",
+      "open": "열기",
+      "run": "실행",
+      "copyTitle": "제목 복사",
+      "copySnippetContent": "스니펫 내용 복사",
+      "copyHttpUrl": "URL 복사"
+    },
+    "footer": {
+      "open": "열기",
+      "jump": "이동",
+      "actions": "작업",
+      "apply": "적용",
+      "run": "실행",
+      "back": "뒤로"
+    }
+  },
+  "imports": {
+    "title": {
+      "code": "스니펫 가져오기",
+      "notes": "노트 가져오기"
+    },
+    "description": {
+      "code": "VS Code 스니펫 JSON, Raycast 스니펫 JSON, SnippetsLab JSON, 공개 GitHub Gist URL을 가져옵니다.",
+      "notes": "Obsidian 마크다운 폴더를 가져옵니다."
+    },
+    "action": {
+      "import": "가져오기"
+    },
+    "sources": {
+      "vscode-snippets": "VS Code",
+      "raycast-snippets": "Raycast",
+      "snippetslab": "SnippetsLab",
+      "github-gists": "GitHub Gists",
+      "obsidian": "Obsidian"
+    },
+    "gistUrl": "Gist URL",
+    "gistUrlPlaceholder": "https://gist.github.com/user/id",
+    "filesTitle": "가져올 파일 선택",
+    "folderTitle": "가져올 폴더 선택",
+    "fileHint": "파일을 여기로 드래그하거나 파일을 선택해 가져오기를 미리 봅니다.",
+    "folderHint": "미리 보려면 Obsidian 마크다운 폴더를 선택하세요.",
+    "chooseFiles": "파일 선택",
+    "chooseFolder": "폴더 선택",
+    "preview": "미리 보기",
+    "previewing": "가져오기 읽는 중",
+    "noReadableFiles": "읽을 수 있는 파일이 없습니다. 폴더를 로컬에 다운로드하거나 파일 권한을 확인한 후 다시 시도하세요.",
+    "noImportableFiles": "가져올 수 있는 마크다운 파일이 없습니다.",
+    "snippets": "스니펫",
+    "notes": "노트",
+    "tags": "태그",
+    "detectedSource": "감지된 소스",
+    "folderMeta_one": "{{count}}개 항목",
+    "folderMeta_other": "{{count}}개 항목",
+    "warningTitle": "경고",
+    "warningMessages": {
+      "file": {
+        "readFailed": "파일을 읽을 수 없습니다. 로컬에 다운로드되어 massCode에서 사용할 수 있는지 확인하세요."
+      },
+      "fs": {
+        "folderReadFailed": "폴더를 읽을 수 없습니다. 파일 권한과 iCloud 다운로드 상태를 확인하세요.",
+        "fileReadFailed": "파일을 읽을 수 없습니다. 파일 권한과 iCloud 다운로드 상태를 확인하세요."
+      },
+      "source": {
+        "unsupported": "지원하지 않는 가져오기 소스입니다."
+      },
+      "vscode": {
+        "invalidJson": "유효한 VS Code 스니펫 JSON 객체가 아닙니다.",
+        "entryNotObject": "스니펫 항목이 객체가 아닙니다.",
+        "invalidBody": "스니펫 본문은 문자열 또는 문자열 배열이어야 합니다."
+      },
+      "raycast": {
+        "invalidExport": "유효한 Raycast 스니펫 내보내기 파일이 아닙니다.",
+        "emptyText": "스니펫 텍스트가 비어 있거나 없습니다."
+      },
+      "snippetslab": {
+        "invalidExport": "유효한 SnippetsLab 내보내기 파일이 아닙니다.",
+        "smartGroupsSkipped": "SnippetsLab 스마트 그룹은 가져오지 않습니다.",
+        "attachmentsSkipped": "SnippetsLab 프래그먼트 첨부 파일은 가져오지 않습니다.",
+        "emptySnippet": "SnippetsLab 스니펫에 가져올 수 있는 프래그먼트가 없습니다."
+      },
+      "gist": {
+        "noFiles": "GitHub Gist에 파일이 없습니다.",
+        "truncatedSkipped": "잘린(truncated) Gist 파일은 이번 가져오기 버전에서 건너뜁니다.",
+        "contentMissing": "Gist 파일 내용이 없습니다."
+      },
+      "obsidian": {
+        "excalidrawSkipped": "Excalidraw 마크다운 파일은 건너뛰었습니다.",
+        "emptyMarkdown": "마크다운 파일이 비어 있습니다.",
+        "frontmatterIgnored": "무시된 프런트매터 필드: {{fields}}.",
+        "attachmentsKept": "첨부 파일 참조는 텍스트로 유지되며, 첨부 파일 자체는 가져오지 않습니다.",
+        "wikiLinksKept": "Obsidian 위키 링크는 텍스트로 가져오며 다시 쓰지 않습니다.",
+        "noMarkdownFiles": "Obsidian 가져오기에서 마크다운 파일을 찾을 수 없습니다.",
+        "invalidFrontmatter": "프런트매터를 파싱할 수 없어 노트 내용으로 가져왔습니다."
+      },
+      "unknown": "가져오기 경고."
+    },
+    "import": "가져오기",
+    "importing": "가져오는 중",
+    "importedSnippets_one": "스니펫 {{snippets}}개를 가져왔습니다.",
+    "importedSnippets_other": "스니펫 {{snippets}}개를 가져왔습니다.",
+    "importedNotes_one": "노트 {{notes}}개를 가져왔습니다.",
+    "importedNotes_other": "노트 {{notes}}개를 가져왔습니다.",
+    "createdFolder": "생성됨: {{name}}",
+    "error": "가져오기 실패"
+  },
+  "spaces": {
+    "label": "스페이스",
+    "code": {
+      "label": "코드",
+      "tooltip": "코드 스니펫",
+      "title": "코드 스니펫",
+      "allSnippets": "모든 스니펫"
+    },
+    "notes": {
+      "label": "노트",
+      "tooltip": "노트",
+      "title": "노트",
+      "allNotes": "모든 노트"
+    },
+    "math": {
+      "label": "수학",
+      "tooltip": "수학 노트북",
+      "title": "수학 노트북",
+      "sheetList": "시트 목록",
+      "newSheet": "새 시트",
+      "searchPlaceholder": "시트 검색…",
+      "noResults": "시트를 찾을 수 없습니다",
+      "untitled": "제목 없음",
+      "currencyUnavailable": "환율 서비스를 사용할 수 없습니다",
+      "cloudSyncing": "클라우드 스토리지에서 동기화하는 중…"
+    },
+    "drawings": {
+      "label": "드로잉",
+      "tooltip": "Excalidraw 드로잉",
+      "title": "드로잉",
+      "drawingList": "드로잉 목록",
+      "newDrawing": "새 드로잉",
+      "searchPlaceholder": "드로잉 검색…",
+      "noResults": "드로잉을 찾을 수 없습니다",
+      "fitToContent": "내용에 맞추기",
+      "exportImage": "이미지 내보내기…",
+      "copyLinkForNote": "노트용 링크 복사",
+      "openInSpace": "드로잉에서 열기",
+      "notFound": "드로잉을 찾을 수 없습니다",
+      "noSelected": "선택한 드로잉 없음"
+    },
+    "http": {
+      "label": "HTTP",
+      "tooltip": "HTTP 클라이언트",
+      "title": "HTTP 클라이언트",
+      "allRequests": "모든 요청",
+      "untitledRequest": "제목 없는 요청",
+      "empty": "아직 요청이 없습니다",
+      "noUrl": "URL 없음",
+      "action": {
+        "import": "가져오기",
+        "newRequest": "새 요청",
+        "newEnvironment": "새 환경",
+        "manageEnvironments": "환경 관리",
+        "deleteEnvironment": "환경 삭제"
+      },
+      "environments": {
+        "title": "환경",
+        "none": "환경 없음",
+        "activeTooltip": "환경: {{name}}",
+        "selectTooltip": "환경 선택",
+        "manage": "환경 관리…",
+        "empty": "아직 환경이 없습니다",
+        "untitled": "제목 없는 환경",
+        "namePlaceholder": "환경 이름",
+        "variables": "변수",
+        "noVariables": "아직 변수가 없습니다",
+        "varKey": "변수",
+        "varValue": "값",
+        "addVariable": "변수 추가",
+        "noEnvironmentSelected": "변수를 편집할 환경을 선택하세요"
+      },
+      "import": {
+        "title": "HTTP 컬렉션 가져오기",
+        "description": "OpenAPI JSON/YAML, Postman Collection v2.1 JSON, Postman Environment JSON, Bruno OpenCollection YAML 또는 ZIP 파일을 가져옵니다.",
+        "formats": "가져올 파일 선택",
+        "postman": "Postman 컬렉션",
+        "postmanHint": "컬렉션 JSON 1개와 선택적으로 환경 JSON을 선택하세요.",
+        "fileHint": "파일을 여기로 드래그하거나 파일을 선택해 가져오기를 미리 봅니다.",
+        "chooseFiles": "파일 선택",
+        "previewing": "파일 읽는 중",
+        "collections": "컬렉션",
+        "requests": "요청",
+        "environments": "환경",
+        "collectionMeta": "폴더 {{folders}}개, 요청 {{requests}}개",
+        "variablesMeta": "변수 {{variables}}개",
+        "plainTextNotice": "환경 변수는 볼트에 일반 텍스트로 저장됩니다.",
+        "warnings": "경고",
+        "import": "가져오기",
+        "importing": "가져오는 중",
+        "imported": "컬렉션 {{collections}}개에서 요청 {{requests}}개를 가져왔습니다.",
+        "createdFolders": "생성됨: {{names}}",
+        "error": "가져오기 실패"
+      },
+      "editor": {
+        "noSelected": "선택한 요청 없음",
+        "namePlaceholder": "요청 이름",
+        "urlPlaceholder": "요청 URL 입력",
+        "send": "보내기",
+        "tabs": {
+          "params": "파라미터",
+          "headers": "헤더",
+          "body": "본문",
+          "auth": "인증",
+          "description": "설명"
+        },
+        "keyValue": {
+          "key": "키",
+          "value": "값",
+          "description": "설명",
+          "addRow": "행 추가",
+          "empty": "항목 없음"
+        },
+        "body": {
+          "typeNone": "없음",
+          "typeJson": "JSON",
+          "typeText": "텍스트",
+          "typeFormUrlencoded": "Form URL-encoded",
+          "typeMultipart": "Multipart form-data",
+          "placeholder": "요청 본문 입력",
+          "fieldType": {
+            "text": "텍스트",
+            "file": "파일"
+          },
+          "filePlaceholder": "파일 경로 선택",
+          "jsonInvalid": "유효하지 않은 JSON"
+        },
+        "auth": {
+          "typeNone": "인증 없음",
+          "typeBearer": "Bearer 토큰",
+          "typeBasic": "기본 인증",
+          "token": "토큰",
+          "tokenPlaceholder": "토큰 입력",
+          "username": "사용자 이름",
+          "usernamePlaceholder": "사용자 이름 입력",
+          "password": "비밀번호",
+          "passwordPlaceholder": "비밀번호 입력"
+        },
+        "description": {
+          "placeholder": "이 요청에 대한 설명 추가"
+        },
+        "panels": {
+          "preview": "미리 보기",
+          "response": "응답"
+        },
+        "preview": {
+          "empty": "요청 미리 보기 없음",
+          "formats": {
+            "http": "HTTP",
+            "curl": "cURL"
+          }
+        },
+        "response": {
+          "empty": "아직 응답 없음",
+          "executing": "요청 보내는 중",
+          "status": "상태",
+          "time": "시간",
+          "size": "크기",
+          "tabs": {
+            "body": "본문",
+            "headers": "헤더"
+          },
+          "error": "요청 실패",
+          "noResponse": "응답을 받지 못했습니다",
+          "truncated": "응답이 잘렸습니다",
+          "binaryNotice": "바이너리 응답은 표시되지 않습니다",
+          "copy": "복사",
+          "copied": "복사됨"
+        }
+      }
+    },
+    "tools": {
+      "label": "도구",
+      "tooltip": "개발자 도구"
+    }
+  },
+  "snippet": {
+    "untitled": "제목 없는 스니펫",
+    "selectedMultiple": "스니펫 {{count}}개 선택됨",
+    "noSelected": "선택한 스니펫 없음"
+  },
+  "notes": {
+    "untitled": "제목 없는 노트",
+    "plural": "노트",
+    "words": "단어",
+    "symbols": "기호",
+    "selectedMultiple": "노트 {{count}}개 선택됨",
+    "noSelected": "선택한 노트 없음",
+    "editor": {
+      "menu": {
+        "format": {
+          "title": "서식",
+          "bold": "굵게",
+          "italic": "기울임꼴",
+          "strikethrough": "취소선",
+          "highlight": "형광펜",
+          "code": "코드",
+          "link": "링크",
+          "clearFormatting": "서식 지우기"
+        },
+        "paragraph": {
+          "title": "문단",
+          "bulletList": "글머리 기호 목록",
+          "numberedList": "번호 매기기 목록",
+          "taskList": "할 일 목록",
+          "heading": "제목 {{level}}",
+          "body": "본문",
+          "quote": "인용구"
+        },
+        "insert": {
+          "title": "삽입",
+          "table": "표",
+          "callout": "콜아웃",
+          "horizontalRule": "구분선",
+          "codeBlock": "코드 블록"
+        },
+        "table": {
+          "title": "표",
+          "insertRowAbove": "위에 행 삽입",
+          "insertRowBelow": "아래에 행 삽입",
+          "deleteRow": "행 삭제",
+          "insertColumnLeft": "왼쪽에 열 삽입",
+          "insertColumnRight": "오른쪽에 열 삽입",
+          "deleteColumn": "열 삭제",
+          "alignLeft": "왼쪽 정렬",
+          "alignCenter": "가운데 정렬",
+          "alignRight": "오른쪽 정렬"
+        }
+      },
+      "table": {
+        "addColumn": "오른쪽에 열 추가",
+        "addRow": "아래에 행 추가"
+      }
+    },
+    "tasks": {
+      "title": "할 일",
+      "today": "오늘",
+      "upcoming": "예정",
+      "completed": "완료",
+      "convertToTask": "할 일로 변환",
+      "convertToNote": "노트로 변환",
+      "duePlaceholder": "마감일",
+      "clearDue": "마감일 지우기",
+      "noDue": "마감일 없음",
+      "cleanupCompleted": "완료된 할 일 정리",
+      "cleanupConfirmTitle": "완료된 할 일을 정리할까요?",
+      "cleanupConfirmMessage": "완료된 모든 할 일이 휴지통으로 이동합니다. 휴지통을 비우기 전까지 복원할 수 있습니다.",
+      "cleanupDone": "완료된 할 일 {{count}}개를 휴지통으로 이동했습니다",
+      "cleanupEmpty": "정리할 완료된 할 일이 없습니다",
+      "cleanupError": "완료된 할 일 정리에 실패했습니다",
+      "status": {
+        "todo": "할 일",
+        "inProgress": "진행 중",
+        "done": "완료",
+        "blocked": "차단됨"
+      },
+      "priority": {
+        "label": "우선순위",
+        "none": "우선순위 없음",
+        "low": "낮음",
+        "medium": "보통",
+        "high": "높음"
+      }
+    },
+    "dashboard": {
+      "label": "대시보드",
+      "title": "노트 대시보드",
+      "description": "노트 활동, 링크, 구조를 확인하세요.",
+      "empty": "모든 대시보드 위젯이 숨겨져 있습니다.",
+      "error": "노트 대시보드를 불러오지 못했습니다.",
+      "actions": {
+        "refresh": "새로고침",
+        "backToDashboard": "대시보드로 돌아가기",
+        "showAllWidgets": "모든 위젯 표시"
+      },
+      "widgets": {
+        "title": "표시할 위젯",
+        "description": "대시보드에 표시할 블록을 선택하세요.",
+        "stats": "개요",
+        "activityHeatmap": "활동 히트맵",
+        "recent": "최근 노트",
+        "graphPreview": "노트 그래프",
+        "topLinked": "가장 많이 연결된 노트"
+      },
+      "stats": {
+        "title": "개요",
+        "notes": "노트",
+        "words": "단어",
+        "folders": "폴더",
+        "tags": "태그"
+      },
+      "activity": {
+        "heatmapTitle": "활동 히트맵",
+        "heatmapDescription": "최근 일별 노트 업데이트.",
+        "updatedToday": "오늘 업데이트됨",
+        "updatedWeek": "7일 이내 업데이트됨",
+        "less": "적음",
+        "more": "많음",
+        "totalLastYear": "지난 53주간 노트 업데이트 {{count}}회",
+        "tooltipUpdates": "노트 업데이트 {{count}}회"
+      },
+      "recent": {
+        "title": "최근 노트",
+        "empty": "아직 최근 노트가 없습니다."
+      },
+      "graphPreview": {
+        "title": "노트 그래프",
+        "empty": "아직 노트 간 링크가 없습니다."
+      },
+      "topLinked": {
+        "title": "가장 많이 연결된 노트",
+        "empty": "아직 연결된 노트가 없습니다.",
+        "incoming": "수신 링크 {{count}}개"
+      },
+      "graph": {
+        "title": "노트 그래프",
+        "description": "노트 간 연결을 살펴보고 작업 공간에서 바로 여세요.",
+        "hint": "드래그해서 이동하고, 확대/축소 컨트롤이나 마우스 휠을 사용하며, 노드에 마우스를 올려 주변 노트를 확인하세요.",
+        "meta": "수신 링크 {{links}}개 · 연결된 노트 {{neighbors}}개",
+        "empty": "아직 노트 간 링크가 없습니다.",
+        "error": "노트 그래프를 불러오지 못했습니다."
+      }
+    }
+  },
+  "folder": {
+    "untitled": "제목 없는 폴더",
+    "iconPicker": {
+      "searchPlaceholder": "아이콘 검색...",
+      "emptyResults": "아이콘을 찾을 수 없습니다",
+      "filters": {
+        "all": "전체",
+        "material": "Material",
+        "lucide": "Lucide"
+      }
+    }
+  },
+  "button": {
+    "back": "뒤로",
+    "cancel": "취소",
+    "confirm": "확인",
+    "copy": "복사",
+    "fit": "맞춤",
+    "generate": "생성",
+    "saveAs": "다른 이름으로 저장",
+    "update": [
+      "GitHub로 이동",
+      "확인"
+    ],
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "darkMode": "다크 모드",
+    "toggleDarkMode": "다크 모드 전환",
+    "background": "배경",
+    "goToDownload": "다운로드로 이동",
+    "goToSettings": "설정으로 이동",
+    "refreshPreview": "미리 보기 새로고침",
+    "laserPointer": "레이저 포인터",
+    "fullscreen": "전체 화면",
+    "prev": "이전",
+    "next": "다음"
+  },
+  "action": {
+    "close": "닫기",
+    "clearSearch": "검색 지우기",
+    "defaultLanguage": "기본 언어",
+    "duplicate": "복제",
+    "rename": "이름 바꾸기",
+    "restore": "복원",
+    "setCustomIcon": "아이콘 설정",
+    "removeCustomIcon": "아이콘 제거",
+    "show": "표시",
+    "hide": "숨기기",
+    "showSidebar": "사이드바 표시",
+    "hideSidebar": "사이드바 숨기기",
+    "showSidebarAndList": "사이드바 및 목록 표시",
+    "hideSidebarAndList": "사이드바 및 목록 숨기기",
+    "new": {
+      "storage": "새 스토리지",
+      "folder": "새 폴더",
+      "snippet": "새 스니펫",
+      "fragment": "새 프래그먼트",
+      "note": "새 노트",
+      "task": "새 할 일"
+    },
+    "createOptions": "만들기 옵션",
+    "add": {
+      "description": "설명 추가",
+      "tag": "태그 추가",
+      "toFavorites": "즐겨찾기에 추가"
+    },
+    "open": {
+      "storage": "스토리지 열기"
+    },
+    "move": {
+      "storage": "스토리지 이동",
+      "toTrash": "휴지통으로 이동"
+    },
+    "remove": {
+      "fromFavorites": "즐겨찾기에서 제거"
+    },
+    "reveal": {
+      "inFinder": "Finder에서 보기",
+      "inFileManager": "파일 관리자에서 보기"
+    },
+    "reload": {
+      "storage": "스토리지 다시 불러오기",
+      "app": "massCode 다시 시작"
+    },
+    "delete": {
+      "common": "삭제",
+      "now": "지금 삭제",
+      "allData": "모든 데이터 삭제",
+      "trash": "휴지통 비우기"
+    },
+    "migrate": {
+      "fromSnippetsLab": "SnippetsLab에서",
+      "fromV3": "massCode v3에서"
+    },
+    "export": {
+      "toHtml": "HTML로 내보내기"
+    },
+    "copy": {
+      "snippet": "스니펫 복사",
+      "snippetLink": "스니펫 링크 복사",
+      "note": "노트 복사",
+      "noteLink": "노트 링크 복사",
+      "request": "요청 복사",
+      "requestLink": "요청 링크 복사"
+    },
+    "select": {
+      "directory": "디렉터리 선택"
+    }
+  },
+  "internalLinks": {
+    "picker": {
+      "searchPlaceholder": "스니펫, HTTP 요청, 노트 검색...",
+      "emptyResults": "결과 없음",
+      "groups": {
+        "snippets": "스니펫",
+        "httpRequests": "HTTP 요청",
+        "notes": "노트"
+      }
+    },
+    "missing": {
+      "snippet": "스니펫을 찾을 수 없습니다",
+      "httpRequest": "HTTP 요청을 찾을 수 없습니다",
+      "note": "노트를 찾을 수 없습니다"
+    }
+  },
+  "placeholder": {
+    "emptyTagList": "스니펫에 태그를 추가하면 여기에 표시됩니다",
+    "emptyNotesTagList": "노트에 태그를 추가하면 여기에 표시됩니다",
+    "emptyFoldersList": "폴더 없음",
+    "emptySnippetsList": "스니펫 없음",
+    "emptyNotesList": "노트 없음",
+    "searchNotes": "노트 검색...",
+    "emptySheetList": "시트 없음",
+    "emptyDrawingsList": "드로잉 없음",
+    "search": "검색",
+    "searchIn": "{{- context}}에서 검색",
+    "addTag": "태그 추가",
+    "selectLanguage": "언어 선택"
+  },
+  "cloudDownloads": {
+    "downloading": "클라우드 스토리지에서 파일 다운로드 중: {{count}}개 남음",
+    "failed": "클라우드 스토리지에서 파일 다운로드 실패: {{count}}개",
+    "itemPending": "클라우드 스토리지에서 다운로드하는 중…",
+    "label": "클라우드 다운로드"
+  }
+}

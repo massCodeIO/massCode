@@ -857,6 +857,12 @@ export const languages: LanguageOption[] = [
     scopeName: 'source.sqlserver',
   },
   {
+    name: 'Structured Text (IEC 61131-3)',
+    value: 'st',
+    grammar: () => import('./textmate/structuredText.tmLanguage.json'),
+    scopeName: 'source.st',
+  },
+  {
     name: 'Stylus',
     value: 'stylus',
     grammar: () => import('./textmate/less.tmLanguage.json'),
@@ -1016,6 +1022,6 @@ export const oldLanguageMap: Record<any, Language> = {
   'shell': 'sh',
   'sol': 'plain_text',
   'aes': 'plain_text',
-  'st': 'plain_text',
+  'st': 'st',
   'vb': 'vbscript',
 }

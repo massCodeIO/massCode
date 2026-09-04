@@ -1,0 +1,102 @@
+{
+  "name": "Structured Text (IEC 61131-3)",
+  "scopeName": "source.st",
+  "fileTypes": ["st"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#literals" },
+    {
+      "name": "keyword.control.st",
+      "match": "(?i)\\b(?:IF|THEN|ELSIF|ELSE|END_IF|CASE|OF|END_CASE|FOR|TO|BY|DO|END_FOR|WHILE|END_WHILE|REPEAT|UNTIL|END_REPEAT|EXIT|CONTINUE|RETURN)\\b"
+    },
+    {
+      "name": "keyword.declaration.st",
+      "match": "(?i)\\b(?:PROGRAM|END_PROGRAM|FUNCTION|END_FUNCTION|FUNCTION_BLOCK|END_FUNCTION_BLOCK|VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_GLOBAL|VAR_EXTERNAL|VAR_ACCESS|VAR_CONFIG|VAR_STAT|END_VAR|CONSTANT|RETAIN|NON_RETAIN|PERSISTENT|AT|TYPE|END_TYPE|STRUCT|END_STRUCT|ARRAY|POINTER|REFERENCE|REF_TO|CONFIGURATION|END_CONFIGURATION|RESOURCE|END_RESOURCE|TASK|WITH|ON|READ_ONLY|READ_WRITE|R_EDGE|F_EDGE|CLASS|END_CLASS|METHOD|END_METHOD|INTERFACE|END_INTERFACE|PROPERTY|END_PROPERTY|EXTENDS|IMPLEMENTS|PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT|FINAL|OVERRIDE|THIS|SUPER)\\b"
+    },
+    {
+      "name": "storage.type.st",
+      "match": "(?i)\\b(?:BOOL|SINT|INT|DINT|LINT|USINT|UINT|UDINT|ULINT|BYTE|WORD|DWORD|LWORD|REAL|LREAL|TIME|LTIME|DATE|LDATE|TIME_OF_DAY|LTIME_OF_DAY|TOD|LTOD|DATE_AND_TIME|LDATE_AND_TIME|DT|LDT|STRING|WSTRING|CHAR|WCHAR|ANY|ANY_DERIVED|ANY_ELEMENTARY|ANY_MAGNITUDE|ANY_NUM|ANY_REAL|ANY_INT|ANY_BIT|ANY_STRING|ANY_DATE)\\b"
+    },
+    {
+      "name": "keyword.operator.st",
+      "match": "(?i)\\b(?:AND|OR|XOR|NOT|MOD|AND_THEN|OR_ELSE)\\b|:=|=>|<>|<=|>=|\\*\\*|[-+*/=<>&^]"
+    },
+    {
+      "name": "variable.other.address.st",
+      "match": "(?i)%[IQM](?:[XBWDL])?(?:[0-9]+(?:\\.[0-9]+)*|\\*)"
+    },
+    {
+      "name": "entity.name.function.st",
+      "match": "\\b[A-Za-z_][A-Za-z_0-9]*\\b(?=\\s*\\()"
+    },
+    {
+      "name": "punctuation.separator.st",
+      "match": "\\.\\.|[;:,.]"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.st",
+          "begin": "//",
+          "end": "$"
+        },
+        { "include": "#blockComment" }
+      ]
+    },
+    "blockComment": {
+      "name": "comment.block.st",
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "patterns": [{ "include": "#blockComment" }]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.st",
+          "begin": "(?i)(?:\\b(?:STRING|CHAR)#)?'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.st",
+              "match": "(?i)\\$(?:[0-9a-f]{2}|[$'LNPRT])"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.st",
+          "begin": "(?i)(?:\\b(?:WSTRING|WCHAR)#)?\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.st",
+              "match": "(?i)\\$(?:[0-9a-f]{4}|[$\"LNPRT])"
+            }
+          ]
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.st",
+          "match": "(?i)\\b(?:BOOL#(?:TRUE|FALSE|[01])|TRUE|FALSE)\\b"
+        },
+        {
+          "name": "constant.numeric.time.st",
+          "match": "(?i)\\b(?:LTIME|TIME|LT|T)#[+-]?(?:[0-9]+(?:\\.[0-9]+)?(?:ms|us|ns|d|h|m|s)_?)+\\b"
+        },
+        {
+          "name": "constant.numeric.date.st",
+          "match": "(?i)\\b(?:LDATE_AND_TIME|DATE_AND_TIME|LDT|DT)#[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}-[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(?:\\.[0-9]+)?\\b|\\b(?:LTIME_OF_DAY|TIME_OF_DAY|LTOD|TOD)#[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}(?:\\.[0-9]+)?\\b|\\b(?:LDATE|DATE|LD|D)#[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}\\b"
+        },
+        {
+          "name": "constant.numeric.st",
+          "match": "(?i)\\b(?:(?:SINT|INT|DINT|LINT|USINT|UINT|UDINT|ULINT|BYTE|WORD|DWORD|LWORD|REAL|LREAL)#[-+]?)?(?:16#[0-9a-f]+(?:_[0-9a-f]+)*|8#[0-7]+(?:_[0-7]+)*|2#[01]+(?:_[01]+)*|[0-9]+(?:_[0-9]+)*(?:\\.(?!\\.)(?:[0-9]+(?:_[0-9]+)*)?)?(?:e[-+]?[0-9]+(?:_[0-9]+)*)?)(?![\\w])"
+        }
+      ]
+    }
+  }
+}

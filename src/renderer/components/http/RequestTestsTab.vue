@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/shadcn/native-select'
+import * as Select from '@/components/ui/shadcn/select'
+import * as Tooltip from '@/components/ui/shadcn/tooltip'
 import { useHttpExecute } from '@/composables/spaces/http/useHttpExecute'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
@@ -15,15 +13,11 @@ const { currentRequest } = useHttpRequests()
 const {
   draft,
   dirty,
-  valid,
   saving,
   saveError,
   conflict,
   saveRuntime,
-  expectedInputs,
-  expectedErrors,
-  setExpected,
-  removeAssertion,
+  removeExtraction,
 } = useHttpRuntime()
 const { sessionNames, clearHttpSession, refreshHttpSessionNames }
   = useHttpSession()
@@ -31,17 +25,24 @@ const { resetHttpExecuteState } = useHttpExecute()
 const unavailable = computed(
   () => currentRequest.value?.runtimeState !== 'ready',
 )
-const operators = [
-  'eq',
-  'neq',
-  'exists',
-  'contains',
-  'gt',
-  'gte',
-  'lt',
-  'lte',
-] as const
-const sources = ['status', 'json', 'header', 'durationMs'] as const
+const statusIsError = computed(() => unavailable.value || saveError.value)
+const statusMessage = computed(() => {
+  if (unavailable.value) {
+    return i18n.t(
+      `spaces.http.runtime.states.${currentRequest.value?.runtimeState ?? 'pending'}`,
+    )
+  }
+  if (saveError.value) {
+    return i18n.t(
+      conflict.value
+        ? 'spaces.http.runtime.conflict'
+        : 'spaces.http.runtime.saveError',
+    )
+  }
+  return i18n.t(
+    dirty.value ? 'spaces.http.runtime.unsaved' : 'spaces.http.runtime.hint',
+  )
+})
 
 async function clearSession() {
   resetHttpExecuteState()
@@ -54,64 +55,66 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4 pb-2">
+  <div class="space-y-3 pb-2">
     <div class="flex items-center justify-between gap-3">
-      <UiText
-        as="p"
-        variant="xs"
-        muted
+      <div
+        class="scrollbar h-8 min-w-0 flex-1 overflow-y-auto"
+        role="status"
+        aria-atomic="true"
       >
-        {{ i18n.t("spaces.http.runtime.hint") }}
-      </UiText>
-      <Button
-        :disabled="unavailable || !dirty || !valid || saving"
-        @click="saveRuntime"
-      >
-        {{ i18n.t("spaces.http.runtime.save") }}
-      </Button>
+        <UiText
+          v-if="statusIsError"
+          as="p"
+          variant="xs"
+          class="text-destructive"
+        >
+          {{ statusMessage }}
+        </UiText>
+        <UiText
+          v-else
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.hint") }}
+        </UiText>
+      </div>
+      <Tooltip.Tooltip>
+        <Tooltip.TooltipTrigger as-child>
+          <Button
+            :disabled="unavailable || saving"
+            @click="saveRuntime"
+          >
+            {{ i18n.t("spaces.http.runtime.save") }}
+            <span
+              v-if="dirty"
+              class="bg-success size-1.5 shrink-0 rounded-full"
+              aria-hidden="true"
+            />
+            <span
+              v-if="dirty"
+              class="sr-only"
+            >{{
+              i18n.t("spaces.http.runtime.unsaved")
+            }}</span>
+          </Button>
+        </Tooltip.TooltipTrigger>
+        <Tooltip.TooltipContent class="max-w-72">
+          {{ statusMessage }}
+        </Tooltip.TooltipContent>
+      </Tooltip.Tooltip>
     </div>
-    <UiText
-      v-if="unavailable"
-      variant="sm"
-      class="text-destructive"
-    >
-      {{
-        i18n.t(
-          `spaces.http.runtime.states.${currentRequest?.runtimeState ?? "pending"}`,
-        )
-      }}
-    </UiText>
-    <UiText
-      v-else-if="saveError || !valid"
-      variant="sm"
-      class="text-destructive"
-    >
-      {{
-        i18n.t(
-          conflict
-            ? "spaces.http.runtime.conflict"
-            : saveError
-              ? "spaces.http.runtime.saveError"
-              : "spaces.http.runtime.invalidRules",
-        )
-      }}
-    </UiText>
-    <UiText
-      v-else-if="dirty"
-      variant="caption"
-    >
-      {{ i18n.t("spaces.http.runtime.unsaved") }}
-    </UiText>
     <fieldset
       :disabled="unavailable || saving"
-      class="space-y-4 disabled:opacity-50"
+      class="space-y-3 disabled:opacity-50"
     >
-      <section class="space-y-2">
+      <section class="space-y-1">
         <div class="flex items-center justify-between">
           <UiText variant="sm">
             {{ i18n.t("spaces.http.runtime.extractions") }}
           </UiText>
           <UiActionButton
+            :disabled="draft.extractions.length >= 100"
             :tooltip="i18n.t('spaces.http.runtime.addExtraction')"
             @click="
               draft.extractions.push({ name: '', source: 'json', path: '' })
@@ -125,27 +128,38 @@ onMounted(() => {
           :key="index"
           class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-2 [&>div]:w-full [&>div]:min-w-0"
         >
-          <UiInput
+          <HttpRuntimeInput
             v-model="rule.name"
-            class="h-7"
+            group="extractions"
+            :index="index"
+            field="name"
             :placeholder="i18n.t('spaces.http.runtime.variableName')"
-            :aria-label="i18n.t('spaces.http.runtime.variableName')"
+            :label="i18n.t('spaces.http.runtime.variableName')"
           />
-          <NativeSelect
+          <Select.Select
             v-model="rule.source"
-            class="h-7 px-2 py-0 pr-9"
-            :aria-label="i18n.t('spaces.http.runtime.source')"
+            :disabled="unavailable || saving"
           >
-            <NativeSelectOption value="json">
-              {{ i18n.t("spaces.http.runtime.sources.json") }}
-            </NativeSelectOption>
-            <NativeSelectOption value="header">
-              {{ i18n.t("spaces.http.runtime.sources.header") }}
-            </NativeSelectOption>
-          </NativeSelect>
-          <UiInput
+            <Select.SelectTrigger
+              class="h-7 w-full min-w-0"
+              :aria-label="i18n.t('spaces.http.runtime.source')"
+            >
+              <Select.SelectValue />
+            </Select.SelectTrigger>
+            <Select.SelectContent>
+              <Select.SelectItem value="json">
+                {{ i18n.t("spaces.http.runtime.sources.json") }}
+              </Select.SelectItem>
+              <Select.SelectItem value="header">
+                {{ i18n.t("spaces.http.runtime.sources.header") }}
+              </Select.SelectItem>
+            </Select.SelectContent>
+          </Select.Select>
+          <HttpRuntimeInput
             v-model="rule.path"
-            class="h-7"
+            group="extractions"
+            :index="index"
+            field="path"
             :placeholder="
               i18n.t(
                 rule.source === 'json'
@@ -153,114 +167,17 @@ onMounted(() => {
                   : 'spaces.http.runtime.header',
               )
             "
-            :aria-label="i18n.t('spaces.http.runtime.path')"
+            :label="i18n.t('spaces.http.runtime.path')"
           />
           <UiActionButton
             :tooltip="i18n.t('spaces.http.runtime.remove')"
-            @click="draft.extractions.splice(index, 1)"
+            @click="removeExtraction(index)"
           >
             <Trash2 class="size-4" />
           </UiActionButton>
         </div>
       </section>
-      <section class="space-y-2">
-        <div class="flex items-center justify-between">
-          <UiText variant="sm">
-            {{ i18n.t("spaces.http.runtime.assertions") }}
-          </UiText>
-          <UiActionButton
-            :tooltip="i18n.t('spaces.http.runtime.addAssertion')"
-            @click="
-              draft.assertions.push({
-                name: '',
-                source: 'status',
-                operator: 'eq',
-                expected: 200,
-              })
-            "
-          >
-            <Plus class="size-4" />
-          </UiActionButton>
-        </div>
-        <div
-          v-for="(rule, index) in draft.assertions"
-          :key="index"
-          class="border-border space-y-2 rounded-md border p-2"
-        >
-          <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-            <UiInput
-              v-model="rule.name"
-              class="h-7 w-full min-w-0"
-              :placeholder="i18n.t('spaces.http.runtime.assertionName')"
-              :aria-label="i18n.t('spaces.http.runtime.assertionName')"
-            />
-            <UiActionButton
-              :tooltip="i18n.t('spaces.http.runtime.remove')"
-              @click="removeAssertion(index)"
-            >
-              <Trash2 class="size-4" />
-            </UiActionButton>
-          </div>
-          <div
-            class="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] items-start gap-2 [&>div]:w-full [&>div]:min-w-0"
-          >
-            <NativeSelect
-              v-model="rule.source"
-              class="h-7 px-2 py-0 pr-9"
-              :aria-label="i18n.t('spaces.http.runtime.source')"
-            >
-              <NativeSelectOption
-                v-for="source in sources"
-                :key="source"
-                :value="source"
-              >
-                {{ i18n.t(`spaces.http.runtime.sources.${source}`) }}
-              </NativeSelectOption>
-            </NativeSelect>
-            <UiInput
-              v-if="rule.source === 'json' || rule.source === 'header'"
-              v-model="rule.path"
-              class="h-7 w-full min-w-0"
-              :placeholder="
-                i18n.t(
-                  rule.source === 'json'
-                    ? 'spaces.http.runtime.pointer'
-                    : 'spaces.http.runtime.header',
-                )
-              "
-              :aria-label="i18n.t('spaces.http.runtime.path')"
-            />
-            <NativeSelect
-              v-model="rule.operator"
-              class="h-7 px-2 py-0 pr-9"
-              :aria-label="i18n.t('spaces.http.runtime.operator')"
-            >
-              <NativeSelectOption
-                v-for="operator in operators"
-                :key="operator"
-                :value="operator"
-              >
-                {{ i18n.t(`spaces.http.runtime.operators.${operator}`) }}
-              </NativeSelectOption>
-            </NativeSelect>
-            <UiInput
-              v-if="rule.operator !== 'exists'"
-              :model-value="
-                expectedInputs[index] ?? JSON.stringify(rule.expected) ?? ''
-              "
-              class="h-7 w-full min-w-0"
-              :error="
-                expectedErrors[index]
-                  ? i18n.t('spaces.http.runtime.expectedError')
-                  : undefined
-              "
-              :placeholder="i18n.t('spaces.http.runtime.expected')"
-              :aria-label="i18n.t('spaces.http.runtime.expected')"
-              @update:model-value="setExpected(index, $event!)"
-            />
-          </div>
-        </div>
-      </section>
+      <HttpRequestAssertions :disabled="unavailable || saving" />
     </fieldset>
     <section class="border-border space-y-2 border-t pt-3">
       <div class="flex items-center justify-between">

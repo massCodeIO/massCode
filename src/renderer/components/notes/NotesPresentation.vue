@@ -223,6 +223,9 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <EditorMarkdownLaserPointer :is-active="isLaserPointerActive" />
+    <EditorMarkdownLaserPointer
+      :key="presentationNoteId"
+      :is-active="isLaserPointerActive"
+    />
   </div>
 </template>

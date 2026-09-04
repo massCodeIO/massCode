@@ -62,6 +62,13 @@
   },
   "edit": {
     "label": "Edit",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "delete": "Delete",
+    "selectAll": "Select All",
     "find": "Find"
   },
   "editor": {
@@ -98,6 +105,9 @@
   },
   "window": {
     "label": "Window",
-    "minimize": "Minimize"
+    "minimize": "Minimize",
+    "zoom": "Zoom",
+    "front": "Bring All to Front",
+    "close": "Close"
   }
 }

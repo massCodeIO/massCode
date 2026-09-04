@@ -217,6 +217,61 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "runtime": {
+        "tests": "Tests",
+        "hint": "Save rules before sending. JSON paths use JSON Pointer; expected values use JSON scalars.",
+        "save": "Save tests",
+        "saveError": "Could not save tests. Reload the request and try again.",
+        "conflict": "Tests changed on disk. Your edits were not saved. Switch away and reopen this request to load the latest rules.",
+        "invalidRules": "Check rule names, paths and expected values. Extraction names must be unique.",
+        "unsaved": "Unsaved tests. Save before sending; switching requests discards these edits.",
+        "extractions": "Extract variables",
+        "assertions": "Assertions",
+        "addExtraction": "Add extraction",
+        "addAssertion": "Add assertion",
+        "variableName": "Variable name",
+        "assertionName": "Assertion name",
+        "source": "Source",
+        "path": "Path",
+        "pointer": "JSON Pointer (empty = root)",
+        "header": "Header name",
+        "remove": "Remove rule",
+        "operator": "Operator",
+        "expected": "Expected JSON value",
+        "expectedError": "Use a JSON scalar: \"text\", 200, true or null.",
+        "session": "Session variables",
+        "clearSession": "Clear session",
+        "sessionHint": "Values stay in memory and are masked. Use {{name}} in the next request. Cleared when switching environment or vault.",
+        "passed": "Passed",
+        "failed": "Failed",
+        "states": {
+          "pending": "Tests are still downloading. Sending and editing are blocked.",
+          "invalid": "The tests file is invalid or unreadable. Sending and editing are blocked.",
+          "unsupported": "This tests file uses an unsupported version. Sending and editing are blocked."
+        },
+        "sources": {
+          "json": "JSON body",
+          "header": "Response header",
+          "status": "Status code",
+          "durationMs": "Duration (ms)"
+        },
+        "operators": {
+          "eq": "Equals",
+          "neq": "Does not equal",
+          "exists": "Exists",
+          "contains": "Contains",
+          "gt": ">",
+          "gte": "≥",
+          "lt": "<",
+          "lte": "≤"
+        },
+        "errors": {
+          "missing": "Value not found",
+          "invalidJson": "Response is not valid JSON",
+          "unavailableBody": "Response body unavailable or truncated",
+          "mismatch": "Assertion did not match"
+        }
+      },
       "label": "HTTP",
       "tooltip": "HTTP client",
       "title": "HTTP Client",

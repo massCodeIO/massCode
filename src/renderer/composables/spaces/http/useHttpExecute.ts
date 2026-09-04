@@ -10,6 +10,8 @@ import { i18n, ipc } from '@/electron'
 import { useHttpApp } from './useHttpApp'
 import { useHttpEnvironments } from './useHttpEnvironments'
 import { useHttpRequests } from './useHttpRequests'
+import { useHttpRuntime } from './useHttpRuntime'
+import { useHttpSession } from './useHttpSession'
 import { useHttpSettings } from './useHttpSettings'
 
 export type HttpResponse = HttpExecuteResult
@@ -24,6 +26,19 @@ const { httpState } = useHttpApp()
 const { activeEnvironmentId } = useHttpEnvironments()
 const { incrementSent } = useDonations()
 const { settings } = useHttpSettings()
+const { dirty: runtimeDirty } = useHttpRuntime()
+const { sessionNames, resetHttpSessionNames } = useHttpSession()
+let executionToken = 0
+
+watch(activeEnvironmentId, () => {
+  resetHttpExecuteState()
+  resetHttpSessionNames()
+})
+watch(
+  () => currentRequest.value?.id,
+  () => resetHttpExecuteState(false),
+  { flush: 'sync' },
+)
 
 function buildExecuteRequest(): HttpExecuteRequest | null {
   const draft = currentDraft.value
@@ -48,7 +63,11 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   // (в том числе бессрочно, если GET упал), и execute отправил бы не тот
   // запрос, что подсвечен в списке.
   if (
-    isCurrentRequestLoading.value
+    isExecuting.value
+    || runtimeDirty.value
+    || (currentRequest.value?.runtimeState
+      && currentRequest.value.runtimeState !== 'ready')
+    || isCurrentRequestLoading.value
     || httpState.requestId !== currentRequest.value?.id
   ) {
     return null
@@ -78,6 +97,8 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   }
 
   isExecuting.value = true
+  const token = ++executionToken
+  const requestId = currentRequest.value?.id
   lastError.value = null
   lastResponse.value = null
 
@@ -88,23 +109,37 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
       'spaces:http:execute',
       payload,
     )) as HttpResponse
+    if (
+      token !== executionToken
+      || response.discarded
+      || currentRequest.value?.id !== requestId
+    ) {
+      return null
+    }
     lastResponse.value = response
+    sessionNames.value = response.sessionNames ?? sessionNames.value
     if (response.error) {
       lastError.value = response.error
     }
     return response
   }
   catch (error) {
+    if (token !== executionToken)
+      return null
     const message = error instanceof Error ? error.message : String(error)
     lastError.value = message
     return null
   }
   finally {
-    isExecuting.value = false
+    if (token === executionToken)
+      isExecuting.value = false
   }
 }
 
-function resetHttpExecuteState() {
+function resetHttpExecuteState(resetSession = true) {
+  executionToken += 1
+  if (resetSession)
+    resetHttpSessionNames()
   isExecuting.value = false
   lastResponse.value = null
   lastError.value = null

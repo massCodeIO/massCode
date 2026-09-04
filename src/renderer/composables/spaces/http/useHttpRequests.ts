@@ -417,7 +417,10 @@ async function duplicateHttpRequest(requestId: number) {
 
   // Тело pending-запроса ещё не докачано (body: null): копия получилась бы
   // без body и молча разошлась с оригиналом.
-  if (source.pendingCloudDownload) {
+  if (
+    source.pendingCloudDownload
+    || (source.runtimeState && source.runtimeState !== 'ready')
+  ) {
     useSonner().sonner({
       id: 'cloud-file-not-ready',
       message: i18n.t('messages:warning.cloudFileNotReady'),
@@ -456,6 +459,13 @@ async function duplicateHttpRequest(requestId: number) {
       headers: source.headers.map(entry => ({ ...entry })),
       query: source.query.map(entry => ({ ...entry })),
     })
+
+    if (source.runtime) {
+      await api.httpRequests.putHttpRequestsByIdRuntime(String(id), {
+        runtime: source.runtime,
+        expectedRevision: 'missing',
+      })
+    }
 
     await refreshHttpRequests()
 

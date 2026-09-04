@@ -8,6 +8,7 @@ import {
   useHttpRequests,
   useNavigationHistory,
 } from '@/composables'
+import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import {
@@ -35,11 +36,12 @@ const {
 } = useHttpRequests()
 const { isFocusedRequestName } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
+const { dirty: runtimeDirty } = useHttpRuntime()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
-const activeTab = ref<'params' | 'headers' | 'body' | 'auth' | 'description'>(
-  'params',
-)
+const activeTab = ref<
+  'params' | 'headers' | 'body' | 'auth' | 'description' | 'tests'
+>('params')
 
 const paramsCount = computed(() => currentDraft.value?.query.length ?? 0)
 const headersCount = computed(() => currentDraft.value?.headers.length ?? 0)
@@ -115,7 +117,8 @@ function onNameBlur() {
 }
 
 async function onSend() {
-  await saveCurrentRequest()
+  if (!(await saveCurrentRequest()))
+    return
   await executeCurrentRequest()
 }
 </script>
@@ -204,7 +207,12 @@ async function onSend() {
       </div>
       <UiActionButton
         :aria-label="i18n.t('spaces.http.editor.send')"
-        :disabled="isExecuting || !currentDraft.url"
+        :disabled="
+          isExecuting
+            || !currentDraft.url
+            || runtimeDirty
+            || currentRequest.runtimeState !== 'ready'
+        "
         @click="onSend"
       >
         <LoaderCircle
@@ -255,9 +263,19 @@ async function onSend() {
           <Tabs.TabsTrigger value="description">
             {{ i18n.t("spaces.http.editor.tabs.description") }}
           </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger value="tests">
+            {{ i18n.t("spaces.http.runtime.tests")
+            }}{{ runtimeDirty ? " *" : "" }}
+          </Tabs.TabsTrigger>
         </Tabs.TabsList>
       </div>
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
+        <Tabs.TabsContent
+          value="tests"
+          class="h-full"
+        >
+          <HttpRequestTestsTab />
+        </Tabs.TabsContent>
         <Tabs.TabsContent
           value="params"
           class="h-full"

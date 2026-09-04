@@ -14,7 +14,11 @@ const { settings } = useHttpSettings()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
-const activeTab = ref<'body' | 'headers'>('body')
+const activeTab = ref<'body' | 'headers' | 'tests'>('body')
+const runtimeResults = computed(() => [
+  ...(lastResponse.value?.runtimeResults?.extractions ?? []),
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+])
 
 const formattedBody = computed(() => {
   const response = lastResponse.value
@@ -44,6 +48,8 @@ const formattedHeaders = computed(() => {
 })
 
 const copyValue = computed(() => {
+  if (activeTab.value === 'tests')
+    return ''
   return activeTab.value === 'headers'
     ? formattedHeaders.value
     : formattedBody.value
@@ -81,7 +87,7 @@ function copyActiveTab() {
       {{ i18n.t("spaces.http.editor.response.executing") }}
     </div>
     <div
-      v-else-if="responseError"
+      v-else-if="responseError && !runtimeResults.length"
       class="flex flex-1 items-center justify-center px-4"
     >
       <div
@@ -126,6 +132,14 @@ function copyActiveTab() {
           class="border-border flex items-center justify-between border-b px-3 py-1"
         >
           <Tabs.TabsList>
+            <Tabs.TabsTrigger
+              v-if="runtimeResults.length"
+              value="tests"
+            >
+              {{ i18n.t("spaces.http.runtime.tests") }} ({{
+                runtimeResults.filter((result) => result.ok).length
+              }}/{{ runtimeResults.length }})
+            </Tabs.TabsTrigger>
             <Tabs.TabsTrigger value="body">
               {{ i18n.t("spaces.http.editor.response.tabs.body") }}
             </Tabs.TabsTrigger>
@@ -149,6 +163,12 @@ function copyActiveTab() {
         </div>
 
         <div class="min-h-0 flex-1">
+          <Tabs.TabsContent
+            value="tests"
+            class="scrollbar m-0 h-full overflow-auto"
+          >
+            <HttpResponseTests />
+          </Tabs.TabsContent>
           <Tabs.TabsContent
             value="body"
             class="m-0 h-full"

@@ -30,6 +30,116 @@ async function load() {
 }
 
 describe('hTTP runtime editor state', () => {
+  it('reveals untouched errors on save without persisting invalid data', async () => {
+    const runtime = await load()
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: 'bad',
+    })
+    runtime.draft.value.assertions.push({
+      name: '',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    })
+    runtime.setExpected(0, 'invalid')
+    expect(runtime.fieldError('extractions', 0, 'name')).toBeUndefined()
+    expect(await runtime.saveRuntime()).toBe(false)
+    expect(runtime.fieldError('extractions', 0, 'name')).toBe('required')
+    expect(runtime.fieldError('extractions', 0, 'path')).toBe('pointer')
+    expect(runtime.fieldError('assertions', 0, 'name')).toBe('required')
+    expect(runtime.fieldError('assertions', 0, 'expected')).toBe(
+      'expectedValue',
+    )
+    expect(putRuntime).not.toHaveBeenCalled()
+    runtime.draft.value.extractions[0]!.name = 'demo'
+    runtime.draft.value.extractions[0]!.path = '/args/demo'
+    runtime.draft.value.assertions[0]!.name = 'Status OK'
+    runtime.setExpected(0, '200')
+    expect(await runtime.saveRuntime()).toBe(true)
+    expect(putRuntime).toHaveBeenCalledTimes(1)
+  })
+
+  it('validates unchanged data without an unnecessary write', async () => {
+    const runtime = await load()
+    expect(await runtime.saveRuntime()).toBe(true)
+    expect(putRuntime).not.toHaveBeenCalled()
+  })
+
+  it('shows a field error only after blur and clears it while correcting', async () => {
+    currentRequest.value = request()
+    const runtime = await load()
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: '',
+    })
+    expect(runtime.valid.value).toBe(false)
+    expect(runtime.fieldError('extractions', 0, 'name')).toBeUndefined()
+    runtime.touchField('extractions', 0, 'name')
+    expect(runtime.fieldError('extractions', 0, 'name')).toBe('required')
+    runtime.draft.value.extractions[0]!.name = 'demo'
+    expect(runtime.fieldError('extractions', 0, 'name')).toBeUndefined()
+  })
+
+  it('keeps touched fields attached to their rule when rows are removed', async () => {
+    currentRequest.value = request()
+    const runtime = await load()
+    runtime.draft.value.extractions.push(
+      { name: 'first', source: 'json', path: '' },
+      { name: '', source: 'json', path: '' },
+    )
+    runtime.touchField('extractions', 1, 'name')
+    runtime.removeExtraction(0)
+    expect(runtime.fieldError('extractions', 0, 'name')).toBe('required')
+    runtime.removeExtraction(0)
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: '',
+    })
+    expect(runtime.fieldError('extractions', 0, 'name')).toBeUndefined()
+  })
+
+  it('validates raw expected input after blur and ignores it for Exists', async () => {
+    currentRequest.value = request()
+    const runtime = await load()
+    runtime.draft.value.assertions.push({
+      name: 'check',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    })
+    runtime.setExpected(0, '1e999')
+    expect(runtime.valid.value).toBe(false)
+    expect(runtime.fieldError('assertions', 0, 'expected')).toBeUndefined()
+    runtime.touchField('assertions', 0, 'expected')
+    expect(runtime.fieldError('assertions', 0, 'expected')).toBe(
+      'expectedValue',
+    )
+    runtime.draft.value.assertions[0]!.operator = 'exists'
+    expect(runtime.fieldError('assertions', 0, 'expected')).toBeUndefined()
+    expect(runtime.valid.value).toBe(true)
+  })
+
+  it('clears touched state when switching requests', async () => {
+    currentRequest.value = request()
+    const runtime = await load()
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: '',
+    })
+    runtime.touchField('extractions', 0, 'name')
+    currentRequest.value = {
+      ...request(),
+      id: 2,
+      runtime: JSON.parse(JSON.stringify(runtime.draft.value)),
+    }
+    expect(runtime.fieldError('extractions', 0, 'name')).toBeUndefined()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     currentRequest.value = request()
@@ -142,6 +252,34 @@ describe('hTTP runtime editor state', () => {
     resolve({ data: { runtimeRevision: 'saved' } })
     expect(await saving).toBe(true)
     expect(currentRequest.value.name).toBe('Updated during save')
+  })
+
+  it('validates and saves list operands, and ignores hidden errors for type checks', async () => {
+    const runtime = await load()
+    runtime.draft.value.assertions.push({
+      name: 'list',
+      source: 'status',
+      operator: 'in',
+    })
+    runtime.setExpected(0, '[200,')
+    expect(await runtime.saveRuntime()).toBe(false)
+    expect(putRuntime).not.toHaveBeenCalled()
+    runtime.setExpected(0, '[200, 201]')
+    expect(await runtime.saveRuntime()).toBe(true)
+    expect(putRuntime.mock.calls[0]![1].runtime.assertions[0].expected).toEqual(
+      [200, 201],
+    )
+    runtime.draft.value.assertions[0]!.operator = 'between'
+    runtime.setExpected(0, '[299, 200]')
+    expect(await runtime.saveRuntime()).toBe(false)
+    expect(runtime.fieldError('assertions', 0, 'expected')).toBe(
+      'expectedRange',
+    )
+    runtime.setExpected(0, '[')
+    runtime.draft.value.assertions[0]!.operator = 'isNumber'
+    expect(runtime.valid.value).toBe(true)
+    runtime.draft.value.assertions[0]!.operator = 'in'
+    expect(runtime.valid.value).toBe(false)
   })
 
   it.each(['"text"', 'true', 'null'])(

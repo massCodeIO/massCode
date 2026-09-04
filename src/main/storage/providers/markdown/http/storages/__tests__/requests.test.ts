@@ -164,6 +164,44 @@ describe('http requests storage', () => {
     expect(fs.existsSync(sidecar)).toBe(false)
   })
 
+  it('round-trips list, range, regex and type assertions through YAML', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Operators' })
+    const original = storage.getRequestById(id)!
+    const rules = {
+      version: 1 as const,
+      extractions: [],
+      assertions: [
+        {
+          name: 'list',
+          source: 'status' as const,
+          operator: 'in' as const,
+          expected: [200, '201', null, false],
+        },
+        {
+          name: 'range',
+          source: 'status' as const,
+          operator: 'between' as const,
+          expected: [200, 299],
+        },
+        {
+          name: 'regex',
+          source: 'json' as const,
+          operator: 'matches' as const,
+          expected: '^\\d+$',
+        },
+        { name: 'type', source: 'json' as const, operator: 'isArray' as const },
+      ],
+    }
+    storage.updateRuntime(id, rules, original.runtimeRevision!)
+    const sidecar = requestRuntimePath(
+      getHttpPaths(tempVaultPath).httpRoot,
+      original,
+    )
+    expect(yaml.load(fs.readFileSync(sidecar, 'utf8'))).toEqual(rules)
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+  })
+
   it('preserves unsupported and malformed sidecars and blocks writes', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Runtime' })

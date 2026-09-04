@@ -218,8 +218,30 @@
     },
     "http": {
       "runtime": {
+        "validation": {
+          "expectedValue": "Use a JSON scalar or an array of scalars (up to 1000 items)",
+          "expectedLength": "Enter a non-negative integer",
+          "expectedRange": "Use [min, max] with two numbers, min ≤ max",
+          "expectedList": "Use a JSON array, e.g. [200, 201]",
+          "expectedRegex": "Use a valid regex pattern (up to 1024 characters), without / delimiters",
+          "required": "Required field",
+          "nameLength": "Maximum 256 characters",
+          "variableName": "Use letters, digits, _, . or -; not __proto__",
+          "pointer": "Use /path and escape ~ as ~0, / as ~1",
+          "duplicateName": "Name must be unique",
+          "expectedString": "Enter a quoted JSON string",
+          "expectedNumber": "Enter a finite number",
+          "expectedScalar": "Use a JSON scalar: \"text\", 200, true or null",
+          "invalid": "Invalid value"
+        },
         "tests": "Tests",
-        "hint": "Save rules before sending. JSON paths use JSON Pointer; expected values use JSON scalars.",
+        "hint": "Save rules before sending. Paths use JSON Pointer; expected values use JSON.",
+        "expectedHints": {
+          "list": "[200, 201]",
+          "range": "[200, 299]",
+          "regex": "\"^text.*$\"",
+          "length": "0"
+        },
         "save": "Save tests",
         "saveError": "Could not save tests. Reload the request and try again.",
         "conflict": "Tests changed on disk. Your edits were not saved. Switch away and reopen this request to load the latest rules.",
@@ -256,16 +278,32 @@
           "durationMs": "Duration (ms)"
         },
         "operators": {
+          "notContains": "Does not contain",
+          "startsWith": "Starts with",
+          "endsWith": "Ends with",
+          "matches": "Matches regex",
+          "notMatches": "Does not match regex",
+          "length": "Length equals",
+          "between": "Between (inclusive)",
+          "in": "In list",
+          "notIn": "Not in list",
+          "isString": "Is string",
+          "isNumber": "Is number",
+          "isBoolean": "Is boolean",
+          "isArray": "Is array",
+          "isObject": "Is object",
+          "isNull": "Is null",
           "eq": "Equals",
           "neq": "Does not equal",
           "exists": "Exists",
           "contains": "Contains",
-          "gt": ">",
-          "gte": "≥",
-          "lt": "<",
-          "lte": "≤"
+          "gt": "Greater than",
+          "gte": "Greater than or equal",
+          "lt": "Less than",
+          "lte": "Less than or equal"
         },
         "errors": {
+          "regexLimit": "Regex could not complete: invalid pattern, size or time limit exceeded",
           "missing": "Value not found",
           "invalidJson": "Response is not valid JSON",
           "unavailableBody": "Response body unavailable or truncated",
@@ -620,10 +658,7 @@
     "fit": "Fit",
     "generate": "Generate",
     "saveAs": "Save as",
-    "update": [
-      "Go to GitHub",
-      "OK"
-    ],
+    "update": ["Go to GitHub", "OK"],
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",

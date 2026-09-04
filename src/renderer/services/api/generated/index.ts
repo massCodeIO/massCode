@@ -623,8 +623,28 @@ export interface HttpRuntime {
       | "gt"
       | "gte"
       | "lt"
-      | "lte";
-    expected?: string | number | boolean | null;
+      | "lte"
+      | "notContains"
+      | "startsWith"
+      | "endsWith"
+      | "matches"
+      | "notMatches"
+      | "length"
+      | "between"
+      | "in"
+      | "notIn"
+      | "isString"
+      | "isNumber"
+      | "isBoolean"
+      | "isArray"
+      | "isObject"
+      | "isNull";
+    expected?:
+      | string
+      | number
+      | boolean
+      | null
+      | (string | number | boolean | null)[];
   }[];
 }
 
@@ -650,8 +670,28 @@ export interface HttpRuntimeSave {
         | "gt"
         | "gte"
         | "lt"
-        | "lte";
-      expected?: string | number | boolean | null;
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
     }[];
   };
   expectedRevision: string;
@@ -684,8 +724,28 @@ export interface HttpRequestItemResponse {
         | "gt"
         | "gte"
         | "lt"
-        | "lte";
-      expected?: string | number | boolean | null;
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
     }[];
   } | null;
   runtimeState: "ready" | "pending" | "invalid" | "unsupported";

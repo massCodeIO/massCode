@@ -3,8 +3,11 @@ import type {
   HttpRuntimeResult,
 } from '../../../shared/httpRuntime'
 import type { HttpExecuteResult } from '../../types/http'
+import { Script } from 'node:vm'
 
 const missing = Symbol('missing')
+// Only this fixed expression executes; patterns and values are data, never code.
+const regexScript = new Script('new RegExp(pattern, "u").test(value)')
 
 export function readJsonPointer(value: unknown, pointer: string): unknown {
   if (pointer === '')
@@ -88,10 +91,12 @@ export function evaluateHttpRuntime(
       }
     },
   )
+  let regexBudgetMs = 100
   const assertions = runtime.assertions.map(
     (rule, index): HttpRuntimeResult => {
       const value = read(rule.source, rule.path)
       let ok = false
+      let errorCode: HttpRuntimeResult['errorCode']
       if (value !== missing) {
         switch (rule.operator) {
           case 'exists':
@@ -104,10 +109,100 @@ export function evaluateHttpRuntime(
             ok = value !== rule.expected
             break
           case 'contains':
+          case 'notContains':
+          case 'startsWith':
+          case 'endsWith':
             ok
               = typeof value === 'string'
                 && typeof rule.expected === 'string'
-                && value.includes(rule.expected)
+                && (rule.operator === 'startsWith'
+                  ? value.startsWith(rule.expected)
+                  : rule.operator === 'endsWith'
+                    ? value.endsWith(rule.expected)
+                    : rule.operator === 'notContains'
+                      ? !value.includes(rule.expected)
+                      : value.includes(rule.expected))
+            break
+          case 'matches':
+          case 'notMatches':
+            if (
+              typeof value === 'string'
+              && typeof rule.expected === 'string'
+            ) {
+              const started = performance.now()
+              try {
+                if (
+                  value.length > 1_000_000
+                  || rule.expected.length > 1024
+                  || regexBudgetMs < 1
+                ) {
+                  throw new Error('regex budget exceeded')
+                }
+                const matches
+                  = regexScript.runInNewContext(
+                    { pattern: rule.expected, value },
+                    {
+                      timeout: Math.min(20, Math.floor(regexBudgetMs)),
+                      contextCodeGeneration: { strings: false, wasm: false },
+                    },
+                  ) === true
+                ok = rule.operator === 'matches' ? matches : !matches
+              }
+              catch {
+                errorCode = 'regexLimit'
+              }
+              finally {
+                regexBudgetMs -= performance.now() - started
+              }
+            }
+            break
+          case 'length':
+            ok
+              = (typeof value === 'string' || Array.isArray(value))
+                && value.length === rule.expected
+            break
+          case 'between':
+            ok
+              = typeof value === 'number'
+                && Array.isArray(rule.expected)
+                && typeof rule.expected[0] === 'number'
+                && typeof rule.expected[1] === 'number'
+                && value >= rule.expected[0]
+                && value <= rule.expected[1]
+            break
+          case 'in':
+          case 'notIn':
+            if (
+              (value === null
+                || typeof value === 'string'
+                || typeof value === 'number'
+                || typeof value === 'boolean')
+              && Array.isArray(rule.expected)
+            ) {
+              const included = rule.expected.includes(value)
+              ok = rule.operator === 'in' ? included : !included
+            }
+            break
+          case 'isString':
+            ok = typeof value === 'string'
+            break
+          case 'isNumber':
+            ok = typeof value === 'number' && Number.isFinite(value)
+            break
+          case 'isBoolean':
+            ok = typeof value === 'boolean'
+            break
+          case 'isArray':
+            ok = Array.isArray(value)
+            break
+          case 'isObject':
+            ok
+              = value !== null
+                && typeof value === 'object'
+                && !Array.isArray(value)
+            break
+          case 'isNull':
+            ok = value === null
             break
           default:
             if (
@@ -133,11 +228,12 @@ export function evaluateHttpRuntime(
         ...(!ok
           ? {
               errorCode:
-                value === missing
+                errorCode
+                ?? (value === missing
                   ? rule.source === 'json' && jsonError
                     ? jsonError
                     : 'missing'
-                  : 'mismatch',
+                  : 'mismatch'),
             }
           : {}),
       }

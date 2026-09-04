@@ -25,6 +25,108 @@ const response: HttpExecuteResult = {
 }
 
 describe('hTTP declarative runtime', () => {
+  it.each([
+    ['matches', 'hello', '^h.*o$', true],
+    ['matches', 'hello', '^no$', false],
+    ['notMatches', 'hello', '^no$', true],
+    ['notMatches', 200, '^no$', false],
+    ['notContains', 'hello', 'x', true],
+    ['notContains', 'hello', 'ell', false],
+    ['startsWith', 'hello', 'he', true],
+    ['endsWith', 'hello', 'lo', true],
+    ['startsWith', 'hello', 'ell', false],
+    ['length', 'hello', 5, true],
+    ['length', [1, 2], 2, true],
+    ['length', '', 0, true],
+    ['length', { length: 2 }, 2, false],
+    ['between', 200, [200, 299], true],
+    ['between', 299, [200, 299], true],
+    ['between', 300, [200, 299], false],
+    ['between', '200', [200, 299], false],
+    ['in', 200, [200, 201], true],
+    ['in', '200', [200, 201], false],
+    ['in', null, [null], true],
+    ['notIn', 500, [200, 201], true],
+    ['notIn', 200, [200, 201], false],
+    ['notIn', {}, [], false],
+    ['isString', '200', undefined, true],
+    ['isString', 200, undefined, false],
+    ['isNumber', 200, undefined, true],
+    ['isNumber', '200', undefined, false],
+    ['isBoolean', false, undefined, true],
+    ['isBoolean', 0, undefined, false],
+    ['isArray', [], undefined, true],
+    ['isArray', {}, undefined, false],
+    ['isObject', {}, undefined, true],
+    ['isObject', [], undefined, false],
+    ['isObject', null, undefined, false],
+    ['isNull', null, undefined, true],
+    ['isNull', false, undefined, false],
+  ] satisfies [
+    HttpRuntime['assertions'][number]['operator'],
+    unknown,
+    HttpRuntime['assertions'][number]['expected'],
+    boolean,
+  ][])('evaluates %s for %j against %j', (operator, value, expected, ok) => {
+    const runtime: HttpRuntime = {
+      ...emptyHttpRuntime(),
+      assertions: [{ name: 'check', source: 'json', operator, expected }],
+    }
+    expect(
+      evaluateHttpRuntime(runtime, { ...response, body: JSON.stringify(value) })
+        .results
+        .assertions[0]
+        ?.ok,
+    ).toBe(ok)
+  })
+
+  it.each(['notMatches', 'notIn', 'isNull'] as const)(
+    'does not pass %s for missing data',
+    (operator) => {
+      const runtime: HttpRuntime = {
+        ...emptyHttpRuntime(),
+        assertions: [
+          {
+            name: 'missing',
+            source: 'json',
+            path: '/missing',
+            operator,
+            expected: operator === 'notIn' ? [] : 'x',
+          },
+        ],
+      }
+      expect(
+        evaluateHttpRuntime(runtime, response).results.assertions[0],
+      ).toMatchObject({ ok: false, errorCode: 'missing' })
+      expect(
+        evaluateHttpRuntime(runtime, { ...response, body: '{' }).results
+          .assertions[0],
+      ).toMatchObject({ ok: false, errorCode: 'invalidJson' })
+    },
+  )
+
+  it('bounds pathological regex and never turns execution failure into a negative-match pass', () => {
+    const runtime: HttpRuntime = {
+      ...emptyHttpRuntime(),
+      assertions: [
+        {
+          name: 'regex',
+          source: 'json',
+          operator: 'notMatches',
+          expected: '^(a+)+$',
+        },
+      ],
+    }
+    const started = performance.now()
+    expect(
+      evaluateHttpRuntime(runtime, {
+        ...response,
+        body: JSON.stringify(`${'a'.repeat(10000)}!`),
+      }).results.assertions[0],
+    ).toMatchObject({ ok: false, errorCode: 'regexLimit' })
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
+
   it('reads JSON Pointer own properties and distinguishes missing from null', () => {
     const runtime: HttpRuntime = {
       ...emptyHttpRuntime(),

@@ -2,8 +2,11 @@
 import type { Event as ElectronEvent } from 'electron'
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
+import { resolveApiSessionToken } from './api/sessionAuth'
+import { registerApiSessionTokenHandler } from './api/sessionTokenIpc'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
@@ -130,7 +133,7 @@ else {
   app.setAsDefaultProtocolClient('masscode')
 }
 
-function createWindow() {
+function createWindow(sessionToken: string) {
   const bounds = normalizeWindowBounds(
     store.app.get('window.bounds'),
     screen.getAllDisplays(),
@@ -149,8 +152,20 @@ function createWindow() {
 
   Menu.setApplicationMenu(createMainMenu())
 
+  const rendererUrl = isDev
+    ? `http://localhost:${process.env.DEV_PORT || 5177}`
+    : pathToFileURL(
+        path.join(__dirname, '../../build/renderer/index.html'),
+      ).toString()
+
+  registerApiSessionTokenHandler(
+    mainWindow.webContents,
+    rendererUrl,
+    sessionToken,
+  )
+
   if (isDev) {
-    mainWindow.loadURL(`http://localhost:${process.env.DEV_PORT || 5177}`)
+    mainWindow.loadURL(rendererUrl)
     mainWindow.webContents.openDevTools()
   }
   else {
@@ -181,6 +196,11 @@ if (!gotTheLock) {
 }
 else {
   app.whenReady().then(async () => {
+    const apiSessionToken = resolveApiSessionToken(
+      isDev && !app.isPackaged,
+      process.env.MASSCODE_API_TOKEN,
+    )
+
     protocol.handle('masscode', async (request) => {
       const url = new URL(request.url)
 
@@ -282,7 +302,7 @@ else {
     }
 
     try {
-      createWindow()
+      createWindow(apiSessionToken)
     }
     catch (error) {
       log('Error creating window', error)
@@ -310,7 +330,7 @@ else {
     }
 
     try {
-      await initApi()
+      await initApi(apiSessionToken)
     }
     catch (error) {
       log('Error initializing API', error)

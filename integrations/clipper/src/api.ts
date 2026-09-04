@@ -105,7 +105,7 @@ export async function postCapture(
   request: CaptureRequest,
 ): Promise<CaptureResponse> {
   const response = await fetch(
-    `http://localhost:${settings.apiPort}/captures/`,
+    `http://127.0.0.1:${settings.apiPort}/captures/`,
     {
       body: JSON.stringify(request),
       headers: {

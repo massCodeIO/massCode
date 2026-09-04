@@ -1,65 +1,28 @@
-import { cors } from '@elysiajs/cors'
-import { swagger } from '@elysiajs/swagger'
 import { app as electronApp } from 'electron'
 import { Elysia } from 'elysia'
 import { store } from '../store'
 import { importEsm } from '../utils'
-import captures from './routes/captures'
-import folders from './routes/folders'
-import httpEnvironments from './routes/http-environments'
-import httpFolders from './routes/http-folders'
-import httpHistory from './routes/http-history'
-import httpImport from './routes/http-import'
-import httpRequests from './routes/http-requests'
-import imports from './routes/imports'
-import internalLinks from './routes/internal-links'
-import noteFolders from './routes/note-folders'
-import noteTags from './routes/note-tags'
-import notes from './routes/notes'
-import notesDashboard from './routes/notes-dashboard'
-import notesGraph from './routes/notes-graph'
-import snippets from './routes/snippets'
-import system from './routes/system'
-import tags from './routes/tags'
+import { createApiApp } from './app'
 
-export async function initApi() {
+export async function initApi(sessionToken: string) {
   // поскольку @elysiajs/node использует crossws, который работает только в ESM среде,
   // то делаем хак с динамическим импортом
   const { node } = await importEsm('@elysiajs/node')
 
+  const port = store.preferences.get('api.port') as number
   const app = new Elysia({ adapter: node() })
-  const port = store.preferences.get('api.port')
 
-  app
-    .use(cors({ origin: '*' }))
-    .use(
-      swagger({
-        documentation: {
-          info: {
-            title: 'massCode API',
-            version: electronApp.getVersion(),
-          },
-        },
-      }),
-    )
-    .use(captures)
-    .use(snippets)
-    .use(folders)
-    .use(system)
-    .use(tags)
-    .use(notesDashboard)
-    .use(notesGraph)
-    .use(notes)
-    .use(noteFolders)
-    .use(noteTags)
-    .use(internalLinks)
-    .use(httpFolders)
-    .use(httpRequests)
-    .use(httpEnvironments)
-    .use(httpHistory)
-    .use(httpImport)
-    .use(imports)
-    .listen(port)
+  createApiApp(
+    {
+      port,
+      sessionToken,
+      version: electronApp.getVersion(),
+    },
+    app,
+  ).listen({
+    hostname: '127.0.0.1',
+    port,
+  })
 
   // eslint-disable-next-line no-console
   console.log(`\nAPI started on port ${port}\n`)

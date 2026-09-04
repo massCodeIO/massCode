@@ -21,7 +21,7 @@ function getErrorMessage(error) {
 
 function parseArgs(argv) {
   const options = {
-    baseUrl: process.env.MASSCODE_API_URL || 'http://localhost:4321',
+    baseUrl: process.env.MASSCODE_API_URL || 'http://127.0.0.1:4321',
     fragments: 3,
     keep: false,
     query: '',
@@ -74,10 +74,20 @@ function parseArgs(argv) {
 
 async function requestJson(baseUrl, pathname, options) {
   const requestUrl = new URL(pathname, baseUrl)
+  const headers = new Headers(options?.headers)
+  const apiToken = process.env.MASSCODE_API_TOKEN
+
+  if (apiToken) {
+    headers.set('authorization', `Bearer ${apiToken}`)
+  }
+
   let response
 
   try {
-    response = await fetch(requestUrl, options)
+    response = await fetch(requestUrl, {
+      ...options,
+      headers,
+    })
   }
   catch (error) {
     const details = getErrorMessage(error)

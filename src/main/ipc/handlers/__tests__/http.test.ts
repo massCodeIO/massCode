@@ -32,12 +32,17 @@ vi.mock('../../../http/secrets', () => ({
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
     environments: {
+      getActiveEnvironmentId: () => null,
       getEnvironments: () => [],
     },
     history: {
       appendEntry: vi.fn(),
     },
   }),
+}))
+
+vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
+  getVaultPath: () => '/test-vault',
 }))
 
 describe('formatHttpRequestError', () => {

@@ -1,3 +1,5 @@
+import type { HttpRuntimeResult } from '../../shared/httpRuntime'
+
 export type HttpMethod =
   | 'GET'
   | 'POST'
@@ -85,6 +87,12 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  runtimeResults?: {
+    extractions: HttpRuntimeResult[]
+    assertions: HttpRuntimeResult[]
+  }
+  sessionNames?: string[]
+  discarded?: boolean
   status: number | null
   statusText: string
   headers: HttpHeaderEntry[]

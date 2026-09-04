@@ -3,6 +3,7 @@ import type {
   HttpRequestsResponse,
 } from '../dto/http-requests'
 import { Elysia } from 'elysia'
+import { isHttpRuntime } from '../../../shared/httpRuntime'
 import { useHttpStorage } from '../../storage'
 import {
   commonAddResponse,
@@ -131,6 +132,39 @@ app
       detail: {
         tags: ['HTTP Requests'],
       },
+    },
+  )
+  .put(
+    '/:id/runtime',
+    ({ params, body, status }) => {
+      if (!isHttpRuntime(body.runtime))
+        return status(400, { message: 'Invalid runtime rules' })
+      try {
+        const { notFound, runtimeRevision }
+          = useHttpStorage().requests.updateRuntime(
+            Number(params.id),
+            body.runtime,
+            body.expectedRevision,
+          )
+        if (notFound)
+          return status(404, { message: 'Request not found' })
+        return { runtimeRevision: runtimeRevision! }
+      }
+      catch {
+        return status(409, {
+          message: 'Runtime unavailable or changed on disk',
+        })
+      }
+    },
+    {
+      body: 'httpRuntimeSave',
+      response: {
+        200: 'httpRuntimeSaveResponse',
+        400: commonMessageResponse,
+        404: commonMessageResponse,
+        409: commonMessageResponse,
+      },
+      detail: { tags: ['HTTP Requests'] },
     },
   )
   .patch(

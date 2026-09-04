@@ -87,6 +87,8 @@ type SpacesAction =
   | 'math:read'
   | 'math:write'
   | 'http:execute'
+  | 'http:clear-session'
+  | 'http:session-names'
   | 'http:secrets-status'
   | 'http:set-secret'
   | 'http:delete-secret'

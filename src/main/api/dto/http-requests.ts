@@ -75,7 +75,53 @@ const httpRequestsUpdate = t.Object({
   description: t.Optional(t.String()),
 })
 
+const httpRuntime = t.Object({
+  version: t.Literal(1),
+  extractions: t.Array(
+    t.Object({
+      name: t.String(),
+      source: t.Union([t.Literal('json'), t.Literal('header')]),
+      path: t.String(),
+    }),
+    { maxItems: 100 },
+  ),
+  assertions: t.Array(
+    t.Object({
+      name: t.String(),
+      source: t.Union([
+        t.Literal('json'),
+        t.Literal('header'),
+        t.Literal('status'),
+        t.Literal('durationMs'),
+      ]),
+      path: t.Optional(t.String()),
+      operator: t.Union([
+        t.Literal('eq'),
+        t.Literal('neq'),
+        t.Literal('exists'),
+        t.Literal('contains'),
+        t.Literal('gt'),
+        t.Literal('gte'),
+        t.Literal('lt'),
+        t.Literal('lte'),
+      ]),
+      expected: t.Optional(
+        t.Union([t.String(), t.Number(), t.Boolean(), t.Null()]),
+      ),
+    }),
+    { maxItems: 100 },
+  ),
+})
+
 const httpRequestItem = t.Object({
+  runtimeRevision: t.Union([t.String(), t.Null()]),
+  runtime: t.Union([httpRuntime, t.Null()]),
+  runtimeState: t.Union([
+    t.Literal('ready'),
+    t.Literal('pending'),
+    t.Literal('invalid'),
+    t.Literal('unsupported'),
+  ]),
   id: t.Number(),
   name: t.String(),
   folderId: t.Union([t.Number(), t.Null()]),
@@ -132,6 +178,12 @@ const httpRequestsQuery = t.Object({
 })
 
 export const httpRequestsDTO = new Elysia().model({
+  httpRuntime,
+  httpRuntimeSave: t.Object({
+    runtime: httpRuntime,
+    expectedRevision: t.String(),
+  }),
+  httpRuntimeSaveResponse: t.Object({ runtimeRevision: t.String() }),
   httpRequestItemResponse: httpRequestItem,
   httpRequestsAdd,
   httpRequestsQuery,

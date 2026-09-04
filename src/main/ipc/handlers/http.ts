@@ -20,11 +20,21 @@ import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
 import { Agent, request as undiciRequest } from 'undici'
+import { emptyHttpRuntime } from '../../../shared/httpRuntime'
 import {
   HTTP_SECRET_MASK,
   interpolateHttpVariables,
   maskHttpSecretVariables,
 } from '../../../shared/httpVariables'
+import { evaluateHttpRuntime } from '../../http/runtime/evaluate'
+import {
+  beginHttpExecution,
+  commitHttpSession,
+  finishHttpExecution,
+  getHttpSession,
+  isHttpSessionCurrent,
+  resetHttpSession,
+} from '../../http/runtime/session'
 import {
   deleteEnvironmentSecret,
   getEnvironmentSecrets,
@@ -33,6 +43,7 @@ import {
   setEnvironmentSecret,
 } from '../../http/secrets'
 import { useHttpStorage } from '../../storage'
+import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { log } from '../../utils'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
@@ -457,9 +468,36 @@ export function resolveEnvironment(
 async function executeHttpRequest(
   payload: HttpExecutePayload,
 ): Promise<HttpExecuteResult> {
+  const vaultPath = getVaultPath()
+  const storage = useHttpStorage()
+  const saved
+    = payload.requestId === null
+      ? null
+      : storage.requests.getRequestById(payload.requestId)
+  if (
+    payload.requestId !== null
+    && (!saved || saved.pendingCloudDownload || saved.runtimeState !== 'ready')
+  ) {
+    throw new Error('HTTP_RUNTIME_UNAVAILABLE')
+  }
+  if (storage.environments.getActiveEnvironmentId() !== payload.environmentId)
+    throw new Error('HTTP_CONTEXT_CHANGED')
+  const runtime = saved?.runtime ?? emptyHttpRuntime()
+  const session = getHttpSession(vaultPath, payload.environmentId)
+  const current = () =>
+    isHttpSessionCurrent(session.generation)
+    && getVaultPath() === vaultPath
+    && storage.environments.getActiveEnvironmentId() === payload.environmentId
+  const sessionSecrets = Object.values(session.variables).filter(Boolean)
   const { maskedVariables, secretValues, variables } = resolveEnvironment(
     payload.environmentId,
   )
+  Object.assign(variables, session.variables)
+  Object.assign(
+    maskedVariables,
+    maskHttpSecretVariables(session.variables, session.names),
+  )
+  secretValues.push(...sessionSecrets)
   const interpolated = interpolateRequest(payload.request, variables)
 
   // URL для истории строится по той же схеме, но из маскированных значений:
@@ -475,39 +513,7 @@ async function executeHttpRequest(
     }
   }
 
-  const headersWithAuth = applyAuth(interpolated.auth, interpolated.headers)
-  const headersObj = toHeadersObject(headersWithAuth)
-  const built = buildBody(
-    interpolated.bodyType,
-    interpolated.body,
-    interpolated.formData,
-  )
-
-  const hasContentType = Object.keys(headersObj).some(
-    k => k.toLowerCase() === 'content-type',
-  )
-  if (!hasContentType && built.contentType) {
-    headersObj['Content-Type'] = built.contentType
-  }
-
-  let finalUrl: string
-  try {
-    finalUrl = buildUrl(interpolated.url, interpolated.query)
-  }
-  catch (error) {
-    return {
-      status: null,
-      statusText: '',
-      headers: [],
-      body: '',
-      bodyKind: 'text',
-      durationMs: 0,
-      sizeBytes: 0,
-      truncated: false,
-      error: error instanceof Error ? error.message : 'Invalid URL',
-    }
-  }
-
+  let finalUrl = ''
   const timeoutMs = payload.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
@@ -515,6 +521,19 @@ async function executeHttpRequest(
   const startedAtPerf = performance.now()
 
   try {
+    const headersWithAuth = applyAuth(interpolated.auth, interpolated.headers)
+    const headersObj = toHeadersObject(headersWithAuth)
+    const built = buildBody(
+      interpolated.bodyType,
+      interpolated.body,
+      interpolated.formData,
+    )
+    const hasContentType = Object.keys(headersObj).some(
+      k => k.toLowerCase() === 'content-type',
+    )
+    if (!hasContentType && built.contentType)
+      headersObj['Content-Type'] = built.contentType
+    finalUrl = buildUrl(interpolated.url, interpolated.query)
     const response = await undiciRequest(finalUrl, {
       method: interpolated.method,
       headers: headersObj,
@@ -548,6 +567,16 @@ async function executeHttpRequest(
       truncated,
     }
 
+    if (!current())
+      return { ...result, body: '', headers: [], discarded: true }
+    const evaluated = evaluateHttpRuntime(runtime, result)
+    commitHttpSession(session.generation, evaluated.values)
+    result.runtimeResults = evaluated.results
+    result.sessionNames = getHttpSession(
+      vaultPath,
+      payload.environmentId,
+    ).names
+
     appendHistory(
       payload,
       buildHistoryUrl(),
@@ -565,14 +594,27 @@ async function executeHttpRequest(
     const message = formatHttpRequestError(error)
     const isAbort = error instanceof Error && error.name === 'AbortError'
 
+    if (!current()) {
+      return {
+        status: null,
+        statusText: '',
+        headers: [],
+        body: '',
+        bodyKind: 'text',
+        durationMs,
+        sizeBytes: 0,
+        truncated: false,
+        discarded: true,
+      }
+    }
+
     const historyUrl = buildHistoryUrl()
-    // Маскируем только копию для истории: она уходит в vault, который
-    // синхронизируется через облако. `error` в ответе остаётся сырым, потому
-    // что renderer показывает его локально и пользователю нужен точный текст.
+    // История уходит в синхронизируемый vault. Ошибки renderer тоже не
+    // должны раскрывать значения session или keychain через диагностику.
     // Сообщение undici может содержать собранный URL целиком, а также голое
     // значение секрета (например `getaddrinfo ENOTFOUND <секретный-хост>`).
     const historyError = maskSecretValues(
-      message.split(finalUrl).join(historyUrl),
+      finalUrl ? message.split(finalUrl).join(historyUrl) : message,
       secretValues,
     )
 
@@ -591,7 +633,7 @@ async function executeHttpRequest(
           : historyError,
     )
 
-    return {
+    const result: HttpExecuteResult = {
       status: null,
       statusText: '',
       headers: [],
@@ -600,8 +642,20 @@ async function executeHttpRequest(
       durationMs,
       sizeBytes: 0,
       truncated: false,
-      error: isAbort ? `Timeout after ${timeoutMs}ms` : message,
+      error: isAbort
+        ? `Timeout after ${timeoutMs}ms`
+        : secretValues.length
+          ? HTTP_SECRET_MASK
+          : message,
     }
+    const evaluated = evaluateHttpRuntime(runtime, result)
+    commitHttpSession(session.generation, evaluated.values)
+    result.runtimeResults = evaluated.results
+    result.sessionNames = getHttpSession(
+      vaultPath,
+      payload.environmentId,
+    ).names
+    return result
   }
   finally {
     clearTimeout(timer)
@@ -786,7 +840,29 @@ function unprotectEnvironmentSecretHandler(
 export function registerHttpHandlers(): void {
   ipcMain.handle(
     'spaces:http:execute',
-    async (_, payload: HttpExecutePayload) => executeHttpRequest(payload),
+    async (_, payload: HttpExecutePayload) => {
+      if (!beginHttpExecution())
+        throw new Error('HTTP_REQUEST_RUNNING')
+      try {
+        return await executeHttpRequest(payload)
+      }
+      finally {
+        finishHttpExecution()
+      }
+    },
+  )
+
+  ipcMain.handle('spaces:http:clear-session', () => {
+    resetHttpSession()
+    return []
+  })
+  ipcMain.handle(
+    'spaces:http:session-names',
+    () =>
+      getHttpSession(
+        getVaultPath(),
+        useHttpStorage().environments.getActiveEnvironmentId(),
+      ).names,
   )
 
   ipcMain.handle('spaces:http:secrets-status', () => ({

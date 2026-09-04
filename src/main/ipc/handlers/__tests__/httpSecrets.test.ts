@@ -59,6 +59,7 @@ vi.mock('../../../http/secrets', () => ({
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
     environments: {
+      getActiveEnvironmentId: () => 1,
       addSecretKey: addSecretKeyMock,
       getEnvironments: () => [
         {
@@ -79,7 +80,17 @@ vi.mock('../../../storage', () => ({
     history: {
       appendEntry: appendEntryMock,
     },
+    requests: {
+      getRequestById: () => ({
+        runtimeState: 'ready',
+        runtime: { version: 1, extractions: [], assertions: [] },
+      }),
+    },
   }),
+}))
+
+vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
+  getVaultPath: () => '/test-vault',
 }))
 
 function getHandler(channel: string) {
@@ -196,8 +207,7 @@ describe('http secrets in request execution', () => {
 
     const [historyEntry] = appendEntryMock.mock.calls[0]
     expect(historyEntry.error).not.toContain(SECRET_HOST)
-    // Ответ в renderer остаётся неизменным: инвариант касается только vault.
-    expect(result.error).toContain(SECRET_HOST)
+    expect(result.error).not.toContain(SECRET_HOST)
   })
 
   it('uses a generic history error when DNS normalizes secret casing', async () => {
@@ -213,7 +223,7 @@ describe('http secrets in request execution', () => {
 
     const [historyEntry] = appendEntryMock.mock.calls[0]
     expect(historyEntry.error).toBe('••••••')
-    expect(result.error).toContain('xn--bcher-kva.example')
+    expect(result.error).toBe('••••••')
   })
 })
 

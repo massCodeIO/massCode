@@ -602,7 +602,93 @@ export interface HttpFoldersUpdate {
   orderIndex?: number;
 }
 
+export interface HttpRuntime {
+  version: 1;
+  /** @maxItems 100 */
+  extractions: {
+    name: string;
+    source: "json" | "header";
+    path: string;
+  }[];
+  /** @maxItems 100 */
+  assertions: {
+    name: string;
+    source: "json" | "header" | "status" | "durationMs";
+    path?: string;
+    operator:
+      | "eq"
+      | "neq"
+      | "exists"
+      | "contains"
+      | "gt"
+      | "gte"
+      | "lt"
+      | "lte";
+    expected?: string | number | boolean | null;
+  }[];
+}
+
+export interface HttpRuntimeSave {
+  runtime: {
+    version: 1;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte";
+      expected?: string | number | boolean | null;
+    }[];
+  };
+  expectedRevision: string;
+}
+
+export interface HttpRuntimeSaveResponse {
+  runtimeRevision: string;
+}
+
 export interface HttpRequestItemResponse {
+  runtimeRevision: string | null;
+  runtime: {
+    version: 1;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte";
+      expected?: string | number | boolean | null;
+    }[];
+  } | null;
+  runtimeState: "ready" | "pending" | "invalid" | "unsupported";
   id: number;
   name: string;
   folderId: number | null;
@@ -1192,7 +1278,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.9.1
+ * @version 5.10.0
  *
  * Development documentation
  */
@@ -2338,6 +2424,32 @@ export class Api<
       this.request<void, any>({
         path: `/http-requests/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PutHttpRequestsByIdRuntime
+     * @request PUT:/http-requests/{id}/runtime
+     */
+    putHttpRequestsByIdRuntime: (
+      id: string,
+      data: HttpRuntimeSave,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpRuntimeSaveResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}/runtime`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

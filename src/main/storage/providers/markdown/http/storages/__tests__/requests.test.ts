@@ -12,6 +12,7 @@ import {
 } from '../../../runtime/shared/cloudFiles'
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
 import { getHttpPaths } from '../../runtime/paths'
+import { requestRuntimePath } from '../../runtime/requestRuntime'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
@@ -130,6 +131,113 @@ describe('http requests storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it('persists runtime independently across rename, move, trash and hard delete', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Login' })
+    const original = storage.getRequestById(id)!
+    const rules = {
+      version: 1 as const,
+      extractions: [{ name: 'token', source: 'json' as const, path: '/token' }],
+      assertions: [],
+    }
+    expect(original.runtimeState).toBe('ready')
+    expect(original.runtime?.extractions).toEqual([])
+    storage.updateRuntime(id, rules, original.runtimeRevision!)
+    const sidecar = requestRuntimePath(
+      getHttpPaths(tempVaultPath).httpRoot,
+      original,
+    )
+    expect(fs.existsSync(sidecar)).toBe(true)
+    const folder = createHttpFoldersStorage().createFolder({ name: 'API' })
+    storage.updateRequest(id, {
+      name: 'Renamed',
+      folderId: folder.id,
+      isDeleted: 1,
+    })
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    storage.updateRequest(id, { isDeleted: 0 })
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    expect(storage.getRequests()[0]).not.toHaveProperty('runtime')
+    storage.deleteRequest(id)
+    expect(fs.existsSync(sidecar)).toBe(false)
+  })
+
+  it('preserves unsupported and malformed sidecars and blocks writes', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Runtime' })
+    const sidecar = requestRuntimePath(
+      getHttpPaths(tempVaultPath).httpRoot,
+      storage.getRequestById(id)!,
+    )
+    const rules = { version: 1 as const, extractions: [], assertions: [] }
+    fs.writeFileSync(sidecar, 'version: 2\nfuture: keep\n')
+    expect(storage.getRequestById(id)?.runtimeState).toBe('unsupported')
+    expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
+      'RUNTIME_UNAVAILABLE',
+    )
+    expect(fs.readFileSync(sidecar, 'utf8')).toContain('future: keep')
+    fs.writeFileSync(sidecar, 'version: [invalid')
+    expect(storage.getRequestById(id)?.runtimeState).toBe('invalid')
+    expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
+      'RUNTIME_UNAVAILABLE',
+    )
+  })
+
+  it('does not overwrite a cloud runtime placeholder and cleans runtime from empty trash', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Cloud runtime' })
+    const sidecar = requestRuntimePath(
+      getHttpPaths(tempVaultPath).httpRoot,
+      storage.getRequestById(id)!,
+    )
+    makeSparsePlaceholder(sidecar)
+    setDatalessProbeForTests(absolutePath => absolutePath === sidecar)
+    expect(storage.getRequestById(id)?.runtimeState).toBe('pending')
+    expect(() =>
+      storage.updateRuntime(
+        id,
+        { version: 1, extractions: [], assertions: [] },
+        'missing',
+      ),
+    ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+    expect(fs.statSync(sidecar).size).toBe(4096)
+    storage.updateRequest(id, { isDeleted: 1 })
+    storage.emptyTrash()
+    expect(fs.existsSync(sidecar)).toBe(false)
+  })
+
+  it('rejects stale editor revisions including sidecar creation and deletion', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Revisions' })
+    const initial = storage.getRequestById(id)!
+    const sidecar = requestRuntimePath(
+      getHttpPaths(tempVaultPath).httpRoot,
+      initial,
+    )
+    const rules = { version: 1 as const, extractions: [], assertions: [] }
+    const first = storage.updateRuntime(id, rules, initial.runtimeRevision!)
+    expect(first.runtimeRevision).toBe(
+      storage.getRequestById(id)?.runtimeRevision,
+    )
+    expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
+      'RUNTIME_CONFLICT',
+    )
+    const external = yaml.dump({
+      ...rules,
+      extractions: [{ name: 'external', source: 'json', path: '' }],
+    })
+    fs.writeFileSync(sidecar, external)
+    expect(() =>
+      storage.updateRuntime(id, rules, first.runtimeRevision!),
+    ).toThrow('RUNTIME_CONFLICT')
+    expect(fs.readFileSync(sidecar, 'utf8')).toBe(external)
+    fs.unlinkSync(sidecar)
+    expect(() =>
+      storage.updateRuntime(id, rules, first.runtimeRevision!),
+    ).toThrow('RUNTIME_CONFLICT')
+    expect(fs.existsSync(sidecar)).toBe(false)
   })
 
   it('updates and renames an app-written resident zero-block request', () => {

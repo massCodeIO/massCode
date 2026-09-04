@@ -36,6 +36,11 @@ import {
   writeVerifiedMovedLocalRequestFile,
 } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
+import {
+  readRequestRuntime,
+  removeRequestRuntime,
+  writeRequestRuntime,
+} from '../runtime/requestRuntime'
 import { saveHttpState } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
 
@@ -229,6 +234,24 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       return request
+        ? { ...request, ...readRequestRuntime(paths.httpRoot, request) }
+        : null
+    },
+
+    updateRuntime(id, runtime, expectedRevision) {
+      const paths = resolvePaths()
+      const cache = getCache()
+      assertVaultNotHydrating(cache.state)
+      const request = cache.requestById.get(id)
+      if (!request)
+        return { notFound: true }
+      const runtimeRevision = writeRequestRuntime(
+        paths.httpRoot,
+        request,
+        runtime,
+        expectedRevision,
+      )
+      return { notFound: false, runtimeRevision }
     },
 
     createRequest(input: HttpRequestCreateInput) {
@@ -494,6 +517,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       for (const record of trashRecords) {
+        removeRequestRuntime(paths.httpRoot, record)
         removeRequestFile(paths.httpRoot, record.filePath)
         cache.requestById.delete(record.id)
       }
@@ -517,6 +541,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         return { deleted: false }
       }
 
+      removeRequestRuntime(paths.httpRoot, record)
       removeRequestFile(paths.httpRoot, record.filePath)
       cache.requestById.delete(id)
       state.requests = state.requests.filter(entry => entry.id !== id)

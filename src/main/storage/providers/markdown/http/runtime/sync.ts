@@ -8,6 +8,7 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { resetHttpSession } from '../../../../../http/runtime/session'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
@@ -603,6 +604,7 @@ export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {
 }
 
 export function resetHttpRuntimeCache(): void {
+  resetHttpSession()
   // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
   // продолжили бы попытки по неактивному пути и слали storage-synced.
   const previousHttpRoot = httpRuntimeRef.cache?.paths.httpRoot

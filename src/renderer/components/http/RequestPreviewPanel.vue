@@ -9,6 +9,8 @@ const props = defineProps<{
 }>()
 
 const viewerLanguage = computed(() => {
+  if (props.format === 'fetch' || props.format === 'axios')
+    return 'javascript'
   return props.format === 'http' ? 'http' : 'shell'
 })
 </script>

@@ -211,7 +211,9 @@
       "label": "Формат превью по умолчанию",
       "description": "Формат, который выбран по умолчанию в панели превью запроса.",
       "http": "HTTP",
-      "curl": "cURL"
+      "curl": "cURL",
+      "fetch": "fetch",
+      "axios": "axios"
     },
     "autoSwitchToResponse": {
       "label": "Показывать ответ после отправки",

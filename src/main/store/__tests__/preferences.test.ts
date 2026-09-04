@@ -278,6 +278,17 @@ describe('preferences store sanitization', () => {
     expect(preferences.get('http.garbage' as any)).toBeUndefined()
   })
 
+  it.each(['fetch', 'axios'])(
+    'keeps %s as the HTTP preview format',
+    async (format) => {
+      persistedStateByName.preferences = {
+        http: { defaultPreviewFormat: format },
+      }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('http.defaultPreviewFormat' as any)).toBe(format)
+    },
+  )
+
   it('adds sanitized defaults for invalid http settings', async () => {
     persistedStateByName.preferences = {
       http: {

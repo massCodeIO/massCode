@@ -333,7 +333,14 @@
           "empty": "No request preview",
           "formats": {
             "http": "HTTP",
-            "curl": "cURL"
+            "curl": "cURL",
+            "fetch": "fetch",
+            "axios": "axios"
+          },
+          "warnings": {
+            "multipartFiles": "Pass File or Blob objects to sendRequest in field order. Local file paths cannot be copied into browser code.",
+            "fetchBody": "Fetch does not support a body for GET or HEAD. Change the method or remove the body before running this code.",
+            "multipartContentType": "The Content-Type header is omitted so FormData can generate its multipart boundary."
           }
         },
         "response": {

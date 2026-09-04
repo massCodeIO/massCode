@@ -6,6 +6,7 @@ import { useTheme } from '@/composables'
 import { json } from '@codemirror/lang-json'
 import { StreamLanguage } from '@codemirror/language'
 import { http } from '@codemirror/legacy-modes/mode/http'
+import { javascript } from '@codemirror/legacy-modes/mode/javascript'
 import { shell } from '@codemirror/legacy-modes/mode/shell'
 import { EditorState } from '@codemirror/state'
 import {
@@ -16,7 +17,7 @@ import {
   lineNumbers,
 } from '@codemirror/view'
 
-type CodeViewerLanguage = 'plain' | 'json' | 'http' | 'shell'
+type CodeViewerLanguage = 'plain' | 'json' | 'http' | 'shell' | 'javascript'
 
 const props = withDefaults(
   defineProps<{
@@ -124,6 +125,9 @@ function createEditorState(doc: string): EditorState {
   }
   else if (props.language === 'shell') {
     extensions.push(StreamLanguage.define(shell))
+  }
+  else if (props.language === 'javascript') {
+    extensions.push(StreamLanguage.define(javascript))
   }
 
   return EditorState.create({ doc, extensions })

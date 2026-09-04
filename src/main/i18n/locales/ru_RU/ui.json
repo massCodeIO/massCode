@@ -336,7 +336,14 @@
           "empty": "Нет превью запроса",
           "formats": {
             "http": "HTTP",
-            "curl": "cURL"
+            "curl": "cURL",
+            "fetch": "fetch",
+            "axios": "axios"
+          },
+          "warnings": {
+            "multipartFiles": "Передайте объекты File или Blob в sendRequest в порядке полей. Локальные пути к файлам нельзя перенести в браузерный код.",
+            "fetchBody": "Fetch не поддерживает тело в GET и HEAD. Измените метод или удалите тело перед запуском кода.",
+            "multipartContentType": "Заголовок Content-Type пропущен, чтобы FormData сформировал границу multipart."
           }
         },
         "response": {

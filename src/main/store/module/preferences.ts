@@ -235,7 +235,7 @@ function sanitizeHttpSettings(value: unknown): HttpSettings {
     defaultPreviewFormat: readEnum(
       source,
       'defaultPreviewFormat',
-      ['http', 'curl'] as const,
+      ['http', 'curl', 'fetch', 'axios'] as const,
       HTTP_DEFAULTS.defaultPreviewFormat,
     ),
     autoSwitchToResponse:

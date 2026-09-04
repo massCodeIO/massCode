@@ -12,7 +12,10 @@ import {
 } from '@/composables'
 import { i18n } from '@/electron'
 import { Copy } from 'lucide-vue-next'
-import { buildRequestPreview } from './requestPreview'
+import {
+  buildRequestPreview,
+  getRequestPreviewWarnings,
+} from './requestPreview'
 
 type BottomPanelTab = 'preview' | 'response'
 
@@ -38,6 +41,12 @@ const previewContent = computed(() => {
     variables: activeEnvironmentVariables.value,
   })
 })
+
+const previewWarnings = computed(() =>
+  currentDraft.value
+    ? getRequestPreviewWarnings(currentDraft.value, previewFormat.value)
+    : [],
+)
 
 const statusClass = computed(() => {
   const status = lastResponse.value?.status
@@ -124,6 +133,12 @@ function copyPreview() {
             <Select.SelectItem value="curl">
               {{ i18n.t("spaces.http.editor.preview.formats.curl") }}
             </Select.SelectItem>
+            <Select.SelectItem value="fetch">
+              {{ i18n.t("spaces.http.editor.preview.formats.fetch") }}
+            </Select.SelectItem>
+            <Select.SelectItem value="axios">
+              {{ i18n.t("spaces.http.editor.preview.formats.axios") }}
+            </Select.SelectItem>
           </Select.SelectContent>
         </Select.Select>
 
@@ -182,9 +197,18 @@ function copyPreview() {
     <div class="min-h-0 flex-1">
       <Tabs.TabsContent
         value="preview"
-        class="m-0 h-full"
+        class="m-0 flex h-full flex-col"
       >
+        <UiText
+          v-for="warning in previewWarnings"
+          :key="warning"
+          variant="caption"
+          class="border-border border-b px-3 py-2"
+        >
+          {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
+        </UiText>
         <HttpRequestPreviewPanel
+          class="min-h-0 flex-1"
           :content="previewContent"
           :format="previewFormat"
           :wrap-lines="settings.wrapLines"

@@ -2,7 +2,7 @@ import type { HttpRequestDraft } from '@/composables'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
 import { interpolateHttpVariables } from '~/shared/httpVariables'
 
-export type HttpRequestPreviewFormat = 'http' | 'curl'
+export type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
 interface HttpRequestPreviewOptions {
   variables?: Record<string, string>
@@ -289,7 +289,102 @@ export function buildRequestPreview(
   format: HttpRequestPreviewFormat,
   options: HttpRequestPreviewOptions = {},
 ): string {
-  return format === 'http'
-    ? buildHttpPreview(draft, options)
-    : buildCurlPreview(draft, options)
+  if (format === 'http')
+    return buildHttpPreview(draft, options)
+  if (format === 'curl')
+    return buildCurlPreview(draft, options)
+  return buildJavaScriptPreview(draft, format, options)
+}
+
+export function getRequestPreviewWarnings(
+  draft: HttpRequestDraft,
+  format: HttpRequestPreviewFormat,
+): ('multipartFiles' | 'fetchBody' | 'multipartContentType')[] {
+  if (format !== 'fetch' && format !== 'axios')
+    return []
+  const warnings: ('multipartFiles' | 'fetchBody' | 'multipartContentType')[]
+    = []
+  if (draft.bodyType === 'multipart') {
+    if (draft.formData.some(entry => entry.key && entry.type === 'file'))
+      warnings.push('multipartFiles')
+    if (
+      draft.headers.some(
+        entry =>
+          entry.enabled !== false && entry.key.toLowerCase() === 'content-type',
+      )
+    ) {
+      warnings.push('multipartContentType')
+    }
+  }
+  if (
+    format === 'fetch'
+    && (draft.method === 'GET' || draft.method === 'HEAD')
+    && draft.bodyType !== 'none'
+  ) {
+    warnings.push('fetchBody')
+  }
+  return warnings
+}
+
+export function buildJavaScriptPreview(
+  draft: HttpRequestDraft,
+  format: 'fetch' | 'axios',
+  options: HttpRequestPreviewOptions = {},
+): string {
+  const previewDraft = interpolateDraft(draft, options.variables)
+  const multipart = previewDraft.bodyType === 'multipart'
+  const headers = new Map<string, { key: string, value: string }>()
+  for (const header of getPreviewHeaders(previewDraft)) {
+    const key = header.key.toLowerCase()
+    // FormData owns the boundary; a copied content type would invalidate it.
+    if (multipart && key === 'content-type')
+      continue
+    headers.set(key, header)
+  }
+  const headerObject = Object.fromEntries(
+    [...headers.values()].map(({ key, value }) => [key, value]),
+  )
+  const lines: string[] = []
+  const files: string[] = []
+  if (multipart) {
+    lines.push('const body = new FormData();')
+    for (const entry of previewDraft.formData.filter(entry => entry.key)) {
+      let value = JSON.stringify(entry.value)
+      if (entry.type === 'file') {
+        value = `file${files.length + 1}`
+        files.push(value)
+      }
+      lines.push(`body.append(${JSON.stringify(entry.key)}, ${value});`)
+    }
+    lines.push('')
+  }
+  const config: Record<string, unknown> = {
+    ...(format === 'axios' ? { url: buildPreviewUrl(previewDraft) } : {}),
+    method: previewDraft.method,
+    headers: headerObject,
+  }
+  const serialized = JSON.stringify(config, null, 2).split('\n')
+  if (previewDraft.bodyType !== 'none' && (multipart || previewDraft.body)) {
+    serialized[serialized.length - 2] += ','
+    serialized.splice(
+      serialized.length - 1,
+      0,
+      `  "${format === 'fetch' ? 'body' : 'data'}": ${multipart ? 'body' : JSON.stringify(previewDraft.body)}`,
+    )
+  }
+  const call
+    = format === 'fetch'
+      ? `fetch(${JSON.stringify(buildPreviewUrl(previewDraft))}, ${serialized.join('\n')})`
+      : `axios(${serialized.join('\n')})`
+  lines.push(`const response = await ${call};`)
+  const imports = format === 'axios' ? 'import axios from "axios";\n\n' : ''
+  if (files.length) {
+    lines.push('return response;')
+    return `${imports}async function sendRequest(${files.join(', ')}) {\n${lines
+      .join('\n')
+      .split('\n')
+      .map(line => (line ? `  ${line}` : ''))
+      .join('\n')}\n}`
+  }
+  return imports + lines.join('\n')
 }

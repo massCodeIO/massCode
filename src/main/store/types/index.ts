@@ -228,7 +228,7 @@ export interface MathSettings {
 
 export interface HttpSettings {
   wrapLines: boolean
-  defaultPreviewFormat: 'http' | 'curl'
+  defaultPreviewFormat: 'http' | 'curl' | 'fetch' | 'axios'
   autoSwitchToResponse: boolean
   skipCertificateVerification: boolean
 }

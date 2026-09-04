@@ -34,6 +34,12 @@ const { settings } = useHttpSettings()
             <Select.SelectItem value="curl">
               {{ i18n.t("preferences:http.defaultPreviewFormat.curl") }}
             </Select.SelectItem>
+            <Select.SelectItem value="fetch">
+              {{ i18n.t("preferences:http.defaultPreviewFormat.fetch") }}
+            </Select.SelectItem>
+            <Select.SelectItem value="axios">
+              {{ i18n.t("preferences:http.defaultPreviewFormat.axios") }}
+            </Select.SelectItem>
           </Select.SelectContent>
         </Select.Select>
         <template #description>

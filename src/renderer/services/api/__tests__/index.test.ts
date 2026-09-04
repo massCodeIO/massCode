@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const context = vi.hoisted(() => ({
-  invoke: vi.fn(async () => 'mc_session_renderer-token'),
+  invoke: vi.fn(async () => ({
+    status: 200,
+    statusText: 'OK',
+    headers: [['content-type', 'application/json']],
+    body: new TextEncoder().encode('{}').buffer,
+  })),
 }))
 
 vi.mock('@/electron', () => ({
@@ -18,12 +23,12 @@ vi.mock('@/composables/useSonner', () => ({
   useSonner: vi.fn(),
 }))
 
-describe('renderer API authentication', () => {
+describe('renderer API transport', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('lazily reuses the IPC session token for API requests', async () => {
+  it('uses scoped IPC without fetching or exposing a bearer in renderer', async () => {
     const fetch = vi.fn<(request: Request) => Promise<Response>>(
       async () => new Response(null, { status: 200 }),
     )
@@ -35,20 +40,17 @@ describe('renderer API authentication', () => {
     await api.system.getSystemStorageVaultPath()
     await api.system.getSystemStorageVaultPath()
 
-    expect(context.invoke).toHaveBeenCalledTimes(1)
+    expect(context.invoke).toHaveBeenCalledTimes(2)
     expect(context.invoke).toHaveBeenCalledWith(
-      'system:api-session-token',
-      undefined,
+      'system:api-request',
+      expect.objectContaining({
+        url: 'http://127.0.0.1:4321/system/storage-vault-path',
+        method: 'GET',
+        body: undefined,
+      }),
     )
-    expect(fetch).toHaveBeenCalledTimes(2)
-
-    for (const [request] of fetch.mock.calls) {
-      expect(request.url).toBe(
-        'http://127.0.0.1:4321/system/storage-vault-path',
-      )
-      expect(request.headers.get('authorization')).toBe(
-        'Bearer mc_session_renderer-token',
-      )
-    }
+    expect(fetch).not.toHaveBeenCalled()
+    expect(JSON.stringify(context.invoke.mock.calls)).not.toContain('Bearer')
+    vi.unstubAllGlobals()
   })
 })

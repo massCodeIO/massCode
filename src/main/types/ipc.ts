@@ -44,7 +44,7 @@ type DBAction = 'migrate-to-markdown'
 
 type SystemAction =
   | 'activate-license'
-  | 'api-session-token'
+  | 'api-request'
   | 'api-token-generate'
   | 'api-token-revoke'
   | 'currency-rates'

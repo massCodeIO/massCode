@@ -5,8 +5,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen } from 'electron'
 import { initApi } from './api'
+import { registerApiRequestHandler } from './api/requestIpc'
 import { resolveApiSessionToken } from './api/sessionAuth'
-import { registerApiSessionTokenHandler } from './api/sessionTokenIpc'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
@@ -30,6 +30,7 @@ import { startTasksCleanupScheduler, stopTasksCleanupScheduler } from './tasks'
 import { checkForUpdates } from './updates'
 import { isSqliteFile, log } from './utils'
 import { DEFAULT_WINDOW_BOUNDS, normalizeWindowBounds } from './windowBounds'
+import { mainWindowWebPreferences } from './windowSecurity'
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
@@ -144,9 +145,8 @@ function createWindow(sessionToken: string) {
     ...bounds,
     titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
     webPreferences: {
+      ...mainWindowWebPreferences,
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      webSecurity: false,
     },
   })
 
@@ -158,10 +158,11 @@ function createWindow(sessionToken: string) {
         path.join(__dirname, '../../build/renderer/index.html'),
       ).toString()
 
-  registerApiSessionTokenHandler(
+  registerApiRequestHandler(
     mainWindow.webContents,
     rendererUrl,
     sessionToken,
+    store.preferences.get('api.port') as number,
   )
 
   if (isDev) {

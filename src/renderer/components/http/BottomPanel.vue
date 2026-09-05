@@ -19,7 +19,7 @@ import {
 
 type BottomPanelTab = 'preview' | 'response'
 
-const { currentDraft } = useHttpRequests()
+const { currentDraft, currentRequest } = useHttpRequests()
 const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const { settings } = useHttpSettings()
@@ -39,6 +39,7 @@ const previewContent = computed(() => {
     return ''
   try {
     return buildRequestPreview(currentDraft.value, previewFormat.value, {
+      name: currentRequest.value?.name,
       variables: activeEnvironmentVariables.value,
     })
   }

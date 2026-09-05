@@ -26,6 +26,7 @@ async function setup(options: SetupOptions = {}) {
   const searchQuery = ref(options.searchQuery ?? '')
   const getHttpRequests = vi.fn(async () => ({ data: [] }))
   const getHttpRequestsById = vi.fn(async () => ({ data: null as unknown }))
+  const postHttpRequests = vi.fn(async () => ({ data: { id: 2 } }))
   const patchHttpRequestsById = vi.fn<
     (id: string, data: unknown) => Promise<object>
   >(async () => ({}))
@@ -70,7 +71,7 @@ async function setup(options: SetupOptions = {}) {
         getHttpRequests,
         getHttpRequestsById,
         patchHttpRequestsById,
-        postHttpRequests: vi.fn(),
+        postHttpRequests,
       },
     },
   }))
@@ -134,6 +135,90 @@ beforeEach(() => {
 })
 
 describe('useHttpRequests', () => {
+  it('saves names independently without committing or discarding content edits', async () => {
+    const context = await setup()
+    const requests = context.useHttpRequests()
+    const record = buildFullRequest(1, 'Alpha')
+    context.getHttpRequestsById.mockResolvedValueOnce({ data: record })
+    await requests.selectHttpRequest(1)
+    requests.currentDraft.value!.body = 'Unsaved body'
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: { ...record, name: 'Renamed' },
+    })
+    await requests.updateHttpRequest(1, { name: 'Renamed' })
+    expect(context.patchHttpRequestsById).toHaveBeenLastCalledWith('1', {
+      name: 'Renamed',
+    })
+    expect(requests.currentDraft.value!.body).toBe('Unsaved body')
+    expect(requests.currentRequest.value!.name).toBe('Renamed')
+    expect(requests.isCurrentRequestDirty.value).toBe(true)
+
+    await requests.saveCurrentRequest()
+    expect(context.patchHttpRequestsById.mock.lastCall![1]).not.toHaveProperty(
+      'name',
+    )
+    expect(requests.isCurrentRequestDirty.value).toBe(false)
+    expect(requests.currentRequest.value!.name).toBe('Renamed')
+  })
+
+  it('trashes an untouched request from a folder without reporting unsaved changes', async () => {
+    const context = await setup({ folderId: 10 })
+    const requests = context.useHttpRequests()
+    const record = { ...buildFullRequest(1, 'Untitled'), folderId: 10 }
+    context.getHttpRequestsById.mockResolvedValueOnce({ data: record })
+    await requests.selectHttpRequest(1)
+    expect(requests.isCurrentRequestDirty.value).toBe(false)
+    const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+    const dirtyAtNavigation: boolean[] = []
+    httpRuntimeNavigation.confirmLeave = async () => {
+      dirtyAtNavigation.push(requests.isCurrentRequestDirty.value)
+      return !requests.isCurrentRequestDirty.value
+    }
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: { ...record, folderId: null, isDeleted: 1 },
+    })
+
+    await requests.deleteSelectedHttpRequests(record as never)
+    await Promise.resolve()
+
+    expect(context.patchHttpRequestsById).toHaveBeenCalledWith('1', {
+      folderId: null,
+      isDeleted: 1,
+    })
+    expect(dirtyAtNavigation).toEqual([false, false])
+    expect(requests.currentRequest.value).toBeNull()
+
+    context.getHttpRequestsById.mockResolvedValueOnce({
+      data: { ...buildFullRequest(2, 'Next request'), folderId: 10 },
+    })
+    await requests.createHttpRequestAndSelect({ folderId: 10 })
+    expect(requests.currentRequest.value?.id).toBe(2)
+    expect(requests.isCurrentRequestDirty.value).toBe(false)
+    expect(dirtyAtNavigation).toEqual([false, false, false])
+  })
+
+  it('preserves edits made while a metadata refresh is pending', async () => {
+    const context = await setup()
+    const requests = context.useHttpRequests()
+    const record = buildFullRequest(1, 'Alpha')
+    context.getHttpRequestsById.mockResolvedValueOnce({ data: record })
+    await requests.selectHttpRequest(1)
+    let finish!: (value: { data: unknown }) => void
+    context.getHttpRequestsById.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const update = requests.updateHttpRequest(1, { isFavorites: 1 })
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+    requests.currentDraft.value!.description = 'Keep this edit'
+    finish({ data: { ...record, isFavorites: 1 } })
+    await update
+    expect(requests.currentDraft.value!.description).toBe('Keep this edit')
+    expect(requests.isCurrentRequestDirty.value).toBe(true)
+  })
+
   it('keeps edits local until explicit save and updates the baseline without a GET', async () => {
     const context = await setup()
     const {
@@ -242,13 +327,17 @@ describe('useHttpRequests', () => {
 
   it('keeps the editor draft when reloading the selected request fails', async () => {
     const context = await setup()
-    const { selectHttpRequest, currentDraft } = context.useHttpRequests()
+    const { selectHttpRequest } = context.useHttpRequests()
 
     context.getHttpRequestsById.mockResolvedValueOnce({
       data: buildFullRequest(1, 'Alpha'),
     })
     selectHttpRequest(1)
-    await vi.waitFor(() => expect(currentDraft.value?.name).toBe('Alpha'))
+    await vi.waitFor(() =>
+      expect(context.useHttpRequests().currentRequest.value?.name).toBe(
+        'Alpha',
+      ),
+    )
 
     // Транзиентный сбой загрузки не должен очищать форму всё ещё
     // выбранного запроса.
@@ -256,17 +345,13 @@ describe('useHttpRequests', () => {
     selectHttpRequest(1)
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(currentDraft.value?.name).toBe('Alpha')
+    expect(context.useHttpRequests().currentRequest.value?.name).toBe('Alpha')
   })
 
   it('keeps the newly selected request when a save of the previous one races', async () => {
     const context = await setup()
-    const {
-      selectHttpRequest,
-      updateHttpRequest,
-      currentDraft,
-      currentRequest,
-    } = context.useHttpRequests()
+    const { selectHttpRequest, updateHttpRequest, currentRequest }
+      = context.useHttpRequests()
 
     // Загружен запрос A.
     context.getHttpRequestsById.mockResolvedValueOnce({
@@ -295,7 +380,11 @@ describe('useHttpRequests', () => {
     await updateHttpRequest(1, { name: 'Alpha Saved' })
 
     resolveSelection({ data: buildFullRequest(2, 'Bravo') })
-    await vi.waitFor(() => expect(currentDraft.value?.name).toBe('Bravo'))
+    await vi.waitFor(() =>
+      expect(context.useHttpRequests().currentRequest.value?.name).toBe(
+        'Bravo',
+      ),
+    )
     expect(currentRequest.value?.id).toBe(2)
   })
 

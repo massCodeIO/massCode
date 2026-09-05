@@ -11,7 +11,6 @@ function createDraft(
   overrides: Partial<HttpRequestDraft> = {},
 ): HttpRequestDraft {
   return {
-    name: 'Request',
     folderId: null,
     method: 'GET',
     url: 'https://api.example.com/users',
@@ -55,13 +54,13 @@ describe('request preview', () => {
   it('builds Paw-style curl preview with shell-quoted values', () => {
     const preview = buildCurlPreview(
       createDraft({
-        name: 'Create user',
         method: 'POST',
         url: 'https://api.example.com/users?name=Anton',
         headers: [{ key: 'X-Token', value: 'a\'b' }],
         bodyType: 'json',
         body: '{\n  "name": "Anton"\n}',
       }),
+      { name: 'Create user' },
     )
 
     expect(preview).toBe(
@@ -109,7 +108,6 @@ describe('request preview', () => {
   it('interpolates body and form data values in curl preview', () => {
     const jsonPreview = buildCurlPreview(
       createDraft({
-        name: 'Create user',
         method: 'POST',
         url: '{{apiBaseUrl}}/users',
         bodyType: 'json',
@@ -131,7 +129,6 @@ describe('request preview', () => {
 
     const formPreview = buildCurlPreview(
       createDraft({
-        name: 'Upload',
         method: 'POST',
         url: '{{apiBaseUrl}}/upload',
         bodyType: 'multipart',

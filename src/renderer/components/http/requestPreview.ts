@@ -6,6 +6,7 @@ import { interpolateHttpVariables } from '~/shared/httpVariables'
 export type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
 interface HttpRequestPreviewOptions {
+  name?: string
   variables?: Record<string, string>
 }
 
@@ -309,7 +310,7 @@ export function buildCurlPreview(
     .map((line, index) => (index === lines.length - 1 ? line : `${line} \\`))
     .join('\n')
 
-  return [`## ${previewDraft.name}`, command].join('\n')
+  return options.name ? [`## ${options.name}`, command].join('\n') : command
 }
 
 export function buildRequestPreview(

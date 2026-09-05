@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
-  useHttpApp,
   useHttpExecute,
   useHttpRequests,
   useNavigationHistory,
@@ -11,21 +10,14 @@ import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import {
-  getEntryNameConflictMessage,
-  getEntryNameValidationMessage,
-} from '@/utils'
-import {
   ChevronLeft,
   ChevronRight,
   LoaderCircle,
   Send,
   Square,
 } from 'lucide-vue-next'
-import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 
-const { currentDraft, currentRequest, hasSiblingRequestNameConflict }
-  = useHttpRequests()
-const { isFocusedRequestName } = useHttpApp()
+const { currentDraft, currentRequest } = useHttpRequests()
 const { executeCurrentRequest, isExecuting, cancelRequest } = useHttpExecute()
 const {
   saving: runtimeSaving,
@@ -73,43 +65,6 @@ const authIndicator = computed(() => {
   return type
 })
 
-const isNameFocused = ref(false)
-
-const hasNameConflict = computed(() => {
-  if (!currentDraft.value || !currentRequest.value)
-    return false
-  if (getEntryNameValidationIssue(currentDraft.value.name))
-    return false
-  if (
-    currentDraft.value.name.trim().toLowerCase()
-    === currentRequest.value.name.toLowerCase()
-  ) {
-    return false
-  }
-  return hasSiblingRequestNameConflict(
-    currentDraft.value.name,
-    currentRequest.value.id,
-    currentDraft.value.folderId,
-  )
-})
-
-const nameValidationMessage = computed(() => {
-  if (!currentDraft.value)
-    return ''
-  const issueMessage = getEntryNameValidationMessage(
-    currentDraft.value.name,
-    i18n.t.bind(i18n),
-  )
-  if (issueMessage)
-    return issueMessage
-  if (hasNameConflict.value)
-    return getEntryNameConflictMessage('request', i18n.t.bind(i18n))
-  return ''
-})
-
-const isNameValidationTooltipOpen = computed(
-  () => isNameFocused.value && Boolean(nameValidationMessage.value),
-)
 const isHistoryVisible = computed(() => canGoBack.value || canGoForward.value)
 
 function onBackClick() {
@@ -118,23 +73,6 @@ function onBackClick() {
 
 function onForwardClick() {
   void navigateForward()
-}
-
-function onNameFocus() {
-  isNameFocused.value = true
-}
-
-function onNameBlur() {
-  if (
-    currentDraft.value
-    && currentRequest.value
-    && (getEntryNameValidationIssue(currentDraft.value.name)
-      || hasNameConflict.value)
-  ) {
-    currentDraft.value.name = currentRequest.value.name
-  }
-  isNameFocused.value = false
-  isFocusedRequestName.value = false
 }
 
 async function onSend() {
@@ -176,20 +114,7 @@ async function onSend() {
           </UiActionButton>
         </div>
         <div class="min-w-0 flex-1">
-          <UiInputValidationTooltip
-            :open="isNameValidationTooltipOpen"
-            :message="nameValidationMessage"
-          >
-            <UiInput
-              v-model="currentDraft.name"
-              variant="ghost"
-              class="w-full truncate px-0"
-              :placeholder="i18n.t('spaces.http.editor.namePlaceholder')"
-              :select="isFocusedRequestName"
-              @focus="onNameFocus"
-              @blur="onNameBlur"
-            />
-          </UiInputValidationTooltip>
+          <HttpRequestName />
         </div>
       </div>
     </div>

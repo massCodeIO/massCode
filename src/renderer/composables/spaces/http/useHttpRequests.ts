@@ -16,7 +16,6 @@ import {
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection } from '@/utils'
-import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 import { LibraryFilter } from '../../types'
 import { httpRuntimeNavigation } from './runtimeNavigation'
 import {
@@ -33,7 +32,6 @@ export type HttpRequest = HttpRequestItemResponse
 
 export type HttpRequestDraft = Pick<
   HttpRequest,
-  | 'name'
   | 'folderId'
   | 'protocol'
   | 'method'
@@ -198,7 +196,6 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
   const query = request.query.map(q => ({ ...q }))
 
   return {
-    name: request.name,
     folderId: request.folderId,
     protocol: request.protocol ?? 'http',
     method: request.method,
@@ -350,8 +347,8 @@ async function loadCurrentRequest(requestId: number) {
   }
 }
 
-// Обновляет только currentRequest (без переустановки draft): вызывающие
-// потоки сохраняют набранные в редакторе, но ещё не сохранённые правки.
+// Нетронутый draft следует за сохранёнными изменениями метаданных (например,
+// folderId при переносе в корзину); реальные правки редактора сохраняются.
 async function refreshCurrentRequestRecord(requestId: number) {
   const requestToken = ++refreshRequestToken
   const record = await fetchHttpRequestById(requestId)
@@ -364,7 +361,10 @@ async function refreshCurrentRequestRecord(requestId: number) {
     return
   }
 
+  const preserveDraft = isCurrentRequestDirty.value
   currentRequest.value = record
+  if (!preserveDraft)
+    currentDraft.value = toDraft(record)
 }
 
 async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
@@ -828,21 +828,8 @@ async function performSaveCurrentRequest(): Promise<boolean> {
     return true
 
   const draft = currentDraft.value
-  if (getEntryNameValidationIssue(draft.name))
-    return false
-  if (
-    hasSiblingRequestNameConflict(
-      draft.name,
-      currentRequest.value.id,
-      draft.folderId,
-    )
-  ) {
-    return false
-  }
-
   const update: HttpRequestsUpdate = JSON.parse(
     JSON.stringify({
-      name: draft.name,
       folderId: draft.folderId,
       protocol: draft.protocol,
       method: draft.method,

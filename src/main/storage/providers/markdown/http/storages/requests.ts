@@ -38,7 +38,6 @@ import {
 import { getHttpPaths } from '../runtime/paths'
 import {
   readRequestRuntime,
-  removeRequestRuntime,
   writeRequestRuntime,
 } from '../runtime/requestRuntime'
 import { saveHttpState } from '../runtime/state'
@@ -521,7 +520,6 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       for (const record of trashRecords) {
-        removeRequestRuntime(paths.httpRoot, record)
         removeRequestFile(paths.httpRoot, record.filePath)
         cache.requestById.delete(record.id)
       }
@@ -545,7 +543,6 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         return { deleted: false }
       }
 
-      removeRequestRuntime(paths.httpRoot, record)
       removeRequestFile(paths.httpRoot, record.filePath)
       cache.requestById.delete(id)
       state.requests = state.requests.filter(entry => entry.id !== id)

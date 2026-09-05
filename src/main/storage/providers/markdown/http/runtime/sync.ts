@@ -30,7 +30,6 @@ import {
   serializeRequestFile,
   writeRequestFile,
 } from './parser'
-import { migrateRequestRuntime } from './requestRuntime'
 import {
   createDefaultHttpState,
   ensureHttpStateFile,
@@ -578,22 +577,6 @@ function performFullHttpSync(paths: HttpPaths): HttpRuntimeCache {
     walk.requestRelativePaths,
     folderIdByPath,
   )
-
-  for (const record of records) {
-    if (record.pendingCloudDownload)
-      continue
-    try {
-      migrateRequestRuntime(paths.httpRoot, record)
-    }
-    catch (error) {
-      // Leave unavailable, malformed or unwritable legacy data intact. The
-      // detail read still reports its state, and a later sync retries migration.
-      log('storage:http:migrate-runtime', {
-        requestId: record.id,
-        pending: isCloudFileNotDownloadedError(error),
-      })
-    }
-  }
 
   saveHttpState(paths, state)
 

@@ -20,7 +20,10 @@ import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { ipcMain } from 'electron'
 import { Agent, request as undiciRequest } from 'undici'
-import { emptyHttpRuntime } from '../../../shared/httpRuntime'
+import {
+  emptyHttpRuntime,
+  httpRuntimeSchema,
+} from '../../../shared/httpRuntime'
 import {
   HTTP_SECRET_MASK,
   interpolateHttpVariables,
@@ -482,7 +485,12 @@ async function executeHttpRequest(
   }
   if (storage.environments.getActiveEnvironmentId() !== payload.environmentId)
     throw new Error('HTTP_CONTEXT_CHANGED')
-  const runtime = saved?.runtime ?? emptyHttpRuntime()
+  // Execute an isolated draft without persisting it. Older callers may omit it.
+  const runtime = httpRuntimeSchema.parse(
+    payload.runtime === undefined
+      ? (saved?.runtime ?? emptyHttpRuntime())
+      : payload.runtime,
+  )
   const session = getHttpSession(vaultPath, payload.environmentId)
   const current = () =>
     isHttpSessionCurrent(session.generation)

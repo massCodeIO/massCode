@@ -1,4 +1,4 @@
-import type { HttpRuntimeResult } from '../../shared/httpRuntime'
+import type { HttpRuntime, HttpRuntimeResult } from '../../shared/httpRuntime'
 
 export type HttpMethod =
   | 'GET'
@@ -58,6 +58,7 @@ export interface HttpExecuteRequest {
 
 export interface HttpExecutePayload {
   request: HttpExecuteRequest
+  runtime?: HttpRuntime
   requestId: number | null
   environmentId: number | null
   skipCertificateVerification?: boolean

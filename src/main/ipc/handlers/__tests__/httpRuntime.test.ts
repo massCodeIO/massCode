@@ -92,6 +92,61 @@ describe('hTTP runtime execution', () => {
     expect(JSON.stringify(mocks.history.mock.calls)).not.toContain('secret')
     expect(second.sessionNames).toEqual([])
   })
+  it('executes draft assertions and extractions without replacing saved rules', async () => {
+    const execute = getHandler()
+    mocks.request.mockResolvedValueOnce(response('{"value":"draft-value"}'))
+    const result = await execute(null, {
+      ...payload,
+      runtime: {
+        version: 1,
+        extractions: [{ name: 'draft', source: 'json', path: '/value' }],
+        assertions: [
+          {
+            name: 'Draft status',
+            source: 'status',
+            operator: 'eq',
+            expected: 201,
+          },
+        ],
+      },
+    })
+    expect(result.runtimeResults.assertions).toMatchObject([
+      { name: 'Draft status', ok: false },
+    ])
+    expect(result.sessionNames).toEqual(['draft'])
+    mocks.request.mockResolvedValueOnce(response('{"token":"saved-value"}'))
+    const savedResult = await execute(null, payload)
+    expect(savedResult.runtimeResults.assertions).toMatchObject([
+      { name: 'status', ok: true },
+    ])
+    expect(savedResult.runtimeResults.extractions).toMatchObject([
+      { name: 'token', ok: true },
+    ])
+  })
+
+  it('honors an empty draft instead of running saved rules', async () => {
+    mocks.request.mockResolvedValueOnce(response('{}'))
+    const result = await getHandler()(null, {
+      ...payload,
+      runtime: { version: 1, extractions: [], assertions: [] },
+    })
+    expect(result.runtimeResults).toEqual({ extractions: [], assertions: [] })
+  })
+
+  it('rejects invalid draft rules before network or history effects', async () => {
+    await expect(
+      getHandler()(null, {
+        ...payload,
+        runtime: {
+          version: 1,
+          extractions: [{ name: '', source: 'json', path: '' }],
+          assertions: [],
+        },
+      }),
+    ).rejects.toThrow()
+    expect(mocks.request).not.toHaveBeenCalled()
+    expect(mocks.history).not.toHaveBeenCalled()
+  })
   it.each(['invalid-url', 'missing-file'])(
     'clears previous extracted values on %s preparation failure and releases execution',
     async (failure) => {

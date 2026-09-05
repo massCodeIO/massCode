@@ -5,7 +5,11 @@ description: Run local pre-request scripts and response tests with explicit trus
 
 # JavaScript Scripts
 
+<AppVersion text=">=5.11" />
+
 Use **Scripts** in an HTTP request to compute variables before sending and test the response. WebSocket requests do not run scripts. Scripts use the massCode `mc` API; Postman and Bruno scripting APIs are not supported.
+
+<img :src="withBase('/http-scripts.png')" alt="Trusted pre-request script with passing JavaScript and HTTP assertion results">
 
 ## Review and trust
 
@@ -45,8 +49,8 @@ mc.variables.set('token', data.token)
 
 | API | Behavior |
 | --- | --- |
-| `mc.request` | Read-only draft snapshot: `method`, `url`, `headers`, `body`. Template variables remain literal. No file paths are exposed. |
-| `mc.response` | `null` before sending; after receiving: `status`, `headers`, `body`, `bodyKind`, `truncated`, `durationMs`. Read-only. |
+| `mc.request` | Read-only draft snapshot: `method` and `url` are strings, `headers` is an array of `{ key, value }` entries, and `body` is a string or `null`. Template variables remain literal. No file paths are exposed. |
+| `mc.response` | `null` before sending; after receiving: `status` and `durationMs` are numbers, `headers` is an array of `{ key, value }` entries, `body` is a string, `bodyKind` is `json`, `text`, or `binary`, and `truncated` is a boolean. Read-only. |
 | `mc.variables.get(name)` | Read a resolved variable, or `undefined`. |
 | `mc.variables.set(name, value)` | Stage a string value in the current session. |
 | `mc.variables.unset(name)` | Stage removal of the session override. The environment value becomes available on the next request. |
@@ -65,49 +69,12 @@ Manual requests share the selected environment's Session. Runner uses its own va
 
 ## Limits
 
-Each phase accepts at most 64 KiB of source text (UTF-16 code units), 2 MiB of JSON input and 64 KiB of serialized output (UTF-16 code units). QuickJS has a 16 MiB heap, a 256 KiB stack and a 500 ms execution deadline. A separate 1.5 second watchdog includes worker startup and terminates the worker if needed. The worker's host JavaScript heap also has a separate limit. These are not a total operating-system RSS limit.
+Each phase allows up to 65,536 UTF-16 code units of source text and 500 ms of script execution. The combined request, response, and variable input is limited to 2 MiB of JSON; serialized results are limited to 65,536 UTF-16 code units. Exceeding a time, memory, or data limit fails the phase and discards its variable changes.
 
 A phase allows up to 100 variable writes/removals and 100 tests. Variable names allow letters, digits, `_`, `.`, and `-`, up to 128 characters, excluding prototype-related names. Values allow up to 16,384 characters; test names allow up to 128. A large response may remain visible in the response panel while the script input limit rejects post-response.
 
-Script exception text and stacks are intentionally hidden because they may contain secrets. After a timeout or memory failure, the next run starts with a fresh worker and engine.
+Script exception text and stacks are intentionally hidden because they may contain secrets. After correcting the script or reducing the data it processes, send the request again.
 
-## Storage and migration
-
-Scripts, assertions and variable extraction rules live together in the `runtime` field of each HTTP request's Markdown frontmatter. Copying the `.md` file carries the complete request; local trust and secret values are not included.
-
-```yaml
-runtime:
-  version: 2
-  assertions: []
-  extractions: []
-  scripts:
-    preRequest: |-
-      mc.variables.set('itemId', '42')
-      mc.assert(true)
-    postResponse: |-
-      mc.test('HTTP 200', () => mc.assert(mc.response.status === 200))
-```
-
-Existing `.runtime-<id>-<createdAt>.yaml` files migrate automatically when the vault is reconciled. The app removes a legacy file only after writing its contents into the request Markdown. Unavailable files retry after download; malformed or unsupported rules remain untouched and block execution. If both formats exist, inline runtime takes precedence; a different legacy copy is retained for recovery.
-
-::: warning Older builds
-Builds that only support separate runtime YAML files do not understand or preserve inline runtime. Do not use them to edit or execute requests in a migrated vault. Unknown inline runtime versions are blocked by builds supporting this format.
-:::
-
-## Local demo
-
-From the repository checkout, run:
-
-```sh
-node scripts/http-scripts-demo.mjs
-```
-
-The server binds only to `127.0.0.1:5189`. Send a request to `/echo` to receive a JSON response containing `token: "demo-token"` and the request body in `received`. It stores no data and does not create requests or grant script trust.
-
-For the Commerce API, Checkout workflow and Service monitoring demo collections, start the separate fixture server:
-
-```sh
-node scripts/http-showcase-server.mjs
-```
-
-Use a demo environment with `commerceApiUrl` set to `http://127.0.0.1:5190/v1` and `commerceToken` set to `demo-commerce-token`. The server uses fictional customers, products and orders; changes remain in memory until it stops.
+<script setup>
+import { withBase } from 'vitepress'
+</script>

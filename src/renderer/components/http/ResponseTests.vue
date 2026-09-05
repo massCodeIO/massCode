@@ -4,6 +4,7 @@ import { i18n } from '@/electron'
 import { CircleCheck, CircleX } from 'lucide-vue-next'
 
 const { lastResponse } = useHttpExecute()
+const scriptResults = computed(() => lastResponse.value?.scriptResults ?? [])
 const groups = computed(() =>
   [
     {
@@ -16,9 +17,12 @@ const groups = computed(() =>
     },
   ].filter(group => group.results.length),
 )
-const results = computed(
-  () => lastResponse.value?.runtimeResults?.assertions ?? [],
-)
+const results = computed(() => [
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+  ...(lastResponse.value?.scriptResults ?? []).flatMap(phase =>
+    phase.error ? [{ ok: false }] : phase.tests,
+  ),
+])
 const passed = computed(
   () => results.value.filter(result => result.ok).length,
 )
@@ -73,6 +77,7 @@ const failed = computed(() => results.value.length - passed.value)
       </div>
     </div>
 
+    <HttpScriptResults :results="scriptResults" />
     <HttpRuntimeResultGroup
       v-for="group in groups"
       :key="group.key"

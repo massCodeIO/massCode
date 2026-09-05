@@ -16,12 +16,18 @@ const { incrementCopy } = useDonations()
 
 const activeTab = ref<'body' | 'headers' | 'tests'>('body')
 const runtimeResults = computed(() => [
+  ...(lastResponse.value?.scriptResults ?? []).map(phase => ({
+    ok: !phase.error && phase.tests.every(test => test.ok),
+  })),
   ...(lastResponse.value?.runtimeResults?.extractions ?? []),
   ...(lastResponse.value?.runtimeResults?.assertions ?? []),
 ])
-const assertionResults = computed(
-  () => lastResponse.value?.runtimeResults?.assertions ?? [],
-)
+const assertionResults = computed(() => [
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+  ...(lastResponse.value?.scriptResults ?? []).flatMap(phase =>
+    phase.error ? [{ ok: false }] : phase.tests,
+  ),
+])
 const passedAssertions = computed(
   () => assertionResults.value.filter(result => result.ok).length,
 )

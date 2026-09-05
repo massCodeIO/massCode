@@ -14,13 +14,19 @@ import {
   getEntryNameConflictMessage,
   getEntryNameValidationMessage,
 } from '@/utils'
-import { ChevronLeft, ChevronRight, LoaderCircle, Send } from 'lucide-vue-next'
+import {
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  Send,
+  Square,
+} from 'lucide-vue-next'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 
 const { currentDraft, currentRequest, hasSiblingRequestNameConflict }
   = useHttpRequests()
 const { isFocusedRequestName } = useHttpApp()
-const { executeCurrentRequest, isExecuting } = useHttpExecute()
+const { executeCurrentRequest, isExecuting, cancelRequest } = useHttpExecute()
 const {
   saving: runtimeSaving,
   groupDirty,
@@ -39,6 +45,7 @@ const activeTab = ref<
   | 'description'
   | 'assertions'
   | 'variables'
+  | 'scripts'
 >('params')
 
 watch(isWebSocket, () => {
@@ -197,6 +204,14 @@ async function onSend() {
       <HttpRequestSaveButton />
       <HttpWebsocketConnectionAction v-if="isWebSocket" />
       <UiActionButton
+        v-else-if="isExecuting"
+        :aria-label="i18n.t('spaces.http.scripts.cancel')"
+        :tooltip="i18n.t('spaces.http.scripts.cancel')"
+        @click="cancelRequest"
+      >
+        <Square />
+      </UiActionButton>
+      <UiActionButton
         v-else
         :aria-label="i18n.t('spaces.http.editor.send')"
         :tooltip="i18n.t('spaces.http.editor.send')"
@@ -260,6 +275,12 @@ async function onSend() {
             >
               {{ authIndicator }}
             </span>
+          </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger
+            v-if="!isWebSocket"
+            value="scripts"
+          >
+            {{ i18n.t("spaces.http.scripts.title") }}
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="description">
             {{ i18n.t("spaces.http.editor.tabs.description") }}
@@ -344,6 +365,12 @@ async function onSend() {
           class="h-full"
         >
           <HttpRequestAuthTab v-model="currentDraft" />
+        </Tabs.TabsContent>
+        <Tabs.TabsContent
+          value="scripts"
+          class="h-full"
+        >
+          <HttpRequestScripts />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="description"

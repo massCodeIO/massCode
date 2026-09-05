@@ -116,9 +116,14 @@ const canReorder = computed(
           {{ i18n.t(`spaces.http.runner.stepErrors.${step.error}`) }}
         </UiText>
         <div
-          v-if="step.assertions?.length || step.extractions?.length"
+          v-if="
+            step.scripts?.length
+              || step.assertions?.length
+              || step.extractions?.length
+          "
           class="space-y-4 border-t p-3"
         >
+          <HttpScriptResults :results="step.scripts ?? []" />
           <HttpRuntimeResultGroup
             kind="assertions"
             :results="step.assertions ?? []"

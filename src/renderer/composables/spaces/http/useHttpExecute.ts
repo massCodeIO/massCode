@@ -120,7 +120,10 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     lastResponse.value = response
     sessionNames.value = response.sessionNames ?? sessionNames.value
     if (response.error) {
-      lastError.value = response.error
+      lastError.value
+        = response.error === 'HTTP_SCRIPT_FAILED'
+          ? i18n.t('spaces.http.scripts.failed')
+          : response.error
     }
     return response
   }
@@ -148,6 +151,7 @@ function resetHttpExecuteState(resetSession = true) {
 
 export function useHttpExecute() {
   return {
+    cancelRequest: () => ipc.invoke('spaces:http:cancel', undefined),
     executeCurrentRequest,
     isExecuting,
     lastError,

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, h, ref } from 'vue'
 import Steps from '../runner/Steps.vue'
 import RuntimeResultGroup from '../RuntimeResultGroup.vue'
+import ScriptResults from '../ScriptResults.vue'
 
 const state = vi.hoisted(() => ({
   view: { value: null as any },
@@ -32,6 +33,7 @@ Object.assign(globalThis, { computed })
 async function renderSteps() {
   const app = createSSRApp(Steps)
   app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
+  app.component('HttpScriptResults', ScriptResults)
   app.component('UiText', {
     setup:
       (_, { slots }) =>

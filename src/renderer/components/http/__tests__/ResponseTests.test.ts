@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, h } from 'vue'
 import ResponseTests from '../ResponseTests.vue'
 import RuntimeResultGroup from '../RuntimeResultGroup.vue'
+import ScriptResults from '../ScriptResults.vue'
 
 const state = vi.hoisted(() => ({ lastResponse: { value: null as any } }))
 vi.mock('@/composables', () => ({ useHttpExecute: () => state }))
@@ -12,6 +13,7 @@ Object.assign(globalThis, { computed })
 async function renderResults() {
   const app = createSSRApp(ResponseTests)
   app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
+  app.component('HttpScriptResults', ScriptResults)
   app.component('UiText', {
     setup:
       (_, { slots }) =>
@@ -51,4 +53,18 @@ describe('hTTP rule results', () => {
     expect(html).not.toContain('spaces.http.runtime.testResults')
     expect(html).not.toContain('0/0')
   })
+})
+
+it('includes JS checks and script phase errors in the summary', async () => {
+  state.lastResponse.value.runtimeResults.assertions = [
+    { name: 'HTTP 200', ok: true },
+  ]
+  state.lastResponse.value.scriptResults = [
+    { phase: 'preRequest', tests: [{ name: 'custom check', ok: true }] },
+    { phase: 'postResponse', tests: [], error: 'limit' },
+  ]
+  const html = await renderResults()
+  expect(html).toContain('2/3')
+  expect(html).toContain('custom check')
+  expect(html).toContain('spaces.http.scripts.errors.limit')
 })

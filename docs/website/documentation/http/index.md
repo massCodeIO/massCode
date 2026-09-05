@@ -22,17 +22,18 @@ Use HTTP when you want a lightweight request client without leaving massCode.
 - import collections from OpenAPI, Postman, or Bruno
 - keep request descriptions close to implementation notes
 - switch variables between local, staging, and production environments
-- copy a request as raw HTTP or cURL for debugging and sharing
+- check responses with assertions and pass extracted values to subsequent requests
+- copy a request as raw HTTP, cURL, fetch, or axios for debugging and integration
 
 ## Main Concepts
 
 ### [Requests](/documentation/http/requests)
 
-Requests store the method, URL, params, headers, body, auth settings, and markdown description for an API call. The editor autosaves changes, shows an outgoing request preview, and sends the selected request with <kbd>Cmd+Enter</kbd> on macOS or <kbd>Ctrl+Enter</kbd> on Windows or Linux.
+Requests store the method, URL, params, headers, body, auth settings, description, assertions, and response extraction rules. **Send** runs the current draft without saving it; **Save** next to Send keeps changes across all tabs. Use <kbd>⌘</kbd> + <kbd>S</kbd> on macOS or <kbd>Ctrl</kbd> + <kbd>S</kbd> on Windows and Linux to save, and <kbd>Cmd+Enter</kbd> / <kbd>Ctrl+Enter</kbd> to send. Changes are not autosaved.
 
 ### [Environments](/documentation/http/environments)
 
-Environments store reusable variables for local, staging, and production APIs. The URL field keeps variables visible while you edit, while preview and request execution resolve values from the active environment.
+Environments store reusable variables for local, staging, and production APIs. Temporary Session variables hold extracted response values and override environment variables with the same name. Use the **Variables inspector** next to Environments to inspect both scopes. Previews mask secrets and Session values; sending uses their real values.
 
 ### [Importing Collections](/documentation/http/importing)
 

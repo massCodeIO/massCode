@@ -59,7 +59,7 @@ Review imported requests and environments before committing or sharing your vaul
 
 ## Warnings
 
-Some external client features do not have an equivalent in the current HTTP space model. When that happens, import keeps the request data it can represent and shows a warning.
+Import keeps the request data it can represent. Some features are unsupported; others, such as assertions, exist in massCode but are not yet converted from external collection formats.
 
 Common warnings include:
 
@@ -69,6 +69,8 @@ Common warnings include:
 - unsupported auth skipped or converted when possible
 
 Requests and environments are still importable when warnings are shown.
+
+Assertions, tests, scripts, and response extraction rules from Bruno or Postman are not imported. Recreate declarative checks in **Assertions** and extraction rules in **Variables → Post-response** after importing. See [Tests and Extracted Variables](/documentation/http/requests#tests-and-extracted-variables) for the supported rule format. JavaScript pre-request and post-response scripts are not supported.
 
 <script setup>
 import { withBase } from 'vitepress'

@@ -35,7 +35,7 @@ The request editor is split into focused tabs:
 - **Variables** - extract response values into temporary session variables under **Post-response**
 - **Assertions** - define declarative checks for the request
 
-Use **Save** in the request header or <kbd>⌘</kbd> + <kbd>S</kbd> on macOS / <kbd>Ctrl</kbd> + <kbd>S</kbd> on Windows and Linux to save request fields, assertions, and variable extraction. Changes are not autosaved. A dot beside Save indicates unsaved edits; saving invalid rules opens the tab containing the first error. Before switching requests or leaving the HTTP space, choose **Save**, **Discard changes**, or **Cancel**. If saving fails partway through, remaining unsaved edits stay in the editor for retry.
+Use the **Save** icon next to Send or <kbd>⌘</kbd> + <kbd>S</kbd> on macOS / <kbd>Ctrl</kbd> + <kbd>S</kbd> on Windows and Linux to save request fields, assertions, and variable extraction. Changes are not autosaved. A green dot on Save indicates unsaved edits; saving invalid rules opens the tab containing the first error. Before switching requests or leaving the HTTP space, choose **Save**, **Discard changes**, or **Cancel**. If saving fails partway through, remaining unsaved edits stay in the editor for retry.
 
 **Send** uses the current request fields, assertions, and variable extraction without saving them. Invalid rules are highlighted before sending; unsaved changes remain in the editor after execution.
 
@@ -65,13 +65,15 @@ The lower panel can show the outgoing request before it is sent.
 
 Use the copy button in the preview panel to copy the active preview.
 
-JavaScript previews resolve regular environment variables and mask secret values. Unresolved variables remain as placeholders. The axios snippet assumes that your project has axios installed.
+JavaScript previews resolve regular environment variables and mask secret and Session values. Unresolved variables remain as placeholders. Copied snippets contain the same masks, so supply real values in your own execution environment. The axios snippet assumes that your project has axios installed.
 
 For multipart uploads, JavaScript snippets accept `File` or `Blob` arguments in field order instead of copying local file paths. The browser generates the multipart boundary, so a manually entered `Content-Type` is omitted. Fetch cannot send a body with GET or HEAD; the preview warns you to change the method or remove the body.
 
 ## Tests and Extracted Variables
 
 Use **Assertions** for checks and **Variables → Post-response** for extraction. These are declarative rules, not JavaScript scripts.
+
+Use **Add assertion** or **Add extraction** at the bottom of the corresponding tab. Each request supports up to 100 assertions and 100 extractions. Extraction names must be unique and contain only letters `A–Z` / `a–z`, digits, underscores, dots, or hyphens; `__proto__` is reserved.
 
 For a login flow:
 
@@ -82,7 +84,26 @@ For a login flow:
 
 JSON paths use JSON Pointer: `/user/id`, `/items/0/name`, or an empty path for the entire response. Escape `/` in a property name as `~1` and `~` as `~0`. Header names are case-insensitive.
 
-Assertions can check status, a JSON value, a header, or duration in milliseconds. Expected values use JSON: `200`, `true`, `null`, or a quoted string such as `"application/json"`. **In list** and **Not in list** accept scalar arrays such as `[200, 201]`; **Between (inclusive)** accepts `[min, max]`. Length checks accept a non-negative integer for strings or arrays. Regex checks accept a quoted pattern without `/` delimiters and have execution limits. Type checks and **Exists** need no expected value. Comparisons do not convert strings to numbers. **Exists** accepts an existing JSON `null`; extraction requires a non-null value. JSON rules cannot inspect binary, truncated, or invalid JSON responses.
+Assertions can check status, a JSON value, a header, or duration in milliseconds. Expected values use JSON: `200`, `true`, `null`, or a quoted string such as `"application/json"`.
+
+| Operator | Expected value | What it checks |
+| --- | --- | --- |
+| Equals / Does not equal | JSON scalar, such as `200` or `"ok"` | Strict equality or inequality; strings are not converted to numbers |
+| Exists | None | The selected value exists; JSON `null` counts as existing |
+| Contains / Does not contain | Quoted string, such as `"json"` | Case-sensitive substring match on a string, not array membership |
+| Starts with / Ends with | Quoted string, such as `"application/"` | Case-sensitive string prefix or suffix |
+| Matches regex / Does not match regex | Quoted pattern, such as `"^user-[0-9]+$"` | A string matches or does not match the regular expression |
+| Length equals | Non-negative integer, such as `3` | String length or number of array items |
+| Greater than / Greater than or equal | Number, such as `200` | Numeric lower bound, exclusive or inclusive |
+| Less than / Less than or equal | Number, such as `500` | Numeric upper bound, exclusive or inclusive |
+| Between (inclusive) | Two numbers, such as `[200, 299]` | Numeric value lies within both bounds; minimum must not exceed maximum |
+| In list / Not in list | Scalar array, such as `[200, 201]` | Scalar membership using exact types; up to 1000 entries |
+| Is string / Is number / Is boolean | None | The selected value has that JSON type |
+| Is array / Is object / Is null | None | The selected value is an array, a non-null object excluding arrays, or `null` |
+
+Regex patterns use JavaScript Unicode mode, without `/` delimiters or selectable flags. Patterns are limited to 1024 characters and evaluated strings to 1,000,000 characters. Execution has a 20 ms limit per regex and a shared 100 ms budget per response; exceeding a limit fails the check, including **Does not match regex**. String length uses JavaScript UTF-16 code units, so some emoji count as two.
+
+A missing value fails any check, including negative operators. Extraction requires a non-null value. JSON rules cannot inspect binary, truncated, or invalid JSON responses. Invalid rule inputs show errors below their fields and prevent sending; a valid rule that does not match the response is reported as **Failed** after the request runs.
 
 **Test Results** counts only assertions. Extraction outcomes appear in a separate group without displaying extracted values; requests with extraction alone show **Variable extraction**. Extraction runs independently of whether assertions pass. A failed check does not hide the HTTP response. A failed extraction removes an earlier session value of the same name, preventing reuse of a stale token.
 

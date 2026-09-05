@@ -178,6 +178,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/documentation/http/' },
             { text: 'Requests', link: '/documentation/http/requests' },
+            { text: 'JavaScript Scripts', link: '/documentation/http/scripts' },
             { text: 'Environments', link: '/documentation/http/environments' },
             { text: 'Importing Collections', link: '/documentation/http/importing' },
           ],

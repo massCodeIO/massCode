@@ -102,16 +102,12 @@ From the repository checkout, run:
 node scripts/http-scripts-demo.mjs
 ```
 
-With the updated development app running, open its DevTools console and create a dedicated demo folder using its existing authenticated API bridge:
+The server binds only to `127.0.0.1:5189`. Send a request to `/echo` to receive a JSON response containing `token: "demo-token"` and the request body in `received`. It stores no data and does not create requests or grant script trust.
 
-```js
-await import('http://127.0.0.1:5189/seed.mjs')
-```
-
-Alternatively, if dev was started with a configured development session token, provide that same token as `MASSCODE_API_TOKEN` to the command-line seeder:
+For the Commerce API, Checkout workflow and Service monitoring demo collections, start the separate fixture server:
 
 ```sh
-node scripts/http-scripts-demo.mjs --seed
+node scripts/http-showcase-server.mjs
 ```
 
-The seeder creates only new demo requests and never grants trust. Each request's Description contains the expected outcome and UI steps. The server binds only to `127.0.0.1:5189`; it refuses to start if the port is already occupied.
+Use a demo environment with `commerceApiUrl` set to `http://127.0.0.1:5190/v1` and `commerceToken` set to `demo-commerce-token`. The server uses fictional customers, products and orders; changes remain in memory until it stops.

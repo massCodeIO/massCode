@@ -85,7 +85,11 @@ Open the **Variables inspector** using the braces icon next to **Environments**.
 
 Create Session values through **Variables → Post-response** in a request. See [Tests and Extracted Variables](/documentation/http/requests#tests-and-extracted-variables) for a login example and extraction behavior.
 
-Session values live only in memory. **Clear session**, switching environments (including **No environment**), switching vaults, or closing the app clears them. Returning to a previous environment does not restore its Session values. Regular environment edits are autosaved; Session values are not written into the environment or vault.
+Use <code v-pre>{{name}}</code> in subsequent requests. Session values are reusable, not consumed by the next request: they remain available until replaced by another extraction or cleared. Overriding a variable does not change its saved environment value. If the Session value is removed, requests use the matching environment value again; without one, the placeholder remains unresolved.
+
+Session values live only in memory. **Clear session**, switching environments (including **No environment**), switching vaults, or quitting or restarting the app clears them. Returning to a previous environment does not restore its Session values. Regular environment edits are autosaved; Session values are not written into the environment or vault.
+
+The [Folder runner](/documentation/http/#variables-and-failures) uses its own temporary variables over the selected environment. It neither reads nor changes these manual Session values.
 
 ## Managing Environments
 

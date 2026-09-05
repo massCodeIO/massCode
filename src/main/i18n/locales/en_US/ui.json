@@ -318,7 +318,7 @@
         "expectedError": "Use a JSON scalar: \"text\", 200, true or null.",
         "session": "Session variables",
         "clearSession": "Clear session",
-        "sessionHint": "Values stay in memory and are masked. Use {{name}} in the next request. Cleared when switching environment or vault.",
+        "sessionHint": "Temporary values stored in memory. Use {{name}} in subsequent requests. Overrides environment variables with the same name. Cleared when switching environment or vault, or restarting the app.",
         "passed": "Passed",
         "failed": "Failed",
         "states": {

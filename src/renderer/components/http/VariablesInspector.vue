@@ -68,17 +68,17 @@ async function clearSession() {
     <Braces class="size-4" />
   </UiActionButton>
   <Dialog.Dialog v-model:open="open">
-    <Dialog.DialogContent class="sm:max-w-lg">
+    <Dialog.DialogContent
+      class="sm:max-w-lg"
+      @open-auto-focus="(e) => e.preventDefault()"
+      @close-auto-focus="(e) => e.preventDefault()"
+    >
       <Dialog.DialogHeader>
         <Dialog.DialogTitle>
-          {{
-            i18n.t("spaces.http.runtime.variablesInspector")
-          }}
+          {{ i18n.t("spaces.http.runtime.variablesInspector") }}
         </Dialog.DialogTitle>
         <Dialog.DialogDescription>
-          {{
-            i18n.t("spaces.http.runtime.scopesHint")
-          }}
+          {{ i18n.t("spaces.http.runtime.scopesHint") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
       <div class="scrollbar max-h-[60vh] space-y-4 overflow-y-auto">

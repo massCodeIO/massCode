@@ -2,7 +2,7 @@
 import * as Select from '@/components/ui/shadcn/select'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { Trash2 } from 'lucide-vue-next'
 import {
   httpOperatorNeedsExpected,
   httpAssertionOperators as operators,
@@ -32,27 +32,13 @@ function expectedPlaceholder(operator: string) {
 </script>
 
 <template>
-  <section class="space-y-1">
-    <div class="flex items-center justify-between">
+  <section class="flex h-full min-h-0 flex-col">
+    <div class="mb-1 flex h-7 shrink-0 items-center">
       <UiText variant="sm">
         {{ i18n.t("spaces.http.runtime.assertions") }}
       </UiText>
-      <UiActionButton
-        :disabled="draft.assertions.length >= 100"
-        :tooltip="i18n.t('spaces.http.runtime.addAssertion')"
-        @click="
-          draft.assertions.push({
-            name: '',
-            source: 'status',
-            operator: 'eq',
-            expected: 200,
-          })
-        "
-      >
-        <Plus class="size-4" />
-      </UiActionButton>
     </div>
-    <div class="space-y-2">
+    <div class="scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
       <template
         v-for="(rule, index) in draft.assertions"
         :key="index"
@@ -148,5 +134,17 @@ function expectedPlaceholder(operator: string) {
         </div>
       </template>
     </div>
+    <HttpAddRowButton
+      :label="i18n.t('spaces.http.runtime.addAssertion')"
+      :disabled="disabled || draft.assertions.length >= 100"
+      @click="
+        draft.assertions.push({
+          name: '',
+          source: 'status',
+          operator: 'eq',
+          expected: 200,
+        })
+      "
+    />
   </section>
 </template>

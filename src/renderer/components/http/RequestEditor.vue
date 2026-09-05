@@ -307,10 +307,11 @@ async function onSend() {
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <Tabs.TabsContent
           value="assertions"
-          class="h-full"
+          class="flex h-full min-h-0 flex-col"
         >
           <HttpRuntimeToolbar />
           <fieldset
+            class="min-h-0 flex-1"
             :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"
           >
             <HttpRequestAssertions
@@ -322,7 +323,7 @@ async function onSend() {
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="variables"
-          class="h-full"
+          class="flex h-full min-h-0 flex-col"
         >
           <HttpRuntimeToolbar :show-hint="false" />
           <HttpRequestVariables />

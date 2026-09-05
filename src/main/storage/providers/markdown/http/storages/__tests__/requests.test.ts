@@ -11,8 +11,12 @@ import {
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
+import { splitFrontmatter } from '../../runtime/parser'
 import { getHttpPaths } from '../../runtime/paths'
-import { requestRuntimePath } from '../../runtime/requestRuntime'
+import {
+  migrateRequestRuntime,
+  requestRuntimePath,
+} from '../../runtime/requestRuntime'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
@@ -155,7 +159,7 @@ describe('http requests storage', () => {
     expect(storage.getRequestById(id)?.protocol).not.toBe('websocket')
   })
 
-  it('persists runtime independently across rename, move, trash and hard delete', () => {
+  it('keeps runtime in Markdown across rename, move, trash and hard delete', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Login' })
     const original = storage.getRequestById(id)!
@@ -171,7 +175,15 @@ describe('http requests storage', () => {
       getHttpPaths(tempVaultPath).httpRoot,
       original,
     )
-    expect(fs.existsSync(sidecar)).toBe(true)
+    expect(fs.existsSync(sidecar)).toBe(false)
+    expect(
+      splitFrontmatter(
+        fs.readFileSync(
+          path.join(getHttpPaths(tempVaultPath).httpRoot, original.filePath),
+          'utf8',
+        ),
+      ).frontmatter.runtime,
+    ).toEqual(rules)
     const folder = createHttpFoldersStorage().createFolder({ name: 'API' })
     storage.updateRequest(id, {
       name: 'Renamed',
@@ -216,11 +228,13 @@ describe('http requests storage', () => {
       ],
     }
     storage.updateRuntime(id, rules, original.runtimeRevision!)
-    const sidecar = requestRuntimePath(
+    const markdown = path.join(
       getHttpPaths(tempVaultPath).httpRoot,
-      original,
+      original.filePath,
     )
-    expect(yaml.load(fs.readFileSync(sidecar, 'utf8'))).toEqual(rules)
+    expect(
+      splitFrontmatter(fs.readFileSync(markdown, 'utf8')).frontmatter.runtime,
+    ).toEqual(rules)
     expect(storage.getRequestById(id)?.runtime).toEqual(rules)
   })
 
@@ -268,14 +282,15 @@ describe('http requests storage', () => {
     expect(fs.existsSync(sidecar)).toBe(false)
   })
 
-  it('rejects stale editor revisions including sidecar creation and deletion', () => {
+  it('rejects stale editor revisions including inline runtime creation and deletion', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Revisions' })
     const initial = storage.getRequestById(id)!
-    const sidecar = requestRuntimePath(
+    const markdown = path.join(
       getHttpPaths(tempVaultPath).httpRoot,
-      initial,
+      initial.filePath,
     )
+    const originalSource = fs.readFileSync(markdown, 'utf8')
     const rules = { version: 1 as const, extractions: [], assertions: [] }
     const first = storage.updateRuntime(id, rules, initial.runtimeRevision!)
     expect(first.runtimeRevision).toBe(
@@ -284,20 +299,208 @@ describe('http requests storage', () => {
     expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
       'RUNTIME_CONFLICT',
     )
-    const external = yaml.dump({
-      ...rules,
-      extractions: [{ name: 'external', source: 'json', path: '' }],
-    })
-    fs.writeFileSync(sidecar, external)
+    const parsed = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+    const external = `---\n${yaml.dump({
+      ...parsed.frontmatter,
+      runtime: {
+        ...rules,
+        extractions: [{ name: 'external', source: 'json', path: '' }],
+      },
+    })}---\n${parsed.body}`
+    fs.writeFileSync(markdown, external)
     expect(() =>
       storage.updateRuntime(id, rules, first.runtimeRevision!),
     ).toThrow('RUNTIME_CONFLICT')
-    expect(fs.readFileSync(sidecar, 'utf8')).toBe(external)
-    fs.unlinkSync(sidecar)
+    expect(fs.readFileSync(markdown, 'utf8')).toBe(external)
+    fs.writeFileSync(markdown, originalSource)
     expect(() =>
       storage.updateRuntime(id, rules, first.runtimeRevision!),
     ).toThrow('RUNTIME_CONFLICT')
+    expect(fs.readFileSync(markdown, 'utf8')).toBe(originalSource)
+  })
+
+  it.each([1, 2] as const)(
+    'migrates legacy runtime v%s without changing request content or revision',
+    (version) => {
+      const storage = createHttpRequestsStorage()
+      const { id } = storage.createRequest({ name: 'Migration' })
+      storage.updateRequest(id, {
+        body: 'payload',
+        description: '# Notes\nKeep this description.\n',
+      })
+      const request = storage.getRequestById(id)!
+      const root = getHttpPaths(tempVaultPath).httpRoot
+      const markdown = path.join(root, request.filePath)
+      const before = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+      const rules = {
+        version,
+        assertions: [],
+        extractions: [],
+        ...(version === 2
+          ? {
+              scripts: {
+                preRequest:
+                  'mc.variables.set("token", "value")\nmc.assert(true)\n',
+                postResponse: 'mc.test("ok", () => mc.assert(true))',
+              },
+            }
+          : {}),
+      }
+      const sidecar = requestRuntimePath(root, request)
+      fs.writeFileSync(sidecar, yaml.dump(rules))
+      const previousRevision = storage.getRequestById(id)!.runtimeRevision
+      migrateRequestRuntime(root, request)
+      expect(fs.existsSync(sidecar)).toBe(false)
+      const after = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+      expect(after.body).toBe(before.body)
+      expect(after.frontmatter).toEqual({
+        ...before.frontmatter,
+        runtime: rules,
+      })
+      expect(storage.getRequestById(id)?.runtimeRevision).toBe(
+        previousRevision,
+      )
+      storage.updateRequest(id, { name: 'Moved migration', isFavorites: 1 })
+      expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+      const moved = storage.getRequestById(id)!
+      const source = fs.readFileSync(path.join(root, moved.filePath), 'utf8')
+      migrateRequestRuntime(root, moved)
+      expect(fs.readFileSync(path.join(root, moved.filePath), 'utf8')).toBe(
+        source,
+      )
+    },
+  )
+
+  it('migrates during cold and indexed sync and keeps a copied Markdown request self-contained', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Portable' })
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const request = storage.getRequestById(id)!
+    const rules = {
+      version: 2,
+      assertions: [],
+      extractions: [],
+      scripts: { preRequest: 'mc.assert(true)', postResponse: '' },
+    }
+    const sidecar = requestRuntimePath(root, request)
+    fs.writeFileSync(sidecar, yaml.dump(rules))
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
     expect(fs.existsSync(sidecar)).toBe(false)
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    fs.copyFileSync(
+      path.join(root, request.filePath),
+      path.join(root, 'Copied.md'),
+    )
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    const copied = storage
+      .getRequests()
+      .find(item => item.filePath === 'Copied.md')!
+    expect(copied.id).not.toBe(id)
+    expect(storage.getRequestById(copied.id)?.runtime).toEqual(rules)
+  })
+
+  it('uses inline runtime and preserves a divergent legacy copy', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Both formats' })
+    const request = storage.getRequestById(id)!
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const rules = {
+      version: 2 as const,
+      assertions: [],
+      extractions: [],
+      scripts: { preRequest: 'mc.assert(true)', postResponse: '' },
+    }
+    storage.updateRuntime(id, rules, request.runtimeRevision!)
+    const sidecar = requestRuntimePath(root, request)
+    const old = yaml.dump({ version: 1, assertions: [], extractions: [] })
+    fs.writeFileSync(sidecar, old)
+    migrateRequestRuntime(root, request)
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    expect(fs.readFileSync(sidecar, 'utf8')).toBe(old)
+    // Interrupted migration can safely finish cleanup of an identical copy.
+    fs.writeFileSync(sidecar, yaml.dump(rules))
+    migrateRequestRuntime(root, request)
+    expect(fs.existsSync(sidecar)).toBe(false)
+  })
+
+  it('preserves externally edited and unsupported inline runtime through metadata saves', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'External runtime' })
+    const request = storage.getRequestById(id)!
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const markdown = path.join(root, request.filePath)
+    const before = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+    const future = { version: 99, scripts: { preRequest: 'future syntax' } }
+    fs.writeFileSync(
+      markdown,
+      `---\n${yaml.dump({ ...before.frontmatter, runtime: future })}---\n${before.body}`,
+    )
+    storage.updateRequest(id, { name: 'Renamed future', isDeleted: 1 })
+    const moved = storage.getRequestById(id)!
+    expect(moved.runtimeState).toBe('unsupported')
+    expect(
+      splitFrontmatter(fs.readFileSync(path.join(root, moved.filePath), 'utf8'))
+        .frontmatter.runtime,
+    ).toEqual(future)
+    expect(() =>
+      storage.updateRuntime(
+        id,
+        { version: 1, assertions: [], extractions: [] },
+        'missing',
+      ),
+    ).toThrow('RUNTIME_UNAVAILABLE')
+  })
+
+  it('keeps the legacy copy if atomic Markdown replacement fails', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Failed migration' })
+    const request = storage.getRequestById(id)!
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const markdown = path.join(root, request.filePath)
+    const before = fs.readFileSync(markdown, 'utf8')
+    const sidecar = requestRuntimePath(root, request)
+    const legacy = yaml.dump({ version: 1, assertions: [], extractions: [] })
+    fs.writeFileSync(sidecar, legacy)
+    const rename = vi.spyOn(fs, 'renameSync').mockImplementationOnce(() => {
+      throw new Error('write failed')
+    })
+    try {
+      expect(() => migrateRequestRuntime(root, request)).toThrow(
+        'write failed',
+      )
+    }
+    finally {
+      rename.mockRestore()
+    }
+    expect(fs.readFileSync(sidecar, 'utf8')).toBe(legacy)
+    expect(fs.readFileSync(markdown, 'utf8')).toBe(before)
+    expect(
+      fs.readdirSync(root).filter(name => name.endsWith('.tmp')),
+    ).toEqual([])
+  })
+
+  it('does not migrate a cloud request placeholder', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Pending migration' })
+    const request = storage.getRequestById(id)!
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const markdown = path.join(root, request.filePath)
+    const sidecar = requestRuntimePath(root, request)
+    const legacy = yaml.dump({ version: 1, assertions: [], extractions: [] })
+    fs.writeFileSync(sidecar, legacy)
+    makeSparsePlaceholder(markdown)
+    setDatalessProbeForTests(absolutePath => absolutePath === markdown)
+    expect(() => migrateRequestRuntime(root, request)).toThrow(
+      'CLOUD_FILE_NOT_DOWNLOADED',
+    )
+    expect(fs.readFileSync(sidecar, 'utf8')).toBe(legacy)
+    expect(fs.statSync(markdown).size).toBe(4096)
+    expect(storage.getRequestById(id)?.runtimeState).toBe('pending')
   })
 
   it('updates and renames an app-written resident zero-block request', () => {

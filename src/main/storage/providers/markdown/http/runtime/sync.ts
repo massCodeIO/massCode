@@ -30,6 +30,7 @@ import {
   serializeRequestFile,
   writeRequestFile,
 } from './parser'
+import { migrateRequestRuntime } from './requestRuntime'
 import {
   createDefaultHttpState,
   ensureHttpStateFile,
@@ -306,6 +307,9 @@ function reconcileRequests(
   const existingByPath = new Map(
     state.requests.map(item => [item.filePath, item]),
   )
+  // A copied Markdown file can appear before its original in directory order.
+  // Reserve indexed IDs so the copy cannot displace the original in the cache.
+  const indexedIds = new Set(state.requests.map(item => item.id))
 
   // Один batch-вызов точной проверки dataless на весь список вместо
   // отдельного системного вызова на каждый подозрительный файл.
@@ -428,11 +432,19 @@ function reconcileRequests(
     const parsed = parseRequestFile(source)
     const fmId = parsed.frontmatter.id
 
-    let id = existingEntry?.id
+    let id
+      = existingEntry && !usedIds.has(existingEntry.id)
+        ? existingEntry.id
+        : undefined
     let needsRewrite = !parsed.hasFrontmatter
 
     if (!id) {
-      if (typeof fmId === 'number' && fmId > 0 && !usedIds.has(fmId)) {
+      if (
+        typeof fmId === 'number'
+        && fmId > 0
+        && !usedIds.has(fmId)
+        && !indexedIds.has(fmId)
+      ) {
         id = fmId
       }
       else {
@@ -474,7 +486,10 @@ function reconcileRequests(
       updatedAt: typeof fmUpdatedAt === 'number' ? fmUpdatedAt : now,
     }
 
-    if (needsRewrite || serializeRequestFile(record) !== source) {
+    if (
+      needsRewrite
+      || serializeRequestFile(record, parsed.frontmatter.runtime) !== source
+    ) {
       writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
     }
 
@@ -563,6 +578,22 @@ function performFullHttpSync(paths: HttpPaths): HttpRuntimeCache {
     walk.requestRelativePaths,
     folderIdByPath,
   )
+
+  for (const record of records) {
+    if (record.pendingCloudDownload)
+      continue
+    try {
+      migrateRequestRuntime(paths.httpRoot, record)
+    }
+    catch (error) {
+      // Leave unavailable, malformed or unwritable legacy data intact. The
+      // detail read still reports its state, and a later sync retries migration.
+      log('storage:http:migrate-runtime', {
+        requestId: record.id,
+        pending: isCloudFileNotDownloadedError(error),
+      })
+    }
+  }
 
   saveHttpState(paths, state)
 

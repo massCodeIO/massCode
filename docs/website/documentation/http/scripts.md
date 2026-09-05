@@ -71,7 +71,28 @@ A phase allows up to 100 variable writes/removals and 100 tests. Variable names 
 
 Script exception text and stacks are intentionally hidden because they may contain secrets. After a timeout or memory failure, the next run starts with a fresh worker and engine.
 
-Scripted runtime files use version 2. Older massCode builds treat them as unsupported, preventing accidental execution without their scripts.
+## Storage and migration
+
+Scripts, assertions and variable extraction rules live together in the `runtime` field of each HTTP request's Markdown frontmatter. Copying the `.md` file carries the complete request; local trust and secret values are not included.
+
+```yaml
+runtime:
+  version: 2
+  assertions: []
+  extractions: []
+  scripts:
+    preRequest: |-
+      mc.variables.set('itemId', '42')
+      mc.assert(true)
+    postResponse: |-
+      mc.test('HTTP 200', () => mc.assert(mc.response.status === 200))
+```
+
+Existing `.runtime-<id>-<createdAt>.yaml` files migrate automatically when the vault is reconciled. The app removes a legacy file only after writing its contents into the request Markdown. Unavailable files retry after download; malformed or unsupported rules remain untouched and block execution. If both formats exist, inline runtime takes precedence; a different legacy copy is retained for recovery.
+
+::: warning Older builds
+Builds that only support separate runtime YAML files do not understand or preserve inline runtime. Do not use them to edit or execute requests in a migrated vault. Unknown inline runtime versions are blocked by builds supporting this format.
+:::
 
 ## Local demo
 

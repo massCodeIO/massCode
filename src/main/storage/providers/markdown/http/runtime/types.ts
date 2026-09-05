@@ -18,6 +18,8 @@ export type {
 } from '../../../../../types/http'
 
 export interface HttpRequestFrontmatter {
+  /** Preserve unknown versions verbatim; validation belongs to requestRuntime. */
+  runtime?: unknown
   protocol?: 'http' | 'websocket'
   id?: number
   name?: string

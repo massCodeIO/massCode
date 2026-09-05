@@ -16,7 +16,9 @@ const groups = computed(() =>
     },
   ].filter(group => group.results.length),
 )
-const results = computed(() => groups.value.flatMap(group => group.results))
+const results = computed(
+  () => lastResponse.value?.runtimeResults?.assertions ?? [],
+)
 const passed = computed(
   () => results.value.filter(result => result.ok).length,
 )
@@ -26,6 +28,7 @@ const failed = computed(() => results.value.length - passed.value)
 <template>
   <div class="space-y-4 p-3">
     <div
+      v-if="results.length"
       class="border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2.5"
     >
       <div class="flex items-center gap-2">
@@ -43,7 +46,7 @@ const failed = computed(() => results.value.length - passed.value)
           variant="sm"
           weight="medium"
         >
-          {{ i18n.t("spaces.http.runtime.tests") }}
+          {{ i18n.t("spaces.http.runtime.testResults") }}
         </UiText>
         <UiText
           variant="xs"
@@ -81,7 +84,13 @@ const failed = computed(() => results.value.length - passed.value)
           weight="medium"
           muted
         >
-          {{ i18n.t(`spaces.http.runtime.${group.key}`) }}
+          {{
+            i18n.t(
+              group.key === "assertions"
+                ? "spaces.http.runtime.assertions"
+                : "spaces.http.runtime.extractionResults",
+            )
+          }}
         </UiText>
         <UiText
           variant="caption"

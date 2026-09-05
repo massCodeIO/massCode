@@ -19,6 +19,16 @@ const runtimeResults = computed(() => [
   ...(lastResponse.value?.runtimeResults?.extractions ?? []),
   ...(lastResponse.value?.runtimeResults?.assertions ?? []),
 ])
+const assertionResults = computed(
+  () => lastResponse.value?.runtimeResults?.assertions ?? [],
+)
+const passedAssertions = computed(
+  () => assertionResults.value.filter(result => result.ok).length,
+)
+watch(runtimeResults, (results) => {
+  if (!results.length && activeTab.value === 'tests')
+    activeTab.value = 'body'
+})
 
 const formattedBody = computed(() => {
   const response = lastResponse.value
@@ -129,16 +139,21 @@ function copyActiveTab() {
         class="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div
-          class="border-border flex items-center justify-between border-b px-3 py-1"
+          class="border-border scrollbar flex min-w-0 items-center justify-between overflow-x-auto border-b px-3 py-1"
         >
           <Tabs.TabsList>
             <Tabs.TabsTrigger
               v-if="runtimeResults.length"
               value="tests"
             >
-              {{ i18n.t("spaces.http.runtime.tests") }} ({{
-                runtimeResults.filter((result) => result.ok).length
-              }}/{{ runtimeResults.length }})
+              {{
+                i18n.t(
+                  assertionResults.length
+                    ? "spaces.http.runtime.testResults"
+                    : "spaces.http.runtime.extractionResults",
+                )
+              }}
+              <span v-if="assertionResults.length">({{ passedAssertions }}/{{ assertionResults.length }})</span>
             </Tabs.TabsTrigger>
             <Tabs.TabsTrigger value="body">
               {{ i18n.t("spaces.http.editor.response.tabs.body") }}

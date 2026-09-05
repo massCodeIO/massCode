@@ -25,7 +25,7 @@ Use HTTP when you want a lightweight request client without leaving massCode.
 - switch variables between local, staging, and production environments
 - check responses with assertions and pass extracted values to subsequent requests
 - run a folder of requests sequentially with an isolated set of temporary variables
-- copy a request as raw HTTP, cURL, fetch, or axios for debugging and integration
+- choose from [29 request generators across 20 language and runtime targets](./requests#code-generation), including cURL, JavaScript, Node.js, Python, Go, Java, and Swift
 
 ## Getting Started
 

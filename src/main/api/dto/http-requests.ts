@@ -14,6 +14,7 @@ const httpMethod = t.Union([
 const httpBodyType = t.Union([
   t.Literal('none'),
   t.Literal('json'),
+  t.Literal('graphql'),
   t.Literal('text'),
   t.Literal('form-urlencoded'),
   t.Literal('multipart'),

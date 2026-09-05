@@ -13,6 +13,7 @@ export type HttpMethod =
 export type HttpBodyType =
   | 'none'
   | 'json'
+  | 'graphql'
   | 'text'
   | 'form-urlencoded'
   | 'multipart'
@@ -89,6 +90,7 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  graphql?: import('../../shared/httpGraphql').GraphqlResponseState
   scriptResults?: HttpScriptResult[]
   runtimeResults?: {
     extractions: HttpRuntimeResult[]

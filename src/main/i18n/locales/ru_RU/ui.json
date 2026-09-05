@@ -586,6 +586,35 @@
           "exception": "Ошибка скрипта. Проверьте синтаксис, доступный API и лимиты памяти. Текст исключения скрыт для защиты секретов.",
           "destination": "Переменные pre-request изменили адрес назначения (origin). Запрос заблокирован."
         }
+      },
+      "graphql": {
+        "title": "GraphQL",
+        "query": "Query / mutation",
+        "variables": "Переменные (JSON-объект)",
+        "operation": "Операция",
+        "chooseOperation": "Автоматически для одной операции",
+        "clearOperation": "Автоматически",
+        "validationOnSend": "Переменные будут проверены после подстановки при отправке.",
+        "schemaLimit": "Только синтаксическая проверка. Загрузка схемы, introspection, автодополнение по схеме и subscriptions не поддерживаются.",
+        "response": {
+          "success": "GraphQL: данные получены без ошибок",
+          "errors": "Ошибки GraphQL — проверьте errors и частичные data ниже.",
+          "invalid": "Некорректный или обрезанный ответ GraphQL — проверьте исходный ответ ниже."
+        },
+        "errors": {
+          "GRAPHQL_DRAFT": "Некорректный черновик GraphQL.",
+          "GRAPHQL_DOCUMENT": "Поддерживаются только исполняемые документы GraphQL.",
+          "GRAPHQL_OPERATION": "Выберите существующую операцию. Имена должны быть уникальны; анонимная операция должна быть единственной.",
+          "GRAPHQL_SUBSCRIPTION": "GraphQL subscriptions не поддерживаются.",
+          "GRAPHQL_VARIABLES": "Переменные должны быть корректным JSON-объектом.",
+          "GRAPHQL_METHOD": "Для GraphQL требуется POST."
+        },
+        "runnerResponse": {
+          "success": "GraphQL: данные получены без ошибок",
+          "errors": "Ошибки GraphQL",
+          "invalid": "Некорректный или обрезанный ответ GraphQL"
+        },
+        "noNamedOperations": "Нет именованных операций"
       }
     },
     "tools": {

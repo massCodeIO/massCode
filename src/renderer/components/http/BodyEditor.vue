@@ -21,13 +21,14 @@ import {
   lineNumbers,
   placeholder,
 } from '@codemirror/view'
+import { graphqlLanguage } from './cm-extensions/graphql'
 import {
   refreshVariables,
   varInterpolationExtension,
 } from './cm-extensions/varInterpolation'
 
 interface Props {
-  language?: 'json' | 'text' | 'form-urlencoded' | 'javascript'
+  language?: 'json' | 'text' | 'form-urlencoded' | 'javascript' | 'graphql'
   placeholder?: string
   wrapLines?: boolean
 }
@@ -78,6 +79,8 @@ function validateJson(value: string) {
 }
 
 function getLanguageExtension(): Extension {
+  if (props.language === 'graphql')
+    return graphqlLanguage
   if (props.language === 'json')
     return json()
   if (props.language === 'javascript')

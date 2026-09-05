@@ -10,6 +10,7 @@ const { settings } = useHttpSettings()
 
 const BODY_TYPES: { value: HttpBodyType, labelKey: string }[] = [
   { value: 'none', labelKey: 'spaces.http.editor.body.typeNone' },
+  { value: 'graphql', labelKey: 'spaces.http.graphql.title' },
   { value: 'json', labelKey: 'spaces.http.editor.body.typeJson' },
   { value: 'text', labelKey: 'spaces.http.editor.body.typeText' },
   {
@@ -41,6 +42,14 @@ const bodyType = computed({
   get: () => draft.value.bodyType,
   set: (value) => {
     draft.value.bodyType = value
+    if (value === 'graphql') {
+      draft.value.method = 'POST'
+      draft.value.body = JSON.stringify({
+        query: '',
+        variables: '{}',
+        operationName: '',
+      })
+    }
   },
 })
 
@@ -75,6 +84,10 @@ function addFormDataRow() {
       </Select.Select>
     </div>
 
+    <HttpGraphqlEditor
+      v-if="bodyType === 'graphql'"
+      v-model="draft.body"
+    />
     <HttpBodyEditor
       v-if="
         bodyType === 'json'

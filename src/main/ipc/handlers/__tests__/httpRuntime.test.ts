@@ -77,6 +77,76 @@ describe('hTTP runtime execution', () => {
     mocks.runtimeState = 'ready'
     mocks.activeEnvironment = null
   })
+  it('executes GraphQL via the shared transport, auth, extraction and assertions', async () => {
+    mocks.request.mockResolvedValue(
+      response('{"data":{"token":"demo"},"errors":[{"message":"partial"}]}'),
+    )
+    const result = await getHandler()(event, {
+      ...payload,
+      runtime: {
+        version: 1,
+        extractions: [{ name: 'token', source: 'json', path: '/data/token' }],
+        assertions: [
+          {
+            name: 'HTTP status',
+            source: 'status',
+            operator: 'eq',
+            expected: 200,
+          },
+        ],
+      },
+      request: {
+        ...payload.request,
+        method: 'POST',
+        bodyType: 'graphql',
+        auth: { type: 'bearer', token: 'demo' },
+        body: JSON.stringify({
+          query: '{ token }',
+          variables: '{}',
+          operationName: '',
+        }),
+      },
+    })
+    expect(result.graphql).toBe('errors')
+    expect(result.status).toBe(200)
+    expect(result.body).toContain('partial')
+    expect(result.runtimeResults.assertions[0].ok).toBe(true)
+    expect(result.sessionNames).toContain('token')
+    expect(mocks.request.mock.calls[0][1]).toMatchObject({
+      method: 'POST',
+      maxRedirections: 0,
+      headers: {
+        'Authorization': 'Bearer demo',
+        'Content-Type': 'application/json',
+      },
+    })
+    expect(JSON.parse(mocks.request.mock.calls[0][1].body)).toEqual({
+      query: '{ token }',
+      variables: {},
+    })
+  })
+
+  it.each(['{bad', 'null'])(
+    'does not send invalid GraphQL variables %s',
+    async (variables) => {
+      const result = await getHandler()(event, {
+        ...payload,
+        request: {
+          ...payload.request,
+          method: 'POST',
+          bodyType: 'graphql',
+          body: JSON.stringify({
+            query: '{ token }',
+            variables,
+            operationName: '',
+          }),
+        },
+      })
+      expect(result.error).toBe('GRAPHQL_VARIABLES')
+      expect(mocks.request).not.toHaveBeenCalled()
+    },
+  )
+
   it('extracts login token and uses it in the next request, masking history', async () => {
     const execute = getHandler()
     mocks.request.mockResolvedValueOnce(response('{"token":"secret token"}'))

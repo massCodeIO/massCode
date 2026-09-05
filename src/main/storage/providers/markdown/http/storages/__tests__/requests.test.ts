@@ -133,6 +133,26 @@ describe('http requests storage', () => {
     vi.clearAllMocks()
   })
 
+  it('preserves GraphQL and incomplete variables through cold and indexed reloads', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'GraphQL', method: 'POST' })
+    const body = JSON.stringify({
+      query: 'query Q { a }',
+      variables: '{bad',
+      operationName: 'Q',
+    })
+    storage.updateRequest(id, { bodyType: 'graphql', body })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)).toMatchObject({
+      bodyType: 'graphql',
+      body,
+    })
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequests({})[0].bodyType).toBe('graphql')
+    expect(storage.getRequestById(id)?.body).toBe(body)
+  })
+
   it('persists WebSocket type and message through cold and indexed reloads', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({

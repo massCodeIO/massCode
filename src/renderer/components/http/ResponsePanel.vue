@@ -140,6 +140,18 @@ function copyActiveTab() {
         {{ responseError }}
       </div>
 
+      <UiText
+        v-if="lastResponse.graphql"
+        variant="caption"
+        class="border-b px-3 py-2"
+        :class="
+          lastResponse.graphql === 'success'
+            ? 'text-muted-foreground'
+            : 'text-destructive'
+        "
+      >
+        {{ i18n.t(`spaces.http.graphql.response.${lastResponse.graphql}`) }}
+      </UiText>
       <Tabs.Tabs
         v-model="activeTab"
         class="flex min-h-0 flex-1 flex-col gap-0"

@@ -33,6 +33,7 @@ export interface HttpRunStep {
   method: HttpMethod
   state: HttpRunStepStatus
   status?: number | null
+  graphql?: import('./httpGraphql').GraphqlResponseState
   durationMs?: number
   scripts?: HttpScriptResult[]
   assertions?: HttpRuntimeResult[]

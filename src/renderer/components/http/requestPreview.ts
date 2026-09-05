@@ -1,5 +1,6 @@
 import type { HttpRequestDraft } from '@/composables'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
+import { buildGraphqlBody } from '~/shared/httpGraphql'
 import { interpolateHttpVariables } from '~/shared/httpVariables'
 
 export type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
@@ -194,6 +195,33 @@ function interpolateDraft(
   draft: HttpRequestDraft,
   variables: Record<string, string> | undefined,
 ): HttpRequestDraft {
+  if (draft.bodyType === 'graphql') {
+    if (draft.method !== 'POST')
+      throw new Error('GRAPHQL_METHOD')
+    draft = {
+      ...draft,
+      method: 'POST',
+      bodyType: 'json',
+      body: buildGraphqlBody(draft.body, variables),
+      headers: [...draft.headers],
+    }
+    if (
+      !draft.headers.some(
+        header =>
+          header.enabled !== false && header.key.toLowerCase() === 'accept',
+      )
+    ) {
+      draft.headers.push({
+        key: 'Accept',
+        value: 'application/graphql-response+json, application/json;q=0.9',
+      })
+    }
+    // Already interpolated before JSON encoding. Do not interpolate this body twice.
+    return {
+      ...interpolateDraft({ ...draft, body: null }, variables),
+      body: draft.body,
+    }
+  }
   if (!variables || Object.keys(variables).length === 0) {
     return draft
   }

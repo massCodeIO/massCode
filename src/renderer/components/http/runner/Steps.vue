@@ -108,6 +108,19 @@ const canReorder = computed(
           </UiText>
         </div>
         <UiText
+          v-if="step.graphql"
+          as="p"
+          variant="caption"
+          class="px-3 pb-2.5"
+          :class="
+            step.graphql === 'success'
+              ? 'text-muted-foreground'
+              : 'text-destructive'
+          "
+        >
+          {{ i18n.t(`spaces.http.graphql.runnerResponse.${step.graphql}`) }}
+        </UiText>
+        <UiText
           v-if="step.error"
           as="p"
           variant="xs"

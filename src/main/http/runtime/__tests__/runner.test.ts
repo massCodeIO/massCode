@@ -314,3 +314,28 @@ describe('folder runner', () => {
     expect(mocks.history).not.toHaveBeenCalled()
   })
 })
+
+it('fails a GraphQL step on HTTP 200 errors and preserves the separate outcome', async () => {
+  mocks.records[0] = {
+    ...record(1),
+    method: 'POST',
+    bodyType: 'graphql',
+    body: JSON.stringify({
+      query: '{ hello }',
+      variables: '{}',
+      operationName: '',
+    }),
+  }
+  mocks.request.mockResolvedValue(
+    response('{"data":{"hello":null},"errors":[{"message":"partial"}]}'),
+  )
+  const view = prepareHttpRun(7, 1)
+  await start(view)
+  const result = getHttpRun(7, view.runId)
+  expect(result?.steps[0]).toMatchObject({
+    state: 'failed',
+    status: 200,
+    graphql: 'errors',
+  })
+  expect(result?.steps[1].state).toBe('skipped')
+})

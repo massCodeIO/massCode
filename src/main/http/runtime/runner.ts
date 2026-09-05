@@ -234,6 +234,7 @@ export async function startHttpRun(
           break
         }
         step.scripts = result.scriptResults
+        step.graphql = result.graphql
         step.status = result.status
         step.durationMs = result.durationMs
         step.assertions = result.runtimeResults?.assertions ?? []
@@ -242,6 +243,7 @@ export async function startHttpRun(
           step.error = 'transport'
         const failed
           = !!result.error
+            || (result.graphql !== undefined && result.graphql !== 'success')
             || !!step.scripts?.some(
               phase => phase.error || phase.tests.some(test => !test.ok),
             )

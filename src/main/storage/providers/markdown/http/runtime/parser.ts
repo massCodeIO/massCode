@@ -33,6 +33,7 @@ const HTTP_METHODS: HttpMethod[] = [
 const HTTP_BODY_TYPES: HttpBodyType[] = [
   'none',
   'json',
+  'graphql',
   'text',
   'form-urlencoded',
   'multipart',

@@ -37,9 +37,14 @@ const previewFormat = computed<HttpRequestPreviewFormat>({
 const previewContent = computed(() => {
   if (!currentDraft.value)
     return ''
-  return buildRequestPreview(currentDraft.value, previewFormat.value, {
-    variables: activeEnvironmentVariables.value,
-  })
+  try {
+    return buildRequestPreview(currentDraft.value, previewFormat.value, {
+      variables: activeEnvironmentVariables.value,
+    })
+  }
+  catch {
+    return ''
+  }
 })
 
 const previewWarnings = computed(() =>
@@ -49,6 +54,8 @@ const previewWarnings = computed(() =>
 )
 
 const statusClass = computed(() => {
+  if (lastResponse.value?.graphql && lastResponse.value.graphql !== 'success')
+    return 'text-destructive'
   const status = lastResponse.value?.status
   if (!status)
     return 'text-muted-foreground'

@@ -785,7 +785,13 @@ export interface HttpRequestItemResponse {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   body: string | null;
   formData: {
     key: string;
@@ -861,7 +867,13 @@ export type HttpRequestsResponse = {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   formData: {
     key: string;
     type: "text" | "file";
@@ -910,7 +922,13 @@ export interface HttpRequestsUpdate {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType?: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType?:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   body?: string | null;
   formData?: {
     key: string;

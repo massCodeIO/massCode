@@ -181,6 +181,7 @@ export default defineConfig({
             { text: 'Tests & Variables', link: '/documentation/http/tests' },
             { text: 'JavaScript Scripts', link: '/documentation/http/scripts' },
             { text: 'Folder Runner', link: '/documentation/http/runner' },
+            { text: 'GraphQL', link: '/documentation/http/graphql' },
             { text: 'WebSocket', link: '/documentation/http/websocket' },
             { text: 'Environments', link: '/documentation/http/environments' },
             { text: 'Importing Collections', link: '/documentation/http/importing' },

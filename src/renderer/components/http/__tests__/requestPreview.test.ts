@@ -1,4 +1,5 @@
 import type { HttpRequestDraft } from '@/composables'
+import { describe, expect, it, vi } from 'vitest'
 import {
   buildCurlPreview,
   buildHttpPreview,
@@ -256,4 +257,34 @@ describe('javaScript request previews', () => {
       ),
     ).toEqual([])
   })
+})
+
+describe('graphQL code generation', () => {
+  it('rejects a non-POST GraphQL draft instead of generating a different method', () => {
+    expect(() =>
+      buildRequestPreview(createDraft({ bodyType: 'graphql' }), 'fetch'),
+    ).toThrow('GRAPHQL_METHOD')
+  })
+  const draft = createDraft({
+    method: 'POST',
+    bodyType: 'graphql',
+    body: JSON.stringify({
+      query: 'query Q($id: ID!) { user(id: $id) { name } }',
+      variables: '{"id":"{{id}}"}',
+      operationName: 'Q',
+    }),
+  })
+  it.each(['http', 'curl', 'fetch', 'axios'] as const)(
+    'encodes the GraphQL envelope for %s',
+    (format) => {
+      const preview = buildRequestPreview(draft, format, {
+        variables: { id: '42' },
+      })
+      expect(preview).toContain('application/json')
+      expect(preview).toContain('application/graphql-response+json')
+      expect(preview).toContain('42')
+      expect(preview).not.toContain('{{id}}')
+      expect(preview).toContain('operationName')
+    },
+  )
 })

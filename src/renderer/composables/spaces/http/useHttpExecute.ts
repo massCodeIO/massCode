@@ -123,7 +123,9 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
       lastError.value
         = response.error === 'HTTP_SCRIPT_FAILED'
           ? i18n.t('spaces.http.scripts.failed')
-          : response.error
+          : response.error.startsWith('GRAPHQL_')
+            ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+            : response.error
     }
     return response
   }

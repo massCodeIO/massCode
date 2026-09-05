@@ -18,6 +18,10 @@ import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { Agent, request as undiciRequest } from 'undici'
 import {
+  buildGraphqlBody,
+  graphqlResponseState,
+} from '../../../shared/httpGraphql'
+import {
   emptyHttpRuntime,
   httpRuntimeSchema,
 } from '../../../shared/httpRuntime'
@@ -92,7 +96,7 @@ function interpolateRequest(
     })),
     bodyType: request.bodyType,
     body:
-      request.body !== null
+      request.body !== null && request.bodyType !== 'graphql'
         ? interpolate(request.body, variables)
         : request.body,
     formData: request.formData.map(entry => ({
@@ -172,6 +176,8 @@ export function buildBody(
   switch (bodyType) {
     case 'none':
       return { body: undefined }
+    case 'graphql':
+      return { body: body ?? '', contentType: 'application/json' }
     case 'json':
       return { body: body ?? '', contentType: 'application/json' }
     case 'text':
@@ -648,8 +654,20 @@ export async function executeHttpRequest(
     }
     if (controller.signal.aborted)
       throw new DOMException('', 'AbortError')
+    if (interpolated.bodyType === 'graphql') {
+      if (interpolated.method !== 'POST')
+        throw new Error('GRAPHQL_METHOD')
+      interpolated.body = buildGraphqlBody(interpolated.body, variables)
+    }
     const headersWithAuth = applyAuth(interpolated.auth, interpolated.headers)
     const headersObj = toHeadersObject(headersWithAuth)
+    if (
+      interpolated.bodyType === 'graphql'
+      && !Object.keys(headersObj).some(key => key.toLowerCase() === 'accept')
+    ) {
+      headersObj.Accept
+        = 'application/graphql-response+json, application/json;q=0.9'
+    }
     const built = buildBody(
       interpolated.bodyType,
       interpolated.body,
@@ -666,7 +684,7 @@ export async function executeHttpRequest(
       headers: headersObj,
       body: built.body as Dispatcher.DispatchOptions['body'],
       signal: controller.signal,
-      maxRedirections: scripted ? 0 : 5,
+      maxRedirections: scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
       ...(payload.skipCertificateVerification
         ? { dispatcher: insecureCertificateDispatcher }
         : {}),
@@ -684,6 +702,9 @@ export async function executeHttpRequest(
     const text = bodyKind === 'binary' ? '' : buffer.toString('utf-8')
 
     const result: HttpExecuteResult = {
+      ...(interpolated.bodyType === 'graphql'
+        ? { graphql: graphqlResponseState(text, truncated) }
+        : {}),
       status: response.statusCode,
       statusText: '',
       headers: headerEntries,

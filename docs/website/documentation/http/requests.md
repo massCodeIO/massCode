@@ -94,3 +94,5 @@ After a request is sent, the response panel shows:
 - copy action for response body and headers
 
 HTTP has its own editor preferences, including line wrapping for request previews, request bodies, and response viewers.
+
+For GraphQL queries and mutations with JSON variables and operation selection, see [GraphQL](./graphql).

@@ -583,6 +583,35 @@
           "exception": "Script failed. Check syntax, supported API and memory limits. Exception text is hidden to protect secrets.",
           "destination": "Pre-request variables changed the destination origin. Request blocked."
         }
+      },
+      "graphql": {
+        "title": "GraphQL",
+        "query": "Query / mutation",
+        "variables": "Variables (JSON object)",
+        "operation": "Operation",
+        "chooseOperation": "Automatic for a single operation",
+        "clearOperation": "Automatic",
+        "validationOnSend": "Variables will be validated after substitution when sending.",
+        "schemaLimit": "Syntax validation only. Schema loading, introspection, schema autocomplete and subscriptions are not supported.",
+        "response": {
+          "success": "GraphQL: data received without errors",
+          "errors": "GraphQL errors — inspect errors and any partial data below.",
+          "invalid": "Invalid or truncated GraphQL response — inspect the raw response below."
+        },
+        "errors": {
+          "GRAPHQL_DRAFT": "Invalid GraphQL draft.",
+          "GRAPHQL_DOCUMENT": "Only executable GraphQL documents are supported.",
+          "GRAPHQL_OPERATION": "Select an existing operation. Operations must have unique names; anonymous operations must stand alone.",
+          "GRAPHQL_SUBSCRIPTION": "GraphQL subscriptions are not supported.",
+          "GRAPHQL_VARIABLES": "Variables must be a valid JSON object.",
+          "GRAPHQL_METHOD": "GraphQL requests require POST."
+        },
+        "runnerResponse": {
+          "success": "GraphQL: data received without errors",
+          "errors": "GraphQL errors",
+          "invalid": "Invalid or truncated GraphQL response"
+        },
+        "noNamedOperations": "No named operations"
       }
     },
     "tools": {

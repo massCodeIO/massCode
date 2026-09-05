@@ -6,6 +6,7 @@ import { cva } from 'class-variance-authority'
 
 interface Props {
   method: HttpMethod
+  protocol?: 'http' | 'websocket'
   size?: 'xs' | 'sm'
   appearance?: 'text' | 'chip'
   class?: string
@@ -47,14 +48,15 @@ const variants = cva('font-mono font-semibold tracking-tight uppercase', {
     :class="
       cn(
         variants({
-          method: props.method,
+          method: props.protocol === 'websocket' ? undefined : props.method,
           size: props.size,
           appearance: props.appearance,
         }),
+        props.protocol === 'websocket' ? 'text-primary' : '',
         props.class,
       )
     "
   >
-    {{ props.method }}
+    {{ props.protocol === "websocket" ? "WS" : props.method }}
   </component>
 </template>

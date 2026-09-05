@@ -217,6 +217,40 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "websocket": {
+        "title": "WebSocket",
+        "requestType": "Request type",
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "message": "Message",
+        "send": "Send message",
+        "messages": "Messages",
+        "clear": "Clear messages",
+        "empty": "Connect and send a message to start the conversation.",
+        "messageHint": "Send text or JSON. Variables use the environment and Session captured at connection time. Save keeps this message draft.",
+        "logHint": "Messages stay in memory: the latest 100, with previews up to 16 KiB. Incoming messages may contain sensitive data.",
+        "dropped": "Older messages removed: {{count}}",
+        "incoming": "Received",
+        "outgoing": "Sent",
+        "binary": "Binary · Base64",
+        "states": {
+          "connecting": "Connecting",
+          "open": "Connected",
+          "closing": "Disconnecting",
+          "closed": "Disconnected",
+          "error": "Connection failed"
+        },
+        "errors": {
+          "invalid": "Use a valid ws:// or wss:// URL. Check variables and headers; handshake headers are managed automatically.",
+          "unavailable": "The request is unavailable. Reload it and try again.",
+          "contextChanged": "Connection closed because the environment, Session or vault changed.",
+          "network": "The connection failed. Check the server, TLS settings and network.",
+          "handshake": "The server rejected the WebSocket handshake (HTTP {{status}}). Check the URL, params, headers and authentication.",
+          "tooLarge": "Messages must not exceed 1 MiB.",
+          "notOpen": "Connect before sending a message.",
+          "busy": "The send buffer is full. Wait before sending again."
+        }
+      },
       "runner": {
         "runFolder": "Run folder",
         "title": "Folder runner",

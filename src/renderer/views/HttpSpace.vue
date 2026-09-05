@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { useApp, useHttpApp, useHttpSpaceInit } from '@/composables'
+import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { store } from '@/electron'
 
 const { isAppLoading } = useApp()
 const { initHttpSpace } = useHttpSpaceInit()
 const { isHttpSidebarHidden, isHttpListHidden } = useHttpApp()
+
+const { dispose: disposeWebSocket } = useHttpWebSocket()
+onBeforeUnmount(disposeWebSocket)
 
 void initHttpSpace()
 

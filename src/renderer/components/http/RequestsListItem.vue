@@ -266,6 +266,7 @@ onClickOutside(itemRef, () => {
           <div class="mb-2 flex items-baseline gap-2">
             <HttpMethodBadge
               :method="props.request.method"
+              :protocol="props.request.protocol"
               size="sm"
               class="method-badge shrink-0"
             />

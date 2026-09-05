@@ -35,6 +35,7 @@ export type HttpRequestDraft = Pick<
   HttpRequest,
   | 'name'
   | 'folderId'
+  | 'protocol'
   | 'method'
   | 'url'
   | 'headers'
@@ -199,6 +200,7 @@ function toDraft(request: HttpRequest): HttpRequestDraft {
   return {
     name: request.name,
     folderId: request.folderId,
+    protocol: request.protocol ?? 'http',
     method: request.method,
     url: getDisplayUrl(request.url, query),
     headers: request.headers.map(h => ({ ...h })),
@@ -375,6 +377,7 @@ async function createHttpRequest(payload?: Partial<HttpRequestsAdd>) {
     const { data } = await api.httpRequests.postHttpRequests({
       name,
       folderId,
+      ...(payload?.protocol && { protocol: payload.protocol }),
       ...(payload?.method && { method: payload.method }),
       ...(payload?.url !== undefined && { url: payload.url }),
     })
@@ -442,6 +445,7 @@ async function duplicateHttpRequest(requestId: number) {
     markPersistedStorageMutation()
     const { data } = await api.httpRequests.postHttpRequests({
       folderId,
+      protocol: source.protocol,
       method: source.method,
       name,
       url: source.url,
@@ -840,6 +844,7 @@ async function performSaveCurrentRequest(): Promise<boolean> {
     JSON.stringify({
       name: draft.name,
       folderId: draft.folderId,
+      protocol: draft.protocol,
       method: draft.method,
       url: getPersistedUrl(draft.url, draft.query),
       headers: draft.headers,

@@ -63,7 +63,8 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   // (в том числе бессрочно, если GET упал), и execute отправил бы не тот
   // запрос, что подсвечен в списке.
   if (
-    isExecuting.value
+    currentDraft.value?.protocol === 'websocket'
+    || isExecuting.value
     || (currentRequest.value?.runtimeState
       && currentRequest.value.runtimeState !== 'ready')
     || isCurrentRequestLoading.value

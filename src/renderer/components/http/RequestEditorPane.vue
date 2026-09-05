@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useHttpRequests, useResizeHandle } from '@/composables'
+import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n, store } from '@/electron'
 
 const { currentRequest, isCurrentRequestLoadingVisible } = useHttpRequests()
+
+const { isWebSocket } = useHttpWebSocket()
 
 const RESPONSE_PANEL_DEFAULT_HEIGHT = 300
 const RESPONSE_PANEL_MIN_HEIGHT = 120
@@ -108,7 +111,8 @@ useResizeHandle(responseHandleRef, {
         responsePanelHeight === undefined ? 'flex-1 basis-2/5' : 'shrink-0'
       "
     >
-      <HttpBottomPanel />
+      <HttpWebsocketMessages v-if="isWebSocket" />
+      <HttpBottomPanel v-else />
     </div>
   </div>
 </template>

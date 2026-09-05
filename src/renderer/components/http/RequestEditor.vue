@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { HttpMethod } from '~/main/types/http'
-import * as Select from '@/components/ui/shadcn/select'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
   useHttpApp,
@@ -9,6 +7,7 @@ import {
   useNavigationHistory,
 } from '@/composables'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
+import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
 import {
@@ -17,16 +16,6 @@ import {
 } from '@/utils'
 import { ChevronLeft, ChevronRight, LoaderCircle, Send } from 'lucide-vue-next'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
-
-const HTTP_METHODS: HttpMethod[] = [
-  'GET',
-  'POST',
-  'PUT',
-  'PATCH',
-  'DELETE',
-  'HEAD',
-  'OPTIONS',
-]
 
 const { currentDraft, currentRequest, hasSiblingRequestNameConflict }
   = useHttpRequests()
@@ -38,9 +27,11 @@ const {
   groupInvalid,
   focusTarget,
 } = useHttpRuntime()
+const { isWebSocket } = useHttpWebSocket()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
 const activeTab = ref<
+  | 'message'
   | 'params'
   | 'headers'
   | 'body'
@@ -50,6 +41,9 @@ const activeTab = ref<
   | 'variables'
 >('params')
 
+watch(isWebSocket, () => {
+  activeTab.value = isWebSocket.value ? 'message' : 'params'
+})
 const editorRoot = useTemplateRef<HTMLElement>('editorRoot')
 watch(focusTarget, async (target) => {
   if (!target)
@@ -193,28 +187,7 @@ async function onSend() {
       </div>
     </div>
     <div class="border-border flex items-center gap-1 border-b px-2 py-1">
-      <Select.Select v-model="currentDraft.method">
-        <Select.SelectTrigger class="w-24">
-          <Select.SelectValue>
-            <HttpMethodBadge
-              :method="currentDraft.method"
-              size="sm"
-            />
-          </Select.SelectValue>
-        </Select.SelectTrigger>
-        <Select.SelectContent>
-          <Select.SelectItem
-            v-for="m in HTTP_METHODS"
-            :key="m"
-            :value="m"
-          >
-            <HttpMethodBadge
-              :method="m"
-              size="sm"
-            />
-          </Select.SelectItem>
-        </Select.SelectContent>
-      </Select.Select>
+      <HttpTransportSelect />
       <div class="min-w-0 flex-1">
         <HttpVariableInput
           v-model="currentDraft.url"
@@ -222,7 +195,9 @@ async function onSend() {
         />
       </div>
       <HttpRequestSaveButton />
+      <HttpWebsocketConnectionAction v-if="isWebSocket" />
       <UiActionButton
+        v-else
         :aria-label="i18n.t('spaces.http.editor.send')"
         :tooltip="i18n.t('spaces.http.editor.send')"
         :disabled="
@@ -247,6 +222,12 @@ async function onSend() {
         class="border-border scrollbar min-w-0 overflow-x-auto border-b px-2 py-1"
       >
         <Tabs.TabsList>
+          <Tabs.TabsTrigger
+            v-if="isWebSocket"
+            value="message"
+          >
+            {{ i18n.t("spaces.http.websocket.message") }}
+          </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="params">
             {{ i18n.t("spaces.http.editor.tabs.params") }}
             <span
@@ -265,7 +246,10 @@ async function onSend() {
               {{ headersCount }}
             </span>
           </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="body">
+          <Tabs.TabsTrigger
+            v-if="!isWebSocket"
+            value="body"
+          >
             {{ i18n.t("spaces.http.editor.tabs.body") }}
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="auth">
@@ -281,6 +265,7 @@ async function onSend() {
             {{ i18n.t("spaces.http.editor.tabs.description") }}
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger
+            v-if="!isWebSocket"
             value="variables"
             :class="
               groupDirty.extractions && groupInvalid.extractions
@@ -292,6 +277,7 @@ async function onSend() {
             }}{{ groupDirty.extractions ? " *" : "" }}
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger
+            v-if="!isWebSocket"
             value="assertions"
             :class="
               groupDirty.assertions && groupInvalid.assertions
@@ -305,6 +291,13 @@ async function onSend() {
         </Tabs.TabsList>
       </div>
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
+        <Tabs.TabsContent
+          v-if="isWebSocket"
+          value="message"
+          class="h-full"
+        >
+          <HttpWebsocketComposer />
+        </Tabs.TabsContent>
         <Tabs.TabsContent
           value="assertions"
           class="flex h-full min-h-0 flex-col"

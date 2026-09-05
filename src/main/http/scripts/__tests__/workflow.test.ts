@@ -2,7 +2,11 @@ import type { HttpExecutePayload } from '../../../types/http'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeHttpRequest } from '../../runtime/execute'
-import { getHttpSession, resetHttpSession } from '../../runtime/session'
+import {
+  commitHttpSession,
+  getHttpSession,
+  resetHttpSession,
+} from '../../runtime/session'
 import { scriptsTrusted, setScriptTrust } from '../trust'
 
 const mocks = vi.hoisted(() => ({
@@ -203,3 +207,46 @@ describe('script workflow and local trust', () => {
     expect(mocks.history).not.toHaveBeenCalled()
   })
 })
+
+it.each(['pre', 'post', 'extraction'] as const)(
+  'rolls back staged writes on %s budget overflow',
+  async (phase) => {
+    const initial = new Map(
+      Array.from({ length: 8 }, (_, i) => [`value${i}`, 'x'.repeat(250_000)]),
+    )
+    // Near the scope limit, while still fitting within the script input limit.
+    initial.set('padding', 'p'.repeat(80_000))
+    commitHttpSession(getHttpSession('/vault', null).generation, initial)
+    const before = session()
+    const write
+      = 'mc.variables.set("one", "a".repeat(16000)); mc.variables.set("two", "b".repeat(16000))'
+    const p
+      = phase === 'pre'
+        ? payload(write)
+        : phase === 'post'
+          ? payload('mc.variables.set("path", "demo")', write)
+          : payload('mc.variables.set("path", "demo")')
+    if (phase === 'extraction') {
+      mocks.request.mockImplementationOnce(async () => ({
+        statusCode: 200,
+        headers: { 'content-type': 'application/json' },
+        body: Readable.from([JSON.stringify({ token: 'z'.repeat(100_000) })]),
+      }))
+    }
+    allow(p)
+    const result = await executeHttpRequest(p)
+    expect(session()).toEqual(before)
+    if (phase === 'extraction') {
+      expect(result.runtimeResults?.extractions[0]).toMatchObject({
+        ok: false,
+        errorCode: 'scopeLimit',
+      })
+    }
+    else {
+      expect(result.scriptResults?.at(-1)?.error).toBe('limit')
+    }
+    if (phase === 'pre')
+      expect(mocks.request).not.toHaveBeenCalled()
+    else expect(result.status).toBe(200)
+  },
+)

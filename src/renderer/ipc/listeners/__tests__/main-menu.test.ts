@@ -4,7 +4,7 @@ import { ref } from 'vue'
 async function setup() {
   vi.resetModules()
 
-  globalThis.watch = vi.fn()
+  Object.assign(globalThis, { watch: vi.fn() })
 
   const ipcHandlers = new Map<string, (...args: any[]) => void>()
   const navigateBack = vi.fn(async () => undefined)

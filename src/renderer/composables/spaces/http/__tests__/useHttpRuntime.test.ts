@@ -43,6 +43,81 @@ async function load() {
 }
 
 describe('hTTP runtime editor state', () => {
+  it('blocks direct reload for dirty drafts and pending saves', async () => {
+    const addEventListener = vi.fn()
+    vi.stubGlobal('window', { addEventListener })
+    try {
+      const runtime = await load()
+      const beforeUnload = addEventListener.mock.calls.find(
+        ([event]) => event === 'beforeunload',
+      )![1]
+      const event = { preventDefault: vi.fn(), returnValue: undefined }
+      beforeUnload(event)
+      expect(event.preventDefault).not.toHaveBeenCalled()
+      isCurrentRequestDirty.value = true
+      beforeUnload(event)
+      expect(event.preventDefault).toHaveBeenCalledOnce()
+      isCurrentRequestDirty.value = false
+      runtime.saving.value = true
+      beforeUnload(event)
+      expect(event.preventDefault).toHaveBeenCalledTimes(2)
+      runtime.saving.value = false
+    }
+    finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it.each([
+    'save',
+    'discard',
+    'cancel',
+    'failed-save',
+    'invalid',
+    'busy',
+  ] as const)(
+    'acknowledges lifecycle %s only after the runtime guard resolves',
+    async (choice) => {
+      const runtime = await load()
+      isCurrentRequestDirty.value = true
+      const send = vi.fn()
+      const on = vi.fn()
+      vi.doMock('@/electron', () => ({ ipc: { on, send } }))
+      const { registerLifecycleListener } = await import(
+        '@/ipc/listeners/lifecycle'
+      )
+      registerLifecycleListener()
+      const listener = on.mock.calls[0]![1]
+      if (choice === 'failed-save')
+        saveCurrentRequest.mockResolvedValueOnce(false)
+      if (choice === 'invalid') {
+        runtime.draft.value.extractions.push({
+          name: '',
+          source: 'json',
+          path: '',
+        })
+      }
+      if (choice === 'busy')
+        runtime.saving.value = true
+      const pending = listener(undefined, { id: 42 })
+      expect(send).not.toHaveBeenCalled()
+      if (choice !== 'busy') {
+        expect(runtime.leaveDialogOpen.value).toBe(true)
+        await runtime.resolveNavigation(
+          choice === 'failed-save' || choice === 'invalid' ? 'save' : choice,
+        )
+      }
+      await pending
+      expect(send).toHaveBeenCalledWith('system:confirm-leave-result', {
+        id: 42,
+        allowed: choice === 'save' || choice === 'discard',
+      })
+      if (choice !== 'save' && choice !== 'discard')
+        expect(runtime.requestDirty.value).toBe(true)
+      runtime.saving.value = false
+    },
+  )
+
   it('saves request fields and runtime with one action', async () => {
     const runtime = await load()
     isCurrentRequestDirty.value = true

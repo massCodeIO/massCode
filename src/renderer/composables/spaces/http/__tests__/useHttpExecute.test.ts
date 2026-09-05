@@ -27,6 +27,7 @@ async function setup() {
   )
   const saveCurrentRequest = vi.fn()
   const putRuntime = vi.fn()
+  const httpState = { requestId: 1 }
   vi.doMock('../useHttpRequests', () => ({
     useHttpRequests: () => ({
       currentRequest,
@@ -38,7 +39,7 @@ async function setup() {
     }),
   }))
   vi.doMock('../useHttpApp', () => ({
-    useHttpApp: () => ({ httpState: { requestId: 1 } }),
+    useHttpApp: () => ({ httpState }),
   }))
   vi.doMock('../useHttpEnvironments', () => ({
     useHttpEnvironments: () => ({ activeEnvironmentId: ref(null) }),
@@ -70,12 +71,70 @@ async function setup() {
   }))
   const runtime = (await import('../useHttpRuntime')).useHttpRuntime()
   const execute = (await import('../useHttpExecute')).useHttpExecute()
-  return { runtime, execute, invoke, saveCurrentRequest, putRuntime }
+  return {
+    runtime,
+    execute,
+    invoke,
+    saveCurrentRequest,
+    putRuntime,
+    currentRequest,
+    httpState,
+  }
 }
 
 beforeEach(() => vi.clearAllMocks())
 
 describe('hTTP draft execution', () => {
+  it('cancels on selection change and waits for execution to settle before another Send', async () => {
+    const { execute, invoke, currentRequest, httpState } = await setup()
+    let finish!: (response: object) => void
+    invoke.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const pending = execute.executeCurrentRequest()
+    expect(execute.isExecuting.value).toBe(true)
+
+    httpState.requestId = 2
+    currentRequest.value = { ...currentRequest.value, id: 2 }
+    expect(invoke).toHaveBeenCalledWith('spaces:http:cancel', undefined)
+    // The cancellation acknowledgement does not release main's execution lock.
+    await Promise.resolve()
+    expect(execute.isExecuting.value).toBe(true)
+    expect(await execute.executeCurrentRequest()).toBeNull()
+    expect(
+      invoke.mock.calls.filter(
+        ([channel]) => channel === 'spaces:http:execute',
+      ),
+    ).toHaveLength(1)
+
+    finish({ status: 200, sessionNames: ['stale'] })
+    expect(await pending).toBeNull()
+    expect(execute.lastResponse.value).toBeNull()
+    expect(execute.isExecuting.value).toBe(false)
+    expect(await execute.executeCurrentRequest()).not.toBeNull()
+  })
+
+  it('releases the busy state when invalidated execution rejects', async () => {
+    const { execute, invoke } = await setup()
+    let reject!: (error: Error) => void
+    invoke.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, fail) => {
+          reject = fail
+        }),
+    )
+    const pending = execute.executeCurrentRequest()
+    execute.resetHttpExecuteState()
+    expect(execute.isExecuting.value).toBe(true)
+    reject(new Error('aborted'))
+    expect(await pending).toBeNull()
+    expect(execute.isExecuting.value).toBe(false)
+    expect(execute.lastError.value).toBeNull()
+  })
+
   it('sends a snapshot of unsaved rules without saving or clearing dirty state', async () => {
     const { runtime, execute, invoke, saveCurrentRequest, putRuntime }
       = await setup()

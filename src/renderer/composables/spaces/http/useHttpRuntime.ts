@@ -329,6 +329,18 @@ httpRuntimeNavigation.confirmLeave = () => {
   return leavePromise
 }
 
+// Прямой reload из DevTools обходит меню и его асинхронный confirmLeave.
+// Electron по умолчанию отменяет unload при preventDefault; обычный Quit
+// проходит main request/ack и уничтожает окно только после подтверждения.
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', (event) => {
+    if (requestDirty.value || busy.value) {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+  })
+}
+
 export function useHttpRuntime() {
   return {
     requestDirty,

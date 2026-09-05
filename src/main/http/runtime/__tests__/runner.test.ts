@@ -339,3 +339,30 @@ it('fails a GraphQL step on HTTP 200 errors and preserves the separate outcome',
   })
   expect(result?.steps[1].state).toBe('skipped')
 })
+
+it('fails cumulative Runner extraction without committing any writes from the failing step', async () => {
+  mocks.records = Array.from({ length: 10 }, (_, i) => ({
+    ...record(i + 1),
+    runtime: {
+      version: 1,
+      assertions: [],
+      extractions: [{ name: `value${i}`, source: 'json', path: '/value' }],
+    },
+  }))
+  mocks.records[9].runtime.extractions = []
+  mocks.records[9].headers = [{ key: 'X-Rejected', value: '{{value8}}' }]
+  mocks.request.mockImplementation(async () =>
+    response(JSON.stringify({ value: 'x'.repeat(250_000) })),
+  )
+  const result = await start(prepareHttpRun(7, 1), true)
+  expect(result.steps[8]).toMatchObject({
+    state: 'failed',
+    status: 200,
+    extractions: [{ ok: false, errorCode: 'scopeLimit' }],
+  })
+  expect(mocks.request.mock.calls[9][1].headers['X-Rejected']).toBe(
+    '{{value8}}',
+  )
+  expect(result.state).toBe('failed')
+  expect(getHttpSession('/vault', 1).variables).toEqual({})
+})

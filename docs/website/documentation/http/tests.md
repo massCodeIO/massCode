@@ -11,7 +11,7 @@ Use **Assertions** for checks and **Variables → Post-response** for extraction
 
 <img :src="withBase('/http-assertions.png')" alt="HTTP status and catalog length assertions with two passing test results">
 
-Use **Add assertion** or **Add extraction** at the bottom of the corresponding tab. Each request supports up to 100 assertions and 100 extractions. Extraction names must be unique and contain only letters `A–Z` / `a–z`, digits, underscores, dots, or hyphens; `__proto__` is reserved.
+Use **Add assertion** or **Add extraction** at the bottom of the corresponding tab. Each request supports up to 100 assertions and 100 extractions. Each extracted value is limited to 256 KiB of UTF-8 text; Session and Runner variables each have a 2 MiB total budget, including variable names. Exceeding either limit fails extraction and discards all variable changes from that request, preserving previous values. Script writes share the same total budget. Extraction names must be unique and contain only letters `A–Z` / `a–z`, digits, underscores, dots, or hyphens; `__proto__` is reserved.
 
 ## Pass a Login Token to Another Request
 

@@ -1,3 +1,5 @@
+import { variableScopeLimit } from './variables'
+
 let generation = 0
 let context: { vaultPath: string, environmentId: number | null } | null = null
 const values = new Map<string, string>()
@@ -35,9 +37,12 @@ export function isHttpSessionCurrent(token: number): boolean {
 export function commitHttpSession(
   token: number,
   next: Map<string, string | null>,
-): void {
+) {
   if (!isHttpSessionCurrent(token))
     return
+  const limit = variableScopeLimit(new Map([...values, ...next]))
+  if (limit)
+    return limit
   for (const [key, value] of next) {
     if (value === null)
       values.delete(key)

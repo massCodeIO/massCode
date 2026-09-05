@@ -65,6 +65,8 @@ type SystemAction =
   | 'update-available'
   | 'update-downloaded'
   | 'renderer-ready'
+  | 'confirm-leave'
+  | 'confirm-leave-result'
   | 'storage-synced'
   | 'cloud-download-status'
   | 'cloud-download-progress'

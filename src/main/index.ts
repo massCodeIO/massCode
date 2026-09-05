@@ -13,6 +13,7 @@ import { registerIPC } from './ipc'
 import { registerHttpScriptHandlers } from './ipc/handlers/httpScripts'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
+import { configureLifecycle, requestLifecycleAction } from './lifecycle'
 import { createMainMenu } from './menu/main'
 import { isQuitting, setQuitting } from './quitState'
 import {
@@ -106,22 +107,30 @@ export function handleMainWindowClose(
   window.destroy()
 }
 
-export function handleBeforeQuit(event: ElectronEvent): void {
+export function prepareQuit(): boolean {
   try {
     stopMarkdownWatcher()
   }
   catch (error) {
-    event.preventDefault()
     setQuitting(false)
     log('Error stopping markdown watcher before quit', error)
-    return
+    return false
   }
 
-  setQuitting(true)
   flushWindowBoundsSave()
   stopThemeWatcher()
   stopTasksCleanupScheduler()
   cleanupDockBadge()
+  return true
+}
+
+configureLifecycle(() => mainWindow, prepareQuit)
+
+export function handleBeforeQuit(event: ElectronEvent): void {
+  if (isQuitting())
+    return
+  event.preventDefault()
+  void requestLifecycleAction()
 }
 
 if (process.defaultApp) {

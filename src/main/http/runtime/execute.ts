@@ -42,6 +42,7 @@ import {
   getHttpSession,
   isHttpSessionCurrent,
 } from './session'
+import { variableScopeLimit } from './variables'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
@@ -545,6 +546,15 @@ export async function executeHttpRequest(
     headers: payload.request.headers,
   }
   const applyValues = (values: Record<string, string | null>) => {
+    const limit = variableScopeLimit(
+      new Map([
+        ...Object.entries(session.variables),
+        ...pendingValues,
+        ...Object.entries(values),
+      ]),
+    )
+    if (limit)
+      return limit
     for (const [key, value] of Object.entries(values)) {
       pendingValues.set(key, value)
       if (value === null) {
@@ -605,7 +615,10 @@ export async function executeHttpRequest(
       scriptResults.push({ phase: name, tests: [], error: execution.error })
       return false
     }
-    applyValues(execution.output.variables)
+    if (applyValues(execution.output.variables)) {
+      scriptResults.push({ phase: name, tests: [], error: 'limit' })
+      return false
+    }
     const tests = execution.output.tests.map(test => ({
       ...test,
       name: maskSecretValues(test.name, secretValues),
@@ -717,9 +730,17 @@ export async function executeHttpRequest(
 
     if (!current())
       return { ...result, body: '', headers: [], discarded: true }
-    const evaluated = evaluateHttpRuntime(runtime, result)
+    const evaluated = evaluateHttpRuntime(
+      runtime,
+      result,
+      new Map([...Object.entries(session.variables), ...pendingValues]),
+    )
     result.runtimeResults = evaluated.results
-    if (scripted) {
+    if (evaluated.limit) {
+      result.scriptResults = scripted ? scriptResults : undefined
+      result.sessionNames = session.names
+    }
+    else if (scripted) {
       applyValues(Object.fromEntries(evaluated.values))
       const completed = await phase('postResponse', {
         status: result.status,

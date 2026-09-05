@@ -393,6 +393,8 @@
         },
         "errors": {
           "regexLimit": "Regex could not complete: invalid pattern, size or time limit exceeded",
+          "valueLimit": "Extracted value exceeds the 256 KiB limit. All variable changes from this request were discarded.",
+          "scopeLimit": "Session or Runner variables exceed the 2 MiB total limit. All variable changes from this request were discarded.",
           "missing": "Value not found",
           "invalidJson": "Response is not valid JSON",
           "unavailableBody": "Response body unavailable or truncated",

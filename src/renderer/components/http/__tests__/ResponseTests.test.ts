@@ -1,6 +1,6 @@
 import { renderToString } from '@vue/server-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, createSSRApp, h } from 'vue'
+import { computed, createSSRApp, defineComponent, h } from 'vue'
 import ResponseTests from '../ResponseTests.vue'
 import RuntimeResultGroup from '../RuntimeResultGroup.vue'
 import ScriptResults from '../ScriptResults.vue'
@@ -14,12 +14,15 @@ async function renderResults() {
   const app = createSSRApp(ResponseTests)
   app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
   app.component('HttpScriptResults', ScriptResults)
-  app.component('UiText', {
-    setup:
-      (_, { slots }) =>
-        () =>
-          h('span', slots.default?.()),
-  })
+  app.component(
+    'UiText',
+    defineComponent({
+      setup:
+        (_, { slots }) =>
+          () =>
+            h('span', slots.default?.()),
+    }),
+  )
   return (await renderToString(app)).replace(/\s+/g, ' ')
 }
 

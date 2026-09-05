@@ -239,6 +239,8 @@ export interface HttpRuntimeResult {
     | 'unavailableBody'
     | 'mismatch'
     | 'regexLimit'
+    | 'valueLimit'
+    | 'scopeLimit'
 }
 
 export function emptyHttpRuntime(): HttpRuntime {

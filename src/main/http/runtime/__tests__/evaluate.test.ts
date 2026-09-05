@@ -1,6 +1,6 @@
 import type { HttpRuntime } from '../../../../shared/httpRuntime'
 import type { HttpExecuteResult } from '../../../types/http'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   emptyHttpRuntime,
   isHttpRuntime,
@@ -12,6 +12,7 @@ import {
   isHttpSessionCurrent,
   resetHttpSession,
 } from '../session'
+import { HTTP_VARIABLE_VALUE_BYTES } from '../variables'
 
 const response: HttpExecuteResult = {
   status: 200,
@@ -284,4 +285,84 @@ describe('hTTP declarative runtime', () => {
     commitHttpSession(first.generation, new Map([['token', 'stale']]))
     expect(getHttpSession('/other-vault', 2).names).toEqual([])
   })
+})
+
+it('rejects oversized values and repeated root extraction atomically', () => {
+  const runtime: HttpRuntime = {
+    ...emptyHttpRuntime(),
+    extractions: Array.from({ length: 100 }, (_, i) => ({
+      name: `value${i}`,
+      source: 'json',
+      path: '',
+    })),
+  }
+  for (const data of [
+    'x'.repeat(HTTP_VARIABLE_VALUE_BYTES + 1),
+    { value: 'x'.repeat(10 * 1024 * 1024) },
+  ]) {
+    const body = JSON.stringify(data)
+    const stringify = vi.spyOn(JSON, 'stringify')
+    const evaluated = evaluateHttpRuntime(runtime, { ...response, body })
+    const calls = stringify.mock.calls.length
+    stringify.mockRestore()
+    expect(calls).toBeLessThanOrEqual(1)
+    expect(evaluated.limit).toBe('valueLimit')
+    expect(evaluated.values.size).toBe(0)
+    expect(
+      evaluated.results.extractions.every(
+        result => !result.ok && result.errorCode === 'valueLimit',
+      ),
+    ).toBe(true)
+  }
+  const evaluated = evaluateHttpRuntime(runtime, {
+    ...response,
+    body: JSON.stringify({ value: 'x'.repeat(200_000) }),
+  })
+  expect(evaluated.limit).toBe('scopeLimit')
+  expect(evaluated.values.size).toBe(0)
+})
+
+it('extracts arrays below the byte limit without counting their numeric indices', () => {
+  const body = JSON.stringify(Array.from({ length: 40_000 }, () => 0))
+  const evaluated = evaluateHttpRuntime(
+    {
+      ...emptyHttpRuntime(),
+      extractions: [{ name: 'items', source: 'json', path: '' }],
+    },
+    { ...response, body },
+  )
+  expect(evaluated.limit).toBeUndefined()
+  expect(evaluated.values.get('items')).toBe(body)
+  expect(evaluated.results.extractions[0].ok).toBe(true)
+})
+
+it('bounds cumulative Session writes atomically, including removals', () => {
+  resetHttpSession()
+  const { generation } = getHttpSession('/vault', null)
+  const values = new Map(
+    Array.from({ length: 8 }, (_, i) => [`value${i}`, 'x'.repeat(250_000)]),
+  )
+  expect(commitHttpSession(generation, values)).toBeUndefined()
+  const before = getHttpSession('/vault', null).variables
+  expect(
+    commitHttpSession(
+      generation,
+      new Map([
+        ['value0', null],
+        ['new1', 'x'.repeat(250_000)],
+        ['new2', 'x'.repeat(250_000)],
+      ]),
+    ),
+  ).toBe('scopeLimit')
+  expect(getHttpSession('/vault', null).variables).toEqual(before)
+  expect(
+    commitHttpSession(
+      generation,
+      new Map([
+        ['value0', null],
+        ['new1', 'x'.repeat(250_000)],
+      ]),
+    ),
+  ).toBeUndefined()
+  expect(getHttpSession('/vault', null).variables.value0).toBeUndefined()
 })

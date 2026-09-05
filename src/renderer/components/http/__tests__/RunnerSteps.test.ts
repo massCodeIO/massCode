@@ -1,6 +1,6 @@
 import { renderToString } from '@vue/server-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, createSSRApp, h, ref } from 'vue'
+import { computed, createSSRApp, defineComponent, h, ref } from 'vue'
 import Steps from '../runner/Steps.vue'
 import RuntimeResultGroup from '../RuntimeResultGroup.vue'
 import ScriptResults from '../ScriptResults.vue'
@@ -34,16 +34,22 @@ async function renderSteps() {
   const app = createSSRApp(Steps)
   app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
   app.component('HttpScriptResults', ScriptResults)
-  app.component('UiText', {
-    setup:
-      (_, { slots }) =>
-        () =>
-          h('span', slots.default?.()),
-  })
-  app.component('HttpMethodBadge', {
-    props: ['method'],
-    setup: props => () => h('span', props.method),
-  })
+  app.component(
+    'UiText',
+    defineComponent({
+      setup:
+        (_, { slots }) =>
+          () =>
+            h('span', slots.default?.()),
+    }),
+  )
+  app.component(
+    'HttpMethodBadge',
+    defineComponent({
+      props: ['method'],
+      setup: props => () => h('span', props.method),
+    }),
+  )
   return (await renderToString(app)).replace(/\s+/g, ' ')
 }
 
@@ -68,7 +74,8 @@ describe('runner result presentation', () => {
     const html = await renderSteps()
     expect(html).not.toContain('<button')
     expect(html).not.toContain(' handle=')
-    expect(html).toContain('cursor-grab select-none active:cursor-grabbing')
+    expect(html).toContain('cursor-default')
+    expect(html).toContain('select-none')
     expect(html).not.toContain('spaces.http.runtime.assertions')
     expect(html).not.toContain('spaces.http.runtime.extractionResults')
   })

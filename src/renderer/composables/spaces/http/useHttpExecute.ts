@@ -137,8 +137,9 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     return null
   }
   finally {
-    if (token === executionToken)
-      isExecuting.value = false
+    // Selection invalidates the displayed response, not the pending IPC call.
+    // Main releases its execution lock before this invocation settles.
+    isExecuting.value = false
   }
 }
 
@@ -146,7 +147,8 @@ function resetHttpExecuteState(resetSession = true) {
   executionToken += 1
   if (resetSession)
     resetHttpSessionNames()
-  isExecuting.value = false
+  if (isExecuting.value)
+    void ipc.invoke('spaces:http:cancel', undefined).catch(console.error)
   lastResponse.value = null
   lastError.value = null
 }

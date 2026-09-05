@@ -4,6 +4,7 @@ import type {
 } from '../../../shared/httpRuntime'
 import type { HttpExecuteResult } from '../../types/http'
 import { Script } from 'node:vm'
+import { serializeVariable, variableScopeLimit } from './variables'
 
 const missing = Symbol('missing')
 // Only this fixed expression executes; patterns and values are data, never code.
@@ -33,6 +34,7 @@ export function readJsonPointer(value: unknown, pointer: string): unknown {
 export function evaluateHttpRuntime(
   runtime: HttpRuntime,
   response: HttpExecuteResult,
+  previous: Map<string, string | null> = new Map(),
 ) {
   const values = new Map<string, string | null>()
   let json: unknown = missing
@@ -66,18 +68,28 @@ export function evaluateHttpRuntime(
     }
     return json === missing ? missing : readJsonPointer(json, path)
   }
+  const candidate = new Map(previous)
+  const serialized = new Map<unknown, string | undefined>()
+  let limit: 'valueLimit' | 'scopeLimit' | undefined
   const extractions = runtime.extractions.map(
     (rule, index): HttpRuntimeResult => {
       const value = read(rule.source, rule.path)
-      const ok = value !== missing && value !== null
-      values.set(
-        rule.name,
-        ok
-          ? typeof value === 'object'
-            ? JSON.stringify(value)
-            : String(value)
-          : null,
-      )
+      let ok = value !== missing && value !== null
+      if (!limit) {
+        if (ok && !serialized.has(value))
+          serialized.set(value, serializeVariable(value))
+        const text = ok ? serialized.get(value) : null
+        if (text === undefined) {
+          limit = 'valueLimit'
+        }
+        else {
+          candidate.set(rule.name, text)
+          limit = variableScopeLimit(candidate)
+          if (!limit)
+            values.set(rule.name, text)
+        }
+      }
+      ok &&= !limit
       return {
         index,
         name: rule.name,
@@ -85,12 +97,20 @@ export function evaluateHttpRuntime(
         ...(!ok
           ? {
               errorCode:
-                rule.source === 'json' && jsonError ? jsonError : 'missing',
+                limit
+                ?? (rule.source === 'json' && jsonError ? jsonError : 'missing'),
             }
           : {}),
       }
     },
   )
+  if (limit) {
+    values.clear()
+    for (const result of extractions) {
+      result.ok = false
+      result.errorCode = limit
+    }
+  }
   let regexBudgetMs = 100
   const assertions = runtime.assertions.map(
     (rule, index): HttpRuntimeResult => {
@@ -239,5 +259,5 @@ export function evaluateHttpRuntime(
       }
     },
   )
-  return { values, results: { extractions, assertions } }
+  return { values, limit, results: { extractions, assertions } }
 }

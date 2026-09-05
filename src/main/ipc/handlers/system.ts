@@ -13,6 +13,7 @@ import { refreshDockBadge, scheduleDockBadgeRefresh } from '../../dockBadge'
 import { moveSecretsToVault } from '../../http/secrets'
 import i18n from '../../i18n'
 import { activateLicense } from '../../license'
+import { requestLifecycleAction } from '../../lifecycle'
 import { getCloudDownloadStatus } from '../../storage/providers/markdown/cloudDownloads'
 import {
   getHttpPaths,
@@ -141,10 +142,7 @@ export function registerSystemHandlers() {
     return getCloudDownloadStatus()
   })
 
-  ipcMain.handle('system:install-update', () => {
-    installDownloadedUpdate()
-    return true
-  })
+  ipcMain.handle('system:install-update', () => installDownloadedUpdate())
 
   ipcMain.handle('system:api-token-generate', () => {
     return generateIntegrationToken()
@@ -200,8 +198,10 @@ export function registerSystemHandlers() {
   })
 
   ipcMain.handle('system:reload', () => {
-    app.relaunch()
-    app.quit()
+    return requestLifecycleAction(() => {
+      app.relaunch()
+      app.quit()
+    })
   })
 
   ipcMain.handle('system:open-external', (_, url: string) => {

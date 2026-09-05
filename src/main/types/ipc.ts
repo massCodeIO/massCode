@@ -89,6 +89,7 @@ type SpacesAction =
   | 'math:read'
   | 'math:write'
   | 'http:execute'
+  | 'http:generate-code'
   | 'http:cancel'
   | 'http:script-trust-status'
   | 'http:script-trust'

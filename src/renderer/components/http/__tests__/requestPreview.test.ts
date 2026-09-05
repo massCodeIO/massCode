@@ -69,7 +69,7 @@ describe('request preview', () => {
         'curl -X "POST" "https://api.example.com/users?name=Anton" \\',
         '     -H \'X-Token: a\'\\\'\'b\' \\',
         '     -H \'Content-Type: application/json\' \\',
-        '     -d $\'{',
+        '     --data-raw $\'{',
         '  "name": "Anton"',
         '}\'',
       ].join('\n'),
@@ -146,8 +146,8 @@ describe('request preview', () => {
       },
     )
 
-    expect(formPreview).toContain('-F \'title=Anton\'')
-    expect(formPreview).toContain('-F \'file=@{{filePath}}\'')
+    expect(formPreview).toContain('--form-string \'title=Anton\'')
+    expect(formPreview).toContain('-F \'file=@"{{filePath}}"\'')
   })
 })
 

@@ -99,6 +99,7 @@
     "elysia": "~1.4.28",
     "fs-extra": "^11.3.0",
     "graphql": "^16.14.2",
+    "httpsnippet": "3.0.10",
     "i18next": "^24.2.2",
     "i18next-fs-backend": "^2.6.0",
     "interactjs": "^1.10.27",
@@ -148,6 +149,7 @@
     "@types/dagre": "^0.7.53",
     "@types/dom-to-image": "^2.6.7",
     "@types/fs-extra": "^11.0.4",
+    "@types/har-format": "^1.2.16",
     "@types/js-yaml": "^4.0.9",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.10.8",
@@ -190,7 +192,10 @@
       "esbuild",
       "simple-git-hooks",
       "vue-demi"
-    ]
+    ],
+    "patchedDependencies": {
+      "httpsnippet@3.0.10": "patches/httpsnippet@3.0.10.patch"
+    }
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",

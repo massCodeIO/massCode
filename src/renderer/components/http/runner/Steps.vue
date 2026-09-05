@@ -25,9 +25,9 @@ const canReorder = computed(
   >
     <template #item="{ element: step, index }">
       <div
-        class="border-border bg-background border-b last:border-b-0 [&.http-runner-drag]:shadow-md"
+        class="border-border bg-background cursor-default border-b last:border-b-0 [&.http-runner-drag]:shadow-md"
         :class="{
-          'cursor-grab select-none active:cursor-grabbing': canReorder,
+          'select-none': canReorder,
         }"
       >
         <div

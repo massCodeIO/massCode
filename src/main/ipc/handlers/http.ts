@@ -22,6 +22,7 @@ import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { log } from '../../utils'
 import { registerHttpRunnerHandlers } from './httpRunner'
+import { registerHttpWebSocketHandlers } from './httpWebSocket'
 
 export {
   applyAuth,
@@ -180,6 +181,7 @@ function unprotectEnvironmentSecretHandler(
 
 export function registerHttpHandlers(): void {
   registerHttpRunnerHandlers()
+  registerHttpWebSocketHandlers()
   ipcMain.handle(
     'spaces:http:execute',
     async (_, payload: HttpExecutePayload) => {

@@ -18,6 +18,7 @@ export type {
 } from '../../../../../types/http'
 
 export interface HttpRequestFrontmatter {
+  protocol?: 'http' | 'websocket'
   id?: number
   name?: string
   folderId?: number | null
@@ -56,6 +57,7 @@ export interface HttpFolderTreeRecord extends HttpFolderRecord {
 // mtimeMs/size — freshness-сигнатура последнего чтения: пока stat
 // совпадает, файл не перечитывается.
 export interface HttpRequestIndexMetadata {
+  protocol?: 'http' | 'websocket'
   auth: HttpAuth
   bodyType: HttpBodyType
   createdAt: number
@@ -80,6 +82,7 @@ export interface HttpRequestIndexItem {
 }
 
 export interface HttpRequestRecord {
+  protocol?: 'http' | 'websocket'
   id: number
   name: string
   folderId: number | null

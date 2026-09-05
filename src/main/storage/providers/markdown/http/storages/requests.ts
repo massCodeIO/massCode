@@ -298,6 +298,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         id,
         isDeleted: 0,
         isFavorites: 0,
+        protocol: input.protocol,
         method: input.method ?? 'GET',
         name: path.posix.basename(filePath, '.md'),
         query: [],
@@ -345,6 +346,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         input.folderId,
         input.isDeleted,
         input.isFavorites,
+        input.protocol,
         input.method,
         input.url,
         input.headers,
@@ -463,6 +465,8 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         record.isDeleted = normalizeFlag(input.isDeleted)
       if (input.isFavorites !== undefined)
         record.isFavorites = normalizeFlag(input.isFavorites)
+      if (input.protocol !== undefined)
+        record.protocol = input.protocol
       if (input.method !== undefined)
         record.method = input.method
       if (input.url !== undefined)

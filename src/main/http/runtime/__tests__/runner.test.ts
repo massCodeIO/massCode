@@ -100,6 +100,14 @@ beforeEach(() => {
 })
 
 describe('folder runner', () => {
+  it('excludes WebSocket requests from HTTP runs', () => {
+    mocks.records = [record(1), { ...record(2), protocol: 'websocket' }]
+    expect(prepareHttpRun(7, 1).steps.map(step => step.requestId)).toEqual([
+      1,
+    ])
+    mocks.records = [{ ...record(2), protocol: 'websocket' }]
+    expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_RUN_EMPTY')
+  })
   it('prepares a recursive stable list, excluding trash, without network calls', () => {
     mocks.records = [
       record(3),

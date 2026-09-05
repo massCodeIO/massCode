@@ -153,6 +153,7 @@ export interface ParsedRequestFile {
   frontmatter: HttpRequestFrontmatter
   hasFrontmatter: boolean
   normalized: {
+    protocol?: 'http' | 'websocket'
     method: HttpMethod
     url: string
     headers: HttpHeaderEntry[]
@@ -176,6 +177,7 @@ export function parseRequestFile(source: string): ParsedRequestFile {
     frontmatter: fm,
     hasFrontmatter,
     normalized: {
+      protocol: fm.protocol === 'websocket' ? 'websocket' : undefined,
       method: normalizeMethod(fm.method),
       url: typeof fm.url === 'string' ? fm.url : '',
       headers: normalizeHeaders(fm.headers),
@@ -195,6 +197,7 @@ export function serializeRequestFile(record: HttpRequestRecord): string {
     id: record.id,
     name: record.name,
     folderId: record.folderId,
+    protocol: record.protocol,
     method: record.method,
     url: record.url,
     headers: record.headers,

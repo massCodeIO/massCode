@@ -59,7 +59,12 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
       throw new Error('HTTP_RUN_INVALID_FOLDER')
     visited.add(id)
     for (const record of records
-      .filter(item => item.folderId === id && !item.isDeleted)
+      .filter(
+        item =>
+          item.folderId === id
+          && !item.isDeleted
+          && item.protocol !== 'websocket',
+      )
       .sort((a, b) => a.createdAt - b.createdAt || a.id - b.id)) {
       if (steps.length >= 500)
         throw new Error('HTTP_RUN_TOO_LARGE')

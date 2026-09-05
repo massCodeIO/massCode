@@ -133,6 +133,28 @@ describe('http requests storage', () => {
     vi.clearAllMocks()
   })
 
+  it('persists WebSocket type and message through cold and indexed reloads', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({
+      name: 'Socket',
+      protocol: 'websocket',
+      url: 'ws://localhost:1234',
+    })
+    storage.updateRequest(id, { body: '{"hello":true}' })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)).toMatchObject({
+      protocol: 'websocket',
+      body: '{"hello":true}',
+    })
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequests({})[0].protocol).toBe('websocket')
+    expect(storage.getRequestById(id)?.body).toBe('{"hello":true}')
+    storage.updateRequest(id, { protocol: 'http' })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.protocol).not.toBe('websocket')
+  })
+
   it('persists runtime independently across rename, move, trash and hard delete', () => {
     const storage = createHttpRequestsStorage()
     const { id } = storage.createRequest({ name: 'Login' })

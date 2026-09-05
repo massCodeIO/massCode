@@ -392,6 +392,7 @@ export interface HttpRequestsQueryInput {
 }
 
 export interface HttpRequestCreateInput {
+  protocol?: 'http' | 'websocket'
   name: string
   folderId?: number | null
   method?: HttpMethod
@@ -399,6 +400,7 @@ export interface HttpRequestCreateInput {
 }
 
 export interface HttpRequestUpdateInput {
+  protocol?: 'http' | 'websocket'
   name?: string
   folderId?: number | null
   isDeleted?: number

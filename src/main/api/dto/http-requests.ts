@@ -55,6 +55,7 @@ const httpAuth = t.Object({
 const httpRequestsAdd = t.Object({
   name: t.String(),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: t.Optional(httpMethod),
   url: t.Optional(t.String()),
 })
@@ -64,6 +65,7 @@ const httpRequestsUpdate = t.Object({
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
   isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
   isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: t.Optional(httpMethod),
   url: t.Optional(t.String()),
   headers: t.Optional(t.Array(httpHeaderEntry)),
@@ -148,6 +150,7 @@ const httpRequestItem = t.Object({
   id: t.Number(),
   name: t.String(),
   folderId: t.Union([t.Number(), t.Null()]),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: httpMethod,
   url: t.String(),
   headers: t.Array(httpHeaderEntry),
@@ -173,6 +176,7 @@ const httpRequestListItem = t.Object({
   id: t.Number(),
   name: t.String(),
   folderId: t.Union([t.Number(), t.Null()]),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: httpMethod,
   url: t.String(),
   headers: t.Array(httpHeaderEntry),

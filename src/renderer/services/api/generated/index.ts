@@ -752,6 +752,7 @@ export interface HttpRequestItemResponse {
   id: number;
   name: string;
   folderId: number | null;
+  protocol?: "http" | "websocket";
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
   headers: {
@@ -791,6 +792,7 @@ export interface HttpRequestItemResponse {
 export interface HttpRequestsAdd {
   name: string;
   folderId?: number | null;
+  protocol?: "http" | "websocket";
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url?: string;
 }
@@ -826,6 +828,7 @@ export type HttpRequestsResponse = {
   id: number;
   name: string;
   folderId: number | null;
+  protocol?: "http" | "websocket";
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
   headers: {
@@ -874,6 +877,7 @@ export interface HttpRequestsUpdate {
    * @max 1
    */
   isFavorites?: number;
+  protocol?: "http" | "websocket";
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url?: string;
   headers?: {

@@ -23,6 +23,7 @@ Use HTTP when you want a lightweight request client without leaving massCode.
 - keep request descriptions close to implementation notes
 - switch variables between local, staging, and production environments
 - check responses with assertions and pass extracted values to subsequent requests
+- run a folder of requests sequentially with an isolated set of temporary variables
 - copy a request as raw HTTP, cURL, fetch, or axios for debugging and integration
 
 ## Main Concepts
@@ -44,6 +45,31 @@ Importing creates HTTP folders, requests, and environments from external collect
 HTTP requests are organized in folders. Selecting a folder shows its requests and selects the first request in that folder. Folders support nesting, drag and drop ordering, inline rename, and custom folder icons.
 
 Right-click a folder and choose **Set Icon** to select a built-in Material or Lucide icon. Choose **Remove Icon** to restore the default folder icon.
+
+### Run a Folder
+
+Right-click an HTTP folder and choose **Run folder** to run its saved requests, including nested folders, in sequence.
+
+1. Save or discard any changes in the current request when prompted. Cancelling keeps the editor open without preparing a run.
+2. Review the prepared list and environment. Drag a request by the handle at the end of its row to change the order for this run only. Reordering is disabled during execution.
+3. Leave **Continue on failure** unchecked to stop at the first failed step, or enable it to run the remaining steps after failures.
+4. Click **Run**. Each step shows its HTTP status, duration, assertion results, and extraction results.
+
+The initial order is oldest-created requests first within each folder, followed by its child folders in sidebar order. Changing the run order does not reorder requests in the library. A run supports up to 500 requests. Empty folders, unavailable requests, and invalid or unsupported rules prevent preparation before any request is sent.
+
+The runner snapshots saved requests and the active environment when you open it. Later edits do not change that prepared run. Choose **Prepare new run** after completion to load the latest saved data.
+
+#### Variables and failures
+
+Each run starts with an empty temporary variable scope over the selected environment. Successful **Variables → Post-response** extractions make values available to subsequent steps through <code v-pre>{{name}}</code>, overriding environment variables with the same name. Failed extractions remove the previous run value for that name. Extraction runs independently of assertion results.
+
+Manual **Session** values are not read or changed by the runner. Run variables are discarded at the end and are not shown in the Variables inspector.
+
+A network error, HTTP status of 400 or higher, failed assertion, or failed extraction marks a step as failed. When stopping on failure, the remaining steps are marked as skipped.
+
+**Stop run** aborts the active request and skips remaining steps. Closing the runner, reloading the app, switching vault or environment, or clearing the manual Session also cancels an active run. Cancellation cannot undo a request already received by the server.
+
+Results remain available only while the runner is open. Runs do not write request history, response bodies, or temporary variables to the vault.
 
 ### Emoji and Uploaded Images
 

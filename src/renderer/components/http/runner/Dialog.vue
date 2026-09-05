@@ -4,7 +4,14 @@ import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
-import { LoaderCircle, Play, Square } from 'lucide-vue-next'
+import {
+  Circle,
+  CircleCheck,
+  CircleX,
+  LoaderCircle,
+  Play,
+  Square,
+} from 'lucide-vue-next'
 
 const {
   open,
@@ -27,6 +34,12 @@ const completed = computed(
     ).length ?? 0,
 )
 const ready = computed(() => view.value?.state === 'ready')
+const passed = computed(
+  () => view.value?.steps.filter(step => step.state === 'passed').length ?? 0,
+)
+const failed = computed(
+  () => view.value?.steps.filter(step => step.state === 'failed').length ?? 0,
+)
 
 function focusRun(event: Event) {
   event.preventDefault()
@@ -59,32 +72,77 @@ onBeforeUnmount(() => {
           {{ view?.folderName }}
         </Dialog.DialogTitle>
         <Dialog.DialogDescription>
-          {{
-            i18n.t("spaces.http.runner.description")
-          }}
+          {{ i18n.t("spaces.http.runner.description") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
       <div
         v-if="view"
         class="flex min-h-0 flex-1 flex-col gap-3"
       >
-        <div class="flex items-center justify-between gap-3">
-          <UiText
-            variant="xs"
-            muted
+        <UiText
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runner.environment") }}:
+          {{ view.environmentName ?? i18n.t("spaces.http.environments.none") }}
+        </UiText>
+        <div
+          class="border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2.5"
+          role="status"
+        >
+          <div class="flex items-center gap-2">
+            <LoaderCircle
+              v-if="view.state === 'running'"
+              class="text-muted-foreground size-4 shrink-0 animate-spin"
+              aria-hidden="true"
+            />
+            <CircleX
+              v-else-if="view.state === 'failed'"
+              class="text-destructive size-4 shrink-0"
+              aria-hidden="true"
+            />
+            <CircleCheck
+              v-else-if="view.state === 'passed'"
+              class="text-success size-4 shrink-0"
+              aria-hidden="true"
+            />
+            <Circle
+              v-else
+              class="text-muted-foreground size-4 shrink-0"
+              aria-hidden="true"
+            />
+            <UiText
+              variant="sm"
+              weight="medium"
+            >
+              {{ i18n.t(`spaces.http.runner.states.${view.state}`) }}
+            </UiText>
+            <UiText
+              variant="xs"
+              muted
+              class="tabular-nums"
+            >
+              {{ completed }}/{{ view.steps.length }}
+            </UiText>
+          </div>
+          <div
+            v-if="!ready"
+            class="flex items-center gap-3"
           >
-            {{ i18n.t("spaces.http.runner.environment") }}:
-            {{
-              view.environmentName ?? i18n.t("spaces.http.environments.none")
-            }}
-          </UiText>
-          <UiText
-            variant="xs"
-            role="status"
-          >
-            {{ i18n.t(`spaces.http.runner.states.${view.state}`) }} ·
-            {{ completed }}/{{ view.steps.length }}
-          </UiText>
+            <UiText
+              variant="xs"
+              class="text-success tabular-nums"
+            >
+              {{ passed }} {{ i18n.t("spaces.http.runtime.passed") }}
+            </UiText>
+            <UiText
+              variant="xs"
+              class="tabular-nums"
+              :class="failed ? 'text-destructive' : 'text-muted-foreground'"
+            >
+              {{ failed }} {{ i18n.t("spaces.http.runtime.failed") }}
+            </UiText>
+          </div>
         </div>
         <UiText
           v-if="ready"

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
-import { Check, Circle, GripVertical, LoaderCircle, X } from 'lucide-vue-next'
+import {
+  Circle,
+  CircleCheck,
+  CircleX,
+  GripVertical,
+  LoaderCircle,
+} from 'lucide-vue-next'
 import Draggable from 'vuedraggable'
 
 const { view, running, reorderSteps } = useHttpRunner()
@@ -21,25 +27,26 @@ const canReorder = computed(
     @update:model-value="reorderSteps"
   >
     <template #item="{ element: step, index }">
-      <div
-        class="border-border bg-background border-b px-3 py-2 last:border-b-0"
-      >
-        <div class="flex items-center gap-2">
+      <div class="border-border border-b last:border-b-0">
+        <div
+          class="flex items-center gap-2 px-3 py-2.5"
+          :class="{ 'bg-destructive/5': step.state === 'failed' }"
+        >
           <LoaderCircle
             v-if="step.state === 'running'"
-            class="text-muted-foreground size-3.5 shrink-0 animate-spin"
+            class="text-muted-foreground size-4 shrink-0 animate-spin"
           />
-          <Check
+          <CircleCheck
             v-else-if="step.state === 'passed'"
-            class="text-success size-3.5 shrink-0"
+            class="text-success size-4 shrink-0"
           />
-          <X
+          <CircleX
             v-else-if="step.state === 'failed'"
-            class="text-destructive size-3.5 shrink-0"
+            class="text-destructive size-4 shrink-0"
           />
           <Circle
             v-else
-            class="text-muted-foreground size-3.5 shrink-0"
+            class="text-muted-foreground size-4 shrink-0"
           />
           <UiText
             variant="xs"
@@ -71,9 +78,14 @@ const canReorder = computed(
           </div>
           <UiText
             variant="xs"
+            weight="medium"
+            class="shrink-0 rounded px-1.5 py-0.5"
             :class="{
-              'text-destructive': step.state === 'failed',
-              'text-success': step.state === 'passed',
+              'bg-destructive/10 text-destructive': step.state === 'failed',
+              'bg-success/10 text-success': step.state === 'passed',
+              'bg-muted text-muted-foreground': !['passed', 'failed'].includes(
+                step.state,
+              ),
             }"
           >
             {{ i18n.t(`spaces.http.runner.steps.${step.state}`) }}
@@ -105,57 +117,22 @@ const canReorder = computed(
           v-if="step.error"
           as="p"
           variant="xs"
-          class="text-destructive mt-1"
+          class="text-muted-foreground px-3 pb-2.5"
         >
           {{ i18n.t(`spaces.http.runner.stepErrors.${step.error}`) }}
         </UiText>
         <div
-          v-for="group in ['assertions', 'extractions'] as const"
-          :key="group"
+          v-if="step.assertions?.length || step.extractions?.length"
+          class="space-y-4 border-t p-3"
         >
-          <div
-            v-if="step[group]?.length"
-            class="mt-2 space-y-1"
-          >
-            <UiText
-              variant="caption"
-              muted
-            >
-              {{
-                i18n.t(
-                  group === "assertions"
-                    ? "spaces.http.runtime.assertions"
-                    : "spaces.http.runtime.extractionResults",
-                )
-              }}
-            </UiText>
-            <div
-              v-for="check in step[group]"
-              :key="check.index"
-              class="flex items-center gap-2"
-            >
-              <Check
-                v-if="check.ok"
-                class="text-success size-3 shrink-0"
-              /><X
-                v-else
-                class="text-destructive size-3 shrink-0"
-              />
-              <UiText
-                variant="xs"
-                class="min-w-0 truncate"
-              >
-                {{ check.name }}
-              </UiText>
-              <UiText
-                v-if="check.errorCode"
-                variant="xs"
-                muted
-              >
-                {{ i18n.t(`spaces.http.runtime.errors.${check.errorCode}`) }}
-              </UiText>
-            </div>
-          </div>
+          <HttpRuntimeResultGroup
+            kind="assertions"
+            :results="step.assertions ?? []"
+          />
+          <HttpRuntimeResultGroup
+            kind="extractions"
+            :results="step.extractions ?? []"
+          />
         </div>
       </div>
     </template>

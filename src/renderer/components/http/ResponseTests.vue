@@ -7,11 +7,11 @@ const { lastResponse } = useHttpExecute()
 const groups = computed(() =>
   [
     {
-      key: 'assertions',
+      key: 'assertions' as const,
       results: lastResponse.value?.runtimeResults?.assertions ?? [],
     },
     {
-      key: 'extractions',
+      key: 'extractions' as const,
       results: lastResponse.value?.runtimeResults?.extractions ?? [],
     },
   ].filter(group => group.results.length),
@@ -39,7 +39,7 @@ const failed = computed(() => results.value.length - passed.value)
         />
         <CircleCheck
           v-else
-          class="size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+          class="text-success size-4 shrink-0"
           aria-hidden="true"
         />
         <UiText
@@ -59,7 +59,7 @@ const failed = computed(() => results.value.length - passed.value)
       <div class="flex items-center gap-3">
         <UiText
           variant="xs"
-          class="text-emerald-600 tabular-nums dark:text-emerald-400"
+          class="text-success tabular-nums"
         >
           {{ passed }} {{ i18n.t("spaces.http.runtime.passed") }}
         </UiText>
@@ -73,90 +73,11 @@ const failed = computed(() => results.value.length - passed.value)
       </div>
     </div>
 
-    <section
+    <HttpRuntimeResultGroup
       v-for="group in groups"
       :key="group.key"
-      class="space-y-2"
-    >
-      <div class="flex items-center gap-2 px-1">
-        <UiText
-          variant="xs"
-          weight="medium"
-          muted
-        >
-          {{
-            i18n.t(
-              group.key === "assertions"
-                ? "spaces.http.runtime.assertions"
-                : "spaces.http.runtime.extractionResults",
-            )
-          }}
-        </UiText>
-        <UiText
-          variant="caption"
-          muted
-          class="tabular-nums"
-        >
-          {{ group.results.length }}
-        </UiText>
-      </div>
-      <ul
-        class="border-border divide-border divide-y overflow-hidden rounded-md border"
-      >
-        <li
-          v-for="(result, index) in group.results"
-          :key="index"
-          class="flex items-start gap-3 px-3 py-2.5"
-          :class="{ 'bg-destructive/5': !result.ok }"
-        >
-          <CircleCheck
-            v-if="result.ok"
-            class="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
-            aria-hidden="true"
-          />
-          <CircleX
-            v-else
-            class="text-destructive mt-0.5 size-4 shrink-0"
-            aria-hidden="true"
-          />
-          <div class="min-w-0 flex-1 space-y-1">
-            <UiText
-              as="p"
-              variant="sm"
-              class="break-words"
-            >
-              {{ result.name }}
-            </UiText>
-            <UiText
-              v-if="result.errorCode"
-              as="p"
-              variant="xs"
-              muted
-              class="break-words"
-            >
-              {{ i18n.t(`spaces.http.runtime.errors.${result.errorCode}`) }}
-            </UiText>
-          </div>
-          <UiText
-            variant="caption"
-            weight="medium"
-            class="mt-0.5 shrink-0 rounded px-1.5 py-0.5"
-            :class="
-              result.ok
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-destructive/10 text-destructive'
-            "
-          >
-            {{
-              i18n.t(
-                result.ok
-                  ? "spaces.http.runtime.passed"
-                  : "spaces.http.runtime.failed",
-              )
-            }}
-          </UiText>
-        </li>
-      </ul>
-    </section>
+      :kind="group.key"
+      :results="group.results"
+    />
   </div>
 </template>

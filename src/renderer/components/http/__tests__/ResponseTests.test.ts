@@ -2,6 +2,7 @@ import { renderToString } from '@vue/server-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, h } from 'vue'
 import ResponseTests from '../ResponseTests.vue'
+import RuntimeResultGroup from '../RuntimeResultGroup.vue'
 
 const state = vi.hoisted(() => ({ lastResponse: { value: null as any } }))
 vi.mock('@/composables', () => ({ useHttpExecute: () => state }))
@@ -10,6 +11,7 @@ Object.assign(globalThis, { computed })
 
 async function renderResults() {
   const app = createSSRApp(ResponseTests)
+  app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
   app.component('UiText', {
     setup:
       (_, { slots }) =>

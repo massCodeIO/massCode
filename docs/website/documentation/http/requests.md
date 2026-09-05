@@ -32,9 +32,12 @@ The request editor is split into focused tabs:
 - **Body** - JSON, text, form URL encoded, or multipart form data
 - **Auth** - none, bearer token, or basic auth. Auth values are stored in the vault as plain text, so keep tokens and passwords in [secret variables](/documentation/http/environments#secret-variables) and reference them here.
 - **Description** - markdown notes for the request
-- **Tests** - extract response values and define checks for the request
+- **Variables** - extract response values into temporary session variables under **Post-response**
+- **Assertions** - define declarative checks for the request
 
-Request fields are saved automatically while you edit. Rules in **Tests** have a separate **Save tests** action; save them before sending the request. Switching requests discards unsaved rule edits.
+Use **Save** in the request header or <kbd>⌘</kbd> + <kbd>S</kbd> on macOS / <kbd>Ctrl</kbd> + <kbd>S</kbd> on Windows and Linux to save request fields, assertions, and variable extraction. Changes are not autosaved. A dot beside Save indicates unsaved edits; saving invalid rules opens the tab containing the first error. Before switching requests or leaving the HTTP space, choose **Save**, **Discard changes**, or **Cancel**. If saving fails partway through, remaining unsaved edits stay in the editor for retry.
+
+**Send** uses the current request fields, assertions, and variable extraction without saving them. Invalid rules are highlighted before sending; unsaved changes remain in the editor after execution.
 
 ## Body
 
@@ -58,7 +61,7 @@ The lower panel can show the outgoing request before it is sent.
 
 - **HTTP** preview shows the request line, host, headers, and body.
 - **cURL** preview builds a command you can paste into a terminal.
-- **fetch** and **axios** generate JavaScript from the current draft, including edits that have not yet been autosaved.
+- **fetch** and **axios** generate JavaScript from the current draft, including unsaved edits.
 
 Use the copy button in the preview panel to copy the active preview.
 
@@ -68,22 +71,22 @@ For multipart uploads, JavaScript snippets accept `File` or `Blob` arguments in 
 
 ## Tests and Extracted Variables
 
-Open **Tests** to configure checks and extract values from an HTTP response. These are declarative rules, not JavaScript scripts.
+Use **Assertions** for checks and **Variables → Post-response** for extraction. These are declarative rules, not JavaScript scripts.
 
 For a login flow:
 
-1. Add an extraction with the variable name `token`, source **JSON body**, and path `/token`.
-2. Add an assertion named `Successful login`, source **Status code**, operator **Equals**, and expected value `200`.
-3. Click **Save tests**, then send the request.
+1. In **Variables**, add an extraction with the variable name `token`, source **JSON body**, and path `/token`.
+2. In **Assertions**, add a check named `Successful login`, source **Status code**, operator **Equals**, and expected value `200`.
+3. Send the request to try the current rules. Click **Save** when you want to keep your changes.
 4. In another request, use <code v-pre>{{token}}</code> in the bearer token field and send it.
 
 JSON paths use JSON Pointer: `/user/id`, `/items/0/name`, or an empty path for the entire response. Escape `/` in a property name as `~1` and `~` as `~0`. Header names are case-insensitive.
 
-Assertions can check status, a JSON value, a header, or duration in milliseconds. Expected values are JSON scalars: `200`, `true`, `null`, or a quoted string such as `"application/json"`. Comparisons do not convert strings to numbers. **Exists** accepts an existing JSON `null`; extraction requires a non-null value. JSON rules cannot inspect binary, truncated, or invalid JSON responses.
+Assertions can check status, a JSON value, a header, or duration in milliseconds. Expected values use JSON: `200`, `true`, `null`, or a quoted string such as `"application/json"`. **In list** and **Not in list** accept scalar arrays such as `[200, 201]`; **Between (inclusive)** accepts `[min, max]`. Length checks accept a non-negative integer for strings or arrays. Regex checks accept a quoted pattern without `/` delimiters and have execution limits. Type checks and **Exists** need no expected value. Comparisons do not convert strings to numbers. **Exists** accepts an existing JSON `null`; extraction requires a non-null value. JSON rules cannot inspect binary, truncated, or invalid JSON responses.
 
-The response panel shows each rule's result without displaying extracted values. A failed check does not hide the HTTP response. A failed extraction removes an earlier session value of the same name, preventing reuse of a stale token.
+**Test Results** counts only assertions. Extraction outcomes appear in a separate group without displaying extracted values; requests with extraction alone show **Variable extraction**. Extraction runs independently of whether assertions pass. A failed check does not hide the HTTP response. A failed extraction removes an earlier session value of the same name, preventing reuse of a stale token.
 
-Extracted variables override environment variables for later requests. Their values stay in memory, are masked in previews and request history, and are never automatically written into environments or the vault. **Clear session**, changing the environment or vault, and closing the app discard them. The original server response remains visible in the response viewer and may itself contain sensitive data.
+Open the **Variables inspector** next to **Environments** to inspect Environment and Session separately. Session variables override environment variables with the same name; overridden environment entries are marked. Session values and environment secrets remain masked. Extracted values stay in memory and are never automatically written into environments or the vault. **Clear session**, changing the environment or vault, and closing the app discard them; returning to a previous environment does not restore its session. The original server response remains visible in the response viewer and may itself contain sensitive data.
 
 Rules are stored in a hidden YAML file alongside the HTTP collection, separately from request Markdown. Renaming, moving, duplicating, trashing, and restoring requests retain their rules. Older massCode versions ignore these files and do not execute the rules. If a rules file is unavailable in cloud storage, invalid, or from an unsupported format version, sending and saving rules are blocked until it is available and valid.
 

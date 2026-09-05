@@ -1,110 +1,100 @@
 ---
 title: massCode vs Postman
-description: "An honest comparison between massCode and Postman. A full cloud-first API platform vs a lightweight, local-first API client that stores requests as plain files on your disk — and can import your Postman collections."
+description: "Explore massCode, a local-first Postman alternative with JavaScript tests, a folder runner, GraphQL, WebSocket, and secret variables. No account required."
 ---
 
 # massCode vs Postman
 
-[Postman](https://www.postman.com) and massCode both let you build and send HTTP requests, but they are not the same kind of tool. Postman is a full API development platform — collections, environments, mock servers, monitors, automated test runs, and team collaboration, built around a cloud account. massCode is a free, open-source developer workspace whose [HTTP space](/documentation/http/) is a lightweight, local-first API client that lives next to your snippets and notes and stores everything as plain files on your disk.
+[Postman](https://www.postman.com) and massCode both support API requests, tests, and sequential request runs. The difference is scope: Postman is a cloud-first API development platform, while massCode brings a local-first [HTTP space](/documentation/http/) into a workspace for snippets, notes, and tasks.
 
-If you need an end-to-end API platform for a team, Postman is the more capable tool. If you want a fast, local API client for saving and sending requests during development — with no account and your data as files you own — massCode is the more natural fit. And because massCode imports Postman collections, you do not have to start over.
+If you are looking for a Postman alternative for local API testing, massCode can handle saved requests, environments, response assertions, JavaScript tests, and multi-step flows without an account. Postman remains the stronger fit for CLI and CI automation, mock servers, monitors, and managed team collaboration.
 
 ## At a glance
 
 | | massCode | Postman |
 | --- | --- | --- |
-| Category | Local-first developer workspace with an HTTP client | Full cloud-first API platform |
+| Category | Local-first developer workspace with an API client | Cloud-first API development platform |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | Free tier (limited); paid plans from ~$14/user/mo (2026) |
-| Data location | Local Markdown Vault on your disk | Cloud workspace; local-only via the lightweight client |
-| Account | Not required | Optional — full features and sync need an account; a no-sign-in lightweight client exists |
-| Works offline | Yes, fully | Lightweight client works offline; synced workspaces need the cloud |
+| Pricing | Free | Free tier and paid plans |
+| Data location | Requests in a local Markdown Vault; secret values outside the vault | Cloud workspaces; local files with Native Git |
+| Account | Not required | Lightweight client needs no sign-in; Native Git and cloud workspaces require an account |
+| Offline use | Local collections, environments, tests, and runner | Lightweight client works offline, without collections or environments |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, web, CLI |
-| Request features | Method, URL, params, headers, body, auth, markdown description | Full request editor with extensive auth and protocol support |
-| Environments | Yes, <code v-pre>{{variables}}</code> | Yes, with broader scoping |
-| Protocols | HTTP | HTTP, WebSocket, gRPC, GraphQL, and more |
-| Mock servers / monitors / collection runner | No | Yes |
-| Automated tests / scripting | No | Yes (JavaScript test scripts, Newman/CLI) |
-| Team collaboration | File-level (shared Git or folder) | Built-in shared workspaces and governance |
-| Imports | OpenAPI, Postman Collection v2.1, Postman Environment, Bruno | Postman formats, OpenAPI, and more |
-| Other workspaces | Snippets, notes, math, drawings, tools | API-focused |
+| Protocols | HTTP, GraphQL POST queries/mutations, WebSocket text/JSON | Broader support, including HTTP, GraphQL, WebSocket, and gRPC |
+| Tests and scripts | Declarative assertions and trusted pre-request/post-response JavaScript | JavaScript tests and scripts |
+| Sequential runs | Folder Runner with isolated temporary variables | Collection Runner, Postman CLI, and Newman |
+| Environments | Environment and Session variables, response extraction, variables inspector | Environments and broader variable scoping |
+| Secrets | OS-encrypted local secret variables | [Postman Vault](https://learning.postman.com/docs/use/postman-vault/manage-vault-secrets/) |
+| Authentication | Basic and bearer; API keys via headers or params | Broader built-in authentication support |
+| Mock servers / monitors | No | Yes |
+| Standalone CLI / CI runner | No | Yes |
+| Team collaboration | Shared files through Git or folder sync | Shared workspaces and governance |
+| Other workspaces | Snippets, notes, tasks, math, drawings, tools | API-focused |
 
-Pricing and plan limits per [Postman pricing](https://www.postman.com/pricing/); account and offline behavior per [Postman docs](https://learning.postman.com/docs/getting-started/basics/using-api-client/).
+Postman's [local-use documentation](https://learning.postman.com/help/faqs/postman-configuration/can-i-use-postman-locally) distinguishes its offline lightweight client from [Native Git](https://learning.postman.com/v11/docs/use/native-git/overview), which works with local collection files but requires sign-in. See [Postman pricing](https://www.postman.com/pricing/) for current plan availability and limits.
 
 ## Where Postman fits better
 
-Postman is a platform, and for platform work it is hard to match:
-
-- **Automated testing and CI.** JavaScript test scripts, the collection runner, and the Newman CLI let you run API tests in pipelines.
-- **More protocols.** Beyond HTTP, Postman handles WebSocket, gRPC, and GraphQL in one place.
-- **Mock servers and monitors.** Stand up mock endpoints and schedule uptime/behavior checks.
-- **Team collaboration and governance.** Shared workspaces, role-based access, and API governance for organizations.
-
-If your work is API design, testing, and collaboration at team scale, Postman is built for exactly that.
+- **CLI and CI automation.** Postman's [tests and scripts](https://learning.postman.com/docs/tests-and-scripts/tests-and-scripts/) work with its Collection Runner and command-line tools. massCode runs saved workflows inside the desktop app; it has no standalone CLI or CI runner.
+- **Broader API tooling.** Postman covers more protocols and authentication methods. massCode supports GraphQL queries and mutations over HTTP and WebSocket messaging, but does not support gRPC, GraphQL subscriptions, or schema introspection.
+- **Mock servers, monitors, and team governance.** Postman's platform includes mock endpoints, scheduled checks, and shared workspaces, with availability depending on the [plan](https://www.postman.com/pricing/). massCode does not provide those managed services.
 
 ## Where massCode fits better
 
-massCode is not trying to be a platform. It is trying to be the fast, local place your requests live:
-
-- **Local-first, plain files.** Every request is stored in your [Markdown Vault](/documentation/storage) on disk, readable and Git-friendly, with no cloud dependency.
-- **No account.** Open the app and send a request — nothing to sign into.
-- **Free and open source.** [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no per-seat pricing or free-tier caps.
-- **Next to everything else.** Requests sit beside your [snippets](/documentation/code/library), [notes](/documentation/notes/), and [math](/documentation/math/), so API work stays in the same window as the rest of your day.
-- **The essentials, done simply.** Method, URL, params, headers, body, auth, a markdown description per request, [environments](/documentation/http/environments) with <code v-pre>{{variables}}</code>, response preview, and copy as raw HTTP or cURL.
-- **Almost nothing to relearn.** Postman has grown into a large platform, and developers who just want to send a request — especially when they come back to it after months away — often have to re-find their way around the interface. massCode's HTTP space is a short, flat set of panels. There is no platform to navigate, so picking it back up after a break takes seconds, not a tour.
-
-If you mainly save requests by project and fire them during development, this is less to manage than a full platform.
+- **API work next to implementation context.** Keep requests alongside [snippets](/documentation/code/library), [notes](/documentation/notes/), and [tasks](/documentation/notes/tasks). An endpoint, its response example, and the work it relates to can live in one app.
+- **Local collections without an account.** Requests are readable Markdown files with YAML frontmatter in your [vault](/documentation/storage). Use your own backups or Git workflow.
+- **Repeatable local testing.** Add [assertions and response extraction](/documentation/http/tests), prepare variables with trusted [JavaScript scripts](/documentation/http/scripts), then run saved requests in sequence with [Folder Runner](/documentation/http/runner).
+- **Variables and credentials.** Use [environments, temporary Session values, and the variables inspector](/documentation/http/environments) to follow a request flow. Built-in secret variables keep sensitive values outside the vault.
+- **Request code generation.** Copy [code previews](/documentation/http/requests#code-generation) for cURL, JavaScript, Python, and other clients to use a request in your own code.
+- **Free and open source.** massCode uses [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no paid feature tier or per-seat pricing.
 
 ## Honest trade-offs
 
-- **massCode is a lightweight client, not a platform.** No mock servers, monitors, collection runner, or scripted tests. If you need those, Postman wins.
-- **HTTP only.** massCode's client handles HTTP requests; it does not cover WebSocket, gRPC, or GraphQL.
-- **Plain-text storage.** Requests live as plain files, so do not store real passwords, tokens, or keys in requests or environments if your vault is synced, shared, or committed to Git. Use an external secret manager.
-- **Newer and smaller.** The HTTP space arrived in massCode 5.3 and is intentionally focused, not feature-complete against a decade-old platform.
+- **Desktop automation has limits.** Folder Runner includes nested folders and supports up to 500 saved HTTP requests, including GraphQL requests. Its temporary variables are separate from manual Session values. There are no scheduled monitors or command-line runs.
+- **Protocol support is scoped.** [GraphQL](/documentation/http/graphql) supports POST queries and mutations, without subscriptions or schema introspection. [WebSocket](/documentation/http/websocket) supports text/JSON messaging, without assertions, scripts, or Folder Runner integration.
+- **Scripts are not interchangeable.** massCode uses its own `mc` API and requires local trust before scripts run. Import translates only a supported subset of Postman scripts; it does not recreate the complete Postman runtime.
+- **Plain files need care.** Requests, scripts, and regular environment values are plain text. Put credentials in [secret variables](/documentation/http/environments#secret-variables), which are encrypted using the operating system and stored outside the vault. Secret values are device-local; Linux requires a supported keyring. Converting a previously shared plain-text value into a secret does not remove it from Git history.
 
 ## Who should pick which
 
-- Pick **Postman** if you need automated API testing, mock servers, multiple protocols, or managed team collaboration and governance.
-- Pick **massCode** if you want a free, local-first API client for saving and sending requests, stored as plain files with no account, inside a workspace that also holds your snippets and notes.
-- **Use both** if it suits you: Postman for heavy testing and team work, massCode as the quick local client next to your code.
+- Pick **Postman** if you need API automation in CI, mocks, monitors, broader protocol/authentication support, or managed team governance.
+- Pick **massCode** if you want local API testing and request flows inside the same free workspace as your snippets, notes, and tasks.
+- **Use both** if Postman serves your team's automation while massCode holds the local requests and implementation notes you use during development.
 
 ## Migrating from Postman to massCode
 
-You can bring your existing Postman work into massCode:
+Export a **Postman Collection v2.1 JSON** file and, optionally, a **Postman Environment JSON** file. Open import in massCode's HTTP space, select the files together, and review the preview before importing.
 
-1. In Postman, export a collection as **Collection v2.1 (JSON)**, and export your environment as JSON.
-2. In massCode, open the [HTTP](/documentation/http/) space and choose import.
-3. Select the exported Postman Collection and Environment files. massCode shows a preview with item counts, folders, and warnings for anything that has no equivalent (such as unsupported auth or scripts).
-4. Import to write the requests into your Markdown Vault, then organize them into folders.
+A limited subset of scripts is translated to massCode's `mc` API. Unsupported active scripts block all scripts for that request until you review and rewrite them; granting trust alone does not unblock them. Imported code never runs during import and always requires explicit local trust before execution. Check authentication, variable scopes, and credentials, then verify a complete flow before running the folder. External GraphQL requests are not automatically converted into the GraphQL editor.
 
-See [Importing HTTP Collections](/documentation/http/importing) for the full workflow. [Download massCode](/download/) and try importing a collection on a copy first.
+See [Importing HTTP Collections](/documentation/http/importing#moving-from-postman-or-bruno) for supported formats, compatibility details, and verification steps. An import creates new items rather than updating a previously imported collection.
 
 ## Frequently asked questions
 
 ### Is massCode a good Postman alternative?
 
-For lightweight, local API work, yes. massCode is a free, open-source, local-first client that saves requests as plain files with no account. It is not a replacement for Postman's platform features — automated testing, mock servers, multiple protocols, and team governance — so it suits individual development more than large-scale API testing.
-
-### Is Postman too complicated for simple API testing?
-
-Postman is a full API platform, so its interface carries a lot of surface area — workspaces, collections, environments, mocks, monitors, runners, and more. If you only need to save and send a few requests, that breadth can feel like a lot to navigate, and returning users often have to reorient themselves. massCode's HTTP client is deliberately minimal, which makes it quicker for that narrower job. For heavy testing and automation, Postman's depth is the point.
-
-### Does massCode need an account like Postman?
-
-massCode never requires an account; your data stays in local files. Postman can be used without signing in through its lightweight API client, but full features and sync are tied to a Postman account.
-
-### Can I import my Postman collections into massCode?
-
-Yes. massCode imports Postman Collection v2.1 JSON and Postman Environment JSON, with a preview before anything is written to your vault. See [Importing HTTP Collections](/documentation/http/importing).
+For local API development, massCode is an option if you want saved requests, environments, tests, and a desktop runner beside your snippets and notes. Choose Postman when your workflow depends on its CI tools, mock servers, monitors, or managed team features.
 
 ### Does massCode support automated API testing?
 
-No. massCode's HTTP client is for building and sending requests and saving them by project. It does not include scripted tests, a collection runner, or monitors. If you need those, use Postman or a dedicated testing tool.
+Yes. HTTP requests support declarative response assertions, value extraction, and trusted JavaScript tests. Folder Runner executes saved requests in sequence and reports failures. This is desktop testing: massCode does not offer a standalone CLI, CI runner, or scheduled monitoring.
+
+### Does massCode need an account like Postman?
+
+massCode does not require an account. Postman also offers a no-sign-in lightweight client for offline requests, but that mode lacks collections and environments. Its Native Git mode stores files locally and requires sign-in. See [Postman's local-use options](https://learning.postman.com/help/faqs/postman-configuration/can-i-use-postman-locally).
+
+### Can I import my Postman collections and tests?
+
+Yes, using Collection v2.1 JSON and optional Environment JSON. Only a supported subset of scripts and tests is converted. Review preview warnings, adapt blocked scripts, and trust the code locally before running it. The [import guide](/documentation/http/importing) explains the compatibility limits.
+
+### Does massCode support GraphQL and WebSocket?
+
+Yes: GraphQL POST queries and mutations use the HTTP testing workflow, while WebSocket provides text/JSON messaging. GraphQL subscriptions, schema introspection, gRPC, and WebSocket tests/scripts are not supported.
 
 ### Is massCode free?
 
-Yes, massCode is free and open source under AGPL v3, with no per-seat pricing. As of 2026, Postman's free plan is limited to a single user with a monthly cap on collection runs, and team features require a paid plan.
+Yes, massCode is free and open source under AGPL v3. Postman offers a free tier and paid plans; check its [pricing page](https://www.postman.com/pricing/) for current terms.
 
 ## Try massCode
 
-If you want a local-first API client that stores requests as plain files you own — and keeps them next to your snippets and notes — [download massCode](/download/) and import a Postman collection to see how it feels.
+[Download massCode](/download/) and import a collection to try local API testing alongside your snippets and notes. If you prefer a dedicated local-first API client, see [massCode vs Bruno](/compare/bruno).

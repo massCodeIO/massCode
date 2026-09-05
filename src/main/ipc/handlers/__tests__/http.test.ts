@@ -1,6 +1,9 @@
+import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
 import { formatHttpRequestError, registerHttpHandlers } from '../http'
+
+const event = { sender: Object.assign(new EventEmitter(), { id: 1 }) }
 
 const { AgentMock, handleMock, requestMock } = vi.hoisted(() => ({
   AgentMock: class {
@@ -32,12 +35,17 @@ vi.mock('../../../http/secrets', () => ({
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
     environments: {
+      getActiveEnvironmentId: () => null,
       getEnvironments: () => [],
     },
     history: {
       appendEntry: vi.fn(),
     },
   }),
+}))
+
+vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
+  getVaultPath: () => '/test-vault',
 }))
 
 describe('formatHttpRequestError', () => {
@@ -110,7 +118,7 @@ describe('registerHttpHandlers', () => {
       ([channel]) => channel === 'spaces:http:execute',
     )?.[1]
 
-    await handler(null, {
+    await handler(event, {
       environmentId: null,
       request: {
         auth: { type: 'none' },

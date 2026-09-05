@@ -1,6 +1,6 @@
 import type { Event as ElectronEvent } from 'electron'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { handleBeforeQuit, handleMainWindowClose } from '../index'
+import { handleMainWindowClose, prepareQuit } from '../index'
 
 const context = vi.hoisted(() => {
   const appHandlers = new Map<string, (...args: unknown[]) => void>()
@@ -122,9 +122,9 @@ describe('main process safe quit lifecycle', () => {
       throw new Error('Pending state writes remain')
     })
 
-    handleBeforeQuit(event)
+    expect(prepareQuit()).toBe(false)
 
-    expect(event.preventDefault).toHaveBeenCalledTimes(1)
+    expect(event.preventDefault).not.toHaveBeenCalled()
     expect(context.setQuitting).toHaveBeenCalledWith(false)
     expect(context.log).toHaveBeenCalledWith(
       'Error stopping markdown watcher before quit',
@@ -139,17 +139,42 @@ describe('main process safe quit lifecycle', () => {
   it('continues normal cleanup after state flush succeeds', () => {
     const event = createEvent()
 
-    handleBeforeQuit(event)
+    expect(prepareQuit()).toBe(true)
 
     expect(event.preventDefault).not.toHaveBeenCalled()
-    expect(context.setQuitting).toHaveBeenCalledWith(true)
+    expect(context.setQuitting).not.toHaveBeenCalled()
     expect(context.stopThemeWatcher).toHaveBeenCalledTimes(1)
     expect(context.stopTasksCleanupScheduler).toHaveBeenCalledTimes(1)
     expect(context.cleanupDockBadge).toHaveBeenCalledTimes(1)
     expect(context.appQuit).not.toHaveBeenCalled()
   })
 
-  it('requests safe quit without destroying a non-macOS window on failure', () => {
+  it('prevents the initial quit and retries only after preparation', async () => {
+    const event = createEvent()
+    context.appHandlers.get('before-quit')?.(event)
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    expect(context.stopMarkdownWatcher).not.toHaveBeenCalled()
+    expect(context.appQuit).not.toHaveBeenCalled()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(context.stopMarkdownWatcher).toHaveBeenCalledOnce()
+    expect(context.setQuitting).toHaveBeenCalledWith(true)
+    expect(context.appQuit).toHaveBeenCalledOnce()
+  })
+
+  it('hides a macOS window without requesting quit or stopping watchers', () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
+    const event = createEvent()
+    const window = { destroy: vi.fn(), hide: vi.fn() }
+    handleMainWindowClose(event, window as never)
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    expect(window.hide).toHaveBeenCalledOnce()
+    expect(window.destroy).not.toHaveBeenCalled()
+    expect(context.appQuit).not.toHaveBeenCalled()
+    expect(context.stopMarkdownWatcher).not.toHaveBeenCalled()
+  })
+
+  it('requests safe quit without destroying a non-macOS window on failure', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
     const closeEvent = createEvent()
     const quitEvent = createEvent()
@@ -165,6 +190,7 @@ describe('main process safe quit lifecycle', () => {
     })
 
     handleMainWindowClose(closeEvent, window as never)
+    await Promise.resolve()
 
     expect(closeEvent.preventDefault).toHaveBeenCalledTimes(1)
     expect(context.appQuit).toHaveBeenCalledTimes(1)

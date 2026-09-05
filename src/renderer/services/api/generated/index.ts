@@ -602,10 +602,175 @@ export interface HttpFoldersUpdate {
   orderIndex?: number;
 }
 
+export interface HttpRuntime {
+  scripts?: {
+    /** @maxLength 65536 */
+    preRequest: string;
+    /** @maxLength 65536 */
+    postResponse: string;
+  };
+  version: 1 | 2;
+  /** @maxItems 100 */
+  extractions: {
+    name: string;
+    source: "json" | "header";
+    path: string;
+  }[];
+  /** @maxItems 100 */
+  assertions: {
+    name: string;
+    source: "json" | "header" | "status" | "durationMs";
+    path?: string;
+    operator:
+      | "eq"
+      | "neq"
+      | "exists"
+      | "contains"
+      | "gt"
+      | "gte"
+      | "lt"
+      | "lte"
+      | "notContains"
+      | "startsWith"
+      | "endsWith"
+      | "matches"
+      | "notMatches"
+      | "length"
+      | "between"
+      | "in"
+      | "notIn"
+      | "isString"
+      | "isNumber"
+      | "isBoolean"
+      | "isArray"
+      | "isObject"
+      | "isNull";
+    expected?:
+      | string
+      | number
+      | boolean
+      | null
+      | (string | number | boolean | null)[];
+  }[];
+}
+
+export interface HttpRuntimeSave {
+  runtime: {
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
+    }[];
+  };
+  expectedRevision: string;
+}
+
+export interface HttpRuntimeSaveResponse {
+  runtimeRevision: string;
+}
+
 export interface HttpRequestItemResponse {
+  runtimeRevision: string | null;
+  runtime: {
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
+    /** @maxItems 100 */
+    extractions: {
+      name: string;
+      source: "json" | "header";
+      path: string;
+    }[];
+    /** @maxItems 100 */
+    assertions: {
+      name: string;
+      source: "json" | "header" | "status" | "durationMs";
+      path?: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "exists"
+        | "contains"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte"
+        | "notContains"
+        | "startsWith"
+        | "endsWith"
+        | "matches"
+        | "notMatches"
+        | "length"
+        | "between"
+        | "in"
+        | "notIn"
+        | "isString"
+        | "isNumber"
+        | "isBoolean"
+        | "isArray"
+        | "isObject"
+        | "isNull";
+      expected?:
+        | string
+        | number
+        | boolean
+        | null
+        | (string | number | boolean | null)[];
+    }[];
+  } | null;
+  runtimeState: "ready" | "pending" | "invalid" | "unsupported";
   id: number;
   name: string;
   folderId: number | null;
+  protocol?: "http" | "websocket";
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
   headers: {
@@ -620,7 +785,13 @@ export interface HttpRequestItemResponse {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   body: string | null;
   formData: {
     key: string;
@@ -645,6 +816,7 @@ export interface HttpRequestItemResponse {
 export interface HttpRequestsAdd {
   name: string;
   folderId?: number | null;
+  protocol?: "http" | "websocket";
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url?: string;
 }
@@ -680,6 +852,7 @@ export type HttpRequestsResponse = {
   id: number;
   name: string;
   folderId: number | null;
+  protocol?: "http" | "websocket";
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
   headers: {
@@ -694,7 +867,13 @@ export type HttpRequestsResponse = {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   formData: {
     key: string;
     type: "text" | "file";
@@ -728,6 +907,7 @@ export interface HttpRequestsUpdate {
    * @max 1
    */
   isFavorites?: number;
+  protocol?: "http" | "websocket";
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url?: string;
   headers?: {
@@ -742,7 +922,13 @@ export interface HttpRequestsUpdate {
     description?: string;
     enabled?: boolean;
   }[];
-  bodyType?: "none" | "json" | "text" | "form-urlencoded" | "multipart";
+  bodyType?:
+    | "none"
+    | "json"
+    | "graphql"
+    | "text"
+    | "form-urlencoded"
+    | "multipart";
   body?: string | null;
   formData?: {
     key: string;
@@ -855,6 +1041,11 @@ export interface HttpImportPreviewResponse {
     index: number;
     name: string;
     requests: number;
+    runtime: {
+      name: string;
+      assertions: number;
+      scripts: "none" | "converted" | "blocked";
+    }[];
   }[];
   environments: {
     index: number;
@@ -1192,7 +1383,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title massCode API
- * @version 5.9.1
+ * @version 5.10.0
  *
  * Development documentation
  */
@@ -2338,6 +2529,32 @@ export class Api<
       this.request<void, any>({
         path: `/http-requests/${id}`,
         method: "DELETE",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags HTTP Requests
+     * @name PutHttpRequestsByIdRuntime
+     * @request PUT:/http-requests/{id}/runtime
+     */
+    putHttpRequestsByIdRuntime: (
+      id: string,
+      data: HttpRuntimeSave,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        HttpRuntimeSaveResponse,
+        {
+          message: string;
+        }
+      >({
+        path: `/http-requests/${id}/runtime`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

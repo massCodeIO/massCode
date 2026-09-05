@@ -6,6 +6,7 @@ import type {
 } from '../../../../contracts'
 import type { HttpEnvironmentRecord } from '../runtime/types'
 import { randomUUID } from 'node:crypto'
+import { resetHttpSession } from '../../../../../http/runtime/session'
 import { getVaultPath } from '../../runtime/paths'
 import {
   assertVaultNotHydrating,
@@ -71,6 +72,8 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
         }
       }
 
+      if (state.activeEnvironmentId !== id)
+        resetHttpSession()
       state.activeEnvironmentId = id
       saveHttpState(paths, state)
       return { notFound: false }
@@ -279,6 +282,8 @@ export function createHttpEnvironmentsStorage(): HttpEnvironmentsStorage {
         saveHttpState(paths, state)
         throw error
       }
+      if (previousActiveEnvironmentId === id)
+        resetHttpSession()
       return {
         deleted: true,
         secretScopeId: removed!.secretStorageId ?? String(removed!.id),

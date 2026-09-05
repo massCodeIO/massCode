@@ -3,7 +3,7 @@ import type { Entry } from './keyValueTable'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Popover from '@/components/ui/shadcn/popover'
 import { i18n } from '@/electron'
-import { Copy, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next'
+import { Copy, MoreHorizontal, Trash2 } from 'lucide-vue-next'
 
 interface Column {
   key: string
@@ -228,13 +228,9 @@ function duplicateRow(index: number) {
       </div>
     </div>
 
-    <button
-      type="button"
-      class="text-muted-foreground hover:text-foreground mt-1 inline-flex h-7 w-fit items-center gap-1 rounded px-2 text-xs"
+    <HttpAddRowButton
+      :label="addLabel"
       @click="addRow"
-    >
-      <Plus class="h-3.5 w-3.5" />
-      {{ addLabel }}
-    </button>
+    />
   </div>
 </template>

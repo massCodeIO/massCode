@@ -84,6 +84,13 @@ function createUniqueRequest(
         query: request.query,
       })
 
+      if (request.runtime) {
+        const revision = storage.requests.getRequestById(id)?.runtimeRevision
+        if (!revision)
+          throw new Error('HTTP_RUNTIME_UNAVAILABLE')
+        storage.requests.updateRuntime(id, request.runtime, revision)
+      }
+
       return id
     }
     catch (error) {

@@ -3,7 +3,7 @@ import { autoUpdater } from 'electron-updater'
 import { repository, version } from '../../../package.json'
 import i18n from '../i18n'
 import { send } from '../ipc'
-import { setQuitting } from '../quitState'
+import { requestLifecycleAction } from '../lifecycle'
 import { store } from '../store'
 import { log } from '../utils'
 
@@ -39,10 +39,7 @@ async function runUpdateCheck() {
 }
 
 export function installDownloadedUpdate() {
-  // На macOS quitAndInstall закрывает окна, а обработчик 'close' без этого флага
-  // спрятал бы окно вместо выхода и заблокировал установку.
-  setQuitting(true)
-  autoUpdater.quitAndInstall()
+  return requestLifecycleAction(() => autoUpdater.quitAndInstall())
 }
 
 // Ручная проверка из меню. Скачивание при необходимости запустит глобальный

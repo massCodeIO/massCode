@@ -18,6 +18,7 @@ import {
 } from 'electron'
 import i18n from '../i18n'
 import { send } from '../ipc'
+import { requestLifecycleAction } from '../lifecycle'
 import { checkForUpdatesFromMenu } from '../updates'
 import { createMenu, createPlatformMenuItems } from './utils'
 
@@ -233,7 +234,11 @@ const helpMenuItems: MenuConfig[] = [
 if (isDev) {
   helpMenuItems.push({
     label: 'Reload',
-    role: 'reload',
+    accelerator: 'CommandOrControl+R',
+    click: () =>
+      requestLifecycleAction(() => {
+        BrowserWindow.getFocusedWindow()?.webContents.reload()
+      }, false),
   })
 }
 

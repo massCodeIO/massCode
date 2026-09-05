@@ -8,6 +8,7 @@ import type {
 } from './types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { resetHttpSession } from '../../../../../http/runtime/session'
 import { log } from '../../../../../utils'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag } from '../../runtime/normalizers'
@@ -174,6 +175,7 @@ function buildHttpRequestIndexMetadata(
     headers: record.headers,
     isDeleted: record.isDeleted,
     isFavorites: record.isFavorites,
+    protocol: record.protocol,
     method: record.method,
     mtimeMs: stats.mtimeMs,
     name: record.name,
@@ -241,6 +243,7 @@ function buildRequestFromIndexMetadata(
     id: entryId,
     name: meta.name,
     folderId,
+    protocol: meta.protocol === 'websocket' ? 'websocket' : undefined,
     method: normalizeMethod(meta.method),
     url: meta.url,
     headers: meta.headers,
@@ -303,6 +306,9 @@ function reconcileRequests(
   const existingByPath = new Map(
     state.requests.map(item => [item.filePath, item]),
   )
+  // A copied Markdown file can appear before its original in directory order.
+  // Reserve indexed IDs so the copy cannot displace the original in the cache.
+  const indexedIds = new Set(state.requests.map(item => item.id))
 
   // Один batch-вызов точной проверки dataless на весь список вместо
   // отдельного системного вызова на каждый подозрительный файл.
@@ -425,11 +431,19 @@ function reconcileRequests(
     const parsed = parseRequestFile(source)
     const fmId = parsed.frontmatter.id
 
-    let id = existingEntry?.id
+    let id
+      = existingEntry && !usedIds.has(existingEntry.id)
+        ? existingEntry.id
+        : undefined
     let needsRewrite = !parsed.hasFrontmatter
 
     if (!id) {
-      if (typeof fmId === 'number' && fmId > 0 && !usedIds.has(fmId)) {
+      if (
+        typeof fmId === 'number'
+        && fmId > 0
+        && !usedIds.has(fmId)
+        && !indexedIds.has(fmId)
+      ) {
         id = fmId
       }
       else {
@@ -454,6 +468,7 @@ function reconcileRequests(
       id,
       name: parsed.frontmatter.name || fileName,
       folderId,
+      protocol: parsed.normalized.protocol,
       method: parsed.normalized.method,
       url: parsed.normalized.url,
       headers: parsed.normalized.headers,
@@ -470,7 +485,10 @@ function reconcileRequests(
       updatedAt: typeof fmUpdatedAt === 'number' ? fmUpdatedAt : now,
     }
 
-    if (needsRewrite || serializeRequestFile(record) !== source) {
+    if (
+      needsRewrite
+      || serializeRequestFile(record, parsed.frontmatter.runtime) !== source
+    ) {
       writeRequestFile(paths.httpRoot, record, { skipIfUnavailable: true })
     }
 
@@ -603,6 +621,7 @@ export function getHttpRuntimeCache(paths: HttpPaths): HttpRuntimeCache {
 }
 
 export function resetHttpRuntimeCache(): void {
+  resetHttpSession()
   // Смена vault: ретраи сверки брошенного корня останавливаются, иначе они
   // продолжили бы попытки по неактивному пути и слали storage-synced.
   const previousHttpRoot = httpRuntimeRef.cache?.paths.httpRoot

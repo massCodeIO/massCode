@@ -33,12 +33,13 @@ const HTTP_METHODS: HttpMethod[] = [
 const HTTP_BODY_TYPES: HttpBodyType[] = [
   'none',
   'json',
+  'graphql',
   'text',
   'form-urlencoded',
   'multipart',
 ]
 
-function splitFrontmatter(source: string): {
+export function splitFrontmatter(source: string): {
   body: string
   frontmatter: HttpRequestFrontmatter
   hasFrontmatter: boolean
@@ -153,6 +154,7 @@ export interface ParsedRequestFile {
   frontmatter: HttpRequestFrontmatter
   hasFrontmatter: boolean
   normalized: {
+    protocol?: 'http' | 'websocket'
     method: HttpMethod
     url: string
     headers: HttpHeaderEntry[]
@@ -176,6 +178,7 @@ export function parseRequestFile(source: string): ParsedRequestFile {
     frontmatter: fm,
     hasFrontmatter,
     normalized: {
+      protocol: fm.protocol === 'websocket' ? 'websocket' : undefined,
       method: normalizeMethod(fm.method),
       url: typeof fm.url === 'string' ? fm.url : '',
       headers: normalizeHeaders(fm.headers),
@@ -190,11 +193,15 @@ export function parseRequestFile(source: string): ParsedRequestFile {
   }
 }
 
-export function serializeRequestFile(record: HttpRequestRecord): string {
+export function serializeRequestFile(
+  record: HttpRequestRecord,
+  runtime?: unknown,
+): string {
   const frontmatter: HttpRequestFrontmatter = {
     id: record.id,
     name: record.name,
     folderId: record.folderId,
+    protocol: record.protocol,
     method: record.method,
     url: record.url,
     headers: record.headers,
@@ -207,6 +214,7 @@ export function serializeRequestFile(record: HttpRequestRecord): string {
     isDeleted: record.isDeleted,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
+    runtime,
   }
 
   const text = yaml
@@ -326,15 +334,23 @@ export function writeRequestFile(
     throwCloudContentUnavailable()
   }
 
-  const next = serializeRequestFile(record)
-
   // Trusted move bypasses only the second availability classification. The
   // destination is still read by pathname before any mark/write: read failure
   // aborts without granting a zero-block exemption. This intentionally follows
   // the same provider trust boundary as Code/Notes; Node cannot atomically
   // guard against a same-inode dehydrate/replace between move and pathname I/O.
-  if (canWriteMovedLocalFile || availability?.exists) {
-    const current = fs.readFileSync(absolutePath, 'utf8')
+  const current
+    = canWriteMovedLocalFile || availability?.exists
+      ? fs.readFileSync(absolutePath, 'utf8')
+      : null
+  // Runtime is read from disk, not the lightweight list cache. Metadata edits
+  // must preserve externally edited scripts, including unknown/invalid versions.
+  const runtime
+    = current === null
+      ? undefined
+      : splitFrontmatter(current).frontmatter.runtime
+  const next = serializeRequestFile(record, runtime)
+  if (current !== null) {
     if (current === next) {
       if (canWriteMovedLocalFile) {
         markAppWrittenFileAsLocal(absolutePath)

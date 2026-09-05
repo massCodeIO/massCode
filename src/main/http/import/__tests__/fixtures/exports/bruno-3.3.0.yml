@@ -1,0 +1,101 @@
+opencollection: 1.0.0
+info:
+  name: massCode Export Verification
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ''
+      port: ''
+      auth:
+        username: ''
+        password: ''
+      bypassProxy: ''
+items:
+  - info:
+      name: Workflow
+      type: folder
+      seq: 1
+    request:
+      scripts:
+        - type: before-request
+          code: bru.setVar('order', bru.getVar('order') + '/folder');
+        - type: after-response
+          code: bru.setVar('postOrder', bru.getVar('postOrder') + '/folder');
+        - type: tests
+          code: test('Folder test', () => { expect(res.status).to.equal(200); });
+    items:
+      - info:
+          name: 01 Passing tests
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: http://127.0.0.1:5189/echo
+          body:
+            type: text
+            data: '{{order}}'
+        runtime:
+          scripts:
+            - type: before-request
+              code: bru.setVar('order', bru.getVar('order') + '/request');
+            - type: after-response
+              code: |-
+                bru.setVar('postOrder', 'request');
+                bru.setVar('token', res.body.token);
+            - type: tests
+              code: |-
+                test('Request test', () => { expect(res.status).to.equal(200); });
+                test('Sandwich order', () => { expect(bru.getVar('postOrder')).to.equal('request/folder/collection'); });
+          assertions:
+            - expression: res.status
+              operator: eq
+              value: '200'
+            - expression: res.body.token
+              operator: isString
+              value: ''
+            - expression: res.body.token
+              operator: eq
+              value: demo-token
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: 02 Failing tests
+          type: http
+          seq: 1
+        http:
+          method: GET
+          url: http://127.0.0.1:5189/echo
+        runtime:
+          scripts:
+            - type: tests
+              code: test('Intentional failure', () => { expect(res.status).to.equal(201); });
+          assertions:
+            - expression: res.status
+              operator: eq
+              value: '201'
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+request:
+  scripts:
+    - type: before-request
+      code: bru.setVar('order', 'collection');
+    - type: after-response
+      code: bru.setVar('postOrder', bru.getVar('postOrder') + '/collection');
+    - type: tests
+      code: test('Collection test', () => { expect(res.status).to.equal(200); });
+bundled: true
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    exportedAt: '2026-09-05T08:07:46.511Z'
+    exportedUsing: Bruno

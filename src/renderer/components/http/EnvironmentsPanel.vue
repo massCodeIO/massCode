@@ -23,12 +23,15 @@ function openManager() {
   <div class="flex h-full min-h-0 flex-col">
     <SidebarSectionHeader :title="i18n.t('spaces.http.environments.title')">
       <template #action>
-        <UiActionButton
-          :tooltip="i18n.t('spaces.http.environments.manage')"
-          @click="openManager"
-        >
-          <Settings2 class="size-4" />
-        </UiActionButton>
+        <div class="flex items-center">
+          <HttpVariablesInspector />
+          <UiActionButton
+            :tooltip="i18n.t('spaces.http.environments.manage')"
+            @click="openManager"
+          >
+            <Settings2 class="size-4" />
+          </UiActionButton>
+        </div>
       </template>
     </SidebarSectionHeader>
 

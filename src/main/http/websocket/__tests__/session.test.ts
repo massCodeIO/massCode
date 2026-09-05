@@ -1,0 +1,303 @@
+import type { WsConnect } from '../../../../shared/httpWebSocket'
+import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
+import { once } from 'node:events'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { WebSocketServer } from 'ws'
+import { WS_MESSAGE_LIMIT } from '../../../../shared/httpWebSocket'
+import {
+  commitHttpSession,
+  getHttpSession,
+  resetHttpSession,
+} from '../../runtime/session'
+import {
+  clearWebSocket,
+  connectWebSocket,
+  disconnectWebSocket,
+  disposeWebSocket,
+  readWebSocket,
+  sendWebSocket,
+} from '../session'
+
+const mocks = vi.hoisted(() => ({
+  envId: 1 as number | null,
+  vault: '/vault',
+  pending: false,
+}))
+vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
+  getVaultPath: () => mocks.vault,
+}))
+vi.mock('../../../storage', () => ({
+  useHttpStorage: () => ({
+    requests: {
+      getRequestById: () => ({ id: 1, pendingCloudDownload: mocks.pending }),
+    },
+    environments: { getActiveEnvironmentId: () => mocks.envId },
+  }),
+}))
+vi.mock('../../secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
+vi.mock('../../runtime/execute', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../runtime/execute')>()),
+  resolveEnvironment: () => ({
+    variables: { token: 'env-value' },
+    maskedVariables: { token: '••••••' },
+    secretValues: ['env-value'],
+  }),
+}))
+
+let server: WebSocketServer
+let url: string
+function input(): WsConnect {
+  return {
+    connectionId: randomUUID(),
+    requestId: 1,
+    environmentId: 1,
+    url,
+    headers: [],
+    query: [],
+    auth: { type: 'none' },
+  }
+}
+async function waitFor(
+  id: string,
+  predicate: (view: ReturnType<typeof readWebSocket>) => boolean,
+) {
+  await vi.waitFor(() => expect(predicate(readWebSocket(1, id, 0))).toBe(true))
+  return readWebSocket(1, id, 0)
+}
+beforeEach(async () => {
+  mocks.envId = 1
+  mocks.vault = '/vault'
+  mocks.pending = false
+  resetHttpSession()
+  server = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await once(server, 'listening')
+  url = `ws://127.0.0.1:${(server.address() as { port: number }).port}`
+  server.on('connection', socket =>
+    socket.on('message', (data, binary) => socket.send(data, { binary })))
+})
+afterEach(async () => {
+  disposeWebSocket(1)
+  disposeWebSocket(2)
+  for (const socket of server.clients) socket.terminate()
+  await new Promise<void>(resolve => server.close(() => resolve()))
+})
+
+describe('webSocket sessions', () => {
+  it('connects, sends text, receives echoes and closes', async () => {
+    const request = input()
+    connectWebSocket(1, request)
+    await waitFor(request.connectionId, view => view.state === 'open')
+    await sendWebSocket(1, request.connectionId, '{"hello":true}')
+    const view = await waitFor(
+      request.connectionId,
+      view => view.messages.length === 2,
+    )
+    expect(view.messages.map(m => m.direction).sort()).toEqual([
+      'incoming',
+      'outgoing',
+    ])
+    expect(view.messages.every(m => m.text === '{"hello":true}')).toBe(true)
+    disconnectWebSocket(1, request.connectionId)
+    await waitFor(request.connectionId, view => view.state === 'closed')
+  })
+
+  it('snapshots variables, applies headers/auth/query and masks outgoing values', async () => {
+    const session = getHttpSession('/vault', 1)
+    commitHttpSession(
+      session.generation,
+      new Map([['token', 'session-value']]),
+    )
+    const request = {
+      ...input(),
+      query: [{ key: 'token', value: '{{token}}' }],
+      headers: [{ key: 'X-Test', value: '{{token}}' }],
+      auth: { type: 'bearer' as const, token: '{{token}}' },
+    }
+    const connected = once(server, 'connection')
+    connectWebSocket(1, request)
+    const [, handshake] = await connected
+    expect(handshake.url).toBe('/?token=session-value')
+    expect(handshake.headers['x-test']).toBe('session-value')
+    expect(handshake.headers.authorization).toBe('Bearer session-value')
+    await waitFor(request.connectionId, view => view.state === 'open')
+    commitHttpSession(session.generation, new Map([['token', 'changed']]))
+    await sendWebSocket(1, request.connectionId, '{{token}}')
+    const view = await waitFor(
+      request.connectionId,
+      view => view.messages.length === 2,
+    )
+    expect(view.messages.find(m => m.direction === 'incoming')?.text).toBe(
+      'session-value',
+    )
+    expect(view.messages.find(m => m.direction === 'outgoing')?.text).toBe(
+      '••••••',
+    )
+  })
+
+  it('isolates owners and ignores stale disposal after reconnecting', async () => {
+    const first = input()
+    connectWebSocket(1, first)
+    expect(() => readWebSocket(2, first.connectionId, 0)).toThrow(
+      'WS_UNAVAILABLE',
+    )
+    const second = input()
+    connectWebSocket(1, second)
+    disposeWebSocket(1, first.connectionId)
+    expect(readWebSocket(1, second.connectionId, 0).connectionId).toBe(
+      second.connectionId,
+    )
+  })
+
+  it.each([400, 401, 403])(
+    'reports HTTP %s handshake rejection without leaking response data',
+    async (status) => {
+      server.options.verifyClient = (_info, done) =>
+        done(false, status, 'sensitive-server-detail', {
+          'X-Secret': 'hidden-token',
+        })
+      const request = input()
+      connectWebSocket(1, request)
+      const view = await waitFor(
+        request.connectionId,
+        view => view.state === 'error',
+      )
+      expect(view).toMatchObject({
+        error: 'handshake',
+        handshakeStatus: status,
+        messages: [],
+      })
+      expect(JSON.stringify(view)).not.toMatch(
+        /sensitive-server-detail|hidden-token/,
+      )
+      await expect(
+        sendWebSocket(1, request.connectionId, 'not connected'),
+      ).rejects.toThrow('WS_NOT_OPEN')
+
+      server.options.verifyClient = undefined
+      const retry = input()
+      connectWebSocket(1, retry)
+      await waitFor(retry.connectionId, view => view.state === 'open')
+      expect(readWebSocket(1, retry.connectionId, 0).error).toBeUndefined()
+    },
+  )
+
+  it('uses current connection settings only after reconnecting and applies real basic auth', async () => {
+    const request = {
+      ...input(),
+      query: [{ key: 'channel', value: 'notifications' }],
+      headers: [{ key: 'X-Client-ID', value: 'first' }],
+      auth: { type: 'basic' as const, username: 'demo', password: 'password' },
+    }
+    const connected = once(server, 'connection')
+    connectWebSocket(1, request)
+    const [, first] = await connected
+    expect(first.url).toBe('/?channel=notifications')
+    expect(first.headers['x-client-id']).toBe('first')
+    expect(first.headers.authorization).toBe(
+      `Basic ${Buffer.from('demo:password').toString('base64')}`,
+    )
+    await waitFor(request.connectionId, view => view.state === 'open')
+    request.query[0].value = 'updates'
+    request.headers[0].value = 'second'
+    expect(first.url).toBe('/?channel=notifications')
+    disconnectWebSocket(1, request.connectionId)
+    await waitFor(request.connectionId, view => view.state === 'closed')
+    const reconnected = once(server, 'connection')
+    connectWebSocket(1, { ...request, connectionId: randomUUID() })
+    const [, second] = await reconnected
+    expect(second.url).toBe('/?channel=updates')
+    expect(second.headers['x-client-id']).toBe('second')
+  })
+
+  it.each(['environment', 'vault', 'session'])(
+    'closes after %s changes',
+    async (context) => {
+      const request = input()
+      connectWebSocket(1, request)
+      await waitFor(request.connectionId, view => view.state === 'open')
+      if (context === 'environment')
+        mocks.envId = 2
+      if (context === 'vault')
+        mocks.vault = '/other'
+      if (context === 'session')
+        resetHttpSession()
+      expect(readWebSocket(1, request.connectionId, 0).error).toBe(
+        'contextChanged',
+      )
+      await expect(
+        sendWebSocket(1, request.connectionId, 'no'),
+      ).rejects.toThrow('WS_CONTEXT_CHANGED')
+    },
+  )
+
+  it('bounds the log and previews, supports binary reception and clearing', async () => {
+    const request = input()
+    const connected = once(server, 'connection')
+    connectWebSocket(1, request)
+    const [socket] = await connected
+    await waitFor(request.connectionId, view => view.state === 'open')
+    for (let i = 0; i < 110; i++) socket.send(String(i))
+    const view = await waitFor(
+      request.connectionId,
+      view => view.lastId === 110,
+    )
+    expect(view.messages).toHaveLength(100)
+    expect(view.dropped).toBe(10)
+    const after = clearWebSocket(1, request.connectionId)
+    socket.send(Buffer.alloc(20000, 1))
+    const binary = await waitFor(
+      request.connectionId,
+      view => view.lastId > after,
+    )
+    expect(binary.messages[0]).toMatchObject({
+      kind: 'binary',
+      truncated: true,
+      bytes: 20000,
+    })
+    expect(binary.messages[0].text.length).toBeLessThanOrEqual(16384)
+    expect(binary.dropped).toBe(0)
+    expect(
+      readWebSocket(1, request.connectionId, binary.lastId).messages,
+    ).toEqual([])
+  })
+
+  it('rejects unsafe URLs, unavailable drafts and oversized sends', async () => {
+    expect(() =>
+      connectWebSocket(1, { ...input(), url: 'file:///tmp/secret' }),
+    ).toThrow('WS_INVALID')
+    expect(() =>
+      connectWebSocket(1, { ...input(), url: 'ws://user:pass@localhost/' }),
+    ).toThrow('WS_INVALID')
+    expect(() =>
+      connectWebSocket(1, {
+        ...input(),
+        headers: [{ key: 'Host', value: 'other' }],
+      }),
+    ).toThrow('WS_INVALID')
+    mocks.pending = true
+    expect(() => connectWebSocket(1, input())).toThrow('WS_UNAVAILABLE')
+    mocks.pending = false
+    const request = input()
+    connectWebSocket(1, request)
+    await waitFor(request.connectionId, view => view.state === 'open')
+    await expect(
+      sendWebSocket(1, request.connectionId, 'я'.repeat(WS_MESSAGE_LIMIT)),
+    ).rejects.toThrow('WS_TOO_LARGE')
+  })
+
+  it('rejects oversized incoming messages without retaining them', async () => {
+    const request = input()
+    const connected = once(server, 'connection')
+    connectWebSocket(1, request)
+    const [socket] = await connected
+    await waitFor(request.connectionId, view => view.state === 'open')
+    socket.send(Buffer.alloc(WS_MESSAGE_LIMIT + 1))
+    const view = await waitFor(
+      request.connectionId,
+      view => view.state === 'error',
+    )
+    expect(view.error).toBe('tooLarge')
+    expect(view.messages).toHaveLength(0)
+  })
+})

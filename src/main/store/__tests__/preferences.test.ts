@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
 
 type State = Record<string, any>
 
@@ -277,6 +278,17 @@ describe('preferences store sanitization', () => {
     )
     expect(preferences.get('http.garbage' as any)).toBeUndefined()
   })
+
+  it.each(HTTP_PREVIEW_FORMATS)(
+    'keeps %s as the HTTP preview format',
+    async (format) => {
+      persistedStateByName.preferences = {
+        http: { defaultPreviewFormat: format },
+      }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('http.defaultPreviewFormat' as any)).toBe(format)
+    },
+  )
 
   it('adds sanitized defaults for invalid http settings', async () => {
     persistedStateByName.preferences = {

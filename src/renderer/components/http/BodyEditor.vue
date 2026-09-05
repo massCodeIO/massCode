@@ -11,7 +11,8 @@ import {
   indentWithTab,
 } from '@codemirror/commands'
 import { json } from '@codemirror/lang-json'
-import { indentUnit } from '@codemirror/language'
+import { indentUnit, StreamLanguage } from '@codemirror/language'
+import { javascript } from '@codemirror/legacy-modes/mode/javascript'
 import { Compartment, EditorState } from '@codemirror/state'
 import {
   EditorView,
@@ -20,13 +21,14 @@ import {
   lineNumbers,
   placeholder,
 } from '@codemirror/view'
+import { graphqlLanguage } from './cm-extensions/graphql'
 import {
   refreshVariables,
   varInterpolationExtension,
 } from './cm-extensions/varInterpolation'
 
 interface Props {
-  language?: 'json' | 'text' | 'form-urlencoded'
+  language?: 'json' | 'text' | 'form-urlencoded' | 'javascript' | 'graphql'
   placeholder?: string
   wrapLines?: boolean
 }
@@ -77,8 +79,12 @@ function validateJson(value: string) {
 }
 
 function getLanguageExtension(): Extension {
+  if (props.language === 'graphql')
+    return graphqlLanguage
   if (props.language === 'json')
     return json()
+  if (props.language === 'javascript')
+    return StreamLanguage.define(javascript)
   return []
 }
 
@@ -167,7 +173,9 @@ function createEditorState(doc: string): EditorState {
     placeholder(props.placeholder ?? ''),
     languageCompartment.of(getLanguageExtension()),
     highlightCompartment.of(createCodeHighlight(isDark.value)),
-    varInterpolationExtension({ getVariables }),
+    ...(props.language === 'javascript'
+      ? []
+      : [varInterpolationExtension({ getVariables })]),
     EditorView.updateListener.of((update) => {
       if (!update.docChanged || isApplyingExternalValue)
         return

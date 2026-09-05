@@ -1,3 +1,4 @@
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 export const RouterName = {
@@ -268,4 +269,10 @@ const routes = [
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
+})
+
+router.beforeEach((to, from) => {
+  if (from.name === RouterName.httpSpace && to.name !== RouterName.httpSpace)
+    return httpRuntimeNavigation.confirmLeave()
+  return true
 })

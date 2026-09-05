@@ -27,6 +27,7 @@ import { getActiveSpaceId } from '@/spaceDefinitions'
 import { retryNotesAssetImages } from '@/utils/notesAssetHydration'
 import { repository } from '../../../../package.json'
 import { handleDeepLink } from './deepLinks'
+import { registerLifecycleListener } from './lifecycle'
 
 const { state, isCodeSpaceInitialized } = useApp()
 const { isHttpSpaceInitialized } = useHttpApp()
@@ -174,6 +175,7 @@ function scheduleStorageSyncRefresh(delayOverride?: number) {
 }
 
 export function registerSystemListeners() {
+  registerLifecycleListener()
   ipc.on('system:deep-link', async (_, url: string) => {
     try {
       await handleDeepLink(url)

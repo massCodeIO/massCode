@@ -14,7 +14,27 @@ const { settings } = useHttpSettings()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
-const activeTab = ref<'body' | 'headers'>('body')
+const activeTab = ref<'body' | 'headers' | 'tests'>('body')
+const runtimeResults = computed(() => [
+  ...(lastResponse.value?.scriptResults ?? []).map(phase => ({
+    ok: !phase.error && phase.tests.every(test => test.ok),
+  })),
+  ...(lastResponse.value?.runtimeResults?.extractions ?? []),
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+])
+const assertionResults = computed(() => [
+  ...(lastResponse.value?.runtimeResults?.assertions ?? []),
+  ...(lastResponse.value?.scriptResults ?? []).flatMap(phase =>
+    phase.error ? [{ ok: false }] : phase.tests,
+  ),
+])
+const passedAssertions = computed(
+  () => assertionResults.value.filter(result => result.ok).length,
+)
+watch(runtimeResults, (results) => {
+  if (!results.length && activeTab.value === 'tests')
+    activeTab.value = 'body'
+})
 
 const formattedBody = computed(() => {
   const response = lastResponse.value
@@ -44,6 +64,8 @@ const formattedHeaders = computed(() => {
 })
 
 const copyValue = computed(() => {
+  if (activeTab.value === 'tests')
+    return ''
   return activeTab.value === 'headers'
     ? formattedHeaders.value
     : formattedBody.value
@@ -81,7 +103,7 @@ function copyActiveTab() {
       {{ i18n.t("spaces.http.editor.response.executing") }}
     </div>
     <div
-      v-else-if="responseError"
+      v-else-if="responseError && !runtimeResults.length"
       class="flex flex-1 items-center justify-center px-4"
     >
       <div
@@ -118,14 +140,39 @@ function copyActiveTab() {
         {{ responseError }}
       </div>
 
+      <UiText
+        v-if="lastResponse.graphql"
+        variant="caption"
+        class="border-b px-3 py-2"
+        :class="
+          lastResponse.graphql === 'success'
+            ? 'text-muted-foreground'
+            : 'text-destructive'
+        "
+      >
+        {{ i18n.t(`spaces.http.graphql.response.${lastResponse.graphql}`) }}
+      </UiText>
       <Tabs.Tabs
         v-model="activeTab"
         class="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div
-          class="border-border flex items-center justify-between border-b px-3 py-1"
+          class="border-border scrollbar flex min-w-0 items-center justify-between overflow-x-auto border-b px-3 py-1"
         >
           <Tabs.TabsList>
+            <Tabs.TabsTrigger
+              v-if="runtimeResults.length"
+              value="tests"
+            >
+              {{
+                i18n.t(
+                  assertionResults.length
+                    ? "spaces.http.runtime.testResults"
+                    : "spaces.http.runtime.extractionResults",
+                )
+              }}
+              <span v-if="assertionResults.length">({{ passedAssertions }}/{{ assertionResults.length }})</span>
+            </Tabs.TabsTrigger>
             <Tabs.TabsTrigger value="body">
               {{ i18n.t("spaces.http.editor.response.tabs.body") }}
             </Tabs.TabsTrigger>
@@ -149,6 +196,12 @@ function copyActiveTab() {
         </div>
 
         <div class="min-h-0 flex-1">
+          <Tabs.TabsContent
+            value="tests"
+            class="scrollbar m-0 h-full overflow-auto"
+          >
+            <HttpResponseTests />
+          </Tabs.TabsContent>
           <Tabs.TabsContent
             value="body"
             class="m-0 h-full"

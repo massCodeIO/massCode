@@ -1,0 +1,24 @@
+{
+  "info": { "name": "Postman import demo", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "event": [
+    { "listen": "prerequest", "script": { "type": "text/javascript", "exec": ["pm.variables.set('order', 'collection');"] } },
+    { "listen": "test", "script": { "exec": "pm.test('Collection status', () => { pm.expect(pm.response.code).to.equal(200); });" } }
+  ],
+  "item": [{
+    "name": "Workflow",
+    "event": [{ "listen": "prerequest", "script": { "exec": "pm.variables.set('order', pm.variables.get('order') + '/folder');" } }],
+    "item": [
+      {
+        "name": "01 Passing tests",
+        "request": { "method": "POST", "url": "http://127.0.0.1:5189/echo", "body": { "mode": "raw", "raw": "{{order}}" } },
+        "event": [
+          { "listen": "prerequest", "script": { "exec": "pm.variables.set('order', pm.variables.get('order') + '/request');" } },
+          { "listen": "test", "script": { "exec": ["const data = pm.response.json();", "pm.variables.set('token', data.token);", "pm.test('Token', function () { pm.expect(data.token).to.equal('demo-token'); });", "pm.test('Inherited setup', () => { pm.expect(data.received).to.equal('collection/folder/request'); });"] } }
+        ]
+      },
+      { "name": "02 Failing test", "request": { "method": "GET", "url": "http://127.0.0.1:5189/echo" }, "event": [{ "listen": "test", "script": { "exec": "pm.test('Intentional failure', () => { pm.expect(pm.response.code).to.equal(201); });" } }] },
+      { "name": "03 Unsupported script", "request": { "method": "GET", "url": "http://127.0.0.1:5189/echo" }, "event": [{ "listen": "prerequest", "script": { "exec": "pm.environment.set('token', 'do-not-print-secret');" } }] },
+      { "name": "04 Malformed script", "request": { "method": "GET", "url": "http://127.0.0.1:5189/echo" }, "event": [{ "listen": "test", "script": { "exec": "pm.test(" } }] }
+    ]
+  }]
+}

@@ -252,6 +252,7 @@ init()
     </RouterView>
     <ImportsImportDialog />
     <CommandPalette />
+    <HttpRuntimeLeaveDialog />
     <div
       v-if="isLoaderVisible"
       class="bg-background absolute inset-0 z-50 flex flex-col items-center justify-center"

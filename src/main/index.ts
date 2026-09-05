@@ -1,5 +1,5 @@
-/* eslint-disable node/prefer-global/process */
 import type { Event as ElectronEvent } from 'electron'
+/* eslint-disable node/prefer-global/process */
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -10,8 +10,10 @@ import { resolveApiSessionToken } from './api/sessionAuth'
 import { cleanupDockBadge, refreshDockBadge } from './dockBadge'
 import { resolveFolderIconResponse } from './folderIcons'
 import { registerIPC } from './ipc'
+import { registerHttpScriptHandlers } from './ipc/handlers/httpScripts'
 import { startThemeWatcher, stopThemeWatcher } from './ipc/handlers/theme'
 import { validateStoredLicense } from './license'
+import { configureLifecycle, requestLifecycleAction } from './lifecycle'
 import { createMainMenu } from './menu/main'
 import { isQuitting, setQuitting } from './quitState'
 import {
@@ -105,22 +107,30 @@ export function handleMainWindowClose(
   window.destroy()
 }
 
-export function handleBeforeQuit(event: ElectronEvent): void {
+export function prepareQuit(): boolean {
   try {
     stopMarkdownWatcher()
   }
   catch (error) {
-    event.preventDefault()
     setQuitting(false)
     log('Error stopping markdown watcher before quit', error)
-    return
+    return false
   }
 
-  setQuitting(true)
   flushWindowBoundsSave()
   stopThemeWatcher()
   stopTasksCleanupScheduler()
   cleanupDockBadge()
+  return true
+}
+
+configureLifecycle(() => mainWindow, prepareQuit)
+
+export function handleBeforeQuit(event: ElectronEvent): void {
+  if (isQuitting())
+    return
+  event.preventDefault()
+  void requestLifecycleAction()
 }
 
 if (process.defaultApp) {
@@ -158,6 +168,7 @@ function createWindow(sessionToken: string) {
         path.join(__dirname, '../../build/renderer/index.html'),
       ).toString()
 
+  registerHttpScriptHandlers(mainWindow.webContents, rendererUrl)
   registerApiRequestHandler(
     mainWindow.webContents,
     rendererUrl,

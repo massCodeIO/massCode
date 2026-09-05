@@ -6,11 +6,14 @@ import type {
 import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { api } from '@/services/api'
 import { maskHttpSecretVariables } from '~/shared/httpVariables'
+import { useHttpSession } from './useHttpSession'
 
 export type HttpEnvironment = HttpEnvironmentsResponse['items'][number]
 
 const environments = shallowRef<HttpEnvironment[]>([])
 const activeEnvironmentId = ref<number | null>(null)
+const { maskedSessionVariables, resetHttpSessionNames } = useHttpSession()
+watch(activeEnvironmentId, resetHttpSessionNames, { flush: 'sync' })
 
 const activeEnvironment = computed(() => {
   if (activeEnvironmentId.value === null)
@@ -29,12 +32,15 @@ const activeEnvironment = computed(() => {
 const activeEnvironmentVariables = computed<Record<string, string>>(() => {
   const env = activeEnvironment.value
   if (!env)
-    return {}
+    return maskedSessionVariables.value
 
-  return maskHttpSecretVariables(
-    env.variables as Record<string, string>,
-    env.secretKeys,
-  )
+  return {
+    ...maskHttpSecretVariables(
+      env.variables as Record<string, string>,
+      env.secretKeys,
+    ),
+    ...maskedSessionVariables.value,
+  }
 })
 
 async function getHttpEnvironments() {

@@ -1,10 +1,10 @@
 import type { HttpRequestListItem } from './useHttpRequests'
+import { httpRuntimeNavigation } from './runtimeNavigation'
 import { useHttpApp } from './useHttpApp'
 import {
   getHttpRequests,
   isRestoreStateBlocked,
   requests,
-  saveCurrentRequest,
   selectFirstRequest,
   selectHttpRequest,
 } from './useHttpRequests'
@@ -74,13 +74,9 @@ function clearSearch(restoreState = false) {
     return
   }
 
-  // Сначала сохраняется dirty draft открытого (найденного) запроса, и только
-  // потом восстанавливается snapshot: restore меняет httpState.requestId, и
-  // ID-guard сохранения увидел бы расхождение — правки молча погибли бы при
-  // загрузке восстановленного выбора. При неудачном сохранении выбор
-  // остаётся на найденном запросе с правками в редакторе.
+  // Resolve unsaved edits before restoring the selection snapshot.
   void (async () => {
-    if (!(await saveCurrentRequest())) {
+    if (!(await httpRuntimeNavigation.confirmLeave())) {
       return
     }
 

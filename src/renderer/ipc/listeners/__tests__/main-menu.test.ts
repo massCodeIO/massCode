@@ -4,7 +4,7 @@ import { ref } from 'vue'
 async function setup() {
   vi.resetModules()
 
-  globalThis.watch = vi.fn()
+  Object.assign(globalThis, { watch: vi.fn() })
 
   const ipcHandlers = new Map<string, (...args: any[]) => void>()
   const navigateBack = vi.fn(async () => undefined)
@@ -180,13 +180,13 @@ describe('registerMainMenuListeners', () => {
     expect(context.createTaskAndSelect).toHaveBeenCalledTimes(1)
   })
 
-  it('saves and sends the current http request from the menu shortcut', async () => {
+  it('sends the current http draft without implicitly saving it', async () => {
     const context = await setup()
     context.getActiveSpaceId.mockReturnValue('http')
 
     await context.ipcHandlers.get('main-menu:send-http-request')?.()
 
-    expect(context.saveCurrentRequest).toHaveBeenCalledTimes(1)
+    expect(context.saveCurrentRequest).not.toHaveBeenCalled()
     expect(context.executeCurrentRequest).toHaveBeenCalledTimes(1)
   })
 

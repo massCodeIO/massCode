@@ -1,3 +1,4 @@
+import type { HttpRuntime } from '../../../shared/httpRuntime'
 import type {
   HttpAuth,
   HttpBodyType,
@@ -19,6 +20,8 @@ export interface HttpImportFolder {
 }
 
 export interface HttpImportRequest {
+  runtime?: HttpRuntime
+  scriptStatus?: 'none' | 'converted' | 'blocked'
   sourceId?: string
   folderId: string | null
   name: string
@@ -77,6 +80,11 @@ export interface HttpImportPreview {
     name: string
     folders: number
     requests: number
+    runtime: Array<{
+      name: string
+      assertions: number
+      scripts: 'none' | 'converted' | 'blocked'
+    }>
   }>
   environments: Array<{
     index: number

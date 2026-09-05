@@ -1,3 +1,5 @@
+import type { HttpRequestPreviewFormat } from '../../../shared/httpPreview'
+
 export type SpaceLayoutMode = 'all-panels' | 'list-editor' | 'editor-only'
 export type NotesEditorMode = 'raw' | 'livePreview' | 'preview'
 export type ContentSortField = 'createdAt' | 'updatedAt' | 'name'
@@ -228,7 +230,7 @@ export interface MathSettings {
 
 export interface HttpSettings {
   wrapLines: boolean
-  defaultPreviewFormat: 'http' | 'curl'
+  defaultPreviewFormat: HttpRequestPreviewFormat
   autoSwitchToResponse: boolean
   skipCertificateVerification: boolean
 }

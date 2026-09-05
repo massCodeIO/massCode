@@ -14,6 +14,7 @@ const httpMethod = t.Union([
 const httpBodyType = t.Union([
   t.Literal('none'),
   t.Literal('json'),
+  t.Literal('graphql'),
   t.Literal('text'),
   t.Literal('form-urlencoded'),
   t.Literal('multipart'),
@@ -55,6 +56,7 @@ const httpAuth = t.Object({
 const httpRequestsAdd = t.Object({
   name: t.String(),
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: t.Optional(httpMethod),
   url: t.Optional(t.String()),
 })
@@ -64,6 +66,7 @@ const httpRequestsUpdate = t.Object({
   folderId: t.Optional(t.Union([t.Number(), t.Null()])),
   isDeleted: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
   isFavorites: t.Optional(t.Number({ minimum: 0, maximum: 1 })),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: t.Optional(httpMethod),
   url: t.Optional(t.String()),
   headers: t.Optional(t.Array(httpHeaderEntry)),
@@ -75,10 +78,86 @@ const httpRequestsUpdate = t.Object({
   description: t.Optional(t.String()),
 })
 
+const httpRuntime = t.Object({
+  scripts: t.Optional(
+    t.Object({
+      preRequest: t.String({ maxLength: 65536 }),
+      postResponse: t.String({ maxLength: 65536 }),
+    }),
+  ),
+  version: t.Union([t.Literal(1), t.Literal(2)]),
+  extractions: t.Array(
+    t.Object({
+      name: t.String(),
+      source: t.Union([t.Literal('json'), t.Literal('header')]),
+      path: t.String(),
+    }),
+    { maxItems: 100 },
+  ),
+  assertions: t.Array(
+    t.Object({
+      name: t.String(),
+      source: t.Union([
+        t.Literal('json'),
+        t.Literal('header'),
+        t.Literal('status'),
+        t.Literal('durationMs'),
+      ]),
+      path: t.Optional(t.String()),
+      operator: t.Union([
+        t.Literal('eq'),
+        t.Literal('neq'),
+        t.Literal('exists'),
+        t.Literal('contains'),
+        t.Literal('gt'),
+        t.Literal('gte'),
+        t.Literal('lt'),
+        t.Literal('lte'),
+        t.Literal('notContains'),
+        t.Literal('startsWith'),
+        t.Literal('endsWith'),
+        t.Literal('matches'),
+        t.Literal('notMatches'),
+        t.Literal('length'),
+        t.Literal('between'),
+        t.Literal('in'),
+        t.Literal('notIn'),
+        t.Literal('isString'),
+        t.Literal('isNumber'),
+        t.Literal('isBoolean'),
+        t.Literal('isArray'),
+        t.Literal('isObject'),
+        t.Literal('isNull'),
+      ]),
+      expected: t.Optional(
+        t.Union([
+          t.String(),
+          t.Number(),
+          t.Boolean(),
+          t.Null(),
+          t.Array(t.Union([t.String(), t.Number(), t.Boolean(), t.Null()]), {
+            maxItems: 1000,
+          }),
+        ]),
+      ),
+    }),
+    { maxItems: 100 },
+  ),
+})
+
 const httpRequestItem = t.Object({
+  runtimeRevision: t.Union([t.String(), t.Null()]),
+  runtime: t.Union([httpRuntime, t.Null()]),
+  runtimeState: t.Union([
+    t.Literal('ready'),
+    t.Literal('pending'),
+    t.Literal('invalid'),
+    t.Literal('unsupported'),
+  ]),
   id: t.Number(),
   name: t.String(),
   folderId: t.Union([t.Number(), t.Null()]),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: httpMethod,
   url: t.String(),
   headers: t.Array(httpHeaderEntry),
@@ -104,6 +183,7 @@ const httpRequestListItem = t.Object({
   id: t.Number(),
   name: t.String(),
   folderId: t.Union([t.Number(), t.Null()]),
+  protocol: t.Optional(t.Union([t.Literal('http'), t.Literal('websocket')])),
   method: httpMethod,
   url: t.String(),
   headers: t.Array(httpHeaderEntry),
@@ -132,6 +212,12 @@ const httpRequestsQuery = t.Object({
 })
 
 export const httpRequestsDTO = new Elysia().model({
+  httpRuntime,
+  httpRuntimeSave: t.Object({
+    runtime: httpRuntime,
+    expectedRevision: t.String(),
+  }),
+  httpRuntimeSaveResponse: t.Object({ runtimeRevision: t.String() }),
   httpRequestItemResponse: httpRequestItem,
   httpRequestsAdd,
   httpRequestsQuery,

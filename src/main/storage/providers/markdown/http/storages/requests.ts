@@ -36,6 +36,10 @@ import {
   writeVerifiedMovedLocalRequestFile,
 } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
+import {
+  readRequestRuntime,
+  writeRequestRuntime,
+} from '../runtime/requestRuntime'
 import { saveHttpState } from '../runtime/state'
 import { getHttpRuntimeCache } from '../runtime/sync'
 
@@ -229,6 +233,24 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
       }
 
       return request
+        ? { ...request, ...readRequestRuntime(paths.httpRoot, request) }
+        : null
+    },
+
+    updateRuntime(id, runtime, expectedRevision) {
+      const paths = resolvePaths()
+      const cache = getCache()
+      assertVaultNotHydrating(cache.state)
+      const request = cache.requestById.get(id)
+      if (!request)
+        return { notFound: true }
+      const runtimeRevision = writeRequestRuntime(
+        paths.httpRoot,
+        request,
+        runtime,
+        expectedRevision,
+      )
+      return { notFound: false, runtimeRevision }
     },
 
     createRequest(input: HttpRequestCreateInput) {
@@ -275,6 +297,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         id,
         isDeleted: 0,
         isFavorites: 0,
+        protocol: input.protocol,
         method: input.method ?? 'GET',
         name: path.posix.basename(filePath, '.md'),
         query: [],
@@ -322,6 +345,7 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         input.folderId,
         input.isDeleted,
         input.isFavorites,
+        input.protocol,
         input.method,
         input.url,
         input.headers,
@@ -440,6 +464,8 @@ export function createHttpRequestsStorage(): HttpRequestsStorage {
         record.isDeleted = normalizeFlag(input.isDeleted)
       if (input.isFavorites !== undefined)
         record.isFavorites = normalizeFlag(input.isFavorites)
+      if (input.protocol !== undefined)
+        record.protocol = input.protocol
       if (input.method !== undefined)
         record.method = input.method
       if (input.url !== undefined)

@@ -11,6 +11,7 @@ import {
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
 import { flushPendingStateWrites } from '../../../runtime/shared/stateWriter'
+import { splitFrontmatter } from '../../runtime/parser'
 import { getHttpPaths } from '../../runtime/paths'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
@@ -130,6 +131,270 @@ describe('http requests storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it('preserves GraphQL and incomplete variables through cold and indexed reloads', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'GraphQL', method: 'POST' })
+    const body = JSON.stringify({
+      query: 'query Q { a }',
+      variables: '{bad',
+      operationName: 'Q',
+    })
+    storage.updateRequest(id, { bodyType: 'graphql', body })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)).toMatchObject({
+      bodyType: 'graphql',
+      body,
+    })
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequests({})[0].bodyType).toBe('graphql')
+    expect(storage.getRequestById(id)?.body).toBe(body)
+  })
+
+  it('persists WebSocket type and message through cold and indexed reloads', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({
+      name: 'Socket',
+      protocol: 'websocket',
+      url: 'ws://localhost:1234',
+    })
+    storage.updateRequest(id, { body: '{"hello":true}' })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)).toMatchObject({
+      protocol: 'websocket',
+      body: '{"hello":true}',
+    })
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequests({})[0].protocol).toBe('websocket')
+    expect(storage.getRequestById(id)?.body).toBe('{"hello":true}')
+    storage.updateRequest(id, { protocol: 'http' })
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.protocol).not.toBe('websocket')
+  })
+
+  it('keeps runtime in Markdown across rename, move, trash and hard delete', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Login' })
+    const original = storage.getRequestById(id)!
+    const rules = {
+      version: 1 as const,
+      extractions: [{ name: 'token', source: 'json' as const, path: '/token' }],
+      assertions: [],
+    }
+    expect(original.runtimeState).toBe('ready')
+    expect(original.runtime?.extractions).toEqual([])
+    storage.updateRuntime(id, rules, original.runtimeRevision!)
+    expect(
+      splitFrontmatter(
+        fs.readFileSync(
+          path.join(getHttpPaths(tempVaultPath).httpRoot, original.filePath),
+          'utf8',
+        ),
+      ).frontmatter.runtime,
+    ).toEqual(rules)
+    const folder = createHttpFoldersStorage().createFolder({ name: 'API' })
+    storage.updateRequest(id, {
+      name: 'Renamed',
+      folderId: folder.id,
+      isDeleted: 1,
+    })
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    storage.updateRequest(id, { isDeleted: 0 })
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    expect(storage.getRequests()[0]).not.toHaveProperty('runtime')
+    const deletedPath = storage.getRequestById(id)!.filePath
+    storage.deleteRequest(id)
+    expect(
+      fs.existsSync(
+        path.join(getHttpPaths(tempVaultPath).httpRoot, deletedPath),
+      ),
+    ).toBe(false)
+  })
+
+  it('round-trips list, range, regex and type assertions through YAML', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Operators' })
+    const original = storage.getRequestById(id)!
+    const rules = {
+      version: 1 as const,
+      extractions: [],
+      assertions: [
+        {
+          name: 'list',
+          source: 'status' as const,
+          operator: 'in' as const,
+          expected: [200, '201', null, false],
+        },
+        {
+          name: 'range',
+          source: 'status' as const,
+          operator: 'between' as const,
+          expected: [200, 299],
+        },
+        {
+          name: 'regex',
+          source: 'json' as const,
+          operator: 'matches' as const,
+          expected: '^\\d+$',
+        },
+        { name: 'type', source: 'json' as const, operator: 'isArray' as const },
+      ],
+    }
+    storage.updateRuntime(id, rules, original.runtimeRevision!)
+    const markdown = path.join(
+      getHttpPaths(tempVaultPath).httpRoot,
+      original.filePath,
+    )
+    expect(
+      splitFrontmatter(fs.readFileSync(markdown, 'utf8')).frontmatter.runtime,
+    ).toEqual(rules)
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+  })
+
+  it('preserves unsupported and malformed inline runtime and blocks writes', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Runtime' })
+    const request = storage.getRequestById(id)!
+    const markdown = path.join(
+      getHttpPaths(tempVaultPath).httpRoot,
+      request.filePath,
+    )
+    const { frontmatter, body } = splitFrontmatter(
+      fs.readFileSync(markdown, 'utf8'),
+    )
+    const rules = { version: 1 as const, extractions: [], assertions: [] }
+    for (const [runtime, state] of [
+      [{ version: 99, future: 'keep' }, 'unsupported'],
+      [{ version: 2, assertions: 'invalid' }, 'invalid'],
+    ] as const) {
+      const source = `---\n${yaml.dump({ ...frontmatter, runtime })}---\n${body}`
+      fs.writeFileSync(markdown, source)
+      expect(storage.getRequestById(id)?.runtimeState).toBe(state)
+      expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
+        'RUNTIME_UNAVAILABLE',
+      )
+      expect(fs.readFileSync(markdown, 'utf8')).toBe(source)
+    }
+  })
+
+  it('does not overwrite runtime in a cloud request placeholder', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Cloud runtime' })
+    const request = storage.getRequestById(id)!
+    const markdown = path.join(
+      getHttpPaths(tempVaultPath).httpRoot,
+      request.filePath,
+    )
+    makeSparsePlaceholder(markdown)
+    setDatalessProbeForTests(absolutePath => absolutePath === markdown)
+    expect(storage.getRequestById(id)?.runtimeState).toBe('pending')
+    expect(() =>
+      storage.updateRuntime(
+        id,
+        { version: 1, extractions: [], assertions: [] },
+        'missing',
+      ),
+    ).toThrow('CLOUD_FILE_NOT_DOWNLOADED')
+    expect(fs.statSync(markdown).size).toBe(4096)
+  })
+
+  it('rejects stale editor revisions including inline runtime creation and deletion', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Revisions' })
+    const initial = storage.getRequestById(id)!
+    const markdown = path.join(
+      getHttpPaths(tempVaultPath).httpRoot,
+      initial.filePath,
+    )
+    const originalSource = fs.readFileSync(markdown, 'utf8')
+    const rules = { version: 1 as const, extractions: [], assertions: [] }
+    const first = storage.updateRuntime(id, rules, initial.runtimeRevision!)
+    expect(first.runtimeRevision).toBe(
+      storage.getRequestById(id)?.runtimeRevision,
+    )
+    expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
+      'RUNTIME_CONFLICT',
+    )
+    const parsed = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+    const external = `---\n${yaml.dump({
+      ...parsed.frontmatter,
+      runtime: {
+        ...rules,
+        extractions: [{ name: 'external', source: 'json', path: '' }],
+      },
+    })}---\n${parsed.body}`
+    fs.writeFileSync(markdown, external)
+    expect(() =>
+      storage.updateRuntime(id, rules, first.runtimeRevision!),
+    ).toThrow('RUNTIME_CONFLICT')
+    expect(fs.readFileSync(markdown, 'utf8')).toBe(external)
+    fs.writeFileSync(markdown, originalSource)
+    expect(() =>
+      storage.updateRuntime(id, rules, first.runtimeRevision!),
+    ).toThrow('RUNTIME_CONFLICT')
+    expect(fs.readFileSync(markdown, 'utf8')).toBe(originalSource)
+  })
+
+  it('keeps runtime through cold and indexed sync and copying a Markdown request', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'Portable' })
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const request = storage.getRequestById(id)!
+    const rules = {
+      version: 2 as const,
+      assertions: [],
+      extractions: [],
+      scripts: { preRequest: 'mc.assert(true)', postResponse: '' },
+    }
+    storage.updateRuntime(id, rules, request.runtimeRevision!)
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    expect(storage.getRequestById(id)?.runtime).toEqual(rules)
+    fs.copyFileSync(
+      path.join(root, request.filePath),
+      path.join(root, 'Copied.md'),
+    )
+    flushPendingStateWrites()
+    resetHttpRuntimeCache()
+    const copied = storage
+      .getRequests()
+      .find(item => item.filePath === 'Copied.md')!
+    expect(copied.id).not.toBe(id)
+    expect(storage.getRequestById(copied.id)?.runtime).toEqual(rules)
+  })
+
+  it('preserves externally edited and unsupported inline runtime through metadata saves', () => {
+    const storage = createHttpRequestsStorage()
+    const { id } = storage.createRequest({ name: 'External runtime' })
+    const request = storage.getRequestById(id)!
+    const root = getHttpPaths(tempVaultPath).httpRoot
+    const markdown = path.join(root, request.filePath)
+    const before = splitFrontmatter(fs.readFileSync(markdown, 'utf8'))
+    const future = { version: 99, scripts: { preRequest: 'future syntax' } }
+    fs.writeFileSync(
+      markdown,
+      `---\n${yaml.dump({ ...before.frontmatter, runtime: future })}---\n${before.body}`,
+    )
+    storage.updateRequest(id, { name: 'Renamed future', isDeleted: 1 })
+    const moved = storage.getRequestById(id)!
+    expect(moved.runtimeState).toBe('unsupported')
+    expect(
+      splitFrontmatter(fs.readFileSync(path.join(root, moved.filePath), 'utf8'))
+        .frontmatter.runtime,
+    ).toEqual(future)
+    expect(() =>
+      storage.updateRuntime(
+        id,
+        { version: 1, assertions: [], extractions: [] },
+        'missing',
+      ),
+    ).toThrow('RUNTIME_UNAVAILABLE')
   })
 
   it('updates and renames an app-written resident zero-block request', () => {

@@ -217,6 +217,190 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "websocket": {
+        "title": "WebSocket",
+        "requestType": "Request type",
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "message": "Message",
+        "send": "Send message",
+        "messages": "Messages",
+        "clear": "Clear messages",
+        "empty": "Connect and send a message to start the conversation.",
+        "messageHint": "Send text or JSON. Variables use the environment and Session captured at connection time. Save keeps this message draft.",
+        "logHint": "Messages stay in memory: the latest 100, with previews up to 16 KiB. Incoming messages may contain sensitive data.",
+        "dropped": "Older messages removed: {{count}}",
+        "incoming": "Received",
+        "outgoing": "Sent",
+        "binary": "Binary · Base64",
+        "states": {
+          "connecting": "Connecting",
+          "open": "Connected",
+          "closing": "Disconnecting",
+          "closed": "Disconnected",
+          "error": "Connection failed"
+        },
+        "errors": {
+          "invalid": "Use a valid ws:// or wss:// URL. Check variables and headers; handshake headers are managed automatically.",
+          "unavailable": "The request is unavailable. Reload it and try again.",
+          "contextChanged": "Connection closed because the environment, Session or vault changed.",
+          "network": "The connection failed. Check the server, TLS settings and network.",
+          "handshake": "The server rejected the WebSocket handshake (HTTP {{status}}). Check the URL, params, headers and authentication.",
+          "tooLarge": "Messages must not exceed 1 MiB.",
+          "notOpen": "Connect before sending a message.",
+          "busy": "The send buffer is full. Wait before sending again."
+        }
+      },
+      "runner": {
+        "runFolder": "Run folder",
+        "title": "Folder runner",
+        "description": "Run saved requests, including nested folders. Changes made after opening this runner are not included. Run variables and results stay in memory; closing stops the run.",
+        "environment": "Environment",
+        "orderHint": "Requests run top to bottom. Drag a row to change this run’s order.",
+        "continueOnFailure": "Continue on failure",
+        "close": "Close",
+        "cancel": "Stop run",
+        "start": "Run",
+        "newRun": "Prepare new run",
+        "reorder": "Drag to reorder",
+        "states": {
+          "ready": "Ready",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed",
+          "cancelled": "Cancelled"
+        },
+        "steps": {
+          "pending": "Pending",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed",
+          "skipped": "Skipped",
+          "cancelled": "Cancelled"
+        },
+        "stepErrors": {
+          "transport": "Request failed. Check the connection and request configuration.",
+          "contextChanged": "The environment or vault changed."
+        },
+        "errors": {
+          "HTTP_RUN_EMPTY": "This folder has no requests to run.",
+          "HTTP_RUN_TOO_LARGE": "A run can contain up to 500 requests.",
+          "HTTP_RUN_REQUEST_UNAVAILABLE": "A request or its rules could not be loaded. Open the requests in this folder and resolve pending downloads or invalid rules before running.",
+          "HTTP_CONTEXT_CHANGED": "The environment or vault changed. Prepare a new run.",
+          "HTTP_REQUEST_RUNNING": "Another HTTP request or run is already active.",
+          "unknown": "Could not prepare or run this folder. Prepare a new run and try again."
+        }
+      },
+      "runtime": {
+        "variables": "Variables",
+        "postResponse": "Post-response",
+        "testResults": "Test Results",
+        "extractionResults": "Variable extraction",
+        "variablesInspector": "Variables inspector",
+        "environmentScope": "Environment",
+        "noVariables": "No variables",
+        "overridden": "Overridden by Session",
+        "scopesHint": "Session variables override environment variables with the same name. Secrets and session values remain masked.",
+        "extractionHint": "Extract values from the response into Session variables, available to subsequent requests. Extraction runs independently of assertion results.",
+        "leaveTitle": "Unsaved request changes",
+        "leaveDescription": "Save changes to this request, including assertions and variables, before leaving?",
+        "discard": "Discard changes",
+        "sessionReadError": "Could not load session variables.",
+        "sessionClearError": "Could not clear session variables.",
+        "validation": {
+          "expectedValue": "Use a JSON scalar or an array of scalars (up to 1000 items)",
+          "expectedLength": "Enter a non-negative integer",
+          "expectedRange": "Use [min, max] with two numbers, min ≤ max",
+          "expectedList": "Use a JSON array, e.g. [200, 201]",
+          "expectedRegex": "Use a valid regex pattern (up to 1024 characters), without / delimiters",
+          "required": "Required field",
+          "nameLength": "Maximum 256 characters",
+          "variableName": "Use letters, digits, _, . or -; not __proto__",
+          "pointer": "Use /path and escape ~ as ~0, / as ~1",
+          "duplicateName": "Name must be unique",
+          "expectedString": "Enter a quoted JSON string",
+          "expectedNumber": "Enter a finite number",
+          "expectedScalar": "Use a JSON scalar: \"text\", 200, true or null",
+          "invalid": "Invalid value"
+        },
+        "tests": "Tests",
+        "hint": "Paths use JSON Pointer; expected values use JSON.",
+        "expectedHints": {
+          "list": "[200, 201]",
+          "range": "[200, 299]",
+          "regex": "\"^text.*$\"",
+          "length": "0"
+        },
+        "save": "Save rules",
+        "saveError": "Could not save all request changes. Unsaved edits are kept; check the fields and try again.",
+        "conflict": "Tests changed on disk. Your edits were not saved. Switch away and reopen this request to load the latest rules.",
+        "invalidRules": "Check rule names, paths and expected values. Extraction names must be unique.",
+        "unsaved": "Unsaved request changes",
+        "extractions": "Extract variables",
+        "assertions": "Assertions",
+        "addExtraction": "Add extraction",
+        "addAssertion": "Add assertion",
+        "variableName": "Variable name",
+        "assertionName": "Assertion name",
+        "source": "Source",
+        "path": "Path",
+        "pointer": "JSON Pointer (empty = root)",
+        "header": "Header name",
+        "remove": "Remove rule",
+        "operator": "Operator",
+        "expected": "Expected JSON value",
+        "expectedError": "Use a JSON scalar: \"text\", 200, true or null.",
+        "session": "Session variables",
+        "clearSession": "Clear session",
+        "sessionHint": "Temporary values stored in memory. Use {{name}} in subsequent requests. Overrides environment variables with the same name. Cleared when switching environment or vault, or restarting the app.",
+        "passed": "Passed",
+        "failed": "Failed",
+        "states": {
+          "pending": "Tests are still downloading. Sending and editing are blocked.",
+          "invalid": "The tests file is invalid or unreadable. Sending and editing are blocked.",
+          "unsupported": "This tests file uses an unsupported version. Sending and editing are blocked."
+        },
+        "sources": {
+          "json": "JSON body",
+          "header": "Response header",
+          "status": "Status code",
+          "durationMs": "Duration (ms)"
+        },
+        "operators": {
+          "notContains": "Does not contain",
+          "startsWith": "Starts with",
+          "endsWith": "Ends with",
+          "matches": "Matches regex",
+          "notMatches": "Does not match regex",
+          "length": "Length equals",
+          "between": "Between (inclusive)",
+          "in": "In list",
+          "notIn": "Not in list",
+          "isString": "Is string",
+          "isNumber": "Is number",
+          "isBoolean": "Is boolean",
+          "isArray": "Is array",
+          "isObject": "Is object",
+          "isNull": "Is null",
+          "eq": "Equals",
+          "neq": "Does not equal",
+          "exists": "Exists",
+          "contains": "Contains",
+          "gt": "Greater than",
+          "gte": "Greater than or equal",
+          "lt": "Less than",
+          "lte": "Less than or equal"
+        },
+        "errors": {
+          "regexLimit": "Regex could not complete: invalid pattern, size or time limit exceeded",
+          "valueLimit": "Extracted value exceeds the 256 KiB limit. All variable changes from this request were discarded.",
+          "scopeLimit": "Session or Runner variables exceed the 2 MiB total limit. All variable changes from this request were discarded.",
+          "missing": "Value not found",
+          "invalidJson": "Response is not valid JSON",
+          "unavailableBody": "Response body unavailable or truncated",
+          "mismatch": "Assertion did not match"
+        }
+      },
       "label": "HTTP",
       "tooltip": "HTTP client",
       "title": "HTTP Client",
@@ -275,7 +459,26 @@
         "importing": "Importing",
         "imported": "Imported {{requests}} requests in {{collections}} collections.",
         "createdFolders": "Created: {{names}}",
-        "error": "Import failed"
+        "error": "Import failed",
+        "runtimeTitle": "Tests and scripts",
+        "runtimeMeta": "{{assertions}} assertions · {{scripts}}",
+        "scriptStates": {
+          "none": "no scripts",
+          "converted": "scripts converted",
+          "blocked": "scripts need adaptation"
+        },
+        "scriptTrustNotice": "Imported scripts require local trust before they can run. Review the code in Scripts. Blocked scripts also require manual adaptation.",
+        "runtimeWarnings": {
+          "disabled": "Disabled rule or event was not imported.",
+          "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
+          "variables": "Temporary variables use massCode Session or isolated Runner variables. Only strings are supported; reads also see the selected environment. Source collection/environment scopes are not reproduced.",
+          "sourceLimit": "Script input or generated code exceeds import limits. The request is blocked. Keep the original file: its full code may not fit in the imported request.",
+          "unsupportedAssertion": "Unsupported, dynamic, malformed, or excess assertion was not imported. Keep the source file and recreate this rule manually.",
+          "depthLimit": "Folder nesting exceeds the import limit; nested items were not imported.",
+          "scopedVariables": "Request/folder variables or runtime actions are not supported. Dependent scripts are blocked.",
+          "fileLimit": "Import exceeds the supported file count or size.",
+          "invalidArchive": "The archive is damaged or exceeds the unpacked size limit."
+        }
       },
       "editor": {
         "noSelected": "No request selected",
@@ -333,8 +536,73 @@
           "empty": "No request preview",
           "formats": {
             "http": "HTTP",
-            "curl": "cURL"
-          }
+            "curl": "cURL",
+            "fetch": "fetch",
+            "axios": "axios"
+          },
+          "warnings": {
+            "multipartFiles": "Pass File or Blob objects to sendRequest in field order. Local file paths cannot be copied into browser code.",
+            "fetchBody": "Fetch does not support a body for GET or HEAD. Change the method or remove the body before running this code.",
+            "multipartContentType": "The Content-Type header is omitted so FormData can generate its multipart boundary."
+          },
+          "languages": {
+            "shell": "Shell",
+            "c": "C",
+            "clojure": "Clojure",
+            "crystal": "Crystal",
+            "csharp": "C#",
+            "go": "Go",
+            "http": "HTTP",
+            "java": "Java",
+            "javascript": "JavaScript",
+            "kotlin": "Kotlin",
+            "node": "Node.js",
+            "objc": "Objective-C",
+            "ocaml": "OCaml",
+            "php": "PHP",
+            "powershell": "PowerShell",
+            "python": "Python",
+            "r": "R",
+            "ruby": "Ruby",
+            "rust": "Rust",
+            "swift": "Swift"
+          },
+          "clients": {
+            "curl": "cURL",
+            "shell_httpie": "HTTPie",
+            "shell_wget": "Wget",
+            "c_libcurl": "Libcurl",
+            "clojure_clj_http": "clj-http",
+            "crystal_native": "http::client",
+            "csharp_httpclient": "HttpClient",
+            "csharp_restsharp": "RestSharp",
+            "go_native": "NewRequest",
+            "http": "HTTP/1.1",
+            "java_nethttp": "java.net.http",
+            "java_okhttp": "OkHttp",
+            "fetch": "fetch",
+            "axios": "Axios",
+            "kotlin_okhttp": "OkHttp",
+            "node_native": "Native",
+            "node_axios": "Axios",
+            "node_fetch": "Fetch",
+            "objc_nsurlsession": "NSURLSession",
+            "ocaml_cohttp": "CoHTTP",
+            "php_curl": "cURL",
+            "php_guzzle": "Guzzle",
+            "powershell_restmethod": "Invoke-RestMethod",
+            "python_requests": "Requests",
+            "python_python3": "http.client",
+            "r_httr": "httr",
+            "ruby_native": "net::http",
+            "rust_reqwest": "reqwest",
+            "swift_nsurlsession": "NSURLSession"
+          },
+          "language": "Language",
+          "interpolate": "Interpolate variables",
+          "error": "Unable to generate code for this request.",
+          "multipartFilesUnsupported": "File uploads are not supported by this generator. Use cURL, JavaScript, Node.js, Swift or Python Requests.",
+          "urlTemplateUnsupported": "Resolve the base URL or protocol variable, or use Python Requests to keep it as a template."
         },
         "response": {
           "empty": "No response yet",
@@ -353,6 +621,57 @@
           "copy": "Copy",
           "copied": "Copied"
         }
+      },
+      "scripts": {
+        "title": "Scripts",
+        "preRequest": "Pre-request",
+        "postResponse": "Post-response & tests",
+        "trusted": "Trusted on this device",
+        "untrusted": "Scripts require local trust",
+        "trust": "Trust this code",
+        "revoke": "Revoke trust",
+        "unavailable": "Script service unavailable. Start the updated app and try again.",
+        "notice": "Review both scripts before trusting them. They can read request, response and environment secrets, change session variables, and send data to this request’s server. Trust applies to this code on this device only. Editing code requires trust again.",
+        "api": "API: mc.request, mc.response, mc.variables.get/set/unset, mc.test(name, fn), mc.assert(condition). Synchronous JavaScript only; no network, files, imports or console. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
+        "cancel": "Cancel request",
+        "failed": "Script workflow failed. See Tests for details.",
+        "errors": {
+          "untrusted": "Execution blocked. Review both scripts in Scripts and explicitly trust this code.",
+          "timeout": "Script exceeded its execution time limit.",
+          "cancelled": "Script cancelled.",
+          "limit": "Script exceeded an input, memory or output limit.",
+          "exception": "Script failed. Check syntax, supported API and memory limits. Exception text is hidden to protect secrets.",
+          "destination": "Pre-request variables changed the destination origin. Request blocked."
+        }
+      },
+      "graphql": {
+        "title": "GraphQL",
+        "query": "Query / mutation",
+        "variables": "Variables (JSON object)",
+        "operation": "Operation",
+        "chooseOperation": "Automatic for a single operation",
+        "clearOperation": "Automatic",
+        "validationOnSend": "Variables will be validated after substitution when sending.",
+        "schemaLimit": "Syntax validation only. Schema loading, introspection, schema autocomplete and subscriptions are not supported.",
+        "response": {
+          "success": "GraphQL: data received without errors",
+          "errors": "GraphQL errors — inspect errors and any partial data below.",
+          "invalid": "Invalid or truncated GraphQL response — inspect the raw response below."
+        },
+        "errors": {
+          "GRAPHQL_DRAFT": "Invalid GraphQL draft.",
+          "GRAPHQL_DOCUMENT": "Only executable GraphQL documents are supported.",
+          "GRAPHQL_OPERATION": "Select an existing operation. Operations must have unique names; anonymous operations must stand alone.",
+          "GRAPHQL_SUBSCRIPTION": "GraphQL subscriptions are not supported.",
+          "GRAPHQL_VARIABLES": "Variables must be a valid JSON object.",
+          "GRAPHQL_METHOD": "GraphQL requests require POST."
+        },
+        "runnerResponse": {
+          "success": "GraphQL: data received without errors",
+          "errors": "GraphQL errors",
+          "invalid": "Invalid or truncated GraphQL response"
+        },
+        "noNamedOperations": "No named operations"
       }
     },
     "tools": {
@@ -551,6 +870,7 @@
     }
   },
   "button": {
+    "save": "Save",
     "back": "Back",
     "cancel": "Cancel",
     "confirm": "Confirm",

@@ -21,7 +21,7 @@ Use variables with double braces:
 {{apiUrl}}/v1/users/{{userId}}/sessions
 ```
 
-The URL field keeps variables visible while you edit. Preview and request execution resolve variables from the active environment.
+The URL field keeps variables visible while you edit. Preview and request execution resolve variables from the active environment and Session. Previews mask secret and Session values; execution substitutes their real values.
 
 Variables can be used in:
 
@@ -69,7 +69,7 @@ Each value is bound to a pair of a vault, identified by its path on disk, and an
 - Switching to a different existing vault does not pick up values entered for the previous one, because it is another vault.
 - Deleting an environment also deletes its local secret values.
 
-Values are decrypted only in the main process, when a request runs or when you click the eye icon to reveal a single value. The interface receives a value only for that explicit reveal action. The request preview, the cURL command you copy from it, and the request history (both the URL and the error text) show a mask. During normal execution, the real value goes only into the outgoing network request.
+Values are decrypted only in the main process, when a request runs or when you click the eye icon to reveal a single value. The interface receives a value only for that explicit reveal action. The request preview, the cURL command you copy from it, and the request history (both the URL and the error text) show a mask. During execution, the real value is used in the outgoing network request and is also available to [trusted scripts](/documentation/http/scripts#review-and-trust).
 
 If a value cannot be decrypted, for example because the file was written by a different operating system user or the keychain has changed, the secret is treated as not set: it shows **Not set on this device** and resolves to an empty value. The request still runs.
 
@@ -77,7 +77,21 @@ If a value cannot be decrypted, for example because the file was written by a di
 
 Use the **Environments** panel below folders to choose the active environment.
 
-Select **No environment** when you want requests to keep variables unresolved. This is useful when you are editing templates or copying a request without applying local values.
+Select **No environment** to stop applying environment variables. Session variables can still be extracted and used while no environment is selected. Placeholders without a matching variable remain unresolved.
+
+## Session Variables and Inspector
+
+<AppVersion text=">=5.11" />
+
+Open the **Variables inspector** using the braces icon next to **Environments**. It lists Environment and Session separately, masks secret and Session values, and marks environment entries overridden by Session. A Session value takes priority even when the matching environment variable is a secret.
+
+Create Session values through **Variables → Post-response** or with `mc.variables.set()` in a [script](/documentation/http/scripts). See [Tests & Variables](/documentation/http/tests) for a login example and extraction behavior.
+
+Use <code v-pre>{{name}}</code> in subsequent requests. Session values are reusable, not consumed by the next request: they remain available until replaced by another extraction or cleared. Overriding a variable does not change its saved environment value. If the Session value is removed, requests use the matching environment value again; without one, the placeholder remains unresolved.
+
+Session values live only in memory. **Clear session**, switching environments (including **No environment**), switching vaults, or quitting or restarting the app clears them. Returning to a previous environment does not restore its Session values. Regular environment edits are autosaved; Session values are not written into the environment or vault.
+
+The [Folder runner](/documentation/http/runner#variables-and-failures) uses its own temporary variables over the selected environment. It neither reads nor changes these manual Session values.
 
 ## Managing Environments
 

@@ -16,6 +16,17 @@ const httpImportPreviewCollection = t.Object({
   index: t.Number(),
   name: t.String(),
   requests: t.Number(),
+  runtime: t.Array(
+    t.Object({
+      name: t.String(),
+      assertions: t.Number(),
+      scripts: t.Union([
+        t.Literal('none'),
+        t.Literal('converted'),
+        t.Literal('blocked'),
+      ]),
+    }),
+  ),
 })
 
 const httpImportPreviewEnvironment = t.Object({

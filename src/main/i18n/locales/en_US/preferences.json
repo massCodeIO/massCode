@@ -244,7 +244,9 @@
       "label": "Default Preview Format",
       "description": "Format selected by default in the request preview panel.",
       "http": "HTTP",
-      "curl": "cURL"
+      "curl": "cURL",
+      "fetch": "fetch",
+      "axios": "axios"
     },
     "autoSwitchToResponse": {
       "label": "Show Response After Send",

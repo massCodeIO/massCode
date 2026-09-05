@@ -9,6 +9,7 @@ import {
   useHttpRequests,
   useSonner,
 } from '@/composables'
+import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n, ipc } from '@/electron'
 
 const props = defineProps<{
@@ -28,6 +29,7 @@ const {
 } = useHttpFolders()
 const { createHttpRequestAndSelect } = useHttpRequests()
 const { sonner } = useSonner()
+const { openRunner, running, preparing } = useHttpRunner()
 
 const isContextMultiSelection = computed(() => {
   if (!props.contextNode)
@@ -103,6 +105,13 @@ async function onRemoveCustomIcon() {
       </ContextMenu.ContextMenuItem>
     </template>
     <template v-else>
+      <ContextMenu.ContextMenuItem
+        :disabled="running || preparing"
+        @click="openRunner(Number(contextNode.id))"
+      >
+        {{ i18n.t("spaces.http.runner.runFolder") }}
+      </ContextMenu.ContextMenuItem>
+      <ContextMenu.ContextMenuSeparator />
       <ContextMenu.ContextMenuItem @click="onCreateChildRequest">
         {{ i18n.t("spaces.http.action.newRequest") }}
       </ContextMenu.ContextMenuItem>

@@ -1,3 +1,6 @@
+import type { HttpRuntime, HttpRuntimeResult } from '../../shared/httpRuntime'
+import type { HttpScriptResult } from '../../shared/httpScripts'
+
 export type HttpMethod =
   | 'GET'
   | 'POST'
@@ -10,6 +13,7 @@ export type HttpMethod =
 export type HttpBodyType =
   | 'none'
   | 'json'
+  | 'graphql'
   | 'text'
   | 'form-urlencoded'
   | 'multipart'
@@ -56,6 +60,7 @@ export interface HttpExecuteRequest {
 
 export interface HttpExecutePayload {
   request: HttpExecuteRequest
+  runtime?: HttpRuntime
   requestId: number | null
   environmentId: number | null
   skipCertificateVerification?: boolean
@@ -85,6 +90,14 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  graphql?: import('../../shared/httpGraphql').GraphqlResponseState
+  scriptResults?: HttpScriptResult[]
+  runtimeResults?: {
+    extractions: HttpRuntimeResult[]
+    assertions: HttpRuntimeResult[]
+  }
+  sessionNames?: string[]
+  discarded?: boolean
   status: number | null
   statusText: string
   headers: HttpHeaderEntry[]

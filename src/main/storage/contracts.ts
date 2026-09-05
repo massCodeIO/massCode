@@ -1,3 +1,4 @@
+import type { HttpRuntime, HttpRuntimeRead } from '../../shared/httpRuntime'
 import type {
   HttpAuth,
   HttpBodyType,
@@ -391,6 +392,7 @@ export interface HttpRequestsQueryInput {
 }
 
 export interface HttpRequestCreateInput {
+  protocol?: 'http' | 'websocket'
   name: string
   folderId?: number | null
   method?: HttpMethod
@@ -398,6 +400,7 @@ export interface HttpRequestCreateInput {
 }
 
 export interface HttpRequestUpdateInput {
+  protocol?: 'http' | 'websocket'
   name?: string
   folderId?: number | null
   isDeleted?: number
@@ -459,7 +462,12 @@ export interface HttpRequestsStorage {
   createRequest: (input: HttpRequestCreateInput) => { id: number }
   deleteRequest: (id: number) => { deleted: boolean }
   emptyTrash: () => { deletedCount: number }
-  getRequestById: (id: number) => HttpRequestRecord | null
+  getRequestById: (id: number) => (HttpRequestRecord & HttpRuntimeRead) | null
+  updateRuntime: (
+    id: number,
+    runtime: HttpRuntime,
+    expectedRevision: string,
+  ) => { notFound: boolean, runtimeRevision?: string }
   getRequests: (query?: HttpRequestsQueryInput) => HttpRequestRecord[]
   updateRequest: (
     id: number,

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
 
 type State = Record<string, any>
 
@@ -278,7 +279,7 @@ describe('preferences store sanitization', () => {
     expect(preferences.get('http.garbage' as any)).toBeUndefined()
   })
 
-  it.each(['fetch', 'axios'])(
+  it.each(HTTP_PREVIEW_FORMATS)(
     'keeps %s as the HTTP preview format',
     async (format) => {
       persistedStateByName.preferences = {

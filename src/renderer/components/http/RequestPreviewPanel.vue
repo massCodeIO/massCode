@@ -6,19 +6,27 @@ const props = defineProps<{
   content: string
   format: HttpRequestPreviewFormat
   wrapLines?: boolean
+  pending?: boolean
 }>()
 
 const viewerLanguage = computed(() => {
   if (props.format === 'fetch' || props.format === 'axios')
     return 'javascript'
-  return props.format === 'http' ? 'http' : 'shell'
+  if (props.format === 'curl')
+    return 'shell'
+  const target = props.format.split(':')[0]
+  return target === 'node'
+    ? 'javascript'
+    : target === 'objc'
+      ? 'objective-c'
+      : target
 })
 </script>
 
 <template>
   <div class="flex h-full min-h-0 flex-col">
     <div
-      v-if="!content"
+      v-if="!content && !pending"
       class="flex flex-1 items-center justify-center"
     >
       <UiText class="text-muted-foreground text-sm">

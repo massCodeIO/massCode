@@ -4,11 +4,12 @@ import { createCodeHighlight } from '@/components/cm-extensions/codeHighlight'
 import { editorScrollbarTheme } from '@/components/cm-extensions/scrollbarTheme'
 import { useTheme } from '@/composables'
 import { json } from '@codemirror/lang-json'
-import { StreamLanguage } from '@codemirror/language'
+import { LanguageDescription, StreamLanguage } from '@codemirror/language'
+import { languages } from '@codemirror/language-data'
 import { http } from '@codemirror/legacy-modes/mode/http'
 import { javascript } from '@codemirror/legacy-modes/mode/javascript'
 import { shell } from '@codemirror/legacy-modes/mode/shell'
-import { EditorState } from '@codemirror/state'
+import { Compartment, EditorState } from '@codemirror/state'
 import {
   drawSelection,
   EditorView,
@@ -17,7 +18,7 @@ import {
   lineNumbers,
 } from '@codemirror/view'
 
-type CodeViewerLanguage = 'plain' | 'json' | 'http' | 'shell' | 'javascript'
+type CodeViewerLanguage = string
 
 const props = withDefaults(
   defineProps<{
@@ -37,6 +38,32 @@ const { isDark } = useTheme()
 const editorContainer = ref<HTMLElement>()
 
 let view: EditorView | null = null
+const languageCompartment = new Compartment()
+
+async function loadLanguage() {
+  const language = props.language
+  if (
+    !language
+    || ['plain', 'json', 'http', 'shell', 'javascript'].includes(language)
+  ) {
+    return
+  }
+  const aliases: Record<string, string> = { csharp: 'c#', ocaml: 'ocaml' }
+  const description = LanguageDescription.matchLanguageName(
+    languages,
+    aliases[language] ?? language,
+  )
+  if (!description)
+    return
+  try {
+    const support = await description.load()
+    if (view && props.language === language)
+      view.dispatch({ effects: languageCompartment.reconfigure(support) })
+  }
+  catch {
+    // Keep the generated code readable if a language chunk fails to load.
+  }
+}
 
 function createViewerTheme(wrapLines: boolean) {
   return EditorView.theme({
@@ -110,6 +137,7 @@ function createEditorState(doc: string): EditorState {
     EditorState.readOnly.of(true),
     EditorView.editable.of(false),
     keymap.of([]),
+    languageCompartment.of([]),
     createCodeHighlight(isDark.value),
   ]
 
@@ -140,6 +168,7 @@ watch(
       return
 
     view.setState(createEditorState(content))
+    void loadLanguage()
   },
 )
 
@@ -151,6 +180,7 @@ onMounted(() => {
     state: createEditorState(props.content),
     parent: editorContainer.value,
   })
+  void loadLanguage()
 })
 
 onUnmounted(() => {

@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
+import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
 import {
   asRecord,
@@ -235,7 +236,7 @@ function sanitizeHttpSettings(value: unknown): HttpSettings {
     defaultPreviewFormat: readEnum(
       source,
       'defaultPreviewFormat',
-      ['http', 'curl', 'fetch', 'axios'] as const,
+      HTTP_PREVIEW_FORMATS,
       HTTP_DEFAULTS.defaultPreviewFormat,
     ),
     autoSwitchToResponse:

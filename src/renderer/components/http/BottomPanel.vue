@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import type { HttpRequestPreviewFormat } from './requestPreview'
-import * as Select from '@/components/ui/shadcn/select'
+import type {
+  HttpRequestPreviewFormat,
+  HttpSnippetPayload,
+} from '~/shared/httpPreview'
+import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Tabs from '@/components/ui/shadcn/tabs'
 import {
   useCopyToClipboard,
@@ -10,9 +13,10 @@ import {
   useHttpRequests,
   useHttpSettings,
 } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
 import {
+  buildHarRequest,
   buildRequestPreview,
   getRequestPreviewWarnings,
 } from './requestPreview'
@@ -34,19 +38,81 @@ const previewFormat = computed<HttpRequestPreviewFormat>({
   },
 })
 
-const previewContent = computed(() => {
-  if (!currentDraft.value)
-    return ''
-  try {
-    return buildRequestPreview(currentDraft.value, previewFormat.value, {
-      name: currentRequest.value?.name,
-      variables: activeEnvironmentVariables.value,
+const previewContent = ref('')
+const previewError = ref(false)
+const previewErrorKey = ref('error')
+const previewPending = ref(false)
+const displayedFormat = ref(previewFormat.value)
+const interpolateVariables = ref(true)
+
+watch(
+  [
+    currentDraft,
+    previewFormat,
+    activeEnvironmentVariables,
+    interpolateVariables,
+    currentRequest,
+  ],
+  async (_, __, onCleanup) => {
+    let cancelled = false
+    onCleanup(() => {
+      cancelled = true
     })
-  }
-  catch {
-    return ''
-  }
-})
+    if (!currentDraft.value?.url.trim()) {
+      previewContent.value = ''
+      previewError.value = false
+      previewPending.value = false
+      return
+    }
+    previewPending.value = true
+    try {
+      const options = {
+        name: currentRequest.value?.name,
+        variables: interpolateVariables.value
+          ? activeEnvironmentVariables.value
+          : undefined,
+      }
+      const format = previewFormat.value
+      const content
+        = format === 'http'
+          || format === 'curl'
+          || format === 'fetch'
+          || format === 'axios'
+          ? buildRequestPreview(currentDraft.value, format, options)
+          : await ipc.invoke<HttpSnippetPayload, string>(
+            'spaces:http:generate-code',
+            {
+              request: buildHarRequest(currentDraft.value, options),
+              format,
+            },
+          )
+      if (!cancelled) {
+        previewContent.value = content
+        displayedFormat.value = format
+        previewError.value = false
+      }
+    }
+    catch (error) {
+      if (!cancelled) {
+        previewErrorKey.value
+          = error instanceof Error
+            && error.message.includes('HTTP_PREVIEW_MULTIPART_FILES_UNSUPPORTED')
+            ? 'multipartFilesUnsupported'
+            : error instanceof Error
+              && error.message.includes('HTTP_PREVIEW_URL_TEMPLATE_UNSUPPORTED')
+              ? 'urlTemplateUnsupported'
+              : 'error'
+        previewContent.value = ''
+        previewError.value = true
+      }
+    }
+    finally {
+      if (!cancelled)
+        previewPending.value = false
+    }
+  },
+  { deep: true, immediate: true },
+)
 
 const previewWarnings = computed(() =>
   currentDraft.value
@@ -102,7 +168,7 @@ watch(lastError, (error) => {
 })
 
 function copyPreview() {
-  if (previewContent.value) {
+  if (previewContent.value && !previewPending.value) {
     copy(previewContent.value)
     incrementCopy('http')
   }
@@ -115,7 +181,7 @@ function copyPreview() {
     class="flex h-full min-h-0 flex-col gap-0"
   >
     <div
-      class="border-border flex items-center justify-between border-b px-3 py-1"
+      class="border-border flex flex-wrap items-center justify-between gap-2 border-b px-3 py-1"
     >
       <Tabs.TabsList>
         <Tabs.TabsTrigger value="preview">
@@ -128,31 +194,19 @@ function copyPreview() {
 
       <div
         v-if="activeTab === 'preview'"
-        class="flex items-center gap-1"
+        class="flex flex-wrap items-center gap-1"
       >
-        <Select.Select v-model="previewFormat">
-          <Select.SelectTrigger class="w-24">
-            <Select.SelectValue />
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            <Select.SelectItem value="http">
-              {{ i18n.t("spaces.http.editor.preview.formats.http") }}
-            </Select.SelectItem>
-            <Select.SelectItem value="curl">
-              {{ i18n.t("spaces.http.editor.preview.formats.curl") }}
-            </Select.SelectItem>
-            <Select.SelectItem value="fetch">
-              {{ i18n.t("spaces.http.editor.preview.formats.fetch") }}
-            </Select.SelectItem>
-            <Select.SelectItem value="axios">
-              {{ i18n.t("spaces.http.editor.preview.formats.axios") }}
-            </Select.SelectItem>
-          </Select.SelectContent>
-        </Select.Select>
+        <HttpPreviewFormatSelect v-model="previewFormat" />
+        <label class="flex items-center gap-2 px-2">
+          <Checkbox v-model="interpolateVariables" />
+          <UiText variant="xs">{{
+            i18n.t("spaces.http.editor.preview.interpolate")
+          }}</UiText>
+        </label>
 
         <UiActionButton
           :tooltip="i18n.t('spaces.http.editor.response.copy')"
-          :disabled="!previewContent"
+          :disabled="!previewContent || previewPending"
           @click="copyPreview"
         >
           <Copy class="size-4" />
@@ -207,6 +261,10 @@ function copyPreview() {
         value="preview"
         class="m-0 flex h-full flex-col"
       >
+        <HttpPreviewClientTabs
+          v-model="previewFormat"
+          class="border-border border-b px-3 py-2"
+        />
         <UiText
           v-for="warning in previewWarnings"
           :key="warning"
@@ -215,10 +273,19 @@ function copyPreview() {
         >
           {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
         </UiText>
+        <UiText
+          v-if="previewError"
+          variant="caption"
+          class="text-destructive px-3 py-2"
+        >
+          {{ i18n.t(`spaces.http.editor.preview.${previewErrorKey}`) }}
+        </UiText>
         <HttpRequestPreviewPanel
+          v-else
           class="min-h-0 flex-1"
           :content="previewContent"
-          :format="previewFormat"
+          :format="displayedFormat"
+          :pending="previewPending"
           :wrap-lines="settings.wrapLines"
         />
       </Tabs.TabsContent>

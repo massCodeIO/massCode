@@ -53,7 +53,7 @@ const {
 } = useNotesApp()
 const { setHttpLayoutMode, toggleHttpSidebar } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
-const { currentDraft, getHttpRequests, saveCurrentRequest } = useHttpRequests()
+const { currentDraft, getHttpRequests } = useHttpRequests()
 const { setContentSortField, setContentSortOrder } = useContentSort()
 
 async function refreshActiveSortableList() {
@@ -264,7 +264,6 @@ export function registerMainMenuListeners() {
       return
     }
 
-    await saveCurrentRequest()
     await executeCurrentRequest()
   })
 

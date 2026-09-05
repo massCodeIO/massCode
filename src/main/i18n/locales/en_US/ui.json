@@ -218,6 +218,21 @@
     },
     "http": {
       "runtime": {
+        "variables": "Variables",
+        "postResponse": "Post-response",
+        "testResults": "Test Results",
+        "extractionResults": "Variable extraction",
+        "variablesInspector": "Variables inspector",
+        "environmentScope": "Environment",
+        "noVariables": "No variables",
+        "overridden": "Overridden by Session",
+        "scopesHint": "Session variables override environment variables with the same name. Secrets and session values remain masked.",
+        "extractionHint": "Extract values from the response into Session variables, available to subsequent requests. Extraction runs independently of assertion results.",
+        "leaveTitle": "Unsaved request changes",
+        "leaveDescription": "Save changes to this request, including assertions and variables, before leaving?",
+        "discard": "Discard changes",
+        "sessionReadError": "Could not load session variables.",
+        "sessionClearError": "Could not clear session variables.",
         "validation": {
           "expectedValue": "Use a JSON scalar or an array of scalars (up to 1000 items)",
           "expectedLength": "Enter a non-negative integer",
@@ -235,18 +250,18 @@
           "invalid": "Invalid value"
         },
         "tests": "Tests",
-        "hint": "Save rules before sending. Paths use JSON Pointer; expected values use JSON.",
+        "hint": "Paths use JSON Pointer; expected values use JSON.",
         "expectedHints": {
           "list": "[200, 201]",
           "range": "[200, 299]",
           "regex": "\"^text.*$\"",
           "length": "0"
         },
-        "save": "Save tests",
-        "saveError": "Could not save tests. Reload the request and try again.",
+        "save": "Save rules",
+        "saveError": "Could not save all request changes. Unsaved edits are kept; check the fields and try again.",
         "conflict": "Tests changed on disk. Your edits were not saved. Switch away and reopen this request to load the latest rules.",
         "invalidRules": "Check rule names, paths and expected values. Extraction names must be unique.",
-        "unsaved": "Unsaved tests. Save before sending; switching requests discards these edits.",
+        "unsaved": "Unsaved request changes",
         "extractions": "Extract variables",
         "assertions": "Assertions",
         "addExtraction": "Add extraction",
@@ -651,6 +666,7 @@
     }
   },
   "button": {
+    "save": "Save",
     "back": "Back",
     "cancel": "Cancel",
     "confirm": "Confirm",

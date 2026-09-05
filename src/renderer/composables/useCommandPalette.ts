@@ -12,6 +12,7 @@ import {
   useHttpRequests,
   useHttpSearch,
 } from '@/composables/spaces/http'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import {
   useNotes,
   useNotesApp,
@@ -1396,6 +1397,8 @@ async function openNote(note: NoteResult) {
 }
 
 async function openHttpRequest(request: HttpRequestResult) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   const httpFolders = useHttpFolders()
 
   httpData.isRestoreStateBlocked.value = true

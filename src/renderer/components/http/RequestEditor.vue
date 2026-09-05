@@ -28,20 +28,40 @@ const HTTP_METHODS: HttpMethod[] = [
   'OPTIONS',
 ]
 
-const {
-  currentDraft,
-  currentRequest,
-  hasSiblingRequestNameConflict,
-  saveCurrentRequest,
-} = useHttpRequests()
+const { currentDraft, currentRequest, hasSiblingRequestNameConflict }
+  = useHttpRequests()
 const { isFocusedRequestName } = useHttpApp()
 const { executeCurrentRequest, isExecuting } = useHttpExecute()
-const { dirty: runtimeDirty } = useHttpRuntime()
+const {
+  saving: runtimeSaving,
+  groupDirty,
+  groupInvalid,
+  focusTarget,
+} = useHttpRuntime()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
 const activeTab = ref<
-  'params' | 'headers' | 'body' | 'auth' | 'description' | 'tests'
+  | 'params'
+  | 'headers'
+  | 'body'
+  | 'auth'
+  | 'description'
+  | 'assertions'
+  | 'variables'
 >('params')
+
+const editorRoot = useTemplateRef<HTMLElement>('editorRoot')
+watch(focusTarget, async (target) => {
+  if (!target)
+    return
+  activeTab.value = target.group === 'assertions' ? 'assertions' : 'variables'
+  await nextTick()
+  editorRoot.value
+    ?.querySelector<HTMLInputElement>(
+      `[data-runtime-field="${target.group}.${target.index}.${target.field}"]`,
+    )
+    ?.focus()
+})
 
 const paramsCount = computed(() => currentDraft.value?.query.length ?? 0)
 const headersCount = computed(() => currentDraft.value?.headers.length ?? 0)
@@ -117,8 +137,6 @@ function onNameBlur() {
 }
 
 async function onSend() {
-  if (!(await saveCurrentRequest()))
-    return
   await executeCurrentRequest()
 }
 </script>
@@ -132,11 +150,10 @@ async function onSend() {
   </div>
   <div
     v-else-if="currentDraft"
+    ref="editorRoot"
     class="flex h-full flex-col"
   >
-    <div
-      class="border-border grid grid-cols-[1fr_auto] items-center border-b px-2 pb-1"
-    >
+    <div class="border-border flex items-center border-b px-2 pb-1">
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
         <div
           v-if="isHistoryVisible"
@@ -174,7 +191,6 @@ async function onSend() {
           </UiInputValidationTooltip>
         </div>
       </div>
-      <div class="flex h-7 items-center" />
     </div>
     <div class="border-border flex items-center gap-1 border-b px-2 py-1">
       <Select.Select v-model="currentDraft.method">
@@ -205,12 +221,13 @@ async function onSend() {
           :placeholder="i18n.t('spaces.http.editor.urlPlaceholder')"
         />
       </div>
+      <HttpRequestSaveButton />
       <UiActionButton
         :aria-label="i18n.t('spaces.http.editor.send')"
+        :tooltip="i18n.t('spaces.http.editor.send')"
         :disabled="
           isExecuting
             || !currentDraft.url
-            || runtimeDirty
             || currentRequest.runtimeState !== 'ready'
         "
         @click="onSend"
@@ -227,7 +244,7 @@ async function onSend() {
       class="flex min-h-0 flex-1 flex-col gap-0"
     >
       <div
-        class="border-border flex items-center justify-between border-b px-2 py-1"
+        class="border-border scrollbar min-w-0 overflow-x-auto border-b px-2 py-1"
       >
         <Tabs.TabsList>
           <Tabs.TabsTrigger value="params">
@@ -263,18 +280,52 @@ async function onSend() {
           <Tabs.TabsTrigger value="description">
             {{ i18n.t("spaces.http.editor.tabs.description") }}
           </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="tests">
-            {{ i18n.t("spaces.http.runtime.tests")
-            }}{{ runtimeDirty ? " *" : "" }}
+          <Tabs.TabsTrigger
+            value="variables"
+            :class="
+              groupDirty.extractions && groupInvalid.extractions
+                ? 'text-destructive'
+                : ''
+            "
+          >
+            {{ i18n.t("spaces.http.runtime.variables")
+            }}{{ groupDirty.extractions ? " *" : "" }}
+          </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger
+            value="assertions"
+            :class="
+              groupDirty.assertions && groupInvalid.assertions
+                ? 'text-destructive'
+                : ''
+            "
+          >
+            {{ i18n.t("spaces.http.runtime.assertions")
+            }}{{ groupDirty.assertions ? " *" : "" }}
           </Tabs.TabsTrigger>
         </Tabs.TabsList>
       </div>
       <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <Tabs.TabsContent
-          value="tests"
+          value="assertions"
           class="h-full"
         >
-          <HttpRequestTestsTab />
+          <HttpRuntimeToolbar />
+          <fieldset
+            :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"
+          >
+            <HttpRequestAssertions
+              :disabled="
+                runtimeSaving || currentRequest.runtimeState !== 'ready'
+              "
+            />
+          </fieldset>
+        </Tabs.TabsContent>
+        <Tabs.TabsContent
+          value="variables"
+          class="h-full"
+        >
+          <HttpRuntimeToolbar :show-hint="false" />
+          <HttpRequestVariables />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="params"

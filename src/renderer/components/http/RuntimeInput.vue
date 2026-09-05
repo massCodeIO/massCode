@@ -35,6 +35,7 @@ const error = computed(() => {
     <Input
       :id="id"
       v-model="model"
+      :data-runtime-field="`${group}.${index}.${field}`"
       class="h-7 min-w-0"
       :placeholder="placeholder"
       :aria-invalid="!!error"

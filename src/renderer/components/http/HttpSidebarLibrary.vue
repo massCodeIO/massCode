@@ -6,6 +6,7 @@ import {
   useHttpRequests,
   useHttpSearch,
 } from '@/composables'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { LibraryFilter } from '@/composables/types'
 import { i18n } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -49,6 +50,8 @@ function isItemSelected(item: (typeof libraryItems)[number]) {
 }
 
 async function onItemClick(item: (typeof libraryItems)[number]) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   const { id } = item
   focusedItemId.value = id
 

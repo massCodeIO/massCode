@@ -13,6 +13,7 @@ import {
   useHttpSearch,
   useResizeHandle,
 } from '@/composables'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { i18n, store } from '@/electron'
 import {
   getEntryNameConflictMessage,
@@ -182,6 +183,9 @@ async function onClickNode({
   }
 
   if (httpState.folderId === id && selectedFolderIds.value.length === 1)
+    return
+
+  if (!(await httpRuntimeNavigation.confirmLeave()))
     return
 
   isRestoreStateBlocked.value = true

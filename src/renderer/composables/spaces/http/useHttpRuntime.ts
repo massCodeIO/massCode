@@ -7,12 +7,15 @@ import {
   httpOperatorNeedsExpected,
   httpRuntimeSchema,
 } from '~/shared/httpRuntime'
+import { httpRuntimeNavigation } from './runtimeNavigation'
 import { useHttpRequests } from './useHttpRequests'
 
 type Runtime = NonNullable<HttpRequestItemResponse['runtime']>
 const draft = ref<Runtime>(emptyHttpRuntime())
-const saved = ref('')
+const saved = ref(JSON.stringify(draft.value))
 const saving = ref(false)
+const savingRequest = ref(false)
+const requestSaveError = ref(false)
 const saveError = ref(false)
 const conflict = ref(false)
 const expectedInputs = ref<Record<number, string>>({})
@@ -21,6 +24,14 @@ type RuleGroup = 'extractions' | 'assertions'
 type RuleField = 'name' | 'path' | 'expected'
 type Rule = Runtime[RuleGroup][number]
 const touched = ref(new Map<Rule, Set<RuleField>>())
+const leaveDialogOpen = ref(false)
+const focusTarget = ref<{
+  group: RuleGroup
+  index: number
+  field: RuleField
+} | null>(null)
+let leavePromise: Promise<boolean> | null = null
+let resolveLeave: ((allowed: boolean) => void) | null = null
 const validation = computed(() => httpRuntimeSchema.safeParse(draft.value))
 const fieldErrors = computed(() => {
   const errors: Record<string, string> = {}
@@ -74,7 +85,36 @@ const dirty = computed(
 const valid = computed(
   () => !hasExpectedErrors.value && validation.value.success,
 )
-const { currentRequest } = useHttpRequests()
+const groupDirty = computed(() => {
+  const baseline: Runtime = saved.value
+    ? JSON.parse(saved.value)
+    : emptyHttpRuntime()
+  return {
+    assertions:
+      hasExpectedErrors.value
+      || JSON.stringify(draft.value.assertions)
+      !== JSON.stringify(baseline.assertions),
+    extractions:
+      JSON.stringify(draft.value.extractions)
+      !== JSON.stringify(baseline.extractions),
+  }
+})
+const groupInvalid = computed(() => ({
+  assertions: Object.keys(fieldErrors.value).some(key =>
+    key.startsWith('assertions.'),
+  ),
+  extractions: Object.keys(fieldErrors.value).some(key =>
+    key.startsWith('extractions.'),
+  ),
+}))
+const {
+  currentRequest,
+  isCurrentRequestDirty,
+  saveCurrentRequest,
+  discardCurrentRequestChanges,
+} = useHttpRequests()
+const requestDirty = computed(() => dirty.value || isCurrentRequestDirty.value)
+const busy = computed(() => saving.value || savingRequest.value)
 let owner: string | null = null
 let generation = 0
 
@@ -84,13 +124,18 @@ watch(
     const nextOwner = request ? `${request.id}:${request.createdAt}` : null
     if (nextOwner === owner && dirty.value)
       return
-    if (nextOwner !== owner)
+    if (nextOwner !== owner) {
       generation += 1
+      focusTarget.value = null
+    }
+    if (nextOwner !== owner && resolveLeave)
+      finishLeave(false)
     owner = nextOwner
     draft.value = structuredClone(request?.runtime ?? emptyHttpRuntime())
     saved.value = JSON.stringify(draft.value)
     expectedRevision = request?.runtimeRevision ?? null
     saveError.value = false
+    requestSaveError.value = false
     conflict.value = false
     expectedInputs.value = {}
     expectedErrors.value = {}
@@ -137,6 +182,28 @@ function removeExtraction(index: number) {
   draft.value.extractions.splice(index, 1)
 }
 
+function validateRuntime(): boolean {
+  for (const group of ['extractions', 'assertions'] as const) {
+    draft.value[group].forEach((_, index) => {
+      for (const field of ['name', 'path', 'expected'] as const)
+        touchField(group, index, field)
+    })
+  }
+  if (!valid.value) {
+    const [group, index, field]
+      = Object.keys(fieldErrors.value)[0]?.split('.') ?? []
+    if (
+      (group === 'assertions' || group === 'extractions')
+      && index
+      && (field === 'name' || field === 'path' || field === 'expected')
+    ) {
+      focusTarget.value = { group, index: Number(index), field }
+    }
+    return false
+  }
+  return true
+}
+
 async function saveRuntime(): Promise<boolean> {
   const request = currentRequest.value
   if (
@@ -144,17 +211,10 @@ async function saveRuntime(): Promise<boolean> {
     || request.runtimeState !== 'ready'
     || expectedRevision === null
     || saving.value
+    || !validateRuntime()
   ) {
     return false
   }
-  for (const group of ['extractions', 'assertions'] as const) {
-    draft.value[group].forEach((_, index) => {
-      for (const field of ['name', 'path', 'expected'] as const)
-        touchField(group, index, field)
-    })
-  }
-  if (!valid.value)
-    return false
   if (!dirty.value)
     return true
   const id = request.id
@@ -200,8 +260,82 @@ async function saveRuntime(): Promise<boolean> {
   }
 }
 
+async function saveRequest(): Promise<boolean> {
+  if (
+    busy.value
+    || !currentRequest.value
+    || currentRequest.value.runtimeState !== 'ready'
+  ) {
+    return false
+  }
+  if (!validateRuntime())
+    return false
+  savingRequest.value = true
+  requestSaveError.value = false
+  const token = generation
+  try {
+    if (!(await saveCurrentRequest())) {
+      requestSaveError.value = true
+      return false
+    }
+    if (token !== generation)
+      return false
+    return await saveRuntime()
+  }
+  finally {
+    savingRequest.value = false
+  }
+}
+
+function finishLeave(allowed: boolean) {
+  leaveDialogOpen.value = false
+  resolveLeave?.(allowed)
+  resolveLeave = null
+  leavePromise = null
+}
+
+async function resolveNavigation(choice: 'save' | 'discard' | 'cancel') {
+  if (busy.value)
+    return
+  if (choice === 'save') {
+    const success = await saveRequest()
+    finishLeave(success && !requestDirty.value)
+    return
+  }
+  if (choice === 'discard') {
+    discardCurrentRequestChanges()
+    draft.value = JSON.parse(saved.value || JSON.stringify(emptyHttpRuntime()))
+    expectedInputs.value = {}
+    expectedErrors.value = {}
+    touched.value.clear()
+    saveError.value = false
+    conflict.value = false
+    requestSaveError.value = false
+  }
+  finishLeave(choice === 'discard')
+}
+
+httpRuntimeNavigation.confirmLeave = () => {
+  if (leavePromise)
+    return leavePromise
+  if (busy.value)
+    return Promise.resolve(false)
+  if (!requestDirty.value)
+    return Promise.resolve(true)
+  leaveDialogOpen.value = true
+  leavePromise = new Promise((resolve) => {
+    resolveLeave = resolve
+  })
+  return leavePromise
+}
+
 export function useHttpRuntime() {
   return {
+    requestDirty,
+    busy,
+    requestSaveError,
+    saveRequest,
+    validateRuntime,
     draft,
     dirty,
     valid,
@@ -216,5 +350,10 @@ export function useHttpRuntime() {
     removeExtraction,
     touchField,
     fieldError,
+    groupDirty,
+    groupInvalid,
+    focusTarget,
+    leaveDialogOpen,
+    resolveNavigation,
   }
 }

@@ -5,6 +5,14 @@ Object.assign(globalThis, { computed, ref, watch })
 
 const putRuntime = vi.fn()
 const currentRequest = shallowRef<any>(null)
+const isCurrentRequestDirty = ref(false)
+const saveCurrentRequest = vi.fn(async () => {
+  isCurrentRequestDirty.value = false
+  return true
+})
+const discardCurrentRequestChanges = vi.fn(() => {
+  isCurrentRequestDirty.value = false
+})
 function request() {
   return {
     id: 1,
@@ -18,7 +26,12 @@ function request() {
 async function load() {
   vi.resetModules()
   vi.doMock('../useHttpRequests', () => ({
-    useHttpRequests: () => ({ currentRequest }),
+    useHttpRequests: () => ({
+      currentRequest,
+      isCurrentRequestDirty,
+      saveCurrentRequest,
+      discardCurrentRequestChanges,
+    }),
   }))
   vi.doMock('@/composables/useStorageMutation', () => ({
     markPersistedStorageMutation: vi.fn(),
@@ -30,6 +43,176 @@ async function load() {
 }
 
 describe('hTTP runtime editor state', () => {
+  it('saves request fields and runtime with one action', async () => {
+    const runtime = await load()
+    isCurrentRequestDirty.value = true
+    runtime.draft.value.assertions.push({
+      name: 'Status',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    })
+    expect(runtime.requestDirty.value).toBe(true)
+    expect(await runtime.saveRequest()).toBe(true)
+    expect(saveCurrentRequest).toHaveBeenCalledTimes(1)
+    expect(putRuntime).toHaveBeenCalledTimes(1)
+    expect(runtime.requestDirty.value).toBe(false)
+  })
+
+  it('validates runtime before writing any request fields', async () => {
+    const runtime = await load()
+    isCurrentRequestDirty.value = true
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: '',
+    })
+    expect(await runtime.saveRequest()).toBe(false)
+    expect(saveCurrentRequest).not.toHaveBeenCalled()
+    expect(putRuntime).not.toHaveBeenCalled()
+    expect(runtime.focusTarget.value?.group).toBe('extractions')
+  })
+
+  it('keeps runtime edits when saving request fields fails', async () => {
+    const runtime = await load()
+    isCurrentRequestDirty.value = true
+    runtime.draft.value.extractions.push({
+      name: 'token',
+      source: 'json',
+      path: '',
+    })
+    saveCurrentRequest.mockResolvedValueOnce(false)
+    expect(await runtime.saveRequest()).toBe(false)
+    expect(runtime.requestSaveError.value).toBe(true)
+    expect(runtime.requestDirty.value).toBe(true)
+    expect(putRuntime).not.toHaveBeenCalled()
+  })
+
+  it('keeps unsaved runtime after a partial save and retries it', async () => {
+    const runtime = await load()
+    isCurrentRequestDirty.value = true
+    runtime.draft.value.extractions.push({
+      name: 'token',
+      source: 'json',
+      path: '',
+    })
+    putRuntime.mockRejectedValueOnce({ response: { status: 409 } })
+    expect(await runtime.saveRequest()).toBe(false)
+    expect(isCurrentRequestDirty.value).toBe(false)
+    expect(runtime.requestDirty.value).toBe(true)
+    expect(runtime.conflict.value).toBe(true)
+    expect(await runtime.saveRequest()).toBe(true)
+    expect(runtime.requestDirty.value).toBe(false)
+  })
+
+  it.each(['cancel', 'discard', 'save'] as const)(
+    'handles %s for field-only edits',
+    async (choice) => {
+      const runtime = await load()
+      const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+      isCurrentRequestDirty.value = true
+      const pending = httpRuntimeNavigation.confirmLeave()
+      expect(runtime.leaveDialogOpen.value).toBe(true)
+      await runtime.resolveNavigation(choice)
+      expect(await pending).toBe(choice !== 'cancel')
+      expect(runtime.requestDirty.value).toBe(choice === 'cancel')
+      expect(putRuntime).not.toHaveBeenCalled()
+    },
+  )
+
+  it('starts clean before the selected request is restored on reload', async () => {
+    currentRequest.value = null
+    const runtime = await load()
+    const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+
+    expect(runtime.dirty.value).toBe(false)
+    expect(await httpRuntimeNavigation.confirmLeave()).toBe(true)
+    expect(runtime.leaveDialogOpen.value).toBe(false)
+
+    currentRequest.value = request()
+    expect(runtime.dirty.value).toBe(false)
+    expect(await httpRuntimeNavigation.confirmLeave()).toBe(true)
+    expect(runtime.leaveDialogOpen.value).toBe(false)
+    expect(putRuntime).not.toHaveBeenCalled()
+  })
+
+  it('tracks dirty groups and focuses the first invalid rule across tabs', async () => {
+    const runtime = await load()
+    runtime.draft.value.extractions.push({
+      name: '',
+      source: 'json',
+      path: '',
+    })
+    expect(runtime.groupDirty.value).toEqual({
+      extractions: true,
+      assertions: false,
+    })
+    expect(runtime.groupInvalid.value.extractions).toBe(true)
+    expect(await runtime.saveRuntime()).toBe(false)
+    expect(runtime.focusTarget.value).toEqual({
+      group: 'extractions',
+      index: 0,
+      field: 'name',
+    })
+  })
+
+  it.each(['cancel', 'discard', 'save'] as const)(
+    'handles %s before leaving a dirty request',
+    async (choice) => {
+      const runtime = await load()
+      const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+      runtime.draft.value.assertions.push({
+        name: 'status',
+        source: 'status',
+        operator: 'eq',
+        expected: 200,
+      })
+      const pending = httpRuntimeNavigation.confirmLeave()
+      expect(httpRuntimeNavigation.confirmLeave()).toBe(pending)
+      expect(runtime.leaveDialogOpen.value).toBe(true)
+      await runtime.resolveNavigation(choice)
+      expect(await pending).toBe(choice !== 'cancel')
+      expect(runtime.dirty.value).toBe(choice === 'cancel')
+      expect(putRuntime).toHaveBeenCalledTimes(choice === 'save' ? 1 : 0)
+    },
+  )
+
+  it('cancels navigation on invalid rules or a save conflict, preserving edits', async () => {
+    const runtime = await load()
+    const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+    runtime.draft.value.assertions.push({
+      name: '',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    })
+    const invalid = httpRuntimeNavigation.confirmLeave()
+    await runtime.resolveNavigation('save')
+    expect(await invalid).toBe(false)
+    expect(runtime.dirty.value).toBe(true)
+    expect(runtime.focusTarget.value?.group).toBe('assertions')
+    runtime.draft.value.assertions[0]!.name = 'Status'
+    putRuntime.mockRejectedValueOnce({ response: { status: 409 } })
+    const conflict = httpRuntimeNavigation.confirmLeave()
+    await runtime.resolveNavigation('save')
+    expect(await conflict).toBe(false)
+    expect(runtime.conflict.value).toBe(true)
+    expect(runtime.dirty.value).toBe(true)
+  })
+
+  it('invalidates a pending leave decision when the request owner is reset', async () => {
+    const runtime = await load()
+    const { httpRuntimeNavigation } = await import('../runtimeNavigation')
+    runtime.draft.value.extractions.push({
+      name: 'token',
+      source: 'json',
+      path: '',
+    })
+    const pending = httpRuntimeNavigation.confirmLeave()
+    currentRequest.value = null
+    expect(await pending).toBe(false)
+    expect(runtime.leaveDialogOpen.value).toBe(false)
+  })
   it('reveals untouched errors on save without persisting invalid data', async () => {
     const runtime = await load()
     runtime.draft.value.extractions.push({
@@ -142,6 +325,7 @@ describe('hTTP runtime editor state', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    isCurrentRequestDirty.value = false
     currentRequest.value = request()
     putRuntime.mockResolvedValue({
       data: { runtimeRevision: 'saved-revision' },

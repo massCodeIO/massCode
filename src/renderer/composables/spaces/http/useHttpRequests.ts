@@ -15,10 +15,10 @@ import {
 } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { getContiguousSelection, isRetriableSaveError } from '@/utils'
-import { useDebounceFn } from '@vueuse/core'
+import { getContiguousSelection } from '@/utils'
 import { getEntryNameValidationIssue } from '~/shared/entryNameValidation'
 import { LibraryFilter } from '../../types'
+import { httpRuntimeNavigation } from './runtimeNavigation'
 import {
   applyQueryToUrl,
   applyUrlToQuery,
@@ -27,8 +27,6 @@ import {
 } from './urlQuery'
 import { useHttpApp } from './useHttpApp'
 import { isSearch, requestsBySearch, searchQuery } from './useHttpSearch'
-
-const AUTO_SAVE_DEBOUNCE_MS = 500
 
 export type HttpRequestListItem = HttpRequestsResponse[number]
 export type HttpRequest = HttpRequestItemResponse
@@ -476,10 +474,7 @@ async function duplicateHttpRequest(requestId: number) {
   }
 }
 
-// Возвращает false при временно неудачном PATCH: вызывающие потоки
-// (переключение выбора) не должны считать несохранённую правку сохранённой.
-// Окончательный отказ возвращает true — сохранять больше некуда, и держать
-// пользователя на записи нет смысла.
+// A rejected write never counts as a successful save.
 async function updateHttpRequest(
   requestId: number,
   data: HttpRequestsUpdate,
@@ -490,7 +485,7 @@ async function updateHttpRequest(
   }
   catch (error) {
     console.error(error)
-    return !isRetriableSaveError(error)
+    return false
   }
 
   try {
@@ -537,6 +532,12 @@ async function updateHttpRequests(
 }
 
 async function deleteHttpRequest(requestId: number) {
+  if (
+    currentRequest.value?.id === requestId
+    && !(await httpRuntimeNavigation.confirmLeave())
+  ) {
+    return
+  }
   try {
     markPersistedStorageMutation()
     await api.httpRequests.deleteHttpRequestsById(String(requestId))
@@ -552,6 +553,13 @@ async function deleteHttpRequest(requestId: number) {
 }
 
 async function deleteHttpRequests(requestIds: number[]) {
+  if (
+    currentRequest.value
+    && requestIds.includes(currentRequest.value.id)
+    && !(await httpRuntimeNavigation.confirmLeave())
+  ) {
+    return
+  }
   try {
     markPersistedStorageMutation()
 
@@ -587,6 +595,14 @@ async function deleteSelectedHttpRequests(
   const targetIds = getActionTargetIds(fallbackRequest?.id)
 
   if (!targetIds.length) {
+    return
+  }
+
+  if (
+    currentRequest.value
+    && targetIds.includes(currentRequest.value.id)
+    && !(await httpRuntimeNavigation.confirmLeave())
+  ) {
     return
   }
 
@@ -663,6 +679,12 @@ async function deleteSelectedHttpRequests(
 }
 
 async function emptyTrash() {
+  if (
+    currentRequest.value?.isDeleted
+    && !(await httpRuntimeNavigation.confirmLeave())
+  ) {
+    return
+  }
   const { confirm } = useDialog()
 
   const isConfirmed = await confirm({
@@ -744,19 +766,10 @@ let selectionTransitionToken = 0
 async function applyHttpRequestSelection(requestId: number | undefined) {
   const transitionToken = ++selectionTransitionToken
 
-  // Незасейвленные правки текущего draft'а сохраняются ДО смены выбора,
-  // с ожиданием результата: при неудачном PATCH (503 на pending, сеть)
-  // переключение отменяется и правки остаются в редакторе — иначе загрузка
-  // новой записи уничтожила бы несохранённый draft. Заодно исключается
-  // параллельный бег PATCH и GET при повторном клике по той же записи.
-  // О причине отказа сообщает общий 503-тост API-клиента.
-  if (!(await saveCurrentRequest())) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
     return
-  }
-
-  if (transitionToken !== selectionTransitionToken) {
+  if (transitionToken !== selectionTransitionToken)
     return
-  }
 
   if (requestId === undefined) {
     httpState.requestId = undefined
@@ -789,11 +802,7 @@ function hasSiblingRequestNameConflict(
   )
 }
 
-// Сохранения сериализуются одной цепочкой: forced save (переключение выбора)
-// и debounced autosave не должны выполняться параллельно — поздний PATCH со
-// старым payload перезаписал бы более свежий. Каждое звено перечитывает
-// dirty-состояние в момент своего выполнения, поэтому дубли схлопываются в
-// no-op.
+// Serialize repeated explicit saves so an older PATCH cannot win the race.
 let saveChain: Promise<boolean> = Promise.resolve(true)
 
 export function saveCurrentRequest(): Promise<boolean> {
@@ -802,9 +811,7 @@ export function saveCurrentRequest(): Promise<boolean> {
   return next
 }
 
-// false — только когда PATCH реально выполнялся и не удался: правка НЕ
-// сохранена, и уничтожать draft нельзя. Пропуски (чистый draft, невалидное
-// имя, несоответствие выбора) возвращают true — там сохранять нечего.
+// Invalid fields and rejected writes retain the draft and block navigation.
 async function performSaveCurrentRequest(): Promise<boolean> {
   if (!currentRequest.value || !currentDraft.value)
     return true
@@ -812,13 +819,13 @@ async function performSaveCurrentRequest(): Promise<boolean> {
   // при расхождении (сбойное переключение, гонка загрузки) сохранение
   // ушло бы не в тот запрос.
   if (httpState.requestId !== currentRequest.value.id)
-    return true
+    return false
   if (!isCurrentRequestDirty.value)
     return true
 
   const draft = currentDraft.value
   if (getEntryNameValidationIssue(draft.name))
-    return true
+    return false
   if (
     hasSiblingRequestNameConflict(
       draft.name,
@@ -826,24 +833,44 @@ async function performSaveCurrentRequest(): Promise<boolean> {
       draft.folderId,
     )
   ) {
-    return true
+    return false
   }
 
-  const update: HttpRequestsUpdate = {
-    name: draft.name,
-    folderId: draft.folderId,
-    method: draft.method,
-    url: getPersistedUrl(draft.url, draft.query),
-    headers: draft.headers,
-    query: draft.query,
-    bodyType: draft.bodyType,
-    body: draft.body,
-    formData: draft.formData,
-    auth: draft.auth,
-    description: draft.description,
-  }
+  const update: HttpRequestsUpdate = JSON.parse(
+    JSON.stringify({
+      name: draft.name,
+      folderId: draft.folderId,
+      method: draft.method,
+      url: getPersistedUrl(draft.url, draft.query),
+      headers: draft.headers,
+      query: draft.query,
+      bodyType: draft.bodyType,
+      body: draft.body,
+      formData: draft.formData,
+      auth: draft.auth,
+      description: draft.description,
+    }),
+  )
 
-  return updateHttpRequest(currentRequest.value.id, update)
+  const request = currentRequest.value
+  try {
+    markPersistedStorageMutation()
+    await api.httpRequests.patchHttpRequestsById(String(request.id), update)
+  }
+  catch (error) {
+    console.error(error)
+    return false
+  }
+  // Advance the baseline from the acknowledged payload, not a follow-up GET.
+  // A failed refresh must not make a successful save dirty again.
+  if (
+    currentRequest.value?.id === request.id
+    && currentRequest.value.createdAt === request.createdAt
+  ) {
+    currentRequest.value = { ...currentRequest.value, ...update }
+  }
+  void refreshHttpRequests().catch(console.error)
+  return true
 }
 
 function discardCurrentRequestChanges() {
@@ -853,10 +880,6 @@ function discardCurrentRequestChanges() {
   skipQueryWatch = true
   currentDraft.value = toDraft(currentRequest.value)
 }
-
-const autoSaveDebounced = useDebounceFn(() => {
-  void saveCurrentRequest()
-}, AUTO_SAVE_DEBOUNCE_MS)
 
 watch(
   () => currentDraft.value?.url,
@@ -901,7 +924,6 @@ watch(
     if (!isCurrentRequestDirty.value)
       return
     markUserEdit()
-    autoSaveDebounced()
   },
   { deep: true },
 )

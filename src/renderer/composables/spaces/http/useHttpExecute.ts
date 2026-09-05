@@ -26,7 +26,7 @@ const { httpState } = useHttpApp()
 const { activeEnvironmentId } = useHttpEnvironments()
 const { incrementSent } = useDonations()
 const { settings } = useHttpSettings()
-const { dirty: runtimeDirty } = useHttpRuntime()
+const { draft: runtimeDraft, validateRuntime } = useHttpRuntime()
 const { sessionNames, resetHttpSessionNames } = useHttpSession()
 let executionToken = 0
 
@@ -64,7 +64,6 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   // запрос, что подсвечен в списке.
   if (
     isExecuting.value
-    || runtimeDirty.value
     || (currentRequest.value?.runtimeState
       && currentRequest.value.runtimeState !== 'ready')
     || isCurrentRequestLoading.value
@@ -86,11 +85,12 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
   }
 
   const request = buildExecuteRequest()
-  if (!request)
+  if (!request || !validateRuntime())
     return null
 
   const payload: HttpExecutePayload = {
     request,
+    runtime: JSON.parse(JSON.stringify(runtimeDraft.value)),
     requestId: currentRequest.value?.id ?? null,
     environmentId: activeEnvironmentId.value,
     skipCertificateVerification: settings.skipCertificateVerification,

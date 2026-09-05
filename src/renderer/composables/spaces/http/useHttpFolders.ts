@@ -8,6 +8,7 @@ import { markPersistedStorageMutation } from '@/composables/useStorageMutation'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
 import { getContiguousSelection, scrollToElement } from '@/utils'
+import { httpRuntimeNavigation } from './runtimeNavigation'
 import { useHttpApp } from './useHttpApp'
 import {
   findParentFolderIds,
@@ -321,6 +322,8 @@ async function updateHttpFolder(folderId: number, data: HttpFoldersUpdate) {
 }
 
 async function deleteHttpFolder(folderId: number, shouldRefresh = true) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   try {
     const { currentRequest, getHttpRequests, requests } = useHttpRequests()
     const selectedRequestId = currentRequest.value?.id
@@ -366,6 +369,8 @@ function getDeleteTargetFolderIds(fallbackFolderId?: number) {
 }
 
 async function deleteSelectedHttpFolders(fallbackFolderId?: number) {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   const targetIds = getDeleteTargetFolderIds(fallbackFolderId)
 
   if (!targetIds.length) {

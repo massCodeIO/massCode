@@ -25,6 +25,7 @@ import {
   useVaultDoctor,
   VAULT_DOCTOR_NOTICE_ID,
 } from '@/composables'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { i18n, ipc, store } from '@/electron'
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
@@ -247,7 +248,7 @@ async function openVaultStorage() {
     },
   )
 
-  if (!selectedPath) {
+  if (!selectedPath || !(await httpRuntimeNavigation.confirmLeave())) {
     return
   }
 
@@ -286,7 +287,7 @@ async function moveVaultStorage() {
     },
   )
 
-  if (!targetPath) {
+  if (!targetPath || !(await httpRuntimeNavigation.confirmLeave())) {
     return
   }
 

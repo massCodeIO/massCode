@@ -17,6 +17,7 @@ import {
   useSnippets,
   useSonner,
 } from '@/composables'
+import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { LibraryFilter } from '@/composables/types'
 import { i18n, ipc } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -211,6 +212,8 @@ export async function openNoteDeepLink(noteId: number): Promise<void> {
 export async function openHttpRequestDeepLink(
   requestId: number,
 ): Promise<void> {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   clearHttpNavigationState()
   await ensureHttpRoute()
 
@@ -332,6 +335,8 @@ async function restoreNavigationTarget(
 }
 
 export async function navigateBack(): Promise<void> {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   const target = goBack()
 
   if (!target) {
@@ -342,6 +347,8 @@ export async function navigateBack(): Promise<void> {
 }
 
 export async function navigateForward(): Promise<void> {
+  if (!(await httpRuntimeNavigation.confirmLeave()))
+    return
   const target = goForward()
 
   if (!target) {

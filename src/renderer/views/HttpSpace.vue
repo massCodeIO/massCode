@@ -56,4 +56,5 @@ onMounted(() => {
       <HttpRequestEditorPane />
     </template>
   </LayoutThreeColumn>
+  <HttpRunnerDialog />
 </template>

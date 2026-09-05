@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import type { HttpMethod } from '~/main/types/http'
+import { Badge } from '@/components/ui/shadcn/badge'
 import { cn } from '@/utils'
 import { cva } from 'class-variance-authority'
 
 interface Props {
   method: HttpMethod
   size?: 'xs' | 'sm'
+  appearance?: 'text' | 'chip'
   class?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'xs',
+  appearance: 'text',
 })
 
 const variants = cva('font-mono font-semibold tracking-tight uppercase', {
   variants: {
+    appearance: {
+      text: '',
+      chip: 'h-5 w-16 border-current/20 bg-current/10 px-1.5 py-0',
+    },
     method: {
       GET: 'text-emerald-600 dark:text-emerald-400',
       POST: 'text-amber-600 dark:text-amber-400',
@@ -33,12 +40,21 @@ const variants = cva('font-mono font-semibold tracking-tight uppercase', {
 </script>
 
 <template>
-  <span
+  <component
+    :is="props.appearance === 'chip' ? Badge : 'span'"
+    :variant="props.appearance === 'chip' ? 'outline' : undefined"
     :data-method="props.method"
     :class="
-      cn(variants({ method: props.method, size: props.size }), props.class)
+      cn(
+        variants({
+          method: props.method,
+          size: props.size,
+          appearance: props.appearance,
+        }),
+        props.class,
+      )
     "
   >
     {{ props.method }}
-  </span>
+  </component>
 </template>

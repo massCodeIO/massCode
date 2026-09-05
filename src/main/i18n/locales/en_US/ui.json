@@ -217,6 +217,46 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "runner": {
+        "runFolder": "Run folder",
+        "title": "Folder runner",
+        "description": "Run saved requests, including nested folders. Changes made after opening this runner are not included. Run variables and results stay in memory; closing stops the run.",
+        "environment": "Environment",
+        "orderHint": "Requests run top to bottom. Drag the handles to change this run’s order.",
+        "continueOnFailure": "Continue on failure",
+        "close": "Close",
+        "cancel": "Stop run",
+        "start": "Run",
+        "newRun": "Prepare new run",
+        "reorder": "Drag to reorder",
+        "states": {
+          "ready": "Ready",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed",
+          "cancelled": "Cancelled"
+        },
+        "steps": {
+          "pending": "Pending",
+          "running": "Running",
+          "passed": "Passed",
+          "failed": "Failed",
+          "skipped": "Skipped",
+          "cancelled": "Cancelled"
+        },
+        "stepErrors": {
+          "transport": "Request failed. Check the connection and request configuration.",
+          "contextChanged": "The environment or vault changed."
+        },
+        "errors": {
+          "HTTP_RUN_EMPTY": "This folder has no requests to run.",
+          "HTTP_RUN_TOO_LARGE": "A run can contain up to 500 requests.",
+          "HTTP_RUN_REQUEST_UNAVAILABLE": "A request or its rules could not be loaded. Open the requests in this folder and resolve pending downloads or invalid rules before running.",
+          "HTTP_CONTEXT_CHANGED": "The environment or vault changed. Prepare a new run.",
+          "HTTP_REQUEST_RUNNING": "Another HTTP request or run is already active.",
+          "unknown": "Could not prepare or run this folder. Prepare a new run and try again."
+        }
+      },
       "runtime": {
         "variables": "Variables",
         "postResponse": "Post-response",

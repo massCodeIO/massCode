@@ -116,6 +116,7 @@ export default defineConfig({
             { text: 'massCode vs Raycast Snippets', link: '/compare/raycast' },
             { text: 'massCode vs GitHub Gist', link: '/compare/github-gist' },
             { text: 'massCode vs Postman', link: '/compare/postman' },
+            { text: 'massCode vs Bruno', link: '/compare/bruno' },
             { text: 'massCode vs Todoist', link: '/compare/todoist' },
             { text: 'massCode vs TickTick', link: '/compare/ticktick' },
             { text: 'massCode vs Things 3', link: '/compare/things' },

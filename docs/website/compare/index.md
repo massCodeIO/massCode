@@ -16,7 +16,11 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - [massCode vs SnippetsLab](/compare/snippetslab) — cross-platform vs macOS-only
 - [massCode vs Raycast Snippets](/compare/raycast) — full snippet workspace vs launcher text expansion
 - [massCode vs GitHub Gist](/compare/github-gist) — local-first organized library vs cloud Git-backed gists
-- [massCode vs Postman](/compare/postman) — lightweight local-first API client vs full cloud API platform
+
+## API clients
+
+- [massCode vs Postman](/compare/postman) — local API testing inside a developer workspace vs a cloud-first API platform
+- [massCode vs Bruno](/compare/bruno) — integrated snippets, notes, and API testing vs a dedicated local-first client with CLI automation
 
 ## Task managers
 
@@ -41,6 +45,8 @@ This section helps you decide whether massCode fits your workflow, or whether an
 - If you need **AI assistants and copilots** built into your snippet flow, look at Pieces.
 - If you need a **native macOS-only** snippet app and stay on Apple devices, look at SnippetsLab.
 - If you need a **launcher with text expansion**, look at Raycast Snippets.
+- If you need **API mocks, monitors, or managed team governance**, look at Postman.
+- If you need a **dedicated local-first API client with CLI/CI automation**, look at Bruno.
 - If you need a **full-featured cross-device task manager** with reminders, recurring tasks, mobile apps, and AI assists, look at Todoist or TickTick.
 - If you want a **premium Apple-only task manager** with a polished native UI, look at Things 3.
 - If you only need a **free Apple-built-in task app**, Apple Reminders is already on your devices.

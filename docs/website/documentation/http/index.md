@@ -51,7 +51,7 @@ Right-click a folder and choose **Set Icon** to select a built-in Material or Lu
 Right-click an HTTP folder and choose **Run folder** to run its saved requests, including nested folders, in sequence.
 
 1. Save or discard any changes in the current request when prompted. Cancelling keeps the editor open without preparing a run.
-2. Review the prepared list and environment. Drag a request by the handle at the end of its row to change the order for this run only. Reordering is disabled during execution.
+2. Review the prepared list and environment. Drag anywhere on a request row to change the order for this run only. Reordering is disabled during execution.
 3. Leave **Continue on failure** unchecked to stop at the first failed step, or enable it to run the remaining steps after failures.
 4. Click **Run**. Each step shows its HTTP status, duration, assertion results, and extraction results.
 

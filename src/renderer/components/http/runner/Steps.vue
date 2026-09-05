@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
-import {
-  Circle,
-  CircleCheck,
-  CircleX,
-  GripVertical,
-  LoaderCircle,
-} from 'lucide-vue-next'
+import { Circle, CircleCheck, CircleX, LoaderCircle } from 'lucide-vue-next'
 import Draggable from 'vuedraggable'
 
 const { view, running, reorderSteps } = useHttpRunner()
@@ -20,14 +14,22 @@ const canReorder = computed(
   <Draggable
     :model-value="view?.steps ?? []"
     item-key="requestId"
-    handle=".http-runner-drag-handle"
     :disabled="!canReorder"
     :animation="200"
-    ghost-class="opacity-40"
+    :force-fallback="true"
+    :fallback-on-body="true"
+    :fallback-tolerance="3"
+    ghost-class="http-runner-placeholder"
+    fallback-class="http-runner-drag"
     @update:model-value="reorderSteps"
   >
     <template #item="{ element: step, index }">
-      <div class="border-border border-b last:border-b-0">
+      <div
+        class="border-border bg-background border-b last:border-b-0 [&.http-runner-drag]:shadow-md"
+        :class="{
+          'cursor-grab select-none active:cursor-grabbing': canReorder,
+        }"
+      >
         <div
           class="flex items-center gap-2 px-3 py-2.5"
           :class="{ 'bg-destructive/5': step.state === 'failed' }"
@@ -104,14 +106,6 @@ const canReorder = computed(
           >
             {{ step.durationMs }} ms
           </UiText>
-          <UiActionButton
-            v-if="canReorder"
-            class="http-runner-drag-handle cursor-grab active:cursor-grabbing"
-            :tooltip="i18n.t('spaces.http.runner.reorder')"
-            :aria-label="i18n.t('spaces.http.runner.reorder')"
-          >
-            <GripVertical class="size-3.5" />
-          </UiActionButton>
         </div>
         <UiText
           v-if="step.error"
@@ -138,3 +132,18 @@ const canReorder = computed(
     </template>
   </Draggable>
 </template>
+
+<style scoped>
+.http-runner-placeholder {
+  background: var(--muted);
+}
+
+.http-runner-placeholder > * {
+  visibility: hidden;
+}
+
+.http-runner-drag {
+  /* Sortable sets an inline opacity on the fallback clone. */
+  opacity: 1 !important;
+}
+</style>

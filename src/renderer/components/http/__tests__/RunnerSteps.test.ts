@@ -38,12 +38,6 @@ async function renderSteps() {
         () =>
           h('span', slots.default?.()),
   })
-  app.component('UiActionButton', {
-    setup:
-      (_, { slots }) =>
-        () =>
-          h('button', slots.default?.()),
-  })
   app.component('HttpMethodBadge', {
     props: ['method'],
     setup: props => () => h('span', props.method),
@@ -68,9 +62,11 @@ beforeEach(() => {
 })
 
 describe('runner result presentation', () => {
-  it('keeps the drag handle in preparation without empty result groups', async () => {
+  it('allows dragging the whole row without a separate handle or empty result groups', async () => {
     const html = await renderSteps()
-    expect(html).toContain('spaces.http.runner.reorder')
+    expect(html).not.toContain('<button')
+    expect(html).not.toContain(' handle=')
+    expect(html).toContain('cursor-grab select-none active:cursor-grabbing')
     expect(html).not.toContain('spaces.http.runtime.assertions')
     expect(html).not.toContain('spaces.http.runtime.extractionResults')
   })
@@ -89,6 +85,7 @@ describe('runner result presentation', () => {
     })
     const html = await renderSteps()
     expect(html).not.toContain('spaces.http.runner.reorder')
+    expect(html).not.toContain('cursor-grab')
     expect(html).toContain('spaces.http.runtime.assertions')
     expect(html).toContain('spaces.http.runtime.extractionResults')
     expect(html).toContain('Status OK')

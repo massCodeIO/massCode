@@ -222,7 +222,7 @@
         "title": "Folder runner",
         "description": "Run saved requests, including nested folders. Changes made after opening this runner are not included. Run variables and results stay in memory; closing stops the run.",
         "environment": "Environment",
-        "orderHint": "Requests run top to bottom. Drag the handles to change this run’s order.",
+        "orderHint": "Requests run top to bottom. Drag a row to change this run’s order.",
         "continueOnFailure": "Continue on failure",
         "close": "Close",
         "cancel": "Stop run",

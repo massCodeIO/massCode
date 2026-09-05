@@ -46,6 +46,7 @@ export function readRequestRuntime(
       && typeof value === 'object'
       && 'version' in value
       && value.version !== 1
+      && value.version !== 2
     ) {
       return {
         runtime: null,

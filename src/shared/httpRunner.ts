@@ -1,5 +1,6 @@
 import type { HttpMethod } from '../main/types/http'
 import type { HttpRuntimeResult } from './httpRuntime'
+import type { HttpScriptResult } from './httpScripts'
 import { z } from 'zod'
 
 export const httpRunPrepareSchema = z.object({
@@ -33,6 +34,7 @@ export interface HttpRunStep {
   state: HttpRunStepStatus
   status?: number | null
   durationMs?: number
+  scripts?: HttpScriptResult[]
   assertions?: HttpRuntimeResult[]
   extractions?: HttpRuntimeResult[]
   error?: 'transport' | 'contextChanged'

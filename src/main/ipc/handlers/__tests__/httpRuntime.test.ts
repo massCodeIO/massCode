@@ -1,8 +1,11 @@
 import type { HttpExecutePayload } from '../../../types/http'
+import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetHttpSession } from '../../../http/runtime/session'
 import { registerHttpHandlers } from '../http'
+
+const event = { sender: Object.assign(new EventEmitter(), { id: 1 }) }
 
 const mocks = vi.hoisted(() => ({
   handle: vi.fn(),
@@ -77,11 +80,11 @@ describe('hTTP runtime execution', () => {
   it('extracts login token and uses it in the next request, masking history', async () => {
     const execute = getHandler()
     mocks.request.mockResolvedValueOnce(response('{"token":"secret token"}'))
-    const first = await execute(null, payload)
+    const first = await execute(event, payload)
     expect(first.sessionNames).toEqual(['token'])
     expect(first.runtimeResults.assertions[0].ok).toBe(true)
     mocks.request.mockResolvedValueOnce(response('{}'))
-    const second = await execute(null, {
+    const second = await execute(event, {
       ...payload,
       request: {
         ...payload.request,
@@ -95,7 +98,7 @@ describe('hTTP runtime execution', () => {
   it('executes draft assertions and extractions without replacing saved rules', async () => {
     const execute = getHandler()
     mocks.request.mockResolvedValueOnce(response('{"value":"draft-value"}'))
-    const result = await execute(null, {
+    const result = await execute(event, {
       ...payload,
       runtime: {
         version: 1,
@@ -115,7 +118,7 @@ describe('hTTP runtime execution', () => {
     ])
     expect(result.sessionNames).toEqual(['draft'])
     mocks.request.mockResolvedValueOnce(response('{"token":"saved-value"}'))
-    const savedResult = await execute(null, payload)
+    const savedResult = await execute(event, payload)
     expect(savedResult.runtimeResults.assertions).toMatchObject([
       { name: 'status', ok: true },
     ])
@@ -126,7 +129,7 @@ describe('hTTP runtime execution', () => {
 
   it('honors an empty draft instead of running saved rules', async () => {
     mocks.request.mockResolvedValueOnce(response('{}'))
-    const result = await getHandler()(null, {
+    const result = await getHandler()(event, {
       ...payload,
       runtime: { version: 1, extractions: [], assertions: [] },
     })
@@ -135,7 +138,7 @@ describe('hTTP runtime execution', () => {
 
   it('rejects invalid draft rules before network or history effects', async () => {
     await expect(
-      getHandler()(null, {
+      getHandler()(event, {
         ...payload,
         runtime: {
           version: 1,
@@ -154,7 +157,7 @@ describe('hTTP runtime execution', () => {
       mocks.request.mockResolvedValueOnce(
         response('{"token":"sensitive-token"}'),
       )
-      await execute(null, payload)
+      await execute(event, payload)
       const failedRequest
         = failure === 'invalid-url'
           ? { ...payload.request, url: 'not a URL' }
@@ -169,7 +172,7 @@ describe('hTTP runtime execution', () => {
                 },
               ],
             }
-      const failed = await execute(null, {
+      const failed = await execute(event, {
         ...payload,
         request: failedRequest,
       })
@@ -178,7 +181,7 @@ describe('hTTP runtime execution', () => {
       expect(failed.error).not.toContain('sensitive-token')
       expect(mocks.request).toHaveBeenCalledTimes(1)
       mocks.request.mockResolvedValueOnce(response('{}'))
-      await execute(null, payload)
+      await execute(event, payload)
       expect(mocks.request).toHaveBeenCalledTimes(2)
     },
   )
@@ -186,7 +189,7 @@ describe('hTTP runtime execution', () => {
     'fails closed when runtime is %s',
     async (state) => {
       mocks.runtimeState = state
-      await expect(getHandler()(null, payload)).rejects.toThrow(
+      await expect(getHandler()(event, payload)).rejects.toThrow(
         'HTTP_RUNTIME_UNAVAILABLE',
       )
       expect(mocks.request).not.toHaveBeenCalled()
@@ -200,8 +203,8 @@ describe('hTTP runtime execution', () => {
       }),
     )
     const execute = getHandler()
-    const pending = execute(null, payload)
-    await expect(execute(null, payload)).rejects.toThrow(
+    const pending = execute(event, payload)
+    await expect(execute(event, payload)).rejects.toThrow(
       'HTTP_REQUEST_RUNNING',
     )
     getHandler('spaces:http:clear-session')()
@@ -217,7 +220,7 @@ describe('hTTP runtime execution', () => {
         resolve = done
       }),
     )
-    const pending = getHandler()(null, payload)
+    const pending = getHandler()(event, payload)
     mocks.vault = '/other-vault'
     resolve(response('{"token":"stale"}'))
     expect((await pending).discarded).toBe(true)

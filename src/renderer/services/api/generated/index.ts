@@ -603,7 +603,13 @@ export interface HttpFoldersUpdate {
 }
 
 export interface HttpRuntime {
-  version: 1;
+  scripts?: {
+    /** @maxLength 65536 */
+    preRequest: string;
+    /** @maxLength 65536 */
+    postResponse: string;
+  };
+  version: 1 | 2;
   /** @maxItems 100 */
   extractions: {
     name: string;
@@ -650,7 +656,13 @@ export interface HttpRuntime {
 
 export interface HttpRuntimeSave {
   runtime: {
-    version: 1;
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
     /** @maxItems 100 */
     extractions: {
       name: string;
@@ -704,7 +716,13 @@ export interface HttpRuntimeSaveResponse {
 export interface HttpRequestItemResponse {
   runtimeRevision: string | null;
   runtime: {
-    version: 1;
+    scripts?: {
+      /** @maxLength 65536 */
+      preRequest: string;
+      /** @maxLength 65536 */
+      postResponse: string;
+    };
+    version: 1 | 2;
     /** @maxItems 100 */
     extractions: {
       name: string;

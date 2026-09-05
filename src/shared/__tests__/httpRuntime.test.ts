@@ -142,7 +142,7 @@ describe('hTTP runtime schema', () => {
   })
 
   it('rejects unsupported versions and over-limit collections', () => {
-    expect(isHttpRuntime({ ...emptyHttpRuntime(), version: 2 })).toBe(false)
+    expect(isHttpRuntime({ ...emptyHttpRuntime(), version: 3 })).toBe(false)
     expect(
       isHttpRuntime({
         ...emptyHttpRuntime(),
@@ -151,6 +151,23 @@ describe('hTTP runtime schema', () => {
           source: 'json',
           path: '',
         })),
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('script runtime versioning', () => {
+  it('requires version 2 for scripts so older clients fail closed', () => {
+    const scripts = { preRequest: 'mc.assert(true)', postResponse: '' }
+    expect(isHttpRuntime({ ...emptyHttpRuntime(), scripts })).toBe(false)
+    expect(isHttpRuntime({ ...emptyHttpRuntime(), version: 2, scripts })).toBe(
+      true,
+    )
+    expect(
+      isHttpRuntime({
+        ...emptyHttpRuntime(),
+        version: 2,
+        scripts: { ...scripts, preRequest: 'x'.repeat(65537) },
       }),
     ).toBe(false)
   })

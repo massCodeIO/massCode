@@ -1,5 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http'
 import type { Dispatcher } from 'undici'
+import type { HttpScriptResult } from '../../../shared/httpScripts'
 import type {
   HttpAuth,
   HttpBodyType,
@@ -20,6 +21,7 @@ import {
   emptyHttpRuntime,
   httpRuntimeSchema,
 } from '../../../shared/httpRuntime'
+import { hasHttpScripts } from '../../../shared/httpScripts'
 import {
   HTTP_SECRET_MASK,
   interpolateHttpVariables,
@@ -27,6 +29,8 @@ import {
 } from '../../../shared/httpVariables'
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { executeScript } from '../scripts/execute'
+import { scriptsTrusted } from '../scripts/trust'
 import { getEnvironmentSecrets } from '../secrets'
 import { evaluateHttpRuntime } from './evaluate'
 import {
@@ -464,6 +468,7 @@ export interface HttpRunContext {
 export async function executeHttpRequest(
   payload: HttpExecutePayload,
   run?: HttpRunContext,
+  signal?: AbortSignal,
 ): Promise<HttpExecuteResult> {
   const vaultPath = getVaultPath()
   const storage = useHttpStorage()
@@ -493,8 +498,10 @@ export async function executeHttpRequest(
         names: Object.keys(run.variables),
       }
     : getHttpSession(vaultPath, payload.environmentId)
+  signal ??= run?.signal
   const current = () =>
-    (run
+    !signal?.aborted
+    && (run
       ? !run.signal.aborted && run.isCurrent()
       : isHttpSessionCurrent(session.generation))
     && getVaultPath() === vaultPath
@@ -521,7 +528,31 @@ export async function executeHttpRequest(
     maskHttpSecretVariables(session.variables, session.names),
   )
   secretValues.push(...sessionSecrets)
-  const interpolated = interpolateRequest(payload.request, variables)
+  let interpolated = interpolateRequest(payload.request, variables)
+  const scripted = hasHttpScripts(runtime.scripts)
+  const scriptResults: HttpScriptResult[] = []
+  const pendingValues = new Map<string, string | null>()
+  const scriptRequest = {
+    method: payload.request.method,
+    url: payload.request.url,
+    body: payload.request.body,
+    headers: payload.request.headers,
+  }
+  const applyValues = (values: Record<string, string | null>) => {
+    for (const [key, value] of Object.entries(values)) {
+      pendingValues.set(key, value)
+      if (value === null) {
+        delete variables[key]
+        delete maskedVariables[key]
+      }
+      else {
+        variables[key] = value
+        maskedVariables[key] = HTTP_SECRET_MASK
+        if (value)
+          secretValues.push(value)
+      }
+    }
+  }
 
   // URL для истории строится по той же схеме, но из маскированных значений:
   // в vault не должно попасть ни сырое, ни percent-encoded значение секрета.
@@ -540,14 +571,83 @@ export async function executeHttpRequest(
   const timeoutMs = payload.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const controller = new AbortController()
   const abort = () => controller.abort()
-  run?.signal.addEventListener('abort', abort, { once: true })
-  if (run?.signal.aborted)
+  signal?.addEventListener('abort', abort, { once: true })
+  if (signal?.aborted)
     abort()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const contextTimer = setInterval(() => {
+    if (!current())
+      controller.abort()
+  }, 100)
+  const phase = async (
+    name: 'preRequest' | 'postResponse',
+    response: unknown = null,
+  ) => {
+    const code = runtime.scripts?.[name]
+    if (!code?.trim())
+      return true
+    if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      scriptResults.push({ phase: name, tests: [], error: 'untrusted' })
+      return false
+    }
+    const execution = await executeScript(
+      code,
+      { request: scriptRequest, response, variables },
+      controller.signal,
+    )
+    if (execution.error) {
+      scriptResults.push({ phase: name, tests: [], error: execution.error })
+      return false
+    }
+    applyValues(execution.output.variables)
+    const tests = execution.output.tests.map(test => ({
+      ...test,
+      name: maskSecretValues(test.name, secretValues),
+    }))
+    scriptResults.push({ phase: name, tests })
+    return tests.every(test => test.ok)
+  }
   const startedAt = Date.now()
   const startedAtPerf = performance.now()
 
   try {
+    if (scripted) {
+      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+        scriptResults.push({
+          phase: runtime.scripts?.preRequest.trim()
+            ? 'preRequest'
+            : 'postResponse',
+          tests: [],
+          error: 'untrusted',
+        })
+        throw new Error('HTTP_SCRIPT_FAILED')
+      }
+      if (!(await phase('preRequest')))
+        throw new Error('HTTP_SCRIPT_FAILED')
+      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+        scriptResults.push({
+          phase: 'preRequest',
+          tests: [],
+          error: 'untrusted',
+        })
+        throw new Error('HTTP_SCRIPT_FAILED')
+      }
+      const next = interpolateRequest(payload.request, variables)
+      if (
+        new URL(buildUrl(next.url, next.query)).origin
+          !== new URL(buildUrl(interpolated.url, interpolated.query)).origin
+      ) {
+        scriptResults.push({
+          phase: 'preRequest',
+          tests: [],
+          error: 'destination',
+        })
+        throw new Error('HTTP_SCRIPT_FAILED')
+      }
+      interpolated = next
+    }
+    if (controller.signal.aborted)
+      throw new DOMException('', 'AbortError')
     const headersWithAuth = applyAuth(interpolated.auth, interpolated.headers)
     const headersObj = toHeadersObject(headersWithAuth)
     const built = buildBody(
@@ -566,7 +666,7 @@ export async function executeHttpRequest(
       headers: headersObj,
       body: built.body as Dispatcher.DispatchOptions['body'],
       signal: controller.signal,
-      maxRedirections: 5,
+      maxRedirections: scripted ? 0 : 5,
       ...(payload.skipCertificateVerification
         ? { dispatcher: insecureCertificateDispatcher }
         : {}),
@@ -597,8 +697,45 @@ export async function executeHttpRequest(
     if (!current())
       return { ...result, body: '', headers: [], discarded: true }
     const evaluated = evaluateHttpRuntime(runtime, result)
-    result.sessionNames = commitValues(evaluated.values)
     result.runtimeResults = evaluated.results
+    if (scripted) {
+      applyValues(Object.fromEntries(evaluated.values))
+      const completed = await phase('postResponse', {
+        status: result.status,
+        headers: result.headers,
+        body: result.body,
+        bodyKind: result.bodyKind,
+        truncated: result.truncated,
+        durationMs: result.durationMs,
+      })
+      result.scriptResults = scriptResults
+      if (!current()) {
+        return {
+          ...result,
+          body: '',
+          headers: [],
+          scriptResults: [],
+          discarded: true,
+        }
+      }
+      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+        scriptResults.push({
+          phase: 'postResponse',
+          tests: [],
+          error: 'untrusted',
+        })
+      }
+      if (
+        completed
+        && !controller.signal.aborted
+        && !scriptResults.some(phase => phase.error)
+      ) {
+        result.sessionNames = commitValues(pendingValues)
+      }
+    }
+    else {
+      result.sessionNames = commitValues(evaluated.values)
+    }
 
     if (!run) {
       appendHistory(
@@ -671,18 +808,27 @@ export async function executeHttpRequest(
       truncated: false,
       error: isAbort
         ? `Timeout after ${timeoutMs}ms`
-        : secretValues.length
-          ? HTTP_SECRET_MASK
-          : message,
+        : message === 'HTTP_SCRIPT_FAILED'
+          ? 'HTTP_SCRIPT_FAILED'
+          : secretValues.length
+            ? HTTP_SECRET_MASK
+            : message,
     }
-    const evaluated = evaluateHttpRuntime(runtime, result)
-    result.sessionNames = commitValues(evaluated.values)
-    result.runtimeResults = evaluated.results
+    if (scripted) {
+      result.scriptResults = scriptResults
+      result.runtimeResults = { assertions: [], extractions: [] }
+    }
+    else {
+      const evaluated = evaluateHttpRuntime(runtime, result)
+      result.runtimeResults = evaluated.results
+      result.sessionNames = commitValues(evaluated.values)
+    }
     return result
   }
   finally {
     clearTimeout(timer)
-    run?.signal.removeEventListener('abort', abort)
+    clearInterval(contextTimer)
+    signal?.removeEventListener('abort', abort)
   }
 }
 

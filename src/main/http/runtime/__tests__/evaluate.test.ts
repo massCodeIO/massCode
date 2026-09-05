@@ -249,7 +249,7 @@ describe('hTTP declarative runtime', () => {
 
   it('validates shape, pointers, names, limits and expected types', () => {
     expect(isHttpRuntime(emptyHttpRuntime())).toBe(true)
-    expect(isHttpRuntime({ ...emptyHttpRuntime(), version: 2 })).toBe(false)
+    expect(isHttpRuntime({ ...emptyHttpRuntime(), version: 3 })).toBe(false)
     expect(
       isHttpRuntime({
         ...emptyHttpRuntime(),

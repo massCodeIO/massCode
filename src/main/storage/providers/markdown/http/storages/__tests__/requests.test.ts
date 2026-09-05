@@ -232,7 +232,7 @@ describe('http requests storage', () => {
       storage.getRequestById(id)!,
     )
     const rules = { version: 1 as const, extractions: [], assertions: [] }
-    fs.writeFileSync(sidecar, 'version: 2\nfuture: keep\n')
+    fs.writeFileSync(sidecar, 'version: 3\nfuture: keep\n')
     expect(storage.getRequestById(id)?.runtimeState).toBe('unsupported')
     expect(() => storage.updateRuntime(id, rules, 'missing')).toThrow(
       'RUNTIME_UNAVAILABLE',

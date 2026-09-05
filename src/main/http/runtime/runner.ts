@@ -233,6 +233,7 @@ export async function startHttpRun(
           active.view.state = 'cancelled'
           break
         }
+        step.scripts = result.scriptResults
         step.status = result.status
         step.durationMs = result.durationMs
         step.assertions = result.runtimeResults?.assertions ?? []
@@ -241,6 +242,9 @@ export async function startHttpRun(
           step.error = 'transport'
         const failed
           = !!result.error
+            || !!step.scripts?.some(
+              phase => phase.error || phase.tests.some(test => !test.ok),
+            )
             || result.status === null
             || result.status >= 400
             || [...step.assertions, ...step.extractions].some(check => !check.ok)

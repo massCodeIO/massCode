@@ -113,6 +113,7 @@
     "nearest-color": "^0.4.4",
     "onigasm": "^2.2.5",
     "prettier": "^3.5.3",
+    "quickjs-emscripten": "0.31.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "reka-ui": "^2.9.0",

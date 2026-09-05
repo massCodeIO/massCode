@@ -1,4 +1,5 @@
 import type { HttpRuntime, HttpRuntimeResult } from '../../shared/httpRuntime'
+import type { HttpScriptResult } from '../../shared/httpScripts'
 
 export type HttpMethod =
   | 'GET'
@@ -88,6 +89,7 @@ export interface HttpSecretMutationResult {
 export type HttpResponseBodyKind = 'text' | 'json' | 'binary'
 
 export interface HttpExecuteResult {
+  scriptResults?: HttpScriptResult[]
   runtimeResults?: {
     extractions: HttpRuntimeResult[]
     assertions: HttpRuntimeResult[]

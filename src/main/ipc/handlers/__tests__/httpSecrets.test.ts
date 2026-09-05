@@ -1,6 +1,9 @@
+import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerHttpHandlers, resolveEnvironment } from '../http'
+
+const event = { sender: Object.assign(new EventEmitter(), { id: 1 }) }
 
 const SECRET_VALUE = 'ab+cd/ef=gh ij'
 const SECRET_HOST = 'secret-host.internal'
@@ -151,7 +154,7 @@ describe('http secrets in request execution', () => {
 
     const handler = getExecuteHandler()
     await handler(
-      null,
+      event,
       buildPayload('{{BASE_URL}}/items', [
         { key: 'token', value: '{{API_KEY}}' },
       ]),
@@ -177,7 +180,7 @@ describe('http secrets in request execution', () => {
 
     const handler = getExecuteHandler()
     await handler(
-      null,
+      event,
       buildPayload('https://example.test/items', [
         { key: 'token', value: '{{API_KEY}}' },
       ]),
@@ -201,7 +204,7 @@ describe('http secrets in request execution', () => {
 
     const handler = getExecuteHandler()
     const result = await handler(
-      null,
+      event,
       buildPayload('https://{{API_KEY}}/items', []),
     )
 
@@ -217,7 +220,7 @@ describe('http secrets in request execution', () => {
     )
 
     const result = await getExecuteHandler()(
-      null,
+      event,
       buildPayload('https://{{API_KEY}}/items', []),
     )
 
@@ -242,7 +245,7 @@ describe('set-secret ordering', () => {
     })
 
     const handler = getHandler('spaces:http:set-secret')
-    const result = await handler(null, {
+    const result = await handler(event, {
       environmentId: 1,
       key: 'API_KEY',
       value: 'plain-value',
@@ -256,7 +259,7 @@ describe('set-secret ordering', () => {
     addSecretKeyMock.mockReturnValue({ notFound: true })
 
     const handler = getHandler('spaces:http:set-secret')
-    const result = await handler(null, {
+    const result = await handler(event, {
       environmentId: 1,
       key: 'API_KEY',
       value: 'plain-value',
@@ -268,7 +271,7 @@ describe('set-secret ordering', () => {
 
   it('encrypts the value before dropping the plain one from the vault', async () => {
     const handler = getHandler('spaces:http:set-secret')
-    const result = await handler(null, {
+    const result = await handler(event, {
       environmentId: 1,
       key: 'API_KEY',
       value: 'plain-value',
@@ -324,7 +327,7 @@ describe('set-secret ordering', () => {
     })
 
     const handler = getHandler('spaces:http:set-secret')
-    const result = await handler(null, {
+    const result = await handler(event, {
       environmentId: 1,
       key: 'API_KEY',
       value: 'plain-value',
@@ -346,7 +349,7 @@ describe('delete-secret', () => {
 
   it('removes the key and the local value', async () => {
     const handler = getHandler('spaces:http:delete-secret')
-    const result = await handler(null, { environmentId: 1, key: ' API_KEY ' })
+    const result = await handler(event, { environmentId: 1, key: ' API_KEY ' })
 
     expect(result).toEqual({ ok: true })
     expect(removeSecretKeyMock).toHaveBeenCalledWith(1, 'API_KEY')
@@ -357,7 +360,7 @@ describe('delete-secret', () => {
     removeSecretKeyMock.mockReturnValue({ notFound: true })
 
     const handler = getHandler('spaces:http:delete-secret')
-    const result = await handler(null, { environmentId: 2, key: 'API_KEY' })
+    const result = await handler(event, { environmentId: 2, key: 'API_KEY' })
 
     expect(result).toEqual({ error: 'notFound', ok: false })
     expect(deleteSecretMock).not.toHaveBeenCalled()

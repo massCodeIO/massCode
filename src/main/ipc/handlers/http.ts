@@ -179,18 +179,38 @@ function unprotectEnvironmentSecretHandler(
   return { ok: true }
 }
 
+const manualExecutions = new Map<number, AbortController>()
 export function registerHttpHandlers(): void {
+  ipcMain.handle('spaces:http:cancel', event =>
+    manualExecutions.get(event.sender.id)?.abort())
   registerHttpRunnerHandlers()
   registerHttpWebSocketHandlers()
   ipcMain.handle(
     'spaces:http:execute',
-    async (_, payload: HttpExecutePayload) => {
+    async (event, payload: HttpExecutePayload) => {
       if (!beginHttpExecution())
         throw new Error('HTTP_REQUEST_RUNNING')
+      const controller = new AbortController()
+      const abort = () => controller.abort()
+      manualExecutions.set(event.sender.id, controller)
+      const onNavigation = (
+        _event: unknown,
+        _url: string,
+        isInPlace: boolean,
+        isMainFrame: boolean,
+      ) => {
+        if (isMainFrame && !isInPlace)
+          abort()
+      }
+      event.sender.once('destroyed', abort)
+      event.sender.on('did-start-navigation', onNavigation)
       try {
-        return await executeHttpRequest(payload)
+        return await executeHttpRequest(payload, undefined, controller.signal)
       }
       finally {
+        event.sender.removeListener('destroyed', abort)
+        event.sender.removeListener('did-start-navigation', onNavigation)
+        manualExecutions.delete(event.sender.id)
         finishHttpExecution()
       }
     },

@@ -78,7 +78,13 @@ const httpRequestsUpdate = t.Object({
 })
 
 const httpRuntime = t.Object({
-  version: t.Literal(1),
+  scripts: t.Optional(
+    t.Object({
+      preRequest: t.String({ maxLength: 65536 }),
+      postResponse: t.String({ maxLength: 65536 }),
+    }),
+  ),
+  version: t.Union([t.Literal(1), t.Literal(2)]),
   extractions: t.Array(
     t.Object({
       name: t.String(),

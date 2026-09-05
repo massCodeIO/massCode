@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { httpScriptsSchema } from './httpScripts'
 
 const nameSchema = z
   .string()
@@ -192,11 +193,14 @@ const assertionSchema = z
 
 export const httpRuntimeSchema = z
   .object({
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
+    scripts: httpScriptsSchema.optional(),
     extractions: z.array(extractionSchema).max(100),
     assertions: z.array(assertionSchema).max(100),
   })
   .superRefine((runtime, ctx) => {
+    if (runtime.scripts && runtime.version !== 2)
+      ctx.addIssue({ code: 'custom', path: ['scripts'], message: 'version' })
     const names = new Map<string, number[]>()
     runtime.extractions.forEach((rule, index) => {
       const indices = names.get(rule.name) ?? []

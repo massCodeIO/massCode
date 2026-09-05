@@ -9,6 +9,8 @@ description: Send GraphQL queries and mutations with variables, operation select
 
 Open **Body** and choose **GraphQL** as the body type. This sets the HTTP method to **POST**. GraphQL uses the same HTTP client as other requests.
 
+<img :src="withBase('/http-graphql.png')" alt="GraphQL query with JSON variables, operation selection and a successful response">
+
 ## Send a query or mutation
 
 1. Enter your endpoint URL and configure **Headers** or **Auth** as needed.
@@ -61,3 +63,7 @@ HTTP, curl, fetch and axios previews generate the wire JSON envelope. As with ot
 - Collection import does not convert external GraphQL requests into this editor automatically.
 
 GraphQL makes no background requests and requires no account or cloud service.
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>

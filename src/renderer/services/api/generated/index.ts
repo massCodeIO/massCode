@@ -1023,6 +1023,11 @@ export interface HttpImportPreviewResponse {
     index: number;
     name: string;
     requests: number;
+    runtime: {
+      name: string;
+      assertions: number;
+      scripts: "none" | "converted" | "blocked";
+    }[];
   }[];
   environments: {
     index: number;

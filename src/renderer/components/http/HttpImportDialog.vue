@@ -116,6 +116,13 @@ async function previewFiles(selectedFiles: File[]) {
   lastSummary.value = null
   isPreviewing.value = true
   try {
+    if (
+      selectedFiles.length > 1000
+      || selectedFiles.reduce((size, file) => size + file.size, 0)
+      > 16 * 1024 * 1024
+    ) {
+      throw new Error(i18n.t('spaces.http.import.runtimeWarnings.fileLimit'))
+    }
     files.value = await Promise.all(selectedFiles.map(readFile))
     const { data } = await api.httpImport.postHttpImportPreview({
       files: files.value,
@@ -126,7 +133,7 @@ async function previewFiles(selectedFiles: File[]) {
     preview.value = null
     errorMessage.value
       = error instanceof Error
-        ? error.message
+        ? i18n.t(error.message, { defaultValue: error.message })
         : i18n.t('spaces.http.import.error')
   }
   finally {
@@ -169,7 +176,7 @@ async function applyImport() {
   catch (error) {
     errorMessage.value
       = error instanceof Error
-        ? error.message
+        ? i18n.t(error.message, { defaultValue: error.message })
         : i18n.t('spaces.http.import.error')
   }
   finally {
@@ -407,6 +414,8 @@ async function applyImport() {
             </UiText>
           </div>
 
+          <HttpImportRuntimePreview :collections="preview.collections" />
+
           <Alert.Alert
             v-if="preview.warnings.length"
             class="border-warning/45 bg-warning/10 text-foreground"
@@ -423,7 +432,9 @@ async function applyImport() {
                   class="text-xs leading-5"
                 >
                   <span class="font-medium">{{ warning.source }}</span>:
-                  {{ warning.message }}
+                  {{
+                    i18n.t(warning.message, { defaultValue: warning.message })
+                  }}
                 </li>
               </ul>
             </Alert.AlertDescription>

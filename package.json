@@ -79,6 +79,7 @@
     "@vue-flow/core": "^1.46.5",
     "@vue-flow/minimap": "^1.5.4",
     "@vueuse/core": "^12.7.0",
+    "acorn": "8.15.0",
     "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "chokidar": "^4.0.3",

@@ -1,4 +1,5 @@
 import type { HttpAuth, HttpHeaderEntry } from '../../types/http'
+import type { ImportedScript } from './runtime/scripts'
 import type {
   HttpImportCollection,
   HttpImportEnvironment,
@@ -8,6 +9,7 @@ import type {
   HttpImportResult,
   HttpImportWarning,
 } from './types'
+import { validateImportFiles, validateImportTree } from './limits'
 import {
   addWarning,
   createEmptyRequestParts,
@@ -17,10 +19,16 @@ import {
   resolveAuthConflict,
   splitUrlAndQuery,
 } from './normalize'
+import {
+  buildImportedRuntime,
+  postmanScripts,
+  runtimeWarning,
+} from './runtime'
 
 type UnknownRecord = Record<string, unknown>
 
 interface PostmanContext {
+  scripts: ImportedScript[]
   auth: HttpAuth
 }
 
@@ -38,7 +46,9 @@ function asString(value: unknown): string {
 
 function readJsonFile(file: HttpImportFile, warnings: HttpImportWarning[]) {
   try {
-    return JSON.parse(file.content) as unknown
+    const raw: unknown = JSON.parse(file.content)
+    validateImportTree(raw)
+    return raw
   }
   catch {
     addWarning(warnings, file.name, 'Invalid JSON skipped')
@@ -305,10 +315,19 @@ function parseRequest(
   )
   const body = parseBody(request.body, source, warnings)
   const parts = createEmptyRequestParts()
+  const scripts = [
+    ...context.scripts,
+    ...postmanScripts(item.event, source, warnings),
+  ]
+  if (item.variable !== undefined) {
+    runtimeWarning(warnings, source, 'scopedVariables')
+    scripts.push({ source, phase: 'preRequest', code: '', invalid: true })
+  }
 
   return {
     ...parts,
     ...body,
+    ...buildImportedRuntime(scripts, 'postman', source, warnings),
     auth,
     description: asString(request.description),
     folderId,
@@ -330,6 +349,8 @@ function walkItems(
   warnings: HttpImportWarning[],
 ): void {
   for (const [index, item] of items.entries()) {
+    if (collection.requests.length >= 1000)
+      throw new Error('spaces.http.import.runtimeWarnings.fileLimit')
     if (!isRecord(item)) {
       continue
     }
@@ -337,13 +358,37 @@ function walkItems(
     const name = normalizeImportName(item.name, `Item ${index + 1}`)
     const source = `${sourcePath}/${name}`
     const itemAuth = parseAuth(item.auth, source, warnings)
-    const nextContext = itemAuth ? { auth: itemAuth } : context
+    const nextContext = { ...context, auth: itemAuth ?? context.auth }
 
     if (Array.isArray(item.item)) {
+      if (item.variable !== undefined) {
+        runtimeWarning(warnings, source, 'scopedVariables')
+        nextContext.scripts = [
+          ...nextContext.scripts,
+          { source, phase: 'preRequest', code: '', invalid: true },
+        ]
+      }
       const id = asString(item.id || item._postman_id) || `${source}:${index}`
       const folder: HttpImportFolder = { id, name, parentId }
       collection.folders.push(folder)
-      walkItems(item.item, collection, id, nextContext, source, warnings)
+      if (source.split('/').length > 32) {
+        runtimeWarning(warnings, source, 'depthLimit')
+        continue
+      }
+      walkItems(
+        item.item,
+        collection,
+        id,
+        {
+          ...nextContext,
+          scripts: [
+            ...nextContext.scripts,
+            ...postmanScripts(item.event, source, warnings),
+          ],
+        },
+        source,
+        warnings,
+      )
       continue
     }
 
@@ -371,11 +416,19 @@ function parseCollection(
     requests: [],
   }
 
-  walkItems(asArray(raw.item), collection, null, { auth }, name, warnings)
+  walkItems(
+    asArray(raw.item),
+    collection,
+    null,
+    { auth, scripts: postmanScripts(raw.event, name, warnings) },
+    name,
+    warnings,
+  )
   return collection
 }
 
 export function parsePostmanFiles(files: HttpImportFile[]): HttpImportResult {
+  validateImportFiles(files)
   const warnings: HttpImportWarning[] = []
   const collections: HttpImportCollection[] = []
   const environments: HttpImportEnvironment[] = []

@@ -3,6 +3,7 @@ import type {
   HttpHeaderEntry,
   HttpQueryEntry,
 } from '../../types/http'
+import type { BrunoScope } from './runtime'
 import type {
   HttpImportCollection,
   HttpImportEnvironment,
@@ -13,6 +14,7 @@ import type {
   HttpImportWarning,
 } from './types'
 import yaml from 'js-yaml'
+import { validateImportFiles, validateImportTree } from './limits'
 import {
   addWarning,
   createEmptyRequestParts,
@@ -22,6 +24,13 @@ import {
   resolveAuthConflict,
   splitUrlAndQuery,
 } from './normalize'
+import {
+  brunoScripts,
+  buildImportedRuntime,
+  record,
+  runtimeWarning,
+} from './runtime'
+import { brunoAssertions } from './runtime/assertions'
 
 type UnknownRecord = Record<string, unknown>
 
@@ -85,7 +94,9 @@ function isInsideRoot(path: string, rootDir: string): boolean {
 
 function readYaml(file: HttpImportFile, warnings: HttpImportWarning[]) {
   try {
-    return yaml.load(file.content) as unknown
+    const raw: unknown = yaml.load(file.content, { schema: yaml.JSON_SCHEMA })
+    validateImportTree(raw)
+    return raw
   }
   catch {
     addWarning(warnings, file.name, 'Invalid YAML skipped')
@@ -357,6 +368,8 @@ function parseRequest(
   raw: UnknownRecord,
   folderId: string | null,
   warnings: HttpImportWarning[],
+  scopes: BrunoScope[] = [],
+  sequential = false,
 ): HttpImportRequest | null {
   const info = getInfo(raw)
   const http = isRecord(raw.http) ? raw.http : {}
@@ -383,18 +396,34 @@ function parseRequest(
   const body = parseBody(http.body, source, warnings)
   const parts = createEmptyRequestParts()
 
-  if (isRecord(raw.runtime)) {
-    if (Array.isArray(raw.runtime.scripts)) {
-      addWarning(warnings, source, 'Runtime scripts skipped')
-    }
-    if (Array.isArray(raw.runtime.assertions)) {
-      addWarning(warnings, source, 'Assertions skipped')
+  const runtimeScopes = [...scopes, { source, raw: raw.runtime }]
+  const scripts = brunoScripts(runtimeScopes, sequential)
+  for (const scope of runtimeScopes) {
+    const data = record(scope.raw)
+    if (data.variables !== undefined || data.actions !== undefined) {
+      runtimeWarning(warnings, scope.source, 'scopedVariables')
+      if (scripts.length) {
+        scripts.push({
+          source: scope.source,
+          phase: 'preRequest',
+          code: '',
+          invalid: true,
+        })
+      }
     }
   }
+  const importedRuntime = buildImportedRuntime(
+    scripts,
+    'bruno',
+    source,
+    warnings,
+    brunoAssertions(record(raw.runtime).assertions, source, warnings),
+  )
 
   return {
     ...parts,
     ...body,
+    ...importedRuntime,
     auth: resolveAuthConflict(headers, auth.auth, source, warnings),
     description: asString(raw.docs),
     folderId,
@@ -448,8 +477,16 @@ function parseBundledItems(
   parentId: string | null,
   source: string,
   warnings: HttpImportWarning[],
+  scopes: BrunoScope[] = [],
+  sequential = false,
 ) {
+  if (scopes.length > 32) {
+    runtimeWarning(warnings, source, 'depthLimit')
+    return
+  }
   for (const [index, item] of items.entries()) {
+    if (collection.requests.length >= 1000)
+      throw new Error('spaces.http.import.runtimeWarnings.fileLimit')
     if (!isRecord(item))
       continue
 
@@ -464,7 +501,15 @@ function parseBundledItems(
         parentId,
       }
       collection.folders.push(folder)
-      parseBundledItems(childItems, collection, folder.id, source, warnings)
+      parseBundledItems(
+        childItems,
+        collection,
+        folder.id,
+        `${source}/${name}`,
+        warnings,
+        [...scopes, { source: `${source}/${name}`, raw: item.request }],
+        sequential,
+      )
       continue
     }
 
@@ -476,6 +521,8 @@ function parseBundledItems(
       item,
       parentId,
       warnings,
+      scopes,
+      sequential,
     )
     if (request) {
       collection.requests.push(request)
@@ -499,7 +546,15 @@ function parseBundledCollection(
     requests: [],
   }
 
-  parseBundledItems(asArray(raw.items), collection, null, file.name, warnings)
+  parseBundledItems(
+    asArray(raw.items),
+    collection,
+    null,
+    file.name,
+    warnings,
+    [{ source: file.name, raw: raw.request }],
+    record(record(record(raw.extensions).bruno).scripts).flow === 'sequential',
+  )
 
   const variables = parseEnvironmentVariables(raw.variables ?? raw.vars)
   const environment
@@ -516,6 +571,7 @@ function parseBundledCollection(
 export function parseOpenCollectionFiles(
   files: HttpImportFile[],
 ): HttpImportResult {
+  validateImportFiles(files)
   const warnings: HttpImportWarning[] = []
   const yamlFiles = files.filter(isYamlFile)
   const parsedFiles = yamlFiles
@@ -533,7 +589,7 @@ export function parseOpenCollectionFiles(
       isBundledCollection(entry.raw),
   )
   if (rootEntries.length === 0 && bundledEntries.length === 0) {
-    return { collections: [], environments: [], warnings: [] }
+    return { collections: [], environments: [], warnings }
   }
 
   const collections: HttpImportCollection[] = []
@@ -567,6 +623,7 @@ export function parseOpenCollectionFiles(
       requests: [],
     }
     const folderNames = new Map<string, string>()
+    const folderScopes = new Map<string, BrunoScope>()
 
     for (const entry of rootFiles) {
       const relativePath = stripRootDir(entry.file.name, rootDir)
@@ -575,6 +632,10 @@ export function parseOpenCollectionFiles(
 
       const folderPath = dirname(relativePath)
       const info = getInfo(entry.raw)
+      folderScopes.set(folderPath, {
+        source: entry.file.name,
+        raw: record(entry.raw).request,
+      })
       folderNames.set(
         folderPath,
         normalizeImportName(info.name, basename(folderPath)),
@@ -601,7 +662,27 @@ export function parseOpenCollectionFiles(
         folderNames,
         dirname(relativePath),
       )
-      const request = parseRequest(relativeFile, entry.raw, folderId, warnings)
+      const rootRaw = record(rootEntry.raw)
+      const scopes: BrunoScope[] = [
+        { source: rootEntry.file.name, raw: rootRaw.request },
+      ]
+      const segments = dirname(relativePath).split('/').filter(Boolean)
+      for (let i = 1; i <= segments.length; i++) {
+        const scope = folderScopes.get(segments.slice(0, i).join('/'))
+        if (scope)
+          scopes.push(scope)
+      }
+      if (collection.requests.length >= 1000)
+        throw new Error('spaces.http.import.runtimeWarnings.fileLimit')
+      const request = parseRequest(
+        relativeFile,
+        entry.raw,
+        folderId,
+        warnings,
+        scopes,
+        record(record(record(rootRaw.extensions).bruno).scripts).flow
+        === 'sequential',
+      )
       if (request) {
         collection.requests.push(request)
       }

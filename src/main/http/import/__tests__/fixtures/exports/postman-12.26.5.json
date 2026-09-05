@@ -1,0 +1,128 @@
+{
+  "info": {
+    "_postman_id": "57ac338f-54c5-438b-b072-a9c3f374f044",
+    "name": "massCode Export Verification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1315995"
+  },
+  "item": [
+    {
+      "name": "Workflow",
+      "item": [
+        {
+          "name": "01 Passing tests",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set('order', pm.variables.get('order') + '/request');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.variables.set('token', data.token);",
+                  "pm.test('Token', function () { pm.expect(data.token).to.equal('demo-token'); });",
+                  "pm.test('Inherited setup', () => { pm.expect(data.received).to.equal('collection/folder/request'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{{order}}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:5189/echo",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "5189",
+              "path": [
+                "echo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 Failing test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Intentional failure', () => { pm.expect(pm.response.code).to.equal(201); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://127.0.0.1:5189/echo",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "5189",
+              "path": [
+                "echo"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.variables.set('order', pm.variables.get('order') + '/folder');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set('order', 'collection');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "pm.test('Collection status', () => { pm.expect(pm.response.code).to.equal(200); });"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}

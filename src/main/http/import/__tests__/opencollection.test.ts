@@ -92,7 +92,9 @@ variables:
       },
     ])
     expect(result.warnings).toContainEqual(
-      expect.objectContaining({ message: 'Runtime scripts skipped' }),
+      expect.objectContaining({
+        message: 'spaces.http.import.runtimeWarnings.unsupportedScript',
+      }),
     )
   })
 
@@ -250,7 +252,9 @@ items:
       }),
     ])
     expect(result.warnings).toContainEqual(
-      expect.objectContaining({ message: 'Runtime scripts skipped' }),
+      expect.objectContaining({
+        message: 'spaces.http.import.runtimeWarnings.unsupportedScript',
+      }),
     )
   })
 })

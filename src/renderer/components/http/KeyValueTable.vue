@@ -188,7 +188,7 @@ function duplicateRow(index: number) {
           </Popover.PopoverTrigger>
           <Popover.PopoverContent
             align="end"
-            class="w-40 p-1"
+            class="w-max max-w-(--reka-popover-content-available-width) min-w-[min(10rem,var(--reka-popover-content-available-width))] p-1"
           >
             <button
               v-if="duplicateRows"
@@ -196,16 +196,20 @@ function duplicateRow(index: number) {
               class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
               @click="duplicateRow(index)"
             >
-              <Copy class="h-3.5 w-3.5" />
-              {{ i18n.t("action.duplicate") }}
+              <Copy class="h-3.5 w-3.5 shrink-0" />
+              <UiText class="min-w-0 truncate leading-5 text-inherit">
+                {{ i18n.t("action.duplicate") }}
+              </UiText>
             </button>
             <button
               type="button"
               class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm"
               @click="removeRow(index)"
             >
-              <Trash2 class="h-3.5 w-3.5" />
-              {{ i18n.t("action.delete.common") }}
+              <Trash2 class="h-3.5 w-3.5 shrink-0" />
+              <UiText class="min-w-0 truncate leading-5 text-inherit">
+                {{ i18n.t("action.delete.common") }}
+              </UiText>
             </button>
           </Popover.PopoverContent>
         </Popover.Popover>

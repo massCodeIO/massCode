@@ -156,32 +156,44 @@ function onKeydown(event: KeyboardEvent) {
         </Popover.PopoverTrigger>
         <Popover.PopoverContent
           align="end"
-          class="w-36 p-1"
+          class="flex w-max max-w-(--reka-popover-content-available-width) min-w-[min(9rem,var(--reka-popover-content-available-width))] flex-col p-1"
         >
           <Button
             variant="ghost"
             size="sm"
-            class="w-full justify-start"
+            class="w-full min-w-0 justify-start"
             @click="selectCreateKind('note')"
           >
             <FileText class="h-4 w-4" />
-            {{ i18n.t("action.new.note") }}
+            <UiText
+              variant="base"
+              weight="medium"
+              class="min-w-0 truncate leading-5 text-inherit"
+            >
+              {{ i18n.t("action.new.note") }}
+            </UiText>
             <Check
-              v-if="notesCreateKind === 'note'"
               class="ml-auto h-4 w-4"
+              :class="{ invisible: notesCreateKind !== 'note' }"
             />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            class="w-full justify-start"
+            class="w-full min-w-0 justify-start"
             @click="selectCreateKind('task')"
           >
             <ListTodo class="h-4 w-4" />
-            {{ i18n.t("action.new.task") }}
+            <UiText
+              variant="base"
+              weight="medium"
+              class="min-w-0 truncate leading-5 text-inherit"
+            >
+              {{ i18n.t("action.new.task") }}
+            </UiText>
             <Check
-              v-if="notesCreateKind === 'task'"
               class="ml-auto h-4 w-4"
+              :class="{ invisible: notesCreateKind !== 'task' }"
             />
           </Button>
         </Popover.PopoverContent>

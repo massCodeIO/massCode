@@ -103,7 +103,7 @@ function run(command: EditorMenuCommand) {
 
 <template>
   <ContextMenu.ContextMenuContent
-    class="w-52"
+    class="w-max max-w-(--reka-context-menu-content-available-width) min-w-[min(13rem,var(--reka-context-menu-content-available-width))]"
     @close-auto-focus="emit('closeAutoFocus', $event)"
   >
     <!-- Format -->
@@ -112,7 +112,9 @@ function run(command: EditorMenuCommand) {
         <Bold />
         {{ i18n.t("notes.editor.menu.format.title") }}
       </ContextMenu.ContextMenuSubTrigger>
-      <ContextMenu.ContextMenuSubContent class="w-52">
+      <ContextMenu.ContextMenuSubContent
+        class="w-max max-w-(--reka-context-menu-content-available-width) min-w-[min(13rem,var(--reka-context-menu-content-available-width))]"
+      >
         <ContextMenu.ContextMenuItem @select="run('bold')">
           <Bold />
           {{ i18n.t("notes.editor.menu.format.bold") }}
@@ -172,7 +174,9 @@ function run(command: EditorMenuCommand) {
         <Table />
         {{ i18n.t("notes.editor.menu.table.title") }}
       </ContextMenu.ContextMenuSubTrigger>
-      <ContextMenu.ContextMenuSubContent class="w-56">
+      <ContextMenu.ContextMenuSubContent
+        class="w-max max-w-(--reka-context-menu-content-available-width) min-w-[min(14rem,var(--reka-context-menu-content-available-width))]"
+      >
         <ContextMenu.ContextMenuItem
           :disabled="props.table.isHeader"
           @select="run('table-insert-row-above')"
@@ -238,7 +242,9 @@ function run(command: EditorMenuCommand) {
         <Pilcrow />
         {{ i18n.t("notes.editor.menu.paragraph.title") }}
       </ContextMenu.ContextMenuSubTrigger>
-      <ContextMenu.ContextMenuSubContent class="w-52">
+      <ContextMenu.ContextMenuSubContent
+        class="w-max max-w-(--reka-context-menu-content-available-width) min-w-[min(13rem,var(--reka-context-menu-content-available-width))]"
+      >
         <ContextMenu.ContextMenuItem @select="run('bullet-list')">
           <List />
           {{ i18n.t("notes.editor.menu.paragraph.bulletList") }}
@@ -283,7 +289,9 @@ function run(command: EditorMenuCommand) {
         <Table />
         {{ i18n.t("notes.editor.menu.insert.title") }}
       </ContextMenu.ContextMenuSubTrigger>
-      <ContextMenu.ContextMenuSubContent class="w-52">
+      <ContextMenu.ContextMenuSubContent
+        class="w-max max-w-(--reka-context-menu-content-available-width) min-w-[min(13rem,var(--reka-context-menu-content-available-width))]"
+      >
         <ContextMenu.ContextMenuItem @select="run('table')">
           <Table />
           {{ i18n.t("notes.editor.menu.insert.table") }}

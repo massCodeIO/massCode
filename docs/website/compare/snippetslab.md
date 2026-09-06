@@ -1,13 +1,18 @@
 ---
 title: massCode vs SnippetsLab
-description: "An honest comparison between massCode and SnippetsLab. Cross-platform open-source workspace vs polished native macOS snippet manager."
+titleTemplate: false
+description: "Compare massCode and SnippetsLab: free snippet libraries, cross-platform support, native Mac workflows, storage, language detection, and import."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs SnippetsLab
 
 # massCode vs SnippetsLab
 
 [SnippetsLab](https://www.renfei.org/snippets-lab/) is a polished, native macOS snippet manager with deep integration into Apple's ecosystem. massCode is a free, open-source workspace that runs on macOS, Windows, and Linux, and stores everything as plain Markdown files on your own disk.
 
 Both tools are free. The real question is whether you live entirely on macOS and want a native Mac feel, or you work across platforms and want one app for snippets, notes, HTTP, and math.
+
+[Try massCode](/download/) with a small sample of your work before moving your library.
 
 ## At a glance
 
@@ -67,7 +72,7 @@ massCode is a strong choice when you cross platforms or need more than snippets.
 To move from SnippetsLab to massCode:
 
 1. In SnippetsLab, export your library as JSON.
-2. In massCode, open [Code](/documentation/code/library), choose import, and select the SnippetsLab export file.
+2. In massCode, open [Code](/documentation/imports#code-imports), choose import, and select the SnippetsLab export file.
 3. Review the preview and warnings, then import the snippets into your Markdown Vault.
 4. Move longer documentation into [Notes](/documentation/notes/) and link between notes and snippets.
 
@@ -81,7 +86,7 @@ Yes, especially if you are not macOS-only. SnippetsLab is a polished, native, ma
 
 ### Can I import my SnippetsLab snippets into massCode?
 
-Yes. Export your library from SnippetsLab as JSON, then import it in massCode's [Code](/documentation/code/library) space. The import brings over snippets, folders, tags, descriptions, and fragments, with a preview before anything is written to your vault.
+Yes. Export your library from SnippetsLab as JSON, then import it in massCode's [Code](/documentation/imports#code-imports) space. The import brings over snippets, folders, tags, descriptions, and fragments, with a preview before anything is written to your vault.
 
 ### Is SnippetsLab or massCode better on Mac?
 
@@ -90,3 +95,8 @@ If you only ever use a Mac and want the most native feel with automatic language
 ### Is massCode free like SnippetsLab?
 
 Both are free. massCode is additionally open source under AGPL v3, and keeps your data as plain files rather than inside the app.
+
+## Related comparisons
+
+- [massCode vs Raycast Snippets](/compare/raycast)
+- [Code snippet managers compared](/compare/best-code-snippet-managers)

@@ -1,13 +1,18 @@
 ---
 title: massCode vs Apple Reminders
-description: "An honest comparison between massCode tasks and Apple Reminders. Cross-platform open-source developer workspace vs free Apple-built-in task manager with iCloud sync."
+titleTemplate: false
+description: "Compare massCode tasks with Apple Reminders: Markdown notes, desktop platforms, iCloud web access, recurring tasks, alerts, and shared lists."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Apple Reminders
 
 # massCode vs Apple Reminders
 
 [Apple Reminders](https://www.apple.com/ios/reminders/) ships free with every Mac, iPhone, iPad, Apple Watch, and Vision Pro. It is the default task manager for most Apple users. massCode is a free, open-source, cross-platform developer workspace where [tasks are notes](/documentation/notes/tasks) — plain Markdown files in a vault on your own disk.
 
 If you are entirely on Apple devices and want a zero-friction default task app, Reminders is the more natural fit. If you work across operating systems, or you want tasks to live as markdown next to your snippets and notes, massCode is the more natural fit.
+
+[Try massCode](/download/) with one engineering note that needs a status and due date.
 
 ## At a glance
 
@@ -18,7 +23,7 @@ If you are entirely on Apple devices and want a zero-friction default task app, 
 | Data location | Local Markdown Vault on your disk | Local on each device, synced via iCloud |
 | Sync | iCloud, Dropbox, Google Drive, Syncthing, Git — your choice | iCloud only |
 | Native platforms | macOS, Windows, Linux | macOS, iPadOS, iOS, watchOS, visionOS |
-| Web access | No web app | View-only web access at [icloud.com/reminders](https://www.icloud.com/reminders) |
+| Web access | No web app | Create, complete, and delete reminders at [icloud.com/reminders](https://www.icloud.com/reminders) |
 | Windows / Linux native app | Yes | No |
 | Task model | Notes with `status`, `priority`, and `due` properties | Reminders with subtasks, sections, tags, smart lists |
 | Statuses | Todo, In Progress, Done, Blocked | Open / completed |
@@ -31,7 +36,7 @@ If you are entirely on Apple devices and want a zero-friction default task app, 
 | Voice input | No | Siri |
 | Account required | No | Apple ID for iCloud sync |
 
-Sources: Apple's [Reminders user guide](https://support.apple.com/guide/reminders/welcome/mac) and the [iCloud Reminders web app](https://www.icloud.com/reminders).
+Sources: Apple's [Reminders user guide](https://support.apple.com/guide/reminders/welcome/mac) and [creating and deleting reminders on iCloud.com](https://support.apple.com/en-ie/guide/icloud/mmc0cd77d9/icloud).
 
 ## Where Apple Reminders fits better
 
@@ -49,7 +54,7 @@ Reminders is a strong choice when the goal is "a task manager that just works on
 
 massCode is a strong choice when Reminders' Apple-only constraint is a problem, or when the "task" is really a working note that needs a structured status.
 
-- **You work across operating systems.** massCode runs natively on macOS, Windows, and Linux from the same vault. Reminders has no native Windows or Linux app — only view-only web access through iCloud.com.
+- **You work across operating systems.** massCode runs natively on macOS, Windows, and Linux from the same vault. Reminders has no native Windows or Linux app — web access through iCloud.com, including creating and completing reminders.
 - **You want plain Markdown files on disk.** Every task is a `.md` file with frontmatter in your [Markdown Vault](/documentation/storage). Reminders data lives in Apple's database and is accessed through Apple's apps.
 - **You want one workspace, not five apps.** Tasks share the app with [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/).
 - **You want sync without Apple.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. iCloud is one option among many, not the only one.
@@ -75,3 +80,8 @@ massCode is a strong choice when Reminders' Apple-only constraint is a problem, 
 You can keep Reminders for life logistics — groceries, family lists, time-and-location alerts — and use massCode tasks for technical work-in-progress, where the "task" is really a working note with code, links, and context.
 
 [Download massCode](/download/) and try it on a few in-flight work notes.
+
+## Related comparisons
+
+- [Markdown-first tasks for developers](/compare/markdown-first-tasks)
+- [massCode vs Obsidian Tasks](/compare/obsidian-tasks)

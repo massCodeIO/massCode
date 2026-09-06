@@ -1,17 +1,19 @@
 ---
 title: Best Code Snippet Managers (2026)
-description: "An honest, up-to-date guide to the best code snippet managers — massCode, SnippetsLab, Pieces, Cacher, Lepton, GitHub Gist, and more. Compare them on license, storage, platforms, price, and scope, then pick the right one for your workflow."
+description: "Compare code snippet managers by storage, search, price, imports, and platforms. Find a fit for local libraries, sharing, or text expansion."
 ---
+
+[Home](/) / [Compare](/compare/) / Best Code Snippet Managers
 
 # Best Code Snippet Managers
 
 A code snippet manager is where the small, reusable pieces of your work live: the regex you always forget, the boilerplate config, the shell one-liner, the query you wrote once and will need again. The right one saves those snippets in seconds and gives them back the moment you need them. The wrong one becomes another place you forget to look.
 
-This guide compares the best code snippet managers available today. Every tool here is a reasonable choice for someone — the goal is to help you match a tool to how you actually work, not to crown a single winner.
+This guide compares snippet tools and adjacent developer workflows. “Best” depends on whether you need an organized code library, publishing, text expansion, or AI recall; this is not a performance ranking.
 
 ## How we evaluated them
 
-Star count and marketing aside, a snippet manager is worth adopting when it handles the boring parts well. We looked at:
+This is a documentation-based comparison by the massCode project. We reviewed the linked product documentation and massCode implementation; we did not benchmark competing apps or perform a hands-on test of every product. The criteria are:
 
 - **Storage and ownership.** Are your snippets plain files on your disk, or rows in someone else's database? Can you read them without the app?
 - **License.** Open source you can audit and fork, or proprietary.
@@ -28,14 +30,39 @@ Star count and marketing aside, a snippet manager is worth adopting when it hand
 | --- | --- | --- | --- | --- | --- |
 | [massCode](#masscode) | Open source (AGPL v3) | macOS, Windows, Linux | Local Markdown files | No | Snippets + notes, HTTP, math, drawings, tools |
 | [SnippetsLab](#snippetslab) | Proprietary | macOS only | Local library | No | Snippets |
-| [Pieces](#pieces) | Proprietary | macOS, Windows, Linux + IDE/browser | On-device / local | Optional | Snippets + AI companion |
+| [Pieces](#pieces) | Proprietary | See current desktop downloads | On-device memories | Subscription | AI work-context memory |
 | [Cacher](#cacher) | Proprietary | macOS, Windows, Linux | Cloud | Yes | Snippets, team libraries |
-| [Lepton](#lepton) | Open source (MIT) | macOS, Windows, Linux | GitHub Gist | GitHub | Snippets (unmaintained) |
+| [Lepton](#lepton) | Open source (MIT) | macOS, Windows, Linux | GitHub Gist | GitHub | Snippets, GitHub Gist client |
 | [GitHub Gist](#github-gist) | Proprietary (service) | Web + API | Cloud | Yes | Snippets |
-| [Raycast Snippets](#raycast-snippets) | Proprietary | macOS, iOS | App database | Optional | Text expansion |
+| [Raycast Snippets](#raycast-snippets) | Proprietary | macOS, Windows; iOS access | App database | Optional | Text expansion |
 | [VS Code snippets](#vs-code-snippets) | Open source (editor) | Anywhere VS Code runs | JSON in editor config | No | Snippets in-editor |
 
-Details and trade-offs for each are below.
+Details and trade-offs for each are below. Prices and limits refer to the linked web offers reviewed September 6, 2026; check regional and app-store terms before buying.
+
+### Cost and moving a library
+
+| Tool | Free use / paid option | Getting data in or out |
+| --- | --- | --- |
+| massCode | Free | VS Code, Raycast, SnippetsLab JSON, public Gist URLs; Markdown vault readable outside the app |
+| SnippetsLab | [Free](https://www.renfei.org/snippets-lab/) | JSON export can be imported into massCode |
+| Pieces | [Paid plans with a trial](https://pieces.app/pricing) | Check version-specific exports; no direct massCode importer |
+| Cacher | [15 private snippets and 3 private labels free](https://www.cacher.io/pricing); paid plans expand limits | Gist sync and export; no direct massCode importer |
+| Lepton | [MIT-licensed app](https://github.com/hackjutsu/Lepton) | Gist-based workflow; preserve GitHub access and backups |
+| GitHub Gist | [Free hosted gists](https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists) | Git clone; massCode imports already-public URLs |
+| Raycast Snippets | [Free core feature](https://www.raycast.com/pricing); paid sync options | [JSON import/export](https://manual.raycast.com/snippets), readable by massCode |
+| VS Code snippets | [Built into the editor](https://code.visualstudio.com/docs/editing/userdefinedsnippets) | JSON snippet files, readable by massCode |
+
+### Retrieval and offline work
+
+| Workflow | What to compare |
+| --- | --- |
+| Search a curated library | massCode provides scoped list search in Code and Notes; its Command Palette searches titles across spaces. SnippetsLab, Cacher, and Lepton offer their own library workflows; test the fields you rely on. |
+| Expand text while typing | Raycast and VS Code snippets target insertion. VS Code uses editor prefixes; Raycast offers desktop keyword expansion. |
+| Recall past context | Pieces provides AI-assisted work-context recall rather than the same retrieval model as a curated library. |
+| Publish and retrieve gists | GitHub offers web search and Git clones. Local clones can be searched with your editor; they are not automatically an organized desktop library. |
+| Work without a network | massCode uses local files; keep synced files downloaded. A Git clone is local too. For account-based products, check login, caching, and AI-provider requirements in the workflow you intend to use. |
+
+For a reproducible evaluation, use the [sample workflow](/compare/#try-a-small-workflow-before-moving-a-library). These are documented distinctions, not measured search-speed results.
 
 ## The best code snippet managers
 
@@ -46,12 +73,26 @@ Details and trade-offs for each are below.
 - **License:** [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), source on [GitHub](https://github.com/massCodeIO/massCode)
 - **Platforms:** macOS, Windows, Linux
 - **Storage:** Local `.md` files you can read, edit, and back up without the app
-- **Account:** None required, no telemetry login
+- **Account:** None required
 - **Search:** Full-text across snippets and notes (HTTP requests by name and URL)
 - **Imports:** VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders
 - **Sync:** Bring your own — iCloud, Dropbox, Google Drive, Syncthing, or [Git](/documentation/sync)
 
 **Best for:** developers who want their snippets to stay as plain files they own, on every platform, for free, and who appreciate having notes, HTTP requests, math, and drawings in the same window. [Download massCode](/download/) to try it.
+
+### A concrete massCode library workflow
+
+The existing [Code documentation](/documentation/code/) illustrates the library layout: folders on the left, a snippet list in the middle, and code in the editor. This is a product screenshot, not a comparative benchmark.
+
+<img :src="withBase('/code.png')" alt="massCode Code space with TypeScript folders, a snippet list, tags, and the selected code in the editor">
+
+Import behavior matters more than a simple “supports import” checkbox:
+
+- A VS Code snippet body is preserved as text. Its prefix becomes a tag in massCode; it does not become an editor expansion trigger. A multi-line body becomes one code fragment.
+- A Raycast snippet becomes a plain-text fragment. Keywords do not enable system-wide expansion in massCode, and dynamic placeholders are not evaluated during import.
+- A public Gist with several complete text files becomes one snippet with multiple fragments. Truncated or missing file contents are skipped with preview warnings.
+
+These examples follow the current [VS Code](https://github.com/massCodeIO/massCode/blob/main/src/main/import/snippets/vscode.ts), [Raycast](https://github.com/massCodeIO/massCode/blob/main/src/main/import/snippets/raycast.ts), and [Gist](https://github.com/massCodeIO/massCode/blob/main/src/main/import/snippets/githubGists.ts) import implementation. They describe massCode conversion behavior, not tests of competing applications. See [Code imports](/documentation/imports#code-imports) for the user workflow.
 
 ### SnippetsLab
 
@@ -67,14 +108,14 @@ Details and trade-offs for each are below.
 
 ### Pieces
 
-[Pieces](https://pieces.app) is an AI-first snippet manager built around an on-device AI companion, long-term memory of your work, and tight integration with editors and browsers. Its site emphasizes that "Pieces runs on-device" and processes data locally.
+[Pieces](https://pieces.app/) now emphasizes on-device work memory and AI recall across applications. It belongs in this guide as an adjacent workflow for people who want to retrieve past context rather than manually curate every code example.
 
 - **License:** Proprietary
-- **Platforms:** macOS, Windows, Linux, plus IDE and browser integrations
-- **Storage:** On-device / local processing
-- **Scope:** Snippets enriched with AI, long-term memory, multiple LLMs
+- **Storage:** Work memories saved on-device
+- **Price:** Paid subscription with a trial; see [current plans](https://pieces.app/pricing)
+- **Scope:** AI memory, summaries, and context retrieval
 
-**Best for:** developers who want an AI assistant that remembers their work and answers questions about it. If you want a focused, file-based workspace without AI, it is more than you need. See [massCode vs Pieces](/compare/pieces).
+**Best for:** finding context from previous work with AI. For a manually organized code library, compare a dedicated snippet manager. Older saved-snippet/export workflows should be checked against the installed version before migration. See [massCode vs Pieces](/compare/pieces).
 
 ### Cacher
 
@@ -93,11 +134,11 @@ Details and trade-offs for each are below.
 
 - **License:** Open source (MIT)
 - **Platforms:** macOS, Windows, Linux
-- **Storage:** GitHub Gist (cloud)
+- **Storage:** GitHub Gist-backed library
 - **Scope:** Snippets only
-- **Maintenance:** Largely inactive — its last tagged release (v1.10.0) dates to 2021, so treat it as stable-but-unmaintained
+- **Release status:** [Lepton 2.0.0](https://github.com/hackjutsu/Lepton/releases) was released in July 2026. A release date alone does not establish support quality.
 
-**Best for:** developers who want their snippet library to *be* their GitHub Gists and are comfortable with a project that is no longer actively developed. You trade local-file ownership for Gist sync and a narrower feature set.
+**Best for:** developers who want their snippet library to *be* their GitHub Gists. Compare its current platform builds and export workflow before moving a library.
 
 ### GitHub Gist
 
@@ -108,14 +149,14 @@ Details and trade-offs for each are below.
 - **Storage:** Cloud (your GitHub account)
 - **Scope:** Snippets as Gists
 
-**Best for:** quick, shareable, public or secret snippets you already manage on GitHub. As a primary library it lacks folders, rich organization, and offline-first storage. If you outgrow it, massCode can [import your Gists](/documentation/code/library) by URL — see [massCode vs GitHub Gist](/compare/github-gist).
+**Best for:** quick, shareable, public or secret snippets you already manage on GitHub. As a primary library it lacks folders, rich organization, and offline-first storage. If you outgrow it, massCode can [import your Gists](/documentation/imports#code-imports) by URL — see [massCode vs GitHub Gist](/compare/github-gist).
 
 ### Raycast Snippets
 
-[Raycast Snippets](https://www.raycast.com) is a feature of the Raycast launcher for macOS. It is best as a global text expander you trigger from anywhere, rather than a long-form code library.
+[Raycast Snippets](https://www.raycast.com) is a feature of the Raycast launcher for macOS and Windows. It is best as a global text expander you trigger from anywhere, rather than a long-form code library.
 
 - **License:** Proprietary
-- **Platforms:** macOS, iOS
+- **Platforms:** macOS, Windows; iOS access
 - **Storage:** Raycast database, optional cloud sync on Pro
 - **Scope:** Short text expansion
 
@@ -147,7 +188,7 @@ Work through these questions before installing anything:
 
 - **You want plain files you own, on every platform, for free** — and notes, HTTP, math, and drawings in the same app: choose **massCode**.
 - **You are macOS-only and want a polished native app:** choose **SnippetsLab**.
-- **You want an AI copilot over your snippets:** choose **Pieces**.
+- **You want AI recall of past work context:** choose **Pieces**.
 - **Your team needs a shared, hosted snippet library:** choose **Cacher**.
 - **You want your library to be GitHub Gists:** choose **Lepton** or **GitHub Gist** directly.
 - **You want system-wide text expansion:** choose **Raycast Snippets**.
@@ -178,3 +219,7 @@ Often, yes. massCode imports VS Code snippets JSON, Raycast snippets JSON, Snipp
 ## Try massCode
 
 If your answers point to local files, cross-platform, no account, free, open-source, and more than just snippets, massCode is the closest match. [Download massCode](/download/) or browse the [comparisons](/compare/) to see how it stacks up against the tool you use today.
+
+<script setup lang="ts">
+import { withBase } from 'vitepress'
+</script>

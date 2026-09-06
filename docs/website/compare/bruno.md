@@ -1,13 +1,18 @@
 ---
 title: massCode vs Bruno
-description: "Compare massCode and Bruno for local API development: an integrated developer workspace versus a dedicated API client with Git-friendly collections and CLI automation."
+titleTemplate: false
+description: "Compare massCode and Bruno for local API testing, CLI automation, authentication, and collection imports. See where their workflows differ."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Bruno
 
 # massCode vs Bruno
 
 [Bruno](https://github.com/usebruno/bruno) and massCode both keep API work local, work offline, and let you use your own files and Git workflow. If you are considering a Bruno alternative, the main question is whether you want a dedicated API client or API testing inside a broader developer workspace.
 
 Bruno focuses on API collections, testing, and command-line automation. massCode's [HTTP space](/documentation/http/) combines saved requests, environments, assertions, JavaScript tests, and a desktop folder runner with snippets, notes, and tasks. Local-first storage is common ground; the surrounding workflow is the difference.
+
+[Try massCode](/download/) with a small sample of your work before moving your library.
 
 ## At a glance
 
@@ -86,3 +91,8 @@ massCode supports response assertions, extraction, trusted JavaScript tests, and
 ## Try massCode
 
 [Download massCode](/download/) and try an exported Bruno collection alongside your project notes and snippets. For the cloud-platform comparison, see [massCode vs Postman](/compare/postman).
+
+## Related comparisons
+
+- [massCode vs Postman](/compare/postman)
+- [All comparisons](/compare/)

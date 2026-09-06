@@ -68,13 +68,50 @@ export default defineConfig({
     ['meta', { name: 'google-site-verification', content: gsv }],
   ],
 
-  transformHead({ pageData, title, description }) {
-    return buildSeoHead({
+  transformPageData(pageData) {
+    const pageTitle = pageData.title || siteTitle
+    const titleTemplate = pageData.titleTemplate ?? siteTitle
+    const socialTitle = titleTemplate === false || pageTitle === titleTemplate
+      ? pageTitle
+      : `${pageTitle} | ${titleTemplate === true ? siteTitle : titleTemplate}`
+    const head = buildSeoHead({
       relativePath: pageData.relativePath,
-      pageTitle: title,
-      pageDescription: description,
+      pageTitle: socialTitle,
+      pageDescription: pageData.description || description,
       isNotFound: pageData.isNotFound,
     })
+
+    if (pageData.relativePath.startsWith('compare/') && !pageData.isNotFound) {
+      const breadcrumbs = [
+        { name: 'Home', item: `${siteUrl}/` },
+        { name: 'Compare', item: `${siteUrl}/compare/` },
+      ]
+
+      if (pageData.relativePath !== 'compare/index.md') {
+        breadcrumbs.push({
+          name: pageData.title,
+          item: resolvePageUrl(pageData.relativePath),
+        })
+      }
+
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': breadcrumbs.map((breadcrumb, index) => ({
+          '@type': 'ListItem',
+          'position': index + 1,
+          ...breadcrumb,
+        })),
+      })])
+    }
+
+    // Page head is included in both rendered HTML and client-side navigation.
+    pageData.frontmatter.head = [...(pageData.frontmatter.head || []), ...head]
+  },
+
+  transformHead({ pageData }) {
+    if (pageData.isNotFound)
+      return [['meta', { name: 'robots', content: 'noindex, nofollow' }]]
   },
 
   themeConfig: {

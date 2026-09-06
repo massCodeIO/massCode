@@ -1,7 +1,10 @@
 ---
 title: massCode vs Todoist
-description: "An honest comparison between massCode tasks and Todoist. Local-first markdown tasks inside a developer workspace vs cloud-first task manager with rich projects, labels, and AI assists."
+titleTemplate: false
+description: "Compare massCode tasks with Todoist: local Markdown work notes versus projects, reminders, recurring tasks, mobile access, and team collaboration."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Todoist
 
 # massCode vs Todoist
 
@@ -9,12 +12,14 @@ description: "An honest comparison between massCode tasks and Todoist. Local-fir
 
 If you need a dedicated task manager for personal and team productivity, with mobile apps, reminders, and integrations, Todoist is the more natural fit. If you want your tasks to live next to your code snippets and notes as plain Markdown files on your own disk, massCode is the more natural fit.
 
+[Try massCode](/download/) with one engineering note that needs a status and due date.
+
 ## At a glance
 
 | | massCode | Todoist |
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | Free; Pro $5/mo (annual) or $7/mo; Business $8/user/mo (annual) or $10/user/mo |
+| Pricing | Free | Free; Pro US$5/user/mo (US$60/year); Business US$8/user/mo (US$96/year), billed annually |
 | Data location | Local Markdown Vault on your disk | Cloud sync across devices |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, iOS, Android, web, browser extensions, wearables |
 | Task model | Notes with `status`, `priority`, and `due` properties | Projects, sections, tasks, subtasks, labels, descriptions |
@@ -30,6 +35,8 @@ If you need a dedicated task manager for personal and team productivity, with mo
 | AI features | None built in | Task Assist, Filter Assist, Email Assist, Ramble |
 | Integrations | VS Code and Raycast extensions | 80+ integrations |
 | Account required | No | Yes |
+
+Annual USD web prices checked September 6, 2026; regional prices, taxes, and monthly billing differ. Beginner includes 5 personal projects and task reminders; Pro adds calendar layout and custom reminders.
 
 Sources for Todoist features and pricing: [todoist.com/features](https://todoist.com/features) and [todoist.com/pricing](https://todoist.com/pricing).
 
@@ -73,3 +80,8 @@ massCode tasks are a strong choice when the task is closer to a working note tha
 Many developers run both: Todoist for personal logistics and team task lifecycles, massCode for technical work-in-progress where a task is really "a note with a status, a priority, and a due date." massCode's tasks do not try to replace a full task manager — they add structure to the notes you are already writing.
 
 [Download massCode](/download/) and try it on a few of your in-flight work notes.
+
+## Related comparisons
+
+- [Markdown-first tasks for developers](/compare/markdown-first-tasks)
+- [massCode vs Obsidian Tasks](/compare/obsidian-tasks)

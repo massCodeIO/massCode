@@ -1,92 +1,85 @@
 ---
 title: massCode vs Pieces
-description: "An honest comparison between massCode and Pieces. Local-first open-source workspace vs AI-first snippet manager — which one fits your workflow."
+titleTemplate: false
+description: "Compare massCode's Markdown snippet workspace with Pieces' on-device AI memory. See pricing, storage, workflow differences, and migration limits."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Pieces
 
 # massCode vs Pieces
 
-[Pieces](https://pieces.app) and massCode both help developers keep useful code close at hand, but they aim at different things. Pieces is built around an AI copilot, long-term memory of your work, and tight integration with editors and browsers. massCode is a free, open-source, local-first workspace where snippets, notes, HTTP requests, math sheets, and dev tools live as plain Markdown files on your own disk.
+[Pieces](https://pieces.app/) and massCode help you retrieve useful work, but their current workflows differ. Pieces emphasizes AI recall of activity across your tools. massCode keeps a library of snippets, notes, HTTP requests, and calculations that you organize as local files.
 
-If you want an AI copilot that remembers your work and answers questions about it, Pieces is the more natural fit. If you want a focused, local workspace where your data stays as plain files, massCode is the more natural fit.
+Both store data locally. The decision is whether you want automatic work-context recall or an explicitly curated Markdown library. Local storage alone is not a reason to switch from Pieces.
+
+[Download massCode](/download/) if you want to try a file-based library alongside your existing tools.
 
 ## At a glance
 
 | | massCode | Pieces |
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | Free tier and Teams plan (contact for pricing) |
-| Data location | Local Markdown Vault on your disk | Local-first storage with optional cloud features |
-| Platforms | macOS, Windows, Linux | macOS, Windows, Linux, plus IDE and browser integrations |
-| Snippets | Yes, with folders, tags, and fragments | Yes, with enrichment and sharing |
-| Imports | VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | Snippet capture and sharing through Pieces workflows |
-| Notes | Yes, dedicated notes space | Not the focus |
-| HTTP client | Yes, built in | No |
-| Math notebook | Yes, built in | No |
-| Dev tools | Yes, built in | No |
-| AI features | None built in | Core feature: Copilot, long-term memory, multiple LLMs |
-| Snippet sharing | File-level (Git, shared folder) | Custom links or GitHub Gists |
-| Account required | No | Account required for some features |
+| Pricing | Free | Pro US$18.99/user/month; Enterprise US$22.99/user/month, billed monthly |
+| Free use | No paid tier | 7-day trial with a payment card; no ongoing free plan |
+| Storage | Local Markdown Vault | Work memories saved on-device |
+| Main workflow | Save and organize reusable code and notes | Capture activity and recall context with AI |
+| AI | No built-in assistant | Conversational recall and summaries |
+| Organization controls | File permissions and your sync workflow | Enterprise controls for capture and AI providers |
+| Other workspaces | Notes, tasks, HTTP, math, drawings, tools | Work-context memory across applications |
+| Portability | Snippets and notes readable as `.md` files | Check export options for your installed version |
 
-Source for Pieces features: [pieces.app/features](https://pieces.app/features) and [pieces.app/pricing](https://pieces.app/pricing).
+Sources: [Pieces product overview](https://pieces.app/) and [pricing](https://pieces.app/pricing), checked September 6, 2026. Prices above use monthly USD web billing; annual options differ. Older descriptions of a free snippet tier or a contact-only Teams plan do not reflect that pricing page.
 
-## Where Pieces fits better
+## When Pieces is a better fit
 
-Pieces is a strong choice when AI is the point, not a side feature.
+Choose Pieces if your question is “what was I working on, and where did I see that?” Its current product focuses on a timeline of activity, context retrieval, summaries, and sharing that context with MCP-ready AI tools. Enterprise adds organization-level policy controls.
 
-- **You want an AI copilot embedded in your tools.** Pieces' Copilot lets you "choose and switch between multiple LLMs," including Claude, Gemini, and local models via Ollama, with IDE and browser integrations.
-- **You want long-term memory of your work.** Pieces is designed around persistent recall of activities and a "Workflow History" with organized summaries.
-- **You want managed team sharing.** Pieces Drive lets you share files and projects with your team, and the Teams plan adds collaboration features.
-- **You want snippet sharing through links or Gists.** Pieces supports sharing snippets via custom links or GitHub Gists.
+That is a different job from manually maintaining a snippet library. Before adopting it, review the capture controls and AI-provider settings against your workflow. On-device storage and the processing used for an AI request are separate questions.
 
-## Where massCode fits better
+## When massCode is a better fit
 
-massCode is a strong choice when your priority is owning your data, staying on your own machine, and consolidating several developer tools into one workspace.
+Choose massCode if your question is “where should I keep this reusable code and its explanation?”
 
-- **You want plain Markdown files on disk.** massCode stores everything in a [Markdown Vault](/documentation/storage). Each snippet and note is a `.md` file with frontmatter — readable in any editor, easy to back up.
-- **You want one workspace, not five apps.** massCode includes [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/). Pieces focuses on AI-augmented snippets and memory.
-- **You want a migration path into plain files.** massCode can import VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, and Obsidian markdown folders into your local vault.
-- **You want full transparency.** The source is on [GitHub](https://github.com/massCodeIO/massCode) under AGPL v3 — read, audit, and self-build it.
-- **You want sync without a vendor.** Point [iCloud, Dropbox, Google Drive, Syncthing, or a Git repo](/documentation/sync) at your vault directory. There is no required account.
+- **Explicit organization.** Save code under [folders](/documentation/code/folders), apply [tags](/documentation/code/tags), and group related code in [fragments](/documentation/code/fragments).
+- **Portable content.** Snippets and notes are `.md` files in your [Markdown Vault](/documentation/storage). You can read them in another editor and back them up independently.
+- **Related project work.** Keep an endpoint in [HTTP](/documentation/http/), an explanation in [Notes](/documentation/notes/), and a follow-up as a [task](/documentation/notes/tasks).
+- **No account or subscription.** Use the desktop app locally and choose your own [sync](/documentation/sync) service.
 
-## Honest trade-offs
+massCode does not capture a timeline of your activity, answer AI questions about past work, or provide managed organization policies. Its source is available under [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE).
 
-- **No built-in AI in massCode.** If you want a code copilot living next to your snippet library, Pieces is purpose-built for that. massCode does not ship AI features.
-- **No first-party team workspace in massCode.** Sharing in massCode happens through the file layer — a shared Git repo or shared cloud folder. Pieces Teams gives you a managed product for that use case.
-- **Manual language selection in massCode.** When you create a snippet, the default language is "Plain text" and you pick the language from a dropdown. Pieces auto-classifies snippets by language.
-- **Smaller surface area.** Pieces has IDE and browser integrations massCode does not match. massCode's surface is the desktop app plus a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=AntonReshetov.masscode-assistant) and a [Raycast extension](https://www.raycast.com/antonreshetov/masscode).
+## Moving an existing snippet library
 
-## Who should pick which
+There is no direct Pieces importer. Export and saved-material capabilities can differ between Pieces versions; the current product overview is not evidence that an older snippet-export workflow still exists.
 
-- Pick **Pieces** if you want AI-powered snippet capture, contextual chat across your tools, and a managed team workspace.
-- Pick **massCode** if you want a free, open-source, local-first workspace that holds snippets, notes, HTTP requests, math sheets, and dev tools — with your data as plain Markdown on your own disk.
+For code you want to keep in massCode:
 
-## Migration tips
+1. Preserve your existing library or export before moving anything.
+2. For private material, create a snippet locally in [Code](/documentation/code/library), copy the code and explanation, then recreate its tags and folders.
+3. If a snippet is **already public** as a GitHub Gist, you can import its public URL and review the preview.
+4. Check languages, fragments, descriptions, and organization on a small sample before continuing.
 
-You do not have to choose all-or-nothing. Many developers run both: Pieces for AI on active work, massCode as the long-term, file-based home for snippets and notes.
-
-If you want to consolidate into massCode:
-
-1. Export your Pieces snippets into a format massCode can read when possible — for example, public GitHub Gist URLs.
-2. Open [Code](/documentation/code/library), choose import, preview the detected snippets, then import them into your vault.
-3. For snippets that cannot be exported as Gists, recreate folders under Code and paste them manually.
-4. Move longer pieces of context into [Notes](/documentation/notes/) and link between them.
-
-[Download massCode](/download/) and try it on a copy of your data.
+Do not make private material public just to use the Gist importer. A Pieces export is not automatically compatible with massCode's supported JSON formats.
 
 ## Frequently asked questions
 
-### Is massCode a good Pieces alternative?
+### Is massCode a Pieces alternative?
 
-Yes, if you want a focused, local-first workspace rather than an AI copilot. Pieces is built around AI and long-term memory of your work. massCode is a free, open-source app that stores snippets, notes, HTTP requests, and math as plain Markdown files on your disk, with no AI layer in the way.
+For keeping a curated code library and project notes, yes. It does not replace Pieces' automatic work-context memory or AI recall. You can use both for those separate jobs.
 
-### Does massCode have AI features?
+### Is Pieces cloud-only?
 
-No. massCode has no built-in AI. It is a deliberately focused workspace for keeping and finding your own snippets and notes. If an AI copilot over your snippets is what you want, Pieces is the better fit.
+No. Its current site describes memories stored on-device. massCode's distinct feature here is plain Markdown content, rather than local storage by itself.
 
-### Can I import my Pieces snippets into massCode?
+### Does massCode have an AI copilot?
 
-There is no direct Pieces importer. The practical path is to export snippets into a format massCode reads — for example, public GitHub Gist URLs — and import those, or recreate the rest manually under [Code](/documentation/code/library). massCode also imports VS Code, Raycast, and SnippetsLab snippets.
+No. It provides organization, editing, and search for the material you save. Choose based on whether that library or an AI memory workflow is your priority.
 
-### Is my data local with massCode?
+### Can I import a Pieces export directly?
 
-Yes. Every snippet and note is a plain `.md` file in a local [Markdown Vault](/documentation/storage), with no account required. You choose whether and how to sync it.
+No. Use local manual transfer for private material, or import already-public Gist URLs. Keep your original library until you have checked the result.
+
+## Related comparisons
+
+- [Local-first storage and file portability](/compare/local-first)
+- [massCode vs Cacher](/compare/cacher)
+- [Code snippet managers compared](/compare/best-code-snippet-managers)

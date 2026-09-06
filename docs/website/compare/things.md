@@ -1,7 +1,10 @@
 ---
 title: massCode vs Things 3
-description: "An honest comparison between massCode tasks and Things 3 by Cultured Code. Free cross-platform open-source workspace vs premium Apple-only task manager with one-time per-platform pricing."
+titleTemplate: false
+description: "Compare massCode tasks with Things 3: local Markdown notes versus Apple task planning, reminders, recurring work, and one-time app purchases."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Things 3
 
 # massCode vs Things 3
 
@@ -9,12 +12,14 @@ description: "An honest comparison between massCode tasks and Things 3 by Cultur
 
 If you live entirely on Apple devices and want a beautifully designed dedicated task manager, Things 3 is the more natural fit. If you work across macOS, Windows, and Linux, or you want your tasks to live as markdown next to your snippets and notes, massCode is the more natural fit.
 
+[Try massCode](/download/) with one engineering note that needs a status and due date.
+
 ## At a glance
 
 | | massCode | Things 3 |
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | One-time per platform: Mac $49.99, iPad $19.99, iPhone + Watch $9.99, Vision Pro $29.99 |
+| Pricing | Free | One-time purchase per platform; see current regional App Store prices |
 | Data location | Local Markdown Vault on your disk | Local on each device, synced via Things Cloud |
 | Sync | iCloud, Dropbox, Google Drive, Syncthing, Git — your choice | Things Cloud, free with the apps |
 | Platforms | macOS, Windows, Linux | macOS, iPadOS, iOS, watchOS, visionOS — Apple only |
@@ -29,7 +34,7 @@ If you live entirely on Apple devices and want a beautifully designed dedicated 
 | Mobile app | No | Yes |
 | Account required | No | A free Things Cloud account is needed for sync |
 
-Sources for Things 3 platform pricing: [App Store listings](https://apps.apple.com/us/app/things-3/id904237743) for Mac, iPad, iPhone, and Vision Pro. Things Cloud sync is free with the apps — see [Cultured Code's pricing page](https://culturedcode.com/things/pricing/) and [Things Cloud support](https://culturedcode.com/things/support/articles/2803586/).
+Source for Things 3 platform pricing: [Cultured Code’s pricing guide](https://culturedcode.com/things/pricing/) links to each platform’s App Store listing. Prices depend on storefront and may change; check the listings for the devices you use. Things Cloud sync is free with the apps — see [Cultured Code's pricing page](https://culturedcode.com/things/pricing/) and [Things Cloud support](https://culturedcode.com/things/support/articles/2803586/).
 
 ## Where Things 3 fits better
 
@@ -37,7 +42,7 @@ Things 3 is a strong choice when "best-in-class native task manager on Apple dev
 
 - **You are all-in on Apple.** Things runs natively on Mac, iPad, iPhone, Apple Watch, and Vision Pro, with deep integration of widgets, Shortcuts, and system features.
 - **You want a polished, opinionated workflow.** Areas, Projects, Today, This Evening, Upcoming, Anytime, and Someday are designed around a specific way of planning. Many users find that opinionated structure is the point.
-- **You want a one-time purchase.** No subscription. You pay per platform once and get future updates for free.
+- **You want a one-time purchase.** No subscription. Each platform is a separate purchase. Do not assume the purchase includes any future major version.
 - **You want free sync without a third-party account.** Things Cloud is included.
 - **You want reminders and recurring tasks.** Both are first-class.
 
@@ -70,3 +75,8 @@ massCode is a strong choice when Things' Apple-only constraint is a problem, or 
 If you already use Things 3 for personal task management, you can keep it. massCode is not designed to replace a dedicated task manager. Use it where the "task" is really a working note — a piece of code, a research thread, a bug investigation, a meeting follow-up — that you want to track with a status, a priority, and a due date.
 
 [Download massCode](/download/) and try it on a few in-flight work notes.
+
+## Related comparisons
+
+- [Markdown-first tasks for developers](/compare/markdown-first-tasks)
+- [massCode vs Obsidian Tasks](/compare/obsidian-tasks)

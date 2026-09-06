@@ -1,15 +1,20 @@
 ---
 title: massCode vs Raycast Snippets
-description: "An honest comparison between massCode and Raycast Snippets. Full snippet workspace vs launcher-driven text expansion."
+titleTemplate: false
+description: "Compare massCode with Raycast Snippets on macOS and Windows: curated code libraries, text expansion, sync, imports, and Linux support."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Raycast Snippets
 
 # massCode vs Raycast Snippets
 
-[Raycast](https://www.raycast.com) is a productivity launcher for macOS, and Raycast Snippets is one of its core features for storing and expanding short pieces of text. massCode is a full developer workspace built around snippets, notes, HTTP requests, and math, with everything stored as plain Markdown files on your own disk.
+[Raycast](https://www.raycast.com) is a productivity launcher for macOS and Windows, and Raycast Snippets is one of its core features for storing and expanding short pieces of text. massCode is a full developer workspace built around snippets, notes, HTTP requests, and math, with everything stored as plain Markdown files on your own disk.
 
-The two tools sit at different levels of the stack. Raycast Snippets is best as a global text expander you trigger from anywhere on macOS or iOS. massCode is best as the place where your real snippet library, notes, and developer utilities live.
+The two tools sit at different levels of the stack. Raycast Snippets is best as a global text expander you trigger on macOS and Windows, with snippet access on iOS. massCode is best as the place where your real snippet library, notes, and developer utilities live.
 
 Many developers use both: Raycast for quick text expansion, massCode for the long-form library and other workspaces. massCode itself ships a [Raycast extension](https://www.raycast.com/antonreshetov/masscode) so you can search your massCode snippets directly from Raycast.
+
+[Try massCode](/download/) with a small sample of your work before moving your library.
 
 ## At a glance
 
@@ -17,23 +22,23 @@ Many developers use both: Raycast for quick text expansion, massCode for the lon
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
 | Pricing | Free | Snippets included in the Free plan |
-| Platforms | macOS, Windows, Linux | macOS and iOS |
+| Platforms | macOS, Windows, Linux | macOS and Windows; snippet access on iOS |
 | Primary use | Snippet library and developer workspace | Global text expansion from a launcher |
 | Data location | Local Markdown Vault on your disk | Raycast database; cloud sync available on Pro |
 | Folders | Yes, multi-level | Yes |
-| Search | Full-text search across snippets, notes, HTTP requests | Search snippets by title in the launcher |
+| Search | Full-text list search in Code and Notes; HTTP search by name and URL | Search Snippets command in the launcher |
 | Imports | Raycast snippets JSON, VS Code snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | Raycast snippets import/export |
 | Snippet expansion by keyword | No | Yes, system-wide |
 | Snippet fragments | Yes, multiple tabs per snippet | No |
 | Code editor with syntax highlighting | Yes, full editor | Limited, designed for short text |
-| Notes | Yes, dedicated notes space | No |
+| Notes | Yes, dedicated notes space | Separate Raycast Notes feature; not part of Snippets |
 | HTTP client | Yes, built in | No |
 | Math notebook | Yes, built in | No |
-| Dev tools | Yes, built in | No |
+| Dev tools | Yes, built in | Other core features and extensions; not part of Snippets |
 | Cloud sync | Bring your own — iCloud, Dropbox, Git, Syncthing | Cloud sync is a Pro feature ($8/mo annual, $10/mo monthly) |
 | Team plan | No | Yes, Teams Free and Teams Pro |
 
-Source for Raycast features and pricing: [raycast.com/core-features/snippets](https://www.raycast.com/core-features/snippets) and [raycast.com/pricing](https://www.raycast.com/pricing).
+Sources: [Snippets manual](https://manual.raycast.com/snippets), [Windows availability](https://www.raycast.com/windows), and [pricing](https://www.raycast.com/pricing). USD web prices checked September 6, 2026. This table compares the Snippets feature; Raycast also has Notes, a calculator, and an extension ecosystem. Desktop and iOS capabilities differ; iOS access does not imply system-wide keyword expansion.
 
 ## Where Raycast Snippets fits better
 
@@ -52,7 +57,7 @@ massCode is a strong choice when your snippets are real code, not text shortcuts
 - **Your library is real code.** massCode is a code workspace with a full editor, syntax highlighting for 160+ grammars, multiple fragments per snippet, descriptions, and tags. It scales to thousands of snippets in folders.
 - **You want plain Markdown files on disk.** Snippets and notes live as `.md` files in a [Markdown Vault](/documentation/storage). Your library is portable, scriptable, and not locked behind another vendor's data store.
 - **You want to promote Raycast snippets into a larger library.** Export Raycast snippets JSON, preview it in massCode, then import it into Code for folders, tags, fragments, and long-term storage.
-- **You work on Windows or Linux.** massCode is a first-class app on macOS, Windows, and Linux. Raycast Snippets is macOS and iOS.
+- **You need Linux as well.** massCode runs on macOS, Windows, and Linux. Raycast supports macOS and [Windows](https://www.raycast.com/windows), with snippet access on iOS; Windows support alone is not a reason to switch.
 - **You want one workspace beyond snippets.** massCode adds [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/) in the same app.
 - **You want sync without paying for it.** Point [iCloud, Dropbox, Google Drive, Syncthing, or Git](/documentation/sync) at your vault. Cloud sync in Raycast is a Pro feature.
 
@@ -64,7 +69,7 @@ massCode is a strong choice when your snippets are real code, not text shortcuts
 
 ## Who should pick which
 
-- Pick **Raycast Snippets** if you want a global text expander, your snippets are short text fragments, and you live on macOS or iOS.
+- Pick **Raycast Snippets** if you want a global text expander, your snippets are short text fragments, and you work on macOS or Windows.
 - Pick **massCode** if you want a real code snippet library, plus notes, HTTP, math, and tools, in one cross-platform app with plain Markdown storage.
 - Pick **both** if you want the best of each: Raycast Snippets for keyword expansion, massCode as the long-term home for your code library and notes. The [massCode Raycast extension](https://www.raycast.com/antonreshetov/masscode) lets you search your massCode snippets from Raycast.
 
@@ -78,3 +83,9 @@ A common pairing:
 4. Use the [massCode Raycast extension](https://www.raycast.com/antonreshetov/masscode) to surface code snippets directly from Raycast when you need them.
 
 [Download massCode](/download/) — it sits well next to a launcher rather than competing with one.
+
+## Related comparisons
+
+- [massCode vs SnippetsLab](/compare/snippetslab)
+- [Windows snippet workflows](/compare/code-snippet-manager-for-windows)
+- [Code snippet managers compared](/compare/best-code-snippet-managers)

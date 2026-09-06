@@ -45,25 +45,20 @@ watch(
           <Tooltip.TooltipTrigger as-child>
             <button
               type="button"
-              class="text-muted-foreground flex w-full cursor-default flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors"
+              class="text-muted-foreground flex h-11.5 w-full cursor-default items-center justify-center rounded-lg px-2 py-2 transition-colors"
               :class="
                 space.active
                   ? 'bg-accent text-accent-foreground'
                   : 'hover:bg-accent-hover'
               "
+              :aria-label="space.label"
+              :aria-current="space.active ? 'page' : undefined"
               @click="navigate"
             >
               <component
                 :is="space.icon"
-                class="h-4 w-4 shrink-0"
+                class="size-5 shrink-0"
               />
-              <UiText
-                variant="caption"
-                weight="medium"
-                class="leading-none select-none"
-              >
-                {{ space.label }}
-              </UiText>
             </button>
           </Tooltip.TooltipTrigger>
           <Tooltip.TooltipContent side="right">
@@ -86,7 +81,7 @@ watch(
           :tooltip="i18n.t('preferences:label')"
           @click="navigate"
         >
-          <Settings class="h-4 w-4" />
+          <Settings class="size-4" />
         </UiActionButton>
       </RouterLink>
       <UiText

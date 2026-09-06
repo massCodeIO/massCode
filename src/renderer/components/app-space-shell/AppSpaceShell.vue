@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
     <div
       v-if="props.showRail"
       class="bg-background border-border/70 border-r"
-      :class="isMac && 'mt-2.5'"
+      :class="isMac && 'pt-2.5'"
     >
       <SpaceRail />
     </div>

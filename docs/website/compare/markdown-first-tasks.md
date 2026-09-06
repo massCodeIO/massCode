@@ -1,7 +1,9 @@
 ---
 title: Markdown-First Task Manager for Developers
-description: "Why a developer's tasks belong as plain Markdown files next to snippets and notes — and how massCode tasks compare to Todoist, TickTick, Things 3, Apple Reminders, and Obsidian Tasks."
+description: "Compare Markdown task workflows in massCode and Obsidian Tasks with dedicated task apps. Choose by task structure, recurring work, and mobile access."
 ---
+
+[Home](/) / [Compare](/compare/) / Markdown-First Task Manager for Developers
 
 # Markdown-First Task Manager for Developers
 
@@ -9,13 +11,13 @@ Most task managers store your work in a cloud database you cannot read without t
 
 A **markdown-first** approach keeps the task as a plain `.md` file on your disk. The body of the file is the work-in-progress: code blocks, mermaid diagrams, internal links, checklists. The frontmatter carries the structured bits: status, priority, due date. If the app disappears tomorrow, the files are still readable.
 
-[massCode](https://github.com/massCodeIO/massCode) treats [tasks as notes](/documentation/notes/tasks) with that frontmatter. The [Obsidian Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plugin takes a different markdown-first route, encoding metadata as inline emojis inside checklist lines. Everything else in this guide stores tasks in a proprietary database.
+[massCode](https://github.com/massCodeIO/massCode) treats [tasks as notes](/documentation/notes/tasks) with that frontmatter. The [Obsidian Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plugin takes a different markdown-first route, encoding metadata in checklist lines using emojis or supported Dataview inline fields. Everything else in this guide stores tasks in a proprietary database.
 
 ## What "markdown-first" actually means
 
 Markdown-first is a stricter bar than "exports to markdown":
 
-- **The task lives on your disk as a plain `.md` file** with human-readable frontmatter — no proprietary database, no binary blob.
+- **The task lives on your disk as a plain `.md` file** with human-readable task metadata — no proprietary database, no binary blob.
 - **The app works fully offline by default.** No login wall, no degraded mode.
 - **Sync is optional and your choice of provider.** iCloud, Dropbox, Google Drive, Syncthing, Git — whatever you already trust.
 - **The format outlives the app.** If the vendor disappears, your tasks are still grep-able files.
@@ -39,11 +41,13 @@ A cloud SaaS that exports tasks to CSV is not markdown-first. A local app with a
 | **Todoist** | Cloud database | Proprietary | macOS, Windows, Linux, iOS, Android, web, more | Yes | Yes | Cross-device personal and team task manager |
 | **TickTick** | Cloud database | Proprietary | macOS, Windows, Linux, iOS, Android, web, more | Yes | Yes | All-in-one tasks + Pomodoro + habits |
 | **Things 3** | Local + Things Cloud | Proprietary | Apple only | Yes | Yes | Best-in-class native Apple task manager |
-| **Apple Reminders** | iCloud | Proprietary, built-in | Apple only (view-only web) | Yes | Yes | Free default for Apple users with location and Siri |
+| **Apple Reminders** | iCloud | Proprietary, built-in | Apple apps + iCloud web access | Yes | Yes | Free default for Apple users with location and Siri |
+
+Apple documents [creating and deleting reminders on iCloud.com](https://support.apple.com/en-ie/guide/icloud/mmc0cd77d9/icloud); web access is not view-only.
 
 The two markdown-first options work very differently:
 
-- **Obsidian Tasks**: a task is a checklist line (`- [ ] Do thing 📅 2026-06-01 ⏫ 🔁 every week`) inside any note in your Obsidian vault. Metadata is encoded with inline emojis. Views are built with a custom query language. Mobile is supported through the Obsidian apps.
+- **Obsidian Tasks**: a task is a checklist line (`- [ ] Do thing 📅 2026-06-01 ⏫ 🔁 every week`) inside any note in your Obsidian vault. Metadata uses emojis or supported [Dataview inline fields](https://github.com/obsidian-tasks-group/obsidian-tasks/blob/main/docs/Reference/Task%20Formats/Dataview%20Format.md). Views are built with a custom query language. Mobile is supported through the Obsidian apps.
 - **massCode**: a task is a whole note with frontmatter properties (`type: task`, `status: todo`, `priority: high`, `due: 2026-06-01`). The note body is the work-in-progress. Views are first-class: **Tasks**, **Today**, **Upcoming**, **Completed**. Desktop only.
 
 Neither is "better" — they fit different workflows.
@@ -52,7 +56,7 @@ Neither is "better" — they fit different workflows.
 
 - **Pick massCode** if you want a standalone, cross-platform developer workspace where tasks are first-class notes that live next to snippets, HTTP requests, math sheets, and dev tools — all stored as plain Markdown on your own disk.
 - **Pick Obsidian Tasks** if your knowledge base is already in Obsidian and you want tasks distributed through that graph, with recurring rules and a powerful query language.
-- **Pick a cloud task manager** (Todoist, TickTick, Things, Reminders) if you primarily need reminders, recurring tasks, mobile apps, and shared lists, and the loss of plain-text durability is acceptable.
+- **Pick a dedicated task manager** if you primarily need reminders, recurring tasks, and mobile apps. Todoist, TickTick, and Apple Reminders also offer sharing; Things focuses on personal planning. Check the individual comparisons for storage and collaboration differences.
 
 ## What you get with massCode tasks
 
@@ -66,7 +70,7 @@ Neither is "better" — they fit different workflows.
 - Lives in the same app as [Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), [Drawings](/documentation/drawings/), and [Tools](/documentation/tools/)
 - Free and open source under [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE)
 - Cross-platform: macOS, Windows, Linux
-- No account, no telemetry-required login, sync via the service you already trust
+- No required account, sync via the service you already trust
 
 ## Honest limits
 
@@ -78,7 +82,7 @@ A markdown-first task list is not a replacement for a full task manager. Be awar
 - **No mobile in massCode.** Desktop only.
 - **No team workspace in massCode.** Sharing happens at the file layer.
 
-These are the price of markdown-first storage. If they are dealbreakers, a cloud task manager is the better fit.
+These are current massCode limitations, not limitations of Markdown storage. Obsidian Tasks supports recurring tasks and mobile use while keeping Markdown files. Choose it or a dedicated task manager if those capabilities are essential.
 
 ## Related comparisons
 

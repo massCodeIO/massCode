@@ -1,99 +1,72 @@
 ---
 title: Local-First Alternative to Pieces and Cacher
-description: "A local-first alternative to Pieces and Cacher for developers who want their snippets, notes, and HTTP requests stored as plain files on their own disk."
+description: "Compare massCode, Pieces, and Cacher on local storage, file portability, accounts, and sharing. Decide whether a Markdown snippet library fits your work."
 ---
+
+[Home](/) / [Compare](/compare/) / Local-First Alternative to Pieces and Cacher
 
 # Local-First Alternative to Pieces and Cacher
 
-Many developers reach a point where they want to move their snippets, notes, and API requests off a vendor's cloud and back onto their own disk. The reasons range from privacy and compliance to durability — software vendors come and go, your work should not.
+If you want snippets and notes as Markdown files you can open outside their original app, massCode is an option. But Pieces and Cacher should not be treated as the same storage model: [Pieces](https://pieces.app/) stores work memories on-device, while [Cacher](https://www.cacher.io/pricing) offers a hosted snippet service and an organizational self-hosting option.
 
-If you are looking for a local-first alternative to [Pieces](https://pieces.app) or [Cacher](https://www.cacher.io), [massCode](https://github.com/massCodeIO/massCode) is built for that use case.
+The useful comparison separates local availability, file portability, account requirements, and collaboration. [Download massCode](/download/) to try a Markdown library without an account.
 
-## What "local-first" actually means
+## Local-first and plain files are different criteria
 
-Local-first is not the same as offline mode. The full definition matters:
+[Ink & Switch's local-first principles](https://www.inkandswitch.com/essay/local-first/) include offline work, user control, multiple devices, and collaboration. They do not require every application to use Markdown or rule out local databases.
 
-- **Your data lives on your disk in a format you can read** without the app installed. If massCode disappeared tomorrow, your snippets and notes would still be there as Markdown files.
-- **The app works fully offline by default.** No login wall, no degraded mode.
-- **Sync is optional and at your choice of provider.** You decide whether your vault sits inside iCloud, Dropbox, Google Drive, Syncthing, a Git repo, or only on this machine.
-- **No telemetry-required account.** You should not need to register to start using the app.
+Ask four separate questions:
 
-A cloud SaaS with an "offline mode" is not local-first. A local app with a proprietary database file is closer, but still not local-first if you cannot read the data without the app. Plain Markdown files cleanly cross both bars.
+- **Local availability:** can you access and edit the content without a server connection?
+- **Portability:** can another tool read or export the content in a useful format?
+- **Sync and processing:** which data leaves the device when optional services are used?
+- **Ownership and access:** which accounts, subscriptions, or organization policies are involved?
 
-## Why developers move from Pieces or Cacher
+A plain-file vault is massCode's approach to portability. It does not make reminders, mobile clients, AI, or team collaboration technically impossible; those are separate product decisions.
 
-Common reasons people consider switching:
+## Storage and workflow comparison
 
-- **Privacy and compliance.** Snippets contain real code from real projects. Sending them to a third-party cloud may violate company policy.
-- **Vendor durability.** Snippet managers come and go. Plain Markdown files survive any vendor.
-- **Cost.** Cacher's paid plans start at $9.99/month for Expert and $29.99/month for the Teams base ([cacher.io/pricing](https://www.cacher.io/pricing)). Pieces' Teams plan is contact-for-pricing. massCode is free.
-- **Sync control.** You may already pay for iCloud, Dropbox, or self-host Syncthing — adding another sync vendor on top is duplication.
-- **Migration.** Built-in imports reduce the amount of manual copy-paste needed when you move existing snippets or markdown notes into local storage.
-- **Open source.** Some teams prefer or require code they can audit and self-build.
-- **Workspace consolidation.** Pieces and Cacher are snippet-focused. Notes, HTTP requests, and math live in other apps. Consolidating into one local-first workspace simplifies the toolchain.
+| Criterion | massCode | Pieces | Cacher |
+| --- | --- | --- | --- |
+| Main job | Curated snippets and developer notes | AI recall of work context | Snippet libraries and team sharing |
+| Storage model | Local Markdown Vault | Work memories stored on-device | Hosted account; organizational self-hosting available |
+| Portability | Markdown files in any editor | Check the installed version's export options | Use the service's export workflow |
+| Sync | Your own file service or Git workflow | Review current product and organization settings | Managed service |
+| Account requirement | None | Subscription-based product | Required for the service |
+| Managed team roles | No | Enterprise policy controls | Teams role management |
 
-## How massCode delivers local-first
+Sources: [Pieces overview](https://pieces.app/), [Pieces plans](https://pieces.app/pricing), and [Cacher plans and self-hosting](https://www.cacher.io/pricing). For exact costs and plan limits, see [massCode vs Pieces](/compare/pieces) and [massCode vs Cacher](/compare/cacher).
 
-massCode is a free, open-source developer workspace where everything is local by default.
+## What a massCode vault gives you
 
-### Markdown Vault as the source of truth
+A [Markdown Vault](/documentation/storage) is a directory containing your snippets, notes, and HTTP requests. Content and metadata use Markdown and frontmatter; folder state is kept separately in `.state.json` files.
 
-Your snippets, notes, and HTTP requests live in a [Markdown Vault](/documentation/storage) — a folder of plain `.md` files with frontmatter metadata. The app watches the vault in real time and reflects external changes immediately.
+You can inspect a file in another editor, keep versions in Git, and move the vault to another computer. massCode watches for external changes. That portability is useful if you want a curated library to remain readable independently of the app.
 
-- Each snippet and note is a `.md` file you can open in any editor
-- Folders on disk match folders in the app
-- A `.state.json` per folder tracks UI state without polluting your data
-- No proprietary database, no opaque blob format
+[Code](/documentation/code/library), [Notes](/documentation/notes/), [HTTP](/documentation/http/), [Math](/documentation/math/), and [Drawings](/documentation/drawings/) share the workspace. A request example and the note explaining it can stay near the snippet that uses it.
 
-### Sync on your terms
+## Sync still needs a workflow
 
-Because the vault is just a folder, [sync](/documentation/sync) becomes a problem you have already solved. Point any of these at your vault directory:
+Choose a file service such as iCloud, Dropbox, Google Drive, or Syncthing, or use Git. These services differ in version history and conflict handling. Sharing a directory does not add massCode-specific team roles or simultaneous-edit conflict resolution.
 
-- iCloud Drive
-- Dropbox
-- Google Drive
-- Syncthing
-- Git repository
+Keep cloud-managed vault files downloaded before relying on offline access. See [sync and offloaded files](/documentation/sync#offloaded-online-only-files). HTTP secret values stay outside the vault and must be entered separately on each device.
 
-You keep version history, conflict handling, and cross-device sync with the tooling you already trust.
+## Moving private snippets
 
-### One workspace, not five
+massCode imports VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, already-public GitHub Gist URLs, and Obsidian Markdown folders. See the [Code library](/documentation/imports#code-imports) and [storage guide](/documentation/storage) for supported flows.
 
-massCode is more than a snippet manager. In the same app you get:
+There is no direct Pieces or Cacher importer. For private snippets in an unsupported format, keep a backup and copy a small sample locally before rebuilding the rest of the library. Do not publish private code to create a Gist import path. Preview and inspect supported imports for missing metadata before retiring the original library.
 
-- [Code](/documentation/code/library) — snippet library with folders, tags, fragments, and 160+ syntax grammars
-- [Notes](/documentation/notes/) — markdown notes with internal links, mindmaps, mermaid diagrams, and presentation mode
-- [HTTP](/documentation/http/) — lightweight API client with environments, variables, and import from OpenAPI, Postman, Bruno
-- [Math](/documentation/math/) — calculator-style notebook for unit conversion, dates, finance, and natural-language math
-- [Tools](/documentation/tools/) — JSON Diff, encoders, hashes, generators, text utilities
+## Which model fits your work?
 
-All of it stored locally. All of it free.
+- Choose **massCode** for a curated Markdown library with developer workspaces and no required account.
+- Choose **Pieces** for AI recall of activity across tools; local storage is already part of its model.
+- Choose **Cacher** for managed snippet sharing, team roles, and GitHub Gist sync; check its deployment options if hosted storage is unsuitable.
 
-### Imports into the local vault
+massCode has no built-in AI memory, managed team workspace, or Gist round-trip sync. These are its current feature boundaries, not unavoidable trade-offs of local-first software.
 
-Moving to a local-first workspace should not mean rebuilding every library by hand. massCode can import snippets from VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, and public GitHub Gist URLs. It can also import Obsidian markdown folders into Notes.
+## Related comparisons
 
-Each import is previewed before anything is written to your vault, including detected source, item counts, tags, folders, and warnings for unsupported source features.
-
-### Open source
-
-massCode is published under [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE). The source is on [GitHub](https://github.com/massCodeIO/massCode). You can read it, build it, and contribute.
-
-## Honest trade-offs versus Pieces and Cacher
-
-A local-first tool is not a drop-in replacement for a cloud SaaS. Be aware:
-
-- **No managed team workspace.** Pieces Teams and Cacher's Teams plan give you role-based shared libraries with a billing portal. massCode does not. Sharing happens at the file layer — typically a shared Git repo or shared cloud folder.
-- **No AI copilot.** Pieces is built around AI assistance and long-term memory. massCode does not embed AI features.
-- **No GitHub Gist round-trip.** Cacher syncs snippets with GitHub Gist on every update. massCode does not.
-- **No cloud account or web app.** massCode is a desktop application. There is no hosted UI.
-- **No hosted backups.** Backup is your responsibility, run by your sync service or your Git remote.
-
-These are real trade-offs. They are also the price of local-first.
-
-## Quick decision guide
-
-- If you need a managed team cloud workspace, AI copilot, hosted web UI, or first-party Gist sync, Pieces or Cacher is the right fit.
-- If you want your snippets, notes, and HTTP requests as plain files on your own disk, with sync handled by services you already trust and no subscription, massCode is the right fit.
-
-[Download massCode](/download/) and try it on a copy of your data. If it does not work for you, your existing vault is still just files — no migration to undo.
+- [massCode vs Pieces](/compare/pieces)
+- [massCode vs Cacher](/compare/cacher)
+- [Open-source snippet managers](/compare/best-open-source)

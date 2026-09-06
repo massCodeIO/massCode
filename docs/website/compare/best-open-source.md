@@ -3,13 +3,15 @@ title: Best Open-Source Snippet Manager
 description: "What to look for in an open-source snippet manager, and how the leading options compare on license, storage, platforms, and scope."
 ---
 
+[Home](/) / [Compare](/compare/) / Best Open-Source Snippet Manager
+
 # Best Open-Source Snippet Manager
 
 Closed-source snippet managers are easy to find. Open-source ones — code you can read, audit, build, and trust to outlive any single company — are a smaller list. This page explains what to look for and how the best open-source options compare.
 
 ## What "open-source snippet manager" should mean
 
-Not every "free" snippet manager is open source, and not every open-source license is the same. When evaluating, check for:
+An open-source license is a licensing property, not a storage or pricing model. Local files, account requirements, and platform support are separate selection criteria. When evaluating, check for:
 
 - **OSI-approved license.** AGPL, GPL, MIT, Apache 2.0, BSD. A "source available" repo with a custom non-commercial license is not the same thing.
 - **Public source on GitHub or GitLab.** You can read, fork, and build it yourself.
@@ -41,17 +43,17 @@ This is the niche massCode is designed for: a free, open-source, local-first wor
 
 ## Honest comparison with other open-source options
 
-The open-source snippet space splits into a few distinct categories. The options below were checked against their own GitHub repositories or official sites at the time of writing.
+The open-source snippet space splits into a few distinct categories. The options below are compared using their repositories and official sites. This is a documentation review, not a hands-on ranking.
 
 ### Pure open-source snippet managers
 
 These projects focus on snippets and stay narrow.
 
-- **[Lepton](https://github.com/hackjutsu/Lepton)** — "a lean code snippet manager powered by GitHub Gist." MIT licensed, available on macOS, Windows, and Linux. The right fit if your snippets must round-trip with GitHub Gists, including GitHub Enterprise. No notes, HTTP, or math.
+- **[Lepton](https://github.com/hackjutsu/Lepton)** — "a lean code snippet manager powered by GitHub Gist." MIT licensed, available on macOS, Windows, and Linux, with [2.0.0 released in July 2026](https://github.com/hackjutsu/Lepton/releases). The right fit if your snippets must round-trip with GitHub Gists, including GitHub Enterprise. No notes, HTTP, or math.
 - **[Snibox](https://github.com/snibox/snibox)** — "a self-hosted snippet manager." MIT licensed. Web app you run on your own server. Good when you want to host a snippet library yourself; not a desktop app.
 - **[massCode](https://github.com/massCodeIO/massCode)** — open-source local-first developer workspace. AGPL v3. Snippets plus Notes, HTTP, Math, and Tools. macOS, Windows, Linux.
 
-### General-purpose open-source apps that hold snippets
+### Notes-first options, including a proprietary alternative
 
 These are not snippet managers, but many developers use them that way. Trade-offs apply: they were not designed for code-first use.
 
@@ -80,3 +82,8 @@ Before installing anything, answer these questions:
 - Is reading the source code something I might actually do, or do I just want it to be possible?
 
 If your answers point to "code, cross-platform, local files, multiple workspaces, free, open-source," massCode is the closest match. [Download massCode](/download/) to try it.
+
+## Related comparisons
+
+- [Code snippet managers compared](/compare/best-code-snippet-managers)
+- [Local-first storage and portability](/compare/local-first)

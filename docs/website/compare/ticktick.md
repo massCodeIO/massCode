@@ -1,7 +1,10 @@
 ---
 title: massCode vs TickTick
-description: "An honest comparison between massCode tasks and TickTick. Local-first markdown tasks inside a developer workspace vs cloud-first task manager with Pomodoro, habits, calendar, and Eisenhower matrix."
+titleTemplate: false
+description: "Compare massCode tasks with TickTick: Markdown work notes versus reminders, recurring tasks, mobile access, calendars, and habit tracking."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs TickTick
 
 # massCode vs TickTick
 
@@ -9,12 +12,14 @@ description: "An honest comparison between massCode tasks and TickTick. Local-fi
 
 If you want a single task app that also handles habits, time-boxing, and reviews on every device, TickTick is the more natural fit. If you want your tasks to live as plain Markdown next to your developer notes and snippets, massCode is the more natural fit.
 
+[Try massCode](/download/) with one engineering note that needs a status and due date.
+
 ## At a glance
 
 | | massCode | TickTick |
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | Free; Premium $3.99/mo or $35.99/year |
+| Pricing | Free | Free; Premium US$49.99/year on the website |
 | Data location | Local Markdown Vault on your disk | Cloud sync across devices |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, web, iOS, Android, Apple Watch, Wear OS, browser extensions |
 | Task model | Notes with `status`, `priority`, and `due` properties | Lists, sections, tasks, subtasks, tags |
@@ -30,7 +35,7 @@ If you want a single task app that also handles habits, time-boxing, and reviews
 | Collaboration | File-level (shared folder, Git) | Built-in list and task sharing |
 | Account required | No | Yes |
 
-Sources for TickTick features and pricing: [ticktick.com](https://ticktick.com) and current public pricing pages.
+Sources for TickTick features and pricing: [TickTick features](https://ticktick.com) and [Premium pricing](https://ticktick.com/upgrade). The annual USD web price was checked on September 6, 2026; app-store and regional prices may differ.
 
 ## Where TickTick fits better
 
@@ -72,3 +77,8 @@ massCode is a strong choice when tasks should live with the rest of your develop
 You can keep TickTick for everyday personal logistics — groceries, habits, calendar reminders — and use massCode tasks for technical work-in-progress where the "task" is really a working note with code, links, and context.
 
 [Download massCode](/download/) and try it on a few in-flight notes.
+
+## Related comparisons
+
+- [Markdown-first tasks for developers](/compare/markdown-first-tasks)
+- [massCode vs Obsidian Tasks](/compare/obsidian-tasks)

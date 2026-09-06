@@ -1,7 +1,10 @@
 ---
 title: massCode vs Cacher
-description: "An honest comparison between massCode and Cacher. Local-first open-source workspace vs cloud snippet manager with team features and GitHub Gist sync."
+titleTemplate: false
+description: "Compare massCode and Cacher on local files, hosted team libraries, pricing, Gist sync, and migration of public or private snippets."
 ---
+
+[Home](/) / [Compare](/compare/) / massCode vs Cacher
 
 # massCode vs Cacher
 
@@ -9,12 +12,14 @@ description: "An honest comparison between massCode and Cacher. Local-first open
 
 If you need a managed cloud with shared team libraries and GitHub Gist sync, Cacher is built for that. If you want full ownership of your snippets and a single local workspace that also covers notes, HTTP, and math, massCode is the better fit.
 
+[Try massCode](/download/) with a small sample of your work before moving your library.
+
 ## At a glance
 
 | | massCode | Cacher |
 | --- | --- | --- |
 | License | Open source (AGPL v3) | Proprietary |
-| Pricing | Free | Free tier, Expert ($9.99/mo annual), Teams ($29.99/mo for 5 seats annual) |
+| Pricing | Free | Free: 15 private snippets and 3 private labels; Expert US$9.99/mo and Teams US$29.99/mo for 5 seats, billed annually |
 | Data location | Local Markdown Vault on your disk | Cloud-hosted account |
 | Platforms | macOS, Windows, Linux | macOS, Windows, Linux, web app |
 | Snippets | Yes, with folders, tags, and fragments | Yes, with color-coded labels |
@@ -27,6 +32,8 @@ If you need a managed cloud with shared team libraries and GitHub Gist sync, Cac
 | Team workspaces with roles | No | Yes, on Teams plan |
 | Account required | No | Yes |
 | IDE integrations | VS Code and Raycast extensions | VS Code, IntelliJ, Raycast, plus a CLI |
+
+USD web prices checked September 6, 2026. Additional Teams seats cost US$8/month on annual billing. Cacher also offers [self-hosting for organizations](https://www.cacher.io/pricing); its hosted service is not the only deployment option.
 
 Source for Cacher features and pricing: [cacher.io](https://www.cacher.io/) and [cacher.io/pricing](https://www.cacher.io/pricing).
 
@@ -64,12 +71,13 @@ massCode is a strong choice when you value local control, a single combined work
 
 ## Migration tips
 
-To move from Cacher to massCode at the file level:
+There is no direct Cacher importer. Keep a backup of your existing library and use one of these paths:
 
-1. Export your Cacher snippets through GitHub Gists when possible.
-2. In massCode, open [Code](/documentation/code/library), choose import, and paste a public Gist URL to preview the snippets.
-3. Import the previewed snippets, then adjust folders, tags, and languages inside Code.
-4. If you previously relied on Cacher for team sharing, point your massCode vault at a shared Git repository so teammates can pull and push changes.
+1. For snippets that are **already public**, import their public GitHub Gist URLs into [Code](/documentation/imports#code-imports), review the preview, then check languages, fragments, and tags.
+2. For private snippets, keep the transfer local: create a snippet in massCode and copy its code and description, then recreate the required folders and tags. A Cacher export is a backup, not a supported massCode import format.
+3. Check a small sample before moving the rest. File-level sharing through Git or a synced folder needs its own permissions and conflict workflow.
+
+Do not publish private snippets as Gists just to migrate them. [Secret Gists are unlisted, not private](https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists).
 
 [Download massCode](/download/) and try it on a copy of your snippets first.
 
@@ -85,8 +93,14 @@ Sharing in massCode happens at the file level: point your [Markdown Vault](/docu
 
 ### Can I import my Cacher snippets into massCode?
 
-There is no direct Cacher importer. The practical path is to export snippets through GitHub Gists and import the public Gist URLs in [Code](/documentation/code/library), then adjust folders, tags, and languages.
+There is no direct Cacher importer. Import already-public Gist URLs in [Code](/documentation/imports#code-imports), or copy private snippets locally and rebuild their organization. Cacher exports are not directly supported; do not make private code public for migration.
 
 ### Is massCode free?
 
 Yes, massCode is free and open source under AGPL v3. Cacher is a commercial cloud service, so the cost and hosting model are the main differences to weigh.
+
+## Related comparisons
+
+- [massCode vs Pieces](/compare/pieces)
+- [massCode vs GitHub Gist](/compare/github-gist)
+- [Code snippet managers compared](/compare/best-code-snippet-managers)

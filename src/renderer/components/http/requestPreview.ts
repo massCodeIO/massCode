@@ -1,6 +1,11 @@
 import type { HttpRequestDraft } from '@/composables'
 import type { HarRequest } from 'httpsnippet'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
+import type { HttpCollectionConfig } from '~/shared/httpCollection'
+import {
+  applyHttpCollection,
+  collectionVariables,
+} from '~/shared/httpCollection'
 import { buildGraphqlBody } from '~/shared/httpGraphql'
 import { interpolateHttpVariables } from '~/shared/httpVariables'
 
@@ -8,6 +13,7 @@ export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
 interface HttpRequestPreviewOptions {
+  collection?: HttpCollectionConfig
   name?: string
   variables?: Record<string, string>
 }
@@ -263,7 +269,12 @@ export function buildHttpPreview(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
   const url = buildPreviewUrl(previewDraft)
   const { host, target } = getHttpUrlParts(url)
   const headers = getPreviewHeaders(previewDraft)
@@ -289,7 +300,12 @@ export function buildCurlPreview(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
   const url = buildPreviewUrl(previewDraft)
   const indent = '     '
   const lines = [
@@ -385,7 +401,12 @@ export function buildHarRequest(
   draft: HttpRequestDraft,
   options: HttpRequestPreviewOptions = {},
 ): HarRequest {
-  const preview = interpolateDraft(draft, options.variables)
+  const preview = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
   const headers = getPreviewHeaders(preview)
   const contentType = headers.find(
     header => header.key.toLowerCase() === 'content-type',
@@ -436,7 +457,12 @@ export function buildJavaScriptPreview(
   format: 'fetch' | 'axios',
   options: HttpRequestPreviewOptions = {},
 ): string {
-  const previewDraft = interpolateDraft(draft, options.variables)
+  const previewDraft = interpolateDraft(
+    applyHttpCollection(draft, options.collection),
+    options.variables === undefined
+      ? undefined
+      : { ...collectionVariables(options.collection), ...options.variables },
+  )
   const multipart = previewDraft.bodyType === 'multipart'
   const headers = new Map<string, { key: string, value: string }>()
   for (const header of getPreviewHeaders(previewDraft)) {

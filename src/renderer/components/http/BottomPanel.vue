@@ -10,11 +10,17 @@ import {
   useDonations,
   useHttpEnvironments,
   useHttpExecute,
+  useHttpFolders,
   useHttpRequests,
   useHttpSettings,
 } from '@/composables'
+import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
+import {
+  findHttpCollection,
+  readHttpCollection,
+} from '~/shared/httpCollection'
 import {
   buildHarRequest,
   buildRequestPreview,
@@ -24,6 +30,7 @@ import {
 type BottomPanelTab = 'preview' | 'response'
 
 const { currentDraft, currentRequest } = useHttpRequests()
+const { folders } = useHttpFolders()
 const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const { settings } = useHttpSettings()
@@ -47,6 +54,7 @@ const interpolateVariables = ref(true)
 
 watch(
   [
+    folders,
     currentDraft,
     previewFormat,
     activeEnvironmentVariables,
@@ -68,6 +76,12 @@ watch(
     try {
       const options = {
         name: currentRequest.value?.name,
+        collection: readHttpCollection(
+          findHttpCollection(
+            flattenFolderTree(folders.value),
+            currentRequest.value?.folderId,
+          ),
+        ),
         variables: interpolateVariables.value
           ? activeEnvironmentVariables.value
           : undefined,

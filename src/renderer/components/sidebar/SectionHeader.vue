@@ -13,12 +13,15 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 </script>
 
 <template>
-  <div class="flex h-9 items-center justify-between py-1 pl-1 select-none">
+  <div
+    class="flex h-9 items-center justify-between select-none"
+    :class="{ 'py-1 pl-1': !collapsible }"
+  >
     <Button
       v-if="collapsible"
       variant="ghost"
       size="sm"
-      class="min-w-0 justify-start gap-1 px-0"
+      class="h-full min-w-0 flex-1 justify-start gap-1 rounded-none pr-0 pl-1 hover:bg-transparent hover:text-inherit dark:hover:bg-transparent"
       :aria-expanded="open"
       @click="emit('update:open', !open)"
     >

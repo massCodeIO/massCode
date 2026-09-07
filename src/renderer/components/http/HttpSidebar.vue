@@ -1,52 +1,20 @@
 <script setup lang="ts">
-import type { TreeNode as TreeNodeType } from '@/components/ui/tree/types'
-import * as ContextMenu from '@/components/ui/shadcn/context-menu'
-import { Tree as UiTree } from '@/components/ui/tree'
 import {
-  useDeleteShortcut,
   useHttpApp,
   useHttpEnvironments,
-  useHttpFolderDragDrop,
   useHttpFolders,
   useHttpImportDialog,
   useHttpRequests,
   useHttpSearch,
   useResizeHandle,
 } from '@/composables'
-import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigation'
 import { i18n, store } from '@/electron'
-import {
-  getEntryNameConflictMessage,
-  getEntryNameValidationMessage,
-} from '@/utils'
-import { Folder, Plus, Upload } from 'lucide-vue-next'
+import { Plus, Upload } from 'lucide-vue-next'
+
 import { LAYOUT_DEFAULTS } from '~/main/store/constants'
 
 const ENVIRONMENTS_PANEL_DEFAULTS
   = LAYOUT_DEFAULTS.http.environmentsPanel ?? LAYOUT_DEFAULTS.tags
-
-const {
-  highlightedFolderIds,
-  highlightedRequestIds,
-  focusedFolderId,
-  httpState,
-} = useHttpApp()
-const {
-  createHttpFolderAndSelect,
-  deleteSelectedHttpFolders,
-  folders,
-  getHttpFolders,
-  updateHttpFolder,
-  getFolderByIdFromTree,
-  selectedFolderIds,
-  selectHttpFolder,
-} = useHttpFolders()
-const { getHttpRequests, isRestoreStateBlocked, selectFirstRequest }
-  = useHttpRequests()
-const { getHttpEnvironments } = useHttpEnvironments()
-const { clearSearch } = useHttpSearch()
-const { onDragNode, onExternalDrop } = useHttpFolderDragDrop()
-const { isHttpImportDialogOpen, openHttpImportDialog } = useHttpImportDialog()
 
 const environmentsHandleRef = ref<HTMLElement>()
 
@@ -83,164 +51,31 @@ useResizeHandle(environmentsHandleRef, {
   },
 })
 
-function mapToTreeNode(folder: any): TreeNodeType {
-  return {
-    id: folder.id,
-    label: folder.name,
-    isExpanded: Boolean(folder.isOpen),
-    children: folder.children?.map(mapToTreeNode) || [],
+const { httpState } = useHttpApp()
+const { createHttpFolderAndSelect, getHttpFolders } = useHttpFolders()
+const { getHttpRequests } = useHttpRequests()
+const { getHttpEnvironments } = useHttpEnvironments()
+const { searchQuery } = useHttpSearch()
+const { isHttpImportDialogOpen, openHttpImportDialog } = useHttpImportDialog()
+const sectionTitle = computed(() => {
+  const labels: Record<string, string> = {
+    inbox: i18n.t('common.inbox'),
+    favorites: i18n.t('common.favorites'),
+    all: i18n.t('spaces.http.allRequests'),
+    trash: i18n.t('common.trash'),
   }
-}
-
-const treeData = computed(() => folders.value?.map(mapToTreeNode) || [])
-
-const selectedIds = computed({
-  get: () => selectedFolderIds.value as (string | number)[],
-  set: (val) => {
-    selectedFolderIds.value = val as number[]
-  },
-})
-
-const editableId = ref<string | number | null>(null)
-
-const focusedId = computed({
-  get: () => focusedFolderId.value as string | number | undefined,
-  set: (val) => {
-    focusedFolderId.value = val as number | undefined
-  },
-})
-
-const highlightedIds = computed({
-  get: () => highlightedFolderIds.value as Set<string | number>,
-  set: (val) => {
-    highlightedFolderIds.value.clear()
-    val.forEach(id => highlightedFolderIds.value.add(id as number))
-  },
-})
-
-const contextNode = ref<any>(null)
-
-function flattenFolders(nodes: any[], acc: any[] = []): any[] {
-  for (const folder of nodes) {
-    acc.push(folder)
-    if (folder.children?.length) {
-      flattenFolders(folder.children, acc)
-    }
-  }
-  return acc
-}
-
-function hasSiblingFolderConflict(node: TreeNodeType, value: string): boolean {
-  const folderId = Number(node.id)
-  const folder = getFolderByIdFromTree(folders.value, folderId)
-  if (!folder)
-    return false
-
-  const normalized = value.trim().toLowerCase()
-  if (!normalized || normalized === folder.name.toLowerCase())
-    return false
-
-  const parentId = folder.parentId ?? null
-  return flattenFolders(folders.value || []).some(
-    sibling =>
-      sibling.id !== folderId
-      && (sibling.parentId ?? null) === parentId
-      && sibling.name.toLowerCase() === normalized,
+  return (
+    labels[httpState.libraryFilter ?? '']
+    || i18n.t('spaces.http.tree.collections')
   )
-}
-
-function getFolderValidationMessage(node: TreeNodeType, value: string) {
-  const message = getEntryNameValidationMessage(value, i18n.t.bind(i18n))
-  if (message)
-    return message
-
-  if (hasSiblingFolderConflict(node, value)) {
-    return getEntryNameConflictMessage('folder', i18n.t.bind(i18n))
-  }
-
-  return ''
-}
-
-async function onClickNode({
-  node,
-  event,
-}: {
-  node: TreeNodeType
-  event?: MouseEvent
-}) {
-  highlightedFolderIds.value.clear()
-
-  const id = Number(node.id)
-
-  if (event?.shiftKey) {
-    await selectHttpFolder(id, { mode: 'range', ensureVisibility: false })
-    return
-  }
-
-  if (event && (event.metaKey || event.ctrlKey)) {
-    await selectHttpFolder(id, { mode: 'toggle', ensureVisibility: false })
-    return
-  }
-
-  if (httpState.folderId === id && selectedFolderIds.value.length === 1)
-    return
-
-  if (!(await httpRuntimeNavigation.confirmLeave()))
-    return
-
-  isRestoreStateBlocked.value = true
-  clearSearch()
-
-  await selectHttpFolder(id)
-  await getHttpRequests()
-  selectFirstRequest({ folderId: id })
-}
-
-function onDblclickNode(node: TreeNodeType) {
-  setTimeout(() => {
-    editableId.value = node.id
-  }, 100)
-}
-
-function onToggleNode(node: TreeNodeType) {
-  const folderNode = getFolderByIdFromTree(folders.value, Number(node.id))
-  if (folderNode) {
-    updateHttpFolder(Number(node.id), {
-      isOpen: !folderNode.isOpen ? 1 : 0,
-    })
-  }
-}
-
-function onContextMenu({
-  node,
-}: {
-  node: TreeNodeType
-  selectedNodes: TreeNodeType[]
-}) {
-  contextNode.value = getFolderByIdFromTree(folders.value, Number(node.id))
-  highlightedRequestIds.value.clear()
-}
-
-function onUpdateLabel({ node, value }: { node: TreeNodeType, value: string }) {
-  updateHttpFolder(Number(node.id), { name: value })
-  editableId.value = null
-}
-
-function onCancelEdit() {
-  editableId.value = null
-}
-
-async function onImported() {
-  await getHttpFolders(false)
-  await getHttpRequests()
-  await getHttpEnvironments()
-}
-
-useDeleteShortcut({
-  rootSelector: '[data-http-folders-tree]',
-  isEnabled: () => focusedFolderId.value !== undefined,
-  onDelete: () => deleteSelectedHttpFolders(focusedFolderId.value),
 })
+async function onImported() {
+  await Promise.allSettled([
+    getHttpFolders(false),
+    getHttpRequests(),
+    getHttpEnvironments(),
+  ])
+}
 </script>
 
 <template>
@@ -257,9 +92,10 @@ useDeleteShortcut({
       <template #actions>
         <UiActionButton
           :tooltip="i18n.t('spaces.http.action.import')"
+          :aria-label="i18n.t('spaces.http.action.import')"
           @click="openHttpImportDialog"
         >
-          <Upload class="h-4 w-4" />
+          <Upload class="size-4" />
         </UiActionButton>
       </template>
     </SidebarHeader>
@@ -269,74 +105,19 @@ useDeleteShortcut({
     />
     <HttpSidebarLibrary />
     <div class="flex min-h-0 flex-1 flex-col">
-      <SidebarSectionHeader :title="i18n.t('common.folders')">
+      <SidebarSectionHeader :title="sectionTitle">
         <template #action>
           <UiActionButton
-            :tooltip="i18n.t('action.new.folder')"
+            :tooltip="i18n.t('spaces.http.tree.newCollection')"
+            :aria-label="i18n.t('spaces.http.tree.newCollection')"
             @click="createHttpFolderAndSelect()"
           >
-            <Plus class="h-4 w-4" />
+            <Plus class="size-4" />
           </UiActionButton>
         </template>
       </SidebarSectionHeader>
-      <div
-        data-http-folders-tree
-        class="scrollbar min-h-0 flex-1 overflow-y-auto"
-      >
-        <ContextMenu.ContextMenu>
-          <ContextMenu.ContextMenuTrigger as-child>
-            <UiTree
-              v-if="treeData.length"
-              :model-value="treeData"
-              :selected-ids="selectedIds"
-              :editable-id="editableId"
-              :focused-id="focusedId"
-              :highlighted-ids="highlightedIds"
-              :get-validation-message="getFolderValidationMessage"
-              class="h-full px-0.5 pb-1"
-              @click-node="onClickNode"
-              @dblclick-node="onDblclickNode"
-              @toggle-node="onToggleNode"
-              @drag-node="onDragNode"
-              @external-drop="onExternalDrop"
-              @context-menu="onContextMenu"
-              @update-label="onUpdateLabel"
-              @cancel-edit="onCancelEdit"
-              @update:selected-ids="selectedIds = $event"
-              @update:editable-id="editableId = $event"
-              @update:focused-id="focusedId = $event"
-              @update:highlighted-ids="highlightedIds = $event"
-            >
-              <template #icon="{ node }">
-                <div class="mr-1.5 flex flex-shrink-0 items-center">
-                  <UiFolderIcon
-                    v-if="getFolderByIdFromTree(folders, Number(node.id))?.icon"
-                    :folder-id="Number(node.id)"
-                    :name="
-                      getFolderByIdFromTree(folders, Number(node.id))!.icon!
-                    "
-                    space-id="http"
-                  />
-                  <Folder
-                    v-else
-                    class="h-4 w-4"
-                  />
-                </div>
-              </template>
-            </UiTree>
-          </ContextMenu.ContextMenuTrigger>
-          <UiEmptyPlaceholder
-            v-if="!treeData.length"
-            :text="i18n.t('placeholder.emptyFoldersList')"
-          />
-          <HttpSidebarFolderContextMenu
-            :context-node="contextNode"
-            :editable-id="editableId"
-            @update:editable-id="editableId = $event"
-          />
-        </ContextMenu.ContextMenu>
-      </div>
-
+      <HttpRequestsListHeader />
+      <HttpTreeLive :query="searchQuery" />
       <div
         ref="environmentsHandleRef"
         class="before:bg-border hover:before:bg-primary data-[resizing]:before:bg-primary relative z-10 flex h-px shrink-0 cursor-row-resize items-center justify-center bg-transparent before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2 before:transition-[background-color,height] before:duration-150 before:content-[''] after:absolute after:inset-x-0 after:top-1/2 after:h-3 after:-translate-y-1/2 after:content-[''] hover:before:h-0.5 hover:before:delay-200 data-[resizing]:before:h-0.5"

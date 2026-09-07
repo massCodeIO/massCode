@@ -55,6 +55,8 @@ watch(searchQuery, (v) => {
 })
 
 async function onCreateRequest() {
+  if (httpState.folderId == null)
+    httpState.libraryFilter = LibraryFilter.Inbox
   await createHttpRequestAndSelect({
     folderId: httpState.folderId ?? null,
   })

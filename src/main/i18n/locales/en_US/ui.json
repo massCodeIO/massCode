@@ -253,7 +253,7 @@
       },
       "runner": {
         "runFolder": "Run folder",
-        "title": "Folder runner",
+        "title": "Runner",
         "description": "Run saved requests, including nested folders. Changes made after opening this runner are not included. Run variables and results stay in memory; closing stops the run.",
         "environment": "Environment",
         "orderHint": "Requests run top to bottom. Drag a row to change this run’s order.",
@@ -523,7 +523,8 @@
           "usernamePlaceholder": "Enter username",
           "password": "Password",
           "passwordPlaceholder": "Enter password",
-          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}."
+          "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}.",
+          "typeInherit": "Inherit from collection"
         },
         "description": {
           "placeholder": "Add a description for this request"
@@ -672,6 +673,77 @@
           "invalid": "Invalid or truncated GraphQL response"
         },
         "noNamedOperations": "No named operations"
+      },
+      "folderPanel": {
+        "runCollection": "Run collection",
+        "name": "Name",
+        "contents": "Contents",
+        "saveFailed": "Could not save the folder. Try again."
+      },
+      "tree": {
+        "title": "HTTP tree prototype",
+        "prototypeOnly": "Test data · changes stay in this prototype",
+        "collections": "Collections",
+        "search": "Search by name, method or URL",
+        "empty": "No matches",
+        "emptyContainer": "This container is empty",
+        "open": "Open",
+        "rename": "Rename",
+        "move": "Move to…",
+        "cancel": "Cancel",
+        "apply": "Apply",
+        "name": "Name",
+        "destination": "Destination",
+        "selected": "Selected: {{count}}",
+        "expand": "Expand {{name}}",
+        "collapse": "Collapse {{name}}",
+        "back": "Back to HTTP",
+        "reset": "Reset test data",
+        "reveal": "Reveal in tree",
+        "overview": "Open a request or a nested folder from the tree or this overview.",
+        "requestPreview": "Request preview for testing navigation. Sending and editing will be connected in the next stage.",
+        "help": "Open collections, folders and requests. Use the context menu to rename or move items. Drag into a container to move, or between rows to reorder. Search temporarily disables dragging.",
+        "keyboard": "Arrow keys move focus; Enter opens a document; Space selects. Cmd/Ctrl-click toggles selection; Shift selects a range; F2 renames. The chevron only expands the container.",
+        "moved": "Moved. The active document is preserved.",
+        "errors": {
+          "invalid": "Choose a collection or folder as the destination.",
+          "cycle": "An item cannot be moved into itself or its descendants.",
+          "collection": "Collections stay at the top level; folders and requests stay inside collections.",
+          "conflict": "The destination contains an item with the same name.",
+          "name": "Enter a name.",
+          "sorted": "Requests follow the app sort order. Drop inside a folder or collection to move.",
+          "unavailable": "Wait until the operation or cloud download completes."
+        },
+        "newCollection": "New collection",
+        "moveFailed": "Some items could not be moved. The tree has been refreshed.",
+        "loadFailed": "Could not load requests. Click to retry."
+      },
+      "collection": {
+        "tabs": {
+          "overview": "Overview",
+          "headers": "Headers",
+          "vars": "Vars",
+          "auth": "Auth",
+          "script": "Script",
+          "tests": "Tests"
+        },
+        "version": "Version",
+        "documentation": "Documentation",
+        "requestCount": "Requests: {{count}}",
+        "unsaved": "Unsaved changes",
+        "invalid": "Collection settings are invalid. Restore the collection metadata before editing.",
+        "saveFailed": "Could not save the collection. Your changes are preserved.",
+        "validation": "Check the collection fields before saving.",
+        "leaveTitle": "Save collection changes?",
+        "leaveDescription": "This collection has unsaved changes.",
+        "sources": {
+          "collection": "Collection",
+          "request": "Request"
+        },
+        "edit": "Edit",
+        "done": "Done",
+        "notSet": "Not set",
+        "documentationEmpty": "Describe the purpose of this collection, its endpoints and how to use them. Markdown is supported."
       }
     },
     "tools": {

@@ -8,9 +8,24 @@ import {
   httpAssertionOperators as operators,
 } from '~/shared/httpRuntime'
 
-defineProps<{ disabled: boolean }>()
+const props = withDefaults(
+  defineProps<{
+    fill?: boolean
+    disabled: boolean
+    context?: Pick<
+      ReturnType<typeof useHttpRuntime>,
+      | 'draft'
+      | 'expectedInputs'
+      | 'setExpected'
+      | 'removeAssertion'
+      | 'fieldError'
+      | 'touchField'
+    >
+  }>(),
+  { fill: true },
+)
 const { draft, expectedInputs, setExpected, removeAssertion }
-  = useHttpRuntime()
+  = props.context ?? useHttpRuntime()
 const sources = ['status', 'json', 'header', 'durationMs'] as const
 
 function expectedPlaceholder(operator: string) {
@@ -32,13 +47,19 @@ function expectedPlaceholder(operator: string) {
 </script>
 
 <template>
-  <section class="flex h-full min-h-0 flex-col">
+  <section
+    class="flex min-h-0 flex-col"
+    :class="{ 'h-full': fill }"
+  >
     <div class="mb-1 flex h-7 shrink-0 items-center">
       <UiText variant="sm">
         {{ i18n.t("spaces.http.runtime.assertions") }}
       </UiText>
     </div>
-    <div class="scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto">
+    <div
+      class="scrollbar min-h-0 space-y-2 overflow-y-auto"
+      :class="{ 'flex-1': fill }"
+    >
       <template
         v-for="(rule, index) in draft.assertions"
         :key="index"
@@ -47,6 +68,7 @@ function expectedPlaceholder(operator: string) {
           <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
             <HttpRuntimeInput
               v-model="rule.name"
+              :context="context"
               group="assertions"
               :index="index"
               field="name"
@@ -86,6 +108,7 @@ function expectedPlaceholder(operator: string) {
             <HttpRuntimeInput
               v-if="rule.source === 'json' || rule.source === 'header'"
               v-model="rule.path"
+              :context="context"
               group="assertions"
               :index="index"
               field="path"
@@ -120,6 +143,7 @@ function expectedPlaceholder(operator: string) {
             </Select.Select>
             <HttpRuntimeInput
               v-if="httpOperatorNeedsExpected(rule.operator)"
+              :context="context"
               group="assertions"
               :index="index"
               field="expected"

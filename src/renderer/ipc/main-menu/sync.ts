@@ -66,6 +66,7 @@ export function registerMainMenuContextSync() {
         currentRequest.value?.pendingCloudDownload,
         currentRequest.value?.id,
         httpState.requestId,
+        httpState.activePanel,
         isCurrentRequestLoading.value,
       ] as const,
     () => {
@@ -99,7 +100,9 @@ export function registerMainMenuContextSync() {
           http: {
             layoutMode: httpLayoutMode.value,
             canSendRequest:
-              Boolean(currentDraft.value?.url)
+              (httpState.activePanel === undefined
+                || httpState.activePanel === 'request')
+              && Boolean(currentDraft.value?.url)
               && !isExecuting.value
               && !currentRequest.value?.pendingCloudDownload
               // Полная запись выбранного запроса ещё грузится: draft пока

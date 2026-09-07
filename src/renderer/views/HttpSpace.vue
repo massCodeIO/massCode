@@ -1,11 +1,32 @@
 <script setup lang="ts">
-import { useApp, useHttpApp, useHttpSpaceInit } from '@/composables'
+import {
+  useApp,
+  useHttpApp,
+  useHttpFolders,
+  useHttpSpaceInit,
+} from '@/composables'
+import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { store } from '@/electron'
 
 const { isAppLoading } = useApp()
 const { initHttpSpace } = useHttpSpaceInit()
-const { isHttpSidebarHidden, isHttpListHidden } = useHttpApp()
+const { httpState, isHttpSidebarHidden } = useHttpApp()
+const { folders, getFolderByIdFromTree } = useHttpFolders()
+const selectedFolder = computed(() =>
+  getFolderByIdFromTree(folders.value, httpState.folderId ?? null),
+)
+
+if (httpState.activePanel === 'environments') {
+  httpState.activePanel
+    = httpState.folderId !== undefined ? 'folder' : 'request'
+}
+
+const { open: runnerOpen } = useHttpRunner()
+if (httpState.activePanel === 'runner' && !runnerOpen.value) {
+  httpState.activePanel
+    = httpState.folderId !== undefined ? 'folder' : 'request'
+}
 
 const { dispose: disposeWebSocket } = useHttpWebSocket()
 onBeforeUnmount(disposeWebSocket)
@@ -17,24 +38,14 @@ const storedThreePanel = store.app.get('http.layout.threePanel') as
   | undefined
 
 const sidebarWidth
-  = storedThreePanel?.length === 2 ? storedThreePanel[0] : undefined
-const listWidth = (() => {
-  if (storedThreePanel?.length === 2)
-    return storedThreePanel[1]
-  const twoPanel = store.app.get('http.layout.twoPanel') as number | undefined
-  return twoPanel ?? undefined
-})()
+  = store.app.get<number>('http.layout.treeWidth')
+    ?? storedThreePanel?.[0]
+    ?? 260
 
-function onResizeEnd(sw: number, lw: number) {
-  store.app.set('http.layout.threePanel', [sw, lw])
+function onResizeEnd(width: number) {
+  store.app.set('http.layout.treeWidth', width)
 }
-
-function onTwoPanelResize(lw: number) {
-  store.app.set('http.layout.twoPanel', lw)
-}
-
 const isSidebarShown = computed(() => !isHttpSidebarHidden.value)
-const isListShown = computed(() => !isHttpListHidden.value)
 
 onMounted(() => {
   isAppLoading.value = false
@@ -44,21 +55,37 @@ onMounted(() => {
 <template>
   <LayoutThreeColumn
     :show-sidebar="isSidebarShown"
-    :show-list="isListShown"
+    :show-list="false"
     :sidebar-width="sidebarWidth"
-    :list-width="listWidth"
     @resize-end="onResizeEnd"
-    @two-panel-resize="onTwoPanelResize"
   >
     <template #sidebar>
       <HttpSidebar />
     </template>
-    <template #list>
-      <HttpRequestsList />
-    </template>
     <template #editor>
-      <HttpRequestEditorPane />
+      <div class="flex h-full min-h-0 flex-col pt-[var(--content-top-offset)]">
+        <HttpContextHeader
+          v-if="
+            httpState.activePanel === 'folder'
+              || httpState.activePanel === 'runner'
+          "
+        />
+        <div class="min-h-0 flex-1 [--content-top-offset:0px]">
+          <HttpRunnerPanel v-show="httpState.activePanel === 'runner'" />
+          <HttpCollectionEditor
+            v-if="
+              httpState.activePanel === 'folder'
+                && selectedFolder?.parentId === null
+            "
+          />
+          <HttpFolderPanel v-else-if="httpState.activePanel === 'folder'" />
+          <HttpRequestEditorPane
+            v-else-if="
+              !httpState.activePanel || httpState.activePanel === 'request'
+            "
+          />
+        </div>
+      </div>
     </template>
   </LayoutThreeColumn>
-  <HttpRunnerDialog />
 </template>

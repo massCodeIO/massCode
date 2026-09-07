@@ -1,17 +1,39 @@
 <script setup lang="ts">
-import type { HttpRequestDraft } from '@/composables'
 import type { HttpAuthType } from '~/main/types/http'
 import { Input } from '@/components/ui/shadcn/input'
 import * as Select from '@/components/ui/shadcn/select'
 import { i18n } from '@/electron'
 
-const draft = defineModel<HttpRequestDraft>({ required: true })
+const props = withDefaults(defineProps<{ allowInherit?: boolean }>(), {
+  allowInherit: true,
+})
+
+const draft = defineModel<{
+  auth: {
+    type: HttpAuthType
+    token?: string
+    username?: string
+    password?: string
+  }
+}>({ required: true })
 
 const AUTH_TYPES: { value: HttpAuthType, labelKey: string }[] = [
   { value: 'none', labelKey: 'spaces.http.editor.auth.typeNone' },
   { value: 'bearer', labelKey: 'spaces.http.editor.auth.typeBearer' },
   { value: 'basic', labelKey: 'spaces.http.editor.auth.typeBasic' },
 ]
+
+const authTypes = computed(() =>
+  props.allowInherit
+    ? [
+        {
+          value: 'inherit' as const,
+          labelKey: 'spaces.http.editor.auth.typeInherit',
+        },
+        ...AUTH_TYPES,
+      ]
+    : AUTH_TYPES,
+)
 
 const authType = computed({
   get: () => draft.value.auth.type,
@@ -30,7 +52,7 @@ const authType = computed({
         </Select.SelectTrigger>
         <Select.SelectContent>
           <Select.SelectItem
-            v-for="t in AUTH_TYPES"
+            v-for="t in authTypes"
             :key="t.value"
             :value="t.value"
           >
@@ -41,7 +63,7 @@ const authType = computed({
     </div>
 
     <UiText
-      v-if="authType !== 'none'"
+      v-if="authType !== 'none' && authType !== 'inherit'"
       class="text-muted-foreground text-xs"
     >
       {{ i18n.t("spaces.http.editor.auth.plainTextHint") }}

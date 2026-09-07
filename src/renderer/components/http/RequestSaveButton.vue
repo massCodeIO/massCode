@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { useSonner } from '@/composables/useSonner'
@@ -6,6 +7,18 @@ import { i18n } from '@/electron'
 import { isMac } from '@/utils'
 import { onKeyStroke } from '@vueuse/core'
 import { LoaderCircle, Save } from 'lucide-vue-next'
+
+const props = defineProps<{
+  context?: Pick<
+    ReturnType<typeof useHttpCollection>,
+    | 'dirty'
+    | 'saving'
+    | 'save'
+    | 'saveError'
+    | 'unavailable'
+    | 'leaveDialogOpen'
+  >
+}>()
 
 const { currentRequest } = useHttpRequests()
 const { sonner } = useSonner()
@@ -17,9 +30,21 @@ const {
   saveError,
   conflict,
   leaveDialogOpen,
-} = useHttpRuntime()
-const unavailable = computed(
-  () => currentRequest.value?.runtimeState !== 'ready',
+} = props.context
+  ? {
+      requestDirty: props.context.dirty,
+      busy: props.context.saving,
+      saveRequest: props.context.save,
+      requestSaveError: ref(false),
+      saveError: props.context.saveError,
+      conflict: ref(false),
+      leaveDialogOpen: props.context.leaveDialogOpen,
+    }
+  : useHttpRuntime()
+const unavailable = computed(() =>
+  props.context
+    ? props.context.unavailable.value
+    : currentRequest.value?.runtimeState !== 'ready',
 )
 
 watch([requestSaveError, saveError], () => {

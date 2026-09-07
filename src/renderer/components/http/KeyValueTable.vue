@@ -16,6 +16,7 @@ type RowActionMode = 'delete' | 'menu' | 'none'
 
 const props = withDefaults(
   defineProps<{
+    fill?: boolean
     columns?: Column[]
     showEnabled?: boolean
     actions?: RowActionMode
@@ -27,6 +28,7 @@ const props = withDefaults(
     beforeRemove?: (entry: T, index: number) => boolean | Promise<boolean>
   }>(),
   {
+    fill: true,
     columns: () => [
       {
         key: 'key',
@@ -123,7 +125,10 @@ function duplicateRow(index: number) {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col">
+  <div
+    class="flex min-h-0 flex-col"
+    :class="{ 'h-full': fill }"
+  >
     <div
       class="text-muted-foreground border-border grid items-center gap-2 border-b px-2 py-1 text-[10px] font-semibold tracking-wider uppercase"
       :style="{ gridTemplateColumns: resolvedGridTemplateColumns }"
@@ -138,7 +143,10 @@ function duplicateRow(index: number) {
       <span v-if="actions !== 'none'" />
     </div>
 
-    <div class="scrollbar min-h-0 flex-1 overflow-y-auto">
+    <div
+      class="scrollbar min-h-0 overflow-y-auto"
+      :class="{ 'flex-1': fill }"
+    >
       <div
         v-if="model.length === 0 && emptyText"
         class="text-muted-foreground px-2 py-2 text-xs"

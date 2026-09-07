@@ -7,9 +7,14 @@ import { i18n } from '@/electron'
 import { ShieldCheck, ShieldOff } from 'lucide-vue-next'
 import { emptyHttpScripts } from '~/shared/httpScripts'
 
-const { draft } = useHttpRuntime()
+const props = defineProps<{
+  embedded?: boolean
+  context?: Pick<ReturnType<typeof useHttpRuntime>, 'draft'>
+  trustContext?: ReturnType<typeof useHttpScriptTrust>
+}>()
+const { draft } = props.context ?? useHttpRuntime()
 const { trusted, busy, unavailable, hasScripts, setTrust }
-  = useHttpScriptTrust()
+  = props.trustContext ?? useHttpScriptTrust()
 const phase = ref<'preRequest' | 'postResponse'>('preRequest')
 const code = computed({
   get: () => draft.value.scripts?.[phase.value] ?? '',
@@ -24,11 +29,16 @@ const code = computed({
 </script>
 
 <template>
-  <div class="space-y-3 p-3">
-    <div class="flex items-center justify-between gap-3">
+  <div
+    class="flex min-h-0 flex-col gap-3"
+    :class="embedded ? 'h-full' : 'p-3'"
+  >
+    <div class="flex h-7 shrink-0 items-center justify-between gap-3">
       <UiText
         variant="xs"
-        :class="trusted ? 'text-success' : 'text-muted-foreground'"
+        :class="
+          trusted && hasScripts ? 'text-success' : 'text-muted-foreground'
+        "
       >
         {{
           i18n.t(
@@ -91,6 +101,7 @@ const code = computed({
       :key="phase"
       v-model="code"
       language="javascript"
+      :class="{ 'min-h-56 flex-1': embedded }"
     />
     <UiText
       as="p"

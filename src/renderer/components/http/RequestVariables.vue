@@ -5,33 +5,50 @@ import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
 import { Trash2 } from 'lucide-vue-next'
 
+const props = withDefaults(
+  defineProps<{
+    fill?: boolean
+    context?: Pick<
+      ReturnType<typeof useHttpRuntime>,
+      'draft' | 'saving' | 'removeExtraction' | 'fieldError' | 'touchField'
+    >
+  }>(),
+  { fill: true },
+)
 const { currentRequest } = useHttpRequests()
-const { draft, saving, removeExtraction } = useHttpRuntime()
+const { draft, saving, removeExtraction } = props.context ?? useHttpRuntime()
 const unavailable = computed(
-  () => currentRequest.value?.runtimeState !== 'ready',
+  () => !props.context && currentRequest.value?.runtimeState !== 'ready',
 )
 </script>
 
 <template>
   <fieldset
     :disabled="unavailable || saving"
-    class="flex min-h-0 flex-1 flex-col disabled:opacity-50"
+    class="flex min-h-0 flex-col disabled:opacity-50"
+    :class="{ 'flex-1': fill }"
   >
-    <UiText
-      as="p"
-      variant="xs"
-      class="mb-3 shrink-0"
-      muted
+    <section
+      class="flex min-h-0 flex-col"
+      :class="{ 'flex-1': fill }"
     >
-      {{ i18n.t("spaces.http.runtime.extractionHint") }}
-    </UiText>
-    <section class="flex min-h-0 flex-1 flex-col">
       <div class="mb-1 flex h-7 shrink-0 items-center">
         <UiText variant="sm">
           {{ i18n.t("spaces.http.runtime.postResponse") }}
         </UiText>
       </div>
-      <div class="scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto">
+      <UiText
+        as="p"
+        variant="xs"
+        class="mb-3 shrink-0"
+        muted
+      >
+        {{ i18n.t("spaces.http.runtime.extractionHint") }}
+      </UiText>
+      <div
+        class="scrollbar min-h-0 space-y-1 overflow-y-auto"
+        :class="{ 'flex-1': fill }"
+      >
         <div
           v-for="(rule, index) in draft.extractions"
           :key="index"
@@ -39,6 +56,7 @@ const unavailable = computed(
         >
           <HttpRuntimeInput
             v-model="rule.name"
+            :context="context"
             group="extractions"
             :index="index"
             field="name"
@@ -66,6 +84,7 @@ const unavailable = computed(
           </Select.Select>
           <HttpRuntimeInput
             v-model="rule.path"
+            :context="context"
             group="extractions"
             :index="index"
             field="path"

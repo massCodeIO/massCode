@@ -17,7 +17,10 @@ defineProps<{ results: HttpScriptResult[] }>()
       weight="medium"
       muted
     >
-      {{ i18n.t(`spaces.http.scripts.${result.phase}`) }}
+      {{
+        i18n.t(`spaces.http.collection.sources.${result.source ?? "request"}`)
+      }}
+      · {{ i18n.t(`spaces.http.scripts.${result.phase}`) }}
     </UiText>
     <UiText
       v-if="result.error"

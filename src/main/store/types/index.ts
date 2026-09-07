@@ -155,6 +155,12 @@ export interface AppStore {
     layout: {
       mode: SpaceLayoutMode
       environmentsListHeight: number
+      collectionsOpen?: boolean
+      environmentsOpen?: boolean
+      trashOpen?: boolean
+      unfiledOpen?: boolean
+      favoritesOnly?: boolean
+      trashHeight?: number
       treeWidth?: number
       threePanel?: number[]
       twoPanel?: number

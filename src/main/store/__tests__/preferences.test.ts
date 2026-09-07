@@ -564,6 +564,12 @@ describe('app store sanitization', () => {
         layout: {
           mode: 'list-editor',
           treeWidth: 284,
+          collectionsOpen: false,
+          environmentsOpen: false,
+          trashOpen: true,
+          unfiledOpen: false,
+          favoritesOnly: true,
+          trashHeight: 140,
           environmentsListHeight: 180,
           threePanel: [20, 30],
           twoPanel: 35,
@@ -581,6 +587,12 @@ describe('app store sanitization', () => {
       requestId: 7,
     })
     expect(app.get('http.layout.treeWidth' as any)).toBe(284)
+    expect(app.get('http.layout.collectionsOpen' as any)).toBe(false)
+    expect(app.get('http.layout.environmentsOpen' as any)).toBe(false)
+    expect(app.get('http.layout.trashOpen' as any)).toBe(true)
+    expect(app.get('http.layout.unfiledOpen' as any)).toBe(false)
+    expect(app.get('http.layout.favoritesOnly' as any)).toBe(true)
+    expect(app.get('http.layout.trashHeight' as any)).toBe(140)
     expect(app.get('http.layout.mode' as any)).toBe('list-editor')
     expect(app.get('http.contentSort' as any)).toEqual({
       sort: 'updatedAt',

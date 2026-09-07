@@ -587,6 +587,12 @@ function sanitizeAppStore(value: unknown): AppStore {
             ? LAYOUT_DEFAULTS.http.environmentsPanel.height
             : raw
         })(),
+        collectionsOpen: httpLayoutSource.collectionsOpen !== false,
+        environmentsOpen: httpLayoutSource.environmentsOpen !== false,
+        trashOpen: httpLayoutSource.trashOpen === true,
+        unfiledOpen: httpLayoutSource.unfiledOpen !== false,
+        favoritesOnly: httpLayoutSource.favoritesOnly === true,
+        trashHeight: readOptionalNumber(httpLayoutSource, 'trashHeight'),
         treeWidth: readOptionalNumber(httpLayoutSource, 'treeWidth'),
         threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
         twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,

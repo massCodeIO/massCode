@@ -63,14 +63,28 @@ onMounted(() => {
       <HttpSidebar />
     </template>
     <template #editor>
-      <div class="flex h-full min-h-0 flex-col pt-[var(--content-top-offset)]">
+      <div
+        class="flex h-full min-h-0 flex-col"
+        :class="{
+          'pt-[var(--content-top-offset)]':
+            httpState.activePanel === 'folder'
+            || httpState.activePanel === 'runner',
+        }"
+      >
         <HttpContextHeader
           v-if="
             httpState.activePanel === 'folder'
               || httpState.activePanel === 'runner'
           "
         />
-        <div class="min-h-0 flex-1 [--content-top-offset:0px]">
+        <div
+          class="min-h-0 flex-1"
+          :class="{
+            '[--content-top-offset:0px]':
+              httpState.activePanel === 'folder'
+              || httpState.activePanel === 'runner',
+          }"
+        >
           <HttpRunnerPanel v-show="httpState.activePanel === 'runner'" />
           <HttpCollectionEditor
             v-if="

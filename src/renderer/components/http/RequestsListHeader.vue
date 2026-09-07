@@ -10,7 +10,9 @@ const { searchQuery } = useHttpSearch()
 </script>
 
 <template>
-  <div class="flex h-9 shrink-0 items-center gap-0.5 border-b px-1">
+  <div
+    class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center gap-0.5 border-b px-1 pb-1"
+  >
     <Search class="text-muted-foreground ml-1 size-4 shrink-0" />
     <UiInput
       v-model="searchQuery"

@@ -92,7 +92,9 @@ async function onSend() {
     ref="editorRoot"
     class="flex h-full flex-col"
   >
-    <div class="border-border flex items-center border-b px-2 pb-1">
+    <div
+      class="border-border flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center border-b px-2 pb-1"
+    >
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
         <div
           v-if="isHistoryVisible"

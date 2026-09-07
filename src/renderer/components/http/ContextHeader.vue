@@ -46,7 +46,9 @@ async function showRunner() {
 </script>
 
 <template>
-  <div class="flex h-9 shrink-0 items-center gap-1 border-b px-2">
+  <div
+    class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center gap-1 border-b px-2 pb-1"
+  >
     <UiActionButton
       v-if="collection"
       :tooltip="i18n.t('action.setCustomIcon')"

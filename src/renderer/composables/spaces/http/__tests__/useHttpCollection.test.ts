@@ -63,6 +63,29 @@ async function setup() {
 beforeEach(() => vi.restoreAllMocks())
 
 describe('collection document state', () => {
+  it('opens nested folder settings with inherited auth and saves their own configuration', async () => {
+    const { folders, collection, patch } = await setup()
+    const folder = folders.folders.value.find(folder => folder.id === 2)!
+    folder.parentId = 1
+    delete folder.collectionConfig
+    // Folder metadata is shallow: publish a new tree after changing its ancestry.
+    folders.folders.value = folders.folders.value.map(item => ({ ...item }))
+    await nextTick()
+    expect(collection.collection.value?.id).toBe(2)
+    expect(collection.draft.value.auth.type).toBe('inherit')
+    collection.draft.value.documentation = 'Folder documentation'
+    await collection.save()
+    expect(patch).toHaveBeenCalledWith(
+      '2',
+      expect.objectContaining({
+        collectionConfig: expect.objectContaining({
+          documentation: 'Folder documentation',
+          auth: { type: 'inherit' },
+        }),
+      }),
+    )
+  })
+
   it('preserves the dirty active collection when multiselection is reordered on tree refresh', async () => {
     const { folders, collection, httpState } = await setup()
     collection.draft.value.documentation = 'Draft of collection B'

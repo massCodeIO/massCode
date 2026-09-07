@@ -5,7 +5,7 @@ import { httpRuntimeNavigation } from '@/composables/spaces/http/runtimeNavigati
 import { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
-import { Layers, Play } from 'lucide-vue-next'
+import { Folder, Layers, Play } from 'lucide-vue-next'
 
 const collectionContext = useHttpCollection()
 const { collection } = collectionContext
@@ -59,6 +59,10 @@ async function showRunner() {
         :folder-id="collection.id"
         :name="collection.icon"
         space-id="http"
+      />
+      <Folder
+        v-else-if="collection.parentId !== null"
+        class="size-4"
       />
       <Layers
         v-else

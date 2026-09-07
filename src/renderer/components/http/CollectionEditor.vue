@@ -123,7 +123,7 @@ watch(
         <Tabs.TabsContent value="auth">
           <HttpRequestAuthTab
             v-model="draft"
-            :allow-inherit="false"
+            :allow-inherit="collection.parentId !== null"
           />
         </Tabs.TabsContent>
         <Tabs.TabsContent

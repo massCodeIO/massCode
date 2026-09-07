@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  useApp,
-  useHttpApp,
-  useHttpFolders,
-  useHttpSpaceInit,
-} from '@/composables'
+import { useApp, useHttpApp, useHttpSpaceInit } from '@/composables'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { store } from '@/electron'
@@ -12,11 +7,6 @@ import { store } from '@/electron'
 const { isAppLoading } = useApp()
 const { initHttpSpace } = useHttpSpaceInit()
 const { httpState, isHttpSidebarHidden } = useHttpApp()
-const { folders, getFolderByIdFromTree } = useHttpFolders()
-const selectedFolder = computed(() =>
-  getFolderByIdFromTree(folders.value, httpState.folderId ?? null),
-)
-
 if (httpState.activePanel === 'environments') {
   httpState.activePanel
     = httpState.folderId !== undefined ? 'folder' : 'request'
@@ -86,13 +76,7 @@ onMounted(() => {
           }"
         >
           <HttpRunnerPanel v-show="httpState.activePanel === 'runner'" />
-          <HttpCollectionEditor
-            v-if="
-              httpState.activePanel === 'folder'
-                && selectedFolder?.parentId === null
-            "
-          />
-          <HttpFolderPanel v-else-if="httpState.activePanel === 'folder'" />
+          <HttpCollectionEditor v-if="httpState.activePanel === 'folder'" />
           <HttpRequestEditorPane
             v-else-if="
               !httpState.activePanel || httpState.activePanel === 'request'

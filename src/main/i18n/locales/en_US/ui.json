@@ -524,7 +524,7 @@
           "password": "Password",
           "passwordPlaceholder": "Enter password",
           "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}.",
-          "typeInherit": "Inherit from collection"
+          "typeInherit": "Inherit from parent"
         },
         "description": {
           "placeholder": "Add a description for this request"
@@ -732,11 +732,11 @@
         "documentation": "Documentation",
         "requestCount": "Requests: {{count}}",
         "unsaved": "Unsaved changes",
-        "invalid": "Collection settings are invalid. Restore the collection metadata before editing.",
-        "saveFailed": "Could not save the collection. Your changes are preserved.",
-        "validation": "Check the collection fields before saving.",
-        "leaveTitle": "Save collection changes?",
-        "leaveDescription": "This collection has unsaved changes.",
+        "invalid": "Settings are invalid. Restore the metadata before editing.",
+        "saveFailed": "Could not save settings. Your changes are preserved.",
+        "validation": "Check the fields before saving.",
+        "leaveTitle": "Save changes?",
+        "leaveDescription": "There are unsaved changes to these settings.",
         "sources": {
           "collection": "Collection",
           "request": "Request"

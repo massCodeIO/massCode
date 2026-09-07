@@ -21,9 +21,7 @@ const collection = computed(() => {
     folders.value,
     httpState.folderId ?? null,
   )
-  return httpState.activePanel === 'folder' && folder?.parentId === null
-    ? folder
-    : null
+  return httpState.activePanel === 'folder' && folder ? folder : null
 })
 type Config = NonNullable<HttpFoldersUpdate['collectionConfig']>
 const draft = ref<Config>(emptyHttpCollection())
@@ -74,7 +72,12 @@ watch(
       return
     owner = value?.id ?? null
     draft.value = JSON.parse(
-      JSON.stringify(value?.collectionConfig ?? emptyHttpCollection()),
+      JSON.stringify(
+        value?.collectionConfig ?? {
+          ...emptyHttpCollection(),
+          auth: { type: value?.parentId != null ? 'inherit' : 'none' },
+        },
+      ),
     )
     saved.value = JSON.stringify(draft.value)
     resetInputs()

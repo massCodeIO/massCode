@@ -1,12 +1,37 @@
 <script setup lang="ts">
-import { useHttpApp, useHttpRequests, useHttpSearch } from '@/composables'
+import { Button } from '@/components/ui/shadcn/button'
+import * as Popover from '@/components/ui/shadcn/popover'
+import { Separator } from '@/components/ui/shadcn/separator'
+import {
+  useHttpApp,
+  useHttpFolders,
+  useHttpImportDialog,
+  useHttpRequests,
+  useHttpSearch,
+} from '@/composables'
 import { i18n } from '@/electron'
-import { Plus, Search, Star, X } from 'lucide-vue-next'
+import { Layers, Plus, Search, Send, Star, Upload, X } from 'lucide-vue-next'
 
 const favorites = defineModel<boolean>('favorites', { default: false })
 const { httpState, isFocusedSearch } = useHttpApp()
 const { createHttpRequestAndSelect } = useHttpRequests()
 const { searchQuery } = useHttpSearch()
+const { createHttpFolderAndSelect } = useHttpFolders()
+const isCreateMenuOpen = ref(false)
+const { openHttpImportDialog } = useHttpImportDialog()
+
+function openImport() {
+  isCreateMenuOpen.value = false
+  openHttpImportDialog()
+}
+
+async function create(kind: 'collection' | 'request') {
+  isCreateMenuOpen.value = false
+  if (kind === 'collection')
+    await createHttpFolderAndSelect()
+  else
+    await createHttpRequestAndSelect({ folderId: httpState.folderId ?? null })
+}
 </script>
 
 <template>
@@ -41,14 +66,64 @@ const { searchQuery } = useHttpSearch()
         :class="{ 'fill-current': favorites }"
       />
     </UiActionButton>
-    <UiActionButton
-      :tooltip="i18n.t('spaces.http.action.newRequest')"
-      @click="
-        createHttpRequestAndSelect({ folderId: httpState.folderId ?? null })
-      "
-    >
-      <Plus class="size-4" />
-    </UiActionButton>
-    <slot name="actions" />
+    <Popover.Popover v-model:open="isCreateMenuOpen">
+      <Popover.PopoverTrigger as-child>
+        <UiActionButton :tooltip="i18n.t('action.createOptions')">
+          <Plus class="size-4" />
+        </UiActionButton>
+      </Popover.PopoverTrigger>
+      <Popover.PopoverContent
+        align="end"
+        class="flex w-max flex-col p-1"
+        @close-auto-focus="(event) => event.preventDefault()"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          class="justify-start"
+          @click="create('collection')"
+        >
+          <Layers class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.tree.newCollection") }}
+          </UiText>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="justify-start"
+          @click="create('request')"
+        >
+          <Send class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.action.newRequest") }}
+          </UiText>
+        </Button>
+        <Separator class="my-1" />
+        <Button
+          variant="ghost"
+          size="sm"
+          class="justify-start"
+          @click="openImport"
+        >
+          <Upload class="size-4" />
+          <UiText
+            variant="base"
+            weight="medium"
+            class="leading-5 text-inherit"
+          >
+            {{ i18n.t("spaces.http.action.import") }}
+          </UiText>
+        </Button>
+      </Popover.PopoverContent>
+    </Popover.Popover>
   </div>
 </template>

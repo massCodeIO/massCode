@@ -12,10 +12,10 @@ import {
 import { LibraryFilter } from '@/composables/types'
 import { i18n, store } from '@/electron'
 import { useElementSize } from '@vueuse/core'
-import { Plus, Trash2, Upload } from 'lucide-vue-next'
+import { Trash2 } from 'lucide-vue-next'
 
 const { httpState } = useHttpApp()
-const { createHttpFolderAndSelect, getHttpFolders } = useHttpFolders()
+const { getHttpFolders } = useHttpFolders()
 const {
   getHttpRequests,
   getAllHttpRequests,
@@ -25,7 +25,7 @@ const {
 } = useHttpRequests()
 const { getHttpEnvironments, environments } = useHttpEnvironments()
 const { searchQuery, resetHttpSearchState } = useHttpSearch()
-const { isHttpImportDialogOpen, openHttpImportDialog } = useHttpImportDialog()
+const { isHttpImportDialogOpen } = useHttpImportDialog()
 const layout = store.app.get('http.layout') as AppStore['http']['layout']
 const collectionsOpen = ref(layout.collectionsOpen !== false)
 const environmentsOpen = ref(layout.environmentsOpen !== false)
@@ -205,16 +205,7 @@ async function onImported() {
 
 <template>
   <div class="flex h-full min-h-0 flex-col px-1 pt-[var(--content-top-offset)]">
-    <HttpRequestsListHeader v-model:favorites="favorites">
-      <template #actions>
-        <UiActionButton
-          :tooltip="i18n.t('spaces.http.action.import')"
-          @click="openHttpImportDialog"
-        >
-          <Upload class="size-4" />
-        </UiActionButton>
-      </template>
-    </HttpRequestsListHeader>
+    <HttpRequestsListHeader v-model:favorites="favorites" />
     <div
       ref="sections"
       class="flex min-h-0 flex-1 flex-col"
@@ -229,16 +220,7 @@ async function onImported() {
           collapsible
           :title="i18n.t('spaces.http.tree.collections')"
           class="shrink-0"
-        >
-          <template #action>
-            <UiActionButton
-              :tooltip="i18n.t('spaces.http.tree.newCollection')"
-              @click="createHttpFolderAndSelect()"
-            >
-              <Plus class="size-4" />
-            </UiActionButton>
-          </template>
-        </SidebarSectionHeader>
+        />
         <HttpTreeLive
           v-show="collectionsOpen"
           v-model:unfiled-open="unfiledOpen"

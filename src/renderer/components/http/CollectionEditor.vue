@@ -83,13 +83,7 @@ watch(
           value="overview"
           class="h-full min-h-0"
         >
-          <HttpCollectionOverview v-if="collection.parentId === null" />
-          <NotesEditor
-            v-else
-            :key="collection.id"
-            v-model:content="draft.documentation"
-            :disabled="saving || unavailable"
-          />
+          <HttpCollectionOverview />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="headers"

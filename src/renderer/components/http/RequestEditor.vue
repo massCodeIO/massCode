@@ -160,9 +160,7 @@ async function onSend() {
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col gap-0"
     >
-      <div
-        class="border-border scrollbar min-w-0 overflow-x-auto border-b px-2 py-1"
-      >
+      <div class="scrollbar min-w-0 shrink-0 overflow-x-auto px-2 py-1">
         <Tabs.TabsList>
           <Tabs.TabsTrigger
             v-if="isWebSocket"
@@ -256,6 +254,7 @@ async function onSend() {
             :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"
           >
             <HttpRequestAssertions
+              :fill="false"
               :disabled="
                 runtimeSaving || currentRequest.runtimeState !== 'ready'
               "
@@ -267,19 +266,25 @@ async function onSend() {
           class="flex h-full min-h-0 flex-col"
         >
           <HttpRuntimeToolbar :show-hint="false" />
-          <HttpRequestVariables />
+          <HttpRequestVariables :fill="false" />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="params"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.query" />
+          <HttpKeyValueTable
+            v-model="currentDraft.query"
+            :fill="false"
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.headers" />
+          <HttpKeyValueTable
+            v-model="currentDraft.headers"
+            :fill="false"
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="body"
@@ -297,7 +302,7 @@ async function onSend() {
           value="scripts"
           class="h-full"
         >
-          <HttpRequestScripts />
+          <HttpRequestScripts embedded />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="description"

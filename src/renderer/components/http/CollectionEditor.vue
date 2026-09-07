@@ -62,20 +62,22 @@ watch(
     </UiText>
     <Tabs.Tabs
       v-model="activeTab"
-      class="flex min-h-0 flex-1 flex-col px-3 pt-2"
+      class="flex min-h-0 flex-1 flex-col gap-0"
     >
-      <Tabs.TabsList class="shrink-0">
-        <Tabs.TabsTrigger
-          v-for="tab in tabs"
-          :key="tab"
-          :value="tab"
-        >
-          {{ i18n.t(`spaces.http.collection.tabs.${tab}`) }}
-        </Tabs.TabsTrigger>
-      </Tabs.TabsList>
+      <div class="scrollbar min-w-0 shrink-0 overflow-x-auto px-2 py-1">
+        <Tabs.TabsList>
+          <Tabs.TabsTrigger
+            v-for="tab in tabs"
+            :key="tab"
+            :value="tab"
+          >
+            {{ i18n.t(`spaces.http.collection.tabs.${tab}`) }}
+          </Tabs.TabsTrigger>
+        </Tabs.TabsList>
+      </div>
       <fieldset
         :disabled="saving || unavailable"
-        class="mt-3 min-h-0 flex-1 overflow-auto pb-3 disabled:opacity-50"
+        class="scrollbar min-h-0 flex-1 overflow-auto px-3 py-2 disabled:opacity-50"
       >
         <Tabs.TabsContent
           value="overview"
@@ -157,14 +159,10 @@ watch(
       >
         <Dialog.DialogHeader>
           <Dialog.DialogTitle>
-            {{
-              i18n.t("spaces.http.collection.leaveTitle")
-            }}
+            {{ i18n.t("spaces.http.collection.leaveTitle") }}
           </Dialog.DialogTitle>
           <Dialog.DialogDescription>
-            {{
-              i18n.t("spaces.http.collection.leaveDescription")
-            }}
+            {{ i18n.t("spaces.http.collection.leaveDescription") }}
           </Dialog.DialogDescription>
         </Dialog.DialogHeader>
         <Dialog.DialogFooter>

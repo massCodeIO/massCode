@@ -107,6 +107,7 @@ function addFormDataRow() {
     >
       <HttpKeyValueTable
         v-model="draft.formData"
+        :fill="false"
         :columns="FORM_DATA_COLUMNS"
         :show-enabled="false"
         actions="delete"

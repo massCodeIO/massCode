@@ -2,14 +2,16 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { emptyHttpCollection } from '../../../../../../../shared/httpCollection'
 import { enqueueCloudDownload } from '../../../cloudDownloads'
+
 import {
   getFileAvailability,
   resetCloudFileExemptions,
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
 import { getHttpPaths } from '../../runtime/paths'
+import * as stateModule from '../../runtime/state'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
@@ -128,6 +130,130 @@ describe('http folders storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it.each([
+    [10, 20, 30, 40],
+    [0, 0, 2, 2],
+    [0, 1, 2, 3],
+  ])(
+    'reorders collections by visible position with stored indices %j',
+    (...indices) => {
+      const folders = createHttpFoldersStorage()
+      const ids = ['Billing', 'Files', 'Playground', 'GitHub'].map(
+        name => folders.createFolder({ name }).id,
+      )
+      const state = getHttpRuntimeCache(getHttpPaths(tempVaultPath)).state
+      ids.forEach(
+        (id, index) =>
+          (state.folders.find(folder => folder.id === id)!.orderIndex
+            = indices[index]!),
+      )
+      folders.updateFolder(ids[3]!, { parentId: null, orderIndex: 1 })
+      expect(folders.getFoldersTree().map(folder => folder.name)).toEqual([
+        'Billing',
+        'GitHub',
+        'Files',
+        'Playground',
+      ])
+      folders.updateFolder(ids[3]!, { parentId: null, orderIndex: 3 })
+      expect(folders.getFoldersTree().map(folder => folder.name)).toEqual([
+        'Billing',
+        'Files',
+        'Playground',
+        'GitHub',
+      ])
+    },
+  )
+
+  it('persists collection configuration and keeps legacy folders unchanged', () => {
+    const folders = createHttpFoldersStorage()
+    const root = folders.createFolder({ name: 'Collection' })
+    const legacy = folders.createFolder({ name: 'Legacy' })
+    const config = emptyHttpCollection()
+    config.documentation = '# API documentation'
+    config.version = '2.1'
+    config.headers = [{ key: 'X-Collection', value: 'test' }]
+    expect(
+      folders.updateFolder(root.id, { collectionConfig: config }).notFound,
+    ).toBe(false)
+    const persisted = stateModule.loadHttpState(getHttpPaths(tempVaultPath))
+    expect(
+      persisted.folders.find(folder => folder.id === root.id)
+        ?.collectionConfig,
+    ).toEqual(config)
+    expect(
+      persisted.folders.find(folder => folder.id === legacy.id)
+        ?.collectionConfig,
+    ).toBeUndefined()
+  })
+
+  it('preserves malformed configuration across state roundtrip without treating it as defaults', () => {
+    const paths = getHttpPaths(tempVaultPath)
+    const folders = createHttpFoldersStorage()
+    const { id } = folders.createFolder({ name: 'Synced' })
+    const state = getHttpRuntimeCache(paths).state
+    const raw = { version: 999, unknown: 'preserve-me', runtime: null }
+    state.folders.find(folder => folder.id === id)!.collectionConfig = raw
+    stateModule.saveHttpStateImmediate(paths, state)
+    expect(
+      stateModule
+        .loadHttpState(paths)
+        .folders
+        .find(folder => folder.id === id)
+        ?.collectionConfig,
+    ).toEqual(raw)
+  })
+
+  it('rejects nested configuration and moving configured collections beneath another root', () => {
+    const folders = createHttpFoldersStorage()
+    const root = folders.createFolder({ name: 'Collection' })
+    const child = folders.createFolder({ name: 'Child', parentId: root.id })
+    const other = folders.createFolder({ name: 'Other' })
+    expect(() =>
+      folders.updateFolder(child.id, {
+        collectionConfig: emptyHttpCollection(),
+      }),
+    ).toThrow('HTTP_COLLECTION_ROOT_ONLY')
+    folders.updateFolder(root.id, { collectionConfig: emptyHttpCollection() })
+    expect(() => folders.updateFolder(root.id, { parentId: other.id })).toThrow(
+      'HTTP_COLLECTION_ROOT_ONLY',
+    )
+    expect(
+      folders.getFolders().find(folder => folder.id === root.id)?.parentId,
+    ).toBeNull()
+  })
+
+  it('does not change saved configuration when its immediate write fails', () => {
+    const folders = createHttpFoldersStorage()
+    const root = folders.createFolder({ name: 'Collection' })
+    const original = emptyHttpCollection()
+    folders.updateFolder(root.id, { collectionConfig: original })
+    const write = vi
+      .spyOn(stateModule, 'saveHttpStateImmediate')
+      .mockImplementationOnce(() => {
+        throw new Error('disk full')
+      })
+    try {
+      expect(() =>
+        folders.updateFolder(root.id, {
+          collectionConfig: { ...original, version: 'lost' },
+        }),
+      ).toThrow('disk full')
+      expect(
+        folders.getFolders().find(folder => folder.id === root.id)?.collectionConfig,
+      ).toEqual(original)
+      expect(
+        stateModule
+          .loadHttpState(getHttpPaths(tempVaultPath))
+          .folders
+          .find(folder => folder.id === root.id)
+          ?.collectionConfig,
+      ).toEqual(original)
+    }
+    finally {
+      write.mockRestore()
+    }
   })
 
   it('moves resident zero-block requests to trash when deleting a folder', () => {

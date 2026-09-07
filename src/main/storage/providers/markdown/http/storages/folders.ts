@@ -12,6 +12,7 @@ import type {
 } from '../runtime/types'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { httpCollectionSchema } from '../../../../../../shared/httpCollection'
 import { enqueueCloudDownload } from '../../cloudDownloads'
 import { normalizeFlag, normalizeNumber } from '../../runtime/normalizers'
 import { getVaultPath } from '../../runtime/paths'
@@ -27,6 +28,7 @@ import {
   buildFolderPathMap,
   collectDescendantIds,
   getNextFolderOrder,
+  normalizeFolderOrderIndices,
 } from '../../runtime/shared/folderIndex'
 import {
   applyFolderParentAndOrder,
@@ -55,7 +57,7 @@ import {
   writeVerifiedMovedLocalRequestFile,
 } from '../runtime/parser'
 import { getHttpPaths } from '../runtime/paths'
-import { saveHttpState } from '../runtime/state'
+import { saveHttpState, saveHttpStateImmediate } from '../runtime/state'
 import { getHttpRuntimeCache, isHttpVaultDiskReady } from '../runtime/sync'
 
 function findHttpFolderById(
@@ -252,10 +254,33 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         && input.parentId === undefined
         && input.isOpen === undefined
         && input.orderIndex === undefined
+        && input.collectionConfig === undefined
       ) {
         return { invalidInput: true, notFound: false }
       }
 
+      const collectionConfig
+        = input.collectionConfig === undefined
+          ? undefined
+          : httpCollectionSchema.safeParse(input.collectionConfig)
+      if (collectionConfig && !collectionConfig.success) {
+        throwStorageError(
+          'HTTP_COLLECTION_INVALID',
+          'Invalid collection configuration',
+        )
+      }
+      const nextParentId
+        = input.parentId === undefined ? folder.parentId : input.parentId
+      if (
+        nextParentId !== null
+        && (input.collectionConfig !== undefined
+          || folder.collectionConfig !== undefined)
+      ) {
+        throwStorageError(
+          'HTTP_COLLECTION_ROOT_ONLY',
+          'Collection configuration belongs to a root folder',
+        )
+      }
       const now = Date.now()
       let pathChanged = false
 
@@ -294,6 +319,11 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         folder.name = targetName
         pathChanged = true
       }
+
+      // Drop positions are sibling offsets, while imported/synced indices may
+      // contain gaps or duplicates. Preserve visible order before shifting.
+      if (input.orderIndex !== undefined)
+        normalizeFolderOrderIndices(state.folders)
 
       const { parentChanged } = applyFolderParentAndOrder(
         state.folders,
@@ -388,7 +418,27 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
         }
       }
 
-      saveHttpState(paths, state)
+      if (collectionConfig?.success) {
+        const nextState = {
+          ...state,
+          folders: state.folders.map(item =>
+            item.id === id
+              ? { ...item, collectionConfig: collectionConfig.data }
+              : item,
+          ),
+        }
+        try {
+          saveHttpStateImmediate(paths, nextState)
+        }
+        catch (error) {
+          saveHttpState(paths, state)
+          throw error
+        }
+        folder.collectionConfig = collectionConfig.data
+      }
+      else {
+        saveHttpState(paths, state)
+      }
       return { invalidInput: false, notFound: false }
     },
 

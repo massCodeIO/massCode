@@ -568,6 +568,84 @@ export interface HttpFoldersAdd {
 }
 
 export type HttpFoldersResponse = {
+  collectionConfig?: {
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "basic" | "bearer";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
   id: number;
   name: string;
   icon: string | null;
@@ -579,6 +657,84 @@ export type HttpFoldersResponse = {
 }[];
 
 export type HttpFoldersTreeResponse = {
+  collectionConfig?: {
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "basic" | "bearer";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+    };
+  } | null;
+  collectionConfigState?: "ready" | "invalid";
   id: number;
   name: string;
   icon: string | null;
@@ -591,6 +747,83 @@ export type HttpFoldersTreeResponse = {
 }[];
 
 export interface HttpFoldersUpdate {
+  collectionConfig?: {
+    /** @maxLength 1048576 */
+    documentation: string;
+    /** @maxLength 256 */
+    version: string;
+    /** @maxItems 1000 */
+    headers: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    /** @maxItems 1000 */
+    variables: {
+      key: string;
+      value: string;
+      enabled?: boolean;
+      description?: string;
+    }[];
+    auth: {
+      type: "none" | "basic" | "bearer";
+      token?: string;
+      username?: string;
+      password?: string;
+    };
+    runtime: {
+      scripts?: {
+        /** @maxLength 65536 */
+        preRequest: string;
+        /** @maxLength 65536 */
+        postResponse: string;
+      };
+      version: 1 | 2;
+      /** @maxItems 100 */
+      extractions: {
+        name: string;
+        source: "json" | "header";
+        path: string;
+      }[];
+      /** @maxItems 100 */
+      assertions: {
+        name: string;
+        source: "json" | "header" | "status" | "durationMs";
+        path?: string;
+        operator:
+          | "eq"
+          | "neq"
+          | "exists"
+          | "contains"
+          | "gt"
+          | "gte"
+          | "lt"
+          | "lte"
+          | "notContains"
+          | "startsWith"
+          | "endsWith"
+          | "matches"
+          | "notMatches"
+          | "length"
+          | "between"
+          | "in"
+          | "notIn"
+          | "isString"
+          | "isNumber"
+          | "isBoolean"
+          | "isArray"
+          | "isObject"
+          | "isNull";
+        expected?:
+          | string
+          | number
+          | boolean
+          | null
+          | (string | number | boolean | null)[];
+      }[];
+    };
+  };
   name?: string;
   icon?: string | null;
   parentId?: number | null;
@@ -799,7 +1032,7 @@ export interface HttpRequestItemResponse {
     value: string;
   }[];
   auth: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "basic";
     token?: string;
     username?: string;
     password?: string;
@@ -880,7 +1113,7 @@ export type HttpRequestsResponse = {
     value: string;
   }[];
   auth: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "basic";
     token?: string;
     username?: string;
     password?: string;
@@ -936,7 +1169,7 @@ export interface HttpRequestsUpdate {
     value: string;
   }[];
   auth?: {
-    type: "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "basic";
     token?: string;
     username?: string;
     password?: string;

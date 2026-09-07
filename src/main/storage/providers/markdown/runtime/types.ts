@@ -195,6 +195,8 @@ export interface Paths {
 }
 
 export type MarkdownErrorCode =
+  | 'HTTP_COLLECTION_INVALID'
+  | 'HTTP_COLLECTION_ROOT_ONLY'
   | 'FOLDER_NOT_FOUND'
   | 'INVALID_NAME'
   | 'NAME_CONFLICT'

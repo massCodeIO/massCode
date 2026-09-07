@@ -1,4 +1,25 @@
 import Elysia, { t } from 'elysia'
+import { httpRuntime } from './http-requests'
+
+const entry = t.Object({
+  key: t.String(),
+  value: t.String(),
+  enabled: t.Optional(t.Boolean()),
+  description: t.Optional(t.String()),
+})
+const collectionConfig = t.Object({
+  documentation: t.String({ maxLength: 1048576 }),
+  version: t.String({ maxLength: 256 }),
+  headers: t.Array(entry, { maxItems: 1000 }),
+  variables: t.Array(entry, { maxItems: 1000 }),
+  auth: t.Object({
+    type: t.Union([t.Literal('none'), t.Literal('basic'), t.Literal('bearer')]),
+    token: t.Optional(t.String()),
+    username: t.Optional(t.String()),
+    password: t.Optional(t.String()),
+  }),
+  runtime: httpRuntime,
+})
 
 const httpFoldersAdd = t.Object({
   name: t.String(),
@@ -7,6 +28,7 @@ const httpFoldersAdd = t.Object({
 })
 
 const httpFoldersUpdate = t.Object({
+  collectionConfig: t.Optional(collectionConfig),
   name: t.Optional(t.String()),
   icon: t.Optional(t.Union([t.String(), t.Null()])),
   parentId: t.Optional(t.Union([t.Number(), t.Null()])),
@@ -15,6 +37,10 @@ const httpFoldersUpdate = t.Object({
 })
 
 const httpFoldersItem = t.Object({
+  collectionConfig: t.Optional(t.Union([collectionConfig, t.Null()])),
+  collectionConfigState: t.Optional(
+    t.Union([t.Literal('ready'), t.Literal('invalid')]),
+  ),
   id: t.Number(),
   name: t.String(),
   icon: t.Union([t.String(), t.Null()]),

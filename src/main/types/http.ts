@@ -18,7 +18,7 @@ export type HttpBodyType =
   | 'form-urlencoded'
   | 'multipart'
 
-export type HttpAuthType = 'none' | 'bearer' | 'basic'
+export type HttpAuthType = 'inherit' | 'none' | 'bearer' | 'basic'
 
 export interface HttpHeaderEntry {
   key: string

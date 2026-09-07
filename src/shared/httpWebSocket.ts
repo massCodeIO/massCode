@@ -16,7 +16,7 @@ export const wsConnectSchema = z.object({
   headers: z.array(entry).max(1000),
   query: z.array(entry).max(1000),
   auth: z.object({
-    type: z.enum(['none', 'basic', 'bearer']),
+    type: z.enum(['inherit', 'none', 'basic', 'bearer']),
     token: z.string().max(32768).optional(),
     username: z.string().max(8192).optional(),
     password: z.string().max(32768).optional(),

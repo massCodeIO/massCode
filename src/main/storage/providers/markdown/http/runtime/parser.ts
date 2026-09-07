@@ -135,7 +135,9 @@ function normalizeAuth(raw: unknown): HttpAuth {
 
   const data = raw as Record<string, unknown>
   const type
-    = data.type === 'bearer' || data.type === 'basic' ? data.type : 'none'
+    = data.type === 'inherit' || data.type === 'bearer' || data.type === 'basic'
+      ? data.type
+      : 'none'
 
   const auth: HttpAuth = { type }
   if (typeof data.token === 'string')

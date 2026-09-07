@@ -21,6 +21,7 @@ const httpBodyType = t.Union([
 ])
 
 const httpAuthType = t.Union([
+  t.Literal('inherit'),
   t.Literal('none'),
   t.Literal('bearer'),
   t.Literal('basic'),
@@ -78,7 +79,7 @@ const httpRequestsUpdate = t.Object({
   description: t.Optional(t.String()),
 })
 
-const httpRuntime = t.Object({
+export const httpRuntime = t.Object({
   scripts: t.Optional(
     t.Object({
       preRequest: t.String({ maxLength: 65536 }),

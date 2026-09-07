@@ -39,6 +39,8 @@ export interface HttpRequestFrontmatter {
 }
 
 export interface HttpFolderRecord {
+  /** Preserve invalid synced configuration; execution validates before use. */
+  collectionConfig?: unknown
   id: number
   name: string
   icon: string | null

@@ -1,3 +1,4 @@
+import type { HttpCollectionConfig } from '../../shared/httpCollection'
 import type { HttpRuntime, HttpRuntimeRead } from '../../shared/httpRuntime'
 import type {
   HttpAuth,
@@ -368,6 +369,7 @@ export interface HttpFolderCreateInput {
 }
 
 export interface HttpFolderUpdateInput {
+  collectionConfig?: HttpCollectionConfig
   name?: string
   icon?: string | null
   parentId?: number | null

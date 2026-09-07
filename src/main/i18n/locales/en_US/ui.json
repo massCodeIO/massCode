@@ -744,7 +744,23 @@
         "edit": "Edit",
         "done": "Done",
         "notSet": "Not set",
-        "documentationEmpty": "Describe the purpose of this collection, its endpoints and how to use them. Markdown is supported."
+        "documentationEmpty": "Describe the purpose of this collection, its endpoints and how to use them. Markdown is supported.",
+        "dashboard": {
+          "editDescription": "Click anywhere in this description to start editing.",
+          "descriptionGuide": "# A starting point for your API\n\nKeep the context next to your requests. Describe what this collection does and what someone needs to know before running it. **Click anywhere in this description to start editing.**\n\n## Before the first request\n\n- Which environment and base URL should be used?\n- How do you get credentials and configure authorization?\n- Which variables need values before sending a request?\n\n## A useful path through the collection\n\nDescribe the main workflow: where to start, which requests depend on earlier responses, and what a successful result looks like. Include common errors when they need an explanation.\n\n## Keep the details close\n\nAdd sample payloads, response notes, or links to related notes and snippets. Use Markdown headings, lists, tables, and code blocks to make the important parts easy to find.",
+          "requests": "Requests",
+          "folders": "Folders",
+          "lastRun": "Last available run · this session",
+          "noRun": "No run result available for this collection in this session.",
+          "description": "Description",
+          "recent": "Recent requests",
+          "noHistory": "No request history for this collection yet.",
+          "loading": "Loading history…",
+          "loadFailed": "Could not load request history.",
+          "error": "Error",
+          "duration": "{{value}} ms",
+          "passed": "{{count}} of {{total}} requests passed"
+        }
       }
     },
     "tools": {

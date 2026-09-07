@@ -26,6 +26,7 @@ export interface NotesState {
 }
 
 export interface HttpState {
+  activePanel?: 'request' | 'folder' | 'environments' | 'runner'
   requestId?: number
   folderId?: number
   libraryFilter?: string
@@ -154,6 +155,7 @@ export interface AppStore {
     layout: {
       mode: SpaceLayoutMode
       environmentsListHeight: number
+      treeWidth?: number
       threePanel?: number[]
       twoPanel?: number
       responsePanelHeight?: number

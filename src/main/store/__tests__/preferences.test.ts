@@ -555,6 +555,7 @@ describe('app store sanitization', () => {
   it('keeps persisted http layout values', async () => {
     persistedStateByName.app = {
       http: {
+        selection: { activePanel: 'folder', folderId: 3, requestId: 7 },
         contentSort: {
           sort: 'updatedAt',
           order: 'ASC',
@@ -562,6 +563,7 @@ describe('app store sanitization', () => {
         },
         layout: {
           mode: 'list-editor',
+          treeWidth: 284,
           environmentsListHeight: 180,
           threePanel: [20, 30],
           twoPanel: 35,
@@ -573,6 +575,12 @@ describe('app store sanitization', () => {
 
     const { default: app } = await import('../module/app')
 
+    expect(app.get('http.selection' as any)).toEqual({
+      activePanel: 'folder',
+      folderId: 3,
+      requestId: 7,
+    })
+    expect(app.get('http.layout.treeWidth' as any)).toBe(284)
     expect(app.get('http.layout.mode' as any)).toBe('list-editor')
     expect(app.get('http.contentSort' as any)).toEqual({
       sort: 'updatedAt',

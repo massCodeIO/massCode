@@ -27,7 +27,9 @@ async function setup() {
   )
   const saveCurrentRequest = vi.fn()
   const putRuntime = vi.fn()
-  const httpState = { requestId: 1 }
+  const httpState: { requestId: number, activePanel?: 'request' | 'folder' } = {
+    requestId: 1,
+  }
   vi.doMock('../useHttpRequests', () => ({
     useHttpRequests: () => ({
       currentRequest,
@@ -85,6 +87,13 @@ async function setup() {
 beforeEach(() => vi.clearAllMocks())
 
 describe('hTTP draft execution', () => {
+  it('does not send the hidden request from a folder panel', async () => {
+    const { execute, invoke, httpState } = await setup()
+    httpState.activePanel = 'folder'
+    expect(await execute.executeCurrentRequest()).toBeNull()
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
   it('cancels on selection change and waits for execution to settle before another Send', async () => {
     const { execute, invoke, currentRequest, httpState } = await setup()
     let finish!: (response: object) => void

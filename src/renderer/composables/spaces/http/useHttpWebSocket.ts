@@ -115,7 +115,9 @@ async function connect() {
   const draft = currentDraft.value
   const request = currentRequest.value
   if (
-    !draft
+    (httpState.activePanel !== undefined
+      && httpState.activePanel !== 'request')
+    || !draft
     || !request
     || !isWebSocket.value
     || active.value

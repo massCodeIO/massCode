@@ -7,9 +7,19 @@ import { useHttpRequests } from './useHttpRequests'
 import { useHttpSearch } from './useHttpSearch'
 
 const { httpState, isHttpSpaceInitialized } = useHttpApp()
-const { getHttpFolders, resetHttpFoldersState } = useHttpFolders()
-const { getHttpRequests, requests, resetHttpRequestsState, selectHttpRequest }
-  = useHttpRequests()
+const {
+  getHttpFolders,
+  resetHttpFoldersState,
+  folders,
+  getFolderByIdFromTree,
+} = useHttpFolders()
+const {
+  getHttpRequests,
+  getAllHttpRequests,
+  requests,
+  resetHttpRequestsState,
+  selectHttpRequest,
+} = useHttpRequests()
 const { getHttpEnvironments, resetHttpEnvironmentsState }
   = useHttpEnvironments()
 const { getHttpHistory, resetHttpHistoryState } = useHttpHistory()
@@ -42,6 +52,7 @@ async function refreshHttpSpaceFromDisk() {
   const results = await Promise.allSettled([
     getHttpFolders(),
     getHttpRequests(),
+    getAllHttpRequests(),
     getHttpEnvironments(),
     getHttpHistory(),
   ])
@@ -56,12 +67,27 @@ async function refreshHttpSpaceFromDisk() {
     result => result.status === 'fulfilled',
   )
 
+  if (
+    httpState.activePanel === 'environments'
+    || httpState.activePanel === 'runner'
+  ) {
+    return
+  }
+
+  if (httpState.activePanel === 'folder') {
+    if (!folders.value.length)
+      return
+    if (getFolderByIdFromTree(folders.value, httpState.folderId ?? null))
+      return
+    httpState.activePanel = 'request'
+  }
+
   const persistedRequestId = selectedRequestId ?? httpState.requestId
   if (
     persistedRequestId !== undefined
     && requests.value.some(r => r.id === persistedRequestId)
   ) {
-    await selectHttpRequest(persistedRequestId)
+    await selectHttpRequest(persistedRequestId, false, { preservePanel: true })
     return
   }
 

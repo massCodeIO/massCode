@@ -2,8 +2,11 @@ import type { HttpRunStart, HttpRunView } from '~/shared/httpRunner'
 import { useSonner } from '@/composables/useSonner'
 import { i18n, ipc } from '@/electron'
 import { httpRuntimeNavigation } from './runtimeNavigation'
+import { useHttpApp } from './useHttpApp'
 import { useHttpSettings } from './useHttpSettings'
 
+const { httpState } = useHttpApp()
+let previousPanel: typeof httpState.activePanel = 'request'
 const open = ref(false)
 const preparing = ref(false)
 const running = ref(false)
@@ -37,15 +40,23 @@ async function openRunner(id: number) {
   try {
     if (!(await httpRuntimeNavigation.confirmLeave()) || generation !== token)
       return
+    const transition = ++httpRuntimeNavigation.transitionToken
     const prepared = await ipc.invoke<{ folderId: number }, HttpRunView>(
       'spaces:http:run-prepare',
       { folderId: id },
     )
-    if (generation !== token)
+    if (
+      generation !== token
+      || transition !== httpRuntimeNavigation.transitionToken
+    ) {
       return
+    }
     folderId.value = id
     view.value = prepared
     open.value = true
+    if (httpState.activePanel !== 'runner')
+      previousPanel = httpState.activePanel
+    httpState.activePanel = 'runner'
   }
   catch (error) {
     if (generation === token)
@@ -135,6 +146,8 @@ function closeRunner() {
     return
   generation += 1
   open.value = false
+  if (httpState.activePanel === 'runner')
+    httpState.activePanel = previousPanel
   void ipc.invoke('spaces:http:run-dispose', null).catch(showError)
 }
 

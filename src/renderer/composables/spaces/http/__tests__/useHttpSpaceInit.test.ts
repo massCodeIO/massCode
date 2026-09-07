@@ -5,11 +5,16 @@ async function setup() {
   vi.resetModules()
 
   const isHttpSpaceInitialized = ref(true)
-  const httpState = {
+  const httpState: {
+    requestId?: number
+    folderId?: number
+    activePanel?: 'request' | 'folder'
+  } = {
     requestId: 42,
   }
   const requests = ref([{ id: 42 }])
 
+  const selectHttpRequest = vi.fn()
   const resetHttpFoldersState = vi.fn()
   const resetHttpRequestsState = vi.fn(() => {
     requests.value = []
@@ -30,14 +35,18 @@ async function setup() {
     useHttpFolders: () => ({
       getHttpFolders: vi.fn(async () => undefined),
       resetHttpFoldersState,
+      folders: ref([{ id: 10 }]),
+      getFolderByIdFromTree: (_folders: unknown, id: number) =>
+        id === 10 ? { id: 10 } : undefined,
     }),
   }))
   vi.doMock('../useHttpRequests', () => ({
     useHttpRequests: () => ({
       getHttpRequests: vi.fn(async () => undefined),
+      getAllHttpRequests: vi.fn(async () => undefined),
       requests,
       resetHttpRequestsState,
-      selectHttpRequest: vi.fn(),
+      selectHttpRequest,
     }),
   }))
   vi.doMock('../useHttpEnvironments', () => ({
@@ -63,9 +72,15 @@ async function setup() {
     }),
   }))
 
-  const { resetHttpSpaceState } = await import('../useHttpSpaceInit')
+  const { resetHttpSpaceState, useHttpSpaceInit } = await import(
+    '../useHttpSpaceInit'
+  )
 
   return {
+    httpState,
+    requests,
+    selectHttpRequest,
+    refresh: useHttpSpaceInit().refreshHttpSpaceFromDisk,
     isHttpSpaceInitialized,
     resetHttpEnvironmentsState,
     resetHttpExecuteState,
@@ -82,6 +97,17 @@ beforeEach(() => {
 })
 
 describe('resetHttpSpaceState', () => {
+  it('preserves folder settings during sync even when the hidden request is outside the folder', async () => {
+    const ctx = await setup()
+    ctx.httpState.activePanel = 'folder'
+    ctx.httpState.folderId = 10
+    ctx.requests.value = [{ id: 99 }]
+    await ctx.refresh()
+    expect(ctx.httpState.activePanel).toBe('folder')
+    expect(ctx.httpState.requestId).toBe(42)
+    expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+  })
+
   it('clears every module-level HTTP space state slice', async () => {
     const context = await setup()
 

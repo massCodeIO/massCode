@@ -174,6 +174,15 @@ function sanitizeHttpState(value: unknown): HttpState {
   const source = asRecord(value)
   const state: HttpState = {}
 
+  if (
+    source.activePanel === 'request'
+    || source.activePanel === 'folder'
+    || source.activePanel === 'environments'
+    || source.activePanel === 'runner'
+  ) {
+    state.activePanel = source.activePanel
+  }
+
   if (typeof source.requestId === 'number')
     state.requestId = source.requestId
   if (typeof source.folderId === 'number')
@@ -578,6 +587,7 @@ function sanitizeAppStore(value: unknown): AppStore {
             ? LAYOUT_DEFAULTS.http.environmentsPanel.height
             : raw
         })(),
+        treeWidth: readOptionalNumber(httpLayoutSource, 'treeWidth'),
         threePanel: readOptionalNumberArray(httpLayoutSource, 'threePanel'),
         twoPanel: readOptionalNumber(httpLayoutSource, 'twoPanel') ?? undefined,
         responsePanelHeight: (() => {

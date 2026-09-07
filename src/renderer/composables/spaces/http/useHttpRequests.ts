@@ -46,6 +46,8 @@ export type HttpRequestDraft = Pick<
 >
 
 export const requests = shallowRef<HttpRequestsResponse>([])
+// Metadata for the unified HTTP navigation tree; the editor keeps its existing scope.
+const allRequests = shallowRef<HttpRequestsResponse>([])
 export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
@@ -88,13 +90,35 @@ const queryByLibraryOrFolderOrSearch = computed(() => {
 })
 
 const selectedRequests = computed(() => {
-  const source = isSearch.value ? requestsBySearch.value : requests.value
+  const source = getRequestActionSource()
   return (
     source?.filter(request =>
       selectedRequestIds.value.includes(request.id),
     ) || []
   )
 })
+
+function getRequestActionSource() {
+  const scoped = isSearch.value
+    ? (requestsBySearch.value ?? [])
+    : requests.value
+  return [
+    ...new Map(
+      [...allRequests.value, ...scoped].map(request => [request.id, request]),
+    ).values(),
+  ]
+}
+
+let treeLoadToken = 0
+async function getAllHttpRequests() {
+  const token = ++treeLoadToken
+  const { data } = await api.httpRequests.getHttpRequests({
+    isDeleted: 0,
+    ...getContentSortQuery('http'),
+  })
+  if (token === treeLoadToken)
+    allRequests.value = data
+}
 
 function getActionTargetIds(fallbackRequestId?: number) {
   const highlightedIds = [...highlightedRequestIds.value]
@@ -122,14 +146,18 @@ function getActionTargetIds(fallbackRequestId?: number) {
     return [...selectedRequestIds.value]
   }
 
-  return httpState.requestId !== undefined ? [httpState.requestId] : []
+  return (httpState.activePanel === undefined
+    || httpState.activePanel === 'request')
+  && httpState.requestId !== undefined
+    ? [httpState.requestId]
+    : []
 }
 
 function getActionTargetRequests(
   targetIds: number[],
   fallbackRequest?: HttpRequestListItem,
 ) {
-  const source = isSearch.value ? requestsBySearch.value : requests.value
+  const source = getRequestActionSource()
   const targetRequests
     = source?.filter(request => targetIds.includes(request.id)) || []
 
@@ -249,7 +277,10 @@ export async function getHttpRequests(query?: HttpRequestsQuery) {
 }
 
 async function refreshHttpRequests() {
-  await getHttpRequests(queryByLibraryOrFolderOrSearch.value)
+  await Promise.all([
+    getHttpRequests(queryByLibraryOrFolderOrSearch.value),
+    getAllHttpRequests(),
+  ])
 }
 
 // Список отдаёт только метаданные (без body/description), поэтому полная
@@ -307,14 +338,17 @@ async function fetchHttpRequestById(
   }
 }
 
-async function loadCurrentRequest(requestId: number) {
+async function loadCurrentRequest(requestId: number, transitionToken: number) {
   const requestToken = ++selectionRequestToken
   isCurrentRequestLoading.value = true
 
   try {
     const record = await fetchHttpRequestById(requestId)
 
-    if (requestToken !== selectionRequestToken) {
+    if (
+      requestToken !== selectionRequestToken
+      || transitionToken !== httpRuntimeNavigation.transitionToken
+    ) {
       return
     }
 
@@ -736,6 +770,7 @@ export function selectFirstRequest(options?: { folderId?: number | null }) {
 export function selectHttpRequest(
   requestId: number | undefined,
   withShift = false,
+  options: { preservePanel?: boolean } = {},
 ): Promise<void> {
   // Расширение выделения shift'ом не меняет открытый draft — выполняется
   // синхронно и без сохранения.
@@ -759,21 +794,26 @@ export function selectHttpRequest(
     }
   }
 
-  return applyHttpRequestSelection(requestId)
+  return applyHttpRequestSelection(requestId, options)
 }
 
 // Токен перехода взводится ДО первого await: при быстрых кликах A → B → C
 // применяется последний клик, а не последний завершившийся PATCH — устаревший
 // переход после ожидания сохранения обнаруживает новый токен и отменяется.
-let selectionTransitionToken = 0
 
-async function applyHttpRequestSelection(requestId: number | undefined) {
-  const transitionToken = ++selectionTransitionToken
+async function applyHttpRequestSelection(
+  requestId: number | undefined,
+  options: { preservePanel?: boolean },
+) {
+  const transitionToken = ++httpRuntimeNavigation.transitionToken
 
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
-  if (transitionToken !== selectionTransitionToken)
+  if (transitionToken !== httpRuntimeNavigation.transitionToken)
     return
+
+  if (!options.preservePanel)
+    httpState.activePanel = 'request'
 
   if (requestId === undefined) {
     httpState.requestId = undefined
@@ -787,7 +827,7 @@ async function applyHttpRequestSelection(requestId: number | undefined) {
   lastSelectedRequestId.value = requestId
   httpState.requestId = requestId
 
-  await loadCurrentRequest(requestId)
+  await loadCurrentRequest(requestId, transitionToken)
 }
 
 function hasSiblingRequestNameConflict(
@@ -921,6 +961,8 @@ watch(
 )
 
 function resetHttpRequestsState() {
+  treeLoadToken += 1
+  allRequests.value = []
   requests.value = []
   requestsBySearch.value = undefined
   currentRequest.value = null
@@ -932,6 +974,8 @@ function resetHttpRequestsState() {
 
 export function useHttpRequests() {
   return {
+    allRequests,
+    getAllHttpRequests,
     createHttpRequest,
     createHttpRequestAndSelect,
     currentDraft,

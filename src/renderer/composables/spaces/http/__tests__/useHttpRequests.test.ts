@@ -14,6 +14,7 @@ async function setup(options: SetupOptions = {}) {
   vi.resetModules()
 
   const httpState = reactive<{
+    activePanel?: 'request' | 'folder'
     folderId?: number
     libraryFilter?: string
     requestId?: number
@@ -65,6 +66,7 @@ async function setup(options: SetupOptions = {}) {
 
   vi.doMock('@/services/api', () => ({
     api: {
+      httpFolders: { getHttpFoldersTree: vi.fn(async () => ({ data: [] })) },
       httpRequests: {
         deleteHttpRequestsById: vi.fn(),
         deleteHttpRequestsTrash: vi.fn(),
@@ -101,6 +103,7 @@ async function setup(options: SetupOptions = {}) {
   const { useHttpRequests } = await import('../useHttpRequests')
 
   return {
+    httpState,
     getHttpRequests,
     getHttpRequestsById,
     patchHttpRequestsById,
@@ -135,6 +138,90 @@ beforeEach(() => {
 })
 
 describe('useHttpRequests', () => {
+  it('refreshes the navigation metadata after mutations while searching', async () => {
+    const ctx = await setup({ isSearch: true, searchQuery: 'renamed' })
+    const data = ctx.useHttpRequests()
+    const updated = buildFullRequest(7, 'renamed')
+    ctx.getHttpRequests.mockResolvedValue({ data: [updated] as never[] })
+    await data.updateHttpRequest(7, { name: 'renamed' })
+    expect(ctx.getHttpRequests).toHaveBeenCalledWith(
+      expect.objectContaining({ search: 'renamed' }),
+    )
+    expect(ctx.getHttpRequests).toHaveBeenCalledWith(
+      expect.objectContaining({ isDeleted: 0 }),
+    )
+    expect(data.allRequests.value[0]).toMatchObject({ id: 7, name: 'renamed' })
+  })
+
+  it('opens folder settings without selecting its first request and returns to the same request', async () => {
+    const ctx = await setup()
+    const data = ctx.useHttpRequests()
+    ctx.getHttpRequestsById.mockResolvedValue({
+      data: buildFullRequest(1, 'One'),
+    })
+    await data.selectHttpRequest(1)
+    const folders = (await import('../useHttpFolders')).useHttpFolders()
+    folders.folders.value = [
+      {
+        id: 10,
+        name: 'Collection',
+        parentId: null,
+        children: [],
+        isOpen: 1,
+        icon: null,
+        createdAt: 1,
+        updatedAt: 1,
+        orderIndex: 0,
+      },
+    ]
+    const calls = ctx.getHttpRequestsById.mock.calls.length
+    expect(await folders.openHttpFolder(10)).toBe(true)
+    expect(ctx.httpState.activePanel).toBe('folder')
+    expect(data.currentRequest.value?.id).toBe(1)
+    expect(ctx.getHttpRequestsById).toHaveBeenCalledTimes(calls)
+    await data.selectHttpRequest(1)
+    expect(ctx.httpState.activePanel).toBe('request')
+  })
+
+  it('keeps the panel on rejected navigation and ignores a request load superseded by a folder click', async () => {
+    const ctx = await setup()
+    const data = ctx.useHttpRequests()
+    const folders = (await import('../useHttpFolders')).useHttpFolders()
+    folders.folders.value = [
+      {
+        id: 10,
+        name: 'Collection',
+        parentId: null,
+        children: [],
+        isOpen: 1,
+        icon: null,
+        createdAt: 1,
+        updatedAt: 1,
+        orderIndex: 0,
+      },
+    ]
+    const navigation = (await import('../runtimeNavigation'))
+      .httpRuntimeNavigation
+    navigation.confirmLeave = async () => false
+    expect(await folders.openHttpFolder(10)).toBe(false)
+    expect(ctx.httpState.activePanel).not.toBe('folder')
+    navigation.confirmLeave = async () => true
+    let finish!: (value: { data: unknown }) => void
+    ctx.getHttpRequestsById.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const pending = data.selectHttpRequest(2)
+    await Promise.resolve()
+    await folders.openHttpFolder(10)
+    finish({ data: buildFullRequest(2, 'Two') })
+    await pending
+    expect(ctx.httpState.activePanel).toBe('folder')
+    expect(data.currentRequest.value).toBeNull()
+  })
+
   it('saves names independently without committing or discarding content edits', async () => {
     const context = await setup()
     const requests = context.useHttpRequests()

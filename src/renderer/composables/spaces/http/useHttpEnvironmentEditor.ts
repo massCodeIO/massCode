@@ -217,28 +217,32 @@ export function useHttpEnvironmentEditor(open: Ref<boolean>) {
     syncLocalFromEnv(selectedEnv.value)
   })
 
-  watch(open, async (isOpen) => {
-    if (!isOpen) {
-      await flushPendingUpdate()
-      return
-    }
-    await Promise.all([getHttpEnvironments(), refreshSecretsStatus()])
-    const stillExists
-      = selectedEnvId.value !== null
-        && environments.value.some(env => env.id === selectedEnvId.value)
-    if (stillExists) {
-      syncLocalFromEnv(selectedEnv.value)
-      return
-    }
-    const nextId
-      = activeEnvironmentId.value ?? environments.value[0]?.id ?? null
-    if (selectedEnvId.value === nextId) {
-      syncLocalFromEnv(selectedEnv.value)
-    }
-    else {
-      selectedEnvId.value = nextId
-    }
-  })
+  watch(
+    open,
+    async (isOpen) => {
+      if (!isOpen) {
+        await flushPendingUpdate()
+        return
+      }
+      await Promise.all([getHttpEnvironments(), refreshSecretsStatus()])
+      const stillExists
+        = selectedEnvId.value !== null
+          && environments.value.some(env => env.id === selectedEnvId.value)
+      if (stillExists) {
+        syncLocalFromEnv(selectedEnv.value)
+        return
+      }
+      const nextId
+        = activeEnvironmentId.value ?? environments.value[0]?.id ?? null
+      if (selectedEnvId.value === nextId) {
+        syncLocalFromEnv(selectedEnv.value)
+      }
+      else {
+        selectedEnvId.value = nextId
+      }
+    },
+    { immediate: true },
+  )
 
   watch(
     [localName, () => variablesRecord.value],

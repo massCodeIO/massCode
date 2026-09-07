@@ -315,7 +315,9 @@ async function resolveNavigation(choice: 'save' | 'discard' | 'cancel') {
   finishLeave(choice === 'discard')
 }
 
-httpRuntimeNavigation.confirmLeave = () => {
+httpRuntimeNavigation.confirmLeave = async () => {
+  if (!(await httpRuntimeNavigation.confirmCollectionLeave()))
+    return false
   if (leavePromise)
     return leavePromise
   if (busy.value)

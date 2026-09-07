@@ -235,6 +235,11 @@
     }
   },
   "http": {
+    "history": {
+      "label": "History entries per request",
+      "off": "Do not save",
+      "description": "Keep 10–100 executions per request. Lowering the limit trims older entries on the next history load or send. Disabling stops new entries and keeps existing history."
+    },
     "label": "HTTP Client",
     "wrapLines": {
       "label": "Wrap Lines",

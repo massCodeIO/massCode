@@ -24,7 +24,7 @@ import {
   getRequestPreviewWarnings,
 } from './requestPreview'
 
-type BottomPanelTab = 'preview' | 'response'
+type BottomPanelTab = 'preview' | 'response' | 'history'
 
 const { currentDraft, currentRequest } = useHttpRequests()
 const { folders } = useHttpFolders()
@@ -199,6 +199,9 @@ function copyPreview() {
         <Tabs.TabsTrigger value="response">
           {{ i18n.t("spaces.http.editor.panels.response") }}
         </Tabs.TabsTrigger>
+        <Tabs.TabsTrigger value="history">
+          {{ i18n.t("spaces.http.history.title") }}
+        </Tabs.TabsTrigger>
       </Tabs.TabsList>
 
       <div
@@ -303,6 +306,12 @@ function copyPreview() {
         class="m-0 h-full"
       >
         <HttpResponsePanel />
+      </Tabs.TabsContent>
+      <Tabs.TabsContent
+        value="history"
+        class="scrollbar m-0 h-full overflow-auto px-3 py-2"
+      >
+        <HttpRequestHistory />
       </Tabs.TabsContent>
     </div>
   </Tabs.Tabs>

@@ -231,7 +231,10 @@ describe('folder runner', () => {
       manualOnly: 'private',
     })
     expect(JSON.stringify(result)).not.toContain('run-secret')
-    expect(mocks.history).not.toHaveBeenCalled()
+    expect(mocks.history).toHaveBeenCalledTimes(2)
+    expect(JSON.stringify(mocks.history.mock.calls)).not.toContain(
+      'run-secret',
+    )
     expect(result.state).toBe('passed')
     expect(result.steps.map(step => step.state)).toEqual([
       'passed',
@@ -297,7 +300,7 @@ describe('folder runner', () => {
         'skipped',
       ])
       expect(mocks.request).toHaveBeenCalledTimes(1)
-      expect(mocks.history).not.toHaveBeenCalled()
+      expect(mocks.history).toHaveBeenCalledTimes(1)
     },
   )
 

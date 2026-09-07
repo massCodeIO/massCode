@@ -1216,6 +1216,7 @@ export interface HttpEnvironmentsUpdate {
 
 export interface HttpHistoryItemResponse {
   id: number;
+  hasResponse: boolean;
   requestId: number | null;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;
@@ -1228,6 +1229,7 @@ export interface HttpHistoryItemResponse {
 
 export type HttpHistoryResponse = {
   id: number;
+  hasResponse: boolean;
   requestId: number | null;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
   url: string;

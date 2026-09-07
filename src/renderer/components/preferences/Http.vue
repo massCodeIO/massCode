@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import * as Select from '@/components/ui/shadcn/select'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useHttpSettings } from '@/composables'
 import { i18n } from '@/electron'
+import { HTTP_HISTORY_LIMITS } from '~/shared/httpHistory'
 
 const { settings } = useHttpSettings()
 </script>
@@ -54,6 +56,28 @@ const { settings } = useHttpSettings()
           {{
             i18n.t("preferences:http.sslCertificateVerification.description")
           }}
+        </template>
+      </UiMenuFormItem>
+      <UiMenuFormItem :label="i18n.t('preferences:http.history.label')">
+        <Select.Select
+          :model-value="String(settings.historyLimit ?? 20)"
+          @update:model-value="settings.historyLimit = Number($event)"
+        >
+          <Select.SelectTrigger class="w-32">
+            <Select.SelectValue />
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            <Select.SelectItem
+              v-for="limit in HTTP_HISTORY_LIMITS"
+              :key="limit"
+              :value="String(limit)"
+            >
+              {{ limit === 0 ? i18n.t("preferences:http.history.off") : limit }}
+            </Select.SelectItem>
+          </Select.SelectContent>
+        </Select.Select>
+        <template #description>
+          {{ i18n.t("preferences:http.history.description") }}
         </template>
       </UiMenuFormItem>
     </UiMenuFormSection>

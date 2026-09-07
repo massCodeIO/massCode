@@ -11,7 +11,10 @@ app
     '/',
     () => {
       const storage = useHttpStorage()
-      return storage.history.getEntries() as HttpHistoryResponse
+      return storage.history.getEntries().map(entry => ({
+        ...entry,
+        hasResponse: Boolean(entry.snapshotFile) && entry.status !== null,
+      })) as HttpHistoryResponse
     },
     {
       response: 'httpHistoryResponse',

@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import type { HttpHistoryResponse } from '@/services/api/generated'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Card from '@/components/ui/shadcn/card'
 import { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
-import { useHttpNavigationTree } from '@/composables/spaces/http/useHttpNavigationTree'
+import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
 import { i18n } from '@/electron'
-import { api } from '@/services/api'
 import { Clock3, Folder, History, Send } from 'lucide-vue-next'
 
 const { collection } = useHttpCollection()
 const { allRequests } = useHttpRequests()
-const { nodes, open } = useHttpNavigationTree()
+const {
+  openHistory,
+  history,
+  loading,
+  loadError: failed,
+  getHttpHistory,
+} = useHttpHistory()
 const { view, folderId } = useHttpRunner()
-const history = shallowRef<HttpHistoryResponse>([])
-const loading = ref(false)
-const failed = ref(false)
 const folderIds = computed(
   () =>
     new Set(
@@ -46,7 +47,7 @@ const recent = computed(() => {
   const byId = new Map(requests.value.map(request => [request.id, request]))
   return history.value
     .filter(item => item.requestId !== null && byId.has(item.requestId))
-    .toSorted((a, b) => b.requestedAt - a.requestedAt)
+    .toSorted((a, b) => b.requestedAt - a.requestedAt || b.id - a.id)
     .slice(0, 5)
     .map(item => ({ ...item, name: byId.get(item.requestId!)!.name }))
 })
@@ -64,38 +65,11 @@ const passed = computed(
 
 watch(
   () => collection.value?.id,
-  async (_id, _previous, onCleanup) => {
-    let stale = false
-    onCleanup(() => {
-      stale = true
-    })
-    loading.value = true
-    failed.value = false
-    history.value = []
-    try {
-      const { data } = await api.httpHistory.getHttpHistory()
-      if (!stale)
-        history.value = data
-    }
-    catch {
-      if (!stale)
-        failed.value = true
-    }
-    finally {
-      if (!stale)
-        loading.value = false
-    }
+  () => {
+    void getHttpHistory()
   },
   { immediate: true },
 )
-
-function openRequest(id: number | null) {
-  const node = nodes.value.find(
-    node => node.kind === 'request' && node.entityId === id,
-  )
-  if (node)
-    void open(node)
-}
 
 function date(value: number) {
   return new Date(value).toLocaleString()
@@ -271,7 +245,7 @@ function date(value: number) {
                 :key="item.id"
                 variant="ghost"
                 class="h-auto w-full flex-col items-stretch gap-1 px-2 py-2 text-left"
-                @click="openRequest(item.requestId)"
+                @click="openHistory(item)"
               >
                 <div class="flex min-w-0 items-center gap-2">
                   <UiText

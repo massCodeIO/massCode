@@ -4,17 +4,20 @@ import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyHttpCollection } from '../../../../../../../shared/httpCollection'
 import { enqueueCloudDownload } from '../../../cloudDownloads'
-
+import { stateContentCacheByPath } from '../../../runtime/cache'
 import {
   getFileAvailability,
   resetCloudFileExemptions,
   setDatalessProbeForTests,
 } from '../../../runtime/shared/cloudFiles'
+import { flushPendingStateWriteByPath } from '../../../runtime/shared/stateWriter'
+
 import { getHttpPaths } from '../../runtime/paths'
 import * as stateModule from '../../runtime/state'
 import { ensureHttpStateFile } from '../../runtime/state'
 import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
+import { createHttpHistoryStorage } from '../history'
 import { createHttpRequestsStorage } from '../requests'
 
 let tempVaultPath = ''
@@ -130,6 +133,54 @@ describe('http folders storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it('restores history and response snapshots from disk after a cold restart', () => {
+    const folders = createHttpFoldersStorage()
+    const folderId = folders.createFolder({ name: 'History' }).id
+    const requestId = createHttpRequestsStorage().createRequest({
+      name: 'Read',
+      folderId,
+    }).id
+    const history = createHttpHistoryStorage()
+    const snapshot = {
+      request: {
+        method: 'GET' as const,
+        url: 'https://example.test',
+        headers: [],
+        body: '',
+        truncated: false,
+      },
+      response: {
+        status: 201,
+        headers: [],
+        body: '{"saved":true}',
+        bodyKind: 'json' as const,
+        truncated: false,
+      },
+    }
+    const { id } = history.appendEntry({
+      requestId,
+      method: 'GET',
+      url: 'https://example.test',
+      status: 201,
+      durationMs: 1,
+      sizeBytes: 14,
+      requestedAt: Date.now(),
+      snapshot,
+    })
+    const paths = getHttpPaths(tempVaultPath)
+    flushPendingStateWriteByPath(paths.statePath)
+    resetHttpRuntimeCache()
+    stateContentCacheByPath.delete(paths.statePath)
+    const reloaded = createHttpHistoryStorage()
+    expect(
+      reloaded.getEntries().find(entry => entry.id === id)?.requestId,
+    ).toBe(requestId)
+    expect(reloaded.getSnapshot(id)).toEqual(snapshot)
+    expect(
+      createHttpRequestsStorage().getRequestById(requestId)?.folderId,
+    ).toBe(folderId)
   })
 
   it.each([

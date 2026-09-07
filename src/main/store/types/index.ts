@@ -237,6 +237,7 @@ export interface MathSettings {
 }
 
 export interface HttpSettings {
+  historyLimit: number
   wrapLines: boolean
   defaultPreviewFormat: HttpRequestPreviewFormat
   autoSwitchToResponse: boolean

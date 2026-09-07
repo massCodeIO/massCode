@@ -1,5 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http'
 import type { Dispatcher } from 'undici'
+import type { HttpHistorySnapshot } from '../../../shared/httpHistory'
 import type { HttpScriptResult } from '../../../shared/httpScripts'
 import type {
   HttpAuth,
@@ -40,6 +41,7 @@ import {
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from '../collection'
+import { createHistorySnapshot } from '../historySnapshot'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
 import { getEnvironmentSecrets } from '../secrets'
@@ -709,6 +711,23 @@ export async function executeHttpRequest(
     scriptResults.push({ source: subject.source, phase: name, tests })
     return tests.every(test => test.ok)
   }
+  let sentRequest: Parameters<typeof createHistorySnapshot>[0] | undefined
+  function snapshotResult(result: HttpExecuteResult) {
+    if (!sentRequest)
+      return undefined
+    try {
+      return createHistorySnapshot(sentRequest, result, [
+        ...secretValues,
+        interpolated.auth.token ?? '',
+        interpolated.auth.password ?? '',
+      ])
+    }
+    catch {
+      // A history failure must not change the outcome of the request.
+      return undefined
+    }
+  }
+
   const startedAt = Date.now()
   const startedAtPerf = performance.now()
 
@@ -782,6 +801,26 @@ export async function executeHttpRequest(
     if (!hasContentType && built.contentType)
       headersObj['Content-Type'] = built.contentType
     finalUrl = buildUrl(interpolated.url, interpolated.query)
+    sentRequest = {
+      method: interpolated.method,
+      url: finalUrl,
+      headers: Object.entries(headersObj).map(([key, value]) => ({
+        key,
+        value,
+      })),
+      body:
+        typeof built.body === 'string'
+          ? built.body
+          : interpolated.bodyType === 'multipart'
+            ? JSON.stringify(
+                interpolated.formData.map(field => ({
+                  ...field,
+                  value:
+                    field.type === 'file' ? basename(field.value) : field.value,
+                })),
+              )
+            : '',
+    }
     const response = await undiciRequest(finalUrl, {
       method: interpolated.method,
       headers: headersObj,
@@ -874,15 +913,18 @@ export async function executeHttpRequest(
       result.sessionNames = commitValues(evaluated.values)
     }
 
-    if (!run) {
+    {
+      const snapshot = snapshotResult(result)
       appendHistory(
         payload,
-        buildHistoryUrl(),
+        snapshot?.request.url ?? buildHistoryUrl(),
         interpolated.method,
         response.statusCode,
         durationMs,
         sizeBytes,
         startedAt,
+        undefined,
+        snapshot,
       )
     }
 
@@ -917,23 +959,6 @@ export async function executeHttpRequest(
       secretValues,
     )
 
-    if (!run) {
-      appendHistory(
-        payload,
-        historyUrl,
-        interpolated.method,
-        null,
-        durationMs,
-        0,
-        startedAt,
-        isAbort
-          ? `Timeout after ${timeoutMs}ms`
-          : secretValues.length > 0
-            ? HTTP_SECRET_MASK
-            : historyError,
-      )
-    }
-
     const result: HttpExecuteResult = {
       status: null,
       statusText: '',
@@ -960,6 +985,18 @@ export async function executeHttpRequest(
       result.runtimeResults = labelResults(evaluated.results)
       result.sessionNames = commitValues(evaluated.values)
     }
+    const snapshot = snapshotResult(result)
+    appendHistory(
+      payload,
+      snapshot?.request.url ?? historyUrl,
+      interpolated.method,
+      null,
+      durationMs,
+      0,
+      startedAt,
+      snapshot?.response.error ?? historyError,
+      snapshot,
+    )
     return result
   }
   finally {
@@ -978,11 +1015,13 @@ function appendHistory(
   sizeBytes: number,
   requestedAt: number,
   error?: string,
+  snapshot?: HttpHistorySnapshot,
 ): void {
   try {
     const storage = useHttpStorage()
     storage.history.appendEntry({
       requestId: payload.requestId,
+      snapshot,
       method,
       url,
       status,

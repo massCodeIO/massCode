@@ -9,6 +9,10 @@ import type {
 } from '../types'
 import { homedir, platform } from 'node:os'
 import Store from 'electron-store'
+import {
+  HTTP_HISTORY_DEFAULT_LIMIT,
+  HTTP_HISTORY_LIMITS,
+} from '../../../shared/httpHistory'
 import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
 import {
@@ -31,6 +35,7 @@ const MATH_DEFAULTS: MathSettings = {
 }
 
 const HTTP_DEFAULTS: HttpSettings = {
+  historyLimit: HTTP_HISTORY_DEFAULT_LIMIT,
   wrapLines: true,
   defaultPreviewFormat: 'http',
   autoSwitchToResponse: true,
@@ -229,6 +234,9 @@ function sanitizeHttpSettings(value: unknown): HttpSettings {
   const source = asRecord(value)
 
   return {
+    historyLimit: HTTP_HISTORY_LIMITS.includes(source.historyLimit as 20)
+      ? (source.historyLimit as number)
+      : HTTP_HISTORY_DEFAULT_LIMIT,
     wrapLines:
       typeof source.wrapLines === 'boolean'
         ? source.wrapLines

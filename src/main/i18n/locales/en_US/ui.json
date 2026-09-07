@@ -217,6 +217,18 @@
       "noSelected": "No drawing selected"
     },
     "http": {
+      "history": {
+        "title": "History",
+        "empty": "No saved executions for this request.",
+        "loading": "Loading snapshot…",
+        "failed": "Could not load the snapshot.",
+        "unavailable": "No snapshot is available for this entry. Older history contains execution details only.",
+        "request": "Request",
+        "response": "Response",
+        "masked": "Known secrets and credential fields are redacted in saved snapshots.",
+        "truncated": "The body was truncated. History stores up to 1 MiB per body.",
+        "binary": "Binary response bodies are not stored."
+      },
       "websocket": {
         "title": "WebSocket",
         "requestType": "Request type",

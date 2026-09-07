@@ -107,6 +107,7 @@ type SpacesAction =
   | 'http:run-dispose'
   | 'http:clear-session'
   | 'http:session-names'
+  | 'http:history-snapshot'
   | 'http:secrets-status'
   | 'http:set-secret'
   | 'http:delete-secret'

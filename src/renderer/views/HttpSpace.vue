@@ -86,4 +86,5 @@ onMounted(() => {
       </div>
     </template>
   </LayoutThreeColumn>
+  <HttpHistoryDialog />
 </template>

@@ -382,7 +382,14 @@ describe('script workflow and local trust', () => {
     })
     expect(variables).toMatchObject({ value: 'runner' })
     expect(session()).toEqual({})
-    expect(mocks.history).not.toHaveBeenCalled()
+    expect(mocks.history).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: 1,
+        snapshot: expect.objectContaining({
+          response: expect.objectContaining({ status: 200 }),
+        }),
+      }),
+    )
   })
 })
 

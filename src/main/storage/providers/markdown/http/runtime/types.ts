@@ -134,6 +134,7 @@ export interface HttpEnvironmentRecord {
 }
 
 export interface HttpHistoryRecord {
+  snapshotFile?: string
   id: number
   requestId: number | null
   method: HttpMethod
@@ -149,7 +150,6 @@ export interface HttpCounters {
   folderId: number
   requestId: number
   environmentId: number
-  historyId: number
 }
 
 export interface HttpStateFile {
@@ -159,7 +159,6 @@ export interface HttpStateFile {
   requests?: HttpRequestIndexItem[]
   environments?: HttpEnvironmentRecord[]
   activeEnvironmentId?: number | null
-  history?: HttpHistoryRecord[]
 }
 
 export interface HttpState {
@@ -169,7 +168,6 @@ export interface HttpState {
   requests: HttpRequestIndexItem[]
   environments: HttpEnvironmentRecord[]
   activeEnvironmentId: number | null
-  history: HttpHistoryRecord[]
   // Дефолтный state на период, пока .state.yaml не докачан из облака:
   // такой state нельзя ни персистить, ни использовать для выдачи id.
   provisional?: boolean

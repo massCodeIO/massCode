@@ -10,7 +10,16 @@ import {
   isDragAllowed,
   TREE_DND_TYPE,
 } from './composables'
+import { getDropPosition, isUnchangedDrop } from './dropPosition'
 import { treeInjectionKey } from './keys'
+
+const props = withDefaults(defineProps<Props>(), {
+  index: 0,
+  deep: 0,
+  indent: 10,
+})
+
+defineSlots<{ icon?: (props: { node: TreeNode }) => unknown }>()
 
 interface Props {
   index: number
@@ -21,13 +30,8 @@ interface Props {
   hoveredNodeId?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  index: 0,
-  deep: 0,
-  indent: 10,
-})
-
 const {
+  rootNodes,
   clickNode,
   dblclickNode,
   dragNode,
@@ -38,6 +42,8 @@ const {
   updateLabel,
   cancelEdit,
   getValidationMessage,
+  canDrop,
+  canDrag,
   editableId,
   selectedIds,
   focusedId,
@@ -55,8 +61,6 @@ const editValue = ref(props.node.label)
 const hasChildren = computed(
   () => props.node.children && props.node.children.length > 0,
 )
-
-const isFirst = computed(() => props.index === 0)
 
 const isHovered = computed(() => {
   return props.node.id === hoveredId.value && overPosition.value === 'center'
@@ -85,8 +89,23 @@ const validationMessage = computed(() => {
 
 const isDragActive = computed(() => Boolean(dragStore.dragNode))
 
+const isDropAllowed = computed(
+  () =>
+    isDragAllowed.value
+    && dragStore.dragEnterNode?.id === props.node.id
+    && Boolean(overPosition.value)
+    && !isUnchangedDrop(
+      props.nodes,
+      dragStore.dragNodes || [],
+      props.node.id,
+      overPosition.value!,
+    )
+    && (canDrop?.(dragStore.dragNodes || [], props.node, overPosition.value!)
+      ?? true),
+)
+
 const isShowBetweenLine = computed(() => {
-  if (!isDragAllowed.value)
+  if (!isDropAllowed.value)
     return false
   return overPosition.value === 'before' || overPosition.value === 'after'
 })
@@ -104,11 +123,11 @@ const betweenLineStyle = computed(() => {
   }
 
   if (overPosition.value === 'before') {
-    style.top = '-4px'
+    style.top = '-5px'
   }
 
   if (overPosition.value === 'after') {
-    style.bottom = '-4px'
+    style.bottom = '-5px'
   }
 
   return style
@@ -227,7 +246,11 @@ function getDraggedNodes(rootNodes: TreeNode[]) {
 }
 
 function onDragStart(e: DragEvent) {
-  let draggedNodes = getDraggedNodes(props.nodes)
+  if (canDrag && !canDrag(props.node)) {
+    e.preventDefault()
+    return
+  }
+  let draggedNodes = getDraggedNodes(rootNodes.value)
 
   if (!draggedNodes.length) {
     draggedNodes = [props.node]
@@ -248,10 +271,16 @@ function onDragStart(e: DragEvent) {
   el.className
     = 'fixed left-[-100%] text-foreground truncate max-w-[200px] flex items-center'
   el.id = 'ghost'
-  el.innerHTML
-    = ghostCount > 1
-      ? `<span class="rounded-full bg-primary text-white px-2 py-0.5 text-xs ml-3">${ghostCount}</span>`
-      : props.node.label
+  if (ghostCount > 1) {
+    const badge = document.createElement('span')
+    badge.className
+      = 'rounded-full bg-primary text-white px-2 py-0.5 text-xs ml-3'
+    badge.textContent = String(ghostCount)
+    el.appendChild(badge)
+  }
+  else {
+    el.textContent = props.node.label
+  }
 
   document.body.appendChild(el)
   e.dataTransfer!.setDragImage(el, 0, 0)
@@ -279,6 +308,7 @@ function onDragEnter() {
 
 function onDragOver(e: DragEvent) {
   hoveredId.value = props.node.id
+  dragStore.dragEnterNode = props.node
 
   if (!e.dataTransfer?.types.includes(TREE_DND_TYPE)) {
     isDraggingExternal.value = true
@@ -299,34 +329,21 @@ function onDragOver(e: DragEvent) {
     return
   }
 
-  const height = rowRef.value!.offsetHeight
-  const before = height * 0.3
-  const after = height - before
-
-  const isContainer = props.node.children !== undefined
-
-  if (isContainer) {
-    if (e.offsetY < before && isFirst.value) {
-      overPosition.value = 'before'
-    }
-    else if (e.offsetY > after) {
-      overPosition.value = 'after'
-    }
-    else {
-      overPosition.value = 'center'
-    }
-  }
-  else {
-    if (e.offsetY < height / 2) {
-      overPosition.value = isFirst.value ? 'before' : 'after'
-    }
-    else {
-      overPosition.value = 'after'
-    }
-  }
+  overPosition.value = getDropPosition(
+    e.clientY,
+    rowRef.value!.getBoundingClientRect(),
+    props.node.children !== undefined,
+  )
 }
 
-function onDragLeave() {
+function onDragLeave(e: DragEvent) {
+  // Moving between the row's label, icon and padding is not leaving the node.
+  if (
+    e.relatedTarget instanceof Node
+    && (e.currentTarget as HTMLElement).contains(e.relatedTarget)
+  ) {
+    return
+  }
   hoveredId.value = undefined
   overPosition.value = undefined
   isDraggingExternal.value = false
@@ -343,7 +360,10 @@ function onDrop(e: DragEvent) {
     return
   }
 
-  if (!dragStore.dragNode || !isDragAllowed.value)
+  // A child dragleave can clear the last dragover state just before drop.
+  // Resolve the target from the release coordinates, not that transient state.
+  onDragOver(e)
+  if (!dragStore.dragNode || !isDropAllowed.value)
     return
 
   const draggedNodes = dragStore.dragNodes?.length
@@ -400,7 +420,7 @@ function onCancelEdit() {
       'has-children': hasChildren,
       'is-dragged': isDragged,
     }"
-    draggable="true"
+    :draggable="canDrag?.(node) ?? true"
     @dragstart.stop="onDragStart"
     @dragleave.stop="onDragLeave"
     @dragend.stop="onDragEnd"
@@ -413,7 +433,7 @@ function onCancelEdit() {
       class="ui-tree-node__row user-select-none relative flex py-px"
       :class="{
         'is-hovered':
-          (isHovered && isDragAllowed)
+          (isHovered && isDropAllowed)
           || (isHovered && isDraggingExternal)
           || hoveredNodeId === String(node.id),
         'is-selected': isSelected && !isEditing,

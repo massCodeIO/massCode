@@ -3,6 +3,18 @@ import type { DropPosition, TreeNode } from './types'
 import { treeInjectionKey } from './keys'
 import TreeNodeComponent from './TreeNode.vue'
 
+const props = withDefaults(defineProps<Props>(), {
+  selectedIds: () => [],
+  editableId: null,
+  focusedId: undefined,
+  highlightedIds: () => new Set(),
+  indent: 10,
+})
+
+const emit = defineEmits<Emits>()
+
+defineSlots<{ icon?: (props: { node: TreeNode }) => unknown }>()
+
 interface Props {
   modelValue: TreeNode[]
   selectedIds?: (string | number)[]
@@ -11,6 +23,12 @@ interface Props {
   highlightedIds?: Set<string | number>
   indent?: number
   getValidationMessage?: (node: TreeNode, value: string) => string
+  canDrop?: (
+    nodes: TreeNode[],
+    target: TreeNode,
+    position: DropPosition,
+  ) => boolean
+  canDrag?: (node: TreeNode) => boolean
 }
 
 interface Emits {
@@ -37,16 +55,6 @@ interface Emits {
     value: { node: TreeNode, selectedNodes: TreeNode[] },
   ): void
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  selectedIds: () => [],
-  editableId: null,
-  focusedId: undefined,
-  highlightedIds: () => new Set(),
-  indent: 10,
-})
-
-const emit = defineEmits<Emits>()
 
 const hoveredNodeId = ref('')
 const isHoveredByIdDisabled = ref(false)
@@ -135,6 +143,7 @@ function cancelEditHandler(node: TreeNode) {
 }
 
 provide(treeInjectionKey, {
+  rootNodes: computed(() => props.modelValue),
   clickNode,
   dblclickNode,
   dragNode: dragNodeHandler,
@@ -144,6 +153,8 @@ provide(treeInjectionKey, {
   updateLabel: updateLabelHandler,
   cancelEdit: cancelEditHandler,
   getValidationMessage: props.getValidationMessage,
+  canDrop: props.canDrop,
+  canDrag: props.canDrag,
   isHoveredByIdDisabled,
   editableId: internalEditableId,
   selectedIds: internalSelectedIds,

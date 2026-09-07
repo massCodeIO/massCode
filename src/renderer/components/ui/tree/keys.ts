@@ -2,6 +2,7 @@ import type { InjectionKey, Ref } from 'vue'
 import type { DropPosition, TreeNode } from './types'
 
 export interface TreeInjection {
+  rootNodes: Ref<TreeNode[]>
   clickNode: (id: string | number, event?: MouseEvent) => void
   dblclickNode: (node: TreeNode) => void
   dragNode: (
@@ -19,6 +20,12 @@ export interface TreeInjection {
   updateLabel: (node: TreeNode, value: string) => void
   cancelEdit: (node: TreeNode) => void
   getValidationMessage?: (node: TreeNode, value: string) => string
+  canDrop?: (
+    nodes: TreeNode[],
+    target: TreeNode,
+    position: DropPosition,
+  ) => boolean
+  canDrag?: (node: TreeNode) => boolean
   isHoveredByIdDisabled: Ref<boolean>
   editableId: Ref<string | number | null>
   selectedIds: Ref<(string | number)[]>

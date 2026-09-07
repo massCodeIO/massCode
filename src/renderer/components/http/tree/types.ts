@@ -13,6 +13,7 @@ export interface HttpTreeNode {
   entityId?: number
   pending?: boolean
   dirty?: boolean
+  deleted?: boolean
   favorite?: boolean
 }
 

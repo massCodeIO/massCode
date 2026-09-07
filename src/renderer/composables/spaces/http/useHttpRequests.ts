@@ -48,6 +48,7 @@ export type HttpRequestDraft = Pick<
 export const requests = shallowRef<HttpRequestsResponse>([])
 // Metadata for the unified HTTP navigation tree; the editor keeps its existing scope.
 const allRequests = shallowRef<HttpRequestsResponse>([])
+const trashRequests = shallowRef<HttpRequestsResponse>([])
 export const isRestoreStateBlocked = ref(false)
 const currentRequest = shallowRef<HttpRequest | null>(null)
 const currentDraft = ref<HttpRequestDraft | null>(null)
@@ -112,12 +113,20 @@ function getRequestActionSource() {
 let treeLoadToken = 0
 async function getAllHttpRequests() {
   const token = ++treeLoadToken
-  const { data } = await api.httpRequests.getHttpRequests({
-    isDeleted: 0,
-    ...getContentSortQuery('http'),
-  })
-  if (token === treeLoadToken)
-    allRequests.value = data
+  const [active, deleted] = await Promise.all([
+    api.httpRequests.getHttpRequests({
+      isDeleted: 0,
+      ...getContentSortQuery('http'),
+    }),
+    api.httpRequests.getHttpRequests({
+      isDeleted: 1,
+      ...getContentSortQuery('http'),
+    }),
+  ])
+  if (token === treeLoadToken) {
+    allRequests.value = active.data
+    trashRequests.value = deleted.data
+  }
 }
 
 function getActionTargetIds(fallbackRequestId?: number) {
@@ -963,6 +972,7 @@ watch(
 function resetHttpRequestsState() {
   treeLoadToken += 1
   allRequests.value = []
+  trashRequests.value = []
   requests.value = []
   requestsBySearch.value = undefined
   currentRequest.value = null
@@ -975,6 +985,7 @@ function resetHttpRequestsState() {
 export function useHttpRequests() {
   return {
     allRequests,
+    trashRequests,
     getAllHttpRequests,
     createHttpRequest,
     createHttpRequestAndSelect,

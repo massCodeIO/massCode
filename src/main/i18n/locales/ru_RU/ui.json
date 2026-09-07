@@ -677,6 +677,7 @@
         },
         "noNamedOperations": "Нет именованных операций"
       },
+      "sidebar": { "unfiled": "Без коллекции" },
       "folderPanel": {
         "runCollection": "Запустить коллекцию",
         "name": "Название",

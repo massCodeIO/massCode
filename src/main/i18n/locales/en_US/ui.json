@@ -674,6 +674,7 @@
         },
         "noNamedOperations": "No named operations"
       },
+      "sidebar": { "unfiled": "Unfiled" },
       "folderPanel": {
         "runCollection": "Run collection",
         "name": "Name",

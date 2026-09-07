@@ -30,7 +30,7 @@ export function useHttpNavigationTree() {
   } = useHttpFolders()
   const {
     allRequests,
-    requests,
+    trashRequests,
     getAllHttpRequests,
     getHttpRequests,
     selectHttpRequest,
@@ -43,7 +43,7 @@ export function useHttpNavigationTree() {
   const nodes = computed(() =>
     buildNavigationNodes(folders.value, [
       ...allRequests.value,
-      ...requests.value.filter(request => request.isDeleted),
+      ...trashRequests.value,
     ]),
   )
 
@@ -72,7 +72,13 @@ export function useHttpNavigationTree() {
       ) {
         return
       }
-      if (!httpState.libraryFilter) {
+      if (currentRequest.value?.isDeleted) {
+        clearFolderSelection()
+        httpState.libraryFilter = LibraryFilter.Trash
+        await getHttpRequests()
+      }
+      else {
+        httpState.libraryFilter = undefined
         const request = currentRequest.value
         if (request?.folderId !== null && request?.folderId !== undefined) {
           await selectHttpFolder(request.folderId)

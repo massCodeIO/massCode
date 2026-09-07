@@ -1,117 +1,52 @@
 <script setup lang="ts">
-import {
-  useHttpApp,
-  useHttpFolders,
-  useHttpRequests,
-  useHttpSearch,
-} from '@/composables'
-import { LibraryFilter } from '@/composables/types'
+import { useHttpApp, useHttpRequests, useHttpSearch } from '@/composables'
 import { i18n } from '@/electron'
-import { Plus, Search, X } from 'lucide-vue-next'
+import { Plus, Search, Star, X } from 'lucide-vue-next'
 
+const favorites = defineModel<boolean>('favorites', { default: false })
 const { httpState, isFocusedSearch } = useHttpApp()
 const { createHttpRequestAndSelect } = useHttpRequests()
-const { folders, getFolderByIdFromTree } = useHttpFolders()
-const {
-  searchQuery,
-  clearSearch,
-  search,
-  searchSelectedIndex,
-  selectSearchRequest,
-  displayedRequests,
-  isSearch,
-} = useHttpSearch()
-
-const libraryFilterLabels = computed<Record<string, string>>(() => ({
-  [LibraryFilter.Inbox]: i18n.t('common.inbox'),
-  [LibraryFilter.Favorites]: i18n.t('common.favorites'),
-  [LibraryFilter.All]: i18n.t('spaces.http.allRequests'),
-  [LibraryFilter.Trash]: i18n.t('common.trash'),
-}))
-
-const searchContextLabel = computed(() => {
-  if (httpState.folderId) {
-    return getFolderByIdFromTree(folders.value, httpState.folderId)?.name
-  }
-
-  return httpState.libraryFilter
-    ? libraryFilterLabels.value[httpState.libraryFilter]
-    : undefined
-})
-
-const searchPlaceholder = computed(() =>
-  searchContextLabel.value
-    ? i18n.t('placeholder.searchIn', { context: searchContextLabel.value })
-    : i18n.t('placeholder.search'),
-)
-
-watch(searchQuery, (v) => {
-  if (v) {
-    search()
-  }
-  else {
-    clearSearch(true)
-  }
-})
-
-async function onCreateRequest() {
-  if (httpState.folderId == null)
-    httpState.libraryFilter = LibraryFilter.Inbox
-  await createHttpRequestAndSelect({
-    folderId: httpState.folderId ?? null,
-  })
-}
-
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'ArrowDown') {
-    event.preventDefault()
-    const nextIndex = Math.min(
-      searchSelectedIndex.value + 1,
-      (displayedRequests.value?.length || 0) - 1,
-    )
-    selectSearchRequest(nextIndex)
-  }
-  else if (event.key === 'ArrowUp') {
-    event.preventDefault()
-    const prevIndex = Math.max(searchSelectedIndex.value - 1, 0)
-    selectSearchRequest(prevIndex)
-  }
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    clearSearch(true)
-  }
-}
+const { searchQuery } = useHttpSearch()
 </script>
 
 <template>
-  <div class="border-border mt-[var(--content-top-offset)] mb-2 border-b pb-1">
-    <div class="flex items-center px-1">
-      <Search class="text-muted-foreground ml-1 h-4 w-4 shrink-0" />
-      <div class="min-w-0 flex-grow">
-        <UiInput
-          v-model="searchQuery"
-          :placeholder="searchPlaceholder"
-          variant="ghost"
-          class="truncate"
-          :focus="isFocusedSearch"
-          @blur="isFocusedSearch = false"
-          @keydown="onKeydown"
-        />
-      </div>
-      <UiActionButton
-        v-if="searchQuery"
-        :tooltip="i18n.t('action.clearSearch')"
-        @click="clearSearch(true)"
-      >
-        <X class="h-4 w-4" />
-      </UiActionButton>
-      <UiActionButton
-        v-else-if="!isSearch"
-        :tooltip="i18n.t('spaces.http.action.newRequest')"
-        @click="onCreateRequest"
-      >
-        <Plus class="h-4 w-4" />
-      </UiActionButton>
-    </div>
+  <div class="flex h-9 shrink-0 items-center gap-0.5 border-b px-1">
+    <Search class="text-muted-foreground ml-1 size-4 shrink-0" />
+    <UiInput
+      v-model="searchQuery"
+      :placeholder="i18n.t('placeholder.search')"
+      variant="ghost"
+      class="min-w-0 flex-1 truncate"
+      :focus="isFocusedSearch"
+      @blur="isFocusedSearch = false"
+      @keydown.esc="searchQuery = ''"
+    />
+    <UiActionButton
+      v-if="searchQuery"
+      :tooltip="i18n.t('action.clearSearch')"
+      @click="searchQuery = ''"
+    >
+      <X class="size-4" />
+    </UiActionButton>
+    <UiActionButton
+      :tooltip="i18n.t('common.favorites')"
+      :aria-pressed="favorites"
+      :class="{ 'bg-accent text-primary': favorites }"
+      @click="favorites = !favorites"
+    >
+      <Star
+        class="size-4"
+        :class="{ 'fill-current': favorites }"
+      />
+    </UiActionButton>
+    <UiActionButton
+      :tooltip="i18n.t('spaces.http.action.newRequest')"
+      @click="
+        createHttpRequestAndSelect({ folderId: httpState.folderId ?? null })
+      "
+    >
+      <Plus class="size-4" />
+    </UiActionButton>
+    <slot name="actions" />
   </div>
 </template>

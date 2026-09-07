@@ -1,7 +1,7 @@
 import type { HttpFolderTreeItem } from '@/composables/spaces/http/useHttpFolderTree'
 import type { HttpRequestsResponse } from '@/services/api/generated'
 import { describe, expect, it } from 'vitest'
-import { buildNavigationNodes } from '../liveModel'
+import { buildNavigationNodes, sidebarNodes, UNFILED_ID } from '../liveModel'
 
 // Metadata adapter must preserve identities even when folders and requests
 // happen to have the same numeric ID.
@@ -53,5 +53,69 @@ describe('hTTP navigation metadata', () => {
       entityId: 1,
     })
     expect(requests[0].folderId).toBe(2)
+  })
+})
+
+describe('sidebar sections', () => {
+  const nodes: import('../types').HttpTreeNode[] = [
+    { id: 'collection', name: 'API', parentId: null, kind: 'collection' },
+    { id: 'folder', name: 'Accounts', parentId: 'collection', kind: 'folder' },
+    {
+      id: 'starred',
+      name: 'List accounts',
+      parentId: 'folder',
+      kind: 'request',
+      favorite: true,
+    },
+    {
+      id: 'ordinary',
+      name: 'Update accounts',
+      parentId: 'folder',
+      kind: 'request',
+    },
+    { id: 'loose', name: 'Quick request', parentId: null, kind: 'request' },
+    {
+      id: 'deleted',
+      name: 'Old request',
+      parentId: 'folder',
+      kind: 'request',
+      deleted: true,
+    },
+  ]
+  it('groups unfiled requests without modifying their stored parents', () => {
+    const result = sidebarNodes(nodes, {
+      trash: false,
+      favorites: false,
+      unfiledLabel: 'Unfiled',
+    })
+    expect(result.find(node => node.id === 'loose')?.parentId).toBe(
+      UNFILED_ID,
+    )
+    expect(nodes.find(node => node.id === 'loose')?.parentId).toBeNull()
+    expect(result.some(node => node.deleted)).toBe(false)
+    expect(
+      sidebarNodes(
+        nodes.filter(node => node.id !== 'loose'),
+        { trash: false, favorites: false, unfiledLabel: 'Unfiled' },
+      ).some(node => node.id === UNFILED_ID),
+    ).toBe(false)
+  })
+  it('keeps the ancestor hierarchy when showing favorites', () => {
+    expect(
+      sidebarNodes(nodes, {
+        trash: false,
+        favorites: true,
+        unfiledLabel: 'Unfiled',
+      }).map(node => node.id),
+    ).toEqual(['collection', 'folder', 'starred'])
+  })
+  it('keeps deleted requests exclusively in the trash section', () => {
+    expect(
+      sidebarNodes(nodes, {
+        trash: true,
+        favorites: false,
+        unfiledLabel: 'Unfiled',
+      }),
+    ).toEqual([{ ...nodes[5], parentId: null }])
   })
 })

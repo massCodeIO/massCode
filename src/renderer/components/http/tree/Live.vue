@@ -7,7 +7,6 @@ import {
   useHttpApp,
   useHttpFolders,
   useHttpRequests,
-  useHttpSearch,
 } from '@/composables'
 import { useHttpNavigationTree } from '@/composables/spaces/http/useHttpNavigationTree'
 import { i18n } from '@/electron'
@@ -16,10 +15,14 @@ import {
   getEntryNameValidationMessage,
 } from '@/utils'
 import { CloudDownload, Folder, Layers, Star } from 'lucide-vue-next'
-import { folderKey, requestKey } from './liveModel'
-import { ancestorIds, selectRange, visibleRows } from './model'
+import { folderKey, requestKey, sidebarNodes, UNFILED_ID } from './liveModel'
+import { selectRange, visibleRows } from './model'
 
-const props = withDefaults(defineProps<{ query?: string }>(), { query: '' })
+const props = withDefaults(
+  defineProps<{ query?: string, trash?: boolean, favorites?: boolean }>(),
+  { query: '' },
+)
+const unfiledOpen = defineModel<boolean>('unfiledOpen', { default: true })
 const {
   httpState,
   focusedFolderId,
@@ -38,23 +41,31 @@ const {
 const {
   requests,
   allRequests,
+  trashRequests,
   currentRequest,
   isCurrentRequestDirty,
   selectedRequestIds,
   updateHttpRequest,
   deleteSelectedHttpRequests,
 } = useHttpRequests()
-const { displayedRequests } = useHttpSearch()
 const { nodes, open, move, validateMove, refresh, loadError, busy }
   = useHttpNavigationTree()
-watch(requests, refresh, { immediate: true })
+if (!props.trash)
+  watch(requests, refresh, { immediate: true })
 const root = ref<HTMLElement>()
 const editableId = ref<string | number | null>(null)
 const anchor = ref<string>()
 const contextNode = ref<HttpTreeNode>()
 const moveDialog = useTemplateRef('moveDialog')
+const source = computed(() =>
+  sidebarNodes(nodes.value, {
+    trash: props.trash,
+    favorites: props.favorites,
+    unfiledLabel: i18n.t('spaces.http.sidebar.unfiled'),
+  }),
+)
 const nodeById = computed(
-  () => new Map(nodes.value.map(node => [node.id, node])),
+  () => new Map(source.value.map(node => [node.id, node])),
 )
 const contextFolder = computed(() =>
   contextNode.value?.kind !== 'request'
@@ -62,7 +73,7 @@ const contextFolder = computed(() =>
     : undefined,
 )
 const contextRequest = computed(() =>
-  [...allRequests.value, ...requests.value].find(
+  [...allRequests.value, ...trashRequests.value].find(
     request =>
       contextNode.value?.kind === 'request'
       && request.id === contextNode.value.entityId,
@@ -80,30 +91,17 @@ const expanded = computed(
         .map(node => node.id),
     ),
 )
-const source = computed(() => {
-  if (httpState.libraryFilter) {
-    const ids = new Set(
-      (displayedRequests.value ?? []).map(request => request.id),
-    )
-    return nodes.value
-      .filter(node => node.kind === 'request' && ids.has(node.entityId!))
-      .map(node => ({ ...node, parentId: null }))
-  }
-  const collectionNodes = nodes.value.filter(
-    node => node.kind !== 'request' || node.parentId !== null,
-  )
-  if (!props.query.trim() || !httpState.folderId)
-    return collectionNodes
-  const scope = folderKey(httpState.folderId)
-  return collectionNodes.filter(
-    node =>
-      node.id === scope
-      || ancestorIds(nodes.value, node.id).includes(scope)
-      || ancestorIds(nodes.value, scope).includes(node.id),
-  )
-})
+
 const rows = computed(() =>
-  visibleRows(source.value, expanded.value, props.query),
+  visibleRows(
+    source.value,
+    new Set([
+      ...expanded.value,
+      ...(unfiledOpen.value ? [UNFILED_ID] : []),
+      ...(props.favorites ? source.value.map(node => node.id) : []),
+    ]),
+    props.query,
+  ),
 )
 const treeData = computed(() => {
   const matches = new Set(rows.value.map(row => row.node.id))
@@ -116,7 +114,12 @@ const treeData = computed(() => {
       label: node.name,
       ...(node.kind !== 'request' && {
         children: [],
-        isExpanded: Boolean(props.query.trim()) || expanded.value.has(node.id),
+        isExpanded:
+          Boolean(props.query.trim())
+          || props.favorites
+          || (node.id === UNFILED_ID
+            ? unfiledOpen.value
+            : expanded.value.has(node.id)),
       }),
     })
   })
@@ -153,7 +156,10 @@ const selectedIds = computed({
     selection.value = ids
     selectedFolderIds.value = ids
       .map(id => nodeById.value.get(String(id)))
-      .filter(node => node && node.kind !== 'request')
+      .filter(
+        node =>
+          node && node.kind !== 'request' && node.entityId !== undefined,
+      )
       .map(node => node!.entityId!)
     selectedRequestIds.value = ids
       .map(id => nodeById.value.get(String(id)))
@@ -161,14 +167,18 @@ const selectedIds = computed({
       .map(node => node!.entityId!)
   },
 })
+const virtualFocus = ref(false)
 const focusedId = computed({
   get: () =>
-    focusedRequestId.value !== undefined
-      ? requestKey(focusedRequestId.value)
-      : focusedFolderId.value !== undefined
-        ? folderKey(focusedFolderId.value)
-        : undefined,
+    virtualFocus.value
+      ? UNFILED_ID
+      : focusedRequestId.value !== undefined
+        ? requestKey(focusedRequestId.value)
+        : focusedFolderId.value !== undefined
+          ? folderKey(focusedFolderId.value)
+          : undefined,
   set: (id: string | number | undefined) => {
+    virtualFocus.value = id === UNFILED_ID
     const node = nodeById.value.get(String(id))
     focusedFolderId.value
       = node?.kind !== 'request' ? node?.entityId : undefined
@@ -195,13 +205,19 @@ watch(
 )
 function canDrag(node: TreeNode) {
   return (
-    !busy.value
+    !props.trash
+    && node.id !== UNFILED_ID
+    && !busy.value
     && !nodeById.value.get(String(node.id))?.pending
     && !props.query.trim()
-    && !httpState.libraryFilter
+    && !props.favorites
   )
 }
 function contextMenu({ node }: { node: TreeNode }) {
+  if (node.id === UNFILED_ID) {
+    contextNode.value = undefined
+    return
+  }
   contextNode.value = nodeById.value.get(String(node.id))
 }
 function drag({
@@ -223,6 +239,10 @@ async function click({ node, event }: { node: TreeNode, event?: MouseEvent }) {
   const item = nodeById.value.get(String(node.id))
   if (!item)
     return
+  if (item.id === UNFILED_ID) {
+    unfiledOpen.value = !unfiledOpen.value
+    return
+  }
   if (event?.shiftKey) {
     selectedIds.value = selectRange(rows.value, anchor.value, item.id)
     return
@@ -253,10 +273,16 @@ async function click({ node, event }: { node: TreeNode, event?: MouseEvent }) {
   }
 }
 function rename(node: TreeNode) {
+  if (props.trash || node.id === UNFILED_ID)
+    return
   if (!nodeById.value.get(String(node.id))?.pending)
     editableId.value = node.id
 }
 function toggle(node: TreeNode) {
+  if (node.id === UNFILED_ID) {
+    unfiledOpen.value = !unfiledOpen.value
+    return
+  }
   if (props.query.trim())
     return
   const item = nodeById.value.get(String(node.id))
@@ -305,8 +331,9 @@ function target(position: DropPosition, node: TreeNode) {
 }
 function canDrop(items: TreeNode[], node: TreeNode, position: DropPosition) {
   return (
-    !props.query.trim()
-    && !httpState.libraryFilter
+    !props.trash
+    && !props.query.trim()
+    && !props.favorites
     && !validateMove(
       items.map(node => String(node.id)),
       target(position, node),
@@ -316,7 +343,9 @@ function canDrop(items: TreeNode[], node: TreeNode, position: DropPosition) {
 async function remove() {
   const items = selectedIds.value.map(id => nodeById.value.get(String(id)))
   const folderIds = items
-    .filter(node => node && node.kind !== 'request')
+    .filter(
+      node => node && node.kind !== 'request' && node.entityId !== undefined,
+    )
     .map(node => node!.entityId!)
   const requestIds = items
     .filter(node => node?.kind === 'request')
@@ -332,8 +361,13 @@ async function remove() {
 }
 
 useDeleteShortcut({
-  rootSelector: '[data-http-navigation-tree]',
-  isEnabled: () => focusedId.value !== undefined && editableId.value === null,
+  rootSelector: props.trash
+    ? '[data-http-navigation-tree=trash]'
+    : '[data-http-navigation-tree=collections]',
+  isEnabled: () =>
+    focusedId.value !== undefined
+    && nodeById.value.has(String(focusedId.value))
+    && editableId.value === null,
   onDelete: remove,
 })
 
@@ -345,7 +379,7 @@ watch(
       (httpState.activePanel === undefined
         || httpState.activePanel === 'request')
       && folderId != null
-      && !httpState.libraryFilter
+      && !props.favorites
     ) {
       const folder = getFolderByIdFromTree(folders.value, folderId)
       if (folder && !folder.isOpen)
@@ -363,7 +397,8 @@ watch(renameFolderId, (id) => {
 watch(
   activeId,
   (id) => {
-    selectedIds.value = id ? [id] : []
+    virtualFocus.value = false
+    selection.value = id && nodeById.value.has(id) ? [id] : []
   },
   { immediate: true },
 )
@@ -387,7 +422,7 @@ watch(
   <div
     ref="root"
     class="flex min-h-0 flex-1 flex-col"
-    data-http-navigation-tree
+    :data-http-navigation-tree="trash ? 'trash' : 'collections'"
   >
     <ContextMenu.ContextMenu>
       <ContextMenu.ContextMenuTrigger as-child>

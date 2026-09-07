@@ -3,10 +3,20 @@ import { useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import { Settings2 } from 'lucide-vue-next'
 
+const props = withDefaults(defineProps<{ query?: string }>(), { query: '' })
+const open = defineModel<boolean>('open', { default: true })
+
 const { environments, activeEnvironmentId, setActiveHttpEnvironment }
   = useHttpEnvironments()
 
 const isManagerOpen = ref(false)
+const visibleEnvironments = computed(() =>
+  environments.value.filter(env =>
+    env.name
+      .toLocaleLowerCase()
+      .includes(props.query.trim().toLocaleLowerCase()),
+  ),
+)
 
 async function onSelectEnvironment(id: number | null) {
   if (activeEnvironmentId.value === id)
@@ -21,7 +31,11 @@ function openManager() {
 
 <template>
   <div class="flex h-full min-h-0 flex-col">
-    <SidebarSectionHeader :title="i18n.t('spaces.http.environments.title')">
+    <SidebarSectionHeader
+      v-model:open="open"
+      collapsible
+      :title="i18n.t('spaces.http.environments.title')"
+    >
       <template #action>
         <div class="flex items-center">
           <HttpVariablesInspector />
@@ -35,7 +49,10 @@ function openManager() {
       </template>
     </SidebarSectionHeader>
 
-    <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-0.5 pb-1">
+    <div
+      v-show="open"
+      class="scrollbar min-h-0 flex-1 overflow-y-auto px-0.5 pb-1"
+    >
       <button
         type="button"
         class="flex h-[21px] w-full items-center rounded-md pr-2 pl-6 text-left text-sm"
@@ -57,7 +74,7 @@ function openManager() {
       </div>
 
       <button
-        v-for="env in environments"
+        v-for="env in visibleEnvironments"
         :key="env.id"
         type="button"
         class="flex h-[21px] w-full items-center rounded-md pr-2 pl-6 text-left text-sm"

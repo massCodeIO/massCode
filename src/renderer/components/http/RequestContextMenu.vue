@@ -46,9 +46,7 @@ const isDuplicateDisabled = computed(() => selectedRequestIds.value.length > 1)
 const isFavoritesLibrarySelected = computed(
   () => httpState.libraryFilter === LibraryFilter.Favorites,
 )
-const isTrashLibrarySelected = computed(
-  () => httpState.libraryFilter === LibraryFilter.Trash,
-)
+const isTrashLibrarySelected = computed(() => Boolean(props.request.isDeleted))
 const isRemoveFavoritesAction = computed(() => {
   if (isFavoritesLibrarySelected.value)
     return true

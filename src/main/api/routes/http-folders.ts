@@ -16,7 +16,7 @@ function projectFolder(folder: HttpFolderRecord | HttpFolderTreeRecord): any {
     = folder.collectionConfig === undefined
       ? undefined
       : httpCollectionSchema.safeParse(folder.collectionConfig)
-  const valid = !parsed || (parsed.success && folder.parentId === null)
+  const valid = !parsed || parsed.success
   return {
     ...folder,
     ...(parsed

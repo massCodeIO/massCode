@@ -205,23 +205,21 @@ describe('http folders storage', () => {
     ).toEqual(raw)
   })
 
-  it('rejects nested configuration and moving configured collections beneath another root', () => {
+  it('persists nested settings and retains them when moving folders', () => {
     const folders = createHttpFoldersStorage()
     const root = folders.createFolder({ name: 'Collection' })
     const child = folders.createFolder({ name: 'Child', parentId: root.id })
     const other = folders.createFolder({ name: 'Other' })
-    expect(() =>
-      folders.updateFolder(child.id, {
-        collectionConfig: emptyHttpCollection(),
-      }),
-    ).toThrow('HTTP_COLLECTION_ROOT_ONLY')
-    folders.updateFolder(root.id, { collectionConfig: emptyHttpCollection() })
-    expect(() => folders.updateFolder(root.id, { parentId: other.id })).toThrow(
-      'HTTP_COLLECTION_ROOT_ONLY',
-    )
+    const config = emptyHttpCollection()
+    config.auth = { type: 'inherit' }
+    folders.updateFolder(child.id, { collectionConfig: config })
+    folders.updateFolder(child.id, { parentId: other.id })
     expect(
-      folders.getFolders().find(folder => folder.id === root.id)?.parentId,
-    ).toBeNull()
+      folders.getFolders().find(folder => folder.id === child.id),
+    ).toMatchObject({
+      parentId: other.id,
+      collectionConfig: config,
+    })
   })
 
   it('does not change saved configuration when its immediate write fails', () => {

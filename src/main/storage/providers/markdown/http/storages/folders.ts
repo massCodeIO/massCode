@@ -269,18 +269,6 @@ export function createHttpFoldersStorage(): HttpFoldersStorage {
           'Invalid collection configuration',
         )
       }
-      const nextParentId
-        = input.parentId === undefined ? folder.parentId : input.parentId
-      if (
-        nextParentId !== null
-        && (input.collectionConfig !== undefined
-          || folder.collectionConfig !== undefined)
-      ) {
-        throwStorageError(
-          'HTTP_COLLECTION_ROOT_ONLY',
-          'Collection configuration belongs to a root folder',
-        )
-      }
       const now = Date.now()
       let pathChanged = false
 

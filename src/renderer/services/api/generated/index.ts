@@ -588,7 +588,7 @@ export type HttpFoldersResponse = {
       description?: string;
     }[];
     auth: {
-      type: "none" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer";
       token?: string;
       username?: string;
       password?: string;
@@ -677,7 +677,7 @@ export type HttpFoldersTreeResponse = {
       description?: string;
     }[];
     auth: {
-      type: "none" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer";
       token?: string;
       username?: string;
       password?: string;
@@ -767,7 +767,7 @@ export interface HttpFoldersUpdate {
       description?: string;
     }[];
     auth: {
-      type: "none" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer";
       token?: string;
       username?: string;
       password?: string;

@@ -7,6 +7,7 @@ import {
   httpCollectionSchema,
   mergeHttpCollectionRuntime,
   readHttpCollection,
+  resolveHttpFolderConfig,
 } from '../httpCollection'
 import { emptyHttpRuntime } from '../httpRuntime'
 
@@ -62,7 +63,7 @@ describe('hTTP collection settings', () => {
     expect(httpCollectionSchema.safeParse(config).success).toBe(false)
   })
 
-  it('finds the collection above nested folders and rejects cycles and nested configuration', () => {
+  it('finds the collection above nested folders and rejects cycles', () => {
     const root = {
       id: 1,
       parentId: null,
@@ -79,12 +80,45 @@ describe('hTTP collection settings', () => {
         1,
       ),
     ).toThrow('HTTP_COLLECTION_INVALID')
-    expect(() =>
+    expect(
       findHttpCollection(
         [root, { id: 2, parentId: 1, collectionConfig: emptyHttpCollection() }],
         2,
       ),
-    ).toThrow('HTTP_COLLECTION_INVALID')
+    ).toBe(root)
+  })
+
+  it('inherits settings through nested folders and applies closest overrides', () => {
+    const root = emptyHttpCollection()
+    root.auth = { type: 'bearer', token: 'root' }
+    root.headers = [{ key: 'X-Mode', value: 'root' }]
+    root.variables = [{ key: 'host', value: 'root' }]
+    root.runtime.extractions = [
+      { name: 'token', source: 'header', path: 'root' },
+    ]
+    const child = emptyHttpCollection()
+    child.auth = { type: 'inherit' }
+    child.headers = [{ key: 'x-mode', value: 'child' }]
+    child.variables = [{ key: 'host', value: 'child' }]
+    child.runtime.extractions = [
+      { name: 'token', source: 'header', path: 'child' },
+    ]
+    const folders = [
+      { id: 1, parentId: null, collectionConfig: root },
+      { id: 2, parentId: 1, collectionConfig: child },
+      { id: 3, parentId: 2 },
+    ]
+    const resolved = resolveHttpFolderConfig(folders, 3)!
+    expect(resolved.auth).toEqual(root.auth)
+    expect(resolved.headers).toEqual(child.headers)
+    expect(collectionVariables(resolved)).toEqual({ host: 'child' })
+    expect(resolved.runtime.extractions).toEqual(child.runtime.extractions)
+    expect(applyHttpCollection(request, resolved).headers[0].value).toBe(
+      'request',
+    )
+    child.auth = { type: 'none' }
+    expect(resolveHttpFolderConfig(folders, 3)?.auth).toEqual({ type: 'none' })
+    expect(root.headers[0].value).toBe('root')
   })
 
   it('keeps legacy folders usable and blocks malformed synced configuration', () => {

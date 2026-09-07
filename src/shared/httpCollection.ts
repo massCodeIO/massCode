@@ -37,7 +37,7 @@ export const httpCollectionSchema = z
         })
       }),
     auth: z.object({
-      type: z.enum(['none', 'bearer', 'basic']),
+      type: z.enum(['none', 'inherit', 'bearer', 'basic']),
       token: z.string().optional(),
       username: z.string().optional(),
       password: z.string().optional(),
@@ -63,29 +63,55 @@ interface CollectionFolder {
   collectionConfig?: unknown
   collectionConfigState?: string
 }
-export function findHttpCollection<T extends CollectionFolder>(
+export function httpFolderChain<T extends CollectionFolder>(
   folders: T[],
   folderId: number | null | undefined,
-): T | undefined {
+): T[] {
   if (folderId == null)
-    return undefined
+    return []
+  const chain: T[] = []
   const visited = new Set<number>()
   let folder = folders.find(item => item.id === folderId)
   while (folder) {
     if (visited.has(folder.id))
       throw new Error('HTTP_COLLECTION_INVALID')
     visited.add(folder.id)
+    chain.unshift(folder)
     if (folder.parentId === null)
-      return folder
-    if (
-      folder.collectionConfig !== undefined
-      && folder.collectionConfig !== null
-    ) {
-      throw new Error('HTTP_COLLECTION_INVALID')
-    }
+      return chain
     folder = folders.find(item => item.id === folder!.parentId)
   }
   throw new Error('HTTP_COLLECTION_INVALID')
+}
+export function findHttpCollection<T extends CollectionFolder>(
+  folders: T[],
+  folderId: number | null | undefined,
+): T | undefined {
+  return httpFolderChain(folders, folderId)[0]
+}
+export function resolveHttpFolderConfig(
+  folders: CollectionFolder[],
+  folderId: number | null | undefined,
+): HttpCollectionConfig | undefined {
+  let result: HttpCollectionConfig | undefined
+  for (const folder of httpFolderChain(folders, folderId)) {
+    const config = readHttpCollection(folder)
+    if (!config)
+      continue
+    const settings = applyHttpCollection(config, result)
+    result = {
+      ...settings,
+      variables: [
+        ...new Map(
+          [...(result?.variables ?? []), ...config.variables]
+            .filter(entry => entry.enabled !== false && entry.key)
+            .map(entry => [entry.key, entry]),
+        ).values(),
+      ],
+      runtime: mergeHttpCollectionRuntime(config.runtime, result?.runtime),
+    }
+  }
+  return result
 }
 export function readHttpCollection(
   folder?: CollectionFolder,
@@ -139,7 +165,11 @@ export function applyHttpCollection<T extends RequestSettings>(
     headers: [...headers.values()],
     auth:
       request.auth.type === 'inherit'
-        ? { ...(config?.auth ?? { type: 'none' }) }
+        ? {
+            ...(config?.auth && config.auth.type !== 'inherit'
+              ? config.auth
+              : { type: 'none' as const }),
+          }
         : { ...request.auth },
   }
 }

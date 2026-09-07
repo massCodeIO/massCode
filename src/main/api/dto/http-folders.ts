@@ -13,7 +13,12 @@ const collectionConfig = t.Object({
   headers: t.Array(entry, { maxItems: 1000 }),
   variables: t.Array(entry, { maxItems: 1000 }),
   auth: t.Object({
-    type: t.Union([t.Literal('none'), t.Literal('basic'), t.Literal('bearer')]),
+    type: t.Union([
+      t.Literal('none'),
+      t.Literal('inherit'),
+      t.Literal('basic'),
+      t.Literal('bearer'),
+    ]),
     token: t.Optional(t.String()),
     username: t.Optional(t.String()),
     password: t.Optional(t.String()),

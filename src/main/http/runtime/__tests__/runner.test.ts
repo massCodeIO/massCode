@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { emptyHttpCollection } from '../../../../shared/httpCollection'
 import {
   cancelHttpRun,
   disposeHttpRun,
@@ -140,6 +141,50 @@ describe('folder runner', () => {
     expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_RUN_EMPTY')
     mocks.records = Array.from({ length: 501 }, (_, i) => record(i + 1))
     expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_RUN_TOO_LARGE')
+  })
+
+  it('freezes collection settings during prepare, including inherited credentials and variables', async () => {
+    const config = emptyHttpCollection()
+    config.headers = [{ key: 'X-Collection', value: '{{collectionValue}}' }]
+    config.variables = [
+      { key: 'collectionValue', value: 'before' },
+      { key: 'host', value: 'collection.test' },
+    ]
+    config.auth = { type: 'bearer', token: '{{collectionValue}}' }
+    mocks.folders[0].collectionConfig = config
+    mocks.records[0].auth = { type: 'inherit' }
+    const view = prepareHttpRun(7, 1)
+    config.variables[0].value = 'after'
+    config.headers[0].key = 'X-Changed'
+    const result = await start(view)
+    expect(result.state).toBe('passed')
+    expect(mocks.request.mock.calls[0][0]).toBe('https://example.test/test')
+    expect(mocks.request.mock.calls[0][1].headers).toMatchObject({
+      'X-Collection': 'before',
+      'Authorization': 'Bearer before',
+    })
+    expect(mocks.request.mock.calls[1][1].headers).toMatchObject({
+      'X-Collection': 'before',
+    })
+    expect(mocks.request.mock.calls[0][1].headers).not.toHaveProperty(
+      'X-Changed',
+    )
+  })
+
+  it('rejects combined collection rule overflow before any network request', () => {
+    const config = emptyHttpCollection()
+    config.runtime.assertions = Array.from({ length: 100 }, () => ({
+      name: 'status',
+      source: 'status',
+      operator: 'eq',
+      expected: 200,
+    }))
+    mocks.folders[0].collectionConfig = config
+    mocks.records[0].runtime.assertions = [
+      { name: 'local', source: 'status', operator: 'eq', expected: 200 },
+    ]
+    expect(() => prepareHttpRun(7, 1)).toThrow('HTTP_COLLECTION_RULE_LIMIT')
+    expect(mocks.request).not.toHaveBeenCalled()
   })
 
   it('uses immutable request and environment snapshots with isolated run variables', async () => {

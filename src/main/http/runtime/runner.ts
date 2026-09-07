@@ -1,13 +1,16 @@
 import type { HttpRunStart, HttpRunView } from '../../../shared/httpRunner'
 import type { HttpExecutePayload } from '../../types/http'
+import type { ResolvedHttpCollection } from '../collection'
 import type { ResolvedEnvironment } from './execute'
 import { randomUUID } from 'node:crypto'
+import { mergeHttpCollectionRuntime } from '../../../shared/httpCollection'
 import {
   emptyHttpRuntime,
   httpRuntimeSchema,
 } from '../../../shared/httpRuntime'
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { resolveHttpCollection } from '../collection'
 import { executeHttpRequest, resolveEnvironment } from './execute'
 import {
   beginHttpExecution,
@@ -20,6 +23,7 @@ interface Run {
   owner: number
   view: HttpRunView
   requests: Map<number, HttpExecutePayload>
+  collections: Map<number, ResolvedHttpCollection | null>
   vaultPath: string
   environmentId: number | null
   environment: ResolvedEnvironment
@@ -50,6 +54,7 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
     order: 'ASC',
   })
   const requests = new Map<number, HttpExecutePayload>()
+  const collections = new Map<number, ResolvedHttpCollection | null>()
   const steps: HttpRunView['steps'] = []
   const visited = new Set<number>()
   const environmentId = storage.environments.getActiveEnvironmentId()
@@ -82,6 +87,9 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
       )
       if (!runtime.success)
         throw new Error('HTTP_RUN_REQUEST_UNAVAILABLE')
+      const collection = resolveHttpCollection(full.folderId)
+      mergeHttpCollectionRuntime(runtime.data, collection?.config?.runtime)
+      collections.set(full.id, structuredClone(collection))
       requests.set(
         full.id,
         structuredClone({
@@ -126,6 +134,7 @@ export function prepareHttpRun(owner: number, folderId: number): HttpRunView {
   run = {
     owner,
     requests,
+    collections,
     environmentId,
     environment,
     vaultPath,
@@ -218,6 +227,7 @@ export async function startHttpRun(
             skipCertificateVerification: options.skipCertificateVerification,
           },
           {
+            collection: active.collections.get(step.requestId),
             environment: active.environment,
             variables,
             signal: active.controller.signal,
@@ -283,6 +293,7 @@ export async function startHttpRun(
     clearInterval(timer)
     for (const key of Object.keys(variables)) delete variables[key]
     active.requests.clear()
+    active.collections.clear()
     active.environment = {
       variables: {},
       maskedVariables: {},

@@ -12,8 +12,11 @@ export function registerHttpScriptHandlers(
     (event, payload: unknown) => {
       if (!isTrustedApiRequest(event, webContents, rendererUrl))
         throw new Error('Unauthorized IPC sender')
-      const { requestId, scripts } = scriptTrustSchema.parse(payload)
-      return scriptsTrusted(requestId, scripts)
+      const parsed = scriptTrustSchema.parse(payload)
+      const subject = 'collectionId' in parsed ? 'collection' : 'request'
+      const id
+        = 'collectionId' in parsed ? parsed.collectionId : parsed.requestId
+      return scriptsTrusted(id, parsed.scripts, subject)
     },
   )
   for (const [channel, allowed] of [
@@ -23,8 +26,11 @@ export function registerHttpScriptHandlers(
     webContents.ipc.handle(channel, (event, payload: unknown) => {
       if (!isTrustedApiRequest(event, webContents, rendererUrl))
         throw new Error('Unauthorized IPC sender')
-      const { requestId, scripts } = scriptTrustSchema.parse(payload)
-      setScriptTrust(requestId, scripts, allowed)
+      const parsed = scriptTrustSchema.parse(payload)
+      const subject = 'collectionId' in parsed ? 'collection' : 'request'
+      const id
+        = 'collectionId' in parsed ? parsed.collectionId : parsed.requestId
+      setScriptTrust(id, parsed.scripts, allowed, subject)
       return allowed
     })
   }

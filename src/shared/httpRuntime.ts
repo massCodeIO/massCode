@@ -230,6 +230,7 @@ export interface HttpRuntimeRead {
 }
 
 export interface HttpRuntimeResult {
+  source?: 'request' | 'collection'
   index: number
   name: string
   ok: boolean

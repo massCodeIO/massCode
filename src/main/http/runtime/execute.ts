@@ -13,10 +13,16 @@ import type {
   HttpQueryEntry,
   HttpResponseBodyKind,
 } from '../../types/http'
+import type { ResolvedHttpCollection } from '../collection'
 import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { Agent, request as undiciRequest } from 'undici'
+import {
+  applyHttpCollection,
+  collectionVariables,
+  mergeHttpCollectionRuntime,
+} from '../../../shared/httpCollection'
 import {
   buildGraphqlBody,
   graphqlResponseState,
@@ -33,6 +39,7 @@ import {
 } from '../../../shared/httpVariables'
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
+import { resolveHttpCollection } from '../collection'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
 import { getEnvironmentSecrets } from '../secrets'
@@ -466,6 +473,7 @@ export function resolveEnvironment(
 }
 
 export interface HttpRunContext {
+  collection?: ResolvedHttpCollection | null
   environment: ResolvedEnvironment
   variables: Record<string, string>
   signal: AbortSignal
@@ -493,11 +501,20 @@ export async function executeHttpRequest(
   if (storage.environments.getActiveEnvironmentId() !== payload.environmentId)
     throw new Error('HTTP_CONTEXT_CHANGED')
   // Execute an isolated draft without persisting it. Older callers may omit it.
-  const runtime = httpRuntimeSchema.parse(
+  const requestRuntime = httpRuntimeSchema.parse(
     payload.runtime === undefined
       ? (saved?.runtime ?? emptyHttpRuntime())
       : payload.runtime,
   )
+  const collection = run
+    ? run.collection
+    : resolveHttpCollection(saved?.folderId)
+  const config = collection?.config
+  const runtime = mergeHttpCollectionRuntime(requestRuntime, config?.runtime)
+  payload = {
+    ...payload,
+    request: applyHttpCollection(payload.request, config),
+  }
   const session = run
     ? {
         generation: -1,
@@ -514,9 +531,18 @@ export async function executeHttpRequest(
     && getVaultPath() === vaultPath
     && storage.environments.getActiveEnvironmentId() === payload.environmentId
   const sessionSecrets = Object.values(session.variables).filter(Boolean)
-  const { maskedVariables, secretValues, variables } = run
+  const environment = run
     ? structuredClone(run.environment)
     : resolveEnvironment(payload.environmentId)
+  const variables = {
+    ...collectionVariables(config),
+    ...environment.variables,
+  }
+  const maskedVariables = {
+    ...collectionVariables(config),
+    ...environment.maskedVariables,
+  }
+  const secretValues = environment.secretValues
   const commitValues = (values: Map<string, string | null>) => {
     if (!run) {
       commitHttpSession(session.generation, values)
@@ -536,7 +562,46 @@ export async function executeHttpRequest(
   )
   secretValues.push(...sessionSecrets)
   let interpolated = interpolateRequest(payload.request, variables)
-  const scripted = hasHttpScripts(runtime.scripts)
+  const subjects = [
+    {
+      source: 'collection' as const,
+      id: collection?.id ?? null,
+      scripts: config?.runtime.scripts,
+    },
+    {
+      source: 'request' as const,
+      id: payload.requestId,
+      scripts: requestRuntime.scripts,
+    },
+  ]
+  const scripted = subjects.some(subject => hasHttpScripts(subject.scripts))
+  const allTrusted = () =>
+    subjects.every(
+      subject =>
+        !hasHttpScripts(subject.scripts)
+        || scriptsTrusted(subject.id, subject.scripts, subject.source),
+    )
+  const labelResults = (results: {
+    assertions: import('../../../shared/httpRuntime').HttpRuntimeResult[]
+    extractions: import('../../../shared/httpRuntime').HttpRuntimeResult[]
+  }) => {
+    if (!config)
+      return results
+    const requestNames = new Set(
+      requestRuntime.extractions.map(rule => rule.name),
+    )
+    const collectionExtractions = config.runtime.extractions.filter(
+      rule => !requestNames.has(rule.name),
+    ).length
+    results.assertions.forEach((result, index) => {
+      result.source
+        = index < config.runtime.assertions.length ? 'collection' : 'request'
+    })
+    results.extractions.forEach((result, index) => {
+      result.source = index < collectionExtractions ? 'collection' : 'request'
+    })
+    return results
+  }
   const scriptResults: HttpScriptResult[] = []
   const pendingValues = new Map<string, string | null>()
   const scriptRequest = {
@@ -597,13 +662,19 @@ export async function executeHttpRequest(
   }, 100)
   const phase = async (
     name: 'preRequest' | 'postResponse',
+    subject: (typeof subjects)[number],
     response: unknown = null,
   ) => {
-    const code = runtime.scripts?.[name]
+    const code = subject.scripts?.[name]
     if (!code?.trim())
       return true
-    if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
-      scriptResults.push({ phase: name, tests: [], error: 'untrusted' })
+    if (!allTrusted()) {
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: 'untrusted',
+      })
       return false
     }
     const execution = await executeScript(
@@ -612,18 +683,28 @@ export async function executeHttpRequest(
       controller.signal,
     )
     if (execution.error) {
-      scriptResults.push({ phase: name, tests: [], error: execution.error })
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: execution.error,
+      })
       return false
     }
     if (applyValues(execution.output.variables)) {
-      scriptResults.push({ phase: name, tests: [], error: 'limit' })
+      scriptResults.push({
+        source: subject.source,
+        phase: name,
+        tests: [],
+        error: 'limit',
+      })
       return false
     }
     const tests = execution.output.tests.map(test => ({
       ...test,
       name: maskSecretValues(test.name, secretValues),
     }))
-    scriptResults.push({ phase: name, tests })
+    scriptResults.push({ source: subject.source, phase: name, tests })
     return tests.every(test => test.ok)
   }
   const startedAt = Date.now()
@@ -631,8 +712,13 @@ export async function executeHttpRequest(
 
   try {
     if (scripted) {
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      if (!allTrusted()) {
         scriptResults.push({
+          source: subjects.find(
+            subject =>
+              hasHttpScripts(subject.scripts)
+              && !scriptsTrusted(subject.id, subject.scripts, subject.source),
+          )?.source,
           phase: runtime.scripts?.preRequest.trim()
             ? 'preRequest'
             : 'postResponse',
@@ -641,9 +727,13 @@ export async function executeHttpRequest(
         })
         throw new Error('HTTP_SCRIPT_FAILED')
       }
-      if (!(await phase('preRequest')))
+      if (
+        !(await phase('preRequest', subjects[0]))
+        || !(await phase('preRequest', subjects[1]))
+      ) {
         throw new Error('HTTP_SCRIPT_FAILED')
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      }
+      if (!allTrusted()) {
         scriptResults.push({
           phase: 'preRequest',
           tests: [],
@@ -735,21 +825,32 @@ export async function executeHttpRequest(
       result,
       new Map([...Object.entries(session.variables), ...pendingValues]),
     )
-    result.runtimeResults = evaluated.results
+    result.runtimeResults = labelResults(evaluated.results)
     if (evaluated.limit) {
       result.scriptResults = scripted ? scriptResults : undefined
       result.sessionNames = session.names
     }
     else if (scripted) {
       applyValues(Object.fromEntries(evaluated.values))
-      const completed = await phase('postResponse', {
+      const scriptResponse = {
         status: result.status,
         headers: result.headers,
         body: result.body,
         bodyKind: result.bodyKind,
         truncated: result.truncated,
         durationMs: result.durationMs,
-      })
+      }
+      const requestCompleted = await phase(
+        'postResponse',
+        subjects[1],
+        scriptResponse,
+      )
+      const collectionCompleted = await phase(
+        'postResponse',
+        subjects[0],
+        scriptResponse,
+      )
+      const completed = requestCompleted && collectionCompleted
       result.scriptResults = scriptResults
       if (!current()) {
         return {
@@ -760,7 +861,7 @@ export async function executeHttpRequest(
           discarded: true,
         }
       }
-      if (!scriptsTrusted(payload.requestId, runtime.scripts)) {
+      if (!allTrusted()) {
         scriptResults.push({
           phase: 'postResponse',
           tests: [],
@@ -862,7 +963,7 @@ export async function executeHttpRequest(
     }
     else {
       const evaluated = evaluateHttpRuntime(runtime, result)
-      result.runtimeResults = evaluated.results
+      result.runtimeResults = labelResults(evaluated.results)
       result.sessionNames = commitValues(evaluated.values)
     }
     return result

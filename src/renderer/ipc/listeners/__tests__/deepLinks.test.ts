@@ -464,6 +464,22 @@ describe('deepLinks', () => {
     expect(context.isNavigatingHistory.value).toBe(false)
   })
 
+  it('restores an HTTP collection or folder on back navigation', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    context.goBack.mockReturnValue({
+      id: 4,
+      name: 'Catalog',
+      type: 'http-folder',
+    })
+    await context.module.navigateBack()
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
+    expect(context.getHttpFolders).toHaveBeenCalledOnce()
+    expect(context.selectHttpFolder).toHaveBeenCalledWith(4)
+    expect(context.selectHttpRequest).not.toHaveBeenCalled()
+    expect(context.selectNote).not.toHaveBeenCalled()
+    expect(context.isNavigatingHistory.value).toBe(false)
+  })
+
   it('restores graph route from history on back navigation', async () => {
     const context = await setup({
       snippetRouteName: 'notes-space',

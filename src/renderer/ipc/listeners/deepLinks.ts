@@ -315,6 +315,14 @@ async function restoreNavigationTarget(
       return
     }
 
+    if (target.type === 'http-folder') {
+      await ensureHttpRoute()
+      await getHttpFolders()
+      await selectHttpFolder(target.id)
+      httpState.activePanel = 'folder'
+      return
+    }
+
     if (target.type === 'snippet') {
       await openSnippetDeepLink(target.id)
       return

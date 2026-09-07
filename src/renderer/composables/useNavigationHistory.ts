@@ -1,5 +1,7 @@
 import { router, RouterName } from '@/router'
 import { useDrawings } from './spaces/drawings/useDrawings'
+import { useHttpApp } from './spaces/http/useHttpApp'
+import { useHttpFolders } from './spaces/http/useHttpFolders'
 import { useHttpRequests } from './spaces/http/useHttpRequests'
 import { useNotes } from './spaces/notes/useNotes'
 import {
@@ -17,7 +19,7 @@ export interface NavigationHistoryRouteEntry {
 export interface NavigationHistoryEntityEntry {
   id: number
   name: string
-  type: 'note' | 'snippet' | 'http-request'
+  type: 'note' | 'snippet' | 'http-request' | 'http-folder'
   uiState?: NavigationHistoryUIState
 }
 
@@ -42,6 +44,8 @@ const isNavigatingHistory = ref(false)
 const { selectedNote } = useNotes()
 const { selectedSnippet } = useSnippets()
 const { currentRequest } = useHttpRequests()
+const { httpState } = useHttpApp()
+const { folders, getFolderByIdFromTree } = useHttpFolders()
 const { activeDrawing } = useDrawings()
 
 const canGoBack = computed(() => cursor.value > 0)
@@ -101,6 +105,17 @@ function captureCurrentLocation(): NavigationHistoryEntry | undefined {
       name: selectedSnippet.value.name,
       type: 'snippet',
     }
+  }
+  else if (
+    routeName === RouterName.httpSpace
+    && httpState.activePanel === 'folder'
+  ) {
+    const folder = getFolderByIdFromTree(
+      folders.value,
+      httpState.folderId ?? null,
+    )
+    if (folder)
+      entry = { id: folder.id, name: folder.name, type: 'http-folder' }
   }
   else if (routeName === RouterName.httpSpace && currentRequest.value) {
     entry = {

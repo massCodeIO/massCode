@@ -215,9 +215,12 @@ export async function openHttpRequestDeepLink(
   if (!(await httpRuntimeNavigation.confirmLeave()))
     return
   clearHttpNavigationState()
-  await ensureHttpRoute()
 
   try {
+    // Finish restoring the previous selection before mounting the HTTP space:
+    // its initialization must not race with the explicit link target.
+    await initHttpSpace()
+    await ensureHttpRoute()
     const { data: request } = await api.httpRequests.getHttpRequestsById(
       String(requestId),
     )

@@ -365,6 +365,29 @@ describe('deepLinks', () => {
     expect(context.isHttpSpaceInitialized.value).toBe(true)
   })
 
+  it('finishes HTTP initialization before opening the route and selecting a link target', async () => {
+    const context = await setup({ snippetRouteName: 'notes-space' })
+    let finishInit!: () => void
+    context.initHttpSpace.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishInit = resolve
+        }),
+    )
+
+    const navigation = context.module.openHttpRequestDeepLink(8)
+    await vi.waitFor(() =>
+      expect(context.initHttpSpace).toHaveBeenCalledTimes(1),
+    )
+    expect(context.router.push).not.toHaveBeenCalled()
+    expect(context.selectHttpRequest).not.toHaveBeenCalled()
+
+    finishInit()
+    await navigation
+    expect(context.router.push).toHaveBeenCalledWith({ name: 'http-space' })
+    expect(context.selectHttpRequest).toHaveBeenLastCalledWith(8)
+  })
+
   it('opens root HTTP request links without a folder selection', async () => {
     const context = await setup({
       httpRequestResponse: {

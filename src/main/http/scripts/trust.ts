@@ -30,7 +30,7 @@ function identity(
       .folders
       .getFolders()
       .find(folder => folder.id === requestId)
-    if (!folder || folder.parentId !== null)
+    if (!folder)
       throw new Error('HTTP_COLLECTION_INVALID')
     const config = readHttpCollection(folder)
     return {

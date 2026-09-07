@@ -211,6 +211,43 @@ describe('script workflow and local trust', () => {
     expect(session().value).toBe('Cpre-Rpre-Rpost-Cpost')
   })
 
+  it('runs nested folder scripts in ancestry order and requires each scope to be trusted', async () => {
+    const root = emptyHttpCollection()
+    root.runtime.version = 2
+    root.runtime.scripts = {
+      preRequest:
+        'mc.variables.set("path", "demo"); mc.variables.set("value", "C")',
+      postResponse:
+        'mc.variables.set("value", mc.variables.get("value") + "-C")',
+    }
+    const folder = emptyHttpCollection()
+    folder.auth = { type: 'inherit' }
+    folder.runtime.version = 2
+    folder.runtime.scripts = {
+      preRequest: 'mc.variables.set("value", mc.variables.get("value") + "-F")',
+      postResponse:
+        'mc.variables.set("value", mc.variables.get("value") + "-F")',
+    }
+    mocks.folders = [
+      { id: 10, parentId: null, createdAt: 100, collectionConfig: root },
+      { id: 11, parentId: 10, createdAt: 101, collectionConfig: folder },
+    ]
+    mocks.saved.folderId = 11
+    const p = payload(
+      'mc.variables.set("value", mc.variables.get("value") + "-R")',
+      'mc.variables.set("value", mc.variables.get("value") + "-R")',
+    )
+    allow(p)
+    setScriptTrust(10, root.runtime.scripts, true, 'collection')
+    expect((await executeHttpRequest(p)).error).toBe('HTTP_SCRIPT_FAILED')
+    expect(mocks.request).not.toHaveBeenCalled()
+    setScriptTrust(11, folder.runtime.scripts, true, 'collection')
+    const result = await executeHttpRequest(p)
+    expect(result.status).toBe(200)
+    expect(mocks.request.mock.calls[0][1].body).toBe('C-F-R')
+    expect(session().value).toBe('C-F-R-R-F-C')
+  })
+
   it('invalidates collection trust when synced code or collection identity changes', () => {
     const config = emptyHttpCollection()
     config.runtime = {

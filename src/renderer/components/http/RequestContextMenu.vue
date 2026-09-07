@@ -15,10 +15,7 @@ import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
 import { api } from '~/renderer/services/api'
-import {
-  findHttpCollection,
-  readHttpCollection,
-} from '~/shared/httpCollection'
+import { resolveHttpFolderConfig } from '~/shared/httpCollection'
 import { buildHttpPreview } from './requestPreview'
 
 interface Props {
@@ -167,8 +164,9 @@ async function onCopyRequest() {
     copy(
       buildHttpPreview(data, {
         variables: previewVariables.value,
-        collection: readHttpCollection(
-          findHttpCollection(flattenFolderTree(folders.value), data.folderId),
+        collection: resolveHttpFolderConfig(
+          flattenFolderTree(folders.value),
+          data.folderId,
         ),
       }),
     )

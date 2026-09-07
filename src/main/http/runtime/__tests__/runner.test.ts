@@ -171,6 +171,26 @@ describe('folder runner', () => {
     )
   })
 
+  it('freezes nested folder overrides separately for requests in each folder', async () => {
+    const config = emptyHttpCollection()
+    config.headers = [{ key: 'X-Scope', value: 'root' }]
+    mocks.folders[0].collectionConfig = config
+    const child = emptyHttpCollection()
+    child.auth = { type: 'inherit' }
+    child.headers = [{ key: 'X-Scope', value: 'child' }]
+    mocks.folders[1].collectionConfig = child
+    const view = prepareHttpRun(7, 1)
+    child.headers[0].value = 'changed'
+    const result = await start(view)
+    expect(result.state).toBe('passed')
+    const scopes = mocks.request.mock.calls.map(
+      call => call[1].headers['X-Scope'],
+    )
+    expect(scopes).toContain('root')
+    expect(scopes).toContain('child')
+    expect(scopes).not.toContain('changed')
+  })
+
   it('rejects combined collection rule overflow before any network request', () => {
     const config = emptyHttpCollection()
     config.runtime.assertions = Array.from({ length: 100 }, () => ({

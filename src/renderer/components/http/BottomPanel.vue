@@ -17,10 +17,7 @@ import {
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
-import {
-  findHttpCollection,
-  readHttpCollection,
-} from '~/shared/httpCollection'
+import { resolveHttpFolderConfig } from '~/shared/httpCollection'
 import {
   buildHarRequest,
   buildRequestPreview,
@@ -76,11 +73,9 @@ watch(
     try {
       const options = {
         name: currentRequest.value?.name,
-        collection: readHttpCollection(
-          findHttpCollection(
-            flattenFolderTree(folders.value),
-            currentRequest.value?.folderId,
-          ),
+        collection: resolveHttpFolderConfig(
+          flattenFolderTree(folders.value),
+          currentRequest.value?.folderId,
         ),
         variables: interpolateVariables.value
           ? activeEnvironmentVariables.value

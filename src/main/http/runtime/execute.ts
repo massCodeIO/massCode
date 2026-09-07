@@ -563,11 +563,13 @@ export async function executeHttpRequest(
   secretValues.push(...sessionSecrets)
   let interpolated = interpolateRequest(payload.request, variables)
   const subjects = [
-    {
-      source: 'collection' as const,
-      id: collection?.id ?? null,
-      scripts: config?.runtime.scripts,
-    },
+    ...(collection?.scopes ?? [{ id: collection?.id ?? null, config }]).map(
+      scope => ({
+        source: 'collection' as const,
+        id: scope.id,
+        scripts: scope.config?.runtime.scripts,
+      }),
+    ),
     {
       source: 'request' as const,
       id: payload.requestId,
@@ -727,11 +729,9 @@ export async function executeHttpRequest(
         })
         throw new Error('HTTP_SCRIPT_FAILED')
       }
-      if (
-        !(await phase('preRequest', subjects[0]))
-        || !(await phase('preRequest', subjects[1]))
-      ) {
-        throw new Error('HTTP_SCRIPT_FAILED')
+      for (const subject of subjects) {
+        if (!(await phase('preRequest', subject)))
+          throw new Error('HTTP_SCRIPT_FAILED')
       }
       if (!allTrusted()) {
         scriptResults.push({
@@ -840,17 +840,11 @@ export async function executeHttpRequest(
         truncated: result.truncated,
         durationMs: result.durationMs,
       }
-      const requestCompleted = await phase(
-        'postResponse',
-        subjects[1],
-        scriptResponse,
-      )
-      const collectionCompleted = await phase(
-        'postResponse',
-        subjects[0],
-        scriptResponse,
-      )
-      const completed = requestCompleted && collectionCompleted
+      let completed = true
+      for (const subject of [...subjects].reverse()) {
+        const success = await phase('postResponse', subject, scriptResponse)
+        completed = success && completed
+      }
       result.scriptResults = scriptResults
       if (!current()) {
         return {

@@ -686,7 +686,9 @@
         },
         "noNamedOperations": "No named operations"
       },
-      "sidebar": { "unfiled": "Unfiled" },
+      "sidebar": {
+        "unfiled": "Unfiled"
+      },
       "folderPanel": {
         "runCollection": "Run collection",
         "name": "Name",
@@ -773,6 +775,27 @@
           "duration": "{{value}} ms",
           "passed": "{{count}} of {{total}} requests passed"
         }
+      },
+      "inspector": {
+        "sidebar": "Sidebar",
+        "bottom": "Preview, response and history",
+        "close": "Close inspector",
+        "search": "Search variables",
+        "showUsed": "Show used variables",
+        "showAll": "Show all available variables",
+        "hint": "Current values before scripts run. Scripts may change them before sending.",
+        "empty": "Empty value",
+        "missing": "Not defined",
+        "collection": "Collection",
+        "folder": "Folder",
+        "environment": "Environment",
+        "session": "Temporary",
+        "overrides": "Overrides: {{count}}",
+        "sessionHint": "Session values are temporary and masked. Cleared when switching environment or restarting the app.",
+        "openSource": "Open source",
+        "inRequest": "Variables in request",
+        "allVariables": "All variables",
+        "noUsed": "No variables used in this request."
       }
     },
     "tools": {

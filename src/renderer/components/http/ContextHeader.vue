@@ -87,5 +87,6 @@ async function showRunner() {
     >
       <Play class="size-4" />
     </UiActionButton>
+    <HttpPanelActions />
   </div>
 </template>

@@ -83,9 +83,16 @@ async function onSend() {
 <template>
   <div
     v-if="!currentRequest"
-    class="text-muted-foreground flex h-full items-center justify-center"
+    class="flex h-full flex-col"
   >
-    {{ i18n.t("spaces.http.editor.noSelected") }}
+    <div
+      class="flex h-[calc(40px-var(--content-top-offset))] shrink-0 items-center justify-end border-b px-2 pb-1"
+    >
+      <HttpPanelActions />
+    </div>
+    <div class="text-muted-foreground flex flex-1 items-center justify-center">
+      {{ i18n.t("spaces.http.editor.noSelected") }}
+    </div>
   </div>
   <div
     v-else-if="currentDraft"
@@ -118,6 +125,7 @@ async function onSend() {
         <div class="min-w-0 flex-1">
           <HttpRequestName />
         </div>
+        <HttpPanelActions />
       </div>
     </div>
     <div class="border-border flex items-center gap-1 border-b px-2 py-1">

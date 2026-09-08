@@ -38,7 +38,6 @@ function openManager() {
     >
       <template #action>
         <div class="flex items-center">
-          <HttpVariablesInspector />
           <UiActionButton
             :tooltip="i18n.t('spaces.http.environments.manage')"
             @click="openManager"

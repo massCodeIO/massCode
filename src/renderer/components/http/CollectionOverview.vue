@@ -91,17 +91,20 @@ function date(value: number) {
         class="scrollbar min-h-0 min-w-0 space-y-3 @min-[640px]:overflow-auto"
       >
         <div class="grid grid-cols-2 gap-3">
-          <Card.Card>
-            <Card.CardContent class="space-y-3 p-3">
+          <Card.Card class="min-w-0 overflow-hidden">
+            <Card.CardHeader class="border-b px-3 py-2">
               <div class="flex items-center justify-between gap-2">
                 <UiText
+                  as="h3"
                   variant="sm"
-                  muted
+                  weight="medium"
                 >
                   {{ i18n.t("spaces.http.collection.dashboard.requests") }}
                 </UiText>
-                <Send class="text-muted-foreground size-4" />
+                <Send class="text-muted-foreground size-4 shrink-0" />
               </div>
+            </Card.CardHeader>
+            <Card.CardContent class="space-y-3 px-3 py-5">
               <UiText
                 as="div"
                 variant="xl"
@@ -128,17 +131,20 @@ function date(value: number) {
               </div>
             </Card.CardContent>
           </Card.Card>
-          <Card.Card>
-            <Card.CardContent class="space-y-3 p-3">
+          <Card.Card class="min-w-0 overflow-hidden">
+            <Card.CardHeader class="border-b px-3 py-2">
               <div class="flex items-center justify-between gap-2">
                 <UiText
+                  as="h3"
                   variant="sm"
-                  muted
+                  weight="medium"
                 >
                   {{ i18n.t("spaces.http.collection.dashboard.folders") }}
                 </UiText>
-                <Folder class="text-muted-foreground size-4" />
+                <Folder class="text-muted-foreground size-4 shrink-0" />
               </div>
+            </Card.CardHeader>
+            <Card.CardContent class="space-y-3 px-3 py-5">
               <UiText
                 as="div"
                 variant="xl"
@@ -149,17 +155,20 @@ function date(value: number) {
               </UiText>
             </Card.CardContent>
           </Card.Card>
-          <Card.Card class="col-span-2">
-            <Card.CardContent class="space-y-3 p-3">
+          <Card.Card class="col-span-2 min-w-0 overflow-hidden">
+            <Card.CardHeader class="border-b px-3 py-2">
               <div class="flex items-center justify-between gap-2">
                 <UiText
+                  as="h3"
                   variant="sm"
-                  muted
+                  weight="medium"
                 >
                   {{ i18n.t("spaces.http.collection.dashboard.lastRun") }}
                 </UiText>
                 <Clock3 class="text-muted-foreground size-4 shrink-0" />
               </div>
+            </Card.CardHeader>
+            <Card.CardContent class="space-y-3 px-3 py-5">
               <div
                 v-if="lastRun"
                 class="space-y-2"

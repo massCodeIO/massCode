@@ -56,7 +56,6 @@ const root = ref<HTMLElement>()
 const editableId = ref<string | number | null>(null)
 const anchor = ref<string>()
 const contextNode = ref<HttpTreeNode>()
-const moveDialog = useTemplateRef('moveDialog')
 const source = computed(() =>
   sidebarNodes(nodes.value, {
     trash: props.trash,
@@ -497,20 +496,7 @@ watch(
         :context-node="contextFolder"
         :editable-id="editableId"
         @update:editable-id="editableId = folderKey(Number($event))"
-      >
-        <ContextMenu.ContextMenuItem
-          v-if="contextNode?.kind === 'folder'"
-          @click="
-            moveDialog?.show(
-              selectedIds.includes(contextNode.id)
-                ? selectedIds.map(String)
-                : [contextNode.id],
-            )
-          "
-        >
-          {{ i18n.t("spaces.http.tree.move") }}
-        </ContextMenu.ContextMenuItem>
-      </HttpSidebarFolderContextMenu>
+      />
       <HttpRequestContextMenu
         v-else-if="contextRequest"
         :request="contextRequest"
@@ -520,21 +506,6 @@ watch(
           @click="editableId = requestKey(contextRequest.id)"
         >
           {{ i18n.t("action.rename") }}
-        </ContextMenu.ContextMenuItem>
-        <ContextMenu.ContextMenuItem
-          :disabled="
-            contextRequest.pendingCloudDownload
-              || Boolean(contextRequest.isDeleted)
-          "
-          @click="
-            moveDialog?.show(
-              selectedIds.includes(requestKey(contextRequest.id))
-                ? selectedIds.map(String)
-                : [requestKey(contextRequest.id)],
-            )
-          "
-        >
-          {{ i18n.t("spaces.http.tree.move") }}
         </ContextMenu.ContextMenuItem>
       </HttpRequestContextMenu>
     </ContextMenu.ContextMenu>
@@ -551,11 +522,5 @@ watch(
     >
       {{ i18n.t("spaces.http.tree.loadFailed") }}
     </UiText>
-    <HttpTreeMoveDialog
-      ref="moveDialog"
-      :nodes="nodes"
-      :validate="validateMove"
-      @move="move"
-    />
   </div>
 </template>

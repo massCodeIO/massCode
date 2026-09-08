@@ -16,6 +16,7 @@ interface EnvFixture {
 }
 
 interface SetupOptions {
+  environmentId?: number
   envs?: EnvFixture[]
   isConfirmed?: boolean
   revealValue?: string | null
@@ -116,9 +117,10 @@ async function setup(options: SetupOptions = {}) {
   )
 
   const open = ref(false)
-  const editor = useHttpEnvironmentEditor(open)
+  const editor = useHttpEnvironmentEditor(open, options.environmentId)
 
-  editor.selectedEnvId.value = environments.value[0]?.id ?? null
+  editor.selectedEnvId.value
+    = options.environmentId ?? environments.value[0]?.id ?? null
   await flush()
 
   return {
@@ -141,6 +143,39 @@ beforeEach(() => {
 })
 
 describe('useHttpEnvironmentEditor', () => {
+  it('saves an inspector draft to its environment after the active selection changes', async () => {
+    const { editor, open, activeEnvironmentId, updateHttpEnvironment }
+      = await setup({
+        environmentId: 2,
+        envs: [createEnv(), createEnv({ id: 2, variables: { A: 'original' } })],
+      })
+    await openDialog(open)
+    expect(editor.selectedEnvId.value).toBe(2)
+    editor.localVariables.value[0]!.value = 'changed'
+    activeEnvironmentId.value = 1
+    await editor.flushPendingUpdate()
+    expect(updateHttpEnvironment).toHaveBeenCalledWith(2, {
+      variables: { A: 'changed' },
+    })
+  })
+
+  it('does not save an uninitialized inspector draft', async () => {
+    const { editor, updateHttpEnvironment } = await setup({ environmentId: 1 })
+    await editor.flushPendingUpdate()
+    expect(updateHttpEnvironment).not.toHaveBeenCalled()
+  })
+
+  it('does not fall back to another environment when the inspector target is missing', async () => {
+    const { editor, open, updateHttpEnvironment } = await setup({
+      environmentId: 99,
+    })
+    await openDialog(open)
+    expect(editor.selectedEnvId.value).toBe(99)
+    expect(editor.localVariables.value).toEqual([])
+    await editor.flushPendingUpdate()
+    expect(updateHttpEnvironment).not.toHaveBeenCalled()
+  })
+
   it('keeps secret values out of the plain variables payload', async () => {
     const { editor, setSecret, updateHttpEnvironment } = await setup({
       envs: [

@@ -28,6 +28,14 @@ const tabs = [
   'script',
   'tests',
 ] as const
+const counts = computed(() => ({
+  overview: 0,
+  headers: draft.value.headers.length,
+  auth: 0,
+  vars: draft.value.variables.length + draft.value.runtime.extractions.length,
+  script: 0,
+  tests: draft.value.runtime.assertions.length,
+}))
 const trustContext = useHttpScriptTrust(
   computed(() => ({
     collectionId: collection.value?.id,
@@ -72,6 +80,7 @@ watch(
             :value="tab"
           >
             {{ i18n.t(`spaces.http.collection.tabs.${tab}`) }}
+            <HttpTabCount :count="counts[tab]" />
           </Tabs.TabsTrigger>
         </Tabs.TabsList>
       </div>

@@ -15,6 +15,7 @@ import {
   useHttpSettings,
 } from '@/composables'
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
+import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
 import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
 import { resolveHttpFolderConfig } from '~/shared/httpCollection'
@@ -27,6 +28,14 @@ import {
 type BottomPanelTab = 'preview' | 'response' | 'history'
 
 const { currentDraft, currentRequest } = useHttpRequests()
+const { history, getHttpHistory } = useHttpHistory()
+const historyCount = computed(
+  () =>
+    history.value.filter(
+      entry => entry.requestId === currentRequest.value?.id,
+    ).length,
+)
+onMounted(getHttpHistory)
 const { folders } = useHttpFolders()
 const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
@@ -201,6 +210,7 @@ function copyPreview() {
         </Tabs.TabsTrigger>
         <Tabs.TabsTrigger value="history">
           {{ i18n.t("spaces.http.history.title") }}
+          <HttpTabCount :count="historyCount" />
         </Tabs.TabsTrigger>
       </Tabs.TabsList>
 

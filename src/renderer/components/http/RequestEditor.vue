@@ -20,6 +20,7 @@ import {
 const { currentDraft, currentRequest } = useHttpRequests()
 const { executeCurrentRequest, isExecuting, cancelRequest } = useHttpExecute()
 const {
+  draft: runtimeDraft,
   saving: runtimeSaving,
   groupDirty,
   groupInvalid,
@@ -199,6 +200,13 @@ async function onSend() {
             value="body"
           >
             {{ i18n.t("spaces.http.editor.tabs.body") }}
+            <HttpTabCount
+              :count="
+                currentDraft.bodyType === 'multipart'
+                  ? (currentDraft.formData?.length ?? 0)
+                  : 0
+              "
+            />
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="auth">
             {{ i18n.t("spaces.http.editor.tabs.auth") }}
@@ -220,6 +228,7 @@ async function onSend() {
           >
             {{ i18n.t("spaces.http.runtime.variables")
             }}{{ groupDirty.extractions ? " *" : "" }}
+            <HttpTabCount :count="runtimeDraft.extractions.length" />
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger
             v-if="!isWebSocket"
@@ -238,6 +247,7 @@ async function onSend() {
           >
             {{ i18n.t("spaces.http.runtime.assertions")
             }}{{ groupDirty.assertions ? " *" : "" }}
+            <HttpTabCount :count="runtimeDraft.assertions.length" />
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger value="description">
             {{ i18n.t("spaces.http.editor.tabs.description") }}

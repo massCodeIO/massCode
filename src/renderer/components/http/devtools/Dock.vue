@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
+import * as Tabs from '@/components/ui/shadcn/tabs'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
@@ -54,24 +55,24 @@ function toggle(tab: 'console' | 'terminal') {
       ref="handle"
       class="bg-border hover:bg-primary relative z-20 h-px shrink-0 cursor-row-resize after:absolute after:inset-x-0 after:-top-1 after:h-2"
     />
-    <section
+    <Tabs.Tabs
       v-show="open"
+      v-model="active"
+      as="section"
       :style="maximized ? undefined : { height: `${panelHeight}px` }"
-      class="flex min-h-0 shrink-0 flex-col"
+      class="flex min-h-0 shrink-0 flex-col gap-0"
       :class="{ 'flex-1 pt-[var(--content-top-offset)]': maximized }"
     >
       <div class="flex h-9 shrink-0 items-center gap-1 border-b px-2">
-        <Button
-          v-for="tab in ['console', 'terminal'] as const"
-          :key="tab"
-          variant="ghost"
-          size="sm"
-          :class="{ 'bg-accent': active === tab }"
-          :aria-pressed="active === tab"
-          @click="active = tab"
-        >
-          {{ i18n.t(`spaces.http.devtools.${tab}`) }}
-        </Button>
+        <Tabs.TabsList>
+          <Tabs.TabsTrigger
+            v-for="tab in ['console', 'terminal'] as const"
+            :key="tab"
+            :value="tab"
+          >
+            {{ i18n.t(`spaces.http.devtools.${tab}`) }}
+          </Tabs.TabsTrigger>
+        </Tabs.TabsList>
         <div class="flex-1" />
         <UiActionButton
           :tooltip="
@@ -95,12 +96,23 @@ function toggle(tab: 'console' | 'terminal') {
           <X />
         </UiActionButton>
       </div>
-      <HttpDevtoolsConsole v-show="active === 'console'" />
-      <HttpDevtoolsTerminal
+      <Tabs.TabsContent
+        v-show="active === 'console'"
+        value="console"
+        force-mount
+        class="flex min-h-0 flex-col"
+      >
+        <HttpDevtoolsConsole />
+      </Tabs.TabsContent>
+      <Tabs.TabsContent
         v-show="active === 'terminal'"
-        :visible="open && active === 'terminal'"
-      />
-    </section>
+        value="terminal"
+        force-mount
+        class="flex min-h-0 flex-col"
+      >
+        <HttpDevtoolsTerminal :visible="open && active === 'terminal'" />
+      </Tabs.TabsContent>
+    </Tabs.Tabs>
     <footer class="flex h-7 shrink-0 items-center gap-1 border-t px-2">
       <Button
         variant="ghost"

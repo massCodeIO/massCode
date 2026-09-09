@@ -13,6 +13,7 @@ async function setup() {
     requestId: 42,
   }
   const requests = ref([{ id: 42 }])
+  const allRequests = ref([{ id: 42 }])
 
   const selectHttpRequest = vi.fn()
   const resetHttpFoldersState = vi.fn()
@@ -45,6 +46,7 @@ async function setup() {
       getHttpRequests: vi.fn(async () => undefined),
       getAllHttpRequests: vi.fn(async () => undefined),
       requests,
+      allRequests,
       resetHttpRequestsState,
       selectHttpRequest,
     }),
@@ -78,6 +80,7 @@ async function setup() {
 
   return {
     httpState,
+    allRequests,
     requests,
     selectHttpRequest,
     refresh: useHttpSpaceInit().refreshHttpSpaceFromDisk,
@@ -97,6 +100,27 @@ beforeEach(() => {
 })
 
 describe('resetHttpSpaceState', () => {
+  it.each([10, 20])(
+    'keeps a request outside the filtered list in folder %s',
+    async (folderId) => {
+      const ctx = await setup()
+      ctx.httpState.folderId = folderId
+      ctx.requests.value = [{ id: 99 }]
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+        preservePanel: true,
+      })
+    },
+  )
+
+  it('does not restore a stale selection after navigation during refresh', async () => {
+    const ctx = await setup()
+    const pending = ctx.refresh()
+    ctx.httpState.requestId = 99
+    await pending
+    expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+  })
+
   it('preserves folder settings during sync even when the hidden request is outside the folder', async () => {
     const ctx = await setup()
     ctx.httpState.activePanel = 'folder'

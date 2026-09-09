@@ -16,7 +16,7 @@ const {
 const {
   getHttpRequests,
   getAllHttpRequests,
-  requests,
+  allRequests,
   resetHttpRequestsState,
   selectHttpRequest,
 } = useHttpRequests()
@@ -48,7 +48,11 @@ async function initHttpSpace() {
 }
 
 async function refreshHttpSpaceFromDisk() {
-  const selectedRequestId = httpState.requestId
+  const selection = {
+    requestId: httpState.requestId,
+    folderId: httpState.folderId,
+    activePanel: httpState.activePanel,
+  }
   const results = await Promise.allSettled([
     getHttpFolders(),
     getHttpRequests(),
@@ -68,6 +72,14 @@ async function refreshHttpSpaceFromDisk() {
   )
 
   if (
+    selection.requestId !== httpState.requestId
+    || selection.folderId !== httpState.folderId
+    || selection.activePanel !== httpState.activePanel
+  ) {
+    return
+  }
+
+  if (
     httpState.activePanel === 'environments'
     || httpState.activePanel === 'runner'
   ) {
@@ -82,10 +94,10 @@ async function refreshHttpSpaceFromDisk() {
     httpState.activePanel = 'request'
   }
 
-  const persistedRequestId = selectedRequestId ?? httpState.requestId
+  const persistedRequestId = httpState.requestId
   if (
     persistedRequestId !== undefined
-    && requests.value.some(r => r.id === persistedRequestId)
+    && allRequests.value.some(r => r.id === persistedRequestId)
   ) {
     await selectHttpRequest(persistedRequestId, false, { preservePanel: true })
     return
@@ -94,7 +106,7 @@ async function refreshHttpSpaceFromDisk() {
   // Пустой список — это либо реально пустой vault, либо provisional-кэш
   // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
   // затёрся бы в store.app и после reconcile не восстановился).
-  if (persistedRequestId !== undefined && requests.value.length) {
+  if (persistedRequestId !== undefined && allRequests.value.length) {
     await selectHttpRequest(undefined)
   }
 }

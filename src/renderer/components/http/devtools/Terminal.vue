@@ -34,7 +34,11 @@ watch(
     if (!visible)
       return
     await init()
-    if (host.value)
+    if (!props.visible)
+      return
+    if (!sessions.value.length && !loading.value)
+      await create()
+    if (props.visible && host.value)
       mount(host.value)
   },
   { immediate: true },

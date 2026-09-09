@@ -163,7 +163,7 @@ async function init() {
 }
 async function create() {
   await init()
-  if (!initialized)
+  if (!initialized || loading.value)
     return
   error.value = ''
   loading.value = true

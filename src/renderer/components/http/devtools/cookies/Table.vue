@@ -170,8 +170,8 @@ function commit(
         </div>
       </form>
     </template>
-    <template #footer>
-      <slot name="footer" />
+    <template #footer-actions>
+      <slot name="footer-actions" />
     </template>
   </UiEditableTable>
 </template>

@@ -252,11 +252,16 @@ function duplicateRow(index: number) {
       </slot>
     </template>
 
-    <template #footer>
-      <HttpAddRowButton
-        :label="addLabel"
-        @click="addRow"
-      />
+    <template #footer-actions>
+      <slot
+        name="footer-actions"
+        :add-row="addRow"
+      >
+        <HttpAddRowButton
+          :label="addLabel"
+          @click="addRow"
+        />
+      </slot>
     </template>
   </UiEditableTable>
 </template>

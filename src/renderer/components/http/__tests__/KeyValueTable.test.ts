@@ -1,11 +1,12 @@
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
-import { computed, createSSRApp, defineComponent, h } from 'vue'
+import { computed, createSSRApp, defineComponent, h, ref, watch } from 'vue'
 import EditableTable from '../../ui/editable-table/EditableTable.vue'
+import Footer from '../../ui/editable-table/Footer.vue'
 import KeyValueTable from '../KeyValueTable.vue'
 
 vi.mock('@/electron', () => ({ i18n: { t: (key: string) => key } }))
-Object.assign(globalThis, { computed })
+Object.assign(globalThis, { computed, ref, watch })
 const text = defineComponent({
   props: ['as'],
   setup:
@@ -13,7 +14,7 @@ const text = defineComponent({
       () =>
         h(props.as ?? 'span', slots.default?.()),
 })
-async function render(secret = false) {
+async function render(secret = false, customFooter = false) {
   const app = createSSRApp({
     render: () =>
       h(
@@ -30,6 +31,14 @@ async function render(secret = false) {
           fill: false,
         },
         {
+          ...(customFooter
+            ? {
+                'footer-actions': ({ addRow }: { addRow: () => void }) => {
+                  expect(addRow).toBeTypeOf('function')
+                  return h('button', { onClick: addRow }, 'Custom add')
+                },
+              }
+            : {}),
           'cell-key': ({
             entry,
             index,
@@ -49,6 +58,7 @@ async function render(secret = false) {
       ),
   })
   app.component('UiEditableTable', EditableTable)
+  app.component('UiEditableTableFooter', Footer)
   app.component('UiEditableTableCell', text)
   app.component('UiText', text)
   app.component('UiInput', text)
@@ -56,6 +66,12 @@ async function render(secret = false) {
   return renderToString(app)
 }
 describe('key value table shared layout adapter', () => {
+  it('renders custom footer actions with the shared add callback', async () => {
+    const html = await render(false, true)
+    expect(html).toContain('Custom add')
+    expect(html).toContain('flex-wrap items-center gap-2 p-1')
+    expect(html).not.toContain('spaces.http.editor.keyValue.addRow')
+  })
   it('keeps caller cell slots, row indices and disabled-row presentation', async () => {
     const html = await render()
     expect(html).toContain('role="table"')

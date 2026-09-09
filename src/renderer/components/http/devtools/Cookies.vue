@@ -83,7 +83,7 @@ const {
             :save-raw="saveRaw"
             :remove-cookie="remove"
           >
-            <template #footer>
+            <template #footer-actions>
               <HttpAddRowButton
                 :label="i18n.t('spaces.http.devtools.addCookie')"
                 :disabled="busy"

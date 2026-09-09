@@ -172,6 +172,12 @@ function editable(row: Row, column: EditableColumn<Row>) {
         </div>
       </div>
     </div>
-    <slot name="footer" />
+    <UiEditableTableFooter v-if="$slots['footer-actions']">
+      <slot name="footer-actions" />
+    </UiEditableTableFooter>
+    <slot
+      v-else
+      name="footer"
+    />
   </div>
 </template>

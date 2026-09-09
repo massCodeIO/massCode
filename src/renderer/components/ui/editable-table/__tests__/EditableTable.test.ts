@@ -1,9 +1,10 @@
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vitest'
-import { computed, createSSRApp, defineComponent, h } from 'vue'
+import { computed, createSSRApp, defineComponent, h, ref, watch } from 'vue'
 import EditableTable from '../EditableTable.vue'
+import Footer from '../Footer.vue'
 
-Object.assign(globalThis, { computed })
+Object.assign(globalThis, { computed, ref, watch })
 const text = defineComponent({
   props: ['as'],
   setup:
@@ -38,6 +39,7 @@ async function render(variant: 'default' | 'compact', rawRow = '') {
       ),
   })
   app.component('UiText', text)
+  app.component('UiEditableTableFooter', Footer)
   app.component('UiEditableTableCell', text)
   return renderToString(app)
 }

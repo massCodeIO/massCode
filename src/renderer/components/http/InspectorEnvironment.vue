@@ -4,6 +4,10 @@ import { i18n } from '@/electron'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = defineProps<{ environmentId: number, query: string }>()
+const columns = [
+  { key: 'key', label: i18n.t('spaces.http.environments.varKey') },
+  { key: 'value', label: i18n.t('spaces.http.environments.varValue') },
+]
 const open = ref(true)
 const {
   localVariables,
@@ -26,28 +30,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="divide-y border-y">
-    <UiText
-      v-if="!visible.length"
-      as="p"
-      variant="xs"
-      muted
-      class="py-2"
-    >
-      {{ i18n.t("spaces.http.runtime.noVariables") }}
-    </UiText>
-    <div
-      v-for="entry in visible"
-      :key="entry.uid"
-      class="grid grid-cols-2 items-center"
-    >
-      <UiText
-        variant="xs"
-        class="px-1 py-2 break-all"
-      >
-        {{ entry.key }}
-      </UiText>
-      <div class="flex min-w-0 items-center border-l px-1">
+  <UiEditableTable
+    variant="compact"
+    class="border-t"
+    :rows="visible"
+    :columns="columns"
+    :row-key="(entry) => entry.uid"
+    :label="i18n.t('spaces.http.inspector.environment')"
+    :empty-text="i18n.t('spaces.http.runtime.noVariables')"
+  >
+    <template #cell-value="{ row: entry }">
+      <div class="flex h-full min-w-0 items-center px-1">
         <UiInput
           v-if="!entry.secret"
           v-model="entry.value"
@@ -92,6 +85,6 @@ onBeforeUnmount(() => {
           </UiActionButton>
         </template>
       </div>
-    </div>
-  </div>
+    </template>
+  </UiEditableTable>
 </template>

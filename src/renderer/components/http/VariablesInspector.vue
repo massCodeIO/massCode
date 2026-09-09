@@ -18,6 +18,10 @@ const { sessionNames, refreshHttpSessionNames, clearHttpSession }
   = useHttpSession()
 const { isExecuting } = useHttpExecute()
 const { sonner } = useSonner()
+const columns = [
+  { key: 'name', label: i18n.t('spaces.http.environments.varKey') },
+  { key: 'value', label: i18n.t('spaces.http.environments.varValue') },
+]
 const query = ref('')
 const clearing = ref(false)
 const allOpen = ref(false)
@@ -33,9 +37,11 @@ const groups = computed(() =>
     .filter(layer => layer.scope !== 'environment')
     .map(layer => ({
       ...layer,
-      rows: Object.entries(layer.values).filter(([name]) =>
-        name.toLocaleLowerCase().includes(query.value.toLocaleLowerCase()),
-      ),
+      rows: Object.entries(layer.values)
+        .filter(([name]) =>
+          name.toLocaleLowerCase().includes(query.value.toLocaleLowerCase()),
+        )
+        .map(([name, value]) => ({ name, value })),
     }))
     .filter(layer => layer.rows.length || layer.scope === 'session'),
 )
@@ -124,15 +130,16 @@ async function clearSession() {
         >
           {{ i18n.t("spaces.http.inspector.noUsed") }}
         </UiText>
-        <div
+        <UiEditableTable
           v-else
-          class="divide-y border-y"
+          variant="compact"
+          class="border-t"
+          :rows="requestVariables"
+          :columns="columns"
+          :row-key="(row) => row.name"
+          :label="i18n.t('spaces.http.inspector.inRequest')"
         >
-          <div
-            v-for="row in requestVariables"
-            :key="row.name"
-            class="grid grid-cols-2"
-          >
+          <template #cell-name="{ row }">
             <div class="min-w-0 px-1 py-2">
               <UiText
                 as="p"
@@ -160,13 +167,15 @@ async function clearSession() {
                 {{ row.overridden.map((source) => source.label).join(", ") }}
               </UiText>
             </div>
+          </template>
+          <template #cell-value="{ row }">
             <div
               v-if="
                 row.current?.scope === 'environment'
                   && activeEnvironment
                   && !activeEnvironment.secretKeys.includes(row.name)
               "
-              class="flex min-w-0 items-center border-l px-1"
+              class="flex h-full min-w-0 items-center px-1"
             >
               <HttpInspectorValue
                 :key="`${activeEnvironment.id}:${row.name}`"
@@ -178,7 +187,7 @@ async function clearSession() {
             <UiText
               v-else
               variant="xs"
-              class="border-l px-2 py-2 break-all"
+              class="block px-2 py-2 break-all"
               :class="!row.current ? 'text-destructive' : ''"
             >
               {{
@@ -187,8 +196,8 @@ async function clearSession() {
                   : i18n.t("spaces.http.inspector.missing")
               }}
             </UiText>
-          </div>
-        </div>
+          </template>
+        </UiEditableTable>
       </section>
       <Button
         v-if="isRequest"
@@ -257,44 +266,41 @@ async function clearSession() {
           >
             {{ i18n.t("spaces.http.runtime.noVariables") }}
           </UiText>
-          <div class="divide-y border-y">
-            <div
-              v-for="[name, value] in group.rows"
-              :key="name"
-              class="grid grid-cols-2"
-            >
-              <UiText
-                variant="xs"
-                class="px-1 py-2 break-all"
-              >
-                {{ name }}
-              </UiText>
+          <UiEditableTable
+            variant="compact"
+            class="border-t"
+            :rows="group.rows"
+            :columns="columns"
+            :row-key="(row) => row.name"
+            :label="group.label"
+          >
+            <template #cell-value="{ row }">
               <div
                 v-if="
                   group.folderId != null && group.folderId === collection?.id
                 "
-                class="flex min-w-0 items-center border-l px-1"
+                class="flex h-full min-w-0 items-center px-1"
               >
                 <UiInput
-                  :model-value="value"
-                  :aria-label="name"
+                  :model-value="row.value"
+                  :aria-label="row.name"
                   :disabled="unavailable || saving"
                   variant="ghost"
                   class="!h-7 min-w-0"
                   @update:model-value="
-                    (value) => updateVariable(name, String(value))
+                    (value) => updateVariable(row.name, String(value))
                   "
                 />
               </div>
               <UiText
                 v-else
                 variant="xs"
-                class="border-l px-2 py-2 break-all"
+                class="block px-2 py-2 break-all"
               >
-                {{ value || i18n.t("spaces.http.inspector.empty") }}
+                {{ row.value || i18n.t("spaces.http.inspector.empty") }}
               </UiText>
-            </div>
-          </div>
+            </template>
+          </UiEditableTable>
           <div
             v-if="group.scope === 'session'"
             class="space-y-2"

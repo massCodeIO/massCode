@@ -6,6 +6,9 @@ import { rowVariants, textVariants } from './variants'
 const props = withDefaults(
   defineProps<{
     variant?: 'default' | 'compact'
+    fill?: boolean
+    gridTemplateColumns?: string
+    rowClass?: (row: Row) => string
     rows: readonly Row[]
     columns: readonly EditableColumn<Row>[]
     rowKey: (row: Row) => string | number
@@ -17,7 +20,12 @@ const props = withDefaults(
     emptyText?: string
     replaceRow?: (row: Row) => boolean
   }>(),
-  { variant: 'default', showHeader: undefined, cellBorders: undefined },
+  {
+    variant: 'default',
+    fill: true,
+    showHeader: undefined,
+    cellBorders: undefined,
+  },
 )
 const emit = defineEmits<{
   input: [row: Row, column: EditableColumn<Row>, value: string]
@@ -29,8 +37,10 @@ const headerVisible = computed(
 const bordersVisible = computed(
   () => props.cellBorders ?? props.variant === 'compact',
 )
-const grid = computed(() =>
-  props.columns.map(column => column.width ?? 'minmax(0,1fr)').join(' '),
+const grid = computed(
+  () =>
+    props.gridTemplateColumns
+    || props.columns.map(column => column.width ?? 'minmax(0,1fr)').join(' '),
 )
 function value(row: Row, column: EditableColumn<Row>) {
   return column.value
@@ -45,11 +55,15 @@ function editable(row: Row, column: EditableColumn<Row>) {
 </script>
 
 <template>
-  <div class="flex min-h-0 flex-1 flex-col">
+  <div
+    class="flex min-h-0 flex-col"
+    :class="{ 'flex-1': fill }"
+  >
     <div
       role="table"
       :aria-label="label"
-      class="flex min-h-0 flex-1 flex-col"
+      class="flex min-h-0 flex-col"
+      :class="{ 'flex-1': fill }"
     >
       <div
         v-if="headerVisible"
@@ -76,7 +90,8 @@ function editable(row: Row, column: EditableColumn<Row>) {
       </div>
       <div
         role="rowgroup"
-        class="scrollbar min-h-0 flex-1 overflow-y-auto"
+        class="scrollbar min-h-0 overflow-y-auto"
+        :class="{ 'flex-1': fill }"
       >
         <div
           v-if="!rows.length && emptyText"
@@ -96,7 +111,7 @@ function editable(row: Row, column: EditableColumn<Row>) {
           v-for="row in rows"
           :key="rowKey(row)"
           role="row"
-          :class="rowVariants({ variant })"
+          :class="cn(rowVariants({ variant }), rowClass?.(row))"
           :style="{ gridTemplateColumns: grid }"
         >
           <div

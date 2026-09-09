@@ -1122,6 +1122,7 @@
     "next": "Next"
   },
   "action": {
+    "rowActions": "Row actions",
     "close": "Close",
     "clearSearch": "Clear Search",
     "defaultLanguage": "Default Language",

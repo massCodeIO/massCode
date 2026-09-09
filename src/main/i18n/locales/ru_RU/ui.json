@@ -1125,6 +1125,7 @@
     "next": "Далее"
   },
   "action": {
+    "rowActions": "Действия со строкой",
     "close": "Закрыть",
     "clearSearch": "Очистить поиск",
     "defaultLanguage": "Язык по умолчанию",

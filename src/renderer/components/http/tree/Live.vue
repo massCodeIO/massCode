@@ -454,7 +454,8 @@ watch(
                 <HttpMethodBadge
                   :method="nodeById.get(String(node.id))?.method || 'GET'"
                   :protocol="nodeById.get(String(node.id))?.protocol"
-                  class="w-10"
+                  compact
+                  class="w-8 text-left"
                 />
                 <CloudDownload
                   v-if="nodeById.get(String(node.id))?.pending"

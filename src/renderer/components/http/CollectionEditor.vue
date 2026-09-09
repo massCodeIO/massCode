@@ -86,7 +86,8 @@ watch(
       </div>
       <fieldset
         :disabled="saving || unavailable"
-        class="scrollbar min-h-0 flex-1 overflow-auto px-3 py-2 disabled:opacity-50"
+        class="scrollbar min-h-0 flex-1 overflow-auto px-3 pt-2 disabled:opacity-50"
+        :class="{ 'pb-2': !['headers', 'vars', 'tests'].includes(activeTab) }"
       >
         <Tabs.TabsContent
           value="overview"
@@ -98,32 +99,23 @@ watch(
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable
-            v-model="draft.headers"
-            :fill="false"
-          />
+          <HttpKeyValueTable v-model="draft.headers" />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="vars"
-          class="flex flex-col gap-6"
+          class="flex h-full min-h-0 flex-col gap-6"
         >
-          <div>
+          <div class="flex min-h-0 flex-1 flex-col">
             <UiText
               as="div"
               variant="sm"
-              class="mb-2"
+              class="mb-2 shrink-0"
             >
               {{ i18n.t("spaces.http.scripts.preRequest") }}
             </UiText>
-            <HttpKeyValueTable
-              v-model="draft.variables"
-              :fill="false"
-            />
+            <HttpKeyValueTable v-model="draft.variables" />
           </div>
-          <HttpRequestVariables
-            :context="runtimeContext"
-            :fill="false"
-          />
+          <HttpRequestVariables :context="runtimeContext" />
         </Tabs.TabsContent>
         <Tabs.TabsContent value="auth">
           <HttpRequestAuthTab
@@ -146,7 +138,6 @@ watch(
           class="h-full"
         >
           <HttpRequestAssertions
-            :fill="false"
             :context="runtimeContext"
             :disabled="saving || unavailable"
           />

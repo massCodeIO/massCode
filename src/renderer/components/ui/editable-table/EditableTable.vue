@@ -81,7 +81,6 @@ function editable(row: Row, column: EditableColumn<Row>) {
       role="table"
       :aria-label="label"
       class="flex min-h-0 flex-col"
-      :class="{ 'flex-1': fill }"
     >
       <div
         v-if="headerVisible"
@@ -109,7 +108,6 @@ function editable(row: Row, column: EditableColumn<Row>) {
       <div
         role="rowgroup"
         class="scrollbar min-h-0 overflow-y-auto"
-        :class="{ 'flex-1': fill }"
       >
         <div
           v-if="!rows.length && emptyText"

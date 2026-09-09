@@ -57,7 +57,6 @@ async function addExtraction() {
       <div
         ref="rows"
         class="scrollbar min-h-0 space-y-1 overflow-y-auto"
-        :class="{ 'flex-1': fill }"
       >
         <div
           v-for="(rule, index) in draft.extractions"

@@ -178,7 +178,6 @@ function addFormDataRow(): HttpFormDataEntry {
     >
       <HttpKeyValueTable
         v-model="draft.formData"
-        :fill="false"
         :columns="FORM_DATA_COLUMNS"
         actions="delete"
         :create-entry="addFormDataRow"

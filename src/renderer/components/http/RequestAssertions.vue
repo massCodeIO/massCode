@@ -73,7 +73,6 @@ async function addAssertion() {
     <div
       ref="rows"
       class="scrollbar min-h-0 space-y-2 overflow-y-auto"
-      :class="{ 'flex-1': fill }"
     >
       <template
         v-for="(rule, index) in draft.assertions"

@@ -256,7 +256,18 @@ async function onSend() {
           </Tabs.TabsList>
         </div>
       </div>
-      <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-2">
+      <div
+        class="scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-2"
+        :class="{
+          'pb-2': ![
+            'params',
+            'headers',
+            'body',
+            'variables',
+            'assertions',
+          ].includes(activeTab),
+        }"
+      >
         <Tabs.TabsContent
           v-if="isWebSocket"
           value="message"
@@ -274,7 +285,6 @@ async function onSend() {
             :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"
           >
             <HttpRequestAssertions
-              :fill="false"
               :disabled="
                 runtimeSaving || currentRequest.runtimeState !== 'ready'
               "
@@ -286,25 +296,19 @@ async function onSend() {
           class="flex h-full min-h-0 flex-col"
         >
           <HttpRuntimeToolbar :show-hint="false" />
-          <HttpRequestVariables :fill="false" />
+          <HttpRequestVariables />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="params"
           class="h-full"
         >
-          <HttpKeyValueTable
-            v-model="currentDraft.query"
-            :fill="false"
-          />
+          <HttpKeyValueTable v-model="currentDraft.query" />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable
-            v-model="currentDraft.headers"
-            :fill="false"
-          />
+          <HttpKeyValueTable v-model="currentDraft.headers" />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="body"

@@ -10,6 +10,9 @@ export const terminalCreateSchema = z
 export const terminalInputSchema = terminalIdSchema.extend({
   data: z.string().max(65536),
 })
+export const terminalAckSchema = terminalIdSchema.extend({
+  sequence: z.number().int().nonnegative(),
+})
 export const terminalResizeSchema = terminalIdSchema.extend({
   cols: z.number().int().min(2).max(500),
   rows: z.number().int().min(1).max(300),

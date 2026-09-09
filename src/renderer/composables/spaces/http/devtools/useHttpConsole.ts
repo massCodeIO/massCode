@@ -7,6 +7,7 @@ let initialized = false
 let pending = false
 let rerun = false
 let timer: ReturnType<typeof setTimeout> | undefined
+let retentionTimer: ReturnType<typeof setInterval> | undefined
 async function refresh() {
   if (pending) {
     rerun = true
@@ -45,6 +46,9 @@ export function useHttpConsole() {
     initialized = true
     ipc.removeListeners('spaces:http:console:event')
     ipc.on('spaces:http:console:event', schedule)
+    retentionTimer = setInterval(() => {
+      void refresh()
+    }, 60_000)
     void refresh()
   }
   async function clear() {
@@ -58,5 +62,7 @@ if (import.meta.hot) {
     ipc.removeListeners('spaces:http:console:event')
     if (timer)
       clearTimeout(timer)
+    if (retentionTimer)
+      clearInterval(retentionTimer)
   })
 }

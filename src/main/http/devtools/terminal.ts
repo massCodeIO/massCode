@@ -12,8 +12,13 @@ import process from 'node:process'
 const lazyRequire = createRequire(__filename)
 const OUTPUT_LIMIT = 1024 * 1024
 const SESSION_LIMIT = 12
+const PAUSE_AT = 256 * 1024
+const RESUME_AT = 64 * 1024
 interface Session extends TerminalSession {
   process: IPty
+  outstanding: Map<number, number>
+  outstandingSize: number
+  paused: boolean
 }
 
 export class HttpTerminalManager {
@@ -49,19 +54,31 @@ export class HttpTerminalManager {
       output: '',
       truncated: false,
       process: child,
+      outstanding: new Map(),
+      outstandingSize: 0,
+      paused: false,
     }
     this.sessions.set(session.id, session)
     child.onData((data) => {
+      if (!this.sessions.has(session.id))
+        return
       session.output += data
       if (session.output.length > OUTPUT_LIMIT) {
         session.output = session.output.slice(-OUTPUT_LIMIT)
         session.truncated = true
       }
+      const sequence = ++session.sequence
+      session.outstanding.set(sequence, data.length)
+      session.outstandingSize += data.length
+      if (!session.paused && session.outstandingSize >= PAUSE_AT) {
+        child.pause()
+        session.paused = true
+      }
       this.emit({
         type: 'data',
         id: session.id,
         data,
-        sequence: ++session.sequence,
+        sequence,
       })
     })
     child.onExit(({ exitCode }) => {
@@ -82,6 +99,9 @@ export class HttpTerminalManager {
 
   private snapshot({
     process: _process,
+    outstanding: _outstanding,
+    outstandingSize: _outstandingSize,
+    paused: _paused,
     ...session
   }: Session): TerminalSession {
     return session
@@ -96,6 +116,24 @@ export class HttpTerminalManager {
     if (session.exitCode !== undefined)
       throw new Error('TERMINAL_SESSION_EXITED')
     session.process.write(data)
+  }
+
+  acknowledge(id: string, sequence: number) {
+    // ACK is cumulative and sent only after xterm has parsed the output.
+    const session = this.sessions.get(id)
+    if (!session || sequence > session.sequence)
+      return
+    for (const [pending, size] of session.outstanding) {
+      if (pending > sequence)
+        break
+      session.outstandingSize -= size
+      session.outstanding.delete(pending)
+    }
+    if (session.paused && session.outstandingSize <= RESUME_AT) {
+      session.paused = false
+      if (session.exitCode === undefined)
+        session.process.resume()
+    }
   }
 
   resize(id: string, cols: number, rows: number) {

@@ -45,7 +45,11 @@ import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from '../collection'
 import { httpConsole } from '../devtools/console'
-import { captureHttpNetwork, finishHttpNetwork } from '../devtools/network'
+import {
+  captureDispatcherFactory,
+  captureHttpNetwork,
+  finishHttpNetwork,
+} from '../devtools/network'
 import { createHistorySnapshot } from '../historySnapshot'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
@@ -60,8 +64,11 @@ import { variableScopeLimit } from './variables'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
-const certificateDispatcher = new Agent()
+const certificateDispatcher = new Agent({
+  factory: captureDispatcherFactory,
+})
 const insecureCertificateDispatcher = new Agent({
+  factory: captureDispatcherFactory,
   connect: {
     rejectUnauthorized: false,
   },
@@ -870,6 +877,12 @@ export async function executeHttpRequest(
       interpolated.body,
       interpolated.formData,
     )
+    if (built.body instanceof FormData) {
+      // Encode once: the logged bytes and the sent multipart boundary must match.
+      const encoded = new Response(built.body)
+      built.body = Buffer.from(await encoded.arrayBuffer())
+      built.contentType = encoded.headers.get('content-type') ?? undefined
+    }
     const hasContentType = Object.keys(headersObj).some(
       k => k.toLowerCase() === 'content-type',
     )
@@ -939,7 +952,11 @@ export async function executeHttpRequest(
 
     finishHttpNetwork(
       networkIds.at(-1),
-      { responseBody: text, bodyKind, sizeBytes, responseTruncated: truncated },
+      {
+        bodyKind,
+        sizeBytes,
+        responseTruncated: truncated,
+      },
       durationMs,
     )
 

@@ -22,7 +22,7 @@ function reportError(cause: unknown) {
   error.value = `${i18n.t('spaces.http.devtools.terminalError')} ${String(cause)}`
 }
 async function invoke(
-  action: 'input' | 'resize' | 'clear' | 'kill',
+  action: 'input' | 'resize' | 'clear' | 'kill' | 'ack',
   payload: unknown,
 ) {
   try {
@@ -70,9 +70,14 @@ function receive(event: TerminalEvent) {
   if (event.sequence <= instance.sequence)
     return
   instance.sequence = event.sequence
-  if (event.type === 'clear')
-    instance.terminal.clear()
-  else instance.terminal.write(event.data)
+  if (event.type === 'clear') {
+    instance.terminal.write('', () => instance.terminal.clear())
+  }
+  else {
+    instance.terminal.write(event.data, () => {
+      void invoke('ack', { id: event.id, sequence: event.sequence })
+    })
+  }
 }
 function install(session: TerminalSession) {
   if (instances.has(session.id))
@@ -113,7 +118,9 @@ function install(session: TerminalSession) {
   })
   if (session.truncated)
     terminal.writeln(i18n.t('spaces.http.devtools.replayTruncated'))
-  terminal.write(session.output)
+  terminal.write(session.output, () => {
+    void invoke('ack', { id: session.id, sequence: session.sequence })
+  })
   if (session.exitCode !== undefined) {
     terminal.writeln(
       `\r\n${i18n.t('spaces.http.devtools.exited', { code: session.exitCode })}`,

@@ -86,7 +86,7 @@ type FsAction =
   | 'notes-asset'
 type ThemeAction = 'list' | 'get' | 'open-dir' | 'create-template' | 'changed'
 type SpacesAction =
-  | `http:terminal:${'list' | 'create' | 'input' | 'resize' | 'clear' | 'kill' | 'event'}`
+  | `http:terminal:${'list' | 'create' | 'input' | 'resize' | 'clear' | 'kill' | 'ack' | 'event'}`
   | `http:console:${'read' | 'clear' | 'event' | 'detach'}`
   | 'math:read'
   | 'math:write'

@@ -1,5 +1,6 @@
 import type { WebContents } from 'electron'
 import {
+  terminalAckSchema,
   terminalCreateSchema,
   terminalIdSchema,
   terminalInputSchema,
@@ -21,6 +22,10 @@ export function registerHttpTerminalHandlers(
     create: (payload: unknown) => {
       const { cols, rows } = terminalCreateSchema.parse(payload)
       return manager.create(cols, rows)
+    },
+    ack: (payload: unknown) => {
+      const { id, sequence } = terminalAckSchema.parse(payload)
+      manager.acknowledge(id, sequence)
     },
     input: (payload: unknown) => {
       const { id, data } = terminalInputSchema.parse(payload)

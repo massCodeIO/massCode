@@ -69,4 +69,40 @@ describe('terminal boundaries', () => {
       expect(manager.list()).toEqual([])
     },
   )
+  it.skipIf(process.platform === 'win32')(
+    'bounds unconsumed output and resumes without losing the tail',
+    async () => {
+      vi.stubEnv('SHELL', '/bin/sh')
+      let acknowledge = false
+      const manager = new HttpTerminalManager((event) => {
+        if (acknowledge && event.type === 'data')
+          setImmediate(() => manager.acknowledge(event.id, event.sequence))
+      })
+      managers.push(manager)
+      const session = manager.create(80, 24)
+      manager.input(
+        session.id,
+        'head -c 2097152 /dev/zero | tr \'\\0\' x; printf \'\\nQA_FLOOD_DONE\\n\'\r',
+      )
+      await vi.waitFor(() =>
+        expect(manager.list()[0].output.length).toBeGreaterThanOrEqual(
+          256 * 1024,
+        ),
+      )
+      await new Promise(resolve => setTimeout(resolve, 100))
+      const paused = manager.list()[0]
+      expect(paused.output.length).toBeLessThan(512 * 1024)
+      await new Promise(resolve => setTimeout(resolve, 100))
+      expect(manager.list()[0].sequence).toBe(paused.sequence)
+      acknowledge = true
+      manager.acknowledge(session.id, paused.sequence)
+      await vi.waitFor(
+        () =>
+          expect(manager.list()[0].output).toContain('\r\nQA_FLOOD_DONE\r\n'),
+        { timeout: 5000 },
+      )
+      expect(manager.list()[0].truncated).toBe(true)
+      expect(manager.list()[0].output.length).toBeLessThanOrEqual(1024 * 1024)
+    },
+  )
 })

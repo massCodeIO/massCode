@@ -854,6 +854,26 @@
           "info": "Info",
           "warn": "Warning",
           "error": "Error"
+        },
+        "details": {
+          "requestBody": "Request Body",
+          "requestHeaders": "Request Headers",
+          "responseHeaders": "Response Headers",
+          "responseBody": "Response Body",
+          "network": "Network",
+          "error": "Error",
+          "args": "Arguments",
+          "phase": "Script phase",
+          "source": "Source",
+          "requestBodyEncoding": "Request body encoding",
+          "responseBodyEncoding": "Response body encoding",
+          "requestBodyBytes": "Request body bytes",
+          "responseBodyBytes": "Response body bytes",
+          "requestBodyTruncated": "Request preview truncated",
+          "responseBodyTruncated": "Response preview truncated",
+          "responseTruncated": "Response truncated",
+          "sizeBytes": "Response size",
+          "bodyKind": "Body format"
         }
       }
     },
@@ -1061,7 +1081,10 @@
     "fit": "Fit",
     "generate": "Generate",
     "saveAs": "Save as",
-    "update": ["Go to GitHub", "OK"],
+    "update": [
+      "Go to GitHub",
+      "OK"
+    ],
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",

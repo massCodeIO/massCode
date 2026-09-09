@@ -232,15 +232,16 @@ watch(
         <div class="flex-1" />
         <UiActionButton
           :tooltip="i18n.t('spaces.http.devtools.copy')"
+          :aria-label="i18n.t('spaces.http.devtools.copy')"
           @click="copy(details ?? '')"
         >
           <Copy />
         </UiActionButton>
       </div>
-      <pre class="scrollbar min-h-0 overflow-auto px-3 pb-2 select-text"><UiText
-variant="xs"
-                                                                                 mono
-      >{{ details }}</UiText></pre>
+      <HttpDevtoolsConsoleDetails
+        :entry="selectedEntry"
+        :raw="raw"
+      />
     </div>
     <div class="flex shrink-0 items-center gap-4 border-t px-3 py-1">
       <label class="flex items-center gap-2"><Checkbox v-model="timestamps" /><UiText

@@ -857,6 +857,26 @@
           "info": "Информация",
           "warn": "Предупреждение",
           "error": "Ошибка"
+        },
+        "details": {
+          "requestBody": "Тело запроса",
+          "requestHeaders": "Заголовки запроса",
+          "responseHeaders": "Заголовки ответа",
+          "responseBody": "Тело ответа",
+          "network": "Соединение",
+          "error": "Ошибка",
+          "args": "Аргументы",
+          "phase": "Фаза скрипта",
+          "source": "Источник",
+          "requestBodyEncoding": "Кодировка тела запроса",
+          "responseBodyEncoding": "Кодировка тела ответа",
+          "requestBodyBytes": "Байты тела запроса",
+          "responseBodyBytes": "Байты тела ответа",
+          "requestBodyTruncated": "Тело запроса обрезано",
+          "responseBodyTruncated": "Тело ответа обрезано",
+          "responseTruncated": "Ответ обрезан",
+          "sizeBytes": "Размер ответа",
+          "bodyKind": "Формат тела"
         }
       }
     },
@@ -1064,7 +1084,10 @@
     "fit": "По размеру",
     "generate": "Сгенерировать",
     "saveAs": "Сохранить как",
-    "update": ["Перейти на GitHub", "OK"],
+    "update": [
+      "Перейти на GitHub",
+      "OK"
+    ],
     "zoomIn": "Увеличить",
     "zoomOut": "Уменьшить",
     "darkMode": "Темная тема",

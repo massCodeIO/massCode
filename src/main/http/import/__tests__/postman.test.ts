@@ -136,3 +136,155 @@ describe('parsePostmanFiles', () => {
     })
   })
 })
+
+function parseRequestBody(body: unknown) {
+  return parsePostmanFiles([
+    {
+      name: 'qa.json',
+      content: JSON.stringify({
+        info: {
+          name: 'QA',
+          schema:
+            'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [
+          {
+            name: 'Request',
+            request: { method: 'POST', url: 'https://example.com', body },
+          },
+        ],
+      }),
+    },
+  ])
+}
+
+describe('postman roundtrip regressions', () => {
+  it('encodes form keys and values without losing repeated, empty or templated values', () => {
+    const result = parseRequestBody({
+      mode: 'urlencoded',
+      urlencoded: [
+        { key: 'special', value: 'a&b=c+d%' },
+        { key: 'a&= +%', value: 'Привет мир' },
+        { key: 'tag', value: 'one' },
+        { key: 'tag', value: 'two' },
+        { key: 'empty', value: '' },
+        { key: 'variable', value: '{{ value }}' },
+        { key: 'disabled', value: 'ignored', disabled: true },
+      ],
+    })
+    const body = result.collections[0].requests[0].body!
+    expect([...new URLSearchParams(body)]).toEqual([
+      ['special', 'a&b=c+d%'],
+      ['a&= +%', 'Привет мир'],
+      ['tag', 'one'],
+      ['tag', 'two'],
+      ['empty', ''],
+      ['variable', '{{ value }}'],
+    ])
+    expect(body).toContain('{{ value }}')
+  })
+
+  it.each(['{"id":"qa-1"}', '', '  ', { id: 'qa-1' }])(
+    'converts GraphQL variables %j to an object',
+    (variables) => {
+      const result = parseRequestBody({
+        mode: 'graphql',
+        graphql: { query: 'query { user { id } }', variables },
+      })
+      expect(JSON.parse(result.collections[0].requests[0].body!)).toEqual({
+        query: 'query { user { id } }',
+        variables:
+          typeof variables === 'string' && !variables.trim()
+            ? {}
+            : { id: 'qa-1' },
+      })
+    },
+  )
+
+  it.each(['{invalid', '{{variables}}', '[]', 'null', '42'])(
+    'preserves invalid GraphQL variables %s with a warning',
+    (variables) => {
+      const result = parseRequestBody({
+        mode: 'graphql',
+        graphql: { query: 'query { id }', variables },
+      })
+      expect(
+        JSON.parse(result.collections[0].requests[0].body!).variables,
+      ).toBe(variables)
+      expect(result.warnings).toContainEqual(
+        expect.objectContaining({
+          message: 'spaces.http.import.runtimeWarnings.graphqlVariables',
+        }),
+      )
+    },
+  )
+
+  it('retains Markdown and object descriptions at all supported levels, including disabled entries', () => {
+    const result = parsePostmanFiles([
+      {
+        name: 'qa.json',
+        content: JSON.stringify({
+          info: {
+            name: 'QA',
+            schema: 'postman',
+            description: '# Roundtrip QA\n\nMarkdown',
+          },
+          item: [
+            {
+              name: 'Folder',
+              description: { content: 'Folder documentation: **QA**.' },
+              item: [
+                {
+                  name: 'GET',
+                  request: {
+                    method: 'GET',
+                    description: { content: 'Request **docs**' },
+                    header: [
+                      {
+                        key: 'Accept',
+                        value: 'application/json',
+                        description: 'Expected format',
+                      },
+                      {
+                        key: 'X-Off',
+                        value: 'off',
+                        disabled: true,
+                        description: { content: 'Disabled header' },
+                      },
+                    ],
+                    url: {
+                      raw: 'https://example.com',
+                      query: [
+                        {
+                          key: 'search',
+                          value: 'hello',
+                          description: 'Search description',
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    ])
+    const collection = result.collections[0]
+    expect(collection.description).toBe('# Roundtrip QA\n\nMarkdown')
+    expect(collection.folders[0].description).toBe(
+      'Folder documentation: **QA**.',
+    )
+    expect(collection.requests[0].description).toBe('Request **docs**')
+    expect(collection.requests[0].headers[0].description).toBe(
+      'Expected format',
+    )
+    expect(collection.requests[0].headers[1]).toMatchObject({
+      enabled: false,
+      description: 'Disabled header',
+    })
+    expect(collection.requests[0].query[0].description).toBe(
+      'Search description',
+    )
+  })
+})

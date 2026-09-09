@@ -35,6 +35,7 @@ import {
 import { hasHttpScripts } from '../../../shared/httpScripts'
 import {
   HTTP_SECRET_MASK,
+  interpolateHttpFormBody,
   interpolateHttpVariables,
   maskHttpSecretVariables,
 } from '../../../shared/httpVariables'
@@ -107,7 +108,9 @@ function interpolateRequest(
     bodyType: request.bodyType,
     body:
       request.body !== null && request.bodyType !== 'graphql'
-        ? interpolate(request.body, variables)
+        ? request.bodyType === 'form-urlencoded'
+          ? interpolateHttpFormBody(request.body, variables)
+          : interpolate(request.body, variables)
         : request.body,
     formData: request.formData.map(entry => ({
       key: entry.key,

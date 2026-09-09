@@ -1,12 +1,19 @@
 import type { HttpRuntime } from '../../../../shared/httpRuntime'
 import type { HttpExecutePayload } from '../../../types/http'
 import type { HttpImportRequest } from '../types'
+import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
+import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeHttpRequest } from '../../runtime/execute'
-import { getHttpSession, resetHttpSession } from '../../runtime/session'
+import {
+  commitHttpSession,
+  getHttpSession,
+  resetHttpSession,
+} from '../../runtime/session'
 import { scriptsTrusted, setScriptTrust } from '../../scripts/trust'
 import { previewHttpImport } from '../index'
 import { parseOpenCollectionFiles } from '../opencollection'
@@ -16,6 +23,8 @@ import { parsePostmanFiles } from '../postman'
 const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   history: vi.fn(),
+  createFolder: vi.fn(),
+  updateFolder: vi.fn(),
   grants: {},
   records: new Map<
     number,
@@ -46,7 +55,10 @@ vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({
 }))
 vi.mock('../../../storage', () => ({
   useHttpStorage: () => ({
-    folders: { createFolder: () => ({ id: 1 }) },
+    folders: {
+      createFolder: mocks.createFolder,
+      updateFolder: mocks.updateFolder,
+    },
     requests: {
       createRequest: () => {
         const id = mocks.records.size + 1
@@ -93,6 +105,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.grants = {}
   mocks.records.clear()
+  mocks.createFolder.mockImplementation(() => ({
+    id: mocks.createFolder.mock.calls.length,
+  }))
   mocks.request.mockImplementation(async () => ({
     statusCode: 200,
     headers: { 'content-type': 'application/json' },
@@ -179,5 +194,161 @@ describe('preview, persistence and imported script trust', () => {
       expect.objectContaining({ error: 'exception' }),
     )
     expect(mocks.request).not.toHaveBeenCalled()
+  })
+})
+
+describe('postman data roundtrip', () => {
+  it('persists collection and folder Markdown through name conflicts', () => {
+    const result = parsePostmanFiles([
+      {
+        name: 'qa.json',
+        content: JSON.stringify({
+          info: {
+            name: 'QA',
+            schema: 'postman',
+            description: '# Roundtrip QA',
+          },
+          item: [{ name: 'Folder', description: 'Folder **QA**.', item: [] }],
+        }),
+      },
+    ])
+    mocks.createFolder.mockImplementationOnce(() => {
+      throw new Error('NAME_CONFLICT:exists')
+    })
+    const summary = persistHttpImportResult(result)
+    expect(summary.createdCollectionNames).toEqual(['QA 1'])
+    expect(mocks.updateFolder).toHaveBeenNthCalledWith(1, 2, {
+      collectionConfig: expect.objectContaining({
+        documentation: '# Roundtrip QA',
+      }),
+    })
+    expect(mocks.createFolder).toHaveBeenLastCalledWith({
+      name: 'Folder',
+      parentId: 2,
+    })
+    expect(mocks.updateFolder).toHaveBeenNthCalledWith(2, 3, {
+      collectionConfig: expect.objectContaining({
+        documentation: 'Folder **QA**.',
+      }),
+    })
+  })
+
+  it('sends imported duplicate headers, encoded fields and GraphQL objects over real HTTP', async () => {
+    // Resolve the application's CommonJS dependency, as Electron main does.
+    const realUndici = createRequire(__filename)(
+      'undici',
+    ) as typeof import('undici')
+    const dispatcher = new realUndici.Agent()
+    mocks.request.mockImplementation((url, options) =>
+      realUndici.request(url, { ...options, dispatcher }),
+    )
+    const server = createServer(async (request, response) => {
+      const chunks = []
+      for await (const chunk of request) chunks.push(chunk)
+      response.setHeader('Content-Type', 'application/json')
+      response.end(
+        JSON.stringify({
+          headers: request.headers,
+          body: Buffer.concat(chunks).toString(),
+        }),
+      )
+    })
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject)
+      server.listen(0, '127.0.0.1', resolve)
+    })
+    try {
+      const address = server.address()
+      if (!address || typeof address === 'string')
+        throw new Error('Missing server address')
+      const session = getHttpSession('/import-test-vault', null)
+      commitHttpSession(
+        session.generation,
+        new Map([['value', 'a&b=c+d% Привет']]),
+      )
+      const result = parsePostmanFiles([
+        {
+          name: 'qa.json',
+          content: JSON.stringify({
+            info: { name: 'QA', schema: 'postman' },
+            item: [
+              {
+                name: 'Form',
+                request: {
+                  method: 'POST',
+                  url: `http://127.0.0.1:${address.port}/form`,
+                  header: [
+                    { key: 'X-QA', value: 'first' },
+                    { key: 'x-qa', value: 'second' },
+                    { key: 'X-Off', value: 'off', disabled: true },
+                  ],
+                  body: {
+                    mode: 'urlencoded',
+                    urlencoded: [
+                      { key: 'special', value: 'a&b=c+d%' },
+                      { key: 'tag', value: 'one' },
+                      { key: 'tag', value: 'two' },
+                      { key: 'empty', value: '' },
+                      { key: 'variable', value: '{{value}}' },
+                    ],
+                  },
+                },
+              },
+              {
+                name: 'GraphQL',
+                request: {
+                  method: 'POST',
+                  url: `http://127.0.0.1:${address.port}/graphql`,
+                  body: {
+                    mode: 'graphql',
+                    graphql: {
+                      query: 'query { id }',
+                      variables: '{"id":"qa-1"}',
+                    },
+                  },
+                },
+              },
+            ],
+          }),
+        },
+      ])
+      const form = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: result.collections[0].requests[0],
+      })
+      expect(form.error).toBeUndefined()
+      expect(form.status).toBe(200)
+      const echoed = JSON.parse(form.body)
+      expect(echoed.headers['x-qa']).toBe('first, second')
+      expect(echoed.headers['x-off']).toBeUndefined()
+      expect(echoed.headers['content-type']).toBe(
+        'application/x-www-form-urlencoded',
+      )
+      expect([...new URLSearchParams(echoed.body)]).toEqual([
+        ['special', 'a&b=c+d%'],
+        ['tag', 'one'],
+        ['tag', 'two'],
+        ['empty', ''],
+        ['variable', 'a&b=c+d% Привет'],
+      ])
+      const graphql = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: result.collections[0].requests[1],
+      })
+      expect(graphql.status).toBe(200)
+      expect(JSON.parse(JSON.parse(graphql.body).body)).toEqual({
+        query: 'query { id }',
+        variables: { id: 'qa-1' },
+      })
+    }
+    finally {
+      await dispatcher.close()
+      server.closeAllConnections()
+      await new Promise<void>((resolve, reject) =>
+        server.close(error => (error ? reject(error) : resolve())),
+      )
+    }
   })
 })

@@ -3,6 +3,8 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyHttpCollection } from '../../../../../../../shared/httpCollection'
+import { persistHttpImportResult } from '../../../../../../http/import/persist'
+import { parsePostmanFiles } from '../../../../../../http/import/postman'
 import { enqueueCloudDownload } from '../../../cloudDownloads'
 import { stateContentCacheByPath } from '../../../runtime/cache'
 import {
@@ -19,6 +21,13 @@ import { getHttpRuntimeCache, resetHttpRuntimeCache } from '../../runtime/sync'
 import { createHttpFoldersStorage } from '../folders'
 import { createHttpHistoryStorage } from '../history'
 import { createHttpRequestsStorage } from '../requests'
+
+vi.mock('../../../../../index', () => ({
+  useHttpStorage: () => ({
+    folders: createHttpFoldersStorage(),
+    requests: createHttpRequestsStorage(),
+  }),
+}))
 
 let tempVaultPath = ''
 
@@ -133,6 +142,76 @@ describe('http folders storage', () => {
     tempVaultPath = ''
     vi.useRealTimers()
     vi.clearAllMocks()
+  })
+
+  it('retains imported Markdown and entry descriptions after a cold cache reload', () => {
+    const imported = parsePostmanFiles([
+      {
+        name: 'qa.json',
+        content: JSON.stringify({
+          info: {
+            name: 'QA',
+            schema: 'postman',
+            description: '# Roundtrip QA',
+          },
+          item: [
+            {
+              name: 'Folder',
+              description: 'Folder **QA**.',
+              item: [
+                {
+                  name: 'Request',
+                  request: {
+                    method: 'GET',
+                    description: 'Request **QA**.',
+                    header: [
+                      {
+                        key: 'Accept',
+                        value: 'application/json',
+                        description: 'Expected format',
+                      },
+                    ],
+                    url: {
+                      raw: 'https://example.com',
+                      query: [
+                        {
+                          key: 'search',
+                          value: 'hello',
+                          description: 'Search description',
+                          disabled: true,
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    ])
+    persistHttpImportResult(imported)
+    flushPendingStateWriteByPath(getHttpPaths(tempVaultPath).statePath)
+    stateContentCacheByPath.delete(getHttpPaths(tempVaultPath).statePath)
+    resetHttpRuntimeCache()
+    const folders = createHttpFoldersStorage().getFolders()
+    expect(
+      folders.find(folder => folder.name === 'QA')?.collectionConfig,
+    ).toMatchObject({ documentation: '# Roundtrip QA' })
+    expect(
+      folders.find(folder => folder.name === 'Folder')?.collectionConfig,
+    ).toMatchObject({
+      documentation: 'Folder **QA**.',
+      auth: { type: 'inherit' },
+    })
+    const requests = createHttpRequestsStorage().getRequests({})
+    const saved = createHttpRequestsStorage().getRequestById(requests[0].id)!
+    expect(saved.description).toBe('Request **QA**.')
+    expect(saved.headers[0].description).toBe('Expected format')
+    expect(saved.query[0]).toMatchObject({
+      description: 'Search description',
+      enabled: false,
+    })
   })
 
   it('restores history and response snapshots from disk after a cold restart', () => {

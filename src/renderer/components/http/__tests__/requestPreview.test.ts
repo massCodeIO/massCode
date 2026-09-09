@@ -26,6 +26,30 @@ function createDraft(
 }
 
 describe('request preview', () => {
+  it('previews every duplicate header value and safely interpolates encoded forms', () => {
+    const draft = createDraft({
+      method: 'POST',
+      headers: [
+        { key: 'X-QA', value: 'first' },
+        { key: 'x-qa', value: 'second' },
+      ],
+      bodyType: 'form-urlencoded',
+      body: 'special=a%26b%3Dc%2Bd%25&variable={{value}}',
+    })
+    const options = { variables: { value: 'a&b=c+d% Привет' } }
+    const preview = buildHttpPreview(draft, options)
+    expect(preview).toContain('X-QA: first, second')
+    expect(new URLSearchParams(preview.split('\n\n')[1]).get('variable')).toBe(
+      options.variables.value,
+    )
+    expect(buildCurlPreview(draft, options)).toContain('X-QA: first, second')
+    for (const format of ['fetch', 'axios'] as const) {
+      expect(buildRequestPreview(draft, format, options)).toContain(
+        'first, second',
+      )
+    }
+  })
+
   it('builds raw HTTP preview with query, headers, auth, and body', () => {
     const preview = buildHttpPreview(
       createDraft({

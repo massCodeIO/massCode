@@ -481,6 +481,7 @@
         },
         "scriptTrustNotice": "Imported scripts require local trust before they can run. Review the code in Scripts. Blocked scripts also require manual adaptation.",
         "runtimeWarnings": {
+          "graphqlVariables": "GraphQL variables could not be parsed as a JSON object. The original value was kept; adapt it before sending.",
           "disabled": "Disabled rule or event was not imported.",
           "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
           "variables": "Temporary variables use massCode Session or isolated Runner variables. Only strings are supported; reads also see the selected environment. Source collection/environment scopes are not reproduced.",

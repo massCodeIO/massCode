@@ -6,6 +6,7 @@ import type {
   HttpImportResult,
   HttpImportSelection,
 } from './types'
+import { emptyHttpCollection } from '../../../shared/httpCollection'
 import { useHttpStorage } from '../../storage'
 import { normalizeImportName } from './normalize'
 
@@ -35,6 +36,7 @@ function createUniqueFolder(
   storage: HttpStorageProvider,
   name: string,
   parentId: number | null,
+  description?: string,
 ): { id: number, name: string } {
   const baseName = normalizeImportName(name, 'Imported')
 
@@ -45,6 +47,15 @@ function createUniqueFolder(
         name: candidate,
         parentId,
       })
+      if (description) {
+        storage.folders.updateFolder(id, {
+          collectionConfig: {
+            ...emptyHttpCollection(),
+            auth: { type: parentId === null ? 'none' : 'inherit' },
+            documentation: description,
+          },
+        })
+      }
       return { id, name: candidate }
     }
     catch (error) {
@@ -160,7 +171,12 @@ export function persistHttpImportResult(
   }
 
   for (const collection of collections) {
-    const root = createUniqueFolder(storage, collection.name, null)
+    const root = createUniqueFolder(
+      storage,
+      collection.name,
+      null,
+      collection.description,
+    )
     const folderIds = new Map<string, number>()
     summary.collections += 1
     summary.folders += 1
@@ -171,7 +187,12 @@ export function persistHttpImportResult(
         = folder.parentId !== null
           ? (folderIds.get(folder.parentId) ?? root.id)
           : root.id
-      const created = createUniqueFolder(storage, folder.name, parentId)
+      const created = createUniqueFolder(
+        storage,
+        folder.name,
+        parentId,
+        folder.description,
+      )
       folderIds.set(folder.id, created.id)
       summary.folders += 1
     }

@@ -7,7 +7,10 @@ import {
   collectionVariables,
 } from '~/shared/httpCollection'
 import { buildGraphqlBody } from '~/shared/httpGraphql'
-import { interpolateHttpVariables } from '~/shared/httpVariables'
+import {
+  interpolateHttpFormBody,
+  interpolateHttpVariables,
+} from '~/shared/httpVariables'
 
 export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
@@ -252,7 +255,9 @@ function interpolateDraft(
     })),
     body:
       draft.body !== null
-        ? interpolateHttpVariables(draft.body, variables)
+        ? draft.bodyType === 'form-urlencoded'
+          ? interpolateHttpFormBody(draft.body, variables)
+          : interpolateHttpVariables(draft.body, variables)
         : draft.body,
     formData: draft.formData.map(entry => ({
       ...entry,

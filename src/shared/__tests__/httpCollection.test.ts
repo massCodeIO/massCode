@@ -34,6 +34,32 @@ describe('hTTP collection settings', () => {
     expect(config.headers[0].value).toBe('collection')
   })
 
+  it('joins same-scope duplicate headers while overriding inherited values as a group', () => {
+    const config = emptyHttpCollection()
+    config.headers = [
+      { key: 'X-QA', value: 'parent' },
+      { key: 'X-Keep', value: 'kept' },
+    ]
+    const draft = {
+      auth: { type: 'none' as const },
+      headers: [
+        { key: 'X-QA', value: 'first' },
+        { key: 'x-qa', value: 'second' },
+        { key: 'X-QA', value: 'disabled', enabled: false },
+        { key: 'Cookie', value: 'a=1' },
+        { key: 'cookie', value: 'b=2' },
+      ],
+    }
+    expect(applyHttpCollection(draft, config).headers).toEqual([
+      { key: 'X-QA', value: 'first, second' },
+      { key: 'X-Keep', value: 'kept' },
+      { key: 'Cookie', value: 'a=1; b=2' },
+    ])
+    expect(applyHttpCollection(draft).headers[0].value).toBe('first, second')
+    expect(draft.headers[0].value).toBe('first')
+    expect(config.headers[0].value).toBe('parent')
+  })
+
   it('inherits auth only when explicit, retaining legacy none and request credentials', () => {
     const config = emptyHttpCollection()
     config.auth = { type: 'bearer', token: '{{token}}' }

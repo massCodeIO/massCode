@@ -14,6 +14,7 @@ export interface HttpImportWarning {
 }
 
 export interface HttpImportFolder {
+  description?: string
   id: string
   parentId: string | null
   name: string

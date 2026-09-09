@@ -44,6 +44,18 @@ function asString(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+function parseDescription(value: unknown): string {
+  return isRecord(value) ? asString(value.content) : asString(value)
+}
+
+function encodeFormPart(value: string): string {
+  // Keep variable tokens editable and resolvable after importing the form.
+  return value
+    .split(/(\{\{\s*[\w.-]+\s*\}\})/g)
+    .map((part, index) => (index % 2 ? part : encodeURIComponent(part)))
+    .join('')
+}
+
 function readJsonFile(file: HttpImportFile, warnings: HttpImportWarning[]) {
   try {
     const raw: unknown = JSON.parse(file.content)
@@ -137,6 +149,7 @@ function parseHeaders(rawHeaders: unknown): HttpHeaderEntry[] {
   return asArray(rawHeaders)
     .filter(isRecord)
     .map(header => ({
+      description: parseDescription(header.description) || undefined,
       enabled: header.disabled === true ? false : undefined,
       key: asString(header.key),
       value: asString(header.value),
@@ -151,6 +164,7 @@ function parsePostmanQuery(rawUrl: unknown): HttpImportRequest['query'] {
   return asArray(rawUrl.query)
     .filter(isRecord)
     .map(entry => ({
+      description: parseDescription(entry.description) || undefined,
       enabled: entry.disabled === true ? false : undefined,
       key: asString(entry.key),
       value: asString(entry.value),
@@ -207,7 +221,10 @@ function parseBody(
     const body = asArray(rawBody.urlencoded)
       .filter(isRecord)
       .filter(entry => entry.disabled !== true && asString(entry.key))
-      .map(entry => `${asString(entry.key)}=${asString(entry.value)}`)
+      .map(
+        entry =>
+          `${encodeFormPart(asString(entry.key))}=${encodeFormPart(asString(entry.value))}`,
+      )
       .join('&')
 
     return { body, bodyType: 'form-urlencoded', formData: [] }
@@ -230,8 +247,26 @@ function parseBody(
 
   if (mode === 'graphql') {
     addWarning(warnings, source, 'GraphQL body imported as JSON')
+    const graphql = isRecord(rawBody.graphql) ? { ...rawBody.graphql } : {}
+    if (typeof graphql.variables === 'string') {
+      try {
+        const variables: unknown = graphql.variables.trim()
+          ? JSON.parse(graphql.variables)
+          : {}
+        if (!isRecord(variables))
+          throw new Error('Invalid variables')
+        graphql.variables = variables
+      }
+      catch {
+        addWarning(
+          warnings,
+          source,
+          'spaces.http.import.runtimeWarnings.graphqlVariables',
+        )
+      }
+    }
     return {
-      body: JSON.stringify(rawBody.graphql ?? {}, null, 2),
+      body: JSON.stringify(graphql, null, 2),
       bodyType: 'json',
       formData: [],
     }
@@ -329,7 +364,7 @@ function parseRequest(
     ...body,
     ...buildImportedRuntime(scripts, 'postman', source, warnings),
     auth,
-    description: asString(request.description),
+    description: parseDescription(request.description),
     folderId,
     headers,
     method,
@@ -369,7 +404,12 @@ function walkItems(
         ]
       }
       const id = asString(item.id || item._postman_id) || `${source}:${index}`
-      const folder: HttpImportFolder = { id, name, parentId }
+      const folder: HttpImportFolder = {
+        id,
+        name,
+        parentId,
+        description: parseDescription(item.description),
+      }
       collection.folders.push(folder)
       if (source.split('/').length > 32) {
         runtimeWarning(warnings, source, 'depthLimit')
@@ -410,7 +450,7 @@ function parseCollection(
     type: 'none' as const,
   }
   const collection: HttpImportCollection = {
-    description: asString(info.description),
+    description: parseDescription(info.description),
     folders: [],
     name,
     requests: [],

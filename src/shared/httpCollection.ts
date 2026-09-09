@@ -156,9 +156,26 @@ export function applyHttpCollection<T extends RequestSettings>(
   config?: HttpCollectionConfig,
 ): T {
   const headers = new Map<string, T['headers'][number]>()
-  for (const entry of [...(config?.headers ?? []), ...request.headers]) {
-    if (entry.enabled !== false && entry.key)
-      headers.set(entry.key.toLowerCase(), { ...entry })
+  for (const entries of [config?.headers ?? [], request.headers]) {
+    const seen = new Set<string>()
+    for (const entry of entries) {
+      if (entry.enabled === false || !entry.key)
+        continue
+      const key = entry.key.toLowerCase()
+      const previous = headers.get(key)
+      // A closer scope overrides the whole header; duplicates within that
+      // scope retain their order in the effective request and every preview.
+      headers.set(
+        key,
+        seen.has(key) && previous
+          ? {
+              ...previous,
+              value: `${previous.value}${key === 'cookie' ? '; ' : ', '}${entry.value}`,
+            }
+          : { ...entry },
+      )
+      seen.add(key)
+    }
   }
   return {
     ...request,

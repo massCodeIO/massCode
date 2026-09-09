@@ -638,7 +638,7 @@
       "scripts": {
         "title": "Scripts",
         "preRequest": "Pre-request",
-        "postResponse": "Post-response & tests",
+        "postResponse": "Post-response",
         "trusted": "Trusted on this device",
         "untrusted": "Scripts require local trust",
         "trust": "Trust this code",

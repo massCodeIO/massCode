@@ -849,6 +849,9 @@
         "truncated": "Log details truncated",
         "timestamps": "Show timestamps",
         "hideNetwork": "Hide network",
+        "allLogs": "All logs",
+        "customLogs": "Custom",
+        "logLevels": "Log levels",
         "level": {
           "log": "Log",
           "info": "Info",

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
+import * as Select from '@/components/ui/shadcn/select'
 import { useHttpConsole } from '@/composables/spaces/http/devtools/useHttpConsole'
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useVirtualList } from '@vueuse/core'
@@ -47,11 +48,6 @@ const details = computed(() =>
     2,
   ),
 )
-function toggleLevel(level: string) {
-  levels.value = levels.value.includes(level)
-    ? levels.value.filter(value => value !== level)
-    : [...levels.value, level]
-}
 function select(id: string) {
   selected.value = selected.value === id ? '' : id
   raw.value = false
@@ -88,18 +84,35 @@ watch(
         :aria-label="i18n.t('spaces.http.devtools.filter')"
         clearable
       />
-      <Button
-        v-for="level in consoleLevels"
-        :key="level"
-        variant="ghost"
-        size="sm"
-        :aria-pressed="levels.includes(level)"
-        :class="{ 'bg-accent': levels.includes(level) }"
-        @click="toggleLevel(level)"
-      >
-        {{ i18n.t(`spaces.http.devtools.level.${level}`) }}
-      </Button>
       <div class="flex-1" />
+      <Select.Select
+        v-model="levels"
+        multiple
+      >
+        <Select.SelectTrigger
+          class="h-7 w-auto shrink-0"
+          :aria-label="i18n.t('spaces.http.devtools.logLevels')"
+        >
+          <Select.SelectValue>
+            {{
+              i18n.t(
+                levels.length === consoleLevels.length
+                  ? "spaces.http.devtools.allLogs"
+                  : "spaces.http.devtools.customLogs",
+              )
+            }}
+          </Select.SelectValue>
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem
+            v-for="level in consoleLevels"
+            :key="level"
+            :value="level"
+          >
+            {{ i18n.t(`spaces.http.devtools.level.${level}`) }}
+          </Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
       <UiActionButton
         :tooltip="
           i18n.t(

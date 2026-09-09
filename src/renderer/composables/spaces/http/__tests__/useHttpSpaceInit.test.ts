@@ -100,6 +100,16 @@ beforeEach(() => {
 })
 
 describe('resetHttpSpaceState', () => {
+  it('restores the saved request before the navigation list is populated', async () => {
+    const ctx = await setup()
+    ctx.requests.value = []
+    ctx.allRequests.value = []
+    await ctx.refresh()
+    expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+      preservePanel: true,
+    })
+  })
+
   it.each([10, 20])(
     'keeps a request outside the filtered list in folder %s',
     async (folderId) => {

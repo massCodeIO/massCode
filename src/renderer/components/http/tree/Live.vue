@@ -394,10 +394,13 @@ watch(renameFolderId, (id) => {
   }
 })
 watch(
-  activeId,
-  (id) => {
+  [
+    activeId,
+    () => activeId.value !== undefined && nodeById.value.has(activeId.value),
+  ],
+  ([id, available]) => {
     virtualFocus.value = false
-    selection.value = id && nodeById.value.has(id) ? [id] : []
+    selection.value = id && available ? [id] : []
   },
   { immediate: true },
 )

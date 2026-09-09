@@ -16,7 +16,6 @@ const {
 const {
   getHttpRequests,
   getAllHttpRequests,
-  allRequests,
   resetHttpRequestsState,
   selectHttpRequest,
 } = useHttpRequests()
@@ -95,19 +94,8 @@ async function refreshHttpSpaceFromDisk() {
   }
 
   const persistedRequestId = httpState.requestId
-  if (
-    persistedRequestId !== undefined
-    && allRequests.value.some(r => r.id === persistedRequestId)
-  ) {
+  if (persistedRequestId !== undefined) {
     await selectHttpRequest(persistedRequestId, false, { preservePanel: true })
-    return
-  }
-
-  // Пустой список — это либо реально пустой vault, либо provisional-кэш
-  // периода фоновой сверки: сохранённый выбор не сбрасывается (иначе он
-  // затёрся бы в store.app и после reconcile не восстановился).
-  if (persistedRequestId !== undefined && allRequests.value.length) {
-    await selectHttpRequest(undefined)
   }
 }
 

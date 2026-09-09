@@ -156,7 +156,7 @@ function duplicateRow(index: number) {
       <div
         v-for="(entry, index) in model"
         :key="index"
-        class="border-border hover:bg-accent-hover grid min-h-7 items-center gap-2 border-b px-2 py-0.5"
+        class="border-border grid min-h-7 items-center gap-2 border-b px-2 py-0.5"
         :class="{ 'opacity-50': showEnabled && !isEnabled(entry) }"
         :style="{ gridTemplateColumns: resolvedGridTemplateColumns }"
       >

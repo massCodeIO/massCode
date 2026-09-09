@@ -15,18 +15,54 @@ const { parentPort, workerData } = require('node:worker_threads');
   let timedOut = false;
   runtime.setInterruptHandler(() => (timedOut = Date.now() > deadline));
   const context = runtime.newContext();
+  let logCount = 0;
+  const emitLog = context.newFunction('__emitLog', (text) => {
+    if (++logCount <= 100) {
+      const serialized = context.getString(text);
+      if (serialized.length <= 16384) parentPort.postMessage({ console: serialized });
+    }
+    return context.undefined;
+  });
+  context.setProp(context.global, '__emitLog', emitLog);
+  emitLog.dispose();
   let reader;
   let failure = 'exception';
   try {
     // The closure retains pristine intrinsics and the output; user code cannot
     // replace the serializer or forge results by overwriting a global variable.
-    const bootstrap = context.evalCode('(' + ${JSON.stringify(String.raw`function (input) {
+    const bootstrap = context.evalCode('(' + ${JSON.stringify(String.raw`function (input, emitLog) {
       const stringify = JSON.stringify.bind(JSON);
       const parse = JSON.parse.bind(JSON);
       const keys = Object.keys.bind(Object);
       const variables = Object.assign(Object.create(null), input.variables);
       const writes = Object.create(null);
       const tests = [];
+      const log = (level, args) => {
+        const seen = new Set();
+        let serialized;
+        try {
+          serialized = stringify({ level, args: args.slice(0, 50) }, (key, value) => {
+            if (value === undefined) return 'undefined';
+            if (typeof value === 'bigint') return String(value) + 'n';
+            if (typeof value === 'function') return '[Function]';
+            if (value && typeof value === 'object') {
+              if (seen.has(value)) return '[Circular]';
+              seen.add(value);
+            }
+            return value;
+          });
+          if (serialized.length > 16384) serialized = stringify({ level, args: [serialized.slice(0, 15000) + '…'] });
+        } catch { serialized = stringify({ level, args: ['[Unserializable]'] }); }
+        emitLog(serialized);
+      };
+      Object.defineProperty(globalThis, 'console', { value: Object.freeze({
+        log: (...args) => log('log', args),
+        info: (...args) => log('info', args),
+        warn: (...args) => log('warn', args),
+        error: (...args) => log('error', args),
+        clear: () => log('clear', []),
+      }), writable: false, configurable: false });
+      delete globalThis.__emitLog;
       let count = 0;
       let exceeded = false;
       const checkName = name => {
@@ -84,7 +120,7 @@ const { parentPort, workerData } = require('node:worker_threads');
         const output = stringify({ variables: writes, tests });
         return output.length <= 65536 ? output : '';
       };
-    }`)} + ')(' + workerData.input + ')');
+    }`)} + ')(' + workerData.input + ', globalThis.__emitLog)');
     if (bootstrap.error) { bootstrap.error.dispose(); throw Error(); }
     reader = bootstrap.value;
     const result = context.evalCode(workerData.code, 'http-script.js', { type: 'global' });

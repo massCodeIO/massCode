@@ -59,6 +59,7 @@ export function translateScript(
     'test',
     'expect',
     'JSON',
+    'console',
     'String',
     'undefined',
     '__mcImportBody',
@@ -111,6 +112,31 @@ export function translateScript(
         return 'mc.response.json()'
       }
     }
+    if (node.type === 'ObjectExpression') {
+      return `{${node.properties
+        .map((item: AnyNode) => {
+          if (
+            item.type !== 'Property'
+            || item.computed
+            || item.method
+            || item.kind !== 'init'
+          ) {
+            unsupported()
+          }
+          const key
+            = item.key.type === 'Identifier'
+              ? item.key.name
+              : item.key.type === 'Literal'
+                ? String(item.key.value)
+                : undefined
+          if (key === undefined || forbidden.has(key))
+            unsupported()
+          return `${JSON.stringify(key)}: ${expr(item.value, locals, depth + 1)}`
+        })
+        .join(', ')}}`
+    }
+    if (node.type === 'ArrayExpression')
+      return `[${node.elements.map((item: AnyNode | null) => (item ? expr(item, locals, depth + 1) : '')).join(', ')}]`
     if (node.type === 'MemberExpression') {
       const key = property(node)
       if (key === undefined || forbidden.has(key))
@@ -356,6 +382,18 @@ export function translateScript(
         }
         if (expression.type === 'CallExpression') {
           const name = memberPath(expression.callee)
+          if (
+            name
+            && [
+              'console.log',
+              'console.info',
+              'console.warn',
+              'console.error',
+              'console.clear',
+            ].includes(name)
+          ) {
+            return `${name}(${expression.arguments.map((argument: AnyNode) => expr(argument, locals)).join(', ')});`
+          }
           if (name && Object.hasOwn(variableNames, name))
             return `${expr(expression, locals, 0, true)};`
         }

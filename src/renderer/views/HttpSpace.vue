@@ -83,37 +83,39 @@ onMounted(() => {
         ref="workspace"
         class="flex h-full min-w-0 overflow-hidden"
       >
-        <div
-          class="flex h-full min-h-0 min-w-0 flex-1 flex-col"
-          :class="{
-            'pt-[var(--content-top-offset)]':
-              httpState.activePanel === 'folder'
-              || httpState.activePanel === 'runner',
-          }"
-        >
-          <HttpContextHeader
-            v-if="
-              httpState.activePanel === 'folder'
-                || httpState.activePanel === 'runner'
-            "
-          />
+        <HttpDevtoolsDock class="min-w-0 flex-1">
           <div
-            class="min-h-0 flex-1"
+            class="flex h-full min-h-0 min-w-0 flex-1 flex-col"
             :class="{
-              '[--content-top-offset:0px]':
+              'pt-[var(--content-top-offset)]':
                 httpState.activePanel === 'folder'
                 || httpState.activePanel === 'runner',
             }"
           >
-            <HttpRunnerPanel v-show="httpState.activePanel === 'runner'" />
-            <HttpCollectionEditor v-if="httpState.activePanel === 'folder'" />
-            <HttpRequestEditorPane
-              v-else-if="
-                !httpState.activePanel || httpState.activePanel === 'request'
+            <HttpContextHeader
+              v-if="
+                httpState.activePanel === 'folder'
+                  || httpState.activePanel === 'runner'
               "
             />
+            <div
+              class="min-h-0 flex-1"
+              :class="{
+                '[--content-top-offset:0px]':
+                  httpState.activePanel === 'folder'
+                  || httpState.activePanel === 'runner',
+              }"
+            >
+              <HttpRunnerPanel v-show="httpState.activePanel === 'runner'" />
+              <HttpCollectionEditor v-if="httpState.activePanel === 'folder'" />
+              <HttpRequestEditorPane
+                v-else-if="
+                  !httpState.activePanel || httpState.activePanel === 'request'
+                "
+              />
+            </div>
           </div>
-        </div>
+        </HttpDevtoolsDock>
         <template v-if="inspectorOpen">
           <div
             ref="inspectorHandle"

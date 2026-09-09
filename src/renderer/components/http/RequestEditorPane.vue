@@ -111,7 +111,7 @@ useResizeHandle(responseHandleRef, {
           ? undefined
           : { height: `${responsePanelHeight}px` }
       "
-      class="min-h-0 overflow-hidden"
+      class="max-h-[60%] min-h-0 overflow-hidden"
       :class="
         responsePanelHeight === undefined ? 'flex-1 basis-2/5' : 'shrink-0'
       "

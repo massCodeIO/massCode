@@ -1,9 +1,11 @@
+import type { ScriptConsoleMessage } from '../../../shared/httpDevtools'
 import type {
   HttpScriptError,
   HttpScriptOutput,
 } from '../../../shared/httpScripts'
 import { Buffer } from 'node:buffer'
 import { Worker } from 'node:worker_threads'
+import { scriptConsoleSchema } from '../../../shared/httpDevtools'
 import { scriptOutputSchema } from '../../../shared/httpScripts'
 import { scriptWorkerSource } from './worker'
 
@@ -15,6 +17,7 @@ export async function executeScript(
   code: string,
   input: unknown,
   signal: AbortSignal,
+  onConsole?: (message: ScriptConsoleMessage) => void,
 ): Promise<ScriptExecution> {
   if (signal.aborted)
     return { error: 'cancelled' }
@@ -56,7 +59,22 @@ export async function executeScript(
       abort()
     worker.once('error', () => finish({ error: 'limit' }))
     worker.once('exit', () => finish({ error: 'limit' }))
-    worker.once('message', (message: unknown) => {
+    worker.on('message', (message: unknown) => {
+      if (finished)
+        return
+      if (
+        message
+        && typeof message === 'object'
+        && 'console' in message
+        && typeof message.console === 'string'
+      ) {
+        try {
+          if (message.console.length <= 16384)
+            onConsole?.(scriptConsoleSchema.parse(JSON.parse(message.console)))
+        }
+        catch {}
+        return
+      }
       if (!message || typeof message !== 'object')
         return finish({ error: 'limit' })
       if (

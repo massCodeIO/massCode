@@ -16,6 +16,7 @@ import type {
 } from '../../types/http'
 import type { ResolvedHttpCollection } from '../collection'
 import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { Agent, request as undiciRequest } from 'undici'
@@ -43,6 +44,8 @@ import {
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from '../collection'
+import { httpConsole } from '../devtools/console'
+import { captureHttpNetwork, finishHttpNetwork } from '../devtools/network'
 import { createHistorySnapshot } from '../historySnapshot'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
@@ -57,6 +60,7 @@ import { variableScopeLimit } from './variables'
 
 const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
 const DEFAULT_TIMEOUT_MS = 30_000
+const certificateDispatcher = new Agent()
 const insecureCertificateDispatcher = new Agent({
   connect: {
     rejectUnauthorized: false,
@@ -511,6 +515,8 @@ export async function executeHttpRequest(
   run?: HttpRunContext,
   signal?: AbortSignal,
 ): Promise<HttpExecuteResult> {
+  const executionId = randomUUID()
+  const networkIds: string[] = []
   const vaultPath = getVaultPath()
   const storage = useHttpStorage()
   const saved
@@ -715,8 +721,32 @@ export async function executeHttpRequest(
         collectionVariables: collectionVariables(config),
       },
       controller.signal,
+      (message) => {
+        if (message.level === 'clear') {
+          httpConsole.clear()
+          return
+        }
+        httpConsole.append({
+          kind: 'script',
+          level: message.level,
+          executionId,
+          message: message.args
+            .map(value =>
+              typeof value === 'string' ? value : JSON.stringify(value),
+            )
+            .join(' '),
+          details: { phase: name, source: subject.source, args: message.args },
+        })
+      },
     )
     if (execution.error) {
+      httpConsole.append({
+        kind: 'script',
+        level: 'error',
+        executionId,
+        message: execution.error,
+        details: { phase: name, source: subject.source },
+      })
       scriptResults.push({
         source: subject.source,
         phase: name,
@@ -866,16 +896,21 @@ export async function executeHttpRequest(
               )
             : '',
     }
-    const response = await undiciRequest(finalUrl, {
-      method: interpolated.method,
-      headers: headersObj,
-      body: built.body as Dispatcher.DispatchOptions['body'],
-      signal: controller.signal,
-      maxRedirections: scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
-      ...(payload.skipCertificateVerification
-        ? { dispatcher: insecureCertificateDispatcher }
-        : {}),
-    })
+    const response = await captureHttpNetwork(
+      { executionId, ids: networkIds, body: sentRequest.body ?? '' },
+      () =>
+        undiciRequest(finalUrl, {
+          method: interpolated.method,
+          headers: headersObj,
+          body: built.body as Dispatcher.DispatchOptions['body'],
+          signal: controller.signal,
+          maxRedirections:
+            scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
+          dispatcher: payload.skipCertificateVerification
+            ? insecureCertificateDispatcher
+            : certificateDispatcher,
+        }),
+    )
 
     const { buffer, sizeBytes, truncated } = await readBodyCapped(
       response.body as unknown as NodeJS.ReadableStream,
@@ -901,6 +936,12 @@ export async function executeHttpRequest(
       sizeBytes,
       truncated,
     }
+
+    finishHttpNetwork(
+      networkIds.at(-1),
+      { responseBody: text, bodyKind, sizeBytes, responseTruncated: truncated },
+      durationMs,
+    )
 
     if (!current())
       return { ...result, body: '', headers: [], discarded: true }
@@ -983,6 +1024,19 @@ export async function executeHttpRequest(
     const durationMs = Math.round(performance.now() - startedAtPerf)
     const message = formatHttpRequestError(error)
     const isAbort = error instanceof Error && error.name === 'AbortError'
+    if (!networkIds.length) {
+      httpConsole.append({
+        kind: 'network',
+        level: 'error',
+        executionId,
+        message: `${interpolated.method} ${finalUrl || interpolated.url}`,
+        durationMs,
+        details: { error: message },
+      })
+    }
+    else {
+      finishHttpNetwork(networkIds.at(-1), { error: message }, durationMs)
+    }
 
     if (!current()) {
       return {

@@ -28,7 +28,7 @@ describe('quickJS worker boundary', () => {
   })
   it('has no host, network or filesystem capabilities, including constructor escape', async () => {
     const result = await run(
-      `mc.test('boundary', () => { for (const key of ['process', 'require', 'fetch', 'XMLHttpRequest', 'WebSocket', 'Buffer', 'window', 'electron', 'std', 'os', 'console']) mc.assert(typeof globalThis[key] === 'undefined'); mc.assert(mc.variables.get.constructor('return typeof process')() === 'undefined'); });`,
+      `mc.test('boundary', () => { for (const key of ['process', 'require', 'fetch', 'XMLHttpRequest', 'WebSocket', 'Buffer', 'window', 'electron', 'std', 'os', '__emitLog']) mc.assert(typeof globalThis[key] === 'undefined'); mc.assert(mc.variables.get.constructor('return typeof process')() === 'undefined'); });`,
     )
     expect(result.output?.tests).toEqual([{ name: 'boundary', ok: true }])
   })
@@ -120,5 +120,39 @@ describe('response JSON API', () => {
       new AbortController().signal,
     )
     expect(result.error).toBe('exception')
+  })
+})
+
+describe('script console', () => {
+  it('streams levels and structured arguments before an exception', async () => {
+    const messages: unknown[] = []
+    const result = await executeScript(
+      'console.log("hello", { value: 42 }); console.info("info"); console.warn("warn"); console.error("error"); throw Error("private");',
+      input,
+      new AbortController().signal,
+      message => messages.push(message),
+    )
+    expect(result.error).toBe('exception')
+    expect(messages).toEqual([
+      { level: 'log', args: ['hello', { value: 42 }] },
+      { level: 'info', args: ['info'] },
+      { level: 'warn', args: ['warn'] },
+      { level: 'error', args: ['error'] },
+    ])
+  })
+  it('supports clear and cycles while bounding log floods', async () => {
+    const messages: { level: string, args: unknown[] }[] = []
+    await executeScript(
+      'const value = {}; value.self = value; console.log(value); console.clear(); for(let i=0;i<1000;i++) console.log(i);',
+      input,
+      new AbortController().signal,
+      message => messages.push(message),
+    )
+    expect(messages[0]).toEqual({
+      level: 'log',
+      args: [{ self: '[Circular]' }],
+    })
+    expect(messages[1]).toEqual({ level: 'clear', args: [] })
+    expect(messages.length).toBeLessThanOrEqual(100)
   })
 })

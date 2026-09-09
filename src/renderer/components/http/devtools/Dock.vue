@@ -105,7 +105,6 @@ function toggle(tab: 'console' | 'terminal') {
       <Button
         variant="ghost"
         size="sm"
-        :class="{ 'bg-accent': open && active === 'console' }"
         :aria-expanded="open && active === 'console'"
         @click="toggle('console')"
       >
@@ -116,7 +115,6 @@ function toggle(tab: 'console' | 'terminal') {
       <Button
         variant="ghost"
         size="sm"
-        :class="{ 'bg-accent': open && active === 'terminal' }"
         :aria-expanded="open && active === 'terminal'"
         @click="toggle('terminal')"
       >

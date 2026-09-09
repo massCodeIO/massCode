@@ -10,6 +10,7 @@ const entry = z.object({
 })
 export const httpCollectionSchema = z
   .object({
+    postResponseOrder: z.enum(['parent-first', 'child-first']).optional(),
     documentation: z.string().max(1048576),
     version: z.string().max(256),
     headers: z.array(entry).max(1000),
@@ -37,7 +38,10 @@ export const httpCollectionSchema = z
         })
       }),
     auth: z.object({
-      type: z.enum(['none', 'inherit', 'bearer', 'basic']),
+      type: z.enum(['none', 'inherit', 'bearer', 'basic', 'apikey']),
+      key: z.string().optional(),
+      value: z.string().optional(),
+      in: z.enum(['header', 'query']).optional(),
       token: z.string().optional(),
       username: z.string().optional(),
       password: z.string().optional(),
@@ -101,6 +105,7 @@ export function resolveHttpFolderConfig(
     const settings = applyHttpCollection(config, result)
     result = {
       ...settings,
+      postResponseOrder: config.postResponseOrder ?? result?.postResponseOrder,
       variables: [
         ...new Map(
           [...(result?.variables ?? []), ...config.variables]
@@ -145,7 +150,7 @@ interface RequestSettings {
     description?: string
   }[]
   auth: {
-    type: 'none' | 'inherit' | 'basic' | 'bearer'
+    type: 'none' | 'inherit' | 'basic' | 'bearer' | 'apikey'
     token?: string
     username?: string
     password?: string

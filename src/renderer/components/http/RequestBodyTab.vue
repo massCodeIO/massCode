@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import type { HttpRequestDraft } from '@/composables'
-import type { HttpBodyType } from '~/main/types/http'
+import type { HttpBodyType, HttpFormDataEntry } from '~/main/types/http'
 import * as Select from '@/components/ui/shadcn/select'
 import { useHttpSettings } from '@/composables'
-import { i18n } from '@/electron'
+import { i18n, ipc } from '@/electron'
+import { readHttpFormEntries } from '~/shared/httpForm'
 
 const draft = defineModel<HttpRequestDraft>({ required: true })
 const { settings } = useHttpSettings()
 
 const BODY_TYPES: { value: HttpBodyType, labelKey: string }[] = [
+  { value: 'binary', labelKey: 'spaces.http.editor.body.typeBinary' },
   { value: 'none', labelKey: 'spaces.http.editor.body.typeNone' },
   { value: 'graphql', labelKey: 'spaces.http.graphql.title' },
   { value: 'json', labelKey: 'spaces.http.editor.body.typeJson' },
@@ -36,11 +38,52 @@ const FORM_DATA_COLUMNS = [
     label: i18n.t('spaces.http.editor.keyValue.value'),
     placeholder: i18n.t('spaces.http.editor.keyValue.value'),
   },
+  {
+    key: 'description',
+    label: i18n.t('spaces.http.editor.keyValue.description'),
+    placeholder: i18n.t('spaces.http.editor.keyValue.description'),
+  },
 ]
+
+const formEntries = ref<HttpFormDataEntry[]>([])
+watch(
+  () => [draft.value.body, draft.value.formData] as const,
+  () => {
+    const entries = readHttpFormEntries(draft.value.body, draft.value.formData)
+    if (JSON.stringify(entries) !== JSON.stringify(formEntries.value))
+      formEntries.value = entries.map(entry => ({ ...entry }))
+  },
+  { immediate: true, deep: true },
+)
+watch(
+  formEntries,
+  (entries) => {
+    if (draft.value.bodyType !== 'form-urlencoded')
+      return
+    if (
+      JSON.stringify(entries)
+      === JSON.stringify(
+        readHttpFormEntries(draft.value.body, draft.value.formData),
+      )
+    ) {
+      return
+    }
+    draft.value.formData = entries.map(entry => ({ ...entry }))
+    draft.value.body = null
+  },
+  { deep: true },
+)
 
 const bodyType = computed({
   get: () => draft.value.bodyType,
   set: (value) => {
+    const previous = draft.value.bodyType
+    if (
+      previous !== value
+      && (value === 'multipart' || value === 'form-urlencoded')
+    ) {
+      draft.value.body = null
+    }
     draft.value.bodyType = value
     if (value === 'graphql') {
       draft.value.method = 'POST'
@@ -60,7 +103,18 @@ const bodyText = computed({
   },
 })
 
-function addFormDataRow() {
+async function chooseFile(entry?: HttpFormDataEntry) {
+  const path = await ipc.invoke('main-menu:open-dialog', {
+    properties: ['openFile'],
+  })
+  if (!path)
+    return
+  if (entry)
+    entry.value = path
+  else bodyText.value = path
+}
+
+function addFormDataRow(): HttpFormDataEntry {
   return { key: '', type: 'text', value: '' }
 }
 </script>
@@ -89,11 +143,7 @@ function addFormDataRow() {
       v-model="draft.body"
     />
     <HttpBodyEditor
-      v-if="
-        bodyType === 'json'
-          || bodyType === 'text'
-          || bodyType === 'form-urlencoded'
-      "
+      v-if="bodyType === 'json' || bodyType === 'text'"
       v-model="bodyText"
       :language="bodyType"
       :wrap-lines="settings.wrapLines"
@@ -102,6 +152,27 @@ function addFormDataRow() {
     />
 
     <div
+      v-if="bodyType === 'binary'"
+      class="flex gap-2"
+    >
+      <UiInput
+        v-model="bodyText"
+        class="flex-1"
+        :placeholder="i18n.t('spaces.http.editor.body.filePlaceholder')"
+      />
+      <UiButton
+        variant="outline"
+        @click="chooseFile()"
+      >
+        {{ i18n.t("spaces.http.editor.body.chooseFile") }}
+      </UiButton>
+    </div>
+    <HttpKeyValueTable
+      v-else-if="bodyType === 'form-urlencoded'"
+      v-model="formEntries"
+      :create-entry="addFormDataRow"
+    />
+    <div
       v-else-if="bodyType === 'multipart'"
       class="min-h-0 flex-1"
     >
@@ -109,9 +180,7 @@ function addFormDataRow() {
         v-model="draft.formData"
         :fill="false"
         :columns="FORM_DATA_COLUMNS"
-        :show-enabled="false"
         actions="delete"
-        grid-template-columns="1fr 120px 1fr 24px"
         :create-entry="addFormDataRow"
       >
         <template #cell-type="{ entry }">
@@ -130,16 +199,25 @@ function addFormDataRow() {
           </Select.Select>
         </template>
         <template #cell-value="{ entry, column }">
-          <UiInput
-            v-model="entry.value"
-            class="!h-6"
-            variant="ghost"
-            :placeholder="
-              entry.type === 'file'
-                ? i18n.t('spaces.http.editor.body.filePlaceholder')
-                : column.placeholder
-            "
-          />
+          <div class="flex gap-1">
+            <UiInput
+              v-model="entry.value"
+              class="!h-6"
+              variant="ghost"
+              :placeholder="
+                entry.type === 'file'
+                  ? i18n.t('spaces.http.editor.body.filePlaceholder')
+                  : column.placeholder
+              "
+            />
+            <UiButton
+              v-if="entry.type === 'file'"
+              variant="ghost"
+              @click="chooseFile(entry)"
+            >
+              {{ i18n.t("spaces.http.editor.body.chooseFile") }}
+            </UiButton>
+          </div>
         </template>
       </HttpKeyValueTable>
     </div>

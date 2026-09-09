@@ -42,6 +42,8 @@ const { parentPort, workerData } = require('node:worker_threads');
       const api = {
         request: freeze(input.request),
         response: freeze(input.response),
+        environment: { get(name) { checkName(name); return (input.environment || {})[name]; } },
+        collectionVariables: { get(name) { checkName(name); return (input.collectionVariables || {})[name]; } },
         variables: {
           get(name) { checkName(name); return variables[name]; },
           set(name, value) {

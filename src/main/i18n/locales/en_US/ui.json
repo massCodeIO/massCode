@@ -484,7 +484,7 @@
           "graphqlVariables": "GraphQL variables could not be parsed as a JSON object. The original value was kept; adapt it before sending.",
           "disabled": "Disabled rule or event was not imported.",
           "unsupportedScript": "Unsupported or malformed script: all scripts for this request are blocked. Original code is retained as comments for manual adaptation.",
-          "variables": "Temporary variables use massCode Session or isolated Runner variables. Only strings are supported; reads also see the selected environment. Source collection/environment scopes are not reproduced.",
+          "variables": "Temporary writes use massCode Session or isolated Runner variables. Reads resolve Session/Runner, environment, then collection variables; explicit scope getters read their own scope. Only string values are supported. Persistent environment and collection writes are unsupported.",
           "sourceLimit": "Script input or generated code exceeds import limits. The request is blocked. Keep the original file: its full code may not fit in the imported request.",
           "unsupportedAssertion": "Unsupported, dynamic, malformed, or excess assertion was not imported. Keep the source file and recreate this rule manually.",
           "depthLimit": "Folder nesting exceeds the import limit; nested items were not imported.",
@@ -524,7 +524,10 @@
             "file": "File"
           },
           "filePlaceholder": "Select file path",
-          "jsonInvalid": "Invalid JSON"
+          "jsonInvalid": "Invalid JSON",
+          "fileUnavailable": "The body file is unavailable. Select an existing local file or update its path.",
+          "chooseFile": "Choose file",
+          "typeBinary": "Binary file"
         },
         "auth": {
           "typeNone": "No Auth",
@@ -537,7 +540,10 @@
           "password": "Password",
           "passwordPlaceholder": "Enter password",
           "plainTextHint": "Auth values are stored in the vault as plain text. For sensitive data create a secret environment variable and reference it as {{API_KEY}}.",
-          "typeInherit": "Inherit from parent"
+          "typeInherit": "Inherit from parent",
+          "typeApiKey": "API Key",
+          "apiKeyHeader": "Header",
+          "apiKeyQuery": "Query parameter"
         },
         "description": {
           "placeholder": "Add a description for this request"
@@ -615,6 +621,7 @@
           "language": "Language",
           "interpolate": "Interpolate variables",
           "error": "Unable to generate code for this request.",
+          "binaryUnsupported": "Preview is unavailable for binary files. Send reads the file from the specified local path.",
           "multipartFilesUnsupported": "File uploads are not supported by this generator. Use cURL, JavaScript, Node.js, Swift or Python Requests.",
           "urlTemplateUnsupported": "Resolve the base URL or protocol variable, or use Python Requests to keep it as a template."
         },
@@ -1003,10 +1010,7 @@
     "fit": "Fit",
     "generate": "Generate",
     "saveAs": "Save as",
-    "update": [
-      "Go to GitHub",
-      "OK"
-    ],
+    "update": ["Go to GitHub", "OK"],
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "darkMode": "Dark Mode",

@@ -18,12 +18,14 @@ const httpBodyType = t.Union([
   t.Literal('text'),
   t.Literal('form-urlencoded'),
   t.Literal('multipart'),
+  t.Literal('binary'),
 ])
 
 const httpAuthType = t.Union([
   t.Literal('inherit'),
   t.Literal('none'),
   t.Literal('bearer'),
+  t.Literal('apikey'),
   t.Literal('basic'),
 ])
 
@@ -42,6 +44,8 @@ const httpQueryEntry = t.Object({
 })
 
 const httpFormDataEntry = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  description: t.Optional(t.String()),
   key: t.String(),
   type: t.Union([t.Literal('text'), t.Literal('file')]),
   value: t.String(),
@@ -49,6 +53,9 @@ const httpFormDataEntry = t.Object({
 
 const httpAuth = t.Object({
   type: httpAuthType,
+  key: t.Optional(t.String()),
+  value: t.Optional(t.String()),
+  in: t.Optional(t.Union([t.Literal('header'), t.Literal('query')])),
   token: t.Optional(t.String()),
   username: t.Optional(t.String()),
   password: t.Optional(t.String()),

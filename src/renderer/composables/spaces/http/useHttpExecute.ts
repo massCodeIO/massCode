@@ -123,11 +123,13 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     sessionNames.value = response.sessionNames ?? sessionNames.value
     if (response.error) {
       lastError.value
-        = response.error === 'HTTP_SCRIPT_FAILED'
-          ? i18n.t('spaces.http.scripts.failed')
-          : response.error.startsWith('GRAPHQL_')
-            ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
-            : response.error
+        = response.error === 'HTTP_BODY_FILE_UNAVAILABLE'
+          ? i18n.t('spaces.http.editor.body.fileUnavailable')
+          : response.error === 'HTTP_SCRIPT_FAILED'
+            ? i18n.t('spaces.http.scripts.failed')
+            : response.error.startsWith('GRAPHQL_')
+              ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+              : response.error
     }
     return response
   }

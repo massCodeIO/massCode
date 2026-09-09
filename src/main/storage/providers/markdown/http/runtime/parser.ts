@@ -37,6 +37,7 @@ const HTTP_BODY_TYPES: HttpBodyType[] = [
   'text',
   'form-urlencoded',
   'multipart',
+  'binary',
 ]
 
 export function splitFrontmatter(source: string): {
@@ -124,7 +125,7 @@ function normalizeQuery(raw: unknown): HttpQueryEntry[] {
 function normalizeFormData(raw: unknown): HttpFormDataEntry[] {
   return normalizeKeyValueEntries<HttpFormDataEntry>(raw, (entry) => {
     const type = entry.type === 'file' ? 'file' : 'text'
-    return { type }
+    return { type, ...pickKvExtras(entry) }
   })
 }
 
@@ -135,11 +136,20 @@ function normalizeAuth(raw: unknown): HttpAuth {
 
   const data = raw as Record<string, unknown>
   const type
-    = data.type === 'inherit' || data.type === 'bearer' || data.type === 'basic'
+    = data.type === 'inherit'
+      || data.type === 'bearer'
+      || data.type === 'basic'
+      || data.type === 'apikey'
       ? data.type
       : 'none'
 
   const auth: HttpAuth = { type }
+  if (typeof data.key === 'string')
+    auth.key = data.key
+  if (typeof data.value === 'string')
+    auth.value = data.value
+  if (data.in === 'header' || data.in === 'query')
+    auth.in = data.in
   if (typeof data.token === 'string')
     auth.token = data.token
   if (typeof data.username === 'string')

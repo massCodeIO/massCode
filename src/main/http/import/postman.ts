@@ -9,6 +9,7 @@ import type {
   HttpImportResult,
   HttpImportWarning,
 } from './types'
+import { emptyHttpCollection } from '../../../shared/httpCollection'
 import { validateImportFiles, validateImportTree } from './limits'
 import {
   addWarning,
@@ -46,14 +47,6 @@ function asString(value: unknown): string {
 
 function parseDescription(value: unknown): string {
   return isRecord(value) ? asString(value.content) : asString(value)
-}
-
-function encodeFormPart(value: string): string {
-  // Keep variable tokens editable and resolvable after importing the form.
-  return value
-    .split(/(\{\{\s*[\w.-]+\s*\}\})/g)
-    .map((part, index) => (index % 2 ? part : encodeURIComponent(part)))
-    .join('')
 }
 
 function readJsonFile(file: HttpImportFile, warnings: HttpImportWarning[]) {
@@ -128,6 +121,18 @@ function parseAuth(
     return { type: 'none' }
   }
 
+  if (type === 'apikey') {
+    return {
+      type: 'apikey',
+      key: getKeyValueArrayValue(rawAuth.apikey, 'key') ?? '',
+      value: getKeyValueArrayValue(rawAuth.apikey, 'value') ?? '',
+      in:
+        getKeyValueArrayValue(rawAuth.apikey, 'in') === 'query'
+          ? 'query'
+          : 'header',
+    }
+  }
+
   if (type === 'bearer') {
     const token = getKeyValueArrayValue(rawAuth.bearer, 'token') ?? ''
     return { token, type: 'bearer' }
@@ -165,7 +170,8 @@ function parsePostmanQuery(rawUrl: unknown): HttpImportRequest['query'] {
     .filter(isRecord)
     .map(entry => ({
       description: parseDescription(entry.description) || undefined,
-      enabled: entry.disabled === true ? false : undefined,
+      enabled:
+        entry.disabled === true || entry.enabled === false ? false : undefined,
       key: asString(entry.key),
       value: asString(entry.value),
     }))
@@ -218,16 +224,22 @@ function parseBody(
   }
 
   if (mode === 'urlencoded') {
-    const body = asArray(rawBody.urlencoded)
-      .filter(isRecord)
-      .filter(entry => entry.disabled !== true && asString(entry.key))
-      .map(
-        entry =>
-          `${encodeFormPart(asString(entry.key))}=${encodeFormPart(asString(entry.value))}`,
-      )
-      .join('&')
-
-    return { body, bodyType: 'form-urlencoded', formData: [] }
+    return {
+      body: null,
+      bodyType: 'form-urlencoded',
+      formData: asArray(rawBody.urlencoded)
+        .filter(isRecord)
+        .map(entry => ({
+          key: asString(entry.key),
+          value: asString(entry.value),
+          type: 'text',
+          enabled:
+            entry.disabled === true || entry.enabled === false
+              ? false
+              : undefined,
+          description: parseDescription(entry.description) || undefined,
+        })),
+    }
   }
 
   if (mode === 'formdata') {
@@ -236,8 +248,12 @@ function parseBody(
       bodyType: 'multipart',
       formData: asArray(rawBody.formdata)
         .filter(isRecord)
-        .filter(entry => entry.disabled !== true && asString(entry.key))
         .map(entry => ({
+          enabled:
+            entry.disabled === true || entry.enabled === false
+              ? false
+              : undefined,
+          description: parseDescription(entry.description) || undefined,
           key: asString(entry.key),
           type: entry.type === 'file' ? 'file' : 'text',
           value: asString(entry.src || entry.value),
@@ -246,7 +262,6 @@ function parseBody(
   }
 
   if (mode === 'graphql') {
-    addWarning(warnings, source, 'GraphQL body imported as JSON')
     const graphql = isRecord(rawBody.graphql) ? { ...rawBody.graphql } : {}
     if (typeof graphql.variables === 'string') {
       try {
@@ -266,15 +281,25 @@ function parseBody(
       }
     }
     return {
-      body: JSON.stringify(graphql, null, 2),
-      bodyType: 'json',
+      body: JSON.stringify({
+        query: asString(graphql.query),
+        variables:
+          typeof graphql.variables === 'string'
+            ? graphql.variables
+            : JSON.stringify(graphql.variables ?? {}),
+        operationName: asString(graphql.operationName),
+      }),
+      bodyType: 'graphql',
       formData: [],
     }
   }
 
   if (mode === 'file') {
-    addWarning(warnings, source, 'Standalone file body skipped')
-    return { body: null, bodyType: 'none', formData: [] }
+    return {
+      body: isRecord(rawBody.file) ? asString(rawBody.file.src) : '',
+      bodyType: 'binary',
+      formData: [],
+    }
   }
 
   return { body: null, bodyType: 'none', formData: [] }
@@ -306,6 +331,38 @@ function parseVariables(
   }
 
   return variables
+}
+
+function parseCollectionConfig(
+  raw: UnknownRecord,
+  parent: boolean,
+  source: string,
+  warnings: HttpImportWarning[],
+) {
+  const config = emptyHttpCollection()
+  config.documentation = parseDescription(raw.description)
+  config.auth = parseAuth(raw.auth, source, warnings) ?? {
+    type: parent ? 'inherit' : 'none',
+  }
+  config.postResponseOrder = 'parent-first'
+  config.variables = asArray(raw.variable)
+    .filter(isRecord)
+    .map(entry => ({
+      key: asString(entry.key),
+      value: asString(entry.value),
+      enabled:
+        entry.disabled === true || entry.enabled === false ? false : undefined,
+      description: parseDescription(entry.description) || undefined,
+    }))
+  const imported = buildImportedRuntime(
+    postmanScripts(raw.event, source, warnings),
+    'postman',
+    source,
+    warnings,
+  )
+  if (imported.runtime)
+    config.runtime = imported.runtime
+  return config
 }
 
 function parseEnvironment(
@@ -344,7 +401,7 @@ function parseRequest(
   )
   const auth = resolveAuthConflict(
     headers,
-    parseAuth(request.auth, source, warnings) ?? context.auth,
+    parseAuth(request.auth, source, warnings) ?? { type: 'inherit' },
     source,
     warnings,
   )
@@ -362,7 +419,19 @@ function parseRequest(
   return {
     ...parts,
     ...body,
-    ...buildImportedRuntime(scripts, 'postman', source, warnings),
+    ...buildImportedRuntime(
+      [
+        ...postmanScripts(item.event, source, warnings),
+        ...(item.variable !== undefined
+          ? [{ source, phase: 'preRequest' as const, code: '', invalid: true }]
+          : []),
+      ],
+      'postman',
+      source,
+      warnings,
+    ),
+    scriptStatus: buildImportedRuntime(scripts, 'postman', source, [])
+      .scriptStatus,
     auth,
     description: parseDescription(request.description),
     folderId,
@@ -396,19 +465,13 @@ function walkItems(
     const nextContext = { ...context, auth: itemAuth ?? context.auth }
 
     if (Array.isArray(item.item)) {
-      if (item.variable !== undefined) {
-        runtimeWarning(warnings, source, 'scopedVariables')
-        nextContext.scripts = [
-          ...nextContext.scripts,
-          { source, phase: 'preRequest', code: '', invalid: true },
-        ]
-      }
       const id = asString(item.id || item._postman_id) || `${source}:${index}`
       const folder: HttpImportFolder = {
         id,
         name,
         parentId,
         description: parseDescription(item.description),
+        collectionConfig: parseCollectionConfig(item, true, source, warnings),
       }
       collection.folders.push(folder)
       if (source.split('/').length > 32) {
@@ -451,6 +514,12 @@ function parseCollection(
   }
   const collection: HttpImportCollection = {
     description: parseDescription(info.description),
+    collectionConfig: parseCollectionConfig(
+      { ...raw, description: info.description },
+      false,
+      name,
+      warnings,
+    ),
     folders: [],
     name,
     requests: [],
@@ -484,15 +553,6 @@ export function parsePostmanFiles(files: HttpImportFile[]): HttpImportResult {
 
     if (isPostmanCollection(raw)) {
       collections.push(parseCollection(raw, file.name, warnings))
-
-      const variables = parseVariables(raw.variable, file.name, warnings)
-      if (Object.keys(variables).length > 0) {
-        const infoName = isRecord(raw.info) ? raw.info.name : undefined
-        environments.push({
-          name: `${normalizeImportName(infoName, file.name.replace(/\.json$/i, ''))} Variables`,
-          variables,
-        })
-      }
 
       continue
     }

@@ -2,11 +2,13 @@ import type { HttpRuntime } from '../../../../shared/httpRuntime'
 import type { HttpExecutePayload } from '../../../types/http'
 import type { HttpImportRequest } from '../types'
 import { Buffer } from 'node:buffer'
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
+import { buildSchema, graphql as runGraphql } from 'graphql'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeHttpRequest } from '../../runtime/execute'
 import {
@@ -242,13 +244,31 @@ describe('postman data roundtrip', () => {
     mocks.request.mockImplementation((url, options) =>
       realUndici.request(url, { ...options, dispatcher }),
     )
+    const tempDir = mkdtempSync(join(tmpdir(), 'mc-parity-'))
+    const binaryPath = join(tempDir, 'bytes.bin')
+    const bytes = Buffer.from([0, 255, 128, 13, 10, 65])
+    writeFileSync(binaryPath, bytes)
     const server = createServer(async (request, response) => {
       const chunks = []
       for await (const chunk of request) chunks.push(chunk)
       response.setHeader('Content-Type', 'application/json')
+      if (request.url === '/graphql') {
+        const body = JSON.parse(Buffer.concat(chunks).toString())
+        const result = await runGraphql({
+          schema: buildSchema('type Query { id: String! }'),
+          source: body.query,
+          variableValues: body.variables,
+          rootValue: { id: () => 'qa-1' },
+        })
+        response.end(JSON.stringify(result))
+        return
+      }
       response.end(
         JSON.stringify({
+          method: request.method,
+          url: request.url,
           headers: request.headers,
+          base64: Buffer.concat(chunks).toString('base64'),
           body: Buffer.concat(chunks).toString(),
         }),
       )
@@ -332,18 +352,127 @@ describe('postman data roundtrip', () => {
         ['empty', ''],
         ['variable', 'a&b=c+d% Привет'],
       ])
+      const base = result.collections[0].requests[0]
+      for (const method of [
+        'GET',
+        'HEAD',
+        'OPTIONS',
+        'DELETE',
+        'PATCH',
+        'PUT',
+      ] as const) {
+        const result = await executeHttpRequest({
+          requestId: null,
+          environmentId: null,
+          request: { ...base, method, bodyType: 'none', body: null },
+        })
+        expect(result.status).toBe(200)
+        if (method === 'HEAD')
+          expect(result.body).toBe('')
+        else expect(JSON.parse(result.body).method).toBe(method)
+      }
+      const xml = '<root>Привет &amp; QA</root>'
+      const xmlResult = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: {
+          ...base,
+          bodyType: 'text',
+          body: xml,
+          headers: [{ key: 'Content-Type', value: 'application/xml' }],
+        },
+      })
+      expect(JSON.parse(xmlResult.body).body).toBe(xml)
+      for (const location of ['header', 'query'] as const) {
+        const authenticated = await executeHttpRequest({
+          requestId: null,
+          environmentId: null,
+          request: {
+            ...base,
+            bodyType: 'none',
+            body: null,
+            auth: { type: 'apikey', in: location, key: 'qa-key', value: 'a&b' },
+          },
+        })
+        const echoed = JSON.parse(authenticated.body)
+        if (location === 'header') {
+          expect(echoed.headers['qa-key']).toBe('a&b')
+        }
+        else {
+          expect(
+            new URL(echoed.url, 'http://localhost').searchParams.get('qa-key'),
+          ).toBe('a&b')
+        }
+      }
+      const binary = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: { ...base, bodyType: 'binary', body: binaryPath },
+      })
+      expect(binary.error).toBeUndefined()
+      expect(JSON.parse(binary.body).base64).toBe(bytes.toString('base64'))
+      const multipart = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: {
+          ...base,
+          bodyType: 'multipart',
+          body: null,
+          formData: [
+            { key: 'upload', value: binaryPath, type: 'file' },
+            {
+              key: 'off',
+              value: '/missing/disabled',
+              type: 'file',
+              enabled: false,
+            },
+            { key: 'text', value: 'hello', type: 'text' },
+          ],
+        },
+      })
+      expect(multipart.error).toBeUndefined()
+      const multipartBytes = Buffer.from(
+        JSON.parse(multipart.body).base64,
+        'base64',
+      )
+      expect(multipartBytes.includes(bytes)).toBe(true)
+      expect(multipartBytes.toString()).toContain('name="text"')
+      expect(multipartBytes.toString()).not.toContain('name="off"')
+      const missing = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: {
+          ...base,
+          bodyType: 'binary',
+          body: join(tempDir, 'missing'),
+        },
+      })
+      expect(missing.error).toBe('HTTP_BODY_FILE_UNAVAILABLE')
       const graphql = await executeHttpRequest({
         requestId: null,
         environmentId: null,
         request: result.collections[0].requests[1],
       })
       expect(graphql.status).toBe(200)
-      expect(JSON.parse(JSON.parse(graphql.body).body)).toEqual({
-        query: 'query { id }',
-        variables: { id: 'qa-1' },
+      expect(JSON.parse(graphql.body)).toEqual({ data: { id: 'qa-1' } })
+      const invalid = await executeHttpRequest({
+        requestId: null,
+        environmentId: null,
+        request: {
+          ...result.collections[0].requests[1],
+          body: JSON.stringify({
+            query: 'query { missing }',
+            variables: '{}',
+            operationName: '',
+          }),
+        },
       })
+      expect(JSON.parse(invalid.body).errors[0].message).toContain(
+        'Cannot query field',
+      )
     }
     finally {
+      rmSync(tempDir, { recursive: true, force: true })
       await dispatcher.close()
       server.closeAllConnections()
       await new Promise<void>((resolve, reject) =>

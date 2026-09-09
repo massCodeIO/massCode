@@ -597,7 +597,7 @@ function sanitizeAppStore(value: unknown): AppStore {
           readNumber(
             httpLayoutSource,
             'inspectorWidth',
-            APP_STORE_DEFAULTS.http.layout.inspectorWidth,
+            APP_STORE_DEFAULTS.http.layout.inspectorWidth ?? 340,
           ),
         ),
         collectionsOpen: httpLayoutSource.collectionsOpen !== false,

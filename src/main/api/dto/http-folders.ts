@@ -8,6 +8,9 @@ const entry = t.Object({
   description: t.Optional(t.String()),
 })
 const collectionConfig = t.Object({
+  postResponseOrder: t.Optional(
+    t.Union([t.Literal('parent-first'), t.Literal('child-first')]),
+  ),
   documentation: t.String({ maxLength: 1048576 }),
   version: t.String({ maxLength: 256 }),
   headers: t.Array(entry, { maxItems: 1000 }),
@@ -18,7 +21,11 @@ const collectionConfig = t.Object({
       t.Literal('inherit'),
       t.Literal('basic'),
       t.Literal('bearer'),
+      t.Literal('apikey'),
     ]),
+    key: t.Optional(t.String()),
+    value: t.Optional(t.String()),
+    in: t.Optional(t.Union([t.Literal('header'), t.Literal('query')])),
     token: t.Optional(t.String()),
     username: t.Optional(t.String()),
     password: t.Optional(t.String()),

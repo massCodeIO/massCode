@@ -5,13 +5,14 @@ import {
   createRenderer,
   defineComponent,
   nextTick,
+  onMounted,
   reactive,
   ref,
   ssrContextKey,
   watch,
 } from 'vue'
 
-Object.assign(globalThis, { computed, ref, watch })
+Object.assign(globalThis, { computed, ref, watch, onMounted })
 const cleanup: Array<() => void> = []
 
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
@@ -46,7 +47,11 @@ async function setup() {
     i18n: { t: (key: string) => key },
     ipc: { invoke },
   }))
+  vi.doMock('@/composables/spaces/http/useHttpHistory', () => ({
+    useHttpHistory: () => ({ history: ref([]), getHttpHistory: vi.fn() }),
+  }))
   vi.doMock('@/composables', () => ({
+    useHttpFolders: () => ({ folders: ref([]) }),
     useHttpRequests: () => ({
       currentDraft,
       currentRequest: ref({ name: 'Request' }),

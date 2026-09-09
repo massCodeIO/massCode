@@ -154,6 +154,14 @@ describe('http folders storage', () => {
             schema: 'postman',
             description: '# Roundtrip QA',
           },
+          auth: {
+            type: 'apikey',
+            apikey: [
+              { key: 'key', value: 'X-Key' },
+              { key: 'value', value: '{{token}}' },
+            ],
+          },
+          variable: [{ key: 'token', value: 'collection-value' }],
           item: [
             {
               name: 'Folder',
@@ -162,7 +170,18 @@ describe('http folders storage', () => {
                 {
                   name: 'Request',
                   request: {
-                    method: 'GET',
+                    method: 'POST',
+                    body: {
+                      mode: 'urlencoded',
+                      urlencoded: [
+                        {
+                          key: 'field',
+                          value: 'a&b',
+                          disabled: true,
+                          description: 'Form description',
+                        },
+                      ],
+                    },
                     description: 'Request **QA**.',
                     header: [
                       {
@@ -197,7 +216,12 @@ describe('http folders storage', () => {
     const folders = createHttpFoldersStorage().getFolders()
     expect(
       folders.find(folder => folder.name === 'QA')?.collectionConfig,
-    ).toMatchObject({ documentation: '# Roundtrip QA' })
+    ).toMatchObject({
+      documentation: '# Roundtrip QA',
+      auth: { type: 'apikey', key: 'X-Key', value: '{{token}}' },
+      variables: [{ key: 'token', value: 'collection-value' }],
+      postResponseOrder: 'parent-first',
+    })
     expect(
       folders.find(folder => folder.name === 'Folder')?.collectionConfig,
     ).toMatchObject({
@@ -206,6 +230,16 @@ describe('http folders storage', () => {
     })
     const requests = createHttpRequestsStorage().getRequests({})
     const saved = createHttpRequestsStorage().getRequestById(requests[0].id)!
+    expect(saved.body).toBeNull()
+    expect(saved.formData).toEqual([
+      {
+        key: 'field',
+        value: 'a&b',
+        type: 'text',
+        enabled: false,
+        description: 'Form description',
+      },
+    ])
     expect(saved.description).toBe('Request **QA**.')
     expect(saved.headers[0].description).toBe('Expected format')
     expect(saved.query[0]).toMatchObject({

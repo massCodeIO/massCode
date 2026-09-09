@@ -154,6 +154,9 @@ export interface AppStore {
     contentSort: ContentSortState
     layout: {
       mode: SpaceLayoutMode
+      bottomOpen?: boolean
+      inspectorOpen?: boolean
+      inspectorWidth?: number
       environmentsListHeight: number
       collectionsOpen?: boolean
       environmentsOpen?: boolean

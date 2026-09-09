@@ -2,15 +2,14 @@ import type { HttpRequestDraft } from '@/composables'
 import type { HarRequest } from 'httpsnippet'
 import type { HttpAuth, HttpHeaderEntry } from '~/main/types/http'
 import type { HttpCollectionConfig } from '~/shared/httpCollection'
+import { applyHttpApiKey } from '~/shared/httpAuth'
 import {
   applyHttpCollection,
   collectionVariables,
 } from '~/shared/httpCollection'
+import { buildHttpFormBody } from '~/shared/httpForm'
 import { buildGraphqlBody } from '~/shared/httpGraphql'
-import {
-  interpolateHttpFormBody,
-  interpolateHttpVariables,
-} from '~/shared/httpVariables'
+import { interpolateHttpVariables } from '~/shared/httpVariables'
 
 export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
@@ -191,7 +190,7 @@ function interpolateAuth(
   variables: Record<string, string>,
 ): HttpAuth {
   return {
-    type: auth.type,
+    ...auth,
     token:
       auth.token !== undefined
         ? interpolateHttpVariables(auth.token, variables)
@@ -211,6 +210,25 @@ function interpolateDraft(
   draft: HttpRequestDraft,
   variables: Record<string, string> | undefined,
 ): HttpRequestDraft {
+  draft = applyHttpApiKey(draft, variables)
+  draft = {
+    ...draft,
+    formData: draft.formData.filter(entry => entry.enabled !== false),
+  }
+  if (draft.bodyType === 'form-urlencoded') {
+    const body = buildHttpFormBody(draft.body, draft.formData, variables)
+    // The body has already been interpolated and encoded exactly once.
+    return {
+      ...interpolateDraft(
+        { ...draft, bodyType: 'text', body: null },
+        variables,
+      ),
+      bodyType: 'form-urlencoded',
+      body,
+    }
+  }
+  if (draft.bodyType === 'binary')
+    throw new Error('HTTP_PREVIEW_BINARY_UNSUPPORTED')
   if (draft.bodyType === 'graphql') {
     if (draft.method !== 'POST')
       throw new Error('GRAPHQL_METHOD')
@@ -255,9 +273,7 @@ function interpolateDraft(
     })),
     body:
       draft.body !== null
-        ? draft.bodyType === 'form-urlencoded'
-          ? interpolateHttpFormBody(draft.body, variables)
-          : interpolateHttpVariables(draft.body, variables)
+        ? interpolateHttpVariables(draft.body, variables)
         : draft.body,
     formData: draft.formData.map(entry => ({
       ...entry,

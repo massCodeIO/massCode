@@ -37,6 +37,7 @@ function createUniqueFolder(
   name: string,
   parentId: number | null,
   description?: string,
+  collectionConfig?: HttpImportCollection['collectionConfig'],
 ): { id: number, name: string } {
   const baseName = normalizeImportName(name, 'Imported')
 
@@ -47,12 +48,12 @@ function createUniqueFolder(
         name: candidate,
         parentId,
       })
-      if (description) {
+      if (description || collectionConfig) {
         storage.folders.updateFolder(id, {
-          collectionConfig: {
+          collectionConfig: collectionConfig ?? {
             ...emptyHttpCollection(),
             auth: { type: parentId === null ? 'none' : 'inherit' },
-            documentation: description,
+            documentation: description ?? '',
           },
         })
       }
@@ -176,6 +177,7 @@ export function persistHttpImportResult(
       collection.name,
       null,
       collection.description,
+      collection.collectionConfig,
     )
     const folderIds = new Map<string, number>()
     summary.collections += 1
@@ -192,6 +194,7 @@ export function persistHttpImportResult(
         folder.name,
         parentId,
         folder.description,
+        folder.collectionConfig,
       )
       folderIds.set(folder.id, created.id)
       summary.folders += 1

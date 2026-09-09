@@ -1,4 +1,5 @@
 import type { HttpRuntime } from '../../../../shared/httpRuntime'
+import type { HttpImportCollection } from '../types'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import JSZip from 'jszip'
@@ -40,11 +41,86 @@ async function execute(runtime: HttpRuntime) {
   return { pre, post }
 }
 
+async function executePostman(collection: HttpImportCollection, index: number) {
+  const request = collection.requests[index]
+  const folders = []
+  let id = request.folderId
+  while (id) {
+    const folder = collection.folders.find(folder => folder.id === id)!
+    folders.unshift(folder.collectionConfig!.runtime)
+    id = folder.parentId
+  }
+  const scopes = [
+    collection.collectionConfig!.runtime,
+    ...folders,
+    request.runtime,
+  ]
+  let variables: Record<string, string | null> = {}
+  let pre: Awaited<ReturnType<typeof executeScript>> = { error: 'exception' }
+  for (const scope of scopes) {
+    pre = await executeScript(
+      scope?.scripts?.preRequest ?? '',
+      { request: {}, response: null, variables },
+      new AbortController().signal,
+    )
+    variables = pre.output?.variables ?? variables
+    if (pre.error)
+      return { pre, post: pre }
+  }
+  const tests = []
+  let post = pre
+  for (const scope of scopes) {
+    post = await executeScript(
+      scope?.scripts?.postResponse ?? '',
+      { request: {}, response, variables },
+      new AbortController().signal,
+    )
+    variables = post.output?.variables ?? variables
+    tests.push(...(post.output?.tests ?? []))
+    if (post.error)
+      break
+  }
+  return {
+    pre,
+    post: { ...post, output: { ...post.output, variables, tests } },
+  }
+}
+
+it('supports scoped reads and passing/failing Postman status assertions', async () => {
+  for (const status of [200, 201]) {
+    const translated = translateScript(
+      `pm.test("status", () => { pm.response.to.have.status(${status}); }); const value = pm.environment.get("x"); pm.variables.set("env", value); pm.variables.set("collection", pm.collectionVariables.get("x"));`,
+      'postman',
+      'postResponse',
+    )
+    const execution = await executeScript(
+      translated.code!,
+      {
+        request: {},
+        response,
+        variables: { x: 'local' },
+        environment: { x: 'env' },
+        collectionVariables: { x: 'collection' },
+      },
+      new AbortController().signal,
+    )
+    expect(execution.error).toBeUndefined()
+    expect(execution.output?.tests).toEqual([
+      { name: 'status', ok: status === 200 },
+    ])
+    expect(execution.output?.variables).toMatchObject({
+      env: 'env',
+      collection: 'collection',
+    })
+  }
+})
+
 describe('imported scripts in the actual isolated runtime', () => {
   it('preserves inherited scripts from a real Postman 12.26.5 v2.1 export', async () => {
-    const requests = parsePostmanFiles([
+    const collection = parsePostmanFiles([
       fixture('exports/postman-12.26.5.json'),
-    ]).collections[0].requests
+    ]).collections[0]
+    const requests = collection.requests
     const expected = parsePostmanFiles([
       fixture('postman-scripts.json'),
     ]).collections[0].requests.slice(0, 2)
@@ -56,7 +132,7 @@ describe('imported scripts in the actual isolated runtime', () => {
       'converted',
       'converted',
     ])
-    const { pre, post } = await execute(requests[0].runtime!)
+    const { pre, post } = await executePostman(collection, 0)
     expect(pre.output?.variables.order).toBe('collection/folder/request')
     expect(post.error).toBeUndefined()
     expect(post.output?.variables.token).toBe('demo-token')
@@ -67,7 +143,7 @@ describe('imported scripts in the actual isolated runtime', () => {
       })),
     )
     expect(
-      (await execute(requests[1].runtime!)).post.output?.tests,
+      (await executePostman(collection, 1)).post.output?.tests,
     ).toContainEqual({ name: 'Intentional failure', ok: false })
   })
 
@@ -128,7 +204,10 @@ describe('imported scripts in the actual isolated runtime', () => {
         = result.collections[0].requests
       expect(passing.scriptStatus).toBe('converted')
       expect(httpRuntimeSchema.safeParse(passing.runtime).success).toBe(true)
-      const { pre, post } = await execute(passing.runtime!)
+      const { pre, post }
+        = dialect === 'postman'
+          ? await executePostman(result.collections[0], 0)
+          : await execute(passing.runtime!)
       expect(pre.output?.variables.order).toBe('collection/folder/request')
       expect(post.error).toBeUndefined()
       expect(post.output?.variables.token).toBe('demo-token')
@@ -206,7 +285,6 @@ describe('imported scripts in the actual isolated runtime', () => {
   it.each([
     'pm.sendRequest("https://example.test")',
     'pm.environment.set("x", "secret")',
-    'pm.collectionVariables.get("x")',
     'pm.test("async", async () => {})',
     'pm.test("done", (done) => {})',
     'const pm = {};',

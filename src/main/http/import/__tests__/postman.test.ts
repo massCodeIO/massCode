@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { buildHttpFormBody } from '../../../../shared/httpForm'
+import { buildGraphqlBody } from '../../../../shared/httpGraphql'
 import { parsePostmanFiles } from '../postman'
 
 describe('parsePostmanFiles', () => {
@@ -45,19 +47,18 @@ describe('parsePostmanFiles', () => {
     ])
     expect(result.collections[0].requests).toEqual([
       expect.objectContaining({
-        auth: { token: '{{token}}', type: 'bearer' },
+        auth: { type: 'inherit' },
         method: 'GET',
         name: 'List users',
         query: [{ key: 'page', value: '1' }],
         url: '{{baseUrl}}/users',
       }),
     ])
-    expect(result.environments).toEqual([
-      {
-        name: 'API Variables',
-        variables: { baseUrl: 'https://api.example.com' },
-      },
-    ])
+    expect(result.environments).toEqual([])
+    expect(result.collections[0].collectionConfig).toMatchObject({
+      auth: { type: 'bearer', token: '{{token}}' },
+      variables: [{ key: 'baseUrl', value: 'https://api.example.com' }],
+    })
   })
 
   it('keeps explicit Authorization header over inherited auth', () => {
@@ -172,7 +173,13 @@ describe('postman roundtrip regressions', () => {
         { key: 'disabled', value: 'ignored', disabled: true },
       ],
     })
-    const body = result.collections[0].requests[0].body!
+    const request = result.collections[0].requests[0]
+    expect(request.body).toBeNull()
+    expect(request.formData.at(-1)).toMatchObject({
+      key: 'disabled',
+      enabled: false,
+    })
+    const body = buildHttpFormBody(request.body, request.formData)
     expect([...new URLSearchParams(body)]).toEqual([
       ['special', 'a&b=c+d%'],
       ['a&= +%', 'Привет мир'],
@@ -181,7 +188,9 @@ describe('postman roundtrip regressions', () => {
       ['empty', ''],
       ['variable', '{{ value }}'],
     ])
-    expect(body).toContain('{{ value }}')
+    expect(
+      request.formData.find(entry => entry.key === 'variable')?.value,
+    ).toBe('{{ value }}')
   })
 
   it.each(['{"id":"qa-1"}', '', '  ', { id: 'qa-1' }])(
@@ -191,7 +200,10 @@ describe('postman roundtrip regressions', () => {
         mode: 'graphql',
         graphql: { query: 'query { user { id } }', variables },
       })
-      expect(JSON.parse(result.collections[0].requests[0].body!)).toEqual({
+      expect(result.collections[0].requests[0].bodyType).toBe('graphql')
+      expect(
+        JSON.parse(buildGraphqlBody(result.collections[0].requests[0].body!)),
+      ).toEqual({
         query: 'query { user { id } }',
         variables:
           typeof variables === 'string' && !variables.trim()
@@ -286,5 +298,41 @@ describe('postman roundtrip regressions', () => {
     expect(collection.requests[0].query[0].description).toBe(
       'Search description',
     )
+  })
+})
+
+it('imports binary paths and API keys without discarding an explicit Authorization header', () => {
+  const result = parsePostmanFiles([
+    {
+      name: 'binary.json',
+      content: JSON.stringify({
+        info: { name: 'QA', schema: 'postman' },
+        item: [
+          {
+            name: 'Binary',
+            request: {
+              method: 'POST',
+              url: 'https://example.test',
+              auth: {
+                type: 'apikey',
+                apikey: [
+                  { key: 'key', value: 'X-Key' },
+                  { key: 'value', value: '{{token}}' },
+                  { key: 'in', value: 'header' },
+                ],
+              },
+              header: [{ key: 'Authorization', value: 'custom' }],
+              body: { mode: 'file', file: { src: '/local/file.bin' } },
+            },
+          },
+        ],
+      }),
+    },
+  ])
+  expect(result.collections[0].requests[0]).toMatchObject({
+    bodyType: 'binary',
+    body: '/local/file.bin',
+    auth: { type: 'apikey', key: 'X-Key', value: '{{token}}', in: 'header' },
+    headers: [{ key: 'Authorization', value: 'custom' }],
   })
 })

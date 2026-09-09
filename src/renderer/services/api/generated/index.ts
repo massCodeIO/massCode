@@ -569,6 +569,7 @@ export interface HttpFoldersAdd {
 
 export type HttpFoldersResponse = {
   collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
     /** @maxLength 1048576 */
     documentation: string;
     /** @maxLength 256 */
@@ -588,7 +589,10 @@ export type HttpFoldersResponse = {
       description?: string;
     }[];
     auth: {
-      type: "none" | "inherit" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
       token?: string;
       username?: string;
       password?: string;
@@ -658,6 +662,7 @@ export type HttpFoldersResponse = {
 
 export type HttpFoldersTreeResponse = {
   collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
     /** @maxLength 1048576 */
     documentation: string;
     /** @maxLength 256 */
@@ -677,7 +682,10 @@ export type HttpFoldersTreeResponse = {
       description?: string;
     }[];
     auth: {
-      type: "none" | "inherit" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
       token?: string;
       username?: string;
       password?: string;
@@ -748,6 +756,7 @@ export type HttpFoldersTreeResponse = {
 
 export interface HttpFoldersUpdate {
   collectionConfig?: {
+    postResponseOrder?: "parent-first" | "child-first";
     /** @maxLength 1048576 */
     documentation: string;
     /** @maxLength 256 */
@@ -767,7 +776,10 @@ export interface HttpFoldersUpdate {
       description?: string;
     }[];
     auth: {
-      type: "none" | "inherit" | "basic" | "bearer";
+      type: "none" | "inherit" | "basic" | "bearer" | "apikey";
+      key?: string;
+      value?: string;
+      in?: "header" | "query";
       token?: string;
       username?: string;
       password?: string;
@@ -1024,15 +1036,21 @@ export interface HttpRequestItemResponse {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   body: string | null;
   formData: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth: {
-    type: "inherit" | "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;
@@ -1106,14 +1124,20 @@ export type HttpRequestsResponse = {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   formData: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth: {
-    type: "inherit" | "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;
@@ -1161,15 +1185,21 @@ export interface HttpRequestsUpdate {
     | "graphql"
     | "text"
     | "form-urlencoded"
-    | "multipart";
+    | "multipart"
+    | "binary";
   body?: string | null;
   formData?: {
+    enabled?: boolean;
+    description?: string;
     key: string;
     type: "text" | "file";
     value: string;
   }[];
   auth?: {
-    type: "inherit" | "none" | "bearer" | "basic";
+    type: "inherit" | "none" | "bearer" | "apikey" | "basic";
+    key?: string;
+    value?: string;
+    in?: "header" | "query";
     token?: string;
     username?: string;
     password?: string;

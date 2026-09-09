@@ -114,12 +114,19 @@ watch(
       if (!cancelled) {
         previewErrorKey.value
           = error instanceof Error
-            && error.message.includes('HTTP_PREVIEW_MULTIPART_FILES_UNSUPPORTED')
-            ? 'multipartFilesUnsupported'
+            && error.message.includes('HTTP_PREVIEW_BINARY_UNSUPPORTED')
+            ? 'binaryUnsupported'
             : error instanceof Error
-              && error.message.includes('HTTP_PREVIEW_URL_TEMPLATE_UNSUPPORTED')
-              ? 'urlTemplateUnsupported'
-              : 'error'
+              && error.message.includes(
+                'HTTP_PREVIEW_MULTIPART_FILES_UNSUPPORTED',
+              )
+              ? 'multipartFilesUnsupported'
+              : error instanceof Error
+                && error.message.includes(
+                  'HTTP_PREVIEW_URL_TEMPLATE_UNSUPPORTED',
+                )
+                ? 'urlTemplateUnsupported'
+                : 'error'
         previewContent.value = ''
         previewError.value = true
       }

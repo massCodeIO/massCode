@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HttpAuthType } from '~/main/types/http'
+import type { HttpAuth, HttpAuthType } from '~/main/types/http'
 import { Input } from '@/components/ui/shadcn/input'
 import * as Select from '@/components/ui/shadcn/select'
 import { i18n } from '@/electron'
@@ -9,17 +9,13 @@ const props = withDefaults(defineProps<{ allowInherit?: boolean }>(), {
 })
 
 const draft = defineModel<{
-  auth: {
-    type: HttpAuthType
-    token?: string
-    username?: string
-    password?: string
-  }
+  auth: HttpAuth
 }>({ required: true })
 
 const AUTH_TYPES: { value: HttpAuthType, labelKey: string }[] = [
   { value: 'none', labelKey: 'spaces.http.editor.auth.typeNone' },
   { value: 'bearer', labelKey: 'spaces.http.editor.auth.typeBearer' },
+  { value: 'apikey', labelKey: 'spaces.http.editor.auth.typeApiKey' },
   { value: 'basic', labelKey: 'spaces.http.editor.auth.typeBasic' },
 ]
 
@@ -83,6 +79,36 @@ const authType = computed({
       />
     </div>
 
+    <div
+      v-else-if="authType === 'apikey'"
+      class="flex flex-col gap-3"
+    >
+      <Input
+        v-model="draft.auth.key"
+        :placeholder="i18n.t('spaces.http.editor.keyValue.key')"
+      />
+      <Input
+        v-model="draft.auth.value"
+        type="password"
+        :placeholder="i18n.t('spaces.http.editor.keyValue.value')"
+      />
+      <Select.Select
+        :model-value="draft.auth.in ?? 'header'"
+        @update:model-value="draft.auth.in = $event as 'header' | 'query'"
+      >
+        <Select.SelectTrigger class="w-48">
+          <Select.SelectValue />
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem value="header">
+            {{ i18n.t("spaces.http.editor.auth.apiKeyHeader") }}
+          </Select.SelectItem>
+          <Select.SelectItem value="query">
+            {{ i18n.t("spaces.http.editor.auth.apiKeyQuery") }}
+          </Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
+    </div>
     <div
       v-else-if="authType === 'basic'"
       class="flex flex-col gap-3"

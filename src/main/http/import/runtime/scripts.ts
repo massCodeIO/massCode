@@ -155,6 +155,17 @@ export function translateScript(
     if (node.type === 'CallExpression' && !node.optional) {
       const name = memberPath(node.callee)
       const args = node.arguments
+      if (
+        dialect === 'postman'
+        && (name === 'pm.environment.get'
+          || name === 'pm.collectionVariables.get')
+        && args.length === 1
+        && args[0].type === 'Literal'
+        && typeof args[0].value === 'string'
+      ) {
+        usesVariables = true
+        return `mc.${name === 'pm.environment.get' ? 'environment' : 'collectionVariables'}.get(${JSON.stringify(args[0].value)})`
+      }
       if (name === 'String' && args.length === 1)
         return `String(${expr(args[0], locals, depth + 1)})`
       if (
@@ -197,6 +208,15 @@ export function translateScript(
   }
 
   function assertion(node: AnyNode, locals: Set<string>): string {
+    if (
+      dialect === 'postman'
+      && phase === 'postResponse'
+      && node.type === 'CallExpression'
+      && memberPath(node.callee) === 'pm.response.to.have.status'
+      && node.arguments.length === 1
+    ) {
+      return `mc.assert(mc.response.status === ${expr(node.arguments[0], locals, 1)});`
+    }
     const args = node.type === 'CallExpression' ? node.arguments : []
     let base = node.type === 'CallExpression' ? node.callee : node
     const chain: string[] = []

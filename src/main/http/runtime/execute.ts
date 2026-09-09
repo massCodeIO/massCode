@@ -19,11 +19,13 @@ import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { Agent, request as undiciRequest } from 'undici'
+import { applyHttpApiKey } from '../../../shared/httpAuth'
 import {
   applyHttpCollection,
   collectionVariables,
   mergeHttpCollectionRuntime,
 } from '../../../shared/httpCollection'
+import { buildHttpFormBody } from '../../../shared/httpForm'
 import {
   buildGraphqlBody,
   graphqlResponseState,
@@ -35,7 +37,6 @@ import {
 import { hasHttpScripts } from '../../../shared/httpScripts'
 import {
   HTTP_SECRET_MASK,
-  interpolateHttpFormBody,
   interpolateHttpVariables,
   maskHttpSecretVariables,
 } from '../../../shared/httpVariables'
@@ -74,7 +75,7 @@ function interpolateAuth(
   variables: Record<string, string>,
 ): HttpAuth {
   return {
-    type: auth.type,
+    ...auth,
     token:
       auth.token !== undefined
         ? interpolate(auth.token, variables)
@@ -94,6 +95,7 @@ function interpolateRequest(
   request: HttpExecuteRequest,
   variables: Record<string, string>,
 ): HttpExecuteRequest {
+  request = applyHttpApiKey(request, variables)
   return {
     method: request.method,
     url: interpolate(request.url, variables),
@@ -107,19 +109,24 @@ function interpolateRequest(
     })),
     bodyType: request.bodyType,
     body:
-      request.body !== null && request.bodyType !== 'graphql'
-        ? request.bodyType === 'form-urlencoded'
-          ? interpolateHttpFormBody(request.body, variables)
-          : interpolate(request.body, variables)
-        : request.body,
-    formData: request.formData.map(entry => ({
-      key: entry.key,
-      type: entry.type,
-      value:
-        entry.type === 'text'
-          ? interpolate(entry.value, variables)
-          : entry.value,
-    })),
+      request.bodyType === 'form-urlencoded'
+        ? buildHttpFormBody(request.body, request.formData, variables)
+        : request.body !== null
+          && request.bodyType !== 'graphql'
+          && request.bodyType !== 'binary'
+          ? interpolate(request.body, variables)
+          : request.body,
+    formData: request.formData
+      .filter(entry => entry.enabled !== false)
+      .map(entry => ({
+        ...entry,
+        key: interpolate(entry.key, variables),
+        type: entry.type,
+        value:
+          entry.type === 'text'
+            ? interpolate(entry.value, variables)
+            : entry.value,
+      })),
     auth: interpolateAuth(request.auth, variables),
   }
 }
@@ -181,12 +188,26 @@ interface BuiltBody {
   contentType?: string
 }
 
+function readBodyFile(path: string) {
+  try {
+    return readFileSync(path)
+  }
+  catch {
+    throw new Error('HTTP_BODY_FILE_UNAVAILABLE')
+  }
+}
+
 export function buildBody(
   bodyType: HttpBodyType,
   body: string | null,
   formData: HttpFormDataEntry[],
 ): BuiltBody {
   switch (bodyType) {
+    case 'binary':
+      return {
+        body: readBodyFile(body ?? ''),
+        contentType: 'application/octet-stream',
+      }
     case 'none':
       return { body: undefined }
     case 'graphql':
@@ -197,16 +218,16 @@ export function buildBody(
       return { body: body ?? '', contentType: 'text/plain' }
     case 'form-urlencoded':
       return {
-        body: body ?? '',
+        body: buildHttpFormBody(body, formData),
         contentType: 'application/x-www-form-urlencoded',
       }
     case 'multipart': {
       const fd = new FormData()
       for (const entry of formData) {
-        if (!entry.key)
+        if (!entry.key || entry.enabled === false)
           continue
         if (entry.type === 'file' && entry.value) {
-          const buffer = readFileSync(entry.value)
+          const buffer = readBodyFile(entry.value)
           const blob = new Blob([buffer])
           fd.append(entry.key, blob, basename(entry.value))
         }
@@ -686,7 +707,13 @@ export async function executeHttpRequest(
     }
     const execution = await executeScript(
       code,
-      { request: scriptRequest, response, variables },
+      {
+        request: scriptRequest,
+        response,
+        variables,
+        environment: environment.variables,
+        collectionVariables: collectionVariables(config),
+      },
       controller.signal,
     )
     if (execution.error) {
@@ -723,6 +750,7 @@ export async function executeHttpRequest(
         ...secretValues,
         interpolated.auth.token ?? '',
         interpolated.auth.password ?? '',
+        interpolated.auth.value ?? '',
       ])
     }
     catch {
@@ -736,6 +764,20 @@ export async function executeHttpRequest(
 
   try {
     if (scripted) {
+      if (
+        subjects.some(subject =>
+          subject.scripts?.preRequest.startsWith(
+            'mc.assert(false); // IMPORT_REQUIRES_ADAPTATION',
+          ),
+        )
+      ) {
+        scriptResults.push({
+          phase: 'preRequest',
+          tests: [],
+          error: 'exception',
+        })
+        throw new Error('HTTP_SCRIPT_FAILED')
+      }
       if (!allTrusted()) {
         scriptResults.push({
           source: subjects.find(
@@ -883,7 +925,11 @@ export async function executeHttpRequest(
         durationMs: result.durationMs,
       }
       let completed = true
-      for (const subject of [...subjects].reverse()) {
+      const postSubjects
+        = config?.postResponseOrder === 'parent-first'
+          ? subjects
+          : [...subjects].reverse()
+      for (const subject of postSubjects) {
         const success = await phase('postResponse', subject, scriptResponse)
         completed = success && completed
       }
@@ -974,7 +1020,8 @@ export async function executeHttpRequest(
       error: isAbort
         ? `Timeout after ${timeoutMs}ms`
         : message === 'HTTP_SCRIPT_FAILED'
-          ? 'HTTP_SCRIPT_FAILED'
+          || message === 'HTTP_BODY_FILE_UNAVAILABLE'
+          ? message
           : secretValues.length
             ? HTTP_SECRET_MASK
             : message,

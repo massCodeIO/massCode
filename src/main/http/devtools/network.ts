@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { Buffer } from 'node:buffer'
 import { channel } from 'node:diagnostics_channel'
 import { Pool } from 'undici'
+import { cookieInterceptor } from '../cookies/transport'
 import { httpConsole } from './console'
 
 const BODY_PREVIEW_LIMIT = 64 * 1024
@@ -265,5 +266,8 @@ export function captureDispatcherFactory(
   origin: string | URL,
   options: object,
 ) {
-  return new Pool(origin, options).compose(captureResponseInterceptor)
+  return new Pool(origin, options).compose(
+    captureResponseInterceptor,
+    cookieInterceptor,
+  )
 }

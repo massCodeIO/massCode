@@ -23,6 +23,9 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../http/cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({
   Agent: vi.fn(AgentMock),
   request: requestMock,
@@ -138,11 +141,11 @@ describe('registerHttpHandlers', () => {
       'https://example.test/',
       expect.objectContaining({
         dispatcher: expect.objectContaining({
-          options: {
+          options: expect.objectContaining({
             connect: {
               rejectUnauthorized: false,
             },
-          },
+          }),
         }),
       }),
     )

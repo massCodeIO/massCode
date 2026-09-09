@@ -42,6 +42,9 @@ vi.mock('electron', () => ({
   },
 }))
 
+vi.mock('../../../http/cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({
   Agent: class {},
   request: requestMock,

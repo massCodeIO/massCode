@@ -50,6 +50,9 @@ vi.mock('electron-store', () => ({
     }
   },
 }))
+vi.mock('../../cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({ Agent: class {}, request: mocks.request }))
 vi.mock('../../secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
 vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({

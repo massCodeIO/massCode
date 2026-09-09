@@ -44,6 +44,8 @@ import {
 import { useHttpStorage } from '../../storage'
 import { getVaultPath } from '../../storage/providers/markdown/runtime/paths'
 import { resolveHttpCollection } from '../collection'
+import { getHttpCookieJar } from '../cookies/store'
+import { withHttpCookies } from '../cookies/transport'
 import { httpConsole } from '../devtools/console'
 import {
   captureDispatcherFactory,
@@ -909,20 +911,25 @@ export async function executeHttpRequest(
               )
             : '',
     }
-    const response = await captureHttpNetwork(
-      { executionId, ids: networkIds, body: sentRequest.body ?? '' },
+    const cookieJar = getHttpCookieJar()
+    const response = await withHttpCookies(
+      cookieJar.enabled(payload.requestId) ? cookieJar : undefined,
       () =>
-        undiciRequest(finalUrl, {
-          method: interpolated.method,
-          headers: headersObj,
-          body: built.body as Dispatcher.DispatchOptions['body'],
-          signal: controller.signal,
-          maxRedirections:
-            scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
-          dispatcher: payload.skipCertificateVerification
-            ? insecureCertificateDispatcher
-            : certificateDispatcher,
-        }),
+        captureHttpNetwork(
+          { executionId, ids: networkIds, body: sentRequest?.body ?? '' },
+          () =>
+            undiciRequest(finalUrl, {
+              method: interpolated.method,
+              headers: headersObj,
+              body: built.body as Dispatcher.DispatchOptions['body'],
+              signal: controller.signal,
+              maxRedirections:
+                scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
+              dispatcher: payload.skipCertificateVerification
+                ? insecureCertificateDispatcher
+                : certificateDispatcher,
+            }),
+        ),
     )
 
     const { buffer, sizeBytes, truncated } = await readBodyCapped(

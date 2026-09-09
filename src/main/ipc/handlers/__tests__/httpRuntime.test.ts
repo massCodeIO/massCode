@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => ({
   runtimeState: 'ready',
 }))
 vi.mock('electron', () => ({ ipcMain: { handle: mocks.handle } }))
+vi.mock('../../../http/cookies/store', () => ({
+  getHttpCookieJar: () => ({ enabled: () => false }),
+}))
 vi.mock('undici', () => ({ Agent: class {}, request: mocks.request }))
 vi.mock('../../../http/secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
 vi.mock('../../../storage/providers/markdown/runtime/paths', () => ({

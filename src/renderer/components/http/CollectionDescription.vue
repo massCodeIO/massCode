@@ -12,6 +12,13 @@ async function startEditing() {
   await nextTick()
   editor.value?.focusEditor()
 }
+function onEscape(event: KeyboardEvent) {
+  if (!editing.value || draft.value.documentation.trim())
+    return
+  event.preventDefault()
+  event.stopPropagation()
+  editing.value = false
+}
 const showGuide = computed(
   () => !draft.value.documentation.trim() && !editing.value,
 )
@@ -27,6 +34,7 @@ watch(
   <div
     v-if="collection"
     class="flex h-full min-h-0 flex-col"
+    @keydown.esc.capture="onEscape"
   >
     <div
       v-if="showGuide"

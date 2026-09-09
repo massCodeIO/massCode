@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
+import { Input } from '@/components/ui/shadcn/input'
 import { useHttpEnvironmentEditor } from '@/composables'
 import { i18n } from '@/electron'
-import { Eye, EyeOff, KeyRound, Plus, Trash2 } from 'lucide-vue-next'
+import { Eye, EyeOff, Plus, Trash2 } from 'lucide-vue-next'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -25,7 +27,6 @@ const VARIABLE_COLUMNS = [
 ]
 
 const {
-  addSecretVariable,
   confirmRemoveVariable,
   createVariable,
   environments,
@@ -62,13 +63,19 @@ const {
       <div
         class="grid h-[min(560px,calc(100vh-8rem))] min-h-0 grid-cols-[200px_minmax(0,1fr)] gap-4"
       >
-        <div class="border-border flex flex-col rounded border">
+        <div
+          class="border-border flex min-h-0 flex-col overflow-hidden rounded-md border"
+        >
           <div
             class="border-border flex items-center justify-between border-b px-2 py-1"
           >
-            <span class="text-muted-foreground text-xs font-medium">
+            <UiText
+              variant="xs"
+              muted
+              weight="medium"
+            >
               {{ i18n.t("spaces.http.environments.title") }}
-            </span>
+            </UiText>
             <UiActionButton
               :tooltip="i18n.t('spaces.http.action.newEnvironment')"
               @click="onAddEnvironment"
@@ -83,18 +90,24 @@ const {
             >
               {{ i18n.t("spaces.http.environments.empty") }}
             </div>
-            <button
+            <Button
               v-for="env in environments"
               :key="env.id"
               type="button"
-              class="flex h-[21px] w-full items-center rounded-md px-2 text-left text-sm"
+              variant="ghost"
+              class="h-[21px] w-full justify-start px-2"
               :class="
                 selectedEnvId === env.id ? 'bg-accent' : 'hover:bg-accent-hover'
               "
               @click="onSelectEnvironment(env.id)"
             >
-              <span class="truncate">{{ env.name }}</span>
-            </button>
+              <UiText
+                variant="sm"
+                class="truncate"
+              >
+                {{ env.name }}
+              </UiText>
+            </Button>
           </div>
         </div>
 
@@ -108,13 +121,13 @@ const {
           v-else
           class="flex min-h-0 min-w-0 flex-col gap-3"
         >
-          <UiInput
+          <Input
             v-model="localName"
             variant="default"
             :placeholder="i18n.t('spaces.http.environments.namePlaceholder')"
           />
           <div
-            class="border-border flex min-h-0 flex-1 flex-col rounded border"
+            class="border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border"
           >
             <HttpKeyValueTable
               v-model="localVariables"
@@ -128,9 +141,9 @@ const {
               :add-label="i18n.t('spaces.http.environments.addVariable')"
             >
               <template #cell-key="{ entry }">
-                <UiInput
+                <Input
                   v-model="entry.key"
-                  class="!h-6"
+                  class="h-7"
                   variant="ghost"
                   :disabled="entry.secret && !entry.isNew"
                   :title="
@@ -143,10 +156,10 @@ const {
               </template>
 
               <template #cell-value="{ entry }">
-                <UiInput
+                <Input
                   v-if="!entry.secret"
                   v-model="entry.value"
-                  class="!h-6"
+                  class="h-7"
                   variant="ghost"
                   :placeholder="i18n.t('spaces.http.environments.varValue')"
                 />
@@ -154,9 +167,9 @@ const {
                   v-else
                   class="flex min-w-0 items-center gap-1"
                 >
-                  <UiInput
+                  <Input
                     :model-value="getSecretValue(entry)"
-                    class="!h-6"
+                    class="h-7"
                     variant="ghost"
                     :type="
                       revealedSecrets[entry.uid] !== undefined
@@ -211,29 +224,17 @@ const {
               </template>
             </HttpKeyValueTable>
           </div>
-          <div class="flex items-center justify-between">
-            <button
+          <div class="flex items-center justify-end">
+            <Button
               type="button"
-              class="text-muted-foreground hover:text-foreground inline-flex h-7 items-center gap-1 rounded px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-              :disabled="!isSecretsEncryptionAvailable"
-              :title="
-                isSecretsEncryptionAvailable
-                  ? i18n.t('spaces.http.environments.secretHint')
-                  : i18n.t('spaces.http.environments.secretUnavailable')
-              "
-              @click="addSecretVariable"
-            >
-              <KeyRound class="size-3.5" />
-              {{ i18n.t("spaces.http.environments.addSecret") }}
-            </button>
-            <button
-              type="button"
-              class="text-destructive hover:bg-destructive/10 inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs"
+              variant="ghost"
+              size="sm"
+              class="text-destructive"
               @click="onDeleteEnvironment"
             >
               <Trash2 class="size-3.5" />
               {{ i18n.t("spaces.http.action.deleteEnvironment") }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

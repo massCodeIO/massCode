@@ -7,6 +7,7 @@ const props = withDefaults(
   defineProps<{
     variant?: 'default' | 'compact'
     fill?: boolean
+    revealRowKey?: string | number
     gridTemplateColumns?: string
     rowClass?: (row: Row) => string
     rows: readonly Row[]
@@ -41,6 +42,23 @@ const grid = computed(
   () =>
     props.gridTemplateColumns
     || props.columns.map(column => column.width ?? 'minmax(0,1fr)').join(' '),
+)
+const rowElements = new Map<string | number, HTMLElement>()
+function setRowElement(key: string | number, element: unknown) {
+  if (element instanceof HTMLElement)
+    rowElements.set(key, element)
+  else rowElements.delete(key)
+}
+watch(
+  () => props.revealRowKey,
+  (key) => {
+    if (key !== undefined) {
+      rowElements
+        .get(key)
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    }
+  },
+  { flush: 'post' },
 )
 function value(row: Row, column: EditableColumn<Row>) {
   return column.value
@@ -110,6 +128,7 @@ function editable(row: Row, column: EditableColumn<Row>) {
         <div
           v-for="row in rows"
           :key="rowKey(row)"
+          :ref="(element) => setRowElement(rowKey(row), element)"
           role="row"
           :class="cn(rowVariants({ variant }), rowClass?.(row))"
           :style="{ gridTemplateColumns: grid }"

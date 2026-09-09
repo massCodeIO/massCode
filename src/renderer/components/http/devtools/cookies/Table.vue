@@ -11,6 +11,7 @@ import { CodeXml, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   rows: HttpCookie[]
+  revealRowKey?: string
   busy: boolean
   updateCookie: ReturnType<typeof useHttpCookies>['updateCookie']
   saveRaw: ReturnType<typeof useHttpCookies>['saveRaw']
@@ -74,6 +75,7 @@ function commit(
   <UiEditableTable
     class="min-w-[850px]"
     :rows="rows"
+    :reveal-row-key="revealRowKey"
     :columns="columns"
     :row-key="rowKey"
     :label="i18n.t('spaces.http.devtools.cookies')"

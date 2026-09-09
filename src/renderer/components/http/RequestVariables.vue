@@ -20,6 +20,15 @@ const { draft, saving, removeExtraction } = props.context ?? useHttpRuntime()
 const unavailable = computed(
   () => !props.context && currentRequest.value?.runtimeState !== 'ready',
 )
+const rowsElement = useTemplateRef<HTMLElement>('rows')
+async function addExtraction() {
+  draft.value.extractions.push({ name: '', source: 'json', path: '' })
+  await nextTick()
+  rowsElement.value?.lastElementChild?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  })
+}
 </script>
 
 <template>
@@ -46,6 +55,7 @@ const unavailable = computed(
         {{ i18n.t("spaces.http.runtime.extractionHint") }}
       </UiText>
       <div
+        ref="rows"
         class="scrollbar min-h-0 space-y-1 overflow-y-auto"
         :class="{ 'flex-1': fill }"
       >
@@ -105,11 +115,13 @@ const unavailable = computed(
           </UiActionButton>
         </div>
       </div>
-      <HttpAddRowButton
-        :label="i18n.t('spaces.http.runtime.addExtraction')"
-        :disabled="unavailable || saving || draft.extractions.length >= 100"
-        @click="draft.extractions.push({ name: '', source: 'json', path: '' })"
-      />
+      <UiEditableTableFooter>
+        <HttpAddRowButton
+          :label="i18n.t('spaces.http.runtime.addExtraction')"
+          :disabled="unavailable || saving || draft.extractions.length >= 100"
+          @click="addExtraction"
+        />
+      </UiEditableTableFooter>
     </section>
   </fieldset>
 </template>

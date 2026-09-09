@@ -13,6 +13,7 @@ const requestSettingId = useId()
 const {
   state,
   query,
+  revealRowKey,
   error,
   busy,
   requestId,
@@ -78,6 +79,7 @@ const {
         >
           <HttpDevtoolsCookiesTable
             :rows="rows"
+            :reveal-row-key="revealRowKey"
             :busy="busy"
             :update-cookie="updateCookie"
             :save-raw="saveRaw"

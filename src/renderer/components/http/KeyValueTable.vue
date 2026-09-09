@@ -85,6 +85,7 @@ const tableColumns = computed(() => [
     ? [{ key: '__actions', label: '', width: '24px' }]
     : []),
 ])
+const revealRowKey = ref<number>()
 const rowIds = new WeakMap<Entry, number>()
 let nextRowId = 0
 function rowKey(row: { entry: T }) {
@@ -118,6 +119,7 @@ function addRow() {
       } as T)
 
   model.value.push(entry)
+  revealRowKey.value = rowKey({ entry: model.value[model.value.length - 1]! })
 }
 
 async function removeRow(index: number) {
@@ -145,6 +147,7 @@ function duplicateRow(index: number) {
   if (!entry)
     return
   model.value.splice(index + 1, 0, { ...entry })
+  revealRowKey.value = rowKey({ entry: model.value[index + 1]! })
 }
 </script>
 
@@ -155,6 +158,7 @@ function duplicateRow(index: number) {
     :rows="tableRows"
     :columns="tableColumns"
     :row-key="rowKey"
+    :reveal-row-key="revealRowKey"
     :row-class="rowClass"
     :grid-template-columns="resolvedGridTemplateColumns"
     :empty-text="emptyText"

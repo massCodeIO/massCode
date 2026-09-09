@@ -44,6 +44,20 @@ function expectedPlaceholder(operator: string) {
       : 'spaces.http.runtime.expected',
   )
 }
+const rowsElement = useTemplateRef<HTMLElement>('rows')
+async function addAssertion() {
+  draft.value.assertions.push({
+    name: '',
+    source: 'status',
+    operator: 'eq',
+    expected: 200,
+  })
+  await nextTick()
+  rowsElement.value?.lastElementChild?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  })
+}
 </script>
 
 <template>
@@ -57,6 +71,7 @@ function expectedPlaceholder(operator: string) {
       </UiText>
     </div>
     <div
+      ref="rows"
       class="scrollbar min-h-0 space-y-2 overflow-y-auto"
       :class="{ 'flex-1': fill }"
     >
@@ -158,17 +173,12 @@ function expectedPlaceholder(operator: string) {
         </div>
       </template>
     </div>
-    <HttpAddRowButton
-      :label="i18n.t('spaces.http.runtime.addAssertion')"
-      :disabled="disabled || draft.assertions.length >= 100"
-      @click="
-        draft.assertions.push({
-          name: '',
-          source: 'status',
-          operator: 'eq',
-          expected: 200,
-        })
-      "
-    />
+    <UiEditableTableFooter>
+      <HttpAddRowButton
+        :label="i18n.t('spaces.http.runtime.addAssertion')"
+        :disabled="disabled || draft.assertions.length >= 100"
+        @click="addAssertion"
+      />
+    </UiEditableTableFooter>
   </section>
 </template>

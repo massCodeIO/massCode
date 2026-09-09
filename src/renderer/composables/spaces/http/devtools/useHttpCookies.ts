@@ -16,6 +16,7 @@ export function useHttpCookies(open: Ref<boolean>) {
     enabled: true,
   })
   const query = ref('')
+  const revealRowKey = ref<string>()
   const error = ref('')
   const busy = ref(false)
   const requestId = computed(() => currentRequest.value?.id ?? null)
@@ -51,6 +52,7 @@ export function useHttpCookies(open: Ref<boolean>) {
     }
   }
   async function addCookie() {
+    revealRowKey.value = undefined
     await action(async () => {
       let domain = 'localhost'
       try {
@@ -71,6 +73,10 @@ export function useHttpCookies(open: Ref<boolean>) {
       })
       query.value = ''
       await refresh()
+      revealRowKey.value = state.value.cookies.find(
+        cookie =>
+          cookie.domain === domain && cookie.name === `Cookie_${index}`,
+      )?.id
     })
   }
   async function updateCookie(
@@ -148,6 +154,7 @@ export function useHttpCookies(open: Ref<boolean>) {
   return {
     state,
     query,
+    revealRowKey,
     error,
     busy,
     requestId,

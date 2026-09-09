@@ -429,3 +429,27 @@ describe('damaged and oversized input', () => {
     ).rejects.toThrow('invalidArchive')
   })
 })
+
+it('emits readable scripts without generated JSON helpers or a redundant outer block', () => {
+  const result = buildImportedRuntime(
+    [
+      {
+        source: 'QA',
+        phase: 'postResponse',
+        code: 'pm.test("HTTP 200", function () { pm.expect(pm.response.code).to.equal(200); }); const json = pm.response.json(); pm.variables.set("extracted", json.url);',
+      },
+    ],
+    'postman',
+    'QA',
+    [],
+  )
+  expect(result.runtime?.scripts?.postResponse).toBe(
+    [
+      'mc.test("HTTP 200", () => {',
+      '  mc.assert(mc.response.status === 200);',
+      '});',
+      'const json = mc.response.json();',
+      'mc.variables.set("extracted", json["url"]);',
+    ].join('\n'),
+  )
+})

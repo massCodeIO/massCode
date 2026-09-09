@@ -39,9 +39,22 @@ const { parentPort, workerData } = require('node:worker_threads');
         }
         return value;
       };
+      let responseJson;
+      let responseJsonParsed = false;
+      const response = input.response === null ? null : {
+        ...input.response,
+        json() {
+          if (!input.response || input.response.truncated || input.response.bodyKind === 'binary' || typeof input.response.body !== 'string') throw Error();
+          if (!responseJsonParsed) {
+            responseJson = parse(input.response.body);
+            responseJsonParsed = true;
+          }
+          return responseJson;
+        },
+      };
       const api = {
         request: freeze(input.request),
-        response: freeze(input.response),
+        response: freeze(response),
         environment: { get(name) { checkName(name); return (input.environment || {})[name]; } },
         collectionVariables: { get(name) { checkName(name); return (input.collectionVariables || {})[name]; } },
         variables: {

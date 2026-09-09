@@ -50,7 +50,6 @@ export function translateScript(
   const tree = parse(code, { ecmaVersion: 2022, sourceType: 'script' })
   let nodes = 0
   let usesVariables = false
-  let readsJson = false
   const reserved = new Set([
     'mc',
     'pm',
@@ -109,8 +108,7 @@ export function translateScript(
         return 'mc.response.durationMs'
       }
       if (dialect === 'bruno' && path === 'res.body') {
-        readsJson = true
-        return '__mcImportJson()'
+        return 'mc.response.json()'
       }
     }
     if (node.type === 'MemberExpression') {
@@ -174,8 +172,7 @@ export function translateScript(
         && args.length === 0
       ) {
         if (name === 'pm.response.json') {
-          readsJson = true
-          return '__mcImportJson()'
+          return 'mc.response.json()'
         }
         if (name === 'pm.response.text')
           return 'mc.response.body'
@@ -348,7 +345,14 @@ export function translateScript(
           ) {
             unsupported()
           }
-          return `mc.test(${JSON.stringify(name.value)}, () => {\n${statements(callback.body.body, locals, true)}\n});`
+          return `mc.test(${JSON.stringify(name.value)}, () => {\n${statements(
+            callback.body.body,
+            locals,
+            true,
+          )
+            .split('\n')
+            .map(line => `  ${line}`)
+            .join('\n')}\n});`
         }
         if (expression.type === 'CallExpression') {
           const name = memberPath(expression.callee)
@@ -360,8 +364,5 @@ export function translateScript(
       .join('\n')
   }
   const translated = statements(tree.body, new Set())
-  const jsonReader = readsJson
-    ? 'let __mcImportBody; const __mcImportJson = () => { mc.assert(!mc.response.truncated && mc.response.bodyKind !== "binary"); return __mcImportBody ??= JSON.parse(mc.response.body); };\n'
-    : ''
-  return { code: `{\n${jsonReader}${translated}\n}`, usesVariables }
+  return { code: translated, usesVariables }
 }

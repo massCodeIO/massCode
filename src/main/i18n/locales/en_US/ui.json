@@ -653,7 +653,7 @@
         "revoke": "Revoke trust",
         "unavailable": "Script service unavailable. Start the updated app and try again.",
         "notice": "Review both scripts before trusting them. They can read request, response and environment secrets, change session variables, and send data to this request’s server. Trust applies to this code on this device only. Editing code requires trust again.",
-        "api": "API: mc.request, mc.response, mc.variables.get/set/unset, mc.test(name, fn), mc.assert(condition). Synchronous JavaScript only; no network, files, imports or console. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
+        "api": "API: mc.request, mc.response.json(), mc.variables.get/set/unset, mc.test(name, fn), mc.assert(condition). Synchronous JavaScript only; no network, files, imports or console. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
         "cancel": "Cancel request",
         "failed": "Script workflow failed. See Tests for details.",
         "errors": {

@@ -95,3 +95,30 @@ describe('quickJS worker boundary', () => {
     ).toBe(true)
   })
 })
+
+describe('response JSON API', () => {
+  it.each(['{"value":"ok"}', 'null', '[1,2]', 'false'])(
+    'parses %s in the sandbox',
+    async (body) => {
+      const result = await executeScript(
+        'mc.test("json", () => { mc.assert(JSON.stringify(mc.response.json()) === mc.response.body); });',
+        { ...input, response: { body, bodyKind: 'text', truncated: false } },
+        new AbortController().signal,
+      )
+      expect(result.output?.tests).toEqual([{ name: 'json', ok: true }])
+    },
+  )
+  it.each([
+    { body: '{}', truncated: true },
+    { body: '{}', bodyKind: 'binary' },
+    { body: 'invalid' },
+    null,
+  ])('rejects unreadable response %j', async (response) => {
+    const result = await executeScript(
+      'mc.response.json()',
+      { ...input, response },
+      new AbortController().signal,
+    )
+    expect(result.error).toBe('exception')
+  })
+})

@@ -23,8 +23,8 @@ const activeTab = ref('overview')
 const tabs = [
   'overview',
   'headers',
-  'vars',
   'auth',
+  'vars',
   'script',
   'tests',
 ] as const

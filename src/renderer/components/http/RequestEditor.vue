@@ -211,15 +211,6 @@ async function onSend() {
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger
             v-if="!isWebSocket"
-            value="scripts"
-          >
-            {{ i18n.t("spaces.http.scripts.title") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger value="description">
-            {{ i18n.t("spaces.http.editor.tabs.description") }}
-          </Tabs.TabsTrigger>
-          <Tabs.TabsTrigger
-            v-if="!isWebSocket"
             value="variables"
             :class="
               groupDirty.extractions && groupInvalid.extractions
@@ -232,6 +223,12 @@ async function onSend() {
           </Tabs.TabsTrigger>
           <Tabs.TabsTrigger
             v-if="!isWebSocket"
+            value="scripts"
+          >
+            {{ i18n.t("spaces.http.scripts.title") }}
+          </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger
+            v-if="!isWebSocket"
             value="assertions"
             :class="
               groupDirty.assertions && groupInvalid.assertions
@@ -241,6 +238,9 @@ async function onSend() {
           >
             {{ i18n.t("spaces.http.runtime.assertions")
             }}{{ groupDirty.assertions ? " *" : "" }}
+          </Tabs.TabsTrigger>
+          <Tabs.TabsTrigger value="description">
+            {{ i18n.t("spaces.http.editor.tabs.description") }}
           </Tabs.TabsTrigger>
         </Tabs.TabsList>
       </div>

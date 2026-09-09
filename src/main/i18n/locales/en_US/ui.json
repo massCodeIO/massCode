@@ -737,10 +737,10 @@
         "tabs": {
           "overview": "Overview",
           "headers": "Headers",
-          "vars": "Vars",
+          "vars": "Variables",
           "auth": "Auth",
-          "script": "Script",
-          "tests": "Tests"
+          "script": "Scripts",
+          "tests": "Assertions"
         },
         "version": "Version",
         "documentation": "Documentation",

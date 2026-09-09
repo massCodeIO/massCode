@@ -140,10 +140,10 @@ describe('script console', () => {
       { level: 'error', args: ['error'] },
     ])
   })
-  it('supports clear and cycles while bounding log floods', async () => {
+  it('streams more than 5000 logs and preserves late clear and error events', async () => {
     const messages: { level: string, args: unknown[] }[] = []
-    await executeScript(
-      'const value = {}; value.self = value; console.log(value); console.clear(); for(let i=0;i<1000;i++) console.log(i);',
+    const result = await executeScript(
+      'const value = {}; value.self = value; console.log(value); for(let i=0;i<5005;i++) console.log(i); console.clear(); console.error("tail");',
       input,
       new AbortController().signal,
       message => messages.push(message),
@@ -152,7 +152,17 @@ describe('script console', () => {
       level: 'log',
       args: [{ self: '[Circular]' }],
     })
-    expect(messages[1]).toEqual({ level: 'clear', args: [] })
-    expect(messages.length).toBeLessThanOrEqual(100)
+    expect(result.error).toBeUndefined()
+    expect(messages).toHaveLength(5008)
+    expect(messages.slice(1, 5006)).toEqual(
+      Array.from({ length: 5005 }, (_, index) => ({
+        level: 'log',
+        args: [index],
+      })),
+    )
+    expect(messages.slice(-2)).toEqual([
+      { level: 'clear', args: [] },
+      { level: 'error', args: ['tail'] },
+    ])
   })
 })

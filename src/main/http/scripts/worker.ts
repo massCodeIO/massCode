@@ -15,12 +15,9 @@ const { parentPort, workerData } = require('node:worker_threads');
   let timedOut = false;
   runtime.setInterruptHandler(() => (timedOut = Date.now() > deadline));
   const context = runtime.newContext();
-  let logCount = 0;
   const emitLog = context.newFunction('__emitLog', (text) => {
-    if (++logCount <= 100) {
-      const serialized = context.getString(text);
-      if (serialized.length <= 16384) parentPort.postMessage({ console: serialized });
-    }
+    const serialized = context.getString(text);
+    if (serialized.length <= 16384) parentPort.postMessage({ console: serialized });
     return context.undefined;
   });
   context.setProp(context.global, '__emitLog', emitLog);

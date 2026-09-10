@@ -113,7 +113,7 @@ function setBoolean(key: (typeof booleans.value)[number], value: unknown) {
         </Select.SelectTrigger>
         <Select.SelectContent>
           <Select.SelectItem
-            v-for="value in ['inherit', 'http1', 'auto', 'http2']"
+            v-for="value in ['inherit', 'auto', 'http1', 'http2']"
             :key="value"
             :value="value"
           >

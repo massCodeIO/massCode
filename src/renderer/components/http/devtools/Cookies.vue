@@ -1,31 +1,25 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
-import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
-import { FieldError, FieldLabel } from '@/components/ui/shadcn/field'
+import { FieldError } from '@/components/ui/shadcn/field'
 import { Input } from '@/components/ui/shadcn/input'
 import { useHttpCookies } from '@/composables/spaces/http/devtools/useHttpCookies'
 import { i18n } from '@/electron'
-import { Cookie, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { Cookie, Trash2 } from 'lucide-vue-next'
 
 const open = ref(false)
-const requestSettingId = useId()
 const {
   state,
   query,
   revealRowKey,
   error,
   busy,
-  requestId,
   rows,
-  action,
-  refresh,
   addCookie,
   updateCookie,
   saveRaw,
   remove,
   clear,
-  setEnabled,
 } = useHttpCookies(open)
 </script>
 
@@ -60,13 +54,6 @@ const {
             :placeholder="i18n.t('spaces.http.devtools.searchCookies')"
             :aria-label="i18n.t('spaces.http.devtools.searchCookies')"
           />
-          <UiActionButton
-            :disabled="busy"
-            :tooltip="i18n.t('spaces.http.devtools.refreshCookies')"
-            @click="action(refresh)"
-          >
-            <RefreshCw class="size-3.5" />
-          </UiActionButton>
         </div>
         <FieldError
           v-if="error"
@@ -106,37 +93,6 @@ const {
               i18n.t("spaces.http.devtools.clearAllCookies")
             }}
           </Button>
-        </div>
-        <div
-          v-if="requestId"
-          class="shrink-0 space-y-2 pt-1"
-        >
-          <div class="flex items-center gap-2">
-            <Checkbox
-              :id="requestSettingId"
-              :model-value="state.enabled"
-              :disabled="busy"
-              :aria-describedby="`${requestSettingId}-hint`"
-              @update:model-value="setEnabled"
-            />
-            <FieldLabel :for="requestSettingId">
-              <UiText
-                variant="sm"
-                weight="medium"
-              >
-                {{ i18n.t("spaces.http.devtools.enableCookieJar") }}
-              </UiText>
-            </FieldLabel>
-          </div>
-          <UiText
-            :id="`${requestSettingId}-hint`"
-            class="pl-6"
-            as="div"
-            variant="xs"
-            muted
-          >
-            {{ i18n.t("spaces.http.devtools.cookieJarHint") }}
-          </UiText>
         </div>
       </div>
     </Dialog.DialogContent>

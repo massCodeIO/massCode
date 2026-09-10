@@ -130,15 +130,6 @@ export function useHttpCookies(open: Ref<boolean>) {
       await refresh()
     })
   }
-  async function setEnabled(enabled: boolean | 'indeterminate') {
-    await action(async () => {
-      await ipc.invoke('spaces:http:cookies:setEnabled', {
-        requestId: requestId.value,
-        enabled: enabled === true,
-      })
-      await refresh()
-    })
-  }
   const onChanged = useDebounceFn(() => {
     if (open.value && !busy.value)
       void action(refresh)
@@ -157,15 +148,11 @@ export function useHttpCookies(open: Ref<boolean>) {
     revealRowKey,
     error,
     busy,
-    requestId,
     rows: visible,
-    action,
-    refresh,
     addCookie,
     updateCookie,
     saveRaw,
     remove,
     clear,
-    setEnabled,
   }
 }

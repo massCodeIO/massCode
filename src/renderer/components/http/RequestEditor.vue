@@ -30,6 +30,7 @@ const { isWebSocket } = useHttpWebSocket()
 const { canGoBack, canGoForward } = useNavigationHistory()
 
 const activeTab = ref<
+  | 'settings'
   | 'message'
   | 'params'
   | 'headers'
@@ -253,6 +254,12 @@ async function onSend() {
             <Tabs.TabsTrigger value="description">
               {{ i18n.t("spaces.http.editor.tabs.description") }}
             </Tabs.TabsTrigger>
+            <Tabs.TabsTrigger
+              v-if="!isWebSocket"
+              value="settings"
+            >
+              {{ i18n.t("spaces.http.editor.tabs.settings") }}
+            </Tabs.TabsTrigger>
           </Tabs.TabsList>
         </div>
       </div>
@@ -327,6 +334,12 @@ async function onSend() {
           class="h-full"
         >
           <HttpRequestScripts embedded />
+        </Tabs.TabsContent>
+        <Tabs.TabsContent
+          v-if="!isWebSocket"
+          value="settings"
+        >
+          <HttpRequestSettingsTab />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="description"

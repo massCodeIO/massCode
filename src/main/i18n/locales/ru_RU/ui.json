@@ -506,7 +506,8 @@
           "headers": "Заголовки",
           "body": "Тело",
           "auth": "Авторизация",
-          "description": "Описание"
+          "description": "Описание",
+          "settings": "Настройки"
         },
         "keyValue": {
           "key": "Ключ",

@@ -503,7 +503,8 @@
           "headers": "Headers",
           "body": "Body",
           "auth": "Auth",
-          "description": "Description"
+          "description": "Description",
+          "settings": "Settings"
         },
         "keyValue": {
           "key": "Key",

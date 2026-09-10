@@ -23,6 +23,7 @@ export interface HttpImportFolder {
 }
 
 export interface HttpImportRequest {
+  disableCookies?: boolean
   runtime?: HttpRuntime
   scriptStatus?: 'none' | 'converted' | 'blocked'
   sourceId?: string

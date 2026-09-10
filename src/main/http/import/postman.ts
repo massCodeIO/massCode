@@ -419,6 +419,9 @@ function parseRequest(
   return {
     ...parts,
     ...body,
+    disableCookies: isRecord(item.protocolProfileBehavior)
+      ? item.protocolProfileBehavior.disableCookies === true
+      : undefined,
     ...buildImportedRuntime(
       [
         ...postmanScripts(item.event, source, warnings),

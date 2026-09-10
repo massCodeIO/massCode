@@ -8,6 +8,7 @@ import type {
 } from './types'
 import { emptyHttpCollection } from '../../../shared/httpCollection'
 import { useHttpStorage } from '../../storage'
+import { getHttpCookieJar } from '../cookies/store'
 import { normalizeImportName } from './normalize'
 
 function parseStorageError(
@@ -103,6 +104,8 @@ function createUniqueRequest(
         storage.requests.updateRuntime(id, request.runtime, revision)
       }
 
+      if (request.disableCookies === true)
+        getHttpCookieJar().setEnabled(id, false)
       return id
     }
     catch (error) {

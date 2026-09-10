@@ -24,6 +24,7 @@ import { parsePostmanFiles } from '../postman'
 
 const mocks = vi.hoisted(() => ({
   request: vi.fn(),
+  setCookiesEnabled: vi.fn(),
   history: vi.fn(),
   createFolder: vi.fn(),
   updateFolder: vi.fn(),
@@ -51,7 +52,10 @@ vi.mock('electron-store', () => ({
   },
 }))
 vi.mock('../../cookies/store', () => ({
-  getHttpCookieJar: () => ({ enabled: () => false }),
+  getHttpCookieJar: () => ({
+    enabled: () => false,
+    setEnabled: mocks.setCookiesEnabled,
+  }),
 }))
 vi.mock('undici', () => ({ Agent: class {}, request: mocks.request }))
 vi.mock('../../secrets', () => ({ getEnvironmentSecrets: () => ({}) }))
@@ -134,6 +138,30 @@ describe('preview, persistence and imported script trust', () => {
     expect(mocks.records.size).toBe(0)
     expect(mocks.request).not.toHaveBeenCalled()
     expect(mocks.grants).toEqual({})
+  })
+
+  it('persists Postman disableCookies against the newly created request ID', () => {
+    const result = parsePostmanFiles([
+      {
+        name: 'cookies.json',
+        content: JSON.stringify({
+          info: {
+            name: 'Cookies',
+            schema:
+              'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+          },
+          item: [
+            {
+              name: 'Disabled',
+              protocolProfileBehavior: { disableCookies: true },
+              request: { method: 'GET', url: 'https://example.com' },
+            },
+          ],
+        }),
+      },
+    ])
+    persistHttpImportResult(result)
+    expect(mocks.setCookiesEnabled).toHaveBeenCalledWith(1, false)
   })
 
   it.each(['postman', 'bruno'])(

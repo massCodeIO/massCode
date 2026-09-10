@@ -2,11 +2,13 @@
 import { useApp, useHttpApp, useHttpSpaceInit } from '@/composables'
 import { useHttpPanels } from '@/composables/spaces/http/useHttpPanels'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { store } from '@/electron'
 import { useElementSize } from '@vueuse/core'
 
+const { environmentsOpen } = useHttpUi()
 const { inspectorOpen, inspectorWidth } = useHttpPanels()
 const workspace = ref<HTMLElement>()
 const inspectorHandle = ref<HTMLElement>()
@@ -132,4 +134,5 @@ onMounted(() => {
     </template>
   </LayoutThreeColumn>
   <HttpHistoryDialog />
+  <HttpEnvironmentManagerDialog v-model:open="environmentsOpen" />
 </template>

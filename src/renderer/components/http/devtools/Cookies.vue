@@ -4,10 +4,11 @@ import * as Dialog from '@/components/ui/shadcn/dialog'
 import { FieldError } from '@/components/ui/shadcn/field'
 import { Input } from '@/components/ui/shadcn/input'
 import { useHttpCookies } from '@/composables/spaces/http/devtools/useHttpCookies'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { i18n } from '@/electron'
 import { Cookie, Trash2 } from 'lucide-vue-next'
 
-const open = ref(false)
+const { cookiesOpen: open } = useHttpUi()
 const {
   state,
   query,

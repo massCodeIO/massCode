@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Tabs from '@/components/ui/shadcn/tabs'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { useResizeHandle } from '@/composables/useResizeHandle'
 import { i18n } from '@/electron'
 import { useElementSize } from '@vueuse/core'
@@ -12,8 +13,7 @@ import {
   X,
 } from 'lucide-vue-next'
 
-const active = ref<'console' | 'terminal'>('console')
-const open = ref(false)
+const { dockOpen: open, dockTab: active } = useHttpUi()
 const maximized = ref(false)
 const height = ref(240)
 const root = ref<HTMLElement>()

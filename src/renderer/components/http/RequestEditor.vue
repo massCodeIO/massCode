@@ -6,6 +6,7 @@ import {
   useNavigationHistory,
 } from '@/composables'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { useHttpWebSocket } from '@/composables/spaces/http/useHttpWebSocket'
 import { i18n } from '@/electron'
 import { navigateBack, navigateForward } from '@/ipc/listeners/deepLinks'
@@ -41,6 +42,11 @@ const activeTab = ref<
   | 'variables'
   | 'scripts'
 >('params')
+
+const { requestSettingsVersion } = useHttpUi()
+watch(requestSettingsVersion, () => {
+  activeTab.value = 'settings'
+})
 
 watch(isWebSocket, () => {
   activeTab.value = isWebSocket.value ? 'message' : 'params'

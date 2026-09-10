@@ -18,7 +18,6 @@ import {
   useNotesApp,
   useNoteSearch,
 } from '@/composables/spaces/notes'
-import { useHttpImportDialog } from '@/composables/useHttpImportDialog'
 import { useImportDialog } from '@/composables/useImportDialog'
 import { i18n, store } from '@/electron'
 import { router, RouterName } from '@/router'
@@ -30,6 +29,10 @@ import {
 } from '@/spaceDefinitions'
 import { useDebounceFn, useEventListener } from '@vueuse/core'
 import { Folder, Hash, Settings, Upload } from 'lucide-vue-next'
+import {
+  createHttpRequestFromPalette,
+  getHttpCommands,
+} from './command-palette/httpCommands'
 import {
   type CommandPaletteFolderFilter,
   type CommandPaletteFolderOption,
@@ -67,7 +70,7 @@ interface CommandPaletteUsageEntry {
   lastQuery?: string
 }
 
-interface CommandPaletteCommand {
+export interface CommandPaletteCommand {
   id: string
   title: string
   subtitle: string
@@ -181,7 +184,6 @@ const httpApp = useHttpApp()
 const httpData = useHttpRequests()
 const httpSearch = useHttpSearch()
 const importDialog = useImportDialog()
-const httpImportDialog = useHttpImportDialog()
 
 const SEARCHABLE_SPACE_IDS = new Set<SpaceId>(['code', 'notes', 'http'])
 
@@ -1128,27 +1130,6 @@ async function createNoteFromPalette(payload?: CommandPaletteCreatePayload) {
   )
 }
 
-async function createHttpRequestFromPalette(
-  payload?: CommandPaletteCreatePayload,
-) {
-  const httpFolders = useHttpFolders()
-  const httpRequestsApi = useHttpRequests()
-
-  httpRequestsApi.isRestoreStateBlocked.value = true
-  httpSearch.clearSearch(false)
-  httpFolders.clearFolderSelection()
-  httpApp.httpState.libraryFilter = LibraryFilter.Inbox
-  httpApp.focusedFolderId.value = undefined
-  httpApp.highlightedFolderIds.value.clear()
-
-  await router.push({ name: RouterName.httpSpace })
-  await httpRequestsApi.createHttpRequestAndSelect({
-    folderId: null,
-    ...(payload?.name && { name: payload.name }),
-    ...(payload?.url !== undefined && { url: payload.url }),
-  })
-}
-
 async function createCodeFolderFromPalette() {
   const [{ useApp }, { useFolders }, { useSnippets }] = await Promise.all([
     import('@/composables/useApp'),
@@ -1187,19 +1168,6 @@ async function createNotesFolderFromPalette() {
   await noteFolders.createNoteFolderAndSelect()
 }
 
-async function createHttpFolderFromPalette() {
-  const httpFolders = useHttpFolders()
-  const httpRequestsApi = useHttpRequests()
-
-  httpRequestsApi.isRestoreStateBlocked.value = true
-  httpSearch.clearSearch(false)
-  httpApp.focusedFolderId.value = undefined
-  httpApp.highlightedFolderIds.value.clear()
-
-  await router.push({ name: RouterName.httpSpace })
-  await httpFolders.createHttpFolderAndSelect()
-}
-
 async function openPreferencesFromPalette() {
   await router.push({ name: RouterName.preferences })
 }
@@ -1209,11 +1177,6 @@ async function openImportFromPalette(
   space?: Parameters<typeof importDialog.openImportDialog>[1],
 ) {
   importDialog.openImportDialog(source, space)
-}
-
-async function openHttpImportFromPalette() {
-  await router.push({ name: RouterName.httpSpace })
-  httpImportDialog.openHttpImportDialog()
 }
 
 function getCommandDefinitions(): CommandPaletteCommand[] {
@@ -1282,41 +1245,7 @@ function getCommandDefinitions(): CommandPaletteCommand[] {
       spaceId: 'notes',
       run: () => openImportFromPalette('obsidian', 'notes'),
     },
-    {
-      id: 'new-http-request',
-      title: i18n.t('commandPalette.actions.newHttpRequest'),
-      subtitle: i18n.t('commandPalette.actions.newHttpRequestSubtitle'),
-      icon: getSpaceIcon('http'),
-      keywords: ['create', 'http', 'request'],
-      spaceId: 'http',
-      run: createHttpRequestFromPalette,
-    },
-    {
-      id: 'new-http-folder',
-      title: i18n.t('commandPalette.actions.newHttpFolder'),
-      subtitle: i18n.t('commandPalette.actions.newHttpFolderSubtitle'),
-      icon: getSpaceIcon('http'),
-      keywords: ['create', 'http', 'request', 'folder'],
-      spaceId: 'http',
-      run: createHttpFolderFromPalette,
-    },
-    {
-      id: 'import-http-collection',
-      title: i18n.t('commandPalette.actions.importHttpCollection'),
-      subtitle: i18n.t('commandPalette.actions.importHttpCollectionSubtitle'),
-      icon: Upload,
-      keywords: [
-        'import',
-        'http',
-        'openapi',
-        'postman',
-        'bruno',
-        'collection',
-        'environment',
-      ],
-      spaceId: 'http',
-      run: openHttpImportFromPalette,
-    },
+    ...getHttpCommands(),
     {
       id: 'open-preferences',
       title: i18n.t('commandPalette.actions.openPreferences'),

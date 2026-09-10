@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useHttpEnvironments } from '@/composables'
+import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
 import { i18n } from '@/electron'
 import { Settings2 } from 'lucide-vue-next'
 
@@ -9,7 +10,7 @@ const open = defineModel<boolean>('open', { default: true })
 const { environments, activeEnvironmentId, setActiveHttpEnvironment }
   = useHttpEnvironments()
 
-const isManagerOpen = ref(false)
+const { environmentsOpen: isManagerOpen } = useHttpUi()
 const visibleEnvironments = computed(() =>
   environments.value.filter(env =>
     env.name
@@ -85,7 +86,5 @@ function openManager() {
         <span class="truncate">{{ env.name }}</span>
       </button>
     </div>
-
-    <HttpEnvironmentManagerDialog v-model:open="isManagerOpen" />
   </div>
 </template>

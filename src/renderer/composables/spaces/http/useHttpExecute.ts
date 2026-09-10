@@ -97,6 +97,7 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
     requestId: currentRequest.value?.id ?? null,
     environmentId: activeEnvironmentId.value,
     skipCertificateVerification: settings.skipCertificateVerification,
+    transport: JSON.parse(JSON.stringify(settings.transport ?? {})),
   }
 
   isExecuting.value = true

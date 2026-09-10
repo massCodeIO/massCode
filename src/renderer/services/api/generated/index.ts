@@ -647,6 +647,28 @@ export type HttpFoldersResponse = {
           | null
           | (string | number | boolean | null)[];
       }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
     };
   } | null;
   collectionConfigState?: "ready" | "invalid";
@@ -740,6 +762,28 @@ export type HttpFoldersTreeResponse = {
           | null
           | (string | number | boolean | null)[];
       }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
     };
   } | null;
   collectionConfigState?: "ready" | "invalid";
@@ -834,6 +878,28 @@ export interface HttpFoldersUpdate {
           | null
           | (string | number | boolean | null)[];
       }[];
+      transport?: {
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 2147483647
+         */
+        timeoutMs?: number;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 9007199254740991
+         */
+        maxResponseBytes?: number;
+        followRedirects?: boolean;
+        /**
+         * @min 0
+         * @multipleOf 1
+         * @max 100
+         */
+        maxRedirects?: number;
+        skipCertificateVerification?: boolean;
+      };
     };
   };
   name?: string;
@@ -897,6 +963,28 @@ export interface HttpRuntime {
       | null
       | (string | number | boolean | null)[];
   }[];
+  transport?: {
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 2147483647
+     */
+    timeoutMs?: number;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 9007199254740991
+     */
+    maxResponseBytes?: number;
+    followRedirects?: boolean;
+    /**
+     * @min 0
+     * @multipleOf 1
+     * @max 100
+     */
+    maxRedirects?: number;
+    skipCertificateVerification?: boolean;
+  };
 }
 
 export interface HttpRuntimeSave {
@@ -950,6 +1038,28 @@ export interface HttpRuntimeSave {
         | null
         | (string | number | boolean | null)[];
     }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
   };
   expectedRevision: string;
 }
@@ -1010,6 +1120,28 @@ export interface HttpRequestItemResponse {
         | null
         | (string | number | boolean | null)[];
     }[];
+    transport?: {
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 2147483647
+       */
+      timeoutMs?: number;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 9007199254740991
+       */
+      maxResponseBytes?: number;
+      followRedirects?: boolean;
+      /**
+       * @min 0
+       * @multipleOf 1
+       * @max 100
+       */
+      maxRedirects?: number;
+      skipCertificateVerification?: boolean;
+    };
   } | null;
   runtimeState: "ready" | "pending" | "invalid" | "unsupported";
   id: number;

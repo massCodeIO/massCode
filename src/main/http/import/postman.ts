@@ -1,3 +1,4 @@
+import type { HttpTransport } from '../../../shared/httpTransport'
 import type { HttpAuth, HttpHeaderEntry } from '../../types/http'
 import type { ImportedScript } from './runtime/scripts'
 import type {
@@ -10,6 +11,8 @@ import type {
   HttpImportWarning,
 } from './types'
 import { emptyHttpCollection } from '../../../shared/httpCollection'
+import { emptyHttpRuntime } from '../../../shared/httpRuntime'
+import { httpTransportSchema } from '../../../shared/httpTransport'
 import { validateImportFiles, validateImportTree } from './limits'
 import {
   addWarning,
@@ -29,6 +32,7 @@ import {
 type UnknownRecord = Record<string, unknown>
 
 interface PostmanContext {
+  profile?: UnknownRecord
   scripts: ImportedScript[]
   auth: HttpAuth
 }
@@ -416,23 +420,51 @@ function parseRequest(
     scripts.push({ source, phase: 'preRequest', code: '', invalid: true })
   }
 
+  const imported = buildImportedRuntime(
+    [
+      ...postmanScripts(item.event, source, warnings),
+      ...(item.variable !== undefined
+        ? [{ source, phase: 'preRequest' as const, code: '', invalid: true }]
+        : []),
+    ],
+    'postman',
+    source,
+    warnings,
+  )
+  const profile = context.profile ?? {}
+  const transport: HttpTransport = {}
+  for (const key of ['followRedirects', 'maxRedirects', 'strictSSL'] as const) {
+    if (profile[key] === undefined)
+      continue
+    const target = key === 'strictSSL' ? 'skipCertificateVerification' : key
+    const value
+      = key === 'strictSSL' && typeof profile[key] === 'boolean'
+        ? !profile[key]
+        : profile[key]
+    const parsed = httpTransportSchema.safeParse({ [target]: value })
+    if (parsed.success) {
+      Object.assign(transport, parsed.data)
+    }
+    else {
+      addWarning(
+        warnings,
+        source,
+        'spaces.http.import.runtimeWarnings.transport',
+      )
+    }
+  }
+  if (Object.keys(transport).length) {
+    imported.runtime = {
+      ...(imported.runtime ?? emptyHttpRuntime()),
+      transport,
+    }
+  }
+
   return {
     ...parts,
     ...body,
-    disableCookies: isRecord(item.protocolProfileBehavior)
-      ? item.protocolProfileBehavior.disableCookies === true
-      : undefined,
-    ...buildImportedRuntime(
-      [
-        ...postmanScripts(item.event, source, warnings),
-        ...(item.variable !== undefined
-          ? [{ source, phase: 'preRequest' as const, code: '', invalid: true }]
-          : []),
-      ],
-      'postman',
-      source,
-      warnings,
-    ),
+    disableCookies: profile.disableCookies === true,
+    ...imported,
     scriptStatus: buildImportedRuntime(scripts, 'postman', source, [])
       .scriptStatus,
     auth,
@@ -465,7 +497,16 @@ function walkItems(
     const name = normalizeImportName(item.name, `Item ${index + 1}`)
     const source = `${sourcePath}/${name}`
     const itemAuth = parseAuth(item.auth, source, warnings)
-    const nextContext = { ...context, auth: itemAuth ?? context.auth }
+    const nextContext = {
+      ...context,
+      auth: itemAuth ?? context.auth,
+      profile: {
+        ...context.profile,
+        ...(isRecord(item.protocolProfileBehavior)
+          ? item.protocolProfileBehavior
+          : {}),
+      },
+    }
 
     if (Array.isArray(item.item)) {
       const id = asString(item.id || item._postman_id) || `${source}:${index}`
@@ -532,7 +573,13 @@ function parseCollection(
     asArray(raw.item),
     collection,
     null,
-    { auth, scripts: postmanScripts(raw.event, name, warnings) },
+    {
+      auth,
+      scripts: postmanScripts(raw.event, name, warnings),
+      profile: isRecord(raw.protocolProfileBehavior)
+        ? raw.protocolProfileBehavior
+        : {},
+    },
     name,
     warnings,
   )

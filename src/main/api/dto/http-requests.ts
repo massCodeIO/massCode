@@ -87,6 +87,25 @@ const httpRequestsUpdate = t.Object({
 })
 
 export const httpRuntime = t.Object({
+  transport: t.Optional(
+    t.Object({
+      timeoutMs: t.Optional(
+        t.Number({ multipleOf: 1, minimum: 0, maximum: 2147483647 }),
+      ),
+      maxResponseBytes: t.Optional(
+        t.Number({
+          multipleOf: 1,
+          minimum: 0,
+          maximum: Number.MAX_SAFE_INTEGER,
+        }),
+      ),
+      followRedirects: t.Optional(t.Boolean()),
+      maxRedirects: t.Optional(
+        t.Number({ multipleOf: 1, minimum: 0, maximum: 100 }),
+      ),
+      skipCertificateVerification: t.Optional(t.Boolean()),
+    }),
+  ),
   scripts: t.Optional(
     t.Object({
       preRequest: t.String({ maxLength: 65536 }),

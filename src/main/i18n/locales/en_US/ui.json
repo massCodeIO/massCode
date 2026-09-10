@@ -490,7 +490,8 @@
           "depthLimit": "Folder nesting exceeds the import limit; nested items were not imported.",
           "scopedVariables": "Request/folder variables or runtime actions are not supported. Dependent scripts are blocked.",
           "fileLimit": "Import exceeds the supported file count or size.",
-          "invalidArchive": "The archive is damaged or exceeds the unpacked size limit."
+          "invalidArchive": "The archive is damaged or exceeds the unpacked size limit.",
+          "transport": "An invalid transport setting was ignored."
         }
       },
       "editor": {

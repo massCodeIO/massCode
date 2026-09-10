@@ -14,6 +14,7 @@ import {
   HTTP_HISTORY_LIMITS,
 } from '../../../shared/httpHistory'
 import { HTTP_PREVIEW_FORMATS } from '../../../shared/httpPreview'
+import { httpTransportSchema } from '../../../shared/httpTransport'
 import { EDITOR_DEFAULTS, NOTES_EDITOR_DEFAULTS } from '../constants'
 import {
   asRecord,
@@ -234,6 +235,7 @@ function sanitizeHttpSettings(value: unknown): HttpSettings {
   const source = asRecord(value)
 
   return {
+    transport: httpTransportSchema.catch({}).parse(source.transport ?? {}),
     historyLimit: HTTP_HISTORY_LIMITS.includes(source.historyLimit as 20)
       ? (source.historyLimit as number)
       : HTTP_HISTORY_DEFAULT_LIMIT,

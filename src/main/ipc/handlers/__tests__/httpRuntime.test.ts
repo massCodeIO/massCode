@@ -80,6 +80,63 @@ describe('hTTP runtime execution', () => {
     mocks.runtimeState = 'ready'
     mocks.activeEnvironment = null
   })
+  it('applies request overrides over caller defaults and supports unlimited response bodies', async () => {
+    mocks.request.mockResolvedValue(response('123456789'))
+    const result = await getHandler()(event, {
+      ...payload,
+      transport: {
+        timeoutMs: 1,
+        maxResponseBytes: 2,
+        followRedirects: false,
+        maxRedirects: 1,
+      },
+      runtime: {
+        version: 1,
+        extractions: [],
+        assertions: [],
+        transport: {
+          timeoutMs: 0,
+          maxResponseBytes: 0,
+          followRedirects: true,
+          maxRedirects: 3,
+        },
+      },
+    })
+    expect(result.body).toBe('123456789')
+    expect(result.truncated).toBe(false)
+    expect(mocks.request.mock.calls[0][1]).toMatchObject({
+      headersTimeout: 0,
+      bodyTimeout: 0,
+      maxRedirections: 3,
+    })
+  })
+  it('truncates the body at the configured byte limit', async () => {
+    mocks.request.mockResolvedValue(response('123456789'))
+    const result = await getHandler()(event, {
+      ...payload,
+      transport: { maxResponseBytes: 4 },
+    })
+    expect(result).toMatchObject({
+      body: '1234',
+      sizeBytes: 4,
+      truncated: true,
+    })
+  })
+  it('allows explicit redirects for GraphQL', async () => {
+    mocks.request.mockResolvedValue(response('{"data":{}}'))
+    await getHandler()(event, {
+      ...payload,
+      transport: { followRedirects: true, maxRedirects: 2 },
+      request: {
+        ...payload.request,
+        method: 'POST',
+        bodyType: 'graphql',
+        body: '{"query":"{ ok }","variables":"{}","operationName":""}',
+      },
+    })
+    expect(mocks.request.mock.calls[0][1].maxRedirections).toBe(2)
+  })
+
   it('executes GraphQL via the shared transport, auth, extraction and assertions', async () => {
     mocks.request.mockResolvedValue(
       response('{"data":{"token":"demo"},"errors":[{"message":"partial"}]}'),

@@ -2,6 +2,7 @@ import type { HttpMethod } from '../main/types/http'
 import type { HttpRuntimeResult } from './httpRuntime'
 import type { HttpScriptResult } from './httpScripts'
 import { z } from 'zod'
+import { httpTransportSchema } from './httpTransport'
 
 export const httpRunPrepareSchema = z.object({
   folderId: z.number().int().positive(),
@@ -11,6 +12,7 @@ export const httpRunStartSchema = z.object({
   requestIds: z.array(z.number().int().positive()).max(500),
   continueOnFailure: z.boolean(),
   skipCertificateVerification: z.boolean(),
+  transport: httpTransportSchema.optional(),
 })
 export type HttpRunStart = z.infer<typeof httpRunStartSchema>
 export type HttpRunStatus =

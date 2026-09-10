@@ -140,6 +140,44 @@ describe('preview, persistence and imported script trust', () => {
     expect(mocks.grants).toEqual({})
   })
 
+  it('inherits Postman transport profiles and persists item overrides', () => {
+    const result = parsePostmanFiles([
+      {
+        name: 'transport.json',
+        content: JSON.stringify({
+          info: {
+            name: 'Transport',
+            schema:
+              'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+          },
+          protocolProfileBehavior: { strictSSL: false, maxRedirects: 8 },
+          item: [
+            {
+              name: 'Folder',
+              protocolProfileBehavior: { followRedirects: false },
+              item: [
+                {
+                  name: 'Request',
+                  protocolProfileBehavior: { strictSSL: true, maxRedirects: 0 },
+                  request: { method: 'GET', url: 'https://example.test' },
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    ])
+    const expected = {
+      skipCertificateVerification: false,
+      followRedirects: false,
+      maxRedirects: 0,
+    }
+    expect(result.collections[0].requests[0].runtime?.transport).toEqual(
+      expected,
+    )
+    persistHttpImportResult(result)
+    expect(mocks.records.get(1)?.runtime?.transport).toEqual(expected)
+  })
   it('persists Postman disableCookies against the newly created request ID', () => {
     const result = parsePostmanFiles([
       {

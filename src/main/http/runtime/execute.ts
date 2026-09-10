@@ -36,6 +36,7 @@ import {
   httpRuntimeSchema,
 } from '../../../shared/httpRuntime'
 import { hasHttpScripts } from '../../../shared/httpScripts'
+import { resolveHttpTransport } from '../../../shared/httpTransport'
 import {
   HTTP_SECRET_MASK,
   interpolateHttpVariables,
@@ -64,14 +65,14 @@ import {
 } from './session'
 import { variableScopeLimit } from './variables'
 
-const RESPONSE_BODY_CAP_BYTES = 10 * 1024 * 1024
-const DEFAULT_TIMEOUT_MS = 30_000
 const certificateDispatcher = new Agent({
   factory: captureDispatcherFactory,
+  connect: { timeout: 0 },
 })
 const insecureCertificateDispatcher = new Agent({
   factory: captureDispatcherFactory,
   connect: {
+    timeout: 0,
     rejectUnauthorized: false,
   },
 })
@@ -412,7 +413,7 @@ async function readBodyCapped(
 
   for await (const chunk of body as AsyncIterable<Buffer>) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-    if (received + buf.length > cap) {
+    if (cap > 0 && received + buf.length > cap) {
       const remaining = cap - received
       if (remaining > 0) {
         chunks.push(buf.subarray(0, remaining))
@@ -692,13 +693,23 @@ export async function executeHttpRequest(
   }
 
   let finalUrl = ''
-  const timeoutMs = payload.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  const transport = resolveHttpTransport(
+    {
+      timeoutMs: payload.timeoutMs,
+      skipCertificateVerification: payload.skipCertificateVerification,
+      ...payload.transport,
+    },
+    requestRuntime.transport,
+    scripted || interpolated.bodyType === 'graphql',
+  )
+  const { timeoutMs } = transport
   const controller = new AbortController()
   const abort = () => controller.abort()
   signal?.addEventListener('abort', abort, { once: true })
   if (signal?.aborted)
     abort()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const timer
+    = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : undefined
   const contextTimer = setInterval(() => {
     if (!current())
       controller.abort()
@@ -923,9 +934,12 @@ export async function executeHttpRequest(
               headers: headersObj,
               body: built.body as Dispatcher.DispatchOptions['body'],
               signal: controller.signal,
-              maxRedirections:
-                scripted || interpolated.bodyType === 'graphql' ? 0 : 5,
-              dispatcher: payload.skipCertificateVerification
+              headersTimeout: timeoutMs,
+              bodyTimeout: timeoutMs,
+              maxRedirections: transport.followRedirects
+                ? transport.maxRedirects
+                : 0,
+              dispatcher: transport.skipCertificateVerification
                 ? insecureCertificateDispatcher
                 : certificateDispatcher,
             }),
@@ -934,7 +948,7 @@ export async function executeHttpRequest(
 
     const { buffer, sizeBytes, truncated } = await readBodyCapped(
       response.body as unknown as NodeJS.ReadableStream,
-      RESPONSE_BODY_CAP_BYTES,
+      transport.maxResponseBytes,
     )
 
     const durationMs = Math.round(performance.now() - startedAtPerf)

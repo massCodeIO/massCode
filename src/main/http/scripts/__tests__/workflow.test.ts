@@ -314,6 +314,18 @@ describe('script workflow and local trust', () => {
     expect(JSON.stringify(mocks.history.mock.calls)).not.toContain('pre-value')
     expect(mocks.saved.runtime.scripts.preRequest).toBe('')
   })
+  it('honors explicit redirect settings for trusted scripts without rerunning phases', async () => {
+    const p = payload(
+      'mc.variables.set("value", "once")',
+      'mc.test("ok", () => mc.assert(true))',
+    )
+    p.runtime!.transport = { followRedirects: true, maxRedirects: 4 }
+    allow(p)
+    const result = await executeHttpRequest(p)
+    expect(mocks.request.mock.calls[0]?.[1].maxRedirections).toBe(4)
+    expect(result.scriptResults).toHaveLength(2)
+    expect(session().value).toBe('once')
+  })
   it('rolls back writes and extraction on post exceptions or failed tests', async () => {
     for (const post of [
       'throw new Error("secret")',

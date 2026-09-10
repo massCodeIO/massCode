@@ -240,6 +240,7 @@ export interface MathSettings {
 }
 
 export interface HttpSettings {
+  transport?: import('../../../shared/httpTransport').HttpTransport
   historyLimit: number
   wrapLines: boolean
   defaultPreviewFormat: HttpRequestPreviewFormat

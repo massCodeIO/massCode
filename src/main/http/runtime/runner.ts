@@ -225,6 +225,7 @@ export async function startHttpRun(
           {
             ...active.requests.get(step.requestId)!,
             skipCertificateVerification: options.skipCertificateVerification,
+            transport: options.transport,
           },
           {
             collection: active.collections.get(step.requestId),

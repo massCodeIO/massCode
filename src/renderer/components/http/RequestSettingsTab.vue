@@ -2,10 +2,27 @@
 import type { HttpCookieSnapshot } from '~/shared/httpCookies'
 import { FieldError } from '@/components/ui/shadcn/field'
 import { Switch } from '@/components/ui/shadcn/switch'
-import { useHttpRequests } from '@/composables'
+import { useHttpRequests, useHttpSettings } from '@/composables'
 import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
+import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n, ipc } from '@/electron'
 
+import { HTTP_TRANSPORT_DEFAULTS } from '~/shared/httpTransport'
+
+const { draft } = useHttpRuntime()
+const { settings } = useHttpSettings()
+const transport = computed({
+  get: () => draft.value.transport ?? {},
+  set: (value) => {
+    if (Object.keys(value).length)
+      draft.value.transport = value
+    else delete draft.value.transport
+  },
+})
+const defaults = computed(() => ({
+  ...HTTP_TRANSPORT_DEFAULTS,
+  ...settings.transport,
+}))
 const { currentRequest } = useHttpRequests()
 const requestId = computed(() => currentRequest.value?.id ?? null)
 const revision = useHttpCookieRevision()
@@ -67,20 +84,26 @@ async function setEnabled(value: boolean) {
 </script>
 
 <template>
-  <UiMenuFormSection :label="i18n.t('spaces.http.devtools.currentRequest')">
-    <UiMenuFormItem :label="i18n.t('spaces.http.devtools.enableCookieJar')">
-      <Switch
-        :checked="enabled"
-        :disabled="loading || saving || !requestId"
-        :aria-label="i18n.t('spaces.http.devtools.enableCookieJar')"
-        @update:checked="setEnabled"
-      />
-      <template #description>
-        {{ i18n.t("spaces.http.devtools.cookieJarHint") }}
-      </template>
-    </UiMenuFormItem>
-    <FieldError v-if="error">
-      {{ error }}
-    </FieldError>
-  </UiMenuFormSection>
+  <div class="space-y-4">
+    <HttpTransportSettings
+      v-model="transport"
+      :defaults="defaults"
+    />
+    <UiMenuFormSection :label="i18n.t('spaces.http.devtools.currentRequest')">
+      <UiMenuFormItem :label="i18n.t('spaces.http.devtools.enableCookieJar')">
+        <Switch
+          :checked="enabled"
+          :disabled="loading || saving || !requestId"
+          :aria-label="i18n.t('spaces.http.devtools.enableCookieJar')"
+          @update:checked="setEnabled"
+        />
+        <template #description>
+          {{ i18n.t("spaces.http.devtools.cookieJarHint") }}
+        </template>
+      </UiMenuFormItem>
+      <FieldError v-if="error">
+        {{ error }}
+      </FieldError>
+    </UiMenuFormSection>
+  </div>
 </template>

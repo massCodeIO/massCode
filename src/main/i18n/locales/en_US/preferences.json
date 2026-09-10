@@ -238,7 +238,8 @@
     "history": {
       "label": "History entries per request",
       "off": "Do not save",
-      "description": "Keep 10–100 executions per request. Lowering the limit trims older entries on the next history load or send. Disabling stops new entries and keeps existing history."
+      "description": "Keep 10–100 executions per request. Lowering the limit trims older entries on the next history load or send. Disabling stops new entries and keeps existing history.",
+      "section": "History"
     },
     "label": "HTTP Client",
     "wrapLines": {
@@ -260,7 +261,28 @@
     "sslCertificateVerification": {
       "label": "SSL Certificate Verification",
       "description": "Verify SSL certificates when sending HTTPS requests. Turn off to allow invalid or self-signed certificates."
-    }
+    },
+    "transport": {
+      "label": "Transport",
+      "timeoutMs": "Request timeout",
+      "maxResponseBytes": "Maximum response size",
+      "maxRedirects": "Maximum redirects",
+      "followRedirects": "Automatically follow redirects",
+      "skipCertificateVerification": "Skip SSL certificate verification",
+      "inherit": "Use application setting",
+      "legacy": "Default",
+      "on": "On",
+      "off": "Off",
+      "timeoutMsHint": "Set how long a request should wait for a response before timing out. To never time out, set to 0.",
+      "maxResponseBytesHint": "Set the maximum size of a response to download. To download a response of any size, set to 0.",
+      "maxRedirectsHint": "Set the maximum number of redirects to follow. To prevent redirects, set to 0.",
+      "followRedirectsHint": "Follow redirects automatically. By default, this is off for requests with scripts and GraphQL.",
+      "skipCertificateVerificationHint": "Allow requests to servers with invalid or self-signed SSL certificates.",
+      "invalid": "Value not applied. Enter a valid non-negative number. Timeout and redirects must be whole numbers; redirects cannot exceed 100.",
+      "ms": "ms",
+      "mb": "MB"
+    },
+    "interface": "Interface"
   },
   "api": {
     "label": "API",

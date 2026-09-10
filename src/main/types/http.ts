@@ -71,6 +71,7 @@ export interface HttpExecutePayload {
   environmentId: number | null
   skipCertificateVerification?: boolean
   timeoutMs?: number
+  transport?: import('../../shared/httpTransport').HttpTransport
 }
 
 export interface HttpSecretPayload {

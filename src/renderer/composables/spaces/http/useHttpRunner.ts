@@ -109,6 +109,7 @@ async function startRunner() {
         requestIds: view.value.steps.map(step => step.requestId),
         continueOnFailure: continueOnFailure.value,
         skipCertificateVerification: settings.skipCertificateVerification,
+        transport: JSON.parse(JSON.stringify(settings.transport ?? {})),
       },
     )
     if (token === generation)

@@ -14,7 +14,8 @@ import { interpolateHttpVariables } from '~/shared/httpVariables'
 export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
-interface HttpRequestPreviewOptions {
+export interface HttpRequestPreviewOptions {
+  automaticCookie?: string
   collection?: HttpCollectionConfig
   name?: string
   variables?: Record<string, string>
@@ -88,6 +89,25 @@ function buildPreviewUrl(draft: HttpRequestDraft): string {
   }
 }
 
+export function resolveHttpPreviewUrl(
+  draft: HttpRequestDraft,
+  options: HttpRequestPreviewOptions = {},
+): string {
+  return buildPreviewUrl(
+    interpolateDraft(
+      {
+        ...applyHttpCollection(draft, options.collection),
+        bodyType: 'none',
+        body: null,
+        formData: [],
+      },
+      options.variables === undefined
+        ? undefined
+        : { ...collectionVariables(options.collection), ...options.variables },
+    ),
+  )
+}
+
 function getHttpUrlParts(url: string): { host: string, target: string } {
   try {
     const parsed = new URL(url)
@@ -134,12 +154,28 @@ function hasHeader(headers: HttpHeaderEntry[], name: string): boolean {
   return headers.some(header => header.key.toLowerCase() === name)
 }
 
-function getPreviewHeaders(draft: HttpRequestDraft): HttpHeaderEntry[] {
+function getPreviewHeaders(
+  draft: HttpRequestDraft,
+  automaticCookie?: string,
+): HttpHeaderEntry[] {
   const headers = [
     ...draft.headers.filter(entry => entry.enabled !== false && entry.key),
     ...authHeaders(draft.auth),
   ]
 
+  if (automaticCookie) {
+    const manual = headers
+      .filter(header => header.key.toLowerCase() === 'cookie')
+      .map(header => header.value)
+    for (let index = headers.length - 1; index >= 0; index--) {
+      if (headers[index]!.key.toLowerCase() === 'cookie')
+        headers.splice(index, 1)
+    }
+    headers.push({
+      key: 'Cookie',
+      value: [automaticCookie, ...manual].filter(Boolean).join('; '),
+    })
+  }
   const contentType = BODY_CONTENT_TYPES[draft.bodyType]
   if (contentType && !hasHeader(headers, 'content-type')) {
     headers.push({ key: 'Content-Type', value: contentType })
@@ -298,7 +334,7 @@ export function buildHttpPreview(
   )
   const url = buildPreviewUrl(previewDraft)
   const { host, target } = getHttpUrlParts(url)
-  const headers = getPreviewHeaders(previewDraft)
+  const headers = getPreviewHeaders(previewDraft, options.automaticCookie)
   const lines = [`${previewDraft.method} ${target || '/'} HTTP/1.1`]
 
   if (host && !hasHeader(headers, 'host')) {
@@ -333,7 +369,10 @@ export function buildCurlPreview(
     `curl -X ${shellDoubleQuote(previewDraft.method)} ${shellDoubleQuote(url)}`,
   ]
 
-  for (const header of getPreviewHeaders(previewDraft).filter(
+  for (const header of getPreviewHeaders(
+    previewDraft,
+    options.automaticCookie,
+  ).filter(
     header =>
       previewDraft.bodyType !== 'multipart'
       || header.key.toLowerCase() !== 'content-type',
@@ -428,7 +467,7 @@ export function buildHarRequest(
       ? undefined
       : { ...collectionVariables(options.collection), ...options.variables },
   )
-  const headers = getPreviewHeaders(preview)
+  const headers = getPreviewHeaders(preview, options.automaticCookie)
   const contentType = headers.find(
     header => header.key.toLowerCase() === 'content-type',
   )?.value
@@ -486,7 +525,10 @@ export function buildJavaScriptPreview(
   )
   const multipart = previewDraft.bodyType === 'multipart'
   const headers = new Map<string, { key: string, value: string }>()
-  for (const header of getPreviewHeaders(previewDraft)) {
+  for (const header of getPreviewHeaders(
+    previewDraft,
+    options.automaticCookie,
+  )) {
     const key = header.key.toLowerCase()
     // FormData owns the boundary; a copied content type would invalidate it.
     if (multipart && key === 'content-type')

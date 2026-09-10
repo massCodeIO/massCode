@@ -7,6 +7,7 @@ import {
 import { useHttpRequests } from '@/composables'
 import { i18n, ipc } from '@/electron'
 import { useDebounceFn } from '@vueuse/core'
+import { useHttpCookieRevision } from './useHttpCookieRevision'
 
 export function useHttpCookies(open: Ref<boolean>) {
   const { currentRequest, currentDraft } = useHttpRequests()
@@ -142,8 +143,7 @@ export function useHttpCookies(open: Ref<boolean>) {
     if (open.value && !busy.value)
       void action(refresh)
   }, 100)
-  ipc.on('spaces:http:cookies:event', onChanged)
-  onBeforeUnmount(() => ipc.removeListeners('spaces:http:cookies:event'))
+  watch(useHttpCookieRevision(), onChanged)
   watch(open, (value) => {
     if (!value)
       return

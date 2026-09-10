@@ -16,7 +16,7 @@ import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
 import { api } from '~/renderer/services/api'
 import { resolveHttpFolderConfig } from '~/shared/httpCollection'
-import { buildHttpPreview } from './requestPreview'
+import { buildHttpPreview, resolveHttpPreviewUrl } from './requestPreview'
 
 interface Props {
   request: HttpRequestListItem
@@ -161,15 +161,18 @@ async function onCopyRequest() {
       return
     }
 
-    copy(
-      buildHttpPreview(data, {
-        variables: previewVariables.value,
-        collection: resolveHttpFolderConfig(
-          flattenFolderTree(folders.value),
-          data.folderId,
-        ),
-      }),
-    )
+    const options = {
+      variables: previewVariables.value,
+      collection: resolveHttpFolderConfig(
+        flattenFolderTree(folders.value),
+        data.folderId,
+      ),
+    }
+    const automaticCookie = (await ipc.invoke('spaces:http:cookies:preview', {
+      requestId: props.request.id,
+      url: resolveHttpPreviewUrl(data, options),
+    })) as string
+    copy(buildHttpPreview(data, { ...options, automaticCookie }))
     useDonations().incrementCopy('http')
   }
   catch (error) {

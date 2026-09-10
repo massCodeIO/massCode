@@ -53,4 +53,25 @@ it('validates sender, frame and payload before cookie access or mutation', () =>
     }),
   ).toThrow()
   expect(jar.read(null).cookies).toEqual([])
+  jar.save('example.com', 'session=abc; Path=/api; Secure')
+  const preview = handlers.get('spaces:http:cookies:preview')!
+  expect(
+    preview(event, { requestId: 1, url: 'https://example.com/api/users' }),
+  ).toBe('session=abc')
+  for (const url of [
+    'http://example.com/api',
+    'https://example.com/other',
+    'https://other.example/api',
+    '{{baseUrl}}',
+    'file:///api',
+  ]) {
+    expect(preview(event, { requestId: 1, url })).toBe('')
+  }
+  jar.setEnabled(1, false)
+  expect(preview(event, { requestId: 1, url: 'https://example.com/api' })).toBe(
+    '',
+  )
+  expect(preview(event, { requestId: 2, url: 'https://example.com/api' })).toBe(
+    'session=abc',
+  )
 })

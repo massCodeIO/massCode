@@ -3,6 +3,7 @@ import {
   cookieDomainSchema,
   cookieEnabledSchema,
   cookieIdSchema,
+  cookiePreviewSchema,
   cookieRequestSchema,
   cookieSaveSchema,
 } from '../../../shared/httpCookies'
@@ -22,6 +23,21 @@ export function registerHttpCookieHandlers(
   })
   owner.once('destroyed', unsubscribe)
   const actions = {
+    preview: (payload: unknown) => {
+      const { requestId, url } = cookiePreviewSchema.parse(payload)
+      const jar = getHttpCookieJar()
+      if (!jar.enabled(requestId))
+        return ''
+      try {
+        const parsed = new URL(url)
+        if (!['http:', 'https:'].includes(parsed.protocol))
+          return ''
+        return jar.header(url)
+      }
+      catch {
+        return ''
+      }
+    },
     read: (payload: unknown) =>
       getHttpCookieJar().read(cookieRequestSchema.parse(payload).requestId),
     addDomain: (payload: unknown) =>

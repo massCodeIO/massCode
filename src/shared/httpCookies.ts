@@ -31,3 +31,7 @@ export interface HttpCookieSnapshot {
   cookies: HttpCookie[]
   enabled: boolean
 }
+
+export const cookiePreviewSchema = cookieRequestSchema.extend({
+  url: z.string().max(65536),
+})

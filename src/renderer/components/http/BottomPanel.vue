@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { HttpRequestPreviewOptions } from './requestPreview'
 import type {
   HttpRequestPreviewFormat,
   HttpSnippetPayload,
@@ -14,6 +15,7 @@ import {
   useHttpRequests,
   useHttpSettings,
 } from '@/composables'
+import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
 import { i18n, ipc } from '@/electron'
@@ -23,6 +25,7 @@ import {
   buildHarRequest,
   buildRequestPreview,
   getRequestPreviewWarnings,
+  resolveHttpPreviewUrl,
 } from './requestPreview'
 
 type BottomPanelTab = 'preview' | 'response' | 'history'
@@ -57,6 +60,7 @@ const previewErrorKey = ref('error')
 const previewPending = ref(false)
 const displayedFormat = ref(previewFormat.value)
 const interpolateVariables = ref(true)
+const cookieRevision = useHttpCookieRevision()
 
 watch(
   [
@@ -66,6 +70,7 @@ watch(
     activeEnvironmentVariables,
     interpolateVariables,
     currentRequest,
+    cookieRevision,
   ],
   async (_, __, onCleanup) => {
     let cancelled = false
@@ -80,7 +85,7 @@ watch(
     }
     previewPending.value = true
     try {
-      const options = {
+      const options: HttpRequestPreviewOptions = {
         name: currentRequest.value?.name,
         collection: resolveHttpFolderConfig(
           flattenFolderTree(folders.value),
@@ -90,6 +95,19 @@ watch(
           ? activeEnvironmentVariables.value
           : undefined,
       }
+      const url = resolveHttpPreviewUrl(currentDraft.value, {
+        ...options,
+        variables: activeEnvironmentVariables.value,
+      })
+      options.automaticCookie = (await ipc.invoke(
+        'spaces:http:cookies:preview',
+        {
+          requestId: currentRequest.value?.id ?? null,
+          url,
+        },
+      )) as string
+      if (cancelled)
+        return
       const format = previewFormat.value
       const content
         = format === 'http'

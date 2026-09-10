@@ -18,6 +18,7 @@ import {
 import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
 import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
+import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n, ipc } from '@/electron'
 import { Copy } from 'lucide-vue-next'
 import { resolveHttpFolderConfig } from '~/shared/httpCollection'
@@ -43,6 +44,7 @@ const { folders } = useHttpFolders()
 const { activeEnvironmentVariables } = useHttpEnvironments()
 const { isExecuting, lastError, lastResponse } = useHttpExecute()
 const { settings } = useHttpSettings()
+const { draft: runtimeDraft } = useHttpRuntime()
 const copy = useCopyToClipboard()
 const { incrementCopy } = useDonations()
 
@@ -71,6 +73,8 @@ watch(
     interpolateVariables,
     currentRequest,
     cookieRevision,
+    runtimeDraft,
+    () => settings.transport,
   ],
   async (_, __, onCleanup) => {
     let cancelled = false
@@ -86,6 +90,10 @@ watch(
     previewPending.value = true
     try {
       const options: HttpRequestPreviewOptions = {
+        encodeUrl:
+          runtimeDraft.value.transport?.encodeUrl
+          ?? settings.transport?.encodeUrl
+          ?? true,
         name: currentRequest.value?.name,
         collection: resolveHttpFolderConfig(
           flattenFolderTree(folders.value),

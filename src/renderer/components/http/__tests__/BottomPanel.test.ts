@@ -6,13 +6,14 @@ import {
   defineComponent,
   nextTick,
   onMounted,
+  onScopeDispose,
   reactive,
   ref,
   ssrContextKey,
   watch,
 } from 'vue'
 
-Object.assign(globalThis, { computed, ref, watch, onMounted })
+Object.assign(globalThis, { computed, ref, watch, onMounted, onScopeDispose })
 const cleanup: Array<() => void> = []
 
 afterEach(() => cleanup.splice(0).forEach(dispose => dispose()))
@@ -37,15 +38,19 @@ async function setup() {
     resolve: (value: string) => void
     reject: (error: Error) => void
   }> = []
-  const invoke = vi.fn(
-    () =>
-      new Promise<string>((resolve, reject) =>
+  const invoke = vi.fn((channel: string) =>
+    channel === 'spaces:http:cookies:preview'
+      ? Promise.resolve('')
+      : new Promise<string>((resolve, reject) =>
         pending.push({ resolve, reject }),
       ),
   )
   vi.doMock('@/electron', () => ({
     i18n: { t: (key: string) => key },
-    ipc: { invoke },
+    ipc: { invoke, on: vi.fn(), removeListeners: vi.fn() },
+  }))
+  vi.doMock('@/composables/spaces/http/useHttpRuntime', () => ({
+    useHttpRuntime: () => ({ draft: ref({}) }),
   }))
   vi.doMock('@/composables/spaces/http/useHttpHistory', () => ({
     useHttpHistory: () => ({ history: ref([]), getHttpHistory: vi.fn() }),

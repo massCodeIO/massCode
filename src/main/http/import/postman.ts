@@ -433,12 +433,27 @@ function parseRequest(
   )
   const profile = context.profile ?? {}
   const transport: HttpTransport = {}
-  for (const key of ['followRedirects', 'maxRedirects', 'strictSSL'] as const) {
+  for (const key of [
+    'followRedirects',
+    'maxRedirects',
+    'strictSSL',
+    'protocolVersion',
+    'disableUrlEncoding',
+    'followOriginalHttpMethod',
+    'followAuthorizationHeader',
+    'removeRefererHeaderOnRedirect',
+  ] as const) {
     if (profile[key] === undefined)
       continue
-    const target = key === 'strictSSL' ? 'skipCertificateVerification' : key
+    const target
+      = key === 'strictSSL'
+        ? 'skipCertificateVerification'
+        : key === 'disableUrlEncoding'
+          ? 'encodeUrl'
+          : key
     const value
-      = key === 'strictSSL' && typeof profile[key] === 'boolean'
+      = (key === 'strictSSL' || key === 'disableUrlEncoding')
+        && typeof profile[key] === 'boolean'
         ? !profile[key]
         : profile[key]
     const parsed = httpTransportSchema.safeParse({ [target]: value })

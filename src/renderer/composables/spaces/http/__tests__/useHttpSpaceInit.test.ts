@@ -15,6 +15,11 @@ async function setup() {
   const requests = ref([{ id: 42 }])
   const allRequests = ref([{ id: 42 }])
 
+  const requestDirty = ref(false)
+  const busy = ref(false)
+  vi.doMock('../useHttpRuntime', () => ({
+    useHttpRuntime: () => ({ requestDirty, busy }),
+  }))
   const selectHttpRequest = vi.fn()
   const resetHttpFoldersState = vi.fn()
   const resetHttpRequestsState = vi.fn(() => {
@@ -80,6 +85,8 @@ async function setup() {
 
   return {
     httpState,
+    requestDirty,
+    busy,
     allRequests,
     requests,
     selectHttpRequest,
@@ -100,6 +107,21 @@ beforeEach(() => {
 })
 
 describe('resetHttpSpaceState', () => {
+  it.each(['requestDirty', 'busy'] as const)(
+    'does not navigate away from %s during a background refresh',
+    async (field) => {
+      const ctx = await setup()
+      ctx[field].value = true
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).not.toHaveBeenCalled()
+      expect(ctx.httpState.requestId).toBe(42)
+      ctx[field].value = false
+      await ctx.refresh()
+      expect(ctx.selectHttpRequest).toHaveBeenCalledWith(42, false, {
+        preservePanel: true,
+      })
+    },
+  )
   it('restores the saved request before the navigation list is populated', async () => {
     const ctx = await setup()
     ctx.requests.value = []

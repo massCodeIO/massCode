@@ -19,7 +19,6 @@ import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename } from 'node:path'
-import { Agent, request as undiciRequest } from 'undici'
 import { applyHttpApiKey } from '../../../shared/httpAuth'
 import {
   applyHttpCollection,
@@ -48,11 +47,7 @@ import { resolveHttpCollection } from '../collection'
 import { getHttpCookieJar } from '../cookies/store'
 import { withHttpCookies } from '../cookies/transport'
 import { httpConsole } from '../devtools/console'
-import {
-  captureDispatcherFactory,
-  captureHttpNetwork,
-  finishHttpNetwork,
-} from '../devtools/network'
+import { captureHttpNetwork, finishHttpNetwork } from '../devtools/network'
 import { createHistorySnapshot } from '../historySnapshot'
 import { executeScript } from '../scripts/execute'
 import { scriptsTrusted } from '../scripts/trust'
@@ -63,19 +58,8 @@ import {
   getHttpSession,
   isHttpSessionCurrent,
 } from './session'
+import { getHttpDispatcher, requestWithRedirects } from './transport'
 import { variableScopeLimit } from './variables'
-
-const certificateDispatcher = new Agent({
-  factory: captureDispatcherFactory,
-  connect: { timeout: 0 },
-})
-const insecureCertificateDispatcher = new Agent({
-  factory: captureDispatcherFactory,
-  connect: {
-    timeout: 0,
-    rejectUnauthorized: false,
-  },
-})
 
 export function interpolate(
   template: string,
@@ -169,7 +153,33 @@ export function applyAuth(
   return headers
 }
 
-function buildUrl(rawUrl: string, query: HttpQueryEntry[]): string {
+function buildUrl(
+  rawUrl: string,
+  query: HttpQueryEntry[],
+  encode = true,
+): string {
+  if (!encode) {
+    const base = rawUrl.split('#')[0]
+    const result = query.length
+      ? base.split('?')[0]
+      + (query.some(entry => entry.enabled !== false && entry.key)
+        ? `?${query
+          .filter(entry => entry.enabled !== false && entry.key)
+          .map(entry => `${entry.key}=${entry.value}`)
+          .join('&')}`
+        : '')
+      : base
+    const parsed = new URL(result)
+    const rawPath = result.replace(/^https?:\/\/[^/?#]+/i, '') || '/'
+    if (
+      /[^\x21-\x7E]/.test(result)
+      || parsed.pathname + parsed.search
+      !== (rawPath.startsWith('?') ? `/${rawPath}` : rawPath)
+    ) {
+      throw new Error('HTTP_URL_ENCODING_REQUIRED')
+    }
+    return result
+  }
   const url = new URL(rawUrl)
   if (query.length > 0) {
     url.search = ''
@@ -901,7 +911,11 @@ export async function executeHttpRequest(
     )
     if (!hasContentType && built.contentType)
       headersObj['Content-Type'] = built.contentType
-    finalUrl = buildUrl(interpolated.url, interpolated.query)
+    finalUrl = buildUrl(
+      interpolated.url,
+      interpolated.query,
+      transport.encodeUrl,
+    )
     sentRequest = {
       method: interpolated.method,
       url: finalUrl,
@@ -929,20 +943,22 @@ export async function executeHttpRequest(
         captureHttpNetwork(
           { executionId, ids: networkIds, body: sentRequest?.body ?? '' },
           () =>
-            undiciRequest(finalUrl, {
-              method: interpolated.method,
-              headers: headersObj,
-              body: built.body as Dispatcher.DispatchOptions['body'],
-              signal: controller.signal,
-              headersTimeout: timeoutMs,
-              bodyTimeout: timeoutMs,
-              maxRedirections: transport.followRedirects
-                ? transport.maxRedirects
-                : 0,
-              dispatcher: transport.skipCertificateVerification
-                ? insecureCertificateDispatcher
-                : certificateDispatcher,
-            }),
+            requestWithRedirects(
+              finalUrl,
+              {
+                method: interpolated.method,
+                headers: headersObj,
+                body: built.body as Dispatcher.DispatchOptions['body'],
+                signal: controller.signal,
+                headersTimeout: timeoutMs,
+                bodyTimeout: timeoutMs,
+                maxRedirections: transport.followRedirects
+                  ? transport.maxRedirects
+                  : 0,
+                dispatcher: getHttpDispatcher(transport),
+              },
+              transport,
+            ),
         ),
     )
 

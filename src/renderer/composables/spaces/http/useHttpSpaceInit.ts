@@ -4,6 +4,7 @@ import { useHttpExecute } from './useHttpExecute'
 import { useHttpFolders } from './useHttpFolders'
 import { useHttpHistory } from './useHttpHistory'
 import { useHttpRequests } from './useHttpRequests'
+import { useHttpRuntime } from './useHttpRuntime'
 import { useHttpSearch } from './useHttpSearch'
 
 const { httpState, isHttpSpaceInitialized } = useHttpApp()
@@ -92,6 +93,12 @@ async function refreshHttpSpaceFromDisk() {
       return
     httpState.activePanel = 'request'
   }
+
+  // A background sync is not navigation. Keep local edits and in-flight saves
+  // instead of opening the leave dialog or replacing the editor draft.
+  const { requestDirty, busy } = useHttpRuntime()
+  if (requestDirty.value || busy.value)
+    return
 
   const persistedRequestId = httpState.requestId
   if (persistedRequestId !== undefined) {

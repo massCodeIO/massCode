@@ -99,6 +99,13 @@ export const httpRuntime = t.Object({
           maximum: Number.MAX_SAFE_INTEGER,
         }),
       ),
+      protocolVersion: t.Optional(
+        t.Union([t.Literal('http1'), t.Literal('auto'), t.Literal('http2')]),
+      ),
+      encodeUrl: t.Optional(t.Boolean()),
+      followOriginalHttpMethod: t.Optional(t.Boolean()),
+      followAuthorizationHeader: t.Optional(t.Boolean()),
+      removeRefererHeaderOnRedirect: t.Optional(t.Boolean()),
       followRedirects: t.Optional(t.Boolean()),
       maxRedirects: t.Optional(
         t.Number({ multipleOf: 1, minimum: 0, maximum: 100 }),

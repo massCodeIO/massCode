@@ -13,11 +13,25 @@ const props = defineProps<{ defaults: Transport, global?: boolean }>()
 const model = defineModel<Transport>({ required: true })
 const invalid = ref<Record<string, boolean>>({})
 const numbers = ['timeoutMs', 'maxResponseBytes', 'maxRedirects'] as const
-const booleans = computed(() =>
-  props.global
-    ? (['followRedirects'] as const)
-    : (['followRedirects', 'skipCertificateVerification'] as const),
+const booleans = computed(
+  () =>
+    [
+      'encodeUrl',
+      'followRedirects',
+      'followOriginalHttpMethod',
+      'followAuthorizationHeader',
+      'removeRefererHeaderOnRedirect',
+      ...(!props.global ? ['skipCertificateVerification' as const] : []),
+    ] as const,
 )
+function setProtocol(value: unknown) {
+  const next = { ...model.value }
+  if (value === 'inherit')
+    delete next.protocolVersion
+  else if (value === 'http1' || value === 'http2' || value === 'auto')
+    next.protocolVersion = value
+  model.value = next
+}
 
 function setNumber(key: (typeof numbers)[number], value: string | number) {
   const next = { ...model.value }
@@ -82,6 +96,37 @@ function setBoolean(key: (typeof booleans.value)[number], value: unknown) {
       </FieldError>
       <template #description>
         {{ i18n.t(`preferences:http.transport.${key}Hint`) }}
+      </template>
+    </UiMenuFormItem>
+    <UiMenuFormItem
+      :label="i18n.t('preferences:http.transport.protocolVersion')"
+    >
+      <Select.Select
+        :model-value="model.protocolVersion ?? 'inherit'"
+        @update:model-value="setProtocol"
+      >
+        <Select.SelectTrigger
+          class="w-48"
+          :aria-label="i18n.t('preferences:http.transport.protocolVersion')"
+        >
+          <Select.SelectValue />
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem
+            v-for="value in ['inherit', 'http1', 'auto', 'http2']"
+            :key="value"
+            :value="value"
+          >
+            {{
+              i18n.t(
+                `preferences:http.transport.${value === "inherit" && global ? "legacy" : value}`,
+              )
+            }}
+          </Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
+      <template #description>
+        {{ i18n.t("preferences:http.transport.protocolVersionHint") }}
       </template>
     </UiMenuFormItem>
     <UiMenuFormItem

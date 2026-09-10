@@ -15,6 +15,7 @@ export type { HttpRequestPreviewFormat } from '~/shared/httpPreview'
 type HttpRequestPreviewFormat = 'http' | 'curl' | 'fetch' | 'axios'
 
 export interface HttpRequestPreviewOptions {
+  encodeUrl?: boolean
   automaticCookie?: string
   collection?: HttpCollectionConfig
   name?: string
@@ -58,7 +59,17 @@ function buildQueryString(query: HttpRequestDraft['query']): string {
     .join('&')
 }
 
-function buildPreviewUrl(draft: HttpRequestDraft): string {
+function buildPreviewUrl(draft: HttpRequestDraft, encodeUrl = true): string {
+  if (!encodeUrl) {
+    const parts = splitUrl(draft.url)
+    const query = draft.query.length
+      ? draft.query
+          .filter(entry => entry.enabled !== false && entry.key)
+          .map(entry => `${entry.key}=${entry.value}`)
+          .join('&')
+      : parts.query
+    return parts.path + (query ? `?${query}` : '') + parts.fragment
+  }
   const queryString = buildQueryString(draft.query)
 
   try {
@@ -105,6 +116,7 @@ export function resolveHttpPreviewUrl(
         ? undefined
         : { ...collectionVariables(options.collection), ...options.variables },
     ),
+    options.encodeUrl,
   )
 }
 
@@ -332,7 +344,7 @@ export function buildHttpPreview(
       ? undefined
       : { ...collectionVariables(options.collection), ...options.variables },
   )
-  const url = buildPreviewUrl(previewDraft)
+  const url = buildPreviewUrl(previewDraft, options.encodeUrl)
   const { host, target } = getHttpUrlParts(url)
   const headers = getPreviewHeaders(previewDraft, options.automaticCookie)
   const lines = [`${previewDraft.method} ${target || '/'} HTTP/1.1`]
@@ -363,7 +375,7 @@ export function buildCurlPreview(
       ? undefined
       : { ...collectionVariables(options.collection), ...options.variables },
   )
-  const url = buildPreviewUrl(previewDraft)
+  const url = buildPreviewUrl(previewDraft, options.encodeUrl)
   const indent = '     '
   const lines = [
     `curl -X ${shellDoubleQuote(previewDraft.method)} ${shellDoubleQuote(url)}`,
@@ -495,7 +507,7 @@ export function buildHarRequest(
   }
   return {
     method: preview.method,
-    url: buildPreviewUrl(preview),
+    url: buildPreviewUrl(preview, options.encodeUrl),
     httpVersion: 'HTTP/1.1',
     headers: headers
       .filter(
@@ -553,7 +565,9 @@ export function buildJavaScriptPreview(
     lines.push('')
   }
   const config: Record<string, unknown> = {
-    ...(format === 'axios' ? { url: buildPreviewUrl(previewDraft) } : {}),
+    ...(format === 'axios'
+      ? { url: buildPreviewUrl(previewDraft, options.encodeUrl) }
+      : {}),
     method: previewDraft.method,
     headers: headerObject,
   }
@@ -568,7 +582,7 @@ export function buildJavaScriptPreview(
   }
   const call
     = format === 'fetch'
-      ? `fetch(${JSON.stringify(buildPreviewUrl(previewDraft))}, ${serialized.join('\n')})`
+      ? `fetch(${JSON.stringify(buildPreviewUrl(previewDraft, options.encodeUrl))}, ${serialized.join('\n')})`
       : `axios(${serialized.join('\n')})`
   lines.push(`const response = await ${call};`)
   const imports = format === 'axios' ? 'import axios from "axios";\n\n' : ''

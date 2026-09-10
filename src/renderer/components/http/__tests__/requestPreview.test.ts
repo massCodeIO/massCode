@@ -28,6 +28,22 @@ function createDraft(
 }
 
 describe('request preview', () => {
+  it('keeps encoded query bytes in URL lookup and generated previews when encoding is off', () => {
+    const draft = createDraft({ query: [{ key: 'q', value: 'a%20b+c' }] })
+    const options = { encodeUrl: false }
+    expect(resolveHttpPreviewUrl(draft, options)).toBe(
+      'https://api.example.com/users?q=a%20b+c',
+    )
+    expect(buildHarRequest(draft, options).url).toBe(
+      'https://api.example.com/users?q=a%20b+c',
+    )
+    for (const format of ['http', 'curl', 'fetch', 'axios'] as const) {
+      expect(buildRequestPreview(draft, format, options)).toContain(
+        'q=a%20b+c',
+      )
+    }
+    expect(resolveHttpPreviewUrl(draft)).toContain('q=a%2520b%2Bc')
+  })
   it('resolves the cookie lookup URL without interpreting the request body', () => {
     expect(
       resolveHttpPreviewUrl(

@@ -128,9 +128,16 @@ async function executeCurrentRequest(): Promise<HttpResponse | null> {
           ? i18n.t('spaces.http.editor.body.fileUnavailable')
           : response.error === 'HTTP_SCRIPT_FAILED'
             ? i18n.t('spaces.http.scripts.failed')
-            : response.error.startsWith('GRAPHQL_')
-              ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
-              : response.error
+            : [
+                'HTTP2_HTTPS_REQUIRED',
+                'HTTP2_NOT_NEGOTIATED',
+                'HTTP_URL_ENCODING_REQUIRED',
+                'HTTP_REDIRECT_PROTOCOL',
+              ].includes(response.error)
+                ? i18n.t(`preferences:http.transport.${response.error}`)
+                : response.error.startsWith('GRAPHQL_')
+                  ? i18n.t(`spaces.http.graphql.errors.${response.error}`)
+                  : response.error
     }
     return response
   }

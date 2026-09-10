@@ -660,6 +660,11 @@ export type HttpFoldersResponse = {
          * @max 9007199254740991
          */
         maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
         followRedirects?: boolean;
         /**
          * @min 0
@@ -775,6 +780,11 @@ export type HttpFoldersTreeResponse = {
          * @max 9007199254740991
          */
         maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
         followRedirects?: boolean;
         /**
          * @min 0
@@ -891,6 +901,11 @@ export interface HttpFoldersUpdate {
          * @max 9007199254740991
          */
         maxResponseBytes?: number;
+        protocolVersion?: "http1" | "auto" | "http2";
+        encodeUrl?: boolean;
+        followOriginalHttpMethod?: boolean;
+        followAuthorizationHeader?: boolean;
+        removeRefererHeaderOnRedirect?: boolean;
         followRedirects?: boolean;
         /**
          * @min 0
@@ -976,6 +991,11 @@ export interface HttpRuntime {
      * @max 9007199254740991
      */
     maxResponseBytes?: number;
+    protocolVersion?: "http1" | "auto" | "http2";
+    encodeUrl?: boolean;
+    followOriginalHttpMethod?: boolean;
+    followAuthorizationHeader?: boolean;
+    removeRefererHeaderOnRedirect?: boolean;
     followRedirects?: boolean;
     /**
      * @min 0
@@ -1051,6 +1071,11 @@ export interface HttpRuntimeSave {
        * @max 9007199254740991
        */
       maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
       followRedirects?: boolean;
       /**
        * @min 0
@@ -1133,6 +1158,11 @@ export interface HttpRequestItemResponse {
        * @max 9007199254740991
        */
       maxResponseBytes?: number;
+      protocolVersion?: "http1" | "auto" | "http2";
+      encodeUrl?: boolean;
+      followOriginalHttpMethod?: boolean;
+      followAuthorizationHeader?: boolean;
+      removeRefererHeaderOnRedirect?: boolean;
       followRedirects?: boolean;
       /**
        * @min 0

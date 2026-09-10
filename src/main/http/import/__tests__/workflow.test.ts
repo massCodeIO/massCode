@@ -150,15 +150,30 @@ describe('preview, persistence and imported script trust', () => {
             schema:
               'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
           },
-          protocolProfileBehavior: { strictSSL: false, maxRedirects: 8 },
+          protocolProfileBehavior: {
+            strictSSL: false,
+            maxRedirects: 8,
+            protocolVersion: 'auto',
+            disableUrlEncoding: true,
+            followAuthorizationHeader: true,
+          },
           item: [
             {
               name: 'Folder',
-              protocolProfileBehavior: { followRedirects: false },
+              protocolProfileBehavior: {
+                followRedirects: false,
+                followOriginalHttpMethod: true,
+                removeRefererHeaderOnRedirect: true,
+              },
               item: [
                 {
                   name: 'Request',
-                  protocolProfileBehavior: { strictSSL: true, maxRedirects: 0 },
+                  protocolProfileBehavior: {
+                    strictSSL: true,
+                    maxRedirects: 0,
+                    protocolVersion: 'http2',
+                    followAuthorizationHeader: false,
+                  },
                   request: { method: 'GET', url: 'https://example.test' },
                 },
               ],
@@ -171,6 +186,11 @@ describe('preview, persistence and imported script trust', () => {
       skipCertificateVerification: false,
       followRedirects: false,
       maxRedirects: 0,
+      protocolVersion: 'http2',
+      encodeUrl: false,
+      followAuthorizationHeader: false,
+      followOriginalHttpMethod: true,
+      removeRefererHeaderOnRedirect: true,
     }
     expect(result.collections[0].requests[0].runtime?.transport).toEqual(
       expected,

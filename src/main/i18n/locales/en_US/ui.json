@@ -591,7 +591,10 @@
           "typeInherit": "Inherit from parent",
           "typeApiKey": "API Key",
           "apiKeyHeader": "Header",
-          "apiKeyQuery": "Query parameter"
+          "apiKeyQuery": "Query parameter",
+          "inheritedNone": "No authentication is configured in the parent.",
+          "inheritedFrom": "{{type}} · from “{{name}}”",
+          "inheritedUnavailable": "Could not resolve authentication. Check the parent folder settings."
         },
         "description": {
           "placeholder": "Add a description for this request"

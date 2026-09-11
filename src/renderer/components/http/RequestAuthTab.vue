@@ -2,11 +2,17 @@
 import type { HttpAuth, HttpAuthType } from '~/main/types/http'
 import { Input } from '@/components/ui/shadcn/input'
 import * as Select from '@/components/ui/shadcn/select'
+import { useHttpFolders } from '@/composables/spaces/http/useHttpFolders'
+import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { i18n } from '@/electron'
+import { httpFolderChain, readHttpCollection } from '~/shared/httpCollection'
 
-const props = withDefaults(defineProps<{ allowInherit?: boolean }>(), {
-  allowInherit: true,
-})
+const props = withDefaults(
+  defineProps<{ allowInherit?: boolean, parentId?: number | null }>(),
+  {
+    allowInherit: true,
+  },
+)
 
 const draft = defineModel<{
   auth: HttpAuth
@@ -30,6 +36,34 @@ const authTypes = computed(() =>
       ]
     : AUTH_TYPES,
 )
+
+const { folders } = useHttpFolders()
+const inheritedAuth = computed(() => {
+  if (draft.value.auth.type !== 'inherit')
+    return ''
+  try {
+    const chain = httpFolderChain(
+      flattenFolderTree(folders.value),
+      props.parentId,
+    )
+    let source: { name: string, type: HttpAuthType } | undefined
+    for (const folder of chain) {
+      const config = readHttpCollection(folder)
+      if (config && config.auth.type !== 'inherit')
+        source = { name: folder.name, type: config.auth.type }
+    }
+    if (!source || source.type === 'none')
+      return i18n.t('spaces.http.editor.auth.inheritedNone')
+    const type = AUTH_TYPES.find(item => item.value === source.type)!
+    return i18n.t('spaces.http.editor.auth.inheritedFrom', {
+      type: i18n.t(type.labelKey),
+      name: source.name,
+    })
+  }
+  catch {
+    return i18n.t('spaces.http.editor.auth.inheritedUnavailable')
+  }
+})
 
 const authType = computed({
   get: () => draft.value.auth.type,
@@ -58,6 +92,14 @@ const authType = computed({
       </Select.Select>
     </div>
 
+    <UiText
+      v-if="authType === 'inherit'"
+      as="p"
+      variant="xs"
+      muted
+    >
+      {{ inheritedAuth }}
+    </UiText>
     <UiText
       v-if="authType !== 'none' && authType !== 'inherit'"
       class="text-muted-foreground text-xs"

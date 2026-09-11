@@ -594,7 +594,10 @@
           "typeInherit": "Наследовать от родителя",
           "typeApiKey": "API-ключ",
           "apiKeyHeader": "Заголовок",
-          "apiKeyQuery": "Параметр запроса"
+          "apiKeyQuery": "Параметр запроса",
+          "inheritedNone": "У родителя авторизация не настроена.",
+          "inheritedFrom": "{{type}} · из «{{name}}»",
+          "inheritedUnavailable": "Не удалось определить авторизацию: проверьте настройки родительских папок."
         },
         "description": {
           "placeholder": "Добавьте описание для этого запроса"

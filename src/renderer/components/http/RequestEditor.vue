@@ -349,7 +349,10 @@ async function onSend() {
           value="auth"
           class="h-full"
         >
-          <HttpRequestAuthTab v-model="currentDraft" />
+          <HttpRequestAuthTab
+            v-model="currentDraft"
+            :parent-id="currentRequest.folderId"
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="scripts"

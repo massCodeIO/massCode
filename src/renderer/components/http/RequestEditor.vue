@@ -71,7 +71,7 @@ const paramsCount = computed(() => currentDraft.value?.query.length ?? 0)
 const headersCount = computed(() => currentDraft.value?.headers.length ?? 0)
 const authIndicator = computed(() => {
   const type = currentDraft.value?.auth.type
-  if (!type || type === 'none')
+  if (!type || type === 'none' || type === 'inherit')
     return null
   return type
 })

@@ -319,6 +319,12 @@
           "HTTP_CONTEXT_CHANGED": "The environment or vault changed. Prepare a new run.",
           "HTTP_REQUEST_RUNNING": "Another HTTP request or run is already active.",
           "unknown": "Could not prepare or run this folder. Prepare a new run and try again."
+        },
+        "closeHint": "Closing stops the run.",
+        "help": {
+          "title": "Collection runner help",
+          "requests": "Runs saved requests, including nested folders. Changes made after opening the runner are not included.",
+          "results": "Run variables and results are stored in memory."
         }
       },
       "runtime": {
@@ -429,6 +435,26 @@
           "invalidJson": "Response is not valid JSON",
           "unavailableBody": "Response body unavailable or truncated",
           "mismatch": "Assertion did not match"
+        },
+        "help": {
+          "extraction": {
+            "title": "Response extraction help",
+            "pointer": "For JSON, use a JSON Pointer. For example, read the id field inside user:",
+            "header": "For headers, enter the header name:",
+            "reuse": "Save it as userId, then reference it in the next request:"
+          },
+          "assertions": {
+            "title": "Assertions help",
+            "pointer": "For a JSON response, select a value using JSON Pointer:",
+            "expected": "Expected values must be valid JSON. Wrap strings in double quotes; use an array for “in” and “not in”:",
+            "example": "Example: select Status code and Equals, then enter:"
+          },
+          "session": {
+            "title": "Session variables help",
+            "lifecycle": "Session values are stored in memory. They are cleared when you change the environment or vault, or restart the app.",
+            "priority": "Session variables override environment variables with the same name.",
+            "usage": "Reference a variable in a subsequent request:"
+          }
         }
       },
       "label": "HTTP",
@@ -685,6 +711,13 @@
           "limit": "Script exceeded an input, memory or output limit.",
           "exception": "Script failed. Check syntax, supported API and memory limits. Exception text is hidden to protect secrets.",
           "destination": "Pre-request variables changed the destination origin. Request blocked."
+        },
+        "help": {
+          "title": "Scripts help",
+          "apiTitle": "Available API",
+          "limitsTitle": "Limits",
+          "limits": "Synchronous JavaScript only; no network, files or imports. Limits: 500 ms, 16 MiB heap, 64 KiB output.",
+          "exampleTitle": "Example · Post-response"
         }
       },
       "graphql": {
@@ -714,7 +747,8 @@
           "errors": "GraphQL errors",
           "invalid": "Invalid or truncated GraphQL response"
         },
-        "noNamedOperations": "No named operations"
+        "noNamedOperations": "No named operations",
+        "helpTitle": "GraphQL help"
       },
       "sidebar": {
         "unfiled": "Unfiled"

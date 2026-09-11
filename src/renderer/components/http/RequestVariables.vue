@@ -29,6 +29,7 @@ async function addExtraction() {
     inline: 'nearest',
   })
 }
+const variableExample = '{{userId}}'
 </script>
 
 <template>
@@ -41,19 +42,46 @@ async function addExtraction() {
       class="flex min-h-0 flex-col"
       :class="{ 'flex-1': fill }"
     >
-      <div class="mb-1 flex h-7 shrink-0 items-center">
+      <div class="mb-1 flex h-7 shrink-0 items-center justify-between gap-2">
         <UiText variant="sm">
           {{ i18n.t("spaces.http.runtime.postResponse") }}
         </UiText>
+        <UiHelpButton
+          :label="i18n.t('spaces.http.runtime.help.extraction.title')"
+        >
+          <UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.extractionHint") }}
+          </UiText><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.pointer") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >/user/id</code><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.header") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >x-request-id</code><UiText
+            as="p"
+            variant="xs"
+            muted
+          >
+            {{ i18n.t("spaces.http.runtime.help.extraction.reuse") }}
+          </UiText><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >{{ variableExample }}</code>
+        </UiHelpButton>
       </div>
-      <UiText
-        as="p"
-        variant="xs"
-        class="mb-3 shrink-0"
-        muted
-      >
-        {{ i18n.t("spaces.http.runtime.extractionHint") }}
-      </UiText>
       <div
         ref="rows"
         class="scrollbar min-h-0 space-y-1 overflow-y-auto"

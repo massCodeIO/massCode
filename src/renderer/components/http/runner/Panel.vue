@@ -47,14 +47,32 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex h-full min-h-0 flex-col gap-3 p-3">
-    <UiText variant="sm">
-      {{ i18n.t("spaces.http.runner.title") }} · {{ view?.folderName }}
-    </UiText>
+    <div class="flex shrink-0 items-center justify-between gap-2">
+      <UiText variant="sm">
+        {{ i18n.t("spaces.http.runner.title") }} · {{ view?.folderName }}
+      </UiText>
+      <UiHelpButton :label="i18n.t('spaces.http.runner.help.title')">
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runner.help.requests") }}
+        </UiText>
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runner.help.results") }}
+        </UiText>
+      </UiHelpButton>
+    </div>
     <UiText
       variant="xs"
       muted
     >
-      {{ i18n.t("spaces.http.runner.description") }}
+      {{ i18n.t("spaces.http.runner.closeHint") }}
     </UiText>
     <div
       v-if="view"

@@ -83,6 +83,7 @@ async function clearSession() {
     clearing.value = false
   }
 }
+const variableExample = '{{userId}}'
 </script>
 
 <template>
@@ -250,14 +251,45 @@ async function clearSession() {
           :key="`${group.scope}:${group.folderId ?? group.label}`"
           class="space-y-2"
         >
-          <UiText
-            as="h3"
-            variant="xs"
-            weight="medium"
-          >
-            {{ i18n.t(`spaces.http.inspector.${group.scope}`) }} ·
-            {{ group.label }}
-          </UiText>
+          <div class="flex items-center justify-between gap-2">
+            <UiText
+              as="h3"
+              variant="xs"
+              weight="medium"
+            >
+              {{ i18n.t(`spaces.http.inspector.${group.scope}`) }} ·
+              {{ group.label }}
+            </UiText><UiHelpButton
+              v-if="group.scope === 'session'"
+              :label="i18n.t('spaces.http.runtime.help.session.title')"
+            >
+              <UiText
+                as="p"
+                variant="xs"
+                muted
+              >
+                {{
+                  i18n.t("spaces.http.runtime.help.session.lifecycle")
+                }}
+              </UiText><UiText
+                as="p"
+                variant="xs"
+                muted
+              >
+                {{
+                  i18n.t("spaces.http.runtime.help.session.priority")
+                }}
+              </UiText><UiText
+                as="p"
+                variant="xs"
+                muted
+              >
+                {{ i18n.t("spaces.http.runtime.help.session.usage") }}
+              </UiText><code
+                class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+              >{{ variableExample }}</code>
+            </UiHelpButton>
+          </div>
           <UiText
             v-if="!group.rows.length"
             as="p"
@@ -305,13 +337,6 @@ async function clearSession() {
             v-if="group.scope === 'session'"
             class="space-y-2"
           >
-            <UiText
-              as="p"
-              variant="caption"
-              muted
-            >
-              {{ i18n.t("spaces.http.runtime.sessionHint") }}
-            </UiText>
             <Button
               variant="outline"
               size="sm"

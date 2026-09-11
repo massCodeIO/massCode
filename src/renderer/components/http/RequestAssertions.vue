@@ -65,10 +65,55 @@ async function addAssertion() {
     class="flex min-h-0 flex-col"
     :class="{ 'h-full': fill }"
   >
-    <div class="mb-1 flex h-7 shrink-0 items-center">
+    <div class="mb-1 flex h-7 shrink-0 items-center justify-between gap-2">
       <UiText variant="sm">
         {{ i18n.t("spaces.http.runtime.assertions") }}
       </UiText>
+      <UiHelpButton
+        :label="i18n.t('spaces.http.runtime.help.assertions.title')"
+      >
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.hint") }}
+        </UiText><UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.pointer") }}
+        </UiText><code
+          class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+        >/user/id</code><UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.expected") }}
+        </UiText>
+        <div class="flex flex-wrap gap-2">
+          <code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >200</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >"ok"</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >true</code><code
+            class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+          >[200, 201]</code>
+        </div>
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.runtime.help.assertions.example") }}
+        </UiText><code
+          class="bg-muted block w-fit rounded px-1.5 py-0.5 font-mono text-xs"
+        >200</code>
+      </UiHelpButton>
     </div>
     <div
       ref="rows"

@@ -64,9 +64,20 @@ const validation = computed(() => {
 
 <template>
   <div class="scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-auto">
-    <UiText variant="caption">
-      {{ i18n.t("spaces.http.graphql.query") }}
-    </UiText>
+    <div class="flex shrink-0 items-center justify-between gap-2">
+      <UiText variant="caption">
+        {{ i18n.t("spaces.http.graphql.query") }}
+      </UiText>
+      <UiHelpButton :label="i18n.t('spaces.http.graphql.helpTitle')">
+        <UiText
+          as="p"
+          variant="xs"
+          muted
+        >
+          {{ i18n.t("spaces.http.graphql.schemaLimit") }}
+        </UiText>
+      </UiHelpButton>
+    </div>
     <HttpBodyEditor
       v-model="query"
       language="graphql"
@@ -124,11 +135,5 @@ const validation = computed(() => {
     >
       {{ validation }}
     </UiAlert>
-    <UiText
-      variant="caption"
-      class="text-muted-foreground"
-    >
-      {{ i18n.t("spaces.http.graphql.schemaLimit") }}
-    </UiText>
   </div>
 </template>

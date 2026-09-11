@@ -67,12 +67,30 @@ onBeforeUnmount(() => {
       @open-auto-focus="focusRun"
     >
       <Dialog.DialogHeader>
-        <Dialog.DialogTitle>
-          {{ i18n.t("spaces.http.runner.title") }} ·
-          {{ view?.folderName }}
-        </Dialog.DialogTitle>
+        <div class="flex items-center justify-between gap-2 pr-6">
+          <Dialog.DialogTitle>
+            {{ i18n.t("spaces.http.runner.title") }} ·
+            {{ view?.folderName }}
+          </Dialog.DialogTitle>
+          <UiHelpButton :label="i18n.t('spaces.http.runner.help.title')">
+            <UiText
+              as="p"
+              variant="xs"
+              muted
+            >
+              {{ i18n.t("spaces.http.runner.help.requests") }}
+            </UiText>
+            <UiText
+              as="p"
+              variant="xs"
+              muted
+            >
+              {{ i18n.t("spaces.http.runner.help.results") }}
+            </UiText>
+          </UiHelpButton>
+        </div>
         <Dialog.DialogDescription>
-          {{ i18n.t("spaces.http.runner.description") }}
+          {{ i18n.t("spaces.http.runner.closeHint") }}
         </Dialog.DialogDescription>
       </Dialog.DialogHeader>
       <div

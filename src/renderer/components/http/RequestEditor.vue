@@ -308,7 +308,7 @@ async function onSend() {
           value="assertions"
           class="flex h-full min-h-0 flex-col"
         >
-          <HttpRuntimeToolbar />
+          <HttpRuntimeToolbar :show-hint="false" />
           <fieldset
             class="min-h-0 flex-1"
             :disabled="runtimeSaving || currentRequest.runtimeState !== 'ready'"

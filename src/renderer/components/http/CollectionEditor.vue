@@ -102,7 +102,10 @@ watch(
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="draft.headers" />
+          <HttpKeyValueTable
+            v-model="draft.headers"
+            bulk-edit
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="vars"
@@ -116,7 +119,10 @@ watch(
             >
               {{ i18n.t("spaces.http.scripts.preRequest") }}
             </UiText>
-            <HttpKeyValueTable v-model="draft.variables" />
+            <HttpKeyValueTable
+              v-model="draft.variables"
+              bulk-edit
+            />
           </div>
           <HttpRequestVariables :context="runtimeContext" />
         </Tabs.TabsContent>

@@ -63,6 +63,7 @@ async function render(secret = false, customFooter = false) {
   app.component('UiText', text)
   app.component('UiInput', text)
   app.component('HttpAddRowButton', text)
+  app.component('HttpBodyEditor', text)
   return renderToString(app)
 }
 describe('key value table shared layout adapter', () => {
@@ -87,4 +88,65 @@ describe('key value table shared layout adapter', () => {
     expect(html).not.toContain('role="checkbox"')
     expect(html).not.toContain('opacity-50')
   })
+})
+
+it('keeps unfinished bulk input while updating the model and follows external replacements', async () => {
+  const { createRenderer, nextTick, ssrContextKey } = await import('vue')
+  const component = KeyValueTable as unknown as import('vue').ComponentOptions
+  const rows = ref([
+    { key: 'x', value: 'one', description: 'keep', enabled: true },
+  ])
+  const renderer = createRenderer({
+    patchProp() {},
+    insert() {},
+    remove() {},
+    createElement: () => ({}),
+    createText: () => ({}),
+    createComment: () => ({}),
+    setText() {},
+    setElementText() {},
+    parentNode: () => null,
+    nextSibling: () => null,
+  })
+  let state: any
+  const probe = defineComponent({
+    ...component,
+    setup(props, context) {
+      state = component.setup!(props, context)
+      return () => null
+    },
+  })
+  const app = renderer.createApp(
+    defineComponent({
+      setup() {
+        return () =>
+          h(probe, {
+            'modelValue': rows.value,
+            'bulkEdit': true,
+            'onUpdate:modelValue': (value: typeof rows.value) => {
+              rows.value = value
+            },
+          })
+      },
+    }),
+  )
+  app.provide(ssrContextKey, {})
+  app.mount({})
+  try {
+    state.toggleBulkEdit()
+    expect(state.bulkText.value).toBe('x:one')
+    state.updateBulkText('x:two\n\nunfinished')
+    expect(rows.value[0]?.description).toBe('keep')
+    await nextTick()
+    expect(rows.value[1]?.key).toBe('unfinished')
+    expect(state.bulkText.value).toBe('x:two\n\nunfinished')
+    rows.value = [
+      { key: 'external', value: 'new', description: '', enabled: true },
+    ]
+    await nextTick()
+    expect(state.bulkText.value).toBe('external:new')
+  }
+  finally {
+    app.unmount()
+  }
 })

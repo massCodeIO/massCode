@@ -331,13 +331,19 @@ async function onSend() {
           value="params"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.query" />
+          <HttpKeyValueTable
+            v-model="currentDraft.query"
+            bulk-edit
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="headers"
           class="h-full"
         >
-          <HttpKeyValueTable v-model="currentDraft.headers" />
+          <HttpKeyValueTable
+            v-model="currentDraft.headers"
+            bulk-edit
+          />
         </Tabs.TabsContent>
         <Tabs.TabsContent
           value="body"

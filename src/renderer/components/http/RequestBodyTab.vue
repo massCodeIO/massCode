@@ -170,6 +170,7 @@ function addFormDataRow(): HttpFormDataEntry {
     <HttpKeyValueTable
       v-else-if="bodyType === 'form-urlencoded'"
       v-model="formEntries"
+      bulk-edit
       :create-entry="addFormDataRow"
     />
     <div

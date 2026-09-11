@@ -554,6 +554,9 @@
           "settings": "Settings"
         },
         "keyValue": {
+          "bulkEdit": "Bulk Edit",
+          "keyValueEdit": "Key-Value Edit",
+          "bulkHint": "One key:value pair per line. Prefix a row with // to disable it.",
           "key": "Key",
           "value": "Value",
           "description": "Description",

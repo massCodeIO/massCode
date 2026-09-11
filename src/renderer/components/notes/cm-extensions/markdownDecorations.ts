@@ -29,8 +29,13 @@ class HorizontalRuleWidget extends WidgetType {
 
   toDOM(): HTMLElement {
     const hr = document.createElement('hr')
+    // Keep the replacement inside the source line's box so revealing the
+    // Markdown marker does not change the height of the document.
+    hr.style.display = 'inline-block'
+    hr.style.width = '100%'
+    hr.style.verticalAlign = 'middle'
     hr.style.borderTop = '1px solid var(--border)'
-    hr.style.margin = '14px 0'
+    hr.style.margin = '0'
     hr.style.borderBottom = 'none'
     hr.style.borderLeft = 'none'
     hr.style.borderRight = 'none'

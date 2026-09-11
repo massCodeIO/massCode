@@ -24,6 +24,7 @@ interface NotesMenuState {
 }
 
 interface HttpMenuState {
+  panels?: MainMenuContext['view']['httpPanels']
   layoutMode: LayoutMode
   canSendRequest: boolean
 }
@@ -134,8 +135,14 @@ export function createMainMenuContext(
         canCreateTask: false,
       },
       view: {
-        layoutMode: options.http.layoutMode,
-        layoutModes: sharedLayoutModes,
+        layoutMode: null,
+        layoutModes: [],
+        httpPanels: options.http.panels ?? {
+          sidebar: options.http.layoutMode !== 'editor-only',
+          bottom: true,
+          inspector: false,
+          canToggleBottom: true,
+        },
         contentSortField: options.contentSort.http.sort,
         contentSortOrder: options.contentSort.http.order,
         canToggleCompactMode: false,

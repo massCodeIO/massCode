@@ -391,6 +391,32 @@ function getSidebarLayoutAccelerator(
 }
 
 function createLayoutMenuItems(context: MainMenuContext): MenuConfig[] {
+  const panels = context.view.httpPanels
+  if (panels) {
+    return [
+      {
+        label: i18n.t('ui:spaces.http.inspector.sidebar'),
+        type: 'checkbox',
+        checked: panels.sidebar,
+        accelerator: 'CmdOrCtrl+Alt+B',
+        click: () => send('main-menu:toggle-http-panel', 'sidebar'),
+      },
+      {
+        label: i18n.t('ui:spaces.http.inspector.bottom'),
+        type: 'checkbox',
+        checked: panels.bottom,
+        enabled: panels.canToggleBottom,
+        click: () => send('main-menu:toggle-http-panel', 'bottom'),
+      },
+      {
+        label: i18n.t('ui:spaces.http.runtime.variablesInspector'),
+        type: 'checkbox',
+        checked: panels.inspector,
+        click: () => send('main-menu:toggle-http-panel', 'inspector'),
+      },
+    ]
+  }
+
   if (!context.view.layoutModes.length || !context.view.layoutMode) {
     return []
   }

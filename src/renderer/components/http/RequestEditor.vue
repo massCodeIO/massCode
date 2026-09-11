@@ -26,6 +26,9 @@ const {
   groupDirty,
   groupInvalid,
   focusTarget,
+  requestSaveError,
+  saveError,
+  conflict,
 } = useHttpRuntime()
 const { isWebSocket } = useHttpWebSocket()
 const { canGoBack, canGoForward } = useNavigationHistory()
@@ -172,6 +175,19 @@ async function onSend() {
         <Send v-else />
       </UiActionButton>
     </div>
+    <UiAlert
+      v-if="requestSaveError || saveError"
+      variant="error"
+      layout="panel"
+    >
+      {{
+        i18n.t(
+          conflict
+            ? "spaces.http.runtime.conflict"
+            : "spaces.http.runtime.saveError",
+        )
+      }}
+    </UiAlert>
     <Tabs.Tabs
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col gap-0"

@@ -52,18 +52,17 @@ function onScroll() {
         <Trash2 class="size-4" />
       </UiActionButton>
     </div>
-    <UiText
+    <UiAlert
       v-if="error || view?.error"
-      variant="xs"
-      class="text-destructive border-b px-3 py-2"
-      role="alert"
+      variant="error"
+      layout="panel"
     >
       {{
         i18n.t(`spaces.http.websocket.errors.${error ?? view?.error}`, {
           status: view?.handshakeStatus,
         })
       }}
-    </UiText>
+    </UiAlert>
     <UiText
       variant="caption"
       muted

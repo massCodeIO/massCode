@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
-import { FieldError } from '@/components/ui/shadcn/field'
 import { Input } from '@/components/ui/shadcn/input'
 import { useHttpCookies } from '@/composables/spaces/http/devtools/useHttpCookies'
 import { useHttpUi } from '@/composables/spaces/http/useHttpUi'
@@ -56,12 +55,13 @@ const {
             :aria-label="i18n.t('spaces.http.devtools.searchCookies')"
           />
         </div>
-        <FieldError
+        <UiAlert
           v-if="error"
-          class="text-xs"
+          variant="error"
+          layout="card"
         >
           {{ error }}
-        </FieldError>
+        </UiAlert>
         <div
           class="border-border flex min-h-[100px] flex-1 flex-col overflow-auto rounded-md border"
         >

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { HttpCookieSnapshot } from '~/shared/httpCookies'
-import { FieldError } from '@/components/ui/shadcn/field'
 import { Switch } from '@/components/ui/shadcn/switch'
 import { useHttpRequests, useHttpSettings } from '@/composables'
 import { useHttpCookieRevision } from '@/composables/spaces/http/devtools/useHttpCookieRevision'
@@ -101,9 +100,12 @@ async function setEnabled(value: boolean) {
           {{ i18n.t("spaces.http.devtools.cookieJarHint") }}
         </template>
       </UiMenuFormItem>
-      <FieldError v-if="error">
+      <UiAlert
+        v-if="error"
+        variant="error"
+      >
         {{ error }}
-      </FieldError>
+      </UiAlert>
     </UiMenuFormSection>
   </div>
 </template>

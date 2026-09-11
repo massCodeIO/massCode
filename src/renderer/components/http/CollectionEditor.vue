@@ -54,10 +54,10 @@ watch(
     v-if="collection"
     class="flex h-full min-h-0 flex-col overflow-hidden pt-[var(--content-top-offset)]"
   >
-    <UiText
+    <UiAlert
       v-if="saveError || unavailable || (submitted && !valid)"
-      variant="xs"
-      class="text-destructive px-3 py-2"
+      variant="error"
+      layout="panel"
     >
       {{
         i18n.t(
@@ -70,7 +70,7 @@ watch(
                 : "spaces.http.collection.validation",
         )
       }}
-    </UiText>
+    </UiAlert>
     <Tabs.Tabs
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col gap-0"

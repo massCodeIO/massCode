@@ -2,7 +2,6 @@
 import type { useHttpCollection } from '@/composables/spaces/http/useHttpCollection'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
-import { useSonner } from '@/composables/useSonner'
 import { i18n } from '@/electron'
 import { isMac } from '@/utils'
 import { onKeyStroke } from '@vueuse/core'
@@ -11,33 +10,16 @@ import { LoaderCircle, Save } from 'lucide-vue-next'
 const props = defineProps<{
   context?: Pick<
     ReturnType<typeof useHttpCollection>,
-    | 'dirty'
-    | 'saving'
-    | 'save'
-    | 'saveError'
-    | 'unavailable'
-    | 'leaveDialogOpen'
+    'dirty' | 'saving' | 'save' | 'unavailable' | 'leaveDialogOpen'
   >
 }>()
 
 const { currentRequest } = useHttpRequests()
-const { sonner } = useSonner()
-const {
-  requestDirty,
-  busy,
-  saveRequest,
-  requestSaveError,
-  saveError,
-  conflict,
-  leaveDialogOpen,
-} = props.context
+const { requestDirty, busy, saveRequest, leaveDialogOpen } = props.context
   ? {
       requestDirty: props.context.dirty,
       busy: props.context.saving,
       saveRequest: props.context.save,
-      requestSaveError: ref(false),
-      saveError: props.context.saveError,
-      conflict: ref(false),
       leaveDialogOpen: props.context.leaveDialogOpen,
     }
   : useHttpRuntime()
@@ -46,19 +28,6 @@ const unavailable = computed(() =>
     ? props.context.unavailable.value
     : currentRequest.value?.runtimeState !== 'ready',
 )
-
-watch([requestSaveError, saveError], () => {
-  if (requestSaveError.value || saveError.value) {
-    sonner({
-      type: 'error',
-      message: i18n.t(
-        conflict.value
-          ? 'spaces.http.runtime.conflict'
-          : 'spaces.http.runtime.saveError',
-      ),
-    })
-  }
-})
 
 onKeyStroke(['s', 'S'], (event) => {
   if (

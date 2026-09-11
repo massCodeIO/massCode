@@ -3,13 +3,11 @@ import type {
   HttpImportApplyResponse,
   HttpImportPreviewResponse,
 } from '@/services/api/generated'
-import * as Alert from '@/components/ui/shadcn/alert'
 import { Button } from '@/components/ui/shadcn/button'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { markPersistedStorageMutation, useSonner } from '@/composables'
 import { i18n } from '@/electron'
 import { api } from '@/services/api'
-import { AlertTriangle } from 'lucide-vue-next'
 
 interface ImportDialogFile {
   name: string
@@ -416,29 +414,21 @@ async function applyImport() {
 
           <HttpImportRuntimePreview :collections="preview.collections" />
 
-          <Alert.Alert
+          <UiAlert
             v-if="preview.warnings.length"
-            class="border-warning/45 bg-warning/10 text-foreground"
+            variant="warning"
+            :title="i18n.t('spaces.http.import.warnings')"
           >
-            <AlertTriangle class="text-warning" />
-            <Alert.AlertTitle>
-              {{ i18n.t("spaces.http.import.warnings") }}
-            </Alert.AlertTitle>
-            <Alert.AlertDescription class="text-foreground/80">
-              <ul class="scrollbar max-h-28 space-y-1 overflow-y-auto">
-                <li
-                  v-for="(warning, index) in preview.warnings"
-                  :key="`${warning.source}-${index}`"
-                  class="text-xs leading-5"
-                >
-                  <span class="font-medium">{{ warning.source }}</span>:
-                  {{
-                    i18n.t(warning.message, { defaultValue: warning.message })
-                  }}
-                </li>
-              </ul>
-            </Alert.AlertDescription>
-          </Alert.Alert>
+            <ul class="scrollbar max-h-28 space-y-1 overflow-y-auto">
+              <li
+                v-for="(warning, index) in preview.warnings"
+                :key="`${warning.source}-${index}`"
+              >
+                <span class="font-medium">{{ warning.source }}</span>:
+                {{ i18n.t(warning.message, { defaultValue: warning.message }) }}
+              </li>
+            </ul>
+          </UiAlert>
         </div>
 
         <div
@@ -452,12 +442,13 @@ async function applyImport() {
           }}
         </div>
 
-        <div
+        <UiAlert
           v-if="errorMessage"
-          class="text-destructive text-xs"
+          variant="error"
+          layout="card"
         >
           {{ errorMessage }}
-        </div>
+        </UiAlert>
       </div>
 
       <Dialog.DialogFooter class="border-border shrink-0 gap-2 border-t pt-4">

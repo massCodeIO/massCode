@@ -40,12 +40,15 @@ const operations = computed(() => {
     return []
   }
 })
+const deferredValidation = computed(
+  () => query.value.includes('{{') || variables.value.includes('{{'),
+)
 const validation = computed(() => {
   if (!query.value.trim())
     return ''
   try {
     // Interpolated values are validated again by main after environment/session/scripts resolution.
-    if (query.value.includes('{{') || variables.value.includes('{{'))
+    if (deferredValidation.value)
       return i18n.t('spaces.http.graphql.validationOnSend')
     buildGraphqlBody(JSON.stringify(draft.value))
     return ''
@@ -115,13 +118,12 @@ const validation = computed(() => {
       language="json"
       :wrap-lines="settings.wrapLines"
     />
-    <UiText
+    <UiAlert
       v-if="validation"
-      variant="caption"
-      class="text-destructive"
+      :variant="deferredValidation ? 'info' : 'error'"
     >
       {{ validation }}
-    </UiText>
+    </UiAlert>
     <UiText
       variant="caption"
       class="text-muted-foreground"

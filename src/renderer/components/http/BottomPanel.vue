@@ -238,8 +238,17 @@ function copyPreview() {
         <Tabs.TabsTrigger value="preview">
           {{ i18n.t("spaces.http.editor.panels.preview") }}
         </Tabs.TabsTrigger>
-        <Tabs.TabsTrigger value="response">
+        <Tabs.TabsTrigger
+          value="response"
+          :class="{ 'text-destructive': lastError }"
+        >
           {{ i18n.t("spaces.http.editor.panels.response") }}
+          <span
+            v-if="lastError"
+            class="sr-only"
+          >{{
+            i18n.t("spaces.http.editor.response.error")
+          }}</span>
         </Tabs.TabsTrigger>
         <Tabs.TabsTrigger value="history">
           {{ i18n.t("spaces.http.history.title") }}
@@ -320,21 +329,27 @@ function copyPreview() {
           v-model="previewFormat"
           class="border-border border-b px-3 py-2"
         />
-        <UiText
-          v-for="warning in previewWarnings"
-          :key="warning"
-          variant="caption"
-          class="border-border border-b px-3 py-2"
+        <UiAlert
+          v-if="previewWarnings.length"
+          variant="warning"
+          layout="panel"
         >
-          {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
-        </UiText>
-        <UiText
+          <ul class="space-y-1">
+            <li
+              v-for="warning in previewWarnings"
+              :key="warning"
+            >
+              {{ i18n.t(`spaces.http.editor.preview.warnings.${warning}`) }}
+            </li>
+          </ul>
+        </UiAlert>
+        <UiAlert
           v-if="previewError"
-          variant="caption"
-          class="text-destructive px-3 py-2"
+          variant="error"
+          layout="panel"
         >
           {{ i18n.t(`spaces.http.editor.preview.${previewErrorKey}`) }}
-        </UiText>
+        </UiAlert>
         <HttpRequestPreviewPanel
           v-else
           class="min-h-0 flex-1"

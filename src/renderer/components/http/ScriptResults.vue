@@ -22,14 +22,12 @@ defineProps<{ results: HttpScriptResult[] }>()
       }}
       · {{ i18n.t(`spaces.http.scripts.${result.phase}`) }}
     </UiText>
-    <UiText
+    <UiAlert
       v-if="result.error"
-      as="p"
-      variant="xs"
-      class="text-destructive"
+      variant="error"
     >
       {{ i18n.t(`spaces.http.scripts.errors.${result.error}`) }}
-    </UiText>
+    </UiAlert>
     <UiText
       v-else-if="!result.tests.length"
       as="p"

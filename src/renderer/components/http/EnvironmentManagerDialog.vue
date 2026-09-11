@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/shadcn/button'
 import { Checkbox } from '@/components/ui/shadcn/checkbox'
 import * as Dialog from '@/components/ui/shadcn/dialog'
 import { Input } from '@/components/ui/shadcn/input'
-import { useHttpEnvironmentEditor } from '@/composables'
+import { useHttpEnvironmentEditor, useHttpEnvironments } from '@/composables'
 import { i18n } from '@/electron'
 import { Eye, EyeOff, Plus, Trash2 } from 'lucide-vue-next'
+
+const { environmentSaveErrorId } = useHttpEnvironments()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -121,6 +123,15 @@ const {
           v-else
           class="flex min-h-0 min-w-0 flex-col gap-3"
         >
+          <UiAlert
+            v-if="
+              selectedEnvId != null && environmentSaveErrorId === selectedEnvId
+            "
+            variant="error"
+          >
+            {{ i18n.t("messages:error.httpEnvironment.update") }}
+          </UiAlert>
+
           <Input
             v-model="localName"
             variant="default"

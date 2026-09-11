@@ -142,13 +142,13 @@ watch(
         <ExternalLink />
       </UiActionButton>
     </div>
-    <UiText
+    <UiAlert
       v-if="error"
-      variant="xs"
-      class="text-destructive p-2"
+      variant="error"
+      layout="panel"
     >
       {{ error }}
-    </UiText>
+    </UiAlert>
     <div
       v-bind="containerProps"
       class="scrollbar min-h-0 flex-1 overflow-auto"

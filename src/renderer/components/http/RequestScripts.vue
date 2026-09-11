@@ -79,14 +79,13 @@ const code = computed({
     >
       {{ i18n.t("spaces.http.scripts.notice") }}
     </UiText>
-    <UiText
+    <UiAlert
       v-if="unavailable"
-      as="p"
-      variant="xs"
-      class="text-destructive"
+      variant="error"
+      layout="card"
     >
       {{ i18n.t("spaces.http.scripts.unavailable") }}
-    </UiText>
+    </UiAlert>
     <Tabs.Tabs v-model="phase">
       <Tabs.TabsList>
         <Tabs.TabsTrigger value="preRequest">
@@ -110,13 +109,12 @@ const code = computed({
     >
       {{ i18n.t("spaces.http.scripts.api") }}
     </UiText>
-    <UiText
+    <UiAlert
       v-if="code.length > 65536"
-      as="p"
-      variant="xs"
-      class="text-destructive"
+      variant="error"
+      layout="card"
     >
       {{ i18n.t("spaces.http.scripts.errors.limit") }}
-    </UiText>
+    </UiAlert>
   </div>
 </template>

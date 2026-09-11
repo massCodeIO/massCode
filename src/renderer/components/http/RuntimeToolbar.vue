@@ -1,41 +1,33 @@
 <script setup lang="ts">
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
-import { useHttpRuntime } from '@/composables/spaces/http/useHttpRuntime'
 import { i18n } from '@/electron'
 
 withDefaults(defineProps<{ showHint?: boolean }>(), { showHint: true })
 const { currentRequest } = useHttpRequests()
-const { saveError, conflict } = useHttpRuntime()
 const unavailable = computed(
   () => currentRequest.value?.runtimeState !== 'ready',
 )
-const error = computed(() => {
-  if (unavailable.value) {
-    return i18n.t(
-      `spaces.http.runtime.states.${currentRequest.value?.runtimeState ?? 'pending'}`,
-    )
-  }
-  if (saveError.value) {
-    return i18n.t(
-      conflict.value
-        ? 'spaces.http.runtime.conflict'
-        : 'spaces.http.runtime.saveError',
-    )
-  }
-  return ''
-})
 </script>
 
 <template>
+  <UiAlert
+    v-if="unavailable"
+    :variant="currentRequest?.runtimeState === 'pending' ? 'warning' : 'error'"
+    class="mb-3"
+  >
+    {{
+      i18n.t(
+        `spaces.http.runtime.states.${currentRequest?.runtimeState ?? "pending"}`,
+      )
+    }}
+  </UiAlert>
   <UiText
-    v-if="error || showHint"
+    v-else-if="showHint"
     as="p"
     variant="xs"
     muted
     class="mb-3"
-    :class="{ 'text-destructive': error }"
-    role="status"
   >
-    {{ error || i18n.t("spaces.http.runtime.hint") }}
+    {{ i18n.t("spaces.http.runtime.hint") }}
   </UiText>
 </template>

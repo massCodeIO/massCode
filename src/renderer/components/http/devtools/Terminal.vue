@@ -72,14 +72,13 @@ watch(
         <Plus />
       </UiActionButton>
     </div>
-    <UiText
+    <UiAlert
       v-if="error"
-      variant="xs"
-      as="div"
-      class="text-destructive shrink-0 border-b px-3 py-2 break-words"
+      variant="error"
+      layout="panel"
     >
       {{ error }}
-    </UiText>
+    </UiAlert>
     <div class="flex min-h-0 flex-1">
       <div class="relative min-h-0 min-w-0 flex-1">
         <div

@@ -1,3 +1,4 @@
+import UiAlert from '@/components/ui/alert/Alert.vue'
 import { renderToString } from '@vue/server-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, createSSRApp, defineComponent, h } from 'vue'
@@ -12,6 +13,7 @@ Object.assign(globalThis, { computed })
 
 async function renderResults() {
   const app = createSSRApp(ResponseTests)
+  app.component('UiAlert', UiAlert)
   app.component('HttpRuntimeResultGroup', RuntimeResultGroup)
   app.component('HttpScriptResults', ScriptResults)
   app.component(
@@ -70,4 +72,5 @@ it('includes JS checks and script phase errors in the summary', async () => {
   expect(html).toContain('2/3')
   expect(html).toContain('custom check')
   expect(html).toContain('spaces.http.scripts.errors.limit')
+  expect(html).toContain('role="alert"')
 })

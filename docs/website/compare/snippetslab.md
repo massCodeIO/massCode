@@ -27,7 +27,7 @@ Both tools are free. The real question is whether you live entirely on macOS and
 | Syntax languages | 160+ grammars (600+ via `.tmLanguage`) | 600+ languages and text formats |
 | Language detection | Manual selection from a dropdown (default "Plain text") | Automatic detection for 50 most popular languages via Core ML |
 | Markdown notes | Yes, dedicated notes space | Markdown support inside snippets, with Mermaid and LaTeX |
-| HTTP client | Yes, built in | No |
+| API client | [HTTP, GraphQL, WebSocket, tests, and runner](/documentation/http/) | No |
 | Math notebook | Yes, built in | No |
 | Dev tools | Yes, built in | No |
 | Sync | Bring your own — iCloud, Dropbox, Git, Syncthing | iCloud Sync between Macs |

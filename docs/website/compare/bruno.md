@@ -12,7 +12,7 @@ description: "Compare massCode and Bruno for local API testing, CLI automation, 
 
 Bruno focuses on API collections, testing, and command-line automation. massCode's [HTTP space](/documentation/http/) combines saved requests, environments, assertions, JavaScript tests, and a desktop folder runner with snippets, notes, and tasks. Local-first storage is common ground; the surrounding workflow is the difference.
 
-[Try massCode](/download/) with a small sample of your work before moving your library.
+[Try massCode](/download/): import one collection, run a short request flow, and keep the related code and notes alongside it.
 
 ## At a glance
 
@@ -29,8 +29,8 @@ Bruno focuses on API collections, testing, and command-line automation. massCode
 | Tests and scripts | Assertions, extraction, trusted pre-request/post-response JavaScript | Assertions, JavaScript tests and scripts |
 | Sequential runs | Desktop Folder Runner with isolated variables | Collection Runner and CLI |
 | CLI / CI automation | No standalone runner | Yes |
-| Authentication | Basic and bearer; API keys via headers or params | Broader built-in options, including OAuth 2.0 |
-| Variables | Environments, secret variables, Session extraction and inspector | Environments and scripting variables |
+| Authentication | Inherited auth, Basic, Bearer, and API Key (header or query) | Broader built-in options, including OAuth 2.0 |
+| Variables | Collection/folder variables, environments, local secrets, Session extraction and inspector | Environments and scripting variables |
 | Other workspaces | Snippets, notes, tasks, math, drawings, tools | API-focused |
 
 Bruno documents its [local collection model](https://docs.usebruno.com/get-started/bruno-basics/create-a-collection) and [MIT core license](https://github.com/usebruno/bruno/blob/main/license.md). HTTP, GraphQL, gRPC, scripting, and testing are included in its free offering; see [Bruno pricing](https://www.usebruno.com/pricing) for current paid enhancements.
@@ -39,14 +39,19 @@ Bruno documents its [local collection model](https://docs.usebruno.com/get-start
 
 - **API automation beyond the desktop.** Bruno's [Collection Runner and CLI](https://docs.usebruno.com/get-started/bruno-basics/run-a-collection) let you run collections locally or in CI/CD pipelines. massCode's Folder Runner runs inside the app.
 - **Dedicated API workflows.** If requests and test suites are the whole job, Bruno keeps that work in a purpose-built client. Its local collection files fit a repository-based workflow without needing a broader workspace.
-- **Broader authentication and gRPC.** Bruno provides [built-in authentication options](https://docs.usebruno.com/v2/auth/overview) such as OAuth 2.0, and supports gRPC. massCode's built-in auth is basic or bearer, with API keys configured as headers or query parameters; it has no gRPC client.
+- **Broader authentication and gRPC.** Bruno provides [built-in authentication options](https://docs.usebruno.com/v2/auth/overview) such as OAuth 2.0, and supports gRPC. massCode provides inherited auth, Basic, Bearer, and API Key, but has no OAuth flow or gRPC client.
 
 ## Where massCode fits better
 
 - **Requests alongside the rest of your project context.** Keep API examples near [snippets](/documentation/code/library), [notes](/documentation/notes/), and [tasks](/documentation/notes/tasks), with calculations, drawings, and developer tools available in the same app.
 - **A shared Markdown Vault.** HTTP requests use the same [local storage](/documentation/storage) and folder-based backup or sync workflow as the rest of your massCode content.
-- **Local request flows.** Check responses with [assertions and extraction](/documentation/http/tests), add trusted [JavaScript tests](/documentation/http/scripts), and run saved requests with [Folder Runner](/documentation/http/runner). The [variables inspector](/documentation/http/environments#session-variables-and-inspector) helps track environment and temporary Session values while sending requests manually.
 - **Code ready to reuse.** Generate [request snippets](/documentation/http/requests#code-generation) for cURL, JavaScript, Python, and other clients, then keep useful code in your snippet library.
+
+### API tools in the workspace
+
+- **Reusable collection setup.** Define shared [auth, headers, variables, scripts, and checks](/documentation/http/collections) at collection or folder level. Requests inherit that setup and can override auth and headers.
+- **Local request flows.** Check responses with [assertions and extraction](/documentation/http/tests), add trusted [JavaScript tests](/documentation/http/scripts), and run saved requests with [Folder Runner](/documentation/http/runner). The [variables inspector](/documentation/http/environments#session-variables-and-inspector) helps track environment and temporary Session values while sending requests manually.
+- **Request debugging.** Inspect [saved request and response snapshots](/documentation/http/responses), view network traffic in [Console](/documentation/http/debugging), and manage cookies and per-request transport settings.
 
 ## Honest trade-offs
 
@@ -60,9 +65,9 @@ Requests, scripts, and regular environment values in massCode are plain text. Us
 
 Export a Bruno collection as **OpenCollection YAML** or an **OpenCollection ZIP** archive, then select it in massCode's HTTP import dialog. Native `.bru` files and ZIP archives containing `.bru` files are not supported import formats.
 
-Preview shows imported items and compatibility warnings. Supported declarative assertions and a limited subset of scripts are converted to massCode rules and its `mc` API. Unsupported active scripts block all scripts for that request and need review and rewriting before you remove the blocking assertion. Imported code requires explicit local trust before execution; trust alone does not fix incompatible scripts.
+Preview shows imported items and compatibility warnings. Supported declarative assertions and a limited subset of scripts are converted to massCode rules and its `mc` API. Unsupported active scripts block the affected request until you adapt the code and remove the blocker. Imported code requires explicit local trust before execution; trust alone does not fix incompatible scripts.
 
-Review auth and variable scopes, protect credentials, and verify a complete request flow before using Folder Runner. External GraphQL requests are not automatically converted into the GraphQL editor. See [Importing HTTP Collections](/documentation/http/importing#moving-from-postman-or-bruno) for export steps and compatibility details. Keep your original Bruno collection: importing creates new massCode items rather than a live link to those files.
+Review inherited auth on each request; imported API keys become header or query entries. Bruno GraphQL bodies import as JSON with a warning. Collection variables may become a separate environment, and inherited scripts are copied into requests. Select the environment you need, protect credentials, and verify a complete flow before using Folder Runner. See [Importing HTTP Collections](/documentation/http/importing#moving-from-postman-or-bruno) for export steps and compatibility details. Keep your original Bruno collection: importing creates new massCode items rather than a live link to those files.
 
 ## Who should pick which
 

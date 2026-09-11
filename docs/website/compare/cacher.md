@@ -26,7 +26,7 @@ If you need a managed cloud with shared team libraries and GitHub Gist sync, Cac
 | Imports | VS Code snippets JSON, Raycast snippets JSON, SnippetsLab JSON, public GitHub Gist URLs, Obsidian markdown folders | GitHub Gist sync and app import/export workflows |
 | GitHub Gist sync | No | Yes, first-party |
 | Notes | Yes, dedicated notes space | Markdown editing inside snippets |
-| HTTP client | Yes, built in | No |
+| API client | [HTTP, GraphQL, WebSocket, tests, and runner](/documentation/http/) | No |
 | Math notebook | Yes, built in | No |
 | Dev tools | Yes, built in | No |
 | Team workspaces with roles | No | Yes, on Teams plan |

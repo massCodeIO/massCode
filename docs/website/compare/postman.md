@@ -12,7 +12,7 @@ description: "Explore massCode, a local-first Postman alternative with JavaScrip
 
 If you are looking for a Postman alternative for local API testing, massCode can handle saved requests, environments, response assertions, JavaScript tests, and multi-step flows without an account. Postman remains the stronger fit for CLI and CI automation, mock servers, monitors, and managed team collaboration.
 
-[Try massCode](/download/) with a small sample of your work before moving your library.
+[Try massCode](/download/): import one collection, run a short request flow, and keep the related code and notes alongside it.
 
 ## At a glance
 
@@ -28,9 +28,9 @@ If you are looking for a Postman alternative for local API testing, massCode can
 | Protocols | HTTP, GraphQL POST queries/mutations, WebSocket text/JSON | Broader support, including HTTP, GraphQL, WebSocket, and gRPC |
 | Tests and scripts | Declarative assertions and trusted pre-request/post-response JavaScript | JavaScript tests and scripts |
 | Sequential runs | Folder Runner with isolated temporary variables | Collection Runner, Postman CLI, and Newman |
-| Environments | Environment and Session variables, response extraction, variables inspector | Environments and broader variable scoping |
+| Environments | Collection/folder, environment, and Session variables; extraction and inspector | Environments and broader variable scoping |
 | Secrets | OS-encrypted local secret variables | [Postman Vault](https://learning.postman.com/docs/use/postman-vault/manage-vault-secrets/) |
-| Authentication | Basic and bearer; API keys via headers or params | Broader built-in authentication support |
+| Authentication | Inherited auth, Basic, Bearer, and API Key (header or query) | [Broader built-in authentication support](https://learning.postman.com/docs/use/send-requests/authorization/authorization-types/) |
 | Mock servers / monitors | No | Yes |
 | Standalone CLI / CI runner | No | Yes |
 | Team collaboration | Shared files through Git or folder sync | Shared workspaces and governance |
@@ -48,10 +48,15 @@ Postman's [local-use documentation](https://learning.postman.com/help/faqs/postm
 
 - **API work next to implementation context.** Keep requests alongside [snippets](/documentation/code/library), [notes](/documentation/notes/), and [tasks](/documentation/notes/tasks). An endpoint, its response example, and the work it relates to can live in one app.
 - **Local collections without an account.** Requests are readable Markdown files with YAML frontmatter in your [vault](/documentation/storage). Use your own backups or Git workflow.
+- **Free and open source.** massCode uses [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no paid feature tier or per-seat pricing.
+
+### API tools in the workspace
+
+- **Reusable collection setup.** Define shared [auth, headers, variables, scripts, and checks](/documentation/http/collections) at collection or folder level. Requests inherit that setup and can override auth and headers.
 - **Repeatable local testing.** Add [assertions and response extraction](/documentation/http/tests), prepare variables with trusted [JavaScript scripts](/documentation/http/scripts), then run saved requests in sequence with [Folder Runner](/documentation/http/runner).
 - **Variables and credentials.** Use [environments, temporary Session values, and the variables inspector](/documentation/http/environments) to follow a request flow. Built-in secret variables keep sensitive values outside the vault.
 - **Request code generation.** Copy [code previews](/documentation/http/requests#code-generation) for cURL, JavaScript, Python, and other clients to use a request in your own code.
-- **Free and open source.** massCode uses [AGPL v3](https://github.com/massCodeIO/massCode/blob/master/LICENSE), with no paid feature tier or per-seat pricing.
+- **Request debugging.** Inspect [saved request and response snapshots](/documentation/http/responses), view network traffic in [Console](/documentation/http/debugging), and manage cookies and per-request transport settings.
 
 ## Honest trade-offs
 
@@ -70,7 +75,9 @@ Postman's [local-use documentation](https://learning.postman.com/help/faqs/postm
 
 Export a **Postman Collection v2.1 JSON** file and, optionally, a **Postman Environment JSON** file. Open import in massCode's HTTP space, select the files together, and review the preview before importing.
 
-A limited subset of scripts is translated to massCode's `mc` API. Unsupported active scripts block all scripts for that request until you review and rewrite them; granting trust alone does not unblock them. Imported code never runs during import and always requires explicit local trust before execution. Check authentication, variable scopes, and credentials, then verify a complete flow before running the folder. External GraphQL requests are not automatically converted into the GraphQL editor.
+Collection and folder settings remain in their original scopes, including supported auth, variables, and scripts. Request headers are preserved. GraphQL query bodies, variables, and operation selection are preserved, as are supported form and binary file references. Reselect files whose paths are unavailable on this device.
+
+A supported subset of scripts is translated to massCode's `mc` API. An unsupported active script blocks requests that depend on it. Review the collection, folder, or request scope identified in the warning, adapt the code, and grant local trust before running it. Verify a complete request flow before using Runner.
 
 See [Importing HTTP Collections](/documentation/http/importing#moving-from-postman-or-bruno) for supported formats, compatibility details, and verification steps. An import creates new items rather than updating a previously imported collection.
 

@@ -5,13 +5,7 @@ import * as Select from '@/components/ui/shadcn/select'
 import { useHttpConsole } from '@/composables/spaces/http/devtools/useHttpConsole'
 import { i18n, ipc } from '@/electron'
 import { useClipboard, useVirtualList } from '@vueuse/core'
-import {
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  ExternalLink,
-  Trash2,
-} from 'lucide-vue-next'
+import { Copy, ExternalLink, Trash2 } from 'lucide-vue-next'
 import { consoleLevels } from '~/shared/httpDevtools'
 
 const props = defineProps<{ detached?: boolean }>()
@@ -36,7 +30,11 @@ const visible = computed(() =>
 )
 const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
   visible,
-  { itemHeight: 32, overscan: 8 },
+  {
+    itemHeight: index =>
+      visible.value[index]?.id === selected.value ? 353 : 32,
+    overscan: 8,
+  },
 )
 const selectedEntry = computed(() =>
   visible.value.find(entry => entry.id === selected.value),
@@ -52,6 +50,7 @@ function select(id: string) {
   selected.value = selected.value === id ? '' : id
   raw.value = false
 }
+watch(selected, () => containerProps.onScroll(), { flush: 'post' })
 function copyAll() {
   void copy(visible.value.map(entry => JSON.stringify(entry)).join('\n'))
 }
@@ -154,64 +153,84 @@ watch(
       class="scrollbar min-h-0 flex-1 overflow-auto"
     >
       <div v-bind="wrapperProps">
-        <Button
+        <UiExpandableRow
           v-for="{ data: entry } in list"
           :key="entry.id"
-          variant="ghost"
-          class="h-8 w-full justify-start gap-2 rounded-none border-b px-3"
-          :class="{
-            'bg-destructive/5': entry.level === 'error',
-            'bg-accent': selected === entry.id,
-          }"
-          :aria-expanded="selected === entry.id"
-          @click="select(entry.id)"
+          :expanded="selected === entry.id"
+          :header-class="{ 'bg-destructive/5': entry.level === 'error' }"
+          @update:expanded="select(entry.id)"
         >
-          <ChevronDown
-            v-if="selected === entry.id"
-            class="size-3"
-          /><ChevronRight
-            v-else
-            class="size-3"
-          />
-          <UiText
-            v-if="timestamps"
-            variant="xs"
-            muted
-            mono
-          >
-            {{ new Date(entry.timestamp).toLocaleTimeString() }}
-          </UiText>
-          <UiText
-            variant="xs"
-            mono
-            class="min-w-0 flex-1 truncate text-left"
-            :class="{ 'text-destructive': entry.level === 'error' }"
-          >
-            {{ entry.message }}
-          </UiText>
-          <UiText
-            v-if="entry.pending"
-            variant="xs"
-            muted
-          >
-            {{ i18n.t("spaces.http.devtools.pending") }}
-          </UiText>
-          <UiText
-            v-if="entry.status"
-            variant="xs"
-            mono
-          >
-            {{ entry.status }}
-          </UiText>
-          <UiText
-            v-if="entry.durationMs !== undefined"
-            variant="xs"
-            mono
-            muted
-          >
-            {{ entry.durationMs }} ms
-          </UiText>
-        </Button>
+          <template #header>
+            <UiText
+              v-if="timestamps"
+              variant="xs"
+              muted
+              mono
+            >
+              {{ new Date(entry.timestamp).toLocaleTimeString() }}
+            </UiText>
+            <UiText
+              variant="xs"
+              mono
+              class="min-w-0 flex-1 truncate text-left"
+              :class="{ 'text-destructive': entry.level === 'error' }"
+            >
+              {{ entry.message }}
+            </UiText>
+            <UiText
+              v-if="entry.pending"
+              variant="xs"
+              muted
+            >
+              {{ i18n.t("spaces.http.devtools.pending") }}
+            </UiText>
+            <UiText
+              v-if="entry.status"
+              variant="xs"
+              mono
+            >
+              {{ entry.status }}
+            </UiText>
+            <UiText
+              v-if="entry.durationMs !== undefined"
+              variant="xs"
+              mono
+              muted
+            >
+              {{ entry.durationMs }} ms
+            </UiText>
+          </template>
+          <div class="flex h-80 min-h-0 flex-col">
+            <div class="flex shrink-0 items-center gap-2 px-3 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                :aria-pressed="raw"
+                @click="raw = !raw"
+              >
+                {{ i18n.t("spaces.http.devtools.raw") }}
+              </Button><UiText
+                v-if="entry.truncated"
+                variant="xs"
+                muted
+              >
+                {{ i18n.t("spaces.http.devtools.truncated") }}
+              </UiText>
+              <div class="flex-1" />
+              <UiActionButton
+                :tooltip="i18n.t('spaces.http.devtools.copy')"
+                :aria-label="i18n.t('spaces.http.devtools.copy')"
+                @click="copy(details ?? '')"
+              >
+                <Copy />
+              </UiActionButton>
+            </div>
+            <HttpDevtoolsConsoleDetails
+              :entry="entry"
+              :raw="raw"
+            />
+          </div>
+        </UiExpandableRow>
       </div>
       <UiText
         v-if="!visible.length"
@@ -222,39 +241,6 @@ watch(
       >
         {{ i18n.t("spaces.http.devtools.noLogs") }}
       </UiText>
-    </div>
-    <div
-      v-if="selectedEntry"
-      class="flex max-h-[55%] min-h-0 shrink-0 flex-col border-t"
-    >
-      <div class="flex shrink-0 items-center gap-2 px-3 py-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          :aria-pressed="raw"
-          @click="raw = !raw"
-        >
-          {{ i18n.t("spaces.http.devtools.raw") }}
-        </Button><UiText
-          v-if="selectedEntry.truncated"
-          variant="xs"
-          muted
-        >
-          {{ i18n.t("spaces.http.devtools.truncated") }}
-        </UiText>
-        <div class="flex-1" />
-        <UiActionButton
-          :tooltip="i18n.t('spaces.http.devtools.copy')"
-          :aria-label="i18n.t('spaces.http.devtools.copy')"
-          @click="copy(details ?? '')"
-        >
-          <Copy />
-        </UiActionButton>
-      </div>
-      <HttpDevtoolsConsoleDetails
-        :entry="selectedEntry"
-        :raw="raw"
-      />
     </div>
     <div class="flex shrink-0 items-center gap-4 border-t px-3 py-1">
       <label class="flex items-center gap-2"><Checkbox v-model="timestamps" /><UiText

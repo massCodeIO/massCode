@@ -21,7 +21,7 @@ watch(
 </script>
 
 <template>
-  <div class="space-y-1">
+  <div>
     <UiText
       v-if="loading || loadError || !entries.length"
       variant="xs"

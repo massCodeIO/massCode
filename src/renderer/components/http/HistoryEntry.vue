@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { HttpHistoryItem } from '@/composables/spaces/http/useHttpHistory'
 import type { HttpHistorySnapshot } from '~/shared/httpHistory'
-import { Button } from '@/components/ui/shadcn/button'
 import { i18n, ipc } from '@/electron'
-import { ChevronRight } from 'lucide-vue-next'
 
 const props = defineProps<{ entry: HttpHistoryItem }>()
 const expanded = ref(false)
@@ -39,19 +37,11 @@ watch(expanded, async (value, _old, onCleanup) => {
 </script>
 
 <template>
-  <div class="border-b">
-    <Button
-      variant="ghost"
-      class="h-auto w-full justify-start gap-3 py-2"
-      :aria-expanded="expanded"
-      @click="expanded = !expanded"
-    >
-      <ChevronRight
-        class="size-3 shrink-0"
-        :class="{ 'rotate-90': expanded }"
-      />
+  <UiExpandableRow v-model:expanded="expanded">
+    <template #header>
       <UiText
         variant="xs"
+        mono
         :class="{
           'text-success': entry.status !== null && entry.status < 400,
           'text-destructive': entry.status === null || entry.status >= 400,
@@ -61,12 +51,14 @@ watch(expanded, async (value, _old, onCleanup) => {
       </UiText>
       <UiText
         variant="xs"
+        mono
         class="min-w-0 flex-1 truncate text-left"
       >
         {{ entry.method }} {{ entry.url }}
       </UiText>
       <UiText
-        variant="caption"
+        variant="xs"
+        mono
         muted
       >
         {{
@@ -76,16 +68,14 @@ watch(expanded, async (value, _old, onCleanup) => {
         }}
       </UiText>
       <UiText
-        variant="caption"
+        variant="xs"
+        mono
         muted
       >
         {{ new Date(entry.requestedAt).toLocaleString() }}
       </UiText>
-    </Button>
-    <div
-      v-if="expanded"
-      class="px-3 py-2"
-    >
+    </template>
+    <div class="px-3 py-2">
       <UiText
         v-if="loading || failed || !snapshot"
         variant="xs"
@@ -104,5 +94,5 @@ watch(expanded, async (value, _old, onCleanup) => {
         <HttpHistorySnapshot :snapshot="snapshot" />
       </div>
     </div>
-  </div>
+  </UiExpandableRow>
 </template>

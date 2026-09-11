@@ -74,6 +74,11 @@ export function createNotesEditThemeStyles(
     '.cm-line': {
       padding: '0',
     },
+    '.cm-widgetBuffer': {
+      // Align to the line box: text-top can add a pixel to compact headings
+      // while markup is hidden, shifting subsequent lines when it is revealed.
+      verticalAlign: 'bottom',
+    },
   }
 }
 

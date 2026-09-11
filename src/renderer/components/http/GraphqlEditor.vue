@@ -63,7 +63,9 @@ const validation = computed(() => {
 </script>
 
 <template>
-  <div class="scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-auto">
+  <div
+    class="scrollbar -m-1 flex min-h-0 flex-1 flex-col gap-2 overflow-auto p-1"
+  >
     <div class="flex shrink-0 items-center justify-between gap-2">
       <UiText variant="caption">
         {{ i18n.t("spaces.http.graphql.query") }}

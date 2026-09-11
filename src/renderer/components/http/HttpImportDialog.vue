@@ -200,7 +200,7 @@ async function applyImport() {
       </Dialog.DialogHeader>
 
       <div
-        class="scrollbar -mr-2 min-h-0 space-y-3 overflow-x-hidden overflow-y-auto pr-2"
+        class="scrollbar -my-1 -mr-2 -ml-1 min-h-0 space-y-3 overflow-x-hidden overflow-y-auto py-1 pr-2 pl-1"
       >
         <input
           ref="fileInputRef"

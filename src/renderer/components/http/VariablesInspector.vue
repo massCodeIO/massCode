@@ -155,7 +155,7 @@ const variableExample = '{{userId}}'
                 variant="caption"
                 muted
               >
-                {{ i18n.t(`spaces.http.inspector.${row.current.scope}`) }} ·
+                {{ i18n.t(`spaces.http.inspector.${row.current.scope}`) }} →
                 {{ row.current.label }}
               </UiText>
               <UiText
@@ -226,7 +226,7 @@ const variableExample = '{{userId}}'
             variant="xs"
             weight="medium"
           >
-            {{ i18n.t("spaces.http.inspector.environment") }} ·
+            {{ i18n.t("spaces.http.inspector.environment") }} →
             {{
               activeEnvironment?.name ?? i18n.t("spaces.http.environments.none")
             }}
@@ -257,7 +257,7 @@ const variableExample = '{{userId}}'
               variant="xs"
               weight="medium"
             >
-              {{ i18n.t(`spaces.http.inspector.${group.scope}`) }} ·
+              {{ i18n.t(`spaces.http.inspector.${group.scope}`) }} →
               {{ group.label }}
             </UiText><UiHelpButton
               v-if="group.scope === 'session'"

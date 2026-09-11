@@ -596,7 +596,7 @@
           "apiKeyHeader": "Header",
           "apiKeyQuery": "Query parameter",
           "inheritedNone": "No authentication is configured in the parent.",
-          "inheritedFrom": "{{type}} · from “{{name}}”",
+          "inheritedFrom": "{{type}} → from “{{name}}”",
           "inheritedUnavailable": "Could not resolve authentication. Check the parent folder settings."
         },
         "description": {

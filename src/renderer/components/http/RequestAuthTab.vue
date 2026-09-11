@@ -58,6 +58,7 @@ const inheritedAuth = computed(() => {
     return i18n.t('spaces.http.editor.auth.inheritedFrom', {
       type: i18n.t(type.labelKey),
       name: source.name,
+      interpolation: { escapeValue: false },
     })
   }
   catch {

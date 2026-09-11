@@ -599,7 +599,7 @@
           "apiKeyHeader": "Заголовок",
           "apiKeyQuery": "Параметр запроса",
           "inheritedNone": "У родителя авторизация не настроена.",
-          "inheritedFrom": "{{type}} · из «{{name}}»",
+          "inheritedFrom": "{{type}} → из «{{name}}»",
           "inheritedUnavailable": "Не удалось определить авторизацию: проверьте настройки родительских папок."
         },
         "description": {

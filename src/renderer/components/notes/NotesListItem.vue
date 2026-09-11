@@ -13,8 +13,9 @@ import {
   useNotes,
   useNotesApp,
 } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
-import { format, isPast, isToday, isValid, parseISO } from 'date-fns'
+import { isPast, isToday, isValid, parseISO } from 'date-fns'
 import { CalendarClock, CloudDownload, Flag } from 'lucide-vue-next'
 import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
@@ -47,6 +48,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { formatDate } = useDateFormat()
 
 const { isCompactListMode } = useApp()
 const { clearHistory } = useNavigationHistory()
@@ -102,7 +105,7 @@ const taskDueLabel = computed(() => {
     return i18n.t('notes.tasks.today')
   }
 
-  return format(due, 'dd.MM.yyyy')
+  return formatDate(due)
 })
 const isTaskOverdue = computed(() => {
   if (!taskDue.value || isTaskDone.value) {
@@ -124,7 +127,7 @@ const trailingMeta = computed(() => {
     return taskDueLabel.value
   }
 
-  return format(new Date(props.note.updatedAt), 'dd.MM.yyyy')
+  return formatDate(new Date(props.note.updatedAt))
 })
 function onNoteClick(id: number, event: MouseEvent) {
   clearHistory()

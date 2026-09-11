@@ -18,3 +18,9 @@ export const language = {
   zh_HK: '中文 (繁體 香港特別行政區)',
   zh_TW: '中文 (繁體)',
 } as const
+
+export function resolveLanguage(value: unknown): keyof typeof language {
+  return typeof value === 'string' && Object.hasOwn(language, value)
+    ? (value as keyof typeof language)
+    : 'en_US'
+}

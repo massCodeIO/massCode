@@ -6,8 +6,11 @@ import { flattenFolderTree } from '@/composables/spaces/http/useHttpFolderTree'
 import { useHttpHistory } from '@/composables/spaces/http/useHttpHistory'
 import { useHttpRequests } from '@/composables/spaces/http/useHttpRequests'
 import { useHttpRunner } from '@/composables/spaces/http/useHttpRunner'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { Clock3, Folder, History, Send } from 'lucide-vue-next'
+
+const { formatDateTime } = useDateFormat()
 
 const { collection } = useHttpCollection()
 const { allRequests } = useHttpRequests()
@@ -72,7 +75,7 @@ watch(
 )
 
 function date(value: number) {
-  return new Date(value).toLocaleString()
+  return formatDateTime(value)
 }
 </script>
 

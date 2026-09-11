@@ -13,10 +13,11 @@ import {
   NoteTaskStatus,
   useNotes,
 } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { cn } from '@/utils'
 import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
-import { format, isValid, parseISO } from 'date-fns'
+import { isValid, parseISO } from 'date-fns'
 import { CalendarIcon, CircleCheck, Flag, X } from 'lucide-vue-next'
 import { getTaskPriorityFlagClass } from './taskPriorityStyle'
 
@@ -30,6 +31,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { formatDate } = useDateFormat()
 
 const { updateNoteProperties } = useNotes()
 
@@ -64,7 +67,7 @@ const dueLabel = computed(() => {
     return due.value
   }
 
-  return format(parsedDue, 'dd.MM.yyyy')
+  return formatDate(parsedDue)
 })
 
 const statusItems = [

@@ -8,10 +8,10 @@ import {
   useSnippets,
 } from '@/composables'
 import { LibraryFilter } from '@/composables/types'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n, ipc } from '@/electron'
 import { isMac } from '@/utils'
 import { useClipboard } from '@vueuse/core'
-import { format } from 'date-fns'
 import { CloudDownload } from 'lucide-vue-next'
 import { api } from '~/renderer/services/api'
 
@@ -20,6 +20,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { formatDate } = useDateFormat()
 
 const {
   highlightedSnippetIds,
@@ -93,7 +95,7 @@ const folderName = computed(() => {
 })
 
 const createdAtFormatted = computed(() =>
-  format(new Date(props.snippet.createdAt), 'dd.MM.yyyy'),
+  formatDate(new Date(props.snippet.createdAt)),
 )
 
 function onSnippetClick(id: number, event: MouseEvent) {

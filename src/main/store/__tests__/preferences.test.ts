@@ -112,6 +112,24 @@ afterEach(() => {
 })
 
 describe('preferences store sanitization', () => {
+  it.each(['locale', 'dd.MM.yyyy', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy-MM-dd'])(
+    'keeps saved date format %s',
+    async (dateFormat) => {
+      persistedStateByName.preferences = { appearance: { dateFormat } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('appearance.dateFormat' as any)).toBe(dateFormat)
+    },
+  )
+
+  it.each([undefined, null, 'invalid', 42])(
+    'defaults missing or invalid date format %s to locale',
+    async (dateFormat) => {
+      persistedStateByName.preferences = { appearance: { dateFormat } }
+      const { default: preferences } = await import('../module/preferences')
+      expect(preferences.get('appearance.dateFormat' as any)).toBe('locale')
+    },
+  )
+
   it('defaults table wrapping to false', async () => {
     const { default: preferences } = await import('../module/preferences')
 

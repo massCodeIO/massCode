@@ -2,9 +2,9 @@
 import type { HttpRequestListItem } from '@/composables/spaces/http/useHttpRequests'
 import * as ContextMenu from '@/components/ui/shadcn/context-menu'
 import { useHttpApp, useHttpRequests } from '@/composables'
+import { useDateFormat } from '@/composables/useDateFormat'
 import { i18n } from '@/electron'
 import { onClickOutside } from '@vueuse/core'
-import { format } from 'date-fns'
 import { CloudDownload } from 'lucide-vue-next'
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { formatDate } = useDateFormat()
 
 const {
   highlightedRequestIds,
@@ -145,7 +147,7 @@ onClickOutside(itemRef, () => {
               </span>
             </span>
             <span class="shrink-0 tabular-nums">
-              {{ format(new Date(props.request.updatedAt), "dd.MM.yyyy") }}
+              {{ formatDate(new Date(props.request.updatedAt)) }}
             </span>
           </UiText>
         </div>

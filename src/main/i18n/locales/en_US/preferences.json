@@ -178,6 +178,17 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "dateFormat": {
+      "label": "Date format",
+      "preview": "Example: {{date}}. Applies throughout the interface.",
+      "options": {
+        "0": "By app language (default)",
+        "1": "DD.MM.YYYY",
+        "2": "MM/DD/YYYY",
+        "3": "DD/MM/YYYY",
+        "4": "YYYY-MM-DD"
+      }
     }
   },
   "language": {
